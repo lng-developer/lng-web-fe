@@ -31,11 +31,11 @@ src/
 ├── main.jsx                  # Entry point, import global styles + render <App/>
 ├── app/
 │   ├── App.jsx                # Compose AppProviders + RouterProvider
-│   ├── providers/
-│   │   └── AppProviders.jsx   # QueryClient, MUI ThemeProvider, SnackbarProvider, i18n init
-│   └── router/
-│       └── index.jsx          # createBrowserRouter + route definitions
+│   └── providers/
+│       └── AppProviders.jsx   # QueryClient, MUI ThemeProvider, SnackbarProvider, i18n init
 ├── assets/                    # Ảnh, icon tĩnh (import trực tiếp trong component)
+│   ├── images/
+│   └── icons/
 ├── components/                # Component dùng chung toàn app
 │   ├── common/                 # Loader, ErrorBoundary, EmptyState...
 │   └── form/                   # FormTextField, FormSelect... (wrap MUI + RHF)
@@ -48,35 +48,46 @@ src/
 │       ├── components/          # Component chỉ dùng trong feature này
 │       ├── hooks/                # Hook riêng của feature
 │       ├── store/                # Zustand store riêng của feature (nếu cần)
-│       ├── schemas/              # zod schema cho form/validate
 │       └── pages/                # Page component - route target
 ├── hooks/                     # Hook dùng chung (useDebounce...)
+├── i18n/
+│   ├── index.js                # react-i18next init
+│   └── locales/
+│       ├── vi/common.json
+│       └── en/common.json
 ├── layouts/                   # Layout shell (MainLayout, AuthLayout...)
 ├── lib/                       # Cấu hình thư viện bên thứ 3
-│   ├── axios.js                # axios instance + interceptors
 │   ├── queryClient.js          # TanStack QueryClient
-│   ├── theme.js                # MUI theme (palette, breakpoints...)
-│   ├── i18n.js                 # react-i18next init
 │   └── dayjs.js                # dayjs + plugin/locale
-├── locales/
-│   ├── vi/common.json
-│   └── en/common.json
+├── routes/
+│   └── index.jsx              # createBrowserRouter + route definitions
+├── services/                  # Gọi API: axios instance + endpoint path
+│   ├── axiosInstance.js        # axios instance + interceptors (export apiClient)
+│   └── endpoints.js            # Hằng số đường dẫn API, nhóm theo feature
 ├── store/                     # Zustand store global (UI state, auth...)
 ├── styles/
 │   ├── tailwind.css            # Entry Tailwind (theme + utilities, bỏ preflight)
 │   ├── _variables.scss         # Biến SCSS (kích thước layout, z-index...)
 │   ├── _mixins.scss            # Mixin SCSS dùng chung
 │   └── global.scss             # Global style (reset nhẹ, scrollbar...)
-└── utils/                     # Hàm thuần (formatters, helpers...)
+├── theme/                     # MUI theme
+│   ├── index.js                # createAppTheme(mode) + components style overrides
+│   ├── palette.js               # colorTokens (light/dark) + buildPalette
+│   └── typography.js            # Typography scale
+├── utils/                     # Hàm thuần (formatters, helpers...)
+└── validations/               # zod schema cho form/validate (tập trung)
+    ├── index.js                 # Re-export các schema
+    └── <feature>Schema.js       # zod schema theo feature, ví dụ feedbackSchema.js
 ```
 
 ### Nguyên tắc đặt code
 
 - **Chung toàn app** (dùng ở ≥ 2 feature) → đặt ở `components/`, `hooks/`, `store/`, `lib/`,
-  `utils/`, `constants/`.
+  `services/`, `theme/`, `i18n/`, `validations/`, `routes/`, `utils/`, `constants/`.
 - **Riêng của 1 nghiệp vụ** → đặt trong `features/<feature-name>/...` tương ứng.
-- Khi tạo feature mới, copy cấu trúc `src/features/home` (api, components, schemas, pages) và
-  đăng ký route trong `src/app/router/index.jsx` + `src/constants/routes.js`.
+- Khi tạo feature mới, copy cấu trúc `src/features/home` (api, components, pages), thêm schema
+  vào `src/validations/<feature>Schema.js` và đăng ký route trong `src/routes/index.jsx` +
+  `src/constants/routes.js`.
 
 ## 3. Quy ước đặt tên
 
@@ -107,7 +118,7 @@ export default function UserCard({ user, onEdit }) {
 - Mỗi file chỉ export **1 component** (default) + có thể export thêm hằng số/hook liên quan
   nếu cần (theo rule `react-refresh/only-export-components`). Nếu file không phải component
   (ví dụ route config), thêm comment `eslint-disable react-refresh/only-export-components`
-  kèm lý do — xem `src/app/router/index.jsx`.
+  kèm lý do — xem `src/routes/index.jsx`.
 - Style ưu tiên: class Tailwind qua prop `className`, dùng `sx`/theme của MUI cho các thành
   phần design-system, SCSS module (`*.module.scss`) cho style phức tạp/animation.
 
@@ -118,20 +129,21 @@ export default function UserCard({ user, onEdit }) {
 - **Tailwind**: layout, spacing, flex/grid, responsive (`flex`, `gap-4`, `grid-cols-3`,
   `md:p-6`...) trên các element thường (`div`, `section`...).
 - **MUI**: mọi component design-system (Button, TextField, Dialog, AppBar, Card...), theme
-  (màu, typography, spacing scale) qua `sx` hoặc `theme.js`.
+  (màu, typography, spacing scale) qua `sx` hoặc `src/theme/`.
 - **SCSS module**: style phức tạp không tiện làm bằng utility/sx (animation, pseudo-element,
   override style của thư viện ngoài). Đặt cùng folder với component: `Component.module.scss`.
 
 **Đồng bộ design tokens (quan trọng):**
 
-- `src/lib/theme.js` (MUI, export `colorTokens` + `createAppTheme(mode)`) và
-  `src/styles/tailwind.css` (`@theme` + `.dark{}`) phải khớp nhau — tokens lấy từ Figma "LNG v2"
-  > Design System > Color Tokens (Light/Dark):
-  - `breakpoints.values` (MUI) ↔ `--breakpoint-*` (Tailwind): `sm:600 md:900 lg:1200 xl:1536`.
-  - `colorTokens.light/dark` (MUI) ↔ `--color-*` trong `@theme` (light) và `.dark{}` (dark) —
-    xem bảng mapping đầy đủ trong comment đầu `tailwind.css`. Ví dụ: `brand/primary` ↔
-    `--color-primary` ↔ `palette.primary.main`; `text/primary` ↔ `--color-ink` ↔
-    `palette.text.primary`.
+- `src/theme/palette.js` (export `colorTokens` + `buildPalette`), `src/theme/index.js` (export
+  `createAppTheme(mode)`) và `src/styles/tailwind.css` (`@theme` + `.dark{}`) phải khớp nhau —
+  tokens lấy từ Figma "LNG v2" > Design System > Color Tokens (Light/Dark):
+  - `breakpoints.values` (MUI, `src/theme/index.js`) ↔ `--breakpoint-*` (Tailwind): `sm:600
+md:900 lg:1200 xl:1536`.
+  - `colorTokens.light/dark` (MUI, `src/theme/palette.js`) ↔ `--color-*` trong `@theme` (light)
+    và `.dark{}` (dark) — xem bảng mapping đầy đủ trong comment đầu `tailwind.css`. Ví dụ:
+    `brand/primary` ↔ `--color-primary` ↔ `palette.primary.main`; `text/primary` ↔ `--color-ink`
+    ↔ `palette.text.primary`.
   - Khi đổi 1 trong 2 file, **phải cập nhật file còn lại** để ví dụ `bg-page`/`text-ink`
     (Tailwind) và `theme.palette.background.default`/`theme.palette.text.primary` (MUI) luôn
     đồng nhất ở cả light và dark.
@@ -182,13 +194,14 @@ const toggleSidebar = useUIStore((state) => state.toggleSidebar)
     ```
 
   - `<feature>.queries.js` / `<feature>.mutations.js` — custom hook bọc `useQuery`/`useMutation`,
-    gọi hàm fetch dùng `apiClient` (từ `@/lib/axios`):
+    gọi hàm fetch dùng `apiClient` (từ `@/services/axiosInstance`) với path từ `ENDPOINTS`
+    (`@/services/endpoints`):
 
     ```js
     export function useHomeSummaryQuery() {
       return useQuery({
         queryKey: homeKeys.summary(),
-        queryFn: () => apiClient.get('/home/summary'),
+        queryFn: () => apiClient.get(ENDPOINTS.HOME.SUMMARY),
       })
     }
     ```
@@ -198,13 +211,16 @@ const toggleSidebar = useUIStore((state) => state.toggleSidebar)
 - Component dùng `isPending`/`isError`/`data` từ hook, không gọi `axios`/`fetch` trực tiếp
   trong component.
 
-## 8. API layer — axios
+## 8. API layer — axios & endpoints
 
-- 1 instance duy nhất: `src/lib/axios.js` (`apiClient`), `baseURL` lấy từ
+- 1 instance duy nhất: `src/services/axiosInstance.js` (export `apiClient`), `baseURL` lấy từ
   `src/constants/env.js` (`VITE_API_BASE_URL`).
 - Request interceptor: tự gắn `Authorization: Bearer <token>` từ `localStorage`.
 - Response interceptor: trả về `response.data` trực tiếp (component nhận data đã unwrap),
   lỗi được `reject` để TanStack Query xử lý qua `isError`/`error`.
+- Đường dẫn API khai báo tập trung trong `src/services/endpoints.js` (object `ENDPOINTS`, nhóm
+  theo feature, ví dụ `ENDPOINTS.HOME.SUMMARY`), không hard-code string path trong
+  `<feature>.queries.js`/`.mutations.js`.
 - Mọi gọi API đặt trong `features/<name>/api/`, **không** gọi `apiClient` trực tiếp từ
   component/page.
 
@@ -212,14 +228,15 @@ const toggleSidebar = useUIStore((state) => state.toggleSidebar)
 
 - Khai báo path trong `src/constants/routes.js` (object `ROUTES`), không hard-code string path
   trong component.
-- `src/app/router/index.jsx`: `createBrowserRouter`, page component load qua `React.lazy`.
+- `src/routes/index.jsx`: `createBrowserRouter`, page component load qua `React.lazy`.
 - `MainLayout` bọc `<Outlet/>` trong 1 `<Suspense fallback={<Loader/>}>` duy nhất — các page
   con không cần tự thêm Suspense.
 - Thêm route mới: thêm hằng số vào `ROUTES`, `lazy import` page, thêm vào `children` của router.
 
 ## 10. Form & validation — react-hook-form + zod
 
-- Schema validate đặt ở `features/<name>/schemas/<name>Schema.js`, dùng `zod`.
+- Schema validate đặt tập trung ở `src/validations/<feature>Schema.js`, dùng `zod`, và được
+  re-export qua `src/validations/index.js`.
 - **Message lỗi của schema là i18n key** (ví dụ `'feedback.errors.nameRequired'`), không phải
   text cứng — để hỗ trợ đa ngôn ngữ:
 
@@ -237,13 +254,13 @@ const toggleSidebar = useUIStore((state) => state.toggleSidebar)
 
 ## 11. i18n — react-i18next
 
-- File ngôn ngữ: `src/locales/{vi,en}/common.json`, namespace mặc định `common`.
+- File ngôn ngữ: `src/i18n/locales/{vi,en}/common.json`, namespace mặc định `common`.
 - Ngôn ngữ hiện tại lưu trong `useUIStore` (persist) — **đây là nguồn duy nhất**, không dùng
   thêm language-detector để tránh 2 nguồn xung đột.
 - Đổi ngôn ngữ: gọi đồng thời `i18n.changeLanguage(lang)` và `setLanguage(lang)` (xem
   `MainLayout`).
 - Dùng `useTranslation()` + `t('namespace.key')` trong component. Thêm namespace mới (ví dụ
-  `<feature>.json`) nếu file `common.json` quá lớn, rồi khai báo trong `lib/i18n.js`.
+  `<feature>.json`) nếu file `common.json` quá lớn, rồi khai báo trong `src/i18n/index.js`.
 
 ## 12. Notification — notistack
 
@@ -258,10 +275,11 @@ const toggleSidebar = useUIStore((state) => state.toggleSidebar)
 ESLint (`eslint-plugin-simple-import-sort`) tự sắp xếp import theo 4 nhóm, cách nhau 1 dòng
 trống:
 
-1. **Side-effect imports** — `import './foo.css'`, `import '@/lib/i18n'`.
+1. **Side-effect imports** — `import './foo.css'`, `import '@/i18n'`.
 2. **react/react-\* trước, các package ngoài khác sau** (react, react-dom, react-router-dom...
    rồi @mui/..., @tanstack/..., axios, zod, zustand...).
-3. **Import nội bộ qua alias `@/`** — `@/components/...`, `@/lib/...`, `@/constants/...`.
+3. **Import nội bộ qua alias `@/`** — `@/components/...`, `@/lib/...`, `@/services/...`,
+   `@/constants/...`.
 4. **Import tương đối** — `./Component`, `../api/xxx.queries`, `*.module.scss`.
 
 Chạy `npm run lint:fix` để tự sắp xếp. Luôn dùng alias `@/` cho import xuyên thư mục
@@ -309,8 +327,8 @@ và đảm bảo đồng bộ toàn app.
 - Mọi text hiển thị cho người dùng (label, title, placeholder, message lỗi/thành công, tooltip,
   aria-label, alt...) phải lấy qua `useTranslation()` + `t('namespace.key')`, **không** viết
   text cứng trực tiếp trong JSX (cả tiếng Việt và tiếng Anh).
-- Thêm key mới vào **cả 2 file** `src/locales/vi/common.json` và `src/locales/en/common.json`
-  (cùng cấu trúc, namespace theo feature - xem mục 11).
+- Thêm key mới vào **cả 2 file** `src/i18n/locales/vi/common.json` và
+  `src/i18n/locales/en/common.json` (cùng cấu trúc, namespace theo feature - xem mục 11).
 - Message lỗi của zod schema cũng phải là i18n key (xem mục 10), không phải text cứng.
 - Ngoại lệ: giá trị kỹ thuật không hiển thị cho người dùng (key tra cứu, `value` của option,
   enum nội bộ...) không cần qua i18n.
@@ -320,10 +338,10 @@ và đảm bảo đồng bộ toàn app.
 - **Không** dùng màu hex/rgb, kích thước px tùy ý viết trực tiếp trong component (ví dụ
   `style={{ color: '#E63946' }}`, `className="text-[#fff] p-[13px]"`, `sx={{ marginTop: '13px'
 }}`...).
-- Màu sắc: dùng `theme.palette`/`colorTokens` (MUI, qua `sx`/`theme.js`) hoặc token Tailwind đã
+- Màu sắc: dùng `theme.palette`/`colorTokens` (MUI, qua `sx`/`src/theme/`) hoặc token Tailwind đã
   định nghĩa trong `tailwind.css` (`bg-page`, `text-ink`, `border-default`...) - xem mục 5. Cần
-  màu mới → bổ sung vào `colorTokens` (`theme.js`) **và** `@theme`/`.dark{}` (`tailwind.css`)
-  cho cả light/dark, không thêm màu rời rạc tại chỗ dùng.
+  màu mới → bổ sung vào `colorTokens` (`src/theme/palette.js`) **và** `@theme`/`.dark{}`
+  (`tailwind.css`) cho cả light/dark, không thêm màu rời rạc tại chỗ dùng.
 - Spacing/kích thước: dùng spacing scale của Tailwind (`gap-4`, `p-6`, `m-2`...) hoặc
   `theme.spacing()`/`theme.shape.borderRadius*` của MUI. Kích thước layout dùng chung (header
   height, sidebar width, z-index...) lấy từ biến trong `src/styles/_variables.scss` - cần giá

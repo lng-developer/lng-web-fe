@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Message của mỗi rule là một i18n key (locales/{vi,en}/common.json),
+// Message của mỗi rule là một i18n key (i18n/locales/{vi,en}/common.json),
 // được dịch trong FormTextField bằng useTranslation().
 export const feedbackSchema = z.object({
   name: z.string().min(1, 'feedback.errors.nameRequired'),

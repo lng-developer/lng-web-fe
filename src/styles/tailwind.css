@@ -17,8 +17,9 @@
 
 /*
  * Design tokens lấy từ Figma "LNG v2" > Design System > 1. Color Tokens (Light/Dark).
- * Đồng bộ với src/lib/theme.js (colorTokens, createAppTheme) - khi đổi giá trị ở đây,
- * nhớ cập nhật cả theme.js để Tailwind utilities và MUI theme luôn khớp nhau.
+ * Đồng bộ với src/theme/palette.js (colorTokens) và src/theme/index.js (createAppTheme) -
+ * khi đổi giá trị ở đây, nhớ cập nhật cả src/theme/palette.js để Tailwind utilities và MUI
+ * theme luôn khớp nhau.
  *
  * Mapping Figma token -> Tailwind var -> MUI palette:
  *   background/page     -> --color-page             -> palette.background.default

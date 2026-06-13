@@ -1,75 +1,9 @@
 import { alpha, createTheme } from '@mui/material/styles'
 
-/*
- * Design tokens lấy từ Figma "LNG v2" > Design System > 1. Color Tokens (Light/Dark).
- * Đồng bộ với @theme + .dark{} trong src/styles/tailwind.css. Khi đổi giá trị ở đây,
- * nhớ cập nhật cả tailwind.css để Tailwind utilities và MUI theme luôn khớp nhau.
- */
-export const colorTokens = {
-  light: {
-    bg: { page: '#F8F9FA' },
-    surface: { card: '#FFFFFF', elevated: '#FFFFFF' },
-    border: { default: '#E5E7EB', strong: '#D1D5DB' },
-    text: { primary: '#1A1A1A', secondary: '#4B5563', muted: '#9CA3AF' },
-    brand: { primary: '#E63946', primaryHover: '#B91C1C', tint10: '#FDECEE' },
-    success: { main: '#16A34A', bg: '#DCFCE7' },
-    warning: { main: '#F59E0B', bg: '#FEF3C7' },
-    danger: { main: '#DC2626', bg: '#FEE2E2' },
-    info: { main: '#2563EB', bg: '#DBEAFE' },
-    purple: { main: '#8B5CF6', bg: '#EDE9FE' },
-  },
-  dark: {
-    bg: { page: '#121417' },
-    surface: { card: '#1C1F23', elevated: '#23262B' },
-    border: { default: '#2D3036', strong: '#3A3E45' },
-    text: { primary: '#F3F4F6', secondary: '#C9CDD3', muted: '#8A8F98' },
-    brand: { primary: '#FF6B6B', primaryHover: '#E63946', tint10: '#3A1518' },
-    success: { main: '#4ADE80', bg: '#14301F' },
-    warning: { main: '#FBBF24', bg: '#3A2E0E' },
-    danger: { main: '#F87171', bg: '#3A1518' },
-    info: { main: '#60A5FA', bg: '#15243A' },
-    purple: { main: '#A78BFA', bg: '#2A2440' },
-  },
-}
+import { buildPalette, colorTokens } from './palette'
+import { typography } from './typography'
 
-function buildPalette(mode) {
-  const tokens = colorTokens[mode]
-
-  return {
-    mode,
-    primary: {
-      main: tokens.brand.primary,
-      dark: tokens.brand.primaryHover,
-      light: tokens.brand.tint10,
-    },
-    secondary: {
-      main: tokens.purple.main,
-      light: tokens.purple.bg,
-    },
-    success: { main: tokens.success.main, light: tokens.success.bg },
-    warning: { main: tokens.warning.main, light: tokens.warning.bg },
-    error: { main: tokens.danger.main, light: tokens.danger.bg },
-    info: { main: tokens.info.main, light: tokens.info.bg },
-    background: {
-      default: tokens.bg.page,
-      paper: tokens.surface.card,
-    },
-    text: {
-      primary: tokens.text.primary,
-      secondary: tokens.text.secondary,
-      disabled: tokens.text.muted,
-    },
-    divider: tokens.border.default,
-    // Token mở rộng, không thuộc shape chuẩn của MUI - dùng qua theme.palette.tokens.*
-    tokens: {
-      surfaceElevated: tokens.surface.elevated,
-      borderStrong: tokens.border.strong,
-    },
-  }
-}
-
-const fontFamily = ['Inter', 'Helvetica', 'Arial', 'sans-serif'].join(',')
-const fontFamilyMono = ['"JetBrains Mono"', 'monospace'].join(',')
+export { colorTokens }
 
 // Hệ số opacity dùng chung cho mọi state "disabled" (Button, Checkbox, Switch...).
 const DISABLED_OPACITY = 0.5
@@ -79,8 +13,8 @@ const DISABLED_OPACITY = 0.5
 const focusRing = (color) => `0 0 0 4px ${alpha(color, 0.12)}`
 
 /**
- * Tạo MUI theme theo mode (light/dark). Typography lấy từ Figma "LNG v2" > Design System >
- * 2. Typography Scale, shape.borderRadius* lấy từ 3. Spacing & Radius.
+ * Tạo MUI theme theo mode (light/dark). Typography lấy từ src/theme/typography.js,
+ * shape.borderRadius* lấy từ Figma "LNG v2" > Design System > 3. Spacing & Radius.
  */
 export function createAppTheme(mode = 'light') {
   return createTheme({
@@ -94,40 +28,7 @@ export function createAppTheme(mode = 'light') {
         xl: 1536,
       },
     },
-    typography: {
-      fontFamily,
-      // Không thuộc API chuẩn của MUI - dùng qua theme.typography.fontFamilyMono cho
-      // các giá trị dạng ID/mã (đơn hàng, mã tracking...).
-      fontFamilyMono,
-      h1: {
-        fontSize: '1.5rem',
-        fontWeight: 700,
-        lineHeight: 1.3,
-      },
-      h2: {
-        fontSize: '1rem',
-        fontWeight: 600,
-      },
-      h3: {
-        fontSize: '0.8125rem',
-        fontWeight: 600,
-        letterSpacing: '0.0385em',
-        textTransform: 'uppercase',
-      },
-      body1: {
-        fontSize: '0.875rem',
-        fontWeight: 400,
-        lineHeight: 1.5,
-      },
-      body2: {
-        fontSize: '0.8125rem',
-        fontWeight: 400,
-      },
-      caption: {
-        fontSize: '0.6875rem',
-        fontWeight: 600,
-      },
-    },
+    typography,
     shape: {
       borderRadius: 8, // radius/input-button
       borderRadiusCard: 12, // radius/card

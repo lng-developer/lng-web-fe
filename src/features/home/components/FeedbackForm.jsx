@@ -5,8 +5,7 @@ import { Button, Stack } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
 import FormTextField from '@/components/form/FormTextField'
-
-import { feedbackDefaultValues, feedbackSchema } from '../schemas/feedbackSchema'
+import { feedbackDefaultValues, feedbackSchema } from '@/validations/feedbackSchema'
 
 export default function FeedbackForm() {
   const { t } = useTranslation()

@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 
 import { homeKeys } from './home.keys'
 
-// Demo: thay bằng `apiClient.get('/home/summary')` khi có API thực tế
-// (xem @/lib/axios). Hàm trả về Promise để giữ đúng shape của queryFn.
+// Demo: thay bằng `apiClient.get(ENDPOINTS.HOME.SUMMARY)` khi có API thực tế
+// (xem @/services/axiosInstance, @/services/endpoints). Hàm trả về Promise để giữ đúng shape của queryFn.
 function fetchHomeSummary() {
   return new Promise((resolve) => {
     setTimeout(() => {

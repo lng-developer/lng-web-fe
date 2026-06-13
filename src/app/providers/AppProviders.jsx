@@ -1,4 +1,4 @@
-import '@/lib/i18n'
+import '@/i18n'
 
 import { useEffect, useMemo } from 'react'
 import { CssBaseline, ThemeProvider } from '@mui/material'
@@ -9,8 +9,8 @@ import { SnackbarProvider } from 'notistack'
 import { ErrorToast, InfoToast, SuccessToast, WarningToast } from '@/components/common/Toast'
 import { env } from '@/constants/env'
 import { queryClient } from '@/lib/queryClient'
-import { createAppTheme } from '@/lib/theme'
 import { useUIStore } from '@/store/useUIStore'
+import { createAppTheme } from '@/theme'
 
 const SNACKBAR_COMPONENTS = {
   success: SuccessToast,
