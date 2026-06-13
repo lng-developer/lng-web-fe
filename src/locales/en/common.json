@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "LNG Web FE"
+  },
+  "nav": {
+    "home": "Home",
+    "uiKit": "UI Kit"
+  },
+  "theme": {
+    "toggleSidebar": "Toggle sidebar",
+    "toggleMode": "Toggle light/dark mode"
+  },
+  "home": {
+    "title": "Home",
+    "welcome": "Welcome to LNG Web FE",
+    "description": "This is a demo page showcasing the conventions in CONVENTIONS.md: MUI + Tailwind layout, TanStack Query, Zustand, react-i18next, react-hook-form + zod and notistack.",
+    "summary": {
+      "users": "Users",
+      "orders": "Orders",
+      "revenue": "Revenue"
+    }
+  },
+  "feedback": {
+    "title": "Send feedback",
+    "name": "Full name",
+    "email": "Email",
+    "message": "Message",
+    "submit": "Submit",
+    "success": "Feedback submitted successfully!",
+    "errors": {
+      "nameRequired": "Please enter your full name",
+      "emailInvalid": "Invalid email address",
+      "messageRequired": "Please enter a message"
+    }
+  },
+  "dateRangePicker": {
+    "placeholder": "Select date range",
+    "clear": "Clear",
+    "apply": "Apply"
+  },
+  "uiKit": {
+    "title": "UI Kit",
+    "description": "Atoms & Molecules components based on Figma \"LNG v2\" Design System.",
+    "sections": {
+      "buttons": "Button",
+      "inputs": "Input",
+      "select": "Select",
+      "dateRangePicker": "Date Range Picker",
+      "avatar": "Avatar",
+      "checkbox": "Checkbox",
+      "toggle": "Toggle",
+      "toast": "Toast Notification",
+      "tooltip": "Tooltip",
+      "pagination": "Pagination"
+    },
+    "inputs": {
+      "default": "Default",
+      "withIcon": "With icon",
+      "search": "Search...",
+      "error": "Error",
+      "errorHelper": "This field is required",
+      "errorValue": "Invalid value",
+      "disabled": "Disabled",
+      "disabledValue": "Cannot be edited"
+    },
+    "select": {
+      "placeholder": "Select an option",
+      "option": "Option {{value}}"
+    },
+    "toast": {
+      "success": "Show success toast",
+      "error": "Show error toast",
+      "warning": "Show warning toast",
+      "info": "Show info toast",
+      "messages": {
+        "success": "Changes saved successfully!",
+        "error": "Something went wrong, please try again.",
+        "warning": "Please double-check the information entered.",
+        "info": "You have 3 new notifications."
+      }
+    },
+    "tooltip": {
+      "top": "Tooltip on top",
+      "bottom": "Tooltip on bottom"
+    }
+  }
+}

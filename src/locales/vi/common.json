@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "LNG Web FE"
+  },
+  "nav": {
+    "home": "Trang chủ",
+    "uiKit": "UI Kit"
+  },
+  "theme": {
+    "toggleSidebar": "Đóng/mở thanh điều hướng",
+    "toggleMode": "Đổi giao diện sáng/tối"
+  },
+  "home": {
+    "title": "Trang chủ",
+    "welcome": "Chào mừng bạn đến với LNG Web FE",
+    "description": "Đây là trang demo minh hoạ các quy ước trong CONVENTIONS.md: layout MUI + Tailwind, TanStack Query, Zustand, react-i18next, react-hook-form + zod và notistack.",
+    "summary": {
+      "users": "Người dùng",
+      "orders": "Đơn hàng",
+      "revenue": "Doanh thu"
+    }
+  },
+  "feedback": {
+    "title": "Gửi phản hồi",
+    "name": "Họ và tên",
+    "email": "Email",
+    "message": "Nội dung",
+    "submit": "Gửi phản hồi",
+    "success": "Gửi phản hồi thành công!",
+    "errors": {
+      "nameRequired": "Vui lòng nhập họ và tên",
+      "emailInvalid": "Email không hợp lệ",
+      "messageRequired": "Vui lòng nhập nội dung"
+    }
+  },
+  "dateRangePicker": {
+    "placeholder": "Chọn khoảng ngày",
+    "clear": "Xoá",
+    "apply": "Áp dụng"
+  },
+  "uiKit": {
+    "title": "UI Kit",
+    "description": "Bộ component Atoms & Molecules theo Figma \"LNG v2\" - Design System.",
+    "sections": {
+      "buttons": "Button",
+      "inputs": "Input",
+      "select": "Select",
+      "dateRangePicker": "Date Range Picker",
+      "avatar": "Avatar",
+      "checkbox": "Checkbox",
+      "toggle": "Toggle",
+      "toast": "Toast Notification",
+      "tooltip": "Tooltip",
+      "pagination": "Pagination"
+    },
+    "inputs": {
+      "default": "Mặc định",
+      "withIcon": "Có icon",
+      "search": "Tìm kiếm...",
+      "error": "Lỗi",
+      "errorHelper": "Trường này là bắt buộc",
+      "errorValue": "Dữ liệu không hợp lệ",
+      "disabled": "Vô hiệu hoá",
+      "disabledValue": "Không thể chỉnh sửa"
+    },
+    "select": {
+      "placeholder": "Chọn một mục",
+      "option": "Lựa chọn {{value}}"
+    },
+    "toast": {
+      "success": "Hiện toast thành công",
+      "error": "Hiện toast lỗi",
+      "warning": "Hiện toast cảnh báo",
+      "info": "Hiện toast thông tin",
+      "messages": {
+        "success": "Lưu thay đổi thành công!",
+        "error": "Đã có lỗi xảy ra, vui lòng thử lại.",
+        "warning": "Vui lòng kiểm tra lại thông tin đã nhập.",
+        "info": "Có 3 thông báo mới."
+      }
+    },
+    "tooltip": {
+      "top": "Tooltip phía trên",
+      "bottom": "Tooltip phía dưới"
+    }
+  }
+}
