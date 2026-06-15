@@ -2,7 +2,9 @@
 // features/<name>/api/. Thêm nhóm endpoint mới theo feature khi có API thực tế.
 export const ENDPOINTS = {
   AUTH: {
-    REFRESH: '/auth/refresh',
+    LOGIN: '/api/auth/login',
+    ME: '/api/auth/me',
+    REFRESH: '/api/auth/refresh',
   },
   HOME: {
     SUMMARY: '/home/summary',

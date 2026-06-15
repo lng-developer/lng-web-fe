@@ -8,7 +8,9 @@
   },
   "theme": {
     "toggleSidebar": "Toggle sidebar",
-    "toggleMode": "Toggle light/dark mode"
+    "toggleMode": "Toggle light/dark mode",
+    "light": "Light mode",
+    "dark": "Dark mode"
   },
   "home": {
     "title": "Home",
@@ -37,6 +39,50 @@
     "placeholder": "Select date range",
     "clear": "Clear",
     "apply": "Apply"
+  },
+  "errors": {
+    "backHome": "Back to home",
+    "notFound": {
+      "title": "Page not found",
+      "description": "This path does not exist or has been moved."
+    },
+    "route": {
+      "title": "Cannot display page",
+      "description": "Something went wrong while loading this page."
+    },
+    "api": {
+      "network": "Cannot connect to the server."
+    },
+    "auth": {
+      "invalidLoginResponse": "The login response is invalid.",
+      "missingAccessToken": "The refresh response is missing an access token.",
+      "missingRefreshToken": "Your session has expired. Please log in again."
+    }
+  },
+  "auth": {
+    "tagline": "Comprehensive POD operations management",
+    "footer": "v2.0.0 · LNG System",
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "emailPlaceholder": "you@lng.co",
+      "password": "Password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Login",
+      "success": "Login successful!",
+      "errors": {
+        "emailRequired": "Please enter your email",
+        "emailInvalid": "Invalid email address",
+        "passwordRequired": "Please enter your password"
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Password recovery is not available yet. Please contact your administrator for support.",
+      "backLogin": "Back to login"
+    }
   },
   "uiKit": {
     "title": "UI Kit",

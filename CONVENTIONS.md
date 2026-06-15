@@ -40,6 +40,7 @@ src/
 │   ├── common/                 # Loader, ErrorBoundary, EmptyState...
 │   └── form/                   # FormTextField, FormSelect... (wrap MUI + RHF)
 ├── constants/
+│   ├── app.js                  # App-level constants: modes, languages, storage keys, variants...
 │   ├── env.js                  # Wrap import.meta.env
 │   └── routes.js               # Hằng số route path
 ├── features/                  # Module nghiệp vụ (feature-based)
@@ -353,3 +354,39 @@ và đảm bảo đồng bộ toàn app.
 xl:`) đã đồng bộ ở mục 5, không tự định nghĩa breakpoint riêng trong component.
 - Font/typography: dùng `theme.typography` (variant `h1`, `body1`, `caption`...) hoặc class
   Tailwind tương ứng, không khai `fontSize`/`fontWeight`/`fontFamily` tùy ý trong component.
+
+### Keys/config literals
+
+- Không hardcode các key/config literal rải rác trong component, store, service, theme hoặc i18n
+  init. Các giá trị dùng cho logic phải được gom vào `src/constants/app.js` hoặc file constants
+  chuyên biệt.
+- Các nhóm key bắt buộc đi qua constants:
+  - theme mode / html class: `THEME_MODES.LIGHT`, `THEME_MODES.DARK`, `HTML_CLASSES.DARK`.
+  - language code: `LANGUAGES.VI`, `LANGUAGES.EN`.
+  - localStorage/sessionStorage key: `STORAGE_KEYS.*`.
+  - API response field/key dùng cho parsing: `AUTH_RESPONSE_FIELDS.*`.
+  - snackbar/toast variant: `SNACKBAR_VARIANTS.SUCCESS`, `ERROR`, `WARNING`, `INFO`.
+  - elevation/shadow tái sử dụng: `ELEVATION_SHADOWS.*`.
+- Endpoint path luôn đặt trong `src/services/endpoints.js` (`ENDPOINTS.*`), route path luôn đặt trong
+  `src/constants/routes.js` (`ROUTES.*`), không viết trực tiếp trong feature/api/component.
+- Ngoại lệ chấp nhận: literal chỉ dùng một lần và là giá trị hiển thị kĩ thuật cục bộ
+  (ví dụ option demo trong UI Kit) có thể để tại chỗ, nhưng nếu được so sánh logic, persist, parse
+  response, hoặc dùng ở hạn mức cross-file thì phải tạo constants.
+
+Ví dụ đúng:
+
+```js
+import { LANGUAGES, SNACKBAR_VARIANTS, THEME_MODES } from '@/constants/app'
+
+setThemeMode(THEME_MODES.DARK)
+i18n.changeLanguage(LANGUAGES.VI)
+enqueueSnackbar(t('feedback.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+```
+
+Không viết:
+
+```js
+setThemeMode('dark')
+i18n.changeLanguage('vi')
+enqueueSnackbar(t('feedback.success'), { variant: 'success' })
+```

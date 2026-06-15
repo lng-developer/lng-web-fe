@@ -7,6 +7,8 @@ import WarningIcon from '@mui/icons-material/Warning'
 import { IconButton, Stack, Typography } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import { ELEVATION_SHADOWS } from '@/constants/app'
+
 // Component/Toast (Figma "LNG v2"): nền surface.card, viền trái 4px theo màu trạng thái,
 // shadow Elevation/Lg, radius 8, rộng 360px. Đăng ký qua SnackbarProvider `Components`
 // trong AppProviders.jsx để thay SnackbarContent mặc định của notistack.
@@ -26,7 +28,7 @@ function ToastContent({ id, message, color, icon }) {
         borderLeft: 4,
         borderLeftColor: color,
         bgcolor: 'background.paper',
-        boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+        boxShadow: ELEVATION_SHADOWS.LG,
       }}
     >
       <Stack sx={{ color }}>{icon}</Stack>

@@ -1,10 +1,12 @@
+import { THEME_MODES } from '@/constants/app'
+
 /*
  * Design tokens lấy từ Figma "LNG v2" > Design System > 1. Color Tokens (Light/Dark).
  * Đồng bộ với @theme + .dark{} trong src/styles/tailwind.css. Khi đổi giá trị ở đây,
  * nhớ cập nhật cả tailwind.css để Tailwind utilities và MUI theme luôn khớp nhau.
  */
 export const colorTokens = {
-  light: {
+  [THEME_MODES.LIGHT]: {
     bg: { page: '#F8F9FA' },
     surface: { card: '#FFFFFF', elevated: '#FFFFFF' },
     border: { default: '#E5E7EB', strong: '#D1D5DB' },
@@ -16,7 +18,7 @@ export const colorTokens = {
     info: { main: '#2563EB', bg: '#DBEAFE' },
     purple: { main: '#8B5CF6', bg: '#EDE9FE' },
   },
-  dark: {
+  [THEME_MODES.DARK]: {
     bg: { page: '#121417' },
     surface: { card: '#1C1F23', elevated: '#23262B' },
     border: { default: '#2D3036', strong: '#3A3E45' },

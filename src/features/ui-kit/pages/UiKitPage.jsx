@@ -20,6 +20,7 @@ import {
 import { useSnackbar } from 'notistack'
 
 import DateRangePicker from '@/components/form/DateRangePicker'
+import { SNACKBAR_VARIANTS } from '@/constants/app'
 
 export default function UiKitPage() {
   const { t } = useTranslation()
@@ -179,28 +180,40 @@ export default function UiKitPage() {
             <Button
               variant="outlined"
               onClick={() =>
-                enqueueSnackbar(t('uiKit.toast.messages.success'), { variant: 'success' })
+                enqueueSnackbar(t('uiKit.toast.messages.success'), {
+                  variant: SNACKBAR_VARIANTS.SUCCESS,
+                })
               }
             >
               {t('uiKit.toast.success')}
             </Button>
             <Button
               variant="outlined"
-              onClick={() => enqueueSnackbar(t('uiKit.toast.messages.error'), { variant: 'error' })}
+              onClick={() =>
+                enqueueSnackbar(t('uiKit.toast.messages.error'), {
+                  variant: SNACKBAR_VARIANTS.ERROR,
+                })
+              }
             >
               {t('uiKit.toast.error')}
             </Button>
             <Button
               variant="outlined"
               onClick={() =>
-                enqueueSnackbar(t('uiKit.toast.messages.warning'), { variant: 'warning' })
+                enqueueSnackbar(t('uiKit.toast.messages.warning'), {
+                  variant: SNACKBAR_VARIANTS.WARNING,
+                })
               }
             >
               {t('uiKit.toast.warning')}
             </Button>
             <Button
               variant="outlined"
-              onClick={() => enqueueSnackbar(t('uiKit.toast.messages.info'), { variant: 'info' })}
+              onClick={() =>
+                enqueueSnackbar(t('uiKit.toast.messages.info'), {
+                  variant: SNACKBAR_VARIANTS.INFO,
+                })
+              }
             >
               {t('uiKit.toast.info')}
             </Button>
