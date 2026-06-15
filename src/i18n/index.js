@@ -1,6 +1,7 @@
 import { initReactI18next } from 'react-i18next'
 import i18n from 'i18next'
 
+import { LANGUAGES } from '@/constants/app'
 import { useUIStore } from '@/store/useUIStore'
 
 import en from './locales/en/common.json'
@@ -11,11 +12,11 @@ import vi from './locales/vi/common.json'
 // kèm useUIStore.setState() - xem MainLayout.
 i18n.use(initReactI18next).init({
   resources: {
-    vi: { common: vi },
-    en: { common: en },
+    [LANGUAGES.VI]: { common: vi },
+    [LANGUAGES.EN]: { common: en },
   },
   lng: useUIStore.getState().language,
-  fallbackLng: 'vi',
+  fallbackLng: LANGUAGES.VI,
   defaultNS: 'common',
   interpolation: {
     escapeValue: false,

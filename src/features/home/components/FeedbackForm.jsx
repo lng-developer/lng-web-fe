@@ -5,6 +5,7 @@ import { Button, Stack } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
 import FormTextField from '@/components/form/FormTextField'
+import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { feedbackDefaultValues, feedbackSchema } from '@/validations/feedbackSchema'
 
 export default function FeedbackForm() {
@@ -23,7 +24,7 @@ export default function FeedbackForm() {
   // Demo: thay phần dưới bằng mutation TanStack Query gọi API thực tế
   // (xem CONVENTIONS.md mục "Forms & validation").
   const onSubmit = () => {
-    enqueueSnackbar(t('feedback.success'), { variant: 'success' })
+    enqueueSnackbar(t('feedback.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
     reset()
   }
 

@@ -6,14 +6,18 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import {
   Box,
   Button,
+  ButtonBase,
   IconButton,
   InputAdornment,
   OutlinedInput,
   Popover,
   Stack,
   Typography,
+  useMediaQuery,
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 
+import { ELEVATION_SHADOWS } from '@/constants/app'
 import dayjs from '@/lib/dayjs'
 
 const CELL_SIZE = 36
@@ -50,10 +54,15 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
       >
         {monthStart.locale(locale).format('MMMM YYYY')}
       </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CELL_SIZE}px)` }}>
+      <Box
+        role="grid"
+        aria-label={monthStart.locale(locale).format('MMMM YYYY')}
+        sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CELL_SIZE}px)` }}
+      >
         {weekdays.map((weekday, index) => (
           <Typography
             key={`${weekday}-${index}`}
+            role="columnheader"
             variant="caption"
             color="text.secondary"
             textAlign="center"
@@ -75,30 +84,44 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
           const isEdge = isStart || isEnd
 
           return (
-            <Box
+            <ButtonBase
               key={day.format('YYYY-MM-DD')}
+              component="button"
+              type="button"
+              role="gridcell"
+              aria-label={day.locale(locale).format('DD/MM/YYYY')}
+              aria-selected={Boolean(isEdge || isInRange)}
+              disabled={disabled}
               onMouseEnter={() => onDayHover(day)}
-              onClick={() => !disabled && onDayClick(day)}
+              onFocus={() => onDayHover(day)}
+              onClick={() => onDayClick(day)}
               sx={{
+                width: CELL_SIZE,
                 height: CELL_SIZE,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: disabled ? 'default' : 'pointer',
                 fontSize: '0.8125rem',
-                color: isEdge ? '#FFFFFF' : !isCurrentMonth ? 'text.disabled' : 'text.primary',
+                color: isEdge ? 'common.white' : !isCurrentMonth ? 'text.disabled' : 'text.primary',
                 bgcolor: isEdge ? 'primary.main' : isInRange ? 'primary.light' : 'transparent',
                 borderRadius: isEdge ? '50%' : 0,
                 border: isToday && !isEdge ? '1px solid' : 'none',
                 borderColor: 'primary.main',
                 boxSizing: 'border-box',
-                '&:hover': !isEdge
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: 'primary.main',
+                  outlineOffset: 2,
+                  borderRadius: '50%',
+                },
+                '&:hover:not(.Mui-disabled)': !isEdge
                   ? { bgcolor: isInRange ? 'primary.light' : 'action.hover', borderRadius: '50%' }
                   : undefined,
               }}
             >
               {day.date()}
-            </Box>
+            </ButtonBase>
           )
         })}
       </Box>
@@ -122,6 +145,8 @@ export default function DateRangePicker({
   fullWidth = false,
 }) {
   const { t, i18n } = useTranslation()
+  const muiTheme = useTheme()
+  const isDesktop = useMediaQuery(muiTheme.breakpoints.up('sm'))
   const [anchorEl, setAnchorEl] = useState(null)
   const [draft, setDraft] = useState(value)
   const [hoverDay, setHoverDay] = useState(null)
@@ -166,7 +191,6 @@ export default function DateRangePicker({
       : ''
 
   const leftMonth = baseMonth
-  const rightMonth = baseMonth.add(1, 'month')
   const range = { start: draft.start, end: draft.end }
 
   return (
@@ -211,7 +235,7 @@ export default function DateRangePicker({
               mt: 1,
               p: 2,
               borderRadius: 3,
-              boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+              boxShadow: ELEVATION_SHADOWS.LG,
             },
           },
         }}
@@ -224,7 +248,7 @@ export default function DateRangePicker({
             <ChevronRightIcon fontSize="small" />
           </IconButton>
         </Stack>
-        <Stack direction="row" spacing={3}>
+        <Stack direction={isDesktop ? 'row' : 'column'} spacing={3}>
           <MonthGrid
             monthStart={leftMonth}
             locale={i18n.language}
@@ -234,15 +258,17 @@ export default function DateRangePicker({
             onDayClick={handleDayClick}
             disabled={disabled}
           />
-          <MonthGrid
-            monthStart={rightMonth}
-            locale={i18n.language}
-            range={range}
-            hoverDay={hoverDay}
-            onDayHover={setHoverDay}
-            onDayClick={handleDayClick}
-            disabled={disabled}
-          />
+          {isDesktop && (
+            <MonthGrid
+              monthStart={baseMonth.add(1, 'month')}
+              locale={i18n.language}
+              range={range}
+              hoverDay={hoverDay}
+              onDayHover={setHoverDay}
+              onDayClick={handleDayClick}
+              disabled={disabled}
+            />
+          )}
         </Stack>
         <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 2 }}>
           <Button variant="text" onClick={handleClear}>
