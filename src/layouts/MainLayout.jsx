@@ -19,9 +19,12 @@ import {
   ToggleButtonGroup,
   Toolbar,
   Typography,
+  useMediaQuery,
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 
 import Loader from '@/components/common/Loader'
+import { LANGUAGES, THEME_MODES } from '@/constants/app'
 import { ROUTES } from '@/constants/routes'
 import { useUIStore } from '@/store/useUIStore'
 
@@ -34,8 +37,11 @@ const NAV_ITEMS = [
 
 export default function MainLayout() {
   const { t, i18n } = useTranslation()
+  const muiTheme = useTheme()
+  const isDesktop = useMediaQuery(muiTheme.breakpoints.up('md'))
   const sidebarOpen = useUIStore((state) => state.sidebarOpen)
   const toggleSidebar = useUIStore((state) => state.toggleSidebar)
+  const closeSidebar = useUIStore((state) => state.closeSidebar)
   const language = useUIStore((state) => state.language)
   const setLanguage = useUIStore((state) => state.setLanguage)
   const themeMode = useUIStore((state) => state.themeMode)
@@ -62,7 +68,7 @@ export default function MainLayout() {
             {t('app.name')}
           </Typography>
           <IconButton color="inherit" onClick={toggleThemeMode} aria-label={t('theme.toggleMode')}>
-            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            {themeMode === THEME_MODES.DARK ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
           <ToggleButtonGroup
             value={language}
@@ -71,21 +77,29 @@ export default function MainLayout() {
             onChange={(_event, value) => value && handleChangeLanguage(value)}
             sx={{ bgcolor: 'background.paper' }}
           >
-            <ToggleButton value="vi">VI</ToggleButton>
-            <ToggleButton value="en">EN</ToggleButton>
+            <ToggleButton value={LANGUAGES.VI}>VI</ToggleButton>
+            <ToggleButton value={LANGUAGES.EN}>EN</ToggleButton>
           </ToggleButtonGroup>
         </Toolbar>
       </AppBar>
 
       <Drawer
-        variant="persistent"
+        variant={isDesktop ? 'persistent' : 'temporary'}
         open={sidebarOpen}
+        onClose={closeSidebar}
+        ModalProps={{ keepMounted: true }}
         sx={{ '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, boxSizing: 'border-box' } }}
       >
         <Toolbar />
         <List>
           {NAV_ITEMS.map((item) => (
-            <ListItemButton key={item.to} component={NavLink} to={item.to} end>
+            <ListItemButton
+              key={item.to}
+              component={NavLink}
+              to={item.to}
+              end
+              onClick={!isDesktop ? closeSidebar : undefined}
+            >
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={t(item.labelKey)} />
             </ListItemButton>

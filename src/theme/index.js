@@ -1,5 +1,7 @@
 import { alpha, createTheme } from '@mui/material/styles'
 
+import { ELEVATION_SHADOWS, THEME_MODES } from '@/constants/app'
+
 import { buildPalette, colorTokens } from './palette'
 import { typography } from './typography'
 
@@ -16,7 +18,7 @@ const focusRing = (color) => `0 0 0 4px ${alpha(color, 0.12)}`
  * Tạo MUI theme theo mode (light/dark). Typography lấy từ src/theme/typography.js,
  * shape.borderRadius* lấy từ Figma "LNG v2" > Design System > 3. Spacing & Radius.
  */
-export function createAppTheme(mode = 'light') {
+export function createAppTheme(mode = THEME_MODES.LIGHT) {
   return createTheme({
     palette: buildPalette(mode),
     breakpoints: {
@@ -157,7 +159,7 @@ export function createAppTheme(mode = 'light') {
             marginTop: 4,
             borderRadius: theme.shape.borderRadius,
             border: `1px solid ${theme.palette.divider}`,
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+            boxShadow: ELEVATION_SHADOWS.LG,
           }),
           list: {
             padding: 4,
@@ -253,9 +255,9 @@ export function createAppTheme(mode = 'light') {
           tooltip: ({ theme }) => ({
             backgroundColor: theme.palette.text.primary,
             color:
-              theme.palette.mode === 'light'
+              theme.palette.mode === THEME_MODES.LIGHT
                 ? theme.palette.common.white
-                : colorTokens.light.text.primary,
+                : colorTokens[THEME_MODES.LIGHT].text.primary,
             fontSize: '0.75rem',
             fontWeight: 500,
             padding: '6px 10px',
@@ -287,4 +289,4 @@ export function createAppTheme(mode = 'light') {
   })
 }
 
-export const theme = createAppTheme('light')
+export const theme = createAppTheme(THEME_MODES.LIGHT)
