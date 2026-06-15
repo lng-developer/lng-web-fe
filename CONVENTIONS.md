@@ -287,7 +287,10 @@ Chạy `npm run lint:fix` để tự sắp xếp. Luôn dùng alias `@/` cho imp
 
 ## 14. Biến môi trường
 
-- Copy `.env.example` → `.env` khi setup máy mới. Mọi biến phải có tiền tố `VITE_` để Vite
+- Dùng env theo Vite mode:
+  - `.env.development` cho môi trường dev (`npm.cmd run dev`, `npm.cmd run build:dev`).
+  - `.env.production` cho môi trường production (`npm.cmd run build` hoặc `npm.cmd run build:prod`).
+- `.env.example` chỉ là template chung khi cần tạo env riêng theo máy. Mọi biến phải có tiền tố `VITE_` để Vite
   expose ra client.
 - Không đọc `import.meta.env` trực tiếp trong component/feature — luôn qua
   `src/constants/env.js` (object `env`).
