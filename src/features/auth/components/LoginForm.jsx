@@ -61,6 +61,7 @@ export default function LoginForm() {
         name="password"
         control={control}
         label={t('auth.login.password')}
+        placeholder={t('auth.login.passwordPlaceholder')}
         type={showPassword ? 'text' : 'password'}
         slotProps={{
           input: {

@@ -123,6 +123,14 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
           root: ({ theme }) => ({
             borderRadius: theme.shape.borderRadius,
             backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            minHeight: 42,
+            transition: theme.transitions.create(
+              ['background-color', 'border-color', 'box-shadow'],
+              {
+                duration: theme.transitions.duration.shorter,
+              },
+            ),
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: theme.palette.divider,
             },
@@ -144,10 +152,46 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
             },
             '&.Mui-disabled': {
               backgroundColor: theme.palette.action.disabledBackground,
+              color: theme.palette.text.disabled,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.action.disabledBackground,
+              },
             },
           }),
-          input: {
+          input: ({ theme }) => ({
             padding: '8.5px 12px',
+            '&::placeholder': {
+              color: theme.palette.text.secondary,
+              opacity: 1,
+            },
+            '&.Mui-disabled': {
+              WebkitTextFillColor: theme.palette.text.disabled,
+              '&::placeholder': {
+                color: theme.palette.text.disabled,
+                opacity: 1,
+              },
+            },
+          }),
+        },
+      },
+      MuiInputAdornment: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            color: theme.palette.text.disabled,
+            '& .MuiSvgIcon-root': {
+              fontSize: 20,
+            },
+          }),
+        },
+      },
+      MuiFormHelperText: {
+        styleOverrides: {
+          root: {
+            marginLeft: 0,
+            marginRight: 0,
+            marginTop: 6,
+            fontSize: '0.8125rem',
+            lineHeight: 1.35,
           },
         },
       },

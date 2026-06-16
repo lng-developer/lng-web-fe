@@ -2,6 +2,9 @@
   "app": {
     "name": "LNG Web FE"
   },
+  "common": {
+    "close": "Đóng"
+  },
   "nav": {
     "home": "Trang chủ",
     "uiKit": "UI Kit"
@@ -33,6 +36,7 @@
       "email": "Email",
       "emailPlaceholder": "you@lng.co",
       "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
       "showPassword": "Hiện mật khẩu",
       "hidePassword": "Ẩn mật khẩu",
       "forgotPassword": "Quên mật khẩu?",
@@ -81,8 +85,11 @@
   "feedback": {
     "title": "Gửi phản hồi",
     "name": "Họ và tên",
+    "namePlaceholder": "Nhập họ và tên",
     "email": "Email",
+    "emailPlaceholder": "Nhập email",
     "message": "Nội dung",
+    "messagePlaceholder": "Nhập nội dung phản hồi",
     "submit": "Gửi phản hồi",
     "success": "Gửi phản hồi thành công!",
     "errors": {
@@ -139,6 +146,17 @@
       "pagination": "Pagination"
     },
     "inputs": {
+      "title": "2. Input Field",
+      "lightMode": "LIGHT MODE",
+      "darkMode": "DARK MODE",
+      "contentPlaceholder": "Nhập nội dung...",
+      "requiredHelper": "Trường này là bắt buộc",
+      "states": {
+        "default": "Default",
+        "focus": "Focus",
+        "error": "Error",
+        "disabled": "Disabled"
+      },
       "default": "Mặc định",
       "withIcon": "Có icon",
       "search": "Tìm kiếm...",
@@ -147,6 +165,15 @@
       "errorValue": "Dữ liệu không hợp lệ",
       "disabled": "Vô hiệu hoá",
       "disabledValue": "Không thể chỉnh sửa"
+    },
+    "buttons": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "ghost": "Ghost",
+      "danger": "Danger",
+      "small": "Small",
+      "default": "Default",
+      "large": "Large"
     },
     "select": {
       "placeholder": "Chọn một mục",
@@ -165,6 +192,10 @@
       }
     },
     "tooltip": {
+      "actions": {
+        "top": "Top",
+        "bottom": "Bottom"
+      },
       "top": "Tooltip phía trên",
       "bottom": "Tooltip phía dưới"
     }

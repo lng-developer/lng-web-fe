@@ -59,6 +59,10 @@ export function buildPalette(mode) {
       secondary: tokens.text.secondary,
       disabled: tokens.text.muted,
     },
+    action: {
+      disabled: tokens.text.muted,
+      disabledBackground: tokens.border.default,
+    },
     divider: tokens.border.default,
     // Token mở rộng, không thuộc shape chuẩn của MUI - dùng qua theme.palette.tokens.*
     tokens: {

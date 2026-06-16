@@ -35,8 +35,11 @@ export default function AuthLayout() {
             size="small"
             onClick={() => setThemeMode(THEME_MODES.LIGHT)}
             aria-label={t('theme.light')}
-            className={themeMode === THEME_MODES.LIGHT ? 'bg-primary-light' : ''}
-            sx={{ color: themeMode === THEME_MODES.LIGHT ? 'primary.main' : 'text.secondary' }}
+            className={
+              themeMode === THEME_MODES.LIGHT
+                ? '!bg-primary-light !text-primary'
+                : '!text-ink-secondary'
+            }
           >
             <LightModeIcon fontSize="small" />
           </IconButton>
@@ -44,8 +47,11 @@ export default function AuthLayout() {
             size="small"
             onClick={() => setThemeMode(THEME_MODES.DARK)}
             aria-label={t('theme.dark')}
-            className={themeMode === THEME_MODES.DARK ? 'bg-primary-light' : ''}
-            sx={{ color: themeMode === THEME_MODES.DARK ? 'primary.main' : 'text.secondary' }}
+            className={
+              themeMode === THEME_MODES.DARK
+                ? '!bg-primary-light !text-primary'
+                : '!text-ink-secondary'
+            }
           >
             <DarkModeIcon fontSize="small" />
           </IconButton>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
@@ -17,10 +17,7 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 
-import { ELEVATION_SHADOWS } from '@/constants/app'
 import dayjs from '@/lib/dayjs'
-
-const CELL_SIZE = 36
 
 // Sinh lưới 6 tuần x 7 ngày cho 1 tháng, tuần bắt đầu từ Thứ Hai.
 function buildMonthMatrix(monthStart) {
@@ -45,19 +42,14 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
     start && previewEnd ? (start.isAfter(previewEnd, 'day') ? start : previewEnd) : null
 
   return (
-    <Stack spacing={1} sx={{ width: CELL_SIZE * 7 }}>
-      <Typography
-        variant="body2"
-        fontWeight={600}
-        textAlign="center"
-        sx={{ textTransform: 'capitalize' }}
-      >
+    <Stack spacing={1} className="w-[252px]">
+      <Typography variant="body2" fontWeight={600} textAlign="center" className="capitalize">
         {monthStart.locale(locale).format('MMMM YYYY')}
       </Typography>
       <Box
         role="grid"
         aria-label={monthStart.locale(locale).format('MMMM YYYY')}
-        sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CELL_SIZE}px)` }}
+        className="grid grid-cols-[repeat(7,36px)]"
       >
         {weekdays.map((weekday, index) => (
           <Typography
@@ -66,7 +58,7 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
             variant="caption"
             color="text.secondary"
             textAlign="center"
-            sx={{ textTransform: 'capitalize', py: 0.5 }}
+            className="py-1 capitalize"
           >
             {weekday}
           </Typography>
@@ -95,20 +87,15 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
               onMouseEnter={() => onDayHover(day)}
               onFocus={() => onDayHover(day)}
               onClick={() => onDayClick(day)}
+              className={`flex h-9 w-9 items-center justify-center box-border text-[0.8125rem] ${
+                disabled ? 'cursor-default' : 'cursor-pointer'
+              }`}
               sx={{
-                width: CELL_SIZE,
-                height: CELL_SIZE,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: disabled ? 'default' : 'pointer',
-                fontSize: '0.8125rem',
                 color: isEdge ? 'common.white' : !isCurrentMonth ? 'text.disabled' : 'text.primary',
                 bgcolor: isEdge ? 'primary.main' : isInRange ? 'primary.light' : 'transparent',
                 borderRadius: isEdge ? '50%' : 0,
                 border: isToday && !isEdge ? '1px solid' : 'none',
                 borderColor: 'primary.main',
-                boxSizing: 'border-box',
                 '&:focus-visible': {
                   outline: '2px solid',
                   outlineColor: 'primary.main',
@@ -145,6 +132,8 @@ export default function DateRangePicker({
   fullWidth = false,
 }) {
   const { t, i18n } = useTranslation()
+  const generatedId = useId()
+  const inputId = `date-range-${generatedId}`
   const muiTheme = useTheme()
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up('sm'))
   const [anchorEl, setAnchorEl] = useState(null)
@@ -194,14 +183,21 @@ export default function DateRangePicker({
   const range = { start: draft.start, end: draft.end }
 
   return (
-    <Box sx={{ width: fullWidth ? '100%' : 260 }}>
+    <Box className={fullWidth ? 'w-full' : 'w-[260px]'}>
       {label && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        <Typography
+          component="label"
+          htmlFor={inputId}
+          variant="caption"
+          color="text.secondary"
+          className="mb-[3px] block"
+        >
           {label}
         </Typography>
       )}
       <OutlinedInput
         fullWidth
+        id={inputId}
         readOnly
         value={displayText}
         placeholder={placeholder ?? t('dateRangePicker.placeholder')}
@@ -210,16 +206,16 @@ export default function DateRangePicker({
         disabled={disabled}
         endAdornment={
           <InputAdornment position="end">
-            <CalendarTodayIcon fontSize="small" color="action" />
+            <CalendarTodayIcon fontSize="small" />
           </InputAdornment>
         }
-        sx={{ cursor: disabled ? 'default' : 'pointer' }}
+        className={disabled ? 'cursor-default' : 'cursor-pointer'}
       />
       {helperText && (
         <Typography
           variant="caption"
           color={error ? 'error.main' : 'text.secondary'}
-          sx={{ mt: 0.5, display: 'block' }}
+          className="mt-[3px] block leading-[1.35]"
         >
           {helperText}
         </Typography>
@@ -231,16 +227,11 @@ export default function DateRangePicker({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         slotProps={{
           paper: {
-            sx: {
-              mt: 1,
-              p: 2,
-              borderRadius: 3,
-              boxShadow: ELEVATION_SHADOWS.LG,
-            },
+            className: 'mt-2 rounded-3xl p-4 shadow-lg',
           },
         }}
       >
-        <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+        <Stack direction="row" justifyContent="space-between" className="mb-2">
           <IconButton size="small" onClick={() => setBaseMonth((m) => m.subtract(1, 'month'))}>
             <ChevronLeftIcon fontSize="small" />
           </IconButton>
@@ -270,7 +261,7 @@ export default function DateRangePicker({
             />
           )}
         </Stack>
-        <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 2 }}>
+        <Stack direction="row" justifyContent="flex-end" spacing={1} className="mt-4">
           <Button variant="text" onClick={handleClear}>
             {t('dateRangePicker.clear')}
           </Button>
