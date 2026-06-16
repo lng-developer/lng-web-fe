@@ -98,6 +98,14 @@
   },
   "errors": {
     "backHome": "Back to home",
+    "unauthorized": {
+      "title": "403 — Access denied",
+      "currentRole": "Current role:",
+      "roleManager": "Manager",
+      "requestAccess": "Request access ->",
+      "contactAdmin": "Contact Admin",
+      "backHome": "Back to home"
+    },
     "notFound": {
       "title": "Page not found",
       "description": "This path does not exist or has been moved."
