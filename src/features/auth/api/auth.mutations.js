@@ -1,8 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
 
 import { AUTH_RESPONSE_FIELDS } from '@/constants/app'
+import { queryClient } from '@/lib/queryClient'
 import { apiClient, setAuthTokens } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
+
+import { authKeys } from './auth.keys'
 
 function readAuthTokens(response) {
   const authData = response?.data
@@ -21,6 +24,7 @@ async function login(payload) {
   const tokens = readAuthTokens(response)
 
   setAuthTokens(tokens)
+  queryClient.setQueryData(authKeys.me(), response.data)
 
   return response.data
 }

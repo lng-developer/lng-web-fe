@@ -4,7 +4,55 @@
   },
   "nav": {
     "home": "Home",
-    "uiKit": "UI Kit"
+    "uiKit": "UI Kit",
+    "dashboard": "Dashboard",
+    "portal": "Portal",
+    "hr": "HR",
+    "sections": {
+      "sales": "Sales",
+      "operations": "Operations",
+      "business": "Business",
+      "admin": "Admin"
+    },
+    "groups": {
+      "orders": "Orders",
+      "fulfillment": "Fulfillment",
+      "design": "Design",
+      "finance": "Finance",
+      "vendors": "Vendors",
+      "customers": "Customers",
+      "settings": "Settings"
+    },
+    "items": {
+      "orderList": "Order List",
+      "orderDetail": "Order Detail",
+      "listings": "Listings",
+      "tracking": "Tracking",
+      "scale": "Scale",
+      "qc": "QC",
+      "shipping": "Shipping",
+      "cs": "CS",
+      "taskList": "Task List",
+      "templateCenter": "Template Center",
+      "summary": "Summary",
+      "balance": "Balance",
+      "payout": "Payout",
+      "compensationPool": "Compensation Pool",
+      "vendorList": "Vendor List",
+      "productsCost": "Products & Cost",
+      "storeRouting": "Store Routing",
+      "usersRoles": "Users & Roles",
+      "shopsStores": "Shop & Stores",
+      "systemConfig": "System Config",
+      "auditLog": "Audit Log"
+    }
+  },
+  "roles": {
+    "admin": "Admin",
+    "designer": "Designer",
+    "qc": "QC",
+    "fulfillment": "Operations",
+    "cs": "CS"
   },
   "theme": {
     "toggleSidebar": "Toggle sidebar",
@@ -60,6 +108,7 @@
     }
   },
   "auth": {
+    "userFallback": "Current user",
     "tagline": "Comprehensive POD operations management",
     "footer": "v2.0.0 · LNG System",
     "login": {

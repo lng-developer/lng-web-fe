@@ -1,20 +1,14 @@
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
-import HomeIcon from '@mui/icons-material/Home'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import MenuIcon from '@mui/icons-material/Menu'
-import WidgetsIcon from '@mui/icons-material/Widgets'
 import {
   AppBar,
+  Backdrop,
   Box,
-  Drawer,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   ToggleButton,
   ToggleButtonGroup,
   Toolbar,
@@ -25,15 +19,9 @@ import { useTheme } from '@mui/material/styles'
 
 import Loader from '@/components/common/Loader'
 import { LANGUAGES, THEME_MODES } from '@/constants/app'
-import { ROUTES } from '@/constants/routes'
 import { useUIStore } from '@/store/useUIStore'
 
-const SIDEBAR_WIDTH = 240
-
-const NAV_ITEMS = [
-  { to: ROUTES.HOME, labelKey: 'nav.home', icon: <HomeIcon /> },
-  { to: ROUTES.UI_KIT, labelKey: 'nav.uiKit', icon: <WidgetsIcon /> },
-]
+import AppSidebar, { SIDEBAR_WIDTH } from './AppSidebar'
 
 export default function MainLayout() {
   const { t, i18n } = useTranslation()
@@ -83,29 +71,17 @@ export default function MainLayout() {
         </Toolbar>
       </AppBar>
 
-      <Drawer
-        variant={isDesktop ? 'persistent' : 'temporary'}
-        open={sidebarOpen}
-        onClose={closeSidebar}
-        ModalProps={{ keepMounted: true }}
-        sx={{ '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, boxSizing: 'border-box' } }}
-      >
-        <Toolbar />
-        <List>
-          {NAV_ITEMS.map((item) => (
-            <ListItemButton
-              key={item.to}
-              component={NavLink}
-              to={item.to}
-              end
-              onClick={!isDesktop ? closeSidebar : undefined}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={t(item.labelKey)} />
-            </ListItemButton>
-          ))}
-        </List>
-      </Drawer>
+      {!isDesktop && (
+        <Backdrop
+          open={sidebarOpen}
+          sx={(theme) => ({
+            top: 64,
+            zIndex: theme.zIndex.drawer - 1,
+          })}
+          onClick={closeSidebar}
+        />
+      )}
+      <AppSidebar open={sidebarOpen} onNavigate={!isDesktop ? closeSidebar : undefined} />
 
       <Box
         component="main"
