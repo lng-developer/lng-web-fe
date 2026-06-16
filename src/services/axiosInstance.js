@@ -50,7 +50,7 @@ function normalizeApiError(error) {
   const status = error.response?.status
   const data = error.response?.data
   const serverMessage =
-    typeof data === 'object' && data !== null && 'message' in data ? data.message : undefined
+    typeof data === 'object' && data !== null ? data.message || data.error?.message : undefined
 
   return new ApiError({
     message: serverMessage || 'errors.api.network',

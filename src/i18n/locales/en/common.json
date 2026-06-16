@@ -12,6 +12,62 @@
     "light": "Light mode",
     "dark": "Dark mode"
   },
+  "auth": {
+    "brandAlt": "LNG logo",
+    "tagline": "Comprehensive POD operations management",
+    "version": "v2.0.0 · LNG System",
+    "footer": "v2.0.0 · LNG System",
+    "backToLogin": "Back to login",
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+    "placeholders": {
+      "email": "you@lng.co",
+      "password": "Enter new password",
+      "confirmPassword": "Re-enter new password"
+    },
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "emailPlaceholder": "you@lng.co",
+      "password": "Password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Login",
+      "success": "Login successful!",
+      "errors": {
+        "emailRequired": "Please enter your email",
+        "emailInvalid": "Invalid email address",
+        "passwordRequired": "Please enter your password"
+      }
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "description": "Enter your email to receive a password reset link",
+      "submit": "Send request",
+      "success": "Password reset request sent.",
+      "sentTitle": "Verification email sent",
+      "sentDescription": "We sent reset instructions to {{email}}. Please check your inbox and follow the verification link.",
+      "resend": "Resend email"
+    },
+    "reset": {
+      "title": "Reset password",
+      "description": "Create a new password for your account",
+      "submit": "Update password",
+      "success": "Password updated successfully.",
+      "missingToken": "This reset link is missing a verification token. Please request a new email."
+    },
+    "errors": {
+      "emailInvalid": "Invalid email address",
+      "passwordMin": "Password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Password confirmation does not match",
+      "generic": "Could not complete the request, please try again."
+    }
+  },
   "home": {
     "title": "Home",
     "welcome": "Welcome to LNG Web FE",
@@ -57,31 +113,6 @@
       "invalidLoginResponse": "The login response is invalid.",
       "missingAccessToken": "The refresh response is missing an access token.",
       "missingRefreshToken": "Your session has expired. Please log in again."
-    }
-  },
-  "auth": {
-    "tagline": "Comprehensive POD operations management",
-    "footer": "v2.0.0 · LNG System",
-    "login": {
-      "title": "Login",
-      "email": "Email",
-      "emailPlaceholder": "you@lng.co",
-      "password": "Password",
-      "showPassword": "Show password",
-      "hidePassword": "Hide password",
-      "forgotPassword": "Forgot password?",
-      "submit": "Login",
-      "success": "Login successful!",
-      "errors": {
-        "emailRequired": "Please enter your email",
-        "emailInvalid": "Invalid email address",
-        "passwordRequired": "Please enter your password"
-      }
-    },
-    "forgotPassword": {
-      "title": "Forgot password",
-      "description": "Password recovery is not available yet. Please contact your administrator for support.",
-      "backLogin": "Back to login"
     }
   },
   "uiKit": {
