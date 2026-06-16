@@ -75,7 +75,7 @@ export default function MainLayout() {
             exclusive
             size="small"
             onChange={(_event, value) => value && handleChangeLanguage(value)}
-            sx={{ bgcolor: 'background.paper' }}
+            className="bg-surface"
           >
             <ToggleButton value={LANGUAGES.VI}>VI</ToggleButton>
             <ToggleButton value={LANGUAGES.EN}>EN</ToggleButton>
@@ -109,8 +109,9 @@ export default function MainLayout() {
 
       <Box
         component="main"
-        className="flex-1 p-4 transition-[margin] duration-200 md:p-6"
-        sx={{ marginTop: '64px', marginLeft: { md: sidebarOpen ? `${SIDEBAR_WIDTH}px` : 0 } }}
+        className={`mt-16 flex-1 p-4 transition-[margin] duration-200 md:p-6 ${
+          sidebarOpen ? 'md:ml-[240px]' : 'md:ml-0'
+        }`}
       >
         <Suspense fallback={<Loader />}>
           <Outlet />

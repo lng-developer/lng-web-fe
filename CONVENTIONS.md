@@ -120,19 +120,69 @@ export default function UserCard({ user, onEdit }) {
   nếu cần (theo rule `react-refresh/only-export-components`). Nếu file không phải component
   (ví dụ route config), thêm comment `eslint-disable react-refresh/only-export-components`
   kèm lý do — xem `src/routes/index.jsx`.
-- Style ưu tiên: class Tailwind qua prop `className`, dùng `sx`/theme của MUI cho các thành
-  phần design-system, SCSS module (`*.module.scss`) cho style phức tạp/animation.
+- Style ưu tiên: dùng Tailwind qua prop `className` cho style tĩnh, kể cả trên MUI component
+  (`Box`, `Stack`, `Typography`, `Avatar`, `FormControl`...). Chỉ dùng `sx`/theme của MUI cho giá
+  trị phụ thuộc theme callback, selector nội bộ của MUI, hoặc style động theo state phức tạp. SCSS
+  module (`*.module.scss`) dùng cho style phức tạp/animation.
 
 ## 5. Styling: Tailwind vs MUI vs SCSS
 
 **Nguyên tắc chọn công cụ:**
 
-- **Tailwind**: layout, spacing, flex/grid, responsive (`flex`, `gap-4`, `grid-cols-3`,
-  `md:p-6`...) trên các element thường (`div`, `section`...).
-- **MUI**: mọi component design-system (Button, TextField, Dialog, AppBar, Card...), theme
-  (màu, typography, spacing scale) qua `sx` hoặc `src/theme/`.
+- **Tailwind**: mặc định cho style tĩnh trong component: layout, spacing, flex/grid, responsive,
+  width/height, padding/margin, radius, border, shadow, cursor và màu token (`flex`, `gap-4`,
+  `w-[360px]`, `rounded-lg`, `border-l-4`, `bg-surface`, `text-ink`, `md:p-6`...). Dùng được trực
+  tiếp trên cả element thường và MUI component qua `className`.
+- **MUI**: dùng component design-system (Button, TextField, Dialog, AppBar, Card...), global theme
+  và `styleOverrides` trong `src/theme/`. Dùng `sx` khi cần:
+  - đọc giá trị từ theme callback (`sx={(theme) => ...}`), ví dụ màu preview trong nested
+    `ThemeProvider`;
+  - selector nội bộ của MUI, ví dụ `& .MuiDrawer-paper`;
+  - style phụ thuộc state phức tạp hoặc pseudo state khó đọc nếu viết bằng class, ví dụ ô ngày
+    trong `DateRangePicker`;
+  - z-index/breakpoint tính từ MUI theme.
 - **SCSS module**: style phức tạp không tiện làm bằng utility/sx (animation, pseudo-element,
   override style của thư viện ngoài). Đặt cùng folder với component: `Component.module.scss`.
+
+**Quy tắc khi gặp `sx`:**
+
+- Nếu `sx` chỉ chứa style tĩnh như `width`, `height`, `p`, `px`, `py`, `mt`, `mb`, `borderRadius`,
+  `borderLeft`, `bgcolor`, `boxShadow`, `display`, `gridTemplateColumns`, `textTransform`,
+  `cursor`... thì chuyển sang Tailwind.
+- Nếu chỉ còn một giá trị động đơn giản như màu theo variant, ưu tiên map variant sang class token
+  thay vì truyền `color` vào `sx`.
+- Với MUI component có style mặc định ưu tiên cao hơn class thường, dùng Tailwind important modifier
+  có chủ đích, ví dụ `className="!h-6 !w-6 !text-xs"` cho `Avatar` hoặc
+  `className="!bg-primary-light !text-primary"` cho `IconButton`.
+- Arbitrary value của Tailwind (`w-[260px]`, `grid-cols-[repeat(7,36px)]`, `mb-[3px]`) được phép
+  khi cần khớp thiết kế hoặc thay thế trực tiếp giá trị `sx` cũ. Không dùng arbitrary color rời rạc
+  nếu đã có token màu.
+
+Ví dụ đúng:
+
+```jsx
+<Stack
+  direction="row"
+  alignItems="center"
+  spacing={1.5}
+  className="w-[360px] max-w-full rounded-lg border-l-4 bg-surface px-4 py-3 shadow-lg"
+/>
+```
+
+Không viết nếu chỉ là style tĩnh:
+
+```jsx
+<Stack
+  sx={{
+    width: 360,
+    maxWidth: '100%',
+    p: '12px 16px',
+    borderRadius: 2,
+    bgcolor: 'background.paper',
+    boxShadow: ELEVATION_SHADOWS.LG,
+  }}
+/>
+```
 
 **Đồng bộ design tokens (quan trọng):**
 
@@ -346,10 +396,12 @@ và đảm bảo đồng bộ toàn app.
   định nghĩa trong `tailwind.css` (`bg-page`, `text-ink`, `border-default`...) - xem mục 5. Cần
   màu mới → bổ sung vào `colorTokens` (`src/theme/palette.js`) **và** `@theme`/`.dark{}`
   (`tailwind.css`) cho cả light/dark, không thêm màu rời rạc tại chỗ dùng.
-- Spacing/kích thước: dùng spacing scale của Tailwind (`gap-4`, `p-6`, `m-2`...) hoặc
-  `theme.spacing()`/`theme.shape.borderRadius*` của MUI. Kích thước layout dùng chung (header
-  height, sidebar width, z-index...) lấy từ biến trong `src/styles/_variables.scss` - cần giá
-  trị mới thì thêm biến vào đây, không hardcode số trong các file SCSS khác.
+- Spacing/kích thước/radius/shadow tĩnh trong JSX: ưu tiên Tailwind (`gap-4`, `p-6`, `mt-16`,
+  `w-[260px]`, `rounded-lg`, `shadow-lg`). Dùng `theme.spacing()`/`theme.shape.borderRadius*` trong
+  `src/theme/` hoặc khi `sx` thật sự cần theme callback. Kích thước layout dùng chung (header
+  height, sidebar width, z-index...) lấy từ biến trong `src/styles/_variables.scss` hoặc constant
+  module phù hợp; cần giá trị mới thì thêm vào nguồn dùng chung, không hardcode số rải rác trong
+  các file SCSS khác.
 - Breakpoint dùng `theme.breakpoints` (MUI) hoặc prefix responsive của Tailwind (`sm: md: lg:
 xl:`) đã đồng bộ ở mục 5, không tự định nghĩa breakpoint riêng trong component.
 - Font/typography: dùng `theme.typography` (variant `h1`, `body1`, `caption`...) hoặc class

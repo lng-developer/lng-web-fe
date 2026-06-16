@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchIcon from '@mui/icons-material/Search'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
   Avatar,
+  Box,
   Button,
   Card,
   CardContent,
@@ -17,10 +19,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { ThemeProvider } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 
 import DateRangePicker from '@/components/form/DateRangePicker'
-import { SNACKBAR_VARIANTS } from '@/constants/app'
+import { SNACKBAR_VARIANTS, THEME_MODES } from '@/constants/app'
+import { createAppTheme } from '@/theme'
 
 export default function UiKitPage() {
   const { t } = useTranslation()
@@ -28,6 +32,53 @@ export default function UiKitPage() {
   const [selectValue, setSelectValue] = useState('')
   const [dateRange, setDateRange] = useState({ start: null, end: null })
   const [page, setPage] = useState(3)
+  const inputPreviewThemes = useMemo(
+    () => ({
+      [THEME_MODES.LIGHT]: createAppTheme(THEME_MODES.LIGHT),
+      [THEME_MODES.DARK]: createAppTheme(THEME_MODES.DARK),
+    }),
+    [],
+  )
+  const inputStates = [
+    {
+      key: 'default',
+      slotProps: {
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        },
+      },
+    },
+    {
+      key: 'focus',
+      focused: true,
+      slotProps: {
+        input: {
+          endAdornment: (
+            <InputAdornment position="end">
+              <VisibilityOutlinedIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        },
+      },
+    },
+    {
+      key: 'error',
+      error: true,
+      helperText: t('uiKit.inputs.requiredHelper'),
+    },
+    {
+      key: 'disabled',
+      disabled: true,
+    },
+  ]
+  const inputPanels = [
+    { mode: THEME_MODES.LIGHT, label: t('uiKit.inputs.lightMode') },
+    { mode: THEME_MODES.DARK, label: t('uiKit.inputs.darkMode') },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,34 +95,34 @@ export default function UiKitPage() {
         <CardContent className="flex flex-col gap-4">
           <Typography variant="h6">{t('uiKit.sections.buttons')}</Typography>
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="contained">Primary</Button>
+            <Button variant="contained">{t('uiKit.buttons.primary')}</Button>
             <Button variant="contained" disabled>
-              Primary
+              {t('uiKit.buttons.primary')}
             </Button>
-            <Button variant="outlined">Secondary</Button>
+            <Button variant="outlined">{t('uiKit.buttons.secondary')}</Button>
             <Button variant="outlined" disabled>
-              Secondary
+              {t('uiKit.buttons.secondary')}
             </Button>
-            <Button variant="text">Ghost</Button>
+            <Button variant="text">{t('uiKit.buttons.ghost')}</Button>
             <Button variant="text" disabled>
-              Ghost
+              {t('uiKit.buttons.ghost')}
             </Button>
             <Button variant="contained" color="error">
-              Danger
+              {t('uiKit.buttons.danger')}
             </Button>
             <Button variant="contained" color="error" disabled>
-              Danger
+              {t('uiKit.buttons.danger')}
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="contained" size="small">
-              Small
+              {t('uiKit.buttons.small')}
             </Button>
             <Button variant="contained" size="medium">
-              Default
+              {t('uiKit.buttons.default')}
             </Button>
             <Button variant="contained" size="large">
-              Large
+              {t('uiKit.buttons.large')}
             </Button>
           </div>
         </CardContent>
@@ -79,33 +130,50 @@ export default function UiKitPage() {
 
       <Card>
         <CardContent className="flex flex-col gap-4">
-          <Typography variant="h6">{t('uiKit.sections.inputs')}</Typography>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextField label={t('uiKit.inputs.default')} placeholder={t('uiKit.inputs.default')} />
-            <TextField
-              label={t('uiKit.inputs.withIcon')}
-              placeholder={t('uiKit.inputs.search')}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <TextField
-              label={t('uiKit.inputs.error')}
-              defaultValue={t('uiKit.inputs.errorValue')}
-              error
-              helperText={t('uiKit.inputs.errorHelper')}
-            />
-            <TextField
-              label={t('uiKit.inputs.disabled')}
-              defaultValue={t('uiKit.inputs.disabledValue')}
-              disabled
-            />
+          <Typography variant="h6">{t('uiKit.inputs.title')}</Typography>
+          <div className="flex flex-col gap-5">
+            {inputPanels.map((panel) => (
+              <ThemeProvider key={panel.mode} theme={inputPreviewThemes[panel.mode]}>
+                <Box
+                  className="rounded-xl p-4"
+                  sx={(theme) => ({
+                    border: `1px solid ${theme.palette.divider}`,
+                    backgroundColor: theme.palette.background.default,
+                    color: theme.palette.text.primary,
+                  })}
+                >
+                  <Typography
+                    variant="h3"
+                    className="mb-4"
+                    sx={(theme) => ({
+                      color: theme.palette.text.secondary,
+                    })}
+                  >
+                    {panel.label}
+                  </Typography>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+                    {inputStates.map(({ key, ...fieldProps }) => (
+                      <div key={key} className="flex min-w-0 flex-col">
+                        <Typography
+                          variant="caption"
+                          className="mb-[3px] block"
+                          sx={(theme) => ({
+                            color: theme.palette.text.secondary,
+                          })}
+                        >
+                          {t(`uiKit.inputs.states.${key}`)}
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          placeholder={t('uiKit.inputs.contentPlaceholder')}
+                          {...fieldProps}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Box>
+              </ThemeProvider>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -113,7 +181,7 @@ export default function UiKitPage() {
       <Card>
         <CardContent className="flex flex-col gap-4">
           <Typography variant="h6">{t('uiKit.sections.select')}</Typography>
-          <FormControl sx={{ minWidth: 240 }}>
+          <FormControl className="min-w-[240px]">
             <Select
               value={selectValue}
               onChange={(event) => setSelectValue(event.target.value)}
@@ -141,9 +209,9 @@ export default function UiKitPage() {
         <CardContent className="flex flex-col gap-4">
           <Typography variant="h6">{t('uiKit.sections.avatar')}</Typography>
           <div className="flex flex-wrap items-center gap-3">
-            <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>A</Avatar>
-            <Avatar sx={{ width: 32, height: 32, fontSize: '0.8125rem' }}>B</Avatar>
-            <Avatar sx={{ width: 40, height: 40 }}>C</Avatar>
+            <Avatar className="!h-6 !w-6 !text-xs">A</Avatar>
+            <Avatar className="!h-8 !w-8 !text-[0.8125rem]">B</Avatar>
+            <Avatar className="!h-10 !w-10">C</Avatar>
           </div>
         </CardContent>
       </Card>
@@ -226,10 +294,10 @@ export default function UiKitPage() {
           <Typography variant="h6">{t('uiKit.sections.tooltip')}</Typography>
           <div className="flex flex-wrap gap-6">
             <Tooltip title={t('uiKit.tooltip.top')} placement="top">
-              <Button variant="outlined">Top</Button>
+              <Button variant="outlined">{t('uiKit.tooltip.actions.top')}</Button>
             </Tooltip>
             <Tooltip title={t('uiKit.tooltip.bottom')} placement="bottom">
-              <Button variant="outlined">Bottom</Button>
+              <Button variant="outlined">{t('uiKit.tooltip.actions.bottom')}</Button>
             </Tooltip>
           </div>
         </CardContent>

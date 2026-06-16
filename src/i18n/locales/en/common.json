@@ -2,6 +2,9 @@
   "app": {
     "name": "LNG Web FE"
   },
+  "common": {
+    "close": "Close"
+  },
   "nav": {
     "home": "Home",
     "uiKit": "UI Kit"
@@ -33,6 +36,7 @@
       "email": "Email",
       "emailPlaceholder": "you@lng.co",
       "password": "Password",
+      "passwordPlaceholder": "Enter password",
       "showPassword": "Show password",
       "hidePassword": "Hide password",
       "forgotPassword": "Forgot password?",
@@ -81,8 +85,11 @@
   "feedback": {
     "title": "Send feedback",
     "name": "Full name",
+    "namePlaceholder": "Enter full name",
     "email": "Email",
+    "emailPlaceholder": "Enter email",
     "message": "Message",
+    "messagePlaceholder": "Enter feedback message",
     "submit": "Submit",
     "success": "Feedback submitted successfully!",
     "errors": {
@@ -139,6 +146,17 @@
       "pagination": "Pagination"
     },
     "inputs": {
+      "title": "2. Input Field",
+      "lightMode": "LIGHT MODE",
+      "darkMode": "DARK MODE",
+      "contentPlaceholder": "Enter content...",
+      "requiredHelper": "This field is required",
+      "states": {
+        "default": "Default",
+        "focus": "Focus",
+        "error": "Error",
+        "disabled": "Disabled"
+      },
       "default": "Default",
       "withIcon": "With icon",
       "search": "Search...",
@@ -147,6 +165,15 @@
       "errorValue": "Invalid value",
       "disabled": "Disabled",
       "disabledValue": "Cannot be edited"
+    },
+    "buttons": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "ghost": "Ghost",
+      "danger": "Danger",
+      "small": "Small",
+      "default": "Default",
+      "large": "Large"
     },
     "select": {
       "placeholder": "Select an option",
@@ -166,7 +193,11 @@
     },
     "tooltip": {
       "top": "Tooltip on top",
-      "bottom": "Tooltip on bottom"
+      "bottom": "Tooltip on bottom",
+      "actions": {
+        "top": "Top",
+        "bottom": "Bottom"
+      }
     }
   }
 }
