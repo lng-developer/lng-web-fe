@@ -12,6 +12,7 @@ const HomePage = lazy(() => import('@/features/home/pages/HomePage'))
 const UiKitPage = lazy(() => import('@/features/ui-kit/pages/UiKitPage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
+const UnauthorizedPage = lazy(() => import('@/features/auth/pages/UnauthorizedPage'))
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,11 @@ export const router = createBrowserRouter([
       { path: 'ui-kit', element: <UiKitPage /> },
       { path: '*', element: <NotFound /> },
     ],
+  },
+  {
+    path: ROUTES.UNAUTHORIZED,
+    element: <UnauthorizedPage />,
+    errorElement: <RouteError />,
   },
   {
     element: <AuthLayout />,
