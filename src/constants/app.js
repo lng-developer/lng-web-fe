@@ -19,7 +19,7 @@ export const AUTH_RESPONSE_FIELDS = {
 }
 
 export const HTML_CLASSES = {
-  DARK: 'dark',
+  DARK: THEME_MODES.DARK,
 }
 
 export const SNACKBAR_VARIANTS = {

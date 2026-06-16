@@ -12,6 +12,62 @@
     "light": "Giao diện sáng",
     "dark": "Giao diện tối"
   },
+  "auth": {
+    "brandAlt": "Logo LNG",
+    "tagline": "Quản lý vận hành POD toàn diện",
+    "version": "v2.0.0 · LNG System",
+    "footer": "v2.0.0 · LNG System",
+    "backToLogin": "Quay lại đăng nhập",
+    "fields": {
+      "email": "Email",
+      "password": "Mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu"
+    },
+    "placeholders": {
+      "email": "you@lng.co",
+      "password": "Nhập mật khẩu mới",
+      "confirmPassword": "Nhập lại mật khẩu mới"
+    },
+    "login": {
+      "title": "Đăng nhập",
+      "email": "Email",
+      "emailPlaceholder": "you@lng.co",
+      "password": "Mật khẩu",
+      "showPassword": "Hiện mật khẩu",
+      "hidePassword": "Ẩn mật khẩu",
+      "forgotPassword": "Quên mật khẩu?",
+      "submit": "Đăng nhập",
+      "success": "Đăng nhập thành công!",
+      "errors": {
+        "emailRequired": "Vui lòng nhập email",
+        "emailInvalid": "Email không hợp lệ",
+        "passwordRequired": "Vui lòng nhập mật khẩu"
+      }
+    },
+    "forgot": {
+      "title": "Quên mật khẩu",
+      "description": "Nhập email để nhận link đặt lại mật khẩu",
+      "submit": "Gửi yêu cầu",
+      "success": "Đã gửi yêu cầu đặt lại mật khẩu.",
+      "sentTitle": "Đã gửi email xác thực",
+      "sentDescription": "Hệ thống đã gửi hướng dẫn đặt lại mật khẩu tới {{email}}. Vui lòng kiểm tra hộp thư và mở link xác thực.",
+      "resend": "Gửi lại email"
+    },
+    "reset": {
+      "title": "Đặt lại mật khẩu",
+      "description": "Tạo mật khẩu mới cho tài khoản của bạn",
+      "submit": "Cập nhật mật khẩu",
+      "success": "Mật khẩu đã được cập nhật.",
+      "missingToken": "Link đặt lại mật khẩu thiếu mã xác thực. Vui lòng yêu cầu gửi email mới."
+    },
+    "errors": {
+      "emailInvalid": "Email không hợp lệ",
+      "passwordMin": "Mật khẩu cần tối thiểu 8 ký tự",
+      "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+      "passwordMismatch": "Mật khẩu xác nhận không khớp",
+      "generic": "Không thể thực hiện yêu cầu, vui lòng thử lại."
+    }
+  },
   "home": {
     "title": "Trang chủ",
     "welcome": "Chào mừng bạn đến với LNG Web FE",
@@ -57,31 +113,6 @@
       "invalidLoginResponse": "Phản hồi đăng nhập không hợp lệ.",
       "missingAccessToken": "Phản hồi làm mới phiên thiếu access token.",
       "missingRefreshToken": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
-    }
-  },
-  "auth": {
-    "tagline": "Quản lý vận hành POD toàn diện",
-    "footer": "v2.0.0 · LNG System",
-    "login": {
-      "title": "Đăng nhập",
-      "email": "Email",
-      "emailPlaceholder": "you@lng.co",
-      "password": "Mật khẩu",
-      "showPassword": "Hiện mật khẩu",
-      "hidePassword": "Ẩn mật khẩu",
-      "forgotPassword": "Quên mật khẩu?",
-      "submit": "Đăng nhập",
-      "success": "Đăng nhập thành công!",
-      "errors": {
-        "emailRequired": "Vui lòng nhập email",
-        "emailInvalid": "Email không hợp lệ",
-        "passwordRequired": "Vui lòng nhập mật khẩu"
-      }
-    },
-    "forgotPassword": {
-      "title": "Quên mật khẩu",
-      "description": "Chức năng khôi phục mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
-      "backLogin": "Về trang đăng nhập"
     }
   },
   "uiKit": {
