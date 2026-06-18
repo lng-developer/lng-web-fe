@@ -63,13 +63,11 @@ function normalizeApiError(error) {
 export const apiClient = axios.create({
   baseURL: env.apiBaseUrl,
   timeout: 15000,
-  withCredentials: true,
 })
 
 const refreshClient = axios.create({
   baseURL: env.apiBaseUrl,
   timeout: 15000,
-  withCredentials: true,
 })
 
 export function setAccessToken(token) {
@@ -142,6 +140,14 @@ async function refreshAccessToken() {
   }
 
   return refreshPromise
+}
+
+export async function ensureAccessToken() {
+  if (accessToken) {
+    return accessToken
+  }
+
+  return refreshAccessToken()
 }
 
 apiClient.interceptors.request.use((config) => {
