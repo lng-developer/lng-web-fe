@@ -7,6 +7,8 @@ import RouteError from '@/components/common/RouteError'
 import { ROUTES } from '@/constants/routes'
 import AuthLayout from '@/layouts/AuthLayout'
 import MainLayout from '@/layouts/MainLayout'
+import ProtectedRoute from '@/routes/ProtectedRoute'
+import PublicRoute from '@/routes/PublicRoute'
 
 const HomePage = lazy(() => import('@/features/home/pages/HomePage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
@@ -18,13 +20,18 @@ const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPassword
 export const router = createBrowserRouter([
   {
     path: ROUTES.HOME,
-    element: <MainLayout />,
+    element: <ProtectedRoute />,
     errorElement: <RouteError />,
     children: [
-      { index: true, element: <HomePage /> },
-      // Path tương đối so với MainLayout - ROUTES.UI_KIT ('/ui-kit') dùng cho NavLink.
-      { path: 'ui-kit', element: <UiKitPage /> },
-      { path: '*', element: <NotFound /> },
+      {
+        element: <MainLayout />,
+        children: [
+          { index: true, element: <HomePage /> },
+          // Path tương đối so với MainLayout - ROUTES.UI_KIT ('/ui-kit') dùng cho NavLink.
+          { path: 'ui-kit', element: <UiKitPage /> },
+          { path: '*', element: <NotFound /> },
+        ],
+      },
     ],
   },
   {
@@ -33,7 +40,11 @@ export const router = createBrowserRouter([
     errorElement: <RouteError />,
   },
   {
-    element: <AuthLayout />,
+    element: (
+      <PublicRoute>
+        <AuthLayout />
+      </PublicRoute>
+    ),
     errorElement: <RouteError />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginPage /> },

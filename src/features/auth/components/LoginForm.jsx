@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import MailOutlinedIcon from '@mui/icons-material/MailOutlined'
@@ -20,9 +20,13 @@ import { useLoginMutation } from '../api/auth.mutations'
 export default function LoginForm() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { enqueueSnackbar } = useSnackbar()
   const [showPassword, setShowPassword] = useState(false)
   const loginMutation = useLoginMutation()
+  const redirectTo = location.state?.from?.pathname
+    ? `${location.state.from.pathname}${location.state.from.search ?? ''}`
+    : ROUTES.HOME
   const { control, handleSubmit } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: loginDefaultValues,
@@ -32,7 +36,7 @@ export default function LoginForm() {
     try {
       await loginMutation.mutateAsync(values)
       enqueueSnackbar(t('auth.login.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
-      navigate(ROUTES.HOME)
+      navigate(redirectTo, { replace: true })
     } catch (error) {
       enqueueSnackbar(t(error.message || 'errors.api.network'), {
         variant: SNACKBAR_VARIANTS.ERROR,
