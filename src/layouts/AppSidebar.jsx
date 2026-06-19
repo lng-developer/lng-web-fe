@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@mui/material'
 
-import { ELEVATION_SHADOWS } from '@/constants/app'
+import { ELEVATION_SHADOWS, LAYOUT_SIZES } from '@/constants/app'
 import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import {
   getCurrentUserAvatar,
@@ -232,6 +232,7 @@ export default function AppSidebar({ onNavigate, open }) {
                 pt: 2,
                 pb: 0.5,
                 textTransform: 'uppercase',
+                borderRadius: 10,
               }}
             >
               {t(item.labelKey)}
@@ -285,7 +286,7 @@ export default function AppSidebar({ onNavigate, open }) {
         flexDirection: 'column',
         left: 0,
         position: 'fixed',
-        top: 64,
+        top: LAYOUT_SIZES.HEADER_HEIGHT,
         transform: open ? 'translateX(0)' : 'translateX(-100%)',
         transition: theme.transitions.create('transform', {
           duration: theme.transitions.duration.shorter,
@@ -302,7 +303,7 @@ export default function AppSidebar({ onNavigate, open }) {
           bgcolor: 'background.default',
           display: 'flex',
           gap: 1,
-          p: 1,
+          // p: 1,
         }}
       >
         {SIDEBAR_TABS.map((tab) => {

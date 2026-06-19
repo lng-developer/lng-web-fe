@@ -1,6 +1,14 @@
 {
   "app": {
-    "name": "LNG Web FE"
+    "name": "LNG Web FE",
+    "brandName": "LNG System"
+  },
+  "header": {
+    "searchPlaceholder": "Tìm Order ID, SKU, nhân viên... (⌘K)",
+    "notifications": "Thông báo",
+    "language": "Đổi ngôn ngữ",
+    "roleChip": "Vai trò hiện tại",
+    "userMenu": "Menu người dùng"
   },
   "nav": {
     "home": "Trang chủ",
