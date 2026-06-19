@@ -9,6 +9,22 @@ export const APP_ROLES = {
 }
 
 export const ALL_APP_ROLES = Object.values(APP_ROLES)
+export const SIDEBAR_ROLE_FILTERING_ENABLED = false
+export const SIDEBAR_NAV_TABS = {
+  PORTAL: 'portal',
+  HR: 'hr',
+}
+
+export const SIDEBAR_TABS = [
+  {
+    id: SIDEBAR_NAV_TABS.PORTAL,
+    labelKey: 'nav.portal',
+  },
+  {
+    id: SIDEBAR_NAV_TABS.HR,
+    labelKey: 'nav.hr',
+  },
+]
 
 const ROLE_ACCESS = {
   ALL: ALL_APP_ROLES,
@@ -43,7 +59,7 @@ export const ROLE_META = {
   },
 }
 
-export const SIDEBAR_NAVIGATION = [
+const SIDEBAR_NAVIGATION_ROOT = [
   {
     id: 'dashboard',
     type: 'item',
@@ -308,16 +324,27 @@ export const SIDEBAR_NAVIGATION = [
       },
     ],
   },
-  {
-    id: 'hr',
-    type: 'item',
-    labelKey: 'nav.hr',
-    path: ROUTES.HR,
-    icon: 'hr',
-    trailingIcon: 'chevronRight',
-    allowedRoles: ROLE_ACCESS.ADMIN,
-  },
 ]
+
+const portalRoot = SIDEBAR_NAVIGATION_ROOT.find((item) => item.id === SIDEBAR_NAV_TABS.PORTAL)
+
+export const SIDEBAR_NAVIGATION = [
+  SIDEBAR_NAVIGATION_ROOT.find((item) => item.id === 'dashboard'),
+  ...(portalRoot?.children ?? []),
+]
+
+export const HR_NAVIGATION = []
+
+export const SIDEBAR_TAB_NAVIGATION = {
+  [SIDEBAR_NAV_TABS.PORTAL]: SIDEBAR_NAVIGATION,
+  [SIDEBAR_NAV_TABS.HR]: HR_NAVIGATION,
+}
+
+export function getSidebarTabForPath(pathname) {
+  return pathname === ROUTES.HR || pathname?.startsWith(`${ROUTES.HR}/`)
+    ? SIDEBAR_NAV_TABS.HR
+    : SIDEBAR_NAV_TABS.PORTAL
+}
 
 export function normalizeRole(role) {
   return typeof role === 'string' ? role.trim().toLowerCase() : ''
@@ -351,7 +378,23 @@ function filterItem(item, role) {
   return { ...item }
 }
 
+function cloneNavigationItem(item) {
+  if (item.type === 'section') {
+    return { ...item, items: item.items.map(cloneNavigationItem) }
+  }
+
+  if (item.children) {
+    return { ...item, children: item.children.map(cloneNavigationItem) }
+  }
+
+  return { ...item }
+}
+
 export function filterNavigationByRole(navigation, role) {
+  if (!SIDEBAR_ROLE_FILTERING_ENABLED) {
+    return navigation.map(cloneNavigationItem)
+  }
+
   const normalizedRole = normalizeRole(role)
 
   return navigation.map((item) => filterItem(item, normalizedRole)).filter(Boolean)

@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation } from 'react-router-dom'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import GridViewIcon from '@mui/icons-material/GridView'
-import PeopleOutlineIcon from '@mui/icons-material/PeopleOutlineOutlined'
 import {
   Avatar,
   Box,
+  ButtonBase,
   Chip,
   Collapse,
   List,
@@ -20,6 +19,7 @@ import {
   Typography,
 } from '@mui/material'
 
+import { ELEVATION_SHADOWS } from '@/constants/app'
 import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import {
   getCurrentUserAvatar,
@@ -29,14 +29,20 @@ import {
   resolveCurrentUser,
 } from '@/features/auth/utils/currentUser'
 
-import { filterNavigationByRole, getRoleMeta, SIDEBAR_NAVIGATION } from './sidebarNavigation'
+import {
+  filterNavigationByRole,
+  getRoleMeta,
+  getSidebarTabForPath,
+  SIDEBAR_NAV_TABS,
+  SIDEBAR_TAB_NAVIGATION,
+  SIDEBAR_TABS,
+} from './sidebarNavigation'
 
 const SIDEBAR_WIDTH = 240
 
 const NAV_ICONS = {
   dashboard: DashboardOutlinedIcon,
   portal: GridViewIcon,
-  hr: PeopleOutlineIcon,
 }
 
 function collectDefaultOpenIds(items) {
@@ -131,6 +137,32 @@ function navButtonSx({ active, depth, withActiveBorder }) {
   })
 }
 
+function sidebarTabSx({ active }) {
+  return (theme) => ({
+    alignItems: 'center',
+    bgcolor: active ? 'background.paper' : 'transparent',
+    border: 0,
+    borderRadius: theme.spacing(1),
+    boxShadow: active ? ELEVATION_SHADOWS.SIDEBAR_TAB : 'none',
+    color: active ? 'primary.main' : 'text.disabled',
+    cursor: 'pointer',
+    display: 'flex',
+    flex: 1,
+    fontSize: theme.typography.body2.fontSize,
+    fontWeight: active ? 600 : 400,
+    justifyContent: 'center',
+    minHeight: theme.spacing(4.5),
+    px: 1,
+    textTransform: 'none',
+    transition: theme.transitions.create(['background-color', 'box-shadow', 'color'], {
+      duration: theme.transitions.duration.shorter,
+    }),
+    '&:hover': {
+      bgcolor: active ? 'background.paper' : 'background.paper',
+    },
+  })
+}
+
 function renderLeafItem({ item, pathname, t, depth, onNavigate }) {
   const active = isPathActive(item.path, pathname)
   const withActiveBorder = depth === 'root'
@@ -146,9 +178,6 @@ function renderLeafItem({ item, pathname, t, depth, onNavigate }) {
     >
       <NavIcon icon={item.icon} active={active} />
       <ListItemText primary={t(item.labelKey)} />
-      {item.trailingIcon === 'chevronRight' && (
-        <ChevronRightIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-      )}
     </ListItemButton>
   )
 }
@@ -157,16 +186,35 @@ export default function AppSidebar({ onNavigate, open }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { data, isPending } = useCurrentUserQuery()
-  const [openItems, setOpenItems] = useState(() => collectDefaultOpenIds(SIDEBAR_NAVIGATION))
+  const pathTab = getSidebarTabForPath(pathname)
+  const [selectedTab, setActiveTab] = useState(pathTab)
+  const activeTab = pathTab === SIDEBAR_NAV_TABS.HR ? pathTab : selectedTab
+  const [openItemsByTab, setOpenItemsByTab] = useState(() =>
+    SIDEBAR_TABS.reduce(
+      (itemsByTab, tab) => ({
+        ...itemsByTab,
+        [tab.id]: collectDefaultOpenIds(SIDEBAR_TAB_NAVIGATION[tab.id] ?? []),
+      }),
+      {},
+    ),
+  )
   const user = resolveCurrentUser(data)
   const userName = getCurrentUserDisplayName(user)
   const userAvatar = getCurrentUserAvatar(user)
   const role = getCurrentUserRole(user)
   const roleMeta = getRoleMeta(role)
-  const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, role)
+  const openItems = openItemsByTab[activeTab] ?? {}
+  const activeTabNavigation = SIDEBAR_TAB_NAVIGATION[activeTab] ?? []
+  const navigation = filterNavigationByRole(activeTabNavigation, role)
 
   const toggleItem = (id) => {
-    setOpenItems((state) => ({ ...state, [id]: !state[id] }))
+    setOpenItemsByTab((state) => ({
+      ...state,
+      [activeTab]: {
+        ...(state[activeTab] ?? {}),
+        [id]: !state[activeTab]?.[id],
+      },
+    }))
   }
 
   const renderItems = (items, depth = 'root') =>
@@ -245,7 +293,35 @@ export default function AppSidebar({ onNavigate, open }) {
         width: SIDEBAR_WIDTH,
         zIndex: theme.zIndex.drawer,
       })}
+      className="p-2"
     >
+      <Box
+        component="nav"
+        aria-label={t('nav.sidebarTabs')}
+        sx={{
+          bgcolor: 'background.default',
+          display: 'flex',
+          gap: 1,
+          p: 1,
+        }}
+      >
+        {SIDEBAR_TABS.map((tab) => {
+          const active = activeTab === tab.id
+
+          return (
+            <ButtonBase
+              key={tab.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setActiveTab(tab.id)}
+              sx={sidebarTabSx({ active })}
+            >
+              {t(tab.labelKey)}
+            </ButtonBase>
+          )
+        })}
+      </Box>
+
       <List
         disablePadding
         sx={{

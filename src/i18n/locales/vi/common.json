@@ -8,6 +8,7 @@
     "dashboard": "Dashboard",
     "portal": "Portal",
     "hr": "HR",
+    "sidebarTabs": "Tab điều hướng sidebar",
     "sections": {
       "sales": "Sales",
       "operations": "Operations",
