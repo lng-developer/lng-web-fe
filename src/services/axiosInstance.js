@@ -50,7 +50,7 @@ function normalizeApiError(error) {
   const status = error.response?.status
   const data = error.response?.data
   const serverMessage =
-    typeof data === 'object' && data !== null && 'message' in data ? data.message : undefined
+    typeof data === 'object' && data !== null ? data.message || data.error?.message : undefined
 
   return new ApiError({
     message: serverMessage || 'errors.api.network',
@@ -63,13 +63,11 @@ function normalizeApiError(error) {
 export const apiClient = axios.create({
   baseURL: env.apiBaseUrl,
   timeout: 15000,
-  withCredentials: true,
 })
 
 const refreshClient = axios.create({
   baseURL: env.apiBaseUrl,
   timeout: 15000,
-  withCredentials: true,
 })
 
 export function setAccessToken(token) {
@@ -142,6 +140,14 @@ async function refreshAccessToken() {
   }
 
   return refreshPromise
+}
+
+export async function ensureAccessToken() {
+  if (accessToken) {
+    return accessToken
+  }
+
+  return refreshAccessToken()
 }
 
 apiClient.interceptors.request.use((config) => {

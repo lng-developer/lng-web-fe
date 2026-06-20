@@ -3,8 +3,10 @@
 export const ENDPOINTS = {
   AUTH: {
     LOGIN: '/api/auth/login',
-    ME: '/api/auth/me',
     REFRESH: '/api/auth/refresh',
+    ME: '/api/auth/me',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/reset-password',
   },
   HOME: {
     SUMMARY: '/home/summary',

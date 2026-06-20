@@ -10,6 +10,9 @@
     "roleChip": "Current role",
     "userMenu": "User menu"
   },
+  "common": {
+    "close": "Close"
+  },
   "nav": {
     "home": "Home",
     "uiKit": "UI Kit",
@@ -69,6 +72,63 @@
     "light": "Light mode",
     "dark": "Dark mode"
   },
+  "auth": {
+    "brandAlt": "LNG logo",
+    "tagline": "Comprehensive POD operations management",
+    "version": "v2.0.0 · LNG System",
+    "footer": "v2.0.0 · LNG System",
+    "backToLogin": "Back to login",
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+    "placeholders": {
+      "email": "you@lng.co",
+      "password": "Enter new password",
+      "confirmPassword": "Re-enter new password"
+    },
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "emailPlaceholder": "you@lng.co",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Login",
+      "success": "Login successful!",
+      "errors": {
+        "emailRequired": "Please enter your email",
+        "emailInvalid": "Invalid email address",
+        "passwordRequired": "Please enter your password"
+      }
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "description": "Enter your email to receive a password reset link",
+      "submit": "Send request",
+      "success": "Password reset request sent.",
+      "sentTitle": "Verification email sent",
+      "sentDescription": "We sent reset instructions to {{email}}. Please check your inbox and follow the verification link.",
+      "resend": "Resend email"
+    },
+    "reset": {
+      "title": "Reset password",
+      "description": "Create a new password for your account",
+      "submit": "Update password",
+      "success": "Password updated successfully.",
+      "missingToken": "This reset link is missing a verification token. Please request a new email."
+    },
+    "errors": {
+      "emailInvalid": "Invalid email address",
+      "passwordMin": "Password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Password confirmation does not match",
+      "generic": "Could not complete the request, please try again."
+    }
+  },
   "home": {
     "title": "Home",
     "welcome": "Welcome to LNG Web FE",
@@ -82,8 +142,11 @@
   "feedback": {
     "title": "Send feedback",
     "name": "Full name",
+    "namePlaceholder": "Enter full name",
     "email": "Email",
+    "emailPlaceholder": "Enter email",
     "message": "Message",
+    "messagePlaceholder": "Enter feedback message",
     "submit": "Submit",
     "success": "Feedback submitted successfully!",
     "errors": {
@@ -99,6 +162,14 @@
   },
   "errors": {
     "backHome": "Back to home",
+    "unauthorized": {
+      "title": "403 — Access denied",
+      "currentRole": "Current role:",
+      "roleManager": "Manager",
+      "requestAccess": "Request access ->",
+      "contactAdmin": "Contact Admin",
+      "backHome": "Back to home"
+    },
     "notFound": {
       "title": "Page not found",
       "description": "This path does not exist or has been moved."
@@ -158,6 +229,17 @@
       "pagination": "Pagination"
     },
     "inputs": {
+      "title": "2. Input Field",
+      "lightMode": "LIGHT MODE",
+      "darkMode": "DARK MODE",
+      "contentPlaceholder": "Enter content...",
+      "requiredHelper": "This field is required",
+      "states": {
+        "default": "Default",
+        "focus": "Focus",
+        "error": "Error",
+        "disabled": "Disabled"
+      },
       "default": "Default",
       "withIcon": "With icon",
       "search": "Search...",
@@ -166,6 +248,15 @@
       "errorValue": "Invalid value",
       "disabled": "Disabled",
       "disabledValue": "Cannot be edited"
+    },
+    "buttons": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "ghost": "Ghost",
+      "danger": "Danger",
+      "small": "Small",
+      "default": "Default",
+      "large": "Large"
     },
     "select": {
       "placeholder": "Select an option",
@@ -185,7 +276,11 @@
     },
     "tooltip": {
       "top": "Tooltip on top",
-      "bottom": "Tooltip on bottom"
+      "bottom": "Tooltip on bottom",
+      "actions": {
+        "top": "Top",
+        "bottom": "Bottom"
+      }
     }
   }
 }

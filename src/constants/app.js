@@ -19,9 +19,32 @@ export const AUTH_RESPONSE_FIELDS = {
 }
 
 export const HTML_CLASSES = {
-  DARK: 'dark',
+  DARK: THEME_MODES.DARK,
+}
+export const AUTH_ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  LEADER: 'leader',
+  STAFF: 'staff',
+  ANONYMOUS: 'anonymous',
 }
 
+export const AUTH_DEPARTMENTS = {
+  DESIGNER: 'designer',
+  FULFILLMENT: 'fulfillment',
+  CS: 'cs',
+  SELLER: 'seller',
+  PRODUCTION: 'production',
+}
+
+export const AUTH_STATUSES = {
+  ACTIVE: 'active',
+}
+
+export const AUTH_PERMISSIONS = {
+  AUTH_READ: 'AUTH:READ',
+  AUTH_WRITE: 'AUTH:WRITE',
+}
 export const SNACKBAR_VARIANTS = {
   SUCCESS: 'success',
   ERROR: 'error',

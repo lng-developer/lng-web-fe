@@ -30,12 +30,23 @@ export default function FeedbackForm() {
 
   return (
     <Stack component="form" onSubmit={handleSubmit(onSubmit)} spacing={2}>
-      <FormTextField name="name" control={control} label={t('feedback.name')} />
-      <FormTextField name="email" control={control} label={t('feedback.email')} />
+      <FormTextField
+        name="name"
+        control={control}
+        label={t('feedback.name')}
+        placeholder={t('feedback.namePlaceholder')}
+      />
+      <FormTextField
+        name="email"
+        control={control}
+        label={t('feedback.email')}
+        placeholder={t('feedback.emailPlaceholder')}
+      />
       <FormTextField
         name="message"
         control={control}
         label={t('feedback.message')}
+        placeholder={t('feedback.messagePlaceholder')}
         multiline
         minRows={3}
       />

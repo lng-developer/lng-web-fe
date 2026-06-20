@@ -2,6 +2,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
   UI_KIT: '/ui-kit',
   PORTAL_ORDER_LIST: '/portal/orders',
   PORTAL_ORDER_DETAIL: '/portal/orders/detail',
@@ -26,4 +27,5 @@ export const ROUTES = {
   PORTAL_SYSTEM_CONFIG: '/portal/settings/system-config',
   PORTAL_AUDIT_LOG: '/portal/settings/audit-log',
   HR: '/hr',
+  UNAUTHORIZED: '/unauthorized',
 }
