@@ -1,59 +1,45 @@
 import { Suspense } from 'react'
-import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet } from 'react-router-dom'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
-import HomeIcon from '@mui/icons-material/Home'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import MenuIcon from '@mui/icons-material/Menu'
-import WidgetsIcon from '@mui/icons-material/Widgets'
-import {
-  AppBar,
-  Box,
-  Drawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  ToggleButton,
-  ToggleButtonGroup,
-  Toolbar,
-  Typography,
-  useMediaQuery,
-} from '@mui/material'
+import { Outlet } from 'react-router-dom'
+import { Backdrop, Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 
 import Loader from '@/components/common/Loader'
-import { LANGUAGES, THEME_MODES } from '@/constants/app'
-import { ROUTES } from '@/constants/routes'
+import { LAYOUT_SIZES } from '@/constants/app'
 import { useUIStore } from '@/store/useUIStore'
 
-const SIDEBAR_WIDTH = 240
-
-const NAV_ITEMS = [
-  { to: ROUTES.HOME, labelKey: 'nav.home', icon: <HomeIcon /> },
-  { to: ROUTES.UI_KIT, labelKey: 'nav.uiKit', icon: <WidgetsIcon /> },
-]
+import AppHeader from './AppHeader'
+import AppSidebar, { SIDEBAR_WIDTH } from './AppSidebar'
 
 export default function MainLayout() {
-  const { t, i18n } = useTranslation()
   const muiTheme = useTheme()
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up('md'))
   const sidebarOpen = useUIStore((state) => state.sidebarOpen)
   const toggleSidebar = useUIStore((state) => state.toggleSidebar)
   const closeSidebar = useUIStore((state) => state.closeSidebar)
-  const language = useUIStore((state) => state.language)
-  const setLanguage = useUIStore((state) => state.setLanguage)
-  const themeMode = useUIStore((state) => state.themeMode)
-  const toggleThemeMode = useUIStore((state) => state.toggleThemeMode)
-
-  const handleChangeLanguage = (lang) => {
-    i18n.changeLanguage(lang)
-    setLanguage(lang)
-  }
 
   return (
     <Box className="flex min-h-screen flex-col">
+      <AppHeader onToggleSidebar={toggleSidebar} />
+
+      {!isDesktop && (
+        <Backdrop
+          open={sidebarOpen}
+          sx={(theme) => ({
+            top: LAYOUT_SIZES.HEADER_HEIGHT,
+            zIndex: theme.zIndex.drawer - 1,
+          })}
+          onClick={closeSidebar}
+        />
+      )}
+      <AppSidebar open={sidebarOpen} onNavigate={!isDesktop ? closeSidebar : undefined} />
+
+      <Box
+        component="main"
+        className="flex-1 p-4 transition-[margin] duration-200 md:p-6"
+        sx={{
+          marginLeft: { md: sidebarOpen ? `${SIDEBAR_WIDTH}px` : 0 },
+          marginTop: `${LAYOUT_SIZES.HEADER_HEIGHT}px`,
+        }}
       <AppBar position="fixed" sx={{ zIndex: (muiTheme) => muiTheme.zIndex.drawer + 1 }}>
         <Toolbar className="gap-2">
           <IconButton

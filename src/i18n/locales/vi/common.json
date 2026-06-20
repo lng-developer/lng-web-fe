@@ -1,13 +1,70 @@
 {
   "app": {
-    "name": "LNG Web FE"
+    "name": "LNG Web FE",
+    "brandName": "LNG System"
+  },
+  "header": {
+    "searchPlaceholder": "Tìm Order ID, SKU, nhân viên... (⌘K)",
+    "notifications": "Thông báo",
+    "language": "Đổi ngôn ngữ",
+    "roleChip": "Vai trò hiện tại",
+    "userMenu": "Menu người dùng"
   },
   "common": {
     "close": "Đóng"
   },
   "nav": {
     "home": "Trang chủ",
-    "uiKit": "UI Kit"
+    "uiKit": "UI Kit",
+    "dashboard": "Dashboard",
+    "portal": "Portal",
+    "hr": "HR",
+    "sidebarTabs": "Tab điều hướng sidebar",
+    "sections": {
+      "sales": "Sales",
+      "operations": "Operations",
+      "business": "Business",
+      "admin": "Admin"
+    },
+    "groups": {
+      "orders": "Đơn hàng",
+      "fulfillment": "Vận hành",
+      "design": "Thiết kế",
+      "finance": "Tài chính",
+      "vendors": "Nhà cung cấp",
+      "customers": "Khách hàng",
+      "settings": "Cài đặt"
+    },
+    "items": {
+      "orderList": "Danh sách đơn",
+      "orderDetail": "Chi tiết đơn",
+      "listings": "Listings",
+      "tracking": "Tracking",
+      "scale": "Scale",
+      "qc": "QC",
+      "shipping": "Shipping",
+      "cs": "CS",
+      "taskList": "Danh sách task",
+      "templateCenter": "Kho template",
+      "summary": "Tổng quan",
+      "balance": "Số dư",
+      "payout": "Payout",
+      "compensationPool": "Quỹ bồi thường",
+      "vendorList": "Danh sách vendor",
+      "productsCost": "Sản phẩm & chi phí",
+      "storeRouting": "Điều phối store",
+      "usersRoles": "Người dùng & phân quyền",
+      "shopsStores": "Shop & Store",
+      "systemConfig": "Cấu hình hệ thống",
+      "auditLog": "Audit Log"
+    }
+  },
+  "roles": {
+    "admin": "Admin",
+    "designer": "Thiết kế",
+    "qc": "QC",
+    "fulfillment": "Vận hành",
+    "cs": "CS"
   },
   "theme": {
     "toggleSidebar": "Đóng/mở thanh điều hướng",
@@ -128,6 +185,32 @@
       "invalidLoginResponse": "Phản hồi đăng nhập không hợp lệ.",
       "missingAccessToken": "Phản hồi làm mới phiên thiếu access token.",
       "missingRefreshToken": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+    }
+  },
+  "auth": {
+    "userFallback": "Người dùng",
+    "tagline": "Quản lý vận hành POD toàn diện",
+    "footer": "v2.0.0 · LNG System",
+    "login": {
+      "title": "Đăng nhập",
+      "email": "Email",
+      "emailPlaceholder": "you@lng.co",
+      "password": "Mật khẩu",
+      "showPassword": "Hiện mật khẩu",
+      "hidePassword": "Ẩn mật khẩu",
+      "forgotPassword": "Quên mật khẩu?",
+      "submit": "Đăng nhập",
+      "success": "Đăng nhập thành công!",
+      "errors": {
+        "emailRequired": "Vui lòng nhập email",
+        "emailInvalid": "Email không hợp lệ",
+        "passwordRequired": "Vui lòng nhập mật khẩu"
+      }
+    },
+    "forgotPassword": {
+      "title": "Quên mật khẩu",
+      "description": "Chức năng khôi phục mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+      "backLogin": "Về trang đăng nhập"
     }
   },
   "uiKit": {
