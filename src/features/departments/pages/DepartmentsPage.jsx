@@ -143,7 +143,7 @@ function TableHeader({ columns, templateColumns }) {
   )
 }
 
-function DataRow({ children, templateColumns }) {
+function DataRow({ children, onClick, selected = false, templateColumns }) {
   return (
     <Box
       sx={(theme) => ({
@@ -153,9 +153,20 @@ function DataRow({ children, templateColumns }) {
         alignItems: 'center',
         px: 3,
         columnGap: 3,
+        cursor: onClick ? 'pointer' : 'default',
+        bgcolor: selected ? theme.palette.primary.light : 'transparent',
         borderBottom: `1px solid ${theme.palette.divider}`,
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.shortest,
+        }),
+        '&:hover': onClick
+          ? {
+              bgcolor: selected ? theme.palette.primary.light : theme.palette.action.hover,
+            }
+          : undefined,
         '&:last-child': { borderBottom: 0 },
       })}
+      onClick={onClick}
     >
       {children}
     </Box>
@@ -446,12 +457,13 @@ export default function DepartmentsPage() {
   const { t } = useTranslation()
   const [isCreateDepartmentOpen, setIsCreateDepartmentOpen] = useState(false)
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false)
+  const [selectedDepartmentCode, setSelectedDepartmentCode] = useState(SELECTED_DEPARTMENT_CODE)
   const [departmentForm, setDepartmentForm] = useState(INITIAL_DEPARTMENT_FORM)
   const [teamForm, setTeamForm] = useState(INITIAL_TEAM_FORM)
   const summary = buildDepartmentSummary(FAKE_DEPARTMENTS)
-  const teams = getTeamsByDepartmentCode(FAKE_DEPARTMENTS, SELECTED_DEPARTMENT_CODE)
+  const teams = getTeamsByDepartmentCode(FAKE_DEPARTMENTS, selectedDepartmentCode)
   const selectedDepartment = FAKE_DEPARTMENTS.find(
-    (department) => department.code === SELECTED_DEPARTMENT_CODE,
+    (department) => department.code === selectedDepartmentCode,
   )
   const departmentColumns = t('departments.columns.department', { returnObjects: true })
   const teamColumns = t('departments.columns.team', { returnObjects: true })
@@ -543,7 +555,18 @@ export default function DepartmentsPage() {
               templateColumns="minmax(220px, 1fr) 120px 120px"
             />
             {FAKE_DEPARTMENTS.map((department) => (
-              <DataRow key={department.id} templateColumns="minmax(220px, 1fr) 120px 120px">
+              <DataRow
+                key={department.id}
+                selected={department.code === selectedDepartmentCode}
+                templateColumns="minmax(220px, 1fr) 120px 120px"
+                onClick={() => {
+                  setSelectedDepartmentCode(department.code)
+                  setTeamForm((currentForm) => ({
+                    ...currentForm,
+                    departmentCode: department.code,
+                  }))
+                }}
+              >
                 <NameCell code={department.code} name={department.name} />
                 <Box>
                   <StatusChip label={t(`departments.status.${department.status}`)} />
@@ -559,7 +582,7 @@ export default function DepartmentsPage() {
           <OrganizationCard
             minWidth={720}
             title={`Teams: ${selectedDepartment?.name ?? ''}`}
-            badge={<CodeBadge>{SELECTED_DEPARTMENT_CODE}</CodeBadge>}
+            badge={<CodeBadge>{selectedDepartmentCode}</CodeBadge>}
             action={
               <Button
                 variant="outlined"

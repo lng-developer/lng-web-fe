@@ -22,4 +22,15 @@ describe('departmentData', () => {
       ['TEAM-QC-01', 'TEAM-QC-02'],
     )
   })
+
+  it('returns different fake teams for each department code', () => {
+    assert.deepEqual(
+      getTeamsByDepartmentCode(FAKE_DEPARTMENTS, 'DEPT-DESIGN').map((team) => team.code),
+      ['TEAM-DESIGN-01', 'TEAM-DESIGN-02'],
+    )
+    assert.deepEqual(
+      getTeamsByDepartmentCode(FAKE_DEPARTMENTS, 'DEPT-FULFILLMENT').map((team) => team.code),
+      ['TEAM-FULFILL-01', 'TEAM-FULFILL-02'],
+    )
+  })
 })

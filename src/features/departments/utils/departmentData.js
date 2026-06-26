@@ -32,7 +32,24 @@ export const FAKE_DEPARTMENTS = [
     teamCount: 2,
     memberCount: 22,
     status: 'active',
-    teams: [],
+    teams: [
+      {
+        id: 'team-design-01',
+        code: 'TEAM-DESIGN-01',
+        name: 'Design Team A',
+        leaderCount: 1,
+        staffCount: 10,
+        status: 'active',
+      },
+      {
+        id: 'team-design-02',
+        code: 'TEAM-DESIGN-02',
+        name: 'Design Team B',
+        leaderCount: 1,
+        staffCount: 10,
+        status: 'active',
+      },
+    ],
   },
   {
     id: 'dept-fulfillment',
@@ -41,7 +58,24 @@ export const FAKE_DEPARTMENTS = [
     teamCount: 2,
     memberCount: 64,
     status: 'active',
-    teams: [],
+    teams: [
+      {
+        id: 'team-fulfill-01',
+        code: 'TEAM-FULFILL-01',
+        name: 'Fulfillment Team A',
+        leaderCount: 2,
+        staffCount: 30,
+        status: 'active',
+      },
+      {
+        id: 'team-fulfill-02',
+        code: 'TEAM-FULFILL-02',
+        name: 'Fulfillment Team B',
+        leaderCount: 2,
+        staffCount: 30,
+        status: 'active',
+      },
+    ],
   },
 ]
 
