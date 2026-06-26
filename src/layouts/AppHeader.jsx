@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -14,10 +16,13 @@ import {
   Chip,
   IconButton,
   InputBase,
+  Menu,
+  MenuItem,
   Toolbar,
 } from '@mui/material'
 
 import { LANGUAGES, LAYOUT_SIZES, THEME_MODES } from '@/constants/app'
+import { ROUTES } from '@/constants/routes'
 import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import {
   getCurrentUserInitials,
@@ -78,6 +83,8 @@ function getHeaderInitialsSource(user) {
 
 export default function AppHeader({ onToggleSidebar }) {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null)
   const { data: currentUserData } = useCurrentUserQuery()
   const language = useUIStore((state) => state.language)
   const setLanguage = useUIStore((state) => state.setLanguage)
@@ -98,6 +105,25 @@ export default function AppHeader({ onToggleSidebar }) {
   const handleChangeLanguage = (lang) => {
     i18n.changeLanguage(lang)
     setLanguage(lang)
+  }
+  const isUserMenuOpen = Boolean(userMenuAnchorEl)
+
+  const handleOpenUserMenu = (event) => {
+    setUserMenuAnchorEl(event.currentTarget)
+  }
+
+  const handleCloseUserMenu = () => {
+    setUserMenuAnchorEl(null)
+  }
+
+  const handleOpenProfile = () => {
+    handleCloseUserMenu()
+    navigate(ROUTES.PROFILE)
+  }
+
+  const handleOpenDepartments = () => {
+    handleCloseUserMenu()
+    navigate(ROUTES.DEPARTMENTS)
   }
 
   return (
@@ -269,7 +295,11 @@ export default function AppHeader({ onToggleSidebar }) {
           <ButtonBase
             type="button"
             aria-label={t('header.userMenu')}
+            aria-controls={isUserMenuOpen ? 'app-header-user-menu' : undefined}
+            aria-expanded={isUserMenuOpen ? 'true' : undefined}
+            aria-haspopup="menu"
             className="items-center gap-1"
+            onClick={handleOpenUserMenu}
             sx={(theme) => ({
               borderRadius: theme.spacing(0.75),
               display: 'flex',
@@ -294,6 +324,29 @@ export default function AppHeader({ onToggleSidebar }) {
             </Avatar>
             <ExpandMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
           </ButtonBase>
+          <Menu
+            id="app-header-user-menu"
+            anchorEl={userMenuAnchorEl}
+            open={isUserMenuOpen}
+            onClose={handleCloseUserMenu}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            slotProps={{
+              paper: {
+                sx: (theme) => ({
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: theme.spacing(1),
+                  boxShadow: theme.shadows[4],
+                  mt: 1,
+                  minWidth: 180,
+                }),
+              },
+            }}
+          >
+            <MenuItem onClick={handleOpenProfile}>{t('header.profile')}</MenuItem>
+            <MenuItem onClick={handleOpenDepartments}>{t('header.departments')}</MenuItem>
+            <MenuItem disabled>{t('header.logout')}</MenuItem>
+          </Menu>
         </Box>
       </Toolbar>
     </AppBar>
