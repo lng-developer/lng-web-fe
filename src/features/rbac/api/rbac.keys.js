@@ -1,0 +1,16 @@
+export const rbacKeys = {
+  all: ['rbac'],
+  accounts: (query = {}) => [...rbacKeys.all, 'accounts', query],
+  account: (accountId) => [...rbacKeys.all, 'accounts', accountId],
+  roles: (query = {}) => [...rbacKeys.all, 'roles', query],
+  role: (roleId) => [...rbacKeys.all, 'roles', roleId],
+  permissions: (query = {}) => [...rbacKeys.all, 'permissions', query],
+  permission: (permissionId) => [...rbacKeys.all, 'permissions', permissionId],
+  scopes: (query = {}) => [...rbacKeys.all, 'scopes', query],
+  scope: (scopeRegistryId) => [...rbacKeys.all, 'scopes', scopeRegistryId],
+  accessAssignments: (query = {}) => [...rbacKeys.all, 'accessAssignments', query],
+  scopedRolePermissions: (query = {}) => [...rbacKeys.all, 'scopedRolePermissions', query],
+  departments: (query = {}) => [...rbacKeys.all, 'departments', query],
+  teams: (query = {}) => [...rbacKeys.all, 'teams', query],
+  memberCandidates: (query = {}) => [...rbacKeys.all, 'memberCandidates', query],
+}

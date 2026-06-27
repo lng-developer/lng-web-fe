@@ -129,6 +129,311 @@
       "generic": "Không thể thực hiện yêu cầu, vui lòng thử lại."
     }
   },
+  "rbac": {
+    "title": "RBAC",
+    "common": {
+      "loading": "Đang tải dữ liệu..."
+    },
+    "tabs": {
+      "users": "Users",
+      "roles": "Roles",
+      "permissions": "Permissions",
+      "scopes": "Scopes",
+      "scopedOverrides": "Scoped Overrides"
+    },
+    "users": {
+      "searchPlaceholder": "Tìm theo tên, email, mã nhân viên...",
+      "columns": {
+        "user": "Người dùng",
+        "status": "Trạng thái",
+        "role": "Vai trò",
+        "department": "Phòng ban",
+        "lastLogin": "Đăng nhập gần nhất",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "viewInfo": "Xem thông tin",
+        "editAccess": "Sửa quyền",
+        "addUser": "Thêm tài khoản"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Không hoạt động"
+      },
+      "filter": {
+        "allStatus": "Tất cả trạng thái",
+        "allRoles": "Tất cả vai trò",
+        "allDepartments": "Tất cả phòng ban"
+      },
+      "addModal": {
+        "title": "Thêm tài khoản mới",
+        "fields": {
+          "displayName": "Họ và tên",
+          "displayNamePlaceholder": "Vd: Nguyễn Văn A",
+          "email": "Email / Tên đăng nhập",
+          "emailPlaceholder": "Vd: ten.nv@lng.com",
+          "password": "Mật khẩu tạm thời",
+          "passwordPlaceholder": "Nhập mật khẩu tạm thời cho người dùng...",
+          "role": "Vai trò"
+        },
+        "passwordHint": "Người dùng sẽ được yêu cầu đổi mật khẩu sau khi đăng nhập lần đầu.",
+        "cancel": "Huỷ",
+        "submit": "Tạo tài khoản",
+        "success": "Tạo tài khoản thành công!"
+      },
+      "viewModal": {
+        "title": "Thông tin tài khoản — {{name}}",
+        "loginName": "TÊN ĐĂNG NHẬP",
+        "password": "MẬT KHẨU",
+        "showPassword": "Hiện",
+        "hidePassword": "Ẩn",
+        "passwordUnavailable": "Không hiển thị vì lý do bảo mật",
+        "resetPassword": "Reset mật khẩu",
+        "resetPasswordPrompt": "Nhập mật khẩu tạm thời mới",
+        "resetPasswordSuccess": "Đã reset mật khẩu thành công!",
+        "updateStatusSuccess": "Đã cập nhật trạng thái tài khoản!",
+        "role": "VAI TRÒ",
+        "status": "TRẠNG THÁI",
+        "department": "PHÒNG BAN",
+        "noDepartment": "— (toàn hệ thống, không thuộc phòng ban)",
+        "createdAt": "NGÀY TẠO TÀI KHOẢN",
+        "createdBy": "CẤP TÀI KHOẢN BỞI",
+        "close": "Đóng"
+      },
+      "editAccessModal": {
+        "title": "Edit Access — {{name}}",
+        "banner": "Department/Team membership được quản lý ở tab Scopes — modal này chỉ quản lý role và permission.",
+        "globalAccess": "Global Access",
+        "globalRoles": "Global Roles",
+        "scopedAccess": "Scoped Access Assignments",
+        "scopedColumns": {
+          "role": "Role",
+          "scopeType": "Scope Type",
+          "scopeResource": "Scope Resource",
+          "customPerms": "Custom Perms"
+        },
+        "noScopedAccess": "Chưa có scoped access nào được gán",
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Cập nhật quyền truy cập thành công!"
+      }
+    },
+    "roles": {
+      "searchPlaceholder": "Tìm theo mã hoặc tên vai trò...",
+      "columns": {
+        "role": "Vai trò",
+        "description": "Mô tả",
+        "userCount": "Số tài khoản",
+        "defaultPermissions": "Quyền mặc định",
+        "actions": "Hành động"
+      },
+      "userCount": "{{count}} tài khoản",
+      "fullAccess": "Toàn quyền ({{count}})",
+      "permissionCount": "{{count}} quyền",
+      "actions": {
+        "addRole": "Thêm vai trò",
+        "edit": "Sửa"
+      },
+      "addModal": {
+        "title": "Thêm vai trò mới",
+        "fields": {
+          "codeLabel": "Role Code",
+          "codePlaceholder": "Vd: SUPERVISOR",
+          "nameLabel": "Role Name",
+          "namePlaceholder": "Vd: Supervisor",
+          "descriptionLabel": "Description",
+          "descriptionPlaceholder": "Mô tả ngắn về phạm vi và trách nhiệm của vai trò này..."
+        },
+        "cancel": "Huỷ",
+        "submit": "Tạo vai trò",
+        "success": "Tạo vai trò thành công!"
+      },
+      "editModal": {
+        "title": "Edit Role: {{code}}",
+        "permissions": "Permissions",
+        "selectAll": "Select All",
+        "permissionSearch": "Tìm quyền theo tên hoặc mã...",
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Cập nhật vai trò thành công!"
+      }
+    },
+    "permissions": {
+      "searchPlaceholder": "Tìm theo mã hoặc tên quyền...",
+      "filter": {
+        "allModules": "Tất cả module",
+        "allActions": "Tất cả action",
+        "allStatus": "Tất cả trạng thái",
+        "active": "Hoạt động",
+        "deprecated": "Deprecated"
+      },
+      "columns": {
+        "code": "Mã quyền",
+        "name": "Tên quyền",
+        "description": "Mô tả",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "addPermission": "Thêm quyền",
+        "edit": "Sửa",
+        "delete": "Xoá",
+        "deleteConfirmSimple": "Bạn có chắc chắn muốn xoá quyền này?"
+      },
+      "addModal": {
+        "title": "Thêm quyền mới",
+        "fields": {
+          "codeLabel": "Permission Code",
+          "codePlaceholder": "Vd: READ_REPORTS",
+          "moduleLabel": "Module",
+          "actionLabel": "Action",
+          "nameLabel": "Display Name",
+          "namePlaceholder": "Vd: Xem báo cáo",
+          "descriptionLabel": "Description / Usage Hint",
+          "descriptionPlaceholder": "Mô tả ngắn về phạm vi của quyền này..."
+        },
+        "cancel": "Huỷ",
+        "submit": "Tạo quyền",
+        "success": "Tạo quyền thành công!"
+      },
+      "editModal": {
+        "title": "Edit Permission",
+        "codeHint": "Mã quyền là định danh ổn định, dùng trong code logic — không nên đổi sau khi đã dùng.",
+        "fields": {
+          "codeLabel": "Permission Code",
+          "nameLabel": "Display Name",
+          "descriptionLabel": "Description / Usage Hint"
+        },
+        "metadata": {
+          "module": "Module",
+          "action": "Action",
+          "created": "Created",
+          "updated": "Updated"
+        },
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Cập nhật quyền thành công!",
+        "deleteConfirm": "Bạn có chắc chắn muốn xoá quyền này? Hành động không thể hoàn tác.",
+        "deleteSuccess": "Đã xoá quyền thành công!"
+      }
+    },
+    "scopes": {
+      "searchPlaceholder": "Tìm theo tên hoặc mã scope...",
+      "types": {
+        "global": "Global",
+        "department": "Department",
+        "team": "Team"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Tạm tắt"
+      },
+      "filter": {
+        "allTypes": "Tất cả loại scope",
+        "allStatus": "Tất cả trạng thái"
+      },
+      "columns": {
+        "type": "Loại Scope",
+        "name": "Tên",
+        "department": "Thuộc phòng ban",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "addScope": "Thêm Scope",
+        "view": "Xem",
+        "edit": "Sửa"
+      },
+      "fields": {
+        "scopeType": "Loại Scope",
+        "scopeTypePlaceholder": "Department / Team",
+        "name": "Scope Name",
+        "namePlaceholder": "Ví dụ: QC Department",
+        "status": "Trạng thái"
+      },
+      "addModal": {
+        "title": "Thêm Scope mới",
+        "fields": {
+          "department": "Thuộc phòng ban (Department)",
+          "departmentPlaceholder": "Chọn phòng ban (QC / Design / Fulfillment)...",
+          "team": "Thuộc team (Team)",
+          "teamPlaceholder": "Chọn team",
+          "teamName": "Tên Team",
+          "teamNamePlaceholder": "Vd: QC Team B",
+          "code": "Mã Scope (Code)",
+          "codePlaceholder": "TEAM-QC-02"
+        },
+        "errors": {
+          "departmentRequired": "Vui lòng chọn phòng ban trước khi tạo scope.",
+          "teamNotFound": "Không tìm thấy team này trong phòng ban đã chọn."
+        },
+        "cancel": "Huỷ",
+        "submit": "Tạo Scope",
+        "success": "Đã tạo scope."
+      },
+      "editModal": {
+        "title": "Sửa Scope",
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Đã cập nhật scope."
+      },
+      "toggleSuccess": "Đã cập nhật trạng thái scope."
+    },
+    "scopedOverrides": {
+      "filterLabel": "CHỌN VAI TRÒ ĐỂ CHỈNH SỬA CẤP QUYỀN",
+      "filterHint": "Tổng quan quyền của tất cả vai trò — bấm \"Chỉnh sửa\" trên từng vai trò để cấp thêm quyền chi tiết.",
+      "allRoles": "Tất cả vai trò",
+      "noRoles": "Không có vai trò phù hợp.",
+      "roleLabel": "Vai trò: {{name}}",
+      "editRolePerms": "Chỉnh sửa cấp quyền cho {{name}} →",
+      "editAnonymousPerms": "Chỉnh sửa cấp quyền cho Anonymous →",
+      "defaultPermsTitle": "Quyền mặc định của vai trò '{{name}}'",
+      "grantedTitle": "Cấp thêm quyền cho '{{name}}'",
+      "defaultBadge": "MẶC ĐỊNH · READ-ONLY",
+      "grantBadge": "CẤP THÊM · GRANT",
+      "fullAccessNote": "Toàn quyền hệ thống ({{count}} quyền) — không cần liệt kê chi tiết.",
+      "noDefaultNote": "Chưa có quyền mặc định cho vai trò này.",
+      "adminGrantNote": "Admin đã có toàn quyền ở mọi scope — không áp dụng override.",
+      "noOverrideNote": "Chưa có override nào cho vai trò này.",
+      "noOverrideAnonymousNote": "Chưa có override nào cho vai trò Anonymous.",
+      "grantedBadge": "Đã cấp thêm",
+      "revokeSuccess": "Đã thu hồi quyền thành công!",
+      "addMore": "+ Thêm",
+      "grantModal": {
+        "title": "Cấp thêm quyền",
+        "contextPrefix": "Áp dụng cho vai trò '{{role}}' tại {{scopeType}} '{{scopeName}}'.",
+        "permissionsLabel": "Quyền cần cấp thêm",
+        "permissionsPlaceholder": "Chọn quyền cần cấp thêm (có thể chọn nhiều)...",
+        "noteLabel": "Ghi chú (tuỳ chọn)",
+        "notePlaceholder": "Vd: Cho phép xếp ca cho team thuộc scope này...",
+        "cancel": "Huỷ",
+        "submit": "Cấp quyền",
+        "success": "Cấp quyền thành công!"
+      },
+      "scopedGrantModal": {
+        "title": "Cấp phạm vi quyền cho vai trò {{name}}",
+        "scopeTypeLabel": "LOẠI SCOPE",
+        "scopeTypePlaceholder": "Chọn loại scope",
+        "scopeTypeHint": "Cho loại phạm vi Department hoặc Team. Global đang chờ backend hỗ trợ validator scopeId null.",
+        "scopeTypes": {
+          "global": "Global (toàn hệ thống)",
+          "department": "Department",
+          "team": "Team"
+        },
+        "scopeLabel": "SCOPE",
+        "scopePlaceholder": "Chọn quyền sẽ áp dụng trong scope...",
+        "scopeHintDepartment": "Hiện các scope thuộc loại Department — chọn phòng ban cụ thể",
+        "scopeHintTeam": "Hiện các scope thuộc loại Team — chọn team cụ thể",
+        "permissionsLabel": "QUYỀN CẦN CẤP",
+        "permissionsPlaceholder": "Chọn quyền sẽ áp dụng trong scope...",
+        "permissionsHint": "Chỉ hiện quyền chưa được cấp trong scope này",
+        "noteLabel": "Ghi chú",
+        "notePlaceholder": "Vd: Cho phép Anonymous xem dữ liệu phòng QC...",
+        "cancel": "Huỷ",
+        "submit": "Cấp quyền",
+        "success": "Cấp phạm vi quyền thành công!"
+      }
+    }
+  },
   "home": {
     "title": "Trang chủ",
     "welcome": "Chào mừng bạn đến với LNG Web FE",
