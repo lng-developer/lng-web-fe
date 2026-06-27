@@ -213,6 +213,181 @@
       "backLogin": "Về trang đăng nhập"
     }
   },
+  "orders": {
+    "title": "Orders",
+    "actions": {
+      "import": "Nhập",
+      "update": "Cập nhật",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "saveChanges": "Lưu thay đổi"
+    },
+    "tabs": {
+      "all": "Tất cả",
+      "new": "Đơn mới",
+      "missingCostCenter": "Thiếu Cost Center",
+      "missingPsd": "Thiếu PSD",
+      "awaitingPayment": "Chờ thanh toán",
+      "processing": "Đang xử lý",
+      "shipped": "Đã gửi hàng",
+      "delivered": "Đã giao",
+      "cancelled": "Đã huỷ",
+      "openCase": "Mở case"
+    },
+    "filters": {
+      "search": "Tìm Order ID, Customer...",
+      "refresh": "Làm mới"
+    },
+    "table": {
+      "orderId": "Order ID",
+      "status": "Trạng thái",
+      "createdAt": "Ngày tạo",
+      "orderDate": "Ngày đặt",
+      "shippingType": "Kiểu vận chuyển",
+      "customer": "Khách hàng",
+      "basecost": "Basecost",
+      "store": "Cửa hàng",
+      "handling": "Xử lý",
+      "case": "Case"
+    },
+    "detail": {
+      "productInfo": "THÔNG TIN SẢN PHẨM",
+      "customization": "CUSTOMIZATION",
+      "fulfillment": "SỐ LƯỢNG & VẬN CHUYỂN"
+    },
+    "fields": {
+      "psd": "PSD:",
+      "pngStatus": "PNG Status:",
+      "scaleBy": "Scale By:",
+      "qcBy": "QC By:",
+      "sku": "SKU:",
+      "asinType": "ASIN Type:",
+      "asin": "ASIN:",
+      "psdId": "PSD ID:",
+      "seller": "Seller:",
+      "team": "Team:",
+      "productType": "Select Product Type:",
+      "shirtColor": "Choose Shirt Color:",
+      "selectSize": "Select Size:",
+      "customerPhoto": "Customer Photo",
+      "customerName": "Custom Name:",
+      "year": "Enter Year:",
+      "customSleeve": "Select Custom Sleeve:",
+      "rightSleeve": "Right Sleeve Customization:",
+      "leftSleeve": "Left Sleeve Customization:",
+      "priority": "Priority Production:",
+      "customizationUrl": "Customization Url:",
+      "quantity": "Quantity:",
+      "fulfillQty": "Fulfill Qty",
+      "new": "New",
+      "vendorProduct": "Vendor Product:",
+      "size": "Size:",
+      "color": "Color:",
+      "fulfillName": "Fulfill Name:",
+      "status": "Status",
+      "tracking": "Tracking",
+      "note": "Note"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "openCase": {
+      "title": "Mở case",
+      "placeholder": "Chọn case...",
+      "options": {
+        "missingPsd": "Thiếu PSD",
+        "customerRequest": "Yêu cầu từ khách hàng",
+        "shippingIssue": "Vấn đề vận chuyển",
+        "productionDelay": "Chậm sản xuất"
+      }
+    },
+    "importOrders": {
+      "title": "Nhập đơn hàng",
+      "store": "CỬA HÀNG",
+      "storePlaceholder": "Chọn cửa hàng...",
+      "file": "TỆP",
+      "uploadTitle": "Bấm để tải lên hoặc thả file .txt",
+      "uploadHint": "Chỉ hỗ trợ file .txt"
+    },
+    "updateCustomer": {
+      "title": "Cập nhật khách hàng",
+      "fields": {
+        "name": "Tên",
+        "email": "Email",
+        "address": "Địa chỉ",
+        "address2": "Địa chỉ 2",
+        "state": "Bang/Tỉnh",
+        "city": "Thành phố",
+        "country": "Quốc gia",
+        "zipCode": "Mã bưu chính",
+        "phoneNumber": "Số điện thoại"
+      },
+      "placeholders": {
+        "name": "Tên",
+        "email": "Email",
+        "address": "Địa chỉ",
+        "address2": "Địa chỉ 2",
+        "state": "Bang/Tỉnh",
+        "city": "Thành phố",
+        "country": "Quốc gia",
+        "zipCode": "Mã bưu chính",
+        "phoneNumber": "Số điện thoại"
+      }
+    },
+    "values": {
+      "channels": {
+        "all": "All — Amazon + Etsy",
+        "amazon": "Amazon",
+        "etsy": "Etsy"
+      },
+      "shops": {
+        "all": "Tất cả Shop"
+      },
+      "sellers": {
+        "all": "Tất cả Seller"
+      },
+      "status": {
+        "new": "New",
+        "fulfilled": "Fulfilled",
+        "shipped": "Shipped",
+        "cancelled": "Cancelled",
+        "pending": "Pending",
+        "needScale": "Need Scale"
+      },
+      "shipping": {
+        "standard": "Standard",
+        "secondDay": "Second Day",
+        "ground": "Ground",
+        "overnight": "Overnight",
+        "economy": "Economy",
+        "expedited": "Expedited"
+      },
+      "stores": {
+        "tanTan": "Tan tan",
+        "lngGroup": "LNG Group"
+      },
+      "handling": {
+        "fiveDays": "5 ngày",
+        "sixDays": "6 ngày",
+        "sevenDays": "7 ngày"
+      },
+      "relative": {
+        "oneHourAgo": "1 giờ trước",
+        "sixDaysAgo": "6 ngày trước",
+        "sevenDaysAgo": "7 ngày trước",
+        "eightDaysAgo": "8 ngày trước",
+        "tenDaysAgo": "10 ngày trước"
+      },
+      "common": {
+        "noData": "No data",
+        "normal": "Normal",
+        "noThankYou": "No, Thank you.",
+        "tracking": "Tracking",
+        "note": "Note"
+      }
+    }
+  },
   "uiKit": {
     "title": "UI Kit",
     "description": "Bộ component Atoms & Molecules theo Figma \"LNG v2\" - Design System.",

@@ -12,6 +12,7 @@ import PublicRoute from '@/routes/PublicRoute'
 
 const HomePage = lazy(() => import('@/features/home/pages/HomePage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
+const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const UiKitPage = lazy(() => import('@/features/ui-kit/pages/UiKitPage'))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const UnauthorizedPage = lazy(() => import('@/features/auth/pages/UnauthorizedPage'))
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           { index: true, element: <HomePage /> },
+          { path: ROUTES.PORTAL_ORDER_LIST, element: <OrdersPage /> },
           // Path tương đối so với MainLayout - ROUTES.UI_KIT ('/ui-kit') dùng cho NavLink.
           { path: 'ui-kit', element: <UiKitPage /> },
           { path: '*', element: <NotFound /> },
