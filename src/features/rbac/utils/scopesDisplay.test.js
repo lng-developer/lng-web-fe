@@ -6,6 +6,7 @@ import {
   buildScopeFormPayload,
   filterScopeItems,
   getScopeDepartmentName,
+  getScopeTypeLabel,
   getScopeTypeMeta,
 } from './scopesDisplay.js'
 
@@ -135,5 +136,14 @@ test('getScopeTypeMeta returns token classes for scope type badges', () => {
   assert.equal(getScopeTypeMeta('team').labelKey, 'rbac.scopes.types.team')
   assert.match(getScopeTypeMeta('team').className, /!bg-success-bg/)
   assert.match(getScopeTypeMeta('department').className, /!bg-secondary-light/)
+  assert.match(getScopeTypeMeta('shop').className, /!bg-warning-bg/)
   assert.match(getScopeTypeMeta('global').className, /!bg-primary-light/)
+})
+
+test('getScopeTypeLabel displays the raw API scopeType and falls back to unknown', () => {
+  assert.equal(getScopeTypeLabel('shop'), 'shop')
+  assert.equal(getScopeTypeLabel(' department '), 'department')
+  assert.equal(getScopeTypeLabel(''), 'unknown')
+  assert.equal(getScopeTypeLabel(null), 'unknown')
+  assert.equal(getScopeTypeLabel(undefined), 'unknown')
 })

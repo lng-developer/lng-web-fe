@@ -11,7 +11,8 @@
     "userMenu": "User menu"
   },
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "delete": "Delete"
   },
   "nav": {
     "home": "Home",
@@ -202,10 +203,11 @@
       },
       "editAccessModal": {
         "title": "Edit Access — {{name}}",
-        "banner": "Department/Team membership is managed in the Scopes tab — this modal only manages role and permission.",
+        "banner": "Each scope assignment has its own role, scope, and permission set. Changing role or scope resets custom permissions back to the role/scope defaults.",
         "globalAccess": "Global Access",
         "globalRoles": "Global Roles",
         "scopedAccess": "Scoped Access Assignments",
+        "scopedAccessHint": "Edit role/scope directly on each row. Use Edit permissions to toggle custom permissions for that assignment.",
         "scopedColumns": {
           "role": "Role",
           "scopeType": "Scope Type",
@@ -213,6 +215,21 @@
           "customPerms": "Custom Perms"
         },
         "noScopedAccess": "No scoped access assigned",
+        "assignmentRole": "Role",
+        "scopeAssignment": "Scope access assignment",
+        "scopeAssignmentPlaceholder": "Select scope access assignment",
+        "addScopedAssignment": "Grant scoped access",
+        "permissionOverride": {
+          "title": "Edit custom permissions",
+          "edit": "Edit permissions",
+          "save": "Save permissions",
+          "reset": "Reset to default",
+          "overrideMode": "This assignment is using its own override permission list.",
+          "inheritedMode": "This assignment is inheriting permissions from role/scope. Saving changes will enable override.",
+          "selectedCount": "{{count}} selected permissions",
+          "inheritedCount": "{{count}} inherited permissions",
+          "effectiveCount": "{{count}} effective permissions"
+        },
         "cancel": "Cancel",
         "submit": "Save changes",
         "success": "Access updated successfully!"

@@ -7,7 +7,6 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
-import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
 import {
   Avatar,
   Box,
@@ -56,7 +55,7 @@ import {
   useDeletePermissionMutation,
   useResetAccountPasswordMutation,
   useSetScopedRolePermissionsMutation,
-  useUpdateAccountAccessMutation,
+  useUpdateAccessAssignmentMutation,
   useUpdateAccountStatusMutation,
   useUpdatePermissionMutation,
   useUpdateRoleMutation,
@@ -79,6 +78,11 @@ import {
   PERMISSION_STATUS_OPTIONS,
 } from '../utils/permissionsDisplay'
 import {
+  buildAccessAssignmentResetPayload,
+  buildScopeAssignmentValue,
+  parseScopeAssignmentValue,
+} from '../utils/rbacApi'
+import {
   filterPermissionsForRole,
   getDefaultPermissionMeta,
   getRolePermissionIds,
@@ -99,6 +103,7 @@ import {
   getScopeDepartmentName,
   getScopeDisplayName,
   getScopeResourceOptions,
+  getScopeTypeLabel,
   getScopeTypeMeta,
   SCOPE_CREATE_TYPE_OPTIONS,
   SCOPE_DEPARTMENT_FALLBACK,
@@ -135,14 +140,12 @@ const ACCOUNT_STATUSES = [
   { value: 'archived', label: 'Đã lưu trữ' },
 ]
 
-const SCOPE_TYPES_FOR_FORM = SCOPE_CREATE_TYPE_OPTIONS
-
 const INITIAL_USER_FORM = {
   fullName: '',
   email: '',
   password: '',
   roleId: '',
-  scopeType: 'global',
+  scopeType: '',
   scopeId: '',
   customPermissionIds: [],
 }
@@ -219,6 +222,33 @@ function getScopeParent(scope) {
   return getScopeDepartmentName(scope)
 }
 
+function getScopeAssignmentLabel(scope) {
+  return scope ? `${getScopeName(scope)} - ${getScopeTypeLabel(scope.scopeType)}` : ''
+}
+
+function getScopeSelectValue(scope) {
+  return buildScopeAssignmentValue({
+    scopeType: scope?.scopeType,
+    scopeId: scope?.scopeId || scope?.resource?.id || scope?.resource?._id,
+  })
+}
+
+function getAssignmentRoleId(assignment, roles = []) {
+  const explicitRoleId = assignment?.roleId || assignment?.role?.id || assignment?.role?._id
+  if (explicitRoleId) return explicitRoleId
+
+  const roleRef = assignment?.roles?.[0] || assignment?.role?.code || assignment?.role?.name
+  const matchedRole = roles.find(
+    (role) => role.id === roleRef || role.code === roleRef || role.name === roleRef,
+  )
+
+  return matchedRole?.id || ''
+}
+
+function getAssignmentScopeValue(assignment) {
+  return getScopeSelectValue(assignment)
+}
+
 function getRoleLabel(role) {
   return role?.name || role?.code || '—'
 }
@@ -279,15 +309,15 @@ function UserHeaderCell({ children, align = 'left', width }) {
   )
 }
 
-function ScopeTypeBadge({ scopeType, t }) {
+function ScopeTypeBadge({ scopeType }) {
   const meta = getScopeTypeMeta(scopeType)
 
   return (
     <Chip
       size="small"
       variant="outlined"
-      label={t(meta.labelKey)}
-      className={`!h-7 !rounded-md text-xs font-semibold ${meta.className}`}
+      label={getScopeTypeLabel(scopeType)}
+      className={`!h-7 !rounded-full text-xs font-semibold ${meta.className}`}
       sx={{ '& .MuiChip-label': { px: '10px' } }}
     />
   )
@@ -390,6 +420,264 @@ function PermissionPicker({ permissions, selectedIds, onChange, dense = false })
         )
       })}
     </Stack>
+  )
+}
+
+function getAssignmentPermissionSelection(assignment) {
+  if (!assignment) return []
+  if (Array.isArray(assignment.overridePermissionIds)) return assignment.overridePermissionIds
+  if (Array.isArray(assignment.effectivePermissionIds)) return assignment.effectivePermissionIds
+  return assignment.customPermissionIds ?? []
+}
+
+function PermissionOverrideDialog({ open, assignment, permissions, pending, onClose, onSave, t }) {
+  const [selectedIds, setSelectedIds] = useState(() => getAssignmentPermissionSelection(assignment))
+  const inheritedIds = assignment?.inheritedPermissionIds ?? []
+  const effectiveIds = assignment?.effectivePermissionIds ?? []
+  const isOverridden = Boolean(assignment?.isPermissionOverridden)
+  const roleLabel = assignment?.roles?.[0] || assignment?.role?.code || 'anonymous'
+  const scopeLabel =
+    assignment?.scopeName || assignment?.resource?.name || assignment?.scopeId || 'unknown'
+
+  if (!assignment) return null
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{ className: 'rounded-xl' }}
+    >
+      <DialogTitle className="pb-2 pr-10 font-semibold text-ink">
+        {t('rbac.users.editAccessModal.permissionOverride.title')}
+        <IconButton
+          onClick={onClose}
+          aria-label={t('common.close')}
+          className="!absolute !right-3 !top-3 !text-ink-muted"
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent className="flex flex-col gap-4 px-6 pb-4 pt-2">
+        <Box className="rounded-lg border border-border bg-page px-4 py-3">
+          <Stack className="gap-2">
+            <Box className="flex flex-wrap items-center gap-2">
+              <UserRoleChip role={roleLabel} />
+              <ScopeTypeBadge scopeType={assignment.scopeType} />
+              <Typography variant="body2" className="font-medium text-ink-secondary">
+                {scopeLabel}
+              </Typography>
+            </Box>
+            <Typography variant="caption" className="text-ink-muted">
+              {isOverridden
+                ? t('rbac.users.editAccessModal.permissionOverride.overrideMode')
+                : t('rbac.users.editAccessModal.permissionOverride.inheritedMode')}
+            </Typography>
+            <Box className="flex flex-wrap gap-2">
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t('rbac.users.editAccessModal.permissionOverride.selectedCount', {
+                  count: selectedIds.length,
+                })}
+                className="!h-6 !rounded-md !border-primary !bg-primary-light text-xs font-medium !text-primary"
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t('rbac.users.editAccessModal.permissionOverride.inheritedCount', {
+                  count: inheritedIds.length,
+                })}
+                className="!h-6 !rounded-md !border-border !bg-surface text-xs font-medium !text-ink-secondary"
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t('rbac.users.editAccessModal.permissionOverride.effectiveCount', {
+                  count: effectiveIds.length,
+                })}
+                className="!h-6 !rounded-md !border-success !bg-success-bg text-xs font-medium !text-success"
+              />
+            </Box>
+          </Stack>
+        </Box>
+        <PermissionPicker
+          dense
+          permissions={permissions}
+          selectedIds={selectedIds}
+          onChange={setSelectedIds}
+        />
+      </DialogContent>
+      <DialogActions className="justify-between gap-3 border-t border-border px-6 pb-6 pt-4">
+        <Button
+          variant="outlined"
+          color="inherit"
+          className="h-10 rounded-lg border-border px-5 text-sm font-semibold text-ink-secondary"
+          disabled={pending}
+          onClick={() =>
+            onSave({
+              assignmentId: assignment.assignmentId,
+              values: { overridePermissionIds: null },
+            })
+          }
+        >
+          {t('rbac.users.editAccessModal.permissionOverride.reset')}
+        </Button>
+        <Box className="flex items-center gap-3">
+          <Button
+            variant="outlined"
+            className="h-10 rounded-lg px-5 text-sm font-semibold text-ink-secondary"
+            onClick={onClose}
+          >
+            {t('rbac.users.editAccessModal.cancel')}
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            className="h-10 rounded-lg px-5 text-sm font-semibold"
+            disabled={pending}
+            onClick={() =>
+              onSave({
+                assignmentId: assignment.assignmentId,
+                values: { overridePermissionIds: selectedIds },
+              })
+            }
+          >
+            {t('rbac.users.editAccessModal.permissionOverride.save')}
+          </Button>
+        </Box>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+function AssignmentAccessRow({
+  assignment,
+  roles,
+  scopeAssignmentOptions,
+  pending,
+  onChangeAssignment,
+  onEditPermission,
+  onDeleteAssignment,
+  t,
+}) {
+  const [roleId, setRoleId] = useState(() => getAssignmentRoleId(assignment, roles))
+  const [scopeAssignmentValue, setScopeAssignmentValue] = useState(() =>
+    getAssignmentScopeValue(assignment),
+  )
+  const selectedScopeAssignment = scopeAssignmentOptions.find(
+    (scope) => getScopeSelectValue(scope) === scopeAssignmentValue,
+  )
+
+  const updateAssignment = (nextRoleId, nextScopeAssignmentValue) => {
+    const { scopeType, scopeId } = parseScopeAssignmentValue(nextScopeAssignmentValue)
+
+    if (!nextRoleId || !scopeType || !scopeId) return
+
+    onChangeAssignment({
+      assignmentId: assignment.assignmentId,
+      values: buildAccessAssignmentResetPayload({
+        roleId: nextRoleId,
+        scopeType,
+        scopeId,
+      }),
+    })
+  }
+
+  return (
+    <Box className="grid grid-cols-1 items-center gap-3 rounded-lg border border-border bg-surface px-3 py-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_auto]">
+      <FormControl fullWidth size="small">
+        <InputLabel>{t('rbac.users.editAccessModal.assignmentRole')}</InputLabel>
+        <Select
+          label={t('rbac.users.editAccessModal.assignmentRole')}
+          value={roleId}
+          disabled={pending}
+          onChange={(event) => {
+            const nextRoleId = event.target.value
+            setRoleId(nextRoleId)
+            updateAssignment(nextRoleId, scopeAssignmentValue)
+          }}
+        >
+          {roles.map((role) => (
+            <MenuItem key={role.id} value={role.id}>
+              {getRoleLabel(role)}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <FormControl fullWidth size="small">
+        <InputLabel shrink>{t('rbac.users.editAccessModal.scopeAssignment')}</InputLabel>
+        <Select
+          displayEmpty
+          label={t('rbac.users.editAccessModal.scopeAssignment')}
+          value={scopeAssignmentValue}
+          disabled={pending}
+          renderValue={(value) =>
+            value && selectedScopeAssignment ? (
+              getScopeAssignmentLabel(selectedScopeAssignment)
+            ) : (
+              <Typography component="span" variant="body2" className="text-ink-muted">
+                {t('rbac.users.editAccessModal.scopeAssignmentPlaceholder')}
+              </Typography>
+            )
+          }
+          onChange={(event) => {
+            const nextScopeAssignmentValue = event.target.value
+            setScopeAssignmentValue(nextScopeAssignmentValue)
+            updateAssignment(roleId, nextScopeAssignmentValue)
+          }}
+        >
+          <MenuItem disabled value="">
+            {t('rbac.users.editAccessModal.scopeAssignmentPlaceholder')}
+          </MenuItem>
+          {scopeAssignmentOptions.map((scope) => {
+            const value = getScopeSelectValue(scope)
+
+            return (
+              <MenuItem key={value} value={value}>
+                <Box className="flex w-full items-center justify-between gap-3">
+                  <Typography variant="body2" className="font-medium text-ink">
+                    {getScopeName(scope)}
+                  </Typography>
+                  <ScopeTypeBadge scopeType={scope.scopeType} />
+                </Box>
+              </MenuItem>
+            )
+          })}
+        </Select>
+      </FormControl>
+
+      <Box className="flex items-center justify-end gap-1">
+        <Tooltip title={t('rbac.users.editAccessModal.permissionOverride.edit')} arrow>
+          <span>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ManageAccountsOutlinedIcon sx={{ fontSize: 18 }} />}
+              disabled={pending}
+              className="h-10 rounded-lg px-3 text-sm font-semibold"
+              onClick={() => onEditPermission(assignment)}
+            >
+              {t('rbac.users.editAccessModal.permissionOverride.edit')}
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={t('common.delete')} arrow>
+          <span>
+            <IconButton
+              size="small"
+              className="!text-ink-muted hover:!text-danger"
+              disabled={pending}
+              onClick={() => onDeleteAssignment(assignment.assignmentId)}
+            >
+              <DeleteOutlineIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
+    </Box>
   )
 }
 
@@ -676,81 +964,6 @@ function AccountFormDialog({ open, onClose, roles, onSubmit, pending, t }) {
   )
 }
 
-function GlobalAccessEditor({ accountId, access, roles, permissions, onUpdateAccess, t }) {
-  const [globalRoleIds, setGlobalRoleIds] = useState(() => access?.roleIds ?? [])
-  const [customPermissionIds, setCustomPermissionIds] = useState(
-    () => access?.customPermissionIds ?? [],
-  )
-
-  if (!access) {
-    return (
-      <Section>
-        <Stack className="gap-4 p-4">
-          <Typography variant="body1" className="font-semibold text-ink">
-            {t('rbac.users.editAccessModal.globalAccess')}
-          </Typography>
-          <Typography variant="body2" color="text.disabled">
-            {t('rbac.common.loading')}
-          </Typography>
-        </Stack>
-      </Section>
-    )
-  }
-
-  const saveGlobal = () => {
-    onUpdateAccess({
-      accountId,
-      values: {
-        roleIds: globalRoleIds,
-        customPermissionIds,
-      },
-    })
-  }
-
-  return (
-    <Section>
-      <Stack
-        id="rbac-global-access-form"
-        component="form"
-        className="p-4 gap-5"
-        onSubmit={(event) => {
-          event.preventDefault()
-          saveGlobal()
-        }}
-      >
-        <Typography variant="body1" className="font-semibold text-ink ">
-          {t('rbac.users.editAccessModal.globalAccess')}
-        </Typography>
-        <FormControl fullWidth>
-          <InputLabel>{t('rbac.users.editAccessModal.globalRoles')}</InputLabel>
-          <Select
-            multiple
-            label={t('rbac.users.editAccessModal.globalRoles')}
-            value={globalRoleIds}
-            onChange={(event) => setGlobalRoleIds(event.target.value)}
-            renderValue={(selected) =>
-              selected.map((roleId) => getRoleLabel(findById(roles, roleId))).join(', ')
-            }
-          >
-            {roles.map((role) => (
-              <MenuItem key={role.id} value={role.id}>
-                <Checkbox checked={globalRoleIds.includes(role.id)} />
-                {getRoleLabel(role)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <PermissionPicker
-          dense
-          permissions={permissions}
-          selectedIds={customPermissionIds}
-          onChange={setCustomPermissionIds}
-        />
-      </Stack>
-    </Section>
-  )
-}
-
 function EditAccessDialog({
   accountId,
   open,
@@ -758,260 +971,214 @@ function EditAccessDialog({
   roles,
   permissions,
   scopes,
-  onUpdateAccess,
   onCreateScopedAssignment,
+  onUpdateAssignment,
   onDeleteAssignment,
   pending,
   t,
 }) {
   const { data } = useAccountQuery(accountId, { enabled: open && Boolean(accountId) })
+  const [permissionAssignment, setPermissionAssignment] = useState(null)
   const [assignmentForm, setAssignmentForm] = useState({
     roleId: '',
-    scopeType: 'department',
-    scopeId: '',
-    customPermissionIds: [],
+    scopeAssignmentValue: '',
   })
 
   const account = data?.account
   const profile = data?.profile
+  const scopeAssignmentOptions = [...scopes, ...(data?.scopes ?? [])].reduce((options, scope) => {
+    const value = getScopeSelectValue(scope)
+    if (!value || options.some((option) => getScopeSelectValue(option) === value)) return options
+
+    return [...options, scope]
+  }, [])
+  const selectedScopeAssignment = scopeAssignmentOptions.find(
+    (scope) => getScopeSelectValue(scope) === assignmentForm.scopeAssignmentValue,
+  )
 
   const addScoped = () => {
+    const { scopeType, scopeId } = parseScopeAssignmentValue(assignmentForm.scopeAssignmentValue)
+
     onCreateScopedAssignment({
       accountId,
-      ...assignmentForm,
+      roleId: assignmentForm.roleId,
+      scopeType,
+      scopeId,
+      customPermissionIds: [],
     })
     setAssignmentForm({
       roleId: '',
-      scopeType: 'department',
-      scopeId: '',
-      customPermissionIds: [],
+      scopeAssignmentValue: '',
     })
   }
 
+  const savePermissionOverride = (payload) => {
+    onUpdateAssignment(payload, () => setPermissionAssignment(null))
+  }
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{ className: 'rounded-xl' }}
-    >
-      <DialogTitle className="pb-3 pr-10 font-semibold text-ink">
-        {t('rbac.users.editAccessModal.title', {
-          name: profile?.fullName || account?.email || '—',
-        })}
-        <IconButton
-          onClick={onClose}
-          aria-label={t('common.close')}
-          className="!absolute !right-3 !top-3 !text-ink-muted"
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent className="flex flex-col gap-5 px-6 pb-5 pt-0">
-        <Stack className="gap-4">
-          <Box className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-3">
-            <Typography variant="body2" className="text-sm text-[#1d4ed8]">
-              {t('rbac.users.editAccessModal.banner')}
-            </Typography>
-          </Box>
-
-          <GlobalAccessEditor
-            key={`${accountId}-${(data?.access?.roleIds ?? []).join('|')}-${(
-              data?.access?.customPermissionIds ?? []
-            ).join('|')}`}
-            accountId={accountId}
-            access={data?.access}
-            roles={roles}
-            permissions={permissions}
-            t={t}
-            onUpdateAccess={onUpdateAccess}
-          />
-
-          <Section>
-            <Stack className="p-4 gap-3">
-              <Typography variant="body1" className="font-semibold text-ink">
-                {t('rbac.users.editAccessModal.scopedAccess')}
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ className: 'rounded-xl' }}
+      >
+        <DialogTitle className="pb-3 pr-10 font-semibold text-ink">
+          {t('rbac.users.editAccessModal.title', {
+            name: profile?.fullName || account?.email || '—',
+          })}
+          <IconButton
+            onClick={onClose}
+            aria-label={t('common.close')}
+            className="!absolute !right-3 !top-3 !text-ink-muted"
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent className="flex flex-col gap-5 px-6 pb-5 pt-0">
+          <Stack className="gap-4">
+            <Box className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-3">
+              <Typography variant="body2" className="text-sm text-[#1d4ed8]">
+                {t('rbac.users.editAccessModal.banner')}
               </Typography>
-              <TableContainer className="rounded-lg border border-border">
-                <Table size="small">
-                  <TableHead className="bg-page">
-                    <TableRow>
-                      <UserHeaderCell width={160}>
-                        {t('rbac.users.editAccessModal.scopedColumns.role')}
-                      </UserHeaderCell>
-                      <UserHeaderCell width={140}>
-                        {t('rbac.users.editAccessModal.scopedColumns.scopeType')}
-                      </UserHeaderCell>
-                      <UserHeaderCell>
-                        {t('rbac.users.editAccessModal.scopedColumns.scopeResource')}
-                      </UserHeaderCell>
-                      <UserHeaderCell>
-                        {t('rbac.users.editAccessModal.scopedColumns.customPerms')}
-                      </UserHeaderCell>
-                      <UserHeaderCell align="right" width={48}>
-                        {' '}
-                      </UserHeaderCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(data?.scopes ?? []).length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center" className="py-8">
-                          <Typography variant="body2" className="text-ink-muted">
-                            {t('rbac.users.editAccessModal.noScopedAccess')}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      (data?.scopes ?? []).map((assignment) => (
-                        <TableRow
-                          key={assignment.assignmentId}
-                          className="h-12 border-b border-border last:border-b-0"
-                        >
-                          <TableCell>
-                            <UserRoleChip
-                              role={assignment.roles?.[0] || assignment.role?.code || 'anonymous'}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              variant="outlined"
-                              label={assignment.scopeType}
-                              className={`!h-6 !rounded-md text-xs font-medium ${
-                                assignment.scopeType === 'team'
-                                  ? '!bg-[#dcfce7] !text-[#16a34a] !border-[#16a34a]'
-                                  : '!bg-[#ede9fe] !text-[#8b5cf6] !border-[#8b5cf6]'
-                              }`}
-                              sx={{ '& .MuiChip-label': { px: '8px' } }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" className="text-ink-secondary">
-                              {assignment.scopeName || assignment.resource?.name || '—'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="caption" className="font-mono text-ink-muted">
-                              {assignment.customPermissionIds?.length
-                                ? assignment.customPermissionIds.join(', ')
-                                : '—'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <IconButton
-                              size="small"
-                              className="!text-ink-muted hover:!text-danger"
-                              onClick={() => onDeleteAssignment(assignment.assignmentId)}
-                            >
-                              <DeleteOutlineIcon sx={{ fontSize: 18 }} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+            </Box>
 
-              <Box className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                <FormControl fullWidth size="small">
-                  <InputLabel>Role</InputLabel>
-                  <Select
-                    label="Role"
-                    value={assignmentForm.roleId}
-                    onChange={(event) =>
-                      setAssignmentForm({ ...assignmentForm, roleId: event.target.value })
-                    }
-                  >
-                    {roles.map((role) => (
-                      <MenuItem key={role.id} value={role.id}>
-                        {getRoleLabel(role)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Scope Type</InputLabel>
-                  <Select
-                    label="Scope Type"
-                    value={assignmentForm.scopeType}
-                    onChange={(event) =>
-                      setAssignmentForm({ ...assignmentForm, scopeType: event.target.value })
-                    }
-                  >
-                    {SCOPE_TYPES_FOR_FORM.map((scope) => (
-                      <MenuItem key={scope.value} value={scope.value}>
-                        {t(scope.labelKey)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Scope Resource</InputLabel>
-                  <Select
-                    label="Scope Resource"
-                    value={assignmentForm.scopeId}
-                    onChange={(event) =>
-                      setAssignmentForm({ ...assignmentForm, scopeId: event.target.value })
-                    }
-                  >
-                    {scopes
-                      .filter((scope) => scope.scopeType === assignmentForm.scopeType)
-                      .map((scope) => (
-                        <MenuItem key={scope.scopeId} value={scope.scopeId}>
-                          {getScopeName(scope)}
+            <Section>
+              <Stack className="gap-4 p-4">
+                <Box>
+                  <Typography variant="body1" className="font-semibold text-ink">
+                    {t('rbac.users.editAccessModal.scopedAccess')}
+                  </Typography>
+                  <Typography variant="body2" className="mt-1 text-ink-muted">
+                    {t('rbac.users.editAccessModal.scopedAccessHint')}
+                  </Typography>
+                </Box>
+
+                <Stack className="gap-3">
+                  {(data?.scopes ?? []).length === 0 ? (
+                    <Box className="rounded-lg border border-dashed border-border px-4 py-6 text-center">
+                      <Typography variant="body2" className="text-ink-muted">
+                        {t('rbac.users.editAccessModal.noScopedAccess')}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    (data?.scopes ?? []).map((assignment) => (
+                      <AssignmentAccessRow
+                        key={assignment.assignmentId}
+                        assignment={assignment}
+                        roles={roles}
+                        scopeAssignmentOptions={scopeAssignmentOptions}
+                        pending={pending}
+                        onChangeAssignment={onUpdateAssignment}
+                        onEditPermission={setPermissionAssignment}
+                        onDeleteAssignment={onDeleteAssignment}
+                        t={t}
+                      />
+                    ))
+                  )}
+                </Stack>
+
+                <Box className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <FormControl fullWidth size="small">
+                    <InputLabel>{t('rbac.users.editAccessModal.assignmentRole')}</InputLabel>
+                    <Select
+                      label={t('rbac.users.editAccessModal.assignmentRole')}
+                      value={assignmentForm.roleId}
+                      onChange={(event) =>
+                        setAssignmentForm({ ...assignmentForm, roleId: event.target.value })
+                      }
+                    >
+                      {roles.map((role) => (
+                        <MenuItem key={role.id} value={role.id}>
+                          {getRoleLabel(role)}
                         </MenuItem>
                       ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <PermissionPicker
-                dense
-                permissions={permissions}
-                selectedIds={assignmentForm.customPermissionIds}
-                onChange={(nextIds) =>
-                  setAssignmentForm({ ...assignmentForm, customPermissionIds: nextIds })
-                }
-              />
-              <Box>
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  disabled={!assignmentForm.roleId || !assignmentForm.scopeId || pending}
-                  onClick={addScoped}
-                >
-                  Thêm scoped assignment
-                </Button>
-              </Box>
-            </Stack>
-          </Section>
-        </Stack>
-      </DialogContent>
-      <DialogActions className="gap-3 border-t border-border px-6 pb-6 pt-4">
-        <Button
-          variant="outlined"
-          size="medium"
-          className="h-10 rounded-lg px-5 text-sm font-semibold text-ink-secondary"
-          onClick={onClose}
-        >
-          {t('rbac.users.editAccessModal.cancel')}
-        </Button>
-        <Button
-          type="submit"
-          form="rbac-global-access-form"
-          variant="contained"
-          color="primary"
-          size="medium"
-          startIcon={<SaveOutlinedIcon />}
-          disabled={pending}
-          className="h-10 rounded-lg px-5 text-sm font-semibold"
-        >
-          {t('rbac.users.editAccessModal.submit')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth size="small">
+                    <InputLabel shrink>
+                      {t('rbac.users.editAccessModal.scopeAssignment')}
+                    </InputLabel>
+                    <Select
+                      displayEmpty
+                      label={t('rbac.users.editAccessModal.scopeAssignment')}
+                      value={assignmentForm.scopeAssignmentValue}
+                      renderValue={(value) =>
+                        value && selectedScopeAssignment ? (
+                          getScopeAssignmentLabel(selectedScopeAssignment)
+                        ) : (
+                          <Typography component="span" variant="body2" className="text-ink-muted">
+                            {t('rbac.users.editAccessModal.scopeAssignmentPlaceholder')}
+                          </Typography>
+                        )
+                      }
+                      onChange={(event) =>
+                        setAssignmentForm({
+                          ...assignmentForm,
+                          scopeAssignmentValue: event.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem disabled value="">
+                        {t('rbac.users.editAccessModal.scopeAssignmentPlaceholder')}
+                      </MenuItem>
+                      {scopeAssignmentOptions.map((scope) => {
+                        const value = getScopeSelectValue(scope)
+
+                        return (
+                          <MenuItem key={value} value={value}>
+                            <Box className="flex w-full items-center justify-between gap-3">
+                              <Typography variant="body2" className="font-medium text-ink">
+                                {getScopeName(scope)}
+                              </Typography>
+                              <ScopeTypeBadge scopeType={scope.scopeType} />
+                            </Box>
+                          </MenuItem>
+                        )
+                      })}
+                    </Select>
+                  </FormControl>
+                </Box>
+                <Box>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    disabled={
+                      !assignmentForm.roleId || !assignmentForm.scopeAssignmentValue || pending
+                    }
+                    onClick={addScoped}
+                  >
+                    {t('rbac.users.editAccessModal.addScopedAssignment')}
+                  </Button>
+                </Box>
+              </Stack>
+            </Section>
+          </Stack>
+        </DialogContent>
+        <DialogActions className="border-t border-border px-6 pb-6 pt-4">
+          <Button
+            variant="outlined"
+            size="medium"
+            className="h-10 rounded-lg px-5 text-sm font-semibold text-ink-secondary"
+            onClick={onClose}
+          >
+            {t('rbac.users.editAccessModal.cancel')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <PermissionOverrideDialog
+        key={permissionAssignment?.assignmentId ?? 'permission-override-closed'}
+        open={Boolean(permissionAssignment)}
+        assignment={permissionAssignment}
+        permissions={permissions}
+        pending={pending}
+        onClose={() => setPermissionAssignment(null)}
+        onSave={savePermissionOverride}
+        t={t}
+      />
+    </>
   )
 }
 
@@ -2446,8 +2613,8 @@ export default function UsersRolesPage() {
   const createAccountMutation = useCreateAccountMutation()
   const updateAccountStatusMutation = useUpdateAccountStatusMutation()
   const resetAccountPasswordMutation = useResetAccountPasswordMutation()
-  const updateAccountAccessMutation = useUpdateAccountAccessMutation()
   const createAccessAssignmentMutation = useCreateAccessAssignmentMutation()
+  const updateAccessAssignmentMutation = useUpdateAccessAssignmentMutation()
   const deactivateAccessAssignmentMutation = useDeactivateAccessAssignmentMutation()
   const createRoleMutation = useCreateRoleMutation()
   const updateRoleMutation = useUpdateRoleMutation()
@@ -3036,7 +3203,7 @@ export default function UsersRolesPage() {
                     className="h-14 border-b border-border last:border-b-0"
                   >
                     <TableCell>
-                      <ScopeTypeBadge scopeType={scope.scopeType} t={t} />
+                      <ScopeTypeBadge scopeType={scope.scopeType} />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" className="font-semibold text-ink">
@@ -3249,20 +3416,25 @@ export default function UsersRolesPage() {
         permissions={permissions}
         scopes={scopes}
         pending={
-          updateAccountAccessMutation.isPending ||
           createAccessAssignmentMutation.isPending ||
+          updateAccessAssignmentMutation.isPending ||
           deactivateAccessAssignmentMutation.isPending
         }
         onClose={closeDialog}
         t={t}
-        onUpdateAccess={(payload) =>
-          runMutation(updateAccountAccessMutation, payload, t('rbac.users.editAccessModal.success'))
-        }
         onCreateScopedAssignment={(payload) =>
           runMutation(
             createAccessAssignmentMutation,
             payload,
             t('rbac.users.editAccessModal.success'),
+          )
+        }
+        onUpdateAssignment={(payload, done) =>
+          runMutation(
+            updateAccessAssignmentMutation,
+            payload,
+            t('rbac.users.editAccessModal.success'),
+            done,
           )
         }
         onDeleteAssignment={(assignmentId) =>

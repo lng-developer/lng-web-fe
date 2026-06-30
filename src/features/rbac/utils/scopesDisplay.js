@@ -16,6 +16,8 @@ export const SCOPE_STATUS_OPTIONS = [
 
 export const SCOPE_DEPARTMENT_FALLBACK = '—'
 
+export const SCOPE_TYPE_UNKNOWN_LABEL = 'unknown'
+
 const SCOPE_TYPE_META = {
   global: {
     labelKey: 'rbac.scopes.types.global',
@@ -29,6 +31,13 @@ const SCOPE_TYPE_META = {
     labelKey: 'rbac.scopes.types.team',
     className: '!border-success !bg-success-bg !text-success',
   },
+  shop: {
+    className: '!border-warning !bg-warning-bg !text-warning',
+  },
+}
+
+const SCOPE_TYPE_FALLBACK_META = {
+  className: '!border-border !bg-page !text-ink-muted',
 }
 
 function cleanString(value) {
@@ -75,7 +84,11 @@ function getTeamDepartmentNames(team = {}) {
 }
 
 export function getScopeTypeMeta(scopeType = '') {
-  return SCOPE_TYPE_META[scopeType] || SCOPE_TYPE_META.global
+  return SCOPE_TYPE_META[scopeType] || SCOPE_TYPE_FALLBACK_META
+}
+
+export function getScopeTypeLabel(scopeType) {
+  return cleanString(scopeType) || SCOPE_TYPE_UNKNOWN_LABEL
 }
 
 export function getScopeResourceOptions(scopeType, departments = [], teams = []) {

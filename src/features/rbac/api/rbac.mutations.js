@@ -5,6 +5,7 @@ import { ENDPOINTS } from '@/services/endpoints'
 
 import {
   buildAccessAssignmentPayload,
+  buildAccessAssignmentUpdatePayload,
   buildAccountAccessPayload,
   buildAccountCreatePayload,
   buildPermissionPayload,
@@ -138,7 +139,12 @@ export function useCreateAccessAssignmentMutation() {
 
 export function useUpdateAccessAssignmentMutation() {
   return useRbacMutation(({ assignmentId, values }) =>
-    apiClient.patch(ENDPOINTS.RBAC.ACCESS_ASSIGNMENT(assignmentId), values).then(unwrapApiData),
+    apiClient
+      .patch(
+        ENDPOINTS.RBAC.ACCESS_ASSIGNMENT(assignmentId),
+        buildAccessAssignmentUpdatePayload(values),
+      )
+      .then(unwrapApiData),
   )
 }
 

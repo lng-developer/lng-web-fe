@@ -2,12 +2,17 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  buildAccessAssignmentPayload,
+  buildAccessAssignmentResetPayload,
+  buildAccessAssignmentUpdatePayload,
   buildAccountCreatePayload,
   buildCleanQuery,
   buildPermissionPayload,
   buildRolePayload,
+  buildScopeAssignmentValue,
   buildScopedRolePermissionPayload,
   buildScopePayload,
+  parseScopeAssignmentValue,
   unwrapApiData,
 } from './rbacApi.js'
 
@@ -53,6 +58,92 @@ test('buildAccountCreatePayload sends backend assignment field names', () => {
       ],
     },
   )
+})
+
+test('buildAccessAssignmentPayload preserves override permission semantics', () => {
+  assert.deepEqual(
+    buildAccessAssignmentPayload({
+      accountId: 'account-id',
+      roleId: 'role-id',
+      scopeType: 'team',
+      scopeId: ' scope-id ',
+      customPermissionIds: ['p1', '', 'p2'],
+      overridePermissionIds: [],
+    }),
+    {
+      accountId: 'account-id',
+      roleId: 'role-id',
+      scopeType: 'team',
+      scopeId: 'scope-id',
+      customPermissionIds: ['p1', 'p2'],
+      overridePermissionIds: [],
+    },
+  )
+})
+
+test('buildAccessAssignmentUpdatePayload keeps null reset and cleans override arrays', () => {
+  assert.deepEqual(
+    buildAccessAssignmentUpdatePayload({
+      roleId: 'role-id',
+      scopeType: 'shop',
+      scopeId: '',
+      customPermissionIds: ['p1', '', 'p2'],
+      overridePermissionIds: null,
+      ignored: 'field',
+    }),
+    {
+      roleId: 'role-id',
+      scopeType: 'shop',
+      scopeId: null,
+      customPermissionIds: ['p1', 'p2'],
+      overridePermissionIds: null,
+    },
+  )
+
+  assert.deepEqual(
+    buildAccessAssignmentUpdatePayload({
+      overridePermissionIds: ['p3', '', 'p4'],
+    }),
+    {
+      overridePermissionIds: ['p3', 'p4'],
+    },
+  )
+})
+
+test('buildAccessAssignmentUpdatePayload resets permission override when role or scope changes', () => {
+  assert.deepEqual(
+    buildAccessAssignmentResetPayload({
+      roleId: 'role-leader',
+      scopeType: 'shop',
+      scopeId: 'shop-001',
+    }),
+    {
+      roleId: 'role-leader',
+      scopeType: 'shop',
+      scopeId: 'shop-001',
+      overridePermissionIds: null,
+    },
+  )
+})
+
+test('scope assignment select value keeps scope type and scope id together', () => {
+  assert.equal(
+    buildScopeAssignmentValue({
+      scopeType: 'shop',
+      scopeId: 'shop-001',
+    }),
+    'shop::shop-001',
+  )
+
+  assert.deepEqual(parseScopeAssignmentValue('team::qc-team-b'), {
+    scopeType: 'team',
+    scopeId: 'qc-team-b',
+  })
+
+  assert.deepEqual(parseScopeAssignmentValue(''), {
+    scopeType: '',
+    scopeId: '',
+  })
 })
 
 test('buildRolePayload normalizes code and permissionIds', () => {

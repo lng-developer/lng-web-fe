@@ -1,6 +1,7 @@
 import { buildPermissionCode } from './permissionsDisplay.js'
 
 const MAX_LIMIT = 100
+const SCOPE_ASSIGNMENT_VALUE_SEPARATOR = '::'
 
 function cleanString(value) {
   return typeof value === 'string' ? value.trim() : value
@@ -13,6 +14,31 @@ function optionalString(value) {
 
 function cleanArray(values = []) {
   return Array.isArray(values) ? values.filter(Boolean) : []
+}
+
+function hasOwnValue(values, key) {
+  return Object.hasOwn(values || {}, key) && values[key] !== undefined
+}
+
+function normalizePermissionOverride(values = {}) {
+  if (!hasOwnValue(values, 'overridePermissionIds')) return {}
+
+  return {
+    overridePermissionIds:
+      values.overridePermissionIds === null ? null : cleanArray(values.overridePermissionIds),
+  }
+}
+
+export function buildScopeAssignmentValue(scope = {}) {
+  return scope.scopeType && scope.scopeId
+    ? `${scope.scopeType}${SCOPE_ASSIGNMENT_VALUE_SEPARATOR}${scope.scopeId}`
+    : ''
+}
+
+export function parseScopeAssignmentValue(value = '') {
+  const [scopeType = '', scopeId = ''] = String(value).split(SCOPE_ASSIGNMENT_VALUE_SEPARATOR)
+
+  return { scopeType, scopeId }
 }
 
 export function buildCleanQuery(query = {}) {
@@ -96,7 +122,30 @@ export function buildAccessAssignmentPayload(values) {
     scopeType: values.scopeType || 'global',
     scopeId: optionalString(values.scopeId),
     customPermissionIds: cleanArray(values.customPermissionIds),
+    ...normalizePermissionOverride(values),
   }
+}
+
+export function buildAccessAssignmentUpdatePayload(values = {}) {
+  return {
+    ...(hasOwnValue(values, 'roleId') ? { roleId: values.roleId } : {}),
+    ...(hasOwnValue(values, 'scopeType') ? { scopeType: values.scopeType } : {}),
+    ...(hasOwnValue(values, 'scopeId') ? { scopeId: optionalString(values.scopeId) } : {}),
+    ...(hasOwnValue(values, 'customPermissionIds')
+      ? { customPermissionIds: cleanArray(values.customPermissionIds) }
+      : {}),
+    ...normalizePermissionOverride(values),
+    ...(hasOwnValue(values, 'status') ? { status: values.status } : {}),
+  }
+}
+
+export function buildAccessAssignmentResetPayload(values = {}) {
+  return buildAccessAssignmentUpdatePayload({
+    roleId: values.roleId,
+    scopeType: values.scopeType,
+    scopeId: values.scopeId,
+    overridePermissionIds: null,
+  })
 }
 
 export function buildScopedRolePermissionPayload(values) {

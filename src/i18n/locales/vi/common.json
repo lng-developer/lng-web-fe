@@ -11,7 +11,8 @@
     "userMenu": "Menu người dùng"
   },
   "common": {
-    "close": "Đóng"
+    "close": "Đóng",
+    "delete": "Xoá"
   },
   "nav": {
     "home": "Trang chủ",
@@ -202,10 +203,11 @@
       },
       "editAccessModal": {
         "title": "Edit Access — {{name}}",
-        "banner": "Department/Team membership được quản lý ở tab Scopes — modal này chỉ quản lý role và permission.",
+        "banner": "Mỗi scope assignment có role, scope và bộ quyền riêng. Đổi role hoặc scope sẽ reset quyền riêng về mặc định theo role/scope.",
         "globalAccess": "Global Access",
         "globalRoles": "Global Roles",
         "scopedAccess": "Scoped Access Assignments",
+        "scopedAccessHint": "Chỉnh role/scope trực tiếp trên từng dòng. Dùng Sửa quyền để bật/tắt permission riêng cho assignment đó.",
         "scopedColumns": {
           "role": "Role",
           "scopeType": "Scope Type",
@@ -213,6 +215,21 @@
           "customPerms": "Custom Perms"
         },
         "noScopedAccess": "Chưa có scoped access nào được gán",
+        "assignmentRole": "Vai trò",
+        "scopeAssignment": "Phân quyền theo scope",
+        "scopeAssignmentPlaceholder": "Chọn scope access assignment",
+        "addScopedAssignment": "Cấp scoped access",
+        "permissionOverride": {
+          "title": "Chỉnh sửa quyền riêng",
+          "edit": "Sửa quyền",
+          "save": "Lưu quyền",
+          "reset": "Reset về mặc định",
+          "overrideMode": "Đang dùng danh sách quyền override riêng cho assignment này.",
+          "inheritedMode": "Đang kế thừa quyền từ role/scope. Lưu thay đổi sẽ bật override.",
+          "selectedCount": "{{count}} quyền được chọn",
+          "inheritedCount": "{{count}} quyền kế thừa",
+          "effectiveCount": "{{count}} quyền hiệu lực"
+        },
         "cancel": "Huỷ",
         "submit": "Lưu thay đổi",
         "success": "Cập nhật quyền truy cập thành công!"
