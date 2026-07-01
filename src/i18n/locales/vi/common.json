@@ -8,7 +8,10 @@
     "notifications": "Thông báo",
     "language": "Đổi ngôn ngữ",
     "roleChip": "Vai trò hiện tại",
-    "userMenu": "Menu người dùng"
+    "userMenu": "Menu người dùng",
+    "profile": "Thông tin cá nhân",
+    "departments": "Phòng ban",
+    "logout": "Đăng xuất"
   },
   "common": {
     "close": "Đóng",
@@ -459,6 +462,145 @@
       "users": "Người dùng",
       "orders": "Đơn hàng",
       "revenue": "Doanh thu"
+    }
+  },
+  "profile": {
+    "title": "Thông tin cá nhân",
+    "description": "Thông tin tài khoản hiện tại của bạn trong hệ thống LNG.",
+    "breadcrumb": "Dashboard / Thông tin cá nhân",
+    "selfCard": {
+      "title": "Thông tin cá nhân",
+      "description": "Bạn có thể tự cập nhật các thông tin dưới đây."
+    },
+    "adminCard": {
+      "title": "Thông tin do Admin cấp",
+      "description": "Không thể tự chỉnh sửa."
+    },
+    "fields": {
+      "fullName": "Họ và tên",
+      "birthday": "Ngày tháng năm sinh",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "citizenId": "Số CCCD",
+      "address": "Địa chỉ",
+      "role": "Vai trò",
+      "status": "Trạng thái"
+    },
+    "adminFields": {
+      "username": "Tên đăng nhập",
+      "role": "Vai trò",
+      "department": "Phòng ban",
+      "status": "Trạng thái",
+      "createdAt": "Ngày tạo tài khoản",
+      "createdBy": "Cấp tài khoản bởi"
+    },
+    "placeholders": {
+      "fullName": "Admin User",
+      "birthday": "dd/mm/yyyy",
+      "phone": "09xx xxx xxx",
+      "email": "ten@gmail.com",
+      "citizenId": "xxxxxxxxxxxx",
+      "address": "Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+    },
+    "actions": {
+      "update": "Lưu thay đổi"
+    },
+    "defaults": {
+      "department": "— (toàn hệ thống)",
+      "createdBy": "Hệ thống"
+    },
+    "status": {
+      "active": "Đang hoạt động",
+      "inactive": "Ngừng hoạt động"
+    }
+  },
+  "departments": {
+    "title": "Phòng ban",
+    "description": "Danh sách phòng ban nội bộ và trạng thái vận hành hiện tại.",
+    "organizationTitle": "Organization Structure",
+    "organizationDescription": "Quản lý cây phòng ban và team theo toàn doanh nghiệp.",
+    "departmentCardTitle": "Phòng ban",
+    "total": "Tổng",
+    "actions": {
+      "refresh": "Làm mới",
+      "addDepartment": "Phòng ban mới",
+      "addTeam": "Team mới"
+    },
+    "columns": {
+      "department": ["CODE / NAME", "TRẠNG THÁI", "CHỈ SỐ"],
+      "team": ["CODE / NAME", "TRẠNG THÁI", "SỐ LƯỢNG"]
+    },
+    "units": {
+      "team": {
+        "singular": "Team",
+        "plural": "Teams"
+      },
+      "member": {
+        "singular": "Member",
+        "plural": "Members"
+      },
+      "leader": {
+        "singular": "Leader",
+        "plural": "Leaders"
+      },
+      "staff": {
+        "singular": "Staff",
+        "plural": "Staff"
+      }
+    },
+    "modal": {
+      "createDepartment": {
+        "title": "Tạo phòng ban mới",
+        "close": "Đóng modal tạo phòng ban",
+        "fields": {
+          "code": "Mã phòng ban",
+          "name": "Tên phòng ban",
+          "description": "Mô tả",
+          "status": "Trạng thái"
+        },
+        "placeholders": {
+          "code": "VD: DEPT-HR",
+          "name": "VD: Nhân sự",
+          "description": "Mô tả ngắn về chức năng phòng ban..."
+        },
+        "actions": {
+          "cancel": "Hủy",
+          "submit": "Tạo phòng ban"
+        }
+      },
+      "createTeam": {
+        "title": "Tạo team mới",
+        "close": "Đóng modal tạo team",
+        "fields": {
+          "code": "Mã team",
+          "name": "Tên team",
+          "department": "Phòng ban",
+          "leader": "Leader",
+          "status": "Trạng thái"
+        },
+        "placeholders": {
+          "code": "VD: TEAM-QC-03",
+          "name": "VD: QC Team C",
+          "leader": "Chọn người phụ trách..."
+        },
+        "actions": {
+          "cancel": "Hủy",
+          "submit": "Tạo"
+        }
+      }
+    },
+    "summary": {
+      "totalDepartments": "Tổng phòng ban",
+      "totalEmployees": "Tổng nhân sự",
+      "activeDepartments": "Đang hoạt động"
+    },
+    "fields": {
+      "manager": "Quản lý",
+      "employeeCount": "Nhân sự"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Tạm dừng"
     }
   },
   "feedback": {

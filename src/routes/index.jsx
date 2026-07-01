@@ -11,6 +11,8 @@ import ProtectedRoute from '@/routes/ProtectedRoute'
 import PublicRoute from '@/routes/PublicRoute'
 
 const HomePage = lazy(() => import('@/features/home/pages/HomePage'))
+const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'))
+const DepartmentsPage = lazy(() => import('@/features/departments/pages/DepartmentsPage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const UsersRolesPage = lazy(() => import('@/features/rbac/pages/UsersRolesPage'))
 const UiKitPage = lazy(() => import('@/features/ui-kit/pages/UiKitPage'))

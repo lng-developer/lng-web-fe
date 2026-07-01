@@ -8,7 +8,10 @@
     "notifications": "Notifications",
     "language": "Change language",
     "roleChip": "Current role",
-    "userMenu": "User menu"
+    "userMenu": "User menu",
+    "profile": "Personal information",
+    "departments": "Departments",
+    "logout": "Log out"
   },
   "common": {
     "close": "Close",
@@ -459,6 +462,145 @@
       "users": "Users",
       "orders": "Orders",
       "revenue": "Revenue"
+    }
+  },
+  "profile": {
+    "title": "Personal information",
+    "description": "Your current account information in the LNG system.",
+    "breadcrumb": "Dashboard / Personal information",
+    "selfCard": {
+      "title": "Personal information",
+      "description": "You can update the information below yourself."
+    },
+    "adminCard": {
+      "title": "Admin-provided information",
+      "description": "This information cannot be edited by you."
+    },
+    "fields": {
+      "fullName": "Full name",
+      "birthday": "Date of birth",
+      "email": "Email",
+      "phone": "Phone",
+      "citizenId": "Citizen ID",
+      "address": "Address",
+      "role": "Role",
+      "status": "Status"
+    },
+    "adminFields": {
+      "username": "Username",
+      "role": "Role",
+      "department": "Department",
+      "status": "Status",
+      "createdAt": "Account created date",
+      "createdBy": "Account created by"
+    },
+    "placeholders": {
+      "fullName": "Admin User",
+      "birthday": "dd/mm/yyyy",
+      "phone": "09xx xxx xxx",
+      "email": "name@gmail.com",
+      "citizenId": "xxxxxxxxxxxx",
+      "address": "House number, street, ward, district, province/city"
+    },
+    "actions": {
+      "update": "Update"
+    },
+    "defaults": {
+      "department": "— (all system)",
+      "createdBy": "System"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    }
+  },
+  "departments": {
+    "title": "Departments",
+    "description": "Internal department list and current operating status.",
+    "organizationTitle": "Organization Structure",
+    "organizationDescription": "Manage the department and team tree across the business.",
+    "departmentCardTitle": "Departments",
+    "total": "Total",
+    "actions": {
+      "refresh": "Refresh",
+      "addDepartment": "New department",
+      "addTeam": "New team"
+    },
+    "columns": {
+      "department": ["CODE / NAME", "STATUS", "METRICS"],
+      "team": ["CODE / NAME", "STATUS", "COUNT"]
+    },
+    "units": {
+      "team": {
+        "singular": "Team",
+        "plural": "Teams"
+      },
+      "member": {
+        "singular": "Member",
+        "plural": "Members"
+      },
+      "leader": {
+        "singular": "Leader",
+        "plural": "Leaders"
+      },
+      "staff": {
+        "singular": "Staff",
+        "plural": "Staff"
+      }
+    },
+    "modal": {
+      "createDepartment": {
+        "title": "Create new department",
+        "close": "Close create department modal",
+        "fields": {
+          "code": "Department code",
+          "name": "Department name",
+          "description": "Description",
+          "status": "Status"
+        },
+        "placeholders": {
+          "code": "Ex: DEPT-HR",
+          "name": "Ex: Human Resources",
+          "description": "Short description of the department function..."
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "submit": "Create department"
+        }
+      },
+      "createTeam": {
+        "title": "Create new team",
+        "close": "Close create team modal",
+        "fields": {
+          "code": "Team code",
+          "name": "Team name",
+          "department": "Department",
+          "leader": "Leader",
+          "status": "Status"
+        },
+        "placeholders": {
+          "code": "Ex: TEAM-QC-03",
+          "name": "Ex: QC Team C",
+          "leader": "Select a person in charge..."
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "submit": "Create"
+        }
+      }
+    },
+    "summary": {
+      "totalDepartments": "Total departments",
+      "totalEmployees": "Total employees",
+      "activeDepartments": "Active departments"
+    },
+    "fields": {
+      "manager": "Manager",
+      "employeeCount": "Employees"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Paused"
     }
   },
   "feedback": {
