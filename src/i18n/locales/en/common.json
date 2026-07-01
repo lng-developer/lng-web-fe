@@ -482,6 +482,181 @@
     "clear": "Clear",
     "apply": "Apply"
   },
+  "orders": {
+    "title": "Orders",
+    "actions": {
+      "import": "Import",
+      "update": "Update",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saveChanges": "Save changes"
+    },
+    "tabs": {
+      "all": "All",
+      "new": "New Orders",
+      "missingCostCenter": "Missing Cost Center",
+      "missingPsd": "Missing PSD",
+      "awaitingPayment": "Awaiting Payment",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "openCase": "Open Case"
+    },
+    "filters": {
+      "search": "Search Order ID, Customer...",
+      "refresh": "Refresh"
+    },
+    "table": {
+      "orderId": "Order ID",
+      "status": "Status",
+      "createdAt": "Created At",
+      "orderDate": "Order Date",
+      "shippingType": "Shipping Type",
+      "customer": "Customer",
+      "basecost": "Basecost",
+      "store": "Store",
+      "handling": "Handling",
+      "case": "Case"
+    },
+    "detail": {
+      "productInfo": "Product Information",
+      "customization": "Customization",
+      "fulfillment": "Quantity & Shipping"
+    },
+    "fields": {
+      "psd": "PSD:",
+      "pngStatus": "PNG Status:",
+      "scaleBy": "Scale By:",
+      "qcBy": "QC By:",
+      "sku": "SKU:",
+      "asinType": "ASIN Type:",
+      "asin": "ASIN:",
+      "psdId": "PSD ID:",
+      "seller": "Seller:",
+      "team": "Team:",
+      "productType": "Select Product Type:",
+      "shirtColor": "Choose Shirt Color:",
+      "selectSize": "Select Size:",
+      "customerPhoto": "Customer Photo",
+      "customerName": "Custom Name:",
+      "year": "Enter Year:",
+      "customSleeve": "Select Custom Sleeve:",
+      "rightSleeve": "Right Sleeve Customization:",
+      "leftSleeve": "Left Sleeve Customization:",
+      "priority": "Priority Production:",
+      "customizationUrl": "Customization Url:",
+      "quantity": "Quantity:",
+      "fulfillQty": "Fulfill Qty",
+      "new": "New",
+      "vendorProduct": "Vendor Product:",
+      "size": "Size:",
+      "color": "Color:",
+      "fulfillName": "Fulfill Name:",
+      "status": "Status",
+      "tracking": "Tracking",
+      "note": "Note"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "openCase": {
+      "title": "Open case",
+      "placeholder": "Select a case...",
+      "options": {
+        "missingPsd": "Missing PSD",
+        "customerRequest": "Customer Request",
+        "shippingIssue": "Shipping Issue",
+        "productionDelay": "Production Delay"
+      }
+    },
+    "importOrders": {
+      "title": "Import Orders",
+      "store": "STORE",
+      "storePlaceholder": "Select store...",
+      "file": "FILE",
+      "uploadTitle": "Click to upload or drop .txt file",
+      "uploadHint": ".txt files only"
+    },
+    "updateCustomer": {
+      "title": "Update Customer",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "address": "Address",
+        "address2": "Address 2",
+        "state": "State",
+        "city": "City",
+        "country": "Country",
+        "zipCode": "Zip Code",
+        "phoneNumber": "Phone Number"
+      },
+      "placeholders": {
+        "name": "Name",
+        "email": "Email",
+        "address": "Address",
+        "address2": "Address 2",
+        "state": "State",
+        "city": "City",
+        "country": "Country",
+        "zipCode": "Zip Code",
+        "phoneNumber": "Phone Number"
+      }
+    },
+    "values": {
+      "channels": {
+        "all": "All — Amazon + Etsy",
+        "amazon": "Amazon",
+        "etsy": "Etsy"
+      },
+      "shops": {
+        "all": "All Shops"
+      },
+      "sellers": {
+        "all": "All Sellers"
+      },
+      "status": {
+        "new": "New",
+        "fulfilled": "Fulfilled",
+        "shipped": "Shipped",
+        "cancelled": "Cancelled",
+        "pending": "Pending",
+        "needScale": "Need Scale"
+      },
+      "shipping": {
+        "standard": "Standard",
+        "secondDay": "Second Day",
+        "ground": "Ground",
+        "overnight": "Overnight",
+        "economy": "Economy",
+        "expedited": "Expedited"
+      },
+      "stores": {
+        "tanTan": "Tan tan",
+        "lngGroup": "LNG Group"
+      },
+      "handling": {
+        "fiveDays": "5 days",
+        "sixDays": "6 days",
+        "sevenDays": "7 days"
+      },
+      "relative": {
+        "oneHourAgo": "1 hour ago",
+        "sixDaysAgo": "6 days ago",
+        "sevenDaysAgo": "7 days ago",
+        "eightDaysAgo": "8 days ago",
+        "tenDaysAgo": "10 days ago"
+      },
+      "common": {
+        "noData": "No data",
+        "normal": "Normal",
+        "noThankYou": "No, Thank you.",
+        "tracking": "Tracking",
+        "note": "Note"
+      }
+    }
+  },
   "errors": {
     "backHome": "Back to home",
     "unauthorized": {
