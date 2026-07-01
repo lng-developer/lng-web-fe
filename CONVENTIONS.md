@@ -129,7 +129,7 @@ export default function UserCard({ user, onEdit }) {
 
 **Nguyên tắc chọn công cụ:**
 
-- **Tailwind**: mặc định cho style tĩnh trong component: layout, spacing, flex/grid, responsive,
+- **Tailwind**: mặc định cho style tĩnh trong component: layout, spacing, gap, flex/grid, responsive,
   width/height, padding/margin, radius, border, shadow, cursor và màu token (`flex`, `gap-4`,
   `w-[360px]`, `rounded-lg`, `border-l-4`, `bg-surface`, `text-ink`, `md:p-6`...). Dùng được trực
   tiếp trên cả element thường và MUI component qua `className`.
