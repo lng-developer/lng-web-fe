@@ -14,7 +14,8 @@
     "logout": "Đăng xuất"
   },
   "common": {
-    "close": "Đóng"
+    "close": "Đóng",
+    "delete": "Xoá"
   },
   "nav": {
     "home": "Trang chủ",
@@ -130,6 +131,327 @@
       "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
       "passwordMismatch": "Mật khẩu xác nhận không khớp",
       "generic": "Không thể thực hiện yêu cầu, vui lòng thử lại."
+    }
+  },
+  "rbac": {
+    "title": "RBAC",
+    "common": {
+      "loading": "Đang tải dữ liệu..."
+    },
+    "tabs": {
+      "users": "Users",
+      "roles": "Roles",
+      "permissions": "Permissions",
+      "scopes": "Scopes",
+      "scopedOverrides": "Scoped Overrides"
+    },
+    "users": {
+      "searchPlaceholder": "Tìm theo tên, email, mã nhân viên...",
+      "columns": {
+        "user": "Người dùng",
+        "status": "Trạng thái",
+        "role": "Vai trò",
+        "department": "Phòng ban",
+        "lastLogin": "Đăng nhập gần nhất",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "viewInfo": "Xem thông tin",
+        "editAccess": "Sửa quyền",
+        "addUser": "Thêm tài khoản"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Không hoạt động"
+      },
+      "filter": {
+        "allStatus": "Tất cả trạng thái",
+        "allRoles": "Tất cả vai trò",
+        "allDepartments": "Tất cả phòng ban"
+      },
+      "addModal": {
+        "title": "Thêm tài khoản mới",
+        "fields": {
+          "displayName": "Họ và tên",
+          "displayNamePlaceholder": "Vd: Nguyễn Văn A",
+          "email": "Email / Tên đăng nhập",
+          "emailPlaceholder": "Vd: ten.nv@lng.com",
+          "password": "Mật khẩu tạm thời",
+          "passwordPlaceholder": "Nhập mật khẩu tạm thời cho người dùng...",
+          "role": "Vai trò"
+        },
+        "passwordHint": "Người dùng sẽ được yêu cầu đổi mật khẩu sau khi đăng nhập lần đầu.",
+        "cancel": "Huỷ",
+        "submit": "Tạo tài khoản",
+        "success": "Tạo tài khoản thành công!"
+      },
+      "viewModal": {
+        "title": "Thông tin tài khoản — {{name}}",
+        "loginName": "TÊN ĐĂNG NHẬP",
+        "password": "MẬT KHẨU",
+        "showPassword": "Hiện",
+        "hidePassword": "Ẩn",
+        "passwordUnavailable": "Không hiển thị vì lý do bảo mật",
+        "resetPassword": "Reset mật khẩu",
+        "resetPasswordPrompt": "Nhập mật khẩu tạm thời mới",
+        "resetPasswordSuccess": "Đã reset mật khẩu thành công!",
+        "updateStatusSuccess": "Đã cập nhật trạng thái tài khoản!",
+        "role": "VAI TRÒ",
+        "status": "TRẠNG THÁI",
+        "department": "PHÒNG BAN",
+        "noDepartment": "— (toàn hệ thống, không thuộc phòng ban)",
+        "createdAt": "NGÀY TẠO TÀI KHOẢN",
+        "createdBy": "CẤP TÀI KHOẢN BỞI",
+        "close": "Đóng"
+      },
+      "editAccessModal": {
+        "title": "Edit Access — {{name}}",
+        "banner": "Mỗi scope assignment có role, scope và bộ quyền riêng. Đổi role hoặc scope sẽ reset quyền riêng về mặc định theo role/scope.",
+        "globalAccess": "Global Access",
+        "globalRoles": "Global Roles",
+        "scopedAccess": "Scoped Access Assignments",
+        "scopedAccessHint": "Chỉnh role/scope trực tiếp trên từng dòng. Dùng Sửa quyền để bật/tắt permission riêng cho assignment đó.",
+        "scopedColumns": {
+          "role": "Role",
+          "scopeType": "Scope Type",
+          "scopeResource": "Scope Resource",
+          "customPerms": "Custom Perms"
+        },
+        "noScopedAccess": "Chưa có scoped access nào được gán",
+        "assignmentRole": "Vai trò",
+        "scopeAssignment": "Phân quyền theo scope",
+        "scopeAssignmentPlaceholder": "Chọn scope access assignment",
+        "addScopedAssignment": "Cấp scoped access",
+        "permissionOverride": {
+          "title": "Chỉnh sửa quyền riêng",
+          "edit": "Sửa quyền",
+          "save": "Lưu quyền",
+          "reset": "Reset về mặc định",
+          "overrideMode": "Đang dùng danh sách quyền override riêng cho assignment này.",
+          "inheritedMode": "Đang kế thừa quyền từ role/scope. Lưu thay đổi sẽ bật override.",
+          "selectedCount": "{{count}} quyền được chọn",
+          "inheritedCount": "{{count}} quyền kế thừa",
+          "effectiveCount": "{{count}} quyền hiệu lực"
+        },
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Cập nhật quyền truy cập thành công!"
+      }
+    },
+    "roles": {
+      "searchPlaceholder": "Tìm theo mã hoặc tên vai trò...",
+      "columns": {
+        "role": "Vai trò",
+        "description": "Mô tả",
+        "userCount": "Số tài khoản",
+        "defaultPermissions": "Quyền mặc định",
+        "actions": "Hành động"
+      },
+      "userCount": "{{count}} tài khoản",
+      "fullAccess": "Toàn quyền ({{count}})",
+      "permissionCount": "{{count}} quyền",
+      "actions": {
+        "addRole": "Thêm vai trò",
+        "edit": "Sửa"
+      },
+      "addModal": {
+        "title": "Thêm vai trò mới",
+        "fields": {
+          "codeLabel": "Role Code",
+          "codePlaceholder": "Vd: SUPERVISOR",
+          "nameLabel": "Role Name",
+          "namePlaceholder": "Vd: Supervisor",
+          "descriptionLabel": "Description",
+          "descriptionPlaceholder": "Mô tả ngắn về phạm vi và trách nhiệm của vai trò này..."
+        },
+        "cancel": "Huỷ",
+        "submit": "Tạo vai trò",
+        "success": "Tạo vai trò thành công!"
+      },
+      "editModal": {
+        "title": "Edit Role: {{code}}",
+        "permissions": "Permissions",
+        "selectAll": "Select All",
+        "permissionSearch": "Tìm quyền theo tên hoặc mã...",
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Cập nhật vai trò thành công!"
+      }
+    },
+    "permissions": {
+      "searchPlaceholder": "Tìm theo mã hoặc tên quyền...",
+      "filter": {
+        "allModules": "Tất cả module",
+        "allActions": "Tất cả action",
+        "allStatus": "Tất cả trạng thái",
+        "active": "Hoạt động",
+        "deprecated": "Deprecated"
+      },
+      "columns": {
+        "code": "Mã quyền",
+        "name": "Tên quyền",
+        "description": "Mô tả",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "addPermission": "Thêm quyền",
+        "edit": "Sửa",
+        "delete": "Xoá",
+        "deleteConfirmSimple": "Bạn có chắc chắn muốn xoá quyền này?"
+      },
+      "addModal": {
+        "title": "Thêm quyền mới",
+        "fields": {
+          "codeLabel": "Permission Code",
+          "codePlaceholder": "Vd: READ_REPORTS",
+          "moduleLabel": "Module",
+          "actionLabel": "Action",
+          "nameLabel": "Display Name",
+          "namePlaceholder": "Vd: Xem báo cáo",
+          "descriptionLabel": "Description / Usage Hint",
+          "descriptionPlaceholder": "Mô tả ngắn về phạm vi của quyền này..."
+        },
+        "cancel": "Huỷ",
+        "submit": "Tạo quyền",
+        "success": "Tạo quyền thành công!"
+      },
+      "editModal": {
+        "title": "Edit Permission",
+        "codeHint": "Mã quyền là định danh ổn định, dùng trong code logic — không nên đổi sau khi đã dùng.",
+        "fields": {
+          "codeLabel": "Permission Code",
+          "nameLabel": "Display Name",
+          "descriptionLabel": "Description / Usage Hint"
+        },
+        "metadata": {
+          "module": "Module",
+          "action": "Action",
+          "created": "Created",
+          "updated": "Updated"
+        },
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Cập nhật quyền thành công!",
+        "deleteConfirm": "Bạn có chắc chắn muốn xoá quyền này? Hành động không thể hoàn tác.",
+        "deleteSuccess": "Đã xoá quyền thành công!"
+      }
+    },
+    "scopes": {
+      "searchPlaceholder": "Tìm theo tên hoặc mã scope...",
+      "types": {
+        "global": "Global",
+        "department": "Department",
+        "team": "Team"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Tạm tắt"
+      },
+      "filter": {
+        "allTypes": "Tất cả loại scope",
+        "allStatus": "Tất cả trạng thái"
+      },
+      "columns": {
+        "type": "Loại Scope",
+        "name": "Tên",
+        "department": "Thuộc phòng ban",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "addScope": "Thêm Scope",
+        "view": "Xem",
+        "edit": "Sửa"
+      },
+      "fields": {
+        "scopeType": "Loại Scope",
+        "scopeTypePlaceholder": "Department / Team",
+        "name": "Scope Name",
+        "namePlaceholder": "Ví dụ: QC Department",
+        "status": "Trạng thái"
+      },
+      "addModal": {
+        "title": "Thêm Scope mới",
+        "fields": {
+          "department": "Thuộc phòng ban (Department)",
+          "departmentPlaceholder": "Chọn phòng ban (QC / Design / Fulfillment)...",
+          "team": "Thuộc team (Team)",
+          "teamPlaceholder": "Chọn team",
+          "teamName": "Tên Team",
+          "teamNamePlaceholder": "Vd: QC Team B",
+          "code": "Mã Scope (Code)",
+          "codePlaceholder": "TEAM-QC-02"
+        },
+        "errors": {
+          "departmentRequired": "Vui lòng chọn phòng ban trước khi tạo scope.",
+          "teamNotFound": "Không tìm thấy team này trong phòng ban đã chọn."
+        },
+        "cancel": "Huỷ",
+        "submit": "Tạo Scope",
+        "success": "Đã tạo scope."
+      },
+      "editModal": {
+        "title": "Sửa Scope",
+        "cancel": "Huỷ",
+        "submit": "Lưu thay đổi",
+        "success": "Đã cập nhật scope."
+      },
+      "toggleSuccess": "Đã cập nhật trạng thái scope."
+    },
+    "scopedOverrides": {
+      "filterLabel": "CHỌN VAI TRÒ ĐỂ CHỈNH SỬA CẤP QUYỀN",
+      "filterHint": "Tổng quan quyền của tất cả vai trò — bấm \"Chỉnh sửa\" trên từng vai trò để cấp thêm quyền chi tiết.",
+      "allRoles": "Tất cả vai trò",
+      "noRoles": "Không có vai trò phù hợp.",
+      "roleLabel": "Vai trò: {{name}}",
+      "editRolePerms": "Chỉnh sửa cấp quyền cho {{name}} →",
+      "editAnonymousPerms": "Chỉnh sửa cấp quyền cho Anonymous →",
+      "defaultPermsTitle": "Quyền mặc định của vai trò '{{name}}'",
+      "grantedTitle": "Cấp thêm quyền cho '{{name}}'",
+      "defaultBadge": "MẶC ĐỊNH · READ-ONLY",
+      "grantBadge": "CẤP THÊM · GRANT",
+      "fullAccessNote": "Toàn quyền hệ thống ({{count}} quyền) — không cần liệt kê chi tiết.",
+      "noDefaultNote": "Chưa có quyền mặc định cho vai trò này.",
+      "adminGrantNote": "Admin đã có toàn quyền ở mọi scope — không áp dụng override.",
+      "noOverrideNote": "Chưa có override nào cho vai trò này.",
+      "noOverrideAnonymousNote": "Chưa có override nào cho vai trò Anonymous.",
+      "grantedBadge": "Đã cấp thêm",
+      "revokeSuccess": "Đã thu hồi quyền thành công!",
+      "addMore": "+ Thêm",
+      "grantModal": {
+        "title": "Cấp thêm quyền",
+        "contextPrefix": "Áp dụng cho vai trò '{{role}}' tại {{scopeType}} '{{scopeName}}'.",
+        "permissionsLabel": "Quyền cần cấp thêm",
+        "permissionsPlaceholder": "Chọn quyền cần cấp thêm (có thể chọn nhiều)...",
+        "noteLabel": "Ghi chú (tuỳ chọn)",
+        "notePlaceholder": "Vd: Cho phép xếp ca cho team thuộc scope này...",
+        "cancel": "Huỷ",
+        "submit": "Cấp quyền",
+        "success": "Cấp quyền thành công!"
+      },
+      "scopedGrantModal": {
+        "title": "Cấp phạm vi quyền cho vai trò {{name}}",
+        "scopeTypeLabel": "LOẠI SCOPE",
+        "scopeTypePlaceholder": "Chọn loại scope",
+        "scopeTypeHint": "Cho loại phạm vi Department hoặc Team. Global đang chờ backend hỗ trợ validator scopeId null.",
+        "scopeTypes": {
+          "global": "Global (toàn hệ thống)",
+          "department": "Department",
+          "team": "Team"
+        },
+        "scopeLabel": "SCOPE",
+        "scopePlaceholder": "Chọn quyền sẽ áp dụng trong scope...",
+        "scopeHintDepartment": "Hiện các scope thuộc loại Department — chọn phòng ban cụ thể",
+        "scopeHintTeam": "Hiện các scope thuộc loại Team — chọn team cụ thể",
+        "permissionsLabel": "QUYỀN CẦN CẤP",
+        "permissionsPlaceholder": "Chọn quyền sẽ áp dụng trong scope...",
+        "permissionsHint": "Chỉ hiện quyền chưa được cấp trong scope này",
+        "noteLabel": "Ghi chú",
+        "notePlaceholder": "Vd: Cho phép Anonymous xem dữ liệu phòng QC...",
+        "cancel": "Huỷ",
+        "submit": "Cấp quyền",
+        "success": "Cấp phạm vi quyền thành công!"
+      }
     }
   },
   "home": {
@@ -353,6 +675,181 @@
       "title": "Quên mật khẩu",
       "description": "Chức năng khôi phục mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
       "backLogin": "Về trang đăng nhập"
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "actions": {
+      "import": "Nhập",
+      "update": "Cập nhật",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "saveChanges": "Lưu thay đổi"
+    },
+    "tabs": {
+      "all": "Tất cả",
+      "new": "Đơn mới",
+      "missingCostCenter": "Thiếu Cost Center",
+      "missingPsd": "Thiếu PSD",
+      "awaitingPayment": "Chờ thanh toán",
+      "processing": "Đang xử lý",
+      "shipped": "Đã gửi hàng",
+      "delivered": "Đã giao",
+      "cancelled": "Đã huỷ",
+      "openCase": "Mở case"
+    },
+    "filters": {
+      "search": "Tìm Order ID, Customer...",
+      "refresh": "Làm mới"
+    },
+    "table": {
+      "orderId": "Order ID",
+      "status": "Trạng thái",
+      "createdAt": "Ngày tạo",
+      "orderDate": "Ngày đặt",
+      "shippingType": "Kiểu vận chuyển",
+      "customer": "Khách hàng",
+      "basecost": "Basecost",
+      "store": "Cửa hàng",
+      "handling": "Xử lý",
+      "case": "Case"
+    },
+    "detail": {
+      "productInfo": "THÔNG TIN SẢN PHẨM",
+      "customization": "CUSTOMIZATION",
+      "fulfillment": "SỐ LƯỢNG & VẬN CHUYỂN"
+    },
+    "fields": {
+      "psd": "PSD:",
+      "pngStatus": "PNG Status:",
+      "scaleBy": "Scale By:",
+      "qcBy": "QC By:",
+      "sku": "SKU:",
+      "asinType": "ASIN Type:",
+      "asin": "ASIN:",
+      "psdId": "PSD ID:",
+      "seller": "Seller:",
+      "team": "Team:",
+      "productType": "Select Product Type:",
+      "shirtColor": "Choose Shirt Color:",
+      "selectSize": "Select Size:",
+      "customerPhoto": "Customer Photo",
+      "customerName": "Custom Name:",
+      "year": "Enter Year:",
+      "customSleeve": "Select Custom Sleeve:",
+      "rightSleeve": "Right Sleeve Customization:",
+      "leftSleeve": "Left Sleeve Customization:",
+      "priority": "Priority Production:",
+      "customizationUrl": "Customization Url:",
+      "quantity": "Quantity:",
+      "fulfillQty": "Fulfill Qty",
+      "new": "New",
+      "vendorProduct": "Vendor Product:",
+      "size": "Size:",
+      "color": "Color:",
+      "fulfillName": "Fulfill Name:",
+      "status": "Status",
+      "tracking": "Tracking",
+      "note": "Note"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "openCase": {
+      "title": "Mở case",
+      "placeholder": "Chọn case...",
+      "options": {
+        "missingPsd": "Thiếu PSD",
+        "customerRequest": "Yêu cầu từ khách hàng",
+        "shippingIssue": "Vấn đề vận chuyển",
+        "productionDelay": "Chậm sản xuất"
+      }
+    },
+    "importOrders": {
+      "title": "Nhập đơn hàng",
+      "store": "CỬA HÀNG",
+      "storePlaceholder": "Chọn cửa hàng...",
+      "file": "TỆP",
+      "uploadTitle": "Bấm để tải lên hoặc thả file .txt",
+      "uploadHint": "Chỉ hỗ trợ file .txt"
+    },
+    "updateCustomer": {
+      "title": "Cập nhật khách hàng",
+      "fields": {
+        "name": "Tên",
+        "email": "Email",
+        "address": "Địa chỉ",
+        "address2": "Địa chỉ 2",
+        "state": "Bang/Tỉnh",
+        "city": "Thành phố",
+        "country": "Quốc gia",
+        "zipCode": "Mã bưu chính",
+        "phoneNumber": "Số điện thoại"
+      },
+      "placeholders": {
+        "name": "Tên",
+        "email": "Email",
+        "address": "Địa chỉ",
+        "address2": "Địa chỉ 2",
+        "state": "Bang/Tỉnh",
+        "city": "Thành phố",
+        "country": "Quốc gia",
+        "zipCode": "Mã bưu chính",
+        "phoneNumber": "Số điện thoại"
+      }
+    },
+    "values": {
+      "channels": {
+        "all": "All — Amazon + Etsy",
+        "amazon": "Amazon",
+        "etsy": "Etsy"
+      },
+      "shops": {
+        "all": "Tất cả Shop"
+      },
+      "sellers": {
+        "all": "Tất cả Seller"
+      },
+      "status": {
+        "new": "New",
+        "fulfilled": "Fulfilled",
+        "shipped": "Shipped",
+        "cancelled": "Cancelled",
+        "pending": "Pending",
+        "needScale": "Need Scale"
+      },
+      "shipping": {
+        "standard": "Standard",
+        "secondDay": "Second Day",
+        "ground": "Ground",
+        "overnight": "Overnight",
+        "economy": "Economy",
+        "expedited": "Expedited"
+      },
+      "stores": {
+        "tanTan": "Tan tan",
+        "lngGroup": "LNG Group"
+      },
+      "handling": {
+        "fiveDays": "5 ngày",
+        "sixDays": "6 ngày",
+        "sevenDays": "7 ngày"
+      },
+      "relative": {
+        "oneHourAgo": "1 giờ trước",
+        "sixDaysAgo": "6 ngày trước",
+        "sevenDaysAgo": "7 ngày trước",
+        "eightDaysAgo": "8 ngày trước",
+        "tenDaysAgo": "10 ngày trước"
+      },
+      "common": {
+        "noData": "No data",
+        "normal": "Normal",
+        "noThankYou": "No, Thank you.",
+        "tracking": "Tracking",
+        "note": "Note"
+      }
     }
   },
   "uiKit": {

@@ -14,7 +14,8 @@
     "logout": "Log out"
   },
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "delete": "Delete"
   },
   "nav": {
     "home": "Home",
@@ -130,6 +131,327 @@
       "confirmPasswordRequired": "Please confirm your password",
       "passwordMismatch": "Password confirmation does not match",
       "generic": "Could not complete the request, please try again."
+    }
+  },
+  "rbac": {
+    "title": "RBAC",
+    "common": {
+      "loading": "Loading data..."
+    },
+    "tabs": {
+      "users": "Users",
+      "roles": "Roles",
+      "permissions": "Permissions",
+      "scopes": "Scopes",
+      "scopedOverrides": "Scoped Overrides"
+    },
+    "users": {
+      "searchPlaceholder": "Search by name, email, employee code...",
+      "columns": {
+        "user": "User",
+        "status": "Status",
+        "role": "Role",
+        "department": "Department",
+        "lastLogin": "Last login",
+        "actions": "Actions"
+      },
+      "actions": {
+        "viewInfo": "View info",
+        "editAccess": "Edit access",
+        "addUser": "Add account"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "filter": {
+        "allStatus": "All statuses",
+        "allRoles": "All roles",
+        "allDepartments": "All departments"
+      },
+      "addModal": {
+        "title": "Add new account",
+        "fields": {
+          "displayName": "Full name",
+          "displayNamePlaceholder": "Ex: Nguyen Van A",
+          "email": "Email / Username",
+          "emailPlaceholder": "Ex: ten.nv@lng.com",
+          "password": "Temporary password",
+          "passwordPlaceholder": "Enter a temporary password for the user...",
+          "role": "Role"
+        },
+        "passwordHint": "The user will be asked to change this password on first login.",
+        "cancel": "Cancel",
+        "submit": "Create account",
+        "success": "Account created successfully!"
+      },
+      "viewModal": {
+        "title": "Account information — {{name}}",
+        "loginName": "LOGIN NAME",
+        "password": "PASSWORD",
+        "showPassword": "Show",
+        "hidePassword": "Hide",
+        "passwordUnavailable": "Hidden for security",
+        "resetPassword": "Reset password",
+        "resetPasswordPrompt": "Enter the new temporary password",
+        "resetPasswordSuccess": "Password reset successfully!",
+        "updateStatusSuccess": "Account status updated!",
+        "role": "ROLE",
+        "status": "STATUS",
+        "department": "DEPARTMENT",
+        "noDepartment": "— (system-wide, no department)",
+        "createdAt": "ACCOUNT CREATED AT",
+        "createdBy": "ACCOUNT CREATED BY",
+        "close": "Close"
+      },
+      "editAccessModal": {
+        "title": "Edit Access — {{name}}",
+        "banner": "Each scope assignment has its own role, scope, and permission set. Changing role or scope resets custom permissions back to the role/scope defaults.",
+        "globalAccess": "Global Access",
+        "globalRoles": "Global Roles",
+        "scopedAccess": "Scoped Access Assignments",
+        "scopedAccessHint": "Edit role/scope directly on each row. Use Edit permissions to toggle custom permissions for that assignment.",
+        "scopedColumns": {
+          "role": "Role",
+          "scopeType": "Scope Type",
+          "scopeResource": "Scope Resource",
+          "customPerms": "Custom Perms"
+        },
+        "noScopedAccess": "No scoped access assigned",
+        "assignmentRole": "Role",
+        "scopeAssignment": "Scope access assignment",
+        "scopeAssignmentPlaceholder": "Select scope access assignment",
+        "addScopedAssignment": "Grant scoped access",
+        "permissionOverride": {
+          "title": "Edit custom permissions",
+          "edit": "Edit permissions",
+          "save": "Save permissions",
+          "reset": "Reset to default",
+          "overrideMode": "This assignment is using its own override permission list.",
+          "inheritedMode": "This assignment is inheriting permissions from role/scope. Saving changes will enable override.",
+          "selectedCount": "{{count}} selected permissions",
+          "inheritedCount": "{{count}} inherited permissions",
+          "effectiveCount": "{{count}} effective permissions"
+        },
+        "cancel": "Cancel",
+        "submit": "Save changes",
+        "success": "Access updated successfully!"
+      }
+    },
+    "roles": {
+      "searchPlaceholder": "Search by role code or name...",
+      "columns": {
+        "role": "Role",
+        "description": "Description",
+        "userCount": "User count",
+        "defaultPermissions": "Default permissions",
+        "actions": "Actions"
+      },
+      "userCount": "{{count}} accounts",
+      "fullAccess": "Full access ({{count}})",
+      "permissionCount": "{{count}} permissions",
+      "actions": {
+        "addRole": "Add role",
+        "edit": "Edit"
+      },
+      "addModal": {
+        "title": "Add new role",
+        "fields": {
+          "codeLabel": "Role Code",
+          "codePlaceholder": "Ex: SUPERVISOR",
+          "nameLabel": "Role Name",
+          "namePlaceholder": "Ex: Supervisor",
+          "descriptionLabel": "Description",
+          "descriptionPlaceholder": "Briefly describe this role's scope and responsibilities..."
+        },
+        "cancel": "Cancel",
+        "submit": "Create role",
+        "success": "Role created successfully!"
+      },
+      "editModal": {
+        "title": "Edit Role: {{code}}",
+        "permissions": "Permissions",
+        "selectAll": "Select All",
+        "permissionSearch": "Search permissions by name or code...",
+        "cancel": "Cancel",
+        "submit": "Save changes",
+        "success": "Role updated successfully!"
+      }
+    },
+    "permissions": {
+      "searchPlaceholder": "Search by permission code or name...",
+      "filter": {
+        "allModules": "All modules",
+        "allActions": "All actions",
+        "allStatus": "All statuses",
+        "active": "Active",
+        "deprecated": "Deprecated"
+      },
+      "columns": {
+        "code": "Permission code",
+        "name": "Permission name",
+        "description": "Description",
+        "actions": "Actions"
+      },
+      "actions": {
+        "addPermission": "Add permission",
+        "edit": "Edit",
+        "delete": "Delete",
+        "deleteConfirmSimple": "Are you sure you want to delete this permission?"
+      },
+      "addModal": {
+        "title": "Add new permission",
+        "fields": {
+          "codeLabel": "Permission Code",
+          "codePlaceholder": "Ex: READ_REPORTS",
+          "moduleLabel": "Module",
+          "actionLabel": "Action",
+          "nameLabel": "Display Name",
+          "namePlaceholder": "Ex: View reports",
+          "descriptionLabel": "Description / Usage Hint",
+          "descriptionPlaceholder": "Briefly describe what this permission allows..."
+        },
+        "cancel": "Cancel",
+        "submit": "Create permission",
+        "success": "Permission created successfully!"
+      },
+      "editModal": {
+        "title": "Edit Permission",
+        "codeHint": "Permission code is a stable identifier used in application logic — avoid changing it after use.",
+        "fields": {
+          "codeLabel": "Permission Code",
+          "nameLabel": "Display Name",
+          "descriptionLabel": "Description / Usage Hint"
+        },
+        "metadata": {
+          "module": "Module",
+          "action": "Action",
+          "created": "Created",
+          "updated": "Updated"
+        },
+        "cancel": "Cancel",
+        "submit": "Save changes",
+        "success": "Permission updated successfully!",
+        "deleteConfirm": "Are you sure you want to delete this permission? This action cannot be undone.",
+        "deleteSuccess": "Permission deleted successfully!"
+      }
+    },
+    "scopes": {
+      "searchPlaceholder": "Search by scope name or code...",
+      "types": {
+        "global": "Global",
+        "department": "Department",
+        "team": "Team"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "filter": {
+        "allTypes": "All scope types",
+        "allStatus": "All statuses"
+      },
+      "columns": {
+        "type": "Scope type",
+        "name": "Name",
+        "department": "Department",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "addScope": "Add Scope",
+        "view": "View",
+        "edit": "Edit"
+      },
+      "fields": {
+        "scopeType": "Scope Type",
+        "scopeTypePlaceholder": "Department / Team",
+        "name": "Scope Name",
+        "namePlaceholder": "Example: QC Department",
+        "status": "Status"
+      },
+      "addModal": {
+        "title": "Add New Scope",
+        "fields": {
+          "department": "Department",
+          "departmentPlaceholder": "Select department (QC / Design / Fulfillment)...",
+          "team": "Team",
+          "teamPlaceholder": "Select team",
+          "teamName": "Team Name",
+          "teamNamePlaceholder": "Example: QC Team B",
+          "code": "Scope Code",
+          "codePlaceholder": "TEAM-QC-02"
+        },
+        "errors": {
+          "departmentRequired": "Please choose a department before creating a scope.",
+          "teamNotFound": "This team was not found in the selected department."
+        },
+        "cancel": "Cancel",
+        "submit": "Create Scope",
+        "success": "Scope created."
+      },
+      "editModal": {
+        "title": "Edit Scope",
+        "cancel": "Cancel",
+        "submit": "Save changes",
+        "success": "Scope updated."
+      },
+      "toggleSuccess": "Scope status updated."
+    },
+    "scopedOverrides": {
+      "filterLabel": "SELECT ROLE TO EDIT PERMISSION GRANTS",
+      "filterHint": "Review permissions across roles — click \"Edit\" on each role to grant scoped permissions.",
+      "allRoles": "All roles",
+      "noRoles": "No matching roles.",
+      "roleLabel": "Role: {{name}}",
+      "editRolePerms": "Edit permission grants for {{name}} →",
+      "editAnonymousPerms": "Edit permission grants for Anonymous →",
+      "defaultPermsTitle": "Default permissions for '{{name}}'",
+      "grantedTitle": "Additional grants for '{{name}}'",
+      "defaultBadge": "DEFAULT · READ-ONLY",
+      "grantBadge": "ADDITIONAL · GRANT",
+      "fullAccessNote": "Full system access ({{count}} permissions) — no detailed listing needed.",
+      "noDefaultNote": "No default permissions for this role.",
+      "adminGrantNote": "Admin already has full access in every scope — overrides do not apply.",
+      "noOverrideNote": "No overrides for this role yet.",
+      "noOverrideAnonymousNote": "No overrides for Anonymous yet.",
+      "grantedBadge": "Granted",
+      "revokeSuccess": "Permission revoked successfully!",
+      "addMore": "+ Add",
+      "grantModal": {
+        "title": "Grant Additional Permissions",
+        "contextPrefix": "Applies to role '{{role}}' in {{scopeType}} '{{scopeName}}'.",
+        "permissionsLabel": "Permissions to grant",
+        "permissionsPlaceholder": "Select permissions to grant (multiple allowed)...",
+        "noteLabel": "Note (optional)",
+        "notePlaceholder": "Ex: Allow scheduling for the team in this scope...",
+        "cancel": "Cancel",
+        "submit": "Grant permissions",
+        "success": "Permissions granted successfully!"
+      },
+      "scopedGrantModal": {
+        "title": "Grant scoped permissions for {{name}}",
+        "scopeTypeLabel": "SCOPE TYPE",
+        "scopeTypePlaceholder": "Select scope type",
+        "scopeTypeHint": "Supports Department or Team scopes. Global is waiting for backend support for null scopeId validation.",
+        "scopeTypes": {
+          "global": "Global (system-wide)",
+          "department": "Department",
+          "team": "Team"
+        },
+        "scopeLabel": "SCOPE",
+        "scopePlaceholder": "Select the scope these permissions apply to...",
+        "scopeHintDepartment": "Shows Department scopes — choose a specific department",
+        "scopeHintTeam": "Shows Team scopes — choose a specific team",
+        "permissionsLabel": "PERMISSIONS TO GRANT",
+        "permissionsPlaceholder": "Select permissions to apply in this scope...",
+        "permissionsHint": "Only permissions not already granted in this scope are shown",
+        "noteLabel": "Note",
+        "notePlaceholder": "Ex: Allow Anonymous to view QC department data...",
+        "cancel": "Cancel",
+        "submit": "Grant permissions",
+        "success": "Scoped permissions granted successfully!"
+      }
     }
   },
   "home": {
@@ -301,6 +623,181 @@
     "placeholder": "Select date range",
     "clear": "Clear",
     "apply": "Apply"
+  },
+  "orders": {
+    "title": "Orders",
+    "actions": {
+      "import": "Import",
+      "update": "Update",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saveChanges": "Save changes"
+    },
+    "tabs": {
+      "all": "All",
+      "new": "New Orders",
+      "missingCostCenter": "Missing Cost Center",
+      "missingPsd": "Missing PSD",
+      "awaitingPayment": "Awaiting Payment",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "openCase": "Open Case"
+    },
+    "filters": {
+      "search": "Search Order ID, Customer...",
+      "refresh": "Refresh"
+    },
+    "table": {
+      "orderId": "Order ID",
+      "status": "Status",
+      "createdAt": "Created At",
+      "orderDate": "Order Date",
+      "shippingType": "Shipping Type",
+      "customer": "Customer",
+      "basecost": "Basecost",
+      "store": "Store",
+      "handling": "Handling",
+      "case": "Case"
+    },
+    "detail": {
+      "productInfo": "Product Information",
+      "customization": "Customization",
+      "fulfillment": "Quantity & Shipping"
+    },
+    "fields": {
+      "psd": "PSD:",
+      "pngStatus": "PNG Status:",
+      "scaleBy": "Scale By:",
+      "qcBy": "QC By:",
+      "sku": "SKU:",
+      "asinType": "ASIN Type:",
+      "asin": "ASIN:",
+      "psdId": "PSD ID:",
+      "seller": "Seller:",
+      "team": "Team:",
+      "productType": "Select Product Type:",
+      "shirtColor": "Choose Shirt Color:",
+      "selectSize": "Select Size:",
+      "customerPhoto": "Customer Photo",
+      "customerName": "Custom Name:",
+      "year": "Enter Year:",
+      "customSleeve": "Select Custom Sleeve:",
+      "rightSleeve": "Right Sleeve Customization:",
+      "leftSleeve": "Left Sleeve Customization:",
+      "priority": "Priority Production:",
+      "customizationUrl": "Customization Url:",
+      "quantity": "Quantity:",
+      "fulfillQty": "Fulfill Qty",
+      "new": "New",
+      "vendorProduct": "Vendor Product:",
+      "size": "Size:",
+      "color": "Color:",
+      "fulfillName": "Fulfill Name:",
+      "status": "Status",
+      "tracking": "Tracking",
+      "note": "Note"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "openCase": {
+      "title": "Open case",
+      "placeholder": "Select a case...",
+      "options": {
+        "missingPsd": "Missing PSD",
+        "customerRequest": "Customer Request",
+        "shippingIssue": "Shipping Issue",
+        "productionDelay": "Production Delay"
+      }
+    },
+    "importOrders": {
+      "title": "Import Orders",
+      "store": "STORE",
+      "storePlaceholder": "Select store...",
+      "file": "FILE",
+      "uploadTitle": "Click to upload or drop .txt file",
+      "uploadHint": ".txt files only"
+    },
+    "updateCustomer": {
+      "title": "Update Customer",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "address": "Address",
+        "address2": "Address 2",
+        "state": "State",
+        "city": "City",
+        "country": "Country",
+        "zipCode": "Zip Code",
+        "phoneNumber": "Phone Number"
+      },
+      "placeholders": {
+        "name": "Name",
+        "email": "Email",
+        "address": "Address",
+        "address2": "Address 2",
+        "state": "State",
+        "city": "City",
+        "country": "Country",
+        "zipCode": "Zip Code",
+        "phoneNumber": "Phone Number"
+      }
+    },
+    "values": {
+      "channels": {
+        "all": "All — Amazon + Etsy",
+        "amazon": "Amazon",
+        "etsy": "Etsy"
+      },
+      "shops": {
+        "all": "All Shops"
+      },
+      "sellers": {
+        "all": "All Sellers"
+      },
+      "status": {
+        "new": "New",
+        "fulfilled": "Fulfilled",
+        "shipped": "Shipped",
+        "cancelled": "Cancelled",
+        "pending": "Pending",
+        "needScale": "Need Scale"
+      },
+      "shipping": {
+        "standard": "Standard",
+        "secondDay": "Second Day",
+        "ground": "Ground",
+        "overnight": "Overnight",
+        "economy": "Economy",
+        "expedited": "Expedited"
+      },
+      "stores": {
+        "tanTan": "Tan tan",
+        "lngGroup": "LNG Group"
+      },
+      "handling": {
+        "fiveDays": "5 days",
+        "sixDays": "6 days",
+        "sevenDays": "7 days"
+      },
+      "relative": {
+        "oneHourAgo": "1 hour ago",
+        "sixDaysAgo": "6 days ago",
+        "sevenDaysAgo": "7 days ago",
+        "eightDaysAgo": "8 days ago",
+        "tenDaysAgo": "10 days ago"
+      },
+      "common": {
+        "noData": "No data",
+        "normal": "Normal",
+        "noThankYou": "No, Thank you.",
+        "tracking": "Tracking",
+        "note": "Note"
+      }
+    }
   },
   "errors": {
     "backHome": "Back to home",
