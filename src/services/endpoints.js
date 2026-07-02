@@ -11,6 +11,10 @@ export const ENDPOINTS = {
   HOME: {
     SUMMARY: '/home/summary',
   },
+  ORDERS: {
+    LIST: '/api/orders',
+    DETAIL: (orderId) => `/api/orders/${orderId}`,
+  },
   RBAC: {
     ACCOUNTS: '/api/auth/accounts',
     ACCOUNT: (accountId) => `/api/auth/accounts/${accountId}`,

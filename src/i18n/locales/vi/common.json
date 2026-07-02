@@ -686,6 +686,13 @@
       "cancel": "Hủy",
       "saveChanges": "Lưu thay đổi"
     },
+    "bulk": {
+      "selected": "Đã chọn {{count}} đơn hàng",
+      "export": "Xuất dữ liệu",
+      "archive": "Lưu trữ",
+      "clear": "Bỏ chọn"
+    },
+    "empty": "Không có đơn hàng phù hợp",
     "tabs": {
       "all": "Tất cả",
       "new": "Đơn mới",
@@ -700,7 +707,10 @@
     },
     "filters": {
       "search": "Tìm Order ID, Customer...",
-      "refresh": "Làm mới"
+      "refresh": "Làm mới",
+      "channel": "Kênh bán",
+      "shop": "Shop",
+      "seller": "Seller"
     },
     "table": {
       "orderId": "Order ID",
@@ -715,6 +725,7 @@
       "case": "Case"
     },
     "detail": {
+      "title": "Chi tiết đơn hàng",
       "productInfo": "THÔNG TIN SẢN PHẨM",
       "customization": "CUSTOMIZATION",
       "fulfillment": "SỐ LƯỢNG & VẬN CHUYỂN"

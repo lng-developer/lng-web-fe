@@ -35,6 +35,10 @@ const hoodieImage =
 export const fakeOrders = [
   {
     id: '12-312244-231412',
+    tabKey: 'new',
+    channel: 'amazon',
+    shop: 'tan-tan',
+    seller: 'dao-quang-tung',
     statusKey: 'orders.values.status.new',
     createdAt: 'Mar 22, 2026',
     createdAgoKey: 'orders.values.relative.oneHourAgo',
@@ -85,6 +89,10 @@ export const fakeOrders = [
   },
   {
     id: '12-445566-778899',
+    tabKey: 'processing',
+    channel: 'amazon',
+    shop: 'lng-group',
+    seller: 'dao-quang-tung',
     statusKey: 'orders.values.status.fulfilled',
     createdAt: 'Jun 12, 2026',
     createdAgoKey: 'orders.values.relative.sixDaysAgo',
@@ -135,6 +143,10 @@ export const fakeOrders = [
   },
   {
     id: '12-567890-445566',
+    tabKey: 'shipped',
+    channel: 'etsy',
+    shop: 'tan-tan',
+    seller: 'dang-thanh-trung-cs',
     statusKey: 'orders.values.status.shipped',
     createdAt: 'Jun 10, 2026',
     createdAgoKey: 'orders.values.relative.eightDaysAgo',

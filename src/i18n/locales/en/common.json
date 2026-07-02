@@ -633,6 +633,13 @@
       "cancel": "Cancel",
       "saveChanges": "Save changes"
     },
+    "bulk": {
+      "selected": "{{count}} orders selected",
+      "export": "Export",
+      "archive": "Archive",
+      "clear": "Clear"
+    },
+    "empty": "No matching orders",
     "tabs": {
       "all": "All",
       "new": "New Orders",
@@ -647,7 +654,10 @@
     },
     "filters": {
       "search": "Search Order ID, Customer...",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "channel": "Channel",
+      "shop": "Shop",
+      "seller": "Seller"
     },
     "table": {
       "orderId": "Order ID",
@@ -662,6 +672,7 @@
       "case": "Case"
     },
     "detail": {
+      "title": "Order details",
       "productInfo": "Product Information",
       "customization": "Customization",
       "fulfillment": "Quantity & Shipping"
