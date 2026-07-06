@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { isValidElement, useMemo, useState, useTransition } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
-import CheckIcon from '@mui/icons-material/Check'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
@@ -17,42 +17,47 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   FormControl,
   IconButton,
   InputAdornment,
-  Menu,
   MenuItem,
   Paper,
   Select,
+  Skeleton,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import { useSnackbar } from 'notistack'
 
 import DateRangePicker from '@/components/form/DateRangePicker'
-import { fakeOrders, filterOptions, orderTabs } from '@/features/orders/data/ordersData'
-import dayjs from '@/lib/dayjs'
+import { SNACKBAR_VARIANTS } from '@/constants/app'
+import {
+  useImportOrdersMutation,
+  useUpdateOrderBuyerMutation,
+  useUpdateOrderCaseStatusMutation,
+  useUpdateOrderShippingAddressMutation,
+} from '@/features/orders/api/orders.mutations'
+import {
+  useExpandedOrderQuery,
+  useOrderDetailQuery,
+  useOrdersQuery,
+  useShopsQuery,
+} from '@/features/orders/api/orders.queries'
+import { filterOptions, orderTabs } from '@/features/orders/data/ordersData'
+import {
+  buildOrderListQuery,
+  mapApiTabCounts,
+  mapOrderDetail,
+  mapOrderRows,
+} from '@/features/orders/utils/ordersApi'
+import { getDefaultExpandedOrderIds } from '@/features/orders/utils/ordersDisplay'
 
 const tableColumns =
   '44px minmax(150px, 1.25fr) minmax(120px, 0.9fr) minmax(145px, 1.1fr) minmax(145px, 1.1fr) minmax(120px, 0.95fr) minmax(140px, 1.05fr) minmax(100px, 0.75fr) minmax(110px, 0.8fr) minmax(95px, 0.7fr) 56px'
-
-const statusOptions = [
-  { key: 'orders.values.status.new', color: 'success' },
-  { key: 'orders.values.status.fulfilled', color: 'success' },
-  { key: 'orders.values.status.shipped', color: 'success' },
-  { key: 'orders.values.status.cancelled', color: 'danger' },
-]
-
-const shippingTypeOptions = [
-  { key: 'orders.values.shipping.secondDay' },
-  { key: 'orders.values.shipping.standard' },
-  { key: 'orders.values.shipping.ground' },
-  { key: 'orders.values.shipping.overnight' },
-  { key: 'orders.values.shipping.economy' },
-  { key: 'orders.values.shipping.expedited' },
-]
 
 const caseOptions = [
   { value: 'missing-psd', labelKey: 'orders.openCase.options.missingPsd' },
@@ -61,7 +66,12 @@ const caseOptions = [
   { value: 'production-delay', labelKey: 'orders.openCase.options.productionDelay' },
 ]
 
-const importStoreOptions = filterOptions.shops.filter((shop) => shop.value !== 'all')
+const importSourceOptions = [
+  { value: 'MANUAL_EXCEL', labelKey: 'orders.importOrders.sources.amazon' },
+  { value: 'ETSY_SOLD_ORDER_ITEMS', labelKey: 'orders.importOrders.sources.etsy' },
+]
+
+const pageSizeOptions = [10, 20, 50, 100]
 
 const customerFieldKeys = [
   ['name', 'email'],
@@ -102,12 +112,23 @@ function StatusBadge({ label, color = 'success' }) {
   )
 }
 
-function OrdersSelect({ options, sx }) {
+function getOrderStatusColor(status) {
+  if (['CANCELLED', 'REFUNDED', 'FAILED'].includes(status)) return 'danger'
+  if (['PROCESSING', 'PARTIALLY_SHIPPED', 'ON_HOLD'].includes(status)) return 'warning'
+  return 'success'
+}
+
+function OrdersSelect({ disabled = false, onChange, options, sx, value }) {
   const { t } = useTranslation()
 
   return (
     <FormControl size="small" sx={sx}>
-      <Select defaultValue={options[0]?.value ?? ''} IconComponent={KeyboardArrowDownIcon}>
+      <Select
+        value={value ?? options[0]?.value ?? ''}
+        disabled={disabled}
+        onChange={(event) => onChange?.(event.target.value)}
+        IconComponent={KeyboardArrowDownIcon}
+      >
         {options.map((option) => (
           <MenuItem key={option.value} value={option.value}>
             {getDisplayText(t, option)}
@@ -118,8 +139,25 @@ function OrdersSelect({ options, sx }) {
   )
 }
 
+function getDetailDisplayValue(value) {
+  if (isValidElement(value)) return value
+  if (value === null || value === undefined || value === '') return '-'
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    return String(value)
+  if (Array.isArray(value)) return value.map(getDetailDisplayValue).filter(Boolean).join(', ')
+  if (typeof value === 'object') {
+    const displayKey = ['label', 'name', 'value'].find(
+      (key) => value[key] !== null && value[key] !== undefined && value[key] !== '',
+    )
+    return displayKey ? getDetailDisplayValue(value[displayKey]) : JSON.stringify(value)
+  }
+
+  return String(value)
+}
+
 function DetailField({ label, value }) {
-  const isTextValue = typeof value === 'string' || typeof value === 'number'
+  const displayValue = getDetailDisplayValue(value)
+  const isTextValue = typeof displayValue === 'string' || typeof displayValue === 'number'
 
   return (
     <Box
@@ -135,21 +173,21 @@ function DetailField({ label, value }) {
       </Typography>
       {isTextValue ? (
         <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'right' }}>
-          {value}
+          {displayValue}
         </Typography>
       ) : (
-        <Box sx={{ justifySelf: 'end' }}>{value}</Box>
+        <Box sx={{ justifySelf: 'end' }}>{displayValue}</Box>
       )}
     </Box>
   )
 }
 
-function OrderTabs({ activeTab, onChange }) {
+function OrderTabs({ activeTab, onChange, tabs }) {
   const { t } = useTranslation()
 
   return (
     <Stack direction="row" spacing={0.5} sx={{ overflowX: 'auto', pb: 0.25, width: '100%' }}>
-      {orderTabs.map((tab) => {
+      {tabs.map((tab) => {
         const active = activeTab === tab.key
 
         return (
@@ -201,18 +239,41 @@ function OrderTabs({ activeTab, onChange }) {
   )
 }
 
-function ImportOrdersModal({ onClose, open }) {
+function ImportOrdersModal({ onClose, open, shopOptions }) {
   const { t } = useTranslation()
+  const { enqueueSnackbar } = useSnackbar()
+  const importOrdersMutation = useImportOrdersMutation()
   const [selectedStore, setSelectedStore] = useState('')
-  const [selectedFileName, setSelectedFileName] = useState('')
+  const [selectedSource, setSelectedSource] = useState('MANUAL_EXCEL')
+  const [selectedFile, setSelectedFile] = useState(null)
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0]
-    setSelectedFileName(file?.name ?? '')
+    setSelectedFile(file ?? null)
   }
 
-  const handleImport = () => {
-    onClose()
+  const handleImport = async () => {
+    if (!selectedStore || !selectedFile) {
+      enqueueSnackbar(t('orders.importOrders.validation'), { variant: SNACKBAR_VARIANTS.WARNING })
+      return
+    }
+
+    try {
+      await importOrdersMutation.mutateAsync({
+        source: selectedSource,
+        shopId: selectedStore,
+        marketplaceCode: selectedSource === 'ETSY_SOLD_ORDER_ITEMS' ? 'ETSY_US' : 'AMAZON_US',
+        file: selectedFile,
+      })
+      enqueueSnackbar(t('orders.importOrders.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+      setSelectedFile(null)
+      setSelectedStore('')
+      onClose()
+    } catch (error) {
+      enqueueSnackbar(error?.message || t('errors.api.network'), {
+        variant: SNACKBAR_VARIANTS.ERROR,
+      })
+    }
   }
 
   return (
@@ -232,13 +293,13 @@ function ImportOrdersModal({ onClose, open }) {
     >
       <Stack sx={{ width: 576 }}>
         <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
           sx={{
-            height: 56,
-            px: 3,
+            alignItems: 'center',
             borderBottom: '1px solid #E5E7EB',
+            flexDirection: 'row',
+            height: 56,
+            justifyContent: 'space-between',
+            px: 3,
           }}
         >
           <Typography
@@ -251,6 +312,30 @@ function ImportOrdersModal({ onClose, open }) {
 
         <Stack spacing={1.5} sx={{ px: 3, pt: 2.25, pb: 2.5 }}>
           <Typography variant="caption" sx={{ color: '#6B7280', fontSize: 11, fontWeight: 500 }}>
+            {t('orders.importOrders.source')}
+          </Typography>
+          <FormControl fullWidth size="small">
+            <Select
+              value={selectedSource}
+              IconComponent={KeyboardArrowDownIcon}
+              onChange={(event) => setSelectedSource(event.target.value)}
+              sx={{
+                height: 40,
+                borderRadius: 2,
+                '& .MuiSelect-select': {
+                  py: 1.1,
+                },
+              }}
+            >
+              {importSourceOptions.map((source) => (
+                <MenuItem key={source.value} value={source.value}>
+                  {t(source.labelKey)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Typography variant="caption" sx={{ color: '#6B7280', fontSize: 11, fontWeight: 500 }}>
             {t('orders.importOrders.store')}
           </Typography>
           <FormControl fullWidth size="small">
@@ -260,7 +345,7 @@ function ImportOrdersModal({ onClose, open }) {
               IconComponent={KeyboardArrowDownIcon}
               onChange={(event) => setSelectedStore(event.target.value)}
               renderValue={(value) => {
-                const store = importStoreOptions.find((item) => item.value === value)
+                const store = shopOptions.find((item) => item.value === value)
                 return value ? getDisplayText(t, store) : t('orders.importOrders.storePlaceholder')
               }}
               sx={{
@@ -272,7 +357,7 @@ function ImportOrdersModal({ onClose, open }) {
                 },
               }}
             >
-              {importStoreOptions.map((store) => (
+              {shopOptions.map((store) => (
                 <MenuItem key={store.value} value={store.value}>
                   {getDisplayText(t, store)}
                 </MenuItem>
@@ -301,7 +386,12 @@ function ImportOrdersModal({ onClose, open }) {
               width: '100%',
             }}
           >
-            <input type="file" accept=".txt,text/plain" hidden onChange={handleFileChange} />
+            <input
+              type="file"
+              accept=".txt,.tsv,.csv,text/plain,text/csv,text/tab-separated-values"
+              hidden
+              onChange={handleFileChange}
+            />
             <Box
               sx={{
                 alignItems: 'center',
@@ -318,7 +408,7 @@ function ImportOrdersModal({ onClose, open }) {
               <CloudUploadOutlinedIcon />
             </Box>
             <Typography variant="body2" sx={{ color: '#111827', fontSize: 13, fontWeight: 500 }}>
-              {selectedFileName || t('orders.importOrders.uploadTitle')}
+              {selectedFile?.name || t('orders.importOrders.uploadTitle')}
             </Typography>
             <Typography variant="caption" sx={{ color: '#6B7280', fontSize: 12, mt: 0.75 }}>
               {t('orders.importOrders.uploadHint')}
@@ -342,9 +432,12 @@ function ImportOrdersModal({ onClose, open }) {
           <Button
             variant="contained"
             onClick={handleImport}
+            disabled={importOrdersMutation.isPending}
             sx={{ gridColumn: 3, height: 40, width: 160 }}
           >
-            {t('orders.actions.import')}
+            {importOrdersMutation.isPending
+              ? t('orders.importOrders.importing')
+              : t('orders.actions.import')}
           </Button>
         </Box>
       </Stack>
@@ -352,13 +445,13 @@ function ImportOrdersModal({ onClose, open }) {
   )
 }
 
-function FilterBar() {
+function FilterBar({ filters, onFiltersChange, onRefresh, shopOptions }) {
   const { t } = useTranslation()
   const [importModalOpen, setImportModalOpen] = useState(false)
-  const [dateRange, setDateRange] = useState({
-    start: dayjs('2026-06-11'),
-    end: dayjs('2026-06-20'),
-  })
+
+  const updateFilter = (key, value) => {
+    onFiltersChange({ ...filters, [key]: value, page: 1 })
+  }
 
   return (
     <Box
@@ -375,6 +468,8 @@ function FilterBar() {
       }}
     >
       <TextField
+        value={filters.search}
+        onChange={(event) => updateFilter('search', event.target.value)}
         placeholder={t('orders.filters.search')}
         sx={{ width: '100%' }}
         slotProps={{
@@ -387,12 +482,33 @@ function FilterBar() {
           },
         }}
       />
-      <OrdersSelect options={filterOptions.channels} sx={{ width: '100%' }} />
-      <OrdersSelect options={filterOptions.shops} sx={{ width: '100%' }} />
-      <DateRangePicker value={dateRange} onChange={setDateRange} fullWidth />
-      <OrdersSelect options={filterOptions.sellers} sx={{ width: '100%' }} />
+      <OrdersSelect
+        value={filters.channel}
+        onChange={(value) => updateFilter('channel', value)}
+        options={filterOptions.channels}
+        sx={{ width: '100%' }}
+      />
+      <OrdersSelect
+        value={filters.shopId}
+        onChange={(value) => updateFilter('shopId', value)}
+        options={[{ value: 'all', labelKey: 'orders.values.shops.all' }, ...shopOptions]}
+        sx={{ width: '100%' }}
+      />
+      <DateRangePicker
+        value={filters.dateRange}
+        onChange={(value) => updateFilter('dateRange', value)}
+        fullWidth
+      />
+      <OrdersSelect
+        value={filters.seller}
+        onChange={(value) => updateFilter('seller', value)}
+        options={filterOptions.sellers}
+        disabled
+        sx={{ width: '100%' }}
+      />
       <IconButton
         aria-label={t('orders.filters.refresh')}
+        onClick={onRefresh}
         sx={(theme) => ({
           width: 40,
           height: 40,
@@ -412,7 +528,11 @@ function FilterBar() {
       >
         {t('orders.actions.import')}
       </Button>
-      <ImportOrdersModal open={importModalOpen} onClose={() => setImportModalOpen(false)} />
+      <ImportOrdersModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        shopOptions={shopOptions}
+      />
     </Box>
   )
 }
@@ -461,17 +581,21 @@ function TableHeader() {
   )
 }
 
-function buildCustomerForm(order) {
+function buildCustomerForm(order = {}) {
+  const buyer = order.buyer || {}
+  const address = order.shippingAddress || {}
+  const customerInfo = order.customerInfo || {}
+
   return {
-    name: order.customer,
-    email: order.customerInfo?.email ?? 'lc9sgxl3dzvvdxk@marketplace.amazon.com',
-    address: order.customerInfo?.address ?? '125 DANABLU DR',
-    address2: order.customerInfo?.address2 ?? '',
-    state: order.customerInfo?.state ?? 'TX',
-    city: order.customerInfo?.city ?? 'HUTTO',
-    country: order.customerInfo?.country ?? 'US',
-    zipCode: order.customerInfo?.zipCode ?? '78634-5781',
-    phoneNumber: order.customerInfo?.phoneNumber ?? '+1 602-671-6610 ext. 39989',
+    name: buyer.name || order.customer || address.name || '',
+    email: buyer.emailMasked || customerInfo.email || '',
+    address: address.addressLine1 || customerInfo.address || '',
+    address2: address.addressLine2 || customerInfo.address2 || '',
+    state: address.stateOrProvinceCode || address.stateOrProvince || customerInfo.state || '',
+    city: address.city || customerInfo.city || '',
+    country: address.countryCode || address.country || customerInfo.country || '',
+    zipCode: address.postalCode || customerInfo.zipCode || '',
+    phoneNumber: address.phoneMasked || buyer.phoneMasked || customerInfo.phoneNumber || '',
   }
 }
 
@@ -505,18 +629,57 @@ function CustomerTextField({ label, name, onChange, placeholder, value }) {
 
 function UpdateCustomerModal({ onClose, open, order }) {
   const { t } = useTranslation()
-  const [formValues, setFormValues] = useState(() => buildCustomerForm(order))
+  const { enqueueSnackbar } = useSnackbar()
+  const updateBuyerMutation = useUpdateOrderBuyerMutation()
+  const updateAddressMutation = useUpdateOrderShippingAddressMutation()
+  const detailQuery = useOrderDetailQuery(order?.apiId, {
+    enabled: open && Boolean(order?.apiId),
+  })
+  const [draftValues, setDraftValues] = useState({})
+  const sourceFormValues = useMemo(
+    () => buildCustomerForm(detailQuery.data || order),
+    [detailQuery.data, order],
+  )
+  const formValues = { ...sourceFormValues, ...draftValues }
+  const saving = updateBuyerMutation.isPending || updateAddressMutation.isPending
 
   const handleChange = (event) => {
     const { name, value } = event.target
-    setFormValues((current) => ({
+    setDraftValues((current) => ({
       ...current,
       [name]: value,
     }))
   }
 
-  const handleSave = () => {
-    onClose()
+  const handleSave = async () => {
+    if (!order?.apiId) return
+
+    try {
+      await updateBuyerMutation.mutateAsync({
+        orderId: order.apiId,
+        name: formValues.name,
+        emailMasked: formValues.email,
+        phoneMasked: formValues.phoneNumber,
+      })
+      await updateAddressMutation.mutateAsync({
+        orderId: order.apiId,
+        name: formValues.name,
+        addressLine1: formValues.address,
+        addressLine2: formValues.address2,
+        stateOrProvinceCode: formValues.state,
+        city: formValues.city,
+        countryCode: formValues.country,
+        postalCode: formValues.zipCode,
+        phoneMasked: formValues.phoneNumber,
+      })
+      enqueueSnackbar(t('orders.updateCustomer.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+      setDraftValues({})
+      onClose()
+    } catch (error) {
+      enqueueSnackbar(t(error?.message || 'errors.api.network'), {
+        variant: SNACKBAR_VARIANTS.ERROR,
+      })
+    }
   }
 
   return (
@@ -537,12 +700,12 @@ function UpdateCustomerModal({ onClose, open, order }) {
     >
       <Stack sx={{ width: 820 }}>
         <Stack
-          direction="row"
-          alignItems="center"
           sx={{
+            alignItems: 'center',
+            borderBottom: '1px solid #E5E8F0',
+            flexDirection: 'row',
             height: 77,
             px: 4,
-            borderBottom: '1px solid #E5E8F0',
           }}
         >
           <Typography
@@ -592,6 +755,7 @@ function UpdateCustomerModal({ onClose, open, order }) {
           <Button
             variant="contained"
             onClick={handleSave}
+            disabled={saving}
             sx={{ gridColumn: 3, height: 44, width: 150 }}
           >
             {t('orders.actions.saveChanges')}
@@ -602,12 +766,27 @@ function UpdateCustomerModal({ onClose, open, order }) {
   )
 }
 
-function OpenCaseModal({ onClose, open }) {
+function OpenCaseModal({ onClose, open, order }) {
   const { t } = useTranslation()
+  const { enqueueSnackbar } = useSnackbar()
+  const updateCaseStatusMutation = useUpdateOrderCaseStatusMutation()
   const [selectedCase, setSelectedCase] = useState('')
 
-  const handleSave = () => {
-    onClose()
+  const handleSave = async () => {
+    if (!order?.apiId) return
+
+    try {
+      await updateCaseStatusMutation.mutateAsync({
+        orderId: order.apiId,
+        caseStatus: 'OPEN',
+      })
+      enqueueSnackbar(t('orders.openCase.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+      onClose()
+    } catch (error) {
+      enqueueSnackbar(t(error?.message || 'errors.api.network'), {
+        variant: SNACKBAR_VARIANTS.ERROR,
+      })
+    }
   }
 
   return (
@@ -631,7 +810,14 @@ function OpenCaseModal({ onClose, open }) {
       }}
     >
       <Box sx={{ p: 3.5, pt: 3, width: 520 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5 }}>
+        <Stack
+          sx={{
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            mb: 2.5,
+          }}
+        >
           <Typography variant="h6" sx={{ color: '#181D27', fontSize: 20, fontWeight: 700 }}>
             {t('orders.openCase.title')}
           </Typography>
@@ -679,6 +865,7 @@ function OpenCaseModal({ onClose, open }) {
           <Button
             variant="contained"
             onClick={handleSave}
+            disabled={updateCaseStatusMutation.isPending || !selectedCase}
             sx={{ gridColumn: 3, height: 40, width: 96 }}
           >
             {t('orders.actions.save')}
@@ -691,42 +878,8 @@ function OpenCaseModal({ onClose, open }) {
 
 function OrderRow({ expanded, onToggle, order }) {
   const { t } = useTranslation()
-  const [statusAnchorEl, setStatusAnchorEl] = useState(null)
-  const [selectedStatusKey, setSelectedStatusKey] = useState(order.statusKey)
-  const [shippingAnchorEl, setShippingAnchorEl] = useState(null)
-  const [selectedShippingTypeKey, setSelectedShippingTypeKey] = useState(order.shippingTypeKey)
   const [caseModalOpen, setCaseModalOpen] = useState(false)
   const [customerModalOpen, setCustomerModalOpen] = useState(false)
-  const selectedStatus =
-    statusOptions.find((status) => status.key === selectedStatusKey) ?? statusOptions[0]
-  const statusMenuOpen = Boolean(statusAnchorEl)
-  const shippingMenuOpen = Boolean(shippingAnchorEl)
-
-  const handleOpenStatusMenu = (event) => {
-    setStatusAnchorEl(event.currentTarget)
-  }
-
-  const handleCloseStatusMenu = () => {
-    setStatusAnchorEl(null)
-  }
-
-  const handleChangeStatus = (statusKey) => {
-    setSelectedStatusKey(statusKey)
-    handleCloseStatusMenu()
-  }
-
-  const handleOpenShippingMenu = (event) => {
-    setShippingAnchorEl(event.currentTarget)
-  }
-
-  const handleCloseShippingMenu = () => {
-    setShippingAnchorEl(null)
-  }
-
-  const handleChangeShippingType = (shippingTypeKey) => {
-    setSelectedShippingTypeKey(shippingTypeKey)
-    handleCloseShippingMenu()
-  }
 
   return (
     <Box
@@ -753,50 +906,8 @@ function OrderRow({ expanded, onToggle, order }) {
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {order.id}
       </Typography>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <StatusBadge label={t(selectedStatusKey)} color={selectedStatus.color} />
-        <IconButton
-          size="small"
-          aria-haspopup="menu"
-          aria-expanded={statusMenuOpen}
-          onClick={handleOpenStatusMenu}
-          sx={{ width: 24, height: 24, color: 'text.secondary' }}
-        >
-          <KeyboardArrowDownIcon fontSize="small" />
-        </IconButton>
-        <Menu
-          anchorEl={statusAnchorEl}
-          open={statusMenuOpen}
-          onClose={handleCloseStatusMenu}
-          slotProps={{
-            paper: {
-              sx: {
-                mt: 0.75,
-                width: 168,
-              },
-            },
-          }}
-        >
-          {statusOptions.map((status) => {
-            const selected = status.key === selectedStatusKey
-
-            return (
-              <MenuItem
-                key={status.key}
-                onClick={() => handleChangeStatus(status.key)}
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  height: 40,
-                  justifyContent: 'space-between',
-                }}
-              >
-                <StatusBadge label={t(status.key)} color={status.color} />
-                {selected && <CheckIcon fontSize="small" sx={{ color: 'text.primary' }} />}
-              </MenuItem>
-            )
-          })}
-        </Menu>
+      <Stack spacing={1} sx={{ alignItems: 'center', flexDirection: 'row' }}>
+        <StatusBadge label={t(order.statusKey)} color={getOrderStatusColor(order.status)} />
       </Stack>
       <Box>
         <Typography variant="body2">{order.createdAt}</Typography>
@@ -810,52 +921,10 @@ function OrderRow({ expanded, onToggle, order }) {
           {t(order.orderAgoKey)}
         </Typography>
       </Box>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <StatusBadge label={t(selectedShippingTypeKey)} />
-        <IconButton
-          size="small"
-          aria-haspopup="menu"
-          aria-expanded={shippingMenuOpen}
-          onClick={handleOpenShippingMenu}
-          sx={{ width: 24, height: 24, color: 'text.secondary' }}
-        >
-          <KeyboardArrowDownIcon fontSize="small" />
-        </IconButton>
-        <Menu
-          anchorEl={shippingAnchorEl}
-          open={shippingMenuOpen}
-          onClose={handleCloseShippingMenu}
-          slotProps={{
-            paper: {
-              sx: {
-                mt: 0.75,
-                width: 200,
-              },
-            },
-          }}
-        >
-          {shippingTypeOptions.map((shippingType) => {
-            const selected = shippingType.key === selectedShippingTypeKey
-
-            return (
-              <MenuItem
-                key={shippingType.key}
-                onClick={() => handleChangeShippingType(shippingType.key)}
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  height: 38,
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Typography variant="body2">{t(shippingType.key)}</Typography>
-                {selected && <CheckIcon fontSize="small" sx={{ color: 'text.primary' }} />}
-              </MenuItem>
-            )
-          })}
-        </Menu>
+      <Stack spacing={1} sx={{ alignItems: 'center', flexDirection: 'row' }}>
+        <StatusBadge label={order.shippingType || '-'} />
       </Stack>
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack spacing={1} sx={{ alignItems: 'center', flexDirection: 'row' }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }}>
           {order.customer}
         </Typography>
@@ -868,6 +937,7 @@ function OrderRow({ expanded, onToggle, order }) {
         </IconButton>
         <CheckCircleIcon fontSize="small" sx={{ color: '#62D989' }} />
         <UpdateCustomerModal
+          key={`${order.apiId}-${customerModalOpen}`}
           open={customerModalOpen}
           order={order}
           onClose={() => setCustomerModalOpen(false)}
@@ -875,9 +945,11 @@ function OrderRow({ expanded, onToggle, order }) {
       </Stack>
       <Typography variant="body2">{order.basecost}</Typography>
       <Box>
-        <StatusBadge label={t(order.storeKey)} color="danger" />
+        <StatusBadge label={order.storeKey ? t(order.storeKey) : order.storeName} color="danger" />
       </Box>
-      <Typography variant="body2">{t(order.handlingKey)}</Typography>
+      <Typography variant="body2">
+        {order.handlingKey ? t(order.handlingKey) : order.handling}
+      </Typography>
       <Box>
         <IconButton
           aria-label={t('orders.openCase.title')}
@@ -886,7 +958,7 @@ function OrderRow({ expanded, onToggle, order }) {
         >
           <AddBoxOutlinedIcon fontSize="small" />
         </IconButton>
-        <OpenCaseModal open={caseModalOpen} onClose={() => setCaseModalOpen(false)} />
+        <OpenCaseModal open={caseModalOpen} order={order} onClose={() => setCaseModalOpen(false)} />
       </Box>
     </Box>
   )
@@ -1076,6 +1148,62 @@ function NotePanel({ fulfillment }) {
 }
 
 function ExpandedOrderDetail({ order }) {
+  const { t } = useTranslation()
+  const expandedOrderQuery = useExpandedOrderQuery(order.apiId, {
+    enabled: Boolean(order.apiId),
+  })
+  const expandedOrder = expandedOrderQuery.data || {}
+  const expandedItems = expandedOrder.items || []
+  const items = expandedItems.map(({ item = {}, pricing = {} }) => ({
+    ...item,
+    price: {
+      currency: pricing.currency,
+      itemPriceAmount: pricing.customerPaidAmount,
+    },
+  }))
+  const customizationsByItemId = new Map()
+  expandedItems.forEach(({ item = {}, customization }) => {
+    if (item.id && customization) customizationsByItemId.set(item.id, customization)
+  })
+  const rawOrder = {
+    ...order.raw,
+    ...(expandedOrder.order || {}),
+    buyer: expandedOrder.buyer || order.raw?.buyer,
+    shippingAddress: expandedOrder.shipping?.address || order.raw?.shippingAddress,
+    shippingService: expandedOrder.shipping?.service || order.raw?.shippingService,
+  }
+  const detail = mapOrderDetail({
+    order: rawOrder,
+    items,
+    customizationsByItemId,
+  })
+  const displayOrder = {
+    ...order,
+    ...detail,
+    basecost: detail.basecost,
+  }
+
+  if (expandedOrderQuery.isLoading) {
+    return (
+      <Box
+        sx={{
+          alignItems: 'center',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          gap: 1.5,
+          px: 3,
+          py: 3,
+        }}
+      >
+        <CircularProgress size={18} />
+        <Typography variant="body2" color="text.secondary">
+          {t('orders.loadingDetails')}
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
     <Box
       sx={{
@@ -1092,18 +1220,21 @@ function ExpandedOrderDetail({ order }) {
         borderColor: 'divider',
       }}
     >
-      <ProductImages images={order.productImages} />
-      <ProductInfo product={order.product} />
-      <CustomizationInfo customization={order.customization} />
-      <FulfillmentInfo fulfillment={order.fulfillment} />
-      <NotePanel fulfillment={order.fulfillment} />
+      <ProductImages images={displayOrder.productImages} />
+      <ProductInfo product={displayOrder.product} />
+      <CustomizationInfo customization={displayOrder.customization} />
+      <FulfillmentInfo fulfillment={displayOrder.fulfillment} />
+      <NotePanel fulfillment={displayOrder.fulfillment} />
     </Box>
   )
 }
 
-function PaginationBar() {
+function PaginationBar({ limit = 10, onLimitChange, onPageChange, page = 1, total = 0 }) {
   const { t } = useTranslation()
-  const pages = ['1', '2', '3', '...', '8', '9', '10']
+  const totalPages = Math.max(Math.ceil(total / limit), 1)
+  const pages = Array.from({ length: Math.min(totalPages, 5) }, (_, index) => index + 1)
+  const canGoBack = page > 1
+  const canGoForward = page < totalPages
 
   return (
     <Box
@@ -1120,36 +1251,102 @@ function PaginationBar() {
       <Button
         variant="outlined"
         startIcon={<ArrowBackIcon />}
-        disabled
+        disabled={!canGoBack}
+        onClick={() => onPageChange?.(page - 1)}
         sx={{ justifySelf: 'start' }}
       >
         {t('orders.pagination.before')}
       </Button>
       <Stack direction="row" spacing={1}>
-        {pages.map((page) => (
+        {pages.map((pageNumber) => (
           <Button
-            key={page}
-            variant={page === '1' ? 'contained' : 'text'}
+            key={pageNumber}
+            variant={pageNumber === page ? 'contained' : 'text'}
+            onClick={() => onPageChange?.(pageNumber)}
             sx={{
               minWidth: 36,
               width: 36,
               height: 36,
               p: 0,
-              color: page === '1' ? 'common.white' : 'text.secondary',
+              color: pageNumber === page ? 'common.white' : 'text.secondary',
             }}
           >
-            {page}
+            {pageNumber}
           </Button>
         ))}
       </Stack>
-      <Button variant="outlined" endIcon={<ArrowForwardIcon />} sx={{ justifySelf: 'end' }}>
-        {t('orders.pagination.after')}
-      </Button>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifySelf: 'end' }}>
+        <Typography variant="body2" color="text.secondary">
+          {t('orders.pagination.perPage')}
+        </Typography>
+        <FormControl size="small" sx={{ minWidth: 82 }}>
+          <Select
+            value={limit}
+            IconComponent={KeyboardArrowDownIcon}
+            onChange={(event) => onLimitChange?.(Number(event.target.value))}
+            sx={{ height: 36 }}
+          >
+            {pageSizeOptions.map((pageSize) => (
+              <MenuItem key={pageSize} value={pageSize}>
+                {pageSize}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Button
+          variant="outlined"
+          endIcon={<ArrowForwardIcon />}
+          disabled={!canGoForward}
+          onClick={() => onPageChange?.(page + 1)}
+        >
+          {t('orders.pagination.after')}
+        </Button>
+      </Stack>
     </Box>
   )
 }
 
-function OrdersTable({ expandedOrderIds, onToggleOrder, orders }) {
+function OrdersTableSkeleton({ rows = 6 }) {
+  return Array.from({ length: rows }, (_, index) => (
+    <Box
+      key={index}
+      sx={{
+        alignItems: 'center',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        display: 'grid',
+        gridTemplateColumns: tableColumns,
+        minHeight: 64,
+        px: 2,
+        width: '100%',
+      }}
+    >
+      <Skeleton variant="circular" width={24} height={24} />
+      <Skeleton variant="text" width={126} height={24} />
+      <Skeleton variant="rounded" width={84} height={24} />
+      <Skeleton variant="text" width={104} height={24} />
+      <Skeleton variant="text" width={104} height={24} />
+      <Skeleton variant="rounded" width={96} height={24} />
+      <Skeleton variant="text" width={118} height={24} />
+      <Skeleton variant="text" width={68} height={24} />
+      <Skeleton variant="rounded" width={84} height={24} />
+      <Skeleton variant="text" width={72} height={24} />
+      <Skeleton variant="circular" width={28} height={28} />
+    </Box>
+  ))
+}
+
+function OrdersTable({
+  expandedOrderIds,
+  loading,
+  onLimitChange,
+  onPageChange,
+  onToggleOrder,
+  orders,
+  pagination,
+}) {
+  const { t } = useTranslation()
+
   return (
     <Paper
       variant="outlined"
@@ -1161,53 +1358,149 @@ function OrdersTable({ expandedOrderIds, onToggleOrder, orders }) {
       }}
     >
       <TableHeader />
-      {orders.map((order) => {
-        const expanded = expandedOrderIds.includes(order.id)
+      {loading ? (
+        <OrdersTableSkeleton />
+      ) : orders.length === 0 ? (
+        <Typography variant="body2" color="text.secondary" sx={{ px: 2.5, py: 3 }}>
+          {t('orders.empty')}
+        </Typography>
+      ) : (
+        orders.map((order) => {
+          const expanded = expandedOrderIds.includes(order.id)
 
-        return (
-          <Box key={order.id}>
-            <OrderRow expanded={expanded} onToggle={() => onToggleOrder(order.id)} order={order} />
-            {expanded && <ExpandedOrderDetail order={order} />}
-          </Box>
-        )
-      })}
-      <PaginationBar />
+          return (
+            <Box key={order.id}>
+              <OrderRow
+                expanded={expanded}
+                onToggle={() => onToggleOrder(order.id)}
+                order={order}
+              />
+              {expanded && <ExpandedOrderDetail order={order} />}
+            </Box>
+          )
+        })
+      )}
+      <PaginationBar
+        limit={pagination?.limit}
+        onLimitChange={onLimitChange}
+        page={pagination?.page}
+        total={pagination?.total}
+        onPageChange={onPageChange}
+      />
     </Paper>
   )
 }
 
 export default function OrdersPage() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const [activeTab, setActiveTab] = useState('all')
-  const orders = useMemo(() => fakeOrders, [])
-  const [expandedOrderIds, setExpandedOrderIds] = useState(() =>
-    [fakeOrders[0]?.id].filter(Boolean),
+  const [queryTab, setQueryTab] = useState('all')
+  const [isTabPending, startTabTransition] = useTransition()
+  const [filters, setFilters] = useState({
+    search: '',
+    channel: 'all',
+    shopId: 'all',
+    seller: 'all',
+    dateRange: { start: null, end: null },
+    page: 1,
+    limit: 10,
+  })
+  const [collapsedOrderIds, setCollapsedOrderIds] = useState([])
+  const shopsQuery = useShopsQuery({ page: 1, limit: 100 })
+  const shopOptions = useMemo(
+    () =>
+      (shopsQuery.data?.items || []).map((shop) => ({
+        value: shop.id,
+        label: shop.name,
+      })),
+    [shopsQuery.data],
   )
+  const shopNameById = useMemo(
+    () => new Map(shopOptions.map((shop) => [shop.value, shop.label])),
+    [shopOptions],
+  )
+  const orderQuery = useMemo(
+    () => buildOrderListQuery({ ...filters, tab: queryTab }),
+    [filters, queryTab],
+  )
+  const ordersQuery = useOrdersQuery(orderQuery)
+  const orders = useMemo(
+    () =>
+      mapOrderRows(ordersQuery.data?.items || [], {
+        shopNameById,
+        locale: i18n.language,
+      }),
+    [i18n.language, ordersQuery.data, shopNameById],
+  )
+  const pagination = ordersQuery.data?.pagination || {
+    total: 0,
+    page: filters.page,
+    limit: filters.limit,
+  }
+  const tabs = useMemo(() => {
+    const counts = mapApiTabCounts(ordersQuery.data?.tabCounts || {})
+
+    return orderTabs.map((tab) => ({
+      ...tab,
+      count: counts[tab.key] || 0,
+    }))
+  }, [ordersQuery.data])
+  const expandedOrderIds = useMemo(() => {
+    const collapsedIds = new Set(collapsedOrderIds)
+    return getDefaultExpandedOrderIds(orders).filter((orderId) => !collapsedIds.has(orderId))
+  }, [collapsedOrderIds, orders])
+  const isTabLoading = activeTab !== queryTab || isTabPending || ordersQuery.isLoading
 
   const handleToggleOrder = (orderId) => {
-    setExpandedOrderIds((currentIds) =>
+    setCollapsedOrderIds((currentIds) =>
       currentIds.includes(orderId)
         ? currentIds.filter((currentId) => currentId !== orderId)
         : [...currentIds, orderId],
     )
   }
+  const handleChangeTab = (tab) => {
+    if (tab === activeTab) {
+      return
+    }
+
+    flushSync(() => {
+      setActiveTab(tab)
+    })
+    startTabTransition(() => {
+      setQueryTab(tab)
+      setFilters((current) => ({ ...current, page: 1 }))
+      setCollapsedOrderIds([])
+    })
+  }
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 112px)', bgcolor: 'background.default' }}>
       <Stack spacing={3}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack sx={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }}>
           <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }}>
             {t('orders.title')}
           </Typography>
         </Stack>
 
         <Stack spacing={2.75}>
-          <OrderTabs activeTab={activeTab} onChange={setActiveTab} />
-          <FilterBar />
+          <OrderTabs activeTab={activeTab} onChange={handleChangeTab} tabs={tabs} />
+          <FilterBar
+            filters={filters}
+            onFiltersChange={setFilters}
+            onRefresh={() => ordersQuery.refetch()}
+            shopOptions={shopOptions}
+          />
           <OrdersTable
             expandedOrderIds={expandedOrderIds}
+            loading={isTabLoading}
+            onLimitChange={(limit) => {
+              setFilters((current) => ({ ...current, limit, page: 1 }))
+              setCollapsedOrderIds([])
+            }}
+            onPageChange={(page) => setFilters((current) => ({ ...current, page }))}
             onToggleOrder={handleToggleOrder}
             orders={orders}
+            pagination={pagination}
           />
         </Stack>
       </Stack>

@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { filterOrders, getOrderTabCounts, toggleOrderSelection } from './ordersDisplay.js'
+import {
+  filterOrders,
+  getDefaultExpandedOrderIds,
+  getOrderTabCounts,
+  toggleOrderSelection,
+} from './ordersDisplay.js'
 
 const orders = [
   {
@@ -57,4 +62,8 @@ test('getOrderTabCounts includes all and per-status counts', () => {
 test('toggleOrderSelection adds and removes ids without duplicates', () => {
   assert.deepEqual(toggleOrderSelection(['A-100'], 'E-200'), ['A-100', 'E-200'])
   assert.deepEqual(toggleOrderSelection(['A-100', 'E-200'], 'A-100'), ['E-200'])
+})
+
+test('getDefaultExpandedOrderIds opens every order row by default', () => {
+  assert.deepEqual(getDefaultExpandedOrderIds(orders), ['A-100', 'E-200'])
 })

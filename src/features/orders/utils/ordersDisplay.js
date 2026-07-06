@@ -51,6 +51,10 @@ export function getOrderTabCounts(orders = []) {
   )
 }
 
+export function getDefaultExpandedOrderIds(orders = []) {
+  return orders.map((order) => order.id).filter(Boolean)
+}
+
 export function toggleOrderSelection(selectedIds = [], orderId) {
   return selectedIds.includes(orderId)
     ? selectedIds.filter((selectedId) => selectedId !== orderId)

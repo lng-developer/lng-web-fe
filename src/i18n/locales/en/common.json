@@ -640,6 +640,8 @@
       "clear": "Clear"
     },
     "empty": "No matching orders",
+    "loading": "Loading orders...",
+    "loadingDetails": "Loading order details...",
     "tabs": {
       "all": "All",
       "new": "New Orders",
@@ -712,11 +714,13 @@
     },
     "pagination": {
       "before": "Before",
-      "after": "After"
+      "after": "After",
+      "perPage": "Per page"
     },
     "openCase": {
       "title": "Open case",
       "placeholder": "Select a case...",
+      "success": "Case opened.",
       "options": {
         "missingPsd": "Missing PSD",
         "customerRequest": "Customer Request",
@@ -726,14 +730,23 @@
     },
     "importOrders": {
       "title": "Import Orders",
+      "source": "SOURCE",
+      "sources": {
+        "amazon": "Amazon order report",
+        "etsy": "Etsy sold order items"
+      },
       "store": "STORE",
       "storePlaceholder": "Select store...",
       "file": "FILE",
       "uploadTitle": "Click to upload or drop .txt file",
-      "uploadHint": ".txt files only"
+      "uploadHint": ".txt, .tsv, .csv files",
+      "importing": "Importing...",
+      "success": "Import job created.",
+      "validation": "Select a store and file before importing."
     },
     "updateCustomer": {
       "title": "Update Customer",
+      "success": "Customer updated.",
       "fields": {
         "name": "Name",
         "email": "Email",
@@ -772,8 +785,14 @@
       "status": {
         "new": "New",
         "fulfilled": "Fulfilled",
+        "processing": "Processing",
+        "partiallyShipped": "Partially shipped",
         "shipped": "Shipped",
         "cancelled": "Cancelled",
+        "refunded": "Refunded",
+        "failed": "Failed",
+        "onHold": "On hold",
+        "fulfillmentReady": "Fulfillment ready",
         "pending": "Pending",
         "needScale": "Need Scale"
       },

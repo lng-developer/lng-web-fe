@@ -693,6 +693,8 @@
       "clear": "Bỏ chọn"
     },
     "empty": "Không có đơn hàng phù hợp",
+    "loading": "Đang tải đơn hàng...",
+    "loadingDetails": "Đang tải chi tiết đơn hàng...",
     "tabs": {
       "all": "Tất cả",
       "new": "Đơn mới",
@@ -765,11 +767,13 @@
     },
     "pagination": {
       "before": "Before",
-      "after": "After"
+      "after": "After",
+      "perPage": "Mỗi trang"
     },
     "openCase": {
       "title": "Mở case",
       "placeholder": "Chọn case...",
+      "success": "Đã mở case.",
       "options": {
         "missingPsd": "Thiếu PSD",
         "customerRequest": "Yêu cầu từ khách hàng",
@@ -778,15 +782,24 @@
       }
     },
     "importOrders": {
+      "source": "NGUON",
+      "sources": {
+        "amazon": "Bao cao don Amazon",
+        "etsy": "Etsy sold order items"
+      },
       "title": "Nhập đơn hàng",
       "store": "CỬA HÀNG",
       "storePlaceholder": "Chọn cửa hàng...",
       "file": "TỆP",
       "uploadTitle": "Bấm để tải lên hoặc thả file .txt",
-      "uploadHint": "Chỉ hỗ trợ file .txt"
+      "uploadHint": "Chỉ hỗ trợ file .txt",
+      "importing": "Dang nhap...",
+      "success": "Da tao job nhap don.",
+      "validation": "Hay chon cua hang va tep truoc khi nhap."
     },
     "updateCustomer": {
       "title": "Cập nhật khách hàng",
+      "success": "Đã cập nhật khách hàng.",
       "fields": {
         "name": "Tên",
         "email": "Email",
@@ -825,8 +838,14 @@
       "status": {
         "new": "New",
         "fulfilled": "Fulfilled",
+        "processing": "Processing",
+        "partiallyShipped": "Partially shipped",
         "shipped": "Shipped",
         "cancelled": "Cancelled",
+        "refunded": "Refunded",
+        "failed": "Failed",
+        "onHold": "On hold",
+        "fulfillmentReady": "Fulfillment ready",
         "pending": "Pending",
         "needScale": "Need Scale"
       },
