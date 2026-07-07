@@ -674,6 +674,13 @@
     "forgotPassword": {
       "title": "Quên mật khẩu",
       "description": "Chức năng khôi phục mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+      "unavailable": "Backend chưa cung cấp API khôi phục mật khẩu, nên màn này tạm thời chỉ hiển thị thông báo.",
+      "backLogin": "Về trang đăng nhập"
+    },
+    "resetPassword": {
+      "title": "Đặt lại mật khẩu",
+      "description": "Chức năng đặt lại mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+      "unavailable": "Backend chưa cung cấp API đặt lại mật khẩu, nên màn này tạm thời chỉ hiển thị thông báo.",
       "backLogin": "Về trang đăng nhập"
     }
   },
@@ -845,7 +852,17 @@
         "refunded": "Refunded",
         "failed": "Failed",
         "onHold": "On hold",
+        "mappingPending": "Chờ mapping",
+        "customizationPending": "Chờ customization",
+        "customizationParsed": "Đã parse customization",
+        "fulfillmentPlanning": "Đang lập kế hoạch fulfillment",
         "fulfillmentReady": "Fulfillment ready",
+        "needProduction": "Cần sản xuất",
+        "inProduction": "Đang sản xuất",
+        "qcRejected": "QC từ chối",
+        "readyToSendVendor": "Sẵn sàng gửi vendor",
+        "sentToVendor": "Đã gửi vendor",
+        "trackingPending": "Chờ tracking",
         "pending": "Pending",
         "needScale": "Need Scale"
       },

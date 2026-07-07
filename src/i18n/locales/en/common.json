@@ -792,7 +792,17 @@
         "refunded": "Refunded",
         "failed": "Failed",
         "onHold": "On hold",
+        "mappingPending": "Mapping pending",
+        "customizationPending": "Customization pending",
+        "customizationParsed": "Customization parsed",
+        "fulfillmentPlanning": "Fulfillment planning",
         "fulfillmentReady": "Fulfillment ready",
+        "needProduction": "Need production",
+        "inProduction": "In production",
+        "qcRejected": "QC rejected",
+        "readyToSendVendor": "Ready to send vendor",
+        "sentToVendor": "Sent to vendor",
+        "trackingPending": "Tracking pending",
         "pending": "Pending",
         "needScale": "Need Scale"
       },
@@ -879,6 +889,13 @@
     "forgotPassword": {
       "title": "Forgot password",
       "description": "Password recovery is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password recovery APIs yet, so this screen is temporarily read-only.",
+      "backLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Password reset is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
       "backLogin": "Back to login"
     }
   },

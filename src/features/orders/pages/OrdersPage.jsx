@@ -17,7 +17,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   FormControl,
   IconButton,
@@ -42,19 +41,20 @@ import {
   useUpdateOrderShippingAddressMutation,
 } from '@/features/orders/api/orders.mutations'
 import {
-  useExpandedOrderQuery,
   useOrderDetailQuery,
-  useOrdersQuery,
+  useOrderWorkbenchQuery,
   useShopsQuery,
 } from '@/features/orders/api/orders.queries'
 import { filterOptions, orderTabs } from '@/features/orders/data/ordersData'
 import {
   buildOrderListQuery,
   mapApiTabCounts,
-  mapOrderDetail,
-  mapOrderRows,
+  mapWorkbenchRows,
 } from '@/features/orders/utils/ordersApi'
-import { getDefaultExpandedOrderIds } from '@/features/orders/utils/ordersDisplay'
+import {
+  getDefaultExpandedOrderIds,
+  getPaginationPages,
+} from '@/features/orders/utils/ordersDisplay'
 
 const tableColumns =
   '44px minmax(150px, 1.25fr) minmax(120px, 0.9fr) minmax(145px, 1.1fr) minmax(145px, 1.1fr) minmax(120px, 0.95fr) minmax(140px, 1.05fr) minmax(100px, 0.75fr) minmax(110px, 0.8fr) minmax(95px, 0.7fr) 56px'
@@ -72,6 +72,11 @@ const importSourceOptions = [
 ]
 
 const pageSizeOptions = [10, 20, 50, 100]
+
+const detailFieldGridClasses = {
+  default: 'grid-cols-[minmax(100px,0.85fr)_minmax(0,1fr)]',
+  compact: 'grid-cols-[96px_minmax(0,1fr)]',
+}
 
 const customerFieldKeys = [
   ['name', 'email'],
@@ -155,28 +160,29 @@ function getDetailDisplayValue(value) {
   return String(value)
 }
 
-function DetailField({ label, value }) {
+function DetailField({ label, labelLayout = 'default', value, valueAlign = 'right' }) {
   const displayValue = getDetailDisplayValue(value)
   const isTextValue = typeof displayValue === 'string' || typeof displayValue === 'number'
+  const alignStart = valueAlign === 'left'
 
   return (
-    <Box
-      sx={{
-        alignItems: 'flex-start',
-        display: 'grid',
-        gap: 1.5,
-        gridTemplateColumns: 'minmax(112px, 0.85fr) minmax(0, 1fr)',
-      }}
-    >
-      <Typography variant="body2" sx={{ color: '#8D9CC5' }}>
+    <Box className={`grid min-w-0 items-start gap-1.5 ${detailFieldGridClasses[labelLayout]}`}>
+      <Typography variant="body2" className="min-w-0 break-words !text-ink-muted">
         {label}
       </Typography>
       {isTextValue ? (
-        <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'right' }}>
+        <Typography
+          variant="body2"
+          className={`min-w-0 break-words [overflow-wrap:anywhere] !font-medium ${
+            alignStart ? '!text-left' : '!text-right'
+          }`}
+        >
           {displayValue}
         </Typography>
       ) : (
-        <Box sx={{ justifySelf: 'end' }}>{displayValue}</Box>
+        <Box className={`min-w-0 ${alignStart ? 'justify-self-start' : 'justify-self-end'}`}>
+          {displayValue}
+        </Box>
       )}
     </Box>
   )
@@ -903,9 +909,7 @@ function OrderRow({ expanded, onToggle, order }) {
       >
         {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
       </IconButton>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {order.id}
-      </Typography>
+      <span className="text-xs">{order.id}</span>
       <Stack spacing={1} sx={{ alignItems: 'center', flexDirection: 'row' }}>
         <StatusBadge label={t(order.statusKey)} color={getOrderStatusColor(order.status)} />
       </Stack>
@@ -931,7 +935,7 @@ function OrderRow({ expanded, onToggle, order }) {
         <IconButton
           aria-label={t('orders.updateCustomer.title')}
           onClick={() => setCustomerModalOpen(true)}
-          sx={{ width: 24, height: 24, color: 'text.secondary' }}
+          sx={{ width: 20, height: 20, color: 'text.secondary' }}
         >
           <EditOutlinedIcon fontSize="small" />
         </IconButton>
@@ -990,32 +994,83 @@ function ProductInfo({ product }) {
   const { t } = useTranslation()
 
   return (
-    <Stack spacing={2.1} sx={{ width: '100%' }}>
-      <Typography variant="caption" sx={{ color: '#9AA7BD', fontWeight: 800, letterSpacing: 0.8 }}>
+    <Stack className="min-w-0 w-full gap-6">
+      <Typography
+        variant="caption"
+        className="min-w-0 tracking-[0.8px] !font-extrabold !text-ink-muted"
+      >
         {t('orders.detail.productInfo')}
       </Typography>
       <DetailField
         label={t('orders.fields.psd')}
         value={<StatusBadge label={t(product.psdKey)} color="danger" />}
+        labelLayout="compact"
+        valueAlign="left"
       />
       <DetailField
         label={t('orders.fields.pngStatus')}
         value={<StatusBadge label={t(product.pngStatusKey)} color="warning" />}
+        labelLayout="compact"
+        valueAlign="left"
       />
-      <DetailField label={t('orders.fields.scaleBy')} value={t(product.scaleByKey)} />
-      <DetailField label={t('orders.fields.qcBy')} value={product.qcBy} />
-      <DetailField label={t('orders.fields.sku')} value={product.sku} />
-      <DetailField label={t('orders.fields.asinType')} value={t(product.asinTypeKey)} />
-      <DetailField label={t('orders.fields.asin')} value={product.asin} />
-      <DetailField label={t('orders.fields.psdId')} value={t(product.psdIdKey)} />
-      <DetailField label={t('orders.fields.seller')} value={product.seller} />
-      <DetailField label={t('orders.fields.team')} value={product.team} />
+      <DetailField
+        label={t('orders.fields.scaleBy')}
+        value={product.scaleBy || t(product.scaleByKey)}
+        labelLayout="compact"
+        valueAlign="left"
+      />
+      <DetailField
+        label={t('orders.fields.qcBy')}
+        value={product.qcBy}
+        labelLayout="compact"
+        valueAlign="left"
+      />
+      <DetailField
+        label={t('orders.fields.sku')}
+        value={product.sku}
+        labelLayout="compact"
+        valueAlign="left"
+      />
+      <DetailField
+        label={t('orders.fields.asinType')}
+        value={t(product.asinTypeKey)}
+        labelLayout="compact"
+        valueAlign="left"
+      />
+      <DetailField
+        label={t('orders.fields.asin')}
+        value={product.asin}
+        labelLayout="compact"
+        valueAlign="left"
+      />
+      <DetailField
+        label={t('orders.fields.psdId')}
+        value={t(product.psdIdKey)}
+        labelLayout="compact"
+        valueAlign="left"
+      />
+      <DetailField
+        label={t('orders.fields.seller')}
+        value={product.seller}
+        labelLayout="compact"
+        valueAlign="left"
+      />
+      <DetailField
+        label={t('orders.fields.team')}
+        value={product.team}
+        labelLayout="compact"
+        valueAlign="left"
+      />
     </Stack>
   )
 }
 
 function CustomizationInfo({ customization }) {
   const { t } = useTranslation()
+  const hasDynamicCustomization =
+    Array.isArray(customization.fields) || Array.isArray(customization.images)
+  const dynamicFields = customization.fields || []
+  const dynamicImages = customization.images || []
   const topFields = [
     ['orders.fields.productType', customization.productType],
     ['orders.fields.shirtColor', customization.shirtColor],
@@ -1032,30 +1087,66 @@ function CustomizationInfo({ customization }) {
   ]
 
   return (
-    <Stack spacing={2.1} sx={{ width: '100%' }}>
-      <Typography variant="caption" sx={{ color: '#9AA7BD', fontWeight: 800, letterSpacing: 0.8 }}>
+    <Stack className="min-w-0 w-full gap-[17px]">
+      <Typography
+        variant="caption"
+        className="min-w-0 tracking-[0.8px] !font-extrabold !text-ink-muted"
+      >
         {t('orders.detail.customization')}
       </Typography>
-      {topFields.map(([labelKey, value]) => (
-        <DetailField key={labelKey} label={t(labelKey)} value={value} />
-      ))}
-      <Typography variant="body2" sx={{ color: '#8D9CC5' }}>
-        {t('orders.fields.customerPhoto')}
-      </Typography>
-      <Stack direction="row" spacing={2.5}>
-        {customization.customerPhoto.map((image, index) => (
-          <Box
-            key={`${image}-photo-${index}`}
-            component="img"
-            src={image}
-            alt=""
-            sx={{ width: 58, height: 58, objectFit: 'cover', borderRadius: 1 }}
-          />
-        ))}
-      </Stack>
-      {bottomFields.map(([labelKey, value]) => (
-        <DetailField key={labelKey} label={t(labelKey)} value={value} />
-      ))}
+      {hasDynamicCustomization ? (
+        <>
+          {dynamicFields.length === 0 && dynamicImages.length === 0 ? (
+            <Typography variant="body2" sx={{ color: '#8D9CC5' }}>
+              {t('orders.values.common.noData')}
+            </Typography>
+          ) : null}
+          {dynamicFields.map((field, index) => (
+            <DetailField
+              key={`${field.label}-${field.value}-${index}`}
+              label={field.label}
+              value={field.value}
+              valueAlign="left"
+            />
+          ))}
+          {dynamicImages.map((image, index) => (
+            <Box key={`${image.url}-${index}`}>
+              <Typography variant="body2" sx={{ color: '#8D9CC5', mb: 1 }}>
+                {image.label || t('orders.fields.customerPhoto')}
+              </Typography>
+              <Box
+                component="img"
+                src={image.url}
+                alt=""
+                sx={{ width: 58, height: 58, objectFit: 'cover', borderRadius: 1 }}
+              />
+            </Box>
+          ))}
+        </>
+      ) : (
+        <>
+          {topFields.map(([labelKey, value]) => (
+            <DetailField key={labelKey} label={t(labelKey)} value={value} valueAlign="left" />
+          ))}
+          <Typography variant="body2" sx={{ color: '#8D9CC5' }}>
+            {t('orders.fields.customerPhoto')}
+          </Typography>
+          <Stack direction="row" spacing={2.5}>
+            {customization.customerPhoto.map((image, index) => (
+              <Box
+                key={`${image}-photo-${index}`}
+                component="img"
+                src={image}
+                alt=""
+                sx={{ width: 58, height: 58, objectFit: 'cover', borderRadius: 1 }}
+              />
+            ))}
+          </Stack>
+          {bottomFields.map(([labelKey, value]) => (
+            <DetailField key={labelKey} label={t(labelKey)} value={value} valueAlign="left" />
+          ))}
+        </>
+      )}
     </Stack>
   )
 }
@@ -1148,61 +1239,7 @@ function NotePanel({ fulfillment }) {
 }
 
 function ExpandedOrderDetail({ order }) {
-  const { t } = useTranslation()
-  const expandedOrderQuery = useExpandedOrderQuery(order.apiId, {
-    enabled: Boolean(order.apiId),
-  })
-  const expandedOrder = expandedOrderQuery.data || {}
-  const expandedItems = expandedOrder.items || []
-  const items = expandedItems.map(({ item = {}, pricing = {} }) => ({
-    ...item,
-    price: {
-      currency: pricing.currency,
-      itemPriceAmount: pricing.customerPaidAmount,
-    },
-  }))
-  const customizationsByItemId = new Map()
-  expandedItems.forEach(({ item = {}, customization }) => {
-    if (item.id && customization) customizationsByItemId.set(item.id, customization)
-  })
-  const rawOrder = {
-    ...order.raw,
-    ...(expandedOrder.order || {}),
-    buyer: expandedOrder.buyer || order.raw?.buyer,
-    shippingAddress: expandedOrder.shipping?.address || order.raw?.shippingAddress,
-    shippingService: expandedOrder.shipping?.service || order.raw?.shippingService,
-  }
-  const detail = mapOrderDetail({
-    order: rawOrder,
-    items,
-    customizationsByItemId,
-  })
-  const displayOrder = {
-    ...order,
-    ...detail,
-    basecost: detail.basecost,
-  }
-
-  if (expandedOrderQuery.isLoading) {
-    return (
-      <Box
-        sx={{
-          alignItems: 'center',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          display: 'flex',
-          gap: 1.5,
-          px: 3,
-          py: 3,
-        }}
-      >
-        <CircularProgress size={18} />
-        <Typography variant="body2" color="text.secondary">
-          {t('orders.loadingDetails')}
-        </Typography>
-      </Box>
-    )
-  }
+  const displayOrder = order
 
   return (
     <Box
@@ -1232,7 +1269,7 @@ function ExpandedOrderDetail({ order }) {
 function PaginationBar({ limit = 10, onLimitChange, onPageChange, page = 1, total = 0 }) {
   const { t } = useTranslation()
   const totalPages = Math.max(Math.ceil(total / limit), 1)
-  const pages = Array.from({ length: Math.min(totalPages, 5) }, (_, index) => index + 1)
+  const pages = getPaginationPages(page, totalPages)
   const canGoBack = page > 1
   const canGoForward = page < totalPages
 
@@ -1258,22 +1295,33 @@ function PaginationBar({ limit = 10, onLimitChange, onPageChange, page = 1, tota
         {t('orders.pagination.before')}
       </Button>
       <Stack direction="row" spacing={1}>
-        {pages.map((pageNumber) => (
-          <Button
-            key={pageNumber}
-            variant={pageNumber === page ? 'contained' : 'text'}
-            onClick={() => onPageChange?.(pageNumber)}
-            sx={{
-              minWidth: 36,
-              width: 36,
-              height: 36,
-              p: 0,
-              color: pageNumber === page ? 'common.white' : 'text.secondary',
-            }}
-          >
-            {pageNumber}
-          </Button>
-        ))}
+        {pages.map((pageNumber, index) =>
+          pageNumber === '...' ? (
+            <Button
+              key={`ellipsis-${index}`}
+              variant="text"
+              disabled
+              sx={{ minWidth: 36, width: 36, height: 36, p: 0 }}
+            >
+              ...
+            </Button>
+          ) : (
+            <Button
+              key={pageNumber}
+              variant={pageNumber === page ? 'contained' : 'text'}
+              onClick={() => onPageChange?.(pageNumber)}
+              sx={{
+                minWidth: 36,
+                width: 36,
+                height: 36,
+                p: 0,
+                color: pageNumber === page ? 'common.white' : 'text.secondary',
+              }}
+            >
+              {pageNumber}
+            </Button>
+          ),
+        )}
       </Stack>
       <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifySelf: 'end' }}>
         <Typography variant="body2" color="text.secondary">
@@ -1366,13 +1414,14 @@ function OrdersTable({
         </Typography>
       ) : (
         orders.map((order) => {
-          const expanded = expandedOrderIds.includes(order.id)
+          const orderKey = order.apiId || order.id
+          const expanded = expandedOrderIds.includes(orderKey)
 
           return (
-            <Box key={order.id}>
+            <Box key={orderKey}>
               <OrderRow
                 expanded={expanded}
-                onToggle={() => onToggleOrder(order.id)}
+                onToggle={() => onToggleOrder(orderKey)}
                 order={order}
               />
               {expanded && <ExpandedOrderDetail order={order} />}
@@ -1415,22 +1464,17 @@ export default function OrdersPage() {
       })),
     [shopsQuery.data],
   )
-  const shopNameById = useMemo(
-    () => new Map(shopOptions.map((shop) => [shop.value, shop.label])),
-    [shopOptions],
-  )
   const orderQuery = useMemo(
     () => buildOrderListQuery({ ...filters, tab: queryTab }),
     [filters, queryTab],
   )
-  const ordersQuery = useOrdersQuery(orderQuery)
+  const ordersQuery = useOrderWorkbenchQuery(orderQuery)
   const orders = useMemo(
     () =>
-      mapOrderRows(ordersQuery.data?.items || [], {
-        shopNameById,
+      mapWorkbenchRows(ordersQuery.data?.items || [], {
         locale: i18n.language,
       }),
-    [i18n.language, ordersQuery.data, shopNameById],
+    [i18n.language, ordersQuery.data],
   )
   const pagination = ordersQuery.data?.pagination || {
     total: 0,

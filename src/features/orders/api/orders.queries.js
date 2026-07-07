@@ -21,6 +21,14 @@ export function useOrdersQuery(query = {}, options = {}) {
   })
 }
 
+export function useOrderWorkbenchQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: ordersKeys.workbench(query),
+    queryFn: () => get(ENDPOINTS.ORDERS.WORKBENCH, query),
+    ...options,
+  })
+}
+
 export function useOrderSummaryQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: ordersKeys.summary(query),

@@ -34,15 +34,3 @@ export function useLoginMutation() {
     mutationFn: login,
   })
 }
-
-export function useForgotPasswordMutation() {
-  return useMutation({
-    mutationFn: (payload) => apiClient.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, payload),
-  })
-}
-
-export function useResetPasswordMutation() {
-  return useMutation({
-    mutationFn: (payload) => apiClient.post(ENDPOINTS.AUTH.RESET_PASSWORD, payload),
-  })
-}

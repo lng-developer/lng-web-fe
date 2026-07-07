@@ -52,11 +52,48 @@ export function getOrderTabCounts(orders = []) {
 }
 
 export function getDefaultExpandedOrderIds(orders = []) {
-  return orders.map((order) => order.id).filter(Boolean)
+  return orders.map((order) => order.apiId || order.id).filter(Boolean)
 }
 
 export function toggleOrderSelection(selectedIds = [], orderId) {
   return selectedIds.includes(orderId)
     ? selectedIds.filter((selectedId) => selectedId !== orderId)
     : [...selectedIds, orderId]
+}
+
+export function getPaginationPages(page = 1, totalPages = 1) {
+  const normalizedTotal = Math.max(Number(totalPages) || 1, 1)
+  const currentPage = Math.min(Math.max(Number(page) || 1, 1), normalizedTotal)
+
+  if (normalizedTotal <= 5) {
+    return Array.from({ length: normalizedTotal }, (_, index) => index + 1)
+  }
+
+  const left = Math.max(currentPage - 1, 2)
+  const right = Math.min(currentPage + 1, normalizedTotal - 1)
+  const pages = [1]
+
+  if (left > 2) {
+    pages.push('...')
+  } else {
+    for (let pageNumber = 2; pageNumber < left; pageNumber += 1) {
+      pages.push(pageNumber)
+    }
+  }
+
+  for (let pageNumber = left; pageNumber <= right; pageNumber += 1) {
+    pages.push(pageNumber)
+  }
+
+  if (right < normalizedTotal - 1) {
+    pages.push('...')
+  } else {
+    for (let pageNumber = right + 1; pageNumber < normalizedTotal; pageNumber += 1) {
+      pages.push(pageNumber)
+    }
+  }
+
+  pages.push(normalizedTotal)
+
+  return pages
 }

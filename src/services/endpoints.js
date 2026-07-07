@@ -5,8 +5,6 @@ export const ENDPOINTS = {
     LOGIN: '/api/auth/login',
     REFRESH: '/api/auth/refresh',
     ME: '/api/auth/me',
-    FORGOT_PASSWORD: '/api/auth/forgot-password',
-    RESET_PASSWORD: '/api/auth/reset-password',
   },
   HOME: {
     SUMMARY: '/home/summary',
@@ -14,7 +12,7 @@ export const ENDPOINTS = {
   ORDERS: {
     LIST: '/api/orders',
     SUMMARY: '/api/orders/summary',
-    COUNTS: '/api/orders/counts',
+    WORKBENCH: '/api/orders/workbench',
     DETAIL: (orderId) => `/api/orders/${orderId}`,
     EXPANDED: (orderId) => `/api/orders/${orderId}/expanded`,
     ITEMS: (orderId) => `/api/orders/${orderId}/items`,

@@ -1,6 +1,7 @@
 export const ordersKeys = {
   all: ['orders'],
   list: (query = {}) => [...ordersKeys.all, 'list', query],
+  workbench: (query = {}) => [...ordersKeys.all, 'workbench', query],
   summary: (query = {}) => [...ordersKeys.all, 'summary', query],
   detail: (orderId) => [...ordersKeys.all, 'detail', orderId],
   expanded: (orderId) => [...ordersKeys.detail(orderId), 'expanded'],
