@@ -417,7 +417,7 @@
       "noOverrideAnonymousNote": "No overrides for Anonymous yet.",
       "grantedBadge": "Granted",
       "revokeSuccess": "Permission revoked successfully!",
-      "addMore": "+ Add",
+      "addMore": "Add",
       "grantModal": {
         "title": "Grant Additional Permissions",
         "contextPrefix": "Applies to role '{{role}}' in {{scopeType}} '{{scopeName}}'.",
@@ -837,6 +837,164 @@
         "tracking": "Tracking",
         "note": "Note"
       }
+    }
+  },
+  "scale": {
+    "title": "Manage Scale Tasks",
+    "lastUpdated": "Last updated at {{time}}",
+    "dateRange": {
+      "today": "Today"
+    },
+    "subTabs": {
+      "groupTask": "Amazon Scale Tasks",
+      "etsyTasks": "Etsy Scale Tasks"
+    },
+    "statusTabs": {
+      "all": "All",
+      "csUnassigned": "CS Unassigned",
+      "needScale": "Need Scale",
+      "pending": "Pending",
+      "completed": "Completed",
+      "qcRejected": "QC Rejected"
+    },
+    "searchPlaceholder": "Search order, group, SKU...",
+    "filters": {
+      "shop": "Shop",
+      "seller": "Seller",
+      "csBy": "CS By",
+      "csStatus": "CS Status"
+    },
+    "table": {
+      "columns": {
+        "orderId": "Order ID",
+        "orderDate": "Order Date",
+        "scaleStatus": "Scale Status",
+        "groupId": "Group ID",
+        "groupType": "Group Type",
+        "shop": "Shop",
+        "orderStatus": "Order Status",
+        "orderOwner": "Order Owner",
+        "qcBy": "QC By",
+        "assignCs": "Assign CS",
+        "csStatus": "CS Status"
+      }
+    },
+    "detail": {
+      "productInfo": "Product Information",
+      "customization": "Customization",
+      "taskStatus": "Task Status",
+      "costCenter": "Cost Center",
+      "csNote": "CS Note",
+      "action": "Action",
+      "orderInfo": "Order Info",
+      "sku": "SKU",
+      "asin": "ASIN",
+      "variant": "Variant",
+      "mapping": "Mapping",
+      "scale": "Scale",
+      "qc": "QC",
+      "vendor": "Vendor",
+      "baseCost": "Base cost",
+      "customer": "Customer",
+      "shipping": "Shipping",
+      "paid": "Paid",
+      "quantity": "Qty",
+      "notePlaceholder": "Add a CS note..."
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "expand": "Expand row",
+      "collapse": "Collapse row",
+      "saveNote": "Save note",
+      "copyFulfillName": "Copy fulfill name",
+      "download": "Download",
+      "uploadMockup": "Upload mockup",
+      "deleteMockup": "Delete mockup"
+    },
+    "pagination": {
+      "total": "{{total}} tasks",
+      "page": "{{page}} / {{totalPages}}",
+      "previous": "Previous page",
+      "next": "Next page"
+    },
+    "values": {
+      "scaleStatus": {
+        "NEED_SCALE": "Need Scale",
+        "SENT": "Sent",
+        "PENDING": "Pending",
+        "COMPLETED": "Completed",
+        "QC_REJECTED": "QC Rejected",
+        "unknown": "Unknown"
+      },
+      "csStatus": {
+        "UNASSIGNED": "Unassigned",
+        "ASSIGNED": "Assigned",
+        "PENDING": "Pending",
+        "COMPLETED": "Completed",
+        "unknown": "Unknown"
+      }
+    },
+    "empty": {
+      "noTasks": "No scale tasks found.",
+      "etsyTasks": "Etsy Scale Tasks is not available in phase 1."
+    },
+    "common": {
+      "noData": "No data"
+    },
+    "etsy": {
+      "title": "Manage Etsy Scale Tasks",
+      "dateRange": "Jun 27 - Jul 3, 2026",
+      "searchPlaceholder": "Search...",
+      "filters": {
+        "shop": "Shop",
+        "vendor": "Vendor",
+        "orderStatus": "Order Status",
+        "scaleBy": "Scale By",
+        "qcByCs": "QC By / CS",
+        "scaleFile": "Scale File"
+      },
+      "pagination": {
+        "total": "Total {{total}} items"
+      },
+      "psdStatus": {
+        "pending": "Pending",
+        "normal": "Normal"
+      },
+      "taskStatus": {
+        "complete": "Complete"
+      },
+      "costCenter": {
+        "vendorProduct": "Vendor Product:",
+        "size": "Size:",
+        "color": "Color:"
+      },
+      "notes": {
+        "cs": "CS note:",
+        "qc": "QC note:"
+      },
+      "actions": {
+        "upload": "Upload",
+        "add": "Add",
+        "view": "View",
+        "addedMockup": "Mockup",
+        "downloadPsd": "Download PSD"
+      },
+      "orderInfo": {
+        "seller": "Seller:",
+        "quantity": "Quantity: {{quantity}}",
+        "fulfillName": "Fulfill Name:",
+        "buyerNote": "Buyer Note:"
+      }
+    },
+    "loading": {
+      "refreshing": "Refreshing data..."
+    },
+    "messages": {
+      "assignSuccess": "CS assignee updated.",
+      "copySuccess": "Fulfill name copied.",
+      "noteSuccess": "CS note saved.",
+      "uploadSuccess": "Mockup uploaded.",
+      "deleteMockupSuccess": "Mockup deleted."
     }
   },
   "errors": {

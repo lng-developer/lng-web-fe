@@ -46,6 +46,16 @@ export const ENDPOINTS = {
     LIST: '/api/shops',
     DETAIL: (shopId) => `/api/shops/${shopId}`,
   },
+  SCALE: {
+    GROUP_TASKS: '/api/fulfillment/scale/group-tasks',
+    TASK: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}`,
+    ASSIGN_CS: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}/assign-cs`,
+    MOCKUPS: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}/mockups`,
+    ETSY_TASKS: '/api/fulfillment/scale/etsy-tasks',
+    ETSY_TASK: (taskId) => `/api/fulfillment/scale/etsy-tasks/${taskId}`,
+    ETSY_ASSIGN_CS: (taskId) => `/api/fulfillment/scale/etsy-tasks/${taskId}/assign-cs`,
+    ETSY_MOCKUPS: (taskId) => `/api/fulfillment/scale/etsy-tasks/${taskId}/mockups`,
+  },
   RBAC: {
     ACCOUNTS: '/api/auth/accounts',
     ACCOUNT: (accountId) => `/api/auth/accounts/${accountId}`,
