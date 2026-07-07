@@ -1,0 +1,20 @@
+export const ordersKeys = {
+  all: ['orders'],
+  list: (query = {}) => [...ordersKeys.all, 'list', query],
+  workbench: (query = {}) => [...ordersKeys.all, 'workbench', query],
+  summary: (query = {}) => [...ordersKeys.all, 'summary', query],
+  detail: (orderId) => [...ordersKeys.all, 'detail', orderId],
+  expanded: (orderId) => [...ordersKeys.detail(orderId), 'expanded'],
+  items: (orderId, query = {}) => [...ordersKeys.detail(orderId), 'items', query],
+  itemCustomization: (orderItemId) => [...ordersKeys.all, 'items', orderItemId, 'customization'],
+  itemReadiness: (orderItemId) => [...ordersKeys.all, 'items', orderItemId, 'readiness'],
+  shops: (query = {}) => [...ordersKeys.all, 'shops', query],
+  importJob: (jobId) => [...ordersKeys.all, 'imports', jobId],
+  importJobIssues: (jobId, query = {}) => [...ordersKeys.importJob(jobId), 'issues', query],
+  importJobRawRecords: (jobId, query = {}) => [
+    ...ordersKeys.importJob(jobId),
+    'raw-records',
+    query,
+  ],
+  importIssues: (query = {}) => [...ordersKeys.all, 'imports', 'issues', query],
+}

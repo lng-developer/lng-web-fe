@@ -633,6 +633,15 @@
       "cancel": "Cancel",
       "saveChanges": "Save changes"
     },
+    "bulk": {
+      "selected": "{{count}} orders selected",
+      "export": "Export",
+      "archive": "Archive",
+      "clear": "Clear"
+    },
+    "empty": "No matching orders",
+    "loading": "Loading orders...",
+    "loadingDetails": "Loading order details...",
     "tabs": {
       "all": "All",
       "new": "New Orders",
@@ -647,7 +656,10 @@
     },
     "filters": {
       "search": "Search Order ID, Customer...",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "channel": "Channel",
+      "shop": "Shop",
+      "seller": "Seller"
     },
     "table": {
       "orderId": "Order ID",
@@ -662,6 +674,7 @@
       "case": "Case"
     },
     "detail": {
+      "title": "Order details",
       "productInfo": "Product Information",
       "customization": "Customization",
       "fulfillment": "Quantity & Shipping"
@@ -701,11 +714,13 @@
     },
     "pagination": {
       "before": "Before",
-      "after": "After"
+      "after": "After",
+      "perPage": "Per page"
     },
     "openCase": {
       "title": "Open case",
       "placeholder": "Select a case...",
+      "success": "Case opened.",
       "options": {
         "missingPsd": "Missing PSD",
         "customerRequest": "Customer Request",
@@ -715,14 +730,23 @@
     },
     "importOrders": {
       "title": "Import Orders",
+      "source": "SOURCE",
+      "sources": {
+        "amazon": "Amazon order report",
+        "etsy": "Etsy sold order items"
+      },
       "store": "STORE",
       "storePlaceholder": "Select store...",
       "file": "FILE",
       "uploadTitle": "Click to upload or drop .txt file",
-      "uploadHint": ".txt files only"
+      "uploadHint": ".txt, .tsv, .csv files",
+      "importing": "Importing...",
+      "success": "Import job created.",
+      "validation": "Select a store and file before importing."
     },
     "updateCustomer": {
       "title": "Update Customer",
+      "success": "Customer updated.",
       "fields": {
         "name": "Name",
         "email": "Email",
@@ -761,8 +785,24 @@
       "status": {
         "new": "New",
         "fulfilled": "Fulfilled",
+        "processing": "Processing",
+        "partiallyShipped": "Partially shipped",
         "shipped": "Shipped",
         "cancelled": "Cancelled",
+        "refunded": "Refunded",
+        "failed": "Failed",
+        "onHold": "On hold",
+        "mappingPending": "Mapping pending",
+        "customizationPending": "Customization pending",
+        "customizationParsed": "Customization parsed",
+        "fulfillmentPlanning": "Fulfillment planning",
+        "fulfillmentReady": "Fulfillment ready",
+        "needProduction": "Need production",
+        "inProduction": "In production",
+        "qcRejected": "QC rejected",
+        "readyToSendVendor": "Ready to send vendor",
+        "sentToVendor": "Sent to vendor",
+        "trackingPending": "Tracking pending",
         "pending": "Pending",
         "needScale": "Need Scale"
       },
@@ -849,6 +889,13 @@
     "forgotPassword": {
       "title": "Forgot password",
       "description": "Password recovery is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password recovery APIs yet, so this screen is temporarily read-only.",
+      "backLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Password reset is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
       "backLogin": "Back to login"
     }
   },
