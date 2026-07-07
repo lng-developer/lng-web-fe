@@ -624,6 +624,13 @@
     "clear": "Xoá",
     "apply": "Áp dụng"
   },
+  "tasks": {
+    "tabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    }
+  },
   "designTasks": {
     "tabsLabel": "Nhóm task thiết kế",
     "dateRange": "Jun 27 - Jul 3, 2026",

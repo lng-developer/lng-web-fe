@@ -27,21 +27,16 @@ import {
 } from '@mui/material'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { TASK_TYPES } from '@/constants/app'
 import { designTasksKeys } from '@/features/design-tasks/api/designTasks.keys'
 import { useDesignTasksQuery } from '@/features/design-tasks/api/designTasks.queries'
+import TaskTypeTabs from '@/features/design-tasks/components/TaskTypeTabs'
 import {
   DESIGN_TASK_PAGE_SIZE,
   DESIGN_TASK_STATUS_TABS,
-  DESIGN_TASK_SUB_TABS,
   DESIGN_TASK_TABLE_COLUMNS,
 } from '@/features/design-tasks/constants/designTasksConstants'
 import { useDebounce } from '@/hooks/useDebounce'
-
-const subTabs = [
-  { value: DESIGN_TASK_SUB_TABS.IDEA, labelKey: 'designTasks.subTabs.idea' },
-  { value: DESIGN_TASK_SUB_TABS.PSD, labelKey: 'designTasks.subTabs.psd' },
-  { value: DESIGN_TASK_SUB_TABS.PNG, labelKey: 'designTasks.subTabs.png' },
-]
 
 const statusTabs = [
   { value: DESIGN_TASK_STATUS_TABS.ALL, labelKey: 'designTasks.statusTabs.all' },
@@ -183,7 +178,7 @@ function DesignTasksPagination({ page, pageSize, total, onPageChange, onPageSize
 export default function DesignTasksPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const [subTab, setSubTab] = useState(DESIGN_TASK_SUB_TABS.IDEA)
+  const [subTab, setSubTab] = useState(TASK_TYPES.IDEA)
   const [statusTab, setStatusTab] = useState(DESIGN_TASK_STATUS_TABS.ALL)
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebounce(searchInput, 300)
@@ -222,37 +217,15 @@ export default function DesignTasksPage() {
   }
 
   const titleKey =
-    subTab === DESIGN_TASK_SUB_TABS.IDEA
+    subTab === TASK_TYPES.IDEA
       ? 'designTasks.titles.idea'
-      : subTab === DESIGN_TASK_SUB_TABS.PSD
+      : subTab === TASK_TYPES.PSD
         ? 'designTasks.titles.psd'
         : 'designTasks.titles.png'
 
   return (
     <div className="flex min-h-full flex-col bg-surface p-2">
-      <div className="border-b border-border">
-        <nav className="flex items-end gap-6" aria-label={t('designTasks.tabsLabel')}>
-          {subTabs.map((tab) => {
-            const active = subTab === tab.value
-
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => handleSubTabChange(tab.value)}
-                className={`relative h-12 px-1 text-sm font-semibold transition-colors ${
-                  active ? 'text-ink-strong' : 'text-ink-secondary hover:text-ink'
-                }`}
-              >
-                {t(tab.labelKey)}
-                {active ? (
-                  <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-primary" />
-                ) : null}
-              </button>
-            )
-          })}
-        </nav>
-      </div>
+      <TaskTypeTabs value={subTab} onChange={handleSubTabChange} />
 
       <header className="mt-8 flex flex-wrap items-center justify-between gap-4">
         <Typography variant="h5" className="text-xl font-bold text-ink-strong">

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { DESIGN_TASK_STATUS_TABS, DESIGN_TASK_SUB_TABS } from '../constants/designTasksConstants.js'
+import { TASK_TYPES } from '../../../constants/app.js'
+import { DESIGN_TASK_STATUS_TABS } from '../constants/designTasksConstants.js'
 import {
   filterDesignTasks,
   getDesignTaskCounts,
@@ -26,7 +27,7 @@ test('filterDesignTasks exposes the required first page rows', () => {
   resetDesignTasksForTest()
 
   const result = filterDesignTasks(undefined, {
-    subTab: DESIGN_TASK_SUB_TABS.IDEA,
+    subTab: TASK_TYPES.IDEA,
     page: 1,
     pageSize: 10,
   })
@@ -47,7 +48,7 @@ test('filterDesignTasks combines status tab, search, and pagination', () => {
   resetDesignTasksForTest()
 
   const result = filterDesignTasks(undefined, {
-    subTab: DESIGN_TASK_SUB_TABS.IDEA,
+    subTab: TASK_TYPES.IDEA,
     statusTab: DESIGN_TASK_STATUS_TABS.ASSIGNED,
     search: 'ornament',
     page: 1,

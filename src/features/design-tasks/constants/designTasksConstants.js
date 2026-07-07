@@ -1,8 +1,6 @@
-export const DESIGN_TASK_SUB_TABS = {
-  IDEA: 'idea',
-  PSD: 'psd',
-  PNG: 'png',
-}
+import { TASK_TYPES } from '../../../constants/app.js'
+
+export const DESIGN_TASK_SUB_TABS = TASK_TYPES
 
 export const DESIGN_TASK_STATUS_TABS = {
   ALL: 'all',

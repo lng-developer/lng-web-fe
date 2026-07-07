@@ -839,6 +839,13 @@
       }
     }
   },
+  "tasks": {
+    "tabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    }
+  },
   "designTasks": {
     "tabsLabel": "Design task categories",
     "dateRange": "Jun 27 - Jul 3, 2026",
