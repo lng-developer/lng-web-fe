@@ -839,6 +839,65 @@
       }
     }
   },
+  "qc": {
+    "title": "QC",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "platform": {
+      "amazon": "Amazon",
+      "etsy": "Etsy"
+    },
+    "statusTabs": {
+      "all": "All",
+      "pending": "Pending",
+      "qcRejected": "QC Rejected",
+      "failed": "Failed",
+      "completed": "Completed",
+      "addressInvalid": "Address Invalid"
+    },
+    "searchPlaceholder": "Search...",
+    "filters": {
+      "seller": "Seller",
+      "shop": "Shop"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "exportExcel": "Export Excel ({{count}})",
+      "pushFulfillment": "Push Fulfillment LNG ({{count}})",
+      "expand": "Expand row",
+      "collapse": "Collapse row"
+    },
+    "table": {
+      "columns": {
+        "orderId": "Order ID",
+        "statusQc": "Status QC",
+        "created": "Created",
+        "orderDate": "Order Date",
+        "statusOrder": "Status Order",
+        "shippingType": "Shipping Type",
+        "shop": "Shop",
+        "scaleBy": "Scale By",
+        "qcBy": "QC By"
+      }
+    },
+    "detail": {
+      "productInfo": "Product Info",
+      "scaleStatus": "Scale Status",
+      "orderOwner": "Order Owner",
+      "fulfillName": "Fulfill Name",
+      "pngStatus": "PNG Status",
+      "vendorProduct": "Vendor Product",
+      "action": "Action",
+      "sku": "Sku:",
+      "asin": "Asin:",
+      "quantity": "Quantity: {{quantity}}"
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Previous page",
+      "pageSize": "Rows per page",
+      "pageSizeValue": "{{size}} / page"
+    }
+  },
   "scale": {
     "title": "Manage Scale Tasks",
     "lastUpdated": "Last updated at {{time}}",

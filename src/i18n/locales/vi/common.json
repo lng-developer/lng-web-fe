@@ -624,6 +624,65 @@
     "clear": "Xoá",
     "apply": "Áp dụng"
   },
+  "qc": {
+    "title": "QC",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "platform": {
+      "amazon": "Amazon",
+      "etsy": "Etsy"
+    },
+    "statusTabs": {
+      "all": "Tất cả",
+      "pending": "Đang chờ",
+      "qcRejected": "QC từ chối",
+      "failed": "Thất bại",
+      "completed": "Hoàn thành",
+      "addressInvalid": "Sai địa chỉ"
+    },
+    "searchPlaceholder": "Tìm kiếm...",
+    "filters": {
+      "seller": "Seller",
+      "shop": "Shop"
+    },
+    "actions": {
+      "refresh": "Làm mới",
+      "exportExcel": "Export Excel ({{count}})",
+      "pushFulfillment": "Push Fulfillment LNG ({{count}})",
+      "expand": "Mở chi tiết",
+      "collapse": "Đóng chi tiết"
+    },
+    "table": {
+      "columns": {
+        "orderId": "Order ID",
+        "statusQc": "Status QC",
+        "created": "Created",
+        "orderDate": "Order Date",
+        "statusOrder": "Status Order",
+        "shippingType": "Shipping Type",
+        "shop": "Shop",
+        "scaleBy": "Scale By",
+        "qcBy": "QC By"
+      }
+    },
+    "detail": {
+      "productInfo": "Product Info",
+      "scaleStatus": "Scale Status",
+      "orderOwner": "Order Owner",
+      "fulfillName": "Fulfill Name",
+      "pngStatus": "PNG Status",
+      "vendorProduct": "Vendor Product",
+      "action": "Action",
+      "sku": "Sku:",
+      "asin": "Asin:",
+      "quantity": "Quantity: {{quantity}}"
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Trang trước",
+      "pageSize": "Số dòng mỗi trang",
+      "pageSizeValue": "{{size}} / page"
+    }
+  },
   "scale": {
     "title": "Manage Scale Tasks",
     "lastUpdated": "Cập nhật lần cuối lúc {{time}}",
