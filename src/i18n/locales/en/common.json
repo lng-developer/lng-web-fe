@@ -839,6 +839,59 @@
       }
     }
   },
+  "designTasks": {
+    "tabsLabel": "Design task categories",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "subTabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "titles": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "statusTabs": {
+      "all": "All",
+      "new": "New",
+      "assigned": "Assigned",
+      "inProgress": "In Progress",
+      "uploaded": "Uploaded",
+      "qcPassed": "QC Passed",
+      "qcRejected": "QC Rejected"
+    },
+    "searchPlaceholder": "Search...",
+    "actions": {
+      "createTask": "Create Task",
+      "refresh": "Refresh",
+      "upload": "Upload",
+      "download": "Download",
+      "viewGrid": "View files",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "table": {
+      "columns": {
+        "createdAt": "Created At",
+        "productImage": "Product Image",
+        "statusTask": "Status Task",
+        "linkProduct": "Link Product",
+        "assigned": "Assigned",
+        "seller": "Seller",
+        "description": "Description",
+        "productType": "Product Type",
+        "actions": "Actions",
+        "editDelete": "Edit/Delete"
+      }
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Previous page",
+      "pageSize": "Rows per page",
+      "pageSizeValue": "{{size}} / page"
+    }
+  },
   "qc": {
     "title": "QC",
     "dateRange": "Jun 27 - Jul 3, 2026",

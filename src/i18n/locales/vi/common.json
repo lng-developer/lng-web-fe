@@ -624,6 +624,59 @@
     "clear": "Xoá",
     "apply": "Áp dụng"
   },
+  "designTasks": {
+    "tabsLabel": "Nhóm task thiết kế",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "subTabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "titles": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "statusTabs": {
+      "all": "Tất cả",
+      "new": "Mới",
+      "assigned": "Đã gán",
+      "inProgress": "Đang làm",
+      "uploaded": "Đã upload",
+      "qcPassed": "QC Passed",
+      "qcRejected": "QC Rejected"
+    },
+    "searchPlaceholder": "Tìm kiếm...",
+    "actions": {
+      "createTask": "Create Task",
+      "refresh": "Làm mới",
+      "upload": "Upload",
+      "download": "Download",
+      "viewGrid": "Xem file",
+      "edit": "Sửa",
+      "delete": "Xóa"
+    },
+    "table": {
+      "columns": {
+        "createdAt": "Created At",
+        "productImage": "Product Image",
+        "statusTask": "Status Task",
+        "linkProduct": "Link Product",
+        "assigned": "Assigned",
+        "seller": "Seller",
+        "description": "Description",
+        "productType": "Product Type",
+        "actions": "Actions",
+        "editDelete": "Edit/Delete"
+      }
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Trang trước",
+      "pageSize": "Số dòng mỗi trang",
+      "pageSizeValue": "{{size}} / page"
+    }
+  },
   "qc": {
     "title": "QC",
     "dateRange": "Jun 27 - Jul 3, 2026",
