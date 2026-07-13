@@ -249,9 +249,11 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
             overflow: 'visible',
           },
           switchBase: ({ theme }) => ({
+            top: '50%',
             padding: 2,
+            transform: 'translateY(-50%)',
             '&.Mui-checked': {
-              transform: 'translateX(16px)',
+              transform: 'translate(16px, -50%)',
             },
             '&.Mui-disabled': { opacity: DISABLED_OPACITY },
             '& + .MuiSwitch-track': {
