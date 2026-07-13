@@ -624,6 +624,159 @@
     "clear": "Xoá",
     "apply": "Áp dụng"
   },
+  "tasks": {
+    "tabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    }
+  },
+  "designTasks": {
+    "tabsLabel": "Nhóm task thiết kế",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "subTabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "titles": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "statusTabs": {
+      "all": "Tất cả",
+      "new": "Mới",
+      "requested": "Đã yêu cầu",
+      "assigned": "Đã gán",
+      "inProgress": "Đang làm",
+      "uploaded": "Đã upload",
+      "pendingAssignment": "Pending Assignment",
+      "needScale": "Need Scale",
+      "pending": "Pending",
+      "completed": "Completed",
+      "qcPassed": "QC Passed",
+      "qcRejected": "QC Rejected"
+    },
+    "searchPlaceholder": "Tìm kiếm...",
+    "actions": {
+      "createTask": "Create Task",
+      "refresh": "Làm mới",
+      "upload": "Upload",
+      "download": "Download",
+      "viewGrid": "Xem file",
+      "edit": "Sửa",
+      "delete": "Xóa"
+    },
+    "table": {
+      "columns": {
+        "createdAt": "Created At",
+        "productImage": "Product Image",
+        "statusTask": "Status Task",
+        "linkProduct": "Link Product",
+        "assigned": "Assigned",
+        "seller": "Seller",
+        "description": "Description",
+        "productType": "Product Type",
+        "actions": "Actions",
+        "editDelete": "Edit/Delete"
+      }
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Trang trước",
+      "pageSize": "Số dòng mỗi trang",
+      "pageSizeValue": "{{size}} / page"
+    },
+    "psd": {
+      "filters": {
+        "seller": "Bộ lọc seller",
+        "sellerValue": "Seller: {{value}}",
+        "all": "All"
+      },
+      "pagination": {
+        "total": "Total {{total}} items"
+      },
+      "table": {
+        "columns": {
+          "createdAt": "Created At",
+          "productImage": "Product Image",
+          "asin": "ASIN",
+          "statusTask": "Status Task",
+          "assigned": "Assigned",
+          "priority": "Priority",
+          "psdStatus": "PSD Status",
+          "seller": "Seller",
+          "asinType": "ASIN Type",
+          "actions": "Actions"
+        }
+      },
+      "actions": {
+        "approve": "Duyệt",
+        "revert": "Hoàn tác"
+      }
+    },
+    "png": {
+      "filters": {
+        "shop": "Bộ lọc shop",
+        "shopValue": "Shop: {{value}}",
+        "asinType": "Bộ lọc ASIN type",
+        "asinTypeValue": "Asin Type: {{value}}",
+        "all": "All"
+      },
+      "table": {
+        "columns": {
+          "expand": "",
+          "orderId": "Order ID",
+          "orderDate": "Order Date",
+          "scaleStatus": "Scale Status",
+          "scaleBy": "Scale By",
+          "shop": "Shop",
+          "orderStatus": "Order Status",
+          "orderOwner": "Order Owner",
+          "qcBy": "QC By",
+          "express": "Express",
+          "action": "Action"
+        }
+      },
+      "actions": {
+        "expand": "Mở chi tiết",
+        "collapse": "Đóng chi tiết",
+        "copy": "Sao chép",
+        "cut": "Cắt",
+        "add": "+ Add",
+        "downloadPsd": "Download PSD"
+      },
+      "detail": {
+        "productInfo": "Product Info",
+        "customization": "Customization",
+        "size": "Choose Your Size:",
+        "customName": "Custom Name:",
+        "customText": "Custom Text:",
+        "dateLocation": "Date/Location:",
+        "textColor": "Text Color:",
+        "bgColor": "BG Color:",
+        "priority": "Priority:",
+        "url": "URL:",
+        "linkSp": "Link SP:",
+        "customerPhoto": "Customer Photo:",
+        "taskStatus": "Task Status",
+        "costCenter": "Cost Center",
+        "vendorProduct": "Vendor Product:",
+        "csNote": "CS Note",
+        "csNoteLabel": "CS note:",
+        "qcNoteLabel": "QC note:",
+        "qcNotePlaceholder": "QC note",
+        "action": "Action",
+        "orderInfo": "Order Info",
+        "seller": "Seller:",
+        "quantity": "Quantity: {{quantity}}",
+        "fulfillName": "Fulfill Name:",
+        "buyerNote": "Buyer Note:",
+        "notePlaceholder": "Note"
+      }
+    }
+  },
   "qc": {
     "title": "QC",
     "dateRange": "Jun 27 - Jul 3, 2026",
