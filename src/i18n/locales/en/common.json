@@ -1120,9 +1120,58 @@
     "searchPlaceholder": "Search...",
     "actions": {
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "deleteUnavailable": "Delete is not available yet",
+      "cancel": "Cancel",
+      "create": "Create",
+      "save": "Save changes"
+    },
+    "fields": {
+      "code": "Code",
+      "name": "Name",
+      "providerKey": "Provider key",
+      "fulfillmentType": "Fulfillment type",
+      "status": "Status",
+      "vendor": "Vendor",
+      "productType": "Product type",
+      "productName": "Product name",
+      "externalProductId": "External product ID",
+      "imageUrl": "Image URL",
+      "productUrl": "Product URL",
+      "designTemplateUrl": "Design template URL",
+      "minProductionDays": "Min production days",
+      "maxProductionDays": "Max production days",
+      "baseCostAmount": "Base cost amount",
+      "currency": "Currency",
+      "sku": "SKU",
+      "lngCode": "LNG code",
+      "vendorSize": "Vendor size",
+      "vendorColor": "Vendor color",
+      "standardSize": "Standard size",
+      "standardColor": "Standard color",
+      "domesticEconomyAmount": "Domestic economy",
+      "domesticAdditionalAmount": "Domestic additional",
+      "internationalEconomyAmount": "International economy",
+      "internationalAdditionalAmount": "International additional",
+      "priorityEconomyAmount": "Priority economy",
+      "priorityAdditionalAmount": "Priority additional",
+      "importTaxAmount": "Import tax"
+    },
+    "placeholders": {
+      "code": "Ex: LENFUL",
+      "name": "Ex: Lenful",
+      "providerKey": "Select provider key",
+      "vendor": "Select vendor",
+      "productType": "Select product type",
+      "productCode": "Ex: PRD-001234",
+      "productName": "Ex: Premium T-Shirt",
+      "externalProductId": "Ex: external product id",
+      "url": "https://example.com",
+      "costCenterCode": "Ex: ZIPLVN000000AA01",
+      "costCenterName": "Ex: S / ZIPLVN000000AA01"
     },
     "values": {
+      "empty": "None",
       "fulfillmentType": {
         "api": "API",
         "manual": "Manual",
@@ -1143,6 +1192,13 @@
     },
     "list": {
       "title": "Vendor List",
+      "actions": {
+        "create": "Create Vendor"
+      },
+      "form": {
+        "createTitle": "Create Vendor",
+        "editTitle": "Edit Vendor"
+      },
       "columns": {
         "name": "Name",
         "fulfillmentType": "Fulfillment Type",
@@ -1164,6 +1220,10 @@
       "values": {
         "noProductType": "No product type"
       },
+      "form": {
+        "createTitle": "Create Vendor Product",
+        "editTitle": "Edit Vendor Product"
+      },
       "pagination": {
         "total": "Total {{total}} items",
         "previous": "Previous page",
@@ -1181,6 +1241,47 @@
         "productType": "Product Type For Design",
         "status": "Status"
       }
+    },
+    "costCenters": {
+      "title": "Cost Centers",
+      "total": "{{total}} cost centers",
+      "actions": {
+        "create": "Create Cost Center",
+        "toggleStatus": "Toggle cost center status"
+      },
+      "form": {
+        "createTitle": "Create Cost Center",
+        "editTitle": "Edit Cost Center",
+        "shipping": "Shipping cost"
+      },
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "sku": "SKU",
+        "sizeColor": "Size / Color",
+        "baseCost": "Base Cost",
+        "domesticShipping": "Domestic Shipping",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "validation": {
+      "codeRequired": "Code is required",
+      "nameRequired": "Name is required",
+      "fulfillmentTypeRequired": "Fulfillment type is required",
+      "statusRequired": "Status is required",
+      "vendorRequired": "Vendor is required",
+      "productTypeRequired": "Product type is required",
+      "nonNegative": "Value must be greater than or equal to 0"
+    },
+    "messages": {
+      "createVendorSuccess": "Vendor created successfully.",
+      "updateVendorSuccess": "Vendor updated successfully.",
+      "createProductSuccess": "Vendor product created successfully.",
+      "updateProductSuccess": "Vendor product updated successfully.",
+      "createCostCenterSuccess": "Cost center created successfully.",
+      "updateCostCenterSuccess": "Cost center updated successfully.",
+      "saveError": "Could not save changes. Please try again."
     }
   },
   "uiKit": {

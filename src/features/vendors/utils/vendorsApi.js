@@ -9,6 +9,56 @@ function normalizeLower(value) {
   return String(value ?? '').toLowerCase()
 }
 
+function normalizeUpper(value) {
+  return String(value ?? '')
+    .trim()
+    .toUpperCase()
+}
+
+function cleanObject(payload = {}, options = {}) {
+  return Object.entries(payload).reduce((result, [key, rawValue]) => {
+    const value = trimValue(rawValue)
+
+    if (value === null && options.preserveNull) {
+      return { ...result, [key]: value }
+    }
+
+    if (value === '' || value === null || value === undefined) {
+      return result
+    }
+
+    return { ...result, [key]: value }
+  }, {})
+}
+
+function nullableText(value) {
+  const trimmed = trimValue(value)
+  return trimmed === '' || trimmed === undefined ? null : trimmed
+}
+
+function optionalNumber(value) {
+  if (value === '' || value === null || value === undefined) {
+    return undefined
+  }
+
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : undefined
+}
+
+function nullableNumber(value) {
+  if (value === '' || value === null || value === undefined) {
+    return null
+  }
+
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : null
+}
+
+function cleanNestedObject(payload = {}) {
+  const cleaned = cleanObject(payload)
+  return Object.keys(cleaned).length > 0 ? cleaned : undefined
+}
+
 function cleanQuery(query = {}) {
   return Object.entries(query).reduce((params, [key, rawValue]) => {
     const value = trimValue(rawValue)
@@ -62,6 +112,7 @@ export function mapVendorResponse(vendor = {}) {
     status: normalizeLower(rawStatus),
     rawFulfillmentType,
     rawStatus,
+    providerKey: vendor.providerKey || '',
   }
 }
 
@@ -76,6 +127,13 @@ export function mapVendorProductResponse(product = {}) {
     imageUrl: product.imageUrl || null,
     name: product.name || product.code || '',
     productId: product.code || product.externalProductId || product.id || '',
+    externalProductId: product.externalProductId || '',
+    productUrl: product.productUrl || '',
+    designTemplateUrl: product.designTemplateUrl || '',
+    minProductionDays: product.minProductionDays ?? '',
+    maxProductionDays: product.maxProductionDays ?? '',
+    baseCostAmount: product.baseCostAmount ?? '',
+    currency: product.currency || '',
     vendorId: vendor.id || null,
     vendorCode: vendor.code || '',
     vendorName: vendor.name || vendor.code || '',
@@ -87,12 +145,120 @@ export function mapVendorProductResponse(product = {}) {
   }
 }
 
+export function mapVendorCostCenterResponse(costCenter = {}) {
+  const rawStatus = costCenter.status || ''
+
+  return {
+    id: costCenter.id,
+    code: costCenter.code || '',
+    name: costCenter.name || costCenter.code || '',
+    sku: costCenter.sku || '',
+    lngCode: costCenter.lngCode || '',
+    vendorSize: costCenter.vendorSize || '',
+    vendorColor: costCenter.vendorColor || '',
+    standardSize: costCenter.standardSize || '',
+    standardColor: costCenter.standardColor || '',
+    baseCostAmount: costCenter.baseCostAmount ?? undefined,
+    currency: costCenter.currency || '',
+    domesticShipping: costCenter.domesticShipping || {},
+    internationalShipping: costCenter.internationalShipping || {},
+    priorityShipping: costCenter.priorityShipping || {},
+    importTaxAmount: costCenter.importTaxAmount ?? undefined,
+    status: normalizeLower(rawStatus),
+    rawStatus,
+  }
+}
+
 export function mapProductTypeOptions(groups = []) {
   return groups.map((group) => ({
     id: group.id,
     label: group.name || group.code || group.id,
     status: group.status,
   }))
+}
+
+export function buildVendorPayload(values = {}, options = {}) {
+  const isUpdate = options.mode === 'update'
+
+  return cleanObject(
+    {
+      code: normalizeUpper(values.code),
+      name: values.name,
+      providerKey: isUpdate
+        ? nullableText(normalizeUpper(values.providerKey))
+        : normalizeUpper(values.providerKey),
+      fulfillmentType: normalizeUpper(values.fulfillmentType),
+      status: normalizeUpper(values.status),
+    },
+    { preserveNull: isUpdate },
+  )
+}
+
+export function buildVendorProductPayload(values = {}, options = {}) {
+  const isUpdate = options.mode === 'update'
+
+  return cleanObject(
+    {
+      vendorId: values.vendorId,
+      productTypeGroupId: values.productTypeGroupId,
+      code: normalizeUpper(values.code),
+      name: values.name,
+      externalProductId: isUpdate
+        ? nullableText(values.externalProductId)
+        : values.externalProductId,
+      imageUrl: isUpdate ? nullableText(values.imageUrl) : values.imageUrl,
+      productUrl: isUpdate ? nullableText(values.productUrl) : values.productUrl,
+      designTemplateUrl: isUpdate
+        ? nullableText(values.designTemplateUrl)
+        : values.designTemplateUrl,
+      minProductionDays: isUpdate
+        ? nullableNumber(values.minProductionDays)
+        : optionalNumber(values.minProductionDays),
+      maxProductionDays: isUpdate
+        ? nullableNumber(values.maxProductionDays)
+        : optionalNumber(values.maxProductionDays),
+      baseCostAmount: optionalNumber(values.baseCostAmount),
+      currency: normalizeUpper(values.currency),
+      status: normalizeUpper(values.status),
+    },
+    { preserveNull: isUpdate },
+  )
+}
+
+export function buildVendorCostCenterPayload(values = {}, options = {}) {
+  const isUpdate = options.mode === 'update'
+
+  return cleanObject(
+    {
+      code: normalizeUpper(values.code),
+      name: values.name,
+      sku: isUpdate ? nullableText(normalizeUpper(values.sku)) : normalizeUpper(values.sku),
+      lngCode: isUpdate
+        ? nullableText(normalizeUpper(values.lngCode))
+        : normalizeUpper(values.lngCode),
+      vendorSize: isUpdate ? nullableText(values.vendorSize) : values.vendorSize,
+      vendorColor: isUpdate ? nullableText(values.vendorColor) : values.vendorColor,
+      standardSize: isUpdate ? nullableText(values.standardSize) : values.standardSize,
+      standardColor: isUpdate ? nullableText(values.standardColor) : values.standardColor,
+      baseCostAmount: optionalNumber(values.baseCostAmount),
+      currency: normalizeUpper(values.currency),
+      domesticShipping: cleanNestedObject({
+        economyAmount: optionalNumber(values.domesticEconomyAmount),
+        additionalAmount: optionalNumber(values.domesticAdditionalAmount),
+      }),
+      internationalShipping: cleanNestedObject({
+        economyAmount: optionalNumber(values.internationalEconomyAmount),
+        additionalAmount: optionalNumber(values.internationalAdditionalAmount),
+      }),
+      priorityShipping: cleanNestedObject({
+        economyAmount: optionalNumber(values.priorityEconomyAmount),
+        additionalAmount: optionalNumber(values.priorityAdditionalAmount),
+      }),
+      importTaxAmount: optionalNumber(values.importTaxAmount),
+      status: normalizeUpper(values.status),
+    },
+    { preserveNull: isUpdate },
+  )
 }
 
 export function mapPaginatedResponse(response, mapper) {

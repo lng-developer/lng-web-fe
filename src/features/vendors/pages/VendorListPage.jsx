@@ -1,13 +1,26 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import SearchIcon from '@mui/icons-material/Search'
-import { IconButton, InputAdornment, Skeleton, TextField, Tooltip, Typography } from '@mui/material'
+import {
+  Button,
+  IconButton,
+  InputAdornment,
+  Skeleton,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import { useSnackbar } from 'notistack'
 
+import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { useDebounce } from '@/hooks/useDebounce'
 
+import { useCreateVendorMutation, useUpdateVendorMutation } from '../api/vendors.mutations'
 import { useVendorsQuery } from '../api/vendors.queries'
+import VendorFormDialog from '../components/VendorFormDialog'
 
 const fulfillmentTypeClasses = {
   fba: 'bg-info text-white',
@@ -34,7 +47,9 @@ function Pill({ children, className = '' }) {
 
 export default function VendorListPage() {
   const { t } = useTranslation()
+  const { enqueueSnackbar } = useSnackbar()
   const [search, setSearch] = useState('')
+  const [dialogState, setDialogState] = useState({ mode: 'create', vendor: null, open: false })
   const debouncedSearch = useDebounce(search, 300)
   const { data, isError, isPending } = useVendorsQuery({
     page: 1,
@@ -42,12 +57,59 @@ export default function VendorListPage() {
     search: debouncedSearch,
   })
   const vendors = data?.items || []
+  const createVendorMutation = useCreateVendorMutation()
+  const updateVendorMutation = useUpdateVendorMutation()
+
+  function closeDialog() {
+    setDialogState((current) => ({ ...current, open: false }))
+  }
+
+  function openCreateDialog() {
+    setDialogState({ mode: 'create', vendor: null, open: true })
+  }
+
+  function openEditDialog(vendor) {
+    setDialogState({ mode: 'edit', vendor, open: true })
+  }
+
+  function handleSubmitVendor(payload) {
+    const isEdit = dialogState.mode === 'edit'
+    const mutation = isEdit ? updateVendorMutation : createVendorMutation
+    const mutationPayload = isEdit ? { vendorId: dialogState.vendor.id, payload } : payload
+
+    mutation.mutate(mutationPayload, {
+      onSuccess: () => {
+        enqueueSnackbar(
+          t(
+            isEdit
+              ? 'vendors.messages.updateVendorSuccess'
+              : 'vendors.messages.createVendorSuccess',
+          ),
+          { variant: SNACKBAR_VARIANTS.SUCCESS },
+        )
+        closeDialog()
+      },
+      onError: () => {
+        enqueueSnackbar(t('vendors.messages.saveError'), { variant: SNACKBAR_VARIANTS.ERROR })
+      },
+    })
+  }
 
   return (
     <div className="flex min-h-full flex-col bg-surface p-2">
-      <Typography component="h1" variant="h4" className="text-2xl font-bold text-ink-strong">
-        {t('vendors.list.title')}
-      </Typography>
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <Typography component="h1" variant="h4" className="text-2xl font-bold text-ink-strong">
+          {t('vendors.list.title')}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon fontSize="small" />}
+          onClick={openCreateDialog}
+          className="h-10 rounded-lg px-4 text-sm font-bold"
+        >
+          {t('vendors.list.actions.create')}
+        </Button>
+      </header>
 
       <div className="mt-6">
         <TextField
@@ -142,18 +204,22 @@ export default function VendorListPage() {
                             aria-label={t('vendors.actions.edit')}
                             size="small"
                             className="text-ink-muted"
+                            onClick={() => openEditDialog(vendor)}
                           >
                             <EditOutlinedIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title={t('vendors.actions.delete')}>
-                          <IconButton
-                            aria-label={t('vendors.actions.delete')}
-                            size="small"
-                            className="text-danger"
-                          >
-                            <DeleteOutlineOutlinedIcon fontSize="small" />
-                          </IconButton>
+                        <Tooltip title={t('vendors.actions.deleteUnavailable')}>
+                          <span>
+                            <IconButton
+                              aria-label={t('vendors.actions.deleteUnavailable')}
+                              size="small"
+                              className="text-danger"
+                              disabled
+                            >
+                              <DeleteOutlineOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       </div>
                     </td>
@@ -163,6 +229,15 @@ export default function VendorListPage() {
           </tbody>
         </table>
       </section>
+      <VendorFormDialog
+        open={dialogState.open}
+        mode={dialogState.mode}
+        vendor={dialogState.vendor}
+        t={t}
+        isSubmitting={createVendorMutation.isPending || updateVendorMutation.isPending}
+        onClose={closeDialog}
+        onSubmit={handleSubmitVendor}
+      />
     </div>
   )
 }

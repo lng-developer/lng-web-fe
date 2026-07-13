@@ -7,6 +7,7 @@ import {
   buildVendorListQuery,
   mapPaginatedResponse,
   mapProductTypeOptions,
+  mapVendorCostCenterResponse,
   mapVendorProductResponse,
   mapVendorResponse,
   unwrapApiData,
@@ -56,6 +57,21 @@ export function useProductTypeGroupsQuery(query = {}, options = {}) {
       ),
     keepPreviousData: true,
     retry: false,
+    ...options,
+  })
+}
+
+export function useVendorCostCentersQuery(productId, query = {}, options = {}) {
+  const params = buildVendorListQuery(query)
+
+  return useQuery({
+    queryKey: vendorsKeys.costCenterList(productId, params),
+    queryFn: () =>
+      get(ENDPOINTS.VENDORS.COST_CENTERS(productId), params).then((response) =>
+        mapPaginatedResponse(response, mapVendorCostCenterResponse),
+      ),
+    enabled: Boolean(productId),
+    keepPreviousData: true,
     ...options,
   })
 }

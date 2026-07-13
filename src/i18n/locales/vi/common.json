@@ -1120,9 +1120,58 @@
     "searchPlaceholder": "Tìm kiếm...",
     "actions": {
       "edit": "Sửa",
-      "delete": "Xoá"
+      "delete": "Xoá",
+      "deleteUnavailable": "Chưa hỗ trợ xoá",
+      "cancel": "Huỷ",
+      "create": "Tạo mới",
+      "save": "Lưu thay đổi"
+    },
+    "fields": {
+      "code": "Mã",
+      "name": "Tên",
+      "providerKey": "Provider key",
+      "fulfillmentType": "Loại fulfillment",
+      "status": "Trạng thái",
+      "vendor": "Vendor",
+      "productType": "Product type",
+      "productName": "Tên sản phẩm",
+      "externalProductId": "External product ID",
+      "imageUrl": "Image URL",
+      "productUrl": "Product URL",
+      "designTemplateUrl": "Design template URL",
+      "minProductionDays": "Số ngày sản xuất tối thiểu",
+      "maxProductionDays": "Số ngày sản xuất tối đa",
+      "baseCostAmount": "Base cost",
+      "currency": "Tiền tệ",
+      "sku": "SKU",
+      "lngCode": "Mã LNG",
+      "vendorSize": "Size vendor",
+      "vendorColor": "Màu vendor",
+      "standardSize": "Size chuẩn",
+      "standardColor": "Màu chuẩn",
+      "domesticEconomyAmount": "Domestic economy",
+      "domesticAdditionalAmount": "Domestic additional",
+      "internationalEconomyAmount": "International economy",
+      "internationalAdditionalAmount": "International additional",
+      "priorityEconomyAmount": "Priority economy",
+      "priorityAdditionalAmount": "Priority additional",
+      "importTaxAmount": "Thuế nhập"
+    },
+    "placeholders": {
+      "code": "Ví dụ: LENFUL",
+      "name": "Ví dụ: Lenful",
+      "providerKey": "Chọn provider key",
+      "vendor": "Chọn vendor",
+      "productType": "Chọn product type",
+      "productCode": "Ví dụ: PRD-001234",
+      "productName": "Ví dụ: Premium T-Shirt",
+      "externalProductId": "Ví dụ: external product id",
+      "url": "https://example.com",
+      "costCenterCode": "Ví dụ: ZIPLVN000000AA01",
+      "costCenterName": "Ví dụ: S / ZIPLVN000000AA01"
     },
     "values": {
+      "empty": "Không chọn",
       "fulfillmentType": {
         "api": "API",
         "manual": "Manual",
@@ -1143,6 +1192,13 @@
     },
     "list": {
       "title": "Vendor List",
+      "actions": {
+        "create": "Tạo Vendor"
+      },
+      "form": {
+        "createTitle": "Tạo Vendor",
+        "editTitle": "Sửa Vendor"
+      },
       "columns": {
         "name": "Name",
         "fulfillmentType": "Fulfillment Type",
@@ -1164,6 +1220,10 @@
       "values": {
         "noProductType": "Chưa có product type"
       },
+      "form": {
+        "createTitle": "Tạo Vendor Product",
+        "editTitle": "Sửa Vendor Product"
+      },
       "pagination": {
         "total": "Total {{total}} items",
         "previous": "Trang trước",
@@ -1181,6 +1241,47 @@
         "productType": "Product Type For Design",
         "status": "Status"
       }
+    },
+    "costCenters": {
+      "title": "Cost Centers",
+      "total": "{{total}} cost center",
+      "actions": {
+        "create": "Tạo Cost Center",
+        "toggleStatus": "Bật/tắt trạng thái cost center"
+      },
+      "form": {
+        "createTitle": "Tạo Cost Center",
+        "editTitle": "Sửa Cost Center",
+        "shipping": "Shipping cost"
+      },
+      "columns": {
+        "code": "Mã",
+        "name": "Tên",
+        "sku": "SKU",
+        "sizeColor": "Size / Màu",
+        "baseCost": "Base Cost",
+        "domesticShipping": "Domestic Shipping",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+      }
+    },
+    "validation": {
+      "codeRequired": "Vui lòng nhập mã",
+      "nameRequired": "Vui lòng nhập tên",
+      "fulfillmentTypeRequired": "Vui lòng chọn loại fulfillment",
+      "statusRequired": "Vui lòng chọn trạng thái",
+      "vendorRequired": "Vui lòng chọn vendor",
+      "productTypeRequired": "Vui lòng chọn product type",
+      "nonNegative": "Giá trị phải lớn hơn hoặc bằng 0"
+    },
+    "messages": {
+      "createVendorSuccess": "Đã tạo vendor.",
+      "updateVendorSuccess": "Đã cập nhật vendor.",
+      "createProductSuccess": "Đã tạo vendor product.",
+      "updateProductSuccess": "Đã cập nhật vendor product.",
+      "createCostCenterSuccess": "Đã tạo cost center.",
+      "updateCostCenterSuccess": "Đã cập nhật cost center.",
+      "saveError": "Không thể lưu thay đổi. Vui lòng thử lại."
     }
   },
   "uiKit": {

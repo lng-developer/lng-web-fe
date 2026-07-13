@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AddIcon from '@mui/icons-material/Add'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
@@ -15,19 +16,32 @@ import {
   MenuItem,
   Select,
   Skeleton,
-  Switch,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
+import { useSnackbar } from 'notistack'
 
+import OverflowTooltip from '@/components/common/OverflowTooltip'
+import StatusSwitch from '@/components/common/StatusSwitch'
+import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { useDebounce } from '@/hooks/useDebounce'
 
-import { useUpdateVendorProductMutation } from '../api/vendors.mutations'
+import {
+  useCreateVendorCostCenterMutation,
+  useCreateVendorProductMutation,
+  useUpdateVendorCostCenterMutation,
+  useUpdateVendorProductMutation,
+} from '../api/vendors.mutations'
 import {
   useProductTypeGroupsQuery,
+  useVendorCostCentersQuery,
   useVendorProductsQuery,
   useVendorsQuery,
 } from '../api/vendors.queries'
+import CostCenterDrawer from '../components/CostCenterDrawer'
+import CostCenterFormDialog from '../components/CostCenterFormDialog'
+import VendorProductFormDialog from '../components/VendorProductFormDialog'
 import { getVendorProductPages } from '../utils/vendorsDisplay'
 
 const pageSizeOptions = [10, 20, 50]
@@ -173,27 +187,48 @@ function getProductTypeOptions(product, productTypeOptions) {
   ]
 }
 
+function isActiveProductTypeOption(option) {
+  return !option.status || String(option.status).toLowerCase() === VENDOR_PRODUCT_STATUSES.ACTIVE
+}
+
 export default function VendorProductsPage() {
   const { t } = useTranslation()
+  const { enqueueSnackbar } = useSnackbar()
   const [search, setSearch] = useState('')
   const [vendorFilter, setVendorFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(VENDOR_PRODUCT_PAGE_SIZE)
+  const [productDialogState, setProductDialogState] = useState({
+    mode: 'create',
+    open: false,
+    product: null,
+  })
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [costCenterDialogState, setCostCenterDialogState] = useState({
+    mode: 'create',
+    open: false,
+    costCenter: null,
+  })
   const debouncedSearch = useDebounce(search, 300)
   const vendorQuery = useVendorsQuery({ page: 1, limit: 100 })
   const productTypesQuery = useProductTypeGroupsQuery({ page: 1, limit: 100 })
+  const createProductMutation = useCreateVendorProductMutation()
   const updateProductMutation = useUpdateVendorProductMutation()
+  const createCostCenterMutation = useCreateVendorCostCenterMutation(selectedProduct?.id)
+  const updateCostCenterMutation = useUpdateVendorCostCenterMutation(selectedProduct?.id)
   const productQuery = useVendorProductsQuery({
     page,
     limit: pageSize,
     search: debouncedSearch,
     vendorId: vendorFilter === 'all' ? '' : vendorFilter,
   })
+  const costCenterQuery = useVendorCostCentersQuery(selectedProduct?.id, { page: 1, limit: 100 })
   const products = productQuery.data?.items || []
   const pagination = productQuery.data?.pagination || { page, limit: pageSize, total: 0 }
   const totalPages = Math.max(Math.ceil(pagination.total / pagination.limit), 1)
   const vendors = vendorQuery.data?.items || []
-  const productTypeOptions = productTypesQuery.data || []
+  const productTypeOptions = (productTypesQuery.data || []).filter(isActiveProductTypeOption)
+  const costCenters = costCenterQuery.data?.items || []
 
   function resetPage() {
     setPage(1)
@@ -205,7 +240,106 @@ export default function VendorProductsPage() {
   }
 
   function handleUpdateProduct(productId, payload) {
-    updateProductMutation.mutate({ productId, payload })
+    updateProductMutation.mutate(
+      { productId, payload },
+      {
+        onError: () => {
+          enqueueSnackbar(t('vendors.messages.saveError'), { variant: SNACKBAR_VARIANTS.ERROR })
+        },
+      },
+    )
+  }
+
+  function openCreateProductDialog() {
+    setProductDialogState({ mode: 'create', open: true, product: null })
+  }
+
+  function openEditProductDialog(product) {
+    setProductDialogState({ mode: 'edit', open: true, product })
+  }
+
+  function closeProductDialog() {
+    setProductDialogState((current) => ({ ...current, open: false }))
+  }
+
+  function handleSubmitProduct(payload) {
+    const isEdit = productDialogState.mode === 'edit'
+    const mutation = isEdit ? updateProductMutation : createProductMutation
+    const mutationPayload = isEdit ? { productId: productDialogState.product.id, payload } : payload
+
+    mutation.mutate(mutationPayload, {
+      onSuccess: () => {
+        enqueueSnackbar(
+          t(
+            isEdit
+              ? 'vendors.messages.updateProductSuccess'
+              : 'vendors.messages.createProductSuccess',
+          ),
+          { variant: SNACKBAR_VARIANTS.SUCCESS },
+        )
+        closeProductDialog()
+      },
+      onError: () => {
+        enqueueSnackbar(t('vendors.messages.saveError'), { variant: SNACKBAR_VARIANTS.ERROR })
+      },
+    })
+  }
+
+  function openCostCenters(product) {
+    setSelectedProduct(product)
+  }
+
+  function closeCostCenters() {
+    setSelectedProduct(null)
+    setCostCenterDialogState((current) => ({ ...current, open: false }))
+  }
+
+  function openCreateCostCenterDialog() {
+    setCostCenterDialogState({ mode: 'create', open: true, costCenter: null })
+  }
+
+  function openEditCostCenterDialog(costCenter) {
+    setCostCenterDialogState({ mode: 'edit', open: true, costCenter })
+  }
+
+  function closeCostCenterDialog() {
+    setCostCenterDialogState((current) => ({ ...current, open: false }))
+  }
+
+  function handleSubmitCostCenter(payload) {
+    const isEdit = costCenterDialogState.mode === 'edit'
+    const mutation = isEdit ? updateCostCenterMutation : createCostCenterMutation
+    const mutationPayload = isEdit
+      ? { costCenterId: costCenterDialogState.costCenter.id, payload }
+      : payload
+
+    mutation.mutate(mutationPayload, {
+      onSuccess: () => {
+        enqueueSnackbar(
+          t(
+            isEdit
+              ? 'vendors.messages.updateCostCenterSuccess'
+              : 'vendors.messages.createCostCenterSuccess',
+          ),
+          { variant: SNACKBAR_VARIANTS.SUCCESS },
+        )
+        closeCostCenterDialog()
+      },
+      onError: () => {
+        enqueueSnackbar(t('vendors.messages.saveError'), { variant: SNACKBAR_VARIANTS.ERROR })
+      },
+    })
+  }
+
+  function handleToggleCostCenterStatus(costCenter, status) {
+    updateCostCenterMutation.mutate(
+      { costCenterId: costCenter.id, payload: { status } },
+      {
+        onError: () => {
+          enqueueSnackbar(t('vendors.messages.saveError'), { variant: SNACKBAR_VARIANTS.ERROR })
+        },
+      },
+    )
   }
 
   return (
@@ -217,6 +351,7 @@ export default function VendorProductsPage() {
         <Button
           variant="contained"
           startIcon={<AddIcon fontSize="small" />}
+          onClick={openCreateProductDialog}
           className="h-10 rounded-lg px-4 text-sm font-bold"
         >
           {t('vendors.products.actions.create')}
@@ -245,7 +380,7 @@ export default function VendorProductsPage() {
               },
             }}
           />
-          <FormControl size="small" className="w-28">
+          <FormControl size="small" className="w-36">
             <Select
               value={vendorFilter}
               onChange={(event) => {
@@ -353,13 +488,25 @@ export default function VendorProductsPage() {
                         />
                       </td>
                       <td className="min-w-64 px-4 py-4">
-                        <div className="flex min-w-0 flex-col">
-                          <span className="truncate text-sm font-bold text-ink-strong">
-                            {product.name}
-                          </span>
-                          <span className="truncate text-xs text-ink-muted">
-                            {product.vendorName}
-                          </span>
+                        <div className="flex min-w-0 items-start gap-2">
+                          <div className="flex min-w-0 flex-col">
+                            <span className="truncate text-sm font-bold text-ink-strong">
+                              {product.name}
+                            </span>
+                            <span className="truncate text-xs text-ink-muted">
+                              {product.vendorName}
+                            </span>
+                          </div>
+                          <Tooltip title={t('vendors.actions.edit')}>
+                            <IconButton
+                              size="small"
+                              aria-label={t('vendors.actions.edit')}
+                              onClick={() => openEditProductDialog(product)}
+                              className="mt-0.5 !p-1 text-ink-muted"
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-4 text-sm text-ink-secondary">
@@ -369,6 +516,7 @@ export default function VendorProductsPage() {
                         <Button
                           variant="outlined"
                           size="small"
+                          onClick={() => openCostCenters(product)}
                           className="h-7 rounded-md border-border px-3 text-xs font-medium text-ink-secondary"
                         >
                           {t('vendors.products.actions.viewCostCenter')}
@@ -377,8 +525,8 @@ export default function VendorProductsPage() {
                       <td className="whitespace-nowrap px-4 py-4">
                         <VendorBadge tone={product.vendorTone}>{product.vendorCode}</VendorBadge>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-4">
-                        <FormControl size="small" className="min-w-40">
+                      <td className="max-w-52 whitespace-nowrap px-4 py-4">
+                        <FormControl size="small" className="w-52 max-w-full">
                           <Select
                             value={product.productTypeGroupId || ''}
                             onChange={(event) =>
@@ -392,8 +540,23 @@ export default function VendorProductsPage() {
                             }
                             className="h-9 rounded-lg bg-surface text-sm text-ink-secondary"
                             displayEmpty
+                            renderValue={(value) => {
+                              const label =
+                                rowProductTypeOptions.find((option) => option.id === value)
+                                  ?.label || t('vendors.products.values.noProductType')
+
+                              return <OverflowTooltip text={label} className="w-full" />
+                            }}
                             inputProps={{
                               'aria-label': t('vendors.products.columns.productType'),
+                            }}
+                            sx={{
+                              '& .MuiSelect-select': {
+                                minWidth: 0,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              },
                             }}
                           >
                             {!product.productTypeGroupId ? (
@@ -410,14 +573,10 @@ export default function VendorProductsPage() {
                         </FormControl>
                       </td>
                       <td className="whitespace-nowrap px-4 py-4">
-                        <Switch
+                        <StatusSwitch
                           checked={active}
-                          color="success"
-                          size="small"
                           disabled={updateProductMutation.isPending}
-                          inputProps={{
-                            'aria-label': t('vendors.products.actions.toggleStatus'),
-                          }}
+                          ariaLabel={t('vendors.products.actions.toggleStatus')}
                           onChange={() =>
                             handleUpdateProduct(product.id, {
                               status: active ? 'INACTIVE' : 'ACTIVE',
@@ -432,6 +591,39 @@ export default function VendorProductsPage() {
           </tbody>
         </table>
       </section>
+      <VendorProductFormDialog
+        open={productDialogState.open}
+        mode={productDialogState.mode}
+        product={productDialogState.product}
+        vendors={vendors}
+        productTypeOptions={productTypeOptions}
+        t={t}
+        isSubmitting={createProductMutation.isPending || updateProductMutation.isPending}
+        onClose={closeProductDialog}
+        onSubmit={handleSubmitProduct}
+      />
+      <CostCenterDrawer
+        open={Boolean(selectedProduct)}
+        product={selectedProduct}
+        costCenters={costCenters}
+        isLoading={costCenterQuery.isPending}
+        isError={costCenterQuery.isError}
+        updating={updateCostCenterMutation.isPending}
+        t={t}
+        onClose={closeCostCenters}
+        onAdd={openCreateCostCenterDialog}
+        onEdit={openEditCostCenterDialog}
+        onToggleStatus={handleToggleCostCenterStatus}
+      />
+      <CostCenterFormDialog
+        open={costCenterDialogState.open}
+        mode={costCenterDialogState.mode}
+        costCenter={costCenterDialogState.costCenter}
+        t={t}
+        isSubmitting={createCostCenterMutation.isPending || updateCostCenterMutation.isPending}
+        onClose={closeCostCenterDialog}
+        onSubmit={handleSubmitCostCenter}
+      />
     </div>
   )
 }
