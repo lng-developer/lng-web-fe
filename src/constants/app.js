@@ -21,6 +21,13 @@ export const AUTH_RESPONSE_FIELDS = {
 export const HTML_CLASSES = {
   DARK: THEME_MODES.DARK,
 }
+
+export const TASK_TYPES = {
+  IDEA: 'idea',
+  PSD: 'psd',
+  PNG: 'png',
+}
+
 export const AUTH_ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',

@@ -13,6 +13,7 @@ import PublicRoute from '@/routes/PublicRoute'
 const HomePage = lazy(() => import('@/features/home/pages/HomePage'))
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'))
 const DepartmentsPage = lazy(() => import('@/features/departments/pages/DepartmentsPage'))
+const DesignTasksPage = lazy(() => import('@/features/design-tasks/pages/DesignTasksPage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const QcPage = lazy(() => import('@/features/qc/pages/QcPage'))
@@ -22,6 +23,8 @@ const UiKitPage = lazy(() => import('@/features/ui-kit/pages/UiKitPage'))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const UnauthorizedPage = lazy(() => import('@/features/auth/pages/UnauthorizedPage'))
 const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage'))
+const VendorListPage = lazy(() => import('@/features/vendors/pages/VendorListPage'))
+const VendorProductsPage = lazy(() => import('@/features/vendors/pages/VendorProductsPage'))
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +41,10 @@ export const router = createBrowserRouter([
           { path: 'portal/orders', element: <OrdersPage /> },
           { path: 'portal/fulfillment/scale', element: <ScalePage /> },
           { path: 'portal/fulfillment/qc', element: <QcPage /> },
+          // { path: 'portal/design/tasks', element: <DesignTasksPage /> },
+          { path: 'portal/vendors', element: <VendorListPage /> },
+          { path: 'portal/vendors/products-cost', element: <VendorProductsPage /> },
+          { path: 'portal/design/tasks', element: <DesignTasksPage /> },
           { path: 'portal/settings/users-roles', element: <UsersRolesPage /> },
           // Path tương đối so với MainLayout - ROUTES.UI_KIT ('/ui-kit') dùng cho NavLink.
           { path: 'ui-kit', element: <UiKitPage /> },
