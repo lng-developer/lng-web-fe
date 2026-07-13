@@ -13,6 +13,7 @@ import PublicRoute from '@/routes/PublicRoute'
 const HomePage = lazy(() => import('@/features/home/pages/HomePage'))
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'))
 const DepartmentsPage = lazy(() => import('@/features/departments/pages/DepartmentsPage'))
+const DesignTasksPage = lazy(() => import('@/features/design-tasks/pages/DesignTasksPage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const QcPage = lazy(() => import('@/features/qc/pages/QcPage'))
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
           // { path: 'portal/design/tasks', element: <DesignTasksPage /> },
           { path: 'portal/vendors', element: <VendorListPage /> },
           { path: 'portal/vendors/products-cost', element: <VendorProductsPage /> },
+          { path: 'portal/design/tasks', element: <DesignTasksPage /> },
           { path: 'portal/settings/users-roles', element: <UsersRolesPage /> },
           // Path tương đối so với MainLayout - ROUTES.UI_KIT ('/ui-kit') dùng cho NavLink.
           { path: 'ui-kit', element: <UiKitPage /> },
