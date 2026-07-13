@@ -55,7 +55,7 @@
       "payout": "Payout",
       "compensationPool": "Compensation Pool",
       "vendorList": "Vendor List",
-      "productsCost": "Products & Cost",
+      "productsCost": "Products",
       "storeRouting": "Store Routing",
       "usersRoles": "Users & Roles",
       "shopsStores": "Shop & Stores",
@@ -1114,6 +1114,73 @@
       "description": "Password reset is not available yet. Please contact your administrator for support.",
       "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
       "backLogin": "Back to login"
+    }
+  },
+  "vendors": {
+    "searchPlaceholder": "Search...",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "values": {
+      "fulfillmentType": {
+        "api": "API",
+        "manual": "Manual",
+        "fbm": "FBM",
+        "fba": "FBA",
+        "pod": "POD",
+        "dropship": "Dropship",
+        "custom": "Custom"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    },
+    "states": {
+      "loadError": "Could not load vendor data.",
+      "empty": "No vendor data found."
+    },
+    "list": {
+      "title": "Vendor List",
+      "columns": {
+        "name": "Name",
+        "fulfillmentType": "Fulfillment Type",
+        "active": "Active",
+        "actions": "Actions"
+      }
+    },
+    "products": {
+      "title": "Vendor Products",
+      "actions": {
+        "create": "Create Vendor Product",
+        "viewCostCenter": "View",
+        "toggleStatus": "Toggle product status"
+      },
+      "filters": {
+        "vendor": "Vendor",
+        "allVendors": "All vendors"
+      },
+      "values": {
+        "noProductType": "No product type"
+      },
+      "pagination": {
+        "total": "Total {{total}} items",
+        "previous": "Previous page",
+        "next": "Next page",
+        "pageSize": "Rows per page",
+        "pageSizeValue": "{{size}} / page"
+      },
+      "columns": {
+        "index": "#",
+        "image": "Image",
+        "name": "Product Name Vendor",
+        "productId": "Product ID",
+        "costCenter": "Cost Center",
+        "vendor": "Vendor",
+        "productType": "Product Type For Design",
+        "status": "Status"
+      }
     }
   },
   "uiKit": {

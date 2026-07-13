@@ -46,6 +46,18 @@ export const ENDPOINTS = {
     LIST: '/api/shops',
     DETAIL: (shopId) => `/api/shops/${shopId}`,
   },
+  CATALOG: {
+    PRODUCT_TYPE_GROUPS: '/api/catalog/product-type-groups',
+  },
+  VENDORS: {
+    LIST: '/api/vendors',
+    DETAIL: (vendorId) => `/api/vendors/${vendorId}`,
+    PRODUCTS: '/api/vendors/products',
+    PRODUCT: (productId) => `/api/vendors/products/${productId}`,
+    COST_CENTERS: (productId) => `/api/vendors/products/${productId}/cost-centers`,
+    COST_CENTER: (productId, costCenterId) =>
+      `/api/vendors/products/${productId}/cost-centers/${costCenterId}`,
+  },
   SCALE: {
     GROUP_TASKS: '/api/fulfillment/scale/group-tasks',
     TASK: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}`,
