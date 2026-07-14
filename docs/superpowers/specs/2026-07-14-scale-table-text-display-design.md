@@ -15,6 +15,7 @@ Improve text display in the Scale table without changing API contracts or row be
 - The table container grows to its content width and uses the existing horizontal scroll region when Order ID or QC By needs more space.
 - The table wrapper owns the column tracks. Header, loading rows, and data rows use CSS subgrid so every value starts and ends on the exact same tracks as its header.
 - Expanded detail panels span the complete parent grid and do not participate in column sizing.
+- Group ID, Group Type, and Assignment status are not displayed as table columns. Scale By remains available as the assignment control.
 - The behavior applies consistently to Amazon and Etsy Scale tabs.
 
 ## Approach
