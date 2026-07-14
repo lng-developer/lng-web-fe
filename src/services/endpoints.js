@@ -48,6 +48,17 @@ export const ENDPOINTS = {
   },
   CATALOG: {
     PRODUCT_TYPE_GROUPS: '/api/catalog/product-type-groups',
+    INTERNAL_TEMPLATES: '/api/catalog/internal-templates',
+    LISTINGS: '/api/catalog/listings',
+    LISTING: (listingId) => `/api/catalog/listings/${listingId}`,
+    LISTING_APPROVE: (listingId) => `/api/catalog/listings/${listingId}/approve`,
+    LISTING_REJECT: (listingId) => `/api/catalog/listings/${listingId}/reject`,
+    LISTING_SUMMARY: '/api/catalog/listings/summary',
+    LISTING_PSD_TEMPLATE: (listingId) => `/api/catalog/listings/${listingId}/psd-template`,
+  },
+  MEDIA: {
+    ASSET: (assetId) => `/api/media/assets/${assetId}`,
+    ASSET_DOWNLOAD: (assetId) => `/api/media/assets/${assetId}/download`,
   },
   VENDORS: {
     LIST: '/api/vendors',

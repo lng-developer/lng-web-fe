@@ -63,6 +63,156 @@
       "auditLog": "Audit Log"
     }
   },
+  "listings": {
+    "title": "Listing",
+    "actions": {
+      "add": "Add Listing",
+      "import": "Import Listing",
+      "refresh": "Refresh",
+      "download": "Download",
+      "upload": "Upload",
+      "edit": "Edit",
+      "delete": "Delete",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "stats": {
+      "totalAsin": "Total ASIN",
+      "anonymousAsin": "Anonymous ASIN",
+      "psdAvailable": "PSD Available",
+      "noPsd": "No PSD"
+    },
+    "tabs": {
+      "all": "All",
+      "amazon": "Amazon",
+      "etsy": "Etsy",
+      "noPsd": "No PSD",
+      "draft": "Draft",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "firstSale": "First Sale",
+      "normal": "Normal",
+      "outline": "Outline",
+      "customImage": "Custom Image",
+      "podLovers": "POD Lovers",
+      "style": "Style",
+      "tool": "Tool",
+      "autoFulfill": "Auto Fulfill",
+      "others": "Others"
+    },
+    "filters": {
+      "search": "Find ASIN, SKU...",
+      "searchFields": {
+        "asin": "ASIN",
+        "sku": "SKU"
+      },
+      "sellers": {
+        "all": "All Sellers",
+        "duc": "Nguyen Minh Duc",
+        "son": "Nguyen Duc Son",
+        "nam": "Nguyen Phuong Nam"
+      },
+      "shops": {
+        "all": "All Shops",
+        "acc1": "Acc1",
+        "acc2": "Acc2",
+        "main": "Main"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "asin": "ASIN/Product ID",
+      "total": "Total",
+      "style": "Style",
+      "designProduct": "Design Product",
+      "variant": "Variant",
+      "psdId": "PSD ID",
+      "psdStatus": "PSD Status",
+      "store": "Store",
+      "seller": "Seller",
+      "asinType": "ASIN Type",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "form": {
+      "addTitle": "Add Listing",
+      "editTitle": "Edit Listing",
+      "shop": "Shop",
+      "selectShop": "Select shop",
+      "salesChannel": "Sales channel",
+      "marketplace": "Marketplace",
+      "sku": "SKU",
+      "asin": "ASIN",
+      "title": "Title",
+      "productType": "Product type",
+      "selectProductType": "Select product type",
+      "baseCostAmount": "Base cost",
+      "currency": "Currency",
+      "costCenterStatus": "Cost center status",
+      "status": "Status",
+      "psdStatus": "PSD status",
+      "create": "Create Listing",
+      "save": "Save Changes"
+    },
+    "values": {
+      "common": {
+        "noData": "No data"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "psdStatus": {
+        "available": "Available",
+        "missing": "Missing"
+      },
+      "setupStatus": {
+        "present": "Present",
+        "missing": "Missing"
+      },
+      "salesChannel": {
+        "AMAZON": "Amazon",
+        "ETSY": "Etsy",
+        "SHOPIFY": "Shopify",
+        "TIKTOK_SHOP": "TikTok Shop",
+        "WALMART": "Walmart",
+        "CUSTOM": "Custom"
+      },
+      "asinType": {
+        "normal": "Normal",
+        "draft": "Draft",
+        "rejected": "Rejected",
+        "unknown": "Unknown"
+      }
+    },
+    "messages": {
+      "loading": "Loading listings...",
+      "empty": "No listings found",
+      "required": "Please fill all required fields",
+      "saved": "Listing saved",
+      "saveFailed": "Could not save listing",
+      "uploaded": "PSD uploaded",
+      "uploadFailed": "Could not upload PSD",
+      "approved": "Listing approved",
+      "approveFailed": "Could not approve listing",
+      "rejected": "Listing rejected",
+      "rejectFailed": "Could not reject listing",
+      "rejectReasonRequired": "Please enter a rejection reason",
+      "downloadFailed": "Could not download asset",
+      "importMissing": "Backend does not expose listing import yet",
+      "deleteMissing": "Backend does not expose listing delete yet",
+      "sellerMissing": "Seller is not available in listing API yet",
+      "tabMissing": "Backend does not expose this listing category yet"
+    },
+    "reject": {
+      "title": "Reject Listing",
+      "reasonPlaceholder": "Enter rejection reason",
+      "submit": "Reject"
+    }
+  },
   "roles": {
     "admin": "Admin",
     "designer": "Designer",
