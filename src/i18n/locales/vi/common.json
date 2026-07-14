@@ -55,12 +55,162 @@
       "payout": "Payout",
       "compensationPool": "Quỹ bồi thường",
       "vendorList": "Danh sách vendor",
-      "productsCost": "Sản phẩm & chi phí",
+      "productsCost": "Sản phẩm",
       "storeRouting": "Điều phối store",
       "usersRoles": "Người dùng & phân quyền",
       "shopsStores": "Shop & Store",
       "systemConfig": "Cấu hình hệ thống",
       "auditLog": "Audit Log"
+    }
+  },
+  "listings": {
+    "title": "Listing",
+    "actions": {
+      "add": "Add Listing",
+      "import": "Import Listing",
+      "refresh": "Làm mới",
+      "download": "Tải xuống",
+      "upload": "Tải lên",
+      "edit": "Chỉnh sửa",
+      "delete": "Xoá",
+      "approve": "Duyệt",
+      "reject": "Từ chối"
+    },
+    "stats": {
+      "totalAsin": "Total ASIN",
+      "anonymousAsin": "Anonymous ASIN",
+      "psdAvailable": "PSD Available",
+      "noPsd": "No PSD"
+    },
+    "tabs": {
+      "all": "All",
+      "amazon": "Amazon",
+      "etsy": "Etsy",
+      "noPsd": "No PSD",
+      "draft": "Draft",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "firstSale": "First Sale",
+      "normal": "Normal",
+      "outline": "Outline",
+      "customImage": "Custom Image",
+      "podLovers": "POD Lovers",
+      "style": "Style",
+      "tool": "Tool",
+      "autoFulfill": "Auto Fulfill",
+      "others": "Others"
+    },
+    "filters": {
+      "search": "Tìm ASIN, SKU...",
+      "searchFields": {
+        "asin": "ASIN",
+        "sku": "SKU"
+      },
+      "sellers": {
+        "all": "Tất cả Seller",
+        "duc": "Nguyễn Minh Đức",
+        "son": "Nguyễn Đức Sơn",
+        "nam": "Nguyễn Phương Nam"
+      },
+      "shops": {
+        "all": "Tất cả Shop",
+        "acc1": "Acc1",
+        "acc2": "Acc2",
+        "main": "Main"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "asin": "Asin/Product ID",
+      "total": "Total",
+      "style": "Style",
+      "designProduct": "Design Product",
+      "variant": "Variant",
+      "psdId": "PSD ID",
+      "psdStatus": "PSD Status",
+      "store": "Store",
+      "seller": "Seller",
+      "asinType": "Asin Type",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "form": {
+      "addTitle": "Thêm Listing",
+      "editTitle": "Sửa Listing",
+      "shop": "Shop",
+      "selectShop": "Chọn shop",
+      "salesChannel": "Kênh bán",
+      "marketplace": "Marketplace",
+      "sku": "SKU",
+      "asin": "ASIN",
+      "title": "Tiêu đề",
+      "productType": "Loại sản phẩm",
+      "selectProductType": "Chọn loại sản phẩm",
+      "baseCostAmount": "Base cost",
+      "currency": "Currency",
+      "costCenterStatus": "Trạng thái cost center",
+      "status": "Trạng thái",
+      "psdStatus": "Trạng thái PSD",
+      "create": "Tạo Listing",
+      "save": "Lưu thay đổi"
+    },
+    "values": {
+      "common": {
+        "noData": "Không có dữ liệu"
+      },
+      "status": {
+        "active": "Đang hoạt động",
+        "inactive": "Không hoạt động"
+      },
+      "psdStatus": {
+        "available": "Có sẵn",
+        "missing": "Chưa có"
+      },
+      "setupStatus": {
+        "present": "Có",
+        "missing": "Chưa có"
+      },
+      "salesChannel": {
+        "AMAZON": "Amazon",
+        "ETSY": "Etsy",
+        "SHOPIFY": "Shopify",
+        "TIKTOK_SHOP": "TikTok Shop",
+        "WALMART": "Walmart",
+        "CUSTOM": "Custom"
+      },
+      "asinType": {
+        "normal": "Normal",
+        "draft": "Draft",
+        "rejected": "Rejected",
+        "unknown": "Unknown"
+      }
+    },
+    "messages": {
+      "loading": "Đang tải listing...",
+      "empty": "Không tìm thấy listing",
+      "required": "Vui lòng nhập đủ các trường bắt buộc",
+      "saved": "Đã lưu listing",
+      "saveFailed": "Không thể lưu listing",
+      "uploaded": "Đã tải PSD lên",
+      "uploadFailed": "Không thể tải PSD lên",
+      "approved": "Đã duyệt listing",
+      "approveFailed": "Không thể duyệt listing",
+      "rejected": "Đã từ chối listing",
+      "rejectFailed": "Không thể từ chối listing",
+      "rejectReasonRequired": "Vui lòng nhập lý do từ chối",
+      "downloadFailed": "Không thể tải file xuống",
+      "importMissing": "Backend chưa có API import listing",
+      "deleteMissing": "Backend chưa có API xóa listing",
+      "sellerMissing": "API listing hiện chưa có dữ liệu seller",
+      "tabMissing": "Backend chưa có nhóm phân loại listing này"
+    },
+    "reject": {
+      "title": "Từ chối Listing",
+      "reasonPlaceholder": "Nhập lý do từ chối",
+      "submit": "Từ chối"
     }
   },
   "roles": {
@@ -624,6 +774,218 @@
     "clear": "Xoá",
     "apply": "Áp dụng"
   },
+  "tasks": {
+    "tabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    }
+  },
+  "designTasks": {
+    "tabsLabel": "Nhóm task thiết kế",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "subTabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "titles": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "statusTabs": {
+      "all": "Tất cả",
+      "new": "Mới",
+      "requested": "Đã yêu cầu",
+      "assigned": "Đã gán",
+      "inProgress": "Đang làm",
+      "uploaded": "Đã upload",
+      "pendingAssignment": "Pending Assignment",
+      "needScale": "Need Scale",
+      "pending": "Pending",
+      "completed": "Completed",
+      "qcPassed": "QC Passed",
+      "qcRejected": "QC Rejected"
+    },
+    "searchPlaceholder": "Tìm kiếm...",
+    "actions": {
+      "createTask": "Create Task",
+      "refresh": "Làm mới",
+      "upload": "Upload",
+      "download": "Download",
+      "viewGrid": "Xem file",
+      "edit": "Sửa",
+      "delete": "Xóa"
+    },
+    "table": {
+      "columns": {
+        "createdAt": "Created At",
+        "productImage": "Product Image",
+        "statusTask": "Status Task",
+        "linkProduct": "Link Product",
+        "assigned": "Assigned",
+        "seller": "Seller",
+        "description": "Description",
+        "productType": "Product Type",
+        "actions": "Actions",
+        "editDelete": "Edit/Delete"
+      }
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Trang trước",
+      "pageSize": "Số dòng mỗi trang",
+      "pageSizeValue": "{{size}} / page"
+    },
+    "psd": {
+      "filters": {
+        "seller": "Bộ lọc seller",
+        "sellerValue": "Seller: {{value}}",
+        "all": "All"
+      },
+      "pagination": {
+        "total": "Total {{total}} items"
+      },
+      "table": {
+        "columns": {
+          "createdAt": "Created At",
+          "productImage": "Product Image",
+          "asin": "ASIN",
+          "statusTask": "Status Task",
+          "assigned": "Assigned",
+          "priority": "Priority",
+          "psdStatus": "PSD Status",
+          "seller": "Seller",
+          "asinType": "ASIN Type",
+          "actions": "Actions"
+        }
+      },
+      "actions": {
+        "approve": "Duyệt",
+        "revert": "Hoàn tác"
+      }
+    },
+    "png": {
+      "filters": {
+        "shop": "Bộ lọc shop",
+        "shopValue": "Shop: {{value}}",
+        "asinType": "Bộ lọc ASIN type",
+        "asinTypeValue": "Asin Type: {{value}}",
+        "all": "All"
+      },
+      "table": {
+        "columns": {
+          "expand": "",
+          "orderId": "Order ID",
+          "orderDate": "Order Date",
+          "scaleStatus": "Scale Status",
+          "scaleBy": "Scale By",
+          "shop": "Shop",
+          "orderStatus": "Order Status",
+          "orderOwner": "Order Owner",
+          "qcBy": "QC By",
+          "express": "Express",
+          "action": "Action"
+        }
+      },
+      "actions": {
+        "expand": "Mở chi tiết",
+        "collapse": "Đóng chi tiết",
+        "copy": "Sao chép",
+        "cut": "Cắt",
+        "add": "+ Add",
+        "downloadPsd": "Download PSD"
+      },
+      "detail": {
+        "productInfo": "Product Info",
+        "customization": "Customization",
+        "size": "Choose Your Size:",
+        "customName": "Custom Name:",
+        "customText": "Custom Text:",
+        "dateLocation": "Date/Location:",
+        "textColor": "Text Color:",
+        "bgColor": "BG Color:",
+        "priority": "Priority:",
+        "url": "URL:",
+        "linkSp": "Link SP:",
+        "customerPhoto": "Customer Photo:",
+        "taskStatus": "Task Status",
+        "costCenter": "Cost Center",
+        "vendorProduct": "Vendor Product:",
+        "csNote": "CS Note",
+        "csNoteLabel": "CS note:",
+        "qcNoteLabel": "QC note:",
+        "qcNotePlaceholder": "QC note",
+        "action": "Action",
+        "orderInfo": "Order Info",
+        "seller": "Seller:",
+        "quantity": "Quantity: {{quantity}}",
+        "fulfillName": "Fulfill Name:",
+        "buyerNote": "Buyer Note:",
+        "notePlaceholder": "Note"
+      }
+    }
+  },
+  "qc": {
+    "title": "QC",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "platform": {
+      "amazon": "Amazon",
+      "etsy": "Etsy"
+    },
+    "statusTabs": {
+      "all": "Tất cả",
+      "pending": "Đang chờ",
+      "qcRejected": "QC từ chối",
+      "failed": "Thất bại",
+      "completed": "Hoàn thành",
+      "addressInvalid": "Sai địa chỉ"
+    },
+    "searchPlaceholder": "Tìm kiếm...",
+    "filters": {
+      "seller": "Seller",
+      "shop": "Shop"
+    },
+    "actions": {
+      "refresh": "Làm mới",
+      "exportExcel": "Export Excel ({{count}})",
+      "pushFulfillment": "Push Fulfillment LNG ({{count}})",
+      "expand": "Mở chi tiết",
+      "collapse": "Đóng chi tiết"
+    },
+    "table": {
+      "columns": {
+        "orderId": "Order ID",
+        "statusQc": "Status QC",
+        "created": "Created",
+        "orderDate": "Order Date",
+        "statusOrder": "Status Order",
+        "shippingType": "Shipping Type",
+        "shop": "Shop",
+        "scaleBy": "Scale By",
+        "qcBy": "QC By"
+      }
+    },
+    "detail": {
+      "productInfo": "Product Info",
+      "scaleStatus": "Scale Status",
+      "orderOwner": "Order Owner",
+      "fulfillName": "Fulfill Name",
+      "pngStatus": "PNG Status",
+      "vendorProduct": "Vendor Product",
+      "action": "Action",
+      "sku": "Sku:",
+      "asin": "Asin:",
+      "quantity": "Quantity: {{quantity}}"
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Trang trước",
+      "pageSize": "Số dòng mỗi trang",
+      "pageSizeValue": "{{size}} / page"
+    }
+  },
   "scale": {
     "title": "Manage Scale Tasks",
     "lastUpdated": "Cập nhật lần cuối lúc {{time}}",
@@ -1055,6 +1417,174 @@
         "tracking": "Tracking",
         "note": "Note"
       }
+    }
+  },
+  "vendors": {
+    "searchPlaceholder": "Tìm kiếm...",
+    "actions": {
+      "edit": "Sửa",
+      "delete": "Xoá",
+      "deleteUnavailable": "Chưa hỗ trợ xoá",
+      "cancel": "Huỷ",
+      "create": "Tạo mới",
+      "save": "Lưu thay đổi"
+    },
+    "fields": {
+      "code": "Mã",
+      "name": "Tên",
+      "providerKey": "Provider key",
+      "fulfillmentType": "Loại fulfillment",
+      "status": "Trạng thái",
+      "vendor": "Vendor",
+      "productType": "Product type",
+      "productName": "Tên sản phẩm",
+      "externalProductId": "External product ID",
+      "imageUrl": "Image URL",
+      "productUrl": "Product URL",
+      "designTemplateUrl": "Design template URL",
+      "minProductionDays": "Số ngày sản xuất tối thiểu",
+      "maxProductionDays": "Số ngày sản xuất tối đa",
+      "baseCostAmount": "Base cost",
+      "currency": "Tiền tệ",
+      "sku": "SKU",
+      "lngCode": "Mã LNG",
+      "vendorSize": "Size vendor",
+      "vendorColor": "Màu vendor",
+      "standardSize": "Size chuẩn",
+      "standardColor": "Màu chuẩn",
+      "domesticEconomyAmount": "Domestic economy",
+      "domesticAdditionalAmount": "Domestic additional",
+      "internationalEconomyAmount": "International economy",
+      "internationalAdditionalAmount": "International additional",
+      "priorityEconomyAmount": "Priority economy",
+      "priorityAdditionalAmount": "Priority additional",
+      "importTaxAmount": "Thuế nhập"
+    },
+    "placeholders": {
+      "code": "Ví dụ: LENFUL",
+      "name": "Ví dụ: Lenful",
+      "providerKey": "Chọn provider key",
+      "vendor": "Chọn vendor",
+      "productType": "Chọn product type",
+      "productCode": "Ví dụ: PRD-001234",
+      "productName": "Ví dụ: Premium T-Shirt",
+      "externalProductId": "Ví dụ: external product id",
+      "url": "https://example.com",
+      "costCenterCode": "Ví dụ: ZIPLVN000000AA01",
+      "costCenterName": "Ví dụ: S / ZIPLVN000000AA01"
+    },
+    "values": {
+      "empty": "Không chọn",
+      "fulfillmentType": {
+        "api": "API",
+        "manual": "Manual",
+        "fbm": "FBM",
+        "fba": "FBA",
+        "pod": "POD",
+        "dropship": "Dropship",
+        "custom": "Custom"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    },
+    "states": {
+      "loadError": "Không thể tải dữ liệu vendor.",
+      "empty": "Không tìm thấy dữ liệu vendor."
+    },
+    "list": {
+      "title": "Vendor List",
+      "actions": {
+        "create": "Tạo Vendor"
+      },
+      "form": {
+        "createTitle": "Tạo Vendor",
+        "editTitle": "Sửa Vendor"
+      },
+      "columns": {
+        "name": "Name",
+        "fulfillmentType": "Fulfillment Type",
+        "active": "Active",
+        "actions": "Actions"
+      }
+    },
+    "products": {
+      "title": "Vendor Products",
+      "actions": {
+        "create": "Create Vendor Product",
+        "viewCostCenter": "View",
+        "toggleStatus": "Bật/tắt trạng thái sản phẩm"
+      },
+      "filters": {
+        "vendor": "Vendor",
+        "allVendors": "Tất cả vendor"
+      },
+      "values": {
+        "noProductType": "Chưa có product type"
+      },
+      "form": {
+        "createTitle": "Tạo Vendor Product",
+        "editTitle": "Sửa Vendor Product"
+      },
+      "pagination": {
+        "total": "Total {{total}} items",
+        "previous": "Trang trước",
+        "next": "Trang sau",
+        "pageSize": "Số dòng mỗi trang",
+        "pageSizeValue": "{{size}} / page"
+      },
+      "columns": {
+        "index": "#",
+        "image": "Image",
+        "name": "Product Name Vendor",
+        "productId": "Product ID",
+        "costCenter": "Cost Center",
+        "vendor": "Vendor",
+        "productType": "Product Type For Design",
+        "status": "Status"
+      }
+    },
+    "costCenters": {
+      "title": "Cost Centers",
+      "total": "{{total}} cost center",
+      "actions": {
+        "create": "Tạo Cost Center",
+        "toggleStatus": "Bật/tắt trạng thái cost center"
+      },
+      "form": {
+        "createTitle": "Tạo Cost Center",
+        "editTitle": "Sửa Cost Center",
+        "shipping": "Shipping cost"
+      },
+      "columns": {
+        "code": "Mã",
+        "name": "Tên",
+        "sku": "SKU",
+        "sizeColor": "Size / Màu",
+        "baseCost": "Base Cost",
+        "domesticShipping": "Domestic Shipping",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+      }
+    },
+    "validation": {
+      "codeRequired": "Vui lòng nhập mã",
+      "nameRequired": "Vui lòng nhập tên",
+      "fulfillmentTypeRequired": "Vui lòng chọn loại fulfillment",
+      "statusRequired": "Vui lòng chọn trạng thái",
+      "vendorRequired": "Vui lòng chọn vendor",
+      "productTypeRequired": "Vui lòng chọn product type",
+      "nonNegative": "Giá trị phải lớn hơn hoặc bằng 0"
+    },
+    "messages": {
+      "createVendorSuccess": "Đã tạo vendor.",
+      "updateVendorSuccess": "Đã cập nhật vendor.",
+      "createProductSuccess": "Đã tạo vendor product.",
+      "updateProductSuccess": "Đã cập nhật vendor product.",
+      "createCostCenterSuccess": "Đã tạo cost center.",
+      "updateCostCenterSuccess": "Đã cập nhật cost center.",
+      "saveError": "Không thể lưu thay đổi. Vui lòng thử lại."
     }
   },
   "uiKit": {

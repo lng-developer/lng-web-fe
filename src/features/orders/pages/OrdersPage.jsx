@@ -73,11 +73,6 @@ const importSourceOptions = [
 
 const pageSizeOptions = [10, 20, 50, 100]
 
-const detailFieldGridClasses = {
-  default: 'grid-cols-[minmax(100px,0.85fr)_minmax(0,1fr)]',
-  compact: 'grid-cols-[96px_minmax(0,1fr)]',
-}
-
 const customerFieldKeys = [
   ['name', 'email'],
   ['address', 'address2'],
@@ -160,13 +155,13 @@ function getDetailDisplayValue(value) {
   return String(value)
 }
 
-function DetailField({ label, labelLayout = 'default', value, valueAlign = 'right' }) {
+function DetailField({ label, value, valueAlign = 'right' }) {
   const displayValue = getDetailDisplayValue(value)
   const isTextValue = typeof displayValue === 'string' || typeof displayValue === 'number'
   const alignStart = valueAlign === 'left'
 
   return (
-    <Box className={`grid min-w-0 items-start gap-1.5 ${detailFieldGridClasses[labelLayout]}`}>
+    <Box className="grid min-w-0 grid-cols-[minmax(112px,0.85fr)_minmax(0,1fr)] items-start gap-1.5">
       <Typography variant="body2" className="min-w-0 break-words !text-ink-muted">
         {label}
       </Typography>
@@ -1004,63 +999,29 @@ function ProductInfo({ product }) {
       <DetailField
         label={t('orders.fields.psd')}
         value={<StatusBadge label={t(product.psdKey)} color="danger" />}
-        labelLayout="compact"
         valueAlign="left"
       />
       <DetailField
         label={t('orders.fields.pngStatus')}
         value={<StatusBadge label={t(product.pngStatusKey)} color="warning" />}
-        labelLayout="compact"
         valueAlign="left"
       />
       <DetailField
         label={t('orders.fields.scaleBy')}
         value={product.scaleBy || t(product.scaleByKey)}
-        labelLayout="compact"
         valueAlign="left"
       />
-      <DetailField
-        label={t('orders.fields.qcBy')}
-        value={product.qcBy}
-        labelLayout="compact"
-        valueAlign="left"
-      />
-      <DetailField
-        label={t('orders.fields.sku')}
-        value={product.sku}
-        labelLayout="compact"
-        valueAlign="left"
-      />
+      <DetailField label={t('orders.fields.qcBy')} value={product.qcBy} valueAlign="left" />
+      <DetailField label={t('orders.fields.sku')} value={product.sku} valueAlign="left" />
       <DetailField
         label={t('orders.fields.asinType')}
         value={t(product.asinTypeKey)}
-        labelLayout="compact"
         valueAlign="left"
       />
-      <DetailField
-        label={t('orders.fields.asin')}
-        value={product.asin}
-        labelLayout="compact"
-        valueAlign="left"
-      />
-      <DetailField
-        label={t('orders.fields.psdId')}
-        value={t(product.psdIdKey)}
-        labelLayout="compact"
-        valueAlign="left"
-      />
-      <DetailField
-        label={t('orders.fields.seller')}
-        value={product.seller}
-        labelLayout="compact"
-        valueAlign="left"
-      />
-      <DetailField
-        label={t('orders.fields.team')}
-        value={product.team}
-        labelLayout="compact"
-        valueAlign="left"
-      />
+      <DetailField label={t('orders.fields.asin')} value={product.asin} valueAlign="left" />
+      <DetailField label={t('orders.fields.psdId')} value={t(product.psdIdKey)} valueAlign="left" />
+      <DetailField label={t('orders.fields.seller')} value={product.seller} valueAlign="left" />
+      <DetailField label={t('orders.fields.team')} value={product.team} valueAlign="left" />
     </Stack>
   )
 }

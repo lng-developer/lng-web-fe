@@ -46,6 +46,29 @@ export const ENDPOINTS = {
     LIST: '/api/shops',
     DETAIL: (shopId) => `/api/shops/${shopId}`,
   },
+  CATALOG: {
+    PRODUCT_TYPE_GROUPS: '/api/catalog/product-type-groups',
+    INTERNAL_TEMPLATES: '/api/catalog/internal-templates',
+    LISTINGS: '/api/catalog/listings',
+    LISTING: (listingId) => `/api/catalog/listings/${listingId}`,
+    LISTING_APPROVE: (listingId) => `/api/catalog/listings/${listingId}/approve`,
+    LISTING_REJECT: (listingId) => `/api/catalog/listings/${listingId}/reject`,
+    LISTING_SUMMARY: '/api/catalog/listings/summary',
+    LISTING_PSD_TEMPLATE: (listingId) => `/api/catalog/listings/${listingId}/psd-template`,
+  },
+  MEDIA: {
+    ASSET: (assetId) => `/api/media/assets/${assetId}`,
+    ASSET_DOWNLOAD: (assetId) => `/api/media/assets/${assetId}/download`,
+  },
+  VENDORS: {
+    LIST: '/api/vendors',
+    DETAIL: (vendorId) => `/api/vendors/${vendorId}`,
+    PRODUCTS: '/api/vendors/products',
+    PRODUCT: (productId) => `/api/vendors/products/${productId}`,
+    COST_CENTERS: (productId) => `/api/vendors/products/${productId}/cost-centers`,
+    COST_CENTER: (productId, costCenterId) =>
+      `/api/vendors/products/${productId}/cost-centers/${costCenterId}`,
+  },
   SCALE: {
     GROUP_TASKS: '/api/fulfillment/scale/group-tasks',
     TASK: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}`,
