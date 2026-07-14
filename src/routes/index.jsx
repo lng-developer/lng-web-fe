@@ -15,6 +15,7 @@ const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'))
 const DepartmentsPage = lazy(() => import('@/features/departments/pages/DepartmentsPage'))
 const DesignTasksPage = lazy(() => import('@/features/design-tasks/pages/DesignTasksPage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
+const ListingPage = lazy(() => import('@/features/listings/pages/ListingPage'))
 const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const QcPage = lazy(() => import('@/features/qc/pages/QcPage'))
 const UsersRolesPage = lazy(() => import('@/features/rbac/pages/UsersRolesPage'))
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
           { path: 'profile', element: <ProfilePage /> },
           { path: 'departments', element: <DepartmentsPage /> },
           { path: 'portal/orders', element: <OrdersPage /> },
+          { path: 'portal/listings', element: <ListingPage /> },
           { path: 'portal/fulfillment/scale', element: <ScalePage /> },
           { path: 'portal/fulfillment/qc', element: <QcPage /> },
           // { path: 'portal/design/tasks', element: <DesignTasksPage /> },

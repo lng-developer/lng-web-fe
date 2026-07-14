@@ -63,6 +63,156 @@
       "auditLog": "Audit Log"
     }
   },
+  "listings": {
+    "title": "Listing",
+    "actions": {
+      "add": "Add Listing",
+      "import": "Import Listing",
+      "refresh": "Làm mới",
+      "download": "Tải xuống",
+      "upload": "Tải lên",
+      "edit": "Chỉnh sửa",
+      "delete": "Xoá",
+      "approve": "Duyệt",
+      "reject": "Từ chối"
+    },
+    "stats": {
+      "totalAsin": "Total ASIN",
+      "anonymousAsin": "Anonymous ASIN",
+      "psdAvailable": "PSD Available",
+      "noPsd": "No PSD"
+    },
+    "tabs": {
+      "all": "All",
+      "amazon": "Amazon",
+      "etsy": "Etsy",
+      "noPsd": "No PSD",
+      "draft": "Draft",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "firstSale": "First Sale",
+      "normal": "Normal",
+      "outline": "Outline",
+      "customImage": "Custom Image",
+      "podLovers": "POD Lovers",
+      "style": "Style",
+      "tool": "Tool",
+      "autoFulfill": "Auto Fulfill",
+      "others": "Others"
+    },
+    "filters": {
+      "search": "Tìm ASIN, SKU...",
+      "searchFields": {
+        "asin": "ASIN",
+        "sku": "SKU"
+      },
+      "sellers": {
+        "all": "Tất cả Seller",
+        "duc": "Nguyễn Minh Đức",
+        "son": "Nguyễn Đức Sơn",
+        "nam": "Nguyễn Phương Nam"
+      },
+      "shops": {
+        "all": "Tất cả Shop",
+        "acc1": "Acc1",
+        "acc2": "Acc2",
+        "main": "Main"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "asin": "Asin/Product ID",
+      "total": "Total",
+      "style": "Style",
+      "designProduct": "Design Product",
+      "variant": "Variant",
+      "psdId": "PSD ID",
+      "psdStatus": "PSD Status",
+      "store": "Store",
+      "seller": "Seller",
+      "asinType": "Asin Type",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "form": {
+      "addTitle": "Thêm Listing",
+      "editTitle": "Sửa Listing",
+      "shop": "Shop",
+      "selectShop": "Chọn shop",
+      "salesChannel": "Kênh bán",
+      "marketplace": "Marketplace",
+      "sku": "SKU",
+      "asin": "ASIN",
+      "title": "Tiêu đề",
+      "productType": "Loại sản phẩm",
+      "selectProductType": "Chọn loại sản phẩm",
+      "baseCostAmount": "Base cost",
+      "currency": "Currency",
+      "costCenterStatus": "Trạng thái cost center",
+      "status": "Trạng thái",
+      "psdStatus": "Trạng thái PSD",
+      "create": "Tạo Listing",
+      "save": "Lưu thay đổi"
+    },
+    "values": {
+      "common": {
+        "noData": "Không có dữ liệu"
+      },
+      "status": {
+        "active": "Đang hoạt động",
+        "inactive": "Không hoạt động"
+      },
+      "psdStatus": {
+        "available": "Có sẵn",
+        "missing": "Chưa có"
+      },
+      "setupStatus": {
+        "present": "Có",
+        "missing": "Chưa có"
+      },
+      "salesChannel": {
+        "AMAZON": "Amazon",
+        "ETSY": "Etsy",
+        "SHOPIFY": "Shopify",
+        "TIKTOK_SHOP": "TikTok Shop",
+        "WALMART": "Walmart",
+        "CUSTOM": "Custom"
+      },
+      "asinType": {
+        "normal": "Normal",
+        "draft": "Draft",
+        "rejected": "Rejected",
+        "unknown": "Unknown"
+      }
+    },
+    "messages": {
+      "loading": "Đang tải listing...",
+      "empty": "Không tìm thấy listing",
+      "required": "Vui lòng nhập đủ các trường bắt buộc",
+      "saved": "Đã lưu listing",
+      "saveFailed": "Không thể lưu listing",
+      "uploaded": "Đã tải PSD lên",
+      "uploadFailed": "Không thể tải PSD lên",
+      "approved": "Đã duyệt listing",
+      "approveFailed": "Không thể duyệt listing",
+      "rejected": "Đã từ chối listing",
+      "rejectFailed": "Không thể từ chối listing",
+      "rejectReasonRequired": "Vui lòng nhập lý do từ chối",
+      "downloadFailed": "Không thể tải file xuống",
+      "importMissing": "Backend chưa có API import listing",
+      "deleteMissing": "Backend chưa có API xóa listing",
+      "sellerMissing": "API listing hiện chưa có dữ liệu seller",
+      "tabMissing": "Backend chưa có nhóm phân loại listing này"
+    },
+    "reject": {
+      "title": "Từ chối Listing",
+      "reasonPlaceholder": "Nhập lý do từ chối",
+      "submit": "Từ chối"
+    }
+  },
   "roles": {
     "admin": "Admin",
     "designer": "Thiết kế",
