@@ -772,7 +772,13 @@
   "dateRangePicker": {
     "placeholder": "Select date range",
     "clear": "Clear",
-    "apply": "Apply"
+    "apply": "Apply",
+    "presets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days"
+    }
   },
   "orders": {
     "title": "Orders",
@@ -1237,8 +1243,8 @@
         "orderStatus": "Order Status",
         "orderOwner": "Order Owner",
         "qcBy": "QC By",
-        "assignCs": "Assign CS",
-        "csStatus": "CS Status"
+        "assignCs": "Scale By",
+        "csStatus": "Assignment"
       }
     },
     "detail": {
@@ -1246,7 +1252,7 @@
       "customization": "Customization",
       "taskStatus": "Task Status",
       "costCenter": "Cost Center",
-      "csNote": "CS Note",
+      "csNote": "Production Notes",
       "action": "Action",
       "orderInfo": "Order Info",
       "sku": "SKU",
@@ -1277,7 +1283,12 @@
       "total": "{{total}} tasks",
       "page": "{{page}} / {{totalPages}}",
       "previous": "Previous page",
-      "next": "Next page"
+      "next": "Next page",
+      "range": "{{from}}-{{to}} of {{total}} tasks",
+      "pageSize": "Rows per page",
+      "pageSizeValue": "{{size}} / page",
+      "pageLabel": "Go to page {{page}}",
+      "morePages": "More pages"
     },
     "values": {
       "scaleStatus": {
@@ -1298,7 +1309,7 @@
     },
     "empty": {
       "noTasks": "No scale tasks found.",
-      "etsyTasks": "Etsy Scale Tasks is not available in phase 1."
+      "etsyTasks": "No Etsy scale tasks found."
     },
     "common": {
       "noData": "No data"
@@ -1312,7 +1323,7 @@
         "vendor": "Vendor",
         "orderStatus": "Order Status",
         "scaleBy": "Scale By",
-        "qcByCs": "QC By / CS",
+        "qcByCs": "QC By",
         "scaleFile": "Scale File"
       },
       "pagination": {
@@ -1331,7 +1342,7 @@
         "color": "Color:"
       },
       "notes": {
-        "cs": "CS note:",
+        "cs": "Design note:",
         "qc": "QC note:"
       },
       "actions": {
@@ -1349,14 +1360,18 @@
       }
     },
     "loading": {
-      "refreshing": "Refreshing data..."
+      "refreshing": "Refreshing data...",
+      "uploading": "Uploading..."
     },
     "messages": {
-      "assignSuccess": "CS assignee updated.",
+      "assignSuccess": "Scale assignee updated.",
       "copySuccess": "Fulfill name copied.",
-      "noteSuccess": "CS note saved.",
-      "uploadSuccess": "Mockup uploaded.",
-      "deleteMockupSuccess": "Mockup deleted."
+      "noteSuccess": "Design note saved.",
+      "uploadSuccess": "Scaled output uploaded.",
+      "deleteMockupSuccess": "Mockup deleted.",
+      "noUploadSlot": "No file check is ready to receive a scaled output.",
+      "noScaleSlots": "No scale slots are available.",
+      "slotUploadUnavailable": "This slot cannot receive an output until its required input and Scale context are ready."
     }
   },
   "errors": {

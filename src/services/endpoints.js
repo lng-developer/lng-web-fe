@@ -57,6 +57,7 @@ export const ENDPOINTS = {
     LISTING_PSD_TEMPLATE: (listingId) => `/api/catalog/listings/${listingId}/psd-template`,
   },
   MEDIA: {
+    ASSETS: '/api/media/assets',
     ASSET: (assetId) => `/api/media/assets/${assetId}`,
     ASSET_DOWNLOAD: (assetId) => `/api/media/assets/${assetId}/download`,
   },
@@ -70,14 +71,16 @@ export const ENDPOINTS = {
       `/api/vendors/products/${productId}/cost-centers/${costCenterId}`,
   },
   SCALE: {
-    GROUP_TASKS: '/api/fulfillment/scale/group-tasks',
-    TASK: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}`,
-    ASSIGN_CS: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}/assign-cs`,
-    MOCKUPS: (taskId) => `/api/fulfillment/scale/group-tasks/${taskId}/mockups`,
-    ETSY_TASKS: '/api/fulfillment/scale/etsy-tasks',
-    ETSY_TASK: (taskId) => `/api/fulfillment/scale/etsy-tasks/${taskId}`,
-    ETSY_ASSIGN_CS: (taskId) => `/api/fulfillment/scale/etsy-tasks/${taskId}/assign-cs`,
-    ETSY_MOCKUPS: (taskId) => `/api/fulfillment/scale/etsy-tasks/${taskId}/mockups`,
+    TASKS: '/api/production/tasks',
+    SUMMARY: '/api/production/tasks/summary',
+    ASSIGNEES: '/api/production/tasks/scale-assignees',
+    ASSIGN: (taskId) => `/api/production/tasks/${taskId}/assign`,
+    CLAIM: (taskId) => `/api/production/tasks/${taskId}/claim`,
+    DESIGN_NOTE: (taskId) => `/api/production/tasks/${taskId}/design-note`,
+    SCALED_OUTPUT: (taskId, fileCheckId) =>
+      `/api/production/tasks/${taskId}/file-checks/${fileCheckId}/scaled-output`,
+    QC: (taskId) => `/api/production/tasks/${taskId}/qc`,
+    SENT_TO_VENDOR: (taskId) => `/api/production/tasks/${taskId}/sent-to-vendor`,
   },
   RBAC: {
     ACCOUNTS: '/api/auth/accounts',

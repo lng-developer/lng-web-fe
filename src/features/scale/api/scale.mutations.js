@@ -1,34 +1,34 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import {
-  assignEtsyScaleTaskCs,
-  assignScaleTaskCs,
-  updateEtsyScaleTaskMockups,
-  updateEtsyScaleTaskNote,
-  updateScaleTaskMockups,
-  updateScaleTaskNote,
-} from '@/features/scale/utils/scaleMock'
+import { apiClient } from '@/services/axiosInstance'
+import { ENDPOINTS } from '@/services/endpoints'
 
+import { unwrapApiData } from '../utils/scaleApi'
 import { scaleKeys } from './scale.keys'
 
 function invalidateScale(queryClient) {
   queryClient.invalidateQueries({ queryKey: scaleKeys.all })
 }
 
-export function useAssignScaleTaskCsMutation() {
+function patch(path, payload) {
+  return apiClient.patch(path, payload).then(unwrapApiData)
+}
+
+export function useAssignScaleTaskMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: assignScaleTaskCs,
+    mutationFn: ({ taskId, assignedDesignUserId }) =>
+      patch(ENDPOINTS.SCALE.ASSIGN(taskId), { assignedDesignUserId }),
     onSuccess: () => invalidateScale(queryClient),
   })
 }
 
-export function useAssignEtsyScaleTaskCsMutation() {
+export function useClaimScaleTaskMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: assignEtsyScaleTaskCs,
+    mutationFn: ({ taskId }) => patch(ENDPOINTS.SCALE.CLAIM(taskId)),
     onSuccess: () => invalidateScale(queryClient),
   })
 }
@@ -37,34 +37,36 @@ export function useUpdateScaleTaskNoteMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: updateScaleTaskNote,
+    mutationFn: ({ taskId, designNote }) =>
+      patch(ENDPOINTS.SCALE.DESIGN_NOTE(taskId), { designNote }),
     onSuccess: () => invalidateScale(queryClient),
   })
 }
 
-export function useUpdateEtsyScaleTaskNoteMutation() {
+export function useUploadScaleOutputMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: updateEtsyScaleTaskNote,
+    mutationFn: async ({ taskId, fileCheckId, file }) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      const asset = await apiClient
+        .post(ENDPOINTS.MEDIA.ASSETS, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        .then(unwrapApiData)
+
+      return patch(ENDPOINTS.SCALE.SCALED_OUTPUT(taskId, fileCheckId), {
+        mediaAssetId: asset.id,
+      })
+    },
     onSuccess: () => invalidateScale(queryClient),
   })
 }
 
-export function useUpdateScaleTaskMockupsMutation() {
-  const queryClient = useQueryClient()
-
+export function useDownloadScaleAssetMutation() {
   return useMutation({
-    mutationFn: updateScaleTaskMockups,
-    onSuccess: () => invalidateScale(queryClient),
-  })
-}
-
-export function useUpdateEtsyScaleTaskMockupsMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: updateEtsyScaleTaskMockups,
-    onSuccess: () => invalidateScale(queryClient),
+    mutationFn: (assetId) =>
+      apiClient.get(ENDPOINTS.MEDIA.ASSET_DOWNLOAD(assetId), { responseType: 'blob' }),
   })
 }

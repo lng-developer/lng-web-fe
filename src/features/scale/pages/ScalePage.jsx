@@ -1,13 +1,9 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import AddIcon from '@mui/icons-material/Add'
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
@@ -17,6 +13,7 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
+  Pagination,
   Select,
   Skeleton,
   TextField,
@@ -26,27 +23,33 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 
+import DateRangePicker from '@/components/form/DateRangePicker'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { scaleKeys } from '@/features/scale/api/scale.keys'
 import {
-  useAssignEtsyScaleTaskCsMutation,
-  useAssignScaleTaskCsMutation,
-  useUpdateEtsyScaleTaskMockupsMutation,
-  useUpdateEtsyScaleTaskNoteMutation,
-  useUpdateScaleTaskMockupsMutation,
+  useAssignScaleTaskMutation,
+  useDownloadScaleAssetMutation,
   useUpdateScaleTaskNoteMutation,
+  useUploadScaleOutputMutation,
 } from '@/features/scale/api/scale.mutations'
-import { useEtsyScaleTasksQuery, useScaleGroupTasksQuery } from '@/features/scale/api/scale.queries'
+import {
+  useScaleAssigneesQuery,
+  useScaleShopsQuery,
+  useScaleSummaryQuery,
+  useScaleTasksQuery,
+} from '@/features/scale/api/scale.queries'
 import {
   CS_STATUSES,
-  ETSY_EXPANDED_TASK_ID,
   SCALE_ALL_FILTER,
+  SCALE_CHANNELS,
   SCALE_PAGE_SIZE,
+  SCALE_PAGE_SIZE_OPTIONS,
   SCALE_STATUS_TABS,
   SCALE_STATUSES,
   SCALE_SUB_TABS,
   SCALE_TABLE_COLUMNS,
 } from '@/features/scale/constants/scaleConstants'
+import { getPaginationRange } from '@/features/scale/utils/scalePagination'
 import { useDebounce } from '@/hooks/useDebounce'
 
 const tableGridClass =
@@ -61,14 +64,6 @@ const groupStatusTabs = [
   { value: SCALE_STATUS_TABS.QC_REJECTED, labelKey: 'scale.statusTabs.qcRejected' },
 ]
 
-const etsyStatusTabs = [
-  { value: SCALE_STATUS_TABS.ALL, labelKey: 'scale.statusTabs.all' },
-  { value: SCALE_STATUS_TABS.NEED_SCALE, labelKey: 'scale.statusTabs.needScale' },
-  { value: SCALE_STATUS_TABS.PENDING, labelKey: 'scale.statusTabs.pending' },
-  { value: SCALE_STATUS_TABS.COMPLETED, labelKey: 'scale.statusTabs.completed' },
-  { value: SCALE_STATUS_TABS.QC_REJECTED, labelKey: 'scale.statusTabs.qcRejected' },
-]
-
 const subTabs = [
   { value: SCALE_SUB_TABS.GROUP_TASK, labelKey: 'scale.subTabs.groupTask' },
   { value: SCALE_SUB_TABS.ETSY_TASKS, labelKey: 'scale.subTabs.etsyTasks' },
@@ -76,18 +71,14 @@ const subTabs = [
 
 const groupFiltersInitialState = {
   shop: SCALE_ALL_FILTER,
-  seller: SCALE_ALL_FILTER,
-  csBy: SCALE_ALL_FILTER,
-  csStatus: SCALE_ALL_FILTER,
+  scaleBy: SCALE_ALL_FILTER,
+  qcBy: SCALE_ALL_FILTER,
 }
 
 const etsyFiltersInitialState = {
   shop: SCALE_ALL_FILTER,
-  vendor: SCALE_ALL_FILTER,
-  orderStatus: SCALE_ALL_FILTER,
   scaleBy: SCALE_ALL_FILTER,
-  qcByCs: SCALE_ALL_FILTER,
-  scaleFile: SCALE_ALL_FILTER,
+  qcBy: SCALE_ALL_FILTER,
 }
 
 const statusBadgeClasses = {
@@ -134,15 +125,22 @@ function getCsStatusLabelKey(status) {
   return `scale.values.csStatus.${status || 'unknown'}`
 }
 
+function formatEnumValue(value) {
+  if (!value) return '-'
+  return String(value)
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase())
+}
+
 function getSelectTextClass(value) {
   return value === SCALE_ALL_FILTER ? 'text-ink-muted' : 'text-ink'
 }
 
-function getCsName(csUsers = [], csBy) {
-  return csUsers.find((user) => user.id === csBy)?.name || csBy || '-'
-}
-
 function toOption(value) {
+  if (value && typeof value === 'object') {
+    return { value: value.id, label: value.name }
+  }
   return { value, label: value }
 }
 
@@ -154,22 +152,14 @@ function getGroupFilters(options, t) {
       options: (options.shops || []).map(toOption),
     },
     {
-      key: 'seller',
-      placeholder: t('scale.filters.seller'),
-      options: (options.sellers || []).map(toOption),
+      key: 'scaleBy',
+      placeholder: t('scale.etsy.filters.scaleBy'),
+      options: (options.scaleUsers || []).map(toOption),
     },
     {
-      key: 'csBy',
-      placeholder: t('scale.filters.csBy'),
-      options: (options.csUsers || []).map((user) => ({ value: user.id, label: user.name })),
-    },
-    {
-      key: 'csStatus',
-      placeholder: t('scale.filters.csStatus'),
-      options: (options.csStatuses || []).map((status) => ({
-        value: status,
-        label: t(getCsStatusLabelKey(status)),
-      })),
+      key: 'qcBy',
+      placeholder: t('scale.etsy.filters.qcByCs'),
+      options: (options.qcUsers || []).map(toOption),
     },
   ]
 }
@@ -182,29 +172,14 @@ function getEtsyFilters(options, t) {
       options: (options.shops || []).map(toOption),
     },
     {
-      key: 'vendor',
-      placeholder: t('scale.etsy.filters.vendor'),
-      options: (options.vendors || []).map(toOption),
-    },
-    {
-      key: 'orderStatus',
-      placeholder: t('scale.etsy.filters.orderStatus'),
-      options: (options.orderStatuses || []).map(toOption),
-    },
-    {
       key: 'scaleBy',
       placeholder: t('scale.etsy.filters.scaleBy'),
-      options: (options.scaleBy || []).map(toOption),
+      options: (options.scaleUsers || []).map(toOption),
     },
     {
-      key: 'qcByCs',
+      key: 'qcBy',
       placeholder: t('scale.etsy.filters.qcByCs'),
-      options: (options.qcByCs || []).map(toOption),
-    },
-    {
-      key: 'scaleFile',
-      placeholder: t('scale.etsy.filters.scaleFile'),
-      options: (options.scaleFiles || []).map(toOption),
+      options: (options.qcUsers || []).map(toOption),
     },
   ]
 }
@@ -301,8 +276,9 @@ function EtsyNoteBox({ label, value, onChange, onBlur, danger = false, heightCla
       </Typography>
       <textarea
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange?.(event.target.value)}
         onBlur={onBlur}
+        readOnly={!onChange}
         className={`${heightClass} w-full resize-none rounded border border-border bg-surface px-[10px] py-2 text-[11px] outline-none ${danger ? 'text-danger' : 'text-ink-muted'}`}
       />
     </>
@@ -347,9 +323,9 @@ function ScaleDetailPanel({
   getNoteValue,
   onNoteChange,
   onSaveNote,
-  onUploadMockup,
-  onAddMockup,
-  onDeleteMockup,
+  onUploadOutput,
+  onDownloadAsset,
+  uploadingSlotId,
   t,
 }) {
   const { detail } = task
@@ -359,15 +335,25 @@ function ScaleDetailPanel({
       <div className="grid min-w-[1540px] grid-cols-[230px_390px_133px_220px_220px_280px] gap-6 py-3">
         <section className="flex w-[230px] flex-col items-start gap-2">
           <DetailHeading>{t('scale.detail.productInfo')}</DetailHeading>
-          <div className="flex h-[106px] w-[106px] items-center justify-center rounded-md border border-sky-border bg-sky-soft">
-            <ImageOutlinedIcon className="text-info-strong !text-[36px]" />
+          <div className="flex h-[106px] w-[106px] items-center justify-center overflow-hidden rounded-md border border-sky-border bg-sky-soft">
+            {detail.product.imageUrl ? (
+              <img
+                src={detail.product.imageUrl}
+                alt={detail.product.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <ImageOutlinedIcon className="text-info-strong !text-[36px]" />
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge className="h-[28px] border border-teal bg-surface px-3 text-[11px] text-teal">
               {detail.product.primaryCode}
             </Badge>
-            <Badge className="h-[28px] bg-pink-bg px-3 text-[13px] text-pink-strong">
-              {t('scale.etsy.psdStatus.normal')}
+            <Badge
+              className={`h-[28px] px-3 text-[13px] ${detail.product.psdStatus === 'MISSING' ? 'bg-danger-bg text-danger' : 'bg-pink-bg text-pink-strong'}`}
+            >
+              {formatEnumValue(detail.product.psdStatus)}
             </Badge>
           </div>
           <Badge className="h-[28px] border border-teal bg-surface px-3 text-[11px] text-teal">
@@ -377,6 +363,8 @@ function ScaleDetailPanel({
             variant="outlined"
             size="small"
             startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
+            disabled={!detail.psdTemplate?.assetId}
+            onClick={() => onDownloadAsset(detail.psdTemplate.assetId, `${task.orderId}-psd`)}
             className="h-[28px] rounded-full border-success px-3 text-[13px] font-semibold text-success"
           >
             {t('scale.etsy.actions.downloadPsd')}
@@ -400,9 +388,18 @@ function ScaleDetailPanel({
 
         <section className="flex w-[133px] flex-col items-center gap-3">
           <DetailHeading>{t('scale.detail.taskStatus')}</DetailHeading>
-          <span className="rounded-md bg-success-soft px-3 py-[5px] text-[13px] font-semibold text-success">
-            {t('scale.etsy.taskStatus.complete')}
+          <span
+            className={`rounded-md px-3 py-[5px] text-center text-[13px] font-semibold ${detail.canScale ? 'bg-success-soft text-success' : 'bg-warning-bg text-warning-strong'}`}
+          >
+            {formatEnumValue(detail.contextStatus)}
           </span>
+          {detail.missingRequirements?.map((requirement) => (
+            <Tooltip key={requirement.code} title={requirement.message || requirement.code}>
+              <span className="max-w-full truncate rounded-full bg-danger-bg px-2 py-1 text-[11px] text-danger">
+                {formatEnumValue(requirement.code)}
+              </span>
+            </Tooltip>
+          ))}
         </section>
 
         <section className="flex w-[220px] flex-col items-start gap-3">
@@ -425,73 +422,79 @@ function ScaleDetailPanel({
           <div className="flex w-full flex-col gap-1">
             <EtsyNoteBox
               label={t('scale.etsy.notes.cs')}
-              value={getNoteValue(task, 'cs')}
-              onChange={(value) => onNoteChange(task.id, 'cs', value)}
-              onBlur={() => onSaveNote(task, 'cs')}
+              value={getNoteValue(task, 'design')}
+              onChange={(value) => onNoteChange(task.id, 'design', value)}
+              onBlur={() => onSaveNote(task, 'design')}
               danger
             />
-            <EtsyNoteBox
-              label={t('scale.etsy.notes.qc')}
-              value={getNoteValue(task, 'qc')}
-              onChange={(value) => onNoteChange(task.id, 'qc', value)}
-              onBlur={() => onSaveNote(task, 'qc')}
-            />
+            <EtsyNoteBox label={t('scale.etsy.notes.qc')} value={getNoteValue(task, 'qc')} />
           </div>
         </section>
 
         <section className="flex w-[280px] flex-col items-start gap-3">
           <DetailHeading>{t('scale.detail.action')}</DetailHeading>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex w-[191px] gap-1.5">
-              <Button
-                component="label"
-                variant="outlined"
-                size="small"
-                startIcon={<CloudUploadOutlinedIcon className="text-[12px]" />}
-                className="h-7 w-[92.5px] rounded border-border px-[10px] text-xs font-normal text-ink-action"
-              >
-                {t('scale.etsy.actions.upload')}
-                <input
-                  hidden
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => onUploadMockup(task, event.target.files?.[0])}
-                />
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<AddIcon className="text-[12px]" />}
-                onClick={() => onAddMockup(task)}
-                className="h-7 w-[92.5px] rounded border-border px-[10px] text-xs font-bold text-ink-action"
-              >
-                {t('scale.etsy.actions.add')}
-              </Button>
-            </div>
-            <div className="flex gap-4">
-              {(detail.mockups || []).slice(0, 2).map((mockup) => (
-                <div key={mockup.id || mockup.url} className="flex flex-col gap-1">
-                  <span className="text-[10px] text-ink-muted">{mockup.label}</span>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => window.open(mockup.url, '_blank', 'noopener,noreferrer')}
-                      className="flex h-[112px] w-[112px] items-center justify-center rounded-md border border-sky-border bg-sky-soft text-info-strong"
-                    >
+          <div className="flex flex-wrap gap-3">
+            {(detail.mockups || []).map((mockup) => {
+              const isUploading = uploadingSlotId === mockup.fileCheckId
+              const uploadDisabled =
+                !detail.canScale || !mockup.fileCheckId || !mockup.inputAssetId || isUploading
+
+              return (
+                <div key={mockup.id} className="flex w-28 flex-col gap-1.5">
+                  <Tooltip title={mockup.label}>
+                    <span className="truncate text-[10px] text-ink-muted">{mockup.label}</span>
+                  </Tooltip>
+                  <button
+                    type="button"
+                    disabled={!mockup.outputAssetId}
+                    onClick={() =>
+                      onDownloadAsset(mockup.outputAssetId, `${task.orderId}-${mockup.label}`)
+                    }
+                    className="flex h-28 w-28 items-center justify-center rounded-md border border-sky-border bg-sky-soft text-info-strong disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {mockup.outputAssetId ? (
+                      <FileDownloadOutlinedIcon className="!text-[28px]" />
+                    ) : (
                       <ImageOutlinedIcon className="!text-[28px]" />
-                    </button>
-                    <IconButton
-                      aria-label={t('scale.actions.deleteMockup')}
-                      size="small"
-                      onClick={() => onDeleteMockup(task, mockup.url)}
-                      className="!absolute -right-2 -top-2 h-6 w-6 bg-danger text-white shadow-sm"
-                    >
-                      <DeleteOutlineOutlinedIcon fontSize="inherit" />
-                    </IconButton>
-                  </div>
+                    )}
+                  </button>
+                  <Tooltip
+                    title={
+                      uploadDisabled && !isUploading
+                        ? t('scale.messages.slotUploadUnavailable')
+                        : ''
+                    }
+                  >
+                    <span>
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        size="small"
+                        disabled={uploadDisabled}
+                        startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
+                        className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
+                      >
+                        {isUploading
+                          ? t('scale.loading.uploading')
+                          : t('scale.etsy.actions.upload')}
+                        <input
+                          hidden
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.pdf,.zip,.psd"
+                          onChange={(event) => {
+                            onUploadOutput(task, mockup, event.target.files?.[0])
+                            event.target.value = ''
+                          }}
+                        />
+                      </Button>
+                    </span>
+                  </Tooltip>
                 </div>
-              ))}
-            </div>
+              )
+            })}
+            {detail.mockups?.length ? null : (
+              <span className="text-xs text-ink-muted">{t('scale.messages.noScaleSlots')}</span>
+            )}
           </div>
         </section>
       </div>
@@ -500,62 +503,58 @@ function ScaleDetailPanel({
 }
 
 function renderOrderDate(task, activeSubTab) {
-  if (activeSubTab === SCALE_SUB_TABS.ETSY_TASKS) {
-    return (
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-[13px] text-ink-strong">{task.orderDate.date}</span>
-        <span className="truncate text-[11px] text-ink-muted">{task.orderDate.relative}</span>
-      </div>
-    )
-  }
-
-  return <span className="truncate text-ink-secondary">{task.orderDate}</span>
+  return (
+    <span
+      className={`truncate ${activeSubTab === SCALE_SUB_TABS.ETSY_TASKS ? 'text-ink-strong' : 'text-ink-secondary'}`}
+    >
+      {task.orderDate}
+    </span>
+  )
 }
 
 function renderPill(value, fallbackClass = 'border border-border bg-surface text-ink-secondary') {
   return <Badge className={pillClassByValue[value] || fallbackClass}>{value}</Badge>
 }
 
-function ScalePagination({ page, totalPages, onPageChange, t }) {
-  const pages = [1, 2, 3, 4].filter((pageNumber) => pageNumber <= totalPages)
+function ScalePagination({ page, pageSize, total, disabled, onPageChange, onPageSizeChange, t }) {
+  const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+  const safePage = Math.min(page, totalPages)
+  const { from, to } = getPaginationRange({ page: safePage, pageSize, total })
+
+  function getItemAriaLabel(type, pageNumber) {
+    if (type === 'previous') return t('scale.pagination.previous')
+    if (type === 'next') return t('scale.pagination.next')
+    if (type === 'page') return t('scale.pagination.pageLabel', { page: pageNumber })
+    return t('scale.pagination.morePages')
+  }
 
   return (
-    <div className="flex items-center gap-1.5">
-      <IconButton
-        aria-label={t('scale.pagination.previous')}
-        disabled={page <= 1}
-        onClick={() => onPageChange(page - 1)}
-        className="h-[30px] w-[30px] rounded border border-border"
-      >
-        <KeyboardArrowLeftIcon fontSize="small" />
-      </IconButton>
-      {pages.map((pageNumber) => {
-        const active = page === pageNumber
-
-        return (
-          <button
-            key={pageNumber}
-            type="button"
-            onClick={() => onPageChange(pageNumber)}
-            className={`h-[30px] w-[30px] rounded border text-[13px] ${
-              active
-                ? 'border-danger bg-primary-light font-bold text-danger'
-                : 'border-border bg-surface font-semibold text-ink-secondary'
-            }`}
-          >
-            {pageNumber}
-          </button>
-        )
-      })}
-      {totalPages >= 4 ? <span className="px-1 text-[13px] text-ink-muted">...</span> : null}
-      <IconButton
-        aria-label={t('scale.pagination.next')}
-        disabled={page >= totalPages}
-        onClick={() => onPageChange(page + 1)}
-        className="h-[30px] w-[30px] rounded border border-border"
-      >
-        <KeyboardArrowRightIcon fontSize="small" />
-      </IconButton>
+    <div className="flex flex-wrap items-center justify-end gap-3">
+      <span className="text-[13px] whitespace-nowrap text-ink-muted">
+        {t('scale.pagination.range', { from, to, total })}
+      </span>
+      <Pagination
+        count={totalPages}
+        page={safePage}
+        onChange={(_event, nextPage) => onPageChange(nextPage)}
+        getItemAriaLabel={getItemAriaLabel}
+        size="small"
+        disabled={disabled || total === 0}
+      />
+      <FormControl size="small" className="min-w-28">
+        <Select
+          value={pageSize}
+          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          inputProps={{ 'aria-label': t('scale.pagination.pageSize') }}
+          disabled={disabled}
+        >
+          {SCALE_PAGE_SIZE_OPTIONS.map((option) => (
+            <MenuItem key={option} value={option}>
+              {t('scale.pagination.pageSizeValue', { size: option })}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     </div>
   )
 }
@@ -569,55 +568,76 @@ export default function ScalePage() {
   const [groupFilters, setGroupFilters] = useState(groupFiltersInitialState)
   const [etsyFilters, setEtsyFilters] = useState(etsyFiltersInitialState)
   const [searchInput, setSearchInput] = useState('')
+  const [dateRange, setDateRange] = useState({ start: null, end: null })
   const debouncedSearch = useDebounce(searchInput, 300)
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(SCALE_PAGE_SIZE)
   const [expandedTaskId, setExpandedTaskId] = useState(null)
   const [noteDrafts, setNoteDrafts] = useState({})
 
   const isEtsyTab = activeSubTab === SCALE_SUB_TABS.ETSY_TASKS
   const activeFilters = isEtsyTab ? etsyFilters : groupFilters
+  const salesChannelCode = isEtsyTab ? SCALE_CHANNELS.ETSY : SCALE_CHANNELS.AMAZON
 
   const query = useMemo(
     () => ({
+      salesChannelCode,
       statusTab,
       search: debouncedSearch,
+      dateRange,
       ...activeFilters,
       page,
-      pageSize: SCALE_PAGE_SIZE,
+      pageSize,
     }),
-    [activeFilters, debouncedSearch, page, statusTab],
+    [activeFilters, dateRange, debouncedSearch, page, pageSize, salesChannelCode, statusTab],
   )
 
-  const groupQuery = useScaleGroupTasksQuery(query, {
-    enabled: !isEtsyTab,
-  })
-  const etsyQuery = useEtsyScaleTasksQuery(query, {
-    enabled: isEtsyTab,
-  })
-  const activeQuery = isEtsyTab ? etsyQuery : groupQuery
+  const activeQuery = useScaleTasksQuery(query)
+  const summaryQuery = useScaleSummaryQuery(query)
+  const assigneesQuery = useScaleAssigneesQuery({ limit: 100 })
+  const shopsQuery = useScaleShopsQuery({ page: 1, limit: 100 })
 
-  const assignCsMutation = useAssignScaleTaskCsMutation()
-  const assignEtsyCsMutation = useAssignEtsyScaleTaskCsMutation()
+  const assignScaleMutation = useAssignScaleTaskMutation()
   const updateNoteMutation = useUpdateScaleTaskNoteMutation()
-  const updateEtsyNoteMutation = useUpdateEtsyScaleTaskNoteMutation()
-  const updateMockupsMutation = useUpdateScaleTaskMockupsMutation()
-  const updateEtsyMockupsMutation = useUpdateEtsyScaleTaskMockupsMutation()
+  const uploadOutputMutation = useUploadScaleOutputMutation()
+  const downloadAssetMutation = useDownloadScaleAssetMutation()
 
   const data = activeQuery.data
-  const tasks = data?.items || []
-  const counts = data?.counts || {}
-  const options = data?.options || {}
+  const listItems = data?.items
+  const shops = shopsQuery.data
+  const tasks = useMemo(() => {
+    const shopNames = new Map((shops || []).map((shop) => [shop.id, shop.name]))
+    return (listItems || []).map((task) => ({
+      ...task,
+      shop: shopNames.get(task.shopId) || task.shop,
+    }))
+  }, [listItems, shops])
+  const counts = summaryQuery.data || {}
+  const options = useMemo(
+    () => ({
+      shops: shops || [],
+      scaleUsers: assigneesQuery.data || [],
+      qcUsers: data?.options?.qcUsers || [],
+    }),
+    [assigneesQuery.data, data?.options?.qcUsers, shops],
+  )
   const total = data?.total || 0
-  const totalPages = Math.max(Math.ceil(total / SCALE_PAGE_SIZE), 1)
+  const totalPages = Math.max(Math.ceil(total / pageSize), 1)
   const filters = isEtsyTab ? getEtsyFilters(options, t) : getGroupFilters(options, t)
-  const statusTabs = isEtsyTab ? etsyStatusTabs : groupStatusTabs
+  const statusTabs = groupStatusTabs
   const titleKey = isEtsyTab ? 'scale.etsy.title' : 'scale.title'
-  const dateRangeLabel = isEtsyTab ? t('scale.etsy.dateRange') : t('scale.dateRange.today')
 
   function resetPageAndExpand(nextPage = 1) {
     setPage(nextPage)
-    setExpandedTaskId(isEtsyTab ? ETSY_EXPANDED_TASK_ID : null)
+    setExpandedTaskId(null)
   }
+
+  useEffect(() => {
+    if (!activeQuery.isSuccess || activeQuery.isFetching || page <= totalPages) return
+    // The server total can shrink after a settled refresh, leaving the controlled page invalid.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    resetPageAndExpand(totalPages)
+  }, [activeQuery.isFetching, activeQuery.isSuccess, page, totalPages])
 
   function handleSubTabChange(nextSubTab) {
     setActiveSubTab(nextSubTab)
@@ -626,7 +646,7 @@ export default function ScalePage() {
     setPage(1)
     setGroupFilters(groupFiltersInitialState)
     setEtsyFilters(etsyFiltersInitialState)
-    setExpandedTaskId(nextSubTab === SCALE_SUB_TABS.ETSY_TASKS ? ETSY_EXPANDED_TASK_ID : null)
+    setExpandedTaskId(null)
   }
 
   function updateFilter(key, value) {
@@ -643,16 +663,27 @@ export default function ScalePage() {
     resetPageAndExpand()
   }
 
-  function handleAssignCs(taskId, csBy) {
-    const mutation = isEtsyTab ? assignEtsyCsMutation : assignCsMutation
+  function handleDateRangeChange(value) {
+    setDateRange(value)
+    resetPageAndExpand()
+  }
 
-    mutation.mutate(
-      { taskId, csBy },
+  function handlePageSizeChange(nextPageSize) {
+    setPageSize(nextPageSize)
+    resetPageAndExpand()
+  }
+
+  function handleAssignScale(taskId, assignedDesignUserId) {
+    assignScaleMutation.mutate(
+      { taskId, assignedDesignUserId },
       {
         onSuccess: () => {
           enqueueSnackbar(t('scale.messages.assignSuccess'), {
             variant: SNACKBAR_VARIANTS.SUCCESS,
           })
+        },
+        onError: (error) => {
+          enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
         },
       },
     )
@@ -666,82 +697,64 @@ export default function ScalePage() {
     setNoteDrafts((current) => ({ ...current, [getNoteDraftKey(taskId, noteType)]: value }))
   }
 
-  function getNoteValue(task, noteType = 'cs') {
+  function getNoteValue(task, noteType = 'design') {
     const key = getNoteDraftKey(task.id, noteType)
     if (Object.hasOwn(noteDrafts, key)) return noteDrafts[key]
 
-    return task.detail.notes?.[noteType] || (noteType === 'cs' ? task.detail.csNote || '' : '')
+    return task.detail.notes?.[noteType] || ''
   }
 
-  function handleSaveNote(task, noteType = 'cs') {
-    const mutation = isEtsyTab ? updateEtsyNoteMutation : updateNoteMutation
-    const payload = isEtsyTab
-      ? { taskId: task.id, noteType, note: getNoteValue(task, noteType) }
-      : { taskId: task.id, noteType, note: getNoteValue(task, noteType) }
-
-    mutation.mutate(payload, {
-      onSuccess: () => {
-        enqueueSnackbar(t('scale.messages.noteSuccess'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+  function handleSaveNote(task, noteType = 'design') {
+    updateNoteMutation.mutate(
+      { taskId: task.id, designNote: getNoteValue(task, noteType) },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(t('scale.messages.noteSuccess'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+        },
+        onError: (error) => {
+          enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
+        },
       },
-    })
+    )
   }
 
-  function updateMockups(task, mockups) {
-    const mutation = isEtsyTab ? updateEtsyMockupsMutation : updateMockupsMutation
+  function handleUploadOutput(task, slot, file) {
+    if (!file) return
+    if (!slot?.fileCheckId) {
+      enqueueSnackbar(t('scale.messages.noUploadSlot'), { variant: SNACKBAR_VARIANTS.WARNING })
+      return
+    }
 
-    mutation.mutate(
-      { taskId: task.id, mockups },
+    uploadOutputMutation.mutate(
+      { taskId: task.id, fileCheckId: slot.fileCheckId, file },
       {
         onSuccess: () => {
           enqueueSnackbar(t('scale.messages.uploadSuccess'), {
             variant: SNACKBAR_VARIANTS.SUCCESS,
           })
         },
-      },
-    )
-  }
-
-  function handleUploadMockup(task, file) {
-    if (!file) return
-
-    const mockups = [
-      ...(task.detail.mockups || []),
-      {
-        id: `${task.id}-${Date.now()}`,
-        label: file.name,
-        name: file.name,
-        url: URL.createObjectURL(file),
-      },
-    ]
-    updateMockups(task, mockups)
-  }
-
-  function handleAddMockup(task) {
-    const mockups = [
-      ...(task.detail.mockups || []),
-      {
-        id: `${task.id}-mockup-${Date.now()}`,
-        label: t('scale.etsy.actions.addedMockup'),
-        url: 'https://example.test/mockup.jpg',
-      },
-    ]
-    updateMockups(task, mockups)
-  }
-
-  function handleDeleteMockup(task, url) {
-    const mockups = (task.detail.mockups || []).filter((mockup) => mockup.url !== url)
-    const mutation = isEtsyTab ? updateEtsyMockupsMutation : updateMockupsMutation
-
-    mutation.mutate(
-      { taskId: task.id, mockups },
-      {
-        onSuccess: () => {
-          enqueueSnackbar(t('scale.messages.deleteMockupSuccess'), {
-            variant: SNACKBAR_VARIANTS.SUCCESS,
-          })
+        onError: (error) => {
+          enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
         },
       },
     )
+  }
+
+  async function handleDownloadAsset(assetId, filename) {
+    if (!assetId) return
+    try {
+      const blob = await downloadAssetMutation.mutateAsync(assetId)
+      const href = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = href
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(href)
+    } catch (error) {
+      enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
+    }
   }
 
   function renderDetailPanel(task) {
@@ -751,9 +764,13 @@ export default function ScalePage() {
         getNoteValue={getNoteValue}
         onNoteChange={handleNoteChange}
         onSaveNote={handleSaveNote}
-        onUploadMockup={handleUploadMockup}
-        onAddMockup={handleAddMockup}
-        onDeleteMockup={handleDeleteMockup}
+        onUploadOutput={handleUploadOutput}
+        onDownloadAsset={handleDownloadAsset}
+        uploadingSlotId={
+          uploadOutputMutation.isPending && uploadOutputMutation.variables?.taskId === task.id
+            ? uploadOutputMutation.variables.fileCheckId
+            : null
+        }
         t={t}
       />
     )
@@ -769,19 +786,18 @@ export default function ScalePage() {
             </Typography>
             <Typography variant="caption" className="text-xs text-ink-muted">
               {t('scale.lastUpdated', {
-                time: data?.lastUpdatedAt || (isEtsyTab ? '10:46' : '09:12'),
+                time: activeQuery.dataUpdatedAt
+                  ? new Intl.DateTimeFormat('en-GB', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                    }).format(activeQuery.dataUpdatedAt)
+                  : '--:--',
               })}
             </Typography>
           </div>
 
-          <Button
-            variant="outlined"
-            startIcon={<CalendarMonthOutlinedIcon fontSize="small" />}
-            endIcon={<KeyboardArrowDownIcon fontSize="small" />}
-            className="h-[38px] rounded-lg border-border bg-surface px-[14px] text-[13px] font-normal text-ink-secondary"
-          >
-            {dateRangeLabel}
-          </Button>
+          <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
         </div>
 
         <div className="flex items-center gap-2">
@@ -794,7 +810,7 @@ export default function ScalePage() {
                 key={tab.value}
                 type="button"
                 onClick={() => handleSubTabChange(tab.value)}
-                className={`h-9 rounded-lg border px-[14px] text-[13px] font-semibold transition ${
+                className={`h-9 rounded-lg border px-[14px] text-[13px] font-semibold transition cursor-pointer ${
                   etsyActive
                     ? 'border-border bg-ink text-white'
                     : active
@@ -817,8 +833,9 @@ export default function ScalePage() {
             <button
               key={tab.value}
               type="button"
+              disabled={tab.disabled}
               onClick={() => handleStatusTabChange(tab.value)}
-              className={`flex h-9 items-center gap-2 rounded-lg border px-[14px] text-[13px] font-semibold transition ${
+              className={`flex h-9 items-center gap-2 rounded-lg border px-[14px] text-[13px] font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
                 active && isEtsyTab
                   ? 'border-danger bg-danger text-white'
                   : active
@@ -843,8 +860,8 @@ export default function ScalePage() {
         })}
       </div>
 
-      <div className="flex h-9 items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <TextField
             size="small"
             value={searchInput}
@@ -872,13 +889,7 @@ export default function ScalePage() {
               ariaLabel={filter.placeholder}
               placeholder={filter.placeholder}
               options={filter.options}
-              widthClass={
-                filter.key === 'orderStatus'
-                  ? 'w-[140px]'
-                  : filter.key === 'qcByCs'
-                    ? 'w-32'
-                    : 'w-[120px]'
-              }
+              widthClass={filter.key === 'qcBy' ? 'w-32' : 'w-[120px]'}
             />
           ))}
           <Tooltip title={t('scale.actions.refresh')}>
@@ -892,17 +903,15 @@ export default function ScalePage() {
           </Tooltip>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <span className="text-[13px] text-ink-muted">
-            {t(isEtsyTab ? 'scale.etsy.pagination.total' : 'scale.pagination.total', { total })}
-          </span>
-          <ScalePagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={(nextPage) => resetPageAndExpand(nextPage)}
-            t={t}
-          />
-        </div>
+        <ScalePagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          disabled={activeQuery.isLoading}
+          onPageChange={(nextPage) => resetPageAndExpand(nextPage)}
+          onPageSizeChange={handlePageSizeChange}
+          t={t}
+        />
       </div>
 
       <section className="overflow-hidden rounded-[10px] border border-border bg-surface">
@@ -920,6 +929,10 @@ export default function ScalePage() {
 
             {activeQuery.isLoading ? (
               <LoadingRows />
+            ) : activeQuery.isError ? (
+              <div className="flex h-48 items-center justify-center text-sm text-danger">
+                {activeQuery.error?.message}
+              </div>
             ) : tasks.length === 0 ? (
               <div className="flex h-48 items-center justify-center text-sm text-ink-muted">
                 {t('scale.empty.noTasks')}
@@ -927,7 +940,7 @@ export default function ScalePage() {
             ) : (
               tasks.map((task) => {
                 const expanded = expandedTaskId === task.id
-                const csOptions = options.csUsers || []
+                const scaleOptions = options.scaleUsers || []
 
                 return (
                   <Fragment key={task.id}>
@@ -1006,12 +1019,21 @@ export default function ScalePage() {
                       <div className="px-4">
                         <FormControl size="small" className={isEtsyTab ? 'w-[120px]' : 'w-full'}>
                           <Select
-                            value={task.csBy}
-                            onChange={(event) => handleAssignCs(task.id, event.target.value)}
+                            value={task.scaleBy}
+                            displayEmpty
+                            disabled={
+                              assigneesQuery.isLoading ||
+                              (assignScaleMutation.isPending &&
+                                assignScaleMutation.variables?.taskId === task.id)
+                            }
+                            onChange={(event) => handleAssignScale(task.id, event.target.value)}
                             className={`${isEtsyTab ? 'h-[30px] rounded' : 'h-8 rounded-lg'} bg-surface text-sm`}
                             inputProps={{ 'aria-label': t('scale.table.columns.assignCs') }}
                           >
-                            {csOptions.map((option) => (
+                            <MenuItem disabled value="">
+                              {t('scale.values.csStatus.UNASSIGNED')}
+                            </MenuItem>
+                            {scaleOptions.map((option) => (
                               <MenuItem key={option.id} value={option.id}>
                                 {option.name}
                               </MenuItem>
@@ -1022,15 +1044,13 @@ export default function ScalePage() {
                       <div className="px-4">
                         <Badge
                           className={
-                            csStatusBadgeClasses[task.csStatus] ||
+                            csStatusBadgeClasses[task.assignmentStatus] ||
                             'bg-neutral-bg text-ink-secondary'
                           }
                         >
-                          {isEtsyTab
-                            ? task.csStatus
-                            : task.csStatus === CS_STATUSES.UNASSIGNED
-                              ? t(getCsStatusLabelKey(task.csStatus))
-                              : getCsName(options.csUsers, task.csBy)}
+                          {task.assignmentStatus === CS_STATUSES.UNASSIGNED
+                            ? t(getCsStatusLabelKey(task.assignmentStatus))
+                            : task.scaleByName}
                         </Badge>
                       </div>
                     </div>

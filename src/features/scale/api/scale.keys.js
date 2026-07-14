@@ -1,5 +1,7 @@
 export const scaleKeys = {
   all: ['scale'],
-  groupTasks: (query = {}) => [...scaleKeys.all, 'group-tasks', query],
-  etsyTasks: (query = {}) => [...scaleKeys.all, 'etsy-tasks', query],
+  tasks: (query = {}) => [...scaleKeys.all, 'tasks', query],
+  summary: (query = {}) => [...scaleKeys.all, 'summary', query],
+  assignees: (query = {}) => [...scaleKeys.all, 'assignees', query],
+  shops: (query = {}) => [...scaleKeys.all, 'shops', query],
 }
