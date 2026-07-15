@@ -28,6 +28,7 @@ export function resolveCurrentUser(response) {
       account: data.account ?? null,
       profile: data.profile ?? null,
       roles: Array.isArray(data.roles) ? data.roles : [],
+      permissions: Array.isArray(data.permissions) ? data.permissions : [],
       scopes: Array.isArray(data.scopes) ? data.scopes : [],
     }
   }
