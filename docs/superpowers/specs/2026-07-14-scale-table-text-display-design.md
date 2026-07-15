@@ -16,6 +16,7 @@ Improve text display in the Scale table without changing API contracts or row be
 - The table wrapper owns the column tracks. Header, loading rows, and data rows use CSS subgrid so every value starts and ends on the exact same tracks as its header.
 - Expanded detail panels span the complete parent grid and do not participate in column sizing.
 - Group ID, Group Type, and Assignment status are not displayed as table columns. Scale By remains available as the assignment control.
+- The expand-control track uses its natural width; the remaining eight data columns share the full available table width evenly.
 - The behavior applies consistently to Amazon and Etsy Scale tabs.
 
 ## Approach
