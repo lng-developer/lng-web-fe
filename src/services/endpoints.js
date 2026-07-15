@@ -46,6 +46,32 @@ export const ENDPOINTS = {
     LIST: '/api/shops',
     DETAIL: (shopId) => `/api/shops/${shopId}`,
   },
+  PRODUCTION: {
+    TASKS: '/api/production/tasks',
+    SUMMARY: '/api/production/tasks/summary',
+    TASK_BY_ORDER_ITEM: (orderItemId) => `/api/production/order-items/${orderItemId}/task`,
+    SCALE_ASSIGNEES: '/api/production/tasks/scale-assignees',
+    ASSIGN: (taskId) => `/api/production/tasks/${taskId}/assign`,
+    CLAIM: (taskId) => `/api/production/tasks/${taskId}/claim`,
+    BULK_ASSIGN: '/api/production/tasks/bulk-assign',
+    DESIGN_NOTE: (taskId) => `/api/production/tasks/${taskId}/design-note`,
+    ASSIGN_CS: (taskId) => `/api/production/tasks/${taskId}/assign-cs`,
+    CS_NOTE: (taskId) => `/api/production/tasks/${taskId}/cs-note`,
+    CS_STATUS: (taskId) => `/api/production/tasks/${taskId}/cs-status`,
+    SCALED_OUTPUT: (taskId, fileCheckId) =>
+      `/api/production/tasks/${taskId}/file-checks/${fileCheckId}/scaled-output`,
+    SCALED_OUTPUT_FILE: (taskId, fileCheckId) =>
+      `/api/production/tasks/${taskId}/file-checks/${fileCheckId}/scaled-output-file`,
+    QC: (taskId) => `/api/production/tasks/${taskId}/qc`,
+    BULK_PUSH_VENDOR: '/api/production/tasks/bulk-push-vendor',
+    QC_EXPORT: '/api/production/tasks/qc/export',
+    SENT_TO_VENDOR: (taskId) => `/api/production/tasks/${taskId}/sent-to-vendor`,
+    RECHECK_ORDER_ITEM: (orderItemId) => `/api/production/order-items/${orderItemId}/recheck`,
+    RECHECK_PSD_BLOCKED: '/api/production/tasks/recheck-psd-blocked',
+  },
+  VENDOR_SUBMISSIONS: {
+    FROM_PRODUCTION_TASK: (taskId) => `/api/vendor-submissions/from-production-tasks/${taskId}`,
+    RECHECK_READY: '/api/vendor-submissions/recheck-ready-production-tasks',
   CATALOG: {
     PRODUCT_TYPE_GROUPS: '/api/catalog/product-type-groups',
     INTERNAL_TEMPLATES: '/api/catalog/internal-templates',
