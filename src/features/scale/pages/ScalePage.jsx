@@ -27,9 +27,9 @@ import DateRangePicker from '@/components/form/DateRangePicker'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { scaleKeys } from '@/features/scale/api/scale.keys'
 import {
-  useAssignScaleTaskMutation,
+  useAssignCsTaskMutation,
   useDownloadScaleAssetMutation,
-  useUpdateScaleTaskNoteMutation,
+  useUpdateScaleTaskCsNoteMutation,
   useUploadScaleOutputMutation,
 } from '@/features/scale/api/scale.mutations'
 import {
@@ -48,14 +48,20 @@ import {
   SCALE_SUB_TABS,
   SCALE_TABLE_COLUMNS,
 } from '@/features/scale/constants/scaleConstants'
-import { copyDisplayText, truncateDisplayText } from '@/features/scale/utils/scaleDisplay'
+import {
+  copyDisplayText,
+  getScaleUploadTarget,
+  isScaleSlotUploadDisabled,
+  toggleExpandedTaskIds,
+  truncateDisplayText,
+} from '@/features/scale/utils/scaleDisplay'
 import { getPaginationRange } from '@/features/scale/utils/scalePagination'
 import { useDebounce } from '@/hooks/useDebounce'
 
 const tableGridClass = 'grid-cols-[auto_repeat(8,minmax(0,1fr))]'
 
 const SHOP_NAME_MAX_LENGTH = 16
-const ORDER_ID_MAX_LENGTH = 18
+const ORDER_ID_MAX_LENGTH = 19
 
 const groupStatusTabs = [
   { value: SCALE_STATUS_TABS.ALL, labelKey: 'scale.statusTabs.all' },
@@ -174,7 +180,7 @@ function getEtsyFilters(options, t) {
 function Badge({ children, className = '', truncate = true, tooltip = '' }) {
   const badge = (
     <span
-      className={`inline-flex h-6 min-w-0 max-w-full items-center justify-center overflow-hidden rounded-full px-2.5 text-xs font-semibold ${className}`}
+      className={`inline-flex h-6 min-w-0 max-w-full items-center justify-center overflow-hidden rounded-full px-2 text-xs font-semibold ${className}`}
     >
       <span className={truncate ? 'block min-w-0 truncate' : 'whitespace-nowrap'}>{children}</span>
     </span>
@@ -184,7 +190,7 @@ function Badge({ children, className = '', truncate = true, tooltip = '' }) {
 
   return (
     <Tooltip title={tooltip}>
-      <span className="inline-flex min-w-0 max-w-full">{badge}</span>
+      <span className="inline-flex min-w-0 max-w-full p-2">{badge}</span>
     </Tooltip>
   )
 }
@@ -338,6 +344,9 @@ function ScaleDetailPanel({
   t,
 }) {
   const { detail } = task
+  const uploadTarget = getScaleUploadTarget(detail)
+  const isUploading = uploadingSlotId === uploadTarget.fileCheckId
+  const uploadDisabled = isScaleSlotUploadDisabled(uploadTarget, isUploading)
 
   return (
     <div className="col-span-full border-b border-border/60 bg-surface-subtle px-5 py-6">
@@ -431,9 +440,9 @@ function ScaleDetailPanel({
           <div className="flex w-full flex-col gap-1">
             <EtsyNoteBox
               label={t('scale.etsy.notes.cs')}
-              value={getNoteValue(task, 'design')}
-              onChange={(value) => onNoteChange(task.id, 'design', value)}
-              onBlur={() => onSaveNote(task, 'design')}
+              value={getNoteValue(task, 'cs')}
+              onChange={(value) => onNoteChange(task.id, 'cs', value)}
+              onBlur={() => onSaveNote(task, 'cs')}
               danger
             />
             <EtsyNoteBox label={t('scale.etsy.notes.qc')} value={getNoteValue(task, 'qc')} />
@@ -442,13 +451,35 @@ function ScaleDetailPanel({
 
         <section className="flex w-[280px] flex-col items-start gap-3">
           <DetailHeading>{t('scale.detail.action')}</DetailHeading>
-          <div className="flex flex-wrap gap-3">
-            {(detail.mockups || []).map((mockup) => {
-              const isUploading = uploadingSlotId === mockup.fileCheckId
-              const uploadDisabled =
-                !detail.canScale || !mockup.fileCheckId || !mockup.inputAssetId || isUploading
-
-              return (
+          <div className="flex w-full flex-col gap-3">
+            <Tooltip
+              title={
+                uploadDisabled && !isUploading ? t('scale.messages.slotUploadUnavailable') : ''
+              }
+            >
+              <span className="w-28">
+                <Button
+                  component="label"
+                  variant="outlined"
+                  size="small"
+                  disabled={uploadDisabled}
+                  startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
+                  className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
+                >
+                  {isUploading ? t('scale.loading.uploading') : t('scale.etsy.actions.upload')}
+                  <input
+                    hidden
+                    type="file"
+                    onChange={(event) => {
+                      onUploadOutput(task, uploadTarget, event.target.files?.[0])
+                      event.target.value = ''
+                    }}
+                  />
+                </Button>
+              </span>
+            </Tooltip>
+            <div className="flex flex-wrap gap-3">
+              {(detail.mockups || []).map((mockup) => (
                 <div key={mockup.id} className="flex w-28 flex-col gap-1.5">
                   <Tooltip title={mockup.label}>
                     <span className="truncate text-[10px] text-ink-muted">{mockup.label}</span>
@@ -467,43 +498,12 @@ function ScaleDetailPanel({
                       <ImageOutlinedIcon className="!text-[28px]" />
                     )}
                   </button>
-                  <Tooltip
-                    title={
-                      uploadDisabled && !isUploading
-                        ? t('scale.messages.slotUploadUnavailable')
-                        : ''
-                    }
-                  >
-                    <span>
-                      <Button
-                        component="label"
-                        variant="outlined"
-                        size="small"
-                        disabled={uploadDisabled}
-                        startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
-                        className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
-                      >
-                        {isUploading
-                          ? t('scale.loading.uploading')
-                          : t('scale.etsy.actions.upload')}
-                        <input
-                          hidden
-                          type="file"
-                          accept=".png,.jpg,.jpeg,.pdf,.zip,.psd"
-                          onChange={(event) => {
-                            onUploadOutput(task, mockup, event.target.files?.[0])
-                            event.target.value = ''
-                          }}
-                        />
-                      </Button>
-                    </span>
-                  </Tooltip>
                 </div>
-              )
-            })}
-            {detail.mockups?.length ? null : (
-              <span className="text-xs text-ink-muted">{t('scale.messages.noScaleSlots')}</span>
-            )}
+              ))}
+              {detail.mockups?.length ? null : (
+                <span className="text-xs text-ink-muted">{t('scale.messages.noScaleSlots')}</span>
+              )}
+            </div>
           </div>
         </section>
       </div>
@@ -564,7 +564,7 @@ function OrderIdBadge({ value, onCopy, t }) {
         type="button"
         aria-label={t('scale.actions.copyOrderId', { orderId: fullOrderId })}
         onClick={() => onCopy(fullOrderId)}
-        className="inline-flex min-w-0 max-w-full cursor-copy rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="inline-flex min-w-0 max-w-full border-0 bg-transparent cursor-copy rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <Badge
           truncate={false}
@@ -633,7 +633,7 @@ export default function ScalePage() {
   const debouncedSearch = useDebounce(searchInput, 300)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(SCALE_PAGE_SIZE)
-  const [expandedTaskId, setExpandedTaskId] = useState(null)
+  const [expandedTaskIds, setExpandedTaskIds] = useState([])
   const [noteDrafts, setNoteDrafts] = useState({})
 
   const isEtsyTab = activeSubTab === SCALE_SUB_TABS.ETSY_TASKS
@@ -658,8 +658,8 @@ export default function ScalePage() {
   const assigneesQuery = useScaleAssigneesQuery({ limit: 100 })
   const shopsQuery = useScaleShopsQuery({ page: 1, limit: 100 })
 
-  const assignScaleMutation = useAssignScaleTaskMutation()
-  const updateNoteMutation = useUpdateScaleTaskNoteMutation()
+  const assignCsMutation = useAssignCsTaskMutation()
+  const updateCsNoteMutation = useUpdateScaleTaskCsNoteMutation()
   const uploadOutputMutation = useUploadScaleOutputMutation()
   const downloadAssetMutation = useDownloadScaleAssetMutation()
 
@@ -690,7 +690,7 @@ export default function ScalePage() {
 
   function resetPageAndExpand(nextPage = 1) {
     setPage(nextPage)
-    setExpandedTaskId(null)
+    setExpandedTaskIds([])
   }
 
   useEffect(() => {
@@ -707,7 +707,7 @@ export default function ScalePage() {
     setPage(1)
     setGroupFilters(groupFiltersInitialState)
     setEtsyFilters(etsyFiltersInitialState)
-    setExpandedTaskId(null)
+    setExpandedTaskIds([])
   }
 
   function updateFilter(key, value) {
@@ -734,9 +734,9 @@ export default function ScalePage() {
     resetPageAndExpand()
   }
 
-  function handleAssignScale(taskId, assignedDesignUserId) {
-    assignScaleMutation.mutate(
-      { taskId, assignedDesignUserId },
+  function handleAssignCs(taskId, csAssigneeId) {
+    assignCsMutation.mutate(
+      { taskId, csAssigneeId },
       {
         onSuccess: () => {
           enqueueSnackbar(t('scale.messages.assignSuccess'), {
@@ -778,9 +778,9 @@ export default function ScalePage() {
     return task.detail.notes?.[noteType] || ''
   }
 
-  function handleSaveNote(task, noteType = 'design') {
-    updateNoteMutation.mutate(
-      { taskId: task.id, designNote: getNoteValue(task, noteType) },
+  function handleSaveNote(task, noteType = 'cs') {
+    updateCsNoteMutation.mutate(
+      { taskId: task.id, csNote: getNoteValue(task, noteType) },
       {
         onSuccess: () => {
           enqueueSnackbar(t('scale.messages.noteSuccess'), { variant: SNACKBAR_VARIANTS.SUCCESS })
@@ -1011,8 +1011,8 @@ export default function ScalePage() {
               </div>
             ) : (
               tasks.map((task) => {
-                const expanded = expandedTaskId === task.id
-                const scaleOptions = options.scaleUsers || []
+                const expanded = expandedTaskIds.includes(task.id)
+                const csOptions = assigneesQuery.data || []
 
                 return (
                   <Fragment key={task.id}>
@@ -1027,7 +1027,9 @@ export default function ScalePage() {
                             expanded ? t('scale.actions.collapse') : t('scale.actions.expand')
                           }
                           size="small"
-                          onClick={() => setExpandedTaskId(expanded ? null : task.id)}
+                          onClick={() =>
+                            setExpandedTaskIds((current) => toggleExpandedTaskIds(current, task.id))
+                          }
                           className={`${expanded && isEtsyTab ? 'text-danger' : 'text-ink-secondary'} h-7 w-7`}
                         >
                           {expanded ? (
@@ -1082,21 +1084,19 @@ export default function ScalePage() {
                       <div className="min-w-0 overflow-hidden px-4">
                         <FormControl size="small" className="w-full">
                           <Select
-                            value={task.scaleBy}
+                            value={task.csAssigneeId}
                             displayEmpty
                             disabled={
                               assigneesQuery.isLoading ||
-                              (assignScaleMutation.isPending &&
-                                assignScaleMutation.variables?.taskId === task.id)
+                              (assignCsMutation.isPending &&
+                                assignCsMutation.variables?.taskId === task.id)
                             }
-                            onChange={(event) => handleAssignScale(task.id, event.target.value)}
+                            onChange={(event) => handleAssignCs(task.id, event.target.value)}
                             className={`${isEtsyTab ? 'h-[30px] rounded' : 'h-8 rounded-lg'} bg-surface text-sm`}
                             inputProps={{ 'aria-label': t('scale.table.columns.assignCs') }}
                           >
-                            <MenuItem disabled value="">
-                              {t('scale.values.csStatus.UNASSIGNED')}
-                            </MenuItem>
-                            {scaleOptions.map((option) => (
+                            <MenuItem value="">{t('scale.values.csStatus.UNASSIGNED')}</MenuItem>
+                            {csOptions.map((option) => (
                               <MenuItem key={option.id} value={option.id}>
                                 {option.name}
                               </MenuItem>

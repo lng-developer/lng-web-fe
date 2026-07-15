@@ -77,7 +77,7 @@ function getDisplayScaleStatus(task = {}) {
 
 function statusQuery(statusTab) {
   if (statusTab === SCALE_STATUS_TABS.CS_UNASSIGNED) {
-    return { designAssignmentStatus: 'UNASSIGNED' }
+    return { csUnassigned: true }
   }
   if (statusTab === SCALE_STATUS_TABS.NEED_SCALE) return { scaleStatus: 'NEED_SCALE' }
   if (statusTab === SCALE_STATUS_TABS.PENDING) {
@@ -138,8 +138,22 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
   const scaleSlots = scaleUse.scaleSlots || []
   const customerPhoto = customization.imageAssets?.[0]
   const scaleBy = task.assignedDesignUserId || ''
-  const scaleByName = task.scaleByUser?.fullName || task.scaleByUser?.employeeCode || scaleBy
-  const qcBy = task.qcByUser?.fullName || task.qcByUser?.employeeCode || task.qcBy || '-'
+  const scaleByName =
+    task.assignedDesigner?.fullName ||
+    task.assignedDesigner?.employeeCode ||
+    task.scaleByUser?.fullName ||
+    task.scaleByUser?.employeeCode ||
+    scaleBy
+  const qcBy =
+    task.qcUser?.fullName ||
+    task.qcUser?.employeeCode ||
+    task.qcByUser?.fullName ||
+    task.qcByUser?.employeeCode ||
+    task.qcBy ||
+    '-'
+  const csAssigneeId = task.csAssigneeId || ''
+  const csAssigneeName =
+    task.csAssignee?.fullName || task.csAssignee?.employeeCode || csAssigneeId || '-'
   const shopId = task.shopId || listing.shopId || null
   const seller = task.seller?.name || task.seller?.employeeCode || '-'
   const orderOwner =
@@ -172,6 +186,9 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
     qcById: task.qcBy || '',
     scaleBy,
     scaleByName: scaleByName || '-',
+    csAssigneeId,
+    csAssigneeName,
+    csStatus: task.csStatus || CS_STATUSES.UNASSIGNED,
     assignmentStatus: scaleBy ? CS_STATUSES.ASSIGNED : CS_STATUSES.UNASSIGNED,
     channel: task.salesChannelCode || listing.salesChannelCode || null,
     marketplaceCode: task.marketplaceCode || listing.marketplaceCode || null,
@@ -199,6 +216,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
       },
       notes: {
         design: task.designNote || '',
+        cs: task.csNote || '',
         qc: '',
       },
       mockups: scaleSlots.map((slot) => ({
@@ -234,7 +252,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
 export function mapScaleSummary(summary = {}) {
   return {
     [SCALE_STATUS_TABS.ALL]: summary.total || 0,
-    [SCALE_STATUS_TABS.CS_UNASSIGNED]: summary.byAssignmentStatus?.UNASSIGNED || 0,
+    [SCALE_STATUS_TABS.CS_UNASSIGNED]: summary.csUnassigned ?? summary.byCsStatus?.UNASSIGNED ?? 0,
     [SCALE_STATUS_TABS.NEED_SCALE]: summary.needScale || 0,
     [SCALE_STATUS_TABS.PENDING]: summary.byAssignmentStatus?.ASSIGNED || 0,
     [SCALE_STATUS_TABS.COMPLETED]: summary.byScaleStatus?.SCALED || 0,
@@ -272,7 +290,12 @@ export function mapProductionListResponse(response = {}, shops = []) {
           task.qcBy,
           {
             id: task.qcBy,
-            name: task.qcByUser?.fullName || task.qcByUser?.employeeCode || task.qcBy,
+            name:
+              task.qcUser?.fullName ||
+              task.qcUser?.employeeCode ||
+              task.qcByUser?.fullName ||
+              task.qcByUser?.employeeCode ||
+              task.qcBy,
           },
         ]),
     ).values(),

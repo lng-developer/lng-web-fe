@@ -4,6 +4,20 @@ export function truncateDisplayText(value, maxLength) {
   return `${text.slice(0, maxLength)}...`
 }
 
+export function isScaleSlotUploadDisabled(slot = {}, isUploading = false) {
+  return !slot.fileCheckId || isUploading
+}
+
+export function getScaleUploadTarget(detail = {}) {
+  return { fileCheckId: detail.psdTemplate?.fileCheckId || null }
+}
+
+export function toggleExpandedTaskIds(expandedTaskIds = [], taskId) {
+  return expandedTaskIds.includes(taskId)
+    ? expandedTaskIds.filter((expandedTaskId) => expandedTaskId !== taskId)
+    : [...expandedTaskIds, taskId]
+}
+
 export async function copyDisplayText(value, options = {}) {
   const text = value === null || value === undefined ? '' : String(value)
   const clipboard = Object.hasOwn(options, 'clipboard')

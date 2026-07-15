@@ -18,6 +18,52 @@ test('truncateDisplayText handles empty and non-string values', () => {
   assert.equal(scaleDisplay.truncateDisplayText(12345, 16), '12345')
 })
 
+test('isScaleSlotUploadDisabled allows replacing an existing scaled output', () => {
+  assert.equal(typeof scaleDisplay.isScaleSlotUploadDisabled, 'function')
+  assert.equal(
+    scaleDisplay.isScaleSlotUploadDisabled(
+      {
+        fileCheckId: 'check-1',
+        inputAssetId: 'input-1',
+        outputAssetId: 'output-1',
+      },
+      false,
+    ),
+    false,
+  )
+})
+
+test('isScaleSlotUploadDisabled only blocks missing file checks and active uploads', () => {
+  assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ inputAssetId: 'input-1' }, false), true)
+  assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ fileCheckId: 'check-1' }, false), false)
+  assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ fileCheckId: 'check-1' }, true), true)
+})
+
+test('getScaleUploadTarget uses the PSD file check independently from scale slots', () => {
+  assert.deepEqual(
+    scaleDisplay.getScaleUploadTarget({
+      psdTemplate: { fileCheckId: 'psd-check-1' },
+      mockups: [],
+    }),
+    { fileCheckId: 'psd-check-1' },
+  )
+})
+
+test('getScaleUploadTarget returns an empty target when the API omits the PSD file check', () => {
+  assert.deepEqual(scaleDisplay.getScaleUploadTarget({ psdTemplate: {}, mockups: [] }), {
+    fileCheckId: null,
+  })
+})
+
+test('toggleExpandedTaskIds opens multiple rows independently', () => {
+  assert.deepEqual(scaleDisplay.toggleExpandedTaskIds([], 'task-1'), ['task-1'])
+  assert.deepEqual(scaleDisplay.toggleExpandedTaskIds(['task-1'], 'task-2'), ['task-1', 'task-2'])
+})
+
+test('toggleExpandedTaskIds only closes the selected row', () => {
+  assert.deepEqual(scaleDisplay.toggleExpandedTaskIds(['task-1', 'task-2'], 'task-1'), ['task-2'])
+})
+
 test('copyDisplayText uses the Clipboard API with the complete source value', async () => {
   assert.equal(typeof scaleDisplay.copyDisplayText, 'function')
   let copiedValue = null

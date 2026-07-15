@@ -24,6 +24,16 @@ export function useAssignScaleTaskMutation() {
   })
 }
 
+export function useAssignCsTaskMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ taskId, csAssigneeId }) =>
+      patch(ENDPOINTS.SCALE.ASSIGN_CS(taskId), { csAssigneeId: csAssigneeId || null }),
+    onSuccess: () => invalidateScale(queryClient),
+  })
+}
+
 export function useClaimScaleTaskMutation() {
   const queryClient = useQueryClient()
 
@@ -43,6 +53,15 @@ export function useUpdateScaleTaskNoteMutation() {
   })
 }
 
+export function useUpdateScaleTaskCsNoteMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ taskId, csNote }) => patch(ENDPOINTS.SCALE.CS_NOTE(taskId), { csNote }),
+    onSuccess: () => invalidateScale(queryClient),
+  })
+}
+
 export function useUploadScaleOutputMutation() {
   const queryClient = useQueryClient()
 
@@ -50,15 +69,9 @@ export function useUploadScaleOutputMutation() {
     mutationFn: async ({ taskId, fileCheckId, file }) => {
       const formData = new FormData()
       formData.append('file', file)
-      const asset = await apiClient
-        .post(ENDPOINTS.MEDIA.ASSETS, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+      return apiClient
+        .post(ENDPOINTS.SCALE.SCALED_OUTPUT_FILE(taskId, fileCheckId), formData)
         .then(unwrapApiData)
-
-      return patch(ENDPOINTS.SCALE.SCALED_OUTPUT(taskId, fileCheckId), {
-        mediaAssetId: asset.id,
-      })
     },
     onSuccess: () => invalidateScale(queryClient),
   })

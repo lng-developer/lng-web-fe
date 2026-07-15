@@ -40,3 +40,7 @@ test('Scale table excludes group and assignment status columns', () => {
   )
   assert.doesNotMatch(scalePageSource, /task\.(?:groupId|groupType|assignmentStatus)/)
 })
+
+test('Scale table displays up to nineteen Order ID characters', () => {
+  assert.match(scalePageSource, /const ORDER_ID_MAX_LENGTH = 19/)
+})

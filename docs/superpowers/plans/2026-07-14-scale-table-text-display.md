@@ -60,7 +60,7 @@
 
 - [ ] Write failing tests for Clipboard API success and document fallback behavior.
 - [ ] Implement a copy helper that always copies the complete source value.
-- [ ] Display at most 18 Order ID characters followed by `...` and preserve the complete value in the tooltip.
+- [ ] Display at most 19 Order ID characters followed by `...` and preserve the complete value in the tooltip.
 - [ ] Make the badge keyboard-accessible and show bilingual success/error snackbars.
 
 ### Task 5: Align Body Cells With Header Tracks

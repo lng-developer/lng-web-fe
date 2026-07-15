@@ -6,6 +6,7 @@ import * as scaleApi from './scaleApi.js'
 const {
   buildProductionSummaryQuery,
   buildProductionTaskQuery,
+  mapProductionListResponse,
   mapProductionTask,
   mapScaleSummary,
 } = scaleApi
@@ -45,10 +46,12 @@ test('buildProductionTaskQuery maps every server-supported status tab', () => {
   })
   assert.equal(buildProductionTaskQuery({ statusTab: 'completed' }).scaleStatus, 'SCALED')
   assert.equal(buildProductionTaskQuery({ statusTab: 'qcRejected' }).qcStatus, 'REJECTED')
-  assert.equal(
-    buildProductionTaskQuery({ statusTab: 'csUnassigned' }).designAssignmentStatus,
-    'UNASSIGNED',
-  )
+  assert.deepEqual(buildProductionTaskQuery({ statusTab: 'csUnassigned' }), {
+    csUnassigned: true,
+    page: 1,
+    limit: 10,
+    sort: '-updatedAt',
+  })
 })
 
 test('buildProductionSummaryQuery keeps shared filters but removes list status and pagination', () => {
@@ -130,9 +133,13 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
       scaleStatus: 'SCALED',
       qcStatus: 'PENDING',
       assignedDesignUserId: 'designer-1',
-      scaleByUser: { id: 'designer-1', fullName: 'Scale User' },
+      assignedDesigner: { id: 'designer-1', fullName: 'Scale User' },
       qcBy: 'qc-1',
-      qcByUser: { id: 'qc-1', fullName: 'QC User' },
+      qcUser: { id: 'qc-1', fullName: 'QC User' },
+      csAssigneeId: 'cs-1',
+      csAssignee: { id: 'cs-1', fullName: 'CS User' },
+      csStatus: 'ASSIGNED',
+      csNote: 'Confirm the shipping address',
       designNote: 'Keep artwork centered',
       scaleContext: {
         status: 'READY_TO_SCALE',
@@ -188,6 +195,9 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   assert.equal(result.scaleBy, 'designer-1')
   assert.equal(result.scaleByName, 'Scale User')
   assert.equal(result.qcBy, 'QC User')
+  assert.equal(result.csAssigneeId, 'cs-1')
+  assert.equal(result.csAssigneeName, 'CS User')
+  assert.equal(result.csStatus, 'ASSIGNED')
   assert.equal(result.detail.product.primaryCode, 'B0TEST')
   assert.equal(result.detail.product.secondaryCode, 'SKU-01')
   assert.equal(result.detail.product.psdStatus, 'READY')
@@ -207,6 +217,7 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   assert.equal(result.detail.canScale, true)
   assert.equal(result.detail.contextStatus, 'READY_TO_SCALE')
   assert.equal(result.detail.notes.design, 'Keep artwork centered')
+  assert.equal(result.detail.notes.cs, 'Confirm the shipping address')
 })
 
 test('mapProductionTask preserves blockers and missing requirements for blocked tasks', () => {
@@ -244,19 +255,35 @@ test('mapScaleSummary maps V2 status-group counters', () => {
     mapScaleSummary({
       total: 18,
       needScale: 7,
+      csUnassigned: 3,
       byAssignmentStatus: { UNASSIGNED: 5, ASSIGNED: 4, OUTPUT_UPLOADED: 9 },
+      byCsStatus: { UNASSIGNED: 3, ASSIGNED: 6 },
       byScaleStatus: { NEED_SCALE: 11, SCALED: 7 },
       byQcStatus: { NOT_READY: 8, PENDING: 6, REJECTED: 2, APPROVED: 2 },
     }),
     {
       all: 18,
-      csUnassigned: 5,
+      csUnassigned: 3,
       needScale: 7,
       pending: 4,
       completed: 7,
       qcRejected: 2,
     },
   )
+})
+
+test('mapProductionListResponse builds QC filter options from the current qcUser DTO', () => {
+  const result = mapProductionListResponse({
+    items: [
+      {
+        id: 'task-1',
+        qcBy: 'qc-1',
+        qcUser: { id: 'qc-1', fullName: 'QC User', employeeCode: 'QC01' },
+      },
+    ],
+  })
+
+  assert.deepEqual(result.options.qcUsers, [{ id: 'qc-1', name: 'QC User' }])
 })
 
 test('mapScaleAssignees maps dedicated assignee DTOs to select options', () => {

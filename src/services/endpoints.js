@@ -75,10 +75,12 @@ export const ENDPOINTS = {
     SUMMARY: '/api/production/tasks/summary',
     ASSIGNEES: '/api/production/tasks/scale-assignees',
     ASSIGN: (taskId) => `/api/production/tasks/${taskId}/assign`,
+    ASSIGN_CS: (taskId) => `/api/production/tasks/${taskId}/assign-cs`,
     CLAIM: (taskId) => `/api/production/tasks/${taskId}/claim`,
     DESIGN_NOTE: (taskId) => `/api/production/tasks/${taskId}/design-note`,
-    SCALED_OUTPUT: (taskId, fileCheckId) =>
-      `/api/production/tasks/${taskId}/file-checks/${fileCheckId}/scaled-output`,
+    CS_NOTE: (taskId) => `/api/production/tasks/${taskId}/cs-note`,
+    SCALED_OUTPUT_FILE: (taskId, fileCheckId) =>
+      `/api/production/tasks/${taskId}/file-checks/${fileCheckId}/scaled-output-file`,
     QC: (taskId) => `/api/production/tasks/${taskId}/qc`,
     SENT_TO_VENDOR: (taskId) => `/api/production/tasks/${taskId}/sent-to-vendor`,
   },
