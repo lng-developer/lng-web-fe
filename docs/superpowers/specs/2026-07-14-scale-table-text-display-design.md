@@ -6,7 +6,7 @@ Improve text display in the Scale table without changing API contracts or row be
 
 ## Decisions
 
-- Order ID displays at most 18 characters followed by `...`; its tooltip keeps the complete value.
+- Order ID displays at most 19 characters followed by `...`; its tooltip keeps the complete value.
 - Clicking or keyboard-activating the Order ID badge copies the complete ID and reports success or failure through bilingual snackbar feedback.
 - Shop names display at most 16 characters, followed by `...` when longer. A tooltip exposes the complete name.
 - QC By always renders as a badge with the complete name on one line. Its grid track uses content sizing to avoid clipping or wrapping.
