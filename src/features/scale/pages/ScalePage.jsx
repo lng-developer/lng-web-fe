@@ -39,7 +39,6 @@ import {
   useScaleTasksQuery,
 } from '@/features/scale/api/scale.queries'
 import {
-  CS_STATUSES,
   SCALE_ALL_FILTER,
   SCALE_CHANNELS,
   SCALE_PAGE_SIZE,
@@ -49,11 +48,14 @@ import {
   SCALE_SUB_TABS,
   SCALE_TABLE_COLUMNS,
 } from '@/features/scale/constants/scaleConstants'
+import { copyDisplayText, truncateDisplayText } from '@/features/scale/utils/scaleDisplay'
 import { getPaginationRange } from '@/features/scale/utils/scalePagination'
 import { useDebounce } from '@/hooks/useDebounce'
 
-const tableGridClass =
-  'grid-cols-[40px_130px_160px_130px_120px_130px_110px_145px_140px_120px_220px_191px]'
+const tableGridClass = 'grid-cols-[auto_repeat(8,minmax(0,1fr))]'
+
+const SHOP_NAME_MAX_LENGTH = 16
+const ORDER_ID_MAX_LENGTH = 18
 
 const groupStatusTabs = [
   { value: SCALE_STATUS_TABS.ALL, labelKey: 'scale.statusTabs.all' },
@@ -89,17 +91,6 @@ const statusBadgeClasses = {
   [SCALE_STATUSES.QC_REJECTED]: 'bg-danger-bg text-danger',
 }
 
-const csStatusBadgeClasses = {
-  [CS_STATUSES.UNASSIGNED]: 'bg-neutral-bg text-ink-secondary',
-  [CS_STATUSES.ASSIGNED]: 'bg-secondary-light text-secondary',
-  [CS_STATUSES.PENDING]: 'bg-warning-bg text-warning-strong',
-  [CS_STATUSES.COMPLETED]: 'bg-success-soft text-success-strong',
-  'In Review': 'bg-warning-bg text-warning-deep',
-  Assigned: 'bg-success-soft text-success-strong',
-  Done: 'bg-success-soft text-success-strong',
-  'No data': 'bg-neutral-bg text-ink-muted',
-}
-
 const pillClassByValue = {
   Standard: 'border border-border bg-surface text-ink-secondary',
   Express: 'border border-border bg-surface text-ink-secondary',
@@ -119,10 +110,6 @@ const pillClassByValue = {
 
 function getStatusLabelKey(status) {
   return `scale.values.scaleStatus.${status || 'unknown'}`
-}
-
-function getCsStatusLabelKey(status) {
-  return `scale.values.csStatus.${status || 'unknown'}`
 }
 
 function formatEnumValue(value) {
@@ -184,13 +171,35 @@ function getEtsyFilters(options, t) {
   ]
 }
 
-function Badge({ children, className = '' }) {
-  return (
+function Badge({ children, className = '', truncate = true, tooltip = '' }) {
+  const badge = (
     <span
-      className={`inline-flex h-6 max-w-full items-center justify-center rounded-full px-2.5 text-xs font-semibold ${className}`}
+      className={`inline-flex h-6 min-w-0 max-w-full items-center justify-center overflow-hidden rounded-full px-2.5 text-xs font-semibold ${className}`}
     >
-      <span className="truncate">{children}</span>
+      <span className={truncate ? 'block min-w-0 truncate' : 'whitespace-nowrap'}>{children}</span>
     </span>
+  )
+
+  if (!tooltip) return badge
+
+  return (
+    <Tooltip title={tooltip}>
+      <span className="inline-flex min-w-0 max-w-full">{badge}</span>
+    </Tooltip>
+  )
+}
+
+function OverflowText({ value, className = '' }) {
+  const text = value === null || value === undefined || value === '' ? '-' : String(value)
+
+  return (
+    <Tooltip title={text}>
+      <span
+        className={`block min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap ${className}`}
+      >
+        {text}
+      </span>
+    </Tooltip>
   )
 }
 
@@ -230,10 +239,10 @@ function LoadingRows() {
   return Array.from({ length: 5 }, (_, index) => (
     <div
       key={index}
-      className={`grid h-14 items-center border-b border-border px-4 ${tableGridClass}`}
+      className="col-span-full grid h-14 grid-cols-subgrid items-center border-b border-border px-4"
     >
       {SCALE_TABLE_COLUMNS.map((column) => (
-        <div key={column.id} className="px-2">
+        <div key={column.id} className="min-w-0 overflow-hidden px-2">
           <Skeleton variant="text" height={20} />
         </div>
       ))}
@@ -331,7 +340,7 @@ function ScaleDetailPanel({
   const { detail } = task
 
   return (
-    <div className="border-b border-border/60 bg-surface-subtle px-5 py-6">
+    <div className="col-span-full border-b border-border/60 bg-surface-subtle px-5 py-6">
       <div className="grid min-w-[1540px] grid-cols-[230px_390px_133px_220px_220px_280px] gap-6 py-3">
         <section className="flex w-[230px] flex-col items-start gap-2">
           <DetailHeading>{t('scale.detail.productInfo')}</DetailHeading>
@@ -504,16 +513,68 @@ function ScaleDetailPanel({
 
 function renderOrderDate(task, activeSubTab) {
   return (
-    <span
-      className={`truncate ${activeSubTab === SCALE_SUB_TABS.ETSY_TASKS ? 'text-ink-strong' : 'text-ink-secondary'}`}
-    >
-      {task.orderDate}
-    </span>
+    <OverflowText
+      value={task.orderDate}
+      className={
+        activeSubTab === SCALE_SUB_TABS.ETSY_TASKS ? 'text-ink-strong' : 'text-ink-secondary'
+      }
+    />
   )
 }
 
 function renderPill(value, fallbackClass = 'border border-border bg-surface text-ink-secondary') {
-  return <Badge className={pillClassByValue[value] || fallbackClass}>{value}</Badge>
+  return (
+    <Badge tooltip={String(value || '-')} className={pillClassByValue[value] || fallbackClass}>
+      {value}
+    </Badge>
+  )
+}
+
+function ShopName({ value, isEtsyTab }) {
+  const fullName = value === null || value === undefined ? '' : String(value)
+  const displayName = truncateDisplayText(fullName, SHOP_NAME_MAX_LENGTH)
+  const isTruncated = displayName !== fullName
+
+  return (
+    <Tooltip title={isTruncated ? fullName : ''} disableHoverListener={!isTruncated}>
+      <span className="block min-w-0">
+        {isEtsyTab ? (
+          <Badge
+            className={
+              pillClassByValue[fullName] || 'border border-border bg-surface text-ink-secondary'
+            }
+          >
+            {displayName}
+          </Badge>
+        ) : (
+          <span className="block truncate text-ink-secondary">{displayName}</span>
+        )}
+      </span>
+    </Tooltip>
+  )
+}
+
+function OrderIdBadge({ value, onCopy, t }) {
+  const fullOrderId = value === null || value === undefined ? '' : String(value)
+  const displayOrderId = truncateDisplayText(fullOrderId, ORDER_ID_MAX_LENGTH)
+
+  return (
+    <Tooltip title={fullOrderId}>
+      <button
+        type="button"
+        aria-label={t('scale.actions.copyOrderId', { orderId: fullOrderId })}
+        onClick={() => onCopy(fullOrderId)}
+        className="inline-flex min-w-0 max-w-full cursor-copy rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <Badge
+          truncate={false}
+          className="border border-danger bg-surface font-mono text-xs text-danger"
+        >
+          {displayOrderId}
+        </Badge>
+      </button>
+    </Tooltip>
+  )
 }
 
 function ScalePagination({ page, pageSize, total, disabled, onPageChange, onPageSizeChange, t }) {
@@ -687,6 +748,19 @@ export default function ScalePage() {
         },
       },
     )
+  }
+
+  async function handleCopyOrderId(orderId) {
+    try {
+      await copyDisplayText(orderId)
+      enqueueSnackbar(t('scale.messages.orderIdCopySuccess'), {
+        variant: SNACKBAR_VARIANTS.SUCCESS,
+      })
+    } catch {
+      enqueueSnackbar(t('scale.messages.orderIdCopyFailed'), {
+        variant: SNACKBAR_VARIANTS.ERROR,
+      })
+    }
   }
 
   function getNoteDraftKey(taskId, noteType) {
@@ -916,12 +990,10 @@ export default function ScalePage() {
 
       <section className="overflow-hidden rounded-[10px] border border-border bg-surface">
         <div className="overflow-x-auto">
-          <div className="min-w-[1636px]">
-            <div
-              className={`grid h-11 items-center border-b border-border bg-surface-subtle px-4 text-[11px] font-semibold uppercase text-ink-muted ${tableGridClass}`}
-            >
+          <div className={`grid w-full min-w-full ${tableGridClass}`}>
+            <div className="col-span-full grid h-11 grid-cols-subgrid items-center border-b border-border bg-surface-subtle px-4 text-[11px] font-semibold uppercase text-ink-muted">
               {SCALE_TABLE_COLUMNS.map((column) => (
-                <div key={column.id} className="truncate px-4">
+                <div key={column.id} className="min-w-0 truncate overflow-hidden px-4">
                   {column.labelKey ? t(column.labelKey) : '^'}
                 </div>
               ))}
@@ -930,11 +1002,11 @@ export default function ScalePage() {
             {activeQuery.isLoading ? (
               <LoadingRows />
             ) : activeQuery.isError ? (
-              <div className="flex h-48 items-center justify-center text-sm text-danger">
+              <div className="col-span-full flex h-48 items-center justify-center text-sm text-danger">
                 {activeQuery.error?.message}
               </div>
             ) : tasks.length === 0 ? (
-              <div className="flex h-48 items-center justify-center text-sm text-ink-muted">
+              <div className="col-span-full flex h-48 items-center justify-center text-sm text-ink-muted">
                 {t('scale.empty.noTasks')}
               </div>
             ) : (
@@ -945,11 +1017,11 @@ export default function ScalePage() {
                 return (
                   <Fragment key={task.id}>
                     <div
-                      className={`grid h-14 items-center border-b border-border px-4 text-[13px] transition ${tableGridClass} ${
+                      className={`col-span-full grid h-14 grid-cols-subgrid items-center border-b border-border px-4 text-[13px] transition ${
                         expanded ? 'bg-primary-subtle' : 'bg-surface hover:bg-page'
                       }`}
                     >
-                      <div className="px-4">
+                      <div className="min-w-0 overflow-hidden px-4">
                         <IconButton
                           aria-label={
                             expanded ? t('scale.actions.collapse') : t('scale.actions.expand')
@@ -966,58 +1038,49 @@ export default function ScalePage() {
                         </IconButton>
                       </div>
                       <div className="px-4">
-                        <Badge className="border border-danger bg-surface font-mono text-xs text-danger">
-                          {task.orderId}
-                        </Badge>
+                        <OrderIdBadge value={task.orderId} onCopy={handleCopyOrderId} t={t} />
                       </div>
-                      <div className="min-w-0 px-4">{renderOrderDate(task, activeSubTab)}</div>
-                      <div className="px-4">
-                        <Badge className={statusBadgeClasses[task.scaleStatus]}>
+                      <div className="min-w-0 overflow-hidden px-4">
+                        {renderOrderDate(task, activeSubTab)}
+                      </div>
+                      <div className="min-w-0 overflow-hidden px-4">
+                        <Badge
+                          tooltip={t(getStatusLabelKey(task.scaleStatus))}
+                          className={statusBadgeClasses[task.scaleStatus]}
+                        >
                           {t(getStatusLabelKey(task.scaleStatus))}
                         </Badge>
                       </div>
-                      <div className="px-4">
-                        {task.groupId ? (
-                          <span className="truncate text-ink-secondary">{task.groupId}</span>
-                        ) : (
-                          <Badge className="bg-neutral-bg text-ink-muted">
-                            {t('scale.common.noData')}
-                          </Badge>
-                        )}
+                      <div className="min-w-0 overflow-hidden px-4">
+                        <ShopName value={task.shop} isEtsyTab={isEtsyTab} />
                       </div>
-                      <div className="px-4">
-                        {task.groupType ? (
-                          isEtsyTab ? (
-                            renderPill(task.groupType)
-                          ) : (
-                            <span className="truncate text-ink-secondary">{task.groupType}</span>
-                          )
-                        ) : (
-                          <Badge className="bg-neutral-bg text-ink-muted">
-                            {t('scale.common.noData')}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="px-4">
-                        {isEtsyTab ? (
-                          renderPill(task.shop)
-                        ) : (
-                          <span className="truncate text-ink-secondary">{task.shop}</span>
-                        )}
-                      </div>
-                      <div className="px-4">
+                      <div className="min-w-0 overflow-hidden px-4">
                         {isEtsyTab ? (
                           renderPill(task.orderStatus)
                         ) : (
-                          <span className="truncate text-ink-secondary">{task.orderStatus}</span>
+                          <OverflowText value={task.orderStatus} className="text-ink-secondary" />
+                        )}
+                      </div>
+                      <div className="min-w-0 overflow-hidden px-4">
+                        {isEtsyTab ? (
+                          renderPill(task.orderOwner)
+                        ) : (
+                          <OverflowText value={task.orderOwner} className="text-ink-secondary" />
                         )}
                       </div>
                       <div className="px-4">
-                        {isEtsyTab ? renderPill(task.orderOwner) : task.orderOwner}
+                        <Badge
+                          truncate={false}
+                          className={
+                            pillClassByValue[task.qcBy] ||
+                            'border border-border bg-surface text-ink-secondary'
+                          }
+                        >
+                          {task.qcBy}
+                        </Badge>
                       </div>
-                      <div className="px-4">{isEtsyTab ? renderPill(task.qcBy) : task.qcBy}</div>
-                      <div className="px-4">
-                        <FormControl size="small" className={isEtsyTab ? 'w-[120px]' : 'w-full'}>
+                      <div className="min-w-0 overflow-hidden px-4">
+                        <FormControl size="small" className="w-full">
                           <Select
                             value={task.scaleBy}
                             displayEmpty
@@ -1040,18 +1103,6 @@ export default function ScalePage() {
                             ))}
                           </Select>
                         </FormControl>
-                      </div>
-                      <div className="px-4">
-                        <Badge
-                          className={
-                            csStatusBadgeClasses[task.assignmentStatus] ||
-                            'bg-neutral-bg text-ink-secondary'
-                          }
-                        >
-                          {task.assignmentStatus === CS_STATUSES.UNASSIGNED
-                            ? t(getCsStatusLabelKey(task.assignmentStatus))
-                            : task.scaleByName}
-                        </Badge>
                       </div>
                     </div>
                     {expanded ? renderDetailPanel(task) : null}

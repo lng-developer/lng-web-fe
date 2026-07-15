@@ -1275,6 +1275,7 @@
       "collapse": "Collapse row",
       "saveNote": "Save note",
       "copyFulfillName": "Copy fulfill name",
+      "copyOrderId": "Copy Order ID {{orderId}}",
       "download": "Download",
       "uploadMockup": "Upload mockup",
       "deleteMockup": "Delete mockup"
@@ -1366,6 +1367,8 @@
     "messages": {
       "assignSuccess": "Scale assignee updated.",
       "copySuccess": "Fulfill name copied.",
+      "orderIdCopySuccess": "Order ID copied.",
+      "orderIdCopyFailed": "Could not copy the Order ID.",
       "noteSuccess": "Design note saved.",
       "uploadSuccess": "Scaled output uploaded.",
       "deleteMockupSuccess": "Mockup deleted.",

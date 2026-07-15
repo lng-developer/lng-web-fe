@@ -1060,6 +1060,7 @@
       "collapse": "Đóng chi tiết",
       "saveNote": "Lưu ghi chú",
       "copyFulfillName": "Copy fulfill name",
+      "copyOrderId": "Sao chép Order ID {{orderId}}",
       "download": "Tải xuống",
       "uploadMockup": "Upload mockup",
       "deleteMockup": "Xóa mockup"
@@ -1151,6 +1152,8 @@
     "messages": {
       "assignSuccess": "Đã cập nhật người phụ trách Scale.",
       "copySuccess": "Đã copy fulfill name.",
+      "orderIdCopySuccess": "Đã sao chép Order ID.",
+      "orderIdCopyFailed": "Không thể sao chép Order ID.",
       "noteSuccess": "Đã lưu ghi chú Design.",
       "uploadSuccess": "Đã upload scaled output.",
       "deleteMockupSuccess": "Đã xóa mockup.",
