@@ -29,6 +29,7 @@ export function getUserPermissionCodes(user) {
 
   collectPermissionCodes(user?.permissions, codes)
   collectPermissionCodes(user?.roles, codes)
+  collectPermissionCodes(user?.scopes, codes)
   collectPermissionCodes(user?.accessAssignments, codes)
   collectPermissionCodes(user?.assignments, codes)
 

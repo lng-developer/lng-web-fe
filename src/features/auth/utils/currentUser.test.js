@@ -58,6 +58,7 @@ describe('current user utilities', () => {
       account: adminMeResponse.data.account,
       profile: adminMeResponse.data.profile,
       roles: ['ADMIN'],
+      permissions: ['AUDIT:READ'],
       scopes: adminMeResponse.data.scopes,
     })
     assert.equal(getCurrentUserDisplayName(user), 'Admin User')

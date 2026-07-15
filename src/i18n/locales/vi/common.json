@@ -642,14 +642,64 @@
     "searchPlaceholder": "Tìm kiếm...",
     "filters": {
       "seller": "Seller",
-      "shop": "Shop"
+      "sellerCode": "Mã seller",
+      "shop": "Shop",
+      "dateRange": "Chọn khoảng ngày"
     },
     "actions": {
       "refresh": "Làm mới",
       "exportExcel": "Export Excel ({{count}})",
       "pushFulfillment": "Push Fulfillment LNG ({{count}})",
       "expand": "Mở chi tiết",
-      "collapse": "Đóng chi tiết"
+      "collapse": "Đóng chi tiết",
+      "retry": "Thử lại",
+      "selectAll": "Chọn tất cả dòng",
+      "selectOrder": "Chọn đơn {{orderId}}",
+      "pass": "Duyệt QC",
+      "reject": "Từ chối QC",
+      "inspectImages": "Soi ảnh QC",
+      "previewOutput": "Mở file scale",
+      "pushHint": "Chỉ các task đã chọn và sẵn sàng gửi vendor mới được đẩy",
+      "noQcPermission": "Bạn không có quyền duyệt QC",
+      "noVendorSubmissionPermission": "Bạn không có quyền tạo vendor submission",
+      "noProductionWritePermission": "Bạn không có quyền đẩy production task"
+    },
+    "preview": {
+      "title": "QC Preview",
+      "itemCounter": "Item {{current}}/{{total}}",
+      "size": "Size: {{size}}",
+      "zoomIn": "Phóng to",
+      "zoomOut": "Thu nhỏ",
+      "fit": "Fit layer đang chọn vào canvas",
+      "center": "Căn giữa layer đang chọn",
+      "centerShort": "Căn giữa",
+      "actualSize": "Xem layer theo kích thước gốc",
+      "resetLayer": "Reset layer đang chọn",
+      "background": "Background",
+      "passed": "Passed",
+      "rejected": "Reject",
+      "close": "Đóng",
+      "canvas": "Khung soi ảnh QC",
+      "openImage": "Mở ảnh",
+      "noImages": "Task này chưa có ảnh để QC.",
+      "itemInfo": "Item Info",
+      "orderId": "Order ID:",
+      "asin": "Asin:",
+      "sku": "Sku:",
+      "scaleBy": "Scale By:",
+      "vendor": "Vendor:",
+      "productName": "Product Name:",
+      "fulfillName": "Fulfill Name:",
+      "pngStatus": "PNG Status:",
+      "customization": "Customization",
+      "noCustomization": "Chưa có dữ liệu customization.",
+      "csNote": "CS Note",
+      "qcNote": "QC Note",
+      "noCsNote": "Không có CS note",
+      "notePlaceholder": "Nhập ghi chú cho seller...",
+      "noteRequired": "Vui lòng nhập ghi chú trước khi reject.",
+      "copySuccess": "Đã copy vào clipboard.",
+      "copyError": "Không thể copy order ID."
     },
     "table": {
       "columns": {
@@ -675,6 +725,61 @@
       "sku": "Sku:",
       "asin": "Asin:",
       "quantity": "Quantity: {{quantity}}"
+    },
+    "values": {
+      "status": {
+        "NOT_READY": "Chưa sẵn sàng",
+        "PENDING": "Đang chờ",
+        "PASSED": "Đã duyệt",
+        "REJECTED": "Đã từ chối",
+        "PROCESSING": "Đang xử lý",
+        "SHIPPED": "Đã giao vận",
+        "READY_TO_SEND_VENDOR": "Sẵn sàng gửi vendor",
+        "SENT_TO_VENDOR": "Đã gửi vendor",
+        "CANCELLED": "Đã hủy",
+        "FAILED": "Thất bại"
+      },
+      "scaleStatus": {
+        "NOT_REQUIRED": "Không cần scale",
+        "NEED_SCALE": "Cần scale",
+        "SCALED": "Đã scale"
+      },
+      "pngStatus": {
+        "AVAILABLE": "Có sẵn",
+        "NOT_AVAILABLE": "Chưa có",
+        "UPLOADED": "Đã upload",
+        "MISSING": "Thiếu file",
+        "NOT_REQUIRED": "Không cần"
+      }
+    },
+    "states": {
+      "empty": "Không có task QC phù hợp với bộ lọc.",
+      "listError": "Không thể tải danh sách QC.",
+      "detailError": "Không thể tải chi tiết task.",
+      "unsupportedStatusFilter": "Backend chưa hỗ trợ bộ lọc QC này.",
+      "sellerFilterUnsupported": "Production API chưa hỗ trợ lọc theo seller."
+    },
+    "decision": {
+      "passTitle": "Duyệt QC",
+      "rejectTitle": "Từ chối QC",
+      "passDescription": "Xác nhận đơn {{orderId}} đã đạt QC.",
+      "rejectDescription": "Từ chối đơn {{orderId}} và ghi lại lý do.",
+      "note": "Ghi chú QC",
+      "notePlaceholder": "Nhập ghi chú cho quyết định này...",
+      "cancel": "Hủy",
+      "confirmPass": "Xác nhận duyệt",
+      "confirmReject": "Từ chối",
+      "saving": "Đang lưu...",
+      "close": "Đóng"
+    },
+    "messages": {
+      "passSuccess": "Đã duyệt task QC thành công.",
+      "rejectSuccess": "Đã từ chối task QC thành công.",
+      "decisionError": "Không thể lưu quyết định QC.",
+      "pushResult": "Đã đẩy {{succeeded}} task; {{failed}} task thất bại.",
+      "pushError": "Không thể đẩy các task đã chọn.",
+      "exportSuccess": "Đã tải file export QC.",
+      "exportError": "Không thể export danh sách QC."
     },
     "pagination": {
       "range": "{{from}}-{{to}} of {{total}} items",
@@ -835,10 +940,15 @@
     },
     "messages": {
       "assignSuccess": "Đã cập nhật CS phụ trách.",
+      "assignError": "Không thể cập nhật người phụ trách scale.",
       "copySuccess": "Đã copy fulfill name.",
       "noteSuccess": "Đã lưu ghi chú CS.",
       "uploadSuccess": "Đã upload mockup.",
-      "deleteMockupSuccess": "Đã xóa mockup."
+      "uploadError": "Không thể upload file scale.",
+      "missingFileCheck": "Task này chưa có file check để upload.",
+      "deleteMockupSuccess": "Đã xóa mockup.",
+      "addMockupUnsupported": "BE chưa hỗ trợ thêm slot mockup từ màn này.",
+      "deleteMockupUnsupported": "BE chưa hỗ trợ xóa file scale từ màn này."
     }
   },
   "errors": {

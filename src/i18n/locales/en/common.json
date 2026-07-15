@@ -857,14 +857,64 @@
     "searchPlaceholder": "Search...",
     "filters": {
       "seller": "Seller",
-      "shop": "Shop"
+      "sellerCode": "Seller code",
+      "shop": "Shop",
+      "dateRange": "Select date range"
     },
     "actions": {
       "refresh": "Refresh",
       "exportExcel": "Export Excel ({{count}})",
       "pushFulfillment": "Push Fulfillment LNG ({{count}})",
       "expand": "Expand row",
-      "collapse": "Collapse row"
+      "collapse": "Collapse row",
+      "retry": "Retry",
+      "selectAll": "Select all rows",
+      "selectOrder": "Select order {{orderId}}",
+      "pass": "Pass QC",
+      "reject": "Reject QC",
+      "inspectImages": "Inspect QC images",
+      "previewOutput": "Open scaled output",
+      "pushHint": "Only selected tasks ready to send vendor will be pushed",
+      "noQcPermission": "You do not have permission to review QC",
+      "noVendorSubmissionPermission": "You do not have permission to create vendor submissions",
+      "noProductionWritePermission": "You do not have permission to push production tasks"
+    },
+    "preview": {
+      "title": "QC Preview",
+      "itemCounter": "Item {{current}}/{{total}}",
+      "size": "Size: {{size}}",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fit": "Fit selected layer to canvas",
+      "center": "Center selected layer",
+      "centerShort": "Center",
+      "actualSize": "Preview selected layer at source scale",
+      "resetLayer": "Reset selected layer",
+      "background": "Background",
+      "passed": "Passed",
+      "rejected": "Reject",
+      "close": "Close",
+      "canvas": "QC image inspection canvas",
+      "openImage": "Open image",
+      "noImages": "No images available for this task.",
+      "itemInfo": "Item Info",
+      "orderId": "Order ID:",
+      "asin": "Asin:",
+      "sku": "Sku:",
+      "scaleBy": "Scale By:",
+      "vendor": "Vendor:",
+      "productName": "Product Name:",
+      "fulfillName": "Fulfill Name:",
+      "pngStatus": "PNG Status:",
+      "customization": "Customization",
+      "noCustomization": "No customization data.",
+      "csNote": "CS Note",
+      "qcNote": "QC Note",
+      "noCsNote": "No CS note",
+      "notePlaceholder": "Enter notes for seller...",
+      "noteRequired": "Please enter a note before rejecting.",
+      "copySuccess": "Copied to clipboard.",
+      "copyError": "Unable to copy order ID."
     },
     "table": {
       "columns": {
@@ -890,6 +940,61 @@
       "sku": "Sku:",
       "asin": "Asin:",
       "quantity": "Quantity: {{quantity}}"
+    },
+    "values": {
+      "status": {
+        "NOT_READY": "Not ready",
+        "PENDING": "Pending",
+        "PASSED": "Passed",
+        "REJECTED": "Rejected",
+        "PROCESSING": "Processing",
+        "SHIPPED": "Shipped",
+        "READY_TO_SEND_VENDOR": "Ready to send vendor",
+        "SENT_TO_VENDOR": "Sent to vendor",
+        "CANCELLED": "Cancelled",
+        "FAILED": "Failed"
+      },
+      "scaleStatus": {
+        "NOT_REQUIRED": "Not required",
+        "NEED_SCALE": "Need scale",
+        "SCALED": "Scaled"
+      },
+      "pngStatus": {
+        "AVAILABLE": "Available",
+        "NOT_AVAILABLE": "Not available",
+        "UPLOADED": "Uploaded",
+        "MISSING": "Missing",
+        "NOT_REQUIRED": "Not required"
+      }
+    },
+    "states": {
+      "empty": "No QC tasks match the current filters.",
+      "listError": "Unable to load QC tasks.",
+      "detailError": "Unable to load task detail.",
+      "unsupportedStatusFilter": "The backend does not support this QC filter yet.",
+      "sellerFilterUnsupported": "The production API does not support seller filtering yet."
+    },
+    "decision": {
+      "passTitle": "Pass QC",
+      "rejectTitle": "Reject QC",
+      "passDescription": "Confirm that order {{orderId}} passed QC.",
+      "rejectDescription": "Reject order {{orderId}} and record the reason.",
+      "note": "QC note",
+      "notePlaceholder": "Add a note for this decision...",
+      "cancel": "Cancel",
+      "confirmPass": "Confirm pass",
+      "confirmReject": "Reject",
+      "saving": "Saving...",
+      "close": "Close"
+    },
+    "messages": {
+      "passSuccess": "QC task passed successfully.",
+      "rejectSuccess": "QC task rejected successfully.",
+      "decisionError": "Unable to save the QC decision.",
+      "pushResult": "Pushed {{succeeded}} task(s); {{failed}} failed.",
+      "pushError": "Unable to push the selected tasks.",
+      "exportSuccess": "QC export downloaded.",
+      "exportError": "Unable to export QC tasks."
     },
     "pagination": {
       "range": "{{from}}-{{to}} of {{total}} items",
@@ -1050,10 +1155,15 @@
     },
     "messages": {
       "assignSuccess": "CS assignee updated.",
+      "assignError": "Could not update scale assignee.",
       "copySuccess": "Fulfill name copied.",
       "noteSuccess": "CS note saved.",
       "uploadSuccess": "Mockup uploaded.",
-      "deleteMockupSuccess": "Mockup deleted."
+      "uploadError": "Could not upload scale file.",
+      "missingFileCheck": "This task does not have a file check to upload.",
+      "deleteMockupSuccess": "Mockup deleted.",
+      "addMockupUnsupported": "Backend does not support adding mockup slots from this page yet.",
+      "deleteMockupUnsupported": "Backend does not support deleting scale files from this page yet."
     }
   },
   "errors": {
