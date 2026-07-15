@@ -1,21 +1,68 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { fetchEtsyScaleTasks, fetchScaleGroupTasks } from '@/features/scale/utils/scaleMock'
+import { apiClient } from '@/services/axiosInstance'
+import { ENDPOINTS } from '@/services/endpoints'
 
+import {
+  buildProductionSummaryQuery,
+  buildProductionTaskQuery,
+  mapProductionListResponse,
+  mapScaleAssignees,
+  mapScaleSummary,
+  mapShopOptions,
+  unwrapApiData,
+} from '../utils/scaleApi'
 import { scaleKeys } from './scale.keys'
 
-export function useScaleGroupTasksQuery(query = {}, options = {}) {
+function get(path, query) {
+  return apiClient.get(path, { params: query }).then(unwrapApiData)
+}
+
+export function useScaleTasksQuery(query = {}, options = {}) {
+  const requestQuery = buildProductionTaskQuery(query)
+
   return useQuery({
-    queryKey: scaleKeys.groupTasks(query),
-    queryFn: () => fetchScaleGroupTasks(query),
+    queryKey: scaleKeys.tasks(requestQuery),
+    queryFn: () =>
+      get(ENDPOINTS.SCALE.TASKS, requestQuery).then((response) =>
+        mapProductionListResponse(response),
+      ),
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey?.[2]?.salesChannelCode === requestQuery.salesChannelCode
+        ? previousData
+        : undefined,
     ...options,
   })
 }
 
-export function useEtsyScaleTasksQuery(query = {}, options = {}) {
+export function useScaleSummaryQuery(query = {}, options = {}) {
+  const requestQuery = buildProductionSummaryQuery(query)
+
   return useQuery({
-    queryKey: scaleKeys.etsyTasks(query),
-    queryFn: () => fetchEtsyScaleTasks(query),
+    queryKey: scaleKeys.summary(requestQuery),
+    queryFn: () => get(ENDPOINTS.SCALE.SUMMARY, requestQuery).then(mapScaleSummary),
+    ...options,
+  })
+}
+
+export function useScaleAssigneesQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: scaleKeys.assignees(query),
+    queryFn: () =>
+      get(ENDPOINTS.SCALE.ASSIGNEES, query).then((response) =>
+        mapScaleAssignees(response?.items || []),
+      ),
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  })
+}
+
+export function useScaleShopsQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: scaleKeys.shops(query),
+    queryFn: () =>
+      get(ENDPOINTS.SHOPS.LIST, query).then((response) => mapShopOptions(response?.items || [])),
+    staleTime: 5 * 60 * 1000,
     ...options,
   })
 }

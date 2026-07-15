@@ -772,7 +772,13 @@
   "dateRangePicker": {
     "placeholder": "Chọn khoảng ngày",
     "clear": "Xoá",
-    "apply": "Áp dụng"
+    "apply": "Áp dụng",
+    "presets": {
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
+      "last7Days": "7 ngày gần nhất",
+      "last30Days": "30 ngày gần nhất"
+    }
   },
   "tasks": {
     "tabs": {
@@ -1127,8 +1133,8 @@
         "orderStatus": "Order Status",
         "orderOwner": "Order Owner",
         "qcBy": "QC By",
-        "assignCs": "Assign CS",
-        "csStatus": "CS Status"
+        "assignCs": "Người Scale",
+        "csStatus": "Phân công"
       }
     },
     "detail": {
@@ -1136,7 +1142,7 @@
       "customization": "Customization",
       "taskStatus": "Task Status",
       "costCenter": "Cost Center",
-      "csNote": "CS Note",
+      "csNote": "Ghi chú Production",
       "action": "Action",
       "orderInfo": "Order Info",
       "sku": "SKU",
@@ -1159,6 +1165,7 @@
       "collapse": "Đóng chi tiết",
       "saveNote": "Lưu ghi chú",
       "copyFulfillName": "Copy fulfill name",
+      "copyOrderId": "Sao chép Order ID {{orderId}}",
       "download": "Tải xuống",
       "uploadMockup": "Upload mockup",
       "deleteMockup": "Xóa mockup"
@@ -1167,7 +1174,12 @@
       "total": "{{total}} task",
       "page": "{{page}} / {{totalPages}}",
       "previous": "Trang trước",
-      "next": "Trang sau"
+      "next": "Trang sau",
+      "range": "{{from}}-{{to}} trên {{total}} tác vụ",
+      "pageSize": "Số dòng mỗi trang",
+      "pageSizeValue": "{{size}} / trang",
+      "pageLabel": "Đi tới trang {{page}}",
+      "morePages": "Các trang khác"
     },
     "values": {
       "scaleStatus": {
@@ -1188,7 +1200,7 @@
     },
     "empty": {
       "noTasks": "Không tìm thấy task scale.",
-      "etsyTasks": "Etsy Scale Tasks chưa hỗ trợ ở phase 1."
+      "etsyTasks": "Không tìm thấy task scale Etsy."
     },
     "common": {
       "noData": "No data"
@@ -1202,7 +1214,7 @@
         "vendor": "Vendor",
         "orderStatus": "Order Status",
         "scaleBy": "Scale By",
-        "qcByCs": "QC By / CS",
+        "qcByCs": "Người QC",
         "scaleFile": "Scale File"
       },
       "pagination": {
@@ -1221,7 +1233,7 @@
         "color": "Color:"
       },
       "notes": {
-        "cs": "CS note:",
+        "cs": "Ghi chú Design:",
         "qc": "QC note:"
       },
       "actions": {
@@ -1239,7 +1251,8 @@
       }
     },
     "loading": {
-      "refreshing": "Đang làm mới dữ liệu..."
+      "refreshing": "Đang làm mới dữ liệu...",
+      "uploading": "Đang tải lên..."
     },
     "messages": {
       "assignSuccess": "Đã cập nhật CS phụ trách.",

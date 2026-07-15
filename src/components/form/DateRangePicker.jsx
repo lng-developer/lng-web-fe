@@ -19,6 +19,15 @@ import { useTheme } from '@mui/material/styles'
 
 import dayjs from '@/lib/dayjs'
 
+import { DATE_RANGE_PRESETS, getDateRangePreset } from './dateRangePresets'
+
+const DATE_RANGE_PRESET_OPTIONS = [
+  DATE_RANGE_PRESETS.TODAY,
+  DATE_RANGE_PRESETS.YESTERDAY,
+  DATE_RANGE_PRESETS.LAST_7_DAYS,
+  DATE_RANGE_PRESETS.LAST_30_DAYS,
+]
+
 // Sinh lưới 6 tuần x 7 ngày cho 1 tháng, tuần bắt đầu từ Thứ Hai.
 function buildMonthMatrix(monthStart) {
   const offset = (monthStart.day() + 6) % 7
@@ -42,7 +51,7 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
     start && previewEnd ? (start.isAfter(previewEnd, 'day') ? start : previewEnd) : null
 
   return (
-    <Stack spacing={1} className="w-[252px]">
+    <Stack className="w-[252px] gap-2">
       <Typography variant="body2" fontWeight={600} textAlign="center" className="capitalize">
         {monthStart.locale(locale).format('MMMM YYYY')}
       </Typography>
@@ -174,6 +183,20 @@ export default function DateRangePicker({
     handleClose()
   }
 
+  const handlePresetSelect = (preset) => {
+    const nextRange = getDateRangePreset(preset)
+    setDraft(nextRange)
+    onChange?.(nextRange)
+    handleClose()
+  }
+
+  const isPresetActive = (preset) => {
+    if (!draft.start || !draft.end) return false
+
+    const presetRange = getDateRangePreset(preset)
+    return draft.start.isSame(presetRange.start, 'day') && draft.end.isSame(presetRange.end, 'day')
+  }
+
   const displayText =
     value.start && value.end
       ? `${value.start.format('DD/MM/YYYY')} - ${value.end.format('DD/MM/YYYY')}`
@@ -231,44 +254,71 @@ export default function DateRangePicker({
           },
         }}
       >
-        <Stack direction="row" justifyContent="space-between" className="mb-2">
-          <IconButton size="small" onClick={() => setBaseMonth((m) => m.subtract(1, 'month'))}>
-            <ChevronLeftIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => setBaseMonth((m) => m.add(1, 'month'))}>
-            <ChevronRightIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-        <Stack direction={isDesktop ? 'row' : 'column'} spacing={3}>
-          <MonthGrid
-            monthStart={leftMonth}
-            locale={i18n.language}
-            range={range}
-            hoverDay={hoverDay}
-            onDayHover={setHoverDay}
-            onDayClick={handleDayClick}
-            disabled={disabled}
-          />
-          {isDesktop && (
-            <MonthGrid
-              monthStart={baseMonth.add(1, 'month')}
-              locale={i18n.language}
-              range={range}
-              hoverDay={hoverDay}
-              onDayHover={setHoverDay}
-              onDayClick={handleDayClick}
-              disabled={disabled}
-            />
-          )}
-        </Stack>
-        <Stack direction="row" justifyContent="flex-end" spacing={1} className="mt-4">
-          <Button variant="text" onClick={handleClear}>
-            {t('dateRangePicker.clear')}
-          </Button>
-          <Button variant="contained" onClick={handleApply}>
-            {t('dateRangePicker.apply')}
-          </Button>
-        </Stack>
+        <Box className="flex flex-col gap-4 sm:flex-row">
+          <Box className="flex shrink-0 gap-1 overflow-x-auto border-b border-default pb-3 sm:flex-col sm:border-r sm:border-b-0 sm:pr-4 sm:pb-0">
+            {DATE_RANGE_PRESET_OPTIONS.map((preset) => {
+              const active = isPresetActive(preset)
+
+              return (
+                <Button
+                  key={preset}
+                  type="button"
+                  variant="text"
+                  size="small"
+                  aria-pressed={active}
+                  onClick={() => handlePresetSelect(preset)}
+                  className={`shrink-0 !justify-start !rounded-lg !px-3 !py-2 !normal-case ${
+                    active
+                      ? '!bg-primary-light !font-semibold !text-primary'
+                      : '!text-ink-secondary hover:!bg-page'
+                  }`}
+                >
+                  {t(`dateRangePicker.presets.${preset}`)}
+                </Button>
+              )
+            })}
+          </Box>
+          <Box>
+            <Stack direction="row" justifyContent="space-between" className="mb-2">
+              <IconButton size="small" onClick={() => setBaseMonth((m) => m.subtract(1, 'month'))}>
+                <ChevronLeftIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={() => setBaseMonth((m) => m.add(1, 'month'))}>
+                <ChevronRightIcon fontSize="small" />
+              </IconButton>
+            </Stack>
+            <Stack direction={isDesktop ? 'row' : 'column'} className="gap-6">
+              <MonthGrid
+                monthStart={leftMonth}
+                locale={i18n.language}
+                range={range}
+                hoverDay={hoverDay}
+                onDayHover={setHoverDay}
+                onDayClick={handleDayClick}
+                disabled={disabled}
+              />
+              {isDesktop && (
+                <MonthGrid
+                  monthStart={baseMonth.add(1, 'month')}
+                  locale={i18n.language}
+                  range={range}
+                  hoverDay={hoverDay}
+                  onDayHover={setHoverDay}
+                  onDayClick={handleDayClick}
+                  disabled={disabled}
+                />
+              )}
+            </Stack>
+            <Stack direction="row" justifyContent="flex-end" className="mt-4 gap-2">
+              <Button variant="text" onClick={handleClear}>
+                {t('dateRangePicker.clear')}
+              </Button>
+              <Button variant="contained" onClick={handleApply}>
+                {t('dateRangePicker.apply')}
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
       </Popover>
     </Box>
   )
