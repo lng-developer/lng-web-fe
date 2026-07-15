@@ -55,12 +55,162 @@
       "payout": "Payout",
       "compensationPool": "Compensation Pool",
       "vendorList": "Vendor List",
-      "productsCost": "Products & Cost",
+      "productsCost": "Products",
       "storeRouting": "Store Routing",
       "usersRoles": "Users & Roles",
       "shopsStores": "Shop & Stores",
       "systemConfig": "System Config",
       "auditLog": "Audit Log"
+    }
+  },
+  "listings": {
+    "title": "Listing",
+    "actions": {
+      "add": "Add Listing",
+      "import": "Import Listing",
+      "refresh": "Refresh",
+      "download": "Download",
+      "upload": "Upload",
+      "edit": "Edit",
+      "delete": "Delete",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "stats": {
+      "totalAsin": "Total ASIN",
+      "anonymousAsin": "Anonymous ASIN",
+      "psdAvailable": "PSD Available",
+      "noPsd": "No PSD"
+    },
+    "tabs": {
+      "all": "All",
+      "amazon": "Amazon",
+      "etsy": "Etsy",
+      "noPsd": "No PSD",
+      "draft": "Draft",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "firstSale": "First Sale",
+      "normal": "Normal",
+      "outline": "Outline",
+      "customImage": "Custom Image",
+      "podLovers": "POD Lovers",
+      "style": "Style",
+      "tool": "Tool",
+      "autoFulfill": "Auto Fulfill",
+      "others": "Others"
+    },
+    "filters": {
+      "search": "Find ASIN, SKU...",
+      "searchFields": {
+        "asin": "ASIN",
+        "sku": "SKU"
+      },
+      "sellers": {
+        "all": "All Sellers",
+        "duc": "Nguyen Minh Duc",
+        "son": "Nguyen Duc Son",
+        "nam": "Nguyen Phuong Nam"
+      },
+      "shops": {
+        "all": "All Shops",
+        "acc1": "Acc1",
+        "acc2": "Acc2",
+        "main": "Main"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "asin": "ASIN/Product ID",
+      "total": "Total",
+      "style": "Style",
+      "designProduct": "Design Product",
+      "variant": "Variant",
+      "psdId": "PSD ID",
+      "psdStatus": "PSD Status",
+      "store": "Store",
+      "seller": "Seller",
+      "asinType": "ASIN Type",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "before": "Before",
+      "after": "After"
+    },
+    "form": {
+      "addTitle": "Add Listing",
+      "editTitle": "Edit Listing",
+      "shop": "Shop",
+      "selectShop": "Select shop",
+      "salesChannel": "Sales channel",
+      "marketplace": "Marketplace",
+      "sku": "SKU",
+      "asin": "ASIN",
+      "title": "Title",
+      "productType": "Product type",
+      "selectProductType": "Select product type",
+      "baseCostAmount": "Base cost",
+      "currency": "Currency",
+      "costCenterStatus": "Cost center status",
+      "status": "Status",
+      "psdStatus": "PSD status",
+      "create": "Create Listing",
+      "save": "Save Changes"
+    },
+    "values": {
+      "common": {
+        "noData": "No data"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "psdStatus": {
+        "available": "Available",
+        "missing": "Missing"
+      },
+      "setupStatus": {
+        "present": "Present",
+        "missing": "Missing"
+      },
+      "salesChannel": {
+        "AMAZON": "Amazon",
+        "ETSY": "Etsy",
+        "SHOPIFY": "Shopify",
+        "TIKTOK_SHOP": "TikTok Shop",
+        "WALMART": "Walmart",
+        "CUSTOM": "Custom"
+      },
+      "asinType": {
+        "normal": "Normal",
+        "draft": "Draft",
+        "rejected": "Rejected",
+        "unknown": "Unknown"
+      }
+    },
+    "messages": {
+      "loading": "Loading listings...",
+      "empty": "No listings found",
+      "required": "Please fill all required fields",
+      "saved": "Listing saved",
+      "saveFailed": "Could not save listing",
+      "uploaded": "PSD uploaded",
+      "uploadFailed": "Could not upload PSD",
+      "approved": "Listing approved",
+      "approveFailed": "Could not approve listing",
+      "rejected": "Listing rejected",
+      "rejectFailed": "Could not reject listing",
+      "rejectReasonRequired": "Please enter a rejection reason",
+      "downloadFailed": "Could not download asset",
+      "importMissing": "Backend does not expose listing import yet",
+      "deleteMissing": "Backend does not expose listing delete yet",
+      "sellerMissing": "Seller is not available in listing API yet",
+      "tabMissing": "Backend does not expose this listing category yet"
+    },
+    "reject": {
+      "title": "Reject Listing",
+      "reasonPlaceholder": "Enter rejection reason",
+      "submit": "Reject"
     }
   },
   "roles": {
@@ -839,6 +989,159 @@
       }
     }
   },
+  "tasks": {
+    "tabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    }
+  },
+  "designTasks": {
+    "tabsLabel": "Design task categories",
+    "dateRange": "Jun 27 - Jul 3, 2026",
+    "subTabs": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "titles": {
+      "idea": "Idea Tasks",
+      "psd": "PSD Tasks",
+      "png": "PNG Tasks"
+    },
+    "statusTabs": {
+      "all": "All",
+      "new": "New",
+      "requested": "Requested",
+      "assigned": "Assigned",
+      "inProgress": "In Progress",
+      "uploaded": "Uploaded",
+      "pendingAssignment": "Pending Assignment",
+      "needScale": "Need Scale",
+      "pending": "Pending",
+      "completed": "Completed",
+      "qcPassed": "QC Passed",
+      "qcRejected": "QC Rejected"
+    },
+    "searchPlaceholder": "Search...",
+    "actions": {
+      "createTask": "Create Task",
+      "refresh": "Refresh",
+      "upload": "Upload",
+      "download": "Download",
+      "viewGrid": "View files",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "table": {
+      "columns": {
+        "createdAt": "Created At",
+        "productImage": "Product Image",
+        "statusTask": "Status Task",
+        "linkProduct": "Link Product",
+        "assigned": "Assigned",
+        "seller": "Seller",
+        "description": "Description",
+        "productType": "Product Type",
+        "actions": "Actions",
+        "editDelete": "Edit/Delete"
+      }
+    },
+    "pagination": {
+      "range": "{{from}}-{{to}} of {{total}} items",
+      "previous": "Previous page",
+      "pageSize": "Rows per page",
+      "pageSizeValue": "{{size}} / page"
+    },
+    "psd": {
+      "filters": {
+        "seller": "Seller filter",
+        "sellerValue": "Seller: {{value}}",
+        "all": "All"
+      },
+      "pagination": {
+        "total": "Total {{total}} items"
+      },
+      "table": {
+        "columns": {
+          "createdAt": "Created At",
+          "productImage": "Product Image",
+          "asin": "ASIN",
+          "statusTask": "Status Task",
+          "assigned": "Assigned",
+          "priority": "Priority",
+          "psdStatus": "PSD Status",
+          "seller": "Seller",
+          "asinType": "ASIN Type",
+          "actions": "Actions"
+        }
+      },
+      "actions": {
+        "approve": "Approve",
+        "revert": "Revert"
+      }
+    },
+    "png": {
+      "filters": {
+        "shop": "Shop filter",
+        "shopValue": "Shop: {{value}}",
+        "asinType": "ASIN type filter",
+        "asinTypeValue": "Asin Type: {{value}}",
+        "all": "All"
+      },
+      "table": {
+        "columns": {
+          "expand": "",
+          "orderId": "Order ID",
+          "orderDate": "Order Date",
+          "scaleStatus": "Scale Status",
+          "scaleBy": "Scale By",
+          "shop": "Shop",
+          "orderStatus": "Order Status",
+          "orderOwner": "Order Owner",
+          "qcBy": "QC By",
+          "express": "Express",
+          "action": "Action"
+        }
+      },
+      "actions": {
+        "expand": "Expand row",
+        "collapse": "Collapse row",
+        "copy": "Copy",
+        "cut": "Cut",
+        "add": "+ Add",
+        "downloadPsd": "Download PSD"
+      },
+      "detail": {
+        "productInfo": "Product Info",
+        "customization": "Customization",
+        "size": "Choose Your Size:",
+        "customName": "Custom Name:",
+        "customText": "Custom Text:",
+        "dateLocation": "Date/Location:",
+        "textColor": "Text Color:",
+        "bgColor": "BG Color:",
+        "priority": "Priority:",
+        "url": "URL:",
+        "linkSp": "Link SP:",
+        "customerPhoto": "Customer Photo:",
+        "taskStatus": "Task Status",
+        "costCenter": "Cost Center",
+        "vendorProduct": "Vendor Product:",
+        "csNote": "CS Note",
+        "csNoteLabel": "CS note:",
+        "qcNoteLabel": "QC note:",
+        "qcNotePlaceholder": "QC note",
+        "action": "Action",
+        "orderInfo": "Order Info",
+        "seller": "Seller:",
+        "quantity": "Quantity: {{quantity}}",
+        "fulfillName": "Fulfill Name:",
+        "buyerNote": "Buyer Note:",
+        "notePlaceholder": "Note"
+      }
+    }
+  },
   "qc": {
     "title": "QC",
     "dateRange": "Jun 27 - Jul 3, 2026",
@@ -1224,6 +1527,174 @@
       "description": "Password reset is not available yet. Please contact your administrator for support.",
       "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
       "backLogin": "Back to login"
+    }
+  },
+  "vendors": {
+    "searchPlaceholder": "Search...",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteUnavailable": "Delete is not available yet",
+      "cancel": "Cancel",
+      "create": "Create",
+      "save": "Save changes"
+    },
+    "fields": {
+      "code": "Code",
+      "name": "Name",
+      "providerKey": "Provider key",
+      "fulfillmentType": "Fulfillment type",
+      "status": "Status",
+      "vendor": "Vendor",
+      "productType": "Product type",
+      "productName": "Product name",
+      "externalProductId": "External product ID",
+      "imageUrl": "Image URL",
+      "productUrl": "Product URL",
+      "designTemplateUrl": "Design template URL",
+      "minProductionDays": "Min production days",
+      "maxProductionDays": "Max production days",
+      "baseCostAmount": "Base cost amount",
+      "currency": "Currency",
+      "sku": "SKU",
+      "lngCode": "LNG code",
+      "vendorSize": "Vendor size",
+      "vendorColor": "Vendor color",
+      "standardSize": "Standard size",
+      "standardColor": "Standard color",
+      "domesticEconomyAmount": "Domestic economy",
+      "domesticAdditionalAmount": "Domestic additional",
+      "internationalEconomyAmount": "International economy",
+      "internationalAdditionalAmount": "International additional",
+      "priorityEconomyAmount": "Priority economy",
+      "priorityAdditionalAmount": "Priority additional",
+      "importTaxAmount": "Import tax"
+    },
+    "placeholders": {
+      "code": "Ex: LENFUL",
+      "name": "Ex: Lenful",
+      "providerKey": "Select provider key",
+      "vendor": "Select vendor",
+      "productType": "Select product type",
+      "productCode": "Ex: PRD-001234",
+      "productName": "Ex: Premium T-Shirt",
+      "externalProductId": "Ex: external product id",
+      "url": "https://example.com",
+      "costCenterCode": "Ex: ZIPLVN000000AA01",
+      "costCenterName": "Ex: S / ZIPLVN000000AA01"
+    },
+    "values": {
+      "empty": "None",
+      "fulfillmentType": {
+        "api": "API",
+        "manual": "Manual",
+        "fbm": "FBM",
+        "fba": "FBA",
+        "pod": "POD",
+        "dropship": "Dropship",
+        "custom": "Custom"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    },
+    "states": {
+      "loadError": "Could not load vendor data.",
+      "empty": "No vendor data found."
+    },
+    "list": {
+      "title": "Vendor List",
+      "actions": {
+        "create": "Create Vendor"
+      },
+      "form": {
+        "createTitle": "Create Vendor",
+        "editTitle": "Edit Vendor"
+      },
+      "columns": {
+        "name": "Name",
+        "fulfillmentType": "Fulfillment Type",
+        "active": "Active",
+        "actions": "Actions"
+      }
+    },
+    "products": {
+      "title": "Vendor Products",
+      "actions": {
+        "create": "Create Vendor Product",
+        "viewCostCenter": "View",
+        "toggleStatus": "Toggle product status"
+      },
+      "filters": {
+        "vendor": "Vendor",
+        "allVendors": "All vendors"
+      },
+      "values": {
+        "noProductType": "No product type"
+      },
+      "form": {
+        "createTitle": "Create Vendor Product",
+        "editTitle": "Edit Vendor Product"
+      },
+      "pagination": {
+        "total": "Total {{total}} items",
+        "previous": "Previous page",
+        "next": "Next page",
+        "pageSize": "Rows per page",
+        "pageSizeValue": "{{size}} / page"
+      },
+      "columns": {
+        "index": "#",
+        "image": "Image",
+        "name": "Product Name Vendor",
+        "productId": "Product ID",
+        "costCenter": "Cost Center",
+        "vendor": "Vendor",
+        "productType": "Product Type For Design",
+        "status": "Status"
+      }
+    },
+    "costCenters": {
+      "title": "Cost Centers",
+      "total": "{{total}} cost centers",
+      "actions": {
+        "create": "Create Cost Center",
+        "toggleStatus": "Toggle cost center status"
+      },
+      "form": {
+        "createTitle": "Create Cost Center",
+        "editTitle": "Edit Cost Center",
+        "shipping": "Shipping cost"
+      },
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "sku": "SKU",
+        "sizeColor": "Size / Color",
+        "baseCost": "Base Cost",
+        "domesticShipping": "Domestic Shipping",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "validation": {
+      "codeRequired": "Code is required",
+      "nameRequired": "Name is required",
+      "fulfillmentTypeRequired": "Fulfillment type is required",
+      "statusRequired": "Status is required",
+      "vendorRequired": "Vendor is required",
+      "productTypeRequired": "Product type is required",
+      "nonNegative": "Value must be greater than or equal to 0"
+    },
+    "messages": {
+      "createVendorSuccess": "Vendor created successfully.",
+      "updateVendorSuccess": "Vendor updated successfully.",
+      "createProductSuccess": "Vendor product created successfully.",
+      "updateProductSuccess": "Vendor product updated successfully.",
+      "createCostCenterSuccess": "Cost center created successfully.",
+      "updateCostCenterSuccess": "Cost center updated successfully.",
+      "saveError": "Could not save changes. Please try again."
     }
   },
   "uiKit": {

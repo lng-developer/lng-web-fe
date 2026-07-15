@@ -1,0 +1,21 @@
+export const VENDOR_FULFILLMENT_TYPES = ['FBM', 'FBA', 'POD', 'DROPSHIP', 'CUSTOM']
+
+export const VENDOR_PROVIDER_KEYS = [
+  'BEEFUL',
+  'GRABINK',
+  'MERCHIZE',
+  'PRINTWAY',
+  'MANGOTEE',
+  'MERCHFOX',
+  'LENFUL',
+  'SS88',
+  'LUXURY_PRO',
+  'MANGO_P76',
+  'ZTB',
+  'PGPRINT',
+  'ONOSPOD',
+  'LNG_GROUP',
+  'CUSTOM',
+]
+
+export const VENDOR_RECORD_STATUSES = ['ACTIVE', 'INACTIVE']
