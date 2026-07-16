@@ -15,12 +15,10 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Skeleton,
   Typography,
 } from '@mui/material'
 
 import { ELEVATION_SHADOWS, LAYOUT_SIZES } from '@/constants/app'
-import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import {
   getCurrentUserAvatar,
   getCurrentUserDisplayName,
@@ -28,9 +26,10 @@ import {
   getCurrentUserRole,
   resolveCurrentUser,
 } from '@/features/auth/utils/currentUser'
+import { useAuthStore } from '@/store/useAuthStore'
 
 import {
-  filterNavigationByRole,
+  filterNavigationByUser,
   getRoleMeta,
   getSidebarTabForPath,
   SIDEBAR_NAV_TABS,
@@ -185,7 +184,7 @@ function renderLeafItem({ item, pathname, t, depth, onNavigate }) {
 export default function AppSidebar({ onNavigate, open }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
-  const { data, isPending } = useCurrentUserQuery()
+  const storedCurrentUser = useAuthStore((state) => state.currentUser)
   const pathTab = getSidebarTabForPath(pathname)
   const [selectedTab, setActiveTab] = useState(pathTab)
   const activeTab = pathTab === SIDEBAR_NAV_TABS.HR ? pathTab : selectedTab
@@ -198,14 +197,14 @@ export default function AppSidebar({ onNavigate, open }) {
       {},
     ),
   )
-  const user = resolveCurrentUser(data)
+  const user = resolveCurrentUser(storedCurrentUser)
   const userName = getCurrentUserDisplayName(user)
   const userAvatar = getCurrentUserAvatar(user)
   const role = getCurrentUserRole(user)
   const roleMeta = getRoleMeta(role)
   const openItems = openItemsByTab[activeTab] ?? {}
   const activeTabNavigation = SIDEBAR_TAB_NAVIGATION[activeTab] ?? []
-  const navigation = filterNavigationByRole(activeTabNavigation, role)
+  const navigation = filterNavigationByUser(activeTabNavigation, user)
 
   const toggleItem = (id) => {
     setOpenItemsByTab((state) => ({
@@ -336,15 +335,7 @@ export default function AppSidebar({ onNavigate, open }) {
           },
         }}
       >
-        {isPending ? (
-          <Box sx={{ px: 2, py: 1 }}>
-            <Skeleton height={40} />
-            <Skeleton height={40} />
-            <Skeleton height={40} />
-          </Box>
-        ) : (
-          renderItems(navigation)
-        )}
+        {renderItems(navigation)}
       </List>
 
       <Box

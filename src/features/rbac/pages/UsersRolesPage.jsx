@@ -134,10 +134,10 @@ const TABS = [
 ]
 
 const ACCOUNT_STATUSES = [
-  { value: '', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Hoạt động' },
-  { value: 'inactive', label: 'Tạm khoá' },
-  { value: 'archived', label: 'Đã lưu trữ' },
+  { value: '', labelKey: 'rbac.users.status.all' },
+  { value: 'active', labelKey: 'rbac.users.status.active' },
+  { value: 'inactive', labelKey: 'rbac.users.status.inactive' },
+  { value: 'archived', labelKey: 'rbac.users.status.archived' },
 ]
 
 const INITIAL_USER_FORM = {
@@ -1039,8 +1039,8 @@ function EditAccessDialog({
         </DialogTitle>
         <DialogContent className="flex flex-col gap-5 px-6 pb-5 pt-0">
           <Stack className="gap-4">
-            <Box className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-3">
-              <Typography variant="body2" className="text-sm text-[#1d4ed8]">
+            <Box className="rounded-lg border border-info bg-info-bg px-4 py-3">
+              <Typography variant="body2" className="text-sm text-info-strong">
                 {t('rbac.users.editAccessModal.banner')}
               </Typography>
             </Box>
@@ -2669,9 +2669,7 @@ export default function UsersRolesPage() {
           >
             {ACCOUNT_STATUSES.filter((item) => item.value !== 'archived').map((item) => (
               <MenuItem key={item.value || 'all'} value={item.value}>
-                {item.value
-                  ? t(getStatusMeta(item.value).labelKey)
-                  : t('rbac.users.filter.allStatus')}
+                {t(item.labelKey)}
               </MenuItem>
             ))}
           </Select>

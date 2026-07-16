@@ -1,4 +1,5 @@
 import { ROUTES } from '../constants/routes.js'
+import { hasAnyPermission } from '../features/auth/utils/authz.js'
 
 export const APP_ROLES = {
   ADMIN: 'admin',
@@ -95,6 +96,15 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.orderList',
                 path: ROUTES.PORTAL_ORDER_LIST,
                 allowedRoles: ROLE_ACCESS.SALES,
+                requiredPermissions: ['ORDERS:READ'],
+              },
+              {
+                id: 'order-workbench',
+                type: 'item',
+                labelKey: 'nav.items.orderWorkbench',
+                path: ROUTES.PORTAL_ORDER_WORKBENCH,
+                allowedRoles: ROLE_ACCESS.SALES,
+                requiredPermissions: ['ORDERS:READ'],
               },
               {
                 id: 'order-detail',
@@ -102,6 +112,15 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.orderDetail',
                 path: ROUTES.PORTAL_ORDER_DETAIL,
                 allowedRoles: ROLE_ACCESS.SALES,
+                requiredPermissions: ['ORDERS:READ'],
+              },
+              {
+                id: 'catalog-setup',
+                type: 'item',
+                labelKey: 'nav.items.catalogSetup',
+                path: ROUTES.PORTAL_CATALOG_SETUP,
+                allowedRoles: ROLE_ACCESS.SALES,
+                requiredPermissions: ['CATALOG:READ'],
               },
               {
                 id: 'listings',
@@ -109,6 +128,15 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.listings',
                 path: ROUTES.PORTAL_LISTINGS,
                 allowedRoles: ROLE_ACCESS.SALES,
+                requiredPermissions: ['CATALOG:READ'],
+              },
+              {
+                id: 'mapping-workbench',
+                type: 'item',
+                labelKey: 'nav.items.mappingWorkbench',
+                path: ROUTES.PORTAL_MAPPING_WORKBENCH,
+                allowedRoles: ROLE_ACCESS.SALES,
+                requiredPermissions: ['MAPPING:READ'],
               },
               {
                 id: 'tracking',
@@ -116,6 +144,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.tracking',
                 path: ROUTES.PORTAL_TRACKING,
                 allowedRoles: ROLE_ACCESS.SALES,
+                requiredPermissions: ['SHIPMENTS:READ'],
               },
             ],
           },
@@ -141,11 +170,20 @@ const SIDEBAR_NAVIGATION_ROOT = [
             allowedRoles: [APP_ROLES.ADMIN, APP_ROLES.QC, APP_ROLES.FULFILLMENT, APP_ROLES.CS],
             children: [
               {
+                id: 'production-board',
+                type: 'item',
+                labelKey: 'nav.items.productionBoard',
+                path: ROUTES.PORTAL_PRODUCTION,
+                allowedRoles: ROLE_ACCESS.FULFILLMENT,
+                requiredPermissions: ['PRODUCTION:READ'],
+              },
+              {
                 id: 'scale',
                 type: 'item',
                 labelKey: 'nav.items.scale',
                 path: ROUTES.PORTAL_SCALE,
                 allowedRoles: ROLE_ACCESS.FULFILLMENT,
+                requiredPermissions: ['PRODUCTION:READ'],
               },
               {
                 id: 'qc',
@@ -153,6 +191,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.qc',
                 path: ROUTES.PORTAL_QC,
                 allowedRoles: ROLE_ACCESS.QC,
+                requiredPermissions: ['PRODUCTION:READ', 'DESIGN:REVIEW'],
               },
               {
                 id: 'shipping',
@@ -160,6 +199,15 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.shipping',
                 path: ROUTES.PORTAL_SHIPPING,
                 allowedRoles: ROLE_ACCESS.FULFILLMENT,
+                requiredPermissions: ['SHIPMENTS:READ'],
+              },
+              {
+                id: 'vendor-submissions',
+                type: 'item',
+                labelKey: 'nav.items.vendorSubmissions',
+                path: ROUTES.PORTAL_VENDOR_SUBMISSIONS,
+                allowedRoles: ROLE_ACCESS.FULFILLMENT,
+                requiredPermissions: ['VENDOR_SUBMISSIONS:READ'],
               },
               {
                 id: 'cs',
@@ -167,6 +215,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.cs',
                 path: ROUTES.PORTAL_CS,
                 allowedRoles: ROLE_ACCESS.CS,
+                requiredPermissions: ['ORDERS:READ'],
               },
             ],
           },
@@ -183,6 +232,13 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.taskList',
                 path: ROUTES.PORTAL_DESIGN_TASKS,
                 allowedRoles: ROLE_ACCESS.DESIGN,
+                requiredPermissions: [
+                  'DESIGN:READ',
+                  'DESIGN:WRITE',
+                  'DESIGN:WORK',
+                  'DESIGN:REVIEW',
+                  'DESIGN_TASKS:READ',
+                ],
               },
               {
                 id: 'template-center',
@@ -190,6 +246,13 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.templateCenter',
                 path: ROUTES.PORTAL_TEMPLATE_CENTER,
                 allowedRoles: ROLE_ACCESS.DESIGN,
+                requiredPermissions: [
+                  'DESIGN:READ',
+                  'DESIGN:WRITE',
+                  'DESIGN:WORK',
+                  'DESIGN:REVIEW',
+                  'DESIGN_TASKS:READ',
+                ],
               },
             ],
           },
@@ -214,6 +277,15 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.summary',
                 path: ROUTES.PORTAL_FINANCE_SUMMARY,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['FINANCE:READ'],
+              },
+              {
+                id: 'reports',
+                type: 'item',
+                labelKey: 'nav.items.reports',
+                path: ROUTES.PORTAL_REPORTS,
+                allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['REPORTS:READ'],
               },
               {
                 id: 'finance-balance',
@@ -221,6 +293,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.balance',
                 path: ROUTES.PORTAL_FINANCE_BALANCE,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['FINANCE:READ'],
               },
               {
                 id: 'finance-payout',
@@ -228,6 +301,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.payout',
                 path: ROUTES.PORTAL_FINANCE_PAYOUT,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['FINANCE:READ'],
               },
               {
                 id: 'compensation-pool',
@@ -235,6 +309,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.compensationPool',
                 path: ROUTES.PORTAL_COMPENSATION_POOL,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['FINANCE:READ'],
               },
             ],
           },
@@ -251,6 +326,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.vendorList',
                 path: ROUTES.PORTAL_VENDOR_LIST,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['VENDORS:READ'],
               },
               {
                 id: 'products-cost',
@@ -258,6 +334,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.productsCost',
                 path: ROUTES.PORTAL_PRODUCTS_COST,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['VENDORS:READ'],
               },
               {
                 id: 'store-routing',
@@ -265,6 +342,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.storeRouting',
                 path: ROUTES.PORTAL_STORE_ROUTING,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['VENDORS:READ'],
               },
             ],
           },
@@ -274,6 +352,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
             labelKey: 'nav.groups.customers',
             path: ROUTES.PORTAL_CUSTOMERS,
             allowedRoles: [APP_ROLES.ADMIN, APP_ROLES.CS],
+            requiredPermissions: ['CUSTOMERS:READ'],
           },
         ],
       },
@@ -296,6 +375,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.usersRoles',
                 path: ROUTES.PORTAL_USERS_ROLES,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['AUTH:READ'],
               },
               {
                 id: 'shops-stores',
@@ -303,6 +383,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.shopsStores',
                 path: ROUTES.PORTAL_SHOPS_STORES,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['SHOPS:READ'],
               },
               {
                 id: 'system-config',
@@ -310,6 +391,15 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.systemConfig',
                 path: ROUTES.PORTAL_SYSTEM_CONFIG,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['SYSTEM:READ'],
+              },
+              {
+                id: 'api-coverage',
+                type: 'item',
+                labelKey: 'nav.items.apiCoverage',
+                path: ROUTES.PORTAL_API_COVERAGE,
+                allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['MANAGE_SYSTEM'],
               },
               {
                 id: 'audit-log',
@@ -317,6 +407,7 @@ const SIDEBAR_NAVIGATION_ROOT = [
                 labelKey: 'nav.items.auditLog',
                 path: ROUTES.PORTAL_AUDIT_LOG,
                 allowedRoles: ROLE_ACCESS.ADMIN,
+                requiredPermissions: ['AUDIT:READ'],
               },
             ],
           },
@@ -388,6 +479,34 @@ function cloneNavigationItem(item) {
   }
 
   return { ...item }
+}
+
+function canAccessByPermission(item, user) {
+  return !item.requiredPermissions || hasAnyPermission(user, item.requiredPermissions)
+}
+
+function filterItemByUser(item, user) {
+  if (!canAccessByPermission(item, user)) {
+    return null
+  }
+
+  if (item.type === 'section') {
+    const items = item.items.map((child) => filterItemByUser(child, user)).filter(Boolean)
+
+    return items.length > 0 ? { ...item, items } : null
+  }
+
+  if (item.children) {
+    const children = item.children.map((child) => filterItemByUser(child, user)).filter(Boolean)
+
+    return children.length > 0 || item.path ? { ...item, children } : null
+  }
+
+  return { ...item }
+}
+
+export function filterNavigationByUser(navigation, user) {
+  return navigation.map((item) => filterItemByUser(item, user)).filter(Boolean)
 }
 
 export function filterNavigationByRole(navigation, role) {

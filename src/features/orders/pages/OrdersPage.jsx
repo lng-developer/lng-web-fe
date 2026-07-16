@@ -4,12 +4,16 @@ import { useTranslation } from 'react-i18next'
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
 import SwapVertIcon from '@mui/icons-material/SwapVert'
@@ -27,6 +31,7 @@ import {
   Skeleton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -35,12 +40,30 @@ import { useSnackbar } from 'notistack'
 import DateRangePicker from '@/components/form/DateRangePicker'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import {
+  useAddOrderCaseCommentMutation,
+  useCancelOrderCaseMutation,
+  useCancelOrderItemMutation,
+  useCreateOrderCaseMutation,
+  useCreateOrderItemReplacementMutation,
   useImportOrdersMutation,
+  useMarkFulfillmentReadyMutation,
+  useRecheckOrderItemMutation,
+  useResolveOrderCaseMutation,
+  useRetryImportJobMutation,
   useUpdateOrderBuyerMutation,
+  useUpdateOrderCaseMutation,
   useUpdateOrderCaseStatusMutation,
   useUpdateOrderShippingAddressMutation,
+  useUpdateOrderShippingServiceMutation,
+  useValidateOrderAddressMutation,
 } from '@/features/orders/api/orders.mutations'
 import {
+  useCustomerExceptionsQuery,
+  useImportIssuesQuery,
+  useImportJobIssuesQuery,
+  useImportJobQuery,
+  useImportJobRawRecordsQuery,
+  useOrderCasesQuery,
   useOrderDetailQuery,
   useOrderWorkbenchQuery,
   useShopsQuery,
@@ -55,6 +78,11 @@ import {
   getDefaultExpandedOrderIds,
   getPaginationPages,
 } from '@/features/orders/utils/ordersDisplay'
+import {
+  mapCustomerExceptionRows,
+  mapImportIssueRows,
+  mapOrderCaseRows,
+} from '@/features/orders/utils/ordersOps'
 
 const tableColumns =
   '44px minmax(150px, 1.25fr) minmax(120px, 0.9fr) minmax(145px, 1.1fr) minmax(145px, 1.1fr) minmax(120px, 0.95fr) minmax(140px, 1.05fr) minmax(100px, 0.75fr) minmax(110px, 0.8fr) minmax(95px, 0.7fr) 56px'
@@ -81,6 +109,18 @@ const customerFieldKeys = [
   ['phoneNumber'],
 ]
 
+function getInitialSelectedOrderId() {
+  return new URLSearchParams(window.location.search).get('orderId') || ''
+}
+
+function updateOrdersUrl({ orderId }) {
+  const params = new URLSearchParams(window.location.search)
+  if (orderId) params.set('orderId', orderId)
+  else params.delete('orderId')
+  const query = params.toString()
+  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+}
+
 function getDisplayText(t, item) {
   if (!item) return ''
   if (typeof item === 'string' || typeof item === 'number') return item
@@ -90,24 +130,24 @@ function getDisplayText(t, item) {
 
 function StatusBadge({ label, color = 'success' }) {
   const variants = {
-    success: { text: '#00B86B', border: '#58D99A', bg: '#E8FFF4' },
-    warning: { text: '#FF6B00', border: '#FFB85A', bg: '#FFF7E6' },
-    danger: { text: '#F04438', border: '#F04438', bg: '#FFF1F0' },
+    success: 'success',
+    warning: 'warning',
+    danger: 'error',
   }
-  const current = variants[color]
+  const paletteColor = variants[color] || variants.success
 
   return (
     <Chip
       label={label}
       size="small"
-      sx={{
+      sx={(theme) => ({
         height: 24,
-        bgcolor: current.bg,
-        border: `1px solid ${current.border}`,
-        color: current.text,
+        bgcolor: theme.palette[paletteColor].light,
+        border: `1px solid ${theme.palette[paletteColor].main}`,
+        color: theme.palette[paletteColor].main,
         fontWeight: 500,
         '& .MuiChip-label': { px: 1 },
-      }}
+      })}
     />
   )
 }
@@ -183,6 +223,159 @@ function DetailField({ label, value, valueAlign = 'right' }) {
   )
 }
 
+function getCollectionCount(data) {
+  if (!data) return 0
+  if (typeof data.total === 'number') return data.total
+  if (typeof data.count === 'number') return data.count
+  if (typeof data.pagination?.total === 'number') return data.pagination.total
+  if (Array.isArray(data.items)) return data.items.length
+  if (Array.isArray(data.rows)) return data.rows.length
+  if (Array.isArray(data.results)) return data.results.length
+  if (Array.isArray(data.data)) return data.data.length
+  return 0
+}
+
+function TextActionDialog({
+  confirmLabel = 'Save',
+  label,
+  loading = false,
+  onClose,
+  onSubmit,
+  open,
+  required = false,
+  title,
+}) {
+  const [value, setValue] = useState('')
+
+  const handleSubmit = () => {
+    const cleaned = value.trim()
+    if (required && !cleaned) return
+    onSubmit(cleaned)
+    setValue('')
+  }
+
+  const handleClose = () => {
+    setValue('')
+    onClose()
+  }
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Stack spacing={2} sx={{ p: 2.5 }}>
+        <Typography variant="h6">{title}</Typography>
+        <TextField
+          label={label}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          multiline
+          minRows={3}
+          fullWidth
+        />
+        <Stack direction="row" justifyContent="flex-end" spacing={1}>
+          <Button variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={loading || (required && !value.trim())}
+            onClick={handleSubmit}
+          >
+            {confirmLabel}
+          </Button>
+        </Stack>
+      </Stack>
+    </Dialog>
+  )
+}
+
+function CreateCaseDialog({ loading = false, onClose, onSubmit, open }) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+
+  const handleClose = () => {
+    setTitle('')
+    setDescription('')
+    onClose()
+  }
+
+  const handleSubmit = () => {
+    onSubmit({ title: title.trim(), description: description.trim() })
+    setTitle('')
+    setDescription('')
+  }
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Stack spacing={2} sx={{ p: 2.5 }}>
+        <Typography variant="h6">Create case</Typography>
+        <TextField
+          label="What happened?"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Operator note"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          multiline
+          minRows={3}
+          fullWidth
+        />
+        <Stack direction="row" justifyContent="flex-end" spacing={1}>
+          <Button variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button variant="contained" disabled={loading || !title.trim()} onClick={handleSubmit}>
+            Create
+          </Button>
+        </Stack>
+      </Stack>
+    </Dialog>
+  )
+}
+
+function ShippingServiceDialog({ loading = false, onClose, onSubmit, open, service = {} }) {
+  const [level, setLevel] = useState(service.level || '')
+  const [name, setName] = useState(service.name || '')
+
+  const handleClose = () => {
+    onClose()
+  }
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Stack spacing={2} sx={{ p: 2.5 }}>
+        <Typography variant="h6">Update shipping service</Typography>
+        <TextField
+          label="Service level"
+          value={level}
+          onChange={(event) => setLevel(event.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Service name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          fullWidth
+        />
+        <Stack direction="row" justifyContent="flex-end" spacing={1}>
+          <Button variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={loading || (!level.trim() && !name.trim())}
+            onClick={() => onSubmit({ level: level.trim(), name: name.trim() })}
+          >
+            Save
+          </Button>
+        </Stack>
+      </Stack>
+    </Dialog>
+  )
+}
+
 function OrderTabs({ activeTab, onChange, tabs }) {
   const { t } = useTranslation()
 
@@ -225,8 +418,8 @@ function OrderTabs({ activeTab, onChange, tabs }) {
                 px: 0.7,
                 py: 0.1,
                 borderRadius: theme.shape.borderRadiusPill,
-                bgcolor: active ? theme.palette.primary.main : '#E9EEF5',
-                color: active ? theme.palette.common.white : '#6B7280',
+                bgcolor: active ? theme.palette.primary.main : theme.palette.background.default,
+                color: active ? theme.palette.common.white : theme.palette.text.secondary,
                 fontSize: 11,
                 lineHeight: '16px',
               })}
@@ -296,7 +489,8 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
         <Stack
           sx={{
             alignItems: 'center',
-            borderBottom: '1px solid #E5E7EB',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             flexDirection: 'row',
             height: 56,
             justifyContent: 'space-between',
@@ -305,14 +499,18 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
         >
           <Typography
             variant="h6"
-            sx={{ color: '#111827', fontSize: 18, fontWeight: 600, marginTop: 2 }}
+            sx={{ color: 'text.primary', fontSize: 18, fontWeight: 600, marginTop: 2 }}
           >
             {t('orders.importOrders.title')}
           </Typography>
         </Stack>
 
         <Stack spacing={1.5} sx={{ px: 3, pt: 2.25, pb: 2.5 }}>
-          <Typography variant="caption" sx={{ color: '#6B7280', fontSize: 11, fontWeight: 500 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontSize: 11, fontWeight: 500 }}
+          >
             {t('orders.importOrders.source')}
           </Typography>
           <FormControl fullWidth size="small">
@@ -336,7 +534,11 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
             </Select>
           </FormControl>
 
-          <Typography variant="caption" sx={{ color: '#6B7280', fontSize: 11, fontWeight: 500 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontSize: 11, fontWeight: 500 }}
+          >
             {t('orders.importOrders.store')}
           </Typography>
           <FormControl fullWidth size="small">
@@ -352,7 +554,7 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
               sx={{
                 height: 40,
                 borderRadius: 2,
-                color: selectedStore ? 'text.primary' : '#9BA2B3',
+                color: selectedStore ? 'text.primary' : 'text.disabled',
                 '& .MuiSelect-select': {
                   py: 1.1,
                 },
@@ -368,7 +570,8 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
 
           <Typography
             variant="caption"
-            sx={{ color: '#6B7280', fontSize: 11, fontWeight: 500, pt: 0.5 }}
+            color="text.secondary"
+            sx={{ fontSize: 11, fontWeight: 500, pt: 0.5 }}
           >
             {t('orders.importOrders.file')}
           </Typography>
@@ -376,8 +579,9 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
             component="label"
             sx={{
               alignItems: 'center',
-              bgcolor: '#F1F6FE',
-              border: '1.5px dashed #96B7F3',
+              bgcolor: 'info.light',
+              border: '1.5px dashed',
+              borderColor: 'info.main',
               borderRadius: 2.5,
               cursor: 'pointer',
               display: 'flex',
@@ -396,9 +600,9 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
             <Box
               sx={{
                 alignItems: 'center',
-                bgcolor: '#DEEAFE',
+                bgcolor: 'background.paper',
                 borderRadius: '50%',
-                color: '#5B8DEF',
+                color: 'info.main',
                 display: 'flex',
                 height: 48,
                 justifyContent: 'center',
@@ -408,10 +612,13 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
             >
               <CloudUploadOutlinedIcon />
             </Box>
-            <Typography variant="body2" sx={{ color: '#111827', fontSize: 13, fontWeight: 500 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.primary', fontSize: 13, fontWeight: 500 }}
+            >
               {selectedFile?.name || t('orders.importOrders.uploadTitle')}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#6B7280', fontSize: 12, mt: 0.75 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, mt: 0.75 }}>
               {t('orders.importOrders.uploadHint')}
             </Typography>
           </Box>
@@ -419,7 +626,8 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
 
         <Box
           sx={{
-            borderTop: '1px solid #E5E7EB',
+            borderTop: '1px solid',
+            borderColor: 'divider',
             display: 'grid',
             gridTemplateColumns: '120px 1fr 160px',
             px: 3,
@@ -564,7 +772,7 @@ function TableHeader() {
         height: 37,
         alignItems: 'center',
         px: 2,
-        bgcolor: '#FAFBFC',
+        bgcolor: 'background.default',
         borderBottom: '1px solid',
         borderColor: 'divider',
       }}
@@ -573,7 +781,7 @@ function TableHeader() {
         <Typography
           key={header || 'expand'}
           variant="caption"
-          sx={{ color: '#475467', fontWeight: 600, textTransform: 'uppercase' }}
+          sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}
         >
           {header ? t(`orders.table.${header}`) : ''}
         </Typography>
@@ -603,7 +811,7 @@ function buildCustomerForm(order = {}) {
 function CustomerTextField({ label, name, onChange, placeholder, value }) {
   return (
     <Stack spacing={0.75}>
-      <Typography variant="body2" sx={{ color: '#181D27', fontSize: 14 }}>
+      <Typography variant="body2" sx={{ color: 'text.primary', fontSize: 14 }}>
         {label}
       </Typography>
       <TextField
@@ -703,7 +911,8 @@ function UpdateCustomerModal({ onClose, open, order }) {
         <Stack
           sx={{
             alignItems: 'center',
-            borderBottom: '1px solid #E5E8F0',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             flexDirection: 'row',
             height: 77,
             px: 4,
@@ -711,7 +920,7 @@ function UpdateCustomerModal({ onClose, open, order }) {
         >
           <Typography
             variant="h6"
-            sx={{ color: '#181D27', fontSize: 20, fontWeight: 700, marginTop: 2 }}
+            sx={{ color: 'text.primary', fontSize: 20, fontWeight: 700, marginTop: 2 }}
           >
             {t('orders.updateCustomer.title')}
           </Typography>
@@ -742,7 +951,8 @@ function UpdateCustomerModal({ onClose, open, order }) {
 
         <Box
           sx={{
-            borderTop: '1px solid #E5E8F0',
+            borderTop: '1px solid',
+            borderColor: 'divider',
             display: 'grid',
             gridTemplateColumns: '110px 1fr 150px',
             px: 4,
@@ -819,7 +1029,7 @@ function OpenCaseModal({ onClose, open, order }) {
             mb: 2.5,
           }}
         >
-          <Typography variant="h6" sx={{ color: '#181D27', fontSize: 20, fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ color: 'text.primary', fontSize: 20, fontWeight: 700 }}>
             {t('orders.openCase.title')}
           </Typography>
         </Stack>
@@ -838,7 +1048,7 @@ function OpenCaseModal({ onClose, open, order }) {
             sx={{
               height: 44,
               borderRadius: 2,
-              color: selectedCase ? 'text.primary' : '#97A1C0',
+              color: selectedCase ? 'text.primary' : 'text.disabled',
               '& .MuiSelect-select': {
                 py: 1.25,
               },
@@ -934,7 +1144,7 @@ function OrderRow({ expanded, onToggle, order }) {
         >
           <EditOutlinedIcon fontSize="small" />
         </IconButton>
-        <CheckCircleIcon fontSize="small" sx={{ color: '#62D989' }} />
+        <CheckCircleIcon fontSize="small" color="success" />
         <UpdateCustomerModal
           key={`${order.apiId}-${customerModalOpen}`}
           open={customerModalOpen}
@@ -953,7 +1163,7 @@ function OrderRow({ expanded, onToggle, order }) {
         <IconButton
           aria-label={t('orders.openCase.title')}
           onClick={() => setCaseModalOpen(true)}
-          sx={{ width: 28, height: 28, color: '#00B86B' }}
+          sx={{ width: 28, height: 28, color: 'success.main' }}
         >
           <AddBoxOutlinedIcon fontSize="small" />
         </IconButton>
@@ -1058,7 +1268,7 @@ function CustomizationInfo({ customization }) {
       {hasDynamicCustomization ? (
         <>
           {dynamicFields.length === 0 && dynamicImages.length === 0 ? (
-            <Typography variant="body2" sx={{ color: '#8D9CC5' }}>
+            <Typography variant="body2" color="text.disabled">
               {t('orders.values.common.noData')}
             </Typography>
           ) : null}
@@ -1072,7 +1282,7 @@ function CustomizationInfo({ customization }) {
           ))}
           {dynamicImages.map((image, index) => (
             <Box key={`${image.url}-${index}`}>
-              <Typography variant="body2" sx={{ color: '#8D9CC5', mb: 1 }}>
+              <Typography variant="body2" color="text.disabled" sx={{ mb: 1 }}>
                 {image.label || t('orders.fields.customerPhoto')}
               </Typography>
               <Box
@@ -1089,7 +1299,7 @@ function CustomizationInfo({ customization }) {
           {topFields.map(([labelKey, value]) => (
             <DetailField key={labelKey} label={t(labelKey)} value={value} valueAlign="left" />
           ))}
-          <Typography variant="body2" sx={{ color: '#8D9CC5' }}>
+          <Typography variant="body2" color="text.disabled">
             {t('orders.fields.customerPhoto')}
           </Typography>
           <Stack direction="row" spacing={2.5}>
@@ -1123,7 +1333,7 @@ function CompactInput({ value, endIcon = false, multiline = false, rows = 1 }) {
           ? {
               endAdornment: (
                 <InputAdornment position="end">
-                  <SwapVertIcon sx={{ color: '#8D9CC5' }} />
+                  <SwapVertIcon sx={{ color: 'text.disabled' }} />
                 </InputAdornment>
               ),
             }
@@ -1138,7 +1348,11 @@ function FulfillmentInfo({ fulfillment }) {
 
   return (
     <Stack spacing={1.35} sx={{ width: '100%' }}>
-      <Typography variant="caption" sx={{ color: '#9AA7BD', fontWeight: 800, letterSpacing: 0.8 }}>
+      <Typography
+        variant="caption"
+        color="text.disabled"
+        sx={{ fontWeight: 800, letterSpacing: 0.8 }}
+      >
         {t('orders.detail.fulfillment')}
       </Typography>
       <Box className="grid grid-cols-2 gap-4">
@@ -1199,31 +1413,499 @@ function NotePanel({ fulfillment }) {
   )
 }
 
-function ExpandedOrderDetail({ order }) {
+function ActionIconButton({ color = 'default', disabled = false, icon, label, onClick }) {
+  return (
+    <Tooltip title={label}>
+      <Box
+        component="span"
+        sx={{
+          alignItems: 'center',
+          display: 'inline-flex',
+          flexDirection: 'column',
+          gap: 0.5,
+          minWidth: 68,
+        }}
+      >
+        <IconButton
+          color={color}
+          disabled={disabled}
+          onClick={onClick}
+          size="small"
+          sx={(theme) => ({
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 1.5,
+            height: 34,
+            width: 34,
+          })}
+        >
+          {icon}
+        </IconButton>
+        <Typography
+          variant="caption"
+          color={disabled ? 'text.disabled' : 'text.secondary'}
+          sx={{ lineHeight: 1.2, maxWidth: 78, textAlign: 'center' }}
+        >
+          {label}
+        </Typography>
+      </Box>
+    </Tooltip>
+  )
+}
+
+function ActionsCard({ children, subtitle, title }) {
+  return (
+    <Paper variant="outlined" sx={{ p: 1.25 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+        {title}
+      </Typography>
+      {subtitle ? (
+        <Typography variant="caption" color="text.secondary">
+          {subtitle}
+        </Typography>
+      ) : null}
+      <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
+        {children}
+      </Stack>
+    </Paper>
+  )
+}
+
+function ExpandedOrderDetail({ onRefresh, order }) {
+  const { enqueueSnackbar } = useSnackbar()
+  const [customerModalOpen, setCustomerModalOpen] = useState(false)
+  const [serviceModalOpen, setServiceModalOpen] = useState(false)
+  const [textAction, setTextAction] = useState(null)
   const displayOrder = order
+  const orderId = order.apiId
+  const firstWorkbenchItem = order.workbenchItems?.[0]?.item || {}
+  const orderItemId = firstWorkbenchItem.id
+  const validateAddressMutation = useValidateOrderAddressMutation()
+  const shippingServiceMutation = useUpdateOrderShippingServiceMutation()
+  const recheckItemMutation = useRecheckOrderItemMutation()
+  const markReadyMutation = useMarkFulfillmentReadyMutation()
+  const replacementMutation = useCreateOrderItemReplacementMutation()
+  const cancelItemMutation = useCancelOrderItemMutation()
+  const currentShippingService = order.raw?.shippingService || {}
+
+  const refreshRow = () => {
+    onRefresh?.()
+  }
+  const runMutation = async (mutation, payload, successMessage) => {
+    try {
+      await mutation.mutateAsync(payload)
+      enqueueSnackbar(successMessage, { variant: SNACKBAR_VARIANTS.SUCCESS })
+      refreshRow()
+    } catch (error) {
+      enqueueSnackbar(error?.message || 'Action failed', { variant: SNACKBAR_VARIANTS.ERROR })
+    }
+  }
+  const submitTextAction = (value) => {
+    if (textAction === 'replacement') {
+      runMutation(
+        replacementMutation,
+        { orderItemId, reason: value, quantity: 1 },
+        'Replacement created.',
+      )
+    }
+    if (textAction === 'cancelItem') {
+      runMutation(cancelItemMutation, { orderItemId, reason: value }, 'Item cancelled.')
+    }
+    setTextAction(null)
+  }
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        display: 'grid',
-        gridTemplateColumns:
-          'minmax(150px, 0.65fr) minmax(220px, 1fr) minmax(320px, 1.35fr) minmax(360px, 1.45fr) minmax(245px, 1fr)',
-        gap: 3.5,
-        alignItems: 'flex-start',
-        minWidth: 1460,
-        px: 3,
-        py: 2.5,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <ProductImages images={displayOrder.productImages} />
-      <ProductInfo product={displayOrder.product} />
-      <CustomizationInfo customization={displayOrder.customization} />
-      <FulfillmentInfo fulfillment={displayOrder.fulfillment} />
-      <NotePanel fulfillment={displayOrder.fulfillment} />
-    </Box>
+    <>
+      <Box
+        sx={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns:
+            'minmax(150px, 0.65fr) minmax(220px, 1fr) minmax(320px, 1.35fr) minmax(360px, 1.45fr) minmax(245px, 1fr)',
+          gap: 3.5,
+          alignItems: 'flex-start',
+          minWidth: 1460,
+          px: 3,
+          py: 2.5,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <ProductImages images={displayOrder.productImages} />
+        <ProductInfo product={displayOrder.product} />
+        <CustomizationInfo customization={displayOrder.customization} />
+        <FulfillmentInfo fulfillment={displayOrder.fulfillment} />
+        <Stack spacing={1.25}>
+          <NotePanel fulfillment={displayOrder.fulfillment} />
+          <ActionsCard subtitle={order.id} title="Order actions">
+            <ActionIconButton
+              disabled={!orderId || validateAddressMutation.isPending}
+              icon={<FactCheckOutlinedIcon fontSize="small" />}
+              label="Validate"
+              onClick={() =>
+                runMutation(validateAddressMutation, { orderId }, 'Address validation requested.')
+              }
+            />
+            <ActionIconButton
+              disabled={!orderId}
+              icon={<PersonOutlineOutlinedIcon fontSize="small" />}
+              label="Buyer"
+              onClick={() => setCustomerModalOpen(true)}
+            />
+            <ActionIconButton
+              disabled={!orderId}
+              icon={<LocalShippingOutlinedIcon fontSize="small" />}
+              label="Service"
+              onClick={() => setServiceModalOpen(true)}
+            />
+          </ActionsCard>
+          <ActionsCard
+            subtitle={firstWorkbenchItem.sku || order.product?.sku}
+            title="Order item actions"
+          >
+            <ActionIconButton
+              disabled={!orderItemId || recheckItemMutation.isPending}
+              icon={<RefreshIcon fontSize="small" />}
+              label="Recheck"
+              onClick={() =>
+                runMutation(recheckItemMutation, { orderItemId }, 'Item recheck requested.')
+              }
+            />
+            <ActionIconButton
+              color="success"
+              disabled={!orderItemId || markReadyMutation.isPending}
+              icon={<CheckCircleIcon fontSize="small" />}
+              label="Ready"
+              onClick={() =>
+                runMutation(markReadyMutation, { orderItemId }, 'Item marked fulfillment-ready.')
+              }
+            />
+            <ActionIconButton
+              disabled={!orderItemId}
+              icon={<AddBoxOutlinedIcon fontSize="small" />}
+              label="Replace"
+              onClick={() => setTextAction('replacement')}
+            />
+            <ActionIconButton
+              color="error"
+              disabled={!orderItemId}
+              icon={<CancelOutlinedIcon fontSize="small" />}
+              label="Cancel"
+              onClick={() => setTextAction('cancelItem')}
+            />
+          </ActionsCard>
+        </Stack>
+      </Box>
+      <UpdateCustomerModal
+        open={customerModalOpen}
+        order={order}
+        onClose={() => setCustomerModalOpen(false)}
+      />
+      <ShippingServiceDialog
+        open={serviceModalOpen}
+        service={currentShippingService}
+        loading={shippingServiceMutation.isPending}
+        onClose={() => setServiceModalOpen(false)}
+        onSubmit={(payload) =>
+          runMutation(
+            shippingServiceMutation,
+            { orderId, ...payload },
+            'Shipping service updated.',
+          ).then(() => setServiceModalOpen(false))
+        }
+      />
+      <TextActionDialog
+        open={Boolean(textAction)}
+        title={textAction === 'replacement' ? 'Create replacement item' : 'Cancel item'}
+        label={textAction === 'replacement' ? 'Replacement reason' : 'Cancel reason'}
+        confirmLabel={textAction === 'replacement' ? 'Create' : 'Cancel item'}
+        required={textAction === 'cancelItem'}
+        loading={replacementMutation.isPending || cancelItemMutation.isPending}
+        onClose={() => setTextAction(null)}
+        onSubmit={submitTextAction}
+      />
+    </>
+  )
+}
+
+function QueueRows({ actions, emptyLabel, loading, rows }) {
+  if (loading) {
+    return (
+      <Stack spacing={1}>
+        <Skeleton variant="rounded" height={58} />
+        <Skeleton variant="rounded" height={58} />
+      </Stack>
+    )
+  }
+
+  if (rows.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        {emptyLabel}
+      </Typography>
+    )
+  }
+
+  return (
+    <Stack spacing={1}>
+      {rows.map((row) => (
+        <Paper key={row.id} variant="outlined" sx={{ p: 1.25 }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                {row.primary}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {row.secondary}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {row.message}
+              </Typography>
+            </Box>
+            <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
+              <Chip size="small" label={row.tag} />
+              <Chip size="small" label={row.status} />
+              <Typography variant="caption" color="text.secondary">
+                {row.date}
+              </Typography>
+              {actions?.(row)}
+            </Stack>
+          </Stack>
+        </Paper>
+      ))}
+    </Stack>
+  )
+}
+
+function CasesTab({ onRefresh, query, selectedOrderId }) {
+  const { enqueueSnackbar } = useSnackbar()
+  const [action, setAction] = useState(null)
+  const rows = mapOrderCaseRows(query.data)
+  const createMutation = useCreateOrderCaseMutation()
+  const updateMutation = useUpdateOrderCaseMutation()
+  const resolveMutation = useResolveOrderCaseMutation()
+  const cancelMutation = useCancelOrderCaseMutation()
+  const commentMutation = useAddOrderCaseCommentMutation()
+  const activeMutation =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    resolveMutation.isPending ||
+    cancelMutation.isPending ||
+    commentMutation.isPending
+
+  const runCaseAction = async (mutation, payload, message) => {
+    try {
+      await mutation.mutateAsync(payload)
+      enqueueSnackbar(message, { variant: SNACKBAR_VARIANTS.SUCCESS })
+      query.refetch()
+      onRefresh?.()
+    } catch (error) {
+      enqueueSnackbar(error?.message || 'Case action failed', { variant: SNACKBAR_VARIANTS.ERROR })
+    }
+  }
+
+  const submitTextAction = (value) => {
+    if (!action) return
+    if (action.type === 'edit') {
+      runCaseAction(updateMutation, { caseId: action.row.id, title: value }, 'Case updated.')
+    }
+    if (action.type === 'resolve') {
+      runCaseAction(
+        resolveMutation,
+        { caseId: action.row.id, resolutionNote: value },
+        'Case resolved.',
+      )
+    }
+    if (action.type === 'cancel') {
+      runCaseAction(
+        cancelMutation,
+        { caseId: action.row.id, cancelReason: value },
+        'Case cancelled.',
+      )
+    }
+    if (action.type === 'comment') {
+      runCaseAction(commentMutation, { caseId: action.row.id, body: value }, 'Comment added.')
+    }
+    setAction(null)
+  }
+
+  return (
+    <Stack spacing={1.5}>
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
+          <Box>
+            <Typography variant="h6">Cases</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Create and close customer-service cases for selected orders.
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            disabled={!selectedOrderId}
+            onClick={() => setAction({ type: 'create' })}
+          >
+            Create case
+          </Button>
+        </Stack>
+      </Paper>
+      <QueueRows
+        rows={rows}
+        loading={query.isFetching}
+        emptyLabel="No cases found."
+        actions={(row) => (
+          <>
+            <Button size="small" onClick={() => setAction({ type: 'edit', row })}>
+              Edit
+            </Button>
+            <Button size="small" onClick={() => setAction({ type: 'comment', row })}>
+              Comment
+            </Button>
+            <Button size="small" onClick={() => setAction({ type: 'resolve', row })}>
+              Resolve
+            </Button>
+            <Button color="error" size="small" onClick={() => setAction({ type: 'cancel', row })}>
+              Cancel
+            </Button>
+          </>
+        )}
+      />
+      <CreateCaseDialog
+        open={action?.type === 'create'}
+        loading={activeMutation}
+        onClose={() => setAction(null)}
+        onSubmit={(payload) => {
+          runCaseAction(
+            createMutation,
+            { orderId: selectedOrderId, caseType: 'OTHER', severity: 'MEDIUM', ...payload },
+            'Case created.',
+          )
+          setAction(null)
+        }}
+      />
+      <TextActionDialog
+        open={Boolean(action && action.type !== 'create')}
+        title={
+          action?.type === 'edit'
+            ? 'Edit case'
+            : action?.type === 'comment'
+              ? 'Add case comment'
+              : action?.type === 'resolve'
+                ? 'Resolve case'
+                : 'Cancel case'
+        }
+        label={
+          action?.type === 'edit'
+            ? 'Case title'
+            : action?.type === 'comment'
+              ? 'Comment'
+              : action?.type === 'resolve'
+                ? 'Resolution note'
+                : 'Cancel reason'
+        }
+        required={action?.type === 'edit' || action?.type === 'comment'}
+        loading={activeMutation}
+        onClose={() => setAction(null)}
+        onSubmit={submitTextAction}
+      />
+    </Stack>
+  )
+}
+
+function ExceptionsTab({ onOpenOrder, query }) {
+  const rows = mapCustomerExceptionRows(query.data)
+
+  return (
+    <Stack spacing={1.5}>
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Typography variant="h6">Customer Exceptions</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Read-only queue from order, item, case, customization, and shipment state.
+        </Typography>
+      </Paper>
+      <QueueRows
+        rows={rows}
+        loading={query.isFetching}
+        emptyLabel="No customer exceptions found."
+        actions={(row) => (
+          <Button size="small" disabled={!row.orderId} onClick={() => onOpenOrder(row.orderId)}>
+            Open detail
+          </Button>
+        )}
+      />
+    </Stack>
+  )
+}
+
+function ImportIssuesTab({ query }) {
+  const { enqueueSnackbar } = useSnackbar()
+  const rows = mapImportIssueRows(query.data)
+  const [selectedJobId, setSelectedJobId] = useState('')
+  const jobQuery = useImportJobQuery(selectedJobId, { enabled: Boolean(selectedJobId) })
+  const jobIssuesQuery = useImportJobIssuesQuery(
+    selectedJobId,
+    { page: 1, limit: 10 },
+    { enabled: Boolean(selectedJobId) },
+  )
+  const rawRecordsQuery = useImportJobRawRecordsQuery(
+    selectedJobId,
+    { page: 1, limit: 10 },
+    { enabled: Boolean(selectedJobId) },
+  )
+  const retryMutation = useRetryImportJobMutation()
+  const retryJob = async () => {
+    if (!selectedJobId) return
+    try {
+      await retryMutation.mutateAsync({ jobId: selectedJobId })
+      enqueueSnackbar('Import job retry requested.', { variant: SNACKBAR_VARIANTS.SUCCESS })
+      query.refetch()
+      jobQuery.refetch()
+      jobIssuesQuery.refetch()
+      rawRecordsQuery.refetch()
+    } catch (error) {
+      enqueueSnackbar(error?.message || 'Retry failed', { variant: SNACKBAR_VARIANTS.ERROR })
+    }
+  }
+
+  return (
+    <Stack spacing={1.5}>
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Typography variant="h6">Import Issues</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Review import failures and inspect job-level issues without raw JSON.
+        </Typography>
+      </Paper>
+      <QueueRows
+        rows={rows}
+        loading={query.isFetching}
+        emptyLabel="No import issues found."
+        actions={(row) => (
+          <Button
+            size="small"
+            disabled={!row.importJobId}
+            onClick={() => setSelectedJobId(row.importJobId)}
+          >
+            Open job
+          </Button>
+        )}
+      />
+      {selectedJobId ? (
+        <Paper variant="outlined" sx={{ p: 1.5 }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                {jobQuery.data?.source || jobQuery.data?.status || 'Import job'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Issues: {getCollectionCount(jobIssuesQuery.data)} | Raw records:{' '}
+                {getCollectionCount(rawRecordsQuery.data)}
+              </Typography>
+            </Box>
+            <Button variant="outlined" disabled={retryMutation.isPending} onClick={retryJob}>
+              Retry job
+            </Button>
+          </Stack>
+        </Paper>
+      ) : null}
+    </Stack>
   )
 }
 
@@ -1350,6 +2032,8 @@ function OrdersTable({
   loading,
   onLimitChange,
   onPageChange,
+  onRefresh,
+  onSelectOrder,
   onToggleOrder,
   orders,
   pagination,
@@ -1382,10 +2066,13 @@ function OrdersTable({
             <Box key={orderKey}>
               <OrderRow
                 expanded={expanded}
-                onToggle={() => onToggleOrder(orderKey)}
+                onToggle={() => {
+                  onSelectOrder?.(order)
+                  onToggleOrder(orderKey)
+                }}
                 order={order}
               />
-              {expanded && <ExpandedOrderDetail order={order} />}
+              {expanded && <ExpandedOrderDetail order={order} onRefresh={onRefresh} />}
             </Box>
           )
         })
@@ -1403,6 +2090,7 @@ function OrdersTable({
 
 export default function OrdersPage() {
   const { i18n, t } = useTranslation()
+  const [selectedOrderId, setSelectedOrderId] = useState(getInitialSelectedOrderId)
   const [activeTab, setActiveTab] = useState('all')
   const [queryTab, setQueryTab] = useState('all')
   const [isTabPending, startTabTransition] = useTransition()
@@ -1430,6 +2118,10 @@ export default function OrdersPage() {
     [filters, queryTab],
   )
   const ordersQuery = useOrderWorkbenchQuery(orderQuery)
+  const operationsQuery = useMemo(() => ({ page: 1, limit: 5 }), [])
+  const customerExceptionsQuery = useCustomerExceptionsQuery(operationsQuery)
+  const orderCasesQuery = useOrderCasesQuery(operationsQuery)
+  const importIssuesQuery = useImportIssuesQuery(operationsQuery)
   const orders = useMemo(
     () =>
       mapWorkbenchRows(ordersQuery.data?.items || [], {
@@ -1455,6 +2147,12 @@ export default function OrdersPage() {
     return getDefaultExpandedOrderIds(orders).filter((orderId) => !collapsedIds.has(orderId))
   }, [collapsedOrderIds, orders])
   const isTabLoading = activeTab !== queryTab || isTabPending || ordersQuery.isLoading
+
+  const handleSelectOrder = (order) => {
+    if (!order?.apiId) return
+    setSelectedOrderId(order.apiId)
+    updateOrdersUrl({ orderId: order.apiId })
+  }
 
   const handleToggleOrder = (orderId) => {
     setCollapsedOrderIds((currentIds) =>
@@ -1503,10 +2201,33 @@ export default function OrdersPage() {
               setCollapsedOrderIds([])
             }}
             onPageChange={(page) => setFilters((current) => ({ ...current, page }))}
+            onRefresh={() => ordersQuery.refetch()}
+            onSelectOrder={handleSelectOrder}
             onToggleOrder={handleToggleOrder}
             orders={orders}
             pagination={pagination}
           />
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 1.5,
+              gridTemplateColumns: { xs: '1fr', xl: 'repeat(3, minmax(0, 1fr))' },
+            }}
+          >
+            <CasesTab
+              query={orderCasesQuery}
+              selectedOrderId={selectedOrderId}
+              onRefresh={() => ordersQuery.refetch()}
+            />
+            <ExceptionsTab
+              query={customerExceptionsQuery}
+              onOpenOrder={(orderId) => {
+                setSelectedOrderId(orderId)
+                updateOrdersUrl({ orderId })
+              }}
+            />
+            <ImportIssuesTab query={importIssuesQuery} />
+          </Box>
         </Stack>
       </Stack>
     </Box>

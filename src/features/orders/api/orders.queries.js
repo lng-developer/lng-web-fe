@@ -38,10 +38,46 @@ export function useOrderSummaryQuery(query = {}, options = {}) {
   })
 }
 
+export function useCustomerExceptionsQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: ordersKeys.customerExceptions(query),
+    queryFn: () => get(ENDPOINTS.ORDERS.CUSTOMER_EXCEPTIONS, query),
+    keepPreviousData: true,
+    ...options,
+  })
+}
+
+export function useOrderCasesQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: ordersKeys.cases(query),
+    queryFn: () => get(ENDPOINTS.ORDERS.CASES, query),
+    keepPreviousData: true,
+    ...options,
+  })
+}
+
+export function useOrderCaseQuery(caseId, options = {}) {
+  return useQuery({
+    queryKey: ordersKeys.caseDetail(caseId),
+    queryFn: () => get(ENDPOINTS.ORDERS.CASE(caseId)),
+    enabled: Boolean(caseId),
+    ...options,
+  })
+}
+
 export function useOrderDetailQuery(orderId, options = {}) {
   return useQuery({
     queryKey: ordersKeys.detail(orderId),
     queryFn: () => get(ENDPOINTS.ORDERS.DETAIL(orderId)),
+    enabled: Boolean(orderId),
+    ...options,
+  })
+}
+
+export function useOrderTimelineQuery(orderId, options = {}) {
+  return useQuery({
+    queryKey: ordersKeys.timeline(orderId),
+    queryFn: () => get(ENDPOINTS.ORDERS.TIMELINE(orderId)),
     enabled: Boolean(orderId),
     ...options,
   })
@@ -52,6 +88,24 @@ export function useExpandedOrderQuery(orderId, options = {}) {
     queryKey: ordersKeys.expanded(orderId),
     queryFn: () => get(ENDPOINTS.ORDERS.EXPANDED(orderId)),
     enabled: Boolean(orderId),
+    ...options,
+  })
+}
+
+export function useOrderItemQuery(orderItemId, options = {}) {
+  return useQuery({
+    queryKey: ordersKeys.item(orderItemId),
+    queryFn: () => get(ENDPOINTS.ORDERS.ITEM(orderItemId)),
+    enabled: Boolean(orderItemId),
+    ...options,
+  })
+}
+
+export function useOrderItemTimelineQuery(orderItemId, options = {}) {
+  return useQuery({
+    queryKey: ordersKeys.itemTimeline(orderItemId),
+    queryFn: () => get(ENDPOINTS.ORDERS.ITEM_TIMELINE(orderItemId)),
+    enabled: Boolean(orderItemId),
     ...options,
   })
 }

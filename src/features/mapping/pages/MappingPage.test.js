@@ -1,0 +1,106 @@
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import test from 'node:test'
+
+test('MappingPage uses a module workflow instead of the generic API workflow page', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('ApiWorkflowPage'), false)
+})
+
+test('MappingPage rule dialog does not render every backend field generically', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('Object.keys(blankRule)'), false)
+})
+
+test('MappingPage rule dialog shows a user-facing rule preview', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('buildMappingRulePreview'), true)
+  assert.equal(source.includes('ArrowForwardIcon'), true)
+  assert.equal(source.includes('(preview.changes || []).map'), true)
+})
+
+test('MappingPage rule dialog compares the current rule with the after-save preview', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('Current'), true)
+  assert.equal(source.includes('After save'), true)
+})
+
+test('MappingPage rule dialog separates required fields from advanced fields', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('mainFields'), true)
+  assert.equal(source.includes('advancedFields'), true)
+  assert.equal(source.includes('How to fill'), true)
+  assert.equal(source.includes('Advanced'), true)
+})
+
+test('MappingPage uses compact icon actions and tighter table spacing', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('IconButton'), true)
+  assert.equal(source.includes('Tooltip'), true)
+  assert.equal(source.includes('aria-label="Edit rule"'), true)
+  assert.equal(source.includes('borderSpacing'), true)
+  assert.equal(source.includes('size="small"'), true)
+})
+
+test('MappingPage uses status toggles instead of disable action buttons', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('role="switch"'), true)
+  assert.equal(source.includes('Toggle rule status'), true)
+  assert.equal(source.includes('Disable rule'), false)
+  assert.equal(source.includes('Activate rule'), false)
+  assert.equal(source.includes('BlockIcon'), false)
+})
+
+test('MappingPage rule table keeps actions right aligned with stable columns', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(
+    source.includes("gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) auto' }"),
+    true,
+  )
+  assert.equal(source.includes('ruleTableColumnSx'), true)
+  assert.equal(source.includes("tableLayout: 'fixed'"), true)
+  assert.equal(source.includes('ruleStatusSwitchSx'), true)
+})
+
+test('MappingPage status switch uses explicit readable on and off styling', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('RuleStatusToggle'), true)
+  assert.equal(source.includes('translateX(18px)'), true)
+  assert.equal(source.includes("'success.main'"), true)
+  assert.equal(source.includes("'action.disabledBackground'"), true)
+})
+
+test('MappingPage exposes search filters and pagination for mapping tables', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('TablePagination'), true)
+  assert.equal(source.includes('Search order item, SKU, config'), true)
+  assert.equal(source.includes('Plan status'), true)
+  assert.equal(source.includes('Search rules'), true)
+  assert.equal(source.includes('Rule status'), true)
+  assert.equal(source.includes('filterBySearch'), true)
+})
+
+test('MappingPage keeps active tab in the URL and lazy loads modal option APIs', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('getInitialMappingTab'), true)
+  assert.equal(source.includes('setMappingTabInUrl'), true)
+  assert.equal(source.includes("searchParams.get('tab')"), true)
+  assert.equal(source.includes('enabled: Boolean(dialogState)'), true)
+})
+
+test('MappingPage resets per-tab table state when switching mapping tabs', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('<RuleSection key={activeTab} type={activeTab} />'), true)
+})

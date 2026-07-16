@@ -2,10 +2,15 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  buildCatalogSetupQuery,
+  buildInternalTemplatePayload,
   buildListingFormPayload,
   buildListingListQuery,
+  buildProductTypeGroupPayload,
+  mapInternalTemplateResponse,
   mapListingResponse,
   mapListingStats,
+  mapProductTypeGroupResponse,
   mapProductTypeOptions,
   mapShopOptions,
   normalizePagination,
@@ -34,6 +39,29 @@ test('buildListingListQuery can search SKU when selected explicitly', () => {
       shopId: 'shop-1',
     }),
     { page: 1, limit: 20, sku: 'SKU-01', shopId: 'shop-1' },
+  )
+})
+
+test('buildListingListQuery maps operational filters and sales sort', () => {
+  assert.deepEqual(
+    buildListingListQuery({
+      productTypeGroupId: 'group-1',
+      psdStatus: 'MISSING',
+      costCenterStatus: 'PRESENT',
+      qcStatus: 'APPROVED',
+      status: 'ACTIVE',
+      sort: 'orderCountDesc',
+    }),
+    {
+      page: 1,
+      limit: 10,
+      productTypeGroupId: 'group-1',
+      psdStatus: 'MISSING',
+      costCenterStatus: 'PRESENT',
+      qcStatus: 'APPROVED',
+      status: 'ACTIVE',
+      sort: 'orderCountDesc',
+    },
   )
 })
 
@@ -89,12 +117,31 @@ test('mapListingResponse flattens catalog listing response for the table', () =>
         asin: 'B0ABC',
         sku: 'SKU-01',
         title: 'Personalized Shirt',
+        shop: { id: 'shop-1', name: 'Acc1' },
         productTypeGroup: { id: 'group-1', name: 'Sweatshirt' },
+        previewAsset: {
+          assetId: 'preview-1',
+          previewUrl: 'https://image.test/preview.jpg',
+        },
         psdTemplateAssetId: 'asset-1',
+        psdTemplateAsset: {
+          assetId: 'asset-1',
+          originalFilename: 'approved-template.psd',
+          size: 2048,
+          downloadUrl: '/api/media/assets/asset-1/download',
+        },
         psdStatus: 'PRESENT',
+        costCenterStatus: 'MISSING',
         qcStatus: 'APPROVED',
         status: 'ACTIVE',
         createdAt: '2026-06-26T00:00:00.000Z',
+        salesChannelCode: 'AMAZON',
+        marketplaceCode: 'AMAZON_US',
+        salesStats: {
+          orderCount: 1,
+          quantitySold: 2,
+          lastSoldAt: '2026-07-15T00:00:00.000Z',
+        },
       },
       {
         locale: 'en',
@@ -106,16 +153,31 @@ test('mapListingResponse flattens catalog listing response for the table', () =>
       asinProductId: 'B0ABC',
       sku: 'SKU-01',
       title: 'Personalized Shirt',
+      previewUrl: 'https://image.test/preview.jpg',
       date: 'Jun 26, 2026',
       total: 1,
       style: 'Sweatshirt',
       designProduct: '',
+      productTypeStatus: '',
+      templateStatus: 'missing',
       variant: '',
       psdId: 'asset-1',
       psdTemplateAssetId: 'asset-1',
+      psdTemplateAsset: {
+        assetId: 'asset-1',
+        originalFilename: 'approved-template.psd',
+        size: 2048,
+        downloadUrl: '/api/media/assets/asset-1/download',
+      },
+      psdTemplateLabel: 'approved-template.psd',
+      psdTemplateSize: '2 KB',
       psdStatus: 'available',
+      costStatus: 'missing',
       store: 'Acc1',
-      seller: '',
+      seller: 'AMAZON / AMAZON_US',
+      channelLabel: 'AMAZON / AMAZON_US',
+      salesLabel: '1 orders / 2 qty',
+      lastSoldAt: 'Jul 15, 2026',
       asinType: 'normal',
       shopId: 'shop-1',
       productTypeGroupId: 'group-1',
@@ -129,15 +191,58 @@ test('mapListingResponse flattens catalog listing response for the table', () =>
         asin: 'B0ABC',
         sku: 'SKU-01',
         title: 'Personalized Shirt',
+        shop: { id: 'shop-1', name: 'Acc1' },
+        previewAsset: {
+          assetId: 'preview-1',
+          previewUrl: 'https://image.test/preview.jpg',
+        },
         productTypeGroup: { id: 'group-1', name: 'Sweatshirt' },
         psdTemplateAssetId: 'asset-1',
+        psdTemplateAsset: {
+          assetId: 'asset-1',
+          originalFilename: 'approved-template.psd',
+          size: 2048,
+          downloadUrl: '/api/media/assets/asset-1/download',
+        },
         psdStatus: 'PRESENT',
+        costCenterStatus: 'MISSING',
         qcStatus: 'APPROVED',
         status: 'ACTIVE',
         createdAt: '2026-06-26T00:00:00.000Z',
+        salesChannelCode: 'AMAZON',
+        marketplaceCode: 'AMAZON_US',
+        salesStats: {
+          orderCount: 1,
+          quantitySold: 2,
+          lastSoldAt: '2026-07-15T00:00:00.000Z',
+        },
       },
     },
   )
+})
+
+test('mapListingResponse never uses shop id as the ownership label', () => {
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-1',
+      shopId: '6881aba9c1bbdfc541b5cd4d',
+      sku: 'SKU-01',
+    }).store,
+    'Unknown shop',
+  )
+})
+
+test('mapListingResponse reads backend timestamp variants and sales activity for the date column', () => {
+  const listing = mapListingResponse(
+    {
+      id: 'listing-1',
+      sku: 'SKU-01',
+      salesStats: { lastSoldAt: '2026-06-26T00:00:00.000Z' },
+    },
+    { locale: 'en' },
+  )
+
+  assert.equal(listing.date, 'Jun 26, 2026')
 })
 
 test('buildListingFormPayload creates BE-compatible payload and omits empty optional fields', () => {
@@ -215,4 +320,223 @@ test('map option helpers expose shop and product type labels', () => {
 
 test('normalizePagination provides safe defaults', () => {
   assert.deepEqual(normalizePagination(null), { page: 1, limit: 10, total: 0 })
+})
+
+test('mapProductTypeGroupResponse exposes readable product type fields', () => {
+  assert.deepEqual(
+    mapProductTypeGroupResponse({
+      id: 'group-1',
+      code: 'TSHIRT',
+      name: 'T-Shirt',
+      sortOrder: 20,
+      status: 'ACTIVE',
+    }),
+    {
+      id: 'group-1',
+      code: 'TSHIRT',
+      name: 'T-Shirt',
+      sortOrder: 20,
+      status: 'ACTIVE',
+      isActive: true,
+      raw: {
+        id: 'group-1',
+        code: 'TSHIRT',
+        name: 'T-Shirt',
+        sortOrder: 20,
+        status: 'ACTIVE',
+      },
+    },
+  )
+})
+
+test('buildCatalogSetupQuery keeps catalog setup search params backend-compatible', () => {
+  assert.deepEqual(
+    buildCatalogSetupQuery({
+      page: 2,
+      limit: 20,
+      search: ' shirt ',
+      status: 'ACTIVE',
+      productTypeGroupId: 'group-1',
+    }),
+    { page: 2, limit: 20, search: 'shirt', status: 'ACTIVE', productTypeGroupId: 'group-1' },
+  )
+
+  assert.deepEqual(buildCatalogSetupQuery({ search: ' main ' }, { searchParam: 'q' }), {
+    page: 1,
+    limit: 10,
+    q: 'main',
+  })
+})
+
+test('buildProductTypeGroupPayload creates and updates business fields only', () => {
+  assert.deepEqual(
+    buildProductTypeGroupPayload({
+      code: ' tshirt ',
+      name: ' T-Shirt ',
+      sortOrder: '20',
+      status: 'ACTIVE',
+    }),
+    { code: 'TSHIRT', name: 'T-Shirt', sortOrder: 20, status: 'ACTIVE' },
+  )
+
+  assert.deepEqual(
+    buildProductTypeGroupPayload(
+      {
+        code: 'TSHIRT',
+        name: 'Updated Shirt',
+        sortOrder: '',
+        status: 'INACTIVE',
+      },
+      { mode: 'update' },
+    ),
+    { name: 'Updated Shirt', status: 'INACTIVE' },
+  )
+})
+
+test('mapInternalTemplateResponse exposes readable template fields', () => {
+  assert.deepEqual(
+    mapInternalTemplateResponse({
+      id: 'template-1',
+      code: 'TSHIRT_MAIN',
+      name: 'T-Shirt Main',
+      description: 'Customer shirt inputs',
+      productTypeGroupId: 'group-1',
+      productTypeGroup: { id: 'group-1', name: 'T-Shirt' },
+      requiredFields: [{ key: 'customName' }],
+      artworkSlots: [{ key: 'frontText' }, { key: 'backText' }],
+      designAssets: [{ assetId: 'asset-1' }],
+      status: 'ACTIVE',
+    }),
+    {
+      id: 'template-1',
+      code: 'TSHIRT_MAIN',
+      name: 'T-Shirt Main',
+      description: 'Customer shirt inputs',
+      productType: 'T-Shirt',
+      productTypeGroupId: 'group-1',
+      requiredFields: [{ key: 'customName' }],
+      artworkSlots: [{ key: 'frontText' }, { key: 'backText' }],
+      designAssets: [{ assetId: 'asset-1' }],
+      requiredFieldCount: 1,
+      artworkSlotCount: 2,
+      designAssetCount: 1,
+      status: 'ACTIVE',
+      isActive: true,
+      raw: {
+        id: 'template-1',
+        code: 'TSHIRT_MAIN',
+        name: 'T-Shirt Main',
+        description: 'Customer shirt inputs',
+        productTypeGroupId: 'group-1',
+        productTypeGroup: { id: 'group-1', name: 'T-Shirt' },
+        requiredFields: [{ key: 'customName' }],
+        artworkSlots: [{ key: 'frontText' }, { key: 'backText' }],
+        designAssets: [{ assetId: 'asset-1' }],
+        status: 'ACTIVE',
+      },
+    },
+  )
+})
+
+test('buildInternalTemplatePayload includes internal template field arrays', () => {
+  assert.deepEqual(
+    buildInternalTemplatePayload({
+      code: ' tshirt_main ',
+      name: ' T-Shirt Main ',
+      description: ' Customer shirt inputs ',
+      productTypeGroupId: 'group-1',
+      requiredFields: [
+        {
+          key: ' customName ',
+          label: ' Custom Name ',
+          type: 'TEXT',
+          required: true,
+          source: 'CUSTOMER_INPUT',
+          sortOrder: '1',
+        },
+      ],
+      artworkSlots: [
+        {
+          key: 'frontText',
+          label: 'Front Text',
+          type: 'TEXT',
+          required: true,
+          acceptedFieldKeys: ' customName, ignoredMissing ',
+          outputRole: 'FRONT',
+          sortOrder: '2',
+        },
+      ],
+      designAssets: [
+        {
+          type: 'PSD_TEMPLATE',
+          mediaAssetId: '660000000000000000000901',
+          version: ' v1 ',
+          label: ' Main PSD ',
+          status: 'ACTIVE',
+        },
+      ],
+      status: 'ACTIVE',
+    }),
+    {
+      code: 'TSHIRT_MAIN',
+      name: 'T-Shirt Main',
+      description: 'Customer shirt inputs',
+      productTypeGroupId: 'group-1',
+      status: 'ACTIVE',
+      requiredFields: [
+        {
+          key: 'customName',
+          label: 'Custom Name',
+          type: 'TEXT',
+          required: true,
+          source: 'CUSTOMER_INPUT',
+          sortOrder: 1,
+        },
+      ],
+      artworkSlots: [
+        {
+          key: 'frontText',
+          label: 'Front Text',
+          type: 'TEXT',
+          required: true,
+          acceptedFieldKeys: ['customName', 'ignoredMissing'],
+          outputRole: 'FRONT',
+          sortOrder: 2,
+        },
+      ],
+      designAssets: [
+        {
+          type: 'PSD_TEMPLATE',
+          mediaAssetId: '660000000000000000000901',
+          version: 'v1',
+          label: 'Main PSD',
+          status: 'ACTIVE',
+        },
+      ],
+    },
+  )
+
+  assert.deepEqual(
+    buildInternalTemplatePayload(
+      {
+        code: 'TSHIRT_MAIN',
+        name: 'Updated Template',
+        description: '',
+        productTypeGroupId: 'group-1',
+        requiredFields: [{ key: 'customName', type: 'TEXT' }],
+        artworkSlots: [],
+        designAssets: [],
+        status: 'INACTIVE',
+      },
+      { mode: 'update' },
+    ),
+    {
+      name: 'Updated Template',
+      productTypeGroupId: 'group-1',
+      requiredFields: [{ key: 'customName', type: 'TEXT' }],
+      artworkSlots: [],
+      designAssets: [],
+      status: 'INACTIVE',
+    },
+  )
 })

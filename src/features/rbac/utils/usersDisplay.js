@@ -1,9 +1,9 @@
 const AVATAR_CLASSES = [
   '!bg-primary-light !text-primary',
-  '!bg-[#dbeafe] !text-[#2563eb]',
-  '!bg-[#ede9fe] !text-[#8b5cf6]',
-  '!bg-[#dcfce7] !text-[#16a34a]',
-  '!bg-[#fef3c7] !text-[#f59e0b]',
+  '!bg-info-bg !text-info',
+  '!bg-violet-bg !text-violet-strong',
+  '!bg-success-bg !text-success',
+  '!bg-warning-bg !text-warning',
 ]
 
 const ROLE_META = {
@@ -13,15 +13,15 @@ const ROLE_META = {
   },
   manager: {
     label: 'Manager',
-    className: '!bg-[#ede9fe] !text-[#8b5cf6] !border-[#8b5cf6]',
+    className: '!bg-violet-bg !text-violet-strong !border-violet-strong',
   },
   leader: {
     label: 'Leader',
-    className: '!bg-[#dbeafe] !text-[#2563eb] !border-[#2563eb]',
+    className: '!bg-info-bg !text-info !border-info',
   },
   staff: {
     label: 'Staff',
-    className: '!bg-[#fef3c7] !text-[#f59e0b] !border-[#f59e0b]',
+    className: '!bg-warning-bg !text-warning !border-warning',
   },
   anonymous: {
     label: 'Anonymous',
@@ -58,8 +58,8 @@ export function getStatusMeta(status = '') {
     key: active ? 'active' : 'inactive',
     labelKey: active ? 'rbac.users.status.active' : 'rbac.users.status.inactive',
     className: active
-      ? '!bg-[#dcfce7] !text-[#16a34a] !border-[#16a34a]'
-      : '!bg-[#fef3c7] !text-[#f59e0b] !border-[#f59e0b]',
+      ? '!bg-success-bg !text-success !border-success'
+      : '!bg-warning-bg !text-warning !border-warning',
   }
 }
 

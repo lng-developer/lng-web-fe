@@ -4,8 +4,11 @@ import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
 import {
+  buildCatalogSetupQuery,
   buildListingListQuery,
+  mapPaginatedInternalTemplateResponse,
   mapPaginatedListingResponse,
+  mapPaginatedProductTypeGroupResponse,
   mapProductTypeOptions,
   mapShopOptions,
   unwrapApiData,
@@ -63,6 +66,30 @@ export function useListingProductTypesQuery(query = {}, options = {}) {
       get(ENDPOINTS.CATALOG.PRODUCT_TYPE_GROUPS, params).then((response) =>
         mapProductTypeOptions(response?.items || []),
       ),
+    keepPreviousData: true,
+    ...options,
+  })
+}
+
+export function useCatalogProductTypeGroupsQuery(query = {}, options = {}) {
+  const params = buildCatalogSetupQuery({ limit: 10, ...query })
+
+  return useQuery({
+    queryKey: listingsKeys.productTypeGroups(params),
+    queryFn: () =>
+      get(ENDPOINTS.CATALOG.PRODUCT_TYPE_GROUPS, params).then(mapPaginatedProductTypeGroupResponse),
+    keepPreviousData: true,
+    ...options,
+  })
+}
+
+export function useCatalogInternalTemplatesQuery(query = {}, options = {}) {
+  const params = buildCatalogSetupQuery({ limit: 10, ...query }, { searchParam: 'q' })
+
+  return useQuery({
+    queryKey: listingsKeys.internalTemplates(params),
+    queryFn: () =>
+      get(ENDPOINTS.CATALOG.INTERNAL_TEMPLATES, params).then(mapPaginatedInternalTemplateResponse),
     keepPreviousData: true,
     ...options,
   })

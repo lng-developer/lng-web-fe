@@ -36,6 +36,52 @@ export function useUpdateListingMutation() {
   })
 }
 
+export function useCreateProductTypeGroupMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload) => post(ENDPOINTS.CATALOG.PRODUCT_TYPE_GROUPS, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listingsKeys.all })
+    },
+  })
+}
+
+export function useUpdateProductTypeGroupMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ groupId, payload }) =>
+      patch(ENDPOINTS.CATALOG.PRODUCT_TYPE_GROUP(groupId), payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listingsKeys.all })
+    },
+  })
+}
+
+export function useCreateInternalTemplateMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload) => post(ENDPOINTS.CATALOG.INTERNAL_TEMPLATES, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listingsKeys.all })
+    },
+  })
+}
+
+export function useUpdateInternalTemplateMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ templateId, payload }) =>
+      patch(ENDPOINTS.CATALOG.INTERNAL_TEMPLATE(templateId), payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listingsKeys.all })
+    },
+  })
+}
+
 export function useUploadListingPsdMutation() {
   const queryClient = useQueryClient()
 
@@ -50,6 +96,18 @@ export function useUploadListingPsdMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: listingsKeys.all })
+    },
+  })
+}
+
+export function useCreateListingPsdTaskMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (listingId) => post(ENDPOINTS.DESIGN.FROM_LISTING_PSD_TEMPLATE(listingId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listingsKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['design-tasks'] })
     },
   })
 }

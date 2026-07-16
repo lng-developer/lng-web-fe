@@ -41,16 +41,22 @@
     },
     "items": {
       "orderList": "Order List",
+      "orderWorkbench": "Order Workbench",
       "orderDetail": "Order Detail",
+      "catalogSetup": "Catalog Setup",
       "listings": "Listings",
+      "mappingWorkbench": "Mapping Workbench",
       "tracking": "Tracking",
+      "productionBoard": "Production Board",
       "scale": "Scale",
       "qc": "QC",
       "shipping": "Shipping",
+      "vendorSubmissions": "Vendor Submissions",
       "cs": "CS",
       "taskList": "Task List",
       "templateCenter": "Template Center",
       "summary": "Summary",
+      "reports": "Reports",
       "balance": "Balance",
       "payout": "Payout",
       "compensationPool": "Compensation Pool",
@@ -60,6 +66,7 @@
       "usersRoles": "Users & Roles",
       "shopsStores": "Shop & Stores",
       "systemConfig": "System Config",
+      "apiCoverage": "API Coverage",
       "auditLog": "Audit Log"
     }
   },
@@ -281,6 +288,19 @@
       "confirmPasswordRequired": "Please confirm your password",
       "passwordMismatch": "Password confirmation does not match",
       "generic": "Could not complete the request, please try again."
+    },
+    "userFallback": "Current user",
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Password recovery is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password recovery APIs yet, so this screen is temporarily read-only.",
+      "backLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Password reset is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
+      "backLogin": "Back to login"
     }
   },
   "rbac": {
@@ -312,7 +332,9 @@
       },
       "status": {
         "active": "Active",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "all": "All statuses",
+        "archived": "Archived"
       },
       "filter": {
         "allStatus": "All statuses",
@@ -606,12 +628,28 @@
   },
   "home": {
     "title": "Home",
-    "welcome": "Welcome to LNG Web FE",
-    "description": "This is a demo page showcasing the conventions in CONVENTIONS.md: MUI + Tailwind layout, TanStack Query, Zustand, react-i18next, react-hook-form + zod and notistack.",
+    "welcome": "POD operations dashboard",
+    "description": "Track orders, active queues, and exceptions that need attention today.",
     "summary": {
       "users": "Users",
       "orders": "Orders",
       "revenue": "Revenue"
+    },
+    "queues": {
+      "title": "Operations queues",
+      "orders": "Orders to process",
+      "scale": "Waiting for scale",
+      "qc": "Waiting for QC"
+    },
+    "queueStatus": {
+      "active": "Within SLA",
+      "warning": "Needs attention"
+    },
+    "exceptions": {
+      "title": "Exceptions to resolve",
+      "missingPsd": "Missing PSD",
+      "shippingHold": "Shipping hold",
+      "qcRejected": "QC rejected"
     }
   },
   "profile": {
@@ -1509,39 +1547,6 @@
       "missingRefreshToken": "Your session has expired. Please log in again."
     }
   },
-  "auth": {
-    "userFallback": "Current user",
-    "tagline": "Comprehensive POD operations management",
-    "footer": "v2.0.0 · LNG System",
-    "login": {
-      "title": "Login",
-      "email": "Email",
-      "emailPlaceholder": "you@lng.co",
-      "password": "Password",
-      "showPassword": "Show password",
-      "hidePassword": "Hide password",
-      "forgotPassword": "Forgot password?",
-      "submit": "Login",
-      "success": "Login successful!",
-      "errors": {
-        "emailRequired": "Please enter your email",
-        "emailInvalid": "Invalid email address",
-        "passwordRequired": "Please enter your password"
-      }
-    },
-    "forgotPassword": {
-      "title": "Forgot password",
-      "description": "Password recovery is not available yet. Please contact your administrator for support.",
-      "unavailable": "The backend does not expose password recovery APIs yet, so this screen is temporarily read-only.",
-      "backLogin": "Back to login"
-    },
-    "resetPassword": {
-      "title": "Reset password",
-      "description": "Password reset is not available yet. Please contact your administrator for support.",
-      "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
-      "backLogin": "Back to login"
-    }
-  },
   "vendors": {
     "searchPlaceholder": "Search...",
     "actions": {
@@ -1778,6 +1783,27 @@
         "top": "Top",
         "bottom": "Bottom"
       }
+    }
+  },
+  "podWorkbench": {
+    "apiContracts": {
+      "title": "API contract",
+      "description": "Endpoints used by the current screen, kept close to the backend contract."
+    },
+    "source": {
+      "apiRows": "API: {{count}} rows",
+      "apiError": "API error: sample rows",
+      "noRows": "No API rows: sample rows"
+    },
+    "searchPlaceholder": "Search {{module}}...",
+    "refreshAria": "Refresh module data",
+    "alerts": {
+      "apiError": "BE endpoint {{endpoint}} has not returned data yet. The UI is showing sample rows so the layout remains testable.",
+      "emptyRows": "BE endpoint {{endpoint}} returned successfully but has no rows in the current response. The UI is showing sample rows."
+    },
+    "detail": {
+      "selectRow": "Select a row",
+      "payloadPlaceholder": "Ready to wire payload form"
     }
   }
 }

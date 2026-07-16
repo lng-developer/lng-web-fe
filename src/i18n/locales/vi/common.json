@@ -41,16 +41,22 @@
     },
     "items": {
       "orderList": "Danh sách đơn",
+      "orderWorkbench": "Order Workbench",
       "orderDetail": "Chi tiết đơn",
+      "catalogSetup": "Catalog Setup",
       "listings": "Listings",
+      "mappingWorkbench": "Mapping Workbench",
       "tracking": "Tracking",
+      "productionBoard": "Production Board",
       "scale": "Scale",
       "qc": "QC",
       "shipping": "Shipping",
+      "vendorSubmissions": "Vendor Submissions",
       "cs": "CS",
       "taskList": "Danh sách task",
       "templateCenter": "Kho template",
       "summary": "Tổng quan",
+      "reports": "Báo cáo",
       "balance": "Số dư",
       "payout": "Payout",
       "compensationPool": "Quỹ bồi thường",
@@ -60,6 +66,7 @@
       "usersRoles": "Người dùng & phân quyền",
       "shopsStores": "Shop & Store",
       "systemConfig": "Cấu hình hệ thống",
+      "apiCoverage": "API Coverage",
       "auditLog": "Audit Log"
     }
   },
@@ -281,6 +288,19 @@
       "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
       "passwordMismatch": "Mật khẩu xác nhận không khớp",
       "generic": "Không thể thực hiện yêu cầu, vui lòng thử lại."
+    },
+    "userFallback": "Người dùng",
+    "forgotPassword": {
+      "title": "Quên mật khẩu",
+      "description": "Chức năng khôi phục mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+      "unavailable": "Backend chưa cung cấp API khôi phục mật khẩu, nên màn này tạm thời chỉ hiển thị thông báo.",
+      "backLogin": "Về trang đăng nhập"
+    },
+    "resetPassword": {
+      "title": "Đặt lại mật khẩu",
+      "description": "Chức năng đặt lại mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+      "unavailable": "Backend chưa cung cấp API đặt lại mật khẩu, nên màn này tạm thời chỉ hiển thị thông báo.",
+      "backLogin": "Về trang đăng nhập"
     }
   },
   "rbac": {
@@ -312,7 +332,9 @@
       },
       "status": {
         "active": "Hoạt động",
-        "inactive": "Không hoạt động"
+        "inactive": "Không hoạt động",
+        "all": "Tất cả trạng thái",
+        "archived": "Đã lưu trữ"
       },
       "filter": {
         "allStatus": "Tất cả trạng thái",
@@ -606,12 +628,28 @@
   },
   "home": {
     "title": "Trang chủ",
-    "welcome": "Chào mừng bạn đến với LNG Web FE",
-    "description": "Đây là trang demo minh hoạ các quy ước trong CONVENTIONS.md: layout MUI + Tailwind, TanStack Query, Zustand, react-i18next, react-hook-form + zod và notistack.",
+    "welcome": "Dashboard vận hành POD",
+    "description": "Theo dõi nhanh đơn hàng, hàng chờ xử lý và các ngoại lệ cần ưu tiên trong ngày.",
     "summary": {
       "users": "Người dùng",
       "orders": "Đơn hàng",
       "revenue": "Doanh thu"
+    },
+    "queues": {
+      "title": "Hàng chờ vận hành",
+      "orders": "Đơn cần xử lý",
+      "scale": "Đang chờ scale",
+      "qc": "Đang chờ QC"
+    },
+    "queueStatus": {
+      "active": "Đang trong SLA",
+      "warning": "Cần theo dõi"
+    },
+    "exceptions": {
+      "title": "Ngoại lệ cần xử lý",
+      "missingPsd": "Thiếu PSD",
+      "shippingHold": "Tạm giữ vận chuyển",
+      "qcRejected": "QC từ chối"
     }
   },
   "profile": {
@@ -1294,39 +1332,6 @@
       "missingRefreshToken": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
     }
   },
-  "auth": {
-    "userFallback": "Người dùng",
-    "tagline": "Quản lý vận hành POD toàn diện",
-    "footer": "v2.0.0 · LNG System",
-    "login": {
-      "title": "Đăng nhập",
-      "email": "Email",
-      "emailPlaceholder": "you@lng.co",
-      "password": "Mật khẩu",
-      "showPassword": "Hiện mật khẩu",
-      "hidePassword": "Ẩn mật khẩu",
-      "forgotPassword": "Quên mật khẩu?",
-      "submit": "Đăng nhập",
-      "success": "Đăng nhập thành công!",
-      "errors": {
-        "emailRequired": "Vui lòng nhập email",
-        "emailInvalid": "Email không hợp lệ",
-        "passwordRequired": "Vui lòng nhập mật khẩu"
-      }
-    },
-    "forgotPassword": {
-      "title": "Quên mật khẩu",
-      "description": "Chức năng khôi phục mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
-      "unavailable": "Backend chưa cung cấp API khôi phục mật khẩu, nên màn này tạm thời chỉ hiển thị thông báo.",
-      "backLogin": "Về trang đăng nhập"
-    },
-    "resetPassword": {
-      "title": "Đặt lại mật khẩu",
-      "description": "Chức năng đặt lại mật khẩu chưa khả dụng. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
-      "unavailable": "Backend chưa cung cấp API đặt lại mật khẩu, nên màn này tạm thời chỉ hiển thị thông báo.",
-      "backLogin": "Về trang đăng nhập"
-    }
-  },
   "orders": {
     "title": "Orders",
     "actions": {
@@ -1778,6 +1783,27 @@
       },
       "top": "Tooltip phía trên",
       "bottom": "Tooltip phía dưới"
+    }
+  },
+  "podWorkbench": {
+    "apiContracts": {
+      "title": "API contract",
+      "description": "Các endpoint frontend dùng cho màn hiện tại, bám sát contract backend."
+    },
+    "source": {
+      "apiRows": "API: {{count}} dòng",
+      "apiError": "API lỗi: dùng dữ liệu mẫu",
+      "noRows": "API chưa có dòng: dùng dữ liệu mẫu"
+    },
+    "searchPlaceholder": "Tìm trong {{module}}...",
+    "refreshAria": "Tải lại dữ liệu module",
+    "alerts": {
+      "apiError": "BE endpoint {{endpoint}} chưa trả dữ liệu. UI đang hiển thị dữ liệu mẫu để kiểm tra layout.",
+      "emptyRows": "BE endpoint {{endpoint}} trả về thành công nhưng chưa có dòng dữ liệu. UI đang hiển thị dữ liệu mẫu."
+    },
+    "detail": {
+      "selectRow": "Chọn một dòng",
+      "payloadPlaceholder": "Sẵn sàng nối form payload"
     }
   }
 }
