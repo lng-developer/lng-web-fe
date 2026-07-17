@@ -72,6 +72,7 @@ export const ENDPOINTS = {
   VENDOR_SUBMISSIONS: {
     FROM_PRODUCTION_TASK: (taskId) => `/api/vendor-submissions/from-production-tasks/${taskId}`,
     RECHECK_READY: '/api/vendor-submissions/recheck-ready-production-tasks',
+  },
   CATALOG: {
     PRODUCT_TYPE_GROUPS: '/api/catalog/product-type-groups',
     INTERNAL_TEMPLATES: '/api/catalog/internal-templates',
