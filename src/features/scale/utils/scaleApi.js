@@ -62,7 +62,9 @@ function formatTaskDate(value) {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).format(date)
+  })
+    .format(date)
+    .replace(',', '')
 }
 
 function getDisplayScaleStatus(task = {}) {
@@ -85,6 +87,8 @@ function statusQuery(statusTab) {
   }
   if (statusTab === SCALE_STATUS_TABS.COMPLETED) return { scaleStatus: 'SCALED' }
   if (statusTab === SCALE_STATUS_TABS.QC_REJECTED) return { qcStatus: 'REJECTED' }
+  if (statusTab === SCALE_STATUS_TABS.ADDRESS_INVALID) return { tab: 'ADDRESS_INVALID' }
+  if (statusTab === SCALE_STATUS_TABS.FAILED) return { tab: 'FAILED' }
   return {}
 }
 
@@ -106,8 +110,13 @@ export function buildProductionTaskQuery(filters = {}) {
     shopId: filters.shop && filters.shop !== SCALE_ALL_FILTER ? filters.shop : undefined,
     scaleBy: filters.scaleBy && filters.scaleBy !== SCALE_ALL_FILTER ? filters.scaleBy : undefined,
     qcBy: filters.qcBy && filters.qcBy !== SCALE_ALL_FILTER ? filters.qcBy : undefined,
+    sellerCode: filters.sellerCode?.trim?.().toUpperCase?.(),
     dateFrom: dateBoundary(dateRange.start, 'startOf') || filters.dateFrom,
     dateTo: dateBoundary(dateRange.end, 'endOf') || filters.dateTo,
+    assignedAtFrom: filters.assignedDateFrom || filters.assignedAtFrom,
+    assignedAtTo: filters.assignedDateTo || filters.assignedAtTo,
+    readyAtFrom: filters.readyDateFrom || filters.readyAtFrom,
+    readyAtTo: filters.readyDateTo || filters.readyAtTo,
     page: Math.max(Number(filters.page) || 1, 1),
     limit: Math.min(Math.max(Number(filters.pageSize) || SCALE_PAGE_SIZE, 1), 100),
     sort: filters.sort || '-updatedAt',
@@ -173,7 +182,9 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
   return {
     id: task.id,
     orderId: orderItem.externalOrderId || task.orderId || '-',
-    orderDate: formatTaskDate(task.createdAt || task.assignedAt || task.updatedAt),
+    orderDate: formatTaskDate(
+      task.orderDate || task.createdAt || task.assignedAt || task.updatedAt,
+    ),
     scaleStatus: getDisplayScaleStatus(task),
     groupId: task.groupId || null,
     groupType: task.groupType || null,
@@ -181,6 +192,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
     shopId,
     seller,
     orderStatus: task.orderStatus || orderItem.status || task.productionStatus || '-',
+    shippingType: task.shippingType || '-',
     orderOwner,
     qcBy,
     qcById: task.qcBy || '',
@@ -199,7 +211,11 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
         secondaryCode: orderItem.sku || listing.sku || '-',
         psdStatus: psdTemplate.status || listing.psdStatus || '-',
         quantity: task.fulfillQty || 1,
-        imageUrl: customerPhoto?.secureUrl || customerPhoto?.assetDownloadUrl || null,
+        imageUrl:
+          task.productImageUrl ||
+          customerPhoto?.secureUrl ||
+          customerPhoto?.assetDownloadUrl ||
+          null,
       },
       customization: customizationRows,
       taskStatus: {
@@ -229,6 +245,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
         inputAssetDownloadUrl: slot.inputAssetDownloadUrl || null,
         outputAssetId: slot.outputAssetId || null,
         outputAssetDownloadUrl: slot.outputAssetDownloadUrl || null,
+        outputStatus: slot.outputStatus || (slot.outputAssetId ? 'UPLOADED' : 'MISSING'),
         scaleStatus: slot.scaleStatus,
         qcStatus: slot.qcStatus,
         blockers: slot.blockers || [],
@@ -245,6 +262,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
       canScale: Boolean(scaleContext.canScale),
       missingRequirements: scaleContext.missingRequirements || [],
       blockers: task.blockers || [],
+      fulfillName: task.fulfillName || '-',
     },
   }
 }
@@ -257,6 +275,11 @@ export function mapScaleSummary(summary = {}) {
     [SCALE_STATUS_TABS.PENDING]: summary.byAssignmentStatus?.ASSIGNED || 0,
     [SCALE_STATUS_TABS.COMPLETED]: summary.byScaleStatus?.SCALED || 0,
     [SCALE_STATUS_TABS.QC_REJECTED]: summary.byQcStatus?.REJECTED || 0,
+    [SCALE_STATUS_TABS.ADDRESS_INVALID]: summary.addressInvalid || 0,
+    [SCALE_STATUS_TABS.FAILED]: summary.failed || 0,
+    csAssigned: summary.csAssigned ?? summary.byCsStatus?.ASSIGNED ?? 0,
+    csInProgress: summary.byCsStatus?.IN_PROGRESS ?? 0,
+    csDone: summary.byCsStatus?.DONE ?? 0,
   }
 }
 

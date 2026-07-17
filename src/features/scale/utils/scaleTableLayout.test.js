@@ -35,10 +35,18 @@ test('Scale table excludes group and assignment status columns', () => {
       'orderStatus',
       'orderOwner',
       'qcBy',
-      'assignCs',
+      'assignScale',
     ],
   )
   assert.doesNotMatch(scalePageSource, /task\.(?:groupId|groupType|assignmentStatus)/)
+})
+
+test('Scale assignment dropdown uses the scale assignee lane', () => {
+  assert.match(scalePageSource, /useAssignScaleTaskMutation/)
+  assert.match(scalePageSource, /handleAssignScale/)
+  assert.match(scalePageSource, /assignedDesignUserId/)
+  assert.doesNotMatch(scalePageSource, /useAssignCsTaskMutation/)
+  assert.doesNotMatch(scalePageSource, /handleAssignCs/)
 })
 
 test('Scale table displays up to nineteen Order ID characters', () => {

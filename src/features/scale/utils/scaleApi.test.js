@@ -20,6 +20,7 @@ test('buildProductionTaskQuery maps shared filters and channel to the production
       shop: '660000000000000000000201',
       scaleBy: '660000000000000000000903',
       qcBy: '660000000000000000000904',
+      sellerCode: ' j2522 ',
       page: 2,
       pageSize: 25,
     }),
@@ -30,6 +31,7 @@ test('buildProductionTaskQuery maps shared filters and channel to the production
       shopId: '660000000000000000000201',
       scaleBy: '660000000000000000000903',
       qcBy: '660000000000000000000904',
+      sellerCode: 'J2522',
       page: 2,
       limit: 25,
       sort: '-updatedAt',
@@ -52,6 +54,28 @@ test('buildProductionTaskQuery maps every server-supported status tab', () => {
     limit: 10,
     sort: '-updatedAt',
   })
+  assert.equal(buildProductionTaskQuery({ statusTab: 'addressInvalid' }).tab, 'ADDRESS_INVALID')
+  assert.equal(buildProductionTaskQuery({ statusTab: 'failed' }).tab, 'FAILED')
+})
+
+test('buildProductionTaskQuery supports assignment and ready date filters', () => {
+  assert.deepEqual(
+    buildProductionTaskQuery({
+      assignedDateFrom: '2026-07-01T00:00:00.000Z',
+      assignedDateTo: '2026-07-02T00:00:00.000Z',
+      readyDateFrom: '2026-07-03T00:00:00.000Z',
+      readyDateTo: '2026-07-04T00:00:00.000Z',
+    }),
+    {
+      assignedAtFrom: '2026-07-01T00:00:00.000Z',
+      assignedAtTo: '2026-07-02T00:00:00.000Z',
+      readyAtFrom: '2026-07-03T00:00:00.000Z',
+      readyAtTo: '2026-07-04T00:00:00.000Z',
+      page: 1,
+      limit: 10,
+      sort: '-updatedAt',
+    },
+  )
 })
 
 test('buildProductionSummaryQuery keeps shared filters but removes list status and pagination', () => {
@@ -103,6 +127,10 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
       salesChannelCode: 'AMAZON',
       marketplaceCode: 'AMAZON_US',
       orderStatus: 'PROCESSING',
+      orderDate: '2026-06-25T00:00:00.000Z',
+      shippingType: 'Express',
+      fulfillName: 'Nguyen Phuong Nam',
+      productImageUrl: 'https://example.test/product.png',
       groupId: 'GRP-001',
       groupType: 'SCALE',
       orderOwner: { id: 'owner-1', fullName: 'Order Owner', employeeCode: 'CS01' },
@@ -170,6 +198,7 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
               inputAssetDownloadUrl: '/api/media/assets/input-1/download',
               outputAssetId: 'output-1',
               outputAssetDownloadUrl: '/api/media/assets/output-1/download',
+              outputStatus: 'UPLOADED',
               scaleStatus: 'SCALED',
               qcStatus: 'PENDING',
               blockers: [],
@@ -184,6 +213,10 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   )
 
   assert.equal(result.orderId, 'ORD-10042')
+  assert.equal(result.orderDate, '2026-06-25 07:00')
+  assert.equal(result.shippingType, 'Express')
+  assert.equal(result.detail.product.imageUrl, 'https://example.test/product.png')
+  assert.equal(result.detail.fulfillName, 'Nguyen Phuong Nam')
   assert.equal(result.groupId, 'GRP-001')
   assert.equal(result.groupType, 'SCALE')
   assert.equal(result.channel, 'AMAZON')
@@ -214,6 +247,7 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   assert.equal(result.detail.mockups[0].inputAssetId, 'input-1')
   assert.equal(result.detail.mockups[0].outputAssetId, 'output-1')
   assert.equal(result.detail.mockups[0].outputAssetDownloadUrl.endsWith('/download'), true)
+  assert.equal(result.detail.mockups[0].outputStatus, 'UPLOADED')
   assert.equal(result.detail.canScale, true)
   assert.equal(result.detail.contextStatus, 'READY_TO_SCALE')
   assert.equal(result.detail.notes.design, 'Keep artwork centered')
@@ -255,9 +289,12 @@ test('mapScaleSummary maps V2 status-group counters', () => {
     mapScaleSummary({
       total: 18,
       needScale: 7,
+      addressInvalid: 2,
+      failed: 1,
       csUnassigned: 3,
+      csAssigned: 8,
       byAssignmentStatus: { UNASSIGNED: 5, ASSIGNED: 4, OUTPUT_UPLOADED: 9 },
-      byCsStatus: { UNASSIGNED: 3, ASSIGNED: 6 },
+      byCsStatus: { UNASSIGNED: 3, ASSIGNED: 6, IN_PROGRESS: 2, DONE: 1 },
       byScaleStatus: { NEED_SCALE: 11, SCALED: 7 },
       byQcStatus: { NOT_READY: 8, PENDING: 6, REJECTED: 2, APPROVED: 2 },
     }),
@@ -268,6 +305,11 @@ test('mapScaleSummary maps V2 status-group counters', () => {
       pending: 4,
       completed: 7,
       qcRejected: 2,
+      addressInvalid: 2,
+      failed: 1,
+      csAssigned: 8,
+      csInProgress: 2,
+      csDone: 1,
     },
   )
 })
