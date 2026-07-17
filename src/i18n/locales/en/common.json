@@ -1349,6 +1349,7 @@
         "orderOwner": "Order Owner",
         "qcBy": "QC By",
         "assignCs": "Scale By",
+        "assignScale": "Scale By",
         "csStatus": "Assignment"
       }
     },
@@ -1463,6 +1464,22 @@
         "quantity": "Quantity: {{quantity}}",
         "fulfillName": "Fulfill Name:",
         "buyerNote": "Buyer Note:"
+      }
+    },
+    "manualUpload": {
+      "title": "Upload scale file",
+      "position": "Position",
+      "file": "File",
+      "dropTitle": "Drop the scaled image here",
+      "dropHint": "PNG, JPG, JPEG, WEBP",
+      "selectFile": "Choose file",
+      "cancel": "Cancel",
+      "upload": "Upload file",
+      "positions": {
+        "front": "Front",
+        "back": "Back",
+        "left": "Left",
+        "right": "Right"
       }
     },
     "loading": {

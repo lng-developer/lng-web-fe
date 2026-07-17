@@ -15,6 +15,8 @@ export const SCALE_STATUS_TABS = {
   PENDING: 'pending',
   COMPLETED: 'completed',
   QC_REJECTED: 'qcRejected',
+  ADDRESS_INVALID: 'addressInvalid',
+  FAILED: 'failed',
 }
 
 export const SCALE_STATUSES = {
@@ -28,8 +30,8 @@ export const SCALE_STATUSES = {
 export const CS_STATUSES = {
   UNASSIGNED: 'UNASSIGNED',
   ASSIGNED: 'ASSIGNED',
-  PENDING: 'PENDING',
-  COMPLETED: 'COMPLETED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  DONE: 'DONE',
 }
 
 export const SCALE_PAGE_SIZE = 10
@@ -49,7 +51,7 @@ export const SCALE_TABLE_COLUMNS = [
   { id: 'orderStatus', labelKey: 'scale.table.columns.orderStatus', width: 'w-[145px]' },
   { id: 'orderOwner', labelKey: 'scale.table.columns.orderOwner', width: 'w-[140px]' },
   { id: 'qcBy', labelKey: 'scale.table.columns.qcBy', width: 'w-[120px]' },
-  { id: 'assignCs', labelKey: 'scale.table.columns.assignCs', width: 'w-[220px]' },
+  { id: 'assignScale', labelKey: 'scale.table.columns.assignScale', width: 'w-[220px]' },
 ]
 
 export const SCALE_TABLE_MIN_WIDTH = 1636

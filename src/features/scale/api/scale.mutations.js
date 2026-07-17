@@ -62,13 +62,33 @@ export function useUpdateScaleTaskCsNoteMutation() {
   })
 }
 
+export function useUpdateScaleTaskCsStatusMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ taskId, csStatus }) => patch(ENDPOINTS.SCALE.CS_STATUS(taskId), { csStatus }),
+    onSuccess: () => invalidateScale(queryClient),
+  })
+}
+
 export function useUploadScaleOutputMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ taskId, fileCheckId, file }) => {
+    mutationFn: async ({ taskId, fileCheckId, file, slotKey, slotLabel, sourceType }) => {
       const formData = new FormData()
       formData.append('file', file)
+
+      if (!fileCheckId) {
+        formData.append('slotKey', slotKey || 'FRONT')
+        formData.append('slotLabel', slotLabel || slotKey || 'Front')
+        formData.append('sourceType', sourceType || 'CUSTOMER_IMAGE')
+
+        return apiClient
+          .post(ENDPOINTS.SCALE.MANUAL_SCALED_OUTPUT_FILE(taskId), formData)
+          .then(unwrapApiData)
+      }
+
       return apiClient
         .post(ENDPOINTS.SCALE.SCALED_OUTPUT_FILE(taskId, fileCheckId), formData)
         .then(unwrapApiData)
