@@ -23,6 +23,8 @@ export const API_WORKFLOWS = {
         listEndpoint: endpoint('GET', '/api/vendor-submissions'),
         detailEndpoint: endpoint('GET', '/api/vendor-submissions/:id'),
         actions: [
+          action('Summary', 'GET', '/api/vendor-submissions/summary'),
+          action('Submit to vendor', 'POST', '/api/vendor-submissions/:id/submit-to-vendor'),
           action(
             'Recheck ready tasks',
             'POST',
@@ -46,6 +48,7 @@ export const API_WORKFLOWS = {
         listEndpoint: endpoint('GET', '/api/shipments'),
         detailEndpoint: endpoint('GET', '/api/shipments/:id'),
         actions: [
+          action('Summary', 'GET', '/api/shipments/summary'),
           action(
             'Create shipment',
             'POST',
@@ -59,6 +62,27 @@ export const API_WORKFLOWS = {
             '{"trackingNumber":"","carrierCode":"","trackingUrl":""}',
           ),
           action('Update status', 'PATCH', '/api/shipments/:id/status', '{"status":""}'),
+          action('Recheck vendor tracking', 'POST', '/api/shipments/vendor-tracking/recheck'),
+          action(
+            'Recheck submitted tracking',
+            'POST',
+            '/api/shipments/vendor-tracking/recheck-submitted',
+          ),
+        ],
+      },
+      {
+        id: 'vendor-integration',
+        label: 'Vendor Integration',
+        listEndpoint: endpoint('GET', '/api/vendors'),
+        actions: [
+          action('Get integration', 'GET', '/api/vendors/:vendorId/integration'),
+          action(
+            'Update integration',
+            'PATCH',
+            '/api/vendors/:vendorId/integration',
+            '{"providerCode":"","status":"ACTIVE"}',
+          ),
+          action('Refresh credential', 'POST', '/api/vendors/:vendorId/integration/refresh'),
         ],
       },
       {
@@ -82,6 +106,7 @@ export const API_WORKFLOWS = {
         label: 'Resolve Queue',
         listEndpoint: endpoint('GET', '/api/mapping/config-workbench'),
         actions: [
+          action('Summary', 'GET', '/api/mapping/summary'),
           action('Recheck unmatched', 'POST', '/api/mapping/recheck-unmatched'),
           action('Preview item', 'POST', '/api/mapping/order-items/:orderItemId/preview'),
           action(

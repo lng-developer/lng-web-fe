@@ -101,6 +101,28 @@ function formatDate(value, locale = 'en') {
   }
 }
 
+function getHandlingLabel(order = {}) {
+  if (order.handlingLabel) return order.handlingLabel
+  if (Number.isFinite(order.handlingDays)) {
+    return `${order.handlingDays} ${order.handlingDays === 1 ? 'Day' : 'Days'}`
+  }
+
+  const start = order.orderedAt || order.createdAt
+  const end = order.shipByDate
+  if (!start || !end) return '-'
+
+  const startedAt = new Date(start).getTime()
+  const shipBy = new Date(end).getTime()
+  if (Number.isNaN(startedAt) || Number.isNaN(shipBy) || shipBy < startedAt) return '-'
+
+  const days = Math.ceil((shipBy - startedAt) / (24 * 60 * 60 * 1000))
+  return `${days} ${days === 1 ? 'Day' : 'Days'}`
+}
+
+function getCaseTitle(order = {}) {
+  return order.caseTitle || order.latestCase?.title || order.case?.title || order.openCase?.title || ''
+}
+
 function formatMoney(price = {}) {
   const amount = Number(price.itemPriceAmount ?? 0)
   const currency = price.currency || 'USD'
@@ -269,6 +291,14 @@ export function buildOrderListQuery(filters = {}) {
   ].reduce((current, [key, value]) => maybeAdd(current, key, value), params)
 }
 
+export function buildOrderSummaryQuery(filters = {}) {
+  const summaryQuery = buildOrderListQuery(filters)
+  delete summaryQuery.limit
+  delete summaryQuery.page
+  delete summaryQuery.tab
+  return summaryQuery
+}
+
 export function mapApiOrderToOrderRow(
   order = {},
   { shopNameById = new Map(), locale = 'en' } = {},
@@ -290,6 +320,7 @@ export function mapApiOrderToOrderRow(
     seller: '',
     status: order.status,
     statusKey: STATUS_LABEL_KEY_MAP[order.status] || order.status || 'orders.values.common.noData',
+    caseTitle: getCaseTitle(order),
     createdAt: formatDate(order.createdAt, locale),
     createdAgoKey: '',
     orderDate: formatDate(order.orderedAt, locale),
@@ -312,7 +343,7 @@ export function mapApiOrderToOrderRow(
     storeKey: '',
     storeName: shopName,
     handlingKey: '',
-    handling: '-',
+    handling: getHandlingLabel(order),
     productImages: [FALLBACK_IMAGE],
     product: {
       ...buildEmptyProduct(),
@@ -378,6 +409,8 @@ export function mapWorkbenchOrderToOrderRow(row = {}, { locale = 'en' } = {}) {
     seller: itemEntry.seller?.name || itemEntry.seller?.employeeCode || '',
     status: order.status,
     statusKey: STATUS_LABEL_KEY_MAP[order.status] || order.status || 'orders.values.common.noData',
+    caseStatus: order.caseStatus || 'NONE',
+    caseTitle: getCaseTitle(order),
     createdAt: formatDate(order.createdAt, locale),
     createdAgoKey: '',
     orderDate: formatDate(order.orderedAt, locale),
@@ -400,7 +433,7 @@ export function mapWorkbenchOrderToOrderRow(row = {}, { locale = 'en' } = {}) {
     storeKey: '',
     storeName: shopName,
     handlingKey: '',
-    handling: '-',
+    handling: getHandlingLabel(order),
     productImages: photos.length > 0 ? photos : [FALLBACK_IMAGE],
     product: {
       ...buildEmptyProduct(),

@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   buildOrderListQuery,
+  buildOrderSummaryQuery,
   getOrderTabKey,
   mapApiOrderToOrderRow,
   mapApiTabCounts,
@@ -45,6 +46,32 @@ test('buildOrderListQuery defaults to 10 orders per page', () => {
     limit: 10,
     tab: 'ALL',
   })
+})
+
+test('buildOrderSummaryQuery keeps filters stable when switching tabs', () => {
+  assert.deepEqual(
+    buildOrderSummaryQuery({
+      tab: 'missingPsd',
+      search: '  113-1234567-1234567 ',
+      channel: 'amazon',
+      shopId: '660000000000000000000201',
+      seller: 'dao-quang-tung',
+      dateRange: {
+        start: { format: () => '2026-06-01' },
+        end: { format: () => '2026-06-30' },
+      },
+      page: 2,
+      limit: 25,
+    }),
+    {
+      search: '113-1234567-1234567',
+      salesChannelCode: 'AMAZON',
+      shopId: '660000000000000000000201',
+      seller: 'dao-quang-tung',
+      dateFrom: '2026-06-01',
+      dateTo: '2026-06-30',
+    },
+  )
 })
 
 test('mapApiTabCounts maps backend tab counts to UI tab keys', () => {
@@ -257,7 +284,10 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
           externalOrderId: '114-1',
           createdAt: '2026-06-02T00:00:00.000Z',
           orderedAt: '2026-06-01T00:00:00.000Z',
+          shipByDate: '2026-06-07T00:00:00.000Z',
           status: 'IMPORTED',
+          caseStatus: 'OPEN',
+          caseTitle: 'Need buyer photo',
           buyer: { name: 'Buyer' },
           customerPaidAmount: 4217,
           pricing: {
@@ -273,7 +303,6 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
           salesChannelCode: 'AMAZON',
           marketplaceCode: 'AMAZON_US',
           shippingService: { level: 'Standard' },
-          caseStatus: 'NONE',
         },
         items: [
           {
@@ -332,6 +361,9 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
   assert.equal(rows[0].shopId, '660000000000000000000201')
   assert.equal(rows[0].storeName, 'Football US Shop')
   assert.equal(rows[0].shippingType, 'Standard')
+  assert.equal(rows[0].handling, '6 Days')
+  assert.equal(rows[0].caseStatus, 'OPEN')
+  assert.equal(rows[0].caseTitle, 'Need buyer photo')
   assert.equal(rows[0].basecost, '$8.94')
   assert.deepEqual(rows[0].productImages, ['https://image.test/a.jpg'])
   assert.equal(rows[0].product.sku, 'SKU-1')

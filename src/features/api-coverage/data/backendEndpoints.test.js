@@ -5,7 +5,11 @@ import test from 'node:test'
 
 import { BACKEND_ENDPOINTS } from './backendEndpoints.js'
 
-const beRoot = path.resolve(process.cwd(), '..', 'lng-web-be')
+const beRootCandidates = [
+  path.resolve(process.cwd(), '..', 'lng-web-be'),
+  path.resolve(process.cwd(), '..', 'lng-web-be-v1', 'lng-web-be'),
+]
+const beRoot = beRootCandidates.find((candidate) => fs.existsSync(candidate))
 
 const routeFiles = [
   ['auth', '/api/auth', 'src/modules/auth/routes/index.js'],
@@ -45,6 +49,8 @@ function key(method, routePath) {
 }
 
 function readBackendRoutes() {
+  assert.ok(beRoot, `Backend repo not found in: ${beRootCandidates.join(', ')}`)
+
   return routeFiles.flatMap(([moduleId, basePath, filePath]) => {
     const source = fs.readFileSync(path.join(beRoot, filePath), 'utf8')
     const routes = []

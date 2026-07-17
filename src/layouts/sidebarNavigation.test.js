@@ -46,31 +46,20 @@ describe('filterNavigationByRole', () => {
     'dashboard',
     'order-list',
     'order-workbench',
-    'order-detail',
     'catalog-setup',
     'listings',
     'mapping-workbench',
-    'tracking',
     'production-board',
     'scale',
     'qc',
     'shipping',
     'vendor-submissions',
-    'cs',
     'design-task-list',
-    'template-center',
     'finance-summary',
     'reports',
-    'finance-balance',
-    'finance-payout',
-    'compensation-pool',
     'vendor-list',
     'products-cost',
-    'store-routing',
-    'customers',
     'users-roles',
-    'shops-stores',
-    'system-config',
     'api-coverage',
     'audit-log',
   ]
@@ -89,7 +78,6 @@ describe('filterNavigationByRole', () => {
     assert.deepEqual(collectLeafIds(navigation), [
       'dashboard',
       'design-task-list',
-      'template-center',
     ])
   })
 
@@ -102,8 +90,29 @@ describe('filterNavigationByRole', () => {
       'dashboard',
       'qc',
       'design-task-list',
-      'template-center',
     ])
+  })
+
+  it('does not expose navigation leaves without mounted routes', () => {
+    const routeLessIds = [
+      'order-detail',
+      'tracking',
+      'cs',
+      'template-center',
+      'finance-balance',
+      'finance-payout',
+      'compensation-pool',
+      'store-routing',
+      'customers',
+      'shops-stores',
+      'system-config',
+    ]
+
+    const leafIds = collectLeafIds(
+      filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['MANAGE_SYSTEM'] }),
+    )
+
+    assert.equal(routeLessIds.some((id) => leafIds.includes(id)), false)
   })
 
   it('shows auth admin surfaces for auth readers without system debug tools', () => {
@@ -128,7 +137,7 @@ describe('filterNavigationByRole', () => {
     assert.deepEqual(
       collectLeafIds(navigation),
       SIDEBAR_ROLE_FILTERING_ENABLED
-        ? ['dashboard', 'design-task-list', 'template-center']
+        ? ['dashboard', 'design-task-list']
         : fullPortalLeafIds,
     )
   })
@@ -163,13 +172,9 @@ describe('filterNavigationByRole', () => {
             'dashboard',
             'order-list',
             'order-workbench',
-            'order-detail',
             'catalog-setup',
             'listings',
             'mapping-workbench',
-            'tracking',
-            'cs',
-            'customers',
           ]
         : fullPortalLeafIds,
     )

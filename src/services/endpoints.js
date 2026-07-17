@@ -2,8 +2,10 @@
 // features/<name>/api/. Thêm nhóm endpoint mới theo feature khi có API thực tế.
 export const ENDPOINTS = {
   AUTH: {
+    REGISTER: '/api/auth/register',
     LOGIN: '/api/auth/login',
     REFRESH: '/api/auth/refresh',
+    LOGOUT: '/api/auth/logout',
     ME: '/api/auth/me',
   },
   HOME: {
@@ -64,6 +66,7 @@ export const ENDPOINTS = {
   SHOPS: {
     LIST: '/api/shops',
     DETAIL: (shopId) => `/api/shops/${shopId}`,
+    STATUS: (shopId) => `/api/shops/${shopId}/status`,
   },
   PRODUCTION: {
     TASKS: '/api/production/tasks',
@@ -79,7 +82,9 @@ export const ENDPOINTS = {
     ASSIGN_CS: (taskId) => `/api/production/tasks/${taskId}/assign-cs`,
     CS_NOTE: (taskId) => `/api/production/tasks/${taskId}/cs-note`,
     CS_STATUS: (taskId) => `/api/production/tasks/${taskId}/cs-status`,
-    FILE_CHECK: (taskId) => `/api/production/tasks/${taskId}/file-check`,
+    MANUAL_FILE_CHECK: (taskId) => `/api/production/tasks/${taskId}/file-checks/manual`,
+    MANUAL_SCALED_OUTPUT_FILE: (taskId) =>
+      `/api/production/tasks/${taskId}/file-checks/manual/scaled-output-file`,
     SCALED_OUTPUT: (taskId, fileCheckId) =>
       `/api/production/tasks/${taskId}/file-checks/${fileCheckId}/scaled-output`,
     SCALED_OUTPUT_FILE: (taskId, fileCheckId) =>
@@ -113,6 +118,8 @@ export const ENDPOINTS = {
   VENDORS: {
     LIST: '/api/vendors',
     DETAIL: (id) => `/api/vendors/${id}`,
+    INTEGRATION: (vendorId) => `/api/vendors/${vendorId}/integration`,
+    INTEGRATION_REFRESH: (vendorId) => `/api/vendors/${vendorId}/integration/refresh`,
     PRODUCTS: '/api/vendors/products',
     PRODUCT: (id) => `/api/vendors/products/${id}`,
     COST_CENTERS: (productId) => `/api/vendors/products/${productId}/cost-centers`,
@@ -120,6 +127,7 @@ export const ENDPOINTS = {
       `/api/vendors/products/${productId}/cost-centers/${costCenterId}`,
   },
   MAPPING: {
+    SUMMARY: '/api/mapping/summary',
     CONFIG_WORKBENCH: '/api/mapping/config-workbench',
     RECHECK_UNMATCHED: '/api/mapping/recheck-unmatched',
     NORMALIZATION_RULES: '/api/mapping/normalization-rules',
@@ -170,7 +178,9 @@ export const ENDPOINTS = {
   },
   VENDOR_SUBMISSIONS: {
     LIST: '/api/vendor-submissions',
+    SUMMARY: '/api/vendor-submissions/summary',
     DETAIL: (id) => `/api/vendor-submissions/${id}`,
+    SUBMIT_TO_VENDOR: (id) => `/api/vendor-submissions/${id}/submit-to-vendor`,
     FROM_PRODUCTION_TASK: (productionTaskId) =>
       `/api/vendor-submissions/from-production-tasks/${productionTaskId}`,
     RECHECK_READY: '/api/vendor-submissions/recheck-ready-production-tasks',
@@ -185,10 +195,13 @@ export const ENDPOINTS = {
   },
   SHIPMENTS: {
     LIST: '/api/shipments',
+    SUMMARY: '/api/shipments/summary',
     DETAIL: (id) => `/api/shipments/${id}`,
     FROM_VENDOR_SUBMISSION: (vendorSubmissionId) =>
       `/api/shipments/from-vendor-submissions/${vendorSubmissionId}`,
     BY_ORDER_ITEM: (orderItemId) => `/api/shipments/order-items/${orderItemId}`,
+    RECHECK_VENDOR_TRACKING: '/api/shipments/vendor-tracking/recheck',
+    RECHECK_SUBMITTED_VENDOR_TRACKING: '/api/shipments/vendor-tracking/recheck-submitted',
     VENDOR_WEBHOOK_LOGS: '/api/shipments/vendor-webhooks/logs',
     VENDOR_WEBHOOK_PROVIDER: (provider) => `/api/shipments/vendor-webhooks/${provider}`,
     TRACKING: (id) => `/api/shipments/${id}/tracking`,

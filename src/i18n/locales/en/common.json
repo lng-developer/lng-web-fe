@@ -649,7 +649,8 @@
       "title": "Exceptions to resolve",
       "missingPsd": "Missing PSD",
       "shippingHold": "Shipping hold",
-      "qcRejected": "QC rejected"
+      "qcRejected": "QC rejected",
+      "vendorReady": "Vendor handoff ready"
     }
   },
   "profile": {
@@ -865,6 +866,7 @@
       "basecost": "Basecost",
       "store": "Store",
       "handling": "Handling",
+      "actions": "Actions",
       "case": "Case"
     },
     "detail": {
@@ -1783,6 +1785,34 @@
         "top": "Top",
         "bottom": "Bottom"
       }
+    }
+  },
+  "apiWorkflows": {
+    "searchPlaceholder": "Search records",
+    "rowsCount": "{{count}} rows",
+    "empty": "No records returned from this endpoint.",
+    "actions": {
+      "close": "Close",
+      "run": "Run",
+      "open": "Open",
+      "refresh": "Refresh"
+    },
+    "detail": {
+      "title": "Detail"
+    },
+    "fields": {
+      "jsonBody": "JSON body"
+    },
+    "table": {
+      "item": "Item",
+      "status": "Status",
+      "owner": "Owner",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "errors": {
+      "missingParam": "Missing path parameter: {{param}}",
+      "unknownWorkflow": "Unknown API workflow: {{workflowId}}"
     }
   },
   "podWorkbench": {

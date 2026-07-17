@@ -649,7 +649,8 @@
       "title": "Ngoại lệ cần xử lý",
       "missingPsd": "Thiếu PSD",
       "shippingHold": "Tạm giữ vận chuyển",
-      "qcRejected": "QC từ chối"
+      "qcRejected": "QC từ chối",
+      "vendorReady": "Sẵn sàng bàn giao vendor"
     }
   },
   "profile": {
@@ -1379,6 +1380,7 @@
       "basecost": "Basecost",
       "store": "Cửa hàng",
       "handling": "Xử lý",
+      "actions": "Thao tác",
       "case": "Case"
     },
     "detail": {
@@ -1783,6 +1785,34 @@
       },
       "top": "Tooltip phía trên",
       "bottom": "Tooltip phía dưới"
+    }
+  },
+  "apiWorkflows": {
+    "searchPlaceholder": "Tìm bản ghi",
+    "rowsCount": "{{count}} dòng",
+    "empty": "Endpoint này chưa trả về bản ghi.",
+    "actions": {
+      "close": "Đóng",
+      "run": "Chạy",
+      "open": "Mở",
+      "refresh": "Tải lại"
+    },
+    "detail": {
+      "title": "Chi tiết"
+    },
+    "fields": {
+      "jsonBody": "JSON body"
+    },
+    "table": {
+      "item": "Mục",
+      "status": "Trạng thái",
+      "owner": "Phụ trách",
+      "updated": "Cập nhật",
+      "actions": "Thao tác"
+    },
+    "errors": {
+      "missingParam": "Thiếu tham số đường dẫn: {{param}}",
+      "unknownWorkflow": "Không tìm thấy API workflow: {{workflowId}}"
     }
   },
   "podWorkbench": {

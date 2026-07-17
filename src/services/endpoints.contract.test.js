@@ -45,3 +45,34 @@ test('design PSD task action endpoints match backend routes', () => {
   assert.equal(ENDPOINTS.DESIGN.ASSIGN('task-1'), '/api/design/tasks/task-1/assign')
   assert.equal(ENDPOINTS.DESIGN.CANCEL('task-1'), '/api/design/tasks/task-1/cancel')
 })
+
+test('missing backend endpoint constants match backend routes', () => {
+  assert.equal(ENDPOINTS.AUTH.LOGOUT, '/api/auth/logout')
+  assert.equal(ENDPOINTS.AUTH.REGISTER, '/api/auth/register')
+  assert.equal(ENDPOINTS.MAPPING.SUMMARY, '/api/mapping/summary')
+  assert.equal(
+    ENDPOINTS.PRODUCTION.MANUAL_FILE_CHECK('task-1'),
+    '/api/production/tasks/task-1/file-checks/manual',
+  )
+  assert.equal(
+    ENDPOINTS.PRODUCTION.MANUAL_SCALED_OUTPUT_FILE('task-1'),
+    '/api/production/tasks/task-1/file-checks/manual/scaled-output-file',
+  )
+  assert.equal(ENDPOINTS.SHIPMENTS.SUMMARY, '/api/shipments/summary')
+  assert.equal(ENDPOINTS.SHIPMENTS.RECHECK_VENDOR_TRACKING, '/api/shipments/vendor-tracking/recheck')
+  assert.equal(
+    ENDPOINTS.SHIPMENTS.RECHECK_SUBMITTED_VENDOR_TRACKING,
+    '/api/shipments/vendor-tracking/recheck-submitted',
+  )
+  assert.equal(ENDPOINTS.SHOPS.STATUS('shop-1'), '/api/shops/shop-1/status')
+  assert.equal(ENDPOINTS.VENDOR_SUBMISSIONS.SUMMARY, '/api/vendor-submissions/summary')
+  assert.equal(
+    ENDPOINTS.VENDOR_SUBMISSIONS.SUBMIT_TO_VENDOR('submission-1'),
+    '/api/vendor-submissions/submission-1/submit-to-vendor',
+  )
+  assert.equal(ENDPOINTS.VENDORS.INTEGRATION('vendor-1'), '/api/vendors/vendor-1/integration')
+  assert.equal(
+    ENDPOINTS.VENDORS.INTEGRATION_REFRESH('vendor-1'),
+    '/api/vendors/vendor-1/integration/refresh',
+  )
+})

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -67,6 +68,7 @@ function buildInitialParams(action, row) {
 }
 
 function ApiActionDialog({ action, mutation, onClose, row, workflowId }) {
+  const { t } = useTranslation()
   const [bodyText, setBodyText] = useState(action?.body || '{}')
   const [params, setParams] = useState(() => buildInitialParams(action, row))
   const [error, setError] = useState('')
@@ -76,7 +78,7 @@ function ApiActionDialog({ action, mutation, onClose, row, workflowId }) {
   const handleRun = () => {
     const missingParam = action.endpoint.paramNames.find((name) => !params[name])
     if (missingParam) {
-      setError(`Missing path parameter: ${missingParam}`)
+      setError(t('apiWorkflows.errors.missingParam', { param: missingParam }))
       return
     }
 
@@ -112,7 +114,7 @@ function ApiActionDialog({ action, mutation, onClose, row, workflowId }) {
           ))}
           {hasBody && (
             <TextField
-              label="JSON body"
+              label={t('apiWorkflows.fields.jsonBody')}
               value={bodyText}
               onChange={(event) => setBodyText(event.target.value)}
               multiline
@@ -143,9 +145,9 @@ function ApiActionDialog({ action, mutation, onClose, row, workflowId }) {
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose}>{t('apiWorkflows.actions.close')}</Button>
         <Button variant="contained" disabled={mutation.isPending} onClick={handleRun}>
-          Run
+          {t('apiWorkflows.actions.run')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -153,12 +155,14 @@ function ApiActionDialog({ action, mutation, onClose, row, workflowId }) {
 }
 
 function RawDrawer({ actionMutation, onAction, onClose, row, tab }) {
+  const { t } = useTranslation()
+
   return (
     <Drawer anchor="right" open={Boolean(row)} onClose={onClose}>
       <Box sx={{ width: { xs: '100vw', sm: 560 }, p: 2 }}>
         <Stack spacing={2}>
           <Box>
-            <Typography variant="h6">{row?.title || 'Detail'}</Typography>
+            <Typography variant="h6">{row?.title || t('apiWorkflows.detail.title')}</Typography>
             <Typography variant="body2" color="text.secondary">
               {tab.label}
             </Typography>
@@ -198,6 +202,7 @@ function RawDrawer({ actionMutation, onAction, onClose, row, tab }) {
 }
 
 export default function ApiWorkflowPage({ workflowId }) {
+  const { t } = useTranslation()
   const workflow = API_WORKFLOWS[workflowId]
   const [activeTabId, setActiveTabId] = useState(workflow?.tabs[0]?.id || '')
   const [search, setSearch] = useState('')
@@ -212,7 +217,11 @@ export default function ApiWorkflowPage({ workflowId }) {
   const rows = useMemo(() => mapWorkflowRows(getListItems(listQuery.data)), [listQuery.data])
 
   if (!workflow || !activeTab) {
-    return <Alert severity="error">Unknown API workflow: {workflowId}</Alert>
+    return (
+      <Alert severity="error">
+        {t('apiWorkflows.errors.unknownWorkflow', { workflowId })}
+      </Alert>
+    )
   }
 
   return (
@@ -249,7 +258,7 @@ export default function ApiWorkflowPage({ workflowId }) {
             sx={{ borderTop: 1, borderColor: 'divider', p: 2 }}
           >
             <TextField
-              placeholder="Search"
+              placeholder={t('apiWorkflows.searchPlaceholder')}
               size="small"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -263,8 +272,8 @@ export default function ApiWorkflowPage({ workflowId }) {
               sx={{ maxWidth: { md: 360 } }}
             />
             <Stack direction="row" alignItems="center" spacing={1}>
-              <Chip size="small" label={`${rows.length} rows`} />
-              <Tooltip title="Refresh">
+              <Chip size="small" label={t('apiWorkflows.rowsCount', { count: rows.length })} />
+              <Tooltip title={t('apiWorkflows.actions.refresh')}>
                 <IconButton size="small" onClick={() => listQuery.refetch()}>
                   <RefreshIcon fontSize="small" />
                 </IconButton>
@@ -281,11 +290,11 @@ export default function ApiWorkflowPage({ workflowId }) {
             <Table size="small" sx={{ minWidth: 760 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Item</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Owner</TableCell>
-                  <TableCell>Updated</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t('apiWorkflows.table.item')}</TableCell>
+                  <TableCell>{t('apiWorkflows.table.status')}</TableCell>
+                  <TableCell>{t('apiWorkflows.table.owner')}</TableCell>
+                  <TableCell>{t('apiWorkflows.table.updated')}</TableCell>
+                  <TableCell align="right">{t('apiWorkflows.table.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -304,7 +313,7 @@ export default function ApiWorkflowPage({ workflowId }) {
                     <TableCell>{row.updatedAt}</TableCell>
                     <TableCell align="right">
                       <Button size="small" onClick={() => setSelectedRow(row)}>
-                        Open
+                        {t('apiWorkflows.actions.open')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -314,7 +323,7 @@ export default function ApiWorkflowPage({ workflowId }) {
                     <TableCell colSpan={5}>
                       <Box sx={{ py: 5, textAlign: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
-                          No records returned from this endpoint.
+                          {t('apiWorkflows.empty')}
                         </Typography>
                       </Box>
                     </TableCell>

@@ -67,7 +67,18 @@ test('maps timeline events into readable event rows', () => {
         fromStatus: 'CUSTOMIZATION_PARSED',
         toStatus: 'FULFILLMENT_READY',
         source: 'USER',
+        actor: {
+          displayName: 'Nguyen Mai Phuong',
+          employeeCode: 'J2508',
+        },
         createdAt: '2026-07-01T00:00:00.000Z',
+      },
+      {
+        id: 'timeline-id-2',
+        eventType: 'SHIPMENT_CONFIRMED',
+        source: 'SHIPMENT',
+        actorId: '660000000000000000000901',
+        createdAt: '2026-07-01T01:00:00.000Z',
       },
     ],
   })
@@ -75,6 +86,9 @@ test('maps timeline events into readable event rows', () => {
   assert.equal(rows[0].event, 'Order item status changed')
   assert.equal(rows[0].message, 'Item moved forward')
   assert.equal(rows[0].statusChange, 'CUSTOMIZATION_PARSED -> FULFILLMENT_READY')
+  assert.equal(rows[0].actorLabel, 'Nguyen Mai Phuong')
+  assert.equal(rows[1].message, '')
+  assert.equal(rows[1].actorLabel, '660000...000901')
 })
 
 test('maps order items for selector with id only in metadata', () => {

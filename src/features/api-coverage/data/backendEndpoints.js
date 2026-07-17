@@ -107,6 +107,8 @@ production|PATCH|/api/production/tasks/:taskId/cs-note
 production|PATCH|/api/production/tasks/:taskId/cs-status
 production|GET|/api/production/order-items/:orderItemId/task
 production|POST|/api/production/order-items/:orderItemId/recheck
+production|POST|/api/production/tasks/:taskId/file-checks/manual
+production|POST|/api/production/tasks/:taskId/file-checks/manual/scaled-output-file
 production|PATCH|/api/production/tasks/:taskId/file-checks/:fileCheckId/scaled-output
 production|POST|/api/production/tasks/:taskId/file-checks/:fileCheckId/scaled-output-file
 production|PATCH|/api/production/tasks/:taskId/qc
@@ -121,6 +123,7 @@ finance|POST|/api/finance/orders/:orderId/recalculate
 finance|GET|/api/finance/orders/:orderId/summary
 design|GET|/api/design/assignees
 design|GET|/api/design/tasks
+design|GET|/api/design/tasks/summary
 design|GET|/api/design/tasks/workload
 design|POST|/api/design/tasks
 design|POST|/api/design/tasks/from-listings/:listingId/psd-template
@@ -139,6 +142,7 @@ media|POST|/api/media/assets
 media|GET|/api/media/assets/:assetId
 media|GET|/api/media/assets/:assetId/download
 mapping|GET|/api/mapping/config-workbench
+mapping|GET|/api/mapping/summary
 mapping|POST|/api/mapping/recheck-unmatched
 mapping|GET|/api/mapping/normalization-rules
 mapping|POST|/api/mapping/normalization-rules
@@ -173,7 +177,10 @@ mapping|POST|/api/mapping/order-items/:orderItemId/select
 mapping|POST|/api/mapping/order-items/:orderItemId/confirm
 mapping|GET|/api/mapping/order-items/:orderItemId/plan
 shipments|GET|/api/shipments
+shipments|GET|/api/shipments/summary
 shipments|POST|/api/shipments/from-vendor-submissions/:vendorSubmissionId
+shipments|POST|/api/shipments/vendor-tracking/recheck
+shipments|POST|/api/shipments/vendor-tracking/recheck-submitted
 shipments|GET|/api/shipments/vendor-webhooks/logs
 shipments|GET|/api/shipments/vendor-webhooks/:provider
 shipments|POST|/api/shipments/vendor-webhooks/:provider
@@ -183,6 +190,9 @@ shipments|PATCH|/api/shipments/:id/status
 shipments|GET|/api/shipments/:id
 vendors|GET|/api/vendors
 vendors|POST|/api/vendors
+vendors|GET|/api/vendors/:vendorId/integration
+vendors|PATCH|/api/vendors/:vendorId/integration
+vendors|POST|/api/vendors/:vendorId/integration/refresh
 vendors|GET|/api/vendors/products
 vendors|POST|/api/vendors/products
 vendors|GET|/api/vendors/products/:productId/cost-centers
@@ -215,10 +225,12 @@ reports|GET|/api/reports/finance/by-team
 reports|GET|/api/reports/vendor/performance
 reports|GET|/api/reports/operations/overview
 vendor-submissions|GET|/api/vendor-submissions
+vendor-submissions|GET|/api/vendor-submissions/summary
 vendor-submissions|POST|/api/vendor-submissions/from-production-tasks/:productionTaskId
 vendor-submissions|POST|/api/vendor-submissions/recheck/production-tasks/:productionTaskId
 vendor-submissions|POST|/api/vendor-submissions/recheck-ready-production-tasks
 vendor-submissions|GET|/api/vendor-submissions/:id/payload-preview
+vendor-submissions|POST|/api/vendor-submissions/:id/submit-to-vendor
 vendor-submissions|POST|/api/vendor-submissions/:id/mark-submitted
 vendor-submissions|POST|/api/vendor-submissions/:id/mark-failed
 vendor-submissions|POST|/api/vendor-submissions/:id/retry

@@ -21,6 +21,11 @@ function text(value, fallback = '-') {
   return cleaned || fallback
 }
 
+function shortId(value) {
+  const cleaned = text(value, '')
+  return cleaned.length > 12 ? `${cleaned.slice(0, 6)}...${cleaned.slice(-6)}` : cleaned
+}
+
 function labelize(value, fallback = '-') {
   const cleaned = text(value, fallback)
   const words = cleaned.toLowerCase().split('_').filter(Boolean)
@@ -111,9 +116,18 @@ export function mapTimelineRows(data) {
   return getItems(data).map((item, index) => ({
     id: item.id || `${item.eventType || 'event'}-${index}`,
     event: labelize(item.eventType, 'Event'),
-    message: text(item.message, 'No message'),
+    message: text(item.message, ''),
     statusChange: getTimelineStatusChange(item),
     source: text(item.source),
+    actorLabel:
+      text(
+        item.actor?.displayName ||
+          item.actor?.fullName ||
+          item.actor?.employeeCode ||
+          item.actorName ||
+          shortId(item.actorId),
+        '',
+      ) || text(item.source),
     date: formatDate(item.createdAt),
   }))
 }

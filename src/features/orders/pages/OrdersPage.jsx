@@ -1,22 +1,17 @@
-import { isValidElement, useMemo, useState, useTransition } from 'react'
-import { flushSync } from 'react-dom'
+import { useMemo, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
-import SwapVertIcon from '@mui/icons-material/SwapVert'
 import {
   Box,
   Button,
@@ -27,11 +22,11 @@ import {
   InputAdornment,
   MenuItem,
   Paper,
+  Popover,
   Select,
   Skeleton,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -40,59 +35,44 @@ import { useSnackbar } from 'notistack'
 import DateRangePicker from '@/components/form/DateRangePicker'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import {
-  useAddOrderCaseCommentMutation,
-  useCancelOrderCaseMutation,
-  useCancelOrderItemMutation,
   useCreateOrderCaseMutation,
   useCreateOrderItemReplacementMutation,
   useImportOrdersMutation,
-  useMarkFulfillmentReadyMutation,
   useRecheckOrderItemMutation,
-  useResolveOrderCaseMutation,
-  useRetryImportJobMutation,
   useUpdateOrderBuyerMutation,
-  useUpdateOrderCaseMutation,
-  useUpdateOrderCaseStatusMutation,
   useUpdateOrderShippingAddressMutation,
-  useUpdateOrderShippingServiceMutation,
-  useValidateOrderAddressMutation,
 } from '@/features/orders/api/orders.mutations'
 import {
-  useCustomerExceptionsQuery,
-  useImportIssuesQuery,
-  useImportJobIssuesQuery,
-  useImportJobQuery,
-  useImportJobRawRecordsQuery,
-  useOrderCasesQuery,
   useOrderDetailQuery,
+  useOrderItemTimelineQuery,
+  useOrderSummaryQuery,
   useOrderWorkbenchQuery,
   useShopsQuery,
 } from '@/features/orders/api/orders.queries'
+import DetailField from '@/features/orders/components/OrderDetailField'
+import StatusBadge from '@/features/orders/components/OrderStatusChip'
+import OrderTableGrid from '@/features/orders/components/OrderTableGrid'
+import {
+  orderTableHeaders,
+  orderTablePaddingX,
+} from '@/features/orders/components/orderTableLayout'
+import TextActionDialog from '@/features/orders/components/OrderTextActionDialog'
 import { filterOptions, orderTabs } from '@/features/orders/data/ordersData'
 import {
   buildOrderListQuery,
+  buildOrderSummaryQuery,
   mapApiTabCounts,
   mapWorkbenchRows,
 } from '@/features/orders/utils/ordersApi'
 import {
   getDefaultExpandedOrderIds,
   getPaginationPages,
+  getSelectedExpandedOrderIds,
 } from '@/features/orders/utils/ordersDisplay'
-import {
-  mapCustomerExceptionRows,
-  mapImportIssueRows,
-  mapOrderCaseRows,
-} from '@/features/orders/utils/ordersOps'
-
-const tableColumns =
-  '44px minmax(150px, 1.25fr) minmax(120px, 0.9fr) minmax(145px, 1.1fr) minmax(145px, 1.1fr) minmax(120px, 0.95fr) minmax(140px, 1.05fr) minmax(100px, 0.75fr) minmax(110px, 0.8fr) minmax(95px, 0.7fr) 56px'
-
-const caseOptions = [
-  { value: 'missing-psd', labelKey: 'orders.openCase.options.missingPsd' },
-  { value: 'customer-request', labelKey: 'orders.openCase.options.customerRequest' },
-  { value: 'shipping-issue', labelKey: 'orders.openCase.options.shippingIssue' },
-  { value: 'production-delay', labelKey: 'orders.openCase.options.productionDelay' },
-]
+import { buildSellerOptions } from '@/features/orders/utils/ordersFilters'
+import { getOrderItemWorkflowScope } from '@/features/orders/utils/ordersItemWorkflow'
+import { mapTimelineRows } from '@/features/orders/utils/ordersOps'
+import { getOrderStatusTone as getOrderStatusColor } from '@/features/orders/utils/orderStatus'
 
 const importSourceOptions = [
   { value: 'MANUAL_EXCEL', labelKey: 'orders.importOrders.sources.amazon' },
@@ -128,36 +108,6 @@ function getDisplayText(t, item) {
   return item.labelKey ? t(item.labelKey) : item.label
 }
 
-function StatusBadge({ label, color = 'success' }) {
-  const variants = {
-    success: 'success',
-    warning: 'warning',
-    danger: 'error',
-  }
-  const paletteColor = variants[color] || variants.success
-
-  return (
-    <Chip
-      label={label}
-      size="small"
-      sx={(theme) => ({
-        height: 24,
-        bgcolor: theme.palette[paletteColor].light,
-        border: `1px solid ${theme.palette[paletteColor].main}`,
-        color: theme.palette[paletteColor].main,
-        fontWeight: 500,
-        '& .MuiChip-label': { px: 1 },
-      })}
-    />
-  )
-}
-
-function getOrderStatusColor(status) {
-  if (['CANCELLED', 'REFUNDED', 'FAILED'].includes(status)) return 'danger'
-  if (['PROCESSING', 'PARTIALLY_SHIPPED', 'ON_HOLD'].includes(status)) return 'warning'
-  return 'success'
-}
-
 function OrdersSelect({ disabled = false, onChange, options, sx, value }) {
   const { t } = useTranslation()
 
@@ -176,203 +126,6 @@ function OrdersSelect({ disabled = false, onChange, options, sx, value }) {
         ))}
       </Select>
     </FormControl>
-  )
-}
-
-function getDetailDisplayValue(value) {
-  if (isValidElement(value)) return value
-  if (value === null || value === undefined || value === '') return '-'
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
-    return String(value)
-  if (Array.isArray(value)) return value.map(getDetailDisplayValue).filter(Boolean).join(', ')
-  if (typeof value === 'object') {
-    const displayKey = ['label', 'name', 'value'].find(
-      (key) => value[key] !== null && value[key] !== undefined && value[key] !== '',
-    )
-    return displayKey ? getDetailDisplayValue(value[displayKey]) : JSON.stringify(value)
-  }
-
-  return String(value)
-}
-
-function DetailField({ label, value, valueAlign = 'right' }) {
-  const displayValue = getDetailDisplayValue(value)
-  const isTextValue = typeof displayValue === 'string' || typeof displayValue === 'number'
-  const alignStart = valueAlign === 'left'
-
-  return (
-    <Box className="grid min-w-0 grid-cols-[minmax(112px,0.85fr)_minmax(0,1fr)] items-start gap-1.5">
-      <Typography variant="body2" className="min-w-0 break-words !text-ink-muted">
-        {label}
-      </Typography>
-      {isTextValue ? (
-        <Typography
-          variant="body2"
-          className={`min-w-0 break-words [overflow-wrap:anywhere] !font-medium ${
-            alignStart ? '!text-left' : '!text-right'
-          }`}
-        >
-          {displayValue}
-        </Typography>
-      ) : (
-        <Box className={`min-w-0 ${alignStart ? 'justify-self-start' : 'justify-self-end'}`}>
-          {displayValue}
-        </Box>
-      )}
-    </Box>
-  )
-}
-
-function getCollectionCount(data) {
-  if (!data) return 0
-  if (typeof data.total === 'number') return data.total
-  if (typeof data.count === 'number') return data.count
-  if (typeof data.pagination?.total === 'number') return data.pagination.total
-  if (Array.isArray(data.items)) return data.items.length
-  if (Array.isArray(data.rows)) return data.rows.length
-  if (Array.isArray(data.results)) return data.results.length
-  if (Array.isArray(data.data)) return data.data.length
-  return 0
-}
-
-function TextActionDialog({
-  confirmLabel = 'Save',
-  label,
-  loading = false,
-  onClose,
-  onSubmit,
-  open,
-  required = false,
-  title,
-}) {
-  const [value, setValue] = useState('')
-
-  const handleSubmit = () => {
-    const cleaned = value.trim()
-    if (required && !cleaned) return
-    onSubmit(cleaned)
-    setValue('')
-  }
-
-  const handleClose = () => {
-    setValue('')
-    onClose()
-  }
-
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <Stack spacing={2} sx={{ p: 2.5 }}>
-        <Typography variant="h6">{title}</Typography>
-        <TextField
-          label={label}
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          multiline
-          minRows={3}
-          fullWidth
-        />
-        <Stack direction="row" justifyContent="flex-end" spacing={1}>
-          <Button variant="outlined" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            disabled={loading || (required && !value.trim())}
-            onClick={handleSubmit}
-          >
-            {confirmLabel}
-          </Button>
-        </Stack>
-      </Stack>
-    </Dialog>
-  )
-}
-
-function CreateCaseDialog({ loading = false, onClose, onSubmit, open }) {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-
-  const handleClose = () => {
-    setTitle('')
-    setDescription('')
-    onClose()
-  }
-
-  const handleSubmit = () => {
-    onSubmit({ title: title.trim(), description: description.trim() })
-    setTitle('')
-    setDescription('')
-  }
-
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <Stack spacing={2} sx={{ p: 2.5 }}>
-        <Typography variant="h6">Create case</Typography>
-        <TextField
-          label="What happened?"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          fullWidth
-        />
-        <TextField
-          label="Operator note"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          multiline
-          minRows={3}
-          fullWidth
-        />
-        <Stack direction="row" justifyContent="flex-end" spacing={1}>
-          <Button variant="outlined" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button variant="contained" disabled={loading || !title.trim()} onClick={handleSubmit}>
-            Create
-          </Button>
-        </Stack>
-      </Stack>
-    </Dialog>
-  )
-}
-
-function ShippingServiceDialog({ loading = false, onClose, onSubmit, open, service = {} }) {
-  const [level, setLevel] = useState(service.level || '')
-  const [name, setName] = useState(service.name || '')
-
-  const handleClose = () => {
-    onClose()
-  }
-
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <Stack spacing={2} sx={{ p: 2.5 }}>
-        <Typography variant="h6">Update shipping service</Typography>
-        <TextField
-          label="Service level"
-          value={level}
-          onChange={(event) => setLevel(event.target.value)}
-          fullWidth
-        />
-        <TextField
-          label="Service name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          fullWidth
-        />
-        <Stack direction="row" justifyContent="flex-end" spacing={1}>
-          <Button variant="outlined" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            disabled={loading || (!level.trim() && !name.trim())}
-            onClick={() => onSubmit({ level: level.trim(), name: name.trim() })}
-          >
-            Save
-          </Button>
-        </Stack>
-      </Stack>
-    </Dialog>
   )
 }
 
@@ -654,7 +407,7 @@ function ImportOrdersModal({ onClose, open, shopOptions }) {
   )
 }
 
-function FilterBar({ filters, onFiltersChange, onRefresh, shopOptions }) {
+function FilterBar({ filters, onFiltersChange, onRefresh, sellerOptions, shopOptions }) {
   const { t } = useTranslation()
   const [importModalOpen, setImportModalOpen] = useState(false)
 
@@ -711,8 +464,7 @@ function FilterBar({ filters, onFiltersChange, onRefresh, shopOptions }) {
       <OrdersSelect
         value={filters.seller}
         onChange={(value) => updateFilter('seller', value)}
-        options={filterOptions.sellers}
-        disabled
+        options={sellerOptions}
         sx={{ width: '100%' }}
       />
       <IconButton
@@ -748,45 +500,33 @@ function FilterBar({ filters, onFiltersChange, onRefresh, shopOptions }) {
 
 function TableHeader() {
   const { t } = useTranslation()
-  const headers = [
-    '',
-    'orderId',
-    'status',
-    'createdAt',
-    'orderDate',
-    'shippingType',
-    'customer',
-    'basecost',
-    'store',
-    'handling',
-    'case',
-  ]
 
   return (
-    <Box
+    <OrderTableGrid
       sx={{
-        display: 'grid',
-        gridTemplateColumns: tableColumns,
-        minWidth: 0,
-        width: '100%',
         height: 37,
-        alignItems: 'center',
-        px: 2,
         bgcolor: 'background.default',
         borderBottom: '1px solid',
         borderColor: 'divider',
       }}
     >
-      {headers.map((header) => (
+      {orderTableHeaders.map((header) => (
         <Typography
-          key={header || 'expand'}
+          key={header.key || 'expand'}
           variant="caption"
-          sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}
+          sx={{
+            color: 'text.secondary',
+            fontWeight: 600,
+            justifySelf: header.align,
+            minWidth: 0,
+            textAlign: header.align,
+            textTransform: 'uppercase',
+          }}
         >
-          {header ? t(`orders.table.${header}`) : ''}
+          {header.key ? t(`orders.table.${header.key}`) : ''}
         </Typography>
       ))}
-    </Box>
+    </OrderTableGrid>
   )
 }
 
@@ -977,21 +717,32 @@ function UpdateCustomerModal({ onClose, open, order }) {
   )
 }
 
-function OpenCaseModal({ onClose, open, order }) {
+function OpenCaseModal({ onClose, onCreated, open, order }) {
   const { t } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
-  const updateCaseStatusMutation = useUpdateOrderCaseStatusMutation()
-  const [selectedCase, setSelectedCase] = useState('')
+  const createCaseMutation = useCreateOrderCaseMutation()
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
 
   const handleSave = async () => {
-    if (!order?.apiId) return
+    const cleanTitle = title.trim()
+    if (!order?.apiId || !cleanTitle) return
+
+    const firstWorkbenchItem = order.workbenchItems?.[0]?.item || {}
 
     try {
-      await updateCaseStatusMutation.mutateAsync({
+      const createdCase = await createCaseMutation.mutateAsync({
         orderId: order.apiId,
-        caseStatus: 'OPEN',
+        orderItemId: firstWorkbenchItem.id || undefined,
+        caseType: 'OTHER',
+        severity: 'MEDIUM',
+        title: cleanTitle,
+        description: description.trim(),
       })
       enqueueSnackbar(t('orders.openCase.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+      setTitle('')
+      setDescription('')
+      onCreated?.(createdCase)
       onClose()
     } catch (error) {
       enqueueSnackbar(t(error?.message || 'errors.api.network'), {
@@ -1034,33 +785,22 @@ function OpenCaseModal({ onClose, open, order }) {
           </Typography>
         </Stack>
 
-        <FormControl fullWidth size="small">
-          <Select
-            value={selectedCase}
-            displayEmpty
-            IconComponent={KeyboardArrowDownIcon}
-            onChange={(event) => setSelectedCase(event.target.value)}
-            renderValue={(value) =>
-              value
-                ? t(caseOptions.find((item) => item.value === value)?.labelKey)
-                : t('orders.openCase.placeholder')
-            }
-            sx={{
-              height: 44,
-              borderRadius: 2,
-              color: selectedCase ? 'text.primary' : 'text.disabled',
-              '& .MuiSelect-select': {
-                py: 1.25,
-              },
-            }}
-          >
-            {caseOptions.map((item) => (
-              <MenuItem key={item.value} value={item.value}>
-                {t(item.labelKey)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <TextField
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          label="Title"
+          fullWidth
+        />
+
+        <TextField
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          label="Description"
+          multiline
+          minRows={3}
+          fullWidth
+          sx={{ mt: 2 }}
+        />
 
         <Box
           sx={{
@@ -1076,7 +816,7 @@ function OpenCaseModal({ onClose, open, order }) {
           <Button
             variant="contained"
             onClick={handleSave}
-            disabled={updateCaseStatusMutation.isPending || !selectedCase}
+            disabled={createCaseMutation.isPending || !title.trim()}
             sx={{ gridColumn: 3, height: 40, width: 96 }}
           >
             {t('orders.actions.save')}
@@ -1087,21 +827,297 @@ function OpenCaseModal({ onClose, open, order }) {
   )
 }
 
-function OrderRow({ expanded, onToggle, order }) {
-  const { t } = useTranslation()
-  const [caseModalOpen, setCaseModalOpen] = useState(false)
-  const [customerModalOpen, setCustomerModalOpen] = useState(false)
+function OrderTimelineButton({ orderItemId }) {
+  const [timelineAnchor, setTimelineAnchor] = useState(null)
+  const timelineQuery = useOrderItemTimelineQuery(orderItemId, {
+    enabled: Boolean(orderItemId && timelineAnchor),
+  })
+  const rows = mapTimelineRows(timelineQuery.data)
+  const open = Boolean(timelineAnchor)
 
   return (
-    <Box
+    <>
+      <IconButton
+        aria-label="Open order item timeline"
+        disabled={!orderItemId}
+        size="small"
+        onClick={(event) => {
+          event.stopPropagation()
+          setTimelineAnchor(event.currentTarget)
+        }}
+        sx={{ color: 'text.secondary', height: 24, width: 24 }}
+      >
+        <HistoryOutlinedIcon sx={{ fontSize: 16 }} />
+      </IconButton>
+      <Popover
+        open={open}
+        anchorEl={timelineAnchor}
+        onClose={() => setTimelineAnchor(null)}
+        anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: 'left', vertical: 'top' }}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: 420,
+            overflow: 'auto',
+            p: 0,
+            width: 420,
+          },
+        }}
+      >
+        <Stack>
+          <Box
+            sx={{
+              px: 2,
+              py: 1.5,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.default',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+              Order item timeline
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {rows.length} events
+            </Typography>
+          </Box>
+          {timelineQuery.isFetching ? (
+            <Stack spacing={1} sx={{ p: 2 }}>
+              <Skeleton height={44} />
+              <Skeleton height={44} />
+              <Skeleton height={44} />
+            </Stack>
+          ) : rows.length > 0 ? (
+            rows.map((row, index) => (
+              <Box
+                key={row.id}
+                sx={(theme) => ({
+                  display: 'grid',
+                  gridTemplateColumns: '18px minmax(0, 1fr)',
+                  columnGap: 1.25,
+                  px: 2,
+                  py: 1.4,
+                  borderBottom:
+                    index === rows.length - 1 ? 'none' : `1px solid ${theme.palette.divider}`,
+                })}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                  <Box
+                    sx={(theme) => ({
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: theme.palette.success.main,
+                      mt: 0.75,
+                    })}
+                  />
+                </Box>
+                <Stack spacing={0.6} sx={{ minWidth: 0 }}>
+                  <Stack
+                    direction="row"
+                    gap={1}
+                    sx={{ alignItems: 'baseline', justifyContent: 'space-between', minWidth: 0 }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 800, overflowWrap: 'anywhere' }}>
+                      {row.event}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                      {row.date}
+                    </Typography>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {row.actorLabel} | {row.source}
+                  </Typography>
+                  {row.statusChange && row.statusChange !== '-' ? (
+                    <Chip
+                      size="small"
+                      label={row.statusChange}
+                      sx={{ alignSelf: 'flex-start', maxWidth: '100%' }}
+                    />
+                  ) : null}
+                  {row.message ? (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ overflowWrap: 'anywhere' }}
+                    >
+                      {row.message}
+                    </Typography>
+                  ) : null}
+                </Stack>
+              </Box>
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+              No timeline events.
+            </Typography>
+          )}
+        </Stack>
+      </Popover>
+    </>
+  )
+}
+
+function RowActionButton({ color = 'default', disabled = false, icon, label, onClick }) {
+  return (
+    <IconButton
+      aria-label={label}
+      color={color}
+      disabled={disabled}
+      onClick={onClick}
+      size="small"
+      title={label}
+      sx={(theme) => ({
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 1.5,
+        flexShrink: 0,
+        height: 28,
+        width: 28,
+      })}
+    >
+      {icon}
+    </IconButton>
+  )
+}
+
+function CustomerCell({ order }) {
+  const [customerModalOpen, setCustomerModalOpen] = useState(false)
+  const orderId = order.apiId
+
+  return (
+    <Stack
+      direction="row"
+      gap={0.5}
+      sx={{ alignItems: 'center', justifyContent: 'flex-start', minWidth: 0, overflow: 'hidden' }}
+    >
+      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 0, maxWidth: 150 }} noWrap>
+        {order.customer}
+      </Typography>
+      <CheckCircleIcon fontSize="small" color="success" sx={{ flexShrink: 0 }} />
+      <RowActionButton
+        disabled={!orderId}
+        icon={<PersonOutlineOutlinedIcon fontSize="small" />}
+        label="Buyer"
+        onClick={() => setCustomerModalOpen(true)}
+      />
+      <UpdateCustomerModal
+        key={`${order.apiId}-${customerModalOpen}`}
+        open={customerModalOpen}
+        order={order}
+        onClose={() => setCustomerModalOpen(false)}
+      />
+    </Stack>
+  )
+}
+
+function OrderCaseAction({ onRefresh, order }) {
+  const [caseModalOpen, setCaseModalOpen] = useState(false)
+  const [createdCaseTitle, setCreatedCaseTitle] = useState('')
+  const orderId = order.apiId
+  const caseStatus = order.caseStatus || order.raw?.caseStatus || 'NONE'
+  const caseTitle =
+    createdCaseTitle ||
+    order.caseTitle ||
+    order.raw?.caseTitle ||
+    order.raw?.latestCase?.title ||
+    order.raw?.case?.title ||
+    ''
+  const hasCase = Boolean(caseTitle) || (caseStatus && caseStatus !== 'NONE')
+  const handleCaseCreated = (createdCase) => {
+    setCreatedCaseTitle(createdCase?.title || '')
+    onRefresh?.()
+  }
+
+  return (
+    <Stack direction="row" gap={0.5} sx={{ alignItems: 'center', justifyContent: 'center' }}>
+      {hasCase ? <Chip size="small" label={caseTitle || caseStatus} color="warning" /> : null}
+      <RowActionButton
+        color="success"
+        disabled={!orderId}
+        icon={<AddBoxOutlinedIcon fontSize="small" />}
+        label="Case"
+        onClick={() => setCaseModalOpen(true)}
+      />
+      <OpenCaseModal
+        open={caseModalOpen}
+        order={order}
+        onCreated={handleCaseCreated}
+        onClose={() => setCaseModalOpen(false)}
+      />
+    </Stack>
+  )
+}
+
+function OrderOtherActions({ onRefresh, order }) {
+  const { enqueueSnackbar } = useSnackbar()
+  const [textAction, setTextAction] = useState(null)
+  const firstWorkbenchItem = order.workbenchItems?.[0]?.item || {}
+  const orderItemId = firstWorkbenchItem.id
+  const recheckItemMutation = useRecheckOrderItemMutation()
+  const replacementMutation = useCreateOrderItemReplacementMutation()
+
+  const runMutation = async (mutation, payload, successMessage) => {
+    try {
+      await mutation.mutateAsync(payload)
+      enqueueSnackbar(successMessage, { variant: SNACKBAR_VARIANTS.SUCCESS })
+      onRefresh?.()
+      return true
+    } catch (error) {
+      enqueueSnackbar(error?.message || 'Action failed', { variant: SNACKBAR_VARIANTS.ERROR })
+      return false
+    }
+  }
+
+  const submitTextAction = async (value) => {
+    const success = await runMutation(
+      replacementMutation,
+      { orderItemId, reason: value, quantity: 1 },
+      'Replacement created.',
+    )
+    if (success) setTextAction(null)
+  }
+
+  return (
+    <Stack
+      direction="row"
+      gap={0.5}
+      sx={{ alignItems: 'center', flexWrap: 'nowrap', justifyContent: 'center', minWidth: 0 }}
+    >
+      <RowActionButton
+        disabled={!orderItemId || recheckItemMutation.isPending}
+        icon={<RefreshIcon fontSize="small" />}
+        label="Retest"
+        onClick={() => runMutation(recheckItemMutation, { orderItemId }, 'Item retest requested.')}
+      />
+      <RowActionButton
+        disabled={!orderItemId}
+        icon={<AddBoxOutlinedIcon fontSize="small" />}
+        label="Replace"
+        onClick={() => setTextAction('replacement')}
+      />
+      <TextActionDialog
+        open={Boolean(textAction)}
+        title="Create replacement item"
+        label="Replacement reason"
+        confirmLabel="Create"
+        required
+        loading={replacementMutation.isPending}
+        onClose={() => setTextAction(null)}
+        onSubmit={submitTextAction}
+      />
+    </Stack>
+  )
+}
+
+function OrderRow({ expanded, onRefresh, onToggle, order }) {
+  const { t } = useTranslation()
+  const orderItemId = getOrderItemWorkflowScope(order).orderItemId
+
+  return (
+    <OrderTableGrid
+      minHeight={64}
       sx={{
-        display: 'grid',
-        gridTemplateColumns: tableColumns,
-        minWidth: 0,
-        width: '100%',
-        minHeight: 64,
-        alignItems: 'center',
-        px: 2,
         borderBottom: '1px solid',
         borderColor: 'divider',
       }}
@@ -1110,66 +1126,52 @@ function OrderRow({ expanded, onToggle, order }) {
         size="small"
         onClick={onToggle}
         aria-expanded={expanded}
-        sx={{ width: 28, height: 28 }}
+        sx={{ height: 28, justifySelf: 'center', width: 28 }}
       >
         {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
       </IconButton>
-      <span className="text-xs">{order.id}</span>
-      <Stack spacing={1} sx={{ alignItems: 'center', flexDirection: 'row' }}>
+      <Box
+        component="span"
+        className="text-xs"
+        sx={{ minWidth: 0, overflowWrap: 'anywhere', pr: 1 }}
+      >
+        {order.id}
+      </Box>
+      <Stack
+        spacing={0.5}
+        sx={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'center', minWidth: 0 }}
+      >
         <StatusBadge label={t(order.statusKey)} color={getOrderStatusColor(order.status)} />
+        <OrderTimelineButton orderItemId={orderItemId} />
       </Stack>
-      <Box>
+      <Box sx={{ justifySelf: 'center', textAlign: 'center' }}>
         <Typography variant="body2">{order.createdAt}</Typography>
         <Typography variant="caption" color="text.disabled">
           {t(order.createdAgoKey)}
         </Typography>
       </Box>
-      <Box>
+      <Box sx={{ justifySelf: 'center', textAlign: 'center' }}>
         <Typography variant="body2">{order.orderDate}</Typography>
         <Typography variant="caption" color="text.disabled">
           {t(order.orderAgoKey)}
         </Typography>
       </Box>
-      <Stack spacing={1} sx={{ alignItems: 'center', flexDirection: 'row' }}>
+      <Stack sx={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
         <StatusBadge label={order.shippingType || '-'} />
       </Stack>
-      <Stack spacing={1} sx={{ alignItems: 'center', flexDirection: 'row' }}>
-        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-          {order.customer}
-        </Typography>
-        <IconButton
-          aria-label={t('orders.updateCustomer.title')}
-          onClick={() => setCustomerModalOpen(true)}
-          sx={{ width: 20, height: 20, color: 'text.secondary' }}
-        >
-          <EditOutlinedIcon fontSize="small" />
-        </IconButton>
-        <CheckCircleIcon fontSize="small" color="success" />
-        <UpdateCustomerModal
-          key={`${order.apiId}-${customerModalOpen}`}
-          open={customerModalOpen}
-          order={order}
-          onClose={() => setCustomerModalOpen(false)}
-        />
-      </Stack>
-      <Typography variant="body2">{order.basecost}</Typography>
-      <Box>
+      <CustomerCell order={order} />
+      <Typography variant="body2" sx={{ justifySelf: 'end' }}>
+        {order.basecost}
+      </Typography>
+      <Box sx={{ justifySelf: 'center', minWidth: 0, maxWidth: '100%' }}>
         <StatusBadge label={order.storeKey ? t(order.storeKey) : order.storeName} color="danger" />
       </Box>
-      <Typography variant="body2">
+      <Typography variant="body2" sx={{ justifySelf: 'center' }}>
         {order.handlingKey ? t(order.handlingKey) : order.handling}
       </Typography>
-      <Box>
-        <IconButton
-          aria-label={t('orders.openCase.title')}
-          onClick={() => setCaseModalOpen(true)}
-          sx={{ width: 28, height: 28, color: 'success.main' }}
-        >
-          <AddBoxOutlinedIcon fontSize="small" />
-        </IconButton>
-        <OpenCaseModal open={caseModalOpen} order={order} onClose={() => setCaseModalOpen(false)} />
-      </Box>
-    </Box>
+      <OrderCaseAction order={order} onRefresh={onRefresh} />
+      <OrderOtherActions order={order} onRefresh={onRefresh} />
+    </OrderTableGrid>
   )
 }
 
@@ -1322,24 +1324,24 @@ function CustomizationInfo({ customization }) {
   )
 }
 
-function CompactInput({ value, endIcon = false, multiline = false, rows = 1 }) {
+function ReadOnlyValue({ multiline = false, rows = 1, value }) {
   return (
-    <TextField
-      defaultValue={value}
-      multiline={multiline}
-      rows={rows}
-      slotProps={{
-        input: endIcon
-          ? {
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SwapVertIcon sx={{ color: 'text.disabled' }} />
-                </InputAdornment>
-              ),
-            }
-          : undefined,
-      }}
-    />
+    <Box
+      sx={(theme) => ({
+        alignItems: multiline ? 'flex-start' : 'center',
+        bgcolor: theme.palette.action.hover,
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 1.5,
+        display: 'flex',
+        minHeight: multiline ? rows * 30 + 18 : 40,
+        px: 1.25,
+        py: multiline ? 1 : 0.75,
+      })}
+    >
+      <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+        {value || '-'}
+      </Typography>
+    </Box>
   )
 }
 
@@ -1358,32 +1360,32 @@ function FulfillmentInfo({ fulfillment }) {
       <Box className="grid grid-cols-2 gap-4">
         <Stack spacing={0.7}>
           <Typography variant="body2">{t('orders.fields.quantity')}</Typography>
-          <CompactInput value={fulfillment.quantity} />
+          <ReadOnlyValue value={fulfillment.quantity} />
         </Stack>
         <Stack spacing={0.7}>
           <Typography variant="body2">{t('orders.fields.fulfillQty')}</Typography>
-          <CompactInput value={fulfillment.fulfillQty} />
+          <ReadOnlyValue value={fulfillment.fulfillQty} />
         </Stack>
         <Stack spacing={0.7}>
           <Typography variant="body2">{t('orders.fields.new')}</Typography>
-          <CompactInput value={t(fulfillment.statusKey)} />
+          <ReadOnlyValue value={t(fulfillment.statusKey)} />
         </Stack>
         <Stack spacing={0.7}>
           <Typography variant="body2">{t('orders.fields.vendorProduct')}</Typography>
-          <CompactInput value={fulfillment.vendorProduct} endIcon />
+          <ReadOnlyValue value={fulfillment.vendorProduct} />
         </Stack>
         <Stack spacing={0.7}>
           <Typography variant="body2">{t('orders.fields.size')}</Typography>
-          <CompactInput value={fulfillment.size} endIcon />
+          <ReadOnlyValue value={fulfillment.size} />
         </Stack>
         <Stack spacing={0.7}>
           <Typography variant="body2">{t('orders.fields.color')}</Typography>
-          <CompactInput value={fulfillment.color} endIcon />
+          <ReadOnlyValue value={fulfillment.color} />
         </Stack>
       </Box>
       <Stack spacing={0.7}>
         <Typography variant="body2">{t('orders.fields.fulfillName')}</Typography>
-        <CompactInput value={fulfillment.fulfillName} multiline rows={3} />
+        <ReadOnlyValue value={fulfillment.fulfillName} multiline rows={3} />
       </Stack>
     </Stack>
   )
@@ -1397,515 +1399,44 @@ function NotePanel({ fulfillment }) {
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {t('orders.fields.status')}
       </Typography>
-      <CompactInput value={t(fulfillment.statusKey)} endIcon />
+      <ReadOnlyValue value={t(fulfillment.statusKey)} />
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {t('orders.fields.tracking')}
       </Typography>
-      <CompactInput value={t(fulfillment.trackingKey)} endIcon />
+      <ReadOnlyValue value={t(fulfillment.trackingKey)} />
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {t('orders.fields.note')}
       </Typography>
-      <CompactInput value={t(fulfillment.noteKey)} multiline rows={3} />
-      <Button variant="contained" startIcon={<EditOutlinedIcon />} sx={{ height: 38 }}>
-        {t('orders.actions.update')}
-      </Button>
+      <ReadOnlyValue value={t(fulfillment.noteKey)} multiline rows={3} />
     </Stack>
   )
 }
 
-function ActionIconButton({ color = 'default', disabled = false, icon, label, onClick }) {
-  return (
-    <Tooltip title={label}>
-      <Box
-        component="span"
-        sx={{
-          alignItems: 'center',
-          display: 'inline-flex',
-          flexDirection: 'column',
-          gap: 0.5,
-          minWidth: 68,
-        }}
-      >
-        <IconButton
-          color={color}
-          disabled={disabled}
-          onClick={onClick}
-          size="small"
-          sx={(theme) => ({
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 1.5,
-            height: 34,
-            width: 34,
-          })}
-        >
-          {icon}
-        </IconButton>
-        <Typography
-          variant="caption"
-          color={disabled ? 'text.disabled' : 'text.secondary'}
-          sx={{ lineHeight: 1.2, maxWidth: 78, textAlign: 'center' }}
-        >
-          {label}
-        </Typography>
-      </Box>
-    </Tooltip>
-  )
-}
-
-function ActionsCard({ children, subtitle, title }) {
-  return (
-    <Paper variant="outlined" sx={{ p: 1.25 }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-        {title}
-      </Typography>
-      {subtitle ? (
-        <Typography variant="caption" color="text.secondary">
-          {subtitle}
-        </Typography>
-      ) : null}
-      <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
-        {children}
-      </Stack>
-    </Paper>
-  )
-}
-
-function ExpandedOrderDetail({ onRefresh, order }) {
-  const { enqueueSnackbar } = useSnackbar()
-  const [customerModalOpen, setCustomerModalOpen] = useState(false)
-  const [serviceModalOpen, setServiceModalOpen] = useState(false)
-  const [textAction, setTextAction] = useState(null)
+function ExpandedOrderDetail({ order }) {
   const displayOrder = order
-  const orderId = order.apiId
-  const firstWorkbenchItem = order.workbenchItems?.[0]?.item || {}
-  const orderItemId = firstWorkbenchItem.id
-  const validateAddressMutation = useValidateOrderAddressMutation()
-  const shippingServiceMutation = useUpdateOrderShippingServiceMutation()
-  const recheckItemMutation = useRecheckOrderItemMutation()
-  const markReadyMutation = useMarkFulfillmentReadyMutation()
-  const replacementMutation = useCreateOrderItemReplacementMutation()
-  const cancelItemMutation = useCancelOrderItemMutation()
-  const currentShippingService = order.raw?.shippingService || {}
-
-  const refreshRow = () => {
-    onRefresh?.()
-  }
-  const runMutation = async (mutation, payload, successMessage) => {
-    try {
-      await mutation.mutateAsync(payload)
-      enqueueSnackbar(successMessage, { variant: SNACKBAR_VARIANTS.SUCCESS })
-      refreshRow()
-    } catch (error) {
-      enqueueSnackbar(error?.message || 'Action failed', { variant: SNACKBAR_VARIANTS.ERROR })
-    }
-  }
-  const submitTextAction = (value) => {
-    if (textAction === 'replacement') {
-      runMutation(
-        replacementMutation,
-        { orderItemId, reason: value, quantity: 1 },
-        'Replacement created.',
-      )
-    }
-    if (textAction === 'cancelItem') {
-      runMutation(cancelItemMutation, { orderItemId, reason: value }, 'Item cancelled.')
-    }
-    setTextAction(null)
-  }
 
   return (
-    <>
-      <Box
-        sx={{
-          width: '100%',
-          display: 'grid',
-          gridTemplateColumns:
-            'minmax(150px, 0.65fr) minmax(220px, 1fr) minmax(320px, 1.35fr) minmax(360px, 1.45fr) minmax(245px, 1fr)',
-          gap: 3.5,
-          alignItems: 'flex-start',
-          minWidth: 1460,
-          px: 3,
-          py: 2.5,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <ProductImages images={displayOrder.productImages} />
-        <ProductInfo product={displayOrder.product} />
-        <CustomizationInfo customization={displayOrder.customization} />
-        <FulfillmentInfo fulfillment={displayOrder.fulfillment} />
-        <Stack spacing={1.25}>
-          <NotePanel fulfillment={displayOrder.fulfillment} />
-          <ActionsCard subtitle={order.id} title="Order actions">
-            <ActionIconButton
-              disabled={!orderId || validateAddressMutation.isPending}
-              icon={<FactCheckOutlinedIcon fontSize="small" />}
-              label="Validate"
-              onClick={() =>
-                runMutation(validateAddressMutation, { orderId }, 'Address validation requested.')
-              }
-            />
-            <ActionIconButton
-              disabled={!orderId}
-              icon={<PersonOutlineOutlinedIcon fontSize="small" />}
-              label="Buyer"
-              onClick={() => setCustomerModalOpen(true)}
-            />
-            <ActionIconButton
-              disabled={!orderId}
-              icon={<LocalShippingOutlinedIcon fontSize="small" />}
-              label="Service"
-              onClick={() => setServiceModalOpen(true)}
-            />
-          </ActionsCard>
-          <ActionsCard
-            subtitle={firstWorkbenchItem.sku || order.product?.sku}
-            title="Order item actions"
-          >
-            <ActionIconButton
-              disabled={!orderItemId || recheckItemMutation.isPending}
-              icon={<RefreshIcon fontSize="small" />}
-              label="Recheck"
-              onClick={() =>
-                runMutation(recheckItemMutation, { orderItemId }, 'Item recheck requested.')
-              }
-            />
-            <ActionIconButton
-              color="success"
-              disabled={!orderItemId || markReadyMutation.isPending}
-              icon={<CheckCircleIcon fontSize="small" />}
-              label="Ready"
-              onClick={() =>
-                runMutation(markReadyMutation, { orderItemId }, 'Item marked fulfillment-ready.')
-              }
-            />
-            <ActionIconButton
-              disabled={!orderItemId}
-              icon={<AddBoxOutlinedIcon fontSize="small" />}
-              label="Replace"
-              onClick={() => setTextAction('replacement')}
-            />
-            <ActionIconButton
-              color="error"
-              disabled={!orderItemId}
-              icon={<CancelOutlinedIcon fontSize="small" />}
-              label="Cancel"
-              onClick={() => setTextAction('cancelItem')}
-            />
-          </ActionsCard>
-        </Stack>
-      </Box>
-      <UpdateCustomerModal
-        open={customerModalOpen}
-        order={order}
-        onClose={() => setCustomerModalOpen(false)}
-      />
-      <ShippingServiceDialog
-        open={serviceModalOpen}
-        service={currentShippingService}
-        loading={shippingServiceMutation.isPending}
-        onClose={() => setServiceModalOpen(false)}
-        onSubmit={(payload) =>
-          runMutation(
-            shippingServiceMutation,
-            { orderId, ...payload },
-            'Shipping service updated.',
-          ).then(() => setServiceModalOpen(false))
-        }
-      />
-      <TextActionDialog
-        open={Boolean(textAction)}
-        title={textAction === 'replacement' ? 'Create replacement item' : 'Cancel item'}
-        label={textAction === 'replacement' ? 'Replacement reason' : 'Cancel reason'}
-        confirmLabel={textAction === 'replacement' ? 'Create' : 'Cancel item'}
-        required={textAction === 'cancelItem'}
-        loading={replacementMutation.isPending || cancelItemMutation.isPending}
-        onClose={() => setTextAction(null)}
-        onSubmit={submitTextAction}
-      />
-    </>
-  )
-}
-
-function QueueRows({ actions, emptyLabel, loading, rows }) {
-  if (loading) {
-    return (
-      <Stack spacing={1}>
-        <Skeleton variant="rounded" height={58} />
-        <Skeleton variant="rounded" height={58} />
-      </Stack>
-    )
-  }
-
-  if (rows.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary">
-        {emptyLabel}
-      </Typography>
-    )
-  }
-
-  return (
-    <Stack spacing={1}>
-      {rows.map((row) => (
-        <Paper key={row.id} variant="outlined" sx={{ p: 1.25 }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {row.primary}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {row.secondary}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {row.message}
-              </Typography>
-            </Box>
-            <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
-              <Chip size="small" label={row.tag} />
-              <Chip size="small" label={row.status} />
-              <Typography variant="caption" color="text.secondary">
-                {row.date}
-              </Typography>
-              {actions?.(row)}
-            </Stack>
-          </Stack>
-        </Paper>
-      ))}
-    </Stack>
-  )
-}
-
-function CasesTab({ onRefresh, query, selectedOrderId }) {
-  const { enqueueSnackbar } = useSnackbar()
-  const [action, setAction] = useState(null)
-  const rows = mapOrderCaseRows(query.data)
-  const createMutation = useCreateOrderCaseMutation()
-  const updateMutation = useUpdateOrderCaseMutation()
-  const resolveMutation = useResolveOrderCaseMutation()
-  const cancelMutation = useCancelOrderCaseMutation()
-  const commentMutation = useAddOrderCaseCommentMutation()
-  const activeMutation =
-    createMutation.isPending ||
-    updateMutation.isPending ||
-    resolveMutation.isPending ||
-    cancelMutation.isPending ||
-    commentMutation.isPending
-
-  const runCaseAction = async (mutation, payload, message) => {
-    try {
-      await mutation.mutateAsync(payload)
-      enqueueSnackbar(message, { variant: SNACKBAR_VARIANTS.SUCCESS })
-      query.refetch()
-      onRefresh?.()
-    } catch (error) {
-      enqueueSnackbar(error?.message || 'Case action failed', { variant: SNACKBAR_VARIANTS.ERROR })
-    }
-  }
-
-  const submitTextAction = (value) => {
-    if (!action) return
-    if (action.type === 'edit') {
-      runCaseAction(updateMutation, { caseId: action.row.id, title: value }, 'Case updated.')
-    }
-    if (action.type === 'resolve') {
-      runCaseAction(
-        resolveMutation,
-        { caseId: action.row.id, resolutionNote: value },
-        'Case resolved.',
-      )
-    }
-    if (action.type === 'cancel') {
-      runCaseAction(
-        cancelMutation,
-        { caseId: action.row.id, cancelReason: value },
-        'Case cancelled.',
-      )
-    }
-    if (action.type === 'comment') {
-      runCaseAction(commentMutation, { caseId: action.row.id, body: value }, 'Comment added.')
-    }
-    setAction(null)
-  }
-
-  return (
-    <Stack spacing={1.5}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
-          <Box>
-            <Typography variant="h6">Cases</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Create and close customer-service cases for selected orders.
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            disabled={!selectedOrderId}
-            onClick={() => setAction({ type: 'create' })}
-          >
-            Create case
-          </Button>
-        </Stack>
-      </Paper>
-      <QueueRows
-        rows={rows}
-        loading={query.isFetching}
-        emptyLabel="No cases found."
-        actions={(row) => (
-          <>
-            <Button size="small" onClick={() => setAction({ type: 'edit', row })}>
-              Edit
-            </Button>
-            <Button size="small" onClick={() => setAction({ type: 'comment', row })}>
-              Comment
-            </Button>
-            <Button size="small" onClick={() => setAction({ type: 'resolve', row })}>
-              Resolve
-            </Button>
-            <Button color="error" size="small" onClick={() => setAction({ type: 'cancel', row })}>
-              Cancel
-            </Button>
-          </>
-        )}
-      />
-      <CreateCaseDialog
-        open={action?.type === 'create'}
-        loading={activeMutation}
-        onClose={() => setAction(null)}
-        onSubmit={(payload) => {
-          runCaseAction(
-            createMutation,
-            { orderId: selectedOrderId, caseType: 'OTHER', severity: 'MEDIUM', ...payload },
-            'Case created.',
-          )
-          setAction(null)
-        }}
-      />
-      <TextActionDialog
-        open={Boolean(action && action.type !== 'create')}
-        title={
-          action?.type === 'edit'
-            ? 'Edit case'
-            : action?.type === 'comment'
-              ? 'Add case comment'
-              : action?.type === 'resolve'
-                ? 'Resolve case'
-                : 'Cancel case'
-        }
-        label={
-          action?.type === 'edit'
-            ? 'Case title'
-            : action?.type === 'comment'
-              ? 'Comment'
-              : action?.type === 'resolve'
-                ? 'Resolution note'
-                : 'Cancel reason'
-        }
-        required={action?.type === 'edit' || action?.type === 'comment'}
-        loading={activeMutation}
-        onClose={() => setAction(null)}
-        onSubmit={submitTextAction}
-      />
-    </Stack>
-  )
-}
-
-function ExceptionsTab({ onOpenOrder, query }) {
-  const rows = mapCustomerExceptionRows(query.data)
-
-  return (
-    <Stack spacing={1.5}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Typography variant="h6">Customer Exceptions</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Read-only queue from order, item, case, customization, and shipment state.
-        </Typography>
-      </Paper>
-      <QueueRows
-        rows={rows}
-        loading={query.isFetching}
-        emptyLabel="No customer exceptions found."
-        actions={(row) => (
-          <Button size="small" disabled={!row.orderId} onClick={() => onOpenOrder(row.orderId)}>
-            Open detail
-          </Button>
-        )}
-      />
-    </Stack>
-  )
-}
-
-function ImportIssuesTab({ query }) {
-  const { enqueueSnackbar } = useSnackbar()
-  const rows = mapImportIssueRows(query.data)
-  const [selectedJobId, setSelectedJobId] = useState('')
-  const jobQuery = useImportJobQuery(selectedJobId, { enabled: Boolean(selectedJobId) })
-  const jobIssuesQuery = useImportJobIssuesQuery(
-    selectedJobId,
-    { page: 1, limit: 10 },
-    { enabled: Boolean(selectedJobId) },
-  )
-  const rawRecordsQuery = useImportJobRawRecordsQuery(
-    selectedJobId,
-    { page: 1, limit: 10 },
-    { enabled: Boolean(selectedJobId) },
-  )
-  const retryMutation = useRetryImportJobMutation()
-  const retryJob = async () => {
-    if (!selectedJobId) return
-    try {
-      await retryMutation.mutateAsync({ jobId: selectedJobId })
-      enqueueSnackbar('Import job retry requested.', { variant: SNACKBAR_VARIANTS.SUCCESS })
-      query.refetch()
-      jobQuery.refetch()
-      jobIssuesQuery.refetch()
-      rawRecordsQuery.refetch()
-    } catch (error) {
-      enqueueSnackbar(error?.message || 'Retry failed', { variant: SNACKBAR_VARIANTS.ERROR })
-    }
-  }
-
-  return (
-    <Stack spacing={1.5}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Typography variant="h6">Import Issues</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Review import failures and inspect job-level issues without raw JSON.
-        </Typography>
-      </Paper>
-      <QueueRows
-        rows={rows}
-        loading={query.isFetching}
-        emptyLabel="No import issues found."
-        actions={(row) => (
-          <Button
-            size="small"
-            disabled={!row.importJobId}
-            onClick={() => setSelectedJobId(row.importJobId)}
-          >
-            Open job
-          </Button>
-        )}
-      />
-      {selectedJobId ? (
-        <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                {jobQuery.data?.source || jobQuery.data?.status || 'Import job'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Issues: {getCollectionCount(jobIssuesQuery.data)} | Raw records:{' '}
-                {getCollectionCount(rawRecordsQuery.data)}
-              </Typography>
-            </Box>
-            <Button variant="outlined" disabled={retryMutation.isPending} onClick={retryJob}>
-              Retry job
-            </Button>
-          </Stack>
-        </Paper>
-      ) : null}
-    </Stack>
+    <Box
+      sx={{
+        width: '100%',
+        display: 'grid',
+        gridTemplateColumns:
+          'minmax(150px, 0.65fr) minmax(220px, 1fr) minmax(320px, 1.35fr) minmax(360px, 1.45fr) minmax(245px, 1fr)',
+        gap: 3.5,
+        alignItems: 'flex-start',
+        minWidth: 1460,
+        px: orderTablePaddingX,
+        py: 2.5,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <ProductImages images={displayOrder.productImages} />
+      <ProductInfo product={displayOrder.product} />
+      <CustomizationInfo customization={displayOrder.customization} />
+      <FulfillmentInfo fulfillment={displayOrder.fulfillment} />
+      <NotePanel fulfillment={displayOrder.fulfillment} />
+    </Box>
   )
 }
 
@@ -1999,17 +1530,12 @@ function PaginationBar({ limit = 10, onLimitChange, onPageChange, page = 1, tota
 
 function OrdersTableSkeleton({ rows = 6 }) {
   return Array.from({ length: rows }, (_, index) => (
-    <Box
+    <OrderTableGrid
       key={index}
+      minHeight={64}
       sx={{
-        alignItems: 'center',
         borderBottom: '1px solid',
         borderColor: 'divider',
-        display: 'grid',
-        gridTemplateColumns: tableColumns,
-        minHeight: 64,
-        px: 2,
-        width: '100%',
       }}
     >
       <Skeleton variant="circular" width={24} height={24} />
@@ -2023,7 +1549,8 @@ function OrdersTableSkeleton({ rows = 6 }) {
       <Skeleton variant="rounded" width={84} height={24} />
       <Skeleton variant="text" width={72} height={24} />
       <Skeleton variant="circular" width={28} height={28} />
-    </Box>
+      <Skeleton variant="rounded" width={72} height={28} />
+    </OrderTableGrid>
   ))
 }
 
@@ -2038,19 +1565,49 @@ function OrdersTable({
   orders,
   pagination,
 }) {
-  const { t } = useTranslation()
-
   return (
     <Paper
       variant="outlined"
       sx={{
         width: '100%',
         overflowX: 'auto',
+        overflowY: 'hidden',
         // borderRadius: theme.shape.borderRadiusCard,
         boxShadow: '0px 1px 3px rgba(16, 24, 40, 0.08)',
       }}
     >
       <TableHeader />
+      <OrdersTableBody
+        expandedOrderIds={expandedOrderIds}
+        loading={loading}
+        onRefresh={onRefresh}
+        onSelectOrder={onSelectOrder}
+        onToggleOrder={onToggleOrder}
+        orders={orders}
+      />
+      <PaginationBar
+        limit={pagination?.limit}
+        onLimitChange={onLimitChange}
+        page={pagination?.page}
+        total={pagination?.total}
+        onPageChange={onPageChange}
+      />
+    </Paper>
+  )
+}
+
+function OrdersTableBody({
+  expandedOrderIds,
+  loading,
+  onRefresh,
+  onSelectOrder,
+  onToggleOrder,
+  orders,
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <Box sx={{ maxHeight: 'calc(100vh - 360px)', overflowY: 'auto', overflowX: 'visible' }}>
       {loading ? (
         <OrdersTableSkeleton />
       ) : orders.length === 0 ? (
@@ -2066,25 +1623,19 @@ function OrdersTable({
             <Box key={orderKey}>
               <OrderRow
                 expanded={expanded}
+                onRefresh={onRefresh}
                 onToggle={() => {
-                  onSelectOrder?.(order)
-                  onToggleOrder(orderKey)
+                  if (!expanded) onSelectOrder?.(order)
+                  onToggleOrder(order)
                 }}
                 order={order}
               />
-              {expanded && <ExpandedOrderDetail order={order} onRefresh={onRefresh} />}
+              {expanded && <ExpandedOrderDetail order={order} />}
             </Box>
           )
         })
       )}
-      <PaginationBar
-        limit={pagination?.limit}
-        onLimitChange={onLimitChange}
-        page={pagination?.page}
-        total={pagination?.total}
-        onPageChange={onPageChange}
-      />
-    </Paper>
+    </Box>
   )
 }
 
@@ -2103,7 +1654,6 @@ export default function OrdersPage() {
     page: 1,
     limit: 10,
   })
-  const [collapsedOrderIds, setCollapsedOrderIds] = useState([])
   const shopsQuery = useShopsQuery({ page: 1, limit: 100 })
   const shopOptions = useMemo(
     () =>
@@ -2117,11 +1667,9 @@ export default function OrdersPage() {
     () => buildOrderListQuery({ ...filters, tab: queryTab }),
     [filters, queryTab],
   )
+  const orderSummaryParams = useMemo(() => buildOrderSummaryQuery(filters), [filters])
   const ordersQuery = useOrderWorkbenchQuery(orderQuery)
-  const operationsQuery = useMemo(() => ({ page: 1, limit: 5 }), [])
-  const customerExceptionsQuery = useCustomerExceptionsQuery(operationsQuery)
-  const orderCasesQuery = useOrderCasesQuery(operationsQuery)
-  const importIssuesQuery = useImportIssuesQuery(operationsQuery)
+  const orderSummaryQuery = useOrderSummaryQuery(orderSummaryParams)
   const orders = useMemo(
     () =>
       mapWorkbenchRows(ordersQuery.data?.items || [], {
@@ -2129,23 +1677,24 @@ export default function OrdersPage() {
       }),
     [i18n.language, ordersQuery.data],
   )
+  const sellerOptions = useMemo(() => buildSellerOptions(orders), [orders])
   const pagination = ordersQuery.data?.pagination || {
     total: 0,
     page: filters.page,
     limit: filters.limit,
   }
   const tabs = useMemo(() => {
-    const counts = mapApiTabCounts(ordersQuery.data?.tabCounts || {})
+    const counts = mapApiTabCounts(orderSummaryQuery.data?.tabCounts || {})
 
     return orderTabs.map((tab) => ({
       ...tab,
       count: counts[tab.key] || 0,
     }))
-  }, [ordersQuery.data])
+  }, [orderSummaryQuery.data])
   const expandedOrderIds = useMemo(() => {
-    const collapsedIds = new Set(collapsedOrderIds)
-    return getDefaultExpandedOrderIds(orders).filter((orderId) => !collapsedIds.has(orderId))
-  }, [collapsedOrderIds, orders])
+    const selectedIds = getSelectedExpandedOrderIds(selectedOrderId)
+    return selectedIds.length > 0 ? selectedIds : getDefaultExpandedOrderIds(orders)
+  }, [orders, selectedOrderId])
   const isTabLoading = activeTab !== queryTab || isTabPending || ordersQuery.isLoading
 
   const handleSelectOrder = (order) => {
@@ -2154,25 +1703,25 @@ export default function OrdersPage() {
     updateOrdersUrl({ orderId: order.apiId })
   }
 
-  const handleToggleOrder = (orderId) => {
-    setCollapsedOrderIds((currentIds) =>
-      currentIds.includes(orderId)
-        ? currentIds.filter((currentId) => currentId !== orderId)
-        : [...currentIds, orderId],
-    )
+  const handleToggleOrder = (order) => {
+    const orderId = order?.apiId || order?.id
+    if (!orderId) return
+
+    const nextOrderId = selectedOrderId === orderId ? '' : orderId
+    setSelectedOrderId(nextOrderId)
+    updateOrdersUrl({ orderId: nextOrderId })
   }
   const handleChangeTab = (tab) => {
     if (tab === activeTab) {
       return
     }
 
-    flushSync(() => {
-      setActiveTab(tab)
-    })
+    setActiveTab(tab)
     startTabTransition(() => {
       setQueryTab(tab)
       setFilters((current) => ({ ...current, page: 1 }))
-      setCollapsedOrderIds([])
+      setSelectedOrderId('')
+      updateOrdersUrl({ orderId: '' })
     })
   }
 
@@ -2191,6 +1740,7 @@ export default function OrdersPage() {
             filters={filters}
             onFiltersChange={setFilters}
             onRefresh={() => ordersQuery.refetch()}
+            sellerOptions={sellerOptions}
             shopOptions={shopOptions}
           />
           <OrdersTable
@@ -2198,7 +1748,8 @@ export default function OrdersPage() {
             loading={isTabLoading}
             onLimitChange={(limit) => {
               setFilters((current) => ({ ...current, limit, page: 1 }))
-              setCollapsedOrderIds([])
+              setSelectedOrderId('')
+              updateOrdersUrl({ orderId: '' })
             }}
             onPageChange={(page) => setFilters((current) => ({ ...current, page }))}
             onRefresh={() => ordersQuery.refetch()}
@@ -2207,27 +1758,6 @@ export default function OrdersPage() {
             orders={orders}
             pagination={pagination}
           />
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 1.5,
-              gridTemplateColumns: { xs: '1fr', xl: 'repeat(3, minmax(0, 1fr))' },
-            }}
-          >
-            <CasesTab
-              query={orderCasesQuery}
-              selectedOrderId={selectedOrderId}
-              onRefresh={() => ordersQuery.refetch()}
-            />
-            <ExceptionsTab
-              query={customerExceptionsQuery}
-              onOpenOrder={(orderId) => {
-                setSelectedOrderId(orderId)
-                updateOrdersUrl({ orderId })
-              }}
-            />
-            <ImportIssuesTab query={importIssuesQuery} />
-          </Box>
         </Stack>
       </Stack>
     </Box>

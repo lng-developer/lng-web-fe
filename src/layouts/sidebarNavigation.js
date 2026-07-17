@@ -16,6 +16,28 @@ export const SIDEBAR_NAV_TABS = {
   HR: 'hr',
 }
 
+const MOUNTED_ROUTE_PATHS = new Set([
+  ROUTES.HOME,
+  ROUTES.PORTAL_ORDER_LIST,
+  ROUTES.PORTAL_ORDER_WORKBENCH,
+  ROUTES.PORTAL_CATALOG_SETUP,
+  ROUTES.PORTAL_LISTINGS,
+  ROUTES.PORTAL_MAPPING_WORKBENCH,
+  ROUTES.PORTAL_PRODUCTION,
+  ROUTES.PORTAL_SCALE,
+  ROUTES.PORTAL_QC,
+  ROUTES.PORTAL_SHIPPING,
+  ROUTES.PORTAL_VENDOR_SUBMISSIONS,
+  ROUTES.PORTAL_DESIGN_TASKS,
+  ROUTES.PORTAL_FINANCE_SUMMARY,
+  ROUTES.PORTAL_REPORTS,
+  ROUTES.PORTAL_VENDOR_LIST,
+  ROUTES.PORTAL_PRODUCTS_COST,
+  ROUTES.PORTAL_USERS_ROLES,
+  ROUTES.PORTAL_API_COVERAGE,
+  ROUTES.PORTAL_AUDIT_LOG,
+])
+
 export const SIDEBAR_TABS = [
   {
     id: SIDEBAR_NAV_TABS.PORTAL,
@@ -481,23 +503,19 @@ function cloneNavigationItem(item) {
   return { ...item }
 }
 
-function canAccessByPermission(item, user) {
-  return !item.requiredPermissions || hasAnyPermission(user, item.requiredPermissions)
-}
-
-function filterItemByUser(item, user) {
-  if (!canAccessByPermission(item, user)) {
+function filterMountedItem(item) {
+  if (item.path && !MOUNTED_ROUTE_PATHS.has(item.path)) {
     return null
   }
 
   if (item.type === 'section') {
-    const items = item.items.map((child) => filterItemByUser(child, user)).filter(Boolean)
+    const items = item.items.map(filterMountedItem).filter(Boolean)
 
     return items.length > 0 ? { ...item, items } : null
   }
 
   if (item.children) {
-    const children = item.children.map((child) => filterItemByUser(child, user)).filter(Boolean)
+    const children = item.children.map(filterMountedItem).filter(Boolean)
 
     return children.length > 0 || item.path ? { ...item, children } : null
   }
@@ -505,16 +523,44 @@ function filterItemByUser(item, user) {
   return { ...item }
 }
 
+function canAccessByPermission(item, user) {
+  return !item.requiredPermissions || hasAnyPermission(user, item.requiredPermissions)
+}
+
+function filterItemByUser(item, user) {
+  const mountedItem = filterMountedItem(item)
+  if (!mountedItem || !canAccessByPermission(mountedItem, user)) {
+    return null
+  }
+
+  if (mountedItem.type === 'section') {
+    const items = mountedItem.items.map((child) => filterItemByUser(child, user)).filter(Boolean)
+
+    return items.length > 0 ? { ...mountedItem, items } : null
+  }
+
+  if (mountedItem.children) {
+    const children = mountedItem.children
+      .map((child) => filterItemByUser(child, user))
+      .filter(Boolean)
+
+    return children.length > 0 || mountedItem.path ? { ...mountedItem, children } : null
+  }
+
+  return { ...mountedItem }
+}
+
 export function filterNavigationByUser(navigation, user) {
   return navigation.map((item) => filterItemByUser(item, user)).filter(Boolean)
 }
 
 export function filterNavigationByRole(navigation, role) {
+  const normalizedRole = normalizeRole(role)
+  const mountedNavigation = navigation.map(filterMountedItem).filter(Boolean)
+
   if (!SIDEBAR_ROLE_FILTERING_ENABLED) {
-    return navigation.map(cloneNavigationItem)
+    return mountedNavigation.map(cloneNavigationItem)
   }
 
-  const normalizedRole = normalizeRole(role)
-
-  return navigation.map((item) => filterItem(item, normalizedRole)).filter(Boolean)
+  return mountedNavigation.map((item) => filterItem(item, normalizedRole)).filter(Boolean)
 }

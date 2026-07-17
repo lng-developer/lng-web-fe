@@ -92,6 +92,9 @@ export const POD_MODULES = {
       endpoint('POST', '/api/vendors', 'Create vendor'),
       endpoint('GET', '/api/vendors/:id', 'Vendor detail'),
       endpoint('PATCH', '/api/vendors/:id', 'Edit vendor'),
+      endpoint('GET', '/api/vendors/:vendorId/integration', 'Load vendor integration config'),
+      endpoint('PATCH', '/api/vendors/:vendorId/integration', 'Update vendor integration config'),
+      endpoint('POST', '/api/vendors/:vendorId/integration/refresh', 'Refresh vendor credential'),
       endpoint(
         'GET',
         '/api/vendors/products?vendorId=&productTypeGroupId=&status=&page=&limit=',
@@ -279,8 +282,17 @@ export const POD_MODULES = {
       endpoint('PATCH', '/api/production/tasks/:id/assign', 'Assign task'),
       endpoint('PATCH', '/api/production/tasks/:id/claim', 'Claim task'),
       endpoint('PATCH', '/api/production/tasks/:id/design-note', 'Design note'),
-      endpoint('PATCH', '/api/production/tasks/:id/file-check', 'File check'),
-      endpoint('PATCH', '/api/production/tasks/:id/scaled-output', 'Scaled output'),
+      endpoint('POST', '/api/production/tasks/:taskId/file-checks/manual', 'Manual file check'),
+      endpoint(
+        'POST',
+        '/api/production/tasks/:taskId/file-checks/manual/scaled-output-file',
+        'Manual scaled output upload',
+      ),
+      endpoint(
+        'PATCH',
+        '/api/production/tasks/:taskId/file-checks/:fileCheckId/scaled-output',
+        'Scaled output metadata',
+      ),
       endpoint('PATCH', '/api/production/tasks/:id/qc', 'QC decision'),
       endpoint('PATCH', '/api/production/tasks/:id/sent-to-vendor', 'Vendor handoff'),
       endpoint('GET', '/api/production/order-items/:orderItemId/task', 'Task by item'),
@@ -321,6 +333,7 @@ export const POD_MODULES = {
     ],
     contracts: [
       endpoint('GET', '/api/vendor-submissions', 'Submission queue'),
+      endpoint('GET', '/api/vendor-submissions/summary', 'Submission summary'),
       endpoint(
         'POST',
         '/api/vendor-submissions/from-production-tasks/:productionTaskId',
@@ -332,10 +345,12 @@ export const POD_MODULES = {
         'Recheck ready tasks',
       ),
       endpoint('GET', '/api/vendor-submissions/:id/payload-preview', 'Payload preview'),
+      endpoint('POST', '/api/vendor-submissions/:id/submit-to-vendor', 'Submit to vendor adapter'),
       endpoint('POST', '/api/vendor-submissions/:id/mark-submitted', 'Mark submitted'),
       endpoint('POST', '/api/vendor-submissions/:id/mark-failed', 'Mark failed'),
       endpoint('POST', '/api/vendor-submissions/:id/cancel', 'Cancel submission'),
       endpoint('GET', '/api/shipments', 'Shipment queue'),
+      endpoint('GET', '/api/shipments/summary', 'Shipment summary'),
       endpoint(
         'POST',
         '/api/shipments/from-vendor-submissions/:vendorSubmissionId',
@@ -343,6 +358,12 @@ export const POD_MODULES = {
       ),
       endpoint('PATCH', '/api/shipments/:id/tracking', 'Update tracking'),
       endpoint('PATCH', '/api/shipments/:id/status', 'Update shipment status'),
+      endpoint('POST', '/api/shipments/vendor-tracking/recheck', 'Recheck vendor tracking'),
+      endpoint(
+        'POST',
+        '/api/shipments/vendor-tracking/recheck-submitted',
+        'Recheck submitted tracking',
+      ),
     ],
   },
   finance: {

@@ -5,6 +5,10 @@ import { formatCurrency } from '@/utils/format'
 
 import { useHomeSummaryQuery } from '../api/home.queries'
 
+function displayValue(value) {
+  return value === null || value === undefined ? '-' : value
+}
+
 export default function HomePage() {
   const { t } = useTranslation()
   const { data, isPending } = useHomeSummaryQuery()
@@ -14,7 +18,7 @@ export default function HomePage() {
     { label: t('home.summary.orders'), value: data?.totalOrders },
     {
       label: t('home.summary.revenue'),
-      value: data ? formatCurrency(data.totalRevenue) : undefined,
+      value: data?.totalRevenue === null ? null : data ? formatCurrency(data.totalRevenue) : undefined,
     },
   ]
   const queueItems = data?.queues ?? []
@@ -41,7 +45,7 @@ export default function HomePage() {
               {isPending ? (
                 <Skeleton width={96} height={32} />
               ) : (
-                <Typography variant="h5">{item.value}</Typography>
+                <Typography variant="h5">{displayValue(item.value)}</Typography>
               )}
             </CardContent>
           </Card>
