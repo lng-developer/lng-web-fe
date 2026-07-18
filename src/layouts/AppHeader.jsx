@@ -23,12 +23,12 @@ import {
 
 import { LANGUAGES, LAYOUT_SIZES, THEME_MODES } from '@/constants/app'
 import { ROUTES } from '@/constants/routes'
-import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import {
   getCurrentUserInitials,
   getCurrentUserRole,
   resolveCurrentUser,
 } from '@/features/auth/utils/currentUser'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useUIStore } from '@/store/useUIStore'
 
 import { getRoleMeta } from './sidebarNavigation'
@@ -85,12 +85,12 @@ export default function AppHeader({ onToggleSidebar }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null)
-  const { data: currentUserData } = useCurrentUserQuery()
+  const storedCurrentUser = useAuthStore((state) => state.currentUser)
   const language = useUIStore((state) => state.language)
   const setLanguage = useUIStore((state) => state.setLanguage)
   const themeMode = useUIStore((state) => state.themeMode)
   const setThemeMode = useUIStore((state) => state.setThemeMode)
-  const currentUser = resolveCurrentUser(currentUserData)
+  const currentUser = resolveCurrentUser(storedCurrentUser)
   const userRole = getCurrentUserRole(currentUser)
   const roleMeta = getRoleMeta(userRole)
   const roleLabel = roleMeta
@@ -171,16 +171,7 @@ export default function AppHeader({ onToggleSidebar }) {
               width: 24,
             }}
           />
-          <Box
-            component="span"
-            sx={{
-              color: 'text.primary',
-              fontSize: '0.9375rem',
-              fontWeight: 700,
-              lineHeight: 1.2,
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <Box component="span" className="whitespace-nowrap text-lg font-bold text-ink">
             {t('app.brandName')}
           </Box>
         </Box>
@@ -312,7 +303,7 @@ export default function AppHeader({ onToggleSidebar }) {
             <Avatar
               sx={(theme) => ({
                 bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.grey[300]}`,
+                border: `1px solid ${theme.palette.divider}`,
                 color: 'text.primary',
                 fontSize: theme.typography.caption.fontSize,
                 fontWeight: 700,

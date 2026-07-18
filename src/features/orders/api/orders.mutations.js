@@ -4,7 +4,7 @@ import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
 import { ordersKeys } from './orders.keys'
-;``
+
 function unwrapApiData(response) {
   return response?.success && Object.hasOwn(response, 'data') ? response.data : response
 }
@@ -49,6 +49,16 @@ export function useImportOrdersMutation() {
   })
 }
 
+export function useRetryImportJobMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId }) =>
+      apiClient.post(ENDPOINTS.ORDER_IMPORTS.JOB_RETRY(jobId)).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+  })
+}
+
 export function useUpdateOrderBuyerMutation() {
   const queryClient = useQueryClient()
 
@@ -59,6 +69,58 @@ export function useUpdateOrderBuyerMutation() {
       queryClient.invalidateQueries({ queryKey: ordersKeys.all })
       queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
     },
+  })
+}
+
+export function useCreateOrderCaseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload) => apiClient.post(ENDPOINTS.ORDERS.CASES, payload).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+  })
+}
+
+export function useUpdateOrderCaseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ caseId, ...payload }) =>
+      apiClient.patch(ENDPOINTS.ORDERS.CASE(caseId), payload).then(unwrapApiData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      queryClient.invalidateQueries({ queryKey: ordersKeys.caseDetail(variables.caseId) })
+    },
+  })
+}
+
+export function useResolveOrderCaseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ caseId, ...payload }) =>
+      apiClient.post(ENDPOINTS.ORDERS.CASE_RESOLVE(caseId), payload).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+  })
+}
+
+export function useCancelOrderCaseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ caseId, ...payload }) =>
+      apiClient.post(ENDPOINTS.ORDERS.CASE_CANCEL(caseId), payload).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+  })
+}
+
+export function useAddOrderCaseCommentMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ caseId, ...payload }) =>
+      apiClient.post(ENDPOINTS.ORDERS.CASE_COMMENTS(caseId), payload).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
   })
 }
 
@@ -139,5 +201,35 @@ export function useMarkFulfillmentReadyMutation() {
       queryClient.invalidateQueries({ queryKey: ordersKeys.all })
       queryClient.invalidateQueries({ queryKey: ordersKeys.itemReadiness(variables.orderItemId) })
     },
+  })
+}
+
+export function useRecheckOrderItemMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ orderItemId, ...payload }) =>
+      apiClient.post(ENDPOINTS.ORDERS.ITEM_RECHECK(orderItemId), payload).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+  })
+}
+
+export function useCreateOrderItemReplacementMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ orderItemId, ...payload }) =>
+      apiClient.post(ENDPOINTS.ORDERS.ITEM_REPLACEMENT(orderItemId), payload).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+  })
+}
+
+export function useCancelOrderItemMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ orderItemId, ...payload }) =>
+      apiClient.post(ENDPOINTS.ORDERS.ITEM_CANCEL(orderItemId), payload).then(unwrapApiData),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
   })
 }

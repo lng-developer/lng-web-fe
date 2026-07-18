@@ -68,6 +68,14 @@ function formatTaskDate(value) {
 }
 
 function getDisplayScaleStatus(task = {}) {
+  const workflowStage = task.workflow?.stage
+  if (workflowStage === 'READY_FOR_SCALE') return SCALE_STATUSES.NEED_SCALE
+  if (workflowStage === 'IN_SCALE') return SCALE_STATUSES.PENDING
+  if (workflowStage === 'QC_REJECTED') return SCALE_STATUSES.QC_REJECTED
+  if (['QC_PENDING', 'READY_TO_SEND_VENDOR'].includes(workflowStage))
+    return SCALE_STATUSES.COMPLETED
+  if (workflowStage === 'SENT_TO_VENDOR') return SCALE_STATUSES.SENT
+
   if (task.qcStatus === 'REJECTED' || task.productionStatus === 'QC_REJECTED') {
     return SCALE_STATUSES.QC_REJECTED
   }
@@ -105,6 +113,7 @@ export function buildProductionTaskQuery(filters = {}) {
 
   return compactObject({
     ...statusQuery(filters.statusTab),
+    readyForScale: true,
     salesChannelCode: filters.salesChannelCode,
     search: filters.search?.trim(),
     shopId: filters.shop && filters.shop !== SCALE_ALL_FILTER ? filters.shop : undefined,
@@ -181,6 +190,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
 
   return {
     id: task.id,
+    orderItemId: task.orderItemId || orderItem.id || null,
     orderId: orderItem.externalOrderId || task.orderId || '-',
     orderDate: formatTaskDate(
       task.orderDate || task.createdAt || task.assignedAt || task.updatedAt,
@@ -204,6 +214,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
     assignmentStatus: scaleBy ? CS_STATUSES.ASSIGNED : CS_STATUSES.UNASSIGNED,
     channel: task.salesChannelCode || listing.salesChannelCode || null,
     marketplaceCode: task.marketplaceCode || listing.marketplaceCode || null,
+    workflow: task.workflow || null,
     detail: {
       product: {
         name: orderItem.title || listing.title || '-',

@@ -1,25 +1,21 @@
-import { useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
 import CheckIcon from '@mui/icons-material/Check'
-import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
-import ContentCutOutlinedIcon from '@mui/icons-material/ContentCutOutlined'
+import CloseIcon from '@mui/icons-material/Close'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined'
-import GridViewIcon from '@mui/icons-material/GridView'
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft'
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import ReplyIcon from '@mui/icons-material/Reply'
 import SearchIcon from '@mui/icons-material/Search'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
   Button,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
   InputAdornment,
@@ -31,1022 +27,1623 @@ import {
   Typography,
 } from '@mui/material'
 import { useQueryClient } from '@tanstack/react-query'
+import { useSnackbar } from 'notistack'
 
-import { TASK_TYPES } from '@/constants/app'
-import { designTasksKeys } from '@/features/design-tasks/api/designTasks.keys'
-import { useDesignTasksQuery } from '@/features/design-tasks/api/designTasks.queries'
-import TaskTypeTabs from '@/features/design-tasks/components/TaskTypeTabs'
+import AnimatedDialog from '@/components/common/AnimatedDialog'
+import DateRangePicker from '@/components/form/DateRangePicker'
 import {
-  DESIGN_TASK_ASIN_TYPE_FILTERS,
-  DESIGN_TASK_PAGE_SIZE,
-  DESIGN_TASK_SELLER_FILTERS,
-  DESIGN_TASK_SHOP_FILTERS,
-  DESIGN_TASK_STATUS_TABS,
-  DESIGN_TASK_TABLE_COLUMNS,
-  PNG_TASK_TABLE_COLUMNS,
-  PSD_TASK_TABLE_COLUMNS,
-} from '@/features/design-tasks/constants/designTasksConstants'
+  IconActionButton,
+  OperationsHeader,
+  OperationsPageShell,
+  OperationsPagination,
+  OperationsTable,
+  OperationsTabs,
+  OperationsToolbar,
+  StatusBadge,
+} from '@/components/operations'
+import { hasAnyPermission } from '@/features/auth/utils/authz'
+import { designTasksKeys } from '@/features/design-tasks/api/designTasks.keys'
+import {
+  useApproveDesignTaskMutation,
+  useAssignDesignTaskMutation,
+  useBulkCreatePsdTasksMutation,
+  useCancelDesignTaskMutation,
+  useCreateDesignTaskMutation,
+  useOverrideSubmissionScoreMutation,
+  useRejectDesignTaskMutation,
+  useStartDesignTaskMutation,
+  useSubmitDesignTaskMutation,
+  useUploadMediaAssetMutation,
+  useVoidSubmissionScoreMutation,
+} from '@/features/design-tasks/api/designTasks.mutations'
+import {
+  useDesignAssigneesQuery,
+  useDesignScoreSummaryQuery,
+  useDesignTaskDetailQuery,
+  useDesignTasksQuery,
+  useDesignTaskSummaryQuery,
+  useDesignWorkloadQuery,
+  usePsdTemplateCandidatesQuery,
+} from '@/features/design-tasks/api/designTasks.queries'
+import DesignScoreSummary from '@/features/design-tasks/components/DesignScoreSummary'
+import {
+  createDesignTaskColumns,
+  DESIGN_TASK_TABLE_MIN_WIDTH,
+} from '@/features/design-tasks/components/designTaskTableColumns'
+import SubmissionScoreEditor from '@/features/design-tasks/components/SubmissionScoreEditor'
+import {
+  buildApproveLatestSubmissionVariables,
+  DESIGN_TASK_OUTPUT_OPTIONS,
+  DESIGN_TASK_PRIORITY_OPTIONS,
+  DESIGN_TASK_TYPE_OPTIONS,
+  getDesignTaskActions,
+} from '@/features/design-tasks/utils/designTasksApi'
+import {
+  useCatalogInternalTemplatesQuery,
+  useListingShopsQuery,
+  useListingsQuery,
+} from '@/features/listings/api/listings.queries'
 import { useDebounce } from '@/hooks/useDebounce'
+import dayjs from '@/lib/dayjs'
+import { useAuthStore } from '@/store/useAuthStore'
 
-const ideaStatusTabs = [
-  { value: DESIGN_TASK_STATUS_TABS.ALL, labelKey: 'designTasks.statusTabs.all' },
-  { value: DESIGN_TASK_STATUS_TABS.NEW, labelKey: 'designTasks.statusTabs.new' },
-  { value: DESIGN_TASK_STATUS_TABS.ASSIGNED, labelKey: 'designTasks.statusTabs.assigned' },
-  { value: DESIGN_TASK_STATUS_TABS.IN_PROGRESS, labelKey: 'designTasks.statusTabs.inProgress' },
-  { value: DESIGN_TASK_STATUS_TABS.UPLOADED, labelKey: 'designTasks.statusTabs.uploaded' },
-  { value: DESIGN_TASK_STATUS_TABS.QC_PASSED, labelKey: 'designTasks.statusTabs.qcPassed' },
-  { value: DESIGN_TASK_STATUS_TABS.QC_REJECTED, labelKey: 'designTasks.statusTabs.qcRejected' },
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'unassigned', label: 'Unassigned' },
+  { value: 'requested', label: 'Requested' },
+  { value: 'new', label: 'Open' },
+  { value: 'assigned', label: 'Assigned' },
+  { value: 'inProgress', label: 'In progress' },
+  { value: 'uploaded', label: 'Submitted' },
+  { value: 'qcRejected', label: 'Rejected' },
+  { value: 'qcPassed', label: 'Approved' },
 ]
 
-const psdStatusTabs = [
-  { value: DESIGN_TASK_STATUS_TABS.ALL, labelKey: 'designTasks.statusTabs.all' },
-  { value: DESIGN_TASK_STATUS_TABS.NEW, labelKey: 'designTasks.statusTabs.new' },
-  { value: DESIGN_TASK_STATUS_TABS.REQUESTED, labelKey: 'designTasks.statusTabs.requested' },
-  { value: DESIGN_TASK_STATUS_TABS.ASSIGNED, labelKey: 'designTasks.statusTabs.assigned' },
-  { value: DESIGN_TASK_STATUS_TABS.IN_PROGRESS, labelKey: 'designTasks.statusTabs.inProgress' },
-  { value: DESIGN_TASK_STATUS_TABS.UPLOADED, labelKey: 'designTasks.statusTabs.uploaded' },
-  { value: DESIGN_TASK_STATUS_TABS.QC_REJECTED, labelKey: 'designTasks.statusTabs.qcRejected' },
-  { value: DESIGN_TASK_STATUS_TABS.QC_PASSED, labelKey: 'designTasks.statusTabs.qcPassed' },
+const SORT_OPTIONS = [
+  { value: 'createdAt', label: 'Created' },
+  { value: 'updatedAt', label: 'Updated' },
+  { value: 'submittedAt', label: 'Submitted' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'status', label: 'Status' },
 ]
 
-const pngStatusTabs = [
-  { value: DESIGN_TASK_STATUS_TABS.ALL, labelKey: 'designTasks.statusTabs.all' },
-  {
-    value: DESIGN_TASK_STATUS_TABS.PENDING_ASSIGNMENT,
-    labelKey: 'designTasks.statusTabs.pendingAssignment',
-  },
-  { value: DESIGN_TASK_STATUS_TABS.NEED_SCALE, labelKey: 'designTasks.statusTabs.needScale' },
-  { value: DESIGN_TASK_STATUS_TABS.PENDING, labelKey: 'designTasks.statusTabs.pending' },
-  { value: DESIGN_TASK_STATUS_TABS.COMPLETED, labelKey: 'designTasks.statusTabs.completed' },
-  { value: DESIGN_TASK_STATUS_TABS.QC_REJECTED, labelKey: 'designTasks.statusTabs.qcRejected' },
-]
-
-const pageSizeOptions = [10, 20, 50]
-
-const sellerFilterOptions = [
-  { value: DESIGN_TASK_SELLER_FILTERS.ALL, labelKey: 'designTasks.psd.filters.all' },
-]
-
-const shopFilterOptions = [
-  { value: DESIGN_TASK_SHOP_FILTERS.ALL, labelKey: 'designTasks.png.filters.all' },
-]
-
-const asinTypeFilterOptions = [
-  { value: DESIGN_TASK_ASIN_TYPE_FILTERS.ALL, labelKey: 'designTasks.png.filters.all' },
-]
-
-const statusClasses = {
-  New: 'border border-success bg-surface text-success',
-  Assigned: 'border border-warning bg-surface text-warning',
-  Uploaded: 'border border-success bg-surface text-success',
-  'In Progress': 'border border-warning bg-surface text-warning',
-  Complete: 'border border-success bg-surface text-success',
-  Completed: 'border border-success bg-surface text-success',
+const DESIGN_TASK_TYPE_SLUGS = {
+  IDEA: 'idea',
+  PSD_TEMPLATE: 'psd-template',
+  CLONE: 'clone',
+  MOCKUP: 'mockup',
+  PNG_ASSET: 'png-asset',
 }
 
-const chipClasses = {
-  'Pending assign': 'border border-border bg-surface text-ink-muted',
-  Nam: 'bg-warning-bg text-warning-deep',
-  Hoa: 'bg-warning-bg text-warning-deep',
-  Acct: 'bg-warning-bg text-warning-deep',
-  Acct2: 'bg-warning-bg text-warning-deep',
-  Main: 'bg-info-bg text-info-strong',
-  'T-Shirt': 'border border-teal bg-surface text-teal',
-  Ornament: 'border border-teal bg-surface text-teal',
-  'Jane Cooper': 'border border-secondary bg-surface text-secondary',
-  'Nam Tran': 'border border-secondary bg-surface text-secondary',
-  'Alex Rivera': 'border border-secondary bg-surface text-secondary',
-  'Mia Chen': 'border border-secondary bg-surface text-secondary',
-  'Sam Lee': 'border border-secondary bg-surface text-secondary',
-  'Nguyễn Phương Nam': 'bg-warning-bg text-warning-deep',
-  Medium: 'border border-border bg-surface text-ink-secondary',
-  High: 'border border-border bg-surface text-ink-secondary',
-  Urgent: 'border border-border bg-surface text-ink-secondary',
-  Easy: 'border border-border bg-surface text-ink-secondary',
-  Available: 'border border-success bg-surface text-success',
-  Draft: 'border border-success bg-surface text-success',
-  'Global Shop': 'border border-warning bg-surface text-warning-deep',
-  'North Store': 'border border-warning bg-surface text-warning-deep',
-  'East Market': 'border border-warning bg-surface text-warning-deep',
-  'West Hub': 'border border-warning bg-surface text-warning-deep',
-  'No data': 'bg-neutral-bg text-ink-muted',
-  Normal: 'border border-teal bg-surface text-teal',
-  Variation: 'border border-teal bg-surface text-teal',
+const DESIGN_TASK_TYPE_BY_SLUG = Object.fromEntries(
+  Object.entries(DESIGN_TASK_TYPE_SLUGS).map(([type, slug]) => [slug, type]),
+)
+
+const EMPTY_CREATE_VALUES = {
+  taskType: 'IDEA',
+  listingId: '',
+  sourceListingId: '',
+  sourceInternalTemplateId: '',
+  brief: '',
+  priority: 'NORMAL',
+  expectedOutputs: ['MOCKUP'],
+  note: '',
+  referenceAssetIds: [],
 }
 
-const productToneClasses = {
-  white: 'bg-surface-subtle text-info',
-  gray: 'bg-neutral-bg text-ink-muted',
-  navy: 'bg-info-bg text-info-strong',
-  blue: 'bg-sky-soft text-link-blue',
-  green: 'bg-success-bg text-success',
+const DESIGN_DIALOG_PAPER_PROPS = { className: 'rounded-xl' }
+
+function fieldFromParams(params, name, fallback) {
+  return params.get(name) || fallback
 }
 
-function Badge({ children, className = '' }) {
+function taskTypeFromTab(value) {
+  if (value === 'psd') return 'PSD_TEMPLATE'
+  if (value === 'png') return 'PNG_ASSET'
+  return value || 'IDEA'
+}
+
+function taskTypeFromRoute(slug, params) {
+  return DESIGN_TASK_TYPE_BY_SLUG[slug] || taskTypeFromTab(params.get('type')) || 'IDEA'
+}
+
+function taskTypePath(taskType) {
+  return `/portal/design/tasks/${DESIGN_TASK_TYPE_SLUGS[taskType] || DESIGN_TASK_TYPE_SLUGS.IDEA}`
+}
+
+function toStatusTab(value) {
+  return STATUS_OPTIONS.some((option) => option.value === value) ? value : 'all'
+}
+
+function getCurrentUserAccountId(user) {
+  return user?.account?.id || user?.accountId || user?.id || ''
+}
+
+function statusTone(status) {
+  if (['Approved', 'Available'].includes(status)) return 'success'
+  if (['Rejected', 'Cancelled'].includes(status)) return 'danger'
+  if (['Assigned', 'In Progress', 'Submitted'].includes(status)) return 'warning'
+  return 'neutral'
+}
+
+function listingLabel(listing) {
+  return listing?.asinProductId || listing?.sku || listing?.title || listing?.label || 'Listing'
+}
+
+function mergeFilters(current, next) {
+  const nextFilters = { ...current, ...next }
+  const changed = Object.keys(nextFilters).some((key) => current[key] !== nextFilters[key])
+  return changed ? nextFilters : current
+}
+
+function SummaryStrip({ summary, workload, isLoading, activeStatus, onStatusChange }) {
+  const source = summary || workload || {}
+  const items = [
+    { label: 'All', value: 'all', count: source.total },
+    { label: 'Unassigned', value: 'unassigned', count: source.unassigned },
+    { label: 'In progress', value: 'inProgress', count: source.inProgress },
+    { label: 'Submitted', value: 'uploaded', count: source.submitted },
+    { label: 'Approved', value: 'qcPassed', count: source.approved },
+    { label: 'Rejected', value: 'qcRejected', count: source.rejected },
+  ]
+
+  if (isLoading) {
+    return <Skeleton variant="rectangular" height={42} className="rounded-lg" />
+  }
+
+  return <OperationsTabs items={items} value={activeStatus} onChange={onStatusChange} />
+}
+
+function TaskTypeTabsInline({ value, onChange }) {
   return (
-    <span
-      className={`inline-flex h-6 max-w-full items-center justify-center rounded-full px-3 text-xs font-semibold ${className}`}
-    >
-      <span className="truncate">{children}</span>
-    </span>
+    <OperationsTabs
+      items={DESIGN_TASK_TYPE_OPTIONS}
+      value={value}
+      onChange={onChange}
+      variant="nav"
+    />
   )
 }
 
-function Chip({ value }) {
-  return <Badge className={chipClasses[value] || 'bg-neutral-bg text-ink-secondary'}>{value}</Badge>
-}
+function DesignFilters({
+  filters,
+  shops,
+  assignees,
+  showAssigneeFilter,
+  activeWorkMode,
+  canManageDesign,
+  canReviewDesign,
+  onChange,
+  onWorkModeChange,
+  onRefresh,
+}) {
+  const [moreOpen, setMoreOpen] = useState(false)
 
-function StatusChip({ value }) {
-  return (
-    <Badge className={statusClasses[value] || 'border border-border bg-surface text-ink-muted'}>
-      <span className="inline-flex items-center gap-1">
-        <AccessTimeIcon fontSize="inherit" />
-        {value}
-      </span>
-    </Badge>
-  )
-}
+  function setField(name, value) {
+    onChange({ ...filters, [name]: value, page: 1 })
+  }
 
-function DateValue({ value }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className="truncate text-sm font-semibold text-ink-secondary">{value.date}</span>
-      <span className="truncate text-xs text-ink-muted">{value.relative}</span>
-    </div>
-  )
-}
+  const dateRange = {
+    start: filters.dateFrom ? dayjs(filters.dateFrom) : null,
+    end: filters.dateTo ? dayjs(filters.dateTo) : null,
+  }
 
-function ProductImagePlaceholder() {
-  return (
-    <div className="flex size-20 items-center justify-center rounded-lg bg-neutral-bg">
-      <ImageOutlinedIcon className="text-ink-muted" fontSize="small" />
-    </div>
-  )
-}
+  function setDateRange(nextRange) {
+    onChange({
+      ...filters,
+      dateFrom: nextRange?.start ? nextRange.start.format('YYYY-MM-DD') : '',
+      dateTo: nextRange?.end ? nextRange.end.format('YYYY-MM-DD') : '',
+      page: 1,
+    })
+  }
 
-function PsdProductImage({ tone }) {
-  return (
-    <div
-      className={`flex size-16 items-center justify-center rounded-lg ${
-        productToneClasses[tone] || 'bg-neutral-bg text-ink-muted'
-      }`}
-    >
-      <ImageOutlinedIcon fontSize="small" />
-    </div>
-  )
-}
-
-function LoadingRows({ columns }) {
-  return Array.from({ length: 5 }, (_, index) => (
-    <tr key={index} className="border-b border-border">
-      {columns.map((column) => (
-        <td key={column.id} className="px-6 py-4">
-          <Skeleton variant="text" height={20} />
-        </td>
-      ))}
-    </tr>
-  ))
-}
-
-function PsdActionButton({ label, tone = 'neutral', children }) {
-  const toneClass =
-    tone === 'success'
-      ? 'bg-success-bg text-success'
-      : tone === 'danger'
-        ? 'bg-danger-bg text-danger'
-        : 'bg-neutral-bg text-ink-muted'
+  const secondaryFilterCount = [
+    Boolean(filters.orderId),
+    filters.shopId !== 'all',
+    showAssigneeFilter && filters.assignedDesignerId !== 'all',
+    filters.priority !== 'all',
+    filters.psdStatus !== 'all',
+  ].filter(Boolean).length
 
   return (
-    <Tooltip title={label}>
-      <IconButton aria-label={label} size="small" className={`h-9 w-9 rounded-lg ${toneClass}`}>
-        {children}
-      </IconButton>
-    </Tooltip>
-  )
-}
-
-function DetailField({ label, value, valueClassName = 'text-link-blue' }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 text-xs">
-      <span className="font-semibold text-ink-detail">{label}</span>
-      <span className={`min-w-0 truncate text-right ${valueClassName}`}>{value}</span>
-    </div>
-  )
-}
-
-function PngActionButton({ label, tone = 'neutral', children }) {
-  const toneClass = tone === 'danger' ? 'bg-danger-bg text-danger' : 'bg-neutral-bg text-ink-muted'
-
-  return (
-    <Tooltip title={label}>
-      <IconButton aria-label={label} size="small" className={`h-9 w-9 rounded-lg ${toneClass}`}>
-        {children}
-      </IconButton>
-    </Tooltip>
-  )
-}
-
-function PngExpandedDetail({ task, t }) {
-  const detail = task.detail
-
-  if (!detail) return null
-
-  return (
-    <tr className="border-b border-border bg-page">
-      <td colSpan={PNG_TASK_TABLE_COLUMNS.length} className="px-6 py-5">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-6">
-          <section className="flex flex-col gap-3">
-            <Typography
-              variant="caption"
-              className="text-xs font-semibold uppercase text-ink-muted"
-            >
-              {t('designTasks.png.detail.productInfo')}
-            </Typography>
-            <div className="flex size-24 items-center justify-center rounded-lg border border-sky-border bg-sky-soft">
-              <ImageOutlinedIcon className="text-info" />
-            </div>
-            <div className="flex flex-col items-start gap-2">
-              <Chip value={detail.productInfo.sku} />
-              <Chip value={detail.productInfo.type} />
-              <Chip value={detail.productInfo.asin} />
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
-                className="h-8 rounded-full border-success px-3 text-xs font-semibold text-success"
-              >
-                {t('designTasks.png.actions.downloadPsd')}
-              </Button>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-2 lg:col-span-2">
-            <Typography
-              variant="caption"
-              className="text-xs font-semibold uppercase text-ink-muted"
-            >
-              {t('designTasks.png.detail.customization')}
-            </Typography>
-            <DetailField
-              label={t('designTasks.png.detail.size')}
-              value={detail.customization.size}
-            />
-            <DetailField
-              label={t('designTasks.png.detail.customName')}
-              value={detail.customization.customName}
-            />
-            <DetailField
-              label={t('designTasks.png.detail.customText')}
-              value={detail.customization.customText}
-            />
-            <DetailField
-              label={t('designTasks.png.detail.dateLocation')}
-              value={detail.customization.dateLocation}
-            />
-            <DetailField
-              label={t('designTasks.png.detail.textColor')}
-              value={detail.customization.textColor}
-            />
-            <DetailField
-              label={t('designTasks.png.detail.bgColor')}
-              value={detail.customization.bgColor}
-            />
-            <DetailField
-              label={t('designTasks.png.detail.priority')}
-              value={detail.customization.priority}
-            />
-            <DetailField label={t('designTasks.png.detail.url')} value={detail.customization.url} />
-            <DetailField
-              label={t('designTasks.png.detail.linkSp')}
-              value={detail.customization.linkSp}
-              valueClassName="text-danger"
-            />
-            <DetailField
-              label={t('designTasks.png.detail.customerPhoto')}
-              value={detail.customization.customerPhoto}
-              valueClassName="text-ink-muted"
-            />
-            <div className="mt-2 flex size-20 items-center justify-center rounded bg-neutral-bg">
-              <ImageOutlinedIcon className="text-ink-muted" />
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Typography
-                variant="caption"
-                className="text-xs font-semibold uppercase text-ink-muted"
-              >
-                {t('designTasks.png.detail.taskStatus')}
-              </Typography>
-              <Chip value={detail.taskStatus} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Typography
-                variant="caption"
-                className="text-xs font-semibold uppercase text-ink-muted"
-              >
-                {t('designTasks.png.detail.costCenter')}
-              </Typography>
-              <span className="text-xs text-ink-muted">
-                {t('designTasks.png.detail.vendorProduct')}
-              </span>
-              <div className="rounded border border-teal bg-surface px-3 py-1 text-sm font-semibold text-teal">
-                {detail.costCenter.vendorProduct}
-              </div>
-              <span className="text-xs text-ink-muted">{t('designTasks.png.detail.size')}</span>
-              <div className="self-start rounded border border-teal bg-surface px-3 py-1 text-sm font-semibold text-teal">
-                {detail.costCenter.size}
-              </div>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <Typography
-              variant="caption"
-              className="text-xs font-semibold uppercase text-ink-muted"
-            >
-              {t('designTasks.png.detail.csNote')}
-            </Typography>
-            <span className="text-xs text-ink-muted">
-              {t('designTasks.png.detail.csNoteLabel')}
-            </span>
-            <div className="min-h-20 rounded border border-border bg-surface p-3 text-sm text-danger">
-              {detail.notes.cs}
-            </div>
-            <span className="text-xs text-ink-muted">
-              {t('designTasks.png.detail.qcNoteLabel')}
-            </span>
-            <div className="min-h-14 rounded border border-border bg-surface p-3 text-sm text-ink-muted">
-              {detail.notes.qc || t('designTasks.png.detail.qcNotePlaceholder')}
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <Typography
-              variant="caption"
-              className="text-xs font-semibold uppercase text-ink-muted"
-            >
-              {t('designTasks.png.detail.action')}
-            </Typography>
-            <div className="flex gap-2">
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<FileUploadOutlinedIcon fontSize="small" />}
-                className="h-9 rounded border-border px-4 text-sm font-semibold text-ink-secondary"
-              >
-                {t('designTasks.actions.upload')}
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                className="h-9 rounded border-border px-4 text-sm font-semibold text-ink-secondary"
-              >
-                {t('designTasks.png.actions.add')}
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {detail.mockups.map((mockup) => (
-                <div key={mockup} className="flex flex-col gap-1">
-                  <span className="text-xs text-ink-muted">{mockup}</span>
-                  <div className="relative flex size-24 items-center justify-center rounded border border-sky-border bg-sky-soft">
-                    <ImageOutlinedIcon className="text-info" />
-                    <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-danger text-xs text-white">
-                      x
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-2 lg:col-span-1">
-            <Typography
-              variant="caption"
-              className="text-xs font-semibold uppercase text-ink-muted"
-            >
-              {t('designTasks.png.detail.orderInfo')}
-            </Typography>
-            <div className="flex items-center gap-2 text-xs text-ink-muted">
-              <span>{t('designTasks.png.detail.seller')}</span>
-              <Chip value={detail.orderInfo.seller} />
-            </div>
-            <div className="text-sm text-ink-secondary">
-              {t('designTasks.png.detail.quantity', { quantity: detail.orderInfo.quantity })}
-            </div>
-            <span className="text-xs text-ink-muted">
-              {t('designTasks.png.detail.fulfillName')}
-            </span>
-            <div className="flex items-center gap-2 rounded border border-teal bg-surface px-3 py-1 text-xs text-ink-secondary">
-              <span className="min-w-0 flex-1 truncate">{detail.orderInfo.fulfillName}</span>
-              <ContentCopyOutlinedIcon fontSize="small" className="text-ink-muted" />
-            </div>
-            <span className="text-xs text-ink-muted">{t('designTasks.png.detail.buyerNote')}</span>
-            <div className="min-h-20 rounded border border-border bg-surface p-3 text-sm text-ink-muted">
-              {detail.orderInfo.buyerNote || t('designTasks.png.detail.notePlaceholder')}
-            </div>
-          </section>
+    <OperationsToolbar>
+      <div className="grid w-full items-center gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.25fr)_minmax(170px,0.9fr)_minmax(240px,1fr)_minmax(126px,0.55fr)_40px]">
+        <TextField
+          size="small"
+          value={filters.searchInput}
+          onChange={(event) => setField('searchInput', event.target.value)}
+          placeholder="Search listing, SKU, ASIN, task"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" className="text-ink-muted" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <FormControl size="small">
+          <Select value={activeWorkMode} onChange={(event) => onWorkModeChange(event.target.value)}>
+            <MenuItem value="mine">My assigned work</MenuItem>
+            {canManageDesign ? <MenuItem value="all">All design tasks</MenuItem> : null}
+            {canReviewDesign ? <MenuItem value="review">Needs review</MenuItem> : null}
+          </Select>
+        </FormControl>
+        <div className="min-w-0">
+          <DateRangePicker value={dateRange} onChange={setDateRange} fullWidth />
         </div>
-      </td>
-    </tr>
-  )
-}
-
-function DesignTasksPagination({ page, pageSize, total, onPageChange, onPageSizeChange, t }) {
-  const totalPages = Math.max(Math.ceil(total / pageSize), 1)
-  const from = total === 0 ? 0 : (page - 1) * pageSize + 1
-  const to = Math.min(page * pageSize, total)
-  const pages = [1, 2, 3].filter((pageNumber) => pageNumber <= totalPages)
-
-  return (
-    <div className="flex items-center gap-2">
-      <Typography variant="body2" className="mr-2 text-sm text-ink-muted">
-        {t('designTasks.pagination.range', { from, to, total })}
-      </Typography>
-      <IconButton
-        aria-label={t('designTasks.pagination.previous')}
-        disabled={page <= 1}
-        onClick={() => onPageChange(page - 1)}
-        className="h-9 w-9 rounded-lg border border-border bg-surface"
-      >
-        <KeyboardArrowLeftIcon fontSize="small" />
-      </IconButton>
-      {pages.map((pageNumber) => {
-        const active = page === pageNumber
-
-        return (
-          <button
-            key={pageNumber}
-            type="button"
-            onClick={() => onPageChange(pageNumber)}
-            className={`h-9 w-9 rounded-lg border text-sm font-semibold ${
-              active
-                ? 'border-primary bg-primary-light text-primary'
-                : 'border-border bg-surface text-ink-secondary'
-            }`}
-          >
-            {pageNumber}
-          </button>
-        )
-      })}
-      <FormControl size="small" className="w-28">
-        <Select
-          value={pageSize}
-          onChange={(event) => onPageSizeChange(Number(event.target.value))}
-          className="h-9 rounded-lg bg-surface text-sm text-ink-secondary"
-          inputProps={{ 'aria-label': t('designTasks.pagination.pageSize') }}
+        <Button
+          variant={moreOpen || secondaryFilterCount ? 'contained' : 'outlined'}
+          onClick={() => setMoreOpen((current) => !current)}
+          className="h-10 w-full whitespace-nowrap"
         >
-          {pageSizeOptions.map((option) => (
-            <MenuItem key={option} value={option}>
-              {t('designTasks.pagination.pageSizeValue', { size: option })}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </div>
-  )
-}
-
-function PsdTasksPagination({ page, sellerFilter, summaryTotal, onPageChange, onSellerChange, t }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Typography variant="body2" className="mr-2 text-sm text-ink-muted">
-        {t('designTasks.psd.pagination.total', { total: summaryTotal })}
-      </Typography>
-      <FormControl size="small" className="w-32">
-        <Select
-          value={sellerFilter}
-          onChange={(event) => onSellerChange(event.target.value)}
-          className="h-9 rounded-lg bg-surface text-sm text-ink-secondary"
-          inputProps={{ 'aria-label': t('designTasks.psd.filters.seller') }}
-        >
-          {sellerFilterOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {t('designTasks.psd.filters.sellerValue', { value: t(option.labelKey) })}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <IconButton
-        aria-label={t('designTasks.pagination.previous')}
-        disabled={page <= 1}
-        onClick={() => onPageChange(page - 1)}
-        className="h-9 w-9 rounded-lg border border-border bg-surface"
-      >
-        <KeyboardArrowLeftIcon fontSize="small" />
-      </IconButton>
-      <button
-        type="button"
-        onClick={() => onPageChange(1)}
-        className="h-9 w-9 rounded-lg border border-primary bg-primary-light text-sm font-semibold text-primary"
-      >
-        1
-      </button>
-    </div>
-  )
-}
-
-function IdeaTaskRow({ task, t }) {
-  return (
-    <tr className="border-b border-border bg-surface last:border-b-0">
-      <td className="whitespace-nowrap px-6 py-4">
-        <DateValue value={task.createdAt} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-3">
-        <ProductImagePlaceholder />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <StatusChip value={task.statusTask} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Badge className="bg-info-bg text-info-strong">{task.linkProduct}</Badge>
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.assigned} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.seller} />
-      </td>
-      <td className="px-6 py-4">
-        <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink-secondary">
-          {task.description}
-        </div>
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.productType} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <div className="flex items-center gap-1">
-          <Tooltip title={t('designTasks.actions.upload')}>
-            <IconButton
-              aria-label={t('designTasks.actions.upload')}
-              size="small"
-              className="text-ink-muted"
-            >
-              <FileUploadOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('designTasks.actions.download')}>
-            <IconButton
-              aria-label={t('designTasks.actions.download')}
-              size="small"
-              className="text-ink-muted"
-            >
-              <FileDownloadOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('designTasks.actions.viewGrid')}>
-            <IconButton
-              aria-label={t('designTasks.actions.viewGrid')}
-              size="small"
-              className="text-ink-muted"
-            >
-              <GridViewIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Tooltip title={t('designTasks.actions.edit')}>
-            <IconButton
-              aria-label={t('designTasks.actions.edit')}
-              size="small"
-              className="text-ink-muted"
-            >
-              <EditOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('designTasks.actions.delete')}>
-            <IconButton
-              aria-label={t('designTasks.actions.delete')}
-              size="small"
-              className="text-danger"
-            >
-              <DeleteOutlineOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-      </td>
-    </tr>
-  )
-}
-
-function PsdTaskRow({ task, t }) {
-  return (
-    <tr className="border-b border-border bg-surface last:border-b-0">
-      <td className="whitespace-nowrap px-6 py-5">
-        <DateValue value={task.createdAt} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-3">
-        <PsdProductImage tone={task.productTone} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Badge className="border border-info bg-surface text-info">{task.asin}</Badge>
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <StatusChip value={task.statusTask} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.assigned} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.priority} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.psdStatus} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.seller} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <Chip value={task.asinType} />
-      </td>
-      <td className="whitespace-nowrap px-6 py-4">
-        <div className="flex items-center gap-2">
-          <PsdActionButton label={t('designTasks.actions.download')}>
-            <FileDownloadOutlinedIcon fontSize="small" />
-          </PsdActionButton>
-          <PsdActionButton label={t('designTasks.actions.upload')}>
-            <FileUploadOutlinedIcon fontSize="small" />
-          </PsdActionButton>
-          <PsdActionButton label={t('designTasks.psd.actions.approve')} tone="success">
-            <CheckIcon fontSize="small" />
-          </PsdActionButton>
-          <PsdActionButton label={t('designTasks.psd.actions.revert')} tone="danger">
-            <ReplyIcon fontSize="small" />
-          </PsdActionButton>
-          <PsdActionButton label={t('designTasks.actions.delete')} tone="danger">
-            <DeleteOutlineOutlinedIcon fontSize="small" />
-          </PsdActionButton>
-        </div>
-      </td>
-    </tr>
-  )
-}
-
-function PngTaskRow({ task, expanded, onToggle, t }) {
-  return (
-    <>
-      <tr className="border-b border-border bg-surface last:border-b-0">
-        <td className="whitespace-nowrap px-6 py-4">
+          More filters{secondaryFilterCount ? ` (${secondaryFilterCount})` : ''}
+        </Button>
+        <Tooltip title="Refresh">
           <IconButton
-            aria-label={
-              expanded ? t('designTasks.png.actions.collapse') : t('designTasks.png.actions.expand')
-            }
-            size="small"
-            onClick={() => onToggle(task.id)}
-            className="text-ink-muted"
+            onClick={onRefresh}
+            className="h-10 w-10 rounded-lg border border-border bg-surface"
           >
-            {expanded ? (
-              <KeyboardArrowDownIcon fontSize="small" />
-            ) : (
-              <KeyboardArrowRightIcon fontSize="small" />
-            )}
+            <RefreshIcon fontSize="small" />
           </IconButton>
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <span className="text-sm font-semibold text-primary">{task.orderId}</span>
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <DateValue value={task.orderDate} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <StatusChip value={task.scaleStatus} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <Chip value={task.scaleBy} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <Chip value={task.shop} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <StatusChip value={task.orderStatus} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <Chip value={task.orderOwner} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <Chip value={task.qcBy} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <Chip value={task.express} />
-        </td>
-        <td className="whitespace-nowrap px-6 py-4">
-          <div className="flex items-center gap-2">
-            <PngActionButton label={t('designTasks.actions.upload')}>
-              <FileUploadOutlinedIcon fontSize="small" />
-            </PngActionButton>
-            <PngActionButton label={t('designTasks.png.actions.copy')}>
-              <ContentCopyOutlinedIcon fontSize="small" />
-            </PngActionButton>
-            <PngActionButton label={t('designTasks.actions.download')}>
-              <FileDownloadOutlinedIcon fontSize="small" />
-            </PngActionButton>
-            <PngActionButton label={t('designTasks.png.actions.cut')} tone="danger">
-              <ContentCutOutlinedIcon fontSize="small" />
-            </PngActionButton>
+        </Tooltip>
+      </div>
+
+      {moreOpen ? (
+        <div className="grid gap-3 rounded-lg bg-surface-subtle p-3 md:grid-cols-2 xl:grid-cols-6">
+          <TextField
+            size="small"
+            value={filters.orderId}
+            onChange={(event) => setField('orderId', event.target.value)}
+            placeholder="Order ID"
+          />
+          <FormControl size="small">
+            <Select
+              value={filters.shopId}
+              onChange={(event) => setField('shopId', event.target.value)}
+            >
+              <MenuItem value="all">All shops</MenuItem>
+              {shops.map((shop) => (
+                <MenuItem key={shop.id} value={shop.id}>
+                  {shop.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {showAssigneeFilter ? (
+            <FormControl size="small">
+              <Select
+                value={filters.assignedDesignerId}
+                onChange={(event) => setField('assignedDesignerId', event.target.value)}
+              >
+                <MenuItem value="all">All designers</MenuItem>
+                {assignees.map((assignee) => (
+                  <MenuItem key={assignee.id} value={assignee.id}>
+                    {assignee.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ) : null}
+          <FormControl size="small">
+            <Select
+              value={filters.priority}
+              onChange={(event) => setField('priority', event.target.value)}
+            >
+              <MenuItem value="all">All priorities</MenuItem>
+              {DESIGN_TASK_PRIORITY_OPTIONS.map((priority) => (
+                <MenuItem key={priority} value={priority}>
+                  {priority}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small">
+            <Select
+              value={filters.psdStatus}
+              onChange={(event) => setField('psdStatus', event.target.value)}
+            >
+              <MenuItem value="all">All PSD</MenuItem>
+              <MenuItem value="missing">PSD missing</MenuItem>
+              <MenuItem value="present">PSD present</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small">
+            <Select
+              value={filters.sortBy}
+              onChange={(event) => setField('sortBy', event.target.value)}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  Sort: {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <div className="grid grid-cols-2 gap-3">
+            <FormControl size="small">
+              <Select
+                value={filters.sortOrder}
+                onChange={(event) => setField('sortOrder', event.target.value)}
+              >
+                <MenuItem value="desc">Newest</MenuItem>
+                <MenuItem value="asc">Oldest</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small">
+              <Select
+                value={filters.pageSize}
+                onChange={(event) => setField('pageSize', Number(event.target.value))}
+              >
+                {[10, 20, 50, 100].map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </div>
-        </td>
-      </tr>
-      {expanded ? <PngExpandedDetail task={task} t={t} /> : null}
-    </>
+        </div>
+      ) : null}
+    </OperationsToolbar>
+  )
+}
+
+const TaskTable = memo(function TaskTable({
+  tasks,
+  isLoading,
+  isSubmitting,
+  currentUser,
+  showAssignedColumn,
+  emptyMessage,
+  sortBy,
+  sortOrder,
+  onSort,
+  onAssign,
+  onStart,
+  onSubmit,
+  onApprove,
+  onReject,
+  onCancel,
+  onOpenDetail,
+}) {
+  const columns = useMemo(
+    () => createDesignTaskColumns({ showAssignedColumn }),
+    [showAssignedColumn],
+  )
+
+  function renderActions(task) {
+    const actions = getDesignTaskActions(task, currentUser)
+
+    return (
+      <div className="flex items-center gap-1">
+        <IconActionButton label="View task details" onClick={() => onOpenDetail(task)}>
+          <VisibilityOutlinedIcon fontSize="small" />
+        </IconActionButton>
+        {actions.canAssign ? (
+          <IconActionButton
+            label="Assign designer"
+            disabled={isSubmitting}
+            onClick={() => onAssign(task)}
+          >
+            <AddIcon fontSize="small" />
+          </IconActionButton>
+        ) : null}
+        {actions.canStart ? (
+          <IconActionButton
+            label="Start task"
+            disabled={isSubmitting}
+            onClick={() => onStart(task)}
+          >
+            <PlayArrowIcon fontSize="small" />
+          </IconActionButton>
+        ) : null}
+        {actions.canSubmit ? (
+          <IconActionButton
+            label="Submit asset"
+            disabled={isSubmitting}
+            onClick={() => onSubmit(task)}
+          >
+            <FileUploadOutlinedIcon fontSize="small" />
+          </IconActionButton>
+        ) : null}
+        {actions.canReview ? (
+          <>
+            <IconActionButton
+              label="Approve latest submission"
+              disabled={isSubmitting}
+              onClick={() => onApprove(task)}
+            >
+              <CheckIcon fontSize="small" />
+            </IconActionButton>
+            <IconActionButton
+              label="Reject submission"
+              disabled={isSubmitting}
+              onClick={() => onReject(task)}
+            >
+              <CloseIcon fontSize="small" />
+            </IconActionButton>
+          </>
+        ) : null}
+        {actions.canCancel ? (
+          <IconActionButton
+            label="Cancel task"
+            disabled={isSubmitting}
+            tone="danger"
+            onClick={() => onCancel(task)}
+          >
+            <DeleteOutlineOutlinedIcon fontSize="small" />
+          </IconActionButton>
+        ) : null}
+      </div>
+    )
+  }
+
+  function renderCell(task, column) {
+    if (column.key === 'orderId') {
+      return (
+        <div className="min-w-0">
+          <div className="block max-w-full truncate text-left text-sm font-semibold text-ink-strong">
+            {task.orderId}
+          </div>
+        </div>
+      )
+    }
+    if (column.key === 'type') return <StatusBadge tone="info">{task.taskTypeLabel}</StatusBadge>
+    if (column.key === 'status')
+      return <StatusBadge tone={statusTone(task.statusTask)}>{task.statusTask}</StatusBadge>
+    if (column.key === 'priority') {
+      return <span className="text-sm font-semibold text-ink-secondary">{task.priority}</span>
+    }
+    if (column.key === 'owner')
+      return <span className="text-sm text-ink-secondary">{task.assigned}</span>
+    if (column.key === 'shop')
+      return <span className="text-sm text-ink-secondary">{task.shop}</span>
+    if (column.key === 'file') {
+      return (
+        <div>
+          <div className="truncate text-sm text-ink-secondary">{task.latestFile}</div>
+          <div className="text-xs text-ink-muted">{task.submissionCount} submissions</div>
+        </div>
+      )
+    }
+    if (column.key === 'updatedAt') {
+      return (
+        <div>
+          <div className="text-sm font-semibold text-ink-secondary">{task.updatedAt.date}</div>
+          <div className="text-xs text-ink-muted">{task.createdAt.date}</div>
+        </div>
+      )
+    }
+    if (column.key === 'actions') return renderActions(task)
+    return null
+  }
+
+  return (
+    <OperationsTable
+      columns={columns}
+      rows={tasks}
+      getRowKey={(task) => task.id}
+      renderCell={renderCell}
+      loading={isLoading}
+      emptyTitle={emptyMessage || 'No design tasks found'}
+      emptyDescription="Adjust filters or create a new task."
+      sortBy={sortBy}
+      sortOrder={sortOrder}
+      onSort={onSort}
+      minWidth={DESIGN_TASK_TABLE_MIN_WIDTH}
+    />
+  )
+})
+
+function DesignActionDialog({
+  action,
+  task,
+  assignees,
+  state,
+  isSubmitting,
+  onClose,
+  onState,
+  onAssign,
+  onSubmit,
+  onReject,
+  onCancel,
+}) {
+  const open = Boolean(action && task)
+  const title =
+    action === 'assign'
+      ? 'Assign designer'
+      : action === 'submit'
+        ? 'Submit asset'
+        : action === 'reject'
+          ? 'Reject submission'
+          : action === 'cancel'
+            ? 'Cancel task'
+            : 'Design action'
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
+    >
+      <DialogTitle className="font-bold text-ink-strong">{title}</DialogTitle>
+      <DialogContent className="grid gap-4 pt-2">
+        <div className="rounded-lg border border-border bg-surface-subtle p-3">
+          <Typography variant="body2" className="font-semibold text-ink-strong">
+            {task?.listingTitle || 'Design task'}
+          </Typography>
+          <Typography variant="caption" className="text-ink-muted">
+            {task?.taskTypeLabel || '-'} - {task?.listingCode || '-'} - {task?.statusTask || '-'}
+          </Typography>
+        </div>
+
+        {action === 'assign' ? (
+          <div className="grid gap-3">
+            <FormControl size="small" fullWidth>
+              <Select
+                value={state.assignedDesignerId}
+                onChange={(event) => onState('assignedDesignerId', event.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">Select designer</MenuItem>
+                {assignees.map((assignee) => (
+                  <MenuItem key={assignee.id} value={assignee.id}>
+                    {assignee.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              label="Assign note"
+              value={state.assignNote}
+              onChange={(event) => onState('assignNote', event.target.value)}
+              fullWidth
+            />
+          </div>
+        ) : null}
+
+        {action === 'submit' ? (
+          <div className="grid gap-3">
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<FileUploadOutlinedIcon />}
+              disabled={isSubmitting}
+            >
+              Pick file
+              <input
+                hidden
+                type="file"
+                accept=".psd,.zip,.rar,.png,.jpg,.jpeg,.webp,.gif,.pdf"
+                onChange={(event) => onState('file', event.target.files?.[0] || null)}
+              />
+            </Button>
+            {state.file ? (
+              <Typography variant="body2" className="text-ink-muted">
+                {state.file.name}
+              </Typography>
+            ) : null}
+          </div>
+        ) : null}
+
+        {action === 'reject' ? (
+          <TextField
+            size="small"
+            label="Reject reason"
+            value={state.rejectReason}
+            onChange={(event) => onState('rejectReason', event.target.value)}
+            fullWidth
+            multiline
+            minRows={3}
+          />
+        ) : null}
+
+        {action === 'cancel' ? (
+          <TextField
+            size="small"
+            label="Cancel reason"
+            value={state.cancelReason}
+            onChange={(event) => onState('cancelReason', event.target.value)}
+            fullWidth
+            multiline
+            minRows={3}
+          />
+        ) : null}
+      </DialogContent>
+      <DialogActions className="gap-2 px-6 pb-5">
+        <Button variant="outlined" onClick={onClose}>
+          Close
+        </Button>
+        {action === 'assign' ? (
+          <Button
+            variant="contained"
+            onClick={onAssign}
+            disabled={!state.assignedDesignerId || isSubmitting}
+          >
+            Assign
+          </Button>
+        ) : null}
+        {action === 'submit' ? (
+          <Button variant="contained" onClick={onSubmit} disabled={!state.file || isSubmitting}>
+            Submit asset
+          </Button>
+        ) : null}
+        {action === 'reject' ? (
+          <Button
+            color="error"
+            variant="contained"
+            onClick={onReject}
+            disabled={!state.rejectReason.trim() || isSubmitting}
+          >
+            Reject
+          </Button>
+        ) : null}
+        {action === 'cancel' ? (
+          <Button
+            color="error"
+            variant="contained"
+            onClick={onCancel}
+            disabled={!state.cancelReason.trim() || isSubmitting}
+          >
+            Cancel task
+          </Button>
+        ) : null}
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+function CreateTaskDialog({
+  open,
+  values,
+  listings,
+  sourceListings,
+  templates,
+  candidates,
+  search,
+  isSubmitting,
+  onChange,
+  onSearchChange,
+  onClose,
+  onSubmit,
+}) {
+  const targetOptions = values.taskType === 'PSD_TEMPLATE' ? candidates : listings
+
+  function toggleOutput(output) {
+    const current = values.expectedOutputs || []
+    onChange(
+      'expectedOutputs',
+      current.includes(output) ? current.filter((item) => item !== output) : [...current, output],
+    )
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="lg"
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
+    >
+      <DialogTitle className="font-bold text-ink-strong">Create design task</DialogTitle>
+      <DialogContent className="grid gap-4 pt-2">
+        <div className="grid gap-3 md:grid-cols-3">
+          <FormControl size="small">
+            <Select
+              value={values.taskType}
+              onChange={(event) => onChange('taskType', event.target.value)}
+            >
+              {DESIGN_TASK_TYPE_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small">
+            <Select
+              value={values.priority}
+              onChange={(event) => onChange('priority', event.target.value)}
+            >
+              {DESIGN_TASK_PRIORITY_OPTIONS.map((priority) => (
+                <MenuItem key={priority} value={priority}>
+                  {priority}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            size="small"
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search listings"
+          />
+        </div>
+
+        <FormControl size="small">
+          <Select
+            value={values.listingId}
+            onChange={(event) => onChange('listingId', event.target.value)}
+            displayEmpty
+          >
+            <MenuItem value="">Select target listing</MenuItem>
+            {targetOptions.map((listing) => (
+              <MenuItem key={listing.id} value={listing.id}>
+                {listing.label || listingLabel(listing)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {values.taskType === 'CLONE' ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            <FormControl size="small">
+              <Select
+                value={values.sourceListingId}
+                onChange={(event) => onChange('sourceListingId', event.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">Source listing</MenuItem>
+                {sourceListings.map((listing) => (
+                  <MenuItem key={listing.id} value={listing.id}>
+                    {listingLabel(listing)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small">
+              <Select
+                value={values.sourceInternalTemplateId}
+                onChange={(event) => onChange('sourceInternalTemplateId', event.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">Source internal template</MenuItem>
+                {templates.map((template) => (
+                  <MenuItem key={template.id} value={template.id}>
+                    {template.name || template.code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+        ) : null}
+
+        <TextField
+          multiline
+          minRows={4}
+          label={values.taskType === 'IDEA' ? 'Creative brief' : 'Brief or instruction'}
+          value={values.brief}
+          onChange={(event) => onChange('brief', event.target.value)}
+          helperText={
+            values.taskType === 'IDEA'
+              ? 'Required. Describe what designer should create.'
+              : 'Use plain operator instruction. No JSON needed.'
+          }
+        />
+
+        <div className="rounded-lg border border-border p-3">
+          <Typography variant="caption" className="font-semibold uppercase text-ink-muted">
+            Expected outputs
+          </Typography>
+          <div className="mt-2 flex flex-wrap gap-3">
+            {DESIGN_TASK_OUTPUT_OPTIONS.map((output) => (
+              <label
+                key={output}
+                className="inline-flex items-center gap-1 text-sm text-ink-secondary"
+              >
+                <Checkbox
+                  checked={(values.expectedOutputs || []).includes(output)}
+                  onChange={() => toggleOutput(output)}
+                />
+                {output}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <TextField
+          label="Note"
+          value={values.note}
+          onChange={(event) => onChange('note', event.target.value)}
+          size="small"
+        />
+      </DialogContent>
+      <DialogActions className="gap-2 px-6 pb-5">
+        <Button variant="outlined" onClick={onClose}>
+          Close
+        </Button>
+        <Button
+          variant="contained"
+          disabled={
+            !values.listingId ||
+            (values.taskType === 'IDEA' && !values.brief.trim()) ||
+            (values.taskType === 'CLONE' &&
+              !values.sourceListingId &&
+              !values.sourceInternalTemplateId) ||
+            isSubmitting
+          }
+          onClick={onSubmit}
+        >
+          Create task
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+function BulkPsdCreateDialog({
+  open,
+  search,
+  note,
+  selectedIds,
+  candidates,
+  isLoading,
+  isSubmitting,
+  onClose,
+  onSearchChange,
+  onNoteChange,
+  onToggleCandidate,
+  onSelectVisible,
+  onSubmit,
+}) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
+    >
+      <DialogTitle className="font-bold text-ink-strong">Create PSD tasks</DialogTitle>
+      <DialogContent className="grid gap-4 pt-2">
+        <TextField
+          size="small"
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Search missing PSD listings"
+        />
+        <TextField
+          size="small"
+          value={note}
+          onChange={(event) => onNoteChange(event.target.value)}
+          label="Note"
+        />
+        <div className="max-h-80 overflow-y-auto rounded-lg border border-border">
+          {isLoading ? (
+            <div className="p-3">
+              <Skeleton height={40} />
+              <Skeleton height={40} />
+              <Skeleton height={40} />
+            </div>
+          ) : candidates.length ? (
+            candidates.map((candidate) => (
+              <div
+                key={candidate.id}
+                className="flex cursor-pointer items-start gap-2 border-b border-border p-3 last:border-b-0"
+              >
+                <Checkbox
+                  inputProps={{ 'aria-label': `Select ${candidate.label}` }}
+                  checked={selectedIds.includes(candidate.id)}
+                  onChange={() => onToggleCandidate(candidate.id)}
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-ink-secondary">
+                    {candidate.label}
+                  </span>
+                  <span className="text-xs text-ink-muted">{candidate.seller}</span>
+                </span>
+              </div>
+            ))
+          ) : (
+            <Typography variant="body2" className="p-4 text-ink-muted">
+              No missing PSD listings found.
+            </Typography>
+          )}
+        </div>
+      </DialogContent>
+      <DialogActions className="gap-2 px-6 pb-5">
+        <Button variant="outlined" onClick={onClose}>
+          Close
+        </Button>
+        <Button variant="outlined" onClick={onSelectVisible} disabled={!candidates.length}>
+          Select visible
+        </Button>
+        <Button
+          variant="contained"
+          onClick={onSubmit}
+          disabled={!selectedIds.length || isSubmitting}
+        >
+          Create tasks
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+function submissionTone(status) {
+  if (status === 'APPROVED') return 'success'
+  if (status === 'REJECTED' || status === 'REMOVED') return 'danger'
+  if (status === 'SUBMITTED') return 'warning'
+  return 'neutral'
+}
+
+function formatDetailDate(value) {
+  return value ? dayjs(value).format('MMM D, YYYY HH:mm') : '-'
+}
+
+function DesignTaskDetailDialog({
+  open,
+  task,
+  isLoading,
+  error,
+  canReviewScores,
+  isScoreSubmitting,
+  onClose,
+  onOverrideScore,
+  onVoidScore,
+}) {
+  return (
+    <AnimatedDialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
+    >
+      <DialogTitle className="font-bold text-ink-strong">Design task detail</DialogTitle>
+      <DialogContent className="grid gap-4 pt-2">
+        {isLoading ? <Skeleton variant="rectangular" height={180} className="rounded-lg" /> : null}
+        {error ? (
+          <Typography variant="body2" color="error">
+            Unable to load this design task.
+          </Typography>
+        ) : null}
+        {task ? (
+          <>
+            <div className="grid gap-2 rounded-lg border border-border bg-surface-subtle p-3 sm:grid-cols-2">
+              <div>
+                <Typography variant="body2" className="font-semibold text-ink-strong">
+                  {task.listingTitle}
+                </Typography>
+                <Typography variant="caption" className="text-ink-muted">
+                  {task.taskTypeLabel} · {task.listingCode} · {task.id}
+                </Typography>
+              </div>
+              <div className="flex items-center sm:justify-end">
+                <StatusBadge tone={statusTone(task.statusLabel)}>{task.statusLabel}</StatusBadge>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <Typography variant="subtitle2" className="font-semibold text-ink-strong">
+                Submission history
+              </Typography>
+              {task.submissions.length ? (
+                task.submissions.map((submission) => (
+                  <div
+                    key={submission.id}
+                    className="grid gap-3 border-t border-border pt-3 first:border-t-0 first:pt-0"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Typography
+                          variant="body2"
+                          className="truncate font-semibold text-ink-strong"
+                        >
+                          {submission.fileLabel}
+                        </Typography>
+                        <Typography variant="caption" className="text-ink-muted">
+                          Submitted {formatDetailDate(submission.submittedAt)}
+                          {submission.rejectedAt
+                            ? ` · Rejected ${formatDetailDate(submission.rejectedAt)}`
+                            : ''}
+                          {submission.rejectReason ? ` · ${submission.rejectReason}` : ''}
+                        </Typography>
+                      </div>
+                      <StatusBadge tone={submissionTone(submission.status)}>
+                        {submission.status || 'UNKNOWN'}
+                      </StatusBadge>
+                    </div>
+                    <SubmissionScoreEditor
+                      key={`${submission.score?.id || submission.id}:${submission.score?.finalPoints ?? ''}:${submission.score?.scoreLevel || ''}`}
+                      submission={submission}
+                      canReview={canReviewScores}
+                      isSubmitting={isScoreSubmitting}
+                      onOverride={onOverrideScore}
+                      onVoid={(voidReason) => onVoidScore(submission.id, voidReason)}
+                    />
+                  </div>
+                ))
+              ) : (
+                <Typography variant="body2" className="text-ink-muted">
+                  No submissions yet.
+                </Typography>
+              )}
+            </div>
+          </>
+        ) : null}
+      </DialogContent>
+      <DialogActions className="px-6 pb-5">
+        <Button variant="outlined" onClick={onClose}>
+          Close
+        </Button>
+      </DialogActions>
+    </AnimatedDialog>
   )
 }
 
 export default function DesignTasksPage() {
-  const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const [subTab, setSubTab] = useState(TASK_TYPES.IDEA)
-  const [statusTab, setStatusTab] = useState(DESIGN_TASK_STATUS_TABS.ALL)
-  const [searchInput, setSearchInput] = useState('')
-  const debouncedSearch = useDebounce(searchInput, 300)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DESIGN_TASK_PAGE_SIZE)
-  const [sellerFilter, setSellerFilter] = useState(DESIGN_TASK_SELLER_FILTERS.ALL)
-  const [shopFilter, setShopFilter] = useState(DESIGN_TASK_SHOP_FILTERS.ALL)
-  const [asinTypeFilter, setAsinTypeFilter] = useState(DESIGN_TASK_ASIN_TYPE_FILTERS.ALL)
-  const [expandedPngTaskIds, setExpandedPngTaskIds] = useState(() => new Set(['png-task-001']))
-  const isPsdTasks = subTab === TASK_TYPES.PSD
-  const isPngTasks = subTab === TASK_TYPES.PNG
-  const activeStatusTabs = isPngTasks ? pngStatusTabs : isPsdTasks ? psdStatusTabs : ideaStatusTabs
-  const tableColumns = isPngTasks
-    ? PNG_TASK_TABLE_COLUMNS
-    : isPsdTasks
-      ? PSD_TASK_TABLE_COLUMNS
-      : DESIGN_TASK_TABLE_COLUMNS
-
+  const { enqueueSnackbar } = useSnackbar()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { taskTypeSlug } = useParams()
+  const currentUser = useAuthStore((state) => state.currentUser)
+  const currentUserAccountId = getCurrentUserAccountId(currentUser)
+  const canManageDesign = hasAnyPermission(currentUser, [
+    'DESIGN:WRITE',
+    'DESIGN_TASKS:ASSIGN',
+    'DESIGN_TASKS:WRITE',
+  ])
+  const canReviewDesign = hasAnyPermission(currentUser, [
+    'DESIGN:REVIEW',
+    'DESIGN_TASKS:APPROVE',
+    'DESIGN_TASKS:REVIEW',
+  ])
+  const canReviewScores = hasAnyPermission(currentUser, ['DESIGN:REVIEW', 'DESIGN:WRITE'])
+  const canSubmitDesign = hasAnyPermission(currentUser, ['DESIGN:WORK', 'DESIGN_TASKS:SUBMIT'])
+  const defaultWorkMode = canManageDesign
+    ? 'all'
+    : canReviewDesign && !canSubmitDesign
+      ? 'review'
+      : 'mine'
+  const routeTaskType = taskTypeFromRoute(taskTypeSlug, searchParams)
+  const [workMode, setWorkMode] = useState(() =>
+    fieldFromParams(searchParams, 'mode', defaultWorkMode),
+  )
+  const activeWorkMode = !canManageDesign && workMode === 'all' ? defaultWorkMode : workMode
+  const activeTaskType = routeTaskType
+  const [filters, setFilters] = useState(() => ({
+    statusTab: toStatusTab(fieldFromParams(searchParams, 'status', 'all')),
+    searchInput: fieldFromParams(searchParams, 'search', ''),
+    orderId: fieldFromParams(searchParams, 'orderId', ''),
+    shopId: fieldFromParams(searchParams, 'shopId', 'all'),
+    assignedDesignerId: fieldFromParams(searchParams, 'assignedDesignerId', 'all'),
+    priority: fieldFromParams(searchParams, 'priority', 'all'),
+    psdStatus: fieldFromParams(searchParams, 'psdStatus', 'all'),
+    dateFrom: fieldFromParams(searchParams, 'dateFrom', ''),
+    dateTo: fieldFromParams(searchParams, 'dateTo', ''),
+    sortBy: fieldFromParams(searchParams, 'sortBy', 'createdAt'),
+    sortOrder: fieldFromParams(searchParams, 'sortOrder', 'desc'),
+    page: Number(fieldFromParams(searchParams, 'page', '1')) || 1,
+    pageSize: Number(fieldFromParams(searchParams, 'pageSize', '20')) || 20,
+  }))
+  const debouncedSearch = useDebounce(filters.searchInput, 300)
+  const debouncedOrderId = useDebounce(filters.orderId, 300)
   const query = useMemo(
     () => ({
-      subTab,
-      statusTab,
+      ...filters,
+      taskType: activeTaskType,
       search: debouncedSearch,
-      seller: isPsdTasks ? sellerFilter : DESIGN_TASK_SELLER_FILTERS.ALL,
-      shop: isPngTasks ? shopFilter : DESIGN_TASK_SHOP_FILTERS.ALL,
-      asinType: isPngTasks ? asinTypeFilter : DESIGN_TASK_ASIN_TYPE_FILTERS.ALL,
-      page,
-      pageSize,
+      orderId: debouncedOrderId,
+      shopId: filters.shopId === 'all' ? undefined : filters.shopId,
     }),
-    [
-      asinTypeFilter,
-      debouncedSearch,
-      isPngTasks,
-      isPsdTasks,
-      page,
-      pageSize,
-      sellerFilter,
-      shopFilter,
-      statusTab,
-      subTab,
-    ],
+    [activeTaskType, debouncedOrderId, debouncedSearch, filters],
   )
-  const { data, isPending } = useDesignTasksQuery(query)
-  const tasks = data?.items || []
-  const counts = data?.counts || {}
-  const total = data?.total || 0
-  const summaryTotal = data?.summaryTotal ?? total
+  const effectiveQuery = useMemo(
+    () => ({
+      ...query,
+      assignedDesignerId:
+        activeWorkMode === 'mine' && !canManageDesign && currentUserAccountId
+          ? currentUserAccountId
+          : query.assignedDesignerId,
+      statusTab: activeWorkMode === 'review' ? 'uploaded' : query.statusTab,
+    }),
+    [activeWorkMode, canManageDesign, currentUserAccountId, query],
+  )
+  const summaryQueryFilters = useMemo(
+    () => ({ ...effectiveQuery, statusTab: 'all' }),
+    [effectiveQuery],
+  )
 
-  function resetPage(nextPage = 1) {
-    setPage(nextPage)
-  }
+  useEffect(() => {
+    const next = new URLSearchParams()
+    if (activeWorkMode !== defaultWorkMode) next.set('mode', activeWorkMode)
+    if (filters.statusTab !== 'all') next.set('status', filters.statusTab)
+    if (filters.searchInput) next.set('search', filters.searchInput)
+    if (filters.orderId) next.set('orderId', filters.orderId)
+    if (filters.shopId !== 'all') next.set('shopId', filters.shopId)
+    if (filters.assignedDesignerId !== 'all')
+      next.set('assignedDesignerId', filters.assignedDesignerId)
+    if (filters.priority !== 'all') next.set('priority', filters.priority)
+    if (filters.psdStatus !== 'all') next.set('psdStatus', filters.psdStatus)
+    if (filters.dateFrom) next.set('dateFrom', filters.dateFrom)
+    if (filters.dateTo) next.set('dateTo', filters.dateTo)
+    next.set('sortBy', filters.sortBy)
+    next.set('sortOrder', filters.sortOrder)
+    next.set('page', String(filters.page))
+    next.set('pageSize', String(filters.pageSize))
+    setSearchParams(next, { replace: true })
+  }, [activeWorkMode, defaultWorkMode, filters, setSearchParams])
 
-  function handleSubTabChange(nextSubTab) {
-    setSubTab(nextSubTab)
-    setStatusTab(DESIGN_TASK_STATUS_TABS.ALL)
-    setSearchInput('')
-    setSellerFilter(DESIGN_TASK_SELLER_FILTERS.ALL)
-    setShopFilter(DESIGN_TASK_SHOP_FILTERS.ALL)
-    setAsinTypeFilter(DESIGN_TASK_ASIN_TYPE_FILTERS.ALL)
-    resetPage()
-  }
+  useEffect(() => {
+    if (taskTypeSlug !== DESIGN_TASK_TYPE_SLUGS[activeTaskType] || searchParams.has('type')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('type')
+      navigate(
+        {
+          pathname: taskTypePath(activeTaskType),
+          search: next.toString() ? `?${next.toString()}` : '',
+        },
+        { replace: true },
+      )
+    }
+  }, [activeTaskType, navigate, searchParams, taskTypeSlug])
 
-  function handlePageSizeChange(nextPageSize) {
-    setPageSize(nextPageSize)
-    resetPage()
-  }
+  const tasksQuery = useDesignTasksQuery(effectiveQuery)
+  const summaryQuery = useDesignTaskSummaryQuery(summaryQueryFilters)
+  const workloadQuery = useDesignWorkloadQuery(summaryQueryFilters)
+  const scoreSummaryQuery = useDesignScoreSummaryQuery(summaryQueryFilters)
+  const shopsQuery = useListingShopsQuery({ limit: 100 })
+  const assigneesQuery = useDesignAssigneesQuery({ taskType: activeTaskType })
+  const [actionTask, setActionTask] = useState(null)
+  const [selectedAction, setSelectedAction] = useState(null)
+  const [detailTaskId, setDetailTaskId] = useState(null)
+  const detailQuery = useDesignTaskDetailQuery(detailTaskId)
+  const [detailState, setDetailState] = useState({
+    assignedDesignerId: '',
+    assignNote: '',
+    file: null,
+    rejectReason: '',
+    cancelReason: '',
+  })
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createSearch, setCreateSearch] = useState('')
+  const debouncedCreateSearch = useDebounce(createSearch, 300)
+  const [createValues, setCreateValues] = useState(EMPTY_CREATE_VALUES)
+  const listingsQuery = useListingsQuery(
+    { search: debouncedCreateSearch, page: 1, limit: 20 },
+    { enabled: createOpen },
+  )
+  const sourceListingsQuery = useListingsQuery(
+    { search: debouncedCreateSearch, page: 1, limit: 20 },
+    { enabled: createOpen && createValues.taskType === 'CLONE' },
+  )
+  const templatesQuery = useCatalogInternalTemplatesQuery(
+    { limit: 100, status: 'ACTIVE' },
+    { enabled: createOpen && createValues.taskType === 'CLONE' },
+  )
+  const candidatesQuery = usePsdTemplateCandidatesQuery(
+    {
+      search: debouncedCreateSearch,
+      page: 1,
+      limit: 20,
+    },
+    { enabled: createOpen && createValues.taskType === 'PSD_TEMPLATE' },
+  )
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkSearch, setBulkSearch] = useState('')
+  const debouncedBulkSearch = useDebounce(bulkSearch, 300)
+  const [bulkNote, setBulkNote] = useState('')
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState([])
+  const bulkCandidatesQuery = usePsdTemplateCandidatesQuery(
+    { search: debouncedBulkSearch, page: 1, limit: 20 },
+    { enabled: bulkOpen },
+  )
+  const createTaskMutation = useCreateDesignTaskMutation()
+  const uploadMediaMutation = useUploadMediaAssetMutation()
+  const assignMutation = useAssignDesignTaskMutation()
+  const startMutation = useStartDesignTaskMutation()
+  const submitMutation = useSubmitDesignTaskMutation()
+  const approveMutation = useApproveDesignTaskMutation()
+  const rejectMutation = useRejectDesignTaskMutation()
+  const cancelMutation = useCancelDesignTaskMutation()
+  const bulkCreateMutation = useBulkCreatePsdTasksMutation()
+  const overrideScoreMutation = useOverrideSubmissionScoreMutation()
+  const voidScoreMutation = useVoidSubmissionScoreMutation()
+  const startDesignTask = startMutation.mutateAsync
+  const approveDesignTask = approveMutation.mutateAsync
+  const tasks = tasksQuery.data?.items || []
+  const total = tasksQuery.data?.total || 0
+  const isDetailSubmitting =
+    uploadMediaMutation.isPending ||
+    assignMutation.isPending ||
+    startMutation.isPending ||
+    submitMutation.isPending ||
+    approveMutation.isPending ||
+    rejectMutation.isPending ||
+    cancelMutation.isPending
+  const isScoreSubmitting = overrideScoreMutation.isPending || voidScoreMutation.isPending
 
-  function handleTogglePngTask(taskId) {
-    setExpandedPngTaskIds((current) => {
-      const next = new Set(current)
+  useEffect(() => {
+    if (detailTaskId && detailQuery.error) {
+      enqueueSnackbar(detailQuery.error.message || 'Unable to load design task details', {
+        variant: 'error',
+      })
+    }
+  }, [detailQuery.error, detailTaskId, enqueueSnackbar])
 
-      if (next.has(taskId)) {
-        next.delete(taskId)
-      } else {
-        next.add(taskId)
+  const setFilter = useCallback((next) => {
+    setFilters((current) => mergeFilters(current, next))
+  }, [])
+
+  const setDesignFilters = useCallback((next) => {
+    const nextFilters = { ...next }
+    delete nextFilters.taskType
+    setFilters((current) => mergeFilters(current, nextFilters))
+  }, [])
+
+  const sortByColumn = useCallback((sortBy) => {
+    setFilters((current) =>
+      mergeFilters(current, {
+        sortBy,
+        sortOrder: current.sortBy === sortBy && current.sortOrder === 'asc' ? 'desc' : 'asc',
+        page: 1,
+      }),
+    )
+  }, [])
+
+  const setStatusFilter = useCallback(
+    (statusTab) => {
+      setFilters((current) => mergeFilters(current, { statusTab, page: 1 }))
+      if (activeWorkMode === 'review' && statusTab !== 'uploaded' && canManageDesign) {
+        setWorkMode('all')
       }
+    },
+    [activeWorkMode, canManageDesign],
+  )
 
-      return next
+  const setTaskTypePage = useCallback(
+    (taskType) => {
+      setFilters((current) => mergeFilters(current, { page: 1 }))
+      const next = new URLSearchParams(searchParams)
+      next.delete('type')
+      next.set('page', '1')
+      const pathname = taskTypePath(taskType)
+      if (pathname === taskTypePath(activeTaskType) && next.toString() === searchParams.toString())
+        return
+      navigate({
+        pathname,
+        search: next.toString() ? `?${next.toString()}` : '',
+      })
+    },
+    [activeTaskType, navigate, searchParams],
+  )
+
+  const openAction = useCallback((task, action) => {
+    setActionTask(task)
+    setSelectedAction(action)
+    setDetailState({
+      assignedDesignerId: '',
+      assignNote: '',
+      file: null,
+      rejectReason: '',
+      cancelReason: '',
     })
+  }, [])
+
+  const closeAction = useCallback(() => {
+    setActionTask(null)
+    setSelectedAction(null)
+  }, [])
+
+  const openDetail = useCallback((task) => setDetailTaskId(task.id), [])
+  const closeDetail = useCallback(() => setDetailTaskId(null), [])
+
+  const resetCreate = useCallback(
+    (nextType = activeTaskType) => {
+      setCreateValues({ ...EMPTY_CREATE_VALUES, taskType: nextType })
+      setCreateSearch('')
+    },
+    [activeTaskType],
+  )
+
+  const runAction = useCallback(
+    async (action, successMessage) => {
+      try {
+        await action()
+        enqueueSnackbar(successMessage, { variant: 'success' })
+      } catch (error) {
+        enqueueSnackbar(error.message || 'Design action failed', { variant: 'error' })
+      }
+    },
+    [enqueueSnackbar],
+  )
+
+  const handleAssignTask = useCallback((task) => openAction(task, 'assign'), [openAction])
+
+  const handleStartTask = useCallback(
+    (task) => runAction(() => startDesignTask({ taskId: task.id }), 'Task started'),
+    [runAction, startDesignTask],
+  )
+
+  const handleSubmitAction = useCallback((task) => openAction(task, 'submit'), [openAction])
+
+  const handleApproveTask = useCallback(
+    (task) =>
+      runAction(
+        () => approveDesignTask(buildApproveLatestSubmissionVariables(task)),
+        'Task approved',
+      ),
+    [approveDesignTask, runAction],
+  )
+
+  const handleRejectTask = useCallback((task) => openAction(task, 'reject'), [openAction])
+
+  const handleCancelTask = useCallback((task) => openAction(task, 'cancel'), [openAction])
+
+  const handleOverrideScore = useCallback(
+    (payload) => runAction(() => overrideScoreMutation.mutateAsync(payload), 'Score overridden'),
+    [overrideScoreMutation, runAction],
+  )
+
+  const handleVoidScore = useCallback(
+    (submissionId, voidReason) =>
+      runAction(
+        () => voidScoreMutation.mutateAsync({ taskId: detailTaskId, submissionId, voidReason }),
+        'Score voided',
+      ),
+    [detailTaskId, runAction, voidScoreMutation],
+  )
+
+  const handleWorkModeChange = useCallback((mode) => {
+    setWorkMode((current) => (current === mode ? current : mode))
+    setFilters((current) => mergeFilters(current, { page: 1 }))
+  }, [])
+
+  function updateDetailState(name, value) {
+    setDetailState((current) => ({ ...current, [name]: value }))
   }
 
-  const titleKey =
-    subTab === TASK_TYPES.IDEA
-      ? 'designTasks.titles.idea'
-      : subTab === TASK_TYPES.PSD
-        ? 'designTasks.titles.psd'
-        : 'designTasks.titles.png'
+  function updateCreateValue(name, value) {
+    setCreateValues((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'taskType'
+        ? {
+            listingId: '',
+            sourceListingId: '',
+            sourceInternalTemplateId: '',
+            expectedOutputs:
+              value === 'IDEA'
+                ? ['MOCKUP']
+                : value === 'PSD_TEMPLATE'
+                  ? ['PSD_TEMPLATE']
+                  : ['PNG_ASSET'],
+          }
+        : {}),
+    }))
+  }
+
+  async function handleSubmitTask() {
+    if (!detailState.file || !actionTask?.id) return
+    await runAction(async () => {
+      const asset = await uploadMediaMutation.mutateAsync(detailState.file)
+      await submitMutation.mutateAsync({
+        taskId: actionTask.id,
+        mediaAssetId: asset?.id || asset?._id,
+      })
+      updateDetailState('file', null)
+      closeAction()
+    }, 'Asset submitted')
+  }
+
+  async function handleCreateTask() {
+    await runAction(async () => {
+      await createTaskMutation.mutateAsync(createValues)
+      setCreateOpen(false)
+      resetCreate()
+    }, 'Design task created')
+  }
+
+  async function handleBulkCreate() {
+    await runAction(async () => {
+      await bulkCreateMutation.mutateAsync({ listingIds: selectedCandidateIds, note: bulkNote })
+      setBulkOpen(false)
+      setSelectedCandidateIds([])
+      setBulkNote('')
+    }, 'PSD tasks created')
+  }
 
   return (
-    <div className="flex min-h-full flex-col bg-surface p-2">
-      <TaskTypeTabs value={subTab} onChange={handleSubTabChange} />
-
-      <header className="mt-8 flex flex-wrap items-center justify-between gap-4">
-        <Typography variant="h5" className="text-xl font-bold text-ink-strong">
-          {t(titleKey)}
-        </Typography>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outlined"
-            startIcon={<CalendarMonthOutlinedIcon fontSize="small" />}
-            endIcon={<KeyboardArrowDownIcon fontSize="small" />}
-            className="h-10 rounded-lg border-border bg-surface px-4 text-sm font-normal text-ink-secondary"
-          >
-            {t('designTasks.dateRange')}
-          </Button>
-          {isPngTasks ? null : (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon fontSize="small" />}
-              className="h-10 rounded-lg px-4 text-sm font-semibold"
-            >
-              {t('designTasks.actions.createTask')}
-            </Button>
-          )}
-        </div>
-      </header>
-
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        {activeStatusTabs.map((tab) => {
-          const active = statusTab === tab.value
-
-          return (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => {
-                setStatusTab(tab.value)
-                resetPage()
-              }}
-              className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold ${
-                active
-                  ? isPngTasks
-                    ? 'border-info bg-info text-white'
-                    : 'border-primary bg-primary text-white'
-                  : 'border-border bg-surface text-ink-secondary'
-              }`}
-            >
-              <span>{t(tab.labelKey)}</span>
-              <span
-                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs ${
-                  active
-                    ? isPngTasks
-                      ? 'bg-white text-info'
-                      : 'bg-white text-primary'
-                    : 'bg-neutral-bg text-ink-muted'
-                }`}
-              >
-                {counts[tab.value] || 0}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <TextField
-            size="small"
-            value={searchInput}
-            onChange={(event) => {
-              setSearchInput(event.target.value)
-              resetPage()
-            }}
-            placeholder={t('designTasks.searchPlaceholder')}
-            className="w-56 bg-surface"
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon className="text-ink-muted" fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
+    <>
+      <OperationsPageShell
+        header={
+          <OperationsHeader
+            title="Design Operations"
+            subtitle="Manage design tasks, files, assignments, and approvals without raw payloads."
+            actions={
+              canManageDesign ? (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      setBulkOpen(true)
+                      setSelectedCandidateIds([])
+                      setBulkNote('')
+                    }}
+                  >
+                    Bulk PSD
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      resetCreate(activeTaskType)
+                      setCreateOpen(true)
+                    }}
+                  >
+                    Create task
+                  </Button>
+                </>
+              ) : null
+            }
           />
-          {isPngTasks ? (
-            <>
-              <FormControl size="small" className="w-28">
-                <Select
-                  value={shopFilter}
-                  onChange={(event) => {
-                    setShopFilter(event.target.value)
-                    resetPage()
-                  }}
-                  className="h-9 rounded-lg bg-surface text-sm text-ink-secondary"
-                  inputProps={{ 'aria-label': t('designTasks.png.filters.shop') }}
-                >
-                  {shopFilterOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {t('designTasks.png.filters.shopValue', { value: t(option.labelKey) })}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" className="w-36">
-                <Select
-                  value={asinTypeFilter}
-                  onChange={(event) => {
-                    setAsinTypeFilter(event.target.value)
-                    resetPage()
-                  }}
-                  className="h-9 rounded-lg bg-surface text-sm text-ink-secondary"
-                  inputProps={{ 'aria-label': t('designTasks.png.filters.asinType') }}
-                >
-                  {asinTypeFilterOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {t('designTasks.png.filters.asinTypeValue', { value: t(option.labelKey) })}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </>
-          ) : null}
-          <Tooltip title={t('designTasks.actions.refresh')}>
-            <IconButton
-              aria-label={t('designTasks.actions.refresh')}
-              onClick={() => queryClient.invalidateQueries({ queryKey: designTasksKeys.all })}
-              className="h-9 w-9 rounded-lg border border-border bg-surface text-ink-secondary"
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-
-        {isPsdTasks ? (
-          <PsdTasksPagination
-            page={page}
-            sellerFilter={sellerFilter}
-            summaryTotal={summaryTotal}
-            onPageChange={setPage}
-            onSellerChange={(nextSeller) => {
-              setSellerFilter(nextSeller)
-              resetPage()
-            }}
-            t={t}
+        }
+        tabs={
+          <div className="space-y-3">
+            <TaskTypeTabsInline value={activeTaskType} onChange={setTaskTypePage} />
+            <SummaryStrip
+              summary={summaryQuery.data}
+              workload={workloadQuery.data}
+              isLoading={summaryQuery.isPending}
+              activeStatus={activeWorkMode === 'review' ? 'uploaded' : filters.statusTab}
+              onStatusChange={setStatusFilter}
+            />
+            <DesignScoreSummary
+              summary={scoreSummaryQuery.data}
+              isLoading={scoreSummaryQuery.isPending}
+              hasError={scoreSummaryQuery.isError}
+            />
+          </div>
+        }
+        toolbar={
+          <DesignFilters
+            filters={filters}
+            shops={shopsQuery.data || []}
+            assignees={assigneesQuery.data || []}
+            showAssigneeFilter={canManageDesign || canReviewDesign}
+            activeWorkMode={activeWorkMode}
+            canManageDesign={canManageDesign}
+            canReviewDesign={canReviewDesign}
+            onChange={setDesignFilters}
+            onWorkModeChange={handleWorkModeChange}
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: designTasksKeys.all })}
           />
-        ) : (
-          <DesignTasksPagination
-            page={page}
-            pageSize={pageSize}
+        }
+        pagination={
+          <OperationsPagination
+            page={filters.page}
+            pageSize={filters.pageSize}
             total={total}
-            onPageChange={setPage}
-            onPageSizeChange={handlePageSizeChange}
-            t={t}
+            onPageChange={(page) => setFilter({ page })}
+            onPageSizeChange={(pageSize) => setFilter({ pageSize, page: 1 })}
           />
-        )}
-      </div>
+        }
+      >
+        <TaskTable
+          tasks={tasks}
+          isLoading={tasksQuery.isPending}
+          isSubmitting={isDetailSubmitting}
+          currentUser={currentUser}
+          showAssignedColumn={canManageDesign || canReviewDesign}
+          sortBy={filters.sortBy}
+          sortOrder={filters.sortOrder}
+          onSort={sortByColumn}
+          emptyMessage={
+            activeWorkMode === 'mine'
+              ? 'No tasks assigned to you.'
+              : activeWorkMode === 'review'
+                ? 'No submissions waiting for review.'
+                : 'No design tasks found.'
+          }
+          onAssign={handleAssignTask}
+          onStart={handleStartTask}
+          onSubmit={handleSubmitAction}
+          onApprove={handleApproveTask}
+          onReject={handleRejectTask}
+          onCancel={handleCancelTask}
+          onOpenDetail={openDetail}
+        />
+      </OperationsPageShell>
 
-      <section className="mt-4 overflow-x-auto rounded-xl border border-border bg-surface">
-        <table className="min-w-full border-collapse">
-          <thead className="bg-surface-subtle">
-            <tr>
-              {tableColumns.map((column) => (
-                <th
-                  key={column.id}
-                  scope="col"
-                  className="h-12 whitespace-nowrap px-6 text-left text-xs font-semibold uppercase text-ink-muted"
-                >
-                  {t(column.labelKey)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isPending ? (
-              <LoadingRows columns={tableColumns} />
-            ) : (
-              tasks
-                .slice(0, 5)
-                .map((task) =>
-                  isPngTasks ? (
-                    <PngTaskRow
-                      key={task.id}
-                      task={task}
-                      expanded={expandedPngTaskIds.has(task.id)}
-                      onToggle={handleTogglePngTask}
-                      t={t}
-                    />
-                  ) : isPsdTasks ? (
-                    <PsdTaskRow key={task.id} task={task} t={t} />
-                  ) : (
-                    <IdeaTaskRow key={task.id} task={task} t={t} />
-                  ),
-                )
-            )}
-          </tbody>
-        </table>
-      </section>
-    </div>
+      <DesignActionDialog
+        action={selectedAction}
+        task={actionTask}
+        assignees={assigneesQuery.data || []}
+        state={detailState}
+        isSubmitting={isDetailSubmitting}
+        onClose={closeAction}
+        onState={updateDetailState}
+        onAssign={() =>
+          runAction(async () => {
+            await assignMutation.mutateAsync({
+              taskId: actionTask.id,
+              assignedDesignerId: detailState.assignedDesignerId,
+              note: detailState.assignNote,
+            })
+            closeAction()
+          }, 'Task assigned')
+        }
+        onSubmit={handleSubmitTask}
+        onReject={() =>
+          runAction(async () => {
+            await rejectMutation.mutateAsync({
+              taskId: actionTask.id,
+              rejectReason: detailState.rejectReason,
+            })
+            closeAction()
+          }, 'Task rejected')
+        }
+        onCancel={() =>
+          runAction(async () => {
+            await cancelMutation.mutateAsync({
+              taskId: actionTask.id,
+              cancelReason: detailState.cancelReason,
+            })
+            closeAction()
+          }, 'Task cancelled')
+        }
+      />
+
+      <DesignTaskDetailDialog
+        open={Boolean(detailTaskId)}
+        task={detailQuery.data}
+        isLoading={detailQuery.isPending}
+        error={detailQuery.error}
+        canReviewScores={canReviewScores}
+        isScoreSubmitting={isScoreSubmitting}
+        onClose={closeDetail}
+        onOverrideScore={handleOverrideScore}
+        onVoidScore={handleVoidScore}
+      />
+
+      <CreateTaskDialog
+        open={createOpen}
+        values={createValues}
+        listings={listingsQuery.data?.items || []}
+        sourceListings={sourceListingsQuery.data?.items || []}
+        templates={templatesQuery.data?.items || []}
+        candidates={candidatesQuery.data?.items || []}
+        search={createSearch}
+        isSubmitting={createTaskMutation.isPending}
+        onChange={updateCreateValue}
+        onSearchChange={setCreateSearch}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={handleCreateTask}
+      />
+
+      <BulkPsdCreateDialog
+        open={bulkOpen}
+        search={bulkSearch}
+        note={bulkNote}
+        selectedIds={selectedCandidateIds}
+        candidates={bulkCandidatesQuery.data?.items || []}
+        isLoading={bulkCandidatesQuery.isPending}
+        isSubmitting={bulkCreateMutation.isPending}
+        onClose={() => setBulkOpen(false)}
+        onSearchChange={setBulkSearch}
+        onNoteChange={setBulkNote}
+        onToggleCandidate={(candidateId) =>
+          setSelectedCandidateIds((current) =>
+            current.includes(candidateId)
+              ? current.filter((id) => id !== candidateId)
+              : [...current, candidateId],
+          )
+        }
+        onSelectVisible={() =>
+          setSelectedCandidateIds(
+            (bulkCandidatesQuery.data?.items || []).map((candidate) => candidate.id),
+          )
+        }
+        onSubmit={handleBulkCreate}
+      />
+    </>
   )
 }

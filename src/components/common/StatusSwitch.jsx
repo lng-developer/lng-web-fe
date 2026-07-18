@@ -5,8 +5,8 @@ export default function StatusSwitch({ checked, disabled, ariaLabel, onChange })
     <Switch
       checked={checked}
       disabled={disabled}
-      inputProps={{ 'aria-label': ariaLabel }}
       onChange={onChange}
+      slotProps={{ input: { 'aria-label': ariaLabel } }}
       sx={{
         '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
           bgcolor: 'success.main',

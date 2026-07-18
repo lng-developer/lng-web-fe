@@ -3,11 +3,10 @@ export const orderTabs = [
   { key: 'new', labelKey: 'orders.tabs.new', count: 12 },
   { key: 'missingCostCenter', labelKey: 'orders.tabs.missingCostCenter', count: 3 },
   { key: 'missingPsd', labelKey: 'orders.tabs.missingPsd', count: 5 },
-  { key: 'awaitingPayment', labelKey: 'orders.tabs.awaitingPayment', count: 8 },
-  { key: 'processing', labelKey: 'orders.tabs.processing', count: 24 },
-  { key: 'shipped', labelKey: 'orders.tabs.shipped', count: 15 },
-  { key: 'delivered', labelKey: 'orders.tabs.delivered', count: 67 },
-  { key: 'cancelled', labelKey: 'orders.tabs.cancelled', count: 2 },
+  { key: 'addressIssue', labelKey: 'orders.tabs.addressIssue', count: 0 },
+  { key: 'atVendor', labelKey: 'orders.tabs.atVendor', count: 0 },
+  { key: 'trackingPending', labelKey: 'orders.tabs.trackingPending', count: 0 },
+  { key: 'readyForProduction', labelKey: 'orders.tabs.readyForProduction', count: 0 },
   { key: 'openCase', labelKey: 'orders.tabs.openCase', count: 1 },
 ]
 

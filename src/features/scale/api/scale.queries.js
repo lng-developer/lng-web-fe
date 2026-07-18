@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
@@ -27,10 +27,7 @@ export function useScaleTasksQuery(query = {}, options = {}) {
       get(ENDPOINTS.SCALE.TASKS, requestQuery).then((response) =>
         mapProductionListResponse(response),
       ),
-    placeholderData: (previousData, previousQuery) =>
-      previousQuery?.queryKey?.[2]?.salesChannelCode === requestQuery.salesChannelCode
-        ? previousData
-        : undefined,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -41,6 +38,7 @@ export function useScaleSummaryQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: scaleKeys.summary(requestQuery),
     queryFn: () => get(ENDPOINTS.SCALE.SUMMARY, requestQuery).then(mapScaleSummary),
+    placeholderData: keepPreviousData,
     ...options,
   })
 }

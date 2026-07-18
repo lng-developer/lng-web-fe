@@ -14,6 +14,10 @@ function patch(path, payload) {
   return apiClient.patch(path, payload).then(unwrapApiData)
 }
 
+function post(path, payload) {
+  return apiClient.post(path, payload).then(unwrapApiData)
+}
+
 export function useAssignScaleTaskMutation() {
   const queryClient = useQueryClient()
 
@@ -58,6 +62,15 @@ export function useUpdateScaleTaskCsNoteMutation() {
 
   return useMutation({
     mutationFn: ({ taskId, csNote }) => patch(ENDPOINTS.SCALE.CS_NOTE(taskId), { csNote }),
+    onSuccess: () => invalidateScale(queryClient),
+  })
+}
+
+export function useRecheckScaleTaskMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ orderItemId }) => post(ENDPOINTS.SCALE.ORDER_ITEM_RECHECK(orderItemId)),
     onSuccess: () => invalidateScale(queryClient),
   })
 }

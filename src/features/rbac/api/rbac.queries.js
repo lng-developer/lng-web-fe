@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
@@ -16,7 +16,7 @@ export function useAccountsQuery(query = {}) {
   return useQuery({
     queryKey: rbacKeys.accounts(params),
     queryFn: () => get(ENDPOINTS.RBAC.ACCOUNTS, params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -35,7 +35,7 @@ export function useRolesQuery(query = {}) {
   return useQuery({
     queryKey: rbacKeys.roles(params),
     queryFn: () => get(ENDPOINTS.RBAC.ROLES, params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -54,7 +54,7 @@ export function usePermissionsQuery(query = {}) {
   return useQuery({
     queryKey: rbacKeys.permissions(params),
     queryFn: () => get(ENDPOINTS.RBAC.PERMISSIONS, params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -73,7 +73,7 @@ export function useScopesQuery(query = {}) {
   return useQuery({
     queryKey: rbacKeys.scopes(params),
     queryFn: () => get(ENDPOINTS.RBAC.SCOPES, params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -83,7 +83,7 @@ export function useAccessAssignmentsQuery(query = {}) {
   return useQuery({
     queryKey: rbacKeys.accessAssignments(params),
     queryFn: () => get(ENDPOINTS.RBAC.ACCESS_ASSIGNMENTS, params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -93,7 +93,7 @@ export function useScopedRolePermissionsQuery(query = {}) {
   return useQuery({
     queryKey: rbacKeys.scopedRolePermissions(params),
     queryFn: () => get(ENDPOINTS.RBAC.SCOPED_ROLE_PERMISSIONS, params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
 

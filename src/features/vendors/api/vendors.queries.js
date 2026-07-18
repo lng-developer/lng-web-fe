@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
@@ -27,7 +27,7 @@ export function useVendorsQuery(query = {}, options = {}) {
       get(ENDPOINTS.VENDORS.LIST, params).then((response) =>
         mapPaginatedResponse(response, mapVendorResponse),
       ),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -41,7 +41,7 @@ export function useVendorProductsQuery(query = {}, options = {}) {
       get(ENDPOINTS.VENDORS.PRODUCTS, params).then((response) =>
         mapPaginatedResponse(response, mapVendorProductResponse),
       ),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -55,7 +55,7 @@ export function useProductTypeGroupsQuery(query = {}, options = {}) {
       get(ENDPOINTS.CATALOG.PRODUCT_TYPE_GROUPS, params).then((response) =>
         mapProductTypeOptions(response?.items || []),
       ),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     retry: false,
     ...options,
   })
@@ -71,7 +71,7 @@ export function useVendorCostCentersQuery(productId, query = {}, options = {}) {
         mapPaginatedResponse(response, mapVendorCostCenterResponse),
       ),
     enabled: Boolean(productId),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }

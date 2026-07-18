@@ -134,10 +134,10 @@ const TABS = [
 ]
 
 const ACCOUNT_STATUSES = [
-  { value: '', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Hoạt động' },
-  { value: 'inactive', label: 'Tạm khoá' },
-  { value: 'archived', label: 'Đã lưu trữ' },
+  { value: '', labelKey: 'rbac.users.status.all' },
+  { value: 'active', labelKey: 'rbac.users.status.active' },
+  { value: 'inactive', labelKey: 'rbac.users.status.inactive' },
+  { value: 'archived', labelKey: 'rbac.users.status.archived' },
 ]
 
 const INITIAL_USER_FORM = {
@@ -1039,8 +1039,8 @@ function EditAccessDialog({
         </DialogTitle>
         <DialogContent className="flex flex-col gap-5 px-6 pb-5 pt-0">
           <Stack className="gap-4">
-            <Box className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-3">
-              <Typography variant="body2" className="text-sm text-[#1d4ed8]">
+            <Box className="rounded-lg border border-info bg-info-bg px-4 py-3">
+              <Typography variant="body2" className="text-sm text-info-strong">
                 {t('rbac.users.editAccessModal.banner')}
               </Typography>
             </Box>
@@ -1339,7 +1339,7 @@ function RoleDialog({
               <Box className="flex items-center justify-between">
                 <Typography
                   variant="body2"
-                  className="text-[13px] font-semibold uppercase tracking-wide text-ink"
+                  className="text-sm font-semibold uppercase tracking-wide text-ink"
                 >
                   {t('rbac.roles.editModal.permissions')}
                 </Typography>
@@ -1347,7 +1347,7 @@ function RoleDialog({
                   variant="text"
                   size="small"
                   color="primary"
-                  className="!min-w-0 !px-0 !py-0 !text-[13px] !font-semibold"
+                  className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
                   onClick={toggleSelectAll}
                 >
                   {t('rbac.roles.editModal.selectAll')}
@@ -1486,7 +1486,7 @@ function PermissionCodeBadge({ code }) {
 function PermissionMetaCard({ children }) {
   return (
     <Box className="inline-flex min-h-6 items-center rounded border border-border bg-surface px-2 py-0.5">
-      <Typography variant="body2" className="text-[13px] font-semibold text-ink">
+      <Typography variant="body2" className="text-sm font-semibold text-ink">
         {children || '—'}
       </Typography>
     </Box>
@@ -1634,7 +1634,7 @@ function PermissionDialog({ open, value, onClose, onSubmit, onDelete, pending, d
                 >
                   {t('rbac.permissions.editModal.metadata.module')}
                 </Typography>
-                <Typography variant="body2" className="text-[13px] font-semibold text-ink">
+                <Typography variant="body2" className="text-sm font-semibold text-ink">
                   {value.module || '—'}
                 </Typography>
               </Box>
@@ -1654,7 +1654,7 @@ function PermissionDialog({ open, value, onClose, onSubmit, onDelete, pending, d
                 >
                   {t('rbac.permissions.editModal.metadata.created')}
                 </Typography>
-                <Typography variant="body2" className="text-[13px] text-ink">
+                <Typography variant="body2" className="text-sm text-ink">
                   {formatShortDate(value.createdAt)}
                 </Typography>
               </Box>
@@ -1665,7 +1665,7 @@ function PermissionDialog({ open, value, onClose, onSubmit, onDelete, pending, d
                 >
                   {t('rbac.permissions.editModal.metadata.updated')}
                 </Typography>
-                <Typography variant="body2" className="text-[13px] text-ink">
+                <Typography variant="body2" className="text-sm text-ink">
                   {formatDate(value.updatedAt)}
                 </Typography>
               </Box>
@@ -2098,7 +2098,7 @@ function GrantPermissionModal({ open, context, permissions, onClose, onSubmit, p
         </DialogTitle>
         <DialogContent className="flex flex-col gap-4 pt-2">
           <Box className="rounded-lg border border-info bg-info-bg px-4 py-2.5">
-            <Typography variant="body2" className="text-[13px] font-medium text-info">
+            <Typography variant="body2" className="text-sm font-medium text-info">
               {t('rbac.scopedOverrides.grantModal.contextPrefix', {
                 role: section?.roleName,
                 scopeType: group?.scopeType,
@@ -2371,7 +2371,7 @@ function PermissionBulletList({ permissions }) {
       {permissions.map((permission) => (
         <Box key={permission.id} className="flex items-center gap-1.5">
           <Box className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-          <Typography variant="body2" className="text-[13px] text-ink-secondary">
+          <Typography variant="body2" className="text-sm text-ink-secondary">
             {permission.name || permission.code}
           </Typography>
         </Box>
@@ -2414,7 +2414,7 @@ function GrantedPermissionItem({ permission, onRevoke, t }) {
   return (
     <Box className="flex items-center justify-between py-1.5">
       <Box className="flex flex-col gap-0">
-        <Typography variant="body2" className="text-[13px] text-ink-secondary">
+        <Typography variant="body2" className="text-sm text-ink-secondary">
           {permission.name || permission.permissionName || permission.code}
         </Typography>
         <Typography variant="caption" className="font-mono text-[11px] text-ink-muted">
@@ -2484,7 +2484,7 @@ function GrantedPermissionsPanel({ section, onGrant, onRevoke, t }) {
                 variant="text"
                 size="small"
                 color="primary"
-                className="!min-w-0 !px-0 !py-0 !text-[13px] !font-semibold"
+                className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
                 onClick={() => onGrant(group)}
               >
                 {t('rbac.scopedOverrides.addMore')}
@@ -2521,7 +2521,7 @@ function RoleOverrideSection({ section, totalPermissions, onEditRole, onGrant, o
           variant="text"
           size="small"
           color="primary"
-          className="!min-w-0 !px-0 !py-0 !text-[13px] !font-semibold"
+          className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
           onClick={onEditRole}
         >
           {isAnonymous
@@ -2669,9 +2669,7 @@ export default function UsersRolesPage() {
           >
             {ACCOUNT_STATUSES.filter((item) => item.value !== 'archived').map((item) => (
               <MenuItem key={item.value || 'all'} value={item.value}>
-                {item.value
-                  ? t(getStatusMeta(item.value).labelKey)
-                  : t('rbac.users.filter.allStatus')}
+                {t(item.labelKey)}
               </MenuItem>
             ))}
           </Select>
@@ -2757,7 +2755,7 @@ export default function UsersRolesPage() {
                       <TableCell>
                         <Stack direction="row" alignItems="center" className="min-w-[260px] gap-2">
                           <Avatar
-                            className={`!h-9 !w-9 !text-[13px] !font-semibold ${avatarMeta.className}`}
+                            className={`!h-9 !w-9 !text-sm !font-semibold ${avatarMeta.className}`}
                           >
                             {avatarMeta.initials}
                           </Avatar>
@@ -2930,7 +2928,7 @@ export default function UsersRolesPage() {
                           variant="text"
                           size="small"
                           color="primary"
-                          className="!min-w-0 !px-0 !py-0 !text-[13px] !font-semibold"
+                          className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
                           onClick={() => setDialog({ type: 'role', payload: role })}
                         >
                           {t('rbac.roles.actions.edit')}
@@ -3090,7 +3088,7 @@ export default function UsersRolesPage() {
                             variant="text"
                             size="small"
                             color="primary"
-                            className="!min-w-0 !px-0 !py-0 !text-[13px] !font-semibold"
+                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
                             onClick={() => setDialog({ type: 'permission', payload: permission })}
                           >
                             {t('rbac.permissions.actions.edit')}
@@ -3101,7 +3099,7 @@ export default function UsersRolesPage() {
                             disabled={
                               permission.deletable === false || deletePermissionMutation.isPending
                             }
-                            className="!min-w-0 !px-0 !py-0 !text-[13px] !font-semibold !text-danger"
+                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold !text-danger"
                             onClick={() => {
                               if (
                                 window.confirm(t('rbac.permissions.actions.deleteConfirmSimple'))

@@ -28,9 +28,9 @@ test('getRoleMeta returns label and className for known roles', () => {
 
 test('getStatusMeta returns figma status labels and classes', () => {
   assert.equal(getStatusMeta('active').labelKey, 'rbac.users.status.active')
-  assert.match(getStatusMeta('active').className, /#16a34a/)
+  assert.match(getStatusMeta('active').className, /!text-success/)
   assert.equal(getStatusMeta('inactive').labelKey, 'rbac.users.status.inactive')
-  assert.match(getStatusMeta('inactive').className, /#f59e0b/)
+  assert.match(getStatusMeta('inactive').className, /!text-warning/)
 })
 
 test('getAvatarMeta returns deterministic color and anonymous override', () => {

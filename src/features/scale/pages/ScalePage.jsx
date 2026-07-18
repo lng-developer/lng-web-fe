@@ -33,6 +33,7 @@ import { scaleKeys } from '@/features/scale/api/scale.keys'
 import {
   useAssignScaleTaskMutation,
   useDownloadScaleAssetMutation,
+  useRecheckScaleTaskMutation,
   useUpdateScaleTaskCsNoteMutation,
   useUploadScaleOutputMutation,
 } from '@/features/scale/api/scale.mutations'
@@ -316,7 +317,7 @@ function EtsyCustomizationValue({ item }) {
         href={item.url}
         target="_blank"
         rel="noreferrer"
-        className="truncate text-right text-[13px] font-light text-link-blue underline"
+        className="truncate text-right text-sm font-light text-link-blue underline"
       >
         {item.value}
       </a>
@@ -324,9 +325,7 @@ function EtsyCustomizationValue({ item }) {
   }
 
   if (item.type === 'danger') {
-    return (
-      <span className="truncate text-right text-[13px] font-light text-danger">{item.value}</span>
-    )
+    return <span className="truncate text-right text-sm font-light text-danger">{item.value}</span>
   }
 
   if (item.type === 'image') {
@@ -337,9 +336,7 @@ function EtsyCustomizationValue({ item }) {
     )
   }
 
-  return (
-    <span className="truncate text-right text-[13px] font-light text-link-blue">{item.value}</span>
-  )
+  return <span className="truncate text-right text-sm font-light text-link-blue">{item.value}</span>
 }
 
 function ScaleOutputPreview({ assetId, alt }) {
@@ -384,7 +381,9 @@ function ScaleDetailPanel({
   onUploadOutput,
   onRequestManualUpload,
   onDownloadAsset,
+  onRecheckTask,
   uploadingSlotId,
+  recheckingOrderItemId,
   t,
 }) {
   const { detail } = task
@@ -392,6 +391,7 @@ function ScaleDetailPanel({
   const uploadTargetId = uploadTarget.fileCheckId || uploadTarget.slotKey
   const isUploading = uploadingSlotId === uploadTargetId
   const uploadDisabled = isScaleSlotUploadDisabled(uploadTarget, isUploading)
+  const isRechecking = recheckingOrderItemId === task.orderItemId
 
   return (
     <div className="col-span-full border-b border-border/60 bg-surface-subtle px-5 py-6">
@@ -410,7 +410,7 @@ function ScaleDetailPanel({
               {detail.product.primaryCode}
             </Badge>
             <Badge
-              className={`h-[28px] px-3 text-[13px] ${detail.product.psdStatus === 'MISSING' ? 'bg-danger-bg text-danger' : 'bg-pink-bg text-pink-strong'}`}
+              className={`h-[28px] px-3 text-sm ${detail.product.psdStatus === 'MISSING' ? 'bg-danger-bg text-danger' : 'bg-pink-bg text-pink-strong'}`}
             >
               {formatEnumValue(detail.product.psdStatus)}
             </Badge>
@@ -424,7 +424,7 @@ function ScaleDetailPanel({
             startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
             disabled={!detail.psdTemplate?.assetId}
             onClick={() => onDownloadAsset(detail.psdTemplate.assetId, `${task.orderId}-psd`)}
-            className="h-[28px] rounded-full border-success px-3 text-[13px] font-semibold text-success"
+            className="h-[28px] rounded-full border-success px-3 text-sm font-semibold text-success"
           >
             {t('scale.etsy.actions.downloadPsd')}
           </Button>
@@ -438,7 +438,7 @@ function ScaleDetailPanel({
                 key={`${item.label}-${index}`}
                 className={`flex items-start justify-between gap-4 ${item.type === 'image' ? 'min-h-[84px]' : 'min-h-[18px]'}`}
               >
-                <span className="shrink-0 text-[13px] font-bold text-ink-detail">{item.label}</span>
+                <span className="shrink-0 text-sm font-bold text-ink-detail">{item.label}</span>
                 <EtsyCustomizationValue item={item} />
               </div>
             ))}
@@ -448,7 +448,7 @@ function ScaleDetailPanel({
         <section className="flex w-[133px] flex-col items-center gap-3">
           <DetailHeading>{t('scale.detail.taskStatus')}</DetailHeading>
           <span
-            className={`rounded-md px-3 py-[5px] text-center text-[13px] font-semibold ${detail.canScale ? 'bg-success-soft text-success' : 'bg-warning-bg text-warning-strong'}`}
+            className={`rounded-md px-3 py-[5px] text-center text-sm font-semibold ${detail.canScale ? 'bg-success-soft text-success' : 'bg-warning-bg text-warning-strong'}`}
           >
             {formatEnumValue(detail.contextStatus)}
           </span>
@@ -493,6 +493,23 @@ function ScaleDetailPanel({
         <section className="flex w-[280px] flex-col items-start gap-3">
           <DetailHeading>{t('scale.detail.action')}</DetailHeading>
           <div className="flex w-full flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              <Tooltip title={!task.orderItemId ? t('scale.messages.recheckUnavailable') : ''}>
+                <span>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    size="small"
+                    disabled={isRechecking || !task.orderItemId}
+                    startIcon={<RefreshIcon className={isRechecking ? 'animate-spin' : ''} />}
+                    onClick={() => onRecheckTask(task)}
+                    className="h-7 rounded border-border px-2 text-xs font-normal text-ink-action"
+                  >
+                    {isRechecking ? t('scale.loading.rechecking') : t('scale.actions.recheck')}
+                  </Button>
+                </span>
+              </Tooltip>
+            </div>
             <Tooltip
               title={
                 uploadDisabled && !isUploading ? t('scale.messages.slotUploadUnavailable') : ''
@@ -650,7 +667,7 @@ function ScalePagination({ page, pageSize, total, disabled, onPageChange, onPage
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-3">
-      <span className="text-[13px] whitespace-nowrap text-ink-muted">
+      <span className="text-sm whitespace-nowrap text-ink-muted">
         {t('scale.pagination.range', { from, to, total })}
       </span>
       <Pagination
@@ -841,6 +858,7 @@ export default function ScalePage() {
 
   const assignScaleMutation = useAssignScaleTaskMutation()
   const updateCsNoteMutation = useUpdateScaleTaskCsNoteMutation()
+  const recheckTaskMutation = useRecheckScaleTaskMutation()
   const uploadOutputMutation = useUploadScaleOutputMutation()
   const downloadAssetMutation = useDownloadScaleAssetMutation()
 
@@ -1005,6 +1023,44 @@ export default function ScalePage() {
     )
   }
 
+  function handleRecheckTask(task) {
+    if (!task.orderItemId) {
+      enqueueSnackbar(t('scale.messages.recheckUnavailable'), {
+        variant: SNACKBAR_VARIANTS.WARNING,
+      })
+      return
+    }
+
+    recheckTaskMutation.mutate(
+      { orderItemId: task.orderItemId },
+      {
+        onSuccess: (result) => {
+          const blockers = result?.blockers || []
+          const missingRequirements = result?.scaleContext?.missingRequirements || []
+          const labels = [
+            ...blockers,
+            ...missingRequirements.map((requirement) => requirement.code),
+          ].filter(Boolean)
+
+          if (labels.length) {
+            enqueueSnackbar(
+              `${t('scale.messages.recheckStillBlocked')}: ${labels.map(formatEnumValue).join(', ')}`,
+              { variant: SNACKBAR_VARIANTS.WARNING },
+            )
+            return
+          }
+
+          enqueueSnackbar(t('scale.messages.recheckSuccess'), {
+            variant: SNACKBAR_VARIANTS.SUCCESS,
+          })
+        },
+        onError: (error) => {
+          enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
+        },
+      },
+    )
+  }
+
   function handleRequestManualUpload(task, target) {
     setManualUploadDialog({
       open: true,
@@ -1080,10 +1136,14 @@ export default function ScalePage() {
         onUploadOutput={handleUploadOutput}
         onRequestManualUpload={handleRequestManualUpload}
         onDownloadAsset={handleDownloadAsset}
+        onRecheckTask={handleRecheckTask}
         uploadingSlotId={
           uploadOutputMutation.isPending && uploadOutputMutation.variables?.taskId === task.id
             ? uploadOutputMutation.variables.fileCheckId || uploadOutputMutation.variables.slotKey
             : null
+        }
+        recheckingOrderItemId={
+          recheckTaskMutation.isPending ? recheckTaskMutation.variables?.orderItemId : null
         }
         t={t}
       />
@@ -1137,7 +1197,7 @@ export default function ScalePage() {
                 key={tab.value}
                 type="button"
                 onClick={() => handleSubTabChange(tab.value)}
-                className={`h-9 rounded-lg border px-[14px] text-[13px] font-semibold transition cursor-pointer ${
+                className={`h-9 rounded-lg border px-[14px] text-sm font-semibold transition cursor-pointer ${
                   etsyActive
                     ? 'border-border bg-ink text-white'
                     : active
@@ -1162,7 +1222,7 @@ export default function ScalePage() {
               type="button"
               disabled={tab.disabled}
               onClick={() => handleStatusTabChange(tab.value)}
-              className={`flex h-9 items-center gap-2 rounded-lg border px-[14px] text-[13px] font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`flex h-9 items-center gap-2 rounded-lg border px-[14px] text-sm font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
                 active && isEtsyTab
                   ? 'border-danger bg-danger text-white'
                   : active
@@ -1274,7 +1334,7 @@ export default function ScalePage() {
                 return (
                   <Fragment key={task.id}>
                     <div
-                      className={`col-span-full grid h-14 grid-cols-subgrid items-center border-b border-border px-4 text-[13px] transition ${
+                      className={`col-span-full grid h-14 grid-cols-subgrid items-center border-b border-border px-4 text-sm transition ${
                         expanded ? 'bg-primary-subtle' : 'bg-surface hover:bg-page'
                       }`}
                     >

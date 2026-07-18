@@ -195,7 +195,11 @@ export default function VendorProductsPage() {
   const { t } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
   const [search, setSearch] = useState('')
+  const [productCode, setProductCode] = useState('')
+  const [externalProductId, setExternalProductId] = useState('')
   const [vendorFilter, setVendorFilter] = useState('all')
+  const [productTypeFilter, setProductTypeFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(VENDOR_PRODUCT_PAGE_SIZE)
   const [productDialogState, setProductDialogState] = useState({
@@ -220,7 +224,11 @@ export default function VendorProductsPage() {
     page,
     limit: pageSize,
     search: debouncedSearch,
+    code: productCode,
+    externalProductId,
     vendorId: vendorFilter === 'all' ? '' : vendorFilter,
+    productTypeGroupId: productTypeFilter === 'all' ? '' : productTypeFilter,
+    status: statusFilter === 'all' ? '' : statusFilter,
   })
   const costCenterQuery = useVendorCostCentersQuery(selectedProduct?.id, { page: 1, limit: 100 })
   const products = productQuery.data?.items || []
@@ -405,6 +413,64 @@ export default function VendorProductsPage() {
                   {vendor.name}
                 </MenuItem>
               ))}
+            </Select>
+          </FormControl>
+          <TextField
+            size="small"
+            value={productCode}
+            onChange={(event) => {
+              setProductCode(event.target.value)
+              resetPage()
+            }}
+            placeholder="Product code"
+            className="w-full max-w-40 bg-surface"
+          />
+          <TextField
+            size="small"
+            value={externalProductId}
+            onChange={(event) => {
+              setExternalProductId(event.target.value)
+              resetPage()
+            }}
+            placeholder="External ID"
+            className="w-full max-w-40 bg-surface"
+          />
+          <FormControl size="small" className="w-44">
+            <Select
+              value={productTypeFilter}
+              onChange={(event) => {
+                setProductTypeFilter(event.target.value)
+                resetPage()
+              }}
+              displayEmpty
+              renderValue={(value) =>
+                value === 'all'
+                  ? t('vendors.products.columns.productType')
+                  : productTypeOptions.find((option) => option.id === value)?.label || value
+              }
+              className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
+            >
+              <MenuItem value="all">{t('vendors.products.columns.productType')}</MenuItem>
+              {productTypeOptions.map((option) => (
+                <MenuItem key={option.id} value={option.id}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" className="w-36">
+            <Select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value)
+                resetPage()
+              }}
+              displayEmpty
+              className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
+            >
+              <MenuItem value="all">All status</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
             </Select>
           </FormControl>
         </div>

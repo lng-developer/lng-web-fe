@@ -6,6 +6,7 @@ import {
   getDefaultExpandedOrderIds,
   getOrderTabCounts,
   getPaginationPages,
+  getSelectedExpandedOrderIds,
   toggleOrderSelection,
 } from './ordersDisplay.js'
 
@@ -65,18 +66,13 @@ test('toggleOrderSelection adds and removes ids without duplicates', () => {
   assert.deepEqual(toggleOrderSelection(['A-100', 'E-200'], 'A-100'), ['E-200'])
 })
 
-test('getDefaultExpandedOrderIds opens every order row by default', () => {
-  assert.deepEqual(getDefaultExpandedOrderIds(orders), ['A-100', 'E-200'])
+test('getDefaultExpandedOrderIds does not open every row by default', () => {
+  assert.deepEqual(getDefaultExpandedOrderIds(orders), [])
 })
 
-test('getDefaultExpandedOrderIds prefers internal api ids over display order ids', () => {
-  assert.deepEqual(
-    getDefaultExpandedOrderIds([
-      { apiId: 'mongo-order-1', id: '113-duplicate' },
-      { apiId: 'mongo-order-2', id: '113-duplicate' },
-    ]),
-    ['mongo-order-1', 'mongo-order-2'],
-  )
+test('getSelectedExpandedOrderIds expands only the selected internal id', () => {
+  assert.deepEqual(getSelectedExpandedOrderIds('mongo-order-1'), ['mongo-order-1'])
+  assert.deepEqual(getSelectedExpandedOrderIds(''), [])
 })
 
 test('getPaginationPages keeps the current page visible for later pages', () => {

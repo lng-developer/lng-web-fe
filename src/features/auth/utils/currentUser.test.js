@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { filterNavigationByRole, SIDEBAR_NAVIGATION } from '../../../layouts/sidebarNavigation.js'
+import { filterNavigationByUser, SIDEBAR_NAVIGATION } from '../../../layouts/sidebarNavigation.js'
 import {
   getCurrentUserAvatar,
   getCurrentUserDisplayName,
@@ -124,55 +124,68 @@ describe('current user utilities', () => {
   })
 
   it('maps ADMIN account payload to the full admin sidebar', () => {
-    const role = getCurrentUserRole(resolveCurrentUser(adminMeResponse))
-    const leafIds = collectLeafIds(filterNavigationByRole(SIDEBAR_NAVIGATION, role))
+    const user = resolveCurrentUser({
+      data: {
+        ...adminMeResponse.data,
+        permissions: ['MANAGE_SYSTEM'],
+      },
+    })
+    const role = getCurrentUserRole(user)
+    const leafIds = collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user))
 
     assert.equal(role, 'admin')
     assert.equal(leafIds.includes('audit-log'), true)
-    assert.equal(leafIds.includes('hr'), true)
-    assert.equal(leafIds.includes('finance-summary'), true)
+    assert.equal(leafIds.includes('amazon-orders-cost-report'), true)
+    assert.equal(leafIds.includes('template-center'), false)
   })
 
   it('maps DESIGNER account payload to design sidebar only', () => {
-    const role = getCurrentUserRole(resolveCurrentUser({ data: { roles: ['DESIGNER'] } }))
+    const user = resolveCurrentUser({ data: { roles: ['DESIGNER'], permissions: ['DESIGN:WORK'] } })
 
-    assert.deepEqual(collectLeafIds(filterNavigationByRole(SIDEBAR_NAVIGATION, role)), [
-      'dashboard',
+    assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
       'design-task-list',
-      'template-center',
     ])
   })
 
   it('maps QC account payload to QC sidebar only', () => {
-    const role = getCurrentUserRole(resolveCurrentUser({ data: { roles: ['QC'] } }))
+    const user = resolveCurrentUser({ data: { roles: ['QC'], permissions: ['DESIGN:REVIEW'] } })
 
-    assert.deepEqual(collectLeafIds(filterNavigationByRole(SIDEBAR_NAVIGATION, role)), [
-      'dashboard',
+    assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
       'qc',
+      'qc-amazon',
+      'qc-etsy',
+      'design-task-list',
     ])
   })
 
   it('maps FULFILLMENT account payload to scale and shipping sidebar', () => {
-    const role = getCurrentUserRole(resolveCurrentUser({ data: { roles: ['FULFILLMENT'] } }))
+    const user = resolveCurrentUser({
+      data: { roles: ['FULFILLMENT'], permissions: ['PRODUCTION:READ', 'SHIPMENTS:READ'] },
+    })
 
-    assert.deepEqual(collectLeafIds(filterNavigationByRole(SIDEBAR_NAVIGATION, role)), [
-      'dashboard',
+    assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
       'scale',
+      'scale-amazon',
+      'scale-etsy',
+      'qc',
+      'qc-amazon',
+      'qc-etsy',
       'shipping',
     ])
   })
 
   it('maps CS account payload to sales customers and CS sidebar', () => {
-    const role = getCurrentUserRole(resolveCurrentUser({ data: { roles: ['CS'] } }))
+    const user = resolveCurrentUser({
+      data: { roles: ['CS'], permissions: ['ORDERS:READ', 'CATALOG:READ'] },
+    })
 
-    assert.deepEqual(collectLeafIds(filterNavigationByRole(SIDEBAR_NAVIGATION, role)), [
-      'dashboard',
-      'order-list',
-      'order-detail',
+    assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
+      'orders-amazon',
+      'orders-etsy',
       'listings',
-      'tracking',
-      'cs',
-      'customers',
+      'cost-center-config',
+      'product-types',
+      'internal-templates',
     ])
   })
 

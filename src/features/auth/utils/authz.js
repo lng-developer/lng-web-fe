@@ -36,12 +36,30 @@ export function getUserPermissionCodes(user) {
   return Array.from(codes)
 }
 
-export function hasRequiredPermissions(user, requiredPermissions = []) {
-  if (!requiredPermissions.length) {
+export function canBypassPermissions(user) {
+  return getUserPermissionCodes(user).includes('MANAGE_SYSTEM')
+}
+
+export function hasAnyPermission(user, permissions = []) {
+  if (!permissions.length || canBypassPermissions(user)) {
     return true
   }
 
   const permissionCodes = new Set(getUserPermissionCodes(user))
 
-  return requiredPermissions.every((permission) => permissionCodes.has(permission))
+  return permissions.some((permission) => permissionCodes.has(permission))
+}
+
+export function hasAllPermissions(user, permissions = []) {
+  if (!permissions.length || canBypassPermissions(user)) {
+    return true
+  }
+
+  const permissionCodes = new Set(getUserPermissionCodes(user))
+
+  return permissions.every((permission) => permissionCodes.has(permission))
+}
+
+export function hasRequiredPermissions(user, requiredPermissions = []) {
+  return hasAllPermissions(user, requiredPermissions)
 }

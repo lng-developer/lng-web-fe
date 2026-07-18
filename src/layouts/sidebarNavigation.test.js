@@ -1,7 +1,19 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 
-import { filterNavigationByRole, getRoleMeta, SIDEBAR_NAVIGATION } from './sidebarNavigation.js'
+import {
+  filterNavigationByRole,
+  filterNavigationByUser,
+  getNavItemTo,
+  getRoleMeta,
+  getSidebarWorkspaceForLocation,
+  isNavItemActive,
+  SIDEBAR_NAVIGATION,
+  SIDEBAR_ROLE_FILTERING_ENABLED,
+  SIDEBAR_WORKSPACE_NAVIGATION,
+  SIDEBAR_WORKSPACES,
+} from './sidebarNavigation.js'
 
 function collectLeafIds(items) {
   return items.flatMap((item) => {
@@ -35,82 +47,305 @@ function findItem(items, id) {
   return null
 }
 
-describe('filterNavigationByRole', () => {
+describe('sidebar navigation', () => {
+  const fullPortalLeafIds = [
+    'orders-amazon',
+    'orders-etsy',
+    'listings',
+    'cost-center-config',
+    'product-types',
+    'internal-templates',
+    'amazon-orders-cost-report',
+    'amazon-ads-report',
+    'amazon-sale-report',
+    'etsy-orders-cost-report',
+    'etsy-ads-report',
+    'etsy-sale-report',
+    'shops-stores',
+    'mapping-workbench',
+    'users-roles',
+    'scale',
+    'scale-amazon',
+    'scale-etsy',
+    'qc',
+    'qc-amazon',
+    'qc-etsy',
+    'design-task-list',
+    'vendor-list',
+    'products-cost',
+    'vendor-submissions',
+    'shipping',
+    'api-coverage',
+    'audit-log',
+  ]
+
+  it('groups sidebar by department workspaces', () => {
+    assert.deepEqual(
+      SIDEBAR_WORKSPACES.map((workspace) => workspace.id),
+      ['orders', 'production', 'design', 'vendor', 'admin'],
+    )
+  })
+
+  it('keeps order listing setup and report workflow in the orders workspace', () => {
+    assert.deepEqual(collectLeafIds(SIDEBAR_WORKSPACE_NAVIGATION.orders), [
+      'orders-amazon',
+      'orders-etsy',
+      'listings',
+      'cost-center-config',
+      'product-types',
+      'internal-templates',
+      'amazon-orders-cost-report',
+      'amazon-ads-report',
+      'amazon-sale-report',
+      'etsy-orders-cost-report',
+      'etsy-ads-report',
+      'etsy-sale-report',
+      'shops-stores',
+      'mapping-workbench',
+      'users-roles',
+    ])
+  })
+
+  it('keeps production workflow in the production workspace', () => {
+    assert.deepEqual(collectLeafIds(SIDEBAR_WORKSPACE_NAVIGATION.production), [
+      'scale',
+      'scale-amazon',
+      'scale-etsy',
+      'qc',
+      'qc-amazon',
+      'qc-etsy',
+    ])
+  })
+
+  it('keeps design workflow in the design workspace', () => {
+    assert.deepEqual(collectLeafIds(SIDEBAR_WORKSPACE_NAVIGATION.design), ['design-task-list'])
+  })
+
+  it('uses query presets without creating new routes', () => {
+    assert.deepEqual(getNavItemTo(findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'orders-amazon')), {
+      pathname: '/portal/orders',
+      search: '?channel=amazon',
+    })
+    assert.deepEqual(
+      getNavItemTo(findItem(SIDEBAR_WORKSPACE_NAVIGATION.production, 'scale-etsy')),
+      {
+        pathname: '/portal/fulfillment/scale',
+        search: '?channel=etsy',
+      },
+    )
+    assert.deepEqual(
+      getNavItemTo(findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'etsy-ads-report')),
+      {
+        pathname: '/portal/reports',
+        search: '?channel=etsy&report=ads',
+      },
+    )
+    assert.deepEqual(getNavItemTo(findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'product-types')), {
+      pathname: '/portal/listings',
+      search: '?view=product-types',
+    })
+    assert.deepEqual(
+      getNavItemTo(findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'internal-templates')),
+      {
+        pathname: '/portal/listings',
+        search: '?view=internal-templates',
+      },
+    )
+  })
+
+  it('matches active query presets exactly when activeSearch is set', () => {
+    const amazonOrders = findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'orders-amazon')
+    const etsyOrders = findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'orders-etsy')
+    const listings = findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'listings')
+    const productTypes = findItem(SIDEBAR_WORKSPACE_NAVIGATION.orders, 'product-types')
+
+    assert.equal(
+      isNavItemActive(amazonOrders, { pathname: '/portal/orders', search: '?channel=amazon' }),
+      true,
+    )
+    assert.equal(
+      isNavItemActive(amazonOrders, {
+        pathname: '/portal/orders',
+        search: '?channel=amazon&orderId=123',
+      }),
+      true,
+    )
+    assert.equal(
+      isNavItemActive(etsyOrders, { pathname: '/portal/orders', search: '?channel=amazon' }),
+      false,
+    )
+    assert.equal(
+      isNavItemActive(listings, { pathname: '/portal/listings', search: '?view=product-types' }),
+      false,
+    )
+    assert.equal(
+      isNavItemActive(listings, { pathname: '/portal/listings', search: '?page=2' }),
+      true,
+    )
+    assert.equal(
+      isNavItemActive(productTypes, {
+        pathname: '/portal/listings',
+        search: '?view=product-types',
+      }),
+      true,
+    )
+  })
+
+  it('resolves the active workspace from the current route', () => {
+    assert.equal(getSidebarWorkspaceForLocation('/portal/design/tasks'), 'design')
+    assert.equal(getSidebarWorkspaceForLocation('/portal/fulfillment/scale'), 'production')
+    assert.equal(getSidebarWorkspaceForLocation('/portal/vendors'), 'vendor')
+    assert.equal(getSidebarWorkspaceForLocation('/portal/settings/users-roles'), 'orders')
+    assert.equal(getSidebarWorkspaceForLocation('/portal/settings/api-coverage'), 'admin')
+  })
+
   it('keeps the full portal navigation for admin', () => {
     const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, 'admin')
 
-    assert.deepEqual(collectLeafIds(navigation), [
-      'dashboard',
-      'order-list',
+    assert.deepEqual(collectLeafIds(navigation), fullPortalLeafIds)
+  })
+
+  it('filters portal navigation by backend permissions', () => {
+    const navigation = filterNavigationByUser(SIDEBAR_NAVIGATION, {
+      permissions: ['DESIGN:WORK'],
+    })
+
+    assert.deepEqual(collectLeafIds(navigation), ['design-task-list'])
+  })
+
+  it('shows review and QC surfaces for design reviewers', () => {
+    const navigation = filterNavigationByUser(SIDEBAR_NAVIGATION, {
+      permissions: ['DESIGN:REVIEW'],
+    })
+
+    assert.deepEqual(collectLeafIds(navigation), ['qc', 'qc-amazon', 'qc-etsy', 'design-task-list'])
+  })
+
+  it('does not expose navigation leaves without mounted routes', () => {
+    const routeLessIds = [
       'order-detail',
-      'listings',
       'tracking',
-      'scale',
-      'qc',
-      'shipping',
       'cs',
-      'design-task-list',
       'template-center',
-      'finance-summary',
       'finance-balance',
       'finance-payout',
       'compensation-pool',
-      'vendor-list',
-      'products-cost',
       'store-routing',
       'customers',
-      'users-roles',
-      'shops-stores',
       'system-config',
-      'audit-log',
-      'hr',
-    ])
+    ]
+
+    const leafIds = collectLeafIds(
+      filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['MANAGE_SYSTEM'] }),
+    )
+
+    assert.equal(
+      routeLessIds.some((id) => leafIds.includes(id)),
+      false,
+    )
+  })
+
+  it('shows auth admin surfaces for auth readers without system debug tools', () => {
+    const navigation = filterNavigationByUser(SIDEBAR_NAVIGATION, {
+      permissions: ['AUTH:READ'],
+    })
+
+    assert.deepEqual(collectLeafIds(navigation), ['users-roles'])
+  })
+
+  it('keeps full navigation for manage system', () => {
+    const navigation = filterNavigationByUser(SIDEBAR_NAVIGATION, {
+      permissions: ['MANAGE_SYSTEM'],
+    })
+
+    assert.deepEqual(collectLeafIds(navigation), fullPortalLeafIds)
   })
 
   it('keeps only design operations for designer', () => {
     const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, 'designer')
 
-    assert.deepEqual(collectLeafIds(navigation), [
-      'dashboard',
-      'design-task-list',
-      'template-center',
-    ])
+    assert.deepEqual(
+      collectLeafIds(navigation),
+      SIDEBAR_ROLE_FILTERING_ENABLED ? ['design-task-list'] : fullPortalLeafIds,
+    )
   })
 
   it('keeps only QC fulfillment for qc', () => {
     const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, 'qc')
 
-    assert.deepEqual(collectLeafIds(navigation), ['dashboard', 'qc'])
+    assert.deepEqual(
+      collectLeafIds(navigation),
+      SIDEBAR_ROLE_FILTERING_ENABLED ? ['qc', 'qc-amazon', 'qc-etsy'] : fullPortalLeafIds,
+    )
   })
 
-  it('keeps scale and shipping fulfillment for fulfillment', () => {
+  it('keeps primary fulfillment work and advanced shipping for fulfillment', () => {
     const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, 'fulfillment')
 
-    assert.deepEqual(collectLeafIds(navigation), ['dashboard', 'scale', 'shipping'])
+    assert.deepEqual(
+      collectLeafIds(navigation),
+      SIDEBAR_ROLE_FILTERING_ENABLED
+        ? ['scale', 'scale-amazon', 'scale-etsy', 'shipping', 'vendor-submissions']
+        : fullPortalLeafIds,
+    )
   })
 
   it('keeps sales, customers, and CS fulfillment for cs', () => {
     const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, 'cs')
 
-    assert.deepEqual(collectLeafIds(navigation), [
-      'dashboard',
-      'order-list',
-      'order-detail',
-      'listings',
-      'tracking',
-      'cs',
-      'customers',
-    ])
+    assert.deepEqual(
+      collectLeafIds(navigation),
+      SIDEBAR_ROLE_FILTERING_ENABLED
+        ? [
+            'orders-amazon',
+            'orders-etsy',
+            'listings',
+            'cost-center-config',
+            'product-types',
+            'internal-templates',
+          ]
+        : fullPortalLeafIds,
+    )
   })
 
-  it('removes empty sections and parent groups after filtering', () => {
-    const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, 'designer')
-    const portal = findItem(navigation, 'portal')
+  it('keeps duplicate workflow consoles out of the sidebar', () => {
+    const navigation = filterNavigationByRole(SIDEBAR_NAVIGATION, 'admin')
+    const leafIds = collectLeafIds(navigation)
 
-    assert.equal(findItem(navigation, 'sales'), null)
-    assert.equal(findItem(navigation, 'fulfillment'), null)
-    assert.equal(portal.children.length, 1)
-    assert.equal(portal.children[0].id, 'operations')
+    assert.equal(leafIds.includes('order-workbench'), false)
+    assert.equal(leafIds.includes('production-board'), false)
+    assert.equal(leafIds.includes('catalog-setup'), false)
+  })
+
+  it('keeps configuration as a top-level orders workspace group', () => {
+    const ordersNavigation = SIDEBAR_WORKSPACE_NAVIGATION.orders
+    const configuration = ordersNavigation.find((item) => item.id === 'configuration-group')
+
+    assert.notEqual(configuration, null)
+    assert.deepEqual(
+      configuration.children.map((item) => item.id),
+      ['shops-stores', 'mapping-workbench', 'users-roles'],
+    )
+  })
+
+  it('has locale labels for sidebar group keys', () => {
+    const english = JSON.parse(
+      readFileSync(new URL('../i18n/locales/en/common.json', import.meta.url)),
+    )
+    const vietnamese = JSON.parse(
+      readFileSync(new URL('../i18n/locales/vi/common.json', import.meta.url)),
+    )
+
+    assert.equal(english.nav.groups.reports, 'Reports')
+    assert.equal(vietnamese.nav.groups.reports, 'Reports')
+  })
+
+  it('removes empty groups after filtering', () => {
+    const navigation = filterNavigationByUser(SIDEBAR_WORKSPACE_NAVIGATION.orders, {
+      permissions: ['DESIGN:WORK'],
+    })
+
+    assert.deepEqual(navigation, [])
   })
 
   it('does not map an unknown role to admin metadata', () => {

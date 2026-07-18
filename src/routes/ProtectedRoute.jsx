@@ -4,11 +4,15 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import Loader from '@/components/common/Loader'
 import { ROUTES } from '@/constants/routes'
 import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
-import { hasRequiredPermissions } from '@/features/auth/utils/authz'
+import { hasAnyPermission, hasRequiredPermissions } from '@/features/auth/utils/authz'
 import { clearAuthTokens, getRefreshToken } from '@/services/axiosInstance'
 import { useAuthStore } from '@/store/useAuthStore'
 
-export default function ProtectedRoute({ requiredPermissions = [], children }) {
+export default function ProtectedRoute({
+  requiredPermissions = [],
+  requiredAnyPermissions = [],
+  children,
+}) {
   const location = useLocation()
   const currentUser = useAuthStore((state) => state.currentUser)
   const setCurrentUser = useAuthStore((state) => state.setCurrentUser)
@@ -52,7 +56,10 @@ export default function ProtectedRoute({ requiredPermissions = [], children }) {
 
   const user = currentUser ?? currentUserQuery.data?.data ?? currentUserQuery.data
 
-  if (!hasRequiredPermissions(user, requiredPermissions)) {
+  if (
+    !hasRequiredPermissions(user, requiredPermissions) ||
+    !hasAnyPermission(user, requiredAnyPermissions)
+  ) {
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />
   }
 

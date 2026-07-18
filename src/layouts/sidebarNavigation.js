@@ -1,4 +1,5 @@
 import { ROUTES } from '../constants/routes.js'
+import { hasAnyPermission } from '../features/auth/utils/authz.js'
 
 export const APP_ROLES = {
   ADMIN: 'admin',
@@ -10,21 +11,29 @@ export const APP_ROLES = {
 
 export const ALL_APP_ROLES = Object.values(APP_ROLES)
 export const SIDEBAR_ROLE_FILTERING_ENABLED = false
-export const SIDEBAR_NAV_TABS = {
-  PORTAL: 'portal',
-  HR: 'hr',
-}
 
-export const SIDEBAR_TABS = [
-  {
-    id: SIDEBAR_NAV_TABS.PORTAL,
-    labelKey: 'nav.portal',
-  },
-  {
-    id: SIDEBAR_NAV_TABS.HR,
-    labelKey: 'nav.hr',
-  },
-]
+const MOUNTED_ROUTE_PATHS = new Set([
+  ROUTES.HOME,
+  ROUTES.PORTAL_ORDER_LIST,
+  ROUTES.PORTAL_ORDER_WORKBENCH,
+  ROUTES.PORTAL_CATALOG_SETUP,
+  ROUTES.PORTAL_LISTINGS,
+  ROUTES.PORTAL_MAPPING_WORKBENCH,
+  ROUTES.PORTAL_PRODUCTION,
+  ROUTES.PORTAL_SCALE,
+  ROUTES.PORTAL_QC,
+  ROUTES.PORTAL_SHIPPING,
+  ROUTES.PORTAL_VENDOR_SUBMISSIONS,
+  ROUTES.PORTAL_DESIGN_TASKS,
+  ROUTES.PORTAL_FINANCE_SUMMARY,
+  ROUTES.PORTAL_REPORTS,
+  ROUTES.PORTAL_VENDOR_LIST,
+  ROUTES.PORTAL_PRODUCTS_COST,
+  ROUTES.PORTAL_SHOPS_STORES,
+  ROUTES.PORTAL_USERS_ROLES,
+  ROUTES.PORTAL_API_COVERAGE,
+  ROUTES.PORTAL_AUDIT_LOG,
+])
 
 const ROLE_ACCESS = {
   ALL: ALL_APP_ROLES,
@@ -59,291 +68,488 @@ export const ROLE_META = {
   },
 }
 
-const SIDEBAR_NAVIGATION_ROOT = [
-  {
-    id: 'dashboard',
-    type: 'item',
-    labelKey: 'nav.dashboard',
-    path: ROUTES.HOME,
-    icon: 'dashboard',
-    allowedRoles: ROLE_ACCESS.ALL,
-  },
-  {
-    id: 'portal',
-    type: 'item',
-    labelKey: 'nav.portal',
-    icon: 'portal',
-    defaultOpen: true,
-    allowedRoles: ROLE_ACCESS.ALL,
-    children: [
-      {
-        id: 'sales',
-        type: 'section',
-        labelKey: 'nav.sections.sales',
-        allowedRoles: ROLE_ACCESS.SALES,
-        items: [
-          {
-            id: 'orders',
-            type: 'group',
-            labelKey: 'nav.groups.orders',
-            defaultOpen: true,
-            allowedRoles: ROLE_ACCESS.SALES,
-            children: [
-              {
-                id: 'order-list',
-                type: 'item',
-                labelKey: 'nav.items.orderList',
-                path: ROUTES.PORTAL_ORDER_LIST,
-                allowedRoles: ROLE_ACCESS.SALES,
-              },
-              {
-                id: 'order-detail',
-                type: 'item',
-                labelKey: 'nav.items.orderDetail',
-                path: ROUTES.PORTAL_ORDER_DETAIL,
-                allowedRoles: ROLE_ACCESS.SALES,
-              },
-              {
-                id: 'listings',
-                type: 'item',
-                labelKey: 'nav.items.listings',
-                path: ROUTES.PORTAL_LISTINGS,
-                allowedRoles: ROLE_ACCESS.SALES,
-              },
-              {
-                id: 'tracking',
-                type: 'item',
-                labelKey: 'nav.items.tracking',
-                path: ROUTES.PORTAL_TRACKING,
-                allowedRoles: ROLE_ACCESS.SALES,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'operations',
-        type: 'section',
-        labelKey: 'nav.sections.operations',
-        allowedRoles: [
-          APP_ROLES.ADMIN,
-          APP_ROLES.DESIGNER,
-          APP_ROLES.QC,
-          APP_ROLES.FULFILLMENT,
-          APP_ROLES.CS,
-        ],
-        items: [
-          {
-            id: 'fulfillment',
-            type: 'group',
-            labelKey: 'nav.groups.fulfillment',
-            defaultOpen: true,
-            allowedRoles: [APP_ROLES.ADMIN, APP_ROLES.QC, APP_ROLES.FULFILLMENT, APP_ROLES.CS],
-            children: [
-              {
-                id: 'scale',
-                type: 'item',
-                labelKey: 'nav.items.scale',
-                path: ROUTES.PORTAL_SCALE,
-                allowedRoles: ROLE_ACCESS.FULFILLMENT,
-              },
-              {
-                id: 'qc',
-                type: 'item',
-                labelKey: 'nav.items.qc',
-                path: ROUTES.PORTAL_QC,
-                allowedRoles: ROLE_ACCESS.QC,
-              },
-              {
-                id: 'shipping',
-                type: 'item',
-                labelKey: 'nav.items.shipping',
-                path: ROUTES.PORTAL_SHIPPING,
-                allowedRoles: ROLE_ACCESS.FULFILLMENT,
-              },
-              {
-                id: 'cs',
-                type: 'item',
-                labelKey: 'nav.items.cs',
-                path: ROUTES.PORTAL_CS,
-                allowedRoles: ROLE_ACCESS.CS,
-              },
-            ],
-          },
-          {
-            id: 'design',
-            type: 'group',
-            labelKey: 'nav.groups.design',
-            defaultOpen: true,
-            allowedRoles: ROLE_ACCESS.DESIGN,
-            children: [
-              {
-                id: 'design-task-list',
-                type: 'item',
-                labelKey: 'nav.items.taskList',
-                path: ROUTES.PORTAL_DESIGN_TASKS,
-                allowedRoles: ROLE_ACCESS.DESIGN,
-              },
-              {
-                id: 'template-center',
-                type: 'item',
-                labelKey: 'nav.items.templateCenter',
-                path: ROUTES.PORTAL_TEMPLATE_CENTER,
-                allowedRoles: ROLE_ACCESS.DESIGN,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'business',
-        type: 'section',
-        labelKey: 'nav.sections.business',
-        allowedRoles: [APP_ROLES.ADMIN, APP_ROLES.CS],
-        items: [
-          {
-            id: 'finance',
-            type: 'group',
-            labelKey: 'nav.groups.finance',
-            defaultOpen: true,
-            allowedRoles: ROLE_ACCESS.ADMIN,
-            children: [
-              {
-                id: 'finance-summary',
-                type: 'item',
-                labelKey: 'nav.items.summary',
-                path: ROUTES.PORTAL_FINANCE_SUMMARY,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'finance-balance',
-                type: 'item',
-                labelKey: 'nav.items.balance',
-                path: ROUTES.PORTAL_FINANCE_BALANCE,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'finance-payout',
-                type: 'item',
-                labelKey: 'nav.items.payout',
-                path: ROUTES.PORTAL_FINANCE_PAYOUT,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'compensation-pool',
-                type: 'item',
-                labelKey: 'nav.items.compensationPool',
-                path: ROUTES.PORTAL_COMPENSATION_POOL,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-            ],
-          },
-          {
-            id: 'vendors',
-            type: 'group',
-            labelKey: 'nav.groups.vendors',
-            defaultOpen: true,
-            allowedRoles: ROLE_ACCESS.ADMIN,
-            children: [
-              {
-                id: 'vendor-list',
-                type: 'item',
-                labelKey: 'nav.items.vendorList',
-                path: ROUTES.PORTAL_VENDOR_LIST,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'products-cost',
-                type: 'item',
-                labelKey: 'nav.items.productsCost',
-                path: ROUTES.PORTAL_PRODUCTS_COST,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'store-routing',
-                type: 'item',
-                labelKey: 'nav.items.storeRouting',
-                path: ROUTES.PORTAL_STORE_ROUTING,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-            ],
-          },
-          {
-            id: 'customers',
-            type: 'item',
-            labelKey: 'nav.groups.customers',
-            path: ROUTES.PORTAL_CUSTOMERS,
-            allowedRoles: [APP_ROLES.ADMIN, APP_ROLES.CS],
-          },
-        ],
-      },
-      {
-        id: 'admin',
-        type: 'section',
-        labelKey: 'nav.sections.admin',
-        allowedRoles: ROLE_ACCESS.ADMIN,
-        items: [
-          {
-            id: 'settings',
-            type: 'group',
-            labelKey: 'nav.groups.settings',
-            defaultOpen: true,
-            allowedRoles: ROLE_ACCESS.ADMIN,
-            children: [
-              {
-                id: 'users-roles',
-                type: 'item',
-                labelKey: 'nav.items.usersRoles',
-                path: ROUTES.PORTAL_USERS_ROLES,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'shops-stores',
-                type: 'item',
-                labelKey: 'nav.items.shopsStores',
-                path: ROUTES.PORTAL_SHOPS_STORES,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'system-config',
-                type: 'item',
-                labelKey: 'nav.items.systemConfig',
-                path: ROUTES.PORTAL_SYSTEM_CONFIG,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-              {
-                id: 'audit-log',
-                type: 'item',
-                labelKey: 'nav.items.auditLog',
-                path: ROUTES.PORTAL_AUDIT_LOG,
-                allowedRoles: ROLE_ACCESS.ADMIN,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-]
-
-const portalRoot = SIDEBAR_NAVIGATION_ROOT.find((item) => item.id === SIDEBAR_NAV_TABS.PORTAL)
-
-export const SIDEBAR_NAVIGATION = [
-  SIDEBAR_NAVIGATION_ROOT.find((item) => item.id === 'dashboard'),
-  ...(portalRoot?.children ?? []),
-]
-
-export const HR_NAVIGATION = []
-
-export const SIDEBAR_TAB_NAVIGATION = {
-  [SIDEBAR_NAV_TABS.PORTAL]: SIDEBAR_NAVIGATION,
-  [SIDEBAR_NAV_TABS.HR]: HR_NAVIGATION,
+export const SIDEBAR_WORKSPACE_IDS = {
+  ORDERS: 'orders',
+  PRODUCTION: 'production',
+  DESIGN: 'design',
+  VENDOR: 'vendor',
+  ADMIN: 'admin',
 }
 
-export function getSidebarTabForPath(pathname) {
-  return pathname === ROUTES.HR || pathname?.startsWith(`${ROUTES.HR}/`)
-    ? SIDEBAR_NAV_TABS.HR
-    : SIDEBAR_NAV_TABS.PORTAL
+export const SIDEBAR_WORKSPACES = [
+  { id: SIDEBAR_WORKSPACE_IDS.ORDERS, labelKey: 'nav.workspaces.orders', icon: 'orders' },
+  {
+    id: SIDEBAR_WORKSPACE_IDS.PRODUCTION,
+    labelKey: 'nav.workspaces.production',
+    icon: 'production',
+  },
+  { id: SIDEBAR_WORKSPACE_IDS.DESIGN, labelKey: 'nav.workspaces.design', icon: 'design' },
+  { id: SIDEBAR_WORKSPACE_IDS.VENDOR, labelKey: 'nav.workspaces.vendor', icon: 'vendor' },
+  { id: SIDEBAR_WORKSPACE_IDS.ADMIN, labelKey: 'nav.workspaces.admin', icon: 'admin' },
+]
+
+function withSearch(search) {
+  return { search, activeSearch: search }
+}
+
+function withoutSearch(inactiveSearchParams = []) {
+  return { activeSearch: '', inactiveSearchParams }
+}
+
+export const SIDEBAR_WORKSPACE_NAVIGATION = {
+  [SIDEBAR_WORKSPACE_IDS.ORDERS]: [
+    {
+      id: 'orders-group',
+      type: 'group',
+      labelKey: 'nav.groups.orders',
+      icon: 'orders',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'orders-amazon',
+          type: 'item',
+          labelKey: 'nav.items.amazonOrders',
+          icon: 'amazon',
+          path: ROUTES.PORTAL_ORDER_LIST,
+          ...withSearch('?channel=amazon'),
+          allowedRoles: ROLE_ACCESS.SALES,
+          requiredPermissions: ['ORDERS:READ'],
+        },
+        {
+          id: 'orders-etsy',
+          type: 'item',
+          labelKey: 'nav.items.etsyOrders',
+          icon: 'etsy',
+          path: ROUTES.PORTAL_ORDER_LIST,
+          ...withSearch('?channel=etsy'),
+          allowedRoles: ROLE_ACCESS.SALES,
+          requiredPermissions: ['ORDERS:READ'],
+        },
+      ],
+    },
+    {
+      id: 'listings',
+      type: 'item',
+      labelKey: 'nav.items.listings',
+      icon: 'listings',
+      path: ROUTES.PORTAL_LISTINGS,
+      ...withoutSearch(['view']),
+      allowedRoles: ROLE_ACCESS.SALES,
+      requiredPermissions: ['CATALOG:READ'],
+    },
+    {
+      id: 'cost-centers-group',
+      type: 'group',
+      labelKey: 'nav.groups.costCenters',
+      icon: 'costCenters',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'cost-center-config',
+          type: 'item',
+          labelKey: 'nav.items.costCenterConfig',
+          icon: 'config',
+          path: ROUTES.PORTAL_CATALOG_SETUP,
+          allowedRoles: ROLE_ACCESS.SALES,
+          requiredPermissions: ['CATALOG:READ'],
+        },
+        {
+          id: 'product-types',
+          type: 'item',
+          labelKey: 'nav.items.productTypes',
+          icon: 'productTypes',
+          path: ROUTES.PORTAL_LISTINGS,
+          ...withSearch('?view=product-types'),
+          allowedRoles: ROLE_ACCESS.SALES,
+          requiredPermissions: ['CATALOG:READ'],
+        },
+        {
+          id: 'internal-templates',
+          type: 'item',
+          labelKey: 'nav.items.internalTemplates',
+          icon: 'templates',
+          path: ROUTES.PORTAL_LISTINGS,
+          ...withSearch('?view=internal-templates'),
+          allowedRoles: ROLE_ACCESS.SALES,
+          requiredPermissions: ['CATALOG:READ'],
+        },
+      ],
+    },
+    {
+      id: 'reports-group',
+      type: 'group',
+      labelKey: 'nav.groups.reports',
+      icon: 'reports',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'amazon-reports-group',
+          type: 'group',
+          labelKey: 'nav.groups.amazon',
+          icon: 'amazon',
+          defaultOpen: true,
+          children: [
+            {
+              id: 'amazon-orders-cost-report',
+              type: 'item',
+              labelKey: 'nav.items.ordersCost',
+              icon: 'costs',
+              path: ROUTES.PORTAL_FINANCE_SUMMARY,
+              ...withSearch('?channel=amazon&report=orders-cost'),
+              allowedRoles: ROLE_ACCESS.ADMIN,
+              requiredPermissions: ['FINANCE:READ'],
+            },
+            {
+              id: 'amazon-ads-report',
+              type: 'item',
+              labelKey: 'nav.items.adsReport',
+              icon: 'ads',
+              path: ROUTES.PORTAL_REPORTS,
+              ...withSearch('?channel=amazon&report=ads'),
+              allowedRoles: ROLE_ACCESS.ADMIN,
+              requiredPermissions: ['REPORTS:READ'],
+            },
+            {
+              id: 'amazon-sale-report',
+              type: 'item',
+              labelKey: 'nav.items.saleReport',
+              icon: 'reports',
+              path: ROUTES.PORTAL_REPORTS,
+              ...withSearch('?channel=amazon&report=sales'),
+              allowedRoles: ROLE_ACCESS.ADMIN,
+              requiredPermissions: ['REPORTS:READ'],
+            },
+          ],
+        },
+        {
+          id: 'etsy-reports-group',
+          type: 'group',
+          labelKey: 'nav.groups.etsy',
+          icon: 'etsy',
+          defaultOpen: true,
+          children: [
+            {
+              id: 'etsy-orders-cost-report',
+              type: 'item',
+              labelKey: 'nav.items.ordersCost',
+              icon: 'costs',
+              path: ROUTES.PORTAL_FINANCE_SUMMARY,
+              ...withSearch('?channel=etsy&report=orders-cost'),
+              allowedRoles: ROLE_ACCESS.ADMIN,
+              requiredPermissions: ['FINANCE:READ'],
+            },
+            {
+              id: 'etsy-ads-report',
+              type: 'item',
+              labelKey: 'nav.items.adsReport',
+              icon: 'ads',
+              path: ROUTES.PORTAL_REPORTS,
+              ...withSearch('?channel=etsy&report=ads'),
+              allowedRoles: ROLE_ACCESS.ADMIN,
+              requiredPermissions: ['REPORTS:READ'],
+            },
+            {
+              id: 'etsy-sale-report',
+              type: 'item',
+              labelKey: 'nav.items.saleReport',
+              icon: 'reports',
+              path: ROUTES.PORTAL_REPORTS,
+              ...withSearch('?channel=etsy&report=sales'),
+              allowedRoles: ROLE_ACCESS.ADMIN,
+              requiredPermissions: ['REPORTS:READ'],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'configuration-group',
+      type: 'group',
+      labelKey: 'nav.groups.configuration',
+      icon: 'configuration',
+      defaultOpen: false,
+      children: [
+        {
+          id: 'shops-stores',
+          type: 'item',
+          labelKey: 'nav.items.manageStores',
+          icon: 'shops',
+          path: ROUTES.PORTAL_SHOPS_STORES,
+          allowedRoles: ROLE_ACCESS.ADMIN,
+          requiredPermissions: ['SHOPS:READ'],
+        },
+        {
+          id: 'mapping-workbench',
+          type: 'item',
+          labelKey: 'nav.items.skuMapping',
+          icon: 'mapping',
+          path: ROUTES.PORTAL_MAPPING_WORKBENCH,
+          allowedRoles: ROLE_ACCESS.SALES,
+          requiredPermissions: ['MAPPING:READ'],
+        },
+        {
+          id: 'users-roles',
+          type: 'item',
+          labelKey: 'nav.items.account',
+          icon: 'users',
+          path: ROUTES.PORTAL_USERS_ROLES,
+          allowedRoles: ROLE_ACCESS.ADMIN,
+          requiredPermissions: ['AUTH:READ'],
+        },
+      ],
+    },
+  ],
+  [SIDEBAR_WORKSPACE_IDS.PRODUCTION]: [
+    {
+      id: 'scale-group',
+      type: 'group',
+      labelKey: 'nav.groups.scale',
+      icon: 'scale',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'scale',
+          type: 'item',
+          labelKey: 'nav.items.scale',
+          icon: 'scale',
+          path: ROUTES.PORTAL_SCALE,
+          ...withoutSearch(['channel']),
+          allowedRoles: ROLE_ACCESS.FULFILLMENT,
+          requiredPermissions: ['PRODUCTION:READ'],
+        },
+        {
+          id: 'scale-amazon',
+          type: 'item',
+          labelKey: 'nav.items.amazonScale',
+          icon: 'amazon',
+          path: ROUTES.PORTAL_SCALE,
+          ...withSearch('?channel=amazon'),
+          allowedRoles: ROLE_ACCESS.FULFILLMENT,
+          requiredPermissions: ['PRODUCTION:READ'],
+        },
+        {
+          id: 'scale-etsy',
+          type: 'item',
+          labelKey: 'nav.items.etsyScale',
+          icon: 'etsy',
+          path: ROUTES.PORTAL_SCALE,
+          ...withSearch('?channel=etsy'),
+          allowedRoles: ROLE_ACCESS.FULFILLMENT,
+          requiredPermissions: ['PRODUCTION:READ'],
+        },
+      ],
+    },
+    {
+      id: 'qc-group',
+      type: 'group',
+      labelKey: 'nav.groups.qc',
+      icon: 'qc',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'qc',
+          type: 'item',
+          labelKey: 'nav.items.qc',
+          icon: 'qc',
+          path: ROUTES.PORTAL_QC,
+          ...withoutSearch(['channel']),
+          allowedRoles: ROLE_ACCESS.QC,
+          requiredPermissions: ['PRODUCTION:READ', 'DESIGN:REVIEW'],
+        },
+        {
+          id: 'qc-amazon',
+          type: 'item',
+          labelKey: 'nav.items.amazonQc',
+          icon: 'amazon',
+          path: ROUTES.PORTAL_QC,
+          ...withSearch('?channel=amazon'),
+          allowedRoles: ROLE_ACCESS.QC,
+          requiredPermissions: ['PRODUCTION:READ', 'DESIGN:REVIEW'],
+        },
+        {
+          id: 'qc-etsy',
+          type: 'item',
+          labelKey: 'nav.items.etsyQc',
+          icon: 'etsy',
+          path: ROUTES.PORTAL_QC,
+          ...withSearch('?channel=etsy'),
+          allowedRoles: ROLE_ACCESS.QC,
+          requiredPermissions: ['PRODUCTION:READ', 'DESIGN:REVIEW'],
+        },
+      ],
+    },
+  ],
+  [SIDEBAR_WORKSPACE_IDS.DESIGN]: [
+    {
+      id: 'design-group',
+      type: 'group',
+      labelKey: 'nav.groups.design',
+      icon: 'design',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'design-task-list',
+          type: 'item',
+          labelKey: 'nav.items.psdTasks',
+          icon: 'design',
+          path: ROUTES.PORTAL_DESIGN_TASKS,
+          allowedRoles: ROLE_ACCESS.DESIGN,
+          requiredPermissions: [
+            'DESIGN:READ',
+            'DESIGN:WRITE',
+            'DESIGN:WORK',
+            'DESIGN:REVIEW',
+            'DESIGN_TASKS:READ',
+          ],
+        },
+      ],
+    },
+  ],
+  [SIDEBAR_WORKSPACE_IDS.VENDOR]: [
+    {
+      id: 'vendor-group',
+      type: 'group',
+      labelKey: 'nav.groups.vendors',
+      icon: 'vendors',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'vendor-list',
+          type: 'item',
+          labelKey: 'nav.items.vendorList',
+          icon: 'vendors',
+          path: ROUTES.PORTAL_VENDOR_LIST,
+          allowedRoles: ROLE_ACCESS.ADMIN,
+          requiredPermissions: ['VENDORS:READ'],
+        },
+        {
+          id: 'products-cost',
+          type: 'item',
+          labelKey: 'nav.items.productsCost',
+          icon: 'products',
+          path: ROUTES.PORTAL_PRODUCTS_COST,
+          allowedRoles: ROLE_ACCESS.ADMIN,
+          requiredPermissions: ['VENDORS:READ'],
+        },
+      ],
+    },
+    {
+      id: 'vendor-fulfillment-group',
+      type: 'group',
+      labelKey: 'nav.groups.fulfillment',
+      icon: 'fulfillment',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'vendor-submissions',
+          type: 'item',
+          labelKey: 'nav.items.vendorSubmissions',
+          icon: 'submissions',
+          path: ROUTES.PORTAL_VENDOR_SUBMISSIONS,
+          allowedRoles: ROLE_ACCESS.FULFILLMENT,
+          requiredPermissions: ['VENDOR_SUBMISSIONS:READ'],
+        },
+        {
+          id: 'shipping',
+          type: 'item',
+          labelKey: 'nav.items.shipping',
+          icon: 'shipping',
+          path: ROUTES.PORTAL_SHIPPING,
+          allowedRoles: ROLE_ACCESS.FULFILLMENT,
+          requiredPermissions: ['SHIPMENTS:READ'],
+        },
+      ],
+    },
+  ],
+  [SIDEBAR_WORKSPACE_IDS.ADMIN]: [
+    {
+      id: 'monitoring-group',
+      type: 'group',
+      labelKey: 'nav.groups.monitoring',
+      icon: 'monitoring',
+      defaultOpen: true,
+      children: [
+        {
+          id: 'api-coverage',
+          type: 'item',
+          labelKey: 'nav.items.apiCoverage',
+          icon: 'api',
+          path: ROUTES.PORTAL_API_COVERAGE,
+          allowedRoles: ROLE_ACCESS.ADMIN,
+          requiredPermissions: ['MANAGE_SYSTEM'],
+        },
+        {
+          id: 'audit-log',
+          type: 'item',
+          labelKey: 'nav.items.auditLog',
+          icon: 'audit',
+          path: ROUTES.PORTAL_AUDIT_LOG,
+          allowedRoles: ROLE_ACCESS.ADMIN,
+          requiredPermissions: ['AUDIT:READ'],
+        },
+      ],
+    },
+  ],
+}
+
+export const SIDEBAR_NAVIGATION = Object.values(SIDEBAR_WORKSPACE_NAVIGATION).flat()
+export const HR_NAVIGATION = []
+
+export function getNavItemTo(item) {
+  return item.search ? { pathname: item.path, search: item.search } : item.path
+}
+
+export function isNavItemActive(item, location) {
+  if (!item.path) {
+    return false
+  }
+
+  const currentPath = location.pathname
+  const pathActive =
+    item.path === '/'
+      ? currentPath === item.path
+      : currentPath === item.path || currentPath.startsWith(`${item.path}/`)
+
+  if (!pathActive) {
+    return false
+  }
+
+  if (!Object.hasOwn(item, 'activeSearch')) {
+    return true
+  }
+
+  if (item.activeSearch === '') {
+    const inactiveSearchParams = item.inactiveSearchParams || []
+    const currentParams = new URLSearchParams(location.search)
+
+    return !inactiveSearchParams.some((key) => currentParams.has(key))
+  }
+
+  const expectedParams = new URLSearchParams(item.activeSearch)
+  const currentParams = new URLSearchParams(location.search)
+
+  return Array.from(expectedParams).every(([key, value]) => currentParams.get(key) === value)
+}
+
+function hasActivePath(item, location) {
+  if (isNavItemActive(item, location)) {
+    return true
+  }
+
+  const nestedItems = item.items ?? item.children
+
+  return nestedItems ? nestedItems.some((nestedItem) => hasActivePath(nestedItem, location)) : false
+}
+
+export function getSidebarWorkspaceForLocation(pathname, search = '') {
+  const location = { pathname, search }
+  const match = SIDEBAR_WORKSPACES.find((workspace) =>
+    (SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? []).some((item) =>
+      hasActivePath(item, location),
+    ),
+  )
+
+  return match?.id ?? SIDEBAR_WORKSPACE_IDS.ORDERS
 }
 
 export function normalizeRole(role) {
@@ -390,12 +596,64 @@ function cloneNavigationItem(item) {
   return { ...item }
 }
 
-export function filterNavigationByRole(navigation, role) {
-  if (!SIDEBAR_ROLE_FILTERING_ENABLED) {
-    return navigation.map(cloneNavigationItem)
+function filterMountedItem(item) {
+  if (item.path && !MOUNTED_ROUTE_PATHS.has(item.path)) {
+    return null
   }
 
-  const normalizedRole = normalizeRole(role)
+  if (item.type === 'section') {
+    const items = item.items.map(filterMountedItem).filter(Boolean)
 
-  return navigation.map((item) => filterItem(item, normalizedRole)).filter(Boolean)
+    return items.length > 0 ? { ...item, items } : null
+  }
+
+  if (item.children) {
+    const children = item.children.map(filterMountedItem).filter(Boolean)
+
+    return children.length > 0 || item.path ? { ...item, children } : null
+  }
+
+  return { ...item }
+}
+
+function canAccessByPermission(item, user) {
+  return !item.requiredPermissions || hasAnyPermission(user, item.requiredPermissions)
+}
+
+function filterItemByUser(item, user) {
+  const mountedItem = filterMountedItem(item)
+  if (!mountedItem || !canAccessByPermission(mountedItem, user)) {
+    return null
+  }
+
+  if (mountedItem.type === 'section') {
+    const items = mountedItem.items.map((child) => filterItemByUser(child, user)).filter(Boolean)
+
+    return items.length > 0 ? { ...mountedItem, items } : null
+  }
+
+  if (mountedItem.children) {
+    const children = mountedItem.children
+      .map((child) => filterItemByUser(child, user))
+      .filter(Boolean)
+
+    return children.length > 0 || mountedItem.path ? { ...mountedItem, children } : null
+  }
+
+  return { ...mountedItem }
+}
+
+export function filterNavigationByUser(navigation, user) {
+  return navigation.map((item) => filterItemByUser(item, user)).filter(Boolean)
+}
+
+export function filterNavigationByRole(navigation, role) {
+  const normalizedRole = normalizeRole(role)
+  const mountedNavigation = navigation.map(filterMountedItem).filter(Boolean)
+
+  if (!SIDEBAR_ROLE_FILTERING_ENABLED) {
+    return mountedNavigation.map(cloneNavigationItem)
+  }
+
+  return mountedNavigation.map((item) => filterItem(item, normalizedRole)).filter(Boolean)
 }

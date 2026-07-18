@@ -15,7 +15,15 @@
   },
   "common": {
     "close": "Close",
-    "delete": "Delete"
+    "delete": "Delete",
+    "all": "All",
+    "cancel": "Cancel",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "view": "View",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "save": "Save"
   },
   "nav": {
     "home": "Home",
@@ -25,9 +33,12 @@
     "hr": "HR",
     "sidebarTabs": "Sidebar navigation tabs",
     "sections": {
+      "work": "Work",
+      "setup": "Setup",
       "sales": "Sales",
       "operations": "Operations",
       "business": "Business",
+      "advanced": "Advanced",
       "admin": "Admin"
     },
     "groups": {
@@ -37,20 +48,34 @@
       "finance": "Finance",
       "vendors": "Vendors",
       "customers": "Customers",
-      "settings": "Settings"
+      "settings": "Settings",
+      "scale": "Scale",
+      "qc": "QC",
+      "costCenters": "Cost Centers",
+      "monitoring": "Monitoring",
+      "configuration": "Configuration",
+      "reports": "Reports",
+      "amazon": "Amazon",
+      "etsy": "Etsy"
     },
     "items": {
       "orderList": "Order List",
+      "orderWorkbench": "Order Workbench",
       "orderDetail": "Order Detail",
+      "catalogSetup": "Catalog Setup",
       "listings": "Listings",
+      "mappingWorkbench": "Mapping Workbench",
       "tracking": "Tracking",
+      "productionBoard": "Production Board",
       "scale": "Scale",
       "qc": "QC",
       "shipping": "Shipping",
+      "vendorSubmissions": "Vendor Submissions",
       "cs": "CS",
       "taskList": "Task List",
       "templateCenter": "Template Center",
       "summary": "Summary",
+      "reports": "Reports",
       "balance": "Balance",
       "payout": "Payout",
       "compensationPool": "Compensation Pool",
@@ -60,7 +85,37 @@
       "usersRoles": "Users & Roles",
       "shopsStores": "Shop & Stores",
       "systemConfig": "System Config",
-      "auditLog": "Audit Log"
+      "apiCoverage": "API Coverage",
+      "auditLog": "Audit Log",
+      "manageStores": "Manage stores",
+      "skuMapping": "SKU Mapping",
+      "account": "Account",
+      "allOrders": "All Orders",
+      "amazonOrders": "Amazon Orders",
+      "etsyOrders": "Etsy Orders",
+      "amazonScale": "Amazon Scale",
+      "etsyScale": "Etsy Scale",
+      "amazonQc": "Amazon QC",
+      "etsyQc": "Etsy QC",
+      "psdTasks": "PSD Tasks",
+      "costCenterConfig": "Config",
+      "productTypes": "Product Types",
+      "internalTemplates": "Internal Templates",
+      "ordersCost": "Orders Cost",
+      "saleReport": "Sale Report",
+      "etsySaleReport": "Etsy Sale Report",
+      "etsyOrdersCost": "Etsy Orders Cost",
+      "adsReport": "Ads Report",
+      "adsEtsy": "ADS Etsy"
+    },
+    "workspacesLabel": "Department workspaces",
+    "workspaces": {
+      "orders": "Orders",
+      "production": "Production",
+      "design": "Design",
+      "vendor": "Vendor",
+      "reports": "Reports",
+      "admin": "Admin"
     }
   },
   "listings": {
@@ -281,6 +336,19 @@
       "confirmPasswordRequired": "Please confirm your password",
       "passwordMismatch": "Password confirmation does not match",
       "generic": "Could not complete the request, please try again."
+    },
+    "userFallback": "Current user",
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Password recovery is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password recovery APIs yet, so this screen is temporarily read-only.",
+      "backLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Password reset is not available yet. Please contact your administrator for support.",
+      "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
+      "backLogin": "Back to login"
     }
   },
   "rbac": {
@@ -312,7 +380,9 @@
       },
       "status": {
         "active": "Active",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "all": "All statuses",
+        "archived": "Archived"
       },
       "filter": {
         "allStatus": "All statuses",
@@ -606,12 +676,29 @@
   },
   "home": {
     "title": "Home",
-    "welcome": "Welcome to LNG Web FE",
-    "description": "This is a demo page showcasing the conventions in CONVENTIONS.md: MUI + Tailwind layout, TanStack Query, Zustand, react-i18next, react-hook-form + zod and notistack.",
+    "welcome": "POD operations dashboard",
+    "description": "Track orders, active queues, and exceptions that need attention today.",
     "summary": {
       "users": "Users",
       "orders": "Orders",
       "revenue": "Revenue"
+    },
+    "queues": {
+      "title": "Operations queues",
+      "orders": "Orders to process",
+      "scale": "Waiting for scale",
+      "qc": "Waiting for QC"
+    },
+    "queueStatus": {
+      "active": "Within SLA",
+      "warning": "Needs attention"
+    },
+    "exceptions": {
+      "title": "Exceptions to resolve",
+      "missingPsd": "Missing PSD",
+      "shippingHold": "Shipping hold",
+      "qcRejected": "QC rejected",
+      "vendorReady": "Vendor handoff ready"
     }
   },
   "profile": {
@@ -798,11 +885,21 @@
     "empty": "No matching orders",
     "loading": "Loading orders...",
     "loadingDetails": "Loading order details...",
+    "addressStatus": {
+      "valid": "Address verified",
+      "invalid": "Address invalid",
+      "warning": "Address needs review",
+      "notChecked": "Address not checked"
+    },
     "tabs": {
       "all": "All",
       "new": "New Orders",
       "missingCostCenter": "Missing Cost Center",
       "missingPsd": "Missing PSD",
+      "addressIssue": "Address Issues",
+      "atVendor": "At vendor",
+      "trackingPending": "Tracking pending",
+      "readyForProduction": "Ready for production",
       "awaitingPayment": "Awaiting Payment",
       "processing": "Processing",
       "shipped": "Shipped",
@@ -827,6 +924,7 @@
       "basecost": "Basecost",
       "store": "Store",
       "handling": "Handling",
+      "actions": "Actions",
       "case": "Case"
     },
     "detail": {
@@ -866,6 +964,7 @@
       "fulfillName": "Fulfill Name:",
       "status": "Status",
       "tracking": "Tracking",
+      "carrier": "Carrier",
       "note": "Note"
     },
     "pagination": {
@@ -926,6 +1025,36 @@
         "phoneNumber": "Phone Number"
       }
     },
+    "updateShipping": {
+      "title": "Update Shipping Type",
+      "success": "Shipping type updated.",
+      "fields": {
+        "level": "Shipping Type"
+      },
+      "placeholders": {
+        "level": "Standard"
+      }
+    },
+    "manualVendorMatch": {
+      "searchPlaceholder": "Search vendor, product, SKU...",
+      "searchHint": "Type vendor name, product name, or SKU code",
+      "noProducts": "No matching vendor products for this product type",
+      "noProductType": "Listing is missing product type",
+      "missingProductTypeHelp": "Cannot search vendor products because this listing is missing product type. Set product type in Listing or Mapping first.",
+      "vendorProduct": "Vendor Product:",
+      "selectVendorProduct": "Select Vendor Product",
+      "selectSize": "Select Size",
+      "selectColor": "Select Color",
+      "noSize": "No sizes available",
+      "noColor": "No colors available",
+      "variantDetails": "Variant Details:",
+      "sku": "SKU: {{value}}",
+      "baseCost": "Base Cost: {{value}}",
+      "standardSize": "Standard Size: {{value}}",
+      "standardColor": "Standard Color: {{value}}",
+      "apply": "Apply",
+      "success": "Vendor match applied."
+    },
     "values": {
       "channels": {
         "all": "All — Amazon + Etsy",
@@ -950,6 +1079,7 @@
         "onHold": "On hold",
         "mappingPending": "Mapping pending",
         "customizationPending": "Customization pending",
+        "waitingCustomization": "Waiting customization",
         "customizationParsed": "Customization parsed",
         "fulfillmentPlanning": "Fulfillment planning",
         "fulfillmentReady": "Fulfillment ready",
@@ -960,7 +1090,14 @@
         "sentToVendor": "Sent to vendor",
         "trackingPending": "Tracking pending",
         "pending": "Pending",
-        "needScale": "Need Scale"
+        "needScale": "Need Scale",
+        "present": "Present",
+        "missing": "Missing",
+        "missingPsd": "Missing PSD",
+        "needAddress": "Address needs review",
+        "needTemplate": "Template missing",
+        "needCustomerImage": "Customer image required",
+        "needsAttention": "Needs attention"
       },
       "shipping": {
         "standard": "Standard",
@@ -1384,6 +1521,7 @@
       "copyOrderId": "Copy Order ID {{orderId}}",
       "download": "Download",
       "uploadMockup": "Upload mockup",
+      "recheck": "Recheck",
       "deleteMockup": "Delete mockup"
     },
     "pagination": {
@@ -1484,6 +1622,7 @@
     },
     "loading": {
       "refreshing": "Refreshing data...",
+      "rechecking": "Rechecking...",
       "uploading": "Uploading..."
     },
     "messages": {
@@ -1491,6 +1630,9 @@
       "assignError": "Could not update scale assignee.",
       "copySuccess": "Fulfill name copied.",
       "noteSuccess": "CS note saved.",
+      "recheckSuccess": "Production task rechecked.",
+      "recheckStillBlocked": "Task still needs attention",
+      "recheckUnavailable": "Order item is missing, cannot recheck this task.",
       "uploadSuccess": "Mockup uploaded.",
       "uploadError": "Could not upload scale file.",
       "missingFileCheck": "This task does not have a file check to upload.",
@@ -1524,39 +1666,6 @@
       "invalidLoginResponse": "The login response is invalid.",
       "missingAccessToken": "The refresh response is missing an access token.",
       "missingRefreshToken": "Your session has expired. Please log in again."
-    }
-  },
-  "auth": {
-    "userFallback": "Current user",
-    "tagline": "Comprehensive POD operations management",
-    "footer": "v2.0.0 · LNG System",
-    "login": {
-      "title": "Login",
-      "email": "Email",
-      "emailPlaceholder": "you@lng.co",
-      "password": "Password",
-      "showPassword": "Show password",
-      "hidePassword": "Hide password",
-      "forgotPassword": "Forgot password?",
-      "submit": "Login",
-      "success": "Login successful!",
-      "errors": {
-        "emailRequired": "Please enter your email",
-        "emailInvalid": "Invalid email address",
-        "passwordRequired": "Please enter your password"
-      }
-    },
-    "forgotPassword": {
-      "title": "Forgot password",
-      "description": "Password recovery is not available yet. Please contact your administrator for support.",
-      "unavailable": "The backend does not expose password recovery APIs yet, so this screen is temporarily read-only.",
-      "backLogin": "Back to login"
-    },
-    "resetPassword": {
-      "title": "Reset password",
-      "description": "Password reset is not available yet. Please contact your administrator for support.",
-      "unavailable": "The backend does not expose password reset APIs yet, so this screen is temporarily read-only.",
-      "backLogin": "Back to login"
     }
   },
   "vendors": {
@@ -1795,6 +1904,595 @@
         "top": "Top",
         "bottom": "Bottom"
       }
+    }
+  },
+  "apiWorkflows": {
+    "searchPlaceholder": "Search records",
+    "rowsCount": "{{count}} rows",
+    "empty": "No records returned from this endpoint.",
+    "actions": {
+      "close": "Close",
+      "run": "Run",
+      "open": "Open",
+      "refresh": "Refresh"
+    },
+    "detail": {
+      "title": "Detail"
+    },
+    "fields": {
+      "jsonBody": "JSON body"
+    },
+    "table": {
+      "item": "Item",
+      "status": "Status",
+      "owner": "Owner",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "errors": {
+      "missingParam": "Missing path parameter: {{param}}",
+      "unknownWorkflow": "Unknown API workflow: {{workflowId}}"
+    }
+  },
+  "podWorkbench": {
+    "apiContracts": {
+      "title": "API contract",
+      "description": "Endpoints used by the current screen, kept close to the backend contract."
+    },
+    "source": {
+      "apiRows": "API: {{count}} rows",
+      "apiError": "API error: sample rows",
+      "noRows": "No API rows: sample rows"
+    },
+    "searchPlaceholder": "Search {{module}}...",
+    "refreshAria": "Refresh module data",
+    "alerts": {
+      "apiError": "BE endpoint {{endpoint}} has not returned data yet. The UI is showing sample rows so the layout remains testable.",
+      "emptyRows": "BE endpoint {{endpoint}} returned successfully but has no rows in the current response. The UI is showing sample rows."
+    },
+    "detail": {
+      "selectRow": "Select a row",
+      "payloadPlaceholder": "Ready to wire payload form"
+    }
+  },
+  "shops": {
+    "title": "Shops",
+    "subtitle": "Internal business shops only. Marketplace credentials do not live here.",
+    "table": {
+      "id": "Shop ID",
+      "name": "Name",
+      "currency": "Currency",
+      "status": "Status",
+      "updatedAt": "Updated",
+      "actions": "Actions"
+    },
+    "dialog": {
+      "createTitle": "Create shop"
+    },
+    "actions": {
+      "create": "Create shop",
+      "activate": "Activate",
+      "deactivate": "Deactivate"
+    },
+    "filters": {
+      "id": "Shop ID",
+      "search": "Shop name",
+      "allStatus": "All status"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "suspended": "Suspended"
+    },
+    "messages": {
+      "created": "Shop created",
+      "createFailed": "Create failed",
+      "statusUpdated": "Shop status updated",
+      "updateFailed": "Update failed"
+    },
+    "empty": "No shops"
+  },
+  "shipments": {
+    "title": "Shipping",
+    "subtitle": "Shipment tracking, vendor tracking rechecks, and webhook logs.",
+    "tabs": {
+      "shipments": "Shipments",
+      "webhooks": "Webhook Logs"
+    },
+    "table": {
+      "id": "Shipment ID",
+      "orderId": "Order ID",
+      "status": "Status",
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking",
+      "vendorOrderId": "Vendor Order ID",
+      "updatedAt": "Updated",
+      "actions": "Actions",
+      "provider": "Provider",
+      "outcome": "Outcome",
+      "message": "Message",
+      "createdAt": "Created"
+    },
+    "filters": {
+      "id": "Shipment ID",
+      "orderId": "Order ID",
+      "vendorOrderId": "Vendor order ID",
+      "trackingNumber": "Tracking number"
+    },
+    "actions": {
+      "recheckSubmitted": "Recheck submitted",
+      "recheckTracking": "Recheck tracking",
+      "updateTracking": "Update tracking",
+      "markDelivered": "Mark delivered",
+      "markException": "Mark exception"
+    },
+    "messages": {
+      "actionFailed": "Action failed",
+      "trackingUpdated": "Tracking updated",
+      "trackingRechecked": "Tracking rechecked",
+      "markedDelivered": "Marked delivered",
+      "markedException": "Marked exception",
+      "submittedRechecked": "Submitted vendor tracking rechecked"
+    },
+    "prompts": {
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking number"
+    },
+    "detail": {
+      "title": "Shipment",
+      "rawRecord": "Raw record"
+    },
+    "empty": {
+      "shipments": "No shipments",
+      "webhooks": "No webhook logs"
+    }
+  },
+  "vendorSubmissions": {
+    "title": "Vendor Submissions",
+    "subtitle": "Production-ready payloads, vendor submit state, and shipment handoff.",
+    "table": {
+      "id": "Submission ID",
+      "orderId": "Order ID",
+      "status": "Status",
+      "vendor": "Vendor",
+      "costCenter": "Cost Center",
+      "provider": "Provider",
+      "vendorOrderId": "Vendor Order ID",
+      "updatedAt": "Updated",
+      "actions": "Actions"
+    },
+    "filters": {
+      "id": "Submission ID",
+      "orderId": "Order ID",
+      "vendorOrderId": "Vendor order ID"
+    },
+    "actions": {
+      "recheckReady": "Recheck ready",
+      "submitToVendor": "Submit to vendor",
+      "markSubmitted": "Mark submitted",
+      "markFailed": "Mark failed",
+      "createShipment": "Create shipment"
+    },
+    "messages": {
+      "actionFailed": "Action failed",
+      "submittedToVendor": "Submitted to vendor",
+      "markedSubmitted": "Marked submitted",
+      "cancelled": "Cancelled",
+      "retried": "Retried",
+      "markedFailed": "Marked failed",
+      "shipmentCreated": "Shipment created",
+      "readyRechecked": "Ready tasks rechecked"
+    },
+    "prompts": {
+      "cancelReason": "Cancel reason",
+      "failureReason": "Failure reason"
+    },
+    "detail": {
+      "title": "Vendor submission",
+      "vendorOrder": "Vendor order",
+      "payloadPreview": "Payload preview",
+      "submittedResponse": "Submitted response",
+      "statusHistory": "Status history",
+      "noHistory": "No history"
+    },
+    "empty": "No vendor submissions"
+  },
+  "apiCoverage": {
+    "empty": "No endpoint matches the current filters.",
+    "requestFailed": "Request failed.",
+    "response": "Response",
+    "running": "Running...",
+    "runEndpoint": "Run endpoint",
+    "missingPathParam": "Missing path param: {{param}}",
+    "fields": {
+      "module": "Module",
+      "searchEndpoint": "Search endpoint",
+      "queryJson": "Query JSON",
+      "bodyJson": "Body JSON"
+    },
+    "presets": {
+      "all": {
+        "title": "Backend API Console",
+        "description": "All backend non-health endpoints available through the shared API client."
+      },
+      "audit": {
+        "title": "Audit API",
+        "description": "Read-only audit module surface. Backend currently exposes health only."
+      },
+      "reports": {
+        "title": "Reports API",
+        "description": "Operational reports from finance, vendor, and operations backend endpoints."
+      },
+      "shipments": {
+        "title": "Shipping & Vendor Submissions API",
+        "description": "Shipment queue, vendor webhook logs, tracking updates, and vendor submission actions."
+      }
+    }
+  },
+  "mapping": {
+    "title": "Mapping Workbench",
+    "subtitle": "Resolve blocked order items and maintain mapping rules without editing raw API payloads.",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "a11y": {
+      "ruleActive": "Rule is active"
+    },
+    "validation": {
+      "required": "{{field}} is required."
+    },
+    "ruleTypes": {
+      "resolve": "Resolve Queue",
+      "skuNormalize": "SKU Normalize",
+      "skuConfig": "SKU Config",
+      "semanticRules": "Semantic Rules",
+      "valueAliases": "Value Aliases",
+      "vendorRouting": "Vendor Routing"
+    },
+    "guides": {
+      "resolve": {
+        "description": "Use this queue for blocked order items. Preview the mapping result, then auto resolve or select a vendor cost center.",
+        "primaryAction": "Preview or resolve the selected order item."
+      },
+      "skuNormalize": {
+        "description": "Use this when raw marketplace SKUs need cleanup before the system reads the config code.",
+        "primaryAction": "Create a rule that removes or replaces a SKU segment."
+      },
+      "skuConfig": {
+        "description": "Use this to connect a SKU config code to the internal product type and production template.",
+        "primaryAction": "Map config code plus marketplace product type to internal catalog data."
+      },
+      "semanticRules": {
+        "description": "Use this when customer option labels need to be understood as Size, Color, Product Type, or another role.",
+        "primaryAction": "Teach the system what a customer-facing option label means."
+      },
+      "valueAliases": {
+        "description": "Use this when customer option values need standard wording, for example XXL becomes 2XL.",
+        "primaryAction": "Normalize customer values before vendor matching."
+      },
+      "vendorRouting": {
+        "description": "Use this to prefer a vendor for a product type, shop, channel, or marketplace when multiple vendors match.",
+        "primaryAction": "Set vendor priority for a mapping scope."
+      }
+    },
+    "batchRecheck": {
+      "title": "Batch recheck unmatched"
+    },
+    "actions": {
+      "recheck": "Recheck",
+      "previewMapping": "Preview mapping",
+      "autoResolve": "Auto resolve",
+      "recheckMapping": "Recheck mapping",
+      "selectCandidate": "Select candidate",
+      "confirmCandidate": "Confirm candidate",
+      "refreshQueue": "Refresh queue",
+      "refreshRules": "Refresh rules",
+      "createRule": "Create rule",
+      "editRule": "Edit rule",
+      "turnRuleOff": "Turn rule off",
+      "turnRuleOn": "Turn rule on"
+    },
+    "filters": {
+      "searchResolve": "Search order item, SKU, config",
+      "planStatus": "Plan status",
+      "allPlans": "All plans",
+      "searchRules": "Search rules",
+      "ruleStatus": "Rule status",
+      "allRules": "All rules"
+    },
+    "resolve": {
+      "title": "Resolve queue",
+      "subtitle": "Read blocked order item fields, preview mapping, then resolve or select a candidate.",
+      "orderLabel": "Order {{order}}",
+      "originalSku": "Original SKU",
+      "canonicalSku": "Canonical SKU",
+      "configCode": "Config code",
+      "plan": "Plan",
+      "blockingReasons": "Blocking reasons",
+      "recommendedFixes": "Recommended fixes",
+      "normalizedInputs": "Normalized inputs",
+      "costCenterCandidates": "Cost center candidates",
+      "noCandidates": "No cost center candidates returned.",
+      "selectOrderItem": "Select an order item to inspect mapping fields and actions.",
+      "empty": "No unmatched mapping samples match the current filters.",
+      "table": {
+        "orderItem": "Order item",
+        "config": "Config",
+        "blocking": "Blocking",
+        "fix": "Fix",
+        "plan": "Plan"
+      }
+    },
+    "rules": {
+      "subtitle": "Manage mapping rules with readable fields. Rule ids stay internal.",
+      "empty": "No rules match the current filters.",
+      "table": {
+        "rule": "Rule",
+        "match": "Match",
+        "output": "Output",
+        "scope": "Scope",
+        "priority": "Priority",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "ruleDialog": {
+      "editTitle": "Edit {{rule}}",
+      "createTitle": "Create {{rule}}",
+      "howToFill": "How to fill",
+      "advanced": "Advanced",
+      "advancedDescription": "Defaults are enough for most rules. Change these only when the rule needs a narrower scope.",
+      "current": "Current",
+      "afterSave": "After save"
+    },
+    "options": {
+      "selectOption": "Select an option",
+      "allNotSet": "All / not set",
+      "AMAZON_US": "Amazon US",
+      "ETSY": "Etsy",
+      "AMAZON": "Amazon",
+      "EXACT": "Exact match",
+      "CONTAINS": "Contains text",
+      "REMOVE_SEGMENT": "Remove segment",
+      "REPLACE_SEGMENT": "Replace segment",
+      "SEGMENT": "SKU segment",
+      "CONFIG": "Config",
+      "COUNTRY": "Country",
+      "DATE": "Date",
+      "SEQUENCE": "Sequence",
+      "SIZE": "Size",
+      "COLOR": "Color",
+      "PRODUCT_TYPE": "Product type",
+      "STYLE": "Style",
+      "MATERIAL": "Material",
+      "CUSTOM_TEXT": "Custom text",
+      "CUSTOMER_IMAGE": "Customer image",
+      "OTHER": "Other",
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
+    "fields": {
+      "semanticRules": {
+        "salesChannelCode": {
+          "label": "Sales channel",
+          "helperText": "Where this rule applies."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Marketplace scope for the rule."
+        },
+        "priority": {
+          "label": "Priority",
+          "helperText": "Higher priority wins when multiple rules match."
+        },
+        "status": {
+          "label": "Status",
+          "helperText": "Disable a rule instead of deleting it."
+        },
+        "semanticRole": {
+          "label": "Option meaning",
+          "helperText": "What this customer-facing option represents."
+        },
+        "matchValue": {
+          "label": "Customer option label",
+          "helperText": "Example: Select Your Choose Size."
+        },
+        "matchType": {
+          "label": "Matching method",
+          "helperText": "How the label should be matched."
+        },
+        "productTypeGroupId": {
+          "label": "Product type limit",
+          "helperText": "Optional: limit this rule to one internal product type."
+        }
+      },
+      "skuConfig": {
+        "salesChannelCode": {
+          "label": "Sales channel",
+          "helperText": "Where this rule applies."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Marketplace scope for the rule."
+        },
+        "priority": {
+          "label": "Priority",
+          "helperText": "Higher priority wins when multiple rules match."
+        },
+        "status": {
+          "label": "Status",
+          "helperText": "Disable a rule instead of deleting it."
+        },
+        "configCode": {
+          "label": "SKU config code",
+          "helperText": "The config segment parsed from SKU, for example TS1S."
+        },
+        "platformProductType": {
+          "label": "Marketplace product type",
+          "helperText": "Marketplace product type text."
+        },
+        "productTypeAliases": {
+          "label": "Product type aliases",
+          "helperText": "Comma separated aliases, for example UNISEX T-SHIRT, UNISEX TSHIRT."
+        },
+        "countryCode": {
+          "label": "Country",
+          "helperText": "Optional country code such as US."
+        },
+        "productTypeGroupId": {
+          "label": "Internal product type",
+          "helperText": "Internal product type used by catalog and vendor matching."
+        },
+        "internalTemplateId": {
+          "label": "Internal template",
+          "helperText": "Internal production template for this product type."
+        }
+      },
+      "skuNormalize": {
+        "salesChannelCode": {
+          "label": "Sales channel",
+          "helperText": "Where this rule applies."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Marketplace scope for the rule."
+        },
+        "priority": {
+          "label": "Priority",
+          "helperText": "Higher priority wins when multiple rules match."
+        },
+        "status": {
+          "label": "Status",
+          "helperText": "Disable a rule instead of deleting it."
+        },
+        "configCode": {
+          "label": "SKU config code",
+          "helperText": "Optional config code this SKU cleanup applies to."
+        },
+        "patternType": {
+          "label": "SKU pattern",
+          "helperText": "How the SKU should be read."
+        },
+        "segmentIndex": {
+          "label": "SKU segment position",
+          "helperText": "Zero-based segment position in the SKU."
+        },
+        "segmentRole": {
+          "label": "Segment meaning",
+          "helperText": "Meaning of this SKU segment."
+        },
+        "appliesWhenValues": {
+          "label": "Apply only when value is",
+          "helperText": "Comma separated values that activate this rule."
+        },
+        "outputAction": {
+          "label": "Cleanup action",
+          "helperText": "What to do with the matched segment."
+        },
+        "replacementValue": {
+          "label": "Replacement value",
+          "helperText": "Only needed for replace action."
+        }
+      },
+      "valueAliases": {
+        "salesChannelCode": {
+          "label": "Sales channel",
+          "helperText": "Where this rule applies."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Marketplace scope for the rule."
+        },
+        "priority": {
+          "label": "Priority",
+          "helperText": "Higher priority wins when multiple rules match."
+        },
+        "status": {
+          "label": "Status",
+          "helperText": "Disable a rule instead of deleting it."
+        },
+        "semanticRole": {
+          "label": "Value group",
+          "helperText": "The kind of customer value being normalized."
+        },
+        "matchValue": {
+          "label": "Customer value",
+          "helperText": "Value as the customer or marketplace sends it."
+        },
+        "normalizedValue": {
+          "label": "Standard value",
+          "helperText": "Standard value used for vendor matching."
+        },
+        "matchType": {
+          "label": "Matching method",
+          "helperText": "How the value should be matched."
+        }
+      },
+      "vendorRouting": {
+        "salesChannelCode": {
+          "label": "Sales channel",
+          "helperText": "Where this rule applies."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Marketplace scope for the rule."
+        },
+        "priority": {
+          "label": "Priority",
+          "helperText": "Higher priority wins when multiple rules match."
+        },
+        "status": {
+          "label": "Status",
+          "helperText": "Disable a rule instead of deleting it."
+        },
+        "shopId": {
+          "label": "Shop",
+          "helperText": "Leave empty to apply to every shop."
+        },
+        "productTypeGroupId": {
+          "label": "Internal product type",
+          "helperText": "Internal product type this vendor priority applies to."
+        },
+        "vendorId": {
+          "label": "Preferred vendor",
+          "helperText": "Vendor to prefer for this scope."
+        }
+      }
+    },
+    "ruleDescriptions": {
+      "semanticRules": "Use this when customer option labels need to be understood as Size, Color, Product Type, or another role.",
+      "skuConfig": "Use this to connect a SKU config code to the internal product type and production template.",
+      "skuNormalize": "Use this when raw marketplace SKUs need cleanup before the system reads the config code.",
+      "valueAliases": "Use this when customer option values need standard wording, for example XXL becomes 2XL.",
+      "vendorRouting": "Use this to prefer a vendor for a product type, shop, channel, or marketplace when multiple vendors match."
+    },
+    "howToFill": {
+      "semanticRules": [
+        "Pick what the customer option means.",
+        "Enter the option label exactly as the marketplace sends it.",
+        "Leave Advanced unchanged unless this rule should apply to a narrower scope."
+      ],
+      "skuConfig": [
+        "Enter the SKU config code parsed from the marketplace SKU.",
+        "Choose the internal product type the order should use.",
+        "Use Advanced only for aliases, country, template, or scope overrides."
+      ],
+      "skuNormalize": [
+        "Enter which SKU segment position should be cleaned.",
+        "Choose what that segment means and what cleanup action to apply.",
+        "Use Advanced only when this cleanup applies to a specific config code or value."
+      ],
+      "valueAliases": [
+        "Choose the value group such as Size or Color.",
+        "Enter the customer value and the standard value the system should use.",
+        "Leave Advanced unchanged unless the rule needs a narrower scope."
+      ],
+      "vendorRouting": [
+        "Choose the internal product type.",
+        "Choose the vendor that should be preferred for matching orders.",
+        "Use Advanced only when the rule should apply to one shop, channel, or marketplace."
+      ]
     }
   }
 }

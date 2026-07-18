@@ -26,6 +26,7 @@ test('buildProductionTaskQuery maps shared filters and channel to the production
     }),
     {
       designAssignmentStatus: 'ASSIGNED',
+      readyForScale: true,
       salesChannelCode: 'AMAZON',
       search: 'ORD-10042',
       shopId: '660000000000000000000201',
@@ -42,6 +43,7 @@ test('buildProductionTaskQuery maps shared filters and channel to the production
 test('buildProductionTaskQuery maps every server-supported status tab', () => {
   assert.deepEqual(buildProductionTaskQuery({ statusTab: 'needScale' }), {
     scaleStatus: 'NEED_SCALE',
+    readyForScale: true,
     page: 1,
     limit: 10,
     sort: '-updatedAt',
@@ -50,6 +52,7 @@ test('buildProductionTaskQuery maps every server-supported status tab', () => {
   assert.equal(buildProductionTaskQuery({ statusTab: 'qcRejected' }).qcStatus, 'REJECTED')
   assert.deepEqual(buildProductionTaskQuery({ statusTab: 'csUnassigned' }), {
     csUnassigned: true,
+    readyForScale: true,
     page: 1,
     limit: 10,
     sort: '-updatedAt',
@@ -67,6 +70,7 @@ test('buildProductionTaskQuery supports assignment and ready date filters', () =
       readyDateTo: '2026-07-04T00:00:00.000Z',
     }),
     {
+      readyForScale: true,
       assignedAtFrom: '2026-07-01T00:00:00.000Z',
       assignedAtTo: '2026-07-02T00:00:00.000Z',
       readyAtFrom: '2026-07-03T00:00:00.000Z',
@@ -88,6 +92,7 @@ test('buildProductionSummaryQuery keeps shared filters but removes list status a
       pageSize: 50,
     }),
     {
+      readyForScale: true,
       salesChannelCode: 'ETSY',
       shopId: 'shop-1',
       sort: '-updatedAt',
@@ -123,6 +128,7 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   const result = mapProductionTask(
     {
       id: 'task-1',
+      orderItemId: 'order-item-1',
       shopId: 'shop-1',
       salesChannelCode: 'AMAZON',
       marketplaceCode: 'AMAZON_US',
@@ -213,6 +219,7 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   )
 
   assert.equal(result.orderId, 'ORD-10042')
+  assert.equal(result.orderItemId, 'order-item-1')
   assert.equal(result.orderDate, '2026-06-25 07:00')
   assert.equal(result.shippingType, 'Express')
   assert.equal(result.detail.product.imageUrl, 'https://example.test/product.png')
@@ -281,6 +288,17 @@ test('mapProductionTask derives pending and rejected display states', () => {
   assert.equal(
     mapProductionTask({ scaleStatus: 'SCALED', qcStatus: 'REJECTED' }).scaleStatus,
     'QC_REJECTED',
+  )
+})
+
+test('mapProductionTask uses the backend workflow stage before legacy production fields', () => {
+  assert.equal(
+    mapProductionTask({
+      workflow: { stage: 'READY_FOR_SCALE' },
+      productionStatus: 'READY_TO_SEND_VENDOR',
+      scaleStatus: 'SCALED',
+    }).scaleStatus,
+    'NEED_SCALE',
   )
 })
 
