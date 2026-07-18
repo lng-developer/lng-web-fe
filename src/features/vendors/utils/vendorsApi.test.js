@@ -25,6 +25,29 @@ test('buildVendorListQuery sends search as BE q and removes empty values', () =>
   )
 })
 
+test('buildVendorListQuery keeps id/code filters and uppercases enum filters', () => {
+  assert.deepEqual(
+    buildVendorListQuery({
+      search: ' hoodie ',
+      code: ' cc-1 ',
+      status: 'active',
+      fulfillmentType: 'pod',
+      providerKey: 'merchize',
+      productTypeGroupId: 'group-1',
+      externalProductId: 'ext-1',
+    }),
+    {
+      q: 'hoodie',
+      code: 'cc-1',
+      status: 'ACTIVE',
+      fulfillmentType: 'POD',
+      providerKey: 'MERCHIZE',
+      productTypeGroupId: 'group-1',
+      externalProductId: 'ext-1',
+    },
+  )
+})
+
 test('mapVendorResponse normalizes uppercase BE status and fulfillment type for UI', () => {
   assert.deepEqual(
     mapVendorResponse({

@@ -57,7 +57,6 @@ function StatusChip({ label }) {
         borderRadius: 9,
         bgcolor: theme.palette.success.light,
         color: theme.palette.success.main,
-        fontSize: 11,
         fontWeight: 700,
         '& .MuiChip-label': { px: 1 },
       })}
@@ -78,7 +77,6 @@ function CodeBadge({ children }) {
         color: 'text.secondary',
         px: 1,
         fontFamily: 'monospace',
-        fontSize: 11,
         fontWeight: 700,
         lineHeight: 1,
         letterSpacing: 0,
@@ -130,12 +128,7 @@ function TableHeader({ columns, templateColumns }) {
       })}
     >
       {columns.map((column) => (
-        <Typography
-          key={column}
-          variant="caption"
-          color="text.disabled"
-          sx={{ fontWeight: 800, fontSize: 11 }}
-        >
+        <Typography key={column} variant="caption" color="text.disabled" sx={{ fontWeight: 800 }}>
           {column}
         </Typography>
       ))}
@@ -189,10 +182,8 @@ function NameCell({ code, name }) {
 function MetricCell({ primary, secondary }) {
   return (
     <Box className="flex flex-col">
-      <Typography variant="body2" sx={{ fontSize: 13 }}>
-        {primary}
-      </Typography>
-      <Typography variant="body2" color="text.disabled" sx={{ fontSize: 13 }}>
+      <Typography variant="body2">{primary}</Typography>
+      <Typography variant="body2" color="text.disabled">
         {secondary}
       </Typography>
     </Box>
@@ -507,11 +498,7 @@ export default function DepartmentsPage() {
         >
           <Box className="flex min-h-[99px] items-center justify-between gap-4 px-6 py-5">
             <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ fontSize: 26, fontWeight: 800, lineHeight: 1.2 }}
-              >
+              <Typography variant="h1" component="h1" sx={{ fontWeight: 800 }}>
                 {t('departments.organizationTitle')}
               </Typography>
               <Typography variant="body2" color="text.disabled" sx={{ mt: 0.75 }}>

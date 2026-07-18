@@ -121,7 +121,7 @@ function ApiActionDialog({ action, mutation, onClose, row, workflowId }) {
               minRows={6}
               size="small"
               spellCheck={false}
-              sx={{ '& textarea': { fontFamily: 'monospace', fontSize: 13 } }}
+              sx={{ '& textarea': { fontFamily: 'monospace' } }}
             />
           )}
           {error ? <Alert severity="error">{error}</Alert> : null}
@@ -132,7 +132,6 @@ function ApiActionDialog({ action, mutation, onClose, row, workflowId }) {
                 bgcolor: alpha(theme.palette.info.main, 0.08),
                 border: `1px solid ${alpha(theme.palette.info.main, 0.24)}`,
                 borderRadius: 1,
-                fontSize: 12,
                 maxHeight: 260,
                 overflow: 'auto',
                 p: 1.5,
@@ -186,7 +185,6 @@ function RawDrawer({ actionMutation, onAction, onClose, row, tab }) {
               bgcolor: theme.palette.background.default,
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
-              fontSize: 12,
               maxHeight: 'calc(100vh - 180px)',
               overflow: 'auto',
               p: 1.5,
@@ -218,9 +216,7 @@ export default function ApiWorkflowPage({ workflowId }) {
 
   if (!workflow || !activeTab) {
     return (
-      <Alert severity="error">
-        {t('apiWorkflows.errors.unknownWorkflow', { workflowId })}
-      </Alert>
+      <Alert severity="error">{t('apiWorkflows.errors.unknownWorkflow', { workflowId })}</Alert>
     )
   }
 
@@ -228,9 +224,7 @@ export default function ApiWorkflowPage({ workflowId }) {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Stack spacing={2.5}>
         <Box>
-          <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 30 }, fontWeight: 700 }}>
-            {workflow.title}
-          </Typography>
+          <Typography variant="h1">{workflow.title}</Typography>
           <Typography variant="body2" color="text.secondary">
             {workflow.description}
           </Typography>

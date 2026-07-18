@@ -48,6 +48,14 @@ test('buildOrderListQuery defaults to 10 orders per page', () => {
   })
 })
 
+test('buildOrderListQuery maps operational item queues to backend tabs', () => {
+  assert.deepEqual(buildOrderListQuery({ tab: 'atVendor' }), {
+    page: 1,
+    limit: 10,
+    tab: 'SENT_TO_VENDOR',
+  })
+})
+
 test('buildOrderSummaryQuery keeps filters stable when switching tabs', () => {
   assert.deepEqual(
     buildOrderSummaryQuery({
@@ -81,6 +89,9 @@ test('mapApiTabCounts maps backend tab counts to UI tab keys', () => {
       NEW_ORDER: 3,
       NO_COST_CENTER: 2,
       NO_PSD: 4,
+      SENT_TO_VENDOR: 5,
+      TRACKING_PENDING: 10,
+      READY_FOR_PRODUCTION: 60,
       PAYMENT_PENDING: 1,
       IN_PROGRESS: 5,
       SHIPPED: 6,
@@ -93,6 +104,9 @@ test('mapApiTabCounts maps backend tab counts to UI tab keys', () => {
       new: 3,
       missingCostCenter: 2,
       missingPsd: 4,
+      atVendor: 5,
+      trackingPending: 10,
+      readyForProduction: 60,
       awaitingPayment: 1,
       processing: 5,
       shipped: 6,
@@ -122,9 +136,11 @@ test('mapApiOrderToOrderRow builds a display row from backend order fields', () 
       salesChannelCode: 'AMAZON',
       shopId: 'shop-id',
       status: 'IMPORTED',
+      addressValidationStatus: 'INVALID',
       createdAt: '2026-06-20T10:00:00.000Z',
       orderedAt: '2026-06-18T08:00:00.000Z',
       buyer: { name: 'Ethan' },
+      shippingService: { level: 'Std US D2D Dom', name: 'Standard' },
       itemsSummary: [{ sku: 'SKU-1', title: 'Custom Hoodie', quantity: 2 }],
       itemsCount: 1,
       totalAmount: 2599,
@@ -142,9 +158,10 @@ test('mapApiOrderToOrderRow builds a display row from backend order fields', () 
   assert.equal(row.shopId, 'shop-id')
   assert.equal(row.shop, 'Tan tan')
   assert.equal(row.customer, 'Ethan')
+  assert.equal(row.addressValidationStatus, 'INVALID')
   assert.equal(row.status, 'IMPORTED')
   assert.equal(row.tabKey, 'new')
-  assert.equal(row.shippingType, '-')
+  assert.equal(row.shippingType, 'Std US D2D Dom')
   assert.equal(row.product.sku, 'SKU-1')
   assert.equal(row.basecost, '$25.99')
 })
@@ -286,6 +303,7 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
           orderedAt: '2026-06-01T00:00:00.000Z',
           shipByDate: '2026-06-07T00:00:00.000Z',
           status: 'IMPORTED',
+          addressValidationStatus: 'INVALID',
           caseStatus: 'OPEN',
           caseTitle: 'Need buyer photo',
           buyer: { name: 'Buyer' },
@@ -302,7 +320,7 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
           shop: { id: '660000000000000000000201', name: 'Football US Shop' },
           salesChannelCode: 'AMAZON',
           marketplaceCode: 'AMAZON_US',
-          shippingService: { level: 'Standard' },
+          shippingService: { level: 'Std US D2D Dom', name: 'Standard' },
         },
         items: [
           {
@@ -316,8 +334,15 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
               status: 'CUSTOMIZATION_PARSED',
             },
             seller: { employeeCode: 'J2508', name: 'Nguyen Duc Son' },
+            listing: {
+              productTypeGroup: { id: '660000000000000000000901' },
+              previewAsset: {
+                previewUrl: 'https://image.test/listing.jpg',
+              },
+            },
             customization: {
               status: 'PARSED',
+              downloadedZip: { sourceUrlRedacted: 'https://custom.test/download.zip' },
               inputs: [
                 { type: 'TEXT', label: 'Custom Name', value: 'Hannah' },
                 { type: 'OPTION', label: 'Select Size', value: 'M' },
@@ -331,8 +356,16 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
             },
             mapping: {
               status: 'READY',
-              vendorProduct: { code: 'PRODUCT_1717', name: 'T-Shirt' },
-              vendorCostCenter: { sku: 'UT-1717-PER-M', size: 'M', color: 'PEPPER' },
+              vendor: { name: 'Lenful' },
+              vendorProduct: {
+                code: 'PRODUCT_1717',
+                name: 'T-Shirt',
+              },
+              vendorCostCenter: {
+                sku: 'UT-1717-PER-M',
+                standardSize: 'M',
+                standardColor: 'PEPPER',
+              },
             },
             pricing: {
               customerPaidAmount: 1000,
@@ -348,6 +381,11 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
               scaleBy: '660000000000000000000903',
               qcBy: '660000000000000000000904',
             },
+            tracking: {
+              carrier: 'USPS',
+              trackingNumber: '9400100000000000000000',
+              note: 'Vendor tracking recheck: LENFUL',
+            },
           },
         ],
       },
@@ -360,18 +398,20 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
   assert.equal(rows[0].id, '114-1')
   assert.equal(rows[0].shopId, '660000000000000000000201')
   assert.equal(rows[0].storeName, 'Football US Shop')
-  assert.equal(rows[0].shippingType, 'Standard')
+  assert.equal(rows[0].shippingType, 'Std US D2D Dom')
   assert.equal(rows[0].handling, '6 Days')
+  assert.equal(rows[0].addressValidationStatus, 'INVALID')
   assert.equal(rows[0].caseStatus, 'OPEN')
   assert.equal(rows[0].caseTitle, 'Need buyer photo')
   assert.equal(rows[0].basecost, '$8.94')
-  assert.deepEqual(rows[0].productImages, ['https://image.test/a.jpg'])
+  assert.deepEqual(rows[0].productImages, ['https://image.test/listing.jpg'])
   assert.equal(rows[0].product.sku, 'SKU-1')
   assert.equal(rows[0].product.asin, 'B000TEST')
   assert.equal(rows[0].product.seller, 'Nguyen Duc Son')
   assert.equal(rows[0].product.qcBy, '660000000000000000000904')
   assert.equal(rows[0].product.scaleBy, '660000000000000000000903')
   assert.equal(rows[0].customization.customerName, 'Hannah')
+  assert.equal(rows[0].customization.customizationUrl, 'https://custom.test/download.zip')
   assert.equal(rows[0].customization.size, 'M')
   assert.equal(rows[0].customization.shirtColor, 'Pepper')
   assert.deepEqual(rows[0].customization.fields, [
@@ -382,10 +422,300 @@ test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {
   assert.deepEqual(rows[0].customization.images, [
     { label: 'Customer Photo', url: 'https://image.test/a.jpg' },
   ])
-  assert.equal(rows[0].fulfillment.vendorProduct, 'T-Shirt')
+  assert.equal(rows[0].fulfillment.vendorProduct, 'Lenful - T-Shirt')
+  assert.equal(rows[0].fulfillment.productTypeGroupId, '660000000000000000000901')
   assert.equal(rows[0].fulfillment.size, 'M')
   assert.equal(rows[0].fulfillment.color, 'PEPPER')
+  assert.equal(rows[0].fulfillment.carrierKey, 'USPS')
+  assert.equal(rows[0].fulfillment.trackingKey, '9400100000000000000000')
   assert.equal(rows[0].fulfillment.statusKey, 'orders.values.status.customizationParsed')
+})
+
+test('buildOrderListQuery maps the address issue tab to its backend tab', () => {
+  assert.deepEqual(buildOrderListQuery({ tab: 'addressIssue' }), {
+    page: 1,
+    limit: 10,
+    tab: 'ADDRESS_ISSUE',
+  })
+})
+
+test('mapWorkbenchRows uses listing previewUrl for product image when customization has no image', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: {
+        id: '660000000000000000000303',
+        externalOrderId: '114-3',
+        status: 'PROCESSING',
+        buyer: { name: 'Buyer' },
+        currency: 'USD',
+      },
+      items: [
+        {
+          item: {
+            id: '660000000000000000000403',
+            sku: 'SKU-3',
+            title: 'Custom Napkins',
+            quantity: 1,
+          },
+          listing: {
+            previewAsset: {
+              previewUrl: 'https://image.test/listing-preview.png',
+            },
+            psdTemplate: {
+              previewUrl: 'https://image.test/psd-preview.jpg',
+            },
+          },
+          customization: {
+            inputs: [{ type: 'TEXT', label: 'Custom Name', value: 'Christie' }],
+          },
+        },
+      ],
+    },
+  ])
+
+  assert.deepEqual(rows[0].productImages, ['https://image.test/listing-preview.png'])
+  assert.deepEqual(rows[0].customization.customerPhoto, [])
+})
+
+test('mapWorkbenchRows does not show customer paid amount as base cost', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: {
+        id: '660000000000000000000307',
+        externalOrderId: '113-7180016-0704235',
+        status: 'PROCESSING',
+        pricing: {
+          customerPaidAmount: 4217,
+          baseCostAmount: null,
+          totalCostAmount: null,
+          currency: 'USD',
+          costCenterStatus: 'MISSING',
+        },
+      },
+      items: [
+        {
+          item: { id: '660000000000000000000407', quantity: 1 },
+          pricing: {
+            customerPaidAmount: 4217,
+            baseCostAmount: null,
+            totalCostAmount: null,
+            currency: 'USD',
+          },
+        },
+      ],
+    },
+  ])
+
+  assert.equal(rows[0].basecost, '-')
+})
+
+test('mapWorkbenchRows shows waiting customization after vendor is matched', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: {
+        id: '660000000000000000000310',
+        externalOrderId: '4100870576',
+        status: 'PROCESSING',
+      },
+      items: [
+        {
+          item: {
+            id: '660000000000000000000410',
+            sku: 'SKU-PENDING-CUSTOM',
+            quantity: 1,
+            status: 'CUSTOMIZATION_PENDING',
+          },
+          mapping: {
+            status: 'READY',
+            vendor: { name: 'Printway' },
+            vendorProduct: { id: '660000000000000000000510', name: 'Napkins' },
+            vendorCostCenter: {
+              id: '660000000000000000000610',
+              standardSize: '6.5 x 6.5',
+              standardColor: 'WHITE',
+            },
+          },
+        },
+      ],
+    },
+  ])
+
+  assert.equal(rows[0].fulfillment.statusKey, 'orders.values.status.waitingCustomization')
+  assert.equal(rows[0].fulfillment.vendorProduct, 'Printway - Napkins')
+})
+
+test('mapWorkbenchRows shows missing PSD before waiting customization', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: { externalOrderId: '4102785351', status: 'PROCESSING' },
+      items: [
+        {
+          item: {
+            id: '660000000000000000000411',
+            sku: 'J2615-NK-2805-006',
+            quantity: 1,
+            status: 'CUSTOMIZATION_PENDING',
+          },
+          listing: { psdStatus: 'MISSING' },
+          mapping: {
+            status: 'READY',
+            vendorProduct: { id: '660000000000000000000510', name: 'Napkins' },
+            vendorCostCenter: { id: '660000000000000000000610', standardSize: '6.5 x 6.5' },
+          },
+        },
+      ],
+    },
+  ])
+
+  assert.equal(rows[0].fulfillment.statusKey, 'orders.values.status.missingPsd')
+})
+
+test('mapWorkbenchRows uses the backend workflow stage instead of stale local facts', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: { externalOrderId: '4102785351', status: 'PROCESSING' },
+      items: [
+        {
+          item: { id: '660000000000000000000412', status: 'CUSTOMIZATION_PENDING' },
+          listing: { psdStatus: 'MISSING' },
+          workflow: { stage: 'READY_TO_SEND_VENDOR' },
+        },
+      ],
+    },
+  ])
+
+  assert.equal(rows[0].fulfillment.statusKey, 'orders.values.status.readyToSendVendor')
+})
+
+test('mapWorkbenchRows maps PSD readiness from workbench listing and order status', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: {
+        id: '660000000000000000000306',
+        externalOrderId: '114-6',
+        status: 'PROCESSING',
+        psdStatus: 'MISSING',
+      },
+      items: [
+        {
+          item: { id: '660000000000000000000406', sku: 'SKU-6A' },
+          listing: { psdStatus: 'PRESENT' },
+        },
+        {
+          item: { id: '660000000000000000000407', sku: 'SKU-6B' },
+          listing: {},
+        },
+      ],
+    },
+  ])
+
+  assert.equal(rows[0].itemDetails[0].product.psdKey, 'orders.values.status.present')
+  assert.equal(rows[0].itemDetails[0].product.psdColor, 'success')
+  assert.equal(rows[0].itemDetails[1].product.psdKey, 'orders.values.status.missing')
+  assert.equal(rows[0].itemDetails[1].product.psdColor, 'danger')
+})
+
+test('mapWorkbenchRows preserves every order item for expanded detail rendering', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: {
+        id: '660000000000000000000304',
+        externalOrderId: '114-4',
+        status: 'PROCESSING',
+        buyer: { name: 'Buyer' },
+        marketplaceCode: 'AMAZON_US',
+      },
+      items: [
+        {
+          item: {
+            id: '660000000000000000000404',
+            sku: 'SKU-4A',
+            title: 'First custom item',
+            asin: 'B000FIRST',
+            quantity: 1,
+            status: 'IN_PRODUCTION',
+          },
+          listing: { previewAsset: { previewUrl: 'https://image.test/first.png' } },
+          customization: {
+            inputs: [{ type: 'TEXT', label: 'Custom Name', value: 'First' }],
+          },
+          mapping: {
+            vendorProduct: { name: 'First Vendor Product' },
+            vendorCostCenter: { size: 'M', color: 'BLACK' },
+          },
+        },
+        {
+          item: {
+            id: '660000000000000000000405',
+            sku: 'SKU-4B',
+            title: 'Second custom item',
+            asin: 'B000SECOND',
+            quantity: 2,
+            status: 'SENT_TO_VENDOR',
+          },
+          listing: { previewAsset: { previewUrl: 'https://image.test/second.png' } },
+          customization: {
+            inputs: [{ type: 'TEXT', label: 'Custom Name', value: 'Second' }],
+          },
+          mapping: {
+            vendorProduct: { name: 'Second Vendor Product' },
+            vendorCostCenter: { size: 'L', color: 'WHITE' },
+          },
+          tracking: {
+            carrier: 'USPS',
+            trackingNumber: '9400SECOND',
+          },
+        },
+      ],
+    },
+  ])
+
+  assert.equal(rows[0].itemDetails.length, 2)
+  assert.equal(rows[0].product.sku, 'SKU-4A')
+  assert.equal(rows[0].itemDetails[0].product.sku, 'SKU-4A')
+  assert.equal(rows[0].itemDetails[1].product.sku, 'SKU-4B')
+  assert.equal(rows[0].itemDetails[1].product.asin, 'B000SECOND')
+  assert.deepEqual(rows[0].itemDetails[1].productImages, ['https://image.test/second.png'])
+  assert.equal(rows[0].itemDetails[1].customization.customerName, 'Second')
+  assert.equal(rows[0].itemDetails[1].fulfillment.quantity, '2')
+  assert.equal(rows[0].itemDetails[1].fulfillment.vendorProduct, 'Second Vendor Product')
+  assert.equal(rows[0].itemDetails[1].fulfillment.trackingKey, '9400SECOND')
+})
+
+test('mapWorkbenchRows does not show listing title as vendor product when vendor is unmatched', () => {
+  const rows = mapWorkbenchRows([
+    {
+      order: {
+        id: '660000000000000000000303',
+        externalOrderId: '114-3',
+        status: 'IMPORTED',
+        buyer: { name: 'Buyer' },
+      },
+      items: [
+        {
+          item: {
+            id: '660000000000000000000403',
+            title: 'Personalized long listing title',
+            quantity: 1,
+          },
+          customization: {
+            inputs: [
+              { type: 'OPTION', label: 'Select Size', value: '11.8 x 23.6 Inches' },
+              { type: 'OPTION', label: 'Color', value: 'We love you!' },
+            ],
+          },
+          mapping: { status: 'PENDING' },
+        },
+      ],
+    },
+  ])
+
+  assert.equal(rows[0].customization.productType, 'Personalized long listing title')
+  assert.equal(rows[0].customization.size, '11.8 x 23.6 Inches')
+  assert.equal(rows[0].customization.shirtColor, 'We love you!')
+  assert.equal(rows[0].fulfillment.vendorProduct, '-')
+  assert.equal(rows[0].fulfillment.size, '-')
+  assert.equal(rows[0].fulfillment.color, '-')
 })
 
 test('mapWorkbenchRows keeps only customization inputs with actual order values', () => {

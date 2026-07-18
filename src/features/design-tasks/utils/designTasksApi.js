@@ -121,6 +121,7 @@ export function buildDesignTaskQuery(filters = {}) {
     taskType: filters.taskType || TASK_TYPE_QUERY[filters.subTab],
     status: STATUS_QUERY[filters.statusTab],
     unassigned: filters.statusTab === 'unassigned' ? true : undefined,
+    orderId: trimText(filters.orderId),
     search: trimText(filters.search),
     shopId:
       filters.shopId ||
@@ -141,6 +142,18 @@ export function buildDesignTaskQuery(filters = {}) {
     sortOrder: trimText(filters.sortOrder),
     page: Math.max(Number(filters.page) || 1, 1),
     limit: Math.max(Number(filters.pageSize) || DESIGN_TASK_PAGE_SIZE, 1),
+  })
+}
+
+export function buildDesignScoreSummaryQuery(filters = {}) {
+  return cleanObject({
+    dateFrom: trimText(filters.dateFrom),
+    dateTo: trimText(filters.dateTo),
+    taskType: trimUpper(filters.taskType),
+    designerId:
+      filters.assignedDesignerId && filters.assignedDesignerId !== 'all'
+        ? filters.assignedDesignerId
+        : undefined,
   })
 }
 
@@ -176,15 +189,28 @@ function mapSubmission(submission = {}) {
     approvedAt: submission.approvedAt || null,
     rejectedAt: submission.rejectedAt || null,
     rejectReason: submission.rejectReason || null,
+    score: submission.score || null,
   }
 }
 
 function mapTaskRow(task = {}) {
   const listing = task.listing || task.listingSnapshot || {}
+  const order = task.order || task.orderSnapshot || {}
+  const orderItem = task.orderItem || task.orderItemSnapshot || {}
+  const productionTask = task.productionTask || task.productionTaskSnapshot || {}
   const latestSubmission = task.latestSubmission || {}
   const latestFile = task.latestSubmittedAsset || latestSubmission.assets?.[0] || {}
   const listingTitle = displayNoId(listing.title || listing.name || listing, 'Unknown listing')
   const listingCode = listing.asin || listing.sku || listing.code || '-'
+  const orderId =
+    task.externalOrderId ||
+    task.orderExternalId ||
+    task.orderIdDisplay ||
+    order.externalOrderId ||
+    order.orderId ||
+    orderItem.externalOrderId ||
+    productionTask.externalOrderId ||
+    '-'
 
   return {
     id: task.id,
@@ -192,6 +218,7 @@ function mapTaskRow(task = {}) {
     updatedAt: { date: formatDate(task.updatedAt), relative: task.updatedAt || '-' },
     taskType: task.taskType || 'IDEA',
     taskTypeLabel: taskTypeLabel(task.taskType),
+    orderId,
     listingTitle,
     listingCode,
     asin: listingCode,
@@ -288,6 +315,26 @@ export function buildApproveDesignTaskPayload({ approvedAssetId, submissionId } 
   })
 }
 
+export function buildApproveLatestSubmissionVariables(task = {}) {
+  const raw = task.raw || task
+  const submission = task.latestSubmission || raw.latestSubmission || {}
+  const approvedAssetId =
+    submission.approvedAssetId ||
+    submission.assetIds?.[0] ||
+    submission.submittedAssetIds?.[0] ||
+    submission.assets?.[0]?.id ||
+    submission.assets?.[0]?._id ||
+    task.latestSubmittedAsset?.id ||
+    raw.latestSubmittedAsset?.id ||
+    raw.latestSubmittedAsset?._id
+
+  return cleanObject({
+    taskId: task.id || raw.id,
+    approvedAssetId,
+    submissionId: submission.id || submission._id,
+  })
+}
+
 export function buildRejectDesignTaskPayload({ rejectReason, submissionId } = {}) {
   return cleanObject({
     rejectReason: trimText(rejectReason),
@@ -299,6 +346,18 @@ export function buildCancelDesignTaskPayload({ cancelReason } = {}) {
   return cleanObject({
     cancelReason: trimText(cancelReason),
   })
+}
+
+export function buildOverrideSubmissionScorePayload({ points, scoreLevel, overrideReason } = {}) {
+  return cleanObject({
+    points: points === '' || points === null || points === undefined ? undefined : Number(points),
+    scoreLevel: trimUpper(scoreLevel),
+    overrideReason: trimText(overrideReason),
+  })
+}
+
+export function buildVoidSubmissionScorePayload({ voidReason } = {}) {
+  return cleanObject({ voidReason: trimText(voidReason) })
 }
 
 export function buildCreateDesignTaskPayload(values = {}) {

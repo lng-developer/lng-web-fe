@@ -171,16 +171,7 @@ export default function AppHeader({ onToggleSidebar }) {
               width: 24,
             }}
           />
-          <Box
-            component="span"
-            sx={{
-              color: 'text.primary',
-              fontSize: '0.9375rem',
-              fontWeight: 700,
-              lineHeight: 1.2,
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <Box component="span" className="whitespace-nowrap text-lg font-bold text-ink">
             {t('app.brandName')}
           </Box>
         </Box>

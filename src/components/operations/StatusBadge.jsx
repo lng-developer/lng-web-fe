@@ -1,3 +1,5 @@
+import { operationsTextCaptionClass } from './operationsLayout'
+
 export default function StatusBadge({ children, tone = 'neutral' }) {
   const classes = {
     neutral: 'border-border bg-surface-subtle text-ink-secondary',
@@ -9,7 +11,7 @@ export default function StatusBadge({ children, tone = 'neutral' }) {
 
   return (
     <span
-      className={`inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${classes[tone] || classes.neutral}`}
+      className={`inline-flex max-w-full items-center rounded-full border px-2.5 py-1 ${operationsTextCaptionClass} ${classes[tone] || classes.neutral}`}
     >
       <span className="truncate">{children}</span>
     </span>

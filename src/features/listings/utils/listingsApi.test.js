@@ -16,7 +16,7 @@ import {
   normalizePagination,
 } from './listingsApi.js'
 
-test('buildListingListQuery maps UI search to asin by default and removes empty values', () => {
+test('buildListingListQuery maps a single search field to the backend search query', () => {
   assert.deepEqual(
     buildListingListQuery({
       page: 2,
@@ -25,20 +25,7 @@ test('buildListingListQuery maps UI search to asin by default and removes empty 
       shopId: 'all',
       seller: 'all',
     }),
-    { page: 2, limit: 10, asin: 'B0ABC' },
-  )
-})
-
-test('buildListingListQuery can search SKU when selected explicitly', () => {
-  assert.deepEqual(
-    buildListingListQuery({
-      page: 1,
-      limit: 20,
-      search: ' sku-01 ',
-      searchField: 'sku',
-      shopId: 'shop-1',
-    }),
-    { page: 1, limit: 20, sku: 'SKU-01', shopId: 'shop-1' },
+    { page: 2, limit: 10, search: 'b0abc' },
   )
 })
 
@@ -174,7 +161,7 @@ test('mapListingResponse flattens catalog listing response for the table', () =>
       psdStatus: 'available',
       costStatus: 'missing',
       store: 'Acc1',
-      seller: 'AMAZON / AMAZON_US',
+      seller: '-',
       channelLabel: 'AMAZON / AMAZON_US',
       salesLabel: '1 orders / 2 qty',
       lastSoldAt: 'Jul 15, 2026',
@@ -229,6 +216,75 @@ test('mapListingResponse never uses shop id as the ownership label', () => {
       sku: 'SKU-01',
     }).store,
     'Unknown shop',
+  )
+})
+
+test('mapListingResponse prefers backend seller display name when available', () => {
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-1',
+      sku: 'SKU-01',
+      seller: { name: 'Nguyen Minh Duc' },
+      salesChannelCode: 'AMAZON',
+      marketplaceCode: 'AMAZON_US',
+    }).seller,
+    'Nguyen Minh Duc',
+  )
+
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-2',
+      sku: 'SKU-02',
+      sellerDisplayName: 'Vuong Van Oai',
+    }).seller,
+    'Vuong Van Oai',
+  )
+
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-3',
+      sku: 'SKU-03',
+      seller: 'Chu Quang Hao',
+    }).seller,
+    'Chu Quang Hao',
+  )
+
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-4',
+      sku: 'J2508-TS2S-280226-2017',
+      seller: { employeeCode: 'J2508', name: null },
+    }).seller,
+    'J2508',
+  )
+})
+
+test('mapListingResponse maps variant only from backend variant fields', () => {
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-1',
+      sku: 'SKU-01',
+      variantName: 'Black / XL',
+    }).variant,
+    'Black / XL',
+  )
+
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-2',
+      sku: 'SKU-02',
+      selectedVariant: { sku: 'BLACK-XL' },
+    }).variant,
+    'BLACK-XL',
+  )
+
+  assert.equal(
+    mapListingResponse({
+      id: 'listing-3',
+      sku: 'SKU-03',
+      templateVariant: { name: 'Default mockup' },
+    }).variant,
+    'Default mockup',
   )
 })
 

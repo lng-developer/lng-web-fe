@@ -48,7 +48,9 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
           root: ({ theme }) => ({
             borderRadius: theme.shape.borderRadius,
             textTransform: 'none',
+            fontSize: theme.typography.button.fontSize,
             fontWeight: 600,
+            lineHeight: theme.typography.button.lineHeight,
             gap: 8,
           }),
           sizeSmall: {
@@ -59,11 +61,11 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
             height: 40,
             padding: '0 16px',
           },
-          sizeLarge: {
+          sizeLarge: ({ theme }) => ({
             height: 48,
             padding: '0 16px',
-            fontSize: '1rem',
-          },
+            fontSize: theme.typography.h3.fontSize,
+          }),
           // variant="contained" (mặc định color="primary") -> Button/Primary
           containedPrimary: ({ theme }) => ({
             '&:hover': { backgroundColor: theme.palette.primary.dark },
@@ -124,6 +126,7 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
             borderRadius: theme.shape.borderRadius,
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
+            fontSize: theme.typography.body2.fontSize,
             minHeight: 42,
             transition: theme.transitions.create(
               ['background-color', 'border-color', 'box-shadow'],
@@ -186,13 +189,13 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
       },
       MuiFormHelperText: {
         styleOverrides: {
-          root: {
+          root: ({ theme }) => ({
             marginLeft: 0,
             marginRight: 0,
             marginTop: 6,
-            fontSize: '0.8125rem',
+            fontSize: theme.typography.body2.fontSize,
             lineHeight: 1.35,
-          },
+          }),
         },
       },
       // Component/Select Menu Item: state=Default (trong suốt), state=Hover/Selected
@@ -214,7 +217,7 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
         styleOverrides: {
           root: ({ theme }) => ({
             borderRadius: 6,
-            fontSize: '0.875rem',
+            fontSize: theme.typography.body1.fontSize,
             '&:hover': { backgroundColor: theme.palette.primary.light },
             '&.Mui-selected': {
               backgroundColor: theme.palette.primary.light,
@@ -284,7 +287,7 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
           root: ({ theme }) => ({
             width: 40,
             height: 40,
-            fontSize: '1rem',
+            fontSize: theme.typography.h3.fontSize,
             fontWeight: 600,
             backgroundColor: theme.palette.tokens.borderStrong,
           }),
@@ -294,8 +297,40 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
           }),
         },
       },
-      // Component/Tooltip: nền = text.primary của mode hiện tại (đảo ngược độ sáng so với nền
-      // trang) -> luôn nổi rõ; chữ trắng (light) hoặc ink của light mode (dark) để đủ tương phản.
+      MuiChip: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            fontSize: theme.typography.caption.fontSize,
+            fontWeight: 600,
+            lineHeight: theme.typography.caption.lineHeight,
+          }),
+        },
+      },
+      MuiTab: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            fontSize: theme.typography.body2.fontSize,
+            fontWeight: 600,
+            lineHeight: theme.typography.body2.lineHeight,
+            textTransform: 'none',
+          }),
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            fontSize: theme.typography.body2.fontSize,
+            lineHeight: theme.typography.body2.lineHeight,
+          }),
+          head: ({ theme }) => ({
+            fontSize: theme.typography.caption.fontSize,
+            fontWeight: 700,
+            lineHeight: theme.typography.caption.lineHeight,
+            textTransform: 'uppercase',
+          }),
+        },
+      },
+      // Component/Tooltip: nền = text.primary của mode hiện tại.
       MuiTooltip: {
         styleOverrides: {
           tooltip: ({ theme }) => ({
@@ -304,7 +339,7 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
               theme.palette.mode === THEME_MODES.LIGHT
                 ? theme.palette.common.white
                 : colorTokens[THEME_MODES.LIGHT].text.primary,
-            fontSize: '0.75rem',
+            fontSize: theme.typography.caption.fontSize,
             fontWeight: 500,
             padding: '6px 10px',
             borderRadius: 6,

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { materializeEndpointPath } from '@/features/api-coverage/data/backendEndpoints'
 import { apiClient } from '@/services/axiosInstance'
@@ -21,7 +21,7 @@ export function useWorkflowListQuery(workflowId, tab, query = {}, options = {}) 
     queryKey: apiWorkflowKeys.list(workflowId, tab?.id, query),
     queryFn: () => get(tab.listEndpoint, {}, query),
     enabled: Boolean(tab?.listEndpoint) && options.enabled !== false,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
 

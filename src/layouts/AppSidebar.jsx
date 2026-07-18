@@ -1,47 +1,84 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation } from 'react-router-dom'
-import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
+import AutoAwesomeMosaicOutlinedIcon from '@mui/icons-material/AutoAwesomeMosaicOutlined'
+import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import GridViewIcon from '@mui/icons-material/GridView'
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined'
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
+import MonitorHeartOutlinedIcon from '@mui/icons-material/MonitorHeartOutlined'
+import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined'
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
+import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined'
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
+import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
 import {
-  Avatar,
   Box,
   ButtonBase,
-  Chip,
   Collapse,
   List,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
   Typography,
 } from '@mui/material'
 
 import { ELEVATION_SHADOWS, LAYOUT_SIZES } from '@/constants/app'
-import {
-  getCurrentUserAvatar,
-  getCurrentUserDisplayName,
-  getCurrentUserInitials,
-  getCurrentUserRole,
-  resolveCurrentUser,
-} from '@/features/auth/utils/currentUser'
+import { getCurrentUserDisplayName, resolveCurrentUser } from '@/features/auth/utils/currentUser'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
   filterNavigationByUser,
-  getRoleMeta,
-  getSidebarTabForPath,
-  SIDEBAR_NAV_TABS,
-  SIDEBAR_TAB_NAVIGATION,
-  SIDEBAR_TABS,
+  getNavItemTo,
+  getSidebarWorkspaceForLocation,
+  isNavItemActive,
+  SIDEBAR_WORKSPACE_NAVIGATION,
+  SIDEBAR_WORKSPACES,
 } from './sidebarNavigation'
 
-const SIDEBAR_WIDTH = 240
+const SIDEBAR_WIDTH = 248
 
-const NAV_ICONS = {
-  dashboard: DashboardOutlinedIcon,
-  portal: GridViewIcon,
+const WORKSPACE_ICONS = {
+  orders: HomeOutlinedIcon,
+  production: FactCheckOutlinedIcon,
+  design: PaletteOutlinedIcon,
+  vendor: StorefrontOutlinedIcon,
+  reports: AssignmentOutlinedIcon,
+  admin: SettingsOutlinedIcon,
+}
+
+const NAV_ITEM_ICONS = {
+  ads: AssignmentOutlinedIcon,
+  api: HubOutlinedIcon,
+  audit: HistoryOutlinedIcon,
+  config: SettingsOutlinedIcon,
+  configuration: SettingsOutlinedIcon,
+  costCenters: HomeOutlinedIcon,
+  costs: ReceiptLongOutlinedIcon,
+  design: PaletteOutlinedIcon,
+  fulfillment: Inventory2OutlinedIcon,
+  listings: ViewListOutlinedIcon,
+  mapping: HubOutlinedIcon,
+  monitoring: MonitorHeartOutlinedIcon,
+  orders: Inventory2OutlinedIcon,
+  products: CategoryOutlinedIcon,
+  productTypes: CategoryOutlinedIcon,
+  qc: RuleOutlinedIcon,
+  reports: AssignmentOutlinedIcon,
+  scale: FactCheckOutlinedIcon,
+  shipping: LocalShippingOutlinedIcon,
+  shops: StorefrontOutlinedIcon,
+  submissions: ReceiptLongOutlinedIcon,
+  templates: AssignmentOutlinedIcon,
+  users: PeopleAltOutlinedIcon,
+  vendors: StorefrontOutlinedIcon,
 }
 
 function collectDefaultOpenIds(items) {
@@ -60,45 +97,81 @@ function collectDefaultOpenIds(items) {
   }, {})
 }
 
-function isPathActive(path, currentPath) {
-  if (!path) {
-    return false
-  }
-
-  return path === '/'
-    ? currentPath === path
-    : currentPath === path || currentPath.startsWith(`${path}/`)
-}
-
-function hasActivePath(item, currentPath) {
-  if (isPathActive(item.path, currentPath)) {
+function hasActivePath(item, location) {
+  if (isNavItemActive(item, location)) {
     return true
   }
 
   const nestedItems = item.items ?? item.children
 
-  return nestedItems
-    ? nestedItems.some((nestedItem) => hasActivePath(nestedItem, currentPath))
-    : false
+  return nestedItems ? nestedItems.some((nestedItem) => hasActivePath(nestedItem, location)) : false
 }
 
-function NavIcon({ icon, active }) {
-  const IconComponent = NAV_ICONS[icon]
+function NavGlyph({ icon, active }) {
+  if (!icon) {
+    return null
+  }
 
-  if (!IconComponent) {
+  if (icon === 'amazon' || icon === 'etsy') {
+    return (
+      <Box
+        component="span"
+        aria-hidden="true"
+        className={icon === 'etsy' ? 'text-xl' : 'text-lg'}
+        sx={{
+          color: active ? 'primary.main' : 'text.primary',
+          display: 'inline-flex',
+          fontFamily: icon === 'etsy' ? 'Georgia, serif' : 'Arial, sans-serif',
+          fontWeight: icon === 'amazon' ? 700 : 500,
+          justifyContent: 'center',
+          lineHeight: 1,
+          width: 24,
+        }}
+      >
+        {icon === 'amazon' ? 'a' : 'E'}
+      </Box>
+    )
+  }
+
+  const Icon = NAV_ITEM_ICONS[icon]
+
+  if (!Icon) {
     return null
   }
 
   return (
-    <ListItemIcon
+    <Icon
+      aria-hidden="true"
+      fontSize="small"
       sx={{
-        color: active ? 'primary.main' : 'text.secondary',
-        minWidth: 36,
+        color: active ? 'primary.main' : 'text.primary',
+        width: 24,
       }}
-    >
-      <IconComponent fontSize="small" />
-    </ListItemIcon>
+    />
   )
+}
+
+function workspaceButtonSx({ active }) {
+  return (theme) => ({
+    alignItems: 'center',
+    bgcolor: active ? 'primary.light' : 'transparent',
+    border: 0,
+    borderRadius: theme.spacing(1),
+    boxShadow: active ? ELEVATION_SHADOWS.SIDEBAR_TAB : 'none',
+    color: active ? 'primary.main' : 'text.secondary',
+    cursor: 'pointer',
+    display: 'flex',
+    height: 34,
+    justifyContent: 'center',
+    minWidth: 34,
+    transition: theme.transitions.create(['background-color', 'box-shadow', 'color'], {
+      duration: theme.transitions.duration.shorter,
+    }),
+    '&:hover': {
+      bgcolor: active ? 'primary.light' : 'action.hover',
+      color: active ? 'primary.main' : 'text.primary',
+    },
+  })
 }
 
 function navButtonSx({ active, depth, withActiveBorder }) {
@@ -112,7 +185,7 @@ function navButtonSx({ active, depth, withActiveBorder }) {
     color: active ? theme.palette.primary.main : theme.palette.text.primary,
     marginBottom: theme.spacing(0.25),
     marginRight: theme.spacing(1),
-    minHeight: 40,
+    minHeight: 38,
     paddingLeft: theme.spacing(depth === 'sub' ? 4 : 2),
     paddingRight: theme.spacing(1.5),
     '& .MuiListItemText-primary': {
@@ -121,8 +194,13 @@ function navButtonSx({ active, depth, withActiveBorder }) {
         : depth === 'sub'
           ? theme.palette.text.secondary
           : 'inherit',
-      fontSize: theme.typography.body1.fontSize,
+      fontSize: theme.typography.body2.fontSize,
       fontWeight: active || depth !== 'sub' ? 600 : 400,
+    },
+    '& .SidebarNavIcon': {
+      color: active ? theme.palette.primary.main : theme.palette.text.primary,
+      flex: '0 0 24px',
+      mr: 1,
     },
     '&:hover': {
       backgroundColor: theme.palette.primary.light,
@@ -136,46 +214,21 @@ function navButtonSx({ active, depth, withActiveBorder }) {
   })
 }
 
-function sidebarTabSx({ active }) {
-  return (theme) => ({
-    alignItems: 'center',
-    bgcolor: active ? 'background.paper' : 'transparent',
-    border: 0,
-    borderRadius: theme.spacing(1),
-    boxShadow: active ? ELEVATION_SHADOWS.SIDEBAR_TAB : 'none',
-    color: active ? 'primary.main' : 'text.disabled',
-    cursor: 'pointer',
-    display: 'flex',
-    flex: 1,
-    fontSize: theme.typography.body2.fontSize,
-    fontWeight: active ? 600 : 400,
-    justifyContent: 'center',
-    minHeight: theme.spacing(4.5),
-    px: 1,
-    textTransform: 'none',
-    transition: theme.transitions.create(['background-color', 'box-shadow', 'color'], {
-      duration: theme.transitions.duration.shorter,
-    }),
-    '&:hover': {
-      bgcolor: active ? 'background.paper' : 'background.paper',
-    },
-  })
-}
-
-function renderLeafItem({ item, pathname, t, depth, onNavigate }) {
-  const active = isPathActive(item.path, pathname)
-  const withActiveBorder = depth === 'root'
+function renderLeafItem({ item, location, t, depth, onNavigate }) {
+  const active = isNavItemActive(item, location)
 
   return (
     <ListItemButton
       key={item.id}
       component={NavLink}
-      to={item.path}
+      to={getNavItemTo(item)}
       end={item.path === '/'}
       onClick={onNavigate}
-      sx={navButtonSx({ active, depth, withActiveBorder })}
+      sx={navButtonSx({ active, depth, withActiveBorder: depth === 'root' })}
     >
-      <NavIcon icon={item.icon} active={active} />
+      <Box className="SidebarNavIcon">
+        <NavGlyph icon={item.icon} active={active} />
+      </Box>
       <ListItemText primary={t(item.labelKey)} />
     </ListItemButton>
   )
@@ -183,35 +236,57 @@ function renderLeafItem({ item, pathname, t, depth, onNavigate }) {
 
 export default function AppSidebar({ onNavigate, open }) {
   const { t } = useTranslation()
-  const { pathname } = useLocation()
+  const location = useLocation()
   const storedCurrentUser = useAuthStore((state) => state.currentUser)
-  const pathTab = getSidebarTabForPath(pathname)
-  const [selectedTab, setActiveTab] = useState(pathTab)
-  const activeTab = pathTab === SIDEBAR_NAV_TABS.HR ? pathTab : selectedTab
-  const [openItemsByTab, setOpenItemsByTab] = useState(() =>
-    SIDEBAR_TABS.reduce(
-      (itemsByTab, tab) => ({
-        ...itemsByTab,
-        [tab.id]: collectDefaultOpenIds(SIDEBAR_TAB_NAVIGATION[tab.id] ?? []),
+  const pathWorkspace = getSidebarWorkspaceForLocation(location.pathname, location.search)
+  const [manualWorkspace, setManualWorkspace] = useState(null)
+  const [openItemsByWorkspace, setOpenItemsByWorkspace] = useState(() =>
+    SIDEBAR_WORKSPACES.reduce(
+      (itemsByWorkspace, workspace) => ({
+        ...itemsByWorkspace,
+        [workspace.id]: collectDefaultOpenIds(SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? []),
       }),
       {},
     ),
   )
   const user = resolveCurrentUser(storedCurrentUser)
   const userName = getCurrentUserDisplayName(user)
-  const userAvatar = getCurrentUserAvatar(user)
-  const role = getCurrentUserRole(user)
-  const roleMeta = getRoleMeta(role)
-  const openItems = openItemsByTab[activeTab] ?? {}
-  const activeTabNavigation = SIDEBAR_TAB_NAVIGATION[activeTab] ?? []
-  const navigation = filterNavigationByUser(activeTabNavigation, user)
+
+  const navigationByWorkspace = SIDEBAR_WORKSPACES.reduce(
+    (itemsByWorkspace, workspace) => ({
+      ...itemsByWorkspace,
+      [workspace.id]: filterNavigationByUser(
+        SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? [],
+        user,
+      ),
+    }),
+    {},
+  )
+  const availableWorkspaces = SIDEBAR_WORKSPACES.filter(
+    (workspace) => navigationByWorkspace[workspace.id]?.length,
+  )
+  const preferredWorkspace =
+    manualWorkspace?.pathname === location.pathname ? manualWorkspace.id : pathWorkspace
+  const activeWorkspace = availableWorkspaces.some(
+    (workspace) => workspace.id === preferredWorkspace,
+  )
+    ? preferredWorkspace
+    : availableWorkspaces.some((workspace) => workspace.id === pathWorkspace)
+      ? pathWorkspace
+      : availableWorkspaces[0]?.id
+  const navigation = activeWorkspace ? navigationByWorkspace[activeWorkspace] : []
+  const openItems = activeWorkspace ? (openItemsByWorkspace[activeWorkspace] ?? {}) : {}
 
   const toggleItem = (id) => {
-    setOpenItemsByTab((state) => ({
+    if (!activeWorkspace) {
+      return
+    }
+
+    setOpenItemsByWorkspace((state) => ({
       ...state,
-      [activeTab]: {
-        ...(state[activeTab] ?? {}),
-        [id]: !state[activeTab]?.[id],
+      [activeWorkspace]: {
+        ...(state[activeWorkspace] ?? {}),
+        [id]: !state[activeWorkspace]?.[id],
       },
     }))
   }
@@ -231,7 +306,6 @@ export default function AppSidebar({ onNavigate, open }) {
                 pt: 2,
                 pb: 0.5,
                 textTransform: 'uppercase',
-                borderRadius: 10,
               }}
             >
               {t(item.labelKey)}
@@ -243,7 +317,7 @@ export default function AppSidebar({ onNavigate, open }) {
 
       if (item.children) {
         const isOpen = Boolean(openItems[item.id])
-        const active = item.children.some((child) => hasActivePath(child, pathname))
+        const active = item.children.some((child) => hasActivePath(child, location))
 
         return (
           <Box key={item.id}>
@@ -255,7 +329,9 @@ export default function AppSidebar({ onNavigate, open }) {
                 withActiveBorder: depth === 'root',
               })}
             >
-              <NavIcon icon={item.icon} active={depth === 'root' && active} />
+              <Box className="SidebarNavIcon">
+                <NavGlyph icon={item.icon} active={depth === 'root' && active} />
+              </Box>
               <ListItemText primary={t(item.labelKey)} />
               {isOpen ? (
                 <ExpandLessIcon fontSize="small" sx={{ color: 'text.secondary' }} />
@@ -264,14 +340,49 @@ export default function AppSidebar({ onNavigate, open }) {
               )}
             </ListItemButton>
             <Collapse in={isOpen} timeout="auto" unmountOnExit>
-              {renderItems(item.children, item.type === 'group' ? 'sub' : 'group')}
+              {renderItems(item.children, depth === 'root' ? 'group' : 'sub')}
             </Collapse>
           </Box>
         )
       }
 
-      return renderLeafItem({ item, pathname, t, depth, onNavigate })
+      return renderLeafItem({ item, location, t, depth, onNavigate })
     })
+
+  const renderWorkspaceRail = () => (
+    <Box
+      component="nav"
+      aria-label={t('nav.workspacesLabel')}
+      sx={(theme) => ({
+        alignItems: 'center',
+        borderRight: `1px solid ${theme.palette.divider}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0.75,
+        p: 0.75,
+        width: 44,
+      })}
+    >
+      {availableWorkspaces.map((workspace) => {
+        const Icon = WORKSPACE_ICONS[workspace.id] ?? AutoAwesomeMosaicOutlinedIcon
+        const active = activeWorkspace === workspace.id
+
+        return (
+          <ButtonBase
+            key={workspace.id}
+            type="button"
+            title={t(workspace.labelKey)}
+            aria-label={t(workspace.labelKey)}
+            aria-pressed={active}
+            onClick={() => setManualWorkspace({ id: workspace.id, pathname: location.pathname })}
+            sx={workspaceButtonSx({ active })}
+          >
+            <Icon fontSize="small" />
+          </ButtonBase>
+        )
+      })}
+    </Box>
+  )
 
   return (
     <Box
@@ -282,7 +393,6 @@ export default function AppSidebar({ onNavigate, open }) {
         bottom: 0,
         boxSizing: 'border-box',
         display: 'flex',
-        flexDirection: 'column',
         left: 0,
         position: 'fixed',
         top: LAYOUT_SIZES.HEADER_HEIGHT,
@@ -293,80 +403,40 @@ export default function AppSidebar({ onNavigate, open }) {
         width: SIDEBAR_WIDTH,
         zIndex: theme.zIndex.drawer,
       })}
-      className="p-2"
     >
-      <Box
-        component="nav"
-        aria-label={t('nav.sidebarTabs')}
-        sx={{
-          bgcolor: 'background.default',
-          display: 'flex',
-          gap: 1,
-          // p: 1,
-        }}
-      >
-        {SIDEBAR_TABS.map((tab) => {
-          const active = activeTab === tab.id
+      {renderWorkspaceRail()}
 
-          return (
-            <ButtonBase
-              key={tab.id}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setActiveTab(tab.id)}
-              sx={sidebarTabSx({ active })}
-            >
-              {t(tab.labelKey)}
-            </ButtonBase>
-          )
-        })}
-      </Box>
-
-      <List
-        disablePadding
-        sx={{
-          flex: 1,
-          msOverflowStyle: 'none',
-          overflowY: 'auto',
-          py: 1,
-          scrollbarWidth: 'none',
-          '&::-webkit-scrollbar': {
-            display: 'none',
-          },
-        }}
-      >
-        {renderItems(navigation)}
-      </List>
-
-      <Box
-        sx={(theme) => ({
-          borderTop: `1px solid ${theme.palette.divider}`,
-          display: 'flex',
-          gap: 1.5,
-          p: 2,
-        })}
-      >
-        <Avatar src={userAvatar} alt={userName || t('auth.userFallback')}>
-          {getCurrentUserInitials(userName)}
-        </Avatar>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="body1" fontWeight={600} noWrap>
+      <Box sx={{ display: 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
+        <Box
+          sx={(theme) => ({
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            px: 2,
+            py: 1.5,
+          })}
+        >
+          <Typography variant="subtitle2" fontWeight={700} noWrap>
+            {t('app.brandName')}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" noWrap>
             {userName || t('auth.userFallback')}
           </Typography>
-          {roleMeta && (
-            <Chip
-              label={t(roleMeta.labelKey)}
-              size="small"
-              sx={(theme) => ({
-                bgcolor: theme.palette[roleMeta.color].light,
-                color: theme.palette[roleMeta.color].main,
-                fontWeight: 600,
-                height: 22,
-                mt: 0.5,
-              })}
-            />
-          )}
         </Box>
+
+        <List
+          disablePadding
+          sx={{
+            flex: 1,
+            msOverflowStyle: 'none',
+            overflowY: 'auto',
+            py: 1,
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
+          }}
+        >
+          {renderItems(navigation)}
+        </List>
       </Box>
     </Box>
   )

@@ -1,5 +1,6 @@
 export { default as IconActionButton } from './IconActionButton'
 export { default as OperationsHeader } from './OperationsHeader'
+export * from './operationsLayout'
 export { default as OperationsPageShell } from './OperationsPageShell'
 export { default as OperationsPagination } from './OperationsPagination'
 export { default as OperationsTable } from './OperationsTable'

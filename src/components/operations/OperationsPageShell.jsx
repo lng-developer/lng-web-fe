@@ -1,3 +1,5 @@
+import { operationsPageHeightClass } from './operationsLayout'
+
 export default function OperationsPageShell({
   header,
   tabs,
@@ -8,11 +10,15 @@ export default function OperationsPageShell({
 }) {
   return (
     <div
-      className={`flex h-[calc(100dvh-80px)] flex-col gap-3 overflow-hidden bg-surface p-4 md:h-[calc(100dvh-96px)] ${className}`}
+      className={`flex ${operationsPageHeightClass} flex-col gap-3 overflow-hidden bg-surface px-4 pt-0 pb-0 ${className}`}
     >
-      {header ? <div className="shrink-0">{header}</div> : null}
-      {tabs ? <div className="shrink-0">{tabs}</div> : null}
-      {toolbar ? <div className="shrink-0">{toolbar}</div> : null}
+      {header || tabs || toolbar ? (
+        <div className="sticky top-0 z-30 flex shrink-0 flex-col gap-3 bg-surface">
+          {header ? <div>{header}</div> : null}
+          {tabs ? <div>{tabs}</div> : null}
+          {toolbar ? <div>{toolbar}</div> : null}
+        </div>
+      ) : null}
       <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       {pagination ? <div className="shrink-0">{pagination}</div> : null}
     </div>

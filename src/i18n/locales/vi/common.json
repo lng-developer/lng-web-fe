@@ -15,7 +15,15 @@
   },
   "common": {
     "close": "Đóng",
-    "delete": "Xoá"
+    "delete": "Xoá",
+    "all": "Tất cả",
+    "cancel": "Hủy",
+    "refresh": "Làm mới",
+    "retry": "Thử lại",
+    "view": "Xem",
+    "copied": "Đã sao chép",
+    "copyFailed": "Không thể sao chép",
+    "save": "Lưu"
   },
   "nav": {
     "home": "Trang chủ",
@@ -25,9 +33,12 @@
     "hr": "HR",
     "sidebarTabs": "Tab điều hướng sidebar",
     "sections": {
+      "work": "Công việc",
+      "setup": "Thiết lập",
       "sales": "Sales",
       "operations": "Operations",
       "business": "Business",
+      "advanced": "Nâng cao",
       "admin": "Admin"
     },
     "groups": {
@@ -37,7 +48,15 @@
       "finance": "Tài chính",
       "vendors": "Nhà cung cấp",
       "customers": "Khách hàng",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "scale": "Scale",
+      "qc": "QC",
+      "costCenters": "Cost Centers",
+      "monitoring": "Monitoring",
+      "configuration": "Configuration",
+      "reports": "Reports",
+      "amazon": "Amazon",
+      "etsy": "Etsy"
     },
     "items": {
       "orderList": "Danh sách đơn",
@@ -67,7 +86,36 @@
       "shopsStores": "Shop & Store",
       "systemConfig": "Cấu hình hệ thống",
       "apiCoverage": "API Coverage",
-      "auditLog": "Audit Log"
+      "auditLog": "Audit Log",
+      "manageStores": "Manage stores",
+      "skuMapping": "SKU Mapping",
+      "account": "Account",
+      "allOrders": "Tất cả đơn",
+      "amazonOrders": "Amazon Orders",
+      "etsyOrders": "Etsy Orders",
+      "amazonScale": "Amazon Scale",
+      "etsyScale": "Etsy Scale",
+      "amazonQc": "Amazon QC",
+      "etsyQc": "Etsy QC",
+      "psdTasks": "PSD Tasks",
+      "costCenterConfig": "Config",
+      "productTypes": "Product Types",
+      "internalTemplates": "Internal Templates",
+      "ordersCost": "Orders Cost",
+      "saleReport": "Sale Report",
+      "etsySaleReport": "Etsy Sale Report",
+      "etsyOrdersCost": "Etsy Orders Cost",
+      "adsReport": "Ads Report",
+      "adsEtsy": "ADS Etsy"
+    },
+    "workspacesLabel": "Khu vực vận hành",
+    "workspaces": {
+      "orders": "Orders",
+      "production": "Production",
+      "design": "Design",
+      "vendor": "Vendor",
+      "reports": "Reports",
+      "admin": "Admin"
     }
   },
   "listings": {
@@ -1207,6 +1255,7 @@
       "copyOrderId": "Sao chép Order ID {{orderId}}",
       "download": "Tải xuống",
       "uploadMockup": "Upload mockup",
+      "recheck": "Kiểm tra lại",
       "deleteMockup": "Xóa mockup"
     },
     "pagination": {
@@ -1291,6 +1340,7 @@
     },
     "loading": {
       "refreshing": "Đang làm mới dữ liệu...",
+      "rechecking": "Đang kiểm tra lại...",
       "uploading": "Đang tải lên..."
     },
     "messages": {
@@ -1298,6 +1348,9 @@
       "assignError": "Không thể cập nhật người phụ trách scale.",
       "copySuccess": "Đã copy fulfill name.",
       "noteSuccess": "Đã lưu ghi chú CS.",
+      "recheckSuccess": "Đã kiểm tra lại task production.",
+      "recheckStillBlocked": "Task vẫn cần xử lý",
+      "recheckUnavailable": "Thiếu order item nên không thể kiểm tra lại task này.",
       "uploadSuccess": "Đã upload mockup.",
       "uploadError": "Không thể upload file scale.",
       "missingFileCheck": "Task này chưa có file check để upload.",
@@ -1351,11 +1404,21 @@
     "empty": "Không có đơn hàng phù hợp",
     "loading": "Đang tải đơn hàng...",
     "loadingDetails": "Đang tải chi tiết đơn hàng...",
+    "addressStatus": {
+      "valid": "Địa chỉ đã xác minh",
+      "invalid": "Địa chỉ không hợp lệ",
+      "warning": "Địa chỉ cần kiểm tra",
+      "notChecked": "Chưa kiểm tra địa chỉ"
+    },
     "tabs": {
       "all": "Tất cả",
       "new": "Đơn mới",
       "missingCostCenter": "Thiếu Cost Center",
       "missingPsd": "Thiếu PSD",
+      "addressIssue": "Địa chỉ cần xử lý",
+      "atVendor": "Đang ở vendor",
+      "trackingPending": "Chờ tracking",
+      "readyForProduction": "Sẵn sàng tạo task",
       "awaitingPayment": "Chờ thanh toán",
       "processing": "Đang xử lý",
       "shipped": "Đã gửi hàng",
@@ -1420,6 +1483,7 @@
       "fulfillName": "Fulfill Name:",
       "status": "Status",
       "tracking": "Tracking",
+      "carrier": "Carrier",
       "note": "Note"
     },
     "pagination": {
@@ -1504,6 +1568,7 @@
         "onHold": "On hold",
         "mappingPending": "Chờ mapping",
         "customizationPending": "Chờ customization",
+        "waitingCustomization": "Ch? customization",
         "customizationParsed": "Đã parse customization",
         "fulfillmentPlanning": "Đang lập kế hoạch fulfillment",
         "fulfillmentReady": "Fulfillment ready",
@@ -1514,7 +1579,14 @@
         "sentToVendor": "Đã gửi vendor",
         "trackingPending": "Chờ tracking",
         "pending": "Pending",
-        "needScale": "Need Scale"
+        "needScale": "Need Scale",
+        "present": "Có",
+        "missing": "Thiếu",
+        "missingPsd": "Thiếu PSD",
+        "needAddress": "Cần kiểm tra địa chỉ",
+        "needTemplate": "Thiếu template",
+        "needCustomerImage": "Cần ảnh khách hàng",
+        "needsAttention": "Cần kiểm tra"
       },
       "shipping": {
         "standard": "Standard",
@@ -1547,6 +1619,36 @@
         "tracking": "Tracking",
         "note": "Note"
       }
+    },
+    "updateShipping": {
+      "title": "Cập nhật loại vận chuyển",
+      "success": "Đã cập nhật loại vận chuyển.",
+      "fields": {
+        "level": "Loại vận chuyển"
+      },
+      "placeholders": {
+        "level": "Standard"
+      }
+    },
+    "manualVendorMatch": {
+      "searchPlaceholder": "Tìm vendor, sản phẩm, SKU...",
+      "searchHint": "Gõ tên vendor, sản phẩm hoặc mã SKU",
+      "noProducts": "Không có vendor product phù hợp với product type này",
+      "noProductType": "Listing chưa có product type",
+      "missingProductTypeHelp": "Ch\u01b0a th\u1ec3 t\u00ecm vendor product v\u00ec listing n\u00e0y thi\u1ebfu product type. H\u00e3y set product type \u1edf Listing ho\u1eb7c Mapping tr\u01b0\u1edbc.",
+      "vendorProduct": "Vendor Product:",
+      "selectVendorProduct": "Chọn Vendor Product",
+      "selectSize": "Chọn Size",
+      "selectColor": "Chọn Color",
+      "noSize": "Không có size",
+      "noColor": "Không có color",
+      "variantDetails": "Chi tiết variant:",
+      "sku": "SKU: {{value}}",
+      "baseCost": "Base Cost: {{value}}",
+      "standardSize": "Standard Size: {{value}}",
+      "standardColor": "Standard Color: {{value}}",
+      "apply": "Apply",
+      "success": "Đã áp dụng vendor match."
     }
   },
   "vendors": {
@@ -1834,6 +1936,546 @@
     "detail": {
       "selectRow": "Chọn một dòng",
       "payloadPlaceholder": "Sẵn sàng nối form payload"
+    }
+  },
+  "shops": {
+    "title": "Cửa hàng",
+    "subtitle": "Chỉ quản lý cửa hàng nội bộ. Thông tin đăng nhập marketplace không nằm ở đây.",
+    "table": {
+      "id": "ID cửa hàng",
+      "name": "Tên",
+      "currency": "Tiền tệ",
+      "status": "Trạng thái",
+      "updatedAt": "Cập nhật",
+      "actions": "Thao tác"
+    },
+    "dialog": {
+      "createTitle": "Tạo cửa hàng"
+    },
+    "actions": {
+      "create": "Tạo cửa hàng",
+      "activate": "Kích hoạt",
+      "deactivate": "Tắt"
+    },
+    "filters": {
+      "id": "ID cửa hàng",
+      "search": "Tên cửa hàng",
+      "allStatus": "Tất cả trạng thái"
+    },
+    "status": {
+      "active": "Đang hoạt động",
+      "inactive": "Không hoạt động",
+      "suspended": "Tạm dừng"
+    },
+    "messages": {
+      "created": "Đã tạo cửa hàng",
+      "createFailed": "Không thể tạo cửa hàng",
+      "statusUpdated": "Đã cập nhật trạng thái cửa hàng",
+      "updateFailed": "Không thể cập nhật"
+    },
+    "empty": "Không có cửa hàng"
+  },
+  "shipments": {
+    "title": "Vận chuyển",
+    "subtitle": "Theo dõi vận chuyển, kiểm tra tracking vendor và webhook log.",
+    "tabs": {
+      "shipments": "Đơn vận chuyển",
+      "webhooks": "Webhook log"
+    },
+    "table": {
+      "id": "ID vận chuyển",
+      "orderId": "Order ID",
+      "status": "Trạng thái",
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking",
+      "vendorOrderId": "Vendor Order ID",
+      "updatedAt": "Cập nhật",
+      "actions": "Thao tác",
+      "provider": "Provider",
+      "outcome": "Kết quả",
+      "message": "Thông báo",
+      "createdAt": "Ngày tạo"
+    },
+    "filters": {
+      "id": "ID vận chuyển",
+      "orderId": "Order ID",
+      "vendorOrderId": "Vendor Order ID",
+      "trackingNumber": "Tracking"
+    },
+    "actions": {
+      "recheckSubmitted": "Kiểm tra đơn đã gửi",
+      "recheckTracking": "Kiểm tra tracking",
+      "updateTracking": "Cập nhật tracking",
+      "markDelivered": "Đánh dấu đã giao",
+      "markException": "Đánh dấu lỗi"
+    },
+    "messages": {
+      "actionFailed": "Thao tác thất bại",
+      "trackingUpdated": "Đã cập nhật tracking",
+      "trackingRechecked": "Đã kiểm tra tracking",
+      "markedDelivered": "Đã đánh dấu đã giao",
+      "markedException": "Đã đánh dấu lỗi",
+      "submittedRechecked": "Đã kiểm tra tracking đơn đã gửi vendor"
+    },
+    "prompts": {
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking number"
+    },
+    "detail": {
+      "title": "Vận chuyển",
+      "rawRecord": "Dữ liệu gốc"
+    },
+    "empty": {
+      "shipments": "Không có đơn vận chuyển",
+      "webhooks": "Không có webhook log"
+    }
+  },
+  "vendorSubmissions": {
+    "title": "Gửi vendor",
+    "subtitle": "Payload sẵn sàng sản xuất, trạng thái gửi vendor và bàn giao vận chuyển.",
+    "table": {
+      "id": "Submission ID",
+      "orderId": "Order ID",
+      "status": "Trạng thái",
+      "vendor": "Vendor",
+      "costCenter": "Cost Center",
+      "provider": "Provider",
+      "vendorOrderId": "Vendor Order ID",
+      "updatedAt": "Cập nhật",
+      "actions": "Thao tác"
+    },
+    "filters": {
+      "id": "Submission ID",
+      "orderId": "Order ID",
+      "vendorOrderId": "Vendor Order ID"
+    },
+    "actions": {
+      "recheckReady": "Kiểm tra đơn sẵn sàng",
+      "submitToVendor": "Gửi vendor",
+      "markSubmitted": "Đánh dấu đã gửi",
+      "markFailed": "Đánh dấu lỗi",
+      "createShipment": "Tạo vận chuyển"
+    },
+    "messages": {
+      "actionFailed": "Thao tác thất bại",
+      "submittedToVendor": "Đã gửi vendor",
+      "markedSubmitted": "Đã đánh dấu đã gửi",
+      "cancelled": "Đã hủy",
+      "retried": "Đã thử lại",
+      "markedFailed": "Đã đánh dấu lỗi",
+      "shipmentCreated": "Đã tạo vận chuyển",
+      "readyRechecked": "Đã kiểm tra task sẵn sàng"
+    },
+    "prompts": {
+      "cancelReason": "Lý do hủy",
+      "failureReason": "Lý do lỗi"
+    },
+    "detail": {
+      "title": "Gửi vendor",
+      "vendorOrder": "Vendor order",
+      "payloadPreview": "Xem trước payload",
+      "submittedResponse": "Phản hồi đã gửi",
+      "statusHistory": "Lịch sử trạng thái",
+      "noHistory": "Chưa có lịch sử"
+    },
+    "empty": "Không có vendor submission"
+  },
+  "apiCoverage": {
+    "empty": "Không có endpoint nào khớp bộ lọc hiện tại.",
+    "requestFailed": "Request thất bại.",
+    "response": "Phản hồi",
+    "running": "Đang chạy...",
+    "runEndpoint": "Chạy endpoint",
+    "missingPathParam": "Thiếu path param: {{param}}",
+    "fields": {
+      "module": "Module",
+      "searchEndpoint": "Tìm endpoint",
+      "queryJson": "Query JSON",
+      "bodyJson": "Body JSON"
+    },
+    "presets": {
+      "all": {
+        "title": "Backend API Console",
+        "description": "Tất cả endpoint backend không phải health chạy qua FE API client dùng chung."
+      },
+      "audit": {
+        "title": "Audit API",
+        "description": "Bề mặt audit chỉ đọc. Backend hiện chỉ expose health."
+      },
+      "reports": {
+        "title": "Reports API",
+        "description": "Report vận hành từ finance, vendor và các endpoint operations backend."
+      },
+      "shipments": {
+        "title": "Shipping & Vendor Submissions API",
+        "description": "Queue shipment, vendor webhook log, tracking update và action vendor submission."
+      }
+    }
+  },
+  "mapping": {
+    "title": "Mapping Workbench",
+    "subtitle": "Xử lý order item bị chặn và quản lý rule mapping mà không sửa payload API thô.",
+    "status": {
+      "active": "Đang bật",
+      "inactive": "Đang tắt"
+    },
+    "a11y": {
+      "ruleActive": "Rule đang bật"
+    },
+    "validation": {
+      "required": "{{field}} là bắt buộc."
+    },
+    "ruleTypes": {
+      "resolve": "Hàng đợi xử lý",
+      "skuNormalize": "Chuẩn hóa SKU",
+      "skuConfig": "Cấu hình SKU",
+      "semanticRules": "Rule ngữ nghĩa",
+      "valueAliases": "Alias giá trị",
+      "vendorRouting": "Điều hướng vendor"
+    },
+    "guides": {
+      "resolve": {
+        "description": "Dùng queue này cho order item bị chặn. Preview kết quả mapping rồi auto resolve hoặc chọn cost center vendor.",
+        "primaryAction": "Preview hoặc resolve order item đang chọn."
+      },
+      "skuNormalize": {
+        "description": "Dùng khi SKU marketplace cần làm sạch trước khi hệ thống đọc config code.",
+        "primaryAction": "Tạo rule để xóa hoặc thay thế một đoạn SKU."
+      },
+      "skuConfig": {
+        "description": "Dùng để nối SKU config code với product type nội bộ và template sản xuất.",
+        "primaryAction": "Map config code và product type marketplace vào dữ liệu catalog nội bộ."
+      },
+      "semanticRules": {
+        "description": "Dùng khi label option của khách cần hiểu là Size, Color, Product Type hoặc vai trò khác.",
+        "primaryAction": "Dạy hệ thống ý nghĩa của label option hiển thị cho khách."
+      },
+      "valueAliases": {
+        "description": "Dùng khi giá trị option của khách cần chuẩn hóa, ví dụ XXL thành 2XL.",
+        "primaryAction": "Chuẩn hóa giá trị khách trước khi match vendor."
+      },
+      "vendorRouting": {
+        "description": "Dùng để ưu tiên vendor theo product type, shop, channel hoặc marketplace khi có nhiều vendor khớp.",
+        "primaryAction": "Đặt độ ưu tiên vendor cho một phạm vi mapping."
+      }
+    },
+    "batchRecheck": {
+      "title": "Recheck hàng loạt item chưa match"
+    },
+    "actions": {
+      "recheck": "Recheck",
+      "previewMapping": "Preview mapping",
+      "autoResolve": "Auto resolve",
+      "recheckMapping": "Recheck mapping",
+      "selectCandidate": "Chọn candidate",
+      "confirmCandidate": "Xác nhận candidate",
+      "refreshQueue": "Làm mới queue",
+      "refreshRules": "Làm mới rule",
+      "createRule": "Tạo rule",
+      "editRule": "Sửa rule",
+      "turnRuleOff": "Tắt rule",
+      "turnRuleOn": "Bật rule"
+    },
+    "filters": {
+      "searchResolve": "Tìm order item, SKU, config",
+      "planStatus": "Trạng thái plan",
+      "allPlans": "Tất cả plan",
+      "searchRules": "Tìm rule",
+      "ruleStatus": "Trạng thái rule",
+      "allRules": "Tất cả rule"
+    },
+    "resolve": {
+      "title": "Queue xử lý",
+      "subtitle": "Đọc field của order item bị chặn, preview mapping rồi resolve hoặc chọn candidate.",
+      "orderLabel": "Order {{order}}",
+      "originalSku": "SKU gốc",
+      "canonicalSku": "SKU chuẩn",
+      "configCode": "Config code",
+      "plan": "Plan",
+      "blockingReasons": "Lý do bị chặn",
+      "recommendedFixes": "Gợi ý sửa",
+      "normalizedInputs": "Input đã chuẩn hóa",
+      "costCenterCandidates": "Candidate cost center",
+      "noCandidates": "Không có candidate cost center.",
+      "selectOrderItem": "Chọn một order item để xem field mapping và action.",
+      "empty": "Không có mẫu mapping chưa match nào khớp bộ lọc.",
+      "table": {
+        "orderItem": "Order item",
+        "config": "Config",
+        "blocking": "Blocking",
+        "fix": "Fix",
+        "plan": "Plan"
+      }
+    },
+    "rules": {
+      "subtitle": "Quản lý mapping rule bằng field dễ đọc. Rule id vẫn là dữ liệu nội bộ.",
+      "empty": "Không có rule nào khớp bộ lọc.",
+      "table": {
+        "rule": "Rule",
+        "match": "Match",
+        "output": "Output",
+        "scope": "Scope",
+        "priority": "Ưu tiên",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      }
+    },
+    "ruleDialog": {
+      "editTitle": "Sửa {{rule}}",
+      "createTitle": "Tạo {{rule}}",
+      "howToFill": "Cách điền",
+      "advanced": "Nâng cao",
+      "advancedDescription": "Giá trị mặc định đủ cho hầu hết rule. Chỉ đổi khi rule cần phạm vi hẹp hơn.",
+      "current": "Hiện tại",
+      "afterSave": "Sau khi lưu"
+    },
+    "options": {
+      "selectOption": "Chọn một option",
+      "allNotSet": "Tất cả / không đặt",
+      "AMAZON_US": "Amazon US",
+      "ETSY": "Etsy",
+      "AMAZON": "Amazon",
+      "EXACT": "Khớp chính xác",
+      "CONTAINS": "Chứa text",
+      "REMOVE_SEGMENT": "Xóa đoạn SKU",
+      "REPLACE_SEGMENT": "Thay đoạn SKU",
+      "SEGMENT": "Đoạn SKU",
+      "CONFIG": "Config",
+      "COUNTRY": "Quốc gia",
+      "DATE": "Ngày",
+      "SEQUENCE": "Thứ tự",
+      "SIZE": "Size",
+      "COLOR": "Màu",
+      "PRODUCT_TYPE": "Product type",
+      "STYLE": "Style",
+      "MATERIAL": "Chất liệu",
+      "CUSTOM_TEXT": "Text khách nhập",
+      "CUSTOMER_IMAGE": "Ảnh khách",
+      "OTHER": "Khác",
+      "ACTIVE": "Đang bật",
+      "INACTIVE": "Đang tắt"
+    },
+    "fields": {
+      "semanticRules": {
+        "salesChannelCode": {
+          "label": "Kênh bán",
+          "helperText": "Phạm vi áp dụng của rule."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Phạm vi marketplace của rule."
+        },
+        "priority": {
+          "label": "Ưu tiên",
+          "helperText": "Ưu tiên cao hơn sẽ thắng khi nhiều rule cùng khớp."
+        },
+        "status": {
+          "label": "Trạng thái",
+          "helperText": "Tắt rule thay vì xóa rule."
+        },
+        "semanticRole": {
+          "label": "Ý nghĩa option",
+          "helperText": "Option khách thấy đang đại diện cho thông tin gì."
+        },
+        "matchValue": {
+          "label": "Label option của khách",
+          "helperText": "Ví dụ: Select Your Choose Size."
+        },
+        "matchType": {
+          "label": "Cách match",
+          "helperText": "Cách hệ thống match label."
+        },
+        "productTypeGroupId": {
+          "label": "Giới hạn product type",
+          "helperText": "Tùy chọn: chỉ áp dụng rule cho một product type nội bộ."
+        }
+      },
+      "skuConfig": {
+        "salesChannelCode": {
+          "label": "Kênh bán",
+          "helperText": "Phạm vi áp dụng của rule."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Phạm vi marketplace của rule."
+        },
+        "priority": {
+          "label": "Ưu tiên",
+          "helperText": "Ưu tiên cao hơn sẽ thắng khi nhiều rule cùng khớp."
+        },
+        "status": {
+          "label": "Trạng thái",
+          "helperText": "Tắt rule thay vì xóa rule."
+        },
+        "configCode": {
+          "label": "SKU config code",
+          "helperText": "Đoạn config được parse từ SKU, ví dụ TS1S."
+        },
+        "platformProductType": {
+          "label": "Product type marketplace",
+          "helperText": "Text product type từ marketplace."
+        },
+        "productTypeAliases": {
+          "label": "Alias product type",
+          "helperText": "Alias cách nhau bằng dấu phẩy, ví dụ UNISEX T-SHIRT, UNISEX TSHIRT."
+        },
+        "countryCode": {
+          "label": "Quốc gia",
+          "helperText": "Mã quốc gia tùy chọn, ví dụ US."
+        },
+        "productTypeGroupId": {
+          "label": "Product type nội bộ",
+          "helperText": "Product type nội bộ dùng cho catalog và match vendor."
+        },
+        "internalTemplateId": {
+          "label": "Template nội bộ",
+          "helperText": "Template sản xuất nội bộ cho product type này."
+        }
+      },
+      "skuNormalize": {
+        "salesChannelCode": {
+          "label": "Kênh bán",
+          "helperText": "Phạm vi áp dụng của rule."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Phạm vi marketplace của rule."
+        },
+        "priority": {
+          "label": "Ưu tiên",
+          "helperText": "Ưu tiên cao hơn sẽ thắng khi nhiều rule cùng khớp."
+        },
+        "status": {
+          "label": "Trạng thái",
+          "helperText": "Tắt rule thay vì xóa rule."
+        },
+        "configCode": {
+          "label": "SKU config code",
+          "helperText": "Config code tùy chọn mà rule cleanup SKU áp dụng."
+        },
+        "patternType": {
+          "label": "Pattern SKU",
+          "helperText": "Cách đọc SKU."
+        },
+        "segmentIndex": {
+          "label": "Vị trí đoạn SKU",
+          "helperText": "Vị trí đoạn trong SKU, bắt đầu từ 0."
+        },
+        "segmentRole": {
+          "label": "Ý nghĩa đoạn",
+          "helperText": "Ý nghĩa của đoạn SKU này."
+        },
+        "appliesWhenValues": {
+          "label": "Chỉ áp dụng khi value là",
+          "helperText": "Các value cách nhau bằng dấu phẩy để kích hoạt rule."
+        },
+        "outputAction": {
+          "label": "Hành động cleanup",
+          "helperText": "Cách xử lý đoạn đã match."
+        },
+        "replacementValue": {
+          "label": "Giá trị thay thế",
+          "helperText": "Chỉ cần khi dùng hành động replace."
+        }
+      },
+      "valueAliases": {
+        "salesChannelCode": {
+          "label": "Kênh bán",
+          "helperText": "Phạm vi áp dụng của rule."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Phạm vi marketplace của rule."
+        },
+        "priority": {
+          "label": "Ưu tiên",
+          "helperText": "Ưu tiên cao hơn sẽ thắng khi nhiều rule cùng khớp."
+        },
+        "status": {
+          "label": "Trạng thái",
+          "helperText": "Tắt rule thay vì xóa rule."
+        },
+        "semanticRole": {
+          "label": "Nhóm giá trị",
+          "helperText": "Loại giá trị khách cần chuẩn hóa."
+        },
+        "matchValue": {
+          "label": "Giá trị khách gửi",
+          "helperText": "Giá trị từ khách hoặc marketplace."
+        },
+        "normalizedValue": {
+          "label": "Giá trị chuẩn",
+          "helperText": "Giá trị chuẩn dùng để match vendor."
+        },
+        "matchType": {
+          "label": "Cách match",
+          "helperText": "Cách hệ thống match giá trị."
+        }
+      },
+      "vendorRouting": {
+        "salesChannelCode": {
+          "label": "Kênh bán",
+          "helperText": "Phạm vi áp dụng của rule."
+        },
+        "marketplaceCode": {
+          "label": "Marketplace",
+          "helperText": "Phạm vi marketplace của rule."
+        },
+        "priority": {
+          "label": "Ưu tiên",
+          "helperText": "Ưu tiên cao hơn sẽ thắng khi nhiều rule cùng khớp."
+        },
+        "status": {
+          "label": "Trạng thái",
+          "helperText": "Tắt rule thay vì xóa rule."
+        },
+        "shopId": {
+          "label": "Shop",
+          "helperText": "Để trống nếu áp dụng cho mọi shop."
+        },
+        "productTypeGroupId": {
+          "label": "Product type nội bộ",
+          "helperText": "Product type nội bộ mà ưu tiên vendor áp dụng."
+        },
+        "vendorId": {
+          "label": "Vendor ưu tiên",
+          "helperText": "Vendor được ưu tiên cho phạm vi này."
+        }
+      }
+    },
+    "ruleDescriptions": {
+      "semanticRules": "Dùng khi label option của khách cần hiểu là Size, Color, Product Type hoặc vai trò khác.",
+      "skuConfig": "Dùng để nối SKU config code với product type nội bộ và template sản xuất.",
+      "skuNormalize": "Dùng khi SKU marketplace cần làm sạch trước khi hệ thống đọc config code.",
+      "valueAliases": "Dùng khi giá trị option của khách cần chuẩn hóa, ví dụ XXL thành 2XL.",
+      "vendorRouting": "Dùng để ưu tiên vendor theo product type, shop, channel hoặc marketplace khi có nhiều vendor khớp."
+    },
+    "howToFill": {
+      "semanticRules": [
+        "Chọn ý nghĩa của option khách gửi.",
+        "Nhập đúng label option như marketplace gửi về.",
+        "Giữ nguyên Nâng cao trừ khi rule cần phạm vi hẹp hơn."
+      ],
+      "skuConfig": [
+        "Nhập SKU config code được parse từ SKU marketplace.",
+        "Chọn product type nội bộ order cần dùng.",
+        "Chỉ dùng Nâng cao cho alias, quốc gia, template hoặc phạm vi."
+      ],
+      "skuNormalize": [
+        "Nhập vị trí đoạn SKU cần cleanup.",
+        "Chọn ý nghĩa đoạn đó và hành động cleanup.",
+        "Chỉ dùng Nâng cao khi cleanup áp dụng cho config code hoặc value cụ thể."
+      ],
+      "valueAliases": [
+        "Chọn nhóm giá trị như Size hoặc Color.",
+        "Nhập giá trị khách gửi và giá trị chuẩn hệ thống cần dùng.",
+        "Giữ nguyên Nâng cao trừ khi rule cần phạm vi hẹp hơn."
+      ],
+      "vendorRouting": [
+        "Chọn product type nội bộ.",
+        "Chọn vendor cần ưu tiên cho order khớp.",
+        "Chỉ dùng Nâng cao khi rule áp dụng cho một shop, channel hoặc marketplace."
+      ]
     }
   }
 }

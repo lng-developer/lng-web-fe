@@ -148,6 +148,30 @@ function getListingDate(listing = {}) {
   )
 }
 
+function getListingSellerLabel(listing = {}) {
+  return (
+    optionalText(listing.seller?.name) ||
+    optionalText(listing.seller?.employeeCode) ||
+    optionalText(typeof listing.seller === 'string' ? listing.seller : '') ||
+    optionalText(listing.sellerName) ||
+    optionalText(listing.sellerDisplayName) ||
+    optionalText(listing.rawSellerName) ||
+    '-'
+  )
+}
+
+function getListingVariantLabel(listing = {}) {
+  return (
+    optionalText(listing.variantName) ||
+    optionalText(listing.variantSku) ||
+    optionalText(listing.selectedVariant?.name) ||
+    optionalText(listing.selectedVariant?.sku) ||
+    optionalText(listing.templateVariant?.name) ||
+    optionalText(listing.templateVariant?.sku) ||
+    ''
+  )
+}
+
 export function unwrapApiData(response) {
   return response?.success && Object.hasOwn(response, 'data') ? response.data : response
 }
@@ -162,7 +186,6 @@ export function normalizePagination(pagination) {
 
 export function buildListingListQuery(filters = {}) {
   const search = optionalText(filters.search)
-  const searchField = filters.searchField === 'sku' ? 'sku' : 'asin'
   const shopId = filters.shopId === 'all' ? '' : filters.shopId
   const tabQuery = TAB_QUERY_MAP[filters.tab] || {}
 
@@ -179,7 +202,7 @@ export function buildListingListQuery(filters = {}) {
     productTypeGroupId: filters.productTypeGroupId,
     costCenterStatus: filters.costCenterStatus,
     sort: filters.sort,
-    [searchField]: search ? normalizeUpper(search) : undefined,
+    search,
   })
 }
 
@@ -242,7 +265,7 @@ export function mapListingResponse(listing = {}, options = {}) {
     designProduct: internalTemplate.name || internalTemplate.code || '',
     productTypeStatus: productTypeGroup.status || '',
     templateStatus: internalTemplate.id ? 'available' : 'missing',
-    variant: '',
+    variant: getListingVariantLabel(listing),
     psdId: psdTemplateAssetId || listing.sku || '-',
     psdTemplateAssetId,
     psdTemplateAsset,
@@ -252,7 +275,7 @@ export function mapListingResponse(listing = {}, options = {}) {
     psdStatus: rawPsdStatus === 'PRESENT' ? 'available' : 'missing',
     costStatus: normalizeLower(listing.costCenterStatus || 'unknown'),
     store: shopName,
-    seller: `${listing.salesChannelCode || '-'} / ${listing.marketplaceCode || '-'}`,
+    seller: getListingSellerLabel(listing),
     channelLabel: `${listing.salesChannelCode || '-'} / ${listing.marketplaceCode || '-'}`,
     salesLabel: `${orderCount} orders / ${quantitySold} qty`,
     lastSoldAt: formatDate(salesStats.lastSoldAt, options.locale),

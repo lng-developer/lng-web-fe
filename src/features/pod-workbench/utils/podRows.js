@@ -136,6 +136,21 @@ function mappingRow(row, index) {
   }
 }
 
+function catalogRow(row, index) {
+  return {
+    id: getDisplayValue(row.id || row._id || row.code, `API-${index + 1}`),
+    platform: 'Catalog',
+    title: getDisplayValue(row.name || row.title || row.code),
+    owner: getDisplayValue(row.code),
+    status: getDisplayValue(row.status || row.approvalStatus),
+    issue: getDisplayValue(
+      row.issue || row.reason || row.readinessStatus,
+      'Template and listing readiness',
+    ),
+    updatedAt: getDisplayValue(row.updatedAt || row.createdAt),
+  }
+}
+
 function logisticsRow(row, index) {
   return {
     ...baseRow(row, index),
@@ -155,6 +170,7 @@ function logisticsRow(row, index) {
 }
 
 export function mapApiRowForModule(moduleId, row, index) {
+  if (moduleId === 'catalog') return catalogRow(row, index)
   if (moduleId === 'orders') return orderRow(row, index)
   if (moduleId === 'production') return productionRow(row, index)
   if (moduleId === 'finance') return financeRow(row, index)

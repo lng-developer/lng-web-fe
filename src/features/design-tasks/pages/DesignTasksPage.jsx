@@ -8,6 +8,7 @@ import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
   Button,
   Checkbox,
@@ -28,6 +29,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 
+import AnimatedDialog from '@/components/common/AnimatedDialog'
 import DateRangePicker from '@/components/form/DateRangePicker'
 import {
   IconActionButton,
@@ -47,19 +49,30 @@ import {
   useBulkCreatePsdTasksMutation,
   useCancelDesignTaskMutation,
   useCreateDesignTaskMutation,
+  useOverrideSubmissionScoreMutation,
   useRejectDesignTaskMutation,
   useStartDesignTaskMutation,
   useSubmitDesignTaskMutation,
   useUploadMediaAssetMutation,
+  useVoidSubmissionScoreMutation,
 } from '@/features/design-tasks/api/designTasks.mutations'
 import {
   useDesignAssigneesQuery,
+  useDesignScoreSummaryQuery,
+  useDesignTaskDetailQuery,
   useDesignTasksQuery,
   useDesignTaskSummaryQuery,
   useDesignWorkloadQuery,
   usePsdTemplateCandidatesQuery,
 } from '@/features/design-tasks/api/designTasks.queries'
+import DesignScoreSummary from '@/features/design-tasks/components/DesignScoreSummary'
 import {
+  createDesignTaskColumns,
+  DESIGN_TASK_TABLE_MIN_WIDTH,
+} from '@/features/design-tasks/components/designTaskTableColumns'
+import SubmissionScoreEditor from '@/features/design-tasks/components/SubmissionScoreEditor'
+import {
+  buildApproveLatestSubmissionVariables,
   DESIGN_TASK_OUTPUT_OPTIONS,
   DESIGN_TASK_PRIORITY_OPTIONS,
   DESIGN_TASK_TYPE_OPTIONS,
@@ -117,6 +130,8 @@ const EMPTY_CREATE_VALUES = {
   note: '',
   referenceAssetIds: [],
 }
+
+const DESIGN_DIALOG_PAPER_PROPS = { className: 'rounded-xl' }
 
 function fieldFromParams(params, name, fallback) {
   return params.get(name) || fallback
@@ -223,6 +238,7 @@ function DesignFilters({
   }
 
   const secondaryFilterCount = [
+    Boolean(filters.orderId),
     filters.shopId !== 'all',
     showAssigneeFilter && filters.assignedDesignerId !== 'all',
     filters.priority !== 'all',
@@ -231,7 +247,7 @@ function DesignFilters({
 
   return (
     <OperationsToolbar>
-      <div className="grid items-end gap-3 xl:grid-cols-[minmax(260px,1fr)_170px_minmax(250px,340px)_auto_auto]">
+      <div className="grid w-full items-center gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.25fr)_minmax(170px,0.9fr)_minmax(240px,1fr)_minmax(126px,0.55fr)_40px]">
         <TextField
           size="small"
           value={filters.searchInput}
@@ -260,7 +276,7 @@ function DesignFilters({
         <Button
           variant={moreOpen || secondaryFilterCount ? 'contained' : 'outlined'}
           onClick={() => setMoreOpen((current) => !current)}
-          className="h-10 whitespace-nowrap"
+          className="h-10 w-full whitespace-nowrap"
         >
           More filters{secondaryFilterCount ? ` (${secondaryFilterCount})` : ''}
         </Button>
@@ -276,6 +292,12 @@ function DesignFilters({
 
       {moreOpen ? (
         <div className="grid gap-3 rounded-lg bg-surface-subtle p-3 md:grid-cols-2 xl:grid-cols-6">
+          <TextField
+            size="small"
+            value={filters.orderId}
+            onChange={(event) => setField('orderId', event.target.value)}
+            placeholder="Order ID"
+          />
           <FormControl size="small">
             <Select
               value={filters.shopId}
@@ -384,24 +406,21 @@ const TaskTable = memo(function TaskTable({
   onApprove,
   onReject,
   onCancel,
+  onOpenDetail,
 }) {
-  const columns = [
-    { key: 'task', label: 'Task', width: '300px' },
-    { key: 'type', label: 'Type', width: '135px' },
-    { key: 'status', label: 'Status', width: '130px', sortable: true },
-    { key: 'priority', label: 'Priority', width: '115px', sortable: true },
-    showAssignedColumn ? { key: 'owner', label: 'Owner', width: '170px' } : null,
-    { key: 'shop', label: 'Shop', width: '140px' },
-    { key: 'file', label: 'File', width: '150px' },
-    { key: 'updatedAt', label: 'Updated', width: '120px', sortable: true },
-    { key: 'actions', label: 'Actions', width: '190px' },
-  ].filter(Boolean)
+  const columns = useMemo(
+    () => createDesignTaskColumns({ showAssignedColumn }),
+    [showAssignedColumn],
+  )
 
   function renderActions(task) {
     const actions = getDesignTaskActions(task, currentUser)
 
     return (
       <div className="flex items-center gap-1">
+        <IconActionButton label="View task details" onClick={() => onOpenDetail(task)}>
+          <VisibilityOutlinedIcon fontSize="small" />
+        </IconActionButton>
         {actions.canAssign ? (
           <IconActionButton
             label="Assign designer"
@@ -462,13 +481,12 @@ const TaskTable = memo(function TaskTable({
   }
 
   function renderCell(task, column) {
-    if (column.key === 'task') {
+    if (column.key === 'orderId') {
       return (
         <div className="min-w-0">
           <div className="block max-w-full truncate text-left text-sm font-semibold text-ink-strong">
-            {task.listingTitle}
+            {task.orderId}
           </div>
-          <div className="mt-1 truncate text-xs text-ink-muted">{task.listingCode}</div>
         </div>
       )
     }
@@ -514,7 +532,7 @@ const TaskTable = memo(function TaskTable({
       sortBy={sortBy}
       sortOrder={sortOrder}
       onSort={onSort}
-      minWidth="1350px"
+      minWidth={DESIGN_TASK_TABLE_MIN_WIDTH}
     />
   )
 })
@@ -545,9 +563,15 @@ function DesignActionDialog({
             : 'Design action'
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent className="space-y-4 pt-3">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
+    >
+      <DialogTitle className="font-bold text-ink-strong">{title}</DialogTitle>
+      <DialogContent className="grid gap-4 pt-2">
         <div className="rounded-lg border border-border bg-surface-subtle p-3">
           <Typography variant="body2" className="font-semibold text-ink-strong">
             {task?.listingTitle || 'Design task'}
@@ -631,7 +655,7 @@ function DesignActionDialog({
           />
         ) : null}
       </DialogContent>
-      <DialogActions className="px-6 pb-5">
+      <DialogActions className="gap-2 px-6 pb-5">
         <Button variant="outlined" onClick={onClose}>
           Close
         </Button>
@@ -704,7 +728,7 @@ function CreateTaskDialog({
       onClose={onClose}
       fullWidth
       maxWidth="lg"
-      PaperProps={{ className: 'rounded-xl' }}
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
     >
       <DialogTitle className="font-bold text-ink-strong">Create design task</DialogTitle>
       <DialogContent className="grid gap-4 pt-2">
@@ -829,7 +853,7 @@ function CreateTaskDialog({
           size="small"
         />
       </DialogContent>
-      <DialogActions className="px-6 pb-5">
+      <DialogActions className="gap-2 px-6 pb-5">
         <Button variant="outlined" onClick={onClose}>
           Close
         </Button>
@@ -873,7 +897,7 @@ function BulkPsdCreateDialog({
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{ className: 'rounded-xl' }}
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
     >
       <DialogTitle className="font-bold text-ink-strong">Create PSD tasks</DialogTitle>
       <DialogContent className="grid gap-4 pt-2">
@@ -922,7 +946,7 @@ function BulkPsdCreateDialog({
           )}
         </div>
       </DialogContent>
-      <DialogActions className="px-6 pb-5">
+      <DialogActions className="gap-2 px-6 pb-5">
         <Button variant="outlined" onClick={onClose}>
           Close
         </Button>
@@ -938,6 +962,118 @@ function BulkPsdCreateDialog({
         </Button>
       </DialogActions>
     </Dialog>
+  )
+}
+
+function submissionTone(status) {
+  if (status === 'APPROVED') return 'success'
+  if (status === 'REJECTED' || status === 'REMOVED') return 'danger'
+  if (status === 'SUBMITTED') return 'warning'
+  return 'neutral'
+}
+
+function formatDetailDate(value) {
+  return value ? dayjs(value).format('MMM D, YYYY HH:mm') : '-'
+}
+
+function DesignTaskDetailDialog({
+  open,
+  task,
+  isLoading,
+  error,
+  canReviewScores,
+  isScoreSubmitting,
+  onClose,
+  onOverrideScore,
+  onVoidScore,
+}) {
+  return (
+    <AnimatedDialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={DESIGN_DIALOG_PAPER_PROPS}
+    >
+      <DialogTitle className="font-bold text-ink-strong">Design task detail</DialogTitle>
+      <DialogContent className="grid gap-4 pt-2">
+        {isLoading ? <Skeleton variant="rectangular" height={180} className="rounded-lg" /> : null}
+        {error ? (
+          <Typography variant="body2" color="error">
+            Unable to load this design task.
+          </Typography>
+        ) : null}
+        {task ? (
+          <>
+            <div className="grid gap-2 rounded-lg border border-border bg-surface-subtle p-3 sm:grid-cols-2">
+              <div>
+                <Typography variant="body2" className="font-semibold text-ink-strong">
+                  {task.listingTitle}
+                </Typography>
+                <Typography variant="caption" className="text-ink-muted">
+                  {task.taskTypeLabel} · {task.listingCode} · {task.id}
+                </Typography>
+              </div>
+              <div className="flex items-center sm:justify-end">
+                <StatusBadge tone={statusTone(task.statusLabel)}>{task.statusLabel}</StatusBadge>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <Typography variant="subtitle2" className="font-semibold text-ink-strong">
+                Submission history
+              </Typography>
+              {task.submissions.length ? (
+                task.submissions.map((submission) => (
+                  <div
+                    key={submission.id}
+                    className="grid gap-3 border-t border-border pt-3 first:border-t-0 first:pt-0"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Typography
+                          variant="body2"
+                          className="truncate font-semibold text-ink-strong"
+                        >
+                          {submission.fileLabel}
+                        </Typography>
+                        <Typography variant="caption" className="text-ink-muted">
+                          Submitted {formatDetailDate(submission.submittedAt)}
+                          {submission.rejectedAt
+                            ? ` · Rejected ${formatDetailDate(submission.rejectedAt)}`
+                            : ''}
+                          {submission.rejectReason ? ` · ${submission.rejectReason}` : ''}
+                        </Typography>
+                      </div>
+                      <StatusBadge tone={submissionTone(submission.status)}>
+                        {submission.status || 'UNKNOWN'}
+                      </StatusBadge>
+                    </div>
+                    <SubmissionScoreEditor
+                      key={`${submission.score?.id || submission.id}:${submission.score?.finalPoints ?? ''}:${submission.score?.scoreLevel || ''}`}
+                      submission={submission}
+                      canReview={canReviewScores}
+                      isSubmitting={isScoreSubmitting}
+                      onOverride={onOverrideScore}
+                      onVoid={(voidReason) => onVoidScore(submission.id, voidReason)}
+                    />
+                  </div>
+                ))
+              ) : (
+                <Typography variant="body2" className="text-ink-muted">
+                  No submissions yet.
+                </Typography>
+              )}
+            </div>
+          </>
+        ) : null}
+      </DialogContent>
+      <DialogActions className="px-6 pb-5">
+        <Button variant="outlined" onClick={onClose}>
+          Close
+        </Button>
+      </DialogActions>
+    </AnimatedDialog>
   )
 }
 
@@ -959,6 +1095,7 @@ export default function DesignTasksPage() {
     'DESIGN_TASKS:APPROVE',
     'DESIGN_TASKS:REVIEW',
   ])
+  const canReviewScores = hasAnyPermission(currentUser, ['DESIGN:REVIEW', 'DESIGN:WRITE'])
   const canSubmitDesign = hasAnyPermission(currentUser, ['DESIGN:WORK', 'DESIGN_TASKS:SUBMIT'])
   const defaultWorkMode = canManageDesign
     ? 'all'
@@ -974,6 +1111,7 @@ export default function DesignTasksPage() {
   const [filters, setFilters] = useState(() => ({
     statusTab: toStatusTab(fieldFromParams(searchParams, 'status', 'all')),
     searchInput: fieldFromParams(searchParams, 'search', ''),
+    orderId: fieldFromParams(searchParams, 'orderId', ''),
     shopId: fieldFromParams(searchParams, 'shopId', 'all'),
     assignedDesignerId: fieldFromParams(searchParams, 'assignedDesignerId', 'all'),
     priority: fieldFromParams(searchParams, 'priority', 'all'),
@@ -986,14 +1124,16 @@ export default function DesignTasksPage() {
     pageSize: Number(fieldFromParams(searchParams, 'pageSize', '20')) || 20,
   }))
   const debouncedSearch = useDebounce(filters.searchInput, 300)
+  const debouncedOrderId = useDebounce(filters.orderId, 300)
   const query = useMemo(
     () => ({
       ...filters,
       taskType: activeTaskType,
       search: debouncedSearch,
+      orderId: debouncedOrderId,
       shopId: filters.shopId === 'all' ? undefined : filters.shopId,
     }),
-    [activeTaskType, debouncedSearch, filters],
+    [activeTaskType, debouncedOrderId, debouncedSearch, filters],
   )
   const effectiveQuery = useMemo(
     () => ({
@@ -1016,6 +1156,7 @@ export default function DesignTasksPage() {
     if (activeWorkMode !== defaultWorkMode) next.set('mode', activeWorkMode)
     if (filters.statusTab !== 'all') next.set('status', filters.statusTab)
     if (filters.searchInput) next.set('search', filters.searchInput)
+    if (filters.orderId) next.set('orderId', filters.orderId)
     if (filters.shopId !== 'all') next.set('shopId', filters.shopId)
     if (filters.assignedDesignerId !== 'all')
       next.set('assignedDesignerId', filters.assignedDesignerId)
@@ -1047,10 +1188,13 @@ export default function DesignTasksPage() {
   const tasksQuery = useDesignTasksQuery(effectiveQuery)
   const summaryQuery = useDesignTaskSummaryQuery(summaryQueryFilters)
   const workloadQuery = useDesignWorkloadQuery(summaryQueryFilters)
+  const scoreSummaryQuery = useDesignScoreSummaryQuery(summaryQueryFilters)
   const shopsQuery = useListingShopsQuery({ limit: 100 })
   const assigneesQuery = useDesignAssigneesQuery({ taskType: activeTaskType })
   const [actionTask, setActionTask] = useState(null)
   const [selectedAction, setSelectedAction] = useState(null)
+  const [detailTaskId, setDetailTaskId] = useState(null)
+  const detailQuery = useDesignTaskDetailQuery(detailTaskId)
   const [detailState, setDetailState] = useState({
     assignedDesignerId: '',
     assignNote: '',
@@ -1100,6 +1244,8 @@ export default function DesignTasksPage() {
   const rejectMutation = useRejectDesignTaskMutation()
   const cancelMutation = useCancelDesignTaskMutation()
   const bulkCreateMutation = useBulkCreatePsdTasksMutation()
+  const overrideScoreMutation = useOverrideSubmissionScoreMutation()
+  const voidScoreMutation = useVoidSubmissionScoreMutation()
   const startDesignTask = startMutation.mutateAsync
   const approveDesignTask = approveMutation.mutateAsync
   const tasks = tasksQuery.data?.items || []
@@ -1112,6 +1258,15 @@ export default function DesignTasksPage() {
     approveMutation.isPending ||
     rejectMutation.isPending ||
     cancelMutation.isPending
+  const isScoreSubmitting = overrideScoreMutation.isPending || voidScoreMutation.isPending
+
+  useEffect(() => {
+    if (detailTaskId && detailQuery.error) {
+      enqueueSnackbar(detailQuery.error.message || 'Unable to load design task details', {
+        variant: 'error',
+      })
+    }
+  }, [detailQuery.error, detailTaskId, enqueueSnackbar])
 
   const setFilter = useCallback((next) => {
     setFilters((current) => mergeFilters(current, next))
@@ -1177,6 +1332,9 @@ export default function DesignTasksPage() {
     setSelectedAction(null)
   }, [])
 
+  const openDetail = useCallback((task) => setDetailTaskId(task.id), [])
+  const closeDetail = useCallback(() => setDetailTaskId(null), [])
+
   const resetCreate = useCallback(
     (nextType = activeTaskType) => {
       setCreateValues({ ...EMPTY_CREATE_VALUES, taskType: nextType })
@@ -1207,13 +1365,31 @@ export default function DesignTasksPage() {
   const handleSubmitAction = useCallback((task) => openAction(task, 'submit'), [openAction])
 
   const handleApproveTask = useCallback(
-    (task) => runAction(() => approveDesignTask({ taskId: task.id }), 'Task approved'),
+    (task) =>
+      runAction(
+        () => approveDesignTask(buildApproveLatestSubmissionVariables(task)),
+        'Task approved',
+      ),
     [approveDesignTask, runAction],
   )
 
   const handleRejectTask = useCallback((task) => openAction(task, 'reject'), [openAction])
 
   const handleCancelTask = useCallback((task) => openAction(task, 'cancel'), [openAction])
+
+  const handleOverrideScore = useCallback(
+    (payload) => runAction(() => overrideScoreMutation.mutateAsync(payload), 'Score overridden'),
+    [overrideScoreMutation, runAction],
+  )
+
+  const handleVoidScore = useCallback(
+    (submissionId, voidReason) =>
+      runAction(
+        () => voidScoreMutation.mutateAsync({ taskId: detailTaskId, submissionId, voidReason }),
+        'Score voided',
+      ),
+    [detailTaskId, runAction, voidScoreMutation],
+  )
 
   const handleWorkModeChange = useCallback((mode) => {
     setWorkMode((current) => (current === mode ? current : mode))
@@ -1320,6 +1496,11 @@ export default function DesignTasksPage() {
               activeStatus={activeWorkMode === 'review' ? 'uploaded' : filters.statusTab}
               onStatusChange={setStatusFilter}
             />
+            <DesignScoreSummary
+              summary={scoreSummaryQuery.data}
+              isLoading={scoreSummaryQuery.isPending}
+              hasError={scoreSummaryQuery.isError}
+            />
           </div>
         }
         toolbar={
@@ -1368,6 +1549,7 @@ export default function DesignTasksPage() {
           onApprove={handleApproveTask}
           onReject={handleRejectTask}
           onCancel={handleCancelTask}
+          onOpenDetail={openDetail}
         />
       </OperationsPageShell>
 
@@ -1408,6 +1590,18 @@ export default function DesignTasksPage() {
             closeAction()
           }, 'Task cancelled')
         }
+      />
+
+      <DesignTaskDetailDialog
+        open={Boolean(detailTaskId)}
+        task={detailQuery.data}
+        isLoading={detailQuery.isPending}
+        error={detailQuery.error}
+        canReviewScores={canReviewScores}
+        isScoreSubmitting={isScoreSubmitting}
+        onClose={closeDetail}
+        onOverrideScore={handleOverrideScore}
+        onVoidScore={handleVoidScore}
       />
 
       <CreateTaskDialog

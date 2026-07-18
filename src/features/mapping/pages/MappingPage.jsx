@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import EditIcon from '@mui/icons-material/Edit'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ReplayIcon from '@mui/icons-material/Replay'
@@ -41,7 +41,6 @@ import {
   useListingShopsQuery,
 } from '@/features/listings/api/listings.queries'
 import {
-  useMappingConfirmMutation,
   useMappingPreviewMutation,
   useMappingRecheckMutation,
   useMappingRecheckUnmatchedMutation,
@@ -54,7 +53,7 @@ import {
   useMappingInternalTemplatesQuery,
   useMappingPlanQuery,
   useMappingRulesQuery,
-  useMappingWorkbenchQuery,
+  useMappingUnmatchedOrderItemsQuery,
 } from '@/features/mapping/api/mapping.queries'
 import { mappingRuleTypes } from '@/features/mapping/api/mapping.queries'
 import {
@@ -73,7 +72,7 @@ import {
 } from '@/features/mapping/utils/mappingMappers'
 import { useVendorsQuery } from '@/features/vendors/api/vendors.queries'
 
-const tabs = [{ id: 'resolve', label: 'Resolve Queue' }, ...mappingRuleTypes]
+const tabs = [{ id: 'resolve' }, ...mappingRuleTypes]
 const tabIds = new Set(tabs.map((tab) => tab.id))
 const blankBatch = { limit: '50', marketplaceCode: '', salesChannelCode: '', shopId: '' }
 const defaultRowsPerPage = 10
@@ -248,25 +247,29 @@ function InfoField({ label, value }) {
 }
 
 function TabGuide({ tabId }) {
+  const { t } = useTranslation()
   const guide = TAB_GUIDES[tabId]
   if (!guide) return null
 
   return (
     <Alert severity="info" variant="outlined">
       <Typography variant="body2" sx={{ fontWeight: 700 }}>
-        {guide.description}
+        {t(`mapping.guides.${tabId}.description`, { defaultValue: guide.description })}
       </Typography>
-      <Typography variant="body2">{guide.primaryAction}</Typography>
+      <Typography variant="body2">
+        {t(`mapping.guides.${tabId}.primaryAction`, { defaultValue: guide.primaryAction })}
+      </Typography>
     </Alert>
   )
 }
 
 function BatchRecheckDialog({ mutation, onClose }) {
+  const { t } = useTranslation()
   const [values, setValues] = useState(blankBatch)
 
   return (
     <Dialog open maxWidth="sm" fullWidth onClose={onClose}>
-      <DialogTitle>Batch recheck unmatched</DialogTitle>
+      <DialogTitle>{t('mapping.batchRecheck.title')}</DialogTitle>
       <DialogContent>
         <Stack spacing={1.5} sx={{ pt: 1 }}>
           {['shopId', 'salesChannelCode', 'marketplaceCode', 'limit'].map((field) => (
@@ -283,13 +286,13 @@ function BatchRecheckDialog({ mutation, onClose }) {
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('common.cancel')}</Button>
         <Button
           variant="contained"
           disabled={mutation.isPending}
           onClick={() => mutation.mutate(compactPayload(values), { onSuccess: onClose })}
         >
-          Recheck
+          {t('mapping.actions.recheck')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -356,7 +359,24 @@ function RulePreviewCard({ label, preview }) {
   )
 }
 
+function getRuleTypeLabel(t, type) {
+  const ruleType = mappingRuleTypes.find((item) => item.id === type)
+  return t(`mapping.ruleTypes.${type}`, { defaultValue: ruleType?.label || type })
+}
+
+function getRuleFieldText(t, type, field, prop) {
+  return t(`mapping.fields.${type}.${field.payloadKey}.${prop}`, {
+    defaultValue: field[prop],
+  })
+}
+
+function getRuleOptionLabel(t, option) {
+  const value = option.value || option.id
+  return t(`mapping.options.${value}`, { defaultValue: option.label })
+}
+
 function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
+  const { t } = useTranslation()
   const config = MAPPING_RULE_FORM_CONFIG[type]
   const [values, setValues] = useState(() => buildMappingRuleInitialValues(type, rule?.raw || {}))
   const [error, setError] = useState('')
@@ -382,10 +402,14 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
                   [field.payloadKey]: event.target.checked ? 'ACTIVE' : 'INACTIVE',
                 }))
               }
-              slotProps={{ input: { 'aria-label': 'Rule is active' } }}
+              slotProps={{ input: { 'aria-label': t('mapping.a11y.ruleActive') } }}
             />
           }
-          label={(values[field.payloadKey] || 'ACTIVE') === 'ACTIVE' ? 'Active' : 'Inactive'}
+          label={
+            (values[field.payloadKey] || 'ACTIVE') === 'ACTIVE'
+              ? t('mapping.status.active')
+              : t('mapping.status.inactive')
+          }
           sx={{ alignItems: 'center', minHeight: 40 }}
         />
       )
@@ -397,13 +421,13 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
     return (
       <TextField
         key={field.payloadKey}
-        label={field.label}
+        label={getRuleFieldText(t, type, field, 'label')}
         required={Boolean(field.required && !field.defaultValue)}
         select={isSelect}
         size="small"
         type={field.type === 'number' ? 'number' : 'text'}
         value={values[field.payloadKey] ?? ''}
-        helperText={field.helperText}
+        helperText={getRuleFieldText(t, type, field, 'helperText')}
         onChange={(event) =>
           setValues((current) => ({ ...current, [field.payloadKey]: event.target.value }))
         }
@@ -411,11 +435,13 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
         {isSelect
           ? [
               <MenuItem key="empty" value="">
-                {field.required ? 'Select an option' : 'All / not set'}
+                {field.required
+                  ? t('mapping.options.selectOption')
+                  : t('mapping.options.allNotSet')}
               </MenuItem>,
               ...options.map((option) => (
                 <MenuItem key={option.value || option.id} value={option.value || option.id}>
-                  {option.label}
+                  {getRuleOptionLabel(t, option)}
                 </MenuItem>
               )),
             ]
@@ -427,7 +453,10 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
     config.fields.map((field) => [
       field.payloadKey,
       Object.fromEntries(
-        getFieldOptions(field).map((option) => [option.value || option.id, option.label]),
+        getFieldOptions(field).map((option) => [
+          option.value || option.id,
+          getRuleOptionLabel(t, option),
+        ]),
       ),
     ]),
   )
@@ -446,7 +475,11 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
     )
 
     if (missingField) {
-      setError(`${missingField.label} is required.`)
+      setError(
+        t('mapping.validation.required', {
+          field: getRuleFieldText(t, type, missingField, 'label'),
+        }),
+      )
       return
     }
 
@@ -459,20 +492,24 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
 
   return (
     <Dialog open maxWidth="md" fullWidth onClose={onClose}>
-      <DialogTitle>{rule ? `Edit ${config.title}` : `Create ${config.title}`}</DialogTitle>
+      <DialogTitle>
+        {rule
+          ? t('mapping.ruleDialog.editTitle', { rule: getRuleTypeLabel(t, type) })
+          : t('mapping.ruleDialog.createTitle', { rule: getRuleTypeLabel(t, type) })}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Alert severity="info" variant="outlined">
-            {config.description}
+            {t(`mapping.ruleDescriptions.${type}`, { defaultValue: config.description })}
           </Alert>
           <Alert severity="success" variant="outlined">
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              How to fill
+              {t('mapping.ruleDialog.howToFill')}
             </Typography>
             <Stack component="ul" spacing={0.5} sx={{ m: 0, mt: 0.5, pl: 2 }}>
-              {config.howToFill.map((item) => (
+              {config.howToFill.map((item, index) => (
                 <Typography key={item} component="li" variant="body2">
-                  {item}
+                  {t(`mapping.howToFill.${type}.${index}`, { defaultValue: item })}
                 </Typography>
               ))}
             </Stack>
@@ -498,11 +535,10 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
               }}
             >
               <Box component="summary" sx={{ cursor: 'pointer', fontWeight: 700 }}>
-                Advanced
+                {t('mapping.ruleDialog.advanced')}
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Defaults are enough for most rules. Change these only when the rule needs a narrower
-                scope.
+                {t('mapping.ruleDialog.advancedDescription')}
               </Typography>
               <Box
                 sx={{
@@ -526,15 +562,17 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
               },
             }}
           >
-            {currentPreview ? <RulePreviewCard label="Current" preview={currentPreview} /> : null}
-            <RulePreviewCard label="After save" preview={preview} />
+            {currentPreview ? (
+              <RulePreviewCard label={t('mapping.ruleDialog.current')} preview={currentPreview} />
+            ) : null}
+            <RulePreviewCard label={t('mapping.ruleDialog.afterSave')} preview={preview} />
           </Box>
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('common.cancel')}</Button>
         <Button variant="contained" disabled={mutation.isPending} onClick={handleSave}>
-          Save
+          {t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -542,7 +580,6 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
 }
 
 function ResolveDetail({
-  confirmMutation,
   onPreview,
   preview,
   recheckMutation,
@@ -550,6 +587,7 @@ function ResolveDetail({
   row,
   selectMutation,
 }) {
+  const { t } = useTranslation()
   const planQuery = useMappingPlanQuery(row?.id, { enabled: Boolean(row?.id) })
   const plan = mapMappingPlan(planQuery.data)
 
@@ -557,7 +595,7 @@ function ResolveDetail({
     return (
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography variant="body2" color="text.secondary">
-          Select an order item to inspect mapping fields and actions.
+          {t('mapping.resolve.selectOrderItem')}
         </Typography>
       </Paper>
     )
@@ -573,7 +611,7 @@ function ResolveDetail({
           <Box>
             <Typography variant="h6">{row.itemLabel}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Order {row.orderLabel}
+              {t('mapping.resolve.orderLabel', { order: row.orderLabel })}
             </Typography>
           </Box>
           <StatusChip value={previewData?.ready ? 'READY' : row.planStatus} />
@@ -586,15 +624,27 @@ function ResolveDetail({
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
           }}
         >
-          <InfoField label="Original SKU" value={previewData?.originalSku || row.originalSku} />
-          <InfoField label="Canonical SKU" value={previewData?.canonicalSku || row.canonicalSku} />
-          <InfoField label="Config code" value={previewData?.configCode || row.configCode} />
-          <InfoField label="Plan" value={`${plan.status} / ${plan.selectionMode}`} />
+          <InfoField
+            label={t('mapping.resolve.originalSku')}
+            value={previewData?.originalSku || row.originalSku}
+          />
+          <InfoField
+            label={t('mapping.resolve.canonicalSku')}
+            value={previewData?.canonicalSku || row.canonicalSku}
+          />
+          <InfoField
+            label={t('mapping.resolve.configCode')}
+            value={previewData?.configCode || row.configCode}
+          />
+          <InfoField
+            label={t('mapping.resolve.plan')}
+            value={`${plan.status} / ${plan.selectionMode}`}
+          />
         </Box>
 
         <Box>
           <Typography variant="caption" color="text.secondary">
-            Blocking reasons
+            {t('mapping.resolve.blockingReasons')}
           </Typography>
           <DetailList
             items={
@@ -607,14 +657,14 @@ function ResolveDetail({
 
         <Box>
           <Typography variant="caption" color="text.secondary">
-            Recommended fixes
+            {t('mapping.resolve.recommendedFixes')}
           </Typography>
           <DetailList items={row.recommendedFixes} />
         </Box>
 
         <Box>
           <Typography variant="caption" color="text.secondary">
-            Normalized inputs
+            {t('mapping.resolve.normalizedInputs')}
           </Typography>
           <DetailList
             items={
@@ -626,34 +676,34 @@ function ResolveDetail({
         </Box>
 
         <Stack direction="row" flexWrap="wrap" gap={1}>
-          <Tooltip title="Preview mapping">
+          <Tooltip title={t('mapping.actions.previewMapping')}>
             <IconButton
               size="small"
               color="primary"
-              aria-label="Preview mapping"
+              aria-label={t('mapping.actions.previewMapping')}
               onClick={() => onPreview(row.id)}
             >
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Auto resolve">
+          <Tooltip title={t('mapping.actions.autoResolve')}>
             <span>
               <IconButton
                 size="small"
                 disabled={!canMutate}
-                aria-label="Auto resolve"
+                aria-label={t('mapping.actions.autoResolve')}
                 onClick={() => resolveMutation.mutate(row.id)}
               >
                 <AutoFixHighIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="Recheck mapping">
+          <Tooltip title={t('mapping.actions.recheckMapping')}>
             <span>
               <IconButton
                 size="small"
                 disabled={!canMutate}
-                aria-label="Recheck mapping"
+                aria-label={t('mapping.actions.recheckMapping')}
                 onClick={() => recheckMutation.mutate(row.id)}
               >
                 <ReplayIcon fontSize="small" />
@@ -664,7 +714,7 @@ function ResolveDetail({
 
         {previewData ? (
           <Box>
-            <Typography variant="subtitle2">Cost center candidates</Typography>
+            <Typography variant="subtitle2">{t('mapping.resolve.costCenterCandidates')}</Typography>
             <Stack spacing={1} sx={{ mt: 1 }}>
               {previewData.costCenterCandidates.map((candidate) => (
                 <Paper key={candidate.id || candidate.label} variant="outlined" sx={{ p: 1 }}>
@@ -674,55 +724,32 @@ function ResolveDetail({
                     gap={1}
                   >
                     <Typography variant="body2">{candidate.label}</Typography>
-                    <Stack direction="row" spacing={1}>
-                      <Tooltip title="Select candidate">
-                        <span>
-                          <IconButton
-                            size="small"
-                            disabled={!candidate.vendorProductId || !candidate.vendorCostCenterId}
-                            aria-label="Select candidate"
-                            onClick={() =>
-                              selectMutation.mutate({
-                                body: {
-                                  vendorCostCenterId: candidate.vendorCostCenterId,
-                                  vendorProductId: candidate.vendorProductId,
-                                },
-                                orderItemId: row.id,
-                              })
-                            }
-                          >
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Confirm candidate">
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="success"
-                            disabled={!candidate.vendorProductId || !candidate.vendorCostCenterId}
-                            aria-label="Confirm candidate"
-                            onClick={() =>
-                              confirmMutation.mutate({
-                                body: {
-                                  vendorCostCenterId: candidate.vendorCostCenterId,
-                                  vendorProductId: candidate.vendorProductId,
-                                },
-                                orderItemId: row.id,
-                              })
-                            }
-                          >
-                            <CheckCircleOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </Stack>
+                    <Tooltip title={t('mapping.actions.selectCandidate')}>
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={!candidate.vendorProductId || !candidate.vendorCostCenterId}
+                          aria-label={t('mapping.actions.selectCandidate')}
+                          onClick={() =>
+                            selectMutation.mutate({
+                              body: {
+                                vendorCostCenterId: candidate.vendorCostCenterId,
+                                vendorProductId: candidate.vendorProductId,
+                              },
+                              orderItemId: row.id,
+                            })
+                          }
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </Stack>
                 </Paper>
               ))}
               {previewData.costCenterCandidates.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  No cost center candidates returned.
+                  {t('mapping.resolve.noCandidates')}
                 </Typography>
               ) : null}
             </Stack>
@@ -734,20 +761,19 @@ function ResolveDetail({
 }
 
 function ResolveQueue() {
+  const { t } = useTranslation()
   const [selectedRow, setSelectedRow] = useState(null)
   const [preview, setPreview] = useState(null)
   const [batchOpen, setBatchOpen] = useState(false)
   const [resolveSearch, setResolveSearch] = useState('')
-  const [planStatusFilter, setPlanStatusFilter] = useState('ALL')
   const [resolvePage, setResolvePage] = useState(0)
   const [resolveRowsPerPage, setResolveRowsPerPage] = useState(defaultRowsPerPage)
-  const query = useMemo(() => ({ sampleLimit: 50 }), [])
-  const workbenchQuery = useMappingWorkbenchQuery(query)
-  const rows = useMemo(() => mapMappingWorkbenchRows(workbenchQuery.data), [workbenchQuery.data])
-  const planStatusOptions = useMemo(
-    () => [...new Set(rows.map((row) => row.planStatus).filter(Boolean))].sort(),
-    [rows],
+  const query = useMemo(
+    () => ({ limit: resolveRowsPerPage, page: resolvePage + 1 }),
+    [resolvePage, resolveRowsPerPage],
   )
+  const unmatchedQuery = useMappingUnmatchedOrderItemsQuery(query)
+  const rows = useMemo(() => mapMappingWorkbenchRows(unmatchedQuery.data), [unmatchedQuery.data])
   const filteredRows = useMemo(
     () =>
       filterBySearch(rows, resolveSearch, (row) => [
@@ -758,27 +784,24 @@ function ResolveQueue() {
         row.configCode,
         row.blockingReasons,
         row.recommendedFixes,
-      ]).filter((row) => planStatusFilter === 'ALL' || row.planStatus === planStatusFilter),
-    [planStatusFilter, resolveSearch, rows],
+      ]),
+    [resolveSearch, rows],
   )
-  const safeResolvePage = getSafePage(filteredRows.length, resolvePage, resolveRowsPerPage)
-  const pageRows = useMemo(
-    () => paginateRows(filteredRows, safeResolvePage, resolveRowsPerPage),
-    [filteredRows, resolveRowsPerPage, safeResolvePage],
-  )
+  const totalRows = resolveSearch.trim()
+    ? filteredRows.length
+    : unmatchedQuery.data?.pagination?.total || unmatchedQuery.data?.total || rows.length
+  const pageRows = filteredRows
   const previewMutation = useMappingPreviewMutation()
   const resolveMutation = useMappingResolveMutation()
   const recheckMutation = useMappingRecheckMutation()
   const selectMutation = useMappingSelectMutation()
-  const confirmMutation = useMappingConfirmMutation()
   const recheckUnmatchedMutation = useMappingRecheckUnmatchedMutation()
   const error =
-    workbenchQuery.error ||
+    unmatchedQuery.error ||
     previewMutation.error ||
     resolveMutation.error ||
     recheckMutation.error ||
     selectMutation.error ||
-    confirmMutation.error ||
     recheckUnmatchedMutation.error
 
   return (
@@ -786,28 +809,28 @@ function ResolveQueue() {
       <TabGuide tabId="resolve" />
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={1}>
         <Box>
-          <Typography variant="h6">Resolve queue</Typography>
+          <Typography variant="h6">{t('mapping.resolve.title')}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Read blocked order item fields, preview mapping, then resolve or select a candidate.
+            {t('mapping.resolve.subtitle')}
           </Typography>
         </Box>
         <Stack direction="row" spacing={0.5}>
-          <Tooltip title="Refresh queue">
+          <Tooltip title={t('mapping.actions.refreshQueue')}>
             <IconButton
               size="small"
-              aria-label="Refresh queue"
-              onClick={() => workbenchQuery.refetch()}
+              aria-label={t('mapping.actions.refreshQueue')}
+              onClick={() => unmatchedQuery.refetch()}
             >
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Button variant="outlined" onClick={() => setBatchOpen(true)}>
-            Batch recheck unmatched
+            {t('mapping.batchRecheck.title')}
           </Button>
         </Stack>
       </Stack>
 
-      {workbenchQuery.isFetching ? <LinearProgress /> : null}
+      {unmatchedQuery.isFetching ? <LinearProgress /> : null}
       {error ? <Alert severity="error">{error.message}</Alert> : null}
 
       <Stack
@@ -817,7 +840,7 @@ function ResolveQueue() {
       >
         <TextField
           fullWidth
-          label="Search order item, SKU, config"
+          label={t('mapping.filters.searchResolve')}
           size="small"
           value={resolveSearch}
           onChange={(event) => {
@@ -825,24 +848,6 @@ function ResolveQueue() {
             setResolvePage(0)
           }}
         />
-        <TextField
-          label="Plan status"
-          select
-          size="small"
-          sx={{ minWidth: { xs: '100%', md: 180 } }}
-          value={planStatusFilter}
-          onChange={(event) => {
-            setPlanStatusFilter(event.target.value)
-            setResolvePage(0)
-          }}
-        >
-          <MenuItem value="ALL">All plans</MenuItem>
-          {planStatusOptions.map((status) => (
-            <MenuItem key={status} value={status}>
-              {status}
-            </MenuItem>
-          ))}
-        </TextField>
       </Stack>
 
       <Box
@@ -856,12 +861,12 @@ function ResolveQueue() {
           <Table size="small" sx={{ minWidth: 840, ...compactTableSx }}>
             <TableHead>
               <TableRow>
-                <TableCell>Order item</TableCell>
+                <TableCell>{t('mapping.resolve.table.orderItem')}</TableCell>
                 <TableCell>SKU</TableCell>
-                <TableCell>Config</TableCell>
-                <TableCell>Blocking</TableCell>
-                <TableCell>Fix</TableCell>
-                <TableCell>Plan</TableCell>
+                <TableCell>{t('mapping.resolve.table.config')}</TableCell>
+                <TableCell>{t('mapping.resolve.table.blocking')}</TableCell>
+                <TableCell>{t('mapping.resolve.table.fix')}</TableCell>
+                <TableCell>{t('mapping.resolve.table.plan')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -898,12 +903,12 @@ function ResolveQueue() {
                   </TableCell>
                 </TableRow>
               ))}
-              {!workbenchQuery.isFetching && filteredRows.length === 0 ? (
+              {!unmatchedQuery.isFetching && filteredRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6}>
                     <Box sx={{ py: 5, textAlign: 'center' }}>
                       <Typography variant="body2" color="text.secondary">
-                        No unmatched mapping samples match the current filters.
+                        {t('mapping.resolve.empty')}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -913,8 +918,8 @@ function ResolveQueue() {
           </Table>
           <TablePagination
             component="div"
-            count={filteredRows.length}
-            page={safeResolvePage}
+            count={totalRows}
+            page={resolvePage}
             rowsPerPage={resolveRowsPerPage}
             rowsPerPageOptions={rowsPerPageOptions}
             onPageChange={(_, page) => setResolvePage(page)}
@@ -926,7 +931,6 @@ function ResolveQueue() {
         </Paper>
 
         <ResolveDetail
-          confirmMutation={confirmMutation}
           preview={preview}
           recheckMutation={recheckMutation}
           resolveMutation={resolveMutation}
@@ -951,6 +955,7 @@ function ResolveQueue() {
 }
 
 function RuleSection({ type }) {
+  const { t } = useTranslation()
   const [dialogState, setDialogState] = useState(null)
   const [ruleSearch, setRuleSearch] = useState('')
   const [ruleStatusFilter, setRuleStatusFilter] = useState('ALL')
@@ -981,7 +986,6 @@ function RuleSection({ type }) {
     () => paginateRows(filteredRows, safeRulePage, ruleRowsPerPage),
     [filteredRows, ruleRowsPerPage, safeRulePage],
   )
-  const ruleType = mappingRuleTypes.find((item) => item.id === type)
   const optionsBySource = useMemo(
     () => ({
       productTypes: productTypesQuery.data || [],
@@ -1008,26 +1012,26 @@ function RuleSection({ type }) {
         }}
       >
         <Box>
-          <Typography variant="h6">{ruleType.label}</Typography>
+          <Typography variant="h6">{getRuleTypeLabel(t, type)}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage mapping rules with readable fields. Rule ids stay internal.
+            {t('mapping.rules.subtitle')}
           </Typography>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ justifySelf: { xs: 'flex-start', md: 'end' } }}>
-          <Tooltip title="Refresh rules">
+          <Tooltip title={t('mapping.actions.refreshRules')}>
             <IconButton
               size="small"
-              aria-label="Refresh rules"
+              aria-label={t('mapping.actions.refreshRules')}
               onClick={() => rulesQuery.refetch()}
             >
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Create rule">
+          <Tooltip title={t('mapping.actions.createRule')}>
             <IconButton
               color="primary"
               size="small"
-              aria-label="Create rule"
+              aria-label={t('mapping.actions.createRule')}
               onClick={() => setDialogState({ rule: null })}
             >
               <AddIcon fontSize="small" />
@@ -1050,7 +1054,7 @@ function RuleSection({ type }) {
       >
         <TextField
           fullWidth
-          label="Search rules"
+          label={t('mapping.filters.searchRules')}
           size="small"
           value={ruleSearch}
           onChange={(event) => {
@@ -1059,7 +1063,7 @@ function RuleSection({ type }) {
           }}
         />
         <TextField
-          label="Rule status"
+          label={t('mapping.filters.ruleStatus')}
           select
           size="small"
           sx={{ minWidth: { xs: '100%', md: 180 } }}
@@ -1069,9 +1073,9 @@ function RuleSection({ type }) {
             setRulePage(0)
           }}
         >
-          <MenuItem value="ALL">All rules</MenuItem>
-          <MenuItem value="ACTIVE">Active</MenuItem>
-          <MenuItem value="INACTIVE">Inactive</MenuItem>
+          <MenuItem value="ALL">{t('mapping.filters.allRules')}</MenuItem>
+          <MenuItem value="ACTIVE">{t('mapping.status.active')}</MenuItem>
+          <MenuItem value="INACTIVE">{t('mapping.status.inactive')}</MenuItem>
         </TextField>
       </Stack>
 
@@ -1079,14 +1083,16 @@ function RuleSection({ type }) {
         <Table size="small" sx={{ minWidth: 920, tableLayout: 'fixed', ...compactTableSx }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={ruleTableColumnSx.rule}>Rule</TableCell>
-              <TableCell sx={ruleTableColumnSx.match}>Match</TableCell>
-              <TableCell sx={ruleTableColumnSx.output}>Output</TableCell>
-              <TableCell sx={ruleTableColumnSx.scope}>Scope</TableCell>
-              <TableCell sx={ruleTableColumnSx.priority}>Priority</TableCell>
-              <TableCell sx={ruleTableColumnSx.status}>Status</TableCell>
+              <TableCell sx={ruleTableColumnSx.rule}>{t('mapping.rules.table.rule')}</TableCell>
+              <TableCell sx={ruleTableColumnSx.match}>{t('mapping.rules.table.match')}</TableCell>
+              <TableCell sx={ruleTableColumnSx.output}>{t('mapping.rules.table.output')}</TableCell>
+              <TableCell sx={ruleTableColumnSx.scope}>{t('mapping.rules.table.scope')}</TableCell>
+              <TableCell sx={ruleTableColumnSx.priority}>
+                {t('mapping.rules.table.priority')}
+              </TableCell>
+              <TableCell sx={ruleTableColumnSx.status}>{t('mapping.rules.table.status')}</TableCell>
               <TableCell align="right" sx={ruleTableColumnSx.actions}>
-                Actions
+                {t('mapping.rules.table.actions')}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -1101,7 +1107,11 @@ function RuleSection({ type }) {
                   <TableCell sx={{ overflowWrap: 'anywhere' }}>{row.scope}</TableCell>
                   <TableCell>{row.priority}</TableCell>
                   <TableCell>
-                    <Tooltip title={active ? 'Turn rule off' : 'Turn rule on'}>
+                    <Tooltip
+                      title={
+                        active ? t('mapping.actions.turnRuleOff') : t('mapping.actions.turnRuleOn')
+                      }
+                    >
                       <Box component="span" sx={ruleStatusSwitchSx}>
                         <RuleStatusToggle
                           checked={active}
@@ -1119,10 +1129,10 @@ function RuleSection({ type }) {
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
-                      <Tooltip title="Edit rule">
+                      <Tooltip title={t('mapping.actions.editRule')}>
                         <IconButton
                           size="small"
-                          aria-label="Edit rule"
+                          aria-label={t('mapping.actions.editRule')}
                           onClick={() => setDialogState({ rule: row })}
                         >
                           <EditIcon fontSize="small" />
@@ -1138,7 +1148,7 @@ function RuleSection({ type }) {
                 <TableCell colSpan={7}>
                   <Box sx={{ py: 5, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
-                      No rules match the current filters.
+                      {t('mapping.rules.empty')}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -1174,6 +1184,7 @@ function RuleSection({ type }) {
 }
 
 export default function MappingPage() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState(getInitialMappingTab)
   const isResolve = activeTab === 'resolve'
 
@@ -1181,11 +1192,9 @@ export default function MappingPage() {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Stack spacing={2.5}>
         <Box>
-          <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 30 }, fontWeight: 700 }}>
-            Mapping Workbench
-          </Typography>
+          <Typography variant="h1">{t('mapping.title')}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Resolve blocked order items and maintain mapping rules without editing raw API payloads.
+            {t('mapping.subtitle')}
           </Typography>
         </Box>
 
@@ -1200,7 +1209,7 @@ export default function MappingPage() {
             }}
           >
             {tabs.map((tab) => (
-              <Tab key={tab.id} label={tab.label} value={tab.id} />
+              <Tab key={tab.id} label={getRuleTypeLabel(t, tab.id)} value={tab.id} />
             ))}
           </Tabs>
         </Paper>

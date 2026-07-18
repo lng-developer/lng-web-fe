@@ -15,12 +15,44 @@ export const typography = {
     lineHeight: 1.3,
   },
   h2: {
-    fontSize: '1rem',
-    fontWeight: 600,
+    fontSize: '1.25rem',
+    fontWeight: 700,
+    lineHeight: 1.35,
   },
   h3: {
+    fontSize: '1rem',
+    fontWeight: 700,
+    lineHeight: 1.4,
+  },
+  h4: {
+    fontSize: '0.875rem',
+    fontWeight: 700,
+    lineHeight: 1.45,
+  },
+  h5: {
+    fontSize: '0.875rem',
+    fontWeight: 700,
+    lineHeight: 1.45,
+  },
+  h6: {
+    fontSize: '0.8125rem',
+    fontWeight: 700,
+    lineHeight: 1.45,
+  },
+  subtitle1: {
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    lineHeight: 1.45,
+  },
+  subtitle2: {
     fontSize: '0.8125rem',
     fontWeight: 600,
+    lineHeight: 1.45,
+  },
+  overline: {
+    fontSize: '0.6875rem',
+    fontWeight: 700,
+    lineHeight: 1.35,
     letterSpacing: '0.0385em',
     textTransform: 'uppercase',
   },
@@ -32,9 +64,17 @@ export const typography = {
   body2: {
     fontSize: '0.8125rem',
     fontWeight: 400,
+    lineHeight: 1.45,
   },
   caption: {
     fontSize: '0.6875rem',
     fontWeight: 600,
+    lineHeight: 1.35,
+  },
+  button: {
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    lineHeight: 1.45,
+    textTransform: 'none',
   },
 }

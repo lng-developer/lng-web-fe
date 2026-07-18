@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link as RouterLink } from 'react-router-dom'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -46,13 +47,80 @@ function getStatusChipColor(status) {
 
 function MetricCard({ label, value }) {
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+    <Paper variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
         {label}
       </Typography>
-      <Typography variant="h5" sx={{ mt: 0.5, fontWeight: 800 }}>
+      <Typography variant="h5" sx={{ mt: 0.75, fontWeight: 800 }}>
         {value}
       </Typography>
+    </Paper>
+  )
+}
+
+function ActionButton({ children, href, variant }) {
+  return (
+    <Button
+      component={href ? RouterLink : 'button'}
+      to={href || undefined}
+      variant={variant}
+      sx={{ borderRadius: 1.5, fontWeight: 800, minHeight: 40, px: 2.5 }}
+    >
+      {children}
+    </Button>
+  )
+}
+
+function SetupSteps({ steps }) {
+  if (!steps?.length) return null
+
+  return (
+    <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1,
+          gridTemplateColumns: { xs: '1fr', md: `repeat(${steps.length}, minmax(0, 1fr))` },
+        }}
+      >
+        {steps.map((step, index) => (
+          <Box
+            key={step}
+            sx={{
+              alignItems: 'center',
+              bgcolor: index === 0 ? 'primary.light' : 'background.default',
+              border: '1px solid',
+              borderColor: index === 0 ? 'primary.main' : 'divider',
+              borderRadius: 1.5,
+              display: 'flex',
+              gap: 1,
+              minHeight: 48,
+              px: 1.5,
+            }}
+          >
+            <Box
+              sx={{
+                alignItems: 'center',
+                bgcolor: index === 0 ? 'primary.main' : 'background.paper',
+                border: '1px solid',
+                borderColor: index === 0 ? 'primary.main' : 'divider',
+                borderRadius: '50%',
+                color: index === 0 ? 'primary.contrastText' : 'text.secondary',
+                display: 'inline-flex',
+                fontWeight: 900,
+                height: 24,
+                justifyContent: 'center',
+                width: 24,
+              }}
+            >
+              {index + 1}
+            </Box>
+            <Typography variant="body2" sx={{ fontWeight: 800 }}>
+              {step}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
     </Paper>
   )
 }
@@ -98,7 +166,6 @@ function ApiContracts({ contracts, t }) {
               sx={{
                 color: 'text.primary',
                 fontFamily: 'monospace',
-                fontSize: 12,
                 overflowWrap: 'anywhere',
               }}
             >
@@ -117,31 +184,30 @@ function ApiContracts({ contracts, t }) {
 function WorkbenchTable({ columns, loading, rows, selectedId, onSelect }) {
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
-      <Box
-        sx={{
-          bgcolor: 'background.default',
-          display: 'grid',
-          gap: 1,
-          gridTemplateColumns:
-            'minmax(170px,1.3fr) 100px minmax(130px,1fr) minmax(150px,1fr) 120px 110px',
-          minWidth: 880,
-          px: 2,
-          py: 1.25,
-        }}
-      >
-        {columns.map((column) => (
-          <Typography
-            key={column}
-            variant="caption"
-            color="text.secondary"
-            sx={{ fontWeight: 800 }}
-          >
-            {column}
-          </Typography>
-        ))}
-      </Box>
       <Box sx={{ overflowX: 'auto' }}>
         <Box sx={{ minWidth: 880 }}>
+          <Box
+            sx={{
+              bgcolor: 'background.default',
+              display: 'grid',
+              gap: 1,
+              gridTemplateColumns:
+                'minmax(170px,1.3fr) 100px minmax(130px,1fr) minmax(150px,1fr) 120px 110px',
+              px: 2,
+              py: 1.25,
+            }}
+          >
+            {columns.map((column) => (
+              <Typography
+                key={column}
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 800 }}
+              >
+                {column}
+              </Typography>
+            ))}
+          </Box>
           {loading
             ? Array.from({ length: 5 }, (_, index) => (
                 <Box
@@ -243,7 +309,12 @@ function DetailDrawer({ moduleConfig, row, t }) {
 
       <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 2 }}>
         {moduleConfig.actions.map((action, index) => (
-          <Button key={action} variant={index === 0 ? 'contained' : 'outlined'} size="small">
+          <Button
+            key={action}
+            variant={index === 0 ? 'contained' : 'outlined'}
+            size="small"
+            sx={{ borderRadius: 1.25, fontWeight: 800 }}
+          >
             {action}
           </Button>
         ))}
@@ -283,41 +354,51 @@ export default function PodWorkbenchPage({ moduleId }) {
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: 'calc(100vh - 112px)' }}>
       <Stack spacing={2.25}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}
-        >
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
-              {moduleConfig.eyebrow}
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 900, mt: 0.5 }}>
-              {moduleConfig.title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {moduleConfig.description}
-            </Typography>
-            <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
-              <Chip
-                color={usesApiRows ? 'success' : moduleQuery.isError ? 'warning' : 'default'}
-                label={sourceLabel}
-                size="small"
-                variant={usesApiRows ? 'filled' : 'outlined'}
-              />
-              <Chip
-                component="code"
-                label={moduleConfig.primaryEndpoint}
-                size="small"
-                variant="outlined"
-              />
+        <Paper variant="outlined" sx={{ bgcolor: 'background.paper', borderRadius: 2, p: 3 }}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}
+          >
+            <Box sx={{ maxWidth: 760 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
+                {moduleConfig.eyebrow}
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 900, mt: 0.5 }}>
+                {moduleConfig.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {moduleConfig.description}
+              </Typography>
+              {moduleConfig.showSourceMeta === false ? null : (
+                <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
+                  <Chip
+                    color={usesApiRows ? 'success' : moduleQuery.isError ? 'warning' : 'default'}
+                    label={sourceLabel}
+                    size="small"
+                    variant={usesApiRows ? 'filled' : 'outlined'}
+                  />
+                  <Chip
+                    component="code"
+                    label={moduleConfig.primaryEndpoint}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Stack>
+              )}
+            </Box>
+            <Stack direction="row" flexWrap="wrap" gap={1}>
+              <ActionButton href={moduleConfig.secondaryHref} variant="outlined">
+                {moduleConfig.secondaryAction}
+              </ActionButton>
+              <ActionButton href={moduleConfig.primaryHref} variant="contained">
+                {moduleConfig.primaryAction}
+              </ActionButton>
             </Stack>
-          </Box>
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined">{moduleConfig.secondaryAction}</Button>
-            <Button variant="contained">{moduleConfig.primaryAction}</Button>
           </Stack>
-        </Stack>
+        </Paper>
+
+        <SetupSteps steps={moduleConfig.setupSteps} />
 
         <Box
           sx={{
@@ -388,7 +469,8 @@ export default function PodWorkbenchPage({ moduleId }) {
           <Alert severity="warning">
             {t('podWorkbench.alerts.apiError', { endpoint: moduleConfig.primaryEndpoint })}
           </Alert>
-        ) : !usesApiRows && !moduleQuery.isLoading ? (
+        ) : moduleConfig.showSourceMeta === false ? null : !usesApiRows &&
+          !moduleQuery.isLoading ? (
           <Alert severity="info">
             {t('podWorkbench.alerts.emptyRows', { endpoint: moduleConfig.primaryEndpoint })}
           </Alert>
@@ -409,7 +491,9 @@ export default function PodWorkbenchPage({ moduleId }) {
               selectedId={selectedRow?.id}
               onSelect={setSelectedId}
             />
-            <ApiContracts contracts={moduleConfig.contracts} t={t} />
+            {moduleConfig.showContracts === false ? null : (
+              <ApiContracts contracts={moduleConfig.contracts} t={t} />
+            )}
           </Stack>
           <DetailDrawer moduleConfig={moduleConfig} row={selectedRow} t={t} />
         </Box>

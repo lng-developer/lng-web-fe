@@ -25,8 +25,8 @@ test('MappingPage rule dialog shows a user-facing rule preview', () => {
 test('MappingPage rule dialog compares the current rule with the after-save preview', () => {
   const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
 
-  assert.equal(source.includes('Current'), true)
-  assert.equal(source.includes('After save'), true)
+  assert.equal(source.includes('mapping.ruleDialog.current'), true)
+  assert.equal(source.includes('mapping.ruleDialog.afterSave'), true)
 })
 
 test('MappingPage rule dialog separates required fields from advanced fields', () => {
@@ -34,8 +34,8 @@ test('MappingPage rule dialog separates required fields from advanced fields', (
 
   assert.equal(source.includes('mainFields'), true)
   assert.equal(source.includes('advancedFields'), true)
-  assert.equal(source.includes('How to fill'), true)
-  assert.equal(source.includes('Advanced'), true)
+  assert.equal(source.includes('mapping.ruleDialog.howToFill'), true)
+  assert.equal(source.includes('mapping.ruleDialog.advanced'), true)
 })
 
 test('MappingPage uses compact icon actions and tighter table spacing', () => {
@@ -43,7 +43,7 @@ test('MappingPage uses compact icon actions and tighter table spacing', () => {
 
   assert.equal(source.includes('IconButton'), true)
   assert.equal(source.includes('Tooltip'), true)
-  assert.equal(source.includes('aria-label="Edit rule"'), true)
+  assert.equal(source.includes("aria-label={t('mapping.actions.editRule')}"), true)
   assert.equal(source.includes('borderSpacing'), true)
   assert.equal(source.includes('size="small"'), true)
 })
@@ -83,11 +83,19 @@ test('MappingPage exposes search filters and pagination for mapping tables', () 
   const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
 
   assert.equal(source.includes('TablePagination'), true)
-  assert.equal(source.includes('Search order item, SKU, config'), true)
-  assert.equal(source.includes('Plan status'), true)
-  assert.equal(source.includes('Search rules'), true)
-  assert.equal(source.includes('Rule status'), true)
+  assert.equal(source.includes('mapping.filters.searchResolve'), true)
+  assert.equal(source.includes('mapping.filters.searchRules'), true)
+  assert.equal(source.includes('mapping.filters.ruleStatus'), true)
   assert.equal(source.includes('filterBySearch'), true)
+})
+
+test('MappingPage uses unmatched queue endpoint and one candidate selection action', () => {
+  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('useMappingUnmatchedOrderItemsQuery'), true)
+  assert.equal(source.includes('useMappingWorkbenchQuery'), false)
+  assert.equal(source.includes('useMappingConfirmMutation'), false)
+  assert.equal(source.includes('confirmCandidate'), false)
 })
 
 test('MappingPage keeps active tab in the URL and lazy loads modal option APIs', () => {

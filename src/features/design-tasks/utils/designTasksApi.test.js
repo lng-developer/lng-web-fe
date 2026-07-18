@@ -4,13 +4,17 @@ import test from 'node:test'
 import { DESIGN_TASK_STATUS_TABS } from '../constants/designTasksConstants.js'
 import {
   buildApproveDesignTaskPayload,
+  buildApproveLatestSubmissionVariables,
   buildAssignDesignTaskPayload,
   buildBulkCreatePsdTasksPayload,
   buildCancelDesignTaskPayload,
   buildCreateDesignTaskPayload,
+  buildDesignScoreSummaryQuery,
   buildDesignTaskQuery,
+  buildOverrideSubmissionScorePayload,
   buildRejectDesignTaskPayload,
   buildSubmitDesignTaskPayload,
+  buildVoidSubmissionScorePayload,
   getDesignTaskActions,
   getPsdTaskActions,
   mapBackendDesignTasksResponse,
@@ -26,6 +30,7 @@ test('buildDesignTaskQuery maps PSD tab filters to backend task query', () => {
     buildDesignTaskQuery({
       taskType: 'PSD_TEMPLATE',
       statusTab: DESIGN_TASK_STATUS_TABS.IN_PROGRESS,
+      orderId: ' 111-7980434-4279402 ',
       search: ' b0abc ',
       shopId: 'shop-1',
       assignedDesignerId: 'designer-1',
@@ -41,6 +46,7 @@ test('buildDesignTaskQuery maps PSD tab filters to backend task query', () => {
     {
       taskType: 'PSD_TEMPLATE',
       status: 'IN_PROGRESS',
+      orderId: '111-7980434-4279402',
       search: 'b0abc',
       shopId: 'shop-1',
       assignedDesignerId: 'designer-1',
@@ -87,6 +93,7 @@ test('mapBackendDesignTasksResponse flattens backend PSD task rows for the table
             psdStatus: 'MISSING',
             title: 'Personalized Shirt',
           },
+          orderItemSnapshot: { externalOrderId: '113-1234567-1234567' },
           assignedDesigner: { fullName: 'Jane Cooper' },
           seller: { name: 'Main Shop' },
           asinType: 'NORMAL',
@@ -101,6 +108,7 @@ test('mapBackendDesignTasksResponse flattens backend PSD task rows for the table
   assert.equal(result.summaryTotal, 1)
   assert.equal(result.counts[DESIGN_TASK_STATUS_TABS.REQUESTED], 1)
   assert.equal(result.items[0].id, 'task-1')
+  assert.equal(result.items[0].orderId, '113-1234567-1234567')
   assert.deepEqual(result.items[0].createdAt, {
     date: 'Jul 15, 2026',
     relative: '2026-07-15T00:00:00.000Z',
@@ -132,6 +140,7 @@ test('mapBackendDesignTasksResponse maps rows without using raw ids as primary l
 
   assert.equal(result.items[0].listingTitle, 'Unknown listing')
   assert.equal(result.items[0].listingCode, '-')
+  assert.equal(result.items[0].orderId, '-')
   assert.equal(result.items[0].assigned, 'Unassigned')
   assert.equal(result.items[0].latestFile, 'No file')
 })
@@ -171,6 +180,35 @@ test('mapDesignTaskDetail preserves submissions and asset ids from backend detai
   assert.deepEqual(detail.latestSubmission.assetIds, ['asset-1', 'asset-2'])
   assert.equal(detail.latestSubmission.assets[0].filename, 'template.psd')
   assert.equal(detail.submissions[0].assets[0].downloadUrl, '/api/media/assets/asset-2/download')
+})
+
+test('mapDesignTaskDetail preserves a submission score for review actions', () => {
+  const detail = mapDesignTaskDetail({
+    id: 'task-1',
+    submissions: [
+      {
+        id: 'submission-1',
+        status: 'APPROVED',
+        score: {
+          id: 'score-1',
+          finalPoints: 3.75,
+          scoreLevel: 'HARD',
+          status: 'ACTIVE',
+          override: { points: 3.75, reason: 'Urgent task' },
+          voidReason: null,
+        },
+      },
+    ],
+  })
+
+  assert.deepEqual(detail.submissions[0].score, {
+    id: 'score-1',
+    finalPoints: 3.75,
+    scoreLevel: 'HARD',
+    status: 'ACTIVE',
+    override: { points: 3.75, reason: 'Urgent task' },
+    voidReason: null,
+  })
 })
 
 test('design task mutation payload builders omit empty optional fields', () => {
@@ -216,6 +254,48 @@ test('design task mutation payload builders omit empty optional fields', () => {
       filters: { shopId: 'shop-1', salesChannelCode: 'AMAZON' },
       limit: 20,
     },
+  )
+})
+
+test('buildApproveLatestSubmissionVariables picks asset id from latest submission row data', () => {
+  assert.deepEqual(
+    buildApproveLatestSubmissionVariables({
+      id: 'task-1',
+      raw: {
+        latestSubmission: {
+          id: 'submission-1',
+          assetIds: ['asset-1'],
+        },
+      },
+    }),
+    {
+      taskId: 'task-1',
+      approvedAssetId: 'asset-1',
+      submissionId: 'submission-1',
+    },
+  )
+})
+
+test('score helpers omit empty score level and summary filters', () => {
+  assert.deepEqual(
+    buildOverrideSubmissionScorePayload({
+      points: ' 3.5 ',
+      scoreLevel: ' ',
+      overrideReason: ' Priority changed ',
+    }),
+    { points: 3.5, overrideReason: 'Priority changed' },
+  )
+  assert.deepEqual(buildVoidSubmissionScorePayload({ voidReason: ' Duplicate score ' }), {
+    voidReason: 'Duplicate score',
+  })
+  assert.deepEqual(
+    buildDesignScoreSummaryQuery({
+      dateFrom: ' 2026-07-01 ',
+      dateTo: '',
+      taskType: 'psd_template',
+      assignedDesignerId: 'designer-1',
+    }),
+    { dateFrom: '2026-07-01', taskType: 'PSD_TEMPLATE', designerId: 'designer-1' },
   )
 })
 

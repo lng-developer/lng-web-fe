@@ -25,6 +25,7 @@ test('buildProductionTaskQuery maps shared filters and channel to the production
     }),
     {
       designAssignmentStatus: 'ASSIGNED',
+      readyForScale: true,
       salesChannelCode: 'AMAZON',
       search: 'ORD-10042',
       shopId: '660000000000000000000201',
@@ -40,6 +41,7 @@ test('buildProductionTaskQuery maps shared filters and channel to the production
 test('buildProductionTaskQuery maps every server-supported status tab', () => {
   assert.deepEqual(buildProductionTaskQuery({ statusTab: 'needScale' }), {
     scaleStatus: 'NEED_SCALE',
+    readyForScale: true,
     page: 1,
     limit: 10,
     sort: '-updatedAt',
@@ -48,6 +50,7 @@ test('buildProductionTaskQuery maps every server-supported status tab', () => {
   assert.equal(buildProductionTaskQuery({ statusTab: 'qcRejected' }).qcStatus, 'REJECTED')
   assert.deepEqual(buildProductionTaskQuery({ statusTab: 'csUnassigned' }), {
     csUnassigned: true,
+    readyForScale: true,
     page: 1,
     limit: 10,
     sort: '-updatedAt',
@@ -64,6 +67,7 @@ test('buildProductionSummaryQuery keeps shared filters but removes list status a
       pageSize: 50,
     }),
     {
+      readyForScale: true,
       salesChannelCode: 'ETSY',
       shopId: 'shop-1',
       sort: '-updatedAt',
@@ -99,6 +103,7 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   const result = mapProductionTask(
     {
       id: 'task-1',
+      orderItemId: 'order-item-1',
       shopId: 'shop-1',
       salesChannelCode: 'AMAZON',
       marketplaceCode: 'AMAZON_US',
@@ -184,6 +189,7 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   )
 
   assert.equal(result.orderId, 'ORD-10042')
+  assert.equal(result.orderItemId, 'order-item-1')
   assert.equal(result.groupId, 'GRP-001')
   assert.equal(result.groupType, 'SCALE')
   assert.equal(result.channel, 'AMAZON')
@@ -247,6 +253,17 @@ test('mapProductionTask derives pending and rejected display states', () => {
   assert.equal(
     mapProductionTask({ scaleStatus: 'SCALED', qcStatus: 'REJECTED' }).scaleStatus,
     'QC_REJECTED',
+  )
+})
+
+test('mapProductionTask uses the backend workflow stage before legacy production fields', () => {
+  assert.equal(
+    mapProductionTask({
+      workflow: { stage: 'READY_FOR_SCALE' },
+      productionStatus: 'READY_TO_SEND_VENDOR',
+      scaleStatus: 'SCALED',
+    }).scaleStatus,
+    'NEED_SCALE',
   )
 })
 

@@ -10,7 +10,7 @@ export default function OperationsPagination({
   const pageCount = Math.max(Math.ceil((total || 0) / pageSize), 1)
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
       <Typography variant="body2" className="text-ink-muted">
         {total || 0} records / page {page} of {pageCount}
       </Typography>
@@ -43,6 +43,7 @@ export default function OperationsPagination({
           }}
         />
       </div>
+      <div aria-hidden="true" />
     </div>
   )
 }

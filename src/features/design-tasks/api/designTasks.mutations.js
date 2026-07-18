@@ -11,8 +11,10 @@ import {
   buildBulkCreatePsdTasksPayload,
   buildCancelDesignTaskPayload,
   buildCreateDesignTaskPayload,
+  buildOverrideSubmissionScorePayload,
   buildRejectDesignTaskPayload,
   buildSubmitDesignTaskPayload,
+  buildVoidSubmissionScorePayload,
   mapDesignTaskDetail,
   unwrapApiData,
 } from '../utils/designTasksApi'
@@ -24,6 +26,11 @@ function invalidateDesignFlow(queryClient, taskId) {
   queryClient.invalidateQueries({ queryKey: designTasksKeys.submissions(taskId) })
   queryClient.invalidateQueries({ queryKey: listingsKeys.all })
   queryClient.invalidateQueries({ queryKey: scaleKeys.all })
+}
+
+function invalidateDesignScores(queryClient) {
+  queryClient.invalidateQueries({ queryKey: designTasksKeys.all })
+  queryClient.invalidateQueries({ queryKey: designTasksKeys.scoreSummary() })
 }
 
 export function useUploadMediaAssetMutation() {
@@ -171,5 +178,35 @@ export function useDeleteDesignSubmissionMutation() {
         .then(unwrapApiData)
         .then(mapDesignTaskDetail),
     onSuccess: (_data, variables) => invalidateDesignFlow(queryClient, variables.taskId),
+  })
+}
+
+export function useOverrideSubmissionScoreMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ scoreId, points, scoreLevel, overrideReason }) =>
+      apiClient
+        .patch(
+          ENDPOINTS.DESIGN.OVERRIDE_SUBMISSION_SCORE(scoreId),
+          buildOverrideSubmissionScorePayload({ points, scoreLevel, overrideReason }),
+        )
+        .then(unwrapApiData),
+    onSuccess: () => invalidateDesignScores(queryClient),
+  })
+}
+
+export function useVoidSubmissionScoreMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ taskId, submissionId, voidReason }) =>
+      apiClient
+        .patch(
+          ENDPOINTS.DESIGN.VOID_SUBMISSION_SCORE(taskId, submissionId),
+          buildVoidSubmissionScorePayload({ voidReason }),
+        )
+        .then(unwrapApiData),
+    onSuccess: () => invalidateDesignScores(queryClient),
   })
 }

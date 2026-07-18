@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
@@ -25,6 +25,7 @@ export function useOrderWorkbenchQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: ordersKeys.workbench(query),
     queryFn: () => get(ENDPOINTS.ORDERS.WORKBENCH, query),
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -33,7 +34,7 @@ export function useOrderSummaryQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: ordersKeys.summary(query),
     queryFn: () => get(ENDPOINTS.ORDERS.SUMMARY, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -42,7 +43,7 @@ export function useCustomerExceptionsQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: ordersKeys.customerExceptions(query),
     queryFn: () => get(ENDPOINTS.ORDERS.CUSTOMER_EXCEPTIONS, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -51,7 +52,7 @@ export function useOrderCasesQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: ordersKeys.cases(query),
     queryFn: () => get(ENDPOINTS.ORDERS.CASES, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -142,7 +143,7 @@ export function useShopsQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: ordersKeys.shops(query),
     queryFn: () => get(ENDPOINTS.SHOPS.LIST, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -178,7 +179,7 @@ export function useImportIssuesQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: ordersKeys.importIssues(query),
     queryFn: () => get(ENDPOINTS.ORDER_IMPORTS.ISSUES, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }

@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import {
+  buildDesignScoreSummaryQuery,
   buildDesignTaskQuery,
   mapBackendDesignTasksResponse,
   mapDesignAssignees,
@@ -23,6 +24,7 @@ export function useDesignTasksQuery(query = {}, options = {}) {
         .get(ENDPOINTS.DESIGN.TASKS, { params: buildDesignTaskQuery(query) })
         .then(unwrapApiData)
         .then((response) => mapBackendDesignTasksResponse(response, query)),
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -45,6 +47,18 @@ export function useDesignTaskSummaryQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: designTasksKeys.summary(params),
     queryFn: () => apiClient.get(ENDPOINTS.DESIGN.SUMMARY, { params }).then(unwrapApiData),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
+export function useDesignScoreSummaryQuery(filters = {}, options = {}) {
+  const params = buildDesignScoreSummaryQuery(filters)
+
+  return useQuery({
+    queryKey: designTasksKeys.scoreSummary(params),
+    queryFn: () => apiClient.get(ENDPOINTS.DESIGN.SCORE_SUMMARY, { params }).then(unwrapApiData),
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -61,6 +75,7 @@ export function useDesignWorkloadQuery(query = {}, options = {}) {
         .get(ENDPOINTS.DESIGN.WORKLOAD, { params })
         .then(unwrapApiData)
         .then(mapDesignWorkload),
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -99,6 +114,7 @@ export function usePsdTemplateCandidatesQuery(query = {}, options = {}) {
         .get(ENDPOINTS.DESIGN.PSD_TEMPLATE_CANDIDATES, { params: query })
         .then(unwrapApiData)
         .then(mapPsdTemplateCandidatesResponse),
+    placeholderData: keepPreviousData,
     ...options,
   })
 }

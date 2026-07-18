@@ -35,7 +35,7 @@ export default function MainLayout() {
 
       <Box
         component="main"
-        className="flex-1 p-4 transition-[margin] duration-200 md:p-6"
+        className="h-[calc(100dvh-48px)] flex-1 overflow-hidden px-4 pt-0 pb-0 transition-[margin] duration-200 md:px-6 md:pt-0 md:pb-0"
         sx={{
           marginLeft: { md: sidebarOpen ? `${SIDEBAR_WIDTH}px` : 0 },
           marginTop: `${LAYOUT_SIZES.HEADER_HEIGHT}px`,

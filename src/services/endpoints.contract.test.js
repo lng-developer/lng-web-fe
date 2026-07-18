@@ -26,6 +26,15 @@ test('external order import job endpoints do not include a jobs segment', () => 
 test('design workload endpoint matches backend task route', () => {
   assert.equal(ENDPOINTS.DESIGN.WORKLOAD, '/api/design/tasks/workload')
   assert.equal(ENDPOINTS.DESIGN.SUMMARY, '/api/design/tasks/summary')
+  assert.equal(ENDPOINTS.DESIGN.SCORE_SUMMARY, '/api/design/score-summary')
+  assert.equal(
+    ENDPOINTS.DESIGN.OVERRIDE_SUBMISSION_SCORE('score-1'),
+    '/api/design/submission-scores/score-1/override',
+  )
+  assert.equal(
+    ENDPOINTS.DESIGN.VOID_SUBMISSION_SCORE('task-1', 'submission-1'),
+    '/api/design/tasks/task-1/submissions/submission-1/score/void',
+  )
   assert.equal(ENDPOINTS.DESIGN.SUBMISSIONS('task-1'), '/api/design/tasks/task-1/submissions')
   assert.equal(
     ENDPOINTS.DESIGN.DELETE_SUBMISSION('task-1', 'submission-1'),
@@ -50,6 +59,7 @@ test('missing backend endpoint constants match backend routes', () => {
   assert.equal(ENDPOINTS.AUTH.LOGOUT, '/api/auth/logout')
   assert.equal(ENDPOINTS.AUTH.REGISTER, '/api/auth/register')
   assert.equal(ENDPOINTS.MAPPING.SUMMARY, '/api/mapping/summary')
+  assert.equal(ENDPOINTS.MAPPING.UNMATCHED_ORDER_ITEMS, '/api/mapping/order-items/unmatched')
   assert.equal(
     ENDPOINTS.PRODUCTION.MANUAL_FILE_CHECK('task-1'),
     '/api/production/tasks/task-1/file-checks/manual',
@@ -59,7 +69,10 @@ test('missing backend endpoint constants match backend routes', () => {
     '/api/production/tasks/task-1/file-checks/manual/scaled-output-file',
   )
   assert.equal(ENDPOINTS.SHIPMENTS.SUMMARY, '/api/shipments/summary')
-  assert.equal(ENDPOINTS.SHIPMENTS.RECHECK_VENDOR_TRACKING, '/api/shipments/vendor-tracking/recheck')
+  assert.equal(
+    ENDPOINTS.SHIPMENTS.RECHECK_VENDOR_TRACKING,
+    '/api/shipments/vendor-tracking/recheck',
+  )
   assert.equal(
     ENDPOINTS.SHIPMENTS.RECHECK_SUBMITTED_VENDOR_TRACKING,
     '/api/shipments/vendor-tracking/recheck-submitted',

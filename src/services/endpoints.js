@@ -129,6 +129,7 @@ export const ENDPOINTS = {
   MAPPING: {
     SUMMARY: '/api/mapping/summary',
     CONFIG_WORKBENCH: '/api/mapping/config-workbench',
+    UNMATCHED_ORDER_ITEMS: '/api/mapping/order-items/unmatched',
     RECHECK_UNMATCHED: '/api/mapping/recheck-unmatched',
     NORMALIZATION_RULES: '/api/mapping/normalization-rules',
     NORMALIZATION_RULE: (id) => `/api/mapping/normalization-rules/${id}`,
@@ -162,6 +163,10 @@ export const ENDPOINTS = {
     TASK: (id) => `/api/design/tasks/${id}`,
     WORKLOAD: '/api/design/tasks/workload',
     SUMMARY: '/api/design/tasks/summary',
+    SCORE_SUMMARY: '/api/design/score-summary',
+    OVERRIDE_SUBMISSION_SCORE: (scoreId) => `/api/design/submission-scores/${scoreId}/override`,
+    VOID_SUBMISSION_SCORE: (taskId, submissionId) =>
+      `/api/design/tasks/${taskId}/submissions/${submissionId}/score/void`,
     FROM_LISTING_PSD_TEMPLATE: (listingId) =>
       `/api/design/tasks/from-listings/${listingId}/psd-template`,
     BULK_CREATE_PSD_FROM_LISTINGS: '/api/design/tasks/bulk-create-psd-from-listings',

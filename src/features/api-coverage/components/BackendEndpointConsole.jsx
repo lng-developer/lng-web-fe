@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import {
   Alert,
@@ -45,11 +46,8 @@ async function runEndpoint({ endpoint, params, queryText, bodyText }) {
   return apiClient[method](path, body, { params: query }).then(unwrapApiData)
 }
 
-export default function BackendEndpointConsole({
-  description = 'Run backend endpoints through the shared FE API client.',
-  moduleIds,
-  title = 'Backend API Console',
-}) {
+export default function BackendEndpointConsole({ description, moduleIds, title }) {
+  const { t } = useTranslation()
   const allowedModules = moduleIds?.length ? moduleIds : BACKEND_ENDPOINT_MODULES
   const [moduleId, setModuleId] = useState(allowedModules[0])
   const [search, setSearch] = useState('')
@@ -84,7 +82,7 @@ export default function BackendEndpointConsole({
     if (!selectedEndpoint) return
     const missingParam = selectedEndpoint.paramNames.find((name) => !params[name])
     if (missingParam) {
-      setLocalError(`Missing path param: ${missingParam}`)
+      setLocalError(t('apiCoverage.missingPathParam', { param: missingParam }))
       mutation.reset()
       return
     }
@@ -97,19 +95,19 @@ export default function BackendEndpointConsole({
       <Stack spacing={2}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 900 }}>
-            {title}
+            {title || t('apiCoverage.presets.all.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {description}
+            {description || t('apiCoverage.presets.all.description')}
           </Typography>
         </Box>
 
         <Paper variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
           <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5}>
             <FormControl size="small" sx={{ minWidth: 220 }}>
-              <InputLabel id="api-module-label">Module</InputLabel>
+              <InputLabel id="api-module-label">{t('apiCoverage.fields.module')}</InputLabel>
               <Select
-                label="Module"
+                label={t('apiCoverage.fields.module')}
                 labelId="api-module-label"
                 value={moduleId}
                 onChange={(event) => {
@@ -126,7 +124,7 @@ export default function BackendEndpointConsole({
               </Select>
             </FormControl>
             <TextField
-              label="Search endpoint"
+              label={t('apiCoverage.fields.searchEndpoint')}
               size="small"
               value={search}
               onChange={(event) => {
@@ -164,7 +162,8 @@ export default function BackendEndpointConsole({
                       <Chip label={endpoint.method} size="small" />
                       <Typography
                         component="code"
-                        sx={{ fontFamily: 'monospace', fontSize: 12, overflowWrap: 'anywhere' }}
+                        className="text-xs"
+                        sx={{ fontFamily: 'monospace', overflowWrap: 'anywhere' }}
                       >
                         {endpoint.path}
                       </Typography>
@@ -202,7 +201,7 @@ export default function BackendEndpointConsole({
                   ))}
 
                   <TextField
-                    label="Query JSON"
+                    label={t('apiCoverage.fields.queryJson')}
                     minRows={3}
                     multiline
                     value={queryText}
@@ -211,7 +210,7 @@ export default function BackendEndpointConsole({
                   {selectedEndpoint.method === 'GET' ||
                   selectedEndpoint.method === 'DELETE' ? null : (
                     <TextField
-                      label="Body JSON"
+                      label={t('apiCoverage.fields.bodyJson')}
                       minRows={5}
                       multiline
                       value={bodyText}
@@ -224,30 +223,32 @@ export default function BackendEndpointConsole({
                     startIcon={<PlayArrowIcon />}
                     variant="contained"
                   >
-                    {mutation.isPending ? 'Running...' : 'Run endpoint'}
+                    {mutation.isPending ? t('apiCoverage.running') : t('apiCoverage.runEndpoint')}
                   </Button>
                 </Stack>
               ) : (
-                <Alert severity="info">No endpoint matches the current filters.</Alert>
+                <Alert severity="info">{t('apiCoverage.empty')}</Alert>
               )}
             </Paper>
 
             {localError ? <Alert severity="warning">{localError}</Alert> : null}
             {mutation.isError ? (
-              <Alert severity="error">{mutation.error?.message || 'Request failed.'}</Alert>
+              <Alert severity="error">
+                {mutation.error?.message || t('apiCoverage.requestFailed')}
+              </Alert>
             ) : null}
             {mutation.isSuccess ? (
               <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
                 <Box sx={{ bgcolor: 'background.default', px: 2, py: 1 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                    Response
+                    {t('apiCoverage.response')}
                   </Typography>
                 </Box>
                 <Box
                   component="pre"
+                  className="text-xs"
                   sx={{
                     fontFamily: 'monospace',
-                    fontSize: 12,
                     m: 0,
                     maxHeight: 360,
                     overflow: 'auto',

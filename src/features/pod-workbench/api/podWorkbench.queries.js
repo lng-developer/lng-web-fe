@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '@/services/axiosInstance'
 
@@ -20,7 +20,7 @@ export function usePodModuleQuery(moduleConfig, query = {}, options = {}) {
   return useQuery({
     queryKey: podWorkbenchKeys.module(moduleConfig.id, query),
     queryFn: () => get(moduleConfig.primaryEndpoint, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -30,7 +30,7 @@ export function usePodModuleSummaryQuery(moduleConfig, query = {}, options = {})
     queryKey: podWorkbenchKeys.summary(moduleConfig.id, query),
     queryFn: () => get(moduleConfig.summaryEndpoint, query),
     enabled: Boolean(moduleConfig.summaryEndpoint),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }

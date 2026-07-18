@@ -122,6 +122,9 @@ finance|POST|/api/finance/order-items/:orderItemId/recalculate
 finance|POST|/api/finance/orders/:orderId/recalculate
 finance|GET|/api/finance/orders/:orderId/summary
 design|GET|/api/design/assignees
+design|GET|/api/design/score-summary
+design|PATCH|/api/design/submission-scores/:scoreId/override
+design|PATCH|/api/design/tasks/:taskId/submissions/:submissionId/score/void
 design|GET|/api/design/tasks
 design|GET|/api/design/tasks/summary
 design|GET|/api/design/tasks/workload
@@ -144,6 +147,7 @@ media|GET|/api/media/assets/:assetId/download
 mapping|GET|/api/mapping/config-workbench
 mapping|GET|/api/mapping/summary
 mapping|POST|/api/mapping/recheck-unmatched
+mapping|GET|/api/mapping/order-items/unmatched
 mapping|GET|/api/mapping/normalization-rules
 mapping|POST|/api/mapping/normalization-rules
 mapping|GET|/api/mapping/normalization-rules/:id

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
@@ -13,6 +14,7 @@ import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -24,11 +26,13 @@ import {
   MenuItem,
   Pagination,
   Select,
+  Skeleton,
   Switch,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 
 import StatusSwitch from '@/components/common/StatusSwitch'
@@ -36,8 +40,6 @@ import {
   IconActionButton,
   OperationsHeader,
   OperationsPagination,
-  OperationsTable,
-  OperationsTabs,
   OperationsToolbar,
 } from '@/components/operations'
 import { apiClient } from '@/services/axiosInstance'
@@ -71,6 +73,7 @@ import {
   mapListingStats,
   unwrapApiData,
 } from '../utils/listingsApi'
+import { getListingWorkspaceView, LISTING_WORKSPACE_VIEWS } from '../utils/listingView'
 
 const DEFAULT_LIMIT = 10
 
@@ -91,15 +94,57 @@ const listingTabs = [
   { key: 'rejected', countKey: 'rejected' },
 ]
 
-const listingTableColumns = [
-  { key: 'activity', label: 'Last sold', width: '130px' },
-  { key: 'listing', label: 'Listing', width: '300px' },
-  { key: 'product', label: 'Product', width: '210px' },
-  { key: 'readiness', label: 'Readiness', width: '240px' },
-  { key: 'ownership', label: 'Ownership', width: '190px' },
-  { key: 'type', label: 'Type', width: '120px', align: 'center' },
-  { key: 'actions', label: 'Actions', width: '230px', align: 'center' },
-]
+function ListingStatusTabs({ items, value, onChange }) {
+  return (
+    <div className="flex min-w-0 flex-1 overflow-x-auto border-b border-border">
+      {items.map((item) => {
+        const active = value === item.value
+
+        return (
+          <Button
+            key={item.value}
+            variant="text"
+            onClick={() => {
+              if (!active) onChange(item.value)
+            }}
+            sx={(theme) => ({
+              borderBottom: active
+                ? `2px solid ${theme.palette.primary.main}`
+                : '2px solid transparent',
+              borderRadius: 0,
+              color: active ? 'primary.main' : 'text.disabled',
+              flex: '0 0 auto',
+              fontWeight: active ? 700 : 600,
+              height: 36,
+              minWidth: 'max-content',
+              px: 1.75,
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                bgcolor: alpha(theme.palette.primary.main, 0.06),
+              },
+            })}
+          >
+            <span>{item.label}</span>
+            <Box
+              component="span"
+              sx={(theme) => ({
+                bgcolor: active ? theme.palette.primary.main : theme.palette.background.default,
+                borderRadius: theme.shape.borderRadiusPill,
+                color: active ? theme.palette.common.white : theme.palette.text.secondary,
+                lineHeight: '16px',
+                ml: 0.75,
+                px: 0.7,
+                py: 0.1,
+              })}
+            >
+              {Number(item.count || 0)}
+            </Box>
+          </Button>
+        )
+      })}
+    </div>
+  )
+}
 
 const salesChannelOptions = ['AMAZON', 'ETSY', 'SHOPIFY', 'TIKTOK_SHOP', 'WALMART', 'CUSTOM']
 const fieldTypeOptions = ['TEXT', 'IMAGE', 'OPTION', 'FILE', 'NUMBER', 'DATE', 'UNKNOWN']
@@ -1095,10 +1140,14 @@ function toTemplateFormValues(template = {}) {
 
 export default function ListingPage() {
   const { i18n, t } = useTranslation()
+  const location = useLocation()
   const { enqueueSnackbar } = useSnackbar()
+  const workspaceView = getListingWorkspaceView(location.search)
+  const showListingManagement = workspaceView === LISTING_WORKSPACE_VIEWS.LISTINGS
+  const showProductTypes = workspaceView === LISTING_WORKSPACE_VIEWS.PRODUCT_TYPES
+  const showInternalTemplates = workspaceView === LISTING_WORKSPACE_VIEWS.INTERNAL_TEMPLATES
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
-  const [searchField, setSearchField] = useState('asin')
   const [shop, setShop] = useState('all')
   const [listingProductType, setListingProductType] = useState('all')
   const [listingPsdStatus, setListingPsdStatus] = useState('all')
@@ -1136,7 +1185,6 @@ export default function ListingPage() {
     limit: DEFAULT_LIMIT,
     tab: activeTab,
     search,
-    searchField,
     shopId: shop,
     productTypeGroupId: listingProductType === 'all' ? undefined : listingProductType,
     psdStatus: listingPsdStatus === 'all' ? undefined : listingPsdStatus,
@@ -1504,8 +1552,8 @@ export default function ListingPage() {
 
     if (column.key === 'listing') {
       return (
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-neutral-bg">
+        <div className="flex min-w-0 flex-col items-center gap-2">
+          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-neutral-bg shadow-sm">
             {listing.previewUrl ? (
               <img
                 src={listing.previewUrl}
@@ -1519,16 +1567,51 @@ export default function ListingPage() {
               </div>
             )}
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-bold text-primary">
-              {listing.sku || listing.asinProductId || '-'}
-            </div>
-            <div className="mt-1 line-clamp-2 text-xs text-ink-muted">
-              {listing.title || listing.sku || t('listings.values.common.noData')}
-            </div>
+          <div className="max-w-32 truncate text-xs font-bold text-primary">
+            {listing.asinProductId || listing.sku || '-'}
           </div>
         </div>
       )
+    }
+
+    if (column.key === 'total') {
+      return <span className="text-sm font-bold text-ink-strong">{listing.total || 1}</span>
+    }
+
+    if (column.key === 'style') {
+      return <Badge tone="gray">{listing.style}</Badge>
+    }
+
+    if (column.key === 'designProduct') {
+      return (
+        <Badge tone={hasInternalTemplate ? 'teal' : 'orange'}>
+          {listing.designProduct || 'Template missing'}
+        </Badge>
+      )
+    }
+
+    if (column.key === 'variant') {
+      return <Badge tone={listing.variant ? 'orange' : 'gray'}>{listing.variant || '-'}</Badge>
+    }
+
+    if (column.key === 'psdStatus') {
+      return (
+        <Badge tone={hasPsdTemplate ? 'green' : 'orange'}>
+          {t(`listings.values.psdStatus.${listing.psdStatus}`)}
+        </Badge>
+      )
+    }
+
+    if (column.key === 'store') {
+      return <Badge tone="primary">{listing.store}</Badge>
+    }
+
+    if (column.key === 'seller') {
+      return <Badge tone={listing.seller === '-' ? 'gray' : 'orange'}>{listing.seller}</Badge>
+    }
+
+    if (column.key === 'asinType') {
+      return <Badge tone="teal">{listing.asinType || 'unknown'}</Badge>
     }
 
     if (column.key === 'product') {
@@ -1591,7 +1674,7 @@ export default function ListingPage() {
 
     if (column.key === 'actions') {
       return (
-        <div className="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-surface-subtle px-1 py-1">
+        <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-1">
           <IconActionButton
             label={t('listings.actions.download')}
             disabled={!listing.psdTemplateAsset?.assetId && !listing.psdTemplateAssetId}
@@ -1639,458 +1722,441 @@ export default function ListingPage() {
   }
 
   return (
-    <div className="min-h-full bg-page px-6 py-7">
-      <OperationsHeader
-        title={t('listings.title')}
-        actions={
-          <>
-            <Tooltip title={t('listings.messages.importMissing')}>
-              <span>
-                <Button
-                  variant="outlined"
-                  disabled
-                  className="h-10 rounded-lg border-border px-4 text-sm font-bold text-primary"
-                >
-                  {t('listings.actions.import')}
-                </Button>
-              </span>
-            </Tooltip>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon fontSize="small" />}
-              onClick={openCreateDialog}
-              className="h-10 rounded-lg px-5 text-sm font-bold"
-            >
-              {t('listings.actions.add')}
-            </Button>
-          </>
-        }
-      />
+    <div className="min-h-full bg-page px-4 pt-0 pb-3">
+      {showProductTypes || showInternalTemplates ? (
+        <OperationsHeader
+          title={
+            showProductTypes
+              ? t('listings.catalogSetup.productTypes.title', { defaultValue: 'Product types' })
+              : t('listings.catalogSetup.templates.title', { defaultValue: 'Internal templates' })
+          }
+        />
+      ) : null}
 
-      <section className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {listingStats.map((stat) => (
-          <StatCard
-            key={stat.key}
-            icon={stat.icon}
-            label={t(`listings.stats.${stat.key}`)}
-            value={stats[stat.key]}
-          />
-        ))}
-      </section>
-
-      <section className="mt-6 grid items-stretch gap-4 xl:grid-cols-2">
-        <div className="flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-          <div className="flex min-h-20 flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
-            <div>
-              <Typography component="h2" className="font-bold text-ink-strong">
-                {t('listings.catalogSetup.productTypes.title', {
-                  defaultValue: 'Product types',
-                })}
-              </Typography>
-              <Typography variant="caption" className="text-ink-muted">
-                {t('listings.catalogSetup.productTypes.description', {
-                  defaultValue:
-                    'Define the internal product family used by mapping, listings, and vendor matching.',
-                })}
-              </Typography>
-            </div>
-            <div className="flex items-center gap-1">
-              <Tooltip title={t('listings.actions.refresh')}>
-                <IconButton
-                  size="small"
-                  aria-label={t('listings.actions.refresh')}
-                  onClick={() => productTypeGroupsQuery.refetch()}
-                  className="h-8 w-8 rounded-lg border border-border"
-                >
-                  <RefreshIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip
-                title={t('listings.catalogSetup.productTypes.add', {
-                  defaultValue: 'Create product type',
-                })}
-              >
-                <IconButton
-                  size="small"
-                  aria-label={t('listings.catalogSetup.productTypes.add', {
-                    defaultValue: 'Create product type',
-                  })}
-                  onClick={openCreateProductTypeDialog}
-                  className="h-8 w-8 rounded-lg border border-border text-primary"
-                >
-                  <AddIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <DebouncedTextField
-              size="small"
-              value={productTypeSearch}
-              onDebouncedChange={(nextValue) => {
-                setProductTypeSearch(nextValue)
-                setProductTypePage(1)
-              }}
-              placeholder={t('listings.catalogSetup.productTypes.search', {
-                defaultValue: 'Search code or name...',
-              })}
-              className="min-w-56 flex-1 bg-surface"
-              slotProps={{
-                input: {
-                  className: 'h-10 rounded-lg text-sm',
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon className="text-ink-muted" fontSize="small" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
+      {showListingManagement ? (
+        <section className="mt-0 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {listingStats.map((stat) => (
+            <StatCard
+              key={stat.key}
+              icon={stat.icon}
+              label={t(`listings.stats.${stat.key}`)}
+              value={stats[stat.key]}
             />
-            <FormControl size="small" className="w-36">
-              <Select
-                value={productTypeStatus}
-                onChange={(event) => {
-                  setProductTypeStatus(event.target.value)
-                  setProductTypePage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
-              >
-                <MenuItem value="all">
-                  {t('listings.catalogSetup.status.all', { defaultValue: 'All status' })}
-                </MenuItem>
-                <MenuItem value="ACTIVE">{t('listings.values.status.active')}</MenuItem>
-                <MenuItem value="INACTIVE">{t('listings.values.status.inactive')}</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
-          <div className="flex-1 overflow-x-auto">
-            <table className="min-w-[560px] w-full border-collapse">
-              <thead className="bg-surface-subtle">
-                <tr>
-                  {['code', 'name', 'sort', 'active', 'actions'].map((column) => (
-                    <th
-                      key={column}
-                      scope="col"
-                      className="h-10 whitespace-nowrap px-4 text-left text-[11px] font-bold text-ink-muted"
+          ))}
+        </section>
+      ) : null}
+
+      {showProductTypes || showInternalTemplates ? (
+        <section
+          className={`mt-3 grid items-stretch gap-3 ${
+            showProductTypes && showInternalTemplates ? 'xl:grid-cols-2' : ''
+          }`}
+        >
+          {showProductTypes ? (
+            <div className="flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+              <div className="flex min-h-20 flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
+                <div>
+                  <Typography component="h2" className="font-bold text-ink-strong">
+                    {t('listings.catalogSetup.productTypes.title', {
+                      defaultValue: 'Product types',
+                    })}
+                  </Typography>
+                  <Typography variant="caption" className="text-ink-muted">
+                    {t('listings.catalogSetup.productTypes.description', {
+                      defaultValue:
+                        'Define the internal product family used by mapping, listings, and vendor matching.',
+                    })}
+                  </Typography>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Tooltip title={t('listings.actions.refresh')}>
+                    <IconButton
+                      size="small"
+                      aria-label={t('listings.actions.refresh')}
+                      onClick={() => productTypeGroupsQuery.refetch()}
+                      className="h-8 w-8 rounded-lg border border-border"
                     >
-                      {t(`listings.catalogSetup.columns.${column}`, {
-                        defaultValue:
-                          {
-                            code: 'Code',
-                            name: 'Name',
-                            sort: 'Sort',
-                            active: 'Active',
-                            actions: 'Actions',
-                          }[column] || column,
+                      <RefreshIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip
+                    title={t('listings.catalogSetup.productTypes.add', {
+                      defaultValue: 'Create product type',
+                    })}
+                  >
+                    <IconButton
+                      size="small"
+                      aria-label={t('listings.catalogSetup.productTypes.add', {
+                        defaultValue: 'Create product type',
                       })}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {productTypeGroupsQuery.isPending ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-sm text-ink-muted">
-                      {t('listings.catalogSetup.productTypes.loading', {
-                        defaultValue: 'Loading product types...',
-                      })}
-                    </td>
-                  </tr>
-                ) : productTypeGroups.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-sm text-ink-muted">
-                      {t('listings.catalogSetup.productTypes.empty', {
-                        defaultValue: 'No product types found',
-                      })}
-                    </td>
-                  </tr>
-                ) : (
-                  productTypeGroups.map((group) => (
-                    <tr key={group.id} className="border-t border-border">
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-bold text-ink">
-                        {group.code || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-ink-secondary">{group.name || '-'}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
-                        {group.sortOrder}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <StatusSwitch
-                          checked={group.isActive}
-                          disabled={updateProductTypeGroupMutation.isPending}
-                          ariaLabel={t('listings.catalogSetup.productTypes.toggle', {
-                            defaultValue: 'Toggle product type status',
-                          })}
-                          onChange={() => handleToggleProductType(group)}
-                        />
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <Tooltip title={t('listings.actions.edit')}>
-                          <IconButton
-                            size="small"
-                            aria-label={t('listings.actions.edit')}
-                            onClick={() => openEditProductTypeDialog(group)}
-                            className="h-8 w-8 rounded-lg border border-border text-ink-secondary"
-                          >
-                            <EditOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <footer className="flex justify-center border-t border-border px-4 py-3">
-            <Pagination
-              size="small"
-              count={productTypePageCount}
-              page={productTypePage}
-              onChange={(_event, value) => setProductTypePage(value)}
-            />
-          </footer>
-        </div>
-
-        <div className="flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-          <div className="flex min-h-20 flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
-            <div>
-              <Typography component="h2" className="font-bold text-ink-strong">
-                {t('listings.catalogSetup.templates.title', {
-                  defaultValue: 'Internal templates',
-                })}
-              </Typography>
-              <Typography variant="caption" className="text-ink-muted">
-                {t('listings.catalogSetup.templates.description', {
-                  defaultValue:
-                    'Attach listings to the internal template that defines customer inputs and artwork slots.',
-                })}
-              </Typography>
-            </div>
-            <div className="flex items-center gap-1">
-              <Tooltip title={t('listings.actions.refresh')}>
-                <IconButton
-                  size="small"
-                  aria-label={t('listings.actions.refresh')}
-                  onClick={() => internalTemplatesQuery.refetch()}
-                  className="h-8 w-8 rounded-lg border border-border"
-                >
-                  <RefreshIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip
-                title={t('listings.catalogSetup.templates.add', {
-                  defaultValue: 'Create internal template',
-                })}
-              >
-                <IconButton
-                  size="small"
-                  aria-label={t('listings.catalogSetup.templates.add', {
-                    defaultValue: 'Create internal template',
-                  })}
-                  onClick={openCreateTemplateDialog}
-                  className="h-8 w-8 rounded-lg border border-border text-primary"
-                >
-                  <AddIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <DebouncedTextField
-              size="small"
-              value={templateSearch}
-              onDebouncedChange={(nextValue) => {
-                setTemplateSearch(nextValue)
-                setTemplatePage(1)
-              }}
-              placeholder={t('listings.catalogSetup.templates.search', {
-                defaultValue: 'Search template...',
-              })}
-              className="min-w-52 flex-1 bg-surface"
-              slotProps={{
-                input: {
-                  className: 'h-10 rounded-lg text-sm',
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon className="text-ink-muted" fontSize="small" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" className="w-44">
-              <Select
-                value={templateProductType}
-                onChange={(event) => {
-                  setTemplateProductType(event.target.value)
-                  setTemplatePage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
-              >
-                <MenuItem value="all">
-                  {t('listings.catalogSetup.productTypes.all', {
-                    defaultValue: 'All product types',
-                  })}
-                </MenuItem>
-                {(productTypesQuery.data || []).map((typeOption) => (
-                  <MenuItem key={typeOption.id} value={typeOption.id}>
-                    {typeOption.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" className="w-36">
-              <Select
-                value={templateStatus}
-                onChange={(event) => {
-                  setTemplateStatus(event.target.value)
-                  setTemplatePage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
-              >
-                <MenuItem value="all">
-                  {t('listings.catalogSetup.status.all', { defaultValue: 'All status' })}
-                </MenuItem>
-                <MenuItem value="ACTIVE">{t('listings.values.status.active')}</MenuItem>
-                <MenuItem value="INACTIVE">{t('listings.values.status.inactive')}</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
-          <div className="flex-1 overflow-x-auto">
-            <table className="min-w-[720px] w-full border-collapse">
-              <thead className="bg-surface-subtle">
-                <tr>
-                  {[
-                    'template',
-                    'productType',
-                    'inputs',
-                    'artwork',
-                    'assets',
-                    'active',
-                    'actions',
-                  ].map((column) => (
-                    <th
-                      key={column}
-                      scope="col"
-                      className="h-10 whitespace-nowrap px-4 text-left text-[11px] font-bold text-ink-muted"
+                      onClick={openCreateProductTypeDialog}
+                      className="h-8 w-8 rounded-lg border border-border text-primary"
                     >
-                      {t(`listings.catalogSetup.columns.${column}`, {
-                        defaultValue:
-                          {
-                            template: 'Template',
-                            productType: 'Product type',
-                            inputs: 'Inputs',
-                            artwork: 'Artwork',
-                            assets: 'Assets',
-                            active: 'Active',
-                            actions: 'Actions',
-                          }[column] || column,
-                      })}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {internalTemplatesQuery.isPending ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-sm text-ink-muted">
-                      {t('listings.catalogSetup.templates.loading', {
-                        defaultValue: 'Loading templates...',
-                      })}
-                    </td>
-                  </tr>
-                ) : internalTemplates.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-sm text-ink-muted">
-                      {t('listings.catalogSetup.templates.empty', {
-                        defaultValue: 'No templates found',
-                      })}
-                    </td>
-                  </tr>
-                ) : (
-                  internalTemplates.map((template) => (
-                    <tr key={template.id} className="border-t border-border">
-                      <td className="px-4 py-3">
-                        <div className="max-w-56 truncate text-sm font-bold text-ink">
-                          {template.name || '-'}
-                        </div>
-                        <div className="max-w-56 truncate text-xs text-ink-muted">
-                          {template.code || '-'}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-ink-secondary">
-                        {template.productType || t('listings.values.common.noData')}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
-                        {template.requiredFieldCount}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
-                        {template.artworkSlotCount}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
-                        {template.designAssetCount}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <StatusSwitch
-                          checked={template.isActive}
-                          disabled={updateInternalTemplateMutation.isPending}
-                          ariaLabel={t('listings.catalogSetup.templates.toggle', {
-                            defaultValue: 'Toggle internal template status',
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <DebouncedTextField
+                  size="small"
+                  value={productTypeSearch}
+                  onDebouncedChange={(nextValue) => {
+                    setProductTypeSearch(nextValue)
+                    setProductTypePage(1)
+                  }}
+                  placeholder={t('listings.catalogSetup.productTypes.search', {
+                    defaultValue: 'Search code or name...',
+                  })}
+                  className="min-w-56 flex-1 bg-surface"
+                  slotProps={{
+                    input: {
+                      className: 'h-10 rounded-lg text-sm',
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon className="text-ink-muted" fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <FormControl size="small" className="w-36">
+                  <Select
+                    value={productTypeStatus}
+                    onChange={(event) => {
+                      setProductTypeStatus(event.target.value)
+                      setProductTypePage(1)
+                    }}
+                    IconComponent={KeyboardArrowDownIcon}
+                    className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
+                  >
+                    <MenuItem value="all">
+                      {t('listings.catalogSetup.status.all', { defaultValue: 'All status' })}
+                    </MenuItem>
+                    <MenuItem value="ACTIVE">{t('listings.values.status.active')}</MenuItem>
+                    <MenuItem value="INACTIVE">{t('listings.values.status.inactive')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="flex-1 overflow-x-auto">
+                <table className="min-w-[560px] w-full border-collapse">
+                  <thead className="bg-surface-subtle">
+                    <tr>
+                      {['code', 'name', 'sort', 'active', 'actions'].map((column) => (
+                        <th
+                          key={column}
+                          scope="col"
+                          className="h-10 whitespace-nowrap px-4 text-left text-[11px] font-bold text-ink-muted"
+                        >
+                          {t(`listings.catalogSetup.columns.${column}`, {
+                            defaultValue:
+                              {
+                                code: 'Code',
+                                name: 'Name',
+                                sort: 'Sort',
+                                active: 'Active',
+                                actions: 'Actions',
+                              }[column] || column,
                           })}
-                          onChange={() => handleToggleTemplate(template)}
-                        />
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <Tooltip title={t('listings.actions.edit')}>
-                          <IconButton
-                            size="small"
-                            aria-label={t('listings.actions.edit')}
-                            onClick={() => openEditTemplateDialog(template)}
-                            className="h-8 w-8 rounded-lg border border-border text-ink-secondary"
-                          >
-                            <EditOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </td>
+                        </th>
+                      ))}
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <footer className="flex justify-center border-t border-border px-4 py-3">
-            <Pagination
-              size="small"
-              count={templatePageCount}
-              page={templatePage}
-              onChange={(_event, value) => setTemplatePage(value)}
-            />
-          </footer>
-        </div>
-      </section>
+                  </thead>
+                  <tbody>
+                    {productTypeGroupsQuery.isPending ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-sm text-ink-muted">
+                          {t('listings.catalogSetup.productTypes.loading', {
+                            defaultValue: 'Loading product types...',
+                          })}
+                        </td>
+                      </tr>
+                    ) : productTypeGroups.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-sm text-ink-muted">
+                          {t('listings.catalogSetup.productTypes.empty', {
+                            defaultValue: 'No product types found',
+                          })}
+                        </td>
+                      </tr>
+                    ) : (
+                      productTypeGroups.map((group) => (
+                        <tr key={group.id} className="border-t border-border">
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-bold text-ink">
+                            {group.code || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-ink-secondary">
+                            {group.name || '-'}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
+                            {group.sortOrder}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <StatusSwitch
+                              checked={group.isActive}
+                              disabled={updateProductTypeGroupMutation.isPending}
+                              ariaLabel={t('listings.catalogSetup.productTypes.toggle', {
+                                defaultValue: 'Toggle product type status',
+                              })}
+                              onChange={() => handleToggleProductType(group)}
+                            />
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <Tooltip title={t('listings.actions.edit')}>
+                              <IconButton
+                                size="small"
+                                aria-label={t('listings.actions.edit')}
+                                onClick={() => openEditProductTypeDialog(group)}
+                                className="h-8 w-8 rounded-lg border border-border text-ink-secondary"
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <footer className="flex justify-center border-t border-border px-4 py-3">
+                <Pagination
+                  size="small"
+                  count={productTypePageCount}
+                  page={productTypePage}
+                  onChange={(_event, value) => setProductTypePage(value)}
+                />
+              </footer>
+            </div>
+          ) : null}
 
-      <section className="mt-6 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-        <div className="border-b border-border px-6 py-5">
-          <OperationsHeader
-            title={t('listings.management.title', { defaultValue: 'Listing management' })}
-            subtitle={t('listings.management.description', {
-              defaultValue: 'Review catalog readiness, PSD state, shop, seller, and QC actions.',
-            })}
-            actions={
-              <Typography
-                variant="body2"
-                className="rounded-full bg-neutral-bg px-4 py-2 font-bold text-ink-muted"
-              >
-                {pagination.total} {t('listings.management.records', { defaultValue: 'records' })}
-              </Typography>
-            }
-          />
-          <div className="mt-3">
-            <OperationsTabs
+          {showInternalTemplates ? (
+            <div className="flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+              <div className="flex min-h-20 flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
+                <div>
+                  <Typography component="h2" className="font-bold text-ink-strong">
+                    {t('listings.catalogSetup.templates.title', {
+                      defaultValue: 'Internal templates',
+                    })}
+                  </Typography>
+                  <Typography variant="caption" className="text-ink-muted">
+                    {t('listings.catalogSetup.templates.description', {
+                      defaultValue:
+                        'Attach listings to the internal template that defines customer inputs and artwork slots.',
+                    })}
+                  </Typography>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Tooltip title={t('listings.actions.refresh')}>
+                    <IconButton
+                      size="small"
+                      aria-label={t('listings.actions.refresh')}
+                      onClick={() => internalTemplatesQuery.refetch()}
+                      className="h-8 w-8 rounded-lg border border-border"
+                    >
+                      <RefreshIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip
+                    title={t('listings.catalogSetup.templates.add', {
+                      defaultValue: 'Create internal template',
+                    })}
+                  >
+                    <IconButton
+                      size="small"
+                      aria-label={t('listings.catalogSetup.templates.add', {
+                        defaultValue: 'Create internal template',
+                      })}
+                      onClick={openCreateTemplateDialog}
+                      className="h-8 w-8 rounded-lg border border-border text-primary"
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <DebouncedTextField
+                  size="small"
+                  value={templateSearch}
+                  onDebouncedChange={(nextValue) => {
+                    setTemplateSearch(nextValue)
+                    setTemplatePage(1)
+                  }}
+                  placeholder={t('listings.catalogSetup.templates.search', {
+                    defaultValue: 'Search template...',
+                  })}
+                  className="min-w-52 flex-1 bg-surface"
+                  slotProps={{
+                    input: {
+                      className: 'h-10 rounded-lg text-sm',
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon className="text-ink-muted" fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <FormControl size="small" className="w-44">
+                  <Select
+                    value={templateProductType}
+                    onChange={(event) => {
+                      setTemplateProductType(event.target.value)
+                      setTemplatePage(1)
+                    }}
+                    IconComponent={KeyboardArrowDownIcon}
+                    className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
+                  >
+                    <MenuItem value="all">
+                      {t('listings.catalogSetup.productTypes.all', {
+                        defaultValue: 'All product types',
+                      })}
+                    </MenuItem>
+                    {(productTypesQuery.data || []).map((typeOption) => (
+                      <MenuItem key={typeOption.id} value={typeOption.id}>
+                        {typeOption.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" className="w-36">
+                  <Select
+                    value={templateStatus}
+                    onChange={(event) => {
+                      setTemplateStatus(event.target.value)
+                      setTemplatePage(1)
+                    }}
+                    IconComponent={KeyboardArrowDownIcon}
+                    className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
+                  >
+                    <MenuItem value="all">
+                      {t('listings.catalogSetup.status.all', { defaultValue: 'All status' })}
+                    </MenuItem>
+                    <MenuItem value="ACTIVE">{t('listings.values.status.active')}</MenuItem>
+                    <MenuItem value="INACTIVE">{t('listings.values.status.inactive')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="flex-1 overflow-x-auto">
+                <table className="min-w-[720px] w-full border-collapse">
+                  <thead className="bg-surface-subtle">
+                    <tr>
+                      {[
+                        'template',
+                        'productType',
+                        'inputs',
+                        'artwork',
+                        'assets',
+                        'active',
+                        'actions',
+                      ].map((column) => (
+                        <th
+                          key={column}
+                          scope="col"
+                          className="h-10 whitespace-nowrap px-4 text-left text-[11px] font-bold text-ink-muted"
+                        >
+                          {t(`listings.catalogSetup.columns.${column}`, {
+                            defaultValue:
+                              {
+                                template: 'Template',
+                                productType: 'Product type',
+                                inputs: 'Inputs',
+                                artwork: 'Artwork',
+                                assets: 'Assets',
+                                active: 'Active',
+                                actions: 'Actions',
+                              }[column] || column,
+                          })}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {internalTemplatesQuery.isPending ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-6 text-center text-sm text-ink-muted">
+                          {t('listings.catalogSetup.templates.loading', {
+                            defaultValue: 'Loading templates...',
+                          })}
+                        </td>
+                      </tr>
+                    ) : internalTemplates.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-6 text-center text-sm text-ink-muted">
+                          {t('listings.catalogSetup.templates.empty', {
+                            defaultValue: 'No templates found',
+                          })}
+                        </td>
+                      </tr>
+                    ) : (
+                      internalTemplates.map((template) => (
+                        <tr key={template.id} className="border-t border-border">
+                          <td className="px-4 py-3">
+                            <div className="max-w-56 truncate text-sm font-bold text-ink">
+                              {template.name || '-'}
+                            </div>
+                            <div className="max-w-56 truncate text-xs text-ink-muted">
+                              {template.code || '-'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-ink-secondary">
+                            {template.productType || t('listings.values.common.noData')}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
+                            {template.requiredFieldCount}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
+                            {template.artworkSlotCount}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
+                            {template.designAssetCount}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <StatusSwitch
+                              checked={template.isActive}
+                              disabled={updateInternalTemplateMutation.isPending}
+                              ariaLabel={t('listings.catalogSetup.templates.toggle', {
+                                defaultValue: 'Toggle internal template status',
+                              })}
+                              onChange={() => handleToggleTemplate(template)}
+                            />
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <Tooltip title={t('listings.actions.edit')}>
+                              <IconButton
+                                size="small"
+                                aria-label={t('listings.actions.edit')}
+                                onClick={() => openEditTemplateDialog(template)}
+                                className="h-8 w-8 rounded-lg border border-border text-ink-secondary"
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <footer className="flex justify-center border-t border-border px-4 py-3">
+                <Pagination
+                  size="small"
+                  count={templatePageCount}
+                  page={templatePage}
+                  onChange={(_event, value) => setTemplatePage(value)}
+                />
+              </footer>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {showListingManagement ? (
+        <section className="mt-3 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 pt-3">
+            <ListingStatusTabs
               items={listingTabs.map((tab) => ({
                 value: tab.key,
                 label: t(`listings.tabs.${tab.key}`),
@@ -2102,214 +2168,343 @@ export default function ListingPage() {
                 setPage(1)
               }}
             />
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <Typography
+                variant="body2"
+                className="flex h-9 items-center rounded-lg bg-neutral-bg px-3 font-bold text-ink-muted"
+              >
+                {pagination.total} {t('listings.management.records', { defaultValue: 'records' })}
+              </Typography>
+              <Tooltip title={t('listings.messages.importMissing')}>
+                <span>
+                  <Button
+                    variant="outlined"
+                    disabled
+                    className="h-9 rounded-lg border-border px-4 text-sm font-bold text-primary"
+                  >
+                    {t('listings.actions.import')}
+                  </Button>
+                </span>
+              </Tooltip>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon fontSize="small" />}
+                onClick={openCreateDialog}
+                className="h-9 rounded-lg px-4 text-sm font-bold"
+              >
+                {t('listings.actions.add')}
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <OperationsToolbar className="border-b border-border bg-page/70 p-4">
-          <div className="grid gap-3 xl:grid-cols-[112px_minmax(260px,1.2fr)_180px_190px_150px_150px_150px_150px_170px_44px]">
-            <FormControl size="small" className="w-28">
-              <Select
-                value={searchField}
-                onChange={(event) => {
-                  setSearchField(event.target.value)
+          <OperationsToolbar className="border-b border-border bg-page/70 p-4">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              <DebouncedTextField
+                size="small"
+                value={search}
+                onDebouncedChange={(nextValue) => {
+                  setSearch(nextValue)
                   setPage(1)
                 }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                <MenuItem value="asin">{t('listings.filters.searchFields.asin')}</MenuItem>
-                <MenuItem value="sku">{t('listings.filters.searchFields.sku')}</MenuItem>
-              </Select>
-            </FormControl>
-            <DebouncedTextField
-              size="small"
-              value={search}
-              onDebouncedChange={(nextValue) => {
-                setSearch(nextValue)
-                setPage(1)
-              }}
-              placeholder={t('listings.filters.search')}
-              className="min-w-80 flex-1 bg-surface"
-              slotProps={{
-                input: {
-                  className: 'h-10 rounded-lg text-sm',
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon className="text-ink-muted" fontSize="small" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
+                placeholder={t('listings.filters.search')}
+                className="min-w-0 flex-[1_1_220px] bg-surface"
+                slotProps={{
+                  input: {
+                    className: 'h-10 rounded-lg text-sm',
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon className="text-ink-muted" fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              <FormControl size="small" className="w-full sm:w-36">
+                <Select
+                  value={shop}
+                  onChange={(event) => {
+                    setShop(event.target.value)
+                    setPage(1)
+                  }}
+                  IconComponent={KeyboardArrowDownIcon}
+                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                >
+                  <MenuItem value="all">{t('listings.filters.shops.all')}</MenuItem>
+                  {(shopsQuery.data || []).map((shopOption) => (
+                    <MenuItem key={shopOption.id} value={shopOption.id}>
+                      {shopOption.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" className="w-full sm:w-40">
+                <Select
+                  value={listingProductType}
+                  onChange={(event) => {
+                    setListingProductType(event.target.value)
+                    setPage(1)
+                  }}
+                  IconComponent={KeyboardArrowDownIcon}
+                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                >
+                  <MenuItem value="all">All product types</MenuItem>
+                  {(productTypesQuery.data || []).map((option) => (
+                    <MenuItem key={option.id} value={option.id}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" className="w-full sm:w-32">
+                <Select
+                  value={listingPsdStatus}
+                  onChange={(event) => {
+                    setListingPsdStatus(event.target.value)
+                    setPage(1)
+                  }}
+                  IconComponent={KeyboardArrowDownIcon}
+                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                >
+                  <MenuItem value="all">All PSD</MenuItem>
+                  {listingSetupStatusFilterOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      PSD {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" className="w-full sm:w-32">
+                <Select
+                  value={listingCostStatus}
+                  onChange={(event) => {
+                    setListingCostStatus(event.target.value)
+                    setPage(1)
+                  }}
+                  IconComponent={KeyboardArrowDownIcon}
+                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                >
+                  <MenuItem value="all">All cost</MenuItem>
+                  {listingSetupStatusFilterOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      Cost {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" className="w-full sm:w-32">
+                <Select
+                  value={listingQcStatus}
+                  onChange={(event) => {
+                    setListingQcStatus(event.target.value)
+                    setPage(1)
+                  }}
+                  IconComponent={KeyboardArrowDownIcon}
+                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                >
+                  <MenuItem value="all">All QC</MenuItem>
+                  {listingQcStatusFilterOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      QC {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" className="w-full sm:w-32">
+                <Select
+                  value={listingStatus}
+                  onChange={(event) => {
+                    setListingStatus(event.target.value)
+                    setPage(1)
+                  }}
+                  IconComponent={KeyboardArrowDownIcon}
+                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                >
+                  <MenuItem value="all">All status</MenuItem>
+                  {listingStatusFilterOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" className="w-full sm:w-40">
+                <Select
+                  value={listingSort}
+                  onChange={(event) => {
+                    setListingSort(event.target.value)
+                    setPage(1)
+                  }}
+                  IconComponent={KeyboardArrowDownIcon}
+                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                >
+                  {listingSortOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Tooltip title={t('listings.actions.refresh')}>
+                <IconButton
+                  aria-label={t('listings.actions.refresh')}
+                  onClick={() => {
+                    listingsQuery.refetch()
+                    summaryQuery.refetch()
+                  }}
+                  className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary hover:bg-surface-subtle"
+                >
+                  <RefreshIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </div>
+          </OperationsToolbar>
+
+          <div className="h-[620px] overflow-auto bg-surface">
+            <table className="min-w-[1360px] w-full border-collapse text-sm">
+              <colgroup>
+                <col className="w-[118px]" />
+                <col className="w-[150px]" />
+                <col className="w-[52px]" />
+                <col className="w-[124px]" />
+                <col className="w-[128px]" />
+                <col className="w-[80px]" />
+                <col className="w-[118px]" />
+                <col className="w-[140px]" />
+                <col className="w-[178px]" />
+                <col className="w-[108px]" />
+                <col className="w-[178px]" />
+              </colgroup>
+              <thead className="sticky top-0 z-20 bg-neutral-bg text-xs font-extrabold uppercase tracking-wide text-ink-strong shadow-sm">
+                <tr>
+                  <th
+                    rowSpan={2}
+                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                  >
+                    Date
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                  >
+                    Asin / Product ID
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                  >
+                    Total
+                  </th>
+                  <th
+                    colSpan={3}
+                    className="border border-border bg-neutral-bg px-3 py-2 text-center"
+                  >
+                    Template
+                  </th>
+                  <th
+                    colSpan={1}
+                    className="border border-border bg-neutral-bg px-3 py-2 text-center"
+                  >
+                    PSD
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                  >
+                    Store
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                  >
+                    Seller
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                  >
+                    Asin Type
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                  >
+                    Actions
+                  </th>
+                </tr>
+                <tr>
+                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
+                    Style
+                  </th>
+                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
+                    Design Product
+                  </th>
+                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
+                    Variant
+                  </th>
+                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
+                    PSD Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {listingsQuery.isPending ? (
+                  Array.from({ length: 5 }, (_, index) => (
+                    <tr key={index}>
+                      <td colSpan={11} className="border border-border px-4 py-3">
+                        <Skeleton height={72} />
+                      </td>
+                    </tr>
+                  ))
+                ) : listings.length === 0 ? (
+                  <tr>
+                    <td colSpan={11} className="border border-border px-4 py-12 text-center">
+                      <Typography className="font-semibold text-ink-strong">
+                        {t('listings.messages.empty')}
+                      </Typography>
+                    </td>
+                  </tr>
+                ) : (
+                  listings.map((listing) => (
+                    <tr key={listing.id} className="bg-surface hover:bg-surface-subtle/60">
+                      {[
+                        'activity',
+                        'listing',
+                        'total',
+                        'style',
+                        'designProduct',
+                        'variant',
+                        'psdStatus',
+                        'store',
+                        'seller',
+                        'asinType',
+                        'actions',
+                      ].map((key) => (
+                        <td
+                          key={key}
+                          className="h-[104px] border border-border px-3 py-2 text-center align-middle"
+                        >
+                          <div className="flex min-w-0 justify-center">
+                            {renderListingCell(listing, { key })}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <footer className="border-t border-border px-5 py-4">
+            <OperationsPagination
+              page={page}
+              pageSize={pagination.limit}
+              total={pagination.total}
+              onPageChange={setPage}
             />
-            <FormControl size="small">
-              <Select
-                value={shop}
-                onChange={(event) => {
-                  setShop(event.target.value)
-                  setPage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                <MenuItem value="all">{t('listings.filters.shops.all')}</MenuItem>
-                {(shopsQuery.data || []).map((shopOption) => (
-                  <MenuItem key={shopOption.id} value={shopOption.id}>
-                    {shopOption.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <Select
-                value={listingProductType}
-                onChange={(event) => {
-                  setListingProductType(event.target.value)
-                  setPage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                <MenuItem value="all">All product types</MenuItem>
-                {(productTypesQuery.data || []).map((option) => (
-                  <MenuItem key={option.id} value={option.id}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <Select
-                value={listingPsdStatus}
-                onChange={(event) => {
-                  setListingPsdStatus(event.target.value)
-                  setPage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                <MenuItem value="all">All PSD</MenuItem>
-                {listingSetupStatusFilterOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    PSD {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <Select
-                value={listingCostStatus}
-                onChange={(event) => {
-                  setListingCostStatus(event.target.value)
-                  setPage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                <MenuItem value="all">All cost</MenuItem>
-                {listingSetupStatusFilterOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    Cost {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <Select
-                value={listingQcStatus}
-                onChange={(event) => {
-                  setListingQcStatus(event.target.value)
-                  setPage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                <MenuItem value="all">All QC</MenuItem>
-                {listingQcStatusFilterOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    QC {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <Select
-                value={listingStatus}
-                onChange={(event) => {
-                  setListingStatus(event.target.value)
-                  setPage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                <MenuItem value="all">All status</MenuItem>
-                {listingStatusFilterOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <Select
-                value={listingSort}
-                onChange={(event) => {
-                  setListingSort(event.target.value)
-                  setPage(1)
-                }}
-                IconComponent={KeyboardArrowDownIcon}
-                className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-              >
-                {listingSortOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Tooltip title={t('listings.actions.refresh')}>
-              <IconButton
-                aria-label={t('listings.actions.refresh')}
-                onClick={() => {
-                  listingsQuery.refetch()
-                  summaryQuery.refetch()
-                }}
-                className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary hover:bg-surface-subtle"
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </div>
-        </OperationsToolbar>
-
-        <div className="h-[620px] overflow-hidden">
-          <OperationsTable
-            columns={listingTableColumns.map((column) => ({
-              ...column,
-              label: t(`listings.table.${column.key}`, { defaultValue: column.label }),
-            }))}
-            rows={listings}
-            getRowKey={(listing) => listing.id}
-            renderCell={renderListingCell}
-            loading={listingsQuery.isPending}
-            emptyTitle={t('listings.messages.empty')}
-            minWidth="1280px"
-            getRowClassName={(listing) =>
-              listing.psdStatus === 'available'
-                ? 'border-l-4 border-l-success'
-                : 'border-l-4 border-l-warning'
-            }
-          />
-        </div>
-
-        <footer className="border-t border-border px-5 py-4">
-          <OperationsPagination
-            page={page}
-            pageSize={pagination.limit}
-            total={pagination.total}
-            onPageChange={setPage}
-          />
-        </footer>
-      </section>
+          </footer>
+        </section>
+      ) : null}
       <ListingDialog
         key={`${dialogOpen}-${dialogMode}-${formValues.id || 'new'}`}
         mode={dialogMode}

@@ -22,4 +22,16 @@ describe('POD module config', () => {
       assert.ok(POD_MODULES[moduleId].rows.length > 0)
     }
   })
+
+  it('uses catalog setup as an operator-facing cost center config screen', () => {
+    assert.equal(POD_MODULES.catalog.title, 'Cost Center Config')
+    assert.equal(POD_MODULES.catalog.showContracts, false)
+    assert.equal(POD_MODULES.catalog.showSourceMeta, false)
+    assert.deepEqual(POD_MODULES.catalog.setupSteps, [
+      'Product type group',
+      'Internal template',
+      'Listing readiness',
+      'PSD task handoff',
+    ])
+  })
 })

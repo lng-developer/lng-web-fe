@@ -1,11 +1,29 @@
+import { Fragment } from 'react'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined'
 import { Skeleton, Typography } from '@mui/material'
+
+import {
+  operationsTableCellContentClass,
+  operationsTableCellPaddingClass,
+  operationsTableHeaderClass,
+  operationsTableRowClass,
+  operationsTableSurfaceClass,
+  operationsTextCaptionClass,
+  operationsTextStrongClass,
+} from './operationsLayout'
 
 function alignClass(align) {
   if (align === 'center') return 'text-center'
   if (align === 'right') return 'text-right'
   return 'text-left'
+}
+
+function cellContentAlignClass(align) {
+  if (align === 'center') return 'justify-items-center text-center'
+  if (align === 'right') return 'justify-items-end text-right'
+  return 'justify-items-start text-left'
 }
 
 export default function OperationsTable({
@@ -16,56 +34,39 @@ export default function OperationsTable({
   loading = false,
   emptyTitle = 'No records found',
   emptyDescription,
+  emptyAction,
   sortBy,
   sortOrder = 'desc',
   onSort,
   minWidth = '100%',
   loadingRows = 5,
   getRowClassName,
+  renderExpandedRow,
+  getRowExpanded,
+  getRowCellClassName,
+  headerClassName = '',
+  bodyClassName = '',
 }) {
-  if (loading) {
-    return (
-      <div className="h-full overflow-hidden bg-surface py-2">
-        {Array.from({ length: loadingRows }, (_, index) => (
-          <Skeleton key={index} height={58} />
-        ))}
-      </div>
-    )
-  }
-
-  if (!rows.length) {
-    return (
-      <div className="h-full bg-surface py-8 text-center">
-        <Typography className="font-semibold text-ink-strong">{emptyTitle}</Typography>
-        {emptyDescription ? (
-          <Typography variant="body2" className="mt-1 text-ink-muted">
-            {emptyDescription}
-          </Typography>
-        ) : null}
-      </div>
-    )
-  }
-
   return (
-    <section className="h-full overflow-auto bg-surface">
+    <section className={`${operationsTableSurfaceClass} ${bodyClassName}`}>
       <table className="w-full table-fixed border-collapse" style={{ minWidth }}>
         <colgroup>
           {columns.map((column) => (
             <col key={column.key} style={column.width ? { width: column.width } : undefined} />
           ))}
         </colgroup>
-        <thead className="sticky top-0 z-10 bg-surface-subtle">
+        <thead className={`${operationsTableHeaderClass} ${headerClassName}`}>
           <tr>
             {columns.map((column) => (
               <th
                 key={column.key}
-                className={`h-11 px-4 text-xs font-semibold uppercase text-ink-muted ${alignClass(column.align)}`}
+                className={`h-11 px-4 uppercase text-ink-muted ${operationsTextCaptionClass} ${alignClass(column.align)}`}
               >
                 {column.sortable ? (
                   <button
                     type="button"
                     onClick={() => onSort?.(column.key)}
-                    className={`group inline-flex appearance-none items-center gap-1 border-0 bg-transparent p-0 font-semibold uppercase outline-none transition focus-visible:ring-2 focus-visible:ring-primary/30 ${
+                    className={`group inline-flex appearance-none items-center gap-1 border-0 bg-transparent p-0 uppercase outline-none transition focus-visible:ring-2 focus-visible:ring-primary/30 ${operationsTextCaptionClass} ${
                       sortBy === column.key
                         ? 'text-primary'
                         : 'text-ink-muted hover:text-ink-strong'
@@ -94,21 +95,68 @@ export default function OperationsTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr
-              key={getRowKey(row)}
-              className={`border-t border-border hover:bg-surface-subtle ${getRowClassName?.(row) || ''}`}
-            >
-              {columns.map((column) => (
-                <td
-                  key={column.key}
-                  className={`px-4 py-3 align-middle ${alignClass(column.align)}`}
-                >
-                  {renderCell(row, column)}
+          {loading ? (
+            Array.from({ length: loadingRows }, (_, index) => (
+              <tr key={`loading-${index}`} className="border-t border-border">
+                <td colSpan={columns.length} className="px-4 py-1.5">
+                  <Skeleton height={46} />
                 </td>
-              ))}
+              </tr>
+            ))
+          ) : rows.length ? (
+            rows.map((row) => {
+              const rowKey = getRowKey(row)
+              const expanded = Boolean(getRowExpanded?.(row))
+
+              return (
+                <Fragment key={rowKey}>
+                  <tr className={`${operationsTableRowClass} ${getRowClassName?.(row) || ''}`}>
+                    {columns.map((column) => {
+                      const cellPaddingClass =
+                        column.cellPaddingClass || operationsTableCellPaddingClass
+
+                      return (
+                        <td
+                          key={column.key}
+                          className={`${cellPaddingClass} align-middle ${alignClass(column.align)} ${getRowCellClassName?.(row, column) || ''}`}
+                        >
+                          <div
+                            className={`${operationsTableCellContentClass} ${cellContentAlignClass(column.align)}`}
+                          >
+                            {renderCell(row, column)}
+                          </div>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                  {expanded && renderExpandedRow ? (
+                    <tr className="border-t border-border bg-surface">
+                      <td colSpan={columns.length} className="p-0 align-top">
+                        {renderExpandedRow(row)}
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              )
+            })
+          ) : !loading && !rows.length ? (
+            <tr className="border-t border-border">
+              <td colSpan={columns.length} className="h-52 px-4 text-center align-middle">
+                <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-surface-subtle text-ink-muted">
+                  <InboxOutlinedIcon fontSize="small" />
+                </span>
+                <Typography className={`${operationsTextStrongClass} text-ink-muted`}>
+                  {emptyTitle}
+                </Typography>
+                {emptyDescription ? (
+                  <Typography variant="body2" className="mt-1 text-ink-muted">
+                    {emptyDescription}
+                  </Typography>
+                ) : null}
+                {emptyAction ? <div className="mt-4">{emptyAction}</div> : null}
+              </td>
             </tr>
-          ))}
+          ) : null}
         </tbody>
       </table>
     </section>

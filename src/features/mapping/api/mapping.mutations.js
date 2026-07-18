@@ -31,6 +31,8 @@ function useMappingMutation(mutationFn, options = {}) {
   return useMutation({
     mutationFn,
     onSuccess: (_data, variables) => {
+      if (options.skipInvalidate) return
+
       if (options.refreshFlow) {
         invalidateMappingFlow(queryClient, getOrderItemId(variables))
         return
@@ -44,6 +46,14 @@ function useMappingMutation(mutationFn, options = {}) {
 export function useMappingPreviewMutation() {
   return useMappingMutation((orderItemId) =>
     post(ENDPOINTS.MAPPING.ORDER_ITEM_PREVIEW(orderItemId)),
+  )
+}
+
+export function useMappingVendorCandidatesMutation() {
+  return useMappingMutation(
+    ({ body, orderItemId }) =>
+      post(ENDPOINTS.MAPPING.ORDER_ITEM_VENDOR_CANDIDATES_SEARCH(orderItemId), body),
+    { skipInvalidate: true },
   )
 }
 
@@ -96,7 +106,5 @@ export function useMappingToggleRuleStatusMutation() {
 }
 
 export function useMappingReorderVendorRoutingMutation() {
-  return useMappingMutation((orderedIds) =>
-    patch(ENDPOINTS.MAPPING.VENDOR_ROUTING_REORDER, { orderedIds }),
-  )
+  return useMappingMutation((body) => patch(ENDPOINTS.MAPPING.VENDOR_ROUTING_REORDER, body))
 }

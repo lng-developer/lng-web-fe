@@ -3,6 +3,10 @@ const UI_TAB_TO_API_TAB = {
   new: 'NEW_ORDER',
   missingCostCenter: 'NO_COST_CENTER',
   missingPsd: 'NO_PSD',
+  addressIssue: 'ADDRESS_ISSUE',
+  atVendor: 'SENT_TO_VENDOR',
+  trackingPending: 'TRACKING_PENDING',
+  readyForProduction: 'READY_FOR_PRODUCTION',
   awaitingPayment: 'PAYMENT_PENDING',
   processing: 'IN_PROGRESS',
   shipped: 'SHIPPED',
@@ -16,6 +20,10 @@ const API_TAB_TO_UI_TAB = {
   NEW_ORDER: 'new',
   NO_COST_CENTER: 'missingCostCenter',
   NO_PSD: 'missingPsd',
+  ADDRESS_ISSUE: 'addressIssue',
+  SENT_TO_VENDOR: 'atVendor',
+  TRACKING_PENDING: 'trackingPending',
+  READY_FOR_PRODUCTION: 'readyForProduction',
   PAYMENT_PENDING: 'awaitingPayment',
   IN_PROGRESS: 'processing',
   SHIPPED: 'shipped',
@@ -74,12 +82,86 @@ const ITEM_STATUS_LABEL_KEY_MAP = {
   FAILED: 'orders.values.status.failed',
 }
 
+const WORKFLOW_STAGE_LABEL_KEY_MAP = {
+  NEED_ADDRESS: 'orders.values.status.needAddress',
+  NEED_CUSTOMIZATION: 'orders.values.status.waitingCustomization',
+  NEED_MAPPING: 'orders.values.status.mappingPending',
+  NEED_TEMPLATE: 'orders.values.status.needTemplate',
+  NEED_PSD: 'orders.values.status.missingPsd',
+  NEED_CUSTOMER_IMAGE: 'orders.values.status.needCustomerImage',
+  NEED_PRODUCTION: 'orders.values.status.needProduction',
+  READY_FOR_SCALE: 'orders.values.status.needScale',
+  IN_SCALE: 'orders.values.status.inProduction',
+  QC_PENDING: 'orders.values.status.pending',
+  QC_REJECTED: 'orders.values.status.qcRejected',
+  READY_TO_SEND_VENDOR: 'orders.values.status.readyToSendVendor',
+  SENT_TO_VENDOR: 'orders.values.status.sentToVendor',
+  TRACKING_PENDING: 'orders.values.status.trackingPending',
+  SHIPPED: 'orders.values.status.shipped',
+  DELIVERED: 'orders.values.status.delivered',
+  CANCELLED: 'orders.values.status.cancelled',
+  REFUNDED: 'orders.values.status.refunded',
+  FAILED: 'orders.values.status.failed',
+  NEEDS_ATTENTION: 'orders.values.status.needsAttention',
+}
+
+function hasVendorMapping(mapping = {}) {
+  return Boolean(mapping.vendorProduct && mapping.vendorCostCenter)
+}
+
+function getItemWorkflowStatusKey(item = {}, mapping = {}, psdStatus = '', workflow = {}) {
+  const workflowStatusKey = WORKFLOW_STAGE_LABEL_KEY_MAP[workflow?.stage]
+  if (workflowStatusKey) return workflowStatusKey
+
+  if (String(psdStatus || '').toUpperCase() === 'MISSING') {
+    return 'orders.values.status.missingPsd'
+  }
+
+  if (item.status === 'CUSTOMIZATION_PENDING' && hasVendorMapping(mapping)) {
+    return 'orders.values.status.waitingCustomization'
+  }
+
+  return ITEM_STATUS_LABEL_KEY_MAP[item.status] || item.status || 'orders.values.common.noData'
+}
+
+const PSD_STATUS_LABEL_KEY_MAP = {
+  PRESENT: 'orders.values.status.present',
+  READY: 'orders.values.status.present',
+  APPROVED: 'orders.values.status.present',
+  AVAILABLE: 'orders.values.status.present',
+  MISSING: 'orders.values.status.missing',
+  PENDING: 'orders.values.status.pending',
+}
+
+const PSD_STATUS_COLOR_MAP = {
+  PRESENT: 'success',
+  READY: 'success',
+  APPROVED: 'success',
+  AVAILABLE: 'success',
+  MISSING: 'danger',
+  PENDING: 'warning',
+}
+
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=420&q=80'
 
 function optionalString(value) {
   const cleaned = String(value ?? '').trim()
   return cleaned || null
+}
+
+function formatVendorProductLabel(product = {}, vendorSource = {}) {
+  const vendor = vendorSource || product.vendor || {}
+  const vendorName =
+    vendor.name ||
+    vendor.code ||
+    product.vendorName ||
+    product.vendorCode ||
+    product.vendor?.name ||
+    product.vendor?.code
+  const productName = product.name || product.code
+
+  return [vendorName, productName].filter(Boolean).join(' - ') || '-'
 }
 
 function maybeAdd(params, key, value) {
@@ -120,7 +202,9 @@ function getHandlingLabel(order = {}) {
 }
 
 function getCaseTitle(order = {}) {
-  return order.caseTitle || order.latestCase?.title || order.case?.title || order.openCase?.title || ''
+  return (
+    order.caseTitle || order.latestCase?.title || order.case?.title || order.openCase?.title || ''
+  )
 }
 
 function formatMoney(price = {}) {
@@ -213,10 +297,32 @@ function getWorkbenchInputValue(inputs = [], keys = []) {
   return toDisplayValue(match?.value, ['value', 'label', 'name'])
 }
 
+function getMediaPreviewUrl(...sources) {
+  for (const source of sources) {
+    if (!source) continue
+    if (typeof source === 'string') return source
+
+    const url =
+      source.previewUrl ||
+      source.secureUrl ||
+      source.imageUrl ||
+      source.thumbnailUrl ||
+      source.url ||
+      source.previewAsset?.previewUrl ||
+      source.previewAsset?.secureUrl ||
+      source.asset?.previewUrl ||
+      source.asset?.secureUrl
+
+    if (url) return url
+  }
+
+  return ''
+}
+
 function getWorkbenchImageInputs(inputs = []) {
   return inputs
     .filter((input) => input?.type === 'IMAGE')
-    .map((input) => input.secureUrl)
+    .map((input) => getMediaPreviewUrl(input))
     .filter(Boolean)
 }
 
@@ -233,11 +339,39 @@ function getWorkbenchCustomizationFields(inputs = []) {
 
 function getWorkbenchCustomizationImages(inputs = []) {
   return inputs
-    .filter((input) => input?.type === 'IMAGE' && input.secureUrl)
+    .filter((input) => input?.type === 'IMAGE' && getMediaPreviewUrl(input))
     .map((input) => ({
       label: input.label || input.name || '',
-      url: input.secureUrl,
+      url: getMediaPreviewUrl(input),
     }))
+}
+
+function getWorkbenchListingImages(itemEntry = {}) {
+  const listing = itemEntry.listing || {}
+  const item = itemEntry.item || {}
+
+  return Array.from(
+    new Set(
+      [
+        getMediaPreviewUrl(listing.previewAsset),
+        getMediaPreviewUrl(listing),
+        getMediaPreviewUrl(item.previewAsset),
+        getMediaPreviewUrl(item),
+      ].filter(Boolean),
+    ),
+  )
+}
+
+function getWorkbenchCustomizationUrl(customization = {}, inputs = []) {
+  return (
+    customization.downloadedZip?.sourceUrlRedacted ||
+    customization.downloadedZip?.sourceUrl ||
+    customization.customizationUrl ||
+    customization.sourceUrlRedacted ||
+    customization.sourceUrl ||
+    getWorkbenchInputValue(inputs, ['customization_url', 'customization url', 'customized url']) ||
+    '-'
+  )
 }
 
 function getWorkbenchOrderFlags(order = {}) {
@@ -306,9 +440,10 @@ export function mapApiOrderToOrderRow(
   const externalOrderId = order.externalOrderId || order.id
   const shopName = shopNameById.get(order.shopId) || order.shopName || order.shopId || '-'
   const customer = order.buyer?.name || order.shippingAddress?.name || '-'
-  const shippingType = order.shippingService?.name || order.shippingService?.level || '-'
+  const shippingType = order.shippingService?.level || order.shippingService?.name || '-'
   const channel = String(order.salesChannelCode || '').toLowerCase()
   const firstItem = order.itemsSummary?.[0] || {}
+  const productImages = [getMediaPreviewUrl(firstItem)].filter(Boolean)
 
   return {
     apiId: order.id,
@@ -319,6 +454,7 @@ export function mapApiOrderToOrderRow(
     shop: shopName,
     seller: '',
     status: order.status,
+    addressValidationStatus: String(order.addressValidationStatus || 'NOT_CHECKED').toUpperCase(),
     statusKey: STATUS_LABEL_KEY_MAP[order.status] || order.status || 'orders.values.common.noData',
     caseTitle: getCaseTitle(order),
     createdAt: formatDate(order.createdAt, locale),
@@ -344,7 +480,7 @@ export function mapApiOrderToOrderRow(
     storeName: shopName,
     handlingKey: '',
     handling: getHandlingLabel(order),
-    productImages: [FALLBACK_IMAGE],
+    productImages: productImages.length > 0 ? productImages : [FALLBACK_IMAGE],
     product: {
       ...buildEmptyProduct(),
       sku: firstItem.sku || '-',
@@ -369,32 +505,87 @@ export function mapOrderRows(apiOrders = [], options = {}) {
   return apiOrders.map((order) => mapApiOrderToOrderRow(order, options))
 }
 
-export function mapWorkbenchOrderToOrderRow(row = {}, { locale = 'en' } = {}) {
-  const order = row.order || {}
-  const itemEntry = row.items?.[0] || {}
+function mapWorkbenchItemDetail(itemEntry = {}, order = {}) {
   const item = itemEntry.item || {}
+  const listing = itemEntry.listing || {}
   const customization = itemEntry.customization || {}
   const inputs = customization.inputs || []
   const mapping = itemEntry.mapping || {}
-  const pricing = itemEntry.pricing || {}
+  const vendorCostCenter = mapping.vendorCostCenter || {}
   const production = itemEntry.production || {}
-  const shopName = order.shop?.name || order.shopName || order.shopId || '-'
-  const externalOrderId = order.externalOrderId || order.id
+  const tracking = itemEntry.tracking || {}
   const customizationColor = getWorkbenchInputValue(inputs, ['color', 'colour']) || '-'
   const customizationSize = getWorkbenchInputValue(inputs, ['size']) || '-'
-  const fulfillmentColor = mapping.vendorCostCenter?.color || customizationColor
-  const fulfillmentSize = mapping.vendorCostCenter?.size || customizationSize
+  const fulfillmentColor = vendorCostCenter.standardColor || vendorCostCenter.color || '-'
+  const fulfillmentSize = vendorCostCenter.standardSize || vendorCostCenter.size || '-'
   const customerName =
     getWorkbenchInputValue(inputs, ['name', 'text', 'custom']) || order.buyer?.name || '-'
   const photos = getWorkbenchImageInputs(inputs)
-  const customizationFields = getWorkbenchCustomizationFields(inputs)
-  const customizationImages = getWorkbenchCustomizationImages(inputs)
+  const listingImages = getWorkbenchListingImages(itemEntry)
+  const psdStatus = String(listing.psdStatus || order.psdStatus || '').toUpperCase()
+
+  return {
+    id: item.id || item._id || item.externalItemId || item.sku || item.title || '',
+    label: item.sku || item.externalItemId || item.title || 'Item',
+    productImages: listingImages.length > 0 ? listingImages : [FALLBACK_IMAGE],
+    product: {
+      ...buildEmptyProduct(),
+      psdKey: PSD_STATUS_LABEL_KEY_MAP[psdStatus] || 'orders.values.common.noData',
+      psdColor: PSD_STATUS_COLOR_MAP[psdStatus] || 'danger',
+      scaleByKey: production.scaleBy ? '' : 'orders.values.common.noData',
+      scaleBy: production.scaleBy || '-',
+      qcBy: production.qcBy || '-',
+      sku: item.sku || '-',
+      asin: item.asin || listing.asin || '-',
+      seller: itemEntry.seller?.name || itemEntry.seller?.employeeCode || '-',
+      team: order.marketplaceCode || '-',
+    },
+    customization: {
+      ...buildEmptyCustomization(),
+      productType: item.title || '-',
+      shirtColor: customizationColor,
+      size: customizationSize,
+      customerPhoto: photos,
+      customerName,
+      fields: getWorkbenchCustomizationFields(inputs),
+      images: getWorkbenchCustomizationImages(inputs),
+      customizationUrl: getWorkbenchCustomizationUrl(customization, inputs),
+    },
+    fulfillment: {
+      ...buildEmptyFulfillment(),
+      quantity: String(item.quantity ?? '-'),
+      fulfillQty: String(item.quantity ?? '-'),
+      statusKey: getItemWorkflowStatusKey(item, mapping, psdStatus, itemEntry.workflow),
+      trackingKey: tracking.trackingNumber || 'orders.values.common.noData',
+      carrierKey:
+        tracking.carrier ||
+        tracking.carrierName ||
+        tracking.shippingCarrier ||
+        tracking.trackingCompany ||
+        'orders.values.common.noData',
+      vendorProduct: formatVendorProductLabel(mapping.vendorProduct, mapping.vendor),
+      vendorProductId: mapping.vendorProduct?.id || null,
+      vendorCostCenterId: mapping.vendorCostCenter?.id || null,
+      productTypeGroupId: listing.productTypeGroup?.id || null,
+      size: fulfillmentSize,
+      color: fulfillmentColor,
+      fulfillName: order.externalOrderId || item.externalItemId || '-',
+      noteKey: tracking.note || 'orders.values.common.noData',
+    },
+  }
+}
+
+export function mapWorkbenchOrderToOrderRow(row = {}, { locale = 'en' } = {}) {
+  const order = row.order || {}
+  const itemEntries = row.items || []
+  const itemDetails = itemEntries.map((entry) => mapWorkbenchItemDetail(entry, order))
+  const firstDetail = itemDetails[0] || mapWorkbenchItemDetail({}, order)
+  const itemEntry = itemEntries[0] || {}
+  const pricing = itemEntry.pricing || {}
+  const shopName = order.shop?.name || order.shopName || order.shopId || '-'
+  const externalOrderId = order.externalOrderId || order.id
   const currency = order.pricing?.currency || pricing.currency || order.currency || 'USD'
-  const baseCostAmount =
-    order.pricing?.baseCostAmount ??
-    order.pricing?.totalCostAmount ??
-    order.pricing?.customerPaidAmount ??
-    order.customerPaidAmount
+  const baseCostAmount = order.pricing?.baseCostAmount ?? null
 
   return {
     apiId: order.id,
@@ -408,6 +599,7 @@ export function mapWorkbenchOrderToOrderRow(row = {}, { locale = 'en' } = {}) {
     shop: shopName,
     seller: itemEntry.seller?.name || itemEntry.seller?.employeeCode || '',
     status: order.status,
+    addressValidationStatus: String(order.addressValidationStatus || 'NOT_CHECKED').toUpperCase(),
     statusKey: STATUS_LABEL_KEY_MAP[order.status] || order.status || 'orders.values.common.noData',
     caseStatus: order.caseStatus || 'NONE',
     caseTitle: getCaseTitle(order),
@@ -415,7 +607,7 @@ export function mapWorkbenchOrderToOrderRow(row = {}, { locale = 'en' } = {}) {
     createdAgoKey: '',
     orderDate: formatDate(order.orderedAt, locale),
     orderAgoKey: '',
-    shippingType: order.shippingService?.name || order.shippingService?.level || '-',
+    shippingType: order.shippingService?.level || order.shippingService?.name || '-',
     shippingTypeKey: '',
     customer: order.buyer?.name || '-',
     customerInfo: {
@@ -434,43 +626,13 @@ export function mapWorkbenchOrderToOrderRow(row = {}, { locale = 'en' } = {}) {
     storeName: shopName,
     handlingKey: '',
     handling: getHandlingLabel(order),
-    productImages: photos.length > 0 ? photos : [FALLBACK_IMAGE],
-    product: {
-      ...buildEmptyProduct(),
-      scaleByKey: production.scaleBy ? '' : 'orders.values.common.noData',
-      scaleBy: production.scaleBy || '-',
-      qcBy: production.qcBy || '-',
-      sku: item.sku || '-',
-      asin: item.asin || itemEntry.listing?.asin || '-',
-      seller: itemEntry.seller?.name || itemEntry.seller?.employeeCode || '-',
-      team: order.marketplaceCode || '-',
-    },
-    customization: {
-      ...buildEmptyCustomization(),
-      productType: item.title || '-',
-      shirtColor: customizationColor,
-      size: customizationSize,
-      customerPhoto: photos.length > 0 ? photos : [FALLBACK_IMAGE],
-      customerName,
-      fields: customizationFields,
-      images: customizationImages,
-    },
-    fulfillment: {
-      ...buildEmptyFulfillment(),
-      quantity: String(item.quantity ?? '-'),
-      fulfillQty: String(item.quantity ?? '-'),
-      statusKey:
-        ITEM_STATUS_LABEL_KEY_MAP[item.status] || item.status || 'orders.values.common.noData',
-      trackingKey: itemEntry.tracking?.trackingNumber || 'orders.values.common.noData',
-      vendorProduct:
-        mapping.vendorProduct?.name || mapping.vendorProduct?.code || item.title || '-',
-      size: fulfillmentSize,
-      color: fulfillmentColor,
-      fulfillName: order.externalOrderId || item.externalItemId || '-',
-      noteKey: itemEntry.tracking?.note || 'orders.values.common.noData',
-    },
+    productImages: firstDetail.productImages,
+    product: firstDetail.product,
+    customization: firstDetail.customization,
+    fulfillment: firstDetail.fulfillment,
+    itemDetails,
     raw: order,
-    workbenchItems: row.items || [],
+    workbenchItems: itemEntries,
   }
 }
 
@@ -517,6 +679,7 @@ function buildEmptyFulfillment() {
     fulfillQty: '-',
     statusKey: 'orders.values.status.new',
     trackingKey: 'orders.values.common.noData',
+    carrierKey: 'orders.values.common.noData',
     vendorProduct: '-',
     size: '-',
     color: '-',
@@ -553,10 +716,11 @@ export function mapOrderDetail({
     getCustomerInputValue(customerInputs, ['name', 'text', 'custom']) ||
     toDisplayValue(customerInputs.name, ['value', 'label', 'name']) ||
     '-'
-  const photos = extractedImages.map((image) => image.secureUrl).filter(Boolean)
+  const photos = extractedImages.map((image) => getMediaPreviewUrl(image)).filter(Boolean)
+  const productImages = [getMediaPreviewUrl(item)].filter(Boolean)
 
   return {
-    productImages: photos.length > 0 ? photos : [FALLBACK_IMAGE],
+    productImages: productImages.length > 0 ? productImages : [FALLBACK_IMAGE],
     product: {
       ...buildEmptyProduct(),
       sku: item.sku || '-',

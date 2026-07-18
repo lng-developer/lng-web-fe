@@ -64,4 +64,25 @@ describe('POD API row adapters', () => {
     assert.equal(row.owner, 'VN Factory')
     assert.equal(row.issue, 'PENDING_QC')
   })
+
+  it('maps catalog product type groups for the cost center setup screen', () => {
+    const row = mapApiRowForModule(
+      'catalog',
+      {
+        id: 'group-1',
+        code: 'TSHIRT',
+        name: 'T-Shirt',
+        status: 'ACTIVE',
+        updatedAt: '2026-07-17T01:00:00.000Z',
+      },
+      0,
+    )
+
+    assert.equal(row.id, 'group-1')
+    assert.equal(row.platform, 'Catalog')
+    assert.equal(row.title, 'T-Shirt')
+    assert.equal(row.owner, 'TSHIRT')
+    assert.equal(row.status, 'ACTIVE')
+    assert.equal(row.issue, 'Template and listing readiness')
+  })
 })

@@ -6,15 +6,23 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import {
   Button,
+  FormControl,
   IconButton,
   InputAdornment,
-  Skeleton,
+  MenuItem,
+  Select,
   TextField,
   Tooltip,
-  Typography,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import {
+  OperationsHeader,
+  OperationsPageShell,
+  OperationsPagination,
+  OperationsTable,
+  OperationsToolbar,
+} from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -34,6 +42,14 @@ const statusClasses = {
   active: 'border-success bg-surface text-success',
   inactive: 'border-border-strong bg-surface text-ink-muted',
 }
+const columns = [
+  { key: 'code', label: 'Code', width: '150px' },
+  { key: 'name', label: 'Name', width: '240px' },
+  { key: 'fulfillmentType', label: 'Fulfillment', width: '150px' },
+  { key: 'providerKey', label: 'Provider', width: '150px' },
+  { key: 'status', label: 'Status', width: '120px' },
+  { key: 'actions', label: 'Actions', width: '110px', align: 'center' },
+]
 
 function Pill({ children, className = '' }) {
   return (
@@ -49,14 +65,23 @@ export default function VendorListPage() {
   const { t } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
   const [search, setSearch] = useState('')
+  const [code, setCode] = useState('')
+  const [status, setStatus] = useState('all')
+  const [fulfillmentType, setFulfillmentType] = useState('all')
+  const [providerKey, setProviderKey] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [dialogState, setDialogState] = useState({ mode: 'create', vendor: null, open: false })
-  const debouncedSearch = useDebounce(search, 300)
+  const debouncedFilters = useDebounce({ search, code, providerKey }, 300)
   const { data, isError, isPending } = useVendorsQuery({
-    page: 1,
-    limit: 100,
-    search: debouncedSearch,
+    page,
+    limit: pageSize,
+    ...debouncedFilters,
+    status,
+    fulfillmentType,
   })
   const vendors = data?.items || []
+  const pagination = data?.pagination || { page, limit: pageSize, total: 0 }
   const createVendorMutation = useCreateVendorMutation()
   const updateVendorMutation = useUpdateVendorMutation()
 
@@ -95,140 +120,175 @@ export default function VendorListPage() {
     })
   }
 
-  return (
-    <div className="flex min-h-full flex-col bg-surface p-2">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <Typography component="h1" variant="h4" className="text-2xl font-bold text-ink-strong">
-          {t('vendors.list.title')}
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon fontSize="small" />}
-          onClick={openCreateDialog}
-          className="h-10 rounded-lg px-4 text-sm font-bold"
-        >
-          {t('vendors.list.actions.create')}
-        </Button>
-      </header>
+  function resetPage() {
+    setPage(1)
+  }
 
-      <div className="mt-6">
-        <TextField
-          size="small"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={t('vendors.searchPlaceholder')}
-          className="w-full max-w-72 bg-surface"
-          slotProps={{
-            input: {
-              className: 'h-10 rounded-lg text-sm',
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon className="text-ink-muted" fontSize="small" />
-                </InputAdornment>
-              ),
-            },
+  function renderCell(vendor, column) {
+    if (column.key === 'fulfillmentType') {
+      return (
+        <Pill
+          className={`border-transparent ${
+            fulfillmentTypeClasses[vendor.fulfillmentType] || 'bg-neutral-bg text-ink-secondary'
+          }`}
+        >
+          {t(`vendors.values.fulfillmentType.${vendor.fulfillmentType}`, {
+            defaultValue: vendor.rawFulfillmentType || vendor.fulfillmentType,
+          })}
+        </Pill>
+      )
+    }
+    if (column.key === 'status') {
+      return (
+        <Pill className={statusClasses[vendor.status]}>
+          {t(`vendors.values.status.${vendor.status}`, {
+            defaultValue: vendor.rawStatus || vendor.status,
+          })}
+        </Pill>
+      )
+    }
+    if (column.key === 'actions') {
+      return (
+        <div className="flex items-center justify-center gap-1">
+          <Tooltip title={t('vendors.actions.edit')}>
+            <IconButton
+              aria-label={t('vendors.actions.edit')}
+              size="small"
+              className="text-ink-muted"
+              onClick={() => openEditDialog(vendor)}
+            >
+              <EditOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t('vendors.actions.deleteUnavailable')}>
+            <span>
+              <IconButton
+                aria-label={t('vendors.actions.deleteUnavailable')}
+                size="small"
+                className="text-danger"
+                disabled
+              >
+                <DeleteOutlineOutlinedIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </div>
+      )
+    }
+    return vendor[column.key] || '-'
+  }
+
+  return (
+    <OperationsPageShell
+      header={
+        <OperationsHeader
+          title={t('vendors.list.title')}
+          actions={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon fontSize="small" />}
+              onClick={openCreateDialog}
+            >
+              {t('vendors.list.actions.create')}
+            </Button>
+          }
+        />
+      }
+      toolbar={
+        <OperationsToolbar>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[240px_170px_160px_170px_170px]">
+            <TextField
+              size="small"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value)
+                resetPage()
+              }}
+              placeholder={t('vendors.searchPlaceholder')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon className="text-ink-muted" fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <TextField
+              size="small"
+              value={code}
+              onChange={(event) => {
+                setCode(event.target.value)
+                resetPage()
+              }}
+              placeholder="Vendor code"
+            />
+            <FormControl size="small">
+              <Select
+                value={status}
+                onChange={(event) => {
+                  setStatus(event.target.value)
+                  resetPage()
+                }}
+              >
+                <MenuItem value="all">All status</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small">
+              <Select
+                value={fulfillmentType}
+                onChange={(event) => {
+                  setFulfillmentType(event.target.value)
+                  resetPage()
+                }}
+              >
+                <MenuItem value="all">All fulfillment</MenuItem>
+                <MenuItem value="pod">POD</MenuItem>
+                <MenuItem value="fbm">FBM</MenuItem>
+                <MenuItem value="dropship">Dropship</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              value={providerKey}
+              onChange={(event) => {
+                setProviderKey(event.target.value)
+                resetPage()
+              }}
+              placeholder="Provider key"
+            />
+          </div>
+        </OperationsToolbar>
+      }
+      pagination={
+        <OperationsPagination
+          page={pagination.page}
+          pageSize={pagination.limit}
+          total={pagination.total}
+          onPageChange={setPage}
+          onPageSizeChange={(nextPageSize) => {
+            setPageSize(nextPageSize)
+            setPage(1)
           }}
         />
-      </div>
-
-      <section className="mt-6 overflow-x-auto rounded-xl border border-border bg-surface">
-        <table className="min-w-full border-collapse">
-          <thead className="bg-surface-subtle">
-            <tr>
-              {['name', 'fulfillmentType', 'active', 'actions'].map((column) => (
-                <th
-                  key={column}
-                  scope="col"
-                  className="h-12 whitespace-nowrap px-4 text-left text-[11px] font-bold uppercase text-ink-muted"
-                >
-                  {t(`vendors.list.columns.${column}`)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isPending
-              ? Array.from({ length: 5 }, (_item, index) => (
-                  <tr key={index} className="h-14 border-t border-border bg-surface">
-                    {Array.from({ length: 4 }, (_cell, cellIndex) => (
-                      <td key={cellIndex} className="px-4">
-                        <Skeleton variant="text" height={20} />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              : null}
-            {!isPending && isError ? (
-              <tr className="h-14 border-t border-border bg-surface">
-                <td colSpan={4} className="px-4 text-sm text-danger">
-                  {t('vendors.states.loadError')}
-                </td>
-              </tr>
-            ) : null}
-            {!isPending && !isError && vendors.length === 0 ? (
-              <tr className="h-14 border-t border-border bg-surface">
-                <td colSpan={4} className="px-4 text-sm text-ink-muted">
-                  {t('vendors.states.empty')}
-                </td>
-              </tr>
-            ) : null}
-            {!isPending && !isError
-              ? vendors.map((vendor) => (
-                  <tr key={vendor.id} className="h-14 border-t border-border bg-surface">
-                    <td className="whitespace-nowrap px-4 text-sm font-medium text-ink-secondary">
-                      {vendor.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4">
-                      <Pill
-                        className={`border-transparent ${
-                          fulfillmentTypeClasses[vendor.fulfillmentType] ||
-                          'bg-neutral-bg text-ink-secondary'
-                        }`}
-                      >
-                        {t(`vendors.values.fulfillmentType.${vendor.fulfillmentType}`, {
-                          defaultValue: vendor.rawFulfillmentType || vendor.fulfillmentType,
-                        })}
-                      </Pill>
-                    </td>
-                    <td className="whitespace-nowrap px-4">
-                      <Pill className={statusClasses[vendor.status]}>
-                        {t(`vendors.values.status.${vendor.status}`, {
-                          defaultValue: vendor.rawStatus || vendor.status,
-                        })}
-                      </Pill>
-                    </td>
-                    <td className="whitespace-nowrap px-4">
-                      <div className="flex items-center gap-1">
-                        <Tooltip title={t('vendors.actions.edit')}>
-                          <IconButton
-                            aria-label={t('vendors.actions.edit')}
-                            size="small"
-                            className="text-ink-muted"
-                            onClick={() => openEditDialog(vendor)}
-                          >
-                            <EditOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={t('vendors.actions.deleteUnavailable')}>
-                          <span>
-                            <IconButton
-                              aria-label={t('vendors.actions.deleteUnavailable')}
-                              size="small"
-                              className="text-danger"
-                              disabled
-                            >
-                              <DeleteOutlineOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              : null}
-          </tbody>
-        </table>
-      </section>
+      }
+    >
+      {isError ? (
+        <div className="p-4 text-sm text-danger">{t('vendors.states.loadError')}</div>
+      ) : (
+        <OperationsTable
+          columns={columns}
+          rows={vendors}
+          loading={isPending}
+          getRowKey={(vendor) => vendor.id}
+          renderCell={renderCell}
+          minWidth="940px"
+          emptyTitle={t('vendors.states.empty')}
+        />
+      )}
       <VendorFormDialog
         open={dialogState.open}
         mode={dialogState.mode}
@@ -238,6 +298,6 @@ export default function VendorListPage() {
         onClose={closeDialog}
         onSubmit={handleSubmitVendor}
       />
-    </div>
+    </OperationsPageShell>
   )
 }

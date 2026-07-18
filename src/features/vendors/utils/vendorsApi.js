@@ -88,6 +88,13 @@ export function buildVendorListQuery(query = {}) {
 
   return cleanQuery({
     ...rest,
+    status: rest.status && rest.status !== 'all' ? normalizeUpper(rest.status) : undefined,
+    fulfillmentType:
+      rest.fulfillmentType && rest.fulfillmentType !== 'all'
+        ? normalizeUpper(rest.fulfillmentType)
+        : undefined,
+    providerKey:
+      rest.providerKey && rest.providerKey !== 'all' ? normalizeUpper(rest.providerKey) : undefined,
     q: search,
   })
 }

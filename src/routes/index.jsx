@@ -28,12 +28,16 @@ const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
 const UsersRolesPage = lazy(() => import('@/features/rbac/pages/UsersRolesPage'))
 const ScalePage = lazy(() => import('@/features/scale/pages/ScalePage'))
 const ShippingPage = lazy(() => import('@/features/shipments/pages/ShippingPage'))
+const ShopsPage = lazy(() => import('@/features/shops/pages/ShopsPage'))
 const UiKitPage = lazy(() => import('@/features/ui-kit/pages/UiKitPage'))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const UnauthorizedPage = lazy(() => import('@/features/auth/pages/UnauthorizedPage'))
 const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage'))
 const VendorListPage = lazy(() => import('@/features/vendors/pages/VendorListPage'))
 const VendorProductsPage = lazy(() => import('@/features/vendors/pages/VendorProductsPage'))
+const VendorSubmissionsPage = lazy(
+  () => import('@/features/vendor-submissions/pages/VendorSubmissionsPage'),
+)
 
 function requirePermissions(requiredPermissions, element) {
   return <ProtectedRoute requiredPermissions={requiredPermissions}>{element}</ProtectedRoute>
@@ -81,10 +85,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'portal/vendor-submissions',
-            element: requirePermissions(
-              ['VENDOR_SUBMISSIONS:READ'],
-              <PodWorkbenchPage moduleId="logistics" />,
-            ),
+            element: requirePermissions(['VENDOR_SUBMISSIONS:READ'], <VendorSubmissionsPage />),
           },
           {
             path: 'portal/fulfillment/shipping',
@@ -132,6 +133,10 @@ export const router = createBrowserRouter([
           {
             path: 'portal/settings/users-roles',
             element: requirePermissions(['AUTH:READ'], <UsersRolesPage />),
+          },
+          {
+            path: 'portal/settings/shops-stores',
+            element: requirePermissions(['SHOPS:READ'], <ShopsPage />),
           },
           {
             path: 'portal/settings/api-coverage',

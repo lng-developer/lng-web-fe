@@ -1,5 +1,7 @@
 import { Tab, Tabs } from '@mui/material'
 
+import { operationsTextCaptionClass, operationsTextStrongClass } from './operationsLayout'
+
 export default function OperationsTabs({
   items,
   value,
@@ -36,7 +38,7 @@ export default function OperationsTabs({
                     <span>{item.label}</span>
                     {item.count !== undefined ? (
                       <span
-                        className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs ${
+                        className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 ${operationsTextCaptionClass} ${
                           active ? 'bg-primary-light text-primary' : 'bg-neutral-bg text-ink-muted'
                         }`}
                       >
@@ -45,10 +47,8 @@ export default function OperationsTabs({
                     ) : null}
                   </span>
                 }
-                className={`!min-h-12 !px-4 !text-sm !normal-case transition-colors ${
-                  active
-                    ? '!font-semibold !text-primary'
-                    : '!font-medium !text-ink-secondary hover:!text-primary'
+                className={`!min-h-12 !px-4 !normal-case transition-colors ${operationsTextStrongClass} ${
+                  active ? '!text-primary' : '!font-medium !text-ink-secondary hover:!text-primary'
                 }`}
               />
             )
@@ -68,7 +68,7 @@ export default function OperationsTabs({
             <span>{item.label}</span>
             {item.count !== undefined ? (
               <span
-                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs ${
+                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 ${operationsTextCaptionClass} ${
                   active
                     ? 'bg-white/20 text-white'
                     : 'bg-neutral-bg text-ink-muted group-hover:bg-primary-light group-hover:text-primary'
@@ -79,7 +79,7 @@ export default function OperationsTabs({
             ) : null}
           </>
         )
-        const itemClassName = `group inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-semibold transition duration-150 active:translate-y-px ${
+        const itemClassName = `group inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-4 transition duration-150 active:translate-y-px ${operationsTextStrongClass} ${
           active
             ? 'border-primary bg-primary text-white shadow-sm hover:bg-danger hover:shadow-md'
             : 'border-transparent text-ink-muted hover:border-border hover:bg-surface hover:text-ink-strong hover:shadow-sm'

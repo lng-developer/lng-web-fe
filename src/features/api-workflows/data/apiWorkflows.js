@@ -152,7 +152,7 @@ export const API_WORKFLOWS = {
             'Reorder routes',
             'PATCH',
             '/api/mapping/vendor-routing-rules/reorder',
-            '{"orderedIds":[]}',
+            '{"productTypeGroupId":"","vendorRanks":[{"vendorId":"","priority":1}]}',
           ),
         ],
       },

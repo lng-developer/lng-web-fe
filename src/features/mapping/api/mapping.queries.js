@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
@@ -54,7 +54,16 @@ export function useMappingWorkbenchQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: mappingKeys.workbench(query),
     queryFn: () => get(ENDPOINTS.MAPPING.CONFIG_WORKBENCH, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
+export function useMappingUnmatchedOrderItemsQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: mappingKeys.unmatchedOrderItems(query),
+    queryFn: () => get(ENDPOINTS.MAPPING.UNMATCHED_ORDER_ITEMS, query),
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -65,7 +74,7 @@ export function useMappingRulesQuery(type, query = {}, options = {}) {
   return useQuery({
     queryKey: mappingKeys.rules(ruleType.id, query),
     queryFn: () => get(ruleType.listEndpoint, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }
@@ -74,7 +83,7 @@ export function useMappingInternalTemplatesQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: mappingKeys.internalTemplates(query),
     queryFn: () => get(ENDPOINTS.CATALOG.INTERNAL_TEMPLATES, query),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     retry: false,
     ...options,
   })
