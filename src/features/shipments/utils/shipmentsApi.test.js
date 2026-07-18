@@ -8,7 +8,15 @@ import {
   buildVendorTrackingRecheckPayload,
   mapShipmentResponse,
   mapShipmentsResponse,
+  readShipmentDashboardSearch,
 } from './shipmentsApi.js'
+
+test('readShipmentDashboardSearch accepts a supported status', () => {
+  assert.deepEqual(readShipmentDashboardSearch('?status=TRACKING_PENDING'), {
+    status: 'TRACKING_PENDING',
+  })
+  assert.deepEqual(readShipmentDashboardSearch('?status=unknown'), {})
+})
 
 test('buildShipmentListQuery keeps operator ids and caps page size', () => {
   assert.deepEqual(

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import AddTaskOutlinedIcon from '@mui/icons-material/AddTaskOutlined'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
@@ -45,6 +46,7 @@ import {
   useVendorSubmissionPayloadPreviewQuery,
   useVendorSubmissionsQuery,
 } from '@/features/vendor-submissions/api/vendorSubmissions.queries'
+import { readVendorSubmissionDashboardSearch } from '@/features/vendor-submissions/utils/vendorSubmissionsApi'
 import { useDebounce } from '@/hooks/useDebounce'
 
 const pageSize = 20
@@ -185,7 +187,10 @@ function DetailDrawer({ row, open, onClose, t }) {
 export default function VendorSubmissionsPage() {
   const { t, i18n } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
-  const [status, setStatus] = useState('ALL')
+  const location = useLocation()
+  const [status, setStatus] = useState(
+    () => readVendorSubmissionDashboardSearch(location.search).status || 'ALL',
+  )
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({ id: '', externalOrderId: '', vendorExternalOrderId: '' })
   const [selectedRow, setSelectedRow] = useState(null)

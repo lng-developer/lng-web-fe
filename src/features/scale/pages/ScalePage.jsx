@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
@@ -53,6 +54,7 @@ import {
   SCALE_SUB_TABS,
   SCALE_TABLE_COLUMNS,
 } from '@/features/scale/constants/scaleConstants'
+import { readScaleDashboardSearch } from '@/features/scale/utils/scaleApi'
 import {
   copyDisplayText,
   getScaleManualUploadPosition,
@@ -814,8 +816,17 @@ export default function ScalePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { enqueueSnackbar } = useSnackbar()
-  const [activeSubTab, setActiveSubTab] = useState(SCALE_SUB_TABS.GROUP_TASK)
-  const [statusTab, setStatusTab] = useState(SCALE_STATUS_TABS.ALL)
+  const location = useLocation()
+  const dashboardSearch = useMemo(
+    () => readScaleDashboardSearch(location.search),
+    [location.search],
+  )
+  const [activeSubTab, setActiveSubTab] = useState(
+    () => dashboardSearch.activeSubTab || SCALE_SUB_TABS.GROUP_TASK,
+  )
+  const [statusTab, setStatusTab] = useState(
+    () => dashboardSearch.statusTab || SCALE_STATUS_TABS.ALL,
+  )
   const [groupFilters, setGroupFilters] = useState(groupFiltersInitialState)
   const [etsyFilters, setEtsyFilters] = useState(etsyFiltersInitialState)
   const [searchInput, setSearchInput] = useState('')

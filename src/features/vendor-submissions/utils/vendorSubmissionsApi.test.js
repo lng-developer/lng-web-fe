@@ -10,7 +10,13 @@ import {
   mapVendorSubmissionDetail,
   mapVendorSubmissionResponse,
   mapVendorSubmissionsResponse,
+  readVendorSubmissionDashboardSearch,
 } from './vendorSubmissionsApi.js'
+
+test('readVendorSubmissionDashboardSearch accepts a supported status', () => {
+  assert.deepEqual(readVendorSubmissionDashboardSearch('?status=READY'), { status: 'READY' })
+  assert.deepEqual(readVendorSubmissionDashboardSearch('?status=unknown'), {})
+})
 
 test('buildVendorSubmissionListQuery keeps operator id filters and removes empty values', () => {
   assert.deepEqual(

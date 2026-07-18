@@ -29,6 +29,12 @@ function cleanQuery(query = {}) {
   }, {})
 }
 
+export function readVendorSubmissionDashboardSearch(search = '') {
+  const status = new URLSearchParams(search).get('status')?.toUpperCase()
+
+  return ['READY', 'SUBMITTED', 'FAILED', 'CANCELLED'].includes(status) ? { status } : {}
+}
+
 function normalizePagination(pagination = {}) {
   return {
     page: Math.max(Number(pagination.page) || DEFAULT_PAGE, 1),
