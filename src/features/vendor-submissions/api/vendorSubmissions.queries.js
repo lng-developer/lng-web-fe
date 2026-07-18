@@ -26,6 +26,16 @@ export function useVendorSubmissionsQuery(query = {}, options = {}) {
   })
 }
 
+export function useVendorSubmissionsSummaryQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: vendorSubmissionsKeys.summary(query),
+    queryFn: () =>
+      apiClient.get(ENDPOINTS.VENDOR_SUBMISSIONS.SUMMARY, { params: query }).then(unwrapApiData),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
 export function useVendorSubmissionDetailQuery(id, options = {}) {
   return useQuery({
     queryKey: vendorSubmissionsKeys.detail(id),
