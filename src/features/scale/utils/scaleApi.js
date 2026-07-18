@@ -1,9 +1,11 @@
 import {
   CS_STATUSES,
   SCALE_ALL_FILTER,
+  SCALE_CHANNELS,
   SCALE_PAGE_SIZE,
   SCALE_STATUS_TABS,
   SCALE_STATUSES,
+  SCALE_SUB_TABS,
 } from '../constants/scaleConstants.js'
 
 function compactObject(value) {
@@ -106,6 +108,19 @@ function dateBoundary(value, method) {
 
 export function unwrapApiData(response) {
   return response?.success && Object.hasOwn(response, 'data') ? response.data : response
+}
+
+export function readScaleDashboardSearch(search = '') {
+  const params = new URLSearchParams(search)
+  const result = {}
+  const statusTab = params.get('status')
+  const channel = params.get('channel')?.toUpperCase()
+
+  if (Object.values(SCALE_STATUS_TABS).includes(statusTab)) result.statusTab = statusTab
+  if (channel === SCALE_CHANNELS.ETSY) result.activeSubTab = SCALE_SUB_TABS.ETSY_TASKS
+  if (channel === SCALE_CHANNELS.AMAZON) result.activeSubTab = SCALE_SUB_TABS.GROUP_TASK
+
+  return result
 }
 
 export function buildProductionTaskQuery(filters = {}) {

@@ -9,7 +9,16 @@ const {
   mapProductionListResponse,
   mapProductionTask,
   mapScaleSummary,
+  readScaleDashboardSearch,
 } = scaleApi
+
+test('readScaleDashboardSearch accepts supported status and channel values', () => {
+  assert.deepEqual(readScaleDashboardSearch('?status=needScale&channel=etsy'), {
+    activeSubTab: 'etsyTasks',
+    statusTab: 'needScale',
+  })
+  assert.deepEqual(readScaleDashboardSearch('?status=unknown&channel=unknown'), {})
+})
 
 test('buildProductionTaskQuery maps shared filters and channel to the production list contract', () => {
   assert.deepEqual(

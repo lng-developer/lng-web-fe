@@ -678,6 +678,67 @@
     "title": "Trang chủ",
     "welcome": "Dashboard vận hành POD",
     "description": "Theo dõi nhanh đơn hàng, hàng chờ xử lý và các ngoại lệ cần ưu tiên trong ngày.",
+    "dashboard": {
+      "title": "Công việc của tôi",
+      "totalOpen": "{{count}} việc đang chờ xử lý",
+      "myWork": "Hàng chờ công việc",
+      "myWorkDescription": "Chỉ hiển thị hàng chờ bạn có quyền truy cập.",
+      "partialData": "Không tải được {{count}} nguồn dữ liệu. Các hàng chờ khác vẫn hiển thị.",
+      "queues": {
+        "orderCases": "Case đơn hàng đang mở",
+        "scale": "Sẵn sàng scale",
+        "qc": "Chờ QC",
+        "design": "Công việc design"
+      },
+      "queueDescriptions": {
+        "orderCases": "Vấn đề khách hàng hoặc đơn hàng cần quyết định.",
+        "scale": "Hạng mục sản xuất sẵn sàng cho scale.",
+        "qc": "Công việc đã scale đang chờ kiểm tra chất lượng.",
+        "design": "Công việc design trong hàng chờ bạn truy cập."
+      },
+      "attention": {
+        "title": "Cần chú ý",
+        "openQueue": "Mở hàng chờ",
+        "missingCostCenter": "Thiếu cost center",
+        "orderMissingPsd": "Đơn hàng thiếu PSD",
+        "missingPsd": "Sản xuất bị chặn do thiếu PSD",
+        "vendorReady": "Sẵn sàng gửi vendor",
+        "vendorFailed": "Gửi vendor thất bại",
+        "trackingPending": "Đang chờ tracking"
+      },
+      "priority": {
+        "info": "Đang xử lý",
+        "warning": "Cần thao tác",
+        "danger": "Bị chặn"
+      },
+      "table": {
+        "queue": "Hàng chờ",
+        "count": "Số lượng",
+        "priority": "Ưu tiên",
+        "description": "Việc cần thực hiện",
+        "action": "Thao tác"
+      },
+      "actions": {
+        "openQueue": "Mở hàng chờ",
+        "refresh": "Làm mới hàng chờ",
+        "retry": "Thử lại"
+      },
+      "empty": {
+        "title": "Không có hàng chờ",
+        "description": "Hiện không có công việc bạn được phép xử lý."
+      },
+      "management": {
+        "title": "Quản trị",
+        "items": {
+          "users-roles": "Người dùng và quyền",
+          "shops": "Cửa hàng",
+          "mapping": "Mapping",
+          "vendors": "Vendor",
+          "audit-log": "Nhật ký kiểm toán",
+          "reports": "Báo cáo"
+        }
+      }
+    },
     "summary": {
       "users": "Người dùng",
       "orders": "Đơn hàng",

@@ -30,6 +30,18 @@ export function isSupportedQcStatusTab(statusTab) {
   return SUPPORTED_STATUS_TABS.has(statusTab || 'all')
 }
 
+export function readQcDashboardSearch(search = '') {
+  const params = new URLSearchParams(search)
+  const result = {}
+  const statusTab = params.get('status')
+  const platform = params.get('channel')?.toLowerCase()
+
+  if (SUPPORTED_STATUS_TABS.has(statusTab)) result.statusTab = statusTab
+  if (platform === 'amazon' || platform === 'etsy') result.platform = platform
+
+  return result
+}
+
 export function buildQcTaskQuery(filters = {}) {
   const query = {
     salesChannelCode: String(filters.platform || 'amazon').toUpperCase(),

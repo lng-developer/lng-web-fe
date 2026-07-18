@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -39,6 +40,7 @@ import {
   useShipmentsQuery,
   useShipmentWebhookLogsQuery,
 } from '@/features/shipments/api/shipments.queries'
+import { readShipmentDashboardSearch } from '@/features/shipments/utils/shipmentsApi'
 import { useDebounce } from '@/hooks/useDebounce'
 
 const pageSize = 20
@@ -146,8 +148,11 @@ function ShipmentDrawer({ row, open, onClose, t }) {
 export default function ShippingPage() {
   const { t, i18n } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('shipments')
-  const [status, setStatus] = useState('ALL')
+  const [status, setStatus] = useState(
+    () => readShipmentDashboardSearch(location.search).status || 'ALL',
+  )
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({
     id: '',

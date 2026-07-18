@@ -28,6 +28,16 @@ export function useShipmentsQuery(query = {}, options = {}) {
   })
 }
 
+export function useShipmentsSummaryQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: shipmentsKeys.summary(query),
+    queryFn: () =>
+      apiClient.get(ENDPOINTS.SHIPMENTS.SUMMARY, { params: query }).then(unwrapApiData),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
 export function useShipmentDetailQuery(id, options = {}) {
   return useQuery({
     queryKey: shipmentsKeys.detail(id),

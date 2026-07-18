@@ -29,6 +29,14 @@ function cleanQuery(query = {}) {
   }, {})
 }
 
+export function readShipmentDashboardSearch(search = '') {
+  const status = new URLSearchParams(search).get('status')?.toUpperCase()
+
+  return ['TRACKING_PENDING', 'SHIPPED', 'DELIVERED', 'EXCEPTION', 'CANCELLED'].includes(status)
+    ? { status }
+    : {}
+}
+
 function normalizePagination(pagination = {}) {
   return {
     page: Math.max(Number(pagination.page) || DEFAULT_PAGE, 1),

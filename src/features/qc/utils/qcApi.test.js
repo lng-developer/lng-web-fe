@@ -12,7 +12,16 @@ import {
   mapProductionSummaryToQcCounts,
   mapProductionTaskToQcRow,
   mergeQcTaskDetail,
+  readQcDashboardSearch,
 } from './qcApi.js'
+
+test('readQcDashboardSearch accepts supported status and channel values', () => {
+  assert.deepEqual(readQcDashboardSearch('?status=pending&channel=amazon'), {
+    platform: 'amazon',
+    statusTab: 'pending',
+  })
+  assert.deepEqual(readQcDashboardSearch('?status=unknown&channel=unknown'), {})
+})
 
 test('buildQcTaskQuery maps supported QC filters to production task params', () => {
   assert.deepEqual(

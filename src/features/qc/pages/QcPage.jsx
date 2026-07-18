@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
@@ -54,6 +55,7 @@ import {
   isSupportedQcStatusTab,
   mapProductionSummaryToQcCounts,
   mapProductionTaskToQcRow,
+  readQcDashboardSearch,
 } from '@/features/qc/utils/qcApi'
 import { useDebounce } from '@/hooks/useDebounce'
 import dayjs from '@/lib/dayjs'
@@ -215,8 +217,12 @@ export default function QcPage() {
   const { i18n, t } = useTranslation()
   const queryClient = useQueryClient()
   const currentUser = useAuthStore((state) => state.currentUser)
-  const [platform, setPlatform] = useState(QC_PLATFORM_TABS.AMAZON)
-  const [statusTab, setStatusTab] = useState(QC_STATUS_TABS.ALL)
+  const location = useLocation()
+  const dashboardSearch = useMemo(() => readQcDashboardSearch(location.search), [location.search])
+  const [platform, setPlatform] = useState(
+    () => dashboardSearch.platform || QC_PLATFORM_TABS.AMAZON,
+  )
+  const [statusTab, setStatusTab] = useState(() => dashboardSearch.statusTab || QC_STATUS_TABS.ALL)
   const [shopId, setShopId] = useState(QC_ALL_FILTER)
   const [searchInput, setSearchInput] = useState('')
   const [sellerInput, setSellerInput] = useState('')
