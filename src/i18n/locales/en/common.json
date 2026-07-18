@@ -678,6 +678,67 @@
     "title": "Home",
     "welcome": "POD operations dashboard",
     "description": "Track orders, active queues, and exceptions that need attention today.",
+    "dashboard": {
+      "title": "My work",
+      "totalOpen": "{{count}} open work items",
+      "myWork": "Work queues",
+      "myWorkDescription": "Only queues you can access are shown.",
+      "partialData": "{{count}} queue source could not be loaded. Other available queues are still shown.",
+      "queues": {
+        "orderCases": "Open order cases",
+        "scale": "Ready for scale",
+        "qc": "Waiting for QC",
+        "design": "Design tasks"
+      },
+      "queueDescriptions": {
+        "orderCases": "Customer or order issues that need a decision.",
+        "scale": "Production items ready for scale work.",
+        "qc": "Scaled work waiting for quality review.",
+        "design": "Design tasks in the current accessible queue."
+      },
+      "attention": {
+        "title": "Needs attention",
+        "openQueue": "Open queue",
+        "missingCostCenter": "Missing cost center",
+        "orderMissingPsd": "Order missing PSD",
+        "missingPsd": "Production blocked by missing PSD",
+        "vendorReady": "Ready for vendor submission",
+        "vendorFailed": "Vendor submission failed",
+        "trackingPending": "Tracking pending"
+      },
+      "priority": {
+        "info": "In progress",
+        "warning": "Action needed",
+        "danger": "Blocked"
+      },
+      "table": {
+        "queue": "Queue",
+        "count": "Count",
+        "priority": "Priority",
+        "description": "What needs to happen",
+        "action": "Action"
+      },
+      "actions": {
+        "openQueue": "Open queue",
+        "refresh": "Refresh queues",
+        "retry": "Retry"
+      },
+      "empty": {
+        "title": "No work queues available",
+        "description": "There is no accessible work waiting right now."
+      },
+      "management": {
+        "title": "Management",
+        "items": {
+          "users-roles": "Users and roles",
+          "shops": "Shops",
+          "mapping": "Mapping",
+          "vendors": "Vendors",
+          "audit-log": "Audit log",
+          "reports": "Reports"
+        }
+      }
+    },
     "summary": {
       "users": "Users",
       "orders": "Orders",
