@@ -33,26 +33,86 @@ test('isScaleSlotUploadDisabled allows replacing an existing scaled output', () 
   )
 })
 
-test('isScaleSlotUploadDisabled only blocks missing file checks and active uploads', () => {
-  assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ inputAssetId: 'input-1' }, false), true)
+test('isScaleSlotUploadDisabled only blocks active uploads', () => {
+  assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ inputAssetId: 'input-1' }, false), false)
+  assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ slotKey: 'FRONT' }, false), false)
   assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ fileCheckId: 'check-1' }, false), false)
   assert.equal(scaleDisplay.isScaleSlotUploadDisabled({ fileCheckId: 'check-1' }, true), true)
 })
 
-test('getScaleUploadTarget uses the PSD file check independently from scale slots', () => {
+test('getScaleUploadTarget prefers an existing missing scale slot output', () => {
   assert.deepEqual(
     scaleDisplay.getScaleUploadTarget({
       psdTemplate: { fileCheckId: 'psd-check-1' },
-      mockups: [],
+      mockups: [
+        {
+          fileCheckId: 'check-1',
+          slotKey: 'FRONT',
+          label: 'Front',
+          sourceType: 'CUSTOMER_IMAGE',
+          inputAssetId: 'input-1',
+          outputStatus: 'MISSING',
+        },
+      ],
     }),
-    { fileCheckId: 'psd-check-1' },
+    {
+      fileCheckId: 'check-1',
+      isManual: false,
+      slotKey: 'FRONT',
+      slotLabel: 'Front',
+      sourceType: 'CUSTOMER_IMAGE',
+    },
   )
 })
 
-test('getScaleUploadTarget returns an empty target when the API omits the PSD file check', () => {
+test('getScaleUploadTarget falls back to a manual front slot when no file check exists', () => {
   assert.deepEqual(scaleDisplay.getScaleUploadTarget({ psdTemplate: {}, mockups: [] }), {
     fileCheckId: null,
+    isManual: true,
+    slotKey: 'FRONT',
+    slotLabel: 'Front',
+    sourceType: 'CUSTOMER_IMAGE',
   })
+})
+
+test('getScaleManualUploadPosition resolves supported upload positions', () => {
+  assert.equal(typeof scaleDisplay.getScaleManualUploadPosition, 'function')
+  assert.deepEqual(scaleDisplay.getScaleManualUploadPosition('BACK'), {
+    value: 'BACK',
+    slotLabel: 'Back',
+    labelKey: 'scale.manualUpload.positions.back',
+  })
+})
+
+test('getScaleManualUploadPosition falls back to front for empty or unknown values', () => {
+  assert.deepEqual(scaleDisplay.getScaleManualUploadPosition(''), {
+    value: 'FRONT',
+    slotLabel: 'Front',
+    labelKey: 'scale.manualUpload.positions.front',
+  })
+  assert.deepEqual(scaleDisplay.getScaleManualUploadPosition('UNKNOWN'), {
+    value: 'FRONT',
+    slotLabel: 'Front',
+    labelKey: 'scale.manualUpload.positions.front',
+  })
+})
+
+test('getScaleSlotPreviewAssetId returns only uploaded output assets', () => {
+  assert.equal(
+    scaleDisplay.getScaleSlotPreviewAssetId({
+      outputAssetId: 'asset-1',
+      outputStatus: 'UPLOADED',
+    }),
+    'asset-1',
+  )
+  assert.equal(
+    scaleDisplay.getScaleSlotPreviewAssetId({
+      outputAssetId: 'asset-2',
+      outputStatus: 'MISSING',
+    }),
+    null,
+  )
+  assert.equal(scaleDisplay.getScaleSlotPreviewAssetId({ outputStatus: 'UPLOADED' }), null)
 })
 
 test('toggleExpandedTaskIds opens multiple rows independently', () => {

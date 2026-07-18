@@ -32,6 +32,6 @@ test('OperationsTable keeps the table header visible while loading or empty', ()
   const source = readFileSync(new URL('./OperationsTable.jsx', import.meta.url), 'utf8')
 
   assert.equal(source.includes('if (loading)'), false)
-  assert.equal(source.includes('loading ? Array.from'), true)
+  assert.equal(source.includes('loading ? ('), true)
   assert.equal(source.includes('!loading && !rows.length'), true)
 })

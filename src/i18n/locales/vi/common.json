@@ -1221,6 +1221,7 @@
         "orderOwner": "Order Owner",
         "qcBy": "QC By",
         "assignCs": "Người Scale",
+        "assignScale": "Người Scale",
         "csStatus": "Phân công"
       }
     },
@@ -1336,6 +1337,22 @@
         "quantity": "Quantity: {{quantity}}",
         "fulfillName": "Fulfill Name:",
         "buyerNote": "Buyer Note:"
+      }
+    },
+    "manualUpload": {
+      "title": "Upload file scale",
+      "position": "Vị trí",
+      "file": "File upload",
+      "dropTitle": "Kéo thả ảnh scale vào đây",
+      "dropHint": "PNG, JPG, JPEG, WEBP",
+      "selectFile": "Chọn file",
+      "cancel": "Hủy",
+      "upload": "Upload file",
+      "positions": {
+        "front": "Mặt trước",
+        "back": "Mặt sau",
+        "left": "Bên trái",
+        "right": "Bên phải"
       }
     },
     "loading": {

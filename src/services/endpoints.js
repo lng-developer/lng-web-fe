@@ -231,8 +231,11 @@ export const ENDPOINTS = {
     CLAIM: (taskId) => `/api/production/tasks/${taskId}/claim`,
     DESIGN_NOTE: (taskId) => `/api/production/tasks/${taskId}/design-note`,
     CS_NOTE: (taskId) => `/api/production/tasks/${taskId}/cs-note`,
+    CS_STATUS: (taskId) => `/api/production/tasks/${taskId}/cs-status`,
     SCALED_OUTPUT_FILE: (taskId, fileCheckId) =>
       `/api/production/tasks/${taskId}/file-checks/${fileCheckId}/scaled-output-file`,
+    MANUAL_SCALED_OUTPUT_FILE: (taskId) =>
+      `/api/production/tasks/${taskId}/file-checks/manual/scaled-output-file`,
     QC: (taskId) => `/api/production/tasks/${taskId}/qc`,
     SENT_TO_VENDOR: (taskId) => `/api/production/tasks/${taskId}/sent-to-vendor`,
   },

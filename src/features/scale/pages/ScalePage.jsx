@@ -9,6 +9,10 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
 import {
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
   InputAdornment,
@@ -27,7 +31,7 @@ import DateRangePicker from '@/components/form/DateRangePicker'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { scaleKeys } from '@/features/scale/api/scale.keys'
 import {
-  useAssignCsTaskMutation,
+  useAssignScaleTaskMutation,
   useDownloadScaleAssetMutation,
   useRecheckScaleTaskMutation,
   useUpdateScaleTaskCsNoteMutation,
@@ -51,13 +55,18 @@ import {
 } from '@/features/scale/constants/scaleConstants'
 import {
   copyDisplayText,
+  getScaleManualUploadPosition,
+  getScaleSlotPreviewAssetId,
   getScaleUploadTarget,
   isScaleSlotUploadDisabled,
+  SCALE_MANUAL_UPLOAD_POSITIONS,
   toggleExpandedTaskIds,
   truncateDisplayText,
 } from '@/features/scale/utils/scaleDisplay'
 import { getPaginationRange } from '@/features/scale/utils/scalePagination'
 import { useDebounce } from '@/hooks/useDebounce'
+import { apiClient } from '@/services/axiosInstance'
+import { ENDPOINTS } from '@/services/endpoints'
 
 const tableGridClass = 'grid-cols-[auto_repeat(8,minmax(0,1fr))]'
 
@@ -330,12 +339,47 @@ function EtsyCustomizationValue({ item }) {
   return <span className="truncate text-right text-sm font-light text-link-blue">{item.value}</span>
 }
 
+function ScaleOutputPreview({ assetId, alt }) {
+  const [preview, setPreview] = useState({ assetId: null, url: '' })
+
+  useEffect(() => {
+    let active = true
+    let objectUrl = null
+
+    if (!assetId) return undefined
+
+    apiClient
+      .get(ENDPOINTS.MEDIA.ASSET_DOWNLOAD(assetId), { responseType: 'blob' })
+      .then((blob) => {
+        if (!active || !blob?.type?.startsWith('image/')) return
+
+        objectUrl = URL.createObjectURL(blob)
+        setPreview({ assetId, url: objectUrl })
+      })
+      .catch(() => {})
+
+    return () => {
+      active = false
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [assetId])
+
+  const previewUrl = preview.assetId === assetId ? preview.url : ''
+
+  if (!previewUrl) {
+    return <FileDownloadOutlinedIcon className="!text-[28px]" />
+  }
+
+  return <img src={previewUrl} alt={alt} className="h-full w-full object-cover" />
+}
+
 function ScaleDetailPanel({
   task,
   getNoteValue,
   onNoteChange,
   onSaveNote,
   onUploadOutput,
+  onRequestManualUpload,
   onDownloadAsset,
   onRecheckTask,
   uploadingSlotId,
@@ -344,7 +388,8 @@ function ScaleDetailPanel({
 }) {
   const { detail } = task
   const uploadTarget = getScaleUploadTarget(detail)
-  const isUploading = uploadingSlotId === uploadTarget.fileCheckId
+  const uploadTargetId = uploadTarget.fileCheckId || uploadTarget.slotKey
+  const isUploading = uploadingSlotId === uploadTargetId
   const uploadDisabled = isScaleSlotUploadDisabled(uploadTarget, isUploading)
   const isRechecking = recheckingOrderItemId === task.orderItemId
 
@@ -355,11 +400,7 @@ function ScaleDetailPanel({
           <DetailHeading>{t('scale.detail.productInfo')}</DetailHeading>
           <div className="flex h-[106px] w-[106px] items-center justify-center overflow-hidden rounded-md border border-sky-border bg-sky-soft">
             {detail.product.imageUrl ? (
-              <img
-                src={detail.product.imageUrl}
-                alt={detail.product.name}
-                className="h-full w-full object-cover"
-              />
+              <img src={detail.product.imageUrl} alt={''} className="h-full w-full object-cover" />
             ) : (
               <ImageOutlinedIcon className="text-info-strong !text-[36px]" />
             )}
@@ -475,48 +516,66 @@ function ScaleDetailPanel({
               }
             >
               <span className="w-28">
-                <Button
-                  component="label"
-                  variant="outlined"
-                  size="small"
-                  disabled={uploadDisabled}
-                  startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
-                  className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
-                >
-                  {isUploading ? t('scale.loading.uploading') : t('scale.etsy.actions.upload')}
-                  <input
-                    hidden
-                    type="file"
-                    onChange={(event) => {
-                      onUploadOutput(task, uploadTarget, event.target.files?.[0])
-                      event.target.value = ''
-                    }}
-                  />
-                </Button>
+                {uploadTarget.fileCheckId ? (
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    disabled={uploadDisabled}
+                    startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
+                    className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
+                  >
+                    {isUploading ? t('scale.loading.uploading') : t('scale.etsy.actions.upload')}
+                    <input
+                      hidden
+                      type="file"
+                      onChange={(event) => {
+                        onUploadOutput(task, uploadTarget, event.target.files?.[0])
+                        event.target.value = ''
+                      }}
+                    />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    size="small"
+                    disabled={uploadDisabled}
+                    startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
+                    onClick={() => onRequestManualUpload(task, uploadTarget)}
+                    className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
+                  >
+                    {isUploading ? t('scale.loading.uploading') : t('scale.etsy.actions.upload')}
+                  </Button>
+                )}
               </span>
             </Tooltip>
             <div className="flex flex-wrap gap-3">
-              {(detail.mockups || []).map((mockup) => (
-                <div key={mockup.id} className="flex w-28 flex-col gap-1.5">
-                  <Tooltip title={mockup.label}>
-                    <span className="truncate text-[10px] text-ink-muted">{mockup.label}</span>
-                  </Tooltip>
-                  <button
-                    type="button"
-                    disabled={!mockup.outputAssetId}
-                    onClick={() =>
-                      onDownloadAsset(mockup.outputAssetId, `${task.orderId}-${mockup.label}`)
-                    }
-                    className="flex h-28 w-28 items-center justify-center rounded-md border border-sky-border bg-sky-soft text-info-strong disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {mockup.outputAssetId ? (
-                      <FileDownloadOutlinedIcon className="!text-[28px]" />
-                    ) : (
-                      <ImageOutlinedIcon className="!text-[28px]" />
-                    )}
-                  </button>
-                </div>
-              ))}
+              {(detail.mockups || []).map((mockup) => {
+                const previewAssetId = getScaleSlotPreviewAssetId(mockup)
+
+                return (
+                  <div key={mockup.id} className="flex w-28 flex-col gap-1.5">
+                    <Tooltip title={mockup.label}>
+                      <span className="truncate text-[10px] text-ink-muted">{mockup.label}</span>
+                    </Tooltip>
+                    <button
+                      type="button"
+                      disabled={!previewAssetId}
+                      onClick={() =>
+                        onDownloadAsset(previewAssetId, `${task.orderId}-${mockup.label}`)
+                      }
+                      className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-md border border-sky-border bg-sky-soft text-info-strong disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {previewAssetId ? (
+                        <ScaleOutputPreview assetId={previewAssetId} alt={mockup.label} />
+                      ) : (
+                        <ImageOutlinedIcon className="!text-[28px]" />
+                      )}
+                    </button>
+                  </div>
+                )
+              })}
               {detail.mockups?.length ? null : (
                 <span className="text-xs text-ink-muted">{t('scale.messages.noScaleSlots')}</span>
               )}
@@ -637,6 +696,120 @@ function ScalePagination({ page, pageSize, total, disabled, onPageChange, onPage
   )
 }
 
+function ManualScaleUploadDialog({
+  open,
+  slotKey,
+  file,
+  isDragging,
+  isSubmitting,
+  onClose,
+  onSlotKeyChange,
+  onFileChange,
+  onDraggingChange,
+  onSubmit,
+  t,
+}) {
+  function handleDrop(event) {
+    event.preventDefault()
+    onDraggingChange(false)
+    onFileChange(event.dataTransfer.files?.[0] || null)
+  }
+
+  return (
+    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+      <DialogTitle className="pr-10 text-lg font-semibold text-ink-strong">
+        {t('scale.manualUpload.title')}
+      </DialogTitle>
+      <DialogContent className="flex flex-col gap-5 pt-2">
+        <div className="flex flex-col gap-1.5">
+          <Typography variant="body2" className="font-medium text-ink">
+            {t('scale.manualUpload.position')}
+          </Typography>
+          <FormControl size="small" fullWidth>
+            <Select
+              value={slotKey}
+              onChange={(event) => onSlotKeyChange(event.target.value)}
+              disabled={isSubmitting}
+            >
+              {SCALE_MANUAL_UPLOAD_POSITIONS.map((position) => (
+                <MenuItem key={position.value} value={position.value}>
+                  {t(position.labelKey)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Typography variant="body2" className="font-medium text-ink">
+            {t('scale.manualUpload.file')}
+          </Typography>
+          <div
+            onDragOver={(event) => {
+              event.preventDefault()
+              onDraggingChange(true)
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault()
+              onDraggingChange(false)
+            }}
+            onDrop={handleDrop}
+            className={`flex min-h-36 flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-5 py-6 text-center transition ${
+              isDragging ? 'border-primary bg-danger-bg/40' : 'border-border bg-surface-subtle'
+            }`}
+          >
+            <CloudUploadOutlinedIcon className="text-ink-muted" />
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-semibold text-ink">
+                {file?.name || t('scale.manualUpload.dropTitle')}
+              </span>
+              <span className="text-xs text-ink-muted">{t('scale.manualUpload.dropHint')}</span>
+            </div>
+            <Button
+              component="label"
+              variant="outlined"
+              size="small"
+              disabled={isSubmitting}
+              className="h-9 rounded-lg border-border px-4 text-sm font-semibold text-ink-secondary"
+            >
+              {t('scale.manualUpload.selectFile')}
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  onFileChange(event.target.files?.[0] || null)
+                  event.target.value = ''
+                }}
+              />
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+      <DialogActions className="px-6 pb-5 pt-2">
+        <Button
+          variant="outlined"
+          size="medium"
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="h-10 rounded-lg border-border px-5 text-sm font-semibold text-ink-secondary"
+        >
+          {t('scale.manualUpload.cancel')}
+        </Button>
+        <Button
+          variant="contained"
+          size="medium"
+          onClick={onSubmit}
+          disabled={!file || isSubmitting}
+          className="h-10 rounded-lg px-5 text-sm font-semibold"
+        >
+          {isSubmitting ? t('scale.loading.uploading') : t('scale.manualUpload.upload')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
 export default function ScalePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -652,6 +825,14 @@ export default function ScalePage() {
   const [pageSize, setPageSize] = useState(SCALE_PAGE_SIZE)
   const [expandedTaskIds, setExpandedTaskIds] = useState([])
   const [noteDrafts, setNoteDrafts] = useState({})
+  const [manualUploadDialog, setManualUploadDialog] = useState({
+    open: false,
+    task: null,
+    target: null,
+    slotKey: 'FRONT',
+    file: null,
+    isDragging: false,
+  })
 
   const isEtsyTab = activeSubTab === SCALE_SUB_TABS.ETSY_TASKS
   const activeFilters = isEtsyTab ? etsyFilters : groupFilters
@@ -675,7 +856,7 @@ export default function ScalePage() {
   const assigneesQuery = useScaleAssigneesQuery({ limit: 100 })
   const shopsQuery = useScaleShopsQuery({ page: 1, limit: 100 })
 
-  const assignCsMutation = useAssignCsTaskMutation()
+  const assignScaleMutation = useAssignScaleTaskMutation()
   const updateCsNoteMutation = useUpdateScaleTaskCsNoteMutation()
   const recheckTaskMutation = useRecheckScaleTaskMutation()
   const uploadOutputMutation = useUploadScaleOutputMutation()
@@ -752,9 +933,11 @@ export default function ScalePage() {
     resetPageAndExpand()
   }
 
-  function handleAssignCs(taskId, csAssigneeId) {
-    assignCsMutation.mutate(
-      { taskId, csAssigneeId },
+  function handleAssignScale(taskId, assignedDesignUserId) {
+    if (!assignedDesignUserId) return
+
+    assignScaleMutation.mutate(
+      { taskId, assignedDesignUserId },
       {
         onSuccess: () => {
           enqueueSnackbar(t('scale.messages.assignSuccess'), {
@@ -810,20 +993,28 @@ export default function ScalePage() {
     )
   }
 
-  function handleUploadOutput(task, slot, file) {
+  function handleUploadOutput(task, slot, file, callbacks = {}) {
     if (!file) return
-    if (!slot?.fileCheckId) {
+    if (!slot?.fileCheckId && !slot?.slotKey) {
       enqueueSnackbar(t('scale.messages.noUploadSlot'), { variant: SNACKBAR_VARIANTS.WARNING })
       return
     }
 
     uploadOutputMutation.mutate(
-      { taskId: task.id, fileCheckId: slot.fileCheckId, file },
+      {
+        taskId: task.id,
+        fileCheckId: slot.fileCheckId,
+        file,
+        slotKey: slot.slotKey,
+        slotLabel: slot.slotLabel,
+        sourceType: slot.sourceType,
+      },
       {
         onSuccess: () => {
           enqueueSnackbar(t('scale.messages.uploadSuccess'), {
             variant: SNACKBAR_VARIANTS.SUCCESS,
           })
+          callbacks.onSuccess?.()
         },
         onError: (error) => {
           enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
@@ -870,6 +1061,54 @@ export default function ScalePage() {
     )
   }
 
+  function handleRequestManualUpload(task, target) {
+    setManualUploadDialog({
+      open: true,
+      task,
+      target,
+      slotKey: target?.slotKey || 'FRONT',
+      file: null,
+      isDragging: false,
+    })
+  }
+
+  function resetManualUploadDialog() {
+    setManualUploadDialog({
+      open: false,
+      task: null,
+      target: null,
+      slotKey: 'FRONT',
+      file: null,
+      isDragging: false,
+    })
+  }
+
+  function handleCloseManualUpload() {
+    if (uploadOutputMutation.isPending) return
+    resetManualUploadDialog()
+  }
+
+  function updateManualUploadDialog(patch) {
+    setManualUploadDialog((current) => ({ ...current, ...patch }))
+  }
+
+  function handleSubmitManualUpload() {
+    const position = getScaleManualUploadPosition(manualUploadDialog.slotKey)
+
+    handleUploadOutput(
+      manualUploadDialog.task,
+      {
+        ...manualUploadDialog.target,
+        fileCheckId: null,
+        slotKey: position.value,
+        slotLabel: position.slotLabel,
+        sourceType: manualUploadDialog.target?.sourceType || 'CUSTOMER_IMAGE',
+      },
+      manualUploadDialog.file,
+      { onSuccess: resetManualUploadDialog },
+    )
+  }
+
   async function handleDownloadAsset(assetId, filename) {
     if (!assetId) return
     try {
@@ -895,11 +1134,12 @@ export default function ScalePage() {
         onNoteChange={handleNoteChange}
         onSaveNote={handleSaveNote}
         onUploadOutput={handleUploadOutput}
+        onRequestManualUpload={handleRequestManualUpload}
         onDownloadAsset={handleDownloadAsset}
         onRecheckTask={handleRecheckTask}
         uploadingSlotId={
           uploadOutputMutation.isPending && uploadOutputMutation.variables?.taskId === task.id
-            ? uploadOutputMutation.variables.fileCheckId
+            ? uploadOutputMutation.variables.fileCheckId || uploadOutputMutation.variables.slotKey
             : null
         }
         recheckingOrderItemId={
@@ -912,6 +1152,19 @@ export default function ScalePage() {
 
   return (
     <div className="flex min-h-full flex-col gap-4 bg-surface p-6">
+      <ManualScaleUploadDialog
+        open={manualUploadDialog.open}
+        slotKey={manualUploadDialog.slotKey}
+        file={manualUploadDialog.file}
+        isDragging={manualUploadDialog.isDragging}
+        isSubmitting={uploadOutputMutation.isPending}
+        onClose={handleCloseManualUpload}
+        onSlotKeyChange={(slotKey) => updateManualUploadDialog({ slotKey })}
+        onFileChange={(file) => updateManualUploadDialog({ file })}
+        onDraggingChange={(isDragging) => updateManualUploadDialog({ isDragging })}
+        onSubmit={handleSubmitManualUpload}
+        t={t}
+      />
       <header className="flex flex-col gap-3">
         <div className="flex min-h-[54px] items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -1072,7 +1325,11 @@ export default function ScalePage() {
             ) : (
               tasks.map((task) => {
                 const expanded = expandedTaskIds.includes(task.id)
-                const csOptions = assigneesQuery.data || []
+                const scaleOptions = assigneesQuery.data || []
+                const visibleScaleOptions =
+                  task.scaleBy && !scaleOptions.some((option) => option.id === task.scaleBy)
+                    ? [{ id: task.scaleBy, name: task.scaleByName }, ...scaleOptions]
+                    : scaleOptions
 
                 return (
                   <Fragment key={task.id}>
@@ -1144,19 +1401,21 @@ export default function ScalePage() {
                       <div className="min-w-0 overflow-hidden px-4">
                         <FormControl size="small" className="w-full">
                           <Select
-                            value={task.csAssigneeId}
+                            value={task.scaleBy}
                             displayEmpty
                             disabled={
                               assigneesQuery.isLoading ||
-                              (assignCsMutation.isPending &&
-                                assignCsMutation.variables?.taskId === task.id)
+                              (assignScaleMutation.isPending &&
+                                assignScaleMutation.variables?.taskId === task.id)
                             }
-                            onChange={(event) => handleAssignCs(task.id, event.target.value)}
+                            onChange={(event) => handleAssignScale(task.id, event.target.value)}
                             className={`${isEtsyTab ? 'h-[30px] rounded' : 'h-8 rounded-lg'} bg-surface text-sm`}
-                            inputProps={{ 'aria-label': t('scale.table.columns.assignCs') }}
+                            inputProps={{ 'aria-label': t('scale.table.columns.assignScale') }}
                           >
-                            <MenuItem value="">{t('scale.values.csStatus.UNASSIGNED')}</MenuItem>
-                            {csOptions.map((option) => (
+                            <MenuItem value="" disabled>
+                              {t('scale.values.csStatus.UNASSIGNED')}
+                            </MenuItem>
+                            {visibleScaleOptions.map((option) => (
                               <MenuItem key={option.id} value={option.id}>
                                 {option.name}
                               </MenuItem>
