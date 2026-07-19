@@ -36,10 +36,14 @@ function useHrTimeListQuery(queryKey, endpoint, params = {}, mapper, options = {
   })
 }
 
-function useHrTimeDetailQuery(queryKey, endpoint, mapper, options = {}) {
+function useHrTimeDetailQuery(queryKey, endpoint, params, mapper, options = {}) {
   return useQuery({
     queryKey,
-    queryFn: () => apiClient.get(endpoint).then(unwrapHrTimeResponse).then(mapper),
+    queryFn: () =>
+      apiClient
+        .get(endpoint, { params: normalizeHrTimeQuery(params) })
+        .then(unwrapHrTimeResponse)
+        .then(mapper),
     enabled: Boolean(endpoint),
     ...options,
   })
@@ -59,6 +63,7 @@ export function useEmployeeProfileQuery(profileId, params, options) {
   return useHrTimeDetailQuery(
     hrTimeKeys.employeeProfile(profileId, params),
     profileId && ENDPOINTS.HR.EMPLOYEE_PROFILE(profileId),
+    params,
     mapEmployeeProfileRow,
     options,
   )
@@ -68,6 +73,7 @@ export function useMyEmployeeProfileQuery(options) {
   return useHrTimeDetailQuery(
     hrTimeKeys.myEmployeeProfile(),
     ENDPOINTS.HR.MY_EMPLOYEE_PROFILE,
+    undefined,
     mapEmployeeProfileRow,
     options,
   )
@@ -150,6 +156,7 @@ export function useLeaveBalanceQuery(profileId, year, leaveType, options) {
   return useHrTimeDetailQuery(
     hrTimeKeys.leaveBalance(profileId, year, leaveType),
     profileId && year && leaveType && ENDPOINTS.HR.LEAVE_BALANCE(profileId, year, leaveType),
+    undefined,
     mapLeaveBalanceRow,
     options,
   )

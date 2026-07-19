@@ -3,6 +3,9 @@ import CloseIcon from '@mui/icons-material/Close'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Alert, Avatar, Button, Drawer, IconButton, Skeleton, Typography } from '@mui/material'
 
+import { hasAnyPermission } from '@/features/auth/utils/authz'
+import { useAuthStore } from '@/store/useAuthStore'
+
 import { useEmployeeProfileQuery } from '../api/hrTime.queries.js'
 import { getEmployeeProfileSections } from '../utils/hrTimeApi.js'
 
@@ -46,9 +49,18 @@ export default function EmployeeProfileDrawer({
   onEdit,
 }) {
   const { t, i18n } = useTranslation()
-  const profileQuery = useEmployeeProfileQuery(profileId, undefined, {
-    enabled: open && Boolean(profileId),
-  })
+  const currentUser = useAuthStore((state) => state.currentUser)
+  const canReadCompensation = hasAnyPermission(currentUser, [
+    'HR_COMPENSATION:READ',
+    'HR_COMPENSATION:WRITE',
+  ])
+  const profileQuery = useEmployeeProfileQuery(
+    profileId,
+    canReadCompensation ? { includeSensitive: true } : undefined,
+    {
+      enabled: open && Boolean(profileId),
+    },
+  )
   const profile = profileQuery.data
   const sections = getEmployeeProfileSections(profile)
   const error = profileQuery.error?.response?.data?.message || profileQuery.error?.message

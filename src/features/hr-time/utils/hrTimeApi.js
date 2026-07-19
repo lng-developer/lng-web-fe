@@ -118,6 +118,21 @@ export function getHrTimeActions(row) {
   )
 }
 
+export function getSelfAttendanceActions(payload = {}) {
+  const actions =
+    payload?.selfActions ||
+    payload?.selfAttendanceActions ||
+    payload?.summary?.selfActions ||
+    payload?.summary?.selfAttendanceActions ||
+    payload?.capabilities ||
+    {}
+
+  return {
+    checkIn: Boolean(actions.checkIn ?? actions.canCheckIn),
+    checkOut: Boolean(actions.checkOut ?? actions.canCheckOut),
+  }
+}
+
 function compactPayload(values, fields, nullableFields = []) {
   return fields.reduce((payload, field) => {
     if (!Object.hasOwn(values, field) || values[field] === undefined) return payload

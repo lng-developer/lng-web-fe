@@ -4,6 +4,7 @@ import test from 'node:test'
 import { hrTimeKeys } from '../api/hrTime.keys.js'
 import {
   getHrTimeActions,
+  getSelfAttendanceActions,
   mapAttendanceRow,
   mapLeaveRequestRow,
   mapOvertimeRequestRow,
@@ -63,5 +64,23 @@ test('maps HR Time row actions from backend capabilities without role-name branc
       capabilities: { approve: true, cancel: false, reject: true, view: true },
     }),
     { approve: true, cancel: false, reject: true, view: true },
+  )
+})
+
+test('uses the server-owned self attendance capability without inferring from attendance rows', () => {
+  assert.deepEqual(
+    getSelfAttendanceActions({ summary: { selfActions: { checkIn: true, checkOut: false } } }),
+    { checkIn: true, checkOut: false },
+  )
+  assert.deepEqual(getSelfAttendanceActions({ selfAttendanceActions: { canCheckOut: true } }), {
+    checkIn: false,
+    checkOut: true,
+  })
+  assert.deepEqual(
+    getSelfAttendanceActions({ items: [{ checkInAt: '2026-07-19T00:00:00.000Z' }] }),
+    {
+      checkIn: false,
+      checkOut: false,
+    },
   )
 })

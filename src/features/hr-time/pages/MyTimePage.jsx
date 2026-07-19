@@ -38,6 +38,7 @@ import LeaveRequestDialog from '../components/LeaveRequestDialog'
 import OvertimeRequestDialog from '../components/OvertimeRequestDialog'
 import RequestReviewDrawer from '../components/RequestReviewDrawer'
 import TimeRequestTable from '../components/TimeRequestTable'
+import { getSelfAttendanceActions } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
 const tabs = ['today', 'leave', 'overtime', 'history']
@@ -121,23 +122,25 @@ export default function MyTimePage() {
     (tab === 'overtime' && canUseOvertime) ||
     ((tab === 'today' || tab === 'history') && canUseAttendance)
   const queryError = selectedQuery.error?.response?.data?.message || selectedQuery.error?.message
-  const todayRecord = todayQuery.data?.items?.[0]
+  const selfAttendanceActions = getSelfAttendanceActions(todayQuery.data)
   const attendanceAction = !todayQuery.isSuccess
     ? null
-    : !todayRecord?.checkInAt
-      ? 'checkIn'
-      : !todayRecord?.checkOutAt
-        ? 'checkOut'
+    : selfAttendanceActions.checkOut
+      ? 'checkOut'
+      : selfAttendanceActions.checkIn
+        ? 'checkIn'
         : null
   const todayState = todayQuery.isPending
     ? t('common.loading', { defaultValue: 'Loading...' })
     : todayQuery.isError
       ? t('hrTime.errors.loadFailed', { defaultValue: 'Could not load today attendance' })
-      : todayRecord?.checkOutAt
-        ? t('hrTime.myTime.checkedOut', { defaultValue: 'Checked out for today' })
-        : todayRecord?.checkInAt
-          ? t('hrTime.myTime.checkedIn', { defaultValue: 'Checked in for today' })
-          : t('hrTime.myTime.notCheckedIn', { defaultValue: 'Not checked in today' })
+      : attendanceAction === 'checkOut'
+        ? t('hrTime.myTime.checkedIn', { defaultValue: 'Checked in' })
+        : attendanceAction === 'checkIn'
+          ? t('hrTime.myTime.notCheckedIn', { defaultValue: 'Ready to check in' })
+          : t('hrTime.myTime.attendanceUnavailable', {
+              defaultValue: 'No attendance action is available right now',
+            })
   const submitting =
     createLeaveMutation.isPending ||
     createOvertimeMutation.isPending ||
