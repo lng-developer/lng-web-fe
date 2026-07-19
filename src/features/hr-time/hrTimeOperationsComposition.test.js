@@ -87,6 +87,7 @@ test('Schedule exposes global configuration only through permission-derived cont
   assert.match(schedule, /ScheduleConfigurationDialog/)
   assert.match(schedule, /user\?\.permissions/)
   assert.match(schedule, /scope\.scopeType === 'global'/)
+  assert.doesNotMatch(schedule, /canBypassPermissions/)
   assert.doesNotMatch(schedule, /roleName|roles\.includes/)
 })
 

@@ -18,7 +18,7 @@ import {
   StatusBadge,
 } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
-import { canBypassPermissions, hasAnyPermission } from '@/features/auth/utils/authz'
+import { hasAnyPermission } from '@/features/auth/utils/authz'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
@@ -92,7 +92,6 @@ function scopePermission(scope) {
 }
 
 function globalScheduleWrite(user) {
-  if (canBypassPermissions(user)) return true
   if (
     (user?.permissions || []).some((permission) =>
       typeof permission === 'string'
