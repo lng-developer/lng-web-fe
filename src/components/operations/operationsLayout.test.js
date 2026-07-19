@@ -56,3 +56,12 @@ test('operations shell and table consume shared layout tokens', () => {
   assert.equal(tableSource.includes('operationsTextCaptionClass'), true)
   assert.equal(tableSource.includes('operationsTextStrongClass'), true)
 })
+
+test('operations tabs expose the compact underline treatment', () => {
+  const tabsSource = readFileSync(new URL('./OperationsTabs.jsx', import.meta.url), 'utf8')
+
+  assert.equal(tabsSource.includes("variant === 'underline'"), true)
+  assert.equal(tabsSource.includes('border-b border-border'), true)
+  assert.equal(tabsSource.includes('!min-h-10'), true)
+  assert.equal(tabsSource.includes("TabIndicatorProps={{ className: 'h-0.5 bg-primary' }}"), true)
+})

@@ -39,6 +39,7 @@ export const ENDPOINTS = {
     ITEM_RECHECK: (orderItemId) => `/api/orders/items/${orderItemId}/recheck`,
     ITEM_REPLACEMENT: (orderItemId) => `/api/orders/items/${orderItemId}/replacement`,
     ITEM_CANCEL: (orderItemId) => `/api/orders/items/${orderItemId}/cancel`,
+    ITEM_CS_NOTE: (orderItemId) => `/api/orders/items/${orderItemId}/cs-note`,
   },
   ORDER_IMPORTS: {
     MANUAL_EXCEL: '/api/integration/external-order-imports/manual-excel',

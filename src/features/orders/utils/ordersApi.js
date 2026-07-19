@@ -571,6 +571,7 @@ function mapWorkbenchItemDetail(itemEntry = {}, order = {}) {
       color: fulfillmentColor,
       fulfillName: order.externalOrderId || item.externalItemId || '-',
       noteKey: tracking.note || 'orders.values.common.noData',
+      csNote: item.csNote || production.csNote || '',
     },
   }
 }

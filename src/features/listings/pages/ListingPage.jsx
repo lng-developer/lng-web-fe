@@ -35,6 +35,7 @@ import {
 import { alpha } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 
+import ImagePreview from '@/components/common/ImagePreview'
 import StatusSwitch from '@/components/common/StatusSwitch'
 import {
   IconActionButton,
@@ -1555,12 +1556,18 @@ export default function ListingPage() {
         <div className="flex min-w-0 flex-col items-center gap-2">
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-neutral-bg shadow-sm">
             {listing.previewUrl ? (
-              <img
+              <ImagePreview
                 src={listing.previewUrl}
                 alt={listing.title || listing.sku || 'Listing preview'}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+                className="h-full w-full"
+              >
+                <img
+                  src={listing.previewUrl}
+                  alt={listing.title || listing.sku || 'Listing preview'}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </ImagePreview>
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-ink-muted">
                 No image

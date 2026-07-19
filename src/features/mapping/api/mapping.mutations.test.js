@@ -30,3 +30,15 @@ test('vendor candidate search mutation calls mapping candidate search endpoint',
     true,
   )
 })
+
+test('rule writes invalidate only the active rule type', () => {
+  const source = readFileSync(new URL('./mapping.mutations.js', import.meta.url), 'utf8')
+
+  assert.equal(
+    source.includes(
+      'queryClient.invalidateQueries({ queryKey: mappingKeys.ruleType(variables?.type) })',
+    ),
+    true,
+  )
+  assert.equal(source.includes('{ refreshRuleType: true }'), true)
+})

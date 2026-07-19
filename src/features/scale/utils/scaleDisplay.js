@@ -4,6 +4,18 @@ export function truncateDisplayText(value, maxLength) {
   return `${text.slice(0, maxLength)}...`
 }
 
+export function formatCompactOrderDate(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return truncateDisplayText(value, 12)
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: '2-digit',
+  }).format(date)
+}
+
 export function isScaleSlotUploadDisabled(slot = {}, isUploading = false) {
   return isUploading || slot.disabled === true
 }
@@ -57,12 +69,6 @@ export function getScaleUploadTarget(detail = {}) {
 export function getScaleSlotPreviewAssetId(slot = {}) {
   if (slot.outputStatus && slot.outputStatus !== 'UPLOADED') return null
   return slot.outputAssetId || null
-}
-
-export function toggleExpandedTaskIds(expandedTaskIds = [], taskId) {
-  return expandedTaskIds.includes(taskId)
-    ? expandedTaskIds.filter((expandedTaskId) => expandedTaskId !== taskId)
-    : [...expandedTaskIds, taskId]
 }
 
 export async function copyDisplayText(value, options = {}) {

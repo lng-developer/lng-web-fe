@@ -1167,6 +1167,7 @@
         "statusOrder": "Status Order",
         "shippingType": "Shipping Type",
         "shop": "Shop",
+        "seller": "Seller",
         "scaleBy": "Scale By",
         "qcBy": "QC By"
       }
@@ -1179,9 +1180,30 @@
       "pngStatus": "PNG Status",
       "vendorProduct": "Vendor Product",
       "action": "Action",
+      "orderId": "Order ID",
       "sku": "Sku:",
       "asin": "Asin:",
-      "quantity": "Quantity: {{quantity}}"
+      "quantity": "Quantity: {{quantity}}",
+      "productAndOrder": "Product & Order",
+      "quantityLabel": "Qty",
+      "seller": "Seller",
+      "shop": "Shop",
+      "customization": "Customization",
+      "customerUploads": "Customer uploads",
+      "scaledFiles": "Scaled files",
+      "input": "Input",
+      "output": "Output",
+      "available": "Available",
+      "noFile": "No file",
+      "noScaledFiles": "No scaled files",
+      "vendorWorkflow": "Vendor & workflow",
+      "vendor": "Vendor",
+      "costCenter": "Cost center",
+      "scaleBy": "Scale by",
+      "notesAndDecision": "Notes & decision",
+      "csNote": "CS note",
+      "designNote": "Design note",
+      "qcNote": "QC note"
     },
     "values": {
       "status": {
@@ -1275,19 +1297,19 @@
         "orderId": "Order ID",
         "orderDate": "Order Date",
         "scaleStatus": "Scale Status",
-        "groupId": "Group ID",
-        "groupType": "Group Type",
         "shop": "Shop",
         "orderStatus": "Order Status",
+        "seller": "Seller",
         "orderOwner": "Order Owner",
         "qcBy": "QC By",
-        "assignCs": "Người Scale",
+        "assignCs": "Gán CS",
         "assignScale": "Người Scale",
-        "csStatus": "Phân công"
+        "csStatus": "Trạng thái CS"
       }
     },
     "detail": {
       "productInfo": "Product Information",
+      "imagePrintSide": "Image & Print Side",
       "customization": "Customization",
       "taskStatus": "Task Status",
       "costCenter": "Cost Center",
@@ -1305,6 +1327,7 @@
       "customer": "Customer",
       "shipping": "Shipping",
       "paid": "Paid",
+      "qty": "QTY",
       "quantity": "SL",
       "notePlaceholder": "Thêm ghi chú CS..."
     },
@@ -1379,11 +1402,12 @@
       },
       "costCenter": {
         "vendorProduct": "Vendor Product:",
-        "size": "Size:",
+        "productCost": "Product Cost:",
         "color": "Color:"
       },
       "notes": {
-        "cs": "Ghi chú Design:",
+        "design": "Ghi chú Design:",
+        "cs": "Ghi chú CS:",
         "qc": "QC note:"
       },
       "actions": {
@@ -1402,6 +1426,10 @@
     },
     "manualUpload": {
       "title": "Upload file scale",
+      "addPosition": "Thêm vị trí",
+      "replace": "Thay file",
+      "tryAgain": "Thử lại",
+      "uploadFailed": "Upload thất bại",
       "position": "Vị trí",
       "file": "File upload",
       "dropTitle": "Kéo thả ảnh scale vào đây",
@@ -1426,6 +1454,8 @@
       "assignError": "Không thể cập nhật người phụ trách scale.",
       "copySuccess": "Đã copy fulfill name.",
       "noteSuccess": "Đã lưu ghi chú CS.",
+      "designNoteSuccess": "Đã lưu ghi chú Design.",
+      "csNoteSuccess": "Đã lưu ghi chú CS.",
       "recheckSuccess": "Đã kiểm tra lại task production.",
       "recheckStillBlocked": "Task vẫn cần xử lý",
       "recheckUnavailable": "Thiếu order item nên không thể kiểm tra lại task này.",
@@ -1434,7 +1464,11 @@
       "missingFileCheck": "Task này chưa có file check để upload.",
       "deleteMockupSuccess": "Đã xóa mockup.",
       "addMockupUnsupported": "BE chưa hỗ trợ thêm slot mockup từ màn này.",
-      "deleteMockupUnsupported": "BE chưa hỗ trợ xóa file scale từ màn này."
+      "deleteMockupUnsupported": "BE chưa hỗ trợ xóa file scale từ màn này.",
+      "noScaleSlots": "Chưa có vị trí scale.",
+      "orderIdCopySuccess": "Đã sao chép Order ID.",
+      "orderIdCopyFailed": "Không thể sao chép Order ID.",
+      "noUploadSlot": "Task này chưa có vị trí upload."
     }
   },
   "errors": {
@@ -1562,7 +1596,12 @@
       "status": "Status",
       "tracking": "Tracking",
       "carrier": "Carrier",
-      "note": "Note"
+      "note": "Note",
+      "csNote": "Ghi chú CS",
+      "csNotePlaceholder": "Thêm ghi chú CS..."
+    },
+    "actions": {
+      "saveNote": "Lưu ghi chú"
     },
     "pagination": {
       "before": "Before",
@@ -2578,6 +2617,13 @@
       "workLocation": "Địa điểm làm việc",
       "shift": "Ca làm việc",
       "department": "Phòng ban"
+    },
+    "navigation": {
+      "myTime": "Thời gian của tôi",
+      "requestInbox": "Hộp duyệt yêu cầu",
+      "attendance": "Bàn chấm công",
+      "schedule": "Lịch làm việc",
+      "employees": "Danh bạ nhân sự"
     }
   }
 }

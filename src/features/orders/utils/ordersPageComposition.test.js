@@ -466,7 +466,16 @@ test('expanded order detail keeps read-only inputs short and shows customization
   assert.equal(readOnlyValueSource.includes('minHeight: multiline ? rows * 30 + 18 : 40'), false)
 })
 
-test('order status panel shows carrier while keeping note at two rows', () => {
+test('expanded order detail reuses shared inline values and image previews', () => {
+  const source = readOrdersPageSource()
+
+  assert.match(source, /import ImagePreview from '@\/components\/common\/ImagePreview'/)
+  assert.match(source, /import InlineDetailValue from '@\/components\/common\/InlineDetailValue'/)
+  assert.match(source, /<InlineDetailValue[\s\S]*field\.label/)
+  assert.match(source, /<ImagePreview[\s\S]*image\.url/)
+})
+
+test('order status panel shows carrier and reuses the existing note editor', () => {
   const source = readOrdersPageSource()
   const notePanelSource = source.slice(
     source.indexOf('function NotePanel'),
@@ -479,10 +488,9 @@ test('order status panel shows carrier while keeping note at two rows', () => {
   assert.equal(notePanelSource.includes('fulfillment.carrierKey'), true)
   assert.equal(notePanelSource.includes('orders.fields.note'), true)
   assert.equal(notePanelSource.includes('maxWidth={220}'), false)
-  assert.equal(
-    notePanelSource.includes('<ReadOnlyValue value={t(fulfillment.noteKey)} multiline rows={2} />'),
-    true,
-  )
+  assert.equal(notePanelSource.includes('<TextField'), true)
+  assert.equal(notePanelSource.includes("aria-label={t('orders.fields.note')}"), true)
+  assert.equal(notePanelSource.includes('orders.fields.csNote'), false)
 })
 
 test('order id, sku, and asin are one-click copyable with full value tooltip', () => {
@@ -563,4 +571,18 @@ test('order case action opens a lazy case list for the order', () => {
   assert.equal(caseActionSource.includes('onClick={openNewCaseModal}'), true)
   assert.equal(caseActionSource.includes('setCasesAnchor(null)'), true)
   assert.equal(caseActionSource.includes('setCaseModalOpen(true)'), true)
+})
+
+test('orders page exposes an editable order item CS note with an explicit save action', () => {
+  const source = readOrdersPageSource()
+
+  assert.equal(source.includes('useUpdateOrderItemCsNoteMutation'), true)
+  assert.equal(source.includes('function NotePanel({ fulfillment, orderItemId })'), true)
+  assert.equal(source.includes("{t('orders.fields.note')}"), true)
+  assert.equal(source.includes("{t('orders.fields.csNote')}"), false)
+  assert.equal(source.includes('SaveOutlinedIcon'), true)
+  assert.equal(
+    source.includes('updateOrderItemCsNoteMutation.mutate({ orderItemId, csNote })'),
+    true,
+  )
 })

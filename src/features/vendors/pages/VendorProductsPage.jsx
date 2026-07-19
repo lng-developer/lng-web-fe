@@ -22,6 +22,7 @@ import {
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import ImagePreview from '@/components/common/ImagePreview'
 import OverflowTooltip from '@/components/common/OverflowTooltip'
 import StatusSwitch from '@/components/common/StatusSwitch'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
@@ -70,7 +71,13 @@ const imageToneClasses = {
 function ProductImage({ alt, src, tone }) {
   if (src) {
     return (
-      <img src={src} alt={alt} className="size-16 rounded-lg border border-border object-cover" />
+      <ImagePreview
+        src={src}
+        alt={alt}
+        className="size-16 rounded-lg border border-border object-cover"
+      >
+        <img src={src} alt={alt} className="size-full object-cover" />
+      </ImagePreview>
     )
   }
 

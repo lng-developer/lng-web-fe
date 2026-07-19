@@ -38,6 +38,11 @@ function useMappingMutation(mutationFn, options = {}) {
         return
       }
 
+      if (options.refreshRuleType && variables?.type) {
+        queryClient.invalidateQueries({ queryKey: mappingKeys.ruleType(variables?.type) })
+        return
+      }
+
       queryClient.invalidateQueries({ queryKey: mappingKeys.all })
     },
   })
@@ -92,17 +97,23 @@ export function useMappingConfirmMutation() {
 }
 
 export function useMappingSaveRuleMutation() {
-  return useMappingMutation(({ body, id, type }) => {
-    const ruleType = getMappingRuleType(type)
-    return id ? patch(ruleType.detailEndpoint(id), body) : post(ruleType.listEndpoint, body)
-  })
+  return useMappingMutation(
+    ({ body, id, type }) => {
+      const ruleType = getMappingRuleType(type)
+      return id ? patch(ruleType.detailEndpoint(id), body) : post(ruleType.listEndpoint, body)
+    },
+    { refreshRuleType: true },
+  )
 }
 
 export function useMappingToggleRuleStatusMutation() {
-  return useMappingMutation(({ id, nextStatus, type }) => {
-    const ruleType = getMappingRuleType(type)
-    return patch(ruleType.detailEndpoint(id), { status: nextStatus })
-  })
+  return useMappingMutation(
+    ({ id, nextStatus, type }) => {
+      const ruleType = getMappingRuleType(type)
+      return patch(ruleType.detailEndpoint(id), { status: nextStatus })
+    },
+    { refreshRuleType: true },
+  )
 }
 
 export function useMappingReorderVendorRoutingMutation() {

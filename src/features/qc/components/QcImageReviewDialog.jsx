@@ -23,6 +23,8 @@ import {
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import ImagePreview from '@/components/common/ImagePreview'
+import InlineDetailValue from '@/components/common/InlineDetailValue'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { buildQcImageReviewItems } from '@/features/qc/utils/qcApi'
 import {
@@ -81,24 +83,35 @@ function InfoRow({ label, value, children }) {
 
 function ThumbnailCard({ active, image, onClick }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
+      aria-pressed={active}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') onClick()
+      }}
       className={`rounded-lg border bg-surface p-2 text-left transition ${
         active ? 'border-info ring-2 ring-info-bg' : 'border-border hover:border-info'
       }`}
     >
-      <div className="flex h-28 items-center justify-center overflow-hidden rounded-md bg-neutral-bg">
-        {image.url ? (
+      {image.url ? (
+        <ImagePreview
+          src={image.url}
+          alt={image.label}
+          className="flex h-28 w-full items-center justify-center rounded-md bg-neutral-bg"
+        >
           <img src={image.url} alt={image.label} className="max-h-full max-w-full object-contain" />
-        ) : (
+        </ImagePreview>
+      ) : (
+        <div className="flex h-28 items-center justify-center overflow-hidden rounded-md bg-neutral-bg">
           <ImageOutlinedIcon className="text-ink-muted" />
-        )}
-      </div>
+        </div>
+      )}
       <Typography className="mt-2 truncate text-center text-xs font-semibold text-ink-muted">
         {image.label}
       </Typography>
-    </button>
+    </div>
   )
 }
 
@@ -746,15 +759,12 @@ export default function QcImageReviewDialog({
             <div className="flex max-h-56 flex-col gap-1.5 overflow-auto">
               {currentItem.customization.length > 0 ? (
                 currentItem.customization.map((item, index) => (
-                  <div
+                  <InlineDetailValue
                     key={`${item.label}-${index}`}
-                    className="grid grid-cols-[auto_1fr] gap-2 text-xs"
-                  >
-                    <span className="font-semibold text-ink">{item.label}:</span>
-                    <span className="min-w-0 break-words text-ink-secondary">
-                      {formatQcCustomizationValue(item.value)}
-                    </span>
-                  </div>
+                    label={item.label}
+                    value={formatQcCustomizationValue(item.value)}
+                    valueClassName="text-xs text-ink-secondary"
+                  />
                 ))
               ) : (
                 <Typography variant="body2" className="text-sm text-ink-muted">

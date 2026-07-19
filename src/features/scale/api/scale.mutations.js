@@ -7,7 +7,14 @@ import { unwrapApiData } from '../utils/scaleApi'
 import { scaleKeys } from './scale.keys'
 
 function invalidateScale(queryClient) {
-  queryClient.invalidateQueries({ queryKey: scaleKeys.all })
+  queryClient.invalidateQueries({
+    queryKey: [...scaleKeys.all, 'tasks'],
+    refetchType: 'active',
+  })
+  queryClient.invalidateQueries({
+    queryKey: [...scaleKeys.all, 'summary'],
+    refetchType: 'active',
+  })
 }
 
 function patch(path, payload) {

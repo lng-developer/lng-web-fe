@@ -2,32 +2,72 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import CancelIcon from '@mui/icons-material/Cancel'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import VisibilityIcon from '@mui/icons-material/Visibility'
-import { Alert, IconButton, Skeleton, Tooltip, Typography } from '@mui/material'
+import { Alert, Button, Skeleton, Tooltip, Typography } from '@mui/material'
 
+import InlineDetailValue from '@/components/common/InlineDetailValue'
+import { StatusBadge } from '@/components/operations'
 import { useProductionTaskByOrderItemQuery } from '@/features/production/api/production.queries'
-import { QC_DETAIL_COLUMNS } from '@/features/qc/constants/qcConstants'
-import { canSubmitQcPass, canSubmitQcReject, mergeQcTaskDetail } from '@/features/qc/utils/qcApi'
+import {
+  buildQcImageReviewItems,
+  canSubmitQcPass,
+  canSubmitQcReject,
+  mergeQcTaskDetail,
+} from '@/features/qc/utils/qcApi'
 
 import QcImageReviewDialog from './QcImageReviewDialog'
 
-function DetailBadge({ children, className = '' }) {
+const slotTone = {
+  UPLOADED: 'success',
+  MISSING: 'danger',
+  NOT_REQUIRED: 'neutral',
+}
+
+function formatValue(value) {
+  if (value === undefined || value === null || value === '') return '-'
+  if (Array.isArray(value)) return value.map(formatValue).join(', ')
+  if (typeof value === 'object') {
+    return formatValue(value.value ?? value.name ?? value.filename ?? value.secureUrl)
+  }
+  return String(value)
+}
+
+function DetailSection({ children, className = '', title }) {
   return (
-    <span
-      className={`inline-flex h-7 max-w-full items-center rounded-full px-3 text-xs font-semibold ${className}`}
-    >
-      <span className="truncate">{children}</span>
-    </span>
+    <section className={`min-w-0 ${className}`}>
+      <Typography
+        variant="caption"
+        className="mb-3 block text-xs font-bold uppercase tracking-wide text-ink-muted"
+      >
+        {title}
+      </Typography>
+      {children}
+    </section>
   )
+}
+
+function getChecks(detail) {
+  if (detail.scaleSlots?.length) return detail.scaleSlots
+  return (detail.fileChecks || []).filter(
+    (check) => check.sourceType !== 'PSD_TEMPLATE' && check.slotKey !== 'PSD_TEMPLATE',
+  )
+}
+
+function getCheckStatus(check) {
+  if (check.outputStatus) return check.outputStatus
+  if (check.outputAssetId || check.outputAssetDownloadUrl) return 'UPLOADED'
+  return check.required ? 'MISSING' : 'NOT_REQUIRED'
+}
+
+function getCheckLabel(check, index) {
+  return check.slotLabel || check.position || check.slotKey || `Slot ${index + 1}`
 }
 
 function DetailLoading() {
   return (
-    <div className="grid grid-cols-8 gap-4 px-4 py-6">
-      {Array.from({ length: 8 }, (_, index) => (
-        <Skeleton key={index} variant="rounded" height={48} />
+    <div className="grid gap-5 px-4 py-6 xl:grid-cols-5">
+      {Array.from({ length: 5 }, (_, index) => (
+        <Skeleton key={index} variant="rounded" height={150} />
       ))}
     </div>
   )
@@ -48,142 +88,208 @@ export default function QcDetailPanel({
     [detailQuery.data, task],
   )
   const { detail } = resolvedTask
-  const outputFile = detail.fileChecks.find((check) => check.outputAssetDownloadUrl)
+  const checks = getChecks(detail)
+  const reviewItem = useMemo(() => buildQcImageReviewItems(resolvedTask)[0] || {}, [resolvedTask])
+  const customizationFields = (reviewItem.customization || []).filter(
+    (item) => String(item.type).toLowerCase() !== 'image',
+  )
+  const customerImages = (reviewItem.referenceImages || []).filter(
+    (image) => image.type !== 'product',
+  )
   const canPass = canSubmitQcPass(resolvedTask)
   const canReject = canSubmitQcReject(resolvedTask)
+  const qcNote = detail.qcNote || detail.fileChecks?.find((check) => check.note)?.note || ''
 
   return (
-    <div className="border-b border-border bg-surface px-4 pb-6 pt-3">
-      <div className="grid min-w-full grid-cols-8 bg-neutral-bg px-2 py-2">
-        {QC_DETAIL_COLUMNS.map((column) => (
-          <Typography
-            key={column.id}
-            variant="caption"
-            className={`px-2 text-xs font-semibold uppercase text-ink-muted ${
-              column.id === 'productInfo' ? 'col-span-2' : ''
-            }`}
-          >
-            {t(column.labelKey)}
-          </Typography>
-        ))}
-      </div>
-
+    <div className="border-b border-border bg-surface-subtle px-4 pb-5 pt-4">
       {detailQuery.isPending ? <DetailLoading /> : null}
       {detailQuery.isError ? (
-        <Alert severity="error" className="mt-4">
+        <Alert severity="error" className="mb-2">
           {detailQuery.error?.message || t('qc.states.detailError')}
         </Alert>
       ) : null}
+
       {!detailQuery.isPending ? (
-        <div className="grid min-w-full grid-cols-8 px-2 py-4">
-          <div className="col-span-2 flex min-w-0 items-start gap-4 px-2">
-            <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-md border border-sky-border bg-sky-soft">
-              {detail.product.imageUrl ? (
-                <img
-                  src={detail.product.imageUrl}
-                  alt={detail.product.title}
-                  className="size-full object-cover"
-                />
+        <div className="grid gap-5 xl:grid-cols-[1.1fr_1.25fr_1.55fr_1.1fr_1.3fr]">
+          <DetailSection title={t('qc.detail.productAndOrder')}>
+            <div className="space-y-1.5">
+              <InlineDetailValue label={t('qc.detail.orderId')} value={resolvedTask.orderId} />
+              <InlineDetailValue label={t('qc.detail.sku')} value={detail.product.sku} />
+              <InlineDetailValue label={t('qc.detail.asin')} value={detail.product.asin} />
+              <InlineDetailValue
+                label={t('qc.detail.quantityLabel')}
+                value={detail.product.quantity}
+              />
+            </div>
+            <Typography className="mt-3 line-clamp-2 text-sm font-semibold text-ink-strong">
+              {detail.product.title}
+            </Typography>
+            <StatusBadge tone="warning" className="mt-2">
+              {t(`qc.values.status.${resolvedTask.statusQc}`, {
+                defaultValue: resolvedTask.statusQc,
+              })}
+            </StatusBadge>
+            <div className="mt-2 space-y-1">
+              <InlineDetailValue label={t('qc.detail.seller')} value={detail.seller} />
+              <InlineDetailValue label={t('qc.detail.shop')} value={resolvedTask.shop} />
+              <InlineDetailValue label={t('qc.detail.fulfillName')} value={detail.fulfillName} />
+            </div>
+          </DetailSection>
+
+          <DetailSection title={t('qc.detail.customization')}>
+            <div className="max-h-44 space-y-1 overflow-auto pr-1">
+              {customizationFields.length ? (
+                customizationFields.map((item, index) => (
+                  <InlineDetailValue
+                    key={`${item.label}-${index}`}
+                    label={item.label}
+                    value={formatValue(item.value)}
+                  />
+                ))
               ) : (
-                <ImageOutlinedIcon className="text-info-strong" fontSize="large" />
+                <Typography className="text-sm text-ink-muted">
+                  {t('qc.preview.noCustomization')}
+                </Typography>
               )}
             </div>
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <Typography variant="caption" className="text-xs text-ink-muted">
-                {t('qc.detail.sku')}
-              </Typography>
-              <DetailBadge className="bg-ink-strong text-white">{detail.product.sku}</DetailBadge>
-              <Typography variant="caption" className="mt-1 text-xs text-ink-muted">
-                {t('qc.detail.asin')}
-              </Typography>
-              <DetailBadge className="border border-info bg-surface text-info-strong">
-                {detail.product.asin}
-              </DetailBadge>
-              <Typography variant="caption" className="mt-1 text-xs text-ink-secondary">
-                {t('qc.detail.quantity', { quantity: detail.product.quantity })}
-              </Typography>
-            </div>
-          </div>
+            <InlineDetailValue
+              className="mt-3 border-t border-border pt-3"
+              label={t('qc.detail.customerUploads')}
+              value={customerImages.length}
+            />
+          </DetailSection>
 
-          <div className="min-w-0 px-2">
-            <DetailBadge className="border border-success bg-surface text-success">
-              {t(`qc.values.scaleStatus.${detail.scaleStatus}`, {
-                defaultValue: detail.scaleStatus,
-              })}
-            </DetailBadge>
-          </div>
-          <div className="min-w-0 px-2">
-            <Tooltip title={detail.orderOwner} disableHoverListener={detail.orderOwner === '-'}>
-              <span className="block truncate text-xs text-ink-secondary">{detail.orderOwner}</span>
-            </Tooltip>
-          </div>
-          <Tooltip title={detail.fulfillName} disableHoverListener={detail.fulfillName === '-'}>
-            <Typography className="min-w-0 truncate px-2 text-xs text-ink-secondary">
-              {detail.fulfillName}
-            </Typography>
-          </Tooltip>
-          <div className="min-w-0 px-2">
-            <DetailBadge className="border border-success bg-surface text-success">
-              {t(`qc.values.pngStatus.${detail.pngStatus}`)}
-            </DetailBadge>
-          </div>
-          <Tooltip title={detail.vendorProduct} disableHoverListener={detail.vendorProduct === '-'}>
-            <Typography className="min-w-0 truncate px-2 text-xs text-ink-secondary">
-              {detail.vendorProduct}
-            </Typography>
-          </Tooltip>
-          <div className="flex items-start gap-1 px-2">
-            <Tooltip title={t('qc.actions.inspectImages')}>
-              <span>
-                <IconButton
-                  size="small"
-                  disabled={detailQuery.isPending}
-                  onClick={() => setPreviewOpen(true)}
-                  className="!text-info-strong"
-                >
-                  <VisibilityIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            {outputFile ? (
-              <Tooltip title={t('qc.actions.previewOutput')}>
-                <IconButton
-                  component="a"
-                  href={outputFile.outputAssetDownloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  size="small"
-                  className="!text-info-strong"
-                >
-                  <OpenInNewIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+          <DetailSection title={t('qc.detail.scaledFiles')}>
+            {checks.length ? (
+              <div className="max-h-56 space-y-3 overflow-auto pr-1">
+                {checks.map((check, index) => {
+                  const status = getCheckStatus(check)
+                  const label = getCheckLabel(check, index)
+                  return (
+                    <div
+                      key={check.fileCheckId || check.id || `${label}-${index}`}
+                      className="flex min-w-0 items-end justify-between gap-3 border-b border-border pb-2 last:border-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <Typography className="truncate text-sm font-semibold text-ink-strong">
+                          {label}
+                        </Typography>
+                        <div className="mt-1 grid grid-cols-2 gap-x-3 text-xs text-ink-secondary">
+                          <span>
+                            <strong>{t('qc.detail.input')}:</strong>{' '}
+                            {check.inputAssetId ? t('qc.detail.available') : t('qc.detail.noFile')}
+                          </span>
+                          <span>
+                            <strong>{t('qc.detail.output')}:</strong>{' '}
+                            {status === 'UPLOADED'
+                              ? t('qc.detail.available')
+                              : t('qc.detail.noFile')}
+                          </span>
+                        </div>
+                      </div>
+                      <StatusBadge tone={slotTone[status] || 'neutral'} tooltip={status}>
+                        {t(`qc.values.pngStatus.${status}`, { defaultValue: status })}
+                      </StatusBadge>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <Typography className="text-sm text-ink-muted">
+                {t('qc.detail.noScaledFiles')}
+              </Typography>
+            )}
+          </DetailSection>
+
+          <DetailSection title={t('qc.detail.vendorWorkflow')}>
+            <div className="space-y-1.5">
+              <InlineDetailValue label={t('qc.detail.vendor')} value={detail.vendorName} />
+              <InlineDetailValue
+                label={t('qc.detail.vendorProduct')}
+                value={detail.vendorProduct}
+              />
+              <InlineDetailValue
+                label={t('qc.detail.costCenter')}
+                value={detail.vendorCostCenter}
+              />
+              <InlineDetailValue label={t('qc.detail.scaleBy')} value={resolvedTask.scaleBy} />
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <StatusBadge tone={slotTone[detail.pngStatus] || 'neutral'}>
+                  {t(`qc.values.pngStatus.${detail.pngStatus}`, {
+                    defaultValue: detail.pngStatus,
+                  })}
+                </StatusBadge>
+                <StatusBadge tone={detail.scaleStatus === 'SCALED' ? 'success' : 'warning'}>
+                  {t(`qc.values.scaleStatus.${detail.scaleStatus}`, {
+                    defaultValue: detail.scaleStatus,
+                  })}
+                </StatusBadge>
+              </div>
+            </div>
+            {detail.blockers?.length ? (
+              <Alert severity="warning" className="mt-3 !px-2 !py-1">
+                {detail.blockers.join(', ')}
+              </Alert>
             ) : null}
-            <Tooltip title={canReview ? t('qc.actions.pass') : t('qc.actions.noQcPermission')}>
-              <span>
-                <IconButton
-                  size="small"
-                  disabled={!canReview || !canPass}
-                  onClick={() => onDecision(resolvedTask, 'PASSED')}
-                  className="!text-success"
-                >
-                  <CheckCircleIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title={canReview ? t('qc.actions.reject') : t('qc.actions.noQcPermission')}>
-              <span>
-                <IconButton
-                  size="small"
-                  disabled={!canReview || !canReject}
-                  onClick={() => onDecision(resolvedTask, 'REJECTED')}
-                  className="!text-danger"
-                >
-                  <CancelIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </div>
+            {detail.workflow?.nextActions?.length ? (
+              <Typography className="mt-2 text-xs text-ink-muted">
+                {detail.workflow.nextActions.join(', ')}
+              </Typography>
+            ) : null}
+          </DetailSection>
+
+          <DetailSection title={t('qc.detail.notesAndDecision')}>
+            <div className="space-y-1.5">
+              <InlineDetailValue label={t('qc.detail.csNote')} value={detail.csNote || '-'} />
+              <InlineDetailValue
+                label={t('qc.detail.designNote')}
+                value={detail.designNote || '-'}
+              />
+              <InlineDetailValue label={t('qc.detail.qcNote')} value={qcNote || '-'} />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<VisibilityIcon fontSize="small" />}
+                disabled={detailQuery.isPending}
+                onClick={() => setPreviewOpen(true)}
+                className="h-8 px-3 text-xs font-semibold"
+              >
+                {t('qc.actions.inspectImages')}
+              </Button>
+              <Tooltip title={canReview ? t('qc.actions.pass') : t('qc.actions.noQcPermission')}>
+                <span>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="success"
+                    startIcon={<CheckCircleIcon fontSize="small" />}
+                    disabled={!canReview || !canPass || decisionLoading}
+                    onClick={() => onDecision(resolvedTask, 'PASSED')}
+                    className="h-8 px-3 text-xs font-semibold"
+                  >
+                    {t('qc.actions.pass')}
+                  </Button>
+                </span>
+              </Tooltip>
+              <Tooltip title={canReview ? t('qc.actions.reject') : t('qc.actions.noQcPermission')}>
+                <span>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    startIcon={<CancelIcon fontSize="small" />}
+                    disabled={!canReview || !canReject || decisionLoading}
+                    onClick={() => onDecision(resolvedTask, 'REJECTED')}
+                    className="h-8 px-3 text-xs font-semibold"
+                  >
+                    {t('qc.actions.reject')}
+                  </Button>
+                </span>
+              </Tooltip>
+            </div>
+          </DetailSection>
         </div>
       ) : null}
 

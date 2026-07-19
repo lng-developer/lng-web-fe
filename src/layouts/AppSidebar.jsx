@@ -81,22 +81,6 @@ const NAV_ITEM_ICONS = {
   vendors: StorefrontOutlinedIcon,
 }
 
-function collectDefaultOpenIds(items) {
-  return items.reduce((accumulator, item) => {
-    if (item.defaultOpen) {
-      accumulator[item.id] = true
-    }
-
-    const nestedItems = item.items ?? item.children
-
-    if (nestedItems) {
-      return { ...accumulator, ...collectDefaultOpenIds(nestedItems) }
-    }
-
-    return accumulator
-  }, {})
-}
-
 function hasActivePath(item, location) {
   if (isNavItemActive(item, location)) {
     return true
@@ -244,11 +228,12 @@ export default function AppSidebar({ onNavigate, open }) {
     SIDEBAR_WORKSPACES.reduce(
       (itemsByWorkspace, workspace) => ({
         ...itemsByWorkspace,
-        [workspace.id]: collectDefaultOpenIds(SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? []),
+        [workspace.id]: {},
       }),
       {},
     ),
   )
+  const [openItemsViewKey, setOpenItemsViewKey] = useState(null)
   const user = resolveCurrentUser(storedCurrentUser)
   const userName = getCurrentUserDisplayName(user)
 
@@ -275,13 +260,18 @@ export default function AppSidebar({ onNavigate, open }) {
       ? pathWorkspace
       : availableWorkspaces[0]?.id
   const navigation = activeWorkspace ? navigationByWorkspace[activeWorkspace] : []
-  const openItems = activeWorkspace ? (openItemsByWorkspace[activeWorkspace] ?? {}) : {}
+  const viewKey = `${location.pathname}|${location.search}|${activeWorkspace ?? ''}`
+  const openItems =
+    activeWorkspace && openItemsViewKey === viewKey
+      ? (openItemsByWorkspace[activeWorkspace] ?? {})
+      : {}
 
   const toggleItem = (id) => {
     if (!activeWorkspace) {
       return
     }
 
+    setOpenItemsViewKey(viewKey)
     setOpenItemsByWorkspace((state) => ({
       ...state,
       [activeWorkspace]: {

@@ -146,8 +146,6 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
       shippingType: 'Express',
       fulfillName: 'Nguyen Phuong Nam',
       productImageUrl: 'https://example.test/product.png',
-      groupId: 'GRP-001',
-      groupType: 'SCALE',
       orderOwner: { id: 'owner-1', fullName: 'Order Owner', employeeCode: 'CS01' },
       seller: { employeeCode: 'J2605', name: 'Seller User' },
       orderItem: {
@@ -161,6 +159,10 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
         customerInputs: {
           customName: 'Mia',
           size: 'M',
+          images: [
+            { label: 'Front', assetId: 'image-1' },
+            { label: 'Back', assetId: 'image-2' },
+          ],
         },
         imageAssets: [
           {
@@ -168,11 +170,21 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
             secureUrl: 'https://example.test/image.png',
             assetDownloadUrl: '/api/media/assets/image-1/download',
           },
+          {
+            assetId: 'image-2',
+            secureUrl: 'https://example.test/image-back.png',
+            assetDownloadUrl: '/api/media/assets/image-2/download',
+          },
         ],
       },
-      vendorProduct: { name: 'Lenful T-Shirt', code: 'VP-01' },
-      vendorCostCenter: { name: 'US Apparel', code: 'CC-01' },
+      vendorProduct: {
+        name: 'Lenful T-Shirt',
+        code: 'VP-01',
+        vendor: { name: 'Lenful' },
+      },
+      vendorCostCenter: { name: 'M / PEPPER', code: 'CC-01' },
       productionStatus: 'QC_PENDING',
+      fulfillQty: 2,
       scaleStatus: 'SCALED',
       qcStatus: 'PENDING',
       assignedDesignUserId: 'designer-1',
@@ -233,8 +245,6 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   assert.equal(result.shippingType, 'Express')
   assert.equal(result.detail.product.imageUrl, 'https://example.test/product.png')
   assert.equal(result.detail.fulfillName, 'Nguyen Phuong Nam')
-  assert.equal(result.groupId, 'GRP-001')
-  assert.equal(result.groupType, 'SCALE')
   assert.equal(result.channel, 'AMAZON')
   assert.equal(result.marketplaceCode, 'AMAZON_US')
   assert.equal(result.orderStatus, 'PROCESSING')
@@ -250,14 +260,20 @@ test('mapProductionTask maps the enriched Production V2 summary contract', () =>
   assert.equal(result.detail.product.primaryCode, 'B0TEST')
   assert.equal(result.detail.product.secondaryCode, 'SKU-01')
   assert.equal(result.detail.product.psdStatus, 'READY')
+  assert.equal(result.detail.product.quantity, 2)
+  assert.equal(result.detail.costCenter.vendor, 'Lenful')
+  assert.equal(result.detail.costCenter.productCost, 'M / PEPPER')
   assert.deepEqual(
     result.detail.customization.map(({ label, value }) => ({ label, value })),
     [
       { label: 'Custom Name', value: 'Mia' },
       { label: 'Size', value: 'M' },
-      { label: 'Customer Photo', value: '-' },
+      { label: 'Front', value: '-' },
+      { label: 'Back', value: '-' },
     ],
   )
+  assert.equal(result.detail.customization[2].url, 'https://example.test/image.png')
+  assert.equal(result.detail.customization[3].url, 'https://example.test/image-back.png')
   assert.equal(result.detail.psdTemplate.assetId, 'psd-1')
   assert.equal(result.detail.mockups[0].fileCheckId, 'check-1')
   assert.equal(result.detail.mockups[0].inputAssetId, 'input-1')
@@ -286,6 +302,22 @@ test('mapProductionTask preserves blockers and missing requirements for blocked 
   assert.deepEqual(result.detail.blockers, ['PSD_MISSING'])
   assert.equal(result.detail.missingRequirements[0].code, 'PSD_TEMPLATE')
   assert.equal(result.detail.product.psdStatus, 'MISSING')
+})
+
+test('mapProductionTask prefers listing preview for the product image', () => {
+  const result = mapProductionTask({
+    productImageUrl: null,
+    customization: {
+      imageAssets: [{ secureUrl: 'https://example.test/customer.png' }],
+    },
+    scaleContext: {
+      use: {
+        listing: { previewAssetPreviewUrl: 'https://example.test/listing.png' },
+      },
+    },
+  })
+
+  assert.equal(result.detail.product.imageUrl, 'https://example.test/listing.png')
 })
 
 test('mapProductionTask derives pending and rejected display states', () => {

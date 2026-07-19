@@ -64,7 +64,7 @@ export function buildQcTaskQuery(filters = {}) {
 }
 
 export function buildQcSummaryQuery(filters = {}) {
-  const query = buildQcTaskQuery({ ...filters, statusTab: 'all', page: 1, pageSize: 1 })
+  const query = buildQcTaskQuery({ ...filters, page: 1, pageSize: 1 })
   delete query.page
   delete query.limit
   return query
@@ -156,7 +156,27 @@ function normalizeCustomizationItems(customization) {
   }
   if (typeof customization === 'object') {
     const inputs = customization.inputs || customization.fields || customization.customerInputs
-    if (inputs) return normalizeCustomizationItems(inputs)
+    if (inputs) {
+      if (typeof inputs === 'object' && !Array.isArray(inputs)) {
+        const groups = [
+          ['texts', 'text'],
+          ['options', 'option'],
+          ['images', 'image'],
+        ]
+        const groupedItems = groups.flatMap(([key, type]) =>
+          asArray(inputs[key]).map((item, index) => ({
+            label: item?.label || item?.name || `${toDisplayLabel(key, key)} ${index + 1}`,
+            value:
+              type === 'image'
+                ? collectImageValues(item)[0] || item?.value || ''
+                : (item?.value ?? item?.text ?? ''),
+            type,
+          })),
+        )
+        if (groupedItems.length) return groupedItems.filter((item) => item.label || item.value)
+      }
+      return normalizeCustomizationItems(inputs)
+    }
     return Object.entries(customization)
       .map(([key, value]) => ({
         label: toDisplayLabel(key, key),
@@ -208,7 +228,8 @@ function buildLayerFromUrl({ check, index, kind, label, url }) {
 export function buildQcImageReviewItems(task = {}) {
   const detail = task.detail || {}
   const product = detail.product || {}
-  const customization = normalizeCustomizationItems(detail.customization)
+  const customizationPayload = detail.customization || {}
+  const customization = normalizeCustomizationItems(customizationPayload)
   const referenceImages = []
   const layers = []
   const seenReferenceUrls = new Set()
@@ -243,6 +264,16 @@ export function buildQcImageReviewItems(task = {}) {
       })
     })
   })
+  asArray(customizationPayload.imageAssets)
+    .flatMap((image) => collectImageValues(image))
+    .forEach((url, index) => {
+      addUniqueImageItem(referenceImages, seenReferenceUrls, {
+        id: `customization-asset-${index}`,
+        label: `Customer Upload ${index + 1}`,
+        url,
+        type: 'customization',
+      })
+    })
   ;[...(detail.fileChecks || []), ...(detail.scaleSlots || [])].forEach((check, index) => {
     const label = getCheckLabel(check, index)
     const inputUrl = getFirstString(
@@ -294,8 +325,14 @@ export function buildQcImageReviewItems(task = {}) {
 
 export function mapProductionTaskToQcRow(task = {}, options = {}) {
   const orderItem = task.orderItem || {}
+  const vendor = task.vendorProduct?.vendor || {}
   const shopName =
     task.shopName || task.shop?.name || options.shopNameById?.get(String(task.shopId || ''))
+  const qcNote =
+    task.qcNote ||
+    task.qcReview?.note ||
+    (task.fileChecks || []).map((check) => check.note).find(Boolean) ||
+    ''
 
   return {
     id: String(task.id || ''),
@@ -311,6 +348,7 @@ export function mapProductionTaskToQcRow(task = {}, options = {}) {
       task.shippingType || task.shippingService?.name || task.shippingService?.level || '-',
     shopId: task.shopId || null,
     shop: shopName || task.shopId || '-',
+    seller: task.seller?.name || task.seller?.employeeCode || '-',
     scaleBy: getPersonName(task.assignedDesigner || task.scaleByUser),
     qcBy: getPersonName(task.qcUser || task.qcByUser),
     vendorSubmissionStatus: task.vendorSubmission?.status || null,
@@ -332,6 +370,14 @@ export function mapProductionTaskToQcRow(task = {}, options = {}) {
       fulfillName: task.fulfillName || task.fulfillmentPlanId || '-',
       pngStatus: getPngStatus(task),
       vendorProduct: task.vendorProduct?.name || task.vendorProduct?.code || '-',
+      vendorName: vendor.name || vendor.fullName || vendor.code || '-',
+      vendorCostCenter: task.vendorCostCenter?.name || task.vendorCostCenter?.code || '-',
+      seller: task.seller?.name || task.seller?.employeeCode || '-',
+      shop: shopName || task.shopId || '-',
+      blockers: task.blockers || [],
+      workflow: task.workflow || null,
+      designNote: task.designNote || '',
+      qcAt: task.qcAt || null,
       scaleSlots: task.scaleContext?.use?.scaleSlots || [],
       fileChecks: task.fileChecks || [],
       customization:
@@ -341,7 +387,7 @@ export function mapProductionTaskToQcRow(task = {}, options = {}) {
         orderItem.customizations ||
         [],
       csNote: task.csNote || orderItem.csNote || orderItem.buyerNote || orderItem.note || '',
-      qcNote: task.qcNote || task.qcReview?.note || '',
+      qcNote,
     },
   }
 }
@@ -376,8 +422,6 @@ function hasRequiredScaledOutputs(task = {}) {
 
 export function canSubmitQcPass(task = {}) {
   if (task.statusQc === 'PASSED') return false
-  if (['PENDING', 'REJECTED'].includes(task.statusQc)) return true
-
   return hasRequiredScaledOutputs(task)
 }
 

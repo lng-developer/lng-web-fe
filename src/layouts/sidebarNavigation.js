@@ -150,15 +150,6 @@ export const SIDEBAR_WORKSPACE_NAVIGATION = {
       defaultOpen: true,
       children: [
         {
-          id: 'cost-center-config',
-          type: 'item',
-          labelKey: 'nav.items.costCenterConfig',
-          icon: 'config',
-          path: ROUTES.PORTAL_CATALOG_SETUP,
-          allowedRoles: ROLE_ACCESS.SALES,
-          requiredPermissions: ['CATALOG:READ'],
-        },
-        {
           id: 'product-types',
           type: 'item',
           labelKey: 'nav.items.productTypes',
@@ -310,18 +301,9 @@ export const SIDEBAR_WORKSPACE_NAVIGATION = {
       type: 'group',
       labelKey: 'nav.groups.scale',
       icon: 'scale',
+      path: ROUTES.PORTAL_SCALE,
       defaultOpen: true,
       children: [
-        {
-          id: 'scale',
-          type: 'item',
-          labelKey: 'nav.items.scale',
-          icon: 'scale',
-          path: ROUTES.PORTAL_SCALE,
-          ...withoutSearch(['channel']),
-          allowedRoles: ROLE_ACCESS.FULFILLMENT,
-          requiredPermissions: ['PRODUCTION:READ'],
-        },
         {
           id: 'scale-amazon',
           type: 'item',
@@ -349,18 +331,9 @@ export const SIDEBAR_WORKSPACE_NAVIGATION = {
       type: 'group',
       labelKey: 'nav.groups.qc',
       icon: 'qc',
+      path: ROUTES.PORTAL_QC,
       defaultOpen: true,
       children: [
-        {
-          id: 'qc',
-          type: 'item',
-          labelKey: 'nav.items.qc',
-          icon: 'qc',
-          path: ROUTES.PORTAL_QC,
-          ...withoutSearch(['channel']),
-          allowedRoles: ROLE_ACCESS.QC,
-          requiredPermissions: ['PRODUCTION:READ', 'DESIGN:REVIEW'],
-        },
         {
           id: 'qc-amazon',
           type: 'item',

@@ -4,6 +4,7 @@ import test from 'node:test'
 import {
   buildQcExportQuery,
   buildQcImageReviewItems,
+  buildQcSummaryQuery,
   buildQcTaskQuery,
   canSubmitQcPass,
   canSubmitQcReject,
@@ -94,6 +95,13 @@ test('buildQcExportQuery keeps active filters and omits pagination', () => {
   )
 })
 
+test('buildQcSummaryQuery keeps the pending QC filter', () => {
+  assert.deepEqual(buildQcSummaryQuery({ platform: 'amazon', statusTab: 'pending' }), {
+    salesChannelCode: 'AMAZON',
+    qcStatus: 'PENDING',
+  })
+})
+
 test('isSupportedQcStatusTab identifies tabs backed by production filters', () => {
   assert.equal(isSupportedQcStatusTab('all'), true)
   assert.equal(isSupportedQcStatusTab('pending'), true)
@@ -143,7 +151,12 @@ test('mapProductionTaskToQcRow maps production summary and derives PNG availabil
       assignedDesigner: { id: 'designer-id', fullName: 'Nam Tran' },
       qcUser: null,
       orderOwner: { id: 'owner-id', fullName: 'Admin User' },
-      vendorProduct: { id: 'vendor-product-id', name: 'Lenful - US Tapestry' },
+      vendorProduct: {
+        id: 'vendor-product-id',
+        name: 'Lenful - US Tapestry',
+        vendor: { name: 'Lenful' },
+      },
+      vendorCostCenter: { id: 'cost-center-id', name: 'XL / CHARCOAL' },
       shopName: 'LNG Main Shop',
       orderDate: '2026-06-20T10:00:00.000Z',
       shippingType: 'Expedited',
@@ -178,6 +191,9 @@ test('mapProductionTaskToQcRow maps production summary and derives PNG availabil
   assert.equal(row.detail.fulfillName, 'Jane Buyer')
   assert.equal(row.detail.pngStatus, 'UPLOADED')
   assert.equal(row.detail.vendorProduct, 'Lenful - US Tapestry')
+  assert.equal(row.detail.vendorName, 'Lenful')
+  assert.equal(row.detail.vendorCostCenter, 'XL / CHARCOAL')
+  assert.deepEqual(row.detail.blockers, [])
   assert.equal(row.vendorSubmissionStatus, 'READY')
 })
 
@@ -243,6 +259,13 @@ test('canSubmitQcPass allows pass when required scaled outputs are present', () 
     }),
     false,
   )
+  assert.equal(
+    canSubmitQcPass({
+      statusQc: 'PENDING',
+      detail: { fileChecks: [{ id: 'front', required: true }] },
+    }),
+    false,
+  )
 })
 
 test('canSubmitQcReject allows reject before pass even when scaled output is missing', () => {
@@ -301,10 +324,13 @@ test('buildQcImageReviewItems builds modal references and editable layers', () =
         imageUrl: '/product.png',
         customerImages: ['/customer.png', ''],
       },
-      customization: [
-        { label: 'Custom Name', value: 'Mia' },
-        { label: 'Customer Photo', value: '/custom-photo.png', type: 'image' },
-      ],
+      customization: {
+        customerInputs: [
+          { label: 'Custom Name', value: 'Mia' },
+          { label: 'Customer Photo', value: '/custom-photo.png', type: 'image' },
+        ],
+        imageAssets: [{ assetDownloadUrl: '/custom-upload.png', filename: 'buyer.png' }],
+      },
       csNote: 'Please check photo crop.',
       qcNote: 'Previous note.',
       fulfillName: '111-222-item-id',
@@ -335,7 +361,7 @@ test('buildQcImageReviewItems builds modal references and editable layers', () =
   assert.equal(items[0].orderId, 'ORD-1')
   assert.deepEqual(
     items[0].referenceImages.map((item) => item.url),
-    ['/product.png', '/customer.png', '/custom-photo.png'],
+    ['/product.png', '/customer.png', '/custom-photo.png', '/custom-upload.png'],
   )
   assert.deepEqual(
     items[0].layers.map((layer) => [layer.id, layer.label, layer.url, layer.outputStatus]),
@@ -348,6 +374,29 @@ test('buildQcImageReviewItems builds modal references and editable layers', () =
   assert.equal(items[0].customization.length, 2)
   assert.equal(items[0].csNote, 'Please check photo crop.')
   assert.equal(items[0].qcNote, 'Previous note.')
+})
+
+test('buildQcImageReviewItems keeps customization options as text fields', () => {
+  const [item] = buildQcImageReviewItems({
+    detail: {
+      customization: {
+        customerInputs: {
+          texts: [{ label: 'Name', value: 'Mia' }],
+          options: [{ label: 'Select Size', value: 'M' }],
+          images: [{ label: 'Upload photo', secureUrl: '/photo.png' }],
+        },
+      },
+    },
+  })
+
+  assert.deepEqual(
+    item.customization.map(({ label, type, value }) => ({ label, type, value })),
+    [
+      { label: 'Name', type: 'text', value: 'Mia' },
+      { label: 'Select Size', type: 'option', value: 'M' },
+      { label: 'Upload photo', type: 'image', value: '/photo.png' },
+    ],
+  )
 })
 
 test('mergeQcTaskDetail preserves scale slots from full task detail', () => {

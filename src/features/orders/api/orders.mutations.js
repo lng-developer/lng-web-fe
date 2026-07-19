@@ -33,6 +33,21 @@ function getImportEndpoint(source) {
     : ENDPOINTS.ORDER_IMPORTS.MANUAL_EXCEL
 }
 
+function invalidateOrderLists(queryClient) {
+  queryClient.invalidateQueries({
+    queryKey: [...ordersKeys.all, 'list'],
+    refetchType: 'active',
+  })
+  queryClient.invalidateQueries({
+    queryKey: [...ordersKeys.all, 'workbench'],
+    refetchType: 'active',
+  })
+  queryClient.invalidateQueries({
+    queryKey: [...ordersKeys.all, 'summary'],
+    refetchType: 'active',
+  })
+}
+
 export function useImportOrdersMutation() {
   const queryClient = useQueryClient()
 
@@ -44,7 +59,7 @@ export function useImportOrdersMutation() {
         })
         .then(unwrapApiData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
     },
   })
 }
@@ -55,7 +70,7 @@ export function useRetryImportJobMutation() {
   return useMutation({
     mutationFn: ({ jobId }) =>
       apiClient.post(ENDPOINTS.ORDER_IMPORTS.JOB_RETRY(jobId)).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -66,7 +81,7 @@ export function useUpdateOrderBuyerMutation() {
     mutationFn: ({ orderId, ...payload }) =>
       apiClient.patch(ENDPOINTS.ORDERS.BUYER(orderId), payload).then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
     },
   })
@@ -77,7 +92,7 @@ export function useCreateOrderCaseMutation() {
 
   return useMutation({
     mutationFn: (payload) => apiClient.post(ENDPOINTS.ORDERS.CASES, payload).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -88,7 +103,7 @@ export function useUpdateOrderCaseMutation() {
     mutationFn: ({ caseId, ...payload }) =>
       apiClient.patch(ENDPOINTS.ORDERS.CASE(caseId), payload).then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.caseDetail(variables.caseId) })
     },
   })
@@ -100,7 +115,7 @@ export function useResolveOrderCaseMutation() {
   return useMutation({
     mutationFn: ({ caseId, ...payload }) =>
       apiClient.post(ENDPOINTS.ORDERS.CASE_RESOLVE(caseId), payload).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -110,7 +125,7 @@ export function useCancelOrderCaseMutation() {
   return useMutation({
     mutationFn: ({ caseId, ...payload }) =>
       apiClient.post(ENDPOINTS.ORDERS.CASE_CANCEL(caseId), payload).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -120,7 +135,7 @@ export function useAddOrderCaseCommentMutation() {
   return useMutation({
     mutationFn: ({ caseId, ...payload }) =>
       apiClient.post(ENDPOINTS.ORDERS.CASE_COMMENTS(caseId), payload).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -131,7 +146,7 @@ export function useUpdateOrderShippingAddressMutation() {
     mutationFn: ({ orderId, ...payload }) =>
       apiClient.patch(ENDPOINTS.ORDERS.SHIPPING_ADDRESS(orderId), payload).then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
     },
   })
@@ -144,7 +159,7 @@ export function useUpdateOrderShippingServiceMutation() {
     mutationFn: ({ orderId, ...payload }) =>
       apiClient.patch(ENDPOINTS.ORDERS.SHIPPING_SERVICE(orderId), payload).then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
     },
   })
@@ -157,7 +172,7 @@ export function useUpdateOrderCaseStatusMutation() {
     mutationFn: ({ orderId, caseStatus }) =>
       apiClient.patch(ENDPOINTS.ORDERS.CASE_STATUS(orderId), { caseStatus }).then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
     },
   })
@@ -170,7 +185,7 @@ export function useValidateOrderAddressMutation() {
     mutationFn: ({ orderId }) =>
       apiClient.post(ENDPOINTS.ORDERS.VALIDATE_ADDRESS(orderId)).then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
     },
   })
@@ -185,7 +200,7 @@ export function useAssignOrderStaffMutation() {
         .patch(ENDPOINTS.ORDERS.ASSIGNED_STAFF(orderId), { assignedStaffId })
         .then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
     },
   })
@@ -198,7 +213,7 @@ export function useMarkFulfillmentReadyMutation() {
     mutationFn: ({ orderItemId }) =>
       apiClient.post(ENDPOINTS.ORDERS.MARK_FULFILLMENT_READY(orderItemId)).then(unwrapApiData),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ordersKeys.all })
+      invalidateOrderLists(queryClient)
       queryClient.invalidateQueries({ queryKey: ordersKeys.itemReadiness(variables.orderItemId) })
     },
   })
@@ -210,7 +225,7 @@ export function useRecheckOrderItemMutation() {
   return useMutation({
     mutationFn: ({ orderItemId, ...payload }) =>
       apiClient.post(ENDPOINTS.ORDERS.ITEM_RECHECK(orderItemId), payload).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -220,7 +235,7 @@ export function useCreateOrderItemReplacementMutation() {
   return useMutation({
     mutationFn: ({ orderItemId, ...payload }) =>
       apiClient.post(ENDPOINTS.ORDERS.ITEM_REPLACEMENT(orderItemId), payload).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
   })
 }
 
@@ -230,6 +245,19 @@ export function useCancelOrderItemMutation() {
   return useMutation({
     mutationFn: ({ orderItemId, ...payload }) =>
       apiClient.post(ENDPOINTS.ORDERS.ITEM_CANCEL(orderItemId), payload).then(unwrapApiData),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersKeys.all }),
+    onSuccess: () => invalidateOrderLists(queryClient),
+  })
+}
+
+export function useUpdateOrderItemCsNoteMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ orderItemId, csNote }) =>
+      apiClient.patch(ENDPOINTS.ORDERS.ITEM_CS_NOTE(orderItemId), { csNote }).then(unwrapApiData),
+    onSuccess: (_, variables) => {
+      invalidateOrderLists(queryClient)
+      queryClient.invalidateQueries({ queryKey: ordersKeys.item(variables.orderItemId) })
+    },
   })
 }
