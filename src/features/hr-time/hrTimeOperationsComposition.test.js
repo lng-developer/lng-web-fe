@@ -36,6 +36,20 @@ test('attendance adjustment and schedule edits follow backend capabilities', asy
   assert.doesNotMatch(schedule, /roleName|roles\.includes/)
 })
 
+test('Attendance Desk sends exception filtering to the paginated API', async () => {
+  const attendance = await source('pages/AttendanceDeskPage.jsx')
+
+  assert.match(attendance, /exceptionsOnly:\s*tab === 'exceptions'/)
+  assert.doesNotMatch(attendance, /\.filter\(isAttendanceException\)/)
+})
+
+test('Schedule uses permission-safe HR data for named scope selectors', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /getScheduleScopeOptions/)
+  assert.doesNotMatch(schedule, /useDepartmentsQuery|useTeamsQuery|features\/rbac/)
+})
+
 test('operation forms use readable selectors and explicit payload builders', async () => {
   const [adjustment, assignment, override, profile] = await Promise.all([
     source('components/AttendanceAdjustmentDialog.jsx'),
@@ -81,4 +95,14 @@ test('HR route children mount attendance, schedule, and people permissions', asy
   assert.match(routes, /HR_ATTENDANCE:MANAGE/)
   assert.match(routes, /HR_SCHEDULE:READ/)
   assert.match(routes, /HR_EMPLOYEES:READ/)
+})
+
+test('Catalog Setup keeps its original protected catalog workbench', async () => {
+  const routes = await readFile(new URL('../../routes/index.jsx', root), 'utf8')
+
+  assert.match(
+    routes,
+    /path: 'portal\/catalog\/setup',[\s\S]*requirePermissions\(\['CATALOG:READ'\], <PodWorkbenchPage moduleId="catalog" \/>\)/,
+  )
+  assert.doesNotMatch(routes, /PORTAL_LISTINGS\}\?view=product-types/)
 })

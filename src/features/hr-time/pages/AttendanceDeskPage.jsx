@@ -22,7 +22,6 @@ import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { useAdjustAttendanceMutation } from '../api/hrTime.mutations.js'
 import { useAttendanceQuery, useEmployeeProfilesQuery } from '../api/hrTime.queries.js'
 import AttendanceAdjustmentDialog from '../components/AttendanceAdjustmentDialog.jsx'
-import { isAttendanceException } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
 const tabs = ['exceptions', 'today', 'all']
@@ -87,12 +86,12 @@ export default function AttendanceDeskPage() {
     limit: pageSize,
     profileId,
     status,
+    exceptionsOnly: tab === 'exceptions',
     ...dateFilters,
   })
   const employeeQuery = useEmployeeProfilesQuery({ page: 1, limit: 100, status: 'ACTIVE' })
   const adjustment = useAdjustAttendanceMutation()
-  const allRows = query.data?.items || []
-  const rows = tab === 'exceptions' && !status ? allRows.filter(isAttendanceException) : allRows
+  const rows = query.data?.items || []
   const pagination = query.data?.pagination || { page, limit: pageSize, total: 0 }
   const queryError = query.error?.response?.data?.message || query.error?.message
 

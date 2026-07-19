@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- file cấu hình router, không phải component */
 import { lazy } from 'react'
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
+import { createBrowserRouter, Outlet } from 'react-router-dom'
 
 import NotFound from '@/components/common/NotFound'
 import RouteError from '@/components/common/RouteError'
@@ -123,7 +123,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'portal/catalog/setup',
-            element: <Navigate to={`${ROUTES.PORTAL_LISTINGS}?view=product-types`} replace />,
+            element: requirePermissions(['CATALOG:READ'], <PodWorkbenchPage moduleId="catalog" />),
           },
           {
             path: 'portal/mapping',

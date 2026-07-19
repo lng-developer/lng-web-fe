@@ -19,7 +19,6 @@ import {
 } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { canBypassPermissions, hasAnyPermission } from '@/features/auth/utils/authz'
-import { useDepartmentsQuery, useTeamsQuery } from '@/features/rbac/api/rbac.queries'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
@@ -37,6 +36,7 @@ import {
 } from '../api/hrTime.queries.js'
 import CalendarOverrideDialog from '../components/CalendarOverrideDialog.jsx'
 import ShiftAssignmentDialog from '../components/ShiftAssignmentDialog.jsx'
+import { getScheduleScopeOptions } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
 const tabs = ['assignments', 'shifts', 'locations', 'overrides']
@@ -131,13 +131,9 @@ export default function SchedulePage() {
   const employeesQuery = useEmployeeProfilesQuery({ page: 1, limit: 100, status: 'ACTIVE' })
   const optionShiftsQuery = useShiftsQuery({ page: 1, limit: 100, status: 'ACTIVE' })
   const optionLocationsQuery = useWorkLocationsQuery({ page: 1, limit: 100, status: 'ACTIVE' })
-  const departmentsQuery = useDepartmentsQuery()
-  const teamsQuery = useTeamsQuery()
   const employees = list(employeesQuery.data)
   const shifts = list(optionShiftsQuery.data)
   const locations = list(optionLocationsQuery.data)
-  const departments = list(departmentsQuery.data)
-  const teams = list(teamsQuery.data)
 
   const createAssignment = useCreateShiftAssignmentMutation()
   const updateAssignment = useUpdateShiftAssignmentMutation()
@@ -163,25 +159,13 @@ export default function SchedulePage() {
   }, [canWriteGlobal, currentUser])
 
   const scopeOptions = useMemo(
-    () => [
-      ...employees.map((employee) => ({
-        type: 'PROFILE',
-        id: employee.id,
-        label: `${employee.fullName} (${employee.employeeCode})`,
-      })),
-      ...locations.map((location) => ({
-        type: 'WORK_LOCATION',
-        id: location.id,
-        label: location.name,
-      })),
-      ...departments.map((department) => ({
-        type: 'DEPARTMENT',
-        id: department.id,
-        label: department.name,
-      })),
-      ...teams.map((team) => ({ type: 'TEAM', id: team.id, label: team.name })),
-    ],
-    [departments, employees, locations, teams],
+    () =>
+      getScheduleScopeOptions({
+        employees,
+        locations,
+        overrides: list(overrideQuery.data),
+      }),
+    [employees, locations, overrideQuery.data],
   )
 
   const selectedQuery = {

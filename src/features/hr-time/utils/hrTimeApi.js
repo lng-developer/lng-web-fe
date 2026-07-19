@@ -156,6 +156,40 @@ export function buildCalendarOverridePayload(values) {
   return payload
 }
 
+export function getScheduleScopeOptions({ employees = [], locations = [], overrides = [] } = {}) {
+  const options = [
+    ...employees.map((employee) => ({
+      type: 'PROFILE',
+      id: employee.id,
+      label: employee.fullName
+        ? `${employee.fullName}${employee.employeeCode ? ` (${employee.employeeCode})` : ''}`
+        : '',
+    })),
+    ...locations.map((location) => ({
+      type: 'WORK_LOCATION',
+      id: location.id,
+      label: location.name,
+    })),
+    ...employees.map((employee) => ({
+      type: 'DEPARTMENT',
+      id: employee.department?.id,
+      label: employee.department?.name,
+    })),
+    ...employees.map((employee) => ({
+      type: 'TEAM',
+      id: employee.team?.id,
+      label: employee.team?.name,
+    })),
+    ...overrides.map((override) => ({
+      type: override.scopeType,
+      id: override.scopeTarget?.id,
+      label: override.scopeTarget?.name || override.scopeTarget?.label,
+    })),
+  ].filter((option) => option.id && option.label)
+
+  return [...new Map(options.map((option) => [`${option.type}:${option.id}`, option])).values()]
+}
+
 export function buildEmployeeProfilePayload(values, { create = false } = {}) {
   const fields = [
     ...(create ? ['accountId'] : []),

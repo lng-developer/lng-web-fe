@@ -7,6 +7,7 @@ import {
   buildEmployeeProfilePayload,
   buildShiftAssignmentPayload,
   getEmployeeProfileSections,
+  getScheduleScopeOptions,
   isAttendanceException,
 } from './utils/hrTimeApi.js'
 
@@ -123,4 +124,35 @@ test('attendance exceptions include status and time-variance cases', () => {
   assert.equal(isAttendanceException({ status: 'ABSENT' }), true)
   assert.equal(isAttendanceException({ status: 'PRESENT', lateMinutes: 4 }), true)
   assert.equal(isAttendanceException({ status: 'PRESENT', lateMinutes: 0 }), false)
+})
+
+test('schedule scope options use named HR directory relationships and skip bare ids', () => {
+  assert.deepEqual(
+    getScheduleScopeOptions({
+      employees: [
+        {
+          id: 'profile-1',
+          fullName: 'Nguyen An',
+          employeeCode: 'EMP-01',
+          department: { id: 'dept-1', name: 'Design' },
+          team: { id: 'team-1', name: 'POD' },
+        },
+        {
+          id: 'profile-2',
+          fullName: 'Tran Binh',
+          employeeCode: 'EMP-02',
+          department: { id: 'dept-1', name: 'Design' },
+          team: { id: 'team-hidden' },
+        },
+      ],
+      locations: [{ id: 'location-1', name: 'Hanoi Office' }],
+    }),
+    [
+      { type: 'PROFILE', id: 'profile-1', label: 'Nguyen An (EMP-01)' },
+      { type: 'PROFILE', id: 'profile-2', label: 'Tran Binh (EMP-02)' },
+      { type: 'WORK_LOCATION', id: 'location-1', label: 'Hanoi Office' },
+      { type: 'DEPARTMENT', id: 'dept-1', label: 'Design' },
+      { type: 'TEAM', id: 'team-1', label: 'POD' },
+    ],
+  )
 })
