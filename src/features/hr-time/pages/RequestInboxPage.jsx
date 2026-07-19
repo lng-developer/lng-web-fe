@@ -43,8 +43,9 @@ export default function RequestInboxPage() {
   const canReadLeave = hasAnyPermission(currentUser, ['HR_LEAVE:READ', 'HR_LEAVE:APPROVE'])
   const canReadOvertime = hasAnyPermission(currentUser, ['HR_OVERTIME:READ', 'HR_OVERTIME:APPROVE'])
   const requestedTab = searchParams.get('tab')
-  const defaultTab = canReadLeave ? 'leave' : 'overtime'
-  const tab = tabs.includes(requestedTab) ? requestedTab : defaultTab
+  const enabledTabs = tabs.filter((value) => (value === 'leave' ? canReadLeave : canReadOvertime))
+  const defaultTab = enabledTabs[0] || tabs[0]
+  const tab = enabledTabs.includes(requestedTab) ? requestedTab : defaultTab
   const page = Math.max(Number(searchParams.get('page')) || 1, 1)
   const status = searchParams.get('status') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
@@ -142,7 +143,7 @@ export default function RequestInboxPage() {
       }
       tabs={
         <OperationsTabs
-          variant="underline"
+          variant="nav"
           items={tabs.map((value) => ({
             value,
             label: t(`hrTime.tabs.${value}`, {

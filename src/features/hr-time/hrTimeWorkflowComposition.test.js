@@ -28,6 +28,23 @@ test('staff and approver pages reuse operations primitives and URL search params
   assert.match(inbox, /overtime/)
 })
 
+test('HR pages normalize URL tabs to the first enabled tab and use the supported nav variant', async () => {
+  const [myTime, inbox] = await Promise.all([
+    source('pages/MyTimePage.jsx'),
+    source('pages/RequestInboxPage.jsx'),
+  ])
+
+  for (const page of [myTime, inbox]) {
+    assert.match(page, /const enabledTabs = tabs\.filter/)
+    assert.match(
+      page,
+      /const tab = enabledTabs\.includes\(requestedTab\) \? requestedTab : defaultTab/,
+    )
+    assert.match(page, /variant="nav"/)
+    assert.doesNotMatch(page, /variant="underline"/)
+  }
+})
+
 test('request actions are capability-gated and use focused dialogs', async () => {
   const [table, drawer, decision, leaveDialog, overtimeDialog] = await Promise.all([
     source('components/TimeRequestTable.jsx'),

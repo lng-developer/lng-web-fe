@@ -52,8 +52,15 @@ export default function MyTimePage() {
   const canUseLeave = hasAnyPermission(currentUser, ['HR_LEAVE:WRITE'])
   const canUseOvertime = hasAnyPermission(currentUser, ['HR_OVERTIME:WRITE'])
   const requestedTab = searchParams.get('tab')
-  const defaultTab = canUseAttendance ? 'today' : canUseLeave ? 'leave' : 'overtime'
-  const tab = tabs.includes(requestedTab) ? requestedTab : defaultTab
+  const enabledTabs = tabs.filter((value) =>
+    value === 'today' || value === 'history'
+      ? canUseAttendance
+      : value === 'leave'
+        ? canUseLeave
+        : canUseOvertime,
+  )
+  const defaultTab = enabledTabs[0] || tabs[0]
+  const tab = enabledTabs.includes(requestedTab) ? requestedTab : defaultTab
   const page = Math.max(Number(searchParams.get('page')) || 1, 1)
   const status = searchParams.get('status') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
@@ -267,9 +274,10 @@ export default function MyTimePage() {
       }
       tabs={
         <OperationsTabs
-          variant="underline"
+          variant="nav"
           items={tabs.map((value) => ({
             value,
+            disabled: !enabledTabs.includes(value),
             label: t(`hrTime.myTime.tabs.${value}`, {
               defaultValue: `${value[0].toUpperCase()}${value.slice(1)}`,
             }),
