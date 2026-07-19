@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
@@ -70,7 +70,17 @@ export default function MyTimePage() {
   const [review, setReview] = useState(null)
   const [actionError, setActionError] = useState('')
 
-  const today = dayjs().format('YYYY-MM-DD')
+  const [today, setToday] = useState(() => dayjs().format('YYYY-MM-DD'))
+
+  useEffect(() => {
+    const now = dayjs()
+    const timeout = window.setTimeout(
+      () => setToday(dayjs().format('YYYY-MM-DD')),
+      now.startOf('day').add(1, 'day').diff(now) + 100,
+    )
+
+    return () => window.clearTimeout(timeout)
+  }, [today])
   const requestFilters = {
     page,
     limit: pageSize,

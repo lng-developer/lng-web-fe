@@ -64,7 +64,7 @@ test('request actions are capability-gated and use focused dialogs', async () =>
   assert.match(overtimeDialog, /helperText/)
 })
 
-test('profile details pass allowed query parameters and My Time uses server attendance actions', async () => {
+test('profile details only request compensation for a global grant and My Time uses server attendance actions', async () => {
   const [queries, drawer, myTime] = await Promise.all([
     source('api/hrTime.queries.js'),
     source('components/EmployeeProfileDrawer.jsx'),
@@ -74,10 +74,14 @@ test('profile details pass allowed query parameters and My Time uses server atte
   assert.match(queries, /\.get\(endpoint, \{ params: normalizeHrTimeQuery\(params\) \}\)/)
   assert.match(drawer, /HR_COMPENSATION:READ/)
   assert.match(drawer, /HR_COMPENSATION:WRITE/)
+  assert.match(drawer, /hasCompensationPermission\(user\?\.permissions\)/)
+  assert.match(drawer, /scopeType \|\| ''\)\.toLowerCase\(\) === 'global'/)
   assert.match(drawer, /includeSensitive: true/)
   assert.doesNotMatch(drawer, /roleName|\.role\b|roles\.includes/)
   assert.match(myTime, /getSelfAttendanceActions\(todayQuery\.data\)/)
   assert.doesNotMatch(myTime, /todayRecord/)
+  assert.match(myTime, /window\.setTimeout/)
+  assert.match(myTime, /startOf\('day'\)\.add\(1, 'day'\)\.diff\(now\)/)
 })
 
 test('HR child routes mount My Time and Request Inbox behind permissions', async () => {

@@ -3,7 +3,6 @@ import CloseIcon from '@mui/icons-material/Close'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Alert, Avatar, Button, Drawer, IconButton, Skeleton, Typography } from '@mui/material'
 
-import { hasAnyPermission } from '@/features/auth/utils/authz'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import { useEmployeeProfileQuery } from '../api/hrTime.queries.js'
@@ -41,6 +40,23 @@ function fieldLabel(field) {
     .replace(/^./, (character) => character.toUpperCase())
 }
 
+function hasGlobalCompensationPermission(user) {
+  const compensationPermissions = new Set(['HR_COMPENSATION:READ', 'HR_COMPENSATION:WRITE'])
+  const hasCompensationPermission = (permissions = []) =>
+    permissions.some((permission) =>
+      compensationPermissions.has(typeof permission === 'string' ? permission : permission?.code),
+    )
+
+  return (
+    hasCompensationPermission(user?.permissions) ||
+    (user?.scopes || []).some(
+      (scope) =>
+        String(scope?.scopeType || '').toLowerCase() === 'global' &&
+        hasCompensationPermission(scope?.permissions),
+    )
+  )
+}
+
 export default function EmployeeProfileDrawer({
   open,
   profileId,
@@ -50,10 +66,7 @@ export default function EmployeeProfileDrawer({
 }) {
   const { t, i18n } = useTranslation()
   const currentUser = useAuthStore((state) => state.currentUser)
-  const canReadCompensation = hasAnyPermission(currentUser, [
-    'HR_COMPENSATION:READ',
-    'HR_COMPENSATION:WRITE',
-  ])
+  const canReadCompensation = hasGlobalCompensationPermission(currentUser)
   const profileQuery = useEmployeeProfileQuery(
     profileId,
     canReadCompensation ? { includeSensitive: true } : undefined,
