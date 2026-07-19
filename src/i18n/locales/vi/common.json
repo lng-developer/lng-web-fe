@@ -2555,5 +2555,29 @@
         "Chỉ dùng Nâng cao khi rule áp dụng cho một shop, channel hoặc marketplace."
       ]
     }
+  },
+  "hrTime": {
+    "title": "Vận hành thời gian nhân sự",
+    "tabs": {
+      "employees": "Nhân viên",
+      "schedule": "Lịch làm việc",
+      "attendance": "Chấm công",
+      "leave": "Nghỉ phép",
+      "overtime": "Tăng ca"
+    },
+    "actions": {
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "adjustAttendance": "Điều chỉnh chấm công",
+      "approve": "Duyệt",
+      "reject": "Từ chối",
+      "cancel": "Hủy"
+    },
+    "labels": {
+      "unknownEmployee": "Nhân viên không xác định",
+      "workLocation": "Địa điểm làm việc",
+      "shift": "Ca làm việc",
+      "department": "Phòng ban"
+    }
   }
 }

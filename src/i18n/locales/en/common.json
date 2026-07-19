@@ -2555,5 +2555,29 @@
         "Use Advanced only when the rule should apply to one shop, channel, or marketplace."
       ]
     }
+  },
+  "hrTime": {
+    "title": "HR Time Operations",
+    "tabs": {
+      "employees": "Employees",
+      "schedule": "Schedule",
+      "attendance": "Attendance",
+      "leave": "Leave",
+      "overtime": "Overtime"
+    },
+    "actions": {
+      "checkIn": "Check in",
+      "checkOut": "Check out",
+      "adjustAttendance": "Adjust attendance",
+      "approve": "Approve",
+      "reject": "Reject",
+      "cancel": "Cancel"
+    },
+    "labels": {
+      "unknownEmployee": "Unknown employee",
+      "workLocation": "Work location",
+      "shift": "Shift",
+      "department": "Department"
+    }
   }
 }

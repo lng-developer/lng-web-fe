@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- file cấu hình router, không phải component */
 import { lazy } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Outlet } from 'react-router-dom'
 
 import NotFound from '@/components/common/NotFound'
 import RouteError from '@/components/common/RouteError'
@@ -59,6 +59,7 @@ export const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: 'profile', element: <ProfilePage /> },
           { path: 'departments', element: <DepartmentsPage /> },
+          { path: ROUTES.HR.slice(1), element: <Outlet /> },
           { path: 'portal/orders', element: requirePermissions(['ORDERS:READ'], <OrdersPage />) },
           {
             path: 'portal/listings',
