@@ -117,3 +117,126 @@ export function getHrTimeActions(row) {
     Object.entries(capabilities).map(([action, allowed]) => [action, Boolean(allowed)]),
   )
 }
+
+function compactPayload(values, fields, nullableFields = []) {
+  return fields.reduce((payload, field) => {
+    if (!Object.hasOwn(values, field) || values[field] === undefined) return payload
+    const value = typeof values[field] === 'string' ? values[field].trim() : values[field]
+    payload[field] = value === '' && nullableFields.includes(field) ? null : value
+    return payload
+  }, {})
+}
+
+export function buildAttendanceAdjustmentPayload(values) {
+  return compactPayload(
+    values,
+    ['status', 'checkInAt', 'checkOutAt', 'reason'],
+    ['checkInAt', 'checkOutAt'],
+  )
+}
+
+export function buildShiftAssignmentPayload(values) {
+  return compactPayload(
+    values,
+    ['profileId', 'shiftId', 'workLocationId', 'effectiveFrom', 'effectiveTo', 'status'],
+    ['effectiveTo'],
+  )
+}
+
+export function buildCalendarOverridePayload(values) {
+  const payload = compactPayload(values, [
+    'dateKey',
+    'kind',
+    'scopeType',
+    'scopeId',
+    'name',
+    'status',
+  ])
+  if (payload.scopeType === 'GLOBAL') payload.scopeId = null
+  return payload
+}
+
+export function buildEmployeeProfilePayload(values, { create = false } = {}) {
+  const fields = [
+    ...(create ? ['accountId'] : []),
+    'employeeCode',
+    'fullName',
+    'departmentId',
+    'teamId',
+    'jobTitle',
+    'jobLevel',
+    'employmentType',
+    'workMode',
+    'startDate',
+    'status',
+  ]
+  const payload = compactPayload(values, fields, [
+    'departmentId',
+    'teamId',
+    'jobTitle',
+    'jobLevel',
+    'startDate',
+  ])
+  if (payload.employeeCode) payload.employeeCode = payload.employeeCode.toUpperCase()
+  return payload
+}
+
+const profileSectionFields = {
+  work: [
+    'employeeCode',
+    'fullName',
+    'department',
+    'team',
+    'jobTitle',
+    'jobLevel',
+    'employmentType',
+    'workMode',
+    'startDate',
+    'status',
+  ],
+  contact: [
+    'workEmail',
+    'personalEmail',
+    'phoneNumber',
+    'address',
+    'birthDate',
+    'emergencyContact',
+  ],
+  contract: [
+    'contractType',
+    'contractNumber',
+    'contractStartDate',
+    'contractEndDate',
+    'probationEndDate',
+    'promotionDate',
+    'transferDate',
+    'endDate',
+  ],
+  compensation: [
+    'baseCurrency',
+    'baseSalary',
+    'allowances',
+    'responsibilityAllowance',
+    'identityCard',
+    'taxIdentification',
+    'socialInsuranceNumber',
+    'bankAccount',
+  ],
+}
+
+export function getEmployeeProfileSections(profile = {}) {
+  return Object.entries(profileSectionFields).flatMap(([key, fields]) => {
+    const visibleFields = fields
+      .filter((field) => Object.hasOwn(profile, field))
+      .map((field) => ({ key: field, value: profile[field] }))
+    return visibleFields.length ? [{ key, fields: visibleFields }] : []
+  })
+}
+
+export function isAttendanceException(row = {}) {
+  return (
+    row.status !== 'PRESENT' ||
+    Number(row.lateMinutes || 0) > 0 ||
+    Number(row.earlyLeaveMinutes || 0) > 0
+  )
+}
