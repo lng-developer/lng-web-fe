@@ -6,6 +6,8 @@ import {
   buildCalendarOverridePayload,
   buildEmployeeProfilePayload,
   buildShiftAssignmentPayload,
+  buildShiftPayload,
+  buildWorkLocationPayload,
   getEmployeeProfileSections,
   getScheduleScopeOptions,
   isAttendanceException,
@@ -63,6 +65,50 @@ test('operation payloads keep only fields accepted by each HR endpoint', () => {
       scopeType: 'GLOBAL',
       scopeId: null,
       name: 'National Day',
+      status: 'ACTIVE',
+    },
+  )
+})
+
+test('global schedule configuration payloads use readable fields and normalize values', () => {
+  assert.deepEqual(
+    buildWorkLocationPayload({
+      code: ' hn-office ',
+      name: ' Hanoi office ',
+      timezone: ' Asia/Ho_Chi_Minh ',
+      status: 'ACTIVE',
+      ignoredId: 'must-not-leak',
+    }),
+    {
+      code: 'HN-OFFICE',
+      name: 'Hanoi office',
+      timezone: 'Asia/Ho_Chi_Minh',
+      status: 'ACTIVE',
+    },
+  )
+
+  assert.deepEqual(
+    buildShiftPayload({
+      code: ' night ',
+      name: ' Night production ',
+      workLocationId: '',
+      startTime: '22:00',
+      endTime: '06:00',
+      breakMinutes: '45',
+      graceMinutes: '10',
+      workdays: [1, 2, 3, 4, 5],
+      status: 'ACTIVE',
+      ignoredId: 'must-not-leak',
+    }),
+    {
+      code: 'NIGHT',
+      name: 'Night production',
+      workLocationId: null,
+      startTime: '22:00',
+      endTime: '06:00',
+      breakMinutes: 45,
+      graceMinutes: 10,
+      workdays: [1, 2, 3, 4, 5],
       status: 'ACTIVE',
     },
   )

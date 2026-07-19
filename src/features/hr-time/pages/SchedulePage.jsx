@@ -24,8 +24,12 @@ import { useAuthStore } from '@/store/useAuthStore'
 import {
   useCreateCalendarOverrideMutation,
   useCreateShiftAssignmentMutation,
+  useCreateShiftMutation,
+  useCreateWorkLocationMutation,
   useUpdateCalendarOverrideMutation,
   useUpdateShiftAssignmentMutation,
+  useUpdateShiftMutation,
+  useUpdateWorkLocationMutation,
 } from '../api/hrTime.mutations.js'
 import {
   useCalendarOverridesQuery,
@@ -35,6 +39,7 @@ import {
   useWorkLocationsQuery,
 } from '../api/hrTime.queries.js'
 import CalendarOverrideDialog from '../components/CalendarOverrideDialog.jsx'
+import ScheduleConfigurationDialog from '../components/ScheduleConfigurationDialog.jsx'
 import ShiftAssignmentDialog from '../components/ShiftAssignmentDialog.jsx'
 import { getScheduleScopeOptions } from '../utils/hrTimeApi.js'
 
@@ -56,11 +61,13 @@ const columnSets = {
     ['location', '200px'],
     ['workdays', '220px'],
     ['status', '130px'],
+    ['actions', '90px'],
   ],
   locations: [
     ['location', '240px'],
     ['timezone', '240px'],
     ['status', '130px'],
+    ['actions', '90px'],
   ],
   overrides: [
     ['date', '150px'],
@@ -87,15 +94,20 @@ function scopePermission(scope) {
 function globalScheduleWrite(user) {
   if (canBypassPermissions(user)) return true
   if (
+    (user?.permissions || []).some((permission) =>
+      typeof permission === 'string'
+        ? permission === 'HR_SCHEDULE:WRITE'
+        : permission?.code === 'HR_SCHEDULE:WRITE',
+    )
+  ) {
+    return true
+  }
+  if (
     (user?.scopes || []).some((scope) => scope.scopeType === 'global' && scopePermission(scope))
   ) {
     return true
   }
-  return (user?.permissions || []).some((permission) =>
-    typeof permission === 'string'
-      ? permission === 'HR_SCHEDULE:WRITE'
-      : permission?.code === 'HR_SCHEDULE:WRITE',
-  )
+  return false
 }
 
 export default function SchedulePage() {
@@ -139,14 +151,26 @@ export default function SchedulePage() {
   const updateAssignment = useUpdateShiftAssignmentMutation()
   const createOverride = useCreateCalendarOverrideMutation()
   const updateOverride = useUpdateCalendarOverrideMutation()
+  const createLocation = useCreateWorkLocationMutation()
+  const updateLocation = useUpdateWorkLocationMutation()
+  const createShift = useCreateShiftMutation()
+  const updateShift = useUpdateShiftMutation()
   const activeMutation =
     editor?.type === 'override'
       ? editor.record
         ? updateOverride
         : createOverride
-      : editor?.record
-        ? updateAssignment
-        : createAssignment
+      : editor?.type === 'location'
+        ? editor.record
+          ? updateLocation
+          : createLocation
+        : editor?.type === 'shift'
+          ? editor.record
+            ? updateShift
+            : createShift
+          : editor?.record
+            ? updateAssignment
+            : createAssignment
 
   const allowedScopeTypes = useMemo(() => {
     if (canWriteGlobal) return ['GLOBAL', 'WORK_LOCATION', 'DEPARTMENT', 'TEAM', 'PROFILE']
@@ -200,10 +224,18 @@ export default function SchedulePage() {
         await (editor.record
           ? updateAssignment.mutateAsync({ id: editor.record.id, payload })
           : createAssignment.mutateAsync(payload))
-      } else {
+      } else if (editor.type === 'override') {
         await (editor.record
           ? updateOverride.mutateAsync({ id: editor.record.id, payload })
           : createOverride.mutateAsync(payload))
+      } else if (editor.type === 'location') {
+        await (editor.record
+          ? updateLocation.mutateAsync({ id: editor.record.id, payload })
+          : createLocation.mutateAsync(payload))
+      } else {
+        await (editor.record
+          ? updateShift.mutateAsync({ id: editor.record.id, payload })
+          : createShift.mutateAsync(payload))
       }
       enqueueSnackbar(t('hrTime.messages.scheduleSaved', { defaultValue: 'Schedule updated' }), {
         variant: SNACKBAR_VARIANTS.SUCCESS,
@@ -218,7 +250,8 @@ export default function SchedulePage() {
   }
 
   function editButton(row, type) {
-    return row.capabilities?.edit ? (
+    const canEdit = ['location', 'shift'].includes(type) ? canWriteGlobal : row.capabilities?.edit
+    return canEdit ? (
       <IconActionButton
         label={t('common.edit', { defaultValue: 'Edit' })}
         tone="primary"
@@ -267,7 +300,16 @@ export default function SchedulePage() {
     if (column.key === 'actions') {
       return (
         <Stack direction="row" justifyContent="center">
-          {editButton(row, tab === 'overrides' ? 'override' : 'assignment')}
+          {editButton(
+            row,
+            tab === 'overrides'
+              ? 'override'
+              : tab === 'shifts'
+                ? 'shift'
+                : tab === 'locations'
+                  ? 'location'
+                  : 'assignment',
+          )}
         </Stack>
       )
     }
@@ -288,21 +330,36 @@ export default function SchedulePage() {
           title={t('hrTime.schedule.title', { defaultValue: 'Schedule' })}
           subtitle={t('hrTime.schedule.subtitle', {
             defaultValue:
-              'Manage assignments and scoped calendar changes; global configuration stays read-only here.',
+              'Manage assignments, global schedule configuration, and scoped calendar changes.',
           })}
           actions={
-            canWrite && ['assignments', 'overrides'].includes(tab) ? (
+            (canWrite && ['assignments', 'overrides'].includes(tab)) ||
+            (canWriteGlobal && ['shifts', 'locations'].includes(tab)) ? (
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => {
                   setActionError('')
-                  setEditor({ type: tab === 'overrides' ? 'override' : 'assignment', record: null })
+                  setEditor({
+                    type:
+                      tab === 'overrides'
+                        ? 'override'
+                        : tab === 'shifts'
+                          ? 'shift'
+                          : tab === 'locations'
+                            ? 'location'
+                            : 'assignment',
+                    record: null,
+                  })
                 }}
               >
                 {tab === 'overrides'
                   ? t('hrTime.schedule.addOverride', { defaultValue: 'Add override' })
-                  : t('hrTime.schedule.addAssignment', { defaultValue: 'Add assignment' })}
+                  : tab === 'shifts'
+                    ? t('hrTime.schedule.addShift', { defaultValue: 'Add shift' })
+                    : tab === 'locations'
+                      ? t('hrTime.schedule.addLocation', { defaultValue: 'Add work location' })
+                      : t('hrTime.schedule.addAssignment', { defaultValue: 'Add assignment' })}
               </Button>
             ) : null
           }
@@ -420,6 +477,19 @@ export default function SchedulePage() {
           override={editor.record}
           allowedScopeTypes={allowedScopeTypes}
           scopeOptions={scopeOptions}
+          loading={activeMutation?.isPending}
+          error={actionError}
+          onClose={() => setEditor(null)}
+          onSubmit={save}
+        />
+      ) : null}
+      {['location', 'shift'].includes(editor?.type) ? (
+        <ScheduleConfigurationDialog
+          key={`${editor.type}-${editor.record?.id || 'new'}`}
+          open
+          type={editor.type}
+          record={editor.record}
+          workLocations={locations}
           loading={activeMutation?.isPending}
           error={actionError}
           onClose={() => setEditor(null)}

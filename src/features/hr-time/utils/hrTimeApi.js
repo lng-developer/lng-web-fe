@@ -171,6 +171,36 @@ export function buildCalendarOverridePayload(values) {
   return payload
 }
 
+export function buildWorkLocationPayload(values) {
+  const payload = compactPayload(values, ['code', 'name', 'timezone', 'status'])
+  if (payload.code) payload.code = payload.code.toUpperCase()
+  return payload
+}
+
+export function buildShiftPayload(values) {
+  const payload = compactPayload(
+    values,
+    [
+      'code',
+      'name',
+      'workLocationId',
+      'startTime',
+      'endTime',
+      'breakMinutes',
+      'graceMinutes',
+      'workdays',
+      'status',
+    ],
+    ['workLocationId'],
+  )
+
+  if (payload.code) payload.code = payload.code.toUpperCase()
+  for (const field of ['breakMinutes', 'graceMinutes']) {
+    if (payload[field] !== undefined) payload[field] = Number(payload[field])
+  }
+  return payload
+}
+
 export function getScheduleScopeOptions({ employees = [], locations = [], overrides = [] } = {}) {
   const options = [
     ...employees.map((employee) => ({

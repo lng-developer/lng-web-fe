@@ -51,9 +51,10 @@ test('Schedule uses permission-safe HR data for named scope selectors', async ()
 })
 
 test('operation forms use readable selectors and explicit payload builders', async () => {
-  const [adjustment, assignment, override, profile] = await Promise.all([
+  const [adjustment, assignment, configuration, override, profile] = await Promise.all([
     source('components/AttendanceAdjustmentDialog.jsx'),
     source('components/ShiftAssignmentDialog.jsx'),
+    source('components/ScheduleConfigurationDialog.jsx'),
     source('components/CalendarOverrideDialog.jsx'),
     source('components/EmployeeProfileDialog.jsx'),
   ])
@@ -63,15 +64,30 @@ test('operation forms use readable selectors and explicit payload builders', asy
   assert.match(assignment, /employees\.map/)
   assert.match(assignment, /shifts\.map/)
   assert.match(assignment, /locations\.map/)
+  assert.match(configuration, /buildWorkLocationPayload/)
+  assert.match(configuration, /buildShiftPayload/)
+  assert.match(configuration, /workLocations\.map/)
   assert.match(override, /buildCalendarOverridePayload/)
   assert.match(override, /scopeOptions\.filter/)
   assert.match(override, /options\.map/)
   assert.match(profile, /buildEmployeeProfilePayload/)
   assert.match(profile, /accounts\.map/)
   assert.doesNotMatch(
-    `${assignment}${override}${profile}`,
+    `${assignment}${configuration}${override}${profile}`,
     /label=.*\b(ID|Id|id)\b|helperText=.*\b(ID|Id|id)\b/,
   )
+})
+
+test('Schedule exposes global configuration only through permission-derived controls', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /canWriteGlobal/)
+  assert.match(schedule, /useCreateWorkLocationMutation/)
+  assert.match(schedule, /useCreateShiftMutation/)
+  assert.match(schedule, /ScheduleConfigurationDialog/)
+  assert.match(schedule, /user\?\.permissions/)
+  assert.match(schedule, /scope\.scopeType === 'global'/)
+  assert.doesNotMatch(schedule, /roleName|roles\.includes/)
 })
 
 test('People loads directory rows separately from permission-gated detail sections', async () => {
