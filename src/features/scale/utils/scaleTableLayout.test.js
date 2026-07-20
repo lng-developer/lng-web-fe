@@ -52,6 +52,6 @@ test('Scale table displays the full Order ID without a badge border', () => {
   assert.doesNotMatch(scalePageSource, /const ORDER_ID_MAX_LENGTH/)
   assert.match(
     scalePageSource,
-    /className="block max-w-full break-all font-mono text-xs text-ink-secondary"/,
+    /className="block max-w-full break-all font-mono text-xs font-semibold text-ink-secondary"/,
   )
 })

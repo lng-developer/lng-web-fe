@@ -70,6 +70,7 @@ orders|POST|/api/orders/items/:orderItemId/mark-fulfillment-ready
 orders|POST|/api/orders/items/:orderItemId/recheck
 orders|POST|/api/orders/items/:orderItemId/replacement
 orders|POST|/api/orders/items/:orderItemId/cancel
+orders|PATCH|/api/orders/items/:orderItemId/cs-note
 orders|GET|/api/orders/items/:orderItemId
 orders|GET|/api/orders/:orderId/timeline
 orders|GET|/api/orders/:orderId/expanded
@@ -224,6 +225,7 @@ organization|POST|/api/organization/teams/:teamId/members
 organization|DELETE|/api/organization/teams/:teamId/members/:accountId
 audit|GET|/api/audit/health
 reports|GET|/api/reports/finance/daily
+reports|GET|/api/reports/finance/daily-profit
 reports|GET|/api/reports/finance/by-seller
 reports|GET|/api/reports/finance/by-team
 reports|GET|/api/reports/vendor/performance

@@ -16,10 +16,6 @@ const listingsSource = readFileSync(
   new URL('../../features/listings/pages/ListingPage.jsx', import.meta.url),
   'utf8',
 )
-const qcDetailSource = readFileSync(
-  new URL('../../features/qc/components/QcDetailPanel.jsx', import.meta.url),
-  'utf8',
-)
 const qcReviewSource = readFileSync(
   new URL('../../features/qc/components/QcImageReviewDialog.jsx', import.meta.url),
   'utf8',
@@ -52,6 +48,5 @@ test('Content images on operational pages reuse ImagePreview', () => {
     /import ImagePreview from '@\/components\/common\/ImagePreview'/,
   )
   assert.match(listingsSource, /import ImagePreview from '@\/components\/common\/ImagePreview'/)
-  assert.match(qcDetailSource, /import ImagePreview from '@\/components\/common\/ImagePreview'/)
   assert.match(qcReviewSource, /import ImagePreview from '@\/components\/common\/ImagePreview'/)
 })

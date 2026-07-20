@@ -1609,7 +1609,12 @@
       "csNotePlaceholder": "Thêm ghi chú CS..."
     },
     "actions": {
-      "saveNote": "Lưu ghi chú"
+      "saveNote": "Lưu ghi chú",
+      "cancel": "Hủy",
+      "import": "Nhập",
+      "saveChanges": "Lưu thay đổi",
+      "update": "Cập nhật",
+      "save": "Lưu"
     },
     "pagination": {
       "before": "Before",

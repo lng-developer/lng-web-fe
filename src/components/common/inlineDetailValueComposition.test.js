@@ -14,7 +14,7 @@ const qcPreviewSource = readFileSync(
 
 test('InlineDetailValue renders a bold label and readable value', () => {
   assert.match(componentSource, /function InlineDetailValue/)
-  assert.match(componentSource, /normalizedLabel\}:<\/span>/)
+  assert.match(componentSource, /\{normalizedLabel\}:\s*<\/span>/)
   assert.match(componentSource, /replace\(\/:\\s\*\$\//)
   assert.match(componentSource, /break-words/)
 })
