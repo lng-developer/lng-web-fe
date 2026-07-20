@@ -1139,6 +1139,14 @@
       "canvas": "Khung soi ảnh QC",
       "openImage": "Mở ảnh",
       "noImages": "Task này chưa có ảnh để QC.",
+      "fileUnavailable": "File không khả dụng",
+      "outputMissing": "Thiếu ảnh đã scale",
+      "referenceImages": "Ảnh tham chiếu",
+      "sourceFiles": "Ảnh nguồn",
+      "scaledFiles": "Ảnh đã scale",
+      "compare": "So sánh",
+      "resetView": "Đặt lại khung xem",
+      "sourceOverlayOpacity": "Độ trong suốt ảnh nguồn",
       "itemInfo": "Item Info",
       "orderId": "Order ID:",
       "asin": "Asin:",
@@ -1191,8 +1199,8 @@
       "customization": "Customization",
       "customerUploads": "Customer uploads",
       "scaledFiles": "Scaled files",
-      "input": "Input",
-      "output": "Output",
+      "input": "Tệp nguồn",
+      "output": "Tệp đã scale",
       "available": "Available",
       "noFile": "No file",
       "noScaledFiles": "No scaled files",
@@ -2624,6 +2632,70 @@
       "attendance": "Bàn chấm công",
       "schedule": "Lịch làm việc",
       "employees": "Danh bạ nhân sự"
+    }
+  },
+  "financeProfit": {
+    "title": "Lợi nhuận & Chi phí",
+    "subtitle": "Finance snapshot theo từng order item để kiểm tra lợi nhuận.",
+    "refresh": "Làm mới",
+    "visibleTotal": "Bản ghi đang hiển thị",
+    "revenue": "Doanh thu",
+    "grossProfit": "Lợi nhuận gộp",
+    "missingCost": "Thiếu chi phí: {{count}}",
+    "loadError": "Không thể tải finance snapshot.",
+    "empty": "Không có finance snapshot.",
+    "filters": {
+      "allChannels": "Tất cả kênh",
+      "shopId": "Shop ID",
+      "orderId": "Order ID",
+      "orderItemId": "Order item ID",
+      "allSnapshots": "Tất cả trạng thái snapshot",
+      "allCosts": "Tất cả trạng thái chi phí"
+    },
+    "table": {
+      "orderItem": "Order item",
+      "channel": "Kênh",
+      "revenue": "Doanh thu",
+      "fees": "Phí",
+      "baseCost": "Chi phí gốc",
+      "grossProfit": "Lợi nhuận gộp",
+      "margin": "Biên lợi nhuận",
+      "costStatus": "Trạng thái chi phí"
+    }
+  },
+  "financialReports": {
+    "title": "Báo cáo tài chính",
+    "subtitle": "Doanh thu, chi phí, lợi nhuận gộp và chi tiêu quảng cáo theo ngày.",
+    "refresh": "Làm mới",
+    "revenue": "Doanh thu",
+    "grossProfit": "Lợi nhuận gộp",
+    "netProfit": "Lợi nhuận ròng",
+    "missingCost": "Thiếu chi phí: {{count}}",
+    "loadError": "Không thể tải báo cáo tài chính.",
+    "empty": "Không có dữ liệu báo cáo.",
+    "tabs": { "daily": "Lợi nhuận theo ngày", "seller": "Theo seller", "team": "Theo team" },
+    "chart": { "title": "Hiệu quả theo ngày", "channelTitle": "Lợi nhuận ròng theo kênh" },
+    "filters": {
+      "allChannels": "Tất cả kênh",
+      "shopId": "Shop ID",
+      "marketplace": "Marketplace",
+      "dateFrom": "Từ ngày",
+      "dateTo": "Đến ngày"
+    },
+    "table": {
+      "date": "Ngày",
+      "channel": "Kênh",
+      "seller": "Seller",
+      "team": "Team",
+      "items": "Số item",
+      "revenue": "Doanh thu",
+      "baseCost": "Chi phí gốc",
+      "grossProfit": "Lợi nhuận gộp",
+      "grossMargin": "Biên gộp",
+      "adSpend": "Chi phí quảng cáo",
+      "netProfit": "Lợi nhuận ròng",
+      "netMargin": "Biên ròng",
+      "missingCost": "Thiếu chi phí"
     }
   }
 }

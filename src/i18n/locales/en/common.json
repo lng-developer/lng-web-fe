@@ -1031,7 +1031,12 @@
       "csNotePlaceholder": "Add a CS note..."
     },
     "actions": {
-      "saveNote": "Save note"
+      "saveNote": "Save note",
+      "cancel": "Cancel",
+      "import": "Import",
+      "saveChanges": "Save changes",
+      "update": "Update",
+      "save": "Save"
     },
     "pagination": {
       "before": "Before",
@@ -1409,6 +1414,14 @@
       "canvas": "QC image inspection canvas",
       "openImage": "Open image",
       "noImages": "No images available for this task.",
+      "fileUnavailable": "File unavailable",
+      "outputMissing": "Scaled output missing",
+      "referenceImages": "Reference images",
+      "sourceFiles": "Source files",
+      "scaledFiles": "Scaled files",
+      "compare": "Compare",
+      "resetView": "Reset view",
+      "sourceOverlayOpacity": "Source opacity",
       "itemInfo": "Item Info",
       "orderId": "Order ID:",
       "asin": "Asin:",
@@ -1461,8 +1474,8 @@
       "customization": "Customization",
       "customerUploads": "Customer uploads",
       "scaledFiles": "Scaled files",
-      "input": "Input",
-      "output": "Output",
+      "input": "Source file",
+      "output": "Scaled file",
       "available": "Available",
       "noFile": "No file",
       "noScaledFiles": "No scaled files",
@@ -2624,6 +2637,70 @@
       "attendance": "Attendance desk",
       "schedule": "Work schedule",
       "employees": "People directory"
+    }
+  },
+  "financeProfit": {
+    "title": "Profit & Cost",
+    "subtitle": "Order-item finance snapshots for profit review.",
+    "refresh": "Refresh",
+    "visibleTotal": "Visible records",
+    "revenue": "Revenue",
+    "grossProfit": "Gross profit",
+    "missingCost": "{{count}} missing cost",
+    "loadError": "Unable to load finance snapshots.",
+    "empty": "No finance snapshots found.",
+    "filters": {
+      "allChannels": "All channels",
+      "shopId": "Shop ID",
+      "orderId": "Order ID",
+      "orderItemId": "Order item ID",
+      "allSnapshots": "All snapshot statuses",
+      "allCosts": "All cost statuses"
+    },
+    "table": {
+      "orderItem": "Order item",
+      "channel": "Channel",
+      "revenue": "Revenue",
+      "fees": "Fees",
+      "baseCost": "Base cost",
+      "grossProfit": "Gross profit",
+      "margin": "Margin",
+      "costStatus": "Cost status"
+    }
+  },
+  "financialReports": {
+    "title": "Financial Reports",
+    "subtitle": "Revenue, cost, gross profit, and daily ad spend from finance data.",
+    "refresh": "Refresh",
+    "revenue": "Revenue",
+    "grossProfit": "Gross profit",
+    "netProfit": "Net profit",
+    "missingCost": "{{count}} missing cost",
+    "loadError": "Unable to load financial reports.",
+    "empty": "No report data found.",
+    "tabs": { "daily": "Daily profit", "seller": "By seller", "team": "By team" },
+    "chart": { "title": "Daily performance", "channelTitle": "Net profit by channel" },
+    "filters": {
+      "allChannels": "All channels",
+      "shopId": "Shop ID",
+      "marketplace": "Marketplace",
+      "dateFrom": "Date from",
+      "dateTo": "Date to"
+    },
+    "table": {
+      "date": "Date",
+      "channel": "Channel",
+      "seller": "Seller",
+      "team": "Team",
+      "items": "Items",
+      "revenue": "Revenue",
+      "baseCost": "Base cost",
+      "grossProfit": "Gross profit",
+      "grossMargin": "Gross margin",
+      "adSpend": "Ad spend",
+      "netProfit": "Net profit",
+      "netMargin": "Net margin",
+      "missingCost": "Missing cost"
     }
   }
 }

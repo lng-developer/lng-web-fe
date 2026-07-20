@@ -6,6 +6,7 @@ import { useUIStore } from '@/store/useUIStore'
 
 import en from './locales/en/common.json'
 import vi from './locales/vi/common.json'
+import { formatMissingTranslationKey } from './formatMissingTranslationKey'
 
 // Ngôn ngữ ban đầu lấy từ useUIStore (đã được persist vào localStorage) để
 // tránh có 2 nguồn quản lý ngôn ngữ khác nhau. Đổi ngôn ngữ qua i18n.changeLanguage()
@@ -21,6 +22,7 @@ i18n.use(initReactI18next).init({
   interpolation: {
     escapeValue: false,
   },
+  parseMissingKeyHandler: formatMissingTranslationKey,
 })
 
 export default i18n

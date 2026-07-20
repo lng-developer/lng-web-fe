@@ -273,6 +273,7 @@ export const ENDPOINTS = {
   },
   REPORTS: {
     FINANCE_DAILY: '/api/reports/finance/daily',
+    FINANCE_DAILY_PROFIT: '/api/reports/finance/daily-profit',
     FINANCE_BY_SELLER: '/api/reports/finance/by-seller',
     FINANCE_BY_TEAM: '/api/reports/finance/by-team',
     VENDOR_PERFORMANCE: '/api/reports/vendor/performance',
