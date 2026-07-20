@@ -59,6 +59,7 @@
       "etsy": "Etsy"
     },
     "items": {
+      "dashboard": "Dashboard",
       "orderList": "Danh sách đơn",
       "orderWorkbench": "Order Workbench",
       "orderDetail": "Chi tiết đơn",
@@ -678,6 +679,95 @@
     "title": "Trang chủ",
     "welcome": "Dashboard vận hành POD",
     "description": "Theo dõi nhanh đơn hàng, hàng chờ xử lý và các ngoại lệ cần ưu tiên trong ngày.",
+    "commercial": {
+      "title": "Phân tích Portal",
+      "subtitle": "Theo dõi doanh thu, lợi nhuận, người mua, độ tin cậy vendor và ngoại lệ vận hành trong một màn hình.",
+      "analyticsPermission": "Cần quyền REPORTS:READ để xem dữ liệu phân tích.",
+      "currency": "Tiền tệ",
+      "actions": { "reports": "Báo cáo" },
+      "filters": {
+        "days": "{{count}} ngày gần nhất",
+        "allChannels": "Tất cả kênh"
+      },
+      "exceptions": {
+        "title": "Cần xử lý",
+        "address": "Địa chỉ có vấn đề",
+        "missingPsd": "Thiếu PSD",
+        "missingCostCenter": "Thiếu cost center",
+        "openCases": "Case đang mở"
+      },
+      "metrics": {
+        "grossSales": "Doanh thu gộp",
+        "netProfit": "Lợi nhuận ròng",
+        "profitMargin": "Biên lợi nhuận",
+        "itemsSold": "Sản phẩm đã bán",
+        "returningBuyers": "Khách quay lại",
+        "knownBuyers": "Khách đã nhận diện"
+      },
+      "charts": {
+        "revenueAndProfit": "Doanh thu, chi phí và lợi nhuận",
+        "revenue": "Doanh thu",
+        "grossProfit": "Lợi nhuận gộp",
+        "netProfit": "Lợi nhuận ròng",
+        "netMargin": "Biên ròng",
+        "productCost": "Chi phí sản phẩm",
+        "adSpend": "Chi phí quảng cáo",
+        "profitByChannel": "Lợi nhuận theo kênh",
+        "channelRanking": "Xếp hạng trong kỳ"
+      },
+      "profitBridge": "Cấu phần lợi nhuận",
+      "acquisition": {
+        "title": "Hiệu quả thu hút khách",
+        "description": "So sánh độ phủ quảng cáo, chi phí thu hút khách và doanh thu quy gắn theo kênh.",
+        "channel": "Kênh",
+        "spend": "Chi phí quảng cáo",
+        "newBuyers": "Khách mới",
+        "cpa": "Chi phí/khách mới",
+        "ctr": "Tỷ lệ nhấp",
+        "conversion": "Chuyển đổi",
+        "sales": "Doanh thu quy gắn",
+        "empty": "Chưa có dữ liệu thu hút khách trong kỳ này."
+      },
+      "funnel": {
+        "title": "Phễu thu hút khách",
+        "impressions": "Lượt hiển thị",
+        "clicks": "Lượt nhấp",
+        "orders": "Đơn được quy gắn"
+      },
+      "channelMix": {
+        "title": "Tỷ trọng doanh thu quy gắn",
+        "sales": "Doanh thu",
+        "mix": "Tỷ trọng kênh"
+      },
+      "buyer": {
+        "title": "Chỉ số người mua",
+        "new": "Khách mới",
+        "returning": "Khách quay lại",
+        "repeatInPeriod": "Mua lại trong kỳ",
+        "repeatRate": "Tỷ lệ mua lại",
+        "unidentifiedOrders": "Đơn chưa nhận diện khách"
+      },
+      "vendor": {
+        "title": "Độ tin cậy vendor",
+        "unknown": "Vendor chưa xác định",
+        "submissions": "{{count}} lượt gửi",
+        "averageHours": "TB {{count}} giờ",
+        "empty": "Chưa có dữ liệu hiệu suất vendor."
+      },
+      "operations": {
+        "title": "Trạng thái vận hành",
+        "production": "Sản xuất",
+        "vendor": "Vendor",
+        "shipment": "Vận chuyển"
+      },
+      "reportLinks": {
+        "title": "Báo cáo sẵn có",
+        "finance": "Báo cáo tài chính",
+        "buyers": "Chỉ số người mua",
+        "vendors": "Hiệu suất vendor",
+        "operations": "Báo cáo vận hành"
+      }
+    },
     "dashboard": {
       "title": "Công việc của tôi",
       "totalOpen": "{{count}} việc đang chờ xử lý",

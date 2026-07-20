@@ -272,6 +272,8 @@ export const ENDPOINTS = {
     TEAM_MEMBER: (teamId, accountId) => `/api/organization/teams/${teamId}/members/${accountId}`,
   },
   REPORTS: {
+    ADS_CHANNEL_PERFORMANCE: '/api/reports/ads/channel-performance',
+    BUYER_INSIGHTS: '/api/reports/buyers/insights',
     FINANCE_DAILY: '/api/reports/finance/daily',
     FINANCE_DAILY_PROFIT: '/api/reports/finance/daily-profit',
     FINANCE_BY_SELLER: '/api/reports/finance/by-seller',

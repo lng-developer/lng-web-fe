@@ -39,6 +39,7 @@ import {
   getNavItemTo,
   getSidebarWorkspaceForLocation,
   isNavItemActive,
+  SIDEBAR_HOME_ITEM,
   SIDEBAR_WORKSPACE_NAVIGATION,
   SIDEBAR_WORKSPACES,
 } from './sidebarNavigation'
@@ -61,6 +62,7 @@ const NAV_ITEM_ICONS = {
   config: SettingsOutlinedIcon,
   configuration: SettingsOutlinedIcon,
   costCenters: HomeOutlinedIcon,
+  dashboard: HomeOutlinedIcon,
   costs: ReceiptLongOutlinedIcon,
   design: PaletteOutlinedIcon,
   fulfillment: Inventory2OutlinedIcon,
@@ -419,6 +421,13 @@ export default function AppSidebar({ onNavigate, open }) {
             },
           }}
         >
+          {renderLeafItem({
+            item: SIDEBAR_HOME_ITEM,
+            location,
+            t,
+            depth: 'root',
+            onNavigate,
+          })}
           {renderItems(navigation)}
         </List>
       </Box>

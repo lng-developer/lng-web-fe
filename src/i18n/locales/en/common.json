@@ -59,6 +59,7 @@
       "etsy": "Etsy"
     },
     "items": {
+      "dashboard": "Dashboard",
       "orderList": "Order List",
       "orderWorkbench": "Order Workbench",
       "orderDetail": "Order Detail",
@@ -678,6 +679,95 @@
     "title": "Home",
     "welcome": "POD operations dashboard",
     "description": "Track orders, active queues, and exceptions that need attention today.",
+    "commercial": {
+      "title": "Portal analytics",
+      "subtitle": "Track sales, profit, buyers, vendor reliability, and operational exceptions from one workspace.",
+      "analyticsPermission": "Analytics requires the REPORTS:READ permission.",
+      "currency": "Currency",
+      "actions": { "reports": "Reports" },
+      "filters": {
+        "days": "Last {{count}} days",
+        "allChannels": "All channels"
+      },
+      "exceptions": {
+        "title": "Needs attention",
+        "address": "Address issues",
+        "missingPsd": "Missing PSD",
+        "missingCostCenter": "Missing cost center",
+        "openCases": "Open cases"
+      },
+      "metrics": {
+        "grossSales": "Gross sales",
+        "netProfit": "Net profit",
+        "profitMargin": "Profit margin",
+        "itemsSold": "Items sold",
+        "returningBuyers": "Returning buyers",
+        "knownBuyers": "Known buyers"
+      },
+      "charts": {
+        "revenueAndProfit": "Revenue, cost and profit",
+        "revenue": "Revenue",
+        "grossProfit": "Gross profit",
+        "netProfit": "Net profit",
+        "netMargin": "Net margin",
+        "productCost": "Product cost",
+        "adSpend": "Ad spend",
+        "profitByChannel": "Profit by channel",
+        "channelRanking": "Period ranking"
+      },
+      "acquisition": {
+        "title": "Acquisition efficiency",
+        "description": "Compare paid reach, customer acquisition cost, and attributed sales by channel.",
+        "channel": "Channel",
+        "spend": "Ad spend",
+        "newBuyers": "New buyers",
+        "cpa": "CPA",
+        "ctr": "CTR",
+        "conversion": "Conversion",
+        "sales": "Attributed sales",
+        "empty": "No acquisition data for this period."
+      },
+      "funnel": {
+        "title": "Acquisition funnel",
+        "impressions": "Impressions",
+        "clicks": "Clicks",
+        "orders": "Attributed orders"
+      },
+      "channelMix": {
+        "title": "Attributed sales mix",
+        "sales": "Sales",
+        "mix": "Channel mix"
+      },
+      "profitBridge": "Profit bridge",
+      "buyer": {
+        "title": "Buyer insights",
+        "new": "New",
+        "returning": "Returning",
+        "repeatInPeriod": "Repeat in period",
+        "repeatRate": "Repeat rate",
+        "unidentifiedOrders": "Unidentified orders"
+      },
+      "vendor": {
+        "title": "Vendor reliability",
+        "unknown": "Unknown vendor",
+        "submissions": "{{count}} submissions",
+        "averageHours": "{{count}}h avg.",
+        "empty": "No vendor performance data."
+      },
+      "operations": {
+        "title": "Operations status",
+        "production": "Production",
+        "vendor": "Vendor",
+        "shipment": "Shipment"
+      },
+      "reportLinks": {
+        "title": "Reports ready",
+        "finance": "Financial report",
+        "buyers": "Buyer insights",
+        "vendors": "Vendor performance",
+        "operations": "Operations report"
+      }
+    },
     "dashboard": {
       "title": "My work",
       "totalOpen": "{{count}} open work items",

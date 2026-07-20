@@ -42,6 +42,11 @@ test('design workload endpoint matches backend task route', () => {
   )
 })
 
+test('buyer insights endpoint matches the aggregate report route', () => {
+  assert.equal(ENDPOINTS.REPORTS.BUYER_INSIGHTS, '/api/reports/buyers/insights')
+  assert.equal(ENDPOINTS.REPORTS.ADS_CHANNEL_PERFORMANCE, '/api/reports/ads/channel-performance')
+})
+
 test('design PSD task action endpoints match backend routes', () => {
   assert.equal(
     ENDPOINTS.DESIGN.PSD_TEMPLATE_CANDIDATES,

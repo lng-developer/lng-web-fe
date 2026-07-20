@@ -9,6 +9,7 @@ import {
   getRoleMeta,
   getSidebarWorkspaceForLocation,
   isNavItemActive,
+  SIDEBAR_HOME_ITEM,
   SIDEBAR_NAVIGATION,
   SIDEBAR_ROLE_FILTERING_ENABLED,
   SIDEBAR_WORKSPACE_NAVIGATION,
@@ -86,6 +87,16 @@ describe('sidebar navigation', () => {
       SIDEBAR_WORKSPACES.map((workspace) => workspace.id),
       ['orders', 'production', 'design', 'vendor', 'admin'],
     )
+  })
+
+  it('exposes the global dashboard above workspace navigation', () => {
+    assert.deepEqual(SIDEBAR_HOME_ITEM, {
+      id: 'dashboard',
+      icon: 'dashboard',
+      labelKey: 'nav.items.dashboard',
+      path: '/',
+      type: 'item',
+    })
   })
 
   it('keeps order listing setup and report workflow in the orders workspace', () => {
