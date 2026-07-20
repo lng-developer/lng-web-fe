@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -7,7 +7,6 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined'
 import {
   Alert,
   Button,
-  Checkbox,
   FormControl,
   IconButton,
   InputAdornment,
@@ -42,6 +41,7 @@ import {
 } from '@/features/production/api/production.queries'
 import QcDecisionDialog from '@/features/qc/components/QcDecisionDialog'
 import QcDetailPanel from '@/features/qc/components/QcDetailPanel'
+import QcImageReviewDialog from '@/features/qc/components/QcImageReviewDialog'
 import {
   QC_ALL_FILTER,
   QC_PAGE_SIZE,
@@ -50,10 +50,12 @@ import {
   QC_TABLE_COLUMNS,
 } from '@/features/qc/constants/qcConstants'
 import {
+  buildQcDashboardSearch,
   buildQcExportQuery,
   buildQcSummaryQuery,
   buildQcTaskQuery,
-  isSupportedQcStatusTab,
+  canSubmitQcPass,
+  canSubmitQcReject,
   mapProductionSummaryToQcCounts,
   mapProductionTaskToQcRow,
   readQcDashboardSearch,
@@ -62,12 +64,20 @@ import { useDebounce } from '@/hooks/useDebounce'
 import dayjs from '@/lib/dayjs'
 import { useAuthStore } from '@/store/useAuthStore'
 
-const statusTabs = [{ value: QC_STATUS_TABS.PENDING, labelKey: 'qc.statusTabs.pending' }]
+const statusTabs = [
+  { value: QC_STATUS_TABS.ALL, labelKey: 'qc.statusTabs.all' },
+  { value: QC_STATUS_TABS.PENDING, labelKey: 'qc.statusTabs.pending' },
+  { value: QC_STATUS_TABS.QC_REJECTED, labelKey: 'qc.statusTabs.qcRejected' },
+  { value: QC_STATUS_TABS.FAILED, labelKey: 'qc.statusTabs.failed' },
+  { value: QC_STATUS_TABS.COMPLETED, labelKey: 'qc.statusTabs.completed' },
+  { value: QC_STATUS_TABS.ADDRESS_INVALID, labelKey: 'qc.statusTabs.addressInvalid' },
+]
 
 const pageSizeOptions = [10, 20, 50]
+const qcQueryOptions = { staleTime: 30_000, refetchOnWindowFocus: false }
+const qcShopsQueryOptions = { staleTime: 5 * 60_000, refetchOnWindowFocus: false }
 
 const qcColumnWidths = {
-  select: '48px',
   orderId: '180px',
   orderDate: '150px',
   statusOrder: '150px',
@@ -77,20 +87,12 @@ const qcColumnWidths = {
   scaleBy: '150px',
 }
 
-function getPositiveUrlParam(search, key, fallback) {
-  const value = Number(new URLSearchParams(search).get(key))
-  return Number.isInteger(value) && value > 0 ? value : fallback
+function getQcRowKey(task) {
+  return task.id
 }
 
-function updateQcPaginationUrl(page, pageSize) {
-  const params = new URLSearchParams(window.location.search)
-  if (page > 1) params.set('page', String(page))
-  else params.delete('page')
-  if (pageSize !== QC_PAGE_SIZE) params.set('limit', String(pageSize))
-  else params.delete('limit')
-
-  const query = params.toString()
-  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+function isQcRowExpanded() {
+  return true
 }
 
 function humanizeStatus(value) {
@@ -208,16 +210,18 @@ export default function QcPage() {
   const location = useLocation()
   const dashboardSearch = useMemo(() => readQcDashboardSearch(location.search), [location.search])
   const platform = dashboardSearch.platform || QC_PLATFORM_TABS.AMAZON
-  const statusTab = QC_STATUS_TABS.PENDING
-  const [shopId, setShopId] = useState(QC_ALL_FILTER)
-  const [searchInput, setSearchInput] = useState('')
-  const [sellerInput, setSellerInput] = useState('')
-  const [dateRange, setDateRange] = useState({ start: null, end: null })
-  const [page, setPage] = useState(() => getPositiveUrlParam(location.search, 'page', 1))
-  const [pageSize, setPageSize] = useState(() =>
-    getPositiveUrlParam(location.search, 'limit', QC_PAGE_SIZE),
+  const [statusTab, setStatusTab] = useState(
+    () => dashboardSearch.statusTab || QC_STATUS_TABS.PENDING,
   )
-  const [selectedTaskIds, setSelectedTaskIds] = useState(() => new Set())
+  const [shopId, setShopId] = useState(() => dashboardSearch.shopId || QC_ALL_FILTER)
+  const [searchInput, setSearchInput] = useState(() => dashboardSearch.search || '')
+  const [sellerInput, setSellerInput] = useState(() => dashboardSearch.sellerCode || '')
+  const [dateRange, setDateRange] = useState(
+    () => dashboardSearch.dateRange || { start: null, end: null },
+  )
+  const [page, setPage] = useState(() => dashboardSearch.page || 1)
+  const [pageSize, setPageSize] = useState(() => dashboardSearch.pageSize || QC_PAGE_SIZE)
+  const [previewTask, setPreviewTask] = useState(null)
   const [decisionState, setDecisionState] = useState({
     decision: null,
     note: '',
@@ -225,8 +229,6 @@ export default function QcPage() {
   })
   const debouncedSearch = useDebounce(searchInput, 300)
   const debouncedSeller = useDebounce(sellerInput, 300)
-  const supportedStatusTab = isSupportedQcStatusTab(statusTab)
-
   const taskFilters = useMemo(
     () => ({
       platform,
@@ -243,9 +245,9 @@ export default function QcPage() {
   const taskQuery = useMemo(() => buildQcTaskQuery(taskFilters), [taskFilters])
   const summaryQuery = useMemo(() => buildQcSummaryQuery(taskFilters), [taskFilters])
   const exportQuery = useMemo(() => buildQcExportQuery(taskFilters), [taskFilters])
-  const tasksQuery = useProductionTasksQuery(taskQuery, { enabled: supportedStatusTab })
-  const countsQuery = useProductionSummaryQuery(summaryQuery)
-  const shopsQuery = useProductionShopsQuery({ page: 1, limit: 100 })
+  const tasksQuery = useProductionTasksQuery(taskQuery, qcQueryOptions)
+  const countsQuery = useProductionSummaryQuery(summaryQuery, qcQueryOptions)
+  const shopsQuery = useProductionShopsQuery({ page: 1, limit: 100 }, qcShopsQueryOptions)
   const submitQcMutation = useSubmitProductionQcMutation()
   const exportTasksMutation = useExportProductionQcTasksMutation()
 
@@ -263,57 +265,51 @@ export default function QcPage() {
   )
   const tasks = useMemo(
     () =>
-      supportedStatusTab
-        ? (tasksQuery.data?.items || []).map((task) =>
-            mapProductionTaskToQcRow(task, { shopNameById }),
-          )
-        : [],
-    [shopNameById, supportedStatusTab, tasksQuery.data],
+      (tasksQuery.data?.items || []).map((task) =>
+        mapProductionTaskToQcRow(task, { shopNameById }),
+      ),
+    [shopNameById, tasksQuery.data],
   )
   const counts = useMemo(() => mapProductionSummaryToQcCounts(countsQuery.data), [countsQuery.data])
-  const total = supportedStatusTab ? Number(tasksQuery.data?.total) || 0 : 0
+  const total = Number(tasksQuery.data?.total) || 0
   const permissionCodes = useMemo(() => new Set(getUserPermissionCodes(currentUser)), [currentUser])
   const canReview = permissionCodes.has('PRODUCTION:WRITE') || permissionCodes.has('DESIGN:REVIEW')
-  const allCurrentRowsSelected =
-    tasks.length > 0 && tasks.every((task) => selectedTaskIds.has(task.id))
-  const someCurrentRowsSelected = tasks.some((task) => selectedTaskIds.has(task.id))
 
-  function resetView() {
+  function replaceQcUrl(nextState = {}) {
+    const query = buildQcDashboardSearch({
+      platform,
+      statusTab,
+      search: searchInput,
+      sellerCode: sellerInput,
+      shopId,
+      dateRange,
+      page,
+      pageSize,
+      ...nextState,
+    })
+    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+  }
+
+  function resetView(nextState = {}) {
     setPage(1)
-    updateQcPaginationUrl(1, pageSize)
-    setSelectedTaskIds(new Set())
+    replaceQcUrl({ ...nextState, page: 1 })
+  }
+
+  function handleStatusTabChange(nextStatusTab) {
+    setStatusTab(nextStatusTab)
+    setPage(1)
+    replaceQcUrl({ statusTab: nextStatusTab, page: 1 })
   }
 
   function handlePageSizeChange(nextPageSize) {
     setPageSize(nextPageSize)
     setPage(1)
-    updateQcPaginationUrl(1, nextPageSize)
-    setSelectedTaskIds(new Set())
+    replaceQcUrl({ page: 1, pageSize: nextPageSize })
   }
 
-  function toggleSelected(taskId) {
-    setSelectedTaskIds((current) => {
-      const next = new Set(current)
-      if (next.has(taskId)) next.delete(taskId)
-      else next.add(taskId)
-      return next
-    })
-  }
-
-  function toggleAllCurrentRows() {
-    setSelectedTaskIds((current) => {
-      const next = new Set(current)
-      tasks.forEach((task) => {
-        if (allCurrentRowsSelected) next.delete(task.id)
-        else next.add(task.id)
-      })
-      return next
-    })
-  }
-
-  function openDecision(task, decision) {
+  const openDecision = useCallback((task, decision) => {
     setDecisionState({ task, decision, note: '' })
-  }
+  }, [])
 
   function closeDecision() {
     if (!submitQcMutation.isPending) {
@@ -332,7 +328,7 @@ export default function QcPage() {
         t(decision === 'PASSED' ? 'qc.messages.passSuccess' : 'qc.messages.rejectSuccess'),
         { variant: SNACKBAR_VARIANTS.SUCCESS },
       )
-      setSelectedTaskIds(new Set())
+      setPreviewTask((current) => (current?.id === task.id ? null : current))
     } catch (error) {
       enqueueSnackbar(error?.message || t('qc.messages.decisionError'), {
         variant: SNACKBAR_VARIANTS.ERROR,
@@ -374,72 +370,65 @@ export default function QcPage() {
     }
   }
 
-  const tableColumns = QC_TABLE_COLUMNS.map((column) => ({
-    key: column.id,
-    label:
-      column.id === 'select' ? (
-        <Checkbox
-          size="small"
-          checked={allCurrentRowsSelected}
-          indeterminate={!allCurrentRowsSelected && someCurrentRowsSelected}
-          onChange={toggleAllCurrentRows}
-          inputProps={{ 'aria-label': t('qc.actions.selectAll') }}
-        />
-      ) : column.labelKey ? (
-        t(column.labelKey)
-      ) : (
-        ''
-      ),
-    width: qcColumnWidths[column.id],
-    align: column.id === 'select' ? 'center' : 'left',
-    cellPaddingClass: column.id === 'select' ? 'px-2 py-0' : undefined,
-  }))
+  const tableColumns = useMemo(
+    () =>
+      QC_TABLE_COLUMNS.filter((column) => column.id !== 'select').map((column) => ({
+        key: column.id,
+        label: column.labelKey ? t(column.labelKey) : '',
+        width: qcColumnWidths[column.id],
+        align: 'left',
+      })),
+    [t],
+  )
 
-  function renderQcCell(task, column) {
-    const selected = selectedTaskIds.has(task.id)
+  const renderQcCell = useCallback(
+    (task, column) => {
+      if (column.key === 'orderId') {
+        return (
+          <Tooltip title={task.orderId}>
+            <span className="inline-flex max-w-36">
+              <Badge className="border border-primary bg-surface text-primary">
+                {task.orderId}
+              </Badge>
+            </span>
+          </Tooltip>
+        )
+      }
 
-    if (column.key === 'select') {
-      return (
-        <Checkbox
-          size="small"
-          checked={selected}
-          onChange={() => toggleSelected(task.id)}
-          inputProps={{
-            'aria-label': t('qc.actions.selectOrder', { orderId: task.orderId }),
-          }}
-        />
-      )
-    }
+      if (column.key === 'orderDate') {
+        return <DateValue value={task.orderDate} language={i18n.language} />
+      }
+      if (column.key === 'statusOrder') return <QcOrderStatusBadge value={task.statusOrder} t={t} />
+      if (column.key === 'shippingType') {
+        return <span className="truncate text-sm text-ink-secondary">{task.shippingType}</span>
+      }
+      if (column.key === 'shop' || column.key === 'seller' || column.key === 'scaleBy') {
+        return (
+          <Tooltip title={task[column.key]}>
+            <span className="block max-w-28 truncate whitespace-nowrap text-sm text-ink-secondary">
+              {task[column.key]}
+            </span>
+          </Tooltip>
+        )
+      }
 
-    if (column.key === 'orderId') {
-      return (
-        <Tooltip title={task.orderId}>
-          <span className="inline-flex max-w-36">
-            <Badge className="border border-primary bg-surface text-primary">{task.orderId}</Badge>
-          </span>
-        </Tooltip>
-      )
-    }
+      return task[column.key] || '-'
+    },
+    [i18n.language, t],
+  )
 
-    if (column.key === 'orderDate') {
-      return <DateValue value={task.orderDate} language={i18n.language} />
-    }
-    if (column.key === 'statusOrder') return <QcOrderStatusBadge value={task.statusOrder} t={t} />
-    if (column.key === 'shippingType') {
-      return <span className="truncate text-sm text-ink-secondary">{task.shippingType}</span>
-    }
-    if (column.key === 'shop' || column.key === 'seller' || column.key === 'scaleBy') {
-      return (
-        <Tooltip title={task[column.key]}>
-          <span className="block max-w-28 truncate whitespace-nowrap text-sm text-ink-secondary">
-            {task[column.key]}
-          </span>
-        </Tooltip>
-      )
-    }
-
-    return task[column.key] || '-'
-  }
+  const renderExpandedQcRow = useCallback(
+    (task) => (
+      <QcDetailPanel
+        task={task}
+        canReview={canReview}
+        decisionLoading={submitQcMutation.isPending}
+        onDecision={openDecision}
+        onPreview={setPreviewTask}
+      />
+    ),
+    [canReview, openDecision, submitQcMutation.isPending],
+  )
 
   return (
     <>
@@ -453,7 +442,7 @@ export default function QcPage() {
               value={dateRange}
               onChange={(nextRange) => {
                 setDateRange(nextRange)
-                resetView()
+                resetView({ dateRange: nextRange })
               }}
               placeholder={t('qc.filters.dateRange')}
             />
@@ -467,6 +456,7 @@ export default function QcPage() {
               count: counts[tab.value] || 0,
             }))}
             value={statusTab}
+            onChange={handleStatusTabChange}
             variant="underline"
           />
         }
@@ -477,8 +467,9 @@ export default function QcPage() {
                 size="small"
                 value={searchInput}
                 onChange={(event) => {
-                  setSearchInput(event.target.value)
-                  resetView()
+                  const nextSearch = event.target.value
+                  setSearchInput(nextSearch)
+                  resetView({ search: nextSearch })
                 }}
                 placeholder={t('qc.searchPlaceholder')}
                 className="w-full bg-surface"
@@ -496,8 +487,9 @@ export default function QcPage() {
                 size="small"
                 value={sellerInput}
                 onChange={(event) => {
-                  setSellerInput(event.target.value)
-                  resetView()
+                  const nextSeller = event.target.value
+                  setSellerInput(nextSeller)
+                  resetView({ sellerCode: nextSeller })
                 }}
                 placeholder={t('qc.filters.sellerCode')}
                 className="w-full bg-surface"
@@ -507,7 +499,7 @@ export default function QcPage() {
                 value={shopId}
                 onChange={(value) => {
                   setShopId(value)
-                  resetView()
+                  resetView({ shopId: value })
                 }}
                 ariaLabel={t('qc.filters.shop')}
                 placeholder={t('qc.filters.shop')}
@@ -518,7 +510,7 @@ export default function QcPage() {
                 <IconButton
                   aria-label={t('qc.actions.refresh')}
                   onClick={() => {
-                    if (supportedStatusTab) tasksQuery.refetch()
+                    tasksQuery.refetch()
                     countsQuery.refetch()
                   }}
                   className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary"
@@ -533,7 +525,7 @@ export default function QcPage() {
                 onClick={exportTasks}
                 className="h-10 rounded-lg border-border bg-neutral-bg px-4 text-sm font-semibold text-ink-muted"
               >
-                {t('qc.actions.exportExcel', { count: selectedTaskIds.size })}
+                {t('qc.actions.exportExcel')}
               </Button>
             </div>
           </OperationsToolbar>
@@ -545,8 +537,7 @@ export default function QcPage() {
             total={total}
             onPageChange={(nextPage) => {
               setPage(nextPage)
-              updateQcPaginationUrl(nextPage, pageSize)
-              setSelectedTaskIds(new Set())
+              replaceQcUrl({ page: nextPage })
             }}
             onPageSizeChange={handlePageSizeChange}
             t={t}
@@ -554,10 +545,7 @@ export default function QcPage() {
         }
       >
         <div className="flex h-full min-h-0 flex-col gap-3">
-          {!supportedStatusTab ? (
-            <Alert severity="info">{t('qc.states.unsupportedStatusFilter')}</Alert>
-          ) : null}
-          {tasksQuery.isError && supportedStatusTab ? (
+          {tasksQuery.isError ? (
             <Alert
               severity="error"
               action={
@@ -573,24 +561,13 @@ export default function QcPage() {
             <OperationsTable
               columns={tableColumns}
               rows={tasks}
-              loading={tasksQuery.isPending && supportedStatusTab}
-              getRowKey={(task) => task.id}
+              loading={tasksQuery.isPending}
+              getRowKey={getQcRowKey}
               renderCell={renderQcCell}
               minWidth="1380px"
-              emptyTitle={
-                supportedStatusTab ? t('qc.states.empty') : t('qc.states.unsupportedStatusFilter')
-              }
-              getRowExpanded={() => true}
-              getRowClassName={(task) => (selectedTaskIds.has(task.id) ? 'bg-primary-subtle' : '')}
-              renderExpandedRow={(task) => (
-                <QcDetailPanel
-                  task={task}
-                  canReview={canReview}
-                  decisionLoading={submitQcMutation.isPending}
-                  onDecision={openDecision}
-                  onPreviewDecision={saveQcDecision}
-                />
-              )}
+              emptyTitle={t('qc.states.empty')}
+              getRowExpanded={isQcRowExpanded}
+              renderExpandedRow={renderExpandedQcRow}
             />
           </div>
         </div>
@@ -605,6 +582,16 @@ export default function QcPage() {
         onClose={closeDecision}
         onConfirm={submitDecision}
         loading={submitQcMutation.isPending}
+      />
+      <QcImageReviewDialog
+        open={Boolean(previewTask)}
+        task={previewTask || {}}
+        canReview={canReview}
+        canPass={canSubmitQcPass(previewTask || {})}
+        canReject={canSubmitQcReject(previewTask || {})}
+        decisionLoading={submitQcMutation.isPending}
+        onClose={() => setPreviewTask(null)}
+        onSubmitDecision={saveQcDecision}
       />
     </>
   )

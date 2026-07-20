@@ -233,7 +233,6 @@ export default function AppSidebar({ onNavigate, open }) {
       {},
     ),
   )
-  const [openItemsViewKey, setOpenItemsViewKey] = useState(null)
   const user = resolveCurrentUser(storedCurrentUser)
   const userName = getCurrentUserDisplayName(user)
 
@@ -260,18 +259,13 @@ export default function AppSidebar({ onNavigate, open }) {
       ? pathWorkspace
       : availableWorkspaces[0]?.id
   const navigation = activeWorkspace ? navigationByWorkspace[activeWorkspace] : []
-  const viewKey = `${location.pathname}|${location.search}|${activeWorkspace ?? ''}`
-  const openItems =
-    activeWorkspace && openItemsViewKey === viewKey
-      ? (openItemsByWorkspace[activeWorkspace] ?? {})
-      : {}
+  const openItems = activeWorkspace ? (openItemsByWorkspace[activeWorkspace] ?? {}) : {}
 
   const toggleItem = (id) => {
     if (!activeWorkspace) {
       return
     }
 
-    setOpenItemsViewKey(viewKey)
     setOpenItemsByWorkspace((state) => ({
       ...state,
       [activeWorkspace]: {
@@ -306,8 +300,8 @@ export default function AppSidebar({ onNavigate, open }) {
       }
 
       if (item.children) {
-        const isOpen = Boolean(openItems[item.id])
         const active = item.children.some((child) => hasActivePath(child, location))
+        const isOpen = active || Boolean(openItems[item.id])
 
         return (
           <Box key={item.id}>

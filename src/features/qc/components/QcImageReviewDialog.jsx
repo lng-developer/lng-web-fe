@@ -2,14 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AddIcon from '@mui/icons-material/Add'
 import CancelIcon from '@mui/icons-material/Cancel'
-import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CloseIcon from '@mui/icons-material/Close'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import RemoveIcon from '@mui/icons-material/Remove'
-import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import {
   Alert,
   Button,
@@ -17,6 +15,7 @@ import {
   DialogContent,
   IconButton,
   Pagination,
+  Slider,
   TextField,
   Tooltip,
   Typography,
@@ -34,13 +33,15 @@ import {
   formatQcCustomizationValue,
   shouldSuppressBrowserZoomWheel,
 } from '@/features/qc/utils/qcCanvas'
+import { createQcPreviewImageSource, isProtectedMediaDownload } from '@/features/qc/utils/qcMedia'
+import { apiClient } from '@/services/axiosInstance'
 
 const MIN_STAGE_SCALE = 0.25
 const MAX_STAGE_SCALE = 50
 const ZOOM_STEP = 1.15
 const DEFAULT_BG_COLOR = '#2f6f8a'
 const DEFAULT_LAYER_SIZE = 320
-const MIN_LAYER_SIZE = 24
+const DEFAULT_OVERLAY_OPACITY = 0.5
 
 function createInitialLayer(layer, index) {
   return {
@@ -51,12 +52,6 @@ function createInitialLayer(layer, index) {
     height: DEFAULT_LAYER_SIZE,
     originalWidth: null,
     originalHeight: null,
-    initialX: 40 + index * 24,
-    initialY: 40 + index * 24,
-    initialWidth: DEFAULT_LAYER_SIZE,
-    initialHeight: DEFAULT_LAYER_SIZE,
-    visible: true,
-    opacity: 1,
   }
 }
 
@@ -81,28 +76,17 @@ function InfoRow({ label, value, children }) {
   )
 }
 
-function ThumbnailCard({ active, image, onClick }) {
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-pressed={active}
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onClick()
-      }}
-      className={`rounded-lg border bg-surface p-2 text-left transition ${
-        active ? 'border-info ring-2 ring-info-bg' : 'border-border hover:border-info'
-      }`}
-    >
+function ThumbnailCard({ active, image, onClick, unavailableLabel }) {
+  const content = (
+    <>
       {image.url ? (
-        <ImagePreview
-          src={image.url}
-          alt={image.label}
-          className="flex h-28 w-full items-center justify-center rounded-md bg-neutral-bg"
-        >
-          <img src={image.url} alt={image.label} className="max-h-full max-w-full object-contain" />
-        </ImagePreview>
+        <div className="flex h-28 w-full items-center justify-center rounded-md bg-neutral-bg">
+          <img
+            src={image.url}
+            alt={onClick ? '' : image.label}
+            className="max-h-full max-w-full object-contain"
+          />
+        </div>
       ) : (
         <div className="flex h-28 items-center justify-center overflow-hidden rounded-md bg-neutral-bg">
           <ImageOutlinedIcon className="text-ink-muted" />
@@ -111,18 +95,43 @@ function ThumbnailCard({ active, image, onClick }) {
       <Typography className="mt-2 truncate text-center text-xs font-semibold text-ink-muted">
         {image.label}
       </Typography>
-    </div>
+      {unavailableLabel ? (
+        <Typography className="mt-1 text-center text-xs font-semibold text-error">
+          {unavailableLabel}
+        </Typography>
+      ) : null}
+    </>
+  )
+  const className = `w-full rounded-lg border bg-surface p-2 text-left transition ${
+    active
+      ? 'border-info ring-2 ring-info-bg'
+      : unavailableLabel
+        ? 'border-border opacity-70'
+        : 'border-border hover:border-info'
+  }`
+
+  return onClick ? (
+    <button
+      type="button"
+      aria-label={`Select ${image.label}`}
+      aria-pressed={active}
+      onClick={onClick}
+      className={className}
+    >
+      {content}
+    </button>
+  ) : (
+    <div className={className}>{content}</div>
   )
 }
 
 function LayerNode({
-  active,
+  active = false,
   layer,
   onImageLoad,
   onMouseDown,
   onResizeMouseDown,
-  onSelect,
-  stageScale,
+  stageScale = 1,
 }) {
   const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
 
@@ -136,16 +145,10 @@ function LayerNode({
         top: layer.y,
         width: layer.width,
         height: layer.height,
-        opacity: layer.opacity,
+        opacity: layer.opacity ?? 1,
       }}
-      onMouseDown={(event) => onMouseDown(event, layer)}
-      onClick={(event) => {
-        event.stopPropagation()
-        onSelect(layer.id)
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onSelect(layer.id)
-      }}
+      onMouseDown={onMouseDown ? (event) => onMouseDown(event, layer) : undefined}
+      onKeyDown={(event) => event.preventDefault()}
     >
       <img
         src={layer.url}
@@ -154,7 +157,7 @@ function LayerNode({
         onLoad={(event) => onImageLoad(layer.id, event.currentTarget)}
         className="size-full object-contain"
       />
-      {active
+      {active && onResizeMouseDown
         ? handles.map((handle) => (
             <span
               key={handle}
@@ -185,29 +188,98 @@ export default function QcImageReviewDialog({
   const { enqueueSnackbar } = useSnackbar()
   const { t } = useTranslation()
   const stageRef = useRef(null)
+  const backgroundInputRef = useRef(null)
+  const dragFrameRef = useRef(null)
+  const pendingOverlayGeometryRef = useRef(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [bgColor, setBgColor] = useState(DEFAULT_BG_COLOR)
   const [qcNote, setQcNote] = useState('')
   const [noteError, setNoteError] = useState(false)
   const [layers, setLayers] = useState([])
   const [activeLayerId, setActiveLayerId] = useState(null)
+  const [viewMode, setViewMode] = useState('single')
+  const [overlayGeometry, setOverlayGeometry] = useState(null)
+  const [overlayOpacity, setOverlayOpacity] = useState(DEFAULT_OVERLAY_OPACITY)
+  const [dragState, setDragState] = useState(null)
   const [stageScale, setStageScale] = useState(1)
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 })
-  const [isSpaceDown, setIsSpaceDown] = useState(false)
-  const [dragState, setDragState] = useState(null)
+  const [resolvedImageSources, setResolvedImageSources] = useState({})
   const previewItems = useMemo(() => buildQcImageReviewItems(task), [task])
   const currentItem = previewItems[currentIndex] || previewItems[0]
+  const imageUrls = useMemo(
+    () =>
+      [...(currentItem?.layers || []), ...(currentItem?.referenceImages || [])]
+        .map((image) => image.url)
+        .filter(Boolean),
+    [currentItem],
+  )
+  const imageUrlsKey = imageUrls.join('|')
+  const resolveImageUrl = useCallback(
+    (url) => resolvedImageSources[url] || (isProtectedMediaDownload(url) ? '' : url),
+    [resolvedImageSources],
+  )
+  const resolvedSlotLayers = useMemo(
+    () =>
+      (currentItem?.layers || []).map((layer) => ({ ...layer, url: resolveImageUrl(layer.url) })),
+    [currentItem, resolveImageUrl],
+  )
   const activeLayer = layers.find((layer) => layer.id === activeLayerId) || null
-  const sizeInfo = activeLayer?.originalWidth
-    ? `${activeLayer.originalWidth}x${activeLayer.originalHeight} px`
+  const outputLayer = layers.find(
+    (layer) => layer.url && layer.sourceId === activeLayer?.sourceId && layer.kind === 'output',
+  )
+  const inputLayer = layers.find(
+    (layer) => layer.url && layer.sourceId === activeLayer?.sourceId && layer.kind === 'input',
+  )
+  const baseLayer = outputLayer || activeLayer
+  const canCompare = Boolean(outputLayer && inputLayer)
+  const overlayLayer = viewMode === 'compare' && canCompare ? inputLayer : null
+  const displayOverlay =
+    overlayLayer && viewMode === 'compare'
+      ? { ...overlayLayer, ...overlayGeometry, opacity: overlayOpacity }
+      : null
+  const sizeInfo = baseLayer?.originalWidth
+    ? `${baseLayer.originalWidth}x${baseLayer.originalHeight} px`
     : '-'
-  const allThumbnails = [...(currentItem?.referenceImages || []), ...layers]
+  const referenceImages = (currentItem?.referenceImages || []).map((image) => ({
+    ...image,
+    url: resolveImageUrl(image.url),
+  }))
+  const slotLayers = resolvedSlotLayers
+  const sourceLayers = slotLayers.filter((layer) => layer.kind === 'input')
+  const scaledLayers = slotLayers.filter((layer) => layer.kind !== 'input')
+  const previewGroups = [
+    { id: 'reference', label: t('qc.preview.referenceImages'), images: referenceImages },
+    { id: 'source', label: t('qc.preview.sourceFiles'), images: sourceLayers, selectable: true },
+    { id: 'scaled', label: t('qc.preview.scaledFiles'), images: scaledLayers, selectable: true },
+  ].filter((group) => group.images.length > 0)
+
+  function selectLayer(layerId) {
+    const nextLayer = layers.find((layer) => layer.id === layerId)
+    if (nextLayer?.sourceId !== activeLayer?.sourceId) {
+      setViewMode('single')
+      setOverlayGeometry(null)
+      setOverlayOpacity(DEFAULT_OVERLAY_OPACITY)
+      setDragState(null)
+    }
+    setActiveLayerId(layerId)
+  }
+
+  function setCanvasBackground(color) {
+    if (backgroundInputRef.current) backgroundInputRef.current.value = color
+    if (stageRef.current) stageRef.current.style.backgroundColor = color
+  }
+
+  function handleBackgroundInput(event) {
+    setCanvasBackground(event.currentTarget.value)
+  }
 
   useEffect(() => {
     if (!open) return
     queueMicrotask(() => {
       setCurrentIndex(0)
-      setBgColor(DEFAULT_BG_COLOR)
+      setCanvasBackground(DEFAULT_BG_COLOR)
+      setViewMode('single')
+      setOverlayGeometry(null)
+      setOverlayOpacity(DEFAULT_OVERLAY_OPACITY)
       setStageScale(1)
       setStagePos({ x: 0, y: 0 })
     })
@@ -215,16 +287,58 @@ export default function QcImageReviewDialog({
 
   useEffect(() => {
     if (!open || !currentItem) return
-    const nextLayers = currentItem.layers.map(createInitialLayer)
+    const nextLayers = resolvedSlotLayers.filter((layer) => layer.url).map(createInitialLayer)
     queueMicrotask(() => {
       setLayers(nextLayers)
-      setActiveLayerId(nextLayers[0]?.id || null)
+      setActiveLayerId(
+        nextLayers.find((layer) => layer.kind === 'output')?.id || nextLayers[0]?.id || null,
+      )
       setQcNote(currentItem.qcNote || '')
       setNoteError(false)
+      setViewMode('single')
+      setOverlayGeometry(null)
+      setOverlayOpacity(DEFAULT_OVERLAY_OPACITY)
+      setDragState(null)
       setStageScale(1)
       setStagePos({ x: 0, y: 0 })
     })
-  }, [currentItem, open])
+  }, [currentItem, open, resolvedSlotLayers])
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    let cancelled = false
+    let sources = []
+
+    void Promise.all(
+      imageUrls.map(async (url) => {
+        try {
+          return await createQcPreviewImageSource(url, {
+            fetchBlob: (path) => apiClient.get(path, { responseType: 'blob' }),
+            createObjectUrl: URL.createObjectURL,
+            revokeObjectUrl: URL.revokeObjectURL,
+          })
+        } catch {
+          return { url: '', revoke: () => {} }
+        }
+      }),
+    ).then((nextSources) => {
+      sources = nextSources
+      if (cancelled) {
+        nextSources.forEach((source) => source.revoke())
+        return
+      }
+
+      setResolvedImageSources(
+        Object.fromEntries(imageUrls.map((url, index) => [url, nextSources[index].url])),
+      )
+    })
+
+    return () => {
+      cancelled = true
+      sources.forEach((source) => source.revoke())
+    }
+  }, [imageUrls, imageUrlsKey, open])
 
   useEffect(() => {
     if (!open) return undefined
@@ -233,100 +347,12 @@ export default function QcImageReviewDialog({
       if (shouldSuppressBrowserZoomWheel(event)) event.preventDefault()
     }
 
-    function handleKeyDown(event) {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)) return
-      if (event.code === 'Space') {
-        event.preventDefault()
-        setIsSpaceDown(true)
-      }
-    }
-
-    function handleKeyUp(event) {
-      if (event.code === 'Space') setIsSpaceDown(false)
-    }
-
     window.addEventListener('wheel', suppressBrowserZoom, { capture: true, passive: false })
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
 
     return () => {
       window.removeEventListener('wheel', suppressBrowserZoom, { capture: true })
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
     }
   }, [open])
-
-  useEffect(() => {
-    if (!dragState) return undefined
-
-    function handleMouseMove(event) {
-      if (dragState.type === 'pan') {
-        setStagePos({
-          x: dragState.startStagePos.x + event.clientX - dragState.startClientX,
-          y: dragState.startStagePos.y + event.clientY - dragState.startClientY,
-        })
-        return
-      }
-
-      const dx = (event.clientX - dragState.startClientX) / stageScale
-      const dy = (event.clientY - dragState.startClientY) / stageScale
-
-      setLayers((current) =>
-        current.map((layer) => {
-          if (layer.id !== dragState.layerId) return layer
-
-          if (dragState.type === 'move') {
-            return {
-              ...layer,
-              ...computeQcLayerMove(dragState.startLayer, {
-                dx,
-                dy,
-                shiftKey: event.shiftKey,
-              }),
-            }
-          }
-
-          return {
-            ...layer,
-            ...computeQcLayerResize(dragState.startLayer, {
-              ctrlKey: event.ctrlKey || event.metaKey,
-              dx,
-              dy,
-              handle: dragState.handle,
-              minSize: MIN_LAYER_SIZE,
-              shiftKey: event.shiftKey,
-            }),
-          }
-        }),
-      )
-    }
-
-    function handleMouseUp() {
-      setDragState(null)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [dragState, stageScale])
-
-  const selectLayer = useCallback((layerId) => {
-    setActiveLayerId(layerId)
-  }, [])
-
-  const updateActiveLayer = useCallback(
-    (patch) => {
-      if (!activeLayerId) return
-      setLayers((current) =>
-        current.map((layer) => (layer.id === activeLayerId ? { ...layer, ...patch } : layer)),
-      )
-    },
-    [activeLayerId],
-  )
 
   const handleImageLoad = useCallback((layerId, imageElement) => {
     setLayers((current) =>
@@ -353,10 +379,6 @@ export default function QcImageReviewDialog({
           height,
           x,
           y,
-          initialX: x,
-          initialY: y,
-          initialWidth: width,
-          initialHeight: height,
         }
       }),
     )
@@ -371,101 +393,74 @@ export default function QcImageReviewDialog({
     setStagePos({ x: 0, y: 0 })
   }, [])
 
-  const centerActiveLayer = useCallback(() => {
-    if (!activeLayer) return
-    const viewport = stageRef.current?.getBoundingClientRect()
-    updateActiveLayer({
-      x: ((viewport?.width || activeLayer.width) - activeLayer.width) / 2,
-      y: ((viewport?.height || activeLayer.height) - activeLayer.height) / 2,
-    })
-  }, [activeLayer, updateActiveLayer])
+  function resetView() {
+    resetViewport()
+    setOverlayGeometry(null)
+    setOverlayOpacity(DEFAULT_OVERLAY_OPACITY)
+  }
 
-  const fitActiveLayer = useCallback(() => {
-    if (!activeLayer?.originalWidth || !activeLayer?.originalHeight) return
-    const viewport = stageRef.current?.getBoundingClientRect()
-    const fitScale = Math.min(
-      ((viewport?.width || DEFAULT_LAYER_SIZE) * 0.9) / activeLayer.originalWidth,
-      ((viewport?.height || DEFAULT_LAYER_SIZE) * 0.9) / activeLayer.originalHeight,
-      1,
-    )
-    const width = activeLayer.originalWidth * fitScale
-    const height = activeLayer.originalHeight * fitScale
-    updateActiveLayer({
-      width,
-      height,
-      x: ((viewport?.width || width) - width) / 2,
-      y: ((viewport?.height || height) - height) / 2,
-    })
-  }, [activeLayer, updateActiveLayer])
+  function startOverlayMove(event, layer) {
+    event.preventDefault()
+    setDragState({ type: 'move', startX: event.clientX, startY: event.clientY, layer })
+  }
 
-  const resetActiveLayer = useCallback(() => {
-    if (!activeLayer) return
-    updateActiveLayer({
-      x: activeLayer.initialX,
-      y: activeLayer.initialY,
-      width: activeLayer.initialWidth,
-      height: activeLayer.initialHeight,
-    })
-  }, [activeLayer, updateActiveLayer])
-
-  const actualSizeActiveLayer = useCallback(() => {
-    if (!activeLayer?.originalWidth || !activeLayer?.originalHeight) return
-    updateActiveLayer({
-      width: activeLayer.originalWidth,
-      height: activeLayer.originalHeight,
-    })
-  }, [activeLayer, updateActiveLayer])
-
-  function startLayerMove(event, layer) {
+  function startOverlayResize(event, layer, handle) {
     event.preventDefault()
     event.stopPropagation()
-    setActiveLayerId(layer.id)
-    if (isSpaceDown || event.button === 1) {
-      setDragState({
-        type: 'pan',
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        startStagePos: stagePos,
-      })
-      return
-    }
-    setDragState({
-      type: 'move',
-      layerId: layer.id,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startLayer: layer,
-    })
+    setDragState({ type: 'resize', startX: event.clientX, startY: event.clientY, layer, handle })
   }
 
-  function startLayerResize(event, layer, handle) {
-    event.preventDefault()
-    event.stopPropagation()
-    setActiveLayerId(layer.id)
-    setDragState({
-      type: 'resize',
-      layerId: layer.id,
-      handle,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startLayer: layer,
-    })
-  }
+  useEffect(() => {
+    if (!dragState) return undefined
 
-  function startStagePan(event) {
-    if (event.target !== stageRef.current && event.target?.dataset?.stage !== 'inner') return
-    if (isSpaceDown || event.button === 1) {
-      event.preventDefault()
-      setDragState({
-        type: 'pan',
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        startStagePos: stagePos,
-      })
-      return
+    function flushOverlayGeometry() {
+      if (!pendingOverlayGeometryRef.current) return
+      if (dragFrameRef.current) {
+        cancelAnimationFrame(dragFrameRef.current)
+        dragFrameRef.current = null
+      }
+      setOverlayGeometry(pendingOverlayGeometryRef.current)
+      pendingOverlayGeometryRef.current = null
     }
-    setActiveLayerId(null)
-  }
+
+    function move(event) {
+      const delta = {
+        dx: (event.clientX - dragState.startX) / stageScale,
+        dy: (event.clientY - dragState.startY) / stageScale,
+      }
+      const next =
+        dragState.type === 'move'
+          ? computeQcLayerMove(dragState.layer, delta)
+          : computeQcLayerResize(dragState.layer, delta)
+      pendingOverlayGeometryRef.current = next
+
+      if (!dragFrameRef.current) {
+        dragFrameRef.current = requestAnimationFrame(() => {
+          dragFrameRef.current = null
+          setOverlayGeometry(pendingOverlayGeometryRef.current)
+          pendingOverlayGeometryRef.current = null
+        })
+      }
+    }
+    function up() {
+      flushOverlayGeometry()
+      setDragState(null)
+    }
+    window.addEventListener('mousemove', move)
+    window.addEventListener('mouseup', up)
+    return () => {
+      flushOverlayGeometry()
+      window.removeEventListener('mousemove', move)
+      window.removeEventListener('mouseup', up)
+    }
+  }, [dragState, stageScale])
+
+  useEffect(
+    () => () => {
+      if (dragFrameRef.current) cancelAnimationFrame(dragFrameRef.current)
+    },
+    [],
+  )
 
   function handleWheel(event) {
     event.preventDefault()
@@ -528,25 +523,67 @@ export default function QcImageReviewDialog({
 
   return (
     <Dialog open={open} onClose={decisionLoading ? undefined : onClose} fullWidth maxWidth="xl">
-      <div className="flex flex-wrap items-center gap-4 border-b border-border px-5 py-3">
-        <Typography variant="h5" className="min-w-52 text-xl font-bold text-ink-strong">
-          {t('qc.preview.title')}
-        </Typography>
+      <div className="flex flex-col gap-3 border-b border-border px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <Typography variant="h5" className="min-w-52 text-xl font-bold text-ink-strong">
+              {t('qc.preview.title')}
+            </Typography>
+            <Pagination
+              count={Math.max(previewItems.length, 1)}
+              page={currentIndex + 1}
+              onChange={(_event, nextPage) => setCurrentIndex(nextPage - 1)}
+              size="small"
+              color="primary"
+            />
+            <ValueBadge>
+              {t('qc.preview.itemCounter', {
+                current: currentIndex + 1,
+                total: previewItems.length,
+              })}
+            </ValueBadge>
+            <ValueBadge>{t('qc.preview.size', { size: sizeInfo })}</ValueBadge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Tooltip title={canReview ? t('qc.actions.pass') : t('qc.actions.noQcPermission')}>
+              <span>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  startIcon={<CheckCircleIcon fontSize="small" />}
+                  disabled={!canReview || !passEnabled || decisionLoading}
+                  onClick={() => submitDecision('PASSED')}
+                  className="h-9 px-4 text-sm font-semibold"
+                >
+                  {t('qc.preview.passed')}
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title={canReview ? t('qc.actions.reject') : t('qc.actions.noQcPermission')}>
+              <span>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<CancelIcon fontSize="small" />}
+                  disabled={!canReview || !rejectEnabled || decisionLoading}
+                  onClick={() => submitDecision('REJECTED')}
+                  className="h-9 px-4 text-sm font-semibold"
+                >
+                  {t('qc.preview.rejected')}
+                </Button>
+              </span>
+            </Tooltip>
+            <IconButton
+              aria-label={t('qc.preview.close')}
+              disabled={decisionLoading}
+              onClick={onClose}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </div>
+        </div>
 
-        <Pagination
-          count={Math.max(previewItems.length, 1)}
-          page={currentIndex + 1}
-          onChange={(_event, nextPage) => setCurrentIndex(nextPage - 1)}
-          size="small"
-          color="primary"
-        />
-
-        <ValueBadge>
-          {t('qc.preview.itemCounter', { current: currentIndex + 1, total: previewItems.length })}
-        </ValueBadge>
-        <ValueBadge>{t('qc.preview.size', { size: sizeInfo })}</ValueBadge>
-
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-2">
           <Tooltip title={t('qc.preview.zoomOut')}>
             <IconButton size="small" onClick={() => setZoom(stageScale / ZOOM_STEP)}>
               <RemoveIcon fontSize="small" />
@@ -565,124 +602,97 @@ export default function QcImageReviewDialog({
               <AddIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Tooltip title={t('qc.preview.fit')}>
-            <span>
-              <IconButton size="small" disabled={!activeLayer} onClick={fitActiveLayer}>
-                <CenterFocusStrongIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title={t('qc.preview.center')}>
-            <span>
-              <Button
+          <Button
+            size="small"
+            variant={viewMode === 'compare' ? 'contained' : 'outlined'}
+            disabled={!canCompare}
+            onClick={() => setViewMode((mode) => (mode === 'compare' ? 'single' : 'compare'))}
+          >
+            {t('qc.preview.compare')}
+          </Button>
+          <Button size="small" variant="outlined" onClick={resetView}>
+            {t('qc.preview.resetView')}
+          </Button>
+          {viewMode === 'compare' ? (
+            <div className="flex w-40 items-center gap-2">
+              <Typography variant="caption">{t('qc.preview.sourceOverlayOpacity')}</Typography>
+              <Slider
                 size="small"
-                variant="outlined"
-                disabled={!activeLayer}
-                onClick={centerActiveLayer}
-                className="h-8 px-3 text-xs"
-              >
-                {t('qc.preview.centerShort')}
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title={t('qc.preview.actualSize')}>
-            <span>
-              <Button
-                size="small"
-                variant="outlined"
-                disabled={!activeLayer}
-                onClick={actualSizeActiveLayer}
-                className="h-8 px-3 text-xs"
-              >
-                1:1
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title={t('qc.preview.resetLayer')}>
-            <span>
-              <IconButton size="small" disabled={!activeLayer} onClick={resetActiveLayer}>
-                <RestartAltIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
+                value={overlayOpacity * 100}
+                onChange={(_event, value) => setOverlayOpacity(Number(value) / 100)}
+              />
+            </div>
+          ) : null}
+          <label className="ml-auto flex items-center gap-2 text-xs font-semibold text-ink-secondary">
+            {t('qc.preview.background')}
+            <input
+              ref={backgroundInputRef}
+              type="color"
+              defaultValue={DEFAULT_BG_COLOR}
+              onInput={handleBackgroundInput}
+              className="h-8 w-10 rounded border border-border bg-surface"
+            />
+          </label>
         </div>
-
-        <label className="ml-auto flex items-center gap-2 text-xs font-semibold text-ink-secondary">
-          {t('qc.preview.background')}
-          <input
-            type="color"
-            value={bgColor}
-            onChange={(event) => setBgColor(event.target.value)}
-            className="h-8 w-10 rounded border border-border bg-surface"
-          />
-        </label>
-
-        <div className="flex items-center gap-2">
-          <Tooltip title={canReview ? t('qc.actions.pass') : t('qc.actions.noQcPermission')}>
-            <span>
-              <Button
-                variant="outlined"
-                color="success"
-                startIcon={<CheckCircleIcon fontSize="small" />}
-                disabled={!canReview || !passEnabled || decisionLoading}
-                onClick={() => submitDecision('PASSED')}
-                className="h-9 px-4 text-sm font-semibold"
-              >
-                {t('qc.preview.passed')}
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title={canReview ? t('qc.actions.reject') : t('qc.actions.noQcPermission')}>
-            <span>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<CancelIcon fontSize="small" />}
-                disabled={!canReview || !rejectEnabled || decisionLoading}
-                onClick={() => submitDecision('REJECTED')}
-                className="h-9 px-4 text-sm font-semibold"
-              >
-                {t('qc.preview.rejected')}
-              </Button>
-            </span>
-          </Tooltip>
-        </div>
-
-        <IconButton aria-label={t('qc.preview.close')} disabled={decisionLoading} onClick={onClose}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
       </div>
 
       <DialogContent className="grid grid-cols-12 gap-4 p-4">
         <aside className="col-span-12 flex max-h-[72vh] flex-col gap-3 overflow-auto lg:col-span-2">
-          {allThumbnails.length > 0 ? (
-            allThumbnails.map((image) => (
-              <div key={image.id} className="relative">
-                <ThumbnailCard
-                  image={image}
-                  active={image.id === activeLayerId}
-                  onClick={() => {
-                    if (layers.some((layer) => layer.id === image.id)) setActiveLayerId(image.id)
-                  }}
-                />
-                {image.url ? (
-                  <Tooltip title={t('qc.preview.openImage')}>
-                    <IconButton
-                      component="a"
-                      href={image.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      size="small"
-                      className="!absolute !right-1 !top-1 !bg-surface"
-                    >
-                      <OpenInNewIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                ) : null}
-              </div>
+          {previewGroups.length > 0 ? (
+            previewGroups.map((group) => (
+              <section key={group.id} className="flex flex-col gap-2">
+                <Typography
+                  variant="caption"
+                  className="px-1 text-xs font-bold uppercase text-ink-muted"
+                >
+                  {group.label}
+                </Typography>
+                {group.images.map((image) => (
+                  <div key={image.id} className="flex items-start gap-1">
+                    <div className="min-w-0 flex-1">
+                      <ThumbnailCard
+                        image={image}
+                        active={group.selectable && image.url && image.id === activeLayerId}
+                        onClick={
+                          group.selectable && image.url ? () => selectLayer(image.id) : undefined
+                        }
+                        unavailableLabel={
+                          !image.url
+                            ? image.kind === 'output' && image.unavailableReason === 'MISSING'
+                              ? t('qc.preview.outputMissing')
+                              : t('qc.preview.fileUnavailable')
+                            : null
+                        }
+                      />
+                    </div>
+                    {image.url ? (
+                      <div className="flex shrink-0 flex-col gap-1">
+                        <Tooltip title={t('qc.preview.openImage')}>
+                          <ImagePreview
+                            src={image.url}
+                            alt={`${t('qc.preview.openImage')}: ${image.label}`}
+                            className="flex size-8 items-center justify-center rounded border border-border bg-surface text-ink-secondary hover:bg-neutral-bg"
+                          >
+                            <ImageOutlinedIcon fontSize="small" />
+                          </ImagePreview>
+                        </Tooltip>
+                        <Tooltip title={t('qc.preview.openImage')}>
+                          <IconButton
+                            component="a"
+                            aria-label={`${t('qc.preview.openImage')}: ${image.label}`}
+                            href={image.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            size="small"
+                          >
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </section>
             ))
           ) : (
             <Alert severity="info">{t('qc.preview.noImages')}</Alert>
@@ -692,18 +702,9 @@ export default function QcImageReviewDialog({
         <section className="col-span-12 lg:col-span-7">
           <div
             ref={stageRef}
-            role="button"
-            tabIndex={0}
-            aria-label={t('qc.preview.canvas')}
-            className={`relative h-[72vh] min-h-96 overflow-hidden rounded-xl border border-border ${
-              isSpaceDown || dragState?.type === 'pan' ? 'cursor-grab' : 'cursor-default'
-            }`}
-            style={{ backgroundColor: bgColor }}
-            onMouseDown={startStagePan}
+            className="relative h-[72vh] min-h-96 overflow-hidden rounded-xl border border-border"
+            style={{ backgroundColor: DEFAULT_BG_COLOR }}
             onWheel={handleWheel}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') setActiveLayerId(null)
-            }}
           >
             <div
               data-stage="inner"
@@ -712,18 +713,20 @@ export default function QcImageReviewDialog({
                 transform: `translate(${stagePos.x}px, ${stagePos.y}px) scale(${stageScale})`,
               }}
             >
-              {layers.map((layer) => (
+              {baseLayer ? (
+                <LayerNode key={baseLayer.id} layer={baseLayer} onImageLoad={handleImageLoad} />
+              ) : null}
+              {displayOverlay ? (
                 <LayerNode
-                  key={layer.id}
-                  layer={layer}
-                  active={layer.id === activeLayerId}
+                  key={displayOverlay.id}
+                  active
+                  layer={displayOverlay}
                   onImageLoad={handleImageLoad}
-                  onMouseDown={startLayerMove}
-                  onResizeMouseDown={startLayerResize}
-                  onSelect={selectLayer}
+                  onMouseDown={startOverlayMove}
+                  onResizeMouseDown={startOverlayResize}
                   stageScale={stageScale}
                 />
-              ))}
+              ) : null}
             </div>
           </div>
         </section>
@@ -735,7 +738,11 @@ export default function QcImageReviewDialog({
             </Typography>
             <div className="flex flex-col gap-2">
               <InfoRow label={t('qc.preview.orderId')} value={currentItem.orderId}>
-                <button type="button" onClick={copyOrderId} className="inline-flex max-w-full">
+                <button
+                  type="button"
+                  onClick={copyOrderId}
+                  className="inline-flex max-w-full border-0 bg-transparent p-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
                   <ValueBadge className="border-primary text-primary">
                     {currentItem.orderId}
                     <ContentCopyIcon className="ml-1 !text-sm" />
@@ -756,7 +763,7 @@ export default function QcImageReviewDialog({
             <Typography variant="subtitle1" className="mb-3 font-semibold text-ink-strong">
               {t('qc.preview.customization')}
             </Typography>
-            <div className="flex max-h-56 flex-col gap-1.5 overflow-auto">
+            <div className="flex flex-col gap-1.5">
               {currentItem.customization.length > 0 ? (
                 currentItem.customization.map((item, index) => (
                   <InlineDetailValue

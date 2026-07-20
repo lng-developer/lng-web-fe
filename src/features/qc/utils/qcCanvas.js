@@ -2,11 +2,6 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
-function toFiniteNumber(value, fallback = 0) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : fallback
-}
-
 export function formatQcCustomizationValue(value) {
   if (value === undefined || value === null || value === '') return '-'
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
@@ -35,56 +30,19 @@ export function shouldSuppressBrowserZoomWheel(event = {}) {
   return Boolean(event.ctrlKey || event.metaKey)
 }
 
-export function computeQcLayerMove(layer, { dx = 0, dy = 0, shiftKey = false } = {}) {
-  let nextDx = toFiniteNumber(dx)
-  let nextDy = toFiniteNumber(dy)
-
-  if (shiftKey) {
-    if (Math.abs(nextDx) >= Math.abs(nextDy)) nextDy = 0
-    else nextDx = 0
-  }
-
+export function computeQcLayerMove(layer, { dx = 0, dy = 0 } = {}) {
   return {
-    x: layer.x + nextDx,
-    y: layer.y + nextDy,
+    ...layer,
+    x: layer.x + dx,
+    y: layer.y + dy,
   }
 }
 
-export function computeQcLayerResize(
-  layer,
-  { ctrlKey = false, dx = 0, dy = 0, handle = 'bottom-right', minSize = 24, shiftKey = false } = {},
-) {
-  const left = handle.includes('left')
-  const top = handle.includes('top')
-  const deltaX = toFiniteNumber(dx)
-  const deltaY = toFiniteNumber(dy)
-  const widthDirection = left ? -1 : 1
-  const heightDirection = top ? -1 : 1
-  const widthDelta = deltaX * widthDirection * (ctrlKey ? 2 : 1)
-  const heightDelta = deltaY * heightDirection * (ctrlKey ? 2 : 1)
-  const ratio = layer.width / layer.height || 1
-  let width = Math.max(minSize, layer.width + widthDelta)
-  let height = Math.max(minSize, layer.height + heightDelta)
-
-  if (shiftKey) {
-    width = Math.max(minSize, layer.width + widthDelta)
-    height = Math.max(minSize, width / ratio)
-  }
-
-  if (ctrlKey) {
-    return {
-      x: layer.x + (layer.width - width) / 2,
-      y: layer.y + (layer.height - height) / 2,
-      width,
-      height,
-    }
-  }
-
+export function computeQcLayerResize(layer, { dx = 0, dy = 0, minSize = 24 } = {}) {
   return {
-    x: left ? layer.x + layer.width - width : layer.x,
-    y: top ? layer.y + layer.height - height : layer.y,
-    width,
-    height,
+    ...layer,
+    width: Math.max(minSize, layer.width + dx),
+    height: Math.max(minSize, layer.height + dy),
   }
 }
 

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 const QC_STATUS_FILTERS = {
   pending: 'PENDING',
   qcRejected: 'REJECTED',
@@ -15,10 +17,26 @@ const SUPPORTED_STATUS_TABS = new Set([
   ...Object.keys(QC_TAB_FILTERS),
 ])
 
+const DEFAULT_PLATFORM = 'amazon'
+const DEFAULT_STATUS_TAB = 'pending'
+const DEFAULT_PAGE = 1
+const DEFAULT_PAGE_SIZE = 10
+
 function addQueryParam(query, key, value) {
   if (value !== undefined && value !== null && value !== '' && value !== 'all') {
     query[key] = value
   }
+}
+
+function getPositiveInteger(value) {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+}
+
+function parseDateParam(value) {
+  if (!value) return null
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed : null
 }
 
 function toDateBoundary(value, boundary) {
@@ -26,25 +44,62 @@ function toDateBoundary(value, boundary) {
   return value[boundary]('day').toISOString()
 }
 
-export function isSupportedQcStatusTab(statusTab) {
-  return SUPPORTED_STATUS_TABS.has(statusTab || 'all')
-}
-
 export function readQcDashboardSearch(search = '') {
   const params = new URLSearchParams(search)
   const result = {}
   const statusTab = params.get('status')
   const platform = params.get('channel')?.toLowerCase()
+  const searchValue = params.get('search')?.trim()
+  const sellerCode = params.get('sellerCode')?.trim()
+  const shopId = params.get('shopId')?.trim()
+  const page = getPositiveInteger(params.get('page'))
+  const pageSize = getPositiveInteger(params.get('limit'))
+  const dateFrom = parseDateParam(params.get('dateFrom'))
+  const dateTo = parseDateParam(params.get('dateTo'))
 
   if (SUPPORTED_STATUS_TABS.has(statusTab)) result.statusTab = statusTab
   if (platform === 'amazon' || platform === 'etsy') result.platform = platform
+  if (searchValue) result.search = searchValue
+  if (sellerCode) result.sellerCode = sellerCode
+  if (shopId) result.shopId = shopId
+  if (dateFrom || dateTo) result.dateRange = { start: dateFrom, end: dateTo }
+  if (page) result.page = page
+  if (pageSize) result.pageSize = pageSize
 
   return result
+}
+
+export function buildQcDashboardSearch(filters = {}) {
+  const params = new URLSearchParams()
+  const platform = String(filters.platform || DEFAULT_PLATFORM).toLowerCase()
+  const statusTab = filters.statusTab
+  const search = filters.search?.trim()
+  const sellerCode = filters.sellerCode?.trim()
+  const shopId = filters.shopId
+  const page = getPositiveInteger(filters.page) || DEFAULT_PAGE
+  const pageSize = getPositiveInteger(filters.pageSize) || DEFAULT_PAGE_SIZE
+  const dateFrom = filters.dateRange?.start?.format?.('YYYY-MM-DD')
+  const dateTo = filters.dateRange?.end?.format?.('YYYY-MM-DD')
+
+  if (SUPPORTED_STATUS_TABS.has(statusTab) && statusTab !== DEFAULT_STATUS_TAB) {
+    params.set('status', statusTab)
+  }
+  if (platform === 'etsy') params.set('channel', platform)
+  if (search) params.set('search', search)
+  if (sellerCode) params.set('sellerCode', sellerCode)
+  if (shopId && shopId !== 'all') params.set('shopId', shopId)
+  if (dateFrom) params.set('dateFrom', dateFrom)
+  if (dateTo) params.set('dateTo', dateTo)
+  if (page > DEFAULT_PAGE) params.set('page', String(page))
+  if (pageSize !== DEFAULT_PAGE_SIZE) params.set('limit', String(pageSize))
+
+  return params.toString()
 }
 
 export function buildQcTaskQuery(filters = {}) {
   const query = {
     salesChannelCode: String(filters.platform || 'amazon').toUpperCase(),
+    view: 'QC',
   }
   const qcStatus = QC_STATUS_FILTERS[filters.statusTab]
   const tab = QC_TAB_FILTERS[filters.statusTab]
@@ -65,6 +120,9 @@ export function buildQcTaskQuery(filters = {}) {
 
 export function buildQcSummaryQuery(filters = {}) {
   const query = buildQcTaskQuery({ ...filters, page: 1, pageSize: 1 })
+  delete query.view
+  delete query.qcStatus
+  delete query.tab
   delete query.page
   delete query.limit
   return query
@@ -72,6 +130,7 @@ export function buildQcSummaryQuery(filters = {}) {
 
 export function buildQcExportQuery(filters = {}) {
   const query = buildQcTaskQuery(filters)
+  delete query.view
   delete query.page
   delete query.limit
   return query
@@ -95,17 +154,17 @@ function getPersonName(person) {
 }
 
 function getPngStatus(task) {
-  const scaleSlots = task.scaleContext?.use?.scaleSlots || []
-  const fileChecks = task.fileChecks || []
-  const outputChecks = scaleSlots.length > 0 ? scaleSlots : fileChecks
-  const statuses = outputChecks.map((check) => check.outputStatus).filter(Boolean)
+  const outputChecks =
+    task.qcPreviewFileChecks || task.scaleContext?.use?.scaleSlots || task.fileChecks || []
+  const requiredChecks = outputChecks.filter(isQcOutputRequired)
+  const statuses = requiredChecks.map((check) => check.outputStatus).filter(Boolean)
 
   if (statuses.includes('MISSING')) return 'MISSING'
   if (statuses.includes('UPLOADED')) return 'UPLOADED'
   if (statuses.includes('NOT_REQUIRED')) return 'NOT_REQUIRED'
-  if (outputChecks.length === 0) return 'NOT_REQUIRED'
+  if (requiredChecks.length === 0) return 'NOT_REQUIRED'
 
-  return outputChecks.every((check) => Boolean(check.outputAssetId)) ? 'UPLOADED' : 'MISSING'
+  return requiredChecks.every((check) => Boolean(check.outputAssetId)) ? 'UPLOADED' : 'MISSING'
 }
 
 function asArray(value) {
@@ -211,17 +270,28 @@ function getCheckId(check, index) {
   )
 }
 
+function isQcOutputRequired(check = {}) {
+  return check.outputRequired ?? (check.required !== false && check.scaleStatus !== 'NOT_REQUIRED')
+}
+
 function buildLayerFromUrl({ check, index, kind, label, url }) {
   const checkId = getCheckId(check, index)
-  const outputStatus = check?.outputStatus || check?.status || null
+  const outputRequired = isQcOutputRequired(check)
+  const outputStatus =
+    kind === 'output' && !url && outputRequired
+      ? 'MISSING'
+      : check?.outputStatus || check?.status || null
 
   return {
     id: `${checkId}-${kind}`,
     label: `${toDisplayLabel(label, `Layer ${index + 1}`)} ${kind}`,
     url,
     kind,
+    required: outputRequired,
+    outputRequired,
     outputStatus,
     sourceId: checkId,
+    unavailableReason: url ? null : outputStatus === 'MISSING' ? 'MISSING' : 'UNAVAILABLE',
   }
 }
 
@@ -233,7 +303,6 @@ export function buildQcImageReviewItems(task = {}) {
   const referenceImages = []
   const layers = []
   const seenReferenceUrls = new Set()
-  const seenLayerUrls = new Set()
 
   addUniqueImageItem(referenceImages, seenReferenceUrls, {
     id: 'product-image',
@@ -274,7 +343,14 @@ export function buildQcImageReviewItems(task = {}) {
         type: 'customization',
       })
     })
-  ;[...(detail.fileChecks || []), ...(detail.scaleSlots || [])].forEach((check, index) => {
+  const previewChecks =
+    detail.qcPreviewFileChecks ||
+    task.qcPreviewFileChecks ||
+    detail.fileChecks ||
+    detail.scaleSlots ||
+    []
+
+  previewChecks.filter(isQcOutputRequired).forEach((check, index) => {
     const label = getCheckLabel(check, index)
     const inputUrl = getFirstString(
       check.inputAssetDownloadUrl,
@@ -290,15 +366,16 @@ export function buildQcImageReviewItems(task = {}) {
       check.url,
     )
 
-    if (inputUrl && !seenLayerUrls.has(inputUrl)) {
-      seenLayerUrls.add(inputUrl)
-      layers.push(buildLayerFromUrl({ check, index, kind: 'input', label, url: inputUrl }))
-    }
-    if (outputUrl && !seenLayerUrls.has(outputUrl)) {
-      seenLayerUrls.add(outputUrl)
-      layers.push(buildLayerFromUrl({ check, index, kind: 'output', label, url: outputUrl }))
-    }
+    layers.push(buildLayerFromUrl({ check, index, kind: 'input', label, url: inputUrl }))
+    layers.push(buildLayerFromUrl({ check, index, kind: 'output', label, url: outputUrl }))
   })
+
+  const reviewInputUrls = new Set(
+    layers
+      .filter((layer) => layer.kind === 'input')
+      .map((layer) => layer.url)
+      .filter(Boolean),
+  )
 
   return [
     {
@@ -311,7 +388,7 @@ export function buildQcImageReviewItems(task = {}) {
       qcBy: task.qcBy || '-',
       product,
       customization,
-      referenceImages,
+      referenceImages: referenceImages.filter((image) => !reviewInputUrls.has(image.url)),
       layers,
       csNote: detail.csNote || '',
       qcNote: detail.qcNote || '',
@@ -331,7 +408,7 @@ export function mapProductionTaskToQcRow(task = {}, options = {}) {
   const qcNote =
     task.qcNote ||
     task.qcReview?.note ||
-    (task.fileChecks || []).map((check) => check.note).find(Boolean) ||
+    (task.qcPreviewFileChecks || task.fileChecks || []).map((check) => check.note).find(Boolean) ||
     ''
 
   return {
@@ -370,7 +447,9 @@ export function mapProductionTaskToQcRow(task = {}, options = {}) {
       fulfillName: task.fulfillName || task.fulfillmentPlanId || '-',
       pngStatus: getPngStatus(task),
       vendorProduct: task.vendorProduct?.name || task.vendorProduct?.code || '-',
-      vendorName: vendor.name || vendor.fullName || vendor.code || '-',
+      vendorName:
+        (typeof vendor === 'string' ? vendor : vendor.name || vendor.fullName || vendor.code) ||
+        '-',
       vendorCostCenter: task.vendorCostCenter?.name || task.vendorCostCenter?.code || '-',
       seller: task.seller?.name || task.seller?.employeeCode || '-',
       shop: shopName || task.shopId || '-',
@@ -378,8 +457,9 @@ export function mapProductionTaskToQcRow(task = {}, options = {}) {
       workflow: task.workflow || null,
       designNote: task.designNote || '',
       qcAt: task.qcAt || null,
+      qcPreviewFileChecks: task.qcPreviewFileChecks,
       scaleSlots: task.scaleContext?.use?.scaleSlots || [],
-      fileChecks: task.fileChecks || [],
+      fileChecks: task.qcPreviewFileChecks || task.fileChecks || [],
       customization:
         task.customization ||
         orderItem.customization?.inputs ||
@@ -392,23 +472,14 @@ export function mapProductionTaskToQcRow(task = {}, options = {}) {
   }
 }
 
-export function getPushableQcTaskIds(tasks = [], selectedTaskIds = new Set()) {
-  return tasks
-    .filter(
-      (task) => selectedTaskIds.has(task.id) && task.productionStatus === 'READY_TO_SEND_VENDOR',
-    )
-    .map((task) => task.id)
-}
-
 function hasRequiredScaledOutputs(task = {}) {
-  const checks = [
-    ...(task.detail?.fileChecks || []),
-    ...(task.detail?.scaleSlots || []),
-    ...(task.fileChecks || []),
-  ]
-  const requiredChecks = checks.filter((check) => check.required !== false)
-
-  if (requiredChecks.length === 0) return false
+  const checks =
+    task.detail?.qcPreviewFileChecks ||
+    task.qcPreviewFileChecks ||
+    task.detail?.fileChecks ||
+    task.fileChecks ||
+    []
+  const requiredChecks = checks.filter(isQcOutputRequired)
 
   return requiredChecks.every((check) =>
     Boolean(
@@ -426,7 +497,7 @@ export function canSubmitQcPass(task = {}) {
 }
 
 export function canSubmitQcReject(task = {}) {
-  return task.statusQc !== 'PASSED'
+  return !['PASSED', 'REJECTED'].includes(task.statusQc)
 }
 
 export function canSubmitQcDecision(task = {}, decision = 'PASSED') {
