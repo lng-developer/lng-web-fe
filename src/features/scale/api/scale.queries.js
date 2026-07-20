@@ -55,6 +55,18 @@ export function useScaleAssigneesQuery(query = {}, options = {}) {
   })
 }
 
+export function useScaleCsAssigneesQuery(query = {}, options = {}) {
+  return useQuery({
+    queryKey: scaleKeys.csAssignees(query),
+    queryFn: () =>
+      get(ENDPOINTS.PRODUCTION.CS_ASSIGNEES, query).then((response) =>
+        mapScaleAssignees(response?.items || []),
+      ),
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  })
+}
+
 export function useScaleShopsQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: scaleKeys.shops(query),

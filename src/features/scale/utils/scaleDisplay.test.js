@@ -18,6 +18,10 @@ test('truncateDisplayText handles empty and non-string values', () => {
   assert.equal(scaleDisplay.truncateDisplayText(12345, 16), '12345')
 })
 
+test('formatCompactOrderDate shortens the table date without dropping the year', () => {
+  assert.equal(scaleDisplay.formatCompactOrderDate('2026-06-25 07:00'), '25 Jun 26')
+})
+
 test('isScaleSlotUploadDisabled allows replacing an existing scaled output', () => {
   assert.equal(typeof scaleDisplay.isScaleSlotUploadDisabled, 'function')
   assert.equal(
@@ -113,15 +117,6 @@ test('getScaleSlotPreviewAssetId returns only uploaded output assets', () => {
     null,
   )
   assert.equal(scaleDisplay.getScaleSlotPreviewAssetId({ outputStatus: 'UPLOADED' }), null)
-})
-
-test('toggleExpandedTaskIds opens multiple rows independently', () => {
-  assert.deepEqual(scaleDisplay.toggleExpandedTaskIds([], 'task-1'), ['task-1'])
-  assert.deepEqual(scaleDisplay.toggleExpandedTaskIds(['task-1'], 'task-2'), ['task-1', 'task-2'])
-})
-
-test('toggleExpandedTaskIds only closes the selected row', () => {
-  assert.deepEqual(scaleDisplay.toggleExpandedTaskIds(['task-1', 'task-2'], 'task-1'), ['task-2'])
 })
 
 test('copyDisplayText uses the Clipboard API with the complete source value', async () => {

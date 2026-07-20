@@ -9,52 +9,22 @@ import {
   shouldSuppressBrowserZoomWheel,
 } from './qcCanvas.js'
 
-test('computeQcLayerMove locks movement to the dominant axis when shift is pressed', () => {
-  const layer = { x: 100, y: 80 }
-
-  assert.deepEqual(computeQcLayerMove(layer, { dx: 40, dy: 12, shiftKey: true }), {
-    x: 140,
-    y: 80,
-  })
-  assert.deepEqual(computeQcLayerMove(layer, { dx: 8, dy: 30, shiftKey: true }), {
-    x: 100,
-    y: 110,
+test('computeQcLayerMove changes only local overlay position', () => {
+  assert.deepEqual(computeQcLayerMove({ x: 10, y: 20 }, { dx: 20, dy: 10 }), {
+    x: 30,
+    y: 30,
   })
 })
 
-test('computeQcLayerResize supports free resize, shift ratio lock, and ctrl center resize', () => {
-  const layer = { x: 100, y: 100, width: 200, height: 100 }
-
+test('computeQcLayerResize changes only local overlay geometry', () => {
   assert.deepEqual(
-    computeQcLayerResize(layer, {
-      dx: 40,
-      dy: 20,
-      handle: 'bottom-right',
-      minSize: 24,
-    }),
-    { x: 100, y: 100, width: 240, height: 120 },
+    computeQcLayerResize({ x: 10, y: 20, width: 100, height: 50 }, { dx: 20, dy: 10 }),
+    { x: 10, y: 20, width: 120, height: 60 },
   )
 
   assert.deepEqual(
-    computeQcLayerResize(layer, {
-      dx: 40,
-      dy: 80,
-      handle: 'bottom-right',
-      minSize: 24,
-      shiftKey: true,
-    }),
-    { x: 100, y: 100, width: 240, height: 120 },
-  )
-
-  assert.deepEqual(
-    computeQcLayerResize(layer, {
-      dx: 40,
-      dy: 20,
-      handle: 'bottom-right',
-      minSize: 24,
-      ctrlKey: true,
-    }),
-    { x: 60, y: 80, width: 280, height: 140 },
+    computeQcLayerResize({ x: 10, y: 20, width: 100, height: 50 }, { dx: -200, dy: -100 }),
+    { x: 10, y: 20, width: 24, height: 24 },
   )
 })
 

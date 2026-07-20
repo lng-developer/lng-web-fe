@@ -11,7 +11,14 @@ function unwrapApiData(response) {
 }
 
 function invalidateProduction(queryClient) {
-  queryClient.invalidateQueries({ queryKey: productionKeys.all })
+  queryClient.invalidateQueries({
+    queryKey: [...productionKeys.all, 'tasks'],
+    refetchType: 'active',
+  })
+  queryClient.invalidateQueries({
+    queryKey: [...productionKeys.all, 'summary'],
+    refetchType: 'active',
+  })
 }
 
 export function useSubmitProductionQcMutation() {

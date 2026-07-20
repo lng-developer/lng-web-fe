@@ -11,10 +11,11 @@ export default function OperationsTabs({
   className = '',
 }) {
   const isNav = variant === 'nav'
+  const isUnderline = variant === 'underline'
 
-  if (isNav) {
+  if (isNav || isUnderline) {
     return (
-      <div className={`bg-surface ${className}`}>
+      <div className={`${isUnderline ? 'border-b border-border' : ''} bg-surface ${className}`}>
         <Tabs
           value={value}
           variant="scrollable"
@@ -23,7 +24,7 @@ export default function OperationsTabs({
             if (nextValue !== value) onChange?.(nextValue)
           }}
           TabIndicatorProps={{ className: 'h-0.5 bg-primary' }}
-          className="!min-h-12"
+          className={isUnderline ? '!min-h-10' : '!min-h-12'}
         >
           {items.map((item) => {
             const active = value === item.value
@@ -47,7 +48,7 @@ export default function OperationsTabs({
                     ) : null}
                   </span>
                 }
-                className={`!min-h-12 !px-4 !normal-case transition-colors ${operationsTextStrongClass} ${
+                className={`${isUnderline ? '!min-h-10' : '!min-h-12'} !px-4 !normal-case transition-colors ${operationsTextStrongClass} ${
                   active ? '!text-primary' : '!font-medium !text-ink-secondary hover:!text-primary'
                 }`}
               />

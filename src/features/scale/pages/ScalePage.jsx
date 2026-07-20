@@ -1,12 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
+import AddIcon from '@mui/icons-material/Add'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
 import RefreshIcon from '@mui/icons-material/Refresh'
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import {
   Button,
@@ -25,17 +25,29 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useQueryClient } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 
+import ImagePreview from '@/components/common/ImagePreview'
+import InlineDetailValue from '@/components/common/InlineDetailValue'
 import DateRangePicker from '@/components/form/DateRangePicker'
+import {
+  OperationsPageShell,
+  OperationsTabs,
+  OperationsToolbar,
+  StatusBadge,
+} from '@/components/operations'
+import {
+  operationsTableHeaderClass,
+  operationsTextCaptionClass,
+} from '@/components/operations/operationsLayout'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
-import { scaleKeys } from '@/features/scale/api/scale.keys'
+import { getOrderStatusTone } from '@/features/orders/utils/orderStatus'
 import {
   useAssignScaleTaskMutation,
   useDownloadScaleAssetMutation,
   useRecheckScaleTaskMutation,
   useUpdateScaleTaskCsNoteMutation,
+  useUpdateScaleTaskNoteMutation,
   useUploadScaleOutputMutation,
 } from '@/features/scale/api/scale.mutations'
 import {
@@ -57,12 +69,11 @@ import {
 import { readScaleDashboardSearch } from '@/features/scale/utils/scaleApi'
 import {
   copyDisplayText,
+  formatCompactOrderDate,
   getScaleManualUploadPosition,
   getScaleSlotPreviewAssetId,
-  getScaleUploadTarget,
   isScaleSlotUploadDisabled,
   SCALE_MANUAL_UPLOAD_POSITIONS,
-  toggleExpandedTaskIds,
   truncateDisplayText,
 } from '@/features/scale/utils/scaleDisplay'
 import { getPaginationRange } from '@/features/scale/utils/scalePagination'
@@ -70,10 +81,10 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
-const tableGridClass = 'grid-cols-[auto_repeat(8,minmax(0,1fr))]'
+const tableGridClass = 'grid-cols-[repeat(8,minmax(0,1fr))]'
 
 const SHOP_NAME_MAX_LENGTH = 16
-const ORDER_ID_MAX_LENGTH = 19
+const COST_CENTER_FIELD_CLASS = 'w-fit max-w-full'
 
 const groupStatusTabs = [
   { value: SCALE_STATUS_TABS.ALL, labelKey: 'scale.statusTabs.all' },
@@ -82,11 +93,6 @@ const groupStatusTabs = [
   { value: SCALE_STATUS_TABS.PENDING, labelKey: 'scale.statusTabs.pending' },
   { value: SCALE_STATUS_TABS.COMPLETED, labelKey: 'scale.statusTabs.completed' },
   { value: SCALE_STATUS_TABS.QC_REJECTED, labelKey: 'scale.statusTabs.qcRejected' },
-]
-
-const subTabs = [
-  { value: SCALE_SUB_TABS.GROUP_TASK, labelKey: 'scale.subTabs.groupTask' },
-  { value: SCALE_SUB_TABS.ETSY_TASKS, labelKey: 'scale.subTabs.etsyTasks' },
 ]
 
 const groupFiltersInitialState = {
@@ -101,29 +107,49 @@ const etsyFiltersInitialState = {
   qcBy: SCALE_ALL_FILTER,
 }
 
-const statusBadgeClasses = {
-  [SCALE_STATUSES.NEED_SCALE]: 'bg-warning-bg text-warning-strong',
-  [SCALE_STATUSES.SENT]: 'bg-info-bg text-info-strong',
-  [SCALE_STATUSES.PENDING]: 'bg-warning-bg text-warning-strong',
-  [SCALE_STATUSES.COMPLETED]: 'bg-success-soft text-success-strong',
-  [SCALE_STATUSES.QC_REJECTED]: 'bg-danger-bg text-danger',
+const statusToneByValue = {
+  [SCALE_STATUSES.NEED_SCALE]: 'warning',
+  [SCALE_STATUSES.SENT]: 'info',
+  [SCALE_STATUSES.PENDING]: 'warning',
+  [SCALE_STATUSES.COMPLETED]: 'success',
+  [SCALE_STATUSES.QC_REJECTED]: 'danger',
 }
 
-const pillClassByValue = {
-  Standard: 'border border-border bg-surface text-ink-secondary',
-  Express: 'border border-border bg-surface text-ink-secondary',
-  Acct: 'bg-warning-bg text-warning-deep',
-  Acct2: 'bg-warning-bg text-warning-deep',
-  Main: 'bg-info-bg text-info-strong',
-  Shipped: 'bg-success-soft text-success-strong',
-  Delivered: 'bg-success-soft text-success-strong',
-  Processing: 'bg-warning-bg text-warning-deep',
-  Nam: 'bg-violet-bg text-violet-strong',
-  Duc: 'bg-violet-bg text-violet-strong',
-  Hoa: 'bg-success-soft text-success-strong',
-  Lan: 'bg-pink-bg text-pink-strong',
-  Mai: 'bg-pink-bg text-pink-strong',
-  Tuan: 'bg-info-bg text-info-strong',
+const pillToneByValue = {
+  Standard: 'neutral',
+  Express: 'neutral',
+  Acct: 'warning',
+  Acct2: 'warning',
+  Main: 'info',
+  Shipped: 'success',
+  Delivered: 'success',
+  Processing: 'warning',
+  Nam: 'info',
+  Duc: 'info',
+  Hoa: 'success',
+  Lan: 'info',
+  Mai: 'info',
+  Tuan: 'info',
+}
+
+function getPositiveUrlParam(search, key, fallback) {
+  const value = Number(new URLSearchParams(search).get(key))
+  return Number.isInteger(value) && value > 0 ? value : fallback
+}
+
+function updateScalePaginationUrl(page, pageSize) {
+  const params = new URLSearchParams(window.location.search)
+  if (page > 1) params.set('page', String(page))
+  else params.delete('page')
+  if (pageSize !== SCALE_PAGE_SIZE) params.set('limit', String(pageSize))
+  else params.delete('limit')
+
+  const query = params.toString()
+  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+}
+
+function getScaleSlotUploadId(slot = {}) {
+  return slot.fileCheckId || slot.slotKey || slot.id || 'unknown'
 }
 
 function getStatusLabelKey(status) {
@@ -276,17 +302,17 @@ function DetailHeading({ children }) {
   )
 }
 
-function EtsyReadonlyField({ label, value, widthClass = 'w-[70px]', muted = false }) {
+function EtsyReadonlyField({ label, value, widthClass = COST_CENTER_FIELD_CLASS, muted = false }) {
   return (
     <>
       <Typography variant="caption" className="text-[10px] text-ink-muted">
         {label}
       </Typography>
       <div
-        className={`flex items-center rounded border border-teal bg-surface px-[10px] py-1 ${widthClass}`}
+        className={`inline-flex min-w-0 items-center rounded-full border border-teal bg-surface px-[10px] py-1 ${widthClass}`}
       >
         <span
-          className={`truncate text-xs ${muted ? 'text-ink-muted' : 'font-semibold text-teal'}`}
+          className={`truncate text-xs ${muted ? 'text-ink-muted' : 'font-semibold text-ink-secondary'}`}
         >
           {value}
         </span>
@@ -306,7 +332,7 @@ function EtsyNoteBox({ label, value, onChange, onBlur, danger = false, heightCla
         onChange={(event) => onChange?.(event.target.value)}
         onBlur={onBlur}
         readOnly={!onChange}
-        className={`${heightClass} w-full resize-none rounded border border-border bg-surface px-[10px] py-2 text-[11px] outline-none ${danger ? 'text-danger' : 'text-ink-muted'}`}
+        className={`${heightClass} w-full resize-none rounded border border-border bg-surface px-[10px] py-2 text-[11px] outline-none ${danger ? 'text-ink-secondary' : 'text-ink-muted'}`}
       />
     </>
   )
@@ -315,33 +341,45 @@ function EtsyNoteBox({ label, value, onChange, onBlur, danger = false, heightCla
 function EtsyCustomizationValue({ item }) {
   if (item.type === 'link') {
     return (
-      <a
-        href={item.url}
-        target="_blank"
-        rel="noreferrer"
-        className="truncate text-right text-sm font-light text-link-blue underline"
-      >
+      <a href={item.url} target="_blank" rel="noreferrer" className="break-words underline">
         {item.value}
       </a>
     )
   }
 
   if (item.type === 'danger') {
-    return <span className="truncate text-right text-sm font-light text-danger">{item.value}</span>
+    return <span>{item.value}</span>
   }
 
   if (item.type === 'image') {
+    if (item.url) {
+      return (
+        <ImagePreview
+          src={item.url}
+          alt={item.label}
+          className="mt-2 flex h-[82px] w-[82px] items-center justify-center overflow-hidden rounded border border-border bg-surface-subtle"
+        >
+          <img
+            src={item.url}
+            alt={item.label}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        </ImagePreview>
+      )
+    }
+
     return (
-      <div className="mt-2 flex h-[82px] w-[82px] items-center justify-center rounded bg-neutral-bg">
+      <div className="mt-2 flex h-[82px] w-[82px] items-center justify-center rounded bg-surface-subtle">
         <ImageOutlinedIcon className="text-ink-muted" fontSize="medium" />
       </div>
     )
   }
 
-  return <span className="truncate text-right text-sm font-light text-link-blue">{item.value}</span>
+  return <span>{item.value}</span>
 }
 
-function ScaleOutputPreview({ assetId, alt }) {
+function ScaleOutputPreview({ assetId, alt, downloadName, onDownload }) {
   const [preview, setPreview] = useState({ assetId: null, url: '' })
 
   useEffect(() => {
@@ -372,52 +410,72 @@ function ScaleOutputPreview({ assetId, alt }) {
     return <FileDownloadOutlinedIcon className="!text-[28px]" />
   }
 
-  return <img src={previewUrl} alt={alt} className="h-full w-full object-cover" />
+  return (
+    <ImagePreview
+      src={previewUrl}
+      alt={alt}
+      downloadName={downloadName}
+      onDownload={() => onDownload?.(assetId, downloadName)}
+      className="h-full w-full"
+    >
+      <img src={previewUrl} alt={alt} className="h-full w-full object-cover" />
+    </ImagePreview>
+  )
 }
 
 function ScaleDetailPanel({
   task,
-  getNoteValue,
-  onNoteChange,
   onSaveNote,
+  isSavingNote,
+  onSaveCsNote,
+  isSavingCsNote,
   onUploadOutput,
   onRequestManualUpload,
   onDownloadAsset,
   onRecheckTask,
   uploadingSlotId,
+  uploadErrors,
   recheckingOrderItemId,
   t,
 }) {
   const { detail } = task
-  const uploadTarget = getScaleUploadTarget(detail)
-  const uploadTargetId = uploadTarget.fileCheckId || uploadTarget.slotKey
-  const isUploading = uploadingSlotId === uploadTargetId
-  const uploadDisabled = isScaleSlotUploadDisabled(uploadTarget, isUploading)
+  const [designNote, setDesignNote] = useState(() => detail.notes?.design || '')
+  const [csNote, setCsNote] = useState(() => detail.notes?.cs || '')
   const isRechecking = recheckingOrderItemId === task.orderItemId
 
   return (
-    <div className="col-span-full border-b border-border/60 bg-surface-subtle px-5 py-6">
-      <div className="grid min-w-[1540px] grid-cols-[230px_390px_133px_220px_220px_280px] gap-6 py-3">
-        <section className="flex w-[230px] flex-col items-start gap-2">
-          <DetailHeading>{t('scale.detail.productInfo')}</DetailHeading>
-          <div className="flex h-[106px] w-[106px] items-center justify-center overflow-hidden rounded-md border border-sky-border bg-sky-soft">
-            {detail.product.imageUrl ? (
-              <img src={detail.product.imageUrl} alt={''} className="h-full w-full object-cover" />
-            ) : (
-              <ImageOutlinedIcon className="text-info-strong !text-[36px]" />
-            )}
-          </div>
+    <div className="col-span-full border-b border-border/60 bg-surface-subtle px-4 py-5 sm:px-5">
+      <div className="grid gap-5 py-1 lg:grid-cols-[repeat(5,minmax(0,1fr))]">
+        <section className="flex min-w-0 flex-col items-start gap-2">
+          <DetailHeading>{t('scale.detail.imagePrintSide')}</DetailHeading>
+          {detail.product.imageUrl ? (
+            <ImagePreview
+              src={detail.product.imageUrl}
+              alt={detail.product.primaryCode}
+              className="flex h-[106px] w-[106px] items-center justify-center rounded-md border border-border bg-surface-subtle"
+            >
+              <img
+                src={detail.product.imageUrl}
+                alt={detail.product.primaryCode}
+                className="h-full w-full object-cover"
+              />
+            </ImagePreview>
+          ) : (
+            <div className="flex h-[106px] w-[106px] items-center justify-center rounded-md border border-border bg-surface-subtle">
+              <ImageOutlinedIcon className="text-ink-muted !text-[36px]" />
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge className="h-[28px] border border-teal bg-surface px-3 text-[11px] text-teal">
+            <Badge className="h-[28px] border border-border bg-surface px-3 text-[11px] text-ink-secondary">
               {detail.product.primaryCode}
             </Badge>
             <Badge
-              className={`h-[28px] px-3 text-sm ${detail.product.psdStatus === 'MISSING' ? 'bg-danger-bg text-danger' : 'bg-pink-bg text-pink-strong'}`}
+              className={`h-[28px] border bg-surface px-3 text-sm text-ink-secondary ${detail.product.psdStatus === 'MISSING' ? 'border-danger' : 'border-border'}`}
             >
               {formatEnumValue(detail.product.psdStatus)}
             </Badge>
           </div>
-          <Badge className="h-[28px] border border-teal bg-surface px-3 text-[11px] text-teal">
+          <Badge className="h-[28px] border border-border bg-surface px-3 text-[11px] text-ink-secondary">
             {detail.product.secondaryCode}
           </Badge>
           <Button
@@ -432,67 +490,96 @@ function ScaleDetailPanel({
           </Button>
         </section>
 
-        <section className="flex w-[390px] flex-col gap-3">
+        <section className="flex min-w-0 flex-col gap-3">
           <DetailHeading>{t('scale.detail.customization')}</DetailHeading>
           <div className="space-y-[4px]">
-            {detail.customization.map((item, index) => (
-              <div
-                key={`${item.label}-${index}`}
-                className={`flex items-start justify-between gap-4 ${item.type === 'image' ? 'min-h-[84px]' : 'min-h-[18px]'}`}
-              >
-                <span className="shrink-0 text-sm font-bold text-ink-detail">{item.label}</span>
-                <EtsyCustomizationValue item={item} />
-              </div>
-            ))}
+            {detail.customization.map((item, index) =>
+              item.type === 'image' ? (
+                <div key={`${item.label}-${index}`} className="flex min-w-0 flex-col gap-1">
+                  <span className="shrink-0 whitespace-nowrap text-sm font-bold text-ink-detail">
+                    {item.label}:
+                  </span>
+                  <EtsyCustomizationValue item={item} />
+                </div>
+              ) : (
+                <InlineDetailValue key={`${item.label}-${index}`} label={item.label}>
+                  <EtsyCustomizationValue item={item} />
+                </InlineDetailValue>
+              ),
+            )}
           </div>
         </section>
 
-        <section className="flex w-[133px] flex-col items-center gap-3">
-          <DetailHeading>{t('scale.detail.taskStatus')}</DetailHeading>
-          <span
-            className={`rounded-md px-3 py-[5px] text-center text-sm font-semibold ${detail.canScale ? 'bg-success-soft text-success' : 'bg-warning-bg text-warning-strong'}`}
-          >
-            {formatEnumValue(detail.contextStatus)}
-          </span>
-          {detail.missingRequirements?.map((requirement) => (
-            <Tooltip key={requirement.code} title={requirement.message || requirement.code}>
-              <span className="max-w-full truncate rounded-full bg-danger-bg px-2 py-1 text-[11px] text-danger">
-                {formatEnumValue(requirement.code)}
-              </span>
-            </Tooltip>
-          ))}
-        </section>
-
-        <section className="flex w-[220px] flex-col items-start gap-3">
+        <section className="flex min-w-0 flex-col items-start gap-3">
           <DetailHeading>{t('scale.detail.costCenter')}</DetailHeading>
           <div className="flex w-full flex-col gap-1">
             <EtsyReadonlyField
-              label={t('scale.etsy.costCenter.vendorProduct')}
-              value={detail.costCenter.vendorProduct}
-              widthClass="w-full"
+              label={t('scale.detail.vendor')}
+              value={detail.costCenter.vendor}
+              widthClass={COST_CENTER_FIELD_CLASS}
             />
             <EtsyReadonlyField
-              label={t('scale.etsy.costCenter.size')}
-              value={detail.costCenter.size}
+              label={t('scale.etsy.costCenter.vendorProduct')}
+              value={detail.costCenter.vendorProduct}
+              widthClass={COST_CENTER_FIELD_CLASS}
             />
+            <EtsyReadonlyField
+              label={t('scale.etsy.costCenter.productCost')}
+              value={detail.costCenter.productCost}
+              widthClass={COST_CENTER_FIELD_CLASS}
+            />
+            <div className="mt-2 pt-2">
+              <EtsyReadonlyField
+                label={t('scale.detail.quantity')}
+                value={detail.product.quantity}
+                widthClass={COST_CENTER_FIELD_CLASS}
+              />
+            </div>
           </div>
         </section>
 
-        <section className="flex w-[220px] flex-col items-start gap-3">
+        <section className="flex min-w-0 flex-col items-start gap-3">
           <DetailHeading>{t('scale.detail.csNote')}</DetailHeading>
           <div className="flex w-full flex-col gap-1">
             <EtsyNoteBox
-              label={t('scale.etsy.notes.cs')}
-              value={getNoteValue(task, 'cs')}
-              onChange={(value) => onNoteChange(task.id, 'cs', value)}
-              onBlur={() => onSaveNote(task, 'cs')}
+              label={t('scale.etsy.notes.design')}
+              value={designNote}
+              onChange={setDesignNote}
               danger
             />
-            <EtsyNoteBox label={t('scale.etsy.notes.qc')} value={getNoteValue(task, 'qc')} />
+            <Button
+              type="button"
+              variant="outlined"
+              size="small"
+              disabled={isSavingNote}
+              startIcon={<SaveOutlinedIcon fontSize="small" />}
+              onClick={() => onSaveNote(task, designNote)}
+              className="h-7 self-start rounded border-border px-3 text-xs font-normal text-ink-action"
+            >
+              {t('scale.actions.saveNote')}
+            </Button>
+            <EtsyNoteBox
+              label={t('scale.etsy.notes.cs')}
+              value={csNote}
+              onChange={setCsNote}
+              danger
+            />
+            <Button
+              type="button"
+              variant="outlined"
+              size="small"
+              disabled={isSavingCsNote}
+              startIcon={<SaveOutlinedIcon fontSize="small" />}
+              onClick={() => onSaveCsNote(task, csNote)}
+              className="h-7 self-start rounded border-border px-3 text-xs font-normal text-ink-action"
+            >
+              {t('scale.actions.saveNote')}
+            </Button>
+            <EtsyNoteBox label={t('scale.etsy.notes.qc')} value={detail.notes?.qc || ''} />
           </div>
         </section>
 
-        <section className="flex w-[280px] flex-col items-start gap-3">
+        <section className="flex min-w-0 flex-col items-start gap-3">
           <DetailHeading>{t('scale.detail.action')}</DetailHeading>
           <div className="flex w-full flex-col gap-3">
             <div className="flex flex-wrap gap-2">
@@ -511,70 +598,106 @@ function ScaleDetailPanel({
                   </Button>
                 </span>
               </Tooltip>
+              <Button
+                type="button"
+                variant="outlined"
+                size="small"
+                disabled={Boolean(uploadingSlotId)}
+                startIcon={<AddIcon className="text-xs" />}
+                onClick={() =>
+                  onRequestManualUpload(task, {
+                    fileCheckId: null,
+                    slotKey: 'FRONT',
+                    slotLabel: 'Front',
+                    sourceType: 'CUSTOMER_IMAGE',
+                  })
+                }
+                className="h-7 rounded border-border px-2 text-xs font-normal text-ink-action"
+              >
+                {t('scale.manualUpload.addPosition')}
+              </Button>
             </div>
-            <Tooltip
-              title={
-                uploadDisabled && !isUploading ? t('scale.messages.slotUploadUnavailable') : ''
-              }
-            >
-              <span className="w-28">
-                {uploadTarget.fileCheckId ? (
-                  <Button
-                    component="label"
-                    variant="outlined"
-                    size="small"
-                    disabled={uploadDisabled}
-                    startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
-                    className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
-                  >
-                    {isUploading ? t('scale.loading.uploading') : t('scale.etsy.actions.upload')}
-                    <input
-                      hidden
-                      type="file"
-                      onChange={(event) => {
-                        onUploadOutput(task, uploadTarget, event.target.files?.[0])
-                        event.target.value = ''
-                      }}
-                    />
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    size="small"
-                    disabled={uploadDisabled}
-                    startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
-                    onClick={() => onRequestManualUpload(task, uploadTarget)}
-                    className="h-7 w-full rounded border-border px-2 text-xs font-normal text-ink-action"
-                  >
-                    {isUploading ? t('scale.loading.uploading') : t('scale.etsy.actions.upload')}
-                  </Button>
-                )}
-              </span>
-            </Tooltip>
             <div className="flex flex-wrap gap-3">
               {(detail.mockups || []).map((mockup) => {
                 const previewAssetId = getScaleSlotPreviewAssetId(mockup)
+                const slotUploadId = getScaleSlotUploadId(mockup)
+                const slotIsUploading = uploadingSlotId === slotUploadId
+                const slotUploadDisabled = isScaleSlotUploadDisabled(mockup, slotIsUploading)
+                const slotUploadError = uploadErrors?.[task.id]?.[slotUploadId]
+                const uploadTarget = {
+                  ...mockup,
+                  slotLabel: mockup.label,
+                  sourceType: mockup.sourceType || 'CUSTOMER_IMAGE',
+                }
+
+                function renderSlotUploadButton(label) {
+                  if (mockup.fileCheckId) {
+                    return (
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        size="small"
+                        disabled={slotUploadDisabled}
+                        startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
+                        className="h-7 w-full rounded border-border px-2 text-[11px] font-normal text-ink-action"
+                      >
+                        {slotIsUploading ? t('scale.loading.uploading') : label}
+                        <input
+                          hidden
+                          type="file"
+                          accept="image/*"
+                          onChange={(event) => {
+                            onUploadOutput(task, uploadTarget, event.target.files?.[0])
+                            event.target.value = ''
+                          }}
+                        />
+                      </Button>
+                    )
+                  }
+
+                  return (
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="small"
+                      disabled={slotUploadDisabled}
+                      startIcon={<CloudUploadOutlinedIcon className="text-xs" />}
+                      onClick={() => onRequestManualUpload(task, uploadTarget)}
+                      className="h-7 w-full rounded border-border px-2 text-[11px] font-normal text-ink-action"
+                    >
+                      {slotIsUploading ? t('scale.loading.uploading') : label}
+                    </Button>
+                  )
+                }
 
                 return (
                   <div key={mockup.id} className="flex w-28 flex-col gap-1.5">
                     <Tooltip title={mockup.label}>
                       <span className="truncate text-[10px] text-ink-muted">{mockup.label}</span>
                     </Tooltip>
-                    <button
-                      type="button"
-                      disabled={!previewAssetId}
-                      onClick={() =>
-                        onDownloadAsset(previewAssetId, `${task.orderId}-${mockup.label}`)
-                      }
-                      className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-md border border-sky-border bg-sky-soft text-info-strong disabled:cursor-not-allowed disabled:opacity-50"
-                    >
+                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-md border border-border bg-surface-subtle text-ink-muted">
                       {previewAssetId ? (
-                        <ScaleOutputPreview assetId={previewAssetId} alt={mockup.label} />
+                        <ScaleOutputPreview
+                          assetId={previewAssetId}
+                          alt={mockup.label}
+                          downloadName={`${task.orderId}-${mockup.label}`}
+                          onDownload={onDownloadAsset}
+                        />
                       ) : (
                         <ImageOutlinedIcon className="!text-[28px]" />
                       )}
-                    </button>
+                    </div>
+                    {renderSlotUploadButton(t('scale.manualUpload.replace'))}
+                    {slotUploadError ? (
+                      <div className="flex flex-col gap-1">
+                        <Tooltip title={slotUploadError}>
+                          <span className="truncate border-l-2 border-danger pl-1 text-[10px] font-medium text-ink-secondary">
+                            {t('scale.manualUpload.uploadFailed')}
+                          </span>
+                        </Tooltip>
+                        {renderSlotUploadButton(t('scale.manualUpload.tryAgain'))}
+                      </div>
+                    ) : null}
                   </div>
                 )
               })}
@@ -591,20 +714,34 @@ function ScaleDetailPanel({
 
 function renderOrderDate(task, activeSubTab) {
   return (
-    <OverflowText
-      value={task.orderDate}
-      className={
-        activeSubTab === SCALE_SUB_TABS.ETSY_TASKS ? 'text-ink-strong' : 'text-ink-secondary'
-      }
-    />
+    <Tooltip title={task.orderDate}>
+      <span
+        className={`block truncate text-sm font-semibold ${activeSubTab === SCALE_SUB_TABS.ETSY_TASKS ? 'text-ink-strong' : 'text-ink-secondary'}`}
+      >
+        {formatCompactOrderDate(task.orderDate)}
+      </span>
+    </Tooltip>
   )
 }
 
-function renderPill(value, fallbackClass = 'border border-border bg-surface text-ink-secondary') {
+function renderPill(value) {
   return (
-    <Badge tooltip={String(value || '-')} className={pillClassByValue[value] || fallbackClass}>
+    <StatusBadge tone={pillToneByValue[value] || 'neutral'} tooltip={String(value || '-')}>
       {value}
-    </Badge>
+    </StatusBadge>
+  )
+}
+
+function renderOrderStatus(value) {
+  const displayValue = value || '-'
+
+  return (
+    <StatusBadge
+      tone={value ? getOrderStatusTone(value) : 'neutral'}
+      tooltip={String(displayValue)}
+    >
+      {displayValue}
+    </StatusBadge>
   )
 }
 
@@ -617,15 +754,9 @@ function ShopName({ value, isEtsyTab }) {
     <Tooltip title={isTruncated ? fullName : ''} disableHoverListener={!isTruncated}>
       <span className="block min-w-0">
         {isEtsyTab ? (
-          <Badge
-            className={
-              pillClassByValue[fullName] || 'border border-border bg-surface text-ink-secondary'
-            }
-          >
-            {displayName}
-          </Badge>
+          <Badge className="bg-surface-subtle text-ink-secondary">{displayName}</Badge>
         ) : (
-          <span className="block truncate text-ink-secondary">{displayName}</span>
+          <span className="block truncate font-semibold text-ink-secondary">{displayName}</span>
         )}
       </span>
     </Tooltip>
@@ -634,7 +765,6 @@ function ShopName({ value, isEtsyTab }) {
 
 function OrderIdBadge({ value, onCopy, t }) {
   const fullOrderId = value === null || value === undefined ? '' : String(value)
-  const displayOrderId = truncateDisplayText(fullOrderId, ORDER_ID_MAX_LENGTH)
 
   return (
     <Tooltip title={fullOrderId}>
@@ -642,14 +772,11 @@ function OrderIdBadge({ value, onCopy, t }) {
         type="button"
         aria-label={t('scale.actions.copyOrderId', { orderId: fullOrderId })}
         onClick={() => onCopy(fullOrderId)}
-        className="inline-flex min-w-0 max-w-full border-0 bg-transparent cursor-copy rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="inline-flex min-w-0 max-w-full border-0 bg-transparent p-0 text-left cursor-copy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        <Badge
-          truncate={false}
-          className="border border-danger bg-surface font-mono text-xs text-danger"
-        >
-          {displayOrderId}
-        </Badge>
+        <span className="block max-w-full break-all font-mono text-xs font-semibold text-ink-secondary">
+          {fullOrderId}
+        </span>
       </button>
     </Tooltip>
   )
@@ -757,7 +884,7 @@ function ManualScaleUploadDialog({
             }}
             onDrop={handleDrop}
             className={`flex min-h-36 flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-5 py-6 text-center transition ${
-              isDragging ? 'border-primary bg-danger-bg/40' : 'border-border bg-surface-subtle'
+              isDragging ? 'border-primary bg-surface' : 'border-border bg-surface-subtle'
             }`}
           >
             <CloudUploadOutlinedIcon className="text-ink-muted" />
@@ -814,16 +941,13 @@ function ManualScaleUploadDialog({
 
 export default function ScalePage() {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const { enqueueSnackbar } = useSnackbar()
   const location = useLocation()
   const dashboardSearch = useMemo(
     () => readScaleDashboardSearch(location.search),
     [location.search],
   )
-  const [activeSubTab, setActiveSubTab] = useState(
-    () => dashboardSearch.activeSubTab || SCALE_SUB_TABS.GROUP_TASK,
-  )
+  const activeSubTab = dashboardSearch.activeSubTab || SCALE_SUB_TABS.GROUP_TASK
   const [statusTab, setStatusTab] = useState(
     () => dashboardSearch.statusTab || SCALE_STATUS_TABS.ALL,
   )
@@ -832,10 +956,10 @@ export default function ScalePage() {
   const [searchInput, setSearchInput] = useState('')
   const [dateRange, setDateRange] = useState({ start: null, end: null })
   const debouncedSearch = useDebounce(searchInput, 300)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(SCALE_PAGE_SIZE)
-  const [expandedTaskIds, setExpandedTaskIds] = useState([])
-  const [noteDrafts, setNoteDrafts] = useState({})
+  const [page, setPage] = useState(() => getPositiveUrlParam(location.search, 'page', 1))
+  const [pageSize, setPageSize] = useState(() =>
+    getPositiveUrlParam(location.search, 'limit', SCALE_PAGE_SIZE),
+  )
   const [manualUploadDialog, setManualUploadDialog] = useState({
     open: false,
     task: null,
@@ -844,6 +968,7 @@ export default function ScalePage() {
     file: null,
     isDragging: false,
   })
+  const [uploadErrors, setUploadErrors] = useState({})
 
   const isEtsyTab = activeSubTab === SCALE_SUB_TABS.ETSY_TASKS
   const activeFilters = isEtsyTab ? etsyFilters : groupFilters
@@ -869,6 +994,7 @@ export default function ScalePage() {
 
   const assignScaleMutation = useAssignScaleTaskMutation()
   const updateCsNoteMutation = useUpdateScaleTaskCsNoteMutation()
+  const updateDesignNoteMutation = useUpdateScaleTaskNoteMutation()
   const recheckTaskMutation = useRecheckScaleTaskMutation()
   const uploadOutputMutation = useUploadScaleOutputMutation()
   const downloadAssetMutation = useDownloadScaleAssetMutation()
@@ -898,27 +1024,18 @@ export default function ScalePage() {
   const statusTabs = groupStatusTabs
   const titleKey = isEtsyTab ? 'scale.etsy.title' : 'scale.title'
 
-  function resetPageAndExpand(nextPage = 1) {
+  function resetPage(nextPage = 1) {
     setPage(nextPage)
-    setExpandedTaskIds([])
+    updateScalePaginationUrl(nextPage, pageSize)
   }
 
   useEffect(() => {
     if (!activeQuery.isSuccess || activeQuery.isFetching || page <= totalPages) return
     // The server total can shrink after a settled refresh, leaving the controlled page invalid.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    resetPageAndExpand(totalPages)
-  }, [activeQuery.isFetching, activeQuery.isSuccess, page, totalPages])
-
-  function handleSubTabChange(nextSubTab) {
-    setActiveSubTab(nextSubTab)
-    setStatusTab(SCALE_STATUS_TABS.ALL)
-    setSearchInput('')
-    setPage(1)
-    setGroupFilters(groupFiltersInitialState)
-    setEtsyFilters(etsyFiltersInitialState)
-    setExpandedTaskIds([])
-  }
+    setPage(totalPages)
+    updateScalePaginationUrl(totalPages, pageSize)
+  }, [activeQuery.isFetching, activeQuery.isSuccess, page, pageSize, totalPages])
 
   function updateFilter(key, value) {
     if (isEtsyTab) {
@@ -926,22 +1043,23 @@ export default function ScalePage() {
     } else {
       setGroupFilters((current) => ({ ...current, [key]: value }))
     }
-    resetPageAndExpand()
+    resetPage()
   }
 
   function handleStatusTabChange(nextStatusTab) {
     setStatusTab(nextStatusTab)
-    resetPageAndExpand()
+    resetPage()
   }
 
   function handleDateRangeChange(value) {
     setDateRange(value)
-    resetPageAndExpand()
+    resetPage()
   }
 
   function handlePageSizeChange(nextPageSize) {
     setPageSize(nextPageSize)
-    resetPageAndExpand()
+    setPage(1)
+    updateScalePaginationUrl(1, nextPageSize)
   }
 
   function handleAssignScale(taskId, assignedDesignUserId) {
@@ -975,27 +1093,30 @@ export default function ScalePage() {
     }
   }
 
-  function getNoteDraftKey(taskId, noteType) {
-    return `${taskId}:${noteType}`
-  }
-
-  function handleNoteChange(taskId, noteType, value) {
-    setNoteDrafts((current) => ({ ...current, [getNoteDraftKey(taskId, noteType)]: value }))
-  }
-
-  function getNoteValue(task, noteType = 'design') {
-    const key = getNoteDraftKey(task.id, noteType)
-    if (Object.hasOwn(noteDrafts, key)) return noteDrafts[key]
-
-    return task.detail.notes?.[noteType] || ''
-  }
-
-  function handleSaveNote(task, noteType = 'cs') {
-    updateCsNoteMutation.mutate(
-      { taskId: task.id, csNote: getNoteValue(task, noteType) },
+  function handleSaveNote(task, designNote) {
+    updateDesignNoteMutation.mutate(
+      { taskId: task.id, designNote },
       {
         onSuccess: () => {
-          enqueueSnackbar(t('scale.messages.noteSuccess'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+          enqueueSnackbar(t('scale.messages.designNoteSuccess'), {
+            variant: SNACKBAR_VARIANTS.SUCCESS,
+          })
+        },
+        onError: (error) => {
+          enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
+        },
+      },
+    )
+  }
+
+  function handleSaveCsNote(task, csNote) {
+    updateCsNoteMutation.mutate(
+      { taskId: task.id, csNote },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(t('scale.messages.csNoteSuccess'), {
+            variant: SNACKBAR_VARIANTS.SUCCESS,
+          })
         },
         onError: (error) => {
           enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
@@ -1011,6 +1132,12 @@ export default function ScalePage() {
       return
     }
 
+    const slotUploadId = getScaleSlotUploadId(slot)
+    setUploadErrors((current) => ({
+      ...current,
+      [task.id]: { ...current[task.id], [slotUploadId]: null },
+    }))
+
     uploadOutputMutation.mutate(
       {
         taskId: task.id,
@@ -1025,9 +1152,21 @@ export default function ScalePage() {
           enqueueSnackbar(t('scale.messages.uploadSuccess'), {
             variant: SNACKBAR_VARIANTS.SUCCESS,
           })
+          setUploadErrors((current) => ({
+            ...current,
+            [task.id]: { ...current[task.id], [slotUploadId]: null },
+          }))
           callbacks.onSuccess?.()
         },
         onError: (error) => {
+          setUploadErrors((current) => ({
+            ...current,
+            [task.id]: {
+              ...current[task.id],
+              [slotUploadId]: error.message || t('scale.manualUpload.uploadFailed'),
+            },
+          }))
+          callbacks.onError?.()
           enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
         },
       },
@@ -1116,7 +1255,7 @@ export default function ScalePage() {
         sourceType: manualUploadDialog.target?.sourceType || 'CUSTOMER_IMAGE',
       },
       manualUploadDialog.file,
-      { onSuccess: resetManualUploadDialog },
+      { onSuccess: resetManualUploadDialog, onError: resetManualUploadDialog },
     )
   }
 
@@ -1141,13 +1280,15 @@ export default function ScalePage() {
     return (
       <ScaleDetailPanel
         task={task}
-        getNoteValue={getNoteValue}
-        onNoteChange={handleNoteChange}
         onSaveNote={handleSaveNote}
+        isSavingNote={updateDesignNoteMutation.isPending}
+        onSaveCsNote={handleSaveCsNote}
+        isSavingCsNote={updateCsNoteMutation.isPending}
         onUploadOutput={handleUploadOutput}
         onRequestManualUpload={handleRequestManualUpload}
         onDownloadAsset={handleDownloadAsset}
         onRecheckTask={handleRecheckTask}
+        uploadErrors={uploadErrors}
         uploadingSlotId={
           uploadOutputMutation.isPending && uploadOutputMutation.variables?.taskId === task.id
             ? uploadOutputMutation.variables.fileCheckId || uploadOutputMutation.variables.slotKey
@@ -1162,7 +1303,7 @@ export default function ScalePage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-4 bg-surface p-6">
+    <>
       <ManualScaleUploadDialog
         open={manualUploadDialog.open}
         slotKey={manualUploadDialog.slotKey}
@@ -1176,279 +1317,210 @@ export default function ScalePage() {
         onSubmit={handleSubmitManualUpload}
         t={t}
       />
-      <header className="flex flex-col gap-3">
-        <div className="flex min-h-[54px] items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Typography variant="h5" className="text-xl font-bold text-ink-strong">
-              {t(titleKey)}
-            </Typography>
-            <Typography variant="caption" className="text-xs text-ink-muted">
-              {t('scale.lastUpdated', {
-                time: activeQuery.dataUpdatedAt
-                  ? new Intl.DateTimeFormat('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false,
-                    }).format(activeQuery.dataUpdatedAt)
-                  : '--:--',
-              })}
-            </Typography>
-          </div>
-
-          <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
-        </div>
-
-        <div className="flex items-center gap-2">
-          {subTabs.map((tab) => {
-            const active = activeSubTab === tab.value
-            const etsyActive = active && tab.value === SCALE_SUB_TABS.ETSY_TASKS
-
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => handleSubTabChange(tab.value)}
-                className={`h-9 rounded-lg border px-[14px] text-sm font-semibold transition cursor-pointer ${
-                  etsyActive
-                    ? 'border-border bg-ink text-white'
-                    : active
-                      ? 'border-border bg-surface text-primary shadow-sm'
-                      : 'border-border bg-transparent text-ink-secondary hover:bg-page'
-                }`}
-              >
-                {t(tab.labelKey)}
-              </button>
-            )
-          })}
-        </div>
-      </header>
-
-      <div className="flex flex-wrap items-center gap-1.5">
-        {statusTabs.map((tab) => {
-          const active = statusTab === tab.value
-
-          return (
-            <button
-              key={tab.value}
-              type="button"
-              disabled={tab.disabled}
-              onClick={() => handleStatusTabChange(tab.value)}
-              className={`flex h-9 items-center gap-2 rounded-lg border px-[14px] text-sm font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
-                active && isEtsyTab
-                  ? 'border-danger bg-danger text-white'
-                  : active
-                    ? 'border-primary-light bg-primary-light text-primary'
-                    : 'border-border bg-surface text-ink-secondary hover:bg-page'
-              }`}
-            >
-              <span>{t(tab.labelKey)}</span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                  active && isEtsyTab
-                    ? 'bg-primary-light text-danger'
-                    : active
-                      ? 'bg-surface text-primary'
-                      : 'bg-surface-subtle text-ink-muted'
-                }`}
-              >
-                {counts[tab.value] || 0}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <TextField
-            size="small"
-            value={searchInput}
-            onChange={(event) => {
-              setSearchInput(event.target.value)
-              resetPageAndExpand()
-            }}
-            placeholder={
-              isEtsyTab ? t('scale.etsy.searchPlaceholder') : t('scale.searchPlaceholder')
-            }
-            className={`${isEtsyTab ? 'w-[180px]' : 'w-[280px]'} bg-surface`}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon className="text-ink-muted" fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-          {filters.map((filter) => (
-            <FilterSelect
-              key={filter.key}
-              value={activeFilters[filter.key]}
-              onChange={(value) => updateFilter(filter.key, value)}
-              ariaLabel={filter.placeholder}
-              placeholder={filter.placeholder}
-              options={filter.options}
-              widthClass={filter.key === 'qcBy' ? 'w-32' : 'w-[120px]'}
-            />
-          ))}
-          <Tooltip title={t('scale.actions.refresh')}>
-            <IconButton
-              aria-label={t('scale.actions.refresh')}
-              onClick={() => queryClient.invalidateQueries({ queryKey: scaleKeys.all })}
-              className="h-9 w-9 rounded-md border border-border bg-surface text-ink-secondary"
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-
-        <ScalePagination
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          disabled={activeQuery.isLoading}
-          onPageChange={(nextPage) => resetPageAndExpand(nextPage)}
-          onPageSizeChange={handlePageSizeChange}
-          t={t}
-        />
-      </div>
-
-      <section className="overflow-hidden rounded-[10px] border border-border bg-surface">
-        <div className="overflow-x-auto">
-          <div className={`grid w-full min-w-full ${tableGridClass}`}>
-            <div className="col-span-full grid h-11 grid-cols-subgrid items-center border-b border-border bg-surface-subtle px-4 text-[11px] font-semibold uppercase text-ink-muted">
-              {SCALE_TABLE_COLUMNS.map((column) => (
-                <div key={column.id} className="min-w-0 truncate overflow-hidden px-4">
-                  {column.labelKey ? t(column.labelKey) : '^'}
-                </div>
-              ))}
+      <OperationsPageShell
+        header={
+          <div className="flex min-h-[54px] flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Typography variant="h5" className="text-xl font-bold text-ink-strong">
+                {t(titleKey)}
+              </Typography>
+              <Typography variant="caption" className="text-xs text-ink-muted">
+                {t('scale.lastUpdated', {
+                  time: activeQuery.dataUpdatedAt
+                    ? new Intl.DateTimeFormat('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                      }).format(activeQuery.dataUpdatedAt)
+                    : '--:--',
+                })}
+              </Typography>
             </div>
 
-            {activeQuery.isLoading ? (
-              <LoadingRows />
-            ) : activeQuery.isError ? (
-              <div className="col-span-full flex h-48 items-center justify-center text-sm text-danger">
-                {activeQuery.error?.message}
+            <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
+          </div>
+        }
+        tabs={
+          <OperationsTabs
+            items={statusTabs.map((tab) => ({
+              value: tab.value,
+              label: t(tab.labelKey),
+              count: counts[tab.value] || 0,
+              disabled: tab.disabled,
+            }))}
+            value={statusTab}
+            onChange={handleStatusTabChange}
+            variant="underline"
+          />
+        }
+        toolbar={
+          <OperationsToolbar>
+            <div className="grid w-full grid-cols-1 items-center gap-2 md:grid-cols-2 xl:w-fit xl:max-w-full xl:grid-cols-[minmax(240px,320px)_repeat(3,160px)_36px]">
+              <TextField
+                size="small"
+                value={searchInput}
+                onChange={(event) => {
+                  setSearchInput(event.target.value)
+                  resetPage()
+                }}
+                placeholder={
+                  isEtsyTab ? t('scale.etsy.searchPlaceholder') : t('scale.searchPlaceholder')
+                }
+                className="w-full bg-surface"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon className="text-ink-muted" fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              {filters.map((filter) => (
+                <FilterSelect
+                  key={filter.key}
+                  value={activeFilters[filter.key]}
+                  onChange={(value) => updateFilter(filter.key, value)}
+                  ariaLabel={filter.placeholder}
+                  placeholder={filter.placeholder}
+                  options={filter.options}
+                  widthClass="w-full"
+                />
+              ))}
+              <Tooltip title={t('scale.actions.refresh')}>
+                <IconButton
+                  aria-label={t('scale.actions.refresh')}
+                  onClick={() => {
+                    activeQuery.refetch()
+                    summaryQuery.refetch()
+                  }}
+                  className="h-9 w-9 rounded-md border border-border bg-surface text-ink-secondary"
+                >
+                  <RefreshIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </div>
+          </OperationsToolbar>
+        }
+        pagination={
+          <ScalePagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            disabled={activeQuery.isLoading}
+            onPageChange={(nextPage) => resetPage(nextPage)}
+            onPageSizeChange={handlePageSizeChange}
+            t={t}
+          />
+        }
+      >
+        <section className="h-full overflow-hidden rounded-[10px] border border-border bg-surface">
+          <div className="h-full overflow-auto scrollbar-none">
+            <div className={`grid w-full min-w-full ${tableGridClass}`}>
+              <div
+                className={`col-span-full grid h-11 grid-cols-subgrid items-center border-b border-border px-4 uppercase text-ink-muted ${operationsTableHeaderClass} ${operationsTextCaptionClass}`}
+              >
+                {SCALE_TABLE_COLUMNS.map((column) => (
+                  <div key={column.id} className="min-w-0 truncate overflow-hidden px-4">
+                    {column.labelKey ? t(column.labelKey) : '^'}
+                  </div>
+                ))}
               </div>
-            ) : tasks.length === 0 ? (
-              <div className="col-span-full flex h-48 items-center justify-center text-sm text-ink-muted">
-                {t('scale.empty.noTasks')}
-              </div>
-            ) : (
-              tasks.map((task) => {
-                const expanded = expandedTaskIds.includes(task.id)
-                const scaleOptions = assigneesQuery.data || []
-                const visibleScaleOptions =
-                  task.scaleBy && !scaleOptions.some((option) => option.id === task.scaleBy)
-                    ? [{ id: task.scaleBy, name: task.scaleByName }, ...scaleOptions]
-                    : scaleOptions
 
-                return (
-                  <Fragment key={task.id}>
-                    <div
-                      className={`col-span-full grid h-14 grid-cols-subgrid items-center border-b border-border px-4 text-sm transition ${
-                        expanded ? 'bg-primary-subtle' : 'bg-surface hover:bg-page'
-                      }`}
-                    >
-                      <div className="min-w-0 overflow-hidden px-4">
-                        <IconButton
-                          aria-label={
-                            expanded ? t('scale.actions.collapse') : t('scale.actions.expand')
-                          }
-                          size="small"
-                          onClick={() =>
-                            setExpandedTaskIds((current) => toggleExpandedTaskIds(current, task.id))
-                          }
-                          className={`${expanded && isEtsyTab ? 'text-danger' : 'text-ink-secondary'} h-7 w-7`}
-                        >
-                          {expanded ? (
-                            <KeyboardArrowDownIcon fontSize="small" />
-                          ) : (
-                            <KeyboardArrowRightIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </div>
-                      <div className="px-4">
-                        <OrderIdBadge value={task.orderId} onCopy={handleCopyOrderId} t={t} />
-                      </div>
-                      <div className="min-w-0 overflow-hidden px-4">
-                        {renderOrderDate(task, activeSubTab)}
-                      </div>
-                      <div className="min-w-0 overflow-hidden px-4">
-                        <Badge
-                          tooltip={t(getStatusLabelKey(task.scaleStatus))}
-                          className={statusBadgeClasses[task.scaleStatus]}
-                        >
-                          {t(getStatusLabelKey(task.scaleStatus))}
-                        </Badge>
-                      </div>
-                      <div className="min-w-0 overflow-hidden px-4">
-                        <ShopName value={task.shop} isEtsyTab={isEtsyTab} />
-                      </div>
-                      <div className="min-w-0 overflow-hidden px-4">
-                        {isEtsyTab ? (
-                          renderPill(task.orderStatus)
-                        ) : (
-                          <OverflowText value={task.orderStatus} className="text-ink-secondary" />
-                        )}
-                      </div>
-                      <div className="min-w-0 overflow-hidden px-4">
-                        {isEtsyTab ? (
-                          renderPill(task.orderOwner)
-                        ) : (
-                          <OverflowText value={task.orderOwner} className="text-ink-secondary" />
-                        )}
-                      </div>
-                      <div className="px-4">
-                        <Badge
-                          truncate={false}
-                          className={
-                            pillClassByValue[task.qcBy] ||
-                            'border border-border bg-surface text-ink-secondary'
-                          }
-                        >
-                          {task.qcBy}
-                        </Badge>
-                      </div>
-                      <div className="min-w-0 overflow-hidden px-4">
-                        <FormControl size="small" className="w-full">
-                          <Select
-                            value={task.scaleBy}
-                            displayEmpty
-                            disabled={
-                              assigneesQuery.isLoading ||
-                              (assignScaleMutation.isPending &&
-                                assignScaleMutation.variables?.taskId === task.id)
-                            }
-                            onChange={(event) => handleAssignScale(task.id, event.target.value)}
-                            className={`${isEtsyTab ? 'h-[30px] rounded' : 'h-8 rounded-lg'} bg-surface text-sm`}
-                            inputProps={{ 'aria-label': t('scale.table.columns.assignScale') }}
+              {activeQuery.isLoading ? (
+                <LoadingRows />
+              ) : activeQuery.isError ? (
+                <div className="col-span-full flex h-48 items-center justify-center border-l-2 border-danger pl-2 text-sm text-ink-secondary">
+                  {activeQuery.error?.message}
+                </div>
+              ) : tasks.length === 0 ? (
+                <div className="col-span-full flex h-48 items-center justify-center text-sm text-ink-muted">
+                  {t('scale.empty.noTasks')}
+                </div>
+              ) : (
+                tasks.map((task) => {
+                  const scaleOptions = assigneesQuery.data || []
+                  const visibleScaleOptions =
+                    task.scaleBy && !scaleOptions.some((option) => option.id === task.scaleBy)
+                      ? [{ id: task.scaleBy, name: task.scaleByName }, ...scaleOptions]
+                      : scaleOptions
+
+                  return (
+                    <Fragment key={task.id}>
+                      <div className="col-span-full grid h-14 grid-cols-subgrid items-center border-b border-border bg-surface px-4 text-sm transition hover:bg-page">
+                        <div className="px-4">
+                          <OrderIdBadge value={task.orderId} onCopy={handleCopyOrderId} t={t} />
+                        </div>
+                        <div className="min-w-0 overflow-hidden px-4">
+                          {renderOrderDate(task, activeSubTab)}
+                        </div>
+                        <div className="min-w-0 overflow-hidden px-4">
+                          <StatusBadge
+                            tone={statusToneByValue[task.scaleStatus] || 'neutral'}
+                            tooltip={t(getStatusLabelKey(task.scaleStatus))}
                           >
-                            <MenuItem value="" disabled>
-                              {t('scale.values.csStatus.UNASSIGNED')}
-                            </MenuItem>
-                            {visibleScaleOptions.map((option) => (
-                              <MenuItem key={option.id} value={option.id}>
-                                {option.name}
+                            {t(getStatusLabelKey(task.scaleStatus))}
+                          </StatusBadge>
+                        </div>
+                        <div className="min-w-0 overflow-hidden px-4">
+                          <ShopName value={task.shop} isEtsyTab={isEtsyTab} />
+                        </div>
+                        <div className="min-w-0 overflow-hidden px-4">
+                          {renderOrderStatus(task.orderStatus)}
+                        </div>
+                        <div className="min-w-0 overflow-hidden px-4">
+                          {isEtsyTab ? (
+                            renderPill(task.seller)
+                          ) : (
+                            <OverflowText
+                              value={task.seller}
+                              className="font-semibold text-ink-secondary"
+                            />
+                          )}
+                        </div>
+                        <div className="min-w-0 overflow-hidden px-4">
+                          <OverflowText value={task.qcBy} className="text-ink-secondary" />
+                        </div>
+                        <div className="min-w-0 overflow-hidden px-4">
+                          <FormControl size="small" className="w-full">
+                            <Select
+                              value={task.scaleBy}
+                              displayEmpty
+                              disabled={
+                                assigneesQuery.isLoading ||
+                                (assignScaleMutation.isPending &&
+                                  assignScaleMutation.variables?.taskId === task.id)
+                              }
+                              onChange={(event) => handleAssignScale(task.id, event.target.value)}
+                              className={`${isEtsyTab ? 'h-[30px] rounded' : 'h-8 rounded-lg'} bg-surface text-sm`}
+                              inputProps={{ 'aria-label': t('scale.table.columns.assignScale') }}
+                            >
+                              <MenuItem value="" disabled>
+                                {t('scale.values.csStatus.UNASSIGNED')}
                               </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                              {visibleScaleOptions.map((option) => (
+                                <MenuItem key={option.id} value={option.id}>
+                                  {option.name}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </div>
                       </div>
-                    </div>
-                    {expanded ? renderDetailPanel(task) : null}
-                  </Fragment>
-                )
-              })
-            )}
+                      {renderDetailPanel(task)}
+                    </Fragment>
+                  )
+                })
+              )}
+            </div>
           </div>
-        </div>
 
-        {activeQuery.isFetching && !activeQuery.isLoading ? (
-          <div className="border-t border-border px-4 py-2 text-xs text-ink-muted">
-            {t('scale.loading.refreshing')}
-          </div>
-        ) : null}
-      </section>
-    </div>
+          {activeQuery.isFetching && !activeQuery.isLoading ? (
+            <div className="border-t border-border px-4 py-2 text-xs text-ink-muted">
+              {t('scale.loading.refreshing')}
+            </div>
+          ) : null}
+        </section>
+      </OperationsPageShell>
+    </>
   )
 }

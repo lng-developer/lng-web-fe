@@ -17,17 +17,14 @@ export const QC_PAGE_SIZE = 10
 export const QC_ALL_FILTER = 'all'
 
 export const QC_TABLE_COLUMNS = [
-  { id: 'expand', labelKey: '' },
   { id: 'select', labelKey: '' },
   { id: 'orderId', labelKey: 'qc.table.columns.orderId' },
-  { id: 'statusQc', labelKey: 'qc.table.columns.statusQc' },
-  { id: 'created', labelKey: 'qc.table.columns.created' },
   { id: 'orderDate', labelKey: 'qc.table.columns.orderDate' },
   { id: 'statusOrder', labelKey: 'qc.table.columns.statusOrder' },
   { id: 'shippingType', labelKey: 'qc.table.columns.shippingType' },
   { id: 'shop', labelKey: 'qc.table.columns.shop' },
+  { id: 'seller', labelKey: 'qc.table.columns.seller' },
   { id: 'scaleBy', labelKey: 'qc.table.columns.scaleBy' },
-  { id: 'qcBy', labelKey: 'qc.table.columns.qcBy' },
 ]
 
 export const QC_DETAIL_COLUMNS = [

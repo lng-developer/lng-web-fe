@@ -12,10 +12,19 @@ test('Scale table rows inherit one shared parent column grid', () => {
   assert.doesNotMatch(scalePageSource, /className=\{`grid h-(?:11|14)[^`]*\$\{tableGridClass\}/)
 })
 
+test('Scale table header uses the shared sticky operations header treatment', () => {
+  assert.match(scalePageSource, /operationsTableHeaderClass/)
+  assert.match(scalePageSource, /operationsTextCaptionClass/)
+})
+
+test('Scale table hides both scrollbars without removing the scroll container', () => {
+  assert.match(scalePageSource, /className="h-full overflow-auto scrollbar-none"/)
+})
+
 test('Scale table distributes the available width evenly across data columns', () => {
   const tableGridClass = scalePageSource.match(/const tableGridClass = '([^']+)'/)?.[1]
 
-  assert.equal(tableGridClass, 'grid-cols-[auto_repeat(8,minmax(0,1fr))]')
+  assert.equal(tableGridClass, 'grid-cols-[repeat(8,minmax(0,1fr))]')
 })
 
 test('Scale table non-row content spans every shared column', () => {
@@ -23,32 +32,26 @@ test('Scale table non-row content spans every shared column', () => {
   assert.match(scalePageSource, /col-span-full flex h-48 items-center justify-center/)
 })
 
-test('Scale table excludes group and assignment status columns', () => {
+test('Scale table keeps QC and Scale assignment columns only', () => {
   assert.deepEqual(
     SCALE_TABLE_COLUMNS.map((column) => column.id),
-    [
-      'expand',
-      'orderId',
-      'orderDate',
-      'scaleStatus',
-      'shop',
-      'orderStatus',
-      'orderOwner',
-      'qcBy',
-      'assignScale',
-    ],
+    ['orderId', 'orderDate', 'scaleStatus', 'shop', 'orderStatus', 'seller', 'qcBy', 'assignScale'],
   )
-  assert.doesNotMatch(scalePageSource, /task\.(?:groupId|groupType|assignmentStatus)/)
+  assert.doesNotMatch(scalePageSource, /task\.(?:csAssigneeName|csStatus)/)
+  assert.match(scalePageSource, /<OverflowText value=\{task\.qcBy\}/)
+  assert.doesNotMatch(scalePageSource, /pillClassByValue\[task\.qcBy\]/)
 })
 
 test('Scale assignment dropdown uses the scale assignee lane', () => {
   assert.match(scalePageSource, /useAssignScaleTaskMutation/)
   assert.match(scalePageSource, /handleAssignScale/)
   assert.match(scalePageSource, /assignedDesignUserId/)
-  assert.doesNotMatch(scalePageSource, /useAssignCsTaskMutation/)
-  assert.doesNotMatch(scalePageSource, /handleAssignCs/)
 })
 
-test('Scale table displays up to nineteen Order ID characters', () => {
-  assert.match(scalePageSource, /const ORDER_ID_MAX_LENGTH = 19/)
+test('Scale table displays the full Order ID without a badge border', () => {
+  assert.doesNotMatch(scalePageSource, /const ORDER_ID_MAX_LENGTH/)
+  assert.match(
+    scalePageSource,
+    /className="block max-w-full break-all font-mono text-xs text-ink-secondary"/,
+  )
 })

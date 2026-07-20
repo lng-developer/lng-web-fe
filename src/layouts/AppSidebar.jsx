@@ -81,22 +81,6 @@ const NAV_ITEM_ICONS = {
   vendors: StorefrontOutlinedIcon,
 }
 
-function collectDefaultOpenIds(items) {
-  return items.reduce((accumulator, item) => {
-    if (item.defaultOpen) {
-      accumulator[item.id] = true
-    }
-
-    const nestedItems = item.items ?? item.children
-
-    if (nestedItems) {
-      return { ...accumulator, ...collectDefaultOpenIds(nestedItems) }
-    }
-
-    return accumulator
-  }, {})
-}
-
 function hasActivePath(item, location) {
   if (isNavItemActive(item, location)) {
     return true
@@ -244,7 +228,7 @@ export default function AppSidebar({ onNavigate, open }) {
     SIDEBAR_WORKSPACES.reduce(
       (itemsByWorkspace, workspace) => ({
         ...itemsByWorkspace,
-        [workspace.id]: collectDefaultOpenIds(SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? []),
+        [workspace.id]: {},
       }),
       {},
     ),
@@ -316,8 +300,8 @@ export default function AppSidebar({ onNavigate, open }) {
       }
 
       if (item.children) {
-        const isOpen = Boolean(openItems[item.id])
         const active = item.children.some((child) => hasActivePath(child, location))
+        const isOpen = active || Boolean(openItems[item.id])
 
         return (
           <Box key={item.id}>

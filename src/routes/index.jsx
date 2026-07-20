@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- file cấu hình router, không phải component */
 import { lazy } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Outlet } from 'react-router-dom'
 
 import NotFound from '@/components/common/NotFound'
 import RouteError from '@/components/common/RouteError'
@@ -21,10 +21,15 @@ const FinancePage = lazy(() => import('@/features/finance/pages/FinancePage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const ListingPage = lazy(() => import('@/features/listings/pages/ListingPage'))
 const MappingPage = lazy(() => import('@/features/mapping/pages/MappingPage'))
+const AttendanceDeskPage = lazy(() => import('@/features/hr-time/pages/AttendanceDeskPage'))
+const MyTimePage = lazy(() => import('@/features/hr-time/pages/MyTimePage'))
 const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const PodWorkbenchPage = lazy(() => import('@/features/pod-workbench/pages/PodWorkbenchPage'))
 const QcPage = lazy(() => import('@/features/qc/pages/QcPage'))
 const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
+const RequestInboxPage = lazy(() => import('@/features/hr-time/pages/RequestInboxPage'))
+const PeoplePage = lazy(() => import('@/features/hr-time/pages/PeoplePage'))
+const SchedulePage = lazy(() => import('@/features/hr-time/pages/SchedulePage'))
 const UsersRolesPage = lazy(() => import('@/features/rbac/pages/UsersRolesPage'))
 const ScalePage = lazy(() => import('@/features/scale/pages/ScalePage'))
 const ShippingPage = lazy(() => import('@/features/shipments/pages/ShippingPage'))
@@ -59,6 +64,54 @@ export const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: 'profile', element: <ProfilePage /> },
           { path: 'departments', element: <DepartmentsPage /> },
+          {
+            path: ROUTES.HR.slice(1),
+            element: <Outlet />,
+            children: [
+              {
+                index: true,
+                element: requireAnyPermissions(
+                  ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
+                  <MyTimePage />,
+                ),
+              },
+              {
+                path: ROUTES.HR_TIME_MY_TIME.replace(`${ROUTES.HR}/`, ''),
+                element: requireAnyPermissions(
+                  ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
+                  <MyTimePage />,
+                ),
+              },
+              {
+                path: ROUTES.HR_TIME_REQUEST_INBOX.replace(`${ROUTES.HR}/`, ''),
+                element: requireAnyPermissions(
+                  ['HR_LEAVE:READ', 'HR_LEAVE:APPROVE', 'HR_OVERTIME:READ', 'HR_OVERTIME:APPROVE'],
+                  <RequestInboxPage />,
+                ),
+              },
+              {
+                path: ROUTES.HR_TIME_ATTENDANCE.replace(`${ROUTES.HR}/`, ''),
+                element: requireAnyPermissions(
+                  ['HR_ATTENDANCE:READ', 'HR_ATTENDANCE:MANAGE'],
+                  <AttendanceDeskPage />,
+                ),
+              },
+              {
+                path: ROUTES.HR_TIME_SCHEDULE.replace(`${ROUTES.HR}/`, ''),
+                element: requireAnyPermissions(
+                  ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'],
+                  <SchedulePage />,
+                ),
+              },
+              {
+                path: ROUTES.HR_TIME_EMPLOYEES.replace(`${ROUTES.HR}/`, ''),
+                element: requireAnyPermissions(
+                  ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'],
+                  <PeoplePage />,
+                ),
+              },
+            ],
+          },
           { path: 'portal/orders', element: requirePermissions(['ORDERS:READ'], <OrdersPage />) },
           {
             path: 'portal/listings',

@@ -14,6 +14,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ReplayIcon from '@mui/icons-material/Replay'
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined'
 import VerifiedIcon from '@mui/icons-material/Verified'
@@ -40,6 +41,8 @@ import { useSnackbar } from 'notistack'
 
 import AnimatedDialog from '@/components/common/AnimatedDialog'
 import CopyableText from '@/components/common/CopyableText'
+import ImagePreview from '@/components/common/ImagePreview'
+import InlineDetailValue from '@/components/common/InlineDetailValue'
 import DateRangePicker from '@/components/form/DateRangePicker'
 import {
   OperationsPageShell,
@@ -57,6 +60,7 @@ import {
   useCreateOrderItemReplacementMutation,
   useImportOrdersMutation,
   useUpdateOrderBuyerMutation,
+  useUpdateOrderItemCsNoteMutation,
   useUpdateOrderShippingAddressMutation,
   useUpdateOrderShippingServiceMutation,
 } from '@/features/orders/api/orders.mutations'
@@ -1589,19 +1593,21 @@ const ProductImages = memo(function ProductImages({ images }) {
   return (
     <Stack spacing={3} sx={{ width: '100%', alignItems: 'center' }}>
       {images.map((image, index) => (
-        <Box
+        <ImagePreview
           key={`${image}-${index}`}
-          component="img"
           src={image}
-          alt=""
-          sx={{
-            width: index === 0 ? 150 : 142,
-            height: index === 0 ? 150 : 142,
-            objectFit: 'cover',
-            objectPosition: 'center',
-            borderRadius: 1,
-          }}
-        />
+          alt="Product image"
+          className={
+            index === 0 ? 'h-[150px] w-[150px] rounded-md' : 'h-[142px] w-[142px] rounded-md'
+          }
+        >
+          <Box
+            component="img"
+            src={image}
+            alt="Product image"
+            sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          />
+        </ImagePreview>
       ))}
     </Stack>
   )
@@ -1715,53 +1721,62 @@ const CustomizationInfo = memo(function CustomizationInfo({ customization }) {
             </Typography>
           ) : null}
           {dynamicFields.map((field, index) => (
-            <DetailField
+            <InlineDetailValue
               key={`${field.label}-${field.value}-${index}`}
               label={field.label}
               value={field.value}
-              valueAlign="left"
             />
           ))}
-          <DetailField
-            label={t('orders.fields.customizationUrl')}
-            value={customizationUrlValue}
-            valueAlign="left"
-          />
+          <InlineDetailValue label={t('orders.fields.customizationUrl')}>
+            {customizationUrlValue}
+          </InlineDetailValue>
           {dynamicImages.map((image, index) => (
             <Box key={`${image.url}-${index}`}>
-              <Typography variant="body2" color="text.disabled" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
                 {image.label || t('orders.fields.customerPhoto')}
               </Typography>
-              <Box
-                component="img"
+              <ImagePreview
                 src={image.url}
-                alt=""
-                sx={{ width: 58, height: 58, objectFit: 'cover', borderRadius: 1 }}
-              />
+                alt={image.label || t('orders.fields.customerPhoto')}
+                className="h-[58px] w-[58px] rounded"
+              >
+                <Box
+                  component="img"
+                  src={image.url}
+                  alt={image.label || t('orders.fields.customerPhoto')}
+                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </ImagePreview>
             </Box>
           ))}
         </>
       ) : (
         <>
           {topFields.map(([labelKey, value]) => (
-            <DetailField key={labelKey} label={t(labelKey)} value={value} valueAlign="left" />
+            <InlineDetailValue key={labelKey} label={t(labelKey)} value={value} />
           ))}
           <Typography variant="body2" color="text.disabled">
             {t('orders.fields.customerPhoto')}
           </Typography>
           <Stack direction="row" spacing={2.5}>
             {customization.customerPhoto.map((image, index) => (
-              <Box
+              <ImagePreview
                 key={`${image}-photo-${index}`}
-                component="img"
                 src={image}
-                alt=""
-                sx={{ width: 58, height: 58, objectFit: 'cover', borderRadius: 1 }}
-              />
+                alt={t('orders.fields.customerPhoto')}
+                className="h-[58px] w-[58px] rounded"
+              >
+                <Box
+                  component="img"
+                  src={image}
+                  alt={t('orders.fields.customerPhoto')}
+                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </ImagePreview>
             ))}
           </Stack>
           {bottomFields.map(([labelKey, value]) => (
-            <DetailField key={labelKey} label={t(labelKey)} value={value} valueAlign="left" />
+            <InlineDetailValue key={labelKey} label={t(labelKey)} value={value} />
           ))}
         </>
       )}
@@ -2257,8 +2272,15 @@ const FulfillmentInfo = memo(function FulfillmentInfo({ fulfillment, onRefresh, 
   )
 })
 
-const NotePanel = memo(function NotePanel({ fulfillment }) {
+const NotePanel = memo(function NotePanel({ fulfillment, orderItemId }) {
   const { t } = useTranslation()
+  const updateOrderItemCsNoteMutation = useUpdateOrderItemCsNoteMutation()
+  const [csNote, setCsNote] = useState(fulfillment.csNote || '')
+
+  const saveCsNote = () => {
+    if (!orderItemId) return
+    updateOrderItemCsNoteMutation.mutate({ orderItemId, csNote })
+  }
 
   return (
     <Stack spacing={1.2} sx={{ width: '100%' }}>
@@ -2277,7 +2299,28 @@ const NotePanel = memo(function NotePanel({ fulfillment }) {
       <Typography variant="body2" className="!text-ink-muted">
         {t('orders.fields.note')}
       </Typography>
-      <ReadOnlyValue value={t(fulfillment.noteKey)} multiline rows={2} />
+      <TextField
+        aria-label={t('orders.fields.note')}
+        disabled={updateOrderItemCsNoteMutation.isPending}
+        error={updateOrderItemCsNoteMutation.isError}
+        fullWidth
+        minRows={2}
+        multiline
+        onChange={(event) => setCsNote(event.target.value)}
+        placeholder={t('orders.fields.note')}
+        value={csNote}
+        size="small"
+      />
+      <Button
+        disabled={!orderItemId || updateOrderItemCsNoteMutation.isPending}
+        onClick={saveCsNote}
+        size="small"
+        startIcon={<SaveOutlinedIcon fontSize="small" />}
+        sx={{ alignSelf: 'flex-start' }}
+        variant="outlined"
+      >
+        {t('common.save')}
+      </Button>
     </Stack>
   )
 })
@@ -2328,7 +2371,11 @@ const ExpandedOrderDetail = memo(function ExpandedOrderDetail({ onRefresh, order
             onRefresh={onRefresh}
             orderItemId={displayOrder.id}
           />
-          <NotePanel fulfillment={displayOrder.fulfillment} />
+          <NotePanel
+            key={`${displayOrder.id}-${displayOrder.fulfillment.csNote || ''}`}
+            fulfillment={displayOrder.fulfillment}
+            orderItemId={displayOrder.id}
+          />
         </Box>
       ))}
     </Stack>

@@ -47,9 +47,70 @@ function mapCustomerInputs(customerInputs) {
   if (!customerInputs || typeof customerInputs !== 'object') return []
 
   return Object.entries(customerInputs).flatMap(([key, value]) => {
+    if (key.toLowerCase() === 'images') return []
     if (Array.isArray(value)) return mapCustomerInputs(value)
     return [{ label: humanizeKey(key), value: displayValue(value), type: 'text' }]
   })
+}
+
+function mapCustomerImages(customization = {}) {
+  const inputs = Array.isArray(customization.customerInputs?.images)
+    ? customization.customerInputs.images.filter(Boolean)
+    : []
+  const assets = Array.isArray(customization.imageAssets) ? customization.imageAssets : []
+  const usedInputIndexes = new Set()
+  const seenAssets = new Set()
+  const rows = []
+
+  function addRow(asset, input, index) {
+    const assetId = asset?.assetId || input?.assetId || null
+    const url =
+      input?.secureUrl ||
+      input?.url ||
+      input?.assetDownloadUrl ||
+      asset?.secureUrl ||
+      asset?.assetDownloadUrl ||
+      (typeof input?.value === 'string' ? input.value : null) ||
+      null
+    const key = assetId || url || `${input?.label || input?.name || 'customer-photo'}-${index}`
+    if (seenAssets.has(String(key))) return
+    seenAssets.add(String(key))
+
+    rows.push({
+      label:
+        input?.label ||
+        input?.name ||
+        asset?.label ||
+        (assets.length > 1 || inputs.length > 1 ? `Customer Photo ${index + 1}` : 'Customer Photo'),
+      value: '-',
+      type: 'image',
+      url,
+      assetId,
+    })
+  }
+
+  assets.forEach((asset, index) => {
+    const inputIndex = inputs.findIndex(
+      (input, candidateIndex) =>
+        !usedInputIndexes.has(candidateIndex) &&
+        input?.assetId &&
+        asset?.assetId &&
+        String(input.assetId) === String(asset.assetId),
+    )
+    const fallbackIndex = inputIndex >= 0 ? inputIndex : !usedInputIndexes.has(index) ? index : -1
+    const input = fallbackIndex >= 0 ? inputs[fallbackIndex] : null
+    if (fallbackIndex >= 0) usedInputIndexes.add(fallbackIndex)
+    addRow(asset, input, index)
+  })
+
+  inputs.forEach((input, index) => {
+    if (usedInputIndexes.has(index)) return
+    if (input.assetId || input.url || input.secureUrl || typeof input.value === 'string') {
+      addRow(null, input, index)
+    }
+  })
+
+  return rows
 }
 
 function formatTaskDate(value) {
@@ -169,7 +230,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
   const vendorProduct = task.vendorProduct || {}
   const vendorCostCenter = task.vendorCostCenter || {}
   const scaleSlots = scaleUse.scaleSlots || []
-  const customerPhoto = customization.imageAssets?.[0]
+  const customerImages = mapCustomerImages(customization)
   const scaleBy = task.assignedDesignUserId || ''
   const scaleByName =
     task.assignedDesigner?.fullName ||
@@ -190,18 +251,14 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
   const shopId = task.shopId || listing.shopId || null
   const seller = task.seller?.name || task.seller?.employeeCode || '-'
   const orderOwner =
-    task.orderOwner?.fullName || task.orderOwner?.employeeCode || task.orderOwner?.id || '-'
+    task.orderOwner?.fullName ||
+    task.orderOwner?.employeeCode ||
+    task.orderOwner?.id ||
+    task.orderOwnerId ||
+    '-'
 
   const customizationRows = mapCustomerInputs(customization.customerInputs)
-  if (customerPhoto) {
-    customizationRows.push({
-      label: 'Customer Photo',
-      value: '-',
-      type: 'image',
-      url: customerPhoto.secureUrl || customerPhoto.assetDownloadUrl || null,
-      assetId: customerPhoto.assetId || null,
-    })
-  }
+  customizationRows.push(...customerImages)
 
   return {
     id: task.id,
@@ -211,8 +268,6 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
       task.orderDate || task.createdAt || task.assignedAt || task.updatedAt,
     ),
     scaleStatus: getDisplayScaleStatus(task),
-    groupId: task.groupId || null,
-    groupType: task.groupType || null,
     shop: shopNames.get(shopId) || shopId || '-',
     shopId,
     seller,
@@ -238,10 +293,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
         psdStatus: psdTemplate.status || listing.psdStatus || '-',
         quantity: task.fulfillQty || 1,
         imageUrl:
-          task.productImageUrl ||
-          customerPhoto?.secureUrl ||
-          customerPhoto?.assetDownloadUrl ||
-          null,
+          task.productImageUrl || listing.previewAssetPreviewUrl || customerImages[0]?.url || null,
       },
       customization: customizationRows,
       taskStatus: {
@@ -251,7 +303,7 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
       },
       costCenter: {
         vendorProduct: vendorProduct.name || vendorProduct.code || '-',
-        size: vendorCostCenter.name || vendorCostCenter.code || '-',
+        productCost: vendorCostCenter.name || vendorCostCenter.code || '-',
         sku: vendorProduct.code || '-',
         vendor:
           vendorProduct.vendor?.name || vendorProduct.vendor?.code || vendorProduct.vendor || '-',

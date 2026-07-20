@@ -3,5 +3,6 @@ export const scaleKeys = {
   tasks: (query = {}) => [...scaleKeys.all, 'tasks', query],
   summary: (query = {}) => [...scaleKeys.all, 'summary', query],
   assignees: (query = {}) => [...scaleKeys.all, 'assignees', query],
+  csAssignees: (query = {}) => [...scaleKeys.all, 'cs-assignees', query],
   shops: (query = {}) => [...scaleKeys.all, 'shops', query],
 }

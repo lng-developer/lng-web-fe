@@ -43,15 +43,14 @@ export const SCALE_ALL_FILTER = 'all'
 export const ETSY_EXPANDED_TASK_ID = 'etsy-scale-task-ord-10039'
 
 export const SCALE_TABLE_COLUMNS = [
-  { id: 'expand', labelKey: '', width: 'w-[40px]' },
   { id: 'orderId', labelKey: 'scale.table.columns.orderId', width: 'w-[130px]' },
   { id: 'orderDate', labelKey: 'scale.table.columns.orderDate', width: 'w-[160px]' },
   { id: 'scaleStatus', labelKey: 'scale.table.columns.scaleStatus', width: 'w-[130px]' },
   { id: 'shop', labelKey: 'scale.table.columns.shop', width: 'w-[110px]' },
   { id: 'orderStatus', labelKey: 'scale.table.columns.orderStatus', width: 'w-[145px]' },
-  { id: 'orderOwner', labelKey: 'scale.table.columns.orderOwner', width: 'w-[140px]' },
+  { id: 'seller', labelKey: 'scale.table.columns.seller', width: 'w-[140px]' },
   { id: 'qcBy', labelKey: 'scale.table.columns.qcBy', width: 'w-[120px]' },
   { id: 'assignScale', labelKey: 'scale.table.columns.assignScale', width: 'w-[220px]' },
 ]
 
-export const SCALE_TABLE_MIN_WIDTH = 1636
+export const SCALE_TABLE_MIN_WIDTH = 1405

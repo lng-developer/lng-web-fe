@@ -1139,6 +1139,14 @@
       "canvas": "Khung soi ảnh QC",
       "openImage": "Mở ảnh",
       "noImages": "Task này chưa có ảnh để QC.",
+      "fileUnavailable": "File không khả dụng",
+      "outputMissing": "Thiếu ảnh đã scale",
+      "referenceImages": "Ảnh tham chiếu",
+      "sourceFiles": "Ảnh nguồn",
+      "scaledFiles": "Ảnh đã scale",
+      "compare": "So sánh",
+      "resetView": "Đặt lại khung xem",
+      "sourceOverlayOpacity": "Độ trong suốt ảnh nguồn",
       "itemInfo": "Item Info",
       "orderId": "Order ID:",
       "asin": "Asin:",
@@ -1167,6 +1175,7 @@
         "statusOrder": "Status Order",
         "shippingType": "Shipping Type",
         "shop": "Shop",
+        "seller": "Seller",
         "scaleBy": "Scale By",
         "qcBy": "QC By"
       }
@@ -1179,9 +1188,30 @@
       "pngStatus": "PNG Status",
       "vendorProduct": "Vendor Product",
       "action": "Action",
+      "orderId": "Order ID",
       "sku": "Sku:",
       "asin": "Asin:",
-      "quantity": "Quantity: {{quantity}}"
+      "quantity": "Quantity: {{quantity}}",
+      "productAndOrder": "Product & Order",
+      "quantityLabel": "Qty",
+      "seller": "Seller",
+      "shop": "Shop",
+      "customization": "Customization",
+      "customerUploads": "Customer uploads",
+      "scaledFiles": "Scaled files",
+      "input": "Tệp nguồn",
+      "output": "Tệp đã scale",
+      "available": "Available",
+      "noFile": "No file",
+      "noScaledFiles": "No scaled files",
+      "vendorWorkflow": "Vendor & workflow",
+      "vendor": "Vendor",
+      "costCenter": "Cost center",
+      "scaleBy": "Scale by",
+      "notesAndDecision": "Notes & decision",
+      "csNote": "CS note",
+      "designNote": "Design note",
+      "qcNote": "QC note"
     },
     "values": {
       "status": {
@@ -1275,19 +1305,19 @@
         "orderId": "Order ID",
         "orderDate": "Order Date",
         "scaleStatus": "Scale Status",
-        "groupId": "Group ID",
-        "groupType": "Group Type",
         "shop": "Shop",
         "orderStatus": "Order Status",
+        "seller": "Seller",
         "orderOwner": "Order Owner",
         "qcBy": "QC By",
-        "assignCs": "Người Scale",
+        "assignCs": "Gán CS",
         "assignScale": "Người Scale",
-        "csStatus": "Phân công"
+        "csStatus": "Trạng thái CS"
       }
     },
     "detail": {
       "productInfo": "Product Information",
+      "imagePrintSide": "Image & Print Side",
       "customization": "Customization",
       "taskStatus": "Task Status",
       "costCenter": "Cost Center",
@@ -1305,6 +1335,7 @@
       "customer": "Customer",
       "shipping": "Shipping",
       "paid": "Paid",
+      "qty": "QTY",
       "quantity": "SL",
       "notePlaceholder": "Thêm ghi chú CS..."
     },
@@ -1379,11 +1410,12 @@
       },
       "costCenter": {
         "vendorProduct": "Vendor Product:",
-        "size": "Size:",
+        "productCost": "Product Cost:",
         "color": "Color:"
       },
       "notes": {
-        "cs": "Ghi chú Design:",
+        "design": "Ghi chú Design:",
+        "cs": "Ghi chú CS:",
         "qc": "QC note:"
       },
       "actions": {
@@ -1402,6 +1434,10 @@
     },
     "manualUpload": {
       "title": "Upload file scale",
+      "addPosition": "Thêm vị trí",
+      "replace": "Thay file",
+      "tryAgain": "Thử lại",
+      "uploadFailed": "Upload thất bại",
       "position": "Vị trí",
       "file": "File upload",
       "dropTitle": "Kéo thả ảnh scale vào đây",
@@ -1426,6 +1462,8 @@
       "assignError": "Không thể cập nhật người phụ trách scale.",
       "copySuccess": "Đã copy fulfill name.",
       "noteSuccess": "Đã lưu ghi chú CS.",
+      "designNoteSuccess": "Đã lưu ghi chú Design.",
+      "csNoteSuccess": "Đã lưu ghi chú CS.",
       "recheckSuccess": "Đã kiểm tra lại task production.",
       "recheckStillBlocked": "Task vẫn cần xử lý",
       "recheckUnavailable": "Thiếu order item nên không thể kiểm tra lại task này.",
@@ -1434,7 +1472,11 @@
       "missingFileCheck": "Task này chưa có file check để upload.",
       "deleteMockupSuccess": "Đã xóa mockup.",
       "addMockupUnsupported": "BE chưa hỗ trợ thêm slot mockup từ màn này.",
-      "deleteMockupUnsupported": "BE chưa hỗ trợ xóa file scale từ màn này."
+      "deleteMockupUnsupported": "BE chưa hỗ trợ xóa file scale từ màn này.",
+      "noScaleSlots": "Chưa có vị trí scale.",
+      "orderIdCopySuccess": "Đã sao chép Order ID.",
+      "orderIdCopyFailed": "Không thể sao chép Order ID.",
+      "noUploadSlot": "Task này chưa có vị trí upload."
     }
   },
   "errors": {
@@ -1562,7 +1604,12 @@
       "status": "Status",
       "tracking": "Tracking",
       "carrier": "Carrier",
-      "note": "Note"
+      "note": "Note",
+      "csNote": "Ghi chú CS",
+      "csNotePlaceholder": "Thêm ghi chú CS..."
+    },
+    "actions": {
+      "saveNote": "Lưu ghi chú"
     },
     "pagination": {
       "before": "Before",
@@ -2554,6 +2601,101 @@
         "Chọn vendor cần ưu tiên cho order khớp.",
         "Chỉ dùng Nâng cao khi rule áp dụng cho một shop, channel hoặc marketplace."
       ]
+    }
+  },
+  "hrTime": {
+    "title": "Vận hành thời gian nhân sự",
+    "tabs": {
+      "employees": "Nhân viên",
+      "schedule": "Lịch làm việc",
+      "attendance": "Chấm công",
+      "leave": "Nghỉ phép",
+      "overtime": "Tăng ca"
+    },
+    "actions": {
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "adjustAttendance": "Điều chỉnh chấm công",
+      "approve": "Duyệt",
+      "reject": "Từ chối",
+      "cancel": "Hủy"
+    },
+    "labels": {
+      "unknownEmployee": "Nhân viên không xác định",
+      "workLocation": "Địa điểm làm việc",
+      "shift": "Ca làm việc",
+      "department": "Phòng ban"
+    },
+    "navigation": {
+      "myTime": "Thời gian của tôi",
+      "requestInbox": "Hộp duyệt yêu cầu",
+      "attendance": "Bàn chấm công",
+      "schedule": "Lịch làm việc",
+      "employees": "Danh bạ nhân sự"
+    }
+  },
+  "financeProfit": {
+    "title": "Lợi nhuận & Chi phí",
+    "subtitle": "Finance snapshot theo từng order item để kiểm tra lợi nhuận.",
+    "refresh": "Làm mới",
+    "visibleTotal": "Bản ghi đang hiển thị",
+    "revenue": "Doanh thu",
+    "grossProfit": "Lợi nhuận gộp",
+    "missingCost": "Thiếu chi phí: {{count}}",
+    "loadError": "Không thể tải finance snapshot.",
+    "empty": "Không có finance snapshot.",
+    "filters": {
+      "allChannels": "Tất cả kênh",
+      "shopId": "Shop ID",
+      "orderId": "Order ID",
+      "orderItemId": "Order item ID",
+      "allSnapshots": "Tất cả trạng thái snapshot",
+      "allCosts": "Tất cả trạng thái chi phí"
+    },
+    "table": {
+      "orderItem": "Order item",
+      "channel": "Kênh",
+      "revenue": "Doanh thu",
+      "fees": "Phí",
+      "baseCost": "Chi phí gốc",
+      "grossProfit": "Lợi nhuận gộp",
+      "margin": "Biên lợi nhuận",
+      "costStatus": "Trạng thái chi phí"
+    }
+  },
+  "financialReports": {
+    "title": "Báo cáo tài chính",
+    "subtitle": "Doanh thu, chi phí, lợi nhuận gộp và chi tiêu quảng cáo theo ngày.",
+    "refresh": "Làm mới",
+    "revenue": "Doanh thu",
+    "grossProfit": "Lợi nhuận gộp",
+    "netProfit": "Lợi nhuận ròng",
+    "missingCost": "Thiếu chi phí: {{count}}",
+    "loadError": "Không thể tải báo cáo tài chính.",
+    "empty": "Không có dữ liệu báo cáo.",
+    "tabs": { "daily": "Lợi nhuận theo ngày", "seller": "Theo seller", "team": "Theo team" },
+    "chart": { "title": "Hiệu quả theo ngày", "channelTitle": "Lợi nhuận ròng theo kênh" },
+    "filters": {
+      "allChannels": "Tất cả kênh",
+      "shopId": "Shop ID",
+      "marketplace": "Marketplace",
+      "dateFrom": "Từ ngày",
+      "dateTo": "Đến ngày"
+    },
+    "table": {
+      "date": "Ngày",
+      "channel": "Kênh",
+      "seller": "Seller",
+      "team": "Team",
+      "items": "Số item",
+      "revenue": "Doanh thu",
+      "baseCost": "Chi phí gốc",
+      "grossProfit": "Lợi nhuận gộp",
+      "grossMargin": "Biên gộp",
+      "adSpend": "Chi phí quảng cáo",
+      "netProfit": "Lợi nhuận ròng",
+      "netMargin": "Biên ròng",
+      "missingCost": "Thiếu chi phí"
     }
   }
 }

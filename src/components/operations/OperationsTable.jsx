@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, memo } from 'react'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined'
@@ -26,7 +26,7 @@ function cellContentAlignClass(align) {
   return 'justify-items-start text-left'
 }
 
-export default function OperationsTable({
+function OperationsTable({
   columns,
   rows,
   getRowKey,
@@ -162,3 +162,5 @@ export default function OperationsTable({
     </section>
   )
 }
+
+export default memo(OperationsTable)

@@ -1,0 +1,212 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+import { apiClient } from '@/services/axiosInstance'
+import { ENDPOINTS } from '@/services/endpoints'
+
+import { unwrapHrTimeResponse } from '../utils/hrTimeApi.js'
+import { hrTimeKeys } from './hrTime.keys.js'
+
+function request(method, endpoint, payload) {
+  return apiClient[method](endpoint, payload).then(unwrapHrTimeResponse)
+}
+
+function useHrTimeMutation(mutationFn, keysForSuccess) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn,
+    onSuccess: async (_data, variables) => {
+      await Promise.all(
+        keysForSuccess(variables).map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+      )
+    },
+  })
+}
+
+export function useCreateEmployeeProfileMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.EMPLOYEE_PROFILES, payload),
+    () => [hrTimeKeys.employeeProfiles()],
+  )
+}
+
+export function useUpdateEmployeeProfileMutation() {
+  return useHrTimeMutation(
+    ({ profileId, payload }) => request('patch', ENDPOINTS.HR.EMPLOYEE_PROFILE(profileId), payload),
+    ({ profileId }) => [hrTimeKeys.employeeProfiles(), hrTimeKeys.employeeProfile(profileId)],
+  )
+}
+
+export function useRestoreEmployeeProfileMutation() {
+  return useHrTimeMutation(
+    ({ profileId }) => request('patch', ENDPOINTS.HR.EMPLOYEE_PROFILE_RESTORE(profileId)),
+    ({ profileId }) => [hrTimeKeys.employeeProfiles(), hrTimeKeys.employeeProfile(profileId)],
+  )
+}
+
+export function useDeleteEmployeeProfileMutation() {
+  return useHrTimeMutation(
+    ({ profileId }) => request('delete', ENDPOINTS.HR.EMPLOYEE_PROFILE(profileId)),
+    ({ profileId }) => [hrTimeKeys.employeeProfiles(), hrTimeKeys.employeeProfile(profileId)],
+  )
+}
+
+export function useCreateWorkLocationMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.WORK_LOCATIONS, payload),
+    () => [hrTimeKeys.workLocations(), hrTimeKeys.shifts(), hrTimeKeys.assignments()],
+  )
+}
+
+export function useUpdateWorkLocationMutation() {
+  return useHrTimeMutation(
+    ({ id, payload }) => request('patch', ENDPOINTS.HR.WORK_LOCATION(id), payload),
+    () => [hrTimeKeys.workLocations(), hrTimeKeys.shifts(), hrTimeKeys.assignments()],
+  )
+}
+
+export function useCreateShiftMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.SHIFTS, payload),
+    () => [hrTimeKeys.shifts(), hrTimeKeys.assignments()],
+  )
+}
+
+export function useUpdateShiftMutation() {
+  return useHrTimeMutation(
+    ({ id, payload }) => request('patch', ENDPOINTS.HR.SHIFT(id), payload),
+    () => [hrTimeKeys.shifts(), hrTimeKeys.assignments()],
+  )
+}
+
+export function useCreateShiftAssignmentMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.SHIFT_ASSIGNMENTS, payload),
+    () => [hrTimeKeys.assignments()],
+  )
+}
+
+export function useUpdateShiftAssignmentMutation() {
+  return useHrTimeMutation(
+    ({ id, payload }) => request('patch', ENDPOINTS.HR.SHIFT_ASSIGNMENT(id), payload),
+    () => [hrTimeKeys.assignments()],
+  )
+}
+
+export function useCreateCalendarOverrideMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.CALENDAR_OVERRIDES, payload),
+    () => [hrTimeKeys.calendarOverrides()],
+  )
+}
+
+export function useUpdateCalendarOverrideMutation() {
+  return useHrTimeMutation(
+    ({ id, payload }) => request('patch', ENDPOINTS.HR.CALENDAR_OVERRIDE(id), payload),
+    () => [hrTimeKeys.calendarOverrides()],
+  )
+}
+
+export function useCheckInMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.ATTENDANCE_CHECK_IN, payload),
+    () => [hrTimeKeys.attendance(), hrTimeKeys.myAttendance()],
+  )
+}
+
+export function useCheckOutMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.ATTENDANCE_CHECK_OUT, payload),
+    () => [hrTimeKeys.attendance(), hrTimeKeys.myAttendance()],
+  )
+}
+
+export function useAdjustAttendanceMutation() {
+  return useHrTimeMutation(
+    ({ attendanceId, payload }) =>
+      request('patch', ENDPOINTS.HR.ATTENDANCE_RECORD(attendanceId), payload),
+    () => [hrTimeKeys.attendance(), hrTimeKeys.myAttendance()],
+  )
+}
+
+export function useUpsertLeaveBalanceMutation() {
+  return useHrTimeMutation(
+    ({ profileId, year, leaveType, payload }) =>
+      request('put', ENDPOINTS.HR.LEAVE_BALANCE(profileId, year, leaveType), payload),
+    ({ profileId, year, leaveType }) => [
+      hrTimeKeys.leaveBalances(),
+      hrTimeKeys.myLeaveBalances(year),
+      hrTimeKeys.leaveBalance(profileId, year, leaveType),
+    ],
+  )
+}
+
+export function useCreateLeaveRequestMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_REQUESTS, payload),
+    () => [hrTimeKeys.leave()],
+  )
+}
+
+export function useApproveLeaveRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request('post', ENDPOINTS.HR.LEAVE_REQUEST_APPROVE(requestId), payload),
+    ({ requestId }) => [
+      hrTimeKeys.leave(),
+      hrTimeKeys.leaveDetail(requestId),
+      hrTimeKeys.leaveBalances(),
+    ],
+  )
+}
+
+export function useRejectLeaveRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request('post', ENDPOINTS.HR.LEAVE_REQUEST_REJECT(requestId), payload),
+    ({ requestId }) => [hrTimeKeys.leave(), hrTimeKeys.leaveDetail(requestId)],
+  )
+}
+
+export function useCancelLeaveRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request('post', ENDPOINTS.HR.LEAVE_REQUEST_CANCEL(requestId), payload),
+    ({ requestId }) => [
+      hrTimeKeys.leave(),
+      hrTimeKeys.leaveDetail(requestId),
+      hrTimeKeys.leaveBalances(),
+    ],
+  )
+}
+
+export function useCreateOvertimeRequestMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.OVERTIME_REQUESTS, payload),
+    () => [hrTimeKeys.overtime()],
+  )
+}
+
+export function useApproveOvertimeRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request('post', ENDPOINTS.HR.OVERTIME_REQUEST_APPROVE(requestId), payload),
+    ({ requestId }) => [hrTimeKeys.overtime(), hrTimeKeys.overtimeDetail(requestId)],
+  )
+}
+
+export function useRejectOvertimeRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request('post', ENDPOINTS.HR.OVERTIME_REQUEST_REJECT(requestId), payload),
+    ({ requestId }) => [hrTimeKeys.overtime(), hrTimeKeys.overtimeDetail(requestId)],
+  )
+}
+
+export function useCancelOvertimeRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request('post', ENDPOINTS.HR.OVERTIME_REQUEST_CANCEL(requestId), payload),
+    ({ requestId }) => [hrTimeKeys.overtime(), hrTimeKeys.overtimeDetail(requestId)],
+  )
+}

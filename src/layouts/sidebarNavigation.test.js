@@ -52,7 +52,6 @@ describe('sidebar navigation', () => {
     'orders-amazon',
     'orders-etsy',
     'listings',
-    'cost-center-config',
     'product-types',
     'internal-templates',
     'amazon-orders-cost-report',
@@ -64,10 +63,8 @@ describe('sidebar navigation', () => {
     'shops-stores',
     'mapping-workbench',
     'users-roles',
-    'scale',
     'scale-amazon',
     'scale-etsy',
-    'qc',
     'qc-amazon',
     'qc-etsy',
     'design-task-list',
@@ -77,6 +74,11 @@ describe('sidebar navigation', () => {
     'shipping',
     'api-coverage',
     'audit-log',
+    'hr-my-time',
+    'hr-request-inbox',
+    'hr-attendance',
+    'hr-schedule',
+    'hr-employees',
   ]
 
   it('groups sidebar by department workspaces', () => {
@@ -91,7 +93,6 @@ describe('sidebar navigation', () => {
       'orders-amazon',
       'orders-etsy',
       'listings',
-      'cost-center-config',
       'product-types',
       'internal-templates',
       'amazon-orders-cost-report',
@@ -108,10 +109,8 @@ describe('sidebar navigation', () => {
 
   it('keeps production workflow in the production workspace', () => {
     assert.deepEqual(collectLeafIds(SIDEBAR_WORKSPACE_NAVIGATION.production), [
-      'scale',
       'scale-amazon',
       'scale-etsy',
-      'qc',
       'qc-amazon',
       'qc-etsy',
     ])
@@ -213,12 +212,20 @@ describe('sidebar navigation', () => {
     assert.deepEqual(collectLeafIds(navigation), ['design-task-list'])
   })
 
+  it('shows only the HR time surface allowed by backend permissions', () => {
+    const navigation = filterNavigationByUser(SIDEBAR_NAVIGATION, {
+      permissions: ['HR_SCHEDULE:READ'],
+    })
+
+    assert.deepEqual(collectLeafIds(navigation), ['hr-schedule'])
+  })
+
   it('shows review and QC surfaces for design reviewers', () => {
     const navigation = filterNavigationByUser(SIDEBAR_NAVIGATION, {
       permissions: ['DESIGN:REVIEW'],
     })
 
-    assert.deepEqual(collectLeafIds(navigation), ['qc', 'qc-amazon', 'qc-etsy', 'design-task-list'])
+    assert.deepEqual(collectLeafIds(navigation), ['qc-amazon', 'qc-etsy', 'design-task-list'])
   })
 
   it('does not expose navigation leaves without mounted routes', () => {
@@ -275,7 +282,7 @@ describe('sidebar navigation', () => {
 
     assert.deepEqual(
       collectLeafIds(navigation),
-      SIDEBAR_ROLE_FILTERING_ENABLED ? ['qc', 'qc-amazon', 'qc-etsy'] : fullPortalLeafIds,
+      SIDEBAR_ROLE_FILTERING_ENABLED ? ['qc-amazon', 'qc-etsy'] : fullPortalLeafIds,
     )
   })
 
@@ -285,7 +292,7 @@ describe('sidebar navigation', () => {
     assert.deepEqual(
       collectLeafIds(navigation),
       SIDEBAR_ROLE_FILTERING_ENABLED
-        ? ['scale', 'scale-amazon', 'scale-etsy', 'shipping', 'vendor-submissions']
+        ? ['scale-amazon', 'scale-etsy', 'shipping', 'vendor-submissions']
         : fullPortalLeafIds,
     )
   })
@@ -296,14 +303,7 @@ describe('sidebar navigation', () => {
     assert.deepEqual(
       collectLeafIds(navigation),
       SIDEBAR_ROLE_FILTERING_ENABLED
-        ? [
-            'orders-amazon',
-            'orders-etsy',
-            'listings',
-            'cost-center-config',
-            'product-types',
-            'internal-templates',
-          ]
+        ? ['orders-amazon', 'orders-etsy', 'listings', 'product-types', 'internal-templates']
         : fullPortalLeafIds,
     )
   })
@@ -314,7 +314,7 @@ describe('sidebar navigation', () => {
 
     assert.equal(leafIds.includes('order-workbench'), false)
     assert.equal(leafIds.includes('production-board'), false)
-    assert.equal(leafIds.includes('catalog-setup'), false)
+    assert.equal(leafIds.includes('cost-center-config'), false)
   })
 
   it('keeps configuration as a top-level orders workspace group', () => {

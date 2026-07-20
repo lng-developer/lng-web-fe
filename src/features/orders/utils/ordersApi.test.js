@@ -82,6 +82,23 @@ test('buildOrderSummaryQuery keeps filters stable when switching tabs', () => {
   )
 })
 
+test('maps the order item CS note separately from shipment tracking note', () => {
+  const [row] = mapWorkbenchRows([
+    {
+      order: { id: 'order-1', externalOrderId: 'order-1' },
+      items: [
+        {
+          item: { id: 'item-1', quantity: 1, csNote: 'Confirm customer artwork' },
+          tracking: { note: 'Shipment note' },
+        },
+      ],
+    },
+  ])
+
+  assert.equal(row.itemDetails[0].fulfillment.csNote, 'Confirm customer artwork')
+  assert.equal(row.itemDetails[0].fulfillment.noteKey, 'Shipment note')
+})
+
 test('mapApiTabCounts maps backend tab counts to UI tab keys', () => {
   assert.deepEqual(
     mapApiTabCounts({

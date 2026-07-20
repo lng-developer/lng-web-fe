@@ -151,7 +151,6 @@ describe('current user utilities', () => {
     const user = resolveCurrentUser({ data: { roles: ['QC'], permissions: ['DESIGN:REVIEW'] } })
 
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
-      'qc',
       'qc-amazon',
       'qc-etsy',
       'design-task-list',
@@ -164,10 +163,8 @@ describe('current user utilities', () => {
     })
 
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
-      'scale',
       'scale-amazon',
       'scale-etsy',
-      'qc',
       'qc-amazon',
       'qc-etsy',
       'shipping',
@@ -183,7 +180,6 @@ describe('current user utilities', () => {
       'orders-amazon',
       'orders-etsy',
       'listings',
-      'cost-center-config',
       'product-types',
       'internal-templates',
     ])

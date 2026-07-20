@@ -1,0 +1,46 @@
+import { normalizeHrTimeQuery } from '../utils/hrTimeApi.js'
+
+export const hrTimeKeys = {
+  all: ['hr-time'],
+  employeeProfiles: () => [...hrTimeKeys.all, 'employee-profiles'],
+  listEmployeeProfiles: (params) => [
+    ...hrTimeKeys.employeeProfiles(),
+    normalizeHrTimeQuery(params),
+  ],
+  employeeProfile: (profileId, params) => [
+    ...hrTimeKeys.employeeProfiles(),
+    profileId,
+    normalizeHrTimeQuery(params),
+  ],
+  myEmployeeProfile: () => [...hrTimeKeys.employeeProfiles(), 'me'],
+  workLocations: () => [...hrTimeKeys.all, 'work-locations'],
+  listWorkLocations: (params) => [...hrTimeKeys.workLocations(), normalizeHrTimeQuery(params)],
+  shifts: () => [...hrTimeKeys.all, 'shifts'],
+  listShifts: (params) => [...hrTimeKeys.shifts(), normalizeHrTimeQuery(params)],
+  assignments: () => [...hrTimeKeys.all, 'shift-assignments'],
+  listAssignments: (params) => [...hrTimeKeys.assignments(), normalizeHrTimeQuery(params)],
+  calendarOverrides: () => [...hrTimeKeys.all, 'calendar-overrides'],
+  listCalendarOverrides: (params) => [
+    ...hrTimeKeys.calendarOverrides(),
+    normalizeHrTimeQuery(params),
+  ],
+  attendance: () => [...hrTimeKeys.all, 'attendance'],
+  listAttendance: (params) => [...hrTimeKeys.attendance(), normalizeHrTimeQuery(params)],
+  myAttendance: (params) => [...hrTimeKeys.attendance(), 'me', normalizeHrTimeQuery(params)],
+  leaveBalances: () => [...hrTimeKeys.all, 'leave-balances'],
+  myLeaveBalances: (year) => [...hrTimeKeys.leaveBalances(), 'me', year],
+  leaveBalance: (profileId, year, leaveType) => [
+    ...hrTimeKeys.leaveBalances(),
+    profileId,
+    year,
+    leaveType,
+  ],
+  leave: () => [...hrTimeKeys.all, 'leave'],
+  listLeave: (params) => [...hrTimeKeys.leave(), normalizeHrTimeQuery(params)],
+  myLeave: (params) => [...hrTimeKeys.leave(), 'me', normalizeHrTimeQuery(params)],
+  leaveDetail: (requestId) => [...hrTimeKeys.leave(), requestId],
+  overtime: () => [...hrTimeKeys.all, 'overtime'],
+  listOvertime: (params) => [...hrTimeKeys.overtime(), normalizeHrTimeQuery(params)],
+  myOvertime: (params) => [...hrTimeKeys.overtime(), 'me', normalizeHrTimeQuery(params)],
+  overtimeDetail: (requestId) => [...hrTimeKeys.overtime(), requestId],
+}
