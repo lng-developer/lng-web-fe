@@ -680,8 +680,8 @@
     "welcome": "POD operations dashboard",
     "description": "Track orders, active queues, and exceptions that need attention today.",
     "commercial": {
-      "title": "Portal analytics",
-      "subtitle": "Track sales, profit, buyers, vendor reliability, and operational exceptions from one workspace.",
+      "title": "Commercial overview",
+      "subtitle": "Compare acquisition cost with margin before increasing ad spend.",
       "analyticsPermission": "Analytics requires the REPORTS:READ permission.",
       "currency": "Currency",
       "actions": { "reports": "Reports" },
@@ -702,7 +702,18 @@
         "profitMargin": "Profit margin",
         "itemsSold": "Items sold",
         "returningBuyers": "Returning buyers",
-        "knownBuyers": "Known buyers"
+        "knownBuyers": "Known buyers",
+        "returningBuyerRate": "Returning buyer rate"
+      },
+      "decision": {
+        "title": "Decision summary",
+        "description": "Compare acquisition cost with margin before increasing ad spend.",
+        "salesMomentum": "Sales momentum",
+        "takeHomeProfit": "Profit after costs",
+        "marginQuality": "Profit quality",
+        "marketingInvestment": "Marketing investment",
+        "marketingEfficiency": "Marketing efficiency",
+        "customerRetention": "Customer retention"
       },
       "charts": {
         "revenueAndProfit": "Revenue, cost and profit",
@@ -716,7 +727,7 @@
         "channelRanking": "Period ranking"
       },
       "acquisition": {
-        "title": "Acquisition efficiency",
+        "title": "Customer acquisition",
         "description": "Compare paid reach, customer acquisition cost, and attributed sales by channel.",
         "channel": "Channel",
         "spend": "Ad spend",
@@ -724,8 +735,11 @@
         "cpa": "CPA",
         "ctr": "CTR",
         "conversion": "Conversion",
+        "roas": "ROAS",
         "sales": "Attributed sales",
-        "empty": "No acquisition data for this period."
+        "empty": "No acquisition data for this period.",
+        "emptyDescription": "Import advertising data or use demo analytics data to compare channel performance.",
+        "emptyAction": "Open Reports"
       },
       "funnel": {
         "title": "Acquisition funnel",
@@ -736,7 +750,13 @@
       "channelMix": {
         "title": "Attributed sales mix",
         "sales": "Sales",
-        "mix": "Channel mix"
+        "mix": "Channel mix",
+        "revenueTitle": "Revenue mix by channel",
+        "profitTitle": "Net-profit mix by channel"
+      },
+      "profit": {
+        "title": "Profit performance",
+        "description": "Track revenue and profit trends with each channel's contribution."
       },
       "profitBridge": "Profit bridge",
       "buyer": {
@@ -759,6 +779,10 @@
         "production": "Production",
         "vendor": "Vendor",
         "shipment": "Shipment"
+      },
+      "operatingHealth": {
+        "title": "Operating health",
+        "description": "Resolve exceptions and monitor vendor and production reliability."
       },
       "reportLinks": {
         "title": "Reports ready",

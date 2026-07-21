@@ -47,30 +47,43 @@ export function buildCommercialDashboard({
 
   const knownBuyerCount = numberValue(buyerInsights.knownBuyerCount)
   const repeatBuyerCount = numberValue(buyerInsights.repeatBuyerCount)
+  const returningBuyerCount = numberValue(buyerInsights.returningBuyerCount)
 
   return {
     acquisitionRows: [...channelPerformance]
-      .map((row) => ({
-        salesChannelCode: row.salesChannelCode || 'UNKNOWN',
-        marketplaceCode: row.marketplaceCode || null,
-        currency: row.currency || 'USD',
-        spendAmount: numberValue(row.spendAmount),
-        attributedSalesAmount: numberValue(row.attributedSalesAmount),
-        impressions: numberValue(row.impressions),
-        clicks: numberValue(row.clicks),
-        attributedOrdersCount: numberValue(row.attributedOrdersCount),
-        newBuyerCount: numberValue(row.newBuyerCount),
-        ctrBps: row.ctrBps ?? null,
-        conversionBps: row.conversionBps ?? null,
-        cpaAmount: row.cpaAmount ?? null,
-      }))
+      .map((row) => {
+        const spendAmount = numberValue(row.spendAmount)
+        const attributedSalesAmount = numberValue(row.attributedSalesAmount)
+        const newBuyerCount = numberValue(row.newBuyerCount)
+
+        return {
+          salesChannelCode: row.salesChannelCode || 'UNKNOWN',
+          marketplaceCode: row.marketplaceCode || null,
+          currency: row.currency || 'USD',
+          spendAmount,
+          attributedSalesAmount,
+          impressions: numberValue(row.impressions),
+          clicks: numberValue(row.clicks),
+          attributedOrdersCount: numberValue(row.attributedOrdersCount),
+          newBuyerCount,
+          ctrBps: row.ctrBps ?? null,
+          conversionBps: row.conversionBps ?? null,
+          cpaAmount: newBuyerCount
+            ? (row.cpaAmount ?? Math.round(spendAmount / newBuyerCount))
+            : null,
+          roas: spendAmount ? attributedSalesAmount / spendAmount : null,
+        }
+      })
       .sort((left, right) => right.spendAmount - left.spendAmount),
     currencies: Object.keys(byCurrency).sort(),
     byCurrency,
     buyer: {
       knownBuyerCount,
       newBuyerCount: numberValue(buyerInsights.newBuyerCount),
-      returningBuyerCount: numberValue(buyerInsights.returningBuyerCount),
+      returningBuyerCount,
+      returningBuyerRateBps: knownBuyerCount
+        ? Math.round((returningBuyerCount / knownBuyerCount) * 10000)
+        : null,
       repeatBuyerCount,
       repeatPurchaseRateBps: knownBuyerCount
         ? Math.round((repeatBuyerCount / knownBuyerCount) * 10000)

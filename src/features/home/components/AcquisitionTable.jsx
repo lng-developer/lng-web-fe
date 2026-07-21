@@ -8,6 +8,10 @@ function percent(value) {
   return value === null || value === undefined ? '-' : `${(Number(value) / 100).toFixed(1)}%`
 }
 
+function ratio(value) {
+  return value === null || value === undefined ? '-' : `${Number(value).toFixed(2)}x`
+}
+
 export default function AcquisitionTable({ labels, language, rows }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-surface shadow-sm">
@@ -20,6 +24,7 @@ export default function AcquisitionTable({ labels, language, rows }) {
             <th className="px-4 py-3 text-right">{labels.cpa}</th>
             <th className="px-4 py-3 text-right">{labels.ctr}</th>
             <th className="px-4 py-3 text-right">{labels.conversion}</th>
+            <th className="px-4 py-3 text-right">{labels.roas}</th>
             <th className="px-4 py-3 text-right">{labels.sales}</th>
           </tr>
         </thead>
@@ -32,11 +37,6 @@ export default function AcquisitionTable({ labels, language, rows }) {
               >
                 <td className="px-4 py-3 font-medium text-ink-strong">
                   {row.salesChannelCode}
-                  {row.marketplaceCode ? (
-                    <span className="ml-2 text-xs font-normal text-ink-muted">
-                      {row.marketplaceCode}
-                    </span>
-                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-right text-ink-secondary">
                   {money(row.spendAmount, row.currency, language)}
@@ -51,6 +51,9 @@ export default function AcquisitionTable({ labels, language, rows }) {
                 <td className="px-4 py-3 text-right text-ink-secondary">
                   {percent(row.conversionBps)}
                 </td>
+                <td className="px-4 py-3 text-right font-medium text-ink-strong">
+                  {ratio(row.roas)}
+                </td>
                 <td className="px-4 py-3 text-right text-ink-secondary">
                   {money(row.attributedSalesAmount, row.currency, language)}
                 </td>
@@ -58,7 +61,7 @@ export default function AcquisitionTable({ labels, language, rows }) {
             ))
           ) : (
             <tr>
-              <td className="px-4 py-10 text-center text-sm text-ink-muted" colSpan={7}>
+              <td className="px-4 py-10 text-center text-sm text-ink-muted" colSpan={8}>
                 {labels.empty}
               </td>
             </tr>

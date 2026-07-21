@@ -680,8 +680,8 @@
     "welcome": "Dashboard vận hành POD",
     "description": "Theo dõi nhanh đơn hàng, hàng chờ xử lý và các ngoại lệ cần ưu tiên trong ngày.",
     "commercial": {
-      "title": "Phân tích Portal",
-      "subtitle": "Theo dõi doanh thu, lợi nhuận, người mua, độ tin cậy vendor và ngoại lệ vận hành trong một màn hình.",
+      "title": "Tổng quan thương mại",
+      "subtitle": "Đối chiếu chi phí thu hút khách với biên lợi nhuận trước khi tăng ngân sách quảng cáo.",
       "analyticsPermission": "Cần quyền REPORTS:READ để xem dữ liệu phân tích.",
       "currency": "Tiền tệ",
       "actions": { "reports": "Báo cáo" },
@@ -702,7 +702,18 @@
         "profitMargin": "Biên lợi nhuận",
         "itemsSold": "Sản phẩm đã bán",
         "returningBuyers": "Khách quay lại",
-        "knownBuyers": "Khách đã nhận diện"
+        "knownBuyers": "Khách đã nhận diện",
+        "returningBuyerRate": "Tỷ lệ khách quay lại"
+      },
+      "decision": {
+        "title": "Tóm tắt quyết định",
+        "description": "So sánh chi phí thu hút khách với biên lợi nhuận trước khi tăng ngân sách quảng cáo.",
+        "salesMomentum": "Quy mô bán hàng",
+        "takeHomeProfit": "Lợi nhuận sau chi phí",
+        "marginQuality": "Chất lượng lợi nhuận",
+        "marketingInvestment": "Mức đầu tư quảng cáo",
+        "marketingEfficiency": "Hiệu quả tiếp thị",
+        "customerRetention": "Khả năng giữ chân khách"
       },
       "charts": {
         "revenueAndProfit": "Doanh thu, chi phí và lợi nhuận",
@@ -717,7 +728,7 @@
       },
       "profitBridge": "Cấu phần lợi nhuận",
       "acquisition": {
-        "title": "Hiệu quả thu hút khách",
+        "title": "Thu hút khách hàng",
         "description": "So sánh độ phủ quảng cáo, chi phí thu hút khách và doanh thu quy gắn theo kênh.",
         "channel": "Kênh",
         "spend": "Chi phí quảng cáo",
@@ -725,8 +736,11 @@
         "cpa": "Chi phí/khách mới",
         "ctr": "Tỷ lệ nhấp",
         "conversion": "Chuyển đổi",
+        "roas": "Hiệu quả chi tiêu quảng cáo",
         "sales": "Doanh thu quy gắn",
-        "empty": "Chưa có dữ liệu thu hút khách trong kỳ này."
+        "empty": "Chưa có dữ liệu thu hút khách trong kỳ này.",
+        "emptyDescription": "Hãy nhập dữ liệu quảng cáo hoặc dùng dữ liệu phân tích mẫu để xem hiệu quả theo kênh.",
+        "emptyAction": "Mở Báo cáo"
       },
       "funnel": {
         "title": "Phễu thu hút khách",
@@ -737,7 +751,13 @@
       "channelMix": {
         "title": "Tỷ trọng doanh thu quy gắn",
         "sales": "Doanh thu",
-        "mix": "Tỷ trọng kênh"
+        "mix": "Tỷ trọng kênh",
+        "revenueTitle": "Tỷ trọng doanh thu theo kênh",
+        "profitTitle": "Tỷ trọng lợi nhuận ròng theo kênh"
+      },
+      "profit": {
+        "title": "Hiệu quả lợi nhuận",
+        "description": "Theo dõi xu hướng doanh thu, lợi nhuận và mức đóng góp của từng kênh."
       },
       "buyer": {
         "title": "Chỉ số người mua",
@@ -759,6 +779,10 @@
         "production": "Sản xuất",
         "vendor": "Vendor",
         "shipment": "Vận chuyển"
+      },
+      "operatingHealth": {
+        "title": "Sức khỏe vận hành",
+        "description": "Xử lý ngoại lệ và theo dõi độ ổn định của vendor cùng luồng sản xuất."
       },
       "reportLinks": {
         "title": "Báo cáo sẵn có",

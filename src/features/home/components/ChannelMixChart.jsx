@@ -1,4 +1,11 @@
-const COLORS = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed']
+import { formatCurrency } from '@/utils/format'
+
+const COLOR_CLASSES = [
+  'fill-primary bg-primary',
+  'fill-success bg-success',
+  'fill-warning bg-warning',
+  'fill-secondary bg-secondary',
+]
 
 function describeArc(cx, cy, radius, startAngle, endAngle) {
   const start = {
@@ -13,16 +20,19 @@ function describeArc(cx, cy, radius, startAngle, endAngle) {
   return `M ${cx} ${cy} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y} Z`
 }
 
-export default function ChannelMixChart({ labels, rows }) {
+export default function ChannelMixChart({ labels, language, metric, rows }) {
   const grouped = Object.values(
     rows.reduce((result, row) => {
       const key = row.salesChannelCode || 'UNKNOWN'
       result[key] = result[key] || { channel: key, amount: 0 }
-      result[key].amount += Number(row.attributedSalesAmount || 0)
+      result[key].amount += Math.max(Number(row[metric] || 0), 0)
       return result
     }, {}),
-  ).sort((left, right) => right.amount - left.amount)
+  )
+    .filter((row) => row.amount > 0)
+    .sort((left, right) => right.amount - left.amount)
   const total = grouped.reduce((sum, row) => sum + row.amount, 0)
+  const currency = rows[0]?.currency || 'USD'
   let startAngle = -90
 
   return (
@@ -43,8 +53,12 @@ export default function ChannelMixChart({ labels, rows }) {
               const path = describeArc(80, 80, 64, startAngle, startAngle + angle)
               startAngle += angle
               return (
-                <path d={path} fill={COLORS[index % COLORS.length]} key={row.channel}>
-                  <title>{`${row.channel}: ${Math.round((row.amount / total) * 100)}%`}</title>
+                <path
+                  className={COLOR_CLASSES[index % COLOR_CLASSES.length]}
+                  d={path}
+                  key={row.channel}
+                >
+                  <title>{`${row.channel}: ${formatCurrency(row.amount / 100, language, currency)} (${Math.round((row.amount / total) * 100)}%)`}</title>
                 </path>
               )
             })
@@ -58,7 +72,7 @@ export default function ChannelMixChart({ labels, rows }) {
             x="80"
             y="78"
           >
-            {labels.sales}
+            {labels.metric}
           </text>
           <text className="fill-ink-muted text-[10px]" textAnchor="middle" x="80" y="94">
             {total ? labels.mix : labels.empty}
@@ -69,14 +83,14 @@ export default function ChannelMixChart({ labels, rows }) {
             grouped.map((row, index) => (
               <div className="flex items-center justify-between gap-3" key={row.channel}>
                 <span className="inline-flex items-center gap-2 text-ink-secondary">
-                  <span
-                    className="h-2.5 w-2.5"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
+                  <span className={`h-2.5 w-2.5 ${COLOR_CLASSES[index % COLOR_CLASSES.length]}`} />
                   {row.channel}
                 </span>
-                <span className="font-medium text-ink-strong">
-                  {Math.round((row.amount / total) * 100)}%
+                <span className="text-right font-medium text-ink-strong">
+                  {formatCurrency(row.amount / 100, language, currency)}
+                  <span className="ml-2 text-xs text-ink-muted">
+                    {Math.round((row.amount / total) * 100)}%
+                  </span>
                 </span>
               </div>
             ))

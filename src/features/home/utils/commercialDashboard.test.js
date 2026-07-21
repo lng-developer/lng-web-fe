@@ -88,3 +88,27 @@ test('buildCommercialDashboard sorts acquisition rows by spend without exposing 
   assert.equal(result.acquisitionRows[0].newBuyerCount, 3)
   assert.equal(Object.hasOwn(result.acquisitionRows[0], 'externalBuyerId'), false)
 })
+
+test('buildCommercialDashboard derives ROAS from attributed sales and spend', () => {
+  const result = buildCommercialDashboard({
+    channelPerformance: [{ spendAmount: 4000, attributedSalesAmount: 12000 }],
+  })
+
+  assert.equal(result.acquisitionRows[0].roas, 3)
+})
+
+test('buildCommercialDashboard clears CPA when a channel has no new buyers', () => {
+  const result = buildCommercialDashboard({
+    channelPerformance: [{ spendAmount: 2000, newBuyerCount: 0, cpaAmount: 2000 }],
+  })
+
+  assert.equal(result.acquisitionRows[0].cpaAmount, null)
+})
+
+test('buildCommercialDashboard derives returning buyer rate from known buyers', () => {
+  const result = buildCommercialDashboard({
+    buyerInsights: { knownBuyerCount: 8, returningBuyerCount: 5 },
+  })
+
+  assert.equal(result.buyer.returningBuyerRateBps, 6250)
+})

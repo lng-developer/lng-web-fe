@@ -33,7 +33,7 @@ function formatPercent(bps) {
   return bps === null || bps === undefined ? '-' : `${(Number(bps) / 100).toFixed(1)}%`
 }
 
-function Metric({ label, value, tone = 'default' }) {
+function Metric({ hint, label, value, tone = 'default' }) {
   const toneClass =
     {
       danger: 'text-danger',
@@ -42,9 +42,10 @@ function Metric({ label, value, tone = 'default' }) {
     }[tone] || 'text-ink-strong'
 
   return (
-    <div className="min-w-0 border-l-2 border-border px-3 py-1 first:border-l-0">
+    <div className="min-w-0 border-l-2 border-border px-3 py-2 first:border-l-0">
       <div className="truncate text-xs font-medium uppercase text-ink-muted">{label}</div>
       <div className={`mt-1 truncate text-xl font-semibold ${toneClass}`}>{value}</div>
+      <div className="mt-1 text-xs text-ink-muted">{hint}</div>
     </div>
   )
 }
@@ -246,6 +247,12 @@ export default function HomePage() {
     revenueAmount: 0,
   }
   const chartRows = data.dailyProfit?.filter((row) => (row.currency || 'USD') === currency) || []
+  const acquisitionRows = data.commercial.acquisitionRows.filter(
+    (row) => (row.currency || 'USD') === currency,
+  )
+  const acquisitionSpend = acquisitionRows.reduce((sum, row) => sum + row.spendAmount, 0)
+  const acquiredBuyers = acquisitionRows.reduce((sum, row) => sum + row.newBuyerCount, 0)
+  const cpaAmount = acquiredBuyers ? Math.round(acquisitionSpend / acquiredBuyers) : null
 
   return (
     <OperationsPageShell
@@ -307,71 +314,6 @@ export default function HomePage() {
           </Alert>
         ) : null}
 
-        <section className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-border bg-surface px-4 py-2 shadow-sm">
-          <span className="mr-2 text-xs font-semibold uppercase text-ink-muted">
-            {t('home.commercial.exceptions.title')}
-          </span>
-          <ExceptionLink
-            count={data.exceptions.address}
-            label={t('home.commercial.exceptions.address')}
-            to={`${ROUTES.PORTAL_ORDER_LIST}?tab=addressIssue`}
-            tone="danger"
-          />
-          <ExceptionLink
-            count={data.exceptions.missingPsd}
-            label={t('home.commercial.exceptions.missingPsd')}
-            to={`${ROUTES.PORTAL_ORDER_LIST}?tab=missingPsd`}
-            tone="danger"
-          />
-          <ExceptionLink
-            count={data.exceptions.missingCostCenter}
-            label={t('home.commercial.exceptions.missingCostCenter')}
-            to={`${ROUTES.PORTAL_ORDER_LIST}?tab=missingCostCenter`}
-          />
-          <ExceptionLink
-            count={data.exceptions.openCases}
-            label={t('home.commercial.exceptions.openCases')}
-            to={`${ROUTES.PORTAL_ORDER_LIST}?tab=openCase`}
-          />
-        </section>
-
-        <div className="grid overflow-hidden rounded-lg border border-border bg-border shadow-sm md:grid-cols-3 xl:grid-cols-6">
-          <div className="bg-surface">
-            <Metric
-              label={t('home.commercial.metrics.grossSales')}
-              value={formatMoney(total.revenueAmount, currency, i18n.language)}
-            />
-          </div>
-          <div className="bg-surface">
-            <Metric
-              label={t('home.commercial.metrics.netProfit')}
-              tone="success"
-              value={formatMoney(total.netProfitAmount, currency, i18n.language)}
-            />
-          </div>
-          <div className="bg-surface">
-            <Metric
-              label={t('home.commercial.metrics.profitMargin')}
-              value={formatPercent(total.netMarginBps)}
-            />
-          </div>
-          <div className="bg-surface">
-            <Metric label={t('home.commercial.metrics.itemsSold')} value={total.itemCount} />
-          </div>
-          <div className="bg-surface">
-            <Metric
-              label={t('home.commercial.metrics.returningBuyers')}
-              value={data.commercial.buyer.returningBuyerCount}
-            />
-          </div>
-          <div className="bg-surface">
-            <Metric
-              label={t('home.commercial.metrics.knownBuyers')}
-              value={data.commercial.buyer.knownBuyerCount}
-            />
-          </div>
-        </div>
-
         {data.commercial.currencies.length > 1 ? (
           <div className="flex items-center gap-2 text-sm text-ink-muted">
             <span>{t('home.commercial.currency')}</span>
@@ -390,44 +332,118 @@ export default function HomePage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 xl:grid-cols-12">
-          <div className="space-y-3 xl:col-span-8">
-            <DashboardSectionHeader
-              description={t('home.commercial.acquisition.description')}
-              title={t('home.commercial.acquisition.title')}
-            />
-            <AcquisitionTable
-              labels={{
-                channel: t('home.commercial.acquisition.channel'),
-                spend: t('home.commercial.acquisition.spend'),
-                newBuyers: t('home.commercial.acquisition.newBuyers'),
-                cpa: t('home.commercial.acquisition.cpa'),
-                ctr: t('home.commercial.acquisition.ctr'),
-                conversion: t('home.commercial.acquisition.conversion'),
-                sales: t('home.commercial.acquisition.sales'),
-                empty: t('home.commercial.acquisition.empty'),
-              }}
-              language={i18n.language}
-              rows={data.commercial.acquisitionRows}
-            />
-          </div>
-          <div className="xl:col-span-4">
-            <AcquisitionFunnelChart
-              labels={{
-                title: t('home.commercial.funnel.title'),
-                impressions: t('home.commercial.funnel.impressions'),
-                clicks: t('home.commercial.funnel.clicks'),
-                orders: t('home.commercial.funnel.orders'),
-                newBuyers: t('home.commercial.acquisition.newBuyers'),
-              }}
-              language={i18n.language}
-              rows={data.commercial.acquisitionRows}
-            />
+        <div className="space-y-3">
+          <DashboardSectionHeader
+            description={t('home.commercial.decision.description')}
+            title={t('home.commercial.decision.title')}
+          />
+          <div className="grid overflow-hidden rounded-lg border border-border bg-border shadow-sm md:grid-cols-3 xl:grid-cols-6">
+            <div className="bg-surface">
+              <Metric
+                hint={t('home.commercial.decision.salesMomentum')}
+                label={t('home.commercial.metrics.grossSales')}
+                value={formatMoney(total.revenueAmount, currency, i18n.language)}
+              />
+            </div>
+            <div className="bg-surface">
+              <Metric
+                hint={t('home.commercial.decision.takeHomeProfit')}
+                label={t('home.commercial.metrics.netProfit')}
+                tone="success"
+                value={formatMoney(total.netProfitAmount, currency, i18n.language)}
+              />
+            </div>
+            <div className="bg-surface">
+              <Metric
+                hint={t('home.commercial.decision.marginQuality')}
+                label={t('home.commercial.metrics.profitMargin')}
+                value={formatPercent(total.netMarginBps)}
+              />
+            </div>
+            <div className="bg-surface">
+              <Metric
+                hint={t('home.commercial.decision.marketingInvestment')}
+                label={t('home.commercial.charts.adSpend')}
+                value={formatMoney(total.adSpendAmount, currency, i18n.language)}
+              />
+            </div>
+            <div className="bg-surface">
+              <Metric
+                hint={t('home.commercial.decision.marketingEfficiency')}
+                label={t('home.commercial.acquisition.cpa')}
+                value={cpaAmount === null ? '-' : formatMoney(cpaAmount, currency, i18n.language)}
+              />
+            </div>
+            <div className="bg-surface">
+              <Metric
+                hint={t('home.commercial.decision.customerRetention')}
+                label={t('home.commercial.metrics.returningBuyerRate')}
+                value={formatPercent(data.commercial.buyer.returningBuyerRateBps)}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-12">
-          <div className="xl:col-span-8">
+        <div className="space-y-3">
+          <DashboardSectionHeader
+            description={t('home.commercial.acquisition.description')}
+            title={t('home.commercial.acquisition.title')}
+          />
+          {acquisitionRows.length ? (
+            <div className="grid gap-4 xl:grid-cols-12">
+              <div className="xl:col-span-8">
+                <AcquisitionTable
+                  labels={{
+                    channel: t('home.commercial.acquisition.channel'),
+                    spend: t('home.commercial.acquisition.spend'),
+                    newBuyers: t('home.commercial.acquisition.newBuyers'),
+                    cpa: t('home.commercial.acquisition.cpa'),
+                    ctr: t('home.commercial.acquisition.ctr'),
+                    conversion: t('home.commercial.acquisition.conversion'),
+                    roas: t('home.commercial.acquisition.roas'),
+                    sales: t('home.commercial.acquisition.sales'),
+                    empty: t('home.commercial.acquisition.empty'),
+                  }}
+                  language={i18n.language}
+                  rows={acquisitionRows}
+                />
+              </div>
+              <div className="xl:col-span-4">
+                <AcquisitionFunnelChart
+                  labels={{
+                    title: t('home.commercial.funnel.title'),
+                    impressions: t('home.commercial.funnel.impressions'),
+                    clicks: t('home.commercial.funnel.clicks'),
+                    orders: t('home.commercial.funnel.orders'),
+                    newBuyers: t('home.commercial.acquisition.newBuyers'),
+                  }}
+                  language={i18n.language}
+                  rows={acquisitionRows}
+                />
+              </div>
+            </div>
+          ) : (
+            <section className="rounded-lg border border-border bg-surface px-5 py-8 text-center shadow-sm">
+              <Typography className="text-sm font-medium text-ink-strong">
+                {t('home.commercial.acquisition.empty')}
+              </Typography>
+              <Typography className="mt-1 text-sm text-ink-muted">
+                {t('home.commercial.acquisition.emptyDescription')}
+              </Typography>
+              <Button component={Link} size="small" to={ROUTES.PORTAL_REPORTS}>
+                {t('home.commercial.acquisition.emptyAction')}
+              </Button>
+            </section>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <DashboardSectionHeader
+            description={t('home.commercial.profit.description')}
+            title={t('home.commercial.profit.title')}
+          />
+          <div className="grid gap-4 xl:grid-cols-12">
+            <div className="xl:col-span-6">
             <DailyProfitChart
               currency={currency}
               labels={{
@@ -441,50 +457,33 @@ export default function HomePage() {
               rows={chartRows}
             />
           </div>
-          <div className="xl:col-span-4">
+            <div className="xl:col-span-3">
             <ChannelMixChart
               labels={{
-                title: t('home.commercial.channelMix.title'),
-                sales: t('home.commercial.channelMix.sales'),
+                  title: t('home.commercial.channelMix.revenueTitle'),
+                  metric: t('home.commercial.charts.revenue'),
                 mix: t('home.commercial.channelMix.mix'),
                 empty: t('home.commercial.acquisition.empty'),
               }}
-              rows={data.commercial.acquisitionRows}
+                language={i18n.language}
+                metric="revenueAmount"
+                rows={chartRows}
             />
           </div>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-3">
-          <BuyerInsights
-            buyer={data.commercial.buyer}
-            labels={{
-              new: t('home.commercial.buyer.new'),
-              returning: t('home.commercial.buyer.returning'),
-              repeatInPeriod: t('home.commercial.buyer.repeatInPeriod'),
-              repeatRate: t('home.commercial.buyer.repeatRate'),
-              unidentifiedOrders: t('home.commercial.buyer.unidentifiedOrders'),
-            }}
-            title={t('home.commercial.buyer.title')}
-          />
-          <VendorReliability
-            items={data.vendors}
-            labels={{
-              unknownVendor: t('home.commercial.vendor.unknown'),
-              submissionsCount: (values) => t('home.commercial.vendor.submissions', values),
-              averageHours: (values) => t('home.commercial.vendor.averageHours', values),
-              empty: t('home.commercial.vendor.empty'),
-            }}
-            title={t('home.commercial.vendor.title')}
-          />
-          <OperationsSummary
-            data={data.operations}
-            labels={{
-              production: t('home.commercial.operations.production'),
-              vendor: t('home.commercial.operations.vendor'),
-              shipment: t('home.commercial.operations.shipment'),
-            }}
-            title={t('home.commercial.operations.title')}
-          />
+            <div className="xl:col-span-3">
+              <ChannelMixChart
+                labels={{
+                  title: t('home.commercial.channelMix.profitTitle'),
+                  metric: t('home.commercial.charts.netProfit'),
+                  mix: t('home.commercial.channelMix.mix'),
+                  empty: t('home.commercial.acquisition.empty'),
+                }}
+                language={i18n.language}
+                metric="netProfitAmount"
+                rows={chartRows}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-8">
@@ -511,6 +510,72 @@ export default function HomePage() {
               }}
               title={t('home.commercial.profitBridge')}
               total={total}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <DashboardSectionHeader
+            description={t('home.commercial.operatingHealth.description')}
+            title={t('home.commercial.operatingHealth.title')}
+          />
+          <section className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-border bg-surface px-4 py-2 shadow-sm">
+            <span className="mr-2 text-xs font-semibold uppercase text-ink-muted">
+              {t('home.commercial.exceptions.title')}
+            </span>
+            <ExceptionLink
+              count={data.exceptions.address}
+              label={t('home.commercial.exceptions.address')}
+              to={`${ROUTES.PORTAL_ORDER_LIST}?tab=addressIssue`}
+              tone="danger"
+            />
+            <ExceptionLink
+              count={data.exceptions.missingPsd}
+              label={t('home.commercial.exceptions.missingPsd')}
+              to={`${ROUTES.PORTAL_ORDER_LIST}?tab=missingPsd`}
+              tone="danger"
+            />
+            <ExceptionLink
+              count={data.exceptions.missingCostCenter}
+              label={t('home.commercial.exceptions.missingCostCenter')}
+              to={`${ROUTES.PORTAL_ORDER_LIST}?tab=missingCostCenter`}
+            />
+            <ExceptionLink
+              count={data.exceptions.openCases}
+              label={t('home.commercial.exceptions.openCases')}
+              to={`${ROUTES.PORTAL_ORDER_LIST}?tab=openCase`}
+            />
+          </section>
+          <div className="grid gap-4 xl:grid-cols-3">
+            <BuyerInsights
+              buyer={data.commercial.buyer}
+              labels={{
+                new: t('home.commercial.buyer.new'),
+                returning: t('home.commercial.buyer.returning'),
+                repeatInPeriod: t('home.commercial.buyer.repeatInPeriod'),
+                repeatRate: t('home.commercial.buyer.repeatRate'),
+                unidentifiedOrders: t('home.commercial.buyer.unidentifiedOrders'),
+              }}
+              title={t('home.commercial.buyer.title')}
+            />
+            <VendorReliability
+              items={data.vendors}
+              labels={{
+                unknownVendor: t('home.commercial.vendor.unknown'),
+                submissionsCount: (values) => t('home.commercial.vendor.submissions', values),
+                averageHours: (values) => t('home.commercial.vendor.averageHours', values),
+                empty: t('home.commercial.vendor.empty'),
+              }}
+              title={t('home.commercial.vendor.title')}
+            />
+            <OperationsSummary
+              data={data.operations}
+              labels={{
+                production: t('home.commercial.operations.production'),
+                vendor: t('home.commercial.operations.vendor'),
+                shipment: t('home.commercial.operations.shipment'),
+              }}
+              title={t('home.commercial.operations.title')}
             />
           </div>
         </div>
