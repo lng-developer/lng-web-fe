@@ -48,6 +48,10 @@ test('HomePage renders decision summary efficiency and retention metrics', () =>
   assert.match(homePageSource, /home\.commercial\.decision\.customerRetention/)
 })
 
+test('HomePage uses acquisition spend when selected currency has no profit totals', () => {
+  assert.match(homePageSource, /adSpendAmount: acquisitionSpend/)
+})
+
 test('HomePage renders currency-filtered revenue and net-profit channel mix', () => {
   assert.match(homePageSource, /metric="revenueAmount"/)
   assert.match(homePageSource, /metric="netProfitAmount"/)

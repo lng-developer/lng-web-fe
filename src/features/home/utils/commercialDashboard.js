@@ -49,14 +49,27 @@ export function getAnalyticsRowsState({ hasAccess, isError, isPending, rows = []
 }
 
 export function buildAcquisitionFunnelRows(rows = []) {
-  return rows.map((row) => {
-    const impressions = Math.max(numberValue(row.impressions), 0)
-    const clicks = Math.max(numberValue(row.clicks), 0)
-    const attributedOrdersCount = Math.max(numberValue(row.attributedOrdersCount), 0)
+  return Object.values(
+    rows.reduce((result, row) => {
+      const salesChannelCode = String(row.salesChannelCode || 'UNKNOWN').trim().toUpperCase() || 'UNKNOWN'
+      const current = result[salesChannelCode] || {
+        salesChannelCode,
+        impressions: 0,
+        clicks: 0,
+        attributedOrdersCount: 0,
+      }
+      current.impressions += Math.max(numberValue(row.impressions), 0)
+      current.clicks += Math.max(numberValue(row.clicks), 0)
+      current.attributedOrdersCount += Math.max(numberValue(row.attributedOrdersCount), 0)
+      result[salesChannelCode] = current
+      return result
+    }, {}),
+  ).map((row) => {
+    const { salesChannelCode, impressions, clicks, attributedOrdersCount } = row
     const total = impressions + clicks + attributedOrdersCount
 
     return {
-      salesChannelCode: row.salesChannelCode || 'UNKNOWN',
+      salesChannelCode,
       impressions,
       clicks,
       attributedOrdersCount,

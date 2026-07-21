@@ -170,6 +170,37 @@ test('buildAcquisitionFunnelRows keeps per-channel ratios and derives funnel rat
   ])
 })
 
+test('buildAcquisitionFunnelRows aggregates marketplace rows by normalized channel', () => {
+  const result = buildAcquisitionFunnelRows([
+    {
+      salesChannelCode: 'amazon',
+      marketplaceCode: 'AMAZON_US',
+      impressions: 80,
+      clicks: 16,
+      attributedOrdersCount: 4,
+    },
+    {
+      salesChannelCode: 'AMAZON',
+      marketplaceCode: 'AMAZON_CA',
+      impressions: 20,
+      clicks: 4,
+      attributedOrdersCount: 1,
+    },
+  ])
+
+  assert.deepEqual(result, [
+    {
+      salesChannelCode: 'AMAZON',
+      impressions: 100,
+      clicks: 20,
+      attributedOrdersCount: 5,
+      ratios: { impressions: 80, clicks: 16, orders: 4 },
+      ctrBps: 2000,
+      conversionBps: 2500,
+    },
+  ])
+})
+
 test('buildChannelMixRows keeps signed losses and uses magnitude for donut proportions', () => {
   const result = buildChannelMixRows(
     [

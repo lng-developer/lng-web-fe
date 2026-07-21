@@ -250,8 +250,13 @@ export default function HomePage() {
   const currency = data.commercial.currencies.includes(selectedCurrency)
     ? selectedCurrency
     : data.commercial.currencies[0] || 'USD'
+  const chartRows = data.dailyProfit?.filter((row) => (row.currency || 'USD') === currency) || []
+  const acquisitionRows = data.commercial.acquisitionRows.filter(
+    (row) => (row.currency || 'USD') === currency,
+  )
+  const acquisitionSpend = acquisitionRows.reduce((sum, row) => sum + row.spendAmount, 0)
   const total = data.commercial.byCurrency[currency] || {
-    adSpendAmount: 0,
+    adSpendAmount: acquisitionSpend,
     baseCostAmount: 0,
     grossProfitAmount: 0,
     itemCount: 0,
@@ -259,17 +264,12 @@ export default function HomePage() {
     netProfitAmount: 0,
     revenueAmount: 0,
   }
-  const chartRows = data.dailyProfit?.filter((row) => (row.currency || 'USD') === currency) || []
-  const acquisitionRows = data.commercial.acquisitionRows.filter(
-    (row) => (row.currency || 'USD') === currency,
-  )
   const acquisitionState = getAnalyticsRowsState({
     hasAccess: data.hasAnalyticsAccess,
     isError: data.acquisitionState === 'unavailable',
     isPending: data.acquisitionState === 'loading',
     rows: acquisitionRows,
   })
-  const acquisitionSpend = acquisitionRows.reduce((sum, row) => sum + row.spendAmount, 0)
   const acquiredBuyers = acquisitionRows.reduce((sum, row) => sum + row.newBuyerCount, 0)
   const cpaAmount = acquiredBuyers ? Math.round(acquisitionSpend / acquiredBuyers) : null
 
