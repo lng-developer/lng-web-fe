@@ -48,6 +48,18 @@ export function getAnalyticsRowsState({ hasAccess, isError, isPending, rows = []
   return rows.length ? 'ready' : 'empty'
 }
 
+export function getCommercialTotal({ acquisitionSpendByCurrency = {}, byCurrency = {} } = {}, currency) {
+  return byCurrency[currency] || {
+    adSpendAmount: acquisitionSpendByCurrency[currency] || 0,
+    baseCostAmount: 0,
+    grossProfitAmount: 0,
+    itemCount: 0,
+    netMarginBps: null,
+    netProfitAmount: 0,
+    revenueAmount: 0,
+  }
+}
+
 export function buildAcquisitionFunnelRows(rows = []) {
   return Object.values(
     rows.reduce((result, row) => {

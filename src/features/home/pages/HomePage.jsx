@@ -26,6 +26,7 @@ import DashboardSectionHeader from '../components/DashboardSectionHeader'
 import {
   buildLastDaysQuery,
   getAnalyticsRowsState,
+  getCommercialTotal,
   getProfitTone,
 } from '../utils/commercialDashboard'
 
@@ -255,15 +256,7 @@ export default function HomePage() {
     (row) => (row.currency || 'USD') === currency,
   )
   const acquisitionSpend = data.commercial.acquisitionSpendByCurrency[currency] || 0
-  const total = data.commercial.byCurrency[currency] || {
-    adSpendAmount: acquisitionSpend,
-    baseCostAmount: 0,
-    grossProfitAmount: 0,
-    itemCount: 0,
-    netMarginBps: null,
-    netProfitAmount: 0,
-    revenueAmount: 0,
-  }
+  const total = getCommercialTotal(data.commercial, currency)
   const acquisitionState = getAnalyticsRowsState({
     hasAccess: data.hasAnalyticsAccess,
     isError: data.acquisitionState === 'unavailable',

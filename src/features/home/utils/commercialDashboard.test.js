@@ -8,6 +8,7 @@ const {
   buildChannelMixRows,
   buildCommercialDashboard,
   buildLastDaysQuery,
+  getCommercialTotal,
   getAnalyticsRowsState,
   getProfitTone,
   getSalesChannelLabel,
@@ -142,6 +143,27 @@ test('buildCommercialDashboard sums acquisition spend for an acquisition-only cu
   })
 
   assert.equal(result.acquisitionSpendByCurrency.EUR, 2000)
+})
+
+test('getCommercialTotal prefers daily-profit totals and falls back to acquisition spend', () => {
+  const dashboard = buildCommercialDashboard({
+    channelPerformance: [
+      { currency: 'EUR', salesChannelCode: 'AMAZON', spendAmount: 1200 },
+      { currency: 'EUR', salesChannelCode: 'ETSY', spendAmount: 800 },
+    ],
+    dailyProfit: [{ currency: 'USD', revenueAmount: 10000, adSpendAmount: 500 }],
+  })
+
+  assert.deepEqual(getCommercialTotal(dashboard, 'USD'), dashboard.byCurrency.USD)
+  assert.deepEqual(getCommercialTotal(dashboard, 'EUR'), {
+    adSpendAmount: 2000,
+    baseCostAmount: 0,
+    grossProfitAmount: 0,
+    itemCount: 0,
+    netMarginBps: null,
+    netProfitAmount: 0,
+    revenueAmount: 0,
+  })
 })
 
 test('buildAcquisitionFunnelRows keeps per-channel ratios and derives funnel rates', () => {
