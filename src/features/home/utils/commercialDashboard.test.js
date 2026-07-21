@@ -4,6 +4,7 @@ import test from 'node:test'
 import * as dashboard from './commercialDashboard.js'
 
 const {
+  buildAcquisitionFunnelRows,
   buildChannelMixRows,
   buildCommercialDashboard,
   buildLastDaysQuery,
@@ -129,6 +130,44 @@ test('buildCommercialDashboard keeps acquisition-only currencies selectable', ()
   })
 
   assert.deepEqual(result.currencies, ['EUR', 'USD'])
+})
+
+test('buildAcquisitionFunnelRows keeps per-channel ratios and derives funnel rates', () => {
+  const result = buildAcquisitionFunnelRows([
+    {
+      salesChannelCode: 'AMAZON',
+      impressions: 80,
+      clicks: 16,
+      attributedOrdersCount: 4,
+    },
+    {
+      salesChannelCode: 'ETSY',
+      impressions: 90,
+      clicks: 9,
+      attributedOrdersCount: 1,
+    },
+  ])
+
+  assert.deepEqual(result, [
+    {
+      salesChannelCode: 'AMAZON',
+      impressions: 80,
+      clicks: 16,
+      attributedOrdersCount: 4,
+      ratios: { impressions: 80, clicks: 16, orders: 4 },
+      ctrBps: 2000,
+      conversionBps: 2500,
+    },
+    {
+      salesChannelCode: 'ETSY',
+      impressions: 90,
+      clicks: 9,
+      attributedOrdersCount: 1,
+      ratios: { impressions: 90, clicks: 9, orders: 1 },
+      ctrBps: 1000,
+      conversionBps: 1111,
+    },
+  ])
 })
 
 test('buildChannelMixRows keeps signed losses and uses magnitude for donut proportions', () => {

@@ -760,7 +760,8 @@
       },
       "profit": {
         "title": "Profit performance",
-        "description": "Track revenue and profit trends with each channel's contribution."
+        "description": "Track revenue and profit trends with each channel's contribution.",
+        "empty": "No profit data for this period."
       },
       "profitBridge": "Profit bridge",
       "buyer": {

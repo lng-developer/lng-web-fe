@@ -761,7 +761,8 @@
       },
       "profit": {
         "title": "Hiệu quả lợi nhuận",
-        "description": "Theo dõi xu hướng doanh thu, lợi nhuận và mức đóng góp của từng kênh."
+        "description": "Theo dõi xu hướng doanh thu, lợi nhuận và mức đóng góp của từng kênh.",
+        "empty": "Chưa có dữ liệu lợi nhuận trong kỳ này."
       },
       "buyer": {
         "title": "Chỉ số người mua",

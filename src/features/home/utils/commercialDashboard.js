@@ -48,6 +48,29 @@ export function getAnalyticsRowsState({ hasAccess, isError, isPending, rows = []
   return rows.length ? 'ready' : 'empty'
 }
 
+export function buildAcquisitionFunnelRows(rows = []) {
+  return rows.map((row) => {
+    const impressions = Math.max(numberValue(row.impressions), 0)
+    const clicks = Math.max(numberValue(row.clicks), 0)
+    const attributedOrdersCount = Math.max(numberValue(row.attributedOrdersCount), 0)
+    const total = impressions + clicks + attributedOrdersCount
+
+    return {
+      salesChannelCode: row.salesChannelCode || 'UNKNOWN',
+      impressions,
+      clicks,
+      attributedOrdersCount,
+      ratios: {
+        impressions: total ? (impressions / total) * 100 : 0,
+        clicks: total ? (clicks / total) * 100 : 0,
+        orders: total ? (attributedOrdersCount / total) * 100 : 0,
+      },
+      ctrBps: impressions ? Math.round((clicks / impressions) * 10000) : null,
+      conversionBps: clicks ? Math.round((attributedOrdersCount / clicks) * 10000) : null,
+    }
+  })
+}
+
 export function buildChannelMixRows(rows = [], metric) {
   return Object.values(
     rows.reduce((result, row) => {

@@ -7,6 +7,10 @@ const acquisitionTableSource = await readFile(
   new URL('../components/AcquisitionTable.jsx', import.meta.url),
   'utf8',
 )
+const acquisitionFunnelSource = await readFile(
+  new URL('../components/AcquisitionFunnelChart.jsx', import.meta.url),
+  'utf8',
+)
 const channelMixChartSource = await readFile(
   new URL('../components/ChannelMixChart.jsx', import.meta.url),
   'utf8',
@@ -68,8 +72,31 @@ test('HomePage renders the Reports CTA only for a successful empty acquisition q
   assert.match(homePageSource, /data\.hasAnalyticsAccess\s*\?\s*\(\s*<Button/)
 })
 
+test('HomePage classifies acquisition availability after selected-currency filtering', () => {
+  assert.match(homePageSource, /getAnalyticsRowsState\(\{[\s\S]*rows: acquisitionRows[\s\S]*\}\)/)
+  assert.match(homePageSource, /isError: data\.acquisitionState === 'unavailable'/)
+  assert.match(homePageSource, /isPending: data\.acquisitionState === 'loading'/)
+})
+
 test('HomePage styles the net-profit metric by sign', () => {
   assert.match(homePageSource, /tone={getProfitTone\(total\.netProfitAmount\)}/)
+})
+
+test('ProfitBridge styles its bar, background, and text from each actual value sign', () => {
+  assert.match(homePageSource, /getProfitTone\(entry\.value\)/)
+  assert.match(homePageSource, /danger: \{[\s\S]*bar: 'bg-danger'/)
+  assert.match(homePageSource, /danger: \{[\s\S]*background: 'bg-danger-bg'/)
+  assert.match(homePageSource, /danger: \{[\s\S]*text: 'text-danger'/)
+  assert.doesNotMatch(homePageSource, /netProfit[^\n]*tone: 'bg-success'/)
+})
+
+test('AcquisitionFunnelChart renders one titled stacked ratio bar per channel', () => {
+  assert.match(acquisitionFunnelSource, /buildAcquisitionFunnelRows\(rows\)\.map/)
+  assert.match(acquisitionFunnelSource, /getSalesChannelLabel/)
+  assert.match(acquisitionFunnelSource, /<title>/)
+  assert.match(acquisitionFunnelSource, /labels\.ctr/)
+  assert.match(acquisitionFunnelSource, /labels\.conversion/)
+  assert.doesNotMatch(acquisitionFunnelSource, /sum\(rows/)
 })
 
 test('commercial analytics uses plain localized labels', () => {
@@ -80,6 +107,13 @@ test('commercial analytics uses plain localized labels', () => {
   assert.equal(viLocale.home.commercial.acquisition.cpa, 'Chi phí cho mỗi khách hàng mới')
   assert.doesNotMatch(JSON.stringify(enLocale.home.commercial), /CPA|CTR|ROAS|REPORTS:READ/)
   assert.doesNotMatch(JSON.stringify(viLocale.home.commercial), /CPA|CTR|ROAS|REPORTS:READ/)
+})
+
+test('profit mix charts use localized profit-specific empty copy', () => {
+  assert.equal(enLocale.home.commercial.profit.empty, 'No profit data for this period.')
+  assert.equal(viLocale.home.commercial.profit.empty, 'Chưa có dữ liệu lợi nhuận trong kỳ này.')
+  assert.notEqual(enLocale.home.commercial.profit.empty, enLocale.home.commercial.acquisition.empty)
+  assert.equal(homePageSource.match(/empty: t\('home\.commercial\.profit\.empty'\)/g)?.length, 2)
 })
 
 test('commercial charts render recognized channel labels and explicit loss state', () => {

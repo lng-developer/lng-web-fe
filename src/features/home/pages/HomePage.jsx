@@ -23,7 +23,17 @@ import AcquisitionFunnelChart from '../components/AcquisitionFunnelChart'
 import AcquisitionTable from '../components/AcquisitionTable'
 import ChannelMixChart from '../components/ChannelMixChart'
 import DashboardSectionHeader from '../components/DashboardSectionHeader'
-import { buildLastDaysQuery, getProfitTone } from '../utils/commercialDashboard'
+import {
+  buildLastDaysQuery,
+  getAnalyticsRowsState,
+  getProfitTone,
+} from '../utils/commercialDashboard'
+
+const BRIDGE_TONES = {
+  danger: { background: 'bg-danger-bg', bar: 'bg-danger', text: 'text-danger' },
+  default: { background: 'bg-surface-subtle', bar: 'bg-ink-muted', text: 'text-ink-muted' },
+  success: { background: 'bg-success-bg', bar: 'bg-success', text: 'text-success' },
+}
 
 function formatMoney(amount, currency, language) {
   return formatCurrency(Number(amount || 0) / 100, language, currency || 'USD')
@@ -64,10 +74,10 @@ function ExceptionLink({ count, label, to, tone = 'warning' }) {
 
 function ProfitBridge({ language, total, currency, labels, title }) {
   const entries = [
-    { label: labels.sales, value: total.revenueAmount, tone: 'bg-primary' },
-    { label: labels.productCost, value: -total.baseCostAmount, tone: 'bg-warning' },
-    { label: labels.adSpend, value: -total.adSpendAmount, tone: 'bg-danger' },
-    { label: labels.netProfit, value: total.netProfitAmount, tone: 'bg-success' },
+    { label: labels.sales, value: total.revenueAmount },
+    { label: labels.productCost, value: -total.baseCostAmount },
+    { label: labels.adSpend, value: -total.adSpendAmount },
+    { label: labels.netProfit, value: total.netProfitAmount },
   ]
   const maximum = Math.max(...entries.map((entry) => Math.abs(entry.value)), 1)
 
@@ -78,25 +88,28 @@ function ProfitBridge({ language, total, currency, labels, title }) {
         <Typography className="text-xs text-ink-muted">{currency}</Typography>
       </div>
       <div className="space-y-3 px-4 py-4">
-        {entries.map((entry) => (
-          <div key={entry.label}>
-            <div className="mb-1 flex items-center justify-between gap-3 text-xs text-ink-secondary">
-              <span>{entry.label}</span>
-              <span className="font-medium text-ink-strong">
-                {formatMoney(entry.value, currency, language)}
-              </span>
+        {entries.map((entry) => {
+          const tone = BRIDGE_TONES[getProfitTone(entry.value)]
+          return (
+            <div key={entry.label}>
+              <div className="mb-1 flex items-center justify-between gap-3 text-xs text-ink-secondary">
+                <span>{entry.label}</span>
+                <span className={`font-medium ${tone.text}`}>
+                  {formatMoney(entry.value, currency, language)}
+                </span>
+              </div>
+              <div className={`h-2 ${tone.background}`}>
+                <div
+                  className={tone.bar}
+                  style={{
+                    height: '100%',
+                    width: `${Math.max((Math.abs(entry.value) / maximum) * 100, 2)}%`,
+                  }}
+                />
+              </div>
             </div>
-            <div className="h-2 bg-surface-subtle">
-              <div
-                className={entry.tone}
-                style={{
-                  height: '100%',
-                  width: `${Math.max((Math.abs(entry.value) / maximum) * 100, 2)}%`,
-                }}
-              />
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
@@ -234,7 +247,6 @@ export default function HomePage() {
     [channel, rangeDays],
   )
   const { data, failedSources, isError, isPending, refetch } = useHomeDashboardQuery(user, query)
-  const acquisitionState = data.acquisitionState
   const currency = data.commercial.currencies.includes(selectedCurrency)
     ? selectedCurrency
     : data.commercial.currencies[0] || 'USD'
@@ -251,6 +263,12 @@ export default function HomePage() {
   const acquisitionRows = data.commercial.acquisitionRows.filter(
     (row) => (row.currency || 'USD') === currency,
   )
+  const acquisitionState = getAnalyticsRowsState({
+    hasAccess: data.hasAnalyticsAccess,
+    isError: data.acquisitionState === 'unavailable',
+    isPending: data.acquisitionState === 'loading',
+    rows: acquisitionRows,
+  })
   const acquisitionSpend = acquisitionRows.reduce((sum, row) => sum + row.spendAmount, 0)
   const acquiredBuyers = acquisitionRows.reduce((sum, row) => sum + row.newBuyerCount, 0)
   const cpaAmount = acquiredBuyers ? Math.round(acquisitionSpend / acquiredBuyers) : null
@@ -419,7 +437,9 @@ export default function HomePage() {
                     impressions: t('home.commercial.funnel.impressions'),
                     clicks: t('home.commercial.funnel.clicks'),
                     orders: t('home.commercial.funnel.orders'),
-                    newBuyers: t('home.commercial.acquisition.newBuyers'),
+                    ctr: t('home.commercial.acquisition.ctr'),
+                    conversion: t('home.commercial.acquisition.conversion'),
+                    unknownChannel: t('home.commercial.acquisition.unknownChannel'),
                   }}
                   language={i18n.language}
                   rows={acquisitionRows}
@@ -475,7 +495,7 @@ export default function HomePage() {
                   title: t('home.commercial.channelMix.revenueTitle'),
                   metric: t('home.commercial.charts.revenue'),
                   mix: t('home.commercial.channelMix.mix'),
-                  empty: t('home.commercial.acquisition.empty'),
+                  empty: t('home.commercial.profit.empty'),
                   loss: t('home.commercial.channelMix.loss'),
                   unknownChannel: t('home.commercial.acquisition.unknownChannel'),
                 }}
@@ -490,7 +510,7 @@ export default function HomePage() {
                   title: t('home.commercial.channelMix.profitTitle'),
                   metric: t('home.commercial.charts.netProfit'),
                   mix: t('home.commercial.channelMix.mix'),
-                  empty: t('home.commercial.acquisition.empty'),
+                  empty: t('home.commercial.profit.empty'),
                   loss: t('home.commercial.channelMix.loss'),
                   unknownChannel: t('home.commercial.acquisition.unknownChannel'),
                 }}
