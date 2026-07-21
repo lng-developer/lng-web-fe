@@ -23,7 +23,7 @@ import AcquisitionFunnelChart from '../components/AcquisitionFunnelChart'
 import AcquisitionTable from '../components/AcquisitionTable'
 import ChannelMixChart from '../components/ChannelMixChart'
 import DashboardSectionHeader from '../components/DashboardSectionHeader'
-import { buildLastDaysQuery } from '../utils/commercialDashboard'
+import { buildLastDaysQuery, getProfitTone } from '../utils/commercialDashboard'
 
 function formatMoney(amount, currency, language) {
   return formatCurrency(Number(amount || 0) / 100, language, currency || 'USD')
@@ -234,6 +234,7 @@ export default function HomePage() {
     [channel, rangeDays],
   )
   const { data, failedSources, isError, isPending, refetch } = useHomeDashboardQuery(user, query)
+  const acquisitionState = data.acquisitionState
   const currency = data.commercial.currencies.includes(selectedCurrency)
     ? selectedCurrency
     : data.commercial.currencies[0] || 'USD'
@@ -284,14 +285,16 @@ export default function HomePage() {
                   <MenuItem value="ETSY">Etsy</MenuItem>
                 </Select>
               </FormControl>
-              <Button
-                component={Link}
-                size="small"
-                startIcon={<AssessmentOutlinedIcon />}
-                to={ROUTES.PORTAL_REPORTS}
-              >
-                {t('home.commercial.actions.reports')}
-              </Button>
+              {data.hasAnalyticsAccess ? (
+                <Button
+                  component={Link}
+                  size="small"
+                  startIcon={<AssessmentOutlinedIcon />}
+                  to={ROUTES.PORTAL_REPORTS}
+                >
+                  {t('home.commercial.actions.reports')}
+                </Button>
+              ) : null}
               <IconActionButton
                 label={t('home.dashboard.actions.refresh')}
                 loading={isPending}
@@ -349,7 +352,7 @@ export default function HomePage() {
               <Metric
                 hint={t('home.commercial.decision.takeHomeProfit')}
                 label={t('home.commercial.metrics.netProfit')}
-                tone="success"
+                tone={getProfitTone(total.netProfitAmount)}
                 value={formatMoney(total.netProfitAmount, currency, i18n.language)}
               />
             </div>
@@ -389,7 +392,7 @@ export default function HomePage() {
             description={t('home.commercial.acquisition.description')}
             title={t('home.commercial.acquisition.title')}
           />
-          {acquisitionRows.length ? (
+          {acquisitionState === 'ready' ? (
             <div className="grid gap-4 xl:grid-cols-12">
               <div className="xl:col-span-8">
                 <AcquisitionTable
@@ -403,6 +406,7 @@ export default function HomePage() {
                     roas: t('home.commercial.acquisition.roas'),
                     sales: t('home.commercial.acquisition.sales'),
                     empty: t('home.commercial.acquisition.empty'),
+                    unknownChannel: t('home.commercial.acquisition.unknownChannel'),
                   }}
                   language={i18n.language}
                   rows={acquisitionRows}
@@ -422,7 +426,7 @@ export default function HomePage() {
                 />
               </div>
             </div>
-          ) : (
+          ) : acquisitionState === 'empty' ? (
             <section className="rounded-lg border border-border bg-surface px-5 py-8 text-center shadow-sm">
               <Typography className="text-sm font-medium text-ink-strong">
                 {t('home.commercial.acquisition.empty')}
@@ -434,6 +438,14 @@ export default function HomePage() {
                 {t('home.commercial.acquisition.emptyAction')}
               </Button>
             </section>
+          ) : (
+            <section className="rounded-lg border border-border bg-surface px-5 py-8 text-center shadow-sm">
+              <Typography className="text-sm text-ink-muted">
+                {acquisitionState === 'unavailable'
+                  ? t('home.commercial.acquisition.unavailable')
+                  : t('home.commercial.acquisition.loading')}
+              </Typography>
+            </section>
           )}
         </div>
 
@@ -444,32 +456,34 @@ export default function HomePage() {
           />
           <div className="grid gap-4 xl:grid-cols-12">
             <div className="xl:col-span-6">
-            <DailyProfitChart
-              currency={currency}
-              labels={{
-                title: t('home.commercial.charts.revenueAndProfit'),
-                revenue: t('home.commercial.charts.revenue'),
-                grossProfit: t('home.commercial.charts.grossProfit'),
-                netProfit: t('home.commercial.charts.netProfit'),
-                netMargin: t('home.commercial.charts.netMargin'),
-              }}
-              language={i18n.language}
-              rows={chartRows}
-            />
-          </div>
+              <DailyProfitChart
+                currency={currency}
+                labels={{
+                  title: t('home.commercial.charts.revenueAndProfit'),
+                  revenue: t('home.commercial.charts.revenue'),
+                  grossProfit: t('home.commercial.charts.grossProfit'),
+                  netProfit: t('home.commercial.charts.netProfit'),
+                  netMargin: t('home.commercial.charts.netMargin'),
+                }}
+                language={i18n.language}
+                rows={chartRows}
+              />
+            </div>
             <div className="xl:col-span-3">
-            <ChannelMixChart
-              labels={{
+              <ChannelMixChart
+                labels={{
                   title: t('home.commercial.channelMix.revenueTitle'),
                   metric: t('home.commercial.charts.revenue'),
-                mix: t('home.commercial.channelMix.mix'),
-                empty: t('home.commercial.acquisition.empty'),
-              }}
+                  mix: t('home.commercial.channelMix.mix'),
+                  empty: t('home.commercial.acquisition.empty'),
+                  loss: t('home.commercial.channelMix.loss'),
+                  unknownChannel: t('home.commercial.acquisition.unknownChannel'),
+                }}
                 language={i18n.language}
                 metric="revenueAmount"
                 rows={chartRows}
-            />
-          </div>
+              />
+            </div>
             <div className="xl:col-span-3">
               <ChannelMixChart
                 labels={{
@@ -477,6 +491,8 @@ export default function HomePage() {
                   metric: t('home.commercial.charts.netProfit'),
                   mix: t('home.commercial.channelMix.mix'),
                   empty: t('home.commercial.acquisition.empty'),
+                  loss: t('home.commercial.channelMix.loss'),
+                  unknownChannel: t('home.commercial.acquisition.unknownChannel'),
                 }}
                 language={i18n.language}
                 metric="netProfitAmount"

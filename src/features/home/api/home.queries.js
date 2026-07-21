@@ -8,7 +8,7 @@ import {
   useVendorPerformanceQuery,
 } from '@/features/reports/api/reports.queries'
 
-import { buildCommercialDashboard } from '../utils/commercialDashboard.js'
+import { buildCommercialDashboard, getAnalyticsRowsState } from '../utils/commercialDashboard.js'
 
 const ORDER_PERMISSIONS = ['ORDERS:READ', 'ORDERS:WRITE']
 const REPORT_PERMISSIONS = ['REPORTS:READ']
@@ -40,6 +40,7 @@ export function useHomeDashboardQuery(user, query = {}) {
   const buyerInsights = useBuyerInsightsQuery(query, { enabled: canReadReports })
   const vendorPerformance = useVendorPerformanceQuery(query, { enabled: canReadReports })
   const operations = useOperationsOverviewQuery(query, { enabled: canReadReports })
+  const channelPerformanceRows = channelPerformance.data || []
   const queryDefinitions = [
     { source: 'orders', enabled: canReadOrders, query: orders },
     { source: 'dailyProfit', enabled: canReadReports, query: dailyProfit },
@@ -54,8 +55,14 @@ export function useHomeDashboardQuery(user, query = {}) {
     data: {
       commercial: buildCommercialDashboard({
         buyerInsights: buyerInsights.data,
-        channelPerformance: channelPerformance.data || [],
+        channelPerformance: channelPerformanceRows,
         dailyProfit: dailyProfit.data || [],
+      }),
+      acquisitionState: getAnalyticsRowsState({
+        hasAccess: canReadReports,
+        isError: channelPerformance.isError,
+        isPending: channelPerformance.isPending,
+        rows: channelPerformanceRows,
       }),
       exceptions: getExceptionCounts(orders.data),
       dailyProfit: dailyProfit.data || [],

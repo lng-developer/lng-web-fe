@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { buildCommercialDashboard, buildLastDaysQuery } from './commercialDashboard.js'
+import * as dashboard from './commercialDashboard.js'
+
+const {
+  buildChannelMixRows,
+  buildCommercialDashboard,
+  buildLastDaysQuery,
+  getAnalyticsRowsState,
+  getProfitTone,
+  getSalesChannelLabel,
+} = dashboard
 
 test('buildLastDaysQuery produces an inclusive UTC date range', () => {
   assert.deepEqual(buildLastDaysQuery(30, new Date('2026-07-20T12:00:00Z')), {
@@ -111,4 +120,48 @@ test('buildCommercialDashboard derives returning buyer rate from known buyers', 
   })
 
   assert.equal(result.buyer.returningBuyerRateBps, 6250)
+})
+
+test('buildCommercialDashboard keeps acquisition-only currencies selectable', () => {
+  const result = buildCommercialDashboard({
+    channelPerformance: [{ currency: 'EUR', spendAmount: 2000, newBuyerCount: 2 }],
+    dailyProfit: [{ currency: 'USD', revenueAmount: 10000 }],
+  })
+
+  assert.deepEqual(result.currencies, ['EUR', 'USD'])
+})
+
+test('buildChannelMixRows keeps signed losses and uses magnitude for donut proportions', () => {
+  const result = buildChannelMixRows(
+    [
+      { salesChannelCode: 'AMAZON', netProfitAmount: -3000 },
+      { salesChannelCode: 'ETSY', netProfitAmount: 1000 },
+    ],
+    'netProfitAmount',
+  )
+
+  assert.deepEqual(result, [
+    { salesChannelCode: 'AMAZON', amount: -3000, magnitude: 3000, isLoss: true },
+    { salesChannelCode: 'ETSY', amount: 1000, magnitude: 1000, isLoss: false },
+  ])
+})
+
+test('getAnalyticsRowsState distinguishes unavailable, loading, empty, and ready data', () => {
+  assert.equal(getAnalyticsRowsState({ hasAccess: false }), 'unavailable')
+  assert.equal(getAnalyticsRowsState({ hasAccess: true, isError: true }), 'unavailable')
+  assert.equal(getAnalyticsRowsState({ hasAccess: true, isPending: true }), 'loading')
+  assert.equal(getAnalyticsRowsState({ hasAccess: true, rows: [] }), 'empty')
+  assert.equal(getAnalyticsRowsState({ hasAccess: true, rows: [{}] }), 'ready')
+})
+
+test('getProfitTone styles profit by sign', () => {
+  assert.equal(getProfitTone(-1), 'danger')
+  assert.equal(getProfitTone(0), 'default')
+  assert.equal(getProfitTone(1), 'success')
+})
+
+test('getSalesChannelLabel returns recognized labels instead of technical channel codes', () => {
+  assert.equal(getSalesChannelLabel('AMAZON'), 'Amazon')
+  assert.equal(getSalesChannelLabel('TIKTOK_SHOP'), 'TikTok Shop')
+  assert.equal(getSalesChannelLabel('UNKNOWN', 'Unknown channel'), 'Unknown channel')
 })

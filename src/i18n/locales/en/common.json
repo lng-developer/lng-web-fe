@@ -682,7 +682,7 @@
     "commercial": {
       "title": "Commercial overview",
       "subtitle": "Compare acquisition cost with margin before increasing ad spend.",
-      "analyticsPermission": "Analytics requires the REPORTS:READ permission.",
+      "analyticsPermission": "Commercial analytics are unavailable for your account.",
       "currency": "Currency",
       "actions": { "reports": "Reports" },
       "filters": {
@@ -732,14 +732,17 @@
         "channel": "Channel",
         "spend": "Ad spend",
         "newBuyers": "New buyers",
-        "cpa": "CPA",
-        "ctr": "CTR",
-        "conversion": "Conversion",
-        "roas": "ROAS",
+        "cpa": "Cost per new buyer",
+        "ctr": "Click-through rate",
+        "conversion": "Click-to-order conversion",
+        "roas": "Return on ad spend",
         "sales": "Attributed sales",
+        "unknownChannel": "Unknown channel",
         "empty": "No acquisition data for this period.",
         "emptyDescription": "Import advertising data or use demo analytics data to compare channel performance.",
-        "emptyAction": "Open Reports"
+        "emptyAction": "Open Reports",
+        "unavailable": "Acquisition analytics are currently unavailable.",
+        "loading": "Loading acquisition analytics."
       },
       "funnel": {
         "title": "Acquisition funnel",
@@ -752,7 +755,8 @@
         "sales": "Sales",
         "mix": "Channel mix",
         "revenueTitle": "Revenue mix by channel",
-        "profitTitle": "Net-profit mix by channel"
+        "profitTitle": "Net-profit mix by channel",
+        "loss": "Loss"
       },
       "profit": {
         "title": "Profit performance",

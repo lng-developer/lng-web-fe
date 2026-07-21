@@ -1,5 +1,7 @@
 import { formatCurrency } from '@/utils/format'
 
+import { getSalesChannelLabel } from '../utils/commercialDashboard'
+
 function money(value, currency, language) {
   return formatCurrency(Number(value || 0) / 100, language, currency || 'USD')
 }
@@ -36,7 +38,7 @@ export default function AcquisitionTable({ labels, language, rows }) {
                 className="transition-colors hover:bg-surface-subtle"
               >
                 <td className="px-4 py-3 font-medium text-ink-strong">
-                  {row.salesChannelCode}
+                  {getSalesChannelLabel(row.salesChannelCode, labels.unknownChannel)}
                 </td>
                 <td className="px-4 py-3 text-right text-ink-secondary">
                   {money(row.spendAmount, row.currency, language)}

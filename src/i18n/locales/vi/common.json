@@ -682,7 +682,7 @@
     "commercial": {
       "title": "Tổng quan thương mại",
       "subtitle": "Đối chiếu chi phí thu hút khách với biên lợi nhuận trước khi tăng ngân sách quảng cáo.",
-      "analyticsPermission": "Cần quyền REPORTS:READ để xem dữ liệu phân tích.",
+      "analyticsPermission": "Tài khoản của bạn không có quyền xem phân tích thương mại.",
       "currency": "Tiền tệ",
       "actions": { "reports": "Báo cáo" },
       "filters": {
@@ -733,14 +733,17 @@
         "channel": "Kênh",
         "spend": "Chi phí quảng cáo",
         "newBuyers": "Khách mới",
-        "cpa": "Chi phí/khách mới",
-        "ctr": "Tỷ lệ nhấp",
-        "conversion": "Chuyển đổi",
-        "roas": "Hiệu quả chi tiêu quảng cáo",
+        "cpa": "Chi phí cho mỗi khách hàng mới",
+        "ctr": "Tỷ lệ nhấp vào quảng cáo",
+        "conversion": "Tỷ lệ chuyển từ lượt nhấp thành đơn hàng",
+        "roas": "Doanh thu trên chi phí quảng cáo",
         "sales": "Doanh thu quy gắn",
+        "unknownChannel": "Kênh chưa xác định",
         "empty": "Chưa có dữ liệu thu hút khách trong kỳ này.",
         "emptyDescription": "Hãy nhập dữ liệu quảng cáo hoặc dùng dữ liệu phân tích mẫu để xem hiệu quả theo kênh.",
-        "emptyAction": "Mở Báo cáo"
+        "emptyAction": "Mở Báo cáo",
+        "unavailable": "Dữ liệu phân tích thu hút khách hiện không khả dụng.",
+        "loading": "Đang tải dữ liệu phân tích thu hút khách."
       },
       "funnel": {
         "title": "Phễu thu hút khách",
@@ -753,7 +756,8 @@
         "sales": "Doanh thu",
         "mix": "Tỷ trọng kênh",
         "revenueTitle": "Tỷ trọng doanh thu theo kênh",
-        "profitTitle": "Tỷ trọng lợi nhuận ròng theo kênh"
+        "profitTitle": "Tỷ trọng lợi nhuận ròng theo kênh",
+        "loss": "Lỗ"
       },
       "profit": {
         "title": "Hiệu quả lợi nhuận",

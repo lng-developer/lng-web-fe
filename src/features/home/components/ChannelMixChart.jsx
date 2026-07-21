@@ -1,5 +1,7 @@
 import { formatCurrency } from '@/utils/format'
 
+import { buildChannelMixRows, getSalesChannelLabel } from '../utils/commercialDashboard'
+
 const COLOR_CLASSES = [
   'fill-primary bg-primary',
   'fill-success bg-success',
@@ -21,17 +23,8 @@ function describeArc(cx, cy, radius, startAngle, endAngle) {
 }
 
 export default function ChannelMixChart({ labels, language, metric, rows }) {
-  const grouped = Object.values(
-    rows.reduce((result, row) => {
-      const key = row.salesChannelCode || 'UNKNOWN'
-      result[key] = result[key] || { channel: key, amount: 0 }
-      result[key].amount += Math.max(Number(row[metric] || 0), 0)
-      return result
-    }, {}),
-  )
-    .filter((row) => row.amount > 0)
-    .sort((left, right) => right.amount - left.amount)
-  const total = grouped.reduce((sum, row) => sum + row.amount, 0)
+  const grouped = buildChannelMixRows(rows, metric)
+  const total = grouped.reduce((sum, row) => sum + row.magnitude, 0)
   const currency = rows[0]?.currency || 'USD'
   let startAngle = -90
 
@@ -49,16 +42,17 @@ export default function ChannelMixChart({ labels, language, metric, rows }) {
         >
           {grouped.length ? (
             grouped.map((row, index) => {
-              const angle = (row.amount / total) * 360
+              const angle = (row.magnitude / total) * 360
               const path = describeArc(80, 80, 64, startAngle, startAngle + angle)
+              const channelLabel = getSalesChannelLabel(row.salesChannelCode, labels.unknownChannel)
               startAngle += angle
               return (
                 <path
                   className={COLOR_CLASSES[index % COLOR_CLASSES.length]}
                   d={path}
-                  key={row.channel}
+                  key={row.salesChannelCode}
                 >
-                  <title>{`${row.channel}: ${formatCurrency(row.amount / 100, language, currency)} (${Math.round((row.amount / total) * 100)}%)`}</title>
+                  <title>{`${channelLabel}: ${formatCurrency(row.amount / 100, language, currency)} (${Math.round((row.magnitude / total) * 100)}%${row.isLoss ? `, ${labels.loss}` : ''})`}</title>
                 </path>
               )
             })
@@ -81,16 +75,19 @@ export default function ChannelMixChart({ labels, language, metric, rows }) {
         <div className="space-y-2 text-sm">
           {grouped.length ? (
             grouped.map((row, index) => (
-              <div className="flex items-center justify-between gap-3" key={row.channel}>
+              <div className="flex items-center justify-between gap-3" key={row.salesChannelCode}>
                 <span className="inline-flex items-center gap-2 text-ink-secondary">
                   <span className={`h-2.5 w-2.5 ${COLOR_CLASSES[index % COLOR_CLASSES.length]}`} />
-                  {row.channel}
+                  {getSalesChannelLabel(row.salesChannelCode, labels.unknownChannel)}
                 </span>
-                <span className="text-right font-medium text-ink-strong">
+                <span
+                  className={`text-right font-medium ${row.isLoss ? 'text-danger' : 'text-ink-strong'}`}
+                >
                   {formatCurrency(row.amount / 100, language, currency)}
                   <span className="ml-2 text-xs text-ink-muted">
-                    {Math.round((row.amount / total) * 100)}%
+                    {Math.round((row.magnitude / total) * 100)}%
                   </span>
+                  {row.isLoss ? <span className="ml-2 text-xs">{labels.loss}</span> : null}
                 </span>
               </div>
             ))
