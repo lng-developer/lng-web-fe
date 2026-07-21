@@ -30,7 +30,6 @@ export const ENDPOINTS = {
     SHIPPING_ADDRESS: (orderId) => `/api/orders/${orderId}/shipping-address`,
     BUYER: (orderId) => `/api/orders/${orderId}/buyer`,
     SHIPPING_SERVICE: (orderId) => `/api/orders/${orderId}/shipping-service`,
-    CASE_STATUS: (orderId) => `/api/orders/${orderId}/case-status`,
     VALIDATE_ADDRESS: (orderId) => `/api/orders/${orderId}/validate-address`,
     ASSIGNED_STAFF: (orderId) => `/api/orders/${orderId}/assigned-staff`,
     ITEM_READINESS: (orderItemId) => `/api/orders/items/${orderItemId}/readiness`,

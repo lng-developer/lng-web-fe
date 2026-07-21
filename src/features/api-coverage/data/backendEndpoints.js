@@ -78,7 +78,6 @@ orders|GET|/api/orders/:orderId/items
 orders|PATCH|/api/orders/:orderId/shipping-address
 orders|PATCH|/api/orders/:orderId/buyer
 orders|PATCH|/api/orders/:orderId/shipping-service
-orders|PATCH|/api/orders/:orderId/case-status
 orders|POST|/api/orders/:orderId/validate-address
 orders|PATCH|/api/orders/:orderId/assigned-staff
 orders|GET|/api/orders/:orderId

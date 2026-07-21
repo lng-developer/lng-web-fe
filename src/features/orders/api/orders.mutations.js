@@ -165,19 +165,6 @@ export function useUpdateOrderShippingServiceMutation() {
   })
 }
 
-export function useUpdateOrderCaseStatusMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ orderId, caseStatus }) =>
-      apiClient.patch(ENDPOINTS.ORDERS.CASE_STATUS(orderId), { caseStatus }).then(unwrapApiData),
-    onSuccess: (_, variables) => {
-      invalidateOrderLists(queryClient)
-      queryClient.invalidateQueries({ queryKey: ordersKeys.detail(variables.orderId) })
-    },
-  })
-}
-
 export function useValidateOrderAddressMutation() {
   const queryClient = useQueryClient()
 
