@@ -150,11 +150,12 @@ test('getCommercialTotal prefers daily-profit totals and falls back to acquisiti
     channelPerformance: [
       { currency: 'EUR', salesChannelCode: 'AMAZON', spendAmount: 1200 },
       { currency: 'EUR', salesChannelCode: 'ETSY', spendAmount: 800 },
+      { currency: 'USD', salesChannelCode: 'AMAZON', spendAmount: 9000 },
     ],
     dailyProfit: [{ currency: 'USD', revenueAmount: 10000, adSpendAmount: 500 }],
   })
 
-  assert.deepEqual(getCommercialTotal(dashboard, 'USD'), dashboard.byCurrency.USD)
+  assert.equal(getCommercialTotal(dashboard, 'USD').adSpendAmount, 500)
   assert.deepEqual(getCommercialTotal(dashboard, 'EUR'), {
     adSpendAmount: 2000,
     baseCostAmount: 0,
