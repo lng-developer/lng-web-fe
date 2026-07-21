@@ -1,70 +1,83 @@
 import { hasAnyPermission } from '@/features/auth/utils/authz'
-import { useDesignTaskSummaryQuery } from '@/features/design-tasks/api/designTasks.queries'
 import { useOrderSummaryQuery } from '@/features/orders/api/orders.queries'
-import { useProductionSummaryQuery } from '@/features/production/api/production.queries'
-import { useShipmentsSummaryQuery } from '@/features/shipments/api/shipments.queries'
-import { useVendorSubmissionsSummaryQuery } from '@/features/vendor-submissions/api/vendorSubmissions.queries'
+import {
+  useAdsChannelPerformanceQuery,
+  useBuyerInsightsQuery,
+  useFinanceDailyProfitQuery,
+  useOperationsOverviewQuery,
+  useVendorPerformanceQuery,
+} from '@/features/reports/api/reports.queries'
 
-import { buildDashboardView } from '../utils/dashboardView.js'
+import { buildCommercialDashboard, getAnalyticsRowsState } from '../utils/commercialDashboard.js'
 
 const ORDER_PERMISSIONS = ['ORDERS:READ', 'ORDERS:WRITE']
-const PRODUCTION_PERMISSIONS = [
-  'PRODUCTION:READ',
-  'PRODUCTION:WRITE',
-  'DESIGN:WORK',
-  'DESIGN:REVIEW',
-]
-const DESIGN_PERMISSIONS = ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
+const REPORT_PERMISSIONS = ['REPORTS:READ']
 
-function collectDashboardState(queryDefinitions) {
-  const summaries = {}
-  const failures = {}
-
+function collectQueryState(queryDefinitions) {
+  const failures = []
   queryDefinitions.forEach(({ source, enabled, query }) => {
-    if (!enabled) return
-    if (query.isSuccess) summaries[source] = query.data
-    if (query.isError) failures[source] = true
+    if (enabled && query.isError) failures.push(source)
   })
-
-  return { summaries, failures }
+  return failures
 }
 
-export function useHomeDashboardQuery(user) {
-  const canReadOrders = hasAnyPermission(user, ORDER_PERMISSIONS)
-  const canReadProduction = hasAnyPermission(user, PRODUCTION_PERMISSIONS)
-  const canReadDesign = hasAnyPermission(user, DESIGN_PERMISSIONS)
-  const canReadVendorSubmissions = hasAnyPermission(user, ['VENDOR_SUBMISSIONS:READ'])
-  const canReadShipments = hasAnyPermission(user, ['SHIPMENTS:READ'])
+function getExceptionCounts(summary = {}) {
+  const tabCounts = summary.tabCounts || {}
+  return {
+    address: Number(tabCounts.ADDRESS_ISSUE || 0),
+    missingCostCenter: Number(tabCounts.NO_COST_CENTER || 0),
+    missingPsd: Number(tabCounts.NO_PSD || 0),
+    openCases: Number(tabCounts.OPEN_CASE || 0),
+  }
+}
 
+export function useHomeDashboardQuery(user, query = {}) {
+  const canReadOrders = hasAnyPermission(user, ORDER_PERMISSIONS)
+  const canReadReports = hasAnyPermission(user, REPORT_PERMISSIONS)
   const orders = useOrderSummaryQuery({}, { enabled: canReadOrders })
-  const production = useProductionSummaryQuery({}, { enabled: canReadProduction })
-  const design = useDesignTaskSummaryQuery({}, { enabled: canReadDesign })
-  const vendorSubmissions = useVendorSubmissionsSummaryQuery(
-    {},
-    { enabled: canReadVendorSubmissions },
-  )
-  const shipments = useShipmentsSummaryQuery({}, { enabled: canReadShipments })
+  const dailyProfit = useFinanceDailyProfitQuery(query, { enabled: canReadReports })
+  const channelPerformance = useAdsChannelPerformanceQuery(query, { enabled: canReadReports })
+  const buyerInsights = useBuyerInsightsQuery(query, { enabled: canReadReports })
+  const vendorPerformance = useVendorPerformanceQuery(query, { enabled: canReadReports })
+  const operations = useOperationsOverviewQuery(query, { enabled: canReadReports })
+  const channelPerformanceRows = channelPerformance.data || []
   const queryDefinitions = [
     { source: 'orders', enabled: canReadOrders, query: orders },
-    { source: 'production', enabled: canReadProduction, query: production },
-    { source: 'design', enabled: canReadDesign, query: design },
-    {
-      source: 'vendorSubmissions',
-      enabled: canReadVendorSubmissions,
-      query: vendorSubmissions,
-    },
-    { source: 'shipments', enabled: canReadShipments, query: shipments },
+    { source: 'dailyProfit', enabled: canReadReports, query: dailyProfit },
+    { source: 'channelPerformance', enabled: canReadReports, query: channelPerformance },
+    { source: 'buyerInsights', enabled: canReadReports, query: buyerInsights },
+    { source: 'vendorPerformance', enabled: canReadReports, query: vendorPerformance },
+    { source: 'operations', enabled: canReadReports, query: operations },
   ]
-  const { summaries, failures } = collectDashboardState(queryDefinitions)
+  const failedSources = collectQueryState(queryDefinitions)
 
   return {
-    data: buildDashboardView({ user, summaries, failures }),
-    isPending: queryDefinitions.some(({ enabled, query }) => enabled && query.isPending),
-    isError: Object.keys(failures).length > 0,
-    failedSources: Object.keys(failures),
+    data: {
+      commercial: buildCommercialDashboard({
+        buyerInsights: buyerInsights.data,
+        channelPerformance: channelPerformanceRows,
+        dailyProfit: dailyProfit.data || [],
+      }),
+      acquisitionState: getAnalyticsRowsState({
+        hasAccess: canReadReports,
+        isError: channelPerformance.isError,
+        isPending: channelPerformance.isPending,
+        rows: channelPerformanceRows,
+      }),
+      exceptions: getExceptionCounts(orders.data),
+      dailyProfit: dailyProfit.data || [],
+      hasAnalyticsAccess: canReadReports,
+      operations: operations.data || {},
+      vendors: vendorPerformance.data?.items || [],
+    },
+    isPending: queryDefinitions.some(({ enabled, query: current }) => enabled && current.isPending),
+    isError: failedSources.length > 0,
+    failedSources,
     refetch: () =>
       Promise.all(
-        queryDefinitions.filter(({ enabled }) => enabled).map(({ query }) => query.refetch()),
+        queryDefinitions
+          .filter(({ enabled }) => enabled)
+          .map(({ query: current }) => current.refetch()),
       ),
   }
 }

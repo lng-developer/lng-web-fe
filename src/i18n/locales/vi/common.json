@@ -59,6 +59,7 @@
       "etsy": "Etsy"
     },
     "items": {
+      "dashboard": "Dashboard",
       "orderList": "Danh sách đơn",
       "orderWorkbench": "Order Workbench",
       "orderDetail": "Chi tiết đơn",
@@ -678,6 +679,124 @@
     "title": "Trang chủ",
     "welcome": "Dashboard vận hành POD",
     "description": "Theo dõi nhanh đơn hàng, hàng chờ xử lý và các ngoại lệ cần ưu tiên trong ngày.",
+    "commercial": {
+      "title": "Tổng quan thương mại",
+      "subtitle": "Đối chiếu chi phí thu hút khách với biên lợi nhuận trước khi tăng ngân sách quảng cáo.",
+      "analyticsPermission": "Tài khoản của bạn không có quyền xem phân tích thương mại.",
+      "currency": "Tiền tệ",
+      "actions": { "reports": "Báo cáo" },
+      "filters": {
+        "days": "{{count}} ngày gần nhất",
+        "allChannels": "Tất cả kênh"
+      },
+      "exceptions": {
+        "title": "Cần xử lý",
+        "address": "Địa chỉ có vấn đề",
+        "missingPsd": "Thiếu PSD",
+        "missingCostCenter": "Thiếu cost center",
+        "openCases": "Case đang mở"
+      },
+      "metrics": {
+        "grossSales": "Doanh thu gộp",
+        "netProfit": "Lợi nhuận ròng",
+        "profitMargin": "Biên lợi nhuận",
+        "itemsSold": "Sản phẩm đã bán",
+        "returningBuyers": "Khách quay lại",
+        "knownBuyers": "Khách đã nhận diện",
+        "returningBuyerRate": "Tỷ lệ khách quay lại"
+      },
+      "decision": {
+        "title": "Tóm tắt quyết định",
+        "description": "So sánh chi phí thu hút khách với biên lợi nhuận trước khi tăng ngân sách quảng cáo.",
+        "salesMomentum": "Quy mô bán hàng",
+        "takeHomeProfit": "Lợi nhuận sau chi phí",
+        "marginQuality": "Chất lượng lợi nhuận",
+        "marketingInvestment": "Mức đầu tư quảng cáo",
+        "marketingEfficiency": "Hiệu quả tiếp thị",
+        "customerRetention": "Khả năng giữ chân khách"
+      },
+      "charts": {
+        "revenueAndProfit": "Doanh thu, chi phí và lợi nhuận",
+        "revenue": "Doanh thu",
+        "grossProfit": "Lợi nhuận gộp",
+        "netProfit": "Lợi nhuận ròng",
+        "netMargin": "Biên ròng",
+        "productCost": "Chi phí sản phẩm",
+        "adSpend": "Chi phí quảng cáo",
+        "profitByChannel": "Lợi nhuận theo kênh",
+        "channelRanking": "Xếp hạng trong kỳ"
+      },
+      "profitBridge": "Cấu phần lợi nhuận",
+      "acquisition": {
+        "title": "Thu hút khách hàng",
+        "description": "So sánh độ phủ quảng cáo, chi phí thu hút khách và doanh thu quy gắn theo kênh.",
+        "channel": "Kênh",
+        "spend": "Chi phí quảng cáo",
+        "newBuyers": "Khách mới",
+        "cpa": "Chi phí cho mỗi khách hàng mới",
+        "ctr": "Tỷ lệ nhấp vào quảng cáo",
+        "conversion": "Tỷ lệ chuyển từ lượt nhấp thành đơn hàng",
+        "roas": "Doanh thu trên chi phí quảng cáo",
+        "sales": "Doanh thu quy gắn",
+        "unknownChannel": "Kênh chưa xác định",
+        "empty": "Chưa có dữ liệu thu hút khách trong kỳ này.",
+        "emptyDescription": "Hãy nhập dữ liệu quảng cáo hoặc dùng dữ liệu phân tích mẫu để xem hiệu quả theo kênh.",
+        "emptyAction": "Mở Báo cáo",
+        "unavailable": "Dữ liệu phân tích thu hút khách hiện không khả dụng.",
+        "loading": "Đang tải dữ liệu phân tích thu hút khách."
+      },
+      "funnel": {
+        "title": "Phễu thu hút khách",
+        "impressions": "Lượt hiển thị",
+        "clicks": "Lượt nhấp",
+        "orders": "Đơn được quy gắn"
+      },
+      "channelMix": {
+        "title": "Tỷ trọng doanh thu quy gắn",
+        "sales": "Doanh thu",
+        "mix": "Tỷ trọng kênh",
+        "revenueTitle": "Tỷ trọng doanh thu theo kênh",
+        "profitTitle": "Tỷ trọng lợi nhuận ròng theo kênh",
+        "loss": "Lỗ"
+      },
+      "profit": {
+        "title": "Hiệu quả lợi nhuận",
+        "description": "Theo dõi xu hướng doanh thu, lợi nhuận và mức đóng góp của từng kênh.",
+        "empty": "Chưa có dữ liệu lợi nhuận trong kỳ này."
+      },
+      "buyer": {
+        "title": "Chỉ số người mua",
+        "new": "Khách mới",
+        "returning": "Khách quay lại",
+        "repeatInPeriod": "Mua lại trong kỳ",
+        "repeatRate": "Tỷ lệ mua lại",
+        "unidentifiedOrders": "Đơn chưa nhận diện khách"
+      },
+      "vendor": {
+        "title": "Độ tin cậy vendor",
+        "unknown": "Vendor chưa xác định",
+        "submissions": "{{count}} lượt gửi",
+        "averageHours": "TB {{count}} giờ",
+        "empty": "Chưa có dữ liệu hiệu suất vendor."
+      },
+      "operations": {
+        "title": "Trạng thái vận hành",
+        "production": "Sản xuất",
+        "vendor": "Vendor",
+        "shipment": "Vận chuyển"
+      },
+      "operatingHealth": {
+        "title": "Sức khỏe vận hành",
+        "description": "Xử lý ngoại lệ và theo dõi độ ổn định của vendor cùng luồng sản xuất."
+      },
+      "reportLinks": {
+        "title": "Báo cáo sẵn có",
+        "finance": "Báo cáo tài chính",
+        "buyers": "Chỉ số người mua",
+        "vendors": "Hiệu suất vendor",
+        "operations": "Báo cáo vận hành"
+      }
+    },
     "dashboard": {
       "title": "Công việc của tôi",
       "totalOpen": "{{count}} việc đang chờ xử lý",

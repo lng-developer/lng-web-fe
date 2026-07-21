@@ -93,6 +93,14 @@ export const SIDEBAR_WORKSPACES = [
   { id: SIDEBAR_WORKSPACE_IDS.ADMIN, labelKey: 'nav.workspaces.admin', icon: 'admin' },
 ]
 
+export const SIDEBAR_HOME_ITEM = {
+  id: 'dashboard',
+  type: 'item',
+  labelKey: 'nav.items.dashboard',
+  icon: 'dashboard',
+  path: ROUTES.HOME,
+}
+
 function withSearch(search) {
   return { search, activeSearch: search }
 }
