@@ -132,6 +132,18 @@ test('buildCommercialDashboard keeps acquisition-only currencies selectable', ()
   assert.deepEqual(result.currencies, ['EUR', 'USD'])
 })
 
+test('buildCommercialDashboard sums acquisition spend for an acquisition-only currency', () => {
+  const result = buildCommercialDashboard({
+    channelPerformance: [
+      { currency: 'EUR', salesChannelCode: 'AMAZON', spendAmount: 1200 },
+      { currency: 'EUR', salesChannelCode: 'ETSY', spendAmount: 800 },
+    ],
+    dailyProfit: [{ currency: 'USD', revenueAmount: 10000 }],
+  })
+
+  assert.equal(result.acquisitionSpendByCurrency.EUR, 2000)
+})
+
 test('buildAcquisitionFunnelRows keeps per-channel ratios and derives funnel rates', () => {
   const result = buildAcquisitionFunnelRows([
     {

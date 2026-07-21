@@ -157,8 +157,13 @@ export function buildCommercialDashboard({
       }
     })
     .sort((left, right) => right.spendAmount - left.spendAmount)
+  const acquisitionSpendByCurrency = acquisitionRows.reduce((result, row) => {
+    result[row.currency] = (result[row.currency] || 0) + row.spendAmount
+    return result
+  }, {})
 
   return {
+    acquisitionSpendByCurrency,
     acquisitionRows,
     currencies: [
       ...new Set([...Object.keys(byCurrency), ...acquisitionRows.map((row) => row.currency)]),

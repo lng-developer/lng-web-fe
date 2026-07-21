@@ -254,7 +254,7 @@ export default function HomePage() {
   const acquisitionRows = data.commercial.acquisitionRows.filter(
     (row) => (row.currency || 'USD') === currency,
   )
-  const acquisitionSpend = acquisitionRows.reduce((sum, row) => sum + row.spendAmount, 0)
+  const acquisitionSpend = data.commercial.acquisitionSpendByCurrency[currency] || 0
   const total = data.commercial.byCurrency[currency] || {
     adSpendAmount: acquisitionSpend,
     baseCostAmount: 0,
