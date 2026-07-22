@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import CloseIcon from '@mui/icons-material/Close'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
@@ -116,6 +116,16 @@ export function ImportOrdersDialog({ onClose, open, shopOptions }) {
   const [selectedStore, setSelectedStore] = useState('')
   const [selectedSource, setSelectedSource] = useState('MANUAL_EXCEL')
   const [selectedFile, setSelectedFile] = useState(null)
+
+  useEffect(() => {
+    if (!open) {
+      queueMicrotask(() => {
+        setSelectedStore('')
+        setSelectedSource('MANUAL_EXCEL')
+        setSelectedFile(null)
+      })
+    }
+  }, [open])
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0]
@@ -321,6 +331,15 @@ export function UpdateCustomerDialog({ onClose, open, order }) {
     enabled: open && Boolean(order?.apiId),
   })
   const [draftValues, setDraftValues] = useState({})
+
+  useEffect(() => {
+    if (!open) queueMicrotask(() => setDraftValues({}))
+  }, [open])
+
+  useEffect(() => {
+    queueMicrotask(() => setDraftValues({}))
+  }, [order?.apiId])
+
   const sourceFormValues = useMemo(
     () => buildCustomerForm(detailQuery.data || order),
     [detailQuery.data, order],
@@ -458,6 +477,15 @@ export function UpdateShippingDialog({ onClose, open, order }) {
     enabled: open && Boolean(order?.apiId),
   })
   const [draftValues, setDraftValues] = useState({})
+
+  useEffect(() => {
+    if (!open) queueMicrotask(() => setDraftValues({}))
+  }, [open])
+
+  useEffect(() => {
+    queueMicrotask(() => setDraftValues({}))
+  }, [order?.apiId])
+
   const sourceFormValues = useMemo(
     () => buildShippingServiceForm(detailQuery.data || order),
     [detailQuery.data, order],
@@ -586,6 +614,15 @@ export function OpenCaseDialog({ onClose, onCreated, open, order }) {
   const createCaseMutation = useCreateOrderCaseMutation()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+
+  useEffect(() => {
+    if (!open) {
+      queueMicrotask(() => {
+        setTitle('')
+        setDescription('')
+      })
+    }
+  }, [open])
 
   const handleSave = async () => {
     const cleanTitle = title.trim()

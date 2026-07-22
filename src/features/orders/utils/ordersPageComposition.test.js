@@ -132,6 +132,51 @@ test('order dialogs own modal flows without owning workbench queries', () => {
   assert.equal(tableSource.includes('function OpenCaseModal'), false)
 })
 
+test('order dialogs reset drafts on close and selected order changes without clearing failures', () => {
+  const source = readOrderDialogsSource()
+  const dialogSource = (name, nextName) =>
+    source.slice(
+      source.indexOf(`export function ${name}`),
+      nextName ? source.indexOf(`export function ${nextName}`) : source.length,
+    )
+  const catchSource = (dialog) =>
+    dialog.slice(dialog.indexOf('} catch (error) {'), dialog.indexOf('\n    }\n  }\n\n  return'))
+  const importDialog = dialogSource('ImportOrdersDialog', 'UpdateCustomerDialog')
+  const customerDialog = dialogSource('UpdateCustomerDialog', 'UpdateShippingDialog')
+  const shippingDialog = dialogSource('UpdateShippingDialog', 'OpenCaseDialog')
+  const caseDialog = dialogSource('OpenCaseDialog')
+
+  assert.match(
+    importDialog,
+    /useEffect\(\(\) => \{\s*if \(!open\) \{\s*queueMicrotask\(\(\) => \{\s*setSelectedStore\(''\)\s*setSelectedSource\('MANUAL_EXCEL'\)\s*setSelectedFile\(null\)\s*\}\)\s*\}\s*\}, \[open\]\)/,
+  )
+  assert.match(
+    customerDialog,
+    /useEffect\(\(\) => \{\s*if \(!open\) queueMicrotask\(\(\) => setDraftValues\(\{\}\)\)\s*\}, \[open\]\)/,
+  )
+  assert.match(
+    customerDialog,
+    /useEffect\(\(\) => \{\s*queueMicrotask\(\(\) => setDraftValues\(\{\}\)\)\s*\}, \[order\?\.apiId\]\)/,
+  )
+  assert.match(
+    shippingDialog,
+    /useEffect\(\(\) => \{\s*if \(!open\) queueMicrotask\(\(\) => setDraftValues\(\{\}\)\)\s*\}, \[open\]\)/,
+  )
+  assert.match(
+    shippingDialog,
+    /useEffect\(\(\) => \{\s*queueMicrotask\(\(\) => setDraftValues\(\{\}\)\)\s*\}, \[order\?\.apiId\]\)/,
+  )
+  assert.match(
+    caseDialog,
+    /useEffect\(\(\) => \{\s*if \(!open\) \{\s*queueMicrotask\(\(\) => \{\s*setTitle\(''\)\s*setDescription\(''\)\s*\}\)\s*\}\s*\}, \[open\]\)/,
+  )
+
+  assert.doesNotMatch(catchSource(importDialog), /setSelected(?:Store|Source|File)/)
+  assert.doesNotMatch(catchSource(customerDialog), /setDraftValues/)
+  assert.doesNotMatch(catchSource(shippingDialog), /setDraftValues/)
+  assert.doesNotMatch(catchSource(caseDialog), /set(?:Title|Description)/)
+})
+
 test('orders header keeps tabs and filters compact without heavy active blocks', () => {
   const controlsSource = readOrdersControlsSource()
   const tabsSource = controlsSource.slice(
