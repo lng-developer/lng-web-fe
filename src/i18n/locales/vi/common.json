@@ -32,6 +32,11 @@
     "portal": "Portal",
     "hr": "HR",
     "sidebarTabs": "Tab điều hướng sidebar",
+    "contexts": {
+      "label": "Ngữ cảnh điều hướng",
+      "portal": "Portal",
+      "hr": "HR"
+    },
     "sections": {
       "work": "Công việc",
       "setup": "Thiết lập",

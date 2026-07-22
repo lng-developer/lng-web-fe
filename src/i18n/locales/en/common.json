@@ -32,6 +32,11 @@
     "portal": "Portal",
     "hr": "HR",
     "sidebarTabs": "Sidebar navigation tabs",
+    "contexts": {
+      "label": "Navigation context",
+      "portal": "Portal",
+      "hr": "HR"
+    },
     "sections": {
       "work": "Work",
       "setup": "Setup",

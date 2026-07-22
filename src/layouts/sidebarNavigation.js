@@ -93,6 +93,16 @@ export const SIDEBAR_WORKSPACES = [
   { id: SIDEBAR_WORKSPACE_IDS.ADMIN, labelKey: 'nav.workspaces.admin', icon: 'admin' },
 ]
 
+export const SIDEBAR_CONTEXT_IDS = {
+  PORTAL: 'portal',
+  HR: 'hr',
+}
+
+export const SIDEBAR_CONTEXTS = [
+  { id: SIDEBAR_CONTEXT_IDS.PORTAL, labelKey: 'nav.contexts.portal' },
+  { id: SIDEBAR_CONTEXT_IDS.HR, labelKey: 'nav.contexts.hr' },
+]
+
 export const SIDEBAR_HOME_ITEM = {
   id: 'dashboard',
   type: 'item',
@@ -475,65 +485,69 @@ export const SIDEBAR_WORKSPACE_NAVIGATION = {
         },
       ],
     },
-    {
-      id: 'hr-time-group',
-      type: 'group',
-      labelKey: 'hrTime.title',
-      icon: 'users',
-      defaultOpen: true,
-      children: [
-        {
-          id: 'hr-my-time',
-          type: 'item',
-          labelKey: 'hrTime.navigation.myTime',
-          icon: 'orders',
-          path: ROUTES.HR_TIME_MY_TIME,
-          requiredPermissions: ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
-        },
-        {
-          id: 'hr-request-inbox',
-          type: 'item',
-          labelKey: 'hrTime.navigation.requestInbox',
-          icon: 'reports',
-          path: ROUTES.HR_TIME_REQUEST_INBOX,
-          requiredPermissions: [
-            'HR_LEAVE:READ',
-            'HR_LEAVE:APPROVE',
-            'HR_OVERTIME:READ',
-            'HR_OVERTIME:APPROVE',
-          ],
-        },
-        {
-          id: 'hr-attendance',
-          type: 'item',
-          labelKey: 'hrTime.navigation.attendance',
-          icon: 'qc',
-          path: ROUTES.HR_TIME_ATTENDANCE,
-          requiredPermissions: ['HR_ATTENDANCE:READ', 'HR_ATTENDANCE:MANAGE'],
-        },
-        {
-          id: 'hr-schedule',
-          type: 'item',
-          labelKey: 'hrTime.navigation.schedule',
-          icon: 'config',
-          path: ROUTES.HR_TIME_SCHEDULE,
-          requiredPermissions: ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'],
-        },
-        {
-          id: 'hr-employees',
-          type: 'item',
-          labelKey: 'hrTime.navigation.employees',
-          icon: 'users',
-          path: ROUTES.HR_TIME_EMPLOYEES,
-          requiredPermissions: ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'],
-        },
-      ],
-    },
   ],
 }
 
-export const SIDEBAR_NAVIGATION = Object.values(SIDEBAR_WORKSPACE_NAVIGATION).flat()
-export const HR_NAVIGATION = []
+export const PORTAL_NAVIGATION = Object.values(SIDEBAR_WORKSPACE_NAVIGATION).flat()
+
+export const HR_NAVIGATION = [
+  {
+    id: 'hr-time-group',
+    type: 'group',
+    labelKey: 'hrTime.title',
+    icon: 'users',
+    defaultOpen: true,
+    children: [
+      {
+        id: 'hr-my-time',
+        type: 'item',
+        labelKey: 'hrTime.navigation.myTime',
+        icon: 'orders',
+        path: ROUTES.HR_TIME_MY_TIME,
+        requiredPermissions: ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
+      },
+      {
+        id: 'hr-request-inbox',
+        type: 'item',
+        labelKey: 'hrTime.navigation.requestInbox',
+        icon: 'reports',
+        path: ROUTES.HR_TIME_REQUEST_INBOX,
+        requiredPermissions: [
+          'HR_LEAVE:READ',
+          'HR_LEAVE:APPROVE',
+          'HR_OVERTIME:READ',
+          'HR_OVERTIME:APPROVE',
+        ],
+      },
+      {
+        id: 'hr-attendance',
+        type: 'item',
+        labelKey: 'hrTime.navigation.attendance',
+        icon: 'qc',
+        path: ROUTES.HR_TIME_ATTENDANCE,
+        requiredPermissions: ['HR_ATTENDANCE:READ', 'HR_ATTENDANCE:MANAGE'],
+      },
+      {
+        id: 'hr-schedule',
+        type: 'item',
+        labelKey: 'hrTime.navigation.schedule',
+        icon: 'config',
+        path: ROUTES.HR_TIME_SCHEDULE,
+        requiredPermissions: ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'],
+      },
+      {
+        id: 'hr-employees',
+        type: 'item',
+        labelKey: 'hrTime.navigation.employees',
+        icon: 'users',
+        path: ROUTES.HR_TIME_EMPLOYEES,
+        requiredPermissions: ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'],
+      },
+    ],
+  },
+]
+
+export const SIDEBAR_NAVIGATION = [...PORTAL_NAVIGATION, ...HR_NAVIGATION]
 
 export function getNavItemTo(item) {
   return item.search ? { pathname: item.path, search: item.search } : item.path
@@ -579,6 +593,35 @@ function hasActivePath(item, location) {
   const nestedItems = item.items ?? item.children
 
   return nestedItems ? nestedItems.some((nestedItem) => hasActivePath(nestedItem, location)) : false
+}
+
+const HR_ROUTE_PATHS = new Set([
+  ROUTES.HR_TIME_MY_TIME,
+  ROUTES.HR_TIME_REQUEST_INBOX,
+  ROUTES.HR_TIME_ATTENDANCE,
+  ROUTES.HR_TIME_SCHEDULE,
+  ROUTES.HR_TIME_EMPLOYEES,
+])
+
+export function getSidebarContextForLocation(pathname) {
+  return HR_ROUTE_PATHS.has(pathname) ? SIDEBAR_CONTEXT_IDS.HR : SIDEBAR_CONTEXT_IDS.PORTAL
+}
+
+export function getFirstNavigableItem(navigation) {
+  for (const item of navigation) {
+    if (item.type === 'section') {
+      const nestedItem = getFirstNavigableItem(item.items)
+      if (nestedItem) return nestedItem
+      continue
+    }
+
+    if (item.path) return item
+
+    const nestedItem = getFirstNavigableItem(item.children ?? [])
+    if (nestedItem) return nestedItem
+  }
+
+  return null
 }
 
 export function getSidebarWorkspaceForLocation(pathname, search = '') {

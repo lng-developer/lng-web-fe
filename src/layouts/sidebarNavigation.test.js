@@ -2,13 +2,19 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 
+import { ROUTES } from '../constants/routes.js'
 import {
   filterNavigationByRole,
   filterNavigationByUser,
+  getFirstNavigableItem,
   getNavItemTo,
   getRoleMeta,
+  getSidebarContextForLocation,
   getSidebarWorkspaceForLocation,
+  HR_NAVIGATION,
   isNavItemActive,
+  PORTAL_NAVIGATION,
+  SIDEBAR_CONTEXT_IDS,
   SIDEBAR_HOME_ITEM,
   SIDEBAR_NAVIGATION,
   SIDEBAR_ROLE_FILTERING_ENABLED,
@@ -97,6 +103,28 @@ describe('sidebar navigation', () => {
       path: '/',
       type: 'item',
     })
+  })
+
+  it('separates HR leaves from Portal navigation', () => {
+    assert.equal(collectLeafIds(PORTAL_NAVIGATION).includes('hr-schedule'), false)
+    assert.deepEqual(
+      collectLeafIds(filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_SCHEDULE:READ'] })),
+      ['hr-schedule'],
+    )
+  })
+
+  it('derives the navigation context from mounted route families', () => {
+    assert.equal(getSidebarContextForLocation(ROUTES.PORTAL_ORDER_LIST), SIDEBAR_CONTEXT_IDS.PORTAL)
+    assert.equal(getSidebarContextForLocation(ROUTES.HR_TIME_SCHEDULE), SIDEBAR_CONTEXT_IDS.HR)
+  })
+
+  it('finds the first accessible leaf depth-first', () => {
+    const navigation = filterNavigationByUser(HR_NAVIGATION, {
+      permissions: ['HR_SCHEDULE:READ'],
+    })
+
+    assert.equal(getFirstNavigableItem(navigation)?.id, 'hr-schedule')
+    assert.equal(getFirstNavigableItem([]), null)
   })
 
   it('keeps order listing setup and report workflow in the orders workspace', () => {
