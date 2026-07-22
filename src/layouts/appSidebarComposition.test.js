@@ -22,3 +22,25 @@ test('sidebar uses route-derived Portal and HR context controls without a worksp
   assert.equal(source.includes('renderWorkspaceRail'), false)
   assert.equal(source.includes('workspaceButtonSx'), false)
 })
+
+test('sidebar does not route when the active context tab is clicked', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+  const guardIndex = source.indexOf('if (contextId === activeContext) return')
+  const navigationIndex = source.indexOf(
+    'const navigation =',
+    source.indexOf('handleContextChange'),
+  )
+
+  assert.notEqual(guardIndex, -1)
+  assert.equal(guardIndex < navigationIndex, true)
+})
+
+test('sidebar context tabs expose a visible keyboard focus state', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+  const contextButtonStyles = source.slice(
+    source.indexOf('function contextButtonSx'),
+    source.indexOf('function navButtonSx'),
+  )
+
+  assert.match(contextButtonStyles, /'&\.Mui-focusVisible':\s*\{[\s\S]*?(?:outline|boxShadow):/)
+})

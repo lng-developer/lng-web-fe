@@ -616,10 +616,10 @@ export function getFirstNavigableItem(navigation) {
       continue
     }
 
-    if (item.path) return item
-
     const nestedItem = getFirstNavigableItem(item?.children ?? [])
     if (nestedItem) return nestedItem
+
+    if (item.type !== 'group' && item.path) return item
   }
 
   return null
@@ -662,7 +662,7 @@ function filterItem(item, role) {
   if (item.children) {
     const children = item.children.map((child) => filterItem(child, role)).filter(Boolean)
 
-    return children.length > 0 || item.path ? { ...item, children } : null
+    return children.length > 0 ? { ...item, children } : null
   }
 
   return { ...item }
@@ -694,7 +694,7 @@ function filterMountedItem(item) {
   if (item.children) {
     const children = item.children.map(filterMountedItem).filter(Boolean)
 
-    return children.length > 0 || item.path ? { ...item, children } : null
+    return children.length > 0 ? { ...item, children } : null
   }
 
   return { ...item }
@@ -721,7 +721,7 @@ function filterItemByUser(item, user) {
       .map((child) => filterItemByUser(child, user))
       .filter(Boolean)
 
-    return children.length > 0 || mountedItem.path ? { ...mountedItem, children } : null
+    return children.length > 0 ? { ...mountedItem, children } : null
   }
 
   return { ...mountedItem }

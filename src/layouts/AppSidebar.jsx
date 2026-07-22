@@ -146,6 +146,9 @@ function contextButtonSx({ selected }) {
     '&:hover': {
       bgcolor: selected ? 'background.paper' : 'action.selected',
     },
+    '&.Mui-focusVisible': {
+      boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+    },
   })
 }
 
@@ -248,6 +251,8 @@ export default function AppSidebar({ onNavigate, open }) {
   const openItems = openItemsByContext[activeContext] ?? {}
 
   const handleContextChange = (contextId) => {
+    if (contextId === activeContext) return
+
     const navigation =
       contextId === SIDEBAR_CONTEXT_IDS.HR ? hrNavigation : [SIDEBAR_HOME_ITEM, ...portalNavigation]
     const landingItem = getFirstNavigableItem(navigation)

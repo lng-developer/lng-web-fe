@@ -130,6 +130,33 @@ describe('sidebar navigation', () => {
     assert.equal(getFirstNavigableItem([{ type: 'section' }]), null)
   })
 
+  it('uses nested leaves instead of path-bearing groups as context landings', () => {
+    const nestedLeaf = { id: 'scale-amazon', type: 'item', path: '/portal/fulfillment/scale' }
+
+    assert.equal(
+      getFirstNavigableItem([
+        {
+          id: 'scale-group',
+          type: 'group',
+          path: '/portal/fulfillment/scale',
+          children: [nestedLeaf],
+        },
+      ]),
+      nestedLeaf,
+    )
+    assert.equal(
+      getFirstNavigableItem([
+        {
+          id: 'scale-group',
+          type: 'group',
+          path: '/portal/fulfillment/scale',
+          children: [],
+        },
+      ]),
+      null,
+    )
+  })
+
   it('keeps order listing setup and report workflow in the orders workspace', () => {
     assert.deepEqual(collectLeafIds(SIDEBAR_WORKSPACE_NAVIGATION.orders), [
       'orders-amazon',
@@ -385,6 +412,14 @@ describe('sidebar navigation', () => {
   it('removes empty groups after filtering', () => {
     const navigation = filterNavigationByUser(SIDEBAR_WORKSPACE_NAVIGATION.orders, {
       permissions: ['DESIGN:WORK'],
+    })
+
+    assert.deepEqual(navigation, [])
+  })
+
+  it('removes path-bearing production groups when permission filtering empties them', () => {
+    const navigation = filterNavigationByUser(SIDEBAR_WORKSPACE_NAVIGATION.production, {
+      permissions: [],
     })
 
     assert.deepEqual(navigation, [])
