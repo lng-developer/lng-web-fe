@@ -691,8 +691,11 @@ test('refresh and timeline icon actions expose labels and tooltips', () => {
 test('keyboard-focused refresh and timeline controls have a visible focus indicator', () => {
   const controlsSource = readOrdersControlsSource()
   const tableSource = readOrdersTableSource()
+  const refreshActionStart = controlsSource.search(
+    /<IconButton\s+aria-label=\{t\('orders\.filters\.refresh'\)\}/,
+  )
   const refreshSource = controlsSource.slice(
-    controlsSource.indexOf("<IconButton\n          aria-label={t('orders.filters.refresh')}"),
+    refreshActionStart,
     controlsSource.indexOf('<Button\n          variant="contained"'),
   )
   const timelineSource = tableSource.slice(
