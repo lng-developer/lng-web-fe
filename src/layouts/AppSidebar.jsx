@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
-import AutoAwesomeMosaicOutlinedIcon from '@mui/icons-material/AutoAwesomeMosaicOutlined'
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -30,30 +29,25 @@ import {
   Typography,
 } from '@mui/material'
 
-import { ELEVATION_SHADOWS, LAYOUT_SIZES } from '@/constants/app'
+import { LAYOUT_SIZES } from '@/constants/app'
 import { getCurrentUserDisplayName, resolveCurrentUser } from '@/features/auth/utils/currentUser'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
   filterNavigationByUser,
+  getFirstNavigableItem,
   getNavItemTo,
-  getSidebarWorkspaceForLocation,
+  getSidebarContextForLocation,
+  HR_NAVIGATION,
   isNavItemActive,
+  SIDEBAR_CONTEXT_IDS,
+  SIDEBAR_CONTEXTS,
   SIDEBAR_HOME_ITEM,
   SIDEBAR_WORKSPACE_NAVIGATION,
   SIDEBAR_WORKSPACES,
 } from './sidebarNavigation'
 
 const SIDEBAR_WIDTH = 248
-
-const WORKSPACE_ICONS = {
-  orders: HomeOutlinedIcon,
-  production: FactCheckOutlinedIcon,
-  design: PaletteOutlinedIcon,
-  vendor: StorefrontOutlinedIcon,
-  reports: AssignmentOutlinedIcon,
-  admin: SettingsOutlinedIcon,
-}
 
 const NAV_ITEM_ICONS = {
   ads: AssignmentOutlinedIcon,
@@ -137,25 +131,20 @@ function NavGlyph({ icon, active }) {
   )
 }
 
-function workspaceButtonSx({ active }) {
+function contextButtonSx({ selected }) {
   return (theme) => ({
-    alignItems: 'center',
-    bgcolor: active ? 'primary.light' : 'transparent',
-    border: 0,
-    borderRadius: theme.spacing(1),
-    boxShadow: active ? ELEVATION_SHADOWS.SIDEBAR_TAB : 'none',
-    color: active ? 'primary.main' : 'text.secondary',
-    cursor: 'pointer',
-    display: 'flex',
-    height: 34,
-    justifyContent: 'center',
-    minWidth: 34,
-    transition: theme.transitions.create(['background-color', 'box-shadow', 'color'], {
+    bgcolor: selected ? 'background.paper' : 'transparent',
+    borderRadius: 1,
+    color: selected ? 'primary.main' : 'text.secondary',
+    flex: 1,
+    fontSize: theme.typography.caption.fontSize,
+    fontWeight: 700,
+    minHeight: 32,
+    transition: theme.transitions.create(['background-color', 'color'], {
       duration: theme.transitions.duration.shorter,
     }),
     '&:hover': {
-      bgcolor: active ? 'primary.light' : 'action.hover',
-      color: active ? 'primary.main' : 'text.primary',
+      bgcolor: selected ? 'background.paper' : 'action.selected',
     },
   })
 }
@@ -223,14 +212,14 @@ function renderLeafItem({ item, location, t, depth, onNavigate }) {
 export default function AppSidebar({ onNavigate, open }) {
   const { t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const storedCurrentUser = useAuthStore((state) => state.currentUser)
-  const pathWorkspace = getSidebarWorkspaceForLocation(location.pathname, location.search)
-  const [manualWorkspace, setManualWorkspace] = useState(null)
-  const [openItemsByWorkspace, setOpenItemsByWorkspace] = useState(() =>
-    SIDEBAR_WORKSPACES.reduce(
-      (itemsByWorkspace, workspace) => ({
-        ...itemsByWorkspace,
-        [workspace.id]: {},
+  const activeContext = getSidebarContextForLocation(location.pathname)
+  const [openItemsByContext, setOpenItemsByContext] = useState(() =>
+    SIDEBAR_CONTEXTS.reduce(
+      (itemsByContext, context) => ({
+        ...itemsByContext,
+        [context.id]: {},
       }),
       {},
     ),
@@ -238,41 +227,43 @@ export default function AppSidebar({ onNavigate, open }) {
   const user = resolveCurrentUser(storedCurrentUser)
   const userName = getCurrentUserDisplayName(user)
 
-  const navigationByWorkspace = SIDEBAR_WORKSPACES.reduce(
-    (itemsByWorkspace, workspace) => ({
-      ...itemsByWorkspace,
-      [workspace.id]: filterNavigationByUser(
-        SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? [],
-        user,
-      ),
-    }),
-    {},
-  )
-  const availableWorkspaces = SIDEBAR_WORKSPACES.filter(
-    (workspace) => navigationByWorkspace[workspace.id]?.length,
-  )
-  const preferredWorkspace =
-    manualWorkspace?.pathname === location.pathname ? manualWorkspace.id : pathWorkspace
-  const activeWorkspace = availableWorkspaces.some(
-    (workspace) => workspace.id === preferredWorkspace,
-  )
-    ? preferredWorkspace
-    : availableWorkspaces.some((workspace) => workspace.id === pathWorkspace)
-      ? pathWorkspace
-      : availableWorkspaces[0]?.id
-  const navigation = activeWorkspace ? navigationByWorkspace[activeWorkspace] : []
-  const openItems = activeWorkspace ? (openItemsByWorkspace[activeWorkspace] ?? {}) : {}
+  const portalNavigation = SIDEBAR_WORKSPACES.flatMap((workspace) => {
+    const items = filterNavigationByUser(SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? [], user)
+
+    return items.length
+      ? [{ id: `${workspace.id}-section`, type: 'section', labelKey: workspace.labelKey, items }]
+      : []
+  })
+  const hrNavigation = filterNavigationByUser(HR_NAVIGATION, user)
+  const contextNavigation =
+    activeContext === SIDEBAR_CONTEXT_IDS.HR ? hrNavigation : portalNavigation
+  const visibleContexts = SIDEBAR_CONTEXTS.filter((context) => {
+    const contextNavigation =
+      context.id === SIDEBAR_CONTEXT_IDS.HR
+        ? hrNavigation
+        : [SIDEBAR_HOME_ITEM, ...portalNavigation]
+
+    return getFirstNavigableItem(contextNavigation)
+  })
+  const openItems = openItemsByContext[activeContext] ?? {}
+
+  const handleContextChange = (contextId) => {
+    const navigation =
+      contextId === SIDEBAR_CONTEXT_IDS.HR ? hrNavigation : [SIDEBAR_HOME_ITEM, ...portalNavigation]
+    const landingItem = getFirstNavigableItem(navigation)
+
+    if (!landingItem) return
+
+    navigate(getNavItemTo(landingItem))
+    onNavigate?.()
+  }
 
   const toggleItem = (id) => {
-    if (!activeWorkspace) {
-      return
-    }
-
-    setOpenItemsByWorkspace((state) => ({
+    setOpenItemsByContext((state) => ({
       ...state,
-      [activeWorkspace]: {
-        ...(state[activeWorkspace] ?? {}),
-        [id]: !state[activeWorkspace]?.[id],
+      [activeContext]: {
+        ...(state[activeContext] ?? {}),
+        [id]: !state[activeContext]?.[id],
       },
     }))
   }
@@ -296,7 +287,7 @@ export default function AppSidebar({ onNavigate, open }) {
             >
               {t(item.labelKey)}
             </Typography>
-            {renderItems(item.items, 'group')}
+            {renderItems(item.items, 'root')}
           </Box>
         )
       }
@@ -335,41 +326,6 @@ export default function AppSidebar({ onNavigate, open }) {
       return renderLeafItem({ item, location, t, depth, onNavigate })
     })
 
-  const renderWorkspaceRail = () => (
-    <Box
-      component="nav"
-      aria-label={t('nav.workspacesLabel')}
-      sx={(theme) => ({
-        alignItems: 'center',
-        borderRight: `1px solid ${theme.palette.divider}`,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 0.75,
-        p: 0.75,
-        width: 44,
-      })}
-    >
-      {availableWorkspaces.map((workspace) => {
-        const Icon = WORKSPACE_ICONS[workspace.id] ?? AutoAwesomeMosaicOutlinedIcon
-        const active = activeWorkspace === workspace.id
-
-        return (
-          <ButtonBase
-            key={workspace.id}
-            type="button"
-            title={t(workspace.labelKey)}
-            aria-label={t(workspace.labelKey)}
-            aria-pressed={active}
-            onClick={() => setManualWorkspace({ id: workspace.id, pathname: location.pathname })}
-            sx={workspaceButtonSx({ active })}
-          >
-            <Icon fontSize="small" />
-          </ButtonBase>
-        )
-      })}
-    </Box>
-  )
-
   return (
     <Box
       component="aside"
@@ -379,6 +335,7 @@ export default function AppSidebar({ onNavigate, open }) {
         bottom: 0,
         boxSizing: 'border-box',
         display: 'flex',
+        flexDirection: 'column',
         left: 0,
         position: 'fixed',
         top: LAYOUT_SIZES.HEADER_HEIGHT,
@@ -390,47 +347,72 @@ export default function AppSidebar({ onNavigate, open }) {
         zIndex: theme.zIndex.drawer,
       })}
     >
-      {renderWorkspaceRail()}
-
-      <Box sx={{ display: 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
+      <Box
+        sx={(theme) => ({
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          px: 2,
+          py: 1.5,
+        })}
+      >
+        <Typography variant="subtitle2" fontWeight={700} noWrap>
+          {t('app.brandName')}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" noWrap>
+          {userName || t('auth.userFallback')}
+        </Typography>
         <Box
-          sx={(theme) => ({
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            px: 2,
-            py: 1.5,
-          })}
-        >
-          <Typography variant="subtitle2" fontWeight={700} noWrap>
-            {t('app.brandName')}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {userName || t('auth.userFallback')}
-          </Typography>
-        </Box>
-
-        <List
-          disablePadding
+          role="group"
+          aria-label={t('nav.contexts.label')}
           sx={{
-            flex: 1,
-            msOverflowStyle: 'none',
-            overflowY: 'auto',
-            py: 1,
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': {
-              display: 'none',
-            },
+            bgcolor: 'action.hover',
+            borderRadius: 1,
+            display: 'flex',
+            gap: 0.5,
+            mt: 1.25,
+            p: 0.5,
           }}
         >
-          {renderLeafItem({
+          {visibleContexts.map((context) => {
+            const selected = activeContext === context.id
+
+            return (
+              <ButtonBase
+                key={context.id}
+                type="button"
+                aria-pressed={activeContext === context.id}
+                onClick={() => handleContextChange(context.id)}
+                sx={contextButtonSx({ selected })}
+              >
+                {t(context.labelKey)}
+              </ButtonBase>
+            )
+          })}
+        </Box>
+      </Box>
+
+      <List
+        disablePadding
+        sx={{
+          flex: 1,
+          msOverflowStyle: 'none',
+          overflowY: 'auto',
+          py: 1,
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+        }}
+      >
+        {activeContext === SIDEBAR_CONTEXT_IDS.PORTAL &&
+          renderLeafItem({
             item: SIDEBAR_HOME_ITEM,
             location,
             t,
             depth: 'root',
             onNavigate,
           })}
-          {renderItems(navigation)}
-        </List>
-      </Box>
+        {renderItems(contextNavigation)}
+      </List>
     </Box>
   )
 }
