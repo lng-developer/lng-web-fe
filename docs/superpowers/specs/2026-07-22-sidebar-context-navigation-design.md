@@ -62,7 +62,7 @@ The navigation configuration remains the source of truth. New context metadata o
 - `src/layouts/AppSidebar.jsx`: context-tab rendering, context navigation handler, single-column layout, existing menu rendering, and context-local expanded-group state.
 - `src/layouts/sidebarNavigation.test.js`: pure navigation/permission/landing-route contracts.
 - `src/layouts/appSidebarComposition.test.js`: structural and accessibility composition contracts.
-- `src/i18n/locales/{en,vi}/common.json`: two context labels only.
+- `src/i18n/locales/{en,vi}/common.json`: context group label plus Portal and HR labels only.
 
 ## Error and empty states
 
