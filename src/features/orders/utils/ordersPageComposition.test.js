@@ -2,8 +2,16 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import test from 'node:test'
 
-function readOrdersPageSource() {
+function readOrdersPageModuleSource() {
   return readFileSync(new URL('../pages/OrdersPage.jsx', import.meta.url), 'utf8')
+}
+
+function readOrdersTableSource() {
+  return readFileSync(new URL('../components/OrdersTable.jsx', import.meta.url), 'utf8')
+}
+
+function readOrdersPageSource() {
+  return `${readOrdersPageModuleSource()}\n${readOrdersTableSource()}`
 }
 
 function readOrdersControlsSource() {
@@ -66,6 +74,20 @@ test('orders controls own tabs and toolbar without owning server queries', () =>
   assert.equal(controlsSource.includes('export function OrdersToolbar'), true)
   assert.equal(controlsSource.includes('useOrderWorkbenchQuery'), false)
   assert.equal(controlsSource.includes('useOrderSummaryQuery'), false)
+})
+
+test('OrdersTable owns row rendering and exposes one page-facing component', () => {
+  const pageSource = readOrdersPageModuleSource()
+  const tableUrl = new URL('../components/OrdersTable.jsx', import.meta.url)
+  assert.equal(existsSync(tableUrl), true)
+  const tableSource = readFileSync(tableUrl, 'utf8')
+
+  assert.equal(pageSource.includes("from '@/features/orders/components/OrdersTable'"), true)
+  assert.equal(pageSource.includes('function renderOrderWorkbenchCell'), false)
+  assert.equal(pageSource.includes('function CustomerCell'), false)
+  assert.equal(tableSource.includes('export default'), true)
+  assert.equal(tableSource.includes('<OperationsTable'), true)
+  assert.equal(tableSource.includes('useOrderWorkbenchQuery'), false)
 })
 
 test('orders header keeps tabs and filters compact without heavy active blocks', () => {
@@ -260,9 +282,10 @@ test('order table keeps header fixed and aligns header cells with row data', () 
 
 test('order table uses shared OperationsTable for header, rows, skeletons, and expansion', () => {
   const source = readOrdersPageSource()
-  const ordersTableSource = source.slice(
-    source.indexOf('function OrdersTable'),
-    source.indexOf('export default function OrdersPage'),
+  const tableSource = readOrdersTableSource()
+  const ordersTableSource = tableSource.slice(
+    tableSource.indexOf('function OrdersTable'),
+    tableSource.indexOf('export default OrdersTable'),
   )
 
   assert.equal(
