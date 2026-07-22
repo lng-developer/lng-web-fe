@@ -655,3 +655,60 @@ test('orders page exposes an editable order item CS note with an explicit save a
     true,
   )
 })
+
+test('orders tabs do not create a second horizontal scroll surface on mobile', () => {
+  const controlsSource = readOrdersControlsSource()
+  const tabsSource = controlsSource.slice(
+    controlsSource.indexOf('export function OrdersTabs'),
+    controlsSource.indexOf('export function OrdersToolbar'),
+  )
+
+  assert.equal(tabsSource.includes("overflowX: 'auto'"), false)
+  assert.equal(tabsSource.includes("overflowY: 'hidden'"), false)
+  assert.match(tabsSource, /flexWrap:\s*['"]wrap['"]/)
+})
+
+test('refresh and timeline icon actions expose labels and tooltips', () => {
+  const controlsSource = readOrdersControlsSource()
+  const tableSource = readOrdersTableSource()
+  const refreshSource = controlsSource.slice(
+    controlsSource.indexOf("<IconButton\n          aria-label={t('orders.filters.refresh')}"),
+    controlsSource.indexOf('<Button\n          variant="contained"'),
+  )
+  const timelineSource = tableSource.slice(
+    tableSource.indexOf('const OrderTimelineButton'),
+    tableSource.indexOf('function RowActionButton'),
+  )
+
+  assert.equal(refreshSource.includes("aria-label={t('orders.filters.refresh')}"), true)
+  assert.equal(refreshSource.includes("<Tooltip title={t('orders.filters.refresh')}"), true)
+  assert.equal(timelineSource.includes('aria-label="Open order item timeline"'), true)
+  assert.equal(timelineSource.includes('<Tooltip title="Order item timeline">'), true)
+})
+
+test('keyboard-focused refresh and timeline controls have a visible focus indicator', () => {
+  const controlsSource = readOrdersControlsSource()
+  const tableSource = readOrdersTableSource()
+  const refreshSource = controlsSource.slice(
+    controlsSource.indexOf("<IconButton\n          aria-label={t('orders.filters.refresh')}"),
+    controlsSource.indexOf('<Button\n          variant="contained"'),
+  )
+  const timelineSource = tableSource.slice(
+    tableSource.indexOf('const OrderTimelineButton'),
+    tableSource.indexOf('function RowActionButton'),
+  )
+
+  ;[refreshSource, timelineSource].forEach((source) => {
+    assert.match(source, /&\.Mui-focusVisible[\s\S]*(?:boxShadow|outline|borderColor|bgcolor)/)
+  })
+})
+
+test('rejected workbench queries render a scoped retry that only refetches orders', () => {
+  const pageSource = readOrdersPageModuleSource()
+  const tableSource = readOrdersTableSource()
+
+  assert.equal(pageSource.includes('error={ordersQuery.isError}'), true)
+  assert.equal(pageSource.includes('onRetry={refetchOrders}'), true)
+  assert.equal(tableSource.includes('onRetry'), true)
+  assert.match(tableSource, /onClick=\{onRetry\}/)
+})
