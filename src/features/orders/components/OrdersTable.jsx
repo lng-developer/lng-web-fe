@@ -587,7 +587,14 @@ function renderOrderWorkbenchCell({ column, onRefresh, order, t }) {
   return null
 }
 
-const OrdersTable = memo(function OrdersTable({ loading, onRefresh, orders, pagination }) {
+const OrdersTable = memo(function OrdersTable({
+  error,
+  loading,
+  onRefresh,
+  onRetry,
+  orders,
+  pagination,
+}) {
   const { t } = useTranslation()
   const columns = useMemo(
     () =>
@@ -610,15 +617,22 @@ const OrdersTable = memo(function OrdersTable({ loading, onRefresh, orders, pagi
   return (
     <OperationsTable
       columns={columns}
-      rows={orders}
+      rows={error ? [] : orders}
       getRowKey={getRowKey}
       renderCell={renderCell}
       getRowExpanded={alwaysExpanded}
       renderExpandedRow={renderExpandedRow}
-      loading={loading}
+      loading={!error && loading}
       loadingRows={pagination?.limit || 10}
       minWidth={orderWorkbenchTableMinWidth}
-      emptyTitle={t('orders.values.common.noData')}
+      emptyTitle={error ? t('errors.api.network') : t('orders.values.common.noData')}
+      emptyAction={
+        error ? (
+          <Button variant="outlined" size="small" onClick={onRetry}>
+            {t('common.retry')}
+          </Button>
+        ) : null
+      }
     />
   )
 })

@@ -152,8 +152,10 @@ export default function OrdersPage() {
       }
     >
       <OrdersTable
+        error={ordersQuery.isError}
         loading={ordersQuery.isLoading}
         onRefresh={handleRefreshOrders}
+        onRetry={refetchOrders}
         orders={deferredTableState.orders}
         pagination={deferredTableState.pagination}
       />
