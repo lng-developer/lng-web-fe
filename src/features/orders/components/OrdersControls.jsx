@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -15,21 +14,12 @@ import {
   Select,
   Stack,
   TextField,
-  Typography,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { useSnackbar } from 'notistack'
 
-import AnimatedDialog from '@/components/common/AnimatedDialog'
 import DateRangePicker from '@/components/form/DateRangePicker'
 import { OperationsToolbar } from '@/components/operations'
-import { SNACKBAR_VARIANTS } from '@/constants/app'
-import { useImportOrdersMutation } from '@/features/orders/api/orders.mutations'
-
-const importSourceOptions = [
-  { value: 'MANUAL_EXCEL', labelKey: 'orders.importOrders.sources.amazon' },
-  { value: 'ETSY_SOLD_ORDER_ITEMS', labelKey: 'orders.importOrders.sources.etsy' },
-]
+import { ImportOrdersDialog } from '@/features/orders/components/OrderDialogs'
 
 function getDisplayText(t, item) {
   if (!item) return ''
@@ -121,209 +111,6 @@ export function OrdersTabs({ activeTab, onChange, tabs }) {
   )
 }
 
-function ImportOrdersModal({ onClose, open, shopOptions }) {
-  const { t } = useTranslation()
-  const { enqueueSnackbar } = useSnackbar()
-  const importOrdersMutation = useImportOrdersMutation()
-  const [selectedStore, setSelectedStore] = useState('')
-  const [selectedSource, setSelectedSource] = useState('MANUAL_EXCEL')
-  const [selectedFile, setSelectedFile] = useState(null)
-
-  const handleFileChange = (event) => {
-    const file = event.target.files?.[0]
-    setSelectedFile(file ?? null)
-  }
-
-  const handleImport = async () => {
-    if (!selectedStore || !selectedFile) {
-      enqueueSnackbar(t('orders.importOrders.validation'), { variant: SNACKBAR_VARIANTS.WARNING })
-      return
-    }
-
-    try {
-      await importOrdersMutation.mutateAsync({
-        source: selectedSource,
-        shopId: selectedStore,
-        marketplaceCode: selectedSource === 'ETSY_SOLD_ORDER_ITEMS' ? 'ETSY_US' : 'AMAZON_US',
-        file: selectedFile,
-      })
-      enqueueSnackbar(t('orders.importOrders.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
-      setSelectedFile(null)
-      setSelectedStore('')
-      onClose()
-    } catch (error) {
-      enqueueSnackbar(error?.message || t('errors.api.network'), {
-        variant: SNACKBAR_VARIANTS.ERROR,
-      })
-    }
-  }
-
-  return (
-    <AnimatedDialog
-      open={open}
-      onClose={onClose}
-      maxWidth={false}
-      slotProps={{
-        paper: {
-          sx: {
-            width: 576,
-            borderRadius: 3,
-            overflow: 'hidden',
-          },
-        },
-      }}
-    >
-      <Stack sx={{ width: 576 }}>
-        <Stack
-          sx={{
-            alignItems: 'center',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            flexDirection: 'row',
-            height: 56,
-            justifyContent: 'space-between',
-            px: 3,
-          }}
-        >
-          <Typography variant="h3" sx={{ color: 'text.primary', marginTop: 2 }}>
-            {t('orders.importOrders.title')}
-          </Typography>
-        </Stack>
-
-        <Stack spacing={1.5} sx={{ px: 3, pt: 2.25, pb: 2.5 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-            {t('orders.importOrders.source')}
-          </Typography>
-          <FormControl fullWidth size="small">
-            <Select
-              value={selectedSource}
-              IconComponent={KeyboardArrowDownIcon}
-              onChange={(event) => setSelectedSource(event.target.value)}
-              sx={{
-                height: 40,
-                borderRadius: 2,
-                '& .MuiSelect-select': {
-                  py: 1.1,
-                },
-              }}
-            >
-              {importSourceOptions.map((source) => (
-                <MenuItem key={source.value} value={source.value}>
-                  {t(source.labelKey)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-            {t('orders.importOrders.store')}
-          </Typography>
-          <FormControl fullWidth size="small">
-            <Select
-              value={selectedStore}
-              displayEmpty
-              IconComponent={KeyboardArrowDownIcon}
-              onChange={(event) => setSelectedStore(event.target.value)}
-              renderValue={(value) => {
-                const store = shopOptions.find((item) => item.value === value)
-                return value ? getDisplayText(t, store) : t('orders.importOrders.storePlaceholder')
-              }}
-              sx={{
-                height: 40,
-                borderRadius: 2,
-                color: selectedStore ? 'text.primary' : 'text.disabled',
-                '& .MuiSelect-select': {
-                  py: 1.1,
-                },
-              }}
-            >
-              {shopOptions.map((store) => (
-                <MenuItem key={store.value} value={store.value}>
-                  {getDisplayText(t, store)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, pt: 0.5 }}>
-            {t('orders.importOrders.file')}
-          </Typography>
-          <Box
-            component="label"
-            sx={{
-              alignItems: 'center',
-              bgcolor: 'info.light',
-              border: '1.5px dashed',
-              borderColor: 'info.main',
-              borderRadius: 2.5,
-              cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              height: 152,
-              justifyContent: 'center',
-              width: '100%',
-            }}
-          >
-            <input
-              type="file"
-              accept=".txt,.tsv,.csv,text/plain,text/csv,text/tab-separated-values"
-              hidden
-              onChange={handleFileChange}
-            />
-            <Box
-              sx={{
-                alignItems: 'center',
-                bgcolor: 'background.paper',
-                borderRadius: '50%',
-                color: 'info.main',
-                display: 'flex',
-                height: 48,
-                justifyContent: 'center',
-                mb: 1.5,
-                width: 48,
-              }}
-            >
-              <CloudUploadOutlinedIcon />
-            </Box>
-            <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500 }}>
-              {selectedFile?.name || t('orders.importOrders.uploadTitle')}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
-              {t('orders.importOrders.uploadHint')}
-            </Typography>
-          </Box>
-        </Stack>
-
-        <Box
-          sx={{
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            display: 'grid',
-            gridTemplateColumns: '120px 1fr 160px',
-            px: 3,
-            py: 2,
-            width: '100%',
-          }}
-        >
-          <Button variant="outlined" onClick={onClose} sx={{ height: 40, width: 120 }}>
-            {t('orders.actions.cancel')}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleImport}
-            disabled={importOrdersMutation.isPending}
-            sx={{ gridColumn: 3, height: 40, width: 160 }}
-          >
-            {importOrdersMutation.isPending
-              ? t('orders.importOrders.importing')
-              : t('orders.actions.import')}
-          </Button>
-        </Box>
-      </Stack>
-    </AnimatedDialog>
-  )
-}
-
 export function OrdersToolbar({ filters, onFiltersChange, onRefresh, sellerOptions, shopOptions }) {
   const { t } = useTranslation()
   const [importModalOpen, setImportModalOpen] = useState(false)
@@ -401,7 +188,7 @@ export function OrdersToolbar({ filters, onFiltersChange, onRefresh, sellerOptio
         >
           {t('orders.actions.import')}
         </Button>
-        <ImportOrdersModal
+        <ImportOrdersDialog
           open={importModalOpen}
           onClose={() => setImportModalOpen(false)}
           shopOptions={shopOptions}

@@ -16,8 +16,14 @@ function readOrderExpandedDetailSource() {
   return readFileSync(url, 'utf8')
 }
 
+function readOrderDialogsSource() {
+  const url = new URL('../components/OrderDialogs.jsx', import.meta.url)
+  assert.equal(existsSync(url), true)
+  return readFileSync(url, 'utf8')
+}
+
 function readOrdersPageSource() {
-  return `${readOrdersPageModuleSource()}\n${readOrderExpandedDetailSource()}\n${readOrdersTableSource()}`
+  return `${readOrdersPageModuleSource()}\n${readOrderExpandedDetailSource()}\n${readOrdersTableSource()}\n${readOrderDialogsSource()}`
 }
 
 function readOrdersControlsSource() {
@@ -107,11 +113,30 @@ test('expanded order detail owns item presentation without importing page orches
   assert.equal(tableSource.includes('function ExpandedOrderDetail'), false)
 })
 
+test('order dialogs own modal flows without owning workbench queries', () => {
+  const dialogSource = readOrderDialogsSource()
+  const pageSource = readOrdersPageModuleSource()
+  const tableSource = readOrdersTableSource()
+  const controlsSource = readOrdersControlsSource()
+
+  ;['ImportOrdersDialog', 'UpdateCustomerDialog', 'UpdateShippingDialog', 'OpenCaseDialog'].forEach(
+    (name) => {
+      assert.equal(dialogSource.includes(`export function ${name}`), true)
+    },
+  )
+  assert.equal(dialogSource.includes('useOrderWorkbenchQuery'), false)
+  assert.equal(pageSource.includes('function ImportOrdersModal'), false)
+  assert.equal(controlsSource.includes('function ImportOrdersModal'), false)
+  assert.equal(tableSource.includes('function UpdateCustomerModal'), false)
+  assert.equal(tableSource.includes('function UpdateShippingModal'), false)
+  assert.equal(tableSource.includes('function OpenCaseModal'), false)
+})
+
 test('orders header keeps tabs and filters compact without heavy active blocks', () => {
   const controlsSource = readOrdersControlsSource()
   const tabsSource = controlsSource.slice(
     controlsSource.indexOf('export function OrdersTabs'),
-    controlsSource.indexOf('function ImportOrdersModal'),
+    controlsSource.indexOf('export function OrdersToolbar'),
   )
   const filterSource = controlsSource.slice(
     controlsSource.indexOf('export function OrdersToolbar'),
@@ -459,17 +484,17 @@ test('cost center summary matches vendor inline through mapping API', () => {
 test('shipping type update uses a dedicated shipping service modal and endpoint', () => {
   const source = readOrdersPageSource()
   const modalSource = source.slice(
-    source.indexOf('function UpdateShippingModal'),
-    source.indexOf('function OpenCaseModal'),
+    source.indexOf('export function UpdateShippingDialog'),
+    source.indexOf('export function OpenCaseDialog'),
   )
   const shippingCellSource = source.slice(
     source.indexOf('function ShippingTypeCell'),
     source.indexOf('function DateCell'),
   )
 
-  assert.equal(source.includes('function UpdateShippingModal'), true)
+  assert.equal(source.includes('export function UpdateShippingDialog'), true)
   assert.equal(shippingCellSource.includes('LocalShippingOutlinedIcon'), true)
-  assert.equal(shippingCellSource.includes('UpdateShippingModal'), true)
+  assert.equal(shippingCellSource.includes('UpdateShippingDialog'), true)
   assert.equal(shippingCellSource.includes('orders.updateShipping.title'), true)
   assert.equal(shippingCellSource.includes('height: 24'), true)
   assert.equal(modalSource.includes('useUpdateOrderShippingServiceMutation'), true)
@@ -581,10 +606,7 @@ test('customer cell keeps buyer actions adjacent to the customer name', () => {
 
 test('order case modal creates a real case instead of hardcoding case status', () => {
   const source = readOrdersPageSource()
-  const modalSource = source.slice(
-    source.indexOf('function OpenCaseModal'),
-    source.indexOf('function OrderTimelineButton'),
-  )
+  const modalSource = source.slice(source.indexOf('export function OpenCaseDialog'), source.length)
 
   assert.equal(source.includes('const caseOptions'), false)
   assert.equal(modalSource.includes('<Select'), false)
