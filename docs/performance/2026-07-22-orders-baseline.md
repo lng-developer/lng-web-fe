@@ -1,6 +1,6 @@
 # Orders Targeted Evolution Baseline
 
-Captured on 2026-07-22 against the local `/portal/orders` route on branch `refactor/orders-targeted-evolution-impl`.
+Captured on 2026-07-22 against the local `/portal/orders` route on branch `refactor/orders-targeted-evolution-impl`, the isolated implementation branch descended from the approved plan branch.
 
 ## Automated checks
 
@@ -26,5 +26,5 @@ Request counts below are local API requests, including CORS preflight requests.
 
 ## Visual captures
 
-- Desktop (1440x900): `docs/performance/2026-07-22-orders-baseline-desktop-1440x900.png`
+- Desktop (1440x900, loaded `/portal/orders` with 20 rendered table rows): `docs/performance/2026-07-22-orders-baseline-desktop-1440x900.png` (223,050 bytes)
 - Mobile (390x844): `docs/performance/2026-07-22-orders-baseline-mobile-390x844.png`
