@@ -115,6 +115,7 @@ describe('sidebar navigation', () => {
 
   it('derives the navigation context from mounted route families', () => {
     assert.equal(getSidebarContextForLocation(ROUTES.PORTAL_ORDER_LIST), SIDEBAR_CONTEXT_IDS.PORTAL)
+    assert.equal(getSidebarContextForLocation(ROUTES.HR), SIDEBAR_CONTEXT_IDS.HR)
     assert.equal(getSidebarContextForLocation(ROUTES.HR_TIME_SCHEDULE), SIDEBAR_CONTEXT_IDS.HR)
   })
 
@@ -125,6 +126,8 @@ describe('sidebar navigation', () => {
 
     assert.equal(getFirstNavigableItem(navigation)?.id, 'hr-schedule')
     assert.equal(getFirstNavigableItem([]), null)
+    assert.equal(getFirstNavigableItem(null), null)
+    assert.equal(getFirstNavigableItem([{ type: 'section' }]), null)
   })
 
   it('keeps order listing setup and report workflow in the orders workspace', () => {

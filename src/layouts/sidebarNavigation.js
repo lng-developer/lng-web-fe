@@ -596,6 +596,7 @@ function hasActivePath(item, location) {
 }
 
 const HR_ROUTE_PATHS = new Set([
+  ROUTES.HR,
   ROUTES.HR_TIME_MY_TIME,
   ROUTES.HR_TIME_REQUEST_INBOX,
   ROUTES.HR_TIME_ATTENDANCE,
@@ -608,16 +609,16 @@ export function getSidebarContextForLocation(pathname) {
 }
 
 export function getFirstNavigableItem(navigation) {
-  for (const item of navigation) {
+  for (const item of navigation ?? []) {
     if (item.type === 'section') {
-      const nestedItem = getFirstNavigableItem(item.items)
+      const nestedItem = getFirstNavigableItem(item?.items ?? [])
       if (nestedItem) return nestedItem
       continue
     }
 
     if (item.path) return item
 
-    const nestedItem = getFirstNavigableItem(item.children ?? [])
+    const nestedItem = getFirstNavigableItem(item?.children ?? [])
     if (nestedItem) return nestedItem
   }
 
