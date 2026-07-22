@@ -47,15 +47,15 @@ This table records the audit state before the targeted UX follow-up commits. Its
 
 ## After verification
 
-Verified on 2026-07-22 at commit `abe4b7f`, after the component extraction and targeted UX follow-up.
+Verified on 2026-07-22 at commit `f9e725e`, after the component extraction, targeted UX follow-up, and case-draft reset fix.
 
 | Check                | Before                          | After                                                                            |
 | -------------------- | ------------------------------- | -------------------------------------------------------------------------------- |
-| Orders-focused tests | Not recorded separately         | 65 passed, 0 failed; exit `0`                                                    |
+| Orders-focused tests | Not recorded separately         | 66 passed, 0 failed; exit `0`                                                    |
 | Source lint          | 0 findings; exit `0`            | 0 findings; exit `0`                                                             |
-| Full Node suite      | 492 total: 491 passed, 1 failed | 502 total: 501 passed, 1 failed; the same unrelated API-coverage failure remains |
-| Production build     | 1,437 modules; 1.17 s; exit `0` | 1,441 modules; 1.36 s; exit `0`                                                  |
-| Orders chunk         | 89,257 bytes; 26.26 kB gzip     | 90,105 bytes; 26.44 kB gzip (+848 bytes raw)                                     |
+| Full Node suite      | 492 total: 491 passed, 1 failed | 503 total: 502 passed, 1 failed; the same unrelated API-coverage failure remains |
+| Production build     | 1,437 modules; 1.17 s; exit `0` | 1,441 modules; 1.34 s; exit `0`                                                  |
+| Orders chunk         | 89,257 bytes; 26.26 kB gzip     | 90,499 bytes; 26.52 kB gzip (+1,242 bytes raw)                                   |
 | `OrdersPage.jsx`     | 2,547 lines                     | 164 lines; orchestration and query ownership only                                |
 
 The remaining full-suite failure is `backend endpoint registry covers every backend non-health route`. Its missing routes are unchanged and unrelated to Orders:
