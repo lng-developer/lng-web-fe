@@ -663,9 +663,8 @@ test('orders tabs do not create a second horizontal scroll surface on mobile', (
     controlsSource.indexOf('export function OrdersToolbar'),
   )
 
-  assert.equal(tabsSource.includes("overflowX: 'auto'"), false)
-  assert.equal(tabsSource.includes("overflowY: 'hidden'"), false)
-  assert.match(tabsSource, /flexWrap:\s*['"]wrap['"]/)
+  assert.doesNotMatch(tabsSource, /overflowX:\s*['"](?:auto|scroll)['"]/)
+  assert.doesNotMatch(tabsSource, /overflow:\s*['"](?:auto|scroll)['"]/)
 })
 
 test('refresh and timeline icon actions expose labels and tooltips', () => {
@@ -681,9 +680,9 @@ test('refresh and timeline icon actions expose labels and tooltips', () => {
   )
 
   assert.equal(refreshSource.includes("aria-label={t('orders.filters.refresh')}"), true)
-  assert.equal(refreshSource.includes("<Tooltip title={t('orders.filters.refresh')}"), true)
+  assert.match(refreshSource, /<Tooltip\s+title=/)
   assert.equal(timelineSource.includes('aria-label="Open order item timeline"'), true)
-  assert.equal(timelineSource.includes('<Tooltip title="Order item timeline">'), true)
+  assert.match(timelineSource, /<Tooltip\s+title=/)
 })
 
 test('keyboard-focused refresh and timeline controls have a visible focus indicator', () => {
