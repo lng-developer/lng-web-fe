@@ -29,7 +29,9 @@ Request counts below are local API requests, including CORS preflight requests.
 - Desktop (1440x900, loaded `/portal/orders` with 20 rendered table rows): `docs/performance/2026-07-22-orders-baseline-desktop-1440x900.png` (223,050 bytes)
 - Mobile (390x844): `docs/performance/2026-07-22-orders-baseline-mobile-390x844.png`
 
-## Targeted UX audit
+## Targeted UX audit (pre-follow-up)
+
+This table records the audit state before the targeted UX follow-up commits. Its `DEFECT` rows are discovery evidence, not the current source state.
 
 | Gate                                                               | Result | Evidence                                                                                                                                                                                                                                                                                                                          | Owning file                                                                                           |
 | ------------------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -67,12 +69,12 @@ The remaining full-suite failure is `backend endpoint registry covers every back
 
 - URL parsing and serialization moved to `ordersFilters.js`.
 - Controls, table, expanded detail, and dialogs moved to dedicated Orders components while workbench and summary queries remain in `OrdersPage`.
-- The follow-up removed the second mobile horizontal scroll surface, added accessible tooltips and visible keyboard focus to icon actions, and added an in-table retry scoped to `ordersQuery.refetch`.
+- Static regression checks confirm the follow-up source removes the second mobile horizontal scroll surface, adds accessible tooltips and visible keyboard-focus styles to icon actions, and wires an in-table retry only to `ordersQuery.refetch`. Fresh browser validation of those behaviors was unavailable, as recorded below.
 - No dependency, new design system, shared speculative abstraction, API contract change, RBAC change, or broad visual redesign was added.
 
 ### Browser evidence limitation
 
-The active verification environment did not expose a callable in-app browser connector. The original desktop/mobile screenshots and six baseline request-count journeys above are preserved as before evidence; no new interaction counts or after screenshots are claimed. The focused composition tests verify URL state, query ownership, mobile tab overflow, tooltip labels, focus styles, and scoped retry wiring, but they do not replace a live browser journey.
+The active verification environment did not expose a callable in-app browser connector. The original desktop/mobile screenshots and six baseline request-count journeys above are preserved as before evidence; no new interaction counts or after screenshots are claimed. The focused composition tests provide static regression evidence for URL state, query ownership, mobile tab overflow, tooltip labels, focus styles, and scoped retry wiring; the four pre-follow-up defects remain pending fresh live-browser validation.
 
 Accepted visible changes are limited to the audited accessibility/error-state fixes. The prior visual captures remain at:
 
