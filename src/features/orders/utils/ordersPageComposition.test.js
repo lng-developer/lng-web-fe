@@ -670,8 +670,8 @@ test('orders tabs do not create a second horizontal scroll surface on mobile', (
 test('refresh and timeline icon actions expose labels and tooltips', () => {
   const controlsSource = readOrdersControlsSource()
   const tableSource = readOrdersTableSource()
-  const refreshSource = controlsSource.slice(
-    controlsSource.indexOf("<IconButton\n          aria-label={t('orders.filters.refresh')}"),
+  const refreshActionSource = controlsSource.slice(
+    controlsSource.indexOf('export function OrdersToolbar'),
     controlsSource.indexOf('<Button\n          variant="contained"'),
   )
   const timelineSource = tableSource.slice(
@@ -679,8 +679,11 @@ test('refresh and timeline icon actions expose labels and tooltips', () => {
     tableSource.indexOf('function RowActionButton'),
   )
 
-  assert.equal(refreshSource.includes("aria-label={t('orders.filters.refresh')}"), true)
-  assert.match(refreshSource, /<Tooltip\s+title=/)
+  assert.equal(refreshActionSource.includes("aria-label={t('orders.filters.refresh')}"), true)
+  assert.match(
+    refreshActionSource,
+    /<Tooltip\s+title=[\s\S]*?<IconButton\s+aria-label=\{t\('orders\.filters\.refresh'\)\}/,
+  )
   assert.equal(timelineSource.includes('aria-label="Open order item timeline"'), true)
   assert.match(timelineSource, /<Tooltip\s+title=/)
 })
