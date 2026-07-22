@@ -168,7 +168,7 @@ test('order dialogs reset drafts on close and selected order changes without cle
   )
   assert.match(
     caseDialog,
-    /useEffect\(\(\) => \{\s*if \(!open\) \{\s*queueMicrotask\(\(\) => \{\s*setTitle\(''\)\s*setDescription\(''\)\s*\}\)\s*\}\s*\}, \[open\]\)/,
+    /useEffect\(\(\) => \{\s*queueMicrotask\(\(\) => \{\s*setTitle\(''\)\s*setDescription\(''\)\s*\}\)\s*\}, \[open, order\?\.apiId\]\)/,
   )
 
   assert.doesNotMatch(catchSource(importDialog), /setSelected(?:Store|Source|File)/)

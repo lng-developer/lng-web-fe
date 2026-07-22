@@ -616,13 +616,11 @@ export function OpenCaseDialog({ onClose, onCreated, open, order }) {
   const [description, setDescription] = useState('')
 
   useEffect(() => {
-    if (!open) {
-      queueMicrotask(() => {
-        setTitle('')
-        setDescription('')
-      })
-    }
-  }, [open])
+    queueMicrotask(() => {
+      setTitle('')
+      setDescription('')
+    })
+  }, [open, order?.apiId])
 
   const handleSave = async () => {
     const cleanTitle = title.trim()
