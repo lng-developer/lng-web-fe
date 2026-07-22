@@ -10,8 +10,14 @@ function readOrdersTableSource() {
   return readFileSync(new URL('../components/OrdersTable.jsx', import.meta.url), 'utf8')
 }
 
+function readOrderExpandedDetailSource() {
+  const url = new URL('../components/OrderExpandedDetail.jsx', import.meta.url)
+  assert.equal(existsSync(url), true)
+  return readFileSync(url, 'utf8')
+}
+
 function readOrdersPageSource() {
-  return `${readOrdersPageModuleSource()}\n${readOrdersTableSource()}`
+  return `${readOrdersPageModuleSource()}\n${readOrderExpandedDetailSource()}\n${readOrdersTableSource()}`
 }
 
 function readOrdersControlsSource() {
@@ -90,6 +96,17 @@ test('OrdersTable owns row rendering and exposes one page-facing component', () 
   assert.equal(tableSource.includes('useOrderWorkbenchQuery'), false)
 })
 
+test('expanded order detail owns item presentation without importing page orchestration', () => {
+  const detailSource = readOrderExpandedDetailSource()
+  const tableSource = readOrdersTableSource()
+
+  assert.equal(detailSource.includes('export default OrderExpandedDetail'), true)
+  assert.equal(detailSource.includes('function ProductInfo'), true)
+  assert.equal(detailSource.includes('function FulfillmentInfo'), true)
+  assert.equal(detailSource.includes('OrdersPage'), false)
+  assert.equal(tableSource.includes('function ExpandedOrderDetail'), false)
+})
+
 test('orders header keeps tabs and filters compact without heavy active blocks', () => {
   const controlsSource = readOrdersControlsSource()
   const tabsSource = controlsSource.slice(
@@ -137,9 +154,10 @@ test('orders refresh reloads both table data and tab counts', () => {
 
 test('orders page opens item timeline lazily from the status cell', () => {
   const source = readOrdersPageSource()
-  const timelineSource = source.slice(
-    source.indexOf('function OrderTimelineButton'),
-    source.indexOf('function RowActionButton'),
+  const tableSource = readOrdersTableSource()
+  const timelineSource = tableSource.slice(
+    tableSource.indexOf('function OrderTimelineButton'),
+    tableSource.indexOf('function RowActionButton'),
   )
 
   assert.equal(source.includes('useOrderTimelineQuery'), false)
@@ -163,10 +181,7 @@ test('orders page opens item timeline lazily from the status cell', () => {
 
 test('expanded order item detail keeps item fields read-only and actions grouped', () => {
   const source = readOrdersPageSource()
-  const detailSource = source.slice(
-    source.indexOf('function ExpandedOrderDetail'),
-    source.indexOf('function OrdersTable'),
-  )
+  const detailSource = readOrderExpandedDetailSource()
 
   assert.equal(source.includes('function CompactInput'), false)
   assert.equal(detailSource.includes('const itemDetails = order.itemDetails?.length'), true)
@@ -305,7 +320,7 @@ test('expanded order detail shares table horizontal padding', () => {
   const source = readOrdersPageSource()
   const columnsSource = readOrderWorkbenchColumnsSource()
   const detailSource = source.slice(
-    source.indexOf('function ExpandedOrderDetail'),
+    source.indexOf('function OrderExpandedDetail'),
     source.indexOf('function OrdersTable'),
   )
 
@@ -511,7 +526,7 @@ test('order status panel shows carrier and reuses the existing note editor', () 
   const source = readOrdersPageSource()
   const notePanelSource = source.slice(
     source.indexOf('function NotePanel'),
-    source.indexOf('function ExpandedOrderDetail'),
+    source.indexOf('function OrderExpandedDetail'),
   )
 
   assert.equal(notePanelSource.includes('orders.fields.status'), true)
