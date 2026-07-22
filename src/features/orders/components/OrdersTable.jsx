@@ -127,18 +127,27 @@ const OrderTimelineButton = memo(function OrderTimelineButton({ orderItemId }) {
 
   return (
     <>
-      <IconButton
-        aria-label="Open order item timeline"
-        disabled={!orderItemId}
-        size="small"
-        onClick={(event) => {
-          event.stopPropagation()
-          setTimelineAnchor(event.currentTarget)
-        }}
-        sx={{ color: 'text.secondary', height: 24, width: 24 }}
-      >
-        <HistoryOutlinedIcon sx={{ fontSize: 16 }} />
-      </IconButton>
+      <Tooltip title="Open order item timeline">
+        <IconButton
+          aria-label="Open order item timeline"
+          disabled={!orderItemId}
+          size="small"
+          onClick={(event) => {
+            event.stopPropagation()
+            setTimelineAnchor(event.currentTarget)
+          }}
+          sx={(theme) => ({
+            color: 'text.secondary',
+            height: 24,
+            width: 24,
+            '&.Mui-focusVisible': {
+              boxShadow: `0 0 0 3px ${theme.palette.action.focus}`,
+            },
+          })}
+        >
+          <HistoryOutlinedIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+      </Tooltip>
       <OrderInfoPopover
         open={open}
         anchorEl={timelineAnchor}

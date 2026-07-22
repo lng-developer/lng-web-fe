@@ -14,6 +14,7 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 
@@ -58,8 +59,7 @@ export function OrdersTabs({ activeTab, onChange, tabs }) {
       spacing={0.5}
       sx={(theme) => ({
         borderBottom: `1px solid ${theme.palette.divider}`,
-        overflowX: 'auto',
-        overflowY: 'hidden',
+        flexWrap: 'wrap',
         width: '100%',
       })}
     >
@@ -166,20 +166,25 @@ export function OrdersToolbar({ filters, onFiltersChange, onRefresh, sellerOptio
           options={sellerOptions}
           sx={{ width: '100%' }}
         />
-        <IconButton
-          aria-label={t('orders.filters.refresh')}
-          onClick={onRefresh}
-          sx={(theme) => ({
-            width: 40,
-            height: 40,
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: theme.shape.borderRadius,
-            bgcolor: 'background.paper',
-            justifySelf: { xs: 'stretch', lg: 'end' },
-          })}
-        >
-          <RefreshIcon fontSize="small" />
-        </IconButton>
+        <Tooltip title={t('orders.filters.refresh')}>
+          <IconButton
+            aria-label={t('orders.filters.refresh')}
+            onClick={onRefresh}
+            sx={(theme) => ({
+              width: 40,
+              height: 40,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: theme.shape.borderRadius,
+              bgcolor: 'background.paper',
+              justifySelf: { xs: 'stretch', lg: 'end' },
+              '&.Mui-focusVisible': {
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.28)}`,
+              },
+            })}
+          >
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Button
           variant="contained"
           startIcon={<FileDownloadOutlinedIcon />}
