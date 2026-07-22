@@ -6,6 +6,12 @@ function readOrdersPageSource() {
   return readFileSync(new URL('../pages/OrdersPage.jsx', import.meta.url), 'utf8')
 }
 
+function readOrdersControlsSource() {
+  const url = new URL('../components/OrdersControls.jsx', import.meta.url)
+  assert.equal(existsSync(url), true)
+  return readFileSync(url, 'utf8')
+}
+
 function readOrderWorkbenchColumnsSource() {
   const layoutUrl = new URL('../components/orderWorkbenchColumns.js', import.meta.url)
   assert.equal(existsSync(layoutUrl), true)
@@ -27,11 +33,12 @@ test('orders table declares columns as shared operations table config', () => {
 
 test('orders page consumes the shared operations layout system', () => {
   const source = readOrdersPageSource()
+  const controlsSource = readOrdersControlsSource()
 
   assert.equal(source.includes("from '@/components/operations'"), true)
   assert.equal(source.includes('<OperationsPageShell'), true)
   assert.equal(source.includes("t('orders.title')"), false)
-  assert.equal(source.includes('<OperationsToolbar'), true)
+  assert.equal(controlsSource.includes('<OperationsToolbar'), true)
   assert.equal(source.includes('<OperationsTable'), true)
   assert.equal(source.includes('<OperationsPagination'), true)
   assert.equal(source.includes('<OrderTableGrid'), false)
@@ -48,15 +55,28 @@ test('orders page keeps operational queues out of the table footer', () => {
   assert.equal(source.includes('label="Workflow"'), false)
 })
 
+test('orders controls own tabs and toolbar without owning server queries', () => {
+  const pageSource = readOrdersPageSource()
+  const controlsSource = readOrdersControlsSource()
+
+  assert.equal(pageSource.includes("from '@/features/orders/components/OrdersControls'"), true)
+  assert.equal(pageSource.includes('function OrderTabs'), false)
+  assert.equal(pageSource.includes('function FilterBar'), false)
+  assert.equal(controlsSource.includes('export function OrdersTabs'), true)
+  assert.equal(controlsSource.includes('export function OrdersToolbar'), true)
+  assert.equal(controlsSource.includes('useOrderWorkbenchQuery'), false)
+  assert.equal(controlsSource.includes('useOrderSummaryQuery'), false)
+})
+
 test('orders header keeps tabs and filters compact without heavy active blocks', () => {
-  const source = readOrdersPageSource()
-  const tabsSource = source.slice(
-    source.indexOf('function OrderTabs'),
-    source.indexOf('function ImportOrdersModal'),
+  const controlsSource = readOrdersControlsSource()
+  const tabsSource = controlsSource.slice(
+    controlsSource.indexOf('export function OrdersTabs'),
+    controlsSource.indexOf('function ImportOrdersModal'),
   )
-  const filterSource = source.slice(
-    source.indexOf('function FilterBar'),
-    source.indexOf('function buildCustomerForm'),
+  const filterSource = controlsSource.slice(
+    controlsSource.indexOf('export function OrdersToolbar'),
+    controlsSource.length,
   )
 
   assert.equal(tabsSource.includes("flex: '1 1 0'"), false)
