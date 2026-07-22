@@ -87,7 +87,13 @@ import {
   mapApiTabCounts,
   mapWorkbenchRows,
 } from '@/features/orders/utils/ordersApi'
-import { buildSellerOptions } from '@/features/orders/utils/ordersFilters'
+import {
+  buildOrdersUrl,
+  buildSellerOptions,
+  getOrdersChannel,
+  getOrdersTab,
+  readOrdersFilters,
+} from '@/features/orders/utils/ordersFilters'
 import { getOrderItemWorkflowScope } from '@/features/orders/utils/ordersItemWorkflow'
 import { mapOrderCaseRows, mapTimelineRows } from '@/features/orders/utils/ordersOps'
 import { getOrderStatusTone as getOrderStatusColor } from '@/features/orders/utils/orderStatus'
@@ -96,7 +102,6 @@ import {
   useVendorProductsQuery,
 } from '@/features/vendors/api/vendors.queries'
 import { useDebounce } from '@/hooks/useDebounce'
-import dayjs from '@/lib/dayjs'
 
 const importSourceOptions = [
   { value: 'MANUAL_EXCEL', labelKey: 'orders.importOrders.sources.amazon' },
@@ -118,55 +123,6 @@ const customerFieldKeys = [
   ['country', 'zipCode'],
   ['phoneNumber'],
 ]
-
-function getChannelFromSearch(search) {
-  const channel = new URLSearchParams(search).get('channel')
-
-  return channel === 'amazon' || channel === 'etsy' ? channel : null
-}
-function getOrderTabFromSearch(search) {
-  const tab = new URLSearchParams(search).get('tab')
-
-  return orderTabs.some((item) => item.key === tab) ? tab : 'all'
-}
-
-function getPositiveIntegerParam(params, key, fallback) {
-  return Math.max(Number(params.get(key)) || fallback, 1)
-}
-
-function getDateParam(params, key) {
-  const value = params.get(key)
-  const date = value ? dayjs(value) : null
-
-  return date?.isValid?.() ? date : null
-}
-
-function getInitialOrderFilters(search) {
-  const params = new URLSearchParams(search)
-
-  return {
-    search: params.get('search') || '',
-    channel: getChannelFromSearch(search) || 'all',
-    shopId: params.get('shopId') || 'all',
-    seller: params.get('seller') || 'all',
-    dateRange: {
-      start: getDateParam(params, 'dateFrom'),
-      end: getDateParam(params, 'dateTo'),
-    },
-    page: getPositiveIntegerParam(params, 'page', 1),
-    limit: Math.min(getPositiveIntegerParam(params, 'limit', 10), 100),
-  }
-}
-
-function setUrlParam(params, key, value, defaultValue = '') {
-  const normalizedValue = String(value ?? '').trim()
-  if (!normalizedValue || normalizedValue === defaultValue) params.delete(key)
-  else params.set(key, normalizedValue)
-}
-
-function formatDateParam(value) {
-  return value?.format?.('YYYY-MM-DD') || ''
-}
 
 function cleanManualMatchValue(value) {
   const text = String(value || '').trim()
@@ -213,37 +169,12 @@ function getMappingRecheckFeedback(result = {}) {
   }
 }
 
-function updateOrdersUrl(updates = {}) {
-  const params = new URLSearchParams(window.location.search)
-  if (Object.hasOwn(updates, 'tab')) {
-    setUrlParam(params, 'tab', updates.tab, 'all')
-  }
-  if (Object.hasOwn(updates, 'page')) {
-    setUrlParam(params, 'page', Math.max(Number(updates.page) || 1, 1), '1')
-  }
-  if (Object.hasOwn(updates, 'limit')) {
-    setUrlParam(params, 'limit', Math.min(Math.max(Number(updates.limit) || 10, 1), 100), '10')
-  }
-  if (Object.hasOwn(updates, 'search')) {
-    setUrlParam(params, 'search', updates.search)
-  }
-  if (Object.hasOwn(updates, 'channel')) {
-    if (updates.channel === 'amazon' || updates.channel === 'etsy')
-      params.set('channel', updates.channel)
-    else params.delete('channel')
-  }
-  if (Object.hasOwn(updates, 'shopId')) {
-    setUrlParam(params, 'shopId', updates.shopId, 'all')
-  }
-  if (Object.hasOwn(updates, 'seller')) {
-    setUrlParam(params, 'seller', updates.seller, 'all')
-  }
-  if (Object.hasOwn(updates, 'dateRange')) {
-    setUrlParam(params, 'dateFrom', formatDateParam(updates.dateRange?.start))
-    setUrlParam(params, 'dateTo', formatDateParam(updates.dateRange?.end))
-  }
-  const query = params.toString()
-  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+function replaceOrdersUrl(updates) {
+  window.history.replaceState(
+    null,
+    '',
+    buildOrdersUrl(window.location.search, window.location.pathname, updates),
+  )
 }
 
 function getDisplayText(t, item) {
@@ -2421,10 +2352,10 @@ const OrdersTable = memo(function OrdersTable({ loading, onRefresh, orders, pagi
 export default function OrdersPage() {
   const { i18n } = useTranslation()
   const location = useLocation()
-  const routeChannel = getChannelFromSearch(location.search)
-  const initialTab = getOrderTabFromSearch(location.search)
+  const routeChannel = getOrdersChannel(location.search)
+  const initialTab = getOrdersTab(location.search)
   const [activeTab, setActiveTab] = useState(initialTab)
-  const [filters, setFilters] = useState(() => getInitialOrderFilters(location.search))
+  const [filters, setFilters] = useState(() => readOrdersFilters(location.search))
   const shopsQuery = useShopsQuery({ page: 1, limit: 100 })
   const effectiveFilters = useMemo(
     () => ({
@@ -2482,7 +2413,7 @@ export default function OrdersPage() {
   }, [orderSummaryQuery.data])
 
   const handleFiltersChange = useCallback((nextFilters) => {
-    updateOrdersUrl(nextFilters)
+    replaceOrdersUrl(nextFilters)
     setFilters(nextFilters)
   }, [])
 
@@ -2493,7 +2424,7 @@ export default function OrdersPage() {
       }
 
       setActiveTab(tab)
-      updateOrdersUrl({ tab, page: 1 })
+      replaceOrdersUrl({ tab, page: 1 })
       setFilters((current) => ({ ...current, page: 1 }))
     },
     [activeTab],
@@ -2523,13 +2454,13 @@ export default function OrdersPage() {
           total={pagination.total}
           onPageChange={(page) =>
             setFilters((current) => {
-              updateOrdersUrl({ page })
+              replaceOrdersUrl({ page })
               return { ...current, page }
             })
           }
           onPageSizeChange={(limit) => {
             setFilters((current) => {
-              updateOrdersUrl({ limit, page: 1 })
+              replaceOrdersUrl({ limit, page: 1 })
               return { ...current, limit, page: 1 }
             })
           }}

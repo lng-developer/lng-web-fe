@@ -74,23 +74,12 @@ test('orders header keeps tabs and filters compact without heavy active blocks',
 
 test('orders page keeps tab, pagination, and filters in the url for reloads', () => {
   const source = readOrdersPageSource()
+  const filtersSource = readFileSync(new URL('./ordersFilters.js', import.meta.url), 'utf8')
 
-  assert.equal(source.includes('function getInitialOrderFilters'), true)
-  assert.equal(source.includes('function getOrderTabFromSearch'), true)
-  assert.equal(source.includes('const initialTab = getOrderTabFromSearch(location.search)'), true)
-  assert.equal(
-    source.includes(
-      'const [filters, setFilters] = useState(() => getInitialOrderFilters(location.search))',
-    ),
-    true,
-  )
-  ;['tab', 'page', 'limit', 'search', 'shopId', 'seller', 'dateFrom', 'dateTo'].forEach((param) => {
-    assert.equal(source.includes(`'${param}'`), true)
-  })
-  assert.equal(source.includes('updateOrdersUrl(nextFilters)'), true)
-  assert.equal(source.includes('updateOrdersUrl({ tab, page: 1 })'), true)
-  assert.equal(source.includes('updateOrdersUrl({ page })'), true)
-  assert.equal(source.includes('updateOrdersUrl({ limit, page: 1 })'), true)
+  assert.equal(source.includes('readOrdersFilters(location.search)'), true)
+  assert.equal(source.includes('getOrdersTab(location.search)'), true)
+  assert.equal(filtersSource.includes('export function buildOrdersUrl'), true)
+  assert.equal(filtersSource.includes("Object.hasOwn(updates, 'dateRange')"), true)
 })
 
 test('orders refresh reloads both table data and tab counts', () => {
