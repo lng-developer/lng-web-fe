@@ -22,6 +22,46 @@ test('sidebar indents child navigation below its parent groups', () => {
   )
 })
 
+test('sidebar renders root parent groups as non-interactive section labels without icons', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+  const parentBranch = source.slice(
+    source.indexOf('if (item.children) {'),
+    source.indexOf('return renderLeafItem'),
+  )
+
+  assert.match(
+    parentBranch,
+    /const isDomainLabel = depth === 'root' && item\.id !== 'catalog-group'/,
+  )
+  assert.match(parentBranch, /sx=\{\s*isDomainLabel\s*\? sectionLabelSx\s*: navButtonSx\(/)
+  assert.match(parentBranch, /\{!isDomainLabel && \(\s*<Box className="SidebarNavIcon">/)
+  assert.match(
+    parentBranch,
+    /<NavGlyph\s+icon=\{item\.id === 'catalog-group' \? 'catalog' : item\.icon\}/,
+  )
+})
+
+test('sidebar uses the approved outlined icon language', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+
+  for (const icon of [
+    'DashboardOutlinedIcon',
+    'ShoppingCartOutlinedIcon',
+    'ConstructionOutlinedIcon',
+    'OutboxOutlinedIcon',
+    'BrushOutlinedIcon',
+    'BusinessOutlinedIcon',
+    'PaymentsOutlinedIcon',
+    'LinkOutlinedIcon',
+    'AssessmentOutlinedIcon',
+  ]) {
+    assert.match(
+      source,
+      new RegExp(`import ${icon} from '@mui/icons-material/${icon.replace('Icon', '')}'`),
+    )
+  }
+})
+
 test('sidebar uses route-derived Portal and HR context controls without a workspace rail', () => {
   const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
 

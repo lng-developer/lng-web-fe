@@ -1,19 +1,24 @@
 import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
+import ApiOutlinedIcon from '@mui/icons-material/ApiOutlined'
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
+import BrushOutlinedIcon from '@mui/icons-material/BrushOutlined'
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined'
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
+import ConstructionOutlinedIcon from '@mui/icons-material/ConstructionOutlined'
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
-import HubOutlinedIcon from '@mui/icons-material/HubOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
+import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined'
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import MonitorHeartOutlinedIcon from '@mui/icons-material/MonitorHeartOutlined'
-import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined'
+import OutboxOutlinedIcon from '@mui/icons-material/OutboxOutlined'
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined'
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
-import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
-import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
 import { Box, ButtonBase, List, ListItemButton, ListItemText, Typography } from '@mui/material'
@@ -37,31 +42,44 @@ import {
 const SIDEBAR_WIDTH = 248
 
 const NAV_ITEM_ICONS = {
-  ads: AssignmentOutlinedIcon,
-  api: HubOutlinedIcon,
+  api: ApiOutlinedIcon,
   audit: HistoryOutlinedIcon,
+  catalog: Inventory2OutlinedIcon,
   config: SettingsOutlinedIcon,
   configuration: SettingsOutlinedIcon,
-  costCenters: HomeOutlinedIcon,
-  dashboard: HomeOutlinedIcon,
-  costs: ReceiptLongOutlinedIcon,
-  design: PaletteOutlinedIcon,
+  dashboard: DashboardOutlinedIcon,
+  design: BrushOutlinedIcon,
   fulfillment: Inventory2OutlinedIcon,
   listings: ViewListOutlinedIcon,
-  mapping: HubOutlinedIcon,
+  mapping: LinkOutlinedIcon,
   monitoring: MonitorHeartOutlinedIcon,
-  orders: Inventory2OutlinedIcon,
-  products: CategoryOutlinedIcon,
+  orders: ShoppingCartOutlinedIcon,
+  products: PaymentsOutlinedIcon,
   productTypes: CategoryOutlinedIcon,
-  qc: RuleOutlinedIcon,
-  reports: AssignmentOutlinedIcon,
-  scale: FactCheckOutlinedIcon,
+  qc: FactCheckOutlinedIcon,
+  reports: AssessmentOutlinedIcon,
+  scale: ConstructionOutlinedIcon,
   shipping: LocalShippingOutlinedIcon,
   shops: StorefrontOutlinedIcon,
-  submissions: ReceiptLongOutlinedIcon,
-  templates: AssignmentOutlinedIcon,
+  submissions: OutboxOutlinedIcon,
+  templates: DescriptionOutlinedIcon,
   users: PeopleAltOutlinedIcon,
-  vendors: StorefrontOutlinedIcon,
+  vendors: BusinessOutlinedIcon,
+}
+
+const sectionLabelSx = {
+  color: 'text.secondary',
+  display: 'flex',
+  pb: 0.5,
+  pt: 2,
+  px: 2,
+  '& .MuiListItemText-primary': {
+    fontSize: '0.6875rem',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    lineHeight: 1.25,
+    textTransform: 'uppercase',
+  },
 }
 
 function hasActivePath(item, location) {
@@ -112,7 +130,8 @@ function NavGlyph({ icon, active }) {
       fontSize="small"
       sx={{
         color: active ? 'primary.main' : 'text.primary',
-        width: 24,
+        height: 16,
+        width: 16,
       }}
     />
   )
@@ -167,7 +186,7 @@ function navButtonSx({ active, depth, withActiveBorder }) {
     },
     '& .SidebarNavIcon': {
       color: active ? theme.palette.primary.main : theme.palette.text.primary,
-      flex: '0 0 24px',
+      flex: '0 0 16px',
       mr: 1,
     },
     '&:hover': {
@@ -259,19 +278,29 @@ export default function AppSidebar({ onNavigate, open }) {
 
       if (item.children) {
         const active = item.children.some((child) => hasActivePath(child, location))
+        const isDomainLabel = depth === 'root' && item.id !== 'catalog-group'
 
         return (
           <Box key={item.id}>
             <Box
-              sx={navButtonSx({
-                active: depth === 'root' && active,
-                depth: depth === 'root' ? 'root' : 'group',
-                withActiveBorder: depth === 'root',
-              })}
+              sx={
+                isDomainLabel
+                  ? sectionLabelSx
+                  : navButtonSx({
+                      active: depth === 'root' && active,
+                      depth: depth === 'root' ? 'root' : 'group',
+                      withActiveBorder: depth === 'root',
+                    })
+              }
             >
-              <Box className="SidebarNavIcon">
-                <NavGlyph icon={item.icon} active={depth === 'root' && active} />
-              </Box>
+              {!isDomainLabel && (
+                <Box className="SidebarNavIcon">
+                  <NavGlyph
+                    icon={item.id === 'catalog-group' ? 'catalog' : item.icon}
+                    active={depth === 'root' && active}
+                  />
+                </Box>
+              )}
               <ListItemText primary={t(item.labelKey)} />
             </Box>
             {renderItems(item.children, depth === 'root' ? 'group' : 'sub')}
