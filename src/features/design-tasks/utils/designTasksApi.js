@@ -474,16 +474,31 @@ function workspaceListingLabel(listing = {}) {
   )
 }
 
+function mapWorkspaceFile(file) {
+  if (!file) return null
+
+  const id = file.id || file._id || null
+
+  return {
+    ...file,
+    id,
+    filename: displayNoId(file.originalFilename || file.filename, 'Unknown file'),
+    ...(id ? { downloadUrl: assetDownloadUrl(id) } : {}),
+  }
+}
+
 export function mapPsdFilesResponse(response = {}) {
   return mapWorkspacePagination(response, (row) => {
-    const asset = row.asset || {}
-    const assetId = asset.id || asset._id || null
+    const asset = mapWorkspaceFile(row.asset)
+    const assetId = asset?.id || null
 
     return {
       id: row.rowKey || row.id || assetId,
+      rowKey: row.rowKey || row.id || assetId,
       assetId,
-      filename: displayNoId(asset.originalFilename || asset.filename, 'Unknown file'),
-      size: asset.size ?? null,
+      asset,
+      filename: asset?.filename || 'Unknown file',
+      size: asset?.size ?? null,
       role: row.role || null,
       taskId: row.task?.id || row.task?._id || row.taskId || null,
       taskStatus: row.task?.status || row.taskStatus || null,
@@ -493,8 +508,8 @@ export function mapPsdFilesResponse(response = {}) {
       submissionId: row.submission?.id || row.submission?._id || row.submissionId || null,
       submissionVersion: row.submission?.version || null,
       submittedAt: row.submission?.submittedAt || row.submittedAt || null,
-      createdAt: row.createdAt || asset.createdAt || null,
-      ...(assetId ? { downloadUrl: assetDownloadUrl(assetId) } : {}),
+      createdAt: row.createdAt || asset?.createdAt || null,
+      ...(asset?.downloadUrl ? { downloadUrl: asset.downloadUrl } : {}),
       raw: row,
     }
   })
@@ -503,11 +518,18 @@ export function mapPsdFilesResponse(response = {}) {
 export function mapSubmissionScoresResponse(response = {}) {
   return mapWorkspacePagination(response, (row) => {
     const score = row.score || row
+    const file = mapWorkspaceFile(row.file || row.asset)
+    const task = row.task ? { ...row.task } : null
+    const submission = row.submission ? { ...row.submission } : null
 
     return {
       id: score.id || score._id || row.id || null,
-      taskId: row.task?.id || row.task?._id || score.taskId || null,
-      submissionId: row.submission?.id || row.submission?._id || score.submissionId || null,
+      file,
+      task,
+      submission,
+      score: { ...score },
+      taskId: task?.id || task?._id || score.taskId || null,
+      submissionId: submission?.id || submission?._id || score.submissionId || null,
       designerId: row.designer?.id || row.designer?._id || score.designerId || null,
       designerLabel: getPersonDisplayName(row.designer, 'Unassigned'),
       listingLabel: workspaceListingLabel(row.listing),
