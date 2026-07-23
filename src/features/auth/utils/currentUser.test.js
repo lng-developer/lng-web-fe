@@ -134,8 +134,10 @@ describe('current user utilities', () => {
     const leafIds = collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user))
 
     assert.equal(role, 'admin')
+    assert.equal(leafIds.includes('dashboard'), true)
+    assert.equal(leafIds.includes('api-coverage'), true)
     assert.equal(leafIds.includes('audit-log'), true)
-    assert.equal(leafIds.includes('amazon-orders-cost-report'), true)
+    assert.equal(leafIds.includes('amazon-orders-cost-report'), false)
     assert.equal(leafIds.includes('template-center'), false)
   })
 
@@ -143,6 +145,7 @@ describe('current user utilities', () => {
     const user = resolveCurrentUser({ data: { roles: ['DESIGNER'], permissions: ['DESIGN:WORK'] } })
 
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
+      'dashboard',
       'design-task-list',
     ])
   })
@@ -151,8 +154,8 @@ describe('current user utilities', () => {
     const user = resolveCurrentUser({ data: { roles: ['QC'], permissions: ['DESIGN:REVIEW'] } })
 
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
-      'qc-amazon',
-      'qc-etsy',
+      'dashboard',
+      'quality-control',
       'design-task-list',
     ])
   })
@@ -163,10 +166,9 @@ describe('current user utilities', () => {
     })
 
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
-      'scale-amazon',
-      'scale-etsy',
-      'qc-amazon',
-      'qc-etsy',
+      'dashboard',
+      'scale-production',
+      'quality-control',
       'shipping',
     ])
   })
@@ -177,8 +179,8 @@ describe('current user utilities', () => {
     })
 
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
-      'orders-amazon',
-      'orders-etsy',
+      'dashboard',
+      'orders-all',
       'listings',
       'product-types',
       'internal-templates',

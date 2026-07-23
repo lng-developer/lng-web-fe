@@ -77,6 +77,18 @@ describe('sidebar navigation', () => {
       ],
     )
     assert.deepEqual(collectLeafIds(PORTAL_NAVIGATION.slice(1)), portalLeafIds)
+
+    const insights = findItem(PORTAL_NAVIGATION, 'insights-group')
+    const monitoring = findItem(PORTAL_NAVIGATION, 'monitoring-group')
+
+    assert.deepEqual(
+      insights.children.map((item) => item.id),
+      ['reports', 'monitoring-group'],
+    )
+    assert.deepEqual(
+      monitoring.children.map((item) => item.id),
+      ['api-coverage', 'audit-log'],
+    )
   })
 
   it('keeps all orders on the base route and inactive for marketplace filters', () => {
@@ -89,6 +101,19 @@ describe('sidebar navigation', () => {
       isNavItemActive(allOrders, { pathname: '/portal/orders', search: '?channel=amazon' }),
       false,
     )
+  })
+
+  it('keeps base fulfillment and report leaves active for marketplace filters', () => {
+    for (const [id, pathname, search] of [
+      ['scale-production', ROUTES.PORTAL_SCALE, '?channel=amazon'],
+      ['quality-control', ROUTES.PORTAL_QC, '?channel=etsy'],
+      ['reports', ROUTES.PORTAL_REPORTS, '?channel=amazon&report=ads'],
+    ]) {
+      const item = findItem(PORTAL_NAVIGATION, id)
+
+      assert.equal(item.activeSearch, undefined)
+      assert.equal(isNavItemActive(item, { pathname, search }), true)
+    }
   })
 
   it('separates HR leaves from Portal navigation', () => {
