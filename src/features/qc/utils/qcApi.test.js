@@ -15,20 +15,20 @@ import {
   readQcDashboardSearch,
 } from './qcApi.js'
 
-test('readQcDashboardSearch accepts supported status and channel values', () => {
+test('readQcDashboardSearch accepts supported status and sales-channel values', () => {
   assert.deepEqual(readQcDashboardSearch('?status=pending&channel=amazon'), {
-    platform: 'amazon',
+    channel: 'amazon',
     statusTab: 'pending',
   })
   assert.deepEqual(readQcDashboardSearch('?status=qcRejected&channel=etsy'), {
-    platform: 'etsy',
+    channel: 'etsy',
     statusTab: 'qcRejected',
   })
   assert.deepEqual(readQcDashboardSearch('?status=completed&channel=amazon'), {
-    platform: 'amazon',
+    channel: 'amazon',
     statusTab: 'completed',
   })
-  assert.deepEqual(readQcDashboardSearch('?status=unknown&channel=unknown'), {})
+  assert.deepEqual(readQcDashboardSearch('?status=unknown&channel=all'), {})
 })
 
 test('readQcDashboardSearch parses persisted queue filters and pagination', () => {
@@ -37,7 +37,7 @@ test('readQcDashboardSearch parses persisted queue filters and pagination', () =
   )
 
   assert.equal(result.statusTab, 'qcRejected')
-  assert.equal(result.platform, 'etsy')
+  assert.equal(result.channel, 'etsy')
   assert.equal(result.search, 'ORD-9')
   assert.equal(result.sellerCode, 's-22')
   assert.equal(result.shopId, 'shop-1')
@@ -50,7 +50,7 @@ test('readQcDashboardSearch parses persisted queue filters and pagination', () =
 test('buildQcDashboardSearch omits defaults and empty values from the queue URL', () => {
   assert.equal(
     buildQcDashboardSearch({
-      platform: 'amazon',
+      channel: 'all',
       statusTab: 'pending',
       search: '   ',
       sellerCode: '',
@@ -64,7 +64,7 @@ test('buildQcDashboardSearch omits defaults and empty values from the queue URL'
 
   assert.equal(
     buildQcDashboardSearch({
-      platform: 'etsy',
+      channel: 'etsy',
       statusTab: 'failed',
       search: '  ORD-9  ',
       sellerCode: ' s-22 ',
@@ -83,7 +83,7 @@ test('buildQcDashboardSearch omits defaults and empty values from the queue URL'
 test('buildQcTaskQuery maps supported QC filters to production task params', () => {
   assert.deepEqual(
     buildQcTaskQuery({
-      platform: 'amazon',
+      channel: 'amazon',
       statusTab: 'pending',
       search: '  ORD-20041  ',
       sellerCode: ' j2605 ',
@@ -111,7 +111,7 @@ test('buildQcTaskQuery maps supported QC filters to production task params', () 
 })
 
 test('buildQcTaskQuery omits empty filters and defaults pagination', () => {
-  assert.deepEqual(buildQcTaskQuery({ platform: 'etsy', statusTab: 'all', shopId: 'all' }), {
+  assert.deepEqual(buildQcTaskQuery({ channel: 'etsy', statusTab: 'all', shopId: 'all' }), {
     salesChannelCode: 'ETSY',
     view: 'QC',
     page: 1,
@@ -119,19 +119,22 @@ test('buildQcTaskQuery omits empty filters and defaults pagination', () => {
   })
 })
 
-test('buildQcTaskQuery requests the slim QC projection', () => {
-  assert.equal(buildQcTaskQuery({}).view, 'QC')
+test('buildQcTaskQuery requests the slim QC projection without a sales channel for all', () => {
+  const query = buildQcTaskQuery({})
+
+  assert.equal(query.view, 'QC')
+  assert.equal(Object.hasOwn(query, 'salesChannelCode'), false)
 })
 
 test('buildQcTaskQuery maps backend tab filters for failed and address invalid', () => {
-  assert.deepEqual(buildQcTaskQuery({ platform: 'amazon', statusTab: 'failed' }), {
+  assert.deepEqual(buildQcTaskQuery({ channel: 'amazon', statusTab: 'failed' }), {
     salesChannelCode: 'AMAZON',
     view: 'QC',
     tab: 'FAILED',
     page: 1,
     limit: 10,
   })
-  assert.deepEqual(buildQcTaskQuery({ platform: 'etsy', statusTab: 'addressInvalid' }), {
+  assert.deepEqual(buildQcTaskQuery({ channel: 'etsy', statusTab: 'addressInvalid' }), {
     salesChannelCode: 'ETSY',
     view: 'QC',
     tab: 'ADDRESS_INVALID',
@@ -142,14 +145,12 @@ test('buildQcTaskQuery maps backend tab filters for failed and address invalid',
 
 test('buildQcTaskQuery lets the backend own selected status scope', () => {
   assert.deepEqual(buildQcTaskQuery({ statusTab: 'pending' }), {
-    salesChannelCode: 'AMAZON',
     view: 'QC',
     qcStatus: 'PENDING',
     page: 1,
     limit: 10,
   })
   assert.deepEqual(buildQcTaskQuery({ statusTab: 'qcRejected' }), {
-    salesChannelCode: 'AMAZON',
     view: 'QC',
     qcStatus: 'REJECTED',
     page: 1,
@@ -160,7 +161,7 @@ test('buildQcTaskQuery lets the backend own selected status scope', () => {
 test('buildQcExportQuery keeps active filters and omits pagination', () => {
   assert.deepEqual(
     buildQcExportQuery({
-      platform: 'amazon',
+      channel: 'amazon',
       statusTab: 'addressInvalid',
       sellerCode: 'J2605',
       shopId: '660000000000000000000201',
@@ -177,10 +178,8 @@ test('buildQcExportQuery keeps active filters and omits pagination', () => {
 })
 
 test('buildQcSummaryQuery omits row scope so header filters keep full counts', () => {
-  assert.deepEqual(buildQcSummaryQuery({ platform: 'amazon', statusTab: 'pending' }), {
-    salesChannelCode: 'AMAZON',
-  })
-  assert.deepEqual(buildQcSummaryQuery({ platform: 'etsy', statusTab: 'failed' }), {
+  assert.deepEqual(buildQcSummaryQuery({ channel: 'all', statusTab: 'pending' }), {})
+  assert.deepEqual(buildQcSummaryQuery({ channel: 'etsy', statusTab: 'failed' }), {
     salesChannelCode: 'ETSY',
   })
 })

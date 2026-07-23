@@ -5,7 +5,6 @@ import {
   SCALE_PAGE_SIZE,
   SCALE_STATUS_TABS,
   SCALE_STATUSES,
-  SCALE_SUB_TABS,
 } from '../constants/scaleConstants.js'
 
 function compactObject(value) {
@@ -175,11 +174,10 @@ export function readScaleDashboardSearch(search = '') {
   const params = new URLSearchParams(search)
   const result = {}
   const statusTab = params.get('status')
-  const channel = params.get('channel')?.toUpperCase()
+  const channel = params.get('channel')?.toLowerCase()
 
   if (Object.values(SCALE_STATUS_TABS).includes(statusTab)) result.statusTab = statusTab
-  if (channel === SCALE_CHANNELS.ETSY) result.activeSubTab = SCALE_SUB_TABS.ETSY_TASKS
-  if (channel === SCALE_CHANNELS.AMAZON) result.activeSubTab = SCALE_SUB_TABS.GROUP_TASK
+  if (channel === 'amazon' || channel === 'etsy') result.channel = channel
 
   return result
 }
@@ -190,7 +188,14 @@ export function buildProductionTaskQuery(filters = {}) {
   return compactObject({
     ...statusQuery(filters.statusTab),
     readyForScale: true,
-    salesChannelCode: filters.salesChannelCode,
+    salesChannelCode:
+      filters.channel === undefined
+        ? filters.salesChannelCode
+        : filters.channel === 'amazon'
+          ? SCALE_CHANNELS.AMAZON
+          : filters.channel === 'etsy'
+            ? SCALE_CHANNELS.ETSY
+            : undefined,
     search: filters.search?.trim(),
     shopId: filters.shop && filters.shop !== SCALE_ALL_FILTER ? filters.shop : undefined,
     scaleBy: filters.scaleBy && filters.scaleBy !== SCALE_ALL_FILTER ? filters.scaleBy : undefined,

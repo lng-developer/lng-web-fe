@@ -1,8 +1,3 @@
-export const QC_PLATFORM_TABS = {
-  AMAZON: 'amazon',
-  ETSY: 'etsy',
-}
-
 export const QC_STATUS_TABS = {
   ALL: 'all',
   PENDING: 'pending',

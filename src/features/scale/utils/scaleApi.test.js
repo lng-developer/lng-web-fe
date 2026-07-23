@@ -12,12 +12,39 @@ const {
   readScaleDashboardSearch,
 } = scaleApi
 
-test('readScaleDashboardSearch accepts supported status and channel values', () => {
+test('readScaleDashboardSearch accepts supported status and sales-channel values', () => {
   assert.deepEqual(readScaleDashboardSearch('?status=needScale&channel=etsy'), {
-    activeSubTab: 'etsyTasks',
+    channel: 'etsy',
     statusTab: 'needScale',
   })
-  assert.deepEqual(readScaleDashboardSearch('?status=unknown&channel=unknown'), {})
+  assert.deepEqual(readScaleDashboardSearch('?channel=amazon'), { channel: 'amazon' })
+  assert.deepEqual(readScaleDashboardSearch('?status=unknown&channel=all'), {})
+})
+
+test('buildProductionTaskQuery maps selected sales channels and omits all channels', () => {
+  assert.equal(buildProductionTaskQuery({ channel: 'amazon' }).salesChannelCode, 'AMAZON')
+  assert.equal(buildProductionTaskQuery({ channel: 'etsy' }).salesChannelCode, 'ETSY')
+  assert.equal(
+    Object.hasOwn(buildProductionTaskQuery({ channel: 'all' }), 'salesChannelCode'),
+    false,
+  )
+})
+
+test('all channels overrides stale legacy sales channel values', () => {
+  assert.equal(
+    Object.hasOwn(
+      buildProductionTaskQuery({ channel: 'all', salesChannelCode: 'ALL' }),
+      'salesChannelCode',
+    ),
+    false,
+  )
+  assert.equal(
+    Object.hasOwn(
+      buildProductionSummaryQuery({ channel: 'all', salesChannelCode: 'ALL' }),
+      'salesChannelCode',
+    ),
+    false,
+  )
 })
 
 test('buildProductionTaskQuery maps shared filters and channel to the production list contract', () => {

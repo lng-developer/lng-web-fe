@@ -17,7 +17,6 @@ const SUPPORTED_STATUS_TABS = new Set([
   ...Object.keys(QC_TAB_FILTERS),
 ])
 
-const DEFAULT_PLATFORM = 'amazon'
 const DEFAULT_STATUS_TAB = 'pending'
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 10
@@ -58,7 +57,7 @@ export function readQcDashboardSearch(search = '') {
   const dateTo = parseDateParam(params.get('dateTo'))
 
   if (SUPPORTED_STATUS_TABS.has(statusTab)) result.statusTab = statusTab
-  if (platform === 'amazon' || platform === 'etsy') result.platform = platform
+  if (platform === 'amazon' || platform === 'etsy') result.channel = platform
   if (searchValue) result.search = searchValue
   if (sellerCode) result.sellerCode = sellerCode
   if (shopId) result.shopId = shopId
@@ -71,7 +70,7 @@ export function readQcDashboardSearch(search = '') {
 
 export function buildQcDashboardSearch(filters = {}) {
   const params = new URLSearchParams()
-  const platform = String(filters.platform || DEFAULT_PLATFORM).toLowerCase()
+  const channel = String(filters.channel ?? filters.platform ?? 'all').toLowerCase()
   const statusTab = filters.statusTab
   const search = filters.search?.trim()
   const sellerCode = filters.sellerCode?.trim()
@@ -84,7 +83,7 @@ export function buildQcDashboardSearch(filters = {}) {
   if (SUPPORTED_STATUS_TABS.has(statusTab) && statusTab !== DEFAULT_STATUS_TAB) {
     params.set('status', statusTab)
   }
-  if (platform === 'etsy') params.set('channel', platform)
+  if (channel === 'amazon' || channel === 'etsy') params.set('channel', channel)
   if (search) params.set('search', search)
   if (sellerCode) params.set('sellerCode', sellerCode)
   if (shopId && shopId !== 'all') params.set('shopId', shopId)
@@ -97,10 +96,9 @@ export function buildQcDashboardSearch(filters = {}) {
 }
 
 export function buildQcTaskQuery(filters = {}) {
-  const query = {
-    salesChannelCode: String(filters.platform || 'amazon').toUpperCase(),
-    view: 'QC',
-  }
+  const channel = String(filters.channel ?? filters.platform ?? 'all').toLowerCase()
+  const query = { view: 'QC' }
+  if (channel === 'amazon' || channel === 'etsy') query.salesChannelCode = channel.toUpperCase()
   const qcStatus = QC_STATUS_FILTERS[filters.statusTab]
   const tab = QC_TAB_FILTERS[filters.statusTab]
 

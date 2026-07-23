@@ -129,7 +129,7 @@ export function OrdersToolbar({ filters, onFiltersChange, onRefresh, sellerOptio
           gridTemplateColumns: {
             xs: '1fr',
             md: 'repeat(2, minmax(0, 1fr))',
-            lg: 'minmax(240px, 1.35fr) minmax(170px, 0.9fr) minmax(220px, 1fr) minmax(170px, 0.9fr) 40px minmax(112px, 0.55fr)',
+            lg: 'minmax(240px, 1.35fr) repeat(2, minmax(150px, 0.8fr)) minmax(220px, 1fr) minmax(170px, 0.9fr) 40px minmax(112px, 0.55fr)',
           },
           width: '100%',
         }}
@@ -148,6 +148,16 @@ export function OrdersToolbar({ filters, onFiltersChange, onRefresh, sellerOptio
               ),
             },
           }}
+        />
+        <OrdersSelect
+          value={filters.channel}
+          onChange={(value) => updateFilter('channel', value)}
+          options={[
+            { value: 'all', labelKey: 'orders.values.channels.all' },
+            { value: 'amazon', labelKey: 'orders.values.channels.amazon' },
+            { value: 'etsy', labelKey: 'orders.values.channels.etsy' },
+          ]}
+          sx={{ width: '100%' }}
         />
         <OrdersSelect
           value={filters.shopId}

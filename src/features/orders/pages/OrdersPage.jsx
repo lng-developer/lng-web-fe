@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 
@@ -20,7 +20,6 @@ import {
 import {
   buildOrdersUrl,
   buildSellerOptions,
-  getOrdersChannel,
   getOrdersTab,
   readOrdersFilters,
 } from '@/features/orders/utils/ordersFilters'
@@ -36,18 +35,17 @@ function replaceOrdersUrl(updates) {
 export default function OrdersPage() {
   const { i18n } = useTranslation()
   const location = useLocation()
-  const routeChannel = getOrdersChannel(location.search)
   const initialTab = getOrdersTab(location.search)
   const [activeTab, setActiveTab] = useState(initialTab)
   const [filters, setFilters] = useState(() => readOrdersFilters(location.search))
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFilters(readOrdersFilters(location.search))
+  }, [location.search])
+
   const shopsQuery = useShopsQuery({ page: 1, limit: 100 })
-  const effectiveFilters = useMemo(
-    () => ({
-      ...filters,
-      channel: routeChannel || filters.channel,
-    }),
-    [filters, routeChannel],
-  )
+  const effectiveFilters = filters
   const shopOptions = useMemo(
     () =>
       (shopsQuery.data?.items || []).map((shop) => ({

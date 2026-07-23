@@ -194,8 +194,8 @@ test('orders header keeps tabs and filters compact without heavy active blocks',
   assert.equal(tabsSource.includes("flex: '0 0 auto'"), true)
   assert.equal(tabsSource.includes('height: 40'), true)
   assert.equal(tabsSource.includes("lineHeight: '18px'"), true)
-  assert.equal(filterSource.includes('filterOptions.channels'), false)
-  assert.equal(filterSource.includes("updateFilter('channel'"), false)
+  assert.equal(filterSource.includes('orders.values.channels.all'), true)
+  assert.equal(filterSource.includes("updateFilter('channel'"), true)
   assert.equal(filterSource.includes('minmax(240px, 1.35fr)'), true)
   assert.equal(filterSource.includes("justifySelf: { xs: 'stretch', lg: 'end' }"), true)
   assert.equal(filterSource.includes('minWidth: 112'), true)
@@ -207,8 +207,18 @@ test('orders page keeps tab, pagination, and filters in the url for reloads', ()
 
   assert.equal(source.includes('readOrdersFilters(location.search)'), true)
   assert.equal(source.includes('getOrdersTab(location.search)'), true)
+  assert.equal(source.includes('getOrdersChannel(location.search)'), false)
   assert.equal(filtersSource.includes('export function buildOrdersUrl'), true)
   assert.equal(filtersSource.includes("Object.hasOwn(updates, 'dateRange')"), true)
+})
+
+test('orders refreshes filters when router search changes while mounted', () => {
+  const source = readOrdersPageModuleSource()
+
+  assert.match(
+    source,
+    /useEffect\(\(\) => \{\s*\/\/ eslint-disable-next-line react-hooks\/set-state-in-effect\s*setFilters\(readOrdersFilters\(location\.search\)\)\s*\}, \[location\.search\]\)/,
+  )
 })
 
 test('orders refresh reloads both table data and tab counts', () => {

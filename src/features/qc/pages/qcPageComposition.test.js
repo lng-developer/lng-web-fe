@@ -33,13 +33,25 @@ test('QC page keeps review actions focused on QC decisions', () => {
   assert.equal(source.includes('pushSelectedTasks'), false)
 })
 
-test('QC page does not render a platform filter', () => {
+test('QC page renders a sales-channel filter', () => {
   const source = readPageSource()
 
   assert.equal(source.includes('platformTabs.map'), false)
-  assert.equal(source.includes('onChange={handlePlatformChange}'), false)
+  assert.equal(source.includes('const [channel, setChannel] = useState'), true)
+  assert.equal(source.includes('value={channel}'), true)
+  assert.equal(source.includes('handleChannelChange'), true)
   assert.equal(source.includes('readQcDashboardSearch'), true)
-  assert.equal(source.includes('platform'), true)
+  assert.equal(source.includes('salesChannelCode'), false)
+})
+
+test('QC only synchronizes channel state when router search changes', () => {
+  const source = readPageSource()
+
+  assert.match(
+    source,
+    /useEffect\(\(\) => \{\s*\/\/ eslint-disable-next-line react-hooks\/set-state-in-effect\s*setChannel\(readQcDashboardSearch\(location\.search\)\.channel \|\| QC_ALL_FILTER\)\s*\}, \[location\.search\]\)/,
+  )
+  assert.equal(source.includes('}, [channel, dashboardSearch.channel])'), false)
 })
 
 test('QC refreshes only the current task and summary queries', () => {
@@ -66,7 +78,10 @@ test('QC keeps the queue subtree stable while users edit filters', () => {
   const source = readPageSource()
   const detailSource = readDetailSource()
 
-  assert.equal(source.includes("import { useCallback, useMemo, useState } from 'react'"), true)
+  assert.equal(
+    source.includes("import { useCallback, useEffect, useMemo, useState } from 'react'"),
+    true,
+  )
   assert.equal(source.includes('const tableColumns = useMemo('), true)
   assert.equal(source.includes('const renderQcCell = useCallback('), true)
   assert.equal(source.includes('const renderExpandedQcRow = useCallback('), true)

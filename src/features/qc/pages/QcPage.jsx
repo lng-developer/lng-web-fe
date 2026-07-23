@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -45,7 +45,6 @@ import QcImageReviewDialog from '@/features/qc/components/QcImageReviewDialog'
 import {
   QC_ALL_FILTER,
   QC_PAGE_SIZE,
-  QC_PLATFORM_TABS,
   QC_STATUS_TABS,
   QC_TABLE_COLUMNS,
 } from '@/features/qc/constants/qcConstants'
@@ -209,7 +208,7 @@ export default function QcPage() {
   const currentUser = useAuthStore((state) => state.currentUser)
   const location = useLocation()
   const dashboardSearch = useMemo(() => readQcDashboardSearch(location.search), [location.search])
-  const platform = dashboardSearch.platform || QC_PLATFORM_TABS.AMAZON
+  const [channel, setChannel] = useState(() => dashboardSearch.channel || QC_ALL_FILTER)
   const [statusTab, setStatusTab] = useState(
     () => dashboardSearch.statusTab || QC_STATUS_TABS.PENDING,
   )
@@ -229,9 +228,15 @@ export default function QcPage() {
   })
   const debouncedSearch = useDebounce(searchInput, 300)
   const debouncedSeller = useDebounce(sellerInput, 300)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setChannel(readQcDashboardSearch(location.search).channel || QC_ALL_FILTER)
+  }, [location.search])
+
   const taskFilters = useMemo(
     () => ({
-      platform,
+      channel,
       statusTab,
       search: debouncedSearch,
       sellerCode: debouncedSeller,
@@ -240,7 +245,7 @@ export default function QcPage() {
       page,
       pageSize,
     }),
-    [dateRange, debouncedSearch, debouncedSeller, page, pageSize, platform, shopId, statusTab],
+    [channel, dateRange, debouncedSearch, debouncedSeller, page, pageSize, shopId, statusTab],
   )
   const taskQuery = useMemo(() => buildQcTaskQuery(taskFilters), [taskFilters])
   const summaryQuery = useMemo(() => buildQcSummaryQuery(taskFilters), [taskFilters])
@@ -277,7 +282,7 @@ export default function QcPage() {
 
   function replaceQcUrl(nextState = {}) {
     const query = buildQcDashboardSearch({
-      platform,
+      channel,
       statusTab,
       search: searchInput,
       sellerCode: sellerInput,
@@ -299,6 +304,11 @@ export default function QcPage() {
     setStatusTab(nextStatusTab)
     setPage(1)
     replaceQcUrl({ statusTab: nextStatusTab, page: 1 })
+  }
+
+  function handleChannelChange(nextChannel) {
+    setChannel(nextChannel)
+    resetView({ channel: nextChannel })
   }
 
   function handlePageSizeChange(nextPageSize) {
@@ -462,7 +472,7 @@ export default function QcPage() {
         }
         toolbar={
           <OperationsToolbar>
-            <div className="grid w-full grid-cols-1 items-center gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1.35fr)_minmax(128px,0.8fr)_minmax(128px,0.8fr)_36px_minmax(140px,auto)_minmax(180px,auto)]">
+            <div className="grid w-full grid-cols-1 items-center gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1.35fr)_repeat(3,minmax(128px,0.8fr))_36px_minmax(140px,auto)_minmax(180px,auto)]">
               <TextField
                 size="small"
                 value={searchInput}
@@ -506,6 +516,18 @@ export default function QcPage() {
                 options={shopOptions}
                 widthClass="w-full"
               />
+              <FormControl size="small" className="w-full">
+                <Select
+                  value={channel}
+                  onChange={(event) => handleChannelChange(event.target.value)}
+                  className="h-10 rounded-lg bg-surface text-sm"
+                  inputProps={{ 'aria-label': t('orders.filters.channel') }}
+                >
+                  <MenuItem value="all">{t('orders.values.channels.all')}</MenuItem>
+                  <MenuItem value="amazon">{t('orders.values.channels.amazon')}</MenuItem>
+                  <MenuItem value="etsy">{t('orders.values.channels.etsy')}</MenuItem>
+                </Select>
+              </FormControl>
               <Tooltip title={t('qc.actions.refresh')}>
                 <IconButton
                   aria-label={t('qc.actions.refresh')}

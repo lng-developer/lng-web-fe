@@ -32,25 +32,30 @@ test('Scale page uses the shared operations shell controls around its existing g
   assert.match(source, /className=\{`grid w-full min-w-full \$\{tableGridClass\}`\}/)
 })
 
-test('Scale page does not render a platform filter', () => {
+test('Scale page renders a sales-channel filter instead of channel-derived subtabs', () => {
   const source = readPageSource()
 
   assert.equal(source.includes('subTabs.map'), false)
-  assert.equal(source.includes('onChange={handleSubTabChange}'), false)
-  assert.equal(source.includes('SCALE_SUB_TABS'), true)
+  assert.equal(source.includes('const [channel, setChannel] = useState'), true)
+  assert.equal(source.includes('value={channel}'), true)
+  assert.equal(source.includes('handleChannelChange'), true)
 })
 
-test('Scale page derives the active channel from the current URL search', () => {
+test('Scale page derives the selected channel from the current URL search', () => {
   const source = readPageSource()
 
-  assert.equal(
-    source.includes(
-      'const activeSubTab = dashboardSearch.activeSubTab || SCALE_SUB_TABS.GROUP_TASK',
-    ),
-    true,
+  assert.equal(source.includes("dashboardSearch.channel || 'all'"), true)
+  assert.equal(source.includes('channel,'), true)
+})
+
+test('Scale only synchronizes channel state when router search changes', () => {
+  const source = readPageSource()
+
+  assert.match(
+    source,
+    /useEffect\(\(\) => \{\s*\/\/ eslint-disable-next-line react-hooks\/set-state-in-effect\s*setChannel\(readScaleDashboardSearch\(location\.search\)\.channel \|\| 'all'\)\s*\}, \[location\.search\]\)/,
   )
-  assert.equal(source.includes('const [activeSubTab] = useState'), false)
-  assert.equal(source.includes('salesChannelCode'), true)
+  assert.equal(source.includes('}, [channel, dashboardSearch.channel])'), false)
 })
 
 test('Scale refreshes only the current task and summary queries', () => {

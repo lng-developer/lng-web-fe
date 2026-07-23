@@ -58,12 +58,10 @@ import {
 } from '@/features/scale/api/scale.queries'
 import {
   SCALE_ALL_FILTER,
-  SCALE_CHANNELS,
   SCALE_PAGE_SIZE,
   SCALE_PAGE_SIZE_OPTIONS,
   SCALE_STATUS_TABS,
   SCALE_STATUSES,
-  SCALE_SUB_TABS,
   SCALE_TABLE_COLUMNS,
 } from '@/features/scale/constants/scaleConstants'
 import { readScaleDashboardSearch } from '@/features/scale/utils/scaleApi'
@@ -712,11 +710,11 @@ function ScaleDetailPanel({
   )
 }
 
-function renderOrderDate(task, activeSubTab) {
+function renderOrderDate(task, isEtsyTab) {
   return (
     <Tooltip title={task.orderDate}>
       <span
-        className={`block truncate text-sm font-semibold ${activeSubTab === SCALE_SUB_TABS.ETSY_TASKS ? 'text-ink-strong' : 'text-ink-secondary'}`}
+        className={`block truncate text-sm font-semibold ${isEtsyTab ? 'text-ink-strong' : 'text-ink-secondary'}`}
       >
         {formatCompactOrderDate(task.orderDate)}
       </span>
@@ -947,7 +945,7 @@ export default function ScalePage() {
     () => readScaleDashboardSearch(location.search),
     [location.search],
   )
-  const activeSubTab = dashboardSearch.activeSubTab || SCALE_SUB_TABS.GROUP_TASK
+  const [channel, setChannel] = useState(() => dashboardSearch.channel || 'all')
   const [statusTab, setStatusTab] = useState(
     () => dashboardSearch.statusTab || SCALE_STATUS_TABS.ALL,
   )
@@ -970,13 +968,17 @@ export default function ScalePage() {
   })
   const [uploadErrors, setUploadErrors] = useState({})
 
-  const isEtsyTab = activeSubTab === SCALE_SUB_TABS.ETSY_TASKS
+  const isEtsyTab = channel === 'etsy'
   const activeFilters = isEtsyTab ? etsyFilters : groupFilters
-  const salesChannelCode = isEtsyTab ? SCALE_CHANNELS.ETSY : SCALE_CHANNELS.AMAZON
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setChannel(readScaleDashboardSearch(location.search).channel || 'all')
+  }, [location.search])
 
   const query = useMemo(
     () => ({
-      salesChannelCode,
+      channel,
       statusTab,
       search: debouncedSearch,
       dateRange,
@@ -984,7 +986,7 @@ export default function ScalePage() {
       page,
       pageSize,
     }),
-    [activeFilters, dateRange, debouncedSearch, page, pageSize, salesChannelCode, statusTab],
+    [activeFilters, channel, dateRange, debouncedSearch, page, pageSize, statusTab],
   )
 
   const activeQuery = useScaleTasksQuery(query)
@@ -1049,6 +1051,18 @@ export default function ScalePage() {
   function handleStatusTabChange(nextStatusTab) {
     setStatusTab(nextStatusTab)
     resetPage()
+  }
+
+  function handleChannelChange(nextChannel) {
+    setChannel(nextChannel)
+    setPage(1)
+
+    const params = new URLSearchParams(window.location.search)
+    if (nextChannel === 'amazon' || nextChannel === 'etsy') params.set('channel', nextChannel)
+    else params.delete('channel')
+    params.delete('page')
+    const query = params.toString()
+    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
   }
 
   function handleDateRangeChange(value) {
@@ -1355,7 +1369,7 @@ export default function ScalePage() {
         }
         toolbar={
           <OperationsToolbar>
-            <div className="grid w-full grid-cols-1 items-center gap-2 md:grid-cols-2 xl:w-fit xl:max-w-full xl:grid-cols-[minmax(240px,320px)_repeat(3,160px)_36px]">
+            <div className="grid w-full grid-cols-1 items-center gap-2 md:grid-cols-2 xl:w-fit xl:max-w-full xl:grid-cols-[minmax(240px,320px)_repeat(4,160px)_36px]">
               <TextField
                 size="small"
                 value={searchInput}
@@ -1375,6 +1389,18 @@ export default function ScalePage() {
                   ),
                 }}
               />
+              <FormControl size="small" className="w-full">
+                <Select
+                  value={channel}
+                  onChange={(event) => handleChannelChange(event.target.value)}
+                  className="h-9 rounded-md bg-surface text-sm"
+                  inputProps={{ 'aria-label': t('orders.filters.channel') }}
+                >
+                  <MenuItem value="all">{t('orders.values.channels.all')}</MenuItem>
+                  <MenuItem value="amazon">{t('orders.values.channels.amazon')}</MenuItem>
+                  <MenuItem value="etsy">{t('orders.values.channels.etsy')}</MenuItem>
+                </Select>
+              </FormControl>
               {filters.map((filter) => (
                 <FilterSelect
                   key={filter.key}
@@ -1451,7 +1477,7 @@ export default function ScalePage() {
                           <OrderIdBadge value={task.orderId} onCopy={handleCopyOrderId} t={t} />
                         </div>
                         <div className="min-w-0 overflow-hidden px-4">
-                          {renderOrderDate(task, activeSubTab)}
+                          {renderOrderDate(task, isEtsyTab)}
                         </div>
                         <div className="min-w-0 overflow-hidden px-4">
                           <StatusBadge

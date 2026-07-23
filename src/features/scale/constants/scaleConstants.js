@@ -1,8 +1,3 @@
-export const SCALE_SUB_TABS = {
-  GROUP_TASK: 'groupTask',
-  ETSY_TASKS: 'etsyTasks',
-}
-
 export const SCALE_CHANNELS = {
   AMAZON: 'AMAZON',
   ETSY: 'ETSY',
