@@ -51,7 +51,6 @@ import { useDebounce } from '@/hooks/useDebounce'
 const pageSize = 20
 const statusTabs = ['ALL', 'READY', 'SUBMITTED', 'FAILED', 'CANCELLED']
 const columns = [
-  { key: 'id', labelKey: 'vendorSubmissions.table.id', width: '170px' },
   { key: 'orderId', labelKey: 'vendorSubmissions.table.orderId', width: '180px' },
   { key: 'status', labelKey: 'vendorSubmissions.table.status', width: '120px' },
   { key: 'vendor', labelKey: 'vendorSubmissions.table.vendor', width: '150px' },
@@ -68,12 +67,6 @@ function statusTone(status) {
   if (status === 'READY') return 'info'
   if (status === 'CANCELLED') return 'neutral'
   return 'warning'
-}
-
-function shortId(value) {
-  if (!value) return '-'
-  const text = String(value)
-  return text.length > 12 ? `${text.slice(0, 8)}...${text.slice(-4)}` : text
 }
 
 function formatDate(value, language) {
@@ -343,17 +336,6 @@ export default function VendorSubmissionsPage() {
   function renderCell(row, column) {
     if (column.key === 'status') {
       return <StatusBadge tone={statusTone(row.status)}>{row.status}</StatusBadge>
-    }
-    if (column.key === 'id') {
-      return (
-        <button
-          type="button"
-          className="max-w-full truncate border-0 bg-transparent p-0 text-left font-semibold text-primary"
-          onClick={() => setSelectedRow(row)}
-        >
-          {shortId(row.id)}
-        </button>
-      )
     }
     if (column.key === 'updatedAt') return formatDate(row.updatedAt, i18n.language)
     if (column.key === 'actions') return renderActions(row)

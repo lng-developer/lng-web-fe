@@ -43,3 +43,9 @@ test('vendor submissions page exposes id filters and BE lifecycle actions', () =
   assert.equal(source.includes('useCancelVendorSubmissionMutation'), true)
   assert.equal(source.includes('useCreateShipmentFromVendorSubmissionMutation'), true)
 })
+
+test('vendor submissions table omits the internal ID column', () => {
+  const source = readPageSource()
+
+  assert.equal(source.includes("{ key: 'id', labelKey: 'vendorSubmissions.table.id'"), false)
+})

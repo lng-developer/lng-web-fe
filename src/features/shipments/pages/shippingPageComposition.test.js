@@ -43,3 +43,9 @@ test('shipping page exposes id filters and shipment actions', () => {
   assert.equal(source.includes('useRecheckSubmittedVendorTrackingMutation'), true)
   assert.equal(source.includes("activeTab === 'webhooks'"), true)
 })
+
+test('shipping table omits the internal ID column', () => {
+  const source = readPageSource()
+
+  assert.equal(source.includes("{ key: 'id', labelKey: 'shipments.table.id'"), false)
+})

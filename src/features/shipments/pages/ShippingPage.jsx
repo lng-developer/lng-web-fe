@@ -49,7 +49,6 @@ const tabs = [
 ]
 const statusTabs = ['ALL', 'TRACKING_PENDING', 'SHIPPED', 'DELIVERED', 'EXCEPTION', 'CANCELLED']
 const shipmentColumns = [
-  { key: 'id', labelKey: 'shipments.table.id', width: '160px' },
   { key: 'orderId', labelKey: 'shipments.table.orderId', width: '180px' },
   { key: 'status', labelKey: 'shipments.table.status', width: '145px' },
   { key: 'carrier', labelKey: 'shipments.table.carrier', width: '120px' },
@@ -73,12 +72,6 @@ function statusTone(status) {
   if (status === 'EXCEPTION') return 'danger'
   if (status === 'CANCELLED') return 'neutral'
   return 'warning'
-}
-
-function shortId(value) {
-  if (!value) return '-'
-  const text = String(value)
-  return text.length > 12 ? `${text.slice(0, 8)}...${text.slice(-4)}` : text
 }
 
 function formatDate(value, language) {
@@ -282,17 +275,6 @@ export default function ShippingPage() {
   function renderShipmentCell(row, column) {
     if (column.key === 'status') {
       return <StatusBadge tone={statusTone(row.status)}>{row.status}</StatusBadge>
-    }
-    if (column.key === 'id') {
-      return (
-        <button
-          type="button"
-          className="max-w-full truncate border-0 bg-transparent p-0 text-left font-semibold text-primary"
-          onClick={() => setSelectedRow(row)}
-        >
-          {shortId(row.id)}
-        </button>
-      )
     }
     if (column.key === 'updatedAt') return formatDate(row.updatedAt, i18n.language)
     if (column.key === 'actions') return renderShipmentActions(row)
