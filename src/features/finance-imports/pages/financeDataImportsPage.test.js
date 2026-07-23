@@ -41,7 +41,14 @@ test('finance import actions stay read-only unless write access and a failed bat
 test('finance import source summaries expose the latest status and row/error counts', () => {
   assert.deepEqual(
     getFinanceImportBatchSummary({ status: 'PARTIAL_FAILED', validRows: 11, errorCount: 2 }),
-    { status: 'PARTIAL_FAILED', importedRows: 11, errorCount: 2 },
+    { hasBatch: true, status: 'PARTIAL_FAILED', importedRows: 11, errorCount: 2 },
+  )
+})
+
+test('finance import source summaries distinguish an empty source from a processing batch', () => {
+  assert.deepEqual(
+    getFinanceImportBatchSummary(),
+    { hasBatch: false, status: null, importedRows: 0, errorCount: 0 },
   )
 })
 

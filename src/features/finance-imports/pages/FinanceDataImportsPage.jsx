@@ -87,9 +87,13 @@ function SourceSummary({ batch, canWrite, onImport, sourceType, total, t }) {
         ) : null}
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-strong">
-        <StatusBadge tone={statusTone(summary.status)}>{summary.status}</StatusBadge>
-        <span>{t('financeImports.importedRows', { count: summary.importedRows })}</span>
-        <span>{t('financeImports.table.errorCount', { count: summary.errorCount })}: {summary.errorCount}</span>
+        {summary.hasBatch ? (
+          <>
+            <StatusBadge tone={statusTone(summary.status)}>{summary.status}</StatusBadge>
+            <span>{t('financeImports.importedRows', { count: summary.importedRows })}</span>
+            <span>{t('financeImports.table.errorCount', { count: summary.errorCount })}: {summary.errorCount}</span>
+          </>
+        ) : <span>{t('financeImports.emptyBatches')}</span>}
       </div>
       <div className="mt-1 text-xs text-ink-muted">{total || 0} {t('financeImports.batchCount')}</div>
     </div>

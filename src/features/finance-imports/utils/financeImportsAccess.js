@@ -28,11 +28,12 @@ export function getFinanceImportBatchActions(user, status) {
     : ['DETAILS']
 }
 
-export function getFinanceImportBatchSummary(batch = {}) {
+export function getFinanceImportBatchSummary(batch) {
   return {
-    status: batch.status || 'PROCESSING',
-    importedRows: Number(batch.validRows || 0),
-    errorCount: Number(batch.errorCount || 0),
+    hasBatch: Boolean(batch),
+    status: batch?.status || null,
+    importedRows: Number(batch?.validRows || 0),
+    errorCount: Number(batch?.errorCount || 0),
   }
 }
 
