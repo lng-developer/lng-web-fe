@@ -112,6 +112,8 @@
       "amazonQc": "Amazon QC",
       "etsyQc": "Etsy QC",
       "psdTasks": "PSD Tasks",
+      "qualityScoring": "Chấm điểm chất lượng",
+      "psdFileLibrary": "Kho file PSD",
       "costCenterConfig": "Config",
       "productTypes": "Product Types",
       "internalTemplates": "Internal Templates",

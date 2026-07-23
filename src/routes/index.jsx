@@ -17,6 +17,8 @@ const BackendEndpointConsolePage = lazy(
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'))
 const DepartmentsPage = lazy(() => import('@/features/departments/pages/DepartmentsPage'))
 const DesignTasksPage = lazy(() => import('@/features/design-tasks/pages/DesignTasksPage'))
+const QualityScoringPage = lazy(() => import('@/features/design-tasks/pages/QualityScoringPage'))
+const PsdFileLibraryPage = lazy(() => import('@/features/design-tasks/pages/PsdFileLibraryPage'))
 const FinancePage = lazy(() => import('@/features/finance/pages/FinancePage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const ListingPage = lazy(() => import('@/features/listings/pages/ListingPage'))
@@ -181,6 +183,20 @@ export const router = createBrowserRouter([
             element: requireAnyPermissions(
               ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW', 'DESIGN_TASKS:READ'],
               <DesignTasksPage />,
+            ),
+          },
+          {
+            path: 'portal/design/quality-scoring',
+            element: requireAnyPermissions(
+              ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW', 'DESIGN_TASKS:READ'],
+              <QualityScoringPage />,
+            ),
+          },
+          {
+            path: 'portal/design/psd-files',
+            element: requireAnyPermissions(
+              ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW', 'DESIGN_TASKS:READ'],
+              <PsdFileLibraryPage />,
             ),
           },
           {

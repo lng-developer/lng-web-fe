@@ -20,6 +20,8 @@ export const ROUTES = {
   PORTAL_VENDOR_SUBMISSIONS: '/portal/vendor-submissions',
   PORTAL_CS: '/portal/fulfillment/cs',
   PORTAL_DESIGN_TASKS: '/portal/design/tasks',
+  PORTAL_QUALITY_SCORING: '/portal/design/quality-scoring',
+  PORTAL_PSD_FILES: '/portal/design/psd-files',
   PORTAL_TEMPLATE_CENTER: '/portal/design/templates',
   PORTAL_FINANCE_SUMMARY: '/portal/finance/summary',
   PORTAL_REPORTS: '/portal/reports',

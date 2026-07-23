@@ -53,6 +53,8 @@ describe('sidebar navigation', () => {
     'vendor-submissions',
     'shipping',
     'design-task-list',
+    'quality-scoring',
+    'psd-file-library',
     'vendor-list',
     'products-cost',
     'mapping-workbench',
@@ -143,7 +145,7 @@ describe('sidebar navigation', () => {
   it('keeps Portal leaves filtered by backend permissions', () => {
     assert.deepEqual(
       collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['DESIGN:WORK'] })),
-      ['dashboard', 'design-task-list'],
+      ['dashboard', 'design-task-list', 'quality-scoring', 'psd-file-library'],
     )
     assert.deepEqual(
       collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['AUTH:READ'] })),
@@ -171,7 +173,7 @@ describe('sidebar navigation', () => {
         assert.equal(typeof locale.nav.groups[key], 'string')
       }
 
-      for (const key of ['scaleProduction', 'qualityControl']) {
+      for (const key of ['scaleProduction', 'qualityControl', 'qualityScoring', 'psdFileLibrary']) {
         assert.equal(typeof locale.nav.items[key], 'string')
       }
     }
