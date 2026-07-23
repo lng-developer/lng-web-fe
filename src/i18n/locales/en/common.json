@@ -2832,6 +2832,7 @@
       "dateTo": "Date to",
       "marketplace": "Marketplace",
       "salesChannel": "Sales channel",
+      "status": "Status",
       "shopId": "Shop ID"
     },
     "table": {
@@ -2846,6 +2847,7 @@
     },
     "sourceData": {
       "batchId": "Import batch",
+      "detailTitle": "Imported source record",
       "id": "Record ID",
       "title": "{{source}} source data"
     },

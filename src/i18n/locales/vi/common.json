@@ -2832,6 +2832,7 @@
       "dateTo": "Đến ngày",
       "marketplace": "Marketplace",
       "salesChannel": "Kênh bán",
+      "status": "Trạng thái",
       "shopId": "Shop ID"
     },
     "table": {
@@ -2846,6 +2847,7 @@
     },
     "sourceData": {
       "batchId": "Batch nhập",
+      "detailTitle": "Bản ghi nguồn đã nhập",
       "id": "Mã bản ghi",
       "title": "Dữ liệu nguồn {{source}}"
     },

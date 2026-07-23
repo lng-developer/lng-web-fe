@@ -14,6 +14,14 @@ export function getFinanceImportDefaults(sourceType) {
   }
 }
 
+export function getFinanceImportFileValues(values, file) {
+  return {
+    ...values,
+    file,
+    sourceRef: values.sourceRef || file?.name || '',
+  }
+}
+
 export function getFinanceImportBatchActions(user, status) {
   return hasAllPermissions(user, ['FINANCE:WRITE']) && reprocessableStatuses.has(status)
     ? ['DETAILS', 'REPROCESS']
@@ -26,4 +34,14 @@ export function getFinanceImportBatchSummary(batch = {}) {
     importedRows: Number(batch.validRows || 0),
     errorCount: Number(batch.errorCount || 0),
   }
+}
+
+export function getFinanceImportedDataQuery(filters, page, limit) {
+  return Object.fromEntries(
+    Object.entries({ ...filters, page, limit }).filter(([, value]) => value !== '' && value !== undefined),
+  )
+}
+
+export function getFinanceImportedDataActions() {
+  return ['DETAILS']
 }

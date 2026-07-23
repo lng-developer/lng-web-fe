@@ -6,6 +6,9 @@ import {
   getFinanceImportBatchActions,
   getFinanceImportBatchSummary,
   getFinanceImportDefaults,
+  getFinanceImportedDataActions,
+  getFinanceImportedDataQuery,
+  getFinanceImportFileValues,
 } from '../utils/financeImportsAccess.js'
 
 function collectLeafIds(items) {
@@ -44,4 +47,18 @@ test('finance import source summaries expose the latest status and row/error cou
 
 test('finance imports persist by default', () => {
   assert.equal(getFinanceImportDefaults('ADS').dryRun, false)
+})
+
+test('finance imports use the selected filename as the default source reference', () => {
+  const values = getFinanceImportFileValues(getFinanceImportDefaults('ADS'), { name: 'ads-report.csv' })
+
+  assert.equal(values.sourceRef, 'ads-report.csv')
+})
+
+test('imported data query preserves the status filter and exposes only read details', () => {
+  assert.deepEqual(
+    getFinanceImportedDataQuery({ shopId: 'shop-1', status: 'POSTED' }, 2, 20),
+    { shopId: 'shop-1', status: 'POSTED', page: 2, limit: 20 },
+  )
+  assert.deepEqual(getFinanceImportedDataActions(), ['DETAILS'])
 })

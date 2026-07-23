@@ -43,6 +43,9 @@ import {
   getFinanceImportBatchActions,
   getFinanceImportBatchSummary,
   getFinanceImportDefaults,
+  getFinanceImportedDataActions,
+  getFinanceImportedDataQuery,
+  getFinanceImportFileValues,
 } from '@/features/finance-imports/utils/financeImportsAccess'
 import { useAuthStore } from '@/store/useAuthStore'
 
@@ -98,6 +101,10 @@ function ImportDialog({ open, onClose, onSubmit, pending, sourceType, t }) {
 
   function update(key, value) {
     setValues((current) => ({ ...current, [key]: value }))
+  }
+
+  function updateFile(file) {
+    setValues((current) => getFinanceImportFileValues(current, file))
   }
 
   function submit(event) {
@@ -156,7 +163,7 @@ function ImportDialog({ open, onClose, onSubmit, pending, sourceType, t }) {
               required
               type="file"
               accept=".csv,.txt"
-              onChange={(event) => update('file', event.target.files?.[0] || null)}
+              onChange={(event) => updateFile(event.target.files?.[0] || null)}
             />
           </Button>
           <FormControlLabel
@@ -234,6 +241,26 @@ function BatchDrawer({ batchId, onClose, open, t }) {
   )
 }
 
+function SourceDataDrawer({ onClose, open, row, t }) {
+  return (
+    <Drawer anchor="right" open={open} onClose={onClose}>
+      <div className="flex h-full w-[520px] max-w-[100vw] flex-col gap-4 overflow-auto bg-surface p-5">
+        <div>
+          <Typography variant="h6" className="font-bold text-ink-strong">
+            {t('financeImports.sourceData.detailTitle')}
+          </Typography>
+          <Typography variant="body2" className="text-ink-muted">
+            {row?.id || '-'}
+          </Typography>
+        </div>
+        <pre className="max-h-full overflow-auto border border-border bg-surface-subtle p-3 text-xs text-ink-secondary">
+          {JSON.stringify(row || {}, null, 2)}
+        </pre>
+      </div>
+    </Drawer>
+  )
+}
+
 export default function FinanceDataImportsPage() {
   const { t, i18n } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
@@ -254,14 +281,16 @@ export default function FinanceDataImportsPage() {
     shopId: '',
     salesChannelCode: '',
     marketplaceCode: '',
+    status: '',
     dateFrom: '',
     dateTo: '',
   })
   const [importOpen, setImportOpen] = useState(false)
   const [importSourceType, setImportSourceType] = useState('ADS')
   const [selectedBatchId, setSelectedBatchId] = useState(null)
+  const [selectedSourceRow, setSelectedSourceRow] = useState(null)
   const batchQuery = compactQuery({ ...batchFilters, page, limit: pageSize })
-  const sourceQuery = compactQuery({ ...sourceFilters, page, limit: pageSize })
+  const sourceQuery = getFinanceImportedDataQuery(sourceFilters, page, pageSize)
   const batchesQuery = useFinanceImportBatchesQuery(batchQuery)
   const adsSummaryQuery = useFinanceImportBatchesQuery({ sourceType: 'ADS', limit: 1 })
   const settlementsSummaryQuery = useFinanceImportBatchesQuery({ sourceType: 'SETTLEMENTS', limit: 1 })
@@ -290,6 +319,7 @@ export default function FinanceDataImportsPage() {
       { key: 'scope', label: t('financeImports.table.scope'), width: '240px' },
       { key: 'importBatchId', label: t('financeImports.sourceData.batchId'), width: '210px' },
       { key: 'createdAt', label: t('financeImports.table.createdAt'), width: '180px' },
+      { key: 'actions', label: t('financeImports.table.actions'), width: '120px', align: 'center' },
     ],
     [t],
   )
@@ -371,6 +401,15 @@ export default function FinanceDataImportsPage() {
     if (column.key === 'scope')
       return [row.shopId, row.salesChannelCode, row.marketplaceCode].filter(Boolean).join(' · ') || '-'
     if (column.key === 'createdAt') return formatDate(row.createdAt, i18n.language)
+    if (column.key === 'actions') {
+      const actions = getFinanceImportedDataActions()
+
+      return actions.includes('DETAILS') ? (
+        <Button size="small" startIcon={<VisibilityIcon />} onClick={() => setSelectedSourceRow(row)}>
+          {t('financeImports.actions.details')}
+        </Button>
+      ) : null
+    }
     return row[column.key] ?? '-'
   }
 
@@ -498,8 +537,8 @@ export default function FinanceDataImportsPage() {
           <Typography variant="h6" className="mb-2 font-bold text-ink-strong">
             {t('financeImports.sourceData.title', { source: t(`financeImports.sources.${sourceType}`) })}
           </Typography>
-          <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-5">
-            {['shopId', 'salesChannelCode', 'marketplaceCode', 'dateFrom', 'dateTo'].map((key) => (
+          <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-6">
+            {['shopId', 'salesChannelCode', 'marketplaceCode', 'status', 'dateFrom', 'dateTo'].map((key) => (
               <TextField
                 key={key}
                 size="small"
@@ -535,6 +574,12 @@ export default function FinanceDataImportsPage() {
         batchId={selectedBatchId}
         open={Boolean(selectedBatchId)}
         onClose={() => setSelectedBatchId(null)}
+        t={t}
+      />
+      <SourceDataDrawer
+        open={Boolean(selectedSourceRow)}
+        row={selectedSourceRow}
+        onClose={() => setSelectedSourceRow(null)}
         t={t}
       />
     </OperationsPageShell>
