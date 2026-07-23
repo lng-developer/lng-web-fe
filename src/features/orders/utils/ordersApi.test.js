@@ -195,14 +195,19 @@ test('mapOrderDetail combines order item and customization payload data', () => 
         quantity: 2,
         price: { itemPriceAmount: 2599, currency: 'USD' },
         status: 'CUSTOMIZATION_PARSED',
-        variantRaw: { Size: 'L', Color: 'Sand' },
       },
     ],
     customizationsByItemId: new Map([
       [
         'item-id',
         {
-          customerInputs: { name: 'NURSE' },
+          customerInputs: {
+            name: 'NURSE',
+            options: [
+              { label: 'Color', name: 'color', value: 'Sand' },
+              { label: 'Size', name: 'size', value: 'XL' },
+            ],
+          },
           extractedImages: [{ secureUrl: 'https://example.test/image.jpg' }],
           review: { status: 'PARSED' },
         },
@@ -213,6 +218,8 @@ test('mapOrderDetail combines order item and customization payload data', () => 
   assert.equal(detail.product.sku, 'SKU-1')
   assert.equal(detail.product.asin, 'B000TEST')
   assert.equal(detail.customization.customerName, 'NURSE')
+  assert.equal(detail.customization.shirtColor, 'Sand')
+  assert.equal(detail.customization.size, 'XL')
   assert.deepEqual(detail.customization.customerPhoto, ['https://example.test/image.jpg'])
   assert.equal(detail.fulfillment.quantity, '2')
 })
@@ -246,7 +253,7 @@ test('mapOrderDetail maps every backend order item status to a translation key',
   })
 })
 
-test('mapOrderDetail normalizes object variant and customer input values for rendering', () => {
+test('mapOrderDetail normalizes object customer input values for rendering', () => {
   const detail = mapOrderDetail({
     order: { externalOrderId: '113-7654321-7654321' },
     items: [
@@ -254,10 +261,6 @@ test('mapOrderDetail normalizes object variant and customer input values for ren
         id: 'item-object-id',
         title: 'Custom Tee',
         quantity: 1,
-        variantRaw: {
-          Color: { label: 'Sand', name: 'shirt_color', value: 'sand' },
-          Size: { label: 'XL', name: 'shirt_size', value: 'xl' },
-        },
       },
     ],
     customizationsByItemId: new Map([
@@ -266,6 +269,8 @@ test('mapOrderDetail normalizes object variant and customer input values for ren
         {
           customerInputs: {
             custom_name: { label: 'Name', name: 'custom_name', value: 'MIA' },
+            color: { label: 'Sand', name: 'shirt_color', value: 'Sand' },
+            size: { label: 'XL', name: 'shirt_size', value: 'XL' },
           },
         },
       ],
@@ -287,7 +292,6 @@ test('mapOrderDetail reads expanded customization view payloads', () => {
         id: 'item-expanded-id',
         title: 'Custom Sweatshirt',
         quantity: 1,
-        variantRaw: {},
       },
     ],
     customizationsByItemId: new Map([
@@ -307,6 +311,10 @@ test('mapOrderDetail reads expanded customization view payloads', () => {
   assert.equal(detail.customization.shirtColor, 'Sand')
   assert.equal(detail.customization.customerName, 'NURSE')
   assert.deepEqual(detail.customization.customerPhoto, ['https://example.test/customer-photo.jpg'])
+})
+
+test('order detail mapper does not depend on raw variant payloads', () => {
+  assert.equal(mapOrderDetail.toString().includes('variantRaw'), false)
 })
 
 test('mapWorkbenchRows builds order rows with embedded expanded detail', () => {

@@ -259,15 +259,6 @@ function toDisplayValue(value, preferredKeys = ['label', 'value', 'name']) {
   return String(value)
 }
 
-function getVariantValue(variantRaw = {}, keys = []) {
-  const entries = Object.entries(variantRaw || {})
-  const match = entries.find(([key]) =>
-    keys.some((expected) => key.toLowerCase().includes(expected)),
-  )
-
-  return toDisplayValue(match?.[1])
-}
-
 function getCustomerInputValue(customerInputs = {}, keys = []) {
   const structuredItems = [
     ...(customerInputs.texts || []),
@@ -702,14 +693,11 @@ export function mapOrderDetail({
     customization.review?.extractedImages ||
     customization.imageAssets ||
     []
-  const variantRaw = item.variantRaw || {}
   const color =
-    getVariantValue(variantRaw, ['color', 'colour']) ||
     getCustomerInputValue(customerInputs, ['color', 'colour']) ||
     toDisplayValue(customerInputs.color, ['value', 'label', 'name']) ||
     '-'
   const size =
-    getVariantValue(variantRaw, ['size']) ||
     getCustomerInputValue(customerInputs, ['size']) ||
     toDisplayValue(customerInputs.size, ['value', 'label', 'name']) ||
     '-'
