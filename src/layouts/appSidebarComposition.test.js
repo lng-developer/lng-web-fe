@@ -23,6 +23,17 @@ test('sidebar uses route-derived Portal and HR context controls without a worksp
   assert.equal(source.includes('workspaceButtonSx'), false)
 })
 
+test('sidebar renders Portal navigation directly from the domain tree', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+
+  assert.match(source, /PORTAL_NAVIGATION/)
+  assert.match(source, /filterNavigationByUser\(PORTAL_NAVIGATION, user\)/)
+  assert.equal(source.includes('SIDEBAR_WORKSPACES'), false)
+  assert.equal(source.includes('SIDEBAR_HOME_ITEM'), false)
+  assert.equal(source.includes('SIDEBAR_WORKSPACE_NAVIGATION'), false)
+  assert.equal(source.includes('SIDEBAR_WORKSPACES.flatMap'), false)
+})
+
 test('sidebar does not route when the active context tab is clicked', () => {
   const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
   const guardIndex = source.indexOf('if (contextId === activeContext) return')

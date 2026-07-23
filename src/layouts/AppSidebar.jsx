@@ -40,11 +40,9 @@ import {
   getSidebarContextForLocation,
   HR_NAVIGATION,
   isNavItemActive,
+  PORTAL_NAVIGATION,
   SIDEBAR_CONTEXT_IDS,
   SIDEBAR_CONTEXTS,
-  SIDEBAR_HOME_ITEM,
-  SIDEBAR_WORKSPACE_NAVIGATION,
-  SIDEBAR_WORKSPACES,
 } from './sidebarNavigation'
 
 const SIDEBAR_WIDTH = 248
@@ -230,21 +228,13 @@ export default function AppSidebar({ onNavigate, open }) {
   const user = resolveCurrentUser(storedCurrentUser)
   const userName = getCurrentUserDisplayName(user)
 
-  const portalNavigation = SIDEBAR_WORKSPACES.flatMap((workspace) => {
-    const items = filterNavigationByUser(SIDEBAR_WORKSPACE_NAVIGATION[workspace.id] ?? [], user)
-
-    return items.length
-      ? [{ id: `${workspace.id}-section`, type: 'section', labelKey: workspace.labelKey, items }]
-      : []
-  })
+  const portalNavigation = filterNavigationByUser(PORTAL_NAVIGATION, user)
   const hrNavigation = filterNavigationByUser(HR_NAVIGATION, user)
   const contextNavigation =
     activeContext === SIDEBAR_CONTEXT_IDS.HR ? hrNavigation : portalNavigation
   const visibleContexts = SIDEBAR_CONTEXTS.filter((context) => {
     const contextNavigation =
-      context.id === SIDEBAR_CONTEXT_IDS.HR
-        ? hrNavigation
-        : [SIDEBAR_HOME_ITEM, ...portalNavigation]
+      context.id === SIDEBAR_CONTEXT_IDS.HR ? hrNavigation : portalNavigation
 
     return getFirstNavigableItem(contextNavigation)
   })
@@ -253,8 +243,7 @@ export default function AppSidebar({ onNavigate, open }) {
   const handleContextChange = (contextId) => {
     if (contextId === activeContext) return
 
-    const navigation =
-      contextId === SIDEBAR_CONTEXT_IDS.HR ? hrNavigation : [SIDEBAR_HOME_ITEM, ...portalNavigation]
+    const navigation = contextId === SIDEBAR_CONTEXT_IDS.HR ? hrNavigation : portalNavigation
     const landingItem = getFirstNavigableItem(navigation)
 
     if (!landingItem) return
@@ -408,14 +397,6 @@ export default function AppSidebar({ onNavigate, open }) {
           },
         }}
       >
-        {activeContext === SIDEBAR_CONTEXT_IDS.PORTAL &&
-          renderLeafItem({
-            item: SIDEBAR_HOME_ITEM,
-            location,
-            t,
-            depth: 'root',
-            onNavigate,
-          })}
         {renderItems(contextNavigation)}
       </List>
     </Box>
