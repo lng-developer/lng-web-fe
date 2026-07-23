@@ -87,7 +87,6 @@ export default function PsdFileDetailDrawer({ row, open, onClose }) {
             <DetailField label="Designer" value={row.designerLabel} />
             <DetailField label="Version" value={row.submissionVersion} />
             <DetailField label="Added to task" value={formatDate(row.linkedAt)} />
-            <DetailField label="Submitted" value={formatDate(row.submittedAt)} />
           </section>
 
           <Button
