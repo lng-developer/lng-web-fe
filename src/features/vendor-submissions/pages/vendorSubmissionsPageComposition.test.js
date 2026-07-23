@@ -13,9 +13,16 @@ test('vendor submissions page uses operations layout instead of workflow console
   assert.equal(source.includes('<OperationsPageShell'), true)
   assert.equal(source.includes('<OperationsToolbar'), true)
   assert.equal(source.includes('<OperationsTable'), true)
-  assert.equal(source.includes('<OperationsTabs'), true)
+  assert.equal(source.includes('<OperationsTabs'), false)
   assert.equal(source.includes('<OperationsPagination'), true)
   assert.equal(source.includes('ApiWorkflowPage'), false)
+})
+
+test('vendor submissions filters status from the toolbar', () => {
+  const source = readPageSource()
+
+  assert.equal(source.includes('<Select'), true)
+  assert.equal(source.includes("'aria-label': t('vendorSubmissions.table.status')"), true)
 })
 
 test('vendor submissions page uses the dense header and toolbar refresh action', () => {

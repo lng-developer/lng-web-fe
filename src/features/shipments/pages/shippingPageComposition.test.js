@@ -18,6 +18,14 @@ test('shipping page uses operations layout instead of api workflow console', () 
   assert.equal(source.includes('ApiWorkflowPage'), false)
 })
 
+test('shipping keeps only the primary tab bar and filters status from the toolbar', () => {
+  const source = readPageSource()
+
+  assert.equal(source.match(/<OperationsTabs/g)?.length, 1)
+  assert.equal(source.includes('<Select'), true)
+  assert.equal(source.includes("'aria-label': t('shipments.table.status')"), true)
+})
+
 test('shipping page uses the dense header and toolbar refresh action', () => {
   const source = readPageSource()
 

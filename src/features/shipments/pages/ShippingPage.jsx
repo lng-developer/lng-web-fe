@@ -10,8 +10,11 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
   Button,
   Drawer,
+  FormControl,
   IconButton,
   InputAdornment,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Tooltip,
@@ -330,18 +333,24 @@ export default function ShippingPage() {
           </Tooltip>
           {activeTab === 'shipments' ? (
             <>
-              <OperationsTabs
-                items={statusTabs.map((item) => ({
-                  value: item,
-                  label: item === 'ALL' ? t('common.all') : item,
-                }))}
-                value={status}
-                onChange={(nextStatus) => {
-                  setStatus(nextStatus)
-                  setPage(1)
-                }}
-              />
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[220px_220px_220px_220px_auto]">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[170px_190px_190px_190px_190px_auto]">
+                <FormControl size="small" className="w-full">
+                  <Select
+                    value={status}
+                    onChange={(event) => {
+                      setStatus(event.target.value)
+                      setPage(1)
+                    }}
+                    className="h-10 rounded-lg bg-surface text-sm"
+                    inputProps={{ 'aria-label': t('shipments.table.status') }}
+                  >
+                    {statusTabs.map((item) => (
+                      <MenuItem key={item} value={item}>
+                        {item === 'ALL' ? t('common.all') : item}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 <TextField
                   size="small"
                   value={filters.id}

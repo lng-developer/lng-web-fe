@@ -13,8 +13,11 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
   Button,
   Drawer,
+  FormControl,
   IconButton,
   InputAdornment,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Tooltip,
@@ -26,7 +29,6 @@ import {
   OperationsPageShell,
   OperationsPagination,
   OperationsTable,
-  OperationsTabs,
   OperationsToolbar,
   StatusBadge,
 } from '@/components/operations'
@@ -356,22 +358,26 @@ export default function VendorSubmissionsPage() {
           </div>
         </div>
       }
-      tabs={
-        <OperationsTabs
-          items={statusTabs.map((item) => ({
-            value: item,
-            label: item === 'ALL' ? t('common.all') : item,
-          }))}
-          value={status}
-          onChange={(nextStatus) => {
-            setStatus(nextStatus)
-            setPage(1)
-          }}
-        />
-      }
       toolbar={
         <OperationsToolbar>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-[240px_240px_240px_auto_auto]">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-[180px_220px_220px_220px_auto_auto]">
+            <FormControl size="small" className="w-full">
+              <Select
+                value={status}
+                onChange={(event) => {
+                  setStatus(event.target.value)
+                  setPage(1)
+                }}
+                className="h-10 rounded-lg bg-surface text-sm"
+                inputProps={{ 'aria-label': t('vendorSubmissions.table.status') }}
+              >
+                {statusTabs.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item === 'ALL' ? t('common.all') : item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               size="small"
               value={filters.id}
