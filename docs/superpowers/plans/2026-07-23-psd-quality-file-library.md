@@ -168,7 +168,9 @@ const psdFilesQuerySchema = Joi.object({
   dateTo: Joi.date().iso(),
   page: Joi.number().integer().min(1),
   limit: Joi.number().integer().min(1).max(100),
-  sortBy: Joi.string().trim().valid('createdAt', 'submittedAt', 'filename', 'size'),
+  // Filename and size live behind the Media Public Port, so they are not
+  // database sort fields in this Design-owned read model.
+  sortBy: Joi.string().trim().valid('createdAt', 'submittedAt'),
   sortOrder: Joi.string().trim().lowercase().valid('asc', 'desc'),
 })
 ```
@@ -417,7 +419,10 @@ const [result = {}] = await DesignTask.aggregate([
   {
     $facet: {
       items: [
-        { $sort: { [sortBy]: direction, _id: direction } },
+        // A file link, rather than the Design task, is the paginated unit.
+        // Use a stable link identity as the tie-breaker so a page cannot
+        // duplicate or skip links when several rows have the same timestamp.
+        { $sort: { [sortBy]: direction, taskId: direction, linkIdentity: direction } },
         { $skip: getPaginationOffset({ page, limit }) },
         { $limit: limit },
       ],
@@ -854,7 +859,7 @@ async function handleDownload() {
 }
 ```
 
-The drawer shows filename, MIME type, size, role, listing, task status, designer, version, and timestamps. It has no preview placeholder and no mutation controls.
+The drawer shows filename, MIME type, size, role, listing, task status, designer, version, and timestamps. It has no preview placeholder and no mutation controls. Do not expose filename or size sorting: both fields are enriched through the Media Public Port rather than being Design-owned sort keys.
 
 - [ ] **Step 4: Implement Quality Scoring with URL-backed filters and a dense table.**
 
