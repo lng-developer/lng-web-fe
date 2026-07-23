@@ -40,6 +40,13 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
     // 4. Components — Atoms & Molecules (Button, Input, Select, Checkbox, Toggle,
     // Avatar, Tooltip, Pagination...).
     components: {
+      MuiDrawer: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            zIndex: theme.zIndex.modal,
+          }),
+        },
+      },
       MuiButton: {
         defaultProps: {
           disableElevation: true,
