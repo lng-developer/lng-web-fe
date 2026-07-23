@@ -1,10 +1,7 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
@@ -19,15 +16,7 @@ import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
-import {
-  Box,
-  ButtonBase,
-  Collapse,
-  List,
-  ListItemButton,
-  ListItemText,
-  Typography,
-} from '@mui/material'
+import { Box, ButtonBase, List, ListItemButton, ListItemText, Typography } from '@mui/material'
 
 import { LAYOUT_SIZES } from '@/constants/app'
 import { getCurrentUserDisplayName, resolveCurrentUser } from '@/features/auth/utils/currentUser'
@@ -131,6 +120,7 @@ function NavGlyph({ icon, active }) {
 
 function contextButtonSx({ selected }) {
   return (theme) => ({
+    alignItems: 'center',
     bgcolor: selected ? 'background.paper' : 'transparent',
     borderRadius: 1,
     color: selected ? 'primary.main' : 'text.secondary',
@@ -159,6 +149,7 @@ function navButtonSx({ active, depth, withActiveBorder }) {
       ? `0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0`
       : 1,
     color: active ? theme.palette.primary.main : theme.palette.text.primary,
+    display: 'flex',
     marginBottom: theme.spacing(0.25),
     marginRight: theme.spacing(1),
     minHeight: 38,
@@ -216,15 +207,6 @@ export default function AppSidebar({ onNavigate, open }) {
   const navigate = useNavigate()
   const storedCurrentUser = useAuthStore((state) => state.currentUser)
   const activeContext = getSidebarContextForLocation(location.pathname)
-  const [openItemsByContext, setOpenItemsByContext] = useState(() =>
-    SIDEBAR_CONTEXTS.reduce(
-      (itemsByContext, context) => ({
-        ...itemsByContext,
-        [context.id]: {},
-      }),
-      {},
-    ),
-  )
   const user = resolveCurrentUser(storedCurrentUser)
   const userName = getCurrentUserDisplayName(user)
 
@@ -238,8 +220,6 @@ export default function AppSidebar({ onNavigate, open }) {
 
     return getFirstNavigableItem(contextNavigation)
   })
-  const openItems = openItemsByContext[activeContext] ?? {}
-
   const handleContextChange = (contextId) => {
     if (contextId === activeContext) return
 
@@ -250,16 +230,6 @@ export default function AppSidebar({ onNavigate, open }) {
 
     navigate(getNavItemTo(landingItem))
     onNavigate?.()
-  }
-
-  const toggleItem = (id) => {
-    setOpenItemsByContext((state) => ({
-      ...state,
-      [activeContext]: {
-        ...(state[activeContext] ?? {}),
-        [id]: !state[activeContext]?.[id],
-      },
-    }))
   }
 
   const renderItems = (items, depth = 'root') =>
@@ -288,12 +258,10 @@ export default function AppSidebar({ onNavigate, open }) {
 
       if (item.children) {
         const active = item.children.some((child) => hasActivePath(child, location))
-        const isOpen = active || Boolean(openItems[item.id])
 
         return (
           <Box key={item.id}>
-            <ListItemButton
-              onClick={() => toggleItem(item.id)}
+            <Box
               sx={navButtonSx({
                 active: depth === 'root' && active,
                 depth: depth === 'root' ? 'root' : 'group',
@@ -304,15 +272,8 @@ export default function AppSidebar({ onNavigate, open }) {
                 <NavGlyph icon={item.icon} active={depth === 'root' && active} />
               </Box>
               <ListItemText primary={t(item.labelKey)} />
-              {isOpen ? (
-                <ExpandLessIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-              ) : (
-                <ExpandMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-              )}
-            </ListItemButton>
-            <Collapse in={isOpen} timeout="auto" unmountOnExit>
-              {renderItems(item.children, depth === 'root' ? 'group' : 'sub')}
-            </Collapse>
+            </Box>
+            {renderItems(item.children, depth === 'root' ? 'group' : 'sub')}
           </Box>
         )
       }

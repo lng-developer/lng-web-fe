@@ -2,12 +2,15 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-test('sidebar keeps the active child group open after route navigation', () => {
+test('sidebar keeps every parent group expanded without an expand control', () => {
   const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
 
-  assert.match(source, /const isOpen = active \|\| Boolean\(openItems\[item\.id\]\)/)
-  assert.match(source, /renderItems\(item\.items, 'root'\)/)
-  assert.equal(source.includes('openItemsViewKey'), false)
+  assert.match(source, /\{renderItems\(item\.children, depth === 'root' \? 'group' : 'sub'\)\}/)
+  assert.equal(source.includes('openItemsByContext'), false)
+  assert.equal(source.includes('toggleItem'), false)
+  assert.equal(source.includes('Collapse'), false)
+  assert.equal(source.includes('ExpandLessIcon'), false)
+  assert.equal(source.includes('ExpandMoreIcon'), false)
 })
 
 test('sidebar uses route-derived Portal and HR context controls without a workspace rail', () => {
