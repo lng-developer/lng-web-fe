@@ -1,3 +1,4 @@
+import { getPersonDisplayName } from '../../../utils/personDisplay.js'
 import {
   CS_STATUSES,
   SCALE_ALL_FILTER,
@@ -237,30 +238,13 @@ export function mapProductionTask(task = {}, shopNames = new Map()) {
   const scaleSlots = scaleUse.scaleSlots || []
   const customerImages = mapCustomerImages(customization)
   const scaleBy = task.assignedDesignUserId || ''
-  const scaleByName =
-    task.assignedDesigner?.fullName ||
-    task.assignedDesigner?.employeeCode ||
-    task.scaleByUser?.fullName ||
-    task.scaleByUser?.employeeCode ||
-    scaleBy
-  const qcBy =
-    task.qcUser?.fullName ||
-    task.qcUser?.employeeCode ||
-    task.qcByUser?.fullName ||
-    task.qcByUser?.employeeCode ||
-    task.qcBy ||
-    '-'
+  const scaleByName = getPersonDisplayName(task.assignedDesigner || task.scaleByUser, 'Unassigned')
+  const qcBy = getPersonDisplayName(task.qcUser || task.qcByUser, 'Unassigned')
   const csAssigneeId = task.csAssigneeId || ''
-  const csAssigneeName =
-    task.csAssignee?.fullName || task.csAssignee?.employeeCode || csAssigneeId || '-'
+  const csAssigneeName = getPersonDisplayName(task.csAssignee, 'Unassigned')
   const shopId = task.shopId || listing.shopId || null
   const seller = task.seller?.name || task.seller?.employeeCode || '-'
-  const orderOwner =
-    task.orderOwner?.fullName ||
-    task.orderOwner?.employeeCode ||
-    task.orderOwner?.id ||
-    task.orderOwnerId ||
-    '-'
+  const orderOwner = getPersonDisplayName(task.orderOwner, 'Unassigned')
 
   const customizationRows = mapCustomerInputs(customization.customerInputs)
   customizationRows.push(...customerImages)
@@ -369,7 +353,7 @@ export function mapScaleSummary(summary = {}) {
 export function mapScaleAssignees(items = []) {
   return items.map((assignee) => ({
     id: assignee.id,
-    name: assignee.fullName || assignee.employeeCode || assignee.id,
+    name: getPersonDisplayName(assignee, 'Unassigned'),
     employeeCode: assignee.employeeCode || null,
   }))
 }
@@ -396,12 +380,7 @@ export function mapProductionListResponse(response = {}, shops = []) {
           task.qcBy,
           {
             id: task.qcBy,
-            name:
-              task.qcUser?.fullName ||
-              task.qcUser?.employeeCode ||
-              task.qcByUser?.fullName ||
-              task.qcByUser?.employeeCode ||
-              task.qcBy,
+            name: getPersonDisplayName(task.qcUser || task.qcByUser, 'Unassigned'),
           },
         ]),
     ).values(),

@@ -1,5 +1,7 @@
 import dayjs from 'dayjs'
 
+import { getPersonDisplayName } from '../../../utils/personDisplay.js'
+
 const QC_STATUS_FILTERS = {
   pending: 'PENDING',
   qcRejected: 'REJECTED',
@@ -148,7 +150,7 @@ export function mapProductionSummaryToQcCounts(summary = {}) {
 }
 
 function getPersonName(person) {
-  return person?.fullName || person?.name || person?.employeeCode || '-'
+  return getPersonDisplayName(person, '-')
 }
 
 function getPngStatus(task) {

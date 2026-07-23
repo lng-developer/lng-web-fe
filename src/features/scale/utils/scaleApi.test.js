@@ -427,3 +427,19 @@ test('mapScaleAssignees maps dedicated assignee DTOs to select options', () => {
     ],
   )
 })
+
+test('user-profile labels use their names and never fall back to Mongo ids', () => {
+  assert.deepEqual(
+    scaleApi.mapScaleAssignees([
+      {
+        id: '6a339b6c033e000000000001',
+        userProfile: { fullName: 'Scale Designer' },
+      },
+      { id: '6a339b6c033e000000000002' },
+    ]),
+    [
+      { id: '6a339b6c033e000000000001', name: 'Scale Designer', employeeCode: null },
+      { id: '6a339b6c033e000000000002', name: 'Unassigned', employeeCode: null },
+    ],
+  )
+})

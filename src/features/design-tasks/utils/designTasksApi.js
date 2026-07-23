@@ -1,4 +1,5 @@
 import { TASK_TYPES } from '../../../constants/app.js'
+import { getPersonDisplayName } from '../../../utils/personDisplay.js'
 import { hasAnyPermission } from '../../auth/utils/authz.js'
 import {
   DESIGN_TASK_ASIN_TYPE_FILTERS,
@@ -223,7 +224,7 @@ function mapTaskRow(task = {}) {
     listingCode,
     asin: listingCode,
     statusTask: STATUS_LABEL[task.status] || display(task.status),
-    assigned: displayNoId(task.assignedDesigner, 'Unassigned'),
+    assigned: getPersonDisplayName(task.assignedDesigner, 'Unassigned'),
     priority: display(task.priority, 'NORMAL'),
     psdStatus: listing.psdStatus === 'PRESENT' ? 'Available' : 'Missing',
     seller: displayNoId(task.seller || task.shop, 'Unknown shop'),
@@ -397,7 +398,7 @@ export function buildBulkCreatePsdTasksPayload({ listingIds, filters, limit, not
 export function mapDesignAssignees(response = {}) {
   return (response.items || []).map((profile) => ({
     id: profile.id,
-    label: `${displayNoId(profile.fullName || profile, 'Designer')} (${Number(profile.activeTaskCount) || 0} active)`,
+    label: `${getPersonDisplayName(profile, 'Designer')} (${Number(profile.activeTaskCount) || 0} active)`,
     activeTaskCount: Number(profile.activeTaskCount) || 0,
   }))
 }
@@ -411,7 +412,7 @@ export function mapDesignWorkload(response = {}) {
     rejected: Number(response.rejected || 0),
     approved: Number(response.approved || 0),
     byDesigner: (response.byDesigner || []).map((row) => ({
-      label: displayNoId(row.assignedDesigner || row.designer || row, 'Unassigned'),
+      label: getPersonDisplayName(row.assignedDesigner || row.designer || row, 'Unassigned'),
       activeTaskCount: Number(row.activeTaskCount || row.count || 0),
     })),
   }

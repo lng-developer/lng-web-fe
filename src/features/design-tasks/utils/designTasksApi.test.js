@@ -473,3 +473,18 @@ test('mapDesignAssignees and mapPsdTemplateCandidatesResponse expose UI options'
   assert.equal(candidates.items[0].seller, 'Main Shop')
   assert.deepEqual(candidates.pagination, { total: 1, page: 1, limit: 10 })
 })
+
+test('mapDesignAssignees reads nested user-profile names instead of exposing ids', () => {
+  assert.deepEqual(
+    mapDesignAssignees({
+      items: [
+        {
+          id: '6a339b6c033e000000000001',
+          userProfile: { fullName: 'Design Reviewer' },
+          activeTaskCount: 2,
+        },
+      ],
+    }),
+    [{ id: '6a339b6c033e000000000001', label: 'Design Reviewer (2 active)', activeTaskCount: 2 }],
+  )
+})
