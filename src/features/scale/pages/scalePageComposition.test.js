@@ -153,20 +153,19 @@ test('Scale design notes save explicitly through the design-note action', () => 
   const source = readPageSource()
 
   assert.equal(source.includes('useUpdateScaleTaskNoteMutation'), true)
-  assert.equal(source.includes('useUpdateScaleTaskCsNoteMutation'), true)
   assert.equal(source.includes("t('scale.actions.saveNote')"), true)
   assert.equal(source.includes('{ taskId: task.id, designNote }'), true)
   assert.equal(source.includes("onBlur={() => onSaveNote(task, 'cs')}"), false)
 })
 
-test('Scale exposes separate design and CS notes with independent save actions', () => {
+test('Scale keeps CS notes read-only and only saves design notes', () => {
   const source = readPageSource()
 
-  assert.equal(source.includes('const [csNote, setCsNote] = useState'), true)
-  assert.equal(source.includes('onChange={setCsNote}'), true)
-  assert.equal(source.includes('{ taskId: task.id, csNote }'), true)
+  assert.equal(source.includes('const [csNote, setCsNote] = useState'), false)
+  assert.equal(source.includes('onChange={setCsNote}'), false)
+  assert.equal(source.includes('{ taskId: task.id, csNote }'), false)
   assert.equal(source.includes("t('scale.etsy.notes.design')"), true)
-  assert.equal((source.match(/t\('scale\.actions\.saveNote'\)/g) || []).length, 2)
+  assert.equal((source.match(/t\('scale\.actions\.saveNote'\)/g) || []).length, 1)
 })
 
 test('Scale design note typing stays local to the detail panel', () => {

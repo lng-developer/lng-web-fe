@@ -46,7 +46,6 @@ import {
   useAssignScaleTaskMutation,
   useDownloadScaleAssetMutation,
   useRecheckScaleTaskMutation,
-  useUpdateScaleTaskCsNoteMutation,
   useUpdateScaleTaskNoteMutation,
   useUploadScaleOutputMutation,
 } from '@/features/scale/api/scale.mutations'
@@ -425,8 +424,6 @@ function ScaleDetailPanel({
   task,
   onSaveNote,
   isSavingNote,
-  onSaveCsNote,
-  isSavingCsNote,
   onUploadOutput,
   onRequestManualUpload,
   onDownloadAsset,
@@ -438,7 +435,6 @@ function ScaleDetailPanel({
 }) {
   const { detail } = task
   const [designNote, setDesignNote] = useState(() => detail.notes?.design || '')
-  const [csNote, setCsNote] = useState(() => detail.notes?.cs || '')
   const isRechecking = recheckingOrderItemId === task.orderItemId
 
   return (
@@ -556,23 +552,7 @@ function ScaleDetailPanel({
             >
               {t('scale.actions.saveNote')}
             </Button>
-            <EtsyNoteBox
-              label={t('scale.etsy.notes.cs')}
-              value={csNote}
-              onChange={setCsNote}
-              danger
-            />
-            <Button
-              type="button"
-              variant="outlined"
-              size="small"
-              disabled={isSavingCsNote}
-              startIcon={<SaveOutlinedIcon fontSize="small" />}
-              onClick={() => onSaveCsNote(task, csNote)}
-              className="h-7 self-start rounded border-border px-3 text-xs font-normal text-ink-action"
-            >
-              {t('scale.actions.saveNote')}
-            </Button>
+            <EtsyNoteBox label={t('scale.etsy.notes.cs')} value={detail.notes?.cs || ''} danger />
             <EtsyNoteBox label={t('scale.etsy.notes.qc')} value={detail.notes?.qc || ''} />
           </div>
         </section>
@@ -995,7 +975,6 @@ export default function ScalePage() {
   const shopsQuery = useScaleShopsQuery({ page: 1, limit: 100 })
 
   const assignScaleMutation = useAssignScaleTaskMutation()
-  const updateCsNoteMutation = useUpdateScaleTaskCsNoteMutation()
   const updateDesignNoteMutation = useUpdateScaleTaskNoteMutation()
   const recheckTaskMutation = useRecheckScaleTaskMutation()
   const uploadOutputMutation = useUploadScaleOutputMutation()
@@ -1113,22 +1092,6 @@ export default function ScalePage() {
       {
         onSuccess: () => {
           enqueueSnackbar(t('scale.messages.designNoteSuccess'), {
-            variant: SNACKBAR_VARIANTS.SUCCESS,
-          })
-        },
-        onError: (error) => {
-          enqueueSnackbar(error.message, { variant: SNACKBAR_VARIANTS.ERROR })
-        },
-      },
-    )
-  }
-
-  function handleSaveCsNote(task, csNote) {
-    updateCsNoteMutation.mutate(
-      { taskId: task.id, csNote },
-      {
-        onSuccess: () => {
-          enqueueSnackbar(t('scale.messages.csNoteSuccess'), {
             variant: SNACKBAR_VARIANTS.SUCCESS,
           })
         },
@@ -1296,8 +1259,6 @@ export default function ScalePage() {
         task={task}
         onSaveNote={handleSaveNote}
         isSavingNote={updateDesignNoteMutation.isPending}
-        onSaveCsNote={handleSaveCsNote}
-        isSavingCsNote={updateCsNoteMutation.isPending}
         onUploadOutput={handleUploadOutput}
         onRequestManualUpload={handleRequestManualUpload}
         onDownloadAsset={handleDownloadAsset}
