@@ -33,6 +33,14 @@ function display(value, fallback = '-') {
 
 function displayWithoutId(value, fallback = '-') {
   if (value === null || value === undefined || value === '') return fallback
+  if (Array.isArray(value)) {
+    return (
+      value
+        .map((item) => displayWithoutId(item, ''))
+        .filter(Boolean)
+        .join(', ') || fallback
+    )
+  }
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return String(value)
   }
@@ -188,7 +196,12 @@ export function mapMappingRuleRows(type, payload) {
     ),
     priority: firstValue(rule, ['priority']) || 0,
     raw: rule,
-    scope: displayWithoutId(rule.shop || rule.shopName, rule.shopId ? 'Scoped shop' : 'Global'),
+    scope: displayWithoutId(
+      rule.shop || rule.shopName,
+      rule.shopId
+        ? 'Scoped shop'
+        : [rule.salesChannelCode, rule.marketplaceCode].filter(Boolean).join(' / ') || 'Global',
+    ),
     status: display(rule.status, 'ACTIVE'),
     type,
   }))

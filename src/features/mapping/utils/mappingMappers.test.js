@@ -120,6 +120,22 @@ test('mapMappingRuleRows builds readable rule rows by rule type', () => {
   })
 })
 
+test('mapMappingRuleRows displays SKU normalize value conditions', () => {
+  const rows = mapMappingRuleRows('skuNormalize', {
+    items: [{ _id: 'rule-1', appliesWhenValues: ['J2501'], outputAction: 'REPLACE_SEGMENT' }],
+  })
+
+  assert.equal(rows[0].match, 'J2501')
+})
+
+test('mapMappingRuleRows displays marketplace scope when there is no shop scope', () => {
+  const rows = mapMappingRuleRows('skuNormalize', {
+    items: [{ _id: 'rule-1', salesChannelCode: 'AMAZON', marketplaceCode: 'AMAZON_US' }],
+  })
+
+  assert.equal(rows[0].scope, 'AMAZON / AMAZON_US')
+})
+
 test('mapMappingRuleRows does not expose raw ids as user-facing labels', () => {
   const rows = mapMappingRuleRows('vendorRouting', {
     items: [
