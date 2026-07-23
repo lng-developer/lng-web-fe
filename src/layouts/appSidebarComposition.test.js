@@ -29,16 +29,10 @@ test('sidebar renders root parent groups as non-interactive section labels witho
     source.indexOf('return renderLeafItem'),
   )
 
-  assert.match(
-    parentBranch,
-    /const isDomainLabel = depth === 'root' && item\.id !== 'catalog-group'/,
-  )
+  assert.match(parentBranch, /const isDomainLabel = depth === 'root'/)
   assert.match(parentBranch, /sx=\{\s*isDomainLabel\s*\? sectionLabelSx\s*: navButtonSx\(/)
   assert.match(parentBranch, /\{!isDomainLabel && \(\s*<Box className="SidebarNavIcon">/)
-  assert.match(
-    parentBranch,
-    /<NavGlyph\s+icon=\{item\.id === 'catalog-group' \? 'catalog' : item\.icon\}/,
-  )
+  assert.equal(parentBranch.includes("item.id === 'catalog-group'"), false)
 })
 
 test('sidebar uses the approved outlined icon language', () => {

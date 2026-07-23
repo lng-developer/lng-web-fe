@@ -44,7 +44,6 @@ const SIDEBAR_WIDTH = 248
 const NAV_ITEM_ICONS = {
   api: ApiOutlinedIcon,
   audit: HistoryOutlinedIcon,
-  catalog: Inventory2OutlinedIcon,
   config: SettingsOutlinedIcon,
   configuration: SettingsOutlinedIcon,
   dashboard: DashboardOutlinedIcon,
@@ -278,7 +277,7 @@ export default function AppSidebar({ onNavigate, open }) {
 
       if (item.children) {
         const active = item.children.some((child) => hasActivePath(child, location))
-        const isDomainLabel = depth === 'root' && item.id !== 'catalog-group'
+        const isDomainLabel = depth === 'root'
 
         return (
           <Box key={item.id}>
@@ -295,10 +294,7 @@ export default function AppSidebar({ onNavigate, open }) {
             >
               {!isDomainLabel && (
                 <Box className="SidebarNavIcon">
-                  <NavGlyph
-                    icon={item.id === 'catalog-group' ? 'catalog' : item.icon}
-                    active={depth === 'root' && active}
-                  />
+                  <NavGlyph icon={item.icon} active={depth === 'root' && active} />
                 </Box>
               )}
               <ListItemText primary={t(item.labelKey)} />
