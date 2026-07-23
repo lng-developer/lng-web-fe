@@ -42,7 +42,7 @@ test('PSD file query only sends supported created or submitted sort fields', () 
   })
 })
 
-test('PSD file rows expose readable names and never use IDs as labels', () => {
+test('PSD file rows keep the Design link time separate from the asset upload time', () => {
   const result = mapPsdFilesResponse({
     items: [
       {
@@ -52,8 +52,10 @@ test('PSD file rows expose readable names and never use IDs as labels', () => {
           originalFilename: 'shirt.psd',
           size: 2048,
           mimeType: 'application/octet-stream',
+          createdAt: '2026-07-01T00:00:00.000Z',
         },
         role: 'APPROVED',
+        linkedAt: '2026-07-20T00:00:00.000Z',
         task: { id: 'task-1', status: 'APPROVED' },
         listing: { id: 'listing-1', code: 'SKU-1', title: 'Shirt' },
         designer: { id: 'designer-1', name: 'Mai' },
@@ -67,11 +69,13 @@ test('PSD file rows expose readable names and never use IDs as labels', () => {
   assert.equal(result.items[0].filename, 'shirt.psd')
   assert.equal(result.items[0].rowKey, 'row-1')
   assert.equal(result.items[0].asset.mimeType, 'application/octet-stream')
+  assert.equal(result.items[0].asset.createdAt, '2026-07-01T00:00:00.000Z')
+  assert.equal(result.items[0].linkedAt, '2026-07-20T00:00:00.000Z')
   assert.equal(result.items[0].listingLabel, 'SKU-1')
   assert.equal(result.items[0].downloadUrl, '/api/media/assets/asset-1/download')
 })
 
-test('submission score rows retain the nested workspace read model', () => {
+test('submission score rows retain the nested workspace read model and mapped download URL', () => {
   const result = mapSubmissionScoresResponse({
     items: [
       {
@@ -90,6 +94,7 @@ test('submission score rows retain the nested workspace read model', () => {
           scoreLevel: 'STANDARD',
           status: 'ACTIVE',
           scoredAt: '2026-07-20T01:00:00.000Z',
+          scorer: { name: 'Linh Reviewer' },
         },
       },
     ],
@@ -103,10 +108,12 @@ test('submission score rows retain the nested workspace read model', () => {
   assert.equal(result.items[0].designerLabel, 'Mai')
   assert.equal(result.items[0].file.filename, 'shirt.psd')
   assert.equal(result.items[0].file.downloadUrl, '/api/media/assets/asset-1/download')
+  assert.equal(result.items[0].downloadUrl, '/api/media/assets/asset-1/download')
   assert.equal(result.items[0].task.status, 'APPROVED')
   assert.equal(result.items[0].submission.version, 2)
   assert.equal(result.items[0].submission.approvedAt, '2026-07-20T00:00:00.000Z')
   assert.equal(result.items[0].score.finalPoints, 3.75)
   assert.equal(result.items[0].score.status, 'ACTIVE')
   assert.equal(result.items[0].score.scoredAt, '2026-07-20T01:00:00.000Z')
+  assert.equal(result.items[0].score.scorer.name, 'Linh Reviewer')
 })

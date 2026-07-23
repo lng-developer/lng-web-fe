@@ -1,8 +1,11 @@
 import CloseIcon from '@mui/icons-material/Close'
-import { Divider, Drawer, IconButton, Typography } from '@mui/material'
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined'
+import { Button, Divider, Drawer, IconButton, Typography } from '@mui/material'
+import { useSnackbar } from 'notistack'
 
 import SubmissionScoreEditor from '@/features/design-tasks/components/SubmissionScoreEditor'
 import dayjs from '@/lib/dayjs'
+import { apiClient } from '@/services/axiosInstance'
 
 function formatDate(value) {
   return value ? dayjs(value).format('MMM D, YYYY HH:mm') : '-'
@@ -38,12 +41,32 @@ export default function QualityScoreDetailDrawer({
   onOverride,
   onVoid,
 }) {
+  const { enqueueSnackbar } = useSnackbar()
+
   if (!row) return null
 
   const submission = {
     ...row.submission,
     status: row.submission?.status || row.task?.status,
     score: { id: row.id, ...row.score },
+  }
+
+  async function handleDownload() {
+    if (!row.downloadUrl) return
+
+    try {
+      const blob = await apiClient.get(row.downloadUrl, { responseType: 'blob' })
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = row.file?.filename || 'submission-file'
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      enqueueSnackbar('Unable to download submission file', { variant: 'error' })
+    }
   }
 
   return (
@@ -78,7 +101,17 @@ export default function QualityScoreDetailDrawer({
             <DetailField label="Version" value={row.submission?.version} />
             <DetailField label="Approved" value={formatDate(row.submission?.approvedAt)} />
             <DetailField label="Scored" value={formatDate(row.score?.scoredAt)} />
+            <DetailField label="Scored by" value={row.score?.scorer?.name || 'Automated'} />
           </section>
+
+          <Button
+            variant="contained"
+            startIcon={<DownloadOutlinedIcon />}
+            disabled={!row.downloadUrl}
+            onClick={handleDownload}
+          >
+            Download file
+          </Button>
 
           <Divider />
 

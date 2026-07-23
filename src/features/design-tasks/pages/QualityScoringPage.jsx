@@ -198,7 +198,7 @@ export default function QualityScoringPage() {
                 size="small"
                 value={searchInput}
                 onChange={(event) => setFilters({ search: event.target.value })}
-                placeholder="Search file or listing"
+                placeholder="Search file, listing, or task reference"
                 className="min-w-64 flex-1"
                 slotProps={{
                   input: {

@@ -18,7 +18,7 @@ The existing **Design Tasks** page remains the place to assign work, submit a fi
 - Only `PSD_TEMPLATE` tasks are in scope. IDEA, CLONE, MOCKUP, PNG_ASSET, order attachments, and files from other modules are excluded.
 - The solution uses the existing React, MUI, TanStack Query, Operations layout primitives, shared API client, and media download endpoint. No dependency is added.
 - A score is created automatically after approval. Quality Scoring is an audit and correction workspace, not another approval queue.
-- Media is read-only from these pages. There is no direct delete, move, rename, or upload action.
+- Media is read-only from these pages. There is no direct delete, move, rename, or upload action. File-library date filtering and ordering use the Design-owned **added-to-task** timestamp, not Media-asset creation time; this keeps the read model within the Public Port boundary.
 - Opaque identifiers are returned only for actions and navigation. They are never rendered as user-facing table values.
 
 ## Navigation and access
@@ -90,7 +90,7 @@ One row represents one PSD-task file relationship, not a generic media record. A
   - file role: Reference, Submission, Approved
   - designer
   - task status
-  - uploaded date range
+  - added-to-task date range
   - refresh
 - Dense Operations table:
   - File name
@@ -98,11 +98,11 @@ One row represents one PSD-task file relationship, not a generic media record. A
   - Listing / task context
   - Designer
   - Submission version when applicable
-  - Uploaded at
+  - Added to Design
   - File size
   - Actions
 - Detail drawer:
-  - filename, MIME type, size, uploaded time
+  - filename, MIME type, size, and added-to-task time
   - linked PSD task, listing, submission version, and role
   - Download action
 
@@ -153,6 +153,7 @@ Response shape:
         "scoreLevel": "STANDARD",
         "status": "ACTIVE",
         "scoredAt": "2026-07-23T00:00:00.000Z",
+        "scorer": { "name": "Reviewer name" },
         "override": null
       }
     }
@@ -195,6 +196,7 @@ Response shape:
         "createdAt": "2026-07-23T00:00:00.000Z"
       },
       "role": "APPROVED",
+      "linkedAt": "2026-07-23T00:00:00.000Z",
       "task": { "id": "task-id", "taskType": "PSD_TEMPLATE", "status": "APPROVED" },
       "listing": { "id": "listing-id", "code": "SKU-001", "title": "Listing title" },
       "designer": { "id": "account-id", "name": "Designer name" },

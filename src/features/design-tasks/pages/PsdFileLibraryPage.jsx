@@ -46,8 +46,8 @@ const TASK_STATUSES = [
 ]
 
 const SORT_OPTIONS = [
-  { value: 'createdAt', label: 'File uploaded' },
-  { value: 'submittedAt', label: 'Submission uploaded' },
+  { value: 'createdAt', label: 'Added to Design' },
+  { value: 'submittedAt', label: 'Submission added to Design' },
 ]
 
 const columns = [
@@ -56,7 +56,7 @@ const columns = [
   { key: 'listing', label: 'Listing / task', width: '240px' },
   { key: 'designer', label: 'Designer', width: '170px' },
   { key: 'version', label: 'Version', width: '90px', align: 'center' },
-  { key: 'uploadedAt', label: 'Uploaded', width: '150px' },
+  { key: 'linkedAt', label: 'Added to Design', width: '150px' },
   { key: 'size', label: 'Size', width: '110px', align: 'right' },
   { key: 'actions', label: '', width: '72px', align: 'right' },
 ]
@@ -173,7 +173,7 @@ export default function PsdFileLibraryPage() {
     }
     if (column.key === 'designer') return row.designerLabel
     if (column.key === 'version') return row.submissionVersion || '-'
-    if (column.key === 'uploadedAt') return formatDate(row.submittedAt || row.createdAt)
+    if (column.key === 'linkedAt') return formatDate(row.linkedAt)
     if (column.key === 'size') return formatSize(row.size)
     if (column.key === 'actions') {
       return (
@@ -203,7 +203,7 @@ export default function PsdFileLibraryPage() {
                 size="small"
                 value={searchInput}
                 onChange={(event) => setFilters({ search: event.target.value })}
-                placeholder="Search file or listing"
+                placeholder="Search file, listing, or task reference"
                 className="min-w-64 flex-1"
                 slotProps={{
                   input: {

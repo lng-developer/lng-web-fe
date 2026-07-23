@@ -508,6 +508,7 @@ export function mapPsdFilesResponse(response = {}) {
       submissionId: row.submission?.id || row.submission?._id || row.submissionId || null,
       submissionVersion: row.submission?.version || null,
       submittedAt: row.submission?.submittedAt || row.submittedAt || null,
+      linkedAt: row.linkedAt || null,
       createdAt: row.createdAt || asset?.createdAt || null,
       ...(asset?.downloadUrl ? { downloadUrl: asset.downloadUrl } : {}),
       raw: row,
@@ -525,6 +526,7 @@ export function mapSubmissionScoresResponse(response = {}) {
     return {
       id: score.id || score._id || row.id || null,
       file,
+      downloadUrl: file?.downloadUrl || null,
       task,
       submission,
       score: { ...score },

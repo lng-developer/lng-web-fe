@@ -30,7 +30,11 @@ test('Quality Scoring keeps score changes reviewer-gated', () => {
   assert.equal(source.includes('useOverrideSubmissionScoreMutation'), true)
   assert.equal(source.includes('useVoidSubmissionScoreMutation'), true)
   assert.equal(source.includes('<MenuItem value="ALL">All statuses</MenuItem>'), true)
-  assert.equal(drawerSource.includes('downloadUrl'), false)
+  assert.equal(drawerSource.includes('row.downloadUrl'), true)
+  assert.equal(drawerSource.includes('apiClient.get(row.downloadUrl'), true)
+  assert.equal(drawerSource.includes('ENDPOINTS.MEDIA'), false)
+  assert.equal(drawerSource.includes('/api/media/'), false)
+  assert.equal(drawerSource.includes('label="Scored by"'), true)
 })
 
 test('PSD File Library downloads only through the mapped Design read model', () => {
@@ -51,4 +55,13 @@ test('PSD File Library downloads only through the mapped Design read model', () 
   assert.equal(pageSource.includes("key: 'size', label: 'Size', sortable: true"), false)
   assert.equal(pageSource.includes("value: 'createdAt'"), true)
   assert.equal(pageSource.includes("value: 'submittedAt'"), true)
+  assert.equal(pageSource.includes("label: 'Added to Design'"), true)
+  assert.equal(pageSource.includes('row.linkedAt'), true)
+  assert.equal(pageSource.includes('placeholder="Search file, listing, or task reference"'), true)
+  assert.equal(
+    readFileSync(new URL('./QualityScoringPage.jsx', import.meta.url), 'utf8').includes(
+      'placeholder="Search file, listing, or task reference"',
+    ),
+    true,
+  )
 })
