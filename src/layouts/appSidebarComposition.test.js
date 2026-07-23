@@ -13,6 +13,15 @@ test('sidebar keeps every parent group expanded without an expand control', () =
   assert.equal(source.includes('ExpandMoreIcon'), false)
 })
 
+test('sidebar indents child navigation below its parent groups', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+
+  assert.match(
+    source,
+    /paddingLeft: theme\.spacing\(depth === 'sub' \? 6 : depth === 'group' \? 4 : 2\)/,
+  )
+})
+
 test('sidebar uses route-derived Portal and HR context controls without a workspace rail', () => {
   const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
 

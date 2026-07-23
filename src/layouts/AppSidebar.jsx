@@ -142,6 +142,7 @@ function contextButtonSx({ selected }) {
 
 function navButtonSx({ active, depth, withActiveBorder }) {
   return (theme) => ({
+    alignItems: 'center',
     borderLeft: withActiveBorder
       ? `${active ? 3 : 3}px solid ${active ? theme.palette.primary.main : 'transparent'}`
       : 0,
@@ -153,7 +154,7 @@ function navButtonSx({ active, depth, withActiveBorder }) {
     marginBottom: theme.spacing(0.25),
     marginRight: theme.spacing(1),
     minHeight: 38,
-    paddingLeft: theme.spacing(depth === 'sub' ? 4 : 2),
+    paddingLeft: theme.spacing(depth === 'sub' ? 6 : depth === 'group' ? 4 : 2),
     paddingRight: theme.spacing(1.5),
     '& .MuiListItemText-primary': {
       color: active

@@ -68,7 +68,9 @@ describe('sidebar navigation', () => {
       PORTAL_NAVIGATION.map((item) => item.id),
       [
         'dashboard',
-        'commerce-group',
+        'orders-all',
+        'catalog-group',
+        'shops-stores',
         'fulfillment-group',
         'design-workspace-group',
         'supply-data-group',
