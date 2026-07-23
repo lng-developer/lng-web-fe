@@ -58,6 +58,7 @@ describe('sidebar navigation', () => {
     'vendor-list',
     'products-cost',
     'mapping-workbench',
+    'finance',
     'reports',
     'api-coverage',
     'audit-log',
@@ -76,21 +77,22 @@ describe('sidebar navigation', () => {
         'fulfillment-group',
         'design-workspace-group',
         'supply-data-group',
-        'insights-group',
+        'finance-reporting-group',
+        'system-operations-group',
         'system-group',
       ],
     )
     assert.deepEqual(collectLeafIds(PORTAL_NAVIGATION.slice(1)), portalLeafIds)
 
-    const insights = findItem(PORTAL_NAVIGATION, 'insights-group')
-    const monitoring = findItem(PORTAL_NAVIGATION, 'monitoring-group')
+    const financeReporting = findItem(PORTAL_NAVIGATION, 'finance-reporting-group')
+    const systemOperations = findItem(PORTAL_NAVIGATION, 'system-operations-group')
 
     assert.deepEqual(
-      insights.children.map((item) => item.id),
-      ['reports', 'monitoring-group'],
+      financeReporting.children.map((item) => item.id),
+      ['finance', 'reports'],
     )
     assert.deepEqual(
-      monitoring.children.map((item) => item.id),
+      systemOperations.children.map((item) => item.id),
       ['api-coverage', 'audit-log'],
     )
   })
@@ -167,7 +169,8 @@ describe('sidebar navigation', () => {
         'catalog',
         'designWorkspace',
         'supplyData',
-        'insights',
+        'financeReporting',
+        'systemOperations',
         'system',
       ]) {
         assert.equal(typeof locale.nav.groups[key], 'string')

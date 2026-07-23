@@ -48,6 +48,7 @@ const NAV_ITEM_ICONS = {
   configuration: SettingsOutlinedIcon,
   dashboard: DashboardOutlinedIcon,
   design: BrushOutlinedIcon,
+  finance: PaymentsOutlinedIcon,
   fulfillment: Inventory2OutlinedIcon,
   listings: ViewListOutlinedIcon,
   mapping: LinkOutlinedIcon,

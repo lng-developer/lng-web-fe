@@ -66,6 +66,8 @@
       "monitoring": "Monitoring",
       "configuration": "Configuration",
       "reports": "Reports",
+      "financeReporting": "Tài chính & Báo cáo",
+      "systemOperations": "Vận hành hệ thống",
       "amazon": "Amazon",
       "etsy": "Etsy"
     },
