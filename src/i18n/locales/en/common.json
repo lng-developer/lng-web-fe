@@ -92,6 +92,7 @@
       "templateCenter": "Template Center",
       "summary": "Summary",
       "reports": "Reports",
+      "financeImports": "Finance Data Imports",
       "balance": "Balance",
       "payout": "Payout",
       "compensationPool": "Compensation Pool",
@@ -2802,6 +2803,74 @@
       "grossProfit": "Gross profit",
       "margin": "Margin",
       "costStatus": "Cost status"
+    }
+  },
+  "financeImports": {
+    "title": "Finance Data Imports",
+    "subtitle": "Review immutable import batches and normalized marketplace source data.",
+    "batchCount": "import batches",
+    "batchTable": "Import batches",
+    "emptyBatches": "No import batches found.",
+    "emptySourceData": "No imported source data found.",
+    "sources": {
+      "ADS": "Ads",
+      "SETTLEMENTS": "Settlements",
+      "TRANSACTIONS": "Transactions"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "details": "Details",
+      "import": "Import file",
+      "refresh": "Refresh",
+      "reprocess": "Reprocess"
+    },
+    "filters": {
+      "allSources": "All sources",
+      "allStatuses": "All statuses",
+      "dateFrom": "Date from",
+      "dateTo": "Date to",
+      "marketplace": "Marketplace",
+      "salesChannel": "Sales channel",
+      "shopId": "Shop ID"
+    },
+    "table": {
+      "actions": "Actions",
+      "createdAt": "Created",
+      "errorCount": "Errors",
+      "filename": "Filename",
+      "processedRows": "Processed rows",
+      "scope": "Scope",
+      "sourceType": "Source",
+      "status": "Status"
+    },
+    "sourceData": {
+      "batchId": "Import batch",
+      "id": "Record ID",
+      "title": "{{source}} source data"
+    },
+    "importDialog": {
+      "dryRun": "Dry run only",
+      "file": "Choose CSV or TXT file",
+      "sourceRef": "Source reference",
+      "title": "Import finance source data"
+    },
+    "detail": {
+      "createdAt": "Created",
+      "errorCount": "Errors",
+      "errors": "Import errors",
+      "filename": "Filename",
+      "noErrors": "No errors recorded for this batch.",
+      "processedRows": "Processed rows",
+      "sourceType": "Source",
+      "status": "Status",
+      "title": "Import batch details"
+    },
+    "messages": {
+      "imported": "Import submitted.",
+      "importError": "Unable to import the file.",
+      "loadError": "Unable to load finance import data.",
+      "reprocessed": "Batch reprocessing started.",
+      "reprocessError": "Unable to reprocess the batch."
     }
   },
   "financialReports": {

@@ -20,6 +20,9 @@ const DesignTasksPage = lazy(() => import('@/features/design-tasks/pages/DesignT
 const QualityScoringPage = lazy(() => import('@/features/design-tasks/pages/QualityScoringPage'))
 const PsdFileLibraryPage = lazy(() => import('@/features/design-tasks/pages/PsdFileLibraryPage'))
 const FinancePage = lazy(() => import('@/features/finance/pages/FinancePage'))
+const FinanceDataImportsPage = lazy(
+  () => import('@/features/finance-imports/pages/FinanceDataImportsPage'),
+)
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const ListingPage = lazy(() => import('@/features/listings/pages/ListingPage'))
 const MappingPage = lazy(() => import('@/features/mapping/pages/MappingPage'))
@@ -149,6 +152,10 @@ export const router = createBrowserRouter([
           {
             path: 'portal/finance/summary',
             element: requirePermissions(['FINANCE:READ'], <FinancePage />),
+          },
+          {
+            path: 'portal/finance/imports',
+            element: requirePermissions(['FINANCE:READ'], <FinanceDataImportsPage />),
           },
           {
             path: 'portal/reports',

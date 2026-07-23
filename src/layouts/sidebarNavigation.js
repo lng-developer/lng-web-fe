@@ -311,6 +311,15 @@ export const PORTAL_NAVIGATION = [
         requiredPermissions: ['FINANCE:READ'],
       },
       {
+        id: 'finance-imports',
+        type: 'item',
+        labelKey: 'nav.items.financeImports',
+        icon: 'finance',
+        path: ROUTES.PORTAL_FINANCE_IMPORTS,
+        allowedRoles: ROLE_ACCESS.ADMIN,
+        requiredPermissions: ['FINANCE:READ'],
+      },
+      {
         id: 'reports',
         type: 'item',
         labelKey: 'nav.items.reports',

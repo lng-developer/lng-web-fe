@@ -24,6 +24,7 @@ export const ROUTES = {
   PORTAL_PSD_FILES: '/portal/design/psd-files',
   PORTAL_TEMPLATE_CENTER: '/portal/design/templates',
   PORTAL_FINANCE_SUMMARY: '/portal/finance/summary',
+  PORTAL_FINANCE_IMPORTS: '/portal/finance/imports',
   PORTAL_REPORTS: '/portal/reports',
   PORTAL_FINANCE_BALANCE: '/portal/finance/balance',
   PORTAL_FINANCE_PAYOUT: '/portal/finance/payout',

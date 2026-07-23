@@ -92,6 +92,7 @@
       "templateCenter": "Kho template",
       "summary": "Tổng quan",
       "reports": "Báo cáo",
+      "financeImports": "Nhập dữ liệu tài chính",
       "balance": "Số dư",
       "payout": "Payout",
       "compensationPool": "Quỹ bồi thường",
@@ -2802,6 +2803,74 @@
       "grossProfit": "Lợi nhuận gộp",
       "margin": "Biên lợi nhuận",
       "costStatus": "Trạng thái chi phí"
+    }
+  },
+  "financeImports": {
+    "title": "Nhập dữ liệu tài chính",
+    "subtitle": "Theo dõi batch nhập bất biến và dữ liệu nguồn marketplace đã chuẩn hóa.",
+    "batchCount": "batch nhập",
+    "batchTable": "Batch nhập dữ liệu",
+    "emptyBatches": "Không có batch nhập dữ liệu.",
+    "emptySourceData": "Không có dữ liệu nguồn đã nhập.",
+    "sources": {
+      "ADS": "Quảng cáo",
+      "SETTLEMENTS": "Đối soát",
+      "TRANSACTIONS": "Giao dịch"
+    },
+    "actions": {
+      "cancel": "Hủy",
+      "details": "Chi tiết",
+      "import": "Nhập tệp",
+      "refresh": "Làm mới",
+      "reprocess": "Xử lý lại"
+    },
+    "filters": {
+      "allSources": "Tất cả nguồn",
+      "allStatuses": "Tất cả trạng thái",
+      "dateFrom": "Từ ngày",
+      "dateTo": "Đến ngày",
+      "marketplace": "Marketplace",
+      "salesChannel": "Kênh bán",
+      "shopId": "Shop ID"
+    },
+    "table": {
+      "actions": "Thao tác",
+      "createdAt": "Thời gian tạo",
+      "errorCount": "Lỗi",
+      "filename": "Tên tệp",
+      "processedRows": "Dòng đã xử lý",
+      "scope": "Phạm vi",
+      "sourceType": "Nguồn",
+      "status": "Trạng thái"
+    },
+    "sourceData": {
+      "batchId": "Batch nhập",
+      "id": "Mã bản ghi",
+      "title": "Dữ liệu nguồn {{source}}"
+    },
+    "importDialog": {
+      "dryRun": "Chỉ chạy thử",
+      "file": "Chọn tệp CSV hoặc TXT",
+      "sourceRef": "Tham chiếu nguồn",
+      "title": "Nhập dữ liệu nguồn tài chính"
+    },
+    "detail": {
+      "createdAt": "Thời gian tạo",
+      "errorCount": "Lỗi",
+      "errors": "Lỗi nhập dữ liệu",
+      "filename": "Tên tệp",
+      "noErrors": "Batch này không ghi nhận lỗi.",
+      "processedRows": "Dòng đã xử lý",
+      "sourceType": "Nguồn",
+      "status": "Trạng thái",
+      "title": "Chi tiết batch nhập"
+    },
+    "messages": {
+      "imported": "Đã gửi yêu cầu nhập dữ liệu.",
+      "importError": "Không thể nhập tệp.",
+      "loadError": "Không thể tải dữ liệu nhập tài chính.",
+      "reprocessed": "Đã bắt đầu xử lý lại batch.",
+      "reprocessError": "Không thể xử lý lại batch."
     }
   },
   "financialReports": {

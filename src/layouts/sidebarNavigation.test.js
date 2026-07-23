@@ -59,6 +59,7 @@ describe('sidebar navigation', () => {
     'products-cost',
     'mapping-workbench',
     'finance',
+    'finance-imports',
     'reports',
     'api-coverage',
     'audit-log',
@@ -89,7 +90,7 @@ describe('sidebar navigation', () => {
 
     assert.deepEqual(
       financeReporting.children.map((item) => item.id),
-      ['finance', 'reports'],
+      ['finance', 'finance-imports', 'reports'],
     )
     assert.deepEqual(
       systemOperations.children.map((item) => item.id),
@@ -176,7 +177,13 @@ describe('sidebar navigation', () => {
         assert.equal(typeof locale.nav.groups[key], 'string')
       }
 
-      for (const key of ['scaleProduction', 'qualityControl', 'qualityScoring', 'psdFileLibrary']) {
+      for (const key of [
+        'scaleProduction',
+        'qualityControl',
+        'qualityScoring',
+        'psdFileLibrary',
+        'financeImports',
+      ]) {
         assert.equal(typeof locale.nav.items[key], 'string')
       }
     }
