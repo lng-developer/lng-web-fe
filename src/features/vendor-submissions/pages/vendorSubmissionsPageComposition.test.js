@@ -18,6 +18,19 @@ test('vendor submissions page uses operations layout instead of workflow console
   assert.equal(source.includes('ApiWorkflowPage'), false)
 })
 
+test('vendor submissions page uses the dense header and toolbar refresh action', () => {
+  const source = readPageSource()
+
+  assert.equal(source.includes('OperationsHeader'), false)
+  assert.equal(source.includes('min-h-[54px]'), true)
+  assert.equal(
+    source.includes('<Typography variant="h5" className="text-xl font-bold text-ink-strong">'),
+    true,
+  )
+  assert.equal(source.includes("aria-label={t('common.refresh')}"), true)
+  assert.equal(source.includes('onClick={() => submissionsQuery.refetch()}'), true)
+})
+
 test('vendor submissions page exposes id filters and BE lifecycle actions', () => {
   const source = readPageSource()
 

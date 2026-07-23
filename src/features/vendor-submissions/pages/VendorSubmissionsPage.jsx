@@ -23,7 +23,6 @@ import {
 import { useSnackbar } from 'notistack'
 
 import {
-  OperationsHeader,
   OperationsPageShell,
   OperationsPagination,
   OperationsTable,
@@ -364,19 +363,16 @@ export default function VendorSubmissionsPage() {
   return (
     <OperationsPageShell
       header={
-        <OperationsHeader
-          title={t('vendorSubmissions.title')}
-          subtitle={t('vendorSubmissions.subtitle')}
-          actions={
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon fontSize="small" />}
-              onClick={() => submissionsQuery.refetch()}
-            >
-              {t('common.refresh')}
-            </Button>
-          }
-        />
+        <div className="flex min-h-[54px] flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Typography variant="h5" className="text-xl font-bold text-ink-strong">
+              {t('vendorSubmissions.title')}
+            </Typography>
+            <Typography variant="body2" className="text-sm text-ink-muted">
+              {t('vendorSubmissions.subtitle')}
+            </Typography>
+          </div>
+        </div>
       }
       tabs={
         <OperationsTabs
@@ -393,7 +389,7 @@ export default function VendorSubmissionsPage() {
       }
       toolbar={
         <OperationsToolbar>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-[240px_240px_240px_auto]">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-[240px_240px_240px_auto_auto]">
             <TextField
               size="small"
               value={filters.id}
@@ -434,6 +430,15 @@ export default function VendorSubmissionsPage() {
             >
               {t('vendorSubmissions.actions.recheckReady')}
             </Button>
+            <Tooltip title={t('common.refresh')}>
+              <IconButton
+                aria-label={t('common.refresh')}
+                onClick={() => submissionsQuery.refetch()}
+                className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary"
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </div>
         </OperationsToolbar>
       }

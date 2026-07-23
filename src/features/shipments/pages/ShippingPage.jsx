@@ -20,7 +20,6 @@ import {
 import { useSnackbar } from 'notistack'
 
 import {
-  OperationsHeader,
   OperationsPageShell,
   OperationsPagination,
   OperationsTable,
@@ -315,19 +314,16 @@ export default function ShippingPage() {
   return (
     <OperationsPageShell
       header={
-        <OperationsHeader
-          title={t('shipments.title')}
-          subtitle={t('shipments.subtitle')}
-          actions={
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon fontSize="small" />}
-              onClick={() => activeQuery.refetch()}
-            >
-              {t('common.refresh')}
-            </Button>
-          }
-        />
+        <div className="flex min-h-[54px] flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Typography variant="h5" className="text-xl font-bold text-ink-strong">
+              {t('shipments.title')}
+            </Typography>
+            <Typography variant="body2" className="text-sm text-ink-muted">
+              {t('shipments.subtitle')}
+            </Typography>
+          </div>
+        </div>
       }
       tabs={
         <OperationsTabs
@@ -341,6 +337,15 @@ export default function ShippingPage() {
       }
       toolbar={
         <OperationsToolbar>
+          <Tooltip title={t('common.refresh')}>
+            <IconButton
+              aria-label={t('common.refresh')}
+              onClick={() => activeQuery.refetch()}
+              className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary"
+            >
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
           {activeTab === 'shipments' ? (
             <>
               <OperationsTabs
