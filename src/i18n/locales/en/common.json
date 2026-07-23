@@ -2809,6 +2809,7 @@
     "title": "Finance Data Imports",
     "subtitle": "Review immutable import batches and normalized marketplace source data.",
     "batchCount": "import batches",
+    "importedRows": "{{count}} imported rows",
     "batchTable": "Import batches",
     "emptyBatches": "No import batches found.",
     "emptySourceData": "No imported source data found.",

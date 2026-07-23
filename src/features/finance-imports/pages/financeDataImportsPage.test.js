@@ -1,17 +1,47 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-test('finance data imports page renders read-only source and batch workbenches', () => {
-  const source = readFileSync(new URL('./FinanceDataImportsPage.jsx', import.meta.url), 'utf8')
+import { filterNavigationByUser, SIDEBAR_NAVIGATION } from '../../../layouts/sidebarNavigation.js'
+import {
+  getFinanceImportBatchActions,
+  getFinanceImportBatchSummary,
+  getFinanceImportDefaults,
+} from '../utils/financeImportsAccess.js'
 
-  assert.equal(source.includes("t('financeImports.title')"), true)
-  assert.equal(source.includes('ADS'), true)
-  assert.equal(source.includes('SETTLEMENTS'), true)
-  assert.equal(source.includes('TRANSACTIONS'), true)
-  assert.equal(source.includes('<OperationsTable'), true)
-  assert.equal(source.includes('useFinanceImportBatchesQuery'), true)
-  assert.equal(source.includes('useFinanceImportedDataQuery'), true)
-  assert.equal(source.includes('Edit'), false)
-  assert.equal(source.includes('Delete'), false)
+function collectLeafIds(items) {
+  return items.flatMap((item) => {
+    if (item.children) return collectLeafIds(item.children)
+    if (item.items) return collectLeafIds(item.items)
+    return [item.id]
+  })
+}
+
+test('finance imports navigation is visible with read access', () => {
+  const leafIds = collectLeafIds(
+    filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['FINANCE:READ'] }),
+  )
+
+  assert.equal(leafIds.includes('finance-imports'), true)
+})
+
+test('finance import actions stay read-only unless write access and a failed batch allow reprocessing', () => {
+  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:READ'] }, 'FAILED'), ['DETAILS'])
+  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'COMPLETED'), ['DETAILS'])
+  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'PARTIAL_FAILED'), [
+    'DETAILS',
+    'REPROCESS',
+  ])
+  assert.equal(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'FAILED').includes('EDIT'), false)
+  assert.equal(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'FAILED').includes('DELETE'), false)
+})
+
+test('finance import source summaries expose the latest status and row/error counts', () => {
+  assert.deepEqual(
+    getFinanceImportBatchSummary({ status: 'PARTIAL_FAILED', validRows: 11, errorCount: 2 }),
+    { status: 'PARTIAL_FAILED', importedRows: 11, errorCount: 2 },
+  )
+})
+
+test('finance imports persist by default', () => {
+  assert.equal(getFinanceImportDefaults('ADS').dryRun, false)
 })

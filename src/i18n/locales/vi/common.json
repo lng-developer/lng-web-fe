@@ -2809,6 +2809,7 @@
     "title": "Nhập dữ liệu tài chính",
     "subtitle": "Theo dõi batch nhập bất biến và dữ liệu nguồn marketplace đã chuẩn hóa.",
     "batchCount": "batch nhập",
+    "importedRows": "{{count}} dòng đã nhập",
     "batchTable": "Batch nhập dữ liệu",
     "emptyBatches": "Không có batch nhập dữ liệu.",
     "emptySourceData": "Không có dữ liệu nguồn đã nhập.",
