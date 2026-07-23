@@ -47,6 +47,12 @@
       "admin": "Admin"
     },
     "groups": {
+      "commerce": "Commerce",
+      "catalog": "Catalog",
+      "designWorkspace": "Design Workspace",
+      "supplyData": "Supply & Data",
+      "insights": "Insights",
+      "system": "System",
       "orders": "Orders",
       "fulfillment": "Fulfillment",
       "design": "Design",
@@ -74,7 +80,9 @@
       "tracking": "Tracking",
       "productionBoard": "Production Board",
       "scale": "Scale",
+      "scaleProduction": "Scale Production",
       "qc": "QC",
+      "qualityControl": "Quality Control",
       "shipping": "Shipping",
       "vendorSubmissions": "Vendor Submissions",
       "cs": "CS",

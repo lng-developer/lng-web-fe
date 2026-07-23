@@ -47,6 +47,12 @@
       "admin": "Admin"
     },
     "groups": {
+      "commerce": "Thương mại",
+      "catalog": "Danh mục",
+      "designWorkspace": "Không gian thiết kế",
+      "supplyData": "Nguồn cung & dữ liệu",
+      "insights": "Thông tin chi tiết",
+      "system": "Hệ thống",
       "orders": "Đơn hàng",
       "fulfillment": "Vận hành",
       "design": "Thiết kế",
@@ -74,7 +80,9 @@
       "tracking": "Tracking",
       "productionBoard": "Production Board",
       "scale": "Scale",
+      "scaleProduction": "Sản xuất hàng loạt",
       "qc": "QC",
+      "qualityControl": "Kiểm soát chất lượng",
       "shipping": "Shipping",
       "vendorSubmissions": "Vendor Submissions",
       "cs": "CS",
