@@ -158,6 +158,36 @@ export function buildDesignScoreSummaryQuery(filters = {}) {
   })
 }
 
+function buildWorkspaceQuery(filters = {}, extra = {}) {
+  return cleanObject({
+    search: trimText(filters.search),
+    designerId: filters.designerId === 'all' ? undefined : filters.designerId,
+    dateFrom: trimText(filters.dateFrom),
+    dateTo: trimText(filters.dateTo),
+    ...extra,
+    page: Math.max(Number(filters.page) || 1, 1),
+    limit: Math.max(Number(filters.pageSize) || 20, 1),
+  })
+}
+
+export function buildSubmissionScoresQuery(filters = {}) {
+  return buildWorkspaceQuery(filters, {
+    scoreLevel: trimUpper(filters.scoreLevel === 'all' ? '' : filters.scoreLevel),
+    scoreStatus: trimUpper(filters.scoreStatus === 'all' ? '' : filters.scoreStatus),
+  })
+}
+
+export function buildPsdFilesQuery(filters = {}) {
+  const sortBy = trimText(filters.sortBy)
+
+  return buildWorkspaceQuery(filters, {
+    role: trimUpper(filters.role === 'all' ? '' : filters.role),
+    taskStatus: trimUpper(filters.taskStatus === 'all' ? '' : filters.taskStatus),
+    sortBy: ['createdAt', 'submittedAt'].includes(sortBy) ? sortBy : undefined,
+    sortOrder: trimText(filters.sortOrder),
+  })
+}
+
 function mapAsset(asset = {}) {
   const id = asset.id || asset._id || null
   return {
@@ -420,6 +450,76 @@ export function mapDesignWorkload(response = {}) {
 
 export function mapDesignSubmissionsResponse(response = {}) {
   return (response.items || response.submissions || []).map(mapSubmission)
+}
+
+function mapWorkspacePagination(response = {}, mapper) {
+  const items = response.items || response.rows || response.results || []
+  const total = Number(response.pagination?.total || response.total || items.length)
+  const page = Number(response.pagination?.page || response.page || 1)
+  const limit = Number(response.pagination?.limit || response.limit || items.length || 20)
+
+  return {
+    items: items.map(mapper),
+    total,
+    page,
+    limit,
+    pagination: { total, page, limit },
+  }
+}
+
+function workspaceListingLabel(listing = {}) {
+  return displayNoId(
+    listing.code || listing.asin || listing.sku || listing.title || listing.name,
+    'Unknown listing',
+  )
+}
+
+export function mapPsdFilesResponse(response = {}) {
+  return mapWorkspacePagination(response, (row) => {
+    const asset = row.asset || {}
+    const assetId = asset.id || asset._id || null
+
+    return {
+      id: row.rowKey || row.id || assetId,
+      assetId,
+      filename: displayNoId(asset.originalFilename || asset.filename, 'Unknown file'),
+      size: asset.size ?? null,
+      role: row.role || null,
+      taskId: row.task?.id || row.task?._id || row.taskId || null,
+      taskStatus: row.task?.status || row.taskStatus || null,
+      listingLabel: workspaceListingLabel(row.listing),
+      designerId: row.designer?.id || row.designer?._id || row.designerId || null,
+      designerLabel: getPersonDisplayName(row.designer, 'Unassigned'),
+      submissionId: row.submission?.id || row.submission?._id || row.submissionId || null,
+      submissionVersion: row.submission?.version || null,
+      submittedAt: row.submission?.submittedAt || row.submittedAt || null,
+      createdAt: row.createdAt || asset.createdAt || null,
+      ...(assetId ? { downloadUrl: assetDownloadUrl(assetId) } : {}),
+      raw: row,
+    }
+  })
+}
+
+export function mapSubmissionScoresResponse(response = {}) {
+  return mapWorkspacePagination(response, (row) => {
+    const score = row.score || row
+
+    return {
+      id: score.id || score._id || row.id || null,
+      taskId: row.task?.id || row.task?._id || score.taskId || null,
+      submissionId: row.submission?.id || row.submission?._id || score.submissionId || null,
+      designerId: row.designer?.id || row.designer?._id || score.designerId || null,
+      designerLabel: getPersonDisplayName(row.designer, 'Unassigned'),
+      listingLabel: workspaceListingLabel(row.listing),
+      points: score.finalPoints ?? score.points ?? null,
+      scoreLevel: score.scoreLevel || null,
+      scoreStatus: score.status || null,
+      override: score.override || null,
+      voidReason: score.voidReason || null,
+      createdAt: score.createdAt || row.createdAt || null,
+      raw: row,
+    }
+  })
 }
 
 export function mapPsdTemplateCandidatesResponse(response = {}) {

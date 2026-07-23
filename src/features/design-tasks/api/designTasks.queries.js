@@ -3,12 +3,16 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   buildDesignScoreSummaryQuery,
   buildDesignTaskQuery,
+  buildPsdFilesQuery,
+  buildSubmissionScoresQuery,
   mapBackendDesignTasksResponse,
   mapDesignAssignees,
   mapDesignSubmissionsResponse,
   mapDesignTaskDetail,
   mapDesignWorkload,
+  mapPsdFilesResponse,
   mapPsdTemplateCandidatesResponse,
+  mapSubmissionScoresResponse,
   unwrapApiData,
 } from '@/features/design-tasks/utils/designTasksApi'
 import { apiClient } from '@/services/axiosInstance'
@@ -58,6 +62,36 @@ export function useDesignScoreSummaryQuery(filters = {}, options = {}) {
   return useQuery({
     queryKey: designTasksKeys.scoreSummary(params),
     queryFn: () => apiClient.get(ENDPOINTS.DESIGN.SCORE_SUMMARY, { params }).then(unwrapApiData),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
+export function useSubmissionScoresQuery(filters = {}, options = {}) {
+  const params = buildSubmissionScoresQuery(filters)
+
+  return useQuery({
+    queryKey: designTasksKeys.submissionScores(params),
+    queryFn: () =>
+      apiClient
+        .get(ENDPOINTS.DESIGN.SUBMISSION_SCORES, { params })
+        .then(unwrapApiData)
+        .then(mapSubmissionScoresResponse),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
+export function usePsdFilesQuery(filters = {}, options = {}) {
+  const params = buildPsdFilesQuery(filters)
+
+  return useQuery({
+    queryKey: designTasksKeys.psdFiles(params),
+    queryFn: () =>
+      apiClient
+        .get(ENDPOINTS.DESIGN.PSD_FILES, { params })
+        .then(unwrapApiData)
+        .then(mapPsdFilesResponse),
     placeholderData: keepPreviousData,
     ...options,
   })

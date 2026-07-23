@@ -4,6 +4,8 @@ export const designTasksKeys = {
   detail: (taskId) => [...designTasksKeys.all, 'detail', taskId],
   summary: (query = {}) => [...designTasksKeys.all, 'summary', query],
   scoreSummary: (query = {}) => [...designTasksKeys.all, 'score-summary', query],
+  submissionScores: (query = {}) => [...designTasksKeys.all, 'submission-scores', query],
+  psdFiles: (query = {}) => [...designTasksKeys.all, 'psd-files', query],
   workload: (query = {}) => [...designTasksKeys.all, 'workload', query],
   submissions: (taskId) => [...designTasksKeys.all, 'submissions', taskId],
 }

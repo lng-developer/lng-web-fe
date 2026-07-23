@@ -164,6 +164,8 @@ export const ENDPOINTS = {
     WORKLOAD: '/api/design/tasks/workload',
     SUMMARY: '/api/design/tasks/summary',
     SCORE_SUMMARY: '/api/design/score-summary',
+    SUBMISSION_SCORES: '/api/design/submission-scores',
+    PSD_FILES: '/api/design/psd-files',
     OVERRIDE_SUBMISSION_SCORE: (scoreId) => `/api/design/submission-scores/${scoreId}/override`,
     VOID_SUBMISSION_SCORE: (taskId, submissionId) =>
       `/api/design/tasks/${taskId}/submissions/${submissionId}/score/void`,
