@@ -39,6 +39,21 @@ test('shipping page uses the dense header and toolbar refresh action', () => {
   assert.equal(source.includes('onClick={() => activeQuery.refetch()}'), true)
 })
 
+test('shipping keeps refresh in the shipment filter row', () => {
+  const source = readPageSource()
+
+  assert.ok(
+    source.indexOf('onClick={() => activeQuery.refetch()}') >
+      source.indexOf('<div className="grid'),
+  )
+})
+
+test('shipping keeps refresh available for webhook logs', () => {
+  const source = readPageSource()
+
+  assert.equal(source.includes("activeTab === 'webhooks' ?"), true)
+})
+
 test('shipping page exposes id filters and shipment actions', () => {
   const source = readPageSource()
 

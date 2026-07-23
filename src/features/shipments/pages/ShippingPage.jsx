@@ -322,18 +322,9 @@ export default function ShippingPage() {
       }
       toolbar={
         <OperationsToolbar>
-          <Tooltip title={t('common.refresh')}>
-            <IconButton
-              aria-label={t('common.refresh')}
-              onClick={() => activeQuery.refetch()}
-              className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary"
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
           {activeTab === 'shipments' ? (
             <>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[170px_190px_190px_190px_190px_auto]">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[170px_auto_1fr_1fr_1fr_1fr_auto]">
                 <FormControl size="small" className="w-full">
                   <Select
                     value={status}
@@ -351,6 +342,15 @@ export default function ShippingPage() {
                     ))}
                   </Select>
                 </FormControl>
+                <Tooltip title={t('common.refresh')}>
+                  <IconButton
+                    aria-label={t('common.refresh')}
+                    onClick={() => activeQuery.refetch()}
+                    className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary"
+                  >
+                    <RefreshIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
                 <TextField
                   size="small"
                   value={filters.id}
@@ -399,6 +399,17 @@ export default function ShippingPage() {
                 </Button>
               </div>
             </>
+          ) : null}
+          {activeTab === 'webhooks' ? (
+            <Tooltip title={t('common.refresh')}>
+              <IconButton
+                aria-label={t('common.refresh')}
+                onClick={() => activeQuery.refetch()}
+                className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary"
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           ) : null}
         </OperationsToolbar>
       }
