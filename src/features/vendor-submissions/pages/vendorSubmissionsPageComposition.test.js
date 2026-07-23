@@ -38,9 +38,10 @@ test('vendor submissions page uses the dense header and toolbar refresh action',
   assert.equal(source.includes('onClick={() => submissionsQuery.refetch()}'), true)
 })
 
-test('vendor submissions page exposes id filters and BE lifecycle actions', () => {
+test('vendor submissions page exposes business filters and BE lifecycle actions', () => {
   const source = readPageSource()
 
+  assert.equal(source.includes('filters.id'), false)
   assert.equal(source.includes('externalOrderId'), true)
   assert.equal(source.includes('vendorExternalOrderId'), true)
   assert.equal(source.includes('useSubmitToVendorMutation'), true)

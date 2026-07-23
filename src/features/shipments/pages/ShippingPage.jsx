@@ -5,14 +5,12 @@ import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutli
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined'
-import SearchIcon from '@mui/icons-material/Search'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
   Button,
   Drawer,
   FormControl,
   IconButton,
-  InputAdornment,
   MenuItem,
   Select,
   Stack,
@@ -150,7 +148,6 @@ export default function ShippingPage() {
   )
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({
-    id: '',
     externalOrderId: '',
     vendorExternalOrderId: '',
     trackingNumber: '',
@@ -324,7 +321,7 @@ export default function ShippingPage() {
         <OperationsToolbar>
           {activeTab === 'shipments' ? (
             <>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[170px_auto_1fr_1fr_1fr_1fr_auto]">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[170px_auto_1fr_1fr_1fr_auto]">
                 <FormControl size="small" className="w-full">
                   <Select
                     value={status}
@@ -351,21 +348,6 @@ export default function ShippingPage() {
                     <RefreshIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <TextField
-                  size="small"
-                  value={filters.id}
-                  onChange={(event) => updateFilter('id', event.target.value)}
-                  placeholder={t('shipments.filters.id')}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
                 <TextField
                   size="small"
                   value={filters.externalOrderId}

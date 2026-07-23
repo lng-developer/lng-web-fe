@@ -7,7 +7,6 @@ import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutli
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ReplayOutlinedIcon from '@mui/icons-material/ReplayOutlined'
-import SearchIcon from '@mui/icons-material/Search'
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
@@ -15,7 +14,6 @@ import {
   Drawer,
   FormControl,
   IconButton,
-  InputAdornment,
   MenuItem,
   Select,
   Stack,
@@ -186,7 +184,7 @@ export default function VendorSubmissionsPage() {
     () => readVendorSubmissionDashboardSearch(location.search).status || 'ALL',
   )
   const [page, setPage] = useState(1)
-  const [filters, setFilters] = useState({ id: '', externalOrderId: '', vendorExternalOrderId: '' })
+  const [filters, setFilters] = useState({ externalOrderId: '', vendorExternalOrderId: '' })
   const [selectedRow, setSelectedRow] = useState(null)
   const debouncedFilters = useDebounce(filters, 300)
   const query = { ...debouncedFilters, status, page, limit: pageSize }
@@ -360,7 +358,7 @@ export default function VendorSubmissionsPage() {
       }
       toolbar={
         <OperationsToolbar>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-[180px_220px_220px_220px_auto_auto]">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-[180px_220px_220px_auto_auto]">
             <FormControl size="small" className="w-full">
               <Select
                 value={status}
@@ -378,21 +376,6 @@ export default function VendorSubmissionsPage() {
                 ))}
               </Select>
             </FormControl>
-            <TextField
-              size="small"
-              value={filters.id}
-              onChange={(event) => updateFilter('id', event.target.value)}
-              placeholder={t('vendorSubmissions.filters.id')}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
             <TextField
               size="small"
               value={filters.externalOrderId}

@@ -54,9 +54,10 @@ test('shipping keeps refresh available for webhook logs', () => {
   assert.equal(source.includes("activeTab === 'webhooks' ?"), true)
 })
 
-test('shipping page exposes id filters and shipment actions', () => {
+test('shipping page exposes business filters and shipment actions', () => {
   const source = readPageSource()
 
+  assert.equal(source.includes('filters.id'), false)
   assert.equal(source.includes('externalOrderId'), true)
   assert.equal(source.includes('vendorExternalOrderId'), true)
   assert.equal(source.includes('trackingNumber'), true)
