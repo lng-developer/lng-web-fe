@@ -13,7 +13,7 @@ const vendorProductsSource = readFileSync(
   'utf8',
 )
 const listingsSource = readFileSync(
-  new URL('../../features/listings/pages/ListingPage.jsx', import.meta.url),
+  new URL('../../features/listings/pages/ListingsPage.jsx', import.meta.url),
   'utf8',
 )
 const qcReviewSource = readFileSync(

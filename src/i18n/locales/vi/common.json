@@ -156,6 +156,10 @@
       "psdAvailable": "PSD Available",
       "noPsd": "No PSD"
     },
+    "management": {
+      "description": "Qu?n l? listing marketplace, template v? tr?ng th?i s?n s?ng PSD.",
+      "records": "b?n ghi"
+    },
     "tabs": {
       "all": "All",
       "amazon": "Amazon",

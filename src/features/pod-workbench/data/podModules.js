@@ -1,3 +1,4 @@
+import { ROUTES } from '../../../constants/routes.js'
 import { ENDPOINTS } from '../../../services/endpoints.js'
 
 const platformRows = ['Amazon', 'Etsy', 'Shopify']
@@ -27,8 +28,8 @@ export const POD_MODULES = {
       'Keep product type groups, internal templates, listing readiness, and PSD task handoff aligned before production.',
     primaryAction: 'Open Product Types',
     secondaryAction: 'Open Templates',
-    primaryHref: '/portal/listings?view=product-types',
-    secondaryHref: '/portal/listings?view=internal-templates',
+    primaryHref: ROUTES.PORTAL_PRODUCT_TYPES,
+    secondaryHref: ROUTES.PORTAL_INTERNAL_TEMPLATES,
     primaryEndpoint: ENDPOINTS.CATALOG.PRODUCT_TYPE_GROUPS,
     summaryEndpoint: ENDPOINTS.CATALOG.LISTINGS_SUMMARY,
     showContracts: false,
