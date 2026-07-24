@@ -3,11 +3,11 @@ import { Tooltip } from '@mui/material'
 import { operationsTextCaptionClass } from './operationsLayout'
 
 const toneClasses = {
-  neutral: 'bg-surface text-ink-secondary',
-  success: 'bg-surface text-success',
-  warning: 'bg-surface text-warning',
-  danger: 'bg-surface text-danger',
-  info: 'bg-surface text-info',
+  neutral: 'bg-neutral-bg text-ink-secondary',
+  success: 'bg-success-bg text-success-strong',
+  warning: 'bg-warning-bg text-warning-strong',
+  danger: 'bg-danger-bg text-danger',
+  info: 'bg-info-bg text-info-strong',
 }
 
 const textToneClasses = {
@@ -41,7 +41,7 @@ export default function StatusBadge({
       className={`${
         isText
           ? 'inline-flex max-w-full items-center'
-          : `inline-flex max-w-full items-center rounded-full px-2.5 py-1 ${
+          : `inline-flex min-h-5 max-w-full items-center rounded-full px-2 py-0.5 ${
               bordered ? `border ${toneBorderClasses[resolvedTone]}` : 'border-0'
             } ${toneClasses[resolvedTone]}`
       } ${operationsTextCaptionClass} ${isText ? textToneClasses[resolvedTone] : ''} ${className}`}

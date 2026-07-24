@@ -8,9 +8,10 @@ const scalePageSource = readFileSync(
   'utf8',
 )
 
-test('shared StatusBadge uses semantic tone colors and supports plain text status', () => {
+test('shared StatusBadge renders compact semantic pills and supports plain text status', () => {
   assert.match(statusBadgeSource, /bordered = true/)
-  assert.match(statusBadgeSource, /success: 'bg-surface text-success'/)
+  assert.match(statusBadgeSource, /success: 'bg-success-bg text-success-strong'/)
+  assert.match(statusBadgeSource, /min-h-5 max-w-full items-center rounded-full px-2 py-0.5/)
   assert.match(statusBadgeSource, /variant = 'badge'/)
   assert.match(statusBadgeSource, /variant === 'text'/)
   assert.match(statusBadgeSource, /bordered \? `border[^`]*` : 'border-0'/)

@@ -7,7 +7,6 @@ import {
   Box,
   Button,
   Card,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,6 +17,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+
+import { StatusBadge } from '@/components/operations'
 
 import {
   buildDepartmentSummary,
@@ -48,20 +49,7 @@ function countLabel(t, value, unitKey) {
 }
 
 function StatusChip({ label }) {
-  return (
-    <Chip
-      label={label}
-      size="small"
-      sx={(theme) => ({
-        height: 18,
-        borderRadius: 9,
-        bgcolor: theme.palette.success.light,
-        color: theme.palette.success.main,
-        fontWeight: 700,
-        '& .MuiChip-label': { px: 1 },
-      })}
-    />
-  )
+  return <StatusBadge tone="success">{label}</StatusBadge>
 }
 
 function CodeBadge({ children }) {

@@ -43,6 +43,7 @@ import {
 import dayjs from 'dayjs'
 import { useSnackbar } from 'notistack'
 
+import { StatusBadge } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 
 import {
@@ -259,16 +260,9 @@ function findById(items, id) {
 
 function UserStatusChip({ status, t }) {
   const meta = getStatusMeta(status)
+  const tone = meta.key === 'active' ? 'success' : 'warning'
 
-  return (
-    <Chip
-      size="small"
-      variant="outlined"
-      label={t(meta.labelKey)}
-      className={`!h-6 !rounded-full text-xs font-medium ${meta.className}`}
-      sx={{ '& .MuiChip-label': { px: '10px' } }}
-    />
-  )
+  return <StatusBadge tone={tone}>{t(meta.labelKey)}</StatusBadge>
 }
 
 function UserRoleChip({ role }) {

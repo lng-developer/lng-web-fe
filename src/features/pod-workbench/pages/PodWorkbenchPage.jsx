@@ -18,6 +18,7 @@ import {
   Typography,
 } from '@mui/material'
 
+import { StatusBadge } from '@/components/operations'
 import {
   usePodModuleQuery,
   usePodModuleSummaryQuery,
@@ -41,8 +42,9 @@ const statusColor = {
   'missing psd': 'error',
 }
 
-function getStatusChipColor(status) {
-  return statusColor[String(status).toLowerCase()] || 'default'
+function getStatusTone(status) {
+  const color = statusColor[String(status).toLowerCase()] || 'default'
+  return { success: 'success', warning: 'warning', error: 'danger' }[color] || 'neutral'
 }
 
 function MetricCard({ label, value }) {
@@ -264,12 +266,7 @@ function WorkbenchTable({ columns, loading, rows, selectedId, onSelect }) {
                     <Typography variant="body2" color="text.secondary">
                       {row.issue}
                     </Typography>
-                    <Chip
-                      label={row.status}
-                      color={getStatusChipColor(row.status)}
-                      size="small"
-                      variant="outlined"
-                    />
+                    <StatusBadge tone={getStatusTone(row.status)}>{row.status}</StatusBadge>
                     <Typography variant="body2" color="text.secondary">
                       {row.updatedAt}
                     </Typography>

@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 
+import { StatusBadge } from '@/components/operations'
 import { getRoleMeta } from '@/layouts/sidebarNavigation'
 
 import { buildProfileDetails } from '../utils/profileUser'
@@ -314,7 +315,7 @@ export default function ProfilePage() {
               <AdminInfoItem label={t('profile.adminFields.department')} value={department} />
               <Divider sx={{ my: 1.5 }} />
               <AdminInfoItem label={t('profile.adminFields.status')}>
-                {statusLabel ? <Chip label={statusLabel} color="success" size="small" /> : '-'}
+                {statusLabel ? <StatusBadge tone="success">{statusLabel}</StatusBadge> : '-'}
               </AdminInfoItem>
               <Divider sx={{ my: 1.5 }} />
               <AdminInfoItem

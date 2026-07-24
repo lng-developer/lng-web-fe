@@ -11,7 +11,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -36,6 +35,7 @@ import {
   Typography,
 } from '@mui/material'
 
+import { StatusBadge } from '@/components/operations'
 import {
   useListingProductTypesQuery,
   useListingShopsQuery,
@@ -179,8 +179,8 @@ function mapTemplateOptions(payload) {
 }
 
 function StatusChip({ value }) {
-  const color = value === 'ACTIVE' || value === 'READY' ? 'success' : 'default'
-  return <Chip size="small" color={color} label={value || '-'} />
+  const tone = value === 'ACTIVE' || value === 'READY' ? 'success' : 'neutral'
+  return <StatusBadge tone={tone}>{value || '-'}</StatusBadge>
 }
 
 function getSearchText(value) {
