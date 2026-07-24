@@ -100,6 +100,11 @@ describe('ListingPage composition', () => {
   })
 
   it('keeps listing actions in the table header instead of the page header', () => {
+    const statusToolbarSource = source.slice(
+      source.indexOf('<section className="mt-3 overflow-hidden'),
+      source.indexOf('<OperationsToolbar'),
+    )
+
     assert.equal(source.includes(": t('listings.title')"), false)
     assert.equal(source.includes('function ListingStatusTabs'), true)
     assert.equal(source.includes('<ListingStatusTabs'), true)
@@ -107,7 +112,12 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes('borderBottom: active'), true)
     assert.equal(source.includes('alpha(theme.palette.primary.main, 0.06)'), true)
     assert.equal(source.includes("'border-primary text-primary'"), false)
-    assert.equal(source.includes('flex shrink-0 flex-wrap items-center gap-2'), true)
+    assert.equal(statusToolbarSource.includes('justify-between'), false)
+    assert.equal(statusToolbarSource.includes('justify-center lg:px-52'), true)
+    assert.equal(statusToolbarSource.includes('lg:absolute lg:right-4 lg:top-2'), true)
+    assert.equal(statusToolbarSource.includes('mt-2 flex w-full'), true)
+    assert.equal(statusToolbarSource.includes('justify-end gap-2'), true)
+    assert.equal(statusToolbarSource.includes('lg:mt-0 lg:w-auto'), true)
     assert.equal(source.includes('<OperationsTabs'), false)
     assert.equal(source.includes("{ key: 'anonymousAsin'"), false)
     assert.equal(source.includes("t('listings.messages.importMissing')"), false)
