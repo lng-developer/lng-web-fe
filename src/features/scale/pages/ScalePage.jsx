@@ -463,11 +463,9 @@ function ScaleDetailPanel({
             <Badge className="h-[28px] border border-border bg-surface px-3 text-[11px] text-ink-secondary">
               {detail.product.primaryCode}
             </Badge>
-            <Badge
-              className={`h-[28px] border bg-surface px-3 text-sm text-ink-secondary ${detail.product.psdStatus === 'MISSING' ? 'border-danger' : 'border-border'}`}
-            >
+            <StatusBadge tone={detail.product.psdStatus === 'MISSING' ? 'danger' : 'success'}>
               {formatEnumValue(detail.product.psdStatus)}
-            </Badge>
+            </StatusBadge>
           </div>
           <Badge className="h-[28px] border border-border bg-surface px-3 text-[11px] text-ink-secondary">
             {detail.product.secondaryCode}

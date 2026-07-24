@@ -120,7 +120,6 @@ function QcOrderStatusBadge({ value, t }) {
     <StatusBadge
       tone={value && value !== '-' ? getOrderStatusTone(value) : 'neutral'}
       tooltip={label}
-      variant="text"
     >
       {label}
     </StatusBadge>

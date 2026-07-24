@@ -34,4 +34,5 @@ test('QC renders order status as a bordered semantic badge', () => {
   )
 
   assert.match(qcPageSource, /QcOrderStatusBadge[\s\S]*task\.statusOrder/)
+  assert.doesNotMatch(qcPageSource, /variant="text"/)
 })
