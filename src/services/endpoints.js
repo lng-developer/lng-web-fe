@@ -167,8 +167,8 @@ export const ENDPOINTS = {
     SUBMISSION_SCORES: '/api/design/submission-scores',
     PSD_FILES: '/api/design/psd-files',
     OVERRIDE_SUBMISSION_SCORE: (scoreId) => `/api/design/submission-scores/${scoreId}/override`,
-    VOID_SUBMISSION_SCORE: (taskId, submissionId) =>
-      `/api/design/tasks/${taskId}/submissions/${submissionId}/score/void`,
+    VOID_SUBMISSION_SCORE: (taskId, submissionId, assetId) =>
+      `/api/design/tasks/${taskId}/submissions/${submissionId}/assets/${assetId}/score/void`,
     FROM_LISTING_PSD_TEMPLATE: (listingId) =>
       `/api/design/tasks/from-listings/${listingId}/psd-template`,
     BULK_CREATE_PSD_FROM_LISTINGS: '/api/design/tasks/bulk-create-psd-from-listings',
@@ -278,6 +278,8 @@ export const ENDPOINTS = {
   },
   REPORTS: {
     ADS_CHANNEL_PERFORMANCE: '/api/reports/ads/channel-performance',
+    ADS_BY_SELLER: '/api/reports/ads/by-seller',
+    ADS_DAILY: '/api/reports/ads/daily',
     BUYER_INSIGHTS: '/api/reports/buyers/insights',
     FINANCE_DAILY: '/api/reports/finance/daily',
     FINANCE_DAILY_PROFIT: '/api/reports/finance/daily-profit',

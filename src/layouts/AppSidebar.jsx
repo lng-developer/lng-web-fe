@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import ApiOutlinedIcon from '@mui/icons-material/ApiOutlined'
@@ -8,6 +9,7 @@ import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
 import ConstructionOutlinedIcon from '@mui/icons-material/ConstructionOutlined'
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
@@ -21,7 +23,15 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined'
-import { Box, ButtonBase, List, ListItemButton, ListItemText, Typography } from '@mui/material'
+import {
+  Box,
+  ButtonBase,
+  Collapse,
+  List,
+  ListItemButton,
+  ListItemText,
+  Typography,
+} from '@mui/material'
 
 import { LAYOUT_SIZES } from '@/constants/app'
 import { getCurrentUserDisplayName, resolveCurrentUser } from '@/features/auth/utils/currentUser'
@@ -42,6 +52,7 @@ import {
 const SIDEBAR_WIDTH = 248
 
 const NAV_ITEM_ICONS = {
+  admin: SettingsOutlinedIcon,
   api: ApiOutlinedIcon,
   audit: HistoryOutlinedIcon,
   config: SettingsOutlinedIcon,
@@ -65,21 +76,6 @@ const NAV_ITEM_ICONS = {
   templates: DescriptionOutlinedIcon,
   users: PeopleAltOutlinedIcon,
   vendors: BusinessOutlinedIcon,
-}
-
-const sectionLabelSx = {
-  color: 'text.secondary',
-  display: 'flex',
-  pb: 0.5,
-  pt: 2,
-  px: 2,
-  '& .MuiListItemText-primary': {
-    fontSize: '0.6875rem',
-    fontWeight: 700,
-    letterSpacing: '0.08em',
-    lineHeight: 1.25,
-    textTransform: 'uppercase',
-  },
 }
 
 function hasActivePath(item, location) {
@@ -175,6 +171,9 @@ function navButtonSx({ active, depth, withActiveBorder }) {
     minHeight: 38,
     paddingLeft: theme.spacing(depth === 'sub' ? 6 : depth === 'group' ? 4 : 2),
     paddingRight: theme.spacing(1.5),
+    transition: theme.transitions.create(['background-color', 'color', 'transform'], {
+      duration: theme.transitions.duration.shorter,
+    }),
     '& .MuiListItemText-primary': {
       color: active
         ? theme.palette.primary.main
@@ -191,6 +190,7 @@ function navButtonSx({ active, depth, withActiveBorder }) {
     },
     '&:hover': {
       backgroundColor: theme.palette.primary.light,
+      transform: 'translateX(2px)',
     },
     ...(active && {
       backgroundColor: theme.palette.primary.light,
@@ -198,12 +198,15 @@ function navButtonSx({ active, depth, withActiveBorder }) {
         backgroundColor: theme.palette.primary.light,
       },
     }),
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+      '&:hover': { transform: 'none' },
+    },
   })
 }
 
 function renderLeafItem({ item, location, t, depth, onNavigate }) {
   const active = isNavItemActive(item, location)
-
   return (
     <ListItemButton
       key={item.id}
@@ -213,9 +216,11 @@ function renderLeafItem({ item, location, t, depth, onNavigate }) {
       onClick={onNavigate}
       sx={navButtonSx({ active, depth, withActiveBorder: depth === 'root' })}
     >
-      <Box className="SidebarNavIcon">
-        <NavGlyph icon={item.icon} active={active} />
-      </Box>
+      {depth === 'root' && (
+        <Box className="SidebarNavIcon">
+          <NavGlyph icon={item.icon} active={active} />
+        </Box>
+      )}
       <ListItemText primary={t(item.labelKey)} />
     </ListItemButton>
   )
@@ -225,6 +230,7 @@ export default function AppSidebar({ onNavigate, open }) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
+  const [openItemsById, setOpenItemsById] = useState({})
   const storedCurrentUser = useAuthStore((state) => state.currentUser)
   const activeContext = getSidebarContextForLocation(location.pathname)
   const user = resolveCurrentUser(storedCurrentUser)
@@ -278,29 +284,34 @@ export default function AppSidebar({ onNavigate, open }) {
 
       if (item.children) {
         const active = item.children.some((child) => hasActivePath(child, location))
-        const isDomainLabel = depth === 'root'
+        const isOpen = openItemsById[item.id] ?? false
 
         return (
           <Box key={item.id}>
-            <Box
-              sx={
-                isDomainLabel
-                  ? sectionLabelSx
-                  : navButtonSx({
-                      active: depth === 'root' && active,
-                      depth: depth === 'root' ? 'root' : 'group',
-                      withActiveBorder: depth === 'root',
-                    })
-              }
+            <ListItemButton
+              aria-expanded={isOpen}
+              onClick={() => setOpenItemsById((current) => ({ ...current, [item.id]: !isOpen }))}
+              sx={navButtonSx({
+                active,
+                depth,
+                withActiveBorder: depth === 'root',
+              })}
             >
-              {!isDomainLabel && (
-                <Box className="SidebarNavIcon">
-                  <NavGlyph icon={item.icon} active={depth === 'root' && active} />
-                </Box>
-              )}
+              <Box className="SidebarNavIcon">
+                <NavGlyph icon={item.icon} active={active} />
+              </Box>
               <ListItemText primary={t(item.labelKey)} />
-            </Box>
-            {renderItems(item.children, depth === 'root' ? 'group' : 'sub')}
+              <ExpandMoreIcon
+                fontSize="small"
+                sx={{
+                  transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 160ms ease',
+                }}
+              />
+            </ListItemButton>
+            <Collapse in={isOpen} timeout={160} unmountOnExit>
+              {renderItems(item.children, 'group')}
+            </Collapse>
           </Box>
         )
       }

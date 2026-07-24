@@ -32,8 +32,8 @@ test('design workload endpoint matches backend task route', () => {
     '/api/design/submission-scores/score-1/override',
   )
   assert.equal(
-    ENDPOINTS.DESIGN.VOID_SUBMISSION_SCORE('task-1', 'submission-1'),
-    '/api/design/tasks/task-1/submissions/submission-1/score/void',
+    ENDPOINTS.DESIGN.VOID_SUBMISSION_SCORE('task-1', 'submission-1', 'asset-1'),
+    '/api/design/tasks/task-1/submissions/submission-1/assets/asset-1/score/void',
   )
   assert.equal(ENDPOINTS.DESIGN.SUBMISSIONS('task-1'), '/api/design/tasks/task-1/submissions')
   assert.equal(

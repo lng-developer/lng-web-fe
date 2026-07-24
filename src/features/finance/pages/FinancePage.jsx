@@ -2,7 +2,16 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import { Alert, Button, Chip, FormControl, MenuItem, Select, TextField } from '@mui/material'
+import {
+  Alert,
+  Autocomplete,
+  Button,
+  Chip,
+  FormControl,
+  MenuItem,
+  Select,
+  TextField,
+} from '@mui/material'
 
 import {
   OperationsHeader,
@@ -13,6 +22,9 @@ import {
   StatusBadge,
 } from '@/components/operations'
 import { useFinanceSnapshotsQuery } from '@/features/finance/api/finance.queries'
+import FinanceRevenueProfitChart from '@/features/finance/components/FinanceRevenueProfitChart'
+import { useShopDetailQuery, useShopsQuery } from '@/features/shops/api/shops.queries'
+import { useDebounce } from '@/hooks/useDebounce'
 import { formatCurrency } from '@/utils/format'
 
 const pageSize = 20
@@ -42,8 +54,16 @@ function statusTone(value) {
 function visibleTotals(rows) {
   return rows.reduce((result, row) => {
     const currency = row?.revenue?.currency || row?.currency || 'USD'
-    const current = result[currency] || { revenue: 0, profit: 0, missingCost: 0 }
+    const current = result[currency] || {
+      revenue: 0,
+      fees: 0,
+      baseCost: 0,
+      profit: 0,
+      missingCost: 0,
+    }
     current.revenue += Number(row?.revenue?.customerPaidAmount || 0)
+    current.fees += Number(row?.revenue?.feeAmount || 0)
+    current.baseCost += Number(row?.cost?.baseCostAmount || 0)
     current.profit += Number(row?.margin?.grossProfitAmount || 0)
     current.missingCost += row?.snapshotStatus === 'MISSING_COST' ? 1 : 0
     result[currency] = current
@@ -57,24 +77,40 @@ export default function FinancePage() {
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState(() => ({
     salesChannelCode: getChannel(location.search),
-    orderId: '',
-    orderItemId: '',
+    marketplaceCode: '',
+    search: '',
     shopId: '',
     snapshotStatus: '',
     costStatus: '',
   }))
-  const query = compactQuery({ ...filters, page, limit: pageSize })
+  const [shopSearch, setShopSearch] = useState('')
+  const debouncedShopSearch = useDebounce(shopSearch)
+  const { search, ...filterQuery } = filters
+  const query = compactQuery({ ...filterQuery, externalOrderId: search, page, limit: pageSize })
   const snapshotsQuery = useFinanceSnapshotsQuery(query)
   const rows = snapshotsQuery.data?.items || EMPTY_ROWS
+  const shopsQuery = useShopsQuery({ search: debouncedShopSearch, status: 'ACTIVE', limit: 20 })
+  const selectedShopQuery = useShopDetailQuery(filters.shopId)
   const pagination = {
     page: snapshotsQuery.data?.page || page,
     limit: snapshotsQuery.data?.limit || pageSize,
     total: snapshotsQuery.data?.total || 0,
   }
   const totals = useMemo(() => visibleTotals(rows), [rows])
+  const marketplaceOptions = useMemo(
+    () => [
+      ...new Set(
+        [filters.marketplaceCode, ...rows.map((row) => row.marketplaceCode)].filter(Boolean),
+      ),
+    ],
+    [filters.marketplaceCode, rows],
+  )
+  const shopOptions = shopsQuery.data?.items || EMPTY_ROWS
+  const selectedShop =
+    shopOptions.find((shop) => shop.id === filters.shopId) || selectedShopQuery.data || null
   const columns = useMemo(
     () => [
-      { key: 'orderItemId', label: t('financeProfit.table.orderItem'), width: '190px' },
+      { key: 'externalOrderId', label: t('financeProfit.table.externalOrder'), width: '190px' },
       { key: 'channel', label: t('financeProfit.table.channel'), width: '115px' },
       { key: 'revenue', label: t('financeProfit.table.revenue'), width: '145px', align: 'right' },
       { key: 'fees', label: t('financeProfit.table.fees'), width: '130px', align: 'right' },
@@ -103,8 +139,8 @@ export default function FinancePage() {
 
   function renderCell(row, column) {
     const currency = row?.revenue?.currency || row?.currency || 'USD'
-    if (column.key === 'orderItemId')
-      return <span className="font-medium text-ink-strong">{row.orderItemId}</span>
+    if (column.key === 'externalOrderId')
+      return <span className="font-medium text-ink-strong">{row.externalOrderId}</span>
     if (column.key === 'channel') return <Chip size="small" label={row.salesChannelCode || '-'} />
     if (column.key === 'revenue')
       return formatMoney(row?.revenue?.customerPaidAmount, currency, i18n.language)
@@ -131,6 +167,7 @@ export default function FinancePage() {
 
   return (
     <OperationsPageShell
+      className="-mx-4 md:-mx-6"
       header={
         <OperationsHeader
           title={t('financeProfit.title')}
@@ -150,6 +187,12 @@ export default function FinancePage() {
       toolbar={
         <OperationsToolbar>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-6">
+            <TextField
+              size="small"
+              placeholder="Search external order ID"
+              value={filters.search}
+              onChange={(event) => updateFilter('search', event.target.value)}
+            />
             <FormControl size="small">
               <Select
                 displayEmpty
@@ -161,24 +204,33 @@ export default function FinancePage() {
                 <MenuItem value="ETSY">Etsy</MenuItem>
               </Select>
             </FormControl>
-            <TextField
+            <Autocomplete
               size="small"
-              label={t('financeProfit.filters.shopId')}
-              value={filters.shopId}
-              onChange={(event) => updateFilter('shopId', event.target.value)}
+              options={shopOptions}
+              value={selectedShop}
+              getOptionLabel={(shop) => shop.name || ''}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onInputChange={(_, value, reason) => reason !== 'reset' && setShopSearch(value)}
+              onChange={(_, shop) => {
+                updateFilter('shopId', shop?.id || '')
+                setShopSearch(shop?.name || '')
+              }}
+              renderInput={(params) => <TextField {...params} label="Search shop" />}
             />
-            <TextField
-              size="small"
-              label={t('financeProfit.filters.orderId')}
-              value={filters.orderId}
-              onChange={(event) => updateFilter('orderId', event.target.value)}
-            />
-            <TextField
-              size="small"
-              label={t('financeProfit.filters.orderItemId')}
-              value={filters.orderItemId}
-              onChange={(event) => updateFilter('orderItemId', event.target.value)}
-            />
+            <FormControl size="small">
+              <Select
+                displayEmpty
+                value={filters.marketplaceCode}
+                onChange={(event) => updateFilter('marketplaceCode', event.target.value)}
+              >
+                <MenuItem value="">All marketplaces</MenuItem>
+                {marketplaceOptions.map((marketplace) => (
+                  <MenuItem key={marketplace} value={marketplace}>
+                    {marketplace}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <FormControl size="small">
               <Select
                 displayEmpty
@@ -202,30 +254,6 @@ export default function FinancePage() {
               </Select>
             </FormControl>
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {Object.entries(totals).map(([currency, total]) => (
-              <div key={currency} className="border border-border bg-surface px-3 py-2">
-                <div className="text-xs font-medium uppercase text-ink-muted">
-                  {t('financeProfit.visibleTotal')} · {currency}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-strong">
-                  <span>
-                    {t('financeProfit.revenue')}:{' '}
-                    <strong>{formatMoney(total.revenue, currency, i18n.language)}</strong>
-                  </span>
-                  <span>
-                    {t('financeProfit.grossProfit')}:{' '}
-                    <strong>{formatMoney(total.profit, currency, i18n.language)}</strong>
-                  </span>
-                  {total.missingCost ? (
-                    <span className="text-warning">
-                      {t('financeProfit.missingCost', { count: total.missingCost })}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
         </OperationsToolbar>
       }
       pagination={
@@ -237,21 +265,60 @@ export default function FinancePage() {
         />
       }
     >
-      <div className="h-full overflow-auto">
+      <div className="h-full -mr-4 overflow-auto pr-4">
         {snapshotsQuery.isError ? (
           <Alert severity="error" className="mb-3">
             {t('financeProfit.loadError')}
           </Alert>
         ) : null}
-        <OperationsTable
-          columns={columns}
-          rows={rows}
-          getRowKey={(row) => row.id || row.orderItemId}
-          renderCell={renderCell}
-          loading={snapshotsQuery.isLoading}
-          emptyTitle={t('financeProfit.empty')}
-          minWidth="1100px"
-        />
+        {Object.entries(totals).map(([currency, total]) => (
+          <section key={currency} className="mb-3 grid gap-3">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+              {[
+                [t('financeProfit.revenue'), formatMoney(total.revenue, currency, i18n.language)],
+                [t('financeProfit.table.fees'), formatMoney(total.fees, currency, i18n.language)],
+                [
+                  t('financeProfit.table.baseCost'),
+                  formatMoney(total.baseCost, currency, i18n.language),
+                ],
+                [
+                  t('financeProfit.grossProfit'),
+                  formatMoney(total.profit, currency, i18n.language),
+                ],
+                [t('financeProfit.missingCost', { count: total.missingCost }), total.missingCost],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-lg border border-border bg-surface px-4 py-3 shadow-sm"
+                >
+                  <div className="text-xs font-medium uppercase text-ink-muted">{label}</div>
+                  <div className="mt-1 text-xl font-semibold text-ink-strong">{value}</div>
+                  <div className="text-xs text-ink-muted">{currency}</div>
+                </div>
+              ))}
+            </div>
+            <FinanceRevenueProfitChart
+              currency={currency}
+              grossProfit={total.profit}
+              language={i18n.language}
+              revenue={total.revenue}
+            />
+          </section>
+        ))}
+        <section className="rounded-lg border border-border bg-surface shadow-sm">
+          <h2 className="border-b border-border px-4 py-3 text-sm font-semibold text-ink-strong">
+            Finance snapshots
+          </h2>
+          <OperationsTable
+            columns={columns}
+            rows={rows}
+            getRowKey={(row) => row.id || row.orderItemId}
+            renderCell={renderCell}
+            loading={snapshotsQuery.isLoading}
+            emptyTitle={t('financeProfit.empty')}
+            minWidth="1100px"
+          />
+        </section>
       </div>
     </OperationsPageShell>
   )

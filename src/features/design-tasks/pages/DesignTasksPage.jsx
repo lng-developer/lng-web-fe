@@ -1055,7 +1055,9 @@ function DesignTaskDetailDialog({
                       canReview={canReviewScores}
                       isSubmitting={isScoreSubmitting}
                       onOverride={onOverrideScore}
-                      onVoid={(voidReason) => onVoidScore(submission.id, voidReason)}
+                      onVoid={(voidReason) =>
+                        onVoidScore(submission.id, submission.approvedAssetId, voidReason)
+                      }
                     />
                   </div>
                 ))
@@ -1383,9 +1385,15 @@ export default function DesignTasksPage() {
   )
 
   const handleVoidScore = useCallback(
-    (submissionId, voidReason) =>
+    (submissionId, assetId, voidReason) =>
       runAction(
-        () => voidScoreMutation.mutateAsync({ taskId: detailTaskId, submissionId, voidReason }),
+        () =>
+          voidScoreMutation.mutateAsync({
+            taskId: detailTaskId,
+            submissionId,
+            assetId,
+            voidReason,
+          }),
         'Score voided',
       ),
     [detailTaskId, runAction, voidScoreMutation],

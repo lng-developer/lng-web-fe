@@ -2886,12 +2886,19 @@
     "missingCost": "Thiếu chi phí: {{count}}",
     "loadError": "Không thể tải báo cáo tài chính.",
     "empty": "Không có dữ liệu báo cáo.",
-    "tabs": { "daily": "Lợi nhuận theo ngày", "seller": "Theo seller", "team": "Theo team" },
+    "tabs": {
+      "daily": "Lợi nhuận theo ngày",
+      "seller": "Theo seller",
+      "team": "Theo team",
+      "ads": "Hiệu suất Ads"
+    },
     "chart": { "title": "Hiệu quả theo ngày", "channelTitle": "Lợi nhuận ròng theo kênh" },
     "filters": {
       "allChannels": "Tất cả kênh",
+      "shop": "Tìm shop",
       "shopId": "Shop ID",
       "marketplace": "Marketplace",
+      "allMarketplaces": "Tất cả marketplace",
       "dateFrom": "Từ ngày",
       "dateTo": "Đến ngày"
     },
@@ -2909,6 +2916,28 @@
       "netProfit": "Lợi nhuận ròng",
       "netMargin": "Biên ròng",
       "missingCost": "Thiếu chi phí"
+    },
+    "ads": {
+      "spend": "Chi phí Ads",
+      "sales": "Doanh thu quy đổi",
+      "clicks": "Lượt nhấp",
+      "orders": "Đơn hàng",
+      "conversion": "Chuyển đổi",
+      "quality": "Chất lượng dữ liệu",
+      "status": "Trạng thái",
+      "trend": "Chi phí và doanh thu Ads",
+      "channelPerformance": "Hiệu suất theo kênh",
+      "sellerAttribution": "Đối soát theo seller",
+      "importHealth": "Sức khỏe import",
+      "evidence": "Dữ liệu chiến dịch",
+      "rows": "dòng",
+      "table": { "channel": "Kênh / market", "campaign": "Chiến dịch" },
+      "qualityStates": {
+        "READY": "Sẵn sàng",
+        "UNASSIGNED_SELLER": "Chưa gán seller",
+        "PARTIAL_IMPORT": "Import một phần",
+        "FAILED_IMPORT": "Import thất bại"
+      }
     }
   }
 }

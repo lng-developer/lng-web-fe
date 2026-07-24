@@ -127,9 +127,9 @@ export default function QualityScoringPage() {
     }
   }
 
-  async function handleVoid(taskId, submissionId, voidReason) {
+  async function handleVoid(taskId, submissionId, assetId, voidReason) {
     try {
-      await voidMutation.mutateAsync({ taskId, submissionId, voidReason })
+      await voidMutation.mutateAsync({ taskId, submissionId, assetId, voidReason })
       enqueueSnackbar('Score voided', { variant: 'success' })
     } catch {
       enqueueSnackbar('Unable to void score', { variant: 'error' })

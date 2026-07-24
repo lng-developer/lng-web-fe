@@ -2,15 +2,31 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-test('sidebar keeps every parent group expanded without an expand control', () => {
+test('sidebar renders expandable parent groups with expand controls', () => {
   const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
 
-  assert.match(source, /\{renderItems\(item\.children, depth === 'root' \? 'group' : 'sub'\)\}/)
-  assert.equal(source.includes('openItemsByContext'), false)
-  assert.equal(source.includes('toggleItem'), false)
-  assert.equal(source.includes('Collapse'), false)
-  assert.equal(source.includes('ExpandLessIcon'), false)
-  assert.equal(source.includes('ExpandMoreIcon'), false)
+  assert.match(source, /useState/)
+  assert.match(source, /Collapse/)
+  assert.match(source, /ExpandMoreIcon/)
+  assert.match(source, /aria-expanded=\{isOpen\}/)
+  assert.match(source, /<Collapse in=\{isOpen\} timeout=\{160\} unmountOnExit>/)
+})
+
+test('sidebar maps the System icon and uses lightweight expand motion', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+
+  assert.match(source, /admin: SettingsOutlinedIcon/)
+  assert.match(source, /transform: isOpen \? 'rotate\(180deg\)' : 'rotate\(0deg\)'/)
+  assert.equal(source.includes('SIDEBAR_PREVIEW_MODES'), false)
+  assert.equal(source.includes('PREVIEW_BADGES'), false)
+  assert.equal(source.includes('<Popper'), false)
+})
+
+test('sidebar keeps parent groups collapsed until the user opens one', () => {
+  const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
+
+  assert.match(source, /const isOpen = openItemsById\[item\.id\] \?\? false/)
+  assert.equal(source.includes('Boolean(item.defaultOpen || active)'), false)
 })
 
 test('sidebar indents child navigation below its parent groups', () => {
@@ -22,17 +38,15 @@ test('sidebar indents child navigation below its parent groups', () => {
   )
 })
 
-test('sidebar renders root parent groups as non-interactive section labels without icons', () => {
+test('sidebar renders icons only for parent groups and root-level leaf items', () => {
   const source = readFileSync(new URL('./AppSidebar.jsx', import.meta.url), 'utf8')
   const parentBranch = source.slice(
     source.indexOf('if (item.children) {'),
     source.indexOf('return renderLeafItem'),
   )
 
-  assert.match(parentBranch, /const isDomainLabel = depth === 'root'/)
-  assert.match(parentBranch, /sx=\{\s*isDomainLabel\s*\? sectionLabelSx\s*: navButtonSx\(/)
-  assert.match(parentBranch, /\{!isDomainLabel && \(\s*<Box className="SidebarNavIcon">/)
-  assert.equal(parentBranch.includes("item.id === 'catalog-group'"), false)
+  assert.match(parentBranch, /<NavGlyph icon=\{item\.icon\} active=\{active\} \/>/)
+  assert.match(source, /\{depth === 'root' && \(\s*<Box className="SidebarNavIcon">/)
 })
 
 test('sidebar uses the approved outlined icon language', () => {

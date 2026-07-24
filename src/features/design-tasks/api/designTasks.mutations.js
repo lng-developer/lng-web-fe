@@ -200,10 +200,10 @@ export function useVoidSubmissionScoreMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ taskId, submissionId, voidReason }) =>
+    mutationFn: ({ taskId, submissionId, assetId, voidReason }) =>
       apiClient
         .patch(
-          ENDPOINTS.DESIGN.VOID_SUBMISSION_SCORE(taskId, submissionId),
+          ENDPOINTS.DESIGN.VOID_SUBMISSION_SCORE(taskId, submissionId, assetId),
           buildVoidSubmissionScorePayload({ voidReason }),
         )
         .then(unwrapApiData),

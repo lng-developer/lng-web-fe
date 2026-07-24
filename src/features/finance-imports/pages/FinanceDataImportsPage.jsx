@@ -6,6 +6,7 @@ import ReplayIcon from '@mui/icons-material/Replay'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import {
   Alert,
+  Autocomplete,
   Button,
   Dialog,
   DialogActions,
@@ -22,6 +23,7 @@ import {
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import DateRangePicker from '@/components/form/DateRangePicker'
 import {
   OperationsHeader,
   OperationsPageShell,
@@ -47,11 +49,15 @@ import {
   getFinanceImportedDataQuery,
   getFinanceImportFileValues,
 } from '@/features/finance-imports/utils/financeImportsAccess'
+import { useShopsQuery } from '@/features/shops/api/shops.queries'
+import { useDebounce } from '@/hooks/useDebounce'
+import dayjs from '@/lib/dayjs'
 import { useAuthStore } from '@/store/useAuthStore'
 
 const pageSize = 20
 const sourceTypes = ['ADS', 'SETTLEMENTS', 'TRANSACTIONS']
 const EMPTY_ROWS = []
+const salesChannels = ['AMAZON', 'ETSY']
 
 function compactQuery(value) {
   return Object.fromEntries(
@@ -73,11 +79,76 @@ function statusTone(status) {
   return 'info'
 }
 
+function ScopeFilters({ filters, marketplaces, onChange, onShopSearch, shopOptions }) {
+  const selectedShop = shopOptions.find((shop) => shop.id === filters.shopId) || null
+  const dateRange = {
+    start: filters.dateFrom ? dayjs(filters.dateFrom) : null,
+    end: filters.dateTo ? dayjs(filters.dateTo) : null,
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
+      <Autocomplete
+        size="small"
+        options={shopOptions}
+        value={selectedShop}
+        getOptionLabel={(shop) => shop.name || ''}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        onInputChange={(_, value, reason) => reason !== 'reset' && onShopSearch(value)}
+        onChange={(_, shop) => {
+          onChange('shopId', shop?.id || '')
+          onShopSearch(shop?.name || '')
+        }}
+        renderInput={(params) => <TextField {...params} label="Search shop" />}
+      />
+      <FormControl size="small">
+        <Select
+          displayEmpty
+          value={filters.salesChannelCode}
+          onChange={(event) => onChange('salesChannelCode', event.target.value)}
+        >
+          <MenuItem value="">All channels</MenuItem>
+          {salesChannels.map((channel) => (
+            <MenuItem key={channel} value={channel}>
+              {channel}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <FormControl size="small">
+        <Select
+          displayEmpty
+          value={filters.marketplaceCode}
+          onChange={(event) => onChange('marketplaceCode', event.target.value)}
+        >
+          <MenuItem value="">All marketplaces</MenuItem>
+          {marketplaces.map((marketplace) => (
+            <MenuItem key={marketplace} value={marketplace}>
+              {marketplace}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <DateRangePicker
+        value={dateRange}
+        onChange={({ start, end }) => {
+          onChange('dateFrom', start?.format('YYYY-MM-DD') || '')
+          onChange('dateTo', end?.format('YYYY-MM-DD') || '')
+        }}
+        onClear={() => {
+          onChange('dateFrom', '')
+          onChange('dateTo', '')
+        }}
+      />
+    </div>
+  )
+}
+
 function SourceSummary({ batch, canWrite, onImport, sourceType, total, t }) {
   const summary = getFinanceImportBatchSummary(batch)
 
   return (
-    <div className="border border-border bg-surface px-3 py-2">
+    <div className="rounded-lg border border-border bg-surface px-3 py-2 shadow-sm">
       <div className="flex items-center justify-between gap-2 text-xs font-medium uppercase text-ink-muted">
         <span>{t(`financeImports.sources.${sourceType}`)}</span>
         {canWrite ? (
@@ -91,11 +162,18 @@ function SourceSummary({ batch, canWrite, onImport, sourceType, total, t }) {
           <>
             <StatusBadge tone={statusTone(summary.status)}>{summary.status}</StatusBadge>
             <span>{t('financeImports.importedRows', { count: summary.importedRows })}</span>
-            <span>{t('financeImports.table.errorCount', { count: summary.errorCount })}: {summary.errorCount}</span>
+            <span>
+              {t('financeImports.table.errorCount', { count: summary.errorCount })}:{' '}
+              {summary.errorCount}
+            </span>
           </>
-        ) : <span>{t('financeImports.emptyBatches')}</span>}
+        ) : (
+          <span>{t('financeImports.emptyBatches')}</span>
+        )}
       </div>
-      <div className="mt-1 text-xs text-ink-muted">{total || 0} {t('financeImports.batchCount')}</div>
+      <div className="mt-1 text-xs text-ink-muted">
+        {total || 0} {t('financeImports.batchCount')}
+      </div>
     </div>
   )
 }
@@ -217,7 +295,9 @@ function BatchDrawer({ batchId, onClose, open, t }) {
             ['errorCount', batch?.errorCount],
           ].map(([key, value]) => (
             <div key={key}>
-              <div className="text-xs uppercase text-ink-muted">{t(`financeImports.detail.${key}`)}</div>
+              <div className="text-xs uppercase text-ink-muted">
+                {t(`financeImports.detail.${key}`)}
+              </div>
               <div className="mt-1 font-medium text-ink-strong">{value ?? '-'}</div>
             </div>
           ))}
@@ -228,7 +308,10 @@ function BatchDrawer({ batchId, onClose, open, t }) {
           </Typography>
           <div className="space-y-2">
             {(batch?.errors || EMPTY_ROWS).map((item, index) => (
-              <div key={`${item.row || index}-${item.message}`} className="border border-border p-2 text-sm">
+              <div
+                key={`${item.row || index}-${item.message}`}
+                className="border border-border p-2 text-sm"
+              >
                 <div className="font-medium text-ink-strong">{item.row || '-'}</div>
                 <div className="text-ink-muted">{item.message}</div>
               </div>
@@ -285,9 +368,22 @@ export default function FinanceDataImportsPage() {
     shopId: '',
     salesChannelCode: '',
     marketplaceCode: '',
-    status: '',
     dateFrom: '',
     dateTo: '',
+  })
+  const [batchShopSearch, setBatchShopSearch] = useState('')
+  const [sourceShopSearch, setSourceShopSearch] = useState('')
+  const debouncedBatchShopSearch = useDebounce(batchShopSearch)
+  const debouncedSourceShopSearch = useDebounce(sourceShopSearch)
+  const batchShopsQuery = useShopsQuery({
+    search: debouncedBatchShopSearch,
+    status: 'ACTIVE',
+    limit: 20,
+  })
+  const sourceShopsQuery = useShopsQuery({
+    search: debouncedSourceShopSearch,
+    status: 'ACTIVE',
+    limit: 20,
   })
   const [importOpen, setImportOpen] = useState(false)
   const [importSourceType, setImportSourceType] = useState('ADS')
@@ -297,21 +393,43 @@ export default function FinanceDataImportsPage() {
   const sourceQuery = getFinanceImportedDataQuery(sourceFilters, page, pageSize)
   const batchesQuery = useFinanceImportBatchesQuery(batchQuery)
   const adsSummaryQuery = useFinanceImportBatchesQuery({ sourceType: 'ADS', limit: 1 })
-  const settlementsSummaryQuery = useFinanceImportBatchesQuery({ sourceType: 'SETTLEMENTS', limit: 1 })
-  const transactionsSummaryQuery = useFinanceImportBatchesQuery({ sourceType: 'TRANSACTIONS', limit: 1 })
+  const settlementsSummaryQuery = useFinanceImportBatchesQuery({
+    sourceType: 'SETTLEMENTS',
+    limit: 1,
+  })
+  const transactionsSummaryQuery = useFinanceImportBatchesQuery({
+    sourceType: 'TRANSACTIONS',
+    limit: 1,
+  })
   const importedDataQuery = useFinanceImportedDataQuery(sourceType, sourceQuery)
   const importMutation = useFinanceImportMutation()
   const reprocessMutation = useFinanceImportBatchReprocessMutation()
   const batches = batchesQuery.data?.items || EMPTY_ROWS
   const sourceRows = importedDataQuery.data?.items || EMPTY_ROWS
+  const marketplaces = useMemo(
+    () => [
+      ...new Set([...batches, ...sourceRows].map((row) => row.marketplaceCode).filter(Boolean)),
+    ],
+    [batches, sourceRows],
+  )
   const batchColumns = useMemo(
     () => [
       { key: 'sourceType', label: t('financeImports.table.sourceType'), width: '135px' },
       { key: 'originalFilename', label: t('financeImports.table.filename'), width: '220px' },
       { key: 'scope', label: t('financeImports.table.scope'), width: '210px' },
       { key: 'status', label: t('financeImports.table.status'), width: '140px', align: 'center' },
-      { key: 'processedRows', label: t('financeImports.table.processedRows'), width: '120px', align: 'right' },
-      { key: 'errorCount', label: t('financeImports.table.errorCount'), width: '100px', align: 'right' },
+      {
+        key: 'processedRows',
+        label: t('financeImports.table.processedRows'),
+        width: '120px',
+        align: 'right',
+      },
+      {
+        key: 'errorCount',
+        label: t('financeImports.table.errorCount'),
+        width: '100px',
+        align: 'right',
+      },
       { key: 'createdAt', label: t('financeImports.table.createdAt'), width: '180px' },
       { key: 'actions', label: t('financeImports.table.actions'), width: '170px', align: 'center' },
     ],
@@ -329,8 +447,14 @@ export default function FinanceDataImportsPage() {
   )
   const summaries = {
     ADS: { total: adsSummaryQuery.data?.total, batch: adsSummaryQuery.data?.items?.[0] },
-    SETTLEMENTS: { total: settlementsSummaryQuery.data?.total, batch: settlementsSummaryQuery.data?.items?.[0] },
-    TRANSACTIONS: { total: transactionsSummaryQuery.data?.total, batch: transactionsSummaryQuery.data?.items?.[0] },
+    SETTLEMENTS: {
+      total: settlementsSummaryQuery.data?.total,
+      batch: settlementsSummaryQuery.data?.items?.[0],
+    },
+    TRANSACTIONS: {
+      total: transactionsSummaryQuery.data?.total,
+      batch: transactionsSummaryQuery.data?.items?.[0],
+    },
   }
 
   function updateBatchFilter(key, value) {
@@ -357,16 +481,27 @@ export default function FinanceDataImportsPage() {
     importMutation.mutate(values, {
       onSuccess: () => {
         setImportOpen(false)
-        enqueueSnackbar(t('financeImports.messages.imported'), { variant: SNACKBAR_VARIANTS.SUCCESS })
+        enqueueSnackbar(t('financeImports.messages.imported'), {
+          variant: SNACKBAR_VARIANTS.SUCCESS,
+        })
       },
-      onError: () => enqueueSnackbar(t('financeImports.messages.importError'), { variant: SNACKBAR_VARIANTS.ERROR }),
+      onError: () =>
+        enqueueSnackbar(t('financeImports.messages.importError'), {
+          variant: SNACKBAR_VARIANTS.ERROR,
+        }),
     })
   }
 
   function reprocess(batchId) {
     reprocessMutation.mutate(batchId, {
-      onSuccess: () => enqueueSnackbar(t('financeImports.messages.reprocessed'), { variant: SNACKBAR_VARIANTS.SUCCESS }),
-      onError: () => enqueueSnackbar(t('financeImports.messages.reprocessError'), { variant: SNACKBAR_VARIANTS.ERROR }),
+      onSuccess: () =>
+        enqueueSnackbar(t('financeImports.messages.reprocessed'), {
+          variant: SNACKBAR_VARIANTS.SUCCESS,
+        }),
+      onError: () =>
+        enqueueSnackbar(t('financeImports.messages.reprocessError'), {
+          variant: SNACKBAR_VARIANTS.ERROR,
+        }),
     })
   }
 
@@ -374,15 +509,20 @@ export default function FinanceDataImportsPage() {
     if (column.key === 'status')
       return <StatusBadge tone={statusTone(row.status)}>{row.status || '-'}</StatusBadge>
     if (column.key === 'scope')
-      return [row.shopId, row.salesChannelCode, row.marketplaceCode].filter(Boolean).join(' · ') || '-'
+      return (
+        [row.shopId, row.salesChannelCode, row.marketplaceCode].filter(Boolean).join(' · ') || '-'
+      )
     if (column.key === 'createdAt') return formatDate(row.createdAt, i18n.language)
-    if (column.key === 'actions')
-      {
-        const actions = getFinanceImportBatchActions(currentUser, row.status)
+    if (column.key === 'actions') {
+      const actions = getFinanceImportBatchActions(currentUser, row.status)
 
       return (
         <div className="flex justify-center gap-1">
-          <Button size="small" startIcon={<VisibilityIcon />} onClick={() => setSelectedBatchId(row.id)}>
+          <Button
+            size="small"
+            startIcon={<VisibilityIcon />}
+            onClick={() => setSelectedBatchId(row.id)}
+          >
             {t('financeImports.actions.details')}
           </Button>
           {actions.includes('REPROCESS') ? (
@@ -397,19 +537,25 @@ export default function FinanceDataImportsPage() {
           ) : null}
         </div>
       )
-      }
+    }
     return row[column.key] ?? '-'
   }
 
   function renderSourceCell(row, column) {
     if (column.key === 'scope')
-      return [row.shopId, row.salesChannelCode, row.marketplaceCode].filter(Boolean).join(' · ') || '-'
+      return (
+        [row.shopId, row.salesChannelCode, row.marketplaceCode].filter(Boolean).join(' · ') || '-'
+      )
     if (column.key === 'createdAt') return formatDate(row.createdAt, i18n.language)
     if (column.key === 'actions') {
       const actions = getFinanceImportedDataActions()
 
       return actions.includes('DETAILS') ? (
-        <Button size="small" startIcon={<VisibilityIcon />} onClick={() => setSelectedSourceRow(row)}>
+        <Button
+          size="small"
+          startIcon={<VisibilityIcon />}
+          onClick={() => setSelectedSourceRow(row)}
+        >
           {t('financeImports.actions.details')}
         </Button>
       ) : null
@@ -419,6 +565,7 @@ export default function FinanceDataImportsPage() {
 
   return (
     <OperationsPageShell
+      className="-mx-4 md:-mx-6"
       header={
         <OperationsHeader
           title={t('financeImports.title')}
@@ -436,7 +583,12 @@ export default function FinanceDataImportsPage() {
                 {t('financeImports.actions.refresh')}
               </Button>
               {canWrite ? (
-                <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => openImport()}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => openImport()}
+                >
                   {t('financeImports.actions.import')}
                 </Button>
               ) : null}
@@ -458,20 +610,7 @@ export default function FinanceDataImportsPage() {
       }
       toolbar={
         <OperationsToolbar>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            {sourceTypes.map((value) => (
-              <SourceSummary
-                key={value}
-                batch={summaries[value].batch}
-                canWrite={canWrite}
-                onImport={openImport}
-                sourceType={value}
-                total={summaries[value].total}
-                t={t}
-              />
-            ))}
-          </div>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-7">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <FormControl size="small">
               <Select
                 displayEmpty
@@ -494,22 +633,20 @@ export default function FinanceDataImportsPage() {
               >
                 <MenuItem value="">{t('financeImports.filters.allStatuses')}</MenuItem>
                 {['PROCESSING', 'COMPLETED', 'PARTIAL_FAILED', 'FAILED'].map((value) => (
-                  <MenuItem key={value} value={value}>{value}</MenuItem>
+                  <MenuItem key={value} value={value}>
+                    {value}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            {['shopId', 'salesChannelCode', 'marketplaceCode', 'dateFrom', 'dateTo'].map((key) => (
-              <TextField
-                key={key}
-                size="small"
-                type={key.startsWith('date') ? 'date' : 'text'}
-                label={t(`financeImports.filters.${key === 'salesChannelCode' ? 'salesChannel' : key === 'marketplaceCode' ? 'marketplace' : key}`)}
-                value={batchFilters[key]}
-                onChange={(event) => updateBatchFilter(key, event.target.value)}
-                slotProps={key.startsWith('date') ? { inputLabel: { shrink: true } } : undefined}
-              />
-            ))}
           </div>
+          <ScopeFilters
+            filters={batchFilters}
+            marketplaces={marketplaces}
+            onChange={updateBatchFilter}
+            onShopSearch={setBatchShopSearch}
+            shopOptions={batchShopsQuery.data?.items || EMPTY_ROWS}
+          />
         </OperationsToolbar>
       }
       pagination={
@@ -521,12 +658,27 @@ export default function FinanceDataImportsPage() {
         />
       }
     >
-      <div className="space-y-4 overflow-auto">
-        {batchesQuery.isError ? <Alert severity="error">{t('financeImports.messages.loadError')}</Alert> : null}
-        <section>
-          <Typography variant="h6" className="mb-2 font-bold text-ink-strong">
+      <div className="h-full -mr-4 space-y-4 overflow-auto pr-4">
+        {batchesQuery.isError ? (
+          <Alert severity="error">{t('financeImports.messages.loadError')}</Alert>
+        ) : null}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          {sourceTypes.map((value) => (
+            <SourceSummary
+              key={value}
+              batch={summaries[value].batch}
+              canWrite={canWrite}
+              onImport={openImport}
+              sourceType={value}
+              total={summaries[value].total}
+              t={t}
+            />
+          ))}
+        </div>
+        <section className="rounded-lg border border-border bg-surface shadow-sm">
+          <h2 className="border-b border-border px-4 py-3 text-sm font-semibold text-ink-strong">
             {t('financeImports.batchTable')}
-          </Typography>
+          </h2>
           <OperationsTable
             columns={batchColumns}
             rows={batches}
@@ -537,22 +689,20 @@ export default function FinanceDataImportsPage() {
             minWidth="1280px"
           />
         </section>
-        <section>
-          <Typography variant="h6" className="mb-2 font-bold text-ink-strong">
-            {t('financeImports.sourceData.title', { source: t(`financeImports.sources.${sourceType}`) })}
-          </Typography>
-          <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-6">
-            {['shopId', 'salesChannelCode', 'marketplaceCode', 'status', 'dateFrom', 'dateTo'].map((key) => (
-              <TextField
-                key={key}
-                size="small"
-                type={key.startsWith('date') ? 'date' : 'text'}
-                label={t(`financeImports.filters.${key === 'salesChannelCode' ? 'salesChannel' : key === 'marketplaceCode' ? 'marketplace' : key}`)}
-                value={sourceFilters[key]}
-                onChange={(event) => updateSourceFilter(key, event.target.value)}
-                slotProps={key.startsWith('date') ? { inputLabel: { shrink: true } } : undefined}
-              />
-            ))}
+        <section className="rounded-lg border border-border bg-surface shadow-sm">
+          <h2 className="border-b border-border px-4 py-3 text-sm font-semibold text-ink-strong">
+            {t('financeImports.sourceData.title', {
+              source: t(`financeImports.sources.${sourceType}`),
+            })}
+          </h2>
+          <div className="border-b border-border p-3">
+            <ScopeFilters
+              filters={sourceFilters}
+              marketplaces={marketplaces}
+              onChange={updateSourceFilter}
+              onShopSearch={setSourceShopSearch}
+              shopOptions={sourceShopsQuery.data?.items || EMPTY_ROWS}
+            />
           </div>
           <OperationsTable
             columns={sourceColumns}

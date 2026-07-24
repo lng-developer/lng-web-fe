@@ -124,7 +124,7 @@ finance|GET|/api/finance/orders/:orderId/summary
 design|GET|/api/design/assignees
 design|GET|/api/design/score-summary
 design|PATCH|/api/design/submission-scores/:scoreId/override
-design|PATCH|/api/design/tasks/:taskId/submissions/:submissionId/score/void
+design|PATCH|/api/design/tasks/:taskId/submissions/:submissionId/assets/:assetId/score/void
 design|GET|/api/design/tasks
 design|GET|/api/design/tasks/summary
 design|GET|/api/design/tasks/workload

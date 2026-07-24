@@ -25,6 +25,10 @@ const viLocale = JSON.parse(
 test('HomePage composes the commercial operations dashboard', async () => {
   assert.match(homePageSource, /useHomeDashboardQuery/)
   assert.match(homePageSource, /OperationsPageShell/)
+  assert.match(homePageSource, /className="-mx-4 bg-surface-subtle px-6 md:-mx-6"/)
+  assert.match(homePageSource, /className="-mx-6 h-full overflow-y-auto px-6"/)
+  assert.doesNotMatch(homePageSource, /max-w-\[(?:1440|1520)px\]/)
+  assert.doesNotMatch(homePageSource, /max-w-\[1520px\][^"]*overflow-y-auto/)
   assert.match(homePageSource, /OperationsHeader/)
   assert.match(homePageSource, /DailyProfitChart/)
   assert.match(homePageSource, /ChannelProfitChart/)

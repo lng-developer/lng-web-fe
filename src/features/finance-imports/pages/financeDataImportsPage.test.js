@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 import { filterNavigationByUser, SIDEBAR_NAVIGATION } from '../../../layouts/sidebarNavigation.js'
@@ -28,14 +29,24 @@ test('finance imports navigation is visible with read access', () => {
 })
 
 test('finance import actions stay read-only unless write access and a failed batch allow reprocessing', () => {
-  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:READ'] }, 'FAILED'), ['DETAILS'])
-  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'COMPLETED'), ['DETAILS'])
-  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'PARTIAL_FAILED'), [
+  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:READ'] }, 'FAILED'), [
     'DETAILS',
-    'REPROCESS',
   ])
-  assert.equal(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'FAILED').includes('EDIT'), false)
-  assert.equal(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'FAILED').includes('DELETE'), false)
+  assert.deepEqual(getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'COMPLETED'), [
+    'DETAILS',
+  ])
+  assert.deepEqual(
+    getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'PARTIAL_FAILED'),
+    ['DETAILS', 'REPROCESS'],
+  )
+  assert.equal(
+    getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'FAILED').includes('EDIT'),
+    false,
+  )
+  assert.equal(
+    getFinanceImportBatchActions({ permissions: ['FINANCE:WRITE'] }, 'FAILED').includes('DELETE'),
+    false,
+  )
 })
 
 test('finance import source summaries expose the latest status and row/error counts', () => {
@@ -46,10 +57,12 @@ test('finance import source summaries expose the latest status and row/error cou
 })
 
 test('finance import source summaries distinguish an empty source from a processing batch', () => {
-  assert.deepEqual(
-    getFinanceImportBatchSummary(),
-    { hasBatch: false, status: null, importedRows: 0, errorCount: 0 },
-  )
+  assert.deepEqual(getFinanceImportBatchSummary(), {
+    hasBatch: false,
+    status: null,
+    importedRows: 0,
+    errorCount: 0,
+  })
 })
 
 test('finance imports persist by default', () => {
@@ -57,15 +70,27 @@ test('finance imports persist by default', () => {
 })
 
 test('finance imports use the selected filename as the default source reference', () => {
-  const values = getFinanceImportFileValues(getFinanceImportDefaults('ADS'), { name: 'ads-report.csv' })
+  const values = getFinanceImportFileValues(getFinanceImportDefaults('ADS'), {
+    name: 'ads-report.csv',
+  })
 
   assert.equal(values.sourceRef, 'ads-report.csv')
 })
 
 test('imported data query preserves the status filter and exposes only read details', () => {
-  assert.deepEqual(
-    getFinanceImportedDataQuery({ shopId: 'shop-1', status: 'POSTED' }, 2, 20),
-    { shopId: 'shop-1', status: 'POSTED', page: 2, limit: 20 },
-  )
+  assert.deepEqual(getFinanceImportedDataQuery({ shopId: 'shop-1', status: 'POSTED' }, 2, 20), {
+    shopId: 'shop-1',
+    status: 'POSTED',
+    page: 2,
+    limit: 20,
+  })
   assert.deepEqual(getFinanceImportedDataActions(), ['DETAILS'])
+})
+
+test('finance imports page uses shared filter controls and card workspaces', () => {
+  const source = readFileSync(new URL('./FinanceDataImportsPage.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('<Autocomplete'), true)
+  assert.equal(source.includes('<DateRangePicker'), true)
+  assert.equal(source.includes('rounded-lg border border-border bg-surface shadow-sm'), true)
 })

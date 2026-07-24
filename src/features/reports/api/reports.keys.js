@@ -1,6 +1,8 @@
 export const reportsKeys = {
   all: ['reports'],
   adsChannelPerformance: (query = {}) => [...reportsKeys.all, 'ads', 'channel-performance', query],
+  adsBySeller: (query = {}) => [...reportsKeys.all, 'ads', 'by-seller', query],
+  adsDaily: (query = {}) => [...reportsKeys.all, 'ads', 'daily', query],
   buyerInsights: (query = {}) => [...reportsKeys.all, 'buyers', 'insights', query],
   dailyProfit: (query = {}) => [...reportsKeys.all, 'finance', 'daily-profit', query],
   bySeller: (query = {}) => [...reportsKeys.all, 'finance', 'by-seller', query],

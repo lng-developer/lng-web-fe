@@ -36,6 +36,19 @@ export function useAdsChannelPerformanceQuery(query = {}, options = {}) {
   )
 }
 
+export function useAdsSellerAttributionQuery(query = {}, options = {}) {
+  return useReportQuery(
+    reportsKeys.adsBySeller(query),
+    ENDPOINTS.REPORTS.ADS_BY_SELLER,
+    query,
+    options,
+  )
+}
+
+export function useAdsDailyQuery(query = {}, options = {}) {
+  return useReportQuery(reportsKeys.adsDaily(query), ENDPOINTS.REPORTS.ADS_DAILY, query, options)
+}
+
 export function useBuyerInsightsQuery(query = {}, options = {}) {
   return useReportQuery(
     reportsKeys.buyerInsights(query),

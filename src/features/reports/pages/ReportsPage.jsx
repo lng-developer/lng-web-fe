@@ -1,9 +1,20 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import { Alert, Button, Chip, FormControl, MenuItem, Select, TextField } from '@mui/material'
+import {
+  Alert,
+  Autocomplete,
+  Button,
+  Chip,
+  FormControl,
+  MenuItem,
+  Select,
+  TextField,
+} from '@mui/material'
+import { useQueryClient } from '@tanstack/react-query'
 
+import DateRangePicker from '@/components/form/DateRangePicker'
 import {
   OperationsHeader,
   OperationsPageShell,
@@ -11,21 +22,26 @@ import {
   OperationsTabs,
   OperationsToolbar,
 } from '@/components/operations'
+import { hasAllPermissions } from '@/features/auth/utils/authz'
 import {
+  useAdsChannelPerformanceQuery,
   useFinanceBySellerQuery,
   useFinanceByTeamQuery,
   useFinanceDailyProfitQuery,
 } from '@/features/reports/api/reports.queries'
+import AdsReportView from '@/features/reports/components/AdsReportView'
 import ChannelProfitChart from '@/features/reports/components/ChannelProfitChart'
 import DailyProfitChart from '@/features/reports/components/DailyProfitChart'
+import DimensionProfitChart from '@/features/reports/components/DimensionProfitChart'
+import FinancialMetricCards from '@/features/reports/components/FinancialMetricCards'
+import { getAdsFilterOptions } from '@/features/reports/utils/adsReport'
+import { fromReportDateRange, toReportDateRange } from '@/features/reports/utils/reportDateRange'
+import { useShopDetailQuery, useShopsQuery } from '@/features/shops/api/shops.queries'
+import { useDebounce } from '@/hooks/useDebounce'
+import { useAuthStore } from '@/store/useAuthStore'
 import { formatCurrency } from '@/utils/format'
 
 const EMPTY_ROWS = []
-
-function getChannel(search) {
-  const channel = new URLSearchParams(search).get('channel')
-  return channel ? channel.toUpperCase() : ''
-}
 
 function compactQuery(value) {
   return Object.fromEntries(
@@ -42,12 +58,14 @@ function currencyTotals(rows, includeAds) {
     const currency = row.currency || 'USD'
     const current = result[currency] || {
       revenue: 0,
+      baseCost: 0,
       grossProfit: 0,
       adSpend: 0,
       netProfit: 0,
       missingCost: 0,
     }
     current.revenue += Number(row.revenueAmount || 0)
+    current.baseCost += Number(row.baseCostAmount || 0)
     current.grossProfit += Number(row.grossProfitAmount || 0)
     current.adSpend += includeAds ? Number(row.adSpendAmount || 0) : 0
     current.netProfit += includeAds
@@ -57,6 +75,32 @@ function currencyTotals(rows, includeAds) {
     result[currency] = current
     return result
   }, {})
+}
+
+function reportMetrics(total, rows, view, currency, language, t) {
+  const money = (amount) => formatMoney(amount, currency, language)
+  if (view === 'daily') {
+    return [
+      [t('financialReports.revenue'), money(total.revenue)],
+      [t('financialReports.table.baseCost'), money(total.baseCost)],
+      [t('financialReports.grossProfit'), money(total.grossProfit)],
+      [t('financialReports.table.adSpend'), money(total.adSpend)],
+      [t('financialReports.netProfit'), money(total.netProfit)],
+    ]
+  }
+  return [
+    [t('financialReports.revenue'), money(total.revenue)],
+    [t('financialReports.table.baseCost'), money(total.baseCost)],
+    [t('financialReports.grossProfit'), money(total.grossProfit)],
+    [
+      t('financialReports.table.grossMargin'),
+      total.revenue ? `${((total.grossProfit / total.revenue) * 100).toFixed(2)}%` : '-',
+    ],
+    [
+      t('financialReports.table.items'),
+      rows.reduce((sum, row) => sum + Number(row.itemCount || 0), 0),
+    ],
+  ]
 }
 
 function groupByCurrency(rows) {
@@ -69,28 +113,68 @@ function groupByCurrency(rows) {
 
 export default function ReportsPage() {
   const { t, i18n } = useTranslation()
-  const location = useLocation()
-  const [view, setView] = useState('daily')
+  const queryClient = useQueryClient()
+  const currentUser = useAuthStore((state) => state.currentUser)
+  const canReadFinance = hasAllPermissions(currentUser, ['FINANCE:READ'])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedView = searchParams.get('report')
+  const [view, setView] = useState(
+    ['daily', 'seller', 'team', 'ads'].includes(requestedView) ? requestedView : 'daily',
+  )
   const [filters, setFilters] = useState(() => ({
-    salesChannelCode: getChannel(location.search),
-    shopId: '',
-    marketplaceCode: '',
-    dateFrom: '',
-    dateTo: '',
+    salesChannelCode: (searchParams.get('channel') || '').toUpperCase(),
+    shopId: searchParams.get('shopId') || '',
+    marketplaceCode: (searchParams.get('marketplace') || '').toUpperCase(),
+    sellerEmployeeCode: (searchParams.get('seller') || '').toUpperCase(),
+    teamId: searchParams.get('teamId') || '',
+    dateFrom: searchParams.get('dateFrom') || '',
+    dateTo: searchParams.get('dateTo') || '',
   }))
+  const [shopSearch, setShopSearch] = useState('')
+  const debouncedShopSearch = useDebounce(shopSearch)
   const query = compactQuery(filters)
   const dailyQuery = useFinanceDailyProfitQuery(query, { enabled: view === 'daily' })
   const sellerQuery = useFinanceBySellerQuery(query, { enabled: view === 'seller' })
   const teamQuery = useFinanceByTeamQuery(query, { enabled: view === 'team' })
-  const activeQuery = view === 'daily' ? dailyQuery : view === 'seller' ? sellerQuery : teamQuery
+  const optionQuery = useAdsChannelPerformanceQuery(
+    compactQuery({ shopId: filters.shopId, dateFrom: filters.dateFrom, dateTo: filters.dateTo }),
+  )
+  const shopsQuery = useShopsQuery({ search: debouncedShopSearch, status: 'ACTIVE', limit: 20 })
+  const selectedShopQuery = useShopDetailQuery(filters.shopId)
+  const filterOptions = useMemo(
+    () => getAdsFilterOptions(optionQuery.data || EMPTY_ROWS, filters.salesChannelCode),
+    [filters.salesChannelCode, optionQuery.data],
+  )
+  const shopOptions = shopsQuery.data?.items || EMPTY_ROWS
+  const selectedShop =
+    shopOptions.find((shop) => shop.id === filters.shopId) || selectedShopQuery.data || null
+  const activeQuery =
+    view === 'daily'
+      ? dailyQuery
+      : view === 'seller'
+        ? sellerQuery
+        : view === 'team'
+          ? teamQuery
+          : optionQuery
   const rows = activeQuery.data || EMPTY_ROWS
-  const includeAds = view === 'daily'
-  const totals = useMemo(() => currencyTotals(rows, includeAds), [includeAds, rows])
-  const dailyChartGroups = useMemo(() => groupByCurrency(rows), [rows])
+  const currencyGroups = useMemo(() => groupByCurrency(rows), [rows])
+  const sellerOptions = useMemo(
+    () => [
+      ...new Map(
+        rows.filter((row) => row.sellerEmployeeCode).map((row) => [row.sellerEmployeeCode, row]),
+      ).values(),
+    ],
+    [rows],
+  )
+  const teamOptions = useMemo(
+    () => [...new Map(rows.filter((row) => row.teamId).map((row) => [row.teamId, row])).values()],
+    [rows],
+  )
   const tabs = [
     { value: 'daily', label: t('financialReports.tabs.daily') },
     { value: 'seller', label: t('financialReports.tabs.seller') },
     { value: 'team', label: t('financialReports.tabs.team') },
+    { value: 'ads', label: t('financialReports.tabs.ads') },
   ]
   const columns = useMemo(() => {
     const moneyColumn = (key, label) => ({ key, label: t(label), width: '150px', align: 'right' })
@@ -149,7 +233,63 @@ export default function ReportsPage() {
   }, [t, view])
 
   function updateFilter(key, value) {
-    setFilters((current) => ({ ...current, [key]: value }))
+    const next = {
+      ...filters,
+      [key]: value,
+      ...(key === 'salesChannelCode' ? { marketplaceCode: '' } : {}),
+    }
+    setFilters(next)
+    setSearchParams(
+      compactQuery({
+        report: view,
+        channel: next.salesChannelCode.toLowerCase(),
+        shopId: next.shopId,
+        marketplace: next.marketplaceCode.toLowerCase(),
+        seller: next.sellerEmployeeCode.toLowerCase(),
+        teamId: next.teamId,
+        dateFrom: next.dateFrom,
+        dateTo: next.dateTo,
+      }),
+    )
+  }
+
+  function updateView(nextView) {
+    setView(nextView)
+    setSearchParams(
+      compactQuery({
+        report: nextView,
+        channel: filters.salesChannelCode.toLowerCase(),
+        shopId: filters.shopId,
+        marketplace: filters.marketplaceCode.toLowerCase(),
+        seller: filters.sellerEmployeeCode.toLowerCase(),
+        teamId: filters.teamId,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+      }),
+    )
+  }
+
+  function updateDateRange(range) {
+    const next = { ...filters, ...fromReportDateRange(range) }
+    setFilters(next)
+    setSearchParams(
+      compactQuery({
+        report: view,
+        channel: next.salesChannelCode.toLowerCase(),
+        shopId: next.shopId,
+        marketplace: next.marketplaceCode.toLowerCase(),
+        seller: next.sellerEmployeeCode.toLowerCase(),
+        teamId: next.teamId,
+        dateFrom: next.dateFrom,
+        dateTo: next.dateTo,
+      }),
+    )
+  }
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ['reports'] })
+    if (view === 'ads' && canReadFinance)
+      queryClient.invalidateQueries({ queryKey: ['finance-imports'] })
   }
 
   function renderCell(row, column) {
@@ -187,6 +327,7 @@ export default function ReportsPage() {
 
   return (
     <OperationsPageShell
+      className="-mx-4 md:-mx-6"
       header={
         <OperationsHeader
           title={t('financialReports.title')}
@@ -195,7 +336,7 @@ export default function ReportsPage() {
             <Button
               size="small"
               startIcon={<RefreshIcon />}
-              onClick={() => activeQuery.refetch()}
+              onClick={refresh}
               disabled={activeQuery.isFetching}
             >
               {t('financialReports.refresh')}
@@ -203,10 +344,12 @@ export default function ReportsPage() {
           }
         />
       }
-      tabs={<OperationsTabs items={tabs} value={view} onChange={setView} variant="underline" />}
+      tabs={<OperationsTabs items={tabs} value={view} onChange={updateView} variant="underline" />}
       toolbar={
         <OperationsToolbar>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-5">
+          <div
+            className={`grid grid-cols-1 gap-2 md:grid-cols-2 ${view === 'daily' ? 'xl:grid-cols-4' : 'xl:grid-cols-5'}`}
+          >
             <FormControl size="small">
               <Select
                 displayEmpty
@@ -214,115 +357,166 @@ export default function ReportsPage() {
                 onChange={(event) => updateFilter('salesChannelCode', event.target.value)}
               >
                 <MenuItem value="">{t('financialReports.filters.allChannels')}</MenuItem>
-                <MenuItem value="AMAZON">Amazon</MenuItem>
-                <MenuItem value="ETSY">Etsy</MenuItem>
+                {[
+                  ...new Set([filters.salesChannelCode, ...filterOptions.channels].filter(Boolean)),
+                ].map((channel) => (
+                  <MenuItem key={channel} value={channel}>
+                    {channel}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
-            <TextField
+            <Autocomplete
               size="small"
-              label={t('financialReports.filters.shopId')}
-              value={filters.shopId}
-              onChange={(event) => updateFilter('shopId', event.target.value)}
+              options={shopOptions}
+              value={selectedShop}
+              getOptionLabel={(shop) => shop.name || ''}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onInputChange={(_, value, reason) => reason !== 'reset' && setShopSearch(value)}
+              onChange={(_, shop) => {
+                updateFilter('shopId', shop?.id || '')
+                setShopSearch(shop?.name || '')
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label={t('financialReports.filters.shop')} />
+              )}
             />
-            <TextField
-              size="small"
-              label={t('financialReports.filters.marketplace')}
-              value={filters.marketplaceCode}
-              onChange={(event) => updateFilter('marketplaceCode', event.target.value)}
+            <FormControl size="small">
+              <Select
+                displayEmpty
+                value={filters.marketplaceCode}
+                onChange={(event) => updateFilter('marketplaceCode', event.target.value)}
+              >
+                <MenuItem value="">{t('financialReports.filters.allMarketplaces')}</MenuItem>
+                {[
+                  ...new Set(
+                    [filters.marketplaceCode, ...filterOptions.marketplaces].filter(Boolean),
+                  ),
+                ].map((marketplace) => (
+                  <MenuItem key={marketplace} value={marketplace}>
+                    {marketplace}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <DateRangePicker
+              fullWidth
+              value={toReportDateRange(filters)}
+              onChange={updateDateRange}
+              onClear={updateDateRange}
             />
-            <TextField
-              size="small"
-              type="date"
-              label={t('financialReports.filters.dateFrom')}
-              value={filters.dateFrom}
-              onChange={(event) => updateFilter('dateFrom', event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              size="small"
-              type="date"
-              label={t('financialReports.filters.dateTo')}
-              value={filters.dateTo}
-              onChange={(event) => updateFilter('dateTo', event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </div>
-          <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-            {Object.entries(totals).map(([currency, total]) => (
-              <div key={currency} className="border border-border bg-surface px-3 py-2">
-                <div className="text-xs font-medium uppercase text-ink-muted">{currency}</div>
-                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-strong">
-                  <span>
-                    {t('financialReports.revenue')}:{' '}
-                    <strong>{formatMoney(total.revenue, currency, i18n.language)}</strong>
-                  </span>
-                  <span>
-                    {t('financialReports.grossProfit')}:{' '}
-                    <strong>{formatMoney(total.grossProfit, currency, i18n.language)}</strong>
-                  </span>
-                  {includeAds ? (
-                    <span>
-                      {t('financialReports.netProfit')}:{' '}
-                      <strong>{formatMoney(total.netProfit, currency, i18n.language)}</strong>
-                    </span>
-                  ) : null}
-                  {total.missingCost ? (
-                    <span className="text-warning">
-                      {t('financialReports.missingCost', { count: total.missingCost })}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            ))}
+            {view === 'seller' ? (
+              <FormControl size="small">
+                <Select
+                  displayEmpty
+                  value={filters.sellerEmployeeCode}
+                  onChange={(event) => updateFilter('sellerEmployeeCode', event.target.value)}
+                >
+                  <MenuItem value="">All sellers</MenuItem>
+                  {sellerOptions.map((seller) => (
+                    <MenuItem key={seller.sellerEmployeeCode} value={seller.sellerEmployeeCode}>
+                      {seller.sellerName || seller.sellerEmployeeCode}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : null}
+            {view === 'team' ? (
+              <FormControl size="small">
+                <Select
+                  displayEmpty
+                  value={filters.teamId}
+                  onChange={(event) => updateFilter('teamId', event.target.value)}
+                >
+                  <MenuItem value="">All teams</MenuItem>
+                  {teamOptions.map((team) => (
+                    <MenuItem key={team.teamId} value={team.teamId}>
+                      {team.teamName || team.teamCode}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : null}
           </div>
         </OperationsToolbar>
       }
     >
-      <div className="h-full overflow-auto">
-        {activeQuery.isError ? (
+      <div className="h-full -mr-4 overflow-auto pr-4">
+        {view !== 'ads' && activeQuery.isError ? (
           <Alert severity="error" className="mb-3">
             {t('financialReports.loadError')}
           </Alert>
         ) : null}
-        {view === 'daily' && rows.length ? (
-          <div className="mb-3 grid gap-3">
-            {Object.entries(dailyChartGroups).map(([currency, currencyRows]) => (
-              <div key={currency} className="grid gap-3">
-                <DailyProfitChart
-                  currency={currency}
-                  labels={{
-                    title: t('financialReports.chart.title'),
-                    revenue: t('financialReports.revenue'),
-                    grossProfit: t('financialReports.grossProfit'),
-                    netProfit: t('financialReports.netProfit'),
-                    netMargin: t('financialReports.table.netMargin'),
-                  }}
-                  language={i18n.language}
-                  rows={currencyRows}
-                />
-                <ChannelProfitChart
-                  currency={currency}
-                  labels={{ title: t('financialReports.chart.channelTitle') }}
-                  language={i18n.language}
-                  rows={currencyRows}
-                />
-              </div>
-            ))}
-          </div>
-        ) : null}
-        <OperationsTable
-          columns={columns}
-          rows={rows}
-          getRowKey={(row) =>
-            [row.date, row.shopId, row.sellerEmployeeCode, row.teamId, row.currency]
-              .filter(Boolean)
-              .join('-')
-          }
-          renderCell={renderCell}
-          loading={activeQuery.isLoading}
-          emptyTitle={t('financialReports.empty')}
-          minWidth="1120px"
-        />
+        {view !== 'ads'
+          ? Object.entries(currencyGroups).map(([currency, currencyRows]) => {
+              const total = currencyTotals(currencyRows, view === 'daily')[currency]
+              const dimensionTitle =
+                view === 'seller' ? 'Gross profit by seller' : 'Gross profit by team'
+              return (
+                <section key={currency} className="mb-3 grid gap-3">
+                  <FinancialMetricCards
+                    currency={currency}
+                    metrics={reportMetrics(total, currencyRows, view, currency, i18n.language, t)}
+                  />
+                  {view === 'daily' ? (
+                    <div className="grid gap-3">
+                      <DailyProfitChart
+                        currency={currency}
+                        labels={{
+                          title: t('financialReports.chart.title'),
+                          revenue: t('financialReports.revenue'),
+                          grossProfit: t('financialReports.grossProfit'),
+                          netProfit: t('financialReports.netProfit'),
+                          netMargin: t('financialReports.table.netMargin'),
+                        }}
+                        language={i18n.language}
+                        rows={currencyRows}
+                      />
+                      <ChannelProfitChart
+                        currency={currency}
+                        labels={{ title: t('financialReports.chart.channelTitle') }}
+                        language={i18n.language}
+                        rows={currencyRows}
+                      />
+                    </div>
+                  ) : (
+                    <DimensionProfitChart
+                      currency={currency}
+                      language={i18n.language}
+                      rows={currencyRows}
+                      title={dimensionTitle}
+                    />
+                  )}
+                </section>
+              )
+            })
+          : null}
+        {view === 'ads' ? (
+          <AdsReportView canReadFinance={canReadFinance} filters={query} />
+        ) : (
+          <section className="rounded-lg border border-border bg-surface shadow-sm">
+            <h2 className="border-b border-border px-4 py-3 text-sm font-semibold text-ink-strong">
+              {view === 'daily'
+                ? 'Daily profit records'
+                : view === 'seller'
+                  ? 'Seller performance'
+                  : 'Team performance'}
+            </h2>
+            <OperationsTable
+              columns={columns}
+              rows={rows}
+              getRowKey={(row) =>
+                [row.date, row.shopId, row.sellerEmployeeCode, row.teamId, row.currency]
+                  .filter(Boolean)
+                  .join('-')
+              }
+              renderCell={renderCell}
+              loading={activeQuery.isLoading}
+              emptyTitle={t('financialReports.empty')}
+              minWidth="1120px"
+            />
+          </section>
+        )}
       </div>
     </OperationsPageShell>
   )

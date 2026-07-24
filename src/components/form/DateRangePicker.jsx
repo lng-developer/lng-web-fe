@@ -102,17 +102,17 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
               sx={{
                 color: isEdge ? 'common.white' : !isCurrentMonth ? 'text.disabled' : 'text.primary',
                 bgcolor: isEdge ? 'primary.main' : isInRange ? 'primary.light' : 'transparent',
-                borderRadius: isEdge ? '50%' : 0,
+                borderRadius: isEdge ? 1 : 0,
                 border: isToday && !isEdge ? '1px solid' : 'none',
                 borderColor: 'primary.main',
                 '&:focus-visible': {
                   outline: '2px solid',
                   outlineColor: 'primary.main',
                   outlineOffset: 2,
-                  borderRadius: '50%',
+                  borderRadius: 1,
                 },
                 '&:hover:not(.Mui-disabled)': !isEdge
-                  ? { bgcolor: isInRange ? 'primary.light' : 'action.hover', borderRadius: '50%' }
+                  ? { bgcolor: isInRange ? 'primary.light' : 'action.hover', borderRadius: 1 }
                   : undefined,
               }}
             >
@@ -133,6 +133,7 @@ function MonthGrid({ monthStart, locale, range, hoverDay, onDayHover, onDayClick
 export default function DateRangePicker({
   value = { start: null, end: null },
   onChange,
+  onClear,
   label,
   placeholder,
   error,
@@ -176,7 +177,11 @@ export default function DateRangePicker({
     })
   }
 
-  const handleClear = () => setDraft({ start: null, end: null })
+  const handleClear = () => {
+    const nextRange = { start: null, end: null }
+    setDraft(nextRange)
+    onClear?.(nextRange)
+  }
 
   const handleApply = () => {
     onChange?.(draft)
@@ -250,7 +255,7 @@ export default function DateRangePicker({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         slotProps={{
           paper: {
-            className: 'mt-2 rounded-3xl p-4 shadow-lg',
+            className: 'mt-2 rounded-lg p-4 shadow-lg',
           },
         }}
       >

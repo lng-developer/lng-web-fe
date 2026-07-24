@@ -2886,12 +2886,19 @@
     "missingCost": "{{count}} missing cost",
     "loadError": "Unable to load financial reports.",
     "empty": "No report data found.",
-    "tabs": { "daily": "Daily profit", "seller": "By seller", "team": "By team" },
+    "tabs": {
+      "daily": "Daily profit",
+      "seller": "By seller",
+      "team": "By team",
+      "ads": "Ads performance"
+    },
     "chart": { "title": "Daily performance", "channelTitle": "Net profit by channel" },
     "filters": {
       "allChannels": "All channels",
+      "shop": "Search shop",
       "shopId": "Shop ID",
       "marketplace": "Marketplace",
+      "allMarketplaces": "All marketplaces",
       "dateFrom": "Date from",
       "dateTo": "Date to"
     },
@@ -2909,6 +2916,28 @@
       "netProfit": "Net profit",
       "netMargin": "Net margin",
       "missingCost": "Missing cost"
+    },
+    "ads": {
+      "spend": "Ad spend",
+      "sales": "Attributed sales",
+      "clicks": "Clicks",
+      "orders": "Orders",
+      "conversion": "Conversion",
+      "quality": "Data quality",
+      "status": "Status",
+      "trend": "Ads spend and attributed sales",
+      "channelPerformance": "Channel performance",
+      "sellerAttribution": "Seller attribution",
+      "importHealth": "Import health",
+      "evidence": "Campaign evidence",
+      "rows": "rows",
+      "table": { "channel": "Channel / market", "campaign": "Campaign" },
+      "qualityStates": {
+        "READY": "Ready",
+        "UNASSIGNED_SELLER": "Unassigned seller",
+        "PARTIAL_IMPORT": "Partial import",
+        "FAILED_IMPORT": "Failed import"
+      }
     }
   }
 }

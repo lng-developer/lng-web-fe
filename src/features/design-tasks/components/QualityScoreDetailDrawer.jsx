@@ -135,7 +135,7 @@ export default function QualityScoreDetailDrawer({
             canReview={canReview}
             isSubmitting={isSubmitting}
             onOverride={onOverride}
-            onVoid={(voidReason) => onVoid(row.task.id, row.submission.id, voidReason)}
+            onVoid={(voidReason) => onVoid(row.task.id, row.submission.id, row.assetId, voidReason)}
           />
         </div>
       </div>
