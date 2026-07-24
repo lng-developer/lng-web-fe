@@ -2,7 +2,19 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 
-const source = readFileSync(new URL('./ListingPage.jsx', import.meta.url), 'utf8')
+const listingsPageUrl = new URL('./ListingsPage.jsx', import.meta.url)
+const listingsPageExists = existsSync(listingsPageUrl)
+const source = listingsPageExists ? readFileSync(listingsPageUrl, 'utf8') : ''
+const routesSource = readFileSync(new URL('../../../routes/index.jsx', import.meta.url), 'utf8')
+const routeConstantsSource = readFileSync(
+  new URL('../../../constants/routes.js', import.meta.url),
+  'utf8',
+)
+const sidebarSource = readFileSync(
+  new URL('../../../layouts/sidebarNavigation.js', import.meta.url),
+  'utf8',
+)
+const listingViewUrl = new URL('../utils/listingView.js', import.meta.url)
 const internalTemplatesPageUrl = new URL('./InternalTemplatesPage.jsx', import.meta.url)
 const internalTemplatesPageExists = existsSync(internalTemplatesPageUrl)
 const productTypesPageUrl = new URL('./ProductTypesPage.jsx', import.meta.url)
@@ -16,6 +28,24 @@ const internalTemplateDialogSource = readFileSync(
 )
 
 describe('ListingPage composition', () => {
+  it('routes each catalog page independently behind catalog read access', () => {
+    assert.equal(listingsPageExists, true)
+    for (const [page, route] of [
+      ['ListingsPage', 'PORTAL_LISTINGS'],
+      ['ProductTypesPage', 'PORTAL_PRODUCT_TYPES'],
+      ['InternalTemplatesPage', 'PORTAL_INTERNAL_TEMPLATES'],
+    ]) {
+      assert.equal(routesSource.includes(`const ${page} = lazy(`), true)
+      assert.equal(routesSource.includes(`<${page} />`), true)
+      assert.equal(routeConstantsSource.includes(`${route}:`), true)
+      assert.equal(sidebarSource.includes(`path: ROUTES.${route}`), true)
+    }
+
+    assert.equal(routesSource.match(/\['CATALOG:READ'\]/g)?.length, 4)
+    assert.equal(sidebarSource.includes('?view='), false)
+    assert.equal(existsSync(listingViewUrl), false)
+  })
+
   it('composes catalog dialogs from reusable components', () => {
     assert.equal(source.includes("from '../components/dialogs/ListingDialog'"), true)
     assert.equal(internalTemplatesPageExists, true)
@@ -112,6 +142,8 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes("onChange('psdStatus'"), false)
     assert.equal(source.includes('listing.psdReadinessSource'), true)
     assert.equal(source.includes('listing.psdNextAction'), true)
+    assert.equal(source.includes('<Badge tone="green">Ready</Badge>'), true)
+    assert.equal(source.includes('>Not required</span>'), true)
   })
 
   it('lets operators set whether an internal template requires a PSD', () => {

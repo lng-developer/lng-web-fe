@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
@@ -52,9 +51,6 @@ import {
 } from '../api/listings.queries'
 import ListingDialog from '../components/dialogs/ListingDialog'
 import { buildListingFormPayload, mapListingStats } from '../utils/listingsApi'
-import { getListingWorkspaceView, LISTING_WORKSPACE_VIEWS } from '../utils/listingView'
-import InternalTemplatesPage from './InternalTemplatesPage'
-import ProductTypesPage from './ProductTypesPage'
 
 const DEFAULT_LIMIT = 10
 
@@ -229,12 +225,9 @@ function canSubmitListing(values, mode) {
   )
 }
 
-export default function ListingPage() {
+export default function ListingsPage() {
   const { i18n, t } = useTranslation()
-  const location = useLocation()
   const { enqueueSnackbar } = useSnackbar()
-  const workspaceView = getListingWorkspaceView(location.search)
-  const showListingManagement = workspaceView === LISTING_WORKSPACE_VIEWS.LISTINGS
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
   const [shop, setShop] = useState('all')
@@ -496,10 +489,10 @@ export default function ListingPage() {
         <div className="flex flex-col items-center gap-1">
           {listing.psdReadinessStatus === 'MISSING' ? (
             <Badge tone="orange">Missing</Badge>
+          ) : listing.psdReadinessStatus === 'PRESENT' ? (
+            <Badge tone="green">Ready</Badge>
           ) : (
-            <span className="text-sm text-ink-secondary">
-              {listing.psdReadinessStatus === 'NOT_REQUIRED' ? 'Not required' : 'Ready'}
-            </span>
+            <span className="text-sm text-ink-secondary">Not required</span>
           )}
           <span className="text-xs text-ink-muted">
             {listing.psdReadinessSource
@@ -631,384 +624,371 @@ export default function ListingPage() {
     return null
   }
 
-  if (workspaceView === LISTING_WORKSPACE_VIEWS.PRODUCT_TYPES) return <ProductTypesPage />
-  if (workspaceView === LISTING_WORKSPACE_VIEWS.INTERNAL_TEMPLATES) {
-    return <InternalTemplatesPage />
-  }
-
   return (
     <div className="min-h-full bg-page px-4 pt-0 pb-3">
-      {showListingManagement ? (
-        <>
-          <header className="flex flex-wrap items-end justify-between gap-2 py-3">
-            <div>
-              <Typography component="h1" variant="h5" className="font-bold text-ink-strong">
-                {t('listings.title')}
-              </Typography>
-              <Typography variant="body2" className="mt-0.5 text-ink-muted">
-                {t('listings.management.description', {
-                  defaultValue: 'Manage marketplace listings, templates, and PSD readiness.',
-                })}
-              </Typography>
-            </div>
-          </header>
-          <section className="grid gap-3 md:grid-cols-3">
-            {listingStats.map((stat) => (
-              <StatCard
-                key={stat.key}
-                icon={stat.icon}
-                label={t(`listings.stats.${stat.key}`)}
-                value={stats[stat.key]}
-              />
-            ))}
-          </section>
-        </>
-      ) : null}
+      <header className="flex flex-wrap items-end justify-between gap-2 py-3">
+        <div>
+          <Typography component="h1" variant="h5" className="font-bold text-ink-strong">
+            {t('listings.title')}
+          </Typography>
+          <Typography variant="body2" className="mt-0.5 text-ink-muted">
+            {t('listings.management.description', {
+              defaultValue: 'Manage marketplace listings, templates, and PSD readiness.',
+            })}
+          </Typography>
+        </div>
+      </header>
+      <section className="grid gap-3 md:grid-cols-3">
+        {listingStats.map((stat) => (
+          <StatCard
+            key={stat.key}
+            icon={stat.icon}
+            label={t(`listings.stats.${stat.key}`)}
+            value={stats[stat.key]}
+          />
+        ))}
+      </section>
 
-      {showListingManagement ? (
-        <section className="mt-3 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 pt-2">
-            <ListingStatusTabs
-              items={listingTabs.map((tab) => ({
-                value: tab.key,
-                label: t(`listings.tabs.${tab.key}`),
-                count: stats[tab.countKey] || 0,
-              }))}
-              value={activeTab}
-              onChange={(nextTab) => {
-                setActiveTab(nextTab)
+      <section className="mt-3 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 pt-2">
+          <ListingStatusTabs
+            items={listingTabs.map((tab) => ({
+              value: tab.key,
+              label: t(`listings.tabs.${tab.key}`),
+              count: stats[tab.countKey] || 0,
+            }))}
+            value={activeTab}
+            onChange={(nextTab) => {
+              setActiveTab(nextTab)
+              setPage(1)
+            }}
+          />
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <Typography
+              variant="body2"
+              className="flex h-9 items-center rounded-lg bg-neutral-bg px-3 font-bold text-ink-muted"
+            >
+              {pagination.total} {t('listings.management.records', { defaultValue: 'records' })}
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon fontSize="small" />}
+              onClick={openCreateDialog}
+              className="h-9 rounded-lg px-4 text-sm font-bold"
+            >
+              {t('listings.actions.add')}
+            </Button>
+          </div>
+        </div>
+
+        <OperationsToolbar className="border-b border-border bg-page/70 px-4 py-2.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <DebouncedTextField
+              size="small"
+              value={search}
+              onDebouncedChange={(nextValue) => {
+                setSearch(nextValue)
                 setPage(1)
               }}
+              placeholder={t('listings.filters.search')}
+              className="min-w-0 flex-[1_1_220px] bg-surface"
+              slotProps={{
+                input: {
+                  className: 'h-9 rounded-lg text-sm',
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon className="text-ink-muted" fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <Typography
-                variant="body2"
-                className="flex h-9 items-center rounded-lg bg-neutral-bg px-3 font-bold text-ink-muted"
-              >
-                {pagination.total} {t('listings.management.records', { defaultValue: 'records' })}
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon fontSize="small" />}
-                onClick={openCreateDialog}
-                className="h-9 rounded-lg px-4 text-sm font-bold"
-              >
-                {t('listings.actions.add')}
-              </Button>
-            </div>
-          </div>
-
-          <OperationsToolbar className="border-b border-border bg-page/70 px-4 py-2.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <DebouncedTextField
-                size="small"
-                value={search}
-                onDebouncedChange={(nextValue) => {
-                  setSearch(nextValue)
+            <FormControl size="small" className="w-full sm:w-36">
+              <Select
+                value={shop}
+                onChange={(event) => {
+                  setShop(event.target.value)
                   setPage(1)
                 }}
-                placeholder={t('listings.filters.search')}
-                className="min-w-0 flex-[1_1_220px] bg-surface"
-                slotProps={{
-                  input: {
-                    className: 'h-9 rounded-lg text-sm',
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon className="text-ink-muted" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  },
+                IconComponent={KeyboardArrowDownIcon}
+                className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+              >
+                <MenuItem value="all">{t('listings.filters.shops.all')}</MenuItem>
+                {(shopsQuery.data || []).map((shopOption) => (
+                  <MenuItem key={shopOption.id} value={shopOption.id}>
+                    {shopOption.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" className="w-full sm:w-40">
+              <Select
+                value={listingProductType}
+                onChange={(event) => {
+                  setListingProductType(event.target.value)
+                  setPage(1)
                 }}
-              />
-              <FormControl size="small" className="w-full sm:w-36">
-                <Select
-                  value={shop}
-                  onChange={(event) => {
-                    setShop(event.target.value)
-                    setPage(1)
-                  }}
-                  IconComponent={KeyboardArrowDownIcon}
-                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-                >
-                  <MenuItem value="all">{t('listings.filters.shops.all')}</MenuItem>
-                  {(shopsQuery.data || []).map((shopOption) => (
-                    <MenuItem key={shopOption.id} value={shopOption.id}>
-                      {shopOption.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" className="w-full sm:w-40">
-                <Select
-                  value={listingProductType}
-                  onChange={(event) => {
-                    setListingProductType(event.target.value)
-                    setPage(1)
-                  }}
-                  IconComponent={KeyboardArrowDownIcon}
-                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-                >
-                  <MenuItem value="all">All product types</MenuItem>
-                  {(productTypesQuery.data || []).map((option) => (
-                    <MenuItem key={option.id} value={option.id}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" className="w-full sm:w-32">
-                <Select
-                  value={listingPsdStatus}
-                  onChange={(event) => {
-                    setListingPsdStatus(event.target.value)
-                    setPage(1)
-                  }}
-                  IconComponent={KeyboardArrowDownIcon}
-                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-                >
-                  <MenuItem value="all">All PSD</MenuItem>
-                  {listingSetupStatusFilterOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      PSD {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" className="w-full sm:w-32">
-                <Select
-                  value={listingCostStatus}
-                  onChange={(event) => {
-                    setListingCostStatus(event.target.value)
-                    setPage(1)
-                  }}
-                  IconComponent={KeyboardArrowDownIcon}
-                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-                >
-                  <MenuItem value="all">All cost</MenuItem>
-                  {listingSetupStatusFilterOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      Cost {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" className="w-full sm:w-32">
-                <Select
-                  value={listingQcStatus}
-                  onChange={(event) => {
-                    setListingQcStatus(event.target.value)
-                    setPage(1)
-                  }}
-                  IconComponent={KeyboardArrowDownIcon}
-                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-                >
-                  <MenuItem value="all">All QC</MenuItem>
-                  {listingQcStatusFilterOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      QC {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" className="w-full sm:w-32">
-                <Select
-                  value={listingStatus}
-                  onChange={(event) => {
-                    setListingStatus(event.target.value)
-                    setPage(1)
-                  }}
-                  IconComponent={KeyboardArrowDownIcon}
-                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-                >
-                  <MenuItem value="all">All status</MenuItem>
-                  {listingStatusFilterOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" className="w-full sm:w-40">
-                <Select
-                  value={listingSort}
-                  onChange={(event) => {
-                    setListingSort(event.target.value)
-                    setPage(1)
-                  }}
-                  IconComponent={KeyboardArrowDownIcon}
-                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
-                >
-                  {listingSortOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Tooltip title={t('listings.actions.refresh')}>
-                <IconButton
-                  aria-label={t('listings.actions.refresh')}
-                  onClick={() => {
-                    listingsQuery.refetch()
-                    summaryQuery.refetch()
-                  }}
-                  className="h-9 w-9 rounded-lg border border-border bg-surface text-ink-secondary hover:bg-surface-subtle"
-                >
-                  <RefreshIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </div>
-          </OperationsToolbar>
+                IconComponent={KeyboardArrowDownIcon}
+                className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+              >
+                <MenuItem value="all">All product types</MenuItem>
+                {(productTypesQuery.data || []).map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" className="w-full sm:w-32">
+              <Select
+                value={listingPsdStatus}
+                onChange={(event) => {
+                  setListingPsdStatus(event.target.value)
+                  setPage(1)
+                }}
+                IconComponent={KeyboardArrowDownIcon}
+                className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+              >
+                <MenuItem value="all">All PSD</MenuItem>
+                {listingSetupStatusFilterOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    PSD {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" className="w-full sm:w-32">
+              <Select
+                value={listingCostStatus}
+                onChange={(event) => {
+                  setListingCostStatus(event.target.value)
+                  setPage(1)
+                }}
+                IconComponent={KeyboardArrowDownIcon}
+                className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+              >
+                <MenuItem value="all">All cost</MenuItem>
+                {listingSetupStatusFilterOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    Cost {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" className="w-full sm:w-32">
+              <Select
+                value={listingQcStatus}
+                onChange={(event) => {
+                  setListingQcStatus(event.target.value)
+                  setPage(1)
+                }}
+                IconComponent={KeyboardArrowDownIcon}
+                className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+              >
+                <MenuItem value="all">All QC</MenuItem>
+                {listingQcStatusFilterOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    QC {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" className="w-full sm:w-32">
+              <Select
+                value={listingStatus}
+                onChange={(event) => {
+                  setListingStatus(event.target.value)
+                  setPage(1)
+                }}
+                IconComponent={KeyboardArrowDownIcon}
+                className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+              >
+                <MenuItem value="all">All status</MenuItem>
+                {listingStatusFilterOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" className="w-full sm:w-40">
+              <Select
+                value={listingSort}
+                onChange={(event) => {
+                  setListingSort(event.target.value)
+                  setPage(1)
+                }}
+                IconComponent={KeyboardArrowDownIcon}
+                className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+              >
+                {listingSortOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Tooltip title={t('listings.actions.refresh')}>
+              <IconButton
+                aria-label={t('listings.actions.refresh')}
+                onClick={() => {
+                  listingsQuery.refetch()
+                  summaryQuery.refetch()
+                }}
+                className="h-9 w-9 rounded-lg border border-border bg-surface text-ink-secondary hover:bg-surface-subtle"
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </div>
+        </OperationsToolbar>
 
-          <div className="h-[620px] overflow-auto bg-surface">
-            <table className="min-w-[1360px] w-full border-collapse text-sm">
-              <colgroup>
-                <col className="w-[118px]" />
-                <col className="w-[150px]" />
-                <col className="w-[52px]" />
-                <col className="w-[124px]" />
-                <col className="w-[128px]" />
-                <col className="w-[80px]" />
-                <col className="w-[118px]" />
-                <col className="w-[140px]" />
-                <col className="w-[178px]" />
-                <col className="w-[108px]" />
-                <col className="w-[178px]" />
-              </colgroup>
-              <thead className="sticky top-0 z-20 bg-neutral-bg text-[13px] font-bold text-ink-secondary shadow-sm">
-                <tr>
-                  <th
-                    rowSpan={2}
-                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
-                  >
-                    Date
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
-                  >
-                    Asin / Product ID
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
-                  >
-                    Total
-                  </th>
-                  <th
-                    colSpan={3}
-                    className="border border-border bg-neutral-bg px-3 py-2 text-center"
-                  >
-                    Template
-                  </th>
-                  <th
-                    colSpan={1}
-                    className="border border-border bg-neutral-bg px-3 py-2 text-center"
-                  >
-                    PSD
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
-                  >
-                    Store
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
-                  >
-                    Seller
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
-                  >
-                    Asin Type
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="border border-border bg-neutral-bg px-3 py-3 text-center"
-                  >
-                    Actions
-                  </th>
-                </tr>
-                <tr>
-                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
-                    Style
-                  </th>
-                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
-                    Design Product
-                  </th>
-                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
-                    Variant
-                  </th>
-                  <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
-                    PSD Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {listingsQuery.isPending ? (
-                  Array.from({ length: 5 }, (_, index) => (
-                    <tr key={index}>
-                      <td colSpan={11} className="border border-border px-4 py-3">
-                        <Skeleton height={72} />
-                      </td>
-                    </tr>
-                  ))
-                ) : listings.length === 0 ? (
-                  <tr>
-                    <td colSpan={11} className="border border-border px-4 py-12 text-center">
-                      <Typography className="font-semibold text-ink-strong">
-                        {t('listings.messages.empty')}
-                      </Typography>
+        <div className="h-[620px] overflow-auto bg-surface">
+          <table className="min-w-[1360px] w-full border-collapse text-sm">
+            <colgroup>
+              <col className="w-[118px]" />
+              <col className="w-[150px]" />
+              <col className="w-[52px]" />
+              <col className="w-[124px]" />
+              <col className="w-[128px]" />
+              <col className="w-[80px]" />
+              <col className="w-[118px]" />
+              <col className="w-[140px]" />
+              <col className="w-[178px]" />
+              <col className="w-[108px]" />
+              <col className="w-[178px]" />
+            </colgroup>
+            <thead className="sticky top-0 z-20 bg-neutral-bg text-[13px] font-bold text-ink-secondary shadow-sm">
+              <tr>
+                <th
+                  rowSpan={2}
+                  className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                >
+                  Date
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                >
+                  Asin / Product ID
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                >
+                  Total
+                </th>
+                <th
+                  colSpan={3}
+                  className="border border-border bg-neutral-bg px-3 py-2 text-center"
+                >
+                  Template
+                </th>
+                <th
+                  colSpan={1}
+                  className="border border-border bg-neutral-bg px-3 py-2 text-center"
+                >
+                  PSD
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                >
+                  Store
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                >
+                  Seller
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                >
+                  Asin Type
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-border bg-neutral-bg px-3 py-3 text-center"
+                >
+                  Actions
+                </th>
+              </tr>
+              <tr>
+                <th className="border border-border bg-neutral-bg px-3 py-2 text-center">Style</th>
+                <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
+                  Design Product
+                </th>
+                <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
+                  Variant
+                </th>
+                <th className="border border-border bg-neutral-bg px-3 py-2 text-center">
+                  PSD Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {listingsQuery.isPending ? (
+                Array.from({ length: 5 }, (_, index) => (
+                  <tr key={index}>
+                    <td colSpan={11} className="border border-border px-4 py-3">
+                      <Skeleton height={72} />
                     </td>
                   </tr>
-                ) : (
-                  listings.map((listing) => (
-                    <tr
-                      key={listing.id}
-                      className="bg-surface even:bg-neutral-bg/40 hover:bg-surface-subtle/70"
-                    >
-                      {[
-                        'activity',
-                        'listing',
-                        'total',
-                        'style',
-                        'designProduct',
-                        'variant',
-                        'psdStatus',
-                        'store',
-                        'seller',
-                        'asinType',
-                        'actions',
-                      ].map((key) => (
-                        <td
-                          key={key}
-                          className="h-[96px] border-b border-border px-3 py-2 text-center align-middle"
-                        >
-                          <div className="flex min-w-0 justify-center">
-                            {renderListingCell(listing, { key })}
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : listings.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="border border-border px-4 py-12 text-center">
+                    <Typography className="font-semibold text-ink-strong">
+                      {t('listings.messages.empty')}
+                    </Typography>
+                  </td>
+                </tr>
+              ) : (
+                listings.map((listing) => (
+                  <tr
+                    key={listing.id}
+                    className="bg-surface even:bg-neutral-bg/40 hover:bg-surface-subtle/70"
+                  >
+                    {[
+                      'activity',
+                      'listing',
+                      'total',
+                      'style',
+                      'designProduct',
+                      'variant',
+                      'psdStatus',
+                      'store',
+                      'seller',
+                      'asinType',
+                      'actions',
+                    ].map((key) => (
+                      <td
+                        key={key}
+                        className="h-[96px] border-b border-border px-3 py-2 text-center align-middle"
+                      >
+                        <div className="flex min-w-0 justify-center">
+                          {renderListingCell(listing, { key })}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-          <footer className="border-t border-border px-5 py-4">
-            <OperationsPagination
-              page={page}
-              pageSize={pagination.limit}
-              total={pagination.total}
-              onPageChange={setPage}
-            />
-          </footer>
-        </section>
-      ) : null}
+        <footer className="border-t border-border px-5 py-4">
+          <OperationsPagination
+            page={page}
+            pageSize={pagination.limit}
+            total={pagination.total}
+            onPageChange={setPage}
+          />
+        </footer>
+      </section>
       <Menu
         anchorEl={rowActionMenu?.anchorEl}
         open={Boolean(rowActionMenu)}

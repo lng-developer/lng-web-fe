@@ -11,6 +11,8 @@ export const ROUTES = {
   PORTAL_ORDER_DETAIL: '/portal/orders/detail',
   PORTAL_CATALOG_SETUP: '/portal/catalog/setup',
   PORTAL_LISTINGS: '/portal/listings',
+  PORTAL_PRODUCT_TYPES: '/portal/catalog/product-types',
+  PORTAL_INTERNAL_TEMPLATES: '/portal/catalog/internal-templates',
   PORTAL_MAPPING_WORKBENCH: '/portal/mapping',
   PORTAL_TRACKING: '/portal/tracking',
   PORTAL_SCALE: '/portal/fulfillment/scale',

@@ -24,7 +24,9 @@ const FinanceDataImportsPage = lazy(
   () => import('@/features/finance-imports/pages/FinanceDataImportsPage'),
 )
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
-const ListingPage = lazy(() => import('@/features/listings/pages/ListingPage'))
+const ListingsPage = lazy(() => import('@/features/listings/pages/ListingsPage'))
+const ProductTypesPage = lazy(() => import('@/features/listings/pages/ProductTypesPage'))
+const InternalTemplatesPage = lazy(() => import('@/features/listings/pages/InternalTemplatesPage'))
 const MappingPage = lazy(() => import('@/features/mapping/pages/MappingPage'))
 const AttendanceDeskPage = lazy(() => import('@/features/hr-time/pages/AttendanceDeskPage'))
 const MyTimePage = lazy(() => import('@/features/hr-time/pages/MyTimePage'))
@@ -119,8 +121,16 @@ export const router = createBrowserRouter([
           },
           { path: 'portal/orders', element: requirePermissions(['ORDERS:READ'], <OrdersPage />) },
           {
-            path: 'portal/listings',
-            element: requirePermissions(['CATALOG:READ'], <ListingPage />),
+            path: ROUTES.PORTAL_LISTINGS.slice(1),
+            element: requirePermissions(['CATALOG:READ'], <ListingsPage />),
+          },
+          {
+            path: ROUTES.PORTAL_PRODUCT_TYPES.slice(1),
+            element: requirePermissions(['CATALOG:READ'], <ProductTypesPage />),
+          },
+          {
+            path: ROUTES.PORTAL_INTERNAL_TEMPLATES.slice(1),
+            element: requirePermissions(['CATALOG:READ'], <InternalTemplatesPage />),
           },
           {
             path: 'portal/orders/workbench',
