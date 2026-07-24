@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 
 const source = readFileSync(new URL('./ListingPage.jsx', import.meta.url), 'utf8')
+const productTypesPageUrl = new URL('./ProductTypesPage.jsx', import.meta.url)
+const productTypesPageExists = existsSync(productTypesPageUrl)
+const productTypesPageSource = productTypesPageExists ? readFileSync(productTypesPageUrl, 'utf8') : ''
 const internalTemplateDialogSource = readFileSync(
   new URL('../components/dialogs/InternalTemplateDialog.jsx', import.meta.url),
   'utf8',
@@ -11,11 +14,20 @@ const internalTemplateDialogSource = readFileSync(
 describe('ListingPage composition', () => {
   it('composes catalog dialogs from reusable components', () => {
     assert.equal(source.includes("from '../components/dialogs/ListingDialog'"), true)
-    assert.equal(source.includes("from '../components/dialogs/ProductTypeDialog'"), true)
     assert.equal(source.includes("from '../components/dialogs/InternalTemplateDialog'"), true)
     assert.equal(source.includes('function ListingDialog'), false)
-    assert.equal(source.includes('function ProductTypeDialog'), false)
     assert.equal(source.includes('function InternalTemplateDialog'), false)
+    assert.equal(productTypesPageSource.includes("from '../components/dialogs/ProductTypeDialog'"), true)
+    assert.equal(productTypesPageSource.includes('function ProductTypeDialog'), false)
+  })
+
+  it('moves product type ownership to its dedicated page', () => {
+    assert.equal(productTypesPageExists, true)
+    assert.equal(source.includes('showProductTypes'), false)
+    assert.equal(source.includes('productTypeDialog'), false)
+    assert.equal(source.includes('productTypeGroupsQuery'), false)
+    assert.equal(source.includes('openCreateProductTypeDialog'), false)
+    assert.equal(source.includes('productTypeSearch'), false)
   })
 
   it('gives listing management a compact page header', () => {
@@ -44,7 +56,7 @@ describe('ListingPage composition', () => {
   })
 
   it('keeps listing actions in the table header instead of the page header', () => {
-    assert.equal(source.includes('{showProductTypes || showInternalTemplates ? ('), true)
+    assert.equal(source.includes('{showInternalTemplates ? ('), true)
     assert.equal(source.includes(": t('listings.title')"), false)
     assert.equal(source.includes('function ListingStatusTabs'), true)
     assert.equal(source.includes('<ListingStatusTabs'), true)

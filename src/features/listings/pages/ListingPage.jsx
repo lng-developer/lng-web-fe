@@ -50,16 +50,13 @@ import {
   useCreateInternalTemplateMutation,
   useCreateListingMutation,
   useCreateListingPsdTaskMutation,
-  useCreateProductTypeGroupMutation,
   useDownloadListingAssetMutation,
   useRejectListingMutation,
   useUpdateInternalTemplateMutation,
   useUpdateListingMutation,
-  useUpdateProductTypeGroupMutation,
 } from '../api/listings.mutations'
 import {
   useCatalogInternalTemplatesQuery,
-  useCatalogProductTypeGroupsQuery,
   useListingProductTypesQuery,
   useListingShopsQuery,
   useListingsQuery,
@@ -67,16 +64,15 @@ import {
 } from '../api/listings.queries'
 import InternalTemplateDialog from '../components/dialogs/InternalTemplateDialog'
 import ListingDialog from '../components/dialogs/ListingDialog'
-import ProductTypeDialog from '../components/dialogs/ProductTypeDialog'
 import {
   buildInternalTemplatePayload,
   buildListingFormPayload,
-  buildProductTypeGroupPayload,
   mapInternalTemplateResponse,
   mapListingStats,
   unwrapApiData,
 } from '../utils/listingsApi'
 import { getListingWorkspaceView, LISTING_WORKSPACE_VIEWS } from '../utils/listingView'
+import ProductTypesPage from './ProductTypesPage'
 
 const DEFAULT_LIMIT = 10
 
@@ -175,14 +171,6 @@ const initialFormValues = {
   status: 'ACTIVE',
 }
 
-const initialProductTypeValues = {
-  id: '',
-  code: '',
-  name: '',
-  sortOrder: '',
-  status: 'ACTIVE',
-}
-
 const initialTemplateValues = {
   id: '',
   code: '',
@@ -272,11 +260,6 @@ function canSubmitListing(values, mode) {
   )
 }
 
-function canSubmitProductType(values, mode) {
-  if (!values.name) return false
-  return mode === 'edit' ? true : Boolean(values.code)
-}
-
 function canSubmitInternalTemplate(values, mode) {
   if (!values.name || !values.productTypeGroupId) return false
   return mode === 'edit' ? true : Boolean(values.code)
@@ -303,7 +286,6 @@ export default function ListingPage() {
   const { enqueueSnackbar } = useSnackbar()
   const workspaceView = getListingWorkspaceView(location.search)
   const showListingManagement = workspaceView === LISTING_WORKSPACE_VIEWS.LISTINGS
-  const showProductTypes = workspaceView === LISTING_WORKSPACE_VIEWS.PRODUCT_TYPES
   const showInternalTemplates = workspaceView === LISTING_WORKSPACE_VIEWS.INTERNAL_TEMPLATES
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
@@ -321,15 +303,10 @@ export default function ListingPage() {
   const [rejectListing, setRejectListing] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [rowActionMenu, setRowActionMenu] = useState(null)
-  const [productTypeSearch, setProductTypeSearch] = useState('')
-  const [productTypeStatus, setProductTypeStatus] = useState('all')
-  const [productTypePage, setProductTypePage] = useState(1)
   const [templateSearch, setTemplateSearch] = useState('')
   const [templateStatus, setTemplateStatus] = useState('all')
   const [templateProductType, setTemplateProductType] = useState('all')
   const [templatePage, setTemplatePage] = useState(1)
-  const [productTypeDialog, setProductTypeDialog] = useState({ mode: 'create', open: false })
-  const [productTypeValues, setProductTypeValues] = useState(initialProductTypeValues)
   const [templateDialog, setTemplateDialog] = useState({ mode: 'create', open: false })
   const [templateValues, setTemplateValues] = useState(initialTemplateValues)
   const [templateDetailLoading, setTemplateDetailLoading] = useState(false)
@@ -357,12 +334,6 @@ export default function ListingPage() {
   const listingsQuery = useListingsQuery(queryFilters, {
     mapperOptions: { locale: i18n.language, shopNameById },
   })
-  const productTypeGroupsQuery = useCatalogProductTypeGroupsQuery({
-    page: productTypePage,
-    limit: 5,
-    search: productTypeSearch,
-    status: productTypeStatus,
-  })
   const internalTemplatesQuery = useCatalogInternalTemplatesQuery({
     page: templatePage,
     limit: 5,
@@ -372,8 +343,6 @@ export default function ListingPage() {
   })
   const createListingMutation = useCreateListingMutation()
   const updateListingMutation = useUpdateListingMutation()
-  const createProductTypeGroupMutation = useCreateProductTypeGroupMutation()
-  const updateProductTypeGroupMutation = useUpdateProductTypeGroupMutation()
   const createInternalTemplateMutation = useCreateInternalTemplateMutation()
   const updateInternalTemplateMutation = useUpdateInternalTemplateMutation()
   const createListingPsdTaskMutation = useCreateListingPsdTaskMutation()
@@ -384,16 +353,6 @@ export default function ListingPage() {
   const stats = mapListingStats(summaryQuery.data)
   const listings = listingsQuery.data?.items || []
   const pagination = listingsQuery.data?.pagination || { page: 1, limit: DEFAULT_LIMIT, total: 0 }
-  const productTypeGroups = productTypeGroupsQuery.data?.items || []
-  const productTypePagination = productTypeGroupsQuery.data?.pagination || {
-    page: 1,
-    limit: 5,
-    total: 0,
-  }
-  const productTypePageCount = Math.max(
-    Math.ceil(productTypePagination.total / productTypePagination.limit),
-    1,
-  )
   const internalTemplates = internalTemplatesQuery.data?.items || []
   const templatePagination = internalTemplatesQuery.data?.pagination || {
     page: 1,
@@ -405,8 +364,6 @@ export default function ListingPage() {
     1,
   )
   const isDialogSubmitting = createListingMutation.isPending || updateListingMutation.isPending
-  const isProductTypeSubmitting =
-    createProductTypeGroupMutation.isPending || updateProductTypeGroupMutation.isPending
   const isTemplateSubmitting =
     createInternalTemplateMutation.isPending ||
     updateInternalTemplateMutation.isPending ||
@@ -442,26 +399,6 @@ export default function ListingPage() {
 
   function closeDialog() {
     setDialogOpen(false)
-  }
-
-  function openCreateProductTypeDialog() {
-    setProductTypeDialog({ mode: 'create', open: true })
-    setProductTypeValues(initialProductTypeValues)
-  }
-
-  function openEditProductTypeDialog(group) {
-    setProductTypeDialog({ mode: 'edit', open: true })
-    setProductTypeValues({
-      id: group.id,
-      code: group.code,
-      name: group.name,
-      sortOrder: group.sortOrder || '',
-      status: group.status || 'ACTIVE',
-    })
-  }
-
-  function closeProductTypeDialog() {
-    setProductTypeDialog((current) => ({ ...current, open: false }))
   }
 
   function openCreateTemplateDialog() {
@@ -517,50 +454,6 @@ export default function ListingPage() {
       }
       enqueueSnackbar(t('listings.messages.saved'), { variant: 'success' })
       closeDialog()
-    } catch (error) {
-      enqueueSnackbar(error.message || t('listings.messages.saveFailed'), { variant: 'error' })
-    }
-  }
-
-  async function handleSubmitProductType(nextValues = productTypeValues) {
-    if (!canSubmitProductType(nextValues, productTypeDialog.mode)) {
-      enqueueSnackbar(t('listings.messages.required'), { variant: 'warning' })
-      return
-    }
-
-    try {
-      if (productTypeDialog.mode === 'edit') {
-        await updateProductTypeGroupMutation.mutateAsync({
-          groupId: nextValues.id,
-          payload: buildProductTypeGroupPayload(nextValues, { mode: 'update' }),
-        })
-      } else {
-        await createProductTypeGroupMutation.mutateAsync(buildProductTypeGroupPayload(nextValues))
-      }
-      enqueueSnackbar(
-        t('listings.catalogSetup.messages.productTypeSaved', {
-          defaultValue: 'Product type saved',
-        }),
-        { variant: 'success' },
-      )
-      closeProductTypeDialog()
-    } catch (error) {
-      enqueueSnackbar(
-        error.message ||
-          t('listings.catalogSetup.messages.productTypeSaveFailed', {
-            defaultValue: 'Could not save product type',
-          }),
-        { variant: 'error' },
-      )
-    }
-  }
-
-  async function handleToggleProductType(group) {
-    try {
-      await updateProductTypeGroupMutation.mutateAsync({
-        groupId: group.id,
-        payload: { status: group.isActive ? 'INACTIVE' : 'ACTIVE' },
-      })
     } catch (error) {
       enqueueSnackbar(error.message || t('listings.messages.saveFailed'), { variant: 'error' })
     }
@@ -900,15 +793,13 @@ export default function ListingPage() {
     return null
   }
 
+  if (workspaceView === LISTING_WORKSPACE_VIEWS.PRODUCT_TYPES) return <ProductTypesPage />
+
   return (
     <div className="min-h-full bg-page px-4 pt-0 pb-3">
-      {showProductTypes || showInternalTemplates ? (
+      {showInternalTemplates ? (
         <OperationsHeader
-          title={
-            showProductTypes
-              ? t('listings.catalogSetup.productTypes.title', { defaultValue: 'Product types' })
-              : t('listings.catalogSetup.templates.title', { defaultValue: 'Internal templates' })
-          }
+          title={t('listings.catalogSetup.templates.title', { defaultValue: 'Internal templates' })}
         />
       ) : null}
 
@@ -939,190 +830,10 @@ export default function ListingPage() {
         </>
       ) : null}
 
-      {showProductTypes || showInternalTemplates ? (
+      {showInternalTemplates ? (
         <section
-          className={`mt-3 grid items-stretch gap-3 ${
-            showProductTypes && showInternalTemplates ? 'xl:grid-cols-2' : ''
-          }`}
+          className="mt-3 grid items-stretch gap-3"
         >
-          {showProductTypes ? (
-            <div className="flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-              <div className="flex min-h-20 flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
-                <div>
-                  <Typography component="h2" className="font-bold text-ink-strong">
-                    {t('listings.catalogSetup.productTypes.title', {
-                      defaultValue: 'Product types',
-                    })}
-                  </Typography>
-                  <Typography variant="caption" className="text-ink-muted">
-                    {t('listings.catalogSetup.productTypes.description', {
-                      defaultValue:
-                        'Define the internal product family used by mapping, listings, and vendor matching.',
-                    })}
-                  </Typography>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Tooltip title={t('listings.actions.refresh')}>
-                    <IconButton
-                      size="small"
-                      aria-label={t('listings.actions.refresh')}
-                      onClick={() => productTypeGroupsQuery.refetch()}
-                      className="h-8 w-8 rounded-lg border border-border"
-                    >
-                      <RefreshIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip
-                    title={t('listings.catalogSetup.productTypes.add', {
-                      defaultValue: 'Create product type',
-                    })}
-                  >
-                    <IconButton
-                      size="small"
-                      aria-label={t('listings.catalogSetup.productTypes.add', {
-                        defaultValue: 'Create product type',
-                      })}
-                      onClick={openCreateProductTypeDialog}
-                      className="h-8 w-8 rounded-lg border border-border text-primary"
-                    >
-                      <AddIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <DebouncedTextField
-                  size="small"
-                  value={productTypeSearch}
-                  onDebouncedChange={(nextValue) => {
-                    setProductTypeSearch(nextValue)
-                    setProductTypePage(1)
-                  }}
-                  placeholder={t('listings.catalogSetup.productTypes.search', {
-                    defaultValue: 'Search code or name...',
-                  })}
-                  className="min-w-56 flex-1 bg-surface"
-                  slotProps={{
-                    input: {
-                      className: 'h-10 rounded-lg text-sm',
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon className="text-ink-muted" fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-                <FormControl size="small" className="w-36">
-                  <Select
-                    value={productTypeStatus}
-                    onChange={(event) => {
-                      setProductTypeStatus(event.target.value)
-                      setProductTypePage(1)
-                    }}
-                    IconComponent={KeyboardArrowDownIcon}
-                    className="h-10 rounded-lg bg-surface text-sm text-ink-secondary"
-                  >
-                    <MenuItem value="all">
-                      {t('listings.catalogSetup.status.all', { defaultValue: 'All status' })}
-                    </MenuItem>
-                    <MenuItem value="ACTIVE">{t('listings.values.status.active')}</MenuItem>
-                    <MenuItem value="INACTIVE">{t('listings.values.status.inactive')}</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="flex-1 overflow-x-auto">
-                <table className="min-w-[560px] w-full border-collapse">
-                  <thead className="bg-surface-subtle">
-                    <tr>
-                      {['code', 'name', 'sort', 'active', 'actions'].map((column) => (
-                        <th
-                          key={column}
-                          scope="col"
-                          className="h-10 whitespace-nowrap px-4 text-left text-[11px] font-bold text-ink-muted"
-                        >
-                          {t(`listings.catalogSetup.columns.${column}`, {
-                            defaultValue:
-                              {
-                                code: 'Code',
-                                name: 'Name',
-                                sort: 'Sort',
-                                active: 'Active',
-                                actions: 'Actions',
-                              }[column] || column,
-                          })}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productTypeGroupsQuery.isPending ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-6 text-center text-sm text-ink-muted">
-                          {t('listings.catalogSetup.productTypes.loading', {
-                            defaultValue: 'Loading product types...',
-                          })}
-                        </td>
-                      </tr>
-                    ) : productTypeGroups.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-6 text-center text-sm text-ink-muted">
-                          {t('listings.catalogSetup.productTypes.empty', {
-                            defaultValue: 'No product types found',
-                          })}
-                        </td>
-                      </tr>
-                    ) : (
-                      productTypeGroups.map((group) => (
-                        <tr key={group.id} className="border-t border-border">
-                          <td className="whitespace-nowrap px-4 py-3 text-sm font-bold text-ink">
-                            {group.code || '-'}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-ink-secondary">
-                            {group.name || '-'}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
-                            {group.sortOrder}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3">
-                            <StatusSwitch
-                              checked={group.isActive}
-                              disabled={updateProductTypeGroupMutation.isPending}
-                              ariaLabel={t('listings.catalogSetup.productTypes.toggle', {
-                                defaultValue: 'Toggle product type status',
-                              })}
-                              onChange={() => handleToggleProductType(group)}
-                            />
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3">
-                            <Tooltip title={t('listings.actions.edit')}>
-                              <IconButton
-                                size="small"
-                                aria-label={t('listings.actions.edit')}
-                                onClick={() => openEditProductTypeDialog(group)}
-                                className="h-8 w-8 rounded-lg border border-border text-ink-secondary"
-                              >
-                                <EditOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <footer className="flex justify-center border-t border-border px-4 py-3">
-                <Pagination
-                  size="small"
-                  count={productTypePageCount}
-                  page={productTypePage}
-                  onChange={(_event, value) => setProductTypePage(value)}
-                />
-              </footer>
-            </div>
-          ) : null}
-
           {showInternalTemplates ? (
             <div className="flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
               <div className="flex min-h-20 flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
@@ -1740,16 +1451,6 @@ export default function ListingPage() {
         isSubmitting={isDialogSubmitting}
         onClose={closeDialog}
         onSubmit={handleSubmitListing}
-        t={t}
-      />
-      <ProductTypeDialog
-        key={`${productTypeDialog.open}-${productTypeDialog.mode}-${productTypeValues.id || 'new'}`}
-        mode={productTypeDialog.mode}
-        open={productTypeDialog.open}
-        values={productTypeValues}
-        isSubmitting={isProductTypeSubmitting}
-        onClose={closeProductTypeDialog}
-        onSubmit={handleSubmitProductType}
         t={t}
       />
       <InternalTemplateDialog
