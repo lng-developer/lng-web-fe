@@ -3,11 +3,27 @@ import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 
 const source = readFileSync(new URL('./ListingPage.jsx', import.meta.url), 'utf8')
+const internalTemplateDialogSource = readFileSync(
+  new URL('../components/dialogs/InternalTemplateDialog.jsx', import.meta.url),
+  'utf8',
+)
 
 describe('ListingPage composition', () => {
+  it('composes catalog dialogs from reusable components', () => {
+    assert.equal(source.includes("from '../components/dialogs/ListingDialog'"), true)
+    assert.equal(source.includes("from '../components/dialogs/ProductTypeDialog'"), true)
+    assert.equal(source.includes("from '../components/dialogs/InternalTemplateDialog'"), true)
+    assert.equal(source.includes('function ListingDialog'), false)
+    assert.equal(source.includes('function ProductTypeDialog'), false)
+    assert.equal(source.includes('function InternalTemplateDialog'), false)
+  })
+
   it('gives listing management a compact page header', () => {
     assert.equal(source.includes("t('listings.title')"), true)
-    assert.equal(source.includes('Manage marketplace listings, templates, and PSD readiness.'), true)
+    assert.equal(
+      source.includes('Manage marketplace listings, templates, and PSD readiness.'),
+      true,
+    )
   })
 
   it('does not force horizontal scrolling in the listing management surface', () => {
@@ -80,7 +96,6 @@ describe('ListingPage composition', () => {
   })
 
   it('lets operators set whether an internal template requires a PSD', () => {
-    assert.equal(source.includes('requiresPsd: true'), true)
-    assert.equal(source.includes("onChange('requiresPsd'"), true)
+    assert.equal(internalTemplateDialogSource.includes("onChange('requiresPsd'"), true)
   })
 })
