@@ -112,12 +112,14 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes('borderBottom: active'), true)
     assert.equal(source.includes('alpha(theme.palette.primary.main, 0.06)'), true)
     assert.equal(source.includes("'border-primary text-primary'"), false)
-    assert.equal(statusToolbarSource.includes('justify-between'), false)
-    assert.equal(statusToolbarSource.includes('justify-center lg:px-52'), true)
-    assert.equal(statusToolbarSource.includes('lg:absolute lg:right-4 lg:top-2'), true)
-    assert.equal(statusToolbarSource.includes('mt-2 flex w-full'), true)
-    assert.equal(statusToolbarSource.includes('justify-end gap-2'), true)
-    assert.equal(statusToolbarSource.includes('lg:mt-0 lg:w-auto'), true)
+    assert.equal(
+      statusToolbarSource.includes('flex min-h-12 flex-wrap items-center justify-between gap-2'),
+      true,
+    )
+    assert.equal(statusToolbarSource.includes('px-4 py-2'), true)
+    assert.equal(statusToolbarSource.includes('pt-2'), false)
+    assert.equal(statusToolbarSource.includes('absolute'), false)
+    assert.equal(source.includes('lg:justify-center'), false)
     assert.equal(source.includes('<OperationsTabs'), false)
     assert.equal(source.includes("{ key: 'anonymousAsin'"), false)
     assert.equal(source.includes("t('listings.messages.importMissing')"), false)

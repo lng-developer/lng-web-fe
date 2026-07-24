@@ -72,7 +72,7 @@ const listingTabs = [
 
 function ListingStatusTabs({ items, value, onChange }) {
   return (
-    <div className="flex min-w-0 flex-1 overflow-x-auto border-b border-border lg:justify-center">
+    <div className="flex min-w-0 flex-1 overflow-x-auto border-b border-border">
       {items.map((item) => {
         const active = value === item.value
 
@@ -638,22 +638,20 @@ export default function ListingsPage() {
       </section>
 
       <section className="mt-3 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-        <div className="relative border-b border-border px-4 pt-2 lg:min-h-12">
-          <div className="flex min-w-0 w-full justify-center lg:px-52">
-            <ListingStatusTabs
-              items={listingTabs.map((tab) => ({
-                value: tab.key,
-                label: t(`listings.tabs.${tab.key}`),
-                count: stats[tab.countKey] || 0,
-              }))}
-              value={activeTab}
-              onChange={(nextTab) => {
-                setActiveTab(nextTab)
-                setPage(1)
-              }}
-            />
-          </div>
-          <div className="mt-2 flex w-full shrink-0 flex-wrap items-center justify-end gap-2 lg:absolute lg:right-4 lg:top-2 lg:mt-0 lg:w-auto">
+        <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
+          <ListingStatusTabs
+            items={listingTabs.map((tab) => ({
+              value: tab.key,
+              label: t(`listings.tabs.${tab.key}`),
+              count: stats[tab.countKey] || 0,
+            }))}
+            value={activeTab}
+            onChange={(nextTab) => {
+              setActiveTab(nextTab)
+              setPage(1)
+            }}
+          />
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <Typography
               variant="body2"
               className="flex h-9 items-center rounded-lg bg-neutral-bg px-3 font-bold text-ink-muted"
