@@ -10,7 +10,7 @@ import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined'
+import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -23,6 +23,7 @@ import {
   FormControl,
   IconButton,
   InputAdornment,
+  Menu,
   MenuItem,
   Pagination,
   Select,
@@ -80,7 +81,6 @@ const DEFAULT_LIMIT = 10
 
 const listingStats = [
   { key: 'totalAsin', icon: Inventory2OutlinedIcon },
-  { key: 'anonymousAsin', icon: PersonOffOutlinedIcon },
   { key: 'psdAvailable', icon: CheckCircleOutlineOutlinedIcon },
   { key: 'noPsd', icon: CancelOutlinedIcon },
 ]
@@ -273,8 +273,8 @@ function Badge({ children, tone = 'gray' }) {
 
 function StatCard({ icon: Icon, label, value }) {
   return (
-    <div className="flex min-h-20 items-center gap-4 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm">
-      <div className="flex size-10 items-center justify-center rounded-lg bg-primary-light text-primary">
+    <div className="flex min-h-16 items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-sm">
+      <div className="flex size-9 items-center justify-center rounded-lg bg-primary-light text-primary">
         <Icon fontSize="small" />
       </div>
       <div className="min-w-0">
@@ -1164,6 +1164,7 @@ export default function ListingPage() {
   const [formValues, setFormValues] = useState(initialFormValues)
   const [rejectListing, setRejectListing] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [rowActionMenu, setRowActionMenu] = useState(null)
   const [productTypeSearch, setProductTypeSearch] = useState('')
   const [productTypeStatus, setProductTypeStatus] = useState('all')
   const [productTypePage, setProductTypePage] = useState(1)
@@ -1540,14 +1541,15 @@ export default function ListingPage() {
     const hasPsdTemplate = listing.psdReadinessStatus === 'PRESENT'
     const hasInternalTemplate = listing.templateStatus === 'available'
     const hasCost = listing.costStatus === 'present'
-    const isApproved = listing.rawQcStatus === 'APPROVED'
     const isActive = listing.rawStatus === 'ACTIVE'
+    const canDownload = Boolean(listing.psdTemplateAsset?.assetId || listing.psdTemplateAssetId)
+    const hasMoreRowActions = canDownload || listing.rawQcStatus === 'DRAFT'
 
     if (column.key === 'activity') {
       return (
         <div className="whitespace-nowrap">
           <div className="text-sm font-semibold text-ink-secondary">{listing.date}</div>
-          <div className="mt-1 text-xs text-ink-muted">{listing.salesLabel}</div>
+          <div className="mt-1 text-[13px] text-ink-muted">{listing.salesLabel}</div>
         </div>
       )
     }
@@ -1575,7 +1577,7 @@ export default function ListingPage() {
               </div>
             )}
           </div>
-          <div className="max-w-32 truncate text-xs font-bold text-primary">
+          <div className="max-w-32 truncate text-sm font-bold text-primary">
             {listing.asinProductId || listing.sku || '-'}
           </div>
         </div>
@@ -1587,31 +1589,33 @@ export default function ListingPage() {
     }
 
     if (column.key === 'style') {
-      return <Badge tone="gray">{listing.style}</Badge>
+      return <span className="text-sm text-ink-secondary">{listing.style || '-'}</span>
     }
 
     if (column.key === 'designProduct') {
       return (
-        <Badge tone={hasInternalTemplate ? 'teal' : 'orange'}>
-          {listing.designProduct || 'Template missing'}
-        </Badge>
+        hasInternalTemplate ? (
+          <span className="text-sm text-ink-secondary">{listing.designProduct}</span>
+        ) : (
+          <Badge tone="orange">Template missing</Badge>
+        )
       )
     }
 
     if (column.key === 'variant') {
-      return <Badge tone={listing.variant ? 'orange' : 'gray'}>{listing.variant || '-'}</Badge>
+      return <span className="text-sm text-ink-secondary">{listing.variant || '-'}</span>
     }
 
     if (column.key === 'psdStatus') {
       return (
         <div className="flex flex-col items-center gap-1">
-          <Badge tone={hasPsdTemplate ? 'green' : listing.psdReadinessRequired ? 'orange' : 'gray'}>
-            {listing.psdReadinessStatus === 'NOT_REQUIRED'
-              ? 'Not required'
-              : hasPsdTemplate
-                ? 'Ready'
-                : 'Missing'}
-          </Badge>
+          {listing.psdReadinessStatus === 'MISSING' ? (
+            <Badge tone="orange">Missing</Badge>
+          ) : (
+            <span className="text-sm text-ink-secondary">
+              {listing.psdReadinessStatus === 'NOT_REQUIRED' ? 'Not required' : 'Ready'}
+            </span>
+          )}
           <span className="text-xs text-ink-muted">
             {listing.psdReadinessSource ? `From ${listing.psdReadinessSource.toLowerCase()}` : 'No source'}
           </span>
@@ -1621,24 +1625,26 @@ export default function ListingPage() {
     }
 
     if (column.key === 'store') {
-      return <Badge tone="primary">{listing.store}</Badge>
+      return <span className="text-sm text-ink-secondary">{listing.store || '-'}</span>
     }
 
     if (column.key === 'seller') {
-      return <Badge tone={listing.seller === '-' ? 'gray' : 'orange'}>{listing.seller}</Badge>
+      return <span className="max-w-44 truncate text-sm text-ink-secondary">{listing.seller || '-'}</span>
     }
 
     if (column.key === 'asinType') {
-      return <Badge tone="teal">{listing.asinType || 'unknown'}</Badge>
+      return <span className="text-sm text-ink-secondary">{listing.asinType || 'Unknown'}</span>
     }
 
     if (column.key === 'product') {
       return (
         <div className="flex flex-col gap-2">
-          <Badge tone="blue">{listing.style}</Badge>
-          <Badge tone={hasInternalTemplate ? 'green' : 'orange'}>
-            {listing.designProduct || 'Template missing'}
-          </Badge>
+          <span className="text-sm text-ink-secondary">{listing.style || '-'}</span>
+          {hasInternalTemplate ? (
+            <span className="text-sm text-ink-secondary">{listing.designProduct}</span>
+          ) : (
+            <Badge tone="orange">Template missing</Badge>
+          )}
         </div>
       )
     }
@@ -1650,9 +1656,13 @@ export default function ListingPage() {
             hasPsdTemplate ? 'border-success bg-success-bg' : 'border-warning bg-warning-bg'
           }`}
         >
-          <Badge tone={hasPsdTemplate ? 'green' : 'orange'}>
-            {t(`listings.values.psdStatus.${listing.psdStatus}`)}
-          </Badge>
+          {hasPsdTemplate ? (
+            <span className="text-sm font-semibold text-success">
+              {t(`listings.values.psdStatus.${listing.psdStatus}`)}
+            </span>
+          ) : (
+            <Badge tone="orange">{t(`listings.values.psdStatus.${listing.psdStatus}`)}</Badge>
+          )}
           <div
             className={`mt-1 truncate text-xs font-medium ${
               hasPsdTemplate ? 'text-success' : 'text-warning-deep'
@@ -1664,9 +1674,11 @@ export default function ListingPage() {
             <div className="mt-0.5 text-xs text-ink-muted">{listing.psdTemplateSize}</div>
           ) : null}
           <div className="mt-2">
-            <Badge tone={hasCost ? 'green' : 'orange'}>
-              {hasCost ? 'Cost ready' : 'Cost missing'}
-            </Badge>
+            {hasCost ? (
+              <span className="text-sm text-success">Cost ready</span>
+            ) : (
+              <Badge tone="orange">Cost missing</Badge>
+            )}
           </div>
         </div>
       )
@@ -1684,8 +1696,12 @@ export default function ListingPage() {
     if (column.key === 'type') {
       return (
         <div className="flex flex-col items-center gap-2">
-          <Badge tone={isApproved ? 'green' : 'orange'}>{listing.rawQcStatus || 'UNKNOWN'}</Badge>
-          <Badge tone={isActive ? 'teal' : 'gray'}>{listing.rawStatus || 'UNKNOWN'}</Badge>
+          {listing.rawQcStatus === 'REJECTED' ? (
+            <Badge tone="orange">REJECTED</Badge>
+          ) : (
+            <span className="text-sm text-ink-secondary">{listing.rawQcStatus || 'UNKNOWN'}</span>
+          )}
+          <span className="text-sm text-ink-muted">{isActive ? 'ACTIVE' : listing.rawStatus || 'UNKNOWN'}</span>
         </div>
       )
     }
@@ -1693,45 +1709,28 @@ export default function ListingPage() {
     if (column.key === 'actions') {
       return (
         <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-1">
-          <IconActionButton
-            label={t('listings.actions.download')}
-            disabled={!listing.psdTemplateAsset?.assetId && !listing.psdTemplateAssetId}
-            onClick={() => handleDownload(listing)}
-          >
-            <DownloadOutlinedIcon fontSize="small" />
-          </IconActionButton>
-          <IconActionButton
-            label={t('listings.actions.createPsdTask', { defaultValue: 'Create PSD task' })}
-            disabled={listing.psdNextAction !== 'Create PSD task'}
-            onClick={() => handleCreatePsdTask(listing)}
-          >
-            <CloudUploadOutlinedIcon fontSize="small" />
-          </IconActionButton>
+          {listing.psdNextAction === 'Create PSD task' ? (
+            <IconActionButton
+              label={t('listings.actions.createPsdTask', { defaultValue: 'Create PSD task' })}
+              onClick={() => handleCreatePsdTask(listing)}
+            >
+              <CloudUploadOutlinedIcon fontSize="small" />
+            </IconActionButton>
+          ) : null}
           <IconActionButton
             label={t('listings.actions.edit')}
             onClick={() => openEditDialog(listing)}
           >
             <EditOutlinedIcon fontSize="small" />
           </IconActionButton>
-          <IconActionButton
-            label={t('listings.actions.approve')}
-            disabled={listing.rawQcStatus !== 'DRAFT'}
-            tone="success"
-            onClick={() => handleApproveListing(listing)}
-          >
-            <CheckCircleOutlineOutlinedIcon fontSize="small" />
-          </IconActionButton>
-          <IconActionButton
-            label={t('listings.actions.reject')}
-            disabled={listing.rawQcStatus !== 'DRAFT'}
-            tone="danger"
-            onClick={() => openRejectDialog(listing)}
-          >
-            <CancelOutlinedIcon fontSize="small" />
-          </IconActionButton>
-          <IconActionButton label={t('listings.messages.deleteMissing')} disabled tone="danger">
-            <DeleteOutlineOutlinedIcon fontSize="small" />
-          </IconActionButton>
+          {hasMoreRowActions ? (
+            <IconActionButton
+              label="More actions"
+              onClick={(event) => setRowActionMenu({ anchorEl: event.currentTarget, listing })}
+            >
+              <MoreHorizOutlinedIcon fontSize="small" />
+            </IconActionButton>
+          ) : null}
         </div>
       )
     }
@@ -1752,16 +1751,30 @@ export default function ListingPage() {
       ) : null}
 
       {showListingManagement ? (
-        <section className="mt-0 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {listingStats.map((stat) => (
-            <StatCard
-              key={stat.key}
-              icon={stat.icon}
-              label={t(`listings.stats.${stat.key}`)}
-              value={stats[stat.key]}
-            />
-          ))}
-        </section>
+        <>
+          <header className="flex flex-wrap items-end justify-between gap-2 py-3">
+            <div>
+              <Typography component="h1" variant="h5" className="font-bold text-ink-strong">
+                {t('listings.title')}
+              </Typography>
+              <Typography variant="body2" className="mt-0.5 text-ink-muted">
+                {t('listings.management.description', {
+                  defaultValue: 'Manage marketplace listings, templates, and PSD readiness.',
+                })}
+              </Typography>
+            </div>
+          </header>
+          <section className="grid gap-3 md:grid-cols-3">
+            {listingStats.map((stat) => (
+              <StatCard
+                key={stat.key}
+                icon={stat.icon}
+                label={t(`listings.stats.${stat.key}`)}
+                value={stats[stat.key]}
+              />
+            ))}
+          </section>
+        </>
       ) : null}
 
       {showProductTypes || showInternalTemplates ? (
@@ -2173,7 +2186,7 @@ export default function ListingPage() {
 
       {showListingManagement ? (
         <section className="mt-3 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 pt-2">
             <ListingStatusTabs
               items={listingTabs.map((tab) => ({
                 value: tab.key,
@@ -2193,17 +2206,6 @@ export default function ListingPage() {
               >
                 {pagination.total} {t('listings.management.records', { defaultValue: 'records' })}
               </Typography>
-              <Tooltip title={t('listings.messages.importMissing')}>
-                <span>
-                  <Button
-                    variant="outlined"
-                    disabled
-                    className="h-9 rounded-lg border-border px-4 text-sm font-bold text-primary"
-                  >
-                    {t('listings.actions.import')}
-                  </Button>
-                </span>
-              </Tooltip>
               <Button
                 variant="contained"
                 startIcon={<AddIcon fontSize="small" />}
@@ -2215,8 +2217,8 @@ export default function ListingPage() {
             </div>
           </div>
 
-          <OperationsToolbar className="border-b border-border bg-page/70 p-4">
-            <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <OperationsToolbar className="border-b border-border bg-page/70 px-4 py-2.5">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <DebouncedTextField
                 size="small"
                 value={search}
@@ -2228,7 +2230,7 @@ export default function ListingPage() {
                 className="min-w-0 flex-[1_1_220px] bg-surface"
                 slotProps={{
                   input: {
-                    className: 'h-10 rounded-lg text-sm',
+                    className: 'h-9 rounded-lg text-sm',
                     startAdornment: (
                       <InputAdornment position="start">
                         <SearchIcon className="text-ink-muted" fontSize="small" />
@@ -2245,7 +2247,7 @@ export default function ListingPage() {
                     setPage(1)
                   }}
                   IconComponent={KeyboardArrowDownIcon}
-                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
                 >
                   <MenuItem value="all">{t('listings.filters.shops.all')}</MenuItem>
                   {(shopsQuery.data || []).map((shopOption) => (
@@ -2263,7 +2265,7 @@ export default function ListingPage() {
                     setPage(1)
                   }}
                   IconComponent={KeyboardArrowDownIcon}
-                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
                 >
                   <MenuItem value="all">All product types</MenuItem>
                   {(productTypesQuery.data || []).map((option) => (
@@ -2281,7 +2283,7 @@ export default function ListingPage() {
                     setPage(1)
                   }}
                   IconComponent={KeyboardArrowDownIcon}
-                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
                 >
                   <MenuItem value="all">All PSD</MenuItem>
                   {listingSetupStatusFilterOptions.map((option) => (
@@ -2299,7 +2301,7 @@ export default function ListingPage() {
                     setPage(1)
                   }}
                   IconComponent={KeyboardArrowDownIcon}
-                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
                 >
                   <MenuItem value="all">All cost</MenuItem>
                   {listingSetupStatusFilterOptions.map((option) => (
@@ -2317,7 +2319,7 @@ export default function ListingPage() {
                     setPage(1)
                   }}
                   IconComponent={KeyboardArrowDownIcon}
-                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
                 >
                   <MenuItem value="all">All QC</MenuItem>
                   {listingQcStatusFilterOptions.map((option) => (
@@ -2335,7 +2337,7 @@ export default function ListingPage() {
                     setPage(1)
                   }}
                   IconComponent={KeyboardArrowDownIcon}
-                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
                 >
                   <MenuItem value="all">All status</MenuItem>
                   {listingStatusFilterOptions.map((option) => (
@@ -2353,7 +2355,7 @@ export default function ListingPage() {
                     setPage(1)
                   }}
                   IconComponent={KeyboardArrowDownIcon}
-                  className="h-10 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
+                  className="h-9 rounded-lg bg-surface text-sm font-semibold text-ink-secondary"
                 >
                   {listingSortOptions.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
@@ -2369,7 +2371,7 @@ export default function ListingPage() {
                     listingsQuery.refetch()
                     summaryQuery.refetch()
                   }}
-                  className="h-10 w-10 rounded-lg border border-border bg-surface text-ink-secondary hover:bg-surface-subtle"
+                  className="h-9 w-9 rounded-lg border border-border bg-surface text-ink-secondary hover:bg-surface-subtle"
                 >
                   <RefreshIcon fontSize="small" />
                 </IconButton>
@@ -2392,7 +2394,7 @@ export default function ListingPage() {
                 <col className="w-[108px]" />
                 <col className="w-[178px]" />
               </colgroup>
-              <thead className="sticky top-0 z-20 bg-neutral-bg text-xs font-extrabold uppercase tracking-wide text-ink-strong shadow-sm">
+              <thead className="sticky top-0 z-20 bg-neutral-bg text-[13px] font-bold text-ink-secondary shadow-sm">
                 <tr>
                   <th
                     rowSpan={2}
@@ -2483,7 +2485,7 @@ export default function ListingPage() {
                   </tr>
                 ) : (
                   listings.map((listing) => (
-                    <tr key={listing.id} className="bg-surface hover:bg-surface-subtle/60">
+                    <tr key={listing.id} className="bg-surface even:bg-neutral-bg/40 hover:bg-surface-subtle/70">
                       {[
                         'activity',
                         'listing',
@@ -2499,7 +2501,7 @@ export default function ListingPage() {
                       ].map((key) => (
                         <td
                           key={key}
-                          className="h-[104px] border border-border px-3 py-2 text-center align-middle"
+                          className="h-[96px] border-b border-border px-3 py-2 text-center align-middle"
                         >
                           <div className="flex min-w-0 justify-center">
                             {renderListingCell(listing, { key })}
@@ -2523,6 +2525,45 @@ export default function ListingPage() {
           </footer>
         </section>
       ) : null}
+      <Menu
+        anchorEl={rowActionMenu?.anchorEl}
+        open={Boolean(rowActionMenu)}
+        onClose={() => setRowActionMenu(null)}
+      >
+        {rowActionMenu?.listing?.psdTemplateAsset?.assetId || rowActionMenu?.listing?.psdTemplateAssetId ? (
+          <MenuItem
+            onClick={() => {
+              handleDownload(rowActionMenu.listing)
+              setRowActionMenu(null)
+            }}
+          >
+            <DownloadOutlinedIcon fontSize="small" className="mr-2" />
+            {t('listings.actions.download')}
+          </MenuItem>
+        ) : null}
+        {rowActionMenu?.listing?.rawQcStatus === 'DRAFT' ? (
+          <MenuItem
+            onClick={() => {
+              handleApproveListing(rowActionMenu.listing)
+              setRowActionMenu(null)
+            }}
+          >
+            <CheckCircleOutlineOutlinedIcon fontSize="small" className="mr-2 text-success" />
+            {t('listings.actions.approve')}
+          </MenuItem>
+        ) : null}
+        {rowActionMenu?.listing?.rawQcStatus === 'DRAFT' ? (
+          <MenuItem
+            onClick={() => {
+              openRejectDialog(rowActionMenu.listing)
+              setRowActionMenu(null)
+            }}
+          >
+            <CancelOutlinedIcon fontSize="small" className="mr-2 text-danger" />
+            {t('listings.actions.reject')}
+          </MenuItem>
+        ) : null}
+      </Menu>
       <ListingDialog
         key={`${dialogOpen}-${dialogMode}-${formValues.id || 'new'}`}
         mode={dialogMode}
