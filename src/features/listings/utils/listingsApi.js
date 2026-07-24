@@ -246,10 +246,22 @@ export function mapListingResponse(listing = {}, options = {}) {
   const salesStats = listing.salesStats || {}
   const shopName = listing.shop?.name || options.shopNameById?.get(listing.shopId) || 'Unknown shop'
   const asinProductId = listing.asin || listing.etsyListingId || listing.sku || listing.id || '-'
-  const psdTemplateAsset = listing.psdTemplateAsset || null
-  const psdTemplateAssetId = psdTemplateAsset?.assetId || listing.psdTemplateAssetId || ''
-  const previewAsset = listing.previewAsset || null
+  const psdReadiness = listing.psdReadiness || {}
   const rawPsdStatus = listing.psdStatus || ''
+  const psdReadinessStatus = ['PRESENT', 'MISSING', 'NOT_REQUIRED'].includes(psdReadiness.status)
+    ? psdReadiness.status
+    : rawPsdStatus === 'PRESENT'
+      ? 'PRESENT'
+      : 'MISSING'
+  const psdReadinessRequired =
+    typeof psdReadiness.required === 'boolean'
+      ? psdReadiness.required
+      : psdReadinessStatus !== 'NOT_REQUIRED'
+  const psdReadinessSource = psdReadiness.source || null
+  const psdTemplateAsset = psdReadiness.asset || listing.psdTemplateAsset || null
+  const psdTemplateAssetId =
+    psdReadiness.effectivePsdAssetId || psdTemplateAsset?.assetId || listing.psdTemplateAssetId || ''
+  const previewAsset = listing.previewAsset || null
   const orderCount = Number(salesStats.orderCount) || 0
   const quantitySold = Number(salesStats.quantitySold) || 0
 
@@ -272,7 +284,16 @@ export function mapListingResponse(listing = {}, options = {}) {
     psdTemplateLabel:
       psdTemplateAsset?.originalFilename || (psdTemplateAssetId ? 'PSD file ready' : ''),
     psdTemplateSize: formatBytes(psdTemplateAsset?.size),
-    psdStatus: rawPsdStatus === 'PRESENT' ? 'available' : 'missing',
+    psdStatus: psdReadinessStatus === 'PRESENT' ? 'available' : 'missing',
+    psdReadinessStatus,
+    psdReadinessRequired,
+    psdReadinessSource,
+    psdNextAction:
+      psdReadinessStatus === 'PRESENT'
+        ? 'Ready'
+        : psdReadinessStatus === 'NOT_REQUIRED'
+          ? 'No PSD required'
+          : 'Create PSD task',
     costStatus: normalizeLower(listing.costCenterStatus || 'unknown'),
     store: shopName,
     seller: getListingSellerLabel(listing),
@@ -352,6 +373,7 @@ export function mapInternalTemplateResponse(template = {}) {
     requiredFieldCount: Number(template.requiredFieldsCount ?? requiredFields.length) || 0,
     artworkSlotCount: Number(template.artworkSlotsCount ?? artworkSlots.length) || 0,
     designAssetCount: Number(template.designAssetsCount ?? designAssets.length) || 0,
+    requiresPsd: template.requiresPsd !== false,
     status: template.status || 'INACTIVE',
     isActive: template.status === 'ACTIVE',
     raw: template,
@@ -383,7 +405,6 @@ export function buildListingFormPayload(values = {}, options = {}) {
       currency: normalizeUpper(values.currency),
       costCenterStatus: values.costCenterStatus,
       status: values.status,
-      psdStatus: values.psdStatus,
     },
     { preserveNull: isUpdate },
   )
@@ -416,6 +437,7 @@ export function buildInternalTemplatePayload(values = {}, options = {}) {
     designAssets: designAssets
       .map(normalizeDesignAsset)
       .filter((asset) => asset.type && asset.mediaAssetId),
+    requiresPsd: values.requiresPsd !== false,
     status: values.status,
   })
 }

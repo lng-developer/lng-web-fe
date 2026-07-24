@@ -55,4 +55,16 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes("listing.variant || 'All'"), false)
     assert.equal(source.includes("listing.variant || '-'"), true)
   })
+
+  it('renders derived PSD readiness rather than an editable listing PSD status', () => {
+    assert.equal(source.includes("psdStatus: 'MISSING',"), false)
+    assert.equal(source.includes("onChange('psdStatus'"), false)
+    assert.equal(source.includes('listing.psdReadinessSource'), true)
+    assert.equal(source.includes('listing.psdNextAction'), true)
+  })
+
+  it('lets operators set whether an internal template requires a PSD', () => {
+    assert.equal(source.includes('requiresPsd: true'), true)
+    assert.equal(source.includes("onChange('requiresPsd'"), true)
+  })
 })

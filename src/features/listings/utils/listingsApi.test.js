@@ -159,6 +159,10 @@ test('mapListingResponse flattens catalog listing response for the table', () =>
       psdTemplateLabel: 'approved-template.psd',
       psdTemplateSize: '2 KB',
       psdStatus: 'available',
+      psdReadinessStatus: 'PRESENT',
+      psdReadinessRequired: true,
+      psdReadinessSource: null,
+      psdNextAction: 'Ready',
       costStatus: 'missing',
       store: 'Acc1',
       seller: '-',
@@ -313,7 +317,6 @@ test('buildListingFormPayload creates BE-compatible payload and omits empty opti
       productTypeGroupId: 'group-1',
       internalTemplateId: '',
       status: 'ACTIVE',
-      psdStatus: 'MISSING',
       costCenterStatus: 'PRESENT',
       baseCostAmount: '1200',
       currency: 'usd',
@@ -327,7 +330,6 @@ test('buildListingFormPayload creates BE-compatible payload and omits empty opti
       title: 'Shirt',
       productTypeGroupId: 'group-1',
       status: 'ACTIVE',
-      psdStatus: 'MISSING',
       costCenterStatus: 'PRESENT',
       baseCostAmount: 1200,
       currency: 'USD',
@@ -359,10 +361,45 @@ test('buildListingFormPayload update never sends immutable fields', () => {
       productTypeGroupId: 'group-1',
       internalTemplateId: null,
       costCenterStatus: 'MISSING',
-      psdStatus: 'PRESENT',
       status: 'ACTIVE',
     },
   )
+})
+
+test('buildListingFormPayload omits the derived PSD status for create and update', () => {
+  const values = {
+    shopId: 'shop-1',
+    salesChannelCode: 'AMAZON',
+    marketplaceCode: 'US',
+    sku: 'SKU-01',
+    title: 'Shirt',
+    productTypeGroupId: 'group-1',
+    psdStatus: 'PRESENT',
+  }
+
+  assert.equal(Object.hasOwn(buildListingFormPayload(values), 'psdStatus'), false)
+  assert.equal(Object.hasOwn(buildListingFormPayload(values, { mode: 'update' }), 'psdStatus'), false)
+})
+
+test('mapListingResponse uses the derived PSD readiness contract', () => {
+  const listing = mapListingResponse({
+    id: 'listing-1',
+    sku: 'SKU-01',
+    psdStatus: 'MISSING',
+    psdReadiness: {
+      required: true,
+      status: 'PRESENT',
+      effectivePsdAssetId: 'template-asset-1',
+      source: 'TEMPLATE',
+      asset: { assetId: 'template-asset-1', originalFilename: 'shared-template.psd', size: 2048 },
+    },
+  })
+
+  assert.equal(listing.psdReadinessStatus, 'PRESENT')
+  assert.equal(listing.psdReadinessSource, 'TEMPLATE')
+  assert.equal(listing.psdNextAction, 'Ready')
+  assert.equal(listing.psdTemplateAssetId, 'template-asset-1')
+  assert.equal(listing.psdTemplateLabel, 'shared-template.psd')
 })
 
 test('map option helpers expose shop and product type labels', () => {
@@ -476,6 +513,7 @@ test('mapInternalTemplateResponse exposes readable template fields', () => {
       requiredFieldCount: 1,
       artworkSlotCount: 2,
       designAssetCount: 1,
+      requiresPsd: true,
       status: 'ACTIVE',
       isActive: true,
       raw: {
@@ -501,6 +539,7 @@ test('buildInternalTemplatePayload includes internal template field arrays', () 
       name: ' T-Shirt Main ',
       description: ' Customer shirt inputs ',
       productTypeGroupId: 'group-1',
+      requiresPsd: false,
       requiredFields: [
         {
           key: ' customName ',
@@ -538,6 +577,7 @@ test('buildInternalTemplatePayload includes internal template field arrays', () 
       name: 'T-Shirt Main',
       description: 'Customer shirt inputs',
       productTypeGroupId: 'group-1',
+      requiresPsd: false,
       status: 'ACTIVE',
       requiredFields: [
         {
@@ -579,6 +619,7 @@ test('buildInternalTemplatePayload includes internal template field arrays', () 
         name: 'Updated Template',
         description: '',
         productTypeGroupId: 'group-1',
+        requiresPsd: true,
         requiredFields: [{ key: 'customName', type: 'TEXT' }],
         artworkSlots: [],
         designAssets: [],
@@ -589,6 +630,7 @@ test('buildInternalTemplatePayload includes internal template field arrays', () 
     {
       name: 'Updated Template',
       productTypeGroupId: 'group-1',
+      requiresPsd: true,
       requiredFields: [{ key: 'customName', type: 'TEXT' }],
       artworkSlots: [],
       designAssets: [],
