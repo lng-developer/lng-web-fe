@@ -613,8 +613,8 @@ export default function ListingsPage() {
   }
 
   return (
-    <div className="min-h-full bg-page px-4 pt-0 pb-3">
-      <header className="flex flex-wrap items-end justify-between gap-2 py-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-page px-4 pt-0 pb-3">
+      <header className="shrink-0 flex flex-wrap items-end justify-between gap-2 py-3">
         <div>
           <Typography component="h1" variant="h5" className="font-bold text-ink-strong">
             {t('listings.title')}
@@ -626,7 +626,7 @@ export default function ListingsPage() {
           </Typography>
         </div>
       </header>
-      <section className="grid gap-3 md:grid-cols-3">
+      <section className="shrink-0 grid gap-3 md:grid-cols-3">
         {listingStats.map((stat) => (
           <StatCard
             key={stat.key}
@@ -637,8 +637,8 @@ export default function ListingsPage() {
         ))}
       </section>
 
-      <section className="mt-3 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-        <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
+      <section className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
           <ListingStatusTabs
             items={listingTabs.map((tab) => ({
               value: tab.key,
@@ -669,7 +669,7 @@ export default function ListingsPage() {
           </div>
         </div>
 
-        <OperationsToolbar className="border-b border-border bg-page/70 px-4 py-2.5">
+        <OperationsToolbar className="shrink-0 border-b border-border bg-page/70 px-4 py-2.5">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <DebouncedTextField
               size="small"
@@ -831,7 +831,7 @@ export default function ListingsPage() {
           </div>
         </OperationsToolbar>
 
-        <div className="overflow-x-auto bg-surface">
+        <div className="min-h-0 flex-1 overflow-auto bg-surface">
           <table className="min-w-[1360px] w-full border-collapse text-sm">
             <colgroup>
               <col className="w-[118px]" />
@@ -846,7 +846,7 @@ export default function ListingsPage() {
               <col className="w-[108px]" />
               <col className="w-[178px]" />
             </colgroup>
-            <thead className="bg-neutral-bg text-[13px] font-bold text-ink-secondary shadow-sm">
+            <thead className="sticky top-0 z-20 bg-neutral-bg text-[13px] font-bold text-ink-secondary shadow-sm">
               <tr>
                 <th
                   rowSpan={2}
@@ -968,7 +968,7 @@ export default function ListingsPage() {
           </table>
         </div>
 
-        <footer className="border-t border-border px-5 py-4">
+        <footer className="shrink-0 border-t border-border px-5 py-4">
           <OperationsPagination
             page={page}
             pageSize={pagination.limit}

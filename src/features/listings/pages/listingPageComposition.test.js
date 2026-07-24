@@ -85,10 +85,21 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes('<OperationsTable'), false)
   })
 
-  it('lets the page own vertical scrolling for long listing tables', () => {
-    assert.equal(source.includes('sticky top-0 z-20'), false)
+  it('contains vertical scrolling inside the listing table', () => {
+    assert.equal(source.includes('flex h-full min-h-0 flex-col overflow-hidden'), true)
+    assert.equal(source.includes('header className="shrink-0'), true)
+    assert.equal(source.includes('section className="shrink-0 grid'), true)
+    assert.equal(
+      source.includes('mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl'),
+      true,
+    )
+    assert.equal(source.includes('flex min-h-12 shrink-0 flex-wrap items-center'), true)
+    assert.equal(source.includes('OperationsToolbar className="shrink-0'), true)
+    assert.equal(source.includes('min-h-0 flex-1 overflow-auto bg-surface'), true)
+    assert.equal(source.includes('footer className="shrink-0'), true)
+    assert.equal(source.includes('sticky top-0 z-20'), true)
     assert.equal(source.includes('h-[620px] overflow-auto'), false)
-    assert.equal(source.includes('<div className="overflow-x-auto bg-surface">'), true)
+    assert.equal(source.includes('<div className="overflow-x-auto bg-surface">'), false)
   })
 
   it('keeps the listing page chrome compact', () => {
@@ -101,7 +112,7 @@ describe('ListingPage composition', () => {
 
   it('keeps listing actions in the table header instead of the page header', () => {
     const statusToolbarSource = source.slice(
-      source.indexOf('<section className="mt-3 overflow-hidden'),
+      source.indexOf('<section className="mt-3'),
       source.indexOf('<OperationsToolbar'),
     )
 
@@ -113,7 +124,9 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes('alpha(theme.palette.primary.main, 0.06)'), true)
     assert.equal(source.includes("'border-primary text-primary'"), false)
     assert.equal(
-      statusToolbarSource.includes('flex min-h-12 flex-wrap items-center justify-between gap-2'),
+      statusToolbarSource.includes(
+        'flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-2',
+      ),
       true,
     )
     assert.equal(statusToolbarSource.includes('px-4 py-2'), true)
