@@ -3,9 +3,13 @@ import { existsSync, readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 
 const source = readFileSync(new URL('./ListingPage.jsx', import.meta.url), 'utf8')
+const internalTemplatesPageUrl = new URL('./InternalTemplatesPage.jsx', import.meta.url)
+const internalTemplatesPageExists = existsSync(internalTemplatesPageUrl)
 const productTypesPageUrl = new URL('./ProductTypesPage.jsx', import.meta.url)
 const productTypesPageExists = existsSync(productTypesPageUrl)
-const productTypesPageSource = productTypesPageExists ? readFileSync(productTypesPageUrl, 'utf8') : ''
+const productTypesPageSource = productTypesPageExists
+  ? readFileSync(productTypesPageUrl, 'utf8')
+  : ''
 const internalTemplateDialogSource = readFileSync(
   new URL('../components/dialogs/InternalTemplateDialog.jsx', import.meta.url),
   'utf8',
@@ -14,10 +18,14 @@ const internalTemplateDialogSource = readFileSync(
 describe('ListingPage composition', () => {
   it('composes catalog dialogs from reusable components', () => {
     assert.equal(source.includes("from '../components/dialogs/ListingDialog'"), true)
-    assert.equal(source.includes("from '../components/dialogs/InternalTemplateDialog'"), true)
+    assert.equal(internalTemplatesPageExists, true)
     assert.equal(source.includes('function ListingDialog'), false)
-    assert.equal(source.includes('function InternalTemplateDialog'), false)
-    assert.equal(productTypesPageSource.includes("from '../components/dialogs/ProductTypeDialog'"), true)
+    assert.equal(source.includes('showInternalTemplates'), false)
+    assert.equal(source.includes('templateDialog'), false)
+    assert.equal(
+      productTypesPageSource.includes("from '../components/dialogs/ProductTypeDialog'"),
+      true,
+    )
     assert.equal(productTypesPageSource.includes('function ProductTypeDialog'), false)
   })
 
@@ -56,7 +64,6 @@ describe('ListingPage composition', () => {
   })
 
   it('keeps listing actions in the table header instead of the page header', () => {
-    assert.equal(source.includes('{showInternalTemplates ? ('), true)
     assert.equal(source.includes(": t('listings.title')"), false)
     assert.equal(source.includes('function ListingStatusTabs'), true)
     assert.equal(source.includes('<ListingStatusTabs'), true)
