@@ -843,7 +843,7 @@ export default function ListingsPage() {
           </div>
         </OperationsToolbar>
 
-        <div className="h-[620px] overflow-auto bg-surface">
+        <div className="overflow-x-auto bg-surface">
           <table className="min-w-[1360px] w-full border-collapse text-sm">
             <colgroup>
               <col className="w-[118px]" />
@@ -858,7 +858,7 @@ export default function ListingsPage() {
               <col className="w-[108px]" />
               <col className="w-[178px]" />
             </colgroup>
-            <thead className="sticky top-0 z-20 bg-neutral-bg text-[13px] font-bold text-ink-secondary shadow-sm">
+            <thead className="bg-neutral-bg text-[13px] font-bold text-ink-secondary shadow-sm">
               <tr>
                 <th
                   rowSpan={2}

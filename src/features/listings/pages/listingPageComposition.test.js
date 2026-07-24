@@ -85,6 +85,12 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes('<OperationsTable'), false)
   })
 
+  it('lets the page own vertical scrolling for long listing tables', () => {
+    assert.equal(source.includes('sticky top-0 z-20'), false)
+    assert.equal(source.includes('h-[620px] overflow-auto'), false)
+    assert.equal(source.includes('<div className="overflow-x-auto bg-surface">'), true)
+  })
+
   it('keeps the listing page chrome compact', () => {
     assert.equal(source.includes('px-6 py-7'), false)
     assert.equal(source.includes('min-h-full bg-page px-4 py-3'), false)
@@ -114,7 +120,6 @@ describe('ListingPage composition', () => {
     assert.equal(source.includes('PSD ID'), false)
     assert.equal(source.includes('Asin / Product ID'), true)
     assert.equal(source.includes('min-w-[1360px]'), true)
-    assert.equal(source.includes('sticky top-0 z-20'), true)
     assert.equal(source.includes('text-[13px] font-bold text-ink-secondary'), true)
     assert.equal(source.includes('h-[96px] border-b border-border'), true)
     assert.equal(source.includes('even:bg-neutral-bg/40'), true)
