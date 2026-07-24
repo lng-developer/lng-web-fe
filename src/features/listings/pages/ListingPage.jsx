@@ -193,7 +193,6 @@ const initialFormValues = {
   currency: 'USD',
   costCenterStatus: 'MISSING',
   status: 'ACTIVE',
-  psdStatus: 'MISSING',
 }
 
 const initialProductTypeValues = {
@@ -210,6 +209,7 @@ const initialTemplateValues = {
   name: '',
   description: '',
   productTypeGroupId: '',
+  requiresPsd: true,
   status: 'ACTIVE',
   requiredFields: [],
   artworkSlots: [],
@@ -447,7 +447,7 @@ function ListingDialog({
             onChange={(event) => onChange('currency', event.target.value)}
           />
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <FormControl size="small">
             <Typography variant="body2" className="mb-1 font-semibold text-ink">
               {t('listings.form.costCenterStatus')}
@@ -481,20 +481,6 @@ function ListingDialog({
               </Typography>
             </div>
           </div>
-          <FormControl size="small">
-            <Typography variant="body2" className="mb-1 font-semibold text-ink">
-              {t('listings.form.psdStatus')}
-            </Typography>
-            <Select
-              value={values.psdStatus}
-              onChange={(event) => onChange('psdStatus', event.target.value)}
-              IconComponent={KeyboardArrowDownIcon}
-              className="h-10 rounded-lg text-sm"
-            >
-              <MenuItem value="MISSING">{t('listings.values.setupStatus.missing')}</MenuItem>
-              <MenuItem value="PRESENT">{t('listings.values.setupStatus.present')}</MenuItem>
-            </Select>
-          </FormControl>
         </div>
       </DialogContent>
       <DialogActions className="px-6 pb-6 pt-3">
@@ -1062,6 +1048,21 @@ function InternalTemplateDialog({
               </Typography>
             </div>
           </div>
+          <div className="flex min-h-10 flex-col justify-center">
+            <Typography variant="body2" className="mb-1 font-semibold text-ink">
+              Requires PSD
+            </Typography>
+            <div className="flex items-center gap-2">
+              <StatusSwitch
+                checked={values.requiresPsd}
+                ariaLabel="Requires PSD"
+                onChange={(_event, checked) => onChange('requiresPsd', checked)}
+              />
+              <Typography variant="body2" className="text-ink-secondary">
+                {values.requiresPsd ? 'Required' : 'Not required'}
+              </Typography>
+            </div>
+          </div>
         </div>
         <Typography variant="caption" className="text-ink-muted">
           {t('listings.catalogSetup.help.templateFields', {
@@ -1132,6 +1133,7 @@ function toTemplateFormValues(template = {}) {
     name: template.name || '',
     description: template.description || '',
     productTypeGroupId: template.productTypeGroupId || '',
+    requiresPsd: template.requiresPsd !== false,
     status: template.status || 'ACTIVE',
     requiredFields: template.requiredFields || [],
     artworkSlots: template.artworkSlots || [],
@@ -1277,7 +1279,6 @@ export default function ListingPage() {
       currency: listing.raw.currency || 'USD',
       costCenterStatus: listing.raw.costCenterStatus || 'MISSING',
       status: listing.rawStatus || 'ACTIVE',
-      psdStatus: listing.rawPsdStatus || 'MISSING',
     })
     setDialogOpen(true)
   }
@@ -1536,7 +1537,7 @@ export default function ListingPage() {
   }
 
   function renderListingCell(listing, column) {
-    const hasPsdTemplate = listing.psdStatus === 'available'
+    const hasPsdTemplate = listing.psdReadinessStatus === 'PRESENT'
     const hasInternalTemplate = listing.templateStatus === 'available'
     const hasCost = listing.costStatus === 'present'
     const isApproved = listing.rawQcStatus === 'APPROVED'
@@ -1603,9 +1604,19 @@ export default function ListingPage() {
 
     if (column.key === 'psdStatus') {
       return (
-        <Badge tone={hasPsdTemplate ? 'green' : 'orange'}>
-          {t(`listings.values.psdStatus.${listing.psdStatus}`)}
-        </Badge>
+        <div className="flex flex-col items-center gap-1">
+          <Badge tone={hasPsdTemplate ? 'green' : listing.psdReadinessRequired ? 'orange' : 'gray'}>
+            {listing.psdReadinessStatus === 'NOT_REQUIRED'
+              ? 'Not required'
+              : hasPsdTemplate
+                ? 'Ready'
+                : 'Missing'}
+          </Badge>
+          <span className="text-xs text-ink-muted">
+            {listing.psdReadinessSource ? `From ${listing.psdReadinessSource.toLowerCase()}` : 'No source'}
+          </span>
+          <span className="text-xs font-medium text-ink-secondary">{listing.psdNextAction}</span>
+        </div>
       )
     }
 
@@ -1691,7 +1702,7 @@ export default function ListingPage() {
           </IconActionButton>
           <IconActionButton
             label={t('listings.actions.createPsdTask', { defaultValue: 'Create PSD task' })}
-            disabled={listing.rawPsdStatus === 'PRESENT'}
+            disabled={listing.psdNextAction !== 'Create PSD task'}
             onClick={() => handleCreatePsdTask(listing)}
           >
             <CloudUploadOutlinedIcon fontSize="small" />
