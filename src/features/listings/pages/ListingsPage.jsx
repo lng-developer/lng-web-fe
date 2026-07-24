@@ -485,22 +485,10 @@ export default function ListingsPage() {
     }
 
     if (column.key === 'psdStatus') {
-      return (
-        <div className="flex flex-col items-center gap-1">
-          {listing.psdReadinessStatus === 'MISSING' ? (
-            <Badge tone="orange">Missing</Badge>
-          ) : listing.psdReadinessStatus === 'PRESENT' ? (
-            <Badge tone="green">Ready</Badge>
-          ) : (
-            <span className="text-sm text-ink-secondary">Not required</span>
-          )}
-          <span className="text-xs text-ink-muted">
-            {listing.psdReadinessSource
-              ? `From ${listing.psdReadinessSource.toLowerCase()}`
-              : 'No source'}
-          </span>
-          <span className="text-xs font-medium text-ink-secondary">{listing.psdNextAction}</span>
-        </div>
+      return hasPsdTemplate ? (
+        <Badge tone="green">Ready</Badge>
+      ) : (
+        <Badge tone="orange">Missing</Badge>
       )
     }
 

@@ -143,12 +143,28 @@ describe('ListingPage composition', () => {
   })
 
   it('renders derived PSD readiness rather than an editable listing PSD status', () => {
+    const psdCellSource = source.slice(
+      source.indexOf("if (column.key === 'psdStatus')"),
+      source.indexOf("if (column.key === 'store')"),
+    )
+    const storeCellSource = source.slice(
+      source.indexOf("if (column.key === 'store')"),
+      source.indexOf("if (column.key === 'seller')"),
+    )
+    const sellerCellSource = source.slice(
+      source.indexOf("if (column.key === 'seller')"),
+      source.indexOf("if (column.key === 'asinType')"),
+    )
+
     assert.equal(source.includes("psdStatus: 'MISSING',"), false)
     assert.equal(source.includes("onChange('psdStatus'"), false)
-    assert.equal(source.includes('listing.psdReadinessSource'), true)
-    assert.equal(source.includes('listing.psdNextAction'), true)
+    assert.equal(psdCellSource.includes('listing.psdReadinessSource'), false)
+    assert.equal(psdCellSource.includes('listing.psdNextAction'), false)
     assert.equal(source.includes('<Badge tone="green">Ready</Badge>'), true)
-    assert.equal(source.includes('>Not required</span>'), true)
+    assert.equal(source.includes('<Badge tone="orange">Missing</Badge>'), true)
+    assert.equal(source.includes('>Not required</span>'), false)
+    assert.equal(storeCellSource.includes('<Badge'), false)
+    assert.equal(sellerCellSource.includes('<Badge'), false)
   })
 
   it('lets operators set whether an internal template requires a PSD', () => {
