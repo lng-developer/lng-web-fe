@@ -68,6 +68,29 @@ test('evaluation payload contains only configured backend fields and capped samp
   assert.equal(Object.hasOwn(payload.rule, 'ignoredTechnicalField'), false)
 })
 
+test('remove action never submits a stale replacement value', () => {
+  const values = {
+    appliesWhenValues: 'TS1S',
+    outputAction: 'REPLACE_SEGMENT',
+    patternType: 'SEGMENT',
+    replacementValue: 'TS2S',
+    segmentIndex: '1',
+    segmentRole: 'CONFIG',
+  }
+
+  assert.equal(buildRuleEvaluationPayload('skuNormalize', values).rule.replacementValue, 'TS2S')
+  assert.equal(
+    Object.hasOwn(
+      buildRuleEvaluationPayload('skuNormalize', {
+        ...values,
+        outputAction: 'REMOVE_SEGMENT',
+      }).rule,
+      'replacementValue',
+    ),
+    false,
+  )
+})
+
 test('server validation details map rule paths back to fields', () => {
   assert.deepEqual(
     getServerFieldErrors({
@@ -118,4 +141,32 @@ test('form metadata and components stay within the four server-evaluated rule ty
   ]) {
     assert.doesNotMatch(componentSource(name), /axios|apiClient|\/api\/mapping/)
   }
+})
+
+test('dialog composes all rule forms and replacement input unregisters when hidden', () => {
+  const dialog = componentSource('MappingRuleDialog')
+  const renderer = componentSource('ConfiguredMappingRuleForm')
+  const hook = readFileSync(new URL('../hooks/useMappingRuleForm.js', import.meta.url), 'utf8')
+
+  for (const name of [
+    'SemanticRuleForm',
+    'SkuConfigRuleForm',
+    'SkuNormalizeRuleForm',
+    'ValueAliasForm',
+    'RuleEvaluationPanel',
+  ]) {
+    assert.match(dialog, new RegExp(`import ${name}`))
+  }
+  for (const name of [
+    'SemanticRuleForm',
+    'SkuConfigRuleForm',
+    'SkuNormalizeRuleForm',
+    'ValueAliasForm',
+  ]) {
+    assert.match(componentSource(name), /useMappingRulePreviewChange/)
+  }
+  assert.match(hook, /shouldUnregister:\s*true/)
+  assert.match(renderer, /required=\{required\}/)
+  assert.match(renderer, /'aria-required': required/)
+  assert.match(renderer, /outputAction === 'REPLACE_SEGMENT'/)
 })

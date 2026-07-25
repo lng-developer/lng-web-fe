@@ -25,6 +25,10 @@ export default function ConfiguredMappingRuleForm({ control, optionsBySource = {
     const options = field.optionsKey
       ? STATIC_OPTIONS[field.optionsKey] || []
       : optionsBySource[field.optionSource] || []
+    const required = Boolean(
+      field.required ||
+      (field.payloadKey === 'replacementValue' && outputAction === 'REPLACE_SEGMENT'),
+    )
     const select = field.type === 'select'
 
     return (
@@ -34,18 +38,21 @@ export default function ConfiguredMappingRuleForm({ control, optionsBySource = {
         helperText={fieldText(t, type, field, 'helperText')}
         label={fieldText(t, type, field, 'label')}
         name={field.payloadKey}
-        required={Boolean(field.required)}
+        required={required}
         select={select}
         size="small"
         type={field.type === 'number' ? 'number' : 'text'}
-        slotProps={field.type === 'number' ? { htmlInput: { min: 0, step: 1 } } : undefined}
+        slotProps={{
+          htmlInput: {
+            'aria-required': required,
+            ...(field.type === 'number' ? { min: 0, step: 1 } : {}),
+          },
+        }}
       >
         {select
           ? [
               <MenuItem key="empty" value="">
-                {field.required
-                  ? t('mapping.options.selectOption')
-                  : t('mapping.options.allNotSet')}
+                {required ? t('mapping.options.selectOption') : t('mapping.options.allNotSet')}
               </MenuItem>,
               ...options.map((option) => {
                 const value = option.value ?? option.id

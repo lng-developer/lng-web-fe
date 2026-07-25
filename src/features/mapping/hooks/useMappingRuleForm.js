@@ -102,9 +102,14 @@ export function createMappingRuleSchema(type) {
 }
 
 export function buildRuleEvaluationPayload(type, values) {
+  const rule = buildMappingRulePayload(type, values)
+  if (type === 'skuNormalize' && rule.outputAction !== 'REPLACE_SEGMENT') {
+    delete rule.replacementValue
+  }
+
   return {
     ruleType: type,
-    rule: buildMappingRulePayload(type, values),
+    rule,
     samples: parseRuleSamples(values.samples),
   }
 }
@@ -126,6 +131,7 @@ export function useMappingRuleForm({ rule, type }) {
       samples: '',
     },
     resolver: zodResolver(createMappingRuleSchema(type)),
+    shouldUnregister: true,
   })
 
   useEffect(() => {
