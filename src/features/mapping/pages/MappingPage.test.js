@@ -110,7 +110,7 @@ test('MappingPage exposes search filters and pagination for mapping tables', () 
   assert.equal(source.includes('mapping.filters.searchResolve'), true)
   assert.equal(source.includes('mapping.filters.searchRules'), true)
   assert.equal(source.includes('mapping.filters.ruleStatus'), true)
-  assert.equal(source.includes('filterBySearch'), true)
+  assert.equal(source.includes('filterResolveQueueRows'), true)
 })
 
 test('MappingPage uses unmatched queue endpoint and one candidate selection action', () => {

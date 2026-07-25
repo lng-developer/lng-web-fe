@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -45,9 +45,13 @@ import {
   mapMappingPreview,
   mapMappingWorkbenchRows,
 } from '@/features/mapping/utils/mappingMappers'
+import {
+  filterResolveQueueRows,
+  initialResolveQueueState,
+  resolveQueueReducer,
+} from '@/features/mapping/utils/resolveQueueState'
 
 const blankBatch = { limit: '50', marketplaceCode: '', salesChannelCode: '', shopId: '' }
-const defaultRowsPerPage = 10
 const rowsPerPageOptions = [10, 25, 50]
 const compactTableSx = {
   borderCollapse: 'separate',
@@ -63,19 +67,6 @@ function compactPayload(values) {
       )
       .filter(([, value]) => value !== ''),
   )
-}
-
-function getSearchText(value) {
-  return Array.isArray(value) ? value.join(' ') : String(value || '')
-}
-
-function filterBySearch(rows, search, getValues) {
-  const needle = search.trim().toLowerCase()
-  return needle
-    ? rows.filter((row) =>
-        getValues(row).map(getSearchText).join(' ').toLowerCase().includes(needle),
-      )
-    : rows
 }
 
 function StatusChip({ value }) {
@@ -337,32 +328,19 @@ function ResolveDetail({
 
 export default function ResolveQueueWorkspace() {
   const { t } = useTranslation()
-  const [selectedRow, setSelectedRow] = useState(null)
-  const [preview, setPreview] = useState(null)
+  const [state, dispatch] = useReducer(resolveQueueReducer, initialResolveQueueState)
   const [batchOpen, setBatchOpen] = useState(false)
-  const [resolveSearch, setResolveSearch] = useState('')
-  const [resolvePage, setResolvePage] = useState(0)
-  const [resolveRowsPerPage, setResolveRowsPerPage] = useState(defaultRowsPerPage)
   const query = useMemo(
-    () => ({ limit: resolveRowsPerPage, page: resolvePage + 1 }),
-    [resolvePage, resolveRowsPerPage],
+    () => ({ limit: state.resolveRowsPerPage, page: state.resolvePage + 1 }),
+    [state.resolvePage, state.resolveRowsPerPage],
   )
   const unmatchedQuery = useMappingUnmatchedOrderItemsQuery(query)
   const rows = useMemo(() => mapMappingWorkbenchRows(unmatchedQuery.data), [unmatchedQuery.data])
   const filteredRows = useMemo(
-    () =>
-      filterBySearch(rows, resolveSearch, (row) => [
-        row.itemLabel,
-        row.orderLabel,
-        row.originalSku,
-        row.canonicalSku,
-        row.configCode,
-        row.blockingReasons,
-        row.recommendedFixes,
-      ]),
-    [resolveSearch, rows],
+    () => filterResolveQueueRows(rows, state.resolveSearch),
+    [rows, state.resolveSearch],
   )
-  const totalRows = resolveSearch.trim()
+  const totalRows = state.resolveSearch.trim()
     ? filteredRows.length
     : unmatchedQuery.data?.pagination?.total || unmatchedQuery.data?.total || rows.length
   const previewMutation = useMappingPreviewMutation()
@@ -409,10 +387,9 @@ export default function ResolveQueueWorkspace() {
         fullWidth
         label={t('mapping.filters.searchResolve')}
         size="small"
-        value={resolveSearch}
+        value={state.resolveSearch}
         onChange={(event) => {
-          setResolveSearch(event.target.value)
-          setResolvePage(0)
+          dispatch({ search: event.target.value, type: 'set-search' })
         }}
       />
       <Box
@@ -439,12 +416,9 @@ export default function ResolveQueueWorkspace() {
                 <TableRow
                   key={row.id}
                   hover
-                  selected={selectedRow?.id === row.id}
+                  selected={state.selectedRow?.id === row.id}
                   sx={{ cursor: 'pointer' }}
-                  onClick={() => {
-                    setSelectedRow(row)
-                    setPreview(null)
-                  }}
+                  onClick={() => dispatch({ row, type: 'select-row' })}
                 >
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
@@ -484,24 +458,25 @@ export default function ResolveQueueWorkspace() {
           <TablePagination
             component="div"
             count={totalRows}
-            page={resolvePage}
-            rowsPerPage={resolveRowsPerPage}
+            page={state.resolvePage}
+            rowsPerPage={state.resolveRowsPerPage}
             rowsPerPageOptions={rowsPerPageOptions}
-            onPageChange={(_, page) => setResolvePage(page)}
+            onPageChange={(_, page) => dispatch({ page, type: 'set-page' })}
             onRowsPerPageChange={(event) => {
-              setResolveRowsPerPage(Number(event.target.value))
-              setResolvePage(0)
+              dispatch({ rowsPerPage: Number(event.target.value), type: 'set-rows-per-page' })
             }}
           />
         </Paper>
         <ResolveDetail
-          preview={preview}
+          preview={state.preview}
           recheckMutation={recheckMutation}
           resolveMutation={resolveMutation}
-          row={selectedRow}
+          row={state.selectedRow}
           selectMutation={selectMutation}
           onPreview={(orderItemId) =>
-            previewMutation.mutate(orderItemId, { onSuccess: setPreview })
+            previewMutation.mutate(orderItemId, {
+              onSuccess: (preview) => dispatch({ preview, type: 'set-preview' }),
+            })
           }
         />
       </Box>
