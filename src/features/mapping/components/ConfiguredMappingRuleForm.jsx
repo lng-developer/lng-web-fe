@@ -4,7 +4,11 @@ import { Box, MenuItem, Typography } from '@mui/material'
 
 import FormTextField from '@/components/form/FormTextField'
 
-import { MAPPING_RULE_FORM_CONFIG, STATIC_OPTIONS } from '../data/mappingUxConfig'
+import {
+  isMappingRuleFieldDisabled,
+  MAPPING_RULE_FORM_CONFIG,
+  STATIC_OPTIONS,
+} from '../data/mappingUxConfig'
 
 function fieldText(t, type, field, key) {
   return t(`mapping.fields.${type}.${field.payloadKey}.${key}`, {
@@ -16,7 +20,12 @@ function optionLabel(t, option) {
   return t(`mapping.options.${option.value}`, { defaultValue: option.label })
 }
 
-export default function ConfiguredMappingRuleForm({ control, optionsBySource = {}, type }) {
+export default function ConfiguredMappingRuleForm({
+  control,
+  editing = false,
+  optionsBySource = {},
+  type,
+}) {
   const { t } = useTranslation()
   const config = MAPPING_RULE_FORM_CONFIG[type]
   const fields = config?.fields || []
@@ -30,11 +39,13 @@ export default function ConfiguredMappingRuleForm({ control, optionsBySource = {
       (field.payloadKey === 'replacementValue' && outputAction === 'REPLACE_SEGMENT'),
     )
     const select = field.type === 'select'
+    const hasEmptyOption = options.some((option) => (option.value ?? option.id) === '')
 
     return (
       <FormTextField
         key={field.payloadKey}
         control={control}
+        disabled={isMappingRuleFieldDisabled(field, editing)}
         helperText={fieldText(t, type, field, 'helperText')}
         label={fieldText(t, type, field, 'label')}
         name={field.payloadKey}
@@ -51,9 +62,15 @@ export default function ConfiguredMappingRuleForm({ control, optionsBySource = {
       >
         {select
           ? [
-              <MenuItem key="empty" value="">
-                {required ? t('mapping.options.selectOption') : t('mapping.options.allNotSet')}
-              </MenuItem>,
+              ...(hasEmptyOption
+                ? []
+                : [
+                    <MenuItem key="empty" value="">
+                      {required
+                        ? t('mapping.options.selectOption')
+                        : t('mapping.options.allNotSet')}
+                    </MenuItem>,
+                  ]),
               ...options.map((option) => {
                 const value = option.value ?? option.id
                 return (

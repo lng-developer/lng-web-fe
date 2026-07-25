@@ -93,6 +93,14 @@ function historyValue(value) {
   return displayWithoutId(value)
 }
 
+export function mapMappingAuthorableShops(payload = {}, globalLabel = 'Global') {
+  const shops = getListItems(payload).map((shop) => ({
+    id: String(shop.id),
+    label: shop.code ? `${shop.name} (${shop.code})` : shop.name,
+  }))
+  return payload.canCreateGlobal ? [{ id: '', label: globalLabel }, ...shops] : shops
+}
+
 export function mapMappingWorkbenchRows(payload) {
   return getListItems(payload).map((item, index) => {
     const skuNormalization = item.skuNormalization || {}

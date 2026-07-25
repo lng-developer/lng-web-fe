@@ -2,11 +2,29 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  mapMappingAuthorableShops,
   mapMappingPreview,
   mapMappingRuleHistory,
   mapMappingRuleRows,
   mapMappingWorkbenchRows,
 } from './mappingMappers.js'
+
+test('mapMappingAuthorableShops exposes Global only when backend allows global writes', () => {
+  const shops = [
+    { id: 'shop-1', name: 'Alpha Shop', code: 'ALPHA' },
+    { id: 'shop-2', name: 'Beta Shop', code: 'BETA' },
+  ]
+
+  assert.deepEqual(mapMappingAuthorableShops({ canCreateGlobal: false, items: shops }), [
+    { id: 'shop-1', label: 'Alpha Shop (ALPHA)' },
+    { id: 'shop-2', label: 'Beta Shop (BETA)' },
+  ])
+  assert.deepEqual(mapMappingAuthorableShops({ canCreateGlobal: true, items: shops }, 'Global'), [
+    { id: '', label: 'Global' },
+    { id: 'shop-1', label: 'Alpha Shop (ALPHA)' },
+    { id: 'shop-2', label: 'Beta Shop (BETA)' },
+  ])
+})
 
 test('mapMappingWorkbenchRows exposes operator fields without raw ids as labels', () => {
   const rows = mapMappingWorkbenchRows({

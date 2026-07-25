@@ -153,6 +153,7 @@ export default function MappingRuleDialog({
           </Alert>
           <FormComponent
             control={form.control}
+            editing={Boolean(rule)}
             onPreviewChange={handlePreviewChange}
             optionsBySource={optionsBySource}
           />

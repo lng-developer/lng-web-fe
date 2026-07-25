@@ -75,11 +75,11 @@ export const STATIC_OPTIONS = {
 
 const commonScopeFields = [
   {
-    helperText: 'Choose the shop this rule belongs to.',
+    helperText: 'Choose a shop, or Global when the rule should apply to every shop.',
     label: 'Shop',
     optionSource: 'shops',
     payloadKey: 'shopId',
-    required: true,
+    required: false,
     type: 'select',
   },
   {
@@ -381,6 +381,10 @@ function normalizeValue(value) {
   if (Array.isArray(value)) return value.join(', ')
   if (value === null || value === undefined) return ''
   return String(value)
+}
+
+export function isMappingRuleFieldDisabled(field, editing) {
+  return Boolean(editing && field.payloadKey === 'shopId')
 }
 
 export function buildMappingRuleInitialValues(type, rawRule = {}) {

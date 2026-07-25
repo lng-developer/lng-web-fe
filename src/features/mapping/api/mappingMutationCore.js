@@ -29,6 +29,10 @@ export function requestMappingRuleHistory(client, unwrap, type, id) {
   return request(client, unwrap, 'get', ENDPOINTS.MAPPING.RULE_HISTORY(type, id))
 }
 
+export function requestMappingAuthorableShops(client, unwrap) {
+  return request(client, unwrap, 'get', ENDPOINTS.MAPPING.AUTHORABLE_SHOPS)
+}
+
 export function requestMappingVendorCandidates(client, unwrap, { body, orderItemId }) {
   return request(
     client,

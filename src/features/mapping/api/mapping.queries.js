@@ -4,7 +4,7 @@ import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
 import { mappingKeys } from './mapping.keys'
-import { requestMappingRuleHistory } from './mappingMutationCore'
+import { requestMappingAuthorableShops, requestMappingRuleHistory } from './mappingMutationCore'
 
 export const mappingRuleTypes = [
   {
@@ -85,6 +85,14 @@ export function useMappingRuleHistoryQuery(type, id, options = {}) {
     queryKey: mappingKeys.ruleHistory(type, id),
     queryFn: () => requestMappingRuleHistory(apiClient, unwrapApiData, type, id),
     enabled: Boolean(type && id),
+    ...options,
+  })
+}
+
+export function useMappingAuthorableShopsQuery(options = {}) {
+  return useQuery({
+    queryKey: mappingKeys.authorableShops(),
+    queryFn: () => requestMappingAuthorableShops(apiClient, unwrapApiData),
     ...options,
   })
 }

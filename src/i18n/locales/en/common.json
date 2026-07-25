@@ -2518,6 +2518,7 @@
     "options": {
       "selectOption": "Select an option",
       "allNotSet": "All / not set",
+      "global": "Global",
       "AMAZON_US": "Amazon US",
       "ETSY": "Etsy",
       "AMAZON": "Amazon",

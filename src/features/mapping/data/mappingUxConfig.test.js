@@ -20,7 +20,12 @@ test('rule form config uses operator labels instead of raw API field names', () 
     .filter((field) => !field.advanced)
     .map((field) => field.label)
 
-  assert.deepEqual(valueAliasMainLabels, ['Value group', 'Customer value', 'Standard value'])
+  assert.deepEqual(valueAliasMainLabels, [
+    'Shop',
+    'Value group',
+    'Customer value',
+    'Standard value',
+  ])
   assert.equal(valueAliasMainLabels.includes('matchValue'), false)
   assert.equal(valueAliasMainLabels.includes('normalizedValue'), false)
 })

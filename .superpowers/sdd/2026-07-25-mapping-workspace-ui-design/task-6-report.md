@@ -162,3 +162,49 @@ history invalidation performed by mutation `onSuccess`.
   were printed.
 - The unrelated pre-existing `package-lock.json` modification remains unstaged and
   uncommitted.
+
+## Fix round 3/5
+
+### Mapping-owned authorable scope resolution
+
+- Added `GET /api/mapping/authorable-shops`, guarded by `MAPPING:WRITE`, as the
+  Mapping-owned read contract for evaluator authoring scopes. The Mapping service
+  resolves active shop scopes through the Auth Public Port, which in turn enriches
+  those scopes from the authentic Shop resource.
+- A caller with global `MAPPING:WRITE` receives all active registered shops plus
+  `canCreateGlobal: true`. A scoped caller receives only the exact shop scopes for
+  which they hold scoped `MAPPING:WRITE`, with `canCreateGlobal: false`.
+- The endpoint does not require Listings, Shops, or Finance permissions. Existing
+  backend global-write authorization remains unchanged; no scoped permission can
+  create or move a rule into the global scope.
+- The frontend rule inventory now uses the Mapping contract instead of the Listings
+  shop query. All four evaluator forms share the returned shop options, and only
+  callers authorized for global creation see the optional `Global` choice.
+- Shop is optional during creation so an authorized global writer can select
+  `Global`. During edits, the shop field is disabled and the existing save helper
+  continues to omit `shopId`, enforcing scope immutability in both UI and transport.
+
+### Regression coverage
+
+- Backend tests cover the endpoint permission middleware and response contract,
+  exact scoped-shop filtering, deduplication, and pagination across all registered
+  shops for a global writer.
+- Frontend tests cover the Mapping endpoint request, conditional `Global` option,
+  shop-only options for scoped writers, optional scope on all four evaluator forms,
+  and edit-time scope locking.
+
+### Fix-round verification
+
+- Backend focused Mapping route/service/architecture suites: 87/87 passed.
+- Backend Auth suites: 115 passed, 12 skipped (24 suites passed, 1 skipped).
+- Frontend Mapping tests: 49/49 passed.
+- Frontend `npm run lint`: passed.
+- Frontend `npm run build`: passed with only the existing large-chunk advisory.
+- Production backend files passed `node -c`; frontend and backend
+  `git diff --check` passed with only line-ending notices.
+- A broader backend Mapping directory sweep passed 149/151 tests. The two failures
+  are pre-existing expectations in `fulfillmentPlan.service.test.js` for
+  `designPublic.createPsdTemplateTaskFromListing`; neither the failing service nor
+  that integration was changed in this fix.
+- No dependencies were added. The unrelated pre-existing frontend
+  `package-lock.json` modification remains unstaged and uncommitted.

@@ -34,10 +34,7 @@ import {
 import { useSnackbar } from 'notistack'
 
 import { SNACKBAR_VARIANTS } from '@/constants/app'
-import {
-  useListingProductTypesQuery,
-  useListingShopsQuery,
-} from '@/features/listings/api/listings.queries'
+import { useListingProductTypesQuery } from '@/features/listings/api/listings.queries'
 import {
   useMappingRuleConflictsMutation,
   useMappingRulePreviewMutation,
@@ -46,6 +43,7 @@ import {
 } from '@/features/mapping/api/mapping.mutations'
 import {
   mappingRuleTypes,
+  useMappingAuthorableShopsQuery,
   useMappingInternalTemplatesQuery,
   useMappingRulesQuery,
 } from '@/features/mapping/api/mapping.queries'
@@ -57,7 +55,10 @@ import {
   STATIC_OPTIONS,
   TAB_GUIDES,
 } from '@/features/mapping/data/mappingUxConfig'
-import { mapMappingRuleRows } from '@/features/mapping/utils/mappingMappers'
+import {
+  mapMappingAuthorableShops,
+  mapMappingRuleRows,
+} from '@/features/mapping/utils/mappingMappers'
 import { useVendorsQuery } from '@/features/vendors/api/vendors.queries'
 
 import MappingRuleDialog from './MappingRuleDialog'
@@ -457,7 +458,7 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
   const [ruleRowsPerPage, setRuleRowsPerPage] = useState(defaultRowsPerPage)
   const rulesQuery = useMappingRulesQuery(type, { limit: 100 })
   const optionQueryOptions = { enabled: Boolean(dialogState) }
-  const shopsQuery = useListingShopsQuery({}, optionQueryOptions)
+  const authorableShopsQuery = useMappingAuthorableShopsQuery(optionQueryOptions)
   const productTypesQuery = useListingProductTypesQuery({}, optionQueryOptions)
   const vendorsQuery = useVendorsQuery({ limit: 100 }, optionQueryOptions)
   const templatesQuery = useMappingInternalTemplatesQuery({ limit: 100 }, optionQueryOptions)
@@ -485,14 +486,14 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
   const optionsBySource = useMemo(
     () => ({
       productTypes: productTypesQuery.data || [],
-      shops: shopsQuery.data || [],
+      shops: mapMappingAuthorableShops(authorableShopsQuery.data, t('mapping.options.global')),
       templates: mapTemplateOptions(templatesQuery.data),
       vendors: (vendorsQuery.data?.items || []).map((vendor) => ({
         id: vendor.id,
         label: vendor.name || vendor.displayName || vendor.code || 'Unnamed vendor',
       })),
     }),
-    [productTypesQuery.data, shopsQuery.data, templatesQuery.data, vendorsQuery.data],
+    [authorableShopsQuery.data, productTypesQuery.data, t, templatesQuery.data, vendorsQuery.data],
   )
   const notifyError = (error, fallbackKey) => {
     enqueueSnackbar(error?.response?.data?.message || error?.message || t(fallbackKey), {

@@ -2518,6 +2518,7 @@
     "options": {
       "selectOption": "Chọn một option",
       "allNotSet": "Tất cả / không đặt",
+      "global": "Toàn hệ thống",
       "AMAZON_US": "Amazon US",
       "ETSY": "Etsy",
       "AMAZON": "Amazon",

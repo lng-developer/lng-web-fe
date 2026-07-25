@@ -2,7 +2,11 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-import { MAPPING_RULE_FORM_CONFIG, STATIC_OPTIONS } from '../data/mappingUxConfig.js'
+import {
+  isMappingRuleFieldDisabled,
+  MAPPING_RULE_FORM_CONFIG,
+  STATIC_OPTIONS,
+} from '../data/mappingUxConfig.js'
 import {
   buildRuleConflictPayload,
   buildRuleEvaluationPayload,
@@ -160,7 +164,7 @@ test('form metadata and components stay within the four server-evaluated rule ty
       ({ payloadKey }) => payloadKey === 'shopId',
     )
     assert.equal(shopField?.optionSource, 'shops')
-    assert.equal(shopField?.required, true)
+    assert.equal(shopField?.required, false)
   }
 
   for (const name of [
@@ -172,6 +176,16 @@ test('form metadata and components stay within the four server-evaluated rule ty
     'RuleEvaluationPanel',
   ]) {
     assert.doesNotMatch(componentSource(name), /axios|apiClient|\/api\/mapping/)
+  }
+})
+
+test('shop scope is editable on create and locked on edit for every evaluator form', () => {
+  for (const type of ['skuNormalize', 'skuConfig', 'semanticRules', 'valueAliases']) {
+    const shopField = MAPPING_RULE_FORM_CONFIG[type].fields.find(
+      ({ payloadKey }) => payloadKey === 'shopId',
+    )
+    assert.equal(isMappingRuleFieldDisabled(shopField, false), false)
+    assert.equal(isMappingRuleFieldDisabled(shopField, true), true)
   }
 })
 

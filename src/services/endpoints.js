@@ -129,6 +129,7 @@ export const ENDPOINTS = {
   MAPPING: {
     SUMMARY: '/api/mapping/summary',
     CONFIG_WORKBENCH: '/api/mapping/config-workbench',
+    AUTHORABLE_SHOPS: '/api/mapping/authorable-shops',
     UNMATCHED_ORDER_ITEMS: '/api/mapping/order-items/unmatched',
     RECHECK_UNMATCHED: '/api/mapping/recheck-unmatched',
     NORMALIZATION_RULES: '/api/mapping/normalization-rules',

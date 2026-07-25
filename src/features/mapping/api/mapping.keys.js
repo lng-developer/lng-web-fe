@@ -1,5 +1,6 @@
 export const mappingKeys = {
   all: ['mapping'],
+  authorableShops: () => [...mappingKeys.all, 'authorable-shops'],
   internalTemplates: (query = {}) => [...mappingKeys.all, 'internal-templates', query],
   unmatchedOrderItems: (query = {}) => [...mappingKeys.all, 'unmatched-order-items', query],
   plan: (orderItemId) => [...mappingKeys.all, 'plan', orderItemId],
