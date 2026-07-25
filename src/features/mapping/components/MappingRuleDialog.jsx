@@ -15,7 +15,7 @@ import {
 
 import FormTextField from '@/components/form/FormTextField'
 
-import { MAPPING_RULE_FORM_CONFIG } from '../data/mappingUxConfig'
+import { getMappingRuleSelectConfig, MAPPING_RULE_FORM_CONFIG } from '../data/mappingUxConfig'
 import {
   buildRuleConflictPayload,
   buildRuleEvaluationPayload,
@@ -58,7 +58,11 @@ export default function MappingRuleDialog({
   const { t } = useTranslation()
   const config = MAPPING_RULE_FORM_CONFIG[type]
   const FormComponent = formComponents[type]
-  const form = useMappingRuleForm({ rule, type })
+  const shopField = config?.fields.find(({ payloadKey }) => payloadKey === 'shopId')
+  const shopSelectConfig = shopField
+    ? getMappingRuleSelectConfig(shopField, optionsBySource.shops || [], Boolean(rule))
+    : { defaultValue: '', required: false }
+  const form = useMappingRuleForm({ requireShop: shopSelectConfig.required, rule, type })
   const [evaluation, setEvaluation] = useState(emptyEvaluation)
   const [pendingAction, setPendingAction] = useState('')
   const pending = Boolean(pendingAction)
@@ -66,6 +70,15 @@ export default function MappingRuleDialog({
   useEffect(() => {
     setEvaluation(emptyEvaluation)
   }, [open, rule, type])
+
+  useEffect(() => {
+    if (!rule && shopSelectConfig.defaultValue && !form.getValues('shopId')) {
+      form.setValue('shopId', shopSelectConfig.defaultValue, {
+        shouldDirty: false,
+        shouldValidate: true,
+      })
+    }
+  }, [form, rule, shopSelectConfig.defaultValue])
 
   const handlePreviewChange = useCallback(
     (payload) => {

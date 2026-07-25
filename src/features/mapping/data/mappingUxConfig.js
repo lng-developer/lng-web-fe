@@ -387,6 +387,35 @@ export function isMappingRuleFieldDisabled(field, editing) {
   return Boolean(editing && field.payloadKey === 'shopId')
 }
 
+function getSelectOptionValue(option) {
+  return String(option?.value ?? option?.id ?? '')
+}
+
+export function getMappingRuleSelectConfig(field, options = [], editing = false) {
+  const hasEmptyOption = options.some((option) => getSelectOptionValue(option) === '')
+  const isShopField = field.payloadKey === 'shopId'
+  const firstPermittedShopId = isShopField
+    ? options.map(getSelectOptionValue).find(Boolean) || ''
+    : ''
+  const scopedShopCreate = isShopField && !editing && !hasEmptyOption && firstPermittedShopId
+  const required = Boolean(field.required || scopedShopCreate)
+
+  return {
+    defaultValue: scopedShopCreate ? firstPermittedShopId : '',
+    options:
+      hasEmptyOption || isShopField
+        ? options
+        : [
+            {
+              labelKey: required ? 'selectOption' : 'allNotSet',
+              value: '',
+            },
+            ...options,
+          ],
+    required,
+  }
+}
+
 export function buildMappingRuleInitialValues(type, rawRule = {}) {
   return Object.fromEntries(
     getRuleFields(type).map((field) => [

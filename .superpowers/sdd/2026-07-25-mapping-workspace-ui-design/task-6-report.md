@@ -208,3 +208,30 @@ history invalidation performed by mutation `onSuccess`.
   that integration was changed in this fix.
 - No dependencies were added. The unrelated pre-existing frontend
   `package-lock.json` modification remains unstaged and uncommitted.
+
+## Fix round 4/5
+
+### Scoped authoring select composition
+
+- Fixed the shared evaluator form renderer so a shop selector never invents the
+  generic empty `All / not set` option. Shop options now come exclusively from the
+  Mapping authorable-shops contract.
+- When the contract returns scoped shops without Global, create mode marks Shop
+  required, defaults the form to the first permitted shop, and applies the same
+  requirement in the Zod submission schema.
+- When the contract explicitly includes Global, the empty value remains available
+  under the explicit `Global` label and Shop remains optional.
+- Edit behavior remains unchanged: the existing rule scope stays selected, disabled,
+  and omitted from the update body.
+
+### Regression and verification
+
+- Added a runnable composition regression covering Mapping payload mapping, rendered
+  select configuration, scoped default selection, scoped validation, and explicit
+  Global behavior.
+- Frontend Mapping tests: 50/50 passed.
+- Frontend production build: passed with only the existing large-chunk advisory.
+- The first lint pass found only import ordering in the new test; the import was
+  corrected before the final verification.
+- No backend files or dependencies changed. The unrelated pre-existing
+  `package-lock.json` modification remains unstaged and uncommitted.

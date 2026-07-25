@@ -5,6 +5,7 @@ import { Box, MenuItem, Typography } from '@mui/material'
 import FormTextField from '@/components/form/FormTextField'
 
 import {
+  getMappingRuleSelectConfig,
   isMappingRuleFieldDisabled,
   MAPPING_RULE_FORM_CONFIG,
   STATIC_OPTIONS,
@@ -31,15 +32,17 @@ export default function ConfiguredMappingRuleForm({
   const fields = config?.fields || []
   const outputAction = useWatch({ control, name: 'outputAction' })
   const renderField = (field) => {
-    const options = field.optionsKey
+    const sourceOptions = field.optionsKey
       ? STATIC_OPTIONS[field.optionsKey] || []
       : optionsBySource[field.optionSource] || []
+    const select = field.type === 'select'
+    const selectConfig = select ? getMappingRuleSelectConfig(field, sourceOptions, editing) : null
+    const options = selectConfig?.options || sourceOptions
     const required = Boolean(
-      field.required ||
+      selectConfig?.required ||
+      (!select && field.required) ||
       (field.payloadKey === 'replacementValue' && outputAction === 'REPLACE_SEGMENT'),
     )
-    const select = field.type === 'select'
-    const hasEmptyOption = options.some((option) => (option.value ?? option.id) === '')
 
     return (
       <FormTextField
@@ -61,25 +64,18 @@ export default function ConfiguredMappingRuleForm({
         }}
       >
         {select
-          ? [
-              ...(hasEmptyOption
-                ? []
-                : [
-                    <MenuItem key="empty" value="">
-                      {required
-                        ? t('mapping.options.selectOption')
-                        : t('mapping.options.allNotSet')}
-                    </MenuItem>,
-                  ]),
-              ...options.map((option) => {
-                const value = option.value ?? option.id
-                return (
-                  <MenuItem key={value} value={value}>
-                    {option.value ? optionLabel(t, option) : option.label}
-                  </MenuItem>
-                )
-              }),
-            ]
+          ? options.map((option) => {
+              const value = option.value ?? option.id
+              return (
+                <MenuItem key={value || option.labelKey} value={value}>
+                  {option.labelKey
+                    ? t(`mapping.options.${option.labelKey}`)
+                    : option.value
+                      ? optionLabel(t, option)
+                      : option.label}
+                </MenuItem>
+              )
+            })
           : null}
       </FormTextField>
     )

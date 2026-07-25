@@ -2,18 +2,16 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-import {
-  isMappingRuleFieldDisabled,
-  MAPPING_RULE_FORM_CONFIG,
-  STATIC_OPTIONS,
-} from '../data/mappingUxConfig.js'
+import * as mappingUxConfig from '../data/mappingUxConfig.js'
 import {
   buildRuleConflictPayload,
   buildRuleEvaluationPayload,
   createMappingRuleSchema,
   getServerFieldErrors,
 } from '../hooks/useMappingRuleForm.js'
+import { mapMappingAuthorableShops } from '../utils/mappingMappers.js'
 
+const { isMappingRuleFieldDisabled, MAPPING_RULE_FORM_CONFIG, STATIC_OPTIONS } = mappingUxConfig
 const componentSource = (name) => readFileSync(new URL(`./${name}.jsx`, import.meta.url), 'utf8')
 
 test('sku normalize validation requires appliesWhenValues and replacement only for replace', () => {
@@ -187,6 +185,72 @@ test('shop scope is editable on create and locked on edit for every evaluator fo
     assert.equal(isMappingRuleFieldDisabled(shopField, false), false)
     assert.equal(isMappingRuleFieldDisabled(shopField, true), true)
   }
+})
+
+test('scoped authoring composes a required permitted shop without an empty scope option', () => {
+  assert.equal(typeof mappingUxConfig.getMappingRuleSelectConfig, 'function')
+
+  const shopField = MAPPING_RULE_FORM_CONFIG.valueAliases.fields.find(
+    ({ payloadKey }) => payloadKey === 'shopId',
+  )
+  const scopedOptions = mapMappingAuthorableShops({
+    canCreateGlobal: false,
+    items: [
+      { code: 'ALPHA', id: 'shop-1', name: 'Alpha Shop' },
+      { code: 'BETA', id: 'shop-2', name: 'Beta Shop' },
+    ],
+  })
+  const scopedConfig = mappingUxConfig.getMappingRuleSelectConfig(shopField, scopedOptions, false)
+
+  assert.equal(scopedConfig.defaultValue, 'shop-1')
+  assert.equal(scopedConfig.required, true)
+  assert.deepEqual(
+    scopedConfig.options.map(({ id }) => id),
+    ['shop-1', 'shop-2'],
+  )
+  const ruleValues = {
+    marketplaceCode: 'AMAZON_US',
+    matchValue: 'XXL',
+    normalizedValue: '2XL',
+    priority: '100',
+    salesChannelCode: 'AMAZON',
+    semanticRole: 'SIZE',
+    shopId: '',
+    status: 'ACTIVE',
+  }
+  const scopedSchema = createMappingRuleSchema('valueAliases', {
+    requireShop: scopedConfig.required,
+  })
+  assert.equal(
+    scopedSchema.safeParse(ruleValues).error.issues.some(({ path }) => path[0] === 'shopId'),
+    true,
+  )
+  assert.equal(
+    scopedSchema.safeParse({ ...ruleValues, shopId: scopedConfig.defaultValue }).success,
+    true,
+  )
+
+  const globalOptions = mapMappingAuthorableShops(
+    {
+      canCreateGlobal: true,
+      items: [{ code: 'ALPHA', id: 'shop-1', name: 'Alpha Shop' }],
+    },
+    'Global',
+  )
+  const globalConfig = mappingUxConfig.getMappingRuleSelectConfig(shopField, globalOptions, false)
+
+  assert.equal(globalConfig.defaultValue, '')
+  assert.equal(globalConfig.required, false)
+  assert.deepEqual(
+    globalConfig.options.map(({ id }) => id),
+    ['', 'shop-1'],
+  )
+  assert.equal(
+    createMappingRuleSchema('valueAliases', { requireShop: globalConfig.required }).safeParse(
+      ruleValues,
+    ).success,
+    true,
+  )
 })
 
 test('dialog composes all rule forms and replacement input unregisters when hidden', () => {

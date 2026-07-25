@@ -33,10 +33,10 @@ export function parseRuleSamples(value) {
     .slice(0, maxSamples)
 }
 
-function createFieldSchema(field) {
+function createFieldSchema(field, required = field.required) {
   let schema = z.string()
 
-  if (field.required) {
+  if (required) {
     schema = schema.trim().min(1, 'mapping.validation.requiredField')
   }
 
@@ -62,13 +62,18 @@ function createFieldSchema(field) {
     )
   }
 
-  return field.required ? schema : schema.default('')
+  return required ? schema : schema.default('')
 }
 
-export function createMappingRuleSchema(type) {
+export function createMappingRuleSchema(type, { requireShop = false } = {}) {
   const fields = MAPPING_RULE_FORM_CONFIG[type]?.fields || []
   const schema = z.object({
-    ...Object.fromEntries(fields.map((field) => [field.payloadKey, createFieldSchema(field)])),
+    ...Object.fromEntries(
+      fields.map((field) => [
+        field.payloadKey,
+        createFieldSchema(field, field.required || (requireShop && field.payloadKey === 'shopId')),
+      ]),
+    ),
     samples: z
       .string()
       .default('')
@@ -131,13 +136,13 @@ export function getServerFieldErrors(error) {
   })
 }
 
-export function useMappingRuleForm({ rule, type }) {
+export function useMappingRuleForm({ requireShop = false, rule, type }) {
   const form = useForm({
     defaultValues: {
       ...buildMappingRuleInitialValues(type, rule?.raw || rule || {}),
       samples: '',
     },
-    resolver: zodResolver(createMappingRuleSchema(type)),
+    resolver: zodResolver(createMappingRuleSchema(type, { requireShop })),
     shouldUnregister: true,
   })
 
