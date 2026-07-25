@@ -103,6 +103,18 @@ test('MappingPage status switch uses explicit readable on and off styling', () =
   assert.equal(source.includes("'action.disabledBackground'"), true)
 })
 
+test('MappingPage gives explicit loading and feedback for rule saves and status changes', () => {
+  const source = readMappingWorkspaceSource()
+
+  assert.equal(source.includes('CircularProgress'), true)
+  assert.equal(source.includes('useSnackbar'), true)
+  assert.equal(source.includes('mapping.messages.ruleCreated'), true)
+  assert.equal(source.includes('mapping.messages.ruleUpdated'), true)
+  assert.equal(source.includes('mapping.messages.ruleStatusUpdated'), true)
+  assert.equal(source.includes('mapping.messages.ruleSaveFailed'), true)
+  assert.equal(source.includes('mapping.messages.ruleStatusFailed'), true)
+})
+
 test('MappingPage exposes search filters and pagination for mapping tables', () => {
   const source = readMappingWorkspaceSource()
 

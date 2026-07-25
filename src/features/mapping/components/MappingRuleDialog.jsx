@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -176,8 +177,20 @@ export default function MappingRuleDialog({
         <Button disabled={pending} variant="outlined" onClick={testRule}>
           {t('mapping.evaluation.testRule')}
         </Button>
-        <Button disabled={pending || !onSave} variant="contained" onClick={saveRule}>
-          {rule ? t('common.save') : t('mapping.actions.createRule')}
+        <Button
+          aria-busy={pendingAction === 'save'}
+          disabled={pending || !onSave}
+          startIcon={
+            pendingAction === 'save' ? <CircularProgress color="inherit" size={16} /> : null
+          }
+          variant="contained"
+          onClick={saveRule}
+        >
+          {pendingAction === 'save'
+            ? t('mapping.messages.savingRule')
+            : rule
+              ? t('common.save')
+              : t('mapping.actions.createRule')}
         </Button>
       </DialogActions>
     </Dialog>

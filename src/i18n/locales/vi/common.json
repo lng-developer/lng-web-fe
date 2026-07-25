@@ -2454,6 +2454,14 @@
       "turnRuleOff": "Tắt rule",
       "turnRuleOn": "Bật rule"
     },
+    "messages": {
+      "savingRule": "Đang lưu rule...",
+      "ruleCreated": "Đã tạo rule.",
+      "ruleUpdated": "Đã cập nhật rule.",
+      "ruleSaveFailed": "Không thể lưu rule.",
+      "ruleStatusUpdated": "Đã cập nhật trạng thái rule.",
+      "ruleStatusFailed": "Không thể cập nhật trạng thái rule."
+    },
     "filters": {
       "searchResolve": "Tìm order item, SKU, config",
       "planStatus": "Trạng thái plan",

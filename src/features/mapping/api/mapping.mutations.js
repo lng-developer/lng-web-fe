@@ -3,12 +3,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
-import { mappingKeys } from './mapping.keys'
 import { getMappingRuleType, unwrapApiData } from './mapping.queries'
 import {
-  getMappingFlowInvalidationKeys,
-  getMappingRuleInvalidationKeys,
-} from './mappingInvalidation'
+  invalidateMappingMutation,
+  requestMappingRuleConflicts,
+  requestMappingRulePreview,
+  requestMappingVendorCandidates,
+  requestMappingVendorRoutingReorder,
+} from './mappingMutationCore'
 
 function post(path, body = {}) {
   return apiClient.post(path, body).then(unwrapApiData)
@@ -18,41 +20,13 @@ function patch(path, body = {}) {
   return apiClient.patch(path, body).then(unwrapApiData)
 }
 
-function getOrderItemId(variables) {
-  return typeof variables === 'string' ? variables : variables?.orderItemId
-}
-
-function invalidateMappingFlow(queryClient, orderItemId) {
-  for (const queryKey of getMappingFlowInvalidationKeys(orderItemId)) {
-    queryClient.invalidateQueries({ queryKey })
-  }
-}
-
 function useMappingMutation(mutationFn, options = {}) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn,
-    onSuccess: (data, variables) => {
-      if (options.skipInvalidate) return
-
-      if (options.refreshFlow) {
-        invalidateMappingFlow(queryClient, getOrderItemId(variables))
-        return
-      }
-
-      if (options.refreshRuleType && variables?.type) {
-        for (const queryKey of getMappingRuleInvalidationKeys(
-          variables.type,
-          variables.id || data?.id,
-        )) {
-          queryClient.invalidateQueries({ queryKey })
-        }
-        return
-      }
-
-      queryClient.invalidateQueries({ queryKey: mappingKeys.all })
-    },
+    onSuccess: (data, variables) =>
+      invalidateMappingMutation(queryClient, data, variables, options),
   })
 }
 
@@ -63,21 +37,20 @@ export function useMappingPreviewMutation() {
 }
 
 export function useMappingRulePreviewMutation() {
-  return useMappingMutation((body) => post(ENDPOINTS.MAPPING.RULE_PREVIEW, body), {
+  return useMappingMutation((body) => requestMappingRulePreview(apiClient, unwrapApiData, body), {
     skipInvalidate: true,
   })
 }
 
 export function useMappingRuleConflictsMutation() {
-  return useMappingMutation((body) => post(ENDPOINTS.MAPPING.RULE_CONFLICTS, body), {
+  return useMappingMutation((body) => requestMappingRuleConflicts(apiClient, unwrapApiData, body), {
     skipInvalidate: true,
   })
 }
 
 export function useMappingVendorCandidatesMutation() {
   return useMappingMutation(
-    ({ body, orderItemId }) =>
-      post(ENDPOINTS.MAPPING.ORDER_ITEM_VENDOR_CANDIDATES_SEARCH(orderItemId), body),
+    (variables) => requestMappingVendorCandidates(apiClient, unwrapApiData, variables),
     { skipInvalidate: true },
   )
 }
@@ -137,5 +110,7 @@ export function useMappingToggleRuleStatusMutation() {
 }
 
 export function useMappingReorderVendorRoutingMutation() {
-  return useMappingMutation((body) => patch(ENDPOINTS.MAPPING.VENDOR_ROUTING_REORDER, body))
+  return useMappingMutation((body) =>
+    requestMappingVendorRoutingReorder(apiClient, unwrapApiData, body),
+  )
 }

@@ -4,6 +4,7 @@ import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
 import { mappingKeys } from './mapping.keys'
+import { requestMappingRuleHistory } from './mappingMutationCore'
 
 export const mappingRuleTypes = [
   {
@@ -82,7 +83,7 @@ export function useMappingRulesQuery(type, query = {}, options = {}) {
 export function useMappingRuleHistoryQuery(type, id, options = {}) {
   return useQuery({
     queryKey: mappingKeys.ruleHistory(type, id),
-    queryFn: () => get(ENDPOINTS.MAPPING.RULE_HISTORY(type, id)),
+    queryFn: () => requestMappingRuleHistory(apiClient, unwrapApiData, type, id),
     enabled: Boolean(type && id),
     ...options,
   })

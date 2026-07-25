@@ -2454,6 +2454,14 @@
       "turnRuleOff": "Turn rule off",
       "turnRuleOn": "Turn rule on"
     },
+    "messages": {
+      "savingRule": "Saving rule...",
+      "ruleCreated": "Rule created.",
+      "ruleUpdated": "Rule updated.",
+      "ruleSaveFailed": "Could not save the rule.",
+      "ruleStatusUpdated": "Rule status updated.",
+      "ruleStatusFailed": "Could not update the rule status."
+    },
     "filters": {
       "searchResolve": "Search order item, SKU, config",
       "planStatus": "Plan status",

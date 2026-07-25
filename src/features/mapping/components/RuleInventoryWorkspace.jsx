@@ -9,6 +9,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -30,7 +31,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { useSnackbar } from 'notistack'
 
+import { SNACKBAR_VARIANTS } from '@/constants/app'
 import {
   useListingProductTypesQuery,
   useListingShopsQuery,
@@ -119,11 +122,12 @@ function getRuleOptionLabel(t, option) {
   return t(`mapping.options.${value}`, { defaultValue: option.label })
 }
 
-function RuleStatusToggle({ checked, disabled, onChange }) {
+function RuleStatusToggle({ checked, disabled, loading, onChange }) {
   return (
     <Box
       aria-checked={checked}
       aria-label="Toggle rule status"
+      aria-busy={loading}
       component="button"
       disabled={disabled}
       role="switch"
@@ -143,17 +147,21 @@ function RuleStatusToggle({ checked, disabled, onChange }) {
         width: 42,
       }}
     >
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: '50%',
-          boxShadow: 1,
-          height: 20,
-          transform: checked ? 'translateX(18px)' : 'translateX(0)',
-          transition: 'transform 120ms ease',
-          width: 20,
-        }}
-      />
+      {loading ? (
+        <CircularProgress color="inherit" size={16} sx={{ m: '2px auto' }} />
+      ) : (
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            borderRadius: '50%',
+            boxShadow: 1,
+            height: 20,
+            transform: checked ? 'translateX(18px)' : 'translateX(0)',
+            transition: 'transform 120ms ease',
+            width: 20,
+          }}
+        />
+      )}
     </Box>
   )
 }
@@ -233,7 +241,7 @@ function RulePreviewCard({ label, preview }) {
   )
 }
 
-function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
+function RuleDialog({ onClose, onSave, optionsBySource, rule, saving, type }) {
   const { t } = useTranslation()
   const config = MAPPING_RULE_FORM_CONFIG[type]
   const [values, setValues] = useState(() => buildMappingRuleInitialValues(type, rule?.raw || {}))
@@ -323,7 +331,7 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
         optionLabels,
       )
     : null
-  const handleSave = () => {
+  const handleSave = async () => {
     const missingField = config.fields.find(
       (field) => field.required && !String(values[field.payloadKey] || '').trim(),
     )
@@ -336,10 +344,16 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
       return
     }
     setError('')
-    mutation.mutate(
-      { body: buildMappingRulePayload(type, values), id: rule?.id, type },
-      { onSuccess: onClose },
-    )
+    try {
+      await onSave({ body: buildMappingRulePayload(type, values), id: rule?.id, type })
+      onClose()
+    } catch (saveError) {
+      setError(
+        saveError?.response?.data?.message ||
+          saveError?.message ||
+          t('mapping.messages.ruleSaveFailed'),
+      )
+    }
   }
   return (
     <Dialog open maxWidth="md" fullWidth onClose={onClose}>
@@ -417,8 +431,14 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{t('common.cancel')}</Button>
-        <Button variant="contained" disabled={mutation.isPending} onClick={handleSave}>
-          {t('common.save')}
+        <Button
+          aria-busy={saving}
+          disabled={saving}
+          startIcon={saving ? <CircularProgress color="inherit" size={16} /> : null}
+          variant="contained"
+          onClick={handleSave}
+        >
+          {saving ? t('mapping.messages.savingRule') : t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -427,8 +447,10 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
 
 export default function RuleInventoryWorkspace({ ruleType: type }) {
   const { t } = useTranslation()
+  const { enqueueSnackbar } = useSnackbar()
   const [dialogState, setDialogState] = useState(null)
   const [historyRule, setHistoryRule] = useState(null)
+  const [pendingStatusRuleId, setPendingStatusRuleId] = useState('')
   const [ruleSearch, setRuleSearch] = useState('')
   const [ruleStatusFilter, setRuleStatusFilter] = useState('ALL')
   const [rulePage, setRulePage] = useState(0)
@@ -472,6 +494,41 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
     }),
     [productTypesQuery.data, shopsQuery.data, templatesQuery.data, vendorsQuery.data],
   )
+  const notifyError = (error, fallbackKey) => {
+    enqueueSnackbar(error?.response?.data?.message || error?.message || t(fallbackKey), {
+      variant: SNACKBAR_VARIANTS.ERROR,
+    })
+  }
+  const saveRule = async (variables) => {
+    try {
+      const result = await saveRuleMutation.mutateAsync(variables)
+      enqueueSnackbar(
+        t(variables.id ? 'mapping.messages.ruleUpdated' : 'mapping.messages.ruleCreated'),
+        { variant: SNACKBAR_VARIANTS.SUCCESS },
+      )
+      return result
+    } catch (saveError) {
+      notifyError(saveError, 'mapping.messages.ruleSaveFailed')
+      throw saveError
+    }
+  }
+  const toggleRuleStatus = async (row, checked) => {
+    setPendingStatusRuleId(row.id)
+    try {
+      await toggleStatusMutation.mutateAsync({
+        id: row.id,
+        nextStatus: checked ? 'ACTIVE' : 'INACTIVE',
+        type,
+      })
+      enqueueSnackbar(t('mapping.messages.ruleStatusUpdated'), {
+        variant: SNACKBAR_VARIANTS.SUCCESS,
+      })
+    } catch (statusError) {
+      notifyError(statusError, 'mapping.messages.ruleStatusFailed')
+    } finally {
+      setPendingStatusRuleId('')
+    }
+  }
   const error = rulesQuery.error || saveRuleMutation.error || toggleStatusMutation.error
   return (
     <Stack spacing={1.5}>
@@ -583,13 +640,8 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
                         <RuleStatusToggle
                           checked={active}
                           disabled={toggleStatusMutation.isPending}
-                          onChange={(checked) =>
-                            toggleStatusMutation.mutate({
-                              id: row.id,
-                              nextStatus: checked ? 'ACTIVE' : 'INACTIVE',
-                              type,
-                            })
-                          }
+                          loading={pendingStatusRuleId === row.id}
+                          onChange={(checked) => toggleRuleStatus(row, checked)}
                         />
                       </Box>
                     </Tooltip>
@@ -648,9 +700,10 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
       {dialogState ? (
         type === 'vendorRouting' ? (
           <RuleDialog
-            mutation={saveRuleMutation}
+            onSave={saveRule}
             optionsBySource={optionsBySource}
             rule={dialogState.rule}
+            saving={saveRuleMutation.isPending}
             type={type}
             onClose={() => setDialogState(null)}
           />
@@ -659,7 +712,7 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
             onCheckConflicts={ruleConflictsMutation.mutateAsync}
             onClose={() => setDialogState(null)}
             onPreview={rulePreviewMutation.mutateAsync}
-            onSave={saveRuleMutation.mutateAsync}
+            onSave={saveRule}
             open
             optionsBySource={optionsBySource}
             rule={dialogState.rule}
