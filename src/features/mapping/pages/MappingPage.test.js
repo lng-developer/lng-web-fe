@@ -1,21 +1,45 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import test from 'node:test'
 
+const componentFiles = [
+  new URL('../components/MappingWorkspaceShell.jsx', import.meta.url),
+  new URL('../components/ResolveQueueWorkspace.jsx', import.meta.url),
+  new URL('../components/RuleInventoryWorkspace.jsx', import.meta.url),
+]
+
+function readMappingWorkspaceSource() {
+  return [
+    readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8'),
+    ...componentFiles.map((file) => readFileSync(file, 'utf8')),
+  ].join('\n')
+}
+
+test('MappingPage composes the shell and focused workspaces', () => {
+  assert.equal(componentFiles.every(existsSync), true)
+
+  const source = readMappingWorkspaceSource()
+
+  assert.equal(source.includes('<MappingWorkspaceShell'), true)
+  assert.equal(source.includes('<ResolveQueueWorkspace'), true)
+  assert.equal(source.includes('<RuleInventoryWorkspace'), true)
+  assert.equal(source.includes('setMappingTabInUrl'), true)
+})
+
 test('MappingPage uses a module workflow instead of the generic API workflow page', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('ApiWorkflowPage'), false)
 })
 
 test('MappingPage rule dialog does not render every backend field generically', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('Object.keys(blankRule)'), false)
 })
 
 test('MappingPage rule dialog shows a user-facing rule preview', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('buildMappingRulePreview'), true)
   assert.equal(source.includes('ArrowForwardIcon'), true)
@@ -23,14 +47,14 @@ test('MappingPage rule dialog shows a user-facing rule preview', () => {
 })
 
 test('MappingPage rule dialog compares the current rule with the after-save preview', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('mapping.ruleDialog.current'), true)
   assert.equal(source.includes('mapping.ruleDialog.afterSave'), true)
 })
 
 test('MappingPage rule dialog separates required fields from advanced fields', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('mainFields'), true)
   assert.equal(source.includes('advancedFields'), true)
@@ -39,7 +63,7 @@ test('MappingPage rule dialog separates required fields from advanced fields', (
 })
 
 test('MappingPage uses compact icon actions and tighter table spacing', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('IconButton'), true)
   assert.equal(source.includes('Tooltip'), true)
@@ -49,7 +73,7 @@ test('MappingPage uses compact icon actions and tighter table spacing', () => {
 })
 
 test('MappingPage uses status toggles instead of disable action buttons', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('role="switch"'), true)
   assert.equal(source.includes('Toggle rule status'), true)
@@ -59,7 +83,7 @@ test('MappingPage uses status toggles instead of disable action buttons', () => 
 })
 
 test('MappingPage rule table keeps actions right aligned with stable columns', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(
     source.includes("gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) auto' }"),
@@ -71,7 +95,7 @@ test('MappingPage rule table keeps actions right aligned with stable columns', (
 })
 
 test('MappingPage status switch uses explicit readable on and off styling', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('RuleStatusToggle'), true)
   assert.equal(source.includes('translateX(18px)'), true)
@@ -80,7 +104,7 @@ test('MappingPage status switch uses explicit readable on and off styling', () =
 })
 
 test('MappingPage exposes search filters and pagination for mapping tables', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('TablePagination'), true)
   assert.equal(source.includes('mapping.filters.searchResolve'), true)
@@ -90,7 +114,7 @@ test('MappingPage exposes search filters and pagination for mapping tables', () 
 })
 
 test('MappingPage uses unmatched queue endpoint and one candidate selection action', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('useMappingUnmatchedOrderItemsQuery'), true)
   assert.equal(source.includes('useMappingWorkbenchQuery'), false)
@@ -99,16 +123,19 @@ test('MappingPage uses unmatched queue endpoint and one candidate selection acti
 })
 
 test('MappingPage keeps active tab in the URL and lazy loads modal option APIs', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
   assert.equal(source.includes('getInitialMappingTab'), true)
   assert.equal(source.includes('setMappingTabInUrl'), true)
-  assert.equal(source.includes("searchParams.get('tab')"), true)
+  assert.equal(source.includes("new URLSearchParams(window.location.search).get('tab')"), true)
   assert.equal(source.includes('enabled: Boolean(dialogState)'), true)
 })
 
 test('MappingPage resets per-tab table state when switching mapping tabs', () => {
-  const source = readFileSync(new URL('./MappingPage.jsx', import.meta.url), 'utf8')
+  const source = readMappingWorkspaceSource()
 
-  assert.equal(source.includes('<RuleSection key={activeTab} type={activeTab} />'), true)
+  assert.equal(
+    source.includes('<RuleInventoryWorkspace key={activeTab} ruleType={activeTab} />'),
+    true,
+  )
 })
