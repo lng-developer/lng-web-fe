@@ -2450,6 +2450,7 @@
       "refreshRules": "Refresh rules",
       "createRule": "Create rule",
       "editRule": "Edit rule",
+      "viewRuleHistory": "View rule history",
       "turnRuleOff": "Turn rule off",
       "turnRuleOn": "Turn rule on"
     },
@@ -2549,6 +2550,34 @@
       "conflictReasons": {
         "EXACT_SCOPE_PATTERN": "An active rule already uses this pattern in the same scope.",
         "BROADER_SCOPE_PATTERN": "An active rule uses this pattern in an overlapping scope."
+      }
+    },
+    "history": {
+      "title": "{{rule}} history",
+      "description": "Review newest-first rule changes recorded by the server.",
+      "loading": "Loading rule history",
+      "empty": "No history has been recorded for this rule.",
+      "actor": "By {{actor}}",
+      "noFieldChanges": "No readable field changes were recorded.",
+      "actors": {
+        "ACCOUNT": "Account",
+        "SYSTEM": "System"
+      },
+      "events": {
+        "CREATED": "Created",
+        "UPDATED": "Updated",
+        "STATUS_CHANGED": "Status changed"
+      },
+      "fields": {
+        "status": "Status",
+        "priority": "Priority",
+        "matchValue": "Match value",
+        "normalizedValue": "Normalized value",
+        "semanticRole": "Semantic role",
+        "configCode": "Config code",
+        "outputAction": "Output action",
+        "replacementValue": "Replacement value",
+        "appliesWhenValues": "Applied values"
       }
     },
     "fields": {

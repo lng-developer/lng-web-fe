@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import EditIcon from '@mui/icons-material/Edit'
+import HistoryIcon from '@mui/icons-material/History'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import {
   Alert,
@@ -35,6 +36,8 @@ import {
   useListingShopsQuery,
 } from '@/features/listings/api/listings.queries'
 import {
+  useMappingRuleConflictsMutation,
+  useMappingRulePreviewMutation,
   useMappingSaveRuleMutation,
   useMappingToggleRuleStatusMutation,
 } from '@/features/mapping/api/mapping.mutations'
@@ -54,6 +57,9 @@ import {
 import { mapMappingRuleRows } from '@/features/mapping/utils/mappingMappers'
 import { useVendorsQuery } from '@/features/vendors/api/vendors.queries'
 
+import MappingRuleDialog from './MappingRuleDialog'
+import RuleHistoryDialog from './RuleHistoryDialog'
+
 const defaultRowsPerPage = 10
 const rowsPerPageOptions = [10, 25, 50]
 const compactTableSx = {
@@ -68,7 +74,7 @@ const ruleTableColumnSx = {
   scope: { width: 160 },
   priority: { width: 90 },
   status: { width: 96 },
-  actions: { width: 80 },
+  actions: { width: 112 },
 }
 const ruleStatusSwitchSx = { display: 'inline-flex', width: 48, justifyContent: 'center' }
 
@@ -422,6 +428,7 @@ function RuleDialog({ mutation, onClose, optionsBySource, rule, type }) {
 export default function RuleInventoryWorkspace({ ruleType: type }) {
   const { t } = useTranslation()
   const [dialogState, setDialogState] = useState(null)
+  const [historyRule, setHistoryRule] = useState(null)
   const [ruleSearch, setRuleSearch] = useState('')
   const [ruleStatusFilter, setRuleStatusFilter] = useState('ALL')
   const [rulePage, setRulePage] = useState(0)
@@ -432,6 +439,8 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
   const productTypesQuery = useListingProductTypesQuery({}, optionQueryOptions)
   const vendorsQuery = useVendorsQuery({ limit: 100 }, optionQueryOptions)
   const templatesQuery = useMappingInternalTemplatesQuery({ limit: 100 }, optionQueryOptions)
+  const rulePreviewMutation = useMappingRulePreviewMutation()
+  const ruleConflictsMutation = useMappingRuleConflictsMutation()
   const saveRuleMutation = useMappingSaveRuleMutation()
   const toggleStatusMutation = useMappingToggleRuleStatusMutation()
   const rows = useMemo(() => mapMappingRuleRows(type, rulesQuery.data), [rulesQuery.data, type])
@@ -596,6 +605,15 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+                      <Tooltip title={t('mapping.actions.viewRuleHistory')}>
+                        <IconButton
+                          size="small"
+                          aria-label={t('mapping.actions.viewRuleHistory')}
+                          onClick={() => setHistoryRule(row)}
+                        >
+                          <HistoryIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -628,12 +646,33 @@ export default function RuleInventoryWorkspace({ ruleType: type }) {
         />
       </Paper>
       {dialogState ? (
-        <RuleDialog
-          mutation={saveRuleMutation}
-          optionsBySource={optionsBySource}
-          rule={dialogState.rule}
+        type === 'vendorRouting' ? (
+          <RuleDialog
+            mutation={saveRuleMutation}
+            optionsBySource={optionsBySource}
+            rule={dialogState.rule}
+            type={type}
+            onClose={() => setDialogState(null)}
+          />
+        ) : (
+          <MappingRuleDialog
+            onCheckConflicts={ruleConflictsMutation.mutateAsync}
+            onClose={() => setDialogState(null)}
+            onPreview={rulePreviewMutation.mutateAsync}
+            onSave={saveRuleMutation.mutateAsync}
+            open
+            optionsBySource={optionsBySource}
+            rule={dialogState.rule}
+            type={type}
+          />
+        )
+      ) : null}
+      {historyRule ? (
+        <RuleHistoryDialog
+          onClose={() => setHistoryRule(null)}
+          open
+          rule={historyRule}
           type={type}
-          onClose={() => setDialogState(null)}
         />
       ) : null}
     </Stack>

@@ -79,6 +79,15 @@ export function useMappingRulesQuery(type, query = {}, options = {}) {
   })
 }
 
+export function useMappingRuleHistoryQuery(type, id, options = {}) {
+  return useQuery({
+    queryKey: mappingKeys.ruleHistory(type, id),
+    queryFn: () => get(ENDPOINTS.MAPPING.RULE_HISTORY(type, id)),
+    enabled: Boolean(type && id),
+    ...options,
+  })
+}
+
 export function useMappingInternalTemplatesQuery(query = {}, options = {}) {
   return useQuery({
     queryKey: mappingKeys.internalTemplates(query),

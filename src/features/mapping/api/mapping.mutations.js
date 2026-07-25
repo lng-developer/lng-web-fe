@@ -5,7 +5,10 @@ import { ENDPOINTS } from '@/services/endpoints'
 
 import { mappingKeys } from './mapping.keys'
 import { getMappingRuleType, unwrapApiData } from './mapping.queries'
-import { getMappingFlowInvalidationKeys } from './mappingInvalidation'
+import {
+  getMappingFlowInvalidationKeys,
+  getMappingRuleInvalidationKeys,
+} from './mappingInvalidation'
 
 function post(path, body = {}) {
   return apiClient.post(path, body).then(unwrapApiData)
@@ -30,7 +33,7 @@ function useMappingMutation(mutationFn, options = {}) {
 
   return useMutation({
     mutationFn,
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       if (options.skipInvalidate) return
 
       if (options.refreshFlow) {
@@ -39,7 +42,12 @@ function useMappingMutation(mutationFn, options = {}) {
       }
 
       if (options.refreshRuleType && variables?.type) {
-        queryClient.invalidateQueries({ queryKey: mappingKeys.ruleType(variables?.type) })
+        for (const queryKey of getMappingRuleInvalidationKeys(
+          variables.type,
+          variables.id || data?.id,
+        )) {
+          queryClient.invalidateQueries({ queryKey })
+        }
         return
       }
 
@@ -52,6 +60,18 @@ export function useMappingPreviewMutation() {
   return useMappingMutation((orderItemId) =>
     post(ENDPOINTS.MAPPING.ORDER_ITEM_PREVIEW(orderItemId)),
   )
+}
+
+export function useMappingRulePreviewMutation() {
+  return useMappingMutation((body) => post(ENDPOINTS.MAPPING.RULE_PREVIEW, body), {
+    skipInvalidate: true,
+  })
+}
+
+export function useMappingRuleConflictsMutation() {
+  return useMappingMutation((body) => post(ENDPOINTS.MAPPING.RULE_CONFLICTS, body), {
+    skipInvalidate: true,
+  })
 }
 
 export function useMappingVendorCandidatesMutation() {

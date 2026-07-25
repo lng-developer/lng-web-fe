@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { mapMappingPreview, mapMappingRuleRows, mapMappingWorkbenchRows } from './mappingMappers.js'
+import {
+  mapMappingPreview,
+  mapMappingRuleHistory,
+  mapMappingRuleRows,
+  mapMappingWorkbenchRows,
+} from './mappingMappers.js'
 
 test('mapMappingWorkbenchRows exposes operator fields without raw ids as labels', () => {
   const rows = mapMappingWorkbenchRows({
@@ -171,4 +176,39 @@ test('mapMappingRuleRows uses compact backend references instead of raw ids', ()
   assert.equal(rows[0].label, 'T-Shirt')
   assert.equal(rows[0].output, 'BeeFul')
   assert.equal(rows[0].scope, 'Main Amazon Shop')
+})
+
+test('mapMappingRuleHistory exposes readable changes without rendering account or entity ids', () => {
+  const history = mapMappingRuleHistory({
+    items: [
+      {
+        _id: 'audit-1',
+        actorAccountId: 'account-1',
+        event: 'STATUS_CHANGED',
+        createdAt: '2026-07-25T10:00:00.000Z',
+        before: {
+          status: 'ACTIVE',
+          priority: 100,
+          shopId: 'shop-1',
+        },
+        after: {
+          status: 'INACTIVE',
+          priority: 100,
+          shopId: 'shop-1',
+        },
+      },
+    ],
+  })
+
+  assert.deepEqual(history, [
+    {
+      id: 'audit-1',
+      actor: 'ACCOUNT',
+      changes: [{ field: 'status', before: 'ACTIVE', after: 'INACTIVE' }],
+      createdAt: '2026-07-25T10:00:00.000Z',
+      event: 'STATUS_CHANGED',
+    },
+  ])
+  assert.equal(JSON.stringify(history).includes('account-1'), false)
+  assert.equal(JSON.stringify(history).includes('shop-1'), false)
 })
