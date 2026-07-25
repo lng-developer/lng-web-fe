@@ -16,7 +16,11 @@ import {
 import FormTextField from '@/components/form/FormTextField'
 
 import { MAPPING_RULE_FORM_CONFIG } from '../data/mappingUxConfig'
-import { buildRuleEvaluationPayload, useMappingRuleForm } from '../hooks/useMappingRuleForm'
+import {
+  buildRuleConflictPayload,
+  buildRuleEvaluationPayload,
+  useMappingRuleForm,
+} from '../hooks/useMappingRuleForm'
 import RuleEvaluationPanel from './RuleEvaluationPanel'
 import SemanticRuleForm from './SemanticRuleForm'
 import SkuConfigRuleForm from './SkuConfigRuleForm'
@@ -78,7 +82,7 @@ export default function MappingRuleDialog({
     try {
       const [preview, conflicts] = await Promise.all([
         onPreview?.(payload),
-        onCheckConflicts?.({ rule: payload.rule, ruleType: type }),
+        onCheckConflicts?.(buildRuleConflictPayload(type, values, rule?.id)),
       ])
       setEvaluation({
         conflicts: conflicts?.conflicts || [],

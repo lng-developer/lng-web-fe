@@ -4,6 +4,7 @@ import test from 'node:test'
 
 import { MAPPING_RULE_FORM_CONFIG, STATIC_OPTIONS } from '../data/mappingUxConfig.js'
 import {
+  buildRuleConflictPayload,
   buildRuleEvaluationPayload,
   createMappingRuleSchema,
   getServerFieldErrors,
@@ -22,6 +23,7 @@ test('sku normalize validation requires appliesWhenValues and replacement only f
     salesChannelCode: 'AMAZON',
     segmentIndex: '2',
     segmentRole: 'COUNTRY',
+    shopId: '507f1f77bcf86cd799439011',
     status: 'ACTIVE',
   }
 
@@ -48,6 +50,7 @@ test('evaluation payload contains only configured backend fields and capped samp
     matchValue: ' XXL ',
     priority: '100',
     salesChannelCode: 'AMAZON',
+    shopId: '507f1f77bcf86cd799439011',
     samples: Array.from({ length: 12 }, (_, index) => ` sample-${index + 1} `).join('\n'),
     semanticRole: 'SIZE',
     status: 'ACTIVE',
@@ -55,6 +58,7 @@ test('evaluation payload contains only configured backend fields and capped samp
   })
 
   assert.deepEqual(payload.rule, {
+    shopId: '507f1f77bcf86cd799439011',
     salesChannelCode: 'AMAZON',
     marketplaceCode: 'AMAZON_US',
     semanticRole: 'SIZE',
@@ -66,6 +70,27 @@ test('evaluation payload contains only configured backend fields and capped samp
   })
   assert.equal(payload.samples.length, 10)
   assert.equal(Object.hasOwn(payload.rule, 'ignoredTechnicalField'), false)
+})
+
+test('conflict payload includes the edited rule id and its complete evaluator payload', () => {
+  const payload = buildRuleConflictPayload(
+    'skuNormalize',
+    {
+      appliesWhenValues: 'US',
+      marketplaceCode: 'AMAZON_US',
+      outputAction: 'REMOVE_SEGMENT',
+      patternType: 'SEGMENT',
+      salesChannelCode: 'AMAZON',
+      segmentIndex: '2',
+      segmentRole: 'COUNTRY',
+      shopId: '507f1f77bcf86cd799439011',
+    },
+    '507f1f77bcf86cd799439012',
+  )
+
+  assert.equal(payload.ruleId, '507f1f77bcf86cd799439012')
+  assert.equal(payload.rule.shopId, '507f1f77bcf86cd799439011')
+  assert.equal(payload.ruleType, 'skuNormalize')
 })
 
 test('remove action never submits a stale replacement value', () => {
@@ -130,6 +155,13 @@ test('form metadata and components stay within the four server-evaluated rule ty
     ).defaultValue,
     'CONTAINS',
   )
+  for (const type of supportedTypes) {
+    const shopField = MAPPING_RULE_FORM_CONFIG[type].fields.find(
+      ({ payloadKey }) => payloadKey === 'shopId',
+    )
+    assert.equal(shopField?.optionSource, 'shops')
+    assert.equal(shopField?.required, true)
+  }
 
   for (const name of [
     'MappingRuleDialog',

@@ -75,6 +75,14 @@ export const STATIC_OPTIONS = {
 
 const commonScopeFields = [
   {
+    helperText: 'Choose the shop this rule belongs to.',
+    label: 'Shop',
+    optionSource: 'shops',
+    payloadKey: 'shopId',
+    required: true,
+    type: 'select',
+  },
+  {
     advanced: true,
     defaultValue: 'AMAZON',
     helperText: 'Where this rule applies.',

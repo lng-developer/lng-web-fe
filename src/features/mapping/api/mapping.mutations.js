@@ -5,6 +5,7 @@ import { ENDPOINTS } from '@/services/endpoints'
 
 import { getMappingRuleType, unwrapApiData } from './mapping.queries'
 import {
+  getMappingRuleSaveBody,
   invalidateMappingMutation,
   requestMappingRuleConflicts,
   requestMappingRulePreview,
@@ -93,7 +94,9 @@ export function useMappingSaveRuleMutation() {
   return useMappingMutation(
     ({ body, id, type }) => {
       const ruleType = getMappingRuleType(type)
-      return id ? patch(ruleType.detailEndpoint(id), body) : post(ruleType.listEndpoint, body)
+      return id
+        ? patch(ruleType.detailEndpoint(id), getMappingRuleSaveBody(body, id))
+        : post(ruleType.listEndpoint, getMappingRuleSaveBody(body, id))
     },
     { refreshRuleType: true },
   )

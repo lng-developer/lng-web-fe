@@ -114,6 +114,13 @@ export function buildRuleEvaluationPayload(type, values) {
   }
 }
 
+export function buildRuleConflictPayload(type, values, ruleId) {
+  return {
+    ...buildRuleEvaluationPayload(type, values),
+    ...(ruleId ? { ruleId } : {}),
+  }
+}
+
 export function getServerFieldErrors(error) {
   const details = error?.data?.error?.details || error?.response?.data?.error?.details || []
 

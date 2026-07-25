@@ -10,6 +10,13 @@ function request(client, unwrap, method, path, body) {
   return response.then(unwrap)
 }
 
+export function getMappingRuleSaveBody(body, id) {
+  if (!id) return body
+  const patch = { ...body }
+  delete patch.shopId
+  return patch
+}
+
 export function requestMappingRulePreview(client, unwrap, body) {
   return request(client, unwrap, 'post', ENDPOINTS.MAPPING.RULE_PREVIEW, body)
 }

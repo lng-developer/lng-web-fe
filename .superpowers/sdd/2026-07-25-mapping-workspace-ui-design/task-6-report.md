@@ -124,3 +124,41 @@ history invalidation performed by mutation `onSuccess`.
   which this review round explicitly prohibited. No server was restarted.
 - The unrelated pre-existing `package-lock.json` modification remains unstaged and
   uncommitted.
+
+## Fix round 2/5
+
+### Transaction, conflict, scoped-authoring, and audit fixes
+
+- The documented local Docker MongoDB runs without a replica set, so the mapping
+  transaction wrapper now retries the same unit of work without a session only for
+  MongoDB's explicit transaction-not-supported (`code: 20`) error. Transaction-capable
+  deployments retain the original atomic `withTransaction` path; unrelated failures
+  still propagate.
+- All four rule updates now read the current entity inside the transaction/session and
+  classify audit events from the persisted before/after snapshots. A full-form update
+  that changes only `status` records `STATUS_CHANGED`; vendor-routing reorder remains
+  unchanged.
+- Conflict evaluation accepts an optional `ruleId` and excludes that same rule. SKU
+  normalize conflicts now compare the production matching keys (pattern type, segment
+  index, and candidate value) rather than the display-only `segmentRole`.
+- Evaluator-backed authoring forms now use the existing shop selector for all four
+  evaluator rule types and submit the selected shop on create. On edit, the shared
+  save helper omits immutable `shopId`, preserving backend global-write controls and
+  avoiding an invalid immutable-field patch.
+
+### Runnable regression coverage
+
+- Backend service tests cover standalone-Mongo fallback, non-transaction errors not
+  falling back, self-conflict exclusion, production SKU conflict semantics, and
+  full-form status-only audit classification.
+- Frontend Node tests cover shop-scoped evaluator payloads, edit conflict `ruleId`,
+  and immutable-shop omission on update.
+
+### Fix-round verification
+
+- Backend mapping service suite: 45/45 passed.
+- Focused frontend mapping contract tests: 8/8 passed.
+- Frontend and backend `git diff --check`: passed; only existing LF-to-CRLF notices
+  were printed.
+- The unrelated pre-existing `package-lock.json` modification remains unstaged and
+  uncommitted.
