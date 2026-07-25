@@ -76,6 +76,31 @@ function getOrderItemId(item) {
   return display(firstValue(item, ['orderItemId', 'itemId', 'id', '_id']), '')
 }
 
+function isVisibleHistoryField(field) {
+  return !['id', '_id', 'createdAt', 'updatedAt'].includes(field) && !/Ids?$/.test(field)
+}
+
+function historyValue(value) {
+  if (Array.isArray(value)) return value.map(historyValue).filter(Boolean).join(', ') || '-'
+  if (value && typeof value === 'object') {
+    return (
+      Object.entries(value)
+        .filter(([field]) => isVisibleHistoryField(field))
+        .map(([field, nestedValue]) => `${field}: ${historyValue(nestedValue)}`)
+        .join(', ') || '-'
+    )
+  }
+  return displayWithoutId(value)
+}
+
+export function mapMappingAuthorableShops(payload = {}, globalLabel = 'Global') {
+  const shops = getListItems(payload).map((shop) => ({
+    id: String(shop.id),
+    label: shop.code ? `${shop.name} (${shop.code})` : shop.name,
+  }))
+  return payload.canCreateGlobal ? [{ id: '', label: globalLabel }, ...shops] : shops
+}
+
 export function mapMappingWorkbenchRows(payload) {
   return getListItems(payload).map((item, index) => {
     const skuNormalization = item.skuNormalization || {}
@@ -205,4 +230,33 @@ export function mapMappingRuleRows(type, payload) {
     status: display(rule.status, 'ACTIVE'),
     type,
   }))
+}
+
+export function mapMappingRuleHistory(payload) {
+  return getListItems(payload).map((item, index) => {
+    const before = item.before || {}
+    const after = item.after || {}
+    const fields = [...new Set([...Object.keys(before), ...Object.keys(after)])]
+
+    return {
+      id: display(firstValue(item, ['id', '_id']), `history-${index + 1}`),
+      actor: displayWithoutId(
+        firstValue(item, ['actor', 'actorAccount']),
+        item.actorAccountId ? 'ACCOUNT' : 'SYSTEM',
+      ),
+      changes: fields
+        .filter(
+          (field) =>
+            isVisibleHistoryField(field) &&
+            JSON.stringify(before[field]) !== JSON.stringify(after[field]),
+        )
+        .map((field) => ({
+          field,
+          before: historyValue(before[field]),
+          after: historyValue(after[field]),
+        })),
+      createdAt: item.createdAt || null,
+      event: display(item.event, 'UPDATED'),
+    }
+  })
 }

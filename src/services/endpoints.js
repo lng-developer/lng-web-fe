@@ -129,6 +129,7 @@ export const ENDPOINTS = {
   MAPPING: {
     SUMMARY: '/api/mapping/summary',
     CONFIG_WORKBENCH: '/api/mapping/config-workbench',
+    AUTHORABLE_SHOPS: '/api/mapping/authorable-shops',
     UNMATCHED_ORDER_ITEMS: '/api/mapping/order-items/unmatched',
     RECHECK_UNMATCHED: '/api/mapping/recheck-unmatched',
     NORMALIZATION_RULES: '/api/mapping/normalization-rules',
@@ -144,6 +145,9 @@ export const ENDPOINTS = {
     SKU_CONFIG_RULE: (id) => `/api/mapping/sku-config-rules/${id}`,
     SKU_NORMALIZE_RULES: '/api/mapping/sku-normalize-rules',
     SKU_NORMALIZE_RULE: (id) => `/api/mapping/sku-normalize-rules/${id}`,
+    RULE_PREVIEW: '/api/mapping/rule-preview',
+    RULE_CONFLICTS: '/api/mapping/rule-conflicts',
+    RULE_HISTORY: (type, id) => `/api/mapping/${type}/${id}/history`,
     ORDER_ITEM_PREVIEW: (orderItemId) => `/api/mapping/order-items/${orderItemId}/preview`,
     ORDER_ITEM_VENDOR_CANDIDATES: (orderItemId) =>
       `/api/mapping/order-items/${orderItemId}/vendor-candidates/search`,

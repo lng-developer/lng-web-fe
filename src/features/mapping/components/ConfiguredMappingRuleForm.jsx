@@ -1,0 +1,111 @@
+import { useWatch } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
+import { Box, MenuItem, Typography } from '@mui/material'
+
+import FormTextField from '@/components/form/FormTextField'
+
+import {
+  getMappingRuleSelectConfig,
+  isMappingRuleFieldDisabled,
+  MAPPING_RULE_FORM_CONFIG,
+  STATIC_OPTIONS,
+} from '../data/mappingUxConfig'
+
+function fieldText(t, type, field, key) {
+  return t(`mapping.fields.${type}.${field.payloadKey}.${key}`, {
+    defaultValue: field[key],
+  })
+}
+
+function optionLabel(t, option) {
+  return t(`mapping.options.${option.value}`, { defaultValue: option.label })
+}
+
+export default function ConfiguredMappingRuleForm({
+  control,
+  editing = false,
+  optionsBySource = {},
+  type,
+}) {
+  const { t } = useTranslation()
+  const config = MAPPING_RULE_FORM_CONFIG[type]
+  const fields = config?.fields || []
+  const outputAction = useWatch({ control, name: 'outputAction' })
+  const renderField = (field) => {
+    const sourceOptions = field.optionsKey
+      ? STATIC_OPTIONS[field.optionsKey] || []
+      : optionsBySource[field.optionSource] || []
+    const select = field.type === 'select'
+    const selectConfig = select ? getMappingRuleSelectConfig(field, sourceOptions, editing) : null
+    const options = selectConfig?.options || sourceOptions
+    const required = Boolean(
+      selectConfig?.required ||
+      (!select && field.required) ||
+      (field.payloadKey === 'replacementValue' && outputAction === 'REPLACE_SEGMENT'),
+    )
+
+    return (
+      <FormTextField
+        key={field.payloadKey}
+        control={control}
+        disabled={isMappingRuleFieldDisabled(field, editing)}
+        helperText={fieldText(t, type, field, 'helperText')}
+        label={fieldText(t, type, field, 'label')}
+        name={field.payloadKey}
+        required={required}
+        select={select}
+        size="small"
+        type={field.type === 'number' ? 'number' : 'text'}
+        slotProps={{
+          htmlInput: {
+            'aria-required': required,
+            ...(field.type === 'number' ? { min: 0, step: 1 } : {}),
+          },
+        }}
+      >
+        {select
+          ? options.map((option) => {
+              const value = option.value ?? option.id
+              return (
+                <MenuItem key={value || option.labelKey} value={value}>
+                  {option.labelKey
+                    ? t(`mapping.options.${option.labelKey}`)
+                    : option.value
+                      ? optionLabel(t, option)
+                      : option.label}
+                </MenuItem>
+              )
+            })
+          : null}
+      </FormTextField>
+    )
+  }
+  const visibleFields = fields.filter(
+    (field) => field.payloadKey !== 'replacementValue' || outputAction === 'REPLACE_SEGMENT',
+  )
+  const mainFields = visibleFields.filter(
+    (field) => !field.advanced || field.payloadKey === 'replacementValue',
+  )
+  const advancedFields = visibleFields.filter(
+    (field) => field.advanced && field.payloadKey !== 'replacementValue',
+  )
+
+  return (
+    <Box className="grid gap-4">
+      <Box className="grid grid-cols-1 gap-4 md:grid-cols-2">{mainFields.map(renderField)}</Box>
+      {advancedFields.length ? (
+        <Box component="details" className="rounded-lg border border-default p-4">
+          <Typography component="summary" variant="subtitle2" className="cursor-pointer">
+            {t('mapping.ruleDialog.advanced')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" className="mt-2">
+            {t('mapping.ruleDialog.advancedDescription')}
+          </Typography>
+          <Box className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {advancedFields.map(renderField)}
+          </Box>
+        </Box>
+      ) : null}
+    </Box>
+  )
+}

@@ -13,3 +13,9 @@ export function getMappingFlowInvalidationKeys(orderItemId) {
 
   return keys
 }
+
+export function getMappingRuleInvalidationKeys(type, id) {
+  const keys = [['mapping', 'rules', type]]
+  if (id) keys.push(['mapping', 'rules', type, id, 'history'])
+  return keys
+}

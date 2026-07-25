@@ -2394,7 +2394,13 @@
       "ruleActive": "Rule đang bật"
     },
     "validation": {
-      "required": "{{field}} là bắt buộc."
+      "required": "{{field}} là bắt buộc.",
+      "requiredField": "Trường này là bắt buộc.",
+      "replacementRequired": "Giá trị thay thế là bắt buộc.",
+      "nonNegativeInteger": "Nhập số nguyên từ 0 trở lên.",
+      "tooLong": "Giá trị này quá dài.",
+      "tooManySamples": "Chỉ dùng tối đa 10 mẫu.",
+      "sampleTooLong": "Mỗi mẫu không được quá 200 ký tự."
     },
     "ruleTypes": {
       "resolve": "Hàng đợi xử lý",
@@ -2444,8 +2450,17 @@
       "refreshRules": "Làm mới rule",
       "createRule": "Tạo rule",
       "editRule": "Sửa rule",
+      "viewRuleHistory": "Xem lịch sử rule",
       "turnRuleOff": "Tắt rule",
       "turnRuleOn": "Bật rule"
+    },
+    "messages": {
+      "savingRule": "Đang lưu rule...",
+      "ruleCreated": "Đã tạo rule.",
+      "ruleUpdated": "Đã cập nhật rule.",
+      "ruleSaveFailed": "Không thể lưu rule.",
+      "ruleStatusUpdated": "Đã cập nhật trạng thái rule.",
+      "ruleStatusFailed": "Không thể cập nhật trạng thái rule."
     },
     "filters": {
       "searchResolve": "Tìm order item, SKU, config",
@@ -2503,6 +2518,7 @@
     "options": {
       "selectOption": "Chọn một option",
       "allNotSet": "Tất cả / không đặt",
+      "global": "Toàn hệ thống",
       "AMAZON_US": "Amazon US",
       "ETSY": "Etsy",
       "AMAZON": "Amazon",
@@ -2511,6 +2527,7 @@
       "REMOVE_SEGMENT": "Xóa đoạn SKU",
       "REPLACE_SEGMENT": "Thay đoạn SKU",
       "SEGMENT": "Đoạn SKU",
+      "EMPLOYEE": "Nhân viên",
       "CONFIG": "Config",
       "COUNTRY": "Quốc gia",
       "DATE": "Ngày",
@@ -2525,6 +2542,52 @@
       "OTHER": "Khác",
       "ACTIVE": "Đang bật",
       "INACTIVE": "Đang tắt"
+    },
+    "evaluation": {
+      "title": "Đánh giá rule",
+      "description": "Kiểm tra giá trị mẫu và xung đột từ server trước khi lưu.",
+      "samples": "Giá trị mẫu",
+      "samplesHelp": "Nhập mỗi giá trị trên một dòng, tối đa 10 mẫu.",
+      "samplesPlaceholder": "Nhập giá trị mẫu",
+      "testRule": "Kiểm tra rule",
+      "running": "Đang kiểm tra rule",
+      "failed": "Không thể đánh giá rule.",
+      "empty": "Kiểm tra rule để xem kết quả mẫu và xung đột.",
+      "matched": "Khớp",
+      "notMatched": "Không khớp",
+      "priority": "Ưu tiên {{value}}",
+      "conflictReasons": {
+        "EXACT_SCOPE_PATTERN": "Đã có rule đang bật dùng pattern này trong cùng phạm vi.",
+        "BROADER_SCOPE_PATTERN": "Đã có rule đang bật dùng pattern này trong phạm vi giao nhau."
+      }
+    },
+    "history": {
+      "title": "Lịch sử {{rule}}",
+      "description": "Xem các thay đổi rule mới nhất do server ghi nhận.",
+      "loading": "Đang tải lịch sử rule",
+      "empty": "Rule này chưa có lịch sử.",
+      "actor": "Bởi {{actor}}",
+      "noFieldChanges": "Không có thay đổi field nào có thể hiển thị.",
+      "actors": {
+        "ACCOUNT": "Tài khoản",
+        "SYSTEM": "Hệ thống"
+      },
+      "events": {
+        "CREATED": "Đã tạo",
+        "UPDATED": "Đã cập nhật",
+        "STATUS_CHANGED": "Đã đổi trạng thái"
+      },
+      "fields": {
+        "status": "Trạng thái",
+        "priority": "Ưu tiên",
+        "matchValue": "Giá trị khớp",
+        "normalizedValue": "Giá trị chuẩn hóa",
+        "semanticRole": "Vai trò ngữ nghĩa",
+        "configCode": "Mã config",
+        "outputAction": "Hành động output",
+        "replacementValue": "Giá trị thay thế",
+        "appliesWhenValues": "Giá trị áp dụng"
+      }
     },
     "fields": {
       "semanticRules": {

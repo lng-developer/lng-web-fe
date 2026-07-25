@@ -50,10 +50,12 @@ export const STATIC_OPTIONS = {
     { label: 'Etsy', value: 'ETSY' },
   ],
   segmentRole: [
+    { label: 'Employee', value: 'EMPLOYEE' },
+    { label: 'Size', value: 'SIZE' },
+    { label: 'Color', value: 'COLOR' },
     { label: 'Config', value: 'CONFIG' },
     { label: 'Country', value: 'COUNTRY' },
-    { label: 'Date', value: 'DATE' },
-    { label: 'Sequence', value: 'SEQUENCE' },
+    { label: 'Other', value: 'OTHER' },
   ],
   semanticRole: [
     { label: 'Size', value: 'SIZE' },
@@ -72,6 +74,14 @@ export const STATIC_OPTIONS = {
 }
 
 const commonScopeFields = [
+  {
+    helperText: 'Choose a shop, or Global when the rule should apply to every shop.',
+    label: 'Shop',
+    optionSource: 'shops',
+    payloadKey: 'shopId',
+    required: false,
+    type: 'select',
+  },
   {
     advanced: true,
     defaultValue: 'AMAZON',
@@ -137,7 +147,7 @@ export const MAPPING_RULE_FORM_CONFIG = {
       },
       {
         advanced: true,
-        defaultValue: 'EXACT',
+        defaultValue: 'CONTAINS',
         helperText: 'How the label should be matched.',
         label: 'Matching method',
         optionsKey: 'matchType',
@@ -255,6 +265,7 @@ export const MAPPING_RULE_FORM_CONFIG = {
         helperText: 'Comma separated values that activate this rule.',
         label: 'Apply only when value is',
         payloadKey: 'appliesWhenValues',
+        required: true,
         type: 'csv',
       },
       {
@@ -370,6 +381,39 @@ function normalizeValue(value) {
   if (Array.isArray(value)) return value.join(', ')
   if (value === null || value === undefined) return ''
   return String(value)
+}
+
+export function isMappingRuleFieldDisabled(field, editing) {
+  return Boolean(editing && field.payloadKey === 'shopId')
+}
+
+function getSelectOptionValue(option) {
+  return String(option?.value ?? option?.id ?? '')
+}
+
+export function getMappingRuleSelectConfig(field, options = [], editing = false) {
+  const hasEmptyOption = options.some((option) => getSelectOptionValue(option) === '')
+  const isShopField = field.payloadKey === 'shopId'
+  const firstPermittedShopId = isShopField
+    ? options.map(getSelectOptionValue).find(Boolean) || ''
+    : ''
+  const scopedShopCreate = isShopField && !editing && !hasEmptyOption && firstPermittedShopId
+  const required = Boolean(field.required || scopedShopCreate)
+
+  return {
+    defaultValue: scopedShopCreate ? firstPermittedShopId : '',
+    options:
+      hasEmptyOption || isShopField
+        ? options
+        : [
+            {
+              labelKey: required ? 'selectOption' : 'allNotSet',
+              value: '',
+            },
+            ...options,
+          ],
+    required,
+  }
 }
 
 export function buildMappingRuleInitialValues(type, rawRule = {}) {

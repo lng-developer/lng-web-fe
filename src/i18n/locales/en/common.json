@@ -2394,7 +2394,13 @@
       "ruleActive": "Rule is active"
     },
     "validation": {
-      "required": "{{field}} is required."
+      "required": "{{field}} is required.",
+      "requiredField": "This field is required.",
+      "replacementRequired": "Replacement value is required.",
+      "nonNegativeInteger": "Enter a whole number of 0 or greater.",
+      "tooLong": "This value is too long.",
+      "tooManySamples": "Use no more than 10 samples.",
+      "sampleTooLong": "Each sample must be 200 characters or fewer."
     },
     "ruleTypes": {
       "resolve": "Resolve Queue",
@@ -2444,8 +2450,17 @@
       "refreshRules": "Refresh rules",
       "createRule": "Create rule",
       "editRule": "Edit rule",
+      "viewRuleHistory": "View rule history",
       "turnRuleOff": "Turn rule off",
       "turnRuleOn": "Turn rule on"
+    },
+    "messages": {
+      "savingRule": "Saving rule...",
+      "ruleCreated": "Rule created.",
+      "ruleUpdated": "Rule updated.",
+      "ruleSaveFailed": "Could not save the rule.",
+      "ruleStatusUpdated": "Rule status updated.",
+      "ruleStatusFailed": "Could not update the rule status."
     },
     "filters": {
       "searchResolve": "Search order item, SKU, config",
@@ -2503,6 +2518,7 @@
     "options": {
       "selectOption": "Select an option",
       "allNotSet": "All / not set",
+      "global": "Global",
       "AMAZON_US": "Amazon US",
       "ETSY": "Etsy",
       "AMAZON": "Amazon",
@@ -2511,6 +2527,7 @@
       "REMOVE_SEGMENT": "Remove segment",
       "REPLACE_SEGMENT": "Replace segment",
       "SEGMENT": "SKU segment",
+      "EMPLOYEE": "Employee",
       "CONFIG": "Config",
       "COUNTRY": "Country",
       "DATE": "Date",
@@ -2525,6 +2542,52 @@
       "OTHER": "Other",
       "ACTIVE": "Active",
       "INACTIVE": "Inactive"
+    },
+    "evaluation": {
+      "title": "Rule evaluation",
+      "description": "Test sample values and review server conflicts before saving.",
+      "samples": "Sample values",
+      "samplesHelp": "Enter one value per line, up to 10 samples.",
+      "samplesPlaceholder": "Enter a sample value",
+      "testRule": "Test rule",
+      "running": "Testing rule",
+      "failed": "Rule evaluation failed.",
+      "empty": "Test the rule to see sample results and conflicts.",
+      "matched": "Matched",
+      "notMatched": "Not matched",
+      "priority": "Priority {{value}}",
+      "conflictReasons": {
+        "EXACT_SCOPE_PATTERN": "An active rule already uses this pattern in the same scope.",
+        "BROADER_SCOPE_PATTERN": "An active rule uses this pattern in an overlapping scope."
+      }
+    },
+    "history": {
+      "title": "{{rule}} history",
+      "description": "Review newest-first rule changes recorded by the server.",
+      "loading": "Loading rule history",
+      "empty": "No history has been recorded for this rule.",
+      "actor": "By {{actor}}",
+      "noFieldChanges": "No readable field changes were recorded.",
+      "actors": {
+        "ACCOUNT": "Account",
+        "SYSTEM": "System"
+      },
+      "events": {
+        "CREATED": "Created",
+        "UPDATED": "Updated",
+        "STATUS_CHANGED": "Status changed"
+      },
+      "fields": {
+        "status": "Status",
+        "priority": "Priority",
+        "matchValue": "Match value",
+        "normalizedValue": "Normalized value",
+        "semanticRole": "Semantic role",
+        "configCode": "Config code",
+        "outputAction": "Output action",
+        "replacementValue": "Replacement value",
+        "appliesWhenValues": "Applied values"
+      }
     },
     "fields": {
       "semanticRules": {
