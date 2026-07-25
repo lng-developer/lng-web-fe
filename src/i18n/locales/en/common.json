@@ -2394,7 +2394,13 @@
       "ruleActive": "Rule is active"
     },
     "validation": {
-      "required": "{{field}} is required."
+      "required": "{{field}} is required.",
+      "requiredField": "This field is required.",
+      "replacementRequired": "Replacement value is required.",
+      "nonNegativeInteger": "Enter a whole number of 0 or greater.",
+      "tooLong": "This value is too long.",
+      "tooManySamples": "Use no more than 10 samples.",
+      "sampleTooLong": "Each sample must be 200 characters or fewer."
     },
     "ruleTypes": {
       "resolve": "Resolve Queue",
@@ -2511,6 +2517,7 @@
       "REMOVE_SEGMENT": "Remove segment",
       "REPLACE_SEGMENT": "Replace segment",
       "SEGMENT": "SKU segment",
+      "EMPLOYEE": "Employee",
       "CONFIG": "Config",
       "COUNTRY": "Country",
       "DATE": "Date",
@@ -2525,6 +2532,24 @@
       "OTHER": "Other",
       "ACTIVE": "Active",
       "INACTIVE": "Inactive"
+    },
+    "evaluation": {
+      "title": "Rule evaluation",
+      "description": "Test sample values and review server conflicts before saving.",
+      "samples": "Sample values",
+      "samplesHelp": "Enter one value per line, up to 10 samples.",
+      "samplesPlaceholder": "Enter a sample value",
+      "testRule": "Test rule",
+      "running": "Testing rule",
+      "failed": "Rule evaluation failed.",
+      "empty": "Test the rule to see sample results and conflicts.",
+      "matched": "Matched",
+      "notMatched": "Not matched",
+      "priority": "Priority {{value}}",
+      "conflictReasons": {
+        "EXACT_SCOPE_PATTERN": "An active rule already uses this pattern in the same scope.",
+        "BROADER_SCOPE_PATTERN": "An active rule uses this pattern in an overlapping scope."
+      }
     },
     "fields": {
       "semanticRules": {

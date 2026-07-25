@@ -50,10 +50,12 @@ export const STATIC_OPTIONS = {
     { label: 'Etsy', value: 'ETSY' },
   ],
   segmentRole: [
+    { label: 'Employee', value: 'EMPLOYEE' },
+    { label: 'Size', value: 'SIZE' },
+    { label: 'Color', value: 'COLOR' },
     { label: 'Config', value: 'CONFIG' },
     { label: 'Country', value: 'COUNTRY' },
-    { label: 'Date', value: 'DATE' },
-    { label: 'Sequence', value: 'SEQUENCE' },
+    { label: 'Other', value: 'OTHER' },
   ],
   semanticRole: [
     { label: 'Size', value: 'SIZE' },
@@ -137,7 +139,7 @@ export const MAPPING_RULE_FORM_CONFIG = {
       },
       {
         advanced: true,
-        defaultValue: 'EXACT',
+        defaultValue: 'CONTAINS',
         helperText: 'How the label should be matched.',
         label: 'Matching method',
         optionsKey: 'matchType',
@@ -255,6 +257,7 @@ export const MAPPING_RULE_FORM_CONFIG = {
         helperText: 'Comma separated values that activate this rule.',
         label: 'Apply only when value is',
         payloadKey: 'appliesWhenValues',
+        required: true,
         type: 'csv',
       },
       {
