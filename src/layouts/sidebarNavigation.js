@@ -43,10 +43,6 @@ const MOUNTED_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
-  ROUTES.HR_MY_PAYSLIPS,
-  ROUTES.HR_PAYROLL_RUNS,
-  ROUTES.HR_ANNOUNCEMENTS,
-  ROUTES.HR_SETTINGS,
 ])
 
 const ROLE_ACCESS = {
@@ -401,7 +397,6 @@ export const HR_NAVIGATION = [
         labelKey: 'hrTime.navigation.payslips',
         icon: 'finance',
         path: ROUTES.HR_MY_PAYSLIPS,
-        requiredPermissions: ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
       },
     ],
   },
@@ -549,10 +544,6 @@ const HR_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
-  ROUTES.HR_MY_PAYSLIPS,
-  ROUTES.HR_PAYROLL_RUNS,
-  ROUTES.HR_ANNOUNCEMENTS,
-  ROUTES.HR_SETTINGS,
 ])
 
 export function getSidebarContextForLocation(pathname) {
@@ -620,19 +611,23 @@ function cloneNavigationItem(item) {
   return { ...item }
 }
 
-function filterMountedItem(item) {
-  if (item.path && !MOUNTED_ROUTE_PATHS.has(item.path)) {
+function filterMountedItem(item, mountedRoutePaths = MOUNTED_ROUTE_PATHS) {
+  if (item.path && !mountedRoutePaths.has(item.path)) {
     return null
   }
 
   if (item.type === 'section') {
-    const items = item.items.map(filterMountedItem).filter(Boolean)
+    const items = item.items
+      .map((child) => filterMountedItem(child, mountedRoutePaths))
+      .filter(Boolean)
 
     return items.length > 0 ? { ...item, items } : null
   }
 
   if (item.children) {
-    const children = item.children.map(filterMountedItem).filter(Boolean)
+    const children = item.children
+      .map((child) => filterMountedItem(child, mountedRoutePaths))
+      .filter(Boolean)
 
     return children.length > 0 ? { ...item, children } : null
   }
@@ -644,21 +639,23 @@ function canAccessByPermission(item, user) {
   return !item.requiredPermissions || hasAnyPermission(user, item.requiredPermissions)
 }
 
-function filterItemByUser(item, user) {
-  const mountedItem = filterMountedItem(item)
+function filterItemByUser(item, user, mountedRoutePaths) {
+  const mountedItem = filterMountedItem(item, mountedRoutePaths)
   if (!mountedItem || !canAccessByPermission(mountedItem, user)) {
     return null
   }
 
   if (mountedItem.type === 'section') {
-    const items = mountedItem.items.map((child) => filterItemByUser(child, user)).filter(Boolean)
+    const items = mountedItem.items
+      .map((child) => filterItemByUser(child, user, mountedRoutePaths))
+      .filter(Boolean)
 
     return items.length > 0 ? { ...mountedItem, items } : null
   }
 
   if (mountedItem.children) {
     const children = mountedItem.children
-      .map((child) => filterItemByUser(child, user))
+      .map((child) => filterItemByUser(child, user, mountedRoutePaths))
       .filter(Boolean)
 
     return children.length > 0 ? { ...mountedItem, children } : null
@@ -667,8 +664,8 @@ function filterItemByUser(item, user) {
   return { ...mountedItem }
 }
 
-export function filterNavigationByUser(navigation, user) {
-  return navigation.map((item) => filterItemByUser(item, user)).filter(Boolean)
+export function filterNavigationByUser(navigation, user, mountedRoutePaths = MOUNTED_ROUTE_PATHS) {
+  return navigation.map((item) => filterItemByUser(item, user, mountedRoutePaths)).filter(Boolean)
 }
 
 export function filterNavigationByRole(navigation, role) {

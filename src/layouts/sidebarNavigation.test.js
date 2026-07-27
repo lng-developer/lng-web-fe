@@ -132,11 +132,12 @@ describe('sidebar navigation', () => {
   })
 
   it('exposes payroll administration only with payroll read permission', () => {
+    const mountedPaths = new Set([ROUTES.HR_PAYROLL_RUNS])
     const withoutPayrollRead = collectLeafIds(
-      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:WRITE'] }),
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:WRITE'] }, mountedPaths),
     )
     const withPayrollRead = collectLeafIds(
-      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:READ'] }),
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:READ'] }, mountedPaths),
     )
 
     assert.equal(withoutPayrollRead.includes('hr-payroll-runs'), false)
@@ -144,15 +145,43 @@ describe('sidebar navigation', () => {
   })
 
   it('exposes integration settings only with the integration manage permission', () => {
+    const mountedPaths = new Set([ROUTES.HR_SETTINGS])
     const withoutIntegrationManage = collectLeafIds(
-      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_CALENDAR:WRITE'] }),
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_CALENDAR:WRITE'] }, mountedPaths),
     )
     const withIntegrationManage = collectLeafIds(
-      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_INTEGRATIONS:MANAGE'] }),
+      filterNavigationByUser(
+        HR_NAVIGATION,
+        { permissions: ['HR_INTEGRATIONS:MANAGE'] },
+        mountedPaths,
+      ),
     )
 
     assert.equal(withoutIntegrationManage.includes('hr-settings'), false)
     assert.equal(withIntegrationManage.includes('hr-settings'), true)
+  })
+
+  it('does not render HR links until their routes are mounted', () => {
+    const renderedIds = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['MANAGE_SYSTEM'] }),
+    )
+
+    for (const id of ['hr-payslips', 'hr-payroll-runs', 'hr-announcements', 'hr-settings']) {
+      assert.equal(renderedIds.includes(id), false)
+    }
+  })
+
+  it('keeps mounted self-service payslips auth-only and payroll administration permission-gated', () => {
+    const mountedPaths = new Set([ROUTES.HR_MY_PAYSLIPS, ROUTES.HR_PAYROLL_RUNS])
+    const ordinaryAccount = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: [] }, mountedPaths),
+    )
+    const payrollReader = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:READ'] }, mountedPaths),
+    )
+
+    assert.deepEqual(ordinaryAccount, ['hr-payslips'])
+    assert.deepEqual(payrollReader, ['hr-payslips', 'hr-payroll-runs'])
   })
 
   it('derives the navigation context from mounted route families', () => {
