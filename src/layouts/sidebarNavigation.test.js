@@ -131,6 +131,30 @@ describe('sidebar navigation', () => {
     )
   })
 
+  it('exposes payroll administration only with payroll read permission', () => {
+    const withoutPayrollRead = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:WRITE'] }),
+    )
+    const withPayrollRead = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:READ'] }),
+    )
+
+    assert.equal(withoutPayrollRead.includes('hr-payroll-runs'), false)
+    assert.equal(withPayrollRead.includes('hr-payroll-runs'), true)
+  })
+
+  it('exposes integration settings only with the integration manage permission', () => {
+    const withoutIntegrationManage = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_CALENDAR:WRITE'] }),
+    )
+    const withIntegrationManage = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_INTEGRATIONS:MANAGE'] }),
+    )
+
+    assert.equal(withoutIntegrationManage.includes('hr-settings'), false)
+    assert.equal(withIntegrationManage.includes('hr-settings'), true)
+  })
+
   it('derives the navigation context from mounted route families', () => {
     assert.equal(getSidebarContextForLocation(ROUTES.PORTAL_ORDER_LIST), SIDEBAR_CONTEXT_IDS.PORTAL)
     assert.equal(getSidebarContextForLocation(ROUTES.HR), SIDEBAR_CONTEXT_IDS.HR)

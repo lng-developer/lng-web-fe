@@ -13,6 +13,15 @@
     "departments": "Phòng ban",
     "logout": "Đăng xuất"
   },
+  "notifications": {
+    "title": "Thông báo",
+    "unreadCount_one": "{{count}} chưa đọc",
+    "unreadCount_other": "{{count}} chưa đọc",
+    "markAllRead": "Đánh dấu đã đọc",
+    "loadError": "Không thể tải thông báo.",
+    "actionError": "Không thể cập nhật thông báo.",
+    "empty": "Bạn đã xem hết thông báo."
+  },
   "common": {
     "close": "Đóng",
     "delete": "Xoá",
@@ -2814,6 +2823,13 @@
   },
   "hrTime": {
     "title": "Vận hành thời gian nhân sự",
+    "groups": {
+      "myHr": "Nhân sự của tôi",
+      "peopleTime": "Nhân sự & Thời gian",
+      "payroll": "Bảng lương",
+      "communication": "Truyền thông",
+      "configuration": "Cấu hình"
+    },
     "tabs": {
       "employees": "Nhân viên",
       "schedule": "Lịch làm việc",
@@ -2840,7 +2856,11 @@
       "requestInbox": "Hộp duyệt yêu cầu",
       "attendance": "Bàn chấm công",
       "schedule": "Lịch làm việc",
-      "employees": "Danh bạ nhân sự"
+      "employees": "Danh bạ nhân sự",
+      "payslips": "Phiếu lương của tôi",
+      "payrollRuns": "Kỳ lương",
+      "announcements": "Thông báo chung",
+      "settings": "Cấu hình nhân sự"
     }
   },
   "financeProfit": {

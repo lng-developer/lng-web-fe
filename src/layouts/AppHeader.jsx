@@ -4,13 +4,11 @@ import { useNavigate } from 'react-router-dom'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MenuIcon from '@mui/icons-material/Menu'
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import SearchIcon from '@mui/icons-material/Search'
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined'
 import {
   AppBar,
   Avatar,
-  Badge,
   Box,
   ButtonBase,
   Chip,
@@ -28,6 +26,7 @@ import {
   getCurrentUserRole,
   resolveCurrentUser,
 } from '@/features/auth/utils/currentUser'
+import NotificationPopover from '@/features/notifications/components/NotificationPopover'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useUIStore } from '@/store/useUIStore'
 
@@ -258,11 +257,7 @@ export default function AppHeader({ onToggleSidebar }) {
             ))}
           </Box>
 
-          <IconButton aria-label={t('header.notifications')} sx={headerIconButtonSx()}>
-            <Badge color="error" variant="dot" overlap="circular">
-              <NotificationsNoneIcon fontSize="small" />
-            </Badge>
-          </IconButton>
+          <NotificationPopover authenticated={Boolean(currentUser)} />
 
           <Chip
             label={roleLabel}

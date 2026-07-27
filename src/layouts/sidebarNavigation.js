@@ -43,6 +43,10 @@ const MOUNTED_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
+  ROUTES.HR_MY_PAYSLIPS,
+  ROUTES.HR_PAYROLL_RUNS,
+  ROUTES.HR_ANNOUNCEMENTS,
+  ROUTES.HR_SETTINGS,
 ])
 
 const ROLE_ACCESS = {
@@ -377,9 +381,9 @@ export const PORTAL_NAVIGATION = [
 
 export const HR_NAVIGATION = [
   {
-    id: 'hr-time-group',
+    id: 'hr-my-group',
     type: 'group',
-    labelKey: 'hrTime.title',
+    labelKey: 'hrTime.groups.myHr',
     icon: 'users',
     defaultOpen: true,
     children: [
@@ -391,6 +395,23 @@ export const HR_NAVIGATION = [
         path: ROUTES.HR_TIME_MY_TIME,
         requiredPermissions: ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
       },
+      {
+        id: 'hr-payslips',
+        type: 'item',
+        labelKey: 'hrTime.navigation.payslips',
+        icon: 'finance',
+        path: ROUTES.HR_MY_PAYSLIPS,
+        requiredPermissions: ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
+      },
+    ],
+  },
+  {
+    id: 'hr-people-time-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.peopleTime',
+    icon: 'users',
+    defaultOpen: true,
+    children: [
       {
         id: 'hr-request-inbox',
         type: 'item',
@@ -427,6 +448,57 @@ export const HR_NAVIGATION = [
         icon: 'users',
         path: ROUTES.HR_TIME_EMPLOYEES,
         requiredPermissions: ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'],
+      },
+    ],
+  },
+  {
+    id: 'hr-payroll-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.payroll',
+    icon: 'finance',
+    defaultOpen: true,
+    children: [
+      {
+        id: 'hr-payroll-runs',
+        type: 'item',
+        labelKey: 'hrTime.navigation.payrollRuns',
+        icon: 'finance',
+        path: ROUTES.HR_PAYROLL_RUNS,
+        requiredPermissions: ['HR_PAYROLL:READ'],
+      },
+    ],
+  },
+  {
+    id: 'hr-communication-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.communication',
+    icon: 'reports',
+    defaultOpen: false,
+    children: [
+      {
+        id: 'hr-announcements',
+        type: 'item',
+        labelKey: 'hrTime.navigation.announcements',
+        icon: 'reports',
+        path: ROUTES.HR_ANNOUNCEMENTS,
+        requiredPermissions: ['HR_ANNOUNCEMENTS:READ'],
+      },
+    ],
+  },
+  {
+    id: 'hr-configuration-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.configuration',
+    icon: 'config',
+    defaultOpen: false,
+    children: [
+      {
+        id: 'hr-settings',
+        type: 'item',
+        labelKey: 'hrTime.navigation.settings',
+        icon: 'config',
+        path: ROUTES.HR_SETTINGS,
+        requiredPermissions: ['HR_INTEGRATIONS:MANAGE'],
       },
     ],
   },
@@ -477,6 +549,10 @@ const HR_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
+  ROUTES.HR_MY_PAYSLIPS,
+  ROUTES.HR_PAYROLL_RUNS,
+  ROUTES.HR_ANNOUNCEMENTS,
+  ROUTES.HR_SETTINGS,
 ])
 
 export function getSidebarContextForLocation(pathname) {

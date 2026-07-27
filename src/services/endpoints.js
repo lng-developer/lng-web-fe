@@ -8,6 +8,12 @@ export const ENDPOINTS = {
     LOGOUT: '/api/auth/logout',
     ME: '/api/auth/me',
   },
+  NOTIFICATIONS: {
+    INBOX: '/api/notifications',
+    UNREAD_COUNT: '/api/notifications/unread-count',
+    MARK_ALL_READ: '/api/notifications/read-all',
+    MARK_READ: (notificationId) => `/api/notifications/${notificationId}/read`,
+  },
   HOME: {
     SUMMARY: '/home/summary',
   },

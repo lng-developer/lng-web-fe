@@ -13,6 +13,15 @@
     "departments": "Departments",
     "logout": "Log out"
   },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread",
+    "markAllRead": "Mark all read",
+    "loadError": "Unable to load notifications.",
+    "actionError": "Unable to update the notification.",
+    "empty": "You are all caught up."
+  },
   "common": {
     "close": "Close",
     "delete": "Delete",
@@ -2814,6 +2823,13 @@
   },
   "hrTime": {
     "title": "HR Time Operations",
+    "groups": {
+      "myHr": "My HR",
+      "peopleTime": "People & Time",
+      "payroll": "Payroll",
+      "communication": "Communication",
+      "configuration": "Configuration"
+    },
     "tabs": {
       "employees": "Employees",
       "schedule": "Schedule",
@@ -2840,7 +2856,11 @@
       "requestInbox": "Request inbox",
       "attendance": "Attendance desk",
       "schedule": "Work schedule",
-      "employees": "People directory"
+      "employees": "People directory",
+      "payslips": "My payslips",
+      "payrollRuns": "Payroll runs",
+      "announcements": "Announcements",
+      "settings": "HR settings"
     }
   },
   "financeProfit": {
