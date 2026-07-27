@@ -319,3 +319,63 @@ export function isAttendanceException(row = {}) {
     Number(row.earlyLeaveMinutes || 0) > 0
   )
 }
+
+function permissionMatches(permission, code) {
+  return typeof permission === 'string' ? permission === code : permission?.code === code
+}
+
+function permissionTreeIncludes(value, code) {
+  if (!value) return false
+  if (typeof value === 'string') return value === code
+  if (Array.isArray(value)) return value.some((item) => permissionTreeIncludes(item, code))
+  if (typeof value !== 'object') return false
+  return (
+    permissionMatches(value, code) ||
+    permissionTreeIncludes(value.permissions, code) ||
+    permissionTreeIncludes(value.customPermissions, code) ||
+    permissionTreeIncludes(value.role, code)
+  )
+}
+
+export function getAuthorizedTeamScopeIds(user, permissionCode) {
+  return [
+    ...new Set(
+      (user?.scopes || [])
+        .filter(
+          (scope) =>
+            String(scope?.scopeType || '').toLowerCase() === 'team' &&
+            (scope.permissions || []).some((permission) =>
+              permissionMatches(permission, permissionCode),
+            ),
+        )
+        .map((scope) => String(scope.scopeId || ''))
+        .filter(Boolean),
+    ),
+  ]
+}
+
+export function hasGlobalPermissionCode(user, permissionCode) {
+  if (
+    permissionTreeIncludes(
+      [user?.permissions, user?.roles, user?.scopes, user?.accessAssignments, user?.assignments],
+      'MANAGE_SYSTEM',
+    )
+  ) {
+    return true
+  }
+  if ((user?.permissions || []).some((permission) => permissionMatches(permission, permissionCode))) {
+    return true
+  }
+  return (user?.scopes || []).some(
+    (scope) =>
+      String(scope?.scopeType || '').toLowerCase() === 'global' &&
+      (scope.permissions || []).some((permission) => permissionMatches(permission, permissionCode)),
+  )
+}
+
+export function resolveRotationTeamId(requestedTeamId, authorizedTeamIds, hasGlobalAccess) {
+  const requested = String(requestedTeamId || '')
+  if (hasGlobalAccess) return requested
+  if (requested) return authorizedTeamIds.includes(requested) ? requested : ''
+  return authorizedTeamIds.length === 1 ? authorizedTeamIds[0] : ''
+}

@@ -330,6 +330,23 @@ export default function AttendanceDeskPage() {
               <Typography variant="body2">{selected?.workedMinutes || 0} minutes</Typography>
             </div>
           </div>
+          <section className="rounded-lg border border-border bg-surface-subtle p-4">
+            <Typography variant="subtitle2">Reconciliation evidence</Typography>
+            <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <Typography component="dt" variant="caption" className="text-ink-muted">Source</Typography>
+                <Typography component="dd" variant="body2">{selected?.source?.replaceAll('_', ' ') || '-'}</Typography>
+              </div>
+              <div>
+                <Typography component="dt" variant="caption" className="text-ink-muted">Workday value</Typography>
+                <Typography component="dd" variant="body2">{selected?.workDayValue ?? '-'}</Typography>
+              </div>
+              <div>
+                <Typography component="dt" variant="caption" className="text-ink-muted">Calculation reason</Typography>
+                <Typography component="dd" variant="body2">{selected?.calculationReason?.replaceAll('_', ' ') || '-'}</Typography>
+              </div>
+            </dl>
+          </section>
           <section>
             <Typography variant="subtitle2">Leave segments</Typography>
             <Typography variant="body2" className="mt-1 text-ink-secondary">

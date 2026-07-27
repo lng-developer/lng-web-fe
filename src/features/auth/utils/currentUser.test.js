@@ -147,6 +147,7 @@ describe('current user utilities', () => {
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
       'dashboard',
       'design-task-list',
+      'hr-payslips',
     ])
   })
 
@@ -157,6 +158,7 @@ describe('current user utilities', () => {
       'dashboard',
       'quality-control',
       'design-task-list',
+      'hr-payslips',
     ])
   })
 
@@ -170,6 +172,7 @@ describe('current user utilities', () => {
       'scale-production',
       'quality-control',
       'shipping',
+      'hr-payslips',
     ])
   })
 
@@ -184,6 +187,7 @@ describe('current user utilities', () => {
       'listings',
       'product-types',
       'internal-templates',
+      'hr-payslips',
     ])
   })
 

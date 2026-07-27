@@ -28,8 +28,14 @@ const ListingsPage = lazy(() => import('@/features/listings/pages/ListingsPage')
 const ProductTypesPage = lazy(() => import('@/features/listings/pages/ProductTypesPage'))
 const InternalTemplatesPage = lazy(() => import('@/features/listings/pages/InternalTemplatesPage'))
 const MappingPage = lazy(() => import('@/features/mapping/pages/MappingPage'))
+const AnnouncementsPage = lazy(
+  () => import('@/features/hr-communication/pages/AnnouncementsPage'),
+)
 const AttendanceDeskPage = lazy(() => import('@/features/hr-time/pages/AttendanceDeskPage'))
+const HrSettingsPage = lazy(() => import('@/features/hr-settings/pages/HrSettingsPage'))
 const MyTimePage = lazy(() => import('@/features/hr-time/pages/MyTimePage'))
+const MyPayslipsPage = lazy(() => import('@/features/hr-payroll/pages/MyPayslipsPage'))
+const PayrollRunsPage = lazy(() => import('@/features/hr-payroll/pages/PayrollRunsPage'))
 const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const PodWorkbenchPage = lazy(() => import('@/features/pod-workbench/pages/PodWorkbenchPage'))
 const QcPage = lazy(() => import('@/features/qc/pages/QcPage'))
@@ -106,7 +112,7 @@ export const router = createBrowserRouter([
               {
                 path: ROUTES.HR_TIME_SCHEDULE.replace(`${ROUTES.HR}/`, ''),
                 element: requireAnyPermissions(
-                  ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'],
+                  ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE', 'HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
                   <SchedulePage />,
                 ),
               },
@@ -116,6 +122,25 @@ export const router = createBrowserRouter([
                   ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'],
                   <PeoplePage />,
                 ),
+              },
+              {
+                path: ROUTES.HR_MY_PAYSLIPS.replace(`${ROUTES.HR}/`, ''),
+                element: <MyPayslipsPage />,
+              },
+              {
+                path: ROUTES.HR_PAYROLL_RUNS.replace(`${ROUTES.HR}/`, ''),
+                element: requirePermissions(['HR_PAYROLL:READ'], <PayrollRunsPage />),
+              },
+              {
+                path: ROUTES.HR_ANNOUNCEMENTS.replace(`${ROUTES.HR}/`, ''),
+                element: requireAnyPermissions(
+                  ['HR_ANNOUNCEMENTS:READ', 'HR_ANNOUNCEMENTS:WRITE'],
+                  <AnnouncementsPage />,
+                ),
+              },
+              {
+                path: ROUTES.HR_SETTINGS.replace(`${ROUTES.HR}/`, ''),
+                element: requirePermissions(['HR_INTEGRATIONS:MANAGE'], <HrSettingsPage />),
               },
             ],
           },

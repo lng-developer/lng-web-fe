@@ -13,7 +13,6 @@ import {
   PORTAL_NAVIGATION,
   SIDEBAR_CONTEXT_IDS,
   SIDEBAR_HOME_ITEM,
-  SIDEBAR_NAVIGATION,
 } from './sidebarNavigation.js'
 
 function collectLeafIds(items) {
@@ -127,7 +126,7 @@ describe('sidebar navigation', () => {
     assert.equal(collectLeafIds(PORTAL_NAVIGATION).includes('hr-schedule'), false)
     assert.deepEqual(
       collectLeafIds(filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_SCHEDULE:READ'] })),
-      ['hr-schedule'],
+      ['hr-payslips', 'hr-schedule'],
     )
   })
 
@@ -161,13 +160,13 @@ describe('sidebar navigation', () => {
     assert.equal(withIntegrationManage.includes('hr-settings'), true)
   })
 
-  it('does not render HR links until their routes are mounted', () => {
+  it('renders Task 10 HR links after their routes are mounted', () => {
     const renderedIds = collectLeafIds(
       filterNavigationByUser(HR_NAVIGATION, { permissions: ['MANAGE_SYSTEM'] }),
     )
 
     for (const id of ['hr-payslips', 'hr-payroll-runs', 'hr-announcements', 'hr-settings']) {
-      assert.equal(renderedIds.includes(id), false)
+      assert.equal(renderedIds.includes(id), true)
     }
   })
 
@@ -194,17 +193,17 @@ describe('sidebar navigation', () => {
       permissions: ['HR_SCHEDULE:READ'],
     })
 
-    assert.equal(getFirstNavigableItem(navigation)?.id, 'hr-schedule')
+    assert.equal(getFirstNavigableItem(navigation)?.id, 'hr-payslips')
     assert.equal(getFirstNavigableItem([]), null)
   })
 
   it('keeps Portal leaves filtered by backend permissions', () => {
     assert.deepEqual(
-      collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['DESIGN:WORK'] })),
+      collectLeafIds(filterNavigationByUser(PORTAL_NAVIGATION, { permissions: ['DESIGN:WORK'] })),
       ['dashboard', 'design-task-list', 'quality-scoring', 'psd-file-library'],
     )
     assert.deepEqual(
-      collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['AUTH:READ'] })),
+      collectLeafIds(filterNavigationByUser(PORTAL_NAVIGATION, { permissions: ['AUTH:READ'] })),
       ['dashboard', 'users-roles'],
     )
   })

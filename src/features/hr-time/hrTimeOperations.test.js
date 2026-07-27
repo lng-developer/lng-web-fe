@@ -8,9 +8,12 @@ import {
   buildShiftAssignmentPayload,
   buildShiftPayload,
   buildWorkLocationPayload,
+  getAuthorizedTeamScopeIds,
   getEmployeeProfileSections,
   getScheduleScopeOptions,
+  hasGlobalPermissionCode,
   isAttendanceException,
+  resolveRotationTeamId,
 } from './utils/hrTimeApi.js'
 
 test('operation payloads keep only fields accepted by each HR endpoint', () => {
@@ -201,4 +204,21 @@ test('schedule scope options use named HR directory relationships and skip bare 
       { type: 'TEAM', id: 'team-1', label: 'POD' },
     ],
   )
+})
+
+test('rotation team scope resolution fails closed for scoped calendar access', () => {
+  const user = {
+    permissions: [],
+    scopes: [
+      { scopeType: 'team', scopeId: 'team-1', permissions: ['HR_CALENDAR:WRITE'] },
+      { scopeType: 'team', scopeId: 'team-2', permissions: ['HR_SCHEDULE:WRITE'] },
+    ],
+  }
+
+  assert.deepEqual(getAuthorizedTeamScopeIds(user, 'HR_CALENDAR:WRITE'), ['team-1'])
+  assert.equal(resolveRotationTeamId('', ['team-1'], false), 'team-1')
+  assert.equal(resolveRotationTeamId('team-2', ['team-1'], false), '')
+  assert.equal(resolveRotationTeamId('team-2', ['team-1'], true), 'team-2')
+  assert.equal(resolveRotationTeamId('', [], false), '')
+  assert.equal(hasGlobalPermissionCode({ permissions: ['MANAGE_SYSTEM'] }, 'HR_CALENDAR:WRITE'), true)
 })

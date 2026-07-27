@@ -43,6 +43,10 @@ const MOUNTED_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
+  ROUTES.HR_MY_PAYSLIPS,
+  ROUTES.HR_PAYROLL_RUNS,
+  ROUTES.HR_ANNOUNCEMENTS,
+  ROUTES.HR_SETTINGS,
 ])
 
 const ROLE_ACCESS = {
@@ -434,7 +438,12 @@ export const HR_NAVIGATION = [
         labelKey: 'hrTime.navigation.schedule',
         icon: 'config',
         path: ROUTES.HR_TIME_SCHEDULE,
-        requiredPermissions: ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'],
+        requiredPermissions: [
+          'HR_SCHEDULE:READ',
+          'HR_SCHEDULE:WRITE',
+          'HR_CALENDAR:READ',
+          'HR_CALENDAR:WRITE',
+        ],
       },
       {
         id: 'hr-employees',
@@ -476,7 +485,7 @@ export const HR_NAVIGATION = [
         labelKey: 'hrTime.navigation.announcements',
         icon: 'reports',
         path: ROUTES.HR_ANNOUNCEMENTS,
-        requiredPermissions: ['HR_ANNOUNCEMENTS:READ'],
+        requiredPermissions: ['HR_ANNOUNCEMENTS:READ', 'HR_ANNOUNCEMENTS:WRITE'],
       },
     ],
   },
@@ -544,6 +553,10 @@ const HR_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
+  ROUTES.HR_MY_PAYSLIPS,
+  ROUTES.HR_PAYROLL_RUNS,
+  ROUTES.HR_ANNOUNCEMENTS,
+  ROUTES.HR_SETTINGS,
 ])
 
 export function getSidebarContextForLocation(pathname) {
