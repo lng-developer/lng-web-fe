@@ -8,12 +8,14 @@ import {
   buildShiftAssignmentPayload,
   buildShiftPayload,
   buildWorkLocationPayload,
+  canAccessTeamScope,
   getAuthorizedTeamScopeIds,
   getEmployeeProfileSections,
   getScheduleScopeOptions,
   hasGlobalPermissionCode,
   isAttendanceException,
   resolveRotationTeamId,
+  resolveScheduleTab,
 } from './utils/hrTimeApi.js'
 
 test('operation payloads keep only fields accepted by each HR endpoint', () => {
@@ -221,4 +223,39 @@ test('rotation team scope resolution fails closed for scoped calendar access', (
   assert.equal(resolveRotationTeamId('team-2', ['team-1'], true), 'team-2')
   assert.equal(resolveRotationTeamId('', [], false), '')
   assert.equal(hasGlobalPermissionCode({ permissions: ['MANAGE_SYSTEM'] }, 'HR_CALENDAR:WRITE'), true)
+})
+
+test('schedule tab defaults calendar-only users to a readable calendar workspace', () => {
+  assert.equal(resolveScheduleTab('', { canScheduleRead: true, canCalendarRead: true }), 'assignments')
+  assert.equal(resolveScheduleTab('', { canScheduleRead: false, canCalendarRead: true }), 'holidays')
+  assert.equal(resolveScheduleTab('rotations', { canScheduleRead: false, canCalendarRead: true }), 'rotations')
+})
+
+test('rotation read and write scopes are resolved independently', () => {
+  const user = {
+    permissions: [],
+    scopes: [
+      { scopeType: 'team', scopeId: 'team-read', permissions: ['HR_CALENDAR:READ'] },
+      { scopeType: 'team', scopeId: 'team-write', permissions: ['HR_CALENDAR:WRITE'] },
+    ],
+  }
+
+  assert.deepEqual(
+    getAuthorizedTeamScopeIds(user, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']),
+    ['team-read', 'team-write'],
+  )
+  assert.equal(canAccessTeamScope(user, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'], 'team-read'), true)
+  assert.equal(canAccessTeamScope(user, 'HR_CALENDAR:WRITE', 'team-read'), false)
+  assert.equal(canAccessTeamScope(user, 'HR_CALENDAR:WRITE', 'team-write'), true)
+  assert.equal(canAccessTeamScope({ permissions: ['HR_CALENDAR:READ'] }, 'HR_CALENDAR:READ', 'any-team'), true)
+  assert.equal(canAccessTeamScope({ scopes: [] }, 'HR_CALENDAR:READ', 'team-read'), false)
+})
+
+test('global holiday policy mutations require global calendar write', () => {
+  const scopedWriter = {
+    scopes: [{ scopeType: 'team', scopeId: 'team-1', permissions: ['HR_CALENDAR:WRITE'] }],
+  }
+
+  assert.equal(hasGlobalPermissionCode(scopedWriter, 'HR_CALENDAR:WRITE'), false)
+  assert.equal(hasGlobalPermissionCode({ permissions: ['HR_CALENDAR:WRITE'] }, 'HR_CALENDAR:WRITE'), true)
 })

@@ -337,21 +337,32 @@ function permissionTreeIncludes(value, code) {
   )
 }
 
-export function getAuthorizedTeamScopeIds(user, permissionCode) {
+function permissionCodes(value) {
+  return Array.isArray(value) ? value : [value]
+}
+
+export function getAuthorizedTeamScopeIds(user, requiredPermissions) {
+  const codes = permissionCodes(requiredPermissions)
   return [
     ...new Set(
       (user?.scopes || [])
         .filter(
           (scope) =>
             String(scope?.scopeType || '').toLowerCase() === 'team' &&
-            (scope.permissions || []).some((permission) =>
-              permissionMatches(permission, permissionCode),
+            codes.some((code) =>
+              (scope.permissions || []).some((permission) => permissionMatches(permission, code)),
             ),
         )
         .map((scope) => String(scope.scopeId || ''))
         .filter(Boolean),
     ),
   ]
+}
+
+export function canAccessTeamScope(user, requiredPermissions, teamId) {
+  const codes = permissionCodes(requiredPermissions)
+  if (codes.some((code) => hasGlobalPermissionCode(user, code))) return true
+  return getAuthorizedTeamScopeIds(user, codes).includes(String(teamId || ''))
 }
 
 export function hasGlobalPermissionCode(user, permissionCode) {
@@ -378,4 +389,12 @@ export function resolveRotationTeamId(requestedTeamId, authorizedTeamIds, hasGlo
   if (hasGlobalAccess) return requested
   if (requested) return authorizedTeamIds.includes(requested) ? requested : ''
   return authorizedTeamIds.length === 1 ? authorizedTeamIds[0] : ''
+}
+
+export function resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead }) {
+  const validTabs = ['assignments', 'shifts', 'locations', 'overrides', 'holidays', 'rotations']
+  if (validTabs.includes(requestedTab)) return requestedTab
+  if (canScheduleRead) return 'assignments'
+  if (canCalendarRead) return 'holidays'
+  return 'assignments'
 }

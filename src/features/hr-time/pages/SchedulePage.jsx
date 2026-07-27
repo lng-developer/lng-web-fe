@@ -63,10 +63,12 @@ import CalendarOverrideDialog from '../components/CalendarOverrideDialog.jsx'
 import ScheduleConfigurationDialog from '../components/ScheduleConfigurationDialog.jsx'
 import ShiftAssignmentDialog from '../components/ShiftAssignmentDialog.jsx'
 import {
+  canAccessTeamScope,
   getAuthorizedTeamScopeIds,
   getScheduleScopeOptions,
   hasGlobalPermissionCode,
   resolveRotationTeamId,
+  resolveScheduleTab,
 } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
@@ -201,7 +203,6 @@ export default function SchedulePage() {
   const currentUser = useAuthStore((state) => state.currentUser)
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
-  const tab = tabs.includes(requestedTab) ? requestedTab : 'assignments'
   const page = Math.max(Number(searchParams.get('page')) || 1, 1)
   const q = searchParams.get('q') || ''
   const profileId = searchParams.get('profileId') || ''
@@ -214,16 +215,30 @@ export default function SchedulePage() {
   const [rotationEditor, setRotationEditor] = useState(false)
   const [actionError, setActionError] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_SCHEDULE:WRITE'])
+  const canScheduleRead = hasAnyPermission(currentUser, ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'])
+  const canCalendarRead = hasAnyPermission(currentUser, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'])
   const canWriteGlobal = globalScheduleWrite(currentUser)
-  const canCalendarWrite = hasAnyPermission(currentUser, ['HR_CALENDAR:WRITE'])
   const canCalendarWriteGlobal = hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:WRITE')
-  const authorizedCalendarTeamIds = useMemo(
+  const canCalendarReadGlobal =
+    hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:READ') || canCalendarWriteGlobal
+  const tab = resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead })
+  const rotationReadTeamIds = useMemo(
+    () =>
+      getAuthorizedTeamScopeIds(currentUser, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']),
+    [currentUser],
+  )
+  const rotationWriteTeamIds = useMemo(
     () => getAuthorizedTeamScopeIds(currentUser, 'HR_CALENDAR:WRITE'),
     [currentUser],
   )
   const rotationTeamId = resolveRotationTeamId(
     teamId,
-    authorizedCalendarTeamIds,
+    rotationReadTeamIds,
+    canCalendarReadGlobal,
+  )
+  const rotationWriteTeamId = resolveRotationTeamId(
+    teamId,
+    rotationWriteTeamIds,
     canCalendarWriteGlobal,
   )
 
@@ -246,7 +261,7 @@ export default function SchedulePage() {
   )
   const rotationQuery = useSaturdayRotationsQuery(
     { page, limit: pageSize, teamId: rotationTeamId, month, year },
-    { enabled: tab === 'rotations' && (canCalendarWriteGlobal || Boolean(rotationTeamId)) },
+    { enabled: tab === 'rotations' && (canCalendarReadGlobal || Boolean(rotationTeamId)) },
   )
 
   const employeesQuery = useEmployeeProfilesQuery({ page: 1, limit: 100, status: 'ACTIVE' })
@@ -260,21 +275,32 @@ export default function SchedulePage() {
       [...new Map(employees.filter((employee) => employee.team?.id).map((employee) => [employee.team.id, employee.team])).values()],
     [employees],
   )
-  const rotationTeams = useMemo(() => {
-    if (canCalendarWriteGlobal) return teams
+  const rotationReadTeams = useMemo(() => {
+    if (canCalendarReadGlobal) return teams
     const namedTeams = new Map(teams.map((team) => [team.id, team]))
-    return authorizedCalendarTeamIds.map(
+    return rotationReadTeamIds.map(
       (id, index) => namedTeams.get(id) || { id, name: `Authorized team ${index + 1}` },
     )
-  }, [authorizedCalendarTeamIds, canCalendarWriteGlobal, teams])
+  }, [canCalendarReadGlobal, rotationReadTeamIds, teams])
+  const rotationWriteTeams = useMemo(() => {
+    if (canCalendarWriteGlobal) return teams
+    const namedTeams = new Map(teams.map((team) => [team.id, team]))
+    return rotationWriteTeamIds.map(
+      (id, index) => namedTeams.get(id) || { id, name: `Authorized team ${index + 1}` },
+    )
+  }, [canCalendarWriteGlobal, rotationWriteTeamIds, teams])
   const employeeById = useMemo(
     () => new Map(employees.map((employee) => [employee.id, employee])),
     [employees],
   )
   const teamById = useMemo(
-    () => new Map(rotationTeams.map((team) => [team.id, team])),
-    [rotationTeams],
+    () => new Map(rotationReadTeams.map((team) => [team.id, team])),
+    [rotationReadTeams],
   )
+
+  function canWriteRotationRow(row) {
+    return canAccessTeamScope(currentUser, 'HR_CALENDAR:WRITE', row.teamId)
+  }
 
   const createAssignment = useCreateShiftAssignmentMutation()
   const updateAssignment = useUpdateShiftAssignmentMutation()
@@ -486,7 +512,7 @@ export default function SchedulePage() {
     }
     if (column.key === 'actions') {
       if (tab === 'holidays') {
-        return canCalendarWrite ? (
+        return canCalendarWriteGlobal ? (
           <Stack direction="row" spacing={0.25} justifyContent="center">
             <IconActionButton label="Edit holiday" tone="primary" onClick={() => setHolidayEditor(row)}>
               <EditOutlinedIcon fontSize="small" />
@@ -498,7 +524,7 @@ export default function SchedulePage() {
         ) : null
       }
       if (tab === 'rotations') {
-        return canCalendarWrite ? (
+        return canWriteRotationRow(row) ? (
           <IconActionButton label="Delete rotation" tone="danger" onClick={() => removeCalendarRecord('rotation', row.id)}>
             <DeleteOutlineIcon fontSize="small" />
           </IconActionButton>
@@ -539,11 +565,11 @@ export default function SchedulePage() {
               'Manage assignments, global schedule configuration, and scoped calendar changes.',
           })}
           actions={
-            canCalendarWrite && tab === 'holidays' ? (
+            canCalendarWriteGlobal && tab === 'holidays' ? (
               <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setActionError(''); setHolidayEditor({}) }}>
                 Add holiday
               </Button>
-            ) : canCalendarWrite && rotationTeams.length && tab === 'rotations' ? (
+            ) : rotationWriteTeams.length && tab === 'rotations' ? (
               <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setActionError(''); setRotationEditor(true) }}>
                 Generate rotations
               </Button>
@@ -641,8 +667,8 @@ export default function SchedulePage() {
             {tab === 'rotations' ? (
               <>
                 <TextField select size="small" className="w-56" label="Team" value={rotationTeamId} onChange={(event) => updateSearch({ teamId: event.target.value }, true)}>
-                  {canCalendarWriteGlobal ? <MenuItem value="">All</MenuItem> : rotationTeams.length > 1 ? <MenuItem value="" disabled>Select authorized team</MenuItem> : null}
-                  {rotationTeams.map((team) => <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>)}
+                  {canCalendarReadGlobal ? <MenuItem value="">All</MenuItem> : rotationReadTeams.length > 1 ? <MenuItem value="" disabled>Select authorized team</MenuItem> : null}
+                  {rotationReadTeams.map((team) => <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>)}
                 </TextField>
                 <TextField size="small" type="number" label="Month" value={month} inputProps={{ min: 1, max: 12 }} onChange={(event) => updateSearch({ month: event.target.value }, true)} />
                 <TextField size="small" type="number" label="Year" value={year} inputProps={{ min: 2000, max: 9999 }} onChange={(event) => updateSearch({ year: event.target.value }, true)} />
@@ -732,8 +758,8 @@ export default function SchedulePage() {
       ) : null}
       {rotationEditor ? (
         <RotationDialog
-          teams={rotationTeams}
-          initialTeamId={rotationTeamId}
+          teams={rotationWriteTeams}
+          initialTeamId={rotationWriteTeamId}
           loading={generateRotations.isPending}
           error={actionError}
           onClose={() => setRotationEditor(false)}

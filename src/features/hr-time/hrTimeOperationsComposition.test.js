@@ -91,6 +91,16 @@ test('Schedule exposes global configuration only through permission-derived cont
   assert.doesNotMatch(schedule, /roleName|roles\.includes/)
 })
 
+test('Schedule separates calendar read scopes from global policy mutations', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /resolveScheduleTab/)
+  assert.match(schedule, /rotationReadTeamIds/)
+  assert.match(schedule, /rotationWriteTeamIds/)
+  assert.match(schedule, /canCalendarWriteGlobal && tab === 'holidays'/)
+  assert.match(schedule, /canWriteRotationRow/)
+})
+
 test('People loads directory rows separately from permission-gated detail sections', async () => {
   const [page, drawer] = await Promise.all([
     source('pages/PeoplePage.jsx'),
