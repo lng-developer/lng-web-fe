@@ -67,6 +67,7 @@ import {
   getAuthorizedTeamScopeIds,
   getScheduleScopeOptions,
   hasGlobalPermissionCode,
+  resolveCalendarScopeQuery,
   resolveRotationTeamId,
   resolveScheduleTab,
 } from '../utils/hrTimeApi.js'
@@ -207,6 +208,7 @@ export default function SchedulePage() {
   const q = searchParams.get('q') || ''
   const profileId = searchParams.get('profileId') || ''
   const scopeType = searchParams.get('scopeType') || ''
+  const holidayScopeKey = searchParams.get('holidayScope') || ''
   const month = searchParams.get('month') || ''
   const year = searchParams.get('year') || ''
   const teamId = searchParams.get('teamId') || ''
@@ -217,11 +219,22 @@ export default function SchedulePage() {
   const canWrite = hasAnyPermission(currentUser, ['HR_SCHEDULE:WRITE'])
   const canScheduleRead = hasAnyPermission(currentUser, ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'])
   const canCalendarRead = hasAnyPermission(currentUser, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'])
+  const canReadDirectory = hasAnyPermission(currentUser, [
+    'HR_EMPLOYEES:READ',
+    'HR_EMPLOYEES:WRITE',
+    'HR_SCHEDULE:READ',
+    'HR_SCHEDULE:WRITE',
+  ])
   const canWriteGlobal = globalScheduleWrite(currentUser)
   const canCalendarWriteGlobal = hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:WRITE')
   const canCalendarReadGlobal =
     hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:READ') || canCalendarWriteGlobal
   const tab = resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead })
+  const holidayScopeState = resolveCalendarScopeQuery(
+    currentUser,
+    holidayScopeKey,
+    ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
+  )
   const rotationReadTeamIds = useMemo(
     () =>
       getAuthorizedTeamScopeIds(currentUser, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']),
@@ -256,17 +269,26 @@ export default function SchedulePage() {
     { enabled: tab === 'overrides' },
   )
   const holidayQuery = useHolidaysQuery(
-    { page, limit: pageSize },
-    { enabled: tab === 'holidays' },
+    { page, limit: pageSize, ...holidayScopeState.params },
+    { enabled: tab === 'holidays' && holidayScopeState.enabled },
   )
   const rotationQuery = useSaturdayRotationsQuery(
     { page, limit: pageSize, teamId: rotationTeamId, month, year },
     { enabled: tab === 'rotations' && (canCalendarReadGlobal || Boolean(rotationTeamId)) },
   )
 
-  const employeesQuery = useEmployeeProfilesQuery({ page: 1, limit: 100, status: 'ACTIVE' })
-  const optionShiftsQuery = useShiftsQuery({ page: 1, limit: 100, status: 'ACTIVE' })
-  const optionLocationsQuery = useWorkLocationsQuery({ page: 1, limit: 100, status: 'ACTIVE' })
+  const employeesQuery = useEmployeeProfilesQuery(
+    { page: 1, limit: 100, status: 'ACTIVE' },
+    { enabled: canReadDirectory },
+  )
+  const optionShiftsQuery = useShiftsQuery(
+    { page: 1, limit: 100, status: 'ACTIVE' },
+    { enabled: canScheduleRead },
+  )
+  const optionLocationsQuery = useWorkLocationsQuery(
+    { page: 1, limit: 100, status: 'ACTIVE' },
+    { enabled: canScheduleRead },
+  )
   const employees = list(employeesQuery.data)
   const shifts = list(optionShiftsQuery.data)
   const locations = list(optionLocationsQuery.data)
@@ -275,6 +297,31 @@ export default function SchedulePage() {
       [...new Map(employees.filter((employee) => employee.team?.id).map((employee) => [employee.team.id, employee.team])).values()],
     [employees],
   )
+  const departments = useMemo(
+    () =>
+      [
+        ...new Map(
+          employees
+            .filter((employee) => employee.department?.id)
+            .map((employee) => [employee.department.id, employee.department]),
+        ).values(),
+      ],
+    [employees],
+  )
+  const holidayScopeOptions = useMemo(() => {
+    const namedTeams = new Map(teams.map((team) => [team.id, team.name]))
+    const namedDepartments = new Map(
+      departments.map((department) => [department.id, department.name]),
+    )
+    return holidayScopeState.scopes.map((scope, index) => ({
+      ...scope,
+      label:
+        (scope.scopeType === 'team'
+          ? namedTeams.get(scope.scopeId)
+          : namedDepartments.get(scope.scopeId)) ||
+        `Authorized ${scope.scopeType} ${index + 1}`,
+    }))
+  }, [departments, holidayScopeState.scopes, teams])
   const rotationReadTeams = useMemo(() => {
     if (canCalendarReadGlobal) return teams
     const namedTeams = new Map(teams.map((team) => [team.id, team]))
@@ -664,6 +711,22 @@ export default function SchedulePage() {
                 ))}
               </TextField>
             ) : null}
+            {tab === 'holidays' && !holidayScopeState.global && holidayScopeState.enabled ? (
+              <TextField
+                select
+                size="small"
+                className="w-64"
+                label="Calendar scope"
+                value={holidayScopeState.selectedScopeKey}
+                onChange={(event) => updateSearch({ holidayScope: event.target.value }, true)}
+              >
+                {holidayScopeOptions.map((scope) => (
+                  <MenuItem key={scope.key} value={scope.key}>
+                    {scope.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : null}
             {tab === 'rotations' ? (
               <>
                 <TextField select size="small" className="w-56" label="Team" value={rotationTeamId} onChange={(event) => updateSearch({ teamId: event.target.value }, true)}>
@@ -677,7 +740,10 @@ export default function SchedulePage() {
             <Button
               variant="text"
               startIcon={<RefreshIcon />}
-              disabled={selectedQuery.isFetching}
+              disabled={
+                selectedQuery.isFetching ||
+                (tab === 'holidays' && !holidayScopeState.enabled)
+              }
               onClick={() => selectedQuery.refetch()}
             >
               {t('common.refresh', { defaultValue: 'Refresh' })}
@@ -745,6 +811,11 @@ export default function SchedulePage() {
           onClose={() => setEditor(null)}
           onSubmit={save}
         />
+      ) : null}
+      {tab === 'holidays' && !holidayScopeState.enabled ? (
+        <Alert severity="warning" className="mb-3">
+          No authorized calendar scope is available for holiday records.
+        </Alert>
       ) : null}
       {holidayEditor ? (
         <HolidayDialog

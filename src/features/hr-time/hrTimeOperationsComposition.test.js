@@ -99,6 +99,9 @@ test('Schedule separates calendar read scopes from global policy mutations', asy
   assert.match(schedule, /rotationWriteTeamIds/)
   assert.match(schedule, /canCalendarWriteGlobal && tab === 'holidays'/)
   assert.match(schedule, /canWriteRotationRow/)
+  assert.match(schedule, /holidayScopeState\.params/)
+  assert.match(schedule, /holidayScopeState\.enabled/)
+  assert.match(schedule, /No authorized calendar scope/)
 })
 
 test('People loads directory rows separately from permission-gated detail sections', async () => {

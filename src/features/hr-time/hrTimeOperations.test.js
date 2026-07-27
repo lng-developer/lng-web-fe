@@ -14,6 +14,7 @@ import {
   getScheduleScopeOptions,
   hasGlobalPermissionCode,
   isAttendanceException,
+  resolveCalendarScopeQuery,
   resolveRotationTeamId,
   resolveScheduleTab,
 } from './utils/hrTimeApi.js'
@@ -229,6 +230,8 @@ test('schedule tab defaults calendar-only users to a readable calendar workspace
   assert.equal(resolveScheduleTab('', { canScheduleRead: true, canCalendarRead: true }), 'assignments')
   assert.equal(resolveScheduleTab('', { canScheduleRead: false, canCalendarRead: true }), 'holidays')
   assert.equal(resolveScheduleTab('rotations', { canScheduleRead: false, canCalendarRead: true }), 'rotations')
+  assert.equal(resolveScheduleTab('assignments', { canScheduleRead: false, canCalendarRead: true }), 'holidays')
+  assert.equal(resolveScheduleTab('holidays', { canScheduleRead: true, canCalendarRead: false }), 'assignments')
 })
 
 test('rotation read and write scopes are resolved independently', () => {
@@ -258,4 +261,46 @@ test('global holiday policy mutations require global calendar write', () => {
 
   assert.equal(hasGlobalPermissionCode(scopedWriter, 'HR_CALENDAR:WRITE'), false)
   assert.equal(hasGlobalPermissionCode({ permissions: ['HR_CALENDAR:WRITE'] }, 'HR_CALENDAR:WRITE'), true)
+})
+
+test('holiday scope query resolves team and department readers without leaking unscoped access', () => {
+  const teamReader = {
+    scopes: [{ scopeType: 'team', scopeId: 'team-1', permissions: ['HR_CALENDAR:READ'] }],
+  }
+  const departmentReader = {
+    scopes: [
+      { scopeType: 'department', scopeId: 'department-1', permissions: ['HR_CALENDAR:READ'] },
+    ],
+  }
+
+  assert.deepEqual(resolveCalendarScopeQuery(teamReader, '', ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']), {
+    enabled: true,
+    global: false,
+    params: { teamId: 'team-1' },
+    scopes: [{ key: 'team:team-1', scopeType: 'team', scopeId: 'team-1' }],
+    selectedScopeKey: 'team:team-1',
+  })
+  assert.deepEqual(
+    resolveCalendarScopeQuery(departmentReader, '', ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']).params,
+    { departmentId: 'department-1' },
+  )
+})
+
+test('holiday scope query stays unscoped only for global readers and otherwise fails closed', () => {
+  assert.deepEqual(
+    resolveCalendarScopeQuery(
+      { permissions: ['HR_CALENDAR:READ'] },
+      '',
+      ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
+    ),
+    { enabled: true, global: true, params: {}, scopes: [], selectedScopeKey: 'global' },
+  )
+  assert.deepEqual(
+    resolveCalendarScopeQuery(
+      { scopes: [{ scopeType: 'shop', scopeId: 'shop-1', permissions: ['HR_CALENDAR:READ'] }] },
+      '',
+      ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
+    ),
+    { enabled: false, global: false, params: {}, scopes: [], selectedScopeKey: '' },
+  )
 })

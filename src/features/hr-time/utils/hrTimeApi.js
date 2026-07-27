@@ -392,9 +392,52 @@ export function resolveRotationTeamId(requestedTeamId, authorizedTeamIds, hasGlo
 }
 
 export function resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead }) {
-  const validTabs = ['assignments', 'shifts', 'locations', 'overrides', 'holidays', 'rotations']
-  if (validTabs.includes(requestedTab)) return requestedTab
+  const scheduleTabs = ['assignments', 'shifts', 'locations', 'overrides']
+  const calendarTabs = ['holidays', 'rotations']
+  if (canScheduleRead && scheduleTabs.includes(requestedTab)) return requestedTab
+  if (canCalendarRead && calendarTabs.includes(requestedTab)) return requestedTab
   if (canScheduleRead) return 'assignments'
   if (canCalendarRead) return 'holidays'
   return 'assignments'
+}
+
+export function resolveCalendarScopeQuery(user, requestedScopeKey, requiredPermissions) {
+  const codes = permissionCodes(requiredPermissions)
+  if (codes.some((code) => hasGlobalPermissionCode(user, code))) {
+    return { enabled: true, global: true, params: {}, scopes: [], selectedScopeKey: 'global' }
+  }
+
+  const scopes = (user?.scopes || [])
+    .filter((scope) => {
+      const scopeType = String(scope?.scopeType || '').toLowerCase()
+      return (
+        ['department', 'team'].includes(scopeType) &&
+        codes.some((code) =>
+          (scope.permissions || []).some((permission) => permissionMatches(permission, code)),
+        )
+      )
+    })
+    .map((scope) => ({
+      key: `${String(scope.scopeType).toLowerCase()}:${String(scope.scopeId)}`,
+      scopeType: String(scope.scopeType).toLowerCase(),
+      scopeId: String(scope.scopeId),
+    }))
+    .filter((scope) => scope.scopeId)
+    .sort((left, right) => left.key.localeCompare(right.key))
+
+  const selected = scopes.find((scope) => scope.key === requestedScopeKey) || scopes[0]
+  if (!selected) {
+    return { enabled: false, global: false, params: {}, scopes: [], selectedScopeKey: '' }
+  }
+
+  return {
+    enabled: true,
+    global: false,
+    params:
+      selected.scopeType === 'team'
+        ? { teamId: selected.scopeId }
+        : { departmentId: selected.scopeId },
+    scopes,
+    selectedScopeKey: selected.key,
+  }
 }
