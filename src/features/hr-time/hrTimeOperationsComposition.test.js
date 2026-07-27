@@ -104,6 +104,16 @@ test('Schedule separates calendar read scopes from global policy mutations', asy
   assert.match(schedule, /No authorized calendar scope/)
 })
 
+test('global calendar writers load directory teams for rotation generation', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /canReadDirectory[\s\S]*'HR_CALENDAR:READ'[\s\S]*'HR_CALENDAR:WRITE'/)
+  assert.match(schedule, /useEmployeeProfilesQuery\([\s\S]*enabled: canReadDirectory/)
+  assert.match(schedule, /canCalendarWriteGlobal[\s\S]*rotationWriteTeams/)
+  assert.match(schedule, /Generate rotations/)
+  assert.match(schedule, /teams={rotationWriteTeams}/)
+})
+
 test('People loads directory rows separately from permission-gated detail sections', async () => {
   const [page, drawer] = await Promise.all([
     source('pages/PeoplePage.jsx'),

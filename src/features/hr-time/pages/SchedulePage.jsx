@@ -222,6 +222,8 @@ export default function SchedulePage() {
   const canReadDirectory = hasAnyPermission(currentUser, [
     'HR_EMPLOYEES:READ',
     'HR_EMPLOYEES:WRITE',
+    'HR_CALENDAR:READ',
+    'HR_CALENDAR:WRITE',
     'HR_SCHEDULE:READ',
     'HR_SCHEDULE:WRITE',
   ])
