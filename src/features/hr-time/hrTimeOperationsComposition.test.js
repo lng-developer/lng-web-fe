@@ -161,6 +161,21 @@ test('People leave balance administration is permission-gated and preserves back
   assert.match(panel, /history/)
   assert.match(panel, /useUpsertLeaveBalanceMutation/)
   assert.match(panel, /useAdjustLeaveBalanceMutation/)
+  assert.match(
+    panel,
+    /const validYear = Number\.isInteger\(Number\(year\)\) && Number\(year\) >= 2000 && Number\(year\) <= 2100/,
+  )
+  assert.match(panel, /enabled: Boolean\(profileId\) && validYear/)
+  assert.match(
+    panel,
+    /const validUpsert =\s*validYear[\s\S]*Number\.isInteger\(Number\(entitledUnits\)\)[\s\S]*Number\.isInteger\(Number\(adjustmentUnits\)\)/,
+  )
+  assert.match(
+    panel,
+    /const validAdjustment =\s*validYear[\s\S]*Number\.isInteger\(Number\(adjustUnits\)\)[\s\S]*Number\(adjustUnits\) !== 0/,
+  )
+  assert.match(panel, /!validUpsert/)
+  assert.match(panel, /!validAdjustment/)
   assert.match(dialog, /Confirm/)
   assert.match(dialog, /result\.processed/)
   assert.match(dialog, /result\.changed/)

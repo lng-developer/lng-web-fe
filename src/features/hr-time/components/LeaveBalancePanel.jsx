@@ -49,8 +49,20 @@ export default function LeaveBalancePanel({ profileId, canManage = false }) {
   const [adjustUnits, setAdjustUnits] = useState('')
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
+  const validYear = Number.isInteger(Number(year)) && Number(year) >= 2000 && Number(year) <= 2100
+  const validUpsert =
+    validYear &&
+    String(entitledUnits).trim() !== '' &&
+    String(adjustmentUnits).trim() !== '' &&
+    Number.isInteger(Number(entitledUnits)) &&
+    Number.isInteger(Number(adjustmentUnits))
+  const validAdjustment =
+    validYear &&
+    String(adjustUnits).trim() !== '' &&
+    Number.isInteger(Number(adjustUnits)) &&
+    Number(adjustUnits) !== 0
   const balanceQuery = useLeaveBalanceQuery(profileId, Number(year), leaveType, {
-    enabled: Boolean(profileId),
+    enabled: Boolean(profileId) && validYear,
   })
   const upsert = useUpsertLeaveBalanceMutation()
   const adjust = useAdjustLeaveBalanceMutation()
@@ -58,6 +70,8 @@ export default function LeaveBalancePanel({ profileId, canManage = false }) {
   const loading = upsert.isPending || adjust.isPending
 
   async function saveBalance() {
+    if (!validUpsert) return
+
     setError('')
     try {
       await upsert.mutateAsync({
@@ -76,6 +90,8 @@ export default function LeaveBalancePanel({ profileId, canManage = false }) {
   }
 
   async function adjustBalance() {
+    if (!validAdjustment) return
+
     setError('')
     try {
       await adjust.mutateAsync({
@@ -165,7 +181,7 @@ export default function LeaveBalancePanel({ profileId, canManage = false }) {
           <div className="flex flex-wrap gap-2">
             <Button
               variant="contained"
-              disabled={loading || entitledUnits === '' || adjustmentUnits === '' || !reason.trim()}
+              disabled={loading || !validUpsert || !reason.trim()}
               onClick={saveBalance}
             >
               Save balance
@@ -181,7 +197,7 @@ export default function LeaveBalancePanel({ profileId, canManage = false }) {
             />
             <Button
               variant="outlined"
-              disabled={loading || !Number(adjustUnits) || !reason.trim()}
+              disabled={loading || !validAdjustment || !reason.trim()}
               onClick={adjustBalance}
             >
               Adjust balance
