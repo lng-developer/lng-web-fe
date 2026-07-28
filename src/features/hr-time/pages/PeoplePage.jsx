@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import RefreshIcon from '@mui/icons-material/Refresh'
+import RestoreIcon from '@mui/icons-material/Restore'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import { Alert, Avatar, Button, MenuItem, TextField, Typography } from '@mui/material'
 import { useSnackbar } from 'notistack'
@@ -27,9 +29,12 @@ import { useAuthStore } from '@/store/useAuthStore'
 
 import {
   useCreateEmployeeProfileMutation,
+  useDeleteEmployeeProfileMutation,
+  useRestoreEmployeeProfileMutation,
   useUpdateEmployeeProfileMutation,
 } from '../api/hrTime.mutations.js'
 import { useEmployeeProfilesQuery } from '../api/hrTime.queries.js'
+import EmployeeLifecycleDialog from '../components/EmployeeLifecycleDialog.jsx'
 import EmployeeProfileDialog from '../components/EmployeeProfileDialog.jsx'
 import EmployeeProfileDrawer from '../components/EmployeeProfileDrawer.jsx'
 
@@ -57,8 +62,10 @@ export default function PeoplePage() {
   const q = searchParams.get('q') || ''
   const status = searchParams.get('status') || ''
   const departmentId = searchParams.get('departmentId') || ''
+  const includeDeleted = searchParams.get('includeDeleted') === 'true'
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(undefined)
+  const [lifecycle, setLifecycle] = useState(null)
   const [actionError, setActionError] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_EMPLOYEES:WRITE'])
   const canReadAccounts = hasAnyPermission(currentUser, ['AUTH:READ'])
@@ -69,13 +76,17 @@ export default function PeoplePage() {
     q,
     status,
     departmentId,
+    ...(includeDeleted ? { includeDeleted: true } : {}),
   })
   const accountsQuery = useAccountsQuery({ page: 1, limit: 100, status: 'active' })
   const departmentsQuery = useDepartmentsQuery()
   const teamsQuery = useTeamsQuery()
   const createProfile = useCreateEmployeeProfileMutation()
   const updateProfile = useUpdateEmployeeProfileMutation()
+  const deleteProfile = useDeleteEmployeeProfileMutation()
+  const restoreProfile = useRestoreEmployeeProfileMutation()
   const activeMutation = editing ? updateProfile : createProfile
+  const lifecycleMutation = lifecycle?.action === 'delete' ? deleteProfile : restoreProfile
   const rows = directoryQuery.data?.items || []
   const pagination = directoryQuery.data?.pagination || { page, limit: pageSize, total: 0 }
   const queryError = directoryQuery.error?.response?.data?.message || directoryQuery.error?.message
@@ -113,6 +124,29 @@ export default function PeoplePage() {
         error?.response?.data?.message ||
           t('hrTime.errors.actionFailed', { defaultValue: 'Could not save employee profile' }),
       )
+    }
+  }
+
+  async function confirmLifecycle() {
+    if (!lifecycle?.employee) return
+
+    setActionError('')
+    try {
+      await lifecycleMutation.mutateAsync({ profileId: lifecycle.employee.id })
+      setLifecycle(null)
+      setSelected(null)
+      enqueueSnackbar(
+        lifecycle.action === 'delete' ? 'Employee profile deleted' : 'Employee profile restored',
+        { variant: SNACKBAR_VARIANTS.SUCCESS },
+      )
+    } catch (error) {
+      setActionError(
+        error?.response?.data?.message ||
+          (lifecycle.action === 'delete'
+            ? 'Could not delete employee profile'
+            : 'Could not restore employee profile'),
+      )
+      if ([403, 404].includes(error?.response?.status)) await directoryQuery.refetch()
     }
   }
 
@@ -158,19 +192,47 @@ export default function PeoplePage() {
       return `${row.employmentType?.replaceAll('_', ' ') || '-'} / ${row.workMode || '-'}`
     if (column.key === 'status') {
       return (
-        <StatusBadge tone={row.status === 'ACTIVE' ? 'success' : 'neutral'}>
-          {row.status?.replaceAll('_', ' ') || '-'}
+        <StatusBadge
+          tone={row.isDeleted ? 'danger' : row.status === 'ACTIVE' ? 'success' : 'neutral'}
+        >
+          {row.isDeleted ? 'Deleted' : row.status?.replaceAll('_', ' ') || '-'}
         </StatusBadge>
       )
     }
     if (column.key === 'actions') {
       return (
-        <IconActionButton
-          label={t('common.view', { defaultValue: 'View' })}
-          onClick={() => setSelected(row)}
-        >
-          <VisibilityOutlinedIcon fontSize="small" />
-        </IconActionButton>
+        <div className="flex justify-center gap-1">
+          <IconActionButton
+            label={t('common.view', { defaultValue: 'View' })}
+            onClick={() => setSelected(row)}
+          >
+            <VisibilityOutlinedIcon fontSize="small" />
+          </IconActionButton>
+          {row.capabilities?.delete ? (
+            <IconActionButton
+              label="Delete employee profile"
+              tone="danger"
+              onClick={() => {
+                setActionError('')
+                setLifecycle({ action: 'delete', employee: row })
+              }}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconActionButton>
+          ) : null}
+          {row.capabilities?.restore ? (
+            <IconActionButton
+              label="Restore employee profile"
+              tone="success"
+              onClick={() => {
+                setActionError('')
+                setLifecycle({ action: 'restore', employee: row })
+              }}
+            >
+              <RestoreIcon fontSize="small" />
+            </IconActionButton>
+          ) : null}
+        </div>
       )
     }
     return '-'
@@ -249,6 +311,12 @@ export default function PeoplePage() {
             >
               {t('common.refresh', { defaultValue: 'Refresh' })}
             </Button>
+            <Button
+              variant={includeDeleted ? 'contained' : 'text'}
+              onClick={() => updateSearch({ includeDeleted: includeDeleted ? '' : 'true' }, true)}
+            >
+              Include deleted
+            </Button>
           </div>
         </OperationsToolbar>
       }
@@ -299,6 +367,16 @@ export default function PeoplePage() {
           error={actionError}
           onClose={() => setEditing(undefined)}
           onSubmit={save}
+        />
+      ) : null}
+      {lifecycle ? (
+        <EmployeeLifecycleDialog
+          action={lifecycle.action}
+          employee={lifecycle.employee}
+          loading={lifecycleMutation.isPending}
+          error={actionError}
+          onClose={() => setLifecycle(null)}
+          onConfirm={confirmLifecycle}
         />
       ) : null}
     </OperationsPageShell>

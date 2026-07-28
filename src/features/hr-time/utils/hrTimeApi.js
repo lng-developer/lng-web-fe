@@ -58,7 +58,19 @@ export function mapHrTimeCollection(payload, mapper) {
 }
 
 export function mapEmployeeProfileRow(row) {
-  return mapEmployeeRelatedRow(row)
+  const mapped = mapEmployeeRelatedRow(row)
+  if (!mapped) return null
+
+  return {
+    ...mapped,
+    isDeleted: Boolean(row.isDeleted),
+    deletedAt: row.deletedAt || null,
+    capabilities: {
+      ...row.capabilities,
+      delete: Boolean(row.capabilities?.delete),
+      restore: Boolean(row.capabilities?.restore),
+    },
+  }
 }
 
 export function mapWorkLocationRow(row) {
@@ -374,7 +386,9 @@ export function hasGlobalPermissionCode(user, permissionCode) {
   ) {
     return true
   }
-  if ((user?.permissions || []).some((permission) => permissionMatches(permission, permissionCode))) {
+  if (
+    (user?.permissions || []).some((permission) => permissionMatches(permission, permissionCode))
+  ) {
     return true
   }
   return (user?.scopes || []).some(

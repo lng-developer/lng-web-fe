@@ -14,6 +14,7 @@ import {
   getScheduleScopeOptions,
   hasGlobalPermissionCode,
   isAttendanceException,
+  mapEmployeeProfileRow,
   resolveCalendarScopeQuery,
   resolveRotationTeamId,
   resolveScheduleTab,
@@ -154,6 +155,28 @@ test('employee payloads exclude restricted and display-only values', () => {
   )
 })
 
+test('employee directory rows retain server-owned lifecycle fields', () => {
+  assert.deepEqual(
+    mapEmployeeProfileRow({
+      id: 'profile-1',
+      isDeleted: 'yes',
+      deletedAt: '',
+      capabilities: { edit: 1, delete: 'allowed', restore: 0 },
+    }),
+    {
+      id: 'profile-1',
+      isDeleted: true,
+      deletedAt: null,
+      capabilities: { edit: 1, delete: true, restore: false },
+      employeeName: 'Unknown employee',
+      departmentName: null,
+      shiftName: null,
+      workLocationName: null,
+      actions: { edit: true, delete: true, restore: false },
+    },
+  )
+})
+
 test('profile sections contain only fields present in the detail projection', () => {
   const sections = getEmployeeProfileSections({
     fullName: 'Nguyen An',
@@ -223,15 +246,33 @@ test('rotation team scope resolution fails closed for scoped calendar access', (
   assert.equal(resolveRotationTeamId('team-2', ['team-1'], false), '')
   assert.equal(resolveRotationTeamId('team-2', ['team-1'], true), 'team-2')
   assert.equal(resolveRotationTeamId('', [], false), '')
-  assert.equal(hasGlobalPermissionCode({ permissions: ['MANAGE_SYSTEM'] }, 'HR_CALENDAR:WRITE'), true)
+  assert.equal(
+    hasGlobalPermissionCode({ permissions: ['MANAGE_SYSTEM'] }, 'HR_CALENDAR:WRITE'),
+    true,
+  )
 })
 
 test('schedule tab defaults calendar-only users to a readable calendar workspace', () => {
-  assert.equal(resolveScheduleTab('', { canScheduleRead: true, canCalendarRead: true }), 'assignments')
-  assert.equal(resolveScheduleTab('', { canScheduleRead: false, canCalendarRead: true }), 'holidays')
-  assert.equal(resolveScheduleTab('rotations', { canScheduleRead: false, canCalendarRead: true }), 'rotations')
-  assert.equal(resolveScheduleTab('assignments', { canScheduleRead: false, canCalendarRead: true }), 'holidays')
-  assert.equal(resolveScheduleTab('holidays', { canScheduleRead: true, canCalendarRead: false }), 'assignments')
+  assert.equal(
+    resolveScheduleTab('', { canScheduleRead: true, canCalendarRead: true }),
+    'assignments',
+  )
+  assert.equal(
+    resolveScheduleTab('', { canScheduleRead: false, canCalendarRead: true }),
+    'holidays',
+  )
+  assert.equal(
+    resolveScheduleTab('rotations', { canScheduleRead: false, canCalendarRead: true }),
+    'rotations',
+  )
+  assert.equal(
+    resolveScheduleTab('assignments', { canScheduleRead: false, canCalendarRead: true }),
+    'holidays',
+  )
+  assert.equal(
+    resolveScheduleTab('holidays', { canScheduleRead: true, canCalendarRead: false }),
+    'assignments',
+  )
 })
 
 test('rotation read and write scopes are resolved independently', () => {
@@ -243,14 +284,20 @@ test('rotation read and write scopes are resolved independently', () => {
     ],
   }
 
-  assert.deepEqual(
-    getAuthorizedTeamScopeIds(user, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']),
-    ['team-read', 'team-write'],
+  assert.deepEqual(getAuthorizedTeamScopeIds(user, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']), [
+    'team-read',
+    'team-write',
+  ])
+  assert.equal(
+    canAccessTeamScope(user, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'], 'team-read'),
+    true,
   )
-  assert.equal(canAccessTeamScope(user, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'], 'team-read'), true)
   assert.equal(canAccessTeamScope(user, 'HR_CALENDAR:WRITE', 'team-read'), false)
   assert.equal(canAccessTeamScope(user, 'HR_CALENDAR:WRITE', 'team-write'), true)
-  assert.equal(canAccessTeamScope({ permissions: ['HR_CALENDAR:READ'] }, 'HR_CALENDAR:READ', 'any-team'), true)
+  assert.equal(
+    canAccessTeamScope({ permissions: ['HR_CALENDAR:READ'] }, 'HR_CALENDAR:READ', 'any-team'),
+    true,
+  )
   assert.equal(canAccessTeamScope({ scopes: [] }, 'HR_CALENDAR:READ', 'team-read'), false)
 })
 
@@ -260,7 +307,10 @@ test('global holiday policy mutations require global calendar write', () => {
   }
 
   assert.equal(hasGlobalPermissionCode(scopedWriter, 'HR_CALENDAR:WRITE'), false)
-  assert.equal(hasGlobalPermissionCode({ permissions: ['HR_CALENDAR:WRITE'] }, 'HR_CALENDAR:WRITE'), true)
+  assert.equal(
+    hasGlobalPermissionCode({ permissions: ['HR_CALENDAR:WRITE'] }, 'HR_CALENDAR:WRITE'),
+    true,
+  )
 })
 
 test('holiday scope query resolves team and department readers without leaking unscoped access', () => {
@@ -273,26 +323,29 @@ test('holiday scope query resolves team and department readers without leaking u
     ],
   }
 
-  assert.deepEqual(resolveCalendarScopeQuery(teamReader, '', ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']), {
-    enabled: true,
-    global: false,
-    params: { teamId: 'team-1' },
-    scopes: [{ key: 'team:team-1', scopeType: 'team', scopeId: 'team-1' }],
-    selectedScopeKey: 'team:team-1',
-  })
   assert.deepEqual(
-    resolveCalendarScopeQuery(departmentReader, '', ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']).params,
+    resolveCalendarScopeQuery(teamReader, '', ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE']),
+    {
+      enabled: true,
+      global: false,
+      params: { teamId: 'team-1' },
+      scopes: [{ key: 'team:team-1', scopeType: 'team', scopeId: 'team-1' }],
+      selectedScopeKey: 'team:team-1',
+    },
+  )
+  assert.deepEqual(
+    resolveCalendarScopeQuery(departmentReader, '', ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'])
+      .params,
     { departmentId: 'department-1' },
   )
 })
 
 test('holiday scope query stays unscoped only for global readers and otherwise fails closed', () => {
   assert.deepEqual(
-    resolveCalendarScopeQuery(
-      { permissions: ['HR_CALENDAR:READ'] },
-      '',
-      ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
-    ),
+    resolveCalendarScopeQuery({ permissions: ['HR_CALENDAR:READ'] }, '', [
+      'HR_CALENDAR:READ',
+      'HR_CALENDAR:WRITE',
+    ]),
     { enabled: true, global: true, params: {}, scopes: [], selectedScopeKey: 'global' },
   )
   assert.deepEqual(

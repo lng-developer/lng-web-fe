@@ -126,6 +126,21 @@ test('People loads directory rows separately from permission-gated detail sectio
   assert.doesNotMatch(drawer, /baseSalary.*0|allowances.*\{\}/)
 })
 
+test('People renders server-owned employee lifecycle controls', async () => {
+  const [page, dialog] = await Promise.all([
+    source('pages/PeoplePage.jsx'),
+    source('components/EmployeeLifecycleDialog.jsx'),
+  ])
+
+  assert.match(page, /includeDeleted/)
+  assert.match(page, /useDeleteEmployeeProfileMutation/)
+  assert.match(page, /useRestoreEmployeeProfileMutation/)
+  assert.match(page, /row\.capabilities\?\.delete/)
+  assert.match(page, /row\.capabilities\?\.restore/)
+  assert.match(dialog, /Delete employee profile/)
+  assert.match(dialog, /Restore employee profile/)
+})
+
 test('HR route children mount attendance, schedule, and people permissions', async () => {
   const routes = await readFile(new URL('../../routes/index.jsx', root), 'utf8')
 
