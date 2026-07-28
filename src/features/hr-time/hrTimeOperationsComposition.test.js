@@ -144,6 +144,36 @@ test('People renders server-owned employee lifecycle controls', async () => {
   assert.match(dialog, /Restore employee profile/)
 })
 
+test('People leave balance administration is permission-gated and preserves backend batch evidence', async () => {
+  const [page, drawer, panel, dialog, mutations] = await Promise.all([
+    source('pages/PeoplePage.jsx'),
+    source('components/EmployeeProfileDrawer.jsx'),
+    source('components/LeaveBalancePanel.jsx'),
+    source('components/LeaveBalanceAdminDialog.jsx'),
+    source('api/hrTime.mutations.js'),
+  ])
+
+  assert.match(page, /HR_LEAVE:APPROVE/)
+  assert.match(page, /LeaveBalanceAdminDialog/)
+  assert.doesNotMatch(`${page}${drawer}${panel}${dialog}`, /roleName|roles\.includes/)
+  assert.match(drawer, /LeaveBalancePanel/)
+  assert.match(panel, /useLeaveBalanceQuery/)
+  assert.match(panel, /history/)
+  assert.match(panel, /useUpsertLeaveBalanceMutation/)
+  assert.match(panel, /useAdjustLeaveBalanceMutation/)
+  assert.match(dialog, /Confirm/)
+  assert.match(dialog, /result\.processed/)
+  assert.match(dialog, /result\.changed/)
+  assert.match(dialog, /result\.items/)
+  assert.match(dialog, /error\?\.data/)
+  assert.doesNotMatch(dialog, /rowFailures|failedRows/)
+  assert.match(mutations, /useAccrueLeaveBalancesMutation/)
+  assert.match(mutations, /useResetLeaveBalancesMutation/)
+  assert.match(mutations, /useCarryOverLeaveBalancesMutation/)
+  assert.match(mutations, /LEAVE_BALANCE_ADJUST/)
+  assert.match(mutations, /retry: false/)
+})
+
 test('HR route children mount attendance, schedule, and people permissions', async () => {
   const routes = await readFile(new URL('../../routes/index.jsx', root), 'utf8')
 

@@ -317,6 +317,11 @@ export const ENDPOINTS = {
     MY_LEAVE_BALANCES: '/api/hr/leave-balances/me',
     LEAVE_BALANCE: (profileId, year, leaveType) =>
       `/api/hr/leave-balances/${profileId}/${year}/${leaveType}`,
+    LEAVE_BALANCE_ADJUST: (profileId, year, leaveType) =>
+      `/api/hr/leave-balances/${profileId}/${year}/${leaveType}/adjust`,
+    LEAVE_BALANCE_ACCRUE: '/api/hr/leave-balances/accrue',
+    LEAVE_BALANCE_RESET: '/api/hr/leave-balances/reset',
+    LEAVE_BALANCE_CARRY_OVER: '/api/hr/leave-balances/carry-over',
     LEAVE_REQUESTS: '/api/hr/leave-requests',
     MY_LEAVE_REQUESTS: '/api/hr/leave-requests/me',
     LEAVE_REQUEST_PREVIEW: '/api/hr/leave-requests/preview',

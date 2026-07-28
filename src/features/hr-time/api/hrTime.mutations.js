@@ -174,10 +174,43 @@ export function useUpsertLeaveBalanceMutation() {
     ({ profileId, year, leaveType, payload }) =>
       request('put', ENDPOINTS.HR.LEAVE_BALANCE(profileId, year, leaveType), payload),
     ({ profileId, year, leaveType }) => [
-      hrTimeKeys.leaveBalances(),
-      hrTimeKeys.myLeaveBalances(year),
+      hrTimeKeys.leaveBalancesForEmployee(profileId),
       hrTimeKeys.leaveBalance(profileId, year, leaveType),
+      hrTimeKeys.myLeaveBalances(year),
     ],
+  )
+}
+
+export function useAdjustLeaveBalanceMutation() {
+  return useHrTimeMutation(
+    ({ profileId, year, leaveType, payload }) =>
+      request('patch', ENDPOINTS.HR.LEAVE_BALANCE_ADJUST(profileId, year, leaveType), payload),
+    ({ profileId, year, leaveType }) => [
+      hrTimeKeys.leaveBalancesForEmployee(profileId),
+      hrTimeKeys.leaveBalance(profileId, year, leaveType),
+      hrTimeKeys.myLeaveBalances(year),
+    ],
+  )
+}
+
+export function useAccrueLeaveBalancesMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_BALANCE_ACCRUE, payload),
+    () => [hrTimeKeys.leaveBalances()],
+  )
+}
+
+export function useResetLeaveBalancesMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_BALANCE_RESET, payload),
+    () => [hrTimeKeys.leaveBalances()],
+  )
+}
+
+export function useCarryOverLeaveBalancesMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_BALANCE_CARRY_OVER, payload),
+    () => [hrTimeKeys.leaveBalances()],
   )
 }
 

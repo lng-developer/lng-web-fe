@@ -121,3 +121,13 @@ test('HR leave preview, attachment, and refund endpoints match backend routes', 
     '/api/hr/leave-requests/leave-1/refund',
   )
 })
+
+test('HR leave balance administration endpoints match backend routes', () => {
+  assert.equal(
+    ENDPOINTS.HR.LEAVE_BALANCE_ADJUST('profile-1', 2026, 'ANNUAL'),
+    '/api/hr/leave-balances/profile-1/2026/ANNUAL/adjust',
+  )
+  assert.equal(ENDPOINTS.HR.LEAVE_BALANCE_ACCRUE, '/api/hr/leave-balances/accrue')
+  assert.equal(ENDPOINTS.HR.LEAVE_BALANCE_RESET, '/api/hr/leave-balances/reset')
+  assert.equal(ENDPOINTS.HR.LEAVE_BALANCE_CARRY_OVER, '/api/hr/leave-balances/carry-over')
+})

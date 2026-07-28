@@ -32,10 +32,10 @@ export const hrTimeKeys = {
   listAttendance: (params) => [...hrTimeKeys.attendance(), normalizeHrTimeQuery(params)],
   myAttendance: (params) => [...hrTimeKeys.attendance(), 'me', normalizeHrTimeQuery(params)],
   leaveBalances: () => [...hrTimeKeys.all, 'leave-balances'],
+  leaveBalancesForEmployee: (profileId) => [...hrTimeKeys.leaveBalances(), profileId],
   myLeaveBalances: (year) => [...hrTimeKeys.leaveBalances(), 'me', year],
   leaveBalance: (profileId, year, leaveType) => [
-    ...hrTimeKeys.leaveBalances(),
-    profileId,
+    ...hrTimeKeys.leaveBalancesForEmployee(profileId),
     year,
     leaveType,
   ],

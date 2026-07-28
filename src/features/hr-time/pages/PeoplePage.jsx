@@ -28,8 +28,11 @@ import {
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
+  useAccrueLeaveBalancesMutation,
+  useCarryOverLeaveBalancesMutation,
   useCreateEmployeeProfileMutation,
   useDeleteEmployeeProfileMutation,
+  useResetLeaveBalancesMutation,
   useRestoreEmployeeProfileMutation,
   useUpdateEmployeeProfileMutation,
 } from '../api/hrTime.mutations.js'
@@ -37,6 +40,7 @@ import { useEmployeeProfilesQuery } from '../api/hrTime.queries.js'
 import EmployeeLifecycleDialog from '../components/EmployeeLifecycleDialog.jsx'
 import EmployeeProfileDialog from '../components/EmployeeProfileDialog.jsx'
 import EmployeeProfileDrawer from '../components/EmployeeProfileDrawer.jsx'
+import LeaveBalanceAdminDialog from '../components/LeaveBalanceAdminDialog.jsx'
 
 const pageSize = 20
 const statuses = ['ACTIVE', 'PROBATION', 'ON_LEAVE', 'SUSPENDED', 'RESIGNED']
@@ -66,8 +70,10 @@ export default function PeoplePage() {
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(undefined)
   const [lifecycle, setLifecycle] = useState(null)
+  const [leaveBalanceAction, setLeaveBalanceAction] = useState(null)
   const [actionError, setActionError] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_EMPLOYEES:WRITE'])
+  const canManageLeaveBalances = hasAnyPermission(currentUser, ['HR_LEAVE:APPROVE'])
   const canReadAccounts = hasAnyPermission(currentUser, ['AUTH:READ'])
 
   const directoryQuery = useEmployeeProfilesQuery({
@@ -85,8 +91,17 @@ export default function PeoplePage() {
   const updateProfile = useUpdateEmployeeProfileMutation()
   const deleteProfile = useDeleteEmployeeProfileMutation()
   const restoreProfile = useRestoreEmployeeProfileMutation()
+  const accrueBalances = useAccrueLeaveBalancesMutation()
+  const resetBalances = useResetLeaveBalancesMutation()
+  const carryOverBalances = useCarryOverLeaveBalancesMutation()
   const activeMutation = editing ? updateProfile : createProfile
   const lifecycleMutation = lifecycle?.action === 'delete' ? deleteProfile : restoreProfile
+  const leaveBalanceMutation =
+    leaveBalanceAction?.mode === 'accrue'
+      ? accrueBalances
+      : leaveBalanceAction?.mode === 'reset'
+        ? resetBalances
+        : carryOverBalances
   const rows = directoryQuery.data?.items || []
   const pagination = directoryQuery.data?.pagination || { page, limit: pageSize, total: 0 }
   const queryError = directoryQuery.error?.response?.data?.message || directoryQuery.error?.message
@@ -147,6 +162,18 @@ export default function PeoplePage() {
             : 'Could not restore employee profile'),
       )
       if ([403, 404, 409].includes(error?.response?.status)) await directoryQuery.refetch()
+    }
+  }
+
+  async function confirmLeaveBalanceBatch(payload) {
+    if (!leaveBalanceAction) return
+
+    setLeaveBalanceAction((current) => ({ ...current, error: null }))
+    try {
+      const result = await leaveBalanceMutation.mutateAsync(payload)
+      setLeaveBalanceAction((current) => ({ ...current, result, error: null }))
+    } catch (error) {
+      setLeaveBalanceAction((current) => ({ ...current, error }))
     }
   }
 
@@ -250,18 +277,50 @@ export default function PeoplePage() {
               'Directory rows stay minimal; restricted details load only when a profile is opened.',
           })}
           actions={
-            canWrite && canReadAccounts ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  setActionError('')
-                  setEditing(null)
-                }}
-              >
-                {t('hrTime.people.addAction', { defaultValue: 'Add employee' })}
-              </Button>
-            ) : null
+            <div className="flex flex-wrap gap-2">
+              {canManageLeaveBalances ? (
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    setLeaveBalanceAction({ mode: 'accrue', result: null, error: null })
+                  }
+                >
+                  Accrue leave
+                </Button>
+              ) : null}
+              {canManageLeaveBalances ? (
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    setLeaveBalanceAction({ mode: 'reset', result: null, error: null })
+                  }
+                >
+                  Reset leave
+                </Button>
+              ) : null}
+              {canManageLeaveBalances ? (
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    setLeaveBalanceAction({ mode: 'carryOver', result: null, error: null })
+                  }
+                >
+                  Carry over leave
+                </Button>
+              ) : null}
+              {canWrite && canReadAccounts ? (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    setActionError('')
+                    setEditing(null)
+                  }}
+                >
+                  {t('hrTime.people.addAction', { defaultValue: 'Add employee' })}
+                </Button>
+              ) : null}
+            </div>
           }
         />
       }
@@ -354,6 +413,7 @@ export default function PeoplePage() {
         open={Boolean(selected)}
         profileId={selected?.id}
         canEdit={Boolean(selected?.capabilities?.edit)}
+        canManageLeaveBalances={canManageLeaveBalances}
         onClose={() => setSelected(null)}
         onEdit={(profile) => {
           setActionError('')
@@ -381,6 +441,18 @@ export default function PeoplePage() {
           error={actionError}
           onClose={() => setLifecycle(null)}
           onConfirm={confirmLifecycle}
+        />
+      ) : null}
+      {leaveBalanceAction ? (
+        <LeaveBalanceAdminDialog
+          open
+          mode={leaveBalanceAction.mode}
+          employees={rows.filter((row) => !row.isDeleted)}
+          loading={leaveBalanceMutation.isPending}
+          error={leaveBalanceAction.error}
+          result={leaveBalanceAction.result}
+          onClose={() => setLeaveBalanceAction(null)}
+          onConfirm={confirmLeaveBalanceBatch}
         />
       ) : null}
     </OperationsPageShell>
