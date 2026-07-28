@@ -1239,11 +1239,12 @@ export default function UsersRolesPage() {
         }
         onClose={closeDialog}
         t={t}
-        onUpdateGlobalAccess={(payload) =>
+        onUpdateGlobalAccess={(payload, done) =>
           runMutation(
             updateAccountAccessMutation,
             payload,
             t('rbac.users.editAccessModal.globalAccessSuccess'),
+            done,
           )
         }
         onCreateScopedAssignment={(payload, done) =>

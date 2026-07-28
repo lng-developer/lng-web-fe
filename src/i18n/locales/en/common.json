@@ -516,8 +516,14 @@
         "close": "Close"
       },
       "editAccessModal": {
-        "title": "Edit Access — {{name}}",
+        "title": "Edit access: {{name}}",
         "banner": "Each scope assignment has its own role, scope, and permission set. Changing role or scope resets custom permissions back to the role/scope defaults.",
+        "modes": {
+          "global": "Global ({{roles}} roles, {{permissions}} direct)",
+          "scoped": "Scoped ({{count}} assignments)"
+        },
+        "discardConfirm": "Discard the unsaved access changes?",
+        "deleteConfirm": "Remove this scoped assignment?",
         "globalAccess": "Global Access",
         "globalRoles": "Global Roles",
         "globalAccessHint": "Roles and direct permissions that apply across the system.",

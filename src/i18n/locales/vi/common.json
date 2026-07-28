@@ -514,8 +514,14 @@
         "close": "Đóng"
       },
       "editAccessModal": {
-        "title": "Chỉnh quyền — {{name}}",
+        "title": "Chỉnh quyền: {{name}}",
         "banner": "Mỗi phân quyền theo scope có vai trò, phạm vi và bộ quyền riêng. Đổi vai trò hoặc phạm vi sẽ đặt lại bộ quyền riêng theo mặc định.",
+        "modes": {
+          "global": "Global ({{roles}} vai trò, {{permissions}} quyền trực tiếp)",
+          "scoped": "Theo scope ({{count}} phân quyền)"
+        },
+        "discardConfirm": "Bỏ các thay đổi quyền chưa lưu?",
+        "deleteConfirm": "Gỡ phân quyền theo scope này?",
         "globalAccess": "Quyền truy cập global",
         "globalRoles": "Vai trò global",
         "globalAccessHint": "Vai trò và quyền trực tiếp áp dụng trên toàn hệ thống.",
