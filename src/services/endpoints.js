@@ -333,6 +333,8 @@ export const ENDPOINTS = {
     PAYROLL_FINALIZE: (id) => `/api/hr/payrolls/${id}/finalize`,
     PAYROLL_MARK_PAID: (id) => `/api/hr/payrolls/${id}/mark-paid`,
     PAYROLL_EMAIL: (id) => `/api/hr/payrolls/${id}/email`,
+    PAYROLL_ADJUSTMENTS: '/api/hr/payroll-adjustments',
+    PAYROLL_ADJUSTMENT: (id) => `/api/hr/payroll-adjustments/${id}`,
     ANNOUNCEMENTS: '/api/hr/announcements',
     ANNOUNCEMENT: (id) => `/api/hr/announcements/${id}`,
     HOLIDAYS: '/api/hr/holidays',

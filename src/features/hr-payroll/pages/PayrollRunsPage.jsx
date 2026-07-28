@@ -29,6 +29,7 @@ import {
 } from '../api/hrPayroll.mutations.js'
 import { usePayrollRunsQuery } from '../api/hrPayroll.queries.js'
 import PayrollActionDialog from '../components/PayrollActionDialog.jsx'
+import PayrollAdjustmentsPanel from '../components/PayrollAdjustmentsPanel.jsx'
 import PayrollReviewDrawer from '../components/PayrollReviewDrawer.jsx'
 import PayrollRunDialog from '../components/PayrollRunDialog.jsx'
 
@@ -273,6 +274,7 @@ export default function PayrollRunsPage() {
         emptyTitle="No payroll runs"
         emptyDescription="Adjust the period or status filters to find a payroll run."
       />
+      <PayrollAdjustmentsPanel canWrite={canWrite} />
       {reviewRun ? (
         <PayrollReviewDrawer run={reviewRun} onClose={() => setReviewRun(null)} />
       ) : null}

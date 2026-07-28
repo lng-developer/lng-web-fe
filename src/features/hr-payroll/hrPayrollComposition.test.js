@@ -74,3 +74,42 @@ test('self-service payslips are read-only and render complete money evidence', a
   assert.match(page, /netIncome/)
   assert.doesNotMatch(page, /useFinalizePayroll|useMarkPayrollPaid|roleName|roles\.includes/)
 })
+
+test('payroll adjustment administration keeps versioned writes and operational outcomes visible', async () => {
+  const [page, panel, dialog, mutations, queries] = await Promise.all([
+    source('pages/PayrollRunsPage.jsx'),
+    source('components/PayrollAdjustmentsPanel.jsx'),
+    source('components/PayrollAdjustmentDialog.jsx'),
+    source('api/hrPayroll.mutations.js'),
+    source('api/hrPayroll.queries.js'),
+  ])
+
+  assert.match(page, /PayrollAdjustmentsPanel/)
+  assert.match(panel, /profileId/)
+  assert.match(panel, /month/)
+  assert.match(panel, /year/)
+  assert.match(panel, /status/)
+  assert.match(panel, /type/)
+  assert.match(panel, /Create adjustment/)
+  assert.match(panel, /Edit adjustment/)
+  assert.match(panel, /Cancel adjustment/)
+  assert.match(panel, /useSearchParams/)
+  assert.match(dialog, /expectedVersion/)
+  assert.match(dialog, /amount/)
+  assert.match(dialog, /VND/)
+  assert.match(
+    dialog,
+    /This adjustment changed on the server\. Review the refreshed row before retrying\./,
+  )
+  assert.match(panel, /requiresReview/)
+  assert.match(panel, /draftPayrollRefreshed/)
+  assert.match(mutations, /useCreatePayrollAdjustmentMutation/)
+  assert.match(mutations, /useUpdatePayrollAdjustmentMutation/)
+  assert.match(mutations, /useCancelPayrollAdjustmentMutation/)
+  assert.match(mutations, /retry:\s*false/)
+  assert.match(mutations, /draftPayrollRefreshed/)
+  assert.match(
+    queries,
+    /adjustments:\s*\(query\)\s*=>\s*\[\.\.\.hrPayrollKeys\.all, 'adjustments', query\]/,
+  )
+})

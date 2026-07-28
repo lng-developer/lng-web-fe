@@ -104,3 +104,8 @@ test('notification inbox endpoints match the shared backend module', () => {
     '/api/notifications/notification-1/read',
   )
 })
+
+test('HR payroll adjustment endpoints match the shared backend module', () => {
+  assert.equal(ENDPOINTS.HR.PAYROLL_ADJUSTMENTS, '/api/hr/payroll-adjustments')
+  assert.equal(ENDPOINTS.HR.PAYROLL_ADJUSTMENT('a1'), '/api/hr/payroll-adjustments/a1')
+})

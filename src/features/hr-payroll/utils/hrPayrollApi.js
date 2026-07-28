@@ -84,6 +84,37 @@ export function buildMarkPaidPayload(payrollResultIds, expectedVersion) {
   return { payrollResultIds, expectedVersion }
 }
 
+export function mapPayrollAdjustment(adjustment) {
+  if (!adjustment) return null
+  return {
+    ...adjustment,
+    amount: Number.isSafeInteger(adjustment.amount) ? adjustment.amount : 0,
+    version: Number.isSafeInteger(adjustment.version) ? adjustment.version : 0,
+    requiresReview: Boolean(adjustment.requiresReview),
+    draftPayrollRefreshed: Boolean(adjustment.draftPayrollRefreshed),
+  }
+}
+
+export function buildPayrollAdjustmentPayload(values = {}, { update = false } = {}) {
+  const payload = {
+    ...(update
+      ? {}
+      : {
+          profileId: values.profileId,
+          month: Number(values.month),
+          year: Number(values.year),
+        }),
+    ...(values.type === undefined ? {} : { type: values.type.trim().toUpperCase() }),
+    ...(values.code === undefined ? {} : { code: values.code.trim().toUpperCase() }),
+    ...(values.name === undefined ? {} : { name: values.name.trim() }),
+    ...(values.amount === undefined ? {} : { amount: Number(values.amount) }),
+    ...(values.note === undefined ? {} : { note: values.note.trim() || null }),
+  }
+  return update
+    ? { ...payload, expectedVersion: values.expectedVersion ?? values.version }
+    : payload
+}
+
 export function formatVnd(value) {
   return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value || 0)} ₫`
 }

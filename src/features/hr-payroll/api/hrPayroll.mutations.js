@@ -3,7 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
-import { mapPayrollEmailOutcome, mapPayrollRun } from '../utils/hrPayrollApi.js'
+import {
+  mapPayrollAdjustment,
+  mapPayrollEmailOutcome,
+  mapPayrollRun,
+} from '../utils/hrPayrollApi.js'
 import { hrPayrollKeys, unwrapPayrollResponse } from './hrPayroll.queries.js'
 
 function usePayrollMutation(mutationFn) {
@@ -46,5 +50,45 @@ export function useEmailPayrollMutation() {
       .post(ENDPOINTS.HR.PAYROLL_EMAIL(payrollRunId), {})
       .then(unwrapPayrollResponse)
       .then(mapPayrollEmailOutcome),
+  )
+}
+
+function usePayrollAdjustmentMutation(mutationFn) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    retry: false,
+    onSuccess: (adjustment) => {
+      queryClient.invalidateQueries({ queryKey: [...hrPayrollKeys.all, 'adjustments'] })
+      if (adjustment.draftPayrollRefreshed)
+        queryClient.invalidateQueries({ queryKey: [...hrPayrollKeys.all, 'runs'] })
+    },
+  })
+}
+
+export function useCreatePayrollAdjustmentMutation() {
+  return usePayrollAdjustmentMutation((payload) =>
+    apiClient
+      .post(ENDPOINTS.HR.PAYROLL_ADJUSTMENTS, payload)
+      .then(unwrapPayrollResponse)
+      .then(mapPayrollAdjustment),
+  )
+}
+
+export function useUpdatePayrollAdjustmentMutation() {
+  return usePayrollAdjustmentMutation(({ adjustmentId, payload }) =>
+    apiClient
+      .patch(ENDPOINTS.HR.PAYROLL_ADJUSTMENT(adjustmentId), payload)
+      .then(unwrapPayrollResponse)
+      .then(mapPayrollAdjustment),
+  )
+}
+
+export function useCancelPayrollAdjustmentMutation() {
+  return usePayrollAdjustmentMutation(({ adjustmentId, expectedVersion }) =>
+    apiClient
+      .delete(ENDPOINTS.HR.PAYROLL_ADJUSTMENT(adjustmentId), { data: { expectedVersion } })
+      .then(unwrapPayrollResponse)
+      .then(mapPayrollAdjustment),
   )
 }

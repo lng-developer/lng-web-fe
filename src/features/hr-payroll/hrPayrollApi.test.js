@@ -3,7 +3,9 @@ import test from 'node:test'
 
 import {
   buildMarkPaidPayload,
+  buildPayrollAdjustmentPayload,
   buildRunPayrollPayload,
+  mapPayrollAdjustment,
   mapPayrollEmailOutcome,
   mapPayrollResult,
   mapPayrollRun,
@@ -50,6 +52,52 @@ test('payroll adapters preserve backend integer VND values without decimal conve
   })
   assert.deepEqual(result.period, { month: 7, year: 2026 })
   assert.equal(result.employeeName, 'Nguyen An')
+})
+
+test('payroll adjustment adapters preserve server integers and versioned writes', () => {
+  const adjustment = mapPayrollAdjustment({
+    id: 'adjustment-1',
+    amount: 1_250_000,
+    version: 4,
+    requiresReview: true,
+    draftPayrollRefreshed: false,
+  })
+
+  assert.equal(adjustment.amount, 1_250_000)
+  assert.equal(Number.isInteger(adjustment.amount), true)
+  assert.equal(adjustment.version, 4)
+  assert.equal(adjustment.requiresReview, true)
+  assert.equal(adjustment.draftPayrollRefreshed, false)
+  assert.deepEqual(
+    buildPayrollAdjustmentPayload({
+      profileId: 'profile-1',
+      month: '7',
+      year: '2026',
+      type: 'earning',
+      code: 'bonus',
+      name: ' Quarterly bonus ',
+      amount: '1250000',
+      note: ' Great work ',
+      version: 4,
+    }),
+    {
+      profileId: 'profile-1',
+      month: 7,
+      year: 2026,
+      type: 'EARNING',
+      code: 'BONUS',
+      name: 'Quarterly bonus',
+      amount: 1_250_000,
+      note: 'Great work',
+    },
+  )
+  assert.deepEqual(
+    buildPayrollAdjustmentPayload(
+      { name: 'Correction', amount: '0', version: 4 },
+      { update: true },
+    ),
+    { name: 'Correction', amount: 0, expectedVersion: 4 },
+  )
 })
 
 test('payroll run actions come only from server-computed capabilities', () => {
