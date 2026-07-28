@@ -245,3 +245,10 @@ test('Schedule completes calendar policy administration through focused API cons
   assert.match(schedule, /HolidayBulkImportDialog/)
   assert.match(schedule, /RotationMaintenanceDialog/)
 })
+
+test('HolidayDialog cannot be dismissed while its write is pending', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /<AnimatedDialog open onClose=\{loading \? undefined : onClose\}/)
+  assert.match(schedule, /<Button onClick=\{onClose\} disabled=\{loading\}>\s*Cancel/)
+})

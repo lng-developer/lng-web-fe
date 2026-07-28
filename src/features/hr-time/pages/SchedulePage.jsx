@@ -202,7 +202,9 @@ function HolidayDialog({ record, loading, error, onClose, onDraftChange, onSubmi
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           disabled={loading || !values.name.trim() || !values.dateKey}
