@@ -133,6 +133,20 @@ export function useDeleteHolidayMutation() {
   )
 }
 
+export function useBulkImportHolidaysMutation() {
+  return useHrTimeMutation(
+    ({ items }) => request('post', ENDPOINTS.HR.HOLIDAY_BULK_IMPORT, { items }),
+    () => [hrTimeKeys.holidays()],
+  )
+}
+
+export function useCheckHolidayPolicyMutation() {
+  return useHrTimeMutation(
+    (params) => request('get', ENDPOINTS.HR.HOLIDAY_CHECK, { params }),
+    () => [],
+  )
+}
+
 export function useGenerateSaturdayRotationsMutation() {
   return useHrTimeMutation(
     (payload) => request('post', ENDPOINTS.HR.SATURDAY_ROTATIONS_GENERATE, payload),
@@ -143,6 +157,24 @@ export function useGenerateSaturdayRotationsMutation() {
 export function useDeleteSaturdayRotationMutation() {
   return useHrTimeMutation(
     (id) => request('delete', ENDPOINTS.HR.SATURDAY_ROTATION(id)),
+    () => [hrTimeKeys.rotations()],
+  )
+}
+
+export function useUpdateSaturdayRotationMutation() {
+  return useHrTimeMutation(
+    ({ id, employeeProfileIds }) =>
+      request('patch', ENDPOINTS.HR.SATURDAY_ROTATION(id), { employeeProfileIds }),
+    () => [hrTimeKeys.rotations()],
+  )
+}
+
+export function useDeleteTeamSaturdayRotationsMutation() {
+  return useHrTimeMutation(
+    ({ teamId, month, year }) =>
+      request('delete', ENDPOINTS.HR.SATURDAY_ROTATION_TEAM(teamId), {
+        params: { month, year },
+      }),
     () => [hrTimeKeys.rotations()],
   )
 }

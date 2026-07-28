@@ -131,3 +131,15 @@ test('HR leave balance administration endpoints match backend routes', () => {
   assert.equal(ENDPOINTS.HR.LEAVE_BALANCE_RESET, '/api/hr/leave-balances/reset')
   assert.equal(ENDPOINTS.HR.LEAVE_BALANCE_CARRY_OVER, '/api/hr/leave-balances/carry-over')
 })
+
+test('HR calendar policy endpoints match backend routes', () => {
+  assert.equal(ENDPOINTS.HR.HOLIDAY_TEMPLATES, '/api/hr/holidays/templates')
+  assert.equal(ENDPOINTS.HR.HOLIDAY_RANGE, '/api/hr/holidays/range')
+  assert.equal(ENDPOINTS.HR.HOLIDAY_CHECK, '/api/hr/holidays/check')
+  assert.equal(ENDPOINTS.HR.HOLIDAY_SUMMARY(2026), '/api/hr/holidays/summary/2026')
+  assert.equal(ENDPOINTS.HR.HOLIDAY_BULK_IMPORT, '/api/hr/holidays/bulk-import')
+  assert.equal(
+    ENDPOINTS.HR.SATURDAY_ROTATION_TEAM('team-1'),
+    '/api/hr/saturday-rotations/team/team-1',
+  )
+})

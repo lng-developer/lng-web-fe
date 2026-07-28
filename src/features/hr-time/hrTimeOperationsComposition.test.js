@@ -210,3 +210,38 @@ test('Catalog Setup keeps its original protected catalog workbench', async () =>
   )
   assert.doesNotMatch(routes, /PORTAL_LISTINGS\}\?view=product-types/)
 })
+
+test('Schedule completes calendar policy administration through focused API consumers', async () => {
+  const [schedule, queries, mutations, detail, summary, bulkImport, rotationMaintenance] =
+    await Promise.all([
+      source('pages/SchedulePage.jsx'),
+      source('api/hrTime.queries.js'),
+      source('api/hrTime.mutations.js'),
+      source('components/HolidayDetailDrawer.jsx'),
+      source('components/HolidayPolicySummary.jsx'),
+      source('components/HolidayBulkImportDialog.jsx'),
+      source('components/RotationMaintenanceDialog.jsx'),
+    ])
+
+  assert.match(queries, /useHolidayDetailQuery/)
+  assert.match(queries, /useHolidayTemplatesQuery/)
+  assert.match(queries, /useHolidayRangeQuery/)
+  assert.match(queries, /useHolidayCheckQuery/)
+  assert.match(queries, /useHolidaySummaryQuery/)
+  assert.match(mutations, /useBulkImportHolidaysMutation/)
+  assert.match(mutations, /useUpdateSaturdayRotationMutation/)
+  assert.match(mutations, /useDeleteTeamSaturdayRotationsMutation/)
+  assert.match(mutations, /SATURDAY_ROTATION_TEAM/)
+  assert.match(mutations, /params:\s*\{\s*month,\s*year\s*\}/)
+  assert.match(detail, /useHolidayDetailQuery/)
+  assert.match(summary, /useHolidayRangeQuery/)
+  assert.match(summary, /useHolidayCheckQuery/)
+  assert.match(bulkImport, /items\.length < 1 \|\| items\.length > 100/)
+  assert.match(bulkImport, /duplicates|rowFailures|failures/)
+  assert.match(rotationMaintenance, /employeeProfileIds/)
+  assert.match(rotationMaintenance, /Delete rotations/)
+  assert.match(schedule, /HolidayPolicySummary/)
+  assert.match(schedule, /HolidayDetailDrawer/)
+  assert.match(schedule, /HolidayBulkImportDialog/)
+  assert.match(schedule, /RotationMaintenanceDialog/)
+})
