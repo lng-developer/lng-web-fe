@@ -1,7 +1,7 @@
 # RBAC Access Explorer Design
 
 Date: 2026-07-29
-Status: Approved visual direction, pending written-spec review
+Status: Approved
 Route: `/portal/settings/users-roles`
 
 ## Objective
