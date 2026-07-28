@@ -17,7 +17,6 @@ test('Task 8 pages reuse the operations shell and URL query state', async () => 
 
   for (const page of pages) {
     assert.match(page, /OperationsPageShell/)
-    assert.match(page, /OperationsTable/)
     assert.match(page, /OperationsPagination/)
     assert.match(page, /useSearchParams/)
   }
@@ -29,17 +28,22 @@ test('attendance adjustment and schedule edits follow backend capabilities', asy
     source('pages/SchedulePage.jsx'),
   ])
 
-  assert.match(attendance, /'exceptions'/)
-  assert.match(attendance, /row\.capabilities\?\.adjust/)
+  assert.match(attendance, /useAttendanceMonthMatrixQuery/)
+  assert.match(attendance, /exceptionsOnly/)
+  assert.match(attendance, /cell\.capabilities\?\.adjust/)
+  assert.match(attendance, /MonthlyStaffMatrix/)
   assert.doesNotMatch(attendance, /roleName|roles\.includes/)
   assert.match(schedule, /row\.capabilities\?\.edit/)
   assert.doesNotMatch(schedule, /roleName|roles\.includes/)
 })
 
-test('Attendance Desk sends exception filtering to the paginated API', async () => {
+test('Attendance Desk sends documented matrix filters to the paginated API', async () => {
   const attendance = await source('pages/AttendanceDeskPage.jsx')
 
-  assert.match(attendance, /exceptionsOnly:\s*tab === 'exceptions'/)
+  assert.match(attendance, /useAttendanceMonthMatrixQuery\(\{/)
+  assert.match(attendance, /teamId/)
+  assert.match(attendance, /departmentId/)
+  assert.match(attendance, /shiftId/)
   assert.doesNotMatch(attendance, /\.filter\(isAttendanceException\)/)
 })
 
