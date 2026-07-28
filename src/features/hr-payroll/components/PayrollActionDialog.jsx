@@ -21,6 +21,7 @@ export default function PayrollActionDialog({
 }) {
   const results = outcome?.results || []
   const failures = results.filter((result) => !result.success)
+  const jobs = outcome?.jobs || []
 
   return (
     <AnimatedDialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth="sm">
@@ -40,6 +41,23 @@ export default function PayrollActionDialog({
                 {failures.map((result) => (
                   <li key={result.payrollResultId}>
                     {result.payrollResultId}: {result.code}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </Alert>
+        ) : null}
+        {outcome && 'queued' in outcome ? (
+          <Alert severity="success">
+            Queued: {outcome.queued}. Reused: {outcome.reused}. Skipped: {outcome.skipped}.
+            {jobs.length ? (
+              <ul className="mt-2 list-disc pl-5">
+                {jobs.map((job) => (
+                  <li key={job.id || job.payrollResultId}>
+                    Job {job.id || '-'} · Run {job.payrollRunId || '-'} · Result{' '}
+                    {job.payrollResultId || '-'} · Status {job.status || '-'} · Attempts{' '}
+                    {job.attemptCount ?? 0} · Last error {job.lastErrorCode || 'none'} · Sent{' '}
+                    {job.sentAt || 'not yet'}
                   </li>
                 ))}
               </ul>

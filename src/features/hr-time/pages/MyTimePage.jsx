@@ -19,12 +19,15 @@ import {
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { hasAnyPermission } from '@/features/auth/utils/authz'
 import {
+  useAttachLeaveReferencesMutation,
   useCancelLeaveRequestMutation,
   useCancelOvertimeRequestMutation,
   useCheckInMutation,
   useCheckOutMutation,
   useCreateLeaveRequestMutation,
   useCreateOvertimeRequestMutation,
+  usePreviewLeaveRequestMutation,
+  useUploadLeaveAttachmentMutation,
 } from '@/features/hr-time/api/hrTime.mutations'
 import {
   useMyAttendanceQuery,
@@ -35,6 +38,7 @@ import {
 import { useAuthStore } from '@/store/useAuthStore'
 
 import LeaveRequestDialog from '../components/LeaveRequestDialog'
+import LeaveRequestPreviewDialog from '../components/LeaveRequestPreviewDialog'
 import OvertimeRequestDialog from '../components/OvertimeRequestDialog'
 import RequestReviewDrawer from '../components/RequestReviewDrawer'
 import TimeRequestTable from '../components/TimeRequestTable'
@@ -67,6 +71,7 @@ export default function MyTimePage() {
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
   const [createDialog, setCreateDialog] = useState(null)
+  const [leavePreview, setLeavePreview] = useState(null)
   const [review, setReview] = useState(null)
   const [actionError, setActionError] = useState('')
 
@@ -111,6 +116,9 @@ export default function MyTimePage() {
     enabled: tab === 'history' && canUseAttendance,
   })
   const createLeaveMutation = useCreateLeaveRequestMutation()
+  const previewLeaveMutation = usePreviewLeaveRequestMutation()
+  const uploadLeaveAttachmentMutation = useUploadLeaveAttachmentMutation()
+  const attachLeaveReferencesMutation = useAttachLeaveReferencesMutation()
   const createOvertimeMutation = useCreateOvertimeRequestMutation()
   const checkInMutation = useCheckInMutation()
   const checkOutMutation = useCheckOutMutation()
@@ -131,7 +139,8 @@ export default function MyTimePage() {
     (tab === 'leave' && canUseLeave) ||
     (tab === 'overtime' && canUseOvertime) ||
     ((tab === 'today' || tab === 'history') && canUseAttendance)
-  const queryError = selectedQuery.error?.response?.data?.message || selectedQuery.error?.message
+  const queryError = selectedQuery.error?.data?.message || selectedQuery.error?.message
+  const noProfile = selectedQuery.error?.status === 404
   const selfAttendanceActions = getSelfAttendanceActions(todayQuery.data)
   const attendanceAction = !todayQuery.isSuccess
     ? null
@@ -153,6 +162,9 @@ export default function MyTimePage() {
             })
   const submitting =
     createLeaveMutation.isPending ||
+    previewLeaveMutation.isPending ||
+    uploadLeaveAttachmentMutation.isPending ||
+    attachLeaveReferencesMutation.isPending ||
     createOvertimeMutation.isPending ||
     checkInMutation.isPending ||
     checkOutMutation.isPending ||
@@ -176,18 +188,67 @@ export default function MyTimePage() {
 
   async function createRequest(kind, payload) {
     setActionError('')
+    if (kind === 'leave') {
+      try {
+        const preview = await previewLeaveMutation.mutateAsync(payload)
+        setCreateDialog(null)
+        setLeavePreview({ payload, preview })
+      } catch (error) {
+        setActionError(
+          error?.data?.message ||
+            t('hrTime.errors.requestFailed', { defaultValue: 'Could not preview request' }),
+        )
+      }
+      return
+    }
     try {
-      const mutation = kind === 'leave' ? createLeaveMutation : createOvertimeMutation
-      await mutation.mutateAsync(payload)
+      await createOvertimeMutation.mutateAsync(payload)
       enqueueSnackbar(t('hrTime.messages.requestCreated', { defaultValue: 'Request submitted' }), {
         variant: SNACKBAR_VARIANTS.SUCCESS,
       })
       setCreateDialog(null)
     } catch (error) {
       setActionError(
-        error?.response?.data?.message ||
+        error?.data?.message ||
           t('hrTime.errors.requestFailed', { defaultValue: 'Could not submit request' }),
       )
+    }
+  }
+
+  async function confirmLeaveRequest() {
+    if (!leavePreview) return
+    setActionError('')
+    try {
+      await createLeaveMutation.mutateAsync(leavePreview.payload)
+      enqueueSnackbar(t('hrTime.messages.requestCreated', { defaultValue: 'Request submitted' }), {
+        variant: SNACKBAR_VARIANTS.SUCCESS,
+      })
+      setLeavePreview(null)
+    } catch (error) {
+      setActionError(
+        error?.data?.message ||
+          t('hrTime.errors.requestFailed', { defaultValue: 'Could not submit request' }),
+      )
+    }
+  }
+
+  async function attachLeaveFile(file) {
+    if (!review?.row) return
+    setActionError('')
+    try {
+      const asset = await uploadLeaveAttachmentMutation.mutateAsync(file)
+      await attachLeaveReferencesMutation.mutateAsync({ requestId: review.row.id, assets: [asset] })
+      enqueueSnackbar(t('hrTime.messages.attachmentAdded', { defaultValue: 'Attachment added' }), {
+        variant: SNACKBAR_VARIANTS.SUCCESS,
+      })
+      setReview(null)
+      return true
+    } catch (error) {
+      setActionError(
+        error?.data?.message ||
+          t('hrTime.errors.actionFailed', { defaultValue: 'Could not complete action' }),
+      )
+      return false
     }
   }
 
@@ -206,7 +267,7 @@ export default function MyTimePage() {
       setReview(null)
     } catch (error) {
       setActionError(
-        error?.response?.data?.message ||
+        error?.data?.message ||
           t('hrTime.errors.actionFailed', { defaultValue: 'Could not complete action' }),
       )
     }
@@ -226,7 +287,7 @@ export default function MyTimePage() {
       )
     } catch (error) {
       enqueueSnackbar(
-        error?.response?.data?.message ||
+        error?.data?.message ||
           t('hrTime.errors.actionFailed', { defaultValue: 'Could not complete action' }),
         { variant: SNACKBAR_VARIANTS.ERROR },
       )
@@ -385,7 +446,37 @@ export default function MyTimePage() {
         ) : null
       }
     >
-      {hasTabAccess ? (
+      {hasTabAccess && selectedQuery.isError ? (
+        <Alert
+          severity="warning"
+          action={
+            <Button color="inherit" size="small" onClick={() => selectedQuery.refetch()}>
+              {t('common.retry', { defaultValue: 'Retry' })}
+            </Button>
+          }
+        >
+          <Typography variant="subtitle2">
+            {t(noProfile ? 'hrTime.myTime.noProfileTitle' : 'hrTime.myTime.unavailableTitle', {
+              defaultValue: noProfile
+                ? 'No employee profile found'
+                : 'Personal time data is unavailable',
+            })}
+          </Typography>
+          <Typography variant="body2">
+            {queryError ||
+              t(
+                noProfile
+                  ? 'hrTime.myTime.noProfileDescription'
+                  : 'hrTime.myTime.unavailableDescription',
+                {
+                  defaultValue: noProfile
+                    ? 'Ask HR to link your account to an employee profile.'
+                    : 'Try again in a moment. If this continues, contact HR.',
+                },
+              )}
+          </Typography>
+        </Alert>
+      ) : hasTabAccess ? (
         <TimeRequestTable
           type={type}
           rows={rows}
@@ -407,7 +498,7 @@ export default function MyTimePage() {
       {createDialog === 'leave' ? (
         <LeaveRequestDialog
           open
-          loading={createLeaveMutation.isPending}
+          loading={previewLeaveMutation.isPending}
           error={actionError}
           onClose={() => setCreateDialog(null)}
           onSubmit={(payload) => createRequest('leave', payload)}
@@ -422,6 +513,16 @@ export default function MyTimePage() {
           onSubmit={(payload) => createRequest('overtime', payload)}
         />
       ) : null}
+      {leavePreview ? (
+        <LeaveRequestPreviewDialog
+          open
+          preview={leavePreview.preview}
+          loading={createLeaveMutation.isPending}
+          error={actionError}
+          onClose={() => setLeavePreview(null)}
+          onConfirm={confirmLeaveRequest}
+        />
+      ) : null}
       <RequestReviewDrawer
         open={Boolean(review)}
         row={review?.row}
@@ -432,6 +533,7 @@ export default function MyTimePage() {
         onClose={() => setReview(null)}
         onActionChange={(action) => setReview((current) => ({ ...current, action }))}
         onSubmit={cancelRequest}
+        onAttach={type === 'leave' ? attachLeaveFile : undefined}
       />
     </OperationsPageShell>
   )

@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 
 import { useEmployeeProfileQuery } from '../api/hrTime.queries.js'
 import { getEmployeeProfileSections } from '../utils/hrTimeApi.js'
+import LeaveBalancePanel from './LeaveBalancePanel.jsx'
 
 function displayValue(value, language) {
   if (value === null || value === undefined || value === '') return '-'
@@ -61,6 +62,7 @@ export default function EmployeeProfileDrawer({
   open,
   profileId,
   canEdit = false,
+  canManageLeaveBalances = false,
   onClose,
   onEdit,
 }) {
@@ -140,6 +142,12 @@ export default function EmployeeProfileDrawer({
                   </dl>
                 </section>
               ))}
+              {profile ? (
+                <LeaveBalancePanel
+                  profileId={profile.id || profileId}
+                  canManage={canManageLeaveBalances}
+                />
+              ) : null}
             </div>
           )}
         </div>

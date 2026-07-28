@@ -4,6 +4,7 @@ import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
 import {
+  mapPayrollAdjustment,
   mapPayrollResult,
   mapPayrollRun,
   normalizePayrollQuery,
@@ -13,6 +14,7 @@ import {
 export {
   buildMarkPaidPayload,
   formatVnd,
+  mapPayrollAdjustment,
   mapPayrollResult,
   mapPayrollRun,
   normalizePayrollQuery,
@@ -24,6 +26,7 @@ export const hrPayrollKeys = {
   runs: (query) => [...hrPayrollKeys.all, 'runs', query],
   run: (id) => [...hrPayrollKeys.all, 'run', id],
   mine: (query) => [...hrPayrollKeys.all, 'mine', query],
+  adjustments: (query) => [...hrPayrollKeys.all, 'adjustments', query],
 }
 
 function mapCollection(payload, mapper) {
@@ -64,6 +67,20 @@ export function useMyPayslipsQuery(params, options = {}) {
         .get(ENDPOINTS.HR.MY_PAYROLLS, { params: query })
         .then(unwrapPayrollResponse)
         .then((payload) => mapCollection(payload, mapPayrollResult)),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
+export function usePayrollAdjustmentsQuery(params, options = {}) {
+  const query = normalizePayrollQuery(params)
+  return useQuery({
+    queryKey: hrPayrollKeys.adjustments(query),
+    queryFn: () =>
+      apiClient
+        .get(ENDPOINTS.HR.PAYROLL_ADJUSTMENTS, { params: query })
+        .then(unwrapPayrollResponse)
+        .then((payload) => mapCollection(payload, mapPayrollAdjustment)),
     placeholderData: keepPreviousData,
     ...options,
   })

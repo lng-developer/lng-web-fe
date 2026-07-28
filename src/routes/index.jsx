@@ -28,9 +28,8 @@ const ListingsPage = lazy(() => import('@/features/listings/pages/ListingsPage')
 const ProductTypesPage = lazy(() => import('@/features/listings/pages/ProductTypesPage'))
 const InternalTemplatesPage = lazy(() => import('@/features/listings/pages/InternalTemplatesPage'))
 const MappingPage = lazy(() => import('@/features/mapping/pages/MappingPage'))
-const AnnouncementsPage = lazy(
-  () => import('@/features/hr-communication/pages/AnnouncementsPage'),
-)
+const AnnouncementsPage = lazy(() => import('@/features/hr-communication/pages/AnnouncementsPage'))
+const HrDashboardPage = lazy(() => import('@/features/hr-dashboard/pages/HrDashboardPage'))
 const AttendanceDeskPage = lazy(() => import('@/features/hr-time/pages/AttendanceDeskPage'))
 const HrSettingsPage = lazy(() => import('@/features/hr-settings/pages/HrSettingsPage'))
 const MyTimePage = lazy(() => import('@/features/hr-time/pages/MyTimePage'))
@@ -82,6 +81,10 @@ export const router = createBrowserRouter([
             element: <Outlet />,
             children: [
               {
+                path: ROUTES.HR_DASHBOARD.replace(`${ROUTES.HR}/`, ''),
+                element: requirePermissions(['HR_EMPLOYEES:READ'], <HrDashboardPage />),
+              },
+              {
                 index: true,
                 element: requireAnyPermissions(
                   ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
@@ -112,7 +115,12 @@ export const router = createBrowserRouter([
               {
                 path: ROUTES.HR_TIME_SCHEDULE.replace(`${ROUTES.HR}/`, ''),
                 element: requireAnyPermissions(
-                  ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE', 'HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
+                  [
+                    'HR_SCHEDULE:READ',
+                    'HR_SCHEDULE:WRITE',
+                    'HR_CALENDAR:READ',
+                    'HR_CALENDAR:WRITE',
+                  ],
                   <SchedulePage />,
                 ),
               },

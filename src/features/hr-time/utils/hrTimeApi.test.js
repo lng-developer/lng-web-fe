@@ -3,14 +3,36 @@ import test from 'node:test'
 
 import { hrTimeKeys } from '../api/hrTime.keys.js'
 import {
+  buildLeaveAttachmentPayload,
+  buildLeaveRefundPayload,
   getHrTimeActions,
   getSelfAttendanceActions,
+  mapAttendanceMonthMatrix,
   mapAttendanceRow,
   mapLeaveRequestRow,
   mapOvertimeRequestRow,
   mapShiftAssignmentRow,
   normalizeHrTimeQuery,
 } from './hrTimeApi.js'
+
+test('builds leave attachment references with only Media fields', () => {
+  assert.deepEqual(
+    buildLeaveAttachmentPayload([
+      { id: 'media-1', filename: 'note.pdf', mimeType: 'application/pdf', url: '/private' },
+    ]),
+    { attachments: [{ mediaId: 'media-1', filename: 'note.pdf', mimeType: 'application/pdf' }] },
+  )
+})
+
+test('builds refund payloads from unique date keys with a trimmed reason', () => {
+  assert.deepEqual(
+    buildLeaveRefundPayload({
+      dateKeys: ['2026-07-10', '2026-07-09', '2026-07-10'],
+      reason: '  correction  ',
+    }),
+    { dateKeys: ['2026-07-10', '2026-07-09'], reason: 'correction' },
+  )
+})
 
 test('normalizes active HR Time list filters for stable query keys', () => {
   const query = normalizeHrTimeQuery({
@@ -64,6 +86,23 @@ test('maps HR Time row actions from backend capabilities without role-name branc
       capabilities: { approve: true, cancel: false, reject: true, view: true },
     }),
     { approve: true, cancel: false, reject: true, view: true },
+  )
+})
+
+test('maps month matrix rows through the same response mapper', () => {
+  assert.deepEqual(
+    mapAttendanceMonthMatrix({
+      items: [
+        { profile: { id: 'profile-1' }, cells: [], totals: {}, capabilities: { view: true } },
+      ],
+      month: { year: 2026, month: 7 },
+    }),
+    {
+      items: [
+        { profile: { id: 'profile-1' }, cells: [], totals: {}, capabilities: { view: true } },
+      ],
+      month: { year: 2026, month: 7 },
+    },
   )
 })
 

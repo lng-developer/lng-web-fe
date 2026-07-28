@@ -3,7 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
-import { unwrapHrTimeResponse } from '../utils/hrTimeApi.js'
+import {
+  buildLeaveAttachmentPayload,
+  buildLeaveRefundPayload,
+  unwrapHrTimeResponse,
+} from '../utils/hrTimeApi.js'
 import { hrTimeKeys } from './hrTime.keys.js'
 
 function request(method, endpoint, payload) {
@@ -129,6 +133,20 @@ export function useDeleteHolidayMutation() {
   )
 }
 
+export function useBulkImportHolidaysMutation() {
+  return useHrTimeMutation(
+    ({ items }) => request('post', ENDPOINTS.HR.HOLIDAY_BULK_IMPORT, { items }),
+    () => [hrTimeKeys.holidays()],
+  )
+}
+
+export function useCheckHolidayPolicyMutation() {
+  return useHrTimeMutation(
+    (params) => request('get', ENDPOINTS.HR.HOLIDAY_CHECK, { params }),
+    () => [],
+  )
+}
+
 export function useGenerateSaturdayRotationsMutation() {
   return useHrTimeMutation(
     (payload) => request('post', ENDPOINTS.HR.SATURDAY_ROTATIONS_GENERATE, payload),
@@ -139,6 +157,24 @@ export function useGenerateSaturdayRotationsMutation() {
 export function useDeleteSaturdayRotationMutation() {
   return useHrTimeMutation(
     (id) => request('delete', ENDPOINTS.HR.SATURDAY_ROTATION(id)),
+    () => [hrTimeKeys.rotations()],
+  )
+}
+
+export function useUpdateSaturdayRotationMutation() {
+  return useHrTimeMutation(
+    ({ id, employeeProfileIds }) =>
+      request('patch', ENDPOINTS.HR.SATURDAY_ROTATION(id), { employeeProfileIds }),
+    () => [hrTimeKeys.rotations()],
+  )
+}
+
+export function useDeleteTeamSaturdayRotationsMutation() {
+  return useHrTimeMutation(
+    ({ teamId, month, year }) =>
+      request('delete', ENDPOINTS.HR.SATURDAY_ROTATION_TEAM(teamId), {
+        params: { month, year },
+      }),
     () => [hrTimeKeys.rotations()],
   )
 }
@@ -170,10 +206,43 @@ export function useUpsertLeaveBalanceMutation() {
     ({ profileId, year, leaveType, payload }) =>
       request('put', ENDPOINTS.HR.LEAVE_BALANCE(profileId, year, leaveType), payload),
     ({ profileId, year, leaveType }) => [
-      hrTimeKeys.leaveBalances(),
-      hrTimeKeys.myLeaveBalances(year),
+      hrTimeKeys.leaveBalancesForEmployee(profileId),
       hrTimeKeys.leaveBalance(profileId, year, leaveType),
+      hrTimeKeys.myLeaveBalances(year),
     ],
+  )
+}
+
+export function useAdjustLeaveBalanceMutation() {
+  return useHrTimeMutation(
+    ({ profileId, year, leaveType, payload }) =>
+      request('patch', ENDPOINTS.HR.LEAVE_BALANCE_ADJUST(profileId, year, leaveType), payload),
+    ({ profileId, year, leaveType }) => [
+      hrTimeKeys.leaveBalancesForEmployee(profileId),
+      hrTimeKeys.leaveBalance(profileId, year, leaveType),
+      hrTimeKeys.myLeaveBalances(year),
+    ],
+  )
+}
+
+export function useAccrueLeaveBalancesMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_BALANCE_ACCRUE, payload),
+    () => [hrTimeKeys.leaveBalances()],
+  )
+}
+
+export function useResetLeaveBalancesMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_BALANCE_RESET, payload),
+    () => [hrTimeKeys.leaveBalances()],
+  )
+}
+
+export function useCarryOverLeaveBalancesMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_BALANCE_CARRY_OVER, payload),
+    () => [hrTimeKeys.leaveBalances()],
   )
 }
 
@@ -181,6 +250,52 @@ export function useCreateLeaveRequestMutation() {
   return useHrTimeMutation(
     (payload) => request('post', ENDPOINTS.HR.LEAVE_REQUESTS, payload),
     () => [hrTimeKeys.leave()],
+  )
+}
+
+export function usePreviewLeaveRequestMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_REQUEST_PREVIEW, payload),
+    () => [],
+  )
+}
+
+export function useUploadLeaveAttachmentMutation() {
+  return useHrTimeMutation(
+    (file) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      return request('post', ENDPOINTS.MEDIA.ASSETS, formData)
+    },
+    () => [],
+  )
+}
+
+export function useAttachLeaveReferencesMutation() {
+  return useHrTimeMutation(
+    ({ requestId, assets }) =>
+      request(
+        'post',
+        ENDPOINTS.HR.LEAVE_REQUEST_ATTACHMENTS(requestId),
+        buildLeaveAttachmentPayload(assets),
+      ),
+    ({ requestId }) => [hrTimeKeys.leave(), hrTimeKeys.leaveDetail(requestId)],
+  )
+}
+
+export function useRefundLeaveRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request(
+        'post',
+        ENDPOINTS.HR.LEAVE_REQUEST_REFUND(requestId),
+        buildLeaveRefundPayload(payload),
+      ),
+    ({ requestId }) => [
+      hrTimeKeys.leave(),
+      hrTimeKeys.leaveDetail(requestId),
+      hrTimeKeys.leaveBalances(),
+    ],
   )
 }
 
