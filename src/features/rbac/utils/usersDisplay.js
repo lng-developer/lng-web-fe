@@ -41,6 +41,11 @@ export function getAccountAccessSummary(detail = {}) {
   }
 }
 
+export function resolveSelectedAccountId(accounts = [], selectedId = '') {
+  if (selectedId) return selectedId
+  return accounts[0]?.id || accounts[0]?.accountId || ''
+}
+
 export function normalizeRoleKey(roleCode = '') {
   const normalized = String(roleCode).toLowerCase()
 

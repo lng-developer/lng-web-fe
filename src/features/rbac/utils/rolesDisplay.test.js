@@ -53,6 +53,21 @@ test('groupPermissionsByModule groups permissions by module label', () => {
   )
 })
 
+test('groupPermissionsByModule resolves effective permission codes through the catalog', () => {
+  const grouped = groupPermissionsByModule(
+    ['AUTH:READ', 'ORDERS:WRITE', 'AUTH:WRITE'],
+    [{ code: 'ORDERS:WRITE', module: 'COMMERCE', name: 'Write orders' }],
+  )
+
+  assert.deepEqual(
+    grouped.map((group) => [group.module, group.permissions.map((permission) => permission.code)]),
+    [
+      ['AUTH MODULE', ['AUTH:READ', 'AUTH:WRITE']],
+      ['COMMERCE MODULE', ['ORDERS:WRITE']],
+    ],
+  )
+})
+
 test('filterPermissionsForRole searches by permission name and code', () => {
   const permissions = [
     { id: 'p1', code: 'READ_ACCOUNTS', name: 'Xem tài khoản' },

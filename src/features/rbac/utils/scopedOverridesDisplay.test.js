@@ -7,6 +7,7 @@ import {
   filterOverrideRoles,
   getAvailableOverridePermissions,
   getOverrideRoleCode,
+  getScopeMatrixCell,
 } from './scopedOverridesDisplay.js'
 
 const roles = [
@@ -92,4 +93,21 @@ test('buildScopedRulePayload matches PUT /api/auth/scoped-role-permissions contr
       permissionIds: ['p3', 'p2'],
     },
   )
+})
+
+test('getScopeMatrixCell matches a role and scope without simulating permissions', () => {
+  const cell = getScopeMatrixCell(
+    [{ roleId: 'manager-id', scopeType: 'department', scopeId: 'dept-id', permissionIds: ['p3'] }],
+    roles[1],
+    { scopeType: 'department', scopeId: 'dept-id' },
+  )
+
+  assert.equal(cell.hasReplacement, true)
+  assert.equal(cell.permissionCount, 1)
+  assert.equal(cell.rule.roleId, 'manager-id')
+  assert.deepEqual(getScopeMatrixCell([], roles[1], { scopeType: 'team', scopeId: 'team-id' }), {
+    hasReplacement: false,
+    permissionCount: 0,
+    rule: null,
+  })
 })

@@ -86,3 +86,19 @@ export function buildScopedRulePayload({ role, scope, permissionIds = [] }) {
     permissionIds: unique(permissionIds),
   }
 }
+
+export function getScopeMatrixCell(rules = [], role = {}, scope = {}) {
+  const rule =
+    rules.find(
+      (item) =>
+        item.roleId === role.id &&
+        item.scopeType === scope.scopeType &&
+        item.scopeId === (scope.scopeId || scope.resourceId || scope.id),
+    ) ?? null
+
+  return {
+    hasReplacement: Boolean(rule),
+    permissionCount: rule?.permissionIds?.length ?? 0,
+    rule,
+  }
+}

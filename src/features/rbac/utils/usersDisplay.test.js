@@ -8,6 +8,7 @@ import {
   getRoleMeta,
   getStatusMeta,
   normalizeRoleKey,
+  resolveSelectedAccountId,
 } from './usersDisplay.js'
 
 test('getAccountAccessSummary keeps global and scoped access separate', () => {
@@ -29,6 +30,15 @@ test('getAccountAccessSummary keeps global and scoped access separate', () => {
     ['assignment-1'],
   )
   assert.deepEqual(result.effectivePermissions, ['AUTH:READ', 'AUTH:WRITE'])
+})
+
+test('resolveSelectedAccountId keeps an explicit URL selection and otherwise uses the first account', () => {
+  const accounts = [{ id: 'account-1' }, { accountId: 'account-2' }]
+
+  assert.equal(resolveSelectedAccountId(accounts, 'account-2'), 'account-2')
+  assert.equal(resolveSelectedAccountId(accounts, 'account-outside-page'), 'account-outside-page')
+  assert.equal(resolveSelectedAccountId(accounts, ''), 'account-1')
+  assert.equal(resolveSelectedAccountId([], ''), '')
 })
 
 test('normalizeRoleKey maps backend role codes to figma role keys', () => {
