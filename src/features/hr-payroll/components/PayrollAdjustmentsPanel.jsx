@@ -96,7 +96,7 @@ export default function PayrollAdjustmentsPanel({ canWrite }) {
       setOutcome(result)
       setEditing(null)
     } catch (error) {
-      if (error?.response?.status === 409) {
+      if (error?.status === 409) {
         await query.refetch()
         setActionError(payrollAdjustmentConflictMessage)
       } else setActionError(error.message || 'Could not save adjustment')
@@ -114,7 +114,7 @@ export default function PayrollAdjustmentsPanel({ canWrite }) {
       )
       setCanceling(null)
     } catch (error) {
-      if (error?.response?.status === 409) {
+      if (error?.status === 409) {
         await query.refetch()
         setActionError(payrollAdjustmentConflictMessage)
       } else setActionError(error.message || 'Could not cancel adjustment')

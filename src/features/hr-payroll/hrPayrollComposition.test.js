@@ -108,6 +108,8 @@ test('payroll adjustment administration keeps versioned writes and operational o
   assert.match(mutations, /useCancelPayrollAdjustmentMutation/)
   assert.match(mutations, /retry:\s*false/)
   assert.match(mutations, /draftPayrollRefreshed/)
+  assert.equal((panel.match(/error\?\.status === 409/g) || []).length, 2)
+  assert.doesNotMatch(panel, /error\?\.response\?\.status === 409/)
   assert.match(
     queries,
     /adjustments:\s*\(query\)\s*=>\s*\[\.\.\.hrPayrollKeys\.all, 'adjustments', query\]/,
