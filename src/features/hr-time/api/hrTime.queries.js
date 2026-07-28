@@ -5,6 +5,7 @@ import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
 import {
+  mapAttendanceMonthMatrix,
   mapAttendanceRow,
   mapCalendarOverrideRow,
   mapEmployeeProfileRow,
@@ -129,6 +130,58 @@ export function useHolidaysQuery(params, options) {
   )
 }
 
+export function useHolidayDetailQuery(holidayId, options) {
+  return useHrTimeDetailQuery(
+    hrTimeKeys.holiday(holidayId),
+    holidayId && ENDPOINTS.HR.HOLIDAY(holidayId),
+    undefined,
+    (holiday) => holiday,
+    options,
+  )
+}
+
+export function useHolidayTemplatesQuery(options) {
+  return useHrTimeDetailQuery(
+    hrTimeKeys.holidayTemplates(),
+    ENDPOINTS.HR.HOLIDAY_TEMPLATES,
+    undefined,
+    (templates) => templates,
+    options,
+  )
+}
+
+export function useHolidayRangeQuery(params = {}, options = {}) {
+  const { dateFrom, dateTo } = params
+  return useHrTimeDetailQuery(
+    hrTimeKeys.holidayRange(params),
+    dateFrom && dateTo && ENDPOINTS.HR.HOLIDAY_RANGE,
+    params,
+    (range) => range,
+    { ...options, enabled: Boolean(dateFrom && dateTo) && options.enabled !== false },
+  )
+}
+
+export function useHolidayCheckQuery(params = {}, options = {}) {
+  return useHrTimeDetailQuery(
+    hrTimeKeys.holidayCheck(params),
+    params.dateKey && ENDPOINTS.HR.HOLIDAY_CHECK,
+    params,
+    (result) => result,
+    { ...options, enabled: Boolean(params.dateKey) && options.enabled !== false },
+  )
+}
+
+export function useHolidaySummaryQuery(year, options = {}) {
+  const validYear = Number.isInteger(Number(year)) && Number(year) >= 2000 && Number(year) <= 9999
+  return useHrTimeDetailQuery(
+    hrTimeKeys.holidaySummary(year),
+    validYear && ENDPOINTS.HR.HOLIDAY_SUMMARY(year),
+    undefined,
+    (summary) => summary,
+    { ...options, enabled: validYear && options.enabled !== false },
+  )
+}
+
 export function useSaturdayRotationsQuery(params, options) {
   return useHrTimeListQuery(
     hrTimeKeys.listRotations,
@@ -147,6 +200,22 @@ export function useAttendanceQuery(params, options) {
     mapAttendanceRow,
     options,
   )
+}
+
+export function useAttendanceMonthMatrixQuery(params = {}, options = {}) {
+  const debouncedSearch = useDebounce(params.q, 300)
+  const query = normalizeHrTimeQuery({ ...params, q: debouncedSearch })
+
+  return useQuery({
+    queryKey: hrTimeKeys.attendanceMonthMatrix(query),
+    queryFn: () =>
+      apiClient
+        .get(ENDPOINTS.HR.ATTENDANCE_MONTH_MATRIX, { params: query })
+        .then(unwrapHrTimeResponse)
+        .then(mapAttendanceMonthMatrix),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
 }
 
 export function useMyAttendanceQuery(params, options) {

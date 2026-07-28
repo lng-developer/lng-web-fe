@@ -2854,6 +2854,23 @@
       "shift": "Shift",
       "department": "Department"
     },
+    "myTime": {
+      "title": "My time",
+      "subtitle": "Attendance, leave, and overtime in one personal workspace.",
+      "checkedIn": "Checked in",
+      "notCheckedIn": "Ready to check in",
+      "attendanceUnavailable": "No attendance action is available right now",
+      "unavailableTitle": "Personal time data is unavailable",
+      "unavailableDescription": "Try again in a moment. If this continues, contact HR.",
+      "noProfileTitle": "No employee profile found",
+      "noProfileDescription": "Ask HR to link your account to an employee profile.",
+      "tabs": {
+        "today": "Today",
+        "leave": "Leave",
+        "overtime": "Overtime",
+        "history": "History"
+      }
+    },
     "navigation": {
       "myTime": "My time",
       "requestInbox": "Request inbox",

@@ -15,7 +15,7 @@ test('reports page renders finance and Ads views with searchable report filters'
   assert.equal(source.includes("value: 'ads'"), true)
   assert.equal(source.includes('<AdsReportView'), true)
   assert.equal(source.includes('h-full -mr-4 overflow-auto pr-4'), true)
-  assert.equal(source.includes('<OperationsPageShell\n      className="-mx-4 md:-mx-6"'), true)
+  assert.match(source, /<OperationsPageShell\s+className="-mx-4 md:-mx-6"/)
   assert.equal(source.includes('<OperationsTabs'), true)
   assert.equal(source.includes('<OperationsTable'), true)
   assert.equal(source.includes('import DailyProfitChart'), true)

@@ -58,7 +58,19 @@ export function mapHrTimeCollection(payload, mapper) {
 }
 
 export function mapEmployeeProfileRow(row) {
-  return mapEmployeeRelatedRow(row)
+  const mapped = mapEmployeeRelatedRow(row)
+  if (!mapped) return null
+
+  return {
+    ...mapped,
+    isDeleted: Boolean(row.isDeleted),
+    deletedAt: row.deletedAt || null,
+    capabilities: {
+      ...row.capabilities,
+      delete: Boolean(row.capabilities?.delete),
+      restore: Boolean(row.capabilities?.restore),
+    },
+  }
 }
 
 export function mapWorkLocationRow(row) {
@@ -94,6 +106,14 @@ export function mapCalendarOverrideRow(row) {
 
 export function mapAttendanceRow(row) {
   return mapEmployeeRelatedRow(row)
+}
+
+export function mapAttendanceMonthMatrix(payload) {
+  if (!payload || typeof payload !== 'object') return payload
+  return {
+    ...payload,
+    items: Array.isArray(payload.items) ? payload.items.map(mapMatrixRow) : [],
+  }
 }
 
 export function mapLeaveBalanceRow(row) {
@@ -148,6 +168,23 @@ export function buildAttendanceAdjustmentPayload(values) {
     ['status', 'checkInAt', 'checkOutAt', 'reason'],
     ['checkInAt', 'checkOutAt'],
   )
+}
+
+export function buildLeaveAttachmentPayload(assets = []) {
+  return {
+    attachments: assets.map((asset) => ({
+      mediaId: asset.mediaId || asset.id,
+      filename: asset.filename || asset.originalFilename || null,
+      mimeType: asset.mimeType || null,
+    })),
+  }
+}
+
+export function buildLeaveRefundPayload({ dateKeys = [], reason = '' }) {
+  return {
+    dateKeys: [...new Set(dateKeys.map((dateKey) => String(dateKey).trim()).filter(Boolean))],
+    reason: reason.trim(),
+  }
 }
 
 export function buildShiftAssignmentPayload(values) {
@@ -374,7 +411,9 @@ export function hasGlobalPermissionCode(user, permissionCode) {
   ) {
     return true
   }
-  if ((user?.permissions || []).some((permission) => permissionMatches(permission, permissionCode))) {
+  if (
+    (user?.permissions || []).some((permission) => permissionMatches(permission, permissionCode))
+  ) {
     return true
   }
   return (user?.scopes || []).some(
@@ -441,3 +480,4 @@ export function resolveCalendarScopeQuery(user, requestedScopeKey, requiredPermi
     selectedScopeKey: selected.key,
   }
 }
+import { mapMatrixRow } from './monthMatrix.js'

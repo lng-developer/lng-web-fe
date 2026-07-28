@@ -21,7 +21,11 @@ test('feature queries use TanStack Query v5 previous-data option', () => {
     assert.equal(source.includes(legacyOption), false, file)
 
     if (source.includes('placeholderData: keepPreviousData')) {
-      assert.equal(source.includes('import { keepPreviousData, useQuery }'), true, file)
+      assert.match(
+        source,
+        /import\s*\{[^}]*\bkeepPreviousData\b[^}]*\}\s*from\s*['"]@tanstack\/react-query['"]/,
+        file,
+      )
     }
   })
 })

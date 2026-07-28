@@ -2,10 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-import {
-  buildAnnouncementPayload,
-  mapAnnouncementRow,
-} from './utils/announcementApi.js'
+import { buildAnnouncementPayload, mapAnnouncementRow } from './utils/announcementApi.js'
 
 const root = new URL('./', import.meta.url)
 
@@ -56,6 +53,21 @@ test('announcements use operations primitives and server record capabilities', a
   assert.match(page, /row\.capabilities\?\.update/)
   assert.match(page, /row\.capabilities\?\.delete/)
   assert.doesNotMatch(page, /roleName|roles\.includes|\.role\b/)
+})
+
+test('announcement rows open a capability-owned detail drawer', async () => {
+  const [page, drawer] = await Promise.all([
+    source('pages/AnnouncementsPage.jsx'),
+    source('components/AnnouncementDetailDrawer.jsx'),
+  ])
+
+  assert.match(page, /setSelectedId\(row\.id\)/)
+  assert.match(page, /AnnouncementDetailDrawer/)
+  assert.match(drawer, /ENDPOINTS\.HR\.ANNOUNCEMENT\(announcementId\)/)
+  assert.match(drawer, /capabilities\?\.update/)
+  assert.match(drawer, /capabilities\?\.delete/)
+  assert.match(drawer, /attachments/)
+  assert.match(drawer, /eventDetails/)
 })
 
 test('remaining HR pages expose calendar, reconciliation, and SQL sync evidence', async () => {

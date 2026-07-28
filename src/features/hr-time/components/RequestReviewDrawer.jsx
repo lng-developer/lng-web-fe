@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import CloseIcon from '@mui/icons-material/Close'
@@ -7,6 +9,8 @@ import { Button, Drawer, IconButton, Typography } from '@mui/material'
 
 import { StatusBadge } from '@/components/operations'
 
+import LeaveAttachmentDialog from './LeaveAttachmentDialog'
+import LeaveRefundDialog from './LeaveRefundDialog'
 import RequestDecisionDialog from './RequestDecisionDialog'
 
 function statusTone(status) {
@@ -31,9 +35,12 @@ export default function RequestReviewDrawer({
   onClose,
   onActionChange,
   onSubmit,
+  onAttach,
+  onRefund,
 }) {
   const { t, i18n } = useTranslation()
   const capabilities = row?.capabilities || {}
+  const [leaveDialog, setLeaveDialog] = useState(null)
   const isAttendance = type === 'attendance'
   const employeeName = row?.employeeName || row?.employee?.fullName
   const dateFormatter = new Intl.DateTimeFormat(i18n.language, {
@@ -89,9 +96,22 @@ export default function RequestReviewDrawer({
           ['reason', row?.reason],
         ]
 
+  function closeDrawer() {
+    setLeaveDialog(null)
+    onClose()
+  }
+
+  async function submitAttachment(file) {
+    if (await onAttach(file)) setLeaveDialog(null)
+  }
+
+  async function submitRefund(payload) {
+    if (await onRefund(payload)) setLeaveDialog(null)
+  }
+
   return (
     <>
-      <Drawer anchor="right" open={open} onClose={loading ? undefined : onClose}>
+      <Drawer anchor="right" open={open} onClose={loading ? undefined : closeDrawer}>
         <div className="flex h-full w-[460px] max-w-[100vw] flex-col bg-surface">
           <div className="flex items-start justify-between gap-3 border-b border-border p-5">
             <div className="min-w-0">
@@ -106,7 +126,7 @@ export default function RequestReviewDrawer({
             </div>
             <IconButton
               aria-label={t('common.close', { defaultValue: 'Close' })}
-              onClick={onClose}
+              onClick={closeDrawer}
               disabled={loading}
             >
               <CloseIcon />
@@ -143,8 +163,26 @@ export default function RequestReviewDrawer({
               </section>
             ) : null}
           </div>
-          {!isAttendance && (capabilities.approve || capabilities.reject || capabilities.cancel) ? (
+          {!isAttendance &&
+          (capabilities.approve ||
+            capabilities.reject ||
+            capabilities.cancel ||
+            (type === 'leave' && capabilities.attach && onAttach) ||
+            (type === 'leave' && capabilities.refund && onRefund)) ? (
             <div className="flex flex-wrap justify-end gap-2 border-t border-border p-4">
+              {type === 'leave' && capabilities.attach && onAttach ? (
+                <Button
+                  startIcon={<AttachFileOutlinedIcon />}
+                  onClick={() => setLeaveDialog('attach')}
+                >
+                  {t('hrTime.actions.attach', { defaultValue: 'Attach file' })}
+                </Button>
+              ) : null}
+              {type === 'leave' && capabilities.refund && onRefund ? (
+                <Button color="warning" onClick={() => setLeaveDialog('refund')}>
+                  {t('hrTime.actions.refund', { defaultValue: 'Refund dates' })}
+                </Button>
+              ) : null}
               {capabilities.cancel ? (
                 <Button
                   color="error"
@@ -187,6 +225,25 @@ export default function RequestReviewDrawer({
           error={error}
           onClose={() => onActionChange(null)}
           onSubmit={onSubmit}
+        />
+      ) : null}
+      {open && leaveDialog === 'attach' ? (
+        <LeaveAttachmentDialog
+          open
+          loading={loading}
+          error={error}
+          onClose={() => setLeaveDialog(null)}
+          onSubmit={submitAttachment}
+        />
+      ) : null}
+      {open && leaveDialog === 'refund' ? (
+        <LeaveRefundDialog
+          open
+          row={row}
+          loading={loading}
+          error={error}
+          onClose={() => setLeaveDialog(null)}
+          onSubmit={submitRefund}
         />
       ) : null}
     </>

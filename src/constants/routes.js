@@ -41,6 +41,7 @@ export const ROUTES = {
   PORTAL_API_COVERAGE: '/portal/settings/api-coverage',
   PORTAL_AUDIT_LOG: '/portal/settings/audit-log',
   HR: '/hr',
+  HR_DASHBOARD: '/hr/dashboard',
   HR_TIME_MY_TIME: '/hr/my-time',
   HR_TIME_REQUEST_INBOX: '/hr/requests',
   HR_TIME_EMPLOYEES: '/hr/employees',

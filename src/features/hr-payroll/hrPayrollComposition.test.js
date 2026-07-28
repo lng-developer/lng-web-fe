@@ -29,17 +29,43 @@ test('payroll administration uses the operations desk and server capabilities', 
 })
 
 test('payroll actions require preview, explicit confirmation, and pending state', async () => {
-  const [page, drawer, dialog] = await Promise.all([
+  const [page, drawer, dialog, mutations] = await Promise.all([
     source('pages/PayrollRunsPage.jsx'),
     source('components/PayrollReviewDrawer.jsx'),
     source('components/PayrollActionDialog.jsx'),
+    source('api/hrPayroll.mutations.js'),
   ])
 
   assert.match(page, /PayrollActionDialog/)
+  assert.match(page, /PayrollRunDialog/)
+  assert.match(page, /useRunPayrollMutation/)
+  assert.match(page, /useEmailPayrollMutation/)
+  assert.match(page, /row\.capabilities\?\.email/)
   assert.match(drawer, /PayrollActionDialog/)
   assert.match(dialog, /preview/i)
   assert.match(dialog, /Confirm/)
   assert.match(dialog, /loading/)
+  assert.match(mutations, /mapPayrollEmailOutcome/)
+  assert.match(dialog, /queued/)
+  assert.match(dialog, /reused/)
+  assert.match(dialog, /skipped/)
+  assert.match(dialog, /outcome\?\.jobs/)
+  assert.match(dialog, /job\.payrollResultId/)
+  assert.match(dialog, /job\.status/)
+})
+
+test('payroll preview renders calculation evidence and clears it after closing', async () => {
+  const dialog = await source('components/PayrollRunDialog.jsx')
+
+  assert.doesNotMatch(dialog, /useEffect/)
+  assert.match(dialog, /function close\(\)[\s\S]*setPreview\(null\)[\s\S]*onClose\(\)/)
+  assert.match(dialog, /if \(shadow\) setPreview\(result\)\s*else setPreview\(null\)/)
+  assert.match(dialog, /payrollResultIdentity\(result, index\)/)
+  assert.doesNotMatch(dialog, /result\.employeeName|result\.employeeCode/)
+  assert.match(dialog, /result\.grossIncome/)
+  assert.match(dialog, /result\.adjustmentEarnings/)
+  assert.match(dialog, /result\.adjustmentDeductions/)
+  assert.match(dialog, /result\.netIncome/)
 })
 
 test('routes mount auth-only payslips and permission-gated payroll administration', async () => {
@@ -50,10 +76,7 @@ test('routes mount auth-only payslips and permission-gated payroll administratio
 
   assert.match(routes, /MyPayslipsPage/)
   assert.match(routes, /PayrollRunsPage/)
-  assert.match(
-    routes,
-    /HR_MY_PAYSLIPS[\s\S]*element:\s*<MyPayslipsPage\s*\/>/,
-  )
+  assert.match(routes, /HR_MY_PAYSLIPS[\s\S]*element:\s*<MyPayslipsPage\s*\/>/)
   assert.match(routes, /HR_PAYROLL_RUNS[\s\S]*HR_PAYROLL:READ/)
   assert.match(navigation, /MOUNTED_ROUTE_PATHS[\s\S]*ROUTES\.HR_MY_PAYSLIPS/)
   assert.match(navigation, /MOUNTED_ROUTE_PATHS[\s\S]*ROUTES\.HR_PAYROLL_RUNS/)
@@ -67,4 +90,45 @@ test('self-service payslips are read-only and render complete money evidence', a
   assert.match(page, /totalDeductions/)
   assert.match(page, /netIncome/)
   assert.doesNotMatch(page, /useFinalizePayroll|useMarkPayrollPaid|roleName|roles\.includes/)
+})
+
+test('payroll adjustment administration keeps versioned writes and operational outcomes visible', async () => {
+  const [page, panel, dialog, mutations, queries] = await Promise.all([
+    source('pages/PayrollRunsPage.jsx'),
+    source('components/PayrollAdjustmentsPanel.jsx'),
+    source('components/PayrollAdjustmentDialog.jsx'),
+    source('api/hrPayroll.mutations.js'),
+    source('api/hrPayroll.queries.js'),
+  ])
+
+  assert.match(page, /PayrollAdjustmentsPanel/)
+  assert.match(panel, /profileId/)
+  assert.match(panel, /month/)
+  assert.match(panel, /year/)
+  assert.match(panel, /status/)
+  assert.match(panel, /type/)
+  assert.match(panel, /Create adjustment/)
+  assert.match(panel, /Edit adjustment/)
+  assert.match(panel, /Cancel adjustment/)
+  assert.match(panel, /useSearchParams/)
+  assert.match(dialog, /expectedVersion/)
+  assert.match(dialog, /amount/)
+  assert.match(dialog, /VND/)
+  assert.match(
+    dialog,
+    /This adjustment changed on the server\. Review the refreshed row before retrying\./,
+  )
+  assert.match(panel, /requiresReview/)
+  assert.match(panel, /draftPayrollRefreshed/)
+  assert.match(mutations, /useCreatePayrollAdjustmentMutation/)
+  assert.match(mutations, /useUpdatePayrollAdjustmentMutation/)
+  assert.match(mutations, /useCancelPayrollAdjustmentMutation/)
+  assert.match(mutations, /retry:\s*false/)
+  assert.match(mutations, /draftPayrollRefreshed/)
+  assert.equal((panel.match(/error\?\.status === 409/g) || []).length, 2)
+  assert.doesNotMatch(panel, /error\?\.response\?\.status === 409/)
+  assert.match(
+    queries,
+    /adjustments:\s*\(query\)\s*=>\s*\[\.\.\.hrPayrollKeys\.all, 'adjustments', query\]/,
+  )
 })

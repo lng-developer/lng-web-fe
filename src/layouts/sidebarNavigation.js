@@ -38,6 +38,7 @@ const MOUNTED_ROUTE_PATHS = new Set([
   ROUTES.PORTAL_USERS_ROLES,
   ROUTES.PORTAL_API_COVERAGE,
   ROUTES.PORTAL_AUDIT_LOG,
+  ROUTES.HR_DASHBOARD,
   ROUTES.HR_TIME_MY_TIME,
   ROUTES.HR_TIME_REQUEST_INBOX,
   ROUTES.HR_TIME_ATTENDANCE,
@@ -412,6 +413,14 @@ export const HR_NAVIGATION = [
     defaultOpen: true,
     children: [
       {
+        id: 'hr-dashboard',
+        type: 'item',
+        labelKey: 'nav.items.dashboard',
+        icon: 'dashboard',
+        path: ROUTES.HR_DASHBOARD,
+        requiredPermissions: ['HR_EMPLOYEES:READ'],
+      },
+      {
         id: 'hr-request-inbox',
         type: 'item',
         labelKey: 'hrTime.navigation.requestInbox',
@@ -548,6 +557,7 @@ export function isNavItemActive(item, location) {
 
 const HR_ROUTE_PATHS = new Set([
   ROUTES.HR,
+  ROUTES.HR_DASHBOARD,
   ROUTES.HR_TIME_MY_TIME,
   ROUTES.HR_TIME_REQUEST_INBOX,
   ROUTES.HR_TIME_ATTENDANCE,

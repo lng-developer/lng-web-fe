@@ -92,3 +92,34 @@ test('HR child routes mount My Time and Request Inbox behind permissions', async
   assert.match(routes, /HR_LEAVE:WRITE/)
   assert.match(routes, /HR_OVERTIME:APPROVE/)
 })
+
+test('leave request workflows preview before create and use server capabilities', async () => {
+  const [mutations, myTime, drawer, attachment, refund, preview] = await Promise.all([
+    source('api/hrTime.mutations.js'),
+    source('pages/MyTimePage.jsx'),
+    source('components/RequestReviewDrawer.jsx'),
+    source('components/LeaveAttachmentDialog.jsx'),
+    source('components/LeaveRefundDialog.jsx'),
+    source('components/LeaveRequestPreviewDialog.jsx'),
+  ])
+
+  assert.match(mutations, /usePreviewLeaveRequestMutation/)
+  assert.match(mutations, /useUploadLeaveAttachmentMutation/)
+  assert.match(mutations, /useAttachLeaveReferencesMutation/)
+  assert.match(mutations, /useRefundLeaveRequestMutation/)
+  assert.match(mutations, /retry: false/)
+  assert.match(mutations, /new FormData\(\)/)
+  assert.match(mutations, /ENDPOINTS\.MEDIA\.ASSETS/)
+  assert.match(myTime, /previewLeaveMutation\.mutateAsync\(payload\)/)
+  assert.match(myTime, /createLeaveMutation\.mutateAsync\(leavePreview\.payload\)/)
+  assert.match(myTime, /LeaveRequestPreviewDialog/)
+  assert.match(drawer, /capabilities\.attach/)
+  assert.match(drawer, /capabilities\.refund/)
+  assert.match(drawer, /LeaveRefundDialog/)
+  assert.match(attachment, /type="file"/)
+  assert.match(refund, /remainingDateKeys/)
+  assert.match(refund, /selectedDateKeys\.length >= remainingDateKeys\.length/)
+  assert.match(preview, /workingDateKeys/)
+  assert.match(preview, /availableUnits/)
+  assert.match(preview, /isPossible/)
+})

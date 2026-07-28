@@ -2854,6 +2854,23 @@
       "shift": "Ca làm việc",
       "department": "Phòng ban"
     },
+    "myTime": {
+      "title": "Thời gian của tôi",
+      "subtitle": "Chấm công, nghỉ phép và tăng ca trong không gian cá nhân.",
+      "checkedIn": "Đã check-in",
+      "notCheckedIn": "Sẵn sàng check-in",
+      "attendanceUnavailable": "Hiện chưa có thao tác chấm công khả dụng",
+      "unavailableTitle": "Không thể tải dữ liệu thời gian cá nhân",
+      "unavailableDescription": "Hãy thử lại sau ít phút. Nếu lỗi tiếp diễn, hãy liên hệ HR.",
+      "noProfileTitle": "Chưa có hồ sơ nhân viên",
+      "noProfileDescription": "Hãy liên hệ HR để liên kết tài khoản với hồ sơ nhân viên.",
+      "tabs": {
+        "today": "Hôm nay",
+        "leave": "Nghỉ phép",
+        "overtime": "Tăng ca",
+        "history": "Lịch sử"
+      }
+    },
     "navigation": {
       "myTime": "Thời gian của tôi",
       "requestInbox": "Hộp duyệt yêu cầu",
