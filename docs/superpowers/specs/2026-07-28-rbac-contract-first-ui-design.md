@@ -2,7 +2,7 @@
 
 Date: 2026-07-28
 Status: Approved direction, pending written-spec review
-Scope: Existing `/portal/admin/users-roles` page only
+Scope: Existing `/portal/settings/users-roles` page only
 
 ## Context
 
@@ -141,8 +141,10 @@ The user table prioritizes identity and effective placement:
 - Last login.
 - Actions.
 
-Filters use only supported request parameters: search, status, role, department,
-team, member type, and archived state where currently supported by the query.
+Filters use only supported request parameters: search, status, role ID or role
+code, department ID, and team ID. Archived accounts are selected through the
+supported status parameter. `memberType` may be displayed from the DTO but is not
+sent as a query parameter.
 
 ### Account Detail
 
