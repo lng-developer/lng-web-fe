@@ -288,6 +288,7 @@ hr|PATCH|/api/hr/saturday-rotations/:id
 hr|DELETE|/api/hr/saturday-rotations/team/:teamId
 hr|DELETE|/api/hr/saturday-rotations/:id
 hr|GET|/api/hr/attendance
+hr|GET|/api/hr/attendance/month-matrix
 hr|GET|/api/hr/attendance/me
 hr|POST|/api/hr/attendance/check-in
 hr|POST|/api/hr/attendance/check-out
@@ -317,6 +318,9 @@ hr|POST|/api/hr/overtime-requests/:requestId/cancel
 hr|GET|/api/hr/payrolls
 hr|POST|/api/hr/payrolls/run
 hr|GET|/api/hr/payrolls/me
+hr|GET|/api/hr/payrolls/results
+hr|GET|/api/hr/payrolls/results/export
+hr|GET|/api/hr/payrolls/results/:resultId
 hr|GET|/api/hr/payrolls/:id
 hr|POST|/api/hr/payrolls/:id/finalize
 hr|POST|/api/hr/payrolls/:id/mark-paid
