@@ -1,7 +1,7 @@
 import { Linter } from 'eslint'
 import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, posix, relative } from 'node:path'
 import test from 'node:test'
 
 const q = 'src/features/hr-time/api/hrTime.queries.js'
@@ -928,107 +928,220 @@ function visit(node, callback) {
   Object.entries(node).forEach(([key, child]) => key !== 'parent' && visit(child, callback))
 }
 
-function findUnusedHooks(files) {
-  const parsedFiles = files.map(({ file, source }) => {
-    const ast = parseSource(file, source)
-    const calls = new Set()
-    visit(ast, (node) => {
-      if (node.type !== 'CallExpression') return
-      if (node.callee.type === 'Identifier') calls.add(node.callee.name)
-      if (node.callee.type === 'MemberExpression' && node.callee.property?.name) {
-        calls.add(node.callee.property.name)
-      }
-    })
-    return { file, ast, calls }
-  })
-  const definitions = parsedFiles
-    .filter(
-      ({ file }) => file.startsWith('src/features/hr-') && !/\.(test|spec)\.[jt]sx?$/.test(file),
-    )
-    .flatMap(({ file, ast }) => {
-      const hooks = []
-      for (const statement of ast.body) {
-        assert.notEqual(
-          statement.type,
-          'ExportAllDeclaration',
-          `${file} must name re-exported hooks explicitly`,
-        )
-        if (
-          statement.type !== 'ExportNamedDeclaration' &&
-          statement.type !== 'ExportDefaultDeclaration'
-        )
-          continue
-        const declaration = statement.declaration
-        if (declaration?.type === 'FunctionDeclaration' && declaration.id)
-          hooks.push(declaration.id.name)
-        if (statement.type === 'ExportDefaultDeclaration' && declaration?.type === 'Identifier') {
-          hooks.push(declaration.name)
-        }
-        if (declaration?.type === 'VariableDeclaration') {
-          declaration.declarations.forEach(
-            ({ id }) => id.type === 'Identifier' && hooks.push(id.name),
-          )
-        }
-        statement.specifiers?.forEach(({ exported, local }) => {
-          const exportedName = exported.name || exported.value
-          hooks.push(exportedName === 'default' ? local.name || local.value : exportedName)
-        })
-      }
-      return hooks.filter((hook) => /^use[A-Z]\w*$/.test(hook)).map((hook) => ({ file, hook }))
-    })
+const isTestFile = (file) =>
+  /(^|\/)__tests__(\/|$)/.test(file) || /\.(test|spec)\.[jt]sx?$/.test(file)
+const isHrFeatureFile = (file) =>
+  file.startsWith('src/features/hr/') || file.startsWith('src/features/hr-')
+const nodeName = (node) => node?.name || node?.value
 
-  return definitions
-    .filter(
-      ({ file, hook }) =>
-        !parsedFiles.some(
-          (candidate) =>
-            candidate.file !== file &&
-            !/\.(test|spec)\.[jt]sx?$/.test(candidate.file) &&
-            candidate.calls.has(hook),
-        ),
-    )
-    .map(({ hook }) => hook)
+function resolveModulePath(fromFile, specifier, filesByPath) {
+  let base
+  if (specifier.startsWith('@/')) base = `src/${specifier.slice(2)}`
+  else if (specifier.startsWith('.')) {
+    base = posix.normalize(posix.join(posix.dirname(fromFile), specifier))
+  } else return undefined
+
+  return [
+    base,
+    ...['js', 'jsx', 'ts', 'tsx'].map((extension) => `${base}.${extension}`),
+    ...['js', 'jsx', 'ts', 'tsx'].map((extension) => `${base}/index.${extension}`),
+  ].find((file) => filesByPath.has(file))
 }
 
-test('hook scan recognizes export lists and requires non-test call expressions', () => {
+function addLocalHooks(declaration, localHooks) {
+  if (declaration?.type === 'FunctionDeclaration' && /^use[A-Z]\w*$/.test(declaration.id?.name)) {
+    localHooks.add(declaration.id.name)
+  }
+  if (declaration?.type === 'VariableDeclaration') {
+    declaration.declarations.forEach(({ id }) => {
+      if (id.type === 'Identifier' && /^use[A-Z]\w*$/.test(id.name)) localHooks.add(id.name)
+    })
+  }
+}
+
+function findUnusedHooks(files) {
+  const filesByPath = new Map(files.map((entry) => [entry.file, entry]))
+  const modules = new Map(
+    files.map(({ file, source }) => {
+      const ast = parseSource(file, source)
+      const calls = new Set()
+      visit(ast, (node) => {
+        if (node.type === 'CallExpression' && node.callee.type === 'Identifier')
+          calls.add(node.callee.name)
+      })
+      const imports = new Map()
+      const exports = new Map()
+      const localHooks = new Set()
+
+      for (const statement of ast.body) {
+        addLocalHooks(statement, localHooks)
+        if (statement.type === 'ImportDeclaration') {
+          const targetFile = resolveModulePath(file, statement.source.value, filesByPath)
+          if (!targetFile) continue
+          statement.specifiers.forEach((specifier) => {
+            if (specifier.type === 'ImportNamespaceSpecifier') return
+            imports.set(specifier.local.name, {
+              file: targetFile,
+              exportedName:
+                specifier.type === 'ImportDefaultSpecifier'
+                  ? 'default'
+                  : nodeName(specifier.imported),
+            })
+          })
+        }
+        if (
+          statement.type === 'ExportAllDeclaration' &&
+          isHrFeatureFile(file) &&
+          !isTestFile(file)
+        ) {
+          assert.notEqual(
+            statement.type,
+            'ExportAllDeclaration',
+            `${file} must name re-exported hooks explicitly`,
+          )
+        }
+        if (statement.type === 'ExportNamedDeclaration') {
+          addLocalHooks(statement.declaration, localHooks)
+          if (statement.declaration?.type === 'FunctionDeclaration') {
+            exports.set(statement.declaration.id.name, { localName: statement.declaration.id.name })
+          }
+          if (statement.declaration?.type === 'VariableDeclaration') {
+            statement.declaration.declarations.forEach(({ id }) => {
+              if (id.type === 'Identifier') exports.set(id.name, { localName: id.name })
+            })
+          }
+          const targetFile =
+            statement.source && resolveModulePath(file, statement.source.value, filesByPath)
+          statement.specifiers.forEach((specifier) => {
+            const exportedName = nodeName(specifier.exported)
+            exports.set(
+              exportedName,
+              targetFile
+                ? { file: targetFile, exportedName: nodeName(specifier.local) }
+                : { localName: nodeName(specifier.local) },
+            )
+          })
+        }
+        if (statement.type === 'ExportDefaultDeclaration') {
+          addLocalHooks(statement.declaration, localHooks)
+          const localName = statement.declaration.id?.name || nodeName(statement.declaration)
+          if (localName) exports.set('default', { localName })
+        }
+      }
+      return [file, { calls, exports, imports, localHooks }]
+    }),
+  )
+
+  function resolveExport(file, exportedName, seen = new Set()) {
+    const key = `${file}:${exportedName}`
+    if (seen.has(key)) return new Set()
+    seen.add(key)
+    const module = modules.get(file)
+    const target = module?.exports.get(exportedName)
+    if (!target) return new Set()
+    if (target.file) return resolveExport(target.file, target.exportedName, seen)
+    const imported = module.imports.get(target.localName)
+    if (imported) return resolveExport(imported.file, imported.exportedName, seen)
+    return module.localHooks.has(target.localName)
+      ? new Set([`${file}:${target.localName}`])
+      : new Set()
+  }
+
+  const definitions = new Map()
+  for (const [file, module] of modules) {
+    if (!isHrFeatureFile(file) || isTestFile(file)) continue
+    for (const exportedName of module.exports.keys()) {
+      for (const origin of resolveExport(file, exportedName)) {
+        const separator = origin.lastIndexOf(':')
+        const originFile = origin.slice(0, separator)
+        const hook = origin.slice(separator + 1)
+        if (isHrFeatureFile(originFile)) definitions.set(origin, hook)
+      }
+    }
+  }
+
+  const calledOrigins = new Set()
+  for (const [file, module] of modules) {
+    if (isTestFile(file)) continue
+    for (const call of module.calls) {
+      const imported = module.imports.get(call)
+      if (!imported) continue
+      resolveExport(imported.file, imported.exportedName).forEach((origin) =>
+        calledOrigins.add(origin),
+      )
+    }
+  }
+
+  return [...definitions].filter(([origin]) => !calledOrigins.has(origin)).map(([, hook]) => hook)
+}
+
+test('hook scan resolves import aliases and excludes test-only or unrelated member calls', () => {
   const files = [
     {
       file: 'src/features/hr-example/hooks.js',
       source: `
-        const useNamedOnlyInTest = () => {}
-        export { useNamedOnlyInTest }
-        export const useCalled = () => {}
-        export const useMentionedOnly = () => {}
-        const useDefaultOnly = () => {}
-        export default useDefaultOnly
+        export function useNamedHook() {}
+        export function useMemberOnly() {}
+        export function useOnlyInTests() {}
       `,
     },
     {
-      file: 'src/features/hr-example/reExport.js',
+      file: 'src/features/hr-example/defaultHook.js',
       source: `
-        const useReExportedDefaultOnly = () => {}
-        export { useReExportedDefaultOnly as default }
+        const useDefaultHook = () => {}
+        export default useDefaultHook
+      `,
+    },
+    {
+      file: 'src/features/hr-example/barrel.js',
+      source: `
+        export { useNamedHook as useRenamedHook } from './hooks.js'
+        export { default as useReExportedDefault } from './defaultHook.js'
       `,
     },
     {
       file: 'src/features/hr-example/Owner.jsx',
       source: `
-        const text = 'useMentionedOnly('
-        // useMentionedOnly()
-        useCalled()
+        import { useRenamedHook as useLocalNamed } from './barrel.js'
+        import { useReExportedDefault as useLocalReExportedDefault } from './barrel.js'
+        import useLocalDefault from './defaultHook.js'
+        useLocalNamed()
+        useLocalReExportedDefault()
+        useLocalDefault()
+        object.useMemberOnly()
       `,
     },
     {
-      file: 'src/features/hr-example/Owner.test.jsx',
-      source: 'useNamedOnlyInTest()',
+      file: 'src/features/hr-example/__tests__/Owner.jsx',
+      source: `
+        import { useOnlyInTests } from '../hooks.js'
+        useOnlyInTests()
+      `,
+    },
+    {
+      file: 'src/features/hr-example/Owner.spec.tsx',
+      source: `
+        import { useMemberOnly } from './hooks.js'
+        useMemberOnly()
+      `,
+    },
+    {
+      file: 'src/features/hr/rootHooks.js',
+      source: 'export function useRootOnlyInTests() {}',
+    },
+    {
+      file: 'src/features/hr/__tests__/Owner.jsx',
+      source: `
+        import { useRootOnlyInTests } from '../rootHooks.js'
+        useRootOnlyInTests()
+      `,
     },
   ]
 
   assert.deepEqual(findUnusedHooks(files), [
-    'useNamedOnlyInTest',
-    'useMentionedOnly',
-    'useDefaultOnly',
-    'useReExportedDefaultOnly',
+    'useMemberOnly',
+    'useOnlyInTests',
+    'useRootOnlyInTests',
   ])
 })
 
