@@ -428,6 +428,17 @@
       "viewAll": "View all ({{count}})",
       "showLess": "Show less"
     },
+    "policies": {
+      "modes": {
+        "roles": "Roles",
+        "permissions": "Permission catalog"
+      },
+      "noDescription": "No description provided.",
+      "permissionCount": "Assigned permissions",
+      "roleCode": "Role code",
+      "assignedPermissions": "Assigned permissions",
+      "noPermissions": "This role has no assigned permissions."
+    },
     "users": {
       "searchPlaceholder": "Search by name, email, employee code...",
       "columns": {

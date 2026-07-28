@@ -426,6 +426,17 @@
       "viewAll": "Xem tất cả ({{count}})",
       "showLess": "Thu gọn"
     },
+    "policies": {
+      "modes": {
+        "roles": "Vai trò",
+        "permissions": "Danh mục quyền"
+      },
+      "noDescription": "Chưa có mô tả.",
+      "permissionCount": "Quyền được gán",
+      "roleCode": "Mã vai trò",
+      "assignedPermissions": "Quyền được gán",
+      "noPermissions": "Vai trò này chưa được gán quyền."
+    },
     "users": {
       "searchPlaceholder": "Tìm theo tên, email, mã nhân viên...",
       "columns": {
