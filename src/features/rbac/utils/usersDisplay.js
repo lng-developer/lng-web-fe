@@ -29,6 +29,18 @@ const ROLE_META = {
   },
 }
 
+export function getAccountAccessSummary(detail = {}) {
+  return {
+    globalRoleIds: detail.access?.roleIds ?? [],
+    globalPermissionIds: detail.access?.customPermissionIds ?? [],
+    globalRoles: detail.roles ?? [],
+    globalPermissions: detail.permissions ?? [],
+    effectiveRoles: detail.effectiveRoles ?? [],
+    effectivePermissions: detail.effectivePermissions ?? [],
+    scopedAssignments: detail.scopes ?? [],
+  }
+}
+
 export function normalizeRoleKey(roleCode = '') {
   const normalized = String(roleCode).toLowerCase()
 

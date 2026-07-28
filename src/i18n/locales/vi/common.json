@@ -32,7 +32,9 @@
     "view": "Xem",
     "copied": "Đã sao chép",
     "copyFailed": "Không thể sao chép",
-    "save": "Lưu"
+    "save": "Lưu",
+    "previous": "Trước",
+    "next": "Sau"
   },
   "nav": {
     "home": "Trang chủ",
@@ -404,8 +406,9 @@
       "columns": {
         "user": "Người dùng",
         "status": "Trạng thái",
-        "role": "Vai trò",
-        "department": "Phòng ban",
+        "organization": "Phòng ban / Team",
+        "globalAccess": "Quyền global",
+        "scopedAccess": "Quyền theo scope",
         "lastLogin": "Đăng nhập gần nhất",
         "actions": "Hành động"
       },
@@ -423,7 +426,12 @@
       "filter": {
         "allStatus": "Tất cả trạng thái",
         "allRoles": "Tất cả vai trò",
-        "allDepartments": "Tất cả phòng ban"
+        "allDepartments": "Tất cả phòng ban",
+        "allTeams": "Tất cả team"
+      },
+      "scopedAssignmentCount": "{{count}} assignment",
+      "pagination": {
+        "total": "Tổng {{count}} tài khoản"
       },
       "addModal": {
         "title": "Thêm tài khoản mới",
@@ -443,21 +451,41 @@
       },
       "viewModal": {
         "title": "Thông tin tài khoản — {{name}}",
+        "subtitle": "Phân biệt quyền global, quyền theo scope và quyền hiệu lực của tài khoản.",
         "loginName": "TÊN ĐĂNG NHẬP",
-        "password": "MẬT KHẨU",
-        "showPassword": "Hiện",
-        "hidePassword": "Ẩn",
-        "passwordUnavailable": "Không hiển thị vì lý do bảo mật",
         "resetPassword": "Reset mật khẩu",
-        "resetPasswordPrompt": "Nhập mật khẩu tạm thời mới",
+        "resetDialog": {
+          "title": "Đặt mật khẩu tạm thời mới",
+          "password": "Mật khẩu mới",
+          "hint": "Mật khẩu phải có ít nhất 6 ký tự."
+        },
         "resetPasswordSuccess": "Đã reset mật khẩu thành công!",
         "updateStatusSuccess": "Đã cập nhật trạng thái tài khoản!",
-        "role": "VAI TRÒ",
+        "revokeSessions": "Thu hồi phiên đăng nhập",
+        "revokeSessionsConfirm": "Thu hồi toàn bộ phiên đăng nhập đang hoạt động của tài khoản này?",
+        "revokeSessionsSuccess": "Đã thu hồi toàn bộ phiên đăng nhập!",
         "status": "TRẠNG THÁI",
         "department": "PHÒNG BAN",
-        "noDepartment": "— (toàn hệ thống, không thuộc phòng ban)",
+        "team": "TEAM",
+        "memberType": "LOẠI THÀNH VIÊN",
+        "lastLogin": "ĐĂNG NHẬP GẦN NHẤT",
+        "lastLoginIp": "IP ĐĂNG NHẬP",
         "createdAt": "NGÀY TẠO TÀI KHOẢN",
-        "createdBy": "CẤP TÀI KHOẢN BỞI",
+        "globalAccess": "Quyền truy cập global",
+        "globalRoles": "Vai trò global",
+        "globalPermissions": "Quyền global hiệu lực",
+        "noGlobalRoles": "Chưa có vai trò global",
+        "noGlobalPermissions": "Chưa có quyền global",
+        "effectiveAccess": "Tổng quyền hiệu lực",
+        "effectiveHint": "Hợp nhất quyền global và mọi assignment theo scope.",
+        "noEffectivePermissions": "Tài khoản chưa có quyền hiệu lực",
+        "scopedAccess": "Assignment theo scope",
+        "assignmentCount": "{{count}} assignment",
+        "noScopedAccess": "Tài khoản chưa có assignment theo scope",
+        "noScopedPermissions": "Assignment này chưa có quyền hiệu lực",
+        "replacementMode": "Bộ quyền thay thế",
+        "inheritedMode": "Kế thừa từ vai trò",
+        "loadError": "Không thể tải thông tin tài khoản.",
         "close": "Đóng"
       },
       "editAccessModal": {

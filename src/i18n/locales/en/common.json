@@ -32,7 +32,9 @@
     "view": "View",
     "copied": "Copied",
     "copyFailed": "Could not copy",
-    "save": "Save"
+    "save": "Save",
+    "previous": "Previous",
+    "next": "Next"
   },
   "nav": {
     "home": "Home",
@@ -406,8 +408,9 @@
       "columns": {
         "user": "User",
         "status": "Status",
-        "role": "Role",
-        "department": "Department",
+        "organization": "Department / Team",
+        "globalAccess": "Global access",
+        "scopedAccess": "Scoped access",
         "lastLogin": "Last login",
         "actions": "Actions"
       },
@@ -425,7 +428,12 @@
       "filter": {
         "allStatus": "All statuses",
         "allRoles": "All roles",
-        "allDepartments": "All departments"
+        "allDepartments": "All departments",
+        "allTeams": "All teams"
+      },
+      "scopedAssignmentCount": "{{count}} assignments",
+      "pagination": {
+        "total": "{{count}} accounts total"
       },
       "addModal": {
         "title": "Add new account",
@@ -445,21 +453,41 @@
       },
       "viewModal": {
         "title": "Account information — {{name}}",
+        "subtitle": "Review global, scoped, and effective access separately.",
         "loginName": "LOGIN NAME",
-        "password": "PASSWORD",
-        "showPassword": "Show",
-        "hidePassword": "Hide",
-        "passwordUnavailable": "Hidden for security",
         "resetPassword": "Reset password",
-        "resetPasswordPrompt": "Enter the new temporary password",
+        "resetDialog": {
+          "title": "Set a new temporary password",
+          "password": "New password",
+          "hint": "The password must contain at least 6 characters."
+        },
         "resetPasswordSuccess": "Password reset successfully!",
         "updateStatusSuccess": "Account status updated!",
-        "role": "ROLE",
+        "revokeSessions": "Revoke sessions",
+        "revokeSessionsConfirm": "Revoke every active session for this account?",
+        "revokeSessionsSuccess": "All active sessions were revoked!",
         "status": "STATUS",
         "department": "DEPARTMENT",
-        "noDepartment": "— (system-wide, no department)",
+        "team": "TEAM",
+        "memberType": "MEMBER TYPE",
+        "lastLogin": "LAST LOGIN",
+        "lastLoginIp": "LAST LOGIN IP",
         "createdAt": "ACCOUNT CREATED AT",
-        "createdBy": "ACCOUNT CREATED BY",
+        "globalAccess": "Global access",
+        "globalRoles": "Global roles",
+        "globalPermissions": "Effective global permissions",
+        "noGlobalRoles": "No global roles assigned",
+        "noGlobalPermissions": "No global permissions assigned",
+        "effectiveAccess": "Total effective access",
+        "effectiveHint": "Combines global access with every scoped assignment.",
+        "noEffectivePermissions": "This account has no effective permissions",
+        "scopedAccess": "Scoped assignments",
+        "assignmentCount": "{{count}} assignments",
+        "noScopedAccess": "This account has no scoped assignments",
+        "noScopedPermissions": "This assignment has no effective permissions",
+        "replacementMode": "Replacement permission set",
+        "inheritedMode": "Inherited from role",
+        "loadError": "Unable to load account information.",
         "close": "Close"
       },
       "editAccessModal": {

@@ -40,6 +40,7 @@ import {
   useDeactivateAccessAssignmentMutation,
   useDeletePermissionMutation,
   useResetAccountPasswordMutation,
+  useRevokeAccountSessionsMutation,
   useSetScopedRolePermissionsMutation,
   useUpdateAccessAssignmentMutation,
   useUpdateAccountStatusMutation,
@@ -124,6 +125,7 @@ export default function UsersRolesPage() {
     status: '',
     roleId: '',
     departmentId: '',
+    teamId: '',
   })
   const [roleSearch, setRoleSearch] = useState('')
   const [permissionFilters, setPermissionFilters] = useState({
@@ -158,6 +160,13 @@ export default function UsersRolesPage() {
   const departments = getItems(departmentsQuery.data)
   const teams = getItems(teamsQuery.data)
   const pagination = getPagination(accountsQuery.data)
+  const availableTeams = useMemo(
+    () =>
+      userFilters.departmentId
+        ? teams.filter((team) => String(team.departmentId) === String(userFilters.departmentId))
+        : teams,
+    [teams, userFilters.departmentId],
+  )
 
   const filteredPermissions = useMemo(
     () => filterPermissionItems(permissions, permissionFilters),
@@ -189,6 +198,7 @@ export default function UsersRolesPage() {
   const createAccountMutation = useCreateAccountMutation()
   const updateAccountStatusMutation = useUpdateAccountStatusMutation()
   const resetAccountPasswordMutation = useResetAccountPasswordMutation()
+  const revokeAccountSessionsMutation = useRevokeAccountSessionsMutation()
   const createAccessAssignmentMutation = useCreateAccessAssignmentMutation()
   const updateAccessAssignmentMutation = useUpdateAccessAssignmentMutation()
   const deactivateAccessAssignmentMutation = useDeactivateAccessAssignmentMutation()
@@ -230,7 +240,7 @@ export default function UsersRolesPage() {
 
   const renderUsers = () => (
     <Stack className="gap-0">
-      <Box className="flex items-center gap-3 py-4">
+      <Box className="flex flex-wrap items-center gap-3 py-4">
         <TextField
           size="small"
           placeholder={t('rbac.users.searchPlaceholder')}
@@ -248,7 +258,7 @@ export default function UsersRolesPage() {
               setUserFilters({ ...userFilters, status: event.target.value, page: 1 })
             }
           >
-            {ACCOUNT_STATUSES.filter((item) => item.value !== 'archived').map((item) => (
+            {ACCOUNT_STATUSES.map((item) => (
               <MenuItem key={item.value || 'all'} value={item.value}>
                 {t(item.labelKey)}
               </MenuItem>
@@ -276,13 +286,34 @@ export default function UsersRolesPage() {
             displayEmpty
             value={userFilters.departmentId}
             onChange={(event) =>
-              setUserFilters({ ...userFilters, departmentId: event.target.value, page: 1 })
+              setUserFilters({
+                ...userFilters,
+                departmentId: event.target.value,
+                teamId: '',
+                page: 1,
+              })
             }
           >
             <MenuItem value="">{t('rbac.users.filter.allDepartments')}</MenuItem>
             {departments.map((department) => (
               <MenuItem key={department.id} value={department.id}>
                 {department.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl size="small" className="w-[180px]">
+          <Select
+            displayEmpty
+            value={userFilters.teamId}
+            onChange={(event) =>
+              setUserFilters({ ...userFilters, teamId: event.target.value, page: 1 })
+            }
+          >
+            <MenuItem value="">{t('rbac.users.filter.allTeams')}</MenuItem>
+            {availableTeams.map((team) => (
+              <MenuItem key={team.id} value={team.id}>
+                {team.name || team.code}
               </MenuItem>
             ))}
           </Select>
@@ -307,15 +338,16 @@ export default function UsersRolesPage() {
               <TableRow className="h-11">
                 <UserHeaderCell>{t('rbac.users.columns.user')}</UserHeaderCell>
                 <UserHeaderCell width={120}>{t('rbac.users.columns.status')}</UserHeaderCell>
-                <UserHeaderCell width={120}>{t('rbac.users.columns.role')}</UserHeaderCell>
-                <UserHeaderCell width={130}>{t('rbac.users.columns.department')}</UserHeaderCell>
+                <UserHeaderCell width={180}>{t('rbac.users.columns.organization')}</UserHeaderCell>
+                <UserHeaderCell width={190}>{t('rbac.users.columns.globalAccess')}</UserHeaderCell>
+                <UserHeaderCell width={140}>{t('rbac.users.columns.scopedAccess')}</UserHeaderCell>
                 <UserHeaderCell>{t('rbac.users.columns.lastLogin')}</UserHeaderCell>
-                <UserHeaderCell>{t('rbac.users.columns.actions')}</UserHeaderCell>
+                <UserHeaderCell align="right">{t('rbac.users.columns.actions')}</UserHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {accounts.length === 0 ? (
-                <EmptyRow colSpan={6} loading={accountsQuery.isPending} />
+                <EmptyRow colSpan={7} loading={accountsQuery.isPending} />
               ) : (
                 accounts.map((account, index) => {
                   const accountId = getAccountId(account)
@@ -323,6 +355,16 @@ export default function UsersRolesPage() {
                   const email = getAccountEmail(account)
                   const primaryRole = getPrimaryRole(account)
                   const roleMeta = getRoleMeta(primaryRole)
+                  const globalRoles =
+                    account.roles?.length > 0
+                      ? account.roles
+                      : (account.roleAssignments ?? [])
+                          .filter((assignment) => assignment.scopeType === 'global')
+                          .map((assignment) => assignment.roleCode)
+                          .filter(Boolean)
+                  const scopedAssignmentCount = (account.roleAssignments ?? []).filter(
+                    (assignment) => assignment.scopeType !== 'global',
+                  ).length
                   const avatarMeta = getAvatarMeta(
                     name || email,
                     index,
@@ -349,6 +391,11 @@ export default function UsersRolesPage() {
                             <Typography variant="caption" className="text-ink-muted">
                               {email}
                             </Typography>
+                            {account.memberType && (
+                              <Typography variant="caption" className="block text-ink-muted">
+                                {account.memberType}
+                              </Typography>
+                            )}
                           </Box>
                         </Stack>
                       </TableCell>
@@ -356,18 +403,27 @@ export default function UsersRolesPage() {
                         <UserStatusChip status={account.status} t={t} />
                       </TableCell>
                       <TableCell>
-                        <UserRoleChip role={primaryRole} />
+                        <Typography variant="body2" className="font-medium text-ink-secondary">
+                          {getDepartmentName(account)}
+                        </Typography>
+                        <Typography variant="caption" className="text-ink-muted">
+                          {account.team?.name || account.team?.code || '—'}
+                        </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography
-                          variant="body2"
-                          className={
-                            getDepartmentName(account) === '—'
-                              ? 'text-ink-muted'
-                              : 'text-ink-secondary'
-                          }
-                        >
-                          {getDepartmentName(account)}
+                        <Box className="flex min-w-[170px] flex-wrap gap-1.5">
+                          {globalRoles.length ? (
+                            globalRoles.map((role) => <UserRoleChip key={role} role={role} />)
+                          ) : (
+                            <Typography variant="body2" className="text-ink-muted">
+                              —
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" className="font-semibold text-ink-secondary">
+                          {t('rbac.users.scopedAssignmentCount', { count: scopedAssignmentCount })}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -390,9 +446,7 @@ export default function UsersRolesPage() {
                               size="small"
                               color="primary"
                               aria-label={t('rbac.users.actions.viewInfo')}
-                              onClick={() =>
-                                setDialog({ type: 'view-account', payload: accountId })
-                              }
+                              onClick={() => setDialog({ type: 'view-account', payload: account })}
                             >
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -422,7 +476,7 @@ export default function UsersRolesPage() {
         </TableContainer>
         <Stack direction="row" justifyContent="space-between" alignItems="center" className="p-4">
           <Typography variant="body2" color="text.secondary">
-            Tổng {pagination.total} tài khoản
+            {t('rbac.users.pagination.total', { count: pagination.total })}
           </Typography>
           <Stack direction="row" className="gap-2">
             <Button
@@ -430,14 +484,14 @@ export default function UsersRolesPage() {
               disabled={pagination.page <= 1}
               onClick={() => setUserFilters({ ...userFilters, page: pagination.page - 1 })}
             >
-              Trước
+              {t('common.previous')}
             </Button>
             <Button
               size="small"
               disabled={pagination.page * pagination.limit >= pagination.total}
               onClick={() => setUserFilters({ ...userFilters, page: pagination.page + 1 })}
             >
-              Sau
+              {t('common.next')}
             </Button>
           </Stack>
         </Stack>
@@ -996,12 +1050,14 @@ export default function UsersRolesPage() {
       />
       <AccountInfoDialog
         open={dialog.type === 'view-account'}
-        accountId={dialog.payload}
+        accountId={getAccountId(dialog.payload)}
+        summary={dialog.payload}
         onClose={closeDialog}
         t={t}
         canWrite={canWrite}
         statusPending={updateAccountStatusMutation.isPending}
         passwordPending={resetAccountPasswordMutation.isPending}
+        sessionsPending={revokeAccountSessionsMutation.isPending}
         onUpdateStatus={(payload) =>
           runMutation(
             updateAccountStatusMutation,
@@ -1009,11 +1065,19 @@ export default function UsersRolesPage() {
             t('rbac.users.viewModal.updateStatusSuccess'),
           )
         }
-        onResetPassword={(payload) =>
+        onResetPassword={(payload, done) =>
           runMutation(
             resetAccountPasswordMutation,
             payload,
             t('rbac.users.viewModal.resetPasswordSuccess'),
+            done,
+          )
+        }
+        onRevokeSessions={(accountId) =>
+          runMutation(
+            revokeAccountSessionsMutation,
+            accountId,
+            t('rbac.users.viewModal.revokeSessionsSuccess'),
           )
         }
       />

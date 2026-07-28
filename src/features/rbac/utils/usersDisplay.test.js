@@ -3,11 +3,33 @@ import test from 'node:test'
 
 import {
   formatLastLoginLabel,
+  getAccountAccessSummary,
   getAvatarMeta,
   getRoleMeta,
   getStatusMeta,
   normalizeRoleKey,
 } from './usersDisplay.js'
+
+test('getAccountAccessSummary keeps global and scoped access separate', () => {
+  const result = getAccountAccessSummary({
+    access: { roleIds: ['role-1'], customPermissionIds: ['permission-1'] },
+    roles: ['ADMIN'],
+    permissions: ['AUTH:READ'],
+    effectiveRoles: ['ADMIN'],
+    effectivePermissions: ['AUTH:READ', 'AUTH:WRITE'],
+    scopes: [{ assignmentId: 'assignment-1', scopeType: 'team', scopeId: 'team-1' }],
+  })
+
+  assert.deepEqual(result.globalRoles, ['ADMIN'])
+  assert.deepEqual(result.globalPermissions, ['AUTH:READ'])
+  assert.deepEqual(result.globalRoleIds, ['role-1'])
+  assert.deepEqual(result.globalPermissionIds, ['permission-1'])
+  assert.deepEqual(
+    result.scopedAssignments.map((item) => item.assignmentId),
+    ['assignment-1'],
+  )
+  assert.deepEqual(result.effectivePermissions, ['AUTH:READ', 'AUTH:WRITE'])
+})
 
 test('normalizeRoleKey maps backend role codes to figma role keys', () => {
   assert.equal(normalizeRoleKey('SYSTEM_ADMIN'), 'admin')
