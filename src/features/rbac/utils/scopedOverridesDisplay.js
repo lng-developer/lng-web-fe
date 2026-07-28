@@ -1,11 +1,3 @@
-export const OVERRIDE_ROLE_FILTER_OPTIONS = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'LEADER', label: 'Leader' },
-  { value: 'STAFF', label: 'Staff' },
-  { value: 'ANONYMOUS', label: 'Anonymous' },
-]
-
 function cleanArray(values = []) {
   return Array.isArray(values) ? values.filter(Boolean) : []
 }
@@ -82,14 +74,8 @@ export function buildScopedOverrideSections({ roles = [], permissions = [], rule
   })
 }
 
-export function getAvailableOverridePermissions({ permissions = [], role = {}, rule = null } = {}) {
-  const blockedIds = new Set([
-    ...getPermissionIdsFromRole(role),
-    ...cleanArray(rule?.permissionIds),
-    ...cleanArray(rule?.permissionDetails).map((permission) => permission.id),
-  ])
-
-  return permissions.filter((permission) => !blockedIds.has(permission.id))
+export function getAvailableOverridePermissions({ permissions = [] } = {}) {
+  return permissions
 }
 
 export function buildScopedRulePayload({ role, scope, permissionIds = [] }) {

@@ -111,6 +111,10 @@ export function getScopeDepartmentName(scope) {
   )
 }
 
+export function canDeactivateScope(scope = {}) {
+  return scope.status === 'active' && Number(scope.assignmentCount || 0) === 0
+}
+
 export function filterScopeItems(items = [], filters = {}) {
   const keyword = String(filters.search || '')
     .trim()

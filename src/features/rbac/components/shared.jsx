@@ -247,9 +247,7 @@ export function PermissionBulletList({ permissions }) {
   )
 }
 
-export function DefaultPermissionsPanel({ section, totalPermissions, t }) {
-  const isAdmin = section.roleCode === 'ADMIN'
-
+export function DefaultPermissionsPanel({ section, t }) {
   return (
     <Paper elevation={0} className="rounded-lg border border-border ">
       <Box className="mb-3 flex items-center gap-2 p-4 bg-gray-100 rounded-t-lg">
@@ -262,11 +260,7 @@ export function DefaultPermissionsPanel({ section, totalPermissions, t }) {
           </Typography>
         </Box>
       </Box>
-      {isAdmin ? (
-        <Typography variant="body2" className="italic text-ink-muted p-4">
-          {t('rbac.scopedOverrides.fullAccessNote', { count: totalPermissions })}
-        </Typography>
-      ) : section.defaultPermissions.length === 0 ? (
+      {section.defaultPermissions.length === 0 ? (
         <Typography variant="body2" className="italic text-ink-muted p-4">
           {t('rbac.scopedOverrides.noDefaultNote')}
         </Typography>
@@ -311,9 +305,6 @@ export function GrantedPermissionItem({ permission, onRevoke, canWrite, t }) {
 }
 
 export function GrantedPermissionsPanel({ section, onGrant, onRevoke, canWrite, t }) {
-  const isAdmin = section.roleCode === 'ADMIN'
-  const isAnonymous = section.roleCode === 'ANONYMOUS'
-
   return (
     <Paper elevation={0} className="rounded-lg border border-border bg-danger-bg">
       <Box className="mb-3 flex items-center gap-2 bg-red-50 p-4 rounded-t-lg">
@@ -329,15 +320,9 @@ export function GrantedPermissionsPanel({ section, onGrant, onRevoke, canWrite, 
           </Typography>
         </Box>
       </Box>
-      {isAdmin ? (
+      {section.overrideGroups.length === 0 ? (
         <Typography variant="body2" className="italic text-ink-muted p-4">
-          {t('rbac.scopedOverrides.adminGrantNote')}
-        </Typography>
-      ) : section.overrideGroups.length === 0 ? (
-        <Typography variant="body2" className="italic text-ink-muted p-4">
-          {isAnonymous
-            ? t('rbac.scopedOverrides.noOverrideAnonymousNote')
-            : t('rbac.scopedOverrides.noOverrideNote')}
+          {t('rbac.scopedOverrides.noOverrideNote')}
         </Typography>
       ) : (
         section.overrideGroups.map((group) => (
@@ -377,17 +362,7 @@ export function GrantedPermissionsPanel({ section, onGrant, onRevoke, canWrite, 
   )
 }
 
-export function RoleOverrideSection({
-  section,
-  totalPermissions,
-  onEditRole,
-  onGrant,
-  onRevoke,
-  canWrite,
-  t,
-}) {
-  const isAnonymous = section.roleCode === 'ANONYMOUS'
-
+export function RoleOverrideSection({ section, onEditRole, onGrant, onRevoke, canWrite, t }) {
   return (
     <Box>
       <Box className="mb-3 mt-6 flex items-center justify-between">
@@ -405,14 +380,12 @@ export function RoleOverrideSection({
             className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
             onClick={onEditRole}
           >
-            {isAnonymous
-              ? t('rbac.scopedOverrides.editAnonymousPerms')
-              : t('rbac.scopedOverrides.editRolePerms', { name: section.roleName })}
+            {t('rbac.scopedOverrides.editRolePerms', { name: section.roleName })}
           </Button>
         )}
       </Box>
       <Box className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <DefaultPermissionsPanel section={section} totalPermissions={totalPermissions} t={t} />
+        <DefaultPermissionsPanel section={section} t={t} />
         <GrantedPermissionsPanel
           section={section}
           onGrant={onGrant}

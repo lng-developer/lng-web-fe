@@ -28,10 +28,12 @@ export default function GrantPermissionModal({
   pending,
   t,
 }) {
-  const [selectedPermissionIds, setSelectedPermissionIds] = useState([])
-  const [note, setNote] = useState('')
   const section = context?.section
   const group = context?.group
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState(
+    () => group?.permissionIds ?? group?.permissions?.map((permission) => permission.id) ?? [],
+  )
+  const [note, setNote] = useState('')
   const availablePermissions = getAvailableOverridePermissions({
     permissions,
     role: section?.role,
@@ -44,7 +46,7 @@ export default function GrantPermissionModal({
       ...buildScopedRulePayload({
         role: section?.role,
         scope: group,
-        permissionIds: [...(group?.permissionIds ?? []), ...selectedPermissionIds],
+        permissionIds: selectedPermissionIds,
       }),
       note,
     })
@@ -118,7 +120,7 @@ export default function GrantPermissionModal({
             variant="contained"
             color="primary"
             className="h-10 rounded-lg px-5 text-sm font-semibold"
-            disabled={pending || selectedPermissionIds.length === 0}
+            disabled={pending}
           >
             {t('rbac.scopedOverrides.grantModal.submit')}
           </Button>

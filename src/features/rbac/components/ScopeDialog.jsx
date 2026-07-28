@@ -19,7 +19,6 @@ import {
   getScopeDisplayName,
   getScopeResourceOptions,
   SCOPE_CREATE_TYPE_OPTIONS,
-  SCOPE_STATUS_OPTIONS,
   SCOPE_TYPE_FILTER_OPTIONS,
 } from '../utils/scopesDisplay'
 import { findById, INITIAL_SCOPE_FORM } from './shared'
@@ -238,27 +237,6 @@ export default function ScopeDialog({
               sx={fieldControlSx}
             />
           </ScopeDialogField>
-
-          {isEdit && (
-            <ScopeDialogField label={t('rbac.scopes.fields.status')}>
-              <Select
-                fullWidth
-                displayEmpty
-                size="small"
-                value={form.status}
-                disabled={!canWrite}
-                onChange={(event) => setForm({ ...form, status: event.target.value })}
-                className={fieldControlClassName}
-                sx={fieldControlSx}
-              >
-                {SCOPE_STATUS_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {t(option.labelKey)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </ScopeDialogField>
-          )}
         </DialogContent>
         <DialogActions className="justify-between border-t border-border !px-6 !pb-6 !pt-2">
           <Button

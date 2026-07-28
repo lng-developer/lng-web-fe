@@ -38,6 +38,7 @@ import {
   useCreateRoleMutation,
   useCreateScopeMutation,
   useDeactivateAccessAssignmentMutation,
+  useDeactivateScopeMutation,
   useDeletePermissionMutation,
   useDeleteRoleMutation,
   useResetAccountPasswordMutation,
@@ -97,10 +98,10 @@ import {
   buildScopedOverrideSections,
   buildScopedRulePayload,
   filterOverrideRoles,
-  OVERRIDE_ROLE_FILTER_OPTIONS,
 } from '../utils/scopedOverridesDisplay'
 import {
   buildAddScopePayload,
+  canDeactivateScope,
   filterScopeItems,
   getScopeDisplayName,
   SCOPE_DEPARTMENT_FALLBACK,
@@ -215,6 +216,7 @@ export default function UsersRolesPage() {
   const deletePermissionMutation = useDeletePermissionMutation()
   const createScopeMutation = useCreateScopeMutation()
   const updateScopeMutation = useUpdateScopeMutation()
+  const deactivateScopeMutation = useDeactivateScopeMutation()
   const setScopedRolePermissionsMutation = useSetScopedRolePermissionsMutation()
 
   const notifySuccess = (message) => {
@@ -873,6 +875,7 @@ export default function UsersRolesPage() {
                 <UserHeaderCell width={160}>{t('rbac.scopes.columns.type')}</UserHeaderCell>
                 <UserHeaderCell>{t('rbac.scopes.columns.name')}</UserHeaderCell>
                 <UserHeaderCell width={200}>{t('rbac.scopes.columns.department')}</UserHeaderCell>
+                <UserHeaderCell width={130}>{t('rbac.scopes.columns.assignments')}</UserHeaderCell>
                 <UserHeaderCell width={160}>{t('rbac.scopes.columns.status')}</UserHeaderCell>
                 <UserHeaderCell align="right" width={160}>
                   {t('rbac.scopes.columns.actions')}
@@ -881,7 +884,7 @@ export default function UsersRolesPage() {
             </TableHead>
             <TableBody>
               {filteredScopes.length === 0 ? (
-                <EmptyRow colSpan={5} loading={scopesQuery.isPending} />
+                <EmptyRow colSpan={6} loading={scopesQuery.isPending} />
               ) : (
                 filteredScopes.map((scope) => (
                   <TableRow
@@ -913,21 +916,50 @@ export default function UsersRolesPage() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Switch
-                        checked={scope.status === 'active'}
-                        color="primary"
-                        disabled={!canWrite}
-                        onChange={(event) =>
-                          runMutation(
-                            updateScopeMutation,
-                            {
-                              scopeRegistryId: scope.id,
-                              values: { status: event.target.checked ? 'active' : 'inactive' },
-                            },
-                            t('rbac.scopes.toggleSuccess'),
-                          )
+                      <Typography variant="body2" className="font-semibold text-ink-secondary">
+                        {t('rbac.scopes.assignmentCount', { count: scope.assignmentCount ?? 0 })}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip
+                        title={
+                          scope.status === 'active' && !canDeactivateScope(scope)
+                            ? t('rbac.scopes.deactivateBlocked', {
+                                count: scope.assignmentCount ?? 0,
+                              })
+                            : ''
                         }
-                      />
+                        arrow
+                      >
+                        <span>
+                          <Switch
+                            checked={scope.status === 'active'}
+                            color="primary"
+                            disabled={
+                              !canWrite ||
+                              updateScopeMutation.isPending ||
+                              deactivateScopeMutation.isPending ||
+                              (scope.status === 'active' && !canDeactivateScope(scope))
+                            }
+                            onChange={(event) => {
+                              if (event.target.checked) {
+                                runMutation(
+                                  updateScopeMutation,
+                                  { scopeRegistryId: scope.id, values: { status: 'active' } },
+                                  t('rbac.scopes.toggleSuccess'),
+                                )
+                                return
+                              }
+
+                              runMutation(
+                                deactivateScopeMutation,
+                                scope.id,
+                                t('rbac.scopes.toggleSuccess'),
+                              )
+                            }}
+                          />
+                        </span>
+                      </Tooltip>
                     </TableCell>
                     <TableCell align="right">
                       <Box className="flex items-center justify-end gap-2">
@@ -980,9 +1012,9 @@ export default function UsersRolesPage() {
             onChange={(event) => setOverrideRoleFilter(event.target.value)}
           >
             <MenuItem value="">{t('rbac.scopedOverrides.allRoles')}</MenuItem>
-            {OVERRIDE_ROLE_FILTER_OPTIONS.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+            {roles.map((role) => (
+              <MenuItem key={role.id} value={role.code}>
+                {role.name || role.code}
               </MenuItem>
             ))}
           </Select>
@@ -1002,7 +1034,6 @@ export default function UsersRolesPage() {
           <RoleOverrideSection
             key={section.roleId}
             section={section}
-            totalPermissions={permissions.length}
             canWrite={canWrite}
             t={t}
             onEditRole={() => setDialog({ type: 'scoped-grant', payload: { role: section.role } })}
@@ -1238,7 +1269,7 @@ export default function UsersRolesPage() {
               updateScopeMutation,
               {
                 scopeRegistryId: dialog.payload.id,
-                values: { name: values.name, status: values.status },
+                values: { name: values.name },
               },
               t('rbac.scopes.editModal.success'),
               closeDialog,

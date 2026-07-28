@@ -63,7 +63,7 @@ export default function GrantScopedPermissionModal({
       ...buildScopedRulePayload({
         role,
         scope: selectedScope,
-        permissionIds: [...(existingRule?.permissionIds ?? []), ...selectedPermissionIds],
+        permissionIds: selectedPermissionIds,
       }),
       note,
     })
@@ -146,8 +146,15 @@ export default function GrantScopedPermissionModal({
                 displayEmpty
                 value={scopeId}
                 onChange={(event) => {
-                  setScopeId(event.target.value)
-                  setSelectedPermissionIds([])
+                  const nextScopeId = event.target.value
+                  const nextRule = rules.find(
+                    (rule) =>
+                      rule.roleId === role?.id &&
+                      rule.scopeType === scopeType &&
+                      rule.scopeId === nextScopeId,
+                  )
+                  setScopeId(nextScopeId)
+                  setSelectedPermissionIds(nextRule?.permissionIds ?? [])
                 }}
                 renderValue={(value) => {
                   const scope = scopeOptions.find((item) => item.scopeId === value)
@@ -223,7 +230,7 @@ export default function GrantScopedPermissionModal({
             variant="contained"
             color="primary"
             className="h-10 rounded-lg px-5 text-sm font-semibold"
-            disabled={!scopeType || !scopeId || selectedPermissionIds.length === 0 || pending}
+            disabled={!scopeType || !scopeId || pending}
           >
             {t('rbac.scopedOverrides.scopedGrantModal.submit')}
           </Button>

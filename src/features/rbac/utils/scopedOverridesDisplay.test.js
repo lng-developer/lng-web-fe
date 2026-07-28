@@ -67,14 +67,14 @@ test('buildScopedOverrideSections joins roles with default permissions and scope
   )
 })
 
-test('getAvailableOverridePermissions excludes default and already granted permissions', () => {
+test('getAvailableOverridePermissions exposes the full replacement permission set', () => {
   assert.deepEqual(
     getAvailableOverridePermissions({
       permissions,
       role: roles[1],
       rule: { permissionIds: ['p3'] },
     }).map((permission) => permission.id),
-    ['p2'],
+    ['p1', 'p2', 'p3'],
   )
 })
 
