@@ -143,3 +143,7 @@ test('HR calendar policy endpoints match backend routes', () => {
     '/api/hr/saturday-rotations/team/team-1',
   )
 })
+
+test('HR dashboard endpoint matches the backend read model route', () => {
+  assert.equal(ENDPOINTS.HR.DASHBOARD, '/api/hr/dashboard')
+})

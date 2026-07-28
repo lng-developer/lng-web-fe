@@ -297,6 +297,7 @@ export const ENDPOINTS = {
     OPERATIONS_OVERVIEW: '/api/reports/operations/overview',
   },
   HR: {
+    DASHBOARD: '/api/hr/dashboard',
     EMPLOYEE_PROFILES: '/api/hr/employee-profiles',
     MY_EMPLOYEE_PROFILE: '/api/hr/employee-profiles/me',
     EMPLOYEE_PROFILE: (profileId) => `/api/hr/employee-profiles/${profileId}`,

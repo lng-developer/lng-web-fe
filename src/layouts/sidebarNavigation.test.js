@@ -160,6 +160,19 @@ describe('sidebar navigation', () => {
     assert.equal(withIntegrationManage.includes('hr-settings'), true)
   })
 
+  it('exposes the HR dashboard only to employee readers', () => {
+    const mountedPaths = new Set([ROUTES.HR_DASHBOARD])
+    const withoutEmployeeRead = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_ATTENDANCE:READ'] }, mountedPaths),
+    )
+    const withEmployeeRead = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_EMPLOYEES:READ'] }, mountedPaths),
+    )
+
+    assert.equal(withoutEmployeeRead.includes('hr-dashboard'), false)
+    assert.equal(withEmployeeRead.includes('hr-dashboard'), true)
+  })
+
   it('renders Task 10 HR links after their routes are mounted', () => {
     const renderedIds = collectLeafIds(
       filterNavigationByUser(HR_NAVIGATION, { permissions: ['MANAGE_SYSTEM'] }),
