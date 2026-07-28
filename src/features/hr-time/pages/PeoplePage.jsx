@@ -146,7 +146,7 @@ export default function PeoplePage() {
             ? 'Could not delete employee profile'
             : 'Could not restore employee profile'),
       )
-      if ([403, 404].includes(error?.response?.status)) await directoryQuery.refetch()
+      if ([403, 404, 409].includes(error?.response?.status)) await directoryQuery.refetch()
     }
   }
 
@@ -202,12 +202,14 @@ export default function PeoplePage() {
     if (column.key === 'actions') {
       return (
         <div className="flex justify-center gap-1">
-          <IconActionButton
-            label={t('common.view', { defaultValue: 'View' })}
-            onClick={() => setSelected(row)}
-          >
-            <VisibilityOutlinedIcon fontSize="small" />
-          </IconActionButton>
+          {!row.isDeleted && (
+            <IconActionButton
+              label={t('common.view', { defaultValue: 'View' })}
+              onClick={() => setSelected(row)}
+            >
+              <VisibilityOutlinedIcon fontSize="small" />
+            </IconActionButton>
+          )}
           {row.capabilities?.delete ? (
             <IconActionButton
               label="Delete employee profile"
@@ -311,12 +313,14 @@ export default function PeoplePage() {
             >
               {t('common.refresh', { defaultValue: 'Refresh' })}
             </Button>
-            <Button
-              variant={includeDeleted ? 'contained' : 'text'}
-              onClick={() => updateSearch({ includeDeleted: includeDeleted ? '' : 'true' }, true)}
-            >
-              Include deleted
-            </Button>
+            {canWrite && (
+              <Button
+                variant={includeDeleted ? 'contained' : 'text'}
+                onClick={() => updateSearch({ includeDeleted: includeDeleted ? '' : 'true' }, true)}
+              >
+                Include deleted
+              </Button>
+            )}
           </div>
         </OperationsToolbar>
       }
