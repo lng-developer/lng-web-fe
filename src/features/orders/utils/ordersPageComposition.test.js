@@ -38,6 +38,18 @@ function readOrderWorkbenchColumnsSource() {
   return readFileSync(layoutUrl, 'utf8')
 }
 
+function catchSource(dialog) {
+  const start = dialog.indexOf('} catch (error) {')
+  assert.ok(start >= 0, 'Expected catch block start')
+  const end = dialog.slice(start).search(/\r?\n {4}}\r?\n {2}}\r?\n\r?\n {2}return/)
+  assert.ok(end >= 0, 'Expected catch terminator')
+  return dialog.slice(start, start + end)
+}
+
+test('catch extraction rejects a missing catch terminator', () => {
+  assert.throws(() => catchSource('} catch (error) {\r\n  return error'), /catch terminator/)
+})
+
 test('orders table declares columns as shared operations table config', () => {
   const columnsUrl = new URL('../components/orderWorkbenchColumns.js', import.meta.url)
   assert.equal(existsSync(columnsUrl), true)
@@ -139,11 +151,6 @@ test('order dialogs reset drafts on close and selected order changes without cle
       source.indexOf(`export function ${name}`),
       nextName ? source.indexOf(`export function ${nextName}`) : source.length,
     )
-  const catchSource = (dialog) => {
-    const start = dialog.indexOf('} catch (error) {')
-    const end = dialog.slice(start).search(/\r?\n {4}}\r?\n {2}}\r?\n\r?\n {2}return/)
-    return dialog.slice(start, start + end)
-  }
   const importDialog = dialogSource('ImportOrdersDialog', 'UpdateCustomerDialog')
   const customerDialog = dialogSource('UpdateCustomerDialog', 'UpdateShippingDialog')
   const shippingDialog = dialogSource('UpdateShippingDialog', 'OpenCaseDialog')
