@@ -37,12 +37,6 @@ export function useUpdateAccountStatusMutation() {
   )
 }
 
-export function useUpdateAccountProfileMutation() {
-  return useRbacMutation(({ accountId, payload }) =>
-    apiClient.patch(ENDPOINTS.RBAC.ACCOUNT_PROFILE(accountId), payload).then(unwrapApiData),
-  )
-}
-
 export function useUpdateAccountEmailMutation() {
   return useRbacMutation(({ accountId, email }) =>
     apiClient.patch(ENDPOINTS.RBAC.ACCOUNT_EMAIL(accountId), { email }).then(unwrapApiData),

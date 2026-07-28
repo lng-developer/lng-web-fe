@@ -12,5 +12,4 @@ export const rbacKeys = {
   scopedRolePermissions: (query = {}) => [...rbacKeys.all, 'scopedRolePermissions', query],
   departments: (query = {}) => [...rbacKeys.all, 'departments', query],
   teams: (query = {}) => [...rbacKeys.all, 'teams', query],
-  memberCandidates: (query = {}) => [...rbacKeys.all, 'memberCandidates', query],
 }

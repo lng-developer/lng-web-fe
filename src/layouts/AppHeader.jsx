@@ -22,6 +22,7 @@ import {
 import { LANGUAGES, LAYOUT_SIZES, THEME_MODES } from '@/constants/app'
 import { ROUTES } from '@/constants/routes'
 import {
+  getCurrentUserDisplayName,
   getCurrentUserInitials,
   getCurrentUserRole,
   resolveCurrentUser,
@@ -67,19 +68,6 @@ function languageToggleButtonSx(active) {
   })
 }
 
-function getHeaderInitialsSource(user) {
-  return (
-    user?.profile?.fullName ??
-    user?.profile?.email ??
-    user?.account?.email ??
-    user?.name ??
-    user?.fullName ??
-    user?.displayName ??
-    user?.email ??
-    ''
-  )
-}
-
 export default function AppHeader({ onToggleSidebar }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -98,7 +86,7 @@ export default function AppHeader({ onToggleSidebar }) {
       ? userRole.toUpperCase()
       : t('roles.admin')
   const userInitials = getCurrentUserInitials(
-    getHeaderInitialsSource(currentUser) || roleLabel || t('auth.userFallback'),
+    getCurrentUserDisplayName(currentUser) || roleLabel || t('auth.userFallback'),
   )
 
   const handleChangeLanguage = (lang) => {

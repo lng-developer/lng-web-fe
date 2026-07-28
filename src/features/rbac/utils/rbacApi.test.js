@@ -37,7 +37,6 @@ test('unwrapApiData returns nested data and supports direct payloads', () => {
 test('buildAccountCreatePayload sends backend assignment field names', () => {
   assert.deepEqual(
     buildAccountCreatePayload({
-      fullName: ' Nguyen Van A ',
       email: 'Admin@LNG.com ',
       password: '12345678',
       roleId: 'role-id',
@@ -45,7 +44,6 @@ test('buildAccountCreatePayload sends backend assignment field names', () => {
       customPermissionIds: ['p1', '', 'p2'],
     }),
     {
-      fullName: 'Nguyen Van A',
       email: 'admin@lng.com',
       password: '12345678',
       assignments: [

@@ -23,10 +23,9 @@ export function resolveCurrentUser(response) {
     return null
   }
 
-  if (data.account || data.profile || data.roles || data.scopes) {
+  if (data.account || data.roles || data.scopes) {
     return {
       account: data.account ?? null,
-      profile: data.profile ?? null,
       roles: Array.isArray(data.roles) ? data.roles : [],
       permissions: Array.isArray(data.permissions) ? data.permissions : [],
       scopes: Array.isArray(data.scopes) ? data.scopes : [],
@@ -38,8 +37,7 @@ export function resolveCurrentUser(response) {
 
 export function getCurrentUserDisplayName(user) {
   return (
-    user?.profile?.fullName ??
-    user?.profile?.email ??
+    user?.employeeProfile?.fullName ??
     user?.account?.email ??
     user?.name ??
     user?.fullName ??
@@ -51,7 +49,7 @@ export function getCurrentUserDisplayName(user) {
 
 export function getCurrentUserAvatar(user) {
   return (
-    user?.profile?.avatarUrl ??
+    user?.employeeProfile?.avatarUrl ??
     user?.account?.avatarUrl ??
     user?.avatarUrl ??
     user?.avatar ??

@@ -331,6 +331,8 @@
     },
     "login": {
       "title": "Đăng nhập",
+      "identifier": "Email hoặc mã nhân viên",
+      "identifierPlaceholder": "you@lng.co hoặc J2501",
       "email": "Email",
       "emailPlaceholder": "you@lng.co",
       "password": "Mật khẩu",
@@ -341,6 +343,7 @@
       "submit": "Đăng nhập",
       "success": "Đăng nhập thành công!",
       "errors": {
+        "identifierRequired": "Vui lòng nhập email hoặc mã nhân viên",
         "emailRequired": "Vui lòng nhập email",
         "emailInvalid": "Email không hợp lệ",
         "passwordRequired": "Vui lòng nhập mật khẩu"

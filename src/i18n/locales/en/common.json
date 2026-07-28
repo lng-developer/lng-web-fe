@@ -331,6 +331,8 @@
     },
     "login": {
       "title": "Login",
+      "identifier": "Email or employee code",
+      "identifierPlaceholder": "you@lng.co or J2501",
       "email": "Email",
       "emailPlaceholder": "you@lng.co",
       "password": "Password",
@@ -341,6 +343,7 @@
       "submit": "Login",
       "success": "Login successful!",
       "errors": {
+        "identifierRequired": "Please enter your email or employee code",
         "emailRequired": "Please enter your email",
         "emailInvalid": "Invalid email address",
         "passwordRequired": "Please enter your password"

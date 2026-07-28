@@ -15,14 +15,18 @@ function resolveDepartment(user) {
 
   return firstNonEmptyValue([
     user?.department?.name,
-    user?.profile?.department,
+    user?.employeeProfile?.department?.name,
     user?.account?.department,
   ])
 }
 
 export function buildProfileDetails(user) {
   const displayName = getCurrentUserDisplayName(user)
-  const email = firstNonEmptyValue([user?.profile?.email, user?.account?.email, user?.email])
+  const email = firstNonEmptyValue([
+    user?.employeeProfile?.workEmail,
+    user?.account?.email,
+    user?.email,
+  ])
   const username = firstNonEmptyValue([
     user?.account?.username,
     user?.username,
@@ -34,25 +38,20 @@ export function buildProfileDetails(user) {
   return {
     displayName,
     email,
-    personalEmail: email,
-    phone: firstNonEmptyValue([user?.profile?.phone, user?.phone, user?.account?.phone]),
+    personalEmail: firstNonEmptyValue([user?.employeeProfile?.personalEmail, email]),
+    phone: firstNonEmptyValue([user?.employeeProfile?.phone, user?.phone, user?.account?.phone]),
     birthday: firstNonEmptyValue([
-      user?.profile?.birthday,
-      user?.profile?.birthDate,
-      user?.profile?.dateOfBirth,
+      user?.employeeProfile?.dateOfBirth,
       user?.birthday,
       user?.dateOfBirth,
     ]),
     citizenId: firstNonEmptyValue([
-      user?.profile?.citizenId,
-      user?.profile?.identityNumber,
-      user?.profile?.cccd,
+      user?.employeeProfile?.citizenId,
       user?.citizenId,
       user?.identityNumber,
     ]),
     address: firstNonEmptyValue([
-      user?.profile?.address,
-      user?.profile?.fullAddress,
+      user?.employeeProfile?.address,
       user?.address,
     ]),
     username,

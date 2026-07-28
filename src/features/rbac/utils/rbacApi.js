@@ -69,7 +69,6 @@ export function buildAccountCreatePayload(values) {
   const scopeId = optionalString(values.scopeId)
 
   return {
-    fullName: cleanString(values.fullName),
     email: cleanString(values.email)?.toLowerCase(),
     password: values.password,
     assignments: [

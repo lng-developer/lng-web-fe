@@ -47,10 +47,11 @@ export default function LoginForm() {
   return (
     <Stack component="form" onSubmit={handleSubmit(onSubmit)} spacing={2.5} className="w-full">
       <FormTextField
-        name="email"
+        name="identifier"
         control={control}
-        label={t('auth.login.email')}
-        placeholder={t('auth.login.emailPlaceholder')}
+        label={t('auth.login.identifier')}
+        placeholder={t('auth.login.identifierPlaceholder')}
+        autoComplete="username"
         slotProps={{
           input: {
             startAdornment: (

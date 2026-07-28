@@ -142,7 +142,6 @@ const ACCOUNT_STATUSES = [
 ]
 
 const INITIAL_USER_FORM = {
-  fullName: '',
   email: '',
   password: '',
   roleId: '',
@@ -195,11 +194,11 @@ function formatShortDate(value) {
 }
 
 function getAccountName(account) {
-  return account?.profile?.fullName || account?.account?.email || account?.email || '—'
+  return account?.account?.email || account?.email || '—'
 }
 
 function getAccountEmail(account) {
-  return account?.account?.email || account?.email || account?.profile?.email || '—'
+  return account?.account?.email || account?.email || '—'
 }
 
 function getAccountId(account) {
@@ -688,8 +687,7 @@ function AccountInfoDialog({
   const [showPassword, setShowPassword] = useState(false)
   const { data, isPending } = useAccountQuery(accountId, { enabled: open && Boolean(accountId) })
   const account = data?.account
-  const profile = data?.profile
-  const displayName = profile?.fullName || account?.email || '—'
+  const displayName = account?.email || '—'
   const role =
     data?.effectiveRoles?.[0] || data?.roles?.[0]?.code || data?.roles?.[0] || 'anonymous'
   const department = data?.scopes?.find((scope) => scope.scopeType === 'department')?.scopeName
@@ -882,16 +880,6 @@ function AccountFormDialog({ open, onClose, roles, onSubmit, pending, t }) {
         <DialogContent className="flex flex-col gap-5 px-6 pb-3 pt-2">
           <Stack className="gap-8 mt-4">
             <TextField
-              label={t('rbac.users.addModal.fields.displayName')}
-              placeholder={t('rbac.users.addModal.fields.displayNamePlaceholder')}
-              value={form.fullName}
-              onChange={(event) => setForm({ ...form, fullName: event.target.value })}
-              size="small"
-              required
-              fullWidth
-              className="rounded-lg"
-            />
-            <TextField
               label={t('rbac.users.addModal.fields.email')}
               placeholder={t('rbac.users.addModal.fields.emailPlaceholder')}
               value={form.email}
@@ -979,7 +967,6 @@ function EditAccessDialog({
   })
 
   const account = data?.account
-  const profile = data?.profile
   const scopeAssignmentOptions = [...scopes, ...(data?.scopes ?? [])].reduce((options, scope) => {
     const value = getScopeSelectValue(scope)
     if (!value || options.some((option) => getScopeSelectValue(option) === value)) return options
@@ -1021,7 +1008,7 @@ function EditAccessDialog({
       >
         <DialogTitle className="pb-3 pr-10 font-semibold text-ink">
           {t('rbac.users.editAccessModal.title', {
-            name: profile?.fullName || account?.email || '—',
+            name: account?.email || '—',
           })}
           <IconButton
             onClick={onClose}

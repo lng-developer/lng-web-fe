@@ -114,12 +114,3 @@ export function useTeamsQuery(query = {}) {
     queryFn: () => get(ENDPOINTS.ORGANIZATION.TEAMS, params),
   })
 }
-
-export function useMemberCandidatesQuery(query = {}) {
-  const params = buildCleanQuery({ limit: 50, ...query })
-
-  return useQuery({
-    queryKey: rbacKeys.memberCandidates(params),
-    queryFn: () => get(ENDPOINTS.ORGANIZATION.MEMBER_CANDIDATES, params),
-  })
-}
