@@ -13,7 +13,7 @@ export function getOverrideRoleCode(role = {}) {
 }
 
 export function getOverrideRoleName(role = {}) {
-  return role.name || role.roleName || getOverrideRoleCode(role) || '—'
+  return role.name || role.roleName || getOverrideRoleCode(role) || '-'
 }
 
 export function filterOverrideRoles(roles = [], roleFilter = '') {
@@ -38,7 +38,7 @@ export function getScopeOptionLabel(scope = {}) {
     scope.resource?.name ||
     scope.scope?.name ||
     scope.scopeId ||
-    '—'
+    '-'
   )
 }
 

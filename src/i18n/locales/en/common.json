@@ -394,6 +394,20 @@
     "title": "Access administration",
     "description": "Manage accounts, roles, permissions, and scopes using the backend's effective access model.",
     "recordCount": "{{count}} records",
+    "workspaces": {
+      "access": {
+        "label": "Access Explorer",
+        "description": "Select an account to trace global, scoped, and backend-returned effective access."
+      },
+      "policies": {
+        "label": "Roles & Policies",
+        "description": "Configure role permission sets and inspect the permission catalog without switching tables."
+      },
+      "matrix": {
+        "label": "Scope Matrix",
+        "description": "Inspect role-to-scope replacement rules and manage registered scope resources."
+      }
+    },
     "common": {
       "readOnly": "You have read-only access to RBAC settings.",
       "loading": "Loading data...",

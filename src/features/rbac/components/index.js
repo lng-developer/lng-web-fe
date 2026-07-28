@@ -1,6 +1,5 @@
 export { default as AccessExplorer } from './AccessExplorer'
 export { default as AccountFormDialog } from './AccountFormDialog'
-export { default as AccountInfoDialog } from './AccountInfoDialog'
 export { default as EditAccessDialog } from './EditAccessDialog'
 export { default as GrantPermissionModal } from './GrantPermissionModal'
 export { default as GrantScopedPermissionModal } from './GrantScopedPermissionModal'

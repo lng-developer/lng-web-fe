@@ -54,8 +54,8 @@ test('getScopeDepartmentName resolves parent department names and falls back to 
     }),
     'QC',
   )
-  assert.equal(getScopeDepartmentName({ scopeType: 'department', name: 'QC' }), '—')
-  assert.equal(getScopeDepartmentName({ scopeType: 'global', name: 'Global' }), '—')
+  assert.equal(getScopeDepartmentName({ scopeType: 'department', name: 'QC' }), '-')
+  assert.equal(getScopeDepartmentName({ scopeType: 'global', name: 'Global' }), '-')
 })
 
 test('buildScopeFormPayload uses selected resource name when form name is empty', () => {

@@ -41,7 +41,7 @@ export default function ScopeDialog({
       ? {
           scopeType: value.scopeType || 'department',
           scopeId: value.scopeId || '',
-          name: getScopeDisplayName(value) === '—' ? '' : getScopeDisplayName(value),
+          name: getScopeDisplayName(value) === '-' ? '' : getScopeDisplayName(value),
           code: value.resource?.code || value.resourceId || '',
           status: value.status || 'active',
         }

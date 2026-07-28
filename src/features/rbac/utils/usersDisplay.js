@@ -102,7 +102,7 @@ export function getAvatarMeta(displayName = '', index = 0, anonymous = false) {
 }
 
 export function formatLastLoginLabel(value, now = new Date(), locale = 'vi') {
-  if (!value) return '—'
+  if (!value) return '-'
 
   const date = new Date(value)
   const diffMinutes = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 60000))

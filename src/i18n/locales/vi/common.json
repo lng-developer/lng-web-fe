@@ -392,6 +392,20 @@
     "title": "Quản trị truy cập",
     "description": "Quản lý tài khoản, vai trò, quyền và phạm vi theo đúng quyền truy cập hiệu lực từ backend.",
     "recordCount": "{{count}} bản ghi",
+    "workspaces": {
+      "access": {
+        "label": "Khám phá quyền",
+        "description": "Chọn tài khoản để truy vết quyền global, theo scope và quyền hiệu lực do backend trả về."
+      },
+      "policies": {
+        "label": "Vai trò & Chính sách",
+        "description": "Cấu hình bộ quyền của vai trò và tra cứu danh mục quyền mà không phải chuyển qua nhiều bảng."
+      },
+      "matrix": {
+        "label": "Ma trận scope",
+        "description": "Kiểm tra bộ quyền thay thế theo vai trò và scope, đồng thời quản lý tài nguyên scope đã đăng ký."
+      }
+    },
     "common": {
       "readOnly": "Bạn chỉ có quyền xem cấu hình phân quyền.",
       "loading": "Đang tải dữ liệu...",

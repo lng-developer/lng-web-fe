@@ -170,7 +170,7 @@ export default function PermissionDialog({
                   {t('rbac.permissions.editModal.metadata.module')}
                 </Typography>
                 <Typography variant="body2" className="text-sm font-semibold text-ink">
-                  {value.module || '—'}
+                  {value.module || '-'}
                 </Typography>
               </Box>
               <Box>

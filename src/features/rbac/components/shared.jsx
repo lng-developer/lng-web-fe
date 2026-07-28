@@ -2,17 +2,13 @@
 import CloseIcon from '@mui/icons-material/Close'
 import {
   Box,
-  Button,
   Checkbox,
   Chip,
   FormControl,
-  IconButton,
   MenuItem,
   Paper,
   Select,
   Stack,
-  TableCell,
-  TableRow,
   Typography,
 } from '@mui/material'
 import dayjs from 'dayjs'
@@ -53,19 +49,6 @@ export function UserFieldLabel({ children }) {
     >
       {children}
     </Typography>
-  )
-}
-
-export function UserHeaderCell({ children, align = 'left', width }) {
-  return (
-    <TableCell align={align} width={width} className="h-11">
-      <Typography
-        variant="caption"
-        className="text-xs font-semibold uppercase tracking-wide text-ink-muted"
-      >
-        {children}
-      </Typography>
-    </TableCell>
   )
 }
 
@@ -111,23 +94,6 @@ export function Section({ children }) {
   )
 }
 
-export function EmptyRow({ colSpan, loading, message, onRetry, t }) {
-  return (
-    <TableRow>
-      <TableCell colSpan={colSpan} align="center" sx={{ py: 6, color: 'text.disabled' }}>
-        <Stack className="items-center gap-2">
-          <Typography variant="body2">{loading ? t('rbac.common.loading') : message}</Typography>
-          {!loading && onRetry && (
-            <Button size="small" onClick={onRetry}>
-              {t('common.retry')}
-            </Button>
-          )}
-        </Stack>
-      </TableCell>
-    </TableRow>
-  )
-}
-
 export function PermissionCodeBadge({ code }) {
   return (
     <Box className="inline-flex items-center rounded border border-border bg-page px-2 py-0.5">
@@ -135,7 +101,7 @@ export function PermissionCodeBadge({ code }) {
         variant="caption"
         className="font-mono text-[12px] font-medium tracking-wide text-ink-secondary"
       >
-        {code || '—'}
+        {code || '-'}
       </Typography>
     </Box>
   )
@@ -145,7 +111,7 @@ export function PermissionMetaCard({ children }) {
   return (
     <Box className="inline-flex min-h-6 items-center rounded border border-border bg-surface px-2 py-0.5">
       <Typography variant="body2" className="text-sm font-semibold text-ink">
-        {children || '—'}
+        {children || '-'}
       </Typography>
     </Box>
   )
@@ -239,189 +205,6 @@ export function PermissionMultiSelect({
   )
 }
 
-export function PermissionBulletList({ permissions }) {
-  return (
-    <Box className="grid grid-cols-1 gap-x-4 gap-y-1 md:grid-cols-2 p-4">
-      {permissions.map((permission) => (
-        <Box key={permission.id} className="flex items-center gap-1.5">
-          <Box className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-          <Typography variant="body2" className="text-sm text-ink-secondary">
-            {permission.name || permission.code}
-          </Typography>
-        </Box>
-      ))}
-    </Box>
-  )
-}
-
-export function DefaultPermissionsPanel({ section, t }) {
-  return (
-    <Paper elevation={0} className="rounded-lg border border-border ">
-      <Box className="mb-3 flex items-center gap-2 p-4 bg-gray-100 rounded-t-lg">
-        <Typography variant="body2" className="font-semibold text-ink">
-          {t('rbac.scopedOverrides.defaultPermsTitle', { name: section.roleName })}
-        </Typography>
-        <Box className="inline-flex items-center gap-1 rounded border border-border bg-page px-2 py-0.5">
-          <Typography variant="caption" className="text-[10px] font-semibold tracking-wide ">
-            {t('rbac.scopedOverrides.defaultBadge')}
-          </Typography>
-        </Box>
-      </Box>
-      {section.defaultPermissions.length === 0 ? (
-        <Typography variant="body2" className="italic text-ink-muted p-4">
-          {t('rbac.scopedOverrides.noDefaultNote')}
-        </Typography>
-      ) : (
-        <PermissionBulletList permissions={section.defaultPermissions} />
-      )}
-    </Paper>
-  )
-}
-
-export function GrantedPermissionItem({ permission, onRevoke, canWrite, t }) {
-  return (
-    <Box className="flex items-center justify-between py-1.5">
-      <Box className="flex flex-col gap-0">
-        <Typography variant="body2" className="text-sm text-ink-secondary">
-          {permission.name || permission.permissionName || permission.code}
-        </Typography>
-        <Typography variant="caption" className="font-mono text-[11px] text-ink-muted">
-          {permission.code || permission.permissionCode}
-        </Typography>
-      </Box>
-      <Box className="flex items-center gap-1.5">
-        {canWrite && (
-          <IconButton
-            size="small"
-            className="!p-0.5 !text-ink-muted hover:!text-danger"
-            onClick={onRevoke}
-          >
-            <CloseIcon sx={{ fontSize: 14 }} />
-          </IconButton>
-        )}
-        <Chip
-          label={t('rbac.scopedOverrides.grantedBadge')}
-          size="small"
-          variant="outlined"
-          className="!h-5 !rounded !border-success !bg-success-bg text-[11px] font-medium !text-success"
-          sx={{ '& .MuiChip-label': { px: '6px' } }}
-        />
-      </Box>
-    </Box>
-  )
-}
-
-export function GrantedPermissionsPanel({ section, onGrant, onRevoke, canWrite, t }) {
-  return (
-    <Paper elevation={0} className="rounded-lg border border-border bg-danger-bg">
-      <Box className="mb-3 flex items-center gap-2 bg-red-50 p-4 rounded-t-lg">
-        <Typography variant="body2" className="font-semibold text-ink">
-          {t('rbac.scopedOverrides.grantedTitle', { name: section.roleName })}
-        </Typography>
-        <Box className="inline-flex items-center gap-1 rounded border border-danger bg-danger-bg px-2 py-0.5">
-          <Typography
-            variant="caption"
-            className="text-[10px] font-semibold tracking-wide text-danger"
-          >
-            {t('rbac.scopedOverrides.grantBadge')}
-          </Typography>
-        </Box>
-      </Box>
-      {section.overrideGroups.length === 0 ? (
-        <Typography variant="body2" className="italic text-ink-muted p-4">
-          {t('rbac.scopedOverrides.noOverrideNote')}
-        </Typography>
-      ) : (
-        section.overrideGroups.map((group) => (
-          <Box key={group.id} className="mb-3 last:mb-0 p-4">
-            <Box className="mb-1 mt-3 flex items-center justify-between first:mt-0">
-              <Typography
-                variant="caption"
-                className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted"
-              >
-                {group.scopeLabel}
-              </Typography>
-              {canWrite && (
-                <Button
-                  variant="text"
-                  size="small"
-                  color="primary"
-                  className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-                  onClick={() => onGrant(group)}
-                >
-                  {t('rbac.scopedOverrides.addMore')}
-                </Button>
-              )}
-            </Box>
-            {group.permissions.map((permission) => (
-              <GrantedPermissionItem
-                key={permission.id}
-                permission={permission}
-                canWrite={canWrite}
-                t={t}
-                onRevoke={() => onRevoke(group, permission)}
-              />
-            ))}
-          </Box>
-        ))
-      )}
-    </Paper>
-  )
-}
-
-export function RoleOverrideSection({ section, onEditRole, onGrant, onRevoke, canWrite, t }) {
-  return (
-    <Box>
-      <Box className="mb-3 mt-6 flex items-center justify-between">
-        <Box className="flex items-center gap-2">
-          <Typography variant="body1" className="font-semibold text-ink">
-            {t('rbac.scopedOverrides.roleLabel', { name: section.roleName })}
-          </Typography>
-          <UserRoleChip role={section.roleCode} />
-        </Box>
-        {canWrite && (
-          <Button
-            variant="text"
-            size="small"
-            color="primary"
-            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-            onClick={onEditRole}
-          >
-            {t('rbac.scopedOverrides.editRolePerms', { name: section.roleName })}
-          </Button>
-        )}
-      </Box>
-      <Box className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <DefaultPermissionsPanel section={section} t={t} />
-        <GrantedPermissionsPanel
-          section={section}
-          onGrant={onGrant}
-          onRevoke={onRevoke}
-          canWrite={canWrite}
-          t={t}
-        />
-      </Box>
-    </Box>
-  )
-}
-
-// Extracted from UsersRolesPage.jsx
-export const TAB_KEYS = {
-  USERS: 'users',
-  ROLES: 'roles',
-  PERMISSIONS: 'permissions',
-  SCOPES: 'scopes',
-  OVERRIDES: 'overrides',
-}
-
-export const TABS = [
-  { id: TAB_KEYS.USERS, labelKey: 'rbac.tabs.users' },
-  { id: TAB_KEYS.ROLES, labelKey: 'rbac.tabs.roles' },
-  { id: TAB_KEYS.PERMISSIONS, labelKey: 'rbac.tabs.permissions' },
-  { id: TAB_KEYS.SCOPES, labelKey: 'rbac.tabs.scopes' },
-  { id: TAB_KEYS.OVERRIDES, labelKey: 'rbac.tabs.scopedOverrides' },
-]
-
 export const ACCOUNT_STATUSES = [
   { value: '', labelKey: 'rbac.users.status.all' },
   { value: 'active', labelKey: 'rbac.users.status.active' },
@@ -474,19 +257,19 @@ export function getPagination(result) {
 }
 
 export function formatDate(value) {
-  return value ? dayjs(value).format('DD/MM/YYYY HH:mm') : '—'
+  return value ? dayjs(value).format('DD/MM/YYYY HH:mm') : '-'
 }
 
 export function formatShortDate(value) {
-  return value ? dayjs(value).format('DD/MM/YYYY') : '—'
+  return value ? dayjs(value).format('DD/MM/YYYY') : '-'
 }
 
 export function getAccountName(account) {
-  return account?.account?.email || account?.email || '—'
+  return account?.account?.email || account?.email || '-'
 }
 
 export function getAccountEmail(account) {
-  return account?.account?.email || account?.email || '—'
+  return account?.account?.email || account?.email || '-'
 }
 
 export function getAccountId(account) {
@@ -495,11 +278,11 @@ export function getAccountId(account) {
 
 export function getPrimaryRole(account) {
   const assignment = account?.roleAssignments?.[0]
-  return assignment?.roleCode || account?.roles?.[0] || '—'
+  return assignment?.roleCode || account?.roles?.[0] || '-'
 }
 
 export function getDepartmentName(account) {
-  return account?.department?.name || account?.department?.code || '—'
+  return account?.department?.name || account?.department?.code || '-'
 }
 
 export function getScopeName(scope) {
@@ -538,7 +321,7 @@ export function getAssignmentScopeValue(assignment) {
 }
 
 export function getRoleLabel(role) {
-  return role?.name || role?.code || '—'
+  return role?.name || role?.code || '-'
 }
 
 export function findById(items, id) {

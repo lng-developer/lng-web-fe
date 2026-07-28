@@ -79,7 +79,7 @@ test('getAvatarMeta returns deterministic color and anonymous override', () => {
 test('formatLastLoginLabel returns relative labels and dash fallback', () => {
   const now = new Date('2026-06-26T10:00:00.000Z')
 
-  assert.equal(formatLastLoginLabel(null, now), '—')
+  assert.equal(formatLastLoginLabel(null, now), '-')
   assert.equal(formatLastLoginLabel('2026-06-26T09:58:00.000Z', now), '2 phút trước')
   assert.equal(formatLastLoginLabel('2026-06-26T09:00:00.000Z', now), '1 giờ trước')
   assert.equal(formatLastLoginLabel('2026-06-23T09:00:00.000Z', now), '3 ngày trước')
