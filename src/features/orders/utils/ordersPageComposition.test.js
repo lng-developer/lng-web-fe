@@ -139,8 +139,11 @@ test('order dialogs reset drafts on close and selected order changes without cle
       source.indexOf(`export function ${name}`),
       nextName ? source.indexOf(`export function ${nextName}`) : source.length,
     )
-  const catchSource = (dialog) =>
-    dialog.slice(dialog.indexOf('} catch (error) {'), dialog.indexOf('\n    }\n  }\n\n  return'))
+  const catchSource = (dialog) => {
+    const start = dialog.indexOf('} catch (error) {')
+    const end = dialog.slice(start).search(/\r?\n {4}}\r?\n {2}}\r?\n\r?\n {2}return/)
+    return dialog.slice(start, start + end)
+  }
   const importDialog = dialogSource('ImportOrdersDialog', 'UpdateCustomerDialog')
   const customerDialog = dialogSource('UpdateCustomerDialog', 'UpdateShippingDialog')
   const shippingDialog = dialogSource('UpdateShippingDialog', 'OpenCaseDialog')

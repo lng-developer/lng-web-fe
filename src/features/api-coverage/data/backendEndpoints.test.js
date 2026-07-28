@@ -6,6 +6,15 @@ import test from 'node:test'
 import { BACKEND_ENDPOINTS } from './backendEndpoints.js'
 
 const beRootCandidates = [
+  path.resolve(
+    process.cwd(),
+    '..',
+    '..',
+    '..',
+    'lng-web-be',
+    '.worktrees',
+    path.basename(process.cwd()),
+  ),
   path.resolve(process.cwd(), '..', 'lng-web-be'),
   path.resolve(process.cwd(), '..', 'lng-web-be-v1', 'lng-web-be'),
 ]

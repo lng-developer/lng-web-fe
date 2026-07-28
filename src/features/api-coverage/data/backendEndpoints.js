@@ -116,6 +116,10 @@ production|PATCH|/api/production/tasks/:taskId/sent-to-vendor
 finance|POST|/api/finance/imports/transactions
 finance|POST|/api/finance/imports/settlements
 finance|POST|/api/finance/imports/ads
+finance|GET|/api/finance/import-batches
+finance|GET|/api/finance/import-batches/:batchId
+finance|POST|/api/finance/import-batches/:batchId/reprocess
+finance|GET|/api/finance/imported-data/:sourceType
 finance|GET|/api/finance/snapshots
 finance|GET|/api/finance/order-items/:orderItemId/snapshot
 finance|POST|/api/finance/order-items/:orderItemId/recalculate
@@ -123,6 +127,8 @@ finance|POST|/api/finance/orders/:orderId/recalculate
 finance|GET|/api/finance/orders/:orderId/summary
 design|GET|/api/design/assignees
 design|GET|/api/design/score-summary
+design|GET|/api/design/submission-scores
+design|GET|/api/design/psd-files
 design|PATCH|/api/design/submission-scores/:scoreId/override
 design|PATCH|/api/design/tasks/:taskId/submissions/:submissionId/assets/:assetId/score/void
 design|GET|/api/design/tasks
@@ -146,7 +152,11 @@ media|GET|/api/media/assets/:assetId
 media|GET|/api/media/assets/:assetId/download
 mapping|GET|/api/mapping/config-workbench
 mapping|GET|/api/mapping/summary
+mapping|GET|/api/mapping/authorable-shops
 mapping|POST|/api/mapping/recheck-unmatched
+mapping|POST|/api/mapping/rule-preview
+mapping|POST|/api/mapping/rule-conflicts
+mapping|GET|/api/mapping/:ruleType/:id/history
 mapping|GET|/api/mapping/order-items/unmatched
 mapping|GET|/api/mapping/normalization-rules
 mapping|POST|/api/mapping/normalization-rules
@@ -223,6 +233,10 @@ organization|POST|/api/organization/teams/:teamId/members
 organization|DELETE|/api/organization/teams/:teamId/members/:accountId
 audit|GET|/api/audit/health
 reports|GET|/api/reports/finance/daily
+reports|GET|/api/reports/buyers/insights
+reports|GET|/api/reports/ads/channel-performance
+reports|GET|/api/reports/ads/by-seller
+reports|GET|/api/reports/ads/daily
 reports|GET|/api/reports/finance/daily-profit
 reports|GET|/api/reports/finance/by-seller
 reports|GET|/api/reports/finance/by-team
