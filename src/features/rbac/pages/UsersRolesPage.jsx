@@ -43,6 +43,7 @@ import {
   useRevokeAccountSessionsMutation,
   useSetScopedRolePermissionsMutation,
   useUpdateAccessAssignmentMutation,
+  useUpdateAccountAccessMutation,
   useUpdateAccountStatusMutation,
   useUpdatePermissionMutation,
   useUpdateRoleMutation,
@@ -201,6 +202,7 @@ export default function UsersRolesPage() {
   const revokeAccountSessionsMutation = useRevokeAccountSessionsMutation()
   const createAccessAssignmentMutation = useCreateAccessAssignmentMutation()
   const updateAccessAssignmentMutation = useUpdateAccessAssignmentMutation()
+  const updateAccountAccessMutation = useUpdateAccountAccessMutation()
   const deactivateAccessAssignmentMutation = useDeactivateAccessAssignmentMutation()
   const createRoleMutation = useCreateRoleMutation()
   const updateRoleMutation = useUpdateRoleMutation()
@@ -1090,16 +1092,25 @@ export default function UsersRolesPage() {
         scopes={scopes}
         pending={
           createAccessAssignmentMutation.isPending ||
+          updateAccountAccessMutation.isPending ||
           updateAccessAssignmentMutation.isPending ||
           deactivateAccessAssignmentMutation.isPending
         }
         onClose={closeDialog}
         t={t}
-        onCreateScopedAssignment={(payload) =>
+        onUpdateGlobalAccess={(payload) =>
+          runMutation(
+            updateAccountAccessMutation,
+            payload,
+            t('rbac.users.editAccessModal.globalAccessSuccess'),
+          )
+        }
+        onCreateScopedAssignment={(payload, done) =>
           runMutation(
             createAccessAssignmentMutation,
             payload,
             t('rbac.users.editAccessModal.success'),
+            done,
           )
         }
         onUpdateAssignment={(payload, done) =>

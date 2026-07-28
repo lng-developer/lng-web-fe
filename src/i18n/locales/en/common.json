@@ -495,6 +495,11 @@
         "banner": "Each scope assignment has its own role, scope, and permission set. Changing role or scope resets custom permissions back to the role/scope defaults.",
         "globalAccess": "Global Access",
         "globalRoles": "Global Roles",
+        "globalAccessHint": "Roles and direct permissions that apply across the system.",
+        "globalPermissions": "Direct global permissions",
+        "globalPermissionsHint": "These permissions are additive to permissions inherited from global roles.",
+        "saveGlobalAccess": "Save global access",
+        "globalAccessSuccess": "Global access updated!",
         "scopedAccess": "Scoped Access Assignments",
         "scopedAccessHint": "Edit role/scope directly on each row. Use Edit permissions to toggle custom permissions for that assignment.",
         "scopedColumns": {

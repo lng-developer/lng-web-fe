@@ -5,6 +5,7 @@ import {
   buildAccessAssignmentPayload,
   buildAccessAssignmentResetPayload,
   buildAccessAssignmentUpdatePayload,
+  buildAccountAccessPayload,
   buildAccountCreatePayload,
   buildCleanQuery,
   buildPermissionPayload,
@@ -15,6 +16,20 @@ import {
   parseScopeAssignmentValue,
   unwrapApiData,
 } from './rbacApi.js'
+
+test('buildAccountAccessPayload keeps only global role and direct permission IDs', () => {
+  assert.deepEqual(
+    buildAccountAccessPayload({
+      roleIds: ['role-1', '', 'role-2'],
+      customPermissionIds: ['permission-1', null],
+      scopes: ['ignored'],
+    }),
+    {
+      roleIds: ['role-1', 'role-2'],
+      customPermissionIds: ['permission-1'],
+    },
+  )
+})
 
 test('buildCleanQuery removes empty search and caps limit at 100', () => {
   assert.deepEqual(

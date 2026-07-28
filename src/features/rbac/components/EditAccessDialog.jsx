@@ -6,6 +6,7 @@ import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlin
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -13,6 +14,7 @@ import {
   FormControl,
   IconButton,
   InputLabel,
+  ListItemText,
   MenuItem,
   Select,
   Stack,
@@ -23,6 +25,7 @@ import {
 import { useAccountQuery } from '../api/rbac.queries'
 import { buildAccessAssignmentResetPayload, parseScopeAssignmentValue } from '../utils/rbacApi'
 import PermissionOverrideDialog from './PermissionOverrideDialog'
+import PermissionPicker from './PermissionPicker'
 import { ScopeTypeBadge, Section } from './shared'
 import {
   getAssignmentRoleId,
@@ -170,6 +173,7 @@ export default function EditAccessDialog({
   permissions,
   scopes,
   onCreateScopedAssignment,
+  onUpdateGlobalAccess,
   onUpdateAssignment,
   onDeleteAssignment,
   pending,
@@ -177,11 +181,16 @@ export default function EditAccessDialog({
 }) {
   const { data } = useAccountQuery(accountId, { enabled: open && Boolean(accountId) })
   const [permissionAssignment, setPermissionAssignment] = useState(null)
+  const [globalAccessDraft, setGlobalAccessDraft] = useState(null)
   const [assignmentForm, setAssignmentForm] = useState({
     roleId: '',
     scopeAssignmentValue: '',
   })
   const account = data?.account
+  const globalAccess = globalAccessDraft ?? {
+    roleIds: data?.access?.roleIds ?? [],
+    customPermissionIds: data?.access?.customPermissionIds ?? [],
+  }
   const scopeAssignmentOptions = [...scopes, ...(data?.scopes ?? [])].reduce((options, scope) => {
     const value = getScopeSelectValue(scope)
     if (!value || options.some((option) => getScopeSelectValue(option) === value)) return options
@@ -192,17 +201,20 @@ export default function EditAccessDialog({
   )
   const addScoped = () => {
     const { scopeType, scopeId } = parseScopeAssignmentValue(assignmentForm.scopeAssignmentValue)
-    onCreateScopedAssignment({
-      accountId,
-      roleId: assignmentForm.roleId,
-      scopeType,
-      scopeId,
-      customPermissionIds: [],
-    })
-    setAssignmentForm({
-      roleId: '',
-      scopeAssignmentValue: '',
-    })
+    onCreateScopedAssignment(
+      {
+        accountId,
+        roleId: assignmentForm.roleId,
+        scopeType,
+        scopeId,
+        customPermissionIds: [],
+      },
+      () =>
+        setAssignmentForm({
+          roleId: '',
+          scopeAssignmentValue: '',
+        }),
+    )
   }
   const savePermissionOverride = (payload) => {
     onUpdateAssignment(payload, () => setPermissionAssignment(null))
@@ -218,7 +230,7 @@ export default function EditAccessDialog({
       >
         <DialogTitle className="pb-3 pr-10 font-semibold text-ink">
           {t('rbac.users.editAccessModal.title', {
-            name: account?.email || 'â€”',
+            name: account?.email || '—',
           })}
           <IconButton
             onClick={onClose}
@@ -235,6 +247,73 @@ export default function EditAccessDialog({
                 {t('rbac.users.editAccessModal.banner')}
               </Typography>
             </Box>
+
+            <Section>
+              <Stack className="gap-4 p-4">
+                <Box>
+                  <Typography variant="body1" className="font-semibold text-ink">
+                    {t('rbac.users.editAccessModal.globalAccess')}
+                  </Typography>
+                  <Typography variant="body2" className="mt-1 text-ink-muted">
+                    {t('rbac.users.editAccessModal.globalAccessHint')}
+                  </Typography>
+                </Box>
+
+                <FormControl fullWidth size="small">
+                  <InputLabel>{t('rbac.users.editAccessModal.globalRoles')}</InputLabel>
+                  <Select
+                    multiple
+                    label={t('rbac.users.editAccessModal.globalRoles')}
+                    value={globalAccess.roleIds}
+                    disabled={pending}
+                    renderValue={(selected) =>
+                      selected
+                        .map((roleId) => getRoleLabel(roles.find((role) => role.id === roleId)))
+                        .join(', ')
+                    }
+                    onChange={(event) =>
+                      setGlobalAccessDraft({ ...globalAccess, roleIds: event.target.value })
+                    }
+                  >
+                    {roles.map((role) => (
+                      <MenuItem key={role.id} value={role.id}>
+                        <Checkbox checked={globalAccess.roleIds.includes(role.id)} />
+                        <ListItemText primary={getRoleLabel(role)} secondary={role.code} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <Box>
+                  <Typography variant="body2" className="mb-2 font-semibold text-ink">
+                    {t('rbac.users.editAccessModal.globalPermissions')}
+                  </Typography>
+                  <Typography variant="caption" className="mb-3 block text-ink-muted">
+                    {t('rbac.users.editAccessModal.globalPermissionsHint')}
+                  </Typography>
+                  <Box className="max-h-64 overflow-y-auto rounded-lg border border-border p-3">
+                    <PermissionPicker
+                      dense
+                      permissions={permissions}
+                      selectedIds={globalAccess.customPermissionIds}
+                      onChange={(customPermissionIds) =>
+                        setGlobalAccessDraft({ ...globalAccess, customPermissionIds })
+                      }
+                    />
+                  </Box>
+                </Box>
+
+                <Box>
+                  <Button
+                    variant="contained"
+                    disabled={pending}
+                    onClick={() => onUpdateGlobalAccess({ accountId, values: globalAccess })}
+                  >
+                    {t('rbac.users.editAccessModal.saveGlobalAccess')}
+                  </Button>
+                </Box>
+              </Stack>
+            </Section>
 
             <Section>
               <Stack className="gap-4 p-4">

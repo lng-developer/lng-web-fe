@@ -493,6 +493,11 @@
         "banner": "Mỗi scope assignment có role, scope và bộ quyền riêng. Đổi role hoặc scope sẽ reset quyền riêng về mặc định theo role/scope.",
         "globalAccess": "Global Access",
         "globalRoles": "Global Roles",
+        "globalAccessHint": "Vai trò và quyền trực tiếp áp dụng trên toàn hệ thống.",
+        "globalPermissions": "Quyền trực tiếp global",
+        "globalPermissionsHint": "Các quyền này được cộng thêm ngoài quyền có sẵn từ vai trò global.",
+        "saveGlobalAccess": "Lưu quyền global",
+        "globalAccessSuccess": "Đã cập nhật quyền global!",
         "scopedAccess": "Scoped Access Assignments",
         "scopedAccessHint": "Chỉnh role/scope trực tiếp trên từng dòng. Dùng Sửa quyền để bật/tắt permission riêng cho assignment đó.",
         "scopedColumns": {
