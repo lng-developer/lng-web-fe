@@ -43,6 +43,15 @@ test('Attendance Desk sends exception filtering to the paginated API', async () 
   assert.doesNotMatch(attendance, /\.filter\(isAttendanceException\)/)
 })
 
+test('My Time replaces unavailable personal data with a localized retry state', async () => {
+  const myTime = await source('pages/MyTimePage.jsx')
+
+  assert.match(myTime, /hrTime\.myTime\.unavailableTitle/)
+  assert.match(myTime, /hrTime\.myTime\.unavailableDescription/)
+  assert.match(myTime, /selectedQuery\.refetch/)
+  assert.doesNotMatch(myTime, /emptyTitle=\{\s*error\s*\?\s*'Title'/)
+})
+
 test('Schedule uses permission-safe HR data for named scope selectors', async () => {
   const schedule = await source('pages/SchedulePage.jsx')
 

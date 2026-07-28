@@ -140,6 +140,7 @@ export default function MyTimePage() {
     (tab === 'overtime' && canUseOvertime) ||
     ((tab === 'today' || tab === 'history') && canUseAttendance)
   const queryError = selectedQuery.error?.data?.message || selectedQuery.error?.message
+  const noProfile = selectedQuery.error?.status === 404
   const selfAttendanceActions = getSelfAttendanceActions(todayQuery.data)
   const attendanceAction = !todayQuery.isSuccess
     ? null
@@ -445,7 +446,37 @@ export default function MyTimePage() {
         ) : null
       }
     >
-      {hasTabAccess ? (
+      {hasTabAccess && selectedQuery.isError ? (
+        <Alert
+          severity="warning"
+          action={
+            <Button color="inherit" size="small" onClick={() => selectedQuery.refetch()}>
+              {t('common.retry', { defaultValue: 'Retry' })}
+            </Button>
+          }
+        >
+          <Typography variant="subtitle2">
+            {t(noProfile ? 'hrTime.myTime.noProfileTitle' : 'hrTime.myTime.unavailableTitle', {
+              defaultValue: noProfile
+                ? 'No employee profile found'
+                : 'Personal time data is unavailable',
+            })}
+          </Typography>
+          <Typography variant="body2">
+            {queryError ||
+              t(
+                noProfile
+                  ? 'hrTime.myTime.noProfileDescription'
+                  : 'hrTime.myTime.unavailableDescription',
+                {
+                  defaultValue: noProfile
+                    ? 'Ask HR to link your account to an employee profile.'
+                    : 'Try again in a moment. If this continues, contact HR.',
+                },
+              )}
+          </Typography>
+        </Alert>
+      ) : hasTabAccess ? (
         <TimeRequestTable
           type={type}
           rows={rows}
