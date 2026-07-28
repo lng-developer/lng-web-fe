@@ -170,6 +170,7 @@ test('People leave balance administration is permission-gated and preserves back
     panel,
     /const validUpsert =\s*validYear[\s\S]*Number\.isInteger\(Number\(entitledUnits\)\)[\s\S]*Number\.isInteger\(Number\(adjustmentUnits\)\)/,
   )
+  assert.match(panel, /Number\(entitledUnits\) >= 0/)
   assert.match(
     panel,
     /const validAdjustment =\s*validYear[\s\S]*Number\.isInteger\(Number\(adjustUnits\)\)[\s\S]*Number\(adjustUnits\) !== 0/,

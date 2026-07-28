@@ -55,6 +55,7 @@ export default function LeaveBalancePanel({ profileId, canManage = false }) {
     String(entitledUnits).trim() !== '' &&
     String(adjustmentUnits).trim() !== '' &&
     Number.isInteger(Number(entitledUnits)) &&
+    Number(entitledUnits) >= 0 &&
     Number.isInteger(Number(adjustmentUnits))
   const validAdjustment =
     validYear &&
