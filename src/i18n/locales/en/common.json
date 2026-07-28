@@ -409,6 +409,25 @@
       "scopes": "Scopes",
       "scopedOverrides": "Scoped Overrides"
     },
+    "explorer": {
+      "selectAccount": "Select account",
+      "noAccount": "Select an account to inspect its access.",
+      "sections": {
+        "overview": "Overview",
+        "global": "Global",
+        "scoped": "Scoped",
+        "effective": "Effective"
+      },
+      "actionsTitle": "Account actions",
+      "actionsHint": "Changes apply only to the selected account.",
+      "contractTitle": "How access works",
+      "contractHint": "Global and scoped access remain separate. Effective permissions are reloaded from the backend after every change.",
+      "globalHint": "Roles and direct permissions that apply across every scope.",
+      "directPermissions": "Direct global permissions",
+      "effectiveHint": "Backend-returned effective access, grouped for scanning. The browser does not calculate this result.",
+      "viewAll": "View all ({{count}})",
+      "showLess": "Show less"
+    },
     "users": {
       "searchPlaceholder": "Search by name, email, employee code...",
       "columns": {

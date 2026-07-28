@@ -407,6 +407,25 @@
       "scopes": "Phạm vi",
       "scopedOverrides": "Ghi đè theo scope"
     },
+    "explorer": {
+      "selectAccount": "Chọn tài khoản",
+      "noAccount": "Chọn một tài khoản để xem quyền truy cập.",
+      "sections": {
+        "overview": "Tổng quan",
+        "global": "Global",
+        "scoped": "Theo scope",
+        "effective": "Hiệu lực"
+      },
+      "actionsTitle": "Thao tác tài khoản",
+      "actionsHint": "Mọi thay đổi chỉ áp dụng cho tài khoản đang chọn.",
+      "contractTitle": "Cách quyền truy cập hoạt động",
+      "contractHint": "Quyền global và theo scope luôn tách biệt. Quyền hiệu lực được tải lại từ backend sau mỗi thay đổi.",
+      "globalHint": "Vai trò và quyền trực tiếp áp dụng trên mọi scope.",
+      "directPermissions": "Quyền global trực tiếp",
+      "effectiveHint": "Quyền hiệu lực do backend trả về và được nhóm để dễ đọc. Trình duyệt không tự tính kết quả này.",
+      "viewAll": "Xem tất cả ({{count}})",
+      "showLess": "Thu gọn"
+    },
     "users": {
       "searchPlaceholder": "Tìm theo tên, email, mã nhân viên...",
       "columns": {
