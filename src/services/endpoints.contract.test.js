@@ -109,3 +109,15 @@ test('HR payroll adjustment endpoints match the shared backend module', () => {
   assert.equal(ENDPOINTS.HR.PAYROLL_ADJUSTMENTS, '/api/hr/payroll-adjustments')
   assert.equal(ENDPOINTS.HR.PAYROLL_ADJUSTMENT('a1'), '/api/hr/payroll-adjustments/a1')
 })
+
+test('HR leave preview, attachment, and refund endpoints match backend routes', () => {
+  assert.equal(ENDPOINTS.HR.LEAVE_REQUEST_PREVIEW, '/api/hr/leave-requests/preview')
+  assert.equal(
+    ENDPOINTS.HR.LEAVE_REQUEST_ATTACHMENTS('leave-1'),
+    '/api/hr/leave-requests/leave-1/attachments',
+  )
+  assert.equal(
+    ENDPOINTS.HR.LEAVE_REQUEST_REFUND('leave-1'),
+    '/api/hr/leave-requests/leave-1/refund',
+  )
+})

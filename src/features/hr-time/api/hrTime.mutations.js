@@ -3,7 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
-import { unwrapHrTimeResponse } from '../utils/hrTimeApi.js'
+import {
+  buildLeaveAttachmentPayload,
+  buildLeaveRefundPayload,
+  unwrapHrTimeResponse,
+} from '../utils/hrTimeApi.js'
 import { hrTimeKeys } from './hrTime.keys.js'
 
 function request(method, endpoint, payload) {
@@ -181,6 +185,52 @@ export function useCreateLeaveRequestMutation() {
   return useHrTimeMutation(
     (payload) => request('post', ENDPOINTS.HR.LEAVE_REQUESTS, payload),
     () => [hrTimeKeys.leave()],
+  )
+}
+
+export function usePreviewLeaveRequestMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.LEAVE_REQUEST_PREVIEW, payload),
+    () => [],
+  )
+}
+
+export function useUploadLeaveAttachmentMutation() {
+  return useHrTimeMutation(
+    (file) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      return request('post', ENDPOINTS.MEDIA.ASSETS, formData)
+    },
+    () => [],
+  )
+}
+
+export function useAttachLeaveReferencesMutation() {
+  return useHrTimeMutation(
+    ({ requestId, assets }) =>
+      request(
+        'post',
+        ENDPOINTS.HR.LEAVE_REQUEST_ATTACHMENTS(requestId),
+        buildLeaveAttachmentPayload(assets),
+      ),
+    ({ requestId }) => [hrTimeKeys.leave(), hrTimeKeys.leaveDetail(requestId)],
+  )
+}
+
+export function useRefundLeaveRequestMutation() {
+  return useHrTimeMutation(
+    ({ requestId, payload }) =>
+      request(
+        'post',
+        ENDPOINTS.HR.LEAVE_REQUEST_REFUND(requestId),
+        buildLeaveRefundPayload(payload),
+      ),
+    ({ requestId }) => [
+      hrTimeKeys.leave(),
+      hrTimeKeys.leaveDetail(requestId),
+      hrTimeKeys.leaveBalances(),
+    ],
   )
 }
 

@@ -19,6 +19,7 @@ import {
   useApproveOvertimeRequestMutation,
   useCancelLeaveRequestMutation,
   useCancelOvertimeRequestMutation,
+  useRefundLeaveRequestMutation,
   useRejectLeaveRequestMutation,
   useRejectOvertimeRequestMutation,
 } from '@/features/hr-time/api/hrTime.mutations'
@@ -69,6 +70,7 @@ export default function RequestInboxPage() {
   const approveLeaveMutation = useApproveLeaveRequestMutation()
   const rejectLeaveMutation = useRejectLeaveRequestMutation()
   const cancelLeaveMutation = useCancelLeaveRequestMutation()
+  const refundLeaveMutation = useRefundLeaveRequestMutation()
   const approveOvertimeMutation = useApproveOvertimeRequestMutation()
   const rejectOvertimeMutation = useRejectOvertimeRequestMutation()
   const cancelOvertimeMutation = useCancelOvertimeRequestMutation()
@@ -76,11 +78,12 @@ export default function RequestInboxPage() {
   const hasTabAccess = tab === 'leave' ? canReadLeave : canReadOvertime
   const rows = selectedQuery.data?.items || []
   const pagination = selectedQuery.data?.pagination || { page, limit: pageSize, total: 0 }
-  const queryError = selectedQuery.error?.response?.data?.message || selectedQuery.error?.message
+  const queryError = selectedQuery.error?.data?.message || selectedQuery.error?.message
   const actionLoading = [
     approveLeaveMutation,
     rejectLeaveMutation,
     cancelLeaveMutation,
+    refundLeaveMutation,
     approveOvertimeMutation,
     rejectOvertimeMutation,
     cancelOvertimeMutation,
@@ -125,9 +128,28 @@ export default function RequestInboxPage() {
       setReview(null)
     } catch (error) {
       setActionError(
-        error?.response?.data?.message ||
+        error?.data?.message ||
           t('hrTime.errors.actionFailed', { defaultValue: 'Could not complete action' }),
       )
+    }
+  }
+
+  async function refundLeave(payload) {
+    if (!review?.row) return
+    setActionError('')
+    try {
+      await refundLeaveMutation.mutateAsync({ requestId: review.row.id, payload })
+      enqueueSnackbar(t('hrTime.messages.actionCompleted', { defaultValue: 'Request updated' }), {
+        variant: SNACKBAR_VARIANTS.SUCCESS,
+      })
+      setReview(null)
+      return true
+    } catch (error) {
+      setActionError(
+        error?.data?.message ||
+          t('hrTime.errors.actionFailed', { defaultValue: 'Could not complete action' }),
+      )
+      return false
     }
   }
 
@@ -245,6 +267,7 @@ export default function RequestInboxPage() {
         onClose={() => setReview(null)}
         onActionChange={(action) => setReview((current) => ({ ...current, action }))}
         onSubmit={decide}
+        onRefund={tab === 'leave' ? refundLeave : undefined}
       />
     </OperationsPageShell>
   )

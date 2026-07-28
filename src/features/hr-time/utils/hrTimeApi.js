@@ -162,6 +162,23 @@ export function buildAttendanceAdjustmentPayload(values) {
   )
 }
 
+export function buildLeaveAttachmentPayload(assets = []) {
+  return {
+    attachments: assets.map((asset) => ({
+      mediaId: asset.mediaId || asset.id,
+      filename: asset.filename || asset.originalFilename || null,
+      mimeType: asset.mimeType || null,
+    })),
+  }
+}
+
+export function buildLeaveRefundPayload({ dateKeys = [], reason = '' }) {
+  return {
+    dateKeys: [...new Set(dateKeys.map((dateKey) => String(dateKey).trim()).filter(Boolean))],
+    reason: reason.trim(),
+  }
+}
+
 export function buildShiftAssignmentPayload(values) {
   return compactPayload(
     values,

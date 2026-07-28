@@ -3,6 +3,8 @@ import test from 'node:test'
 
 import { hrTimeKeys } from '../api/hrTime.keys.js'
 import {
+  buildLeaveAttachmentPayload,
+  buildLeaveRefundPayload,
   getHrTimeActions,
   getSelfAttendanceActions,
   mapAttendanceRow,
@@ -11,6 +13,25 @@ import {
   mapShiftAssignmentRow,
   normalizeHrTimeQuery,
 } from './hrTimeApi.js'
+
+test('builds leave attachment references with only Media fields', () => {
+  assert.deepEqual(
+    buildLeaveAttachmentPayload([
+      { id: 'media-1', filename: 'note.pdf', mimeType: 'application/pdf', url: '/private' },
+    ]),
+    { attachments: [{ mediaId: 'media-1', filename: 'note.pdf', mimeType: 'application/pdf' }] },
+  )
+})
+
+test('builds refund payloads from unique date keys with a trimmed reason', () => {
+  assert.deepEqual(
+    buildLeaveRefundPayload({
+      dateKeys: ['2026-07-10', '2026-07-09', '2026-07-10'],
+      reason: '  correction  ',
+    }),
+    { dateKeys: ['2026-07-10', '2026-07-09'], reason: 'correction' },
+  )
+})
 
 test('normalizes active HR Time list filters for stable query keys', () => {
   const query = normalizeHrTimeQuery({
