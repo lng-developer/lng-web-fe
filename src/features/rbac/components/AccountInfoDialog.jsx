@@ -29,6 +29,7 @@ export default function AccountInfoDialog({
   onResetPassword,
   statusPending,
   passwordPending,
+  canWrite,
   t,
 }) {
   const [showPassword, setShowPassword] = useState(false)
@@ -103,17 +104,21 @@ export default function AccountInfoDialog({
                           ? t('rbac.users.viewModal.hidePassword')
                           : t('rbac.users.viewModal.showPassword')}
                       </Button>
-                      <Divider orientation="vertical" flexItem className="mx-1 my-2" />
-                      <Button
-                        variant="text"
-                        size="small"
-                        color="primary"
-                        disabled={passwordPending}
-                        className="!min-w-0 !whitespace-nowrap !px-1 !text-xs !font-semibold"
-                        onClick={handleResetPassword}
-                      >
-                        {t('rbac.users.viewModal.resetPassword')}
-                      </Button>
+                      {canWrite && (
+                        <>
+                          <Divider orientation="vertical" flexItem className="mx-1 my-2" />
+                          <Button
+                            variant="text"
+                            size="small"
+                            color="primary"
+                            disabled={passwordPending}
+                            className="!min-w-0 !whitespace-nowrap !px-1 !text-xs !font-semibold"
+                            onClick={handleResetPassword}
+                          >
+                            {t('rbac.users.viewModal.resetPassword')}
+                          </Button>
+                        </>
+                      )}
                     </InputAdornment>
                   ),
                 }}
@@ -131,7 +136,7 @@ export default function AccountInfoDialog({
                   <Switch
                     color="primary"
                     checked={account?.status === 'active'}
-                    disabled={statusPending}
+                    disabled={!canWrite || statusPending}
                     onChange={(event) =>
                       onUpdateStatus({
                         accountId,

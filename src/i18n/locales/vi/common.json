@@ -389,6 +389,7 @@
   "rbac": {
     "title": "RBAC",
     "common": {
+      "readOnly": "Bạn chỉ có quyền xem cấu hình phân quyền.",
       "loading": "Đang tải dữ liệu..."
     },
     "tabs": {

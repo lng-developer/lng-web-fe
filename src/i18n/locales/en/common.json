@@ -391,6 +391,7 @@
   "rbac": {
     "title": "RBAC",
     "common": {
+      "readOnly": "You have read-only access to RBAC settings.",
       "loading": "Loading data..."
     },
     "tabs": {

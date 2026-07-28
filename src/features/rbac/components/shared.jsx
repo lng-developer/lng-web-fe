@@ -277,7 +277,7 @@ export function DefaultPermissionsPanel({ section, totalPermissions, t }) {
   )
 }
 
-export function GrantedPermissionItem({ permission, onRevoke, t }) {
+export function GrantedPermissionItem({ permission, onRevoke, canWrite, t }) {
   return (
     <Box className="flex items-center justify-between py-1.5">
       <Box className="flex flex-col gap-0">
@@ -289,13 +289,15 @@ export function GrantedPermissionItem({ permission, onRevoke, t }) {
         </Typography>
       </Box>
       <Box className="flex items-center gap-1.5">
-        <IconButton
-          size="small"
-          className="!p-0.5 !text-ink-muted hover:!text-danger"
-          onClick={onRevoke}
-        >
-          <CloseIcon sx={{ fontSize: 14 }} />
-        </IconButton>
+        {canWrite && (
+          <IconButton
+            size="small"
+            className="!p-0.5 !text-ink-muted hover:!text-danger"
+            onClick={onRevoke}
+          >
+            <CloseIcon sx={{ fontSize: 14 }} />
+          </IconButton>
+        )}
         <Chip
           label={t('rbac.scopedOverrides.grantedBadge')}
           size="small"
@@ -308,7 +310,7 @@ export function GrantedPermissionItem({ permission, onRevoke, t }) {
   )
 }
 
-export function GrantedPermissionsPanel({ section, onGrant, onRevoke, t }) {
+export function GrantedPermissionsPanel({ section, onGrant, onRevoke, canWrite, t }) {
   const isAdmin = section.roleCode === 'ADMIN'
   const isAnonymous = section.roleCode === 'ANONYMOUS'
 
@@ -347,20 +349,23 @@ export function GrantedPermissionsPanel({ section, onGrant, onRevoke, t }) {
               >
                 {group.scopeLabel}
               </Typography>
-              <Button
-                variant="text"
-                size="small"
-                color="primary"
-                className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-                onClick={() => onGrant(group)}
-              >
-                {t('rbac.scopedOverrides.addMore')}
-              </Button>
+              {canWrite && (
+                <Button
+                  variant="text"
+                  size="small"
+                  color="primary"
+                  className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
+                  onClick={() => onGrant(group)}
+                >
+                  {t('rbac.scopedOverrides.addMore')}
+                </Button>
+              )}
             </Box>
             {group.permissions.map((permission) => (
               <GrantedPermissionItem
                 key={permission.id}
                 permission={permission}
+                canWrite={canWrite}
                 t={t}
                 onRevoke={() => onRevoke(group, permission)}
               />
@@ -378,6 +383,7 @@ export function RoleOverrideSection({
   onEditRole,
   onGrant,
   onRevoke,
+  canWrite,
   t,
 }) {
   const isAnonymous = section.roleCode === 'ANONYMOUS'
@@ -391,21 +397,29 @@ export function RoleOverrideSection({
           </Typography>
           <UserRoleChip role={section.roleCode} />
         </Box>
-        <Button
-          variant="text"
-          size="small"
-          color="primary"
-          className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-          onClick={onEditRole}
-        >
-          {isAnonymous
-            ? t('rbac.scopedOverrides.editAnonymousPerms')
-            : t('rbac.scopedOverrides.editRolePerms', { name: section.roleName })}
-        </Button>
+        {canWrite && (
+          <Button
+            variant="text"
+            size="small"
+            color="primary"
+            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
+            onClick={onEditRole}
+          >
+            {isAnonymous
+              ? t('rbac.scopedOverrides.editAnonymousPerms')
+              : t('rbac.scopedOverrides.editRolePerms', { name: section.roleName })}
+          </Button>
+        )}
       </Box>
       <Box className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <DefaultPermissionsPanel section={section} totalPermissions={totalPermissions} t={t} />
-        <GrantedPermissionsPanel section={section} onGrant={onGrant} onRevoke={onRevoke} t={t} />
+        <GrantedPermissionsPanel
+          section={section}
+          onGrant={onGrant}
+          onRevoke={onRevoke}
+          canWrite={canWrite}
+          t={t}
+        />
       </Box>
     </Box>
   )

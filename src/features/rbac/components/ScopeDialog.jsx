@@ -33,6 +33,7 @@ export default function ScopeDialog({
   onClose,
   onSubmit,
   pending,
+  canWrite,
   t,
 }) {
   const isEdit = Boolean(value)
@@ -204,6 +205,7 @@ export default function ScopeDialog({
             <TextField
               size="small"
               value={form.name}
+              disabled={!canWrite}
               onChange={(event) => {
                 const nextName = event.target.value
                 setForm({
@@ -244,6 +246,7 @@ export default function ScopeDialog({
                 displayEmpty
                 size="small"
                 value={form.status}
+                disabled={!canWrite}
                 onChange={(event) => setForm({ ...form, status: event.target.value })}
                 className={fieldControlClassName}
                 sx={fieldControlSx}
@@ -267,16 +270,18 @@ export default function ScopeDialog({
           >
             {isEdit ? t('rbac.scopes.editModal.cancel') : t('rbac.scopes.addModal.cancel')}
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            size="medium"
-            className="h-10 rounded-lg px-6 text-sm font-semibold"
-            disabled={pending || (!isEdit && !form.scopeId)}
-          >
-            {isEdit ? t('rbac.scopes.editModal.submit') : t('rbac.scopes.addModal.submit')}
-          </Button>
+          {canWrite && (
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              size="medium"
+              className="h-10 rounded-lg px-6 text-sm font-semibold"
+              disabled={pending || (!isEdit && !form.scopeId)}
+            >
+              {isEdit ? t('rbac.scopes.editModal.submit') : t('rbac.scopes.addModal.submit')}
+            </Button>
+          )}
         </DialogActions>
       </Box>
     </Dialog>

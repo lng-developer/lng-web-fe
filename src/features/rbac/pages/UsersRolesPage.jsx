@@ -29,6 +29,7 @@ import {
 import { useSnackbar } from 'notistack'
 
 import { SNACKBAR_VARIANTS } from '@/constants/app'
+import { useAuthStore } from '@/store/useAuthStore'
 
 import {
   useCreateAccessAssignmentMutation,
@@ -91,6 +92,7 @@ import {
   PERMISSION_MODULE_OPTIONS,
   PERMISSION_STATUS_OPTIONS,
 } from '../utils/permissionsDisplay'
+import { getRbacCapabilities } from '../utils/rbacAccess'
 import {} from '../utils/rbacApi'
 import { getDefaultPermissionMeta } from '../utils/rolesDisplay'
 import {
@@ -112,6 +114,8 @@ import { formatLastLoginLabel, getAvatarMeta, getRoleMeta } from '../utils/users
 export default function UsersRolesPage() {
   const { i18n, t } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
+  const currentUser = useAuthStore((state) => state.currentUser)
+  const { canWrite } = getRbacCapabilities(currentUser)
   const [activeTab, setActiveTab] = useState(TAB_KEYS.USERS)
   const [userFilters, setUserFilters] = useState({
     page: 1,
@@ -210,6 +214,11 @@ export default function UsersRolesPage() {
   const closeDialog = () => setDialog({ type: null, payload: null })
 
   const runMutation = (mutation, payload, successMessage, onSuccess) => {
+    if (!canWrite) {
+      notifyError({ message: t('rbac.common.readOnly') })
+      return
+    }
+
     mutation.mutate(payload, {
       onSuccess: () => {
         notifySuccess(successMessage)
@@ -278,15 +287,17 @@ export default function UsersRolesPage() {
             ))}
           </Select>
         </FormControl>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          color="primary"
-          className="ml-auto h-10 rounded-lg text-sm font-semibold"
-          onClick={() => setDialog({ type: 'add-account', payload: null })}
-        >
-          {t('rbac.users.actions.addUser')}
-        </Button>
+        {canWrite && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            color="primary"
+            className="ml-auto h-10 rounded-lg text-sm font-semibold"
+            onClick={() => setDialog({ type: 'add-account', payload: null })}
+          >
+            {t('rbac.users.actions.addUser')}
+          </Button>
+        )}
       </Box>
 
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border">
@@ -386,16 +397,20 @@ export default function UsersRolesPage() {
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title={t('rbac.users.actions.editAccess')} arrow>
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              aria-label={t('rbac.users.actions.editAccess')}
-                              onClick={() => setDialog({ type: 'edit-access', payload: accountId })}
-                            >
-                              <ManageAccountsOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          {canWrite && (
+                            <Tooltip title={t('rbac.users.actions.editAccess')} arrow>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                aria-label={t('rbac.users.actions.editAccess')}
+                                onClick={() =>
+                                  setDialog({ type: 'edit-access', payload: accountId })
+                                }
+                              >
+                                <ManageAccountsOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </Stack>
                       </TableCell>
                     </TableRow>
@@ -440,15 +455,17 @@ export default function UsersRolesPage() {
           value={roleSearch}
           onChange={(event) => setRoleSearch(event.target.value)}
         />
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          className="h-10 whitespace-nowrap rounded-lg text-sm font-semibold"
-          onClick={() => setDialog({ type: 'role', payload: null })}
-        >
-          {t('rbac.roles.actions.addRole')}
-        </Button>
+        {canWrite && (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            className="h-10 whitespace-nowrap rounded-lg text-sm font-semibold"
+            onClick={() => setDialog({ type: 'role', payload: null })}
+          >
+            {t('rbac.roles.actions.addRole')}
+          </Button>
+        )}
       </Box>
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border">
         <TableContainer>
@@ -496,15 +513,17 @@ export default function UsersRolesPage() {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Button
-                          variant="text"
-                          size="small"
-                          color="primary"
-                          className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-                          onClick={() => setDialog({ type: 'role', payload: role })}
-                        >
-                          {t('rbac.roles.actions.edit')}
-                        </Button>
+                        {canWrite && (
+                          <Button
+                            variant="text"
+                            size="small"
+                            color="primary"
+                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
+                            onClick={() => setDialog({ type: 'role', payload: role })}
+                          >
+                            {t('rbac.roles.actions.edit')}
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   )
@@ -577,15 +596,17 @@ export default function UsersRolesPage() {
             ))}
           </Select>
         </FormControl>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          className="ml-auto h-10 whitespace-nowrap rounded-lg text-sm font-semibold"
-          onClick={() => setDialog({ type: 'permission', payload: null })}
-        >
-          {t('rbac.permissions.actions.addPermission')}
-        </Button>
+        {canWrite && (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            className="ml-auto h-10 whitespace-nowrap rounded-lg text-sm font-semibold"
+            onClick={() => setDialog({ type: 'permission', payload: null })}
+          >
+            {t('rbac.permissions.actions.addPermission')}
+          </Button>
+        )}
       </Box>
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border">
         <TableContainer>
@@ -655,38 +676,40 @@ export default function UsersRolesPage() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Box className="flex items-center gap-3">
-                          <Button
-                            variant="text"
-                            size="small"
-                            color="primary"
-                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-                            onClick={() => setDialog({ type: 'permission', payload: permission })}
-                          >
-                            {t('rbac.permissions.actions.edit')}
-                          </Button>
-                          <Button
-                            variant="text"
-                            size="small"
-                            disabled={
-                              permission.deletable === false || deletePermissionMutation.isPending
-                            }
-                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold !text-danger"
-                            onClick={() => {
-                              if (
-                                window.confirm(t('rbac.permissions.actions.deleteConfirmSimple'))
-                              ) {
-                                runMutation(
-                                  deletePermissionMutation,
-                                  permission.id,
-                                  t('rbac.permissions.editModal.deleteSuccess'),
-                                )
+                        {canWrite && (
+                          <Box className="flex items-center gap-3">
+                            <Button
+                              variant="text"
+                              size="small"
+                              color="primary"
+                              className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
+                              onClick={() => setDialog({ type: 'permission', payload: permission })}
+                            >
+                              {t('rbac.permissions.actions.edit')}
+                            </Button>
+                            <Button
+                              variant="text"
+                              size="small"
+                              disabled={
+                                permission.deletable === false || deletePermissionMutation.isPending
                               }
-                            }}
-                          >
-                            {t('rbac.permissions.actions.delete')}
-                          </Button>
-                        </Box>
+                              className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold !text-danger"
+                              onClick={() => {
+                                if (
+                                  window.confirm(t('rbac.permissions.actions.deleteConfirmSimple'))
+                                ) {
+                                  runMutation(
+                                    deletePermissionMutation,
+                                    permission.id,
+                                    t('rbac.permissions.editModal.deleteSuccess'),
+                                  )
+                                }
+                              }}
+                            >
+                              {t('rbac.permissions.actions.delete')}
+                            </Button>
+                          </Box>
+                        )}
                       </TableCell>
                     </TableRow>
                   )
@@ -739,14 +762,16 @@ export default function UsersRolesPage() {
             ))}
           </Select>
         </FormControl>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          className="h-10 whitespace-nowrap rounded-lg text-sm font-semibold lg:ml-auto"
-          onClick={() => setDialog({ type: 'scope', payload: null })}
-        >
-          {t('rbac.scopes.actions.addScope')}
-        </Button>
+        {canWrite && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            className="h-10 whitespace-nowrap rounded-lg text-sm font-semibold lg:ml-auto"
+            onClick={() => setDialog({ type: 'scope', payload: null })}
+          >
+            {t('rbac.scopes.actions.addScope')}
+          </Button>
+        )}
       </Box>
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border bg-surface">
         <TableContainer>
@@ -799,6 +824,7 @@ export default function UsersRolesPage() {
                       <Switch
                         checked={scope.status === 'active'}
                         color="primary"
+                        disabled={!canWrite}
                         onChange={(event) =>
                           runMutation(
                             updateScopeMutation,
@@ -820,16 +846,20 @@ export default function UsersRolesPage() {
                         >
                           {t('rbac.scopes.actions.view')}
                         </Button>
-                        <Typography variant="body2" className="text-ink-muted">
-                          ·
-                        </Typography>
-                        <Button
-                          size="small"
-                          className="!min-w-0 px-1 text-sm font-semibold"
-                          onClick={() => setDialog({ type: 'scope', payload: scope })}
-                        >
-                          {t('rbac.scopes.actions.edit')}
-                        </Button>
+                        {canWrite && (
+                          <>
+                            <Typography variant="body2" className="text-ink-muted">
+                              ·
+                            </Typography>
+                            <Button
+                              size="small"
+                              className="!min-w-0 px-1 text-sm font-semibold"
+                              onClick={() => setDialog({ type: 'scope', payload: scope })}
+                            >
+                              {t('rbac.scopes.actions.edit')}
+                            </Button>
+                          </>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -881,6 +911,7 @@ export default function UsersRolesPage() {
             key={section.roleId}
             section={section}
             totalPermissions={permissions.length}
+            canWrite={canWrite}
             t={t}
             onEditRole={() => setDialog({ type: 'scoped-grant', payload: { role: section.role } })}
             onGrant={(group) =>
@@ -954,7 +985,7 @@ export default function UsersRolesPage() {
       {activeTab === TAB_KEYS.OVERRIDES && renderOverrides()}
 
       <AccountFormDialog
-        open={dialog.type === 'add-account'}
+        open={canWrite && dialog.type === 'add-account'}
         onClose={closeDialog}
         roles={roles}
         t={t}
@@ -968,6 +999,7 @@ export default function UsersRolesPage() {
         accountId={dialog.payload}
         onClose={closeDialog}
         t={t}
+        canWrite={canWrite}
         statusPending={updateAccountStatusMutation.isPending}
         passwordPending={resetAccountPasswordMutation.isPending}
         onUpdateStatus={(payload) =>
@@ -987,7 +1019,7 @@ export default function UsersRolesPage() {
       />
       <EditAccessDialog
         key={dialog.type === 'edit-access' ? dialog.payload : 'edit-access-closed'}
-        open={dialog.type === 'edit-access'}
+        open={canWrite && dialog.type === 'edit-access'}
         accountId={dialog.payload}
         roles={roles}
         permissions={permissions}
@@ -1024,7 +1056,7 @@ export default function UsersRolesPage() {
       />
       <RoleDialog
         key={dialog.type === 'role' ? (dialog.payload?.id ?? 'role-new') : 'role-closed'}
-        open={dialog.type === 'role'}
+        open={canWrite && dialog.type === 'role'}
         mode={dialog.payload ? 'edit' : 'create'}
         value={dialog.payload}
         permissions={rolePermissions}
@@ -1049,7 +1081,7 @@ export default function UsersRolesPage() {
             ? (dialog.payload?.id ?? 'permission-new')
             : 'permission-closed'
         }
-        open={dialog.type === 'permission'}
+        open={canWrite && dialog.type === 'permission'}
         value={dialog.payload}
         pending={createPermissionMutation.isPending || updatePermissionMutation.isPending}
         deletePending={deletePermissionMutation.isPending}
@@ -1086,6 +1118,7 @@ export default function UsersRolesPage() {
         departments={departments}
         teams={teams}
         pending={createScopeMutation.isPending || updateScopeMutation.isPending}
+        canWrite={canWrite}
         onClose={closeDialog}
         t={t}
         onSubmit={(values) => {
@@ -1118,7 +1151,7 @@ export default function UsersRolesPage() {
             ? `${dialog.payload?.section?.roleId}-${dialog.payload?.group?.id}`
             : 'grant-permission-closed'
         }
-        open={dialog.type === 'grant-permission'}
+        open={canWrite && dialog.type === 'grant-permission'}
         context={dialog.payload}
         permissions={permissions}
         pending={setScopedRolePermissionsMutation.isPending}
@@ -1139,7 +1172,7 @@ export default function UsersRolesPage() {
             ? (dialog.payload?.role?.id ?? 'scoped-grant-new')
             : 'scoped-grant-closed'
         }
-        open={dialog.type === 'scoped-grant'}
+        open={canWrite && dialog.type === 'scoped-grant'}
         role={dialog.payload?.role}
         scopes={scopes}
         permissions={permissions}
