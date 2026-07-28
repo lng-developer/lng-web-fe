@@ -1,24 +1,14 @@
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
-import path from 'node:path'
 import test from 'node:test'
 
 import { BACKEND_ENDPOINTS } from './backendEndpoints.js'
+import {
+  findPairedBackendRoot,
+  parseExpressRoutes,
+  readExpressRoutes,
+} from './backendRoutes.testUtils.js'
 
-const beRootCandidates = [
-  path.resolve(
-    process.cwd(),
-    '..',
-    '..',
-    '..',
-    'lng-web-be',
-    '.worktrees',
-    path.basename(process.cwd()),
-  ),
-  path.resolve(process.cwd(), '..', 'lng-web-be'),
-  path.resolve(process.cwd(), '..', 'lng-web-be-v1', 'lng-web-be'),
-]
-const beRoot = beRootCandidates.find((candidate) => fs.existsSync(candidate))
+const beRoot = findPairedBackendRoot()
 
 const routeFiles = [
   ['auth', '/api/auth', 'src/modules/auth/routes/index.js'],
@@ -36,6 +26,7 @@ const routeFiles = [
   ['organization', '/api/organization', 'src/modules/organization/routes/index.js'],
   ['audit', '/api/audit', 'src/modules/audit/routes/index.js'],
   ['reports', '/api/reports', 'src/modules/report/routes/index.js'],
+  ['hr', '/api/hr', 'src/modules/hr/routes/index.js'],
   ['vendor-submissions', '/api/vendor-submissions', 'src/modules/vendorSubmission/routes/index.js'],
   ['integration', '/api/integration', 'src/modules/integration/routes/index.js'],
   [
@@ -45,46 +36,41 @@ const routeFiles = [
   ],
 ]
 
-function joinRoute(base, routePath) {
-  return `${base}/${routePath}`.replace(/\/+/g, '/').replace(/\/$/, '')
-}
-
-function normalize(routePath) {
-  return routePath.replace(/:[A-Za-z0-9_]+/g, ':param')
-}
-
-function key(method, routePath) {
-  return `${method.toUpperCase()} ${normalize(routePath)}`
+function key(moduleId, method, routePath) {
+  return `${moduleId}|${method.toUpperCase()}|${routePath}`
 }
 
 function readBackendRoutes() {
-  assert.ok(beRoot, `Backend repo not found in: ${beRootCandidates.join(', ')}`)
-
-  return routeFiles.flatMap(([moduleId, basePath, filePath]) => {
-    const source = fs.readFileSync(path.join(beRoot, filePath), 'utf8')
-    const routes = []
-    const routePattern = /router\.(get|post|patch|put|delete)\s*\(\s*['"`]([^'"`]+)['"`]/gms
-    let match = routePattern.exec(source)
-
-    while (match) {
-      const [, method, routePath] = match
-      const fullPath = joinRoute(basePath, routePath)
-      if (!fullPath.endsWith('/health')) {
-        routes.push({ moduleId, method: method.toUpperCase(), path: fullPath })
-      }
-      match = routePattern.exec(source)
-    }
-
-    return routes
-  })
+  return routeFiles.flatMap((routeFile) => readExpressRoutes(beRoot, routeFile))
 }
 
-test('backend endpoint registry covers every backend non-health route', () => {
-  const backendKeys = readBackendRoutes()
-    .map((route) => key(route.method, route.path))
-    .sort()
-  const registryKeys = BACKEND_ENDPOINTS.map((route) => key(route.method, route.path)).sort()
-  const missing = backendKeys.filter((routeKey) => !registryKeys.includes(routeKey))
+test('backend route parsing ignores commented and string-only router calls', () => {
+  const source = `
+    // router.get('/commented-out', handler)
+    /* router.delete('/also-commented-out', handler) */
+    const example = "router.post('/inside-a-string', handler)"
+    router.patch('/live/:profileId', handler)
+  `
 
-  assert.deepEqual(missing, [])
+  assert.deepEqual(parseExpressRoutes(source, ['fixture', '/api/fixture']), [
+    {
+      moduleId: 'fixture',
+      method: 'PATCH',
+      path: '/api/fixture/live/:profileId',
+    },
+  ])
+})
+
+test('backend endpoint registry exactly covers every backend non-health route', () => {
+  const allBackendKeys = readBackendRoutes()
+    .map((route) => key(route.moduleId, route.method, route.path))
+    .sort()
+  const backendKeys = allBackendKeys.filter((routeKey) => !routeKey.endsWith('/health'))
+  const registryKeys = BACKEND_ENDPOINTS.map((route) =>
+    key(route.moduleId, route.method, route.path),
+  ).sort()
+  const missing = backendKeys.filter((routeKey) => !registryKeys.includes(routeKey))
+  const stale = registryKeys.filter((routeKey) => !allBackendKeys.includes(routeKey))
+
+  assert.deepEqual({ missing, stale }, { missing: [], stale: [] })
 })

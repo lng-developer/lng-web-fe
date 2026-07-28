@@ -41,6 +41,7 @@ import EmployeeLifecycleDialog from '../components/EmployeeLifecycleDialog.jsx'
 import EmployeeProfileDialog from '../components/EmployeeProfileDialog.jsx'
 import EmployeeProfileDrawer from '../components/EmployeeProfileDrawer.jsx'
 import LeaveBalanceAdminDialog from '../components/LeaveBalanceAdminDialog.jsx'
+import { hasGlobalPermissionCode } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
 const statuses = ['ACTIVE', 'PROBATION', 'ON_LEAVE', 'SUSPENDED', 'RESIGNED']
@@ -74,6 +75,7 @@ export default function PeoplePage() {
   const [actionError, setActionError] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_EMPLOYEES:WRITE'])
   const canManageLeaveBalances = hasAnyPermission(currentUser, ['HR_LEAVE:APPROVE'])
+  const canManageLeaveBalancesGlobally = hasGlobalPermissionCode(currentUser, 'HR_LEAVE:APPROVE')
   const canReadAccounts = hasAnyPermission(currentUser, ['AUTH:READ'])
 
   const directoryQuery = useEmployeeProfilesQuery({
@@ -161,7 +163,7 @@ export default function PeoplePage() {
             ? 'Could not delete employee profile'
             : 'Could not restore employee profile'),
       )
-      if ([403, 404, 409].includes(error?.response?.status)) await directoryQuery.refetch()
+      if ([403, 404, 409].includes(error?.status)) await directoryQuery.refetch()
     }
   }
 
@@ -451,6 +453,7 @@ export default function PeoplePage() {
           loading={leaveBalanceMutation.isPending}
           error={leaveBalanceAction.error}
           result={leaveBalanceAction.result}
+          requireSelection={!canManageLeaveBalancesGlobally}
           onClose={() => setLeaveBalanceAction(null)}
           onConfirm={confirmLeaveBalanceBatch}
         />

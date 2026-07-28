@@ -138,7 +138,8 @@ test('People renders server-owned employee lifecycle controls', async () => {
   assert.match(page, /row\.capabilities\?\.delete/)
   assert.match(page, /row\.capabilities\?\.restore/)
   assert.match(page, /canWrite &&\s*\(\s*<Button[\s\S]{0,400}Include deleted/)
-  assert.match(page, /\[403, 404, 409\]\.includes\(error\?\.response\?\.status\)/)
+  assert.match(page, /\[403, 404, 409\]\.includes\(error\?\.status\)/)
+  assert.doesNotMatch(page, /\[403, 404, 409\]\.includes\(error\?\.response\?\.status\)/)
   assert.match(page, /!row\.isDeleted &&[\s\S]*VisibilityOutlinedIcon/)
   assert.match(dialog, /Delete employee profile/)
   assert.match(dialog, /Restore employee profile/)
@@ -188,6 +189,18 @@ test('People leave balance administration is permission-gated and preserves back
   assert.match(mutations, /useCarryOverLeaveBalancesMutation/)
   assert.match(mutations, /LEAVE_BALANCE_ADJUST/)
   assert.match(mutations, /retry: false/)
+})
+
+test('scoped leave approvers must target employees before running a batch', async () => {
+  const [page, dialog] = await Promise.all([
+    source('pages/PeoplePage.jsx'),
+    source('components/LeaveBalanceAdminDialog.jsx'),
+  ])
+
+  assert.match(page, /hasGlobalPermissionCode\(\s*currentUser,\s*'HR_LEAVE:APPROVE'/)
+  assert.match(page, /requireSelection=\{!canManageLeaveBalancesGlobally\}/)
+  assert.match(dialog, /if \(requireSelection && !hasSelection\) return/)
+  assert.match(dialog, /requireSelection && !hasSelection/)
 })
 
 test('HR route children mount attendance, schedule, and people permissions', async () => {
@@ -246,9 +259,30 @@ test('Schedule completes calendar policy administration through focused API cons
   assert.match(schedule, /RotationMaintenanceDialog/)
 })
 
+test('Schedule uses backend holiday enums and renders rotation generation evidence', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /\['PUBLIC_HOLIDAY', 'SUBSTITUTE_WORK_DAY'\]/)
+  assert.doesNotMatch(schedule, /COMPANY_HOLIDAY|SPECIAL_DAY/)
+  assert.match(schedule, /setRotationOutcome\(result\)/)
+  assert.match(schedule, /outcome\.generated/)
+  assert.match(schedule, /outcome\.items/)
+})
+
 test('HolidayDialog cannot be dismissed while its write is pending', async () => {
   const schedule = await source('pages/SchedulePage.jsx')
 
   assert.match(schedule, /<AnimatedDialog open onClose=\{loading \? undefined : onClose\}/)
   assert.match(schedule, /<Button onClick=\{onClose\} disabled=\{loading\}>\s*Cancel/)
+})
+
+test('RotationDialog cannot be dismissed while generation is pending', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+  const dialog = schedule.slice(
+    schedule.indexOf('function RotationDialog'),
+    schedule.indexOf('function list(data)'),
+  )
+
+  assert.match(dialog, /onClose=\{loading \? undefined : onClose\}/)
+  assert.match(dialog, /<Button onClick=\{onClose\} disabled=\{loading\}>\s*Cancel/)
 })

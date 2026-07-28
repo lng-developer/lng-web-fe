@@ -177,7 +177,7 @@ function HolidayDialog({ record, loading, error, onClose, onDraftChange, onSubmi
           value={values.holidayType}
           onChange={(event) => updateValues({ holidayType: event.target.value })}
         >
-          {['PUBLIC_HOLIDAY', 'COMPANY_HOLIDAY', 'SPECIAL_DAY'].map((value) => (
+          {['PUBLIC_HOLIDAY', 'SUBSTITUTE_WORK_DAY'].map((value) => (
             <MenuItem key={value} value={value}>
               {value.replaceAll('_', ' ')}
             </MenuItem>
@@ -219,7 +219,7 @@ function HolidayDialog({ record, loading, error, onClose, onDraftChange, onSubmi
   )
 }
 
-function RotationDialog({ teams, initialTeamId, loading, error, onClose, onSubmit }) {
+function RotationDialog({ teams, initialTeamId, loading, error, outcome, onClose, onSubmit }) {
   const today = new Date()
   const [values, setValues] = useState({
     teamId: initialTeamId || '',
@@ -234,6 +234,18 @@ function RotationDialog({ teams, initialTeamId, loading, error, onClose, onSubmi
         {error ? (
           <Alert severity="error" className="sm:col-span-2">
             {error}
+          </Alert>
+        ) : null}
+        {outcome ? (
+          <Alert severity="success" className="sm:col-span-2">
+            <Typography variant="subtitle2">Generated: {outcome.generated}</Typography>
+            {(outcome.items || []).map((item, index) => (
+              <Typography key={item.id || index} variant="body2">
+                {item.dateKey || '-'} · Rotation {item.id || '-'} · Team {item.teamId || '-'} ·
+                Minimum present {item.minPresent ?? '-'} · Employees off{' '}
+                {(item.employeeProfileIds || []).join(', ') || 'none'}
+              </Typography>
+            ))}
           </Alert>
         ) : null}
         <TextField
@@ -274,7 +286,9 @@ function RotationDialog({ teams, initialTeamId, loading, error, onClose, onSubmi
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           disabled={loading || !values.teamId}
@@ -345,6 +359,7 @@ export default function SchedulePage() {
   const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [bulkImportResult, setBulkImportResult] = useState(null)
   const [rotationEditor, setRotationEditor] = useState(false)
+  const [rotationOutcome, setRotationOutcome] = useState(null)
   const [rotationMaintenance, setRotationMaintenance] = useState(null)
   const [actionError, setActionError] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_SCHEDULE:WRITE'])
@@ -623,8 +638,8 @@ export default function SchedulePage() {
   async function generateRotationSet(payload) {
     setActionError('')
     try {
-      await generateRotations.mutateAsync(payload)
-      setRotationEditor(false)
+      const result = await generateRotations.mutateAsync(payload)
+      setRotationOutcome(result)
       enqueueSnackbar('Saturday rotations generated', { variant: SNACKBAR_VARIANTS.SUCCESS })
     } catch (error) {
       setActionError(error?.data?.message || error?.message || 'Could not generate rotations')
@@ -854,6 +869,7 @@ export default function SchedulePage() {
                 startIcon={<AddIcon />}
                 onClick={() => {
                   setActionError('')
+                  setRotationOutcome(null)
                   setRotationEditor(true)
                 }}
               >
@@ -1126,7 +1142,11 @@ export default function SchedulePage() {
           initialTeamId={rotationWriteTeamId}
           loading={generateRotations.isPending}
           error={actionError}
-          onClose={() => setRotationEditor(false)}
+          outcome={rotationOutcome}
+          onClose={() => {
+            setRotationEditor(false)
+            setRotationOutcome(null)
+          }}
           onSubmit={generateRotationSet}
         />
       ) : null}

@@ -62,6 +62,21 @@ export function mapPayrollRun(run) {
   }
 }
 
+export function payrollResultIdentity(result = {}, index = 0) {
+  const profileId = typeof result.profileId === 'string' ? result.profileId : ''
+  const resultId = typeof result.id === 'string' ? result.id : ''
+  return {
+    key: profileId || resultId || `payroll-preview-${index + 1}`,
+    label:
+      result.employee?.fullName ||
+      result.employee?.employeeCode ||
+      profileId ||
+      resultId ||
+      `Employee ${index + 1}`,
+    reference: profileId || resultId || `#${index + 1}`,
+  }
+}
+
 export function buildRunPayrollPayload(values) {
   return {
     month: Number(values.month),

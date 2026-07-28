@@ -42,6 +42,7 @@ export default function LeaveBalanceAdminDialog({
   loading = false,
   error,
   result,
+  requireSelection = false,
   onClose,
   onConfirm,
 }) {
@@ -63,6 +64,7 @@ export default function LeaveBalanceAdminDialog({
 
   function submit(event) {
     event.preventDefault()
+    if (requireSelection && !hasSelection) return
     const profileIds = hasSelection ? { profileIds: values.profileIds } : {}
     const payload =
       mode === 'accrue'
@@ -94,6 +96,7 @@ export default function LeaveBalanceAdminDialog({
 
   const invalid =
     !values.reason.trim() ||
+    (requireSelection && !hasSelection) ||
     (mode === 'accrue' && (!values.year || !values.month || !values.units)) ||
     (mode === 'reset' && (!values.year || values.entitledUnits === '')) ||
     (mode === 'carryOver' && (!values.fromYear || !values.toYear || values.maxUnits === ''))
@@ -107,16 +110,22 @@ export default function LeaveBalanceAdminDialog({
           <Alert severity="warning">
             {hasSelection
               ? `This will apply to ${values.profileIds.length} selected employee${values.profileIds.length === 1 ? '' : 's'}.`
-              : 'This will apply to all active employees.'}
+              : requireSelection
+                ? 'Select at least one employee. Your scoped approval cannot run for all employees.'
+                : 'This will apply to all active employees.'}
           </Alert>
           <TextField
             select
-            label="Employees (optional)"
+            label={`Employees${requireSelection ? '' : ' (optional)'}`}
             value={values.profileIds}
             SelectProps={{
               multiple: true,
               renderValue: (selected) =>
-                selected.length ? `${selected.length} selected` : 'All active employees',
+                selected.length
+                  ? `${selected.length} selected`
+                  : requireSelection
+                    ? 'Select employees'
+                    : 'All active employees',
             }}
             onChange={(event) => setField('profileIds', event.target.value)}
           >

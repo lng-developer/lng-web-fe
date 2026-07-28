@@ -49,6 +49,23 @@ test('payroll actions require preview, explicit confirmation, and pending state'
   assert.match(dialog, /queued/)
   assert.match(dialog, /reused/)
   assert.match(dialog, /skipped/)
+  assert.match(dialog, /outcome\?\.jobs/)
+  assert.match(dialog, /job\.payrollResultId/)
+  assert.match(dialog, /job\.status/)
+})
+
+test('payroll preview renders calculation evidence and clears it after closing', async () => {
+  const dialog = await source('components/PayrollRunDialog.jsx')
+
+  assert.doesNotMatch(dialog, /useEffect/)
+  assert.match(dialog, /function close\(\)[\s\S]*setPreview\(null\)[\s\S]*onClose\(\)/)
+  assert.match(dialog, /if \(shadow\) setPreview\(result\)\s*else setPreview\(null\)/)
+  assert.match(dialog, /payrollResultIdentity\(result, index\)/)
+  assert.doesNotMatch(dialog, /result\.employeeName|result\.employeeCode/)
+  assert.match(dialog, /result\.grossIncome/)
+  assert.match(dialog, /result\.adjustmentEarnings/)
+  assert.match(dialog, /result\.adjustmentDeductions/)
+  assert.match(dialog, /result\.netIncome/)
 })
 
 test('routes mount auth-only payslips and permission-gated payroll administration', async () => {

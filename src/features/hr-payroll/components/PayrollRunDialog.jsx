@@ -7,10 +7,11 @@ import DialogTitle from '@mui/material/DialogTitle'
 import LinearProgress from '@mui/material/LinearProgress'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 
 import AnimatedDialog from '@/components/common/AnimatedDialog'
 
-import { buildRunPayrollPayload } from '../utils/hrPayrollApi.js'
+import { buildRunPayrollPayload, formatVnd, payrollResultIdentity } from '../utils/hrPayrollApi.js'
 
 function currentPeriod() {
   const now = new Date()
@@ -29,6 +30,11 @@ export default function PayrollRunDialog({
   const [values, setValues] = useState(currentPeriod)
   const [preview, setPreview] = useState(null)
 
+  function close() {
+    setPreview(null)
+    onClose()
+  }
+
   function update(field, value) {
     setPreview(null)
     setValues((current) => ({ ...current, [field]: value }))
@@ -39,10 +45,11 @@ export default function PayrollRunDialog({
       buildRunPayrollPayload({ ...values, shadow }),
     )
     if (shadow) setPreview(result)
+    else setPreview(null)
   }
 
   return (
-    <AnimatedDialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth="sm">
+    <AnimatedDialog open={open} onClose={loading ? undefined : close} fullWidth maxWidth="sm">
       <DialogTitle>Run payroll</DialogTitle>
       {loading ? <LinearProgress /> : null}
       <DialogContent className="grid gap-4 pt-2 sm:grid-cols-2">
@@ -89,14 +96,32 @@ export default function PayrollRunDialog({
           ))}
         </TextField>
         {preview ? (
-          <Alert severity="success" className="sm:col-span-2">
-            Preview complete: {preview.results?.length || 0} employee result
-            {preview.results?.length === 1 ? '' : 's'} calculated. Nothing was saved.
-          </Alert>
+          <div className="space-y-3 sm:col-span-2">
+            <Alert severity="success">
+              Preview complete: {preview.results?.length || 0} employee result
+              {preview.results?.length === 1 ? '' : 's'} calculated. Nothing was saved.
+            </Alert>
+            {(preview.results || []).map((result, index) => {
+              const identity = payrollResultIdentity(result, index)
+              return (
+                <div key={identity.key} className="rounded border p-3">
+                  <Typography variant="subtitle2">{identity.label}</Typography>
+                  <Typography variant="body2" className="text-ink-secondary">
+                    Result: {identity.reference}
+                  </Typography>
+                  <Typography variant="body2">
+                    Gross: {formatVnd(result.grossIncome)} · Adjustment earnings:{' '}
+                    {formatVnd(result.adjustmentEarnings)} · Adjustment deductions:{' '}
+                    {formatVnd(result.adjustmentDeductions)} · Net: {formatVnd(result.netIncome)}
+                  </Typography>
+                </div>
+              )
+            })}
+          </div>
         ) : null}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+        <Button onClick={close} disabled={loading}>
           Close
         </Button>
         <Button variant="outlined" onClick={() => submit(true)} disabled={loading}>

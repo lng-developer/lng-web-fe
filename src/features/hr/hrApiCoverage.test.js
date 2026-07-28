@@ -4,6 +4,11 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join, posix, relative } from 'node:path'
 import test from 'node:test'
 
+import {
+  findPairedBackendRoot,
+  readExpressRoutes,
+} from '../api-coverage/data/backendRoutes.testUtils.js'
+
 const q = 'src/features/hr-time/api/hrTime.queries.js'
 const m = 'src/features/hr-time/api/hrTime.mutations.js'
 const payrollQ = 'src/features/hr-payroll/api/hrPayroll.queries.js'
@@ -900,10 +905,12 @@ function listSourceFiles(directory) {
 function parseSource(file, source) {
   const linter = new Linter({ configType: 'eslintrc' })
   let ast
+  let sourceCode
   let scopeManager
   linter.defineRule('capture-ast', {
     create(context) {
       ast = context.sourceCode.ast
+      sourceCode = context.sourceCode
       scopeManager = context.sourceCode.scopeManager
       return {}
     },
@@ -917,7 +924,7 @@ function parseSource(file, source) {
     { allowInlineConfig: false },
   )
   assert.deepEqual(errors, [], `${file} must parse before its hooks can be audited`)
-  return { ast, scopeManager }
+  return { ast, sourceCode, scopeManager }
 }
 
 const isTestFile = (file) =>
@@ -938,6 +945,81 @@ function resolveModulePath(fromFile, specifier, filesByPath) {
     ...['js', 'jsx', 'ts', 'tsx'].map((extension) => `${base}.${extension}`),
     ...['js', 'jsx', 'ts', 'tsx'].map((extension) => `${base}/index.${extension}`),
   ].find((file) => filesByPath.has(file))
+}
+
+function walkAst(node, visit, seen = new Set()) {
+  if (!node || typeof node !== 'object' || seen.has(node)) return
+  seen.add(node)
+  if (typeof node.type === 'string') visit(node)
+
+  for (const [key, value] of Object.entries(node)) {
+    if (['parent', 'comments', 'tokens'].includes(key)) continue
+    if (Array.isArray(value)) value.forEach((child) => walkAst(child, visit, seen))
+    else if (value && typeof value === 'object') walkAst(value, visit, seen)
+  }
+}
+
+function analyzeRuntimeFiles(files) {
+  const filesByPath = new Map(files.map((entry) => [entry.file, entry]))
+  const modules = new Map(
+    files.map(({ file, source }) => {
+      const { ast, sourceCode, scopeManager } = parseSource(file, source)
+      const importVariables = new Map()
+      for (const scope of scopeManager.scopes) {
+        for (const variable of scope.variables) {
+          if (variable.defs.some(({ type }) => type === 'ImportBinding')) {
+            importVariables.set(variable.name, variable)
+          }
+        }
+      }
+
+      const calledImports = new Set()
+      const dependencies = new Set()
+      const executableTexts = new Set()
+      walkAst(ast, (node) => {
+        const specifier = [
+          'ImportDeclaration',
+          'ExportAllDeclaration',
+          'ExportNamedDeclaration',
+        ].includes(node.type)
+          ? node.source?.value
+          : node.type === 'ImportExpression'
+            ? node.source?.value
+            : undefined
+        const dependency = specifier && resolveModulePath(file, specifier, filesByPath)
+        if (dependency) dependencies.add(dependency)
+
+        if (['MemberExpression', 'CallExpression', 'TemplateLiteral'].includes(node.type)) {
+          executableTexts.add(sourceCode.getText(node))
+        }
+        if (node.type === 'CallExpression' && node.callee?.type === 'Identifier') {
+          const variable = importVariables.get(node.callee.name)
+          if (variable?.references.some(({ identifier }) => identifier === node.callee)) {
+            calledImports.add(node.callee.name)
+          }
+        }
+      })
+      return [file, { calledImports, dependencies, executableTexts }]
+    }),
+  )
+
+  const reachable = new Set()
+  const pending = ['src/main.jsx']
+  while (pending.length) {
+    const file = pending.pop()
+    if (reachable.has(file) || !modules.has(file)) continue
+    reachable.add(file)
+    pending.push(...modules.get(file).dependencies)
+  }
+  return { modules, reachable }
+}
+
+function hasRuntimeEvidence(analysis, file, evidence) {
+  if (!analysis.reachable.has(file)) return false
+  const module = analysis.modules.get(file)
+  return /^use[A-Z]\w*$/.test(evidence)
+    ? module?.calledImports.has(evidence) || false
+    : module?.executableTexts.has(evidence) || false
 }
 
 function addLocalHooks(declaration, localHooks) {
@@ -1158,7 +1240,36 @@ test('hook scan resolves import bindings and excludes shadowed, test-only, or me
   ])
 })
 
+test('runtime evidence rejects comments and modules unreachable from the app entrypoint', () => {
+  const files = [
+    { file: 'src/main.jsx', source: "import './Live.jsx'" },
+    {
+      file: 'src/Hooks.js',
+      source:
+        'export function useLiveHook() {}\nexport function useCommentOnlyHook() {}\nexport function useOrphanHook() {}',
+    },
+    {
+      file: 'src/Live.jsx',
+      source: "import { useLiveHook } from './Hooks.js'\nuseLiveHook()\n// useCommentOnlyHook()",
+    },
+    {
+      file: 'src/Dead.jsx',
+      source: "import { useOrphanHook } from './Hooks.js'\nuseOrphanHook()",
+    },
+  ]
+  const analysis = analyzeRuntimeFiles(files)
+
+  assert.equal(hasRuntimeEvidence(analysis, 'src/Live.jsx', 'useLiveHook'), true)
+  assert.equal(hasRuntimeEvidence(analysis, 'src/Live.jsx', 'useCommentOnlyHook'), false)
+  assert.equal(hasRuntimeEvidence(analysis, 'src/Dead.jsx', 'useOrphanHook'), false)
+})
+
 test('all 79 HR routes have explicit runtime or headless coverage', () => {
+  const backendRoutes = readExpressRoutes(findPairedBackendRoot(), [
+    'hr',
+    '/api/hr',
+    'src/modules/hr/routes/index.js',
+  ])
   assert.equal(routes.length, 79)
   assert.equal(routes.filter(({ disposition }) => disposition === 'runtime').length, 78)
   assert.deepEqual(
@@ -1168,6 +1279,18 @@ test('all 79 HR routes have explicit runtime or headless coverage', () => {
     ['GET /api/hr/health'],
   )
   assert.equal(new Set(routes.map(({ method, path }) => `${method} ${path}`)).size, routes.length)
+  assert.deepEqual(
+    routes.map(({ method, path }) => `${method} ${path}`).sort(),
+    backendRoutes.map(({ method, path }) => `${method} ${path}`).sort(),
+  )
+
+  const files = listSourceFiles('src')
+    .filter((file) => /\.[jt]sx?$/.test(file))
+    .map((file) => ({
+      file: relative('.', file).replaceAll('\\', '/'),
+      source: readFileSync(file, 'utf8'),
+    }))
+  const runtimeAnalysis = analyzeRuntimeFiles(files)
 
   for (const route of routes.filter(({ disposition }) => disposition === 'runtime')) {
     assert.ok(
@@ -1175,10 +1298,9 @@ test('all 79 HR routes have explicit runtime or headless coverage', () => {
       `${route.method} ${route.path} has no runtime page/component`,
     )
     for (const { file, evidence } of route.sourceFiles) {
-      assert.match(
-        readFileSync(file, 'utf8'),
-        new RegExp(evidence.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-        `${route.method} ${route.path}: ${evidence} missing from ${file}`,
+      assert.ok(
+        hasRuntimeEvidence(runtimeAnalysis, file, evidence),
+        `${route.method} ${route.path}: executable ${evidence} missing from reachable ${file}`,
       )
     }
   }

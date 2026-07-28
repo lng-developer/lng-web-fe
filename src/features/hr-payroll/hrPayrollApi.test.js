@@ -10,6 +10,7 @@ import {
   mapPayrollResult,
   mapPayrollRun,
   normalizePayrollQuery,
+  payrollResultIdentity,
   unwrapPayrollResponse,
 } from './utils/hrPayrollApi.js'
 
@@ -132,6 +133,35 @@ test('payroll execution and email adapters preserve the API contract', () => {
     jobs: [],
   })
   assert.equal(mapPayrollRun({ capabilities: { email: true } }).capabilities.email, true)
+})
+
+test('payroll preview identity uses the nested employee DTO and ignores object ids', () => {
+  assert.deepEqual(
+    payrollResultIdentity(
+      {
+        id: { profileId: 'profile-1' },
+        profileId: 'profile-1',
+        employee: { fullName: 'Nguyen An', employeeCode: 'EMP-01' },
+      },
+      0,
+    ),
+    {
+      key: 'profile-1',
+      label: 'Nguyen An',
+      reference: 'profile-1',
+    },
+  )
+  assert.deepEqual(
+    payrollResultIdentity(
+      { id: { profileId: 'profile-2' }, employee: { employeeCode: 'EMP-02' } },
+      1,
+    ),
+    {
+      key: 'payroll-preview-2',
+      label: 'EMP-02',
+      reference: '#2',
+    },
+  )
 })
 
 test('mark-paid payload contains explicit result ids and optimistic version only', () => {
