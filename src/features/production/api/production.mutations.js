@@ -46,6 +46,21 @@ export function usePushProductionTasksMutation() {
   })
 }
 
+export function useReplaceProductionQcArtworkMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ taskId, fileCheckId, file }) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      return apiClient
+        .post(ENDPOINTS.PRODUCTION.SCALED_OUTPUT_FILE(taskId, fileCheckId), formData)
+        .then(unwrapApiData)
+    },
+    onSuccess: () => invalidateProduction(queryClient),
+  })
+}
+
 export function useExportProductionQcTasksMutation() {
   return useMutation({
     mutationFn: (query) =>
