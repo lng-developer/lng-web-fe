@@ -900,9 +900,11 @@ function listSourceFiles(directory) {
 function parseSource(file, source) {
   const linter = new Linter({ configType: 'eslintrc' })
   let ast
+  let scopeManager
   linter.defineRule('capture-ast', {
     create(context) {
       ast = context.sourceCode.ast
+      scopeManager = context.sourceCode.scopeManager
       return {}
     },
   })
@@ -915,17 +917,7 @@ function parseSource(file, source) {
     { allowInlineConfig: false },
   )
   assert.deepEqual(errors, [], `${file} must parse before its hooks can be audited`)
-  return ast
-}
-
-function visit(node, callback) {
-  if (!node || typeof node !== 'object') return
-  if (Array.isArray(node)) {
-    node.forEach((child) => visit(child, callback))
-    return
-  }
-  if (node.type) callback(node)
-  Object.entries(node).forEach(([key, child]) => key !== 'parent' && visit(child, callback))
+  return { ast, scopeManager }
 }
 
 const isTestFile = (file) =>
@@ -963,12 +955,16 @@ function findUnusedHooks(files) {
   const filesByPath = new Map(files.map((entry) => [entry.file, entry]))
   const modules = new Map(
     files.map(({ file, source }) => {
-      const ast = parseSource(file, source)
-      const calls = new Set()
-      visit(ast, (node) => {
-        if (node.type === 'CallExpression' && node.callee.type === 'Identifier')
-          calls.add(node.callee.name)
-      })
+      const { ast, scopeManager } = parseSource(file, source)
+      const importVariables = new Map()
+      for (const scope of scopeManager.scopes) {
+        for (const variable of scope.variables) {
+          if (variable.defs.some(({ type }) => type === 'ImportBinding')) {
+            importVariables.set(variable.name, variable)
+          }
+        }
+      }
+      const calledImports = new Set()
       const imports = new Map()
       const exports = new Map()
       const localHooks = new Set()
@@ -980,6 +976,16 @@ function findUnusedHooks(files) {
           if (!targetFile) continue
           statement.specifiers.forEach((specifier) => {
             if (specifier.type === 'ImportNamespaceSpecifier') return
+            const variable = importVariables.get(specifier.local.name)
+            if (
+              variable?.references.some(
+                ({ identifier }) =>
+                  identifier.parent?.type === 'CallExpression' &&
+                  identifier.parent.callee === identifier,
+              )
+            ) {
+              calledImports.add(specifier.local.name)
+            }
             imports.set(specifier.local.name, {
               file: targetFile,
               exportedName:
@@ -1028,7 +1034,7 @@ function findUnusedHooks(files) {
           if (localName) exports.set('default', { localName })
         }
       }
-      return [file, { calls, exports, imports, localHooks }]
+      return [file, { calledImports, exports, imports, localHooks }]
     }),
   )
 
@@ -1063,7 +1069,7 @@ function findUnusedHooks(files) {
   const calledOrigins = new Set()
   for (const [file, module] of modules) {
     if (isTestFile(file)) continue
-    for (const call of module.calls) {
+    for (const call of module.calledImports) {
       const imported = module.imports.get(call)
       if (!imported) continue
       resolveExport(imported.file, imported.exportedName).forEach((origin) =>
@@ -1075,7 +1081,7 @@ function findUnusedHooks(files) {
   return [...definitions].filter(([origin]) => !calledOrigins.has(origin)).map(([, hook]) => hook)
 }
 
-test('hook scan resolves import aliases and excludes test-only or unrelated member calls', () => {
+test('hook scan resolves import bindings and excludes shadowed, test-only, or member calls', () => {
   const files = [
     {
       file: 'src/features/hr-example/hooks.js',
@@ -1083,6 +1089,7 @@ test('hook scan resolves import aliases and excludes test-only or unrelated memb
         export function useNamedHook() {}
         export function useMemberOnly() {}
         export function useOnlyInTests() {}
+        export function useShadowedOnly() {}
       `,
     },
     {
@@ -1104,11 +1111,16 @@ test('hook scan resolves import aliases and excludes test-only or unrelated memb
       source: `
         import { useRenamedHook as useLocalNamed } from './barrel.js'
         import { useReExportedDefault as useLocalReExportedDefault } from './barrel.js'
+        import { useShadowedOnly } from './hooks.js'
         import useLocalDefault from './defaultHook.js'
         useLocalNamed()
         useLocalReExportedDefault()
         useLocalDefault()
         object.useMemberOnly()
+        function nestedScope() {
+          const useShadowedOnly = () => {}
+          useShadowedOnly()
+        }
       `,
     },
     {
@@ -1141,6 +1153,7 @@ test('hook scan resolves import aliases and excludes test-only or unrelated memb
   assert.deepEqual(findUnusedHooks(files), [
     'useMemberOnly',
     'useOnlyInTests',
+    'useShadowedOnly',
     'useRootOnlyInTests',
   ])
 })
