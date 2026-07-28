@@ -319,3 +319,125 @@ export function isAttendanceException(row = {}) {
     Number(row.earlyLeaveMinutes || 0) > 0
   )
 }
+
+function permissionMatches(permission, code) {
+  return typeof permission === 'string' ? permission === code : permission?.code === code
+}
+
+function permissionTreeIncludes(value, code) {
+  if (!value) return false
+  if (typeof value === 'string') return value === code
+  if (Array.isArray(value)) return value.some((item) => permissionTreeIncludes(item, code))
+  if (typeof value !== 'object') return false
+  return (
+    permissionMatches(value, code) ||
+    permissionTreeIncludes(value.permissions, code) ||
+    permissionTreeIncludes(value.customPermissions, code) ||
+    permissionTreeIncludes(value.role, code)
+  )
+}
+
+function permissionCodes(value) {
+  return Array.isArray(value) ? value : [value]
+}
+
+export function getAuthorizedTeamScopeIds(user, requiredPermissions) {
+  const codes = permissionCodes(requiredPermissions)
+  return [
+    ...new Set(
+      (user?.scopes || [])
+        .filter(
+          (scope) =>
+            String(scope?.scopeType || '').toLowerCase() === 'team' &&
+            codes.some((code) =>
+              (scope.permissions || []).some((permission) => permissionMatches(permission, code)),
+            ),
+        )
+        .map((scope) => String(scope.scopeId || ''))
+        .filter(Boolean),
+    ),
+  ]
+}
+
+export function canAccessTeamScope(user, requiredPermissions, teamId) {
+  const codes = permissionCodes(requiredPermissions)
+  if (codes.some((code) => hasGlobalPermissionCode(user, code))) return true
+  return getAuthorizedTeamScopeIds(user, codes).includes(String(teamId || ''))
+}
+
+export function hasGlobalPermissionCode(user, permissionCode) {
+  if (
+    permissionTreeIncludes(
+      [user?.permissions, user?.roles, user?.scopes, user?.accessAssignments, user?.assignments],
+      'MANAGE_SYSTEM',
+    )
+  ) {
+    return true
+  }
+  if ((user?.permissions || []).some((permission) => permissionMatches(permission, permissionCode))) {
+    return true
+  }
+  return (user?.scopes || []).some(
+    (scope) =>
+      String(scope?.scopeType || '').toLowerCase() === 'global' &&
+      (scope.permissions || []).some((permission) => permissionMatches(permission, permissionCode)),
+  )
+}
+
+export function resolveRotationTeamId(requestedTeamId, authorizedTeamIds, hasGlobalAccess) {
+  const requested = String(requestedTeamId || '')
+  if (hasGlobalAccess) return requested
+  if (requested) return authorizedTeamIds.includes(requested) ? requested : ''
+  return authorizedTeamIds.length === 1 ? authorizedTeamIds[0] : ''
+}
+
+export function resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead }) {
+  const scheduleTabs = ['assignments', 'shifts', 'locations', 'overrides']
+  const calendarTabs = ['holidays', 'rotations']
+  if (canScheduleRead && scheduleTabs.includes(requestedTab)) return requestedTab
+  if (canCalendarRead && calendarTabs.includes(requestedTab)) return requestedTab
+  if (canScheduleRead) return 'assignments'
+  if (canCalendarRead) return 'holidays'
+  return 'assignments'
+}
+
+export function resolveCalendarScopeQuery(user, requestedScopeKey, requiredPermissions) {
+  const codes = permissionCodes(requiredPermissions)
+  if (codes.some((code) => hasGlobalPermissionCode(user, code))) {
+    return { enabled: true, global: true, params: {}, scopes: [], selectedScopeKey: 'global' }
+  }
+
+  const scopes = (user?.scopes || [])
+    .filter((scope) => {
+      const scopeType = String(scope?.scopeType || '').toLowerCase()
+      return (
+        ['department', 'team'].includes(scopeType) &&
+        codes.some((code) =>
+          (scope.permissions || []).some((permission) => permissionMatches(permission, code)),
+        )
+      )
+    })
+    .map((scope) => ({
+      key: `${String(scope.scopeType).toLowerCase()}:${String(scope.scopeId)}`,
+      scopeType: String(scope.scopeType).toLowerCase(),
+      scopeId: String(scope.scopeId),
+    }))
+    .filter((scope) => scope.scopeId)
+    .sort((left, right) => left.key.localeCompare(right.key))
+
+  const selected = scopes.find((scope) => scope.key === requestedScopeKey) || scopes[0]
+  if (!selected) {
+    return { enabled: false, global: false, params: {}, scopes: [], selectedScopeKey: '' }
+  }
+
+  return {
+    enabled: true,
+    global: false,
+    params:
+      selected.scopeType === 'team'
+        ? { teamId: selected.scopeId }
+        : { departmentId: selected.scopeId },
+    scopes,
+    selectedScopeKey: selected.key,
+  }
+}

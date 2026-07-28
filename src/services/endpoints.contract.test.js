@@ -94,3 +94,13 @@ test('missing backend endpoint constants match backend routes', () => {
     '/api/vendors/vendor-1/integration/refresh',
   )
 })
+
+test('notification inbox endpoints match the shared backend module', () => {
+  assert.equal(ENDPOINTS.NOTIFICATIONS.INBOX, '/api/notifications')
+  assert.equal(ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT, '/api/notifications/unread-count')
+  assert.equal(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ, '/api/notifications/read-all')
+  assert.equal(
+    ENDPOINTS.NOTIFICATIONS.MARK_READ('notification-1'),
+    '/api/notifications/notification-1/read',
+  )
+})

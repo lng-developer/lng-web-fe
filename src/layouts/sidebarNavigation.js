@@ -43,6 +43,10 @@ const MOUNTED_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
+  ROUTES.HR_MY_PAYSLIPS,
+  ROUTES.HR_PAYROLL_RUNS,
+  ROUTES.HR_ANNOUNCEMENTS,
+  ROUTES.HR_SETTINGS,
 ])
 
 const ROLE_ACCESS = {
@@ -377,9 +381,9 @@ export const PORTAL_NAVIGATION = [
 
 export const HR_NAVIGATION = [
   {
-    id: 'hr-time-group',
+    id: 'hr-my-group',
     type: 'group',
-    labelKey: 'hrTime.title',
+    labelKey: 'hrTime.groups.myHr',
     icon: 'users',
     defaultOpen: true,
     children: [
@@ -391,6 +395,22 @@ export const HR_NAVIGATION = [
         path: ROUTES.HR_TIME_MY_TIME,
         requiredPermissions: ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'],
       },
+      {
+        id: 'hr-payslips',
+        type: 'item',
+        labelKey: 'hrTime.navigation.payslips',
+        icon: 'finance',
+        path: ROUTES.HR_MY_PAYSLIPS,
+      },
+    ],
+  },
+  {
+    id: 'hr-people-time-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.peopleTime',
+    icon: 'users',
+    defaultOpen: true,
+    children: [
       {
         id: 'hr-request-inbox',
         type: 'item',
@@ -418,7 +438,12 @@ export const HR_NAVIGATION = [
         labelKey: 'hrTime.navigation.schedule',
         icon: 'config',
         path: ROUTES.HR_TIME_SCHEDULE,
-        requiredPermissions: ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'],
+        requiredPermissions: [
+          'HR_SCHEDULE:READ',
+          'HR_SCHEDULE:WRITE',
+          'HR_CALENDAR:READ',
+          'HR_CALENDAR:WRITE',
+        ],
       },
       {
         id: 'hr-employees',
@@ -427,6 +452,57 @@ export const HR_NAVIGATION = [
         icon: 'users',
         path: ROUTES.HR_TIME_EMPLOYEES,
         requiredPermissions: ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'],
+      },
+    ],
+  },
+  {
+    id: 'hr-payroll-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.payroll',
+    icon: 'finance',
+    defaultOpen: true,
+    children: [
+      {
+        id: 'hr-payroll-runs',
+        type: 'item',
+        labelKey: 'hrTime.navigation.payrollRuns',
+        icon: 'finance',
+        path: ROUTES.HR_PAYROLL_RUNS,
+        requiredPermissions: ['HR_PAYROLL:READ'],
+      },
+    ],
+  },
+  {
+    id: 'hr-communication-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.communication',
+    icon: 'reports',
+    defaultOpen: false,
+    children: [
+      {
+        id: 'hr-announcements',
+        type: 'item',
+        labelKey: 'hrTime.navigation.announcements',
+        icon: 'reports',
+        path: ROUTES.HR_ANNOUNCEMENTS,
+        requiredPermissions: ['HR_ANNOUNCEMENTS:READ', 'HR_ANNOUNCEMENTS:WRITE'],
+      },
+    ],
+  },
+  {
+    id: 'hr-configuration-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.configuration',
+    icon: 'config',
+    defaultOpen: false,
+    children: [
+      {
+        id: 'hr-settings',
+        type: 'item',
+        labelKey: 'hrTime.navigation.settings',
+        icon: 'config',
+        path: ROUTES.HR_SETTINGS,
+        requiredPermissions: ['HR_INTEGRATIONS:MANAGE'],
       },
     ],
   },
@@ -477,6 +553,10 @@ const HR_ROUTE_PATHS = new Set([
   ROUTES.HR_TIME_ATTENDANCE,
   ROUTES.HR_TIME_SCHEDULE,
   ROUTES.HR_TIME_EMPLOYEES,
+  ROUTES.HR_MY_PAYSLIPS,
+  ROUTES.HR_PAYROLL_RUNS,
+  ROUTES.HR_ANNOUNCEMENTS,
+  ROUTES.HR_SETTINGS,
 ])
 
 export function getSidebarContextForLocation(pathname) {
@@ -544,19 +624,23 @@ function cloneNavigationItem(item) {
   return { ...item }
 }
 
-function filterMountedItem(item) {
-  if (item.path && !MOUNTED_ROUTE_PATHS.has(item.path)) {
+function filterMountedItem(item, mountedRoutePaths = MOUNTED_ROUTE_PATHS) {
+  if (item.path && !mountedRoutePaths.has(item.path)) {
     return null
   }
 
   if (item.type === 'section') {
-    const items = item.items.map(filterMountedItem).filter(Boolean)
+    const items = item.items
+      .map((child) => filterMountedItem(child, mountedRoutePaths))
+      .filter(Boolean)
 
     return items.length > 0 ? { ...item, items } : null
   }
 
   if (item.children) {
-    const children = item.children.map(filterMountedItem).filter(Boolean)
+    const children = item.children
+      .map((child) => filterMountedItem(child, mountedRoutePaths))
+      .filter(Boolean)
 
     return children.length > 0 ? { ...item, children } : null
   }
@@ -568,21 +652,23 @@ function canAccessByPermission(item, user) {
   return !item.requiredPermissions || hasAnyPermission(user, item.requiredPermissions)
 }
 
-function filterItemByUser(item, user) {
-  const mountedItem = filterMountedItem(item)
+function filterItemByUser(item, user, mountedRoutePaths) {
+  const mountedItem = filterMountedItem(item, mountedRoutePaths)
   if (!mountedItem || !canAccessByPermission(mountedItem, user)) {
     return null
   }
 
   if (mountedItem.type === 'section') {
-    const items = mountedItem.items.map((child) => filterItemByUser(child, user)).filter(Boolean)
+    const items = mountedItem.items
+      .map((child) => filterItemByUser(child, user, mountedRoutePaths))
+      .filter(Boolean)
 
     return items.length > 0 ? { ...mountedItem, items } : null
   }
 
   if (mountedItem.children) {
     const children = mountedItem.children
-      .map((child) => filterItemByUser(child, user))
+      .map((child) => filterItemByUser(child, user, mountedRoutePaths))
       .filter(Boolean)
 
     return children.length > 0 ? { ...mountedItem, children } : null
@@ -591,8 +677,8 @@ function filterItemByUser(item, user) {
   return { ...mountedItem }
 }
 
-export function filterNavigationByUser(navigation, user) {
-  return navigation.map((item) => filterItemByUser(item, user)).filter(Boolean)
+export function filterNavigationByUser(navigation, user, mountedRoutePaths = MOUNTED_ROUTE_PATHS) {
+  return navigation.map((item) => filterItemByUser(item, user, mountedRoutePaths)).filter(Boolean)
 }
 
 export function filterNavigationByRole(navigation, role) {

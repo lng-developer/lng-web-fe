@@ -119,6 +119,26 @@ export function useCalendarOverridesQuery(params, options) {
   )
 }
 
+export function useHolidaysQuery(params, options) {
+  return useHrTimeListQuery(
+    hrTimeKeys.listHolidays,
+    ENDPOINTS.HR.HOLIDAYS,
+    params,
+    (row) => row,
+    options,
+  )
+}
+
+export function useSaturdayRotationsQuery(params, options) {
+  return useHrTimeListQuery(
+    hrTimeKeys.listRotations,
+    ENDPOINTS.HR.SATURDAY_ROTATIONS,
+    params,
+    (row) => row,
+    options,
+  )
+}
+
 export function useAttendanceQuery(params, options) {
   return useHrTimeListQuery(
     hrTimeKeys.listAttendance,

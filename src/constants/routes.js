@@ -48,5 +48,9 @@ export const ROUTES = {
   HR_TIME_ATTENDANCE: '/hr/attendance',
   HR_TIME_LEAVE: '/hr/leave',
   HR_TIME_OVERTIME: '/hr/overtime',
+  HR_MY_PAYSLIPS: '/hr/payslips',
+  HR_PAYROLL_RUNS: '/hr/payroll',
+  HR_ANNOUNCEMENTS: '/hr/announcements',
+  HR_SETTINGS: '/hr/settings',
   UNAUTHORIZED: '/unauthorized',
 }

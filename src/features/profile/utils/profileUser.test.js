@@ -13,11 +13,12 @@ describe('buildProfileDetails', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         createdBy: 'System',
       },
-      profile: {
+      employeeProfile: {
         fullName: 'Admin User',
-        birthday: '1999-02-03',
+        dateOfBirth: '1999-02-03',
         phone: '0909000000',
-        email: 'admin@lng.co',
+        workEmail: 'admin@lng.co',
+        personalEmail: 'admin.personal@example.com',
         citizenId: '012345678901',
         address: '123 LNG Street',
       },
@@ -28,7 +29,7 @@ describe('buildProfileDetails', () => {
     assert.deepEqual(buildProfileDetails(user), {
       displayName: 'Admin User',
       email: 'admin@lng.co',
-      personalEmail: 'admin@lng.co',
+      personalEmail: 'admin.personal@example.com',
       phone: '0909000000',
       birthday: '1999-02-03',
       citizenId: '012345678901',

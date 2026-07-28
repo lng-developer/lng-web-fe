@@ -15,6 +15,7 @@ function useHrTimeMutation(mutationFn, keysForSuccess) {
 
   return useMutation({
     mutationFn,
+    retry: false,
     onSuccess: async (_data, variables) => {
       await Promise.all(
         keysForSuccess(variables).map((queryKey) => queryClient.invalidateQueries({ queryKey })),
@@ -104,6 +105,41 @@ export function useUpdateCalendarOverrideMutation() {
   return useHrTimeMutation(
     ({ id, payload }) => request('patch', ENDPOINTS.HR.CALENDAR_OVERRIDE(id), payload),
     () => [hrTimeKeys.calendarOverrides()],
+  )
+}
+
+export function useCreateHolidayMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.HOLIDAYS, payload),
+    () => [hrTimeKeys.holidays()],
+  )
+}
+
+export function useUpdateHolidayMutation() {
+  return useHrTimeMutation(
+    ({ id, payload }) => request('patch', ENDPOINTS.HR.HOLIDAY(id), payload),
+    () => [hrTimeKeys.holidays()],
+  )
+}
+
+export function useDeleteHolidayMutation() {
+  return useHrTimeMutation(
+    (id) => request('delete', ENDPOINTS.HR.HOLIDAY(id)),
+    () => [hrTimeKeys.holidays()],
+  )
+}
+
+export function useGenerateSaturdayRotationsMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.SATURDAY_ROTATIONS_GENERATE, payload),
+    () => [hrTimeKeys.rotations()],
+  )
+}
+
+export function useDeleteSaturdayRotationMutation() {
+  return useHrTimeMutation(
+    (id) => request('delete', ENDPOINTS.HR.SATURDAY_ROTATION(id)),
+    () => [hrTimeKeys.rotations()],
   )
 }
 

@@ -5,6 +5,7 @@ import Loader from '@/components/common/Loader'
 import { ROUTES } from '@/constants/routes'
 import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import { hasAnyPermission, hasRequiredPermissions } from '@/features/auth/utils/authz'
+import { useMyEmployeeProfileQuery } from '@/features/hr-time/api/hrTime.queries'
 import { clearAuthTokens, getRefreshToken } from '@/services/axiosInstance'
 import { useAuthStore } from '@/store/useAuthStore'
 
@@ -20,6 +21,11 @@ export default function ProtectedRoute({
   const hasRefreshToken = Boolean(getRefreshToken())
   const currentUserQuery = useCurrentUserQuery({
     enabled: hasRefreshToken && !currentUser,
+  })
+  const hasProfileResult = currentUser && Object.hasOwn(currentUser, 'employeeProfile')
+  const employeeProfileQuery = useMyEmployeeProfileQuery({
+    enabled: Boolean(currentUser?.account) && !hasProfileResult,
+    retry: false,
   })
 
   useEffect(() => {
@@ -41,6 +47,15 @@ export default function ProtectedRoute({
       clearCurrentUser()
     }
   }, [clearCurrentUser, currentUserQuery.isError])
+
+  useEffect(() => {
+    if (!currentUser || hasProfileResult) return
+    if (employeeProfileQuery.isSuccess) {
+      setCurrentUser({ ...currentUser, employeeProfile: employeeProfileQuery.data })
+    } else if (employeeProfileQuery.isError) {
+      setCurrentUser({ ...currentUser, employeeProfile: null })
+    }
+  }, [currentUser, employeeProfileQuery.data, employeeProfileQuery.isError, employeeProfileQuery.isSuccess, hasProfileResult, setCurrentUser])
 
   if (!hasRefreshToken) {
     return <Navigate to={ROUTES.LOGIN} replace state={{ from: location }} />

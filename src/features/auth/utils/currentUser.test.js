@@ -18,12 +18,6 @@ const adminMeResponse = {
       email: 'admin@example.com',
       status: 'active',
     },
-    profile: {
-      id: '6a2bb97c64ae65719d55e56e',
-      accountId: '6a2bb97c64ae65719d55e56d',
-      email: 'admin@example.com',
-      fullName: 'Admin User',
-    },
     roles: ['ADMIN'],
     permissions: ['AUDIT:READ'],
     scopes: [
@@ -56,49 +50,55 @@ describe('current user utilities', () => {
 
     assert.deepEqual(user, {
       account: adminMeResponse.data.account,
-      profile: adminMeResponse.data.profile,
       roles: ['ADMIN'],
       permissions: ['AUDIT:READ'],
       scopes: adminMeResponse.data.scopes,
     })
-    assert.equal(getCurrentUserDisplayName(user), 'Admin User')
+    assert.equal(getCurrentUserDisplayName(user), 'admin@example.com')
     assert.equal(getCurrentUserRole(user), 'admin')
     assert.equal(getCurrentUserAvatar(user), '')
-    assert.equal(getCurrentUserInitials(getCurrentUserDisplayName(user)), 'AU')
+    assert.equal(getCurrentUserInitials(getCurrentUserDisplayName(user)), 'A')
   })
 
-  it('extracts role and profile from inner login mutation data', () => {
+  it('extracts account email and role from inner login mutation data', () => {
     const user = resolveCurrentUser({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
       account: { email: 'admin@example.com' },
-      profile: { fullName: 'Admin User', email: 'admin@example.com' },
       roles: ['ADMIN'],
       scopes: [],
     })
 
-    assert.equal(getCurrentUserDisplayName(user), 'Admin User')
+    assert.equal(getCurrentUserDisplayName(user), 'admin@example.com')
     assert.equal(getCurrentUserRole(user), 'admin')
   })
 
-  it('falls back to profile email then account email for display name', () => {
+  it('uses account email for display name', () => {
     const user = resolveCurrentUser({
       data: {
         account: { email: 'account@example.com' },
-        profile: { email: 'profile@example.com' },
         roles: ['CS'],
       },
     })
 
-    assert.equal(getCurrentUserDisplayName(user), 'profile@example.com')
+    assert.equal(getCurrentUserDisplayName(user), 'account@example.com')
     assert.equal(getCurrentUserRole(user), 'cs')
+  })
+
+  it('uses the HR profile when one exists', () => {
+    const user = {
+      account: { email: 'account@example.com' },
+      employeeProfile: { fullName: 'HR Employee', avatarUrl: '/employee.png' },
+    }
+
+    assert.equal(getCurrentUserDisplayName(user), 'HR Employee')
+    assert.equal(getCurrentUserAvatar(user), '/employee.png')
   })
 
   it('falls back to first scoped role when data.roles is empty', () => {
     const user = resolveCurrentUser({
       data: {
         account: { email: 'qc@example.com' },
-        profile: { fullName: 'QC User' },
         roles: [],
         scopes: [{ roles: ['QC'] }],
       },
@@ -147,6 +147,9 @@ describe('current user utilities', () => {
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
       'dashboard',
       'design-task-list',
+      'quality-scoring',
+      'psd-file-library',
+      'hr-payslips',
     ])
   })
 
@@ -157,6 +160,9 @@ describe('current user utilities', () => {
       'dashboard',
       'quality-control',
       'design-task-list',
+      'quality-scoring',
+      'psd-file-library',
+      'hr-payslips',
     ])
   })
 
@@ -170,6 +176,7 @@ describe('current user utilities', () => {
       'scale-production',
       'quality-control',
       'shipping',
+      'hr-payslips',
     ])
   })
 
@@ -184,6 +191,7 @@ describe('current user utilities', () => {
       'listings',
       'product-types',
       'internal-templates',
+      'hr-payslips',
     ])
   })
 

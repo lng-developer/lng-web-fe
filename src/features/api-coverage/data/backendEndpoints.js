@@ -215,7 +215,6 @@ organization|POST|/api/organization/departments
 organization|GET|/api/organization/departments/:departmentId
 organization|PATCH|/api/organization/departments/:departmentId
 organization|GET|/api/organization/teams
-organization|GET|/api/organization/member-candidates
 organization|POST|/api/organization/teams
 organization|GET|/api/organization/teams/:teamId
 organization|PATCH|/api/organization/teams/:teamId

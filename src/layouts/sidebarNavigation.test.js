@@ -13,7 +13,6 @@ import {
   PORTAL_NAVIGATION,
   SIDEBAR_CONTEXT_IDS,
   SIDEBAR_HOME_ITEM,
-  SIDEBAR_NAVIGATION,
 } from './sidebarNavigation.js'
 
 function collectLeafIds(items) {
@@ -127,8 +126,61 @@ describe('sidebar navigation', () => {
     assert.equal(collectLeafIds(PORTAL_NAVIGATION).includes('hr-schedule'), false)
     assert.deepEqual(
       collectLeafIds(filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_SCHEDULE:READ'] })),
-      ['hr-schedule'],
+      ['hr-payslips', 'hr-schedule'],
     )
+  })
+
+  it('exposes payroll administration only with payroll read permission', () => {
+    const mountedPaths = new Set([ROUTES.HR_PAYROLL_RUNS])
+    const withoutPayrollRead = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:WRITE'] }, mountedPaths),
+    )
+    const withPayrollRead = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:READ'] }, mountedPaths),
+    )
+
+    assert.equal(withoutPayrollRead.includes('hr-payroll-runs'), false)
+    assert.equal(withPayrollRead.includes('hr-payroll-runs'), true)
+  })
+
+  it('exposes integration settings only with the integration manage permission', () => {
+    const mountedPaths = new Set([ROUTES.HR_SETTINGS])
+    const withoutIntegrationManage = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_CALENDAR:WRITE'] }, mountedPaths),
+    )
+    const withIntegrationManage = collectLeafIds(
+      filterNavigationByUser(
+        HR_NAVIGATION,
+        { permissions: ['HR_INTEGRATIONS:MANAGE'] },
+        mountedPaths,
+      ),
+    )
+
+    assert.equal(withoutIntegrationManage.includes('hr-settings'), false)
+    assert.equal(withIntegrationManage.includes('hr-settings'), true)
+  })
+
+  it('renders Task 10 HR links after their routes are mounted', () => {
+    const renderedIds = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['MANAGE_SYSTEM'] }),
+    )
+
+    for (const id of ['hr-payslips', 'hr-payroll-runs', 'hr-announcements', 'hr-settings']) {
+      assert.equal(renderedIds.includes(id), true)
+    }
+  })
+
+  it('keeps mounted self-service payslips auth-only and payroll administration permission-gated', () => {
+    const mountedPaths = new Set([ROUTES.HR_MY_PAYSLIPS, ROUTES.HR_PAYROLL_RUNS])
+    const ordinaryAccount = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: [] }, mountedPaths),
+    )
+    const payrollReader = collectLeafIds(
+      filterNavigationByUser(HR_NAVIGATION, { permissions: ['HR_PAYROLL:READ'] }, mountedPaths),
+    )
+
+    assert.deepEqual(ordinaryAccount, ['hr-payslips'])
+    assert.deepEqual(payrollReader, ['hr-payslips', 'hr-payroll-runs'])
   })
 
   it('derives the navigation context from mounted route families', () => {
@@ -141,17 +193,17 @@ describe('sidebar navigation', () => {
       permissions: ['HR_SCHEDULE:READ'],
     })
 
-    assert.equal(getFirstNavigableItem(navigation)?.id, 'hr-schedule')
+    assert.equal(getFirstNavigableItem(navigation)?.id, 'hr-payslips')
     assert.equal(getFirstNavigableItem([]), null)
   })
 
   it('keeps Portal leaves filtered by backend permissions', () => {
     assert.deepEqual(
-      collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['DESIGN:WORK'] })),
+      collectLeafIds(filterNavigationByUser(PORTAL_NAVIGATION, { permissions: ['DESIGN:WORK'] })),
       ['dashboard', 'design-task-list', 'quality-scoring', 'psd-file-library'],
     )
     assert.deepEqual(
-      collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, { permissions: ['AUTH:READ'] })),
+      collectLeafIds(filterNavigationByUser(PORTAL_NAVIGATION, { permissions: ['AUTH:READ'] })),
       ['dashboard', 'users-roles'],
     )
   })
