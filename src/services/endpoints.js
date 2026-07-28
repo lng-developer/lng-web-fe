@@ -311,6 +311,7 @@ export const ENDPOINTS = {
     CALENDAR_OVERRIDES: '/api/hr/calendar-overrides',
     CALENDAR_OVERRIDE: (id) => `/api/hr/calendar-overrides/${id}`,
     ATTENDANCE: '/api/hr/attendance',
+    ATTENDANCE_MONTH_MATRIX: '/api/hr/attendance/month-matrix',
     MY_ATTENDANCE: '/api/hr/attendance/me',
     ATTENDANCE_CHECK_IN: '/api/hr/attendance/check-in',
     ATTENDANCE_CHECK_OUT: '/api/hr/attendance/check-out',

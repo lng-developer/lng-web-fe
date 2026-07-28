@@ -7,6 +7,7 @@ import {
   buildLeaveRefundPayload,
   getHrTimeActions,
   getSelfAttendanceActions,
+  mapAttendanceMonthMatrix,
   mapAttendanceRow,
   mapLeaveRequestRow,
   mapOvertimeRequestRow,
@@ -85,6 +86,23 @@ test('maps HR Time row actions from backend capabilities without role-name branc
       capabilities: { approve: true, cancel: false, reject: true, view: true },
     }),
     { approve: true, cancel: false, reject: true, view: true },
+  )
+})
+
+test('maps month matrix rows through the same response mapper', () => {
+  assert.deepEqual(
+    mapAttendanceMonthMatrix({
+      items: [
+        { profile: { id: 'profile-1' }, cells: [], totals: {}, capabilities: { view: true } },
+      ],
+      month: { year: 2026, month: 7 },
+    }),
+    {
+      items: [
+        { profile: { id: 'profile-1' }, cells: [], totals: {}, capabilities: { view: true } },
+      ],
+      month: { year: 2026, month: 7 },
+    },
   )
 })
 

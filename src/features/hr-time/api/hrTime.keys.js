@@ -35,6 +35,11 @@ export const hrTimeKeys = {
   listRotations: (params) => [...hrTimeKeys.rotations(), normalizeHrTimeQuery(params)],
   attendance: () => [...hrTimeKeys.all, 'attendance'],
   listAttendance: (params) => [...hrTimeKeys.attendance(), normalizeHrTimeQuery(params)],
+  attendanceMonthMatrix: (params) => [
+    ...hrTimeKeys.attendance(),
+    'month-matrix',
+    normalizeHrTimeQuery(params),
+  ],
   myAttendance: (params) => [...hrTimeKeys.attendance(), 'me', normalizeHrTimeQuery(params)],
   leaveBalances: () => [...hrTimeKeys.all, 'leave-balances'],
   leaveBalancesForEmployee: (profileId) => [...hrTimeKeys.leaveBalances(), profileId],

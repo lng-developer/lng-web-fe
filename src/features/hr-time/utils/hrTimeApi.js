@@ -108,6 +108,14 @@ export function mapAttendanceRow(row) {
   return mapEmployeeRelatedRow(row)
 }
 
+export function mapAttendanceMonthMatrix(payload) {
+  if (!payload || typeof payload !== 'object') return payload
+  return {
+    ...payload,
+    items: Array.isArray(payload.items) ? payload.items.map(mapMatrixRow) : [],
+  }
+}
+
 export function mapLeaveBalanceRow(row) {
   return mapEmployeeRelatedRow(row)
 }
@@ -472,3 +480,4 @@ export function resolveCalendarScopeQuery(user, requestedScopeKey, requiredPermi
     selectedScopeKey: selected.key,
   }
 }
+import { mapMatrixRow } from './monthMatrix.js'

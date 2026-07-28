@@ -5,6 +5,7 @@ import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
 import {
+  mapAttendanceMonthMatrix,
   mapAttendanceRow,
   mapCalendarOverrideRow,
   mapEmployeeProfileRow,
@@ -199,6 +200,22 @@ export function useAttendanceQuery(params, options) {
     mapAttendanceRow,
     options,
   )
+}
+
+export function useAttendanceMonthMatrixQuery(params = {}, options = {}) {
+  const debouncedSearch = useDebounce(params.q, 300)
+  const query = normalizeHrTimeQuery({ ...params, q: debouncedSearch })
+
+  return useQuery({
+    queryKey: hrTimeKeys.attendanceMonthMatrix(query),
+    queryFn: () =>
+      apiClient
+        .get(ENDPOINTS.HR.ATTENDANCE_MONTH_MATRIX, { params: query })
+        .then(unwrapHrTimeResponse)
+        .then(mapAttendanceMonthMatrix),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
 }
 
 export function useMyAttendanceQuery(params, options) {
