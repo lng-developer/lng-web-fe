@@ -26,6 +26,7 @@ import { OverrideFieldLabel, PermissionMultiSelect } from './shared'
 export default function GrantScopedPermissionModal({
   open,
   role,
+  initialScope,
   scopes,
   permissions,
   rules,
@@ -34,9 +35,17 @@ export default function GrantScopedPermissionModal({
   pending,
   t,
 }) {
-  const [scopeType, setScopeType] = useState('')
-  const [scopeId, setScopeId] = useState('')
-  const [selectedPermissionIds, setSelectedPermissionIds] = useState([])
+  const initialRule = rules.find(
+    (rule) =>
+      rule.roleId === role?.id &&
+      rule.scopeType === initialScope?.scopeType &&
+      rule.scopeId === initialScope?.scopeId,
+  )
+  const [scopeType, setScopeType] = useState(initialScope?.scopeType || '')
+  const [scopeId, setScopeId] = useState(initialScope?.scopeId || '')
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState(
+    initialRule?.permissionIds ?? [],
+  )
   const [note, setNote] = useState('')
   const selectedScope = scopes.find(
     (scope) => scope.scopeType === scopeType && scope.scopeId === scopeId,

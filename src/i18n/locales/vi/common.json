@@ -437,6 +437,20 @@
       "assignedPermissions": "Quyền được gán",
       "noPermissions": "Vai trò này chưa được gán quyền."
     },
+    "matrix": {
+      "title": "Ma trận quan hệ scope",
+      "hint": "Chọn giao điểm vai trò và scope để xem bộ quyền thay thế.",
+      "roles": "Vai trò",
+      "empty": "Chưa có vai trò hoặc scope hoạt động để hiển thị ma trận.",
+      "inherited": "Kế thừa",
+      "permissionCount": "{{count}} quyền",
+      "cellLabel": "{{role}} tại {{scope}}: {{count}} quyền thay thế",
+      "replacementSummary": "Bộ thay thế gồm {{count}} quyền đang áp dụng cho vai trò và scope này.",
+      "noReplacement": "Chưa có bộ thay thế. Vai trò giữ quyền mặc định trong scope này.",
+      "editReplacement": "Sửa bộ thay thế",
+      "directoryTitle": "Danh mục scope",
+      "directoryHint": "Kiểm tra tài nguyên, mức sử dụng, quan hệ phân cấp và trạng thái hoạt động."
+    },
     "users": {
       "searchPlaceholder": "Tìm theo tên, email, mã nhân viên...",
       "columns": {

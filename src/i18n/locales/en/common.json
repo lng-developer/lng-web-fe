@@ -439,6 +439,20 @@
       "assignedPermissions": "Assigned permissions",
       "noPermissions": "This role has no assigned permissions."
     },
+    "matrix": {
+      "title": "Scope relationship matrix",
+      "hint": "Select a role and scope intersection to inspect its replacement permission set.",
+      "roles": "Roles",
+      "empty": "No active roles or scopes are available for the matrix.",
+      "inherited": "Inherited",
+      "permissionCount": "{{count}} permissions",
+      "cellLabel": "{{role}} in {{scope}}: {{count}} replacement permissions",
+      "replacementSummary": "A replacement set with {{count}} permissions is active for this role and scope.",
+      "noReplacement": "No replacement exists. The role keeps its default permissions in this scope.",
+      "editReplacement": "Edit replacement",
+      "directoryTitle": "Scope directory",
+      "directoryHint": "Review registered resources, usage, hierarchy, and lifecycle status."
+    },
     "users": {
       "searchPlaceholder": "Search by name, email, employee code...",
       "columns": {
