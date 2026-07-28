@@ -215,7 +215,7 @@ export default function PermissionDialog({
                 color="error"
                 size="medium"
                 className="h-10 rounded-lg px-5 text-sm font-semibold"
-                disabled={deletePending}
+                disabled={deletePending || value.deletable === false}
                 onClick={handleDelete}
               >
                 {t('rbac.permissions.actions.delete')}

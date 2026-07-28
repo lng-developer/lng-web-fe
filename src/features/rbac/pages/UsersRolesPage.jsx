@@ -39,6 +39,7 @@ import {
   useCreateScopeMutation,
   useDeactivateAccessAssignmentMutation,
   useDeletePermissionMutation,
+  useDeleteRoleMutation,
   useResetAccountPasswordMutation,
   useRevokeAccountSessionsMutation,
   useSetScopedRolePermissionsMutation,
@@ -88,12 +89,7 @@ import {
   TAB_KEYS,
   TABS,
 } from '../components/shared'
-import {
-  filterPermissionItems,
-  PERMISSION_ACTION_OPTIONS,
-  PERMISSION_MODULE_OPTIONS,
-  PERMISSION_STATUS_OPTIONS,
-} from '../utils/permissionsDisplay'
+import { filterPermissionItems } from '../utils/permissionsDisplay'
 import { getRbacCapabilities } from '../utils/rbacAccess'
 import {} from '../utils/rbacApi'
 import { getDefaultPermissionMeta } from '../utils/rolesDisplay'
@@ -133,7 +129,6 @@ export default function UsersRolesPage() {
     search: '',
     module: '',
     action: '',
-    status: '',
   })
   const [scopeFilters, setScopeFilters] = useState({
     search: '',
@@ -173,6 +168,14 @@ export default function UsersRolesPage() {
     () => filterPermissionItems(permissions, permissionFilters),
     [permissions, permissionFilters],
   )
+  const permissionModules = useMemo(
+    () => [...new Set(permissions.map((permission) => permission.module).filter(Boolean))].sort(),
+    [permissions],
+  )
+  const permissionActions = useMemo(
+    () => [...new Set(permissions.map((permission) => permission.action).filter(Boolean))].sort(),
+    [permissions],
+  )
   const filteredScopes = useMemo(
     () => filterScopeItems(scopes, scopeFilters),
     [scopes, scopeFilters],
@@ -206,6 +209,7 @@ export default function UsersRolesPage() {
   const deactivateAccessAssignmentMutation = useDeactivateAccessAssignmentMutation()
   const createRoleMutation = useCreateRoleMutation()
   const updateRoleMutation = useUpdateRoleMutation()
+  const deleteRoleMutation = useDeleteRoleMutation()
   const createPermissionMutation = useCreatePermissionMutation()
   const updatePermissionMutation = useUpdatePermissionMutation()
   const deletePermissionMutation = useDeletePermissionMutation()
@@ -570,15 +574,47 @@ export default function UsersRolesPage() {
                       </TableCell>
                       <TableCell align="right">
                         {canWrite && (
-                          <Button
-                            variant="text"
-                            size="small"
-                            color="primary"
-                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-                            onClick={() => setDialog({ type: 'role', payload: role })}
-                          >
-                            {t('rbac.roles.actions.edit')}
-                          </Button>
+                          <Box className="flex items-center justify-end gap-3">
+                            <Button
+                              variant="text"
+                              size="small"
+                              color="primary"
+                              className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
+                              onClick={() => setDialog({ type: 'role', payload: role })}
+                            >
+                              {t('rbac.roles.actions.edit')}
+                            </Button>
+                            <Tooltip
+                              title={
+                                role.deletable === false
+                                  ? t('rbac.roles.actions.inUse', { count: role.userCount ?? 0 })
+                                  : ''
+                              }
+                              arrow
+                            >
+                              <span>
+                                <Button
+                                  variant="text"
+                                  size="small"
+                                  disabled={
+                                    role.deletable === false || deleteRoleMutation.isPending
+                                  }
+                                  className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold !text-danger"
+                                  onClick={() => {
+                                    if (window.confirm(t('rbac.roles.actions.deleteConfirm'))) {
+                                      runMutation(
+                                        deleteRoleMutation,
+                                        role.id,
+                                        t('rbac.roles.actions.deleteSuccess'),
+                                      )
+                                    }
+                                  }}
+                                >
+                                  {t('common.delete')}
+                                </Button>
+                              </span>
+                            </Tooltip>
+                          </Box>
                         )}
                       </TableCell>
                     </TableRow>
@@ -613,9 +649,9 @@ export default function UsersRolesPage() {
             }
           >
             <MenuItem value="">{t('rbac.permissions.filter.allModules')}</MenuItem>
-            {PERMISSION_MODULE_OPTIONS.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+            {permissionModules.map((module) => (
+              <MenuItem key={module} value={module}>
+                {module}
               </MenuItem>
             ))}
           </Select>
@@ -629,25 +665,9 @@ export default function UsersRolesPage() {
             }
           >
             <MenuItem value="">{t('rbac.permissions.filter.allActions')}</MenuItem>
-            {PERMISSION_ACTION_OPTIONS.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" className="w-[180px]">
-          <Select
-            displayEmpty
-            value={permissionFilters.status}
-            onChange={(event) =>
-              setPermissionFilters({ ...permissionFilters, status: event.target.value })
-            }
-          >
-            <MenuItem value="">{t('rbac.permissions.filter.allStatus')}</MenuItem>
-            {PERMISSION_STATUS_OPTIONS.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {t(option.labelKey)}
+            {permissionActions.map((action) => (
+              <MenuItem key={action} value={action}>
+                {action}
               </MenuItem>
             ))}
           </Select>
@@ -690,7 +710,15 @@ export default function UsersRolesPage() {
                     variant="caption"
                     className="text-xs font-semibold uppercase tracking-wide text-ink-muted"
                   >
-                    {t('rbac.permissions.columns.description')}
+                    {t('rbac.permissions.columns.moduleAction')}
+                  </Typography>
+                </TableCell>
+                <TableCell width={260} className="py-3">
+                  <Typography
+                    variant="caption"
+                    className="text-xs font-semibold uppercase tracking-wide text-ink-muted"
+                  >
+                    {t('rbac.permissions.columns.usage')}
                   </Typography>
                 </TableCell>
                 <TableCell width={120} className="py-3">
@@ -705,71 +733,79 @@ export default function UsersRolesPage() {
             </TableHead>
             <TableBody>
               {filteredPermissions.length === 0 ? (
-                <EmptyRow colSpan={4} loading={permissionsQuery.isPending} />
+                <EmptyRow colSpan={5} loading={permissionsQuery.isPending} />
               ) : (
-                filteredPermissions.map((permission) => {
-                  const isDeprecated = permission.status === 'deprecated'
-
-                  return (
-                    <TableRow
-                      key={permission.id}
-                      className="h-[52px] border-b border-border last:border-b-0 hover:bg-page"
-                    >
-                      <TableCell>
-                        <PermissionCodeBadge code={permission.code} />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" className="font-medium text-ink">
-                          {permission.name || '—'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant="body2"
-                          className={isDeprecated ? 'text-ink-muted' : 'text-ink-secondary'}
-                        >
-                          {permission.description || '—'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {canWrite && (
-                          <Box className="flex items-center gap-3">
-                            <Button
-                              variant="text"
-                              size="small"
-                              color="primary"
-                              className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-                              onClick={() => setDialog({ type: 'permission', payload: permission })}
-                            >
-                              {t('rbac.permissions.actions.edit')}
-                            </Button>
-                            <Button
-                              variant="text"
-                              size="small"
-                              disabled={
-                                permission.deletable === false || deletePermissionMutation.isPending
+                filteredPermissions.map((permission) => (
+                  <TableRow
+                    key={permission.id}
+                    className="h-[52px] border-b border-border last:border-b-0 hover:bg-page"
+                  >
+                    <TableCell>
+                      <PermissionCodeBadge code={permission.code} />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" className="font-medium text-ink">
+                        {permission.name || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" className="font-medium text-ink-secondary">
+                        {permission.module || '—'}
+                      </Typography>
+                      <Typography variant="caption" className="text-ink-muted">
+                        {permission.action || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" className="font-semibold text-ink-secondary">
+                        {t('rbac.permissions.usage.total', { count: permission.usageCount ?? 0 })}
+                      </Typography>
+                      <Typography variant="caption" className="block text-ink-muted">
+                        {t('rbac.permissions.usage.breakdown', {
+                          roles: permission.roleCount ?? 0,
+                          scoped: permission.scopedRoleCount ?? 0,
+                          direct: permission.directAssignmentCount ?? 0,
+                        })}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {canWrite && (
+                        <Box className="flex items-center gap-3">
+                          <Button
+                            variant="text"
+                            size="small"
+                            color="primary"
+                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
+                            onClick={() => setDialog({ type: 'permission', payload: permission })}
+                          >
+                            {t('rbac.permissions.actions.edit')}
+                          </Button>
+                          <Button
+                            variant="text"
+                            size="small"
+                            disabled={
+                              permission.deletable === false || deletePermissionMutation.isPending
+                            }
+                            className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold !text-danger"
+                            onClick={() => {
+                              if (
+                                window.confirm(t('rbac.permissions.actions.deleteConfirmSimple'))
+                              ) {
+                                runMutation(
+                                  deletePermissionMutation,
+                                  permission.id,
+                                  t('rbac.permissions.editModal.deleteSuccess'),
+                                )
                               }
-                              className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold !text-danger"
-                              onClick={() => {
-                                if (
-                                  window.confirm(t('rbac.permissions.actions.deleteConfirmSimple'))
-                                ) {
-                                  runMutation(
-                                    deletePermissionMutation,
-                                    permission.id,
-                                    t('rbac.permissions.editModal.deleteSuccess'),
-                                  )
-                                }
-                              }}
-                            >
-                              {t('rbac.permissions.actions.delete')}
-                            </Button>
-                          </Box>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
+                            }}
+                          >
+                            {t('rbac.permissions.actions.delete')}
+                          </Button>
+                        </Box>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>

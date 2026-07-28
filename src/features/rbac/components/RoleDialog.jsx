@@ -71,7 +71,7 @@ export default function RoleDialog({
     event.preventDefault()
     onSubmit({
       ...form,
-      permissionIds: editing ? Array.from(selectedPermissionIds) : [],
+      permissionIds: Array.from(selectedPermissionIds),
     })
   }
 
@@ -110,7 +110,7 @@ export default function RoleDialog({
       maxWidth="sm"
       fullWidth
       PaperProps={{ className: 'rounded-xl' }}
-      sx={editing ? { '& .MuiDialog-paper': { maxHeight: '85vh' } } : undefined}
+      sx={{ '& .MuiDialog-paper': { maxHeight: '85vh' } }}
     >
       <Box component="form" onSubmit={submit}>
         <DialogTitle className="pb-4 pr-10 font-semibold text-ink">
@@ -175,116 +175,114 @@ export default function RoleDialog({
             />
           </Box>
 
-          {editing && (
-            <Box className="flex flex-col gap-3">
-              <Box className="flex items-center justify-between">
-                <Typography
-                  variant="body2"
-                  className="text-sm font-semibold uppercase tracking-wide text-ink"
-                >
-                  {t('rbac.roles.editModal.permissions')}
-                </Typography>
-                <Button
-                  variant="text"
-                  size="small"
-                  color="primary"
-                  className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
-                  onClick={toggleSelectAll}
-                >
-                  {t('rbac.roles.editModal.selectAll')}
-                </Button>
-              </Box>
-
-              <TextField
+          <Box className="flex flex-col gap-3">
+            <Box className="flex items-center justify-between">
+              <Typography
+                variant="body2"
+                className="text-sm font-semibold uppercase tracking-wide text-ink"
+              >
+                {t('rbac.roles.editModal.permissions')}
+              </Typography>
+              <Button
+                variant="text"
                 size="small"
-                fullWidth
-                value={permissionSearch}
-                placeholder={t('rbac.roles.editModal.permissionSearch')}
-                onChange={(event) => setPermissionSearch(event.target.value)}
-              />
+                color="primary"
+                className="!min-w-0 !px-0 !py-0 !text-sm !font-semibold"
+                onClick={toggleSelectAll}
+              >
+                {t('rbac.roles.editModal.selectAll')}
+              </Button>
+            </Box>
 
-              <Box className="mt-2 overflow-y-auto" sx={{ maxHeight: 320 }}>
-                {permissionsPending ? (
-                  <Typography variant="body2" className="py-4 text-center text-ink-muted">
-                    {t('rbac.common.loading')}
-                  </Typography>
-                ) : (
-                  permissionGroups.map((group) => {
-                    const collapsed = collapsedModules.has(group.module)
-                    const checkedCount = group.permissions.filter((permission) =>
-                      selectedPermissionIds.has(permission.id),
-                    ).length
+            <TextField
+              size="small"
+              fullWidth
+              value={permissionSearch}
+              placeholder={t('rbac.roles.editModal.permissionSearch')}
+              onChange={(event) => setPermissionSearch(event.target.value)}
+            />
 
-                    return (
-                      <Box key={group.module}>
-                        <Box
-                          role="button"
-                          tabIndex={0}
-                          className="flex cursor-pointer items-center justify-between py-2"
-                          onClick={() => toggleModule(group.module)}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                              toggleModule(group.module)
-                            }
-                          }}
-                        >
-                          <Box className="flex items-center gap-2">
-                            {collapsed ? (
-                              <ExpandMoreIcon className="text-ink-muted" sx={{ fontSize: 18 }} />
-                            ) : (
-                              <ExpandLessIcon className="text-ink-muted" sx={{ fontSize: 18 }} />
-                            )}
-                            <Typography
-                              variant="caption"
-                              className="text-[11px] font-semibold uppercase tracking-wide text-ink-secondary"
-                            >
-                              {group.module}
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" className="text-[11px] text-ink-muted">
-                            {checkedCount}/{group.permissions.length}
+            <Box className="mt-2 overflow-y-auto" sx={{ maxHeight: 320 }}>
+              {permissionsPending ? (
+                <Typography variant="body2" className="py-4 text-center text-ink-muted">
+                  {t('rbac.common.loading')}
+                </Typography>
+              ) : (
+                permissionGroups.map((group) => {
+                  const collapsed = collapsedModules.has(group.module)
+                  const checkedCount = group.permissions.filter((permission) =>
+                    selectedPermissionIds.has(permission.id),
+                  ).length
+
+                  return (
+                    <Box key={group.module}>
+                      <Box
+                        role="button"
+                        tabIndex={0}
+                        className="flex cursor-pointer items-center justify-between py-2"
+                        onClick={() => toggleModule(group.module)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            toggleModule(group.module)
+                          }
+                        }}
+                      >
+                        <Box className="flex items-center gap-2">
+                          {collapsed ? (
+                            <ExpandMoreIcon className="text-ink-muted" sx={{ fontSize: 18 }} />
+                          ) : (
+                            <ExpandLessIcon className="text-ink-muted" sx={{ fontSize: 18 }} />
+                          )}
+                          <Typography
+                            variant="caption"
+                            className="text-[11px] font-semibold uppercase tracking-wide text-ink-secondary"
+                          >
+                            {group.module}
                           </Typography>
                         </Box>
+                        <Typography variant="caption" className="text-[11px] text-ink-muted">
+                          {checkedCount}/{group.permissions.length}
+                        </Typography>
+                      </Box>
 
-                        {!collapsed &&
-                          group.permissions.map((permission) => {
-                            const checked = selectedPermissionIds.has(permission.id)
+                      {!collapsed &&
+                        group.permissions.map((permission) => {
+                          const checked = selectedPermissionIds.has(permission.id)
 
-                            return (
-                              <Box
-                                key={permission.id}
-                                className={`flex h-11 items-center justify-between border-b border-border last:border-b-0 ${
-                                  checked ? 'bg-primary-light' : ''
-                                }`}
-                              >
-                                <Box className="flex items-center gap-3">
-                                  <Checkbox
-                                    size="small"
-                                    color="primary"
-                                    checked={checked}
-                                    onChange={() => togglePermission(permission.id)}
-                                    sx={{ p: '4px' }}
-                                  />
-                                  <Typography variant="body2" className="text-ink">
-                                    {permission.name || permission.code}
-                                  </Typography>
-                                </Box>
-                                <Typography
-                                  variant="caption"
-                                  className="text-[11px] font-mono text-ink-muted"
-                                >
-                                  {permission.code}
+                          return (
+                            <Box
+                              key={permission.id}
+                              className={`flex h-11 items-center justify-between border-b border-border last:border-b-0 ${
+                                checked ? 'bg-primary-light' : ''
+                              }`}
+                            >
+                              <Box className="flex items-center gap-3">
+                                <Checkbox
+                                  size="small"
+                                  color="primary"
+                                  checked={checked}
+                                  onChange={() => togglePermission(permission.id)}
+                                  sx={{ p: '4px' }}
+                                />
+                                <Typography variant="body2" className="text-ink">
+                                  {permission.name || permission.code}
                                 </Typography>
                               </Box>
-                            )
-                          })}
-                      </Box>
-                    )
-                  })
-                )}
-              </Box>
+                              <Typography
+                                variant="caption"
+                                className="text-[11px] font-mono text-ink-muted"
+                              >
+                                {permission.code}
+                              </Typography>
+                            </Box>
+                          )
+                        })}
+                    </Box>
+                  )
+                })
+              )}
             </Box>
-          )}
+          </Box>
         </DialogContent>
         <DialogActions className="gap-3 border-t border-border px-6 pb-6 pt-3">
           <Button

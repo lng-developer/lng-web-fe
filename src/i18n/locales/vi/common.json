@@ -541,7 +541,10 @@
       "permissionCount": "{{count}} quyền",
       "actions": {
         "addRole": "Thêm vai trò",
-        "edit": "Sửa"
+        "edit": "Sửa",
+        "deleteConfirm": "Xoá vai trò này?",
+        "deleteSuccess": "Đã xoá vai trò!",
+        "inUse": "Vai trò đang được gán cho {{count}} tài khoản"
       },
       "addModal": {
         "title": "Thêm vai trò mới",
@@ -571,16 +574,18 @@
       "searchPlaceholder": "Tìm theo mã hoặc tên quyền...",
       "filter": {
         "allModules": "Tất cả module",
-        "allActions": "Tất cả action",
-        "allStatus": "Tất cả trạng thái",
-        "active": "Hoạt động",
-        "deprecated": "Deprecated"
+        "allActions": "Tất cả action"
       },
       "columns": {
         "code": "Mã quyền",
         "name": "Tên quyền",
-        "description": "Mô tả",
+        "moduleAction": "Module / Action",
+        "usage": "Mức sử dụng",
         "actions": "Hành động"
+      },
+      "usage": {
+        "total": "{{count}} nơi đang dùng",
+        "breakdown": "Role {{roles}} · Scoped role {{scoped}} · Gán trực tiếp {{direct}}"
       },
       "actions": {
         "addPermission": "Thêm quyền",

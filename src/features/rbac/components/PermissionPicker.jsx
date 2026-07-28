@@ -23,7 +23,7 @@ export default function PermissionPicker({ permissions, selectedIds, onChange, d
   }
 
   return (
-    <Stack className={`gap-${dense ? 3 : 5}`}>
+    <Stack className={dense ? 'gap-3' : 'gap-5'}>
       {modules.map(([moduleName, modulePermissions]) => {
         const selectedCount = modulePermissions.filter((permission) =>
           selectedIds.includes(permission.id),

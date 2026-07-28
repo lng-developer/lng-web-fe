@@ -543,7 +543,10 @@
       "permissionCount": "{{count}} permissions",
       "actions": {
         "addRole": "Add role",
-        "edit": "Edit"
+        "edit": "Edit",
+        "deleteConfirm": "Delete this role?",
+        "deleteSuccess": "Role deleted!",
+        "inUse": "This role is assigned to {{count}} accounts"
       },
       "addModal": {
         "title": "Add new role",
@@ -573,16 +576,18 @@
       "searchPlaceholder": "Search by permission code or name...",
       "filter": {
         "allModules": "All modules",
-        "allActions": "All actions",
-        "allStatus": "All statuses",
-        "active": "Active",
-        "deprecated": "Deprecated"
+        "allActions": "All actions"
       },
       "columns": {
         "code": "Permission code",
         "name": "Permission name",
-        "description": "Description",
+        "moduleAction": "Module / Action",
+        "usage": "Usage",
         "actions": "Actions"
+      },
+      "usage": {
+        "total": "Used in {{count}} places",
+        "breakdown": "Roles {{roles}} · Scoped roles {{scoped}} · Direct {{direct}}"
       },
       "actions": {
         "addPermission": "Add permission",
