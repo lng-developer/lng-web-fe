@@ -63,6 +63,14 @@ test('Schedule uses permission-safe HR data for named scope selectors', async ()
   assert.doesNotMatch(schedule, /useDepartmentsQuery|useTeamsQuery|features\/rbac/)
 })
 
+test('Schedule separates personal and capability-authorized team calendars', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /StaffMonthlyCalendar/)
+  assert.match(schedule, /capabilities\?\.viewTeamMatrix/)
+  assert.doesNotMatch(schedule, /employee-profiles\?[^\n]*all/)
+})
+
 test('operation forms use readable selectors and explicit payload builders', async () => {
   const [adjustment, assignment, configuration, override, profile] = await Promise.all([
     source('components/AttendanceAdjustmentDialog.jsx'),

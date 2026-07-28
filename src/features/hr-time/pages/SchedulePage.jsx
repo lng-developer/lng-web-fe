@@ -13,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   FormControlLabel,
   MenuItem,
   Stack,
@@ -56,9 +57,13 @@ import {
   useUpdateWorkLocationMutation,
 } from '../api/hrTime.mutations.js'
 import {
+  useAttendanceMonthMatrixQuery,
   useCalendarOverridesQuery,
   useEmployeeProfilesQuery,
   useHolidaysQuery,
+  useMyAttendanceQuery,
+  useMyLeaveRequestsQuery,
+  useMyOvertimeRequestsQuery,
   useSaturdayRotationsQuery,
   useShiftAssignmentsQuery,
   useShiftsQuery,
@@ -68,9 +73,11 @@ import CalendarOverrideDialog from '../components/CalendarOverrideDialog.jsx'
 import HolidayBulkImportDialog from '../components/HolidayBulkImportDialog.jsx'
 import HolidayDetailDrawer from '../components/HolidayDetailDrawer.jsx'
 import HolidayPolicySummary from '../components/HolidayPolicySummary.jsx'
+import MonthlyStaffMatrix from '../components/MonthlyStaffMatrix.jsx'
 import RotationMaintenanceDialog from '../components/RotationMaintenanceDialog.jsx'
 import ScheduleConfigurationDialog from '../components/ScheduleConfigurationDialog.jsx'
 import ShiftAssignmentDialog from '../components/ShiftAssignmentDialog.jsx'
+import StaffMonthlyCalendar from '../components/StaffMonthlyCalendar.jsx'
 import {
   canAccessTeamScope,
   getAuthorizedTeamScopeIds,
@@ -82,7 +89,16 @@ import {
 } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
-const tabs = ['assignments', 'shifts', 'locations', 'overrides', 'holidays', 'rotations']
+const tabs = [
+  'personal',
+  'team',
+  'assignments',
+  'shifts',
+  'locations',
+  'overrides',
+  'holidays',
+  'rotations',
+]
 
 const columnSets = {
   assignments: [
@@ -352,9 +368,12 @@ export default function SchedulePage() {
   const month = searchParams.get('month') || ''
   const year = searchParams.get('year') || ''
   const teamId = searchParams.get('teamId') || ''
+  const calendarMonth = Number(month) || new Date().getMonth() + 1
+  const calendarYear = Number(year) || new Date().getFullYear()
   const [editor, setEditor] = useState(null)
   const [holidayEditor, setHolidayEditor] = useState(null)
   const [holidayDraft, setHolidayDraft] = useState(null)
+  const [personalDay, setPersonalDay] = useState(null)
   const [holidayDetailId, setHolidayDetailId] = useState('')
   const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [bulkImportResult, setBulkImportResult] = useState(null)
@@ -364,6 +383,10 @@ export default function SchedulePage() {
   const [actionError, setActionError] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_SCHEDULE:WRITE'])
   const canScheduleRead = hasAnyPermission(currentUser, ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'])
+  const canTeamAttendance = hasAnyPermission(currentUser, [
+    'HR_ATTENDANCE:READ',
+    'HR_ATTENDANCE:MANAGE',
+  ])
   const canCalendarRead = hasAnyPermission(currentUser, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'])
   const canReadDirectory = hasAnyPermission(currentUser, [
     'HR_EMPLOYEES:READ',
@@ -377,7 +400,12 @@ export default function SchedulePage() {
   const canCalendarWriteGlobal = hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:WRITE')
   const canCalendarReadGlobal =
     hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:READ') || canCalendarWriteGlobal
-  const tab = resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead })
+  const tab =
+    requestedTab === 'personal'
+      ? 'personal'
+      : requestedTab === 'team' && canTeamAttendance
+        ? 'team'
+        : resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead })
   const holidayScopeState = resolveCalendarScopeQuery(currentUser, holidayScopeKey, [
     'HR_CALENDAR:READ',
     'HR_CALENDAR:WRITE',
@@ -417,6 +445,24 @@ export default function SchedulePage() {
   const rotationQuery = useSaturdayRotationsQuery(
     { page, limit: pageSize, teamId: rotationTeamId, month, year },
     { enabled: tab === 'rotations' && (canCalendarReadGlobal || Boolean(rotationTeamId)) },
+  )
+  const monthStart = `${calendarYear}-${String(calendarMonth).padStart(2, '0')}-01`
+  const monthEnd = new Date(Date.UTC(calendarYear, calendarMonth, 0)).toISOString().slice(0, 10)
+  const myAttendanceQuery = useMyAttendanceQuery(
+    { dateFrom: monthStart, dateTo: monthEnd, page: 1, limit: 100 },
+    { enabled: tab === 'personal' },
+  )
+  const myLeaveQuery = useMyLeaveRequestsQuery(
+    { dateFrom: monthStart, dateTo: monthEnd, page: 1, limit: 100 },
+    { enabled: tab === 'personal' },
+  )
+  const myOvertimeQuery = useMyOvertimeRequestsQuery(
+    { dateFrom: monthStart, dateTo: monthEnd, page: 1, limit: 100 },
+    { enabled: tab === 'personal' },
+  )
+  const teamMatrixQuery = useAttendanceMonthMatrixQuery(
+    { year: calendarYear, month: calendarMonth, teamId, page, limit: pageSize },
+    { enabled: tab === 'team' && canTeamAttendance },
   )
 
   const employeesQuery = useEmployeeProfilesQuery(
@@ -549,6 +595,8 @@ export default function SchedulePage() {
   )
 
   const selectedQuery = {
+    personal: myAttendanceQuery,
+    team: teamMatrixQuery,
     assignments: assignmentQuery,
     shifts: shiftQuery,
     locations: locationQuery,
@@ -822,7 +870,7 @@ export default function SchedulePage() {
     return '-'
   }
 
-  const columns = columnSets[tab].map(([key, width]) => ({
+  const columns = (columnSets[tab] || []).map(([key, width]) => ({
     key,
     width,
     align: key === 'actions' ? 'center' : 'left',
@@ -1023,6 +1071,26 @@ export default function SchedulePage() {
                 />
               </>
             ) : null}
+            {['personal', 'team'].includes(tab) ? (
+              <>
+                <TextField
+                  size="small"
+                  type="number"
+                  label="Month"
+                  value={calendarMonth}
+                  inputProps={{ min: 1, max: 12 }}
+                  onChange={(event) => updateSearch({ month: event.target.value }, true)}
+                />
+                <TextField
+                  size="small"
+                  type="number"
+                  label="Year"
+                  value={calendarYear}
+                  inputProps={{ min: 2000, max: 9999 }}
+                  onChange={(event) => updateSearch({ year: event.target.value }, true)}
+                />
+              </>
+            ) : null}
             <Button
               variant="text"
               startIcon={<RefreshIcon />}
@@ -1070,15 +1138,50 @@ export default function SchedulePage() {
           year={Number(year) || new Date().getFullYear()}
         />
       ) : null}
-      <OperationsTable
-        columns={columns}
-        rows={rows}
-        loading={selectedQuery.isPending}
-        getRowKey={(row) => row.id}
-        renderCell={renderCell}
-        minWidth={tab === 'locations' ? '720px' : '1040px'}
-        emptyTitle={t('hrTime.empty.title', { defaultValue: 'No records found' })}
-      />
+      {tab === 'personal' ? (
+        <StaffMonthlyCalendar
+          month={{ year: calendarYear, month: calendarMonth }}
+          records={{
+            attendance: list(myAttendanceQuery.data),
+            leave: list(myLeaveQuery.data),
+            overtime: list(myOvertimeQuery.data),
+          }}
+          onDayOpen={setPersonalDay}
+        />
+      ) : tab === 'team' ? (
+        teamMatrixQuery.data?.capabilities?.viewTeamMatrix ? (
+          <MonthlyStaffMatrix
+            year={calendarYear}
+            month={calendarMonth}
+            rows={teamMatrixQuery.data.items || []}
+          />
+        ) : (
+          <Alert severity="info">Team attendance is unavailable for this scope.</Alert>
+        )
+      ) : (
+        <OperationsTable
+          columns={columns}
+          rows={rows}
+          loading={selectedQuery.isPending}
+          getRowKey={(row) => row.id}
+          renderCell={renderCell}
+          minWidth={tab === 'locations' ? '720px' : '1040px'}
+          emptyTitle={t('hrTime.empty.title', { defaultValue: 'No records found' })}
+        />
+      )}
+      <Drawer anchor="right" open={Boolean(personalDay)} onClose={() => setPersonalDay(null)}>
+        <div className="w-[360px] space-y-3 p-5">
+          <Typography variant="h6">My schedule</Typography>
+          <Typography variant="body2" className="text-ink-muted">
+            {personalDay?.dateKey}
+          </Typography>
+          <Typography variant="body2">
+            {personalDay?.attendance?.status?.replaceAll('_', ' ') || 'No attendance record'}
+          </Typography>
+          {personalDay?.leave ? <Typography variant="body2">Leave request</Typography> : null}
+          {personalDay?.overtime ? <Typography variant="body2">Overtime request</Typography> : null}
+        </div>
+      </Drawer>
       {editor?.type === 'assignment' ? (
         <ShiftAssignmentDialog
           open
