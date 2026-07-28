@@ -226,7 +226,7 @@ export default function EditAccessDialog({
         onClose={onClose}
         maxWidth="md"
         fullWidth
-        PaperProps={{ className: 'rounded-xl' }}
+        slotProps={{ paper: { className: 'rounded-xl' } }}
       >
         <DialogTitle className="pb-3 pr-10 font-semibold text-ink">
           {t('rbac.users.editAccessModal.title', {

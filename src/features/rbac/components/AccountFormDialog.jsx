@@ -39,7 +39,7 @@ export default function AccountFormDialog({ open, onClose, roles, onSubmit, pend
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ className: 'rounded-xl' }}
+      slotProps={{ paper: { className: 'rounded-xl' } }}
     >
       <Box component="form" onSubmit={submit}>
         <DialogTitle className="pb-4 pr-10 font-semibold text-ink">

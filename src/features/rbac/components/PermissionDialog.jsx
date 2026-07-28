@@ -59,7 +59,7 @@ export default function PermissionDialog({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ className: 'rounded-xl' }}
+      slotProps={{ paper: { className: 'rounded-xl' } }}
     >
       <Box component="form" onSubmit={submit}>
         <DialogTitle className="pr-10 pb-3 font-semibold text-ink">
@@ -87,7 +87,7 @@ export default function PermissionDialog({
               size="small"
               required
               fullWidth
-              inputProps={{ className: 'font-mono uppercase' }}
+              slotProps={{ htmlInput: { className: 'font-mono uppercase' } }}
             />
             {isEdit && (
               <Typography variant="caption" className="mt-1 block text-[11px] text-ink-muted">

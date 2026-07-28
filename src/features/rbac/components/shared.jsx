@@ -111,11 +111,18 @@ export function Section({ children }) {
   )
 }
 
-export function EmptyRow({ colSpan, loading }) {
+export function EmptyRow({ colSpan, loading, message, onRetry, t }) {
   return (
     <TableRow>
       <TableCell colSpan={colSpan} align="center" sx={{ py: 6, color: 'text.disabled' }}>
-        {loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu phù hợp'}
+        <Stack className="items-center gap-2">
+          <Typography variant="body2">{loading ? t('rbac.common.loading') : message}</Typography>
+          {!loading && onRetry && (
+            <Button size="small" onClick={onRetry}>
+              {t('common.retry')}
+            </Button>
+          )}
+        </Stack>
       </TableCell>
     </TableRow>
   )

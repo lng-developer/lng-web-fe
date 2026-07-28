@@ -75,7 +75,7 @@ export default function GrantScopedPermissionModal({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ className: 'rounded-xl' }}
+      slotProps={{ paper: { className: 'rounded-xl' } }}
     >
       <Box component="form" onSubmit={submit}>
         <DialogTitle className="pr-10">

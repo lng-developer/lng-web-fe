@@ -389,17 +389,23 @@
     }
   },
   "rbac": {
-    "title": "RBAC",
+    "title": "Quản trị truy cập",
+    "description": "Quản lý tài khoản, vai trò, quyền và phạm vi theo đúng quyền truy cập hiệu lực từ backend.",
+    "recordCount": "{{count}} bản ghi",
     "common": {
       "readOnly": "Bạn chỉ có quyền xem cấu hình phân quyền.",
-      "loading": "Đang tải dữ liệu..."
+      "loading": "Đang tải dữ liệu...",
+      "loadError": "Không thể tải dữ liệu này.",
+      "empty": "Chưa có bản ghi.",
+      "noResults": "Không có bản ghi phù hợp với bộ lọc.",
+      "requestFailed": "Không thể thực hiện yêu cầu."
     },
     "tabs": {
-      "users": "Users",
-      "roles": "Roles",
-      "permissions": "Permissions",
-      "scopes": "Scopes",
-      "scopedOverrides": "Scoped Overrides"
+      "users": "Tài khoản",
+      "roles": "Vai trò",
+      "permissions": "Quyền",
+      "scopes": "Phạm vi",
+      "scopedOverrides": "Ghi đè theo scope"
     },
     "users": {
       "searchPlaceholder": "Tìm theo tên, email, mã nhân viên...",
@@ -429,7 +435,7 @@
         "allDepartments": "Tất cả phòng ban",
         "allTeams": "Tất cả team"
       },
-      "scopedAssignmentCount": "{{count}} assignment",
+      "scopedAssignmentCount": "{{count}} phân quyền",
       "pagination": {
         "total": "Tổng {{count}} tài khoản"
       },
@@ -477,47 +483,47 @@
         "noGlobalRoles": "Chưa có vai trò global",
         "noGlobalPermissions": "Chưa có quyền global",
         "effectiveAccess": "Tổng quyền hiệu lực",
-        "effectiveHint": "Hợp nhất quyền global và mọi assignment theo scope.",
+        "effectiveHint": "Hợp nhất quyền global và mọi phân quyền theo scope.",
         "noEffectivePermissions": "Tài khoản chưa có quyền hiệu lực",
-        "scopedAccess": "Assignment theo scope",
-        "assignmentCount": "{{count}} assignment",
-        "noScopedAccess": "Tài khoản chưa có assignment theo scope",
-        "noScopedPermissions": "Assignment này chưa có quyền hiệu lực",
+        "scopedAccess": "Phân quyền theo scope",
+        "assignmentCount": "{{count}} phân quyền",
+        "noScopedAccess": "Tài khoản chưa có phân quyền theo scope",
+        "noScopedPermissions": "Phân quyền này chưa có quyền hiệu lực",
         "replacementMode": "Bộ quyền thay thế",
         "inheritedMode": "Kế thừa từ vai trò",
         "loadError": "Không thể tải thông tin tài khoản.",
         "close": "Đóng"
       },
       "editAccessModal": {
-        "title": "Edit Access — {{name}}",
-        "banner": "Mỗi scope assignment có role, scope và bộ quyền riêng. Đổi role hoặc scope sẽ reset quyền riêng về mặc định theo role/scope.",
-        "globalAccess": "Global Access",
-        "globalRoles": "Global Roles",
+        "title": "Chỉnh quyền — {{name}}",
+        "banner": "Mỗi phân quyền theo scope có vai trò, phạm vi và bộ quyền riêng. Đổi vai trò hoặc phạm vi sẽ đặt lại bộ quyền riêng theo mặc định.",
+        "globalAccess": "Quyền truy cập global",
+        "globalRoles": "Vai trò global",
         "globalAccessHint": "Vai trò và quyền trực tiếp áp dụng trên toàn hệ thống.",
         "globalPermissions": "Quyền trực tiếp global",
         "globalPermissionsHint": "Các quyền này được cộng thêm ngoài quyền có sẵn từ vai trò global.",
         "saveGlobalAccess": "Lưu quyền global",
         "globalAccessSuccess": "Đã cập nhật quyền global!",
-        "scopedAccess": "Scoped Access Assignments",
-        "scopedAccessHint": "Chỉnh role/scope trực tiếp trên từng dòng. Dùng Sửa quyền để bật/tắt permission riêng cho assignment đó.",
+        "scopedAccess": "Các phân quyền theo scope",
+        "scopedAccessHint": "Chỉnh vai trò/phạm vi trực tiếp trên từng dòng. Dùng Sửa quyền để bật/tắt quyền riêng cho phân quyền đó.",
         "scopedColumns": {
-          "role": "Role",
-          "scopeType": "Scope Type",
-          "scopeResource": "Scope Resource",
-          "customPerms": "Custom Perms"
+          "role": "Vai trò",
+          "scopeType": "Loại phạm vi",
+          "scopeResource": "Tài nguyên phạm vi",
+          "customPerms": "Quyền riêng"
         },
-        "noScopedAccess": "Chưa có scoped access nào được gán",
+        "noScopedAccess": "Chưa có phân quyền theo scope",
         "assignmentRole": "Vai trò",
         "scopeAssignment": "Phân quyền theo scope",
-        "scopeAssignmentPlaceholder": "Chọn scope access assignment",
-        "addScopedAssignment": "Cấp scoped access",
+        "scopeAssignmentPlaceholder": "Chọn phạm vi cần cấp quyền",
+        "addScopedAssignment": "Cấp quyền theo scope",
         "permissionOverride": {
           "title": "Chỉnh sửa quyền riêng",
           "edit": "Sửa quyền",
           "save": "Lưu quyền",
           "reset": "Reset về mặc định",
-          "overrideMode": "Đang dùng danh sách quyền override riêng cho assignment này.",
-          "inheritedMode": "Đang kế thừa quyền từ role/scope. Lưu thay đổi sẽ bật override.",
+          "overrideMode": "Đang dùng danh sách quyền ghi đè riêng cho phân quyền này.",
+          "inheritedMode": "Đang kế thừa quyền từ vai trò/phạm vi. Lưu thay đổi sẽ bật ghi đè.",
           "selectedCount": "{{count}} quyền được chọn",
           "inheritedCount": "{{count}} quyền kế thừa",
           "effectiveCount": "{{count}} quyền hiệu lực"
@@ -653,8 +659,8 @@
         "status": "Trạng thái",
         "actions": "Hành động"
       },
-      "assignmentCount": "{{count}} assignment",
-      "deactivateBlocked": "Không thể tắt scope đang có {{count}} assignment",
+      "assignmentCount": "{{count}} phân quyền",
+      "deactivateBlocked": "Không thể tắt scope đang có {{count}} phân quyền",
       "actions": {
         "addScope": "Thêm Scope",
         "view": "Xem",

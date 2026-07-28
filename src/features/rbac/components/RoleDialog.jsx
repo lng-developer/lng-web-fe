@@ -109,7 +109,7 @@ export default function RoleDialog({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ className: 'rounded-xl' }}
+      slotProps={{ paper: { className: 'rounded-xl' } }}
       sx={{ '& .MuiDialog-paper': { maxHeight: '85vh' } }}
     >
       <Box component="form" onSubmit={submit}>
@@ -137,7 +137,7 @@ export default function RoleDialog({
                 value={form.code}
                 onChange={(event) => setForm({ ...form, code: event.target.value.toUpperCase() })}
                 required
-                inputProps={{ style: { textTransform: 'uppercase' } }}
+                slotProps={{ htmlInput: { style: { textTransform: 'uppercase' } } }}
                 sx={
                   editing
                     ? {

@@ -96,7 +96,7 @@ export default function ScopeDialog({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ className: 'rounded-xl bg-surface' }}
+      slotProps={{ paper: { className: 'rounded-xl bg-surface' } }}
     >
       <Box component="form" onSubmit={submit}>
         <DialogTitle className="border-b border-border !px-6 !py-5 !pr-10">
@@ -233,7 +233,7 @@ export default function ScopeDialog({
               placeholder={t('rbac.scopes.addModal.fields.codePlaceholder')}
               disabled={isEdit || !form.name}
               InputProps={{ className: fieldControlClassName }}
-              inputProps={{ className: 'font-mono uppercase' }}
+              slotProps={{ htmlInput: { className: 'font-mono uppercase' } }}
               sx={fieldControlSx}
             />
           </ScopeDialogField>

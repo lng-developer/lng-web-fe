@@ -7,6 +7,7 @@ import {
   Avatar,
   Box,
   Button,
+  Chip,
   FormControl,
   IconButton,
   MenuItem,
@@ -92,7 +93,6 @@ import {
 } from '../components/shared'
 import { filterPermissionItems } from '../utils/permissionsDisplay'
 import { getRbacCapabilities } from '../utils/rbacAccess'
-import {} from '../utils/rbacApi'
 import { getDefaultPermissionMeta } from '../utils/rolesDisplay'
 import {
   buildScopedOverrideSections,
@@ -157,6 +157,45 @@ export default function UsersRolesPage() {
   const departments = getItems(departmentsQuery.data)
   const teams = getItems(teamsQuery.data)
   const pagination = getPagination(accountsQuery.data)
+  const tabTotals = {
+    [TAB_KEYS.USERS]: pagination.total,
+    [TAB_KEYS.ROLES]: rolesQuery.data?.total ?? roles.length,
+    [TAB_KEYS.PERMISSIONS]: permissionsQuery.data?.total ?? permissions.length,
+    [TAB_KEYS.SCOPES]: scopesQuery.data?.total ?? scopes.length,
+    [TAB_KEYS.OVERRIDES]: scopedRulesQuery.data?.total ?? scopedRules.length,
+  }
+  const primaryActions = {
+    [TAB_KEYS.USERS]: {
+      label: t('rbac.users.actions.addUser'),
+      open: () => setDialog({ type: 'add-account', payload: null }),
+    },
+    [TAB_KEYS.ROLES]: {
+      label: t('rbac.roles.actions.addRole'),
+      open: () => setDialog({ type: 'role', payload: null }),
+    },
+    [TAB_KEYS.PERMISSIONS]: {
+      label: t('rbac.permissions.actions.addPermission'),
+      open: () => setDialog({ type: 'permission', payload: null }),
+    },
+    [TAB_KEYS.SCOPES]: {
+      label: t('rbac.scopes.actions.addScope'),
+      open: () => setDialog({ type: 'scope', payload: null }),
+    },
+  }
+  const primaryAction = primaryActions[activeTab]
+  const hasUserFilters = Boolean(
+    userFilters.search ||
+    userFilters.status ||
+    userFilters.roleId ||
+    userFilters.departmentId ||
+    userFilters.teamId,
+  )
+  const hasPermissionFilters = Boolean(
+    permissionFilters.search || permissionFilters.module || permissionFilters.action,
+  )
+  const hasScopeFilters = Boolean(
+    scopeFilters.search || scopeFilters.scopeType || scopeFilters.status,
+  )
   const availableTeams = useMemo(
     () =>
       userFilters.departmentId
@@ -224,7 +263,7 @@ export default function UsersRolesPage() {
   }
 
   const notifyError = (error) => {
-    enqueueSnackbar(error?.message || 'Không thể thực hiện yêu cầu.', {
+    enqueueSnackbar(error?.message || t('rbac.common.requestFailed'), {
       variant: SNACKBAR_VARIANTS.ERROR,
     })
   }
@@ -326,17 +365,6 @@ export default function UsersRolesPage() {
             ))}
           </Select>
         </FormControl>
-        {canWrite && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            color="primary"
-            className="ml-auto h-10 rounded-lg text-sm font-semibold"
-            onClick={() => setDialog({ type: 'add-account', payload: null })}
-          >
-            {t('rbac.users.actions.addUser')}
-          </Button>
-        )}
       </Box>
 
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border">
@@ -355,7 +383,17 @@ export default function UsersRolesPage() {
             </TableHead>
             <TableBody>
               {accounts.length === 0 ? (
-                <EmptyRow colSpan={7} loading={accountsQuery.isPending} />
+                <EmptyRow
+                  colSpan={7}
+                  loading={accountsQuery.isPending}
+                  message={
+                    accountsQuery.isError
+                      ? accountsQuery.error?.message || t('rbac.common.loadError')
+                      : t(hasUserFilters ? 'rbac.common.noResults' : 'rbac.common.empty')
+                  }
+                  onRetry={accountsQuery.isError ? () => accountsQuery.refetch() : undefined}
+                  t={t}
+                />
               ) : (
                 accounts.map((account, index) => {
                   const accountId = getAccountId(account)
@@ -386,7 +424,7 @@ export default function UsersRolesPage() {
                       className="h-14 border-b border-border last:border-b-0 hover:bg-page"
                     >
                       <TableCell>
-                        <Stack direction="row" alignItems="center" className="min-w-[260px] gap-2">
+                        <Stack direction="row" className="min-w-[260px] items-center gap-2">
                           <Avatar
                             className={`!h-9 !w-9 !text-sm !font-semibold ${avatarMeta.className}`}
                           >
@@ -443,12 +481,7 @@ export default function UsersRolesPage() {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          justifyContent="flex-end"
-                          className="gap-2"
-                        >
+                        <Stack direction="row" className="items-center justify-end gap-2">
                           <Tooltip title={t('rbac.users.actions.viewInfo')} arrow>
                             <IconButton
                               size="small"
@@ -482,7 +515,7 @@ export default function UsersRolesPage() {
             </TableBody>
           </Table>
         </TableContainer>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" className="p-4">
+        <Stack direction="row" className="items-center justify-between p-4">
           <Typography variant="body2" color="text.secondary">
             {t('rbac.users.pagination.total', { count: pagination.total })}
           </Typography>
@@ -517,17 +550,6 @@ export default function UsersRolesPage() {
           value={roleSearch}
           onChange={(event) => setRoleSearch(event.target.value)}
         />
-        {canWrite && (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            className="h-10 whitespace-nowrap rounded-lg text-sm font-semibold"
-            onClick={() => setDialog({ type: 'role', payload: null })}
-          >
-            {t('rbac.roles.actions.addRole')}
-          </Button>
-        )}
       </Box>
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border">
         <TableContainer>
@@ -545,7 +567,17 @@ export default function UsersRolesPage() {
             </TableHead>
             <TableBody>
               {roles.length === 0 ? (
-                <EmptyRow colSpan={5} loading={rolesQuery.isPending} />
+                <EmptyRow
+                  colSpan={5}
+                  loading={rolesQuery.isPending}
+                  message={
+                    rolesQuery.isError
+                      ? rolesQuery.error?.message || t('rbac.common.loadError')
+                      : t(roleSearch ? 'rbac.common.noResults' : 'rbac.common.empty')
+                  }
+                  onRetry={rolesQuery.isError ? () => rolesQuery.refetch() : undefined}
+                  t={t}
+                />
               ) : (
                 roles.map((role) => {
                   const permissionMeta = getDefaultPermissionMeta(role, rolePermissions.length)
@@ -674,17 +706,6 @@ export default function UsersRolesPage() {
             ))}
           </Select>
         </FormControl>
-        {canWrite && (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            className="ml-auto h-10 whitespace-nowrap rounded-lg text-sm font-semibold"
-            onClick={() => setDialog({ type: 'permission', payload: null })}
-          >
-            {t('rbac.permissions.actions.addPermission')}
-          </Button>
-        )}
       </Box>
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border">
         <TableContainer>
@@ -735,7 +756,17 @@ export default function UsersRolesPage() {
             </TableHead>
             <TableBody>
               {filteredPermissions.length === 0 ? (
-                <EmptyRow colSpan={5} loading={permissionsQuery.isPending} />
+                <EmptyRow
+                  colSpan={5}
+                  loading={permissionsQuery.isPending}
+                  message={
+                    permissionsQuery.isError
+                      ? permissionsQuery.error?.message || t('rbac.common.loadError')
+                      : t(hasPermissionFilters ? 'rbac.common.noResults' : 'rbac.common.empty')
+                  }
+                  onRetry={permissionsQuery.isError ? () => permissionsQuery.refetch() : undefined}
+                  t={t}
+                />
               ) : (
                 filteredPermissions.map((permission) => (
                   <TableRow
@@ -856,16 +887,6 @@ export default function UsersRolesPage() {
             ))}
           </Select>
         </FormControl>
-        {canWrite && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className="h-10 whitespace-nowrap rounded-lg text-sm font-semibold lg:ml-auto"
-            onClick={() => setDialog({ type: 'scope', payload: null })}
-          >
-            {t('rbac.scopes.actions.addScope')}
-          </Button>
-        )}
       </Box>
       <Paper elevation={0} className="overflow-hidden rounded-lg border border-border bg-surface">
         <TableContainer>
@@ -884,7 +905,17 @@ export default function UsersRolesPage() {
             </TableHead>
             <TableBody>
               {filteredScopes.length === 0 ? (
-                <EmptyRow colSpan={6} loading={scopesQuery.isPending} />
+                <EmptyRow
+                  colSpan={6}
+                  loading={scopesQuery.isPending}
+                  message={
+                    scopesQuery.isError
+                      ? scopesQuery.error?.message || t('rbac.common.loadError')
+                      : t(hasScopeFilters ? 'rbac.common.noResults' : 'rbac.common.empty')
+                  }
+                  onRetry={scopesQuery.isError ? () => scopesQuery.refetch() : undefined}
+                  t={t}
+                />
               ) : (
                 filteredScopes.map((scope) => (
                   <TableRow
@@ -1023,7 +1054,18 @@ export default function UsersRolesPage() {
           {t('rbac.scopedOverrides.filterHint')}
         </Typography>
       </Box>
-      {filteredOverrideSections.length === 0 ? (
+      {scopedRulesQuery.isError ? (
+        <Paper elevation={0} className="rounded-lg border border-border p-8 text-center">
+          <Stack className="items-center gap-3">
+            <Typography variant="body2" className="text-ink-muted">
+              {scopedRulesQuery.error?.message || t('rbac.common.loadError')}
+            </Typography>
+            <Button size="small" onClick={() => scopedRulesQuery.refetch()}>
+              {t('common.retry')}
+            </Button>
+          </Stack>
+        </Paper>
+      ) : filteredOverrideSections.length === 0 ? (
         <Paper elevation={0} className="rounded-lg border border-border p-8 text-center">
           <Typography variant="body2" className="text-ink-muted">
             {t('rbac.scopedOverrides.noRoles')}
@@ -1063,18 +1105,40 @@ export default function UsersRolesPage() {
   )
 
   return (
-    <Stack className="flex flex-col gap-6">
-      <Box>
-        <Typography variant="h5" className="font-semibold text-ink">
-          {t('rbac.title')}
-        </Typography>
-      </Box>
+    <Stack className="flex flex-col gap-5">
+      <Paper elevation={0} className="rounded-xl border border-border bg-surface p-5">
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          className="items-stretch justify-between gap-4 md:items-center"
+        >
+          <Box>
+            <Typography variant="h5" className="font-semibold text-ink">
+              {t('rbac.title')}
+            </Typography>
+            <Typography variant="body2" className="mt-1 max-w-3xl text-ink-muted">
+              {t('rbac.description')}
+            </Typography>
+          </Box>
+          <Stack direction="row" className="items-center gap-3">
+            <Chip
+              size="small"
+              variant="outlined"
+              label={t('rbac.recordCount', { count: tabTotals[activeTab] ?? 0 })}
+            />
+            {canWrite && primaryAction && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={primaryAction.open}>
+                {primaryAction.label}
+              </Button>
+            )}
+          </Stack>
+        </Stack>
+      </Paper>
 
-      <Box className="inline-flex rounded-lg bg-surface p-1 shadow-sm border border-border">
+      <Box className="overflow-x-auto rounded-lg border border-border bg-surface p-1 shadow-sm">
         <Tabs
           value={activeTab}
           onChange={(_, value) => setActiveTab(value)}
-          TabIndicatorProps={{ style: { display: 'none' } }}
+          slotProps={{ indicator: { style: { display: 'none' } } }}
           sx={(theme) => ({
             minHeight: 32,
             '& .MuiTab-root': {
@@ -1096,7 +1160,17 @@ export default function UsersRolesPage() {
           })}
         >
           {TABS.map((tab) => (
-            <Tab key={tab.id} value={tab.id} label={t(tab.labelKey)} disableRipple />
+            <Tab
+              key={tab.id}
+              value={tab.id}
+              label={
+                <Box className="flex items-center gap-2">
+                  <span>{t(tab.labelKey)}</span>
+                  <Chip size="small" label={tabTotals[tab.id] ?? 0} className="!h-5" />
+                </Box>
+              }
+              disableRipple
+            />
           ))}
         </Tabs>
       </Box>

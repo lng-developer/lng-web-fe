@@ -47,7 +47,7 @@ export default function PermissionOverrideDialog({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{ className: 'rounded-xl' }}
+      slotProps={{ paper: { className: 'rounded-xl' } }}
     >
       <DialogTitle className="pb-2 pr-10 font-semibold text-ink">
         {t('rbac.users.editAccessModal.permissionOverride.title')}

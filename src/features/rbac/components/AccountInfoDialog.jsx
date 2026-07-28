@@ -85,7 +85,7 @@ function ResetPasswordDialog({ open, pending, onClose, onSubmit, t }) {
             label={t('rbac.users.viewModal.resetDialog.password')}
             helperText={t('rbac.users.viewModal.resetDialog.hint')}
             onChange={(event) => setPassword(event.target.value)}
-            inputProps={{ minLength: 6 }}
+            slotProps={{ htmlInput: { minLength: 6 } }}
             className="mt-2"
           />
         </DialogContent>
@@ -133,10 +133,10 @@ export default function AccountInfoDialog({
         onClose={onClose}
         maxWidth="md"
         fullWidth
-        PaperProps={{ className: 'rounded-xl' }}
+        slotProps={{ paper: { className: 'rounded-xl' } }}
       >
         <DialogTitle className="border-b border-border pb-4 pr-12">
-          <Stack direction="row" alignItems="center" className="gap-3">
+          <Stack direction="row" className="items-center gap-3">
             <Box className="min-w-0 flex-1">
               <Typography variant="h6" className="truncate font-semibold text-ink">
                 {t('rbac.users.viewModal.title', { name: displayName })}
@@ -173,11 +173,7 @@ export default function AccountInfoDialog({
           ) : (
             <>
               <Paper elevation={0} className="rounded-lg border border-border bg-surface p-4">
-                <Stack
-                  direction={{ xs: 'column', md: 'row' }}
-                  justifyContent="space-between"
-                  className="gap-4"
-                >
+                <Stack direction={{ xs: 'column', md: 'row' }} className="justify-between gap-4">
                   <Box className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <DetailField label={t('rbac.users.viewModal.loginName')}>
                       <Typography variant="body2" className="font-semibold text-ink">
@@ -210,12 +206,12 @@ export default function AccountInfoDialog({
                       </Typography>
                     </DetailField>
                   </Box>
-                  <Stack direction="row" alignItems="center" className="gap-2 md:self-start">
+                  <Stack direction="row" className="items-center gap-2 md:self-start">
                     <Switch
                       color="primary"
                       checked={account?.status === 'active'}
                       disabled={!canWrite || statusPending}
-                      inputProps={{ 'aria-label': t('rbac.users.viewModal.status') }}
+                      slotProps={{ input: { 'aria-label': t('rbac.users.viewModal.status') } }}
                       onChange={(event) =>
                         onUpdateStatus({
                           accountId,
@@ -273,7 +269,7 @@ export default function AccountInfoDialog({
               </Box>
 
               <Paper elevation={0} className="rounded-lg border border-border bg-surface p-4">
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" className="items-center justify-between">
                   <Box>
                     <Typography variant="subtitle2" className="font-semibold text-ink">
                       {t('rbac.users.viewModal.scopedAccess')}
@@ -295,8 +291,7 @@ export default function AccountInfoDialog({
                       >
                         <Stack
                           direction={{ xs: 'column', sm: 'row' }}
-                          justifyContent="space-between"
-                          className="gap-2"
+                          className="justify-between gap-2"
                         >
                           <Box>
                             <Typography variant="body2" className="font-semibold text-ink">

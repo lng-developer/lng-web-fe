@@ -391,10 +391,16 @@
     }
   },
   "rbac": {
-    "title": "RBAC",
+    "title": "Access administration",
+    "description": "Manage accounts, roles, permissions, and scopes using the backend's effective access model.",
+    "recordCount": "{{count}} records",
     "common": {
       "readOnly": "You have read-only access to RBAC settings.",
-      "loading": "Loading data..."
+      "loading": "Loading data...",
+      "loadError": "Could not load this data.",
+      "empty": "No records yet.",
+      "noResults": "No records match the current filters.",
+      "requestFailed": "Could not complete the request."
     },
     "tabs": {
       "users": "Users",
