@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/services/axiosInstance'
 import { ENDPOINTS } from '@/services/endpoints'
 
+import { mapPayrollEmailOutcome, mapPayrollRun } from '../utils/hrPayrollApi.js'
 import { hrPayrollKeys, unwrapPayrollResponse } from './hrPayroll.queries.js'
 
 function usePayrollMutation(mutationFn) {
@@ -16,7 +17,10 @@ function usePayrollMutation(mutationFn) {
 
 export function useRunPayrollMutation() {
   return usePayrollMutation((payload) =>
-    apiClient.post(`${ENDPOINTS.HR.PAYROLLS}/run`, payload).then(unwrapPayrollResponse),
+    apiClient
+      .post(`${ENDPOINTS.HR.PAYROLLS}/run`, payload)
+      .then(unwrapPayrollResponse)
+      .then(mapPayrollRun),
   )
 }
 
@@ -30,12 +34,17 @@ export function useFinalizePayrollMutation() {
 
 export function useMarkPayrollPaidMutation() {
   return usePayrollMutation(({ payrollRunId, payload }) =>
-    apiClient.post(ENDPOINTS.HR.PAYROLL_MARK_PAID(payrollRunId), payload).then(unwrapPayrollResponse),
+    apiClient
+      .post(ENDPOINTS.HR.PAYROLL_MARK_PAID(payrollRunId), payload)
+      .then(unwrapPayrollResponse),
   )
 }
 
 export function useEmailPayrollMutation() {
   return usePayrollMutation((payrollRunId) =>
-    apiClient.post(ENDPOINTS.HR.PAYROLL_EMAIL(payrollRunId), {}).then(unwrapPayrollResponse),
+    apiClient
+      .post(ENDPOINTS.HR.PAYROLL_EMAIL(payrollRunId), {})
+      .then(unwrapPayrollResponse)
+      .then(mapPayrollEmailOutcome),
   )
 }

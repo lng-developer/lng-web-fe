@@ -29,17 +29,26 @@ test('payroll administration uses the operations desk and server capabilities', 
 })
 
 test('payroll actions require preview, explicit confirmation, and pending state', async () => {
-  const [page, drawer, dialog] = await Promise.all([
+  const [page, drawer, dialog, mutations] = await Promise.all([
     source('pages/PayrollRunsPage.jsx'),
     source('components/PayrollReviewDrawer.jsx'),
     source('components/PayrollActionDialog.jsx'),
+    source('api/hrPayroll.mutations.js'),
   ])
 
   assert.match(page, /PayrollActionDialog/)
+  assert.match(page, /PayrollRunDialog/)
+  assert.match(page, /useRunPayrollMutation/)
+  assert.match(page, /useEmailPayrollMutation/)
+  assert.match(page, /row\.capabilities\?\.email/)
   assert.match(drawer, /PayrollActionDialog/)
   assert.match(dialog, /preview/i)
   assert.match(dialog, /Confirm/)
   assert.match(dialog, /loading/)
+  assert.match(mutations, /mapPayrollEmailOutcome/)
+  assert.match(dialog, /queued/)
+  assert.match(dialog, /reused/)
+  assert.match(dialog, /skipped/)
 })
 
 test('routes mount auth-only payslips and permission-gated payroll administration', async () => {
@@ -50,10 +59,7 @@ test('routes mount auth-only payslips and permission-gated payroll administratio
 
   assert.match(routes, /MyPayslipsPage/)
   assert.match(routes, /PayrollRunsPage/)
-  assert.match(
-    routes,
-    /HR_MY_PAYSLIPS[\s\S]*element:\s*<MyPayslipsPage\s*\/>/,
-  )
+  assert.match(routes, /HR_MY_PAYSLIPS[\s\S]*element:\s*<MyPayslipsPage\s*\/>/)
   assert.match(routes, /HR_PAYROLL_RUNS[\s\S]*HR_PAYROLL:READ/)
   assert.match(navigation, /MOUNTED_ROUTE_PATHS[\s\S]*ROUTES\.HR_MY_PAYSLIPS/)
   assert.match(navigation, /MOUNTED_ROUTE_PATHS[\s\S]*ROUTES\.HR_PAYROLL_RUNS/)

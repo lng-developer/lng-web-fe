@@ -46,6 +46,11 @@ export default function PayrollActionDialog({
             ) : null}
           </Alert>
         ) : null}
+        {outcome && 'queued' in outcome ? (
+          <Alert severity="success">
+            Queued: {outcome.queued}. Reused: {outcome.reused}. Skipped: {outcome.skipped}.
+          </Alert>
+        ) : null}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>

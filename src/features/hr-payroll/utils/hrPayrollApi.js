@@ -41,7 +41,8 @@ export function mapPayrollResult(result) {
     },
     period: result.inputSnapshot?.period || null,
   }
-  for (const field of moneyFields) mapped[field] = Number.isSafeInteger(result[field]) ? result[field] : 0
+  for (const field of moneyFields)
+    mapped[field] = Number.isSafeInteger(result[field]) ? result[field] : 0
   return mapped
 }
 
@@ -49,11 +50,33 @@ export function mapPayrollRun(run) {
   if (!run) return null
   return {
     ...run,
+    capabilities: {
+      ...run.capabilities,
+      email: Boolean(run.capabilities?.email),
+    },
     actions: {
       finalize: Boolean(run.capabilities?.finalize),
       markPaid: Boolean(run.capabilities?.markPaid),
     },
     ...(run.results ? { results: run.results.map(mapPayrollResult) } : {}),
+  }
+}
+
+export function buildRunPayrollPayload(values) {
+  return {
+    month: Number(values.month),
+    year: Number(values.year),
+    profileIds: values.profileIds || [],
+    shadow: Boolean(values.shadow),
+  }
+}
+
+export function mapPayrollEmailOutcome(payload = {}) {
+  return {
+    queued: payload.queued || 0,
+    reused: payload.reused || 0,
+    skipped: payload.skipped || 0,
+    jobs: payload.jobs || [],
   }
 }
 

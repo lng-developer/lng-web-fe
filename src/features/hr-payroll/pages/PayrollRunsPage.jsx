@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import { Alert, Button, MenuItem, Stack, TextField } from '@mui/material'
@@ -16,11 +18,19 @@ import {
   StatusBadge,
 } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
+import { hasAnyPermission } from '@/features/auth/utils/authz.js'
+import { useEmployeeProfilesQuery } from '@/features/hr-time/api/hrTime.queries.js'
+import { useAuthStore } from '@/store/useAuthStore'
 
-import { useFinalizePayrollMutation } from '../api/hrPayroll.mutations.js'
+import {
+  useEmailPayrollMutation,
+  useFinalizePayrollMutation,
+  useRunPayrollMutation,
+} from '../api/hrPayroll.mutations.js'
 import { usePayrollRunsQuery } from '../api/hrPayroll.queries.js'
 import PayrollActionDialog from '../components/PayrollActionDialog.jsx'
 import PayrollReviewDrawer from '../components/PayrollReviewDrawer.jsx'
+import PayrollRunDialog from '../components/PayrollRunDialog.jsx'
 
 const pageSize = 20
 const columns = [
@@ -29,7 +39,7 @@ const columns = [
   { key: 'resultCount', label: 'Employees', width: '130px', align: 'right' },
   { key: 'status', label: 'Status', width: '130px' },
   { key: 'updatedAt', label: 'Last update', width: '190px' },
-  { key: 'actions', label: 'Actions', width: '120px', align: 'center' },
+  { key: 'actions', label: 'Actions', width: '180px', align: 'center' },
 ]
 
 function statusTone(status) {
@@ -45,11 +55,23 @@ export default function PayrollRunsPage() {
   const month = searchParams.get('month') || ''
   const year = searchParams.get('year') || ''
   const status = searchParams.get('status') || ''
+  const currentUser = useAuthStore((state) => state.currentUser)
+  const canWrite = hasAnyPermission(currentUser, ['HR_PAYROLL:WRITE'])
   const [reviewRun, setReviewRun] = useState(null)
+  const [runDialogOpen, setRunDialogOpen] = useState(false)
+  const [persistPayload, setPersistPayload] = useState(null)
   const [finalizeRun, setFinalizeRun] = useState(null)
+  const [emailRun, setEmailRun] = useState(null)
   const [actionError, setActionError] = useState('')
+  const [emailOutcome, setEmailOutcome] = useState(null)
   const query = usePayrollRunsQuery({ page, limit: pageSize, month, year, status })
+  const profilesQuery = useEmployeeProfilesQuery(
+    { page: 1, limit: 100, status: 'ACTIVE' },
+    { enabled: runDialogOpen && canWrite },
+  )
+  const run = useRunPayrollMutation()
   const finalize = useFinalizePayrollMutation()
+  const email = useEmailPayrollMutation()
   const rows = query.data?.items || []
   const pagination = query.data?.pagination || { page, limit: pageSize, total: 0 }
 
@@ -71,11 +93,50 @@ export default function PayrollRunsPage() {
   async function confirmFinalize() {
     setActionError('')
     try {
-      await finalize.mutateAsync({ payrollRunId: finalizeRun.id, expectedVersion: finalizeRun.version })
+      await finalize.mutateAsync({
+        payrollRunId: finalizeRun.id,
+        expectedVersion: finalizeRun.version,
+      })
       enqueueSnackbar('Payroll finalized', { variant: SNACKBAR_VARIANTS.SUCCESS })
       setFinalizeRun(null)
     } catch (error) {
       setActionError(error.message || 'Could not finalize payroll')
+    }
+  }
+
+  async function previewPayroll(payload) {
+    setActionError('')
+    try {
+      return await run.mutateAsync(payload)
+    } catch (error) {
+      setActionError(error.message || 'Could not preview payroll')
+      return null
+    }
+  }
+
+  function requestPersistPayroll(payload) {
+    setActionError('')
+    setPersistPayload(payload)
+    setRunDialogOpen(false)
+  }
+
+  async function confirmPersistPayroll() {
+    setActionError('')
+    try {
+      await run.mutateAsync(persistPayload)
+      enqueueSnackbar('Payroll run saved', { variant: SNACKBAR_VARIANTS.SUCCESS })
+      setPersistPayload(null)
+    } catch (error) {
+      setActionError(error.message || 'Could not run payroll')
+    }
+  }
+
+  async function confirmEmailPayroll() {
+    setActionError('')
+    try {
+      setEmailOutcome(await email.mutateAsync(emailRun.id))
+    } catch (error) {
+      setActionError(error.message || 'Could not queue payroll emails')
     }
   }
 
@@ -103,6 +164,19 @@ export default function PayrollRunsPage() {
               }}
             >
               <LockOutlinedIcon fontSize="small" />
+            </IconActionButton>
+          ) : null}
+          {row.capabilities?.email ? (
+            <IconActionButton
+              label="Email payroll"
+              tone="primary"
+              onClick={() => {
+                setActionError('')
+                setEmailOutcome(null)
+                setEmailRun(row)
+              }}
+            >
+              <EmailOutlinedIcon fontSize="small" />
             </IconActionButton>
           ) : null}
         </Stack>
@@ -148,9 +222,22 @@ export default function PayrollRunsPage() {
             >
               <MenuItem value="">All</MenuItem>
               {['DRAFT', 'FINALIZED', 'PAID'].map((value) => (
-                <MenuItem key={value} value={value}>{value}</MenuItem>
+                <MenuItem key={value} value={value}>
+                  {value}
+                </MenuItem>
               ))}
             </TextField>
+            <Button
+              variant="contained"
+              startIcon={<PlayArrowOutlinedIcon />}
+              disabled={!canWrite}
+              onClick={() => {
+                setActionError('')
+                setRunDialogOpen(true)
+              }}
+            >
+              Run payroll
+            </Button>
             <Button
               variant="text"
               startIcon={<RefreshIcon />}
@@ -171,7 +258,11 @@ export default function PayrollRunsPage() {
         />
       }
     >
-      {query.error ? <Alert severity="error" className="mb-3">{query.error.message}</Alert> : null}
+      {query.error ? (
+        <Alert severity="error" className="mb-3">
+          {query.error.message}
+        </Alert>
+      ) : null}
       <OperationsTable
         columns={columns}
         rows={rows}
@@ -182,7 +273,28 @@ export default function PayrollRunsPage() {
         emptyTitle="No payroll runs"
         emptyDescription="Adjust the period or status filters to find a payroll run."
       />
-      {reviewRun ? <PayrollReviewDrawer run={reviewRun} onClose={() => setReviewRun(null)} /> : null}
+      {reviewRun ? (
+        <PayrollReviewDrawer run={reviewRun} onClose={() => setReviewRun(null)} />
+      ) : null}
+      <PayrollRunDialog
+        open={runDialogOpen}
+        profiles={profilesQuery.data?.items || []}
+        loading={run.isPending}
+        error={actionError}
+        onClose={() => setRunDialogOpen(false)}
+        onPreview={previewPayroll}
+        onPersist={requestPersistPayroll}
+      />
+      <PayrollActionDialog
+        open={Boolean(persistPayload)}
+        title="Run and persist payroll"
+        confirmLabel="Confirm run and persist"
+        preview={`This will save payroll for ${persistPayload?.month || '-'}/${persistPayload?.year || '-'} and create an audit record.`}
+        loading={run.isPending}
+        error={actionError}
+        onClose={() => setPersistPayload(null)}
+        onConfirm={confirmPersistPayroll}
+      />
       <PayrollActionDialog
         open={Boolean(finalizeRun)}
         title="Finalize payroll run"
@@ -192,6 +304,20 @@ export default function PayrollRunsPage() {
         error={actionError}
         onClose={() => setFinalizeRun(null)}
         onConfirm={confirmFinalize}
+      />
+      <PayrollActionDialog
+        open={Boolean(emailRun)}
+        title="Queue payroll emails"
+        confirmLabel="Confirm email delivery"
+        preview={`${emailRun?.resultCount || 0} payroll result${emailRun?.resultCount === 1 ? '' : 's'} will be queued or reused for delivery.`}
+        loading={email.isPending}
+        error={actionError}
+        outcome={emailOutcome}
+        onClose={() => {
+          setEmailRun(null)
+          setEmailOutcome(null)
+        }}
+        onConfirm={confirmEmailPayroll}
       />
     </OperationsPageShell>
   )

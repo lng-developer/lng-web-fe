@@ -3,6 +3,8 @@ import test from 'node:test'
 
 import {
   buildMarkPaidPayload,
+  buildRunPayrollPayload,
+  mapPayrollEmailOutcome,
   mapPayrollResult,
   mapPayrollRun,
   normalizePayrollQuery,
@@ -63,6 +65,25 @@ test('payroll run actions come only from server-computed capabilities', () => {
     finalize: false,
     markPaid: false,
   })
+})
+
+test('payroll execution and email adapters preserve the API contract', () => {
+  assert.deepEqual(
+    buildRunPayrollPayload({ month: '7', year: '2026', profileIds: ['p1'], shadow: true }),
+    {
+      month: 7,
+      year: 2026,
+      profileIds: ['p1'],
+      shadow: true,
+    },
+  )
+  assert.deepEqual(mapPayrollEmailOutcome({ queued: 2, reused: 1, skipped: 3 }), {
+    queued: 2,
+    reused: 1,
+    skipped: 3,
+    jobs: [],
+  })
+  assert.equal(mapPayrollRun({ capabilities: { email: true } }).capabilities.email, true)
 })
 
 test('mark-paid payload contains explicit result ids and optimistic version only', () => {
