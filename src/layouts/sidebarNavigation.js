@@ -382,9 +382,17 @@ export const PORTAL_NAVIGATION = [
 
 export const HR_NAVIGATION = [
   {
-    id: 'hr-my-group',
+    id: 'hr-dashboard',
+    type: 'item',
+    labelKey: 'nav.items.dashboard',
+    icon: 'dashboard',
+    path: ROUTES.HR_DASHBOARD,
+    requiredPermissions: ['HR_EMPLOYEES:READ'],
+  },
+  {
+    id: 'hr-self-service-group',
     type: 'group',
-    labelKey: 'hrTime.groups.myHr',
+    labelKey: 'hrTime.groups.selfService',
     icon: 'users',
     defaultOpen: true,
     children: [
@@ -406,20 +414,12 @@ export const HR_NAVIGATION = [
     ],
   },
   {
-    id: 'hr-people-time-group',
+    id: 'hr-time-attendance-group',
     type: 'group',
-    labelKey: 'hrTime.groups.peopleTime',
-    icon: 'users',
+    labelKey: 'hrTime.groups.timeAttendance',
+    icon: 'clock',
     defaultOpen: true,
     children: [
-      {
-        id: 'hr-dashboard',
-        type: 'item',
-        labelKey: 'nav.items.dashboard',
-        icon: 'dashboard',
-        path: ROUTES.HR_DASHBOARD,
-        requiredPermissions: ['HR_EMPLOYEES:READ'],
-      },
       {
         id: 'hr-request-inbox',
         type: 'item',
@@ -454,6 +454,15 @@ export const HR_NAVIGATION = [
           'HR_CALENDAR:WRITE',
         ],
       },
+    ],
+  },
+  {
+    id: 'hr-core-group',
+    type: 'group',
+    labelKey: 'hrTime.groups.coreHr',
+    icon: 'users',
+    defaultOpen: true,
+    children: [
       {
         id: 'hr-employees',
         type: 'item',
@@ -461,6 +470,14 @@ export const HR_NAVIGATION = [
         icon: 'users',
         path: ROUTES.HR_TIME_EMPLOYEES,
         requiredPermissions: ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'],
+      },
+      {
+        id: 'hr-announcements',
+        type: 'item',
+        labelKey: 'hrTime.navigation.announcements',
+        icon: 'reports',
+        path: ROUTES.HR_ANNOUNCEMENTS,
+        requiredPermissions: ['HR_ANNOUNCEMENTS:READ', 'HR_ANNOUNCEMENTS:WRITE'],
       },
     ],
   },
@@ -478,23 +495,6 @@ export const HR_NAVIGATION = [
         icon: 'finance',
         path: ROUTES.HR_PAYROLL_RUNS,
         requiredPermissions: ['HR_PAYROLL:READ'],
-      },
-    ],
-  },
-  {
-    id: 'hr-communication-group',
-    type: 'group',
-    labelKey: 'hrTime.groups.communication',
-    icon: 'reports',
-    defaultOpen: false,
-    children: [
-      {
-        id: 'hr-announcements',
-        type: 'item',
-        labelKey: 'hrTime.navigation.announcements',
-        icon: 'reports',
-        path: ROUTES.HR_ANNOUNCEMENTS,
-        requiredPermissions: ['HR_ANNOUNCEMENTS:READ', 'HR_ANNOUNCEMENTS:WRITE'],
       },
     ],
   },

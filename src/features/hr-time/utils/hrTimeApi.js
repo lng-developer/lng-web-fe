@@ -3,6 +3,20 @@ function relationName(value) {
   return value?.fullName ?? value?.name ?? null
 }
 
+export function formatMinutes(value, t) {
+  if (value === null || value === undefined) return '-'
+  const minutes = Number(value || 0)
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  if (!hours) return t('hrTime.units.minutes', { count: remainder, defaultValue: '{{count}}m' })
+  if (!remainder) return t('hrTime.units.hours', { count: hours, defaultValue: '{{count}}h' })
+  return t('hrTime.units.hoursMinutes', {
+    hours,
+    minutes: remainder,
+    defaultValue: '{{hours}}h{{minutes}}m',
+  })
+}
+
 function scheduleRelationName(row, relation) {
   return relationName(row?.[relation]) ?? relationName(row?.scheduleSnapshot?.[relation])
 }

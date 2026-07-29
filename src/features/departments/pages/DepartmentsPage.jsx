@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import AddIcon from '@mui/icons-material/Add'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CloseIcon from '@mui/icons-material/Close'
+import DomainIcon from '@mui/icons-material/Domain'
+import GroupsIcon from '@mui/icons-material/Groups'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import {
   Box,
@@ -59,13 +63,14 @@ function CodeBadge({ children }) {
       sx={(theme) => ({
         display: 'inline-flex',
         alignItems: 'center',
-        minHeight: 19,
-        borderRadius: 0.75,
-        bgcolor: theme.palette.mode === 'light' ? '#F5F6F8' : theme.palette.tokens.surfaceElevated,
+        minHeight: 20,
+        borderRadius: 1.5,
+        bgcolor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
         color: 'text.secondary',
-        px: 1,
+        px: 1.25,
         fontFamily: 'monospace',
         fontWeight: 700,
+        fontSize: '11px',
         lineHeight: 1,
         letterSpacing: 0,
       })}
@@ -75,24 +80,32 @@ function CodeBadge({ children }) {
   )
 }
 
-function OrganizationCard({ children, minWidth, title, badge, action }) {
+function OrganizationCard({ children, minWidth, title, badge, action, icon }) {
   return (
     <Card
       elevation={0}
       sx={(theme) => ({
         minWidth,
         border: `1px solid ${theme.palette.divider}`,
-        borderRadius: 1,
+        borderRadius: 3,
         bgcolor: 'background.paper',
         overflow: 'hidden',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
       })}
     >
-      <Box className="flex min-h-[72px] items-center justify-between gap-3 px-4">
+      <Box className="flex min-h-[76px] items-center justify-between gap-3 px-5 border-b border-border bg-surface-subtle">
         <Box className="flex items-center gap-3">
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-            {title}
-          </Typography>
-          {badge}
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600">
+            {icon}
+          </div>
+          <div>
+            <div className="flex items-center gap-3 mb-0.5">
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                {title}
+              </Typography>
+              {badge}
+            </div>
+          </div>
         </Box>
         {action}
       </Box>
@@ -107,16 +120,21 @@ function TableHeader({ columns, templateColumns }) {
       sx={(theme) => ({
         display: 'grid',
         gridTemplateColumns: templateColumns,
-        minHeight: 37,
+        minHeight: 40,
         alignItems: 'center',
-        borderTop: `1px solid ${theme.palette.divider}`,
         borderBottom: `1px solid ${theme.palette.divider}`,
         px: 3,
         columnGap: 3,
+        bgcolor: theme.palette.mode === 'light' ? '#FAFAFA' : 'rgba(0,0,0,0.2)',
       })}
     >
       {columns.map((column) => (
-        <Typography key={column} variant="caption" color="text.disabled" sx={{ fontWeight: 800 }}>
+        <Typography
+          key={column}
+          variant="caption"
+          className="uppercase tracking-wider font-bold"
+          color="text.disabled"
+        >
           {column}
         </Typography>
       ))}
@@ -130,24 +148,25 @@ function DataRow({ children, onClick, selected = false, templateColumns }) {
       sx={(theme) => ({
         display: 'grid',
         gridTemplateColumns: templateColumns,
-        minHeight: 60,
+        minHeight: 64,
         alignItems: 'center',
         px: 3,
         columnGap: 3,
         cursor: onClick ? 'pointer' : 'default',
-        bgcolor: selected ? theme.palette.primary.light : 'transparent',
+        bgcolor: selected ? 'rgba(0, 100, 255, 0.04)' : 'transparent',
         borderBottom: `1px solid ${theme.palette.divider}`,
         transition: theme.transitions.create(['background-color'], {
           duration: theme.transitions.duration.shortest,
         }),
         '&:hover': onClick
           ? {
-              bgcolor: selected ? theme.palette.primary.light : theme.palette.action.hover,
+              bgcolor: selected ? 'rgba(0, 100, 255, 0.06)' : theme.palette.action.hover,
             }
           : undefined,
         '&:last-child': { borderBottom: 0 },
       })}
       onClick={onClick}
+      className={selected ? 'border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'}
     >
       {children}
     </Box>
@@ -156,11 +175,11 @@ function DataRow({ children, onClick, selected = false, templateColumns }) {
 
 function NameCell({ code, name }) {
   return (
-    <Box className="flex min-w-0 flex-col gap-1">
+    <Box className="flex min-w-0 flex-col gap-1.5 py-2">
       <Box>
         <CodeBadge>{code}</CodeBadge>
       </Box>
-      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+      <Typography variant="body2" sx={{ fontWeight: 700 }} className="truncate">
         {name}
       </Typography>
     </Box>
@@ -169,9 +188,11 @@ function NameCell({ code, name }) {
 
 function MetricCell({ primary, secondary }) {
   return (
-    <Box className="flex flex-col">
-      <Typography variant="body2">{primary}</Typography>
-      <Typography variant="body2" color="text.disabled">
+    <Box className="flex flex-col gap-0.5">
+      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+        {primary}
+      </Typography>
+      <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 500 }}>
         {secondary}
       </Typography>
     </Box>
@@ -192,7 +213,7 @@ function CreateDepartmentModal({ formValues, onChange, onClose, onSubmit, open, 
           width: 560,
           minHeight: 430,
           maxWidth: 'calc(100% - 32px)',
-          borderRadius: 1.25,
+          borderRadius: 2,
           bgcolor: 'background.paper',
           boxShadow: theme.shadows[24],
         }),
@@ -203,10 +224,11 @@ function CreateDepartmentModal({ formValues, onChange, onClose, onSubmit, open, 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          minHeight: 56,
+          minHeight: 64,
           px: 3,
           py: 0,
           borderBottom: `1px solid ${theme.palette.divider}`,
+          bgcolor: 'background.default',
         })}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
@@ -231,7 +253,7 @@ function CreateDepartmentModal({ formValues, onChange, onClose, onSubmit, open, 
             onChange={onChange}
             fullWidth
             required
-            sx={{ mt: '20px' }}
+            sx={{ mt: '12px' }}
           />
           <TextField
             name="name"
@@ -252,8 +274,8 @@ function CreateDepartmentModal({ formValues, onChange, onClose, onSubmit, open, 
             multiline
             minRows={3}
           />
-          <Box className="flex min-h-6 items-center justify-between gap-4">
-            <Typography variant="body2" color="text.disabled">
+          <Box className="flex min-h-6 items-center justify-between gap-4 mt-2 p-3 rounded-lg bg-surface-subtle border border-border">
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {t('departments.modal.createDepartment.fields.status')}
             </Typography>
             <Switch
@@ -270,7 +292,7 @@ function CreateDepartmentModal({ formValues, onChange, onClose, onSubmit, open, 
 
       <DialogActions
         sx={(theme) => ({
-          minHeight: 56,
+          minHeight: 64,
           justifyContent: 'space-between',
           px: 3,
           py: 1,
@@ -311,7 +333,7 @@ function CreateTeamModal({
           width: 560,
           minHeight: 456,
           maxWidth: 'calc(100% - 32px)',
-          borderRadius: 1.25,
+          borderRadius: 2,
           bgcolor: 'background.paper',
           boxShadow: theme.shadows[24],
         }),
@@ -322,10 +344,11 @@ function CreateTeamModal({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          minHeight: 56,
+          minHeight: 64,
           px: 3,
           py: 0,
           borderBottom: `1px solid ${theme.palette.divider}`,
+          bgcolor: 'background.default',
         })}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
@@ -350,7 +373,7 @@ function CreateTeamModal({
             onChange={onChange}
             fullWidth
             required
-            sx={{ mt: '20px' }}
+            sx={{ mt: '12px' }}
           />
           <TextField
             name="name"
@@ -396,8 +419,8 @@ function CreateTeamModal({
               </MenuItem>
             ))}
           </TextField>
-          <Box className="flex min-h-6 items-center justify-between gap-4">
-            <Typography variant="body2" color="text.disabled">
+          <Box className="flex min-h-6 items-center justify-between gap-4 mt-2 p-3 rounded-lg bg-surface-subtle border border-border">
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {t('departments.modal.createTeam.fields.status')}
             </Typography>
             <Switch
@@ -414,7 +437,7 @@ function CreateTeamModal({
 
       <DialogActions
         sx={(theme) => ({
-          minHeight: 56,
+          minHeight: 64,
           justifyContent: 'space-between',
           px: 3,
           py: 1,
@@ -480,20 +503,30 @@ export default function DepartmentsPage() {
           elevation={0}
           sx={(theme) => ({
             border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 1,
+            borderRadius: 3,
             bgcolor: 'background.paper',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
           })}
         >
-          <Box className="flex min-h-[99px] items-center justify-between gap-4 px-6 py-5">
-            <Box>
-              <Typography variant="h1" component="h1" sx={{ fontWeight: 800 }}>
-                {t('departments.organizationTitle')}
-              </Typography>
-              <Typography variant="body2" color="text.disabled" sx={{ mt: 0.75 }}>
-                {t('departments.organizationDescription')}
-              </Typography>
+          <Box className="flex min-h-[100px] items-center justify-between gap-4 px-6 py-5">
+            <Box className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-primary-50 dark:bg-primary-900/20 text-primary-600">
+                <AccountTreeIcon fontSize="medium" />
+              </div>
+              <div>
+                <Typography
+                  variant="h1"
+                  component="h1"
+                  sx={{ fontWeight: 800, fontSize: '1.5rem' }}
+                >
+                  {t('departments.organizationTitle')}
+                </Typography>
+                <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
+                  {t('departments.organizationDescription')}
+                </Typography>
+              </div>
             </Box>
-            <Button variant="text" color="primary" startIcon={<RefreshIcon fontSize="small" />}>
+            <Button variant="outlined" color="primary" startIcon={<RefreshIcon fontSize="small" />}>
               {t('departments.actions.refresh')}
             </Button>
           </Box>
@@ -504,16 +537,17 @@ export default function DepartmentsPage() {
             display: 'grid',
             gridTemplateColumns: {
               xs: 'minmax(0, 1fr)',
-              xl: 'minmax(480px, 635px) minmax(680px, 1fr)',
+              xl: 'minmax(480px, 580px) minmax(680px, 1fr)',
             },
-            gap: 3,
+            gap: 4,
             alignItems: 'start',
             overflowX: 'auto',
           }}
         >
           <OrganizationCard
-            minWidth={560}
+            minWidth={480}
             title={t('departments.departmentCardTitle')}
+            icon={<DomainIcon />}
             badge={<CodeBadge>{`${summary.totalDepartments} ${t('departments.total')}`}</CodeBadge>}
             action={
               <Button
@@ -527,13 +561,13 @@ export default function DepartmentsPage() {
           >
             <TableHeader
               columns={departmentColumns}
-              templateColumns="minmax(220px, 1fr) 120px 120px"
+              templateColumns="minmax(200px, 1fr) 110px 110px 24px"
             />
             {FAKE_DEPARTMENTS.map((department) => (
               <DataRow
                 key={department.id}
                 selected={department.code === selectedDepartmentCode}
-                templateColumns="minmax(220px, 1fr) 120px 120px"
+                templateColumns="minmax(200px, 1fr) 110px 110px 24px"
                 onClick={() => {
                   setSelectedDepartmentCode(department.code)
                   setTeamForm((currentForm) => ({
@@ -550,13 +584,20 @@ export default function DepartmentsPage() {
                   primary={countLabel(t, department.teamCount, 'team')}
                   secondary={countLabel(t, department.memberCount, 'member')}
                 />
+                <Box className="flex justify-end">
+                  <ChevronRightIcon
+                    className={`transition-colors ${department.code === selectedDepartmentCode ? 'text-primary-600' : 'text-transparent group-hover:text-ink-muted'}`}
+                    fontSize="small"
+                  />
+                </Box>
               </DataRow>
             ))}
           </OrganizationCard>
 
           <OrganizationCard
-            minWidth={720}
+            minWidth={680}
             title={`Teams: ${selectedDepartment?.name ?? ''}`}
+            icon={<GroupsIcon />}
             badge={<CodeBadge>{selectedDepartmentCode}</CodeBadge>}
             action={
               <Button
@@ -568,9 +609,9 @@ export default function DepartmentsPage() {
               </Button>
             }
           >
-            <TableHeader columns={teamColumns} templateColumns="minmax(360px, 1fr) 120px 120px" />
+            <TableHeader columns={teamColumns} templateColumns="minmax(320px, 1fr) 120px 120px" />
             {teams.map((team) => (
-              <DataRow key={team.id} templateColumns="minmax(360px, 1fr) 120px 120px">
+              <DataRow key={team.id} templateColumns="minmax(320px, 1fr) 120px 120px">
                 <NameCell code={team.code} name={team.name} />
                 <Box>
                   <StatusChip label={t(`departments.status.${team.status}`)} />

@@ -371,19 +371,45 @@ export default function AnnouncementsPage() {
           className="w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           onClick={() => setSelectedId(row.id)}
         >
-          <Typography variant="body2" className="font-semibold text-ink-strong">
-            {row.title}
-          </Typography>
-          <Typography variant="caption" className="line-clamp-2 text-ink-muted">
-            {row.content}
-          </Typography>
+          <div className="flex items-start gap-2">
+            {row.isPinned && (
+              <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+                Pinned
+              </span>
+            )}
+            <div>
+              <Typography variant="body2" className="font-bold text-ink-strong">
+                {row.title}
+              </Typography>
+              <Typography variant="caption" className="line-clamp-2 text-ink-muted mt-0.5">
+                {row.content}
+              </Typography>
+            </div>
+          </div>
         </button>
       )
-    if (column.key === 'category') return `${row.category}${row.isPinned ? ' · PINNED' : ''}`
+    if (column.key === 'category') {
+      const colors = {
+        NEWS: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/50',
+        POLICY:
+          'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800/50',
+        EVENT:
+          'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800/50',
+        OTHER:
+          'bg-slate-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-400 border-slate-200 dark:border-slate-700/50',
+      }
+      return (
+        <span
+          className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${colors[row.category] || colors.OTHER}`}
+        >
+          {row.category}
+        </span>
+      )
+    }
     if (column.key === 'audience')
       return row.sendToAll
         ? 'All employees'
-        : `${row.targetDepartmentIds?.length || 0} departments · ${row.targetProfileIds?.length || 0} employees`
+        : `${row.targetDepartmentIds?.length || 0} depts · ${row.targetProfileIds?.length || 0} users`
     if (column.key === 'status')
       return (
         <StatusBadge
@@ -427,6 +453,8 @@ export default function AnnouncementsPage() {
     return '-'
   }
 
+  const [viewMode, setViewMode] = useState('list')
+
   return (
     <OperationsPageShell
       header={
@@ -434,11 +462,19 @@ export default function AnnouncementsPage() {
           title="Announcements"
           subtitle="Publish HR news, policies, and events to authorized audiences."
           actions={
-            canCreate ? (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditor({})}>
-                Create announcement
+            <div className="flex gap-2">
+              <Button
+                variant="outlined"
+                onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+              >
+                {viewMode === 'list' ? 'Grid view' : 'List view'}
               </Button>
-            ) : null
+              {canCreate ? (
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditor({})}>
+                  Create announcement
+                </Button>
+              ) : null}
+            </div>
           }
         />
       }
@@ -509,16 +545,66 @@ export default function AnnouncementsPage() {
           {query.error.message}
         </Alert>
       ) : null}
-      <OperationsTable
-        columns={columns}
-        rows={rows}
-        loading={query.isPending}
-        getRowKey={(row) => row.id}
-        renderCell={renderCell}
-        minWidth="1060px"
-        emptyTitle="No announcements"
-        emptyDescription="Published announcements and drafts in your access scope appear here."
-      />
+
+      {viewMode === 'list' ? (
+        <OperationsTable
+          columns={columns}
+          rows={rows}
+          loading={query.isPending}
+          getRowKey={(row) => row.id}
+          renderCell={renderCell}
+          minWidth="1060px"
+          emptyTitle="No announcements"
+          emptyDescription="Published announcements and drafts in your access scope appear here."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {rows.map((row) => (
+            <button
+              key={row.id}
+              onClick={() => setSelectedId(row.id)}
+              className="flex flex-col text-left border border-border bg-surface hover:shadow-md transition-all rounded-xl overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary group"
+            >
+              <div className="p-5 flex-grow w-full">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex gap-2">
+                    {renderCell(row, { key: 'category' })}
+                    {row.isPinned && (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+                        Pinned
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Typography
+                  variant="subtitle1"
+                  className="font-bold text-ink-strong mb-2 group-hover:text-primary transition-colors line-clamp-2"
+                >
+                  {row.title}
+                </Typography>
+                <Typography variant="body2" className="text-ink-muted line-clamp-3 mb-4">
+                  {row.content}
+                </Typography>
+              </div>
+              <div className="bg-surface-subtle border-t border-border p-3 w-full flex justify-between items-center text-xs text-ink-secondary">
+                <span>{renderCell(row, { key: 'publishedAt' })}</span>
+                <span>{renderCell(row, { key: 'audience' })}</span>
+              </div>
+            </button>
+          ))}
+          {rows.length === 0 && !query.isPending && (
+            <div className="col-span-full py-10 text-center">
+              <Typography variant="subtitle1" className="text-ink-strong">
+                No announcements
+              </Typography>
+              <Typography variant="body2" className="text-ink-muted">
+                Published announcements and drafts in your access scope appear here.
+              </Typography>
+            </div>
+          )}
+        </div>
+      )}
+
       <AnnouncementDetailDrawer
         announcementId={selectedId}
         open={Boolean(selectedId)}

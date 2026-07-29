@@ -11,7 +11,10 @@ import {
   FormControlLabel,
   MenuItem,
   TextField,
+  Typography,
 } from '@mui/material'
+
+import TimePicker from '@/components/form/TimePicker'
 
 import { buildShiftPayload, buildWorkLocationPayload } from '../utils/hrTimeApi.js'
 
@@ -145,25 +148,27 @@ export default function ScheduleConfigurationDialog({
                 ))}
               </TextField>
               <div className="grid gap-3 sm:grid-cols-2">
-                <TextField
+                <TimePicker
                   required
-                  type="time"
+                  fullWidth
                   label={t('hrTime.fields.startTime.label', { defaultValue: 'Start time' })}
                   value={values.startTime}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  onChange={(event) => setField('startTime', event.target.value)}
+                  onChange={(val) => setField('startTime', val)}
                 />
-                <TextField
-                  required
-                  type="time"
-                  label={t('hrTime.fields.endTime.label', { defaultValue: 'End time' })}
-                  helperText={t('hrTime.fields.endTime.helperText', {
-                    defaultValue: 'An earlier end time means an overnight shift.',
-                  })}
-                  value={values.endTime}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  onChange={(event) => setField('endTime', event.target.value)}
-                />
+                <div className="flex flex-col gap-1">
+                  <TimePicker
+                    required
+                    fullWidth
+                    label={t('hrTime.fields.endTime.label', { defaultValue: 'End time' })}
+                    value={values.endTime}
+                    onChange={(val) => setField('endTime', val)}
+                  />
+                  <Typography variant="caption" color="text.secondary" className="pl-3">
+                    {t('hrTime.fields.endTime.helperText', {
+                      defaultValue: 'An earlier end time means an overnight shift.',
+                    })}
+                  </Typography>
+                </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <TextField

@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import { Alert, Button, Drawer, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Button, MenuItem, Stack, TextField } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import MonthPicker from '@/components/form/MonthPicker'
 import {
   OperationsHeader,
   OperationsPageShell,
@@ -12,12 +13,14 @@ import {
   OperationsToolbar,
 } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
+import { useDepartmentsQuery, useTeamsQuery } from '@/features/rbac/api/rbac.queries'
 
 import { useAdjustAttendanceMutation } from '../api/hrTime.mutations.js'
-import { useAttendanceMonthMatrixQuery } from '../api/hrTime.queries.js'
+import { useAttendanceMonthMatrixQuery, useShiftsQuery } from '../api/hrTime.queries.js'
 import AttendanceAdjustmentDialog from '../components/AttendanceAdjustmentDialog.jsx'
+import AttendanceStaffDetailDrawer from '../components/AttendanceStaffDetailDrawer.jsx'
+import AttendanceStaffList from '../components/AttendanceStaffList.jsx'
 import HrOperationsSummaryCards from '../components/HrOperationsSummaryCards.jsx'
-import MonthlyStaffMatrix from '../components/MonthlyStaffMatrix.jsx'
 
 const pageSize = 20
 
@@ -34,7 +37,7 @@ export default function AttendanceDeskPage() {
   const { t } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selected, setSelected] = useState(null)
+  const [selectedRow, setSelectedRow] = useState(null)
   const [adjusting, setAdjusting] = useState(null)
   const [actionError, setActionError] = useState('')
   const today = new Date()
@@ -57,6 +60,14 @@ export default function AttendanceDeskPage() {
     page,
     limit: pageSize,
   })
+
+  const teamsQuery = useTeamsQuery()
+  const departmentsQuery = useDepartmentsQuery()
+  const shiftsQuery = useShiftsQuery()
+  const teams = teamsQuery.data?.items || []
+  const departments = departmentsQuery.data?.items || []
+  const shifts = shiftsQuery.data?.items || []
+
   const adjustment = useAdjustAttendanceMutation()
   const pagination = matrix.data?.pagination || { page, limit: pageSize, total: 0 }
 
@@ -110,46 +121,67 @@ export default function AttendanceDeskPage() {
       toolbar={
         <OperationsToolbar>
           <div className="flex flex-wrap items-center gap-3">
-            <TextField
+            <MonthPicker
               size="small"
-              type="number"
-              label="Year"
-              value={year}
-              onChange={(event) => updateSearch({ year: event.target.value }, true)}
-              inputProps={{ min: 2000, max: 2100 }}
+              className="w-48"
+              value={`${year}-${String(month).padStart(2, '0')}`}
+              onChange={(formatted) => {
+                if (!formatted) return
+                const [y, m] = formatted.split('-')
+                updateSearch({ year: y, month: Number(m) }, true)
+              }}
             />
             <TextField
               size="small"
-              type="number"
-              label="Month"
-              value={month}
-              onChange={(event) => updateSearch({ month: event.target.value }, true)}
-              inputProps={{ min: 1, max: 12 }}
-            />
-            <TextField
-              size="small"
-              label="Search employee"
+              placeholder={t('common.search', { defaultValue: 'Search...' })}
               value={q}
               onChange={(event) => updateSearch({ q: event.target.value }, true)}
             />
             <TextField
+              select
               size="small"
-              label="Team"
+              className="w-44"
+              label={t('hrTime.filters.team', { defaultValue: 'Team' })}
               value={teamId}
               onChange={(event) => updateSearch({ teamId: event.target.value }, true)}
-            />
+            >
+              <MenuItem value="">{t('common.all', { defaultValue: 'All' })}</MenuItem>
+              {teams.map((team) => (
+                <MenuItem key={team.id} value={team.id}>
+                  {team.name}
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
+              select
               size="small"
-              label="Department"
+              className="w-48"
+              label={t('hrTime.filters.department', { defaultValue: 'Department' })}
               value={departmentId}
               onChange={(event) => updateSearch({ departmentId: event.target.value }, true)}
-            />
+            >
+              <MenuItem value="">{t('common.all', { defaultValue: 'All' })}</MenuItem>
+              {departments.map((department) => (
+                <MenuItem key={department.id} value={department.id}>
+                  {department.name}
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
+              select
               size="small"
-              label="Shift"
+              className="w-44"
+              label={t('hrTime.filters.shift', { defaultValue: 'Shift' })}
               value={shiftId}
               onChange={(event) => updateSearch({ shiftId: event.target.value }, true)}
-            />
+            >
+              <MenuItem value="">{t('common.all', { defaultValue: 'All' })}</MenuItem>
+              {shifts.map((shift) => (
+                <MenuItem key={shift.id} value={shift.id}>
+                  {shift.name}
+                </MenuItem>
+              ))}
+            </TextField>
             <Button
               variant={exceptionsOnly ? 'contained' : 'outlined'}
               onClick={() => updateSearch({ exceptionsOnly: !exceptionsOnly }, true)}
@@ -173,11 +205,9 @@ export default function AttendanceDeskPage() {
           summary={matrix.data?.summary}
           onFilterChange={(filters) => updateSearch(filters, true)}
         />
-        <MonthlyStaffMatrix
-          year={year}
-          month={month}
+        <AttendanceStaffList
           rows={matrix.data?.items || []}
-          onCellOpen={(cell) => setSelected(cell)}
+          onViewDetail={(row) => setSelectedRow(row)}
         />
         <OperationsPagination
           page={pagination.page}
@@ -186,31 +216,18 @@ export default function AttendanceDeskPage() {
           onPageChange={(nextPage) => updateSearch({ page: nextPage })}
         />
       </Stack>
-      <Drawer anchor="right" open={Boolean(selected)} onClose={() => setSelected(null)}>
-        <div className="w-[360px] space-y-4 p-5">
-          <Typography variant="h6">Attendance detail</Typography>
-          <Typography variant="body2" className="text-ink-muted">
-            {selected?.dateKey}
-          </Typography>
-          <Typography variant="body1">
-            {(selected?.status || selected?.emptyReason || 'NO_RECORD').replaceAll('_', ' ')}
-          </Typography>
-          <Typography variant="body2">
-            {selected?.plannedShift?.name || selected?.shift?.name || 'No planned shift'}
-          </Typography>
-          {canAdjust(selected) ? (
-            <Button
-              variant="contained"
-              onClick={() => {
-                setActionError('')
-                setAdjusting(selected)
-              }}
-            >
-              Adjust attendance
-            </Button>
-          ) : null}
-        </div>
-      </Drawer>
+      <AttendanceStaffDetailDrawer
+        row={selectedRow}
+        month={month}
+        year={year}
+        onClose={() => setSelectedRow(null)}
+        onCellOpen={(cell) => {
+          if (canAdjust(cell)) {
+            setActionError('')
+            setAdjusting(cell)
+          }
+        }}
+      />
       {adjusting ? (
         <AttendanceAdjustmentDialog
           open

@@ -5,10 +5,11 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import CloseIcon from '@mui/icons-material/Close'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
-import { Button, Drawer, IconButton, Typography } from '@mui/material'
+import { Button, Dialog, IconButton, Typography } from '@mui/material'
 
 import { StatusBadge } from '@/components/operations'
 
+import { formatMinutes } from '../utils/hrTimeApi'
 import LeaveAttachmentDialog from './LeaveAttachmentDialog'
 import LeaveRefundDialog from './LeaveRefundDialog'
 import RequestDecisionDialog from './RequestDecisionDialog'
@@ -91,8 +92,8 @@ export default function RequestReviewDrawer({
       : [
           ['workDate', date(row?.workDateKey)],
           ['plannedTime', `${row?.plannedStartTime || '-'} - ${row?.plannedEndTime || '-'}`],
-          ['requestedMinutes', row?.requestedMinutes],
-          ['approvedMinutes', row?.approvedMinutes],
+          ['requestedMinutes', formatMinutes(row?.requestedMinutes, t)],
+          ['approvedMinutes', formatMinutes(row?.approvedMinutes, t)],
           ['reason', row?.reason],
         ]
 
@@ -111,8 +112,13 @@ export default function RequestReviewDrawer({
 
   return (
     <>
-      <Drawer anchor="right" open={open} onClose={loading ? undefined : closeDrawer}>
-        <div className="flex h-full w-[460px] max-w-[100vw] flex-col bg-surface">
+      <Dialog
+        open={open && !action && !leaveDialog}
+        onClose={loading ? undefined : closeDrawer}
+        maxWidth="sm"
+        fullWidth
+      >
+        <div className="flex flex-col bg-surface">
           <div className="flex items-start justify-between gap-3 border-b border-border p-5">
             <div className="min-w-0">
               <Typography variant="h6" className="font-bold text-ink-strong">
@@ -206,7 +212,13 @@ export default function RequestReviewDrawer({
                 <Button
                   variant="contained"
                   startIcon={<CheckCircleOutlineOutlinedIcon />}
-                  onClick={() => onActionChange('approve')}
+                  onClick={() => {
+                    if (type === 'leave') {
+                      onSubmit({}, 'approve')
+                    } else {
+                      onActionChange('approve')
+                    }
+                  }}
                 >
                   {t('hrTime.actions.approve', { defaultValue: 'Approve' })}
                 </Button>
@@ -214,7 +226,7 @@ export default function RequestReviewDrawer({
             </div>
           ) : null}
         </div>
-      </Drawer>
+      </Dialog>
       {open && action ? (
         <RequestDecisionDialog
           open

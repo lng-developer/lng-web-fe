@@ -10,6 +10,9 @@ import {
   TextField,
 } from '@mui/material'
 
+import DatePicker from '@/components/form/DatePicker'
+import TimePicker from '@/components/form/TimePicker'
+
 const initialForm = {
   workDateKey: '',
   plannedStartTime: '',
@@ -17,9 +20,19 @@ const initialForm = {
   reason: '',
 }
 
-export default function OvertimeRequestDialog({ open, loading = false, error, onClose, onSubmit }) {
+export default function OvertimeRequestDialog({
+  open,
+  initialDate,
+  loading = false,
+  error,
+  onClose,
+  onSubmit,
+}) {
   const { t } = useTranslation()
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState({
+    ...initialForm,
+    workDateKey: initialDate || '',
+  })
 
   function update(key, value) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -42,42 +55,36 @@ export default function OvertimeRequestDialog({ open, loading = false, error, on
         </DialogTitle>
         <DialogContent className="grid gap-4 !pt-2">
           {error ? <Alert severity="error">{error}</Alert> : null}
-          <TextField
+          <DatePicker
             required
             fullWidth
-            type="date"
             label={t('hrTime.fields.workDate', { defaultValue: 'Work date' })}
             value={form.workDateKey}
             helperText={t('hrTime.help.workDate', {
               defaultValue: 'Date the overtime shift starts.',
             })}
-            slotProps={{ inputLabel: { shrink: true } }}
-            onChange={(event) => update('workDateKey', event.target.value)}
+            onChange={(val) => update('workDateKey', val)}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
+            <TimePicker
               required
               fullWidth
-              type="time"
               label={t('hrTime.fields.startTime', { defaultValue: 'Start time' })}
               value={form.plannedStartTime}
               helperText={t('hrTime.help.startTime', {
                 defaultValue: 'Planned overtime start.',
               })}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => update('plannedStartTime', event.target.value)}
+              onChange={(val) => update('plannedStartTime', val)}
             />
-            <TextField
+            <TimePicker
               required
               fullWidth
-              type="time"
               label={t('hrTime.fields.endTime', { defaultValue: 'End time' })}
               value={form.plannedEndTime}
               helperText={t('hrTime.help.endTime', {
                 defaultValue: 'May be after midnight; duration must be 30 minutes to 16 hours.',
               })}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => update('plannedEndTime', event.target.value)}
+              onChange={(val) => update('plannedEndTime', val)}
             />
           </div>
           <TextField

@@ -2828,6 +2828,9 @@
     "title": "Vận hành thời gian nhân sự",
     "groups": {
       "myHr": "Nhân sự của tôi",
+      "selfService": "Cá nhân",
+      "timeAttendance": "Thời gian & Chấm công",
+      "coreHr": "Hồ sơ nhân sự",
       "peopleTime": "Nhân sự & Thời gian",
       "payroll": "Bảng lương",
       "communication": "Truyền thông",
@@ -2881,6 +2884,14 @@
       "payrollRuns": "Kỳ lương",
       "announcements": "Thông báo chung",
       "settings": "Cấu hình nhân sự"
+    },
+    "units": {
+      "minutes": "{{count}}m",
+      "hours": "{{count}}h",
+      "hoursMinutes": "{{hours}}h{{minutes}}m",
+      "days_one": "{{count}} ngày",
+      "days_other": "{{count}} ngày",
+      "days": "{{count}} ngày"
     }
   },
   "financeProfit": {

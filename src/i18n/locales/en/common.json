@@ -2828,6 +2828,9 @@
     "title": "HR Time Operations",
     "groups": {
       "myHr": "My HR",
+      "selfService": "Self Service",
+      "timeAttendance": "Time & Attendance",
+      "coreHr": "Core HR",
       "peopleTime": "People & Time",
       "payroll": "Payroll",
       "communication": "Communication",
@@ -2881,6 +2884,14 @@
       "payrollRuns": "Payroll runs",
       "announcements": "Announcements",
       "settings": "HR settings"
+    },
+    "units": {
+      "minutes": "{{count}}m",
+      "hours": "{{count}}h",
+      "hoursMinutes": "{{hours}}h{{minutes}}m",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "days": "{{count}} days"
     }
   },
   "financeProfit": {

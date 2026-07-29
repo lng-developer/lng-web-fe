@@ -5,6 +5,7 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import { Alert, Button, MenuItem, TextField } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import DateRangePicker from '@/components/form/DateRangePicker'
 import {
   OperationsHeader,
   OperationsPageShell,
@@ -27,6 +28,7 @@ import {
   useLeaveRequestsQuery,
   useOvertimeRequestsQuery,
 } from '@/features/hr-time/api/hrTime.queries'
+import dayjs from '@/lib/dayjs'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import RequestReviewDrawer from '../components/RequestReviewDrawer'
@@ -104,8 +106,9 @@ export default function RequestInboxPage() {
     )
   }
 
-  async function decide(payload) {
-    if (!review?.row || !review.action) return
+  async function decide(payload, overrideAction) {
+    const finalAction = overrideAction || review?.action
+    if (!review?.row || !finalAction) return
     setActionError('')
     const mutations =
       tab === 'leave'
@@ -121,7 +124,7 @@ export default function RequestInboxPage() {
           }
 
     try {
-      await mutations[review.action].mutateAsync({ requestId: review.row.id, payload })
+      await mutations[finalAction].mutateAsync({ requestId: review.row.id, payload })
       enqueueSnackbar(t('hrTime.messages.actionCompleted', { defaultValue: 'Request updated' }), {
         variant: SNACKBAR_VARIANTS.SUCCESS,
       })
@@ -200,21 +203,22 @@ export default function RequestInboxPage() {
                 </MenuItem>
               ))}
             </TextField>
-            <TextField
+            <DateRangePicker
               size="small"
-              type="date"
-              label={t('hrTime.filters.dateFrom', { defaultValue: 'From date' })}
-              value={dateFrom}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => updateSearch({ dateFrom: event.target.value }, true)}
-            />
-            <TextField
-              size="small"
-              type="date"
-              label={t('hrTime.filters.dateTo', { defaultValue: 'To date' })}
-              value={dateTo}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => updateSearch({ dateTo: event.target.value }, true)}
+              value={{
+                start: dateFrom ? dayjs(dateFrom) : null,
+                end: dateTo ? dayjs(dateTo) : null,
+              }}
+              onChange={(range) => {
+                updateSearch(
+                  {
+                    dateFrom: range.start ? range.start.format('YYYY-MM-DD') : '',
+                    dateTo: range.end ? range.end.format('YYYY-MM-DD') : '',
+                  },
+                  true,
+                )
+              }}
+              onClear={() => updateSearch({ dateFrom: '', dateTo: '' }, true)}
             />
             <Button
               variant="text"
@@ -245,8 +249,25 @@ export default function RequestInboxPage() {
           loading={selectedQuery.isPending}
           error={queryError}
           showEmployee
-          onReview={(row, action) => {
+          onReview={async (row, action) => {
             setActionError('')
+            if (action === 'approve' && tab === 'leave') {
+              try {
+                await approveLeaveMutation.mutateAsync({ requestId: row.id, payload: {} })
+                enqueueSnackbar(
+                  t('hrTime.messages.actionCompleted', { defaultValue: 'Request updated' }),
+                  {
+                    variant: SNACKBAR_VARIANTS.SUCCESS,
+                  },
+                )
+              } catch (error) {
+                setActionError(
+                  error?.data?.message ||
+                    t('hrTime.errors.actionFailed', { defaultValue: 'Could not complete action' }),
+                )
+              }
+              return
+            }
             setReview({ row, action: action === 'view' ? null : action })
           }}
         />

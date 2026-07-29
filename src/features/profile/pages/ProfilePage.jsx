@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 
+import DatePicker from '@/components/form/DatePicker'
 import { StatusBadge } from '@/components/operations'
 import { getRoleMeta } from '@/layouts/sidebarNavigation'
 
@@ -82,40 +83,50 @@ function ProfileInputField({
       >
         {label}
       </Typography>
-      <TextField
-        fullWidth
-        hiddenLabel
-        size="small"
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={onChange}
-        slotProps={{
-          htmlInput: {
-            'aria-label': label,
-          },
-        }}
-        sx={(theme) => ({
-          '& .MuiOutlinedInput-root': {
-            bgcolor: 'background.paper',
-            borderRadius: theme.spacing(0.75),
-            minHeight: theme.spacing(5),
-            '& fieldset': {
-              borderColor: theme.palette.divider,
+      {type === 'date' ? (
+        <DatePicker
+          fullWidth
+          size="small"
+          value={value}
+          placeholder={placeholder}
+          onChange={(val) => onChange({ target: { value: val } })}
+        />
+      ) : (
+        <TextField
+          fullWidth
+          hiddenLabel
+          size="small"
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          onChange={onChange}
+          slotProps={{
+            htmlInput: {
+              'aria-label': label,
             },
-            '&:hover fieldset': {
-              borderColor: theme.palette.tokens.borderStrong,
+          }}
+          sx={(theme) => ({
+            '& .MuiOutlinedInput-root': {
+              bgcolor: 'background.paper',
+              borderRadius: theme.spacing(0.75),
+              minHeight: theme.spacing(5),
+              '& fieldset': {
+                borderColor: theme.palette.divider,
+              },
+              '&:hover fieldset': {
+                borderColor: theme.palette.tokens.borderStrong,
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: theme.palette.primary.main,
+              },
             },
-            '&.Mui-focused fieldset': {
-              borderColor: theme.palette.primary.main,
+            '& .MuiInputBase-input': {
+              py: 1.25,
+              typography: 'body2',
             },
-          },
-          '& .MuiInputBase-input': {
-            py: 1.25,
-            typography: 'body2',
-          },
-        })}
-      />
+          })}
+        />
+      )}
     </Box>
   )
 }

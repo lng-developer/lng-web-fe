@@ -11,6 +11,8 @@ import {
   TextField,
 } from '@mui/material'
 
+import DatePicker from '@/components/form/DatePicker'
+
 import { buildEmployeeProfilePayload } from '../utils/hrTimeApi.js'
 
 const initialValues = {
@@ -206,13 +208,11 @@ export default function EmployeeProfileDialog({
                 </MenuItem>
               ))}
             </TextField>
-            <TextField
-              type="date"
+            <DatePicker
               label={fieldText('startDate', 'label', 'Start date')}
               helperText={fieldText('startDate', 'helperText', 'Official employment start date.')}
               value={values.startDate ? String(values.startDate).slice(0, 10) : ''}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => setField('startDate', event.target.value)}
+              onChange={(val) => setField('startDate', val)}
             />
           </div>
           <TextField

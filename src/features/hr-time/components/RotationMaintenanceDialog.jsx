@@ -10,6 +10,8 @@ import {
   TextField,
 } from '@mui/material'
 
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+
 function errorMessage(error) {
   return (
     error?.data?.message ||
@@ -86,11 +88,6 @@ export default function RotationMaintenanceDialog({
             </MenuItem>
           ))}
         </TextField>
-        {confirmingDelete ? (
-          <Alert severity="warning" className="sm:col-span-2">
-            Delete rotations for this team and month?
-          </Alert>
-        ) : null}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
@@ -99,11 +96,9 @@ export default function RotationMaintenanceDialog({
         <Button
           color="error"
           disabled={loading || !teamId || !month || !year}
-          onClick={() =>
-            confirmingDelete ? onDeleteTeam({ teamId, month, year }) : setConfirmingDelete(true)
-          }
+          onClick={() => setConfirmingDelete(true)}
         >
-          {confirmingDelete ? 'Delete rotations' : 'Delete team month'}
+          Delete team month
         </Button>
         <Button
           variant="contained"
@@ -113,6 +108,14 @@ export default function RotationMaintenanceDialog({
           Save employees
         </Button>
       </DialogActions>
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Delete rotations?"
+        description="Are you sure you want to delete all Saturday rotations for this team and month? This action cannot be undone."
+        loading={loading}
+        onClose={() => setConfirmingDelete(false)}
+        onConfirm={() => onDeleteTeam({ teamId, month, year })}
+      />
     </Dialog>
   )
 }
