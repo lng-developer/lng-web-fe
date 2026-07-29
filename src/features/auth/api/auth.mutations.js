@@ -27,10 +27,16 @@ async function login(payload) {
   const tokens = readAuthTokens(response)
 
   setAuthTokens(tokens)
-  const currentUser = resolveCurrentUser(await fetchCurrentUser())
-  queryClient.setQueryData(authKeys.me(), currentUser)
+  try {
+    const currentUser = resolveCurrentUser(await fetchCurrentUser())
+    queryClient.setQueryData(authKeys.me(), currentUser)
 
-  return currentUser
+    return currentUser
+  } catch (error) {
+    clearAuthTokens()
+    queryClient.removeQueries({ queryKey: authKeys.me() })
+    throw error
+  }
 }
 
 async function changeOwnPassword(payload) {
