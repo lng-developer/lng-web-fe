@@ -6,7 +6,9 @@ import { apiClient, clearAuthTokens, setAuthTokens } from '@/services/axiosInsta
 import { ENDPOINTS } from '@/services/endpoints'
 import { useAuthStore } from '@/store/useAuthStore'
 
+import { resolveCurrentUser } from '../utils/currentUser'
 import { authKeys } from './auth.keys'
+import { fetchCurrentUser } from './auth.queries'
 
 function readAuthTokens(response) {
   const authData = response?.data
@@ -20,27 +22,15 @@ function readAuthTokens(response) {
   return { accessToken, refreshToken }
 }
 
-function toCurrentUser(session) {
-  return {
-    account: session?.account ?? null,
-    roles: Array.isArray(session?.roles) ? session.roles : [],
-    permissions: Array.isArray(session?.permissions) ? session.permissions : [],
-    scopes: Array.isArray(session?.scopes) ? session.scopes : [],
-    profileSetupRequired: Boolean(session?.profileSetupRequired),
-  }
-}
-
-async function login(payload, profileSetupRequired) {
+async function login(payload) {
   const response = await apiClient.post(ENDPOINTS.AUTH.LOGIN, payload)
   const tokens = readAuthTokens(response)
 
   setAuthTokens(tokens)
-  queryClient.setQueryData(authKeys.me(), {
-    ...toCurrentUser(response.data),
-    profileSetupRequired: profileSetupRequired ?? Boolean(response.data?.profileSetupRequired),
-  })
+  const currentUser = resolveCurrentUser(await fetchCurrentUser())
+  queryClient.setQueryData(authKeys.me(), currentUser)
 
-  return response.data
+  return currentUser
 }
 
 async function changeOwnPassword(payload) {
@@ -58,12 +48,9 @@ async function changeOwnPassword(payload) {
     throw new Error('errors.auth.invalidLoginResponse')
   }
 
-  let session
+  let freshUser
   try {
-    session = await login(
-      { identifier: email, password: payload.newPassword },
-      currentUser.profileSetupRequired,
-    )
+    freshUser = await login({ identifier: email, password: payload.newPassword })
   } catch (error) {
     clearAuthTokens()
     useAuthStore.getState().clearCurrentUser()
@@ -71,9 +58,8 @@ async function changeOwnPassword(payload) {
   }
 
   const nextUser = {
-    ...toCurrentUser(session),
+    ...freshUser,
     account,
-    profileSetupRequired: Boolean(currentUser.profileSetupRequired),
   }
 
   useAuthStore.getState().setCurrentUser(nextUser)

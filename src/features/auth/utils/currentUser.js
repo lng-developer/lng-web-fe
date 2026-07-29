@@ -29,6 +29,7 @@ export function resolveCurrentUser(response) {
       roles: Array.isArray(data.roles) ? data.roles : [],
       permissions: Array.isArray(data.permissions) ? data.permissions : [],
       scopes: Array.isArray(data.scopes) ? data.scopes : [],
+      profileSetupRequired: Boolean(data.profileSetupRequired),
     }
   }
 
