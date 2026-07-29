@@ -13,6 +13,7 @@ const q = 'src/features/hr-time/api/hrTime.queries.js'
 const m = 'src/features/hr-time/api/hrTime.mutations.js'
 const payrollQ = 'src/features/hr-payroll/api/hrPayroll.queries.js'
 const payrollM = 'src/features/hr-payroll/api/hrPayroll.mutations.js'
+const profileM = 'src/features/profile/api/profile.mutations.js'
 
 const routes = [
   { method: 'GET', path: '/api/hr/health', disposition: 'headless', sourceFiles: [] },
@@ -27,15 +28,33 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/api/hr/employee-profiles',
+    path: '/api/hr/staff-provisioning',
     disposition: 'runtime',
     sourceFiles: [
-      { file: m, evidence: 'ENDPOINTS.HR.EMPLOYEE_PROFILES' },
+      { file: m, evidence: 'ENDPOINTS.HR.STAFF_PROVISIONING' },
       {
         file: 'src/features/hr-time/pages/PeoplePage.jsx',
-        evidence: 'useCreateEmployeeProfileMutation',
+        evidence: 'useProvisionStaffMutation',
       },
     ],
+  },
+  {
+    method: 'GET',
+    path: '/api/hr/staff-provisioning/roles',
+    disposition: 'runtime',
+    sourceFiles: [
+      { file: q, evidence: 'ENDPOINTS.HR.STAFF_PROVISIONING_ROLES' },
+      {
+        file: 'src/features/hr-time/pages/PeoplePage.jsx',
+        evidence: 'useAssignableStaffRolesQuery',
+      },
+    ],
+  },
+  {
+    method: 'POST',
+    path: '/api/hr/employee-profiles',
+    disposition: 'headless',
+    sourceFiles: [],
   },
   {
     method: 'GET',
@@ -44,6 +63,18 @@ const routes = [
     sourceFiles: [
       { file: q, evidence: 'ENDPOINTS.HR.MY_EMPLOYEE_PROFILE' },
       { file: 'src/routes/ProtectedRoute.jsx', evidence: 'useMyEmployeeProfileQuery' },
+    ],
+  },
+  {
+    method: 'PATCH',
+    path: '/api/hr/employee-profiles/me/personal',
+    disposition: 'runtime',
+    sourceFiles: [
+      { file: profileM, evidence: 'ENDPOINTS.HR.MY_EMPLOYEE_PROFILE_PERSONAL' },
+      {
+        file: 'src/features/profile/pages/CompleteProfilePage.jsx',
+        evidence: 'useCompleteMyProfileMutation',
+      },
     ],
   },
   {
@@ -394,10 +425,19 @@ const routes = [
   {
     method: 'GET',
     path: '/api/hr/attendance',
+    disposition: 'headless',
+    sourceFiles: [],
+  },
+  {
+    method: 'GET',
+    path: '/api/hr/attendance/month-matrix',
     disposition: 'runtime',
     sourceFiles: [
-      { file: q, evidence: 'ENDPOINTS.HR.ATTENDANCE' },
-      { file: 'src/features/hr-time/pages/AttendanceDeskPage.jsx', evidence: 'useAttendanceQuery' },
+      { file: q, evidence: 'ENDPOINTS.HR.ATTENDANCE_MONTH_MATRIX' },
+      {
+        file: 'src/features/hr-time/pages/AttendanceDeskPage.jsx',
+        evidence: 'useAttendanceMonthMatrixQuery',
+      },
     ],
   },
   {
@@ -725,6 +765,41 @@ const routes = [
     sourceFiles: [
       { file: payrollQ, evidence: 'ENDPOINTS.HR.MY_PAYROLLS' },
       { file: 'src/features/hr-payroll/pages/MyPayslipsPage.jsx', evidence: 'useMyPayslipsQuery' },
+    ],
+  },
+  {
+    method: 'GET',
+    path: '/api/hr/payrolls/results',
+    disposition: 'runtime',
+    sourceFiles: [
+      { file: payrollQ, evidence: 'ENDPOINTS.HR.PAYROLL_RESULTS' },
+      {
+        file: 'src/features/hr-payroll/pages/PayrollRegisterPage.jsx',
+        evidence: 'usePayrollResultsQuery',
+      },
+    ],
+  },
+  {
+    method: 'GET',
+    path: '/api/hr/payrolls/results/export',
+    disposition: 'runtime',
+    sourceFiles: [
+      {
+        file: 'src/features/hr-payroll/pages/PayrollRegisterPage.jsx',
+        evidence: 'ENDPOINTS.HR.PAYROLL_RESULTS_EXPORT',
+      },
+    ],
+  },
+  {
+    method: 'GET',
+    path: '/api/hr/payrolls/results/:resultId',
+    disposition: 'runtime',
+    sourceFiles: [
+      { file: payrollQ, evidence: 'ENDPOINTS.HR.PAYROLL_RESULT(id)' },
+      {
+        file: 'src/features/hr-payroll/components/PayrollResultDrawer.jsx',
+        evidence: 'usePayrollResultQuery',
+      },
     ],
   },
   {
@@ -1264,19 +1339,19 @@ test('runtime evidence rejects comments and modules unreachable from the app ent
   assert.equal(hasRuntimeEvidence(analysis, 'src/Dead.jsx', 'useOrphanHook'), false)
 })
 
-test('all 79 HR routes have explicit runtime or headless coverage', () => {
+test('all 86 HR routes have explicit runtime or headless coverage', () => {
   const backendRoutes = readExpressRoutes(findPairedBackendRoot(), [
     'hr',
     '/api/hr',
     'src/modules/hr/routes/index.js',
   ])
-  assert.equal(routes.length, 79)
-  assert.equal(routes.filter(({ disposition }) => disposition === 'runtime').length, 78)
+  assert.equal(routes.length, 86)
+  assert.equal(routes.filter(({ disposition }) => disposition === 'runtime').length, 83)
   assert.deepEqual(
     routes
       .filter(({ disposition }) => disposition === 'headless')
       .map(({ method, path }) => `${method} ${path}`),
-    ['GET /api/hr/health'],
+    ['GET /api/hr/health', 'POST /api/hr/employee-profiles', 'GET /api/hr/attendance'],
   )
   assert.equal(new Set(routes.map(({ method, path }) => `${method} ${path}`)).size, routes.length)
   assert.deepEqual(
