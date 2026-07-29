@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
-import { Alert, Button, MenuItem, Stack, TextField } from '@mui/material'
+import { Alert, Button, Card, CardContent, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
 import {
@@ -51,6 +52,7 @@ export default function PayrollRunsPage() {
   const query = usePayrollRunsQuery({ page, limit: pageSize, month, year, status })
   const finalize = useFinalizePayrollMutation()
   const rows = query.data?.items || []
+  const totals = ['DRAFT', 'FINALIZED', 'PAID'].map((value) => ({ value, count: rows.filter((row) => row.status === value).length }))
   const pagination = query.data?.pagination || { page, limit: pageSize, total: 0 }
 
   function updateSearch(updates, resetPage = false) {
@@ -117,6 +119,7 @@ export default function PayrollRunsPage() {
         <OperationsHeader
           title="Payroll runs"
           subtitle="Review payroll calculations, finalize approved periods, and record payment outcomes."
+          actions={<Button variant="contained" startIcon={<AddOutlinedIcon />}>Run payroll</Button>}
         />
       }
       toolbar={
@@ -171,6 +174,9 @@ export default function PayrollRunsPage() {
         />
       }
     >
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {totals.map(({ value, count }) => <Card key={value} variant="outlined"><CardContent className="!p-4"><Typography variant="caption" className="text-ink-muted">{value === 'DRAFT' ? 'Draft runs' : value === 'FINALIZED' ? 'Ready to pay' : 'Paid periods'}</Typography><Typography variant="h5" className="mt-1 font-bold text-ink-strong">{count}</Typography></CardContent></Card>)}
+      </div>
       {query.error ? <Alert severity="error" className="mb-3">{query.error.message}</Alert> : null}
       <OperationsTable
         columns={columns}

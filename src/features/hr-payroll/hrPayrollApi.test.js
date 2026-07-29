@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   buildMarkPaidPayload,
+  buildPayrollResultExportUrl,
   mapPayrollResult,
   mapPayrollRun,
   normalizePayrollQuery,
@@ -80,4 +81,11 @@ test('payroll query and response helpers match the HTTP envelopes', () => {
   })
   assert.deepEqual(unwrapPayrollResponse({ success: true, data: { items: [] } }), { items: [] })
   assert.deepEqual(unwrapPayrollResponse({ data: { status: 'SUCCESS' } }), { status: 'SUCCESS' })
+})
+
+test('payroll register export keeps the active period and filters', () => {
+  assert.equal(
+    buildPayrollResultExportUrl({ month: 7, year: 2026, status: 'FINALIZED', q: 'Nguyen An' }),
+    '/api/hr/payrolls/results/export?month=7&q=Nguyen+An&status=FINALIZED&year=2026',
+  )
 })

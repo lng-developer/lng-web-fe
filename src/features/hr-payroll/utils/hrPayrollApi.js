@@ -61,6 +61,11 @@ export function buildMarkPaidPayload(payrollResultIds, expectedVersion) {
   return { payrollResultIds, expectedVersion }
 }
 
+export function buildPayrollResultExportUrl(params = {}) {
+  const query = new URLSearchParams(normalizePayrollQuery(params))
+  return `/api/hr/payrolls/results/export${query.size ? `?${query.toString()}` : ''}`
+}
+
 export function formatVnd(value) {
   return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value || 0)} ₫`
 }

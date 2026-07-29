@@ -39,3 +39,7 @@ export function useEmailPayrollMutation() {
     apiClient.post(ENDPOINTS.HR.PAYROLL_EMAIL(payrollRunId), {}).then(unwrapPayrollResponse),
   )
 }
+
+export function useCreatePayrollAdjustmentMutation() {
+  return usePayrollMutation((payload) => apiClient.post(ENDPOINTS.HR.PAYROLL_ADJUSTMENTS, payload).then(unwrapPayrollResponse))
+}

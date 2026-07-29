@@ -36,6 +36,7 @@ const HrSettingsPage = lazy(() => import('@/features/hr-settings/pages/HrSetting
 const MyTimePage = lazy(() => import('@/features/hr-time/pages/MyTimePage'))
 const MyPayslipsPage = lazy(() => import('@/features/hr-payroll/pages/MyPayslipsPage'))
 const PayrollRunsPage = lazy(() => import('@/features/hr-payroll/pages/PayrollRunsPage'))
+const PayrollRegisterPage = lazy(() => import('@/features/hr-payroll/pages/PayrollRegisterPage'))
 const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const PodWorkbenchPage = lazy(() => import('@/features/pod-workbench/pages/PodWorkbenchPage'))
 const QcPage = lazy(() => import('@/features/qc/pages/QcPage'))
@@ -130,6 +131,10 @@ export const router = createBrowserRouter([
               {
                 path: ROUTES.HR_PAYROLL_RUNS.replace(`${ROUTES.HR}/`, ''),
                 element: requirePermissions(['HR_PAYROLL:READ'], <PayrollRunsPage />),
+              },
+              {
+                path: ROUTES.HR_PAYROLL_REGISTER.replace(`${ROUTES.HR}/`, ''),
+                element: requirePermissions(['HR_PAYROLL:READ'], <PayrollRegisterPage />),
               },
               {
                 path: ROUTES.HR_ANNOUNCEMENTS.replace(`${ROUTES.HR}/`, ''),
