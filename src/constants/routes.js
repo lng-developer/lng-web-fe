@@ -5,6 +5,8 @@ export const ROUTES = {
   LOGIN: '/login',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
+  CHANGE_INITIAL_PASSWORD: '/auth/change-initial-password',
+  COMPLETE_PROFILE: '/profile/complete',
   UI_KIT: '/ui-kit',
   PORTAL_ORDER_LIST: '/portal/orders',
   PORTAL_ORDER_WORKBENCH: '/portal/orders/workbench',
@@ -58,4 +60,31 @@ export const ROUTES = {
   HR_ANNOUNCEMENTS: '/hr/announcements',
   HR_SETTINGS: '/hr/settings',
   UNAUTHORIZED: '/unauthorized',
+}
+
+const SETUP_ROUTE_PATHS = new Set([ROUTES.CHANGE_INITIAL_PASSWORD, ROUTES.COMPLETE_PROFILE])
+
+export function resolveSetupRoute({ mustChangePassword, profileSetupRequired }) {
+  if (mustChangePassword) return ROUTES.CHANGE_INITIAL_PASSWORD
+  if (profileSetupRequired) return ROUTES.COMPLETE_PROFILE
+  return null
+}
+
+export function getOriginalDestination(location) {
+  const destination = location?.state?.from
+  return destination && !SETUP_ROUTE_PATHS.has(destination.pathname) ? destination : null
+}
+
+export function getSetupRedirectDestination(location) {
+  return (
+    getOriginalDestination(location) ??
+    (SETUP_ROUTE_PATHS.has(location?.pathname) ? null : location)
+  )
+}
+
+export function getOriginalDestinationPath(location) {
+  const destination = getOriginalDestination(location)
+  return destination?.pathname
+    ? `${destination.pathname}${destination.search || ''}${destination.hash || ''}`
+    : null
 }

@@ -28,6 +28,19 @@ test('staff and approver pages reuse operations primitives and URL search params
   assert.match(inbox, /overtime/)
 })
 
+test('People creates staff through the provisioning mutation, not separate account/profile calls', async () => {
+  const [page, mutations] = await Promise.all([
+    source('pages/PeoplePage.jsx'),
+    source('api/hrTime.mutations.js'),
+  ])
+
+  assert.match(page, /useProvisionStaffMutation/)
+  assert.match(page, /useAssignableStaffRolesQuery/)
+  assert.doesNotMatch(page, /useCreateEmployeeProfileMutation/)
+  assert.doesNotMatch(page, /useRolesQuery/)
+  assert.match(mutations, /ENDPOINTS\.HR\.STAFF_PROVISIONING/)
+})
+
 test('HR pages normalize URL tabs to the first enabled tab and use the supported nav variant', async () => {
   const [myTime, inbox] = await Promise.all([
     source('pages/MyTimePage.jsx'),

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import Loader from '@/components/common/Loader'
-import { ROUTES } from '@/constants/routes'
+import { getSetupRedirectDestination, resolveSetupRoute, ROUTES } from '@/constants/routes'
 import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import { hasAnyPermission, hasRequiredPermissions } from '@/features/auth/utils/authz'
 import { useMyEmployeeProfileQuery } from '@/features/hr-time/api/hrTime.queries'
@@ -55,7 +55,14 @@ export default function ProtectedRoute({
     } else if (employeeProfileQuery.isError) {
       setCurrentUser({ ...currentUser, employeeProfile: null })
     }
-  }, [currentUser, employeeProfileQuery.data, employeeProfileQuery.isError, employeeProfileQuery.isSuccess, hasProfileResult, setCurrentUser])
+  }, [
+    currentUser,
+    employeeProfileQuery.data,
+    employeeProfileQuery.isError,
+    employeeProfileQuery.isSuccess,
+    hasProfileResult,
+    setCurrentUser,
+  ])
 
   if (!hasRefreshToken) {
     return <Navigate to={ROUTES.LOGIN} replace state={{ from: location }} />
@@ -70,6 +77,23 @@ export default function ProtectedRoute({
   }
 
   const user = currentUser ?? currentUserQuery.data?.data ?? currentUserQuery.data
+  const setupRoute = resolveSetupRoute({
+    mustChangePassword: user?.account?.mustChangePassword,
+    profileSetupRequired: user?.profileSetupRequired,
+  })
+
+  if (setupRoute && location.pathname !== setupRoute) {
+    return (
+      <Navigate to={setupRoute} replace state={{ from: getSetupRedirectDestination(location) }} />
+    )
+  }
+
+  if (
+    !setupRoute &&
+    [ROUTES.CHANGE_INITIAL_PASSWORD, ROUTES.COMPLETE_PROFILE].includes(location.pathname)
+  ) {
+    return <Navigate to={ROUTES.HOME} replace />
+  }
 
   if (
     !hasRequiredPermissions(user, requiredPermissions) ||

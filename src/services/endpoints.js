@@ -7,6 +7,7 @@ export const ENDPOINTS = {
     REFRESH: '/api/auth/refresh',
     LOGOUT: '/api/auth/logout',
     ME: '/api/auth/me',
+    CHANGE_OWN_PASSWORD: '/api/auth/me/change-password',
   },
   NOTIFICATIONS: {
     INBOX: '/api/notifications',
@@ -298,8 +299,11 @@ export const ENDPOINTS = {
   },
   HR: {
     DASHBOARD: '/api/hr/dashboard',
+    STAFF_PROVISIONING: '/api/hr/staff-provisioning',
+    STAFF_PROVISIONING_ROLES: '/api/hr/staff-provisioning/roles',
     EMPLOYEE_PROFILES: '/api/hr/employee-profiles',
     MY_EMPLOYEE_PROFILE: '/api/hr/employee-profiles/me',
+    MY_EMPLOYEE_PROFILE_PERSONAL: '/api/hr/employee-profiles/me/personal',
     EMPLOYEE_PROFILE: (profileId) => `/api/hr/employee-profiles/${profileId}`,
     EMPLOYEE_PROFILE_RESTORE: (profileId) => `/api/hr/employee-profiles/${profileId}/restore`,
     WORK_LOCATIONS: '/api/hr/work-locations',

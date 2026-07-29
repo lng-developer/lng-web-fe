@@ -5,7 +5,7 @@ import { ENDPOINTS } from '@/services/endpoints'
 
 import { authKeys } from './auth.keys'
 
-async function fetchCurrentUser() {
+export async function fetchCurrentUser() {
   await ensureAccessToken()
 
   return apiClient.get(ENDPOINTS.AUTH.ME)

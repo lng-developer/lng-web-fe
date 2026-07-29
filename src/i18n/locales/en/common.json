@@ -369,6 +369,17 @@
       "success": "Password updated successfully.",
       "missingToken": "This reset link is missing a verification token. Please request a new email."
     },
+    "changeInitialPassword": {
+      "title": "Set your password",
+      "description": "Change the temporary password before continuing.",
+      "currentPassword": "Temporary password",
+      "newPassword": "New password",
+      "submit": "Continue",
+      "success": "Password updated successfully.",
+      "errors": {
+        "currentPasswordRequired": "Please enter your temporary password"
+      }
+    },
     "errors": {
       "emailInvalid": "Invalid email address",
       "passwordMin": "Password must be at least 8 characters",
@@ -1045,7 +1056,23 @@
       "citizenId": "Citizen ID",
       "address": "Address",
       "role": "Role",
-      "status": "Status"
+      "status": "Status",
+      "avatarUrl": "Avatar URL",
+      "gender": "Gender",
+      "birthDate": "Date of birth",
+      "phoneNumber": "Phone number",
+      "personalEmail": "Personal email",
+      "emergencyName": "Emergency contact name",
+      "emergencyPhone": "Emergency contact phone",
+      "emergencyRelation": "Relationship",
+      "dependantName": "Dependant name",
+      "dependantRelation": "Relationship",
+      "dependantBirthDate": "Date of birth",
+      "identityCard": "Identity card",
+      "taxIdentification": "Tax identification",
+      "socialInsuranceNumber": "Social insurance number",
+      "bankName": "Bank name",
+      "bankAccountNumber": "Bank account number"
     },
     "adminFields": {
       "username": "Username",
@@ -1061,10 +1088,14 @@
       "phone": "09xx xxx xxx",
       "email": "name@gmail.com",
       "citizenId": "xxxxxxxxxxxx",
-      "address": "House number, street, ward, district, province/city"
+      "address": "House number, street, ward, district, province/city",
+      "avatarUrl": "https://example.com/avatar.jpg",
+      "gender": "Optional"
     },
     "actions": {
-      "update": "Update"
+      "update": "Update",
+      "addDependant": "Add dependant",
+      "removeDependant": "Remove dependant"
     },
     "defaults": {
       "department": "— (all system)",
@@ -1073,6 +1104,42 @@
     "status": {
       "active": "Active",
       "inactive": "Inactive"
+    },
+    "companyContext": {
+      "employeeCode": "Employee code",
+      "workEmail": "Work email",
+      "department": "Department",
+      "team": "Team",
+      "jobTitle": "Job title"
+    },
+    "sections": {
+      "personal": "Personal",
+      "contact": "Contact",
+      "emergencyContact": "Emergency contact",
+      "dependants": "Optional dependants",
+      "identityTax": "Optional identity and tax",
+      "bank": "Optional bank account"
+    },
+    "completion": {
+      "title": "Complete your profile",
+      "description": "Add your personal details to continue using the system. Company information is managed by HR.",
+      "submit": "Complete profile"
+    },
+    "validation": {
+      "avatarUrl": "Enter a valid avatar URL",
+      "phoneRequired": "Phone number is required",
+      "addressRequired": "Address is required",
+      "personalEmailInvalid": "Enter a valid personal email",
+      "emergencyNameRequired": "Emergency contact name is required",
+      "emergencyPhoneRequired": "Emergency contact phone is required",
+      "emergencyRelationRequired": "Emergency contact relationship is required",
+      "dependantNameRequired": "Dependant name is required",
+      "dependantRelationRequired": "Dependant relationship is required"
+    },
+    "messages": {
+      "loadError": "Unable to load your profile.",
+      "completed": "Your profile is complete.",
+      "updated": "Your personal information has been updated."
     }
   },
   "departments": {
@@ -2945,6 +3012,39 @@
       "payroll": "Payroll",
       "communication": "Communication",
       "configuration": "Configuration"
+    },
+    "people": {
+      "addAction": "Create staff",
+      "addTitle": "Create staff",
+      "createAction": "Create staff",
+      "companyInformation": "Company information",
+      "personalInformation": "Personal information",
+      "personalReadOnly": "Staff-managed and read only for HR.",
+      "scopes": {
+        "global": "Global",
+        "department": "Department",
+        "team": "Team"
+      },
+      "onboarding": {
+        "PROFILE_INCOMPLETE": "Profile incomplete",
+        "READY": "Ready"
+      }
+    },
+    "fields": {
+      "workEmail": {
+        "label": "Work email",
+        "helperText": "This address is used for the staff sign-in account."
+      },
+      "probationEndDate": {
+        "label": "Probation end date",
+        "helperText": "Leave blank when no probation end date is set."
+      },
+      "role": { "label": "Access role" },
+      "scopeType": { "label": "Access scope" },
+      "scope": { "label": "Scope target" }
+    },
+    "messages": {
+      "staffProvisioned": "Staff account created"
     },
     "tabs": {
       "employees": "Employees",

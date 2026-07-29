@@ -82,6 +82,7 @@ export function mapEmployeeProfileRow(row) {
 
   return {
     ...mapped,
+    ...(Object.hasOwn(row, 'onboardingStatus') ? { onboardingStatus: row.onboardingStatus } : {}),
     isDeleted: Boolean(row.isDeleted),
     deletedAt: row.deletedAt || null,
     capabilities: {
@@ -314,6 +315,42 @@ export function buildEmployeeProfilePayload(values, { create = false } = {}) {
   ])
   if (payload.employeeCode) payload.employeeCode = payload.employeeCode.toUpperCase()
   return payload
+}
+
+export function buildStaffProvisioningPayload(values) {
+  const payload = compactPayload(
+    values,
+    [
+      'employeeCode',
+      'workEmail',
+      'fullName',
+      'departmentId',
+      'teamId',
+      'jobTitle',
+      'jobLevel',
+      'employmentType',
+      'workMode',
+      'startDate',
+      'probationEndDate',
+      'status',
+    ],
+    ['departmentId', 'teamId', 'jobTitle', 'jobLevel', 'probationEndDate'],
+  )
+  if (payload.employeeCode) payload.employeeCode = payload.employeeCode.toUpperCase()
+  if (payload.workEmail) payload.workEmail = payload.workEmail.toLowerCase()
+  const scopeType = values.scopeType || 'global'
+
+  return {
+    ...payload,
+    assignments: [
+      {
+        roleId: values.roleId,
+        scopeType,
+        scopeId: scopeType === 'global' ? null : values.scopeId || null,
+        customPermissionIds: [],
+      },
+    ],
+  }
 }
 
 const profileSectionFields = {

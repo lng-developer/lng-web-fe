@@ -29,9 +29,9 @@ function useHrTimeMutation(mutationFn, keysForSuccess) {
   })
 }
 
-export function useCreateEmployeeProfileMutation() {
+export function useProvisionStaffMutation() {
   return useHrTimeMutation(
-    (payload) => request('post', ENDPOINTS.HR.EMPLOYEE_PROFILES, payload),
+    (payload) => request('post', ENDPOINTS.HR.STAFF_PROVISIONING, payload),
     () => [hrTimeKeys.employeeProfiles()],
   )
 }
