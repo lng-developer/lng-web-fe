@@ -369,6 +369,17 @@
       "success": "Password updated successfully.",
       "missingToken": "This reset link is missing a verification token. Please request a new email."
     },
+    "changeInitialPassword": {
+      "title": "Set your password",
+      "description": "Change the temporary password before continuing.",
+      "currentPassword": "Temporary password",
+      "newPassword": "New password",
+      "submit": "Continue",
+      "success": "Password updated successfully.",
+      "errors": {
+        "currentPasswordRequired": "Please enter your temporary password"
+      }
+    },
     "errors": {
       "emailInvalid": "Invalid email address",
       "passwordMin": "Password must be at least 8 characters",

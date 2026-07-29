@@ -5,6 +5,8 @@ export const ROUTES = {
   LOGIN: '/login',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
+  CHANGE_INITIAL_PASSWORD: '/auth/change-initial-password',
+  COMPLETE_PROFILE: '/profile/complete',
   UI_KIT: '/ui-kit',
   PORTAL_ORDER_LIST: '/portal/orders',
   PORTAL_ORDER_WORKBENCH: '/portal/orders/workbench',
@@ -57,4 +59,10 @@ export const ROUTES = {
   HR_ANNOUNCEMENTS: '/hr/announcements',
   HR_SETTINGS: '/hr/settings',
   UNAUTHORIZED: '/unauthorized',
+}
+
+export function resolveSetupRoute({ mustChangePassword, profileSetupRequired }) {
+  if (mustChangePassword) return ROUTES.CHANGE_INITIAL_PASSWORD
+  if (profileSetupRequired) return ROUTES.COMPLETE_PROFILE
+  return null
 }

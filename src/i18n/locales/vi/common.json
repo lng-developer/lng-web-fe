@@ -367,6 +367,17 @@
       "success": "Mật khẩu đã được cập nhật.",
       "missingToken": "Link đặt lại mật khẩu thiếu mã xác thực. Vui lòng yêu cầu gửi email mới."
     },
+    "changeInitialPassword": {
+      "title": "Đặt mật khẩu",
+      "description": "Đổi mật khẩu tạm thời trước khi tiếp tục.",
+      "currentPassword": "Mật khẩu tạm thời",
+      "newPassword": "Mật khẩu mới",
+      "submit": "Tiếp tục",
+      "success": "Mật khẩu đã được cập nhật.",
+      "errors": {
+        "currentPasswordRequired": "Vui lòng nhập mật khẩu tạm thời"
+      }
+    },
     "errors": {
       "emailInvalid": "Email không hợp lệ",
       "passwordMin": "Mật khẩu cần tối thiểu 8 ký tự",

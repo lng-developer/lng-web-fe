@@ -7,6 +7,7 @@ export const ENDPOINTS = {
     REFRESH: '/api/auth/refresh',
     LOGOUT: '/api/auth/logout',
     ME: '/api/auth/me',
+    CHANGE_OWN_PASSWORD: '/api/auth/me/change-password',
   },
   NOTIFICATIONS: {
     INBOX: '/api/notifications',
