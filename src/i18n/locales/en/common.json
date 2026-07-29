@@ -3013,6 +3013,39 @@
       "communication": "Communication",
       "configuration": "Configuration"
     },
+    "people": {
+      "addAction": "Create staff",
+      "addTitle": "Create staff",
+      "createAction": "Create staff",
+      "companyInformation": "Company information",
+      "personalInformation": "Personal information",
+      "personalReadOnly": "Staff-managed and read only for HR.",
+      "scopes": {
+        "global": "Global",
+        "department": "Department",
+        "team": "Team"
+      },
+      "onboarding": {
+        "PROFILE_INCOMPLETE": "Profile incomplete",
+        "READY": "Ready"
+      }
+    },
+    "fields": {
+      "workEmail": {
+        "label": "Work email",
+        "helperText": "This address is used for the staff sign-in account."
+      },
+      "probationEndDate": {
+        "label": "Probation end date",
+        "helperText": "Leave blank when no probation end date is set."
+      },
+      "role": { "label": "Access role" },
+      "scopeType": { "label": "Access scope" },
+      "scope": { "label": "Scope target" }
+    },
+    "messages": {
+      "staffProvisioned": "Staff account created"
+    },
     "tabs": {
       "employees": "Employees",
       "schedule": "Schedule",

@@ -3011,6 +3011,39 @@
       "communication": "Truyền thông",
       "configuration": "Cấu hình"
     },
+    "people": {
+      "addAction": "Tạo nhân sự",
+      "addTitle": "Tạo nhân sự",
+      "createAction": "Tạo nhân sự",
+      "companyInformation": "Thông tin công ty",
+      "personalInformation": "Thông tin cá nhân",
+      "personalReadOnly": "Nhân sự tự quản lý, HR chỉ có quyền xem.",
+      "scopes": {
+        "global": "Toàn hệ thống",
+        "department": "Phòng ban",
+        "team": "Nhóm"
+      },
+      "onboarding": {
+        "PROFILE_INCOMPLETE": "Chưa hoàn thiện hồ sơ",
+        "READY": "Sẵn sàng"
+      }
+    },
+    "fields": {
+      "workEmail": {
+        "label": "Email công việc",
+        "helperText": "Địa chỉ này dùng để đăng nhập hệ thống."
+      },
+      "probationEndDate": {
+        "label": "Ngày kết thúc thử việc",
+        "helperText": "Để trống nếu không áp dụng."
+      },
+      "role": { "label": "Vai trò truy cập" },
+      "scopeType": { "label": "Phạm vi truy cập" },
+      "scope": { "label": "Đối tượng phạm vi" }
+    },
+    "messages": {
+      "staffProvisioned": "Đã tạo tài khoản nhân sự"
+    },
     "tabs": {
       "employees": "Nhân viên",
       "schedule": "Lịch làm việc",

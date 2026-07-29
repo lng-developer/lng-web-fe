@@ -35,6 +35,13 @@ export function useCreateEmployeeProfileMutation() {
   )
 }
 
+export function useProvisionStaffMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.STAFF_PROVISIONING, payload),
+    () => [hrTimeKeys.employeeProfiles()],
+  )
+}
+
 export function useUpdateEmployeeProfileMutation() {
   return useHrTimeMutation(
     ({ profileId, payload }) => request('patch', ENDPOINTS.HR.EMPLOYEE_PROFILE(profileId), payload),

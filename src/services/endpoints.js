@@ -299,6 +299,7 @@ export const ENDPOINTS = {
   },
   HR: {
     DASHBOARD: '/api/hr/dashboard',
+    STAFF_PROVISIONING: '/api/hr/staff-provisioning',
     EMPLOYEE_PROFILES: '/api/hr/employee-profiles',
     MY_EMPLOYEE_PROFILE: '/api/hr/employee-profiles/me',
     MY_EMPLOYEE_PROFILE_PERSONAL: '/api/hr/employee-profiles/me/personal',

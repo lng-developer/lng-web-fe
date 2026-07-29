@@ -7,6 +7,7 @@ import {
   buildEmployeeProfilePayload,
   buildShiftAssignmentPayload,
   buildShiftPayload,
+  buildStaffProvisioningPayload,
   buildWorkLocationPayload,
   canAccessTeamScope,
   getAuthorizedTeamScopeIds,
@@ -155,6 +156,52 @@ test('employee payloads exclude restricted and display-only values', () => {
   )
 })
 
+test('staff provisioning payload keeps HR-owned fields and one access assignment', () => {
+  assert.deepEqual(
+    buildStaffProvisioningPayload({
+      employeeCode: ' emp-01 ',
+      workEmail: ' AN@LNG.VN ',
+      fullName: ' Nguyen An ',
+      departmentId: 'department-1',
+      teamId: 'team-1',
+      jobTitle: ' Designer ',
+      jobLevel: 'L2',
+      employmentType: 'FULL_TIME',
+      workMode: 'ONSITE',
+      startDate: '2026-07-29',
+      probationEndDate: '',
+      status: 'ACTIVE',
+      roleId: 'role-1',
+      scopeType: 'team',
+      scopeId: 'team-1',
+      personalEmail: 'private@example.com',
+      password: 'must-not-leak',
+    }),
+    {
+      employeeCode: 'EMP-01',
+      workEmail: 'an@lng.vn',
+      fullName: 'Nguyen An',
+      departmentId: 'department-1',
+      teamId: 'team-1',
+      jobTitle: 'Designer',
+      jobLevel: 'L2',
+      employmentType: 'FULL_TIME',
+      workMode: 'ONSITE',
+      startDate: '2026-07-29',
+      probationEndDate: null,
+      status: 'ACTIVE',
+      assignments: [
+        {
+          roleId: 'role-1',
+          scopeType: 'team',
+          scopeId: 'team-1',
+          customPermissionIds: [],
+        },
+      ],
+    },
+  )
+})
+
 test('employee directory rows retain server-owned lifecycle fields', () => {
   assert.deepEqual(
     mapEmployeeProfileRow({
@@ -174,6 +221,13 @@ test('employee directory rows retain server-owned lifecycle fields', () => {
       workLocationName: null,
       actions: { edit: true, delete: true, restore: false },
     },
+  )
+})
+
+test('directory maps the server onboarding state without deriving it from client guesses', () => {
+  assert.equal(
+    mapEmployeeProfileRow({ onboardingStatus: 'PROFILE_INCOMPLETE' }).onboardingStatus,
+    'PROFILE_INCOMPLETE',
   )
 })
 

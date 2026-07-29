@@ -13,11 +13,11 @@ import {
 
 import DatePicker from '@/components/form/DatePicker'
 
-import { buildEmployeeProfilePayload } from '../utils/hrTimeApi.js'
+import { buildEmployeeProfilePayload, buildStaffProvisioningPayload } from '../utils/hrTimeApi.js'
 
 const initialValues = {
-  accountId: '',
   employeeCode: '',
+  workEmail: '',
   fullName: '',
   departmentId: '',
   teamId: '',
@@ -26,13 +26,17 @@ const initialValues = {
   employmentType: 'FULL_TIME',
   workMode: 'ONSITE',
   startDate: '',
+  probationEndDate: '',
   status: 'ACTIVE',
+  roleId: '',
+  scopeType: 'global',
+  scopeId: '',
 }
 
 export default function EmployeeProfileDialog({
   open,
   profile,
-  accounts = [],
+  roles = [],
   departments = [],
   teams = [],
   loading = false,
@@ -56,42 +60,39 @@ export default function EmployeeProfileDialog({
 
   const fieldText = (field, part, fallback) =>
     t(`hrTime.fields.${field}.${part}`, { defaultValue: fallback })
+  const scopeItems = values.scopeType === 'department' ? departments : teams
 
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth="md">
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          onSubmit(buildEmployeeProfilePayload(values, { create }))
+          onSubmit(
+            create ? buildStaffProvisioningPayload(values) : buildEmployeeProfilePayload(values),
+          )
         }}
       >
         <DialogTitle>
           {create
-            ? t('hrTime.people.addTitle', { defaultValue: 'Add employee profile' })
+            ? t('hrTime.people.addTitle', { defaultValue: 'Create staff' })
             : t('hrTime.people.editTitle', { defaultValue: 'Edit employee profile' })}
         </DialogTitle>
         <DialogContent className="space-y-4 !pt-2">
           {error ? <Alert severity="error">{error}</Alert> : null}
           {create ? (
             <TextField
-              select
-              fullWidth
               required
-              label={fieldText('account', 'label', 'User account')}
+              fullWidth
+              type="email"
+              label={fieldText('workEmail', 'label', 'Work email')}
               helperText={fieldText(
-                'account',
+                'workEmail',
                 'helperText',
-                'Choose the sign-in account this employee profile belongs to.',
+                'This address is used for the staff sign-in account.',
               )}
-              value={values.accountId}
-              onChange={(event) => setField('accountId', event.target.value)}
-            >
-              {accounts.map((account) => (
-                <MenuItem key={account.id} value={account.id}>
-                  {account.fullName || account.profile?.fullName || account.email} ({account.email})
-                </MenuItem>
-              ))}
-            </TextField>
+              value={values.workEmail}
+              onChange={(event) => setField('workEmail', event.target.value)}
+            />
           ) : null}
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField
@@ -215,6 +216,18 @@ export default function EmployeeProfileDialog({
               onChange={(val) => setField('startDate', val)}
             />
           </div>
+          {create ? (
+            <DatePicker
+              label={fieldText('probationEndDate', 'label', 'Probation end date')}
+              helperText={fieldText(
+                'probationEndDate',
+                'helperText',
+                'Leave blank when no probation end date is set.',
+              )}
+              value={values.probationEndDate ? String(values.probationEndDate).slice(0, 10) : ''}
+              onChange={(value) => setField('probationEndDate', value)}
+            />
+          ) : null}
           <TextField
             select
             fullWidth
@@ -233,13 +246,67 @@ export default function EmployeeProfileDialog({
               </MenuItem>
             ))}
           </TextField>
+          {create ? (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <TextField
+                select
+                required
+                label={fieldText('role', 'label', 'Access role')}
+                value={values.roleId}
+                onChange={(event) => setField('roleId', event.target.value)}
+              >
+                {roles.map((role) => (
+                  <MenuItem key={role.id} value={role.id}>
+                    {role.name || role.code}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                required
+                label={fieldText('scopeType', 'label', 'Access scope')}
+                value={values.scopeType}
+                onChange={(event) => {
+                  setField('scopeType', event.target.value)
+                  setField('scopeId', '')
+                }}
+              >
+                <MenuItem value="global">
+                  {t('hrTime.people.scopes.global', { defaultValue: 'Global' })}
+                </MenuItem>
+                <MenuItem value="department">
+                  {t('hrTime.people.scopes.department', { defaultValue: 'Department' })}
+                </MenuItem>
+                <MenuItem value="team">
+                  {t('hrTime.people.scopes.team', { defaultValue: 'Team' })}
+                </MenuItem>
+              </TextField>
+              {values.scopeType === 'global' ? null : (
+                <TextField
+                  select
+                  required
+                  label={fieldText('scope', 'label', 'Scope target')}
+                  value={values.scopeId}
+                  onChange={(event) => setField('scopeId', event.target.value)}
+                >
+                  {scopeItems.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            </div>
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} disabled={loading}>
             {t('common.cancel', { defaultValue: 'Cancel' })}
           </Button>
           <Button type="submit" variant="contained" disabled={loading}>
-            {t('common.save', { defaultValue: 'Save' })}
+            {create
+              ? t('hrTime.people.createAction', { defaultValue: 'Create staff' })
+              : t('common.save', { defaultValue: 'Save' })}
           </Button>
         </DialogActions>
       </form>

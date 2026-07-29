@@ -20,18 +20,14 @@ import {
 } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { hasAnyPermission } from '@/features/auth/utils/authz'
-import {
-  useAccountsQuery,
-  useDepartmentsQuery,
-  useTeamsQuery,
-} from '@/features/rbac/api/rbac.queries'
+import { useDepartmentsQuery, useRolesQuery, useTeamsQuery } from '@/features/rbac/api/rbac.queries'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
   useAccrueLeaveBalancesMutation,
   useCarryOverLeaveBalancesMutation,
-  useCreateEmployeeProfileMutation,
   useDeleteEmployeeProfileMutation,
+  useProvisionStaffMutation,
   useResetLeaveBalancesMutation,
   useRestoreEmployeeProfileMutation,
   useUpdateEmployeeProfileMutation,
@@ -76,7 +72,6 @@ export default function PeoplePage() {
   const canWrite = hasAnyPermission(currentUser, ['HR_EMPLOYEES:WRITE'])
   const canManageLeaveBalances = hasAnyPermission(currentUser, ['HR_LEAVE:APPROVE'])
   const canManageLeaveBalancesGlobally = hasGlobalPermissionCode(currentUser, 'HR_LEAVE:APPROVE')
-  const canReadAccounts = hasAnyPermission(currentUser, ['AUTH:READ'])
 
   const directoryQuery = useEmployeeProfilesQuery({
     page,
@@ -86,17 +81,17 @@ export default function PeoplePage() {
     departmentId,
     ...(includeDeleted ? { includeDeleted: true } : {}),
   })
-  const accountsQuery = useAccountsQuery({ page: 1, limit: 100, status: 'active' })
   const departmentsQuery = useDepartmentsQuery()
+  const rolesQuery = useRolesQuery()
   const teamsQuery = useTeamsQuery()
-  const createProfile = useCreateEmployeeProfileMutation()
+  const provisionStaff = useProvisionStaffMutation()
   const updateProfile = useUpdateEmployeeProfileMutation()
   const deleteProfile = useDeleteEmployeeProfileMutation()
   const restoreProfile = useRestoreEmployeeProfileMutation()
   const accrueBalances = useAccrueLeaveBalancesMutation()
   const resetBalances = useResetLeaveBalancesMutation()
   const carryOverBalances = useCarryOverLeaveBalancesMutation()
-  const activeMutation = editing ? updateProfile : createProfile
+  const activeMutation = editing ? updateProfile : provisionStaff
   const lifecycleMutation = lifecycle?.action === 'delete' ? deleteProfile : restoreProfile
   const leaveBalanceMutation =
     leaveBalanceAction?.mode === 'accrue'
@@ -127,9 +122,9 @@ export default function PeoplePage() {
     setActionError('')
     try {
       if (editing) await updateProfile.mutateAsync({ profileId: editing.id, payload })
-      else await createProfile.mutateAsync(payload)
+      else await provisionStaff.mutateAsync(payload)
       enqueueSnackbar(
-        t('hrTime.messages.profileSaved', { defaultValue: 'Employee profile saved' }),
+        t('hrTime.messages.staffProvisioned', { defaultValue: 'Staff account created' }),
         {
           variant: SNACKBAR_VARIANTS.SUCCESS,
         },
@@ -139,7 +134,7 @@ export default function PeoplePage() {
     } catch (error) {
       setActionError(
         error?.response?.data?.message ||
-          t('hrTime.errors.actionFailed', { defaultValue: 'Could not save employee profile' }),
+          t('hrTime.errors.actionFailed', { defaultValue: 'Could not create staff account' }),
       )
     }
   }
@@ -243,11 +238,20 @@ export default function PeoplePage() {
     }
     if (column.key === 'status') {
       return (
-        <StatusBadge
-          tone={row.isDeleted ? 'danger' : row.status === 'ACTIVE' ? 'success' : 'neutral'}
-        >
-          {row.isDeleted ? 'Deleted' : row.status?.replaceAll('_', ' ') || '-'}
-        </StatusBadge>
+        <div className="flex flex-wrap gap-1">
+          <StatusBadge
+            tone={row.isDeleted ? 'danger' : row.status === 'ACTIVE' ? 'success' : 'neutral'}
+          >
+            {row.isDeleted ? 'Deleted' : row.status?.replaceAll('_', ' ') || '-'}
+          </StatusBadge>
+          {row.onboardingStatus ? (
+            <StatusBadge tone={row.onboardingStatus === 'READY' ? 'success' : 'warning'}>
+              {t(`hrTime.people.onboarding.${row.onboardingStatus}`, {
+                defaultValue: row.onboardingStatus.replaceAll('_', ' '),
+              })}
+            </StatusBadge>
+          ) : null}
+        </div>
       )
     }
     if (column.key === 'actions') {
@@ -332,7 +336,7 @@ export default function PeoplePage() {
                   Carry over leave
                 </Button>
               ) : null}
-              {canWrite && canReadAccounts ? (
+              {canWrite ? (
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
@@ -341,7 +345,7 @@ export default function PeoplePage() {
                     setEditing(null)
                   }}
                 >
-                  {t('hrTime.people.addAction', { defaultValue: 'Add employee' })}
+                  {t('hrTime.people.addAction', { defaultValue: 'Create staff' })}
                 </Button>
               ) : null}
             </div>
@@ -448,7 +452,7 @@ export default function PeoplePage() {
         <EmployeeProfileDialog
           open
           profile={editing || null}
-          accounts={canReadAccounts ? list(accountsQuery.data) : []}
+          roles={list(rolesQuery.data)}
           departments={list(departmentsQuery.data)}
           teams={list(teamsQuery.data)}
           loading={activeMutation.isPending}

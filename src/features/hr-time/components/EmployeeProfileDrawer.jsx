@@ -78,7 +78,35 @@ export default function EmployeeProfileDrawer({
   )
   const profile = profileQuery.data
   const sections = getEmployeeProfileSections(profile)
+  const companySections = sections.filter((section) => section.key !== 'contact')
+  const personalSections = sections.filter((section) => section.key === 'contact')
   const error = profileQuery.error?.response?.data?.message || profileQuery.error?.message
+
+  function renderSections(items) {
+    return items.map((section) => (
+      <section key={section.key} className="py-4 first:pt-0">
+        <Typography variant="subtitle2" className="mb-3 uppercase text-ink-muted">
+          {t(`hrTime.people.sections.${section.key}`, {
+            defaultValue: fieldLabel(section.key),
+          })}
+        </Typography>
+        <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+          {section.fields.map((field) => (
+            <div key={field.key} className="min-w-0">
+              <dt className="text-xs text-ink-muted">
+                {t(`hrTime.people.fields.${field.key}`, {
+                  defaultValue: fieldLabel(field.key),
+                })}
+              </dt>
+              <dd className="mt-0.5 break-words text-sm text-ink-strong">
+                {displayValue(field.value, i18n.language)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    ))
+  }
 
   return (
     <Drawer
@@ -119,29 +147,31 @@ export default function EmployeeProfileDrawer({
             <Alert severity="error">{error}</Alert>
           ) : (
             <div className="divide-y divide-border">
-              {sections.map((section) => (
-                <section key={section.key} className="py-4 first:pt-0">
-                  <Typography variant="subtitle2" className="mb-3 uppercase text-ink-muted">
-                    {t(`hrTime.people.sections.${section.key}`, {
-                      defaultValue: fieldLabel(section.key),
+              {companySections.length ? (
+                <section className="py-4 first:pt-0">
+                  <Typography variant="subtitle2" className="mb-3 text-ink-strong">
+                    {t('hrTime.people.companyInformation', { defaultValue: 'Company information' })}
+                  </Typography>
+                  <div className="divide-y divide-border">{renderSections(companySections)}</div>
+                </section>
+              ) : null}
+              {personalSections.length ? (
+                <section className="py-4">
+                  <Typography variant="subtitle2" className="mb-1 text-ink-strong">
+                    {t('hrTime.people.personalInformation', {
+                      defaultValue: 'Personal information',
                     })}
                   </Typography>
-                  <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
-                    {section.fields.map((field) => (
-                      <div key={field.key} className="min-w-0">
-                        <dt className="text-xs text-ink-muted">
-                          {t(`hrTime.people.fields.${field.key}`, {
-                            defaultValue: fieldLabel(field.key),
-                          })}
-                        </dt>
-                        <dd className="mt-0.5 break-words text-sm text-ink-strong">
-                          {displayValue(field.value, i18n.language)}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
+                  <Typography variant="caption" className="text-ink-muted">
+                    {t('hrTime.people.personalReadOnly', {
+                      defaultValue: 'Staff-managed and read only for HR.',
+                    })}
+                  </Typography>
+                  <div className="mt-2 divide-y divide-border">
+                    {renderSections(personalSections)}
+                  </div>
                 </section>
-              ))}
+              ) : null}
               {profile ? (
                 <LeaveBalancePanel
                   profileId={profile.id || profileId}
