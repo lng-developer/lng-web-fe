@@ -61,8 +61,29 @@ export const ROUTES = {
   UNAUTHORIZED: '/unauthorized',
 }
 
+const SETUP_ROUTE_PATHS = new Set([ROUTES.CHANGE_INITIAL_PASSWORD, ROUTES.COMPLETE_PROFILE])
+
 export function resolveSetupRoute({ mustChangePassword, profileSetupRequired }) {
   if (mustChangePassword) return ROUTES.CHANGE_INITIAL_PASSWORD
   if (profileSetupRequired) return ROUTES.COMPLETE_PROFILE
   return null
+}
+
+export function getOriginalDestination(location) {
+  const destination = location?.state?.from
+  return destination && !SETUP_ROUTE_PATHS.has(destination.pathname) ? destination : null
+}
+
+export function getSetupRedirectDestination(location) {
+  return (
+    getOriginalDestination(location) ??
+    (SETUP_ROUTE_PATHS.has(location?.pathname) ? null : location)
+  )
+}
+
+export function getOriginalDestinationPath(location) {
+  const destination = getOriginalDestination(location)
+  return destination?.pathname
+    ? `${destination.pathname}${destination.search || ''}${destination.hash || ''}`
+    : null
 }

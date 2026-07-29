@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import Loader from '@/components/common/Loader'
-import { resolveSetupRoute, ROUTES } from '@/constants/routes'
+import { getSetupRedirectDestination, resolveSetupRoute, ROUTES } from '@/constants/routes'
 import { useCurrentUserQuery } from '@/features/auth/api/auth.queries'
 import { hasAnyPermission, hasRequiredPermissions } from '@/features/auth/utils/authz'
 import { useMyEmployeeProfileQuery } from '@/features/hr-time/api/hrTime.queries'
@@ -83,7 +83,9 @@ export default function ProtectedRoute({
   })
 
   if (setupRoute && location.pathname !== setupRoute) {
-    return <Navigate to={setupRoute} replace />
+    return (
+      <Navigate to={setupRoute} replace state={{ from: getSetupRedirectDestination(location) }} />
+    )
   }
 
   if (!setupRoute && location.pathname === ROUTES.CHANGE_INITIAL_PASSWORD) {

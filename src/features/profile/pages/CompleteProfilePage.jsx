@@ -5,7 +5,7 @@ import { useSnackbar } from 'notistack'
 
 import Loader from '@/components/common/Loader'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
-import { ROUTES } from '@/constants/routes'
+import { getOriginalDestinationPath, ROUTES } from '@/constants/routes'
 
 import { useCompleteMyProfileMutation } from '../api/profile.mutations'
 import { useMyEmployeeProfileQuery } from '../api/profile.queries'
@@ -23,7 +23,7 @@ export default function CompleteProfilePage() {
     try {
       await completionMutation.mutateAsync(payload)
       enqueueSnackbar(t('profile.messages.completed'), { variant: SNACKBAR_VARIANTS.SUCCESS })
-      navigate(location.state?.from?.pathname || ROUTES.HOME, { replace: true })
+      navigate(getOriginalDestinationPath(location) ?? ROUTES.HOME, { replace: true })
     } catch (error) {
       enqueueSnackbar(t(error.message || 'errors.api.network'), {
         variant: SNACKBAR_VARIANTS.ERROR,

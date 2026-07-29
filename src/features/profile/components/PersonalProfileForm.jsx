@@ -106,8 +106,8 @@ function CompanyContext({ profile, t }) {
   const items = [
     [t('profile.companyContext.employeeCode'), profile.employeeCode],
     [t('profile.companyContext.workEmail'), profile.workEmail],
-    [t('profile.companyContext.department'), profile.department?.name],
-    [t('profile.companyContext.team'), profile.team?.name],
+    [t('profile.companyContext.department'), profile.department?.name || profile.department?.code],
+    [t('profile.companyContext.team'), profile.team?.name || profile.team?.code],
     [t('profile.companyContext.jobTitle'), profile.jobTitle],
   ]
 
