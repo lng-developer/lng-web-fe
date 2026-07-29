@@ -112,6 +112,8 @@ test('leave request workflows preview before create and use server capabilities'
   assert.match(mutations, /ENDPOINTS\.MEDIA\.ASSETS/)
   assert.match(myTime, /previewLeaveMutation\.mutateAsync\(payload\)/)
   assert.match(myTime, /createLeaveMutation\.mutateAsync\(leavePreview\.payload\)/)
+  assert.match(myTime, /function showRequestError\(error, fallback\)/)
+  assert.match(myTime, /variant: SNACKBAR_VARIANTS\.ERROR/)
   assert.match(myTime, /LeaveRequestPreviewDialog/)
   assert.match(drawer, /capabilities\.attach/)
   assert.match(drawer, /capabilities\.refund/)

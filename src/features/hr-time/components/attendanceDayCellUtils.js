@@ -3,6 +3,8 @@ export const stateClasses = {
     'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/50',
   HALF_DAY:
     'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50',
+  ERROR:
+    'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/50',
   HOLIDAY:
     'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/50',
   MIXED_LEAVE:
@@ -27,6 +29,20 @@ export function compactTime(value) {
   return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(
     new Date(value),
   )
+}
+
+export function attendanceCode(state) {
+  if (['PAID_LEAVE', 'UNPAID_LEAVE', 'MIXED_LEAVE'].includes(state)) return 'L'
+  if (state === 'HALF_DAY' || state === 'ABSENT' || state === 'NO_RECORD') return 'M'
+  if (state === 'REST_DAY' || state === 'UNASSIGNED') return 'R'
+  if (state === 'HOLIDAY') return 'H'
+  if (state === 'PRESENT') return 'P'
+  if (state === 'ERROR') return 'E'
+  return state === 'OVERTIME' ? 'OT' : state.slice(0, 2)
+}
+
+export function attendanceTimes(cell = {}) {
+  return [compactTime(cell.checkInAt), compactTime(cell.checkOutAt)].filter(Boolean)
 }
 
 export function secondaryLabel(cell = {}) {

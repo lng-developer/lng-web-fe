@@ -17,24 +17,90 @@ test('Task 8 pages reuse the operations shell and URL query state', async () => 
 
   for (const page of pages) {
     assert.match(page, /OperationsPageShell/)
-    assert.match(page, /OperationsPagination/)
     assert.match(page, /useSearchParams/)
   }
+
+  assert.match(pages[1], /OperationsPagination/)
+  assert.match(pages[2], /OperationsPagination/)
 })
 
 test('attendance adjustment and schedule edits follow backend capabilities', async () => {
-  const [attendance, schedule] = await Promise.all([
+  const [attendance, schedule, matrix, drawer] = await Promise.all([
     source('pages/AttendanceDeskPage.jsx'),
     source('pages/SchedulePage.jsx'),
+    source('components/MonthlyStaffMatrix.jsx'),
+    source('components/AttendanceStaffDetailDrawer.jsx'),
   ])
 
   assert.match(attendance, /useAttendanceMonthMatrixQuery/)
   assert.match(attendance, /exceptionsOnly/)
   assert.match(attendance, /cell\.capabilities\?\.adjust/)
-  assert.match(attendance, /AttendanceStaffList/)
+  assert.match(attendance, /MonthlyStaffMatrix/)
+  assert.doesNotMatch(attendance, /AttendanceStaffList/)
+  assert.match(attendance, /setSelectedAttendance/)
+  assert.match(attendance, /const updated = await adjustment\.mutateAsync/)
+  assert.match(attendance, /setSelectedAttendance\(\(current\) =>/)
+  assert.match(attendance, /cell: \{ \.\.\.current\.cell, \.\.\.updated \}/)
+  assert.match(matrix, /onCellOpen\?\.\(cell, row\)/)
+  assert.match(drawer, /Adjust attendance/)
+  assert.match(drawer, /manualAdjustments/)
+  assert.match(drawer, /History/)
+  assert.match(drawer, /adjustment\.actorName/)
+  assert.match(drawer, /adjustment\.reason/)
+  assert.match(drawer, /adjustment\.before/)
+  assert.match(drawer, /adjustment\.after/)
+  assert.match(drawer, /Late check-in/)
+  assert.match(drawer, /lateMinutes/)
   assert.doesNotMatch(attendance, /roleName|roles\.includes/)
   assert.match(schedule, /row\.capabilities\?\.edit/)
   assert.doesNotMatch(schedule, /roleName|roles\.includes/)
+})
+
+test('attendance matrix keeps the compact mockup footer inside the workbench', async () => {
+  const [attendance, matrix, cell] = await Promise.all([
+    source('pages/AttendanceDeskPage.jsx'),
+    source('components/MonthlyStaffMatrix.jsx'),
+    source('components/AttendanceDayCell.jsx'),
+  ])
+
+  assert.match(matrix, /Legend/)
+  assert.match(matrix, /Showing \{start\}–\{end\} of \{total\} employees/)
+  assert.match(matrix, /<Pagination/)
+  assert.match(matrix, /className="w-full border-separate/)
+  assert.match(matrix, /min-w-\[124px\]/)
+  assert.match(matrix, /min-w-\[34px\]/)
+  assert.match(matrix, /shrink-0 overflow-x-auto overflow-y-hidden/)
+  assert.doesNotMatch(matrix, /Team \/ Shift/)
+  assert.doesNotMatch(attendance, /OperationsPagination/)
+  assert.match(matrix, /overflow-x-auto overflow-y-hidden/)
+  assert.match(attendance, /limit: pageSize/)
+  assert.match(attendance, /<Stack spacing=\{3\} className="h-full min-h-0">/)
+  assert.match(attendance, /useCallback/)
+  assert.match(attendance, /handleMatrixCellOpen/)
+  assert.match(attendance, /handleMatrixRowOpen/)
+  assert.match(matrix, /memo\(MonthlyStaffMatrix\)/)
+  assert.match(matrix, /\[content-visibility:auto\]/)
+  assert.match(cell, /title=\{label\}/)
+  assert.match(cell, /lateMinutes/)
+  assert.doesNotMatch(cell, /Tooltip/)
+})
+
+test('attendance summary exposes late arrivals separately from present status', async () => {
+  const cards = await source('components/HrOperationsSummaryCards.jsx')
+
+  assert.match(cards, /Late arrivals/)
+  assert.match(cards, /summary\.lateCount/)
+})
+
+test('Request Inbox supports status cards and documented request filters', async () => {
+  const inbox = await source('pages/RequestInboxPage.jsx')
+
+  assert.match(inbox, /summary\.statusCounts/)
+  assert.match(inbox, /Pending/)
+  assert.match(inbox, /profileId/)
+  assert.match(inbox, /leaveType/)
+  assert.match(inbox, /year/)
+  assert.match(inbox, /Clear filters/)
 })
 
 test('Attendance Desk sends documented matrix filters to the paginated API', async () => {
@@ -44,6 +110,13 @@ test('Attendance Desk sends documented matrix filters to the paginated API', asy
   assert.match(attendance, /teamId/)
   assert.match(attendance, /departmentId/)
   assert.match(attendance, /shiftId/)
+  assert.match(attendance, /useDebounce\(searchInput, 300\)/)
+  assert.match(attendance, /useTransition/)
+  assert.match(attendance, /startTransition\(\(\) =>/)
+  assert.match(attendance, /handleSummaryFilterChange/)
+  assert.match(attendance, /handlePageChange/)
+  assert.match(attendance, /setSearchInput\(event\.target\.value\)/)
+  assert.doesNotMatch(attendance, /updateSearch\(\{ q: event\.target\.value \}, true\)/)
   assert.doesNotMatch(attendance, /\.filter\(isAttendanceException\)/)
 })
 
@@ -63,11 +136,40 @@ test('Schedule uses permission-safe HR data for named scope selectors', async ()
   assert.doesNotMatch(schedule, /useDepartmentsQuery|useTeamsQuery|features\/rbac/)
 })
 
-test('Schedule separates personal and capability-authorized team calendars', async () => {
+test('Schedule renders only permitted configuration tabs', async () => {
   const schedule = await source('pages/SchedulePage.jsx')
 
-  assert.match(schedule, /StaffMonthlyCalendar/)
-  assert.match(schedule, /capabilities\?\.viewTeamMatrix/)
+  assert.match(schedule, /const visibleTabs = tabs\.filter/)
+  assert.match(schedule, /items=\{visibleTabs\.map/)
+})
+
+test('Assignment workbench filters use URL state and server employee search', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /const \[employeeSearch, setEmployeeSearch\] = useState/)
+  assert.match(schedule, /effectiveFrom/)
+  assert.match(schedule, /effectiveTo/)
+  assert.match(schedule, /shiftId/)
+  assert.match(schedule, /workLocationId/)
+  assert.match(schedule, /<Autocomplete/)
+  assert.match(schedule, /<DateRangePicker/)
+  assert.doesNotMatch(schedule, /label="Effective from"/)
+})
+
+test('Holiday list follows the selected year', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /const holidayYear =/)
+  assert.match(schedule, /dateFrom: `\$\{holidayYear\}-01-01`/)
+  assert.match(schedule, /dateTo: `\$\{holidayYear\}-12-31`/)
+})
+
+test('Schedule keeps staff and team attendance views out of the configuration workspace', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.doesNotMatch(schedule, /'personal',\s*'team',/)
+  assert.doesNotMatch(schedule, /StaffMonthlyCalendar/)
+  assert.doesNotMatch(schedule, /useAttendanceMonthMatrixQuery/)
   assert.doesNotMatch(schedule, /employee-profiles\?[^\n]*all/)
 })
 
@@ -81,6 +183,17 @@ test('operation forms use readable selectors and explicit payload builders', asy
   ])
 
   assert.match(adjustment, /buildAttendanceAdjustmentPayload/)
+  assert.match(adjustment, /import TimePicker from '@\/components\/form\/TimePicker'/)
+  assert.match(adjustment, /<TimePicker/)
+  assert.doesNotMatch(adjustment, /DatePicker|checkInDate\.label|checkOutDate\.label/)
+  assert.match(
+    adjustment,
+    /status: values\.status === record\.status \? undefined : values\.status/,
+  )
+  assert.doesNotMatch(adjustment, /type="datetime-local"/)
+  ;['ERROR', 'SICK_LEAVE', 'MATERNITY_LEAVE', 'PATERNITY_LEAVE'].forEach((status) => {
+    assert.match(adjustment, new RegExp(`['"]${status}['"]`))
+  })
   assert.match(assignment, /buildShiftAssignmentPayload/)
   assert.match(assignment, /employees\.map/)
   assert.match(assignment, /shifts\.map/)
@@ -273,11 +386,46 @@ test('Schedule completes calendar policy administration through focused API cons
   assert.match(bulkImport, /items\.length < 1 \|\| items\.length > 100/)
   assert.match(bulkImport, /duplicates|rowFailures|failures/)
   assert.match(rotationMaintenance, /employeeProfileIds/)
+  assert.match(rotationMaintenance, /<Checkbox/)
+  assert.match(rotationMaintenance, /Clear selection/)
   assert.match(rotationMaintenance, /Delete rotations/)
   assert.match(schedule, /HolidayPolicySummary/)
   assert.match(schedule, /HolidayDetailDrawer/)
   assert.match(schedule, /HolidayBulkImportDialog/)
   assert.match(schedule, /RotationMaintenanceDialog/)
+})
+
+test('Schedule renders the Saturday rotation matrix from the dedicated read model', async () => {
+  const [schedule, queries, mutations, endpoints, matrix] = await Promise.all([
+    source('pages/SchedulePage.jsx'),
+    source('api/hrTime.queries.js'),
+    source('api/hrTime.mutations.js'),
+    readFile(new URL('../../services/endpoints.js', root), 'utf8'),
+    source('components/SaturdayRotationMatrix.jsx'),
+  ])
+
+  assert.match(endpoints, /SATURDAY_ROTATIONS_MATRIX/)
+  assert.match(queries, /useSaturdayRotationMatrixQuery/)
+  assert.match(mutations, /useCreateSaturdayRotationMutation/)
+  assert.match(schedule, /useSaturdayRotationMatrixQuery/)
+  assert.match(schedule, /SaturdayRotationMatrix/)
+  assert.match(matrix, /offCount/)
+  assert.match(matrix, /presentCount/)
+  assert.match(matrix, /Saturday rotation/)
+  assert.match(matrix, /Selected off/)
+  assert.match(matrix, /Manage Saturday/)
+  assert.match(matrix, /grid-flow-col/)
+  assert.match(schedule, /h-full overflow-y-auto pb-4/)
+})
+
+test('Rotation supports a manual plan for every Saturday in the selected month', async () => {
+  const schedule = await source('pages/SchedulePage.jsx')
+
+  assert.match(schedule, /Manual month/)
+  assert.match(schedule, /manualMonth/)
+  assert.match(schedule, /customRotations/)
+  assert.match(schedule, /Search employees/)
+  assert.match(schedule, /Clear this day/)
 })
 
 test('Schedule uses backend holiday enums and renders rotation generation evidence', async () => {

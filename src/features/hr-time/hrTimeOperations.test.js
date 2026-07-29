@@ -15,10 +15,16 @@ import {
   hasGlobalPermissionCode,
   isAttendanceException,
   mapEmployeeProfileRow,
+  normalizeIdArray,
   resolveCalendarScopeQuery,
   resolveRotationTeamId,
   resolveScheduleTab,
 } from './utils/hrTimeApi.js'
+
+test('rotation employee ids remain an array when a multi-select returns a string', () => {
+  assert.deepEqual(normalizeIdArray('profile-1,profile-2'), ['profile-1', 'profile-2'])
+  assert.deepEqual(normalizeIdArray(['profile-1', 'profile-2']), ['profile-1', 'profile-2'])
+})
 
 test('operation payloads keep only fields accepted by each HR endpoint', () => {
   assert.deepEqual(

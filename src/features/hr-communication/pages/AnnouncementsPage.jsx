@@ -40,7 +40,11 @@ import { ENDPOINTS } from '@/services/endpoints'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import AnnouncementDetailDrawer from '../components/AnnouncementDetailDrawer.jsx'
-import { buildAnnouncementPayload, mapAnnouncementCollection } from '../utils/announcementApi.js'
+import {
+  announcementPreview,
+  buildAnnouncementPayload,
+  mapAnnouncementCollection,
+} from '../utils/announcementApi.js'
 
 const pageSize = 20
 const queryKey = ['hr-announcements']
@@ -338,6 +342,15 @@ export default function AnnouncementsPage() {
   })
   const rows = query.data?.items || []
   const pagination = query.data?.pagination || { page, limit: pageSize, total: 0 }
+  const pinnedRows = rows.filter((row) => row.isPinned)
+  const inboxRows = rows.filter((row) => !row.isPinned)
+  const statusCounts = statuses.reduce(
+    (counts, value) => ({
+      ...counts,
+      [value]: rows.filter((row) => row.status === value).length,
+    }),
+    {},
+  )
 
   function updateSearch(key, value, resetPage = false) {
     setSearchParams(
@@ -382,7 +395,7 @@ export default function AnnouncementsPage() {
                 {row.title}
               </Typography>
               <Typography variant="caption" className="line-clamp-2 text-ink-muted mt-0.5">
-                {row.content}
+                {announcementPreview(row.content)}
               </Typography>
             </div>
           </div>
@@ -546,64 +559,132 @@ export default function AnnouncementsPage() {
         </Alert>
       ) : null}
 
-      {viewMode === 'list' ? (
-        <OperationsTable
-          columns={columns}
-          rows={rows}
-          loading={query.isPending}
-          getRowKey={(row) => row.id}
-          renderCell={renderCell}
-          minWidth="1060px"
-          emptyTitle="No announcements"
-          emptyDescription="Published announcements and drafts in your access scope appear here."
-        />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {rows.map((row) => (
-            <button
-              key={row.id}
-              onClick={() => setSelectedId(row.id)}
-              className="flex flex-col text-left border border-border bg-surface hover:shadow-md transition-all rounded-xl overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary group"
-            >
-              <div className="p-5 flex-grow w-full">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex gap-2">
-                    {renderCell(row, { key: 'category' })}
-                    {row.isPinned && (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
-                        Pinned
-                      </span>
-                    )}
-                  </div>
+      <div className="h-full overflow-y-auto pb-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_240px]">
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ['Published', statusCounts.PUBLISHED || 0, 'border-success/40 text-success-dark'],
+                ['Scheduled', statusCounts.SCHEDULED || 0, 'border-warning/40 text-warning-dark'],
+                ['Draft', statusCounts.DRAFT || 0, 'border-primary/30 text-primary'],
+              ].map(([label, value, tone]) => (
+                <div key={label} className={`rounded-lg border bg-surface px-4 py-3 ${tone}`}>
+                  <div className="text-2xl font-bold">{value}</div>
+                  <div className="text-sm text-ink-muted">{label}</div>
                 </div>
-                <Typography
-                  variant="subtitle1"
-                  className="font-bold text-ink-strong mb-2 group-hover:text-primary transition-colors line-clamp-2"
-                >
-                  {row.title}
-                </Typography>
-                <Typography variant="body2" className="text-ink-muted line-clamp-3 mb-4">
-                  {row.content}
-                </Typography>
-              </div>
-              <div className="bg-surface-subtle border-t border-border p-3 w-full flex justify-between items-center text-xs text-ink-secondary">
-                <span>{renderCell(row, { key: 'publishedAt' })}</span>
-                <span>{renderCell(row, { key: 'audience' })}</span>
-              </div>
-            </button>
-          ))}
-          {rows.length === 0 && !query.isPending && (
-            <div className="col-span-full py-10 text-center">
-              <Typography variant="subtitle1" className="text-ink-strong">
-                No announcements
-              </Typography>
-              <Typography variant="body2" className="text-ink-muted">
-                Published announcements and drafts in your access scope appear here.
-              </Typography>
+              ))}
             </div>
-          )}
+
+            {pinnedRows.length ? (
+              <section>
+                <Typography variant="subtitle2" className="mb-2 font-semibold text-ink-strong">
+                  Pinned announcements
+                </Typography>
+                <div className="space-y-2">
+                  {pinnedRows.map((row) => (
+                    <button
+                      key={row.id}
+                      type="button"
+                      onClick={() => setSelectedId(row.id)}
+                      className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-warning/40 border-l-4 border-l-warning bg-warning-light/40 px-4 py-3 text-left"
+                    >
+                      {renderCell(row, { key: 'category' })}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-ink-strong">
+                          {row.title}
+                        </span>
+                        <span className="block truncate text-xs text-ink-muted">
+                          {announcementPreview(row.content)}
+                        </span>
+                      </span>
+                      <StatusBadge tone="success">{row.status}</StatusBadge>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {viewMode === 'list' ? (
+              <OperationsTable
+                columns={columns}
+                rows={inboxRows}
+                loading={query.isPending}
+                getRowKey={(row) => row.id}
+                renderCell={renderCell}
+                minWidth="1060px"
+                bodyClassName="h-auto overflow-visible rounded-lg border border-border"
+                emptyTitle="No announcements"
+                emptyDescription="Published announcements and drafts in your access scope appear here."
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {inboxRows.map((row) => (
+                  <button
+                    key={row.id}
+                    onClick={() => setSelectedId(row.id)}
+                    className="flex flex-col text-left border border-border bg-surface hover:shadow-md transition-all rounded-xl overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary group"
+                  >
+                    <div className="p-5 flex-grow w-full">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex gap-2">
+                          {renderCell(row, { key: 'category' })}
+                          {row.isPinned && (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+                              Pinned
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Typography
+                        variant="subtitle1"
+                        className="font-bold text-ink-strong mb-2 group-hover:text-primary transition-colors line-clamp-2"
+                      >
+                        {row.title}
+                      </Typography>
+                      <Typography variant="body2" className="text-ink-muted line-clamp-3 mb-4">
+                        {announcementPreview(row.content)}
+                      </Typography>
+                    </div>
+                    <div className="bg-surface-subtle border-t border-border p-3 w-full flex justify-between items-center text-xs text-ink-secondary">
+                      <span>{renderCell(row, { key: 'publishedAt' })}</span>
+                      <span>{renderCell(row, { key: 'audience' })}</span>
+                    </div>
+                  </button>
+                ))}
+                {inboxRows.length === 0 && !query.isPending && (
+                  <div className="col-span-full py-10 text-center">
+                    <Typography variant="subtitle1" className="text-ink-strong">
+                      No announcements
+                    </Typography>
+                    <Typography variant="body2" className="text-ink-muted">
+                      Published announcements and drafts in your access scope appear here.
+                    </Typography>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <aside className="rounded-lg border border-border bg-surface p-4">
+            <Typography variant="subtitle2" className="font-semibold text-ink-strong">
+              Announcements overview
+            </Typography>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-ink-muted">Total announcements</dt>
+                <dd className="font-semibold text-ink-strong">{pagination.total || rows.length}</dd>
+              </div>
+              {categories.map((value) => (
+                <div key={value} className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">{value}</dt>
+                  <dd className="font-semibold text-ink-strong">
+                    {rows.filter((row) => row.category === value).length}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </aside>
         </div>
-      )}
+      </div>
 
       <AnnouncementDetailDrawer
         announcementId={selectedId}

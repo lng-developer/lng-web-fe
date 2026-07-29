@@ -6,6 +6,7 @@ import { ENDPOINTS } from '@/services/endpoints'
 import {
   buildLeaveAttachmentPayload,
   buildLeaveRefundPayload,
+  normalizeIdArray,
   unwrapHrTimeResponse,
 } from '../utils/hrTimeApi.js'
 import { hrTimeKeys } from './hrTime.keys.js'
@@ -154,6 +155,13 @@ export function useGenerateSaturdayRotationsMutation() {
   )
 }
 
+export function useCreateSaturdayRotationMutation() {
+  return useHrTimeMutation(
+    (payload) => request('post', ENDPOINTS.HR.SATURDAY_ROTATIONS, payload),
+    () => [hrTimeKeys.rotations()],
+  )
+}
+
 export function useDeleteSaturdayRotationMutation() {
   return useHrTimeMutation(
     (id) => request('delete', ENDPOINTS.HR.SATURDAY_ROTATION(id)),
@@ -164,7 +172,9 @@ export function useDeleteSaturdayRotationMutation() {
 export function useUpdateSaturdayRotationMutation() {
   return useHrTimeMutation(
     ({ id, employeeProfileIds }) =>
-      request('patch', ENDPOINTS.HR.SATURDAY_ROTATION(id), { employeeProfileIds }),
+      request('patch', ENDPOINTS.HR.SATURDAY_ROTATION(id), {
+        employeeProfileIds: normalizeIdArray(employeeProfileIds),
+      }),
     () => [hrTimeKeys.rotations()],
   )
 }

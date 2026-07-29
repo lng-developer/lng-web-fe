@@ -12,29 +12,44 @@ import {
   Typography,
 } from '@mui/material'
 
+import TimePicker from '@/components/form/TimePicker'
+
 import { buildAttendanceAdjustmentPayload } from '../utils/hrTimeApi.js'
 
 const statuses = [
   'PRESENT',
   'ABSENT',
+  'ERROR',
   'PAID_LEAVE',
   'UNPAID_LEAVE',
+  'SICK_LEAVE',
+  'MATERNITY_LEAVE',
+  'PATERNITY_LEAVE',
   'MIXED_LEAVE',
   'HALF_DAY',
   'HOLIDAY',
   'REST_DAY',
 ]
 
-function toLocalDateTime(value) {
-  if (!value) return ''
+function toLocalParts(value) {
+  if (!value) return { date: '', time: '' }
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-  const offset = date.getTimezoneOffset() * 60_000
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+  if (Number.isNaN(date.getTime())) return { date: '', time: '' }
+  return {
+    date: [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-'),
+    time: [
+      String(date.getHours()).padStart(2, '0'),
+      String(date.getMinutes()).padStart(2, '0'),
+    ].join(':'),
+  }
 }
 
-function toInstant(value) {
-  return value ? new Date(value).toISOString() : ''
+function toInstant(date, time) {
+  return date && time ? new Date(`${date}T${time}`).toISOString() : ''
 }
 
 export default function AttendanceAdjustmentDialog({
@@ -46,10 +61,15 @@ export default function AttendanceAdjustmentDialog({
   onSubmit,
 }) {
   const { t } = useTranslation()
+  const checkIn = toLocalParts(record.checkInAt)
+  const checkOut = toLocalParts(record.checkOutAt)
+  const workDate = checkIn.date || record.workDateKey || ''
   const [values, setValues] = useState(() => ({
     status: record.status || 'PRESENT',
-    checkInAt: toLocalDateTime(record.checkInAt),
-    checkOutAt: toLocalDateTime(record.checkOutAt),
+    checkInDate: workDate,
+    checkInTime: checkIn.time,
+    checkOutDate: checkOut.date || workDate,
+    checkOutTime: checkOut.time,
     reason: '',
   }))
 
@@ -62,8 +82,9 @@ export default function AttendanceAdjustmentDialog({
     onSubmit(
       buildAttendanceAdjustmentPayload({
         ...values,
-        checkInAt: toInstant(values.checkInAt),
-        checkOutAt: toInstant(values.checkOutAt),
+        status: values.status === record.status ? undefined : values.status,
+        checkInAt: toInstant(values.checkInDate, values.checkInTime),
+        checkOutAt: toInstant(values.checkOutDate, values.checkOutTime),
       }),
     )
   }
@@ -92,7 +113,9 @@ export default function AttendanceAdjustmentDialog({
                 {t('hrTime.attendance.after', { defaultValue: 'After' })}
               </Typography>
               <Typography variant="body2" className="mt-1 text-ink-secondary">
-                {values.checkInAt || '-'} / {values.checkOutAt || '-'}
+                {values.checkInTime || '-'}
+                {' / '}
+                {values.checkOutTime || '-'}
               </Typography>
             </div>
           </div>
@@ -116,25 +139,23 @@ export default function AttendanceAdjustmentDialog({
             ))}
           </TextField>
           <div className="grid gap-3 sm:grid-cols-2">
-            <TextField
-              type="datetime-local"
+            <TimePicker
+              fullWidth
               label={t('hrTime.fields.checkInAt.label', { defaultValue: 'Check-in time' })}
+              value={values.checkInTime}
               helperText={t('hrTime.fields.checkInAt.helperText', {
                 defaultValue: 'Use the verified local badge time.',
               })}
-              value={values.checkInAt || ''}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => setField('checkInAt', event.target.value)}
+              onChange={(value) => setField('checkInTime', value)}
             />
-            <TextField
-              type="datetime-local"
+            <TimePicker
+              fullWidth
               label={t('hrTime.fields.checkOutAt.label', { defaultValue: 'Check-out time' })}
+              value={values.checkOutTime}
               helperText={t('hrTime.fields.checkOutAt.helperText', {
                 defaultValue: 'Leave empty when the shift is still open.',
               })}
-              value={values.checkOutAt || ''}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => setField('checkOutAt', event.target.value)}
+              onChange={(value) => setField('checkOutTime', value)}
             />
           </div>
           <TextField

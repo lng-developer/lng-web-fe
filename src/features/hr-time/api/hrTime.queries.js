@@ -192,6 +192,16 @@ export function useSaturdayRotationsQuery(params, options) {
   )
 }
 
+export function useSaturdayRotationMatrixQuery(params, options = {}) {
+  return useHrTimeDetailQuery(
+    hrTimeKeys.rotationMatrix(params),
+    ENDPOINTS.HR.SATURDAY_ROTATIONS_MATRIX,
+    params,
+    (matrix) => matrix,
+    options,
+  )
+}
+
 export function useAttendanceQuery(params, options) {
   return useHrTimeListQuery(
     hrTimeKeys.listAttendance,
