@@ -3,9 +3,11 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
-import { Stack, Typography } from '@mui/material'
+import { Avatar, Stack, Typography } from '@mui/material'
 
 import { IconActionButton, OperationsTable, StatusBadge } from '@/components/operations'
+
+import { formatMinutes } from '../utils/hrTimeApi'
 
 const requestColumns = [
   { key: 'employee', width: '200px' },
@@ -63,19 +65,6 @@ function formatDateTime(value, language) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date)
-}
-
-function formatMinutes(value, t) {
-  const minutes = Number(value || 0)
-  const hours = Math.floor(minutes / 60)
-  const remainder = minutes % 60
-  if (!hours) return t('hrTime.units.minutes', { count: remainder, defaultValue: '{{count}} min' })
-  if (!remainder) return t('hrTime.units.hours', { count: hours, defaultValue: '{{count}} hr' })
-  return t('hrTime.units.hoursMinutes', {
-    hours,
-    minutes: remainder,
-    defaultValue: '{{hours}} hr {{minutes}} min',
-  })
 }
 
 export default function TimeRequestTable({
@@ -160,17 +149,25 @@ export default function TimeRequestTable({
   function renderRequestCell(row, column) {
     if (column.key === 'employee') {
       return (
-        <div className="min-w-0">
-          <Typography variant="body2" className="truncate font-semibold text-ink-strong">
-            {row.employeeName ||
-              row.employee?.fullName ||
-              t('hrTime.labels.unknownEmployee', { defaultValue: 'Unknown employee' })}
-          </Typography>
-          {row.employee?.employeeCode ? (
-            <Typography variant="caption" className="text-ink-muted">
-              {row.employee.employeeCode}
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar
+            src={row.employee?.avatarUrl || ''}
+            alt={row.employee?.fullName || 'Employee'}
+            className="w-8 h-8 rounded-lg shadow-sm"
+            variant="rounded"
+          />
+          <div className="flex flex-col min-w-0">
+            <Typography variant="body2" className="truncate font-semibold text-ink-strong">
+              {row.employeeName ||
+                row.employee?.fullName ||
+                t('hrTime.labels.unknownEmployee', { defaultValue: 'Unknown employee' })}
             </Typography>
-          ) : null}
+            {row.employee?.employeeCode ? (
+              <Typography variant="caption" className="text-ink-muted">
+                {row.employee.employeeCode}
+              </Typography>
+            ) : null}
+          </div>
         </div>
       )
     }

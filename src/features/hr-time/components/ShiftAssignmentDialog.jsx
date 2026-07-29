@@ -11,6 +11,8 @@ import {
   TextField,
 } from '@mui/material'
 
+import DatePicker from '@/components/form/DatePicker'
+
 import { buildShiftAssignmentPayload } from '../utils/hrTimeApi.js'
 
 const initialValues = {
@@ -118,26 +120,22 @@ export default function ShiftAssignmentDialog({
             </TextField>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <TextField
+            <DatePicker
               required
-              type="date"
               label={t('hrTime.fields.effectiveFrom.label', { defaultValue: 'Effective from' })}
               helperText={t('hrTime.fields.effectiveFrom.helperText', {
                 defaultValue: 'First work date covered by this assignment.',
               })}
               value={values.effectiveFrom}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => setField('effectiveFrom', event.target.value)}
+              onChange={(val) => setField('effectiveFrom', val)}
             />
-            <TextField
-              type="date"
+            <DatePicker
               label={t('hrTime.fields.effectiveTo.label', { defaultValue: 'Effective to' })}
               helperText={t('hrTime.fields.effectiveTo.helperText', {
                 defaultValue: 'Leave empty for an ongoing assignment.',
               })}
               value={values.effectiveTo}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => setField('effectiveTo', event.target.value)}
+              onChange={(val) => setField('effectiveTo', val)}
             />
           </div>
           <TextField

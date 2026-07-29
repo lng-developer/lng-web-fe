@@ -4,6 +4,7 @@ import test from 'node:test'
 import {
   buildMarkPaidPayload,
   buildPayrollAdjustmentPayload,
+  buildPayrollResultExportUrl,
   buildRunPayrollPayload,
   mapPayrollAdjustment,
   mapPayrollEmailOutcome,
@@ -179,4 +180,18 @@ test('payroll query and response helpers match the HTTP envelopes', () => {
   })
   assert.deepEqual(unwrapPayrollResponse({ success: true, data: { items: [] } }), { items: [] })
   assert.deepEqual(unwrapPayrollResponse({ data: { status: 'SUCCESS' } }), { status: 'SUCCESS' })
+})
+
+test('payroll result export preserves only active filters in its query string', () => {
+  assert.equal(
+    buildPayrollResultExportUrl({
+      month: 7,
+      year: 2026,
+      status: 'PAID',
+      q: ' Nguyen ',
+      page: 2,
+      limit: 20,
+    }),
+    '?month=7&q=Nguyen&status=PAID&year=2026',
+  )
 })

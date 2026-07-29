@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
 import ApiOutlinedIcon from '@mui/icons-material/ApiOutlined'
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import BrushOutlinedIcon from '@mui/icons-material/BrushOutlined'
@@ -57,6 +58,7 @@ const NAV_ITEM_ICONS = {
   audit: HistoryOutlinedIcon,
   config: SettingsOutlinedIcon,
   configuration: SettingsOutlinedIcon,
+  clock: AccessTimeOutlinedIcon,
   dashboard: DashboardOutlinedIcon,
   design: BrushOutlinedIcon,
   finance: PaymentsOutlinedIcon,

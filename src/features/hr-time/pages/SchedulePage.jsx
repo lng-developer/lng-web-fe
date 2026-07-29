@@ -23,6 +23,8 @@ import {
 import { useSnackbar } from 'notistack'
 
 import AnimatedDialog from '@/components/common/AnimatedDialog'
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+import DatePicker from '@/components/form/DatePicker'
 import {
   IconActionButton,
   OperationsHeader,
@@ -179,12 +181,10 @@ function HolidayDialog({ record, loading, error, onClose, onDraftChange, onSubmi
           onChange={(event) => updateValues({ name: event.target.value })}
           required
         />
-        <TextField
-          type="date"
+        <DatePicker
           label="Date"
-          slotProps={{ inputLabel: { shrink: true } }}
           value={values.dateKey}
-          onChange={(event) => updateValues({ dateKey: event.target.value })}
+          onChange={(val) => updateValues({ dateKey: val })}
           required
         />
         <TextField
@@ -380,6 +380,7 @@ export default function SchedulePage() {
   const [rotationEditor, setRotationEditor] = useState(false)
   const [rotationOutcome, setRotationOutcome] = useState(null)
   const [rotationMaintenance, setRotationMaintenance] = useState(null)
+  const [deletingRecord, setDeletingRecord] = useState(null)
   const [actionError, setActionError] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_SCHEDULE:WRITE'])
   const canScheduleRead = hasAnyPermission(currentUser, ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'])
@@ -719,12 +720,19 @@ export default function SchedulePage() {
   }
 
   async function removeCalendarRecord(type, id) {
+    setDeletingRecord({ type, id })
+  }
+
+  async function confirmRemoveCalendarRecord() {
+    if (!deletingRecord) return
+    const { type, id } = deletingRecord
     setActionError('')
     try {
       await (type === 'holiday' ? deleteHoliday.mutateAsync(id) : deleteRotation.mutateAsync(id))
       enqueueSnackbar(type === 'holiday' ? 'Holiday removed' : 'Rotation removed', {
         variant: SNACKBAR_VARIANTS.SUCCESS,
       })
+      setDeletingRecord(null)
     } catch (error) {
       enqueueSnackbar(
         error?.data?.message || error?.message || 'Could not remove calendar record',
@@ -1282,6 +1290,14 @@ export default function SchedulePage() {
           onUpdate={saveRotation}
         />
       ) : null}
+      <ConfirmDialog
+        open={Boolean(deletingRecord)}
+        title={deletingRecord?.type === 'holiday' ? 'Delete holiday?' : 'Delete rotation?'}
+        description={`Are you sure you want to delete this ${deletingRecord?.type}? This action cannot be undone.`}
+        loading={deleteHoliday.isPending || deleteRotation.isPending}
+        onClose={() => setDeletingRecord(null)}
+        onConfirm={confirmRemoveCalendarRecord}
+      />
     </OperationsPageShell>
   )
 }

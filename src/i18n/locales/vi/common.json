@@ -32,7 +32,9 @@
     "view": "Xem",
     "copied": "Đã sao chép",
     "copyFailed": "Không thể sao chép",
-    "save": "Lưu"
+    "save": "Lưu",
+    "previous": "Trước",
+    "next": "Sau"
   },
   "nav": {
     "home": "Trang chủ",
@@ -387,24 +389,90 @@
     }
   },
   "rbac": {
-    "title": "RBAC",
+    "title": "Quản trị truy cập",
+    "description": "Quản lý tài khoản, vai trò, quyền và phạm vi theo đúng quyền truy cập hiệu lực từ backend.",
+    "recordCount": "{{count}} bản ghi",
+    "workspaces": {
+      "access": {
+        "label": "Khám phá quyền",
+        "description": "Chọn tài khoản để truy vết quyền global, theo scope và quyền hiệu lực do backend trả về."
+      },
+      "policies": {
+        "label": "Vai trò & Chính sách",
+        "description": "Cấu hình bộ quyền của vai trò và tra cứu danh mục quyền mà không phải chuyển qua nhiều bảng."
+      },
+      "matrix": {
+        "label": "Ma trận scope",
+        "description": "Kiểm tra bộ quyền thay thế theo vai trò và scope, đồng thời quản lý tài nguyên scope đã đăng ký."
+      }
+    },
     "common": {
-      "loading": "Đang tải dữ liệu..."
+      "readOnly": "Bạn chỉ có quyền xem cấu hình phân quyền.",
+      "loading": "Đang tải dữ liệu...",
+      "loadError": "Không thể tải dữ liệu này.",
+      "empty": "Chưa có bản ghi.",
+      "noResults": "Không có bản ghi phù hợp với bộ lọc.",
+      "requestFailed": "Không thể thực hiện yêu cầu."
     },
     "tabs": {
-      "users": "Users",
-      "roles": "Roles",
-      "permissions": "Permissions",
-      "scopes": "Scopes",
-      "scopedOverrides": "Scoped Overrides"
+      "users": "Tài khoản",
+      "roles": "Vai trò",
+      "permissions": "Quyền",
+      "scopes": "Phạm vi",
+      "scopedOverrides": "Ghi đè theo scope"
+    },
+    "explorer": {
+      "selectAccount": "Chọn tài khoản",
+      "noAccount": "Chọn một tài khoản để xem quyền truy cập.",
+      "sections": {
+        "overview": "Tổng quan",
+        "global": "Global",
+        "scoped": "Theo scope",
+        "effective": "Hiệu lực"
+      },
+      "actionsTitle": "Thao tác tài khoản",
+      "actionsHint": "Mọi thay đổi chỉ áp dụng cho tài khoản đang chọn.",
+      "contractTitle": "Cách quyền truy cập hoạt động",
+      "contractHint": "Quyền global và theo scope luôn tách biệt. Quyền hiệu lực được tải lại từ backend sau mỗi thay đổi.",
+      "globalHint": "Vai trò và quyền trực tiếp áp dụng trên mọi scope.",
+      "directPermissions": "Quyền global trực tiếp",
+      "effectiveHint": "Quyền hiệu lực do backend trả về và được nhóm để dễ đọc. Trình duyệt không tự tính kết quả này.",
+      "viewAll": "Xem tất cả ({{count}})",
+      "showLess": "Thu gọn"
+    },
+    "policies": {
+      "modes": {
+        "roles": "Vai trò",
+        "permissions": "Danh mục quyền"
+      },
+      "noDescription": "Chưa có mô tả.",
+      "permissionCount": "Quyền được gán",
+      "roleCode": "Mã vai trò",
+      "assignedPermissions": "Quyền được gán",
+      "noPermissions": "Vai trò này chưa được gán quyền."
+    },
+    "matrix": {
+      "title": "Ma trận quan hệ scope",
+      "hint": "Chọn giao điểm vai trò và scope để xem bộ quyền thay thế.",
+      "roles": "Vai trò",
+      "empty": "Chưa có vai trò hoặc scope hoạt động để hiển thị ma trận.",
+      "inherited": "Kế thừa",
+      "permissionCount": "{{count}} quyền",
+      "cellLabel": "{{role}} tại {{scope}}: {{count}} quyền thay thế",
+      "replacementSummary": "Bộ thay thế gồm {{count}} quyền đang áp dụng cho vai trò và scope này.",
+      "noReplacement": "Chưa có bộ thay thế. Vai trò giữ quyền mặc định trong scope này.",
+      "editReplacement": "Sửa bộ thay thế",
+      "directoryTitle": "Danh mục scope",
+      "directoryHint": "Kiểm tra tài nguyên, mức sử dụng, quan hệ phân cấp và trạng thái hoạt động."
     },
     "users": {
       "searchPlaceholder": "Tìm theo tên, email, mã nhân viên...",
       "columns": {
         "user": "Người dùng",
         "status": "Trạng thái",
-        "role": "Vai trò",
-        "department": "Phòng ban",
+        "organization": "Phòng ban / Team",
+        "globalAccess": "Quyền global",
+        "scopedAccess": "Quyền theo scope",
         "lastLogin": "Đăng nhập gần nhất",
         "actions": "Hành động"
       },
@@ -422,7 +490,12 @@
       "filter": {
         "allStatus": "Tất cả trạng thái",
         "allRoles": "Tất cả vai trò",
-        "allDepartments": "Tất cả phòng ban"
+        "allDepartments": "Tất cả phòng ban",
+        "allTeams": "Tất cả team"
+      },
+      "scopedAssignmentCount": "{{count}} phân quyền",
+      "pagination": {
+        "total": "Tổng {{count}} tài khoản"
       },
       "addModal": {
         "title": "Thêm tài khoản mới",
@@ -442,48 +515,79 @@
       },
       "viewModal": {
         "title": "Thông tin tài khoản — {{name}}",
+        "subtitle": "Phân biệt quyền global, quyền theo scope và quyền hiệu lực của tài khoản.",
         "loginName": "TÊN ĐĂNG NHẬP",
-        "password": "MẬT KHẨU",
-        "showPassword": "Hiện",
-        "hidePassword": "Ẩn",
-        "passwordUnavailable": "Không hiển thị vì lý do bảo mật",
         "resetPassword": "Reset mật khẩu",
-        "resetPasswordPrompt": "Nhập mật khẩu tạm thời mới",
+        "resetDialog": {
+          "title": "Đặt mật khẩu tạm thời mới",
+          "password": "Mật khẩu mới",
+          "hint": "Mật khẩu phải có ít nhất 6 ký tự."
+        },
         "resetPasswordSuccess": "Đã reset mật khẩu thành công!",
         "updateStatusSuccess": "Đã cập nhật trạng thái tài khoản!",
-        "role": "VAI TRÒ",
+        "revokeSessions": "Thu hồi phiên đăng nhập",
+        "revokeSessionsConfirm": "Thu hồi toàn bộ phiên đăng nhập đang hoạt động của tài khoản này?",
+        "revokeSessionsSuccess": "Đã thu hồi toàn bộ phiên đăng nhập!",
         "status": "TRẠNG THÁI",
         "department": "PHÒNG BAN",
-        "noDepartment": "— (toàn hệ thống, không thuộc phòng ban)",
+        "team": "TEAM",
+        "memberType": "LOẠI THÀNH VIÊN",
+        "lastLogin": "ĐĂNG NHẬP GẦN NHẤT",
+        "lastLoginIp": "IP ĐĂNG NHẬP",
         "createdAt": "NGÀY TẠO TÀI KHOẢN",
-        "createdBy": "CẤP TÀI KHOẢN BỞI",
+        "globalAccess": "Quyền truy cập global",
+        "globalRoles": "Vai trò global",
+        "globalPermissions": "Quyền global hiệu lực",
+        "noGlobalRoles": "Chưa có vai trò global",
+        "noGlobalPermissions": "Chưa có quyền global",
+        "effectiveAccess": "Tổng quyền hiệu lực",
+        "effectiveHint": "Hợp nhất quyền global và mọi phân quyền theo scope.",
+        "noEffectivePermissions": "Tài khoản chưa có quyền hiệu lực",
+        "scopedAccess": "Phân quyền theo scope",
+        "assignmentCount": "{{count}} phân quyền",
+        "noScopedAccess": "Tài khoản chưa có phân quyền theo scope",
+        "noScopedPermissions": "Phân quyền này chưa có quyền hiệu lực",
+        "replacementMode": "Bộ quyền thay thế",
+        "inheritedMode": "Kế thừa từ vai trò",
+        "loadError": "Không thể tải thông tin tài khoản.",
         "close": "Đóng"
       },
       "editAccessModal": {
-        "title": "Edit Access — {{name}}",
-        "banner": "Mỗi scope assignment có role, scope và bộ quyền riêng. Đổi role hoặc scope sẽ reset quyền riêng về mặc định theo role/scope.",
-        "globalAccess": "Global Access",
-        "globalRoles": "Global Roles",
-        "scopedAccess": "Scoped Access Assignments",
-        "scopedAccessHint": "Chỉnh role/scope trực tiếp trên từng dòng. Dùng Sửa quyền để bật/tắt permission riêng cho assignment đó.",
-        "scopedColumns": {
-          "role": "Role",
-          "scopeType": "Scope Type",
-          "scopeResource": "Scope Resource",
-          "customPerms": "Custom Perms"
+        "title": "Chỉnh quyền: {{name}}",
+        "banner": "Mỗi phân quyền theo scope có vai trò, phạm vi và bộ quyền riêng. Đổi vai trò hoặc phạm vi sẽ đặt lại bộ quyền riêng theo mặc định.",
+        "modes": {
+          "global": "Global ({{roles}} vai trò, {{permissions}} quyền trực tiếp)",
+          "scoped": "Theo scope ({{count}} phân quyền)"
         },
-        "noScopedAccess": "Chưa có scoped access nào được gán",
+        "discardConfirm": "Bỏ các thay đổi quyền chưa lưu?",
+        "deleteConfirm": "Gỡ phân quyền theo scope này?",
+        "globalAccess": "Quyền truy cập global",
+        "globalRoles": "Vai trò global",
+        "globalAccessHint": "Vai trò và quyền trực tiếp áp dụng trên toàn hệ thống.",
+        "globalPermissions": "Quyền trực tiếp global",
+        "globalPermissionsHint": "Các quyền này được cộng thêm ngoài quyền có sẵn từ vai trò global.",
+        "saveGlobalAccess": "Lưu quyền global",
+        "globalAccessSuccess": "Đã cập nhật quyền global!",
+        "scopedAccess": "Các phân quyền theo scope",
+        "scopedAccessHint": "Chỉnh vai trò/phạm vi trực tiếp trên từng dòng. Dùng Sửa quyền để bật/tắt quyền riêng cho phân quyền đó.",
+        "scopedColumns": {
+          "role": "Vai trò",
+          "scopeType": "Loại phạm vi",
+          "scopeResource": "Tài nguyên phạm vi",
+          "customPerms": "Quyền riêng"
+        },
+        "noScopedAccess": "Chưa có phân quyền theo scope",
         "assignmentRole": "Vai trò",
         "scopeAssignment": "Phân quyền theo scope",
-        "scopeAssignmentPlaceholder": "Chọn scope access assignment",
-        "addScopedAssignment": "Cấp scoped access",
+        "scopeAssignmentPlaceholder": "Chọn phạm vi cần cấp quyền",
+        "addScopedAssignment": "Cấp quyền theo scope",
         "permissionOverride": {
           "title": "Chỉnh sửa quyền riêng",
           "edit": "Sửa quyền",
           "save": "Lưu quyền",
           "reset": "Reset về mặc định",
-          "overrideMode": "Đang dùng danh sách quyền override riêng cho assignment này.",
-          "inheritedMode": "Đang kế thừa quyền từ role/scope. Lưu thay đổi sẽ bật override.",
+          "overrideMode": "Đang dùng danh sách quyền ghi đè riêng cho phân quyền này.",
+          "inheritedMode": "Đang kế thừa quyền từ vai trò/phạm vi. Lưu thay đổi sẽ bật ghi đè.",
           "selectedCount": "{{count}} quyền được chọn",
           "inheritedCount": "{{count}} quyền kế thừa",
           "effectiveCount": "{{count}} quyền hiệu lực"
@@ -507,7 +611,10 @@
       "permissionCount": "{{count}} quyền",
       "actions": {
         "addRole": "Thêm vai trò",
-        "edit": "Sửa"
+        "edit": "Sửa",
+        "deleteConfirm": "Xoá vai trò này?",
+        "deleteSuccess": "Đã xoá vai trò!",
+        "inUse": "Vai trò đang được gán cho {{count}} tài khoản"
       },
       "addModal": {
         "title": "Thêm vai trò mới",
@@ -537,16 +644,18 @@
       "searchPlaceholder": "Tìm theo mã hoặc tên quyền...",
       "filter": {
         "allModules": "Tất cả module",
-        "allActions": "Tất cả action",
-        "allStatus": "Tất cả trạng thái",
-        "active": "Hoạt động",
-        "deprecated": "Deprecated"
+        "allActions": "Tất cả action"
       },
       "columns": {
         "code": "Mã quyền",
         "name": "Tên quyền",
-        "description": "Mô tả",
+        "moduleAction": "Module / Action",
+        "usage": "Mức sử dụng",
         "actions": "Hành động"
+      },
+      "usage": {
+        "total": "{{count}} nơi đang dùng",
+        "breakdown": "Role {{roles}} · Scoped role {{scoped}} · Gán trực tiếp {{direct}}"
       },
       "actions": {
         "addPermission": "Thêm quyền",
@@ -610,9 +719,12 @@
         "type": "Loại Scope",
         "name": "Tên",
         "department": "Thuộc phòng ban",
+        "assignments": "Đang sử dụng",
         "status": "Trạng thái",
         "actions": "Hành động"
       },
+      "assignmentCount": "{{count}} phân quyền",
+      "deactivateBlocked": "Không thể tắt scope đang có {{count}} phân quyền",
       "actions": {
         "addScope": "Thêm Scope",
         "view": "Xem",
@@ -654,38 +766,34 @@
       "toggleSuccess": "Đã cập nhật trạng thái scope."
     },
     "scopedOverrides": {
-      "filterLabel": "CHỌN VAI TRÒ ĐỂ CHỈNH SỬA CẤP QUYỀN",
-      "filterHint": "Tổng quan quyền của tất cả vai trò — bấm \"Chỉnh sửa\" trên từng vai trò để cấp thêm quyền chi tiết.",
+      "filterLabel": "LỌC THEO VAI TRÒ",
+      "filterHint": "Mỗi rule thay thế toàn bộ bộ quyền mặc định của vai trò trong scope đã chọn.",
       "allRoles": "Tất cả vai trò",
       "noRoles": "Không có vai trò phù hợp.",
       "roleLabel": "Vai trò: {{name}}",
-      "editRolePerms": "Chỉnh sửa cấp quyền cho {{name}} →",
-      "editAnonymousPerms": "Chỉnh sửa cấp quyền cho Anonymous →",
+      "editRolePerms": "Thiết lập bộ quyền thay thế cho {{name}} →",
       "defaultPermsTitle": "Quyền mặc định của vai trò '{{name}}'",
-      "grantedTitle": "Cấp thêm quyền cho '{{name}}'",
+      "grantedTitle": "Bộ quyền thay thế theo scope của '{{name}}'",
       "defaultBadge": "MẶC ĐỊNH · READ-ONLY",
-      "grantBadge": "CẤP THÊM · GRANT",
-      "fullAccessNote": "Toàn quyền hệ thống ({{count}} quyền) — không cần liệt kê chi tiết.",
+      "grantBadge": "THAY THẾ · REPLACEMENT",
       "noDefaultNote": "Chưa có quyền mặc định cho vai trò này.",
-      "adminGrantNote": "Admin đã có toàn quyền ở mọi scope — không áp dụng override.",
-      "noOverrideNote": "Chưa có override nào cho vai trò này.",
-      "noOverrideAnonymousNote": "Chưa có override nào cho vai trò Anonymous.",
-      "grantedBadge": "Đã cấp thêm",
-      "revokeSuccess": "Đã thu hồi quyền thành công!",
-      "addMore": "+ Thêm",
+      "noOverrideNote": "Chưa có rule thay thế. Vai trò đang dùng bộ quyền mặc định ở mọi scope.",
+      "grantedBadge": "Quyền thay thế",
+      "revokeSuccess": "Đã cập nhật bộ quyền thay thế!",
+      "addMore": "Sửa bộ quyền",
       "grantModal": {
-        "title": "Cấp thêm quyền",
+        "title": "Sửa bộ quyền thay thế",
         "contextPrefix": "Áp dụng cho vai trò '{{role}}' tại {{scopeType}} '{{scopeName}}'.",
-        "permissionsLabel": "Quyền cần cấp thêm",
-        "permissionsPlaceholder": "Chọn quyền cần cấp thêm (có thể chọn nhiều)...",
+        "permissionsLabel": "Toàn bộ quyền áp dụng trong scope",
+        "permissionsPlaceholder": "Chọn bộ quyền thay thế...",
         "noteLabel": "Ghi chú (tuỳ chọn)",
         "notePlaceholder": "Vd: Cho phép xếp ca cho team thuộc scope này...",
         "cancel": "Huỷ",
-        "submit": "Cấp quyền",
-        "success": "Cấp quyền thành công!"
+        "submit": "Lưu bộ quyền",
+        "success": "Đã lưu bộ quyền thay thế!"
       },
       "scopedGrantModal": {
-        "title": "Cấp phạm vi quyền cho vai trò {{name}}",
+        "title": "Thiết lập bộ quyền thay thế cho {{name}}",
         "scopeTypeLabel": "LOẠI SCOPE",
         "scopeTypePlaceholder": "Chọn loại scope",
         "scopeTypeHint": "Cho loại phạm vi Department hoặc Team. Global đang chờ backend hỗ trợ validator scopeId null.",
@@ -698,14 +806,14 @@
         "scopePlaceholder": "Chọn quyền sẽ áp dụng trong scope...",
         "scopeHintDepartment": "Hiện các scope thuộc loại Department — chọn phòng ban cụ thể",
         "scopeHintTeam": "Hiện các scope thuộc loại Team — chọn team cụ thể",
-        "permissionsLabel": "QUYỀN CẦN CẤP",
-        "permissionsPlaceholder": "Chọn quyền sẽ áp dụng trong scope...",
-        "permissionsHint": "Chỉ hiện quyền chưa được cấp trong scope này",
+        "permissionsLabel": "BỘ QUYỀN THAY THẾ",
+        "permissionsPlaceholder": "Chọn toàn bộ quyền sẽ áp dụng trong scope...",
+        "permissionsHint": "Danh sách này thay thế quyền mặc định; để trống nghĩa là không có quyền trong scope.",
         "noteLabel": "Ghi chú",
         "notePlaceholder": "Vd: Cho phép Anonymous xem dữ liệu phòng QC...",
         "cancel": "Huỷ",
-        "submit": "Cấp quyền",
-        "success": "Cấp phạm vi quyền thành công!"
+        "submit": "Lưu bộ quyền",
+        "success": "Đã lưu bộ quyền thay thế!"
       }
     }
   },
@@ -2828,6 +2936,9 @@
     "title": "Vận hành thời gian nhân sự",
     "groups": {
       "myHr": "Nhân sự của tôi",
+      "selfService": "Cá nhân",
+      "timeAttendance": "Thời gian & Chấm công",
+      "coreHr": "Hồ sơ nhân sự",
       "peopleTime": "Nhân sự & Thời gian",
       "payroll": "Bảng lương",
       "communication": "Truyền thông",
@@ -2881,6 +2992,14 @@
       "payrollRuns": "Kỳ lương",
       "announcements": "Thông báo chung",
       "settings": "Cấu hình nhân sự"
+    },
+    "units": {
+      "minutes": "{{count}}m",
+      "hours": "{{count}}h",
+      "hoursMinutes": "{{hours}}h{{minutes}}m",
+      "days_one": "{{count}} ngày",
+      "days_other": "{{count}} ngày",
+      "days": "{{count}} ngày"
     }
   },
   "financeProfit": {

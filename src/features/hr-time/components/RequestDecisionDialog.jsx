@@ -11,6 +11,8 @@ import {
   Typography,
 } from '@mui/material'
 
+import { formatMinutes } from '../utils/hrTimeApi'
+
 export default function RequestDecisionDialog({
   open,
   action,
@@ -76,9 +78,13 @@ export default function RequestDecisionDialog({
               type="number"
               label={t('hrTime.fields.approvedMinutes', { defaultValue: 'Approved minutes' })}
               value={approvedMinutes}
-              helperText={t('hrTime.help.approvedMinutes', {
-                defaultValue: 'Leave blank to approve the full requested duration.',
-              })}
+              helperText={
+                approvedMinutes
+                  ? formatMinutes(approvedMinutes, t)
+                  : t('hrTime.help.approvedMinutes', {
+                      defaultValue: 'Leave blank to approve the full requested duration.',
+                    })
+              }
               slotProps={{ htmlInput: { min: 1, step: 1 } }}
               onChange={(event) => setApprovedMinutes(event.target.value)}
             />

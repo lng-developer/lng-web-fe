@@ -31,7 +31,7 @@ test('attendance adjustment and schedule edits follow backend capabilities', asy
   assert.match(attendance, /useAttendanceMonthMatrixQuery/)
   assert.match(attendance, /exceptionsOnly/)
   assert.match(attendance, /cell\.capabilities\?\.adjust/)
-  assert.match(attendance, /MonthlyStaffMatrix/)
+  assert.match(attendance, /AttendanceStaffList/)
   assert.doesNotMatch(attendance, /roleName|roles\.includes/)
   assert.match(schedule, /row\.capabilities\?\.edit/)
   assert.doesNotMatch(schedule, /roleName|roles\.includes/)

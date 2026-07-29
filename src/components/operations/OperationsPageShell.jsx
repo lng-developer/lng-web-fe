@@ -13,7 +13,7 @@ export default function OperationsPageShell({
       className={`flex ${operationsPageHeightClass} flex-col gap-3 overflow-hidden bg-surface px-4 pt-0 pb-0 ${className}`}
     >
       {header || tabs || toolbar ? (
-        <div className="sticky top-0 z-30 flex shrink-0 flex-col gap-3 bg-surface">
+        <div className="sticky top-0 z-30 flex shrink-0 flex-col gap-4 bg-surface pb-4 pt-1">
           {header ? <div>{header}</div> : null}
           {tabs ? <div>{tabs}</div> : null}
           {toolbar ? <div>{toolbar}</div> : null}

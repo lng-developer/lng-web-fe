@@ -11,6 +11,8 @@ import {
   TextField,
 } from '@mui/material'
 
+import DatePicker from '@/components/form/DatePicker'
+
 const leaveTypes = [
   'ANNUAL',
   'SICK',
@@ -35,9 +37,20 @@ function enumLabel(t, group, value) {
   return t(`hrTime.enums.${group}.${value}`, { defaultValue: value.replaceAll('_', ' ') })
 }
 
-export default function LeaveRequestDialog({ open, loading = false, error, onClose, onSubmit }) {
+export default function LeaveRequestDialog({
+  open,
+  initialDate,
+  loading = false,
+  error,
+  onClose,
+  onSubmit,
+}) {
   const { t } = useTranslation()
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState({
+    ...initialForm,
+    startDateKey: initialDate || '',
+    endDateKey: initialDate || '',
+  })
 
   function update(key, value) {
     setForm((current) => ({
@@ -101,23 +114,20 @@ export default function LeaveRequestDialog({ open, loading = false, error, onClo
             ))}
           </TextField>
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
+            <DatePicker
               required
               fullWidth
-              type="date"
               label={t('hrTime.fields.startDate', { defaultValue: 'Start date' })}
               value={form.startDateKey}
               helperText={t('hrTime.help.startDate', {
                 defaultValue: 'First requested working date.',
               })}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => update('startDateKey', event.target.value)}
+              onChange={(val) => update('startDateKey', val)}
             />
-            <TextField
+            <DatePicker
               required
               fullWidth
               disabled={form.portion !== 'FULL_DAY'}
-              type="date"
               label={t('hrTime.fields.endDate', { defaultValue: 'End date' })}
               value={endDate}
               error={invalidRange}
@@ -128,8 +138,7 @@ export default function LeaveRequestDialog({ open, loading = false, error, onClo
                     })
                   : t('hrTime.help.endDate', { defaultValue: 'Last requested working date.' })
               }
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => update('endDateKey', event.target.value)}
+              onChange={(val) => update('endDateKey', val)}
             />
           </div>
           <TextField

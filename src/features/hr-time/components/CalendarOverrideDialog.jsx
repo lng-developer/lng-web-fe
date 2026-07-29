@@ -11,6 +11,8 @@ import {
   TextField,
 } from '@mui/material'
 
+import DatePicker from '@/components/form/DatePicker'
+
 import { buildCalendarOverridePayload } from '../utils/hrTimeApi.js'
 
 const initialValues = {
@@ -75,16 +77,14 @@ export default function CalendarOverrideDialog({
         <DialogContent className="space-y-4 !pt-2">
           {error ? <Alert severity="error">{error}</Alert> : null}
           <div className="grid gap-3 sm:grid-cols-2">
-            <TextField
+            <DatePicker
               required
-              type="date"
               label={t('hrTime.fields.overrideDate.label', { defaultValue: 'Calendar date' })}
               helperText={t('hrTime.fields.overrideDate.helperText', {
                 defaultValue: 'Date whose normal work rule is replaced.',
               })}
               value={values.dateKey}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={(event) => setField('dateKey', event.target.value)}
+              onChange={(val) => setField('dateKey', val)}
             />
             <TextField
               select

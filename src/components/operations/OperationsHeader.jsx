@@ -2,19 +2,23 @@ import { Typography } from '@mui/material'
 
 export default function OperationsHeader({ title, subtitle, actions }) {
   return (
-    <header className="bg-surface">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <header className="bg-surface pt-4 pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Typography variant="h5" className="font-bold text-ink-strong">
+          <Typography
+            variant="h4"
+            className="font-extrabold text-ink-strong tracking-tight"
+            style={{ fontSize: '1.5rem' }}
+          >
             {title}
           </Typography>
           {subtitle ? (
-            <Typography variant="body2" className="mt-1 text-ink-muted">
+            <Typography variant="body2" className="mt-1 font-medium text-ink-muted">
               {subtitle}
             </Typography>
           ) : null}
         </div>
-        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+        {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
       </div>
     </header>
   )

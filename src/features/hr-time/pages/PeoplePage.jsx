@@ -183,42 +183,64 @@ export default function PeoplePage() {
     if (column.key === 'employee') {
       return (
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar src={row.avatarUrl || undefined} alt={row.fullName || ''} className="!h-9 !w-9">
+          <Avatar
+            src={row.avatarUrl || undefined}
+            alt={row.fullName || ''}
+            className="!h-10 !w-10 !rounded-xl !shadow-sm"
+            variant="rounded"
+          >
             {row.fullName?.slice(0, 1)}
           </Avatar>
-          <div className="min-w-0">
-            <Typography variant="body2" className="truncate font-semibold text-ink-strong">
+          <div className="min-w-0 flex flex-col gap-0.5">
+            <Typography variant="body2" className="truncate font-bold text-ink-strong">
               {row.fullName || '-'}
             </Typography>
-            <Typography variant="caption" className="text-ink-muted">
-              {row.employeeCode || '-'}
-            </Typography>
+            <div className="flex items-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted bg-surface-subtle px-1.5 py-0.5 rounded border border-border">
+                {row.employeeCode || '-'}
+              </span>
+            </div>
           </div>
         </div>
       )
     }
     if (column.key === 'organization') {
       return (
-        <div>
-          <Typography variant="body2">{row.department?.name || '-'}</Typography>
-          <Typography variant="caption" className="text-ink-muted">
+        <div className="flex flex-col gap-1.5">
+          <span className="inline-flex items-center w-fit text-[11px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/50">
+            {row.department?.name || '-'}
+          </span>
+          <span className="text-xs text-ink-muted flex items-center gap-1.5 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
             {row.team?.name || '-'}
-          </Typography>
+          </span>
         </div>
       )
     }
     if (column.key === 'job') {
       return (
-        <div>
-          <Typography variant="body2">{row.jobTitle || '-'}</Typography>
+        <div className="flex flex-col gap-0.5">
+          <Typography variant="body2" className="font-semibold text-ink-strong">
+            {row.jobTitle || '-'}
+          </Typography>
           <Typography variant="caption" className="text-ink-muted">
             {row.jobLevel || '-'}
           </Typography>
         </div>
       )
     }
-    if (column.key === 'employment')
-      return `${row.employmentType?.replaceAll('_', ' ') || '-'} / ${row.workMode || '-'}`
+    if (column.key === 'employment') {
+      return (
+        <div className="flex flex-col gap-1.5 items-start">
+          <span className="inline-flex text-[10px] font-bold uppercase tracking-wide text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50">
+            {row.employmentType?.replaceAll('_', ' ') || '-'}
+          </span>
+          <span className="inline-flex text-[10px] font-bold uppercase tracking-wide text-sky-700 bg-sky-50 dark:text-sky-400 dark:bg-sky-900/30 px-1.5 py-0.5 rounded border border-sky-200 dark:border-sky-800/50">
+            {row.workMode || '-'}
+          </span>
+        </div>
+      )
+    }
     if (column.key === 'status') {
       return (
         <StatusBadge

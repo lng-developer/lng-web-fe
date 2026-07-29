@@ -1,11 +1,3 @@
-export const OVERRIDE_ROLE_FILTER_OPTIONS = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'LEADER', label: 'Leader' },
-  { value: 'STAFF', label: 'Staff' },
-  { value: 'ANONYMOUS', label: 'Anonymous' },
-]
-
 function cleanArray(values = []) {
   return Array.isArray(values) ? values.filter(Boolean) : []
 }
@@ -21,7 +13,7 @@ export function getOverrideRoleCode(role = {}) {
 }
 
 export function getOverrideRoleName(role = {}) {
-  return role.name || role.roleName || getOverrideRoleCode(role) || '—'
+  return role.name || role.roleName || getOverrideRoleCode(role) || '-'
 }
 
 export function filterOverrideRoles(roles = [], roleFilter = '') {
@@ -46,7 +38,7 @@ export function getScopeOptionLabel(scope = {}) {
     scope.resource?.name ||
     scope.scope?.name ||
     scope.scopeId ||
-    '—'
+    '-'
   )
 }
 
@@ -82,14 +74,8 @@ export function buildScopedOverrideSections({ roles = [], permissions = [], rule
   })
 }
 
-export function getAvailableOverridePermissions({ permissions = [], role = {}, rule = null } = {}) {
-  const blockedIds = new Set([
-    ...getPermissionIdsFromRole(role),
-    ...cleanArray(rule?.permissionIds),
-    ...cleanArray(rule?.permissionDetails).map((permission) => permission.id),
-  ])
-
-  return permissions.filter((permission) => !blockedIds.has(permission.id))
+export function getAvailableOverridePermissions({ permissions = [] } = {}) {
+  return permissions
 }
 
 export function buildScopedRulePayload({ role, scope, permissionIds = [] }) {
@@ -98,5 +84,21 @@ export function buildScopedRulePayload({ role, scope, permissionIds = [] }) {
     scopeType: scope?.scopeType,
     scopeId: scope?.scopeId || scope?.resourceId || scope?.id,
     permissionIds: unique(permissionIds),
+  }
+}
+
+export function getScopeMatrixCell(rules = [], role = {}, scope = {}) {
+  const rule =
+    rules.find(
+      (item) =>
+        item.roleId === role.id &&
+        item.scopeType === scope.scopeType &&
+        item.scopeId === (scope.scopeId || scope.resourceId || scope.id),
+    ) ?? null
+
+  return {
+    hasReplacement: Boolean(rule),
+    permissionCount: rule?.permissionIds?.length ?? 0,
+    rule,
   }
 }

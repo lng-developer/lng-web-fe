@@ -5,10 +5,22 @@ import AddIcon from '@mui/icons-material/Add'
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined'
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import { Alert, Button, MenuItem, TextField, Typography } from '@mui/material'
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  LinearProgress,
+  MenuItem,
+  TextField,
+  Typography,
+} from '@mui/material'
 import dayjs from 'dayjs'
 import { useSnackbar } from 'notistack'
 
+import DateRangePicker from '@/components/form/DateRangePicker'
+import MonthPicker from '@/components/form/MonthPicker'
 import {
   OperationsHeader,
   OperationsPageShell,
@@ -41,11 +53,12 @@ import LeaveRequestDialog from '../components/LeaveRequestDialog'
 import LeaveRequestPreviewDialog from '../components/LeaveRequestPreviewDialog'
 import OvertimeRequestDialog from '../components/OvertimeRequestDialog'
 import RequestReviewDrawer from '../components/RequestReviewDrawer'
+import StaffMonthlyCalendar from '../components/StaffMonthlyCalendar'
 import TimeRequestTable from '../components/TimeRequestTable'
 import { getSelfAttendanceActions } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
-const tabs = ['today', 'leave', 'overtime', 'history']
+const tabs = ['schedule', 'leave', 'overtime']
 const requestStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']
 
 export default function MyTimePage() {
@@ -58,11 +71,7 @@ export default function MyTimePage() {
   const canUseOvertime = hasAnyPermission(currentUser, ['HR_OVERTIME:WRITE'])
   const requestedTab = searchParams.get('tab')
   const enabledTabs = tabs.filter((value) =>
-    value === 'today' || value === 'history'
-      ? canUseAttendance
-      : value === 'leave'
-        ? canUseLeave
-        : canUseOvertime,
+    value === 'schedule' ? canUseAttendance : value === 'leave' ? canUseLeave : canUseOvertime,
   )
   const defaultTab = enabledTabs[0] || tabs[0]
   const tab = enabledTabs.includes(requestedTab) ? requestedTab : defaultTab
@@ -70,7 +79,9 @@ export default function MyTimePage() {
   const status = searchParams.get('status') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
+  const scheduleMonth = searchParams.get('month') || dayjs().format('YYYY-MM')
   const [createDialog, setCreateDialog] = useState(null)
+  const [quickActionDate, setQuickActionDate] = useState(null)
   const [leavePreview, setLeavePreview] = useState(null)
   const [review, setReview] = useState(null)
   const [actionError, setActionError] = useState('')
@@ -93,12 +104,6 @@ export default function MyTimePage() {
     ...(dateFrom ? { dateFrom } : {}),
     ...(dateTo ? { dateTo } : {}),
   }
-  const historyFilters = {
-    page,
-    limit: pageSize,
-    ...(dateFrom ? { dateFrom } : {}),
-    ...(dateTo ? { dateTo } : {}),
-  }
   const todayQuery = useMyAttendanceQuery(
     { page, limit: pageSize, dateFrom: today, dateTo: today },
     { enabled: canUseAttendance },
@@ -112,8 +117,19 @@ export default function MyTimePage() {
   const overtimeQuery = useMyOvertimeRequestsQuery(requestFilters, {
     enabled: tab === 'overtime' && canUseOvertime,
   })
-  const historyQuery = useMyAttendanceQuery(historyFilters, {
-    enabled: tab === 'history' && canUseAttendance,
+
+  const scheduleMonthStart = dayjs(`${scheduleMonth}-01`).format('YYYY-MM-DD')
+  const scheduleMonthEnd = dayjs(`${scheduleMonth}-01`).endOf('month').format('YYYY-MM-DD')
+  const scheduleFilters = { dateFrom: scheduleMonthStart, dateTo: scheduleMonthEnd, limit: 100 }
+
+  const scheduleAttendanceQuery = useMyAttendanceQuery(scheduleFilters, {
+    enabled: tab === 'schedule' && canUseAttendance,
+  })
+  const scheduleLeaveQuery = useMyLeaveRequestsQuery(scheduleFilters, {
+    enabled: tab === 'schedule' && canUseLeave,
+  })
+  const scheduleOvertimeQuery = useMyOvertimeRequestsQuery(scheduleFilters, {
+    enabled: tab === 'schedule' && canUseOvertime,
   })
   const createLeaveMutation = useCreateLeaveRequestMutation()
   const previewLeaveMutation = usePreviewLeaveRequestMutation()
@@ -125,20 +141,14 @@ export default function MyTimePage() {
   const cancelLeaveMutation = useCancelLeaveRequestMutation()
   const cancelOvertimeMutation = useCancelOvertimeRequestMutation()
   const selectedQuery =
-    tab === 'leave'
-      ? leaveQuery
-      : tab === 'overtime'
-        ? overtimeQuery
-        : tab === 'history'
-          ? historyQuery
-          : todayQuery
+    tab === 'leave' ? leaveQuery : tab === 'overtime' ? overtimeQuery : scheduleAttendanceQuery
   const type = tab === 'leave' || tab === 'overtime' ? tab : 'attendance'
   const rows = selectedQuery.data?.items || []
   const pagination = selectedQuery.data?.pagination || { page, limit: pageSize, total: 0 }
   const hasTabAccess =
     (tab === 'leave' && canUseLeave) ||
     (tab === 'overtime' && canUseOvertime) ||
-    ((tab === 'today' || tab === 'history') && canUseAttendance)
+    (tab === 'schedule' && canUseAttendance)
   const queryError = selectedQuery.error?.data?.message || selectedQuery.error?.message
   const noProfile = selectedQuery.error?.status === 404
   const selfAttendanceActions = getSelfAttendanceActions(todayQuery.data)
@@ -300,33 +310,20 @@ export default function MyTimePage() {
         <OperationsHeader
           title={t('hrTime.myTime.title', { defaultValue: 'My Time' })}
           subtitle={
-            tab === 'today'
+            tab === 'schedule'
               ? todayState
               : t('hrTime.myTime.subtitle', {
                   defaultValue: 'Attendance, leave, and overtime in one personal workspace.',
                 })
           }
           actions={
-            tab === 'today' && attendanceAction && canUseAttendance ? (
-              <Button
-                variant="contained"
-                startIcon={
-                  attendanceAction === 'checkIn' ? <LoginOutlinedIcon /> : <LogoutOutlinedIcon />
-                }
-                disabled={checkInMutation.isPending || checkOutMutation.isPending}
-                onClick={recordAttendance}
-              >
-                {t(`hrTime.actions.${attendanceAction}`, {
-                  defaultValue: attendanceAction === 'checkIn' ? 'Check in' : 'Check out',
-                })}
-              </Button>
-            ) : tab === 'leave' && canUseLeave ? (
+            tab === 'leave' && canUseLeave ? (
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => {
                   setActionError('')
-                  setCreateDialog('leave')
+                  setCreateDialog({ type: 'leave' })
                 }}
               >
                 {t('hrTime.actions.requestLeave', { defaultValue: 'Request leave' })}
@@ -337,7 +334,7 @@ export default function MyTimePage() {
                 startIcon={<AddIcon />}
                 onClick={() => {
                   setActionError('')
-                  setCreateDialog('overtime')
+                  setCreateDialog({ type: 'overtime' })
                 }}
               >
                 {t('hrTime.actions.requestOvertime', { defaultValue: 'Request overtime' })}
@@ -365,25 +362,6 @@ export default function MyTimePage() {
       }
       toolbar={
         <OperationsToolbar>
-          {tab === 'leave' && leaveBalancesQuery.data?.length ? (
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-border pb-3">
-              {leaveBalancesQuery.data.map((balance) => (
-                <div key={balance.id || balance.leaveType} className="flex items-baseline gap-2">
-                  <Typography variant="caption" className="font-semibold text-ink-muted">
-                    {t(`hrTime.enums.leaveType.${balance.leaveType}`, {
-                      defaultValue: balance.leaveType?.replaceAll('_', ' '),
-                    })}
-                  </Typography>
-                  <Typography variant="body2" className="font-semibold text-ink-strong">
-                    {t('hrTime.units.days', {
-                      count: Number(balance.availableUnits || 0) / 2,
-                      defaultValue: '{{count}} days',
-                    })}
-                  </Typography>
-                </div>
-              ))}
-            </div>
-          ) : null}
           <div className="flex flex-wrap items-start gap-3">
             {tab === 'leave' || tab === 'overtime' ? (
               <TextField
@@ -404,25 +382,33 @@ export default function MyTimePage() {
                 ))}
               </TextField>
             ) : null}
-            {tab !== 'today' ? (
-              <>
-                <TextField
-                  size="small"
-                  type="date"
-                  label={t('hrTime.filters.dateFrom', { defaultValue: 'From date' })}
-                  value={dateFrom}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  onChange={(event) => updateSearch({ dateFrom: event.target.value }, true)}
-                />
-                <TextField
-                  size="small"
-                  type="date"
-                  label={t('hrTime.filters.dateTo', { defaultValue: 'To date' })}
-                  value={dateTo}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  onChange={(event) => updateSearch({ dateTo: event.target.value }, true)}
-                />
-              </>
+            {tab === 'schedule' ? (
+              <MonthPicker
+                size="small"
+                className="w-48"
+                value={scheduleMonth}
+                onChange={(val) => updateSearch({ month: val }, true)}
+              />
+            ) : null}
+            {tab !== 'schedule' ? (
+              <DateRangePicker
+                size="small"
+                className="w-56"
+                value={{
+                  start: dateFrom ? dayjs(dateFrom) : null,
+                  end: dateTo ? dayjs(dateTo) : null,
+                }}
+                onChange={(range) => {
+                  updateSearch(
+                    {
+                      dateFrom: range.start ? range.start.format('YYYY-MM-DD') : '',
+                      dateTo: range.end ? range.end.format('YYYY-MM-DD') : '',
+                    },
+                    true,
+                  )
+                }}
+                onClear={() => updateSearch({ dateFrom: '', dateTo: '' }, true)}
+              />
             ) : null}
             <Button
               variant="text"
@@ -436,7 +422,7 @@ export default function MyTimePage() {
         </OperationsToolbar>
       }
       pagination={
-        hasTabAccess ? (
+        hasTabAccess && tab !== 'schedule' ? (
           <OperationsPagination
             page={pagination.page || page}
             pageSize={pagination.limit || pageSize}
@@ -477,17 +463,165 @@ export default function MyTimePage() {
           </Typography>
         </Alert>
       ) : hasTabAccess ? (
-        <TimeRequestTable
-          type={type}
-          rows={rows}
-          loading={selectedQuery.isPending}
-          error={queryError}
-          allowedActions={['view', 'cancel']}
-          onReview={(row, action) => {
-            setActionError('')
-            setReview({ row, action: action === 'view' ? null : action })
-          }}
-        />
+        <div className="flex h-full flex-col gap-6 overflow-y-auto pb-6 pr-2">
+          {tab === 'schedule' && canUseAttendance && (
+            <div className="flex flex-col lg:flex-row gap-6 min-h-0">
+              <div className="lg:w-1/3 shrink-0 flex flex-col gap-6">
+                <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+                  <div className="p-5 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <Typography
+                        variant="subtitle2"
+                        className="text-ink-strong font-semibold uppercase tracking-wider text-xs"
+                      >
+                        {t('hrTime.myTime.timeClock', { defaultValue: 'Time Clock' })}
+                      </Typography>
+                    </div>
+                    <Typography variant="h3" className="font-bold text-ink-strong tracking-tight">
+                      {dayjs().format('hh:mm A')}
+                    </Typography>
+                    <Typography variant="body2" className="text-ink-muted font-medium">
+                      {dayjs().format('dddd, MMMM D, YYYY')}
+                    </Typography>
+                  </div>
+
+                  <div className="p-5 bg-black/5 dark:bg-white/5 border-t border-border flex flex-col justify-center gap-3">
+                    <Typography
+                      variant="body2"
+                      className="font-semibold text-ink-strong text-center"
+                    >
+                      {attendanceAction === 'checkOut'
+                        ? t('hrTime.myTime.checkedIn', { defaultValue: 'Checked in' })
+                        : attendanceAction === 'checkIn'
+                          ? t('hrTime.myTime.notCheckedIn', { defaultValue: 'Ready to check in' })
+                          : t('hrTime.myTime.attendanceUnavailable', {
+                              defaultValue: 'No action available',
+                            })}
+                    </Typography>
+
+                    {attendanceAction && (
+                      <Button
+                        variant="contained"
+                        size="large"
+                        className="w-full shadow-md"
+                        color={attendanceAction === 'checkIn' ? 'primary' : 'warning'}
+                        startIcon={
+                          attendanceAction === 'checkIn' ? (
+                            <LoginOutlinedIcon />
+                          ) : (
+                            <LogoutOutlinedIcon />
+                          )
+                        }
+                        disabled={checkInMutation.isPending || checkOutMutation.isPending}
+                        onClick={recordAttendance}
+                      >
+                        {t(`hrTime.actions.${attendanceAction}`, {
+                          defaultValue: attendanceAction === 'checkIn' ? 'Check in' : 'Check out',
+                        })}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:w-2/3 flex-1 flex flex-col gap-4 min-h-0">
+                {(scheduleAttendanceQuery.isPending ||
+                  scheduleLeaveQuery.isPending ||
+                  scheduleOvertimeQuery.isPending) && <LinearProgress className="rounded-full" />}
+                <StaffMonthlyCalendar
+                  month={{
+                    year: parseInt(scheduleMonth.split('-')[0], 10),
+                    month: parseInt(scheduleMonth.split('-')[1], 10),
+                  }}
+                  records={{
+                    attendance: scheduleAttendanceQuery.data?.items || [],
+                    leave: scheduleLeaveQuery.data?.items || [],
+                    overtime: scheduleOvertimeQuery.data?.items || [],
+                  }}
+                  onDayOpen={(day) => {
+                    if (day.leave) {
+                      setReview({ row: day.leave, action: null })
+                    } else if (day.overtime) {
+                      setReview({ row: day.overtime, action: null })
+                    } else if (day.attendance) {
+                      setReview({ row: day.attendance, action: null })
+                    } else {
+                      setQuickActionDate(day.dateKey)
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {tab === 'leave' && canUseLeave && leaveBalancesQuery.data?.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {leaveBalancesQuery.data.map((balance) => {
+                const total =
+                  (balance.entitledUnits || 0) +
+                  (balance.carriedOverUnits || 0) +
+                  (balance.adjustmentUnits || 0)
+                const used = balance.usedUnits || 0
+                const available = balance.availableUnits || 0
+                const totalDays = total / 2
+                const usedDays = used / 2
+                const availableDays = available / 2
+                const percent = total > 0 ? (used / total) * 100 : 0
+
+                return (
+                  <div
+                    key={balance.id || balance.leaveType}
+                    className="rounded-xl border border-border bg-surface p-4 shadow-sm flex flex-col gap-3"
+                  >
+                    <div className="flex justify-between items-center">
+                      <Typography
+                        variant="subtitle2"
+                        className="font-semibold text-ink-strong uppercase tracking-wide text-xs"
+                      >
+                        {t(`hrTime.enums.leaveType.${balance.leaveType}`, {
+                          defaultValue: balance.leaveType?.replaceAll('_', ' '),
+                        })}
+                      </Typography>
+                      <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded text-xs font-bold">
+                        {t('hrTime.units.days', {
+                          count: availableDays,
+                          defaultValue: '{{count}} days left',
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1 mt-1">
+                      <LinearProgress
+                        variant="determinate"
+                        value={percent}
+                        className="h-2 rounded-full"
+                        color={percent > 80 ? 'error' : percent > 50 ? 'warning' : 'primary'}
+                      />
+                      <div className="flex justify-between text-xs text-ink-muted font-medium mt-1">
+                        <span>{usedDays} used</span>
+                        <span>{totalDays} total</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {tab !== 'schedule' && (
+            <TimeRequestTable
+              type={type}
+              rows={rows}
+              loading={selectedQuery.isPending}
+              error={queryError}
+              allowedActions={['view', 'cancel']}
+              onReview={(row, action) => {
+                setActionError('')
+                setReview({ row, action: action === 'view' ? null : action })
+              }}
+            />
+          )}
+        </div>
       ) : (
         <Alert severity="info">
           {t('hrTime.restricted.selfService', {
@@ -495,18 +629,54 @@ export default function MyTimePage() {
           })}
         </Alert>
       )}
-      {createDialog === 'leave' ? (
+      <Dialog
+        open={Boolean(quickActionDate)}
+        onClose={() => setQuickActionDate(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="text-center font-bold">
+          {t('hrTime.quickAction.title', { defaultValue: 'Quick Action' })}
+        </DialogTitle>
+        <DialogContent className="flex flex-col gap-3 pb-6">
+          <Typography variant="body2" className="text-center text-ink-muted mb-2">
+            {quickActionDate ? dayjs(quickActionDate).format('dddd, MMMM D, YYYY') : ''}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setCreateDialog({ type: 'leave', date: quickActionDate })
+              setQuickActionDate(null)
+            }}
+          >
+            {t('hrTime.actions.requestLeave', { defaultValue: 'Request leave' })}
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setCreateDialog({ type: 'overtime', date: quickActionDate })
+              setQuickActionDate(null)
+            }}
+          >
+            {t('hrTime.actions.requestOvertime', { defaultValue: 'Request overtime' })}
+          </Button>
+        </DialogContent>
+      </Dialog>
+      {createDialog?.type === 'leave' ? (
         <LeaveRequestDialog
           open
+          initialDate={createDialog.date}
           loading={previewLeaveMutation.isPending}
           error={actionError}
           onClose={() => setCreateDialog(null)}
           onSubmit={(payload) => createRequest('leave', payload)}
         />
       ) : null}
-      {createDialog === 'overtime' ? (
+      {createDialog?.type === 'overtime' ? (
         <OvertimeRequestDialog
           open
+          initialDate={createDialog.date}
           loading={createOvertimeMutation.isPending}
           error={actionError}
           onClose={() => setCreateDialog(null)}

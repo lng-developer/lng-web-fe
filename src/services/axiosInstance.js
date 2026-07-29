@@ -5,6 +5,10 @@ import { env } from '@/constants/env'
 import { ROUTES } from '@/constants/routes'
 import { ENDPOINTS } from '@/services/endpoints'
 
+import { ApiError, normalizeApiError } from './apiError'
+
+export { ApiError, normalizeApiError }
+
 let accessToken = null
 let refreshPromise = null
 
@@ -30,34 +34,6 @@ function clearStoredRefreshToken() {
   }
 
   window.localStorage.removeItem(STORAGE_KEYS.AUTH_REFRESH_TOKEN)
-}
-
-export class ApiError extends Error {
-  constructor({ message, status, data, code }) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-    this.data = data
-    this.code = code
-  }
-}
-
-function normalizeApiError(error) {
-  if (!axios.isAxiosError(error)) {
-    return error
-  }
-
-  const status = error.response?.status
-  const data = error.response?.data
-  const serverMessage =
-    typeof data === 'object' && data !== null ? data.message || data.error?.message : undefined
-
-  return new ApiError({
-    message: serverMessage || 'errors.api.network',
-    status,
-    data,
-    code: error.code,
-  })
 }
 
 export const apiClient = axios.create({
