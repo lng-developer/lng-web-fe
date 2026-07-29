@@ -53,6 +53,7 @@ export const ROUTES = {
   HR_TIME_OVERTIME: '/hr/overtime',
   HR_MY_PAYSLIPS: '/hr/payslips',
   HR_PAYROLL_RUNS: '/hr/payroll',
+  HR_PAYROLL_REGISTER: '/hr/payroll/register',
   HR_ANNOUNCEMENTS: '/hr/announcements',
   HR_SETTINGS: '/hr/settings',
   UNAUTHORIZED: '/unauthorized',

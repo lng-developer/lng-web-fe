@@ -24,6 +24,8 @@ export {
 export const hrPayrollKeys = {
   all: ['hr-payroll'],
   runs: (query) => [...hrPayrollKeys.all, 'runs', query],
+  results: (query) => [...hrPayrollKeys.all, 'results', query],
+  result: (id) => [...hrPayrollKeys.all, 'result', id],
   run: (id) => [...hrPayrollKeys.all, 'run', id],
   mine: (query) => [...hrPayrollKeys.all, 'mine', query],
   adjustments: (query) => [...hrPayrollKeys.all, 'adjustments', query],
@@ -53,6 +55,26 @@ export function usePayrollRunQuery(id, options = {}) {
     queryKey: hrPayrollKeys.run(id),
     queryFn: () =>
       apiClient.get(ENDPOINTS.HR.PAYROLL_RUN(id)).then(unwrapPayrollResponse).then(mapPayrollRun),
+    enabled: Boolean(id) && options.enabled !== false,
+    ...options,
+  })
+}
+
+export function usePayrollResultsQuery(params, options = {}) {
+  const query = normalizePayrollQuery(params)
+  return useQuery({
+    queryKey: hrPayrollKeys.results(query),
+    queryFn: () => apiClient.get(ENDPOINTS.HR.PAYROLL_RESULTS, { params: query })
+      .then(unwrapPayrollResponse).then((payload) => mapCollection(payload, mapPayrollResult)),
+    placeholderData: keepPreviousData,
+    ...options,
+  })
+}
+
+export function usePayrollResultQuery(id, options = {}) {
+  return useQuery({
+    queryKey: hrPayrollKeys.result(id),
+    queryFn: () => apiClient.get(ENDPOINTS.HR.PAYROLL_RESULT(id)).then(unwrapPayrollResponse).then(mapPayrollResult),
     enabled: Boolean(id) && options.enabled !== false,
     ...options,
   })
