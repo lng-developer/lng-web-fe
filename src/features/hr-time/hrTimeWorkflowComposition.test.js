@@ -35,7 +35,9 @@ test('People creates staff through the provisioning mutation, not separate accou
   ])
 
   assert.match(page, /useProvisionStaffMutation/)
+  assert.match(page, /useAssignableStaffRolesQuery/)
   assert.doesNotMatch(page, /useCreateEmployeeProfileMutation/)
+  assert.doesNotMatch(page, /useRolesQuery/)
   assert.match(mutations, /ENDPOINTS\.HR\.STAFF_PROVISIONING/)
 })
 

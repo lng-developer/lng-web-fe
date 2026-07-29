@@ -20,7 +20,7 @@ import {
 } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { hasAnyPermission } from '@/features/auth/utils/authz'
-import { useDepartmentsQuery, useRolesQuery, useTeamsQuery } from '@/features/rbac/api/rbac.queries'
+import { useDepartmentsQuery, useTeamsQuery } from '@/features/rbac/api/rbac.queries'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
@@ -32,7 +32,7 @@ import {
   useRestoreEmployeeProfileMutation,
   useUpdateEmployeeProfileMutation,
 } from '../api/hrTime.mutations.js'
-import { useEmployeeProfilesQuery } from '../api/hrTime.queries.js'
+import { useAssignableStaffRolesQuery, useEmployeeProfilesQuery } from '../api/hrTime.queries.js'
 import EmployeeLifecycleDialog from '../components/EmployeeLifecycleDialog.jsx'
 import EmployeeProfileDialog from '../components/EmployeeProfileDialog.jsx'
 import EmployeeProfileDrawer from '../components/EmployeeProfileDrawer.jsx'
@@ -82,7 +82,7 @@ export default function PeoplePage() {
     ...(includeDeleted ? { includeDeleted: true } : {}),
   })
   const departmentsQuery = useDepartmentsQuery()
-  const rolesQuery = useRolesQuery()
+  const rolesQuery = useAssignableStaffRolesQuery({ enabled: canWrite })
   const teamsQuery = useTeamsQuery()
   const provisionStaff = useProvisionStaffMutation()
   const updateProfile = useUpdateEmployeeProfileMutation()

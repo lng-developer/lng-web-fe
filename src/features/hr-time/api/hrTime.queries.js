@@ -60,6 +60,16 @@ export function useEmployeeProfilesQuery(params, options) {
   )
 }
 
+export function useAssignableStaffRolesQuery(options) {
+  return useHrTimeDetailQuery(
+    hrTimeKeys.assignableStaffRoles(),
+    ENDPOINTS.HR.STAFF_PROVISIONING_ROLES,
+    undefined,
+    (roles) => roles,
+    options,
+  )
+}
+
 export function useEmployeeProfileQuery(profileId, params, options) {
   return useHrTimeDetailQuery(
     hrTimeKeys.employeeProfile(profileId, params),

@@ -3,6 +3,7 @@ import { normalizeHrTimeQuery } from '../utils/hrTimeApi.js'
 export const hrTimeKeys = {
   all: ['hr-time'],
   employeeProfiles: () => [...hrTimeKeys.all, 'employee-profiles'],
+  assignableStaffRoles: () => [...hrTimeKeys.employeeProfiles(), 'assignable-roles'],
   listEmployeeProfiles: (params) => [
     ...hrTimeKeys.employeeProfiles(),
     normalizeHrTimeQuery(params),
