@@ -27,6 +27,7 @@ const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswo
 const ChangeInitialPasswordPage = lazy(
   () => import('@/features/auth/pages/ChangeInitialPasswordPage'),
 )
+const CompleteProfilePage = lazy(() => import('@/features/profile/pages/CompleteProfilePage'))
 const ListingsPage = lazy(() => import('@/features/listings/pages/ListingsPage'))
 const ProductTypesPage = lazy(() => import('@/features/listings/pages/ProductTypesPage'))
 const InternalTemplatesPage = lazy(() => import('@/features/listings/pages/InternalTemplatesPage'))
@@ -308,6 +309,7 @@ export const router = createBrowserRouter([
         element: <AuthLayout />,
         children: [
           { path: ROUTES.CHANGE_INITIAL_PASSWORD, element: <ChangeInitialPasswordPage /> },
+          { path: ROUTES.COMPLETE_PROFILE, element: <CompleteProfilePage /> },
         ],
       },
     ],

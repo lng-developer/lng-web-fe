@@ -1054,7 +1054,23 @@
       "citizenId": "Số CCCD",
       "address": "Địa chỉ",
       "role": "Vai trò",
-      "status": "Trạng thái"
+      "status": "Trạng thái",
+      "avatarUrl": "URL ảnh đại diện",
+      "gender": "Giới tính",
+      "birthDate": "Ngày sinh",
+      "phoneNumber": "Số điện thoại",
+      "personalEmail": "Email cá nhân",
+      "emergencyName": "Tên người liên hệ khẩn cấp",
+      "emergencyPhone": "Số điện thoại liên hệ khẩn cấp",
+      "emergencyRelation": "Mối quan hệ",
+      "dependantName": "Tên người phụ thuộc",
+      "dependantRelation": "Mối quan hệ",
+      "dependantBirthDate": "Ngày sinh",
+      "identityCard": "Số giấy tờ định danh",
+      "taxIdentification": "Mã số thuế",
+      "socialInsuranceNumber": "Số bảo hiểm xã hội",
+      "bankName": "Tên ngân hàng",
+      "bankAccountNumber": "Số tài khoản ngân hàng"
     },
     "adminFields": {
       "username": "Tên đăng nhập",
@@ -1070,10 +1086,14 @@
       "phone": "09xx xxx xxx",
       "email": "ten@gmail.com",
       "citizenId": "xxxxxxxxxxxx",
-      "address": "Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+      "address": "Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố",
+      "avatarUrl": "https://example.com/avatar.jpg",
+      "gender": "Không bắt buộc"
     },
     "actions": {
-      "update": "Lưu thay đổi"
+      "update": "Lưu thay đổi",
+      "addDependant": "Thêm người phụ thuộc",
+      "removeDependant": "Xóa người phụ thuộc"
     },
     "defaults": {
       "department": "— (toàn hệ thống)",
@@ -1082,6 +1102,42 @@
     "status": {
       "active": "Đang hoạt động",
       "inactive": "Ngừng hoạt động"
+    },
+    "companyContext": {
+      "employeeCode": "Mã nhân viên",
+      "workEmail": "Email công việc",
+      "department": "Phòng ban",
+      "team": "Nhóm",
+      "jobTitle": "Chức danh"
+    },
+    "sections": {
+      "personal": "Cá nhân",
+      "contact": "Liên hệ",
+      "emergencyContact": "Liên hệ khẩn cấp",
+      "dependants": "Người phụ thuộc (không bắt buộc)",
+      "identityTax": "Định danh và thuế (không bắt buộc)",
+      "bank": "Tài khoản ngân hàng (không bắt buộc)"
+    },
+    "completion": {
+      "title": "Hoàn thiện hồ sơ",
+      "description": "Bổ sung thông tin cá nhân để tiếp tục sử dụng hệ thống. Thông tin công ty do HR quản lý.",
+      "submit": "Hoàn thiện hồ sơ"
+    },
+    "validation": {
+      "avatarUrl": "Nhập URL ảnh đại diện hợp lệ",
+      "phoneRequired": "Số điện thoại là bắt buộc",
+      "addressRequired": "Địa chỉ là bắt buộc",
+      "personalEmailInvalid": "Nhập email cá nhân hợp lệ",
+      "emergencyNameRequired": "Tên người liên hệ khẩn cấp là bắt buộc",
+      "emergencyPhoneRequired": "Số điện thoại liên hệ khẩn cấp là bắt buộc",
+      "emergencyRelationRequired": "Mối quan hệ liên hệ khẩn cấp là bắt buộc",
+      "dependantNameRequired": "Tên người phụ thuộc là bắt buộc",
+      "dependantRelationRequired": "Mối quan hệ người phụ thuộc là bắt buộc"
+    },
+    "messages": {
+      "loadError": "Không thể tải hồ sơ của bạn.",
+      "completed": "Bạn đã hoàn thiện hồ sơ.",
+      "updated": "Thông tin cá nhân đã được cập nhật."
     }
   },
   "departments": {

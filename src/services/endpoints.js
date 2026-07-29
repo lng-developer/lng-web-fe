@@ -301,6 +301,7 @@ export const ENDPOINTS = {
     DASHBOARD: '/api/hr/dashboard',
     EMPLOYEE_PROFILES: '/api/hr/employee-profiles',
     MY_EMPLOYEE_PROFILE: '/api/hr/employee-profiles/me',
+    MY_EMPLOYEE_PROFILE_PERSONAL: '/api/hr/employee-profiles/me/personal',
     EMPLOYEE_PROFILE: (profileId) => `/api/hr/employee-profiles/${profileId}`,
     EMPLOYEE_PROFILE_RESTORE: (profileId) => `/api/hr/employee-profiles/${profileId}/restore`,
     WORK_LOCATIONS: '/api/hr/work-locations',
