@@ -36,6 +36,10 @@ test('preserves a business destination through password and profile setup withou
   assert.equal(getOriginalDestinationPath(passwordLocation), '/portal/orders?status=READY#order-42')
   assert.equal(getOriginalDestinationPath({ pathname: ROUTES.COMPLETE_PROFILE }), null)
   assert.match(protectedRoute, /getSetupRedirectDestination\(location\)/)
+  assert.match(
+    protectedRoute,
+    /\[ROUTES\.CHANGE_INITIAL_PASSWORD, ROUTES\.COMPLETE_PROFILE\]\.includes\(location\.pathname\)/,
+  )
   assert.match(passwordForm, /getOriginalDestination\(location\)/)
   assert.match(completionPage, /getOriginalDestinationPath\(location\)/)
 })

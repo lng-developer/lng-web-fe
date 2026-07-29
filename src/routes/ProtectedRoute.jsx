@@ -88,7 +88,10 @@ export default function ProtectedRoute({
     )
   }
 
-  if (!setupRoute && location.pathname === ROUTES.CHANGE_INITIAL_PASSWORD) {
+  if (
+    !setupRoute &&
+    [ROUTES.CHANGE_INITIAL_PASSWORD, ROUTES.COMPLETE_PROFILE].includes(location.pathname)
+  ) {
     return <Navigate to={ROUTES.HOME} replace />
   }
 
