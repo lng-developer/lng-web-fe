@@ -1,7 +1,6 @@
-import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
-import BeachAccessOutlinedIcon from '@mui/icons-material/BeachAccessOutlined'
-import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
-import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined'
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import { Button, Typography } from '@mui/material'
@@ -13,76 +12,91 @@ function count(summary, ...statuses) {
 export default function HrOperationsSummaryCards({ summary = {}, onFilterChange }) {
   const cards = [
     {
-      label: 'Total Records',
-      value: summary.totalRecords || 0,
-      icon: <AssessmentOutlinedIcon fontSize="small" />,
-      colorClass: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30',
-    },
-    {
-      label: 'Present',
-      value: count(summary, 'PRESENT'),
-      icon: <CheckCircleOutlineOutlinedIcon fontSize="small" />,
-      colorClass: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30',
-    },
-    {
-      label: 'Late / Missing',
+      label: 'Missing check-in/out',
       value: count(summary, 'ERROR', 'HALF_DAY'),
       icon: <WarningAmberOutlinedIcon fontSize="small" />,
-      colorClass: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30',
-    },
-    {
-      label: 'Absent',
-      value: count(summary, 'ABSENT'),
-      icon: <ErrorOutlineOutlinedIcon fontSize="small" />,
-      colorClass: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30',
-    },
-    {
-      label: 'On Leave',
-      value: count(summary, 'PAID_LEAVE', 'UNPAID_LEAVE', 'MIXED_LEAVE'),
-      icon: <BeachAccessOutlinedIcon fontSize="small" />,
-      colorClass: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30',
-    },
-    {
-      label: 'Exceptions',
-      value: count(summary, 'ABSENT', 'ERROR', 'HALF_DAY'),
       exception: true,
+      colorClass: 'text-amber-600 dark:text-amber-400',
+      borderClass: '!border-amber-300',
+      footer: 'Requires attention',
+    },
+    {
+      label: 'Attendance errors',
+      value: count(summary, 'ERROR'),
       icon: <ReportProblemOutlinedIcon fontSize="small" />,
-      colorClass: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30',
+      exception: true,
+      colorClass: 'text-rose-600 dark:text-rose-400',
+      borderClass: '!border-rose-300',
+      footer: 'Requires correction',
+    },
+    {
+      label: 'Late arrivals',
+      value: summary.lateCount || 0,
+      icon: <AccessTimeOutlinedIcon fontSize="small" />,
+      filter: { lateOnly: true, exceptionsOnly: false },
+      colorClass: 'text-amber-600 dark:text-amber-400',
+      borderClass: '!border-amber-300',
+      footer: 'Late check-in',
+    },
+    {
+      label: 'Approved leave',
+      value: count(summary, 'PAID_LEAVE', 'UNPAID_LEAVE', 'MIXED_LEAVE'),
+      icon: <CalendarTodayOutlinedIcon fontSize="small" />,
+      colorClass: 'text-ink-secondary',
+      footer: 'This month',
+    },
+    {
+      label: 'Approved OT',
+      value: summary.approvedOvertimeCount || 0,
+      icon: <AccessTimeOutlinedIcon fontSize="small" />,
+      colorClass: 'text-ink-secondary',
+      footer: 'This month',
+    },
+    {
+      label: 'Manual adjustments',
+      value: summary.manualAdjustmentCount || 0,
+      icon: <EditOutlinedIcon fontSize="small" />,
+      colorClass: 'text-ink-secondary',
+      footer: 'This month',
     },
   ]
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {cards.map((card) => (
         <Button
           key={card.label}
           variant="outlined"
-          disabled={!card.exception}
-          onClick={() => onFilterChange?.({ exceptionsOnly: true })}
-          className={`!block !rounded-xl !border-border !p-4 !text-left disabled:!opacity-100 !bg-surface hover:!bg-black/5 dark:hover:!bg-white/5 !transition-colors !normal-case`}
+          disabled={!card.exception && !card.filter}
+          onClick={() => onFilterChange?.(card.filter || { exceptionsOnly: true })}
+          className={`!block !min-h-[106px] !rounded-lg !border-border !p-3 !text-left disabled:!opacity-100 !bg-surface hover:!bg-black/5 dark:hover:!bg-white/5 !transition-colors !normal-case ${card.borderClass || ''}`}
         >
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-start gap-3">
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-lg ${card.colorClass}`}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-subtle ${card.colorClass}`}
             >
               {card.icon}
             </div>
             <Typography
               variant="caption"
-              className="font-semibold text-ink-muted leading-tight tracking-wide uppercase text-[10px]"
+              className="text-[15px] font-medium leading-tight text-ink-muted"
             >
               {card.label}
             </Typography>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <Typography variant="h5" className="font-bold text-ink-strong tracking-tight">
+          <div className="ml-11 mt-1">
+            <Typography
+              variant="h5"
+              className={`text-3xl font-bold tracking-tight ${card.exception ? card.colorClass : 'text-ink-strong'}`}
+            >
               {card.value}
             </Typography>
-            {card.exception && (
-              <span className="text-[10px] text-orange-600 dark:text-orange-400 font-bold ml-auto bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 rounded uppercase">
-                Filter
-              </span>
-            )}
+          </div>
+          <div
+            className={`ml-11 mt-1 flex items-center gap-2 text-[13px] ${card.exception ? card.colorClass : 'text-ink-muted'}`}
+          >
+            <span>{card.footer}</span>
+            <span>→</span>
           </div>
         </Button>
       ))}

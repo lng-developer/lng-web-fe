@@ -2,10 +2,12 @@ import { useState } from 'react'
 import {
   Alert,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   MenuItem,
   TextField,
 } from '@mui/material'
@@ -26,6 +28,7 @@ export default function RotationMaintenanceDialog({
   error,
   loading,
   onClose,
+  onCreate,
   onDeleteTeam,
   onUpdate,
   rotation,
@@ -33,8 +36,9 @@ export default function RotationMaintenanceDialog({
 }) {
   const [employeeProfileIds, setEmployeeProfileIds] = useState(rotation?.employeeProfileIds || [])
   const [teamId, setTeamId] = useState(rotation?.teamId || '')
-  const [month, setMonth] = useState(rotation?.month || '')
-  const [year, setYear] = useState(rotation?.year || '')
+  const month = rotation?.month || ''
+  const year = rotation?.year || ''
+  const dateKey = rotation?.dateKey || ''
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const teamEmployees = employees.filter((employee) => !teamId || employee.team?.id === teamId)
 
@@ -52,7 +56,10 @@ export default function RotationMaintenanceDialog({
           label="Team"
           className="sm:col-span-2"
           value={teamId}
-          onChange={(event) => setTeamId(event.target.value)}
+          onChange={(event) => {
+            setTeamId(event.target.value)
+            setEmployeeProfileIds([])
+          }}
         >
           {teams.map((team) => (
             <MenuItem key={team.id} value={team.id}>
@@ -61,33 +68,58 @@ export default function RotationMaintenanceDialog({
           ))}
         </TextField>
         <TextField
-          type="number"
-          label="Month"
-          value={month}
-          inputProps={{ min: 1, max: 12 }}
-          onChange={(event) => setMonth(Number(event.target.value))}
+          label="Saturday"
+          value={dateKey || `${month}/${year}`}
+          InputProps={{ readOnly: true }}
         />
-        <TextField
-          type="number"
-          label="Year"
-          value={year}
-          inputProps={{ min: 2000, max: 9999 }}
-          onChange={(event) => setYear(Number(event.target.value))}
-        />
-        <TextField
-          select
-          label="Employees off"
-          className="sm:col-span-2"
-          value={employeeProfileIds}
-          SelectProps={{ multiple: true, renderValue: (selected) => `${selected.length} selected` }}
-          onChange={(event) => setEmployeeProfileIds(event.target.value)}
-        >
-          {teamEmployees.map((employee) => (
-            <MenuItem key={employee.id} value={employee.id}>
-              {employee.fullName || employee.employeeCode}
-            </MenuItem>
-          ))}
-        </TextField>
+        <div className="sm:col-span-2">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-ink-strong">
+              Employees off · {employeeProfileIds.length}
+            </span>
+            <Button
+              size="small"
+              onClick={() => setEmployeeProfileIds([])}
+              disabled={loading || employeeProfileIds.length === 0}
+            >
+              Clear selection
+            </Button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {teamEmployees.map((employee) => {
+              const selected = employeeProfileIds.includes(employee.id)
+              return (
+                <FormControlLabel
+                  key={employee.id}
+                  className={`m-0 rounded-lg border px-2 py-1.5 ${selected ? 'border-primary bg-primary-light' : 'border-border bg-surface'}`}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={selected}
+                      onChange={() =>
+                        setEmployeeProfileIds((current) =>
+                          current.includes(employee.id)
+                            ? current.filter((id) => id !== employee.id)
+                            : [...current, employee.id],
+                        )
+                      }
+                    />
+                  }
+                  label={
+                    <span>
+                      <span className="block text-sm font-semibold text-ink-strong">
+                        {employee.fullName || employee.employeeCode}
+                      </span>
+                      <span className="block text-xs text-ink-muted">
+                        {employee.employeeCode || 'Employee'}
+                      </span>
+                    </span>
+                  }
+                />
+              )
+            })}
+          </div>
+        </div>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
@@ -102,10 +134,14 @@ export default function RotationMaintenanceDialog({
         </Button>
         <Button
           variant="contained"
-          disabled={loading || !rotation?.id}
-          onClick={() => onUpdate({ id: rotation.id, employeeProfileIds })}
+          disabled={loading || !teamId || !dateKey}
+          onClick={() =>
+            rotation?.id
+              ? onUpdate({ id: rotation.id, employeeProfileIds })
+              : onCreate({ teamId, dateKey, employeeProfileIds })
+          }
         >
-          Save employees
+          {rotation?.id ? 'Save employees' : 'Create manual rotation'}
         </Button>
       </DialogActions>
       <ConfirmDialog

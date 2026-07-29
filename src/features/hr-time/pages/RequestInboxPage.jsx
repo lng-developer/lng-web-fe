@@ -25,6 +25,7 @@ import {
   useRejectOvertimeRequestMutation,
 } from '@/features/hr-time/api/hrTime.mutations'
 import {
+  useEmployeeProfilesQuery,
   useLeaveRequestsQuery,
   useOvertimeRequestsQuery,
 } from '@/features/hr-time/api/hrTime.queries'
@@ -37,6 +38,17 @@ import TimeRequestTable from '../components/TimeRequestTable'
 const pageSize = 20
 const tabs = ['leave', 'overtime']
 const requestStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']
+const leaveTypes = [
+  'ANNUAL',
+  'SICK',
+  'MATERNITY',
+  'PATERNITY',
+  'BEREAVEMENT',
+  'WEDDING',
+  'UNPAID',
+  'PERSONAL_PAID',
+  'PERSONAL_UNPAID',
+]
 
 export default function RequestInboxPage() {
   const { t } = useTranslation()
@@ -53,6 +65,13 @@ export default function RequestInboxPage() {
   const status = searchParams.get('status') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
+  const profileId = searchParams.get('profileId') || ''
+  const leaveType = searchParams.get('leaveType') || ''
+  const year = searchParams.get('year') || ''
+  const canReadEmployeeDirectory = hasAnyPermission(currentUser, [
+    'HR_EMPLOYEES:READ',
+    'HR_EMPLOYEES:WRITE',
+  ])
   const [review, setReview] = useState(null)
   const [actionError, setActionError] = useState('')
 
@@ -62,6 +81,9 @@ export default function RequestInboxPage() {
     ...(status ? { status } : {}),
     ...(dateFrom ? { dateFrom } : {}),
     ...(dateTo ? { dateTo } : {}),
+    ...(profileId ? { profileId } : {}),
+    ...(tab === 'leave' && leaveType ? { leaveType } : {}),
+    ...(tab === 'leave' && year ? { year: Number(year) } : {}),
   }
   const leaveQuery = useLeaveRequestsQuery(filters, {
     enabled: tab === 'leave' && canReadLeave,
@@ -69,6 +91,10 @@ export default function RequestInboxPage() {
   const overtimeQuery = useOvertimeRequestsQuery(filters, {
     enabled: tab === 'overtime' && canReadOvertime,
   })
+  const employeesQuery = useEmployeeProfilesQuery(
+    { page: 1, limit: 100, status: 'ACTIVE' },
+    { enabled: canReadEmployeeDirectory },
+  )
   const approveLeaveMutation = useApproveLeaveRequestMutation()
   const rejectLeaveMutation = useRejectLeaveRequestMutation()
   const cancelLeaveMutation = useCancelLeaveRequestMutation()
@@ -79,6 +105,8 @@ export default function RequestInboxPage() {
   const selectedQuery = tab === 'leave' ? leaveQuery : overtimeQuery
   const hasTabAccess = tab === 'leave' ? canReadLeave : canReadOvertime
   const rows = selectedQuery.data?.items || []
+  const summary = selectedQuery.data?.summary || { statusCounts: {} }
+  const employees = employeesQuery.data?.items || []
   const pagination = selectedQuery.data?.pagination || { page, limit: pageSize, total: 0 }
   const queryError = selectedQuery.error?.data?.message || selectedQuery.error?.message
   const actionLoading = [
@@ -103,6 +131,13 @@ export default function RequestInboxPage() {
         return next
       },
       { replace: true },
+    )
+  }
+
+  function clearFilters() {
+    updateSearch(
+      { status: '', dateFrom: '', dateTo: '', profileId: '', leaveType: '', year: '' },
+      true,
     )
   }
 
@@ -203,6 +238,55 @@ export default function RequestInboxPage() {
                 </MenuItem>
               ))}
             </TextField>
+            {canReadEmployeeDirectory ? (
+              <TextField
+                select
+                size="small"
+                className="w-52"
+                label={t('hrTime.filters.employee', { defaultValue: 'Employee' })}
+                value={profileId}
+                onChange={(event) => updateSearch({ profileId: event.target.value }, true)}
+              >
+                <MenuItem value="">{t('common.all', { defaultValue: 'All' })}</MenuItem>
+                {employees.map((employee) => (
+                  <MenuItem key={employee.id} value={employee.id}>
+                    {employee.fullName}
+                    {employee.employeeCode ? ` · ${employee.employeeCode}` : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : null}
+            {tab === 'leave' ? (
+              <>
+                <TextField
+                  select
+                  size="small"
+                  className="w-44"
+                  label={t('hrTime.filters.leaveType', { defaultValue: 'Leave type' })}
+                  value={leaveType}
+                  onChange={(event) => updateSearch({ leaveType: event.target.value }, true)}
+                >
+                  <MenuItem value="">{t('common.all', { defaultValue: 'All' })}</MenuItem>
+                  {leaveTypes.map((value) => (
+                    <MenuItem key={value} value={value}>
+                      {t(`hrTime.enums.leaveType.${value}`, {
+                        defaultValue: value.replaceAll('_', ' '),
+                      })}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  size="small"
+                  className="w-28"
+                  label={t('hrTime.filters.year', { defaultValue: 'Year' })}
+                  value={year}
+                  inputProps={{ inputMode: 'numeric', maxLength: 4 }}
+                  onChange={(event) =>
+                    updateSearch({ year: event.target.value.replace(/\D/g, '').slice(0, 4) }, true)
+                  }
+                />
+              </>
+            ) : null}
             <DateRangePicker
               size="small"
               value={{
@@ -228,6 +312,11 @@ export default function RequestInboxPage() {
             >
               {t('common.refresh', { defaultValue: 'Refresh' })}
             </Button>
+            {status || dateFrom || dateTo || profileId || leaveType || year ? (
+              <Button variant="text" onClick={clearFilters}>
+                {t('common.clearFilters', { defaultValue: 'Clear filters' })}
+              </Button>
+            ) : null}
           </div>
         </OperationsToolbar>
       }
@@ -243,34 +332,70 @@ export default function RequestInboxPage() {
       }
     >
       {hasTabAccess ? (
-        <TimeRequestTable
-          type={tab}
-          rows={rows}
-          loading={selectedQuery.isPending}
-          error={queryError}
-          showEmployee
-          onReview={async (row, action) => {
-            setActionError('')
-            if (action === 'approve' && tab === 'leave') {
-              try {
-                await approveLeaveMutation.mutateAsync({ requestId: row.id, payload: {} })
-                enqueueSnackbar(
-                  t('hrTime.messages.actionCompleted', { defaultValue: 'Request updated' }),
-                  {
-                    variant: SNACKBAR_VARIANTS.SUCCESS,
-                  },
-                )
-              } catch (error) {
-                setActionError(
-                  error?.data?.message ||
-                    t('hrTime.errors.actionFailed', { defaultValue: 'Could not complete action' }),
-                )
+        <div className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {requestStatuses.map((value) => (
+              <Button
+                key={value}
+                variant={status === value ? 'contained' : 'outlined'}
+                className="!min-h-[76px] !justify-start !rounded-lg !border-border !px-4 !text-left !normal-case"
+                onClick={() => updateSearch({ status: status === value ? '' : value }, true)}
+              >
+                <span className="flex flex-col items-start">
+                  <span className="text-xs text-ink-muted">
+                    {t(`hrTime.enums.status.${value}`, { defaultValue: value })}
+                  </span>
+                  <span className="mt-1 text-2xl font-bold">
+                    {summary.statusCounts?.[value] || 0}
+                  </span>
+                </span>
+              </Button>
+            ))}
+          </div>
+          <div className="flex items-center justify-between px-1 text-sm text-ink-muted">
+            <span>
+              {t('hrTime.labels.requestsFound', {
+                count: pagination.total || 0,
+                defaultValue: '{{count}} requests',
+              })}
+            </span>
+            <span>
+              {selectedQuery.isFetching
+                ? t('common.loading', { defaultValue: 'Loading...' })
+                : null}
+            </span>
+          </div>
+          <TimeRequestTable
+            type={tab}
+            rows={rows}
+            loading={selectedQuery.isPending}
+            error={queryError}
+            showEmployee
+            onReview={async (row, action) => {
+              setActionError('')
+              if (action === 'approve' && tab === 'leave') {
+                try {
+                  await approveLeaveMutation.mutateAsync({ requestId: row.id, payload: {} })
+                  enqueueSnackbar(
+                    t('hrTime.messages.actionCompleted', { defaultValue: 'Request updated' }),
+                    {
+                      variant: SNACKBAR_VARIANTS.SUCCESS,
+                    },
+                  )
+                } catch (error) {
+                  setActionError(
+                    error?.data?.message ||
+                      t('hrTime.errors.actionFailed', {
+                        defaultValue: 'Could not complete action',
+                      }),
+                  )
+                }
+                return
               }
-              return
-            }
-            setReview({ row, action: action === 'view' ? null : action })
-          }}
-        />
+              setReview({ row, action: action === 'view' ? null : action })
+            }}
+          />
+        </div>
       ) : (
         <Alert severity="info">
           {t('hrTime.restricted.inbox', {

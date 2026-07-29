@@ -11,6 +11,7 @@ test('builds every calendar day for the selected month', () => {
     dateKey: '2026-07-01',
     label: '1',
     isWeekend: false,
+    weekday: 'Wed',
   })
 })
 

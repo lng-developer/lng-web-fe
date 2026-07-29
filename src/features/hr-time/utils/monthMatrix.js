@@ -8,6 +8,7 @@ export function buildMonthColumns(year, month) {
       dateKey: date.toISOString().slice(0, 10),
       label: String(day),
       isWeekend: [0, 6].includes(date.getUTCDay()),
+      weekday: date.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' }),
     }
   })
 }

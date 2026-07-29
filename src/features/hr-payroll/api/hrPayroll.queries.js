@@ -64,8 +64,11 @@ export function usePayrollResultsQuery(params, options = {}) {
   const query = normalizePayrollQuery(params)
   return useQuery({
     queryKey: hrPayrollKeys.results(query),
-    queryFn: () => apiClient.get(ENDPOINTS.HR.PAYROLL_RESULTS, { params: query })
-      .then(unwrapPayrollResponse).then((payload) => mapCollection(payload, mapPayrollResult)),
+    queryFn: () =>
+      apiClient
+        .get(ENDPOINTS.HR.PAYROLL_RESULTS, { params: query })
+        .then(unwrapPayrollResponse)
+        .then((payload) => mapCollection(payload, mapPayrollResult)),
     placeholderData: keepPreviousData,
     ...options,
   })
@@ -74,7 +77,11 @@ export function usePayrollResultsQuery(params, options = {}) {
 export function usePayrollResultQuery(id, options = {}) {
   return useQuery({
     queryKey: hrPayrollKeys.result(id),
-    queryFn: () => apiClient.get(ENDPOINTS.HR.PAYROLL_RESULT(id)).then(unwrapPayrollResponse).then(mapPayrollResult),
+    queryFn: () =>
+      apiClient
+        .get(ENDPOINTS.HR.PAYROLL_RESULT(id))
+        .then(unwrapPayrollResponse)
+        .then(mapPayrollResult),
     enabled: Boolean(id) && options.enabled !== false,
     ...options,
   })

@@ -204,10 +204,7 @@ export default function MyTimePage() {
         setCreateDialog(null)
         setLeavePreview({ payload, preview })
       } catch (error) {
-        setActionError(
-          error?.data?.message ||
-            t('hrTime.errors.requestFailed', { defaultValue: 'Could not preview request' }),
-        )
+        showRequestError(error, 'Could not preview request')
       }
       return
     }
@@ -218,10 +215,7 @@ export default function MyTimePage() {
       })
       setCreateDialog(null)
     } catch (error) {
-      setActionError(
-        error?.data?.message ||
-          t('hrTime.errors.requestFailed', { defaultValue: 'Could not submit request' }),
-      )
+      showRequestError(error, 'Could not submit request')
     }
   }
 
@@ -235,11 +229,17 @@ export default function MyTimePage() {
       })
       setLeavePreview(null)
     } catch (error) {
-      setActionError(
-        error?.data?.message ||
-          t('hrTime.errors.requestFailed', { defaultValue: 'Could not submit request' }),
-      )
+      showRequestError(error, 'Could not submit request')
     }
+  }
+
+  function showRequestError(error, fallback) {
+    const message =
+      error?.response?.data?.message ||
+      error?.data?.message ||
+      t('hrTime.errors.requestFailed', { defaultValue: fallback })
+    setActionError(message)
+    enqueueSnackbar(message, { variant: SNACKBAR_VARIANTS.ERROR })
   }
 
   async function attachLeaveFile(file) {

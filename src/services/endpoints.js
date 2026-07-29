@@ -355,6 +355,7 @@ export const ENDPOINTS = {
     HOLIDAY_SUMMARY: (year) => `/api/hr/holidays/summary/${year}`,
     HOLIDAY_BULK_IMPORT: '/api/hr/holidays/bulk-import',
     SATURDAY_ROTATIONS: '/api/hr/saturday-rotations',
+    SATURDAY_ROTATIONS_MATRIX: '/api/hr/saturday-rotations/matrix',
     SATURDAY_ROTATIONS_GENERATE: '/api/hr/saturday-rotations/generate',
     SATURDAY_ROTATION: (id) => `/api/hr/saturday-rotations/${id}`,
     SATURDAY_ROTATION_TEAM: (teamId) => `/api/hr/saturday-rotations/team/${teamId}`,

@@ -8,12 +8,12 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
   Alert,
+  Autocomplete,
   Button,
   Checkbox,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Drawer,
   FormControlLabel,
   MenuItem,
   Stack,
@@ -25,6 +25,7 @@ import { useSnackbar } from 'notistack'
 import AnimatedDialog from '@/components/common/AnimatedDialog'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import DatePicker from '@/components/form/DatePicker'
+import DateRangePicker from '@/components/form/DateRangePicker'
 import {
   IconActionButton,
   OperationsHeader,
@@ -37,6 +38,7 @@ import {
 } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { hasAnyPermission } from '@/features/auth/utils/authz'
+import dayjs from '@/lib/dayjs'
 import { useAuthStore } from '@/store/useAuthStore'
 
 import {
@@ -44,6 +46,7 @@ import {
   useCheckHolidayPolicyMutation,
   useCreateCalendarOverrideMutation,
   useCreateHolidayMutation,
+  useCreateSaturdayRotationMutation,
   useCreateShiftAssignmentMutation,
   useCreateShiftMutation,
   useCreateWorkLocationMutation,
@@ -59,14 +62,10 @@ import {
   useUpdateWorkLocationMutation,
 } from '../api/hrTime.mutations.js'
 import {
-  useAttendanceMonthMatrixQuery,
   useCalendarOverridesQuery,
   useEmployeeProfilesQuery,
   useHolidaysQuery,
-  useMyAttendanceQuery,
-  useMyLeaveRequestsQuery,
-  useMyOvertimeRequestsQuery,
-  useSaturdayRotationsQuery,
+  useSaturdayRotationMatrixQuery,
   useShiftAssignmentsQuery,
   useShiftsQuery,
   useWorkLocationsQuery,
@@ -75,11 +74,10 @@ import CalendarOverrideDialog from '../components/CalendarOverrideDialog.jsx'
 import HolidayBulkImportDialog from '../components/HolidayBulkImportDialog.jsx'
 import HolidayDetailDrawer from '../components/HolidayDetailDrawer.jsx'
 import HolidayPolicySummary from '../components/HolidayPolicySummary.jsx'
-import MonthlyStaffMatrix from '../components/MonthlyStaffMatrix.jsx'
 import RotationMaintenanceDialog from '../components/RotationMaintenanceDialog.jsx'
+import SaturdayRotationMatrix from '../components/SaturdayRotationMatrix.jsx'
 import ScheduleConfigurationDialog from '../components/ScheduleConfigurationDialog.jsx'
 import ShiftAssignmentDialog from '../components/ShiftAssignmentDialog.jsx'
-import StaffMonthlyCalendar from '../components/StaffMonthlyCalendar.jsx'
 import {
   canAccessTeamScope,
   getAuthorizedTeamScopeIds,
@@ -91,16 +89,7 @@ import {
 } from '../utils/hrTimeApi.js'
 
 const pageSize = 20
-const tabs = [
-  'personal',
-  'team',
-  'assignments',
-  'shifts',
-  'locations',
-  'overrides',
-  'holidays',
-  'rotations',
-]
+const tabs = ['assignments', 'shifts', 'locations', 'overrides', 'holidays', 'rotations']
 
 const columnSets = {
   assignments: [
@@ -235,17 +224,48 @@ function HolidayDialog({ record, loading, error, onClose, onDraftChange, onSubmi
   )
 }
 
-function RotationDialog({ teams, initialTeamId, loading, error, outcome, onClose, onSubmit }) {
+function saturdaysInMonth(month, year) {
+  const date = new Date(Date.UTC(year, month - 1, 1))
+  const dates = []
+  while (date.getUTCMonth() === month - 1) {
+    if (date.getUTCDay() === 6) dates.push(date.toISOString().slice(0, 10))
+    date.setUTCDate(date.getUTCDate() + 1)
+  }
+  return dates
+}
+
+function RotationDialog({
+  teams,
+  employees,
+  initialTeamId,
+  loading,
+  error,
+  outcome,
+  manualMonth,
+  onClose,
+  onSubmit,
+}) {
   const today = new Date()
   const [values, setValues] = useState({
     teamId: initialTeamId || '',
     month: today.getMonth() + 1,
     year: today.getFullYear(),
     minPresent: '',
+    customRotations: {},
   })
+  const dates = saturdaysInMonth(values.month, values.year)
+  const teamEmployees = employees.filter((employee) => employee.team?.id === values.teamId)
+  const [employeeSearch, setEmployeeSearch] = useState('')
+  const filteredTeamEmployees = teamEmployees.filter((employee) =>
+    `${employee.fullName || ''} ${employee.employeeCode || ''}`
+      .toLowerCase()
+      .includes(employeeSearch.trim().toLowerCase()),
+  )
   return (
-    <AnimatedDialog open onClose={loading ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Generate Saturday rotations</DialogTitle>
+    <AnimatedDialog open onClose={loading ? undefined : onClose} fullWidth maxWidth="md">
+      <DialogTitle>
+        {manualMonth ? 'Manual Saturday rotation month' : 'Generate Saturday rotations'}
+      </DialogTitle>
       <DialogContent className="grid gap-4 pt-2 sm:grid-cols-2">
         {error ? (
           <Alert severity="error" className="sm:col-span-2">
@@ -300,6 +320,87 @@ function RotationDialog({ teams, initialTeamId, loading, error, outcome, onClose
           inputProps={{ min: 0 }}
           onChange={(event) => setValues({ ...values, minPresent: event.target.value })}
         />
+        {manualMonth ? (
+          <div className="grid gap-4 sm:col-span-2">
+            <TextField
+              size="small"
+              label="Search employees"
+              placeholder="Search by name or employee code"
+              value={employeeSearch}
+              onChange={(event) => setEmployeeSearch(event.target.value)}
+            />
+            {dates.map((dateKey) => (
+              <section
+                key={dateKey}
+                className="rounded-xl border border-border bg-surface-subtle p-4"
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <Typography variant="subtitle2">
+                      {new Date(`${dateKey}T00:00:00`).toLocaleDateString(undefined, {
+                        weekday: 'long',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
+                    </Typography>
+                    <Typography variant="caption" className="text-ink-muted">
+                      {(values.customRotations[dateKey] || []).length} employees selected off
+                    </Typography>
+                  </div>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() =>
+                      setValues({
+                        ...values,
+                        customRotations: { ...values.customRotations, [dateKey]: [] },
+                      })
+                    }
+                  >
+                    Clear this day
+                  </Button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredTeamEmployees.map((employee) => {
+                    const selected = (values.customRotations[dateKey] || []).includes(employee.id)
+                    return (
+                      <div
+                        key={employee.id}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2.5 transition ${selected ? 'border-primary bg-primary-light' : 'border-border bg-surface hover:border-primary/40'}`}
+                      >
+                        <Checkbox
+                          size="small"
+                          checked={selected}
+                          onChange={() => {
+                            const current = values.customRotations[dateKey] || []
+                            setValues({
+                              ...values,
+                              customRotations: {
+                                ...values.customRotations,
+                                [dateKey]: selected
+                                  ? current.filter((id) => id !== employee.id)
+                                  : [...current, employee.id],
+                              },
+                            })
+                          }}
+                        />
+                        <span>
+                          <span className="block text-sm font-semibold text-ink-strong">
+                            {employee.fullName || employee.employeeCode}
+                          </span>
+                          <span className="block text-xs text-ink-muted">
+                            {employee.employeeCode || 'Employee'}
+                          </span>
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : null}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
@@ -314,10 +415,18 @@ function RotationDialog({ teams, initialTeamId, loading, error, outcome, onClose
               month: values.month,
               year: values.year,
               ...(values.minPresent === '' ? {} : { minPresent: Number(values.minPresent) }),
+              ...(manualMonth
+                ? {
+                    customRotations: dates.map((dateKey) => ({
+                      dateKey,
+                      employeeProfileIds: values.customRotations[dateKey] || [],
+                    })),
+                  }
+                : {}),
             })
           }
         >
-          Generate rotations
+          {manualMonth ? 'Save manual month' : 'Generate rotations'}
         </Button>
       </DialogActions>
     </AnimatedDialog>
@@ -363,31 +472,38 @@ export default function SchedulePage() {
   const page = Math.max(Number(searchParams.get('page')) || 1, 1)
   const q = searchParams.get('q') || ''
   const profileId = searchParams.get('profileId') || ''
+  const shiftId = searchParams.get('shiftId') || ''
+  const workLocationId = searchParams.get('workLocationId') || ''
+  const status = searchParams.get('status') || ''
+  const effectiveFrom = searchParams.get('effectiveFrom') || ''
+  const effectiveTo = searchParams.get('effectiveTo') || ''
   const scopeType = searchParams.get('scopeType') || ''
   const holidayScopeKey = searchParams.get('holidayScope') || ''
   const month = searchParams.get('month') || ''
   const year = searchParams.get('year') || ''
+  const holidayYear =
+    Number(year) >= 2000 && Number(year) <= 9999 ? Number(year) : new Date().getFullYear()
+  const rotationMonth =
+    Number(month) >= 1 && Number(month) <= 12 ? Number(month) : new Date().getMonth() + 1
+  const rotationYear =
+    Number(year) >= 2000 && Number(year) <= 9999 ? Number(year) : new Date().getFullYear()
   const teamId = searchParams.get('teamId') || ''
-  const calendarMonth = Number(month) || new Date().getMonth() + 1
-  const calendarYear = Number(year) || new Date().getFullYear()
   const [editor, setEditor] = useState(null)
   const [holidayEditor, setHolidayEditor] = useState(null)
   const [holidayDraft, setHolidayDraft] = useState(null)
-  const [personalDay, setPersonalDay] = useState(null)
   const [holidayDetailId, setHolidayDetailId] = useState('')
   const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [bulkImportResult, setBulkImportResult] = useState(null)
-  const [rotationEditor, setRotationEditor] = useState(false)
+  const [rotationEditor, setRotationEditor] = useState('')
   const [rotationOutcome, setRotationOutcome] = useState(null)
   const [rotationMaintenance, setRotationMaintenance] = useState(null)
   const [deletingRecord, setDeletingRecord] = useState(null)
   const [actionError, setActionError] = useState('')
+  const [employeeSearch, setEmployeeSearch] = useState('')
+  const [shiftSearch, setShiftSearch] = useState('')
+  const [locationSearch, setLocationSearch] = useState('')
   const canWrite = hasAnyPermission(currentUser, ['HR_SCHEDULE:WRITE'])
   const canScheduleRead = hasAnyPermission(currentUser, ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE'])
-  const canTeamAttendance = hasAnyPermission(currentUser, [
-    'HR_ATTENDANCE:READ',
-    'HR_ATTENDANCE:MANAGE',
-  ])
   const canCalendarRead = hasAnyPermission(currentUser, ['HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'])
   const canReadDirectory = hasAnyPermission(currentUser, [
     'HR_EMPLOYEES:READ',
@@ -401,12 +517,12 @@ export default function SchedulePage() {
   const canCalendarWriteGlobal = hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:WRITE')
   const canCalendarReadGlobal =
     hasGlobalPermissionCode(currentUser, 'HR_CALENDAR:READ') || canCalendarWriteGlobal
-  const tab =
-    requestedTab === 'personal'
-      ? 'personal'
-      : requestedTab === 'team' && canTeamAttendance
-        ? 'team'
-        : resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead })
+  const tab = resolveScheduleTab(requestedTab, { canScheduleRead, canCalendarRead })
+  const visibleTabs = tabs.filter((value) =>
+    ['assignments', 'shifts', 'locations', 'overrides'].includes(value)
+      ? canScheduleRead
+      : canCalendarRead,
+  )
   const holidayScopeState = resolveCalendarScopeQuery(currentUser, holidayScopeKey, [
     'HR_CALENDAR:READ',
     'HR_CALENDAR:WRITE',
@@ -427,7 +543,16 @@ export default function SchedulePage() {
   )
 
   const assignmentQuery = useShiftAssignmentsQuery(
-    { page, limit: pageSize, profileId },
+    {
+      page,
+      limit: pageSize,
+      profileId,
+      shiftId,
+      workLocationId,
+      status,
+      effectiveFrom,
+      effectiveTo,
+    },
     { enabled: tab === 'assignments' },
   )
   const shiftQuery = useShiftsQuery({ page, limit: pageSize, q }, { enabled: tab === 'shifts' })
@@ -440,35 +565,35 @@ export default function SchedulePage() {
     { enabled: tab === 'overrides' },
   )
   const holidayQuery = useHolidaysQuery(
-    { page, limit: pageSize, ...holidayScopeState.params },
+    {
+      page,
+      limit: pageSize,
+      dateFrom: `${holidayYear}-01-01`,
+      dateTo: `${holidayYear}-12-31`,
+      ...holidayScopeState.params,
+    },
     { enabled: tab === 'holidays' && holidayScopeState.enabled },
   )
-  const rotationQuery = useSaturdayRotationsQuery(
-    { page, limit: pageSize, teamId: rotationTeamId, month, year },
+  const rotationMatrixQuery = useSaturdayRotationMatrixQuery(
+    { teamId: rotationTeamId, month: rotationMonth, year: rotationYear },
     { enabled: tab === 'rotations' && (canCalendarReadGlobal || Boolean(rotationTeamId)) },
-  )
-  const monthStart = `${calendarYear}-${String(calendarMonth).padStart(2, '0')}-01`
-  const monthEnd = new Date(Date.UTC(calendarYear, calendarMonth, 0)).toISOString().slice(0, 10)
-  const myAttendanceQuery = useMyAttendanceQuery(
-    { dateFrom: monthStart, dateTo: monthEnd, page: 1, limit: 100 },
-    { enabled: tab === 'personal' },
-  )
-  const myLeaveQuery = useMyLeaveRequestsQuery(
-    { dateFrom: monthStart, dateTo: monthEnd, page: 1, limit: 100 },
-    { enabled: tab === 'personal' },
-  )
-  const myOvertimeQuery = useMyOvertimeRequestsQuery(
-    { dateFrom: monthStart, dateTo: monthEnd, page: 1, limit: 100 },
-    { enabled: tab === 'personal' },
-  )
-  const teamMatrixQuery = useAttendanceMonthMatrixQuery(
-    { year: calendarYear, month: calendarMonth, teamId, page, limit: pageSize },
-    { enabled: tab === 'team' && canTeamAttendance },
   )
 
   const employeesQuery = useEmployeeProfilesQuery(
     { page: 1, limit: 100, status: 'ACTIVE' },
     { enabled: canReadDirectory },
+  )
+  const assignmentEmployeesQuery = useEmployeeProfilesQuery(
+    { page: 1, limit: 20, status: 'ACTIVE', q: employeeSearch },
+    { enabled: tab === 'assignments' && canScheduleRead },
+  )
+  const assignmentShiftsQuery = useShiftsQuery(
+    { page: 1, limit: 20, q: shiftSearch },
+    { enabled: tab === 'assignments' && canScheduleRead },
+  )
+  const assignmentLocationsQuery = useWorkLocationsQuery(
+    { page: 1, limit: 20, q: locationSearch },
+    { enabled: tab === 'assignments' && canScheduleRead },
   )
   const optionShiftsQuery = useShiftsQuery(
     { page: 1, limit: 100, status: 'ACTIVE' },
@@ -481,6 +606,9 @@ export default function SchedulePage() {
   const employees = list(employeesQuery.data)
   const shifts = list(optionShiftsQuery.data)
   const locations = list(optionLocationsQuery.data)
+  const assignmentEmployees = list(assignmentEmployeesQuery.data)
+  const assignmentShifts = list(assignmentShiftsQuery.data)
+  const assignmentLocations = list(assignmentLocationsQuery.data)
   const teams = useMemo(
     () => [
       ...new Map(
@@ -514,20 +642,17 @@ export default function SchedulePage() {
           : namedDepartments.get(scope.scopeId)) || `Authorized ${scope.scopeType} ${index + 1}`,
     }))
   }, [departments, holidayScopeState.scopes, teams])
-  const rotationReadTeams = useMemo(() => {
-    if (canCalendarReadGlobal) return teams
-    const namedTeams = new Map(teams.map((team) => [team.id, team]))
-    return rotationReadTeamIds.map(
-      (id, index) => namedTeams.get(id) || { id, name: `Authorized team ${index + 1}` },
-    )
-  }, [canCalendarReadGlobal, rotationReadTeamIds, teams])
-  const rotationWriteTeams = useMemo(() => {
-    if (canCalendarWriteGlobal) return teams
-    const namedTeams = new Map(teams.map((team) => [team.id, team]))
-    return rotationWriteTeamIds.map(
-      (id, index) => namedTeams.get(id) || { id, name: `Authorized team ${index + 1}` },
-    )
-  }, [canCalendarWriteGlobal, rotationWriteTeamIds, teams])
+  const namedRotationTeams = new Map(teams.map((team) => [team.id, team]))
+  const rotationReadTeams = canCalendarReadGlobal
+    ? teams
+    : rotationReadTeamIds.map(
+        (id, index) => namedRotationTeams.get(id) || { id, name: `Authorized team ${index + 1}` },
+      )
+  const rotationWriteTeams = canCalendarWriteGlobal
+    ? teams
+    : rotationWriteTeamIds.map(
+        (id, index) => namedRotationTeams.get(id) || { id, name: `Authorized team ${index + 1}` },
+      )
   const employeeById = useMemo(
     () => new Map(employees.map((employee) => [employee.id, employee])),
     [employees],
@@ -555,6 +680,7 @@ export default function SchedulePage() {
   const bulkImportHolidays = useBulkImportHolidaysMutation()
   const checkHolidayPolicy = useCheckHolidayPolicyMutation()
   const generateRotations = useGenerateSaturdayRotationsMutation()
+  const createRotation = useCreateSaturdayRotationMutation()
   const deleteRotation = useDeleteSaturdayRotationMutation()
   const updateRotation = useUpdateSaturdayRotationMutation()
   const deleteTeamRotations = useDeleteTeamSaturdayRotationsMutation()
@@ -596,14 +722,12 @@ export default function SchedulePage() {
   )
 
   const selectedQuery = {
-    personal: myAttendanceQuery,
-    team: teamMatrixQuery,
     assignments: assignmentQuery,
     shifts: shiftQuery,
     locations: locationQuery,
     overrides: overrideQuery,
     holidays: holidayQuery,
-    rotations: rotationQuery,
+    rotations: rotationMatrixQuery,
   }[tab]
   const rows = list(selectedQuery.data)
   const pagination = selectedQuery.data?.pagination || { page, limit: pageSize, total: 0 }
@@ -698,9 +822,12 @@ export default function SchedulePage() {
   async function saveRotation(payload) {
     setActionError('')
     try {
-      await updateRotation.mutateAsync(payload)
+      await (payload.id ? updateRotation.mutateAsync(payload) : createRotation.mutateAsync(payload))
       setRotationMaintenance(null)
-      enqueueSnackbar('Saturday rotation updated', { variant: SNACKBAR_VARIANTS.SUCCESS })
+      enqueueSnackbar(
+        payload.id ? 'Saturday rotation updated' : 'Manual Saturday rotation created',
+        { variant: SNACKBAR_VARIANTS.SUCCESS },
+      )
     } catch (error) {
       setActionError(error?.data?.message || error?.message || 'Could not update Saturday rotation')
     }
@@ -920,17 +1047,29 @@ export default function SchedulePage() {
                 </Button>
               </Stack>
             ) : rotationWriteTeams.length && tab === 'rotations' ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  setActionError('')
-                  setRotationOutcome(null)
-                  setRotationEditor(true)
-                }}
-              >
-                Generate rotations
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setActionError('')
+                    setRotationOutcome(null)
+                    setRotationEditor('manual')
+                  }}
+                >
+                  Manual month
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    setActionError('')
+                    setRotationOutcome(null)
+                    setRotationEditor('generate')
+                  }}
+                >
+                  Generate rotations
+                </Button>
+              </Stack>
             ) : (canWrite && ['assignments', 'overrides'].includes(tab)) ||
               (canWriteGlobal && ['shifts', 'locations'].includes(tab)) ? (
               <Button
@@ -966,7 +1105,7 @@ export default function SchedulePage() {
       tabs={
         <OperationsTabs
           variant="nav"
-          items={tabs.map((value) => ({
+          items={visibleTabs.map((value) => ({
             value,
             label: t(`hrTime.schedule.tabs.${value}`, {
               defaultValue: value[0].toUpperCase() + value.slice(1),
@@ -977,24 +1116,130 @@ export default function SchedulePage() {
         />
       }
       toolbar={
-        <OperationsToolbar>
+        <OperationsToolbar className="border-0 shadow-none">
           <div className="flex flex-wrap items-start gap-3">
             {tab === 'assignments' ? (
-              <TextField
-                select
-                size="small"
-                className="w-60"
-                label={t('hrTime.filters.employee', { defaultValue: 'Employee' })}
-                value={profileId}
-                onChange={(event) => updateSearch({ profileId: event.target.value }, true)}
-              >
-                <MenuItem value="">{t('common.all', { defaultValue: 'All' })}</MenuItem>
-                {employees.map((employee) => (
-                  <MenuItem key={employee.id} value={employee.id}>
-                    {employee.fullName} ({employee.employeeCode})
-                  </MenuItem>
-                ))}
-              </TextField>
+              <>
+                <Autocomplete
+                  size="small"
+                  className="w-64"
+                  options={assignmentEmployees}
+                  value={assignmentEmployees.find((employee) => employee.id === profileId) || null}
+                  loading={assignmentEmployeesQuery.isFetching}
+                  getOptionLabel={(employee) =>
+                    `${employee.fullName || ''}${employee.employeeCode ? ` (${employee.employeeCode})` : ''}`
+                  }
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  onInputChange={(_, value, reason) => {
+                    if (reason !== 'reset') setEmployeeSearch(value)
+                  }}
+                  onChange={(_, employee) => {
+                    updateSearch({ profileId: employee?.id || '' }, true)
+                    setEmployeeSearch(employee?.fullName || '')
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={t('hrTime.filters.employee', { defaultValue: 'Employee' })}
+                      placeholder={t('common.search', { defaultValue: 'Search' })}
+                    />
+                  )}
+                />
+                <Autocomplete
+                  size="small"
+                  className="w-52"
+                  options={assignmentShifts}
+                  value={assignmentShifts.find((shift) => shift.id === shiftId) || null}
+                  loading={assignmentShiftsQuery.isFetching}
+                  getOptionLabel={(shift) =>
+                    `${shift.name || ''}${shift.code ? ` (${shift.code})` : ''}`
+                  }
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  onInputChange={(_, value, reason) => {
+                    if (reason !== 'reset') setShiftSearch(value)
+                  }}
+                  onChange={(_, shift) => {
+                    updateSearch({ shiftId: shift?.id || '' }, true)
+                    setShiftSearch(shift?.name || '')
+                  }}
+                  renderInput={(params) => <TextField {...params} label="Shift" />}
+                />
+                <Autocomplete
+                  size="small"
+                  className="w-52"
+                  options={assignmentLocations}
+                  value={
+                    assignmentLocations.find((location) => location.id === workLocationId) || null
+                  }
+                  loading={assignmentLocationsQuery.isFetching}
+                  getOptionLabel={(location) =>
+                    `${location.name || ''}${location.code ? ` (${location.code})` : ''}`
+                  }
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  onInputChange={(_, value, reason) => {
+                    if (reason !== 'reset') setLocationSearch(value)
+                  }}
+                  onChange={(_, location) => {
+                    updateSearch({ workLocationId: location?.id || '' }, true)
+                    setLocationSearch(location?.name || '')
+                  }}
+                  renderInput={(params) => <TextField {...params} label="Work location" />}
+                />
+                <TextField
+                  select
+                  size="small"
+                  className="w-36"
+                  label={t('common.status', { defaultValue: 'Status' })}
+                  value={status}
+                  onChange={(event) => updateSearch({ status: event.target.value }, true)}
+                >
+                  <MenuItem value="">{t('common.all', { defaultValue: 'All' })}</MenuItem>
+                  <MenuItem value="ACTIVE">Active</MenuItem>
+                  <MenuItem value="SUSPENDED">Suspended</MenuItem>
+                </TextField>
+                <DateRangePicker
+                  value={{
+                    start: effectiveFrom ? dayjs(effectiveFrom) : null,
+                    end: effectiveTo ? dayjs(effectiveTo) : null,
+                  }}
+                  onChange={({ start, end }) =>
+                    updateSearch(
+                      {
+                        effectiveFrom: start?.format('YYYY-MM-DD') ?? '',
+                        effectiveTo: end?.format('YYYY-MM-DD') ?? '',
+                      },
+                      true,
+                    )
+                  }
+                  onClear={() => updateSearch({ effectiveFrom: '', effectiveTo: '' }, true)}
+                />
+                <Button
+                  variant="text"
+                  disabled={
+                    !profileId &&
+                    !shiftId &&
+                    !workLocationId &&
+                    !status &&
+                    !effectiveFrom &&
+                    !effectiveTo
+                  }
+                  onClick={() =>
+                    updateSearch(
+                      {
+                        profileId: '',
+                        shiftId: '',
+                        workLocationId: '',
+                        status: '',
+                        effectiveFrom: '',
+                        effectiveTo: '',
+                      },
+                      true,
+                    )
+                  }
+                >
+                  Clear filters
+                </Button>
+              </>
             ) : null}
             {['shifts', 'locations'].includes(tab) ? (
               <TextField
@@ -1038,6 +1283,17 @@ export default function SchedulePage() {
                 ))}
               </TextField>
             ) : null}
+            {tab === 'holidays' ? (
+              <TextField
+                size="small"
+                type="number"
+                className="w-32"
+                label="Year"
+                value={year || holidayYear}
+                inputProps={{ min: 2000, max: 9999 }}
+                onChange={(event) => updateSearch({ year: event.target.value }, true)}
+              />
+            ) : null}
             {tab === 'rotations' ? (
               <>
                 <TextField
@@ -1065,7 +1321,7 @@ export default function SchedulePage() {
                   size="small"
                   type="number"
                   label="Month"
-                  value={month}
+                  value={rotationMonth}
                   inputProps={{ min: 1, max: 12 }}
                   onChange={(event) => updateSearch({ month: event.target.value }, true)}
                 />
@@ -1073,27 +1329,7 @@ export default function SchedulePage() {
                   size="small"
                   type="number"
                   label="Year"
-                  value={year}
-                  inputProps={{ min: 2000, max: 9999 }}
-                  onChange={(event) => updateSearch({ year: event.target.value }, true)}
-                />
-              </>
-            ) : null}
-            {['personal', 'team'].includes(tab) ? (
-              <>
-                <TextField
-                  size="small"
-                  type="number"
-                  label="Month"
-                  value={calendarMonth}
-                  inputProps={{ min: 1, max: 12 }}
-                  onChange={(event) => updateSearch({ month: event.target.value }, true)}
-                />
-                <TextField
-                  size="small"
-                  type="number"
-                  label="Year"
-                  value={calendarYear}
+                  value={rotationYear}
                   inputProps={{ min: 2000, max: 9999 }}
                   onChange={(event) => updateSearch({ year: event.target.value }, true)}
                 />
@@ -1113,12 +1349,14 @@ export default function SchedulePage() {
         </OperationsToolbar>
       }
       pagination={
-        <OperationsPagination
-          page={pagination.page || page}
-          pageSize={pagination.limit || pageSize}
-          total={pagination.total || 0}
-          onPageChange={(value) => updateSearch({ page: value })}
-        />
+        tab === 'rotations' ? null : (
+          <OperationsPagination
+            page={pagination.page || page}
+            pageSize={pagination.limit || pageSize}
+            total={pagination.total || 0}
+            onPageChange={(value) => updateSearch({ page: value })}
+          />
+        )
       }
     >
       {queryError ? (
@@ -1137,35 +1375,34 @@ export default function SchedulePage() {
           rangeParams={
             holidayScopeState.enabled
               ? {
-                  dateFrom: `${Number(year) || new Date().getFullYear()}-01-01`,
-                  dateTo: `${Number(year) || new Date().getFullYear()}-12-31`,
+                  dateFrom: `${holidayYear}-01-01`,
+                  dateTo: `${holidayYear}-12-31`,
                   ...holidayScopeState.params,
                 }
               : undefined
           }
-          year={Number(year) || new Date().getFullYear()}
+          year={holidayYear}
         />
       ) : null}
-      {tab === 'personal' ? (
-        <StaffMonthlyCalendar
-          month={{ year: calendarYear, month: calendarMonth }}
-          records={{
-            attendance: list(myAttendanceQuery.data),
-            leave: list(myLeaveQuery.data),
-            overtime: list(myOvertimeQuery.data),
-          }}
-          onDayOpen={setPersonalDay}
-        />
-      ) : tab === 'team' ? (
-        teamMatrixQuery.data?.capabilities?.viewTeamMatrix ? (
-          <MonthlyStaffMatrix
-            year={calendarYear}
-            month={calendarMonth}
-            rows={teamMatrixQuery.data.items || []}
+      {tab === 'rotations' ? (
+        <div className="h-full overflow-y-auto pb-4">
+          <SaturdayRotationMatrix
+            matrix={rotationMatrixQuery.data}
+            employees={employees}
+            canWriteCell={(team) => canWriteRotationRow({ teamId: team.id })}
+            onSelectCell={(team, cell) => {
+              setActionError('')
+              setRotationMaintenance({
+                id: cell.rotationId,
+                teamId: team.id,
+                dateKey: cell.dateKey,
+                month: rotationMonth,
+                year: rotationYear,
+                employeeProfileIds: cell.employeeProfileIds,
+              })
+            }}
           />
-        ) : (
-          <Alert severity="info">Team attendance is unavailable for this scope.</Alert>
-        )
+        </div>
       ) : (
         <OperationsTable
           columns={columns}
@@ -1177,19 +1414,6 @@ export default function SchedulePage() {
           emptyTitle={t('hrTime.empty.title', { defaultValue: 'No records found' })}
         />
       )}
-      <Drawer anchor="right" open={Boolean(personalDay)} onClose={() => setPersonalDay(null)}>
-        <div className="w-[360px] space-y-3 p-5">
-          <Typography variant="h6">My schedule</Typography>
-          <Typography variant="body2" className="text-ink-muted">
-            {personalDay?.dateKey}
-          </Typography>
-          <Typography variant="body2">
-            {personalDay?.attendance?.status?.replaceAll('_', ' ') || 'No attendance record'}
-          </Typography>
-          {personalDay?.leave ? <Typography variant="body2">Leave request</Typography> : null}
-          {personalDay?.overtime ? <Typography variant="body2">Overtime request</Typography> : null}
-        </div>
-      </Drawer>
       {editor?.type === 'assignment' ? (
         <ShiftAssignmentDialog
           open
@@ -1250,12 +1474,14 @@ export default function SchedulePage() {
       {rotationEditor ? (
         <RotationDialog
           teams={rotationWriteTeams}
+          employees={employees}
           initialTeamId={rotationWriteTeamId}
+          manualMonth={rotationEditor === 'manual'}
           loading={generateRotations.isPending}
           error={actionError}
           outcome={rotationOutcome}
           onClose={() => {
-            setRotationEditor(false)
+            setRotationEditor('')
             setRotationOutcome(null)
           }}
           onSubmit={generateRotationSet}
@@ -1280,13 +1506,19 @@ export default function SchedulePage() {
       ) : null}
       {rotationMaintenance ? (
         <RotationMaintenanceDialog
+          key={
+            rotationMaintenance.id || `${rotationMaintenance.teamId}-${rotationMaintenance.dateKey}`
+          }
           employees={employees}
           error={actionError ? { message: actionError } : null}
-          loading={updateRotation.isPending || deleteTeamRotations.isPending}
+          loading={
+            createRotation.isPending || updateRotation.isPending || deleteTeamRotations.isPending
+          }
           rotation={rotationMaintenance}
           teams={rotationWriteTeams}
           onClose={() => setRotationMaintenance(null)}
           onDeleteTeam={removeTeamRotations}
+          onCreate={saveRotation}
           onUpdate={saveRotation}
         />
       ) : null}

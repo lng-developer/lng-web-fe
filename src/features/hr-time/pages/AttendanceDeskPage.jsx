@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -6,23 +6,19 @@ import { Alert, Button, MenuItem, Stack, TextField } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
 import MonthPicker from '@/components/form/MonthPicker'
-import {
-  OperationsHeader,
-  OperationsPageShell,
-  OperationsPagination,
-  OperationsToolbar,
-} from '@/components/operations'
+import { OperationsHeader, OperationsPageShell, OperationsToolbar } from '@/components/operations'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { useDepartmentsQuery, useTeamsQuery } from '@/features/rbac/api/rbac.queries'
+import { useDebounce } from '@/hooks/useDebounce'
 
 import { useAdjustAttendanceMutation } from '../api/hrTime.mutations.js'
 import { useAttendanceMonthMatrixQuery, useShiftsQuery } from '../api/hrTime.queries.js'
 import AttendanceAdjustmentDialog from '../components/AttendanceAdjustmentDialog.jsx'
 import AttendanceStaffDetailDrawer from '../components/AttendanceStaffDetailDrawer.jsx'
-import AttendanceStaffList from '../components/AttendanceStaffList.jsx'
 import HrOperationsSummaryCards from '../components/HrOperationsSummaryCards.jsx'
+import MonthlyStaffMatrix from '../components/MonthlyStaffMatrix.jsx'
 
-const pageSize = 20
+const pageSize = 8
 
 function monthValue(value, fallback) {
   const parsed = Number(value)
@@ -37,18 +33,67 @@ export default function AttendanceDeskPage() {
   const { t } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedRow, setSelectedRow] = useState(null)
+  const [, startTransition] = useTransition()
+  const [selectedAttendance, setSelectedAttendance] = useState(null)
   const [adjusting, setAdjusting] = useState(null)
   const [actionError, setActionError] = useState('')
+
+  const handleMatrixRowOpen = useCallback((row) => {
+    setSelectedAttendance({ row, cell: row.cells?.[0] || null })
+  }, [])
+
+  const handleMatrixCellOpen = useCallback((cell, row) => {
+    setSelectedAttendance({ row, cell })
+  }, [])
   const today = new Date()
   const year = Number(searchParams.get('year')) || today.getFullYear()
   const month = monthValue(searchParams.get('month'), today.getMonth() + 1)
-  const page = Math.max(Number(searchParams.get('page')) || 1, 1)
   const teamId = searchParams.get('teamId') || ''
   const departmentId = searchParams.get('departmentId') || ''
   const shiftId = searchParams.get('shiftId') || ''
   const q = searchParams.get('q') || ''
+  const [searchInput, setSearchInput] = useState(q)
+  const debouncedSearch = useDebounce(searchInput, 300)
+  const page = Math.max(Number(searchParams.get('page')) || 1, 1)
   const exceptionsOnly = searchParams.get('exceptionsOnly') === 'true'
+  const lateOnly = searchParams.get('lateOnly') === 'true'
+  const monthLabel = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(year, month - 1))
+
+  const updateSearch = useCallback(
+    (updates, resetPage = false) => {
+      startTransition(() => {
+        setSearchParams(
+          (current) => {
+            const next = new URLSearchParams(current)
+            Object.entries(updates).forEach(([key, value]) => {
+              if (value === '' || value === null || value === undefined || value === false)
+                next.delete(key)
+              else next.set(key, String(value))
+            })
+            if (resetPage) next.delete('page')
+            return next
+          },
+          { replace: true },
+        )
+      })
+    },
+    [setSearchParams, startTransition],
+  )
+
+  const handleSummaryFilterChange = useCallback(
+    (filters) => updateSearch(filters, true),
+    [updateSearch],
+  )
+
+  const handlePageChange = useCallback((value) => updateSearch({ page: value }), [updateSearch])
+
+  useEffect(() => {
+    if (debouncedSearch !== q) updateSearch({ q: debouncedSearch }, true)
+  }, [debouncedSearch, q, updateSearch])
+
   const matrix = useAttendanceMonthMatrixQuery({
     year,
     month,
@@ -57,6 +102,7 @@ export default function AttendanceDeskPage() {
     shiftId,
     q,
     exceptionsOnly,
+    lateOnly,
     page,
     limit: pageSize,
   })
@@ -67,30 +113,18 @@ export default function AttendanceDeskPage() {
   const teams = teamsQuery.data?.items || []
   const departments = departmentsQuery.data?.items || []
   const shifts = shiftsQuery.data?.items || []
-
-  const adjustment = useAdjustAttendanceMutation()
   const pagination = matrix.data?.pagination || { page, limit: pageSize, total: 0 }
 
-  function updateSearch(updates, resetPage = false) {
-    setSearchParams(
-      (current) => {
-        const next = new URLSearchParams(current)
-        Object.entries(updates).forEach(([key, value]) => {
-          if (value === '' || value === null || value === undefined || value === false)
-            next.delete(key)
-          else next.set(key, String(value))
-        })
-        if (resetPage) next.set('page', '1')
-        return next
-      },
-      { replace: true },
-    )
-  }
-
+  const adjustment = useAdjustAttendanceMutation()
   async function submitAdjustment(payload) {
     setActionError('')
     try {
-      await adjustment.mutateAsync({ attendanceId: adjusting.id, payload })
+      const updated = await adjustment.mutateAsync({ attendanceId: adjusting.id, payload })
+      setSelectedAttendance((current) =>
+        current?.cell?.id === updated.id
+          ? { ...current, cell: { ...current.cell, ...updated } }
+          : current,
+      )
       enqueueSnackbar(
         t('hrTime.messages.attendanceAdjusted', { defaultValue: 'Attendance updated' }),
         {
@@ -110,14 +144,7 @@ export default function AttendanceDeskPage() {
 
   return (
     <OperationsPageShell
-      header={
-        <OperationsHeader
-          title={t('hrTime.attendance.title', { defaultValue: 'Attendance Desk' })}
-          subtitle={t('hrTime.attendance.subtitle', {
-            defaultValue: 'Review monthly attendance inside your authorized scope.',
-          })}
-        />
-      }
+      header={<OperationsHeader title="Attendance" subtitle={`${monthLabel} · Company scope`} />}
       toolbar={
         <OperationsToolbar>
           <div className="flex flex-wrap items-center gap-3">
@@ -134,8 +161,8 @@ export default function AttendanceDeskPage() {
             <TextField
               size="small"
               placeholder={t('common.search', { defaultValue: 'Search...' })}
-              value={q}
-              onChange={(event) => updateSearch({ q: event.target.value }, true)}
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
             />
             <TextField
               select
@@ -184,7 +211,9 @@ export default function AttendanceDeskPage() {
             </TextField>
             <Button
               variant={exceptionsOnly ? 'contained' : 'outlined'}
-              onClick={() => updateSearch({ exceptionsOnly: !exceptionsOnly }, true)}
+              onClick={() =>
+                updateSearch({ exceptionsOnly: !exceptionsOnly, lateOnly: false }, true)
+              }
             >
               Exceptions
             </Button>
@@ -195,7 +224,7 @@ export default function AttendanceDeskPage() {
         </OperationsToolbar>
       }
     >
-      <Stack spacing={3}>
+      <Stack spacing={3} className="h-full min-h-0">
         {matrix.isError ? (
           <Alert severity="error">
             {matrix.error?.response?.data?.message || matrix.error?.message}
@@ -203,25 +232,25 @@ export default function AttendanceDeskPage() {
         ) : null}
         <HrOperationsSummaryCards
           summary={matrix.data?.summary}
-          onFilterChange={(filters) => updateSearch(filters, true)}
+          onFilterChange={handleSummaryFilterChange}
         />
-        <AttendanceStaffList
+        <MonthlyStaffMatrix
+          year={year}
+          month={month}
           rows={matrix.data?.items || []}
-          onViewDetail={(row) => setSelectedRow(row)}
-        />
-        <OperationsPagination
-          page={pagination.page}
-          pageSize={pagination.limit}
-          total={pagination.total}
-          onPageChange={(nextPage) => updateSearch({ page: nextPage })}
+          onRowOpen={handleMatrixRowOpen}
+          onCellOpen={handleMatrixCellOpen}
+          page={pagination.page || page}
+          pageSize={pagination.limit || pageSize}
+          total={pagination.total || 0}
+          onPageChange={handlePageChange}
         />
       </Stack>
       <AttendanceStaffDetailDrawer
-        row={selectedRow}
-        month={month}
-        year={year}
-        onClose={() => setSelectedRow(null)}
-        onCellOpen={(cell) => {
+        row={selectedAttendance?.row}
+        cell={selectedAttendance?.cell}
+        onClose={() => setSelectedAttendance(null)}
+        onAdjust={(cell) => {
           if (canAdjust(cell)) {
             setActionError('')
             setAdjusting(cell)

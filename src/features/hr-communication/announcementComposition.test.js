@@ -2,7 +2,11 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-import { buildAnnouncementPayload, mapAnnouncementRow } from './utils/announcementApi.js'
+import {
+  announcementPreview,
+  buildAnnouncementPayload,
+  mapAnnouncementRow,
+} from './utils/announcementApi.js'
 
 const root = new URL('./', import.meta.url)
 
@@ -44,11 +48,22 @@ test('announcement behavior preserves server capabilities and accepted payload f
   )
 })
 
+test('announcement previews strip editor markup before list rendering', () => {
+  assert.equal(
+    announcementPreview(
+      '<p>New <strong>leave policy</strong></p><ul><li>Effective Monday</li></ul>',
+    ),
+    'New leave policy Effective Monday',
+  )
+})
+
 test('announcements use operations primitives and server record capabilities', async () => {
   const page = await source('pages/AnnouncementsPage.jsx')
 
   assert.match(page, /OperationsPageShell/)
   assert.match(page, /OperationsTable/)
+  assert.match(page, /Pinned announcements/)
+  assert.match(page, /Announcements overview/)
   assert.match(page, /useSearchParams/)
   assert.match(page, /row\.capabilities\?\.update/)
   assert.match(page, /row\.capabilities\?\.delete/)

@@ -33,6 +33,7 @@ export const hrTimeKeys = {
   holidaySummary: (year) => [...hrTimeKeys.holidays(), 'summary', year],
   rotations: () => [...hrTimeKeys.all, 'saturday-rotations'],
   listRotations: (params) => [...hrTimeKeys.rotations(), normalizeHrTimeQuery(params)],
+  rotationMatrix: (params) => [...hrTimeKeys.rotations(), 'matrix', normalizeHrTimeQuery(params)],
   attendance: () => [...hrTimeKeys.all, 'attendance'],
   listAttendance: (params) => [...hrTimeKeys.attendance(), normalizeHrTimeQuery(params)],
   attendanceMonthMatrix: (params) => [

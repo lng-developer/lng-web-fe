@@ -3,6 +3,11 @@ function relationName(value) {
   return value?.fullName ?? value?.name ?? null
 }
 
+export function normalizeIdArray(value) {
+  const ids = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []
+  return [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))]
+}
+
 export function formatMinutes(value, t) {
   if (value === null || value === undefined) return '-'
   const minutes = Number(value || 0)
