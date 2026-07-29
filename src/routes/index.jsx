@@ -140,6 +140,10 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.HR_PAYROLL_RUNS.replace(`${ROUTES.HR}/`, ''),
+                element: requirePermissions(['HR_PAYROLL:READ'], <PayrollRegisterPage />),
+              },
+              {
+                path: ROUTES.HR_PAYROLL_RUN_HISTORY.replace(`${ROUTES.HR}/`, ''),
                 element: requirePermissions(['HR_PAYROLL:READ'], <PayrollRunsPage />),
               },
               {

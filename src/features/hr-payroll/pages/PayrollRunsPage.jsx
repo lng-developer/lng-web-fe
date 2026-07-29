@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
+import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
-import { Alert, Button, MenuItem, Stack, TextField } from '@mui/material'
+import { Alert, Button, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
 import {
@@ -49,6 +53,33 @@ function statusTone(status) {
   return 'warning'
 }
 
+function RunMetric({ icon, label, value, detail, tone = 'default' }) {
+  const iconClass =
+    tone === 'success'
+      ? 'bg-emerald-50 text-emerald-700'
+      : tone === 'warning'
+        ? 'bg-amber-50 text-amber-700'
+        : 'bg-primary-light text-primary'
+  return (
+    <section className="flex min-h-32 items-center gap-4 rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${iconClass}`}>
+        {icon}
+      </span>
+      <div>
+        <Typography variant="body2" className="font-semibold text-ink-muted">
+          {label}
+        </Typography>
+        <Typography variant="h5" className="mt-1 font-extrabold text-ink-strong">
+          {value}
+        </Typography>
+        <Typography variant="caption" className="mt-1 block text-ink-muted">
+          {detail}
+        </Typography>
+      </div>
+    </section>
+  )
+}
+
 export default function PayrollRunsPage() {
   const { enqueueSnackbar } = useSnackbar()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -75,6 +106,10 @@ export default function PayrollRunsPage() {
   const email = useEmailPayrollMutation()
   const rows = query.data?.items || []
   const pagination = query.data?.pagination || { page, limit: pageSize, total: 0 }
+  const draftRuns = rows.filter((row) => row.status === 'DRAFT').length
+  const readyToFinalize = rows.filter((row) => row.capabilities?.finalize).length
+  const paidRuns = rows.filter((row) => row.status === 'PAID').length
+  const employeeResults = rows.reduce((total, row) => total + (row.resultCount || 0), 0)
 
   function updateSearch(updates, resetPage = false) {
     setSearchParams(
@@ -264,6 +299,37 @@ export default function PayrollRunsPage() {
           {query.error.message}
         </Alert>
       ) : null}
+      <section
+        aria-label="Payroll run summary"
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <RunMetric
+          icon={<DescriptionOutlinedIcon />}
+          label="Draft runs"
+          value={draftRuns}
+          detail="Periods in draft"
+        />
+        <RunMetric
+          icon={<HourglassEmptyOutlinedIcon />}
+          label="Ready to finalize"
+          value={readyToFinalize}
+          detail="Authorized actions on this page"
+          tone="warning"
+        />
+        <RunMetric
+          icon={<CheckCircleOutlineOutlinedIcon />}
+          label="Paid runs"
+          value={paidRuns}
+          detail="Payment completed"
+          tone="success"
+        />
+        <RunMetric
+          icon={<AccountBalanceWalletOutlinedIcon />}
+          label="Employee results"
+          value={employeeResults}
+          detail="Across loaded periods"
+        />
+      </section>
       <OperationsTable
         columns={columns}
         rows={rows}

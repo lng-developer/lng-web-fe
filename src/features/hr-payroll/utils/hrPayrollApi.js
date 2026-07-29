@@ -30,6 +30,11 @@ export function mapPayrollResult(result) {
     ...result,
     employeeName: result.employee?.fullName || 'Unknown employee',
     employeeCode: result.employee?.employeeCode || '-',
+    employeeTeam:
+      result.employee?.teamName ||
+      result.employee?.departmentName ||
+      result.employee?.department ||
+      '-',
     insurance: {
       ...(result.insurance && typeof result.insurance === 'object' ? result.insurance : {}),
       social: Number.isSafeInteger(result.insurance?.social) ? result.insurance.social : 0,
@@ -97,6 +102,17 @@ export function mapPayrollEmailOutcome(payload = {}) {
 
 export function buildMarkPaidPayload(payrollResultIds, expectedVersion) {
   return { payrollResultIds, expectedVersion }
+}
+
+export function buildPayrollResultExportUrl(filters = {}) {
+  const query = normalizePayrollQuery({
+    month: filters.month,
+    year: filters.year,
+    status: filters.status,
+    q: typeof filters.q === 'string' ? filters.q.trim() : filters.q,
+  })
+  const params = new URLSearchParams(query)
+  return params.size ? `?${params.toString()}` : ''
 }
 
 export function mapPayrollAdjustment(adjustment) {
