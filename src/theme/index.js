@@ -10,9 +10,9 @@ export { colorTokens }
 // Hệ số opacity dùng chung cho mọi state "disabled" (Button, Checkbox, Switch...).
 const DISABLED_OPACITY = 0.5
 
-// Focus/Ring (Component/Input, Component/Select...): viền glow 4px, alpha 12% theo màu trạng thái
+// Focus/Ring (Component/Input, Component/Select...): viền glow 4px, alpha 24% theo màu trạng thái
 // (brand/primary khi focus thường, error khi focus + lỗi).
-const focusRing = (color) => `0 0 0 4px ${alpha(color, 0.12)}`
+const focusRing = (color) => `0 0 0 4px ${alpha(color, 0.24)}`
 
 /**
  * Tạo MUI theme theo mode (light/dark). Typography lấy từ src/theme/typography.js,
@@ -69,9 +69,9 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
             padding: '0 16px',
           },
           sizeLarge: ({ theme }) => ({
-            height: 48,
-            padding: '0 16px',
-            fontSize: theme.typography.h3.fontSize,
+            height: 44,
+            padding: '0 24px',
+            fontSize: theme.typography.button.fontSize,
           }),
           // variant="contained" (mặc định color="primary") -> Button/Primary
           containedPrimary: ({ theme }) => ({
@@ -118,10 +118,12 @@ export function createAppTheme(mode = THEME_MODES.LIGHT) {
         },
       },
       // size="small" để label/placeholder căn giữa đúng với chiều cao input 40px
-      // (MuiOutlinedInput.input padding bên dưới đã thu nhỏ theo size nhỏ).
       MuiTextField: {
         defaultProps: {
           size: 'small',
+          slotProps: {
+            inputLabel: { shrink: true },
+          },
         },
       },
       // Input/Select dùng chung MuiOutlinedInput - các state Default/Focus/Error/Disabled

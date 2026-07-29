@@ -11,3 +11,9 @@ test('main layout does not add top padding under the fixed app header', () => {
   assert.equal(source.includes('pb-0'), true)
   assert.equal(source.includes('p-4 transition-[margin] duration-200 md:p-6'), false)
 })
+
+test('main layout owns the semantic page canvas', () => {
+  const source = readFileSync(new URL('./MainLayout.jsx', import.meta.url), 'utf8')
+
+  assert.equal(source.includes('bg-page'), true)
+})

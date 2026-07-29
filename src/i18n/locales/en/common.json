@@ -573,7 +573,11 @@
           "scoped": "Scoped ({{count}} assignments)"
         },
         "discardConfirm": "Discard the unsaved access changes?",
+        "discardConfirmTitle": "Discard changes?",
+        "discardAction": "Discard changes",
         "deleteConfirm": "Remove this scoped assignment?",
+        "deleteConfirmTitle": "Remove assignment",
+        "deleteAction": "Remove assignment",
         "globalAccess": "Global Access",
         "globalRoles": "Global Roles",
         "globalAccessHint": "Roles and direct permissions that apply across the system.",
@@ -625,6 +629,7 @@
       "actions": {
         "addRole": "Add role",
         "edit": "Edit",
+        "deleteConfirmTitle": "Delete role",
         "deleteConfirm": "Delete this role?",
         "deleteSuccess": "Role deleted!",
         "inUse": "This role is assigned to {{count}} accounts"
@@ -709,6 +714,7 @@
         "cancel": "Cancel",
         "submit": "Save changes",
         "success": "Permission updated successfully!",
+        "deleteConfirmTitle": "Delete permission",
         "deleteConfirm": "Are you sure you want to delete this permission? This action cannot be undone.",
         "deleteSuccess": "Permission deleted successfully!"
       }
@@ -3014,9 +3020,34 @@
       "configuration": "Configuration"
     },
     "people": {
+      "title": "People directory",
+      "subtitle": "Manage staff profiles, access accounts, and employment status.",
+      "search": "Search name or employee code",
       "addAction": "Create staff",
       "addTitle": "Create staff",
+      "editTitle": "Edit employee profile",
+      "editAction": "Edit profile",
       "createAction": "Create staff",
+      "accrueLeave": "Accrue leave",
+      "resetLeave": "Reset leave",
+      "carryOverLeave": "Carry over leave",
+      "includeDeleted": "Include deleted",
+      "lifecycle": {
+        "deleteTitle": "Delete employee profile",
+        "restoreTitle": "Restore employee profile",
+        "deleteAction": "Delete",
+        "restoreAction": "Restore",
+        "deleteDescription": "This profile will no longer appear in the active employee directory.",
+        "restoreDescription": "This profile will appear in the active employee directory again."
+      },
+      "columns": {
+        "employee": "Employee",
+        "organization": "Organization",
+        "job": "Job",
+        "employment": "Employment",
+        "status": "Status",
+        "actions": "Actions"
+      },
       "companyInformation": "Company information",
       "personalInformation": "Personal information",
       "personalReadOnly": "Staff-managed and read only for HR.",
@@ -3030,10 +3061,54 @@
         "READY": "Ready"
       }
     },
+    "filters": {
+      "department": "Department",
+      "status": "Status"
+    },
     "fields": {
       "workEmail": {
         "label": "Work email",
         "helperText": "This address is used for the staff sign-in account."
+      },
+      "employeeCode": {
+        "label": "Employee code",
+        "helperText": "Stable code used on internal HR records."
+      },
+      "fullName": {
+        "label": "Full name",
+        "helperText": "Use the employee name shown across operations."
+      },
+      "department": {
+        "label": "Department",
+        "helperText": "Primary department used for reporting and access scope."
+      },
+      "team": {
+        "label": "Team",
+        "helperText": "Operational team inside the selected department."
+      },
+      "jobTitle": {
+        "label": "Job title",
+        "helperText": "Readable role title for the directory."
+      },
+      "jobLevel": {
+        "label": "Job level",
+        "helperText": "Internal level or grade, when used."
+      },
+      "employmentType": {
+        "label": "Employment type",
+        "helperText": "Contracted working arrangement."
+      },
+      "workMode": {
+        "label": "Work mode",
+        "helperText": "Normal place-of-work arrangement."
+      },
+      "startDate": {
+        "label": "Start date",
+        "helperText": "Official employment start date."
+      },
+      "employeeStatus": {
+        "label": "Employment status",
+        "helperText": "Use the status that controls active HR operations."
       },
       "probationEndDate": {
         "label": "Probation end date",

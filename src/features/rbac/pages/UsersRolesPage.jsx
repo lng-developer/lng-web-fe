@@ -5,6 +5,7 @@ import AddIcon from '@mui/icons-material/Add'
 import { Box, Button, Paper, Stack, Tab, Tabs, Typography } from '@mui/material'
 import { useSnackbar } from 'notistack'
 
+import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
 import { useAuthStore } from '@/store/useAuthStore'
 
@@ -89,6 +90,7 @@ export default function UsersRolesPage() {
     status: '',
   })
   const [dialog, setDialog] = useState({ type: null, payload: null })
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   const accountsQuery = useAccountsQuery(accountFilters)
   const rolesQuery = useRolesQuery({ search: roleSearch })
@@ -304,8 +306,15 @@ export default function UsersRolesPage() {
           onCreateRole={() => setDialog({ type: 'role', payload: null })}
           onEditRole={(role) => setDialog({ type: 'role', payload: role })}
           onDeleteRole={(role) => {
-            if (!window.confirm(t('rbac.roles.actions.deleteConfirm'))) return
-            runMutation(deleteRoleMutation, role.id, t('rbac.roles.actions.deleteSuccess'))
+            setConfirmDialog({
+              title: t('rbac.roles.actions.deleteConfirmTitle', { defaultValue: 'Delete role' }),
+              description: t('rbac.roles.actions.deleteConfirm'),
+              confirmLabel: t('common.delete'),
+              onConfirm: () => {
+                runMutation(deleteRoleMutation, role.id, t('rbac.roles.actions.deleteSuccess'))
+                setConfirmDialog(null)
+              },
+            })
           }}
           onCreatePermission={() => setDialog({ type: 'permission', payload: null })}
           onEditPermission={(permission) => setDialog({ type: 'permission', payload: permission })}
@@ -534,6 +543,16 @@ export default function UsersRolesPage() {
             closeDialog,
           )
         }
+      />
+
+      <ConfirmDialog
+        open={Boolean(confirmDialog)}
+        title={confirmDialog?.title}
+        description={confirmDialog?.description}
+        confirmLabel={confirmDialog?.confirmLabel}
+        loading={deleteRoleMutation.isPending}
+        onClose={() => setConfirmDialog(null)}
+        onConfirm={confirmDialog?.onConfirm}
       />
     </Stack>
   )

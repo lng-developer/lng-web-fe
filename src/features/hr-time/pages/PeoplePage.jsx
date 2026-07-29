@@ -313,7 +313,7 @@ export default function PeoplePage() {
                     setLeaveBalanceAction({ mode: 'accrue', result: null, error: null })
                   }
                 >
-                  Accrue leave
+                  {t('hrTime.people.accrueLeave')}
                 </Button>
               ) : null}
               {canManageLeaveBalances ? (
@@ -323,7 +323,7 @@ export default function PeoplePage() {
                     setLeaveBalanceAction({ mode: 'reset', result: null, error: null })
                   }
                 >
-                  Reset leave
+                  {t('hrTime.people.resetLeave')}
                 </Button>
               ) : null}
               {canManageLeaveBalances ? (
@@ -333,7 +333,7 @@ export default function PeoplePage() {
                     setLeaveBalanceAction({ mode: 'carryOver', result: null, error: null })
                   }
                 >
-                  Carry over leave
+                  {t('hrTime.people.carryOverLeave')}
                 </Button>
               ) : null}
               {canWrite ? (
@@ -405,7 +405,7 @@ export default function PeoplePage() {
                 variant={includeDeleted ? 'contained' : 'text'}
                 onClick={() => updateSearch({ includeDeleted: includeDeleted ? '' : 'true' }, true)}
               >
-                Include deleted
+                {t('hrTime.people.includeDeleted')}
               </Button>
             )}
           </div>

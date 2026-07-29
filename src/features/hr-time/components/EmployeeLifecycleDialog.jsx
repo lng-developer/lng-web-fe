@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   Button,
@@ -16,9 +17,10 @@ export default function EmployeeLifecycleDialog({
   onClose,
   onConfirm,
 }) {
+  const { t } = useTranslation()
   const isDelete = action === 'delete'
-  const title = isDelete ? 'Delete employee profile' : 'Restore employee profile'
-  const verb = isDelete ? 'Delete' : 'Restore'
+  const title = t(`hrTime.people.lifecycle.${isDelete ? 'deleteTitle' : 'restoreTitle'}`)
+  const verb = t(`hrTime.people.lifecycle.${isDelete ? 'deleteAction' : 'restoreAction'}`)
 
   return (
     <Dialog open onClose={loading ? undefined : onClose} fullWidth maxWidth="sm">
@@ -30,13 +32,13 @@ export default function EmployeeLifecycleDialog({
         </Typography>
         <Typography variant="body2" className="text-ink-muted">
           {isDelete
-            ? 'This employee profile will no longer appear in the active directory.'
-            : 'This employee profile will appear in the active directory again.'}
+            ? t('hrTime.people.lifecycle.deleteDescription')
+            : t('hrTime.people.lifecycle.restoreDescription')}
         </Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           color={isDelete ? 'error' : 'primary'}

@@ -18,7 +18,7 @@ export default function MainLayout() {
   const closeSidebar = useUIStore((state) => state.closeSidebar)
 
   return (
-    <Box className="flex min-h-screen flex-col">
+    <Box className="flex min-h-screen flex-col bg-page">
       <AppHeader onToggleSidebar={toggleSidebar} />
 
       {!isDesktop && (

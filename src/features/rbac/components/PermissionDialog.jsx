@@ -15,6 +15,8 @@ import {
   Typography,
 } from '@mui/material'
 
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+
 import { PERMISSION_ACTION_OPTIONS, PERMISSION_MODULE_OPTIONS } from '../utils/permissionsDisplay'
 import { formatDate, formatShortDate, INITIAL_PERMISSION_FORM } from './shared'
 import { PermissionMetaCard, UserFieldLabel } from './shared'
@@ -41,6 +43,7 @@ export default function PermissionDialog({
         }
       : INITIAL_PERMISSION_FORM,
   )
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   const submit = (event) => {
     event.preventDefault()
@@ -48,9 +51,17 @@ export default function PermissionDialog({
   }
 
   const handleDelete = () => {
-    if (window.confirm(t('rbac.permissions.editModal.deleteConfirm'))) {
-      onDelete(value.id)
-    }
+    setConfirmDialog({
+      title: t('rbac.permissions.editModal.deleteConfirmTitle', {
+        defaultValue: 'Delete permission',
+      }),
+      description: t('rbac.permissions.editModal.deleteConfirm'),
+      confirmLabel: t('common.delete'),
+      onConfirm: () => {
+        onDelete(value.id)
+        setConfirmDialog(null)
+      },
+    })
   }
 
   return (
@@ -248,6 +259,15 @@ export default function PermissionDialog({
           </Box>
         </DialogActions>
       </Box>
+      <ConfirmDialog
+        open={Boolean(confirmDialog)}
+        title={confirmDialog?.title}
+        description={confirmDialog?.description}
+        confirmLabel={confirmDialog?.confirmLabel}
+        loading={deletePending}
+        onClose={() => setConfirmDialog(null)}
+        onConfirm={confirmDialog?.onConfirm}
+      />
     </Dialog>
   )
 }

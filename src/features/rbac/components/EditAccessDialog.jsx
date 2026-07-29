@@ -24,6 +24,8 @@ import {
   Typography,
 } from '@mui/material'
 
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+
 import { useAccountQuery } from '../api/rbac.queries'
 import {
   buildAccessAssignmentResetPayload,
@@ -186,6 +188,7 @@ export default function EditAccessDialog({
   t,
 }) {
   const { data } = useAccountQuery(accountId, { enabled: open && Boolean(accountId) })
+  const [confirmDialog, setConfirmDialog] = useState(null)
   const [mode, setMode] = useState('global')
   const [permissionAssignment, setPermissionAssignment] = useState(null)
   const [globalAccessDraft, setGlobalAccessDraft] = useState(null)
@@ -209,7 +212,20 @@ export default function EditAccessDialog({
   const dirty = hasUnsavedAccessChanges(globalAccessDraft, assignmentForm)
   const requestClose = () => {
     if (pending) return
-    if (dirty && !window.confirm(t('rbac.users.editAccessModal.discardConfirm'))) return
+    if (dirty) {
+      setConfirmDialog({
+        title: t('rbac.users.editAccessModal.discardConfirmTitle', {
+          defaultValue: 'Discard changes?',
+        }),
+        description: t('rbac.users.editAccessModal.discardConfirm'),
+        confirmLabel: t('rbac.users.editAccessModal.discardAction'),
+        onConfirm: () => {
+          onClose()
+          setConfirmDialog(null)
+        },
+      })
+      return
+    }
     onClose()
   }
   const addScoped = () => {
@@ -370,9 +386,17 @@ export default function EditAccessDialog({
                             onChangeAssignment={onUpdateAssignment}
                             onEditPermission={setPermissionAssignment}
                             onDeleteAssignment={(assignmentId) => {
-                              if (window.confirm(t('rbac.users.editAccessModal.deleteConfirm'))) {
-                                onDeleteAssignment(assignmentId)
-                              }
+                              setConfirmDialog({
+                                title: t('rbac.users.editAccessModal.deleteConfirmTitle', {
+                                  defaultValue: 'Delete assignment',
+                                }),
+                                description: t('rbac.users.editAccessModal.deleteConfirm'),
+                                confirmLabel: t('rbac.users.editAccessModal.deleteAction'),
+                                onConfirm: () => {
+                                  onDeleteAssignment(assignmentId)
+                                  setConfirmDialog(null)
+                                },
+                              })
                             }}
                             t={t}
                           />
@@ -493,6 +517,15 @@ export default function EditAccessDialog({
         onClose={() => setPermissionAssignment(null)}
         onSave={savePermissionOverride}
         t={t}
+      />
+      <ConfirmDialog
+        open={Boolean(confirmDialog)}
+        title={confirmDialog?.title}
+        description={confirmDialog?.description}
+        confirmLabel={confirmDialog?.confirmLabel}
+        loading={pending}
+        onClose={() => setConfirmDialog(null)}
+        onConfirm={confirmDialog?.onConfirm}
       />
     </>
   )

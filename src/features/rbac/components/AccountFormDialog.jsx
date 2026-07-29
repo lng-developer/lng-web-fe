@@ -63,6 +63,7 @@ export default function AccountFormDialog({ open, onClose, roles, onSubmit, pend
               required
               fullWidth
               type="email"
+              autoComplete="off"
               className="rounded-lg"
             />
             <Box>
@@ -75,6 +76,7 @@ export default function AccountFormDialog({ open, onClose, roles, onSubmit, pend
                 required
                 fullWidth
                 type="password"
+                autoComplete="new-password"
                 className="rounded-lg"
               />
               <Typography variant="caption" className="mt-1 block text-ink-muted">

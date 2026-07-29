@@ -571,7 +571,11 @@
           "scoped": "Theo scope ({{count}} phân quyền)"
         },
         "discardConfirm": "Bỏ các thay đổi quyền chưa lưu?",
+        "discardConfirmTitle": "Bỏ thay đổi?",
+        "discardAction": "Bỏ thay đổi",
         "deleteConfirm": "Gỡ phân quyền theo scope này?",
+        "deleteConfirmTitle": "Gỡ phân quyền",
+        "deleteAction": "Gỡ phân quyền",
         "globalAccess": "Quyền truy cập global",
         "globalRoles": "Vai trò global",
         "globalAccessHint": "Vai trò và quyền trực tiếp áp dụng trên toàn hệ thống.",
@@ -623,6 +627,7 @@
       "actions": {
         "addRole": "Thêm vai trò",
         "edit": "Sửa",
+        "deleteConfirmTitle": "Xóa vai trò",
         "deleteConfirm": "Xoá vai trò này?",
         "deleteSuccess": "Đã xoá vai trò!",
         "inUse": "Vai trò đang được gán cho {{count}} tài khoản"
@@ -707,6 +712,7 @@
         "cancel": "Huỷ",
         "submit": "Lưu thay đổi",
         "success": "Cập nhật quyền thành công!",
+        "deleteConfirmTitle": "Xóa quyền",
         "deleteConfirm": "Bạn có chắc chắn muốn xoá quyền này? Hành động không thể hoàn tác.",
         "deleteSuccess": "Đã xoá quyền thành công!"
       }
@@ -3012,9 +3018,34 @@
       "configuration": "Cấu hình"
     },
     "people": {
+      "title": "Hồ sơ nhân sự",
+      "subtitle": "Quản lý hồ sơ, tài khoản truy cập và trạng thái làm việc của nhân sự.",
+      "search": "Tìm theo tên hoặc mã nhân viên",
       "addAction": "Tạo nhân sự",
       "addTitle": "Tạo nhân sự",
+      "editTitle": "Cập nhật hồ sơ nhân sự",
+      "editAction": "Sửa hồ sơ",
       "createAction": "Tạo nhân sự",
+      "accrueLeave": "Cộng phép",
+      "resetLeave": "Đặt lại phép",
+      "carryOverLeave": "Chuyển phép",
+      "includeDeleted": "Hiện hồ sơ đã xóa",
+      "lifecycle": {
+        "deleteTitle": "Xóa hồ sơ nhân sự",
+        "restoreTitle": "Khôi phục hồ sơ nhân sự",
+        "deleteAction": "Xóa",
+        "restoreAction": "Khôi phục",
+        "deleteDescription": "Hồ sơ này sẽ không còn xuất hiện trong danh sách nhân sự đang hoạt động.",
+        "restoreDescription": "Hồ sơ này sẽ xuất hiện lại trong danh sách nhân sự đang hoạt động."
+      },
+      "columns": {
+        "employee": "Nhân sự",
+        "organization": "Đơn vị",
+        "job": "Công việc",
+        "employment": "Hình thức",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
       "companyInformation": "Thông tin công ty",
       "personalInformation": "Thông tin cá nhân",
       "personalReadOnly": "Nhân sự tự quản lý, HR chỉ có quyền xem.",
@@ -3028,10 +3059,54 @@
         "READY": "Sẵn sàng"
       }
     },
+    "filters": {
+      "department": "Phòng ban",
+      "status": "Trạng thái"
+    },
     "fields": {
       "workEmail": {
         "label": "Email công việc",
         "helperText": "Địa chỉ này dùng để đăng nhập hệ thống."
+      },
+      "employeeCode": {
+        "label": "Mã nhân viên",
+        "helperText": "Mã ổn định dùng trong hồ sơ nội bộ."
+      },
+      "fullName": {
+        "label": "Họ và tên",
+        "helperText": "Tên hiển thị trên các màn vận hành."
+      },
+      "department": {
+        "label": "Phòng ban",
+        "helperText": "Phòng ban chính dùng cho báo cáo và phạm vi truy cập."
+      },
+      "team": {
+        "label": "Team",
+        "helperText": "Team vận hành thuộc phòng ban đã chọn."
+      },
+      "jobTitle": {
+        "label": "Chức danh",
+        "helperText": "Chức danh hiển thị trong danh bạ nhân sự."
+      },
+      "jobLevel": {
+        "label": "Cấp bậc",
+        "helperText": "Cấp bậc nội bộ nếu công ty có sử dụng."
+      },
+      "employmentType": {
+        "label": "Loại hợp đồng",
+        "helperText": "Hình thức làm việc theo hợp đồng."
+      },
+      "workMode": {
+        "label": "Chế độ làm việc",
+        "helperText": "Địa điểm làm việc thông thường."
+      },
+      "startDate": {
+        "label": "Ngày bắt đầu",
+        "helperText": "Ngày chính thức bắt đầu làm việc."
+      },
+      "employeeStatus": {
+        "label": "Trạng thái nhân sự",
+        "helperText": "Trạng thái áp dụng cho các nghiệp vụ HR."
       },
       "probationEndDate": {
         "label": "Ngày kết thúc thử việc",
