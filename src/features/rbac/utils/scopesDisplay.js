@@ -14,7 +14,7 @@ export const SCOPE_STATUS_OPTIONS = [
   { value: 'inactive', labelKey: 'rbac.scopes.status.inactive' },
 ]
 
-export const SCOPE_DEPARTMENT_FALLBACK = '—'
+export const SCOPE_DEPARTMENT_FALLBACK = '-'
 
 export const SCOPE_TYPE_UNKNOWN_LABEL = 'unknown'
 
@@ -96,7 +96,7 @@ export function getScopeResourceOptions(scopeType, departments = [], teams = [])
 }
 
 export function getScopeDisplayName(scope) {
-  return scope?.scope?.name || scope?.resource?.name || scope?.name || scope?.scopeName || '—'
+  return scope?.scope?.name || scope?.resource?.name || scope?.name || scope?.scopeName || '-'
 }
 
 export function getScopeDepartmentName(scope) {
@@ -109,6 +109,10 @@ export function getScopeDepartmentName(scope) {
     scope.scope?.parentDepartment?.name ||
     SCOPE_DEPARTMENT_FALLBACK
   )
+}
+
+export function canDeactivateScope(scope = {}) {
+  return scope.status === 'active' && Number(scope.assignmentCount || 0) === 0
 }
 
 export function filterScopeItems(items = [], filters = {}) {

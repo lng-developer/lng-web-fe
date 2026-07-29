@@ -38,12 +38,14 @@ const PayrollRunsPage = lazy(() => import('@/features/hr-payroll/pages/PayrollRu
 const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage'))
 const PodWorkbenchPage = lazy(() => import('@/features/pod-workbench/pages/PodWorkbenchPage'))
 const QcPage = lazy(() => import('@/features/qc/pages/QcPage'))
+const ArtworkQcWorkbenchPage = lazy(() => import('@/features/qc/pages/ArtworkQcWorkbenchPage'))
 const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
 const RequestInboxPage = lazy(() => import('@/features/hr-time/pages/RequestInboxPage'))
 const PeoplePage = lazy(() => import('@/features/hr-time/pages/PeoplePage'))
 const SchedulePage = lazy(() => import('@/features/hr-time/pages/SchedulePage'))
 const UsersRolesPage = lazy(() => import('@/features/rbac/pages/UsersRolesPage'))
 const ScalePage = lazy(() => import('@/features/scale/pages/ScalePage'))
+const ScaleWorkbenchPage = lazy(() => import('@/features/scale/pages/ScaleWorkbenchPage'))
 const ShippingPage = lazy(() => import('@/features/shipments/pages/ShippingPage'))
 const ShopsPage = lazy(() => import('@/features/shops/pages/ShopsPage'))
 const UiKitPage = lazy(() => import('@/features/ui-kit/pages/UiKitPage'))
@@ -209,8 +211,19 @@ export const router = createBrowserRouter([
             element: requirePermissions(['PRODUCTION:READ'], <ScalePage />),
           },
           {
+            path: 'portal/fulfillment/scale/workbench',
+            element: requirePermissions(['PRODUCTION:READ'], <ScaleWorkbenchPage />),
+          },
+          {
             path: 'portal/fulfillment/qc',
             element: requireAnyPermissions(['PRODUCTION:READ', 'DESIGN:REVIEW'], <QcPage />),
+          },
+          {
+            path: 'portal/fulfillment/qc/artwork',
+            element: requireAnyPermissions(
+              ['PRODUCTION:READ', 'DESIGN:REVIEW'],
+              <ArtworkQcWorkbenchPage />,
+            ),
           },
           // { path: 'portal/design/tasks', element: <DesignTasksPage /> },
           {

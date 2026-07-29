@@ -3,7 +3,7 @@ import test from 'node:test'
 
 import { buildPermissionCode, filterPermissionItems } from './permissionsDisplay.js'
 
-test('filterPermissionItems filters by search, module, action, and status', () => {
+test('filterPermissionItems filters by supported search, module, and action fields', () => {
   const permissions = [
     {
       id: 'p1',
@@ -39,7 +39,6 @@ test('filterPermissionItems filters by search, module, action, and status', () =
       search: 'employee',
       module: 'EMPLOYEES',
       action: 'WRITE',
-      status: 'deprecated',
     }).map((permission) => permission.id),
     ['p2'],
   )
@@ -49,9 +48,13 @@ test('filterPermissionItems filters by search, module, action, and status', () =
       search: 'manage',
       module: '',
       action: '',
-      status: 'active',
     }).map((permission) => permission.id),
     ['p3'],
+  )
+
+  assert.deepEqual(
+    filterPermissionItems(permissions, { status: 'deprecated' }).map((permission) => permission.id),
+    ['p1', 'p2', 'p3'],
   )
 })
 

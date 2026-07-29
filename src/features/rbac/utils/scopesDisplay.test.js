@@ -4,11 +4,18 @@ import test from 'node:test'
 import {
   buildAddScopePayload,
   buildScopeFormPayload,
+  canDeactivateScope,
   filterScopeItems,
   getScopeDepartmentName,
   getScopeTypeLabel,
   getScopeTypeMeta,
 } from './scopesDisplay.js'
+
+test('canDeactivateScope blocks inactive scopes and scopes with assignments', () => {
+  assert.equal(canDeactivateScope({ status: 'active', assignmentCount: 2 }), false)
+  assert.equal(canDeactivateScope({ status: 'active', assignmentCount: 0 }), true)
+  assert.equal(canDeactivateScope({ status: 'inactive', assignmentCount: 0 }), false)
+})
 
 test('filterScopeItems filters by search, type, and status', () => {
   const scopes = [
@@ -47,8 +54,8 @@ test('getScopeDepartmentName resolves parent department names and falls back to 
     }),
     'QC',
   )
-  assert.equal(getScopeDepartmentName({ scopeType: 'department', name: 'QC' }), '—')
-  assert.equal(getScopeDepartmentName({ scopeType: 'global', name: 'Global' }), '—')
+  assert.equal(getScopeDepartmentName({ scopeType: 'department', name: 'QC' }), '-')
+  assert.equal(getScopeDepartmentName({ scopeType: 'global', name: 'Global' }), '-')
 })
 
 test('buildScopeFormPayload uses selected resource name when form name is empty', () => {

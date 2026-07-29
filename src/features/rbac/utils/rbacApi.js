@@ -89,6 +89,10 @@ export function buildAccountAccessPayload(values) {
   }
 }
 
+export function hasUnsavedAccessChanges(globalDraft, assignmentForm = {}) {
+  return Boolean(globalDraft || assignmentForm.roleId || assignmentForm.scopeAssignmentValue)
+}
+
 export function buildRolePayload(values) {
   return {
     code: cleanString(values.code)?.toUpperCase(),

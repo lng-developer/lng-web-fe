@@ -1,13 +1,16 @@
-import { useMemo, useReducer, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
+import FileDownloadDoneIcon from '@mui/icons-material/FileDownloadDone'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ReplayIcon from '@mui/icons-material/Replay'
-import VisibilityIcon from '@mui/icons-material/Visibility'
+import SkipNextIcon from '@mui/icons-material/SkipNext'
 import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,18 +19,13 @@ import {
   LinearProgress,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TablePagination,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
+import { useSnackbar } from 'notistack'
 
-import { StatusBadge } from '@/components/operations'
+import { SNACKBAR_VARIANTS } from '@/constants/app'
 import {
   useMappingPreviewMutation,
   useMappingRecheckMutation,
@@ -35,16 +33,8 @@ import {
   useMappingResolveMutation,
   useMappingSelectMutation,
 } from '@/features/mapping/api/mapping.mutations'
-import {
-  useMappingPlanQuery,
-  useMappingUnmatchedOrderItemsQuery,
-} from '@/features/mapping/api/mapping.queries'
-import { TAB_GUIDES } from '@/features/mapping/data/mappingUxConfig'
-import {
-  mapMappingPlan,
-  mapMappingPreview,
-  mapMappingWorkbenchRows,
-} from '@/features/mapping/utils/mappingMappers'
+import { useMappingUnmatchedOrderItemsQuery } from '@/features/mapping/api/mapping.queries'
+import { mapMappingPreview, mapMappingWorkbenchRows } from '@/features/mapping/utils/mappingMappers'
 import {
   filterResolveQueueRows,
   initialResolveQueueState,
@@ -52,12 +42,6 @@ import {
 } from '@/features/mapping/utils/resolveQueueState'
 
 const blankBatch = { limit: '50', marketplaceCode: '', salesChannelCode: '', shopId: '' }
-const rowsPerPageOptions = [10, 25, 50]
-const compactTableSx = {
-  borderCollapse: 'separate',
-  borderSpacing: 0,
-  '& .MuiTableCell-root': { px: 1.25, py: 0.75, verticalAlign: 'middle' },
-}
 
 function compactPayload(values) {
   return Object.fromEntries(
@@ -66,56 +50,6 @@ function compactPayload(values) {
         ['limit'].includes(key) && value !== '' ? [key, Number(value)] : [key, value],
       )
       .filter(([, value]) => value !== ''),
-  )
-}
-
-function StatusChip({ value }) {
-  return (
-    <StatusBadge tone={value === 'ACTIVE' || value === 'READY' ? 'success' : 'neutral'}>
-      {value || '-'}
-    </StatusBadge>
-  )
-}
-
-function DetailList({ items }) {
-  return items?.length ? (
-    <Stack spacing={0.5}>
-      {items.map((item) => (
-        <Typography key={item} variant="body2">
-          {item}
-        </Typography>
-      ))}
-    </Stack>
-  ) : (
-    <Typography variant="body2">-</Typography>
-  )
-}
-
-function InfoField({ label, value }) {
-  return (
-    <Box>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
-        {value || '-'}
-      </Typography>
-    </Box>
-  )
-}
-
-function TabGuide() {
-  const { t } = useTranslation()
-  const guide = TAB_GUIDES.resolve
-  return (
-    <Alert severity="info" variant="outlined">
-      <Typography variant="body2" sx={{ fontWeight: 700 }}>
-        {t('mapping.guides.resolve.description', { defaultValue: guide.description })}
-      </Typography>
-      <Typography variant="body2">
-        {t('mapping.guides.resolve.primaryAction', { defaultValue: guide.primaryAction })}
-      </Typography>
-    </Alert>
   )
 }
 
@@ -154,185 +88,166 @@ function BatchRecheckDialog({ mutation, onClose }) {
   )
 }
 
-function ResolveDetail({
-  onPreview,
-  preview,
-  recheckMutation,
-  resolveMutation,
-  row,
-  selectMutation,
-}) {
+// Draggable Active Item Card
+function DraggableSourceCard({ row }) {
+  const [isDragging, setIsDragging] = useState(false)
   const { t } = useTranslation()
-  const planQuery = useMappingPlanQuery(row?.id, { enabled: Boolean(row?.id) })
-  const plan = mapMappingPlan(planQuery.data)
-  if (!row)
-    return (
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          {t('mapping.resolve.selectOrderItem')}
-        </Typography>
-      </Paper>
-    )
 
-  const previewData = preview ? mapMappingPreview(preview) : null
-  const canMutate = !resolveMutation.isPending && !recheckMutation.isPending
+  if (!row) return null
+
   return (
-    <Paper variant="outlined" sx={{ p: 2 }}>
-      <Stack spacing={2}>
-        <Stack direction="row" justifyContent="space-between" spacing={1}>
-          <Box>
-            <Typography variant="h6">{row.itemLabel}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('mapping.resolve.orderLabel', { order: row.orderLabel })}
-            </Typography>
-          </Box>
-          <StatusChip value={previewData?.ready ? 'READY' : row.planStatus} />
-        </Stack>
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 1.5,
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-          }}
+    <Box
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', row.id)
+        e.dataTransfer.effectAllowed = 'move'
+        // Add a slight delay before setting dragging state to allow drag image to render
+        setTimeout(() => setIsDragging(true), 10)
+      }}
+      onDragEnd={() => setIsDragging(false)}
+      sx={{
+        p: 2.5,
+        borderRadius: 2,
+        border: '2px solid',
+        borderColor: 'primary.main',
+        bgcolor: 'background.paper',
+        boxShadow: isDragging ? 4 : 1,
+        cursor: 'grab',
+        opacity: isDragging ? 0.5 : 1,
+        transition: 'all 0.2s',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        '&:active': { cursor: 'grabbing' },
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Decorative drag handle background */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 32,
+          bgcolor: 'primary.50',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <DragIndicatorIcon color="primary" />
+      </Box>
+
+      <Box sx={{ ml: 4, flex: 1 }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase' }}
         >
-          <InfoField
-            label={t('mapping.resolve.originalSku')}
-            value={previewData?.originalSku || row.originalSku}
-          />
-          <InfoField
-            label={t('mapping.resolve.canonicalSku')}
-            value={previewData?.canonicalSku || row.canonicalSku}
-          />
-          <InfoField
-            label={t('mapping.resolve.configCode')}
-            value={previewData?.configCode || row.configCode}
-          />
-          <InfoField
-            label={t('mapping.resolve.plan')}
-            value={`${plan.status} / ${plan.selectionMode}`}
-          />
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            {t('mapping.resolve.blockingReasons')}
+          {t('mapping.workbench.activeItem', { defaultValue: 'Item to Map' })}
+        </Typography>
+        <Typography variant="h6" sx={{ mt: 0.5, lineHeight: 1.2 }}>
+          {row.itemLabel}
+        </Typography>
+        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            Order: {row.orderLabel}
           </Typography>
-          <DetailList
-            items={
-              previewData?.blockingReasons.length
-                ? previewData.blockingReasons
-                : row.blockingReasons
-            }
-          />
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            {t('mapping.resolve.recommendedFixes')}
+          <Typography variant="body2" color="text.secondary">
+            •
           </Typography>
-          <DetailList items={row.recommendedFixes} />
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            {t('mapping.resolve.normalizedInputs')}
+          <Typography variant="body2" color="text.secondary">
+            SKU: <strong>{row.originalSku}</strong>
           </Typography>
-          <DetailList
-            items={
-              previewData?.normalizedInputs.length
-                ? previewData.normalizedInputs
-                : row.normalizedInputs
-            }
-          />
-        </Box>
-        <Stack direction="row" flexWrap="wrap" gap={1}>
-          <Tooltip title={t('mapping.actions.previewMapping')}>
-            <IconButton
-              size="small"
-              color="primary"
-              aria-label={t('mapping.actions.previewMapping')}
-              onClick={() => onPreview(row.id)}
-            >
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('mapping.actions.autoResolve')}>
-            <span>
-              <IconButton
-                size="small"
-                disabled={!canMutate}
-                aria-label={t('mapping.actions.autoResolve')}
-                onClick={() => resolveMutation.mutate(row.id)}
-              >
-                <AutoFixHighIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title={t('mapping.actions.recheckMapping')}>
-            <span>
-              <IconButton
-                size="small"
-                disabled={!canMutate}
-                aria-label={t('mapping.actions.recheckMapping')}
-                onClick={() => recheckMutation.mutate(row.id)}
-              >
-                <ReplayIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
         </Stack>
-        {previewData ? (
-          <Box>
-            <Typography variant="subtitle2">{t('mapping.resolve.costCenterCandidates')}</Typography>
-            <Stack spacing={1} sx={{ mt: 1 }}>
-              {previewData.costCenterCandidates.map((candidate) => (
-                <Paper key={candidate.id || candidate.label} variant="outlined" sx={{ p: 1 }}>
-                  <Stack
-                    direction={{ xs: 'column', sm: 'row' }}
-                    justifyContent="space-between"
-                    gap={1}
-                  >
-                    <Typography variant="body2">{candidate.label}</Typography>
-                    <Tooltip title={t('mapping.actions.selectCandidate')}>
-                      <span>
-                        <IconButton
-                          size="small"
-                          disabled={!candidate.vendorProductId || !candidate.vendorCostCenterId}
-                          aria-label={t('mapping.actions.selectCandidate')}
-                          onClick={() =>
-                            selectMutation.mutate({
-                              body: {
-                                vendorCostCenterId: candidate.vendorCostCenterId,
-                                vendorProductId: candidate.vendorProductId,
-                              },
-                              orderItemId: row.id,
-                            })
-                          }
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </Stack>
-                </Paper>
-              ))}
-              {previewData.costCenterCandidates.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  {t('mapping.resolve.noCandidates')}
-                </Typography>
-              ) : null}
-            </Stack>
-          </Box>
-        ) : null}
-      </Stack>
-    </Paper>
+      </Box>
+    </Box>
+  )
+}
+
+// Dropzone Candidate Card
+function CandidateDropzone({ candidate, onSelect, isSelecting, rowId }) {
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  return (
+    <Box
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        setIsDragOver(true)
+      }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setIsDragOver(false)
+        const droppedId = e.dataTransfer.getData('text/plain')
+        if (droppedId === rowId && !isSelecting) {
+          onSelect(candidate)
+        }
+      }}
+      onClick={() => {
+        if (!isSelecting) onSelect(candidate)
+      }}
+      sx={{
+        p: 2.5,
+        borderRadius: 2,
+        border: '2px dashed',
+        borderColor: isDragOver ? 'primary.main' : 'divider',
+        bgcolor: isDragOver ? 'primary.50' : 'background.paper',
+        cursor: isSelecting ? 'not-allowed' : 'pointer',
+        transition: 'all 0.2s',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        '&:hover': {
+          borderColor: isSelecting ? 'divider' : 'primary.main',
+          bgcolor: isSelecting ? 'background.paper' : 'action.hover',
+        },
+        opacity: isSelecting ? 0.7 : 1,
+        position: 'relative',
+      }}
+    >
+      <Box
+        sx={{
+          width: 48,
+          height: 48,
+          borderRadius: '50%',
+          bgcolor: isDragOver ? 'primary.main' : 'surface.subtle',
+          border: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s',
+          color: isDragOver ? 'primary.contrastText' : 'text.secondary',
+        }}
+      >
+        {isSelecting ? <CircularProgress size={24} /> : <FileDownloadDoneIcon />}
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          {candidate.label}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Cost Center ID: {candidate.vendorCostCenterId || '-'}
+        </Typography>
+      </Box>
+    </Box>
   )
 }
 
 export default function ResolveQueueWorkspace() {
   const { t } = useTranslation()
+  const { enqueueSnackbar } = useSnackbar()
   const [state, dispatch] = useReducer(resolveQueueReducer, initialResolveQueueState)
   const [batchOpen, setBatchOpen] = useState(false)
+  const activePreviewId = useRef(null)
+  const [selectingCandidateId, setSelectingCandidateId] = useState(null)
+
   const query = useMemo(
-    () => ({ limit: state.resolveRowsPerPage, page: state.resolvePage + 1 }),
-    [state.resolvePage, state.resolveRowsPerPage],
+    () => ({ limit: 100, page: 1 }),
+    [], // Fetch 100 items for continuous queue
   )
   const unmatchedQuery = useMappingUnmatchedOrderItemsQuery(query)
   const rows = useMemo(() => mapMappingWorkbenchRows(unmatchedQuery.data), [unmatchedQuery.data])
@@ -340,14 +255,94 @@ export default function ResolveQueueWorkspace() {
     () => filterResolveQueueRows(rows, state.resolveSearch),
     [rows, state.resolveSearch],
   )
-  const totalRows = state.resolveSearch.trim()
-    ? filteredRows.length
-    : unmatchedQuery.data?.pagination?.total || unmatchedQuery.data?.total || rows.length
+
+  // Mutations
   const previewMutation = useMappingPreviewMutation()
   const resolveMutation = useMappingResolveMutation()
   const recheckMutation = useMappingRecheckMutation()
   const selectMutation = useMappingSelectMutation()
   const recheckUnmatchedMutation = useMappingRecheckUnmatchedMutation()
+
+  // Auto-select first row if none selected
+  useEffect(() => {
+    if (!state.selectedRow && filteredRows.length > 0) {
+      dispatch({ row: filteredRows[0], type: 'select-row' })
+    }
+  }, [state.selectedRow, filteredRows])
+
+  const selectedRow = state.selectedRow
+
+  // Auto-fetch preview when selected row changes
+  useEffect(() => {
+    if (selectedRow?.id && selectedRow.id !== activePreviewId.current) {
+      activePreviewId.current = selectedRow.id
+      previewMutation.mutate(selectedRow.id, {
+        onSuccess: (preview) => dispatch({ preview, type: 'set-preview' }),
+      })
+    }
+  }, [selectedRow?.id, previewMutation])
+
+  const handleSelectCandidate = useCallback(
+    (candidate) => {
+      if (!selectedRow || !candidate.vendorCostCenterId) return
+
+      setSelectingCandidateId(candidate.vendorCostCenterId)
+
+      selectMutation.mutate(
+        {
+          body: {
+            vendorCostCenterId: candidate.vendorCostCenterId,
+            vendorProductId: candidate.vendorProductId,
+          },
+          orderItemId: selectedRow.id,
+        },
+        {
+          onSuccess: () => {
+            enqueueSnackbar(
+              t('mapping.messages.mappingSuccess', { defaultValue: 'Mapping successful!' }),
+              {
+                variant: SNACKBAR_VARIANTS.SUCCESS,
+              },
+            )
+            // Auto-Next: find current index, select next
+            const currentIndex = filteredRows.findIndex((r) => r.id === selectedRow.id)
+            if (currentIndex >= 0 && currentIndex < filteredRows.length - 1) {
+              dispatch({ row: filteredRows[currentIndex + 1], type: 'select-row' })
+            } else {
+              unmatchedQuery.refetch()
+            }
+          },
+          onError: (err) => {
+            enqueueSnackbar(
+              err.message ||
+                t('mapping.messages.mappingFailed', { defaultValue: 'Mapping failed.' }),
+              {
+                variant: SNACKBAR_VARIANTS.ERROR,
+              },
+            )
+          },
+          onSettled: () => {
+            setSelectingCandidateId(null)
+          },
+        },
+      )
+    },
+    [selectedRow, filteredRows, selectMutation, unmatchedQuery, enqueueSnackbar, t],
+  )
+
+  const handleSkipNext = useCallback(() => {
+    if (!selectedRow) return
+    const currentIndex = filteredRows.findIndex((r) => r.id === selectedRow.id)
+    if (currentIndex >= 0 && currentIndex < filteredRows.length - 1) {
+      dispatch({ row: filteredRows[currentIndex + 1], type: 'select-row' })
+    } else {
+      unmatchedQuery.refetch()
+    }
+  }, [selectedRow, filteredRows, unmatchedQuery])
+
+  const previewData = state.preview ? mapMappingPreview(state.preview) : null
+  const canMutate = !resolveMutation.isPending && !recheckMutation.isPending
+
   const error =
     unmatchedQuery.error ||
     previewMutation.error ||
@@ -357,8 +352,8 @@ export default function ResolveQueueWorkspace() {
     recheckUnmatchedMutation.error
 
   return (
-    <Stack spacing={1.5}>
-      <TabGuide />
+    <Stack spacing={1.5} sx={{ height: 'calc(100vh - 120px)', minHeight: 0 }}>
+      {/* Header */}
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={1}>
         <Box>
           <Typography variant="h6">{t('mapping.resolve.title')}</Typography>
@@ -381,105 +376,226 @@ export default function ResolveQueueWorkspace() {
           </Button>
         </Stack>
       </Stack>
+
       {unmatchedQuery.isFetching ? <LinearProgress /> : null}
       {error ? <Alert severity="error">{error.message}</Alert> : null}
-      <TextField
-        fullWidth
-        label={t('mapping.filters.searchResolve')}
-        size="small"
-        value={state.resolveSearch}
-        onChange={(event) => {
-          dispatch({ search: event.target.value, type: 'set-search' })
-        }}
-      />
+
       <Box
         sx={{
           display: 'grid',
-          gap: 1.5,
-          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.4fr) minmax(360px, 0.8fr)' },
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', lg: '350px minmax(0, 1fr)' },
+          flex: 1,
+          minHeight: 0,
         }}
       >
-        <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-          <Table size="small" sx={{ minWidth: 840, ...compactTableSx }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('mapping.resolve.table.orderItem')}</TableCell>
-                <TableCell>SKU</TableCell>
-                <TableCell>{t('mapping.resolve.table.config')}</TableCell>
-                <TableCell>{t('mapping.resolve.table.blocking')}</TableCell>
-                <TableCell>{t('mapping.resolve.table.fix')}</TableCell>
-                <TableCell>{t('mapping.resolve.table.plan')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredRows.map((row) => (
-                <TableRow
+        {/* Left Sidebar: Queue */}
+        <Paper
+          variant="outlined"
+          sx={{
+            display: 'flex',
+            flexCol: 'column',
+            overflow: 'hidden',
+            height: '100%',
+            flexDirection: 'column',
+          }}
+        >
+          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <TextField
+              fullWidth
+              placeholder={t('mapping.filters.searchResolve', { defaultValue: 'Search Queue...' })}
+              size="small"
+              value={state.resolveSearch}
+              onChange={(event) => {
+                dispatch({ search: event.target.value, type: 'set-search' })
+              }}
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              {filteredRows.length}{' '}
+              {t('mapping.workbench.pendingTasks', { defaultValue: 'items remaining' })}
+            </Typography>
+          </Box>
+          <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            {filteredRows.map((row) => {
+              const active = selectedRow?.id === row.id
+              return (
+                <Box
                   key={row.id}
-                  hover
-                  selected={state.selectedRow?.id === row.id}
-                  sx={{ cursor: 'pointer' }}
                   onClick={() => dispatch({ row, type: 'select-row' })}
+                  sx={{
+                    p: 2,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: active ? 'primary.50' : 'background.paper',
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: active ? 'primary.50' : 'action.hover' },
+                    borderLeft: active ? '4px solid' : '4px solid transparent',
+                    borderLeftColor: active ? 'primary.main' : 'transparent',
+                    transition: 'all 0.2s',
+                  }}
                 >
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {row.itemLabel}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {row.orderLabel}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{row.canonicalSku}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {row.originalSku}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{row.configCode}</TableCell>
-                  <TableCell>{row.blockingReasons.join(', ') || '-'}</TableCell>
-                  <TableCell>{row.recommendedFixes.join(', ') || '-'}</TableCell>
-                  <TableCell>
-                    <StatusChip value={row.planStatus} />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!unmatchedQuery.isFetching && filteredRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <Box sx={{ py: 5, textAlign: 'center' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('mapping.resolve.empty')}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
-          <TablePagination
-            component="div"
-            count={totalRows}
-            page={state.resolvePage}
-            rowsPerPage={state.resolveRowsPerPage}
-            rowsPerPageOptions={rowsPerPageOptions}
-            onPageChange={(_, page) => dispatch({ page, type: 'set-page' })}
-            onRowsPerPageChange={(event) => {
-              dispatch({ rowsPerPage: Number(event.target.value), type: 'set-rows-per-page' })
-            }}
-          />
+                  <Typography variant="body2" sx={{ fontWeight: active ? 700 : 500 }}>
+                    {row.itemLabel}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    SKU: {row.originalSku}
+                  </Typography>
+                </Box>
+              )
+            })}
+            {filteredRows.length === 0 && !unmatchedQuery.isFetching && (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  {t('mapping.resolve.empty', { defaultValue: 'No unmapped items found.' })}
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Paper>
-        <ResolveDetail
-          preview={state.preview}
-          recheckMutation={recheckMutation}
-          resolveMutation={resolveMutation}
-          row={state.selectedRow}
-          selectMutation={selectMutation}
-          onPreview={(orderItemId) =>
-            previewMutation.mutate(orderItemId, {
-              onSuccess: (preview) => dispatch({ preview, type: 'set-preview' }),
-            })
-          }
-        />
+
+        {/* Right Main Area: Workspace */}
+        <Paper
+          variant="outlined"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            height: '100%',
+            bgcolor: 'surface.subtle',
+          }}
+        >
+          {selectedRow ? (
+            <>
+              <Box
+                sx={{
+                  p: 3,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                }}
+              >
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                  <Box sx={{ flex: 1, pr: 3 }}>
+                    <DraggableSourceCard row={selectedRow} />
+
+                    <Box
+                      sx={{
+                        mt: 2,
+                        p: 1.5,
+                        bgcolor: 'surface.subtle',
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        {t('mapping.resolve.blockingReasons', { defaultValue: 'Blocking Reasons' })}
+                      </Typography>
+                      <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                        {(previewData?.blockingReasons.length
+                          ? previewData.blockingReasons
+                          : selectedRow.blockingReasons
+                        )?.map((item, idx) => (
+                          <Typography key={idx} variant="body2" color="error.main">
+                            • {item}
+                          </Typography>
+                        )) || <Typography variant="body2">-</Typography>}
+                      </Stack>
+                    </Box>
+                  </Box>
+
+                  <Stack spacing={1}>
+                    <Button
+                      variant="outlined"
+                      color="inherit"
+                      endIcon={<SkipNextIcon />}
+                      onClick={handleSkipNext}
+                    >
+                      {t('mapping.actions.skipNext', { defaultValue: 'Skip & Next' })}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={!canMutate}
+                      startIcon={<AutoFixHighIcon />}
+                      onClick={() => resolveMutation.mutate(selectedRow.id)}
+                    >
+                      {t('mapping.actions.autoResolve', { defaultValue: 'Auto-Resolve' })}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      disabled={!canMutate}
+                      startIcon={<ReplayIcon />}
+                      onClick={() => recheckMutation.mutate(selectedRow.id)}
+                    >
+                      {t('mapping.actions.recheckMapping', { defaultValue: 'Recheck' })}
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Box>
+
+              <Box sx={{ p: 3, flex: 1, overflowY: 'auto' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
+                  {t('mapping.resolve.costCenterCandidates', {
+                    defaultValue: 'Suggested Internal SKUs (Drag & Drop here)',
+                  })}
+                </Typography>
+
+                {previewMutation.isPending ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : previewData?.costCenterCandidates?.length > 0 ? (
+                  <Stack spacing={2}>
+                    {previewData.costCenterCandidates.map((candidate) => (
+                      <CandidateDropzone
+                        key={candidate.id || candidate.label || candidate.vendorCostCenterId}
+                        candidate={candidate}
+                        rowId={selectedRow.id}
+                        isSelecting={selectingCandidateId === candidate.vendorCostCenterId}
+                        onSelect={handleSelectCandidate}
+                      />
+                    ))}
+                  </Stack>
+                ) : (
+                  <Paper
+                    variant="outlined"
+                    sx={{ p: 4, textAlign: 'center', borderStyle: 'dashed' }}
+                  >
+                    <Typography variant="body1" color="text.secondary">
+                      {t('mapping.resolve.noCandidates', {
+                        defaultValue:
+                          'No suggestions found. You may need to create a new mapping rule manually.',
+                      })}
+                    </Typography>
+                  </Paper>
+                )}
+              </Box>
+            </>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+                p: 4,
+              }}
+            >
+              <Typography variant="body1" color="text.secondary">
+                {t('mapping.workbench.selectTask', {
+                  defaultValue: 'Select an item from the queue to start mapping.',
+                })}
+              </Typography>
+            </Box>
+          )}
+        </Paper>
       </Box>
+
       {batchOpen ? (
         <BatchRecheckDialog
           mutation={recheckUnmatchedMutation}

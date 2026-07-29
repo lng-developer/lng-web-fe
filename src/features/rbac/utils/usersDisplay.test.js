@@ -3,11 +3,43 @@ import test from 'node:test'
 
 import {
   formatLastLoginLabel,
+  getAccountAccessSummary,
   getAvatarMeta,
   getRoleMeta,
   getStatusMeta,
   normalizeRoleKey,
+  resolveSelectedAccountId,
 } from './usersDisplay.js'
+
+test('getAccountAccessSummary keeps global and scoped access separate', () => {
+  const result = getAccountAccessSummary({
+    access: { roleIds: ['role-1'], customPermissionIds: ['permission-1'] },
+    roles: ['ADMIN'],
+    permissions: ['AUTH:READ'],
+    effectiveRoles: ['ADMIN'],
+    effectivePermissions: ['AUTH:READ', 'AUTH:WRITE'],
+    scopes: [{ assignmentId: 'assignment-1', scopeType: 'team', scopeId: 'team-1' }],
+  })
+
+  assert.deepEqual(result.globalRoles, ['ADMIN'])
+  assert.deepEqual(result.globalPermissions, ['AUTH:READ'])
+  assert.deepEqual(result.globalRoleIds, ['role-1'])
+  assert.deepEqual(result.globalPermissionIds, ['permission-1'])
+  assert.deepEqual(
+    result.scopedAssignments.map((item) => item.assignmentId),
+    ['assignment-1'],
+  )
+  assert.deepEqual(result.effectivePermissions, ['AUTH:READ', 'AUTH:WRITE'])
+})
+
+test('resolveSelectedAccountId keeps an explicit URL selection and otherwise uses the first account', () => {
+  const accounts = [{ id: 'account-1' }, { accountId: 'account-2' }]
+
+  assert.equal(resolveSelectedAccountId(accounts, 'account-2'), 'account-2')
+  assert.equal(resolveSelectedAccountId(accounts, 'account-outside-page'), 'account-outside-page')
+  assert.equal(resolveSelectedAccountId(accounts, ''), 'account-1')
+  assert.equal(resolveSelectedAccountId([], ''), '')
+})
 
 test('normalizeRoleKey maps backend role codes to figma role keys', () => {
   assert.equal(normalizeRoleKey('SYSTEM_ADMIN'), 'admin')
@@ -47,7 +79,7 @@ test('getAvatarMeta returns deterministic color and anonymous override', () => {
 test('formatLastLoginLabel returns relative labels and dash fallback', () => {
   const now = new Date('2026-06-26T10:00:00.000Z')
 
-  assert.equal(formatLastLoginLabel(null, now), '—')
+  assert.equal(formatLastLoginLabel(null, now), '-')
   assert.equal(formatLastLoginLabel('2026-06-26T09:58:00.000Z', now), '2 phút trước')
   assert.equal(formatLastLoginLabel('2026-06-26T09:00:00.000Z', now), '1 giờ trước')
   assert.equal(formatLastLoginLabel('2026-06-23T09:00:00.000Z', now), '3 ngày trước')

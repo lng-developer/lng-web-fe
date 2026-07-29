@@ -30,8 +30,20 @@ export function getRolePermissionIds(role = {}) {
   return []
 }
 
-export function groupPermissionsByModule(permissions = []) {
-  const grouped = permissions.reduce((items, permission) => {
+export function groupPermissionsByModule(permissions = [], catalog = []) {
+  const catalogByCode = new Map(catalog.map((permission) => [permission.code, permission]))
+  const normalized = permissions
+    .map((permission) => {
+      if (typeof permission !== 'string') return permission
+      return (
+        catalogByCode.get(permission) || {
+          code: permission,
+          module: permission.split(':')[0] || 'OTHER',
+        }
+      )
+    })
+    .filter(Boolean)
+  const grouped = normalized.reduce((items, permission) => {
     const moduleName = `${permission.module || 'OTHER'} MODULE`
     return {
       ...items,

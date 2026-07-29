@@ -29,6 +29,23 @@ const ROLE_META = {
   },
 }
 
+export function getAccountAccessSummary(detail = {}) {
+  return {
+    globalRoleIds: detail.access?.roleIds ?? [],
+    globalPermissionIds: detail.access?.customPermissionIds ?? [],
+    globalRoles: detail.roles ?? [],
+    globalPermissions: detail.permissions ?? [],
+    effectiveRoles: detail.effectiveRoles ?? [],
+    effectivePermissions: detail.effectivePermissions ?? [],
+    scopedAssignments: detail.scopes ?? [],
+  }
+}
+
+export function resolveSelectedAccountId(accounts = [], selectedId = '') {
+  if (selectedId) return selectedId
+  return accounts[0]?.id || accounts[0]?.accountId || ''
+}
+
 export function normalizeRoleKey(roleCode = '') {
   const normalized = String(roleCode).toLowerCase()
 
@@ -85,7 +102,7 @@ export function getAvatarMeta(displayName = '', index = 0, anonymous = false) {
 }
 
 export function formatLastLoginLabel(value, now = new Date(), locale = 'vi') {
-  if (!value) return '—'
+  if (!value) return '-'
 
   const date = new Date(value)
   const diffMinutes = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 60000))

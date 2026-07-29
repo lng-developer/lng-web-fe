@@ -32,7 +32,9 @@
     "view": "View",
     "copied": "Copied",
     "copyFailed": "Could not copy",
-    "save": "Save"
+    "save": "Save",
+    "previous": "Previous",
+    "next": "Next"
   },
   "nav": {
     "home": "Home",
@@ -92,8 +94,10 @@
       "productionBoard": "Production Board",
       "scale": "Scale",
       "scaleProduction": "Scale Production",
+      "scaleWorkbench": "Scale Workbench",
       "qc": "QC",
       "qualityControl": "Quality Control",
+      "artworkQcWorkbench": "Artwork QC",
       "shipping": "Shipping",
       "vendorSubmissions": "Vendor Submissions",
       "cs": "CS",
@@ -387,9 +391,30 @@
     }
   },
   "rbac": {
-    "title": "RBAC",
+    "title": "Access administration",
+    "description": "Manage accounts, roles, permissions, and scopes using the backend's effective access model.",
+    "recordCount": "{{count}} records",
+    "workspaces": {
+      "access": {
+        "label": "Access Explorer",
+        "description": "Select an account to trace global, scoped, and backend-returned effective access."
+      },
+      "policies": {
+        "label": "Roles & Policies",
+        "description": "Configure role permission sets and inspect the permission catalog without switching tables."
+      },
+      "matrix": {
+        "label": "Scope Matrix",
+        "description": "Inspect role-to-scope replacement rules and manage registered scope resources."
+      }
+    },
     "common": {
-      "loading": "Loading data..."
+      "readOnly": "You have read-only access to RBAC settings.",
+      "loading": "Loading data...",
+      "loadError": "Could not load this data.",
+      "empty": "No records yet.",
+      "noResults": "No records match the current filters.",
+      "requestFailed": "Could not complete the request."
     },
     "tabs": {
       "users": "Users",
@@ -398,13 +423,58 @@
       "scopes": "Scopes",
       "scopedOverrides": "Scoped Overrides"
     },
+    "explorer": {
+      "selectAccount": "Select account",
+      "noAccount": "Select an account to inspect its access.",
+      "sections": {
+        "overview": "Overview",
+        "global": "Global",
+        "scoped": "Scoped",
+        "effective": "Effective"
+      },
+      "actionsTitle": "Account actions",
+      "actionsHint": "Changes apply only to the selected account.",
+      "contractTitle": "How access works",
+      "contractHint": "Global and scoped access remain separate. Effective permissions are reloaded from the backend after every change.",
+      "globalHint": "Roles and direct permissions that apply across every scope.",
+      "directPermissions": "Direct global permissions",
+      "effectiveHint": "Backend-returned effective access, grouped for scanning. The browser does not calculate this result.",
+      "viewAll": "View all ({{count}})",
+      "showLess": "Show less"
+    },
+    "policies": {
+      "modes": {
+        "roles": "Roles",
+        "permissions": "Permission catalog"
+      },
+      "noDescription": "No description provided.",
+      "permissionCount": "Assigned permissions",
+      "roleCode": "Role code",
+      "assignedPermissions": "Assigned permissions",
+      "noPermissions": "This role has no assigned permissions."
+    },
+    "matrix": {
+      "title": "Scope relationship matrix",
+      "hint": "Select a role and scope intersection to inspect its replacement permission set.",
+      "roles": "Roles",
+      "empty": "No active roles or scopes are available for the matrix.",
+      "inherited": "Inherited",
+      "permissionCount": "{{count}} permissions",
+      "cellLabel": "{{role}} in {{scope}}: {{count}} replacement permissions",
+      "replacementSummary": "A replacement set with {{count}} permissions is active for this role and scope.",
+      "noReplacement": "No replacement exists. The role keeps its default permissions in this scope.",
+      "editReplacement": "Edit replacement",
+      "directoryTitle": "Scope directory",
+      "directoryHint": "Review registered resources, usage, hierarchy, and lifecycle status."
+    },
     "users": {
       "searchPlaceholder": "Search by name, email, employee code...",
       "columns": {
         "user": "User",
         "status": "Status",
-        "role": "Role",
-        "department": "Department",
+        "organization": "Department / Team",
+        "globalAccess": "Global access",
+        "scopedAccess": "Scoped access",
         "lastLogin": "Last login",
         "actions": "Actions"
       },
@@ -422,7 +492,12 @@
       "filter": {
         "allStatus": "All statuses",
         "allRoles": "All roles",
-        "allDepartments": "All departments"
+        "allDepartments": "All departments",
+        "allTeams": "All teams"
+      },
+      "scopedAssignmentCount": "{{count}} assignments",
+      "pagination": {
+        "total": "{{count}} accounts total"
       },
       "addModal": {
         "title": "Add new account",
@@ -442,28 +517,59 @@
       },
       "viewModal": {
         "title": "Account information — {{name}}",
+        "subtitle": "Review global, scoped, and effective access separately.",
         "loginName": "LOGIN NAME",
-        "password": "PASSWORD",
-        "showPassword": "Show",
-        "hidePassword": "Hide",
-        "passwordUnavailable": "Hidden for security",
         "resetPassword": "Reset password",
-        "resetPasswordPrompt": "Enter the new temporary password",
+        "resetDialog": {
+          "title": "Set a new temporary password",
+          "password": "New password",
+          "hint": "The password must contain at least 6 characters."
+        },
         "resetPasswordSuccess": "Password reset successfully!",
         "updateStatusSuccess": "Account status updated!",
-        "role": "ROLE",
+        "revokeSessions": "Revoke sessions",
+        "revokeSessionsConfirm": "Revoke every active session for this account?",
+        "revokeSessionsSuccess": "All active sessions were revoked!",
         "status": "STATUS",
         "department": "DEPARTMENT",
-        "noDepartment": "— (system-wide, no department)",
+        "team": "TEAM",
+        "memberType": "MEMBER TYPE",
+        "lastLogin": "LAST LOGIN",
+        "lastLoginIp": "LAST LOGIN IP",
         "createdAt": "ACCOUNT CREATED AT",
-        "createdBy": "ACCOUNT CREATED BY",
+        "globalAccess": "Global access",
+        "globalRoles": "Global roles",
+        "globalPermissions": "Effective global permissions",
+        "noGlobalRoles": "No global roles assigned",
+        "noGlobalPermissions": "No global permissions assigned",
+        "effectiveAccess": "Total effective access",
+        "effectiveHint": "Combines global access with every scoped assignment.",
+        "noEffectivePermissions": "This account has no effective permissions",
+        "scopedAccess": "Scoped assignments",
+        "assignmentCount": "{{count}} assignments",
+        "noScopedAccess": "This account has no scoped assignments",
+        "noScopedPermissions": "This assignment has no effective permissions",
+        "replacementMode": "Replacement permission set",
+        "inheritedMode": "Inherited from role",
+        "loadError": "Unable to load account information.",
         "close": "Close"
       },
       "editAccessModal": {
-        "title": "Edit Access — {{name}}",
+        "title": "Edit access: {{name}}",
         "banner": "Each scope assignment has its own role, scope, and permission set. Changing role or scope resets custom permissions back to the role/scope defaults.",
+        "modes": {
+          "global": "Global ({{roles}} roles, {{permissions}} direct)",
+          "scoped": "Scoped ({{count}} assignments)"
+        },
+        "discardConfirm": "Discard the unsaved access changes?",
+        "deleteConfirm": "Remove this scoped assignment?",
         "globalAccess": "Global Access",
         "globalRoles": "Global Roles",
+        "globalAccessHint": "Roles and direct permissions that apply across the system.",
+        "globalPermissions": "Direct global permissions",
+        "globalPermissionsHint": "These permissions are additive to permissions inherited from global roles.",
+        "saveGlobalAccess": "Save global access",
+        "globalAccessSuccess": "Global access updated!",
         "scopedAccess": "Scoped Access Assignments",
         "scopedAccessHint": "Edit role/scope directly on each row. Use Edit permissions to toggle custom permissions for that assignment.",
         "scopedColumns": {
@@ -507,7 +613,10 @@
       "permissionCount": "{{count}} permissions",
       "actions": {
         "addRole": "Add role",
-        "edit": "Edit"
+        "edit": "Edit",
+        "deleteConfirm": "Delete this role?",
+        "deleteSuccess": "Role deleted!",
+        "inUse": "This role is assigned to {{count}} accounts"
       },
       "addModal": {
         "title": "Add new role",
@@ -537,16 +646,18 @@
       "searchPlaceholder": "Search by permission code or name...",
       "filter": {
         "allModules": "All modules",
-        "allActions": "All actions",
-        "allStatus": "All statuses",
-        "active": "Active",
-        "deprecated": "Deprecated"
+        "allActions": "All actions"
       },
       "columns": {
         "code": "Permission code",
         "name": "Permission name",
-        "description": "Description",
+        "moduleAction": "Module / Action",
+        "usage": "Usage",
         "actions": "Actions"
+      },
+      "usage": {
+        "total": "Used in {{count}} places",
+        "breakdown": "Roles {{roles}} · Scoped roles {{scoped}} · Direct {{direct}}"
       },
       "actions": {
         "addPermission": "Add permission",
@@ -610,9 +721,12 @@
         "type": "Scope type",
         "name": "Name",
         "department": "Department",
+        "assignments": "Usage",
         "status": "Status",
         "actions": "Actions"
       },
+      "assignmentCount": "{{count}} assignments",
+      "deactivateBlocked": "Cannot deactivate a scope with {{count}} assignments",
       "actions": {
         "addScope": "Add Scope",
         "view": "View",
@@ -654,38 +768,34 @@
       "toggleSuccess": "Scope status updated."
     },
     "scopedOverrides": {
-      "filterLabel": "SELECT ROLE TO EDIT PERMISSION GRANTS",
-      "filterHint": "Review permissions across roles — click \"Edit\" on each role to grant scoped permissions.",
+      "filterLabel": "FILTER BY ROLE",
+      "filterHint": "Each rule replaces the role's entire default permission set in the selected scope.",
       "allRoles": "All roles",
       "noRoles": "No matching roles.",
       "roleLabel": "Role: {{name}}",
-      "editRolePerms": "Edit permission grants for {{name}} →",
-      "editAnonymousPerms": "Edit permission grants for Anonymous →",
+      "editRolePerms": "Set scoped replacement permissions for {{name}} →",
       "defaultPermsTitle": "Default permissions for '{{name}}'",
-      "grantedTitle": "Additional grants for '{{name}}'",
+      "grantedTitle": "Scoped replacement sets for '{{name}}'",
       "defaultBadge": "DEFAULT · READ-ONLY",
-      "grantBadge": "ADDITIONAL · GRANT",
-      "fullAccessNote": "Full system access ({{count}} permissions) — no detailed listing needed.",
+      "grantBadge": "REPLACEMENT SET",
       "noDefaultNote": "No default permissions for this role.",
-      "adminGrantNote": "Admin already has full access in every scope — overrides do not apply.",
-      "noOverrideNote": "No overrides for this role yet.",
-      "noOverrideAnonymousNote": "No overrides for Anonymous yet.",
-      "grantedBadge": "Granted",
-      "revokeSuccess": "Permission revoked successfully!",
-      "addMore": "Add",
+      "noOverrideNote": "No replacement rule exists. This role uses its default permissions in every scope.",
+      "grantedBadge": "Replacement permission",
+      "revokeSuccess": "Replacement permissions updated!",
+      "addMore": "Edit replacement set",
       "grantModal": {
-        "title": "Grant Additional Permissions",
+        "title": "Edit Replacement Permissions",
         "contextPrefix": "Applies to role '{{role}}' in {{scopeType}} '{{scopeName}}'.",
-        "permissionsLabel": "Permissions to grant",
-        "permissionsPlaceholder": "Select permissions to grant (multiple allowed)...",
+        "permissionsLabel": "Complete permission set for this scope",
+        "permissionsPlaceholder": "Select the replacement permissions...",
         "noteLabel": "Note (optional)",
         "notePlaceholder": "Ex: Allow scheduling for the team in this scope...",
         "cancel": "Cancel",
-        "submit": "Grant permissions",
-        "success": "Permissions granted successfully!"
+        "submit": "Save permission set",
+        "success": "Replacement permissions saved!"
       },
       "scopedGrantModal": {
-        "title": "Grant scoped permissions for {{name}}",
+        "title": "Set replacement permissions for {{name}}",
         "scopeTypeLabel": "SCOPE TYPE",
         "scopeTypePlaceholder": "Select scope type",
         "scopeTypeHint": "Supports Department or Team scopes. Global is waiting for backend support for null scopeId validation.",
@@ -698,14 +808,14 @@
         "scopePlaceholder": "Select the scope these permissions apply to...",
         "scopeHintDepartment": "Shows Department scopes — choose a specific department",
         "scopeHintTeam": "Shows Team scopes — choose a specific team",
-        "permissionsLabel": "PERMISSIONS TO GRANT",
-        "permissionsPlaceholder": "Select permissions to apply in this scope...",
-        "permissionsHint": "Only permissions not already granted in this scope are shown",
+        "permissionsLabel": "REPLACEMENT PERMISSION SET",
+        "permissionsPlaceholder": "Select every permission that applies in this scope...",
+        "permissionsHint": "This list replaces the role defaults; an empty set means no permissions in this scope.",
         "noteLabel": "Note",
         "notePlaceholder": "Ex: Allow Anonymous to view QC department data...",
         "cancel": "Cancel",
-        "submit": "Grant permissions",
-        "success": "Scoped permissions granted successfully!"
+        "submit": "Save permission set",
+        "success": "Replacement permissions saved!"
       }
     }
   },

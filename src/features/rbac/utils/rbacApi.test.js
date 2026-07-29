@@ -5,6 +5,7 @@ import {
   buildAccessAssignmentPayload,
   buildAccessAssignmentResetPayload,
   buildAccessAssignmentUpdatePayload,
+  buildAccountAccessPayload,
   buildAccountCreatePayload,
   buildCleanQuery,
   buildPermissionPayload,
@@ -12,9 +13,30 @@ import {
   buildScopeAssignmentValue,
   buildScopedRolePermissionPayload,
   buildScopePayload,
+  hasUnsavedAccessChanges,
   parseScopeAssignmentValue,
   unwrapApiData,
 } from './rbacApi.js'
+
+test('buildAccountAccessPayload keeps only global role and direct permission IDs', () => {
+  assert.deepEqual(
+    buildAccountAccessPayload({
+      roleIds: ['role-1', '', 'role-2'],
+      customPermissionIds: ['permission-1', null],
+      scopes: ['ignored'],
+    }),
+    {
+      roleIds: ['role-1', 'role-2'],
+      customPermissionIds: ['permission-1'],
+    },
+  )
+})
+
+test('hasUnsavedAccessChanges detects global or incomplete scoped drafts', () => {
+  assert.equal(hasUnsavedAccessChanges(null, { roleId: '', scopeAssignmentValue: '' }), false)
+  assert.equal(hasUnsavedAccessChanges({ roleIds: [], customPermissionIds: [] }, {}), true)
+  assert.equal(hasUnsavedAccessChanges(null, { roleId: 'role-1', scopeAssignmentValue: '' }), true)
+})
 
 test('buildCleanQuery removes empty search and caps limit at 100', () => {
   assert.deepEqual(

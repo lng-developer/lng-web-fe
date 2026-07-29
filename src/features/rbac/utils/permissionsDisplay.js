@@ -14,11 +14,6 @@ export const PERMISSION_ACTION_OPTIONS = [
   { value: 'MANAGE', label: 'Manage' },
 ]
 
-export const PERMISSION_STATUS_OPTIONS = [
-  { value: 'active', labelKey: 'rbac.permissions.filter.active' },
-  { value: 'deprecated', labelKey: 'rbac.permissions.filter.deprecated' },
-]
-
 export function buildPermissionCode(values = {}) {
   const code = String(values.code || '').trim()
 
@@ -42,7 +37,6 @@ export function filterPermissionItems(items = [], filters = {}) {
   return items.filter((permission) => {
     const moduleMatch = !filters.module || permission.module === filters.module
     const actionMatch = !filters.action || permission.action === filters.action
-    const statusMatch = !filters.status || (permission.status || 'active') === filters.status
     const searchMatch =
       !keyword ||
       [permission.code, permission.name, permission.description].some((value) =>
@@ -51,6 +45,6 @@ export function filterPermissionItems(items = [], filters = {}) {
           .includes(keyword),
       )
 
-    return moduleMatch && actionMatch && statusMatch && searchMatch
+    return moduleMatch && actionMatch && searchMatch
   })
 }

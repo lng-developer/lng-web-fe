@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
@@ -41,6 +41,7 @@ import {
   operationsTextCaptionClass,
 } from '@/components/operations/operationsLayout'
 import { SNACKBAR_VARIANTS } from '@/constants/app'
+import { ROUTES } from '@/constants/routes'
 import { getOrderStatusTone } from '@/features/orders/utils/orderStatus'
 import {
   useAssignScaleTaskMutation,
@@ -918,6 +919,7 @@ function ManualScaleUploadDialog({
 export default function ScalePage() {
   const { t } = useTranslation()
   const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
   const location = useLocation()
   const dashboardSearch = useMemo(
     () => readScaleDashboardSearch(location.search),
@@ -1310,7 +1312,18 @@ export default function ScalePage() {
               </Typography>
             </div>
 
-            <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
+            <div className="flex items-center gap-4">
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                startIcon={<ImageOutlinedIcon />}
+                onClick={() => navigate(ROUTES.PORTAL_SCALE_WORKBENCH)}
+              >
+                {t('scale.workbench.open', { defaultValue: 'Open Workbench' })}
+              </Button>
+              <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
+            </div>
           </div>
         }
         tabs={
