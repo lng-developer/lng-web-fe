@@ -61,16 +61,20 @@ test('backend route parsing ignores commented and string-only router calls', () 
   ])
 })
 
-test('backend endpoint registry exactly covers every backend non-health route', () => {
-  const allBackendKeys = readBackendRoutes()
-    .map((route) => key(route.moduleId, route.method, route.path))
-    .sort()
-  const backendKeys = allBackendKeys.filter((routeKey) => !routeKey.endsWith('/health'))
-  const registryKeys = BACKEND_ENDPOINTS.map((route) =>
-    key(route.moduleId, route.method, route.path),
-  ).sort()
-  const missing = backendKeys.filter((routeKey) => !registryKeys.includes(routeKey))
-  const stale = registryKeys.filter((routeKey) => !allBackendKeys.includes(routeKey))
+test(
+  'backend endpoint registry exactly covers every backend non-health route',
+  { skip: !beRoot },
+  () => {
+    const allBackendKeys = readBackendRoutes()
+      .map((route) => key(route.moduleId, route.method, route.path))
+      .sort()
+    const backendKeys = allBackendKeys.filter((routeKey) => !routeKey.endsWith('/health'))
+    const registryKeys = BACKEND_ENDPOINTS.map((route) =>
+      key(route.moduleId, route.method, route.path),
+    ).sort()
+    const missing = backendKeys.filter((routeKey) => !registryKeys.includes(routeKey))
+    const stale = registryKeys.filter((routeKey) => !allBackendKeys.includes(routeKey))
 
-  assert.deepEqual({ missing, stale }, { missing: [], stale: [] })
-})
+    assert.deepEqual({ missing, stale }, { missing: [], stale: [] })
+  },
+)

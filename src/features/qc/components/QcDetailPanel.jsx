@@ -1,6 +1,5 @@
 import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import CancelIcon from '@mui/icons-material/Cancel'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import VisibilityIcon from '@mui/icons-material/Visibility'
@@ -8,7 +7,6 @@ import { Alert, Button, Tooltip, Typography } from '@mui/material'
 
 import InlineDetailValue from '@/components/common/InlineDetailValue'
 import { StatusBadge } from '@/components/operations'
-import { ROUTES } from '@/constants/routes'
 import {
   buildQcImageReviewItems,
   canSubmitQcPass,
@@ -68,9 +66,8 @@ function getCheckLabel(check, index) {
   return check.slotLabel || check.position || check.slotKey || `Slot ${index + 1}`
 }
 
-function QcDetailPanel({ canReview, decisionLoading, onDecision, task }) {
+function QcDetailPanel({ canReview, decisionLoading, onDecision, onPreview = () => {}, task }) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const resolvedTask = task
   const { detail } = resolvedTask
   const checks = getChecks(detail)
@@ -211,9 +208,7 @@ function QcDetailPanel({ canReview, decisionLoading, onDecision, task }) {
               size="small"
               variant="outlined"
               startIcon={<VisibilityIcon fontSize="small" />}
-              onClick={() =>
-                navigate(`${ROUTES.PORTAL_QC_ARTWORK_WORKBENCH}?taskId=${resolvedTask.id}`)
-              }
+              onClick={() => onPreview(resolvedTask)}
               className="h-8 px-3 text-xs font-semibold"
             >
               {t('qc.actions.inspectImages')}

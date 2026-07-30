@@ -5,16 +5,15 @@ import { basename, dirname, join, resolve } from 'node:path'
 
 export function findPairedBackendRoot(frontendRoot = process.cwd()) {
   const parent = dirname(frontendRoot)
-  const backendRoot =
+  const backendRoots =
     basename(parent) === '.worktrees'
-      ? resolve(dirname(dirname(parent)), 'lng-web-be', '.worktrees', basename(frontendRoot))
-      : resolve(parent, 'lng-web-be')
+      ? [
+          resolve(dirname(dirname(parent)), 'lng-web-be', '.worktrees', basename(frontendRoot)),
+          resolve(dirname(dirname(parent)), 'lng-web-be'),
+        ]
+      : [resolve(parent, 'lng-web-be')]
 
-  assert.ok(
-    existsSync(join(backendRoot, 'src/modules/index.js')),
-    `Paired backend repo not found at ${backendRoot}`,
-  )
-  return backendRoot
+  return backendRoots.find((backendRoot) => existsSync(join(backendRoot, 'src/modules/index.js')))
 }
 
 function literalRoutePath(node) {

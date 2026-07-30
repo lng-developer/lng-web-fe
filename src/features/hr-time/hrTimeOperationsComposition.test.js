@@ -205,7 +205,7 @@ test('operation forms use readable selectors and explicit payload builders', asy
   assert.match(override, /scopeOptions\.filter/)
   assert.match(override, /options\.map/)
   assert.match(profile, /buildEmployeeProfilePayload/)
-  assert.match(profile, /accounts\.map/)
+  assert.match(profile, /employeeCode/)
   assert.doesNotMatch(
     `${assignment}${configuration}${override}${profile}`,
     /label=.*\b(ID|Id|id)\b|helperText=.*\b(ID|Id|id)\b/,
@@ -271,12 +271,13 @@ test('People renders server-owned employee lifecycle controls', async () => {
   assert.match(page, /useRestoreEmployeeProfileMutation/)
   assert.match(page, /row\.capabilities\?\.delete/)
   assert.match(page, /row\.capabilities\?\.restore/)
-  assert.match(page, /canWrite &&\s*\(\s*<Button[\s\S]{0,400}Include deleted/)
+  assert.match(page, /canWrite && \(/)
+  assert.match(page, /hrTime\.people\.includeDeleted/)
   assert.match(page, /\[403, 404, 409\]\.includes\(error\?\.status\)/)
   assert.doesNotMatch(page, /\[403, 404, 409\]\.includes\(error\?\.response\?\.status\)/)
   assert.match(page, /!row\.isDeleted &&[\s\S]*VisibilityOutlinedIcon/)
-  assert.match(dialog, /Delete employee profile/)
-  assert.match(dialog, /Restore employee profile/)
+  assert.match(dialog, /deleteTitle/)
+  assert.match(dialog, /restoreTitle/)
 })
 
 test('People leave balance administration is permission-gated and preserves backend batch evidence', async () => {
