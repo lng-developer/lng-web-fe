@@ -9,9 +9,10 @@ async function source(path) {
 }
 
 test('payroll administration uses the operations desk and server capabilities', async () => {
-  const [page, drawer, dialog, mutations] = await Promise.all([
+  const [page, drawer, resultDrawer, dialog, mutations] = await Promise.all([
     source('pages/PayrollRunsPage.jsx'),
     source('components/PayrollReviewDrawer.jsx'),
+    source('components/PayrollResultDrawer.jsx'),
     source('components/PayrollActionDialog.jsx'),
     source('api/hrPayroll.mutations.js'),
   ])
@@ -21,6 +22,12 @@ test('payroll administration uses the operations desk and server capabilities', 
   assert.match(page, /useSearchParams/)
   assert.match(page, /row\.capabilities\?\.finalize/)
   assert.match(drawer, /result\.capabilities\?\.markPaid/)
+  assert.match(
+    resultDrawer,
+    /const canWrite = hasAnyPermission\(currentUser, \['HR_PAYROLL:WRITE'\]\)/,
+  )
+  assert.match(resultDrawer, /result\.status === 'DRAFT' && canWrite/)
+  assert.match(resultDrawer, /canWrite \? \(/)
   assert.match(dialog, /results/)
   assert.match(dialog, /result\.success/)
   assert.match(dialog, /result\.code/)
