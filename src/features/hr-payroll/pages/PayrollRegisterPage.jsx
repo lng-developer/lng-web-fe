@@ -95,9 +95,10 @@ export default function PayrollRegisterPage() {
   const query = usePayrollResultsQuery(filters, { enabled: Boolean(filters.month && filters.year) })
   const rows = query.data?.items || []
   const pagination = query.data?.pagination || { page, limit: pageSize, total: 0 }
-  const draftCount = rows.filter((row) => row.status === 'DRAFT').length
-  const paidCount = rows.filter((row) => row.status === 'PAID').length
-  const pageNetPay = rows.reduce((total, row) => total + (row.netIncome || 0), 0)
+  const hasPeriod = Boolean(filters.month && filters.year)
+  const summary = query.data?.summary
+  const draftCount = summary?.statusCounts?.DRAFT || 0
+  const finalizedCount = summary?.statusCounts?.FINALIZED || 0
   const update = (key, value) =>
     setParams(
       (current) => {
@@ -188,28 +189,28 @@ export default function PayrollRegisterPage() {
         <PayrollMetric
           icon={<GroupsOutlinedIcon />}
           label="Employees"
-          value={pagination.total}
-          detail="Authorized results in this period"
+          value={hasPeriod ? summary?.total || 0 : '—'}
+          detail="Authorized results in the selected period"
         />
         <PayrollMetric
           icon={<AccountBalanceWalletOutlinedIcon />}
           label="Net payroll"
-          value={formatVnd(pageNetPay)}
-          detail="Current page total"
+          value={hasPeriod ? formatVnd(summary?.amounts?.netIncome) : '—'}
+          detail="Total net pay for the selected period"
         />
         <PayrollMetric
           icon={<PendingActionsOutlinedIcon />}
           label="Requires review"
-          value={draftCount}
-          detail="Draft results on this page"
+          value={hasPeriod ? draftCount : '—'}
+          detail="Draft results that still need review"
           tone="warning"
         />
         <PayrollMetric
           icon={<CheckCircleOutlineOutlinedIcon />}
-          label="Paid"
-          value={paidCount}
-          detail="Payment recorded on this page"
-          tone="success"
+          label="Awaiting payment"
+          value={hasPeriod ? finalizedCount : '—'}
+          detail="Finalized results not yet paid"
+          tone="warning"
         />
       </section>
       <OperationsTable

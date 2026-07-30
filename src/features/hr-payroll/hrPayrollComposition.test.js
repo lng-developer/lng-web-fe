@@ -119,6 +119,13 @@ test('payroll screens keep the register, detail drawer, and run history visual h
   assert.match(register, /PayrollMetric/)
   assert.match(register, /Base salary/)
   assert.match(register, /Team/)
+  assert.match(register, /query\.data\?\.summary/)
+  assert.match(register, /summary\?\.amounts\?\.netIncome/)
+  assert.match(register, /Awaiting payment/)
+  assert.doesNotMatch(
+    register,
+    /rows\.reduce\(\(total, row\) => total \+ \(row\.netIncome \|\| 0\), 0\)/,
+  )
   assert.match(details, /Attendance inputs/)
   assert.match(details, /Calculation note/)
   assert.match(details, /Add adjustment/)
