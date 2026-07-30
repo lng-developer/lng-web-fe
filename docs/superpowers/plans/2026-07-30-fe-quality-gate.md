@@ -68,7 +68,7 @@ Expected: Node's test runner is invoked through npm without a missing-script err
 **Interfaces:**
 
 - Consumes: `.nvmrc` and `npm run lint`, `npm run test`, `npm run build`.
-- Produces: required check context `Quality Gate / quality-gate`.
+- Produces: required check context `Quality Gate / lint-test-build`.
 
 - [ ] **Step 1: Add the workflow**
 
@@ -110,7 +110,7 @@ Expected: lint and build exit successfully; full tests are separately reported f
 
 **Interfaces:**
 
-- Consumes: check context `Quality Gate / quality-gate` from Task 2.
+- Consumes: check context `Quality Gate / lint-test-build` from Task 2.
 - Produces: an active branch ruleset for `refs/heads/develop`.
 
 - [ ] **Step 1: Confirm repository plan and administration permission**
@@ -145,7 +145,7 @@ Expected: GitHub accepts the request and the credential has Administration write
       "type": "required_status_checks",
       "parameters": {
         "do_not_enforce_on_create": false,
-        "required_status_checks": [{ "context": "Quality Gate / quality-gate" }],
+        "required_status_checks": [{ "context": "Quality Gate / lint-test-build" }],
         "strict_required_status_checks_policy": true
       }
     }
