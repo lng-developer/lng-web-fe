@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
+import { ENDPOINTS } from '../../services/endpoints.js'
 import {
   buildMarkPaidPayload,
   buildPayrollAdjustmentPayload,
@@ -14,6 +15,12 @@ import {
   payrollResultIdentity,
   unwrapPayrollResponse,
 } from './utils/hrPayrollApi.js'
+
+test('payroll result endpoints match the backend register contract', () => {
+  assert.equal(ENDPOINTS.HR.PAYROLL_RESULTS, '/api/hr/payrolls/results')
+  assert.equal(ENDPOINTS.HR.PAYROLL_RESULT('result-1'), '/api/hr/payrolls/results/result-1')
+  assert.equal(ENDPOINTS.HR.PAYROLL_RESULTS_EXPORT, '/api/hr/payrolls/results/export')
+})
 
 test('payroll adapters preserve backend integer VND values without decimal conversion', () => {
   const result = mapPayrollResult({

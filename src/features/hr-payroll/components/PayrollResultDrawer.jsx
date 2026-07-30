@@ -10,6 +10,8 @@ import { Button, Drawer, IconButton, MenuItem, Stack, TextField, Typography } fr
 import { useSnackbar } from 'notistack'
 
 import { StatusBadge } from '@/components/operations'
+import { hasAnyPermission } from '@/features/auth/utils/authz.js'
+import { useAuthStore } from '@/store/useAuthStore'
 
 import {
   useCreatePayrollAdjustmentMutation,
@@ -86,6 +88,8 @@ function statusTone(status) {
 
 export default function PayrollResultDrawer({ resultId, onClose }) {
   const { enqueueSnackbar } = useSnackbar()
+  const currentUser = useAuthStore((state) => state.currentUser)
+  const canWrite = hasAnyPermission(currentUser, ['HR_PAYROLL:WRITE'])
   const query = usePayrollResultQuery(resultId)
   const markPaid = useMarkPayrollPaidMutation()
   const email = useEmailPayrollMutation()
@@ -237,7 +241,7 @@ export default function PayrollResultDrawer({ resultId, onClose }) {
                   detail="Payroll calculation"
                 />
               </div>
-              {result.status === 'DRAFT' ? (
+              {result.status === 'DRAFT' && canWrite ? (
                 <section className="mt-4 rounded-xl border border-border p-4">
                   <Typography variant="subtitle2" className="mb-3 font-bold">
                     Add adjustment
@@ -303,14 +307,16 @@ export default function PayrollResultDrawer({ resultId, onClose }) {
                 Mark paid
               </Button>
             ) : null}
-            <Button
-              variant="outlined"
-              startIcon={<SendOutlinedIcon />}
-              disabled={email.isPending || result.status === 'DRAFT'}
-              onClick={submitEmail}
-            >
-              Send payslip
-            </Button>
+            {canWrite ? (
+              <Button
+                variant="outlined"
+                startIcon={<SendOutlinedIcon />}
+                disabled={email.isPending || result.status === 'DRAFT'}
+                onClick={submitEmail}
+              >
+                Send payslip
+              </Button>
+            ) : null}
           </Stack>
         ) : null}
       </div>
