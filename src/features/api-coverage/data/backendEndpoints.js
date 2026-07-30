@@ -4,6 +4,7 @@ auth|POST|/api/auth/login
 auth|POST|/api/auth/refresh
 auth|POST|/api/auth/logout
 auth|GET|/api/auth/me
+auth|POST|/api/auth/me/change-password
 auth|GET|/api/auth/accounts
 auth|POST|/api/auth/accounts
 auth|GET|/api/auth/accounts/:accountId
@@ -231,6 +232,8 @@ organization|GET|/api/organization/teams/:teamId/members
 organization|POST|/api/organization/teams/:teamId/members
 organization|DELETE|/api/organization/teams/:teamId/members/:accountId
 audit|GET|/api/audit/health
+audit|GET|/api/audit/events
+audit|GET|/api/audit/events/:eventId
 reports|GET|/api/reports/finance/daily
 reports|GET|/api/reports/buyers/insights
 reports|GET|/api/reports/ads/channel-performance
@@ -256,10 +259,13 @@ vendor-submissions|GET|/api/vendor-submissions/:id
 hr|GET|/api/hr/employee-profiles
 hr|POST|/api/hr/employee-profiles
 hr|GET|/api/hr/employee-profiles/me
+hr|PATCH|/api/hr/employee-profiles/me/personal
 hr|PATCH|/api/hr/employee-profiles/:profileId/restore
 hr|GET|/api/hr/employee-profiles/:profileId
 hr|PATCH|/api/hr/employee-profiles/:profileId
 hr|DELETE|/api/hr/employee-profiles/:profileId
+hr|POST|/api/hr/staff-provisioning
+hr|GET|/api/hr/staff-provisioning/roles
 hr|GET|/api/hr/work-locations
 hr|POST|/api/hr/work-locations
 hr|PATCH|/api/hr/work-locations/:id
@@ -283,6 +289,8 @@ hr|POST|/api/hr/holidays
 hr|PATCH|/api/hr/holidays/:id
 hr|DELETE|/api/hr/holidays/:id
 hr|GET|/api/hr/saturday-rotations
+hr|GET|/api/hr/saturday-rotations/matrix
+hr|POST|/api/hr/saturday-rotations
 hr|POST|/api/hr/saturday-rotations/generate
 hr|PATCH|/api/hr/saturday-rotations/:id
 hr|DELETE|/api/hr/saturday-rotations/team/:teamId

@@ -23,7 +23,7 @@ test('staff and approver pages reuse operations primitives and URL search params
   }
 
   assert.match(myTime, /today/)
-  assert.match(myTime, /history/)
+  assert.match(myTime, /scheduleAttendanceQuery/)
   assert.match(inbox, /leave/)
   assert.match(inbox, /overtime/)
 })

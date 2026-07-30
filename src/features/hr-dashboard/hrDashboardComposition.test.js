@@ -30,5 +30,5 @@ test('HR dashboard forwards dateKey and renders each backend DTO section', async
   assert.match(page, /employees\.total/)
   assert.match(page, /attendance\.coverageRate/)
   assert.match(page, /approvals\.totalPending/)
-  assert.match(page, /missingCheckOuts/)
+  assert.match(page, /attendance\.absent/)
 })

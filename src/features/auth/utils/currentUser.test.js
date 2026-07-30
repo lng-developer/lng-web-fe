@@ -53,6 +53,7 @@ describe('current user utilities', () => {
       roles: ['ADMIN'],
       permissions: ['AUDIT:READ'],
       scopes: adminMeResponse.data.scopes,
+      profileSetupRequired: false,
     })
     assert.equal(getCurrentUserDisplayName(user), 'admin@example.com')
     assert.equal(getCurrentUserRole(user), 'admin')
@@ -159,6 +160,7 @@ describe('current user utilities', () => {
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
       'dashboard',
       'quality-control',
+      'artwork-qc',
       'design-task-list',
       'quality-scoring',
       'psd-file-library',
@@ -174,7 +176,9 @@ describe('current user utilities', () => {
     assert.deepEqual(collectLeafIds(filterNavigationByUser(SIDEBAR_NAVIGATION, user)), [
       'dashboard',
       'scale-production',
+      'scale-workbench',
       'quality-control',
+      'artwork-qc',
       'shipping',
       'hr-payslips',
     ])

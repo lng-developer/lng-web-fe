@@ -365,12 +365,30 @@ const routes = [
   {
     method: 'GET',
     path: '/api/hr/saturday-rotations',
+    disposition: 'headless',
+    sourceFiles: [],
+  },
+  {
+    method: 'GET',
+    path: '/api/hr/saturday-rotations/matrix',
     disposition: 'runtime',
     sourceFiles: [
-      { file: q, evidence: 'ENDPOINTS.HR.SATURDAY_ROTATIONS' },
+      { file: q, evidence: 'ENDPOINTS.HR.SATURDAY_ROTATIONS_MATRIX' },
       {
         file: 'src/features/hr-time/pages/SchedulePage.jsx',
-        evidence: 'useSaturdayRotationsQuery',
+        evidence: 'useSaturdayRotationMatrixQuery',
+      },
+    ],
+  },
+  {
+    method: 'POST',
+    path: '/api/hr/saturday-rotations',
+    disposition: 'runtime',
+    sourceFiles: [
+      { file: m, evidence: 'ENDPOINTS.HR.SATURDAY_ROTATIONS' },
+      {
+        file: 'src/features/hr-time/pages/SchedulePage.jsx',
+        evidence: 'useCreateSaturdayRotationMutation',
       },
     ],
   },
@@ -1339,19 +1357,26 @@ test('runtime evidence rejects comments and modules unreachable from the app ent
   assert.equal(hasRuntimeEvidence(analysis, 'src/Dead.jsx', 'useOrphanHook'), false)
 })
 
-test('all 86 HR routes have explicit runtime or headless coverage', () => {
-  const backendRoutes = readExpressRoutes(findPairedBackendRoot(), [
+const backendRoot = findPairedBackendRoot()
+
+test('all 88 HR routes have explicit runtime or headless coverage', { skip: !backendRoot }, () => {
+  const backendRoutes = readExpressRoutes(backendRoot, [
     'hr',
     '/api/hr',
     'src/modules/hr/routes/index.js',
   ])
-  assert.equal(routes.length, 86)
-  assert.equal(routes.filter(({ disposition }) => disposition === 'runtime').length, 83)
+  assert.equal(routes.length, 88)
+  assert.equal(routes.filter(({ disposition }) => disposition === 'runtime').length, 84)
   assert.deepEqual(
     routes
       .filter(({ disposition }) => disposition === 'headless')
       .map(({ method, path }) => `${method} ${path}`),
-    ['GET /api/hr/health', 'POST /api/hr/employee-profiles', 'GET /api/hr/attendance'],
+    [
+      'GET /api/hr/health',
+      'POST /api/hr/employee-profiles',
+      'GET /api/hr/saturday-rotations',
+      'GET /api/hr/attendance',
+    ],
   )
   assert.equal(new Set(routes.map(({ method, path }) => `${method} ${path}`)).size, routes.length)
   assert.deepEqual(

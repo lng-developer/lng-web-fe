@@ -192,32 +192,12 @@ export function useHolidaySummaryQuery(year, options = {}) {
   )
 }
 
-export function useSaturdayRotationsQuery(params, options) {
-  return useHrTimeListQuery(
-    hrTimeKeys.listRotations,
-    ENDPOINTS.HR.SATURDAY_ROTATIONS,
-    params,
-    (row) => row,
-    options,
-  )
-}
-
 export function useSaturdayRotationMatrixQuery(params, options = {}) {
   return useHrTimeDetailQuery(
     hrTimeKeys.rotationMatrix(params),
     ENDPOINTS.HR.SATURDAY_ROTATIONS_MATRIX,
     params,
     (matrix) => matrix,
-    options,
-  )
-}
-
-export function useAttendanceQuery(params, options) {
-  return useHrTimeListQuery(
-    hrTimeKeys.listAttendance,
-    ENDPOINTS.HR.ATTENDANCE,
-    params,
-    mapAttendanceRow,
     options,
   )
 }
