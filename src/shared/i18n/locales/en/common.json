@@ -1,0 +1,107 @@
+{
+  "app": { "name": "LNG Web" },
+  "language": { "label": "Language", "vi": "Vietnamese", "en": "English" },
+  "theme": { "label": "Appearance", "light": "Light", "dark": "Dark", "system": "System" },
+  "shell": {
+    "navigation": { "primary": "Primary", "foundation": "Foundation" },
+    "workspace": "Workspace",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
+  "foundation": {
+    "eyebrow": "New foundation",
+    "title": "Foundation is ready",
+    "description": "Desktop application patterns for rebuilding each screen against backend contracts.",
+    "actions": {
+      "primary": "Primary action",
+      "secondary": "Secondary",
+      "deleteRole": "Delete role",
+      "cancel": "Cancel"
+    },
+    "sections": {
+      "controls": "Buttons and inputs",
+      "cards": "Cards and status",
+      "feedback": "Feedback",
+      "empty": "Empty state",
+      "loading": "Loading states",
+      "table": "Data table",
+      "upload": "File upload",
+      "summary": "Summary and table footer",
+      "filters": "Filters and controls"
+    },
+    "input": { "label": "Search", "placeholder": "Search foundation" },
+    "controls": {
+      "filters": "Filters",
+      "requiredName": "Required name",
+      "requiredError": "This field is required",
+      "status": "Status",
+      "dateRange": "Date range",
+      "timeRange": "Time range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "reportMonth": "Report month",
+      "selectMonth": "Select month",
+      "monthFormat": "MMMM YYYY",
+      "notify": "Notify",
+      "automation": "Automation",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "clear": "Clear",
+      "apply": "Apply"
+    },
+    "card": { "title": "Logistics Manager", "description": "Active session: 4h 12m" },
+    "summary": {
+      "totalAssets": "Total assets",
+      "alerts": "Alerts 24h",
+      "showing": "Showing",
+      "rowsPerPage": "Rows per page:"
+    },
+    "modal": { "title": "Delete role?", "description": "This action cannot be undone." },
+    "status": { "operational": "Operational", "warning": "Warning", "critical": "Critical" },
+    "priority": { "low": "Low", "medium": "Medium", "high": "High", "urgent": "Urgent" },
+    "form": {
+      "note": "Review note",
+      "notePlaceholder": "Add a review note",
+      "save": "Save changes"
+    },
+    "table": {
+      "reference": "Reference",
+      "owner": "Owner",
+      "priority": "Priority",
+      "actions": "Actions",
+      "viewDetails": "View details",
+      "searchPlaceholder": "Search orders",
+      "export": "Export",
+      "archive": "Archive"
+    },
+    "upload": { "title": "Upload files", "description": "Drop files here or click to browse." },
+    "command": {
+      "open": "Commands",
+      "placeholder": "Search commands",
+      "orders": "Open orders",
+      "create": "Create order"
+    },
+    "chart": { "ariaLabel": "Daily order volume" },
+    "drawer": { "title": "Order details", "reference": "Order reference" },
+    "feedback": {
+      "success": "Role updated",
+      "successDescription": "Changes propagated to active nodes.",
+      "warning": "Unsaved changes",
+      "error": "Database connection failed",
+      "retry": "Retry"
+    },
+    "empty": {
+      "title": "No personnel found",
+      "description": "Adjust the filters or add a staff member.",
+      "action": "Add resource"
+    }
+  },
+  "errors": { "unexpected": "Something unexpected happened." },
+  "notFound": { "title": "Page not found", "backHome": "Back home" }
+}

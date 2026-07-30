@@ -1,0 +1,107 @@
+{
+  "app": { "name": "LNG Web" },
+  "language": { "label": "Ngôn ngữ", "vi": "Tiếng Việt", "en": "Tiếng Anh" },
+  "theme": { "label": "Giao diện", "light": "Sáng", "dark": "Tối", "system": "Hệ thống" },
+  "shell": {
+    "navigation": { "primary": "Điều hướng chính", "foundation": "Nền tảng" },
+    "workspace": "Không gian làm việc",
+    "collapse": "Thu gọn thanh bên",
+    "expand": "Mở rộng thanh bên"
+  },
+  "foundation": {
+    "eyebrow": "Nền tảng mới",
+    "title": "Foundation đã sẵn sàng",
+    "description": "Các pattern desktop để xây lại từng màn hình theo hợp đồng backend.",
+    "actions": {
+      "primary": "Thao tác chính",
+      "secondary": "Phụ",
+      "deleteRole": "Xoá vai trò",
+      "cancel": "Huỷ"
+    },
+    "sections": {
+      "controls": "Nút và ô nhập liệu",
+      "cards": "Thẻ và trạng thái",
+      "feedback": "Phản hồi",
+      "empty": "Trạng thái trống",
+      "loading": "Trạng thái tải",
+      "table": "Bảng dữ liệu",
+      "upload": "Tải tệp",
+      "summary": "Tổng quan và chân bảng",
+      "filters": "Bộ lọc và điều khiển"
+    },
+    "input": { "label": "Tìm kiếm", "placeholder": "Tìm trong foundation" },
+    "controls": {
+      "filters": "Bộ lọc",
+      "requiredName": "Tên bắt buộc",
+      "requiredError": "Trường này là bắt buộc",
+      "status": "Trạng thái",
+      "dateRange": "Khoảng ngày",
+      "timeRange": "Khoảng giờ",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc",
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
+      "last7Days": "7 ngày gần nhất",
+      "last30Days": "30 ngày gần nhất",
+      "reportMonth": "Tháng báo cáo",
+      "selectMonth": "Chọn tháng",
+      "monthFormat": "[Tháng] M YYYY",
+      "notify": "Thông báo",
+      "automation": "Tự động hoá",
+      "daily": "Hàng ngày",
+      "weekly": "Hàng tuần",
+      "clear": "Xoá lọc",
+      "apply": "Áp dụng"
+    },
+    "card": { "title": "Quản lý vận chuyển", "description": "Phiên hoạt động: 4 giờ 12 phút" },
+    "summary": {
+      "totalAssets": "Tổng tài sản",
+      "alerts": "Cảnh báo 24 giờ",
+      "showing": "Hiển thị",
+      "rowsPerPage": "Số dòng mỗi trang:"
+    },
+    "modal": { "title": "Xoá vai trò?", "description": "Thao tác này không thể hoàn tác." },
+    "status": { "operational": "Đang vận hành", "warning": "Cảnh báo", "critical": "Nghiêm trọng" },
+    "priority": { "low": "Thấp", "medium": "Trung bình", "high": "Cao", "urgent": "Khẩn cấp" },
+    "form": {
+      "note": "Ghi chú duyệt",
+      "notePlaceholder": "Thêm ghi chú duyệt",
+      "save": "Lưu thay đổi"
+    },
+    "table": {
+      "reference": "Mã tham chiếu",
+      "owner": "Người phụ trách",
+      "priority": "Độ ưu tiên",
+      "actions": "Thao tác",
+      "viewDetails": "Xem chi tiết",
+      "searchPlaceholder": "Tìm đơn hàng",
+      "export": "Xuất dữ liệu",
+      "archive": "Lưu trữ"
+    },
+    "upload": { "title": "Tải tệp lên", "description": "Kéo thả tệp vào đây hoặc bấm để chọn." },
+    "command": {
+      "open": "Lệnh",
+      "placeholder": "Tìm lệnh",
+      "orders": "Mở đơn hàng",
+      "create": "Tạo đơn hàng"
+    },
+    "chart": { "ariaLabel": "Số lượng đơn hàng theo ngày" },
+    "drawer": { "title": "Chi tiết đơn hàng", "reference": "Mã đơn hàng" },
+    "feedback": {
+      "success": "Đã cập nhật vai trò",
+      "successDescription": "Thay đổi đã được áp dụng đến các node đang hoạt động.",
+      "warning": "Có thay đổi chưa lưu",
+      "error": "Kết nối cơ sở dữ liệu thất bại",
+      "retry": "Thử lại"
+    },
+    "empty": {
+      "title": "Không tìm thấy nhân sự",
+      "description": "Điều chỉnh bộ lọc hoặc thêm nhân sự mới.",
+      "action": "Thêm tài nguyên"
+    }
+  },
+  "errors": { "unexpected": "Đã xảy ra lỗi không mong muốn." },
+  "notFound": { "title": "Không tìm thấy trang", "backHome": "Về trang chính" }
+}
