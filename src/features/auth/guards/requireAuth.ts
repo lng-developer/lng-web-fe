@@ -1,6 +1,6 @@
 import { redirect } from 'react-router-dom'
 
-import { restoreSession } from './authApi'
+import { restoreSession } from '../api/authApi'
 
 export async function requireAuth() {
   try {

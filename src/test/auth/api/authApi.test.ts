@@ -2,10 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/shared/api', () => ({ apiClient: { post: vi.fn() } }))
 
+import { logout, restoreSession } from '@/features/auth/api/authApi'
 import { apiClient } from '@/shared/api'
 import { getAccessToken, setAccessToken } from '@/shared/auth/session'
-
-import { logout, restoreSession } from './authApi'
 
 describe('logout', () => {
   beforeEach(() => setAccessToken('access-token'))

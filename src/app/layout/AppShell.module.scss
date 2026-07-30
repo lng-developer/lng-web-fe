@@ -1,5 +1,4 @@
 .shell {
-  min-width: 1280px;
   min-height: 100dvh;
 }
 
@@ -59,11 +58,27 @@
 
 .content {
   min-height: calc(100dvh - 56px);
-  padding: 32px;
+  padding: 20px 32px 32px;
   background: var(--ant-color-bg-layout);
 }
 
 .workspace {
   width: min(100%, 1440px);
   margin-inline: auto;
+}
+
+@media (max-width: 767px) {
+  .header {
+    padding-inline: 16px;
+  }
+
+  .breadcrumb {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .content {
+    padding: 16px;
+  }
 }

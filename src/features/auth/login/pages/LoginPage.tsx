@@ -6,7 +6,7 @@ import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd'
 
 import { ApiError } from '@/shared/api'
 
-import { login } from './authApi'
+import { login } from '../../api/authApi'
 import styles from './LoginPage.module.scss'
 type LoginValues = { identifier: string; password: string }
 export function LoginPage() {

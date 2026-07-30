@@ -3,8 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
-
-import { LoginPage } from './LoginPage'
+import { LoginPage } from '@/features/auth/login/pages/LoginPage'
 
 describe('LoginPage', () => {
   it('renders credentials fields and a sign-in action', () => {

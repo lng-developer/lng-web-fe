@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react'
 import { Button, Modal, Typography } from 'antd'
 
 export interface ConfirmDangerModalProps {
+  readonly confirmIcon?: ReactNode
   readonly open: boolean
   readonly title: string
   readonly description: string
@@ -18,6 +20,7 @@ export function ConfirmDangerModal({
   confirmLabel,
   cancelLabel = 'Cancel',
   loading = false,
+  confirmIcon,
   onConfirm,
   onCancel,
 }: ConfirmDangerModalProps) {
@@ -33,7 +36,14 @@ export function ConfirmDangerModal({
         <Button key="cancel" onClick={onCancel}>
           {cancelLabel}
         </Button>,
-        <Button key="confirm" danger type="primary" loading={loading} onClick={onConfirm}>
+        <Button
+          key="confirm"
+          danger
+          type="primary"
+          icon={confirmIcon}
+          loading={loading}
+          onClick={onConfirm}
+        >
           {confirmLabel}
         </Button>,
       ]}

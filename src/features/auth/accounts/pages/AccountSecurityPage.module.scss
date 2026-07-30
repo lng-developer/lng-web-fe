@@ -1,0 +1,16 @@
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.dangerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .page {
+    gap: 16px;
+  }
+}

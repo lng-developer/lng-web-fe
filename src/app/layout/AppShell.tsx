@@ -6,11 +6,12 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { Avatar, Breadcrumb, Button, Layout, Menu, Space, Typography } from 'antd'
 
-import { logout } from '@/features/auth/authApi'
+import { logout } from '@/features/auth/api/authApi'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 
@@ -25,6 +26,16 @@ export function AppShell() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+  const isAccountsRoute =
+    location.pathname.startsWith('/auth/accounts') || location.pathname.startsWith('/auth/access')
+  const isAccessControlRoute =
+    location.pathname.startsWith('/auth/access-control') ||
+    location.pathname.startsWith('/auth/roles')
+  const selectedKey = isAccountsRoute
+    ? '/auth/accounts'
+    : isAccessControlRoute
+      ? '/auth/access-control'
+      : location.pathname
 
   async function handleLogout() {
     setIsLoggingOut(true)
@@ -37,9 +48,11 @@ export function AppShell() {
       <Sider
         className={styles.sidebar}
         width={248}
-        collapsedWidth={72}
+        collapsedWidth={0}
         collapsed={collapsed}
+        breakpoint="lg"
         theme="light"
+        onBreakpoint={setCollapsed}
       >
         <Link className={styles.brand} to="/foundation" aria-label="LNG Web">
           <span className={styles.brandMark}>L</span>
@@ -49,13 +62,23 @@ export function AppShell() {
         <nav aria-label={t('shell.navigation.primary')} className={styles.navigation}>
           <Menu
             mode="inline"
-            selectedKeys={[location.pathname]}
+            selectedKeys={[selectedKey]}
             inlineCollapsed={collapsed}
             items={[
               {
                 key: '/foundation',
                 icon: <AppstoreOutlined />,
                 label: <Link to="/foundation">{t('shell.navigation.foundation')}</Link>,
+              },
+              {
+                key: '/auth/accounts',
+                icon: <SafetyCertificateOutlined />,
+                label: <Link to="/auth/accounts">{t('shell.navigation.accounts')}</Link>,
+              },
+              {
+                key: '/auth/access-control',
+                icon: <SafetyCertificateOutlined />,
+                label: <Link to="/auth/access-control">{t('shell.navigation.accessControl')}</Link>,
               },
             ]}
           />
@@ -73,7 +96,19 @@ export function AppShell() {
       <Layout>
         <Header className={styles.header}>
           <Breadcrumb
-            items={[{ title: t('shell.workspace') }, { title: t('shell.navigation.foundation') }]}
+            className={styles.breadcrumb}
+            items={[
+              { title: t('shell.workspace') },
+              {
+                title: t(
+                  isAccountsRoute
+                    ? 'shell.navigation.accounts'
+                    : isAccessControlRoute
+                      ? 'shell.navigation.accessControl'
+                      : 'shell.navigation.foundation',
+                ),
+              },
+            ]}
           />
           <Space size={12}>
             <ThemeSwitch />

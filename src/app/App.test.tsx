@@ -18,7 +18,9 @@ vi.mock('@/features/foundation/FoundationPage', async () => {
   }
 })
 
-vi.mock('@/features/auth/authApi', () => ({ restoreSession: vi.fn().mockResolvedValue(undefined) }))
+vi.mock('@/features/auth/api/authApi', () => ({
+  restoreSession: vi.fn().mockResolvedValue(undefined),
+}))
 
 function renderRoute(path: string) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] })

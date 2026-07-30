@@ -1,3 +1,4 @@
+import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
@@ -11,6 +12,7 @@ import {
   EmptyState,
   FeedbackAlert,
   FileUpload,
+  FilterBar,
   FormActions,
   LoadingState,
   MetricCard,
@@ -46,6 +48,16 @@ describe('shared UI', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Retry')
   })
 
+  it('allows a caller to style the filter control group', () => {
+    render(
+      <FilterBar label="Account filters" contentClassName="single-line-filters">
+        <input aria-label="Search" />
+      </FilterBar>,
+    )
+
+    expect(screen.getByRole('search').querySelector('.single-line-filters')).toBeInTheDocument()
+  })
+
   it('renders table, drawer, form, loading, and permission foundations', () => {
     render(
       <>
@@ -74,13 +86,18 @@ describe('shared UI', () => {
   it('renders summary, pagination, and destructive confirmation patterns', async () => {
     render(
       <>
-        <MetricCard label="Total assets" value="1,284" />
+        <MetricCard
+          label="Total assets"
+          value="1,284"
+          icon={<UserOutlined aria-label="Account metric" />}
+        />
         <TableFooter from={21} to={40} total={126} pageSize={20} />
         <ConfirmDangerModal
           open
           title="Delete role?"
           description="This cannot be undone."
           confirmLabel="Delete role"
+          confirmIcon={<DeleteOutlined aria-label="Delete action icon" />}
           onConfirm={() => undefined}
           onCancel={() => undefined}
         />
@@ -89,6 +106,7 @@ describe('shared UI', () => {
 
     expect(screen.getByText('Total assets')).toBeVisible()
     expect(screen.getByText('1,284')).toBeVisible()
+    expect(screen.getByLabelText('Account metric')).toBeVisible()
     expect(screen.getByText('Showing 21-40 of 126')).toBeVisible()
     const dialog = screen
       .getAllByRole('dialog')
@@ -96,7 +114,8 @@ describe('shared UI', () => {
     expect(dialog).toBeDefined()
     await waitFor(() => {
       expect(within(dialog!).getByText('Delete role?')).toBeVisible()
-      expect(within(dialog!).getByRole('button', { name: 'Delete role' })).toBeVisible()
+      expect(within(dialog!).getByRole('button', { name: /Delete role/ })).toBeVisible()
+      expect(within(dialog!).getByLabelText('Delete action icon')).toBeVisible()
     })
   })
 
