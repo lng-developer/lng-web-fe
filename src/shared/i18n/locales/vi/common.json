@@ -6,7 +6,8 @@
     "navigation": { "primary": "Điều hướng chính", "foundation": "Nền tảng" },
     "workspace": "Không gian làm việc",
     "collapse": "Thu gọn thanh bên",
-    "expand": "Mở rộng thanh bên"
+    "expand": "Mở rộng thanh bên",
+    "logout": "Đăng xuất"
   },
   "foundation": {
     "eyebrow": "Nền tảng mới",
@@ -100,6 +101,19 @@
       "title": "Không tìm thấy nhân sự",
       "description": "Điều chỉnh bộ lọc hoặc thêm nhân sự mới.",
       "action": "Thêm tài nguyên"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Không gian vận hành",
+      "description": "Không gian làm việc an toàn để điều hành POD.",
+      "welcome": "Chào mừng trở lại",
+      "instruction": "Đăng nhập để tiếp tục vào LNG Web.",
+      "identifier": "Email hoặc mã nhân viên",
+      "password": "Mật khẩu",
+      "identifierRequired": "Nhập email hoặc mã nhân viên",
+      "passwordRequired": "Nhập mật khẩu",
+      "submit": "Đăng nhập"
     }
   },
   "errors": { "unexpected": "Đã xảy ra lỗi không mong muốn." },

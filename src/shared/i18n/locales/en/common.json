@@ -6,7 +6,8 @@
     "navigation": { "primary": "Primary", "foundation": "Foundation" },
     "workspace": "Workspace",
     "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar"
+    "expand": "Expand sidebar",
+    "logout": "Sign out"
   },
   "foundation": {
     "eyebrow": "New foundation",
@@ -100,6 +101,19 @@
       "title": "No personnel found",
       "description": "Adjust the filters or add a staff member.",
       "action": "Add resource"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Operations workspace",
+      "description": "A secure workspace for managing the POD operation.",
+      "welcome": "Welcome back",
+      "instruction": "Sign in to continue to LNG Web.",
+      "identifier": "Email or employee code",
+      "password": "Password",
+      "identifierRequired": "Enter your email or employee code",
+      "passwordRequired": "Enter your password",
+      "submit": "Sign in"
     }
   },
   "errors": { "unexpected": "Something unexpected happened." },

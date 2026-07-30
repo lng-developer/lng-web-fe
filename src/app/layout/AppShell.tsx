@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   AppstoreOutlined,
+  LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { Avatar, Breadcrumb, Button, Layout, Menu, Space, Typography } from 'antd'
 
+import { logout } from '@/features/auth/authApi'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 
@@ -20,7 +22,15 @@ const { Text } = Typography
 export function AppShell() {
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    setIsLoggingOut(true)
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <Layout className={styles.shell}>
@@ -69,6 +79,13 @@ export function AppShell() {
             <ThemeSwitch />
             <LanguageSwitch />
             <Avatar icon={<UserOutlined />} />
+            <Button
+              aria-label={t('shell.logout')}
+              type="text"
+              icon={<LogoutOutlined />}
+              loading={isLoggingOut}
+              onClick={handleLogout}
+            />
           </Space>
         </Header>
 

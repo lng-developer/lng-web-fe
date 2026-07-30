@@ -1,5 +1,6 @@
 import axios from 'axios'
 
+import { getAccessToken } from '@/shared/auth/session'
 import { env } from '@/shared/config/env'
 
 import { normalizeApiError } from './apiError'
@@ -7,6 +8,13 @@ import { normalizeApiError } from './apiError'
 export const apiClient = axios.create({
   baseURL: env.apiBaseUrl,
   timeout: 15_000,
+  withCredentials: true,
+})
+
+apiClient.interceptors.request.use((request) => {
+  const token = getAccessToken()
+  if (token) request.headers.Authorization = `Bearer ${token}`
+  return request
 })
 
 apiClient.interceptors.response.use(

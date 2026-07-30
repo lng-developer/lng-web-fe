@@ -18,6 +18,8 @@ vi.mock('@/features/foundation/FoundationPage', async () => {
   }
 })
 
+vi.mock('@/features/auth/authApi', () => ({ restoreSession: vi.fn().mockResolvedValue(undefined) }))
+
 function renderRoute(path: string) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] })
   return render(
@@ -34,9 +36,9 @@ describe('application shell', () => {
   })
 
   it('renders the shell route and switches language without feature internals', async () => {
-    renderRoute('/')
+    renderRoute('/foundation')
 
-    expect(screen.getByLabelText('LNG Web')).toBeVisible()
+    expect(await screen.findByLabelText('LNG Web')).toBeVisible()
     expect(i18n.resolvedLanguage).toBe('vi')
     fireEvent.click(screen.getByText('EN'))
     expect(await screen.findByRole('heading', { name: 'Foundation is ready' })).toBeVisible()
