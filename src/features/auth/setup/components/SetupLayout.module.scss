@@ -1,0 +1,95 @@
+.page {
+  position: relative;
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--ant-color-bg-layout);
+}
+
+.language {
+  position: absolute;
+  z-index: 1;
+  top: 24px;
+  right: 24px;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  padding: 48px;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand :global(.ant-typography) {
+  margin: 0;
+}
+
+.mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ant-border-radius-lg);
+  place-items: center;
+  background: var(--ant-color-primary);
+  color: var(--ant-color-text-light-solid);
+  font-weight: 800;
+}
+
+.railCopy {
+  max-width: 260px;
+}
+
+.railCopy :global(.ant-typography) {
+  margin-block-start: 8px;
+}
+
+.eyebrow {
+  color: var(--ant-color-primary);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.content {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 16px;
+}
+
+.card,
+.wideCard {
+  width: min(100%, 520px);
+  box-shadow: var(--ant-box-shadow-secondary);
+}
+
+.wideCard {
+  width: 100%;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+}
+
+.wideCard :global(.ant-card-body) {
+  padding: 20px;
+}
+
+.wideCard .header {
+  margin-bottom: 12px;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.header :global(.ant-typography) {
+  margin-block: 6px 0;
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import en from './locales/en/common.json'
-import vi from './locales/vi/common.json'
+import en from '@/shared/i18n/locales/en/common.json'
+import vi from '@/shared/i18n/locales/vi/common.json'
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {
   return Object.entries(value).flatMap(([key, entry]) => {
@@ -37,6 +37,12 @@ describe('foundation locales', () => {
         'errors.unexpected',
         'notFound.title',
         'notFound.backHome',
+        'hrOperations.title',
+        'hrOperations.schedule.title',
+        'hrOperations.attendance.title',
+        'hrOperations.requests.title',
+        'hrOperations.payroll.title',
+        'hrOperations.overview.title',
       ]),
     )
   })

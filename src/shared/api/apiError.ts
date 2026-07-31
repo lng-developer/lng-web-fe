@@ -12,6 +12,10 @@ type BackendError = {
   details?: unknown
 }
 
+type BackendErrorResponse = BackendError & {
+  error?: BackendError
+}
+
 export class ApiError extends Error {
   readonly status?: number
   readonly code?: string
@@ -29,17 +33,18 @@ export class ApiError extends Error {
 export function normalizeApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error
 
-  if (!axios.isAxiosError<BackendError>(error)) {
+  if (!axios.isAxiosError<BackendErrorResponse>(error)) {
     return new ApiError(error instanceof Error ? error.message : 'Unexpected error', {
       code: 'UNEXPECTED_ERROR',
     })
   }
 
   const data = error.response?.data
+  const backendError = data?.error ?? data
 
-  return new ApiError(data?.message ?? error.message, {
+  return new ApiError(backendError?.message ?? error.message, {
     status: error.response?.status,
-    code: data?.code ?? (error.response ? 'API_ERROR' : 'NETWORK_ERROR'),
-    details: data?.details,
+    code: backendError?.code ?? (error.response ? 'API_ERROR' : 'NETWORK_ERROR'),
+    details: backendError?.details,
   })
 }

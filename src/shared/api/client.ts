@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-import { getAccessToken } from '@/shared/auth/session'
+import { expireSession, getAccessToken } from '@/shared/auth/session'
 import { env } from '@/shared/config/env'
 
 import { normalizeApiError } from './apiError'
@@ -19,5 +19,10 @@ apiClient.interceptors.request.use((request) => {
 
 apiClient.interceptors.response.use(
   (response) => response.data,
-  (error: unknown) => Promise.reject(normalizeApiError(error)),
+  (error: unknown) => {
+    const apiError = normalizeApiError(error)
+    const requestUrl = axios.isAxiosError(error) ? error.config?.url : undefined
+    if (apiError.status === 401 && requestUrl !== '/api/auth/login') expireSession()
+    return Promise.reject(apiError)
+  },
 )

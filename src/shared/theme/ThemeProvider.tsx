@@ -42,7 +42,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   return (
     <ThemePreferenceContext value={preference}>
-      <ConfigProvider theme={createAppTheme(resolved)}>{children}</ConfigProvider>
+      <ConfigProvider modal={{ centered: true }} theme={createAppTheme(resolved)}>
+        {children}
+      </ConfigProvider>
     </ThemePreferenceContext>
   )
 }

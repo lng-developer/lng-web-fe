@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createAppTheme, resolveAppearance } from './theme'
+import { createAppTheme, resolveAppearance } from '@/shared/theme/theme'
 
 describe('theme foundation', () => {
   it('resolves explicit and system appearances', () => {

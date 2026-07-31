@@ -5,7 +5,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, Modal, Select, Space, Tag } from 'antd'
 
-import { ConfirmDangerModal, DataTable, FeedbackAlert, PageHeader, SectionCard } from '@/shared/ui'
+import {
+  ConfirmDangerModal,
+  DataTable,
+  FeedbackAlert,
+  PageHeader,
+  SectionCard,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   createRole,
@@ -21,6 +28,7 @@ type Role = Awaited<ReturnType<typeof loadRoleCatalog>>['roles']['items'][number
 export function RolesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const showFeedbackToast = useFeedbackToast()
   const [form] = Form.useForm<RoleInput>()
   const [editingRole, setEditingRole] = useState<Role>()
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -37,15 +45,19 @@ export function RolesPage() {
       setEditingRole(undefined)
       setIsEditorOpen(false)
       form.resetFields()
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const deleteMutation = useMutation({
     mutationFn: (roleId: string) => deleteRole(roleId),
     onSuccess: async () => {
       setRoleToDelete(undefined)
+      showFeedbackToast('success', t('actionFeedback.deleted'))
       await invalidate()
     },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const permissionById = new Map(
     (data?.permissions.items ?? []).map((permission) => [permission.id, permission]),

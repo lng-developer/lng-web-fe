@@ -17,6 +17,7 @@ import {
   LoadingState,
   PageHeader,
   SectionCard,
+  useFeedbackToast,
 } from '@/shared/ui'
 
 import {
@@ -34,9 +35,9 @@ export function AccountSecurityPage() {
   const { t } = useTranslation()
   const { accountId = '' } = useParams()
   const queryClient = useQueryClient()
+  const showFeedbackToast = useFeedbackToast()
   const [passwordForm] = Form.useForm<{ password: string }>()
   const [pendingAction, setPendingAction] = useState<SecurityAction>()
-  const [notice, setNotice] = useState<'error' | 'success'>()
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['auth-account', accountId],
     queryFn: () => loadAccount(accountId),
@@ -50,37 +51,37 @@ export function AccountSecurityPage() {
     mutationFn: (password: string) => resetAccountPassword(accountId, password),
     onSuccess: async () => {
       passwordForm.resetFields()
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const revokeMutation = useMutation({
     mutationFn: () => revokeAccountSessions(accountId),
     onSuccess: async () => {
       setPendingAction(undefined)
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const statusMutation = useMutation({
     mutationFn: () => updateAccountStatus(accountId, 'inactive'),
     onSuccess: async () => {
       setPendingAction(undefined)
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.deactivated'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const archiveMutation = useMutation({
     mutationFn: () => archiveAccount(accountId),
     onSuccess: async () => {
       setPendingAction(undefined)
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.deleted'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
   if (isLoading) return <LoadingState variant="page" />
@@ -139,7 +140,6 @@ export function AccountSecurityPage() {
           </Button>
         }
       />
-      {notice ? <FeedbackAlert type={notice} title={t(`auth.accountSecurity.${notice}`)} /> : null}
       <SectionCard title={t('auth.accountSecurity.password')}>
         <Typography.Paragraph type="secondary">
           {t('auth.accountSecurity.passwordDescription')}

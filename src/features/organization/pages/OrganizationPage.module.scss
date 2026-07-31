@@ -1,0 +1,241 @@
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.header {
+  padding-block: 8px 2px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.header :global(.ant-typography) {
+  margin-bottom: 6px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+
+.metrics :global(.ant-card) {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.metrics :global(.ant-card + .ant-card) {
+  border-left: 1px solid var(--ant-color-border-secondary);
+}
+
+.metrics :global(.ant-card-body) {
+  padding: 18px 20px;
+}
+
+.metrics :global(.ant-statistic-content) {
+  font-variant-numeric: tabular-nums;
+}
+
+.directory :global(.ant-card) {
+  overflow: hidden;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--ant-color-text) 5%, transparent);
+}
+
+.directory :global(.ant-card-head) {
+  min-height: 56px;
+  border-bottom-color: var(--ant-color-border-secondary);
+}
+
+.directory :global(.ant-card-body) {
+  padding: 0;
+}
+
+.tree {
+  display: grid;
+}
+
+.departmentNode + .departmentNode {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.departmentHeader,
+.teamHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.departmentHeader {
+  min-height: 66px;
+  padding: 12px 20px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.nodeIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nodeIdentity > :global(.anticon) {
+  color: var(--ant-color-primary);
+  font-size: 18px;
+}
+.nodeIdentity > div {
+  display: grid;
+  gap: 2px;
+}
+
+.teamGroup {
+  padding-left: 34px;
+}
+.teamNode {
+  border-top: 1px solid var(--ant-color-border-secondary);
+  border-left: 2px solid var(--ant-color-border-secondary);
+}
+.teamNodeOpen {
+  border-left-color: var(--ant-color-primary);
+}
+.teamHeader {
+  min-height: 62px;
+  padding: 8px 16px;
+}
+
+.teamButton {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.teamButton:hover strong {
+  color: var(--ant-color-primary);
+}
+.teamButton > :global(.anticon) {
+  color: var(--ant-color-text-secondary);
+  font-size: 18px;
+}
+.teamIdentity {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+.teamButton small {
+  color: var(--ant-color-text-secondary);
+}
+
+.teamPanel {
+  background: transparent;
+}
+.teamPanel > :global(.ant-collapse-item) {
+  border: 0;
+}
+.teamPanel :global(.ant-collapse-header) {
+  display: none;
+}
+.teamPanel :global(.ant-collapse-content-box) {
+  padding: 0;
+}
+
+.staffBranch {
+  margin: 0 16px 16px 38px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  overflow: hidden;
+}
+.assignmentBox {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: var(--ant-color-fill-quaternary);
+}
+.assignmentToolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto auto;
+  gap: 10px;
+}
+.candidateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.candidate {
+  margin: 0 !important;
+  padding: 9px 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+  overflow: hidden;
+}
+.candidate > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.candidate > span:last-child > span {
+  display: grid;
+  min-width: 0;
+}
+.candidate strong,
+.candidate small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.candidate small,
+.memberRow small {
+  color: var(--ant-color-text-secondary);
+}
+
+.memberList {
+  display: grid;
+}
+.memberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 6px 14px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+.memberRow > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.memberIdentity {
+  display: grid;
+  min-width: 180px;
+}
+.departmentChoices {
+  display: grid;
+  gap: 8px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1100px) {
+  .assignmentToolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+  .assignmentToolbar > :last-child {
+    grid-column: 1 / -1;
+  }
+  .candidateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

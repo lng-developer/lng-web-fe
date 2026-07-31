@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { readEnv } from './env'
+import { readEnv } from '@/shared/config/env'
 
 describe('readEnv', () => {
   it('uses safe defaults when optional values are missing', () => {

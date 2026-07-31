@@ -1,13 +1,124 @@
 .page {
   display: grid;
-  gap: 24px;
+  gap: 20px;
 }
-
-.tabs :global(.ant-tabs-nav) {
-  margin-bottom: 0;
-}
-
 .icon {
   color: var(--ant-color-primary);
   font-size: 28px;
+}
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+.search {
+  width: 320px;
+}
+.tree,
+.branch {
+  background: transparent;
+}
+.tree :global(.ant-collapse-item),
+.branch :global(.ant-collapse-item) {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+.tree > :global(.ant-collapse-item > .ant-collapse-header) {
+  padding: 16px 4px;
+}
+.branch :global(.ant-collapse-header) {
+  padding: 13px 12px 13px 28px;
+}
+.branch :global(.ant-collapse-content-box) {
+  padding: 0 12px 16px 48px;
+}
+.rootLabel,
+.nodeLabel {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.rootLabel {
+  font-size: 16px;
+  font-weight: 600;
+}
+.addButton {
+  margin-left: auto;
+}
+.nodeActions {
+  margin-left: auto;
+}
+.nodeLabel strong {
+  min-width: 180px;
+}
+.code {
+  color: var(--ant-color-text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+}
+.permissionEditor {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-fill-quaternary);
+}
+.editorToolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  gap: 12px;
+}
+.permissionGrid,
+.roleFormPermissions,
+.catalogGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+.permissionGrid :global(.ant-checkbox-wrapper) {
+  min-width: 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+}
+.roleFormPermissions {
+  max-height: 280px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.roleFormPermissions :global(.ant-checkbox-wrapper) {
+  padding: 8px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+}
+.permissionName {
+  display: block;
+}
+.catalogItem,
+.scopeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+}
+.catalogItem {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.scopeList {
+  display: grid;
+  gap: 8px;
+}
+.scopeIdentity {
+  display: grid;
+  margin-right: auto;
+}
+@media (max-width: 1100px) {
+  .permissionGrid,
+  .catalogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

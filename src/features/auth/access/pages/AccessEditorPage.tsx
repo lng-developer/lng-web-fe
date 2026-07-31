@@ -22,6 +22,7 @@ import {
   LoadingState,
   PageHeader,
   SectionCard,
+  useFeedbackToast,
 } from '@/shared/ui'
 
 import { type AccessExplorerSnapshot, loadAccessExplorer } from '../../api/accessExplorerApi'
@@ -42,13 +43,13 @@ export function AccessEditorPage() {
   const { t } = useTranslation()
   const { accountId = '' } = useParams()
   const queryClient = useQueryClient()
+  const showFeedbackToast = useFeedbackToast()
   const [globalForm] = Form.useForm()
   const [assignmentForm] = Form.useForm<AssignmentFormValues>()
   const [overrideForm] = Form.useForm<{ permissionIds: string[] }>()
   const [editingAssignment, setEditingAssignment] = useState<Assignment>()
   const [overrideAssignment, setOverrideAssignment] = useState<Assignment>()
   const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment>()
-  const [notice, setNotice] = useState<'success' | 'error'>()
 
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['access-explorer', accountId],
@@ -64,10 +65,10 @@ export function AccessEditorPage() {
     mutationFn: (values: { roleIds: string[]; customPermissionIds: string[] }) =>
       updateGlobalAccess(accountId, values),
     onSuccess: async () => {
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const assignmentMutation = useMutation({
     mutationFn: (values: AssignmentFormValues) =>
@@ -76,19 +77,19 @@ export function AccessEditorPage() {
         : createAccessAssignment({ ...values, accountId }),
     onSuccess: async () => {
       setEditingAssignment(undefined)
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const deleteMutation = useMutation({
     mutationFn: deleteAccessAssignment,
     onSuccess: async () => {
       setAssignmentToDelete(undefined)
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.deleted'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const overrideMutation = useMutation({
     mutationFn: (permissionIds: string[]) =>
@@ -100,10 +101,10 @@ export function AccessEditorPage() {
       }),
     onSuccess: async () => {
       setOverrideAssignment(undefined)
-      setNotice('success')
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
-    onError: () => setNotice('error'),
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
   useEffect(() => {
@@ -259,7 +260,6 @@ export function AccessEditorPage() {
           }
         />
       ) : null}
-      {notice ? <FeedbackAlert type={notice} title={t(`auth.accessEditor.${notice}`)} /> : null}
       {data ? (
         <>
           <div className={styles.accountSummary}>

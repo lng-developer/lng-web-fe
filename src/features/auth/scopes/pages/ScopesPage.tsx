@@ -5,7 +5,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, Modal, Select, Space, Tag } from 'antd'
 
-import { ConfirmDangerModal, DataTable, FeedbackAlert, PageHeader, SectionCard } from '@/shared/ui'
+import {
+  ConfirmDangerModal,
+  DataTable,
+  FeedbackAlert,
+  PageHeader,
+  SectionCard,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   createScope,
@@ -22,6 +29,7 @@ const scopeTypes: ScopeInput['scopeType'][] = ['DEPARTMENT', 'TEAM', 'SHOP', 'VE
 export function ScopesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const showFeedbackToast = useFeedbackToast()
   const [form] = Form.useForm<ScopeInput>()
   const [editingScope, setEditingScope] = useState<Scope>()
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -38,15 +46,19 @@ export function ScopesPage() {
       setEditingScope(undefined)
       setIsEditorOpen(false)
       form.resetFields()
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const deactivateMutation = useMutation({
     mutationFn: (scopeId: string) => deactivateScope(scopeId),
     onSuccess: async () => {
       setScopeToDeactivate(undefined)
+      showFeedbackToast('success', t('actionFeedback.deactivated'))
       await invalidate()
     },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const columns: TableColumnsType<Scope> = [
     { title: t('auth.scopes.name'), dataIndex: 'name' },

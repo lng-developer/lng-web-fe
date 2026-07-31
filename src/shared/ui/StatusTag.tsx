@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react'
 import { Tag } from 'antd'
 
-type OperationalStatus = 'operational' | 'warning' | 'critical'
+type OperationalStatus =
+  | 'operational'
+  | 'warning'
+  | 'critical'
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
 
 export interface StatusTagProps {
   readonly status: OperationalStatus
@@ -12,6 +19,10 @@ const colors: Record<OperationalStatus, string> = {
   operational: 'success',
   warning: 'warning',
   critical: 'error',
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'error',
+  cancelled: 'default',
 }
 
 export function StatusTag({ status, children }: StatusTagProps) {

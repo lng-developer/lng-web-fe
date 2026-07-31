@@ -5,7 +5,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, Modal, Space } from 'antd'
 
-import { ConfirmDangerModal, DataTable, FeedbackAlert, PageHeader, SectionCard } from '@/shared/ui'
+import {
+  ConfirmDangerModal,
+  DataTable,
+  FeedbackAlert,
+  PageHeader,
+  SectionCard,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   createPermission,
@@ -21,6 +28,7 @@ type Permission = Awaited<ReturnType<typeof loadPermissions>>['items'][number]
 export function PermissionsPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const showFeedbackToast = useFeedbackToast()
   const [form] = Form.useForm<PermissionInput>()
   const [editingPermission, setEditingPermission] = useState<Permission>()
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -37,15 +45,19 @@ export function PermissionsPage() {
       setEditingPermission(undefined)
       setIsEditorOpen(false)
       form.resetFields()
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const deleteMutation = useMutation({
     mutationFn: (permissionId: string) => deletePermission(permissionId),
     onSuccess: async () => {
       setPermissionToDelete(undefined)
+      showFeedbackToast('success', t('actionFeedback.deleted'))
       await invalidate()
     },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const columns: TableColumnsType<Permission> = [
     { title: t('auth.permissions.code'), dataIndex: 'code' },

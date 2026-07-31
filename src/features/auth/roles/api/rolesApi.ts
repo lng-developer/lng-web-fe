@@ -10,7 +10,10 @@ export type RoleInput = {
 }
 
 export type RoleCatalog = {
-  permissions: { items: { code: string; id: string; name?: string }[]; total: number }
+  permissions: {
+    items: { code: string; description?: string; id: string; name?: string }[]
+    total: number
+  }
   roles: {
     items: {
       code: string

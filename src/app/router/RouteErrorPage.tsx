@@ -10,7 +10,7 @@ export function RouteErrorPage() {
         status="error"
         title={t('errors.unexpected')}
         extra={
-          <Button type="primary" href="/">
+          <Button type="primary" href="/foundation">
             {t('notFound.backHome')}
           </Button>
         }

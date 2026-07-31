@@ -1,6 +1,7 @@
 import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import dayjs from 'dayjs'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   BarChart,
@@ -8,6 +9,7 @@ import {
   CommandPalette,
   ConfirmDangerModal,
   DataTable,
+  DateTimePicker,
   DetailDrawer,
   EmptyState,
   FeedbackAlert,
@@ -18,11 +20,46 @@ import {
   MetricCard,
   PageHeader,
   PermissionGate,
+  SearchInput,
   StatusTag,
   TableFooter,
-} from './index'
+} from '@/shared/ui'
+import { serializeDateTimeValue } from '@/shared/ui/dateTimeValue'
 
 describe('shared UI', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('updates the search field immediately and debounces expensive consumers', () => {
+    vi.useFakeTimers()
+    const onSearchChange = vi.fn()
+    render(<SearchInput aria-label="Search staff" delay={200} onSearchChange={onSearchChange} />)
+
+    fireEvent.change(screen.getByLabelText('Search staff'), { target: { value: 'J2501' } })
+
+    expect(screen.getByLabelText('Search staff')).toHaveValue('J2501')
+    expect(onSearchChange).not.toHaveBeenCalled()
+    act(() => vi.advanceTimersByTime(200))
+    expect(onSearchChange).toHaveBeenCalledWith('J2501')
+  })
+
+  it('renders date, time, and datetime values in their own formats', () => {
+    render(
+      <>
+        <DateTimePicker aria-label="Date" mode="date" value="2026-07-31" />
+        <DateTimePicker aria-label="Time" mode="time" value="13:45:00" />
+        <DateTimePicker aria-label="Date time" mode="datetime" value="2026-07-31T13:45:00" />
+      </>,
+    )
+
+    expect(screen.getByLabelText('Date')).toHaveValue('31/07/2026')
+    expect(screen.getByLabelText('Time')).toHaveValue('13:45')
+    expect(screen.getByLabelText('Date time')).toHaveValue('31/07/2026 13:45')
+  })
+
+  it('serializes time values using the backend HH:mm contract', () => {
+    expect(serializeDateTimeValue(dayjs('2026-07-31T13:45:00'), 'time')).toBe('13:45')
+  })
+
   it('renders page hierarchy and operational status', () => {
     render(
       <>

@@ -24,7 +24,7 @@ export function DetailDrawer({
       title={title}
       onClose={onClose}
       footer={footer}
-      width={width}
+      size={width}
       destroyOnHidden
     >
       {children}

@@ -1,8 +1,15 @@
 .page {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 480px;
   min-height: 100dvh;
   background: var(--ant-color-bg-layout);
+}
+.language {
+  position: absolute;
+  z-index: 1;
+  top: 24px;
+  right: 24px;
 }
 .intro {
   display: flex;

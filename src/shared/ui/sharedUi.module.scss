@@ -3,6 +3,63 @@
   box-shadow: 0 0 0 1px var(--ant-color-primary);
 }
 
+.uiTabs :global(.ant-tabs-nav) {
+  margin-bottom: 24px;
+  padding: 4px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+}
+
+.uiTabs :global(.ant-tabs-nav::before) {
+  border-bottom: 0;
+}
+
+.uiTabs :global(.ant-tabs-tab) {
+  padding: 10px 16px;
+  border-radius: 7px;
+  color: var(--ant-color-text-secondary);
+  font-size: 15px;
+  line-height: 20px;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.uiTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+  margin-left: 4px;
+}
+
+.uiTabs :global(.ant-tabs-tab:hover) {
+  background: var(--ant-color-fill-tertiary);
+  color: var(--ant-color-text);
+}
+
+.uiTabs :global(.ant-tabs-tab:active) {
+  transform: translateY(1px);
+}
+
+.uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
+  background: var(--ant-color-primary-bg);
+}
+
+.uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+  color: var(--ant-color-primary);
+  font-weight: 600;
+}
+
+.uiTabs :global(.ant-tabs-ink-bar) {
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uiTabs :global(.ant-tabs-tab) {
+    transition: none;
+  }
+}
+
 :global(.ant-card-head-title) :global(.ant-typography) {
   margin: 0;
   font-size: 16px;
@@ -15,6 +72,16 @@
   padding: 16px 20px;
   border-radius: 12px;
   background: var(--ant-color-bg-container);
+}
+
+.feedbackToastNotification {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.feedbackToastNotification :global(.ant-notification-notice-message) {
+  margin: 0 !important;
 }
 
 .feedbackIcon {

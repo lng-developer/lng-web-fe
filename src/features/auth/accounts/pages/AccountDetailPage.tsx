@@ -5,7 +5,7 @@ import { LockOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-de
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Descriptions, Form, Input, Tag, Typography } from 'antd'
 
-import { FeedbackAlert, LoadingState, PageHeader, SectionCard } from '@/shared/ui'
+import { FeedbackAlert, LoadingState, PageHeader, SectionCard, useFeedbackToast } from '@/shared/ui'
 
 import { loadAccount, updateAccountEmail } from '../api/accountManagementApi'
 import styles from './AccountDetailPage.module.scss'
@@ -14,6 +14,7 @@ export function AccountDetailPage() {
   const { t } = useTranslation()
   const { accountId = '' } = useParams()
   const queryClient = useQueryClient()
+  const showFeedbackToast = useFeedbackToast()
   const [emailForm] = Form.useForm<{ email: string }>()
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['auth-account', accountId],
@@ -23,9 +24,11 @@ export function AccountDetailPage() {
   const emailMutation = useMutation({
     mutationFn: (email: string) => updateAccountEmail(accountId, email),
     onSuccess: async () => {
+      showFeedbackToast('success', t('actionFeedback.saved'))
       await queryClient.invalidateQueries({ queryKey: ['auth-account', accountId] })
       await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
     },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
   useEffect(() => {

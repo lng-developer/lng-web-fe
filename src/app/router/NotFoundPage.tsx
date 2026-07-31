@@ -10,7 +10,7 @@ export function NotFoundPage() {
         status="404"
         title={<h1>{t('notFound.title')}</h1>}
         extra={
-          <Button type="primary" href="/">
+          <Button type="primary" href="/foundation">
             {t('notFound.backHome')}
           </Button>
         }
