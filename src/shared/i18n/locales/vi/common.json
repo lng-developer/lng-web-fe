@@ -20,7 +20,8 @@
       "integrations": "Tích hợp",
       "production": "Sản xuất",
       "vendorSubmissions": "Gửi đơn nhà cung cấp",
-      "shipments": "Vận chuyển"
+      "shipments": "Vận chuyển",
+      "orders": "Đơn hàng"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {
@@ -1207,6 +1208,145 @@
       "members": "Thành viên",
       "status": "Trạng thái",
       "actions": "Thao tác"
+    }
+  },
+  "orders": {
+    "title": "Bàn làm việc đơn hàng",
+    "description": "Theo dõi người phụ trách, điểm nghẽn và trạng thái xử lý ngay trong hàng đợi.",
+    "error": "Không thể tải danh sách đơn hàng",
+    "actions": {
+      "refresh": "Làm mới",
+      "retry": "Thử lại",
+      "editAddress": "Sửa địa chỉ",
+      "validateAddress": "Kiểm tra địa chỉ",
+      "saveAddress": "Lưu địa chỉ",
+      "cancelEdit": "Hủy",
+      "saveNote": "Lưu ghi chú",
+      "recheck": "Kiểm tra lại item",
+      "markReady": "Đánh dấu sẵn sàng fulfillment",
+      "createReplacement": "Tạo đơn thay thế",
+      "cancelItem": "Hủy item",
+      "editShipping": "Loại vận chuyển",
+      "saveShipping": "Lưu vận chuyển",
+      "manageCase": "Quản lý case",
+      "createCase": "Tạo case",
+      "updateCase": "Cập nhật case",
+      "resolveCase": "Giải quyết case",
+      "cancelCase": "Hủy case",
+      "more": "Thao tác khác",
+      "replaceOrder": "Tạo đơn thay thế",
+      "replaceShort": "Thay thế",
+      "recheckShort": "Kiểm tra",
+      "readyShort": "Sẵn sàng",
+      "cancelShort": "Hủy",
+      "viewHistory": "Xem lịch sử",
+      "editCustomer": "Sửa thông tin khách hàng",
+      "saveCustomer": "Lưu khách hàng",
+      "addComment": "Thêm bình luận"
+    },
+    "sections": {
+      "shippingAddress": "Địa chỉ giao hàng",
+      "imagePrint": "Ảnh và bản in",
+      "skuSeller": "SKU, biến thể và seller",
+      "customization": "Cá nhân hóa",
+      "quantityCost": "Số lượng và chi phí",
+      "fulfillment": "Fulfillment",
+      "trackingState": "Tracking và trạng thái",
+      "itemActions": "Thao tác"
+    },
+    "fields": {
+      "seller": "Seller",
+      "image": "Ảnh",
+      "quantity": "Số lượng",
+      "customerPaid": "Khách đã trả",
+      "vendor": "Vendor",
+      "costCenter": "Cost center",
+      "size": "Kích thước",
+      "color": "Màu",
+      "stage": "Công đoạn",
+      "scale": "Scale",
+      "qc": "QC",
+      "tracking": "Tracking",
+      "noNote": "Chưa có ghi chú",
+      "reason": "Lý do",
+      "replacementReason": "Lý do thay thế"
+    },
+    "address": {
+      "name": "Người nhận",
+      "company": "Công ty",
+      "addressLine1": "Địa chỉ dòng 1",
+      "addressLine2": "Địa chỉ dòng 2",
+      "city": "Thành phố",
+      "stateOrProvinceCode": "Bang / tỉnh",
+      "postalCode": "Mã bưu chính",
+      "countryCode": "Mã quốc gia",
+      "phoneMasked": "Số điện thoại"
+    },
+    "messages": {
+      "updated": "Đã cập nhật đơn hàng",
+      "actionFailed": "Thao tác đơn hàng thất bại",
+      "caseLoadFailed": "Không thể tải case của đơn hàng",
+      "historyLoadFailed": "Không thể tải lịch sử hoạt động",
+      "commentAdded": "Đã thêm bình luận"
+    },
+    "shipping": { "name": "Dịch vụ vận chuyển", "level": "Cấp độ vận chuyển" },
+    "case": {
+      "type": "Loại case",
+      "severity": "Mức độ",
+      "title": "Tiêu đề",
+      "description": "Mô tả",
+      "outcomeNote": "Ghi chú giải quyết hoặc hủy",
+      "comments": "Bình luận",
+      "newComment": "Nhập bình luận",
+      "noComments": "Chưa có bình luận"
+    },
+    "customer": {
+      "name": "Tên khách hàng",
+      "emailMasked": "Email",
+      "phoneMasked": "Số điện thoại",
+      "externalBuyerId": "Mã khách hàng ngoài"
+    },
+    "history": {
+      "orderTitle": "Lịch sử đơn hàng",
+      "itemTitle": "Lịch sử item",
+      "empty": "Chưa có hoạt động"
+    },
+    "filters": {
+      "label": "Bộ lọc đơn hàng",
+      "search": "Tìm đơn, khách hàng hoặc SKU",
+      "shop": "Tất cả shop",
+      "seller": "Mã seller",
+      "addressStatus": "Trạng thái địa chỉ",
+      "clear": "Xóa bộ lọc"
+    },
+    "addressStatuses": {
+      "NOT_CHECKED": "Chưa kiểm tra",
+      "VALID": "Hợp lệ",
+      "INVALID": "Không hợp lệ",
+      "WARNING": "Cảnh báo",
+      "OVERRIDDEN": "Đã ghi đè"
+    },
+    "columns": {
+      "order": "Mã đơn",
+      "status": "Trạng thái",
+      "created": "Ngày tạo",
+      "customer": "Khách hàng",
+      "shipping": "Vận chuyển",
+      "shop": "Shop",
+      "cost": "Giá gốc",
+      "handling": "Xử lý",
+      "case": "Case"
+    },
+    "tabs": {
+      "ALL": "Tất cả",
+      "NEW_ORDER": "Đơn mới",
+      "NO_COST_CENTER": "Thiếu cost center",
+      "NO_PSD": "Thiếu PSD",
+      "PAYMENT_PENDING": "Chờ thanh toán",
+      "IN_PROGRESS": "Đang xử lý",
+      "SHIPPED": "Đã gửi",
+      "CANCELLED": "Đã huỷ",
+      "OPEN_CASE": "Case đang mở"
     }
   },
   "errors": { "unexpected": "Đã xảy ra lỗi không mong muốn." },

@@ -87,6 +87,11 @@ describe('app navigation', () => {
           labelKey: 'shell.groups.portalOperations',
           items: [
             {
+              key: 'orders',
+              path: '/portal/orders',
+              labelKey: 'shell.navigation.orders',
+            },
+            {
               key: 'integrations',
               path: '/portal/integrations',
               labelKey: 'shell.navigation.integrations',
@@ -118,7 +123,7 @@ describe('app navigation', () => {
     }
 
     expect(getAvailableCores(scopedWriter).map(({ key }) => key)).toContain('portal')
-    expect(getDefaultWorkspacePath(scopedWriter)).toBe('/portal/integrations')
+    expect(getDefaultWorkspacePath(scopedWriter)).toBe('/portal/orders')
     expect(
       getContextNavigation('portal', account(['SHOPS:READ', 'ORDERS:READ'])).map(({ key }) => key),
     ).toEqual(['configuration', 'operations'])

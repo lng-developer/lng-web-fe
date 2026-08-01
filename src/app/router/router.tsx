@@ -125,6 +125,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/orders',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/orders/pages/OrderWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { OrderWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['ORDERS:READ', 'ORDERS:WRITE']}>
+                <OrderWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/integrations',
         lazy: () =>
           Promise.all([

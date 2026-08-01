@@ -20,7 +20,8 @@
       "integrations": "Integrations",
       "production": "Production",
       "vendorSubmissions": "Vendor submissions",
-      "shipments": "Shipments"
+      "shipments": "Shipments",
+      "orders": "Orders"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -1207,6 +1208,145 @@
       "members": "Members",
       "status": "Status",
       "actions": "Actions"
+    }
+  },
+  "orders": {
+    "title": "Order workbench",
+    "description": "See ownership, blockers and fulfillment state without leaving the queue.",
+    "error": "Orders are unavailable",
+    "actions": {
+      "refresh": "Refresh",
+      "retry": "Retry",
+      "editAddress": "Edit address",
+      "validateAddress": "Validate address",
+      "saveAddress": "Save address",
+      "cancelEdit": "Cancel",
+      "saveNote": "Save note",
+      "recheck": "Recheck item",
+      "markReady": "Mark fulfillment ready",
+      "createReplacement": "Create replacement",
+      "cancelItem": "Cancel item",
+      "editShipping": "Shipping type",
+      "saveShipping": "Save shipping",
+      "manageCase": "Manage case",
+      "createCase": "Create case",
+      "updateCase": "Update case",
+      "resolveCase": "Resolve case",
+      "cancelCase": "Cancel case",
+      "more": "More actions",
+      "replaceOrder": "Replace order",
+      "replaceShort": "Replace",
+      "recheckShort": "Recheck",
+      "readyShort": "Ready",
+      "cancelShort": "Cancel",
+      "viewHistory": "View history",
+      "editCustomer": "Edit customer",
+      "saveCustomer": "Save customer",
+      "addComment": "Add comment"
+    },
+    "sections": {
+      "shippingAddress": "Shipping address",
+      "imagePrint": "Image & print",
+      "skuSeller": "SKU, variant & seller",
+      "customization": "Customization",
+      "quantityCost": "Quantity & cost",
+      "fulfillment": "Fulfillment",
+      "trackingState": "Tracking & state",
+      "itemActions": "Actions"
+    },
+    "fields": {
+      "seller": "Seller",
+      "image": "Image",
+      "quantity": "Quantity",
+      "customerPaid": "Customer paid",
+      "vendor": "Vendor",
+      "costCenter": "Cost center",
+      "size": "Size",
+      "color": "Color",
+      "stage": "Stage",
+      "scale": "Scale",
+      "qc": "QC",
+      "tracking": "Tracking",
+      "noNote": "No note",
+      "reason": "Reason",
+      "replacementReason": "Replacement reason"
+    },
+    "address": {
+      "name": "Recipient",
+      "company": "Company",
+      "addressLine1": "Address line 1",
+      "addressLine2": "Address line 2",
+      "city": "City",
+      "stateOrProvinceCode": "State / province",
+      "postalCode": "Postal code",
+      "countryCode": "Country code",
+      "phoneMasked": "Phone"
+    },
+    "messages": {
+      "updated": "Order updated",
+      "actionFailed": "Order action failed",
+      "caseLoadFailed": "Unable to load order cases",
+      "historyLoadFailed": "Unable to load activity history",
+      "commentAdded": "Comment added"
+    },
+    "shipping": { "name": "Shipping service", "level": "Shipping level" },
+    "case": {
+      "type": "Case type",
+      "severity": "Severity",
+      "title": "Title",
+      "description": "Description",
+      "outcomeNote": "Resolution or cancellation note",
+      "comments": "Comments",
+      "newComment": "Write a comment",
+      "noComments": "No comments yet"
+    },
+    "customer": {
+      "name": "Customer name",
+      "emailMasked": "Email",
+      "phoneMasked": "Phone",
+      "externalBuyerId": "External buyer ID"
+    },
+    "history": {
+      "orderTitle": "Order activity",
+      "itemTitle": "Item activity",
+      "empty": "No activity recorded yet"
+    },
+    "filters": {
+      "label": "Order filters",
+      "search": "Search order, customer or SKU",
+      "shop": "All shops",
+      "seller": "Seller code",
+      "addressStatus": "Address status",
+      "clear": "Clear filters"
+    },
+    "addressStatuses": {
+      "NOT_CHECKED": "Not checked",
+      "VALID": "Valid",
+      "INVALID": "Invalid",
+      "WARNING": "Warning",
+      "OVERRIDDEN": "Overridden"
+    },
+    "columns": {
+      "order": "Order ID",
+      "status": "Status",
+      "created": "Created",
+      "customer": "Customer",
+      "shipping": "Shipping",
+      "shop": "Shop",
+      "cost": "Base cost",
+      "handling": "Handling",
+      "case": "Case"
+    },
+    "tabs": {
+      "ALL": "All",
+      "NEW_ORDER": "New",
+      "NO_COST_CENTER": "No cost center",
+      "NO_PSD": "No PSD",
+      "PAYMENT_PENDING": "Payment pending",
+      "IN_PROGRESS": "In progress",
+      "SHIPPED": "Shipped",
+      "CANCELLED": "Cancelled",
+      "OPEN_CASE": "Open case"
     }
   },
   "errors": { "unexpected": "Something unexpected happened." },
