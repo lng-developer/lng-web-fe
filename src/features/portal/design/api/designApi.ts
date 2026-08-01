@@ -47,6 +47,28 @@ export type DesignListParams = {
   priority?: string
 }
 export type DesignAssignee = { id: string; fullName?: string | null; name?: string | null }
+export type PsdFileListParams = {
+  page: number
+  limit: number
+  search?: string
+  role?: 'REFERENCE' | 'SUBMISSION' | 'APPROVED'
+  designerId?: string
+  taskStatus?: string
+  dateFrom?: string
+  dateTo?: string
+  sortBy?: 'createdAt' | 'submittedAt'
+  sortOrder?: 'asc' | 'desc'
+}
+export type PsdFileListItem = {
+  rowKey: string
+  linkedAt: string | null
+  role: string
+  asset: (DesignAsset & { createdAt?: string | null }) | null
+  task: { id: string; taskType: string; status: string }
+  listing: { id: string; code: string | null; title: string | null }
+  designer: { id: string | null; name: string | null }
+  submission: { id: string | null; version: number | null; submittedAt: string | null }
+}
 export type DesignSummary = {
   total: number
   unassigned: number
@@ -131,6 +153,10 @@ export const getDesignWorkload = async (params: Omit<DesignListParams, 'page' | 
 export const listPsdCandidates = async (params: PsdCandidateParams) =>
   unwrap<{ items: PsdCandidate[]; pagination: { total: number; page: number; limit: number } }>(
     await apiClient.get('/api/design/tasks/psd-template/candidates', { params: compact(params) }),
+  )
+export const listPsdFiles = async (params: PsdFileListParams) =>
+  unwrap<{ items: PsdFileListItem[]; total: number; page: number; limit: number }>(
+    await apiClient.get('/api/design/psd-files', { params: compact(params) }),
   )
 export const createPsdTaskFromListing = async (listingId: string, note?: string) =>
   unwrap<DesignTask>(

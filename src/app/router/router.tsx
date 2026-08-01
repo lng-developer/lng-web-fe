@@ -190,6 +190,22 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/design/files',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/PsdFileWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { PsdFileWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <PsdFileWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/production',
         lazy: () =>
           Promise.all([

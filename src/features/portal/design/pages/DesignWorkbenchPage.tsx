@@ -374,6 +374,7 @@ export function DesignWorkbenchPage() {
         description={t('portal.design.description')}
         actions={
           <Space>
+            <Button href="/portal/design/files">PSD files</Button>
             {canAssign ? (
               <Button
                 type="primary"

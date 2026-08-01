@@ -14,6 +14,7 @@ import {
   listDesignSubmissions,
   listDesignTasks,
   listPsdCandidates,
+  listPsdFiles,
   rejectDesignTask,
   startDesignTask,
   submitDesignTask,
@@ -38,6 +39,15 @@ describe('designApi', () => {
     await getDesignSummary({ status: 'OPEN' })
     await getDesignWorkload({ taskType: 'PSD_TEMPLATE' })
     await listPsdCandidates({ page: 1, limit: 20, search: 'SKU' })
+    await listPsdFiles({
+      page: 1,
+      limit: 20,
+      search: 'flower',
+      role: 'APPROVED',
+      taskStatus: 'APPROVED',
+      dateFrom: '2026-08-01',
+      dateTo: '2026-08-31',
+    })
     await createPsdTaskFromListing('listing-1', 'Create PSD')
     await createDesignTask({
       listingId: 'listing-1',
@@ -77,6 +87,17 @@ describe('designApi', () => {
     })
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/psd-template/candidates', {
       params: { page: 1, limit: 20, search: 'SKU' },
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/design/psd-files', {
+      params: {
+        page: 1,
+        limit: 20,
+        search: 'flower',
+        role: 'APPROVED',
+        taskStatus: 'APPROVED',
+        dateFrom: '2026-08-01',
+        dateTo: '2026-08-31',
+      },
     })
     expect(apiClient.post).toHaveBeenCalledWith(
       '/api/design/tasks/from-listings/listing-1/psd-template',

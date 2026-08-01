@@ -1,4 +1,4 @@
-import type { DesignListParams } from './designApi'
+import type { DesignListParams, PsdFileListParams } from './designApi'
 
 export const designKeys = {
   all: ['portal', 'design'] as const,
@@ -8,5 +8,6 @@ export const designKeys = {
   summary: (params: object) => [...designKeys.all, 'summary', params] as const,
   workload: (params: object) => [...designKeys.all, 'workload', params] as const,
   candidates: (params: object) => [...designKeys.all, 'candidates', params] as const,
+  psdFiles: (params: PsdFileListParams) => [...designKeys.all, 'psd-files', params] as const,
   submissions: (id: string) => [...designKeys.all, 'submissions', id] as const,
 }
