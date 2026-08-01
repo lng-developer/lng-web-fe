@@ -21,7 +21,7 @@ const organizationPermissions = [
   'TEAMS:READ',
   'TEAMS:WRITE',
 ]
-const systemPermissions = ['AUTH:READ', 'AUTH:WRITE']
+const systemPermissions = ['AUTH:READ', 'AUTH:WRITE', 'AUDIT:READ']
 
 const effectivePermissions = (account: CurrentAccount) =>
   new Set([...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)])
@@ -91,13 +91,20 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
         key: 'system',
         labelKey: 'shell.groups.system',
         items: [
-          { key: 'accounts', path: '/auth/accounts', labelKey: 'shell.navigation.accounts' },
-          {
-            key: 'access-control',
-            path: '/auth/access-control',
-            labelKey: 'shell.navigation.accessControl',
-          },
-        ],
+          permissions.has('AUTH:READ') || permissions.has('AUTH:WRITE')
+            ? { key: 'accounts', path: '/auth/accounts', labelKey: 'shell.navigation.accounts' }
+            : null,
+          permissions.has('AUTH:READ') || permissions.has('AUTH:WRITE')
+            ? {
+                key: 'access-control',
+                path: '/auth/access-control',
+                labelKey: 'shell.navigation.accessControl',
+              }
+            : null,
+          permissions.has('AUDIT:READ')
+            ? { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' }
+            : null,
+        ].filter((item): item is NavigationItem => item !== null),
       },
     ]
   }

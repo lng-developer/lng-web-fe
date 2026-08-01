@@ -9,6 +9,7 @@
       "foundation": "Foundation",
       "accounts": "Accounts",
       "accessControl": "Access control",
+      "auditLog": "Audit log",
       "roles": "Roles",
       "organization": "Organization",
       "hr": "HR workspace",
@@ -1347,6 +1348,39 @@
       "SHIPPED": "Shipped",
       "CANCELLED": "Cancelled",
       "OPEN_CASE": "Open case"
+    }
+  },
+  "audit": {
+    "title": "Audit log",
+    "description": "Trace system activity, changes, and failed operations.",
+    "loadFailed": "Audit events could not be loaded",
+    "retry": "Retry",
+    "empty": "No audit events match these filters.",
+    "loadMore": "Load more",
+    "detailTitle": "Audit event details",
+    "filters": {
+      "label": "Audit filters",
+      "action": "Action",
+      "entityType": "Entity type",
+      "entityId": "Entity ID",
+      "outcome": "Outcome",
+      "source": "Source"
+    },
+    "columns": {
+      "time": "Time",
+      "actor": "Actor",
+      "action": "Action",
+      "entity": "Entity",
+      "scope": "Scope",
+      "source": "Source",
+      "outcome": "Outcome"
+    },
+    "outcomes": { "SUCCEEDED": "Succeeded", "FAILED": "Failed" },
+    "detail": {
+      "requestId": "Request ID",
+      "ip": "IP address",
+      "changes": "Changes",
+      "metadata": "Metadata"
     }
   },
   "errors": { "unexpected": "Something unexpected happened." },

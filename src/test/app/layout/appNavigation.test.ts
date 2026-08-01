@@ -35,9 +35,19 @@ describe('app navigation', () => {
       'hr',
     ])
     expect(getAvailableCores(account(['AUTH:READ'])).map(({ key }) => key)).toEqual(['system'])
+    expect(getAvailableCores(account(['AUDIT:READ'])).map(({ key }) => key)).toEqual(['system'])
     expect(
       getAvailableCores(account(['HR_ATTENDANCE:WRITE', 'AUTH:READ'])).map(({ key }) => key),
     ).toEqual(['hr', 'system'])
+  })
+
+  it('shows the audit log only to audit readers', () => {
+    expect(getContextNavigation('system', account(['AUDIT:READ']))[0]?.items).toEqual([
+      { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' },
+    ])
+    expect(getContextNavigation('system', account(['AUTH:READ']))[0]?.items).not.toContainEqual(
+      expect.objectContaining({ key: 'audit-log' }),
+    )
   })
 
   it('maps nested organization and account routes to their owning core', () => {

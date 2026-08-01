@@ -9,6 +9,7 @@
       "foundation": "Nền tảng",
       "accounts": "Tài khoản",
       "accessControl": "Kiểm soát truy cập",
+      "auditLog": "Nhật ký hệ thống",
       "roles": "Vai trò",
       "organization": "Tổ chức",
       "hr": "Nhân sự",
@@ -1347,6 +1348,39 @@
       "SHIPPED": "Đã gửi",
       "CANCELLED": "Đã huỷ",
       "OPEN_CASE": "Case đang mở"
+    }
+  },
+  "audit": {
+    "title": "Nhật ký hệ thống",
+    "description": "Theo dõi hoạt động, thay đổi và thao tác thất bại trong hệ thống.",
+    "loadFailed": "Không thể tải nhật ký hệ thống",
+    "retry": "Thử lại",
+    "empty": "Không có sự kiện phù hợp với bộ lọc.",
+    "loadMore": "Tải thêm",
+    "detailTitle": "Chi tiết sự kiện",
+    "filters": {
+      "label": "Bộ lọc nhật ký",
+      "action": "Hành động",
+      "entityType": "Loại dữ liệu",
+      "entityId": "Mã dữ liệu",
+      "outcome": "Kết quả",
+      "source": "Nguồn"
+    },
+    "columns": {
+      "time": "Thời gian",
+      "actor": "Người thực hiện",
+      "action": "Hành động",
+      "entity": "Dữ liệu",
+      "scope": "Phạm vi",
+      "source": "Nguồn",
+      "outcome": "Kết quả"
+    },
+    "outcomes": { "SUCCEEDED": "Thành công", "FAILED": "Thất bại" },
+    "detail": {
+      "requestId": "Mã yêu cầu",
+      "ip": "Địa chỉ IP",
+      "changes": "Thay đổi",
+      "metadata": "Dữ liệu bổ sung"
     }
   },
   "errors": { "unexpected": "Đã xảy ra lỗi không mong muốn." },
