@@ -57,7 +57,8 @@ describe('CatalogListingEditorModal', () => {
       </AppProviders>,
     )
 
-    expect(screen.getByLabelText('SKU')).toBeDisabled()
+    expect(screen.getByText('AMAZON · AMAZON_US · SKU-1')).toBeInTheDocument()
+    expect(screen.queryByLabelText('SKU')).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated shirt' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
@@ -65,5 +66,24 @@ describe('CatalogListingEditorModal', () => {
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: 'Updated shirt' })
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('shopId')
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('sku')
+  })
+
+  it('shows only the marketplace identity field required by the selected channel', () => {
+    render(
+      <AppProviders>
+        <CatalogListingEditorModal
+          open
+          shops={[{ id: 'shop-1', name: 'Football', currency: 'USD' }]}
+          productTypes={[{ id: 'group-1', code: 'SHIRT', name: 'Shirt' }]}
+          templates={[]}
+          saving={false}
+          onClose={vi.fn()}
+          onSubmit={vi.fn()}
+        />
+      </AppProviders>,
+    )
+
+    expect(screen.getByLabelText('ASIN')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Etsy listing ID')).not.toBeInTheDocument()
   })
 })

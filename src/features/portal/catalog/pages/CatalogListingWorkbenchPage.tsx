@@ -383,39 +383,108 @@ export function CatalogListingWorkbenchPage({
               items={[
                 {
                   key: 'identity',
-                  label: 'Identity',
+                  label: t('portal.catalog.fields.identity'),
                   children: `${selected.salesChannelCode} · ${selected.marketplaceCode} · ${selected.sku}`,
                 },
-                { key: 'shop', label: 'Shop', children: selected.shop?.name ?? selected.shopId },
+                {
+                  key: 'externalIdentity',
+                  label: selected.salesChannelCode === 'AMAZON' ? 'ASIN' : 'Etsy listing ID',
+                  children:
+                    selected.salesChannelCode === 'AMAZON'
+                      ? (selected.asin ?? '-')
+                      : (selected.etsyListingId ?? '-'),
+                },
+                {
+                  key: 'shop',
+                  label: t('portal.catalog.fields.shop'),
+                  children: selected.shop?.name ?? selected.shopId,
+                },
                 {
                   key: 'product',
-                  label: 'Product type',
+                  label: t('portal.catalog.fields.productType'),
                   children: selected.productTypeGroup?.name ?? '-',
                 },
                 {
                   key: 'template',
-                  label: 'Internal template',
+                  label: t('portal.catalog.fields.internalTemplate'),
                   children: selected.internalTemplate?.name ?? '-',
                 },
                 {
                   key: 'psd',
-                  label: 'PSD readiness',
+                  label: t('portal.catalog.details.psdReadiness'),
                   children: `${selected.psdReadiness?.status ?? 'MISSING'}${selected.psdReadiness?.source ? ` from ${selected.psdReadiness.source}` : ''}`,
                 },
                 {
+                  key: 'psdAsset',
+                  label: t('portal.catalog.details.psdFile'),
+                  children: selected.psdTemplateAsset?.downloadUrl ? (
+                    <Button
+                      type="link"
+                      href={selected.psdTemplateAsset.downloadUrl}
+                      target="_blank"
+                    >
+                      {selected.psdTemplateAsset.originalFilename ??
+                        t('portal.catalog.details.download')}
+                    </Button>
+                  ) : (
+                    '-'
+                  ),
+                },
+                {
+                  key: 'previewAsset',
+                  label: t('portal.catalog.details.previewFile'),
+                  children: selected.previewAsset?.downloadUrl ? (
+                    <Button type="link" href={selected.previewAsset.downloadUrl} target="_blank">
+                      {selected.previewAsset.originalFilename ??
+                        t('portal.catalog.details.download')}
+                    </Button>
+                  ) : (
+                    '-'
+                  ),
+                },
+                {
+                  key: 'cost',
+                  label: t('portal.catalog.fields.baseCost'),
+                  children: `${selected.baseCostAmount} ${selected.currency}`,
+                },
+                {
+                  key: 'setup',
+                  label: t('portal.catalog.details.setup'),
+                  children: `${selected.costCenterStatus} · ${selected.status}`,
+                },
+                {
                   key: 'sales',
-                  label: 'Sales',
-                  children: `${selected.salesStats.quantitySold} quantity · ${selected.salesStats.orderCount} orders`,
+                  label: t('portal.catalog.columns.sales'),
+                  children: `${selected.salesStats.quantitySold} · ${selected.salesStats.orderCount} · ${selected.salesStats.orderItemCount}`,
+                },
+                {
+                  key: 'lastSold',
+                  label: t('portal.catalog.details.lastSold'),
+                  children: selected.salesStats.lastSoldAt
+                    ? new Date(selected.salesStats.lastSoldAt).toLocaleString()
+                    : '-',
                 },
                 { key: 'qc', label: 'QC', children: selected.qcStatus },
                 {
                   key: 'rejection',
-                  label: 'Rejection reason',
+                  label: t('portal.catalog.rejectReason'),
                   children: selected.rejectionReason ?? '-',
                 },
                 {
+                  key: 'approvedAt',
+                  label: t('portal.catalog.details.approvedAt'),
+                  children: selected.approvedAt
+                    ? new Date(selected.approvedAt).toLocaleString()
+                    : '-',
+                },
+                {
+                  key: 'created',
+                  label: t('portal.catalog.details.created'),
+                  children: new Date(selected.createdAt).toLocaleString(),
+                },
+                {
                   key: 'updated',
-                  label: 'Updated',
+                  label: t('portal.catalog.columns.updated'),
                   children: new Date(selected.updatedAt).toLocaleString(),
                 },
               ]}

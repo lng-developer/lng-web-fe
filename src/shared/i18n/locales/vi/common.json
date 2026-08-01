@@ -713,6 +713,21 @@
       "saved": "Đã lưu listing",
       "approved": "Đã duyệt listing",
       "rejected": "Đã từ chối listing",
+      "sections": {
+        "identity": "Định danh listing",
+        "product": "Thiết lập sản phẩm",
+        "advanced": "Thiết lập nâng cao"
+      },
+      "details": {
+        "psdReadiness": "Mức sẵn sàng PSD",
+        "psdFile": "Tệp PSD",
+        "previewFile": "Tệp xem trước",
+        "download": "Tải xuống",
+        "setup": "Cost center / trạng thái bản ghi",
+        "lastSold": "Lần bán gần nhất",
+        "approvedAt": "Thời điểm duyệt",
+        "created": "Ngày tạo"
+      },
       "metrics": {
         "total": "Tổng",
         "noPsd": "Thiếu PSD",
@@ -732,6 +747,7 @@
       },
       "fields": {
         "shop": "Cửa hàng",
+        "identity": "Kênh / thị trường / SKU",
         "salesChannel": "Kênh bán",
         "marketplace": "Thị trường",
         "sku": "SKU",
@@ -741,6 +757,7 @@
         "productType": "Loại sản phẩm",
         "internalTemplate": "Mẫu nội bộ",
         "previewAssetId": "ID ảnh xem trước",
+        "previewAssetHelp": "Tham chiếu media kỹ thuật, không bắt buộc",
         "baseCost": "Chi phí gốc (đơn vị nhỏ)",
         "currency": "Tiền tệ",
         "costCenterStatus": "Trạng thái cost center",

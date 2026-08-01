@@ -713,6 +713,21 @@
       "saved": "Listing saved",
       "approved": "Listing approved",
       "rejected": "Listing rejected",
+      "sections": {
+        "identity": "Listing identity",
+        "product": "Product setup",
+        "advanced": "Advanced setup"
+      },
+      "details": {
+        "psdReadiness": "PSD readiness",
+        "psdFile": "PSD file",
+        "previewFile": "Preview file",
+        "download": "Download",
+        "setup": "Cost center / record status",
+        "lastSold": "Last sold",
+        "approvedAt": "Approved at",
+        "created": "Created"
+      },
       "metrics": {
         "total": "Total",
         "noPsd": "No PSD",
@@ -732,6 +747,7 @@
       },
       "fields": {
         "shop": "Shop",
+        "identity": "Channel / marketplace / SKU",
         "salesChannel": "Sales channel",
         "marketplace": "Marketplace",
         "sku": "SKU",
@@ -741,6 +757,7 @@
         "productType": "Product type",
         "internalTemplate": "Internal template",
         "previewAssetId": "Preview asset ID",
+        "previewAssetHelp": "Optional technical media asset reference",
         "baseCost": "Base cost (minor units)",
         "currency": "Currency",
         "costCenterStatus": "Cost center status",
