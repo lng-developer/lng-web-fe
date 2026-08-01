@@ -139,6 +139,22 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/production',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/production/pages/ProductionWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { ProductionWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['PRODUCTION:READ', 'PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <ProductionWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/vendor-submissions',
         lazy: () =>
           Promise.all([
