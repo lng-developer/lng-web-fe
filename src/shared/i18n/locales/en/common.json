@@ -23,7 +23,8 @@
       "production": "Production",
       "vendorSubmissions": "Vendor submissions",
       "shipments": "Shipments",
-      "orders": "Orders"
+      "orders": "Orders",
+      "mapping": "Mapping"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -53,6 +54,102 @@
         "shop": "Shop",
         "vendor": "Vendor"
       }
+    }
+  },
+  "mapping": {
+    "title": "Mapping pipeline",
+    "description": "Trace imported items, correct mapping rules, and prepare fulfillment plans.",
+    "pipeline": {
+      "skuCleanup": "SKU cleanup",
+      "productMapping": "Product mapping",
+      "inputSemantics": "Input semantics",
+      "valueAliases": "Value aliases",
+      "vendorRouting": "Vendor routing"
+    },
+    "context": {
+      "shop": "Shop",
+      "marketplace": "Marketplace",
+      "orderItem": "SKU or order item",
+      "allShops": "All readable shops",
+      "allMarketplaces": "All marketplaces"
+    },
+    "actions": {
+      "preview": "Run preview",
+      "createRule": "Create rule",
+      "saveRule": "Save rule",
+      "previewChanges": "Preview changes",
+      "recheck": "Recheck item",
+      "resolve": "Auto resolve",
+      "select": "Select candidate",
+      "batchRecheck": "Recheck safe items",
+      "history": "View history",
+      "fixNow": "Fix now",
+      "closeEditor": "Close rule editor",
+      "acknowledge": "Acknowledge overlap",
+      "retry": "Try again"
+    },
+    "sections": {
+      "rules": "Rules",
+      "liveTrace": "Live trace",
+      "resolveQueue": "Resolve queue",
+      "impact": "Sampled impact",
+      "history": "Rule history",
+      "candidates": "Candidates",
+      "normalizedInputs": "Normalized inputs",
+      "ruleEditor": "Rule editor"
+    },
+    "filters": {
+      "searchRules": "Search rules",
+      "searchQueue": "Search order, SKU, or ASIN",
+      "status": "Status",
+      "blocker": "Blocker",
+      "configCode": "Config code",
+      "productType": "Product type",
+      "age": "Age"
+    },
+    "fields": {
+      "configCode": "Config code",
+      "segmentIndex": "Segment position",
+      "segmentRole": "Segment meaning",
+      "appliesWhenValues": "Matching values (comma separated)",
+      "outputAction": "Cleanup action",
+      "replacementValue": "Replacement value",
+      "platformProductType": "Marketplace product type",
+      "productTypeAliases": "Product aliases (comma separated)",
+      "countryCode": "Country code",
+      "productTypeGroupId": "Product group",
+      "internalTemplateId": "Internal template",
+      "semanticRole": "Input meaning",
+      "matchValue": "Value to match",
+      "matchType": "Match type",
+      "normalizedValue": "Normalized value",
+      "vendorId": "Vendor",
+      "asin": "ASIN",
+      "normalizedSize": "Normalized size",
+      "normalizedColor": "Normalized color",
+      "priority": "Priority",
+      "status": "Status"
+    },
+    "states": {
+      "ready": "Ready",
+      "blocked": "Blocked",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noRules": "No rules match this context",
+      "noQueue": "No unmatched items",
+      "selectContext": "Select an item or enter a context to inspect its trace",
+      "sampled": "These are sampled records, not an exact total."
+    },
+    "feedback": {
+      "ruleSaved": "Mapping rule saved",
+      "itemRechecked": "Mapping rechecked",
+      "candidateSelected": "Fulfillment candidate selected",
+      "batchCompleted": "Batch recheck completed",
+      "loadFailed": "Mapping data could not be loaded",
+      "actionFailed": "Mapping action failed",
+      "exactConflict": "An exact-scope rule already exists.",
+      "scopeOverlap": "This rule overlaps a broader scope.",
+      "unsaved": "You have unsaved rule changes."
     }
   },
   "actionFeedback": {

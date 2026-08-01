@@ -160,6 +160,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/mapping',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/integrations',
         lazy: () =>
           Promise.all([

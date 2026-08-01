@@ -53,6 +53,9 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
             ? { key: 'orders', path: '/portal/orders', labelKey: 'shell.navigation.orders' }
             : null,
+          permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
+            ? { key: 'mapping', path: '/portal/mapping', labelKey: 'shell.navigation.mapping' }
+            : null,
           permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
             ? {
                 key: 'integrations',

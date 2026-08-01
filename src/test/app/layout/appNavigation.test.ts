@@ -127,6 +127,24 @@ describe('app navigation', () => {
     }
   })
 
+  it('shows Mapping only for global or scoped mapping access', () => {
+    for (const permission of ['MAPPING:READ', 'MAPPING:WRITE']) {
+      expect(getContextNavigation('portal', account([permission]))[0]?.items).toContainEqual({
+        key: 'mapping',
+        path: '/portal/mapping',
+        labelKey: 'shell.navigation.mapping',
+      })
+      expect(getContextNavigation('portal', account([], [permission]))[0]?.items).toContainEqual({
+        key: 'mapping',
+        path: '/portal/mapping',
+        labelKey: 'shell.navigation.mapping',
+      })
+    }
+    expect(getContextNavigation('portal', account(['ORDERS:READ']))[0]?.items).not.toContainEqual(
+      expect.objectContaining({ key: 'mapping' }),
+    )
+  })
+
   it('shows shipment operations for global or scoped shipment readers', () => {
     expect(getContextNavigation('portal', account(['SHIPMENTS:READ']))[0]?.items).toContainEqual({
       key: 'shipments',
