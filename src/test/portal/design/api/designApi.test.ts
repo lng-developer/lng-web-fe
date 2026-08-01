@@ -5,7 +5,14 @@ vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch
 import {
   approveDesignTask,
   assignDesignTask,
+  bulkCreatePsdTasks,
+  cancelDesignTask,
+  createPsdTaskFromListing,
+  getDesignSummary,
+  getDesignWorkload,
+  listDesignSubmissions,
   listDesignTasks,
+  listPsdCandidates,
   rejectDesignTask,
   startDesignTask,
   submitDesignTask,
@@ -17,6 +24,7 @@ describe('designApi', () => {
     vi.clearAllMocks()
     vi.mocked(apiClient.get).mockResolvedValue({ data: {} })
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
+    vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
   })
 
   it('uses the Design lifecycle contracts', async () => {
@@ -26,6 +34,13 @@ describe('designApi', () => {
     await submitDesignTask('task-1', ['asset-1'], 'Ready')
     await approveDesignTask('task-1', 'asset-1')
     await rejectDesignTask('task-1', 'Wrong size')
+    await getDesignSummary({ status: 'OPEN' })
+    await getDesignWorkload({ taskType: 'PSD_TEMPLATE' })
+    await listPsdCandidates({ page: 1, limit: 20, search: 'SKU' })
+    await createPsdTaskFromListing('listing-1', 'Create PSD')
+    await bulkCreatePsdTasks({ listingIds: ['listing-1'] })
+    await listDesignSubmissions('task-1')
+    await cancelDesignTask('task-1', 'Duplicate')
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks', {
       params: { page: 1, limit: 20, status: 'SUBMITTED' },
@@ -43,6 +58,26 @@ describe('designApi', () => {
     })
     expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/reject', {
       rejectReason: 'Wrong size',
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/summary', {
+      params: { status: 'OPEN' },
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/workload', {
+      params: { taskType: 'PSD_TEMPLATE' },
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/psd-template/candidates', {
+      params: { page: 1, limit: 20, search: 'SKU' },
+    })
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/design/tasks/from-listings/listing-1/psd-template',
+      { note: 'Create PSD' },
+    )
+    expect(apiClient.post).toHaveBeenCalledWith('/api/design/tasks/bulk-create-psd-from-listings', {
+      listingIds: ['listing-1'],
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/task-1/submissions')
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/cancel', {
+      cancelReason: 'Duplicate',
     })
   })
 })

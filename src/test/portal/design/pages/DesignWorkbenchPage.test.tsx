@@ -39,6 +39,17 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
   approveDesignTask: vi.fn(),
   rejectDesignTask: vi.fn(),
   uploadDesignAsset: vi.fn(),
+  getDesignSummary: vi
+    .fn()
+    .mockResolvedValue({ total: 1, active: 1, unassigned: 1, byStatus: {}, byTaskType: {} }),
+  getDesignWorkload: vi
+    .fn()
+    .mockResolvedValue({ totals: { unassignedCount: 1, activeCount: 1 }, byDesigner: [] }),
+  listPsdCandidates: vi.fn().mockResolvedValue({ items: [], pagination: { total: 0 } }),
+  createPsdTaskFromListing: vi.fn(),
+  bulkCreatePsdTasks: vi.fn(),
+  listDesignSubmissions: vi.fn().mockResolvedValue([]),
+  cancelDesignTask: vi.fn(),
 }))
 
 describe('DesignWorkbenchPage', () => {
@@ -54,6 +65,17 @@ describe('DesignWorkbenchPage', () => {
     expect(quickAction).toHaveTextContent('')
     fireEvent.click(quickAction)
     expect(screen.getAllByRole('button', { name: 'Assign' })).toHaveLength(2)
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  }, 15_000)
+
+  it('opens the PSD candidate picker without opening task detail', async () => {
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
+    fireEvent.click((await screen.findByText('Create PSD tasks')).closest('button')!)
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Create PSD tasks')
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
   }, 15_000)
 })

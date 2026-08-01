@@ -699,6 +699,9 @@
       "actions": "Actions",
       "view": "View",
       "moreActions": "More actions",
+      "uploadPsd": "Upload PSD",
+      "dropPsd": "Drop a PSD, ZIP, or RAR file here",
+      "psdUploaded": "PSD uploaded",
       "tabs": {
         "listings": "Listings",
         "productTypes": "Product types",
@@ -829,7 +832,20 @@
       "note": "Submission note",
       "rejectSubmission": "Reject submission",
       "reasonRequired": "Reason is required",
-      "updated": "Design task updated"
+      "updated": "Design task updated",
+      "createPsdTasks": "Create PSD tasks",
+      "create": "Create",
+      "selectListings": "Select listings missing PSD",
+      "tasksCreated": "PSD tasks created",
+      "total": "Total",
+      "active": "Active",
+      "cancel": "Cancel task",
+      "cancelTask": "Cancel design task",
+      "cancelReason": "Cancellation reason is required",
+      "submissionHistory": "Submission history",
+      "version": "Version",
+      "files": "Files",
+      "rejectReason": "Reject reason"
     },
     "integrations": {
       "title": "External order imports",

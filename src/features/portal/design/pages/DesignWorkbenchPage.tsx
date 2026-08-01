@@ -6,6 +6,7 @@ import {
   EyeOutlined,
   MoreOutlined,
   PlayCircleOutlined,
+  PlusOutlined,
   ReloadOutlined,
   UploadOutlined,
   UserAddOutlined,
@@ -39,10 +40,18 @@ import {
 import {
   approveDesignTask,
   assignDesignTask,
+  bulkCreatePsdTasks,
+  type BulkPsdTaskResult,
+  cancelDesignTask,
+  createPsdTaskFromListing,
   type DesignTask,
+  getDesignSummary,
   getDesignTask,
+  getDesignWorkload,
   listDesignAssignees,
+  listDesignSubmissions,
   listDesignTasks,
+  listPsdCandidates,
   rejectDesignTask,
   startDesignTask,
   submitDesignTask,
@@ -98,6 +107,11 @@ export function DesignWorkbenchPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [approveOpen, setApproveOpen] = useState(false)
   const [approvedAssetId, setApprovedAssetId] = useState<string>()
+  const [candidateOpen, setCandidateOpen] = useState(false)
+  const [candidateIds, setCandidateIds] = useState<string[]>([])
+  const [candidateResult, setCandidateResult] = useState<BulkPsdTaskResult>()
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
   const params = { page, limit: PAGE_SIZE, search: search || undefined, status, taskType }
   const tasks = useQuery({
     queryKey: designKeys.list(params),
@@ -116,6 +130,29 @@ export function DesignWorkbenchPage() {
     enabled: assignOpen,
     retry: false,
   })
+  const dashboardParams = { search: search || undefined, status, taskType }
+  const summary = useQuery({
+    queryKey: designKeys.summary(dashboardParams),
+    queryFn: () => getDesignSummary(dashboardParams),
+    retry: false,
+  })
+  const workload = useQuery({
+    queryKey: designKeys.workload(dashboardParams),
+    queryFn: () => getDesignWorkload(dashboardParams),
+    retry: false,
+  })
+  const candidates = useQuery({
+    queryKey: designKeys.candidates({ page: 1, limit: 100 }),
+    queryFn: () => listPsdCandidates({ page: 1, limit: 100 }),
+    enabled: candidateOpen,
+    retry: false,
+  })
+  const submissions = useQuery({
+    queryKey: designKeys.submissions(selectedId ?? ''),
+    queryFn: () => listDesignSubmissions(selectedId!),
+    enabled: Boolean(selectedId),
+    retry: false,
+  })
   const refresh = async () => queryClient.invalidateQueries({ queryKey: designKeys.all })
   const action = useMutation({
     mutationFn: async ({ type, task }: { type: string; task: DesignTask }) => {
@@ -123,6 +160,7 @@ export function DesignWorkbenchPage() {
       if (type === 'start') return startDesignTask(task.id)
       if (type === 'approve') return approveDesignTask(task.id, approvedAssetId!)
       if (type === 'reject') return rejectDesignTask(task.id, rejectReason.trim())
+      if (type === 'cancel') return cancelDesignTask(task.id, cancelReason.trim())
       const assets = await Promise.all(
         files.map(({ originFileObj }) => uploadDesignAsset(originFileObj as File)),
       )
@@ -141,12 +179,28 @@ export function DesignWorkbenchPage() {
       setFiles([])
       setNote('')
       setRejectReason('')
+      setCancelReason('')
+      setCancelOpen(false)
       setActiveTask(undefined)
       await refresh()
       toast('success', t('portal.design.updated'))
     },
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not update design task'),
+  })
+  const createCandidates = useMutation({
+    mutationFn: async () =>
+      candidateIds.length === 1
+        ? createPsdTaskFromListing(candidateIds[0])
+        : bulkCreatePsdTasks({ listingIds: candidateIds }),
+    onSuccess: async (result) => {
+      setCandidateIds([])
+      setCandidateResult('items' in result ? result : undefined)
+      await refresh()
+      toast('success', t('portal.design.tasksCreated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : 'Could not create tasks'),
   })
   const canAssign = permissions.has('DESIGN:WRITE')
   const canWork = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:WORK')
@@ -268,11 +322,37 @@ export function DesignWorkbenchPage() {
         title={t('portal.design.title')}
         description={t('portal.design.description')}
         actions={
-          <Button icon={<ReloadOutlined />} onClick={() => void refresh()}>
-            {t('portal.design.refresh')}
-          </Button>
+          <Space>
+            {canAssign ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setCandidateOpen(true)}>
+                {t('portal.design.createPsdTasks')}
+              </Button>
+            ) : null}
+            <Button icon={<ReloadOutlined />} onClick={() => void refresh()}>
+              {t('portal.design.refresh')}
+            </Button>
+          </Space>
         }
       />
+      <SectionCard>
+        <Space size="large" wrap>
+          <Typography.Text>
+            {t('portal.design.total')}: <strong>{summary.data?.total ?? 0}</strong>
+          </Typography.Text>
+          <Typography.Text>
+            {t('portal.design.active')}: <strong>{summary.data?.active ?? 0}</strong>
+          </Typography.Text>
+          <Typography.Text>
+            {t('portal.design.unassigned')}:{' '}
+            <strong>{workload.data?.totals.unassignedCount ?? 0}</strong>
+          </Typography.Text>
+          {(workload.data?.byDesigner ?? []).slice(0, 5).map((designer) => (
+            <Typography.Text key={designer.assignedDesignerId}>
+              {designer.assignedDesignerId}: <strong>{designer.totalActive}</strong>
+            </Typography.Text>
+          ))}
+        </Space>
+      </SectionCard>
       <SectionCard>
         <DataTable
           rowKey="id"
@@ -331,7 +411,14 @@ export function DesignWorkbenchPage() {
           task ? (
             <div className={styles.actions}>
               {canAssign && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(task.status) ? (
-                <Button onClick={() => setAssignOpen(true)}>{t('portal.design.assign')}</Button>
+                <Button
+                  onClick={() => {
+                    setActiveTask(task)
+                    setAssignOpen(true)
+                  }}
+                >
+                  {t('portal.design.assign')}
+                </Button>
               ) : null}
               {canWork && task.status === 'ASSIGNED' ? (
                 <Button type="primary" onClick={() => action.mutate({ type: 'start', task })}>
@@ -342,7 +429,10 @@ export function DesignWorkbenchPage() {
                 <Button
                   type="primary"
                   icon={<UploadOutlined />}
-                  onClick={() => setSubmitOpen(true)}
+                  onClick={() => {
+                    setActiveTask(task)
+                    setSubmitOpen(true)
+                  }}
                 >
                   {t('portal.design.submitFiles')}
                 </Button>
@@ -356,6 +446,11 @@ export function DesignWorkbenchPage() {
                     {t('portal.design.reject')}
                   </Button>
                 </>
+              ) : null}
+              {canAssign && !['APPROVED', 'CANCELLED'].includes(task.status) ? (
+                <Button danger onClick={() => setCancelOpen(true)}>
+                  {t('portal.design.cancel')}
+                </Button>
               ) : null}
             </div>
           ) : undefined
@@ -402,6 +497,42 @@ export function DesignWorkbenchPage() {
               <Button key={asset.id} href={asset.downloadUrl ?? undefined} target="_blank">
                 {asset.originalFilename ?? asset.id}
               </Button>
+            ))}
+            <Typography.Title level={5}>{t('portal.design.submissionHistory')}</Typography.Title>
+            {(submissions.data ?? []).map((submission) => (
+              <Descriptions
+                key={submission.id}
+                bordered
+                size="small"
+                column={1}
+                items={[
+                  {
+                    key: 'version',
+                    label: t('portal.design.version'),
+                    children: `v${submission.version} · ${submission.status}`,
+                  },
+                  { key: 'note', label: t('portal.design.note'), children: submission.note ?? '-' },
+                  {
+                    key: 'reason',
+                    label: t('portal.design.rejectReason'),
+                    children: submission.rejectReason ?? '-',
+                  },
+                  {
+                    key: 'files',
+                    label: t('portal.design.files'),
+                    children: submission.assets.map((asset) => (
+                      <Button
+                        type="link"
+                        key={asset.id}
+                        href={asset.downloadUrl ?? undefined}
+                        target="_blank"
+                      >
+                        {asset.originalFilename ?? asset.id}
+                      </Button>
+                    )),
+                  },
+                ]}
+              />
             ))}
           </div>
         ) : null}
@@ -499,6 +630,60 @@ export function DesignWorkbenchPage() {
           value={rejectReason}
           onChange={(event) => setRejectReason(event.target.value)}
           placeholder={t('portal.design.reasonRequired')}
+        />
+      </Modal>
+      <Modal
+        open={candidateOpen}
+        title={t('portal.design.createPsdTasks')}
+        okText={t('portal.design.create')}
+        confirmLoading={createCandidates.isPending}
+        okButtonProps={{ disabled: !candidateIds.length }}
+        onCancel={() => {
+          setCandidateOpen(false)
+          setCandidateIds([])
+          setCandidateResult(undefined)
+        }}
+        onOk={() => createCandidates.mutate()}
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Select
+            mode="multiple"
+            showSearch
+            optionFilterProp="label"
+            style={{ width: '100%' }}
+            value={candidateIds}
+            onChange={setCandidateIds}
+            placeholder={t('portal.design.selectListings')}
+            options={(candidates.data?.items ?? []).map((candidate) => ({
+              value: candidate.id,
+              label: `${candidate.sku} · ${candidate.title}`,
+            }))}
+          />
+          {candidateResult?.items.map((item) => (
+            <Typography.Text key={item.listingId}>
+              {item.listingId}: {item.status}
+              {item.message ? ` - ${item.message}` : ''}
+            </Typography.Text>
+          ))}
+        </Space>
+      </Modal>
+      <Modal
+        open={cancelOpen}
+        title={t('portal.design.cancelTask')}
+        okText={t('portal.design.cancel')}
+        confirmLoading={action.isPending}
+        okButtonProps={{ danger: true, disabled: !cancelReason.trim() }}
+        onCancel={() => {
+          setCancelOpen(false)
+          setCancelReason('')
+        }}
+        onOk={() => task && action.mutate({ type: 'cancel', task })}
+      >
+        <Input.TextArea
+          rows={3}
+          value={cancelReason}
+          onChange={(event) => setCancelReason(event.target.value)}
+          placeholder={t('portal.design.cancelReason')}
         />
       </Modal>
     </section>

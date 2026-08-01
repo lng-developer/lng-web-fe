@@ -47,6 +47,35 @@ export type DesignListParams = {
   priority?: string
 }
 export type DesignAssignee = { id: string; fullName?: string | null; name?: string | null }
+export type DesignSummary = {
+  total: number
+  unassigned: number
+  active: number
+  byStatus: Record<string, number>
+  byTaskType: Record<string, number>
+}
+export type PsdCandidate = {
+  id: string
+  sku: string
+  title: string
+  shop?: { id: string; name: string } | null
+}
+export type PsdCandidateParams = {
+  page: number
+  limit: number
+  search?: string
+  shopId?: string
+  salesChannelCode?: string
+  marketplaceCode?: string
+  productTypeGroupId?: string
+}
+export type BulkPsdTaskResult = {
+  checked: number
+  created: number
+  existing: number
+  skipped: number
+  items: Array<{ listingId: string; status: string; message?: string }>
+}
 const compact = (params: object) =>
   Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -79,3 +108,32 @@ export const approveDesignTask = async (id: string, approvedAssetId: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/approve`, { approvedAssetId }))
 export const rejectDesignTask = async (id: string, rejectReason: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/reject`, { rejectReason }))
+export const getDesignSummary = async (params: Omit<DesignListParams, 'page' | 'limit'>) =>
+  unwrap<DesignSummary>(
+    await apiClient.get('/api/design/tasks/summary', { params: compact(params) }),
+  )
+export const getDesignWorkload = async (params: Omit<DesignListParams, 'page' | 'limit'>) =>
+  unwrap<{
+    totals: { unassignedCount: number; activeCount: number }
+    byDesigner: Array<{ assignedDesignerId: string; totalActive: number }>
+  }>(await apiClient.get('/api/design/tasks/workload', { params: compact(params) }))
+export const listPsdCandidates = async (params: PsdCandidateParams) =>
+  unwrap<{ items: PsdCandidate[]; pagination: { total: number; page: number; limit: number } }>(
+    await apiClient.get('/api/design/tasks/psd-template/candidates', { params: compact(params) }),
+  )
+export const createPsdTaskFromListing = async (listingId: string, note?: string) =>
+  unwrap<DesignTask>(
+    await apiClient.post(`/api/design/tasks/from-listings/${listingId}/psd-template`, {
+      ...(note ? { note } : {}),
+    }),
+  )
+export const bulkCreatePsdTasks = async (input: { listingIds: string[]; note?: string }) =>
+  unwrap<BulkPsdTaskResult>(
+    await apiClient.post('/api/design/tasks/bulk-create-psd-from-listings', input),
+  )
+export const listDesignSubmissions = async (taskId: string) =>
+  unwrap<{ items: DesignSubmission[] }>(
+    await apiClient.get(`/api/design/tasks/${taskId}/submissions`),
+  ).items
+export const cancelDesignTask = async (taskId: string, cancelReason: string) =>
+  unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${taskId}/cancel`, { cancelReason }))

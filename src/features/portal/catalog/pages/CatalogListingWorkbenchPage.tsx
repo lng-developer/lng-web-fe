@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { EyeOutlined, MoreOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import {
+  EyeOutlined,
+  MoreOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -14,6 +20,7 @@ import {
   Space,
   Tooltip,
   Typography,
+  Upload,
 } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -28,6 +35,7 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { designKeys } from '../../design/api/designKeys'
 import {
   approveListing,
   type CatalogListParams,
@@ -41,6 +49,7 @@ import {
   rejectListing,
   updateListing,
   type UpdateListingInput,
+  uploadListingPsdTemplate,
 } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
 import { CatalogListingEditorModal } from './CatalogListingEditorModal'
@@ -74,6 +83,8 @@ export function CatalogListingWorkbenchPage({
   const [editing, setEditing] = useState<Listing | 'create'>()
   const [rejectReason, setRejectReason] = useState('')
   const [rejectOpen, setRejectOpen] = useState(false)
+  const [psdUploadTarget, setPsdUploadTarget] = useState<Listing>()
+  const [uploadWarnings, setUploadWarnings] = useState<Array<{ code: string; message: string }>>([])
   const params: CatalogListParams = {
     page,
     limit: PAGE_SIZE,
@@ -159,6 +170,17 @@ export function CatalogListingWorkbenchPage({
     },
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not reject listing'),
+  })
+  const uploadPsd = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => uploadListingPsdTemplate(id, file),
+    onSuccess: async (result) => {
+      setUploadWarnings(result.warnings ?? [])
+      await Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: designKeys.all })])
+      toast('success', t('portal.catalog.psdUploaded'))
+      if (!result.warnings?.length) setPsdUploadTarget(undefined)
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : 'Could not upload PSD'),
   })
   const resetPage =
     <T,>(setter: (value: T) => void) =>
@@ -252,6 +274,7 @@ export function CatalogListingWorkbenchPage({
               menu={{
                 items: [
                   { key: 'edit', label: t('portal.catalog.edit') },
+                  { key: 'upload-psd', label: t('portal.catalog.uploadPsd') },
                   ...(row.qcStatus === 'DRAFT'
                     ? [
                         { key: 'approve', label: t('portal.catalog.approve') },
@@ -261,6 +284,10 @@ export function CatalogListingWorkbenchPage({
                 ],
                 onClick: ({ key }) => {
                   if (key === 'edit') setEditing(row)
+                  if (key === 'upload-psd') {
+                    setUploadWarnings([])
+                    setPsdUploadTarget(row)
+                  }
                   if (key === 'approve')
                     Modal.confirm({
                       title: t('portal.catalog.approve'),
@@ -553,6 +580,33 @@ export function CatalogListingWorkbenchPage({
           </div>
         ) : null}
       </DetailDrawer>
+      <Modal
+        open={Boolean(psdUploadTarget)}
+        title={t('portal.catalog.uploadPsd')}
+        footer={null}
+        onCancel={() => setPsdUploadTarget(undefined)}
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Upload.Dragger
+            accept=".psd,.zip,.rar"
+            maxCount={1}
+            showUploadList={false}
+            disabled={uploadPsd.isPending}
+            beforeUpload={(file) => {
+              if (psdUploadTarget) uploadPsd.mutate({ id: psdUploadTarget.id, file })
+              return false
+            }}
+          >
+            <UploadOutlined />
+            <p>{t('portal.catalog.dropPsd')}</p>
+          </Upload.Dragger>
+          {uploadWarnings.map((warning) => (
+            <Typography.Text type="warning" key={warning.code}>
+              {warning.message}
+            </Typography.Text>
+          ))}
+        </Space>
+      </Modal>
       <CatalogListingEditorModal
         open={Boolean(editing)}
         listing={editing === 'create' ? undefined : editing}

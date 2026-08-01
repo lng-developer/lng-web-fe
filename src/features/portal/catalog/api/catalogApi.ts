@@ -181,6 +181,13 @@ export const approveListing = async (id: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/approve`))
 export const rejectListing = async (id: string, rejectionReason: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/reject`, { rejectionReason }))
+export const uploadListingPsdTemplate = async (id: string, file: File) => {
+  const body = new FormData()
+  body.append('file', file)
+  return unwrap<Listing & { warnings?: Array<{ code: string; message: string }> }>(
+    await apiClient.post(`/api/catalog/listings/${id}/psd-template`, body),
+  )
+}
 
 export const listProductTypeGroups = async (params: {
   page: number

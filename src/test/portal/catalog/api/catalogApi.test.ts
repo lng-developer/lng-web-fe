@@ -17,6 +17,7 @@ import {
   rejectListing,
   updateListing,
   uploadCatalogAsset,
+  uploadListingPsdTemplate,
 } from '@/features/portal/catalog/api/catalogApi'
 import { apiClient } from '@/shared/api'
 
@@ -59,6 +60,7 @@ describe('catalogApi', () => {
     })
     const file = new File(['asset'], 'template.psd', { type: 'application/octet-stream' })
     await uploadCatalogAsset(file)
+    await uploadListingPsdTemplate('listing-1', file)
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings', {
       params: { page: 1, limit: 20, psdReadinessStatus: 'MISSING' },
@@ -88,5 +90,9 @@ describe('catalogApi', () => {
       params: { page: 1, limit: 20 },
     })
     expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/assets', expect.any(FormData))
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/catalog/listings/listing-1/psd-template',
+      expect.any(FormData),
+    )
   })
 })
