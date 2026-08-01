@@ -36,7 +36,7 @@ export function MappingContextBar({
         value={value.shopId}
         options={(shops?.items ?? []).map((shop) => ({
           value: shop.id,
-          label: shop.name || shop.code || shop.id,
+          label: shop.name || shop.code || t('mapping.states.unavailable'),
         }))}
         onChange={(shopId) => onChange({ ...value, shopId })}
       />

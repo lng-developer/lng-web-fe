@@ -75,6 +75,7 @@ describe('MappingWorkbenchPage', () => {
       missingVendorCostCenterCount: 0,
       ambiguousSkuConfigCount: 0,
     })
+    vi.mocked(listAuthorableShops).mockResolvedValue({ items: [], canCreateGlobal: false })
     vi.mocked(listUnmatchedItems).mockResolvedValue({
       items: [
         {
@@ -99,7 +100,7 @@ describe('MappingWorkbenchPage', () => {
 
   it('never loads rule inventory and links the selected blocker to its focused page', async () => {
     renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
-    fireEvent.click(await screen.findByRole('button', { name: /J2501-TS1S-01/i }))
+    fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('tr')!)
 
     const link = await screen.findByRole('link', { name: 'Open Product mapping' })
     expect(link).toHaveAttribute('href', expect.stringContaining('/portal/mapping?'))

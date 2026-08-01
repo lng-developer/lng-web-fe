@@ -31,7 +31,7 @@ describe('ResolveQueuePanel', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /J2501-TS1S-01/i }))
+    fireEvent.click(screen.getByText('J2501-TS1S-01').closest('tr')!)
 
     expect(onSelect).toHaveBeenCalledWith(item)
     expect(onRecommendedStage).toHaveBeenCalledWith('PRODUCT_MAPPING')

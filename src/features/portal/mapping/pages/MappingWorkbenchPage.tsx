@@ -154,6 +154,19 @@ export function MappingWorkbenchPage({
           returnTo: '/portal/mapping?tab=workbench',
         }).toString()
       : ''
+  const stageCounters = [
+    ['PRODUCT_MAPPING', t('mapping.pipeline.productMapping'), summary.data?.missingSkuConfigCount],
+    [
+      'INPUT_SEMANTICS',
+      t('mapping.pipeline.inputSemantics'),
+      summary.data?.missingSemanticRuleCount,
+    ],
+    [
+      'VENDOR_ROUTING',
+      t('mapping.pipeline.vendorRouting'),
+      summary.data?.missingVendorProductCount,
+    ],
+  ] as const
 
   return (
     <section className={styles.page}>
@@ -185,6 +198,15 @@ export function MappingWorkbenchPage({
         onPreview={() => setQueueSearch(context.search ?? '')}
       />
       <Space wrap>
+        {stageCounters.map(([stage, label, count]) => (
+          <Button
+            key={stage}
+            type={queueStage === stage ? 'primary' : 'default'}
+            onClick={() => setQueueStage(queueStage === stage ? undefined : stage)}
+          >
+            {label} · {count ?? 0}
+          </Button>
+        ))}
         <Select
           allowClear
           className="min-w-48"

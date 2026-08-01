@@ -1,6 +1,7 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { List, Select, Skeleton, Typography } from 'antd'
+import { Select, Table } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 
 import { EmptyState, SearchInput, StatusTag } from '@/shared/ui'
 
@@ -38,6 +39,49 @@ export function ResolveQueuePanel({
     [onRecommendedStage, onSelect],
   )
   const blockers = [...new Set(items.flatMap((item) => item.blockingReasons))]
+  const columns = useMemo<ColumnsType<UnmatchedMappingItem>>(
+    () => [
+      {
+        title: t('mapping.fields.order'),
+        render: (_, item) => item.externalOrderId || t('mapping.states.unavailable'),
+      },
+      {
+        title: 'SKU',
+        dataIndex: 'sku',
+        render: (value) => value || t('mapping.states.unavailable'),
+      },
+      {
+        title: t('mapping.context.shop'),
+        render: (_, item) => item.shop?.name || t('mapping.states.unavailable'),
+      },
+      {
+        title: t('mapping.filters.stage'),
+        dataIndex: 'blockedStage',
+        render: (value) => value || t('mapping.states.unavailable'),
+      },
+      {
+        title: t('mapping.filters.blocker'),
+        render: (_, item) => (
+          <div className="flex flex-wrap gap-1">
+            {item.blockingReasons.slice(0, 2).map((reason) => (
+              <StatusTag key={reason} status="warning">
+                {reason}
+              </StatusTag>
+            ))}
+          </div>
+        ),
+      },
+      {
+        title: t('mapping.filters.age'),
+        width: 120,
+        render: (_, item) =>
+          item.createdAt
+            ? new Date(item.createdAt).toLocaleDateString()
+            : t('mapping.states.unavailable'),
+      },
+    ],
+    [t],
+  )
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
@@ -55,30 +99,18 @@ export function ResolveQueuePanel({
         options={blockers.map((value) => ({ value, label: value }))}
         onChange={onBlockerChange}
       />
-      {loading ? <Skeleton active paragraph={{ rows: 7 }} /> : null}
-      {!loading && items.length === 0 ? <EmptyState title={t('mapping.states.noQueue')} /> : null}
-      <List
+      <Table
         className="min-h-0 overflow-auto"
+        rowKey="id"
+        size="small"
+        loading={loading}
+        columns={columns}
         dataSource={items}
-        renderItem={(item) => (
-          <List.Item
-            className={selectedId === item.id ? '!bg-primary-light !px-2' : '!px-2'}
-            onClick={() => selectItem(item)}
-          >
-            <button className="w-full cursor-pointer border-0 bg-transparent text-left">
-              <Typography.Text strong>
-                {item.sku || item.externalOrderId || item.id}
-              </Typography.Text>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {item.blockingReasons.slice(0, 2).map((reason) => (
-                  <StatusTag key={reason} status="warning">
-                    {reason}
-                  </StatusTag>
-                ))}
-              </div>
-            </button>
-          </List.Item>
-        )}
+        locale={{ emptyText: <EmptyState title={t('mapping.states.noQueue')} /> }}
+        pagination={false}
+        rowClassName={(item) => (selectedId === item.id ? '!bg-primary-light' : 'cursor-pointer')}
+        scroll={{ x: 820, y: 500 }}
+        onRow={(item) => ({ onClick: () => selectItem(item) })}
       />
     </div>
   )

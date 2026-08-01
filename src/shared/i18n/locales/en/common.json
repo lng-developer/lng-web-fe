@@ -124,6 +124,7 @@
       "searchRules": "Search rules",
       "searchQueue": "Search order, SKU, or ASIN",
       "status": "Status",
+      "order": "Order",
       "blocker": "Blocker",
       "configCode": "Config code",
       "productType": "Product type",
