@@ -1357,6 +1357,9 @@
     "retry": "Thử lại",
     "empty": "Không có sự kiện phù hợp với bộ lọc.",
     "loadMore": "Tải thêm",
+    "globalScope": "Toàn hệ thống",
+    "notAvailable": "Không có dữ liệu",
+    "entities": { "session": "Phiên đăng nhập" },
     "detailTitle": "Chi tiết sự kiện",
     "filters": {
       "label": "Bộ lọc nhật ký",

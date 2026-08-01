@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Modal, Result, Select, Typography } from 'antd'
+import { Button, Descriptions, Modal, Result, Select, Space, Typography } from 'antd'
 
 import { getPermissions } from '@/shared/auth/session'
 import {
@@ -17,9 +17,17 @@ import {
 } from '@/shared/ui'
 
 import { type AuditEvent, type AuditFilters, listAuditEvents } from '../api/auditApi'
+import styles from './AuditLogPage.module.scss'
 
 const outcomeOptions = ['SUCCEEDED', 'FAILED'] as const
 const sourceOptions = ['HTTP', 'WORKER', 'SYSTEM', 'IMPORT'] as const
+const readableCode = (value: string) =>
+  value
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+const shortId = (value: string | null) => (value ? `#${value.slice(-8)}` : '')
 
 export function AuditLogPage() {
   const { t } = useTranslation()
@@ -42,17 +50,52 @@ export function AuditLogPage() {
     },
     {
       title: t('audit.columns.actor'),
-      render: (_, event) =>
-        String(event.actorSnapshot.email ?? event.actorAccountId ?? event.actorType),
+      render: (_, event) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text strong>
+            {event.actorLabel ?? String(event.actorSnapshot.email ?? event.actorType)}
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            {[event.actorEmployeeCode, event.actorEmail, shortId(event.actorAccountId)]
+              .filter(Boolean)
+              .filter((value, index, values) => values.indexOf(value) === index)
+              .join(' | ')}
+          </Typography.Text>
+        </Space>
+      ),
     },
-    { title: t('audit.columns.action'), dataIndex: 'action' },
+    { title: t('audit.columns.action'), dataIndex: 'action', render: readableCode },
     {
       title: t('audit.columns.entity'),
-      render: (_, event) => `${event.entityType} · ${event.entityId}`,
+      render: (_, event) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text strong>
+            {event.entityLabel ??
+              (event.entityType === 'AUTH_SESSION' && event.actorLabel
+                ? `${event.actorLabel} - ${t('audit.entities.session')}`
+                : readableCode(event.entityType))}
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            {readableCode(event.entityType)} | {shortId(event.entityId)}
+          </Typography.Text>
+        </Space>
+      ),
     },
     {
       title: t('audit.columns.scope'),
-      render: (_, event) => (event.scopeType ? `${event.scopeType} · ${event.scopeId}` : '—'),
+      render: (_, event) =>
+        event.scopeType ? (
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong>
+              {event.scopeLabel ?? readableCode(event.scopeType)}
+            </Typography.Text>
+            <Typography.Text type="secondary">
+              {readableCode(event.scopeType)} | {shortId(event.scopeId)}
+            </Typography.Text>
+          </Space>
+        ) : (
+          t('audit.globalScope')
+        ),
     },
     { title: t('audit.columns.source'), dataIndex: 'source' },
     {
@@ -87,7 +130,7 @@ export function AuditLogPage() {
         onRow={(event) => ({ onClick: () => setSelected(event), className: 'cursor-pointer' })}
         pagination={false}
         toolbar={
-          <FilterBar label={t('audit.filters.label')}>
+          <FilterBar label={t('audit.filters.label')} contentClassName={styles.filters}>
             <SearchInput
               placeholder={t('audit.filters.action')}
               value={filters.action}
@@ -154,20 +197,26 @@ export function AuditLogPage() {
                 {
                   key: 'request',
                   label: t('audit.detail.requestId'),
-                  children: selected.requestId ?? '—',
+                  children: selected.requestId ?? t('audit.notAvailable'),
                 },
-                { key: 'ip', label: t('audit.detail.ip'), children: selected.ipAddress ?? '—' },
+                {
+                  key: 'ip',
+                  label: t('audit.detail.ip'),
+                  children: selected.ipAddress ?? t('audit.notAvailable'),
+                },
                 {
                   key: 'actor',
                   label: t('audit.columns.actor'),
-                  children: selected.actorAccountId ?? selected.actorType,
+                  children: selected.actorLabel
+                    ? `${selected.actorLabel} (${selected.actorEmail ?? selected.actorType})`
+                    : (selected.actorAccountId ?? selected.actorType),
                 },
                 {
                   key: 'scope',
                   label: t('audit.columns.scope'),
                   children: selected.scopeType
-                    ? `${selected.scopeType} · ${selected.scopeId}`
-                    : '—',
+                    ? `${selected.scopeLabel ?? readableCode(selected.scopeType)} (${selected.scopeId})`
+                    : t('audit.globalScope'),
                 },
               ]}
             />

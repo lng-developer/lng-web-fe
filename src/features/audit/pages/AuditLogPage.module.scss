@@ -1,0 +1,22 @@
+.filters {
+  display: grid !important;
+  flex: 1;
+  grid-template-columns:
+    minmax(220px, 2fr)
+    minmax(170px, 1fr)
+    minmax(210px, 1.4fr)
+    minmax(130px, 0.8fr)
+    minmax(120px, 0.7fr)
+    minmax(280px, 1.6fr);
+  width: 100%;
+}
+
+.filters > * {
+  width: 100%;
+}
+
+@media (max-width: 1400px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(200px, 1fr));
+  }
+}

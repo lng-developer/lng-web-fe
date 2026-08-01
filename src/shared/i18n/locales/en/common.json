@@ -1357,6 +1357,9 @@
     "retry": "Retry",
     "empty": "No audit events match these filters.",
     "loadMore": "Load more",
+    "globalScope": "System-wide",
+    "notAvailable": "Not available",
+    "entities": { "session": "Login session" },
     "detailTitle": "Audit event details",
     "filters": {
       "label": "Audit filters",

@@ -7,11 +7,16 @@ export type AuditEvent = {
   actorType: string
   actorAccountId: string | null
   actorSnapshot: Record<string, unknown>
+  actorLabel: string | null
+  actorEmail: string | null
+  actorEmployeeCode: string | null
   action: string
   entityType: string
   entityId: string
+  entityLabel: string | null
   scopeType: string | null
   scopeId: string | null
+  scopeLabel: string | null
   outcome: 'SUCCEEDED' | 'FAILED'
   source: 'HTTP' | 'WORKER' | 'SYSTEM' | 'IMPORT'
   requestId: string | null
