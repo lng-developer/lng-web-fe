@@ -109,11 +109,21 @@ export type UnmatchedMappingItem = {
   createdAt?: string | null
   blockingReasons: string[]
   recommendedFixTypes?: string[]
+  blockedStage?:
+    | 'SKU_CLEANUP'
+    | 'PRODUCT_MAPPING'
+    | 'INPUT_SEMANTICS'
+    | 'VALUE_ALIASES'
+    | 'VENDOR_ROUTING'
   skuNormalization?: MappingPreview['skuNormalization']
   skuMapping?: MappingPreview['skuMapping']
   normalizedInputs?: NormalizedInput[]
 }
 export type UnmatchedParams = MappingContextParams & {
+  q?: string
+  blocker?: string
+  stage?: UnmatchedMappingItem['blockedStage']
+  age?: 'TODAY' | 'OVER_24_HOURS' | 'OVER_3_DAYS'
   page?: number
   limit?: number
 }

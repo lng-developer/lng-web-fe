@@ -54,7 +54,38 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
             ? { key: 'orders', path: '/portal/orders', labelKey: 'shell.navigation.orders' }
             : null,
           permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
-            ? { key: 'mapping', path: '/portal/mapping', labelKey: 'shell.navigation.mapping' }
+            ? [
+                {
+                  key: 'mapping-workbench',
+                  path: '/portal/mapping/workbench',
+                  labelKey: 'mapping.pages.workbench',
+                },
+                {
+                  key: 'mapping-sku-rules',
+                  path: '/portal/mapping/sku-rules',
+                  labelKey: 'mapping.pages.skuRules',
+                },
+                {
+                  key: 'mapping-product',
+                  path: '/portal/mapping/product-mapping',
+                  labelKey: 'mapping.pages.productMapping',
+                },
+                {
+                  key: 'mapping-semantics',
+                  path: '/portal/mapping/input-semantics',
+                  labelKey: 'mapping.pages.inputSemantics',
+                },
+                {
+                  key: 'mapping-aliases',
+                  path: '/portal/mapping/value-aliases',
+                  labelKey: 'mapping.pages.valueAliases',
+                },
+                {
+                  key: 'mapping-vendor',
+                  path: '/portal/mapping/vendor-routing',
+                  labelKey: 'mapping.pages.vendorRouting',
+                },
+              ]
             : null,
           permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
             ? {
@@ -86,7 +117,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 labelKey: 'shell.navigation.shipments',
               }
             : null,
-        ].filter((item): item is NavigationItem => item !== null),
+        ].flatMap((item) => item ?? []),
       },
     ].filter(({ items }) => items.length)
   }

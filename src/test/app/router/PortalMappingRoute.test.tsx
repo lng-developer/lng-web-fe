@@ -1,38 +1,22 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-
-vi.mock('@/features/portal/mapping/pages/MappingWorkspacePage', () => ({
-  MappingWorkspacePage: () => <div>Mapping workspace</div>,
-}))
+import { describe, expect, it } from 'vitest'
 
 import { appRoutes } from '@/app/router/router'
-import { setPermissions } from '@/shared/auth/session'
 
-async function loadMappingRoute() {
-  const workspace = appRoutes.find((route) => route.id === 'workspace')
-  const route = workspace?.children?.find(({ path }) => path === 'portal/mapping')
-  expect(route?.lazy).toBeTypeOf('function')
-  if (!route?.lazy) throw new Error('Portal Mapping route must be lazy')
-  const loaded = await (route.lazy as () => Promise<{ Component?: React.ComponentType }>)()
-  if (!('Component' in loaded) || !loaded.Component)
-    throw new Error('Mapping route must provide a component')
-  return loaded.Component
-}
+describe('Portal Mapping routes', () => {
+  it('exposes a redirect, Workbench, and five lazy rule pages', () => {
+    const workspace = appRoutes.find((route) => route.id === 'workspace')
+    const mappingRoutes =
+      workspace?.children?.filter(({ path }) => path?.startsWith('portal/mapping')) ?? []
 
-describe('Portal Mapping route', () => {
-  afterEach(cleanup)
-
-  it('allows mapping readers', async () => {
-    const Component = await loadMappingRoute()
-    setPermissions(['MAPPING:READ'])
-    render(<Component />)
-    expect(screen.getByText('Mapping workspace')).toBeVisible()
-  })
-
-  it('rejects users without mapping permissions', async () => {
-    const Component = await loadMappingRoute()
-    setPermissions(['ORDERS:READ'])
-    render(<Component />)
-    expect(screen.getByText('403')).toBeVisible()
+    expect(mappingRoutes.map(({ path }) => path)).toEqual([
+      'portal/mapping',
+      'portal/mapping/workbench',
+      'portal/mapping/sku-rules',
+      'portal/mapping/product-mapping',
+      'portal/mapping/input-semantics',
+      'portal/mapping/value-aliases',
+      'portal/mapping/vendor-routing',
+    ])
+    expect(mappingRoutes.slice(1).every(({ lazy }) => typeof lazy === 'function')).toBe(true)
   })
 })

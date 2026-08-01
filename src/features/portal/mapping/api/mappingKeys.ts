@@ -7,7 +7,8 @@ import type {
 
 export const mappingKeys = {
   all: ['portal', 'mapping'] as const,
-  summary: (params: MappingContextParams) => [...mappingKeys.all, 'summary', params] as const,
+  summaryRoot: () => [...mappingKeys.all, 'summary'] as const,
+  summary: (params: MappingContextParams) => [...mappingKeys.summaryRoot(), params] as const,
   workbench: (params: MappingContextParams) => [...mappingKeys.all, 'workbench', params] as const,
   shops: () => [...mappingKeys.all, 'authorable-shops'] as const,
   unmatchedRoot: () => [...mappingKeys.all, 'unmatched'] as const,

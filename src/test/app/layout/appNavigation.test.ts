@@ -129,16 +129,20 @@ describe('app navigation', () => {
 
   it('shows Mapping only for global or scoped mapping access', () => {
     for (const permission of ['MAPPING:READ', 'MAPPING:WRITE']) {
-      expect(getContextNavigation('portal', account([permission]))[0]?.items).toContainEqual({
-        key: 'mapping',
-        path: '/portal/mapping',
-        labelKey: 'shell.navigation.mapping',
-      })
-      expect(getContextNavigation('portal', account([], [permission]))[0]?.items).toContainEqual({
-        key: 'mapping',
-        path: '/portal/mapping',
-        labelKey: 'shell.navigation.mapping',
-      })
+      const expected = [
+        '/portal/mapping/workbench',
+        '/portal/mapping/sku-rules',
+        '/portal/mapping/product-mapping',
+        '/portal/mapping/input-semantics',
+        '/portal/mapping/value-aliases',
+        '/portal/mapping/vendor-routing',
+      ]
+      expect(
+        getContextNavigation('portal', account([permission]))[0]?.items.map(({ path }) => path),
+      ).toEqual(expected)
+      expect(
+        getContextNavigation('portal', account([], [permission]))[0]?.items.map(({ path }) => path),
+      ).toEqual(expected)
     }
     expect(getContextNavigation('portal', account(['ORDERS:READ']))[0]?.items).not.toContainEqual(
       expect.objectContaining({ key: 'mapping' }),

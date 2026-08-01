@@ -25,6 +25,28 @@ describe('mappingApi', () => {
     })
   })
 
+  it('serializes bounded workbench filters', async () => {
+    await listUnmatchedItems({
+      q: 'J2501',
+      blocker: 'LISTING_NOT_FOUND',
+      stage: 'PRODUCT_MAPPING',
+      age: 'OVER_24_HOURS',
+      page: 1,
+      limit: 20,
+    })
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/mapping/order-items/unmatched', {
+      params: {
+        q: 'J2501',
+        blocker: 'LISTING_NOT_FOUND',
+        stage: 'PRODUCT_MAPPING',
+        age: 'OVER_24_HOURS',
+        page: 1,
+        limit: 20,
+      },
+    })
+  })
+
   it('posts candidate selection to the canonical select endpoint', async () => {
     await selectFulfillmentCandidate('item-1', {
       vendorProductId: 'product-1',

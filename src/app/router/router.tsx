@@ -161,14 +161,88 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'portal/mapping',
+        element: <Navigate to="/portal/mapping/workbench" replace />,
+      },
+      {
+        path: 'portal/mapping/workbench',
         lazy: () =>
           Promise.all([
             import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/mapping/pages/MappingWorkspacePage'),
-          ]).then(([{ PortalPageBoundary }, { MappingWorkspacePage }]) => ({
+            import('@/features/portal/mapping/pages/MappingWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { MappingWorkbenchPage }]) => ({
             Component: () => (
               <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
-                <MappingWorkspacePage />
+                <MappingWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/mapping/sku-rules',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingRulePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingRulePage pageKey="sku-rules" />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/mapping/product-mapping',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingRulePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingRulePage pageKey="product-mapping" />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/mapping/input-semantics',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingRulePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingRulePage pageKey="input-semantics" />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/mapping/value-aliases',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingRulePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingRulePage pageKey="value-aliases" />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/mapping/vendor-routing',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingRulePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingRulePage pageKey="vendor-routing" />
               </PortalPageBoundary>
             ),
           })),

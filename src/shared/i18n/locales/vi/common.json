@@ -59,6 +59,19 @@
   "mapping": {
     "title": "Luồng ánh xạ",
     "description": "Theo dõi item nhập vào, sửa quy tắc ánh xạ và chuẩn bị phương án fulfillment.",
+    "pages": {
+      "workbench": "Bàn xử lý ánh xạ",
+      "skuRules": "Quy tắc chuẩn hóa SKU",
+      "skuRulesDescription": "Chuẩn hóa các phần của SKU trước khi xác định sản phẩm.",
+      "productMapping": "Ánh xạ sản phẩm",
+      "productMappingDescription": "Gắn mã cấu hình với nhóm sản phẩm và template nội bộ.",
+      "inputSemantics": "Ý nghĩa dữ liệu",
+      "inputSemanticsDescription": "Xác định ý nghĩa của các trường tùy chỉnh từ khách hàng.",
+      "valueAliases": "Giá trị tương đương",
+      "valueAliasesDescription": "Chuẩn hóa các cách viết kích thước, màu sắc và tùy chọn.",
+      "vendorRouting": "Điều phối vendor",
+      "vendorRoutingDescription": "Điều phối sản phẩm đã khớp tới vendor và cost center phù hợp."
+    },
     "pipeline": {
       "skuCleanup": "Chuẩn hóa SKU",
       "productMapping": "Xác định sản phẩm",
@@ -105,6 +118,7 @@
       "blocker": "Nguyên nhân chặn",
       "configCode": "Mã cấu hình",
       "productType": "Loại sản phẩm",
+      "stage": "Bước đang bị chặn",
       "age": "Thời gian chờ"
     },
     "fields": {
