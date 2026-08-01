@@ -1,0 +1,97 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+
+  &::before,
+  &::after {
+    display: none;
+  }
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 82px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 8px !important;
+
+  &::before {
+    display: none;
+  }
+}
+
+.product {
+  position: relative;
+  width: 42px;
+  height: 46px;
+  flex: none;
+  background: var(--ant-color-fill-secondary);
+  clip-path: polygon(
+    26% 0,
+    40% 8%,
+    60% 8%,
+    74% 0,
+    100% 22%,
+    82% 39%,
+    75% 31%,
+    75% 100%,
+    25% 100%,
+    25% 31%,
+    18% 39%,
+    0 22%
+  );
+
+  span {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--ant-color-primary);
+  }
+}
+
+.front span,
+.back span {
+  top: 19px;
+  left: 14px;
+  width: 14px;
+  height: 13px;
+}
+
+.leftChest span {
+  top: 16px;
+  left: 11px;
+}
+
+.leftSleeve span {
+  top: 13px;
+  left: 2px;
+}
+
+.rightSleeve span {
+  top: 13px;
+  right: 2px;
+}
+
+.custom span {
+  top: 19px;
+  left: 17px;
+  border-radius: 50%;
+}
+
+.uploadIcon {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ant-color-primary);
+  font-size: 28px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

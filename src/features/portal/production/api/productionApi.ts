@@ -17,6 +17,7 @@ export type FileCheck = {
   slotKey: string
   slotLabel: string | null
   required: boolean
+  outputRequired?: boolean
   inputAssetDownloadUrl: string | null
   outputAssetDownloadUrl: string | null
   outputStatus: string
@@ -26,6 +27,7 @@ export type FileCheck = {
 export type ProductionTask = {
   id: string
   status: ProductionStatus
+  productionStatus?: ProductionStatus
   qcStatus: QcStatus
   blockers: string[]
   assignedDesignUserId: string | null
@@ -35,6 +37,9 @@ export type ProductionTask = {
   orderItem?: { externalOrderId?: string | null; sku?: string | null; title?: string | null }
   order?: { id?: string | null }
   shop?: { id?: string | null; name?: string | null }
+  shopId?: string | null
+  shopName?: string | null
+  createdAt?: string
   fileChecks?: FileCheck[]
   qcPreviewFileChecks?: FileCheck[]
   vendorSubmission?: { id: string; status: string; failureReason?: string | null }
@@ -50,13 +55,38 @@ export type ProductionParams = {
   qcStatus?: QcStatus
 }
 export type FileDecision = { fileCheckId: string; decision: 'PASSED' | 'REJECTED'; note?: string }
+export type ManualScaledOutput = {
+  file: File
+  slotKey: string
+  slotLabel?: string
+}
 
 const basePath = '/api/production'
 
-export const listProductionTasks = async (params: ProductionParams) =>
-  unwrap<ProductionList>(await apiClient.get(`${basePath}/tasks`, { params }))
-export const summarizeProductionTasks = async (params: Omit<ProductionParams, 'page' | 'limit'>) =>
-  unwrap<ProductionSummary>(await apiClient.get(`${basePath}/tasks/summary`, { params }))
+export const listProductionTasks = async (params: ProductionParams) => {
+  const result = unwrap<ProductionList>(await apiClient.get(`${basePath}/tasks`, { params }))
+  return {
+    ...result,
+    items: result.items.map((task) => ({
+      ...task,
+      status: task.status ?? task.productionStatus!,
+      shop: task.shop ?? (task.shopName ? { id: task.shopId, name: task.shopName } : undefined),
+      updatedAt: task.updatedAt ?? task.createdAt!,
+      qcPreviewFileChecks: task.qcPreviewFileChecks?.map((check) => ({
+        ...check,
+        required: check.required ?? Boolean(check.outputRequired),
+      })),
+    })),
+  }
+}
+export const summarizeProductionTasks = async (
+  params: Omit<ProductionParams, 'page' | 'limit'>,
+) => {
+  const result = unwrap<ProductionSummary>(
+    await apiClient.get(`${basePath}/tasks/summary`, { params }),
+  )
+  return { ...result, ready: result.ready ?? result.readyToSendVendor ?? 0 } as ProductionSummary
+}
 export const getProductionTask = async (id: string) =>
   unwrap<ProductionTask>(await apiClient.get(`${basePath}/tasks/${id}`))
 export const claimProductionTask = async (id: string) =>
@@ -75,5 +105,15 @@ export async function uploadScaledOutput(id: string, fileCheckId: string, file: 
       `${basePath}/tasks/${id}/file-checks/${fileCheckId}/scaled-output-file`,
       body,
     ),
+  )
+}
+
+export async function uploadManualScaledOutput(id: string, input: ManualScaledOutput) {
+  const body = new FormData()
+  body.append('slotKey', input.slotKey)
+  if (input.slotLabel) body.append('slotLabel', input.slotLabel)
+  body.append('file', input.file)
+  return unwrap<ProductionTask>(
+    await apiClient.post(`${basePath}/tasks/${id}/file-checks/manual/scaled-output-file`, body),
   )
 }

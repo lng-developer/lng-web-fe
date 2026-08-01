@@ -895,6 +895,27 @@
       "designNote": "Ghi chú thiết kế",
       "saveNote": "Lưu ghi chú",
       "uploadOutput": "Tải file scale lên",
+      "addManualSlot": "Thêm vị trí in",
+      "manualSlot": {
+        "title": "Thêm vị trí in",
+        "choosePosition": "Chọn vị trí trên sản phẩm",
+        "positions": {
+          "front": "Mặt trước",
+          "back": "Mặt sau",
+          "leftChest": "Ngực trái",
+          "leftSleeve": "Tay trái",
+          "rightSleeve": "Tay phải",
+          "custom": "Vị trí khác"
+        },
+        "customLabel": "Tên vị trí",
+        "customLabelPlaceholder": "Ví dụ: Viền cổ trước",
+        "file": "File scale",
+        "dropFile": "Thả file vào đây hoặc chọn từ máy",
+        "fileHint": "Một file PSD, PNG, JPG hoặc PDF",
+        "technicalDetails": "Thông tin kỹ thuật",
+        "cancel": "Hủy",
+        "submit": "Thêm vị trí in"
+      },
       "inspect": "Kiểm tra artwork",
       "inspectArtwork": "Kiểm tra artwork · {{slot}}",
       "original": "File gốc",

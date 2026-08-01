@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
   DownloadOutlined,
+  PlusOutlined,
   ReloadOutlined,
   ZoomInOutlined,
   ZoomOutOutlined,
@@ -28,14 +29,17 @@ import {
   type FileDecision,
   getProductionTask,
   listProductionTasks,
+  type ManualScaledOutput,
   type ProductionStatus,
   type ProductionTask,
   submitProductionQc,
   summarizeProductionTasks,
   updateDesignNote,
+  uploadManualScaledOutput,
   uploadScaledOutput,
 } from '../api/productionApi'
 import { productionKeys } from '../api/productionKeys'
+import { ManualSlotUploadModal } from './ManualSlotUploadModal'
 import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20
@@ -146,6 +150,7 @@ export function ProductionWorkbenchPage({
   const [inspect, setInspect] = useState<FileCheck>()
   const [note, setNote] = useState('')
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
+  const [manualSlotOpen, setManualSlotOpen] = useState(false)
   const canScale = allowed.has('PRODUCTION:WRITE') || allowed.has('DESIGN:WORK')
   const canQc = allowed.has('PRODUCTION:WRITE') || allowed.has('DESIGN:REVIEW')
   const filters = {
@@ -178,6 +183,16 @@ export function ProductionWorkbenchPage({
       return submitProductionQc(input.task.id, Object.values(decisions))
     },
     onSuccess: async () => {
+      await refresh()
+      toast('success', t('portal.production.updated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+  })
+  const manualUpload = useMutation({
+    mutationFn: (input: ManualScaledOutput) => uploadManualScaledOutput(selectedId!, input),
+    onSuccess: async () => {
+      setManualSlotOpen(false)
       await refresh()
       toast('success', t('portal.production.updated'))
     },
@@ -319,9 +334,14 @@ export function ProductionWorkbenchPage({
         loading={detail.isLoading}
         extra={
           task && tab === 'scale' && canScale ? (
-            <Button onClick={() => action.mutate({ kind: 'claim', task })}>
-              {t('portal.production.claim')}
-            </Button>
+            <Space>
+              <Button icon={<PlusOutlined />} onClick={() => setManualSlotOpen(true)}>
+                {t('portal.production.addManualSlot')}
+              </Button>
+              <Button onClick={() => action.mutate({ kind: 'claim', task })}>
+                {t('portal.production.claim')}
+              </Button>
+            </Space>
           ) : null
         }
       >
@@ -454,6 +474,13 @@ export function ProductionWorkbenchPage({
         check={inspect}
         open={Boolean(inspect)}
         onClose={() => setInspect(undefined)}
+      />
+      <ManualSlotUploadModal
+        open={manualSlotOpen}
+        saving={manualUpload.isPending}
+        existingSlotKeys={checks.map((check) => check.slotKey)}
+        onClose={() => setManualSlotOpen(false)}
+        onSubmit={(input) => manualUpload.mutate(input)}
       />
     </section>
   )

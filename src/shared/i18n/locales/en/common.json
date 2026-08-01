@@ -895,6 +895,27 @@
       "designNote": "Design note",
       "saveNote": "Save note",
       "uploadOutput": "Upload scaled output",
+      "addManualSlot": "Add print position",
+      "manualSlot": {
+        "title": "Add print position",
+        "choosePosition": "Choose a position on the product",
+        "positions": {
+          "front": "Front",
+          "back": "Back",
+          "leftChest": "Left chest",
+          "leftSleeve": "Left sleeve",
+          "rightSleeve": "Right sleeve",
+          "custom": "Other position"
+        },
+        "customLabel": "Position name",
+        "customLabelPlaceholder": "For example, Front collar",
+        "file": "Scaled output file",
+        "dropFile": "Drop the file here or choose from your computer",
+        "fileHint": "One PSD, PNG, JPG, or PDF file",
+        "technicalDetails": "Technical details",
+        "cancel": "Cancel",
+        "submit": "Add print position"
+      },
       "inspect": "Inspect artwork",
       "inspectArtwork": "Inspect artwork · {{slot}}",
       "original": "Original input",
