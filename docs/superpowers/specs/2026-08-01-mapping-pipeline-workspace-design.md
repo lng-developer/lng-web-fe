@@ -1,163 +1,184 @@
-# Mapping Pipeline Workspace Design
+# Mapping Multi-Page Module Design
 
 ## Goal
 
-Build an operator-facing Mapping workspace that exposes the backend resolution pipeline directly. Mapping and Production operators can trace why an imported order item is blocked, correct the responsible rule, preview the effect, and recheck the item without moving through disconnected CRUD screens.
+Separate two different operator jobs:
 
-Seller and team-leader users do not receive this workspace. They continue to see only the mapping status and relevant blocker inside the Order workbench.
+1. Find and unblock imported order items that cannot complete Mapping.
+2. Maintain reusable Mapping rules for each pipeline behavior.
 
-## Existing Contract
+The Mapping Workbench remains the operational inbox. Rule authoring moves to focused pages so queue handling and long-lived configuration no longer compete for space or attention.
 
-The backend already owns the required workflow under `/api/mapping`:
+## Users And Permissions
 
-- mapping summary and configuration workbench;
-- unmatched order-item queue;
-- read-only fulfillment preview;
-- automatic resolve and item or batch recheck;
-- vendor candidate search and manual selection;
-- SKU normalization, SKU configuration, semantic normalization, value alias, and vendor-routing rule management;
-- rule preview, conflict detection, authorable shops, and rule history.
+- `MAPPING:READ` exposes Mapping navigation, Workbench evidence, rule lists, previews, impact samples, and history.
+- `MAPPING:WRITE` exposes rule create/update, item recheck/resolve, bounded batch recheck, and vendor candidate selection.
+- Authorization follows backend global or exact shop scope. The frontend never grants access from a hardcoded role name.
+- Sellers and team leaders without Mapping permission continue to see only mapping state inside Orders.
 
-The frontend must use the shared API client, backend-provided permissions, and these existing endpoints. It must not reproduce mapping decisions in the browser.
+## Routes And Navigation
 
-## Users And Authorization
+Mapping becomes a sidebar group with six lazy routes:
 
-- `MAPPING:READ` exposes the navigation entry and permits viewing the workspace, queue, previews, candidates, rule history, and impact samples.
-- `MAPPING:WRITE` permits rule creation and updates, status changes, recheck, resolve, batch recheck, and manual vendor/cost-center selection.
-- Access remains global or exact shop-scoped according to backend authorization.
-- No UI behavior is based on hardcoded role names.
+```text
+/portal/mapping/workbench
+/portal/mapping/sku-rules
+/portal/mapping/product-mapping
+/portal/mapping/input-semantics
+/portal/mapping/value-aliases
+/portal/mapping/vendor-routing
+```
 
-## Information Architecture
+`/portal/mapping` redirects to `/portal/mapping/workbench` for backward compatibility.
 
-The module uses one route: `/portal/mapping`.
+The rule pages correspond to backend rule types:
 
-It is one workspace rather than a collection of rule CRUD pages. Its fixed pipeline navigation follows the real resolution order:
+| Page            | Rule type       | Responsibility                                                           |
+| --------------- | --------------- | ------------------------------------------------------------------------ |
+| SKU Rules       | `skuNormalize`  | Remove or replace SKU segments and produce a canonical SKU               |
+| Product Mapping | `skuConfig`     | Map config code to product group and internal template                   |
+| Input Semantics | `semanticRules` | Classify imported inputs as size, color, text, image, material, or other |
+| Value Aliases   | `valueAliases`  | Normalize equivalent input values                                        |
+| Vendor Routing  | `vendorRouting` | Map normalized product data to vendor product and cost center            |
 
-1. SKU cleanup
-2. Product mapping
-3. Input semantics
-4. Value aliases
-5. Vendor routing
+Rule history stays inside each rule page and does not become another route.
 
-The unmatched queue remains an auxiliary mode inside this workspace. Selecting a blocked item loads its context and opens the pipeline step associated with its recommended fix.
+## Mapping Workbench
 
-## Desktop Layout
+The Workbench displays every unmatched order item, regardless of whether it is blocked by SKU cleanup, product mapping, input semantics, value aliases, vendor routing, or candidate ambiguity.
 
-### Context bar
+### Queue
 
-A compact top bar controls the active Shop, marketplace, SKU, or Order Item. Preview is explicit and read-only. Context is retained while the operator changes pipeline steps.
+The queue supports bounded API filters for Shop, marketplace, blocker, pipeline stage, and age, plus shared debounced search for order ID, SKU, or ASIN. Selecting a row does not navigate.
 
-### Pipeline navigation
+Each row prioritizes readable business data:
 
-The left rail lists the five ordered stages. Each stage shows relevant rule and warning counts when returned by the backend. It does not use horizontal tabs.
+- SKU and external order ID;
+- Shop and marketplace;
+- first blocking stage and reason;
+- waiting age;
+- readiness status.
 
-### Rule inventory and editor
+Raw database IDs are secondary support metadata only.
 
-The center region displays rules belonging to the active stage. Search, status, scope, and priority filters are available. Selecting a rule opens an inline editor in the same workspace; create and update do not use a large modal.
+### Focus View
 
-### Live Trace
-
-The right region explains the active preview:
+The selected item renders:
 
 - original and canonical SKU;
-- rules applied at each stage;
+- the five-stage pipeline with completed and blocked stages;
 - normalized inputs and their sources;
-- selected product group and template;
-- blockers and recommended fix;
+- product group and internal template;
 - vendor product and cost-center candidates;
-- auto-match confidence and estimated cost.
+- current fulfillment plan state;
+- recommended next action.
 
-The UI uses readable names and codes. Database identifiers are retained only as secondary technical metadata when needed for support.
+The Workbench does not embed a rule editor. Its action opens the responsible rule page with a minimal URL context:
 
-### Rule impact samples
+```text
+/portal/mapping/product-mapping?orderItemId=<id>&configCode=TS1S&returnTo=/portal/mapping/workbench
+```
 
-The lower region displays conflict results, sampled affected order items, and before/after output. It must label these records as samples; the current backend does not provide an exact global affected-item count.
+The URL carries identifiers needed to restore context, not mutable form payloads. The destination fetches canonical data from the backend.
+`returnTo` is accepted only when it is an internal Mapping path; arbitrary URLs are ignored.
 
-### Resolve queue
+Vendor candidate selection remains in Workbench because it resolves one order item rather than defining a reusable rule.
 
-The queue is a compact panel in the same workspace. It supports search and filters for Shop, blocker, config code, product type, marketplace, and age. Selecting an item loads it into Live Trace. A successful selection or resolve offers an automatic move to the next queue item.
+## Rule Pages
 
-## Interaction Flow
+All five pages use the same stable layout:
 
-1. The operator selects a Shop and enters a SKU or selects an unmatched item.
-2. The frontend requests a read-only preview and renders the returned trace.
-3. The recommended fix opens the responsible pipeline stage and relevant rules.
-4. Create or update remains a local draft until the operator explicitly saves.
-5. Before save, the frontend requests rule preview and conflict detection.
-6. Exact conflicts block save. Broader scope overlaps produce a warning that the operator may acknowledge.
-7. A successful write refreshes the inventory and rule history.
-8. The workspace rechecks only the active item. It never silently rechecks the full backlog.
-9. Batch recheck remains an explicit write action and previews its bounded scope before submission.
-10. When valid candidates exist, an authorized operator can select a vendor product and cost center from Live Trace and persist the fulfillment plan.
+```text
+Rule inventory | Rule editor | Preview and conflicts
+```
 
-The UI must not expose a distinct `Confirm mapping` action because the current `/confirm` endpoint is only a compatibility alias for manual selection and does not perform a real `CONFIRMED` transition.
+Each page supplies only its own field definition and API rule type. Shared behavior includes:
 
-## Component Boundaries
+- search and status/scope filters;
+- create, select, update, activate, and deactivate;
+- inline required-field validation;
+- preview before save;
+- exact-conflict blocking;
+- acknowledged overlap warnings;
+- sampled impact labels;
+- lazy rule history;
+- dirty-state protection;
+- product success and concrete error toasts.
 
-- `MappingWorkspacePage`: owns route-level context and coordinates queries.
-- `MappingContextBar`: edits Shop, marketplace, SKU, and Order Item context.
-- `MappingPipelineNav`: presents the ordered stages and warning counts.
-- `RuleInventoryPanel`: lists and filters rules for the active stage.
-- `RuleEditorPanel`: handles create and update drafts inline.
-- `LiveTracePanel`: renders backend preview evidence and candidates.
-- `RuleImpactSamples`: renders preview, conflict, and sample impact evidence.
-- `ResolveQueuePanel`: lists unmatched items and loads their context.
-- `RuleHistoryModal`: lazy-mounts rule audit history only when requested.
+The editor uses readable selectors for Shop, vendor, product group, and template. It does not make operators enter opaque database IDs.
 
-API calls and query keys live under the mapping feature. UI components consume normalized view models rather than raw response envelopes.
+## Context Handoff And Return Flow
+
+1. Operator selects a blocked item in Workbench.
+2. Focus View identifies the first actionable blocker.
+3. Operator opens the matching rule page.
+4. The rule page reads `orderItemId` and relevant search hints, fetches canonical context, and pre-fills a new draft or highlights a matching rule.
+5. Preview and conflict checks run explicitly before save.
+6. Successful save rechecks only the originating item.
+7. If resolved, the operator returns to Workbench with the item removed and the next queue item selected.
+8. If another blocker remains, the result links to the next responsible rule page.
+9. Cancel returns without mutating the item or rule.
+
+Full-backlog recheck never runs implicitly. A bounded batch recheck remains an explicit Workbench action with confirmation.
 
 ## State And Performance
 
-- Server state uses TanStack Query with stable query keys.
-- Draft form state remains local to `RuleEditorPanel`.
-- Search fields use the shared debounced search component.
-- Heavy panels and history content mount only when opened.
-- Selecting a rule or editing a draft must not rerender the entire unmatched queue.
-- Queries run from explicit context changes, not scroll or render loops.
-- Preview requests are cancelled or ignored when their context is superseded.
+- TanStack Query owns server state through feature-level stable keys.
+- Each route loads only its own rule list and page component.
+- Workbench never requests rule inventories.
+- Rule pages request order-item preview only when `orderItemId` exists.
+- Search uses the shared 200 ms debounce.
+- History and heavy impact content mount only when opened.
+- Scroll events never trigger requests.
+- Successful mutations invalidate only affected Mapping summary, rule list/history, selected preview, and unmatched queue keys.
 
-## Error And Feedback UX
+## Error And Empty States
 
-- Required-field and format validation appears beside the field.
-- Rule conflicts and scope overlaps remain inline beside the preview.
-- Successful writes use the shared success product toast.
-- Failed actions use the shared error product toast with a concrete backend reason and retry only when safe.
-- Workspace load failures remain inline with a retry action.
-- Dirty editors warn before closing, changing rule, or changing pipeline stage.
-- Empty, loading, and unauthorized states use existing shared foundations.
+- Loading the queue or page data uses an inline loading state.
+- Page-level load failure remains inline with a safe retry.
+- Mutation failure preserves drafts and uses the shared product error toast.
+- Validation stays beside the field.
+- Exact conflicts and overlap warnings stay beside preview results.
+- If the originating item no longer exists, the rule page remains usable and offers a return to Workbench.
+- Read-only operators can inspect evidence but do not see write actions.
 
-## Backend Changes
+## Backend Contract
 
-No backend change is required for the first implementation. Existing APIs are sufficient for the approved workspace.
+The implementation uses the existing `/api/mapping` endpoints for unmatched items, preview, resolve, recheck, candidate selection, five rule types, rule preview, conflicts, authorable shops, and history.
 
-A backend change is allowed only when implementation proves that a human-readable reference required by the operator is missing. The frontend must not work around missing names by displaying opaque identifiers. Exact global rule-impact counting is outside V1; sampled impact remains explicitly labelled.
+Before implementing Workbench filters, audit the unmatched-item validator and repository. If Shop, marketplace, blocker, stage, or age cannot be filtered server-side, add only those missing bounded query parameters to the backend. Client-side filtering of a single page is not acceptable because it produces incomplete operational results.
 
-## Reuse From The Previous Frontend
+Any other backend change is allowed only if implementation proves that a required readable label is absent. The frontend must not replace missing labels with raw IDs or implement mapping decisions locally.
 
-Reuse behavior and contract knowledge from the existing Mapping feature:
+## Component Boundaries
 
-- API endpoint coverage and query invalidation intent;
-- response mappers;
-- rule field metadata;
-- conflict and history flows;
-- queue auto-next behavior.
+- `MappingWorkbenchPage`: unmatched queue, selected item, trace, candidate selection, and route handoff.
+- `MappingRulePage`: shared route shell for one rule type.
+- `MappingRulePageConfig`: static field and copy configuration for the five rule pages.
+- `ResolveQueuePanel`: filterable unmatched-item queue.
+- `LiveTracePanel`: read-only pipeline evidence and item-level actions.
+- `RuleInventoryPanel`: searchable rules for one type.
+- `RuleEditorPanel`: local draft and save safety gate.
+- `RuleImpactSamples`: preview and conflict evidence.
+- `RuleHistoryModal`: lazy audit history.
 
-Do not copy its MUI JSX or horizontal-tab structure into the Ant Design foundation.
+No additional abstraction is introduced beyond the shared rule-page shell because the five pages have the same lifecycle and differ only in their rule schema.
 
 ## Verification
 
-- Unit tests cover API serialization, response mapping, and pipeline-to-rule-type mapping.
-- Component tests cover pipeline navigation, permissions, context preservation, and dirty-state protection.
-- Interaction tests cover rule create/update, conflict blocking, overlap acknowledgement, item recheck, and manual candidate selection.
-- A small route smoke test verifies lazy routing and permission-gated navigation without importing the entire application route tree.
-- Final checkpoint runs focused tests, lint, typecheck, and production build.
+- Route tests cover redirect, lazy pages, permission gating, and navigation visibility.
+- Workbench tests cover all blocker types, context links, candidate selection, item-only recheck, and no scroll request loop.
+- Rule-page tests cover context prefill, readable options, preview/conflict gating, draft preservation, save, item recheck, and return behavior.
+- API/model unit tests preserve canonical endpoint and pipeline mappings.
+- Final gate runs Mapping-focused tests, lint, typecheck, and production build.
 
 ## Acceptance Criteria
 
-- An authorized operator can trace a blocked order item to the responsible pipeline stage without leaving the workspace.
-- Rule changes show before/after output and conflict evidence before they are persisted.
-- Saving a rule never silently triggers a full-backlog recheck.
-- Candidate selection persists through the backend and advances the operator to the next item when requested.
-- Read-only users can inspect all evidence but cannot see or execute write actions.
-- Seller and team-leader navigation does not expose the Mapping workspace without `MAPPING:READ`.
-- No user-facing surface relies on raw database identifiers as its primary label.
+- Workbench shows every order item blocked anywhere in the Mapping pipeline.
+- Operator can identify the blocker and open the correct rule page without searching again.
+- Rule pages contain only rule-management behavior for their own rule type.
+- Successful rule save rechecks the originating item only.
+- Candidate selection remains available in Workbench for item-level resolution.
+- No route silently rechecks the full backlog.
+- Read-only and write behavior follows backend permissions.
+- No primary operator label is an opaque database ID.
