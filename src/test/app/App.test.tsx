@@ -24,8 +24,15 @@ vi.mock('@/features/auth/api/authApi', () => ({
     account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
     roles: [],
     permissions: [],
+    scopes: [],
   }),
-  getCurrentAccount: vi.fn().mockResolvedValue({ profileSetupRequired: false }),
+  getCurrentAccount: vi.fn().mockResolvedValue({
+    account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
+    roles: [],
+    permissions: [],
+    scopes: [],
+    profileSetupRequired: false,
+  }),
 }))
 
 function renderRoute(path: string) {
@@ -48,7 +55,7 @@ describe('application shell', () => {
   it('renders the shell route and switches language without feature internals', async () => {
     renderRoute('/foundation')
 
-    expect(await screen.findByLabelText('LNG Web')).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Foundation đã sẵn sàng' })).toBeVisible()
     expect(i18n.resolvedLanguage).toBe('vi')
     fireEvent.click(screen.getByText('EN'))
     expect(await screen.findByRole('heading', { name: 'Foundation is ready' })).toBeVisible()
@@ -77,7 +84,7 @@ describe('application shell', () => {
     const workspace = appRoutes.find((route) => route.children)
     const childByPath = new Map(workspace?.children?.map((route) => [route.path, route]))
 
-    for (const path of ['auth/accounts', 'auth/access-control', 'organization', 'hr']) {
+    for (const path of ['auth/accounts', 'auth/access-control', 'organization', 'hr/*']) {
       expect(childByPath.get(path)?.lazy).toBeTypeOf('function')
       expect(childByPath.get(path)?.element).toBeUndefined()
     }

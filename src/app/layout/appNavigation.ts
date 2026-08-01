@@ -1,7 +1,7 @@
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getHrNavigation } from '@/features/hr/hrNavigation'
 
-export type AppCoreKey = 'hr' | 'system'
+export type AppCoreKey = 'portal' | 'hr' | 'system'
 
 export type NavigationItem = {
   key: string
@@ -28,6 +28,37 @@ const effectivePermissions = (account: CurrentAccount) =>
 
 export function getContextNavigation(core: AppCoreKey, account: CurrentAccount): NavigationGroup[] {
   const permissions = effectivePermissions(account)
+  const globalPermissions = new Set(account.permissions)
+  if (core === 'portal') {
+    return [
+      {
+        key: 'configuration',
+        labelKey: 'shell.groups.portalConfiguration',
+        items: [
+          permissions.has('SHOPS:READ')
+            ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
+            : null,
+          globalPermissions.has('VENDORS:READ')
+            ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
+            : null,
+        ].filter((item): item is NavigationItem => item !== null),
+      },
+      {
+        key: 'operations',
+        labelKey: 'shell.groups.portalOperations',
+        items:
+          permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
+            ? [
+                {
+                  key: 'integrations',
+                  path: '/portal/integrations',
+                  labelKey: 'shell.navigation.integrations',
+                },
+              ]
+            : [],
+      },
+    ].filter(({ items }) => items.length)
+  }
   if (core === 'system') {
     if (!systemPermissions.some((permission) => permissions.has(permission))) return []
     return [
@@ -80,12 +111,13 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
 }
 
 export function getAvailableCores(account: CurrentAccount) {
-  return (['hr', 'system'] as const)
+  return (['portal', 'hr', 'system'] as const)
     .filter((key) => getContextNavigation(key, account).length)
     .map((key) => ({ key, labelKey: `shell.cores.${key}` }))
 }
 
 export function getCoreForPath(pathname: string): AppCoreKey | undefined {
+  if (pathname.startsWith('/portal')) return 'portal'
   if (pathname.startsWith('/hr') || pathname.startsWith('/organization')) return 'hr'
   if (pathname.startsWith('/auth')) return 'system'
   return undefined

@@ -96,6 +96,48 @@ export const appRoutes: RouteObject[] = [
             Component: HrModulePage,
           })),
       },
+      {
+        path: 'portal/shops',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/shops/pages/ShopWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { ShopWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['SHOPS:READ']}>
+                <ShopWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/vendors',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/vendors/pages/VendorWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { VendorWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['VENDORS:READ']} globalOnly>
+                <VendorWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/integrations',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/integrations/pages/IntegrationWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { IntegrationWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['ORDERS:READ', 'ORDERS:WRITE']}>
+                <IntegrationWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
       { path: 'foundation', element: <FoundationPage /> },
     ],
   },

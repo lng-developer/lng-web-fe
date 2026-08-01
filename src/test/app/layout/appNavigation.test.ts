@@ -30,6 +30,7 @@ const account = (permissions: string[], scopedPermissions: string[] = []): Curre
 
 describe('app navigation', () => {
   it('shows only cores backed by permitted routes', () => {
+    expect(getAvailableCores(account(['SHOPS:READ'])).map(({ key }) => key)).toEqual(['portal'])
     expect(getAvailableCores(account(['HR_ATTENDANCE:WRITE'])).map(({ key }) => key)).toEqual([
       'hr',
     ])
@@ -40,9 +41,89 @@ describe('app navigation', () => {
   })
 
   it('maps nested organization and account routes to their owning core', () => {
+    expect(getCoreForPath('/portal/shops')).toBe('portal')
     expect(getCoreForPath('/organization')).toBe('hr')
     expect(getCoreForPath('/auth/accounts/account-1')).toBe('system')
     expect(getCoreForPath('/auth/access-control')).toBe('system')
+  })
+
+  it('shows Shop configuration only when the caller can read Shops', () => {
+    expect(getContextNavigation('portal', account(['SHOPS:READ']))).toMatchObject([
+      { key: 'configuration', items: [{ key: 'shops', path: '/portal/shops' }] },
+    ])
+    expect(getAvailableCores(account([])).map(({ key }) => key)).not.toContain('portal')
+  })
+
+  it('shows Vendor configuration only when the caller can read Vendors', () => {
+    expect(getContextNavigation('portal', account(['VENDORS:READ']))).toMatchObject([
+      { key: 'configuration', items: [{ key: 'vendors', path: '/portal/vendors' }] },
+    ])
+    expect(getContextNavigation('portal', account(['SHOPS:READ']))[0]?.items).not.toContainEqual(
+      expect.objectContaining({ key: 'vendors' }),
+    )
+  })
+
+  it('does not expose global-only Vendor navigation from scoped permissions', () => {
+    expect(getContextNavigation('portal', account([], ['VENDORS:READ']))).toEqual([])
+    expect(getAvailableCores(account([], ['VENDORS:WRITE'])).map(({ key }) => key)).not.toContain(
+      'portal',
+    )
+  })
+
+  it('keeps Shops before Vendors when both configuration permissions are granted', () => {
+    expect(
+      getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ']))[0]?.items,
+    ).toEqual([
+      { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' },
+      { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' },
+    ])
+  })
+
+  it('groups external order imports under Portal Operations for order readers and writers', () => {
+    for (const permission of ['ORDERS:READ', 'ORDERS:WRITE']) {
+      expect(getContextNavigation('portal', account([permission]))).toEqual([
+        {
+          key: 'operations',
+          labelKey: 'shell.groups.portalOperations',
+          items: [
+            {
+              key: 'integrations',
+              path: '/portal/integrations',
+              labelKey: 'shell.navigation.integrations',
+            },
+          ],
+        },
+      ])
+    }
+  })
+
+  it('exposes Portal Operations for scoped order access and keeps it separate from configuration', () => {
+    const scopedWriter = account([], ['ORDERS:WRITE'])
+    scopedWriter.scopes[0] = {
+      ...scopedWriter.scopes[0],
+      scopeType: 'shop',
+      scopeId: 'shop-1',
+      resourceId: 'shop-1',
+    }
+
+    expect(getAvailableCores(scopedWriter).map(({ key }) => key)).toContain('portal')
+    expect(getDefaultWorkspacePath(scopedWriter)).toBe('/portal/integrations')
+    expect(
+      getContextNavigation('portal', account(['SHOPS:READ', 'ORDERS:READ'])).map(({ key }) => key),
+    ).toEqual(['configuration', 'operations'])
+  })
+
+  it('shows Shop configuration for an exact Shop-scoped reader', () => {
+    const shopReader = account([], ['SHOPS:READ'])
+    shopReader.scopes[0] = {
+      ...shopReader.scopes[0],
+      scopeType: 'shop',
+      scopeId: 'shop-1',
+      resourceId: 'shop-1',
+    }
+
+    expect(getAvailableCores(shopReader).map(({ key }) => key)).toContain('portal')
+    expect(getContextNavigation('portal', shopReader)[0]?.items[0]?.path).toBe('/portal/shops')
   })
 
   it('keeps staff navigation personal and exposes scoped manager groups', () => {

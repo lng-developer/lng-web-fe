@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import {
+  AppstoreOutlined,
   MedicineBoxOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -11,6 +12,7 @@ import type { AppCoreKey } from './appNavigation'
 import styles from './AppShell.module.scss'
 
 const coreIcons = {
+  portal: <AppstoreOutlined />,
   hr: <MedicineBoxOutlined />,
   system: <SettingOutlined />,
 }

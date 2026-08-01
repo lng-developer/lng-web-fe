@@ -4,6 +4,12 @@ export { type Command, CommandPalette, type CommandPaletteProps } from './Comman
 export { ConfirmDangerModal, type ConfirmDangerModalProps } from './ConfirmDangerModal'
 export { DataTable, type DataTableProps } from './DataTable'
 export {
+  DateRangePicker,
+  type DateRangePickerProps,
+  type DateRangeValue,
+  serializeDateRange,
+} from './DateRangePicker'
+export {
   DateTimePicker,
   type DateTimePickerMode,
   type DateTimePickerProps,
