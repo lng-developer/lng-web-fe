@@ -696,6 +696,9 @@
   "portal": {
     "catalog": {
       "title": "Catalog listings",
+      "actions": "Actions",
+      "view": "View",
+      "moreActions": "More actions",
       "tabs": {
         "listings": "Listings",
         "productTypes": "Product types",
@@ -794,6 +797,10 @@
     },
     "design": {
       "title": "Design operations",
+      "actions": "Actions",
+      "view": "View",
+      "review": "Review",
+      "moreActions": "More actions",
       "description": "Assign, produce, submit, and review design assets linked to Catalog listings.",
       "refresh": "Refresh",
       "filters": "Design filters",

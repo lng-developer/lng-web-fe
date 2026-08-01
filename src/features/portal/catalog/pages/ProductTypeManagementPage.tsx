@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Form, Input, InputNumber, Modal, Select, Space } from 'antd'
+import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip } from 'antd'
 
 import { DataTable, PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
@@ -68,6 +68,29 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
         <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
       ),
     },
+    ...(canManage
+      ? [
+          {
+            key: 'actions',
+            title: t('portal.catalog.actions'),
+            width: 76,
+            fixed: 'right' as const,
+            render: (_: unknown, row: ProductTypeGroup) => (
+              <Tooltip title={t('portal.catalog.master.editProductType')}>
+                <Button
+                  type="text"
+                  aria-label={t('portal.catalog.master.editProductType')}
+                  icon={<EditOutlined />}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    open(row)
+                  }}
+                />
+              </Tooltip>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

@@ -695,6 +695,9 @@
   },
   "portal": {
     "catalog": {
+      "actions": "Thao tác",
+      "view": "Xem",
+      "moreActions": "Thao tác khác",
       "title": "Danh mục listing",
       "tabs": { "listings": "Listing", "productTypes": "Loại sản phẩm", "templates": "Mẫu nội bộ" },
       "description": "Quản lý cấu hình listing, trạng thái PSD thực tế và QC.",
@@ -789,6 +792,10 @@
       "reasonRequired": "Bắt buộc nhập lý do"
     },
     "design": {
+      "actions": "Thao tác",
+      "view": "Xem",
+      "review": "Kiểm duyệt",
+      "moreActions": "Thao tác khác",
       "title": "Vận hành thiết kế",
       "description": "Phân công, thực hiện, nộp và duyệt tài nguyên thiết kế gắn với listing.",
       "refresh": "Làm mới",

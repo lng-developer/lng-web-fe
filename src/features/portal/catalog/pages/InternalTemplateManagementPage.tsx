@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DeleteOutlined, PlusOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons'
+import {
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -13,6 +19,7 @@ import {
   Space,
   Switch,
   Tabs,
+  Tooltip,
   Typography,
   Upload,
 } from 'antd'
@@ -136,6 +143,29 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
       ),
     },
+    ...(canManage
+      ? [
+          {
+            key: 'actions',
+            title: t('portal.catalog.actions'),
+            width: 76,
+            fixed: 'right' as const,
+            render: (_: unknown, row: InternalTemplate) => (
+              <Tooltip title={t('portal.catalog.master.editTemplate')}>
+                <Button
+                  type="text"
+                  aria-label={t('portal.catalog.master.editTemplate')}
+                  icon={<EditOutlined />}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void open(row)
+                  }}
+                />
+              </Tooltip>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

@@ -1,10 +1,20 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { EyeOutlined, MoreOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Input, Modal, Select, Space, Typography } from 'antd'
+import {
+  Button,
+  Descriptions,
+  Dropdown,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Tooltip,
+  Typography,
+} from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -221,6 +231,57 @@ export function CatalogListingWorkbenchPage({
       width: 170,
       dataIndex: 'updatedAt',
       render: (value) => (value ? new Date(value).toLocaleString() : '-'),
+    },
+    {
+      key: 'actions',
+      title: t('portal.catalog.actions'),
+      width: 130,
+      fixed: 'right',
+      render: (_, row) => (
+        <Space onClick={(event) => event.stopPropagation()}>
+          <Tooltip title={t('portal.catalog.view')}>
+            <Button
+              type="text"
+              aria-label={t('portal.catalog.view')}
+              icon={<EyeOutlined />}
+              onClick={() => setSelectedId(row.id)}
+            />
+          </Tooltip>
+          {canWrite(row) ? (
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'edit', label: t('portal.catalog.edit') },
+                  ...(row.qcStatus === 'DRAFT'
+                    ? [
+                        { key: 'approve', label: t('portal.catalog.approve') },
+                        { key: 'reject', label: t('portal.catalog.reject'), danger: true },
+                      ]
+                    : []),
+                ],
+                onClick: ({ key }) => {
+                  if (key === 'edit') setEditing(row)
+                  if (key === 'approve')
+                    Modal.confirm({
+                      title: t('portal.catalog.approve'),
+                      onOk: () => approve.mutate(row.id),
+                    })
+                  if (key === 'reject') {
+                    setSelectedId(row.id)
+                    setRejectOpen(true)
+                  }
+                },
+              }}
+            >
+              <Button
+                type="text"
+                aria-label={t('portal.catalog.moreActions')}
+                icon={<MoreOutlined />}
+              />
+            </Dropdown>
+          ) : null}
+        </Space>
+      ),
     },
   ]
   const selected = detail.data

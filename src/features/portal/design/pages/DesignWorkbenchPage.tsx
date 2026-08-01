@@ -1,10 +1,29 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { ReloadOutlined, UploadOutlined } from '@ant-design/icons'
+import {
+  AuditOutlined,
+  EyeOutlined,
+  MoreOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+  UserAddOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType, UploadFile } from 'antd'
-import { Button, Descriptions, Input, Modal, Select, Space, Typography, Upload } from 'antd'
+import {
+  Button,
+  Descriptions,
+  Dropdown,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Tooltip,
+  Typography,
+  Upload,
+} from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -69,6 +88,7 @@ export function DesignWorkbenchPage() {
   const [status, setStatus] = useState<string>()
   const [taskType, setTaskType] = useState<string>()
   const [selectedId, setSelectedId] = useState<string>()
+  const [activeTask, setActiveTask] = useState<DesignTask>()
   const [assignOpen, setAssignOpen] = useState(false)
   const [designerId, setDesignerId] = useState<string>()
   const [submitOpen, setSubmitOpen] = useState(false)
@@ -121,12 +141,28 @@ export function DesignWorkbenchPage() {
       setFiles([])
       setNote('')
       setRejectReason('')
+      setActiveTask(undefined)
       await refresh()
       toast('success', t('portal.design.updated'))
     },
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not update design task'),
   })
+  const canAssign = permissions.has('DESIGN:WRITE')
+  const canWork = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:WORK')
+  const canReview = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:REVIEW')
+  const openQuickAction = (task: DesignTask, type: 'assign' | 'start' | 'submit' | 'review') => {
+    if (type === 'review') setSelectedId(task.id)
+    if (type === 'assign') {
+      setActiveTask(task)
+      setAssignOpen(true)
+    }
+    if (type === 'start') action.mutate({ type: 'start', task })
+    if (type === 'submit') {
+      setActiveTask(task)
+      setSubmitOpen(true)
+    }
+  }
   const columns: TableColumnsType<DesignTask> = [
     {
       title: t('portal.design.listing'),
@@ -158,11 +194,73 @@ export function DesignWorkbenchPage() {
       width: 170,
       render: (value) => new Date(value).toLocaleString(),
     },
+    {
+      key: 'actions',
+      title: t('portal.design.actions'),
+      width: 150,
+      fixed: 'right',
+      render: (_, row) => {
+        const primary =
+          canAssign && ['REQUESTED', 'OPEN'].includes(row.status)
+            ? (['assign', t('portal.design.assign')] as const)
+            : canWork && row.status === 'ASSIGNED'
+              ? (['start', t('portal.design.start')] as const)
+              : canWork && ['IN_PROGRESS', 'REJECTED'].includes(row.status)
+                ? (['submit', t('portal.design.submit')] as const)
+                : canReview && row.status === 'SUBMITTED'
+                  ? (['review', t('portal.design.review')] as const)
+                  : null
+        return (
+          <Space onClick={(event) => event.stopPropagation()}>
+            {primary ? (
+              <Tooltip title={primary[1]}>
+                <Button
+                  type="text"
+                  aria-label={primary[1]}
+                  icon={
+                    primary[0] === 'assign' ? (
+                      <UserAddOutlined />
+                    ) : primary[0] === 'start' ? (
+                      <PlayCircleOutlined />
+                    ) : primary[0] === 'submit' ? (
+                      <UploadOutlined />
+                    ) : (
+                      <AuditOutlined />
+                    )
+                  }
+                  onClick={() => openQuickAction(row, primary[0])}
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title={t('portal.design.view')}>
+                <Button
+                  type="text"
+                  aria-label={t('portal.design.view')}
+                  icon={<EyeOutlined />}
+                  onClick={() => setSelectedId(row.id)}
+                />
+              </Tooltip>
+            )}
+            {primary ? (
+              <Dropdown
+                menu={{
+                  items: [{ key: 'view', label: t('portal.design.view') }],
+                  onClick: () => setSelectedId(row.id),
+                }}
+              >
+                <Button
+                  type="text"
+                  aria-label={t('portal.design.moreActions')}
+                  icon={<MoreOutlined />}
+                />
+              </Dropdown>
+            ) : null}
+          </Space>
+        )
+      },
+    },
   ]
   const task = detail.data
-  const canAssign = permissions.has('DESIGN:WRITE')
-  const canWork = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:WORK')
-  const canReview = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:REVIEW')
 
   return (
     <section className={styles.page}>
@@ -314,8 +412,11 @@ export function DesignWorkbenchPage() {
         okText={t('portal.design.assign')}
         confirmLoading={action.isPending}
         okButtonProps={{ disabled: !designerId }}
-        onCancel={() => setAssignOpen(false)}
-        onOk={() => task && action.mutate({ type: 'assign', task })}
+        onCancel={() => {
+          setAssignOpen(false)
+          setActiveTask(undefined)
+        }}
+        onOk={() => activeTask && action.mutate({ type: 'assign', task: activeTask })}
       >
         <Select
           showSearch
@@ -355,8 +456,11 @@ export function DesignWorkbenchPage() {
         okText={t('portal.design.submit')}
         confirmLoading={action.isPending}
         okButtonProps={{ disabled: !files.length }}
-        onCancel={() => setSubmitOpen(false)}
-        onOk={() => task && action.mutate({ type: 'submit', task })}
+        onCancel={() => {
+          setSubmitOpen(false)
+          setActiveTask(undefined)
+        }}
+        onOk={() => activeTask && action.mutate({ type: 'submit', task: activeTask })}
       >
         <Space direction="vertical" style={{ width: '100%' }}>
           <Upload.Dragger
