@@ -71,4 +71,12 @@ describe('ManualSlotUploadModal', () => {
     expect(screen.queryByRole('radio', { name: 'Front' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add print position' })).toBeDisabled()
   })
+
+  it('uses the modal footer layout for its actions', () => {
+    render(<ManualSlotUploadModal open onClose={vi.fn()} onSubmit={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Cancel' }).parentElement?.className).toContain(
+      'actions',
+    )
+  })
 })

@@ -170,7 +170,7 @@ export function ManualSlotUploadModal({
           />
         ) : null}
 
-        <div className="flex justify-end gap-2">
+        <div className={styles.actions}>
           <Button onClick={onClose}>{t('portal.production.manualSlot.cancel')}</Button>
           <Button
             type="primary"
