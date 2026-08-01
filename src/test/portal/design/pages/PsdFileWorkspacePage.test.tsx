@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/design/api/designApi', () => ({
@@ -44,23 +44,19 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
   }),
 }))
 
-import { AppProviders } from '@/app/providers/AppProviders'
 import { PsdFileWorkspacePage } from '@/features/portal/design/pages/PsdFileWorkspacePage'
+import { renderWithTestProviders } from '@/test/helpers/testProviders'
 
 describe('PsdFileWorkspacePage', () => {
   afterEach(cleanup)
 
   it('shows real download links and only previews image files', async () => {
-    render(
-      <AppProviders>
-        <PsdFileWorkspacePage />
-      </AppProviders>,
-    )
+    const view = renderWithTestProviders(<PsdFileWorkspacePage />)
 
-    expect(await screen.findByText('reference.png')).toBeVisible()
-    expect(screen.getByAltText('reference.png')).toBeVisible()
-    expect(screen.queryByAltText('master.psd')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Download master.psd' })).toHaveAttribute(
+    expect(await view.findByText('reference.png')).toBeVisible()
+    expect(view.getByAltText('reference.png')).toBeVisible()
+    expect(view.queryByAltText('master.psd')).not.toBeInTheDocument()
+    expect(view.getByRole('link', { name: 'Download master.psd' })).toHaveAttribute(
       'href',
       '/api/media/assets/asset-2/download',
     )
