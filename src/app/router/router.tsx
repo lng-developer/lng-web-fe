@@ -8,6 +8,7 @@ import {
 } from '@/features/auth/guards/accountSetupGuards'
 import { LoginPage } from '@/features/auth/login/pages/LoginPage'
 import { FoundationPage } from '@/features/foundation/FoundationPage'
+import { LegacyMappingRedirect } from '@/features/portal/mapping/pages/LegacyMappingRedirect'
 
 import { NotFoundPage } from './NotFoundPage'
 import { RouteErrorPage } from './RouteErrorPage'
@@ -161,91 +162,41 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'portal/mapping',
-        element: <Navigate to="/portal/mapping/workbench" replace />,
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
       },
       {
         path: 'portal/mapping/workbench',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/mapping/pages/MappingWorkbenchPage'),
-          ]).then(([{ PortalPageBoundary }, { MappingWorkbenchPage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
-                <MappingWorkbenchPage />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <LegacyMappingRedirect tab="workbench" />,
       },
       {
         path: 'portal/mapping/sku-rules',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/mapping/pages/MappingRulePage'),
-          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
-                <MappingRulePage pageKey="sku-rules" />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <LegacyMappingRedirect tab="sku-rules" />,
       },
       {
         path: 'portal/mapping/product-mapping',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/mapping/pages/MappingRulePage'),
-          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
-                <MappingRulePage pageKey="product-mapping" />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <LegacyMappingRedirect tab="product-mapping" />,
       },
       {
         path: 'portal/mapping/input-semantics',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/mapping/pages/MappingRulePage'),
-          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
-                <MappingRulePage pageKey="input-semantics" />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <LegacyMappingRedirect tab="input-semantics" />,
       },
       {
         path: 'portal/mapping/value-aliases',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/mapping/pages/MappingRulePage'),
-          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
-                <MappingRulePage pageKey="value-aliases" />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <LegacyMappingRedirect tab="value-aliases" />,
       },
       {
         path: 'portal/mapping/vendor-routing',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/mapping/pages/MappingRulePage'),
-          ]).then(([{ PortalPageBoundary }, { MappingRulePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
-                <MappingRulePage pageKey="vendor-routing" />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <LegacyMappingRedirect tab="vendor-routing" />,
       },
       {
         path: 'portal/integrations',

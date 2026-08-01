@@ -151,7 +151,7 @@ export function MappingWorkbenchPage({
           orderItemId,
           configCode:
             preview.data?.skuMapping?.configCode ?? selectedItem?.skuMapping?.configCode ?? '',
-          returnTo: '/portal/mapping/workbench',
+          returnTo: '/portal/mapping?tab=workbench',
         }).toString()
       : ''
 
@@ -242,7 +242,7 @@ export function MappingWorkbenchPage({
           }
           extra={
             rulePage ? (
-              <Link to={`/portal/mapping/${rulePage.path}?${ruleSearch}`}>
+              <Link to={`/portal/mapping?tab=${rulePage.key}&${ruleSearch}`}>
                 Open {t(rulePage.titleKey)}
               </Link>
             ) : null
@@ -250,7 +250,7 @@ export function MappingWorkbenchPage({
         >
           {selectedItem ? (
             <Typography.Text type="secondary">
-              {selectedItem.externalOrderId || selectedItem.asin || selectedItem.id}
+              {selectedItem.externalOrderId || selectedItem.asin || t('mapping.states.unavailable')}
             </Typography.Text>
           ) : null}
           <LiveTracePanel

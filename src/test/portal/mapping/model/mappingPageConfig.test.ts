@@ -17,7 +17,7 @@ describe('mappingPageConfig', () => {
 
   it('accepts only internal mapping return paths', () => {
     expect(safeMappingReturnTo('/portal/mapping/workbench')).toBe('/portal/mapping/workbench')
-    expect(safeMappingReturnTo('/portal/orders')).toBe('/portal/mapping/workbench')
-    expect(safeMappingReturnTo('https://evil.example')).toBe('/portal/mapping/workbench')
+    expect(safeMappingReturnTo('/portal/orders')).toBe('/portal/mapping?tab=workbench')
+    expect(safeMappingReturnTo('https://evil.example')).toBe('/portal/mapping?tab=workbench')
   })
 })

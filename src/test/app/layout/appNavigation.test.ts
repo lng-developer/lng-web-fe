@@ -129,14 +129,7 @@ describe('app navigation', () => {
 
   it('shows Mapping only for global or scoped mapping access', () => {
     for (const permission of ['MAPPING:READ', 'MAPPING:WRITE']) {
-      const expected = [
-        '/portal/mapping/workbench',
-        '/portal/mapping/sku-rules',
-        '/portal/mapping/product-mapping',
-        '/portal/mapping/input-semantics',
-        '/portal/mapping/value-aliases',
-        '/portal/mapping/vendor-routing',
-      ]
+      const expected = ['/portal/mapping']
       expect(
         getContextNavigation('portal', account([permission]))[0]?.items.map(({ path }) => path),
       ).toEqual(expected)

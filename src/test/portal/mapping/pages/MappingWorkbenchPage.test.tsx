@@ -45,7 +45,7 @@ function renderPage(currentAccount = account) {
         loader: () => currentAccount,
         element: <MappingWorkbenchPage />,
       },
-      { path: '/portal/mapping/product-mapping', element: <div>Product Mapping</div> },
+      { path: '/portal/mapping', element: <div>Product Mapping</div> },
     ],
     { initialEntries: ['/portal/mapping/workbench'] },
   )
@@ -102,10 +102,8 @@ describe('MappingWorkbenchPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /J2501-TS1S-01/i }))
 
     const link = await screen.findByRole('link', { name: 'Open Product mapping' })
-    expect(link).toHaveAttribute(
-      'href',
-      expect.stringContaining('/portal/mapping/product-mapping?'),
-    )
+    expect(link).toHaveAttribute('href', expect.stringContaining('/portal/mapping?'))
+    expect(link).toHaveAttribute('href', expect.stringContaining('tab=product-mapping'))
     expect(link).toHaveAttribute('href', expect.stringContaining('orderItemId=item-1'))
     expect(listMappingRules).not.toHaveBeenCalled()
   })

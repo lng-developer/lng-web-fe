@@ -76,5 +76,5 @@ export function getRulePageForFixType(fixType?: string) {
 }
 
 export function safeMappingReturnTo(value?: string | null) {
-  return value?.startsWith('/portal/mapping/') ? value : '/portal/mapping/workbench'
+  return value?.startsWith('/portal/mapping') ? value : '/portal/mapping?tab=workbench'
 }
