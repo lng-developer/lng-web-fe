@@ -18,7 +18,8 @@
       "shops": "Cửa hàng",
       "vendors": "Nhà cung cấp",
       "integrations": "Tích hợp",
-      "vendorSubmissions": "Gửi đơn nhà cung cấp"
+      "vendorSubmissions": "Gửi đơn nhà cung cấp",
+      "shipments": "Vận chuyển"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {
@@ -923,6 +924,48 @@
         "payloadCorrected": "Nhân viên xác nhận dữ liệu gửi đã được sửa",
         "remoteMissing": "Nhân viên xác nhận nhà cung cấp chưa có đơn",
         "remoteFound": "Nhân viên xác nhận đã tìm thấy đơn trên hệ thống nhà cung cấp"
+      }
+    },
+    "shipments": {
+      "title": "Vận hành vận chuyển",
+      "description": "Theo dõi mã vận đơn, ngoại lệ giao hàng và đối soát an toàn với nhà cung cấp.",
+      "refresh": "Tải lại",
+      "unavailable": "Không thể tải danh sách vận chuyển",
+      "filters": "Bộ lọc vận chuyển",
+      "externalOrderId": "Mã đơn ngoài hệ thống",
+      "trackingNumber": "Mã vận đơn",
+      "allStatuses": "Tất cả trạng thái",
+      "detail": "Chi tiết vận chuyển",
+      "note": "Ghi chú",
+      "recheck": "Kiểm tra lại",
+      "recheckComplete": "Đã kiểm tra lại vận chuyển",
+      "recheckFailed": "Kiểm tra lại vận chuyển thất bại",
+      "webhookHistory": "Lịch sử webhook nhà cung cấp",
+      "logsUnavailable": "Không thể tải lịch sử webhook",
+      "loadingLogs": "Đang tải lịch sử webhook",
+      "metrics": {
+        "total": "Tổng",
+        "trackingPending": "Chờ mã vận đơn",
+        "shipped": "Đã gửi",
+        "delivered": "Đã giao",
+        "exception": "Ngoại lệ"
+      },
+      "columns": {
+        "order": "Đơn hàng",
+        "vendorOrder": "Đơn nhà cung cấp",
+        "provider": "Dịch vụ",
+        "tracking": "Mã vận đơn",
+        "status": "Trạng thái",
+        "updated": "Cập nhật",
+        "action": "Thao tác"
+      },
+      "statuses": {
+        "TRACKING_PENDING": "Chờ mã vận đơn",
+        "SHIPPED": "Đã gửi",
+        "DELIVERED": "Đã giao",
+        "EXCEPTION": "Ngoại lệ",
+        "RETURNED": "Hoàn trả",
+        "CANCELLED": "Đã hủy"
       }
     },
     "vendors": {

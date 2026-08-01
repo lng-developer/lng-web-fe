@@ -152,6 +152,20 @@ export const appRoutes: RouteObject[] = [
             ),
           })),
       },
+      {
+        path: 'portal/shipments',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/shipments/pages/ShipmentWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { ShipmentWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['SHIPMENTS:READ', 'SHIPMENTS:WRITE']}>
+                <ShipmentWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
       { path: 'foundation', element: <FoundationPage /> },
     ],
   },

@@ -97,6 +97,17 @@ describe('app navigation', () => {
     }
   })
 
+  it('shows shipment operations for global or scoped shipment readers', () => {
+    expect(getContextNavigation('portal', account(['SHIPMENTS:READ']))[0]?.items).toContainEqual({
+      key: 'shipments',
+      path: '/portal/shipments',
+      labelKey: 'shell.navigation.shipments',
+    })
+    expect(
+      getContextNavigation('portal', account([], ['SHIPMENTS:READ']))[0]?.items,
+    ).toContainEqual(expect.objectContaining({ key: 'shipments' }))
+  })
+
   it('exposes Portal Operations for scoped order access and keeps it separate from configuration', () => {
     const scopedWriter = account([], ['ORDERS:WRITE'])
     scopedWriter.scopes[0] = {

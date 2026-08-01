@@ -18,7 +18,8 @@
       "shops": "Shops",
       "vendors": "Vendors",
       "integrations": "Integrations",
-      "vendorSubmissions": "Vendor submissions"
+      "vendorSubmissions": "Vendor submissions",
+      "shipments": "Shipments"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -923,6 +924,48 @@
         "payloadCorrected": "Operator confirmed payload is corrected",
         "remoteMissing": "Operator confirmed provider has no order",
         "remoteFound": "Operator confirmed order in provider portal"
+      }
+    },
+    "shipments": {
+      "title": "Shipment operations",
+      "description": "Monitor tracking, delivery exceptions, and safe vendor rechecks.",
+      "refresh": "Refresh",
+      "unavailable": "Shipments are unavailable",
+      "filters": "Shipment filters",
+      "externalOrderId": "External order ID",
+      "trackingNumber": "Tracking number",
+      "allStatuses": "All statuses",
+      "detail": "Shipment detail",
+      "note": "Note",
+      "recheck": "Recheck",
+      "recheckComplete": "Shipment recheck completed",
+      "recheckFailed": "Shipment recheck failed",
+      "webhookHistory": "Vendor webhook history",
+      "logsUnavailable": "Webhook history is unavailable",
+      "loadingLogs": "Loading webhook history",
+      "metrics": {
+        "total": "Total",
+        "trackingPending": "Pending tracking",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "exception": "Exceptions"
+      },
+      "columns": {
+        "order": "Order",
+        "vendorOrder": "Vendor order",
+        "provider": "Provider",
+        "tracking": "Tracking",
+        "status": "Status",
+        "updated": "Updated",
+        "action": "Action"
+      },
+      "statuses": {
+        "TRACKING_PENDING": "Tracking pending",
+        "SHIPPED": "Shipped",
+        "DELIVERED": "Delivered",
+        "EXCEPTION": "Exception",
+        "RETURNED": "Returned",
+        "CANCELLED": "Cancelled"
       }
     },
     "vendors": {

@@ -61,6 +61,13 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 labelKey: 'shell.navigation.vendorSubmissions',
               }
             : null,
+          permissions.has('SHIPMENTS:READ') || permissions.has('SHIPMENTS:WRITE')
+            ? {
+                key: 'shipments',
+                path: '/portal/shipments',
+                labelKey: 'shell.navigation.shipments',
+              }
+            : null,
         ].filter((item): item is NavigationItem => item !== null),
       },
     ].filter(({ items }) => items.length)
