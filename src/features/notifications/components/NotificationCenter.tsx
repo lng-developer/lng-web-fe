@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BellOutlined, CheckOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Badge, Button, Empty, List, Popover, Skeleton, Space, Typography } from 'antd'
 
 import { useFeedbackToast } from '@/shared/ui'
@@ -12,6 +12,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from '../api/notificationApi'
+import styles from './NotificationCenter.module.scss'
 
 const notificationKey = ['notifications'] as const
 
@@ -20,15 +21,17 @@ export function NotificationCenter() {
   const toast = useFeedbackToast()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [limit, setLimit] = useState(8)
   const countQuery = useQuery({
     queryKey: [...notificationKey, 'unread-count'],
     queryFn: getUnreadCount,
     refetchInterval: 60_000,
   })
   const inboxQuery = useQuery({
-    queryKey: [...notificationKey, 'inbox'],
-    queryFn: () => listNotifications(),
+    queryKey: [...notificationKey, 'inbox', limit],
+    queryFn: () => listNotifications(false, limit),
     enabled: open,
+    placeholderData: keepPreviousData,
   })
   const refresh = () => queryClient.invalidateQueries({ queryKey: notificationKey })
   const mutationError = (error: Error) =>
@@ -48,7 +51,7 @@ export function NotificationCenter() {
   })
 
   const content = (
-    <div className="w-[380px] max-w-[80vw]">
+    <div className={styles.content}>
       <Space className="mb-3 flex w-full justify-between">
         <Typography.Title level={5} className="!mb-0">
           {t('notifications.title')}
@@ -67,6 +70,7 @@ export function NotificationCenter() {
         <Skeleton active paragraph={{ rows: 4 }} />
       ) : (
         <List
+          className={styles.list}
           dataSource={inboxQuery.data?.items ?? []}
           locale={{
             emptyText: (
@@ -107,6 +111,16 @@ export function NotificationCenter() {
           )}
         />
       )}
+      {(inboxQuery.data?.pagination.total ?? 0) > (inboxQuery.data?.items.length ?? 0) ? (
+        <Button
+          block
+          type="link"
+          loading={inboxQuery.isFetching}
+          onClick={() => setLimit((value) => value + 8)}
+        >
+          {t('notifications.loadMore')}
+        </Button>
+      ) : null}
     </div>
   )
 
@@ -116,7 +130,10 @@ export function NotificationCenter() {
       placement="bottomRight"
       open={open}
       content={content}
-      onOpenChange={setOpen}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (!nextOpen) setLimit(8)
+      }}
     >
       <Badge count={countQuery.data?.unreadCount ?? 0} size="small" overflowCount={99}>
         <Button

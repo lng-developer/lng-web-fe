@@ -1392,6 +1392,7 @@
     "empty": "Bạn chưa có thông báo.",
     "markRead": "Đánh dấu đã đọc",
     "markAllRead": "Đánh dấu tất cả đã đọc",
+    "loadMore": "Xem thêm",
     "markedAllRead": "Đã đánh dấu tất cả thông báo là đã đọc",
     "updateFailed": "Không thể cập nhật thông báo"
   },

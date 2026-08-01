@@ -18,11 +18,15 @@ describe('notificationApi', () => {
 
   it('uses the inbox and unread count contracts', async () => {
     await listNotifications(true)
+    await listNotifications(false, 16)
     await getUnreadCount()
     expect(apiClient.get).toHaveBeenNthCalledWith(1, '/api/notifications', {
-      params: { unreadOnly: true, page: 1, limit: 10 },
+      params: { unreadOnly: true, page: 1, limit: 8 },
     })
-    expect(apiClient.get).toHaveBeenNthCalledWith(2, '/api/notifications/unread-count')
+    expect(apiClient.get).toHaveBeenNthCalledWith(2, '/api/notifications', {
+      params: { unreadOnly: false, page: 1, limit: 16 },
+    })
+    expect(apiClient.get).toHaveBeenNthCalledWith(3, '/api/notifications/unread-count')
   })
 
   it('uses the read mutation contracts', async () => {

@@ -1,0 +1,8 @@
+.content {
+  width: min(460px, calc(100vw - 64px));
+}
+
+.list {
+  max-height: min(560px, calc(100vh - 160px));
+  overflow-y: auto;
+}
