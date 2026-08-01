@@ -27,6 +27,7 @@ import {
 } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { getListingOptions, listListings } from '@/features/portal/catalog/api/catalogApi'
 import {
   DataTable,
   DetailDrawer,
@@ -43,6 +44,8 @@ import {
   bulkCreatePsdTasks,
   type BulkPsdTaskResult,
   cancelDesignTask,
+  createDesignTask,
+  type CreateDesignTaskInput,
   createPsdTaskFromListing,
   type DesignTask,
   getDesignSummary,
@@ -58,6 +61,7 @@ import {
   uploadDesignAsset,
 } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
+import { type CreateDesignTaskDraft, CreateDesignTaskModal } from './CreateDesignTaskModal'
 import styles from './DesignWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20
@@ -82,6 +86,14 @@ const tone = (status: string) =>
         : status === 'SUBMITTED'
           ? 'ready'
           : 'processing'
+const priorityTone = (priority: string) =>
+  priority === 'URGENT'
+    ? 'critical'
+    : priority === 'HIGH'
+      ? 'warning'
+      : priority === 'NORMAL'
+        ? 'ready'
+        : 'cancelled'
 
 export function DesignWorkbenchPage() {
   const { t } = useTranslation()
@@ -110,6 +122,7 @@ export function DesignWorkbenchPage() {
   const [candidateOpen, setCandidateOpen] = useState(false)
   const [candidateIds, setCandidateIds] = useState<string[]>([])
   const [candidateResult, setCandidateResult] = useState<BulkPsdTaskResult>()
+  const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const params = { page, limit: PAGE_SIZE, search: search || undefined, status, taskType }
@@ -127,7 +140,6 @@ export function DesignWorkbenchPage() {
   const assignees = useQuery({
     queryKey: designKeys.assignees(),
     queryFn: listDesignAssignees,
-    enabled: assignOpen,
     retry: false,
   })
   const dashboardParams = { search: search || undefined, status, taskType }
@@ -151,6 +163,18 @@ export function DesignWorkbenchPage() {
     queryKey: designKeys.submissions(selectedId ?? ''),
     queryFn: () => listDesignSubmissions(selectedId!),
     enabled: Boolean(selectedId),
+    retry: false,
+  })
+  const createListings = useQuery({
+    queryKey: ['catalog', 'listings', 'design-task-create'],
+    queryFn: () => listListings({ page: 1, limit: 100 }),
+    enabled: createTaskOpen,
+    retry: false,
+  })
+  const createOptions = useQuery({
+    queryKey: ['catalog', 'listing-options', 'design-task-create'],
+    queryFn: getListingOptions,
+    enabled: createTaskOpen,
     retry: false,
   })
   const refresh = async () => queryClient.invalidateQueries({ queryKey: designKeys.all })
@@ -202,9 +226,31 @@ export function DesignWorkbenchPage() {
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not create tasks'),
   })
+  const createTask = useMutation({
+    mutationFn: async (draft: CreateDesignTaskDraft) => {
+      const { referenceFiles, ...input } = draft
+      const assets = await Promise.all(
+        referenceFiles.map(({ originFileObj }) => uploadDesignAsset(originFileObj as File)),
+      )
+      return createDesignTask({
+        ...(input as CreateDesignTaskInput),
+        ...(assets.length ? { referenceAssetIds: assets.map(({ id }) => id) } : {}),
+      })
+    },
+    onSuccess: async () => {
+      setCreateTaskOpen(false)
+      await refresh()
+      toast('success', t('portal.design.tasksCreated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : 'Could not create design task'),
+  })
   const canAssign = permissions.has('DESIGN:WRITE')
   const canWork = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:WORK')
   const canReview = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:REVIEW')
+  const assigneeNames = new Map(
+    (assignees.data ?? []).map(({ id, fullName, name }) => [id, fullName ?? name]),
+  )
   const openQuickAction = (task: DesignTask, type: 'assign' | 'start' | 'submit' | 'review') => {
     if (type === 'review') setSelectedId(task.id)
     if (type === 'assign') {
@@ -236,7 +282,12 @@ export function DesignWorkbenchPage() {
       title: t('portal.design.designer'),
       render: (_, row) => row.assignedDesigner?.fullName ?? t('portal.design.unassigned'),
     },
-    { title: t('portal.design.priority'), dataIndex: 'priority', width: 100 },
+    {
+      title: t('portal.design.priority'),
+      dataIndex: 'priority',
+      width: 100,
+      render: (value) => <StatusTag status={priorityTone(value)}>{value}</StatusTag>,
+    },
     {
       title: t('portal.design.status'),
       width: 130,
@@ -324,6 +375,15 @@ export function DesignWorkbenchPage() {
         actions={
           <Space>
             {canAssign ? (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setCreateTaskOpen(true)}
+              >
+                {t('portal.design.createDesignTask')}
+              </Button>
+            ) : null}
+            {canAssign ? (
               <Button type="primary" icon={<PlusOutlined />} onClick={() => setCandidateOpen(true)}>
                 {t('portal.design.createPsdTasks')}
               </Button>
@@ -348,7 +408,8 @@ export function DesignWorkbenchPage() {
           </Typography.Text>
           {(workload.data?.byDesigner ?? []).slice(0, 5).map((designer) => (
             <Typography.Text key={designer.assignedDesignerId}>
-              {designer.assignedDesignerId}: <strong>{designer.totalActive}</strong>
+              {assigneeNames.get(designer.assignedDesignerId) ?? t('portal.design.unknownDesigner')}
+              : <strong>{designer.totalActive}</strong>
             </Typography.Text>
           ))}
         </Space>
@@ -537,6 +598,14 @@ export function DesignWorkbenchPage() {
           </div>
         ) : null}
       </DetailDrawer>
+      <CreateDesignTaskModal
+        open={createTaskOpen}
+        listings={createListings.data?.items ?? []}
+        templates={createOptions.data?.internalTemplates ?? []}
+        saving={createTask.isPending}
+        onClose={() => setCreateTaskOpen(false)}
+        onSubmit={(draft) => createTask.mutate(draft)}
+      />
       <Modal
         open={assignOpen}
         title={t('portal.design.assignDesigner')}

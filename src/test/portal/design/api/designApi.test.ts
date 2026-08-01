@@ -7,6 +7,7 @@ import {
   assignDesignTask,
   bulkCreatePsdTasks,
   cancelDesignTask,
+  createDesignTask,
   createPsdTaskFromListing,
   getDesignSummary,
   getDesignWorkload,
@@ -38,6 +39,15 @@ describe('designApi', () => {
     await getDesignWorkload({ taskType: 'PSD_TEMPLATE' })
     await listPsdCandidates({ page: 1, limit: 20, search: 'SKU' })
     await createPsdTaskFromListing('listing-1', 'Create PSD')
+    await createDesignTask({
+      listingId: 'listing-1',
+      taskType: 'IDEA',
+      priority: 'HIGH',
+      brief: 'Create a graduation concept',
+      note: 'Use references',
+      referenceAssetIds: ['asset-1'],
+      expectedOutputs: ['MOCKUP', 'PNG_ASSET'],
+    })
     await bulkCreatePsdTasks({ listingIds: ['listing-1'] })
     await listDesignSubmissions('task-1')
     await cancelDesignTask('task-1', 'Duplicate')
@@ -72,6 +82,15 @@ describe('designApi', () => {
       '/api/design/tasks/from-listings/listing-1/psd-template',
       { note: 'Create PSD' },
     )
+    expect(apiClient.post).toHaveBeenCalledWith('/api/design/tasks', {
+      listingId: 'listing-1',
+      taskType: 'IDEA',
+      priority: 'HIGH',
+      brief: 'Create a graduation concept',
+      note: 'Use references',
+      referenceAssetIds: ['asset-1'],
+      expectedOutputs: ['MOCKUP', 'PNG_ASSET'],
+    })
     expect(apiClient.post).toHaveBeenCalledWith('/api/design/tasks/bulk-create-psd-from-listings', {
       listingIds: ['listing-1'],
     })

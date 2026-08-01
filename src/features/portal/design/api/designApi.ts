@@ -76,6 +76,17 @@ export type BulkPsdTaskResult = {
   skipped: number
   items: Array<{ listingId: string; status: string; message?: string }>
 }
+export type CreateDesignTaskInput = {
+  listingId: string
+  taskType: 'PSD_TEMPLATE' | 'MOCKUP' | 'PNG_ASSET' | 'IDEA' | 'CLONE'
+  priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
+  brief?: string
+  note?: string
+  referenceAssetIds?: string[]
+  expectedOutputs?: Array<'PSD_TEMPLATE' | 'MOCKUP' | 'PNG_ASSET' | 'IDEA'>
+  sourceListingId?: string
+  sourceInternalTemplateId?: string
+}
 const compact = (params: object) =>
   Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -127,6 +138,8 @@ export const createPsdTaskFromListing = async (listingId: string, note?: string)
       ...(note ? { note } : {}),
     }),
   )
+export const createDesignTask = async (input: CreateDesignTaskInput) =>
+  unwrap<DesignTask>(await apiClient.post('/api/design/tasks', input))
 export const bulkCreatePsdTasks = async (input: { listingIds: string[]; note?: string }) =>
   unwrap<BulkPsdTaskResult>(
     await apiClient.post('/api/design/tasks/bulk-create-psd-from-listings', input),
