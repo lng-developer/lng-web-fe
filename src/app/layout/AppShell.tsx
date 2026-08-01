@@ -4,6 +4,7 @@ import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-do
 import { Breadcrumb, Layout, Space } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 
@@ -84,6 +85,7 @@ export function AppShell() {
           <Space size={12}>
             <ThemeSwitch />
             <LanguageSwitch />
+            <NotificationCenter />
             <AccountMenu account={account} />
           </Space>
         </Header>

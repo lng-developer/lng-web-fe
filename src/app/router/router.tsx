@@ -39,6 +39,13 @@ export const appRoutes: RouteObject[] = [
     children: [
       { index: true, element: <WorkspaceIndexRedirect /> },
       {
+        path: 'auth/audit-log',
+        lazy: () =>
+          import('@/features/audit/pages/AuditLogPage').then(({ AuditLogPage }) => ({
+            Component: AuditLogPage,
+          })),
+      },
+      {
         path: 'auth/accounts',
         lazy: () =>
           import('@/features/auth/accounts/pages/AccessExplorerPage').then(
