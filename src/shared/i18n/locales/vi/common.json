@@ -1383,6 +1383,15 @@
       "metadata": "Dữ liệu bổ sung"
     }
   },
+  "notifications": {
+    "title": "Thông báo",
+    "open": "Mở thông báo",
+    "empty": "Bạn chưa có thông báo.",
+    "markRead": "Đánh dấu đã đọc",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "markedAllRead": "Đã đánh dấu tất cả thông báo là đã đọc",
+    "updateFailed": "Không thể cập nhật thông báo"
+  },
   "errors": { "unexpected": "Đã xảy ra lỗi không mong muốn." },
   "notFound": { "title": "Không tìm thấy trang", "backHome": "Về trang chính" }
 }

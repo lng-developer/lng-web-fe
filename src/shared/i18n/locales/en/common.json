@@ -1383,6 +1383,15 @@
       "metadata": "Metadata"
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Open notifications",
+    "empty": "You have no notifications.",
+    "markRead": "Mark as read",
+    "markAllRead": "Mark all as read",
+    "markedAllRead": "All notifications marked as read",
+    "updateFailed": "Could not update notifications"
+  },
   "errors": { "unexpected": "Something unexpected happened." },
   "notFound": { "title": "Page not found", "backHome": "Back home" }
 }
