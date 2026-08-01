@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 vi.mock('@/shared/api', () => ({
   apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() },
@@ -6,6 +6,7 @@ vi.mock('@/shared/api', () => ({
 
 import {
   getImportJob,
+  type ImportUploadResult,
   listImportJobs,
   listIssues,
   listJobIssues,
@@ -18,6 +19,10 @@ import {
 import { apiClient } from '@/shared/api'
 
 describe('integrationApi', () => {
+  it('types upload responses as operation results', () => {
+    expectTypeOf(uploadManualExcel).returns.resolves.toEqualTypeOf<ImportUploadResult>()
+    expectTypeOf(uploadEtsySoldItems).returns.resolves.toEqualTypeOf<ImportUploadResult>()
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [], pagination: {} } })

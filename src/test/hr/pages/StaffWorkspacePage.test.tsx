@@ -1,5 +1,6 @@
 import { MemoryRouter } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -15,11 +16,16 @@ vi.mock('@/features/hr/api/hrTimeApi', () => ({
 }))
 
 describe('StaffWorkspacePage', () => {
+  const dateKey = dayjs().format('YYYY-MM-DD')
+  const attendanceDateKey = dayjs().date(2).format('YYYY-MM-DD')
+  const leaveDateKey = dayjs().date(3).format('YYYY-MM-DD')
+  const holidayDateKey = dayjs().date(4).format('YYYY-MM-DD')
+
   beforeEach(() => {
     queryClient.clear()
     setPermissions(['HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'])
     vi.mocked(getMyHrWorkspace).mockResolvedValue({
-      dateKey: '2026-07-31',
+      dateKey,
       profile: {
         id: 'profile-1',
         employeeCode: 'J001',
@@ -31,7 +37,7 @@ describe('StaffWorkspacePage', () => {
       },
       today: {
         schedule: {
-          workDateKey: '2026-07-31',
+          workDateKey: dateKey,
           isWorkingDay: true,
           shift: { name: 'Day', startTime: '08:00', endTime: '17:00' },
           workLocation: { name: 'Office' },
@@ -41,7 +47,7 @@ describe('StaffWorkspacePage', () => {
       schedule: [],
       calendar: [
         {
-          workDateKey: '2026-07-02',
+          workDateKey: attendanceDateKey,
           status: 'WORKING_DAY',
           isWorkingDay: true,
           shift: { name: 'Day', startTime: '08:00', endTime: '17:00' },
@@ -49,11 +55,11 @@ describe('StaffWorkspacePage', () => {
           attendance: {
             id: 'attendance-1',
             profileId: 'profile-1',
-            workDateKey: '2026-07-02',
+            workDateKey: attendanceDateKey,
             status: 'LATE',
             workDayValue: 1,
-            checkInAt: '2026-07-02T08:12:00',
-            checkOutAt: '2026-07-02T17:05:00',
+            checkInAt: `${attendanceDateKey}T08:12:00`,
+            checkOutAt: `${attendanceDateKey}T17:05:00`,
             lateMinutes: 12,
             earlyLeaveMinutes: 0,
             workedMinutes: 533,
@@ -63,7 +69,7 @@ describe('StaffWorkspacePage', () => {
             {
               id: 'ot-1',
               profileId: 'profile-1',
-              workDateKey: '2026-07-02',
+              workDateKey: attendanceDateKey,
               plannedStartTime: '17:30',
               plannedEndTime: '19:00',
               requestedMinutes: 90,
@@ -74,7 +80,7 @@ describe('StaffWorkspacePage', () => {
           ],
         },
         {
-          workDateKey: '2026-07-03',
+          workDateKey: leaveDateKey,
           status: 'WORKING_DAY',
           isWorkingDay: true,
           shift: { name: 'Day', startTime: '08:00', endTime: '17:00' },
@@ -86,8 +92,8 @@ describe('StaffWorkspacePage', () => {
               profileId: 'profile-1',
               leaveType: 'ANNUAL',
               portion: 'FULL_DAY',
-              startDateKey: '2026-07-03',
-              endDateKey: '2026-07-03',
+              startDateKey: leaveDateKey,
+              endDateKey: leaveDateKey,
               requestedUnits: 1,
               reason: '',
               status: 'APPROVED',
@@ -96,7 +102,7 @@ describe('StaffWorkspacePage', () => {
           overtime: [],
         },
         {
-          workDateKey: '2026-07-04',
+          workDateKey: holidayDateKey,
           status: 'HOLIDAY',
           isWorkingDay: false,
           calendarOverride: { kind: 'HOLIDAY', name: 'Company holiday' },
@@ -190,11 +196,15 @@ describe('StaffWorkspacePage', () => {
       </MemoryRouter>,
     )
 
-    fireEvent.click(await screen.findByRole('button', { name: '02/07/2026' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: dayjs(attendanceDateKey).format('DD/MM/YYYY') }),
+    )
     expect(screen.getByRole('button', { name: /OT/ })).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: /nghỉ/i }))
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('02/07/2026')).toHaveLength(2)
+    expect(screen.getAllByDisplayValue(dayjs(attendanceDateKey).format('DD/MM/YYYY'))).toHaveLength(
+      2,
+    )
   })
 })

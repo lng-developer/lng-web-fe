@@ -208,7 +208,16 @@ describe('IntegrationWorkbenchPage', () => {
       items: [shop, shopB],
       pagination: { total: 2, page: 1, limit: 100 },
     })
-    vi.mocked(uploadManualExcel).mockResolvedValue(job)
+    vi.mocked(uploadManualExcel).mockResolvedValue({
+      jobId: job.id,
+      status: job.status,
+      totalRecords: job.totalRecords,
+      importedCount: job.importedCount,
+      skippedCount: job.skippedCount,
+      failedCount: job.failedCount,
+      issuesCount: 0,
+      postImportQueuedCount: 0,
+    })
     const scopedAccount = account(
       [],
       [

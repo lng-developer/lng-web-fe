@@ -142,6 +142,17 @@ export type ImportUploadInput = {
   externalAccountId?: string
 }
 
+export type ImportUploadResult = {
+  jobId: string
+  status: ImportJobStatus
+  totalRecords: number
+  importedCount: number
+  skippedCount: number
+  failedCount: number
+  issuesCount: number
+  postImportQueuedCount: number
+}
+
 export type IssueUpdateInput = {
   status: 'RESOLVED' | 'IGNORED'
   note: string
@@ -173,11 +184,13 @@ function toUploadForm(input: ImportUploadInput) {
 }
 
 export async function uploadManualExcel(input: ImportUploadInput) {
-  return unwrap<ImportJob>(await apiClient.post(`${basePath}/manual-excel`, toUploadForm(input)))
+  return unwrap<ImportUploadResult>(
+    await apiClient.post(`${basePath}/manual-excel`, toUploadForm(input)),
+  )
 }
 
 export async function uploadEtsySoldItems(input: ImportUploadInput) {
-  return unwrap<ImportJob>(
+  return unwrap<ImportUploadResult>(
     await apiClient.post(`${basePath}/etsy-sold-order-items`, toUploadForm(input)),
   )
 }

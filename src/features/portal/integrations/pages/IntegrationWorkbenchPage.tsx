@@ -7,7 +7,6 @@ import type { TableColumnsType } from 'antd'
 import { Button, Select } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import {
   DataTable,
@@ -32,6 +31,7 @@ import {
   uploadManualExcel,
 } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
+import { listAllActiveShops } from '../api/loadActiveShops'
 import { canWriteOrdersForShop, canWriteOrdersSomewhere } from '../auth/integrationAccess'
 import { ImportIssueQueue } from './ImportIssueQueue'
 import { ImportJobPanel } from './ImportJobPanel'
@@ -124,10 +124,9 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const params = readParams(searchParams)
   const selectedJobId = searchParams.get('selectedJobId') || undefined
   const canWrite = canWriteOrdersSomewhere(account)
-  const shopsParams = { page: 1, limit: 100, status: 'ACTIVE' as const }
   const shops = useQuery({
-    queryKey: shopKeys.list(shopsParams),
-    queryFn: () => listShops(shopsParams),
+    queryKey: shopKeys.list({ page: 1, limit: 100, status: 'ACTIVE' }),
+    queryFn: listAllActiveShops,
     retry: false,
   })
   const jobs = useQuery({

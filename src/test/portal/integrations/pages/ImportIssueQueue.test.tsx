@@ -65,7 +65,7 @@ const account = (
 function renderQueue(
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
   currentAccount = account(),
-  selectedJobId = 'job-1',
+  selectedJobId?: string,
 ) {
   render(
     <QueryClientProvider client={client}>
@@ -95,6 +95,18 @@ describe('ImportIssueQueue', () => {
   afterEach(() => {
     vi.useRealTimers()
     cleanup()
+  })
+
+  it('scopes the issue queue to the selected import job', async () => {
+    renderQueue(undefined, account(), 'job-selected')
+
+    await waitFor(() =>
+      expect(listIssues).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+        importJobId: 'job-selected',
+      }),
+    )
   })
 
   it('sends all queue filters to the server and hides write actions for readers', async () => {

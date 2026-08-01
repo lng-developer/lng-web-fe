@@ -63,15 +63,16 @@ export interface ImportIssueQueueProps {
   readonly selectedJobId?: string
 }
 
-export function ImportIssueQueue({ account, shops }: ImportIssueQueueProps) {
+export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQueueProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [params, setParams] = useState<IssueListParams>({ page: 1, limit: PAGE_SIZE })
+  const issueParams = selectedJobId ? { ...params, importJobId: selectedJobId } : params
   const [resolvingIssue, setResolvingIssue] = useState<ImportIssue>()
   const issues = useQuery({
-    queryKey: integrationKeys.issues(params),
-    queryFn: () => listIssues(params),
+    queryKey: integrationKeys.issues(issueParams),
+    queryFn: () => listIssues(issueParams),
     retry: false,
   })
   const resolution = useMutation({

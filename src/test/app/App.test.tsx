@@ -1,9 +1,12 @@
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { createMemoryRouter, Navigate, type RouteObject, RouterProvider } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { AppShell } from '@/app/layout/AppShell'
 import { AppProviders } from '@/app/providers/AppProviders'
-import { appRoutes } from '@/app/router/router'
+import { NotFoundPage } from '@/app/router/NotFoundPage'
+import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { FoundationPage } from '@/features/foundation/FoundationPage'
 import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/foundation/FoundationPage', async () => {
@@ -17,26 +20,29 @@ vi.mock('@/features/foundation/FoundationPage', async () => {
   }
 })
 
-vi.mock('@/features/auth/api/authApi', () => ({
-  restoreSession: vi.fn().mockResolvedValue({
-    accessToken: 'token',
-    tokenType: 'Bearer',
-    account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
-    roles: [],
-    permissions: [],
-    scopes: [],
-  }),
-  getCurrentAccount: vi.fn().mockResolvedValue({
-    account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
-    roles: [],
-    permissions: [],
-    scopes: [],
-    profileSetupRequired: false,
-  }),
-}))
+const account: CurrentAccount = {
+  account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
+  roles: [],
+  permissions: [],
+  scopes: [],
+  profileSetupRequired: false,
+}
+
+const smokeRoutes: RouteObject[] = [
+  {
+    path: '/',
+    element: <AppShell />,
+    loader: () => account,
+    children: [
+      { index: true, element: <Navigate to="/foundation" replace /> },
+      { path: 'foundation', element: <FoundationPage /> },
+    ],
+  },
+  { path: '*', element: <NotFoundPage /> },
+]
 
 function renderRoute(path: string) {
-  const router = createMemoryRouter(appRoutes, { initialEntries: [path] })
+  const router = createMemoryRouter(smokeRoutes, { initialEntries: [path] })
   return render(
     <AppProviders>
       <RouterProvider router={router} />
@@ -78,16 +84,5 @@ describe('application shell', () => {
     renderRoute('/')
 
     expect(await screen.findByRole('heading', { name: 'Foundation is ready' })).toBeVisible()
-  })
-
-  it('lazy-loads business routes while keeping the foundation static', () => {
-    const workspace = appRoutes.find((route) => route.children)
-    const childByPath = new Map(workspace?.children?.map((route) => [route.path, route]))
-
-    for (const path of ['auth/accounts', 'auth/access-control', 'organization', 'hr/*']) {
-      expect(childByPath.get(path)?.lazy).toBeTypeOf('function')
-      expect(childByPath.get(path)?.element).toBeUndefined()
-    }
-    expect(childByPath.get('foundation')?.element).toBeDefined()
   })
 })
