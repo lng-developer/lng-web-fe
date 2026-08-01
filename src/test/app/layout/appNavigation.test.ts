@@ -89,6 +89,21 @@ describe('app navigation', () => {
     ])
   })
 
+  it('shows Catalog for global or scoped readers and writers', () => {
+    for (const permission of ['CATALOG:READ', 'CATALOG:WRITE']) {
+      expect(getContextNavigation('portal', account([permission]))[0]?.items).toContainEqual({
+        key: 'catalog',
+        path: '/portal/catalog',
+        labelKey: 'shell.navigation.catalog',
+      })
+      expect(getContextNavigation('portal', account([], [permission]))[0]?.items).toContainEqual({
+        key: 'catalog',
+        path: '/portal/catalog',
+        labelKey: 'shell.navigation.catalog',
+      })
+    }
+  })
+
   it('groups external order imports under Portal Operations for order readers and writers', () => {
     for (const permission of ['ORDERS:READ', 'ORDERS:WRITE']) {
       expect(getContextNavigation('portal', account([permission]))).toEqual([

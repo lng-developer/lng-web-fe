@@ -38,6 +38,9 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           permissions.has('SHOPS:READ')
             ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
             : null,
+          permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+            ? { key: 'catalog', path: '/portal/catalog', labelKey: 'shell.navigation.catalog' }
+            : null,
           globalPermissions.has('VENDORS:READ')
             ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
             : null,

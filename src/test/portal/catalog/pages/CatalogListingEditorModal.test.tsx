@@ -1,0 +1,69 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { AppProviders } from '@/app/providers/AppProviders'
+import type { Listing } from '@/features/portal/catalog/api/catalogApi'
+import { CatalogListingEditorModal } from '@/features/portal/catalog/pages/CatalogListingEditorModal'
+import i18n from '@/shared/i18n/i18n'
+
+const listing: Listing = {
+  id: 'listing-1',
+  shopId: 'shop-1',
+  shop: { id: 'shop-1', name: 'Football' },
+  salesChannelCode: 'AMAZON',
+  marketplaceCode: 'AMAZON_US',
+  sku: 'SKU-1',
+  asin: null,
+  etsyListingId: null,
+  title: 'Shirt',
+  productTypeGroup: { id: 'group-1', code: 'SHIRT', name: 'Shirt' },
+  internalTemplate: null,
+  previewAssetId: null,
+  previewAsset: null,
+  psdTemplateAssetId: null,
+  psdTemplateAsset: null,
+  baseCostAmount: 0,
+  currency: 'USD',
+  costCenterStatus: 'MISSING',
+  psdStatus: 'MISSING',
+  psdReadiness: { required: true, status: 'MISSING', source: null, effectivePsdAssetId: null },
+  status: 'ACTIVE',
+  qcStatus: 'DRAFT',
+  salesStats: { orderCount: 0, orderItemCount: 0, quantitySold: 0, lastSoldAt: null },
+  createdAt: '2026-08-01T00:00:00.000Z',
+  updatedAt: '2026-08-01T00:00:00.000Z',
+}
+
+describe('CatalogListingEditorModal', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+  afterEach(cleanup)
+
+  it('keeps identity immutable and submits only PATCH fields when editing', async () => {
+    const onSubmit = vi.fn()
+    render(
+      <AppProviders>
+        <CatalogListingEditorModal
+          open
+          listing={listing}
+          shops={[{ id: 'shop-1', name: 'Football', currency: 'USD' }]}
+          productTypes={[{ id: 'group-1', code: 'SHIRT', name: 'Shirt' }]}
+          templates={[]}
+          saving={false}
+          onClose={vi.fn()}
+          onSubmit={onSubmit}
+        />
+      </AppProviders>,
+    )
+
+    expect(screen.getByLabelText('SKU')).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated shirt' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled())
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: 'Updated shirt' })
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('shopId')
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('sku')
+  })
+})

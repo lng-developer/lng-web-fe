@@ -1,0 +1,62 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn() } }))
+
+import {
+  approveListing,
+  createListing,
+  type CreateListingInput,
+  getListing,
+  getListingOptions,
+  getListingSummary,
+  listListings,
+  rejectListing,
+  updateListing,
+} from '@/features/portal/catalog/api/catalogApi'
+import { apiClient } from '@/shared/api'
+
+describe('catalogApi', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(apiClient.get).mockResolvedValue({ data: {} })
+    vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
+    vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
+  })
+
+  it('uses Catalog list, summary, detail, options, and mutation contracts', async () => {
+    const createInput: CreateListingInput = {
+      shopId: 'shop-1',
+      salesChannelCode: 'AMAZON',
+      marketplaceCode: 'AMAZON_US',
+      sku: 'SKU-1',
+      title: 'Shirt',
+      productTypeGroupId: 'group-1',
+    }
+    await listListings({ page: 1, limit: 20, search: '', psdReadinessStatus: 'MISSING' })
+    await getListingSummary({ shopId: 'shop-1' })
+    await getListing('listing-1')
+    await getListingOptions()
+    await createListing(createInput)
+    await updateListing('listing-1', { title: 'Updated', productTypeGroupId: 'group-1' })
+    await approveListing('listing-1')
+    await rejectListing('listing-1', 'Missing setup')
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings', {
+      params: { page: 1, limit: 20, psdReadinessStatus: 'MISSING' },
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings/summary', {
+      params: { shopId: 'shop-1' },
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings/listing-1')
+    expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listing-options')
+    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings', createInput)
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/catalog/listings/listing-1', {
+      title: 'Updated',
+      productTypeGroupId: 'group-1',
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/approve')
+    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/reject', {
+      rejectionReason: 'Missing setup',
+    })
+  })
+})

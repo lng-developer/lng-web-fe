@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BellOutlined, CheckOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -20,6 +20,7 @@ export function NotificationCenter() {
   const { t } = useTranslation()
   const toast = useFeedbackToast()
   const queryClient = useQueryClient()
+  const contentRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [limit, setLimit] = useState(8)
   const countQuery = useQuery({
@@ -50,8 +51,19 @@ export function NotificationCenter() {
     onError: mutationError,
   })
 
+  useEffect(() => {
+    if (!open) return
+    const closeOnPageScroll = (event: Event) => {
+      if (event.target instanceof Node && contentRef.current?.contains(event.target)) return
+      setOpen(false)
+      setLimit(8)
+    }
+    window.addEventListener('scroll', closeOnPageScroll, true)
+    return () => window.removeEventListener('scroll', closeOnPageScroll, true)
+  }, [open])
+
   const content = (
-    <div className={styles.content}>
+    <div ref={contentRef} className={styles.content}>
       <Space className="mb-3 flex w-full justify-between">
         <Typography.Title level={5} className="!mb-0">
           {t('notifications.title')}
