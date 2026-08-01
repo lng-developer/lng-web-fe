@@ -17,7 +17,8 @@
       "hrOverview": "HR operations",
       "shops": "Shops",
       "vendors": "Vendors",
-      "integrations": "Integrations"
+      "integrations": "Integrations",
+      "vendorSubmissions": "Vendor submissions"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -873,6 +874,56 @@
       "clearFilters": "Clear filters",
       "noAuthorizedShops": "No shops are assigned to your access",
       "statuses": { "ACTIVE": "Active", "INACTIVE": "Inactive", "SUSPENDED": "Suspended" }
+    },
+    "vendorSubmissions": {
+      "title": "Vendor submissions",
+      "description": "Monitor automatic QC handoffs and safely resolve failed or ambiguous vendor outcomes.",
+      "refresh": "Refresh",
+      "unavailable": "Vendor submissions are unavailable",
+      "filters": "Submission filters",
+      "externalOrderId": "External order ID",
+      "vendorOrderId": "Vendor external order ID",
+      "vendorProvider": "Vendor / provider",
+      "allStatuses": "All statuses",
+      "detail": "Submission detail",
+      "submitAttempts": "Submit attempts",
+      "updated": "Vendor submission updated",
+      "actionFailed": "Action failed",
+      "externalIdRequired": "Vendor external order ID is required",
+      "confirm": "Confirm",
+      "confirmSubmit": "Submit order to vendor?",
+      "confirmReconcile": "Confirm reconciliation result?",
+      "remoteMissingHelp": "This returns the submission to READY so it can be submitted safely.",
+      "remoteOrderTitle": "Confirm remote vendor order",
+      "markSubmitted": "Mark submitted",
+      "columns": {
+        "order": "Order",
+        "product": "Product",
+        "vendor": "Vendor",
+        "status": "Status",
+        "attempts": "Attempts",
+        "failure": "Failure",
+        "action": "Action"
+      },
+      "actions": {
+        "submit": "Submit",
+        "returnReady": "Return to ready",
+        "remoteFound": "Remote found",
+        "remoteMissing": "Not found"
+      },
+      "statuses": {
+        "READY": "Ready",
+        "SUBMITTING": "Submitting",
+        "NEEDS_REVIEW": "Needs review",
+        "FAILED": "Failed",
+        "SUBMITTED": "Submitted",
+        "CANCELLED": "Cancelled"
+      },
+      "reasons": {
+        "payloadCorrected": "Operator confirmed payload is corrected",
+        "remoteMissing": "Operator confirmed provider has no order",
+        "remoteFound": "Operator confirmed order in provider portal"
+      }
     },
     "vendors": {
       "title": "Vendor workspace",

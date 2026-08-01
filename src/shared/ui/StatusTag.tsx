@@ -6,6 +6,8 @@ type OperationalStatus =
   | 'warning'
   | 'critical'
   | 'pending'
+  | 'ready'
+  | 'processing'
   | 'approved'
   | 'rejected'
   | 'cancelled'
@@ -20,6 +22,8 @@ const colors: Record<OperationalStatus, string> = {
   warning: 'warning',
   critical: 'error',
   pending: 'warning',
+  ready: 'blue',
+  processing: 'processing',
   approved: 'success',
   rejected: 'error',
   cancelled: 'default',

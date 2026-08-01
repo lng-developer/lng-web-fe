@@ -138,6 +138,20 @@ export const appRoutes: RouteObject[] = [
             ),
           })),
       },
+      {
+        path: 'portal/vendor-submissions',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/vendor-submissions/pages/VendorSubmissionWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { VendorSubmissionWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['VENDOR_SUBMISSIONS:READ']}>
+                <VendorSubmissionWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
       { path: 'foundation', element: <FoundationPage /> },
     ],
   },

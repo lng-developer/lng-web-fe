@@ -17,7 +17,8 @@
       "hrOverview": "Vận hành nhân sự",
       "shops": "Cửa hàng",
       "vendors": "Nhà cung cấp",
-      "integrations": "Tích hợp"
+      "integrations": "Tích hợp",
+      "vendorSubmissions": "Gửi đơn nhà cung cấp"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {
@@ -873,6 +874,56 @@
       "clearFilters": "Xóa bộ lọc",
       "noAuthorizedShops": "Chưa có cửa hàng nào được cấp cho quyền truy cập của bạn",
       "statuses": { "ACTIVE": "Hoạt động", "INACTIVE": "Không hoạt động", "SUSPENDED": "Tạm ngưng" }
+    },
+    "vendorSubmissions": {
+      "title": "Gửi đơn nhà cung cấp",
+      "description": "Theo dõi bàn giao tự động sau QC và xử lý an toàn các trường hợp gửi lỗi hoặc chưa rõ kết quả.",
+      "refresh": "Tải lại",
+      "unavailable": "Không thể tải danh sách gửi đơn",
+      "filters": "Bộ lọc gửi đơn",
+      "externalOrderId": "Mã đơn ngoài hệ thống",
+      "vendorOrderId": "Mã đơn phía nhà cung cấp",
+      "vendorProvider": "Nhà cung cấp / dịch vụ",
+      "allStatuses": "Tất cả trạng thái",
+      "detail": "Chi tiết gửi đơn",
+      "submitAttempts": "Số lần gửi",
+      "updated": "Đã cập nhật gửi đơn",
+      "actionFailed": "Thao tác thất bại",
+      "externalIdRequired": "Cần nhập mã đơn phía nhà cung cấp",
+      "confirm": "Xác nhận",
+      "confirmSubmit": "Gửi đơn sang nhà cung cấp?",
+      "confirmReconcile": "Xác nhận kết quả đối soát?",
+      "remoteMissingHelp": "Thao tác này đưa đơn về trạng thái Sẵn sàng để có thể gửi lại an toàn.",
+      "remoteOrderTitle": "Xác nhận đơn trên hệ thống nhà cung cấp",
+      "markSubmitted": "Đánh dấu đã gửi",
+      "columns": {
+        "order": "Đơn hàng",
+        "product": "Sản phẩm",
+        "vendor": "Nhà cung cấp",
+        "status": "Trạng thái",
+        "attempts": "Số lần",
+        "failure": "Lý do lỗi",
+        "action": "Thao tác"
+      },
+      "actions": {
+        "submit": "Gửi đơn",
+        "returnReady": "Đưa về sẵn sàng",
+        "remoteFound": "Đã tìm thấy",
+        "remoteMissing": "Không tìm thấy"
+      },
+      "statuses": {
+        "READY": "Sẵn sàng",
+        "SUBMITTING": "Đang gửi",
+        "NEEDS_REVIEW": "Cần kiểm tra",
+        "FAILED": "Thất bại",
+        "SUBMITTED": "Đã gửi",
+        "CANCELLED": "Đã hủy"
+      },
+      "reasons": {
+        "payloadCorrected": "Nhân viên xác nhận dữ liệu gửi đã được sửa",
+        "remoteMissing": "Nhân viên xác nhận nhà cung cấp chưa có đơn",
+        "remoteFound": "Nhân viên xác nhận đã tìm thấy đơn trên hệ thống nhà cung cấp"
+      }
     },
     "vendors": {
       "title": "Không gian nhà cung cấp",

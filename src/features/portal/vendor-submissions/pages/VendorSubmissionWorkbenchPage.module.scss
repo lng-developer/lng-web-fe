@@ -1,0 +1,18 @@
+.page {
+  display: grid;
+  gap: 24px;
+}
+.filters {
+  width: min(100%, 900px);
+}
+.filterControl {
+  width: 190px;
+}
+.detail {
+  display: grid;
+  gap: 16px;
+}
+.failure {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

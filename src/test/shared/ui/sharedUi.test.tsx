@@ -72,6 +72,18 @@ describe('shared UI', () => {
     expect(screen.getByText('Operational')).toBeVisible()
   })
 
+  it('keeps ready and processing statuses visually distinct', () => {
+    render(
+      <>
+        <StatusTag status="ready">Ready</StatusTag>
+        <StatusTag status="processing">Submitting</StatusTag>
+      </>,
+    )
+
+    expect(screen.getByText('Ready')).toHaveClass('ant-tag-blue')
+    expect(screen.getByText('Submitting')).toHaveClass('ant-tag-processing')
+  })
+
   it('renders accessible empty and error states', () => {
     render(
       <>

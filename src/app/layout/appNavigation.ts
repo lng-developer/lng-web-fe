@@ -46,16 +46,22 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
       {
         key: 'operations',
         labelKey: 'shell.groups.portalOperations',
-        items:
+        items: [
           permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
-            ? [
-                {
-                  key: 'integrations',
-                  path: '/portal/integrations',
-                  labelKey: 'shell.navigation.integrations',
-                },
-              ]
-            : [],
+            ? {
+                key: 'integrations',
+                path: '/portal/integrations',
+                labelKey: 'shell.navigation.integrations',
+              }
+            : null,
+          permissions.has('VENDOR_SUBMISSIONS:READ')
+            ? {
+                key: 'vendor-submissions',
+                path: '/portal/vendor-submissions',
+                labelKey: 'shell.navigation.vendorSubmissions',
+              }
+            : null,
+        ].filter((item): item is NavigationItem => item !== null),
       },
     ].filter(({ items }) => items.length)
   }
