@@ -2,9 +2,11 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card, Select } from 'antd'
+import { Card, Modal, Select } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
+import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import { normalizeApiError } from '@/shared/api'
 import { FeedbackAlert, PageHeader, useFeedbackToast } from '@/shared/ui'
 
@@ -58,6 +60,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
   const [selectedRule, setSelectedRule] = useState<MappingRule>()
   const [creating, setCreating] = useState(Boolean(orderItemId))
   const [historyRule, setHistoryRule] = useState<MappingRule>()
+  const editorOpen = creating || Boolean(selectedRule)
 
   const rules = useQuery({
     queryKey: mappingKeys.rules(page.ruleType, { shopId, page: 1, limit: 100 }),
@@ -68,6 +71,18 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
     queryKey: mappingKeys.shops(),
     queryFn: listAuthorableShops,
     enabled: canWrite,
+    retry: false,
+  })
+  const catalogOptions = useQuery({
+    queryKey: ['portal', 'catalog', 'listing-options'],
+    queryFn: getListingOptions,
+    enabled: ['skuConfig', 'semanticRules', 'vendorRouting'].includes(page.ruleType),
+    retry: false,
+  })
+  const vendors = useQuery({
+    queryKey: ['portal', 'vendors', { status: 'ACTIVE', limit: 100 }],
+    queryFn: () => listVendors({ status: 'ACTIVE', limit: 100 }),
+    enabled: page.ruleType === 'vendorRouting',
     retry: false,
   })
   const originPreview = useQuery({
@@ -86,8 +101,8 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
       selectedRule
         ? updateMappingRule(page.ruleType, selectedRule.id, input)
         : createMappingRule(page.ruleType, input),
-    onSuccess: async (rule) => {
-      setSelectedRule(rule)
+    onSuccess: async () => {
+      setSelectedRule(undefined)
       setCreating(false)
       await queryClient.invalidateQueries({ queryKey: mappingKeys.rulesRoot(page.ruleType) })
       toast('success', t('mapping.feedback.ruleSaved'))
@@ -109,6 +124,55 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
     const configCode = contextConfigCode ?? originPreview.data?.skuMapping?.configCode
     return { id: '', ...(configCode && page.ruleType === 'skuConfig' ? { configCode } : {}) }
   }, [contextConfigCode, creating, originPreview.data?.skuMapping?.configCode, page.ruleType])
+  const referenceLabels = useMemo(
+    () => ({
+      productGroups: Object.fromEntries(
+        (catalogOptions.data?.productTypeGroups ?? []).map(({ id, code, name }) => [
+          id,
+          code ? `${name} · ${code}` : name,
+        ]),
+      ),
+      templates: Object.fromEntries(
+        (catalogOptions.data?.internalTemplates ?? []).map(({ id, code, name }) => [
+          id,
+          code ? `${name} · ${code}` : name,
+        ]),
+      ),
+      vendors: Object.fromEntries(
+        (vendors.data?.items ?? []).map(({ id, code, name }) => [
+          id,
+          code ? `${name} · ${code}` : name,
+        ]),
+      ),
+    }),
+    [catalogOptions.data, vendors.data],
+  )
+  const toggleRuleStatus = (rule: MappingRule) => {
+    const active = rule.status === 'ACTIVE'
+    Modal.confirm({
+      centered: true,
+      title: t(active ? 'mapping.actions.disableTitle' : 'mapping.actions.enableTitle'),
+      content: t(
+        active ? 'mapping.actions.disableDescription' : 'mapping.actions.enableDescription',
+      ),
+      okText: t(active ? 'mapping.actions.disableRule' : 'mapping.actions.enableRule'),
+      okButtonProps: { danger: active },
+      onOk: () =>
+        updateMappingRule(page.ruleType, rule.id, {
+          status: active ? 'INACTIVE' : 'ACTIVE',
+        })
+          .then(() =>
+            queryClient.invalidateQueries({ queryKey: mappingKeys.rulesRoot(page.ruleType) }),
+          )
+          .then(() =>
+            toast(
+              'success',
+              t(active ? 'mapping.feedback.ruleDisabled' : 'mapping.feedback.ruleEnabled'),
+            ),
+          )
+          .catch(notifyError),
+    })
+  }
 
   return (
     <section className="flex min-h-0 flex-col gap-4">
@@ -116,72 +180,82 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
       {rules.error || originPreview.error ? (
         <FeedbackAlert type="error" title={t('mapping.feedback.loadFailed')} />
       ) : null}
-      <div className="grid min-h-0 grid-cols-[18rem_minmax(0,1fr)] gap-4">
-        <Card size="small" title={t('mapping.sections.rules')}>
-          <Select
-            allowClear
-            className="mb-2 w-full"
-            placeholder={t('mapping.context.allShops')}
-            loading={shops.isLoading}
-            value={shopId}
-            options={(shops.data?.items ?? []).map((shop) => ({
-              value: shop.id,
-              label: shop.name || shop.code || shop.id,
-            }))}
-            onChange={setShopId}
+      <Card size="small" title={t('mapping.sections.rules')}>
+        <Select
+          allowClear
+          className="mb-2 w-full"
+          placeholder={t('mapping.context.allShops')}
+          loading={shops.isLoading}
+          value={shopId}
+          options={(shops.data?.items ?? []).map((shop) => ({
+            value: shop.id,
+            label: shop.name || shop.code || t('mapping.states.unavailable'),
+          }))}
+          onChange={setShopId}
+        />
+        <RuleInventoryPanel
+          canWrite={canWrite}
+          loading={rules.isLoading}
+          references={referenceLabels}
+          rules={rules.data?.items ?? []}
+          search={search}
+          status={status}
+          type={page.ruleType}
+          onCreate={() => {
+            setSelectedRule(undefined)
+            setCreating(true)
+          }}
+          onHistory={setHistoryRule}
+          onSearchChange={setSearch}
+          onSelect={(rule) => {
+            setSelectedRule(rule)
+            setCreating(false)
+          }}
+          onStatusChange={setStatus}
+          onToggleStatus={toggleRuleStatus}
+        />
+      </Card>
+      <Modal
+        centered
+        destroyOnHidden
+        footer={null}
+        open={editorOpen}
+        title={creating ? t('mapping.actions.createRule') : t('mapping.sections.ruleEditor')}
+        width={960}
+        onCancel={() => {
+          setCreating(false)
+          setSelectedRule(undefined)
+        }}
+      >
+        {orderItemId ? (
+          <FeedbackAlert
+            type="success"
+            title={originPreview.data?.skuMapping?.configCode || t('mapping.states.unavailable')}
           />
-          <RuleInventoryPanel
-            canWrite={canWrite}
-            loading={rules.isLoading}
-            rules={rules.data?.items ?? []}
-            search={search}
-            status={status}
-            selectedId={selectedRule?.id}
-            onCreate={() => {
-              setSelectedRule(undefined)
-              setCreating(true)
-            }}
-            onHistory={setHistoryRule}
-            onSearchChange={setSearch}
-            onSelect={(rule) => {
-              setSelectedRule(rule)
-              setCreating(false)
-            }}
-            onStatusChange={setStatus}
-          />
-        </Card>
-        <Card
-          size="small"
-          title={creating ? t('mapping.actions.createRule') : t('mapping.sections.ruleEditor')}
-        >
-          {orderItemId ? (
-            <FeedbackAlert
-              type="success"
-              title={originPreview.data?.skuMapping?.configCode || orderItemId}
-              description={orderItemId}
-            />
-          ) : null}
-          <RuleEditorPanel
-            key={`${page.ruleType}:${selectedRule?.id ?? contextConfigCode ?? 'new'}`}
-            canWrite={canWrite}
-            rule={selectedRule ?? contextRule}
-            type={page.ruleType}
-            saving={saveRule.isPending}
-            onDirtyChange={() => undefined}
-            onPreview={(rule) =>
-              previewMappingRule({
-                ruleType: page.ruleType,
-                rule,
-                samples: orderItemId ? [{ orderItemId }] : [],
-              })
-            }
-            onConflicts={(rule) =>
-              findMappingRuleConflicts({ ruleId: selectedRule?.id, ruleType: page.ruleType, rule })
-            }
-            onSave={(rule) => saveRule.mutateAsync(rule).then(() => undefined)}
-          />
-        </Card>
-      </div>
+        ) : null}
+        <RuleEditorPanel
+          key={`${page.ruleType}:${selectedRule?.id ?? contextConfigCode ?? 'new'}`}
+          canWrite={canWrite}
+          rule={selectedRule ?? contextRule}
+          type={page.ruleType}
+          saving={saveRule.isPending}
+          productTypeGroups={catalogOptions.data?.productTypeGroups}
+          internalTemplates={catalogOptions.data?.internalTemplates}
+          vendors={vendors.data?.items}
+          onDirtyChange={() => undefined}
+          onPreview={(rule) =>
+            previewMappingRule({
+              ruleType: page.ruleType,
+              rule,
+              samples: orderItemId ? [{ orderItemId }] : [],
+            })
+          }
+          onConflicts={(rule) =>
+            findMappingRuleConflicts({ ruleId: selectedRule?.id, ruleType: page.ruleType, rule })
+          }
+          onSave={(rule) => saveRule.mutateAsync(rule).then(() => undefined)}
+        />
+      </Modal>
       <RuleHistoryModal
         id={historyRule?.id}
         open={Boolean(historyRule)}

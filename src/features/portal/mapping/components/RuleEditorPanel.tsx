@@ -12,6 +12,7 @@ import type {
 import { RuleImpactSamples } from './RuleImpactSamples'
 
 type Field = { name: string; required?: boolean; kind?: 'number' | 'select'; options?: string[] }
+type ReferenceOption = { id: string; code?: string; name: string }
 const fields: Record<MappingRuleType, Field[]> = {
   skuNormalize: [
     { name: 'configCode' },
@@ -109,6 +110,9 @@ export function RuleEditorPanel({
   rule,
   type,
   saving,
+  productTypeGroups = [],
+  internalTemplates = [],
+  vendors = [],
   onDirtyChange,
   onPreview,
   onConflicts,
@@ -118,6 +122,9 @@ export function RuleEditorPanel({
   readonly rule?: MappingRule
   readonly type: MappingRuleType
   readonly saving?: boolean
+  readonly productTypeGroups?: ReferenceOption[]
+  readonly internalTemplates?: Array<ReferenceOption & { productTypeGroup?: { id: string } | null }>
+  readonly vendors?: ReferenceOption[]
   readonly onDirtyChange: (dirty: boolean) => void
   readonly onPreview: (rule: MappingRuleInput) => Promise<RulePreviewResult>
   readonly onConflicts: (rule: MappingRuleInput) => Promise<RuleConflictResult>
@@ -129,6 +136,7 @@ export function RuleEditorPanel({
   const [conflicts, setConflicts] = useState<RuleConflictResult>()
   const [acknowledged, setAcknowledged] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const productTypeGroupId = Form.useWatch('productTypeGroupId', form)
 
   const exactConflict = Boolean(
     conflicts?.hasExactConflict ||
@@ -143,6 +151,22 @@ export function RuleEditorPanel({
     preview && conflicts && !exactConflict && (!hasWarning || acknowledged),
   )
   const displayedFields = useMemo(() => fields[type], [type])
+  const referenceOptions = (name: string) => {
+    const items =
+      name === 'vendorId'
+        ? vendors
+        : name === 'internalTemplateId'
+          ? internalTemplates.filter(
+              (item) => !productTypeGroupId || item.productTypeGroup?.id === productTypeGroupId,
+            )
+          : name === 'productTypeGroupId'
+            ? productTypeGroups
+            : undefined
+    return items?.map(({ id, code, name: label }) => ({
+      value: id,
+      label: code ? `${label} · ${code}` : label,
+    }))
+  }
 
   const inspect = async () => {
     const values = normalizeValues(await form.validateFields())
@@ -187,7 +211,14 @@ export function RuleEditorPanel({
               label={t(`mapping.fields.${field.name}`)}
               rules={field.required ? [{ required: true }] : undefined}
             >
-              {field.kind === 'select' ? (
+              {referenceOptions(field.name) ? (
+                <Select
+                  allowClear={!field.required}
+                  showSearch
+                  optionFilterProp="label"
+                  options={referenceOptions(field.name)}
+                />
+              ) : field.kind === 'select' ? (
                 <Select options={field.options?.map((value) => ({ value, label: value }))} />
               ) : field.kind === 'number' ? (
                 <InputNumber className="w-full" />
@@ -217,7 +248,7 @@ export function RuleEditorPanel({
         </Checkbox>
       ) : null}
       <Space className="mt-3">
-        <Button disabled={!canWrite} onClick={() => void inspect()}>
+        <Button disabled={!canWrite} onClick={() => void inspect().catch(() => undefined)}>
           {t('mapping.actions.previewChanges')}
         </Button>
         <Button type="primary" disabled={!readyToSave} loading={saving} onClick={() => void save()}>

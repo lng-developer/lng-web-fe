@@ -1,8 +1,8 @@
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { App as AntdApp } from 'antd'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/mapping/api/mappingApi')>()
@@ -13,14 +13,18 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
     previewOrderItem: vi.fn(),
   }
 })
+vi.mock('@/features/portal/catalog/api/catalogApi', () => ({ getListingOptions: vi.fn() }))
+vi.mock('@/features/portal/vendors/api/vendorApi', () => ({ listVendors: vi.fn() }))
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
 import {
   listAuthorableShops,
   listMappingRules,
   previewOrderItem,
 } from '@/features/portal/mapping/api/mappingApi'
 import { MappingRulePage } from '@/features/portal/mapping/pages/MappingRulePage'
+import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import i18n from '@/shared/i18n/i18n'
 
 const account: CurrentAccount = {
@@ -32,6 +36,8 @@ const account: CurrentAccount = {
 }
 
 describe('MappingRulePage', () => {
+  afterEach(cleanup)
+
   beforeEach(() => {
     vi.clearAllMocks()
     void i18n.changeLanguage('en')
@@ -44,6 +50,15 @@ describe('MappingRulePage', () => {
       ready: false,
       skuMapping: { configCode: 'TS1S' },
       blockingReasons: ['LISTING_NOT_FOUND'],
+    })
+    vi.mocked(getListingOptions).mockResolvedValue({
+      shops: [],
+      productTypeGroups: [{ id: '69b12f8d99b2e3b197021d76', name: 'T-shirt', code: 'TS' }],
+      internalTemplates: [],
+    })
+    vi.mocked(listVendors).mockResolvedValue({
+      items: [],
+      pagination: { total: 0, page: 1, limit: 100 },
     })
   })
 
@@ -78,5 +93,74 @@ describe('MappingRulePage', () => {
     expect(listMappingRules).toHaveBeenCalledTimes(1)
     expect(previewOrderItem).toHaveBeenCalledWith('item-1')
     expect(screen.getByRole('textbox', { name: 'Config code' })).toHaveValue('TS1S')
+    expect((await screen.findAllByText('Product group')).length).toBeGreaterThan(0)
+    expect(screen.queryByDisplayValue('69b12f8d99b2e3b197021d76')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('opens create in a modal and never uses an ObjectID as the rule label', async () => {
+    vi.mocked(listMappingRules).mockResolvedValue({
+      items: [{ id: '69b12f8d99b2e3b197021d76', status: 'ACTIVE' }],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const router = createMemoryRouter(
+      [
+        {
+          id: 'workspace',
+          path: '/portal/mapping',
+          loader: () => account,
+          element: <MappingRulePage pageKey="product-mapping" />,
+        },
+      ],
+      { initialEntries: ['/portal/mapping?tab=product-mapping'] },
+    )
+    render(
+      <AntdApp>
+        <QueryClientProvider client={client}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </AntdApp>,
+    )
+
+    expect((await screen.findAllByText('Unavailable')).length).toBeGreaterThan(0)
+    expect(screen.queryByText('69b12f8d99b2e3b197021d76')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Create rule/ }))
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+
+  const renderRuleTable = () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const router = createMemoryRouter(
+      [
+        {
+          id: 'workspace',
+          path: '/portal/mapping',
+          loader: () => account,
+          element: <MappingRulePage pageKey="product-mapping" />,
+        },
+      ],
+      { initialEntries: ['/portal/mapping?tab=product-mapping'] },
+    )
+    render(
+      <AntdApp>
+        <QueryClientProvider client={client}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </AntdApp>,
+    )
+  }
+
+  it('opens update from a table row', async () => {
+    vi.mocked(listMappingRules).mockResolvedValue({
+      items: [{ id: 'rule-1', configCode: 'TS1S', status: 'ACTIVE', priority: 10 }],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+    renderRuleTable()
+
+    const row = (await screen.findByText('TS1S')).closest('tr')
+    expect(row).not.toBeNull()
+    fireEvent.click(row!)
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
   })
 })
