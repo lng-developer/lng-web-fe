@@ -6,4 +6,7 @@ export const catalogKeys = {
   summary: (params: CatalogSummaryParams) => [...catalogKeys.all, 'summary', params] as const,
   detail: (id: string) => [...catalogKeys.all, 'detail', id] as const,
   options: () => [...catalogKeys.all, 'listing-options'] as const,
+  productTypes: (params: object) => [...catalogKeys.all, 'product-types', params] as const,
+  templates: (params: object) => [...catalogKeys.all, 'templates', params] as const,
+  template: (id: string) => [...catalogKeys.all, 'template', id] as const,
 }

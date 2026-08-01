@@ -4,14 +4,19 @@ vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch
 
 import {
   approveListing,
+  createInternalTemplate,
   createListing,
   type CreateListingInput,
+  createProductTypeGroup,
   getListing,
   getListingOptions,
   getListingSummary,
+  listInternalTemplates,
   listListings,
+  listProductTypeGroups,
   rejectListing,
   updateListing,
+  uploadCatalogAsset,
 } from '@/features/portal/catalog/api/catalogApi'
 import { apiClient } from '@/shared/api'
 
@@ -40,6 +45,20 @@ describe('catalogApi', () => {
     await updateListing('listing-1', { title: 'Updated', productTypeGroupId: 'group-1' })
     await approveListing('listing-1')
     await rejectListing('listing-1', 'Missing setup')
+    await listProductTypeGroups({ page: 1, limit: 20 })
+    await createProductTypeGroup({ code: 'SHIRT', name: 'Shirt' })
+    await listInternalTemplates({ page: 1, limit: 20 })
+    await createInternalTemplate({
+      code: 'SHIRT_MAIN',
+      name: 'Main',
+      productTypeGroupId: 'group-1',
+      requiredFields: [],
+      artworkSlots: [],
+      designAssets: [],
+      requiresPsd: true,
+    })
+    const file = new File(['asset'], 'template.psd', { type: 'application/octet-stream' })
+    await uploadCatalogAsset(file)
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings', {
       params: { page: 1, limit: 20, psdReadinessStatus: 'MISSING' },
@@ -58,5 +77,16 @@ describe('catalogApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/reject', {
       rejectionReason: 'Missing setup',
     })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/product-type-groups', {
+      params: { page: 1, limit: 20 },
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/product-type-groups', {
+      code: 'SHIRT',
+      name: 'Shirt',
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/internal-templates', {
+      params: { page: 1, limit: 20 },
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/assets', expect.any(FormData))
   })
 })

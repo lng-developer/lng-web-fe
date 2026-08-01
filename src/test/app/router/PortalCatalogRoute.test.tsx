@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/features/portal/catalog/pages/CatalogListingWorkbenchPage', () => ({
-  CatalogListingWorkbenchPage: () => <div>Catalog workbench</div>,
+vi.mock('@/features/portal/catalog/pages/CatalogWorkspacePage', () => ({
+  CatalogWorkspacePage: () => <div>Catalog workbench</div>,
 }))
 
 import { appRoutes } from '@/app/router/router'

@@ -1,0 +1,28 @@
+.page {
+  display: grid;
+  gap: 24px;
+}
+.filters {
+  width: 100%;
+}
+.search {
+  width: 280px;
+}
+.filter {
+  width: 180px;
+}
+.detail {
+  display: grid;
+  gap: 16px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .search,
+  .filter {
+    width: 100%;
+  }
+}

@@ -68,10 +68,64 @@ export type CatalogSummary = {
   approvedCount: number
   rejectedCount: number
 }
-export type ProductTypeGroup = CompactRef
+export type ProductTypeGroup = CompactRef & {
+  sortOrder?: number
+  createdAt?: string
+  updatedAt?: string
+}
 export type InternalTemplate = CompactRef & {
   productTypeGroup: CompactRef | null
   requiresPsd: boolean
+  description?: string | null
+  requiredFieldsCount?: number
+  artworkSlotsCount?: number
+  designAssetsCount?: number
+  requiredFields?: TemplateField[]
+  artworkSlots?: ArtworkSlot[]
+  designAssets?: DesignAsset[]
+}
+export type TemplateField = {
+  key: string
+  label?: string | null
+  type: string
+  required: boolean
+  source?: string | null
+  validation?: Record<string, unknown>
+  sortOrder?: number
+}
+export type ArtworkSlot = {
+  key: string
+  label?: string | null
+  type: string
+  required: boolean
+  acceptedFieldKeys: string[]
+  outputRole?: string | null
+  sortOrder?: number
+}
+export type DesignAsset = {
+  mediaAssetId: string
+  type: string
+  version?: string
+  label?: string | null
+  status?: string
+  metadata?: Record<string, unknown>
+}
+export type ProductTypeGroupInput = {
+  code: string
+  name: string
+  sortOrder?: number
+  status?: string
+}
+export type InternalTemplateInput = {
+  code?: string
+  name: string
+  description?: string | null
+  productTypeGroupId: string
+  requiredFields: TemplateField[]
+  artworkSlots: ArtworkSlot[]
+  designAssets: DesignAsset[]
+  requiresPsd: boolean
+  status?: string
 }
 export type ListingOptions = {
   shops: Array<{ id: string; name: string; currency: string; status: string }>
@@ -127,3 +181,44 @@ export const approveListing = async (id: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/approve`))
 export const rejectListing = async (id: string, rejectionReason: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/reject`, { rejectionReason }))
+
+export const listProductTypeGroups = async (params: {
+  page: number
+  limit: number
+  search?: string
+  status?: string
+}) =>
+  unwrap<{ items: ProductTypeGroup[]; pagination: { total: number; page: number; limit: number } }>(
+    await apiClient.get('/api/catalog/product-type-groups', { params: compact(params) }),
+  )
+export const createProductTypeGroup = async (input: ProductTypeGroupInput) =>
+  unwrap<ProductTypeGroup>(await apiClient.post('/api/catalog/product-type-groups', input))
+export const updateProductTypeGroup = async (id: string, input: Partial<ProductTypeGroupInput>) =>
+  unwrap<ProductTypeGroup>(await apiClient.patch(`/api/catalog/product-type-groups/${id}`, input))
+export const listInternalTemplates = async (params: {
+  page: number
+  limit: number
+  q?: string
+  productTypeGroupId?: string
+  status?: string
+}) =>
+  unwrap<{ items: InternalTemplate[]; pagination: { total: number; page: number; limit: number } }>(
+    await apiClient.get('/api/catalog/internal-templates', { params: compact(params) }),
+  )
+export const getInternalTemplate = async (id: string) =>
+  unwrap<InternalTemplate>(await apiClient.get(`/api/catalog/internal-templates/${id}`))
+export const createInternalTemplate = async (input: InternalTemplateInput & { code: string }) =>
+  unwrap<InternalTemplate>(await apiClient.post('/api/catalog/internal-templates', input))
+export const updateInternalTemplate = async (id: string, input: InternalTemplateInput) =>
+  unwrap<InternalTemplate>(await apiClient.patch(`/api/catalog/internal-templates/${id}`, input))
+export const uploadCatalogAsset = async (file: File) => {
+  const body = new FormData()
+  body.append('file', file)
+  return unwrap<{
+    id: string
+    originalFilename: string
+    mimeType: string
+    size: number
+    downloadUrl: string
+  }>(await apiClient.post('/api/catalog/assets', body))
+}

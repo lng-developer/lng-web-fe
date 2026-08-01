@@ -60,6 +60,11 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 labelKey: 'shell.navigation.integrations',
               }
             : null,
+          ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((permission) =>
+            permissions.has(permission),
+          )
+            ? { key: 'design', path: '/portal/design', labelKey: 'shell.navigation.design' }
+            : null,
           ['PRODUCTION:READ', 'PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some(
             (permission) => permissions.has(permission),
           )

@@ -21,6 +21,7 @@
       "vendors": "Vendors",
       "integrations": "Integrations",
       "production": "Production",
+      "design": "Design",
       "vendorSubmissions": "Vendor submissions",
       "shipments": "Shipments",
       "orders": "Orders"
@@ -695,6 +696,11 @@
   "portal": {
     "catalog": {
       "title": "Catalog listings",
+      "tabs": {
+        "listings": "Listings",
+        "productTypes": "Product types",
+        "templates": "Internal templates"
+      },
       "description": "Manage listing setup, effective PSD readiness, and QC.",
       "refresh": "Refresh",
       "create": "Create listing",
@@ -717,6 +723,26 @@
         "identity": "Listing identity",
         "product": "Product setup",
         "advanced": "Advanced setup"
+      },
+      "master": {
+        "productTypes": "Product types",
+        "productTypeDescription": "Define the product families used by listings and internal templates.",
+        "createProductType": "Create product type",
+        "editProductType": "Edit product type",
+        "searchProductTypes": "Search product types",
+        "templates": "Internal templates",
+        "templateDescription": "Define customer inputs, artwork slots, and reusable design assets.",
+        "createTemplate": "Create template",
+        "editTemplate": "Edit internal template",
+        "searchTemplates": "Search templates",
+        "save": "Save",
+        "saveTemplate": "Save template",
+        "saved": "Product type saved",
+        "templateSaved": "Internal template saved",
+        "code": "Code",
+        "name": "Name",
+        "order": "Sort order",
+        "status": "Status"
       },
       "details": {
         "psdReadiness": "PSD readiness",
@@ -765,6 +791,38 @@
       },
       "rejectReason": "Rejection reason",
       "reasonRequired": "Reason is required"
+    },
+    "design": {
+      "title": "Design operations",
+      "description": "Assign, produce, submit, and review design assets linked to Catalog listings.",
+      "refresh": "Refresh",
+      "filters": "Design filters",
+      "search": "Search listing or task",
+      "allStatuses": "All statuses",
+      "allTypes": "All task types",
+      "listing": "Listing",
+      "type": "Type",
+      "shop": "Shop",
+      "designer": "Designer",
+      "unassigned": "Unassigned",
+      "priority": "Priority",
+      "status": "Status",
+      "updatedAt": "Updated",
+      "task": "Design task",
+      "assign": "Assign",
+      "start": "Start",
+      "submitFiles": "Submit design files",
+      "submit": "Submit",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approveConfirm": "Approve submission?",
+      "chooseApprovedFile": "Choose the approved file",
+      "assignDesigner": "Assign designer",
+      "dropFiles": "Drop PSD, image, PDF, ZIP, or RAR files here",
+      "note": "Submission note",
+      "rejectSubmission": "Reject submission",
+      "reasonRequired": "Reason is required",
+      "updated": "Design task updated"
     },
     "integrations": {
       "title": "External order imports",

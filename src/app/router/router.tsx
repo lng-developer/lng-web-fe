@@ -122,11 +122,11 @@ export const appRoutes: RouteObject[] = [
         lazy: () =>
           Promise.all([
             import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/catalog/pages/CatalogListingWorkbenchPage'),
-          ]).then(([{ PortalPageBoundary }, { CatalogListingWorkbenchPage }]) => ({
+            import('@/features/portal/catalog/pages/CatalogWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { CatalogWorkspacePage }]) => ({
             Component: () => (
               <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
-                <CatalogListingWorkbenchPage />
+                <CatalogWorkspacePage />
               </PortalPageBoundary>
             ),
           })),
@@ -169,6 +169,22 @@ export const appRoutes: RouteObject[] = [
             Component: () => (
               <PortalPageBoundary anyOf={['ORDERS:READ', 'ORDERS:WRITE']}>
                 <IntegrationWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/DesignWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { DesignWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <DesignWorkbenchPage />
               </PortalPageBoundary>
             ),
           })),
