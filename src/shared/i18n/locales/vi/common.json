@@ -25,7 +25,8 @@
       "vendorSubmissions": "Gửi đơn nhà cung cấp",
       "shipments": "Vận chuyển",
       "workScores": "Điểm công việc",
-      "orders": "Đơn hàng"
+      "orders": "Đơn hàng",
+      "mapping": "Ánh xạ"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {

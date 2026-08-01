@@ -8,6 +8,7 @@ import {
 } from '@/features/auth/guards/accountSetupGuards'
 import { LoginPage } from '@/features/auth/login/pages/LoginPage'
 import { FoundationPage } from '@/features/foundation/FoundationPage'
+import { LegacyMappingRedirect } from '@/features/portal/mapping/pages/LegacyMappingRedirect'
 
 import { NotFoundPage } from './NotFoundPage'
 import { RouteErrorPage } from './RouteErrorPage'
@@ -158,6 +159,44 @@ export const appRoutes: RouteObject[] = [
               </PortalPageBoundary>
             ),
           })),
+      },
+      {
+        path: 'portal/mapping',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/mapping/pages/MappingWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { MappingWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MAPPING:READ', 'MAPPING:WRITE']}>
+                <MappingWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/mapping/workbench',
+        element: <LegacyMappingRedirect tab="workbench" />,
+      },
+      {
+        path: 'portal/mapping/sku-rules',
+        element: <LegacyMappingRedirect tab="sku-rules" />,
+      },
+      {
+        path: 'portal/mapping/product-mapping',
+        element: <LegacyMappingRedirect tab="product-mapping" />,
+      },
+      {
+        path: 'portal/mapping/input-semantics',
+        element: <LegacyMappingRedirect tab="input-semantics" />,
+      },
+      {
+        path: 'portal/mapping/value-aliases',
+        element: <LegacyMappingRedirect tab="value-aliases" />,
+      },
+      {
+        path: 'portal/mapping/vendor-routing',
+        element: <LegacyMappingRedirect tab="vendor-routing" />,
       },
       {
         path: 'portal/integrations',

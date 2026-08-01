@@ -25,7 +25,8 @@
       "vendorSubmissions": "Vendor submissions",
       "shipments": "Shipments",
       "workScores": "Work scores",
-      "orders": "Orders"
+      "orders": "Orders",
+      "mapping": "Mapping"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
