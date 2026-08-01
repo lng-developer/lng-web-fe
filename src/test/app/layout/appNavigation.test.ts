@@ -127,6 +127,19 @@ describe('app navigation', () => {
     }
   })
 
+  it('shows Work Scores only from scoring or own-work permissions', () => {
+    for (const permission of ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK']) {
+      expect(getContextNavigation('portal', account([], [permission]))[0]?.items).toContainEqual({
+        key: 'work-scores',
+        path: '/portal/work-scores',
+        labelKey: 'shell.navigation.workScores',
+      })
+    }
+    expect(getContextNavigation('portal', account(['ORDERS:READ']))[0]?.items).not.toContainEqual(
+      expect.objectContaining({ key: 'work-scores' }),
+    )
+  })
+
   it('shows shipment operations for global or scoped shipment readers', () => {
     expect(getContextNavigation('portal', account(['SHIPMENTS:READ']))[0]?.items).toContainEqual({
       key: 'shipments',

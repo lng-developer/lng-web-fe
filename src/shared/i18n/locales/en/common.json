@@ -24,6 +24,7 @@
       "design": "Design",
       "vendorSubmissions": "Vendor submissions",
       "shipments": "Shipments",
+      "workScores": "Work scores",
       "orders": "Orders"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
@@ -1220,6 +1221,50 @@
         "EXCEPTION": "Exception",
         "RETURNED": "Returned",
         "CANCELLED": "Cancelled"
+      }
+    },
+    "workScores": {
+      "title": "Work scores",
+      "description": "Review Design and Scale output points with an auditable adjustment history.",
+      "refresh": "Refresh",
+      "unavailable": "Work scores are unavailable",
+      "filters": "Score filters",
+      "search": "Search SKU, order, or task",
+      "allSources": "All sources",
+      "detail": "Work score detail",
+      "history": "Adjustment history",
+      "updated": "Work score updated",
+      "actionFailed": "Work score update failed",
+      "metrics": {
+        "totalFiles": "Files",
+        "totalPoints": "Points",
+        "designFiles": "Design files",
+        "scaleFiles": "Scale files"
+      },
+      "sources": { "DESIGN_SUBMISSION": "Design", "PRODUCTION_SCALE": "Scale" },
+      "statuses": { "ACTIVE": "Active", "VOIDED": "Voided", "ALL": "All statuses" },
+      "columns": {
+        "source": "Source",
+        "context": "File / context",
+        "worker": "Worker",
+        "points": "Final / base",
+        "level": "Level",
+        "status": "Status",
+        "scoredAt": "Scored at",
+        "action": "Actions"
+      },
+      "fields": {
+        "points": "Points",
+        "level": "Score level",
+        "reason": "Reason",
+        "context": "Source context"
+      },
+      "actions": {
+        "view": "View",
+        "download": "Download",
+        "override": "Override score",
+        "void": "Void score",
+        "confirm": "Confirm"
       }
     },
     "vendors": {

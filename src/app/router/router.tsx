@@ -222,6 +222,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/work-scores',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/work-scores/pages/WorkScoreWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { WorkScoreWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK']}>
+                <WorkScoreWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/vendor-submissions',
         lazy: () =>
           Promise.all([

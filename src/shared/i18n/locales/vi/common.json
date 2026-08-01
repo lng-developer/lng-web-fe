@@ -24,6 +24,7 @@
       "design": "Thiết kế",
       "vendorSubmissions": "Gửi đơn nhà cung cấp",
       "shipments": "Vận chuyển",
+      "workScores": "Điểm công việc",
       "orders": "Đơn hàng"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
@@ -1216,6 +1217,50 @@
         "EXCEPTION": "Ngoại lệ",
         "RETURNED": "Hoàn trả",
         "CANCELLED": "Đã hủy"
+      }
+    },
+    "workScores": {
+      "title": "Điểm công việc",
+      "description": "Theo dõi điểm file Design và Scale cùng lịch sử điều chỉnh minh bạch.",
+      "refresh": "Tải lại",
+      "unavailable": "Không thể tải điểm công việc",
+      "filters": "Bộ lọc điểm",
+      "search": "Tìm SKU, đơn hàng hoặc task",
+      "allSources": "Tất cả nguồn",
+      "detail": "Chi tiết điểm",
+      "history": "Lịch sử điều chỉnh",
+      "updated": "Đã cập nhật điểm",
+      "actionFailed": "Cập nhật điểm thất bại",
+      "metrics": {
+        "totalFiles": "Số file",
+        "totalPoints": "Tổng điểm",
+        "designFiles": "File Design",
+        "scaleFiles": "File Scale"
+      },
+      "sources": { "DESIGN_SUBMISSION": "Design", "PRODUCTION_SCALE": "Scale" },
+      "statuses": { "ACTIVE": "Đang hiệu lực", "VOIDED": "Đã hủy", "ALL": "Tất cả trạng thái" },
+      "columns": {
+        "source": "Nguồn",
+        "context": "File / ngữ cảnh",
+        "worker": "Nhân viên",
+        "points": "Điểm cuối / gốc",
+        "level": "Mức",
+        "status": "Trạng thái",
+        "scoredAt": "Thời điểm tính",
+        "action": "Thao tác"
+      },
+      "fields": {
+        "points": "Điểm",
+        "level": "Mức điểm",
+        "reason": "Lý do",
+        "context": "Ngữ cảnh nguồn"
+      },
+      "actions": {
+        "view": "Xem",
+        "download": "Tải file",
+        "override": "Điều chỉnh điểm",
+        "void": "Hủy điểm",
+        "confirm": "Xác nhận"
       }
     },
     "vendors": {
