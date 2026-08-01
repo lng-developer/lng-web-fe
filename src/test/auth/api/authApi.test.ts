@@ -9,7 +9,12 @@ import {
   restoreSession,
 } from '@/features/auth/api/authApi'
 import { apiClient } from '@/shared/api'
-import { getAccessToken, getPermissions, setAccessToken } from '@/shared/auth/session'
+import {
+  getAccessToken,
+  getGlobalPermissions,
+  getPermissions,
+  setAccessToken,
+} from '@/shared/auth/session'
 
 describe('logout', () => {
   beforeEach(() => setAccessToken('access-token'))
@@ -34,6 +39,7 @@ describe('logout', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/auth/refresh')
     expect(getAccessToken()).toBe('restored-access')
     expect(getPermissions()).toEqual(['AUTH:WRITE'])
+    expect(getGlobalPermissions()).toEqual(['AUTH:WRITE'])
   })
 
   it('clears a stale access token when refresh is rejected', async () => {
@@ -66,6 +72,7 @@ describe('logout', () => {
     await restoreSession()
 
     expect(getPermissions()).toEqual(['HR_ATTENDANCE:READ'])
+    expect(getGlobalPermissions()).toEqual([])
   })
 
   it('loads the current setup state', async () => {

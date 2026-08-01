@@ -1,5 +1,5 @@
 import { apiClient } from '@/shared/api'
-import { setAccessToken, setPermissions } from '@/shared/auth/session'
+import { setAccessToken, setGlobalPermissions, setPermissions } from '@/shared/auth/session'
 type ApiResponse<T> = { success: boolean; data: T }
 export type ScopedAccess = {
   assignmentId: string
@@ -35,6 +35,7 @@ export async function login(identifier: string, password: string) {
   const session = (response as unknown as ApiResponse<AuthSession>).data
   setAccessToken(session.accessToken)
   setPermissions(effectivePermissions(session))
+  setGlobalPermissions(session.permissions)
   return session
 }
 
@@ -52,6 +53,7 @@ export async function restoreSession() {
     const session = (response as unknown as ApiResponse<AuthSession>).data
     setAccessToken(session.accessToken)
     setPermissions(effectivePermissions(session))
+    setGlobalPermissions(session.permissions)
     return session
   } catch (error) {
     setAccessToken(null)
@@ -63,6 +65,7 @@ export async function getCurrentAccount() {
   const response = await apiClient.get<ApiResponse<CurrentAccount>>('/api/auth/me')
   const account = (response as unknown as ApiResponse<CurrentAccount>).data
   setPermissions(effectivePermissions(account))
+  setGlobalPermissions(account.permissions)
   return account
 }
 

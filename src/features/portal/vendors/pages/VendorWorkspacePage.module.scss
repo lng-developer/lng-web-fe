@@ -1,0 +1,155 @@
+.page {
+  display: grid;
+  gap: 20px;
+}
+.tree {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+.treeToolbar {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
+.treeToolbar :global(.ant-input-affix-wrapper) {
+  max-width: 420px;
+}
+.vendorNode + .vendorNode {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+.vendorNode,
+.productNode {
+  border-left: 2px solid var(--ant-color-border-secondary);
+}
+.nodeHeader,
+.costCenterNode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 8px 16px;
+}
+.nodeButton {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 4px;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+.nodeButton:hover strong {
+  color: var(--ant-color-primary);
+}
+.nodeIdentity {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.nodeIdentity strong,
+.nodeIdentity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nodeIdentity small {
+  color: var(--ant-color-text-secondary);
+}
+.childBranch,
+.costCenterBranch {
+  display: grid;
+  gap: 10px;
+  padding: 12px 16px 16px 32px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
+.productNode {
+  border-top: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+}
+.costCenterBranch {
+  margin-top: 8px;
+  padding-left: 24px;
+  background: var(--ant-color-fill-quaternary);
+}
+.costCenterNode {
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+}
+.branchLoading {
+  min-height: 56px;
+  background: linear-gradient(
+    90deg,
+    var(--ant-color-fill-quaternary),
+    var(--ant-color-fill-secondary),
+    var(--ant-color-fill-quaternary)
+  );
+  animation: loading 1.2s infinite;
+}
+.branchError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  color: var(--ant-color-error);
+}
+.formSection {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+}
+.formSection legend {
+  padding-inline: 6px;
+  color: var(--ant-color-text-secondary);
+  font-weight: 600;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.formGrid :global(.ant-input-number) {
+  width: 100%;
+}
+@keyframes loading {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 220px 0;
+  }
+}
+@media (max-width: 720px) {
+  .treeToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .treeToolbar :global(.ant-input-affix-wrapper) {
+    max-width: none;
+  }
+  .childBranch {
+    padding-left: 16px;
+  }
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
