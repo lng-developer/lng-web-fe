@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Input, Select, Space, Typography } from 'antd'
 
+import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   DateRangePicker,
@@ -55,9 +56,9 @@ export function PsdFileWorkspacePage() {
         asset ? (
           <Space>
             {asset.mimeType?.startsWith('image/') ? (
-              <img
+              <AuthenticatedMediaImage
                 alt={asset.originalFilename ?? 'File'}
-                src={asset.downloadUrl ?? undefined}
+                downloadUrl={asset.downloadUrl}
                 width={32}
                 height={32}
               />
@@ -112,8 +113,9 @@ export function PsdFileWorkspacePage() {
           <Space size={0}>
             <Button
               type="link"
-              href={asset.downloadUrl}
-              target="_blank"
+              onClick={() =>
+                void downloadMediaAsset(asset.downloadUrl!, asset.originalFilename ?? undefined)
+              }
               aria-label={`Open ${asset.originalFilename}`}
             >
               Open
@@ -121,8 +123,9 @@ export function PsdFileWorkspacePage() {
             <Button
               type="link"
               icon={<DownloadOutlined />}
-              href={asset.downloadUrl}
-              download
+              onClick={() =>
+                void downloadMediaAsset(asset.downloadUrl!, asset.originalFilename ?? undefined)
+              }
               aria-label={`Download ${asset.originalFilename}`}
             >
               Download

@@ -24,6 +24,7 @@ import {
 } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   DetailDrawer,
@@ -508,8 +509,12 @@ export function CatalogListingWorkbenchPage({
                   children: selected.psdTemplateAsset?.downloadUrl ? (
                     <Button
                       type="link"
-                      href={selected.psdTemplateAsset.downloadUrl}
-                      target="_blank"
+                      onClick={() =>
+                        void downloadMediaAsset(
+                          selected.psdTemplateAsset!.downloadUrl,
+                          selected.psdTemplateAsset!.originalFilename,
+                        )
+                      }
                     >
                       {selected.psdTemplateAsset.originalFilename ??
                         t('portal.catalog.details.download')}
@@ -522,7 +527,15 @@ export function CatalogListingWorkbenchPage({
                   key: 'previewAsset',
                   label: t('portal.catalog.details.previewFile'),
                   children: selected.previewAsset?.downloadUrl ? (
-                    <Button type="link" href={selected.previewAsset.downloadUrl} target="_blank">
+                    <Button
+                      type="link"
+                      onClick={() =>
+                        void downloadMediaAsset(
+                          selected.previewAsset!.downloadUrl,
+                          selected.previewAsset!.originalFilename,
+                        )
+                      }
+                    >
                       {selected.previewAsset.originalFilename ??
                         t('portal.catalog.details.download')}
                     </Button>

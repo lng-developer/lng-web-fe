@@ -28,6 +28,7 @@ import {
 } from 'antd'
 import dayjs from 'dayjs'
 
+import { downloadMediaAsset } from '@/shared/media'
 import { FeedbackAlert, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -716,7 +717,9 @@ function OrderItemPanel({
           <Button
             size="small"
             icon={<DownloadOutlined />}
-            href={item.listing.psdTemplate.downloadUrl}
+            onClick={() =>
+              void downloadMediaAsset(item.listing!.psdTemplate!.downloadUrl!, 'template.psd')
+            }
           >
             PSD
           </Button>

@@ -28,6 +28,7 @@ import {
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions, listListings } from '@/features/portal/catalog/api/catalogApi'
+import { downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   DetailDrawer,
@@ -556,7 +557,14 @@ export function DesignWorkbenchPage() {
               ]}
             />
             {task.latestSubmission?.assets.map((asset) => (
-              <Button key={asset.id} href={asset.downloadUrl ?? undefined} target="_blank">
+              <Button
+                key={asset.id}
+                disabled={!asset.downloadUrl}
+                onClick={() =>
+                  asset.downloadUrl &&
+                  void downloadMediaAsset(asset.downloadUrl, asset.originalFilename ?? undefined)
+                }
+              >
                 {asset.originalFilename ?? asset.id}
               </Button>
             ))}
@@ -586,8 +594,14 @@ export function DesignWorkbenchPage() {
                       <Button
                         type="link"
                         key={asset.id}
-                        href={asset.downloadUrl ?? undefined}
-                        target="_blank"
+                        disabled={!asset.downloadUrl}
+                        onClick={() =>
+                          asset.downloadUrl &&
+                          void downloadMediaAsset(
+                            asset.downloadUrl,
+                            asset.originalFilename ?? undefined,
+                          )
+                        }
                       >
                         {asset.originalFilename ?? asset.id}
                       </Button>

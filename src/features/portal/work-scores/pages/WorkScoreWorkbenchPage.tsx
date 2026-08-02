@@ -14,6 +14,7 @@ import { Button, Input, Select, Space, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { ApiError } from '@/shared/api/apiError'
+import { downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   DateRangePicker,
@@ -208,8 +209,10 @@ export function WorkScoreWorkbenchPage({
                 aria-label={t('portal.workScores.actions.download')}
                 size="small"
                 icon={<DownloadOutlined />}
-                href={row.assetDownloadUrl}
-                onClick={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  void downloadMediaAsset(row.assetDownloadUrl!)
+                }}
               />
             </Tooltip>
           ) : null}

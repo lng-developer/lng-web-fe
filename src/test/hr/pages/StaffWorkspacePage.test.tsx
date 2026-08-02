@@ -183,7 +183,7 @@ describe('StaffWorkspacePage', () => {
     expect(screen.getAllByText('08:12 - 17:05')[0]).toBeVisible()
     expect(screen.getAllByText('Đi muộn 12 phút')[0]).toBeVisible()
     expect(screen.getAllByText('OT 90 min')[0]).toBeVisible()
-    expect(screen.getByText('Nghỉ phép năm')).toBeVisible()
+    expect(screen.getAllByText('Nghỉ phép năm')[0]).toBeVisible()
     expect(screen.getByText('Company holiday')).toBeVisible()
   })
 

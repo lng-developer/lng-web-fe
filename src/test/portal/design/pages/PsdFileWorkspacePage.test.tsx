@@ -1,4 +1,4 @@
-import { cleanup } from '@testing-library/react'
+import { cleanup, fireEvent } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/design/api/designApi', () => ({
@@ -44,21 +44,28 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
   }),
 }))
 
+vi.mock('@/shared/media', () => ({
+  AuthenticatedMediaImage: ({ alt }: { alt: string }) => <img alt={alt} />,
+  downloadMediaAsset: vi.fn(),
+}))
+
 import { PsdFileWorkspacePage } from '@/features/portal/design/pages/PsdFileWorkspacePage'
+import { downloadMediaAsset } from '@/shared/media'
 import { renderWithTestProviders } from '@/test/helpers/testProviders'
 
 describe('PsdFileWorkspacePage', () => {
   afterEach(cleanup)
 
-  it('shows real download links and only previews image files', async () => {
+  it('uses authenticated media actions and only previews image files', async () => {
     const view = renderWithTestProviders(<PsdFileWorkspacePage />)
 
     expect(await view.findByText('reference.png')).toBeVisible()
     expect(view.getByAltText('reference.png')).toBeVisible()
     expect(view.queryByAltText('master.psd')).not.toBeInTheDocument()
-    expect(view.getByRole('link', { name: 'Download master.psd' })).toHaveAttribute(
-      'href',
+    fireEvent.click(view.getByRole('button', { name: 'Download master.psd' }))
+    expect(downloadMediaAsset).toHaveBeenCalledWith(
       '/api/media/assets/asset-2/download',
+      'master.psd',
     )
   }, 15_000)
 })

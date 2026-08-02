@@ -13,6 +13,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Drawer, Input, Modal, Select, Slider, Space, Tabs, Typography, Upload } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   FeedbackAlert,
@@ -118,7 +119,11 @@ function ArtworkInspector({
           <div className={styles.canvas} key={label}>
             <Typography.Text strong>{label}</Typography.Text>
             {url ? (
-              <img src={url} alt={label} style={{ transform: `scale(${scale})` }} />
+              <AuthenticatedMediaImage
+                downloadUrl={url}
+                alt={label}
+                style={{ transform: `scale(${scale})` }}
+              />
             ) : (
               <Typography.Text type="secondary">
                 {t('portal.production.fileMissing')}
@@ -361,8 +366,8 @@ export function ProductionWorkbenchPage({
                 <div className={styles.slotFiles}>
                   <div className={styles.preview}>
                     {check.inputAssetDownloadUrl ? (
-                      <img
-                        src={check.inputAssetDownloadUrl}
+                      <AuthenticatedMediaImage
+                        downloadUrl={check.inputAssetDownloadUrl}
                         alt={t('portal.production.original')}
                       />
                     ) : (
@@ -371,7 +376,10 @@ export function ProductionWorkbenchPage({
                   </div>
                   <div className={styles.preview}>
                     {check.outputAssetDownloadUrl ? (
-                      <img src={check.outputAssetDownloadUrl} alt={t('portal.production.scaled')} />
+                      <AuthenticatedMediaImage
+                        downloadUrl={check.outputAssetDownloadUrl}
+                        alt={t('portal.production.scaled')}
+                      />
                     ) : (
                       t('portal.production.fileMissing')
                     )}
@@ -382,7 +390,10 @@ export function ProductionWorkbenchPage({
                     {t('portal.production.inspect')}
                   </Button>
                   {check.inputAssetDownloadUrl ? (
-                    <Button href={check.inputAssetDownloadUrl} icon={<DownloadOutlined />}>
+                    <Button
+                      icon={<DownloadOutlined />}
+                      onClick={() => void downloadMediaAsset(check.inputAssetDownloadUrl!)}
+                    >
                       {t('portal.production.downloadOriginal')}
                     </Button>
                   ) : null}
