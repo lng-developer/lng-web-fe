@@ -140,7 +140,26 @@ export type CandidateSearchInput = {
   page?: number
   limit?: number
 }
-export type CandidateResult = Paginated<VendorCandidate> | { items: VendorCandidate[] }
+export type VendorCandidateSearchRow = {
+  vendor: { id: string; code?: string | null; name?: string | null }
+  vendorProduct: { id: string; code?: string | null; name?: string | null }
+  vendorCostCenter: {
+    id: string
+    code?: string | null
+    name?: string | null
+    standardSize?: string | null
+    standardColor?: string | null
+    baseCostAmount?: number | null
+    currency?: string | null
+  }
+  match: { score?: number | null; confidence?: string | null; reasons?: string[] }
+}
+export type CandidateResult = {
+  orderItemId: string
+  signals: Record<string, unknown>
+  items: VendorCandidateSearchRow[]
+  pagination: { total: number; page: number; limit: number }
+}
 export type CandidateSelection = { vendorProductId: string; vendorCostCenterId: string }
 export type RecheckBatchInput = Pick<
   MappingContextParams,

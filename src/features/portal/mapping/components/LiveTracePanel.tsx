@@ -1,5 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { CheckCircleOutlined, ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import {
+  CheckCircleOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons'
 import { Button, Descriptions, Divider, List, Space, Typography } from 'antd'
 
 import { EmptyState, FeedbackAlert, StatusTag } from '@/shared/ui'
@@ -13,6 +18,7 @@ export function LiveTracePanel({
   selectingCandidateId,
   onRecheck,
   onResolve,
+  onFindCandidate,
   onSelectCandidate,
 }: {
   readonly canWrite: boolean
@@ -21,6 +27,7 @@ export function LiveTracePanel({
   readonly selectingCandidateId?: string
   readonly onRecheck: () => void
   readonly onResolve: () => void
+  readonly onFindCandidate: () => void
   readonly onSelectCandidate: (candidateId: string, productId: string) => void
 }) {
   const { t } = useTranslation()
@@ -74,6 +81,11 @@ export function LiveTracePanel({
         )}
       />
       <Divider titlePlacement="start">{t('mapping.sections.candidates')}</Divider>
+      {canWrite ? (
+        <Button className="mb-2" icon={<SearchOutlined />} onClick={onFindCandidate}>
+          {t('mapping.actions.findCandidate')}
+        </Button>
+      ) : null}
       <List
         size="small"
         dataSource={trace.candidates}

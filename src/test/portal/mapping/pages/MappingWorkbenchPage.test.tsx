@@ -13,6 +13,8 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
     listMappingRules: vi.fn(),
     listUnmatchedItems: vi.fn(),
     previewOrderItem: vi.fn(),
+    searchVendorCandidates: vi.fn(),
+    selectFulfillmentCandidate: vi.fn(),
   }
 })
 
@@ -23,6 +25,8 @@ import {
   listMappingRules,
   listUnmatchedItems,
   previewOrderItem,
+  searchVendorCandidates,
+  selectFulfillmentCandidate,
 } from '@/features/portal/mapping/api/mappingApi'
 import { MappingWorkbenchPage } from '@/features/portal/mapping/pages/MappingWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
@@ -35,7 +39,7 @@ const account: CurrentAccount = {
   profileSetupRequired: false,
 }
 
-function renderPage(currentAccount = account) {
+function renderPage(currentAccount = account, initialEntry = '/portal/mapping/workbench') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const router = createMemoryRouter(
     [
@@ -47,7 +51,7 @@ function renderPage(currentAccount = account) {
       },
       { path: '/portal/mapping', element: <div>Product Mapping</div> },
     ],
-    { initialEntries: ['/portal/mapping/workbench'] },
+    { initialEntries: [initialEntry] },
   )
   return render(
     <AntdApp>
@@ -96,6 +100,25 @@ describe('MappingWorkbenchPage', () => {
       skuNormalization: { originalSku: 'J2501-TS1S-01', canonicalSku: 'J2501-TS1S-01' },
       skuMapping: { configCode: 'TS1S' },
     })
+    vi.mocked(searchVendorCandidates).mockResolvedValue({
+      orderItemId: 'item-1',
+      signals: {},
+      items: [
+        {
+          vendor: { id: 'vendor-1', name: 'Vendor One' },
+          vendorProduct: { id: 'product-1', name: 'Product A' },
+          vendorCostCenter: {
+            id: 'cost-1',
+            code: 'CC-M-BLACK',
+            standardSize: 'M',
+            standardColor: 'Black',
+          },
+          match: { score: 95, confidence: 'HIGH', reasons: [] },
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+    vi.mocked(selectFulfillmentCandidate).mockResolvedValue({ id: 'plan-1' })
   })
 
   it('never loads rule inventory and links the selected blocker to its focused page', async () => {
@@ -116,5 +139,40 @@ describe('MappingWorkbenchPage', () => {
     await waitFor(() => expect(listUnmatchedItems).toHaveBeenCalledTimes(1))
     expect(screen.queryByRole('button', { name: 'Recheck safe items' })).not.toBeInTheDocument()
     expect(listAuthorableShops).not.toHaveBeenCalled()
+  })
+
+  it('searches and applies a manual vendor candidate from the selected item', async () => {
+    renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
+    fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('tr')!)
+
+    fireEvent.click((await screen.findByText('Find vendor candidate')).closest('button')!)
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    await waitFor(() => expect(searchVendorCandidates).toHaveBeenCalled())
+    fireEvent.mouseDown(screen.getByLabelText('Vendor'))
+    fireEvent.click(await screen.findByText('Vendor One'))
+    fireEvent.mouseDown(screen.getByLabelText('Vendor product'))
+    fireEvent.click(await screen.findByText('Product A'))
+    fireEvent.mouseDown(screen.getByLabelText('Normalized size'))
+    fireEvent.click((await screen.findAllByText('M')).at(-1)!)
+    fireEvent.mouseDown(screen.getByLabelText('Normalized color'))
+    fireEvent.click((await screen.findAllByText('Black')).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Apply candidate' }))
+
+    await waitFor(() =>
+      expect(selectFulfillmentCandidate).toHaveBeenCalledWith('item-1', {
+        vendorProductId: 'product-1',
+        vendorCostCenterId: 'cost-1',
+      }),
+    )
+  })
+
+  it('opens a linked order item directly in the workbench', async () => {
+    renderPage(
+      { ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] },
+      '/portal/mapping/workbench?orderItemId=item-1',
+    )
+
+    await waitFor(() => expect(previewOrderItem).toHaveBeenCalledWith('item-1'))
+    expect(await screen.findByText('Find vendor candidate')).toBeInTheDocument()
   })
 })

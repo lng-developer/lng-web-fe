@@ -100,9 +100,14 @@ export type OrderWorkbenchItem = {
   } | null
   mapping: {
     status: string | null
-    vendor?: { name: string | null } | null
-    vendorProduct?: { name: string | null } | null
-    vendorCostCenter?: { code: string | null; size: string | null; color: string | null } | null
+    vendor?: { id?: string | null; name: string | null } | null
+    vendorProduct?: { id?: string | null; name: string | null } | null
+    vendorCostCenter?: {
+      id?: string | null
+      code: string | null
+      size: string | null
+      color: string | null
+    } | null
   } | null
   pricing: { customerPaidAmount: number; baseCostAmount: number | null; currency: string | null }
   production: { status: string | null; scaleStatus: string | null; qcStatus: string | null } | null

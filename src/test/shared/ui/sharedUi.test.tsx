@@ -42,6 +42,20 @@ describe('shared UI', () => {
     expect(onSearchChange).toHaveBeenCalledWith('J2501')
   })
 
+  it('does not restart debounce when the parent recreates its callback', () => {
+    vi.useFakeTimers()
+    const first = vi.fn()
+    const latest = vi.fn()
+    const view = render(<SearchInput aria-label="Search" delay={200} onSearchChange={first} />)
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'ORDER-1' } })
+    act(() => vi.advanceTimersByTime(100))
+    view.rerender(<SearchInput aria-label="Search" delay={200} onSearchChange={latest} />)
+    act(() => vi.advanceTimersByTime(100))
+
+    expect(latest).toHaveBeenCalledWith('ORDER-1')
+  })
+
   it('renders date, time, and datetime values in their own formats', () => {
     render(
       <>

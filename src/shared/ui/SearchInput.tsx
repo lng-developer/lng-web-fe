@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Input, type InputProps } from 'antd'
 
@@ -19,12 +19,17 @@ export function SearchInput({
   ...props
 }: SearchInputProps) {
   const [draft, setDraft] = useState(value)
+  const onSearchChangeRef = useRef(onSearchChange)
+
+  useEffect(() => {
+    onSearchChangeRef.current = onSearchChange
+  }, [onSearchChange])
 
   useEffect(() => {
     if (draft === value) return
-    const timer = window.setTimeout(() => onSearchChange(draft), delay)
+    const timer = window.setTimeout(() => onSearchChangeRef.current(draft), delay)
     return () => window.clearTimeout(timer)
-  }, [delay, draft, onSearchChange, value])
+  }, [delay, draft, value])
 
   return (
     <Input

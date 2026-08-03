@@ -151,7 +151,9 @@
       "fixNow": "Sửa ngay",
       "closeEditor": "Đóng trình sửa quy tắc",
       "acknowledge": "Xác nhận phạm vi giao nhau",
-      "retry": "Thử lại"
+      "retry": "Thử lại",
+      "findCandidate": "Tìm vendor candidate",
+      "applyCandidate": "Áp dụng candidate"
     },
     "sections": {
       "rules": "Quy tắc",
@@ -164,6 +166,9 @@
       "ruleEditor": "Sửa quy tắc"
     },
     "filters": {
+      "vendorProduct": "Sản phẩm vendor",
+      "costCenter": "Cost center",
+      "matchScore": "Điểm phù hợp",
       "searchRules": "Tìm quy tắc",
       "searchQueue": "Tìm đơn, SKU hoặc ASIN",
       "status": "Trạng thái",
@@ -172,7 +177,8 @@
       "configCode": "Mã cấu hình",
       "productType": "Loại sản phẩm",
       "stage": "Bước đang bị chặn",
-      "age": "Thời gian chờ"
+      "age": "Thời gian chờ",
+      "searchCandidates": "Tìm vendor hoặc sản phẩm"
     },
     "fields": {
       "configCode": "Mã cấu hình",
@@ -1609,6 +1615,7 @@
       "createCase": "Tạo case",
       "updateCase": "Cập nhật case",
       "resolveCase": "Giải quyết case",
+      "product": "Sản phẩm",
       "cancelCase": "Hủy case",
       "more": "Thao tác khác",
       "replaceOrder": "Tạo đơn thay thế",

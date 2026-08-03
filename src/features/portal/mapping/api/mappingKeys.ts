@@ -14,6 +14,8 @@ export const mappingKeys = {
   unmatchedRoot: () => [...mappingKeys.all, 'unmatched'] as const,
   unmatched: (params: UnmatchedParams) => [...mappingKeys.unmatchedRoot(), params] as const,
   preview: (orderItemId: string) => [...mappingKeys.all, 'preview', orderItemId] as const,
+  candidates: (orderItemId: string, q: string) =>
+    [...mappingKeys.all, 'candidates', orderItemId, q] as const,
   rulesRoot: (type: MappingRuleType) => [...mappingKeys.all, 'rules', type] as const,
   rules: (type: MappingRuleType, params: RuleListParams) =>
     [...mappingKeys.rulesRoot(type), params] as const,

@@ -60,6 +60,7 @@ import {
   validateShippingAddress,
 } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
+import { FulfillmentInlineEditor } from './FulfillmentInlineEditor'
 import { formatMinorMoney, orderStatusTone } from './orderPresentation'
 import styles from './OrderWorkbenchPage.module.scss'
 
@@ -793,33 +794,7 @@ function OrderItemPanel({
       </section>
       <section>
         <Typography.Text strong>{t('orders.sections.fulfillment')}</Typography.Text>
-        <Descriptions
-          size="small"
-          column={1}
-          colon={false}
-          items={[
-            {
-              key: 'vendor',
-              label: t('orders.fields.vendor'),
-              children: value(item.mapping?.vendor?.name),
-            },
-            {
-              key: 'cc',
-              label: t('orders.fields.costCenter'),
-              children: value(item.mapping?.vendorCostCenter?.code),
-            },
-            {
-              key: 'size',
-              label: t('orders.fields.size'),
-              children: value(item.mapping?.vendorCostCenter?.size),
-            },
-            {
-              key: 'color',
-              label: t('orders.fields.color'),
-              children: value(item.mapping?.vendorCostCenter?.color),
-            },
-          ]}
-        />
+        <FulfillmentInlineEditor item={item} canWrite={canWrite} />
       </section>
       <section>
         <Typography.Text strong>{t('orders.sections.trackingState')}</Typography.Text>

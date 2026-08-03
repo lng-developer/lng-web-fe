@@ -151,7 +151,9 @@
       "fixNow": "Fix now",
       "closeEditor": "Close rule editor",
       "acknowledge": "Acknowledge overlap",
-      "retry": "Try again"
+      "retry": "Try again",
+      "findCandidate": "Find vendor candidate",
+      "applyCandidate": "Apply candidate"
     },
     "sections": {
       "rules": "Rules",
@@ -164,6 +166,9 @@
       "ruleEditor": "Rule editor"
     },
     "filters": {
+      "vendorProduct": "Vendor product",
+      "costCenter": "Cost center",
+      "matchScore": "Match score",
       "searchRules": "Search rules",
       "searchQueue": "Search order, SKU, or ASIN",
       "status": "Status",
@@ -172,7 +177,8 @@
       "configCode": "Config code",
       "productType": "Product type",
       "stage": "Blocked stage",
-      "age": "Age"
+      "age": "Age",
+      "searchCandidates": "Search vendor or product"
     },
     "fields": {
       "configCode": "Config code",
@@ -1613,6 +1619,7 @@
       "createCase": "Create case",
       "updateCase": "Update case",
       "resolveCase": "Resolve case",
+      "product": "Product",
       "cancelCase": "Cancel case",
       "more": "More actions",
       "replaceOrder": "Replace order",

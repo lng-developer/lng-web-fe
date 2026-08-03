@@ -1,8 +1,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { App } from 'antd'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/portal/mapping/api/mappingApi')>()
+  return {
+    ...actual,
+    searchVendorCandidates: vi.fn(),
+    selectFulfillmentCandidate: vi.fn(),
+  }
+})
+
+import {
+  searchVendorCandidates,
+  selectFulfillmentCandidate,
+} from '@/features/portal/mapping/api/mappingApi'
 import type { OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
 import { OrderInlinePanel } from '@/features/portal/orders/pages/OrderInlinePanel'
 
@@ -78,6 +91,40 @@ function renderPanel(
 }
 
 describe('OrderInlinePanel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(searchVendorCandidates).mockResolvedValue({
+      orderItemId: 'item-1',
+      signals: {},
+      items: [
+        {
+          vendor: { id: 'vendor-1', name: 'Vendor One' },
+          vendorProduct: { id: 'product-1', name: 'Product One' },
+          vendorCostCenter: {
+            id: 'cost-1',
+            code: 'M-BLACK',
+            standardSize: 'M',
+            standardColor: 'Black',
+          },
+          match: { score: 90, reasons: [] },
+        },
+        {
+          vendor: { id: 'vendor-1', name: 'Vendor One' },
+          vendorProduct: { id: 'product-2', name: 'Product Two' },
+          vendorCostCenter: {
+            id: 'cost-2',
+            code: 'L-WHITE',
+            standardSize: 'L',
+            standardColor: 'White',
+          },
+          match: { score: 80, reasons: [] },
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+    vi.mocked(selectFulfillmentCandidate).mockResolvedValue({ id: 'plan-1' })
+  })
+
   it('omits duplicated address and marketplace product titles', () => {
     renderPanel()
 
@@ -129,5 +176,29 @@ describe('OrderInlinePanel', () => {
     expect(screen.getAllByRole('checkbox')).toHaveLength(2)
     expect(screen.getAllByText('J2501-DM-1')).toHaveLength(2)
     expect(screen.getAllByText('J2502-DM-2')).toHaveLength(2)
+  })
+
+  it('edits vendor, product, size, and color inline and saves the completed candidate', async () => {
+    renderPanel()
+
+    expect(screen.getByLabelText('orders.fields.size')).toBeDisabled()
+    expect(screen.getByLabelText('orders.fields.color')).toBeDisabled()
+
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
+    fireEvent.click(await screen.findByText('Vendor One'))
+    expect(screen.getByLabelText('orders.fields.product')).toBeEnabled()
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
+    fireEvent.click(await screen.findByText('Product One'))
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
+    fireEvent.click((await screen.findAllByText('M')).at(-1)!)
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.color'))
+    fireEvent.click((await screen.findAllByText('Black')).at(-1)!)
+
+    await waitFor(() =>
+      expect(selectFulfillmentCandidate).toHaveBeenCalledWith('item-1', {
+        vendorProductId: 'product-1',
+        vendorCostCenterId: 'cost-1',
+      }),
+    )
   })
 })

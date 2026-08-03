@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useRouteLoaderData } from 'react-router-dom'
+import { Link, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { SyncOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App as AntdApp, Button, Card, Select, Space, Typography } from 'antd'
@@ -17,6 +17,7 @@ import {
   recheckOrderItem,
   recheckUnmatched,
   resolveOrderItem,
+  searchVendorCandidates,
   selectFulfillmentCandidate,
   type UnmatchedMappingItem,
   type UnmatchedParams,
@@ -25,6 +26,7 @@ import { mappingKeys } from '../api/mappingKeys'
 import { LiveTracePanel } from '../components/LiveTracePanel'
 import { MappingContextBar, type MappingContextValue } from '../components/MappingContextBar'
 import { ResolveQueuePanel } from '../components/ResolveQueuePanel'
+import { VendorCandidatePickerModal } from '../components/VendorCandidatePickerModal'
 import { toMappingTraceView } from '../model/mappingModel'
 import { getRulePageForFixType } from '../model/mappingPageConfig'
 import styles from './MappingWorkspacePage.module.scss'
@@ -38,6 +40,8 @@ export function MappingWorkbenchPage({
 }) {
   const { t } = useTranslation()
   const { modal } = AntdApp.useApp()
+  const [searchParams] = useSearchParams()
+  const linkedOrderItemId = searchParams.get('orderItemId') ?? ''
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const account = accountProp ?? loadedAccount
   const permissions = useMemo(
@@ -51,11 +55,18 @@ export function MappingWorkbenchPage({
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [context, setContext] = useState<MappingContextValue>({})
-  const [queueSearch, setQueueSearch] = useState('')
+  const [queueSearch, setQueueSearch] = useState(linkedOrderItemId)
   const [queueBlocker, setQueueBlocker] = useState<string>()
   const [queueStage, setQueueStage] = useState<UnmatchedParams['stage']>()
   const [queueAge, setQueueAge] = useState<UnmatchedParams['age']>()
-  const [selectedItem, setSelectedItem] = useState<UnmatchedMappingItem>()
+  const [selectedItem, setSelectedItem] = useState<UnmatchedMappingItem | undefined>(() => {
+    return linkedOrderItemId
+      ? { id: linkedOrderItemId, orderItemId: linkedOrderItemId, blockingReasons: [] }
+      : undefined
+  })
+  const [candidateOpen, setCandidateOpen] = useState(false)
+  const [candidateSearch, setCandidateSearch] = useState('')
+  const orderItemId = selectedItem?.orderItemId ?? selectedItem?.id
   const apiContext = { shopId: context.shopId, marketplaceCode: context.marketplaceCode }
   const unmatchedParams = {
     ...apiContext,
@@ -89,6 +100,12 @@ export function MappingWorkbenchPage({
     enabled: Boolean(selectedItem),
     retry: false,
   })
+  const candidates = useQuery({
+    queryKey: mappingKeys.candidates(orderItemId ?? '', candidateSearch),
+    queryFn: () => searchVendorCandidates(orderItemId!, { q: candidateSearch, limit: 100 }),
+    enabled: candidateOpen && Boolean(orderItemId),
+    retry: false,
+  })
 
   const notifyError = useCallback(
     (error: unknown) =>
@@ -104,6 +121,7 @@ export function MappingWorkbenchPage({
   const recheck = useMutation({
     mutationFn: recheckOrderItem,
     onSuccess: async () => {
+      setCandidateOpen(false)
       await refreshQueue()
       toast('success', t('mapping.feedback.itemRechecked'))
     },
@@ -123,9 +141,10 @@ export function MappingWorkbenchPage({
         vendorCostCenterId: costCenterId,
         vendorProductId: productId,
       }),
-    onSuccess: async () => {
-      await refreshQueue()
+    onSuccess: () => {
+      setCandidateOpen(false)
       toast('success', t('mapping.feedback.candidateSelected'))
+      void refreshQueue()
     },
     onError: notifyError,
   })
@@ -144,7 +163,6 @@ export function MappingWorkbenchPage({
 
   const trace = preview.data ? toMappingTraceView(preview.data) : undefined
   const rulePage = getRulePageForFixType(selectedItem?.recommendedFixTypes?.[0])
-  const orderItemId = selectedItem?.orderItemId ?? selectedItem?.id
   const ruleSearch =
     orderItemId && rulePage
       ? new URLSearchParams({
@@ -284,12 +302,27 @@ export function MappingWorkbenchPage({
             }
             onRecheck={() => orderItemId && recheck.mutate(orderItemId)}
             onResolve={() => orderItemId && resolve.mutate(orderItemId)}
+            onFindCandidate={() => setCandidateOpen(true)}
             onSelectCandidate={(costCenterId, productId) =>
               selectCandidate.mutate({ costCenterId, productId })
             }
           />
         </Card>
       </div>
+      <VendorCandidatePickerModal
+        applying={selectCandidate.isPending}
+        items={candidates.data?.items ?? []}
+        loading={candidates.isFetching}
+        open={candidateOpen}
+        onClose={() => setCandidateOpen(false)}
+        onSearch={setCandidateSearch}
+        onApply={(candidate) =>
+          selectCandidate.mutate({
+            costCenterId: candidate.vendorCostCenter.id,
+            productId: candidate.vendorProduct.id,
+          })
+        }
+      />
     </section>
   )
 }
