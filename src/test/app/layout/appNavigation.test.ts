@@ -80,6 +80,15 @@ describe('app navigation', () => {
     )
   })
 
+  it('exposes Media only from global MEDIA:READ', () => {
+    expect(getContextNavigation('portal', account(['MEDIA:READ']))[0]?.items).toContainEqual({
+      key: 'media',
+      path: '/portal/media',
+      labelKey: 'shell.navigation.media',
+    })
+    expect(getContextNavigation('portal', account([], ['MEDIA:READ']))).toEqual([])
+  })
+
   it('keeps Shops before Vendors when both configuration permissions are granted', () => {
     expect(
       getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ']))[0]?.items,

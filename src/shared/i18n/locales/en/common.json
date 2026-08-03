@@ -26,7 +26,8 @@
       "shipments": "Shipments",
       "workScores": "Work scores",
       "orders": "Orders",
-      "mapping": "Mapping"
+      "mapping": "Mapping",
+      "media": "Media"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -56,6 +57,46 @@
         "shop": "Shop",
         "vendor": "Vendor"
       }
+    }
+  },
+  "media": {
+    "title": "Media assets",
+    "description": "Find, inspect, upload, and download files used across Portal operations.",
+    "unknownFile": "Unnamed file",
+    "empty": "No media assets match the current filters.",
+    "loadError": "Media assets could not be loaded.",
+    "filters": {
+      "label": "Media filters",
+      "search": "Search filename",
+      "mime": "All file groups",
+      "provider": "All providers",
+      "resourceType": "All resource types",
+      "ownerType": "All owners",
+      "status": "All statuses"
+    },
+    "columns": {
+      "file": "File",
+      "mime": "MIME type",
+      "size": "Size",
+      "provider": "Provider",
+      "resourceType": "Resource type",
+      "source": "Source",
+      "ownerType": "Owner",
+      "createdAt": "Created",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": { "download": "Download", "retry": "Retry" },
+    "detail": { "title": "Asset details" },
+    "upload": {
+      "action": "Upload file",
+      "title": "Upload media",
+      "submit": "Upload",
+      "cancel": "Cancel",
+      "drop": "Drop a file here or click to browse",
+      "hint": "One file, up to the configured upload limit.",
+      "success": "Media file uploaded",
+      "error": "Media upload failed"
     }
   },
   "mapping": {

@@ -26,7 +26,8 @@
       "shipments": "Vận chuyển",
       "workScores": "Điểm công việc",
       "orders": "Đơn hàng",
-      "mapping": "Ánh xạ"
+      "mapping": "Ánh xạ",
+      "media": "Tệp tin"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {
@@ -56,6 +57,46 @@
         "shop": "Cửa hàng",
         "vendor": "Nhà cung cấp"
       }
+    }
+  },
+  "media": {
+    "title": "Quản lý tệp tin",
+    "description": "Tìm, xem, tải lên và tải xuống các tệp được dùng trong Portal.",
+    "unknownFile": "Tệp chưa đặt tên",
+    "empty": "Không có tệp nào khớp với bộ lọc.",
+    "loadError": "Không thể tải danh sách tệp.",
+    "filters": {
+      "label": "Bộ lọc tệp",
+      "search": "Tìm theo tên tệp",
+      "mime": "Tất cả nhóm tệp",
+      "provider": "Tất cả nhà cung cấp",
+      "resourceType": "Tất cả loại tài nguyên",
+      "ownerType": "Tất cả nguồn sử dụng",
+      "status": "Tất cả trạng thái"
+    },
+    "columns": {
+      "file": "Tệp",
+      "mime": "Loại MIME",
+      "size": "Dung lượng",
+      "provider": "Nhà cung cấp",
+      "resourceType": "Loại tài nguyên",
+      "source": "Nguồn",
+      "ownerType": "Nơi sử dụng",
+      "createdAt": "Ngày tạo",
+      "status": "Trạng thái",
+      "actions": "Thao tác"
+    },
+    "actions": { "download": "Tải xuống", "retry": "Thử lại" },
+    "detail": { "title": "Chi tiết tệp" },
+    "upload": {
+      "action": "Tải tệp lên",
+      "title": "Tải tệp lên",
+      "submit": "Tải lên",
+      "cancel": "Hủy",
+      "drop": "Thả tệp vào đây hoặc bấm để chọn",
+      "hint": "Một tệp, theo giới hạn dung lượng đã cấu hình.",
+      "success": "Đã tải tệp lên",
+      "error": "Tải tệp thất bại"
     }
   },
   "mapping": {

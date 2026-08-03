@@ -81,6 +81,9 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 labelKey: 'shell.navigation.production',
               }
             : null,
+          globalPermissions.has('MEDIA:READ')
+            ? { key: 'media', path: '/portal/media', labelKey: 'shell.navigation.media' }
+            : null,
           ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK'].some((permission) =>
             permissions.has(permission),
           )

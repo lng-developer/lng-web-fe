@@ -261,6 +261,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/media',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/media/pages/MediaWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { MediaWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['MEDIA:READ']} globalOnly>
+                <MediaWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/work-scores',
         lazy: () =>
           Promise.all([
