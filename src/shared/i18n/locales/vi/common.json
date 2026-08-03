@@ -157,6 +157,8 @@
     "loadError": "Không thể tải dữ liệu báo cáo.",
     "empty": "Chưa có dữ liệu",
     "trend": "Xu hướng doanh thu theo ngày",
+    "cadence": { "daily": "Theo ngày", "weekly": "Theo tuần" },
+    "channels": { "title": "Kênh nổi bật" },
     "scopeLimited": "Báo cáo vận hành và quảng cáo hiện dành cho phạm vi toàn cục hoặc shop. Dữ liệu tài chính vẫn được giới hạn theo phạm vi tổ chức của bạn.",
     "tabs": {
       "overview": "Tổng quan điều hành",
@@ -1972,6 +1974,11 @@
     "markedAllRead": "Đã đánh dấu tất cả thông báo là đã đọc",
     "updateFailed": "Không thể cập nhật thông báo"
   },
-  "errors": { "unexpected": "Đã xảy ra lỗi không mong muốn." },
+  "errors": {
+    "unexpected": "Đã xảy ra lỗi không mong muốn.",
+    "requestId": "Mã yêu cầu",
+    "goBack": "Quay lại",
+    "tryAgain": "Thử lại"
+  },
   "notFound": { "title": "Không tìm thấy trang", "backHome": "Về trang chính" }
 }

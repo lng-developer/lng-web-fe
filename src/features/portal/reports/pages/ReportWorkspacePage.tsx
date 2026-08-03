@@ -4,6 +4,7 @@ import { useRouteLoaderData } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Alert, Select, Space, Tag, Typography } from 'antd'
+import dayjs from 'dayjs'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -23,7 +24,6 @@ import {
   type VendorPerformance,
 } from '@/features/portal/reports/api/reportApi'
 import {
-  BarChart,
   DataTable,
   DateRangePicker,
   FilterBar,
@@ -33,6 +33,8 @@ import {
   UiTabs,
 } from '@/shared/ui'
 
+import { buildRevenueTrend } from './reportTrend'
+import { ReportTrendChart } from './ReportTrendChart'
 import styles from './ReportWorkspacePage.module.scss'
 
 type TabKey = 'overview' | 'sales' | 'operations'
@@ -42,6 +44,16 @@ const money = (amount: number, currency: string) =>
 const percent = (bps: number | null) => (bps === null ? '—' : `${(bps / 100).toFixed(1)}%`)
 const sum = (rows: FinanceDaily[], key: keyof FinanceDaily) =>
   rows.reduce((total, row) => total + Number(row[key] || 0), 0)
+const topChannels = (rows: FinanceDaily[]) =>
+  Object.entries(
+    rows.reduce<Record<string, number>>((result, row) => {
+      const channel = [row.salesChannelCode, row.marketplaceCode].filter(Boolean).join(' / ') || '—'
+      result[channel] = (result[channel] || 0) + row.revenueAmount
+      return result
+    }, {}),
+  )
+    .sort(([, left], [, right]) => right - left)
+    .slice(0, 4)
 
 function statusSummary(rows: Record<string, number>, empty: string) {
   const entries = Object.entries(rows)
@@ -60,9 +72,12 @@ function statusSummary(rows: Record<string, number>, empty: string) {
 
 export function ReportWorkspacePage() {
   const { t } = useTranslation()
-  const account = useRouteLoaderData('app') as CurrentAccount
+  const account = useRouteLoaderData('workspace') as CurrentAccount
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
-  const [filters, setFilters] = useState<ReportFilters>({})
+  const [filters, setFilters] = useState<ReportFilters>(() => ({
+    dateFrom: dayjs().subtract(29, 'day').startOf('day').toISOString(),
+    dateTo: dayjs().endOf('day').toISOString(),
+  }))
   const globalRead = account.permissions.includes('REPORTS:READ')
   const operationalScope =
     globalRead ||
@@ -127,30 +142,50 @@ export function ReportWorkspacePage() {
       title: t('reports.columns.seller'),
       render: (_, row) => row.sellerName || row.sellerEmployeeCode || '—',
     },
-    { title: t('reports.columns.items'), dataIndex: 'itemCount' },
+    {
+      title: t('reports.columns.items'),
+      dataIndex: 'itemCount',
+      sorter: (a, b) => a.itemCount - b.itemCount,
+    },
     {
       title: t('reports.columns.revenue'),
+      sorter: (a, b) => a.revenueAmount - b.revenueAmount,
       render: (_, row) => money(row.revenueAmount, row.currency || 'USD'),
     },
     {
       title: t('reports.columns.netProfit'),
+      sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
       render: (_, row) => money(row.netProfitAmount, row.currency || 'USD'),
     },
-    { title: t('reports.columns.margin'), render: (_, row) => percent(row.netMarginBps) },
+    {
+      title: t('reports.columns.margin'),
+      sorter: (a, b) => (a.netMarginBps ?? -Infinity) - (b.netMarginBps ?? -Infinity),
+      render: (_, row) => percent(row.netMarginBps),
+    },
   ]
   const teamColumns: TableColumnsType<TeamPerformance> = [
     { title: t('reports.columns.team'), render: (_, row) => row.teamName || row.teamCode || '—' },
     { title: t('reports.columns.sellers'), dataIndex: 'activeSellerCount' },
-    { title: t('reports.columns.items'), dataIndex: 'itemCount' },
+    {
+      title: t('reports.columns.items'),
+      dataIndex: 'itemCount',
+      sorter: (a, b) => a.itemCount - b.itemCount,
+    },
     {
       title: t('reports.columns.revenue'),
+      sorter: (a, b) => a.revenueAmount - b.revenueAmount,
       render: (_, row) => money(row.revenueAmount, row.currency || 'USD'),
     },
     {
       title: t('reports.columns.netProfit'),
+      sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
       render: (_, row) => money(row.netProfitAmount, row.currency || 'USD'),
     },
-    { title: t('reports.columns.margin'), render: (_, row) => percent(row.netMarginBps) },
+    {
+      title: t('reports.columns.margin'),
+      sorter: (a, b) => (a.netMarginBps ?? -Infinity) - (b.netMarginBps ?? -Infinity),
+      render: (_, row) => percent(row.netMarginBps),
+    },
   ]
   const vendorColumns: TableColumnsType<VendorPerformance> = [
     {
@@ -256,10 +291,36 @@ export function ReportWorkspacePage() {
               value={String(sum(rows, 'missingCostCount'))}
             />
           </div>
-          <BarChart
-            ariaLabel={t('reports.trend')}
-            data={rows.map((row) => ({ label: row.date.slice(5), value: row.revenueAmount }))}
-          />
+          <div className={styles.trendLayout}>
+            <div className={styles.trendPanel}>
+              <div className={styles.trendHeader}>
+                <Typography.Text strong>{t('reports.trend')}</Typography.Text>
+                <Typography.Text type="secondary">
+                  {t(
+                    dayjs(filters.dateTo).diff(dayjs(filters.dateFrom), 'day') >= 60
+                      ? 'reports.cadence.weekly'
+                      : 'reports.cadence.daily',
+                  )}
+                </Typography.Text>
+              </div>
+              <ReportTrendChart
+                ariaLabel={t('reports.trend')}
+                data={buildRevenueTrend(rows, filters.dateFrom, filters.dateTo)}
+                formatValue={(value) => money(value, currency)}
+              />
+            </div>
+            <div className={styles.channelPanel}>
+              <Typography.Text strong>{t('reports.channels.title')}</Typography.Text>
+              <div className={styles.channelList}>
+                {topChannels(rows).map(([channel, value]) => (
+                  <div key={channel} className={styles.channelRow}>
+                    <Typography.Text>{channel}</Typography.Text>
+                    <Typography.Text strong>{money(value, currency)}</Typography.Text>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </SectionCard>
       ))}
       {operationalScope ? (

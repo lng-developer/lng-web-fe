@@ -157,6 +157,8 @@
     "loadError": "Report data could not be loaded.",
     "empty": "No data",
     "trend": "Daily revenue trend",
+    "cadence": { "daily": "Daily", "weekly": "Weekly" },
+    "channels": { "title": "Top channels" },
     "scopeLimited": "Operational and advertising reports are available for global or shop scope. Your finance data remains scoped to your organization assignment.",
     "tabs": {
       "overview": "Executive overview",
@@ -1976,6 +1978,11 @@
     "markedAllRead": "All notifications marked as read",
     "updateFailed": "Could not update notifications"
   },
-  "errors": { "unexpected": "Something unexpected happened." },
+  "errors": {
+    "unexpected": "Something unexpected happened.",
+    "requestId": "Request ID",
+    "goBack": "Go back",
+    "tryAgain": "Try again"
+  },
   "notFound": { "title": "Page not found", "backHome": "Back home" }
 }
