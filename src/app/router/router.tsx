@@ -161,6 +161,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/customizations',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/customization/pages/CustomizationReviewPage'),
+          ]).then(([{ PortalPageBoundary }, { CustomizationReviewPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['ORDERS:READ']}>
+                <CustomizationReviewPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/mapping',
         lazy: () =>
           Promise.all([

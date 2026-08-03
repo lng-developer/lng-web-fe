@@ -27,7 +27,8 @@
       "workScores": "Work scores",
       "orders": "Orders",
       "mapping": "Mapping",
-      "media": "Media"
+      "media": "Media",
+      "customizations": "Customization review"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -58,6 +59,39 @@
         "vendor": "Vendor"
       }
     }
+  },
+  "customization": {
+    "title": "Customization review",
+    "description": "Resolve buyer customization issues blocking fulfillment.",
+    "queue": "Blocked customizations",
+    "summary": { "pending": "Pending", "review": "Needs review", "failed": "Failed" },
+    "filters": {
+      "label": "Filters",
+      "search": "Search order, SKU, or customer",
+      "status": "All statuses"
+    },
+    "columns": {
+      "order": "Order / SKU",
+      "customer": "Customer",
+      "shop": "Shop",
+      "status": "Status",
+      "issue": "Issue",
+      "assets": "Assets"
+    },
+    "actions": {
+      "review": "Review",
+      "retry": "Retry",
+      "confirm": "Confirm parsed",
+      "fail": "Mark failed",
+      "reason": "Failure reason",
+      "openOrder": "Open order"
+    },
+    "modal": {
+      "title": "Review customization",
+      "inputs": "Customer inputs",
+      "assets": "{{extracted}}/{{total}} assets extracted, {{failed}} failed"
+    },
+    "feedback": { "updated": "Customization updated", "failed": "Could not update customization" }
   },
   "media": {
     "title": "Media assets",

@@ -27,7 +27,8 @@
       "workScores": "Điểm công việc",
       "orders": "Đơn hàng",
       "mapping": "Ánh xạ",
-      "media": "Tệp tin"
+      "media": "Tệp tin",
+      "customizations": "Duyệt tùy chỉnh"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {
@@ -58,6 +59,39 @@
         "vendor": "Nhà cung cấp"
       }
     }
+  },
+  "customization": {
+    "title": "Duyệt tùy chỉnh",
+    "description": "Xử lý dữ liệu tùy chỉnh của khách đang chặn hoàn tất đơn.",
+    "queue": "Tùy chỉnh đang bị chặn",
+    "summary": { "pending": "Đang chờ", "review": "Cần duyệt", "failed": "Thất bại" },
+    "filters": {
+      "label": "Bộ lọc",
+      "search": "Tìm đơn, SKU hoặc khách hàng",
+      "status": "Tất cả trạng thái"
+    },
+    "columns": {
+      "order": "Đơn / SKU",
+      "customer": "Khách hàng",
+      "shop": "Cửa hàng",
+      "status": "Trạng thái",
+      "issue": "Vấn đề",
+      "assets": "Tệp"
+    },
+    "actions": {
+      "review": "Kiểm tra",
+      "retry": "Thử lại",
+      "confirm": "Xác nhận đã đọc",
+      "fail": "Đánh dấu lỗi",
+      "reason": "Lý do lỗi",
+      "openOrder": "Mở đơn hàng"
+    },
+    "modal": {
+      "title": "Kiểm tra tùy chỉnh",
+      "inputs": "Nội dung khách nhập",
+      "assets": "Đã trích xuất {{extracted}}/{{total}} tệp, {{failed}} lỗi"
+    },
+    "feedback": { "updated": "Đã cập nhật tùy chỉnh", "failed": "Không thể cập nhật tùy chỉnh" }
   },
   "media": {
     "title": "Quản lý tệp tin",
