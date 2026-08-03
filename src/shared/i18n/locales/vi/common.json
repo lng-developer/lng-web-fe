@@ -77,7 +77,18 @@
       "profit": "Lợi nhuận gộp",
       "missing": "Thiếu chi phí"
     },
-    "filters": { "label": "Bộ lọc", "search": "Tìm mã đơn", "cost": "Trạng thái chi phí" },
+    "filters": {
+      "label": "Bộ lọc",
+      "search": "Tìm mã đơn",
+      "channel": "Kênh bán",
+      "marketplace": "Thị trường",
+      "seller": "Nhân viên bán hàng",
+      "team": "Nhóm",
+      "department": "Phòng ban",
+      "date": "Ngày đặt hàng",
+      "cost": "Trạng thái chi phí",
+      "unnamed": "Chưa đặt tên"
+    },
     "columns": {
       "order": "Đơn hàng",
       "channel": "Kênh",

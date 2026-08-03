@@ -60,14 +60,25 @@ export type FinancePage = {
     missingCostCount: number
   }>
 }
+export type FinanceFilterOptions = {
+  channels: string[]
+  marketplaces: string[]
+  sellers: Array<{ employeeCode: string; name: string | null }>
+  teams: Array<{ id: string; code: string | null; name: string | null }>
+  departments: Array<{ id: string; code: string | null; name: string | null }>
+}
 export type ImportBatch = {
   id: string
   sourceType: string
+  originalFilename: string
+  dryRun: boolean
   status: string
   processedRows: number
   validRows: number
   skippedRows: number
   unlinkedRows: number
+  errorCount: number
+  errors: Array<{ row?: number; message?: string; code?: string }>
   createdAt: string
 }
 export type FinanceImportInput = {
@@ -85,6 +96,9 @@ export async function listFinanceSnapshots(query: FinanceParams) {
   return unwrap<FinancePage>(
     await apiClient.get('/api/finance/snapshots', { params: params(query) }),
   )
+}
+export async function listFinanceFilterOptions() {
+  return unwrap<FinanceFilterOptions>(await apiClient.get('/api/finance/filter-options'))
 }
 export async function recalculateOrderItem(orderItemId: string) {
   return unwrap(await apiClient.post(`/api/finance/order-items/${orderItemId}/recalculate`))

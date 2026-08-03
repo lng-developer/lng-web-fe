@@ -77,7 +77,18 @@
       "profit": "Gross profit",
       "missing": "Missing cost"
     },
-    "filters": { "label": "Filters", "search": "Search Order ID", "cost": "Cost status" },
+    "filters": {
+      "label": "Filters",
+      "search": "Search Order ID",
+      "channel": "Sales channel",
+      "marketplace": "Marketplace",
+      "seller": "Seller",
+      "team": "Team",
+      "department": "Department",
+      "date": "Order date",
+      "cost": "Cost status",
+      "unnamed": "Unnamed"
+    },
     "columns": {
       "order": "Order",
       "channel": "Channel",

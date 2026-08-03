@@ -10,6 +10,8 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import {
   DataTable,
+  DateRangePicker,
+  type DateRangeValue,
   FilterBar,
   MetricCard,
   PageHeader,
@@ -24,6 +26,7 @@ import {
   type FinanceSnapshot,
   type ImportBatch,
   importFinanceFile,
+  listFinanceFilterOptions,
   listFinanceSnapshots,
   listImportBatches,
   recalculateOrderItem,
@@ -52,20 +55,43 @@ export function FinanceWorkspacePage() {
   const client = useQueryClient()
   const toast = useFeedbackToast()
   const [page, setPage] = useState(1)
+  const [importPage, setImportPage] = useState(1)
   const [search, setSearch] = useState('')
   const [costStatus, setCostStatus] = useState<string>()
+  const [salesChannelCode, setSalesChannelCode] = useState<string>()
+  const [marketplaceCode, setMarketplaceCode] = useState<string>()
+  const [sellerEmployeeCode, setSellerEmployeeCode] = useState<string>()
+  const [teamId, setTeamId] = useState<string>()
+  const [departmentId, setDepartmentId] = useState<string>()
+  const [dates, setDates] = useState<DateRangeValue>({})
   const [selected, setSelected] = useState<FinanceSnapshot>()
   const [importOpen, setImportOpen] = useState(false)
-  const queryParams = { page, limit: PAGE_SIZE, externalOrderId: search || undefined, costStatus }
+  const queryParams = {
+    page,
+    limit: PAGE_SIZE,
+    externalOrderId: search || undefined,
+    costStatus,
+    salesChannelCode,
+    marketplaceCode,
+    sellerEmployeeCode,
+    teamId,
+    departmentId,
+    ...dates,
+  }
   const snapshots = useQuery({
     queryKey: ['finance', 'snapshots', queryParams],
     queryFn: () => listFinanceSnapshots(queryParams),
     retry: false,
   })
   const batches = useQuery({
-    queryKey: ['finance', 'imports'],
-    queryFn: () => listImportBatches({ page: 1, limit: 20 }),
+    queryKey: ['finance', 'imports', importPage],
+    queryFn: () => listImportBatches({ page: importPage, limit: PAGE_SIZE }),
     enabled: globalRead,
+    retry: false,
+  })
+  const filterOptions = useQuery({
+    queryKey: ['finance', 'filter-options'],
+    queryFn: listFinanceFilterOptions,
     retry: false,
   })
   const shops = useQuery({
@@ -107,7 +133,6 @@ export function FinanceWorkspacePage() {
     },
     onError: (error) => toast('error', t('finance.feedback.failed'), error.message),
   })
-  const summary = snapshots.data?.summaryByCurrency[0]
   const columns = useMemo<TableColumnsType<FinanceSnapshot>>(
     () => [
       {
@@ -195,6 +220,84 @@ export function FinanceWorkspacePage() {
         />
         <Select
           allowClear
+          aria-label={t('finance.filters.channel')}
+          value={salesChannelCode}
+          onChange={(value) => {
+            setSalesChannelCode(value)
+            setPage(1)
+          }}
+          placeholder={t('finance.filters.channel')}
+          options={filterOptions.data?.channels.map((value) => ({ value, label: value }))}
+        />
+        <Select
+          allowClear
+          aria-label={t('finance.filters.marketplace')}
+          value={marketplaceCode}
+          onChange={(value) => {
+            setMarketplaceCode(value)
+            setPage(1)
+          }}
+          placeholder={t('finance.filters.marketplace')}
+          options={filterOptions.data?.marketplaces.map((value) => ({ value, label: value }))}
+        />
+        <Select
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          aria-label={t('finance.filters.seller')}
+          value={sellerEmployeeCode}
+          onChange={(value) => {
+            setSellerEmployeeCode(value)
+            setPage(1)
+          }}
+          placeholder={t('finance.filters.seller')}
+          options={filterOptions.data?.sellers.map((seller) => ({
+            value: seller.employeeCode,
+            label: `${seller.employeeCode} · ${seller.name || t('finance.filters.unnamed')}`,
+          }))}
+        />
+        <Select
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          aria-label={t('finance.filters.team')}
+          value={teamId}
+          onChange={(value) => {
+            setTeamId(value)
+            setPage(1)
+          }}
+          placeholder={t('finance.filters.team')}
+          options={filterOptions.data?.teams.map((team) => ({
+            value: team.id,
+            label: team.name || team.code || t('finance.filters.unnamed'),
+          }))}
+        />
+        <Select
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          aria-label={t('finance.filters.department')}
+          value={departmentId}
+          onChange={(value) => {
+            setDepartmentId(value)
+            setPage(1)
+          }}
+          placeholder={t('finance.filters.department')}
+          options={filterOptions.data?.departments.map((department) => ({
+            value: department.id,
+            label: department.name || department.code || t('finance.filters.unnamed'),
+          }))}
+        />
+        <DateRangePicker
+          value={dates}
+          onChange={(value) => {
+            setDates(value)
+            setPage(1)
+          }}
+          aria-label={t('finance.filters.date')}
+        />
+        <Select
+          allowClear
           value={costStatus}
           onChange={(value) => {
             setCostStatus(value)
@@ -241,23 +344,32 @@ export function FinanceWorkspacePage() {
             label: t('finance.tabs.overview'),
             children: (
               <>
-                <div className={styles.metrics}>
-                  <MetricCard
-                    label={t('finance.metrics.revenue')}
-                    value={money(summary?.revenueAmount, summary?.currency)}
-                  />
-                  <MetricCard
-                    label={t('finance.metrics.cost')}
-                    value={money(summary?.totalCostAmount, summary?.currency)}
-                  />
-                  <MetricCard
-                    label={t('finance.metrics.profit')}
-                    value={money(summary?.profitAmount, summary?.currency)}
-                  />
-                  <MetricCard
-                    label={t('finance.metrics.missing')}
-                    value={String(summary?.missingCostCount ?? '—')}
-                  />
+                <div className={styles.summaryGroups}>
+                  {snapshots.data?.summaryByCurrency.map((summary) => (
+                    <section key={summary.currency} className={styles.currencySummary}>
+                      <Typography.Text strong className={styles.currency}>
+                        {summary.currency}
+                      </Typography.Text>
+                      <div className={styles.metrics}>
+                        <MetricCard
+                          label={t('finance.metrics.revenue')}
+                          value={money(summary.revenueAmount, summary.currency)}
+                        />
+                        <MetricCard
+                          label={t('finance.metrics.cost')}
+                          value={money(summary.totalCostAmount, summary.currency)}
+                        />
+                        <MetricCard
+                          label={t('finance.metrics.profit')}
+                          value={money(summary.profitAmount, summary.currency)}
+                        />
+                        <MetricCard
+                          label={t('finance.metrics.missing')}
+                          value={String(summary.missingCostCount)}
+                        />
+                      </div>
+                    </section>
+                  ))}
                 </div>
                 {table}
               </>
@@ -273,7 +385,11 @@ export function FinanceWorkspacePage() {
                     <SectionCard title={t('finance.imports.title')}>
                       {globalWrite ? (
                         <Space className={styles.importActions}>
-                          <Button type="primary" icon={<UploadOutlined />} onClick={() => setImportOpen(true)}>
+                          <Button
+                            type="primary"
+                            icon={<UploadOutlined />}
+                            onClick={() => setImportOpen(true)}
+                          >
                             {t('finance.actions.import')}
                           </Button>
                         </Space>
@@ -283,6 +399,13 @@ export function FinanceWorkspacePage() {
                         columns={importColumns}
                         dataSource={batches.data?.items}
                         loading={batches.isLoading}
+                        pagination={{
+                          current: importPage,
+                          pageSize: PAGE_SIZE,
+                          total: batches.data?.pagination.total,
+                          showSizeChanger: false,
+                          onChange: setImportPage,
+                        }}
                       />
                     </SectionCard>
                   ),
