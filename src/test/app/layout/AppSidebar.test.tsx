@@ -72,6 +72,29 @@ describe('AppSidebar', () => {
     await waitFor(() => expect(screen.getByRole('link', { name: 'Employees' })).toBeVisible())
     expect(approvalsLink).not.toBeVisible()
   })
+
+  it('opens the newly active group when the route changes', async () => {
+    const view = renderSidebar([personal, team], 'self')
+
+    expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
+
+    view.rerender(
+      <MemoryRouter initialEntries={['/hr/team/approvals']}>
+        <AppProviders>
+          <AppSidebar
+            coreLabel="HR"
+            groups={[personal, team]}
+            selectedKey="team-approvals"
+            collapsed={false}
+            onCollapsedChange={() => undefined}
+          />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible())
+    expect(screen.queryByRole('link', { name: 'Profile' })).not.toBeVisible()
+  })
 })
 
 function renderSidebar(groups: NavigationGroup[], selectedKey = 'self') {

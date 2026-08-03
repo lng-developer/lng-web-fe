@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Result, Select, Space, Typography } from 'antd'
 
@@ -16,7 +16,7 @@ import {
   StatusTag,
 } from '@/shared/ui'
 
-import { type AuditEvent, type AuditFilters, listAuditEvents } from '../api/auditApi'
+import { type AuditEvent, type AuditFilters, getAuditEvent, listAuditEvents } from '../api/auditApi'
 import styles from './AuditLogPage.module.scss'
 
 const outcomeOptions = ['SUCCEEDED', 'FAILED'] as const
@@ -39,7 +39,14 @@ export function AuditLogPage() {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   })
+  const detail = useQuery({
+    queryKey: ['audit-event', selected?.id],
+    queryFn: () => getAuditEvent(selected!.id),
+    enabled: Boolean(selected?.id),
+    retry: false,
+  })
   const events = useMemo(() => query.data?.pages.flatMap((page) => page.items) ?? [], [query.data])
+  const event = detail.data ?? selected
   if (!getPermissions().includes('AUDIT:READ')) return <Result status="403" title="403" />
 
   const columns: TableColumnsType<AuditEvent> = [
@@ -187,7 +194,9 @@ export function AuditLogPage() {
         footer={null}
         onCancel={() => setSelected(undefined)}
       >
-        {selected ? (
+        {detail.isLoading ? (
+          <Result status="info" title={t('audit.loadingDetail')} />
+        ) : event ? (
           <>
             <Descriptions
               bordered
@@ -197,36 +206,36 @@ export function AuditLogPage() {
                 {
                   key: 'request',
                   label: t('audit.detail.requestId'),
-                  children: selected.requestId ?? t('audit.notAvailable'),
+                  children: event.requestId ?? t('audit.notAvailable'),
                 },
                 {
                   key: 'ip',
                   label: t('audit.detail.ip'),
-                  children: selected.ipAddress ?? t('audit.notAvailable'),
+                  children: event.ipAddress ?? t('audit.notAvailable'),
                 },
                 {
                   key: 'actor',
                   label: t('audit.columns.actor'),
-                  children: selected.actorLabel
-                    ? `${selected.actorLabel} (${selected.actorEmail ?? selected.actorType})`
-                    : (selected.actorAccountId ?? selected.actorType),
+                  children: event.actorLabel
+                    ? `${event.actorLabel} (${event.actorEmail ?? event.actorType})`
+                    : (event.actorAccountId ?? event.actorType),
                 },
                 {
                   key: 'scope',
                   label: t('audit.columns.scope'),
-                  children: selected.scopeType
-                    ? `${selected.scopeLabel ?? readableCode(selected.scopeType)} (${selected.scopeId})`
+                  children: event.scopeType
+                    ? `${event.scopeLabel ?? readableCode(event.scopeType)} (${event.scopeId})`
                     : t('audit.globalScope'),
                 },
               ]}
             />
             <Typography.Title level={5}>{t('audit.detail.changes')}</Typography.Title>
             <pre className="max-h-64 overflow-auto rounded-lg bg-page p-4">
-              {JSON.stringify(selected.changes ?? {}, null, 2)}
+              {JSON.stringify(event.changes ?? {}, null, 2)}
             </pre>
             <Typography.Title level={5}>{t('audit.detail.metadata')}</Typography.Title>
             <pre className="max-h-64 overflow-auto rounded-lg bg-page p-4">
-              {JSON.stringify(selected.metadata, null, 2)}
+              {JSON.stringify(event.metadata, null, 2)}
             </pre>
           </>
         ) : null}

@@ -40,7 +40,11 @@
       "payroll": "Payroll",
       "system": "System administration",
       "portalConfiguration": "Portal configuration",
-      "portalOperations": "Portal operations"
+      "portalOperations": "Portal operations",
+      "portalSetup": "Setup",
+      "portalOrderWorkflow": "Order workflow",
+      "portalFulfillment": "Fulfillment",
+      "portalPerformance": "Finance & performance"
     },
     "workspace": "Workspace",
     "collapse": "Collapse sidebar",
@@ -110,7 +114,10 @@
       "baseCost": "Base cost",
       "additionalCost": "Additional fulfillment cost",
       "deductions": "Total deductions",
-      "history": "Calculation history"
+      "history": "Calculation history",
+      "itemSnapshot": "Item financial snapshot",
+      "missingReason": "Missing cost reason",
+      "costLines": "Cost lines"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Fulfillment plan is missing",
@@ -123,6 +130,14 @@
       "source": "Source",
       "processed": "Processed",
       "unlinked": "Unlinked",
+      "file": "File",
+      "valid": "Valid",
+      "errors": "Errors",
+      "detailTitle": "Import batch details",
+      "importErrors": "Import errors",
+      "recentSourceData": "Recent source data",
+      "noSourceData": "No source data in this context.",
+      "row": "Row",
       "modal": {
         "title": "Import finance data",
         "type": "Data type",
@@ -142,7 +157,9 @@
       "import": "Import finance data",
       "reprocess": "Reprocess",
       "recalculate": "Recalculate",
-      "recalculateOrder": "Recalculate order"
+      "recalculateOrder": "Recalculate order",
+      "recalculateItem": "Recalculate item",
+      "inspectItem": "Inspect item"
     },
     "feedback": {
       "reprocessed": "Import batch reprocessed",
@@ -1439,6 +1456,16 @@
       "selectCsAssignee": "Select CS assignee",
       "assignScale": "Assign Scale",
       "assignCs": "Assign CS",
+      "updateCsStatus": "Update status",
+      "csNote": "CS note",
+      "saveCsNote": "Save CS note",
+      "exportQc": "Export QC",
+      "csStatuses": {
+        "UNASSIGNED": "Unassigned",
+        "ASSIGNED": "Assigned",
+        "IN_PROGRESS": "In progress",
+        "DONE": "Done"
+      },
       "bulkAssign": "Assign {{count}} tasks",
       "bulkPush": "Push {{count}} to vendor",
       "recheckBlocked": "Recheck PSD blockers",
@@ -1977,6 +2004,7 @@
     "notAvailable": "Not available",
     "entities": { "session": "Login session" },
     "detailTitle": "Audit event details",
+    "loadingDetail": "Loading audit event details",
     "filters": {
       "label": "Audit filters",
       "action": "Action",

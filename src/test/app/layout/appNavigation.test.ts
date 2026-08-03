@@ -59,14 +59,14 @@ describe('app navigation', () => {
 
   it('shows Shop configuration only when the caller can read Shops', () => {
     expect(getContextNavigation('portal', account(['SHOPS:READ']))).toMatchObject([
-      { key: 'configuration', items: [{ key: 'shops', path: '/portal/shops' }] },
+      { key: 'setup', items: [{ key: 'shops', path: '/portal/shops' }] },
     ])
     expect(getAvailableCores(account([])).map(({ key }) => key)).not.toContain('portal')
   })
 
   it('shows Vendor configuration only when the caller can read Vendors', () => {
     expect(getContextNavigation('portal', account(['VENDORS:READ']))).toMatchObject([
-      { key: 'configuration', items: [{ key: 'vendors', path: '/portal/vendors' }] },
+      { key: 'setup', items: [{ key: 'vendors', path: '/portal/vendors' }] },
     ])
     expect(getContextNavigation('portal', account(['SHOPS:READ']))[0]?.items).not.toContainEqual(
       expect.objectContaining({ key: 'vendors' }),
@@ -98,6 +98,54 @@ describe('app navigation', () => {
     ])
   })
 
+  it('groups Portal navigation by the operational workflow', () => {
+    const groups = getContextNavigation(
+      'portal',
+      account([
+        'SHOPS:READ',
+        'CATALOG:READ',
+        'VENDORS:READ',
+        'MEDIA:READ',
+        'ORDERS:READ',
+        'MAPPING:READ',
+        'DESIGN:READ',
+        'PRODUCTION:READ',
+        'VENDOR_SUBMISSIONS:READ',
+        'SHIPMENTS:READ',
+        'FINANCE:READ',
+        'REPORTS:READ',
+        'WORK_SCORES:READ',
+      ]),
+    )
+
+    expect(groups.map(({ key }) => key)).toEqual([
+      'setup',
+      'order-workflow',
+      'fulfillment',
+      'performance',
+    ])
+    expect(groups.find(({ key }) => key === 'setup')?.items.map(({ key }) => key)).toEqual([
+      'shops',
+      'catalog',
+      'vendors',
+      'media',
+    ])
+    expect(groups.find(({ key }) => key === 'order-workflow')?.items.map(({ key }) => key)).toEqual(
+      ['orders', 'customizations', 'mapping', 'integrations'],
+    )
+    expect(groups.find(({ key }) => key === 'fulfillment')?.items.map(({ key }) => key)).toEqual([
+      'design',
+      'production',
+      'vendor-submissions',
+      'shipments',
+    ])
+    expect(groups.find(({ key }) => key === 'performance')?.items.map(({ key }) => key)).toEqual([
+      'finance',
+      'reports',
+      'work-scores',
+    ])
+  })
+
   it('shows Catalog for global or scoped readers and writers', () => {
     for (const permission of ['CATALOG:READ', 'CATALOG:WRITE']) {
       expect(getContextNavigation('portal', account([permission]))[0]?.items).toContainEqual({
@@ -113,12 +161,12 @@ describe('app navigation', () => {
     }
   })
 
-  it('groups external order imports under Portal Operations for order readers and writers', () => {
+  it('groups external order imports under the order workflow for order readers and writers', () => {
     for (const permission of ['ORDERS:READ', 'ORDERS:WRITE']) {
       expect(getContextNavigation('portal', account([permission]))).toEqual([
         {
-          key: 'operations',
-          labelKey: 'shell.groups.portalOperations',
+          key: 'order-workflow',
+          labelKey: 'shell.groups.portalOrderWorkflow',
           items: [
             {
               key: 'orders',
@@ -143,7 +191,9 @@ describe('app navigation', () => {
 
   it('shows Work Scores only from scoring or own-work permissions', () => {
     for (const permission of ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK']) {
-      expect(getContextNavigation('portal', account([], [permission]))[0]?.items).toContainEqual({
+      expect(
+        getContextNavigation('portal', account([], [permission])).flatMap(({ items }) => items),
+      ).toContainEqual({
         key: 'work-scores',
         path: '/portal/work-scores',
         labelKey: 'shell.navigation.workScores',
@@ -194,7 +244,7 @@ describe('app navigation', () => {
     }
   })
 
-  it('exposes Portal Operations for scoped order access and keeps it separate from configuration', () => {
+  it('exposes the order workflow for scoped order access and keeps it separate from setup', () => {
     const scopedWriter = account([], ['ORDERS:WRITE'])
     scopedWriter.scopes[0] = {
       ...scopedWriter.scopes[0],
@@ -207,7 +257,7 @@ describe('app navigation', () => {
     expect(getDefaultWorkspacePath(scopedWriter)).toBe('/portal/orders')
     expect(
       getContextNavigation('portal', account(['SHOPS:READ', 'ORDERS:READ'])).map(({ key }) => key),
-    ).toEqual(['configuration', 'operations'])
+    ).toEqual(['setup', 'order-workflow'])
   })
 
   it('shows Shop configuration for an exact Shop-scoped reader', () => {

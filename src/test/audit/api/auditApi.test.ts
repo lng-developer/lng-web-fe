@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { listAuditEvents } from '@/features/audit/api/auditApi'
+import { getAuditEvent, listAuditEvents } from '@/features/audit/api/auditApi'
 import { apiClient } from '@/shared/api'
 
 vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn() } }))
@@ -24,5 +24,11 @@ describe('auditApi', () => {
         limit: 50,
       },
     })
+  })
+
+  it('loads the complete audit event when an operator opens a row', async () => {
+    await getAuditEvent('event-1')
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/audit/events/event-1')
   })
 })

@@ -7,12 +7,15 @@ import {
   assignProductionTask,
   bulkAssignProductionTasks,
   claimProductionTask,
+  exportProductionQcTasks,
   listCsAssignees,
   listProductionTasks,
   listScaleAssignees,
   recheckPsdBlockedTasks,
   submitProductionQc,
   summarizeProductionTasks,
+  updateProductionCsNote,
+  updateProductionCsStatus,
   uploadManualScaledOutput,
 } from '@/features/portal/production/api/productionApi'
 import { apiClient } from '@/shared/api'
@@ -69,6 +72,23 @@ describe('productionApi', () => {
     })
     expect(apiClient.post).toHaveBeenCalledWith('/api/production/tasks/recheck-psd-blocked', {
       limit: 50,
+    })
+  })
+
+  it('uses CS workflow and QC export contracts', async () => {
+    await updateProductionCsNote('task-1', 'Confirm the customer address')
+    await updateProductionCsStatus('task-1', 'IN_PROGRESS')
+    await exportProductionQcTasks({ search: 'ORDER-1', status: 'QC_PENDING' })
+
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/cs-note', {
+      csNote: 'Confirm the customer address',
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/cs-status', {
+      csStatus: 'IN_PROGRESS',
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/production/tasks/qc/export', {
+      params: { search: 'ORDER-1', status: 'QC_PENDING' },
+      responseType: 'blob',
     })
   })
 

@@ -24,13 +24,17 @@ import {
 import {
   type FinanceImportInput,
   type FinanceSnapshot,
+  getFinanceImportBatch,
   getOrderFinanceSummary,
+  getOrderItemFinanceSnapshot,
   type ImportBatch,
   importFinanceFile,
   listFinanceFilterOptions,
   listFinanceSnapshots,
   listImportBatches,
+  listImportedFinanceData,
   recalculateOrder,
+  recalculateOrderItem,
   reprocessImportBatch,
 } from '../api/financeApi'
 import { FinanceImportModal } from './FinanceImportModal'
@@ -66,6 +70,8 @@ export function FinanceWorkspacePage() {
   const [departmentId, setDepartmentId] = useState<string>()
   const [dates, setDates] = useState<DateRangeValue>({})
   const [selected, setSelected] = useState<FinanceSnapshot>()
+  const [selectedBatch, setSelectedBatch] = useState<ImportBatch>()
+  const [selectedItemId, setSelectedItemId] = useState<string>()
   const [importOpen, setImportOpen] = useState(false)
   const queryParams = {
     page,
@@ -101,6 +107,33 @@ export function FinanceWorkspacePage() {
     enabled: Boolean(selected?.orderId),
     retry: false,
   })
+  const batchDetail = useQuery({
+    queryKey: ['finance', 'import-batches', selectedBatch?.id],
+    queryFn: () => getFinanceImportBatch(selectedBatch!.id),
+    enabled: Boolean(selectedBatch?.id),
+    retry: false,
+  })
+  const importedData = useQuery({
+    queryKey: ['finance', 'imported-data', selectedBatch?.sourceType, selectedBatch?.shopId],
+    queryFn: () =>
+      listImportedFinanceData(
+        selectedBatch!.sourceType.toLowerCase() as 'transactions' | 'settlements' | 'ads',
+        {
+          shopId: selectedBatch!.shopId,
+          salesChannelCode: selectedBatch!.salesChannelCode,
+          marketplaceCode: selectedBatch!.marketplaceCode,
+          limit: 10,
+        },
+      ),
+    enabled: Boolean(selectedBatch?.sourceType),
+    retry: false,
+  })
+  const itemDetail = useQuery({
+    queryKey: ['finance', 'order-items', selectedItemId, 'snapshot'],
+    queryFn: () => getOrderItemFinanceSnapshot(selectedItemId!),
+    enabled: Boolean(selectedItemId),
+    retry: false,
+  })
   const shops = useQuery({
     queryKey: ['shops', 'finance-import'],
     queryFn: () => listShops({ page: 1, limit: 100, status: 'ACTIVE' }),
@@ -133,6 +166,14 @@ export function FinanceWorkspacePage() {
   })
   const recalculate = useMutation({
     mutationFn: recalculateOrder,
+    onSuccess: async () => {
+      toast('success', t('finance.feedback.recalculated'))
+      await client.invalidateQueries({ queryKey: ['finance'] })
+    },
+    onError: (error) => toast('error', t('finance.feedback.failed'), error.message),
+  })
+  const recalculateItem = useMutation({
+    mutationFn: recalculateOrderItem,
     onSuccess: async () => {
       toast('success', t('finance.feedback.recalculated'))
       await client.invalidateQueries({ queryKey: ['finance'] })
@@ -404,6 +445,7 @@ export function FinanceWorkspacePage() {
                         columns={importColumns}
                         dataSource={batches.data?.items}
                         loading={batches.isLoading}
+                        onRow={(row) => ({ onClick: () => setSelectedBatch(row) })}
                         pagination={{
                           current: importPage,
                           pageSize: PAGE_SIZE,
@@ -472,6 +514,27 @@ export function FinanceWorkspacePage() {
                 <Typography.Title level={5}>
                   {t('finance.detail.item', { number: index + 1 })}
                 </Typography.Title>
+                <Space>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setSelected(undefined)
+                      setSelectedItemId(snapshot.orderItemId)
+                    }}
+                  >
+                    {t('finance.actions.inspectItem')}
+                  </Button>
+                  {canWrite ? (
+                    <Button
+                      size="small"
+                      icon={<ReloadOutlined />}
+                      loading={recalculateItem.isPending}
+                      onClick={() => recalculateItem.mutate(snapshot.orderItemId)}
+                    >
+                      {t('finance.actions.recalculateItem')}
+                    </Button>
+                  ) : null}
+                </Space>
                 <Descriptions
                   size="small"
                   column={4}
@@ -564,6 +627,175 @@ export function FinanceWorkspacePage() {
                 onClick={() => recalculate.mutate(selected.orderId)}
               >
                 {t('finance.actions.recalculateOrder')}
+              </Button>
+            ) : null}
+          </Space>
+        ) : null}
+      </Modal>
+      <Modal
+        centered
+        width={820}
+        open={Boolean(selectedBatch)}
+        title={t('finance.imports.detailTitle')}
+        footer={null}
+        onCancel={() => setSelectedBatch(undefined)}
+        destroyOnHidden
+      >
+        {batchDetail.isLoading ? (
+          <Spin />
+        ) : batchDetail.data ? (
+          <Space orientation="vertical" size="large" className={styles.detail}>
+            <Descriptions
+              bordered
+              column={3}
+              size="small"
+              items={[
+                {
+                  key: 'file',
+                  label: t('finance.imports.file'),
+                  children: batchDetail.data.originalFilename,
+                },
+                {
+                  key: 'source',
+                  label: t('finance.imports.source'),
+                  children: batchDetail.data.sourceType,
+                },
+                {
+                  key: 'status',
+                  label: t('finance.columns.status'),
+                  children: batchDetail.data.status,
+                },
+                {
+                  key: 'processed',
+                  label: t('finance.imports.processed'),
+                  children: batchDetail.data.processedRows,
+                },
+                {
+                  key: 'valid',
+                  label: t('finance.imports.valid'),
+                  children: batchDetail.data.validRows,
+                },
+                {
+                  key: 'errors',
+                  label: t('finance.imports.errors'),
+                  children: batchDetail.data.errorCount,
+                },
+              ]}
+            />
+            {batchDetail.data.errors.length ? (
+              <section>
+                <Typography.Title level={5}>{t('finance.imports.importErrors')}</Typography.Title>
+                {batchDetail.data.errors.map((error, index) => (
+                  <Typography.Paragraph
+                    key={`${error.row ?? index}-${error.message}`}
+                    type="danger"
+                  >
+                    {error.row ? `${t('finance.imports.row')} ${error.row}: ` : ''}
+                    {error.message || error.code}
+                  </Typography.Paragraph>
+                ))}
+              </section>
+            ) : null}
+            <section>
+              <Typography.Title level={5}>{t('finance.imports.recentSourceData')}</Typography.Title>
+              {importedData.data?.items.length ? (
+                importedData.data.items.map((row) => (
+                  <Descriptions
+                    bordered
+                    column={2}
+                    size="small"
+                    key={row.id}
+                    items={Object.entries(row)
+                      .filter(([key]) => key !== 'id' && !key.toLowerCase().endsWith('id'))
+                      .slice(0, 8)
+                      .map(([key, value]) => ({
+                        key,
+                        label: key,
+                        children:
+                          typeof value === 'object' ? JSON.stringify(value) : String(value ?? '—'),
+                      }))}
+                  />
+                ))
+              ) : (
+                <Typography.Text type="secondary">
+                  {t('finance.imports.noSourceData')}
+                </Typography.Text>
+              )}
+            </section>
+          </Space>
+        ) : null}
+      </Modal>
+      <Modal
+        centered
+        width={760}
+        open={Boolean(selectedItemId)}
+        title={t('finance.detail.itemSnapshot')}
+        footer={null}
+        onCancel={() => setSelectedItemId(undefined)}
+        destroyOnHidden
+      >
+        {itemDetail.isLoading ? (
+          <Spin />
+        ) : itemDetail.data ? (
+          <Space orientation="vertical" size="large" className={styles.detail}>
+            <Descriptions
+              bordered
+              column={3}
+              size="small"
+              items={[
+                {
+                  key: 'revenue',
+                  label: t('finance.columns.revenue'),
+                  children: money(
+                    itemDetail.data.revenue.customerPaidAmount,
+                    itemDetail.data.revenue.currency,
+                  ),
+                },
+                {
+                  key: 'cost',
+                  label: t('finance.columns.cost'),
+                  children: money(
+                    itemDetail.data.cost.totalCostAmount,
+                    itemDetail.data.revenue.currency,
+                  ),
+                },
+                {
+                  key: 'profit',
+                  label: t('finance.columns.profit'),
+                  children: money(
+                    itemDetail.data.margin.grossProfitAmount,
+                    itemDetail.data.revenue.currency,
+                  ),
+                },
+                {
+                  key: 'status',
+                  label: t('finance.columns.status'),
+                  children: itemDetail.data.snapshotStatus,
+                },
+                {
+                  key: 'reason',
+                  label: t('finance.detail.missingReason'),
+                  children: itemDetail.data.cost.missingCostReason
+                    ? t(`finance.missingReasons.${itemDetail.data.cost.missingCostReason}`)
+                    : '—',
+                },
+              ]}
+            />
+            <section>
+              <Typography.Title level={5}>{t('finance.detail.costLines')}</Typography.Title>
+              {itemDetail.data.cost.costLines.map((line) => (
+                <Typography.Paragraph key={line.code}>
+                  {line.label || line.code}: {money(line.amount, itemDetail.data!.revenue.currency)}
+                </Typography.Paragraph>
+              ))}
+            </section>
+            {canWrite ? (
+              <Button
+                icon={<ReloadOutlined />}
+                loading={recalculateItem.isPending}
+                onClick={() => recalculateItem.mutate(selectedItemId!)}
+              >
+                {t('finance.actions.recalculateItem')}
               </Button>
             ) : null}
           </Space>

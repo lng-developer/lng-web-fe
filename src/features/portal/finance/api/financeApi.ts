@@ -104,6 +104,9 @@ export type ImportBatch = {
   id: string
   sourceType: string
   originalFilename: string
+  shopId?: string | null
+  salesChannelCode?: string | null
+  marketplaceCode?: string | null
   dryRun: boolean
   status: string
   processedRows: number
@@ -114,6 +117,7 @@ export type ImportBatch = {
   errors: Array<{ row?: number; message?: string; code?: string }>
   createdAt: string
 }
+export type ImportedFinanceData = Record<string, unknown> & { id: string }
 export type FinanceImportInput = {
   kind: 'transactions' | 'settlements' | 'ads'
   file: File
@@ -160,9 +164,24 @@ export async function listImportBatches(query: Record<string, unknown> = {}) {
     limit: Number(query.limit) || 20,
   })
 }
+export const getFinanceImportBatch = async (id: string) =>
+  unwrap<ImportBatch>(await apiClient.get(`/api/finance/import-batches/${id}`))
+export async function listImportedFinanceData(
+  sourceType: 'transactions' | 'settlements' | 'ads',
+  query: Record<string, unknown> = {},
+) {
+  const data = unwrap<Paginated<ImportedFinanceData>>(
+    await apiClient.get(`/api/finance/imported-data/${sourceType}`, { params: params(query) }),
+  )
+  return normalizePagination(data, query)
+}
 export async function reprocessImportBatch(id: string) {
   return unwrap(await apiClient.post(`/api/finance/import-batches/${id}/reprocess`))
 }
+export const getOrderItemFinanceSnapshot = async (id: string) =>
+  unwrap<FinanceSnapshot | null>(await apiClient.get(`/api/finance/order-items/${id}/snapshot`))
+export const recalculateOrderItem = async (id: string) =>
+  unwrap(await apiClient.post(`/api/finance/order-items/${id}/recalculate`))
 export async function importFinanceFile(
   kind: 'transactions' | 'settlements' | 'ads',
   file: File,

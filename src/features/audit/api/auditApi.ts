@@ -45,3 +45,8 @@ export async function listAuditEvents(filters: AuditFilters, cursor?: string): P
   })) as ApiResponse<AuditPage>
   return response.data
 }
+
+export async function getAuditEvent(eventId: string): Promise<AuditEvent> {
+  const response = (await apiClient.get(`/api/audit/events/${eventId}`)) as ApiResponse<AuditEvent>
+  return response.data
+}

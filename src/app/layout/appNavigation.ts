@@ -32,8 +32,8 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
   if (core === 'portal') {
     return [
       {
-        key: 'configuration',
-        labelKey: 'shell.groups.portalConfiguration',
+        key: 'setup',
+        labelKey: 'shell.groups.portalSetup',
         items: [
           permissions.has('SHOPS:READ')
             ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
@@ -44,11 +44,14 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           globalPermissions.has('VENDORS:READ')
             ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
             : null,
+          globalPermissions.has('MEDIA:READ')
+            ? { key: 'media', path: '/portal/media', labelKey: 'shell.navigation.media' }
+            : null,
         ].filter((item): item is NavigationItem => item !== null),
       },
       {
-        key: 'operations',
-        labelKey: 'shell.groups.portalOperations',
+        key: 'order-workflow',
+        labelKey: 'shell.groups.portalOrderWorkflow',
         items: [
           permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
             ? { key: 'orders', path: '/portal/orders', labelKey: 'shell.navigation.orders' }
@@ -59,12 +62,6 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 path: '/portal/customizations',
                 labelKey: 'shell.navigation.customizations',
               }
-            : null,
-          permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
-            ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
-            : null,
-          permissions.has('REPORTS:READ')
-            ? { key: 'reports', path: '/portal/reports', labelKey: 'shell.navigation.reports' }
             : null,
           permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
             ? {
@@ -80,6 +77,12 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 labelKey: 'shell.navigation.integrations',
               }
             : null,
+        ].flatMap((item) => item ?? []),
+      },
+      {
+        key: 'fulfillment',
+        labelKey: 'shell.groups.portalFulfillment',
+        items: [
           ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((permission) =>
             permissions.has(permission),
           )
@@ -92,18 +95,6 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 key: 'production',
                 path: '/portal/production',
                 labelKey: 'shell.navigation.production',
-              }
-            : null,
-          globalPermissions.has('MEDIA:READ')
-            ? { key: 'media', path: '/portal/media', labelKey: 'shell.navigation.media' }
-            : null,
-          ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK'].some((permission) =>
-            permissions.has(permission),
-          )
-            ? {
-                key: 'work-scores',
-                path: '/portal/work-scores',
-                labelKey: 'shell.navigation.workScores',
               }
             : null,
           permissions.has('VENDOR_SUBMISSIONS:READ')
@@ -121,6 +112,27 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
               }
             : null,
         ].flatMap((item) => item ?? []),
+      },
+      {
+        key: 'performance',
+        labelKey: 'shell.groups.portalPerformance',
+        items: [
+          permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
+            ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
+            : null,
+          permissions.has('REPORTS:READ')
+            ? { key: 'reports', path: '/portal/reports', labelKey: 'shell.navigation.reports' }
+            : null,
+          ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK'].some((permission) =>
+            permissions.has(permission),
+          )
+            ? {
+                key: 'work-scores',
+                path: '/portal/work-scores',
+                labelKey: 'shell.navigation.workScores',
+              }
+            : null,
+        ].filter((item): item is NavigationItem => item !== null),
       },
     ].filter(({ items }) => items.length)
   }

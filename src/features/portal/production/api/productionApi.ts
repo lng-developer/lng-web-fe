@@ -12,6 +12,7 @@ export type ProductionStatus =
   | 'SENT_TO_VENDOR'
   | 'CANCELLED'
 export type QcStatus = 'NOT_READY' | 'PENDING' | 'PASSED' | 'REJECTED'
+export type CsStatus = 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'DONE'
 export type FileCheck = {
   id: string
   slotKey: string
@@ -32,7 +33,7 @@ export type ProductionTask = {
   blockers: string[]
   assignedDesignUserId: string | null
   csAssigneeId?: string | null
-  csStatus?: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'DONE'
+  csStatus?: CsStatus
   csNote?: string | null
   designNote: string | null
   readyAt: string | null
@@ -119,6 +120,13 @@ export const assignCsTask = async (id: string, csAssigneeId: string | null, csNo
   unwrap<ProductionTask>(
     await apiClient.patch(`${basePath}/tasks/${id}/assign-cs`, { csAssigneeId, csNote }),
   )
+export const updateProductionCsNote = async (id: string, csNote: string) =>
+  unwrap<ProductionTask>(await apiClient.patch(`${basePath}/tasks/${id}/cs-note`, { csNote }))
+export const updateProductionCsStatus = async (id: string, csStatus: CsStatus) =>
+  unwrap<ProductionTask>(await apiClient.patch(`${basePath}/tasks/${id}/cs-status`, { csStatus }))
+export const exportProductionQcTasks = (
+  params: Omit<ProductionParams, 'page' | 'limit' | 'view'>,
+) => apiClient.get(`${basePath}/tasks/qc/export`, { params, responseType: 'blob' })
 export const bulkAssignProductionTasks = async (taskIds: string[], assignedDesignUserId: string) =>
   unwrap<unknown>(
     await apiClient.patch(`${basePath}/tasks/bulk-assign`, { taskIds, assignedDesignUserId }),

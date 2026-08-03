@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import {
   getOrderFinanceSummary,
+  getOrderItemFinanceSnapshot,
   listFinanceFilterOptions,
   listFinanceSnapshots,
   listImportBatches,
@@ -27,6 +28,7 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
   listFinanceSnapshots: vi.fn(),
   listImportBatches: vi.fn(),
   getOrderFinanceSummary: vi.fn(),
+  getOrderItemFinanceSnapshot: vi.fn(),
   recalculateOrder: vi.fn(),
 }))
 
@@ -140,6 +142,36 @@ describe('FinanceWorkspacePage', () => {
       ],
     })
     vi.mocked(recalculateOrder).mockResolvedValue({})
+    vi.mocked(getOrderItemFinanceSnapshot).mockResolvedValue({
+      id: 'snapshot-1',
+      orderId: 'order-1',
+      orderItemId: 'item-1',
+      externalOrderId: 'ORDER-100',
+      salesChannelCode: 'AMAZON',
+      marketplaceCode: 'AMAZON_US',
+      seller: { employeeCode: 'J2508', name: 'Seller One' },
+      team: { name: 'Sales A', code: 'SALE_A' },
+      department: { name: 'Sales', code: 'SALE' },
+      revenue: {
+        customerPaidAmount: 10000,
+        feeAmount: 900,
+        refundAmount: 200,
+        discountAmount: 300,
+        currency: 'USD',
+      },
+      cost: {
+        baseCostAmount: 4000,
+        totalCostAmount: 4500,
+        costLines: [{ code: 'BASE', label: 'Base product', amount: 4000 }],
+        costStatus: 'PRESENT',
+        missingCostReason: null,
+      },
+      margin: { grossProfitAmount: 4100, grossMarginBps: 4100 },
+      orderPnl: null,
+      snapshotStatus: 'ESTIMATED',
+      calculatedAt: '2026-08-03T03:00:00.000Z',
+      calculationHistory: [],
+    })
   })
 
   afterEach(() => {
@@ -230,6 +262,19 @@ describe('FinanceWorkspacePage', () => {
 
     expect(await screen.findByText('Financial breakdown')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Recalculate order/ })).not.toBeInTheDocument()
+  })
+
+  it('opens a direct item snapshot returned by the backend', async () => {
+    render(
+      <AppProviders>
+        <FinanceWorkspacePage />
+      </AppProviders>,
+    )
+    fireEvent.click((await screen.findByText('ORDER-100')).closest('tr')!)
+    fireEvent.click(await screen.findByRole('button', { name: 'Inspect item' }))
+
+    await waitFor(() => expect(getOrderItemFinanceSnapshot).toHaveBeenCalledWith('item-1'))
+    expect(await screen.findByText('Item financial snapshot')).toBeInTheDocument()
   })
 
   it('shows a useful toast when order recalculation fails', async () => {

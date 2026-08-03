@@ -40,7 +40,11 @@
       "payroll": "Bảng lương",
       "system": "Quản trị hệ thống",
       "portalConfiguration": "Cấu hình Portal",
-      "portalOperations": "Vận hành Portal"
+      "portalOperations": "Vận hành Portal",
+      "portalSetup": "Thiết lập",
+      "portalOrderWorkflow": "Xử lý đơn",
+      "portalFulfillment": "Hoàn tất đơn hàng",
+      "portalPerformance": "Tài chính & hiệu suất"
     },
     "workspace": "Không gian làm việc",
     "collapse": "Thu gọn thanh bên",
@@ -110,7 +114,10 @@
       "baseCost": "Chi phí gốc",
       "additionalCost": "Chi phí fulfillment bổ sung",
       "deductions": "Tổng khấu trừ",
-      "history": "Lịch sử tính toán"
+      "history": "Lịch sử tính toán",
+      "itemSnapshot": "Snapshot tài chính item",
+      "missingReason": "Lý do thiếu chi phí",
+      "costLines": "Các dòng chi phí"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Chưa có phương án fulfillment",
@@ -123,6 +130,14 @@
       "source": "Nguồn",
       "processed": "Đã xử lý",
       "unlinked": "Chưa liên kết",
+      "file": "Tệp",
+      "valid": "Hợp lệ",
+      "errors": "Lỗi",
+      "detailTitle": "Chi tiết batch nhập liệu",
+      "importErrors": "Lỗi nhập liệu",
+      "recentSourceData": "Dữ liệu nguồn gần đây",
+      "noSourceData": "Không có dữ liệu nguồn trong ngữ cảnh này.",
+      "row": "Dòng",
       "modal": {
         "title": "Nhập dữ liệu tài chính",
         "type": "Loại dữ liệu",
@@ -142,7 +157,9 @@
       "import": "Nhập dữ liệu tài chính",
       "reprocess": "Chạy lại",
       "recalculate": "Tính lại",
-      "recalculateOrder": "Tính lại toàn bộ đơn"
+      "recalculateOrder": "Tính lại toàn bộ đơn",
+      "recalculateItem": "Tính lại item",
+      "inspectItem": "Xem item"
     },
     "feedback": {
       "reprocessed": "Đã chạy lại batch",
@@ -1435,6 +1452,16 @@
       "selectCsAssignee": "Chọn CS phụ trách",
       "assignScale": "Gán Scale",
       "assignCs": "Gán CS",
+      "updateCsStatus": "Cập nhật trạng thái",
+      "csNote": "Ghi chú CS",
+      "saveCsNote": "Lưu ghi chú CS",
+      "exportQc": "Xuất QC",
+      "csStatuses": {
+        "UNASSIGNED": "Chưa gán",
+        "ASSIGNED": "Đã gán",
+        "IN_PROGRESS": "Đang xử lý",
+        "DONE": "Hoàn tất"
+      },
       "bulkAssign": "Gán {{count}} tác vụ",
       "bulkPush": "Gửi {{count}} tác vụ sang vendor",
       "recheckBlocked": "Kiểm tra lại PSD bị chặn",
@@ -1973,6 +2000,7 @@
     "notAvailable": "Không có dữ liệu",
     "entities": { "session": "Phiên đăng nhập" },
     "detailTitle": "Chi tiết sự kiện",
+    "loadingDetail": "Đang tải chi tiết sự kiện",
     "filters": {
       "label": "Bộ lọc nhật ký",
       "action": "Hành động",

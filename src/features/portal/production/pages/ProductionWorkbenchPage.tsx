@@ -29,6 +29,8 @@ import {
   assignProductionTask,
   bulkAssignProductionTasks,
   claimProductionTask,
+  type CsStatus,
+  exportProductionQcTasks,
   type FileCheck,
   type FileDecision,
   getProductionTask,
@@ -42,6 +44,8 @@ import {
   submitProductionQc,
   summarizeProductionTasks,
   updateDesignNote,
+  updateProductionCsNote,
+  updateProductionCsStatus,
   uploadManualScaledOutput,
   uploadScaledOutput,
 } from '../api/productionApi'
@@ -51,6 +55,7 @@ import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20
 const SCALE_STATUSES: ProductionStatus[] = ['BLOCKED', 'NEED_SCALE', 'QC_REJECTED', 'QC_PENDING']
+const CS_STATUSES: CsStatus[] = ['UNASSIGNED', 'ASSIGNED', 'IN_PROGRESS', 'DONE']
 
 function permissions(account?: CurrentAccount) {
   return new Set(
@@ -214,6 +219,8 @@ export function ProductionWorkbenchPage({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
   const [csAssigneeId, setCsAssigneeId] = useState<string>()
+  const [csNote, setCsNote] = useState('')
+  const [csStatus, setCsStatus] = useState<CsStatus>('UNASSIGNED')
   const canScale = allowed.has('PRODUCTION:WRITE')
   const canAssignScale = tab === 'scale' && canScale
   const canQc = allowed.has('PRODUCTION:WRITE') || allowed.has('DESIGN:REVIEW')
@@ -276,17 +283,34 @@ export function ProductionWorkbenchPage({
       toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
   })
   const operations = useMutation({
-    mutationFn: async (input: { kind: 'bulk-assign' | 'recheck' | 'assign' | 'assign-cs' }) => {
+    mutationFn: async (input: {
+      kind: 'bulk-assign' | 'recheck' | 'assign' | 'assign-cs' | 'cs-note' | 'cs-status'
+    }) => {
       const taskIds = selectedRowKeys.map(String)
       if (input.kind === 'bulk-assign') return bulkAssignProductionTasks(taskIds, scaleAssigneeId!)
       if (input.kind === 'recheck') return recheckPsdBlockedTasks({ limit: 100 })
       if (input.kind === 'assign') return assignProductionTask(selectedId!, scaleAssigneeId!)
-      return assignCsTask(selectedId!, csAssigneeId || null)
+      if (input.kind === 'assign-cs') return assignCsTask(selectedId!, csAssigneeId || null)
+      if (input.kind === 'cs-note') return updateProductionCsNote(selectedId!, csNote)
+      return updateProductionCsStatus(selectedId!, csStatus)
     },
     onSuccess: async () => {
       setSelectedRowKeys([])
       await refresh()
       toast('success', t('portal.production.updated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+  })
+  const exportQc = useMutation({
+    mutationFn: () => exportProductionQcTasks({ search: search || undefined, status }),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result as unknown as Blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'production-qc-tasks.xls'
+      link.click()
+      URL.revokeObjectURL(url)
     },
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
@@ -397,6 +421,9 @@ export function ProductionWorkbenchPage({
             onClick: () => {
               setSelectedId(row.id)
               setNote(row.designNote || '')
+              setCsAssigneeId(row.csAssigneeId || undefined)
+              setCsNote(row.csNote || '')
+              setCsStatus(row.csStatus || 'UNASSIGNED')
               setDecisions({})
             },
           })}
@@ -430,6 +457,15 @@ export function ProductionWorkbenchPage({
                   setPage(1)
                 }}
               />
+              {tab === 'qc' ? (
+                <Button
+                  icon={<DownloadOutlined />}
+                  loading={exportQc.isPending}
+                  onClick={() => exportQc.mutate()}
+                >
+                  {t('portal.production.exportQc')}
+                </Button>
+              ) : null}
               {canAssignScale ? (
                 <>
                   <Select
@@ -515,6 +551,40 @@ export function ProductionWorkbenchPage({
                   />
                   <Button onClick={() => operations.mutate({ kind: 'assign-cs' })}>
                     {t('portal.production.assignCs')}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+            {canScale ? (
+              <div className={styles.assignmentBar}>
+                <div className={styles.assignmentGroup}>
+                  <Select
+                    value={csStatus}
+                    options={CS_STATUSES.map((value) => ({
+                      value,
+                      label: t(`portal.production.csStatuses.${value}`),
+                    }))}
+                    onChange={setCsStatus}
+                  />
+                  <Button
+                    loading={operations.isPending}
+                    onClick={() => operations.mutate({ kind: 'cs-status' })}
+                  >
+                    {t('portal.production.updateCsStatus')}
+                  </Button>
+                </div>
+                <div className={styles.assignmentGroup}>
+                  <Input.TextArea
+                    value={csNote}
+                    placeholder={t('portal.production.csNote')}
+                    autoSize={{ minRows: 1, maxRows: 3 }}
+                    onChange={(event) => setCsNote(event.target.value)}
+                  />
+                  <Button
+                    loading={operations.isPending}
+                    onClick={() => operations.mutate({ kind: 'cs-note' })}
+                  >
+                    {t('portal.production.saveCsNote')}
                   </Button>
                 </div>
               </div>
