@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), post: vi.fn() } }))
+vi.mock('@/shared/api', () => ({
+  apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() },
+}))
 
 import {
   getShipment,
   listShipments,
   listWebhookLogs,
   recheckShipment,
+  recheckSubmittedShipments,
+  recheckVendorTracking,
   summarizeShipments,
+  updateShipmentStatus,
+  updateShipmentTracking,
 } from '@/features/portal/shipments/api/shipmentApi'
 import { apiClient } from '@/shared/api'
 
@@ -16,6 +22,7 @@ describe('shipmentApi', () => {
     vi.clearAllMocks()
     vi.mocked(apiClient.get).mockResolvedValue({ data: {} })
     vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
+    vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
   })
 
   it('uses shipment identity recheck without caller-selected vendor fields', async () => {
@@ -35,5 +42,35 @@ describe('shipmentApi', () => {
       params: { page: 1, limit: 20 },
     })
     expect(apiClient.post).toHaveBeenCalledWith('/api/shipments/shipment-1/recheck')
+  })
+
+  it('uses tracking, status, and batch recheck contracts', async () => {
+    await updateShipmentTracking('shipment-1', {
+      carrier: 'USPS',
+      trackingNumber: 'TRACK-1',
+      trackingUrl: 'https://example.com/TRACK-1',
+      note: 'Corrected',
+    })
+    await updateShipmentStatus('shipment-1', { status: 'EXCEPTION', note: 'Delayed' })
+    await recheckVendorTracking({ vendorSubmissionId: 'submission-1' })
+    await recheckSubmittedShipments({ provider: 'MERCHIZE', limit: 50 })
+
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/shipments/shipment-1/tracking', {
+      carrier: 'USPS',
+      trackingNumber: 'TRACK-1',
+      trackingUrl: 'https://example.com/TRACK-1',
+      note: 'Corrected',
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/shipments/shipment-1/status', {
+      status: 'EXCEPTION',
+      note: 'Delayed',
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/api/shipments/vendor-tracking/recheck', {
+      vendorSubmissionId: 'submission-1',
+    })
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/shipments/vendor-tracking/recheck-submitted',
+      { provider: 'MERCHIZE', limit: 50 },
+    )
   })
 })

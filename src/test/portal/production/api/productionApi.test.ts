@@ -3,8 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() } }))
 
 import {
+  assignCsTask,
+  assignProductionTask,
+  bulkAssignProductionTasks,
   claimProductionTask,
+  listCsAssignees,
   listProductionTasks,
+  listScaleAssignees,
+  recheckPsdBlockedTasks,
   submitProductionQc,
   summarizeProductionTasks,
   uploadManualScaledOutput,
@@ -32,6 +38,37 @@ describe('productionApi', () => {
     expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/claim')
     expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/qc', {
       fileDecisions,
+    })
+  })
+
+  it('uses assignment and bulk operation contracts', async () => {
+    await listScaleAssignees({ search: 'J25', limit: 20 })
+    await listCsAssignees({ limit: 20 })
+    await assignProductionTask('task-1', 'user-1', 'Priority')
+    await assignCsTask('task-1', 'cs-1', 'Check address')
+    await bulkAssignProductionTasks(['task-1', 'task-2'], 'user-1')
+    await recheckPsdBlockedTasks({ limit: 50 })
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/production/tasks/scale-assignees', {
+      params: { search: 'J25', limit: 20 },
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/production/tasks/cs-assignees', {
+      params: { limit: 20 },
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/assign', {
+      assignedDesignUserId: 'user-1',
+      designNote: 'Priority',
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/assign-cs', {
+      csAssigneeId: 'cs-1',
+      csNote: 'Check address',
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/bulk-assign', {
+      taskIds: ['task-1', 'task-2'],
+      assignedDesignUserId: 'user-1',
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/api/production/tasks/recheck-psd-blocked', {
+      limit: 50,
     })
   })
 

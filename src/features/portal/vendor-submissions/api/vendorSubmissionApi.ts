@@ -44,6 +44,14 @@ export type VendorSubmissionParams = {
   dateFrom?: string
   dateTo?: string
 }
+export type VendorSubmissionSummary = {
+  total: number
+  ready: number
+  submitted: number
+  failed: number
+  cancelled: number
+  byStatus: Record<string, number>
+}
 
 const basePath = '/api/vendor-submissions'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -54,6 +62,26 @@ export async function listVendorSubmissions(params: VendorSubmissionParams) {
 
 export async function getVendorSubmission(id: string) {
   return unwrap<VendorSubmission>(await apiClient.get(`${basePath}/${id}`))
+}
+
+export async function getVendorSubmissionSummary(params: Partial<VendorSubmissionParams> = {}) {
+  return unwrap<VendorSubmissionSummary>(await apiClient.get(`${basePath}/summary`, { params }))
+}
+
+export async function getVendorSubmissionPayloadPreview(id: string) {
+  return unwrap<unknown>(await apiClient.get(`${basePath}/${id}/payload-preview`))
+}
+
+export async function markVendorSubmissionFailed(id: string, failureReason: string) {
+  return unwrap<VendorSubmission>(
+    await apiClient.post(`${basePath}/${id}/mark-failed`, { failureReason }),
+  )
+}
+
+export async function cancelVendorSubmission(id: string, cancelReason = '') {
+  return unwrap<VendorSubmission>(
+    await apiClient.post(`${basePath}/${id}/cancel`, { cancelReason }),
+  )
 }
 
 export async function submitVendorSubmission(id: string) {

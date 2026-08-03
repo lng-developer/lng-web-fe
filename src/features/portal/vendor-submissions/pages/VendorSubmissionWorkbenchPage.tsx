@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { ReloadOutlined, SendOutlined } from '@ant-design/icons'
+import {
+  EyeOutlined,
+  ReloadOutlined,
+  SendOutlined,
+  StopOutlined,
+  WarningOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -29,8 +35,12 @@ import {
 } from '@/shared/ui'
 
 import {
+  cancelVendorSubmission,
   getVendorSubmission,
+  getVendorSubmissionPayloadPreview,
+  getVendorSubmissionSummary,
   listVendorSubmissions,
+  markVendorSubmissionFailed,
   reconcileVendorSubmission,
   retryVendorSubmission,
   submitVendorSubmission,
@@ -77,6 +87,12 @@ export function VendorSubmissionWorkbenchPage({
   const [selectedId, setSelectedId] = useState<string>()
   const [reconcileRow, setReconcileRow] = useState<VendorSubmission>()
   const [vendorExternalOrderId, setVendorExternalOrderId] = useState('')
+  const [payloadId, setPayloadId] = useState<string>()
+  const [operationalAction, setOperationalAction] = useState<{
+    kind: 'fail' | 'cancel'
+    row: VendorSubmission
+  }>()
+  const [reason, setReason] = useState('')
   const canWrite = Boolean(
     account &&
     [...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)].includes(
@@ -95,6 +111,22 @@ export function VendorSubmissionWorkbenchPage({
     queryFn: () => listVendorSubmissions(params),
     retry: false,
   })
+  const summary = useQuery({
+    queryKey: [...vendorSubmissionKeys.all, 'summary', { status, externalOrderId, ...dates }],
+    queryFn: () =>
+      getVendorSubmissionSummary({
+        status,
+        externalOrderId: externalOrderId || undefined,
+        ...dates,
+      }),
+    retry: false,
+  })
+  const payload = useQuery({
+    queryKey: [...vendorSubmissionKeys.all, 'payload', payloadId],
+    queryFn: () => getVendorSubmissionPayloadPreview(payloadId!),
+    enabled: Boolean(payloadId),
+    retry: false,
+  })
   const detail = useQuery({
     queryKey: vendorSubmissionKeys.detail(selectedId ?? ''),
     queryFn: () => getVendorSubmission(selectedId!),
@@ -108,13 +140,15 @@ export function VendorSubmissionWorkbenchPage({
       row,
       externalId,
     }: {
-      kind: 'submit' | 'retry' | 'found' | 'missing'
+      kind: 'submit' | 'retry' | 'found' | 'missing' | 'fail' | 'cancel'
       row: VendorSubmission
       externalId?: string
     }) => {
       if (kind === 'submit') return submitVendorSubmission(row.id)
       if (kind === 'retry')
         return retryVendorSubmission(row.id, t('portal.vendorSubmissions.reasons.payloadCorrected'))
+      if (kind === 'fail') return markVendorSubmissionFailed(row.id, externalId || '')
+      if (kind === 'cancel') return cancelVendorSubmission(row.id, externalId || '')
       if (kind === 'missing')
         return reconcileVendorSubmission(row.id, {
           outcome: 'REMOTE_NOT_FOUND',
@@ -263,6 +297,16 @@ export function VendorSubmissionWorkbenchPage({
       {submissions.error ? (
         <FeedbackAlert type="error" title={t('portal.vendorSubmissions.unavailable')} />
       ) : null}
+      <div className={styles.metrics}>
+        {(['total', 'ready', 'submitted', 'failed', 'cancelled'] as const).map((key) => (
+          <div className={styles.metric} key={key}>
+            <Typography.Text type="secondary">
+              {t(`portal.vendorSubmissions.metrics.${key}`)}
+            </Typography.Text>
+            <Typography.Title level={3}>{summary.data?.[key] ?? 0}</Typography.Title>
+          </div>
+        ))}
+      </div>
       <SectionCard>
         <DataTable
           rowKey="id"
@@ -319,6 +363,38 @@ export function VendorSubmissionWorkbenchPage({
         title={t('portal.vendorSubmissions.detail')}
         onClose={() => setSelectedId(undefined)}
         loading={detail.isLoading}
+        extra={
+          detail.data ? (
+            <Space>
+              <Button icon={<EyeOutlined />} onClick={() => setPayloadId(detail.data!.id)}>
+                {t('portal.vendorSubmissions.actions.previewPayload')}
+              </Button>
+              {canWrite && !['SUBMITTED', 'CANCELLED'].includes(detail.data.status) ? (
+                <Button
+                  danger
+                  icon={<WarningOutlined />}
+                  onClick={() => {
+                    setReason('')
+                    setOperationalAction({ kind: 'fail', row: detail.data! })
+                  }}
+                >
+                  {t('portal.vendorSubmissions.actions.markFailed')}
+                </Button>
+              ) : null}
+              {canWrite && !['SUBMITTED', 'CANCELLED'].includes(detail.data.status) ? (
+                <Button
+                  icon={<StopOutlined />}
+                  onClick={() => {
+                    setReason('')
+                    setOperationalAction({ kind: 'cancel', row: detail.data! })
+                  }}
+                >
+                  {t('portal.vendorSubmissions.actions.cancel')}
+                </Button>
+              ) : null}
+            </Space>
+          ) : null
+        }
       >
         {detail.data ? (
           <div className={styles.detail}>
@@ -377,6 +453,45 @@ export function VendorSubmissionWorkbenchPage({
           </div>
         ) : null}
       </Drawer>
+      <Modal
+        open={Boolean(payloadId)}
+        width={760}
+        footer={null}
+        title={t('portal.vendorSubmissions.payloadPreview')}
+        onCancel={() => setPayloadId(undefined)}
+      >
+        {payload.isError ? (
+          <FeedbackAlert type="error" title={t('portal.vendorSubmissions.payloadUnavailable')} />
+        ) : (
+          <pre className={styles.payload}>{JSON.stringify(payload.data ?? {}, null, 2)}</pre>
+        )}
+      </Modal>
+      <Modal
+        open={Boolean(operationalAction)}
+        title={t(`portal.vendorSubmissions.actions.${operationalAction?.kind || 'cancel'}`)}
+        okButtonProps={{
+          danger: true,
+          disabled: operationalAction?.kind === 'fail' && !reason.trim(),
+        }}
+        confirmLoading={action.isPending}
+        onCancel={() => setOperationalAction(undefined)}
+        onOk={async () => {
+          if (!operationalAction) return
+          await action.mutateAsync({
+            kind: operationalAction.kind,
+            row: operationalAction.row,
+            externalId: reason.trim(),
+          })
+          setOperationalAction(undefined)
+        }}
+      >
+        <Input.TextArea
+          rows={4}
+          value={reason}
+          placeholder={t('portal.vendorSubmissions.reason')}
+          onChange={(event) => setReason(event.target.value)}
+        />
+      </Modal>
       <Modal
         title={t('portal.vendorSubmissions.remoteOrderTitle')}
         open={Boolean(reconcileRow)}

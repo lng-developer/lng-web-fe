@@ -31,6 +31,9 @@ export type ProductionTask = {
   qcStatus: QcStatus
   blockers: string[]
   assignedDesignUserId: string | null
+  csAssigneeId?: string | null
+  csStatus?: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'DONE'
+  csNote?: string | null
   designNote: string | null
   readyAt: string | null
   updatedAt: string
@@ -59,6 +62,11 @@ export type ManualScaledOutput = {
   file: File
   slotKey: string
   slotLabel?: string
+}
+export type ProductionAssignee = {
+  id: string
+  fullName: string | null
+  employeeCode: string | null
 }
 
 const basePath = '/api/production'
@@ -91,6 +99,32 @@ export const getProductionTask = async (id: string) =>
   unwrap<ProductionTask>(await apiClient.get(`${basePath}/tasks/${id}`))
 export const claimProductionTask = async (id: string) =>
   unwrap<ProductionTask>(await apiClient.patch(`${basePath}/tasks/${id}/claim`))
+export const listScaleAssignees = async (params: { search?: string; limit?: number } = {}) =>
+  unwrap<{ items: ProductionAssignee[] }>(
+    await apiClient.get(`${basePath}/tasks/scale-assignees`, { params }),
+  )
+export const listCsAssignees = async (params: { search?: string; limit?: number } = {}) =>
+  unwrap<{ items: ProductionAssignee[] }>(
+    await apiClient.get(`${basePath}/tasks/cs-assignees`, { params }),
+  )
+export const assignProductionTask = async (
+  id: string,
+  assignedDesignUserId: string,
+  designNote?: string,
+) =>
+  unwrap<ProductionTask>(
+    await apiClient.patch(`${basePath}/tasks/${id}/assign`, { assignedDesignUserId, designNote }),
+  )
+export const assignCsTask = async (id: string, csAssigneeId: string | null, csNote?: string) =>
+  unwrap<ProductionTask>(
+    await apiClient.patch(`${basePath}/tasks/${id}/assign-cs`, { csAssigneeId, csNote }),
+  )
+export const bulkAssignProductionTasks = async (taskIds: string[], assignedDesignUserId: string) =>
+  unwrap<unknown>(
+    await apiClient.patch(`${basePath}/tasks/bulk-assign`, { taskIds, assignedDesignUserId }),
+  )
+export const recheckPsdBlockedTasks = async (input: { shopId?: string; limit?: number } = {}) =>
+  unwrap<unknown>(await apiClient.post(`${basePath}/tasks/recheck-psd-blocked`, input))
 export const updateDesignNote = async (id: string, designNote: string) =>
   unwrap<ProductionTask>(
     await apiClient.patch(`${basePath}/tasks/${id}/design-note`, { designNote }),

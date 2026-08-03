@@ -126,6 +126,11 @@ export const assignDesignTask = async (id: string, assignedDesignerId: string) =
   unwrap<DesignTask>(
     await apiClient.patch(`/api/design/tasks/${id}/assign`, { assignedDesignerId }),
   )
+export const bulkAssignDesignTasks = async (taskIds: string[], assignedDesignerId: string) =>
+  unwrap<{
+    assigned: DesignTask[]
+    failed: Array<{ taskId: string; code: string; message: string }>
+  }>(await apiClient.patch('/api/design/tasks/bulk-assign', { taskIds, assignedDesignerId }))
 export const startDesignTask = async (id: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/start`, {}))
 export const uploadDesignAsset = async (file: File) => {

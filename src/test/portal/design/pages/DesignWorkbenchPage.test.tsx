@@ -67,6 +67,7 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
     .fn()
     .mockResolvedValue([{ id: '6a339b5a033e2ff7753522c3', fullName: 'Nguyen Van An' }]),
   assignDesignTask: vi.fn(),
+  bulkAssignDesignTasks: vi.fn().mockResolvedValue({ assigned: [], failed: [] }),
   startDesignTask: vi.fn(),
   submitDesignTask: vi.fn(),
   approveDesignTask: vi.fn(),
@@ -104,6 +105,22 @@ describe('DesignWorkbenchPage', () => {
     fireEvent.click(quickAction)
     expect(screen.getAllByRole('button', { name: 'Assign' })).toHaveLength(2)
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  }, 15_000)
+
+  it('allows managers to select tasks for bulk designer assignment', async () => {
+    const formatDate = vi.spyOn(Date.prototype, 'toLocaleString').mockReturnValue('formatted date')
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
+
+    const rowCheckbox = await screen.findByRole('checkbox', { name: 'Select row 1' })
+    const rendersBeforeSelection = formatDate.mock.calls.length
+    fireEvent.click(rowCheckbox)
+    expect(screen.getByRole('button', { name: 'Assign 1 task' })).toBeInTheDocument()
+    expect(formatDate).toHaveBeenCalledTimes(rendersBeforeSelection)
+    formatDate.mockRestore()
   }, 15_000)
 
   it('opens the PSD candidate picker without opening task detail', async () => {

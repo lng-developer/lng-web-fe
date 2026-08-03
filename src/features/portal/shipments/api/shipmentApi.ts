@@ -61,6 +61,16 @@ export type WebhookLog = {
   payloadHash: string | null
   createdAt: string
 }
+export type ShipmentTrackingInput = {
+  carrier: string
+  trackingNumber: string
+  trackingUrl?: string | null
+  note?: string | null
+}
+export type ShipmentStatusInput = {
+  status: Extract<ShipmentStatus, 'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'>
+  note?: string | null
+}
 
 const basePath = '/api/shipments'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -81,3 +91,19 @@ export const listWebhookLogs = async (params: {
   )
 export const recheckShipment = async (id: string) =>
   unwrap<Shipment>(await apiClient.post(`${basePath}/${id}/recheck`))
+export const updateShipmentTracking = async (id: string, input: ShipmentTrackingInput) =>
+  unwrap<Shipment>(await apiClient.patch(`${basePath}/${id}/tracking`, input))
+export const updateShipmentStatus = async (id: string, input: ShipmentStatusInput) =>
+  unwrap<Shipment>(await apiClient.patch(`${basePath}/${id}/status`, input))
+export const recheckVendorTracking = async (input: {
+  vendorSubmissionId: string
+  provider?: string
+  externalOrderId?: string
+  dateFrom?: string
+  dateTo?: string
+}) => unwrap<unknown>(await apiClient.post(`${basePath}/vendor-tracking/recheck`, input))
+export const recheckSubmittedShipments = async (input: {
+  provider?: string
+  shopId?: string
+  limit?: number
+}) => unwrap<unknown>(await apiClient.post(`${basePath}/vendor-tracking/recheck-submitted`, input))

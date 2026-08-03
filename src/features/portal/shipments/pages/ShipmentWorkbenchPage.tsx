@@ -1,10 +1,20 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { ReloadOutlined, SyncOutlined } from '@ant-design/icons'
+import { EditOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Drawer, Input, Select, Space, Timeline, Typography } from 'antd'
+import {
+  Button,
+  Descriptions,
+  Drawer,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Timeline,
+  Typography,
+} from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -23,9 +33,12 @@ import {
   listShipments,
   listWebhookLogs,
   recheckShipment,
+  recheckSubmittedShipments,
   type Shipment,
   type ShipmentStatus,
   summarizeShipments,
+  updateShipmentStatus,
+  updateShipmentTracking,
 } from '../api/shipmentApi'
 import { shipmentKeys } from '../api/shipmentKeys'
 import styles from './ShipmentWorkbenchPage.module.scss'
@@ -64,6 +77,14 @@ export function ShipmentWorkbenchPage({
   const [trackingNumber, setTrackingNumber] = useState('')
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [selectedId, setSelectedId] = useState<string>()
+  const [editMode, setEditMode] = useState<'tracking' | 'status'>()
+  const [carrier, setCarrier] = useState('')
+  const [newTrackingNumber, setNewTrackingNumber] = useState('')
+  const [trackingUrl, setTrackingUrl] = useState('')
+  const [nextStatus, setNextStatus] = useState<
+    'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'
+  >('DELIVERED')
+  const [note, setNote] = useState('')
   const permissions = account
     ? [...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)]
     : []
@@ -107,6 +128,36 @@ export function ShipmentWorkbenchPage({
   })
   const recheck = useMutation({
     mutationFn: recheckShipment,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: shipmentKeys.all })
+      toast('success', t('portal.shipments.recheckComplete'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.shipments.recheckFailed')),
+  })
+  const operation = useMutation({
+    mutationFn: async () => {
+      if (!selectedId) throw new Error(t('portal.shipments.noSelection'))
+      if (editMode === 'tracking') {
+        return updateShipmentTracking(selectedId, {
+          carrier: carrier.trim(),
+          trackingNumber: newTrackingNumber.trim(),
+          trackingUrl: trackingUrl.trim() || null,
+          note: note.trim() || null,
+        })
+      }
+      return updateShipmentStatus(selectedId, { status: nextStatus, note: note.trim() || null })
+    },
+    onSuccess: async () => {
+      setEditMode(undefined)
+      await queryClient.invalidateQueries({ queryKey: shipmentKeys.all })
+      toast('success', t('portal.shipments.updated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.shipments.updateFailed')),
+  })
+  const batchRecheck = useMutation({
+    mutationFn: () => recheckSubmittedShipments({ limit: 100 }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: shipmentKeys.all })
       toast('success', t('portal.shipments.recheckComplete'))
@@ -179,12 +230,23 @@ export function ShipmentWorkbenchPage({
         title={t('portal.shipments.title')}
         description={t('portal.shipments.description')}
         actions={
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => void queryClient.invalidateQueries({ queryKey: shipmentKeys.all })}
-          >
-            {t('portal.shipments.refresh')}
-          </Button>
+          <Space>
+            {canWrite ? (
+              <Button
+                icon={<SyncOutlined />}
+                loading={batchRecheck.isPending}
+                onClick={() => batchRecheck.mutate()}
+              >
+                {t('portal.shipments.recheckSubmitted')}
+              </Button>
+            ) : null}
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => void queryClient.invalidateQueries({ queryKey: shipmentKeys.all })}
+            >
+              {t('portal.shipments.refresh')}
+            </Button>
+          </Space>
         }
       />
       {shipments.error || summary.error ? (
@@ -264,6 +326,32 @@ export function ShipmentWorkbenchPage({
         title={t('portal.shipments.detail')}
         onClose={() => setSelectedId(undefined)}
         loading={detail.isLoading}
+        extra={
+          canWrite && detail.data ? (
+            <Space>
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setCarrier(detail.data!.carrier || '')
+                  setNewTrackingNumber(detail.data!.trackingNumber || '')
+                  setTrackingUrl(detail.data!.trackingUrl || '')
+                  setNote(detail.data!.note || '')
+                  setEditMode('tracking')
+                }}
+              >
+                {t('portal.shipments.editTracking')}
+              </Button>
+              <Button
+                onClick={() => {
+                  setNote(detail.data!.note || '')
+                  setEditMode('status')
+                }}
+              >
+                {t('portal.shipments.changeStatus')}
+              </Button>
+            </Space>
+          ) : null
+        }
       >
         {detail.data ? (
           <div className={styles.detail}>
@@ -341,6 +429,63 @@ export function ShipmentWorkbenchPage({
           </div>
         ) : null}
       </Drawer>
+      <Modal
+        open={editMode === 'tracking'}
+        title={t('portal.shipments.editTracking')}
+        confirmLoading={operation.isPending}
+        okButtonProps={{ disabled: !carrier.trim() || !newTrackingNumber.trim() }}
+        onCancel={() => setEditMode(undefined)}
+        onOk={() => operation.mutate()}
+      >
+        <Space direction="vertical" className={styles.modalFields}>
+          <Input
+            value={carrier}
+            placeholder={t('portal.shipments.carrier')}
+            onChange={(event) => setCarrier(event.target.value)}
+          />
+          <Input
+            value={newTrackingNumber}
+            placeholder={t('portal.shipments.trackingNumber')}
+            onChange={(event) => setNewTrackingNumber(event.target.value)}
+          />
+          <Input
+            value={trackingUrl}
+            placeholder={t('portal.shipments.trackingUrl')}
+            onChange={(event) => setTrackingUrl(event.target.value)}
+          />
+          <Input.TextArea
+            value={note}
+            placeholder={t('portal.shipments.note')}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </Space>
+      </Modal>
+      <Modal
+        open={editMode === 'status'}
+        title={t('portal.shipments.changeStatus')}
+        confirmLoading={operation.isPending}
+        onCancel={() => setEditMode(undefined)}
+        onOk={() => operation.mutate()}
+      >
+        <Space direction="vertical" className={styles.modalFields}>
+          <Select
+            className={styles.fullWidth}
+            value={nextStatus}
+            options={(['DELIVERED', 'EXCEPTION', 'RETURNED', 'CANCELLED'] as const).map(
+              (value) => ({
+                value,
+                label: t(`portal.shipments.statuses.${value}`),
+              }),
+            )}
+            onChange={setNextStatus}
+          />
+          <Input.TextArea
+            value={note}
+            placeholder={t('portal.shipments.note')}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </Space>
+      </Modal>
     </section>
   )
 }

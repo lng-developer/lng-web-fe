@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { type Key, type PointerEvent as ReactPointerEvent, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
@@ -25,14 +25,20 @@ import {
 } from '@/shared/ui'
 
 import {
+  assignCsTask,
+  assignProductionTask,
+  bulkAssignProductionTasks,
   claimProductionTask,
   type FileCheck,
   type FileDecision,
   getProductionTask,
+  listCsAssignees,
   listProductionTasks,
+  listScaleAssignees,
   type ManualScaledOutput,
   type ProductionStatus,
   type ProductionTask,
+  recheckPsdBlockedTasks,
   submitProductionQc,
   summarizeProductionTasks,
   updateDesignNote,
@@ -73,7 +79,45 @@ function ArtworkInspector({
 }) {
   const { t } = useTranslation()
   const [zoom, setZoom] = useState(100)
+  const inspectorRef = useRef<HTMLDivElement>(null)
+  const panRef = useRef({ x: 0, y: 0 })
+  const dragRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    originX: number
+    originY: number
+  } | null>(null)
   const scale = zoom / 100
+
+  const applyPan = (x: number, y: number) => {
+    panRef.current = { x, y }
+    inspectorRef.current?.style.setProperty('--inspect-pan-x', `${x}px`)
+    inspectorRef.current?.style.setProperty('--inspect-pan-y', `${y}px`)
+  }
+  const startPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: panRef.current.x,
+      originY: panRef.current.y,
+    }
+  }
+  const movePan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+    applyPan(drag.originX + event.clientX - drag.startX, drag.originY + event.clientY - drag.startY)
+  }
+  const stopPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null
+  }
+  const resetView = () => {
+    setZoom(100)
+    applyPan(0, 0)
+  }
   return (
     <Modal
       open={open}
@@ -107,22 +151,33 @@ function ArtworkInspector({
             {zoom}% · {t('portal.production.syncZoom')}
           </Typography.Text>
         </Space>
-        <Button onClick={() => setZoom(100)}>{t('portal.production.resetView')}</Button>
+        <Button onClick={resetView}>{t('portal.production.resetView')}</Button>
       </div>
-      <div className={styles.inspector}>
+      <div className={styles.inspector} ref={inspectorRef}>
         {(
           [
             [t('portal.production.original'), check?.inputAssetDownloadUrl],
             [t('portal.production.scaled'), check?.outputAssetDownloadUrl],
           ] as Array<[string, string | null | undefined]>
         ).map(([label, url]) => (
-          <div className={styles.canvas} key={label}>
+          <div
+            className={styles.canvas}
+            key={label}
+            onPointerDown={startPan}
+            onPointerMove={movePan}
+            onPointerUp={stopPan}
+            onPointerCancel={stopPan}
+          >
             <Typography.Text strong>{label}</Typography.Text>
             {url ? (
               <AuthenticatedMediaImage
                 downloadUrl={url}
                 alt={label}
-                style={{ transform: `scale(${scale})` }}
+                className={styles.pannableImage}
+                draggable={false}
+                style={{
+                  transform: `translate(var(--inspect-pan-x, 0px), var(--inspect-pan-y, 0px)) scale(${scale})`,
+                }}
               />
             ) : (
               <Typography.Text type="secondary">
@@ -156,7 +211,11 @@ export function ProductionWorkbenchPage({
   const [note, setNote] = useState('')
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [manualSlotOpen, setManualSlotOpen] = useState(false)
-  const canScale = allowed.has('PRODUCTION:WRITE') || allowed.has('DESIGN:WORK')
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
+  const [csAssigneeId, setCsAssigneeId] = useState<string>()
+  const canScale = allowed.has('PRODUCTION:WRITE')
+  const canAssignScale = tab === 'scale' && canScale
   const canQc = allowed.has('PRODUCTION:WRITE') || allowed.has('DESIGN:REVIEW')
   const filters = {
     search: search || undefined,
@@ -172,6 +231,18 @@ export function ProductionWorkbenchPage({
   const summary = useQuery({
     queryKey: productionKeys.summary(filters),
     queryFn: () => summarizeProductionTasks(filters),
+    retry: false,
+  })
+  const scaleAssignees = useQuery({
+    queryKey: [...productionKeys.all, 'scale-assignees'],
+    queryFn: () => listScaleAssignees({ limit: 100 }),
+    enabled: canAssignScale,
+    retry: false,
+  })
+  const csAssignees = useQuery({
+    queryKey: [...productionKeys.all, 'cs-assignees'],
+    queryFn: () => listCsAssignees({ limit: 100 }),
+    enabled: canAssignScale,
     retry: false,
   })
   const detail = useQuery({
@@ -198,6 +269,22 @@ export function ProductionWorkbenchPage({
     mutationFn: (input: ManualScaledOutput) => uploadManualScaledOutput(selectedId!, input),
     onSuccess: async () => {
       setManualSlotOpen(false)
+      await refresh()
+      toast('success', t('portal.production.updated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+  })
+  const operations = useMutation({
+    mutationFn: async (input: { kind: 'bulk-assign' | 'recheck' | 'assign' | 'assign-cs' }) => {
+      const taskIds = selectedRowKeys.map(String)
+      if (input.kind === 'bulk-assign') return bulkAssignProductionTasks(taskIds, scaleAssigneeId!)
+      if (input.kind === 'recheck') return recheckPsdBlockedTasks({ limit: 100 })
+      if (input.kind === 'assign') return assignProductionTask(selectedId!, scaleAssigneeId!)
+      return assignCsTask(selectedId!, csAssigneeId || null)
+    },
+    onSuccess: async () => {
+      setSelectedRowKeys([])
       await refresh()
       toast('success', t('portal.production.updated'))
     },
@@ -254,9 +341,19 @@ export function ProductionWorkbenchPage({
         title={t('portal.production.title')}
         description={t('portal.production.description')}
         actions={
-          <Button icon={<ReloadOutlined />} onClick={() => void refresh()}>
-            {t('portal.production.refresh')}
-          </Button>
+          <Space>
+            {canAssignScale ? (
+              <Button
+                loading={operations.isPending}
+                onClick={() => operations.mutate({ kind: 'recheck' })}
+              >
+                {t('portal.production.recheckBlocked')}
+              </Button>
+            ) : null}
+            <Button icon={<ReloadOutlined />} onClick={() => void refresh()}>
+              {t('portal.production.refresh')}
+            </Button>
+          </Space>
         }
       />
       {tasks.error || summary.error ? (
@@ -279,6 +376,7 @@ export function ProductionWorkbenchPage({
             setTab(value as 'scale' | 'qc')
             setPage(1)
             setStatus(undefined)
+            setSelectedRowKeys([])
           }}
           items={[
             { key: 'scale', label: t('portal.production.scaleQueue') },
@@ -290,6 +388,11 @@ export function ProductionWorkbenchPage({
           columns={columns}
           dataSource={rows}
           loading={tasks.isLoading}
+          rowSelection={
+            canAssignScale
+              ? { selectedRowKeys, onChange: setSelectedRowKeys, preserveSelectedRowKeys: true }
+              : undefined
+          }
           onRow={(row) => ({
             onClick: () => {
               setSelectedId(row.id)
@@ -327,6 +430,29 @@ export function ProductionWorkbenchPage({
                   setPage(1)
                 }}
               />
+              {canAssignScale ? (
+                <>
+                  <Select
+                    showSearch
+                    allowClear
+                    className={styles.filter}
+                    value={scaleAssigneeId}
+                    placeholder={t('portal.production.selectAssignee')}
+                    options={(scaleAssignees.data?.items ?? []).map((item) => ({
+                      value: item.id,
+                      label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
+                    }))}
+                    onChange={setScaleAssigneeId}
+                  />
+                  <Button
+                    disabled={!selectedRowKeys.length || !scaleAssigneeId}
+                    loading={operations.isPending}
+                    onClick={() => operations.mutate({ kind: 'bulk-assign' })}
+                  >
+                    {t('portal.production.bulkAssign', { count: selectedRowKeys.length })}
+                  </Button>
+                </>
+              ) : null}
             </FilterBar>
           }
         />
@@ -354,6 +480,44 @@ export function ProductionWorkbenchPage({
           <div className={styles.drawer}>
             {task.blockers.length ? (
               <FeedbackAlert type="warning" title={task.blockers.join(', ')} />
+            ) : null}
+            {canAssignScale ? (
+              <div className={styles.assignmentBar}>
+                <div className={styles.assignmentGroup}>
+                  <Select
+                    showSearch
+                    value={scaleAssigneeId}
+                    placeholder={t('portal.production.selectAssignee')}
+                    options={(scaleAssignees.data?.items ?? []).map((item) => ({
+                      value: item.id,
+                      label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
+                    }))}
+                    onChange={setScaleAssigneeId}
+                  />
+                  <Button
+                    disabled={!scaleAssigneeId}
+                    onClick={() => operations.mutate({ kind: 'assign' })}
+                  >
+                    {t('portal.production.assignScale')}
+                  </Button>
+                </div>
+                <div className={styles.assignmentGroup}>
+                  <Select
+                    allowClear
+                    showSearch
+                    value={csAssigneeId}
+                    placeholder={t('portal.production.selectCsAssignee')}
+                    options={(csAssignees.data?.items ?? []).map((item) => ({
+                      value: item.id,
+                      label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
+                    }))}
+                    onChange={setCsAssigneeId}
+                  />
+                  <Button onClick={() => operations.mutate({ kind: 'assign-cs' })}>
+                    {t('portal.production.assignCs')}
+                  </Button>
+                </div>
+              </div>
             ) : null}
             {checks.map((check) => (
               <div className={styles.slot} key={check.id}>

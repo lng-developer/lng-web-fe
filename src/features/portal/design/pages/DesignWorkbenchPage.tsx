@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type Key, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
@@ -42,6 +42,7 @@ import {
 import {
   approveDesignTask,
   assignDesignTask,
+  bulkAssignDesignTasks,
   bulkCreatePsdTasks,
   type BulkPsdTaskResult,
   cancelDesignTask,
@@ -95,6 +96,7 @@ const priorityTone = (priority: string) =>
       : priority === 'NORMAL'
         ? 'ready'
         : 'cancelled'
+const taskChanged = (task: DesignTask, previousTask: DesignTask) => task !== previousTask
 
 export function DesignWorkbenchPage() {
   const { t } = useTranslation()
@@ -113,6 +115,8 @@ export function DesignWorkbenchPage() {
   const [activeTask, setActiveTask] = useState<DesignTask>()
   const [assignOpen, setAssignOpen] = useState(false)
   const [designerId, setDesignerId] = useState<string>()
+  const [bulkDesignerId, setBulkDesignerId] = useState<string>()
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [submitOpen, setSubmitOpen] = useState(false)
   const [files, setFiles] = useState<UploadFile[]>([])
   const [note, setNote] = useState('')
@@ -246,6 +250,21 @@ export function DesignWorkbenchPage() {
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not create design task'),
   })
+  const bulkAssign = useMutation({
+    mutationFn: () => bulkAssignDesignTasks(selectedRowKeys.map(String), bulkDesignerId!),
+    onSuccess: async ({ failed }) => {
+      setSelectedRowKeys([])
+      await refresh()
+      toast(
+        failed.length ? 'warning' : 'success',
+        failed.length
+          ? t('portal.design.bulkAssignPartial', { count: failed.length })
+          : t('portal.design.bulkAssigned'),
+      )
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.design.actionFailed')),
+  })
   const canAssign = permissions.has('DESIGN:WRITE')
   const canWork = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:WORK')
   const canReview = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:REVIEW')
@@ -267,6 +286,7 @@ export function DesignWorkbenchPage() {
   const columns: TableColumnsType<DesignTask> = [
     {
       title: t('portal.design.listing'),
+      shouldCellUpdate: taskChanged,
       render: (_, row) => (
         <>
           <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>
@@ -277,27 +297,40 @@ export function DesignWorkbenchPage() {
         </>
       ),
     },
-    { title: t('portal.design.type'), dataIndex: 'taskType', width: 130 },
-    { title: t('portal.design.shop'), render: (_, row) => row.shop?.name ?? '-' },
+    {
+      title: t('portal.design.type'),
+      dataIndex: 'taskType',
+      width: 130,
+      shouldCellUpdate: taskChanged,
+    },
+    {
+      title: t('portal.design.shop'),
+      shouldCellUpdate: taskChanged,
+      render: (_, row) => row.shop?.name ?? '-',
+    },
     {
       title: t('portal.design.designer'),
+      shouldCellUpdate: taskChanged,
       render: (_, row) => row.assignedDesigner?.fullName ?? t('portal.design.unassigned'),
     },
     {
       title: t('portal.design.priority'),
       dataIndex: 'priority',
       width: 100,
+      shouldCellUpdate: taskChanged,
       render: (value) => <StatusTag status={priorityTone(value)}>{value}</StatusTag>,
     },
     {
       title: t('portal.design.status'),
       width: 130,
+      shouldCellUpdate: taskChanged,
       render: (_, row) => <StatusTag status={tone(row.status)}>{row.status}</StatusTag>,
     },
     {
       title: t('portal.design.updatedAt'),
       dataIndex: 'updatedAt',
       width: 170,
+      shouldCellUpdate: taskChanged,
       render: (value) => new Date(value).toLocaleString(),
     },
     {
@@ -305,6 +338,7 @@ export function DesignWorkbenchPage() {
       title: t('portal.design.actions'),
       width: 150,
       fixed: 'right',
+      shouldCellUpdate: taskChanged,
       render: (_, row) => {
         const primary =
           canAssign && ['REQUESTED', 'OPEN'].includes(row.status)
@@ -419,6 +453,17 @@ export function DesignWorkbenchPage() {
       <SectionCard>
         <DataTable
           rowKey="id"
+          rowSelection={
+            canAssign
+              ? {
+                  selectedRowKeys,
+                  onChange: setSelectedRowKeys,
+                  getCheckboxProps: (row) => ({
+                    disabled: !['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status),
+                  }),
+                }
+              : undefined
+          }
           columns={columns}
           dataSource={tasks.data?.items ?? []}
           loading={tasks.isLoading}
@@ -461,6 +506,29 @@ export function DesignWorkbenchPage() {
                 }}
                 options={TYPES.map((value) => ({ value, label: value }))}
               />
+              {canAssign ? (
+                <>
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    className={styles.filter}
+                    placeholder={t('portal.design.selectDesigner')}
+                    value={bulkDesignerId}
+                    onChange={setBulkDesignerId}
+                    options={(assignees.data ?? []).map(({ id, fullName, name }) => ({
+                      value: id,
+                      label: fullName ?? name ?? id,
+                    }))}
+                  />
+                  <Button
+                    disabled={!selectedRowKeys.length || !bulkDesignerId}
+                    loading={bulkAssign.isPending}
+                    onClick={() => bulkAssign.mutate()}
+                  >
+                    {t('portal.design.bulkAssign', { count: selectedRowKeys.length })}
+                  </Button>
+                </>
+              ) : null}
             </FilterBar>
           }
         />
