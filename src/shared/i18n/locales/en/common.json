@@ -98,7 +98,21 @@
       "title": "Import batches",
       "source": "Source",
       "processed": "Processed",
-      "unlinked": "Unlinked"
+      "unlinked": "Unlinked",
+      "modal": {
+        "title": "Import finance data",
+        "type": "Data type",
+        "types": { "transactions": "Transactions", "settlements": "Settlements", "ads": "Ads" },
+        "shop": "Shop",
+        "salesChannel": "Sales channel",
+        "marketplace": "Marketplace",
+        "dryRun": "Dry run",
+        "file": "Data file",
+        "dropFile": "Drop a CSV or TXT file here, or click to browse",
+        "fileError": "Use a CSV or TXT file up to 25 MB.",
+        "cancel": "Cancel",
+        "submit": "Run import"
+      }
     },
     "actions": {
       "import": "Import finance data",
@@ -107,6 +121,7 @@
     },
     "feedback": {
       "reprocessed": "Import batch reprocessed",
+      "imported": "Finance import completed",
       "recalculated": "Finance snapshot recalculated",
       "failed": "Finance action failed"
     }

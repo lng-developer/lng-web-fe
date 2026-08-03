@@ -70,6 +70,14 @@ export type ImportBatch = {
   unlinkedRows: number
   createdAt: string
 }
+export type FinanceImportInput = {
+  kind: 'transactions' | 'settlements' | 'ads'
+  file: File
+  shopId: string
+  salesChannelCode: string
+  marketplaceCode: string
+  dryRun: boolean
+}
 
 const params = (value: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== ''))

@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { ReloadOutlined } from '@ant-design/icons'
+import { ReloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Select, Space, Tabs, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { listShops } from '@/features/portal/shops/api/shopApi'
 import {
   DataTable,
   FilterBar,
@@ -19,13 +20,16 @@ import {
 } from '@/shared/ui'
 
 import {
+  type FinanceImportInput,
   type FinanceSnapshot,
   type ImportBatch,
+  importFinanceFile,
   listFinanceSnapshots,
   listImportBatches,
   recalculateOrderItem,
   reprocessImportBatch,
 } from '../api/financeApi'
+import { FinanceImportModal } from './FinanceImportModal'
 import styles from './FinanceWorkspacePage.module.scss'
 
 const PAGE_SIZE = 20
@@ -51,6 +55,7 @@ export function FinanceWorkspacePage() {
   const [search, setSearch] = useState('')
   const [costStatus, setCostStatus] = useState<string>()
   const [selected, setSelected] = useState<FinanceSnapshot>()
+  const [importOpen, setImportOpen] = useState(false)
   const queryParams = { page, limit: PAGE_SIZE, externalOrderId: search || undefined, costStatus }
   const snapshots = useQuery({
     queryKey: ['finance', 'snapshots', queryParams],
@@ -62,6 +67,28 @@ export function FinanceWorkspacePage() {
     queryFn: () => listImportBatches({ page: 1, limit: 20 }),
     enabled: globalRead,
     retry: false,
+  })
+  const shops = useQuery({
+    queryKey: ['shops', 'finance-import'],
+    queryFn: () => listShops({ page: 1, limit: 100, status: 'ACTIVE' }),
+    enabled: globalWrite,
+    retry: false,
+  })
+  const importFile = useMutation({
+    mutationFn: (input: FinanceImportInput) => {
+      const { kind, file, ...context } = input
+      return importFinanceFile(kind, file, {
+        ...context,
+        salesChannelCode: context.salesChannelCode.trim().toUpperCase(),
+        marketplaceCode: context.marketplaceCode.trim().toUpperCase(),
+      })
+    },
+    onSuccess: async () => {
+      toast('success', t('finance.feedback.imported'))
+      setImportOpen(false)
+      await client.invalidateQueries({ queryKey: ['finance'] })
+    },
+    onError: (error) => toast('error', t('finance.feedback.failed'), error.message),
   })
   const reprocess = useMutation({
     mutationFn: reprocessImportBatch,
@@ -244,6 +271,13 @@ export function FinanceWorkspacePage() {
                   label: t('finance.tabs.imports'),
                   children: (
                     <SectionCard title={t('finance.imports.title')}>
+                      {globalWrite ? (
+                        <Space className={styles.importActions}>
+                          <Button type="primary" icon={<UploadOutlined />} onClick={() => setImportOpen(true)}>
+                            {t('finance.actions.import')}
+                          </Button>
+                        </Space>
+                      ) : null}
                       <DataTable
                         rowKey="id"
                         columns={importColumns}
@@ -324,6 +358,13 @@ export function FinanceWorkspacePage() {
           </Space>
         ) : null}
       </Modal>
+      <FinanceImportModal
+        open={importOpen}
+        shops={shops.data?.items ?? []}
+        saving={importFile.isPending}
+        onClose={() => setImportOpen(false)}
+        onSubmit={(input) => importFile.mutate(input)}
+      />
     </section>
   )
 }

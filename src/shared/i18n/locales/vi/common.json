@@ -98,7 +98,21 @@
       "title": "Lịch sử nhập liệu",
       "source": "Nguồn",
       "processed": "Đã xử lý",
-      "unlinked": "Chưa liên kết"
+      "unlinked": "Chưa liên kết",
+      "modal": {
+        "title": "Nhập dữ liệu tài chính",
+        "type": "Loại dữ liệu",
+        "types": { "transactions": "Giao dịch", "settlements": "Đối soát", "ads": "Quảng cáo" },
+        "shop": "Cửa hàng",
+        "salesChannel": "Kênh bán",
+        "marketplace": "Thị trường",
+        "dryRun": "Chạy thử",
+        "file": "Tệp dữ liệu",
+        "dropFile": "Kéo thả tệp CSV hoặc TXT vào đây, hoặc bấm để chọn",
+        "fileError": "Chỉ dùng tệp CSV hoặc TXT tối đa 25 MB.",
+        "cancel": "Hủy",
+        "submit": "Chạy nhập liệu"
+      }
     },
     "actions": {
       "import": "Nhập dữ liệu tài chính",
@@ -107,6 +121,7 @@
     },
     "feedback": {
       "reprocessed": "Đã chạy lại batch",
+      "imported": "Đã nhập dữ liệu tài chính",
       "recalculated": "Đã tính lại dữ liệu tài chính",
       "failed": "Thao tác tài chính thất bại"
     }
