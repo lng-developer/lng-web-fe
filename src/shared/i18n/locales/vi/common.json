@@ -101,9 +101,21 @@
     },
     "detail": {
       "title": "Chi tiết tài chính",
+      "items": "Số item",
+      "item": "Item {{number}}",
       "fees": "Phí sàn",
       "refund": "Hoàn tiền",
-      "baseCost": "Chi phí gốc"
+      "discount": "Giảm giá",
+      "baseCost": "Chi phí gốc",
+      "additionalCost": "Chi phí fulfillment bổ sung",
+      "deductions": "Tổng khấu trừ",
+      "history": "Lịch sử tính toán"
+    },
+    "missingReasons": {
+      "FULFILLMENT_PLAN_NOT_FOUND": "Chưa có phương án fulfillment",
+      "COST_ESTIMATE_NOT_AVAILABLE": "Phương án fulfillment chưa có ước tính chi phí",
+      "BASE_COST_NOT_AVAILABLE": "Ước tính đang thiếu chi phí gốc",
+      "TOTAL_COST_NOT_AVAILABLE": "Ước tính đang thiếu tổng chi phí fulfillment"
     },
     "imports": {
       "title": "Lịch sử nhập liệu",
@@ -128,7 +140,8 @@
     "actions": {
       "import": "Nhập dữ liệu tài chính",
       "reprocess": "Chạy lại",
-      "recalculate": "Tính lại"
+      "recalculate": "Tính lại",
+      "recalculateOrder": "Tính lại toàn bộ đơn"
     },
     "feedback": {
       "reprocessed": "Đã chạy lại batch",

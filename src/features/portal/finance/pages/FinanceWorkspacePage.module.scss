@@ -20,12 +20,39 @@
   font-size: 16px;
 }
 .filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
+  width: 100%;
+  flex: 1 1 100%;
+}
+.filters > * {
+  width: auto !important;
+  min-width: 160px;
+  flex: 1 1 170px;
+}
+.filters > :first-child {
+  min-width: 280px;
+  flex-grow: 2;
+}
+.filters > :nth-child(7) {
+  min-width: 280px;
+  flex-grow: 2;
 }
 .detail {
   width: 100%;
+}
+.itemBreakdown {
+  padding: 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+}
+.history {
+  display: grid;
+  gap: 8px;
+}
+.history > div {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(220px, 1fr);
+  align-items: center;
+  gap: 12px;
 }
 .amount {
   float: right;

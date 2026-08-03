@@ -101,9 +101,21 @@
     },
     "detail": {
       "title": "Financial breakdown",
+      "items": "Items",
+      "item": "Item {{number}}",
       "fees": "Marketplace fees",
       "refund": "Refund",
-      "baseCost": "Base cost"
+      "discount": "Discount",
+      "baseCost": "Base cost",
+      "additionalCost": "Additional fulfillment cost",
+      "deductions": "Total deductions",
+      "history": "Calculation history"
+    },
+    "missingReasons": {
+      "FULFILLMENT_PLAN_NOT_FOUND": "Fulfillment plan is missing",
+      "COST_ESTIMATE_NOT_AVAILABLE": "The fulfillment plan has no cost estimate",
+      "BASE_COST_NOT_AVAILABLE": "Base cost is missing from the estimate",
+      "TOTAL_COST_NOT_AVAILABLE": "Total fulfillment cost is missing from the estimate"
     },
     "imports": {
       "title": "Import batches",
@@ -128,7 +140,8 @@
     "actions": {
       "import": "Import finance data",
       "reprocess": "Reprocess",
-      "recalculate": "Recalculate"
+      "recalculate": "Recalculate",
+      "recalculateOrder": "Recalculate order"
     },
     "feedback": {
       "reprocessed": "Import batch reprocessed",

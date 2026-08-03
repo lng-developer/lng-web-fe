@@ -4,7 +4,7 @@ import { useRouteLoaderData } from 'react-router-dom'
 import { ReloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Modal, Select, Space, Tabs, Typography } from 'antd'
+import { Button, Descriptions, Divider, Modal, Select, Space, Spin, Tabs, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
@@ -24,12 +24,13 @@ import {
 import {
   type FinanceImportInput,
   type FinanceSnapshot,
+  getOrderFinanceSummary,
   type ImportBatch,
   importFinanceFile,
   listFinanceFilterOptions,
   listFinanceSnapshots,
   listImportBatches,
-  recalculateOrderItem,
+  recalculateOrder,
   reprocessImportBatch,
 } from '../api/financeApi'
 import { FinanceImportModal } from './FinanceImportModal'
@@ -94,6 +95,12 @@ export function FinanceWorkspacePage() {
     queryFn: listFinanceFilterOptions,
     retry: false,
   })
+  const orderDetail = useQuery({
+    queryKey: ['finance', 'orders', selected?.orderId, 'summary'],
+    queryFn: () => getOrderFinanceSummary(selected!.orderId),
+    enabled: Boolean(selected?.orderId),
+    retry: false,
+  })
   const shops = useQuery({
     queryKey: ['shops', 'finance-import'],
     queryFn: () => listShops({ page: 1, limit: 100, status: 'ACTIVE' }),
@@ -125,10 +132,9 @@ export function FinanceWorkspacePage() {
     onError: (error) => toast('error', t('finance.feedback.failed'), error.message),
   })
   const recalculate = useMutation({
-    mutationFn: recalculateOrderItem,
+    mutationFn: recalculateOrder,
     onSuccess: async () => {
       toast('success', t('finance.feedback.recalculated'))
-      setSelected(undefined)
       await client.invalidateQueries({ queryKey: ['finance'] })
     },
     onError: (error) => toast('error', t('finance.feedback.failed'), error.message),
@@ -375,7 +381,6 @@ export function FinanceWorkspacePage() {
               </>
             ),
           },
-          { key: 'orders', label: t('finance.tabs.orders'), children: table },
           ...(globalRead
             ? [
                 {
@@ -423,59 +428,142 @@ export function FinanceWorkspacePage() {
         onCancel={() => setSelected(undefined)}
         destroyOnHidden
       >
-        {selected ? (
-          <Space direction="vertical" className={styles.detail} size="large">
+        {orderDetail.isLoading ? (
+          <Spin />
+        ) : orderDetail.data ? (
+          <Space orientation="vertical" className={styles.detail} size="large">
             <Descriptions
               bordered
-              column={3}
+              column={4}
               items={[
+                {
+                  key: 'items',
+                  label: t('finance.detail.items'),
+                  children: orderDetail.data.itemCount,
+                },
                 {
                   key: 'revenue',
                   label: t('finance.columns.revenue'),
-                  children: money(selected.revenue.customerPaidAmount, selected.revenue.currency),
+                  children: money(
+                    orderDetail.data.customerPaidAmount,
+                    orderDetail.data.currency || 'USD',
+                  ),
                 },
                 {
-                  key: 'fees',
-                  label: t('finance.detail.fees'),
-                  children: money(selected.revenue.feeAmount, selected.revenue.currency),
-                },
-                {
-                  key: 'refund',
-                  label: t('finance.detail.refund'),
-                  children: money(selected.revenue.refundAmount, selected.revenue.currency),
-                },
-                {
-                  key: 'base',
-                  label: t('finance.detail.baseCost'),
-                  children: money(selected.cost.baseCostAmount, selected.revenue.currency),
-                },
-                {
-                  key: 'total',
+                  key: 'cost',
                   label: t('finance.columns.cost'),
-                  children: money(selected.cost.totalCostAmount, selected.revenue.currency),
+                  children: money(
+                    orderDetail.data.totalCostAmount,
+                    orderDetail.data.currency || 'USD',
+                  ),
                 },
                 {
                   key: 'profit',
                   label: t('finance.columns.profit'),
-                  children: money(selected.margin.grossProfitAmount, selected.revenue.currency),
+                  children: money(
+                    orderDetail.data.grossProfitAmount,
+                    orderDetail.data.currency || 'USD',
+                  ),
                 },
               ]}
             />
-            {selected.cost.costLines.map((line) => (
-              <div key={line.code}>
-                <Typography.Text type="secondary">{line.label || line.code}</Typography.Text>
-                <Typography.Text className={styles.amount}>
-                  {money(line.amount, selected.revenue.currency)}
-                </Typography.Text>
-              </div>
+            {orderDetail.data.snapshots.map((snapshot, index) => (
+              <section key={snapshot.orderItemId} className={styles.itemBreakdown}>
+                <Typography.Title level={5}>
+                  {t('finance.detail.item', { number: index + 1 })}
+                </Typography.Title>
+                <Descriptions
+                  size="small"
+                  column={4}
+                  items={[
+                    {
+                      key: 'revenue',
+                      label: t('finance.columns.revenue'),
+                      children: money(
+                        snapshot.revenue.customerPaidAmount,
+                        snapshot.revenue.currency,
+                      ),
+                    },
+                    {
+                      key: 'fee',
+                      label: t('finance.detail.fees'),
+                      children: money(
+                        snapshot.orderPnl?.marketplaceFeeAmount,
+                        snapshot.revenue.currency,
+                      ),
+                    },
+                    {
+                      key: 'refund',
+                      label: t('finance.detail.refund'),
+                      children: money(snapshot.orderPnl?.refundAmount, snapshot.revenue.currency),
+                    },
+                    {
+                      key: 'discount',
+                      label: t('finance.detail.discount'),
+                      children: money(snapshot.orderPnl?.discountAmount, snapshot.revenue.currency),
+                    },
+                    {
+                      key: 'base',
+                      label: t('finance.detail.baseCost'),
+                      children: money(snapshot.orderPnl?.baseCostAmount, snapshot.revenue.currency),
+                    },
+                    {
+                      key: 'additional',
+                      label: t('finance.detail.additionalCost'),
+                      children: money(
+                        snapshot.orderPnl?.additionalFulfillmentCostAmount,
+                        snapshot.revenue.currency,
+                      ),
+                    },
+                    {
+                      key: 'deductions',
+                      label: t('finance.detail.deductions'),
+                      children: money(
+                        snapshot.orderPnl?.totalDeductionAmount,
+                        snapshot.revenue.currency,
+                      ),
+                    },
+                    {
+                      key: 'profit',
+                      label: t('finance.columns.profit'),
+                      children: money(snapshot.orderPnl?.profitAmount, snapshot.revenue.currency),
+                    },
+                  ]}
+                />
+                {snapshot.cost.missingCostReason ? (
+                  <Typography.Text type="danger">
+                    {t(`finance.missingReasons.${snapshot.cost.missingCostReason}`)}
+                  </Typography.Text>
+                ) : null}
+                <Divider titlePlacement="start">{t('finance.detail.history')}</Divider>
+                <div className={styles.history}>
+                  {snapshot.calculationHistory.map((entry) => (
+                    <div key={`${entry.calculatedAt}-${entry.snapshotStatus}`}>
+                      <Typography.Text>
+                        {new Date(entry.calculatedAt).toLocaleString()}
+                      </Typography.Text>
+                      <StatusTag
+                        status={entry.costStatus === 'MISSING' ? 'critical' : 'operational'}
+                      >
+                        {entry.snapshotStatus}
+                      </StatusTag>
+                      {entry.missingCostReason ? (
+                        <Typography.Text type="secondary">
+                          {t(`finance.missingReasons.${entry.missingCostReason}`)}
+                        </Typography.Text>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
             ))}
-            {canWrite ? (
+            {canWrite && selected ? (
               <Button
                 icon={<ReloadOutlined />}
                 loading={recalculate.isPending}
-                onClick={() => recalculate.mutate(selected.orderItemId)}
+                onClick={() => recalculate.mutate(selected.orderId)}
               >
-                {t('finance.actions.recalculate')}
+                {t('finance.actions.recalculateOrder')}
               </Button>
             ) : null}
           </Space>

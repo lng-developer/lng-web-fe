@@ -5,6 +5,7 @@ const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export type FinanceSnapshot = {
   id: string
+  orderId: string
   orderItemId: string
   externalOrderId: string | null
   salesChannelCode: string | null
@@ -24,15 +25,39 @@ export type FinanceSnapshot = {
     totalCostAmount: number | null
     costLines: Array<{ code: string; label: string | null; amount: number }>
     costStatus: 'PRESENT' | 'MISSING'
+    missingCostReason: string | null
   }
   margin: { grossProfitAmount: number | null; grossMarginBps: number | null }
   orderPnl: {
+    marketplaceFeeAmount: number
+    refundAmount: number
+    discountAmount: number
+    baseCostAmount: number | null
     additionalFulfillmentCostAmount: number | null
+    totalCostAmount: number | null
     totalDeductionAmount: number | null
     profitAmount: number | null
   } | null
   snapshotStatus: 'ESTIMATED' | 'MISSING_COST'
   calculatedAt: string
+  calculationHistory: Array<{
+    calculatedAt: string
+    snapshotStatus: 'ESTIMATED' | 'MISSING_COST'
+    costStatus: 'PRESENT' | 'MISSING'
+    missingCostReason: string | null
+  }>
+}
+export type OrderFinanceSummary = {
+  orderId: string
+  itemCount: number
+  currency: string | null
+  customerPaidAmount: number
+  baseCostAmount: number | null
+  totalCostAmount: number | null
+  grossProfitAmount: number | null
+  grossMarginBps: number | null
+  missingCostCount: number
+  snapshots: FinanceSnapshot[]
 }
 export type FinanceParams = {
   page?: number
@@ -59,6 +84,14 @@ export type FinancePage = {
     grossMarginBps: number | null
     missingCostCount: number
   }>
+}
+type FinancePageResponse = FinancePage & Partial<FinancePage['pagination']>
+type Paginated<T> = {
+  items: T[]
+  pagination?: { total: number; page: number; limit: number }
+  total?: number
+  page?: number
+  limit?: number
 }
 export type FinanceFilterOptions = {
   channels: string[]
@@ -92,22 +125,40 @@ export type FinanceImportInput = {
 
 const params = (value: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== ''))
+const normalizePagination = <T extends Paginated<unknown>>(
+  data: T,
+  fallback: { page?: number; limit?: number } = {},
+) => ({
+  ...data,
+  pagination: data.pagination ?? {
+    total: data.total ?? 0,
+    page: data.page ?? fallback.page ?? 1,
+    limit: data.limit ?? fallback.limit ?? 20,
+  },
+})
 export async function listFinanceSnapshots(query: FinanceParams) {
-  return unwrap<FinancePage>(
+  const data = unwrap<FinancePageResponse>(
     await apiClient.get('/api/finance/snapshots', { params: params(query) }),
   )
+  return normalizePagination(data, query)
 }
 export async function listFinanceFilterOptions() {
   return unwrap<FinanceFilterOptions>(await apiClient.get('/api/finance/filter-options'))
 }
-export async function recalculateOrderItem(orderItemId: string) {
-  return unwrap(await apiClient.post(`/api/finance/order-items/${orderItemId}/recalculate`))
+export async function getOrderFinanceSummary(orderId: string) {
+  return unwrap<OrderFinanceSummary>(await apiClient.get(`/api/finance/orders/${orderId}/summary`))
+}
+export async function recalculateOrder(orderId: string) {
+  return unwrap(await apiClient.post(`/api/finance/orders/${orderId}/recalculate`))
 }
 export async function listImportBatches(query: Record<string, unknown> = {}) {
-  return unwrap<{
-    items: ImportBatch[]
-    pagination: { total: number; page: number; limit: number }
-  }>(await apiClient.get('/api/finance/import-batches', { params: params(query) }))
+  const data = unwrap<Paginated<ImportBatch>>(
+    await apiClient.get('/api/finance/import-batches', { params: params(query) }),
+  )
+  return normalizePagination(data, {
+    page: Number(query.page) || 1,
+    limit: Number(query.limit) || 20,
+  })
 }
 export async function reprocessImportBatch(id: string) {
   return unwrap(await apiClient.post(`/api/finance/import-batches/${id}/reprocess`))
