@@ -28,7 +28,8 @@
       "orders": "Orders",
       "mapping": "Mapping",
       "media": "Media",
-      "customizations": "Customization review"
+      "customizations": "Customization review",
+      "finance": "Finance"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -58,6 +59,56 @@
         "shop": "Shop",
         "vendor": "Vendor"
       }
+    }
+  },
+  "finance": {
+    "title": "Finance operations",
+    "description": "Review scoped revenue, costs, profit, and reconciliation.",
+    "profitability": "Order profitability",
+    "tabs": {
+      "overview": "Overview",
+      "orders": "Order profitability",
+      "imports": "Imports & reconciliation"
+    },
+    "scope": { "global": "All company", "scoped": "Your assigned scope" },
+    "metrics": {
+      "revenue": "Customer paid",
+      "cost": "Total cost",
+      "profit": "Gross profit",
+      "missing": "Missing cost"
+    },
+    "filters": { "label": "Filters", "search": "Search Order ID", "cost": "Cost status" },
+    "columns": {
+      "order": "Order",
+      "channel": "Channel",
+      "seller": "Seller / team",
+      "revenue": "Customer paid",
+      "cost": "Total cost",
+      "profit": "Profit",
+      "margin": "Margin",
+      "status": "Status"
+    },
+    "detail": {
+      "title": "Financial breakdown",
+      "fees": "Marketplace fees",
+      "refund": "Refund",
+      "baseCost": "Base cost"
+    },
+    "imports": {
+      "title": "Import batches",
+      "source": "Source",
+      "processed": "Processed",
+      "unlinked": "Unlinked"
+    },
+    "actions": {
+      "import": "Import finance data",
+      "reprocess": "Reprocess",
+      "recalculate": "Recalculate"
+    },
+    "feedback": {
+      "reprocessed": "Import batch reprocessed",
+      "recalculated": "Finance snapshot recalculated",
+      "failed": "Finance action failed"
     }
   },
   "customization": {

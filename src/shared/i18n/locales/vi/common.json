@@ -28,7 +28,8 @@
       "orders": "Đơn hàng",
       "mapping": "Ánh xạ",
       "media": "Tệp tin",
-      "customizations": "Duyệt tùy chỉnh"
+      "customizations": "Duyệt tùy chỉnh",
+      "finance": "Tài chính"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {
@@ -58,6 +59,56 @@
         "shop": "Cửa hàng",
         "vendor": "Nhà cung cấp"
       }
+    }
+  },
+  "finance": {
+    "title": "Vận hành tài chính",
+    "description": "Theo dõi doanh thu, chi phí, lợi nhuận và đối soát trong phạm vi được giao.",
+    "profitability": "Lợi nhuận theo đơn",
+    "tabs": {
+      "overview": "Tổng quan",
+      "orders": "Lợi nhuận theo đơn",
+      "imports": "Nhập liệu & đối soát"
+    },
+    "scope": { "global": "Toàn công ty", "scoped": "Phạm vi được giao" },
+    "metrics": {
+      "revenue": "Khách thanh toán",
+      "cost": "Tổng chi phí",
+      "profit": "Lợi nhuận gộp",
+      "missing": "Thiếu chi phí"
+    },
+    "filters": { "label": "Bộ lọc", "search": "Tìm mã đơn", "cost": "Trạng thái chi phí" },
+    "columns": {
+      "order": "Đơn hàng",
+      "channel": "Kênh",
+      "seller": "Seller / team",
+      "revenue": "Khách thanh toán",
+      "cost": "Tổng chi phí",
+      "profit": "Lợi nhuận",
+      "margin": "Biên lợi nhuận",
+      "status": "Trạng thái"
+    },
+    "detail": {
+      "title": "Chi tiết tài chính",
+      "fees": "Phí sàn",
+      "refund": "Hoàn tiền",
+      "baseCost": "Chi phí gốc"
+    },
+    "imports": {
+      "title": "Lịch sử nhập liệu",
+      "source": "Nguồn",
+      "processed": "Đã xử lý",
+      "unlinked": "Chưa liên kết"
+    },
+    "actions": {
+      "import": "Nhập dữ liệu tài chính",
+      "reprocess": "Chạy lại",
+      "recalculate": "Tính lại"
+    },
+    "feedback": {
+      "reprocessed": "Đã chạy lại batch",
+      "recalculated": "Đã tính lại dữ liệu tài chính",
+      "failed": "Thao tác tài chính thất bại"
     }
   },
   "customization": {

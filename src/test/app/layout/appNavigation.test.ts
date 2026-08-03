@@ -126,6 +126,11 @@ describe('app navigation', () => {
               labelKey: 'shell.navigation.orders',
             },
             {
+              key: 'customizations',
+              path: '/portal/customizations',
+              labelKey: 'shell.navigation.customizations',
+            },
+            {
               key: 'integrations',
               path: '/portal/integrations',
               labelKey: 'shell.navigation.integrations',

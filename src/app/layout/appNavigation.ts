@@ -60,6 +60,9 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                 labelKey: 'shell.navigation.customizations',
               }
             : null,
+          permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
+            ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
+            : null,
           permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
             ? {
                 key: 'mapping',

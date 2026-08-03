@@ -175,6 +175,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/finance',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/finance/pages/FinanceWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { FinanceWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['FINANCE:READ', 'FINANCE:WRITE']}>
+                <FinanceWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/mapping',
         lazy: () =>
           Promise.all([
