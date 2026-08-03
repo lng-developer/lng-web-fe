@@ -189,6 +189,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/reports',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/reports/pages/ReportWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { ReportWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['REPORTS:READ']}>
+                <ReportWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/mapping',
         lazy: () =>
           Promise.all([

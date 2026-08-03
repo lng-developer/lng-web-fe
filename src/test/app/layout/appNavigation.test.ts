@@ -180,6 +180,20 @@ describe('app navigation', () => {
     ).toContainEqual(expect.objectContaining({ key: 'shipments' }))
   })
 
+  it('shows Reports for global or scoped report readers', () => {
+    for (const scoped of [false, true]) {
+      const items = getContextNavigation(
+        'portal',
+        scoped ? account([], ['REPORTS:READ']) : account(['REPORTS:READ']),
+      )[0]?.items
+      expect(items).toContainEqual({
+        key: 'reports',
+        path: '/portal/reports',
+        labelKey: 'shell.navigation.reports',
+      })
+    }
+  })
+
   it('exposes Portal Operations for scoped order access and keeps it separate from configuration', () => {
     const scopedWriter = account([], ['ORDERS:WRITE'])
     scopedWriter.scopes[0] = {

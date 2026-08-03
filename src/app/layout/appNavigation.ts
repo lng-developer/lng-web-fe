@@ -63,6 +63,9 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
             ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
             : null,
+          permissions.has('REPORTS:READ')
+            ? { key: 'reports', path: '/portal/reports', labelKey: 'shell.navigation.reports' }
+            : null,
           permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
             ? {
                 key: 'mapping',

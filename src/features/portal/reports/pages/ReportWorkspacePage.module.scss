@@ -1,0 +1,49 @@
+.page,
+.stack {
+  display: grid;
+  gap: 20px;
+}
+
+.filters {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 1.5fr) repeat(3, minmax(160px, 1fr));
+  width: 100%;
+}
+
+.filters > * {
+  width: 100%;
+}
+
+.metrics,
+.metricsCompact,
+.twoColumns,
+.operationsGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 24px;
+}
+
+.metricsCompact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.twoColumns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.operationsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+  .filters,
+  .metrics,
+  .twoColumns,
+  .operationsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

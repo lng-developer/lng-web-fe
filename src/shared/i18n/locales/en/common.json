@@ -29,7 +29,8 @@
       "mapping": "Mapping",
       "media": "Media",
       "customizations": "Customization review",
-      "finance": "Finance"
+      "finance": "Finance",
+      "reports": "Reports"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
     "groups": {
@@ -148,6 +149,74 @@
       "imported": "Finance import completed",
       "recalculated": "Finance snapshot recalculated",
       "failed": "Finance action failed"
+    }
+  },
+  "reports": {
+    "title": "Report workspace",
+    "description": "Track scoped commercial and operational performance without mixing currencies.",
+    "loadError": "Report data could not be loaded.",
+    "empty": "No data",
+    "trend": "Daily revenue trend",
+    "scopeLimited": "Operational and advertising reports are available for global or shop scope. Your finance data remains scoped to your organization assignment.",
+    "tabs": {
+      "overview": "Executive overview",
+      "sales": "Sales & finance",
+      "operations": "Operations"
+    },
+    "filters": {
+      "label": "Report filters",
+      "date": "Report date",
+      "from": "Start date",
+      "to": "End date",
+      "shop": "Shop",
+      "channel": "Sales channel",
+      "marketplace": "Marketplace",
+      "seller": "Seller",
+      "team": "Team",
+      "department": "Department",
+      "unnamed": "Unnamed"
+    },
+    "metrics": {
+      "revenue": "Revenue",
+      "grossProfit": "Gross profit",
+      "netProfit": "Net profit",
+      "missingCost": "Missing cost"
+    },
+    "buyers": {
+      "title": "Buyer signals",
+      "total": "Orders",
+      "new": "New buyers",
+      "returning": "Returning buyers"
+    },
+    "sales": {
+      "bySeller": "Seller performance",
+      "byTeam": "Team performance",
+      "acquisition": "Channel acquisition"
+    },
+    "operations": {
+      "orders": "Order items",
+      "production": "Production",
+      "shipments": "Shipments",
+      "vendors": "Vendor performance",
+      "blockers": "Production blockers"
+    },
+    "columns": {
+      "seller": "Seller",
+      "team": "Team",
+      "sellers": "Active sellers",
+      "vendor": "Vendor",
+      "items": "Items",
+      "revenue": "Revenue",
+      "netProfit": "Net profit",
+      "margin": "Margin",
+      "channel": "Channel / marketplace",
+      "spend": "Ad spend",
+      "sales": "Attributed sales",
+      "newBuyers": "New buyers",
+      "submitted": "Submitted",
+      "failed": "Failed",
+      "shipped": "Shipped",
+      "successRate": "Success rate"
     }
   },
   "customization": {

@@ -29,7 +29,8 @@
       "mapping": "Ánh xạ",
       "media": "Tệp tin",
       "customizations": "Duyệt tùy chỉnh",
-      "finance": "Tài chính"
+      "finance": "Tài chính",
+      "reports": "Báo cáo"
     },
     "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
     "groups": {
@@ -148,6 +149,74 @@
       "imported": "Đã nhập dữ liệu tài chính",
       "recalculated": "Đã tính lại dữ liệu tài chính",
       "failed": "Thao tác tài chính thất bại"
+    }
+  },
+  "reports": {
+    "title": "Không gian báo cáo",
+    "description": "Theo dõi hiệu quả kinh doanh và vận hành theo đúng phạm vi, không gộp lẫn tiền tệ.",
+    "loadError": "Không thể tải dữ liệu báo cáo.",
+    "empty": "Chưa có dữ liệu",
+    "trend": "Xu hướng doanh thu theo ngày",
+    "scopeLimited": "Báo cáo vận hành và quảng cáo hiện dành cho phạm vi toàn cục hoặc shop. Dữ liệu tài chính vẫn được giới hạn theo phạm vi tổ chức của bạn.",
+    "tabs": {
+      "overview": "Tổng quan điều hành",
+      "sales": "Kinh doanh & tài chính",
+      "operations": "Vận hành"
+    },
+    "filters": {
+      "label": "Bộ lọc báo cáo",
+      "date": "Ngày báo cáo",
+      "from": "Từ ngày",
+      "to": "Đến ngày",
+      "shop": "Shop",
+      "channel": "Kênh bán",
+      "marketplace": "Thị trường",
+      "seller": "Seller",
+      "team": "Nhóm",
+      "department": "Phòng ban",
+      "unnamed": "Chưa đặt tên"
+    },
+    "metrics": {
+      "revenue": "Doanh thu",
+      "grossProfit": "Lợi nhuận gộp",
+      "netProfit": "Lợi nhuận ròng",
+      "missingCost": "Thiếu giá vốn"
+    },
+    "buyers": {
+      "title": "Tín hiệu khách hàng",
+      "total": "Đơn hàng",
+      "new": "Khách mới",
+      "returning": "Khách quay lại"
+    },
+    "sales": {
+      "bySeller": "Hiệu quả seller",
+      "byTeam": "Hiệu quả nhóm",
+      "acquisition": "Hiệu quả theo kênh"
+    },
+    "operations": {
+      "orders": "Sản phẩm trong đơn",
+      "production": "Sản xuất",
+      "shipments": "Vận chuyển",
+      "vendors": "Hiệu quả vendor",
+      "blockers": "Điểm nghẽn sản xuất"
+    },
+    "columns": {
+      "seller": "Seller",
+      "team": "Nhóm",
+      "sellers": "Seller hoạt động",
+      "vendor": "Vendor",
+      "items": "Sản phẩm",
+      "revenue": "Doanh thu",
+      "netProfit": "Lợi nhuận ròng",
+      "margin": "Biên lợi nhuận",
+      "channel": "Kênh / thị trường",
+      "spend": "Chi quảng cáo",
+      "sales": "Doanh thu quy đổi",
+      "newBuyers": "Khách mới",
+      "submitted": "Đã gửi",
+      "failed": "Thất bại",
+      "shipped": "Đã giao vận",
+      "successRate": "Tỷ lệ thành công"
     }
   },
   "customization": {
