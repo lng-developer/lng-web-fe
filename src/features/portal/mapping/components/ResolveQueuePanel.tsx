@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Select, Table } from 'antd'
+import { Flex, Select, Space, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
-import { EmptyState, SearchInput, StatusTag } from '@/shared/ui'
+import { CopyableOrderId, EmptyState, SearchInput, StatusTag } from '@/shared/ui'
 
 import type { UnmatchedMappingItem } from '../api/mappingApi'
 import { getStageForFixType, type MappingPipelineStage } from '../model/mappingModel'
@@ -43,7 +43,12 @@ export function ResolveQueuePanel({
     () => [
       {
         title: t('mapping.fields.order'),
-        render: (_, item) => item.externalOrderId || t('mapping.states.unavailable'),
+        render: (_, item) => (
+          <CopyableOrderId
+            value={item.externalOrderId}
+            fallback={t('mapping.states.unavailable')}
+          />
+        ),
       },
       {
         title: 'SKU',
@@ -62,13 +67,13 @@ export function ResolveQueuePanel({
       {
         title: t('mapping.filters.blocker'),
         render: (_, item) => (
-          <div className="flex flex-wrap gap-1">
+          <Space size={4} wrap>
             {item.blockingReasons.slice(0, 2).map((reason) => (
               <StatusTag key={reason} status="warning">
                 {reason}
               </StatusTag>
             ))}
-          </div>
+          </Space>
         ),
       },
       {
@@ -84,21 +89,26 @@ export function ResolveQueuePanel({
   )
 
   return (
-    <div className="flex min-h-0 flex-col gap-2">
-      <SearchInput
-        aria-label={t('mapping.filters.searchQueue')}
-        placeholder={t('mapping.filters.searchQueue')}
-        value={search}
-        onSearchChange={onSearchChange}
-      />
-      <Select
-        allowClear
-        aria-label={t('mapping.filters.blocker')}
-        placeholder={t('mapping.filters.blocker')}
-        value={blocker}
-        options={blockers.map((value) => ({ value, label: value }))}
-        onChange={onBlockerChange}
-      />
+    <Flex vertical gap={16} style={{ minHeight: 0 }}>
+      <Flex gap={8}>
+        <div style={{ flex: '1 1 0', minWidth: 0 }}>
+          <SearchInput
+            aria-label={t('mapping.filters.searchQueue')}
+            placeholder={t('mapping.filters.searchQueue')}
+            value={search}
+            onSearchChange={onSearchChange}
+          />
+        </div>
+        <Select
+          allowClear
+          style={{ width: 144 }}
+          aria-label={t('mapping.filters.blocker')}
+          placeholder={t('mapping.filters.blocker')}
+          value={blocker}
+          options={blockers.map((value) => ({ value, label: value }))}
+          onChange={onBlockerChange}
+        />
+      </Flex>
       <Table
         className="min-h-0 overflow-auto"
         rowKey="id"
@@ -112,6 +122,6 @@ export function ResolveQueuePanel({
         scroll={{ x: 820, y: 500 }}
         onRow={(item) => ({ onClick: () => selectItem(item) })}
       />
-    </div>
+    </Flex>
   )
 }

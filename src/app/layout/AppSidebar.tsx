@@ -66,7 +66,11 @@ export function AppSidebar({
     children: group.items.map((item) => ({
       key: item.key,
       icon: iconFor(item),
-      label: <Link to={item.path}>{t(item.labelKey)}</Link>,
+      label: (
+        <Link to={item.path} prefetch="intent">
+          {t(item.labelKey)}
+        </Link>
+      ),
     })),
   }))
 

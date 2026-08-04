@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Descriptions, Modal, Select } from 'antd'
+import { Col, Descriptions, Modal, Row, Select } from 'antd'
 
 import { SearchInput } from '@/shared/ui'
 
@@ -97,62 +97,71 @@ export function VendorCandidatePickerModal({
       }}
       onOk={() => selected && onApply(selected)}
     >
-      <div className="grid grid-cols-2 gap-3 py-2">
-        <SearchInput
-          className="col-span-2"
-          aria-label={t('mapping.filters.searchCandidates')}
-          placeholder={t('mapping.filters.searchCandidates')}
-          onSearchChange={onSearch}
-        />
-        <Select
-          showSearch
-          optionFilterProp="label"
-          aria-label={t('mapping.fields.vendorId')}
-          loading={loading}
-          placeholder={t('mapping.fields.vendorId')}
-          options={options.vendors}
-          value={vendorId}
-          onChange={(value) => {
-            setVendorId(value)
-            setProductId(undefined)
-            setSize(undefined)
-            setColor(undefined)
-          }}
-        />
-        <Select
-          showSearch
-          optionFilterProp="label"
-          aria-label={t('mapping.fields.vendorProduct')}
-          disabled={!vendorId}
-          placeholder={t('mapping.fields.vendorProduct')}
-          options={options.products}
-          value={productId}
-          onChange={(value) => {
-            setProductId(value)
-            setSize(undefined)
-            setColor(undefined)
-          }}
-        />
-        <Select
-          aria-label={t('mapping.fields.normalizedSize')}
-          disabled={!productId}
-          placeholder={t('mapping.fields.normalizedSize')}
-          options={options.sizes}
-          value={size}
-          onChange={(value) => {
-            setSize(value)
-            setColor(undefined)
-          }}
-        />
-        <Select
-          aria-label={t('mapping.fields.normalizedColor')}
-          disabled={!productId}
-          placeholder={t('mapping.fields.normalizedColor')}
-          options={options.colors}
-          value={color}
-          onChange={setColor}
-        />
-      </div>
+      <Row gutter={[12, 12]} style={{ padding: '8px 0' }}>
+        <Col span={24}>
+          <SearchInput
+            aria-label={t('mapping.filters.searchCandidates')}
+            placeholder={t('mapping.filters.searchCandidates')}
+            onSearchChange={onSearch}
+          />
+        </Col>
+        <Col xs={24} sm={12}>
+          <Select
+            showSearch
+            optionFilterProp="label"
+            aria-label={t('mapping.fields.vendorId')}
+            loading={loading}
+            placeholder={t('mapping.fields.vendorId')}
+            options={options.vendors}
+            value={vendorId}
+            onChange={(value) => {
+              setVendorId(value)
+              setProductId(undefined)
+              setSize(undefined)
+              setColor(undefined)
+            }}
+          />
+        </Col>
+        <Col xs={24} sm={12}>
+          <Select
+            showSearch
+            optionFilterProp="label"
+            aria-label={t('mapping.filters.vendorProduct')}
+            disabled={!vendorId}
+            placeholder={t('mapping.filters.vendorProduct')}
+            options={options.products}
+            value={productId}
+            onChange={(value) => {
+              setProductId(value)
+              setSize(undefined)
+              setColor(undefined)
+            }}
+          />
+        </Col>
+        <Col xs={24} sm={12}>
+          <Select
+            aria-label={t('mapping.fields.normalizedSize')}
+            disabled={!productId}
+            placeholder={t('mapping.fields.normalizedSize')}
+            options={options.sizes}
+            value={size}
+            onChange={(value) => {
+              setSize(value)
+              setColor(undefined)
+            }}
+          />
+        </Col>
+        <Col xs={24} sm={12}>
+          <Select
+            aria-label={t('mapping.fields.normalizedColor')}
+            disabled={!productId}
+            placeholder={t('mapping.fields.normalizedColor')}
+            options={options.colors}
+            value={color}
+            onChange={setColor}
+          />
+        </Col>
+      </Row>
       {selected ? (
         <Descriptions
           size="small"
@@ -160,12 +169,12 @@ export function VendorCandidatePickerModal({
           items={[
             {
               key: 'cost-center',
-              label: t('mapping.fields.costCenter'),
+              label: t('mapping.filters.costCenter'),
               children: selected.vendorCostCenter.name || selected.vendorCostCenter.code,
             },
             {
               key: 'score',
-              label: t('mapping.fields.matchScore'),
+              label: t('mapping.filters.matchScore'),
               children: selected.match.score ?? t('mapping.states.unavailable'),
             },
           ]}

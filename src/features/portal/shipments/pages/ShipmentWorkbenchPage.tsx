@@ -18,6 +18,7 @@ import {
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  CopyableOrderId,
   DataTable,
   DateRangePicker,
   FeedbackAlert,
@@ -169,7 +170,7 @@ export function ShipmentWorkbenchPage({
     {
       title: t('portal.shipments.columns.order'),
       dataIndex: 'externalOrderId',
-      render: (value, row) => value || row.orderId,
+      render: (value) => <CopyableOrderId value={value} />,
     },
     { title: t('portal.shipments.columns.vendorOrder'), dataIndex: 'vendorExternalOrderId' },
     { title: t('portal.shipments.columns.provider'), dataIndex: 'provider', width: 120 },
@@ -372,7 +373,7 @@ export function ShipmentWorkbenchPage({
                 {
                   key: 'order',
                   label: t('portal.shipments.columns.order'),
-                  children: detail.data.externalOrderId || detail.data.orderId,
+                  children: <CopyableOrderId value={detail.data.externalOrderId} />,
                 },
                 {
                   key: 'vendor',

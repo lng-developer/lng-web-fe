@@ -36,6 +36,7 @@ export const appRoutes: RouteObject[] = [
     id: 'workspace',
     element: <AppShell />,
     loader: requireWorkspace,
+    shouldRevalidate: () => false,
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <WorkspaceIndexRedirect /> },

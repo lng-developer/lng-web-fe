@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircleFilled,
@@ -10,7 +10,7 @@ import {
   SwapOutlined,
   TruckOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Table, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
@@ -19,6 +19,7 @@ import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { getPermissions } from '@/shared/auth/session'
 import {
+  CopyableOrderId,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
@@ -79,6 +80,7 @@ export function OrderWorkbenchPage() {
   const orders = useQuery({
     queryKey: orderKeys.workbench(params),
     queryFn: () => listOrderWorkbench(params),
+    placeholderData: keepPreviousData,
     retry: false,
   })
   const summary = useQuery({
@@ -92,6 +94,7 @@ export function OrderWorkbenchPage() {
     queryFn: () => listShops(shopParams),
     retry: false,
   })
+  const displayedOrders = useDeferredValue(orders.data)
   const onSearchChange = useCallback((value: string) => {
     setSearch(value)
     setPage(1)
@@ -102,7 +105,7 @@ export function OrderWorkbenchPage() {
     () => [
       {
         title: t('orders.columns.order'),
-        render: (_, row) => <Typography.Text strong>{row.order.externalOrderId}</Typography.Text>,
+        render: (_, row) => <CopyableOrderId strong value={row.order.externalOrderId} />,
       },
       {
         title: t('orders.columns.status'),
@@ -352,18 +355,18 @@ export function OrderWorkbenchPage() {
         className={styles.table}
         rowKey={(row) => row.order.id}
         columns={columns}
-        dataSource={orders.data?.items ?? []}
-        loading={orders.isLoading}
+        dataSource={displayedOrders?.items ?? []}
+        loading={orders.isFetching}
         scroll={{ x: 1280 }}
         pagination={{
           current: page,
           pageSize: PAGE_SIZE,
-          total: orders.data?.pagination.total,
+          total: displayedOrders?.pagination.total,
           showSizeChanger: false,
           onChange: setPage,
         }}
         expandable={{
-          expandedRowKeys: (orders.data?.items ?? []).map((row) => row.order.id),
+          expandedRowKeys: (displayedOrders?.items ?? []).map((row) => row.order.id),
           showExpandColumn: false,
           expandedRowRender: (row) => (
             <OrderInlinePanel

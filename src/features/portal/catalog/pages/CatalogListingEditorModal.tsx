@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Collapse, Form, Input, InputNumber, Modal, Select, Typography } from 'antd'
+import { Button, Collapse, Drawer, Form, Input, InputNumber, Select, Space, Typography } from 'antd'
 
 import type {
   CreateListingInput,
@@ -39,6 +39,7 @@ export function CatalogListingEditorModal({
 
   useEffect(() => {
     if (!open) return
+    form.resetFields()
     form.setFieldsValue(
       listing
         ? {
@@ -106,17 +107,20 @@ export function CatalogListingEditorModal({
   )
 
   return (
-    <Modal
+    <Drawer
       open={open}
       width={820}
-      centered
       className={styles.modal}
       title={t(listing ? 'portal.catalog.edit' : 'portal.catalog.create')}
-      okText={t(listing ? 'portal.catalog.save' : 'portal.catalog.create')}
-      confirmLoading={saving}
-      onCancel={onClose}
-      onOk={() => void form.submit()}
-      destroyOnHidden
+      onClose={onClose}
+      footer={
+        <Space>
+          <Button onClick={onClose}>{t('auth.accessEditor.cancel')}</Button>
+          <Button type="primary" loading={saving} onClick={() => void form.submit()}>
+            {t(listing ? 'portal.catalog.save' : 'portal.catalog.create')}
+          </Button>
+        </Space>
+      }
     >
       <Form form={form} layout="vertical" onFinish={submit} preserve={false}>
         <section className={styles.section}>
@@ -243,6 +247,6 @@ export function CatalogListingEditorModal({
           ]}
         />
       </Form>
-    </Modal>
+    </Drawer>
   )
 }

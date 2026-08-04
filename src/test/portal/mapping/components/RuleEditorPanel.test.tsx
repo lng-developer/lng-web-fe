@@ -27,6 +27,9 @@ describe('RuleEditorPanel', () => {
       />,
     )
 
+    expect(
+      screen.queryByText('These are sampled records, not an exact total.'),
+    ).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Config code'), { target: { value: 'TS1S' } })
     chooseProductGroup()
     expect(screen.getByRole('button', { name: 'Save rule' })).toBeDisabled()

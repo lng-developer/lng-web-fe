@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Link, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { SyncOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App as AntdApp, Button, Card, Select, Space, Typography } from 'antd'
+import { App as AntdApp, Button, Card, Select, Space } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { normalizeApiError } from '@/shared/api'
-import { FeedbackAlert, PageHeader, useFeedbackToast } from '@/shared/ui'
+import { CopyableOrderId, FeedbackAlert, PageHeader, useFeedbackToast } from '@/shared/ui'
 
 import {
   getMappingSummary,
@@ -190,7 +190,6 @@ export function MappingWorkbenchPage({
     <section className={styles.page}>
       <PageHeader
         title={t('mapping.pages.workbench')}
-        description={t('mapping.description')}
         actions={
           canWrite ? (
             <Button
@@ -215,7 +214,7 @@ export function MappingWorkbenchPage({
         onChange={setContext}
         onPreview={() => setQueueSearch(context.search ?? '')}
       />
-      <Space wrap>
+      <Space wrap size={[12, 12]}>
         {stageCounters.map(([stage, label, count]) => (
           <Button
             key={stage}
@@ -227,7 +226,7 @@ export function MappingWorkbenchPage({
         ))}
         <Select
           allowClear
-          className="min-w-48"
+          style={{ minWidth: 192 }}
           aria-label={t('mapping.filters.stage')}
           placeholder={t('mapping.filters.stage')}
           value={queueStage}
@@ -242,7 +241,7 @@ export function MappingWorkbenchPage({
         />
         <Select
           allowClear
-          className="min-w-48"
+          style={{ minWidth: 192 }}
           aria-label={t('mapping.filters.age')}
           placeholder={t('mapping.filters.age')}
           value={queueAge}
@@ -289,9 +288,10 @@ export function MappingWorkbenchPage({
           }
         >
           {selectedItem ? (
-            <Typography.Text type="secondary">
-              {selectedItem.externalOrderId || selectedItem.asin || t('mapping.states.unavailable')}
-            </Typography.Text>
+            <CopyableOrderId
+              value={selectedItem.externalOrderId}
+              fallback={selectedItem.asin || t('mapping.states.unavailable')}
+            />
           ) : null}
           <LiveTracePanel
             canWrite={canWrite}

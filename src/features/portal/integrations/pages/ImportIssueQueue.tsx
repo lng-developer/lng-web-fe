@@ -8,6 +8,7 @@ import { Button, Select, Space, Tooltip, Typography } from 'antd'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import {
+  CopyableOrderId,
   DataTable,
   FeedbackAlert,
   FilterBar,
@@ -118,7 +119,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
       width: 210,
       render: (_, issue) => (
         <Space orientation="vertical" size={0}>
-          <Typography.Text>{issue.externalOrderId ?? '-'}</Typography.Text>
+          <CopyableOrderId value={issue.externalOrderId} fallback="-" />
           <Typography.Text type="secondary">{issue.externalItemId ?? '-'}</Typography.Text>
         </Space>
       ),

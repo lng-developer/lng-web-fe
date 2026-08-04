@@ -7,6 +7,7 @@ import { Button, Descriptions, Modal, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  CopyableOrderId,
   DataTable,
   DetailDrawer,
   FeedbackAlert,
@@ -123,7 +124,12 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
     },
     {
       title: t('portal.integrations.issues.reference', { defaultValue: 'Reference' }),
-      render: (_, issue) => `${issue.externalOrderId ?? '-'} / ${issue.externalItemId ?? '-'}`,
+      render: (_, issue) => (
+        <>
+          <CopyableOrderId value={issue.externalOrderId} fallback="-" /> /{' '}
+          {issue.externalItemId ?? '-'}
+        </>
+      ),
     },
     {
       title: t('portal.integrations.issues.message', { defaultValue: 'Message' }),
@@ -155,7 +161,11 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
     },
     {
       title: t('portal.integrations.raw.reference', { defaultValue: 'Reference' }),
-      render: (_, raw) => `${raw.externalOrderId ?? '-'} / ${raw.externalItemId ?? '-'}`,
+      render: (_, raw) => (
+        <>
+          <CopyableOrderId value={raw.externalOrderId} fallback="-" /> / {raw.externalItemId ?? '-'}
+        </>
+      ),
     },
     ...(['normalizeStatus', 'importStatus', 'postImportStatus'] as const).map((field) => ({
       title: t(`portal.integrations.raw.${field}`, { defaultValue: field }),

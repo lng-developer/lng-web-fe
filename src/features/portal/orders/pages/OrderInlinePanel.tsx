@@ -746,15 +746,37 @@ function OrderItemPanel({
         />
       </section>
       <section>
-        <Typography.Text strong>{t('orders.sections.customization')}</Typography.Text>
+        <Space size="small">
+          <Typography.Text strong>{t('orders.sections.customization')}</Typography.Text>
+          {canWrite && item.customization?.sourceCustomizationUrl ? (
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              href={item.customization.sourceCustomizationUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t('orders.actions.downloadAmazonCustomization')}
+            </Button>
+          ) : null}
+        </Space>
         <div className={styles.inputList}>
           {(item.customization?.inputs ?? []).map((input, index) => (
             <div key={`${input.label}-${index}`}>
               <Typography.Text type="secondary">{input.label || input.type}: </Typography.Text>
               {input.secureUrl ? (
-                <a href={input.secureUrl} target="_blank" rel="noreferrer">
-                  <LinkOutlined /> {t('orders.fields.image')}
-                </a>
+                <div className={styles.buyerImage}>
+                  <Image
+                    width={72}
+                    height={72}
+                    src={input.secureUrl}
+                    alt={input.label || t('orders.fields.image')}
+                    fallback="/favicon.svg"
+                  />
+                  <a href={input.secureUrl} target="_blank" rel="noreferrer">
+                    <LinkOutlined /> {t('orders.fields.image')}
+                  </a>
+                </div>
               ) : (
                 <Typography.Text>{value(input.value)}</Typography.Text>
               )}

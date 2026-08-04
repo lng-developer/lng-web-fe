@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { MappingPreview } from '@/features/portal/mapping/api/mappingApi'
 import {
   getRuleTypeForStage,
   getStageForFixType,
@@ -32,5 +33,45 @@ describe('mappingModel', () => {
         costCenterCandidates: [],
       }).impactLabel,
     ).toBe('SAMPLED')
+  })
+
+  it('adapts the fulfillment preview DTO into selectable trace candidates', () => {
+    const trace = toMappingTraceView({
+      ready: true,
+      normalizedInputs: [
+        { semanticRole: 'SIZE', value: '36X72', originalLabel: 'Choose Size', source: 'RULE' },
+      ],
+      vendorProductCandidates: [
+        {
+          id: 'product-1',
+          name: 'Rectangle Fence Flag',
+          vendor: { name: 'Merchize' },
+        },
+      ],
+      costCenterCandidates: [
+        {
+          id: 'cost-center-1',
+          vendorProductId: 'product-1',
+          code: 'RFFLVN_36X72',
+          name: '36x72',
+          standardSize: '36x72',
+          confidence: 'HIGH',
+        },
+      ],
+    } as unknown as MappingPreview)
+
+    expect(trace.normalizedInputs[0]).toMatchObject({
+      label: 'Choose Size',
+      normalizedValue: '36X72',
+    })
+    expect(trace.candidates).toEqual([
+      expect.objectContaining({
+        vendorCostCenterId: 'cost-center-1',
+        vendorProductId: 'product-1',
+        vendorProductName: 'Rectangle Fence Flag',
+        vendorName: 'Merchize',
+        size: '36x72',
+      }),
+    ])
   })
 })

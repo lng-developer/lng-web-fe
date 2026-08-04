@@ -44,24 +44,53 @@ export type MappingTraceView = {
   configCode: string
   blockingReasons: string[]
   normalizedInputs: NonNullable<MappingPreview['normalizedInputs']>
-  candidates: VendorCandidate[]
+  candidates: TraceCandidate[]
   autoMatch: VendorCandidate | null
   impactLabel: 'SAMPLED'
 }
+
+type TraceCandidate = Required<Pick<VendorCandidate, 'vendorProductId' | 'vendorCostCenterId'>> &
+  VendorCandidate
 
 export const getRuleTypeForStage = (stage: MappingPipelineStage) => ruleTypes[stage]
 export const getStageForFixType = (fixType?: string) =>
   fixType ? recommendationStages[fixType] : undefined
 
 export function toMappingTraceView(preview: MappingPreview): MappingTraceView {
+  const products = new Map(
+    (preview.vendorProductCandidates ?? [])
+      .filter((candidate) => candidate.id)
+      .map((candidate) => [candidate.id as string, candidate]),
+  )
+
   return {
     ready: preview.ready,
     originalSku: preview.skuNormalization?.originalSku ?? '—',
     canonicalSku: preview.skuNormalization?.canonicalSku ?? '—',
     configCode: preview.skuMapping?.configCode ?? '—',
     blockingReasons: preview.blockingReasons ?? [],
-    normalizedInputs: preview.normalizedInputs ?? [],
-    candidates: preview.costCenterCandidates ?? preview.vendorProductCandidates ?? [],
+    normalizedInputs: (preview.normalizedInputs ?? []).map((input) => ({
+      ...input,
+      label: input.originalLabel ?? input.label,
+      normalizedValue:
+        input.value ?? input.normalizedValue ?? input.originalValue ?? input.rawValue,
+    })),
+    candidates: (preview.costCenterCandidates ?? []).flatMap((candidate) => {
+      if (!candidate.id || !candidate.vendorProductId) return []
+      const vendorProductId = candidate.vendorProductId
+      const product = products.get(vendorProductId)
+      return [
+        {
+          ...candidate,
+          vendorProductId,
+          vendorCostCenterId: candidate.id,
+          vendorProductName: product?.name ?? candidate.name ?? candidate.code,
+          vendorName: product?.vendor?.name ?? candidate.vendorName,
+          size: candidate.standardSize ?? candidate.vendorSize,
+          color: candidate.standardColor ?? candidate.vendorColor,
+        },
+      ]
+    }),
     autoMatch: preview.autoMatch ?? null,
     impactLabel: 'SAMPLED',
   }

@@ -8,6 +8,7 @@ import { Button, Descriptions, Input, Modal, Select, Space, Typography } from 'a
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  CopyableOrderId,
   DataTable,
   FilterBar,
   MetricCard,
@@ -102,7 +103,7 @@ export function CustomizationReviewPage() {
         title: t('customization.columns.order'),
         render: (_, row) => (
           <>
-            <Typography.Text strong>{row.order.externalOrderId || '—'}</Typography.Text>
+            <CopyableOrderId strong value={row.order.externalOrderId} />
             <br />
             <Typography.Text type="secondary">{row.item.sku || '—'}</Typography.Text>
           </>
@@ -226,7 +227,7 @@ export function CustomizationReviewPage() {
                 {
                   key: 'order',
                   label: t('customization.columns.order'),
-                  children: selected.order.externalOrderId || '—',
+                  children: <CopyableOrderId value={selected.order.externalOrderId} />,
                 },
                 { key: 'sku', label: 'SKU', children: selected.item.sku || '—' },
                 {

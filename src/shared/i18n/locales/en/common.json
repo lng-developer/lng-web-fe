@@ -1,5 +1,6 @@
 {
   "app": { "name": "LNG Web" },
+  "common": { "copyOrderId": "Copy order ID", "orderIdCopied": "Order ID copied" },
   "language": { "label": "Language", "vi": "Vietnamese", "en": "English" },
   "theme": { "label": "Appearance", "light": "Light", "dark": "Dark", "system": "System" },
   "shell": {
@@ -1416,6 +1417,7 @@
       "search": "Search shops",
       "allStatuses": "All statuses",
       "name": "Name",
+      "id": "Shop ID",
       "currency": "Currency",
       "status": "Status",
       "updatedAt": "Updated",
@@ -1449,6 +1451,22 @@
       "qcQueue": "QC queue",
       "scaleTask": "Scale task",
       "qcReview": "QC review",
+      "loadingTask": "Loading task workspace...",
+      "selectTask": "Select a task from the queue to review its files and complete the next action.",
+      "backToQueue": "Back to queue",
+      "emptyQueue": "No tasks match the current filters.",
+      "noProductTitle": "No product title supplied",
+      "filesSummary": "{{outputCount}} / {{requiredCount}} files",
+      "requiredSlots": "Required slots",
+      "customization": "Customization",
+      "psdStatus": "PSD status",
+      "psdReady": "PSD uploaded",
+      "psdMissing": "No PSD",
+      "assignedTo": "Assigned to",
+      "unassigned": "Unassigned",
+      "originalArtwork": "Original artwork",
+      "outputReady": "Output ready",
+      "outputMissing": "Output missing",
       "filters": "Production filters",
       "search": "Search order, SKU, or product",
       "allStatuses": "All statuses",
@@ -1886,7 +1904,8 @@
       "viewHistory": "View history",
       "editCustomer": "Edit customer",
       "saveCustomer": "Save customer",
-      "addComment": "Add comment"
+      "addComment": "Add comment",
+      "downloadAmazonCustomization": "Link"
     },
     "sections": {
       "shippingAddress": "Shipping address",

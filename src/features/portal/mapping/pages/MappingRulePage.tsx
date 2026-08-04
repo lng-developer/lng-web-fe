@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card, Modal, Select } from 'antd'
+import { Card, Flex, Modal, Select } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
@@ -175,26 +175,28 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
   }
 
   return (
-    <section className="flex min-h-0 flex-col gap-4">
+    <Flex vertical gap={16} style={{ minHeight: 0 }}>
       <PageHeader title={t(page.titleKey)} description={t(page.descriptionKey)} />
       {rules.error || originPreview.error ? (
         <FeedbackAlert type="error" title={t('mapping.feedback.loadFailed')} />
       ) : null}
       <Card size="small" title={t('mapping.sections.rules')}>
-        <Select
-          allowClear
-          className="mb-2 w-full"
-          placeholder={t('mapping.context.allShops')}
-          loading={shops.isLoading}
-          value={shopId}
-          options={(shops.data?.items ?? []).map((shop) => ({
-            value: shop.id,
-            label: shop.name || shop.code || t('mapping.states.unavailable'),
-          }))}
-          onChange={setShopId}
-        />
         <RuleInventoryPanel
           canWrite={canWrite}
+          shopFilter={
+            <Select
+              allowClear
+              style={{ width: '100%' }}
+              placeholder={t('mapping.context.allShops')}
+              loading={shops.isLoading}
+              value={shopId}
+              options={(shops.data?.items ?? []).map((shop) => ({
+                value: shop.id,
+                label: shop.name || shop.code || t('mapping.states.unavailable'),
+              }))}
+              onChange={setShopId}
+            />
+          }
           loading={rules.isLoading}
           references={referenceLabels}
           rules={rules.data?.items ?? []}
@@ -221,7 +223,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
         footer={null}
         open={editorOpen}
         title={creating ? t('mapping.actions.createRule') : t('mapping.sections.ruleEditor')}
-        width={960}
+        width={760}
         onCancel={() => {
           setCreating(false)
           setSelectedRule(undefined)
@@ -262,7 +264,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
         type={page.ruleType}
         onClose={() => setHistoryRule(undefined)}
       />
-    </section>
+    </Flex>
   )
 }
 

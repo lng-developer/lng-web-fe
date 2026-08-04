@@ -1,30 +1,312 @@
 .page {
   display: grid;
-  gap: 24px;
+  gap: 16px;
 }
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
+
 .metric {
-  padding: 14px 16px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 8px;
+  padding: 12px 14px;
+  border-inline-start: 2px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
 }
+
+.metric:nth-child(2) {
+  border-inline-start-color: var(--ant-color-error);
+}
+
+.metric:nth-child(3),
+.metric:nth-child(4) {
+  border-inline-start-color: var(--ant-color-warning);
+}
+
+.metric:nth-child(5) {
+  border-inline-start-color: var(--ant-color-success);
+}
+
+.metric :global(.ant-typography) {
+  margin: 0;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.queuePane,
+.taskPane {
+  min-width: 0;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+  overflow: hidden;
+}
+
+.queueTabs {
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.queueTabs :global(.ant-tabs-nav) {
+  margin: 0;
+}
+
+.queuePane :global(.ant-table-wrapper) {
+  padding: 0 8px 8px;
+}
+
+.tableProduct {
+  max-width: 210px;
+  margin: 2px 0 0 !important;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+
+.queueControls {
+  padding: 12px 12px 4px;
+}
+
+.inlineWorkspace {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(220px, 1fr) minmax(200px, 0.8fr) minmax(
+      300px,
+      1.2fr
+    );
+  gap: 16px;
+  padding: 16px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.inlineSection {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.productPreview {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+
+.inputValue {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1.25fr);
+  gap: 8px;
+  font-size: 12px;
+}
+
+.inlineSlots {
+  display: grid;
+  gap: 10px;
+}
+
+.inlineSlot {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+
+.queueList {
+  display: grid;
+  gap: 6px;
+  max-height: calc(100vh - 342px);
+  min-height: 420px;
+  padding: 8px 12px;
+  overflow: auto;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.queueTask {
+  position: relative;
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.queueTask:hover {
+  border-color: var(--ant-color-primary-border);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ant-color-text) 7%, transparent);
+  transform: translateY(-1px);
+}
+
+.queueTask:has(.queueTaskOpen:focus-visible) {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+
+.queueTaskOpen {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+}
+
+.queueTask > :not(.queueTaskOpen) {
+  position: relative;
+  z-index: 2;
+}
+
+.queueTaskTop,
+.queueTaskMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.queueTaskTop :global(.ant-tag) {
+  margin-inline-start: auto;
+}
+
+.queueTaskSku {
+  font-size: 14px;
+}
+
+.queueTaskTitle {
+  margin: 0 !important;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.queueTaskMeta {
+  justify-content: space-between;
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+}
+
+.queueTaskBlocker {
+  padding: 4px 6px;
+  border-radius: var(--ant-border-radius-sm);
+  color: var(--ant-color-warning);
+  background: var(--ant-color-warning-bg);
+  font-size: 12px;
+}
+
+.queuePagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px 12px;
+}
+
+.emptyQueue {
+  display: grid;
+  place-content: center;
+  min-height: 360px;
+  color: var(--ant-color-text-secondary);
+  text-align: center;
+}
+
+.taskPane {
+  display: none;
+  min-height: 0;
+  margin-top: 16px;
+}
+
 .filters {
   width: 100%;
 }
+
 .search {
   width: 280px;
 }
+
 .filter {
   width: 190px;
 }
+
 .drawer {
   display: grid;
   gap: 16px;
+  padding: 18px;
 }
+
+.taskHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.taskHeader :global(.ant-typography h4) {
+  margin: 4px 0 0;
+}
+
+.taskOverview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(180px, 0.85fr);
+  gap: 12px;
+}
+
+.artworkPreview {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.artworkPreview img {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+
+.slotSummary {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.slotSummary > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.emptyTask {
+  display: grid;
+  place-content: center;
+  min-height: 560px;
+  gap: 8px;
+  padding: 32px;
+  text-align: center;
+}
+
 .slot {
   display: grid;
   gap: 12px;
@@ -32,11 +314,13 @@
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
 }
+
 .slotFiles {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+
 .preview {
   display: grid;
   place-items: center;
@@ -46,11 +330,13 @@
   border-radius: 8px;
   background: var(--ant-color-fill-quaternary);
 }
+
 .preview img {
   max-width: 100%;
   max-height: 280px;
   object-fit: contain;
 }
+
 .inspector {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -59,27 +345,32 @@
   background: var(--ant-color-border-secondary);
   overflow: hidden;
 }
+
 .canvas {
   position: relative;
-  overflow: hidden;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: var(--ant-color-bg-layout);
   cursor: grab;
   touch-action: none;
 }
+
 .canvas:active {
   cursor: grabbing;
 }
+
 .canvas img {
   max-width: none;
   user-select: none;
   transform-origin: center;
 }
+
 .pannableImage {
   pointer-events: none;
   will-change: transform;
 }
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -87,24 +378,7 @@
   gap: 12px;
   margin-bottom: 12px;
 }
-@media (max-width: 900px) {
-  .metrics {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .slotFiles,
-  .inspector {
-    grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 600px) {
-  .metrics {
-    grid-template-columns: 1fr;
-  }
-  .search,
-  .filter {
-    width: 100%;
-  }
-}
+
 .assignmentBar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -115,8 +389,82 @@
   border-radius: var(--ant-border-radius-lg);
   background: var(--ant-color-fill-quaternary);
 }
+
 .assignmentGroup {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+}
+
+.activeTask :global(td) {
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 72%, transparent) !important;
+}
+
+.activeTableRow :global(td) {
+  background: var(--ant-color-primary-bg) !important;
+}
+
+.activeTask {
+  border-color: var(--ant-color-primary) !important;
+  background: var(--ant-color-primary-bg) !important;
+  box-shadow: inset 3px 0 0 var(--ant-color-primary);
+}
+
+@media (max-width: 1280px) {
+  .inlineWorkspace {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .queueList {
+    max-height: 520px;
+  }
+
+  .emptyTask {
+    min-height: 240px;
+  }
+
+  .slotFiles,
+  .inspector {
+    grid-template-columns: 1fr;
+  }
+
+  .taskOverview {
+    grid-template-columns: 1fr;
+  }
+
+  .inlineWorkspace,
+  .inlineSlot {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .search,
+  .filter {
+    width: 100%;
+  }
+
+  .taskHeader,
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .assignmentBar {
+    grid-template-columns: 1fr;
+  }
 }

@@ -74,15 +74,22 @@ describe('shared UI', () => {
     expect(serializeDateTimeValue(dayjs('2026-07-31T13:45:00'), 'time')).toBe('13:45')
   })
 
-  it('renders page hierarchy and operational status', () => {
+  it('renders only page actions and operational status', () => {
     render(
       <>
-        <PageHeader title="Foundation" />
+        <PageHeader
+          title="Foundation"
+          description="Long page description"
+          updatedAt="2026-08-04T03:00:00.000Z"
+          actions={<button type="button">Refresh</button>}
+        />
         <StatusTag status="operational">Operational</StatusTag>
       </>,
     )
 
-    expect(screen.getByRole('heading', { name: 'Foundation' })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: 'Foundation' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Long page description')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
     expect(screen.getByText('Operational')).toBeVisible()
   })
 

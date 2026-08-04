@@ -14,7 +14,6 @@ import {
   getAvailableCores,
   getContextNavigation,
   getCoreForPath,
-  getNavigationGroupForItem,
 } from './appNavigation'
 import { AppRail } from './AppRail'
 import styles from './AppShell.module.scss'
@@ -38,7 +37,6 @@ export function AppShell() {
     [account, activeCore],
   )
   const { selectedKey } = getSidebarRouteState(location.pathname, groups)
-  const activeGroup = getNavigationGroupForItem(groups, selectedKey)
   const activeItem = groups.flatMap((group) => group.items).find(({ key }) => key === selectedKey)
 
   useEffect(() => {
@@ -61,7 +59,6 @@ export function AppShell() {
       />
       {activeCore && (
         <AppSidebar
-          key={`${activeCore}:${activeGroup ?? 'none'}`}
           coreLabel={t(`shell.cores.${activeCore}`)}
           groups={groups}
           selectedKey={selectedKey}
