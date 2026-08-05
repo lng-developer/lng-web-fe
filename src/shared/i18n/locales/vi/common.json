@@ -1901,7 +1901,8 @@
       "editCustomer": "Sửa thông tin khách hàng",
       "saveCustomer": "Lưu khách hàng",
       "addComment": "Thêm bình luận",
-      "downloadAmazonCustomization": "Link"
+      "downloadAmazonCustomization": "Link",
+      "apply": "Áp dụng"
     },
     "sections": {
       "shippingAddress": "Địa chỉ giao hàng",
@@ -1910,7 +1911,7 @@
       "customization": "Cá nhân hóa",
       "quantityCost": "Số lượng và chi phí",
       "fulfillment": "Fulfillment",
-      "trackingState": "Tracking và trạng thái",
+      "trackingState": "Tracking và ghi chú",
       "itemActions": "Thao tác"
     },
     "fields": {
@@ -1919,6 +1920,7 @@
       "quantity": "Số lượng",
       "customerPaid": "Khách đã trả",
       "vendor": "Vendor",
+      "product": "Sản phẩm",
       "costCenter": "Cost center",
       "size": "Kích thước",
       "color": "Màu",
@@ -1926,6 +1928,8 @@
       "scale": "Scale",
       "qc": "QC",
       "tracking": "Tracking",
+      "baseCost": "Chi phí gốc",
+      "notSet": "Chưa thiết lập",
       "noNote": "Chưa có ghi chú",
       "reason": "Lý do",
       "replacementReason": "Lý do thay thế"

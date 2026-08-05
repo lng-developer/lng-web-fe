@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { App } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -7,13 +7,17 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/mapping/api/mappingApi')>()
   return {
     ...actual,
-    searchVendorCandidates: vi.fn(),
+    searchMappingVendors: vi.fn(),
+    listMappingVendorProducts: vi.fn(),
+    getMappingVendorProductOptions: vi.fn(),
     selectFulfillmentCandidate: vi.fn(),
   }
 })
 
 import {
-  searchVendorCandidates,
+  getMappingVendorProductOptions,
+  listMappingVendorProducts,
+  searchMappingVendors,
   selectFulfillmentCandidate,
 } from '@/features/portal/mapping/api/mappingApi'
 import type { OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
@@ -93,34 +97,27 @@ function renderPanel(
 describe('OrderInlinePanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(searchVendorCandidates).mockResolvedValue({
-      orderItemId: 'item-1',
-      signals: {},
-      items: [
+    vi.mocked(searchMappingVendors).mockResolvedValue({
+      items: [{ id: 'vendor-1', name: 'Vendor One' }],
+      hasMore: false,
+    })
+    vi.mocked(listMappingVendorProducts).mockResolvedValue([
+      { id: 'product-1', name: 'Product One' },
+      { id: 'product-2', name: 'Product Two' },
+    ])
+    vi.mocked(getMappingVendorProductOptions).mockResolvedValue({
+      dimensions: { hasSize: true, hasColor: true },
+      options: { sizes: ['M'], colors: ['Black'] },
+      candidates: [
         {
-          vendor: { id: 'vendor-1', name: 'Vendor One' },
-          vendorProduct: { id: 'product-1', name: 'Product One' },
-          vendorCostCenter: {
-            id: 'cost-1',
-            code: 'M-BLACK',
-            standardSize: 'M',
-            standardColor: 'Black',
-          },
-          match: { score: 90, reasons: [] },
-        },
-        {
-          vendor: { id: 'vendor-1', name: 'Vendor One' },
-          vendorProduct: { id: 'product-2', name: 'Product Two' },
-          vendorCostCenter: {
-            id: 'cost-2',
-            code: 'L-WHITE',
-            standardSize: 'L',
-            standardColor: 'White',
-          },
-          match: { score: 80, reasons: [] },
+          id: 'cost-1',
+          code: 'M-BLACK',
+          size: 'M',
+          color: 'Black',
+          baseCostAmount: 1250,
+          currency: 'USD',
         },
       ],
-      pagination: { total: 1, page: 1, limit: 100 },
     })
     vi.mocked(selectFulfillmentCandidate).mockResolvedValue({ id: 'plan-1' })
   })
@@ -172,10 +169,11 @@ describe('OrderInlinePanel', () => {
     }
     renderPanel(true, 'replacement', { ...row, items: [row.items[0], secondItem] })
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toBeInTheDocument()
     expect(screen.getAllByRole('checkbox')).toHaveLength(2)
-    expect(screen.getAllByText('J2501-DM-1')).toHaveLength(2)
-    expect(screen.getAllByText('J2502-DM-2')).toHaveLength(2)
+    expect(within(dialog).getByText('J2501-DM-1')).toBeInTheDocument()
+    expect(within(dialog).getByText('J2502-DM-2')).toBeInTheDocument()
   })
 
   it('renders buyer-uploaded customization images in the expanded item', () => {
@@ -207,6 +205,39 @@ describe('OrderInlinePanel', () => {
     )
   })
 
+  it('does not repeat extracted Amazon assets beside buyer-uploaded images', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            inputs: [
+              {
+                type: 'IMAGE',
+                label: 'Buyer photo',
+                secureUrl: 'https://media.example.test/buyer-photo.png',
+              },
+            ],
+            extractedImages: [
+              {
+                filename: 'archive-preview.jpg',
+                secureUrl: 'https://media.example.test/archive-preview.jpg',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByAltText('Buyer photo')).toBeInTheDocument()
+    expect(screen.queryByAltText('archive-preview.jpg')).not.toBeInTheDocument()
+  })
+
   it('opens the source URL imported from Amazon for users who can edit the order', () => {
     const source: OrderWorkbenchRow = {
       ...row,
@@ -233,21 +264,33 @@ describe('OrderInlinePanel', () => {
     )
   })
 
-  it('edits vendor, product, size, and color inline and saves the completed candidate', async () => {
+  it('previews candidate base cost and saves only after Apply', async () => {
     renderPanel()
 
+    expect(screen.queryByRole('button', { name: 'orders.actions.apply' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('orders.fields.size')).toBeDisabled()
     expect(screen.getByLabelText('orders.fields.color')).toBeDisabled()
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
     fireEvent.click(await screen.findByText('Vendor One'))
+    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1'))
+    expect(screen.queryByRole('button', { name: 'orders.actions.apply' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('orders.fields.product')).toBeEnabled()
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
     fireEvent.click(await screen.findByText('Product One'))
+    await waitFor(() =>
+      expect(getMappingVendorProductOptions).toHaveBeenCalledWith('product-1', {}),
+    )
+    await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeEnabled())
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
     fireEvent.click((await screen.findAllByText('M')).at(-1)!)
+    await waitFor(() => expect(screen.getByLabelText('orders.fields.color')).toBeEnabled())
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.color'))
     fireEvent.click((await screen.findAllByText('Black')).at(-1)!)
+
+    expect(selectFulfillmentCandidate).not.toHaveBeenCalled()
+    expect(screen.getByText('$12.50')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'orders.actions.apply' }))
 
     await waitFor(() =>
       expect(selectFulfillmentCandidate).toHaveBeenCalledWith('item-1', {
@@ -257,12 +300,95 @@ describe('OrderInlinePanel', () => {
     )
   })
 
+  it('allows Apply when the selected product has no color option', async () => {
+    vi.mocked(getMappingVendorProductOptions).mockResolvedValue({
+      dimensions: { hasSize: true, hasColor: false },
+      options: { sizes: ['72x36'], colors: [] },
+      candidates: [
+        {
+          id: 'cost-1',
+          size: '72x36',
+          color: null,
+          baseCostAmount: 1250,
+          currency: 'USD',
+        },
+      ],
+    })
+    renderPanel()
+
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
+    fireEvent.click(await screen.findByText('Vendor One'))
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
+    fireEvent.click(await screen.findByText('Product One'))
+    await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeEnabled())
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
+    fireEvent.click((await screen.findAllByText('72x36')).at(-1)!)
+
+    await waitFor(() => expect(screen.getByLabelText('orders.fields.color')).toBeDisabled())
+    expect(await screen.findByRole('button', { name: 'orders.actions.apply' })).toBeInTheDocument()
+  })
+
+  it('allows Apply when the selected product has color but no size', async () => {
+    vi.mocked(getMappingVendorProductOptions).mockResolvedValue({
+      dimensions: { hasSize: false, hasColor: true },
+      options: { sizes: [], colors: ['Old Gold'] },
+      candidates: [
+        {
+          id: 'cost-1',
+          code: 'OLD-GOLD',
+          size: null,
+          color: 'Old Gold',
+          baseCostAmount: 1250,
+          currency: 'USD',
+        },
+      ],
+    })
+    renderPanel()
+
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
+    fireEvent.click(await screen.findByText('Vendor One'))
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
+    fireEvent.click(await screen.findByText('Product One'))
+    await waitFor(() => expect(screen.getByLabelText('orders.fields.color')).toBeEnabled())
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.color'))
+    fireEvent.click((await screen.findAllByText('Old Gold')).at(-1)!)
+
+    await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeDisabled())
+    expect(await screen.findByRole('button', { name: 'orders.actions.apply' })).toBeInTheDocument()
+  })
+
   it('shows the candidate lookup error instead of an empty vendor list', async () => {
-    vi.mocked(searchVendorCandidates).mockRejectedValueOnce(new Error('Forbidden'))
+    vi.mocked(searchMappingVendors).mockRejectedValueOnce(new Error('Forbidden'))
     renderPanel()
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
 
-    expect(await screen.findByText('Forbidden')).toBeInTheDocument()
+    expect((await screen.findAllByText('Forbidden')).length).toBeGreaterThan(0)
+  })
+
+  it('loads every product after choosing a manually searched vendor', async () => {
+    renderPanel()
+
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
+    fireEvent.click(await screen.findByText('Vendor One'))
+    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1'))
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
+
+    expect(await screen.findByText('Product Two')).toBeInTheDocument()
+  })
+
+  it('debounces manual vendor search requests', async () => {
+    renderPanel()
+    const vendor = screen.getByLabelText('orders.fields.vendor')
+    fireEvent.mouseDown(vendor)
+    await waitFor(() => expect(searchMappingVendors).toHaveBeenCalledTimes(1))
+
+    fireEvent.change(vendor, { target: { value: 'm' } })
+    fireEvent.change(vendor, { target: { value: 'mango' } })
+    fireEvent.change(vendor, { target: { value: 'mango tee' } })
+
+    expect(searchMappingVendors).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(searchMappingVendors).toHaveBeenCalledTimes(2))
+    expect(searchMappingVendors).toHaveBeenLastCalledWith({ q: 'mango tee', limit: 20 })
   })
 })

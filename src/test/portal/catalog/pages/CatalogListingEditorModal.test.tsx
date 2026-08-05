@@ -13,7 +13,7 @@ const listing: Listing = {
   salesChannelCode: 'AMAZON',
   marketplaceCode: 'AMAZON_US',
   sku: 'SKU-1',
-  asin: null,
+  asin: 'B0G4CYCDTJ',
   etsyListingId: null,
   title: 'Shirt',
   productTypeGroup: { id: 'group-1', code: 'SHIRT', name: 'Shirt' },
@@ -64,6 +64,7 @@ describe('CatalogListingEditorModal', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: 'Updated shirt' })
+    expect(onSubmit.mock.calls[0][0]).toHaveProperty('asin', 'B0G4CYCDTJ')
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('shopId')
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('sku')
   })

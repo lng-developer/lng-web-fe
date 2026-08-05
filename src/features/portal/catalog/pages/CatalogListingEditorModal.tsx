@@ -65,8 +65,8 @@ export function CatalogListingEditorModal({
   const submit = (values: CreateListingInput) => {
     const channelValues = {
       ...values,
-      asin: values.salesChannelCode === 'AMAZON' ? values.asin : null,
-      etsyListingId: values.salesChannelCode === 'ETSY' ? values.etsyListingId : null,
+      asin: channel === 'AMAZON' ? values.asin : null,
+      etsyListingId: channel === 'ETSY' ? values.etsyListingId : null,
     }
     if (!listing) return onSubmit(channelValues)
     const { shopId, salesChannelCode, marketplaceCode, sku, ...update } = channelValues
