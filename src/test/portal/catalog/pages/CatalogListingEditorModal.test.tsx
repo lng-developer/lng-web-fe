@@ -16,17 +16,10 @@ const listing: Listing = {
   asin: 'B0G4CYCDTJ',
   etsyListingId: null,
   title: 'Shirt',
-  productTypeGroup: { id: 'group-1', code: 'SHIRT', name: 'Shirt' },
-  internalTemplate: null,
-  previewAssetId: null,
-  previewAsset: null,
-  psdTemplateAssetId: null,
-  psdTemplateAsset: null,
   baseCostAmount: 0,
   currency: 'USD',
   costCenterStatus: 'MISSING',
   psdStatus: 'MISSING',
-  psdReadiness: { required: true, status: 'MISSING', source: null, effectivePsdAssetId: null },
   status: 'ACTIVE',
   qcStatus: 'DRAFT',
   salesStats: { orderCount: 0, orderItemCount: 0, quantitySold: 0, lastSoldAt: null },
@@ -48,8 +41,6 @@ describe('CatalogListingEditorModal', () => {
           open
           listing={listing}
           shops={[{ id: 'shop-1', name: 'Football', currency: 'USD' }]}
-          productTypes={[{ id: 'group-1', code: 'SHIRT', name: 'Shirt' }]}
-          templates={[]}
           saving={false}
           onClose={vi.fn()}
           onSubmit={onSubmit}
@@ -75,8 +66,6 @@ describe('CatalogListingEditorModal', () => {
         <CatalogListingEditorModal
           open
           shops={[{ id: 'shop-1', name: 'Football', currency: 'USD' }]}
-          productTypes={[{ id: 'group-1', code: 'SHIRT', name: 'Shirt' }]}
-          templates={[]}
           saving={false}
           onClose={vi.fn()}
           onSubmit={vi.fn()}

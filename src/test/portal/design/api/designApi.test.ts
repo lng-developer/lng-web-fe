@@ -6,15 +6,12 @@ import {
   approveDesignTask,
   assignDesignTask,
   bulkAssignDesignTasks,
-  bulkCreatePsdTasks,
   cancelDesignTask,
   createDesignTask,
-  createPsdTaskFromListing,
   getDesignSummary,
   getDesignWorkload,
   listDesignSubmissions,
   listDesignTasks,
-  listPsdCandidates,
   listPsdFiles,
   rejectDesignTask,
   startDesignTask,
@@ -40,7 +37,6 @@ describe('designApi', () => {
     await rejectDesignTask('task-1', 'Wrong size')
     await getDesignSummary({ status: 'OPEN' })
     await getDesignWorkload({ taskType: 'PSD_TEMPLATE' })
-    await listPsdCandidates({ page: 1, limit: 20, search: 'SKU' })
     await listPsdFiles({
       page: 1,
       limit: 20,
@@ -50,7 +46,6 @@ describe('designApi', () => {
       dateFrom: '2026-08-01',
       dateTo: '2026-08-31',
     })
-    await createPsdTaskFromListing('listing-1', 'Create PSD')
     await createDesignTask({
       listingId: 'listing-1',
       taskType: 'IDEA',
@@ -60,7 +55,6 @@ describe('designApi', () => {
       referenceAssetIds: ['asset-1'],
       expectedOutputs: ['MOCKUP', 'PNG_ASSET'],
     })
-    await bulkCreatePsdTasks({ listingIds: ['listing-1'] })
     await listDesignSubmissions('task-1')
     await cancelDesignTask('task-1', 'Duplicate')
 
@@ -91,9 +85,6 @@ describe('designApi', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/workload', {
       params: { taskType: 'PSD_TEMPLATE' },
     })
-    expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/psd-template/candidates', {
-      params: { page: 1, limit: 20, search: 'SKU' },
-    })
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/psd-files', {
       params: {
         page: 1,
@@ -105,10 +96,6 @@ describe('designApi', () => {
         dateTo: '2026-08-31',
       },
     })
-    expect(apiClient.post).toHaveBeenCalledWith(
-      '/api/design/tasks/from-listings/listing-1/psd-template',
-      { note: 'Create PSD' },
-    )
     expect(apiClient.post).toHaveBeenCalledWith('/api/design/tasks', {
       listingId: 'listing-1',
       taskType: 'IDEA',
@@ -117,9 +104,6 @@ describe('designApi', () => {
       note: 'Use references',
       referenceAssetIds: ['asset-1'],
       expectedOutputs: ['MOCKUP', 'PNG_ASSET'],
-    })
-    expect(apiClient.post).toHaveBeenCalledWith('/api/design/tasks/bulk-create-psd-from-listings', {
-      listingIds: ['listing-1'],
     })
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/task-1/submissions')
     expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/cancel', {

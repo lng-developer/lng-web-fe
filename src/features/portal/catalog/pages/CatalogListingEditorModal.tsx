@@ -2,21 +2,13 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Collapse, Drawer, Form, Input, InputNumber, Select, Space, Typography } from 'antd'
 
-import type {
-  CreateListingInput,
-  InternalTemplate,
-  Listing,
-  ProductTypeGroup,
-  UpdateListingInput,
-} from '../api/catalogApi'
+import type { CreateListingInput, Listing, UpdateListingInput } from '../api/catalogApi'
 import styles from './CatalogListingEditorModal.module.scss'
 
 type Props = {
   open: boolean
   listing?: Listing
   shops: Array<{ id: string; name: string; currency: string }>
-  productTypes: ProductTypeGroup[]
-  templates: InternalTemplate[]
   saving: boolean
   onClose: () => void
   onSubmit: (input: CreateListingInput | UpdateListingInput) => void
@@ -26,15 +18,12 @@ export function CatalogListingEditorModal({
   open,
   listing,
   shops,
-  productTypes,
-  templates,
   saving,
   onClose,
   onSubmit,
 }: Props) {
   const { t } = useTranslation()
   const [form] = Form.useForm<CreateListingInput>()
-  const productTypeGroupId = Form.useWatch('productTypeGroupId', form)
   const channel = Form.useWatch('salesChannelCode', form) ?? listing?.salesChannelCode ?? 'AMAZON'
 
   useEffect(() => {
@@ -50,9 +39,6 @@ export function CatalogListingEditorModal({
             title: listing.title,
             asin: listing.asin,
             etsyListingId: listing.etsyListingId,
-            productTypeGroupId: listing.productTypeGroup?.id,
-            internalTemplateId: listing.internalTemplate?.id,
-            previewAssetId: listing.previewAssetId,
             baseCostAmount: listing.baseCostAmount,
             currency: listing.currency,
             costCenterStatus: listing.costCenterStatus,
@@ -79,9 +65,6 @@ export function CatalogListingEditorModal({
 
   const advancedFields = (
     <div className={styles.grid}>
-      <Form.Item label={t('portal.catalog.fields.previewAssetId')} name="previewAssetId">
-        <Input placeholder={t('portal.catalog.fields.previewAssetHelp')} />
-      </Form.Item>
       <Form.Item label={t('portal.catalog.fields.baseCost')} name="baseCostAmount">
         <InputNumber min={0} precision={0} className={styles.fullWidth} />
       </Form.Item>
@@ -204,34 +187,6 @@ export function CatalogListingEditorModal({
                 <Input />
               </Form.Item>
             )}
-            <Form.Item
-              label={t('portal.catalog.fields.productType')}
-              name="productTypeGroupId"
-              rules={[{ required: true }]}
-            >
-              <Select
-                showSearch
-                optionFilterProp="label"
-                options={productTypes.map(({ id, name, code }) => ({
-                  value: id,
-                  label: `${name} (${code})`,
-                }))}
-                onChange={() => form.setFieldValue('internalTemplateId', null)}
-              />
-            </Form.Item>
-            <Form.Item
-              label={t('portal.catalog.fields.internalTemplate')}
-              name="internalTemplateId"
-            >
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                options={templates
-                  .filter(({ productTypeGroup }) => productTypeGroup?.id === productTypeGroupId)
-                  .map(({ id, name, code }) => ({ value: id, label: `${name} (${code})` }))}
-              />
-            </Form.Item>
           </div>
         </section>
 

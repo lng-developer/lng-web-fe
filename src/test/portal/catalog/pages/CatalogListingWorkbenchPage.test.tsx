@@ -12,6 +12,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 }))
 
 vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
+  listListingVariants: vi.fn().mockResolvedValue([]),
   getListingOptions: vi
     .fn()
     .mockResolvedValue({ shops: [], productTypeGroups: [], internalTemplates: [] }),
@@ -76,16 +77,5 @@ describe('CatalogListingWorkbenchPage', () => {
     expect(action).toHaveTextContent('')
     fireEvent.click(action)
     await waitFor(() => expect(screen.getByRole('dialog')).toHaveTextContent('SKU-1'))
-  }, 15_000)
-
-  it('opens the manual PSD upload from row actions', async () => {
-    render(
-      <AppProviders>
-        <CatalogListingWorkbenchPage account={account} />
-      </AppProviders>,
-    )
-    fireEvent.mouseEnter(await screen.findByRole('button', { name: 'More actions' }))
-    fireEvent.click(await screen.findByText('Upload PSD'))
-    expect(await screen.findByRole('dialog')).toHaveTextContent('Drop a PSD, ZIP, or RAR file here')
   }, 15_000)
 })

@@ -2,13 +2,6 @@ import { apiClient } from '@/shared/api'
 
 type ApiResponse<T> = { success: boolean; data: T }
 type CompactRef = { id: string; code?: string; name: string; status?: string }
-type AssetRef = {
-  assetId: string
-  downloadUrl: string
-  previewUrl?: string
-  originalFilename?: string
-}
-
 export type CatalogListParams = {
   page: number
   limit: number
@@ -16,8 +9,6 @@ export type CatalogListParams = {
   shopId?: string
   salesChannelCode?: string
   qcStatus?: string
-  psdReadinessStatus?: 'MISSING' | 'PRESENT' | 'NOT_REQUIRED'
-  productTypeGroupId?: string
   sort?: string
 }
 export type CatalogSummaryParams = Omit<CatalogListParams, 'page' | 'limit' | 'sort'>
@@ -31,22 +22,11 @@ export type Listing = {
   asin: string | null
   etsyListingId: string | null
   title: string
-  productTypeGroup: CompactRef | null
-  internalTemplate: CompactRef | null
-  previewAssetId: string | null
-  previewAsset: AssetRef | null
-  psdTemplateAssetId: string | null
-  psdTemplateAsset: AssetRef | null
+  defaultVariantId?: string | null
   baseCostAmount: number
   currency: string
   costCenterStatus: string
   psdStatus: string
-  psdReadiness: {
-    required: boolean
-    status: string
-    source: string | null
-    effectivePsdAssetId: string | null
-  } | null
   status: string
   qcStatus: 'DRAFT' | 'APPROVED' | 'REJECTED'
   salesStats: {
@@ -132,17 +112,38 @@ export type ListingOptions = {
   productTypeGroups: ProductTypeGroup[]
   internalTemplates: InternalTemplate[]
 }
+export type ListingVariant = {
+  id: string
+  listingId: string
+  productTypeGroup: CompactRef
+  internalTemplate: CompactRef | null
+  psdTemplateAssetId: string | null
+  previewAssetId: string | null
+  psdReadiness: {
+    required: boolean
+    status: 'MISSING' | 'PRESENT' | 'NOT_REQUIRED'
+    effectivePsdAssetId: string | null
+    source: string | null
+  }
+  status: string
+  createdAt: string
+  updatedAt: string
+}
+export type ListingVariantInput = {
+  productTypeGroupId: string
+  internalTemplateId?: string | null
+  psdTemplateAssetId?: string | null
+  previewAssetId?: string | null
+  status?: string
+}
 export type CreateListingInput = {
   shopId: string
   salesChannelCode: 'AMAZON' | 'ETSY'
   marketplaceCode: string
   sku: string
   title: string
-  productTypeGroupId: string
-  internalTemplateId?: string | null
   asin?: string | null
   etsyListingId?: string | null
-  previewAssetId?: string | null
   baseCostAmount?: number
   currency?: string
   costCenterStatus?: string
@@ -181,13 +182,26 @@ export const approveListing = async (id: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/approve`))
 export const rejectListing = async (id: string, rejectionReason: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/reject`, { rejectionReason }))
-export const uploadListingPsdTemplate = async (id: string, file: File) => {
-  const body = new FormData()
-  body.append('file', file)
-  return unwrap<Listing & { warnings?: Array<{ code: string; message: string }> }>(
-    await apiClient.post(`/api/catalog/listings/${id}/psd-template`, body),
+export const listListingVariants = async (listingId: string) =>
+  unwrap<ListingVariant[]>(await apiClient.get(`/api/catalog/listings/${listingId}/variants`))
+export const createListingVariant = async (listingId: string, input: ListingVariantInput) =>
+  unwrap<ListingVariant>(await apiClient.post(`/api/catalog/listings/${listingId}/variants`, input))
+export const updateListingVariant = async (
+  listingId: string,
+  variantId: string,
+  input: Partial<ListingVariantInput>,
+) =>
+  unwrap<ListingVariant>(
+    await apiClient.patch(`/api/catalog/listings/${listingId}/variants/${variantId}`, input),
   )
-}
+export const setDefaultListingVariant = async (listingId: string, variantId: string) =>
+  unwrap<ListingVariant>(
+    await apiClient.post(`/api/catalog/listings/${listingId}/variants/${variantId}/default`),
+  )
+export const requestListingVariantPsd = async (listingId: string, variantId: string) =>
+  unwrap<{ id: string }>(
+    await apiClient.post(`/api/catalog/listings/${listingId}/variants/${variantId}/request-psd`),
+  )
 
 export const listProductTypeGroups = async (params: {
   page: number
