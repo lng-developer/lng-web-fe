@@ -1,22 +1,16 @@
 import type { ReactNode } from 'react'
-import { Flex, Typography } from 'antd'
-
-const { Paragraph, Title } = Typography
+import { Flex } from 'antd'
 
 export interface PageHeaderProps {
+  /** Retained for page call-site compatibility. */
   readonly title: string
+  /** Retained for page call-site compatibility. */
   readonly description?: string
+  /** Retained for page call-site compatibility. */
+  readonly updatedAt?: string
   readonly actions?: ReactNode
 }
 
-export function PageHeader({ title, description, actions }: PageHeaderProps) {
-  return (
-    <Flex justify="space-between" align="flex-start" gap={24}>
-      <div>
-        <Title level={1}>{title}</Title>
-        {description && <Paragraph type="secondary">{description}</Paragraph>}
-      </div>
-      {actions}
-    </Flex>
-  )
+export function PageHeader({ actions }: PageHeaderProps) {
+  return actions ? <Flex justify="flex-end">{actions}</Flex> : null
 }

@@ -138,6 +138,18 @@ export function CatalogListingWorkbenchPage({
       ),
     )
   }
+  const openEdit = async (listing: Listing) => {
+    try {
+      const latestListing = await queryClient.fetchQuery({
+        queryKey: catalogKeys.detail(listing.id),
+        queryFn: () => getListing(listing.id),
+      })
+      setSelectedId(undefined)
+      setEditing(latestListing)
+    } catch (error) {
+      toast('error', error instanceof Error ? error.message : 'Could not load listing')
+    }
+  }
   const refresh = async () => queryClient.invalidateQueries({ queryKey: catalogKeys.all })
   const save = useMutation({
     mutationFn: (input: CreateListingInput | UpdateListingInput) =>
@@ -284,7 +296,7 @@ export function CatalogListingWorkbenchPage({
                     : []),
                 ],
                 onClick: ({ key }) => {
-                  if (key === 'edit') setEditing(row)
+                  if (key === 'edit') void openEdit(row)
                   if (key === 'upload-psd') {
                     setUploadWarnings([])
                     setPsdUploadTarget(row)
@@ -439,7 +451,7 @@ export function CatalogListingWorkbenchPage({
         footer={
           selected && canWrite(selected) ? (
             <div className={styles.drawerActions}>
-              <Button onClick={() => setEditing(selected)}>{t('portal.catalog.edit')}</Button>
+              <Button onClick={() => void openEdit(selected)}>{t('portal.catalog.edit')}</Button>
               {selected.qcStatus === 'DRAFT' ? (
                 <>
                   <Button

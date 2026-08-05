@@ -1,6 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, Button, Checkbox, Form, Input, InputNumber, Select, Space, Typography } from 'antd'
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Select,
+  Space,
+  Typography,
+} from 'antd'
 
 import type {
   MappingRule,
@@ -187,7 +199,7 @@ export function RuleEditorPanel({
   }
 
   return (
-    <div className="min-h-0 overflow-auto pr-1">
+    <div style={{ minHeight: 0, overflow: 'auto', paddingRight: 4 }}>
       {!canWrite ? (
         <Alert type="info" showIcon message={t('mapping.states.selectContext')} />
       ) : null}
@@ -203,42 +215,47 @@ export function RuleEditorPanel({
           onDirtyChange(true)
         }}
       >
-        <div className="grid grid-cols-2 gap-x-3">
+        <Row gutter={[16, 0]}>
           {displayedFields.map((field) => (
-            <Form.Item
-              key={field.name}
-              name={field.name}
-              label={t(`mapping.fields.${field.name}`)}
-              rules={field.required ? [{ required: true }] : undefined}
-            >
-              {referenceOptions(field.name) ? (
-                <Select
-                  allowClear={!field.required}
-                  showSearch
-                  optionFilterProp="label"
-                  options={referenceOptions(field.name)}
-                />
-              ) : field.kind === 'select' ? (
-                <Select options={field.options?.map((value) => ({ value, label: value }))} />
-              ) : field.kind === 'number' ? (
-                <InputNumber className="w-full" />
-              ) : (
-                <Input />
-              )}
-            </Form.Item>
+            <Col key={field.name} xs={24} md={12}>
+              <Form.Item
+                name={field.name}
+                label={t(`mapping.fields.${field.name}`)}
+                rules={field.required ? [{ required: true }] : undefined}
+              >
+                {referenceOptions(field.name) ? (
+                  <Select
+                    allowClear={!field.required}
+                    showSearch
+                    optionFilterProp="label"
+                    options={referenceOptions(field.name)}
+                  />
+                ) : field.kind === 'select' ? (
+                  <Select options={field.options?.map((value) => ({ value, label: value }))} />
+                ) : field.kind === 'number' ? (
+                  <InputNumber style={{ width: '100%' }} />
+                ) : (
+                  <Input />
+                )}
+              </Form.Item>
+            </Col>
           ))}
-          <Form.Item name="priority" label={t('mapping.fields.priority')}>
-            <InputNumber className="w-full" min={0} />
-          </Form.Item>
-          <Form.Item name="status" label={t('mapping.fields.status')}>
-            <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))} />
-          </Form.Item>
-        </div>
+          <Col xs={24} md={12}>
+            <Form.Item name="priority" label={t('mapping.fields.priority')}>
+              <InputNumber style={{ width: '100%' }} min={0} />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item name="status" label={t('mapping.fields.status')}>
+              <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))} />
+            </Form.Item>
+          </Col>
+        </Row>
       </Form>
       {dirty ? (
         <Typography.Text type="warning">{t('mapping.feedback.unsaved')}</Typography.Text>
       ) : null}
-      <RuleImpactSamples conflicts={conflicts} preview={preview} />
+      {preview || conflicts ? <RuleImpactSamples conflicts={conflicts} preview={preview} /> : null}
       {hasWarning && !exactConflict ? (
         <Checkbox
           checked={acknowledged}
@@ -247,7 +264,7 @@ export function RuleEditorPanel({
           {t('mapping.actions.acknowledge')}
         </Checkbox>
       ) : null}
-      <Space className="mt-3">
+      <Space style={{ marginTop: 12 }}>
         <Button disabled={!canWrite} onClick={() => void inspect().catch(() => undefined)}>
           {t('mapping.actions.previewChanges')}
         </Button>

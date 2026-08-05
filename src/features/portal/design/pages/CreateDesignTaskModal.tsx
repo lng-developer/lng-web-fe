@@ -100,9 +100,9 @@ export function CreateDesignTaskModal({
             aria-label={t('portal.design.listing')}
             showSearch
             optionFilterProp="label"
-            options={listings.map(({ id, sku, title }) => ({
+            options={listings.map(({ id, sku }) => ({
               value: id,
-              label: `${sku} - ${title}`,
+              label: sku,
             }))}
           />
         </Form.Item>
@@ -152,9 +152,9 @@ export function CreateDesignTaskModal({
                   optionFilterProp="label"
                   options={
                     sourceMode === 'LISTING'
-                      ? listings.map(({ id, sku, title }) => ({
+                      ? listings.map(({ id, sku }) => ({
                           value: id,
-                          label: `${sku} - ${title}`,
+                          label: sku,
                         }))
                       : templates.map(({ id, name }) => ({ value: id, label: name }))
                   }

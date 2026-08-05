@@ -112,6 +112,12 @@ describe('ShopWorkspacePage', () => {
     )
   })
 
+  it('shows the copyable shop ID next to the shop record', async () => {
+    renderPage()
+
+    expect(await screen.findByText('shop-1')).toBeVisible()
+  })
+
   it('keeps global Create hidden and limits status actions to the exact scoped shop', async () => {
     vi.mocked(listShops).mockResolvedValue({
       items: [shop, secondShop],

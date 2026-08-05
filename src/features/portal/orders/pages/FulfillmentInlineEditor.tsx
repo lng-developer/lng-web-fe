@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Descriptions, Select } from 'antd'
+import { Descriptions, Select, Typography } from 'antd'
 
 import {
   searchVendorCandidates,
@@ -102,6 +102,9 @@ export function FulfillmentInlineEditor({
     size: 'small' as const,
     variant: 'borderless' as const,
     loading: candidates.isFetching || save.isPending,
+    notFoundContent: candidates.isError ? (
+      <Typography.Text type="danger">{normalizeApiError(candidates.error).message}</Typography.Text>
+    ) : undefined,
     onOpenChange: (open: boolean) => open && setActive(true),
   }
 

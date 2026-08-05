@@ -178,6 +178,61 @@ describe('OrderInlinePanel', () => {
     expect(screen.getAllByText('J2502-DM-2')).toHaveLength(2)
   })
 
+  it('renders buyer-uploaded customization images in the expanded item', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            inputs: [
+              {
+                type: 'IMAGE',
+                label: 'Buyer photo',
+                secureUrl: 'https://media.example.test/buyer-photo.png',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByAltText('Buyer photo')).toHaveAttribute(
+      'src',
+      'https://media.example.test/buyer-photo.png',
+    )
+  })
+
+  it('opens the source URL imported from Amazon for users who can edit the order', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            sourceCustomizationUrl:
+              'https://zme-caps.amazon.com/t/imported-customization.zip?token=order-bound',
+            inputs: [],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+    expect(
+      screen.getByRole('link', { name: /orders\.actions\.downloadAmazonCustomization/ }),
+    ).toHaveAttribute(
+      'href',
+      'https://zme-caps.amazon.com/t/imported-customization.zip?token=order-bound',
+    )
+  })
+
   it('edits vendor, product, size, and color inline and saves the completed candidate', async () => {
     renderPanel()
 
@@ -200,5 +255,14 @@ describe('OrderInlinePanel', () => {
         vendorCostCenterId: 'cost-1',
       }),
     )
+  })
+
+  it('shows the candidate lookup error instead of an empty vendor list', async () => {
+    vi.mocked(searchVendorCandidates).mockRejectedValueOnce(new Error('Forbidden'))
+    renderPanel()
+
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
+
+    expect(await screen.findByText('Forbidden')).toBeInTheDocument()
   })
 })

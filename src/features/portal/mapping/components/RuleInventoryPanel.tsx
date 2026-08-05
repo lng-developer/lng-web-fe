@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HistoryOutlined, MoreOutlined, PlusOutlined, PoweroffOutlined } from '@ant-design/icons'
-import { Button, Dropdown, Select, Space, Table, Tooltip } from 'antd'
+import { Button, Dropdown, Flex, Select, Space, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
 import { SearchInput, StatusTag } from '@/shared/ui'
@@ -40,6 +40,7 @@ function displayValue(
 
 export function RuleInventoryPanel({
   canWrite,
+  shopFilter,
   loading,
   references,
   rules,
@@ -54,6 +55,7 @@ export function RuleInventoryPanel({
   onToggleStatus,
 }: {
   readonly canWrite: boolean
+  readonly shopFilter?: ReactNode
   readonly loading?: boolean
   readonly references?: RuleReferenceLabels
   readonly rules: MappingRule[]
@@ -160,19 +162,21 @@ export function RuleInventoryPanel({
   )
 
   return (
-    <div className="flex min-h-0 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <SearchInput
-          className="min-w-72 flex-1"
-          aria-label={t('mapping.filters.searchRules')}
-          placeholder={t('mapping.filters.searchRules')}
-          value={search}
-          onSearchChange={onSearchChange}
-        />
+    <Flex vertical gap={16} style={{ minHeight: 0 }}>
+      <Flex gap={12} wrap="wrap" align="center">
+        {shopFilter ? <div style={{ flex: '0 0 224px' }}>{shopFilter}</div> : null}
+        <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+          <SearchInput
+            aria-label={t('mapping.filters.searchRules')}
+            placeholder={t('mapping.filters.searchRules')}
+            value={search}
+            onSearchChange={onSearchChange}
+          />
+        </div>
         <Select
           allowClear
           aria-label={t('mapping.filters.status')}
-          className="w-40"
+          style={{ width: 160 }}
           placeholder={t('mapping.filters.status')}
           value={status}
           options={[
@@ -186,7 +190,7 @@ export function RuleInventoryPanel({
             {t('mapping.actions.createRule')}
           </Button>
         ) : null}
-      </div>
+      </Flex>
       <Table
         rowKey="id"
         size="small"
@@ -198,6 +202,6 @@ export function RuleInventoryPanel({
         scroll={{ x: 980 }}
         onRow={(rule) => ({ onClick: () => onSelect(rule) })}
       />
-    </div>
+    </Flex>
   )
 }

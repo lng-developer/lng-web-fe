@@ -5,7 +5,7 @@ import {
   SearchOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons'
-import { Button, Descriptions, Divider, List, Space, Typography } from 'antd'
+import { Button, Descriptions, Divider, Flex, List, Space, Typography } from 'antd'
 
 import { EmptyState, FeedbackAlert, StatusTag } from '@/shared/ui'
 
@@ -34,8 +34,8 @@ export function LiveTracePanel({
   if (!trace) return <EmptyState title={t('mapping.states.selectContext')} />
 
   return (
-    <div className="min-h-0 overflow-auto">
-      <div className="mb-3 flex items-center justify-between">
+    <div style={{ minHeight: 0, overflow: 'auto' }}>
+      <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
         <StatusTag status={trace.ready ? 'ready' : 'warning'}>
           {t(trace.ready ? 'mapping.states.ready' : 'mapping.states.blocked')}
         </StatusTag>
@@ -54,7 +54,7 @@ export function LiveTracePanel({
             </Button>
           </Space>
         ) : null}
-      </div>
+      </Flex>
       {trace.blockingReasons.length ? (
         <FeedbackAlert type="warning" title={trace.blockingReasons.join(' · ')} />
       ) : null}
@@ -74,7 +74,9 @@ export function LiveTracePanel({
         locale={{ emptyText: '—' }}
         renderItem={(input) => (
           <List.Item>
-            <Typography.Text strong>{input.semanticRole || input.label || 'OTHER'}</Typography.Text>
+            <Typography.Text strong>
+              {input.semanticRole || input.originalLabel || input.label || 'OTHER'}
+            </Typography.Text>
             <span>{input.normalizedValue || input.rawValue || '—'}</span>
             <Typography.Text type="secondary">{input.source || '—'}</Typography.Text>
           </List.Item>
@@ -82,7 +84,7 @@ export function LiveTracePanel({
       />
       <Divider titlePlacement="start">{t('mapping.sections.candidates')}</Divider>
       {canWrite ? (
-        <Button className="mb-2" icon={<SearchOutlined />} onClick={onFindCandidate}>
+        <Button style={{ marginBottom: 8 }} icon={<SearchOutlined />} onClick={onFindCandidate}>
           {t('mapping.actions.findCandidate')}
         </Button>
       ) : null}

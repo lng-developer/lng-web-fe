@@ -1,4 +1,11 @@
-import { type Key, type PointerEvent as ReactPointerEvent, useMemo, useRef, useState } from 'react'
+import {
+  type Key,
+  type PointerEvent as ReactPointerEvent,
+  useDeferredValue,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
@@ -8,18 +15,18 @@ import {
   ZoomInOutlined,
   ZoomOutOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Drawer, Input, Modal, Select, Slider, Space, Tabs, Typography, Upload } from 'antd'
+import { Button, Input, Modal, Select, Slider, Space, Tabs, Typography, Upload } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
+  CopyableOrderId,
   DataTable,
   FeedbackAlert,
   FilterBar,
   PageHeader,
-  SectionCard,
   StatusTag,
   useFeedbackToast,
 } from '@/shared/ui'
@@ -56,6 +63,17 @@ import styles from './ProductionWorkbenchPage.module.scss'
 const PAGE_SIZE = 20
 const SCALE_STATUSES: ProductionStatus[] = ['BLOCKED', 'NEED_SCALE', 'QC_REJECTED', 'QC_PENDING']
 const CS_STATUSES: CsStatus[] = ['UNASSIGNED', 'ASSIGNED', 'IN_PROGRESS', 'DONE']
+
+function formatInputValue(value: unknown): string | null {
+  if (typeof value === 'string' || typeof value === 'number') return String(value)
+  if (Array.isArray(value)) {
+    const entries = value.filter(
+      (item): item is string | number => typeof item === 'string' || typeof item === 'number',
+    )
+    return entries.length ? entries.join(', ') : null
+  }
+  return null
+}
 
 function permissions(account?: CurrentAccount) {
   return new Set(
@@ -212,6 +230,7 @@ export function ProductionWorkbenchPage({
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<ProductionStatus>()
   const [selectedId, setSelectedId] = useState<string>()
+  const legacyDetailEnabled = selectedId === '__legacy__'
   const [inspect, setInspect] = useState<FileCheck>()
   const [note, setNote] = useState('')
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
@@ -233,6 +252,7 @@ export function ProductionWorkbenchPage({
   const tasks = useQuery({
     queryKey: productionKeys.list(params),
     queryFn: () => listProductionTasks(params),
+    placeholderData: keepPreviousData,
     retry: false,
   })
   const summary = useQuery({
@@ -289,10 +309,10 @@ export function ProductionWorkbenchPage({
       const taskIds = selectedRowKeys.map(String)
       if (input.kind === 'bulk-assign') return bulkAssignProductionTasks(taskIds, scaleAssigneeId!)
       if (input.kind === 'recheck') return recheckPsdBlockedTasks({ limit: 100 })
-      if (input.kind === 'assign') return assignProductionTask(selectedId!, scaleAssigneeId!)
       if (input.kind === 'assign-cs') return assignCsTask(selectedId!, csAssigneeId || null)
       if (input.kind === 'cs-note') return updateProductionCsNote(selectedId!, csNote)
-      return updateProductionCsStatus(selectedId!, csStatus)
+      if (input.kind === 'cs-status') return updateProductionCsStatus(selectedId!, csStatus)
+      return assignProductionTask(selectedId!, scaleAssigneeId!)
     },
     onSuccess: async () => {
       setSelectedRowKeys([])
@@ -315,47 +335,94 @@ export function ProductionWorkbenchPage({
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
   })
-  const rows = tasks.data?.items ?? []
+  const displayedTasks = useDeferredValue(tasks.data)
+  const rows = displayedTasks?.items ?? []
   const columns: TableColumnsType<ProductionTask> = useMemo(
     () => [
       {
         title: t('portal.production.columns.order'),
-        render: (_, row) => row.orderItem?.externalOrderId || row.id,
+        width: 136,
+        render: (_, row) => <CopyableOrderId value={row.orderItem?.externalOrderId} />,
       },
       {
         title: t('portal.production.columns.product'),
+        width: 230,
         render: (_, row) => (
-          <>
-            <Typography.Text>{row.orderItem?.title || '-'}</Typography.Text>
-            <br />
-            <Typography.Text type="secondary">{row.orderItem?.sku || '-'}</Typography.Text>
-          </>
+          <div>
+            <Typography.Text strong>{row.orderItem?.sku || '-'}</Typography.Text>
+            <Typography.Paragraph className={styles.tableProduct} ellipsis={{ rows: 2 }}>
+              {row.orderItem?.title || '-'}
+            </Typography.Paragraph>
+          </div>
         ),
       },
-      { title: t('portal.production.columns.shop'), render: (_, row) => row.shop?.name || '-' },
       {
-        title: t('portal.production.columns.files'),
+        title: t('portal.production.columns.shop'),
+        width: 150,
+        render: (_, row) => row.shop?.name || '-',
+      },
+      {
+        title: t('portal.production.requiredSlots'),
+        width: 118,
+        render: (_, row) => {
+          const checks = row.qcPreviewFileChecks || row.fileChecks || []
+          return (
+            checks
+              .filter((check) => check.required)
+              .map((check) => check.slotLabel || check.slotKey)
+              .join(', ') || '-'
+          )
+        },
+      },
+      {
+        title: t('portal.production.psdStatus'),
+        width: 132,
+        render: (_, row) => {
+          const hasInput = (row.qcPreviewFileChecks || row.fileChecks || []).some(
+            (check) => check.inputAssetDownloadUrl,
+          )
+          return (
+            <StatusTag status={hasInput ? 'operational' : 'pending'}>
+              {hasInput ? t('portal.production.psdReady') : t('portal.production.psdMissing')}
+            </StatusTag>
+          )
+        },
+      },
+      {
+        title: t('portal.production.assignedTo'),
+        width: 138,
         render: (_, row) =>
-          `${(row.qcPreviewFileChecks || row.fileChecks || []).filter((check) => check.outputAssetDownloadUrl).length}/${(row.qcPreviewFileChecks || row.fileChecks || []).filter((check) => check.required).length}`,
+          row.assignedDesigner?.fullName ||
+          row.assignedDesigner?.employeeCode ||
+          t('portal.production.unassigned'),
       },
       {
         title: t('portal.production.columns.status'),
-        dataIndex: tab === 'qc' ? 'qcStatus' : 'status',
-        render: (value: string) => (
-          <StatusTag status={tone(value)}>{t(`portal.production.statuses.${value}`)}</StatusTag>
-        ),
+        width: 126,
+        render: (_, row) => {
+          const value = tab === 'qc' ? row.qcStatus : row.status
+          return (
+            <StatusTag status={tone(value)}>{t(`portal.production.statuses.${value}`)}</StatusTag>
+          )
+        },
       },
       {
         title: t('portal.production.columns.updated'),
-        dataIndex: 'updatedAt',
-        render: (value: string) => new Date(value).toLocaleString(),
+        width: 138,
+        render: (_, row) => new Date(row.updatedAt).toLocaleString(),
       },
     ],
     [t, tab],
   )
   const task = detail.data
   const checks = task?.fileChecks ?? task?.qcPreviewFileChecks ?? []
+  const sourceArtwork =
+    task?.scaleContext?.use?.psdTemplate?.assetDownloadUrl ??
+    checks.find((check) => check.inputAssetDownloadUrl)?.inputAssetDownloadUrl
   const requiredChecks = checks.filter((check) => check.required && check.outputAssetDownloadUrl)
+  const customizationEntries = Object.entries(task?.customization?.customerInputs ?? {})
+    .map(([label, value]) => [label, formatInputValue(value)] as const)
+    .filter((entry): entry is [string, string] => entry[1] !== null)
   const canSubmitQc =
     requiredChecks.length > 0 && requiredChecks.every((check) => decisions[check.id])
 
@@ -393,47 +460,30 @@ export function ProductionWorkbenchPage({
           </div>
         ))}
       </div>
-      <SectionCard>
-        <Tabs
-          activeKey={tab}
-          onChange={(value) => {
-            setTab(value as 'scale' | 'qc')
-            setPage(1)
-            setStatus(undefined)
-            setSelectedRowKeys([])
-          }}
-          items={[
-            { key: 'scale', label: t('portal.production.scaleQueue') },
-            { key: 'qc', label: t('portal.production.qcQueue') },
-          ]}
-        />
-        <DataTable
-          rowKey="id"
-          columns={columns}
-          dataSource={rows}
-          loading={tasks.isLoading}
-          rowSelection={
-            canAssignScale
-              ? { selectedRowKeys, onChange: setSelectedRowKeys, preserveSelectedRowKeys: true }
-              : undefined
-          }
-          onRow={(row) => ({
-            onClick: () => {
-              setSelectedId(row.id)
-              setNote(row.designNote || '')
-              setCsAssigneeId(row.csAssigneeId || undefined)
-              setCsNote(row.csNote || '')
-              setCsStatus(row.csStatus || 'UNASSIGNED')
-              setDecisions({})
-            },
-          })}
-          pagination={{
-            current: page,
-            pageSize: PAGE_SIZE,
-            total: tasks.data?.total,
-            onChange: setPage,
-          }}
-          toolbar={
+      <div className={styles.workspace}>
+        <section className={styles.queuePane} aria-label={t('portal.production.title')}>
+          <Tabs
+            className={styles.queueTabs}
+            activeKey={tab}
+            onChange={(value) => {
+              setTab(value as 'scale' | 'qc')
+              setPage(1)
+              setStatus(undefined)
+              setSelectedRowKeys([])
+              setSelectedId(undefined)
+            }}
+            items={[
+              {
+                key: 'scale',
+                label: `${t('portal.production.scaleQueue')} (${summary.data?.needScale ?? 0})`,
+              },
+              {
+                key: 'qc',
+                label: `${t('portal.production.qcQueue')} (${summary.data?.qcPending ?? 0})`,
+              },
+            ]}
+          />
+          <div className={styles.queueControls}>
             <FilterBar label={t('portal.production.filters')} contentClassName={styles.filters}>
               <Input.Search
                 className={styles.search}
@@ -490,231 +540,467 @@ export function ProductionWorkbenchPage({
                 </>
               ) : null}
             </FilterBar>
-          }
-        />
-      </SectionCard>
-      <Drawer
-        width={720}
-        open={Boolean(selectedId)}
-        title={tab === 'qc' ? t('portal.production.qcReview') : t('portal.production.scaleTask')}
-        onClose={() => setSelectedId(undefined)}
-        loading={detail.isLoading}
-        extra={
-          task && tab === 'scale' && canScale ? (
-            <Space>
-              <Button icon={<PlusOutlined />} onClick={() => setManualSlotOpen(true)}>
-                {t('portal.production.addManualSlot')}
-              </Button>
-              <Button onClick={() => action.mutate({ kind: 'claim', task })}>
-                {t('portal.production.claim')}
-              </Button>
-            </Space>
-          ) : null
-        }
-      >
-        {task ? (
-          <div className={styles.drawer}>
-            {task.blockers.length ? (
-              <FeedbackAlert type="warning" title={task.blockers.join(', ')} />
-            ) : null}
-            {canAssignScale ? (
-              <div className={styles.assignmentBar}>
-                <div className={styles.assignmentGroup}>
-                  <Select
-                    showSearch
-                    value={scaleAssigneeId}
-                    placeholder={t('portal.production.selectAssignee')}
-                    options={(scaleAssignees.data?.items ?? []).map((item) => ({
-                      value: item.id,
-                      label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
-                    }))}
-                    onChange={setScaleAssigneeId}
-                  />
-                  <Button
-                    disabled={!scaleAssigneeId}
-                    onClick={() => operations.mutate({ kind: 'assign' })}
-                  >
-                    {t('portal.production.assignScale')}
-                  </Button>
-                </div>
-                <div className={styles.assignmentGroup}>
-                  <Select
-                    allowClear
-                    showSearch
-                    value={csAssigneeId}
-                    placeholder={t('portal.production.selectCsAssignee')}
-                    options={(csAssignees.data?.items ?? []).map((item) => ({
-                      value: item.id,
-                      label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
-                    }))}
-                    onChange={setCsAssigneeId}
-                  />
-                  <Button onClick={() => operations.mutate({ kind: 'assign-cs' })}>
-                    {t('portal.production.assignCs')}
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-            {canScale ? (
-              <div className={styles.assignmentBar}>
-                <div className={styles.assignmentGroup}>
-                  <Select
-                    value={csStatus}
-                    options={CS_STATUSES.map((value) => ({
-                      value,
-                      label: t(`portal.production.csStatuses.${value}`),
-                    }))}
-                    onChange={setCsStatus}
-                  />
-                  <Button
-                    loading={operations.isPending}
-                    onClick={() => operations.mutate({ kind: 'cs-status' })}
-                  >
-                    {t('portal.production.updateCsStatus')}
-                  </Button>
-                </div>
-                <div className={styles.assignmentGroup}>
-                  <Input.TextArea
-                    value={csNote}
-                    placeholder={t('portal.production.csNote')}
-                    autoSize={{ minRows: 1, maxRows: 3 }}
-                    onChange={(event) => setCsNote(event.target.value)}
-                  />
-                  <Button
-                    loading={operations.isPending}
-                    onClick={() => operations.mutate({ kind: 'cs-note' })}
-                  >
-                    {t('portal.production.saveCsNote')}
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-            {checks.map((check) => (
-              <div className={styles.slot} key={check.id}>
-                <Space className="justify-between">
-                  <Typography.Title level={5}>{check.slotLabel || check.slotKey}</Typography.Title>
-                  <StatusTag status={tone(check.qcStatus)}>
-                    {t(`portal.production.statuses.${check.qcStatus}`)}
-                  </StatusTag>
-                </Space>
-                <div className={styles.slotFiles}>
-                  <div className={styles.preview}>
-                    {check.inputAssetDownloadUrl ? (
-                      <AuthenticatedMediaImage
-                        downloadUrl={check.inputAssetDownloadUrl}
-                        alt={t('portal.production.original')}
-                      />
-                    ) : (
-                      t('portal.production.fileMissing')
-                    )}
+          </div>
+          <DataTable
+            rowKey="id"
+            columns={columns}
+            dataSource={rows}
+            loading={tasks.isFetching}
+            rowSelection={
+              canAssignScale
+                ? { selectedRowKeys, onChange: setSelectedRowKeys, preserveSelectedRowKeys: true }
+                : undefined
+            }
+            onRow={(row) => ({
+              className: row.id === selectedId ? styles.activeTableRow : undefined,
+              onClick: () => {
+                setSelectedId(row.id)
+                setDecisions({})
+              },
+            })}
+            pagination={{
+              current: page,
+              pageSize: PAGE_SIZE,
+              total: displayedTasks?.total,
+              showSizeChanger: false,
+              onChange: setPage,
+            }}
+            expandable={{
+              expandedRowKeys: selectedId ? [selectedId] : [],
+              onExpand: (expanded, row) => {
+                setSelectedId(expanded ? row.id : undefined)
+                setDecisions({})
+              },
+              expandedRowRender: (row) => {
+                if (!task || task.id !== row.id) return null
+                return (
+                  <div className={styles.inlineWorkspace}>
+                    <div className={styles.inlineSection}>
+                      <Typography.Text strong>
+                        {t('portal.production.columns.product')}
+                      </Typography.Text>
+                      {task.productImageUrl ? (
+                        <img
+                          className={styles.productPreview}
+                          src={task.productImageUrl}
+                          alt={task.orderItem?.title || task.orderItem?.sku || ''}
+                        />
+                      ) : null}
+                      <Typography.Text strong>{task.orderItem?.sku || '-'}</Typography.Text>
+                      <Typography.Text type="secondary">
+                        {task.orderItem?.title || '-'}
+                      </Typography.Text>
+                    </div>
+                    <div className={styles.inlineSection}>
+                      <Typography.Text strong>
+                        {t('portal.production.customization')}
+                      </Typography.Text>
+                      {customizationEntries.length ? (
+                        customizationEntries.map(([label, value]) => (
+                          <div className={styles.inputValue} key={label}>
+                            <Typography.Text type="secondary">{label}</Typography.Text>
+                            <Typography.Text>{value}</Typography.Text>
+                          </div>
+                        ))
+                      ) : (
+                        <Typography.Text type="secondary">-</Typography.Text>
+                      )}
+                    </div>
+                    <div className={styles.inlineSection}>
+                      <Typography.Text strong>
+                        {t('portal.production.originalArtwork')}
+                      </Typography.Text>
+                      <div className={styles.artworkPreview}>
+                        {sourceArtwork ? (
+                          <AuthenticatedMediaImage
+                            alt={t('portal.production.originalArtwork')}
+                            downloadUrl={sourceArtwork}
+                          />
+                        ) : (
+                          t('portal.production.fileMissing')
+                        )}
+                      </div>
+                      {sourceArtwork ? (
+                        <Button
+                          size="small"
+                          onClick={() =>
+                            setInspect(checks.find((check) => check.inputAssetDownloadUrl))
+                          }
+                        >
+                          {t('portal.production.inspect')}
+                        </Button>
+                      ) : null}
+                    </div>
+                    <div className={styles.inlineSection}>
+                      <Typography.Text strong>
+                        {t('portal.production.requiredSlots')}
+                      </Typography.Text>
+                      <div className={styles.inlineSlots}>
+                        {checks
+                          .filter((check) => check.required && check.sourceType !== 'PSD_TEMPLATE')
+                          .map((check) => (
+                            <div className={styles.inlineSlot} key={check.id}>
+                              <Typography.Text strong>
+                                {check.slotLabel || check.slotKey}
+                              </Typography.Text>
+                              <StatusTag
+                                status={check.outputAssetDownloadUrl ? 'operational' : 'pending'}
+                              >
+                                {check.outputAssetDownloadUrl
+                                  ? t('portal.production.outputReady')
+                                  : t('portal.production.outputMissing')}
+                              </StatusTag>
+                              {tab === 'scale' && canScale ? (
+                                <Upload
+                                  showUploadList={false}
+                                  beforeUpload={(file) => {
+                                    void uploadScaledOutput(task.id, check.id, file).then(refresh)
+                                    return false
+                                  }}
+                                >
+                                  <Button>{t('portal.production.uploadOutput')}</Button>
+                                </Upload>
+                              ) : null}
+                              {tab === 'qc' && canQc && check.outputAssetDownloadUrl ? (
+                                <Button
+                                  type={
+                                    decisions[check.id]?.decision === 'PASSED'
+                                      ? 'primary'
+                                      : 'default'
+                                  }
+                                  onClick={() =>
+                                    setDecisions((current) => ({
+                                      ...current,
+                                      [check.id]: { fileCheckId: check.id, decision: 'PASSED' },
+                                    }))
+                                  }
+                                >
+                                  {t('portal.production.passSlot')}
+                                </Button>
+                              ) : null}
+                            </div>
+                          ))}
+                      </div>
+                      {task.blockers.length ? (
+                        <FeedbackAlert type="warning" title={task.blockers.join(', ')} />
+                      ) : null}
+                      {tab === 'qc' && canQc ? (
+                        <Button
+                          type="primary"
+                          disabled={!canSubmitQc}
+                          loading={action.isPending}
+                          onClick={() => action.mutate({ kind: 'qc', task })}
+                        >
+                          {t('portal.production.submitQc')}
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className={styles.preview}>
-                    {check.outputAssetDownloadUrl ? (
-                      <AuthenticatedMediaImage
-                        downloadUrl={check.outputAssetDownloadUrl}
-                        alt={t('portal.production.scaled')}
-                      />
-                    ) : (
-                      t('portal.production.fileMissing')
-                    )}
+                )
+              },
+            }}
+          />
+        </section>
+        {legacyDetailEnabled ? (
+          <aside className={styles.taskPane} aria-live="polite">
+            {detail.isLoading ? (
+              <div className={styles.emptyTask}>
+                <Typography.Text type="secondary">
+                  {t('portal.production.loadingTask')}
+                </Typography.Text>
+              </div>
+            ) : task ? (
+              <div className={styles.drawer}>
+                <div className={styles.taskHeader}>
+                  <div>
+                    <Typography.Text type="secondary">
+                      {t('portal.production.columns.order')}
+                    </Typography.Text>
+                    <CopyableOrderId value={task.orderItem?.externalOrderId} />
+                    <Typography.Title level={4}>{task.orderItem?.sku || '-'}</Typography.Title>
                   </div>
-                </div>
-                <Space wrap>
-                  <Button onClick={() => setInspect(check)}>
-                    {t('portal.production.inspect')}
-                  </Button>
-                  {check.inputAssetDownloadUrl ? (
-                    <Button
-                      icon={<DownloadOutlined />}
-                      onClick={() => void downloadMediaAsset(check.inputAssetDownloadUrl!)}
-                    >
-                      {t('portal.production.downloadOriginal')}
+                  <Space wrap>
+                    <StatusTag status={tone(tab === 'qc' ? task.qcStatus : task.status)}>
+                      {t(
+                        `portal.production.statuses.${tab === 'qc' ? task.qcStatus : task.status}`,
+                      )}
+                    </StatusTag>
+                    {tab === 'scale' && canScale ? (
+                      <>
+                        <Button icon={<PlusOutlined />} onClick={() => setManualSlotOpen(true)}>
+                          {t('portal.production.addManualSlot')}
+                        </Button>
+                        <Button
+                          type="primary"
+                          onClick={() => action.mutate({ kind: 'claim', task })}
+                        >
+                          {t('portal.production.claim')}
+                        </Button>
+                      </>
+                    ) : null}
+                    <Button onClick={() => setSelectedId(undefined)}>
+                      {t('portal.production.backToQueue')}
                     </Button>
-                  ) : null}
-                  {tab === 'scale' && canScale ? (
-                    <Upload
-                      showUploadList={false}
-                      beforeUpload={(file) => {
-                        void uploadScaledOutput(task.id, check.id, file).then(refresh)
-                        return false
-                      }}
-                    >
-                      <Button>{t('portal.production.uploadOutput')}</Button>
-                    </Upload>
-                  ) : null}
-                  {tab === 'qc' && canQc && check.outputAssetDownloadUrl ? (
-                    <>
+                  </Space>
+                </div>
+                <div className={styles.taskOverview}>
+                  <div>
+                    <Typography.Text type="secondary">
+                      {t('portal.production.originalArtwork')}
+                    </Typography.Text>
+                    <div className={styles.artworkPreview}>
+                      {sourceArtwork ? (
+                        <AuthenticatedMediaImage
+                          alt={t('portal.production.originalArtwork')}
+                          downloadUrl={sourceArtwork}
+                        />
+                      ) : (
+                        <Typography.Text type="secondary">
+                          {t('portal.production.fileMissing')}
+                        </Typography.Text>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <Typography.Text type="secondary">
+                      {t('portal.production.requiredSlots')}
+                    </Typography.Text>
+                    <div className={styles.slotSummary}>
+                      {checks
+                        .filter((check) => check.required)
+                        .map((check) => (
+                          <div key={check.id}>
+                            <Typography.Text strong>
+                              {check.slotLabel || check.slotKey}
+                            </Typography.Text>
+                            <Typography.Text type="secondary">
+                              {check.outputAssetDownloadUrl
+                                ? t('portal.production.outputReady')
+                                : t('portal.production.outputMissing')}
+                            </Typography.Text>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+                {task.blockers.length ? (
+                  <FeedbackAlert type="warning" title={task.blockers.join(', ')} />
+                ) : null}
+                {canAssignScale ? (
+                  <div className={styles.assignmentBar}>
+                    <div className={styles.assignmentGroup}>
+                      <Select
+                        showSearch
+                        value={scaleAssigneeId}
+                        placeholder={t('portal.production.selectAssignee')}
+                        options={(scaleAssignees.data?.items ?? []).map((item) => ({
+                          value: item.id,
+                          label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
+                        }))}
+                        onChange={setScaleAssigneeId}
+                      />
                       <Button
-                        type={decisions[check.id]?.decision === 'PASSED' ? 'primary' : 'default'}
-                        onClick={() =>
-                          setDecisions((current) => ({
-                            ...current,
-                            [check.id]: { fileCheckId: check.id, decision: 'PASSED' },
-                          }))
-                        }
+                        disabled={!scaleAssigneeId}
+                        onClick={() => operations.mutate({ kind: 'assign' })}
                       >
-                        {t('portal.production.passSlot')}
+                        {t('portal.production.assignScale')}
                       </Button>
+                    </div>
+                    <div className={styles.assignmentGroup}>
+                      <Select
+                        allowClear
+                        showSearch
+                        value={csAssigneeId}
+                        placeholder={t('portal.production.selectCsAssignee')}
+                        options={(csAssignees.data?.items ?? []).map((item) => ({
+                          value: item.id,
+                          label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
+                        }))}
+                        onChange={setCsAssigneeId}
+                      />
+                      <Button onClick={() => operations.mutate({ kind: 'assign-cs' })}>
+                        {t('portal.production.assignCs')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                {canAssignScale ? (
+                  <div className={styles.assignmentBar}>
+                    <div className={styles.assignmentGroup}>
+                      <Select
+                        value={csStatus}
+                        options={CS_STATUSES.map((value) => ({
+                          value,
+                          label: t(`portal.production.csStatuses.${value}`),
+                        }))}
+                        onChange={setCsStatus}
+                      />
                       <Button
-                        danger
-                        onClick={() =>
-                          Modal.confirm({
-                            title: t('portal.production.rejectReason'),
-                            content: <Input.TextArea id={`reason-${check.id}`} />,
-                            onOk: () => {
-                              const value = (
-                                document.getElementById(
-                                  `reason-${check.id}`,
-                                ) as HTMLTextAreaElement | null
-                              )?.value.trim()
-                              if (!value)
-                                return Promise.reject(
-                                  new Error(t('portal.production.reasonRequired')),
-                                )
+                        loading={operations.isPending}
+                        onClick={() => operations.mutate({ kind: 'cs-status' })}
+                      >
+                        {t('portal.production.updateCsStatus')}
+                      </Button>
+                    </div>
+                    <div className={styles.assignmentGroup}>
+                      <Input.TextArea
+                        value={csNote}
+                        placeholder={t('portal.production.csNote')}
+                        autoSize={{ minRows: 1, maxRows: 3 }}
+                        onChange={(event) => setCsNote(event.target.value)}
+                      />
+                      <Button
+                        loading={operations.isPending}
+                        onClick={() => operations.mutate({ kind: 'cs-note' })}
+                      >
+                        {t('portal.production.saveCsNote')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                {checks.map((check) => (
+                  <div className={styles.slot} key={check.id}>
+                    <Space className="justify-between">
+                      <Typography.Title level={5}>
+                        {check.slotLabel || check.slotKey}
+                      </Typography.Title>
+                      <StatusTag status={tone(check.qcStatus)}>
+                        {t(`portal.production.statuses.${check.qcStatus}`)}
+                      </StatusTag>
+                    </Space>
+                    <div className={styles.slotFiles}>
+                      <div className={styles.preview}>
+                        {check.inputAssetDownloadUrl ? (
+                          <AuthenticatedMediaImage
+                            downloadUrl={check.inputAssetDownloadUrl}
+                            alt={t('portal.production.original')}
+                          />
+                        ) : (
+                          t('portal.production.fileMissing')
+                        )}
+                      </div>
+                      <div className={styles.preview}>
+                        {check.outputAssetDownloadUrl ? (
+                          <AuthenticatedMediaImage
+                            downloadUrl={check.outputAssetDownloadUrl}
+                            alt={t('portal.production.scaled')}
+                          />
+                        ) : (
+                          t('portal.production.fileMissing')
+                        )}
+                      </div>
+                    </div>
+                    <Space wrap>
+                      <Button onClick={() => setInspect(check)}>
+                        {t('portal.production.inspect')}
+                      </Button>
+                      {check.inputAssetDownloadUrl ? (
+                        <Button
+                          icon={<DownloadOutlined />}
+                          onClick={() => void downloadMediaAsset(check.inputAssetDownloadUrl!)}
+                        >
+                          {t('portal.production.downloadOriginal')}
+                        </Button>
+                      ) : null}
+                      {tab === 'scale' && canScale ? (
+                        <Upload
+                          showUploadList={false}
+                          beforeUpload={(file) => {
+                            void uploadScaledOutput(task.id, check.id, file).then(refresh)
+                            return false
+                          }}
+                        >
+                          <Button>{t('portal.production.uploadOutput')}</Button>
+                        </Upload>
+                      ) : null}
+                      {tab === 'qc' && canQc && check.outputAssetDownloadUrl ? (
+                        <>
+                          <Button
+                            type={
+                              decisions[check.id]?.decision === 'PASSED' ? 'primary' : 'default'
+                            }
+                            onClick={() =>
                               setDecisions((current) => ({
                                 ...current,
-                                [check.id]: {
-                                  fileCheckId: check.id,
-                                  decision: 'REJECTED',
-                                  note: value,
-                                },
+                                [check.id]: { fileCheckId: check.id, decision: 'PASSED' },
                               }))
-                            },
-                          })
-                        }
-                      >
-                        {t('portal.production.rejectSlot')}
-                      </Button>
-                    </>
-                  ) : null}
-                </Space>
+                            }
+                          >
+                            {t('portal.production.passSlot')}
+                          </Button>
+                          <Button
+                            danger
+                            onClick={() =>
+                              Modal.confirm({
+                                title: t('portal.production.rejectReason'),
+                                content: <Input.TextArea id={`reason-${check.id}`} />,
+                                onOk: () => {
+                                  const value = (
+                                    document.getElementById(
+                                      `reason-${check.id}`,
+                                    ) as HTMLTextAreaElement | null
+                                  )?.value.trim()
+                                  if (!value)
+                                    return Promise.reject(
+                                      new Error(t('portal.production.reasonRequired')),
+                                    )
+                                  setDecisions((current) => ({
+                                    ...current,
+                                    [check.id]: {
+                                      fileCheckId: check.id,
+                                      decision: 'REJECTED',
+                                      note: value,
+                                    },
+                                  }))
+                                },
+                              })
+                            }
+                          >
+                            {t('portal.production.rejectSlot')}
+                          </Button>
+                        </>
+                      ) : null}
+                    </Space>
+                  </div>
+                ))}
+                {tab === 'scale' && canScale ? (
+                  <>
+                    <Input.TextArea
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      placeholder={t('portal.production.designNote')}
+                    />
+                    <Button onClick={() => action.mutate({ kind: 'note', task })}>
+                      {t('portal.production.saveNote')}
+                    </Button>
+                  </>
+                ) : null}
+                {tab === 'qc' && canQc ? (
+                  <Button
+                    type="primary"
+                    disabled={!canSubmitQc}
+                    loading={action.isPending}
+                    onClick={() => action.mutate({ kind: 'qc', task })}
+                  >
+                    {t('portal.production.submitQc')}
+                  </Button>
+                ) : null}
               </div>
-            ))}
-            {tab === 'scale' && canScale ? (
-              <>
-                <Input.TextArea
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder={t('portal.production.designNote')}
-                />
-                <Button onClick={() => action.mutate({ kind: 'note', task })}>
-                  {t('portal.production.saveNote')}
-                </Button>
-              </>
-            ) : null}
-            {tab === 'qc' && canQc ? (
-              <Button
-                type="primary"
-                disabled={!canSubmitQc}
-                loading={action.isPending}
-                onClick={() => action.mutate({ kind: 'qc', task })}
-              >
-                {t('portal.production.submitQc')}
-              </Button>
-            ) : null}
-          </div>
+            ) : (
+              <div className={styles.emptyTask}>
+                <Typography.Title level={4}>
+                  {tab === 'qc'
+                    ? t('portal.production.qcReview')
+                    : t('portal.production.scaleTask')}
+                </Typography.Title>
+                <Typography.Text type="secondary">
+                  {t('portal.production.selectTask')}
+                </Typography.Text>
+              </div>
+            )}
+          </aside>
         ) : null}
-      </Drawer>
+      </div>
       <ArtworkInspector
         check={inspect}
         open={Boolean(inspect)}

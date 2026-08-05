@@ -19,6 +19,18 @@ describe('ProductionWorkbenchPage source contract', () => {
 
   it('keeps Scale assignment controls out of the QC queue', () => {
     expect(source).toContain("const canAssignScale = tab === 'scale' && canScale")
-    expect(source).toMatch(/rowSelection=\{\s*canAssignScale/)
+    expect(source).toContain('{canAssignScale ? (')
+    expect(source).toContain('rowSelection={')
+  })
+
+  it('keeps task work inline with the expanded order row', () => {
+    expect(source).toContain('styles.workspace')
+    expect(source).toContain('styles.queuePane')
+    expect(source).toContain('<DataTable')
+    expect(source).toContain('expandedRowRender: (row) =>')
+    expect(source).toContain("check.sourceType !== 'PSD_TEMPLATE'")
+    expect(source).toContain('styles.inlineSection')
+    expect(source).toContain("title: t('portal.production.requiredSlots')")
+    expect(source).not.toContain('<Drawer')
   })
 })

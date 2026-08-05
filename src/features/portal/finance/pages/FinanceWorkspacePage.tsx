@@ -9,6 +9,7 @@ import { Button, Descriptions, Divider, Modal, Select, Space, Spin, Tabs, Typogr
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import {
+  CopyableOrderId,
   DataTable,
   DateRangePicker,
   type DateRangeValue,
@@ -184,7 +185,7 @@ export function FinanceWorkspacePage() {
     () => [
       {
         title: t('finance.columns.order'),
-        render: (_, row) => <Typography.Text strong>{row.externalOrderId || '—'}</Typography.Text>,
+        render: (_, row) => <CopyableOrderId strong value={row.externalOrderId} />,
       },
       {
         title: t('finance.columns.channel'),

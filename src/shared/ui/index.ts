@@ -2,6 +2,7 @@ export { BarChart, type BarChartDatum, type BarChartProps } from './BarChart'
 export { BulkActionBar, type BulkActionBarProps } from './BulkActionBar'
 export { type Command, CommandPalette, type CommandPaletteProps } from './CommandPalette'
 export { ConfirmDangerModal, type ConfirmDangerModalProps } from './ConfirmDangerModal'
+export { CopyableOrderId } from './CopyableOrderId'
 export { DataTable, type DataTableProps } from './DataTable'
 export {
   DateRangePicker,

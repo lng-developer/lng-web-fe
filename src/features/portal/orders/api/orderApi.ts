@@ -91,6 +91,9 @@ export type OrderWorkbenchItem = {
   customization: {
     status: string | null
     needsReview: boolean
+    customizationUrl?: string | null
+    sourceCustomizationUrl?: string | null
+    downloadedZip?: { status?: string | null; sourceUrlRedacted?: string | null } | null
     inputs: Array<{
       type: string
       label: string | null

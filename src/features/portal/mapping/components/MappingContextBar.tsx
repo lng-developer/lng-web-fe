@@ -5,6 +5,7 @@ import { Button, Select } from 'antd'
 import { SearchInput } from '@/shared/ui'
 
 import type { AuthorableShopResult } from '../api/mappingApi'
+import styles from './MappingContextBar.module.scss'
 
 export type MappingContextValue = {
   shopId?: string
@@ -27,7 +28,7 @@ export function MappingContextBar({
 }) {
   const { t } = useTranslation()
   return (
-    <div className="grid grid-cols-[minmax(12rem,0.7fr)_minmax(12rem,0.7fr)_minmax(20rem,1.6fr)_auto] gap-2">
+    <div className={styles.bar}>
       <Select
         allowClear
         aria-label={t('mapping.context.shop')}
@@ -51,12 +52,14 @@ export function MappingContextBar({
         }))}
         onChange={(marketplaceCode) => onChange({ ...value, marketplaceCode })}
       />
-      <SearchInput
-        aria-label={t('mapping.context.orderItem')}
-        placeholder={t('mapping.context.orderItem')}
-        value={value.search}
-        onSearchChange={(search) => onChange({ ...value, search })}
-      />
+      <div className={styles.search}>
+        <SearchInput
+          aria-label={t('mapping.context.orderItem')}
+          placeholder={t('mapping.context.orderItem')}
+          value={value.search}
+          onSearchChange={(search) => onChange({ ...value, search })}
+        />
+      </div>
       <Button type="primary" icon={<EyeOutlined />} loading={loading} onClick={onPreview}>
         {t('mapping.actions.preview')}
       </Button>

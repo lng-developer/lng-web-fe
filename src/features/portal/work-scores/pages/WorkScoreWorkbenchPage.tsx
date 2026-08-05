@@ -20,6 +20,7 @@ import {
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
+  MetricCard,
   PageHeader,
   SectionCard,
   StatusTag,
@@ -278,12 +279,11 @@ export function WorkScoreWorkbenchPage({
       ) : null}
       <div className={styles.metrics}>
         {metrics.map(([key, value]) => (
-          <div className={styles.metric} key={key}>
-            <Typography.Text type="secondary">
-              {t(`portal.workScores.metrics.${key}`)}
-            </Typography.Text>
-            <Typography.Title level={3}>{value}</Typography.Title>
-          </div>
+          <MetricCard
+            key={key}
+            label={t(`portal.workScores.metrics.${key}`)}
+            value={String(value)}
+          />
         ))}
       </div>
       <SectionCard>

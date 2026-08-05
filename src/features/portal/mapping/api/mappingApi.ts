@@ -40,6 +40,9 @@ export type MappingWorkbench = Record<string, unknown> & {
 }
 export type NormalizedInput = {
   semanticRole?: string
+  value?: string | null
+  originalLabel?: string | null
+  originalValue?: string | null
   label?: string | null
   rawValue?: string | null
   normalizedValue?: string | null
@@ -48,12 +51,19 @@ export type NormalizedInput = {
 }
 export type VendorCandidate = {
   id?: string
+  code?: string | null
+  name?: string | null
+  vendor?: { id?: string; code?: string | null; name?: string | null } | null
   vendorId?: string
   vendorName?: string
-  vendorProductId: string
-  vendorProductName?: string
-  vendorCostCenterId: string
+  vendorProductId?: string
+  vendorProductName?: string | null
+  vendorCostCenterId?: string
   vendorCostCenterCode?: string
+  standardSize?: string | null
+  standardColor?: string | null
+  vendorSize?: string | null
+  vendorColor?: string | null
   size?: string | null
   color?: string | null
   confidence?: string | null

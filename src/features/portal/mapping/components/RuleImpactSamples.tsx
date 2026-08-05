@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { List, Typography } from 'antd'
+import { Flex, List, Typography } from 'antd'
 
 import { FeedbackAlert } from '@/shared/ui'
 
@@ -19,7 +19,7 @@ export function RuleImpactSamples({
   const warnings =
     conflicts?.warnings ?? conflicts?.conflicts?.filter((item) => item.severity === 'WARNING') ?? []
   return (
-    <div className="space-y-2">
+    <Flex vertical gap={8}>
       <Typography.Text type="secondary">{t('mapping.states.sampled')}</Typography.Text>
       {errors.length ? (
         <FeedbackAlert type="error" title={t('mapping.feedback.exactConflict')} />
@@ -39,6 +39,6 @@ export function RuleImpactSamples({
           </List.Item>
         )}
       />
-    </div>
+    </Flex>
   )
 }

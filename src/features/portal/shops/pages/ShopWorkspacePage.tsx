@@ -4,7 +4,7 @@ import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Empty, Select, Tooltip } from 'antd'
+import { Button, Empty, Select, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -109,6 +109,12 @@ export function ShopWorkspacePage() {
 
   const columns: TableColumnsType<Shop> = [
     { title: t('portal.shops.name'), dataIndex: 'name' },
+    {
+      title: t('portal.shops.id'),
+      dataIndex: 'id',
+      width: 250,
+      render: (id: string) => <Typography.Text copyable={{ text: id }}>{id}</Typography.Text>,
+    },
     { title: t('portal.shops.currency'), dataIndex: 'currency' },
     {
       title: t('portal.shops.status'),

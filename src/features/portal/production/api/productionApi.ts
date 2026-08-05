@@ -17,6 +17,7 @@ export type FileCheck = {
   id: string
   slotKey: string
   slotLabel: string | null
+  sourceType?: string | null
   required: boolean
   outputRequired?: boolean
   inputAssetDownloadUrl: string | null
@@ -25,6 +26,16 @@ export type FileCheck = {
   qcStatus: QcStatus
   note: string | null
 }
+export type ProductionUser = { id: string; fullName: string | null; employeeCode: string | null }
+export type ProductionScaleContext = {
+  use?: {
+    psdTemplate?: { assetDownloadUrl?: string | null; status?: string | null }
+    listing?: { psdStatus?: string | null; previewAssetDownloadUrl?: string | null }
+  }
+}
+export type ProductionCustomization = {
+  customerInputs?: Record<string, unknown> | null
+}
 export type ProductionTask = {
   id: string
   status: ProductionStatus
@@ -32,10 +43,12 @@ export type ProductionTask = {
   qcStatus: QcStatus
   blockers: string[]
   assignedDesignUserId: string | null
+  assignedDesigner?: ProductionUser
   csAssigneeId?: string | null
   csStatus?: CsStatus
   csNote?: string | null
   designNote: string | null
+  productImageUrl?: string | null
   readyAt: string | null
   updatedAt: string
   orderItem?: { externalOrderId?: string | null; sku?: string | null; title?: string | null }
@@ -47,6 +60,8 @@ export type ProductionTask = {
   fileChecks?: FileCheck[]
   qcPreviewFileChecks?: FileCheck[]
   vendorSubmission?: { id: string; status: string; failureReason?: string | null }
+  scaleContext?: ProductionScaleContext
+  customization?: ProductionCustomization | null
 }
 export type ProductionList = { items: ProductionTask[]; total: number; page: number; limit: number }
 export type ProductionSummary = Record<string, number>

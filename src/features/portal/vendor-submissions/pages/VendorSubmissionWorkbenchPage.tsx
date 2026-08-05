@@ -24,6 +24,7 @@ import {
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  CopyableOrderId,
   DataTable,
   DateRangePicker,
   FeedbackAlert,
@@ -191,16 +192,12 @@ export function VendorSubmissionWorkbenchPage({
     {
       title: t('portal.vendorSubmissions.columns.order'),
       dataIndex: 'externalOrderId',
-      render: (value, row) => value || row.id,
+      render: (value) => <CopyableOrderId value={value} />,
     },
     {
       title: t('portal.vendorSubmissions.columns.product'),
       render: (_, row) => (
-        <>
-          <Typography.Text>{row.listingTitle || row.vendorProductName || '-'}</Typography.Text>
-          <br />
-          <Typography.Text type="secondary">{row.sku || row.costCenterCode || '-'}</Typography.Text>
-        </>
+        <Typography.Text strong>{row.sku || row.costCenterCode || '-'}</Typography.Text>
       ),
     },
     {
@@ -406,7 +403,7 @@ export function VendorSubmissionWorkbenchPage({
                 {
                   key: 'order',
                   label: t('portal.vendorSubmissions.externalOrderId'),
-                  children: detail.data.externalOrderId || '-',
+                  children: <CopyableOrderId value={detail.data.externalOrderId} fallback="-" />,
                 },
                 {
                   key: 'vendorOrder',

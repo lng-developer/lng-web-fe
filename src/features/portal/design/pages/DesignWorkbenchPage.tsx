@@ -1,4 +1,4 @@
-import { type Key, useState } from 'react'
+import { type Key, useDeferredValue, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
@@ -11,7 +11,7 @@ import {
   UploadOutlined,
   UserAddOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType, UploadFile } from 'antd'
 import {
   Button,
@@ -134,6 +134,7 @@ export function DesignWorkbenchPage() {
   const tasks = useQuery({
     queryKey: designKeys.list(params),
     queryFn: () => listDesignTasks(params),
+    placeholderData: keepPreviousData,
     retry: false,
   })
   const detail = useQuery({
@@ -182,6 +183,7 @@ export function DesignWorkbenchPage() {
     enabled: createTaskOpen,
     retry: false,
   })
+  const displayedTasks = useDeferredValue(tasks.data)
   const refresh = async () => queryClient.invalidateQueries({ queryKey: designKeys.all })
   const action = useMutation({
     mutationFn: async ({ type, task }: { type: string; task: DesignTask }) => {
@@ -287,15 +289,7 @@ export function DesignWorkbenchPage() {
     {
       title: t('portal.design.listing'),
       shouldCellUpdate: taskChanged,
-      render: (_, row) => (
-        <>
-          <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>
-          <br />
-          <Typography.Text type="secondary">
-            {row.listing?.title ?? row.internalTemplate?.name ?? '-'}
-          </Typography.Text>
-        </>
-      ),
+      render: (_, row) => <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>,
     },
     {
       title: t('portal.design.type'),
@@ -465,13 +459,13 @@ export function DesignWorkbenchPage() {
               : undefined
           }
           columns={columns}
-          dataSource={tasks.data?.items ?? []}
-          loading={tasks.isLoading}
+          dataSource={displayedTasks?.items ?? []}
+          loading={tasks.isFetching}
           onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
           pagination={{
             current: page,
             pageSize: PAGE_SIZE,
-            total: tasks.data?.pagination.total,
+            total: displayedTasks?.pagination.total,
             onChange: setPage,
           }}
           toolbar={
@@ -599,7 +593,7 @@ export function DesignWorkbenchPage() {
                 {
                   key: 'listing',
                   label: 'Listing',
-                  children: `${task.listing?.sku ?? '-'} · ${task.listing?.title ?? '-'}`,
+                  children: task.listing?.sku ?? '-',
                 },
                 {
                   key: 'template',
@@ -808,7 +802,7 @@ export function DesignWorkbenchPage() {
             placeholder={t('portal.design.selectListings')}
             options={(candidates.data?.items ?? []).map((candidate) => ({
               value: candidate.id,
-              label: `${candidate.sku} · ${candidate.title}`,
+              label: candidate.sku,
             }))}
           />
           {candidateResult?.items.map((item) => (

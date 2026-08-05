@@ -1,5 +1,6 @@
 {
   "app": { "name": "LNG Web" },
+  "common": { "copyOrderId": "Sao chép mã đơn", "orderIdCopied": "Đã sao chép mã đơn" },
   "language": { "label": "Ngôn ngữ", "vi": "Tiếng Việt", "en": "Tiếng Anh" },
   "theme": { "label": "Giao diện", "light": "Sáng", "dark": "Tối", "system": "Hệ thống" },
   "shell": {
@@ -1412,6 +1413,7 @@
       "search": "Tìm cửa hàng",
       "allStatuses": "Tất cả trạng thái",
       "name": "Tên",
+      "id": "Mã cửa hàng",
       "currency": "Tiền tệ",
       "status": "Trạng thái",
       "updatedAt": "Cập nhật",
@@ -1445,6 +1447,22 @@
       "qcQueue": "Hàng đợi QC",
       "scaleTask": "Tác vụ Scale",
       "qcReview": "Kiểm tra QC",
+      "loadingTask": "Đang tải không gian xử lý tác vụ...",
+      "selectTask": "Chọn một tác vụ trong hàng đợi để kiểm tra file và hoàn tất bước tiếp theo.",
+      "backToQueue": "Quay lại hàng đợi",
+      "emptyQueue": "Không có tác vụ phù hợp với bộ lọc hiện tại.",
+      "noProductTitle": "Chưa có tên sản phẩm",
+      "filesSummary": "{{outputCount}} / {{requiredCount}} file",
+      "requiredSlots": "Vị trí bắt buộc",
+      "customization": "Tùy chỉnh khách hàng",
+      "psdStatus": "Trạng thái PSD",
+      "psdReady": "Đã có PSD",
+      "psdMissing": "Chưa có PSD",
+      "assignedTo": "Người phụ trách",
+      "unassigned": "Chưa gán",
+      "originalArtwork": "Artwork gốc",
+      "outputReady": "Đã có output",
+      "outputMissing": "Thiếu output",
       "filters": "Bộ lọc sản xuất",
       "search": "Tìm đơn hàng, SKU hoặc sản phẩm",
       "allStatuses": "Tất cả trạng thái",
@@ -1882,7 +1900,8 @@
       "viewHistory": "Xem lịch sử",
       "editCustomer": "Sửa thông tin khách hàng",
       "saveCustomer": "Lưu khách hàng",
-      "addComment": "Thêm bình luận"
+      "addComment": "Thêm bình luận",
+      "downloadAmazonCustomization": "Link"
     },
     "sections": {
       "shippingAddress": "Địa chỉ giao hàng",

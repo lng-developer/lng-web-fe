@@ -21,4 +21,10 @@ describe('route loading contract', () => {
     }
     expect(childByPath.get('foundation')?.element).toBeDefined()
   })
+
+  it('does not refresh the workspace session for child-route navigation', () => {
+    const workspace = appRoutes.find((route) => route.children)
+
+    expect(workspace?.shouldRevalidate?.({} as never)).toBe(false)
+  })
 })
