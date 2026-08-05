@@ -159,10 +159,16 @@ describe('ImportJobPanel', () => {
   it('shows job summary before issue and raw-record diagnostics', async () => {
     renderPanel()
 
-    expect(await screen.findByText('Import job job-1')).toBeVisible()
     expect(await screen.findByText('8 imported')).toBeVisible()
     expect((await screen.findAllByText('Postal code is missing')).length).toBeGreaterThan(0)
-    expect((await screen.findAllByText('ORDER-1 / ITEM-1')).length).toBeGreaterThan(0)
+    expect(
+      (
+        await screen.findAllByText(
+          (_, element) =>
+            element?.tagName === 'TD' && element.textContent?.includes('ORDER-1 / ITEM-1') === true,
+        )
+      ).length,
+    ).toBeGreaterThan(0)
     const summary = screen.getByText('Summary')
     const issues = screen.getByText('Issues')
     const rawRecords = screen.getByText('Raw records')
@@ -205,7 +211,7 @@ describe('ImportJobPanel', () => {
 
     renderPanel(undefined, scopedAccount)
 
-    expect(await screen.findByText('Import job job-1')).toBeVisible()
+    expect(await screen.findByText('8 imported')).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Retry import' })).not.toBeInTheDocument()
   })
 

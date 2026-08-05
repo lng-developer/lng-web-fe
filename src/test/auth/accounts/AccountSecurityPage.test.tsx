@@ -45,7 +45,7 @@ describe('AccountSecurityPage', () => {
       </MemoryRouter>,
     )
 
-    await screen.findByRole('heading', { name: 'Security' })
+    await screen.findByLabelText('New password')
     fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'new-password' } })
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }))
 

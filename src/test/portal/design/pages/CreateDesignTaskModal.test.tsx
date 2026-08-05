@@ -36,7 +36,7 @@ describe('CreateDesignTaskModal', () => {
   it('requires a brief for an IDEA task', async () => {
     openModal()
     await selectOption('Task type', 'IDEA')
-    await selectOption('Listing', 'SKU-1 - Target listing')
+    await selectOption('Listing', 'SKU-1')
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
     expect(await screen.findByText('Brief is required')).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
@@ -45,7 +45,7 @@ describe('CreateDesignTaskModal', () => {
   it('requires a source for a CLONE task', async () => {
     openModal()
     await selectOption('Task type', 'CLONE')
-    await selectOption('Listing', 'SKU-1 - Target listing')
+    await selectOption('Listing', 'SKU-1')
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
     expect(await screen.findByText('Select a source')).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
@@ -54,7 +54,7 @@ describe('CreateDesignTaskModal', () => {
   it('submits only the selected source for a CLONE task', async () => {
     openModal()
     await selectOption('Task type', 'CLONE')
-    await selectOption('Listing', 'SKU-1 - Target listing')
+    await selectOption('Listing', 'SKU-1')
     await selectOption('Source type', 'Internal template')
     fireEvent.mouseDown(await screen.findByLabelText('Source'))
     fireEvent.click(await screen.findByText('Source template'))

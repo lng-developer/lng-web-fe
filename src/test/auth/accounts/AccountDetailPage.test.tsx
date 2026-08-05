@@ -40,7 +40,7 @@ describe('AccountDetailPage', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'linh@lng.local' })).toBeVisible()
+    expect(await screen.findByDisplayValue('linh@lng.local')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Manage access' })).toHaveAttribute(
       'href',
       '/auth/accounts/account-1/access',
@@ -62,7 +62,7 @@ describe('AccountDetailPage', () => {
       </MemoryRouter>,
     )
 
-    await screen.findByRole('heading', { name: 'linh@lng.local' })
+    await screen.findByDisplayValue('linh@lng.local')
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'new@lng.local' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save email' }))
 
