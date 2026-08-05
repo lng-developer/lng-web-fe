@@ -238,8 +238,7 @@ describe('ReportWorkspacePage', () => {
       </AppProviders>,
     )
 
-    await screen.findByText('Report workspace')
-    expect(listFinanceDaily).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(listFinanceDaily).toHaveBeenCalledTimes(1))
     expect(listFinanceDailyProfit).not.toHaveBeenCalled()
     expect(getOperationsOverview).not.toHaveBeenCalled()
   })

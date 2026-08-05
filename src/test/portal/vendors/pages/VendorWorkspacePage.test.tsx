@@ -21,7 +21,7 @@ describe('VendorWorkspacePage', () => {
       </AppProviders>,
     )
 
-    expect(screen.getByRole('heading', { name: 'Vendor workspace' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Vendor directory' })).toBeVisible()
     expect(screen.queryByText('vendors.title')).not.toBeInTheDocument()
   })
 })

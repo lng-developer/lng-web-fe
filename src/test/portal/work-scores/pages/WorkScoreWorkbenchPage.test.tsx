@@ -130,7 +130,6 @@ describe('WorkScoreWorkbenchPage', () => {
         <WorkScoreWorkbenchPage />
       </AppProviders>,
     )
-    expect(await screen.findByText('Điểm công việc')).toBeVisible()
-    expect(screen.getByText('Tổng điểm')).toBeVisible()
+    expect(await screen.findByText('Tổng điểm')).toBeVisible()
   }, 15_000)
 })

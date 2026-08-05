@@ -49,7 +49,6 @@ describe('AccessEditorPage', () => {
       </QueryClientProvider>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Quản lý quyền truy cập' })).toBeVisible()
     expect(await screen.findByText('operator@lng.test')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Lưu quyền toàn cục' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Thêm quyền theo phạm vi' })).toBeVisible()

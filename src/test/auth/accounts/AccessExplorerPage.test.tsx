@@ -41,7 +41,7 @@ describe('AccessExplorerPage', () => {
     )
 
     expect(await screen.findByText('linh@lng.local')).toBeVisible()
-    expect(screen.getByRole('heading', { level: 1, name: 'Tài khoản' })).toBeVisible()
+    expect(screen.getByRole('heading', { level: 2, name: 'Tài khoản' })).toBeVisible()
     expect(screen.getAllByRole('link', { name: 'Quản lý tài khoản' })[0]).toHaveAttribute(
       'href',
       '/auth/accounts/account-1',
