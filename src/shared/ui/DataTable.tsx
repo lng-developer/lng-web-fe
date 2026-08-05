@@ -7,6 +7,7 @@ import styles from './sharedUi.module.scss'
 export type DataTableProps<RecordType extends object> = Pick<
   TableProps<RecordType>,
   | 'columns'
+  | 'className'
   | 'dataSource'
   | 'expandable'
   | 'loading'
@@ -14,6 +15,7 @@ export type DataTableProps<RecordType extends object> = Pick<
   | 'pagination'
   | 'rowKey'
   | 'rowSelection'
+  | 'scroll'
 > & {
   readonly toolbar?: ReactNode
   readonly emptyText?: ReactNode

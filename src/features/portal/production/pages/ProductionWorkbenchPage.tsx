@@ -347,14 +347,7 @@ export function ProductionWorkbenchPage({
       {
         title: t('portal.production.columns.product'),
         width: 230,
-        render: (_, row) => (
-          <div>
-            <Typography.Text strong>{row.orderItem?.sku || '-'}</Typography.Text>
-            <Typography.Paragraph className={styles.tableProduct} ellipsis={{ rows: 2 }}>
-              {row.orderItem?.title || '-'}
-            </Typography.Paragraph>
-          </div>
-        ),
+        render: (_, row) => <Typography.Text strong>{row.orderItem?.sku || '-'}</Typography.Text>,
       },
       {
         title: t('portal.production.columns.shop'),

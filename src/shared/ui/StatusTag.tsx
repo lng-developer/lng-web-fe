@@ -29,6 +29,30 @@ const colors: Record<OperationalStatus, string> = {
   cancelled: 'default',
 }
 
+const backgrounds: Record<OperationalStatus, string> = {
+  operational: '#f0fdf4',
+  warning: '#fffbeb',
+  critical: '#fef2f2',
+  pending: '#fffbeb',
+  ready: '#eff6ff',
+  processing: '#eff6ff',
+  approved: '#f0fdf4',
+  rejected: '#fef2f2',
+  cancelled: '#f5f5f5',
+}
+
 export function StatusTag({ status, children }: StatusTagProps) {
-  return <Tag color={colors[status]}>{children}</Tag>
+  return (
+    <Tag
+      color={colors[status]}
+      style={{
+        backgroundColor: backgrounds[status],
+        borderColor: 'currentColor',
+        borderRadius: 999,
+        paddingInline: 8,
+      }}
+    >
+      {children}
+    </Tag>
+  )
 }

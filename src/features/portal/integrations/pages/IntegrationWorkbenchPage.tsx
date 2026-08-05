@@ -137,12 +137,15 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const upload = useMutation({
     mutationFn: ({ source, ...input }: ImportUploadInput & { source: ImportUploadSource }) =>
       source === 'ETSY_SOLD_ORDER_ITEMS' ? uploadEtsySoldItems(input) : uploadManualExcel(input),
-    onSuccess: async () => {
+    onSuccess: async (job) => {
       await queryClient.invalidateQueries({ queryKey: [...integrationKeys.all, 'jobs'] })
       setUploadOpen(false)
+      updateParams({ selectedJobId: job.jobId }, false)
       showFeedbackToast(
         'success',
-        t('portal.integrations.upload.success', { defaultValue: 'Report uploaded' }),
+        t('portal.integrations.upload.success', {
+          defaultValue: 'Import queued. You can follow its progress here.',
+        }),
       )
     },
   })

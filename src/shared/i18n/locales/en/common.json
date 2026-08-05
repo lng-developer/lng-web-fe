@@ -1905,7 +1905,8 @@
       "editCustomer": "Edit customer",
       "saveCustomer": "Save customer",
       "addComment": "Add comment",
-      "downloadAmazonCustomization": "Link"
+      "downloadAmazonCustomization": "Link",
+      "apply": "Apply"
     },
     "sections": {
       "shippingAddress": "Shipping address",
@@ -1914,7 +1915,7 @@
       "customization": "Customization",
       "quantityCost": "Quantity & cost",
       "fulfillment": "Fulfillment",
-      "trackingState": "Tracking & state",
+      "trackingState": "Tracking & note",
       "itemActions": "Actions"
     },
     "fields": {
@@ -1923,6 +1924,7 @@
       "quantity": "Quantity",
       "customerPaid": "Customer paid",
       "vendor": "Vendor",
+      "product": "Product",
       "costCenter": "Cost center",
       "size": "Size",
       "color": "Color",
@@ -1930,6 +1932,8 @@
       "scale": "Scale",
       "qc": "QC",
       "tracking": "Tracking",
+      "baseCost": "Base cost",
+      "notSet": "Not set",
       "noNote": "No note",
       "reason": "Reason",
       "replacementReason": "Replacement reason"

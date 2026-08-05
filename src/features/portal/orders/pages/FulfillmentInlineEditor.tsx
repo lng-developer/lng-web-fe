@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Descriptions, Select, Typography } from 'antd'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, Descriptions, Flex, Select, Typography } from 'antd'
 
 import {
-  searchVendorCandidates,
+  getMappingVendorProductOptions,
+  listMappingVendorProducts,
+  type MappingCostCenterOption,
+  searchMappingVendors,
   selectFulfillmentCandidate,
-  type VendorCandidateSearchRow,
 } from '@/features/portal/mapping/api/mappingApi'
 import { mappingKeys } from '@/features/portal/mapping/api/mappingKeys'
 import { normalizeApiError } from '@/shared/api'
@@ -14,6 +16,7 @@ import { useFeedbackToast } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
+import { formatMinorMoney } from './orderPresentation'
 
 const unique = (rows: Array<{ value: string; label: string }>) => [
   ...new Map(rows.map((row) => [row.value, row])).values(),
@@ -34,57 +37,54 @@ export function FulfillmentInlineEditor({
   const [productId, setProductId] = useState(item.mapping?.vendorProduct?.id ?? undefined)
   const [size, setSize] = useState(item.mapping?.vendorCostCenter?.size ?? undefined)
   const [color, setColor] = useState(item.mapping?.vendorCostCenter?.color ?? undefined)
-  const candidates = useQuery({
-    queryKey: mappingKeys.candidates(item.item.id, ''),
-    queryFn: () => searchVendorCandidates(item.item.id, { limit: 100 }),
+  const [costCenterId, setCostCenterId] = useState<string>()
+  const [vendorSearchDraft, setVendorSearchDraft] = useState('')
+  const [vendorSearch, setVendorSearch] = useState('')
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setVendorSearch(vendorSearchDraft), 200)
+    return () => window.clearTimeout(timer)
+  }, [vendorSearchDraft])
+
+  const vendors = useQuery({
+    queryKey: mappingKeys.vendors(vendorSearch),
+    queryFn: () => searchMappingVendors({ q: vendorSearch, limit: 20 }),
     enabled: active && canWrite,
+    staleTime: 5 * 60_000,
     retry: false,
   })
-  const rows = candidates.data?.items ?? []
-  const vendorRows = rows.filter((row) => !vendorId || row.vendor.id === vendorId)
-  const productRows = vendorRows.filter((row) => !productId || row.vendorProduct.id === productId)
-  const sizeRows = productRows.filter((row) => !size || row.vendorCostCenter.standardSize === size)
-  const options = {
-    vendors: unique([
-      ...(item.mapping?.vendor?.id
-        ? [{ value: item.mapping.vendor.id, label: item.mapping.vendor.name || '-' }]
-        : []),
-      ...rows.map((row) => ({
-        value: row.vendor.id,
-        label: row.vendor.name || row.vendor.code || '—',
-      })),
-    ]),
-    products: unique([
-      ...(item.mapping?.vendorProduct?.id
-        ? [{ value: item.mapping.vendorProduct.id, label: item.mapping.vendorProduct.name || '-' }]
-        : []),
-      ...vendorRows.map((row) => ({
-        value: row.vendorProduct.id,
-        label: row.vendorProduct.name || row.vendorProduct.code || '—',
-      })),
-    ]),
-    sizes: unique(
-      productRows
-        .filter((row) => row.vendorCostCenter.standardSize)
-        .map((row) => ({
-          value: row.vendorCostCenter.standardSize!,
-          label: row.vendorCostCenter.standardSize!,
-        })),
-    ),
-    colors: unique(
-      sizeRows
-        .filter((row) => row.vendorCostCenter.standardColor)
-        .map((row) => ({
-          value: row.vendorCostCenter.standardColor!,
-          label: row.vendorCostCenter.standardColor!,
-        })),
-    ),
-  }
+  const products = useQuery({
+    queryKey: mappingKeys.vendorProducts(vendorId ?? ''),
+    queryFn: () => listMappingVendorProducts(vendorId!),
+    enabled: active && canWrite && Boolean(vendorId),
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+  const productOptions = useQuery({
+    queryKey: mappingKeys.vendorProductOptions(productId ?? '', size, color),
+    queryFn: () => getMappingVendorProductOptions(productId!, { size, color }),
+    enabled: active && canWrite && Boolean(productId),
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
+    retry: false,
+  })
+
+  const dimensions = productOptions.data?.dimensions
+  const candidates = productOptions.data?.candidates ?? []
+  const selectionComplete =
+    Boolean(productId) &&
+    (!dimensions?.hasSize || Boolean(size)) &&
+    (!dimensions?.hasColor || Boolean(color))
+  const selectedCandidate = selectionComplete
+    ? (candidates.find((candidate) => candidate.id === costCenterId) ??
+      (candidates.length === 1 ? candidates[0] : undefined))
+    : undefined
+
   const save = useMutation({
-    mutationFn: (candidate: VendorCandidateSearchRow) =>
+    mutationFn: (candidate: MappingCostCenterOption) =>
       selectFulfillmentCandidate(item.item.id, {
-        vendorProductId: candidate.vendorProduct.id,
-        vendorCostCenterId: candidate.vendorCostCenter.id,
+        vendorProductId: productId!,
+        vendorCostCenterId: candidate.id,
       }),
     onSuccess: () => {
       toast('success', t('orders.messages.updated'))
@@ -92,105 +92,214 @@ export function FulfillmentInlineEditor({
     },
     onError: (error) => toast('error', normalizeApiError(error).message),
   })
-  const selectColor = (nextColor: string) => {
-    setColor(nextColor)
-    const candidate = sizeRows.find((row) => row.vendorCostCenter.standardColor === nextColor)
-    if (candidate) save.mutate(candidate)
-  }
   const common = {
-    className: 'w-full min-w-40',
+    style: { minWidth: 0, width: '100%' },
     size: 'small' as const,
     variant: 'borderless' as const,
-    loading: candidates.isFetching || save.isPending,
-    notFoundContent: candidates.isError ? (
-      <Typography.Text type="danger">{normalizeApiError(candidates.error).message}</Typography.Text>
-    ) : undefined,
+    popupMatchSelectWidth: 300,
     onOpenChange: (open: boolean) => open && setActive(true),
   }
-
-  const controls = canWrite
-    ? [
-        <Select
-          key="vendor"
-          {...common}
-          showSearch
-          optionFilterProp="label"
-          aria-label={t('orders.fields.vendor')}
-          placeholder={item.mapping?.vendor?.name || t('orders.fields.vendor')}
-          options={options.vendors}
-          value={vendorId}
-          onChange={(nextVendorId) => {
-            const products = unique(
-              rows
-                .filter((row) => row.vendor.id === nextVendorId)
-                .map((row) => ({
-                  value: row.vendorProduct.id,
-                  label: row.vendorProduct.name || '—',
-                })),
-            )
-            setVendorId(nextVendorId)
-            setProductId(products.length === 1 ? products[0].value : undefined)
-            setSize(undefined)
-            setColor(undefined)
-          }}
-        />,
-        options.products.length > 1 ? (
-          <Select
-            key="product"
-            {...common}
-            showSearch
-            optionFilterProp="label"
-            aria-label={t('orders.fields.product')}
-            disabled={!vendorId}
-            placeholder={item.mapping?.vendorProduct?.name || t('orders.fields.product')}
-            options={options.products}
-            value={productId}
-            onChange={(nextProductId) => {
-              setProductId(nextProductId)
-              setSize(undefined)
-              setColor(undefined)
-            }}
-          />
-        ) : null,
-        <Select
-          key="size"
-          {...common}
-          aria-label={t('orders.fields.size')}
-          disabled={!productId}
-          placeholder={item.mapping?.vendorCostCenter?.size || t('orders.fields.size')}
-          options={options.sizes}
-          value={size}
-          onChange={(nextSize) => {
-            setSize(nextSize)
-            setColor(undefined)
-          }}
-        />,
-        <Select
-          key="color"
-          {...common}
-          aria-label={t('orders.fields.color')}
-          disabled={!productId || !size}
-          placeholder={item.mapping?.vendorCostCenter?.color || t('orders.fields.color')}
-          options={options.colors}
-          value={color}
-          onChange={selectColor}
-        />,
-      ]
-    : [
-        item.mapping?.vendor?.name || '—',
-        item.mapping?.vendorProduct?.name || '—',
-        item.mapping?.vendorCostCenter?.size || '—',
-        item.mapping?.vendorCostCenter?.color || '—',
-      ]
-
-  const descriptionItems = [
-    { key: 'vendor', label: t('orders.fields.vendor'), children: controls[0] },
-    ...(controls[1]
-      ? [{ key: 'product', label: t('orders.fields.product'), children: controls[1] }]
+  const notSet = t('orders.fields.notSet')
+  const error = vendors.error || products.error || productOptions.error
+  const vendorOptions = unique([
+    ...(item.mapping?.vendor?.id
+      ? [{ value: item.mapping.vendor.id, label: item.mapping.vendor.name || '-' }]
       : []),
-    { key: 'size', label: t('orders.fields.size'), children: controls[2] },
-    { key: 'color', label: t('orders.fields.color'), children: controls[3] },
-  ]
+    ...(vendors.data?.items ?? []).map((vendor) => ({
+      value: vendor.id,
+      label: vendor.name || vendor.code || '—',
+    })),
+  ])
+  const productSelectOptions = unique([
+    ...(item.mapping?.vendorProduct?.id
+      ? [{ value: item.mapping.vendorProduct.id, label: item.mapping.vendorProduct.name || '-' }]
+      : []),
+    ...(products.data ?? []).map((product) => ({
+      value: product.id,
+      label: product.name || product.code || '—',
+    })),
+  ])
 
-  return <Descriptions size="small" column={1} colon={false} items={descriptionItems} />
+  if (!canWrite) {
+    return (
+      <Descriptions
+        size="small"
+        column={1}
+        colon={false}
+        items={[
+          {
+            key: 'vendor',
+            label: t('orders.fields.vendor'),
+            children: item.mapping?.vendor?.name || '—',
+          },
+          {
+            key: 'product',
+            label: t('orders.fields.product'),
+            children: item.mapping?.vendorProduct?.name || '—',
+          },
+          {
+            key: 'size',
+            label: t('orders.fields.size'),
+            children: item.mapping?.vendorCostCenter?.size || '—',
+          },
+          {
+            key: 'color',
+            label: t('orders.fields.color'),
+            children: item.mapping?.vendorCostCenter?.color || '—',
+          },
+        ]}
+      />
+    )
+  }
+
+  return (
+    <Flex vertical gap={6}>
+      <Descriptions
+        size="small"
+        column={1}
+        colon={false}
+        items={[
+          {
+            key: 'vendor',
+            label: t('orders.fields.vendor'),
+            children: (
+              <Select
+                {...common}
+                showSearch
+                filterOption={false}
+                aria-label={t('orders.fields.vendor')}
+                placeholder={item.mapping?.vendor?.name || notSet}
+                options={vendorOptions}
+                value={vendorId}
+                loading={vendors.isFetching}
+                notFoundContent={
+                  vendors.isError ? normalizeApiError(vendors.error).message : undefined
+                }
+                onSearch={setVendorSearchDraft}
+                onChange={(nextVendorId) => {
+                  setVendorId(nextVendorId)
+                  setProductId(undefined)
+                  setSize(undefined)
+                  setColor(undefined)
+                  setCostCenterId(undefined)
+                }}
+              />
+            ),
+          },
+          {
+            key: 'product',
+            label: t('orders.fields.product'),
+            children: (
+              <Select
+                {...common}
+                showSearch
+                optionFilterProp="label"
+                aria-label={t('orders.fields.product')}
+                disabled={!vendorId}
+                placeholder={item.mapping?.vendorProduct?.name || notSet}
+                options={productSelectOptions}
+                value={productId}
+                loading={products.isFetching}
+                onChange={(nextProductId) => {
+                  setProductId(nextProductId)
+                  setSize(undefined)
+                  setColor(undefined)
+                  setCostCenterId(undefined)
+                }}
+              />
+            ),
+          },
+          {
+            key: 'size',
+            label: t('orders.fields.size'),
+            children: (
+              <Select
+                {...common}
+                aria-label={t('orders.fields.size')}
+                disabled={!productId || !dimensions?.hasSize}
+                placeholder={item.mapping?.vendorCostCenter?.size || notSet}
+                options={(productOptions.data?.options.sizes ?? []).map((value) => ({
+                  value,
+                  label: value,
+                }))}
+                value={size}
+                loading={productOptions.isFetching}
+                onChange={(value) => {
+                  setSize(value)
+                  setCostCenterId(undefined)
+                }}
+              />
+            ),
+          },
+          {
+            key: 'color',
+            label: t('orders.fields.color'),
+            children: (
+              <Select
+                {...common}
+                aria-label={t('orders.fields.color')}
+                disabled={!productId || !dimensions?.hasColor}
+                placeholder={item.mapping?.vendorCostCenter?.color || notSet}
+                options={(productOptions.data?.options.colors ?? []).map((value) => ({
+                  value,
+                  label: value,
+                }))}
+                value={color}
+                loading={productOptions.isFetching}
+                onChange={(value) => {
+                  setColor(value)
+                  setCostCenterId(undefined)
+                }}
+              />
+            ),
+          },
+          ...(selectionComplete && candidates.length > 1
+            ? [
+                {
+                  key: 'costCenter',
+                  label: t('orders.fields.costCenter'),
+                  children: (
+                    <Select
+                      {...common}
+                      aria-label={t('orders.fields.costCenter')}
+                      placeholder={notSet}
+                      value={costCenterId}
+                      options={candidates.map((candidate) => ({
+                        value: candidate.id,
+                        label: candidate.sku || candidate.code || '—',
+                      }))}
+                      onChange={setCostCenterId}
+                    />
+                  ),
+                },
+              ]
+            : []),
+        ]}
+      />
+      {error ? (
+        <Typography.Text type="danger">{normalizeApiError(error).message}</Typography.Text>
+      ) : null}
+      {selectedCandidate ? (
+        <Flex align="center" justify="space-between" gap={8}>
+          <Typography.Text type="secondary">
+            {t('orders.fields.baseCost')}:{' '}
+            <Typography.Text strong>
+              {formatMinorMoney(
+                selectedCandidate.baseCostAmount,
+                selectedCandidate.currency || 'USD',
+              )}
+            </Typography.Text>
+          </Typography.Text>
+          <Button
+            type="primary"
+            size="small"
+            loading={save.isPending}
+            onClick={() => save.mutate(selectedCandidate)}
+          >
+            {t('orders.actions.apply')}
+          </Button>
+        </Flex>
+      ) : null}
+    </Flex>
+  )
 }

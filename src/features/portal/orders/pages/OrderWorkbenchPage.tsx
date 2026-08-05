@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircleFilled,
@@ -10,9 +10,9 @@ import {
   SwapOutlined,
   TruckOutlined,
 } from '@ant-design/icons'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Select, Space, Table, Tooltip, Typography } from 'antd'
+import { Button, Select, Skeleton, Space, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { listShops } from '@/features/portal/shops/api/shopApi'
@@ -20,6 +20,7 @@ import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { getPermissions } from '@/shared/auth/session'
 import {
   CopyableOrderId,
+  DataTable,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
@@ -48,6 +49,50 @@ const TABS = [
 ]
 const ADDRESS_STATUSES = ['NOT_CHECKED', 'VALID', 'INVALID', 'WARNING', 'OVERRIDDEN']
 type OrderModal = 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline'
+
+function LazyOrderDetail({
+  row,
+  canWrite,
+  requestedModal,
+  onOrderModalClose,
+}: {
+  readonly row: OrderWorkbenchRow
+  readonly canWrite: boolean
+  readonly requestedModal?: OrderModal
+  readonly onOrderModalClose: () => void
+}) {
+  const elementRef = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
+
+  useEffect(() => {
+    if (visible || !elementRef.current) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        setVisible(true)
+        observer.disconnect()
+      },
+      { rootMargin: '600px 0px' },
+    )
+    observer.observe(elementRef.current)
+    return () => observer.disconnect()
+  }, [visible])
+
+  return (
+    <div ref={elementRef} className={styles.lazyOrderDetail}>
+      {visible ? (
+        <OrderInlinePanel
+          row={row}
+          canWrite={canWrite}
+          requestedModal={requestedModal}
+          onOrderModalClose={onOrderModalClose}
+        />
+      ) : (
+        <Skeleton active title={false} paragraph={{ rows: 4 }} />
+      )}
+    </div>
+  )
+}
 
 export function OrderWorkbenchPage() {
   const { t, i18n } = useTranslation()
@@ -80,7 +125,6 @@ export function OrderWorkbenchPage() {
   const orders = useQuery({
     queryKey: orderKeys.workbench(params),
     queryFn: () => listOrderWorkbench(params),
-    placeholderData: keepPreviousData,
     retry: false,
   })
   const summary = useQuery({
@@ -94,7 +138,6 @@ export function OrderWorkbenchPage() {
     queryFn: () => listShops(shopParams),
     retry: false,
   })
-  const displayedOrders = useDeferredValue(orders.data)
   const onSearchChange = useCallback((value: string) => {
     setSearch(value)
     setPage(1)
@@ -351,25 +394,25 @@ export function OrderWorkbenchPage() {
           }
         />
       ) : null}
-      <Table
+      <DataTable
         className={styles.table}
         rowKey={(row) => row.order.id}
         columns={columns}
-        dataSource={displayedOrders?.items ?? []}
+        dataSource={orders.data?.items ?? []}
         loading={orders.isFetching}
         scroll={{ x: 1280 }}
         pagination={{
           current: page,
           pageSize: PAGE_SIZE,
-          total: displayedOrders?.pagination.total,
+          total: orders.data?.pagination.total,
           showSizeChanger: false,
           onChange: setPage,
         }}
         expandable={{
-          expandedRowKeys: (displayedOrders?.items ?? []).map((row) => row.order.id),
+          expandedRowKeys: (orders.data?.items ?? []).map((row) => row.order.id),
           showExpandColumn: false,
           expandedRowRender: (row) => (
-            <OrderInlinePanel
+            <LazyOrderDetail
               row={row}
               canWrite={canWrite}
               requestedModal={orderAction?.orderId === row.order.id ? orderAction.modal : undefined}

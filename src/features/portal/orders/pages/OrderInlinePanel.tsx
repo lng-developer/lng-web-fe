@@ -50,6 +50,7 @@ import {
   type OrderWorkbenchRow,
   recheckOrderItem,
   resolveOrderCase,
+  retryCustomizationAssets,
   type ShippingAddress,
   type ShippingService,
   updateOrderBuyer,
@@ -72,6 +73,7 @@ type Action =
   | { kind: 'validate-address' }
   | { kind: 'note'; itemId: string; note: string }
   | { kind: 'recheck'; itemId: string }
+  | { kind: 'retry-customization-assets'; itemId: string }
   | { kind: 'ready'; itemId: string }
   | { kind: 'cancel'; itemId: string; reason: string }
   | { kind: 'replacement'; itemId: string; reason: string; quantity: number }
@@ -178,6 +180,8 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       if (action.kind === 'validate-address') return validateShippingAddress(row.order.id)
       if (action.kind === 'note') return updateOrderItemCsNote(action.itemId, action.note)
       if (action.kind === 'recheck') return recheckOrderItem(action.itemId)
+      if (action.kind === 'retry-customization-assets')
+        return retryCustomizationAssets(action.itemId)
       if (action.kind === 'ready') return markOrderItemFulfillmentReady(action.itemId)
       if (action.kind === 'cancel') return cancelOrderItem(action.itemId, action.reason)
       if (action.kind === 'replacement') {
@@ -696,8 +700,7 @@ function OrderItemPanel({
   readonly onHistory: (itemId: string) => void
 }) {
   const { t } = useTranslation()
-  const [note, setNote] = useState(item.item.csNote ?? '')
-  const preview = item.listing?.previewAsset?.previewUrl
+  const preview = item.listing?.previewAsset?.previewUrl || item.customization?.previewImageUrl
   const customizationImage = item.customization?.inputs.find((input) => input.secureUrl)?.secureUrl
   const canRecheck = item.workflow.nextActions.some((action) => action.startsWith('RECHECK_'))
   const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item.status ?? '')
@@ -726,7 +729,7 @@ function OrderItemPanel({
           </Button>
         ) : null}
       </section>
-      <section>
+      <section className={styles.identifierSection}>
         <Typography.Text strong>{t('orders.sections.skuSeller')}</Typography.Text>
         <Descriptions
           size="small"
@@ -744,9 +747,25 @@ function OrderItemPanel({
             },
           ]}
         />
+        <div className={styles.identifierList}>
+          <div>
+            <Typography.Text type="secondary">SKU</Typography.Text>
+            <span className={styles.skuChip}>{value(item.item.sku)}</span>
+          </div>
+          <div>
+            <Typography.Text type="secondary">ASIN</Typography.Text>
+            <span className={styles.asinChip}>{value(item.item.asin)}</span>
+          </div>
+          <div>
+            <Typography.Text type="secondary">{t('orders.fields.seller')}</Typography.Text>
+            <span className={styles.sellerChip}>
+              {value([item.seller?.employeeCode, item.seller?.name].filter(Boolean).join(' · '))}
+            </span>
+          </div>
+        </div>
       </section>
       <section>
-        <Space size="small">
+        <Space className={styles.customizationHeader} size="small" wrap>
           <Typography.Text strong>{t('orders.sections.customization')}</Typography.Text>
           {canWrite && item.customization?.sourceCustomizationUrl ? (
             <Button
@@ -757,6 +776,16 @@ function OrderItemPanel({
               rel="noreferrer"
             >
               {t('orders.actions.downloadAmazonCustomization')}
+            </Button>
+          ) : null}
+          {canWrite && item.customization?.downloadedZip?.status === 'FAILED' ? (
+            <Button
+              size="small"
+              icon={<ReloadOutlined />}
+              loading={pending}
+              onClick={() => onAction({ kind: 'retry-customization-assets', itemId: item.item.id })}
+            >
+              Retry Amazon data
             </Button>
           ) : null}
         </Space>
@@ -820,11 +849,12 @@ function OrderItemPanel({
       </section>
       <section>
         <Typography.Text strong>{t('orders.sections.trackingState')}</Typography.Text>
-        <div className={styles.statusStack}>
+        <div className={styles.trackingRow}>
           <Space size={4}>
-            <StatusTag status={orderStatusTone(item.item.status)}>
-              {value(item.item.status)}
-            </StatusTag>
+            <Typography.Text type="secondary">{t('orders.fields.tracking')}</Typography.Text>
+            <Typography.Text type={item.tracking?.trackingNumber ? undefined : 'secondary'}>
+              {item.tracking?.trackingNumber || t('orders.fields.notSet')}
+            </Typography.Text>
             <Tooltip title={t('orders.actions.viewHistory')}>
               <Button
                 type="text"
@@ -835,37 +865,14 @@ function OrderItemPanel({
               />
             </Tooltip>
           </Space>
-          <span>
-            {t('orders.fields.stage')}: {value(item.workflow.stage)}
-          </span>
-          <span>
-            {t('orders.fields.scale')}: {value(item.production?.scaleStatus)}
-          </span>
-          <span>
-            {t('orders.fields.qc')}: {value(item.production?.qcStatus)}
-          </span>
-          <span>
-            {t('orders.fields.tracking')}: {value(item.tracking?.trackingNumber)}
-          </span>
         </div>
-        <Input.TextArea
-          value={note}
-          placeholder={t('orders.fields.noNote')}
-          onChange={(event) => setNote(event.target.value)}
-          readOnly={!canWrite}
-          autoSize={{ minRows: 2, maxRows: 3 }}
+        <OrderItemNoteEditor
+          key={`${item.item.id}:${item.item.csNote ?? ''}`}
+          canWrite={canWrite}
+          initialNote={item.item.csNote ?? ''}
+          pending={pending}
+          onSave={(note) => onAction({ kind: 'note', itemId: item.item.id, note })}
         />
-        {canWrite ? (
-          <Space wrap>
-            <Button
-              icon={<SaveOutlined />}
-              loading={pending}
-              onClick={() => onAction({ kind: 'note', itemId: item.item.id, note })}
-            >
-              {t('orders.actions.saveNote')}
-            </Button>
-          </Space>
-        ) : null}
       </section>
       <section className={styles.itemActions}>
         <Typography.Text strong>{t('orders.sections.itemActions')}</Typography.Text>
@@ -926,3 +933,37 @@ function OrderItemPanel({
     </article>
   )
 }
+
+const OrderItemNoteEditor = memo(function OrderItemNoteEditor({
+  canWrite,
+  initialNote,
+  pending,
+  onSave,
+}: {
+  readonly canWrite: boolean
+  readonly initialNote: string
+  readonly pending: boolean
+  readonly onSave: (note: string) => void
+}) {
+  const { t } = useTranslation()
+  const [note, setNote] = useState(initialNote)
+
+  return (
+    <>
+      <Input.TextArea
+        value={note}
+        placeholder={t('orders.fields.noNote')}
+        onChange={(event) => setNote(event.target.value)}
+        readOnly={!canWrite}
+        autoSize={{ minRows: 2, maxRows: 3 }}
+      />
+      {canWrite ? (
+        <Space wrap>
+          <Button icon={<SaveOutlined />} loading={pending} onClick={() => onSave(note)}>
+            {t('orders.actions.saveNote')}
+          </Button>
+        </Space>
+      ) : null}
+    </>
+  )
+})

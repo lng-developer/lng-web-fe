@@ -94,6 +94,8 @@ export type OrderWorkbenchItem = {
     customizationUrl?: string | null
     sourceCustomizationUrl?: string | null
     downloadedZip?: { status?: string | null; sourceUrlRedacted?: string | null } | null
+    previewImageUrl?: string | null
+    extractedImages?: Array<{ secureUrl: string | null; filename: string | null }>
     inputs: Array<{
       type: string
       label: string | null
@@ -196,6 +198,20 @@ export async function updateOrderItemCsNote(orderItemId: string, csNote: string)
 
 export async function recheckOrderItem(orderItemId: string) {
   return unwrap(await apiClient.post(`/api/orders/items/${orderItemId}/recheck`))
+}
+
+export async function retryCustomizationAssets(orderItemId: string) {
+  await unwrap(
+    await apiClient.post(`/api/customizations/order-items/${orderItemId}/download-assets`, {
+      retryFailed: true,
+    }),
+  )
+  await unwrap(
+    await apiClient.post(`/api/customizations/order-items/${orderItemId}/inspect-zip`, {}),
+  )
+  return unwrap(
+    await apiClient.post(`/api/customizations/order-items/${orderItemId}/extract-zip-images`, {}),
+  )
 }
 
 export async function markOrderItemFulfillmentReady(orderItemId: string) {

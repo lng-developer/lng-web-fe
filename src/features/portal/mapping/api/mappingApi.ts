@@ -146,6 +146,7 @@ export type CandidateSearchInput = {
   color?: string
   sku?: string
   lngCode?: string
+  manualBrowse?: boolean
   includeDifferentProductType?: boolean
   page?: number
   limit?: number
@@ -168,9 +169,26 @@ export type CandidateResult = {
   orderItemId: string
   signals: Record<string, unknown>
   items: VendorCandidateSearchRow[]
+  products?: Array<{ id: string; code?: string | null; name?: string | null }>
   pagination: { total: number; page: number; limit: number }
 }
 export type CandidateSelection = { vendorProductId: string; vendorCostCenterId: string }
+export type MappingVendor = { id: string; code?: string | null; name?: string | null }
+export type MappingVendorProduct = { id: string; code?: string | null; name?: string | null }
+export type MappingCostCenterOption = {
+  id: string
+  code?: string | null
+  sku?: string | null
+  size?: string | null
+  color?: string | null
+  baseCostAmount?: number | null
+  currency?: string | null
+}
+export type MappingVendorProductOptions = {
+  dimensions: { hasSize: boolean; hasColor: boolean }
+  options: { sizes: string[]; colors: string[] }
+  candidates: MappingCostCenterOption[]
+}
 export type RecheckBatchInput = Pick<
   MappingContextParams,
   'shopId' | 'salesChannelCode' | 'marketplaceCode'
@@ -285,6 +303,26 @@ export async function searchVendorCandidates(orderItemId: string, input: Candida
       `/api/mapping/order-items/${orderItemId}/vendor-candidates/search`,
       compact(input),
     ),
+  )
+}
+export async function searchMappingVendors(params: { q?: string; limit?: number } = {}) {
+  return unwrap<{ items: MappingVendor[]; hasMore: boolean }>(
+    await apiClient.get('/api/mapping/vendors', { params: compact(params) }),
+  )
+}
+export async function listMappingVendorProducts(vendorId: string) {
+  return unwrap<MappingVendorProduct[]>(
+    await apiClient.get(`/api/mapping/vendors/${vendorId}/products`),
+  )
+}
+export async function getMappingVendorProductOptions(
+  productId: string,
+  params: { size?: string; color?: string } = {},
+) {
+  return unwrap<MappingVendorProductOptions>(
+    await apiClient.get(`/api/mapping/vendor-products/${productId}/options`, {
+      params: compact(params),
+    }),
   )
 }
 export async function selectFulfillmentCandidate(orderItemId: string, input: CandidateSelection) {
