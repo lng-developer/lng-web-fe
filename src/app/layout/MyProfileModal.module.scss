@@ -1,0 +1,18 @@
+.profile {
+  width: 100%;
+}
+
+.identity {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.identity > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.identity h4 {
+  margin: 0;
+}

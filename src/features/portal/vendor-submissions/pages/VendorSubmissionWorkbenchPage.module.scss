@@ -1,0 +1,42 @@
+.page {
+  display: grid;
+  gap: 24px;
+}
+.filters {
+  width: min(100%, 900px);
+}
+.filterControl {
+  width: 190px;
+}
+.detail {
+  display: grid;
+  gap: 16px;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.metric {
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+.metric :global(.ant-typography) {
+  margin: 4px 0 0;
+}
+.payload {
+  max-height: 60vh;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.failure {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

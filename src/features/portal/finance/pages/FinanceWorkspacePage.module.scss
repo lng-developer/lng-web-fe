@@ -1,0 +1,65 @@
+.page {
+  display: grid;
+  gap: 16px;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.summaryGroups {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.currencySummary {
+  display: grid;
+  gap: 8px;
+}
+.currency {
+  font-size: 16px;
+}
+.filters {
+  width: 100%;
+  flex: 1 1 100%;
+}
+.filters > * {
+  width: auto !important;
+  min-width: 160px;
+  flex: 1 1 170px;
+}
+.filters > :first-child {
+  min-width: 280px;
+  flex-grow: 2;
+}
+.filters > :nth-child(7) {
+  min-width: 280px;
+  flex-grow: 2;
+}
+.detail {
+  width: 100%;
+}
+.itemBreakdown {
+  padding: 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+}
+.history {
+  display: grid;
+  gap: 8px;
+}
+.history > div {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(220px, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.amount {
+  float: right;
+  font-variant-numeric: tabular-nums;
+}
+.importActions {
+  width: 100%;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}

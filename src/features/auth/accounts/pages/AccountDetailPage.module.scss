@@ -1,0 +1,26 @@
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.accountSummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.accountSummary :global(.ant-typography) {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .page {
+    gap: 16px;
+  }
+}

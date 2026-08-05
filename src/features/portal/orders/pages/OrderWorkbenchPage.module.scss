@@ -1,0 +1,232 @@
+.page {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.header :global(.ant-typography) {
+  margin: 0;
+}
+.filters {
+  width: 100%;
+}
+.orderSearch {
+  flex: 1 1 360px;
+  min-width: 300px;
+  width: auto;
+}
+.sellerFilter {
+  flex: 0 0 200px;
+  width: 200px;
+}
+.filterSelect {
+  flex: 0 0 170px;
+  width: 170px;
+}
+.validIcon {
+  color: var(--ant-color-success);
+}
+.activeCaseIcon {
+  color: var(--ant-color-warning);
+}
+.table :global(.ant-table-expanded-row > .ant-table-cell) {
+  padding-top: 0;
+  padding-bottom: 16px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 2px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  color: var(--ant-color-text);
+  text-align: left;
+}
+.inlinePanel {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0;
+}
+.lazyOrderDetail {
+  min-height: 320px;
+}
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sectionHeading > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.addressEditor {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+}
+.customerEditor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+}
+.customerEditor label {
+  display: grid;
+  gap: 5px;
+}
+.addressEditor label,
+.modalForm label {
+  display: grid;
+  gap: 5px;
+}
+.modalToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.modalForm {
+  display: grid;
+  gap: 16px;
+}
+.caseGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.caseGrid label,
+.caseResolution {
+  display: grid;
+  gap: 8px;
+}
+.caseComments {
+  display: grid;
+  gap: 8px;
+  max-height: 180px;
+  overflow: auto;
+}
+.caseComments > div {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-surface-subtle);
+}
+.historyEntry {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 8px;
+}
+.replacementForm {
+  display: grid;
+  gap: 12px;
+}
+.replacementRow {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.itemPanel {
+  display: grid;
+  grid-template-columns: 150px minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(
+      150px,
+      0.65fr
+    ) minmax(150px, 0.9fr) minmax(170px, 1fr) 116px;
+  gap: 20px;
+  padding: 10px 20px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+.itemPanel > section {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+.itemActions {
+  justify-items: start;
+}
+.itemActions :global(.ant-btn) {
+  justify-content: flex-start;
+  width: 100%;
+}
+.assetColumn {
+  justify-items: start;
+}
+.assetColumn :global(.ant-image-img) {
+  object-fit: cover;
+  border-radius: 8px;
+}
+.inputList,
+.trackingRow {
+  display: grid;
+  gap: 6px;
+}
+.customizationHeader {
+  align-items: center;
+}
+.customizationHeader :global(.ant-typography) {
+  white-space: nowrap;
+}
+.buyerImage {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.buyerImage :global(.ant-image-img) {
+  object-fit: cover;
+  border-radius: 6px;
+}
+.identifierSection :global(.ant-descriptions) {
+  display: none;
+}
+.identifierList {
+  display: grid;
+  gap: 8px;
+}
+.identifierList > div {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+}
+.skuChip,
+.asinChip,
+.sellerChip {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.skuChip {
+  color: #0891b2;
+  background: #ecfeff;
+}
+.asinChip {
+  color: #2563eb;
+  background: #eff6ff;
+}
+.sellerChip {
+  color: #ea580c;
+  background: #fff7ed;
+}
+@media (max-width: 1500px) {
+  .itemPanel {
+    grid-template-columns: 140px minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr) 116px;
+  }
+  .addressEditor {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}

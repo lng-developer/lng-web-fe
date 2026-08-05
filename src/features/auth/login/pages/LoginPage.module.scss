@@ -1,0 +1,49 @@
+.page {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 480px;
+  min-height: 100dvh;
+  background: var(--ant-color-bg-layout);
+}
+.language {
+  position: absolute;
+  z-index: 1;
+  top: 24px;
+  right: 24px;
+}
+.intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px max(64px, 10vw);
+  background: linear-gradient(145deg, #162238, #263b5f);
+  color: #fff;
+}
+.intro :global(.ant-typography) {
+  color: inherit;
+  max-width: 520px;
+}
+.mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 48px;
+  border-radius: 12px;
+  place-items: center;
+  background: #e83b4a;
+  font-size: 24px;
+  font-weight: 800;
+}
+.card {
+  display: grid;
+  align-self: center;
+  width: min(100%, 400px);
+  margin-inline: auto;
+  box-shadow: 0 20px 50px rgb(23 32 51 / 8%);
+}
+.formContent {
+  width: 100%;
+}
+.submit {
+  margin-bottom: 0;
+}

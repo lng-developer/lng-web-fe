@@ -1,0 +1,83 @@
+.workspace {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.identity :global(.ant-upload-list) {
+  max-width: 150px;
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.identityText span {
+  color: var(--ant-color-text-secondary);
+}
+
+.form {
+  min-width: 0;
+}
+
+.form :global(.ant-form-item) {
+  margin-bottom: 8px;
+}
+
+.form :global(.ant-form-item-label) {
+  padding-bottom: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1fr;
+  gap: 10px;
+}
+
+.section {
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+}
+
+.section h3 {
+  margin: 0 0 8px;
+}
+
+.bankTitle {
+  padding-top: 4px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.twoColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}

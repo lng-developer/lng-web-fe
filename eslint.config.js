@@ -6,16 +6,18 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
+import typescriptEslint from 'typescript-eslint'
 
 export default [
   { ignores: ['dist', 'node_modules', '.husky'] },
   js.configs.recommended,
+  ...typescriptEslint.configs.recommended,
   react.configs.flat.recommended,
   react.configs.flat['jsx-runtime'],
   reactHooks.configs.flat.recommended,
   reactRefresh.configs.vite,
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',

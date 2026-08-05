@@ -1,0 +1,77 @@
+.page {
+  display: flex;
+  min-height: calc(100vh - var(--app-header-height, 64px));
+  flex-direction: column;
+  gap: 24px;
+}
+
+.workspace {
+  display: grid;
+  min-height: 650px;
+  grid-template-columns: minmax(380px, 430px) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.queue,
+.trace,
+.rules,
+.editor {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.queue {
+  height: 650px;
+}
+
+.focus {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.trace {
+  min-height: 420px;
+}
+
+.pipeline {
+  margin: 12px 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.editorWorkspace {
+  display: grid;
+  min-height: 480px;
+  grid-template-columns: minmax(280px, 0.38fr) minmax(480px, 1fr);
+  gap: 20px;
+}
+
+.rules :global(.ant-card-body),
+.editor :global(.ant-card-body),
+.queue :global(.ant-card-body) {
+  height: 100%;
+  overflow: auto;
+}
+
+@media (max-width: 1500px) {
+  .workspace {
+    grid-template-columns: minmax(340px, 0.42fr) minmax(0, 1fr);
+  }
+
+  .editorWorkspace {
+    grid-template-columns: minmax(250px, 0.42fr) minmax(420px, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace,
+  .editorWorkspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .queue {
+    height: auto;
+  }
+}

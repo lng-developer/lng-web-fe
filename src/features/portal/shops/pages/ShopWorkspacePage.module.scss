@@ -1,0 +1,12 @@
+.page {
+  display: grid;
+  gap: 24px;
+}
+
+.filters {
+  min-width: min(100%, 440px);
+}
+
+.statusFilter {
+  width: 180px;
+}

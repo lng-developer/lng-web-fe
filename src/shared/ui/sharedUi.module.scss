@@ -1,0 +1,260 @@
+.selectedCard {
+  border-color: var(--ant-color-primary);
+  box-shadow: 0 0 0 1px var(--ant-color-primary);
+}
+
+.uiTabs :global(.ant-tabs-nav) {
+  margin-bottom: 24px;
+  padding: 4px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+}
+
+.uiTabs :global(.ant-tabs-nav::before) {
+  border-bottom: 0;
+}
+
+.uiTabs :global(.ant-tabs-tab) {
+  padding: 10px 16px;
+  border-radius: 7px;
+  color: var(--ant-color-text-secondary);
+  font-size: 15px;
+  line-height: 20px;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.uiTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+  margin-left: 4px;
+}
+
+.uiTabs :global(.ant-tabs-tab:hover) {
+  background: var(--ant-color-fill-tertiary);
+  color: var(--ant-color-text);
+}
+
+.uiTabs :global(.ant-tabs-tab:active) {
+  transform: translateY(1px);
+}
+
+.uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
+  background: var(--ant-color-primary-bg);
+}
+
+.uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+  color: var(--ant-color-primary);
+  font-weight: 600;
+}
+
+.uiTabs :global(.ant-tabs-ink-bar) {
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uiTabs :global(.ant-tabs-tab) {
+    transition: none;
+  }
+}
+
+:global(.ant-card-head-title) :global(.ant-typography) {
+  margin: 0;
+  font-size: 16px;
+}
+
+.feedbackAlert {
+  display: flex;
+  align-items: flex-start;
+  min-height: 70px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--ant-color-bg-container);
+}
+
+.feedbackToastNotification {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.feedbackToastNotification :global(.ant-notification-notice-message) {
+  margin: 0 !important;
+}
+
+.feedbackIcon {
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.feedbackContent {
+  display: grid;
+  gap: 4px;
+  margin-left: 12px;
+  color: var(--ant-color-text);
+}
+
+.feedbackContent strong {
+  font-weight: 600;
+}
+
+.feedbackContent span {
+  font-size: 13px;
+}
+
+.feedbackAction {
+  margin-left: auto;
+}
+
+.success {
+  border-left: 4px solid var(--ant-color-success);
+  box-shadow: 0 6px 14px rgb(23 26 31 / 8%);
+}
+
+.success .feedbackIcon {
+  color: var(--ant-color-success);
+}
+
+.warning {
+  border: 1px solid var(--ant-color-warning);
+}
+
+.warning .feedbackIcon,
+.warning .feedbackContent strong {
+  color: var(--ant-color-warning);
+}
+
+.error {
+  background: var(--ant-color-error);
+}
+
+.error .feedbackIcon,
+.error .feedbackContent,
+.error .feedbackAction {
+  color: var(--ant-color-text-light-solid);
+}
+
+.error .feedbackAction :global(.ant-btn-link) {
+  padding-inline: 0;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.dataTableToolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dataTable :global(.ant-table-thead > tr > th) {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-alter);
+  color: var(--ant-color-text-heading);
+  text-align: center;
+}
+
+.dataTable :global(.ant-table-container) {
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 10px;
+}
+
+.dataTable :global(.ant-table-thead > tr > th:not(:last-child)),
+.dataTable :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td:not(:last-child)) {
+  border-inline-end: 1px solid var(--ant-color-border-secondary);
+}
+
+.dataTable :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td) {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  text-align: center;
+}
+
+.dataTable :global(.ant-table-expanded-row > .ant-table-cell) {
+  background: var(--ant-color-bg-container);
+  color: var(--ant-color-text);
+}
+
+.loadingState {
+  width: 100%;
+}
+
+.loadingtable {
+  padding: 20px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 12px;
+}
+
+.bulkActionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--ant-color-primary-bg);
+}
+
+.barChart {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  height: 180px;
+}
+
+.barChartItem {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  height: 100%;
+  text-align: center;
+  font-size: 12px;
+}
+
+.barChartTrack {
+  display: flex;
+  align-items: end;
+  height: 100%;
+  border-radius: 6px 6px 2px 2px;
+  background: var(--ant-color-fill-tertiary);
+}
+
+.barChartBar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: inherit;
+  background: var(--ant-color-primary);
+}
+
+.commandList {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.commandItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ant-color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.commandItem:hover,
+.commandItem:focus-visible {
+  background: var(--ant-color-fill-tertiary);
+  outline: 0;
+}
+
+.commandItem small {
+  color: var(--ant-color-text-secondary);
+}

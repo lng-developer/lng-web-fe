@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   quality-gate:
-    name: lint-test-build
+    name: lint-unit-build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -24,5 +24,24 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm run test
+      - run: npm run test:unit
       - run: npm run build
+
+  ui-tests:
+    name: ui-tests-${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/4', '2/4', '3/4', '4/4']
+    env:
+      TZ: Asia/Ho_Chi_Minh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:ui -- --shard=${{ matrix.shard }}

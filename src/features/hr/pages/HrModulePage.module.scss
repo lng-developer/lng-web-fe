@@ -1,0 +1,7 @@
+.page {
+  display: grid;
+  gap: 14px;
+}
+.page > :global(section) {
+  min-width: 0;
+}
