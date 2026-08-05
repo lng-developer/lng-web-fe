@@ -7,17 +7,21 @@ import {
   createInternalTemplate,
   createListing,
   type CreateListingInput,
+  createListingVariant,
   createProductTypeGroup,
   getListing,
   getListingOptions,
   getListingSummary,
   listInternalTemplates,
   listListings,
+  listListingVariants,
   listProductTypeGroups,
   rejectListing,
+  requestListingVariantPsd,
+  setDefaultListingVariant,
   updateListing,
+  updateListingVariant,
   uploadCatalogAsset,
-  uploadListingPsdTemplate,
 } from '@/features/portal/catalog/api/catalogApi'
 import { apiClient } from '@/shared/api'
 
@@ -36,14 +40,13 @@ describe('catalogApi', () => {
       marketplaceCode: 'AMAZON_US',
       sku: 'SKU-1',
       title: 'Shirt',
-      productTypeGroupId: 'group-1',
     }
-    await listListings({ page: 1, limit: 20, search: '', psdReadinessStatus: 'MISSING' })
+    await listListings({ page: 1, limit: 20, search: '' })
     await getListingSummary({ shopId: 'shop-1' })
     await getListing('listing-1')
     await getListingOptions()
     await createListing(createInput)
-    await updateListing('listing-1', { title: 'Updated', productTypeGroupId: 'group-1' })
+    await updateListing('listing-1', { title: 'Updated' })
     await approveListing('listing-1')
     await rejectListing('listing-1', 'Missing setup')
     await listProductTypeGroups({ page: 1, limit: 20 })
@@ -60,10 +63,14 @@ describe('catalogApi', () => {
     })
     const file = new File(['asset'], 'template.psd', { type: 'application/octet-stream' })
     await uploadCatalogAsset(file)
-    await uploadListingPsdTemplate('listing-1', file)
+    await listListingVariants('listing-1')
+    await createListingVariant('listing-1', { productTypeGroupId: 'group-1' })
+    await updateListingVariant('listing-1', 'variant-1', { status: 'INACTIVE' })
+    await setDefaultListingVariant('listing-1', 'variant-1')
+    await requestListingVariantPsd('listing-1', 'variant-1')
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings', {
-      params: { page: 1, limit: 20, psdReadinessStatus: 'MISSING' },
+      params: { page: 1, limit: 20 },
     })
     expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings/summary', {
       params: { shopId: 'shop-1' },
@@ -73,7 +80,6 @@ describe('catalogApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings', createInput)
     expect(apiClient.patch).toHaveBeenCalledWith('/api/catalog/listings/listing-1', {
       title: 'Updated',
-      productTypeGroupId: 'group-1',
     })
     expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/approve')
     expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/reject', {
@@ -90,9 +96,19 @@ describe('catalogApi', () => {
       params: { page: 1, limit: 20 },
     })
     expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/assets', expect.any(FormData))
+    expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings/listing-1/variants')
+    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/variants', {
+      productTypeGroupId: 'group-1',
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith(
+      '/api/catalog/listings/listing-1/variants/variant-1',
+      { status: 'INACTIVE' },
+    )
     expect(apiClient.post).toHaveBeenCalledWith(
-      '/api/catalog/listings/listing-1/psd-template',
-      expect.any(FormData),
+      '/api/catalog/listings/listing-1/variants/variant-1/default',
+    )
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/catalog/listings/listing-1/variants/variant-1/request-psd',
     )
   })
 })

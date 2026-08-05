@@ -5,7 +5,7 @@ import { Form, Input, Modal, Select, Upload } from 'antd'
 
 import type { CreateDesignTaskInput } from '../api/designApi'
 
-const TASK_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE'] as const
+const TASK_TYPES = ['MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE'] as const
 const PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const
 const OUTPUT_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA'] as const
 
@@ -44,7 +44,7 @@ export function CreateDesignTaskModal({
   const { t } = useTranslation()
   const [form] = Form.useForm<FormValues>()
   const [referenceFiles, setReferenceFiles] = useState<UploadFile[]>([])
-  const taskType = Form.useWatch('taskType', form) ?? 'PSD_TEMPLATE'
+  const taskType = Form.useWatch('taskType', form) ?? 'MOCKUP'
   const sourceMode = Form.useWatch('sourceMode', form)
 
   const submit = (values: FormValues) => {
@@ -83,7 +83,7 @@ export function CreateDesignTaskModal({
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ taskType: 'PSD_TEMPLATE', priority: 'NORMAL', expectedOutputs: [] }}
+        initialValues={{ taskType: 'MOCKUP', priority: 'NORMAL', expectedOutputs: [] }}
         onFinish={submit}
         onValuesChange={(changed) => {
           if (changed.taskType !== undefined)

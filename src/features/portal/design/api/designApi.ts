@@ -23,7 +23,13 @@ export type DesignTask = {
   taskType: string
   status: string
   priority: string
-  listing: { sku: string | null; title: string | null; psdStatus: string | null } | null
+  listing: {
+    sku: string | null
+    title: string | null
+    psdStatus: string | null
+    productTypeName: string | null
+  } | null
+  listingVariantId: string | null
   internalTemplate: { code: string | null; name: string | null } | null
   targetListingId: string | null
   assignedDesignerId: string | null
@@ -76,31 +82,9 @@ export type DesignSummary = {
   byStatus: Record<string, number>
   byTaskType: Record<string, number>
 }
-export type PsdCandidate = {
-  id: string
-  sku: string
-  title: string
-  shop?: { id: string; name: string } | null
-}
-export type PsdCandidateParams = {
-  page: number
-  limit: number
-  search?: string
-  shopId?: string
-  salesChannelCode?: string
-  marketplaceCode?: string
-  productTypeGroupId?: string
-}
-export type BulkPsdTaskResult = {
-  checked: number
-  created: number
-  existing: number
-  skipped: number
-  items: Array<{ listingId: string; status: string; message?: string }>
-}
 export type CreateDesignTaskInput = {
   listingId: string
-  taskType: 'PSD_TEMPLATE' | 'MOCKUP' | 'PNG_ASSET' | 'IDEA' | 'CLONE'
+  taskType: 'MOCKUP' | 'PNG_ASSET' | 'IDEA' | 'CLONE'
   priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
   brief?: string
   note?: string
@@ -155,26 +139,12 @@ export const getDesignWorkload = async (params: Omit<DesignListParams, 'page' | 
     totals: { unassignedCount: number; activeCount: number }
     byDesigner: Array<{ assignedDesignerId: string; totalActive: number }>
   }>(await apiClient.get('/api/design/tasks/workload', { params: compact(params) }))
-export const listPsdCandidates = async (params: PsdCandidateParams) =>
-  unwrap<{ items: PsdCandidate[]; pagination: { total: number; page: number; limit: number } }>(
-    await apiClient.get('/api/design/tasks/psd-template/candidates', { params: compact(params) }),
-  )
 export const listPsdFiles = async (params: PsdFileListParams) =>
   unwrap<{ items: PsdFileListItem[]; total: number; page: number; limit: number }>(
     await apiClient.get('/api/design/psd-files', { params: compact(params) }),
   )
-export const createPsdTaskFromListing = async (listingId: string, note?: string) =>
-  unwrap<DesignTask>(
-    await apiClient.post(`/api/design/tasks/from-listings/${listingId}/psd-template`, {
-      ...(note ? { note } : {}),
-    }),
-  )
 export const createDesignTask = async (input: CreateDesignTaskInput) =>
   unwrap<DesignTask>(await apiClient.post('/api/design/tasks', input))
-export const bulkCreatePsdTasks = async (input: { listingIds: string[]; note?: string }) =>
-  unwrap<BulkPsdTaskResult>(
-    await apiClient.post('/api/design/tasks/bulk-create-psd-from-listings', input),
-  )
 export const listDesignSubmissions = async (taskId: string) =>
   unwrap<{ items: DesignSubmission[] }>(
     await apiClient.get(`/api/design/tasks/${taskId}/submissions`),

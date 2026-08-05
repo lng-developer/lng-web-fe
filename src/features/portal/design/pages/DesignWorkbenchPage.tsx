@@ -43,12 +43,9 @@ import {
   approveDesignTask,
   assignDesignTask,
   bulkAssignDesignTasks,
-  bulkCreatePsdTasks,
-  type BulkPsdTaskResult,
   cancelDesignTask,
   createDesignTask,
   type CreateDesignTaskInput,
-  createPsdTaskFromListing,
   type DesignTask,
   getDesignSummary,
   getDesignTask,
@@ -56,7 +53,6 @@ import {
   listDesignAssignees,
   listDesignSubmissions,
   listDesignTasks,
-  listPsdCandidates,
   rejectDesignTask,
   startDesignTask,
   submitDesignTask,
@@ -124,9 +120,6 @@ export function DesignWorkbenchPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [approveOpen, setApproveOpen] = useState(false)
   const [approvedAssetId, setApprovedAssetId] = useState<string>()
-  const [candidateOpen, setCandidateOpen] = useState(false)
-  const [candidateIds, setCandidateIds] = useState<string[]>([])
-  const [candidateResult, setCandidateResult] = useState<BulkPsdTaskResult>()
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
@@ -157,12 +150,6 @@ export function DesignWorkbenchPage() {
   const workload = useQuery({
     queryKey: designKeys.workload(dashboardParams),
     queryFn: () => getDesignWorkload(dashboardParams),
-    retry: false,
-  })
-  const candidates = useQuery({
-    queryKey: designKeys.candidates({ page: 1, limit: 100 }),
-    queryFn: () => listPsdCandidates({ page: 1, limit: 100 }),
-    enabled: candidateOpen,
     retry: false,
   })
   const submissions = useQuery({
@@ -218,20 +205,6 @@ export function DesignWorkbenchPage() {
     },
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not update design task'),
-  })
-  const createCandidates = useMutation({
-    mutationFn: async () =>
-      candidateIds.length === 1
-        ? createPsdTaskFromListing(candidateIds[0])
-        : bulkCreatePsdTasks({ listingIds: candidateIds }),
-    onSuccess: async (result) => {
-      setCandidateIds([])
-      setCandidateResult('items' in result ? result : undefined)
-      await refresh()
-      toast('success', t('portal.design.tasksCreated'))
-    },
-    onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not create tasks'),
   })
   const createTask = useMutation({
     mutationFn: async (draft: CreateDesignTaskDraft) => {
@@ -289,7 +262,14 @@ export function DesignWorkbenchPage() {
     {
       title: t('portal.design.listing'),
       shouldCellUpdate: taskChanged,
-      render: (_, row) => <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>,
+      render: (_, row) => (
+        <Space orientation="vertical" size={0}>
+          <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>
+          {row.listing?.productTypeName ? (
+            <Typography.Text type="secondary">{row.listing.productTypeName}</Typography.Text>
+          ) : null}
+        </Space>
+      ),
     },
     {
       title: t('portal.design.type'),
@@ -411,11 +391,6 @@ export function DesignWorkbenchPage() {
                 onClick={() => setCreateTaskOpen(true)}
               >
                 {t('portal.design.createDesignTask')}
-              </Button>
-            ) : null}
-            {canAssign ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setCandidateOpen(true)}>
-                {t('portal.design.createPsdTasks')}
               </Button>
             ) : null}
             <Button icon={<ReloadOutlined />} onClick={() => void refresh()}>
@@ -601,6 +576,11 @@ export function DesignWorkbenchPage() {
                   children: task.internalTemplate?.name ?? '-',
                 },
                 {
+                  key: 'productType',
+                  label: 'Product type',
+                  children: task.listing?.productTypeName ?? '-',
+                },
+                {
                   key: 'designer',
                   label: 'Designer',
                   children: task.assignedDesigner?.fullName ?? '-',
@@ -777,41 +757,6 @@ export function DesignWorkbenchPage() {
           onChange={(event) => setRejectReason(event.target.value)}
           placeholder={t('portal.design.reasonRequired')}
         />
-      </Modal>
-      <Modal
-        open={candidateOpen}
-        title={t('portal.design.createPsdTasks')}
-        okText={t('portal.design.create')}
-        confirmLoading={createCandidates.isPending}
-        okButtonProps={{ disabled: !candidateIds.length }}
-        onCancel={() => {
-          setCandidateOpen(false)
-          setCandidateIds([])
-          setCandidateResult(undefined)
-        }}
-        onOk={() => createCandidates.mutate()}
-      >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Select
-            mode="multiple"
-            showSearch
-            optionFilterProp="label"
-            style={{ width: '100%' }}
-            value={candidateIds}
-            onChange={setCandidateIds}
-            placeholder={t('portal.design.selectListings')}
-            options={(candidates.data?.items ?? []).map((candidate) => ({
-              value: candidate.id,
-              label: candidate.sku,
-            }))}
-          />
-          {candidateResult?.items.map((item) => (
-            <Typography.Text key={item.listingId}>
-              {item.listingId}: {item.status}
-              {item.message ? ` - ${item.message}` : ''}
-            </Typography.Text>
-          ))}
-        </Space>
       </Modal>
       <Modal
         open={cancelOpen}

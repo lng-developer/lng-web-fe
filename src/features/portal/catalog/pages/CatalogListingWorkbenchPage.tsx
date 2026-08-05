@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import {
-  EyeOutlined,
-  MoreOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
+import { EyeOutlined, MoreOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -20,11 +14,9 @@ import {
   Space,
   Tooltip,
   Typography,
-  Upload,
 } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   DetailDrawer,
@@ -36,7 +28,6 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { designKeys } from '../../design/api/designKeys'
 import {
   approveListing,
   type CatalogListParams,
@@ -50,17 +41,15 @@ import {
   rejectListing,
   updateListing,
   type UpdateListingInput,
-  uploadListingPsdTemplate,
 } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
 import { CatalogListingEditorModal } from './CatalogListingEditorModal'
 import styles from './CatalogListingWorkbenchPage.module.scss'
+import { ListingVariantManager } from './ListingVariantManager'
 
 const PAGE_SIZE = 20
 const qcTone = (status: Listing['qcStatus']) =>
   status === 'APPROVED' ? 'approved' : status === 'REJECTED' ? 'rejected' : 'pending'
-const psdTone = (status?: string) =>
-  status === 'PRESENT' ? 'operational' : status === 'NOT_REQUIRED' ? 'cancelled' : 'warning'
 
 export function CatalogListingWorkbenchPage({
   account: accountProp,
@@ -77,15 +66,10 @@ export function CatalogListingWorkbenchPage({
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
   const [qcStatus, setQcStatus] = useState<string>()
-  const [psdReadinessStatus, setPsdReadinessStatus] =
-    useState<CatalogListParams['psdReadinessStatus']>()
-  const [productTypeGroupId, setProductTypeGroupId] = useState<string>()
   const [selectedId, setSelectedId] = useState<string>()
   const [editing, setEditing] = useState<Listing | 'create'>()
   const [rejectReason, setRejectReason] = useState('')
   const [rejectOpen, setRejectOpen] = useState(false)
-  const [psdUploadTarget, setPsdUploadTarget] = useState<Listing>()
-  const [uploadWarnings, setUploadWarnings] = useState<Array<{ code: string; message: string }>>([])
   const params: CatalogListParams = {
     page,
     limit: PAGE_SIZE,
@@ -93,16 +77,12 @@ export function CatalogListingWorkbenchPage({
     shopId,
     salesChannelCode,
     qcStatus,
-    psdReadinessStatus,
-    productTypeGroupId,
   }
   const summaryParams = {
     search: params.search,
     shopId,
     salesChannelCode,
     qcStatus,
-    psdReadinessStatus,
-    productTypeGroupId,
   }
   const options = useQuery({
     queryKey: catalogKeys.options(),
@@ -184,17 +164,6 @@ export function CatalogListingWorkbenchPage({
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not reject listing'),
   })
-  const uploadPsd = useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) => uploadListingPsdTemplate(id, file),
-    onSuccess: async (result) => {
-      setUploadWarnings(result.warnings ?? [])
-      await Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: designKeys.all })])
-      toast('success', t('portal.catalog.psdUploaded'))
-      if (!result.warnings?.length) setPsdUploadTarget(undefined)
-    },
-    onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not upload PSD'),
-  })
   const resetPage =
     <T,>(setter: (value: T) => void) =>
     (value: T) => {
@@ -202,16 +171,6 @@ export function CatalogListingWorkbenchPage({
       setPage(1)
     }
   const columns: TableColumnsType<Listing> = [
-    {
-      title: t('portal.catalog.columns.preview'),
-      width: 72,
-      render: (_, row) =>
-        row.previewAsset?.previewUrl ? (
-          <img className={styles.preview} src={row.previewAsset.previewUrl} alt="" />
-        ) : (
-          '-'
-        ),
-    },
     {
       title: t('portal.catalog.columns.listing'),
       render: (_, row) => (
@@ -233,28 +192,9 @@ export function CatalogListingWorkbenchPage({
       ),
     },
     {
-      title: t('portal.catalog.columns.productTemplate'),
-      render: (_, row) => (
-        <>
-          {row.productTypeGroup?.name ?? '-'}
-          <br />
-          <Typography.Text type="secondary">{row.internalTemplate?.name ?? '-'}</Typography.Text>
-        </>
-      ),
-    },
-    {
       title: t('portal.catalog.columns.sales'),
       width: 100,
       render: (_, row) => `${row.salesStats.quantitySold} / ${row.salesStats.orderCount}`,
-    },
-    {
-      title: t('portal.catalog.columns.psd'),
-      width: 130,
-      render: (_, row) => (
-        <StatusTag status={psdTone(row.psdReadiness?.status)}>
-          {row.psdReadiness?.status ?? 'MISSING'}
-        </StatusTag>
-      ),
     },
     {
       title: t('portal.catalog.columns.qc'),
@@ -287,7 +227,6 @@ export function CatalogListingWorkbenchPage({
               menu={{
                 items: [
                   { key: 'edit', label: t('portal.catalog.edit') },
-                  { key: 'upload-psd', label: t('portal.catalog.uploadPsd') },
                   ...(row.qcStatus === 'DRAFT'
                     ? [
                         { key: 'approve', label: t('portal.catalog.approve') },
@@ -297,10 +236,6 @@ export function CatalogListingWorkbenchPage({
                 ],
                 onClick: ({ key }) => {
                   if (key === 'edit') void openEdit(row)
-                  if (key === 'upload-psd') {
-                    setUploadWarnings([])
-                    setPsdUploadTarget(row)
-                  }
                   if (key === 'approve')
                     Modal.confirm({
                       title: t('portal.catalog.approve'),
@@ -415,28 +350,6 @@ export function CatalogListingWorkbenchPage({
                   label: value,
                 }))}
               />
-              <Select
-                allowClear
-                className={styles.filter}
-                placeholder={t('portal.catalog.allPsdStatuses')}
-                value={psdReadinessStatus}
-                onChange={resetPage(setPsdReadinessStatus)}
-                options={['MISSING', 'PRESENT', 'NOT_REQUIRED'].map((value) => ({
-                  value,
-                  label: value,
-                }))}
-              />
-              <Select
-                allowClear
-                className={styles.filter}
-                placeholder={t('portal.catalog.allProductTypes')}
-                value={productTypeGroupId}
-                onChange={resetPage(setProductTypeGroupId)}
-                options={(options.data?.productTypeGroups ?? []).map(({ id, name }) => ({
-                  value: id,
-                  label: name,
-                }))}
-              />
             </FilterBar>
           }
         />
@@ -501,61 +414,6 @@ export function CatalogListingWorkbenchPage({
                   children: selected.shop?.name ?? selected.shopId,
                 },
                 {
-                  key: 'product',
-                  label: t('portal.catalog.fields.productType'),
-                  children: selected.productTypeGroup?.name ?? '-',
-                },
-                {
-                  key: 'template',
-                  label: t('portal.catalog.fields.internalTemplate'),
-                  children: selected.internalTemplate?.name ?? '-',
-                },
-                {
-                  key: 'psd',
-                  label: t('portal.catalog.details.psdReadiness'),
-                  children: `${selected.psdReadiness?.status ?? 'MISSING'}${selected.psdReadiness?.source ? ` from ${selected.psdReadiness.source}` : ''}`,
-                },
-                {
-                  key: 'psdAsset',
-                  label: t('portal.catalog.details.psdFile'),
-                  children: selected.psdTemplateAsset?.downloadUrl ? (
-                    <Button
-                      type="link"
-                      onClick={() =>
-                        void downloadMediaAsset(
-                          selected.psdTemplateAsset!.downloadUrl,
-                          selected.psdTemplateAsset!.originalFilename,
-                        )
-                      }
-                    >
-                      {selected.psdTemplateAsset.originalFilename ??
-                        t('portal.catalog.details.download')}
-                    </Button>
-                  ) : (
-                    '-'
-                  ),
-                },
-                {
-                  key: 'previewAsset',
-                  label: t('portal.catalog.details.previewFile'),
-                  children: selected.previewAsset?.downloadUrl ? (
-                    <Button
-                      type="link"
-                      onClick={() =>
-                        void downloadMediaAsset(
-                          selected.previewAsset!.downloadUrl,
-                          selected.previewAsset!.originalFilename,
-                        )
-                      }
-                    >
-                      {selected.previewAsset.originalFilename ??
-                        t('portal.catalog.details.download')}
-                    </Button>
-                  ) : (
-                    '-'
-                  ),
-                },
-                {
                   key: 'cost',
                   label: t('portal.catalog.fields.baseCost'),
                   children: `${selected.baseCostAmount} ${selected.currency}`,
@@ -602,42 +460,19 @@ export function CatalogListingWorkbenchPage({
                 },
               ]}
             />
+            <ListingVariantManager
+              listing={selected}
+              productTypes={options.data?.productTypeGroups ?? []}
+              templates={options.data?.internalTemplates ?? []}
+              canWrite={canWrite(selected)}
+            />
           </div>
         ) : null}
       </DetailDrawer>
-      <Modal
-        open={Boolean(psdUploadTarget)}
-        title={t('portal.catalog.uploadPsd')}
-        footer={null}
-        onCancel={() => setPsdUploadTarget(undefined)}
-      >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Upload.Dragger
-            accept=".psd,.zip,.rar"
-            maxCount={1}
-            showUploadList={false}
-            disabled={uploadPsd.isPending}
-            beforeUpload={(file) => {
-              if (psdUploadTarget) uploadPsd.mutate({ id: psdUploadTarget.id, file })
-              return false
-            }}
-          >
-            <UploadOutlined />
-            <p>{t('portal.catalog.dropPsd')}</p>
-          </Upload.Dragger>
-          {uploadWarnings.map((warning) => (
-            <Typography.Text type="warning" key={warning.code}>
-              {warning.message}
-            </Typography.Text>
-          ))}
-        </Space>
-      </Modal>
       <CatalogListingEditorModal
         open={Boolean(editing)}
         listing={editing === 'create' ? undefined : editing}
         shops={options.data?.shops ?? []}
-        productTypes={options.data?.productTypeGroups ?? []}
-        templates={options.data?.internalTemplates ?? []}
         saving={save.isPending}
         onClose={() => setEditing(undefined)}
         onSubmit={(input) => save.mutate(input)}
