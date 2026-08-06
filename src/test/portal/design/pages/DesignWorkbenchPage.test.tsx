@@ -2,9 +2,21 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
-import { createDesignTask, uploadDesignAsset } from '@/features/portal/design/api/designApi'
+import {
+  createDesignTask,
+  getDesignTask,
+  listDesignTasks,
+  submitDesignTask,
+  uploadDesignAsset,
+} from '@/features/portal/design/api/designApi'
 import { DesignWorkbenchPage } from '@/features/portal/design/pages/DesignWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
+import { uploadMultipartAsset } from '@/shared/media'
+
+vi.mock('@/shared/media', () => ({
+  downloadMediaAsset: vi.fn(),
+  uploadMultipartAsset: vi.fn().mockResolvedValue({ id: 'package-asset', uploadStatus: 'READY' }),
+}))
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
@@ -192,5 +204,36 @@ describe('DesignWorkbenchPage', () => {
     await waitFor(() => expect(uploadDesignAsset).toHaveBeenCalledTimes(1))
     expect(createDesignTask).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Submit new task' })).toBeInTheDocument()
+  }, 15_000)
+
+  it('uploads a PSD package to Wasabi and preview separately before submission', async () => {
+    vi.mocked(listDesignTasks).mockResolvedValueOnce({
+      items: [{
+        id: 'task-1', status: 'IN_PROGRESS', taskType: 'PSD_TEMPLATE', priority: 'HIGH',
+        listing: { sku: 'SKU-1', title: 'Shirt' }, shop: { name: 'Shop' },
+        assignedDesigner: null, updatedAt: '2026-08-01T00:00:00Z',
+      }],
+      pagination: { total: 1 },
+    } as never)
+    vi.mocked(getDesignTask).mockResolvedValueOnce({
+      id: 'task-1', status: 'IN_PROGRESS', taskType: 'PSD_TEMPLATE', expectedOutputs: [], latestSubmission: null,
+    } as never)
+    vi.mocked(uploadDesignAsset).mockResolvedValueOnce({ id: 'preview-asset' } as never)
+
+    render(<AppProviders><DesignWorkbenchPage /></AppProviders>)
+    fireEvent.click(await screen.findByRole('button', { name: 'Submit' }))
+    fireEvent.change(screen.getByLabelText('PSD or ZIP package'), {
+      target: { files: [new File(['psd'], 'package.zip', { type: 'application/zip' })] },
+    })
+    fireEvent.change(screen.getByLabelText('Preview image'), {
+      target: { files: [new File(['image'], 'preview.png', { type: 'image/png' })] },
+    })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Submit' }).at(-1)!)
+
+    await waitFor(() => expect(uploadMultipartAsset).toHaveBeenCalled())
+    expect(uploadDesignAsset).toHaveBeenCalledWith(expect.objectContaining({ name: 'preview.png' }))
+    expect(submitDesignTask).toHaveBeenCalledWith(
+      'task-1', ['package-asset', 'preview-asset'], undefined,
+    )
   }, 15_000)
 })
