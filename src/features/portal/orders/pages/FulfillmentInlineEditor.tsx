@@ -40,6 +40,7 @@ export function FulfillmentInlineEditor({
   const [costCenterId, setCostCenterId] = useState<string>()
   const [vendorSearchDraft, setVendorSearchDraft] = useState('')
   const [vendorSearch, setVendorSearch] = useState('')
+  const productTypeGroupId = item.mapping?.listingVariant?.productTypeGroup?.id ?? undefined
 
   useEffect(() => {
     const timer = window.setTimeout(() => setVendorSearch(vendorSearchDraft), 200)
@@ -54,9 +55,9 @@ export function FulfillmentInlineEditor({
     retry: false,
   })
   const products = useQuery({
-    queryKey: mappingKeys.vendorProducts(vendorId ?? ''),
-    queryFn: () => listMappingVendorProducts(vendorId!),
-    enabled: active && canWrite && Boolean(vendorId),
+    queryKey: mappingKeys.vendorProducts(vendorId ?? '', productTypeGroupId ?? ''),
+    queryFn: () => listMappingVendorProducts(vendorId!, { productTypeGroupId: productTypeGroupId! }),
+    enabled: active && canWrite && Boolean(vendorId && productTypeGroupId),
     staleTime: 5 * 60_000,
     retry: false,
   })

@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/api'
+import { env } from '@/shared/config/env'
 
 type ApiResponse<T> = { success: boolean; data: T }
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -18,17 +19,17 @@ export async function fetchMediaBlob(downloadUrl: string, signal?: AbortSignal) 
 }
 
 export async function downloadMediaAsset(downloadUrl: string, filename?: string) {
-  const blobUrl = URL.createObjectURL(await fetchMediaBlob(downloadUrl))
+  if (!downloadUrl.trim()) throw new Error('Media download URL is required')
+
   const anchor = document.createElement('a')
 
   try {
-    anchor.href = blobUrl
+    anchor.href = new URL(downloadUrl, env.apiBaseUrl || window.location.origin).href
     if (filename) anchor.download = filename
     document.body.append(anchor)
     anchor.click()
   } finally {
     anchor.remove()
-    URL.revokeObjectURL(blobUrl)
   }
 }
 

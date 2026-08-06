@@ -4,7 +4,7 @@ export function orderStatusTone(status?: string | null): StatusTagProps['status'
   if (['SHIPPED', 'DELIVERED', 'FULFILLED'].includes(status ?? '')) return 'operational'
   if (status === 'CANCELLED') return 'cancelled'
   if (['ON_HOLD', 'FAILED', 'ADDRESS_INVALID', 'INVALID'].includes(status ?? '')) return 'critical'
-  if (['READY', 'APPROVED', 'VALID', 'OVERRIDDEN'].includes(status ?? '')) return 'approved'
+  if (['READY', 'APPROVED', 'VALID', 'OVERRIDDEN', 'PRESENT'].includes(status ?? '')) return 'approved'
   return 'pending'
 }
 

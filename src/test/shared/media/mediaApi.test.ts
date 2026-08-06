@@ -17,10 +17,6 @@ import {
 describe('authenticated media API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubGlobal('URL', {
-      createObjectURL: vi.fn(() => 'blob:media'),
-      revokeObjectURL: vi.fn(),
-    })
   })
 
   it('fetches protected media through the authenticated API client', async () => {
@@ -40,21 +36,18 @@ describe('authenticated media API', () => {
     expect(apiClient.get).not.toHaveBeenCalled()
   })
 
-  it('downloads with a temporary object URL and always revokes it', async () => {
-    const blob = new Blob(['media'])
+  it('downloads directly through the authenticated backend URL', async () => {
     const anchor = document.createElement('a')
     const click = vi.spyOn(anchor, 'click').mockImplementation(() => {})
     vi.spyOn(document, 'createElement').mockReturnValue(anchor)
-    vi.mocked(apiClient.get).mockResolvedValue(blob)
 
     await downloadMediaAsset('/api/media/assets/a/download', 'design.psd')
 
-    expect(URL.createObjectURL).toHaveBeenCalledWith(blob)
-    expect(anchor.href).toBe('blob:media')
+    expect(apiClient.get).not.toHaveBeenCalled()
+    expect(anchor.href).toBe('http://localhost:3000/api/media/assets/a/download')
     expect(anchor.download).toBe('design.psd')
     expect(click).toHaveBeenCalledTimes(1)
     expect(anchor.isConnected).toBe(false)
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:media')
   })
 
   it('uses the backend multipart control contract', async () => {

@@ -84,9 +84,6 @@ export type OrderWorkbenchItem = {
   seller: { employeeCode: string | null; name: string | null } | null
   listing: {
     title: string | null
-    previewAsset?: { previewUrl?: string; downloadUrl?: string } | null
-    psdTemplate?: { downloadUrl?: string } | null
-    psdStatus: string | null
   } | null
   customization: {
     status: string | null
@@ -105,6 +102,13 @@ export type OrderWorkbenchItem = {
   } | null
   mapping: {
     status: string | null
+    listingVariant?: {
+      id: string
+      productTypeGroup?: { id?: string | null; code?: string | null; name?: string | null } | null
+      internalTemplate?: { id?: string | null; code?: string | null; name?: string | null } | null
+      psdReadiness?: { status?: string | null } | null
+      psdTemplate?: { downloadUrl?: string | null } | null
+    } | null
     vendor?: { id?: string | null; name: string | null } | null
     vendorProduct?: { id?: string | null; name: string | null } | null
     vendorCostCenter?: {

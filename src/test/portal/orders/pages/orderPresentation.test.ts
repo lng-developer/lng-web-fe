@@ -9,6 +9,7 @@ describe('orderPresentation', () => {
     expect(orderStatusTone('ON_HOLD')).toBe('critical')
     expect(orderStatusTone('INVALID')).toBe('critical')
     expect(orderStatusTone('VALID')).toBe('approved')
+    expect(orderStatusTone('PRESENT')).toBe('approved')
     expect(orderStatusTone('IMPORTED')).toBe('pending')
     expect(formatMinorMoney(1299, 'USD', 'en-US')).toBe('$12.99')
     expect(formatMinorMoney(null, 'USD', 'en-US')).toBe('—')

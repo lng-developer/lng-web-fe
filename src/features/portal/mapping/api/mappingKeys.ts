@@ -17,7 +17,8 @@ export const mappingKeys = {
   candidates: (orderItemId: string, q: string) =>
     [...mappingKeys.all, 'candidates', orderItemId, q] as const,
   vendors: (q: string) => [...mappingKeys.all, 'manual-vendors', q] as const,
-  vendorProducts: (vendorId: string) => [...mappingKeys.all, 'manual-products', vendorId] as const,
+  vendorProducts: (vendorId: string, productTypeGroupId = '') =>
+    [...mappingKeys.all, 'manual-products', vendorId, productTypeGroupId] as const,
   vendorProductOptions: (productId: string, size?: string, color?: string) =>
     [...mappingKeys.all, 'manual-options', productId, size, color] as const,
   rulesRoot: (type: MappingRuleType) => [...mappingKeys.all, 'rules', type] as const,
