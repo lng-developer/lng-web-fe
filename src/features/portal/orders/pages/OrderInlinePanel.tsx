@@ -700,8 +700,10 @@ function OrderItemPanel({
   readonly onHistory: (itemId: string) => void
 }) {
   const { t } = useTranslation()
-  const preview = item.listing?.previewAsset?.previewUrl || item.customization?.previewImageUrl
+  const preview = item.customization?.previewImageUrl
   const customizationImage = item.customization?.inputs.find((input) => input.secureUrl)?.secureUrl
+  const psdStatus = item.mapping?.listingVariant?.psdReadiness?.status
+  const psdDownloadUrl = item.mapping?.listingVariant?.psdTemplate?.downloadUrl
   const canRecheck = item.workflow.nextActions.some((action) => action.startsWith('RECHECK_'))
   const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item.status ?? '')
   return (
@@ -714,15 +716,15 @@ function OrderItemPanel({
           src={preview || customizationImage || undefined}
           fallback="/favicon.svg"
         />
-        <StatusTag status={orderStatusTone(item.listing?.psdStatus)}>
-          PSD {value(item.listing?.psdStatus)}
+        <StatusTag status={orderStatusTone(psdStatus)}>
+          PSD {value(psdStatus)}
         </StatusTag>
-        {item.listing?.psdTemplate?.downloadUrl ? (
+        {psdDownloadUrl ? (
           <Button
             size="small"
             icon={<DownloadOutlined />}
             onClick={() =>
-              void downloadMediaAsset(item.listing!.psdTemplate!.downloadUrl!, 'template.psd')
+              void downloadMediaAsset(psdDownloadUrl, 'template.psd')
             }
           >
             PSD

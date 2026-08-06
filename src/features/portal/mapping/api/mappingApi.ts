@@ -310,9 +310,12 @@ export async function searchMappingVendors(params: { q?: string; limit?: number 
     await apiClient.get('/api/mapping/vendors', { params: compact(params) }),
   )
 }
-export async function listMappingVendorProducts(vendorId: string) {
+export async function listMappingVendorProducts(
+  vendorId: string,
+  params: { productTypeGroupId: string },
+) {
   return unwrap<MappingVendorProduct[]>(
-    await apiClient.get(`/api/mapping/vendors/${vendorId}/products`),
+    await apiClient.get(`/api/mapping/vendors/${vendorId}/products`, { params }),
   )
 }
 export async function getMappingVendorProductOptions(

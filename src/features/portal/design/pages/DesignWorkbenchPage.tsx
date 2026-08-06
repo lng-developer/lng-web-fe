@@ -19,6 +19,7 @@ import {
   Dropdown,
   Input,
   Modal,
+  Progress,
   Select,
   Space,
   Tooltip,
@@ -28,7 +29,7 @@ import {
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions, listListings } from '@/features/portal/catalog/api/catalogApi'
-import { downloadMediaAsset } from '@/shared/media'
+import { downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
 import {
   DataTable,
   DetailDrawer,
@@ -115,6 +116,10 @@ export function DesignWorkbenchPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [submitOpen, setSubmitOpen] = useState(false)
   const [files, setFiles] = useState<UploadFile[]>([])
+  const [packageFile, setPackageFile] = useState<File>()
+  const [previewFile, setPreviewFile] = useState<File>()
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadController, setUploadController] = useState<AbortController>()
   const [note, setNote] = useState('')
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
@@ -179,6 +184,22 @@ export function DesignWorkbenchPage() {
       if (type === 'approve') return approveDesignTask(task.id, approvedAssetId!)
       if (type === 'reject') return rejectDesignTask(task.id, rejectReason.trim())
       if (type === 'cancel') return cancelDesignTask(task.id, cancelReason.trim())
+      if (task.taskType === 'PSD_TEMPLATE') {
+        if (!packageFile) throw new Error(t('portal.design.designPackageRequired'))
+        const controller = new AbortController()
+        setUploadController(controller)
+        const packageAsset = await uploadMultipartAsset(packageFile, {
+          assetPurpose: 'DESIGN_PACKAGE',
+          signal: controller.signal,
+          onProgress: setUploadProgress,
+        })
+        const previewAsset = previewFile ? await uploadDesignAsset(previewFile) : undefined
+        return submitDesignTask(
+          task.id,
+          [packageAsset.id, ...(previewAsset ? [previewAsset.id] : [])],
+          note.trim() || undefined,
+        )
+      }
       const assets = await Promise.all(
         files.map(({ originFileObj }) => uploadDesignAsset(originFileObj as File)),
       )
@@ -195,6 +216,10 @@ export function DesignWorkbenchPage() {
       setApproveOpen(false)
       setApprovedAssetId(undefined)
       setFiles([])
+      setPackageFile(undefined)
+      setPreviewFile(undefined)
+      setUploadProgress(0)
+      setUploadController(undefined)
       setNote('')
       setRejectReason('')
       setCancelReason('')
@@ -712,28 +737,66 @@ export function DesignWorkbenchPage() {
         title={t('portal.design.submitFiles')}
         okText={t('portal.design.submit')}
         confirmLoading={action.isPending}
-        okButtonProps={{ disabled: !files.length }}
+        okButtonProps={{
+          disabled: activeTask?.taskType === 'PSD_TEMPLATE' ? !packageFile : !files.length,
+        }}
         onCancel={() => {
+          uploadController?.abort()
           setSubmitOpen(false)
           setActiveTask(undefined)
         }}
         onOk={() => activeTask && action.mutate({ type: 'submit', task: activeTask })}
       >
         <Space direction="vertical" style={{ width: '100%' }}>
-          <Upload.Dragger
-            multiple
-            fileList={files}
-            beforeUpload={(file) => {
-              setFiles((current) => [...current, file])
-              return false
-            }}
-            onRemove={(file) =>
-              setFiles((current) => current.filter(({ uid }) => uid !== file.uid))
-            }
-          >
-            <UploadOutlined />
-            <p>{t('portal.design.dropFiles')}</p>
-          </Upload.Dragger>
+          {activeTask?.taskType === 'PSD_TEMPLATE' ? (
+            <>
+              <label>
+                <Typography.Text strong>{t('portal.design.designPackage')}</Typography.Text>
+                <input
+                  aria-label={t('portal.design.designPackage')}
+                  type="file"
+                  accept=".psd,.zip"
+                  disabled={action.isPending}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (!file) return
+                    if (file.size > 2 * 1024 * 1024 * 1024) {
+                      toast('error', t('portal.design.designPackageTooLarge'))
+                      event.target.value = ''
+                      return
+                    }
+                    setPackageFile(file)
+                  }}
+                />
+              </label>
+              <label>
+                <Typography.Text strong>{t('portal.design.previewImage')}</Typography.Text>
+                <input
+                  aria-label="Preview image"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={action.isPending}
+                  onChange={(event) => setPreviewFile(event.target.files?.[0])}
+                />
+              </label>
+              {action.isPending ? <Progress percent={uploadProgress} /> : null}
+            </>
+          ) : (
+            <Upload.Dragger
+              multiple
+              fileList={files}
+              beforeUpload={(file) => {
+                setFiles((current) => [...current, file])
+                return false
+              }}
+              onRemove={(file) =>
+                setFiles((current) => current.filter(({ uid }) => uid !== file.uid))
+              }
+            >
+              <UploadOutlined />
+              <p>{t('portal.design.dropFiles')}</p>
+            </Upload.Dragger>
+          )}
           <Input.TextArea
             rows={3}
             value={note}

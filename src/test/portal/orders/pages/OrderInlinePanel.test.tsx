@@ -63,10 +63,15 @@ const row: OrderWorkbenchRow = {
       seller: { employeeCode: 'J2501', name: 'Seller' },
       listing: {
         title: 'Listing product title',
-        psdStatus: null,
       },
       customization: null,
-      mapping: null,
+      mapping: {
+        status: 'BLOCKED',
+        listingVariant: {
+          id: 'variant-1',
+          productTypeGroup: { id: 'group-1' },
+        },
+      },
       pricing: { customerPaidAmount: 0, baseCostAmount: null, currency: 'USD' },
       production: null,
       tracking: null,
@@ -129,6 +134,26 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByText(/Austin/)).not.toBeInTheDocument()
     expect(screen.queryByText('Long marketplace product title')).not.toBeInTheDocument()
     expect(screen.queryByText('Listing product title')).not.toBeInTheDocument()
+  })
+
+  it('shows PSD readiness from the resolved listing variant', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [{
+        ...row.items[0],
+        mapping: {
+          status: 'BLOCKED',
+          listingVariant: {
+            id: 'variant-1',
+            psdReadiness: { status: 'PRESENT' },
+            psdTemplate: { downloadUrl: '/api/media/assets/asset-1/download' },
+          },
+        },
+      }],
+    })
+
+    expect(screen.getByText('PSD PRESENT')).toBeInTheDocument()
+    expect(screen.queryByText('PSD MISSING')).not.toBeInTheDocument()
   })
 
   it('keeps order-level actions out of the expanded detail', () => {
@@ -273,7 +298,9 @@ describe('OrderInlinePanel', () => {
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
     fireEvent.click(await screen.findByText('Vendor One'))
-    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1'))
+    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
+      productTypeGroupId: 'group-1',
+    }))
     expect(screen.queryByRole('button', { name: 'orders.actions.apply' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('orders.fields.product')).toBeEnabled()
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
@@ -366,12 +393,26 @@ describe('OrderInlinePanel', () => {
     expect((await screen.findAllByText('Forbidden')).length).toBeGreaterThan(0)
   })
 
-  it('loads every product after choosing a manually searched vendor', async () => {
-    renderPanel()
+  it('loads products for the listing variant product type after choosing a vendor', async () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [{
+        ...row.items[0],
+        mapping: {
+          status: 'BLOCKED',
+          listingVariant: {
+            id: 'variant-1',
+            productTypeGroup: { id: 'group-1' },
+          },
+        },
+      }],
+    })
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
     fireEvent.click(await screen.findByText('Vendor One'))
-    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1'))
+    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
+      productTypeGroupId: 'group-1',
+    }))
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
 
     expect(await screen.findByText('Product Two')).toBeInTheDocument()
