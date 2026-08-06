@@ -1,4 +1,5 @@
 export { AuthenticatedMediaImage } from './AuthenticatedMediaImage'
+export type { MultipartAsset, MultipartPart, MultipartPurpose } from './mediaApi'
 export {
   abortMultipartUpload,
   completeMultipartUpload,
@@ -7,6 +8,5 @@ export {
   initiateMultipartUpload,
   presignMultipartParts,
 } from './mediaApi'
-export type { MultipartAsset, MultipartPart, MultipartPurpose } from './mediaApi'
 export { uploadMultipartAsset } from './uploadMultipartAsset'
 export { useAuthenticatedMediaUrl } from './useAuthenticatedMediaUrl'

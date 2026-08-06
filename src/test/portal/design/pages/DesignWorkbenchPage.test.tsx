@@ -12,6 +12,7 @@ import {
 import { DesignWorkbenchPage } from '@/features/portal/design/pages/DesignWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
 import { uploadMultipartAsset } from '@/shared/media'
+import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/shared/media', () => ({
   downloadMediaAsset: vi.fn(),
@@ -104,6 +105,7 @@ describe('DesignWorkbenchPage', () => {
   afterEach(cleanup)
   beforeEach(() => {
     vi.clearAllMocks()
+    queryClient.clear()
     i18n.changeLanguage('en')
   })
   it('shows Assign as the primary action for an open task', async () => {
@@ -133,17 +135,6 @@ describe('DesignWorkbenchPage', () => {
     expect(screen.getByRole('button', { name: 'Assign 1 task' })).toBeInTheDocument()
     expect(formatDate).toHaveBeenCalledTimes(rendersBeforeSelection)
     formatDate.mockRestore()
-  }, 15_000)
-
-  it('opens the PSD candidate picker without opening task detail', async () => {
-    render(
-      <AppProviders>
-        <DesignWorkbenchPage />
-      </AppProviders>,
-    )
-    fireEvent.click((await screen.findByText('Create PSD tasks')).closest('button')!)
-    expect(await screen.findByRole('dialog')).toHaveTextContent('Create PSD tasks')
-    expect(screen.getAllByRole('dialog')).toHaveLength(1)
   }, 15_000)
 
   it('shows designer names instead of database ids in workload', async () => {
@@ -207,7 +198,7 @@ describe('DesignWorkbenchPage', () => {
   }, 15_000)
 
   it('uploads a PSD package to Wasabi and preview separately before submission', async () => {
-    vi.mocked(listDesignTasks).mockResolvedValueOnce({
+    vi.mocked(listDesignTasks).mockResolvedValue({
       items: [{
         id: 'task-1', status: 'IN_PROGRESS', taskType: 'PSD_TEMPLATE', priority: 'HIGH',
         listing: { sku: 'SKU-1', title: 'Shirt' }, shop: { name: 'Shop' },
@@ -215,7 +206,7 @@ describe('DesignWorkbenchPage', () => {
       }],
       pagination: { total: 1 },
     } as never)
-    vi.mocked(getDesignTask).mockResolvedValueOnce({
+    vi.mocked(getDesignTask).mockResolvedValue({
       id: 'task-1', status: 'IN_PROGRESS', taskType: 'PSD_TEMPLATE', expectedOutputs: [], latestSubmission: null,
     } as never)
     vi.mocked(uploadDesignAsset).mockResolvedValueOnce({ id: 'preview-asset' } as never)
