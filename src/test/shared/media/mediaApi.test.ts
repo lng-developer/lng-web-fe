@@ -2,10 +2,17 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn() } }))
+vi.mock('@/shared/api', () => ({ apiClient: { delete: vi.fn(), get: vi.fn(), post: vi.fn() } }))
 
 import { apiClient } from '@/shared/api'
-import { downloadMediaAsset, fetchMediaBlob } from '@/shared/media'
+import {
+  abortMultipartUpload,
+  completeMultipartUpload,
+  downloadMediaAsset,
+  fetchMediaBlob,
+  initiateMultipartUpload,
+  presignMultipartParts,
+} from '@/shared/media'
 
 describe('authenticated media API', () => {
   beforeEach(() => {
@@ -48,5 +55,28 @@ describe('authenticated media API', () => {
     expect(click).toHaveBeenCalledTimes(1)
     expect(anchor.isConnected).toBe(false)
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:media')
+  })
+
+  it('uses the backend multipart control contract', async () => {
+    vi.mocked(apiClient.post)
+      .mockResolvedValueOnce({ success: true, data: { assetId: 'asset-1', partSize: 64, totalParts: 2 } })
+      .mockResolvedValueOnce({ success: true, data: { parts: [{ partNumber: 1, url: 'signed' }] } })
+      .mockResolvedValueOnce({ success: true, data: { id: 'asset-1', uploadStatus: 'READY' } })
+    vi.mocked(apiClient.delete).mockResolvedValue({ success: true, data: { id: 'asset-1', uploadStatus: 'ABORTED' } })
+
+    await expect(initiateMultipartUpload({
+      filename: 'package.zip', mimeType: 'application/zip', size: 100, assetPurpose: 'DESIGN_PACKAGE',
+    })).resolves.toMatchObject({ assetId: 'asset-1' })
+    await expect(presignMultipartParts('asset-1', [1])).resolves.toEqual([{ partNumber: 1, url: 'signed' }])
+    await expect(completeMultipartUpload('asset-1', [{ partNumber: 1, etag: 'etag' }]))
+      .resolves.toMatchObject({ uploadStatus: 'READY' })
+    await abortMultipartUpload('asset-1')
+
+    expect(apiClient.post).toHaveBeenNthCalledWith(1, '/api/media/multipart/initiate', expect.any(Object))
+    expect(apiClient.post).toHaveBeenNthCalledWith(2, '/api/media/multipart/asset-1/presign-parts', { partNumbers: [1] })
+    expect(apiClient.post).toHaveBeenNthCalledWith(3, '/api/media/multipart/asset-1/complete', {
+      parts: [{ partNumber: 1, etag: 'etag' }],
+    })
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/media/multipart/asset-1')
   })
 })
