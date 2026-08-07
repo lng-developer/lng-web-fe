@@ -12,7 +12,17 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 }))
 
 vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
-  listListingVariants: vi.fn().mockResolvedValue([]),
+  listListingVariants: vi.fn().mockResolvedValue([
+    {
+      id: 'variant-1',
+      listingId: 'listing-1',
+      productTypeGroup: { id: 'type-1', name: 'Unisex Hoodie' },
+      internalTemplate: { id: 'template-1', code: 'HD-01', name: 'Hoodie Master' },
+      psdReadiness: { status: 'MISSING' },
+      previewAssetId: null,
+      status: 'ACTIVE',
+    },
+  ]),
   getListingOptions: vi
     .fn()
     .mockResolvedValue({ shops: [], productTypeGroups: [], internalTemplates: [] }),
@@ -21,9 +31,16 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
       {
         id: 'listing-1',
         shopId: 'shop-1',
+        shop: { id: 'shop-1', name: 'Amazon US' },
         sku: 'SKU-1',
+        asin: 'B0TEST123',
+        etsyListingId: null,
         title: 'Shirt',
         salesChannelCode: 'AMAZON',
+        marketplaceCode: 'US',
+        defaultVariantId: 'variant-1',
+        status: 'ACTIVE',
+        costCenterStatus: 'READY',
         productTypeGroup: null,
         internalTemplate: null,
         salesStats: { quantitySold: 0, orderCount: 0 },
@@ -59,6 +76,11 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
   updateListing: vi.fn(),
   approveListing: vi.fn(),
   rejectListing: vi.fn(),
+  requestListingVariantPsd: vi.fn().mockResolvedValue({ id: 'task-1' }),
+  setDefaultListingVariant: vi.fn(),
+  createListingVariant: vi.fn(),
+  updateListingVariant: vi.fn(),
+  uploadCatalogAsset: vi.fn(),
   uploadListingPsdTemplate: vi.fn(),
 }))
 
@@ -77,5 +99,22 @@ describe('CatalogListingWorkbenchPage', () => {
     expect(action).toHaveTextContent('')
     fireEvent.click(action)
     await waitFor(() => expect(screen.getByRole('dialog')).toHaveTextContent('SKU-1'))
+  }, 15_000)
+
+  it('shows variants and Request PSD inline without listing title or QC column', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('Unisex Hoodie')).toBeInTheDocument()
+    expect(screen.getByText('Hoodie Master')).toBeInTheDocument()
+    expect(screen.getByText('B0TEST123')).toBeInTheDocument()
+    expect(screen.getByText('Default')).toBeInTheDocument()
+    expect(screen.getByText('Variants (1)')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Request PSD' })).toBeInTheDocument()
+    expect(screen.queryByText('Shirt')).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'QC' })).not.toBeInTheDocument()
   }, 15_000)
 })

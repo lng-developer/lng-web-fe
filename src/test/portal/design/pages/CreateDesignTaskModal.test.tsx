@@ -33,6 +33,25 @@ describe('CreateDesignTaskModal', () => {
   })
   beforeEach(() => i18n.changeLanguage('en'))
 
+  it('creates MOCKUP with its output automatically', async () => {
+    openModal()
+    await selectOption('Listing', 'SKU-1')
+    expect(screen.queryByLabelText('Expected outputs')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ taskType: 'MOCKUP', expectedOutputs: ['MOCKUP'] }),
+      ),
+    )
+  })
+
+  it('does not offer PSD as a generic task output', async () => {
+    openModal()
+    await selectOption('Task type', 'IDEA')
+    fireEvent.mouseDown(await screen.findByLabelText('Expected outputs'))
+    expect(screen.queryByText('PSD_TEMPLATE')).not.toBeInTheDocument()
+  })
+
   it('requires a brief for an IDEA task', async () => {
     openModal()
     await selectOption('Task type', 'IDEA')

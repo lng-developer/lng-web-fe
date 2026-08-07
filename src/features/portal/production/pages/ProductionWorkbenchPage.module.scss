@@ -75,36 +75,155 @@
 
 .inlineWorkspace {
   display: grid;
-  grid-template-columns: minmax(180px, 0.7fr) minmax(220px, 1fr) minmax(200px, 0.8fr) minmax(
-      300px,
-      1.2fr
+  grid-template-areas: 'product customization task output';
+  grid-template-columns: minmax(230px, 0.7fr) minmax(300px, 0.95fr) minmax(250px, 0.75fr) minmax(
+      400px,
+      1.35fr
     );
-  gap: 16px;
-  padding: 16px;
-  background: var(--ant-color-fill-quaternary);
+  gap: 12px;
+  padding: 14px;
+  background: var(--ant-color-bg-layout);
 }
 
 .inlineSection {
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 14px;
   min-width: 0;
-}
-
-.productPreview {
-  width: 88px;
-  height: 88px;
-  object-fit: contain;
+  padding: 16px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius-lg);
   background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ant-color-text) 5%, transparent);
+}
+
+.taskMeta {
+  display: grid;
+  grid-area: task;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ant-color-text) 5%, transparent);
+}
+
+.metaItem {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.noteEditor {
+  display: grid;
+  gap: 8px;
+}
+
+.noteEditor :global(.ant-btn) {
+  justify-self: end;
+}
+
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.optionGrid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.csNote {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.notesSummary {
+  display: grid;
+  gap: 12px;
+}
+
+.notesSummary > div {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.productContext {
+  grid-area: product;
+}
+
+.productContext .sectionHeader strong {
+  white-space: nowrap;
+}
+
+.productActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.customizationSection {
+  grid-area: customization;
+}
+
+.outputSection {
+  grid-area: output;
+}
+
+.productIdentifiers {
+  display: grid;
+  gap: 8px;
+}
+
+.productIdentifiers > div {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.sectionHeader > div {
+  display: grid;
+  gap: 2px;
+}
+
+.customizationList {
+  display: grid;
+  max-height: 430px;
+  overflow: auto;
 }
 
 .inputValue {
   display: grid;
-  grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1.25fr);
-  gap: 8px;
-  font-size: 12px;
+  grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1.1fr);
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  font-size: 13px;
+}
+
+.inputValue:last-child {
+  border-bottom: 0;
 }
 
 .inlineSlots {
@@ -114,13 +233,138 @@
 
 .inlineSlot {
   display: grid;
-  grid-template-columns: minmax(130px, 1fr) auto auto;
-  align-items: center;
   gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.slotHeader,
+.slotActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.slotActions {
+  justify-content: flex-end;
+}
+
+.slotOutput {
+  display: grid;
+  grid-template-rows: auto 150px;
+  gap: 6px;
+  min-width: 0;
+}
+
+.slotOutput img,
+.slotOutput > span:last-child {
+  width: 100%;
+  height: 150px;
+  object-fit: contain;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-md);
+  background: var(--ant-color-bg-container);
+}
+
+.slotOutput > span:last-child {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  color: var(--ant-color-text-tertiary);
+  text-align: center;
+}
+
+.outputPlaceholder {
+  border-style: dashed !important;
+}
+
+.rejectionNote {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--ant-color-warning-border);
+  border-radius: var(--ant-border-radius-md);
+  background: var(--ant-color-warning-bg);
+}
+
+.inspector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  height: 72vh;
+}
+
+.inspectToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.zoomRange {
+  width: 220px;
+}
+
+.colorControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colorControl input {
+  width: 36px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.inspectPanel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
   padding: 12px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius-lg);
-  background: var(--ant-color-bg-container);
+  background: var(--inspect-background, #f2f3f5);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.inspectPanel:active {
+  cursor: grabbing;
+}
+
+.inspectPanel img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  transform-origin: center;
+  user-select: none;
+}
+
+.pannableImage {
+  pointer-events: none;
+  transform: translate(var(--inspect-pan-x, 0), var(--inspect-pan-y, 0))
+    scale(var(--inspect-scale, 1));
+  will-change: transform;
+}
+
+.inspectDecisionBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .queueList {
@@ -337,48 +581,6 @@
   object-fit: contain;
 }
 
-.inspector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  height: 65vh;
-  background: var(--ant-color-border-secondary);
-  overflow: hidden;
-}
-
-.canvas {
-  position: relative;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: var(--ant-color-bg-layout);
-  cursor: grab;
-  touch-action: none;
-}
-
-.canvas:active {
-  cursor: grabbing;
-}
-
-.canvas img {
-  max-width: none;
-  user-select: none;
-  transform-origin: center;
-}
-
-.pannableImage {
-  pointer-events: none;
-  will-change: transform;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
 .assignmentBar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -412,6 +614,9 @@
 
 @media (max-width: 1280px) {
   .inlineWorkspace {
+    grid-template-areas:
+      'product customization'
+      'task output';
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -433,8 +638,7 @@
     min-height: 240px;
   }
 
-  .slotFiles,
-  .inspector {
+  .slotFiles {
     grid-template-columns: 1fr;
   }
 
@@ -445,6 +649,23 @@
   .inlineWorkspace,
   .inlineSlot {
     grid-template-columns: 1fr;
+  }
+
+  .inlineWorkspace {
+    grid-template-areas:
+      'product'
+      'customization'
+      'task'
+      'output';
+  }
+
+  .inspector {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .inspectPanel {
+    min-height: 360px;
   }
 }
 
@@ -458,13 +679,25 @@
     width: 100%;
   }
 
-  .taskHeader,
-  .toolbar {
+  .taskHeader {
     align-items: stretch;
     flex-direction: column;
   }
 
+  .inspectToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inspectDecisionBar {
+    grid-template-columns: 1fr;
+  }
+
   .assignmentBar {
     grid-template-columns: 1fr;
+  }
+
+  .metaItem {
+    padding-bottom: 10px;
   }
 }

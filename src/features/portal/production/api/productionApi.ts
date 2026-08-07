@@ -21,6 +21,7 @@ export type FileCheck = {
   required: boolean
   outputRequired?: boolean
   inputAssetDownloadUrl: string | null
+  inputImageName?: string | null
   outputAssetDownloadUrl: string | null
   outputStatus: string
   qcStatus: QcStatus
@@ -51,7 +52,12 @@ export type ProductionTask = {
   productImageUrl?: string | null
   readyAt: string | null
   updatedAt: string
-  orderItem?: { externalOrderId?: string | null; sku?: string | null; title?: string | null }
+  orderItem?: {
+    externalOrderId?: string | null
+    asin?: string | null
+    sku?: string | null
+    title?: string | null
+  }
   order?: { id?: string | null }
   shop?: { id?: string | null; name?: string | null }
   shopId?: string | null
@@ -62,13 +68,27 @@ export type ProductionTask = {
   vendorSubmission?: { id: string; status: string; failureReason?: string | null }
   scaleContext?: ProductionScaleContext
   customization?: ProductionCustomization | null
+  vendorProduct?: {
+    id?: string | null
+    code?: string | null
+    name?: string | null
+    vendor?: string | { name?: string | null } | null
+  } | null
+  vendorCostCenter?: {
+    id?: string | null
+    code?: string | null
+    name?: string | null
+    standardSize?: string | null
+    standardColor?: string | null
+  } | null
+  fulfillQty?: number | null
 }
 export type ProductionList = { items: ProductionTask[]; total: number; page: number; limit: number }
 export type ProductionSummary = Record<string, number>
 export type ProductionParams = {
   page: number
   limit: number
-  view?: 'QC'
+  view?: 'SCALE' | 'QC'
   search?: string
   status?: ProductionStatus
   qcStatus?: QcStatus

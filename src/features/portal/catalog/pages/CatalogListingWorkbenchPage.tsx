@@ -12,6 +12,7 @@ import {
   Modal,
   Select,
   Space,
+  Tag,
   Tooltip,
   Typography,
 } from 'antd'
@@ -24,7 +25,6 @@ import {
   FilterBar,
   PageHeader,
   SectionCard,
-  StatusTag,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -38,7 +38,9 @@ import {
   getListingSummary,
   type Listing,
   listListings,
+  listListingVariants,
   rejectListing,
+  requestListingVariantPsd,
   updateListing,
   type UpdateListingInput,
 } from '../api/catalogApi'
@@ -48,8 +50,94 @@ import styles from './CatalogListingWorkbenchPage.module.scss'
 import { ListingVariantManager } from './ListingVariantManager'
 
 const PAGE_SIZE = 20
-const qcTone = (status: Listing['qcStatus']) =>
-  status === 'APPROVED' ? 'approved' : status === 'REJECTED' ? 'rejected' : 'pending'
+
+function InlineListingVariants({ listing, canWrite }: { listing: Listing; canWrite: boolean }) {
+  const queryClient = useQueryClient()
+  const toast = useFeedbackToast()
+  const variants = useQuery({
+    queryKey: catalogKeys.variants(listing.id),
+    queryFn: () => listListingVariants(listing.id),
+  })
+  const requestPsd = useMutation({
+    mutationFn: (variantId: string) => requestListingVariantPsd(listing.id, variantId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: catalogKeys.variants(listing.id) })
+      toast('success', 'PSD task requested')
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : 'Could not request PSD'),
+  })
+
+  return (
+    <div className={styles.inlineVariants}>
+      <div className={styles.variantHeader}>
+        <Typography.Text strong>Variants ({variants.data?.length ?? 0})</Typography.Text>
+        <Typography.Text type="secondary">Production setup by product type</Typography.Text>
+      </div>
+      <div className={styles.variantColumns} aria-hidden="true">
+        <span>Product type</span>
+        <span>Internal template</span>
+        <span>Variant</span>
+        <span>PSD readiness</span>
+        <span>Action</span>
+      </div>
+      {variants.isLoading ? (
+        <Typography.Text type="secondary">Loading variants...</Typography.Text>
+      ) : null}
+      {(variants.data ?? []).map((variant) => {
+        const isDefault = listing.defaultVariantId === variant.id
+        return (
+          <div className={styles.inlineVariant} key={variant.id}>
+            <div>
+              <Typography.Text strong>{variant.productTypeGroup.name}</Typography.Text>
+              {variant.productTypeGroup.code ? (
+                <Typography.Text className={styles.cellMeta} type="secondary">
+                  {variant.productTypeGroup.code}
+                </Typography.Text>
+              ) : null}
+            </div>
+            <div>
+              <Typography.Text>
+                {variant.internalTemplate?.name ?? 'Not configured'}
+              </Typography.Text>
+              {variant.internalTemplate?.code ? (
+                <Typography.Text className={styles.cellMeta} type="secondary">
+                  {variant.internalTemplate.code}
+                </Typography.Text>
+              ) : null}
+            </div>
+            <Space size={4} wrap>
+              <Tag color={variant.status === 'ACTIVE' ? 'green' : 'default'}>{variant.status}</Tag>
+              {isDefault ? <Tag color="blue">Default</Tag> : null}
+            </Space>
+            <Tag color={variant.psdReadiness.status === 'PRESENT' ? 'green' : 'orange'}>
+              PSD {variant.psdReadiness.status.toLowerCase().replace('_', ' ')}
+            </Tag>
+            <div>
+              {canWrite && variant.psdReadiness.status === 'MISSING' ? (
+                <Button
+                  size="small"
+                  loading={requestPsd.isPending && requestPsd.variables === variant.id}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    requestPsd.mutate(variant.id)
+                  }}
+                >
+                  Request PSD
+                </Button>
+              ) : (
+                <Typography.Text type="secondary">Ready</Typography.Text>
+              )}
+            </div>
+          </div>
+        )
+      })}
+      {!variants.isLoading && variants.data?.length === 0 ? (
+        <Typography.Text type="secondary">No variants configured</Typography.Text>
+      ) : null}
+    </div>
+  )
+}
 
 export function CatalogListingWorkbenchPage({
   account: accountProp,
@@ -173,33 +261,54 @@ export function CatalogListingWorkbenchPage({
   const columns: TableColumnsType<Listing> = [
     {
       title: t('portal.catalog.columns.listing'),
+      width: 280,
       render: (_, row) => (
-        <>
+        <div className={styles.listingIdentity}>
           <Typography.Text strong>{row.sku}</Typography.Text>
-          <br />
-          <Typography.Text type="secondary">{row.title}</Typography.Text>
-        </>
+          <Space size={6} wrap>
+            <Typography.Text type="secondary">{row.asin ? 'ASIN' : 'Etsy ID'}</Typography.Text>
+            <Typography.Text copyable>{row.asin ?? row.etsyListingId ?? '-'}</Typography.Text>
+          </Space>
+        </div>
       ),
     },
     {
       title: t('portal.catalog.columns.shopChannel'),
       render: (_, row) => (
-        <>
-          {row.shop?.name ?? row.shopId}
-          <br />
-          <Typography.Text type="secondary">{row.salesChannelCode}</Typography.Text>
-        </>
+        <div className={styles.listingIdentity}>
+          <Typography.Text strong>{row.shop?.name ?? row.shopId}</Typography.Text>
+          <Space size={4} wrap>
+            <Tag>{row.salesChannelCode}</Tag>
+            <Typography.Text type="secondary">{row.marketplaceCode}</Typography.Text>
+          </Space>
+        </div>
+      ),
+    },
+    {
+      title: 'Setup',
+      width: 170,
+      render: (_, row) => (
+        <Space size={4} wrap>
+          <Tag color={row.status === 'ACTIVE' ? 'green' : 'default'}>{row.status}</Tag>
+          <Tag color={row.costCenterStatus === 'READY' ? 'blue' : 'gold'}>
+            {row.costCenterStatus}
+          </Tag>
+        </Space>
       ),
     },
     {
       title: t('portal.catalog.columns.sales'),
-      width: 100,
-      render: (_, row) => `${row.salesStats.quantitySold} / ${row.salesStats.orderCount}`,
-    },
-    {
-      title: t('portal.catalog.columns.qc'),
-      width: 110,
-      render: (_, row) => <StatusTag status={qcTone(row.qcStatus)}>{row.qcStatus}</StatusTag>,
+      width: 150,
+      render: (_, row) => (
+        <div className={styles.salesStats}>
+          <span>
+            <strong>{row.salesStats.quantitySold}</strong> quantity
+          </span>
+          <span>
+            <strong>{row.salesStats.orderCount}</strong> orders
+          </span>
+        </div>
+      ),
     },
     {
       title: t('portal.catalog.columns.updated'),
@@ -304,6 +413,13 @@ export function CatalogListingWorkbenchPage({
           dataSource={listings.data?.items ?? []}
           loading={listings.isLoading}
           onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
+          expandable={{
+            expandedRowKeys: (listings.data?.items ?? []).map((listing) => listing.id),
+            showExpandColumn: false,
+            expandedRowRender: (listing) => (
+              <InlineListingVariants listing={listing} canWrite={canWrite(listing)} />
+            ),
+          }}
           pagination={{
             current: page,
             pageSize: PAGE_SIZE,

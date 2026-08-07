@@ -7,7 +7,7 @@ import type { CreateDesignTaskInput } from '../api/designApi'
 
 const TASK_TYPES = ['MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE'] as const
 const PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const
-const OUTPUT_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA'] as const
+const OUTPUT_TYPES = ['MOCKUP', 'PNG_ASSET', 'IDEA'] as const
 
 type ListingOption = { id: string; sku: string; title: string }
 type TemplateOption = { id: string; name: string }
@@ -46,6 +46,7 @@ export function CreateDesignTaskModal({
   const [referenceFiles, setReferenceFiles] = useState<UploadFile[]>([])
   const taskType = Form.useWatch('taskType', form) ?? 'MOCKUP'
   const sourceMode = Form.useWatch('sourceMode', form)
+  const fixedOutput = taskType === 'MOCKUP' || taskType === 'PNG_ASSET' ? taskType : undefined
 
   const submit = (values: FormValues) => {
     const source =
@@ -60,7 +61,11 @@ export function CreateDesignTaskModal({
       priority: values.priority,
       ...(values.brief?.trim() ? { brief: values.brief.trim() } : {}),
       ...(values.note?.trim() ? { note: values.note.trim() } : {}),
-      ...(values.expectedOutputs?.length ? { expectedOutputs: values.expectedOutputs } : {}),
+      ...(fixedOutput
+        ? { expectedOutputs: [fixedOutput] }
+        : values.expectedOutputs?.length
+          ? { expectedOutputs: values.expectedOutputs }
+          : {}),
       ...source,
       referenceFiles,
     })
@@ -87,7 +92,11 @@ export function CreateDesignTaskModal({
         onFinish={submit}
         onValuesChange={(changed) => {
           if (changed.taskType !== undefined)
-            form.setFieldsValue({ sourceMode: undefined, sourceId: undefined })
+            form.setFieldsValue({
+              sourceMode: undefined,
+              sourceId: undefined,
+              expectedOutputs: [],
+            })
           if (changed.sourceMode !== undefined) form.setFieldValue('sourceId', undefined)
         }}
       >
@@ -163,13 +172,19 @@ export function CreateDesignTaskModal({
             ) : null}
           </>
         ) : null}
-        <Form.Item name="expectedOutputs" label={t('portal.design.expectedOutputs')}>
-          <Select
-            mode="multiple"
-            aria-label={t('portal.design.expectedOutputs')}
-            options={OUTPUT_TYPES.map((value) => ({ value, label: value }))}
-          />
-        </Form.Item>
+        {fixedOutput ? (
+          <Form.Item label={t('portal.design.expectedOutputs')}>
+            <Input value={fixedOutput} disabled />
+          </Form.Item>
+        ) : (
+          <Form.Item name="expectedOutputs" label={t('portal.design.expectedOutputs')}>
+            <Select
+              mode="multiple"
+              aria-label={t('portal.design.expectedOutputs')}
+              options={OUTPUT_TYPES.map((value) => ({ value, label: value }))}
+            />
+          </Form.Item>
+        )}
         <Form.Item name="note" label={t('portal.design.note')}>
           <Input.TextArea rows={2} />
         </Form.Item>
