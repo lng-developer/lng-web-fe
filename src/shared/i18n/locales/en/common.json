@@ -492,7 +492,10 @@
       "table": "Data table",
       "upload": "File upload",
       "summary": "Summary and table footer",
-      "filters": "Filters and controls"
+      "filters": "Filters and controls",
+      "accessScope": "Access scope",
+      "hr": "Human resources",
+      "portal": "Portal"
     },
     "input": { "label": "Search", "placeholder": "Search foundation" },
     "controls": {
@@ -594,7 +597,8 @@
       "successDescription": "Changes propagated to active nodes.",
       "warning": "Unsaved changes",
       "error": "Database connection failed",
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadFailed": "Failed to load data."
     },
     "empty": {
       "title": "No personnel found",
@@ -602,11 +606,6 @@
       "action": "Add resource"
     },
     "noData": "No data",
-    "sections": {
-      "accessScope": "Access scope",
-      "hr": "Human resources",
-      "portal": "Portal"
-    },
     "portal": {
       "noPermission": "Portal scope permission is required to view this section.",
       "moduleDenied": "You do not have permission to view this module.",
@@ -616,9 +615,6 @@
       "production": "Production"
     },
     "accessDenied": "You do not have permission to access operations dashboard.",
-    "feedback": {
-      "loadFailed": "Failed to load data."
-    },
     "metrics": {
       "staff": {
         "attendance": "Attendance",

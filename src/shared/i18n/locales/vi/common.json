@@ -8,6 +8,7 @@
       "primary": "Điều hướng chính",
       "cores": "Khu vực ứng dụng",
       "foundation": "Nền tảng",
+      "operationsDashboard": "Bảng điều khiển vận hành",
       "accounts": "Tài khoản",
       "accessControl": "Kiểm soát truy cập",
       "auditLog": "Nhật ký hệ thống",
@@ -491,7 +492,10 @@
       "table": "Bảng dữ liệu",
       "upload": "Tải tệp",
       "summary": "Tổng quan và chân bảng",
-      "filters": "Bộ lọc và điều khiển"
+      "filters": "Bộ lọc và điều khiển",
+      "accessScope": "Phạm vi truy cập",
+      "hr": "Nhân sự",
+      "portal": "Portal"
     },
     "input": { "label": "Tìm kiếm", "placeholder": "Tìm trong foundation" },
     "controls": {
@@ -565,9 +569,27 @@
     },
     "chart": {
       "ariaLabel": "Số lượng đơn hàng theo ngày",
+      "line": "Đường xu hướng",
+      "lineHint": "Đường xu hướng thể hiện chuyển động tương đối giữa các nhãn.",
       "orders": "Biểu đồ tròn trạng thái đơn hàng",
+      "ordersLine": "Xu hướng đơn hàng",
+      "ordersDonut": "Cơ cấu đơn hàng",
       "mapping": "Biểu đồ tròn tổng quan mapping",
-      "design": "Biểu đồ tròn trạng thái thiết kế"
+      "mappingLine": "Xu hướng mapping",
+      "mappingDonut": "Cơ cấu mapping",
+      "design": "Biểu đồ tròn trạng thái thiết kế",
+      "designLine": "Xu hướng thiết kế",
+      "designDonut": "Cơ cấu thiết kế",
+      "production": "Phân bổ tổng quan sản xuất",
+      "productionLine": "Xu hướng sản xuất",
+      "productionDonut": "Cơ cấu sản xuất",
+      "notes": {
+        "hr": "Các thẻ HR tổng hợp kỳ vận hành và thay đổi theo phạm vi.",
+        "orders": "Đơn hàng dùng biểu đồ cột, tròn và xu hướng để thể hiện cơ cấu và chuyển động.",
+        "mapping": "Mapping thể hiện phân bổ giai đoạn và xu hướng để kiểm tra tiến độ nhanh.",
+        "design": "Thiết kế theo dõi tổng số, đang hoạt động và chưa phân công kèm xu hướng.",
+        "production": "Sản xuất thể hiện đồng thời cơ cấu thông lượng và chuyển động ngắn hạn."
+      }
     },
     "drawer": { "title": "Chi tiết đơn hàng", "reference": "Mã đơn hàng" },
     "feedback": {
@@ -575,12 +597,67 @@
       "successDescription": "Thay đổi đã được áp dụng đến các node đang hoạt động.",
       "warning": "Có thay đổi chưa lưu",
       "error": "Kết nối cơ sở dữ liệu thất bại",
-      "retry": "Thử lại"
+      "retry": "Thử lại",
+      "loadFailed": "Không thể tải dữ liệu."
     },
     "empty": {
       "title": "Không tìm thấy nhân sự",
       "description": "Điều chỉnh bộ lọc hoặc thêm nhân sự mới.",
       "action": "Thêm tài nguyên"
+    },
+    "noData": "Chưa có dữ liệu",
+    "portal": {
+      "noPermission": "Cần quyền phạm vi Portal để xem khu vực này.",
+      "moduleDenied": "Bạn không có quyền xem module này.",
+      "orders": "Đơn hàng",
+      "mapping": "Mapping",
+      "design": "Thiết kế",
+      "production": "Sản xuất"
+    },
+    "accessDenied": "Bạn không có quyền truy cập bảng điều khiển vận hành.",
+    "metrics": {
+      "staff": {
+        "attendance": "Chấm công",
+        "shift": "Hoàn thành ca",
+        "leaveBalance": "Phép còn lại",
+        "pendingRequests": "Yêu cầu chờ duyệt",
+        "latestPayroll": "Bảng lương gần nhất",
+        "presentDays": "Ngày có mặt",
+        "approvedLeave": "Nghỉ phép đã duyệt",
+        "approvedOvertime": "Tăng ca đã duyệt"
+      },
+      "leader": {
+        "members": "Thành viên nhóm",
+        "present": "Thành viên có mặt",
+        "lateToday": "Đi muộn hôm nay",
+        "exceptions": "Ngoại lệ",
+        "pendingApprovals": "Chờ phê duyệt"
+      },
+      "manager": {
+        "totalEmployees": "Tổng nhân viên",
+        "activeEmployees": "Nhân viên hoạt động",
+        "presentToday": "Có mặt hôm nay",
+        "pendingApprovals": "Chờ phê duyệt",
+        "coverageRate": "Tỷ lệ phủ",
+        "probation": "Thử việc",
+        "onLeave": "Đang nghỉ"
+      },
+      "portal": {
+        "orderTotal": "Tổng đơn hàng",
+        "mappingTotalPlan": "Tổng phương án mapping",
+        "mappingReadyPlan": "Phương án sẵn sàng",
+        "mappingConfirmedPlan": "Phương án đã xác nhận",
+        "mappingBlockedSample": "Mẫu bị chặn",
+        "mappingMissingConfig": "Thiếu cấu hình phương án",
+        "designTotal": "Tổng tác vụ thiết kế",
+        "designUnassigned": "Thiết kế chưa phân công",
+        "designActive": "Thiết kế đang hoạt động",
+        "productionTotal": "Tổng mục sản xuất",
+        "productionBlocked": "Mục bị chặn",
+        "productionNeedScale": "Cần scale",
+        "productionQcPending": "Chờ QC",
+        "productionReady": "Mục sẵn sàng"
+      }
     }
   },
   "auth": {
