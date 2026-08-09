@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { App as AntdApp } from 'antd'
 
 import i18n from '@/shared/i18n/i18n'
+import { GlobalMutationToastProvider } from '@/shared/query/GlobalMutationToastProvider'
 import { queryClient } from '@/shared/query/queryClient'
 import { ThemeProvider } from '@/shared/theme/ThemeProvider'
 
@@ -16,7 +17,10 @@ export function AppProviders({ children }: AppProvidersProps) {
     <I18nextProvider i18n={i18n}>
       <ThemeProvider>
         <AntdApp>
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            <GlobalMutationToastProvider />
+            {children}
+          </QueryClientProvider>
         </AntdApp>
       </ThemeProvider>
     </I18nextProvider>

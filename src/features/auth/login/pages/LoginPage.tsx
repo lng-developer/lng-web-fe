@@ -5,6 +5,7 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd'
 
 import { ApiError } from '@/shared/api'
+import { brandAssets } from '@/shared/config/brandAssets'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 
 import { login } from '../../api/authApi'
@@ -18,7 +19,7 @@ export function LoginPage() {
     setError(undefined)
     try {
       const session = await login(values.identifier, values.password)
-      navigate(session.account.mustChangePassword ? '/setup/password' : '/foundation', {
+      navigate(session.account.mustChangePassword ? '/setup/password' : '/operations-dashboard', {
         replace: true,
       })
     } catch (cause) {
@@ -31,14 +32,22 @@ export function LoginPage() {
         <LanguageSwitch />
       </div>
       <section className={styles.intro} aria-label="LNG Web">
-        <span className={styles.mark}>L</span>
-        <Typography.Title level={1}>{t('auth.login.title')}</Typography.Title>
-        <Typography.Paragraph>{t('auth.login.description')}</Typography.Paragraph>
+        <div className={styles.introInner}>
+          <img className={styles.logo} src={brandAssets.logoWide} alt={t('app.name')} />
+          <Typography.Title level={1} className={styles.introTitle}>
+            {t('auth.login.title')}
+          </Typography.Title>
+          <Typography.Paragraph className={styles.introText}>
+            {t('auth.login.description')}
+          </Typography.Paragraph>
+        </div>
       </section>
       <Card className={styles.card} variant="borderless">
         <Space orientation="vertical" size={24} className={styles.formContent}>
-          <div>
-            <Typography.Title level={3}>{t('auth.login.welcome')}</Typography.Title>
+          <div className={styles.formHeader}>
+            <Typography.Title level={3} className={styles.formTitle}>
+              {t('auth.login.welcome')}
+            </Typography.Title>
             <Typography.Text type="secondary">{t('auth.login.instruction')}</Typography.Text>
           </div>
           {error && <Alert type="error" showIcon message={error} />}

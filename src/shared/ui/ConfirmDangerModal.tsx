@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react'
-import { Button, Modal, Typography } from 'antd'
+import { Button, Typography } from 'antd'
 
-export interface ConfirmDangerModalProps {
+import { PopupModal, type PopupModalAnchor, type PopupModalProps } from './PopupModal'
+
+export interface ConfirmDangerModalProps extends Omit<
+  PopupModalProps,
+  'open' | 'children' | 'title'
+> {
   readonly confirmIcon?: ReactNode
   readonly open: boolean
   readonly title: string
@@ -9,6 +14,8 @@ export interface ConfirmDangerModalProps {
   readonly confirmLabel: string
   readonly cancelLabel?: string
   readonly loading?: boolean
+  readonly anchor?: PopupModalAnchor | null
+  readonly anchorRect?: PopupModalAnchor | null
   readonly onConfirm: () => void
   readonly onCancel: () => void
 }
@@ -21,17 +28,21 @@ export function ConfirmDangerModal({
   cancelLabel = 'Cancel',
   loading = false,
   confirmIcon,
+  anchor,
+  anchorRect,
   onConfirm,
   onCancel,
+  ...props
 }: ConfirmDangerModalProps) {
   return (
-    <Modal
+    <PopupModal
       open={open}
+      anchor={anchor}
+      anchorRect={anchorRect}
       title={title}
       aria-label={title}
-      transitionName=""
-      maskTransitionName=""
       onCancel={onCancel}
+      {...props}
       footer={[
         <Button key="cancel" onClick={onCancel}>
           {cancelLabel}
@@ -49,6 +60,6 @@ export function ConfirmDangerModal({
       ]}
     >
       <Typography.Paragraph>{description}</Typography.Paragraph>
-    </Modal>
+    </PopupModal>
   )
 }

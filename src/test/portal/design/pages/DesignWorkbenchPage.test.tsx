@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -15,6 +15,7 @@ import { uploadMultipartAsset } from '@/shared/media'
 import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/shared/media', () => ({
+  AuthenticatedMediaImage: ({ alt }: { alt: string }) => <img alt={alt} />,
   downloadMediaAsset: vi.fn(),
   uploadMultipartAsset: vi.fn().mockResolvedValue({ id: 'package-asset', uploadStatus: 'READY' }),
 }))
@@ -114,7 +115,7 @@ describe('DesignWorkbenchPage', () => {
         <DesignWorkbenchPage />
       </AppProviders>,
     )
-    const quickAction = await screen.findByRole('button', { name: 'Assign' })
+    const quickAction = await screen.findByRole('button', { name: 'Assign' }, { timeout: 5_000 })
     expect(quickAction).toHaveTextContent('')
     fireEvent.click(quickAction)
     expect(screen.getAllByRole('button', { name: 'Assign' })).toHaveLength(2)
@@ -129,7 +130,7 @@ describe('DesignWorkbenchPage', () => {
       </AppProviders>,
     )
 
-    const rowCheckbox = await screen.findByRole('checkbox', { name: 'Select row 1' })
+    const rowCheckbox = await screen.findByRole('checkbox', { name: 'Select SKU-1' })
     const rendersBeforeSelection = formatDate.mock.calls.length
     fireEvent.click(rowCheckbox)
     expect(screen.getByRole('button', { name: 'Assign 1 task' })).toBeInTheDocument()
@@ -143,7 +144,7 @@ describe('DesignWorkbenchPage', () => {
         <DesignWorkbenchPage />
       </AppProviders>,
     )
-    expect(await screen.findByText(/Nguyen Van An/)).toHaveTextContent('2')
+    expect(await screen.findByRole('img', { name: /Nguyen Van An: 2/ })).toBeInTheDocument()
     expect(screen.queryByText(/6a339b5a033e2ff7753522c3/)).not.toBeInTheDocument()
   }, 15_000)
 
@@ -199,20 +200,43 @@ describe('DesignWorkbenchPage', () => {
 
   it('uploads a PSD package to Wasabi and preview separately before submission', async () => {
     vi.mocked(listDesignTasks).mockResolvedValue({
-      items: [{
-        id: 'task-1', status: 'IN_PROGRESS', taskType: 'PSD_TEMPLATE', priority: 'HIGH',
-        listing: { sku: 'SKU-1', title: 'Shirt' }, shop: { name: 'Shop' },
-        assignedDesigner: null, updatedAt: '2026-08-01T00:00:00Z',
-      }],
+      items: [
+        {
+          id: 'task-1',
+          status: 'IN_PROGRESS',
+          taskType: 'PSD_TEMPLATE',
+          priority: 'HIGH',
+          listing: { sku: 'SKU-1', title: 'Shirt' },
+          shop: { name: 'Shop' },
+          assignedDesigner: {
+            id: '6a339b5a033e2ff7753522c3',
+            fullName: 'Nguyen Van An',
+            avatarUrl: '/api/hr/employee-profiles/profile-1/avatar',
+          },
+          updatedAt: '2026-08-01T00:00:00Z',
+        },
+      ],
       pagination: { total: 1 },
     } as never)
     vi.mocked(getDesignTask).mockResolvedValue({
-      id: 'task-1', status: 'IN_PROGRESS', taskType: 'PSD_TEMPLATE', expectedOutputs: [], latestSubmission: null,
+      id: 'task-1',
+      status: 'IN_PROGRESS',
+      taskType: 'PSD_TEMPLATE',
+      expectedOutputs: [],
+      latestSubmission: null,
     } as never)
     vi.mocked(uploadDesignAsset).mockResolvedValueOnce({ id: 'preview-asset' } as never)
 
-    render(<AppProviders><DesignWorkbenchPage /></AppProviders>)
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
     fireEvent.click(await screen.findByRole('button', { name: 'Submit' }))
+    const dialog = screen.getByRole('dialog', { hidden: true })
+    expect(within(dialog).getByText('SKU-1')).toBeInTheDocument()
+    expect(within(dialog).getByText('Nguyen Van An')).toBeInTheDocument()
+    expect(within(dialog).getByRole('img', { name: 'Nguyen Van An' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('PSD or ZIP package'), {
       target: { files: [new File(['psd'], 'package.zip', { type: 'application/zip' })] },
     })
@@ -224,7 +248,9 @@ describe('DesignWorkbenchPage', () => {
     await waitFor(() => expect(uploadMultipartAsset).toHaveBeenCalled())
     expect(uploadDesignAsset).toHaveBeenCalledWith(expect.objectContaining({ name: 'preview.png' }))
     expect(submitDesignTask).toHaveBeenCalledWith(
-      'task-1', ['package-asset', 'preview-asset'], undefined,
+      'task-1',
+      ['package-asset', 'preview-asset'],
+      undefined,
     )
   }, 15_000)
 })

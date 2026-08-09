@@ -355,7 +355,7 @@ export function VendorSubmissionWorkbenchPage({
         />
       </SectionCard>
       <Drawer
-        width={560}
+        width={720}
         open={Boolean(selectedId)}
         title={t('portal.vendorSubmissions.detail')}
         onClose={() => setSelectedId(undefined)}
@@ -395,10 +395,31 @@ export function VendorSubmissionWorkbenchPage({
       >
         {detail.data ? (
           <div className={styles.detail}>
+            {/* Status badge at top */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 20,
+                padding: '12px 16px',
+                background: 'var(--ant-color-fill-quaternary)',
+                borderRadius: 8,
+              }}
+            >
+              <StatusTag status={tone(detail.data.status)}>
+                {t(`portal.vendorSubmissions.statuses.${detail.data.status}`)}
+              </StatusTag>
+              <Typography.Text strong style={{ fontSize: 15 }}>
+                {detail.data.externalOrderId}
+              </Typography.Text>
+            </div>
+
             <Descriptions
-              column={1}
+              column={2}
               bordered
               size="small"
+              style={{ marginBottom: 20 }}
               items={[
                 {
                   key: 'order',
@@ -423,12 +444,18 @@ export function VendorSubmissionWorkbenchPage({
                 {
                   key: 'failure',
                   label: t('portal.vendorSubmissions.columns.failure'),
+                  span: 2,
                   children: (
                     <span className={styles.failure}>{detail.data.failureReason || '-'}</span>
                   ),
                 },
               ]}
             />
+
+            {/* Timeline section */}
+            <Typography.Text strong style={{ display: 'block', marginBottom: 12, fontSize: 13 }}>
+              Status History
+            </Typography.Text>
             <Timeline
               items={(detail.data.statusHistory ?? [])
                 .slice()

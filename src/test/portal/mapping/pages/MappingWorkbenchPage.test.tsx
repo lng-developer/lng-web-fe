@@ -123,9 +123,9 @@ describe('MappingWorkbenchPage', () => {
 
   it('never loads rule inventory and links the selected blocker to its focused page', async () => {
     renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
-    fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('tr')!)
+    fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('[role="button"]')!)
 
-    const link = await screen.findByRole('link', { name: 'Open Product mapping' })
+    const link = await screen.findByRole('link', { name: /Fix in Product mapping/ })
     expect(link).toHaveAttribute('href', expect.stringContaining('/portal/mapping?'))
     expect(link).toHaveAttribute('href', expect.stringContaining('tab=product-mapping'))
     expect(link).toHaveAttribute('href', expect.stringContaining('orderItemId=item-1'))
@@ -143,7 +143,7 @@ describe('MappingWorkbenchPage', () => {
 
   it('searches and applies a manual vendor candidate from the selected item', async () => {
     renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
-    fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('tr')!)
+    fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('[role="button"]')!)
 
     fireEvent.click((await screen.findByText('Find vendor candidate')).closest('button')!)
     expect(await screen.findByRole('dialog')).toBeInTheDocument()

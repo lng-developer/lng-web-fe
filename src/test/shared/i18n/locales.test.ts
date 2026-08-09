@@ -191,6 +191,86 @@ describe('foundation locales', () => {
     expect(flatten(vi)).toEqual(expect.arrayContaining(requiredKeys))
   })
 
+  it('contains every Mapping UI key in both locales', () => {
+    const requiredKeys = [
+      'mapping.actions.edit',
+      'mapping.actions.openRuleTab',
+      'mapping.age.over24h',
+      'mapping.age.over3d',
+      'mapping.age.today',
+      'mapping.pages.workbenchDesc',
+      'mapping.sections.ruleFields',
+      'mapping.sections.ruleMetadata',
+      'mapping.states.noCandidates',
+      'mapping.summary.ambiguous',
+      'mapping.summary.blocked',
+      'mapping.summary.confirmed',
+      'mapping.summary.ready',
+    ]
+
+    expect(flatten(en)).toEqual(expect.arrayContaining(requiredKeys))
+    expect(flatten(vi)).toEqual(expect.arrayContaining(requiredKeys))
+  })
+
+  it('contains every Vendor workspace key in both locales', () => {
+    const requiredKeys = [
+      'costCenterActions',
+      'costCenters',
+      'discard',
+      'importCostCenters',
+      'importProducts',
+      'manageCostCenters',
+      'productCostCenters',
+      'productsTabActions',
+      'sectionAuth',
+      'sectionConnection',
+      'sectionFulfillment',
+      'sectionIdentity',
+      'sectionStatus',
+      'sla',
+      'tabs.products',
+      'tabs.vendors',
+      'vendor',
+      'vendorsTabActions',
+      'filters.label',
+      'filters.status',
+      'filters.vendor',
+      'metrics.active',
+      'metrics.integrated',
+      'metrics.total',
+      'metrics.types',
+      'status.CONNECTED',
+      'status.DISCONNECTED',
+      'import.chooseFile',
+      'import.costCenterTip',
+      'import.createFailed',
+      'import.description',
+      'import.downloadTemplate',
+      'import.failed',
+      'import.fileRequired',
+      'import.fileTooLarge',
+      'import.fileType',
+      'import.importing',
+      'import.invalidCsv',
+      'import.invalidStatus',
+      'import.needProductTypeGroups',
+      'import.notReady',
+      'import.numberInvalid',
+      'import.previewEmpty',
+      'import.previewTitle',
+      'import.productTip',
+      'import.productTypeGroupMissing',
+      'import.requiredMissing',
+      'import.result',
+      'import.rowError',
+      'import.submit',
+      'import.summary',
+    ].map((key) => `portal.vendors.${key}`)
+
+    expect(flatten(en)).toEqual(expect.arrayContaining(requiredKeys))
+    expect(flatten(vi)).toEqual(expect.arrayContaining(requiredKeys))
+  })
+
   it('keeps Integration accessibility labels out of hardcoded source strings', () => {
     const pages = [
       integrationWorkbenchSource,

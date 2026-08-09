@@ -4,16 +4,20 @@ import { Card, Typography } from 'antd'
 import styles from './sharedUi.module.scss'
 
 export interface SectionCardProps {
-  readonly title?: string
+  readonly title?: ReactNode
   readonly children: ReactNode
   readonly selected?: boolean
+  readonly extra?: ReactNode
 }
 
-export function SectionCard({ title, children, selected = false }: SectionCardProps) {
+export function SectionCard({ title, children, selected = false, extra }: SectionCardProps) {
   return (
     <Card
-      title={title ? <Typography.Title level={2}>{title}</Typography.Title> : undefined}
-      className={selected ? styles.selectedCard : undefined}
+      title={
+        typeof title === 'string' ? <Typography.Title level={2}>{title}</Typography.Title> : title
+      }
+      extra={extra}
+      className={`${styles.sectionCard} ${selected ? styles.selectedCard : ''}`}
       variant="outlined"
     >
       {children}

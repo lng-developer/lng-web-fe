@@ -2,45 +2,359 @@
   display: flex;
   min-height: calc(100vh - var(--app-header-height, 64px));
   flex-direction: column;
-  gap: 24px;
-}
-
-.workspace {
-  display: grid;
-  min-height: 650px;
-  grid-template-columns: minmax(380px, 430px) minmax(0, 1fr);
   gap: 20px;
 }
 
-.queue,
-.trace,
-.rules,
-.editor {
+/* ── Summary metric cards ─────────────────────────────── */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.metricCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  transition: box-shadow 0.2s ease;
+  cursor: default;
+
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.metricIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.metricIcon.blocked {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+.metricIcon.ready {
+  background: #f0f9ff;
+  color: #1677ff;
+}
+.metricIcon.confirmed {
+  background: #f6ffed;
+  color: #52c41a;
+}
+.metricIcon.ambiguous {
+  background: #fffbe6;
+  color: #faad14;
+}
+
+.metricBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metricValue {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ant-color-text);
+}
+
+.metricLabel {
+  font-size: 12px;
+  color: var(--ant-color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Stage filter pills ───────────────────────────────── */
+.stageFilters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stagePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  color: var(--ant-color-text);
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+    color: var(--ant-color-primary);
+  }
+}
+
+.stagePill.active {
+  background: var(--ant-color-primary);
+  border-color: var(--ant-color-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.28);
+}
+
+.stagePillCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.stagePill:not(.active) .stagePillCount {
+  background: var(--ant-color-fill-tertiary);
+  color: var(--ant-color-text-secondary);
+}
+
+.stagePillCount.urgent {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+/* ── Workspace split layout ───────────────────────────── */
+.workspace {
+  display: grid;
+  flex: 1;
+  min-height: 600px;
+  max-height: calc(100vh - 360px);
+  grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.queueCard,
+.traceCard {
   min-width: 0;
   overflow: hidden;
-}
-
-.queue {
-  height: 650px;
-}
-
-.focus {
   display: flex;
-  min-width: 0;
   flex-direction: column;
-  gap: 16px;
+  height: 100%;
 }
 
-.trace {
-  min-height: 420px;
+.queueCard :global(.ant-card-body),
+.traceCard :global(.ant-card-body) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
 }
 
-.pipeline {
-  margin: 12px 0 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+/* ── Queue item cards ─────────────────────────────────── */
+.queueItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-bottom: 6px;
+
+  &:hover {
+    border-color: var(--ant-color-primary-border);
+    background: var(--ant-color-primary-bg);
+  }
 }
 
+.queueItem.selected {
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.12);
+}
+
+.queueItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.queueItemSku {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ant-color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queueItemAge {
+  font-size: 11px;
+  color: var(--ant-color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.queueItemAge.overdue {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+.queueItemMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.stageBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.stageBadge.SKU_CLEANUP {
+  background: #f0f5ff;
+  color: #2f54eb;
+}
+.stageBadge.PRODUCT_MAPPING {
+  background: #fff0f6;
+  color: #c41d7f;
+}
+.stageBadge.INPUT_SEMANTICS {
+  background: #fffbe6;
+  color: #ad6800;
+}
+.stageBadge.VALUE_ALIASES {
+  background: #f0f9ff;
+  color: #0958d9;
+}
+.stageBadge.VENDOR_ROUTING {
+  background: #f6ffed;
+  color: #389e0d;
+}
+
+.queueList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.queueFilters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Live Trace Panel ─────────────────────────────────── */
+.traceScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.traceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.pipelineSteps {
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.candidateCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  margin-bottom: 8px;
+  transition: border-color 0.18s;
+}
+
+.candidateCard.autoMatch {
+  border-color: #52c41a;
+  background: #f6ffed;
+}
+
+.candidateMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.candidateName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ant-color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.candidateDetail {
+  font-size: 12px;
+  color: var(--ant-color-text-tertiary);
+  margin-top: 2px;
+}
+
+.confidenceBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.confidenceBadge.HIGH {
+  background: #f6ffed;
+  color: #389e0d;
+}
+.confidenceBadge.MEDIUM {
+  background: #fffbe6;
+  color: #ad6800;
+}
+.confidenceBadge.LOW {
+  background: #fff1f0;
+  color: #cf1322;
+}
+
+/* ── Rule page layout ─────────────────────────────────── */
 .editorWorkspace {
   display: grid;
   min-height: 480px;
@@ -48,30 +362,38 @@
   gap: 20px;
 }
 
+.rules,
+.editor {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .rules :global(.ant-card-body),
-.editor :global(.ant-card-body),
-.queue :global(.ant-card-body) {
+.editor :global(.ant-card-body) {
   height: 100%;
   overflow: auto;
 }
 
-@media (max-width: 1500px) {
-  .workspace {
-    grid-template-columns: minmax(340px, 0.42fr) minmax(0, 1fr);
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 1400px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .editorWorkspace {
-    grid-template-columns: minmax(250px, 0.42fr) minmax(420px, 1fr);
+  .workspace {
+    grid-template-columns: minmax(320px, 0.42fr) minmax(0, 1fr);
+    max-height: calc(100vh - 420px);
   }
 }
 
 @media (max-width: 900px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .workspace,
   .editorWorkspace {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .queue {
-    height: auto;
+    max-height: none;
   }
 }

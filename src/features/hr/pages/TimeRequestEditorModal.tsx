@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Modal, Select, Space } from 'antd'
+import { Col, Divider, Form, Input, Modal, Row, Select } from 'antd'
 
-import { DateTimePicker, useFeedbackToast } from '@/shared/ui'
+import { DateTimePicker, FormActions, useFeedbackToast } from '@/shared/ui'
 
 import {
   createLeaveRequest,
@@ -14,7 +14,6 @@ import {
   updateLeaveRequest,
   updateOvertimeRequest,
 } from '../api/hrTimeApi'
-import styles from './HrOperationsPage.module.scss'
 
 export type TimeRequestKind = 'leave' | 'overtime'
 
@@ -82,10 +81,21 @@ export function TimeRequestEditorModal({
       )
 
   return (
-    <Modal centered open={Boolean(kind)} title={title} footer={null} onCancel={onClose}>
+    <Modal
+      centered
+      destroyOnHidden
+      open={Boolean(kind)}
+      title={title}
+      footer={null}
+      width={520}
+      onCancel={onClose}
+    >
       <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
         {kind === 'leave' ? (
           <>
+            <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+              Leave Request Details
+            </Divider>
             <Form.Item
               name="leaveType"
               label={t('hrOperations.requests.leaveType')}
@@ -93,7 +103,7 @@ export function TimeRequestEditorModal({
             >
               <Select
                 options={['ANNUAL', 'SICK', 'UNPAID', 'PERSONAL_PAID', 'PERSONAL_UNPAID'].map(
-                  (value) => ({ value }),
+                  (value) => ({ value, label: value }),
                 )}
               />
             </Form.Item>
@@ -102,27 +112,39 @@ export function TimeRequestEditorModal({
               label={t('hrOperations.requests.duration')}
               rules={[{ required: true }]}
             >
-              <Select options={['FULL_DAY', 'MORNING', 'AFTERNOON'].map((value) => ({ value }))} />
+              <Select
+                options={['FULL_DAY', 'MORNING', 'AFTERNOON'].map((value) => ({
+                  value,
+                  label: value,
+                }))}
+              />
             </Form.Item>
-            <Space>
-              <Form.Item
-                name="startDateKey"
-                label={t('hrOperations.common.from')}
-                rules={[{ required: true }]}
-              >
-                <DateTimePicker mode="date" />
-              </Form.Item>
-              <Form.Item
-                name="endDateKey"
-                label={t('hrOperations.common.to')}
-                rules={[{ required: true }]}
-              >
-                <DateTimePicker mode="date" />
-              </Form.Item>
-            </Space>
+            <Row gutter={12}>
+              <Col span={12}>
+                <Form.Item
+                  name="startDateKey"
+                  label={t('hrOperations.common.from')}
+                  rules={[{ required: true }]}
+                >
+                  <DateTimePicker mode="date" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="endDateKey"
+                  label={t('hrOperations.common.to')}
+                  rules={[{ required: true }]}
+                >
+                  <DateTimePicker mode="date" />
+                </Form.Item>
+              </Col>
+            </Row>
           </>
         ) : (
           <>
+            <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+              Overtime Request Details
+            </Divider>
             <Form.Item
               name="workDateKey"
               label={t('hrOperations.common.date')}
@@ -130,22 +152,26 @@ export function TimeRequestEditorModal({
             >
               <DateTimePicker mode="date" />
             </Form.Item>
-            <Space>
-              <Form.Item
-                name="plannedStartTime"
-                label={t('hrOperations.common.from')}
-                rules={[{ required: true }]}
-              >
-                <DateTimePicker mode="time" />
-              </Form.Item>
-              <Form.Item
-                name="plannedEndTime"
-                label={t('hrOperations.common.to')}
-                rules={[{ required: true }]}
-              >
-                <DateTimePicker mode="time" />
-              </Form.Item>
-            </Space>
+            <Row gutter={12}>
+              <Col span={12}>
+                <Form.Item
+                  name="plannedStartTime"
+                  label={t('hrOperations.common.from')}
+                  rules={[{ required: true }]}
+                >
+                  <DateTimePicker mode="time" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="plannedEndTime"
+                  label={t('hrOperations.common.to')}
+                  rules={[{ required: true }]}
+                >
+                  <DateTimePicker mode="time" />
+                </Form.Item>
+              </Col>
+            </Row>
           </>
         )}
         <Form.Item
@@ -153,14 +179,20 @@ export function TimeRequestEditorModal({
           label={t('hrOperations.common.reason')}
           rules={[{ required: true }]}
         >
-          <Input.TextArea rows={3} />
+          <Input.TextArea rows={3} placeholder="Please provide reason for this request..." />
         </Form.Item>
-        <Space className={styles.actions}>
-          <Button onClick={onClose}>{t('hrOperations.common.cancel')}</Button>
-          <Button type="primary" htmlType="submit" loading={save.isPending}>
-            {t('hrOperations.common.submit')}
-          </Button>
-        </Space>
+
+        <Form.Item shouldUpdate noStyle>
+          {() => (
+            <FormActions
+              cancelLabel={t('hrOperations.common.cancel')}
+              dirty={form.isFieldsTouched()}
+              onCancel={onClose}
+              saving={save.isPending}
+              submitLabel={t('hrOperations.common.submit')}
+            />
+          )}
+        </Form.Item>
       </Form>
     </Modal>
   )

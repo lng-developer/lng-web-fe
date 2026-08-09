@@ -6,6 +6,7 @@ import {
   EditOutlined,
   PlusOutlined,
   TeamOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -83,7 +84,7 @@ const OrganizationTeamNode = memo(function OrganizationTeamNode({
           <span className={styles.teamIdentity}>
             <strong>{team.name}</strong>
             <small>
-              {team.code} Â· {team.memberCount} {t('organization.members').toLowerCase()}
+              {team.code} · {team.memberCount} {t('organization.members', 'members').toLowerCase()}
             </small>
           </span>
           <Tag color={team.status === 'active' ? 'success' : 'default'}>{team.status}</Tag>
@@ -125,6 +126,8 @@ export function OrganizationPage() {
     queryFn: loadDepartments,
   })
   const teams = useQuery({ queryKey: ['organization', 'teams'], queryFn: loadTeams })
+
+  const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null)
 
   const refreshOrganization = () => queryClient.invalidateQueries({ queryKey: ['organization'] })
   const saveMutation = useMutation<Department | Team, Error, EditorValues>({
@@ -169,6 +172,13 @@ export function OrganizationPage() {
     setEditor(nextEditor)
   }
   const hasError = departments.error || teams.error
+
+  const deptItems = departments.data?.items ?? []
+  const activeDept = deptItems.find((d) => d.id === selectedDeptId) || deptItems[0]
+  const activeDeptTeams = activeDept
+    ? (teams.data?.items ?? []).filter((team) => team.departmentId === activeDept.id)
+    : []
+  const totalMembers = (teams.data?.items ?? []).reduce((sum, t) => sum + (t.memberCount || 0), 0)
 
   const resourceActions = (item: Department | Team, kind: Editor['kind']) =>
     canManageOrganization && (
@@ -247,71 +257,127 @@ export function OrganizationPage() {
           label={t('organization.teamCount')}
           value={String(teams.data?.pagination?.total ?? teams.data?.items.length ?? 0)}
         />
+        <MetricCard
+          icon={<UserOutlined aria-hidden />}
+          label={t('organization.memberCount', 'Total Members')}
+          value={String(totalMembers)}
+        />
       </div>
 
-      <div className={styles.directory}>
-        <SectionCard title={t('organization.directory')}>
-          <div className={styles.tree} role="tree" aria-label={t('organization.directory')}>
-            {(departments.data?.items ?? []).map((department) => {
-              const departmentTeams = (teams.data?.items ?? []).filter(
-                (team) => team.departmentId === department.id,
-              )
+      <div className={styles.splitLayout}>
+        <div className={styles.leftPanel}>
+          <div className={styles.leftPanelHeader}>
+            <Typography.Title level={5} style={{ margin: 0 }}>
+              {t('organization.departments', 'Departments')}
+            </Typography.Title>
+          </div>
+          <div className={styles.deptList}>
+            {deptItems.map((dept) => {
+              const isActive = activeDept?.id === dept.id
+              const count = (teams.data?.items ?? []).filter(
+                (team) => team.departmentId === dept.id,
+              ).length
               return (
-                <section
-                  className={styles.departmentNode}
-                  role="treeitem"
-                  aria-expanded
-                  aria-selected={false}
-                  key={department.id}
+                <div
+                  key={dept.id}
+                  className={`${styles.deptCard} ${isActive ? styles.deptCardActive : ''}`}
+                  onClick={() => setSelectedDeptId(dept.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSelectedDeptId(dept.id)}
                 >
-                  <div className={styles.departmentHeader}>
-                    <div className={styles.nodeIdentity}>
-                      <ApartmentOutlined />
-                      <div>
-                        <Typography.Text strong>{department.name}</Typography.Text>
-                        <Typography.Text type="secondary">
-                          {department.code} · {departmentTeams.length}{' '}
-                          {t('organization.teams').toLowerCase()}
-                        </Typography.Text>
-                      </div>
-                    </div>
-                    <Space>
-                      {canManageOrganization && (
-                        <Tooltip title={t('organization.addTeam')}>
-                          <Button
-                            type="text"
-                            aria-label={`${t('organization.addTeam')} ${department.name}`}
-                            icon={<PlusOutlined />}
-                            onClick={() =>
-                              openEditor({ kind: 'team', departmentId: department.id })
-                            }
-                          />
-                        </Tooltip>
-                      )}
-                      {resourceActions(department, 'department')}
+                  <div className={styles.deptCardHeader}>
+                    <Space size="small">
+                      <ApartmentOutlined className={styles.deptIcon} />
+                      <Typography.Text strong>{dept.name}</Typography.Text>
                     </Space>
+                    <Tag>{dept.code}</Tag>
                   </div>
-                  <div className={styles.teamGroup} role="group">
-                    {departmentTeams.length === 0 && (
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={t('organization.noTeams')}
-                      />
-                    )}
-                    {departmentTeams.map((team) => (
-                      <OrganizationTeamNode
-                        actions={resourceActions(team, 'team')}
-                        canManageMembers={canManageMembers}
-                        team={team}
-                        key={team.id}
-                      />
-                    ))}
+                  <div className={styles.deptCardFooter}>
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {count} {t('organization.teams', 'Teams').toLowerCase()}
+                    </Typography.Text>
+                    <Tag
+                      color={dept.status === 'active' ? 'success' : 'default'}
+                      style={{ fontSize: 10 }}
+                    >
+                      {dept.status}
+                    </Tag>
                   </div>
-                </section>
+                </div>
               )
             })}
+            {deptItems.length === 0 && !departments.isLoading && (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            )}
           </div>
-        </SectionCard>
+        </div>
+
+        <div className={styles.rightPanel}>
+          {activeDept ? (
+            <SectionCard>
+              <div
+                className={styles.rightPanelTitleBar}
+                style={{
+                  borderBottom: '1px solid var(--ant-color-border-secondary)',
+                  paddingBottom: 16,
+                  marginBottom: 16,
+                }}
+              >
+                <Space size="middle">
+                  <ApartmentOutlined className={styles.activeDeptIcon} />
+                  <div>
+                    <Typography.Title level={4} style={{ margin: 0 }}>
+                      {activeDept.name}
+                    </Typography.Title>
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {activeDept.code}
+                    </Typography.Text>
+                  </div>
+                </Space>
+                <Space>
+                  {canManageOrganization && (
+                    <Button
+                      type="primary"
+                      ghost
+                      icon={<PlusOutlined />}
+                      onClick={() => openEditor({ kind: 'team', departmentId: activeDept.id })}
+                    >
+                      {t('organization.addTeam')}
+                    </Button>
+                  )}
+                  {resourceActions(activeDept, 'department')}
+                </Space>
+              </div>
+              <div className={styles.teamList}>
+                {activeDeptTeams.map((team) => (
+                  <OrganizationTeamNode
+                    actions={resourceActions(team, 'team')}
+                    canManageMembers={canManageMembers}
+                    team={team}
+                    key={team.id}
+                  />
+                ))}
+                {activeDeptTeams.length === 0 && (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={t('organization.noTeams')}
+                  />
+                )}
+              </div>
+            </SectionCard>
+          ) : (
+            <div className={styles.emptyDetail}>
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={t(
+                  'organization.selectDepartment',
+                  'Select a department to view details',
+                )}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <Modal

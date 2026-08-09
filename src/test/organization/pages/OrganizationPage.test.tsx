@@ -106,7 +106,7 @@ describe('OrganizationPage', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('Operations')).toBeVisible()
+    expect((await screen.findAllByText('Operations'))[0]).toBeVisible()
   })
 
   it('shows departments and teams together without tabs', async () => {
@@ -118,7 +118,7 @@ describe('OrganizationPage', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('Operations')).toBeVisible()
+    expect((await screen.findAllByText('Operations'))[0]).toBeVisible()
     expect(screen.getByText('Fulfillment')).toBeVisible()
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
   })

@@ -1,21 +1,59 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EditOutlined, PlusOutlined } from '@ant-design/icons'
+import {
+  CalendarOutlined,
+  ClockCircleOutlined,
+  CompassOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  TeamOutlined,
+  UserSwitchOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, InputNumber, Modal, Select, Space, Table, Tag } from 'antd'
+import {
+  Button,
+  Checkbox,
+  Col,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Popconfirm,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tabs,
+  Tag,
+  Typography,
+} from 'antd'
 import dayjs from 'dayjs'
 
 import { loadTeams } from '@/features/organization/api/organizationApi'
 import { getPermissions } from '@/shared/auth/session'
-import { DateTimePicker, MonthPicker, SectionCard, useFeedbackToast } from '@/shared/ui'
+import {
+  DateTimePicker,
+  FormActions,
+  MetricCard,
+  MonthPicker,
+  PageHeader,
+  SectionCard,
+  StatusTag,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import { loadEmployeeProfiles } from '../api/hrApi'
 import {
   createCalendarOverride,
   createHoliday,
+  createSaturdayRotation,
   createShift,
   createShiftAssignment,
   createWorkLocation,
+  deleteSaturdayRotation,
+  deleteTeamSaturdayRotations,
   generateSaturdayRotations,
   type Holiday,
   listCalendarOverrides,
@@ -24,8 +62,10 @@ import {
   listShiftAssignments,
   listShifts,
   listWorkLocations,
+  type SaturdayRotation,
   type Shift,
   updateHoliday,
+  updateSaturdayRotation,
   updateShift,
   updateWorkLocation,
   type WorkLocation,
@@ -33,27 +73,42 @@ import {
 import styles from './ScheduleCalendarPage.module.scss'
 
 type Editor = {
-  kind: 'location' | 'shift' | 'assignment' | 'override' | 'holiday' | 'rotation'
-  item?: WorkLocation | Shift | Holiday
+  kind: 'location' | 'shift' | 'assignment' | 'override' | 'holiday' | 'rotation' | 'rotationManual'
+  item?: WorkLocation | Shift | Holiday | SaturdayRotation
 }
-type Values = Record<string, string | number | string[] | null | undefined>
+type RotationOffByDate = Record<string, string[]>
+type Values = Record<
+  string,
+  string | number | string[] | RotationOffByDate | dayjs.Dayjs | null | undefined
+>
 
 export function ScheduleCalendarPage() {
   const { t } = useTranslation()
   const permissions = new Set(getPermissions())
   const canScheduleWrite = permissions.has('HR_SCHEDULE:WRITE')
   const canCalendarWrite = permissions.has('HR_CALENDAR:WRITE')
+  const canCalendarRead = permissions.has('HR_CALENDAR:READ') || canCalendarWrite
+  const canManageRotation = canScheduleWrite || canCalendarWrite
+  const canRotationRead = canCalendarRead || canScheduleWrite
+  const [rotationTeamId, setRotationTeamId] = useState<string>()
   const [month, setMonth] = useState(dayjs())
   const [editor, setEditor] = useState<Editor>()
   const [form] = Form.useForm<Values>()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
-  const monthParams = { month: month.month() + 1, year: month.year() }
-  const range = {
-    dateFrom: month.startOf('month').format('YYYY-MM-DD'),
-    dateTo: month.endOf('month').format('YYYY-MM-DD'),
-    limit: 100,
-  }
+  const manualTeamId = Form.useWatch('teamId', form)
+  const manualMonth = Form.useWatch('month', form)
+
+  const monthParams = useMemo(() => ({ month: month.month() + 1, year: month.year() }), [month])
+  const range = useMemo(
+    () => ({
+      dateFrom: month.startOf('month').format('YYYY-MM-DD'),
+      dateTo: month.endOf('month').format('YYYY-MM-DD'),
+      limit: 100,
+    }),
+    [month],
+  )
+
   const locations = useQuery({
     queryKey: ['hr-operations', 'locations'],
     queryFn: () => listWorkLocations({ limit: 100 }),
@@ -80,19 +135,26 @@ export function ScheduleCalendarPage() {
     queryFn: () => listHolidays(range),
   })
   const rotations = useQuery({
-    queryKey: ['hr-operations', 'rotations', monthParams],
-    queryFn: () => listSaturdayRotations({ ...monthParams, limit: 100 }),
+    queryKey: ['hr-operations', 'rotations', monthParams, rotationTeamId],
+    queryFn: () =>
+      listSaturdayRotations({
+        ...monthParams,
+        ...(rotationTeamId ? { teamId: rotationTeamId } : {}),
+        limit: 100,
+      }),
+    enabled: canRotationRead,
   })
   const profiles = useQuery({
     queryKey: ['hr', 'employee-profiles', false],
     queryFn: () => loadEmployeeProfiles(false),
-    enabled: canScheduleWrite,
+    enabled: canScheduleWrite || canCalendarWrite,
   })
   const teams = useQuery({
     queryKey: ['organization', 'teams'],
     queryFn: loadTeams,
-    enabled: canCalendarWrite,
+    enabled: canRotationRead,
   })
+
   const employeeOptions = useMemo(
     () =>
       (profiles.data?.items ?? []).map((profile) => ({
@@ -102,11 +164,88 @@ export function ScheduleCalendarPage() {
     [profiles.data],
   )
 
+  const teamOptions = useMemo(
+    () => (teams.data?.items ?? []).map((team) => ({ value: team.id, label: team.name })),
+    [teams.data],
+  )
+  const teamById = useMemo(() => {
+    const map = new Map<string, string>()
+    ;(teams.data?.items ?? []).forEach((team) => {
+      map.set(team.id, team.name)
+    })
+    return map
+  }, [teams.data])
+  const teamName = (teamId: string) => teamById.get(teamId) ?? teamId
+  const employeeNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    ;(profiles.data?.items ?? []).forEach((profile) => {
+      map.set(profile.id, `${profile.fullName || profile.employeeCode}`)
+    })
+    return map
+  }, [profiles.data])
+  const manualTeamEmployees = useMemo(
+    () =>
+      (profiles.data?.items ?? [])
+        .filter((profile) => profile.teamId === manualTeamId)
+        .map((profile) => ({
+          value: profile.id,
+          label: `${profile.fullName || profile.employeeCode} · ${profile.employeeCode}`,
+        })),
+    [manualTeamId, profiles.data],
+  )
+  const manualTeamEmployeeIds = useMemo(
+    () =>
+      (profiles.data?.items ?? [])
+        .filter((profile) => profile.teamId === manualTeamId)
+        .map((profile) => profile.id),
+    [manualTeamId, profiles.data],
+  )
+  const saturdaysOfMonth = useCallback(
+    (monthValue: Values[string]) => {
+      const monthDate = dayjs.isDayjs(monthValue) ? monthValue : month
+      if (!monthDate.isValid()) return []
+      const dates: string[] = []
+      let current = monthDate.startOf('month')
+      const endOfMonth = monthDate.endOf('month')
+      while (current.isBefore(endOfMonth) || current.isSame(endOfMonth, 'day')) {
+        if (current.day() === 6) dates.push(current.format('YYYY-MM-DD'))
+        current = current.add(1, 'day')
+      }
+      return dates
+    },
+    [month],
+  )
+  const manualSaturdays = useMemo(
+    () => saturdaysOfMonth(manualMonth || month),
+    [manualMonth, month, saturdaysOfMonth],
+  )
+  const manualDefaultOffByDate = useMemo(
+    () => Object.fromEntries(manualSaturdays.map((dateKey) => [dateKey, []])) as RotationOffByDate,
+    [manualSaturdays],
+  )
+  const saturdayWeekLabel = (dateKey: string) =>
+    `${t('hrOperations.schedule.weekLabel')} ${
+      Math.floor(dayjs(dateKey).startOf('day').diff(dayjs(dateKey).startOf('month'), 'day') / 7) + 1
+    } (${dayjs(dateKey).format('DD/MM/YYYY')})`
+
   const openEditor = (next: Editor) => {
     form.resetFields()
-    if (next.item) form.setFieldsValue(next.item as Values)
+    if (next.item) {
+      form.setFieldsValue({
+        ...(next.item as Values),
+        ...(next.kind === 'rotationManual'
+          ? {
+              dateKey: dayjs((next.item as SaturdayRotation).dateKey),
+              month: month,
+            }
+          : {}),
+      })
+    } else if (next.kind === 'rotationManual') {
+      form.setFieldsValue({ month, employeeProfileIdsByDate: manualDefaultOffByDate })
+    }
     setEditor(next)
   }
+
   const save = useMutation({
     mutationFn: async (values: Values) => {
       if (!editor) return
@@ -122,6 +261,34 @@ export function ScheduleCalendarPage() {
         })
       if (editor.kind === 'holiday')
         return editor.item ? updateHoliday(editor.item.id, values) : createHoliday(values)
+      if (editor.kind === 'rotationManual') {
+        if (editor.item) {
+          return updateSaturdayRotation(
+            editor.item.id,
+            (values.employeeProfileIds as string[]) ?? [],
+          )
+        }
+        const teamId = String(values.teamId)
+        const byDate = (values.employeeProfileIdsByDate as RotationOffByDate) || {}
+        const targetDates = saturdaysOfMonth(values.month)
+        const teamEmployeeIds = manualTeamEmployeeIds.length
+          ? manualTeamEmployeeIds
+          : (profiles.data?.items ?? [])
+              .filter((profile) => profile.teamId === teamId)
+              .map((profile) => profile.id)
+        const createPayloads = targetDates.map((dateKey) => {
+          const offEmployeeProfileIds = Array.isArray(byDate[dateKey]) ? byDate[dateKey] : []
+          const employeeProfileIds = teamEmployeeIds.filter(
+            (id) => !offEmployeeProfileIds.includes(id),
+          )
+          return createSaturdayRotation({
+            teamId,
+            dateKey,
+            employeeProfileIds,
+          })
+        })
+        return Promise.all(createPayloads)
+      }
       return generateSaturdayRotations({
         teamId: String(values.teamId),
         ...monthParams,
@@ -136,222 +303,402 @@ export function ScheduleCalendarPage() {
     },
     onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
   })
+  const removeRotation = useMutation({
+    mutationFn: async (id: string) => deleteSaturdayRotation(id),
+    onSuccess: () => {
+      toast('success', t('hrOperations.messages.saved'))
+      void queryClient.invalidateQueries({ queryKey: ['hr-operations'] })
+    },
+    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+  })
+  const resetMonthRotation = useMutation({
+    mutationFn: async () => {
+      if (!rotationTeamId) return Promise.resolve()
+      return deleteTeamSaturdayRotations(rotationTeamId, month.month() + 1, month.year())
+    },
+    onSuccess: () => {
+      toast('success', t('hrOperations.messages.saved'))
+      void queryClient.invalidateQueries({ queryKey: ['hr-operations'] })
+    },
+    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+  })
+
   const required = [{ required: true, message: t('hrOperations.common.required') }]
   const title = (kind?: Editor['kind']) =>
     t(
       `hrOperations.schedule.${kind === 'location' ? 'locationEditor' : kind === 'shift' ? 'shiftEditor' : kind === 'assignment' ? 'assignmentEditor' : kind === 'override' ? 'overrideEditor' : kind === 'holiday' ? 'holidayEditor' : 'rotationEditor'}`,
     )
 
-  return (
-    <section className={styles.page}>
-      <div className={styles.toolbar}>
-        <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
-      </div>
-      <div className={styles.grid}>
-        <SectionCard title={t('hrOperations.schedule.workLocations')}>
+  const locationCount = locations.data?.items.length ?? 0
+  const shiftCount = shifts.data?.items.length ?? 0
+  const assignmentCount = assignments.data?.items.length ?? 0
+  const holidayCount = (holidays.data?.items.length ?? 0) + (overrides.data?.items.length ?? 0)
+
+  const tabItems = [
+    {
+      key: 'assignments',
+      label: (
+        <span>
+          <UserSwitchOutlined style={{ marginRight: 6 }} />
+          Shift Assignments ({assignmentCount})
+        </span>
+      ),
+      children: (
+        <SectionCard title={t('hrOperations.schedule.assignments')}>
           {canScheduleWrite && (
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => openEditor({ kind: 'location' })}
+              onClick={() => openEditor({ kind: 'assignment' })}
+              style={{ marginBottom: 16 }}
             >
-              {t('hrOperations.schedule.addLocation')}
+              {t('hrOperations.schedule.assignShift')}
             </Button>
           )}
           <Table
             size="small"
-            pagination={false}
+            pagination={{ pageSize: 10 }}
             rowKey="id"
-            loading={locations.isLoading}
-            dataSource={locations.data?.items}
+            loading={assignments.isLoading}
+            dataSource={assignments.data?.items}
             columns={[
-              { title: t('hrOperations.common.location'), dataIndex: 'name' },
-              { title: t('hrOperations.common.timezone'), dataIndex: 'timezone' },
+              {
+                title: t('hrOperations.common.employee'),
+                render: (_, item) => (
+                  <Typography.Text strong>
+                    {item.employee?.fullName || item.employee?.employeeCode || item.profileId}
+                  </Typography.Text>
+                ),
+              },
+              {
+                title: t('hrOperations.schedule.shift'),
+                render: (_, item) => <Tag color="blue">{item.shift?.name || item.shiftId}</Tag>,
+              },
+              {
+                title: t('hrOperations.common.location'),
+                render: (_, item) => (
+                  <Tag color="purple">{item.workLocation?.name || item.workLocationId}</Tag>
+                ),
+              },
+              {
+                title: t('hrOperations.schedule.effective'),
+                render: (_, item) => (
+                  <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                    {item.effectiveFrom} → {item.effectiveTo || '∞'}
+                  </Typography.Text>
+                ),
+              },
               {
                 title: t('hrOperations.common.status'),
                 dataIndex: 'status',
                 render: (value) => (
-                  <Tag color={value === 'ACTIVE' ? 'green' : 'default'}>{value}</Tag>
+                  <StatusTag status={value === 'ACTIVE' ? 'approved' : 'cancelled'}>
+                    {value}
+                  </StatusTag>
                 ),
               },
-              ...(canScheduleWrite
-                ? [
-                    {
-                      title: '',
-                      width: 44,
-                      render: (_: unknown, item: WorkLocation) => (
-                        <Button
-                          type="text"
-                          icon={<EditOutlined />}
-                          onClick={() => openEditor({ kind: 'location', item })}
-                        />
-                      ),
-                    },
-                  ]
-                : []),
             ]}
           />
         </SectionCard>
-        <SectionCard title={t('hrOperations.schedule.shifts')}>
-          {canScheduleWrite && (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => openEditor({ kind: 'shift' })}
+      ),
+    },
+    {
+      key: 'locations-shifts',
+      label: (
+        <span>
+          <CompassOutlined style={{ marginRight: 6 }} />
+          Locations & Work Shifts
+        </span>
+      ),
+      children: (
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={12}>
+            <SectionCard title={t('hrOperations.schedule.workLocations')}>
+              {canScheduleWrite && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openEditor({ kind: 'location' })}
+                  style={{ marginBottom: 16 }}
+                >
+                  {t('hrOperations.schedule.addLocation')}
+                </Button>
+              )}
+              <Table
+                size="small"
+                pagination={false}
+                rowKey="id"
+                loading={locations.isLoading}
+                dataSource={locations.data?.items}
+                columns={[
+                  {
+                    title: t('hrOperations.common.location'),
+                    dataIndex: 'name',
+                    render: (val) => <Typography.Text strong>{val}</Typography.Text>,
+                  },
+                  {
+                    title: t('hrOperations.common.timezone'),
+                    dataIndex: 'timezone',
+                    render: (val) => <Tag color="geekblue">{val}</Tag>,
+                  },
+                  {
+                    title: t('hrOperations.common.status'),
+                    dataIndex: 'status',
+                    render: (value) => (
+                      <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
+                        {value}
+                      </StatusTag>
+                    ),
+                  },
+                  ...(canScheduleWrite
+                    ? [
+                        {
+                          title: '',
+                          width: 44,
+                          render: (_: unknown, item: WorkLocation) => (
+                            <Button
+                              type="text"
+                              icon={<EditOutlined />}
+                              onClick={() => openEditor({ kind: 'location', item })}
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </SectionCard>
+          </Col>
+
+          <Col xs={24} lg={12}>
+            <SectionCard title={t('hrOperations.schedule.shifts')}>
+              {canScheduleWrite && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openEditor({ kind: 'shift' })}
+                  style={{ marginBottom: 16 }}
+                >
+                  {t('hrOperations.schedule.addShift')}
+                </Button>
+              )}
+              <Table
+                size="small"
+                pagination={false}
+                rowKey="id"
+                loading={shifts.isLoading}
+                dataSource={shifts.data?.items}
+                columns={[
+                  {
+                    title: t('hrOperations.schedule.shift'),
+                    render: (_, item: Shift) => (
+                      <Space>
+                        <Typography.Text strong>{item.name}</Typography.Text>
+                        <Tag color="default" style={{ fontFamily: 'monospace', fontSize: 11 }}>
+                          {item.code}
+                        </Tag>
+                      </Space>
+                    ),
+                  },
+                  {
+                    title: t('hrOperations.schedule.hours'),
+                    render: (_, item: Shift) => (
+                      <Tag color="cyan">
+                        {item.startTime} - {item.endTime}
+                      </Tag>
+                    ),
+                  },
+                  {
+                    title: t('hrOperations.schedule.break'),
+                    dataIndex: 'breakMinutes',
+                    render: (value) => `${value} min`,
+                  },
+                  ...(canScheduleWrite
+                    ? [
+                        {
+                          title: '',
+                          width: 44,
+                          render: (_: unknown, item: Shift) => (
+                            <Button
+                              type="text"
+                              icon={<EditOutlined />}
+                              onClick={() => openEditor({ kind: 'shift', item })}
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </SectionCard>
+          </Col>
+        </Row>
+      ),
+    },
+    {
+      key: 'holidays-overrides',
+      label: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 6 }} />
+          Holidays & Overrides
+        </span>
+      ),
+      children: (
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={8}>
+            <SectionCard title={t('hrOperations.schedule.holidays')}>
+              {canCalendarWrite && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openEditor({ kind: 'holiday' })}
+                  style={{ marginBottom: 16 }}
+                >
+                  {t('hrOperations.schedule.addHoliday')}
+                </Button>
+              )}
+              <Table
+                size="small"
+                pagination={false}
+                rowKey="id"
+                loading={holidays.isLoading}
+                dataSource={holidays.data?.items}
+                columns={[
+                  {
+                    title: t('hrOperations.common.date'),
+                    dataIndex: 'dateKey',
+                    render: (v) => <Tag color="gold">{v}</Tag>,
+                  },
+                  { title: t('hrOperations.common.name'), dataIndex: 'name' },
+                  { title: t('hrOperations.common.type'), dataIndex: 'holidayType' },
+                  ...(canCalendarWrite
+                    ? [
+                        {
+                          title: '',
+                          width: 44,
+                          render: (_: unknown, item: Holiday) => (
+                            <Button
+                              type="text"
+                              icon={<EditOutlined />}
+                              onClick={() => openEditor({ kind: 'holiday', item })}
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </SectionCard>
+          </Col>
+
+          <Col xs={24} lg={8}>
+            <SectionCard title={t('hrOperations.schedule.overrides')}>
+              {canScheduleWrite && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openEditor({ kind: 'override' })}
+                  style={{ marginBottom: 16 }}
+                >
+                  {t('hrOperations.schedule.addOverride')}
+                </Button>
+              )}
+              <Table
+                size="small"
+                pagination={false}
+                rowKey="id"
+                loading={overrides.isLoading}
+                dataSource={overrides.data?.items}
+                columns={[
+                  {
+                    title: t('hrOperations.common.date'),
+                    dataIndex: 'dateKey',
+                    render: (v) => <Tag color="orange">{v}</Tag>,
+                  },
+                  { title: t('hrOperations.common.name'), dataIndex: 'name' },
+                  { title: t('hrOperations.common.type'), dataIndex: 'kind' },
+                  { title: t('hrOperations.common.scope'), dataIndex: 'scopeType' },
+                ]}
+              />
+            </SectionCard>
+          </Col>
+        </Row>
+      ),
+    },
+    {
+      key: 'saturday-rotation',
+      label: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 6 }} />
+          Saturday Rotation
+        </span>
+      ),
+      children: (
+        <SectionCard
+          title={
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
             >
-              {t('hrOperations.schedule.addShift')}
-            </Button>
-          )}
-          <Table
-            size="small"
-            pagination={false}
-            rowKey="id"
-            loading={shifts.isLoading}
-            dataSource={shifts.data?.items}
-            columns={[
-              {
-                title: t('hrOperations.schedule.shift'),
-                render: (_, item: Shift) => `${item.name} (${item.code})`,
-              },
-              {
-                title: t('hrOperations.schedule.hours'),
-                render: (_, item: Shift) => `${item.startTime}-${item.endTime}`,
-              },
-              {
-                title: t('hrOperations.schedule.break'),
-                dataIndex: 'breakMinutes',
-                render: (value) => `${value}m`,
-              },
-              ...(canScheduleWrite
-                ? [
-                    {
-                      title: '',
-                      width: 44,
-                      render: (_: unknown, item: Shift) => (
-                        <Button
-                          type="text"
-                          icon={<EditOutlined />}
-                          onClick={() => openEditor({ kind: 'shift', item })}
-                        />
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </SectionCard>
-      </div>
-      <SectionCard title={t('hrOperations.schedule.assignments')}>
-        {canScheduleWrite && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => openEditor({ kind: 'assignment' })}
-          >
-            {t('hrOperations.schedule.assignShift')}
-          </Button>
-        )}
-        <Table
-          size="small"
-          pagination={{ pageSize: 8 }}
-          rowKey="id"
-          loading={assignments.isLoading}
-          dataSource={assignments.data?.items}
-          columns={[
-            {
-              title: t('hrOperations.common.employee'),
-              render: (_, item) =>
-                item.employee?.fullName || item.employee?.employeeCode || item.profileId,
-            },
-            {
-              title: t('hrOperations.schedule.shift'),
-              render: (_, item) => item.shift?.name || item.shiftId,
-            },
-            {
-              title: t('hrOperations.common.location'),
-              render: (_, item) => item.workLocation?.name || item.workLocationId,
-            },
-            {
-              title: t('hrOperations.schedule.effective'),
-              render: (_, item) => `${item.effectiveFrom} → ${item.effectiveTo || '∞'}`,
-            },
-            { title: t('hrOperations.common.status'), dataIndex: 'status' },
-          ]}
-        />
-      </SectionCard>
-      <div className={styles.grid}>
-        <SectionCard title={t('hrOperations.schedule.holidays')}>
-          {canCalendarWrite && (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => openEditor({ kind: 'holiday' })}
-            >
-              {t('hrOperations.schedule.addHoliday')}
-            </Button>
-          )}
-          <Table
-            size="small"
-            pagination={false}
-            rowKey="id"
-            loading={holidays.isLoading}
-            dataSource={holidays.data?.items}
-            columns={[
-              { title: t('hrOperations.common.date'), dataIndex: 'dateKey' },
-              { title: t('hrOperations.common.name'), dataIndex: 'name' },
-              { title: t('hrOperations.common.type'), dataIndex: 'holidayType' },
-              ...(canCalendarWrite
-                ? [
-                    {
-                      title: '',
-                      width: 44,
-                      render: (_: unknown, item: Holiday) => (
-                        <Button
-                          type="text"
-                          icon={<EditOutlined />}
-                          onClick={() => openEditor({ kind: 'holiday', item })}
-                        />
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </SectionCard>
-        <SectionCard title={t('hrOperations.schedule.overrides')}>
-          {canScheduleWrite && (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => openEditor({ kind: 'override' })}
-            >
-              {t('hrOperations.schedule.addOverride')}
-            </Button>
-          )}
-          <Table
-            size="small"
-            pagination={false}
-            rowKey="id"
-            loading={overrides.isLoading}
-            dataSource={overrides.data?.items}
-            columns={[
-              { title: t('hrOperations.common.date'), dataIndex: 'dateKey' },
-              { title: t('hrOperations.common.name'), dataIndex: 'name' },
-              { title: t('hrOperations.common.type'), dataIndex: 'kind' },
-              { title: t('hrOperations.common.scope'), dataIndex: 'scopeType' },
-            ]}
-          />
-        </SectionCard>
-        <SectionCard title={t('hrOperations.schedule.saturday')}>
-          {canCalendarWrite && (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => openEditor({ kind: 'rotation' })}
-            >
-              {t('hrOperations.schedule.generateMonth')}
-            </Button>
-          )}
+              <span>{t('hrOperations.schedule.saturday')}</span>
+              {canRotationRead && (
+                <Select
+                  allowClear
+                  showSearch
+                  style={{ maxWidth: 220 }}
+                  value={rotationTeamId}
+                  onChange={setRotationTeamId}
+                  options={teamOptions}
+                  placeholder={t('hrOperations.schedule.filterTeam', {
+                    defaultValue: 'Filter team',
+                  })}
+                />
+              )}
+            </div>
+          }
+        >
+          <Space size={8} style={{ marginBottom: 16 }}>
+            {canManageRotation && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => openEditor({ kind: 'rotation' })}
+              >
+                {t('hrOperations.schedule.generateMonth')}
+              </Button>
+            )}
+            {canManageRotation && (
+              <Button
+                icon={<PlusOutlined />}
+                onClick={() => openEditor({ kind: 'rotationManual' })}
+              >
+                {t('hrOperations.schedule.addRotation', { defaultValue: 'Add rotation' })}
+              </Button>
+            )}
+            {canManageRotation && (
+              <Popconfirm
+                title={t('hrOperations.schedule.resetMonthRotationConfirm')}
+                onConfirm={() => resetMonthRotation.mutate()}
+                okText={t('hrOperations.common.yes', { defaultValue: 'Yes' })}
+                cancelText={t('hrOperations.common.no', { defaultValue: 'No' })}
+              >
+                <Button danger loading={resetMonthRotation.isPending} disabled={!rotationTeamId}>
+                  {t('hrOperations.schedule.resetMonthRotation', {
+                    defaultValue: 'Reset this month',
+                  })}
+                </Button>
+              </Popconfirm>
+            )}
+          </Space>
+          <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
+            {t('hrOperations.schedule.saturdayRotationHint', {
+              defaultValue: 'Generate all Saturdays in selected month for the chosen team.',
+            })}
+          </Typography.Paragraph>
           <Table
             size="small"
             pagination={false}
@@ -359,32 +706,159 @@ export function ScheduleCalendarPage() {
             loading={rotations.isLoading}
             dataSource={rotations.data?.items}
             columns={[
-              { title: t('hrOperations.common.date'), dataIndex: 'dateKey' },
-              { title: t('hrOperations.common.team'), dataIndex: 'teamId' },
+              {
+                title: t('hrOperations.common.date'),
+                dataIndex: 'dateKey',
+                render: (v) => <Tag color="blue">{v}</Tag>,
+              },
+              {
+                title: t('hrOperations.common.team'),
+                dataIndex: 'teamId',
+                render: (teamId: string) => teamName(teamId),
+              },
               {
                 title: t('hrOperations.schedule.staffCount'),
-                render: (_, item) => item.employeeProfileIds.length,
+                render: (_: unknown, item: SaturdayRotation) => item.employeeProfileIds.length,
               },
-              { title: t('hrOperations.common.source'), dataIndex: 'source' },
+              {
+                title: t('hrOperations.schedule.sourceLabel', { defaultValue: 'Source' }),
+                dataIndex: 'source',
+                render: (source: string) => (
+                  <Tag color={source === 'MANUAL' ? 'gold' : 'blue'}>{source}</Tag>
+                ),
+              },
+              {
+                title: t('hrOperations.schedule.minPresent', { defaultValue: 'Min staff' }),
+                dataIndex: 'minPresent',
+                render: (value: number) => <Tag color="purple">{value}</Tag>,
+              },
+              {
+                title: t('hrOperations.schedule.staff', { defaultValue: 'Staff' }),
+                render: (_, item: SaturdayRotation) => {
+                  const visible = item.employeeProfileIds.slice(0, 3)
+                  const rest = item.employeeProfileIds.length - visible.length
+                  return (
+                    <Space size={4} wrap>
+                      {visible.map((id) => (
+                        <Tag key={id} color="default">
+                          {employeeNameById.get(id) ?? id}
+                        </Tag>
+                      ))}
+                      {rest > 0 && <Tag color="processing">+{rest}</Tag>}
+                    </Space>
+                  )
+                },
+              },
+              ...(canManageRotation
+                ? [
+                    {
+                      title: t('hrOperations.common.action', { defaultValue: 'Action' }),
+                      width: 120,
+                      render: (_: unknown, item: SaturdayRotation) => (
+                        <Space size={6}>
+                          <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            onClick={() => openEditor({ kind: 'rotationManual', item })}
+                          />
+                          <Popconfirm
+                            title={t('hrOperations.schedule.deleteRotation', {
+                              defaultValue: 'Delete this rotation?',
+                            })}
+                            onConfirm={() => removeRotation.mutate(item.id)}
+                            okText={t('hrOperations.common.yes', { defaultValue: 'Yes' })}
+                            cancelText={t('hrOperations.common.no', { defaultValue: 'No' })}
+                          >
+                            <Button
+                              type="text"
+                              icon={<DeleteOutlined />}
+                              danger
+                              loading={removeRotation.isPending}
+                            />
+                          </Popconfirm>
+                        </Space>
+                      ),
+                    },
+                  ]
+                : []),
             ]}
           />
         </SectionCard>
+      ),
+    },
+  ]
+
+  return (
+    <section className={styles.page}>
+      <PageHeader
+        title={t('hrOperations.schedule.title', { defaultValue: 'Work Schedule & Shift Calendar' })}
+        description={t('hrOperations.schedule.description', {
+          defaultValue:
+            'Manage work locations, shifts, employee assignments, and holiday calendars.',
+        })}
+        actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
+      />
+
+      {/* Summary Metric Cards */}
+      <div className={styles.metrics}>
+        <MetricCard
+          icon={<CompassOutlined />}
+          variant="neutral"
+          label={t('hrOperations.schedule.metrics.locations', { defaultValue: 'Work Locations' })}
+          value={locationCount}
+          loading={locations.isLoading}
+        />
+        <MetricCard
+          icon={<ClockCircleOutlined />}
+          variant="info"
+          label={t('hrOperations.schedule.metrics.shifts', { defaultValue: 'Work Shifts' })}
+          value={shiftCount}
+          loading={shifts.isLoading}
+        />
+        <MetricCard
+          icon={<TeamOutlined />}
+          variant="success"
+          label={t('hrOperations.schedule.metrics.assignments', {
+            defaultValue: 'Active Assignments',
+          })}
+          value={assignmentCount}
+          loading={assignments.isLoading}
+        />
+        <MetricCard
+          icon={<CalendarOutlined />}
+          variant="warning"
+          label={t('hrOperations.schedule.metrics.holidays', {
+            defaultValue: 'Holidays & Overrides',
+          })}
+          value={holidayCount}
+          loading={holidays.isLoading}
+        />
       </div>
+
+      <Tabs items={tabItems} defaultActiveKey="assignments" />
+
+      {/* Editor Modal */}
       <Modal
         centered
+        destroyOnHidden
         open={Boolean(editor)}
         title={title(editor?.kind)}
         footer={null}
+        width="80%"
+        style={{ maxWidth: 1200 }}
         onCancel={() => setEditor(undefined)}
       >
         <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
           {editor?.kind === 'location' && (
             <>
+              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+                Location Identity
+              </Divider>
               <Form.Item name="code" label={t('hrOperations.common.code')} rules={required}>
-                <Input />
+                <Input placeholder="e.g. HQ_HAN" />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input />
+                <Input placeholder="e.g. Hanoi Headquarter Office" />
               </Form.Item>
               <Form.Item
                 name="timezone"
@@ -392,17 +866,21 @@ export function ScheduleCalendarPage() {
                 initialValue="Asia/Ho_Chi_Minh"
                 rules={required}
               >
-                <Input />
+                <Input placeholder="Asia/Ho_Chi_Minh" />
               </Form.Item>
             </>
           )}
+
           {editor?.kind === 'shift' && (
             <>
+              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+                Shift Details
+              </Divider>
               <Form.Item name="code" label={t('hrOperations.common.code')} rules={required}>
-                <Input />
+                <Input placeholder="e.g. SHIFT_DAY" />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input />
+                <Input placeholder="e.g. Day Shift (08:00 - 17:00)" />
               </Form.Item>
               <Form.Item name="workLocationId" label={t('hrOperations.common.location')}>
                 <Select
@@ -413,36 +891,53 @@ export function ScheduleCalendarPage() {
                   }))}
                 />
               </Form.Item>
-              <Space>
-                <Form.Item
-                  name="startTime"
-                  label={t('hrOperations.schedule.start')}
-                  rules={required}
-                >
-                  <DateTimePicker mode="time" />
-                </Form.Item>
-                <Form.Item name="endTime" label={t('hrOperations.schedule.end')} rules={required}>
-                  <DateTimePicker mode="time" />
-                </Form.Item>
-              </Space>
-              <Space>
-                <Form.Item name="breakMinutes" label={t('hrOperations.schedule.breakMinutes')}>
-                  <InputNumber min={0} />
-                </Form.Item>
-                <Form.Item name="graceMinutes" label={t('hrOperations.schedule.graceMinutes')}>
-                  <InputNumber min={0} />
-                </Form.Item>
-              </Space>
+              <Row gutter={12}>
+                <Col span={12}>
+                  <Form.Item
+                    name="startTime"
+                    label={t('hrOperations.schedule.start')}
+                    rules={required}
+                  >
+                    <DateTimePicker mode="time" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="endTime" label={t('hrOperations.schedule.end')} rules={required}>
+                    <DateTimePicker mode="time" />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={12}>
+                <Col span={12}>
+                  <Form.Item name="breakMinutes" label={t('hrOperations.schedule.breakMinutes')}>
+                    <InputNumber min={0} style={{ width: '100%' }} placeholder="60" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="graceMinutes" label={t('hrOperations.schedule.graceMinutes')}>
+                    <InputNumber min={0} style={{ width: '100%' }} placeholder="15" />
+                  </Form.Item>
+                </Col>
+              </Row>
             </>
           )}
+
           {editor?.kind === 'assignment' && (
             <>
+              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+                Shift Assignment
+              </Divider>
               <Form.Item
                 name="profileId"
                 label={t('hrOperations.common.employee')}
                 rules={required}
               >
-                <Select showSearch optionFilterProp="label" options={employeeOptions} />
+                <Select
+                  showSearch
+                  optionFilterProp="label"
+                  options={employeeOptions}
+                  placeholder="Search employee..."
+                />
               </Form.Item>
               <Form.Item name="shiftId" label={t('hrOperations.schedule.shift')} rules={required}>
                 <Select
@@ -461,25 +956,35 @@ export function ScheduleCalendarPage() {
                   }))}
                 />
               </Form.Item>
-              <Form.Item
-                name="effectiveFrom"
-                label={t('hrOperations.common.from')}
-                rules={required}
-              >
-                <DateTimePicker mode="date" />
-              </Form.Item>
-              <Form.Item name="effectiveTo" label={t('hrOperations.common.to')}>
-                <DateTimePicker mode="date" />
-              </Form.Item>
+              <Row gutter={12}>
+                <Col span={12}>
+                  <Form.Item
+                    name="effectiveFrom"
+                    label={t('hrOperations.common.from')}
+                    rules={required}
+                  >
+                    <DateTimePicker mode="date" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="effectiveTo" label={t('hrOperations.common.to')}>
+                    <DateTimePicker mode="date" />
+                  </Form.Item>
+                </Col>
+              </Row>
             </>
           )}
+
           {editor?.kind === 'override' && (
             <>
+              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+                Calendar Override
+              </Divider>
               <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>
                 <DateTimePicker mode="date" />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input />
+                <Input placeholder="e.g. Special Maintenance Day" />
               </Form.Item>
               <Form.Item name="kind" label={t('hrOperations.common.type')} rules={required}>
                 <Select
@@ -500,13 +1005,17 @@ export function ScheduleCalendarPage() {
               </Form.Item>
             </>
           )}
+
           {editor?.kind === 'holiday' && (
             <>
+              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+                Holiday Info
+              </Divider>
               <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>
                 <DateTimePicker mode="date" />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input />
+                <Input placeholder="e.g. Independence Day" />
               </Form.Item>
               <Form.Item
                 name="holidayType"
@@ -518,17 +1027,22 @@ export function ScheduleCalendarPage() {
                 />
               </Form.Item>
               <Form.Item name="note" label={t('hrOperations.common.note')}>
-                <Input />
+                <Input placeholder="Optional note" />
               </Form.Item>
             </>
           )}
+
           {editor?.kind === 'rotation' && (
             <>
+              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+                Saturday Rotation Generator
+              </Divider>
               <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
                 <Select
                   showSearch
                   optionFilterProp="label"
                   options={teams.data?.items.map((item) => ({ value: item.id, label: item.name }))}
+                  placeholder="Select Team..."
                 />
               </Form.Item>
               <Form.Item
@@ -536,18 +1050,98 @@ export function ScheduleCalendarPage() {
                 label={t('hrOperations.schedule.minimumStaff')}
                 initialValue={1}
               >
-                <InputNumber min={0} />
+                <InputNumber min={0} style={{ width: '100%' }} />
               </Form.Item>
             </>
           )}
-          <Space className={styles.actions}>
-            <Button onClick={() => setEditor(undefined)}>{t('hrOperations.common.cancel')}</Button>
-            <Button type="primary" htmlType="submit" loading={save.isPending}>
-              {t('hrOperations.common.save')}
-            </Button>
-          </Space>
+          {editor?.kind === 'rotationManual' && (
+            <>
+              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+                Saturday Rotation Detail
+              </Divider>
+              <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
+                <Select
+                  showSearch
+                  optionFilterProp="label"
+                  options={teamOptions}
+                  placeholder="Select Team..."
+                  disabled={Boolean(editor.item)}
+                  onChange={() => {
+                    form.setFieldsValue({ employeeProfileIdsByDate: manualDefaultOffByDate })
+                  }}
+                />
+              </Form.Item>
+              {editor.item ? (
+                <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>
+                  <DateTimePicker mode="date" disabled={Boolean(editor.item)} />
+                </Form.Item>
+              ) : (
+                <Form.Item
+                  name="month"
+                  label={t('hrOperations.common.month', { defaultValue: 'Month' })}
+                  rules={required}
+                >
+                  <MonthPicker
+                    onChange={(value) => {
+                      if (!value) return
+                      form.setFieldsValue({
+                        employeeProfileIdsByDate: Object.fromEntries(
+                          saturdaysOfMonth(value).map((dateKey) => [dateKey, []]),
+                        ),
+                      })
+                    }}
+                  />
+                </Form.Item>
+              )}
+              {editor.item ? (
+                <Form.Item
+                  name="employeeProfileIds"
+                  label={t('hrOperations.schedule.staff', { defaultValue: 'Staff' })}
+                  rules={required}
+                >
+                  <Select
+                    mode="multiple"
+                    showSearch
+                    optionFilterProp="label"
+                    options={employeeOptions}
+                    placeholder="Select staff..."
+                  />
+                </Form.Item>
+              ) : (
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {manualSaturdays.map((dateKey) => (
+                    <Form.Item
+                      key={dateKey}
+                      name={['employeeProfileIdsByDate', dateKey]}
+                      label={`${saturdayWeekLabel(dateKey)} ${t('hrOperations.schedule.restingStaff')}`}
+                    >
+                      <Checkbox.Group
+                        options={manualTeamEmployees}
+                        className={styles.checkboxGroup}
+                        disabled={!manualTeamId || !manualSaturdays.length}
+                      />
+                    </Form.Item>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          <Form.Item shouldUpdate noStyle>
+            {() => (
+              <FormActions
+                cancelLabel={t('hrOperations.common.cancel')}
+                dirty={form.isFieldsTouched()}
+                onCancel={() => setEditor(undefined)}
+                saving={save.isPending}
+                submitLabel={t('hrOperations.common.save')}
+              />
+            )}
+          </Form.Item>
         </Form>
       </Modal>
     </section>
   )
 }
+
+export default ScheduleCalendarPage

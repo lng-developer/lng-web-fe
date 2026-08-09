@@ -1,55 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BellOutlined, CheckOutlined } from '@ant-design/icons'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Badge, Button, Empty, List, Popover, Skeleton, Space, Typography } from 'antd'
+import { Badge, Button, Empty, List, Popover, Skeleton, Typography } from 'antd'
 
+import { useNotificationCenter } from '@/features/notifications/useNotificationCenter'
 import { useFeedbackToast } from '@/shared/ui'
 
-import {
-  getUnreadCount,
-  listNotifications,
-  markAllNotificationsRead,
-  markNotificationRead,
-} from '../api/notificationApi'
 import styles from './NotificationCenter.module.scss'
-
-const notificationKey = ['notifications'] as const
 
 export function NotificationCenter() {
   const { t } = useTranslation()
   const toast = useFeedbackToast()
-  const queryClient = useQueryClient()
   const contentRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [limit, setLimit] = useState(8)
-  const countQuery = useQuery({
-    queryKey: [...notificationKey, 'unread-count'],
-    queryFn: getUnreadCount,
-    refetchInterval: 60_000,
-  })
-  const inboxQuery = useQuery({
-    queryKey: [...notificationKey, 'inbox', limit],
-    queryFn: () => listNotifications(false, limit),
-    enabled: open,
-    placeholderData: keepPreviousData,
-  })
-  const refresh = () => queryClient.invalidateQueries({ queryKey: notificationKey })
+  const { countQuery, inboxQuery, readMutation, readAllMutation, refresh } = useNotificationCenter(
+    open,
+    limit,
+  )
   const mutationError = (error: Error) =>
     toast('error', t('notifications.updateFailed'), error.message)
-  const readMutation = useMutation({
-    mutationFn: markNotificationRead,
-    onSuccess: refresh,
-    onError: mutationError,
-  })
-  const readAllMutation = useMutation({
-    mutationFn: markAllNotificationsRead,
-    onSuccess: () => {
-      toast('success', t('notifications.markedAllRead'))
-      void refresh()
-    },
-    onError: mutationError,
-  })
+  const unreadCount = countQuery.data?.unreadCount ?? 0
+  const notifications = inboxQuery.data?.items ?? []
+  const hasMoreItems = (inboxQuery.data?.pagination.total ?? 0) > (notifications.length ?? 0)
 
   useEffect(() => {
     if (!open) return
@@ -64,74 +37,113 @@ export function NotificationCenter() {
 
   const content = (
     <div ref={contentRef} className={styles.content}>
-      <Space className="mb-3 flex w-full justify-between">
-        <Typography.Title level={5} className="!mb-0">
-          {t('notifications.title')}
-        </Typography.Title>
+      <div className={styles.header}>
+        <div>
+          <Typography.Text strong className={styles.title}>
+            {t('notifications.title')}
+          </Typography.Text>
+          {unreadCount > 0 ? (
+            <Typography.Text type="secondary" className={styles.subtitle}>
+              <strong>{unreadCount}</strong> {t('notifications.unread')}
+            </Typography.Text>
+          ) : (
+            <Typography.Text type="secondary" className={styles.subtitle}>
+              {t('notifications.empty', 'All caught up')}
+            </Typography.Text>
+          )}
+        </div>
         <Button
           type="link"
           size="small"
-          disabled={!countQuery.data?.unreadCount}
+          className={styles.linkButton}
+          disabled={!unreadCount}
           loading={readAllMutation.isPending}
-          onClick={() => readAllMutation.mutate()}
+          onClick={() =>
+            readAllMutation.mutate(undefined, {
+              onSuccess: () => {
+                toast('success', t('notifications.markedAllRead'))
+                void refresh()
+              },
+              onError: mutationError,
+            })
+          }
         >
           {t('notifications.markAllRead')}
         </Button>
-      </Space>
+      </div>
       {inboxQuery.isLoading ? (
-        <Skeleton active paragraph={{ rows: 4 }} />
+        <List
+          dataSource={[1, 2, 3, 4]}
+          className={styles.list}
+          renderItem={() => (
+            <List.Item>
+              <Skeleton active paragraph={{ rows: 2 }} title={false} />
+            </List.Item>
+          )}
+        />
       ) : (
         <List
           className={styles.list}
-          dataSource={inboxQuery.data?.items ?? []}
+          dataSource={notifications}
           locale={{
             emptyText: (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('notifications.empty')} />
             ),
           }}
-          renderItem={(item) => (
-            <List.Item
-              className={item.readAt ? undefined : '!bg-primary-light'}
-              actions={
-                !item.readAt
-                  ? [
+          renderItem={(item) => {
+            const unread = !item.readAt
+            return (
+              <List.Item className={unread ? styles.unreadItem : styles.item}>
+                <div className={styles.itemContent}>
+                  <div className={styles.itemHeader}>
+                    <div className={styles.itemTitle}>
+                      {unread && <span className={styles.unreadDot} aria-hidden="true" />}
+                      <Typography.Text strong={unread} className={styles.itemTitleText}>
+                        {item.title}
+                      </Typography.Text>
+                    </div>
+                    {unread ? (
                       <Button
-                        key="read"
                         type="text"
                         size="small"
+                        className={styles.readButton}
                         aria-label={t('notifications.markRead')}
                         icon={<CheckOutlined />}
                         loading={readMutation.isPending && readMutation.variables === item.id}
-                        onClick={() => readMutation.mutate(item.id)}
-                      />,
-                    ]
-                  : undefined
-              }
-            >
-              <List.Item.Meta
-                title={item.title}
-                description={
-                  <>
-                    <div>{item.message}</div>
-                    <Typography.Text type="secondary">
-                      {new Date(item.createdAt).toLocaleString()}
-                    </Typography.Text>
-                  </>
-                }
-              />
-            </List.Item>
-          )}
+                        onClick={() =>
+                          readMutation.mutate(item.id, {
+                            onSuccess: refresh,
+                            onError: mutationError,
+                          })
+                        }
+                      >
+                        {t('notifications.markRead')}
+                      </Button>
+                    ) : null}
+                  </div>
+                  <Typography.Text className={styles.message} title={item.message}>
+                    {item.message}
+                  </Typography.Text>
+                  <Typography.Text type="secondary" className={styles.timestamp}>
+                    {new Date(item.createdAt).toLocaleString()}
+                  </Typography.Text>
+                </div>
+              </List.Item>
+            )
+          }}
         />
       )}
-      {(inboxQuery.data?.pagination.total ?? 0) > (inboxQuery.data?.items.length ?? 0) ? (
-        <Button
-          block
-          type="link"
-          loading={inboxQuery.isFetching}
-          onClick={() => setLimit((value) => value + 8)}
-        >
-          {t('notifications.loadMore')}
-        </Button>
+      {hasMoreItems ? (
+        <div className={styles.footer}>
+          <Button
+            block
+            type="link"
+            loading={inboxQuery.isFetching}
+            onClick={() => setLimit((value) => value + 8)}
+          >
+            {t('notifications.loadMore')}
+          </Button>
+        </div>
       ) : null}
     </div>
   )

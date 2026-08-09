@@ -7,6 +7,13 @@ html {
   background: #f5f7fa;
 }
 
+:root {
+  --ui-border-soft: color-mix(in srgb, var(--ant-color-border) 64%, transparent);
+  --ui-border-strong: color-mix(in srgb, var(--ant-color-border) 88%, transparent);
+  --ui-border-accent: color-mix(in srgb, var(--ant-color-primary) 26%, var(--ant-color-border));
+  --ui-surface-elevate-shadow: 0 10px 28px rgb(15 23 42 / 10%);
+}
+
 body {
   min-width: 320px;
   min-height: 100dvh;

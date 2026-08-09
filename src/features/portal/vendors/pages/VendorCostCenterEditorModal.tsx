@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CarOutlined, DollarOutlined, SettingOutlined, TagOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, InputNumber, Modal, Select, Space } from 'antd'
+import { Card, Drawer, Flex, Form, Input, InputNumber, Modal, Select, Switch, Tabs } from 'antd'
 
-import { useFeedbackToast } from '@/shared/ui'
+import { FormActions, useFeedbackToast } from '@/shared/ui'
 
 import {
   createVendorCostCenter,
@@ -26,15 +27,6 @@ export interface VendorCostCenterEditorModalProps {
   readonly onSaved: (costCenter: VendorCostCenter) => void
 }
 
-const moneyNames = [
-  ['domesticShipping', 'economyAmount'],
-  ['domesticShipping', 'additionalAmount'],
-  ['internationalShipping', 'economyAmount'],
-  ['internationalShipping', 'additionalAmount'],
-  ['priorityShipping', 'economyAmount'],
-  ['priorityShipping', 'additionalAmount'],
-] as const
-
 export function VendorCostCenterEditorModal({
   item,
   open,
@@ -47,6 +39,7 @@ export function VendorCostCenterEditorModal({
   const [form] = Form.useForm<EditorValues>()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
+
   useEffect(() => {
     if (!open) return
     form.setFieldsValue(
@@ -56,15 +49,17 @@ export function VendorCostCenterEditorModal({
             attributesText: JSON.stringify(item.attributes ?? {}, null, 2),
             metadataText: JSON.stringify(item.metadata ?? {}, null, 2),
           }
-        : { status: 'ACTIVE' },
+        : { status: 'ACTIVE', currency: 'USD' },
     )
   }, [form, item, open])
+
   const save = useMutation({
     mutationFn: (values: EditorValues) => {
       const { attributesText, code, metadataText, ...rest } = values
       const input = {
         ...rest,
         attributes: parseJsonObject(attributesText),
+        currency: rest.currency?.toUpperCase(),
         metadata: parseJsonObject(metadataText),
       }
       return item
@@ -91,189 +86,368 @@ export function VendorCostCenterEditorModal({
       } else showFeedbackToast('error', t('actionFeedback.failed'))
     },
   })
+
   const close = () => {
-    if (form.isFieldsTouched() && !window.confirm(t('vendors.discardChanges'))) return
-    onCancel()
+    if (!form.isFieldsTouched()) return onCancel()
+    Modal.confirm({
+      title: t('actionFeedback.unsaved'),
+      content: t('vendors.discardChanges'),
+      okText: t('vendors.discard', { defaultValue: 'Discard' }),
+      cancelText: t('vendors.cancel'),
+      onOk: onCancel,
+    })
   }
-  const nonNegative = { type: 'number' as const, min: 0 }
-  const integerMoney = { type: 'integer' as const, min: 0 }
+
+  const numberRule = { type: 'number' as const, min: 0 }
+
+  const tabItems = [
+    {
+      key: 'identity',
+      label: (
+        <span>
+          <TagOutlined style={{ marginRight: 6 }} />
+          Identity & Attributes
+        </span>
+      ),
+      children: (
+        <Flex flex={1} vertical gap={16}>
+          <Card size="small" title="Variant Identity" style={{ background: '#fafafa' }}>
+            <div className={styles.formGrid}>
+              <Form.Item label={t('vendors.name')} name="name" rules={[{ required: true }]}>
+                <Input placeholder="e.g. Black / XL" />
+              </Form.Item>
+              <Form.Item label={t('vendors.code')} name="code" rules={[{ required: !item }]}>
+                <Input disabled={Boolean(item)} placeholder="BLACK_XL" />
+              </Form.Item>
+              <Form.Item label={t('vendors.sku')} name="sku">
+                <Input placeholder="Vendor SKU Code" />
+              </Form.Item>
+              <Form.Item label={t('vendors.lngCode')} name="lngCode">
+                <Input placeholder="LNG Internal Code" />
+              </Form.Item>
+            </div>
+          </Card>
+
+          <Card size="small" title="Size & Color Matrix" style={{ background: '#fafafa' }}>
+            <div className={styles.formGrid}>
+              <Form.Item label={t('vendors.standardSize')} name="standardSize">
+                <Input placeholder="XL, L, M, S" />
+              </Form.Item>
+              <Form.Item label={t('vendors.standardColor')} name="standardColor">
+                <Input placeholder="Black, White, Navy" />
+              </Form.Item>
+              <Form.Item label={t('vendors.vendorSize')} name="vendorSize">
+                <Input placeholder="Vendor specific size" />
+              </Form.Item>
+              <Form.Item label={t('vendors.vendorColor')} name="vendorColor">
+                <Input placeholder="Vendor specific color" />
+              </Form.Item>
+            </div>
+          </Card>
+        </Flex>
+      ),
+    },
+    {
+      key: 'pricing',
+      label: (
+        <span>
+          <DollarOutlined style={{ marginRight: 6 }} />
+          Base Pricing & Taxes
+        </span>
+      ),
+      children: (
+        <Flex flex={1} vertical gap={16}>
+          <Card size="small" title="Base Production Cost" style={{ background: '#fafafa' }}>
+            <div className={styles.formGrid}>
+              <Form.Item
+                label={t('vendors.baseCostAmount')}
+                name="baseCostAmount"
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="Base cost (cents)"
+                />
+              </Form.Item>
+              <Form.Item
+                label="Import Tax Amount (cents)"
+                name="importTaxAmount"
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="Import Tax (cents)"
+                />
+              </Form.Item>
+              <Form.Item label={t('vendors.currency')} name="currency">
+                <Input maxLength={3} placeholder="USD" />
+              </Form.Item>
+            </div>
+          </Card>
+
+          <Card size="small" title="Additional Printing Costs" style={{ background: '#fafafa' }}>
+            <div className={styles.formGrid}>
+              <Form.Item
+                label="Embroidery Cost (cents)"
+                name={['additionalCosts', 'embroideryAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
+              </Form.Item>
+              <Form.Item
+                label="Two-Sided Print Cost (cents)"
+                name={['additionalCosts', 'twoSidedPrintAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
+              </Form.Item>
+              <Form.Item
+                label="Two-Position Print Cost (cents)"
+                name={['additionalCosts', 'twoPositionPrintAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
+              </Form.Item>
+            </div>
+          </Card>
+        </Flex>
+      ),
+    },
+    {
+      key: 'shipping',
+      label: (
+        <span>
+          <CarOutlined style={{ marginRight: 6 }} />
+          Shipping Rates & Dimensions
+        </span>
+      ),
+      children: (
+        <Flex flex={1} vertical gap={16}>
+          <Card
+            size="small"
+            title="Domestic Shipping Rates (Nội địa)"
+            style={{ background: '#fafafa' }}
+          >
+            <div className={styles.formGrid}>
+              <Form.Item
+                label="Base Shipping (cents)"
+                name={['domesticShipping', 'economyAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. 450"
+                />
+              </Form.Item>
+              <Form.Item
+                label="Additional Item Cost (cents)"
+                name={['domesticShipping', 'additionalAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. 200"
+                />
+              </Form.Item>
+            </div>
+          </Card>
+
+          <Card
+            size="small"
+            title="International Shipping Rates (Quốc tế)"
+            style={{ background: '#fafafa' }}
+          >
+            <div className={styles.formGrid}>
+              <Form.Item
+                label="Base Shipping (cents)"
+                name={['internationalShipping', 'economyAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. 850"
+                />
+              </Form.Item>
+              <Form.Item
+                label="Additional Item Cost (cents)"
+                name={['internationalShipping', 'additionalAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. 350"
+                />
+              </Form.Item>
+            </div>
+          </Card>
+
+          <Card
+            size="small"
+            title="Priority / Express Shipping Rates (Hỏa tốc)"
+            style={{ background: '#fafafa' }}
+          >
+            <div className={styles.formGrid}>
+              <Form.Item
+                label="Base Express Cost (cents)"
+                name={['priorityShipping', 'economyAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. 1500"
+                />
+              </Form.Item>
+              <Form.Item
+                label="Additional Express Item (cents)"
+                name={['priorityShipping', 'additionalAmount']}
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. 600"
+                />
+              </Form.Item>
+            </div>
+          </Card>
+
+          <Card size="small" title="Weight & Package Dimensions" style={{ background: '#fafafa' }}>
+            <div className={styles.formGrid}>
+              <Form.Item label="Weight" name="weight" rules={[numberRule]}>
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. 8.5"
+                />
+              </Form.Item>
+              <Form.Item label="Weight Unit" name="weightUnit">
+                <Select
+                  options={['oz', 'g', 'kg', 'lb'].map((u) => ({ label: u, value: u }))}
+                  placeholder="oz"
+                />
+              </Form.Item>
+
+              <Form.Item label="Width / Length / Height" style={{ marginBottom: 0 }}>
+                <Flex gap={8}>
+                  <Form.Item name="width" noStyle rules={[numberRule]}>
+                    <InputNumber min={0} precision={1} placeholder="W" style={{ width: '33%' }} />
+                  </Form.Item>
+                  <Form.Item name="length" noStyle rules={[numberRule]}>
+                    <InputNumber min={0} precision={1} placeholder="L" style={{ width: '33%' }} />
+                  </Form.Item>
+                  <Form.Item name="height" noStyle rules={[numberRule]}>
+                    <InputNumber min={0} precision={1} placeholder="H" style={{ width: '33%' }} />
+                  </Form.Item>
+                </Flex>
+              </Form.Item>
+              <Form.Item label="Dimension Unit" name="dimensionUnit">
+                <Select
+                  options={['in', 'cm', 'mm'].map((u) => ({ label: u, value: u }))}
+                  placeholder="in"
+                />
+              </Form.Item>
+            </div>
+          </Card>
+        </Flex>
+      ),
+    },
+    {
+      key: 'settings',
+      label: (
+        <span>
+          <SettingOutlined style={{ marginRight: 6 }} />
+          Status & Metadata
+        </span>
+      ),
+      children: (
+        <Flex flex={1} vertical gap={16}>
+          <Card size="small" title="Status" style={{ background: '#fafafa' }}>
+            <Form.Item
+              label={t('vendors.statusLabel')}
+              name="status"
+              valuePropName="checked"
+              getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+              getValueProps={(v) => ({ checked: v === 'ACTIVE' })}
+            >
+              <Switch
+                checkedChildren={t('vendors.status.ACTIVE')}
+                unCheckedChildren={t('vendors.status.INACTIVE')}
+              />
+            </Form.Item>
+          </Card>
+
+          <Card size="small" title="Attributes JSON" style={{ background: '#fafafa' }}>
+            <Form.Item
+              label={t('vendors.attributes')}
+              name="attributesText"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    try {
+                      parseJsonObject(value)
+                      return Promise.resolve()
+                    } catch {
+                      return Promise.reject(new Error(t('vendors.invalidJson')))
+                    }
+                  },
+                },
+              ]}
+            >
+              <Input.TextArea
+                autoSize={{ minRows: 3, maxRows: 8 }}
+                placeholder="{}"
+                style={{ fontFamily: 'monospace', fontSize: 12 }}
+              />
+            </Form.Item>
+          </Card>
+        </Flex>
+      ),
+    },
+  ]
 
   return (
-    <Modal
-      centered
-      destroyOnHidden
-      footer={null}
+    <Drawer
+      destroyOnClose
       open={open}
       title={t(item ? 'vendors.editCostCenterTitle' : 'vendors.createCostCenterTitle')}
-      width="min(920px, calc(100vw - 32px))"
-      onCancel={close}
+      width={760}
+      onClose={close}
+      footer={
+        <FormActions
+          cancelLabel={t('vendors.cancel')}
+          dirty
+          form="vendor-cost-center-form"
+          onSubmit={() => form.submit()}
+          onCancel={close}
+          saving={save.isPending}
+          submitLabel={t('vendors.save')}
+        />
+      }
     >
-      <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.identity')}</legend>
-          <div className={styles.formGrid}>
-            <Form.Item
-              label={t('vendors.name')}
-              name="name"
-              rules={[{ required: true }, { max: 200 }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.code')}
-              name="code"
-              rules={[{ required: !item }, { max: 80 }]}
-            >
-              <Input disabled={Boolean(item)} />
-            </Form.Item>
-            <Form.Item label={t('vendors.sku')} name="sku" rules={[{ max: 120 }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item label={t('vendors.lngCode')} name="lngCode" rules={[{ max: 120 }]}>
-              <Input />
-            </Form.Item>
-          </div>
-        </fieldset>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.variants')}</legend>
-          <div className={styles.formGrid}>
-            {(['vendorSize', 'vendorColor', 'standardSize', 'standardColor'] as const).map(
-              (name) => (
-                <Form.Item
-                  key={name}
-                  label={t(`vendors.${name}`)}
-                  name={name}
-                  rules={[{ max: 80 }]}
-                >
-                  <Input />
-                </Form.Item>
-              ),
-            )}
-          </div>
-        </fieldset>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.measurements')}</legend>
-          <div className={styles.formGrid}>
-            {(['weight', 'width', 'length', 'height'] as const).map((name) => (
-              <Form.Item key={name} label={t(`vendors.${name}`)} name={name} rules={[nonNegative]}>
-                <InputNumber min={0} />
-              </Form.Item>
-            ))}
-            <Form.Item label={t('vendors.weightUnit')} name="weightUnit" rules={[{ max: 20 }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.dimensionUnit')}
-              name="dimensionUnit"
-              rules={[{ max: 20 }]}
-            >
-              <Input />
-            </Form.Item>
-          </div>
-        </fieldset>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.pricing')}</legend>
-          <div className={styles.formGrid}>
-            <Form.Item
-              label={t('vendors.baseCostAmount')}
-              name="baseCostAmount"
-              rules={[integerMoney]}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.currency')}
-              name="currency"
-              normalize={(value) => String(value ?? '').toUpperCase()}
-              rules={[{ len: 3 }]}
-            >
-              <Input maxLength={3} />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.importTaxAmount')}
-              name="importTaxAmount"
-              rules={[integerMoney]}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-            {moneyNames.map((name) => (
-              <Form.Item
-                key={name.join('.')}
-                label={t(`vendors.${name[1]}`)}
-                name={[...name]}
-                rules={[integerMoney]}
-              >
-                <InputNumber min={0} precision={0} />
-              </Form.Item>
-            ))}
-            {(['embroideryAmount', 'twoSidedPrintAmount', 'twoPositionPrintAmount'] as const).map(
-              (name) => (
-                <Form.Item
-                  key={name}
-                  label={t(`vendors.${name}`)}
-                  name={['additionalCosts', name]}
-                  rules={[integerMoney]}
-                >
-                  <InputNumber min={0} precision={0} />
-                </Form.Item>
-              ),
-            )}
-          </div>
-        </fieldset>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.advanced')}</legend>
-          <Form.Item
-            label={t('vendors.attributes')}
-            name="attributesText"
-            rules={[
-              {
-                validator: (_, value) => {
-                  try {
-                    parseJsonObject(value)
-                    return Promise.resolve()
-                  } catch {
-                    return Promise.reject(new Error(t('vendors.invalidJson')))
-                  }
-                },
-              },
-            ]}
-          >
-            <Input.TextArea autoSize={{ minRows: 3, maxRows: 8 }} />
-          </Form.Item>
-          <Form.Item
-            label={t('vendors.metadata')}
-            name="metadataText"
-            rules={[
-              {
-                validator: (_, value) => {
-                  try {
-                    parseJsonObject(value)
-                    return Promise.resolve()
-                  } catch {
-                    return Promise.reject(new Error(t('vendors.invalidJson')))
-                  }
-                },
-              },
-            ]}
-          >
-            <Input.TextArea autoSize={{ minRows: 3, maxRows: 8 }} />
-          </Form.Item>
-          <Form.Item label={t('vendors.statusLabel')} name="status">
-            <Select
-              options={['ACTIVE', 'INACTIVE'].map((value) => ({
-                label: t(`vendors.status.${value}`),
-                value,
-              }))}
-            />
-          </Form.Item>
-        </fieldset>
-        <Space>
-          <Button onClick={close}>{t('vendors.cancel')}</Button>
-          <Button type="primary" htmlType="submit" loading={save.isPending}>
-            {t('vendors.save')}
-          </Button>
-        </Space>
+      <Form
+        id="vendor-cost-center-form"
+        form={form}
+        layout="vertical"
+        onFinish={(values) => save.mutate(values)}
+      >
+        <Tabs items={tabItems} defaultActiveKey="identity" />
       </Form>
-    </Modal>
+    </Drawer>
   )
 }

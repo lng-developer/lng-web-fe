@@ -8,6 +8,7 @@
       "primary": "Primary",
       "cores": "Application areas",
       "foundation": "Foundation",
+      "operationsDashboard": "Operations dashboard",
       "accounts": "Accounts",
       "accessControl": "Access control",
       "auditLog": "Audit log",
@@ -317,6 +318,7 @@
     "description": "Trace imported items, correct mapping rules, and prepare fulfillment plans.",
     "pages": {
       "workbench": "Mapping workbench",
+      "workbenchDesc": "Review blocked items, inspect mapping traces, and apply the next fix.",
       "skuRules": "SKU cleanup rules",
       "skuRulesDescription": "Normalize marketplace SKU segments before product matching.",
       "productMapping": "Product mapping",
@@ -366,7 +368,9 @@
       "acknowledge": "Acknowledge overlap",
       "retry": "Try again",
       "findCandidate": "Find vendor candidate",
-      "applyCandidate": "Apply candidate"
+      "applyCandidate": "Apply candidate",
+      "edit": "Edit",
+      "openRuleTab": "Open rule tab"
     },
     "sections": {
       "rules": "Rules",
@@ -376,7 +380,9 @@
       "history": "Rule history",
       "candidates": "Candidates",
       "normalizedInputs": "Normalized inputs",
-      "ruleEditor": "Rule editor"
+      "ruleEditor": "Rule editor",
+      "ruleFields": "Rule fields",
+      "ruleMetadata": "Rule metadata"
     },
     "filters": {
       "vendorProduct": "Vendor product",
@@ -416,6 +422,7 @@
       "normalizedColor": "Normalized color",
       "priority": "Priority",
       "status": "Status",
+      "sampleSku": "Sample SKU",
       "updatedAt": "Updated",
       "actions": "Actions"
     },
@@ -428,7 +435,19 @@
       "noRules": "No rules match this context",
       "noQueue": "No unmatched items",
       "selectContext": "Select an item or enter a context to inspect its trace",
-      "sampled": "These are sampled records, not an exact total."
+      "sampled": "These are sampled records, not an exact total.",
+      "noCandidates": "No matching candidates"
+    },
+    "age": {
+      "today": "Today",
+      "over24h": "Over 24 hours",
+      "over3d": "Over 3 days"
+    },
+    "summary": {
+      "blocked": "Blocked samples",
+      "ready": "Ready plans",
+      "confirmed": "Confirmed plans",
+      "ambiguous": "Ambiguous configurations"
     },
     "feedback": {
       "ruleSaved": "Mapping rule saved",
@@ -473,7 +492,10 @@
       "table": "Data table",
       "upload": "File upload",
       "summary": "Summary and table footer",
-      "filters": "Filters and controls"
+      "filters": "Filters and controls",
+      "accessScope": "Access scope",
+      "hr": "Human resources",
+      "portal": "Portal"
     },
     "input": { "label": "Search", "placeholder": "Search foundation" },
     "controls": {
@@ -502,6 +524,18 @@
       "apply": "Apply"
     },
     "card": { "title": "Logistics Manager", "description": "Active session: 4h 12m" },
+    "scope": {
+      "staff": "Staff",
+      "leader": "Team lead",
+      "manager": "Manager",
+      "admin": "Admin"
+    },
+    "scopeDescription": {
+      "staff": "You can only access your own HR data and your own work scope.",
+      "leader": "You can view your team overview and approve requests for your team.",
+      "manager": "You can view department-wide operations, HR, and operational metrics.",
+      "admin": "You can view the full operations dashboard across all scopes."
+    },
     "summary": {
       "totalAssets": "Total assets",
       "alerts": "Alerts 24h",
@@ -533,19 +567,97 @@
       "orders": "Open orders",
       "create": "Create order"
     },
-    "chart": { "ariaLabel": "Daily order volume" },
+    "chart": {
+      "ariaLabel": "Daily order volume",
+      "line": "Trend line",
+      "lineHint": "Trend lines show relative movement across labels.",
+      "orders": "Order status circle chart",
+      "ordersLine": "Order trend",
+      "ordersDonut": "Order composition",
+      "mapping": "Mapping summary circle chart",
+      "mappingLine": "Mapping trend",
+      "mappingDonut": "Mapping composition",
+      "design": "Design status circle chart",
+      "designLine": "Design trend",
+      "designDonut": "Design composition",
+      "production": "Production summary distribution",
+      "productionLine": "Production trend",
+      "productionDonut": "Production composition",
+      "notes": {
+        "hr": "HR cards summarize your operational window and adapt by scope.",
+        "orders": "Orders use bar + donut + trend to show volume split and movement.",
+        "mapping": "Mapping shows phase distribution and trend for quick progress checks.",
+        "design": "Design tracks total, active, and unassigned tasks with trend context.",
+        "production": "Production displays throughput mix and short-term movement together."
+      }
+    },
     "drawer": { "title": "Order details", "reference": "Order reference" },
     "feedback": {
       "success": "Role updated",
       "successDescription": "Changes propagated to active nodes.",
       "warning": "Unsaved changes",
       "error": "Database connection failed",
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadFailed": "Failed to load data."
     },
     "empty": {
       "title": "No personnel found",
       "description": "Adjust the filters or add a staff member.",
       "action": "Add resource"
+    },
+    "noData": "No data",
+    "portal": {
+      "noPermission": "Portal scope permission is required to view this section.",
+      "moduleDenied": "You do not have permission to view this module.",
+      "orders": "Orders",
+      "mapping": "Mapping",
+      "design": "Design",
+      "production": "Production"
+    },
+    "accessDenied": "You do not have permission to access operations dashboard.",
+    "metrics": {
+      "staff": {
+        "attendance": "Attendance",
+        "shift": "Shift completion",
+        "leaveBalance": "Leave balance",
+        "pendingRequests": "Pending requests",
+        "latestPayroll": "Latest payroll",
+        "presentDays": "Present days",
+        "approvedLeave": "Approved leave",
+        "approvedOvertime": "Approved overtime"
+      },
+      "leader": {
+        "members": "Team members",
+        "present": "Present members",
+        "lateToday": "Late today",
+        "exceptions": "Exceptions",
+        "pendingApprovals": "Pending approvals"
+      },
+      "manager": {
+        "totalEmployees": "Total employees",
+        "activeEmployees": "Active employees",
+        "presentToday": "Present today",
+        "pendingApprovals": "Pending approvals",
+        "coverageRate": "Coverage rate",
+        "probation": "Probation",
+        "onLeave": "On leave"
+      },
+      "portal": {
+        "orderTotal": "Total orders",
+        "mappingTotalPlan": "Total mapping plans",
+        "mappingReadyPlan": "Ready plans",
+        "mappingConfirmedPlan": "Confirmed plans",
+        "mappingBlockedSample": "Blocked samples",
+        "mappingMissingConfig": "Missing plan configuration",
+        "designTotal": "Total design tasks",
+        "designUnassigned": "Unassigned designs",
+        "designActive": "Active designs",
+        "productionTotal": "Total production items",
+        "productionBlocked": "Blocked items",
+        "productionNeedScale": "Needs scale",
+        "productionQcPending": "QC pending",
+        "productionReady": "Ready items"
+      }
     }
   },
   "auth": {
@@ -890,6 +1002,7 @@
       "updated": "Request updated",
       "payrollStarted": "Payroll run started",
       "payrollUpdated": "Payroll updated",
+      "payrollSettingsSaved": "Payroll settings saved",
       "adjustmentSaved": "Adjustment saved",
       "announcementPublished": "Announcement published",
       "announcementDeleted": "Announcement deleted"
@@ -947,6 +1060,8 @@
       "title": "Leave & overtime",
       "requestLeave": "Request leave",
       "requestOvertime": "Request OT",
+      "detail": "Request detail",
+      "minutes": "minutes",
       "remainingLeave": "Remaining leave",
       "pendingLeave": "Pending leave",
       "pendingOvertime": "Pending OT",
@@ -963,6 +1078,7 @@
       "title": "Payroll",
       "export": "Export CSV",
       "addAdjustment": "Add adjustment",
+      "addBulkAdjustment": "Add bulk adjustment",
       "run": "Run payroll",
       "employees": "Employees",
       "gross": "Total gross",
@@ -978,12 +1094,67 @@
       "myPayroll": "My payslips",
       "workdays": "Workdays",
       "baseSalary": "Base salary",
+      "employeeCode": "Employee code",
+      "department": "Department",
+      "jobTitle": "Job title",
       "adjustments": "Adjustments",
       "amount": "Amount",
       "mode": "Mode",
       "live": "Live run",
       "shadow": "Shadow check",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "settings": "Payroll settings",
+      "company": "Company information",
+      "companyName": "Company name",
+      "logoUrl": "Logo URL",
+      "companyAddress": "Company address",
+      "taxCode": "Tax code",
+      "payrollEmail": "Payroll email",
+      "payrollPhone": "Payroll phone",
+      "currency": "Currency",
+      "calculationSettings": "Calculation settings",
+      "workHoursPerDay": "Work hours per day",
+      "probationRate": "Probation rate (basis points)",
+      "insuranceCap": "Insurance salary cap",
+      "personalDeduction": "Personal deduction",
+      "dependantDeduction": "Dependant deduction",
+      "adjustmentTypes": "Adjustment types",
+      "adjustmentCodes": "Adjustment codes",
+      "myTitle": "My payslip statement",
+      "myDescription": "Monthly employee, company, earnings, deductions, and net pay details.",
+      "emptyPayslip": "No payslip is available for {{period}}.",
+      "payslip": "Payslip",
+      "employmentType": "Employment type",
+      "startDate": "Start date",
+      "earnings": "Earnings",
+      "salaryFromWork": "Salary from workdays",
+      "overtime": "Overtime",
+      "approvedMinutes": "{{count}} approved minutes",
+      "allowances": "Total allowances",
+      "adjustmentEarnings": "Other earnings",
+      "deductionBreakdown": "Deductions",
+      "personalIncomeTax": "Personal income tax",
+      "adjustmentDeductions": "Other deductions",
+      "netPayable": "Net payable",
+      "allowance": {
+        "lunch": "Lunch allowance",
+        "fuel": "Fuel allowance",
+        "other": "Other allowance",
+        "responsibility": "Responsibility allowance"
+      },
+      "insurance": {
+        "social": "Social insurance",
+        "health": "Health insurance",
+        "unemployment": "Unemployment insurance"
+      },
+      "otRate": {
+        "weekday": "Weekday OT",
+        "weekend": "Weekend OT",
+        "holiday": "Holiday OT",
+        "weekday_night": "Weekday night OT",
+        "weekend_night": "Weekend night OT",
+        "holiday_night": "Holiday night OT"
+      }
     },
     "overview": {
       "title": "Overview",
@@ -996,14 +1167,27 @@
       "onLeave": "On leave",
       "absent": "Absent",
       "approvedOt": "OT approved today",
+      "attendanceTrend": "Attendance trend",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
       "announcements": "Internal announcements",
       "createAnnouncement": "Create announcement",
+      "editAnnouncement": "Edit announcement",
       "announcementTitle": "Title",
       "content": "Content",
       "category": "Category",
       "priority": "Priority",
       "companyWide": "Send to whole company",
-      "publish": "Publish"
+      "publish": "Save announcement",
+      "targetDepartments": "Target departments",
+      "targetEmployees": "Target employees",
+      "pinned": "Pin announcement",
+      "scheduledAt": "Publish at",
+      "remindAt": "Reminder at",
+      "eventStart": "Event starts",
+      "eventEnd": "Event ends",
+      "mandatory": "Mandatory event",
+      "attachmentIds": "Media attachment IDs"
     },
     "self": {
       "title": "My work",
@@ -1832,7 +2016,62 @@
       "confirmRefresh": "Refresh provider credentials now?",
       "refresh": "Refresh credentials",
       "refreshed": "Provider credentials refreshed",
-      "status": { "ACTIVE": "Active", "INACTIVE": "Inactive" }
+      "discard": "Discard",
+      "costCenters": "Cost centers",
+      "costCenterActions": "Cost center actions",
+      "importProducts": "Import products",
+      "importCostCenters": "Import cost centers",
+      "manageCostCenters": "Manage cost centers",
+      "productCostCenters": "Product cost centers",
+      "productsTabActions": "Product actions",
+      "vendorsTabActions": "Vendor actions",
+      "sectionIdentity": "Identity",
+      "sectionFulfillment": "Fulfillment",
+      "sectionStatus": "Status",
+      "sectionConnection": "Connection",
+      "sectionAuth": "Authentication",
+      "sla": "Production SLA",
+      "vendor": "Vendor",
+      "tabs": { "vendors": "Vendors", "products": "Products" },
+      "filters": { "label": "Filters", "status": "Status", "vendor": "Vendor" },
+      "metrics": {
+        "total": "Total vendors",
+        "active": "Active vendors",
+        "integrated": "API integrated",
+        "types": "Fulfillment types"
+      },
+      "import": {
+        "description": "Import vendor records from a CSV file.",
+        "chooseFile": "Choose CSV file",
+        "downloadTemplate": "Download template",
+        "submit": "Import",
+        "importing": "Importing...",
+        "previewTitle": "Import preview",
+        "previewEmpty": "Choose a valid CSV file to preview records.",
+        "summary": "{{created}} of {{total}} records created; {{failed}} failed.",
+        "result": "Imported {{created}} of {{total}} records; {{failed}} failed.",
+        "productTip": "Use the product template and provide a valid product type group.",
+        "costCenterTip": "Use the cost-center template and valid product identifiers.",
+        "fileRequired": "Choose a CSV file.",
+        "fileTooLarge": "The CSV file is too large.",
+        "fileType": "Only CSV files are supported.",
+        "invalidCsv": "The CSV file has no usable rows.",
+        "invalidStatus": "Status must be ACTIVE or INACTIVE.",
+        "requiredMissing": "Code and name are required.",
+        "productTypeGroupMissing": "Product type group was not found.",
+        "numberInvalid": "{{field}} must be a non-negative number.",
+        "needProductTypeGroups": "Product type groups could not be loaded.",
+        "notReady": "The import is not ready.",
+        "createFailed": "Could not create imported records.",
+        "failed": "Vendor import failed.",
+        "rowError": "Row {{row}}: {{reason}}"
+      },
+      "status": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "CONNECTED": "Connected",
+        "DISCONNECTED": "Disconnected"
+      }
     }
   },
   "organization": {
@@ -1942,6 +2181,7 @@
       "image": "Image",
       "quantity": "Quantity",
       "customerPaid": "Customer paid",
+      "totalCost": "Total cost",
       "vendor": "Vendor",
       "product": "Product",
       "costCenter": "Cost center",
@@ -2020,7 +2260,8 @@
       "shipping": "Shipping",
       "shop": "Shop",
       "cost": "Base cost",
-      "handling": "Handling",
+      "totalCost": "Total cost",
+      "handling": "SLA",
       "case": "Case"
     },
     "tabs": {
@@ -2084,9 +2325,18 @@
   },
   "errors": {
     "unexpected": "Something unexpected happened.",
+    "serverTitle": "Anh em đợi tôi :))",
+    "technicalHint": "Try again, then return to dashboard if the issue continues.",
     "requestId": "Request ID",
     "goBack": "Go back",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "serverImageAlt": "Server error illustration"
   },
-  "notFound": { "title": "Page not found", "backHome": "Back home" }
+  "notFound": {
+    "title": "Feature under development",
+    "subtitle": "The page you are looking for might have been moved or deleted.",
+    "hint": "Try the home page below or check the URL and try again.",
+    "backHome": "Back home",
+    "illustrationAlt": "404 page not found illustration"
+  }
 }

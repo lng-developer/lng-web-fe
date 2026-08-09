@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { Modal } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -25,6 +26,7 @@ vi.mock('@/features/portal/vendors/api/vendorApi', () => ({
 
 describe('VendorEditorModal', () => {
   afterEach(() => {
+    Modal.destroyAll()
     cleanup()
     vi.restoreAllMocks()
   })
@@ -123,6 +125,7 @@ describe('VendorEditorModal', () => {
 
     expect(screen.getByLabelText('Code')).toBeDisabled()
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Updated' } })
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => expect(updateVendor).toHaveBeenCalledWith('vendor-1', expect.any(Object)))
@@ -147,13 +150,16 @@ describe('VendorEditorModal', () => {
     fireEvent.change(screen.getByLabelText('External product ID'), {
       target: { value: 'external-1' },
     })
+    fireEvent.click(screen.getByRole('tab', { name: /Asset Links & Media/ }))
     fireEvent.change(screen.getByLabelText('Image URL'), {
       target: { value: 'https://example.com/image.png' },
     })
+    fireEvent.click(screen.getByRole('tab', { name: /Product Identity & SLA/ }))
     fireEvent.change(screen.getByLabelText('Minimum production days'), { target: { value: '2' } })
     fireEvent.change(screen.getByLabelText('Maximum production days'), { target: { value: '5' } })
     fireEvent.change(screen.getByLabelText('Base cost'), { target: { value: '1250' } })
     fireEvent.change(screen.getByLabelText('Currency'), { target: { value: 'usd' } })
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => expect(createVendorProduct).toHaveBeenCalled())
@@ -216,9 +222,8 @@ describe('VendorEditorModal', () => {
     expect(screen.getByLabelText('Code')).toHaveValue('TEE')
   })
 
-  it('does not discard a dirty Product form when confirmation is declined', () => {
+  it('does not discard a dirty Product form when confirmation is declined', async () => {
     const onCancel = vi.fn()
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     render(
       <AppProviders>
         <VendorProductEditorModal open vendorId="vendor-1" onCancel={onCancel} onSaved={vi.fn()} />
@@ -226,10 +231,14 @@ describe('VendorEditorModal', () => {
     )
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Unsaved tee' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(
+      within(screen.getByLabelText('Name').closest('[role="dialog"]')!).getByRole('button', {
+        name: 'Cancel',
+      }),
+    )
 
-    expect(window.confirm).toHaveBeenCalled()
     expect(onCancel).not.toHaveBeenCalled()
+    expect(await screen.findByText('Discard unsaved changes?')).toBeInTheDocument()
   })
 
   it('submits Cost Center money as integer minor units and refreshes child rows and parent counts', async () => {
@@ -248,20 +257,22 @@ describe('VendorEditorModal', () => {
     )
 
     expect(screen.getByLabelText('Vendor size')).toBeInTheDocument()
-    expect(screen.getByLabelText('Weight')).toBeInTheDocument()
-    expect(screen.getByLabelText('Width')).toBeInTheDocument()
-    expect(screen.getAllByLabelText('Economy amount')).toHaveLength(3)
-    expect(screen.getByLabelText('Embroidery')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Tee XL' } })
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'TEE-XL' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Base Pricing & Taxes/ }))
     fireEvent.change(screen.getByLabelText('Base cost'), { target: { value: '1750' } })
     fireEvent.change(screen.getByLabelText('Currency'), { target: { value: 'usd' } })
-    fireEvent.change(screen.getByLabelText('Import tax'), { target: { value: '125' } })
-    const economy = screen.getAllByLabelText('Economy amount')
+    fireEvent.change(screen.getByLabelText('Import Tax Amount (cents)'), {
+      target: { value: '125' },
+    })
+    fireEvent.change(screen.getByLabelText('Embroidery Cost (cents)'), { target: { value: '250' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Shipping Rates & Dimensions/ }))
+    const economy = screen.getAllByLabelText('Base Shipping (cents)')
     fireEvent.change(economy[0], { target: { value: '500' } })
     fireEvent.change(economy[1], { target: { value: '900' } })
-    fireEvent.change(economy[2], { target: { value: '1400' } })
-    fireEvent.change(screen.getByLabelText('Embroidery'), { target: { value: '250' } })
+    fireEvent.change(screen.getByLabelText('Base Express Cost (cents)'), {
+      target: { value: '1400' },
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => expect(createVendorCostCenter).toHaveBeenCalled())
@@ -298,7 +309,9 @@ describe('VendorEditorModal', () => {
     )
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Tee XL' } })
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'TEE-XL' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Status & Metadata/ }))
     fireEvent.change(screen.getByLabelText('Attributes'), { target: { value: '[]' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Base Pricing & Taxes/ }))
     fireEvent.change(screen.getByLabelText('Base cost'), { target: { value: '-1' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
@@ -336,9 +349,8 @@ describe('VendorEditorModal', () => {
     expect(screen.getByLabelText('Code')).toHaveValue('TEE-XL')
   })
 
-  it('keeps a dirty Cost Center modal open when discard is declined', () => {
+  it('keeps a dirty Cost Center modal open when discard is declined', async () => {
     const onCancel = vi.fn()
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     render(
       <AppProviders>
         <VendorCostCenterEditorModal
@@ -351,8 +363,12 @@ describe('VendorEditorModal', () => {
       </AppProviders>,
     )
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Unsaved center' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(window.confirm).toHaveBeenCalled()
+    fireEvent.click(
+      within(screen.getByLabelText('Name').closest('[role="dialog"]')!).getByRole('button', {
+        name: 'Cancel',
+      }),
+    )
     expect(onCancel).not.toHaveBeenCalled()
+    expect((await screen.findAllByText('Discard unsaved changes?')).length).toBeGreaterThan(0)
   })
 })

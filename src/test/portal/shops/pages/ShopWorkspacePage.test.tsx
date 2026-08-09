@@ -150,7 +150,7 @@ describe('ShopWorkspacePage', () => {
     fireEvent.click(await screen.findByRole('row', { name: /Football US/ }))
     expect(await screen.findByDisplayValue('Football US')).toBeInTheDocument()
     const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByRole('combobox', { name: 'Status' })).toBeDisabled()
+    expect(within(dialog).getByRole('switch', { name: 'Status' })).toBeDisabled()
     expect(within(dialog).queryByRole('button', { name: 'Save status' })).not.toBeInTheDocument()
   })
 
@@ -178,11 +178,10 @@ describe('ShopWorkspacePage', () => {
 
     fireEvent.click(await screen.findByText('Football US'))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Status' }))
-    fireEvent.click(await screen.findByText('Suspended'))
+    fireEvent.click(within(dialog).getByRole('switch', { name: 'Status' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save status' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Save status' }))
-    await waitFor(() => expect(updateShopStatus).toHaveBeenCalledWith('shop-1', 'SUSPENDED'))
+    await waitFor(() => expect(updateShopStatus).toHaveBeenCalledWith('shop-1', 'INACTIVE'))
   })
 
   it('shows Retry for failed lists and keeps failed mutation values visible', async () => {

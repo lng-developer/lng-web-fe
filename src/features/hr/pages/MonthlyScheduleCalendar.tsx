@@ -113,11 +113,7 @@ export function MonthlyScheduleCalendar({
                 </div>
                 <div className={styles.calendarEvents}>
                   {dayEvents.slice(0, 3).map((event, index) => (
-                    <span
-                      className={styles[`event_${event.kind}`]}
-                      key={`${event.kind}-${index}`}
-                      title={event.label}
-                    >
+                    <span className={styles[`event_${event.kind}`]} key={`${event.kind}-${index}`}>
                       {event.label}
                     </span>
                   ))}
@@ -131,11 +127,11 @@ export function MonthlyScheduleCalendar({
         />
       </div>
       <aside className={styles.calendarDetail} aria-live="polite">
-        <div>
+        <div className={styles.calendarDetailHeader}>
           <Typography.Text type="secondary">
             {t('hrOperations.calendar.selectedDay')}
           </Typography.Text>
-          <Typography.Title level={4}>
+          <Typography.Title level={4} style={{ marginTop: 4, marginBottom: 0 }}>
             {selectedDay ? dayjs(selectedDay.workDateKey).format('DD/MM/YYYY') : '-'}
           </Typography.Title>
         </div>
@@ -151,6 +147,7 @@ export function MonthlyScheduleCalendar({
                       ? 'green'
                       : 'default'
               }
+              className={styles.calendarStatusTag}
             >
               {selectedDay.status === 'HOLIDAY'
                 ? t('hrOperations.calendar.holiday')
@@ -209,3 +206,5 @@ export function MonthlyScheduleCalendar({
     </div>
   )
 }
+
+export default MonthlyScheduleCalendar

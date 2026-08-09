@@ -135,6 +135,21 @@ export type VendorCostCenterInput = Omit<Partial<VendorCostCenter>, 'id' | 'vend
   name: string
 }
 export type VendorCostCenterUpdateInput = Omit<Partial<VendorCostCenterInput>, 'code'>
+export type VendorImportRow = Record<string, string>
+export type VendorProductImportPayload = {
+  vendorId: string
+  rows: VendorImportRow[]
+  dryRun?: boolean
+}
+export type VendorCostCenterImportPayload = {
+  rows: VendorImportRow[]
+  dryRun?: boolean
+}
+export type VendorImportSummary = {
+  total: number
+  created: number
+  failed: string[]
+}
 export type VendorIntegrationConfigInput = {
   providerKey: string
   baseUrl: string
@@ -187,6 +202,10 @@ export async function createVendorProduct(input: VendorProductInput) {
   return unwrap<VendorProduct>(await apiClient.post('/api/vendors/products', input))
 }
 
+export async function importVendorProducts(payload: VendorProductImportPayload) {
+  return unwrap<VendorImportSummary>(await apiClient.post('/api/vendors/products/import', payload))
+}
+
 export async function updateVendorProduct(productId: string, input: VendorProductUpdateInput) {
   return unwrap<VendorProduct>(await apiClient.patch(`/api/vendors/products/${productId}`, input))
 }
@@ -202,6 +221,15 @@ export async function listVendorCostCenters(productId: string, params: CostCente
 export async function createVendorCostCenter(productId: string, input: VendorCostCenterInput) {
   return unwrap<VendorCostCenter>(
     await apiClient.post(`/api/vendors/products/${productId}/cost-centers`, input),
+  )
+}
+
+export async function importVendorCostCenters(
+  productId: string,
+  payload: VendorCostCenterImportPayload,
+) {
+  return unwrap<VendorImportSummary>(
+    await apiClient.post(`/api/vendors/products/${productId}/cost-centers/import`, payload),
   )
 }
 

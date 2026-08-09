@@ -166,6 +166,9 @@ describe('HrWorkspacePage', () => {
     const fileInput = screen.getByRole('dialog').querySelector('input[type="file"]')
     expect(fileInput).not.toBeNull()
     fireEvent.change(fileInput!, { target: { files: [avatar] } })
+    fireEvent.change(screen.getByLabelText(/phone number|số điện thoại/i), {
+      target: { value: '0901000003' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /save|lưu/i }))
 
     await waitFor(() => expect(updateEmployeeProfile).toHaveBeenCalled())

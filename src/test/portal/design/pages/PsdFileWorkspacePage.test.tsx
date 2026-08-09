@@ -2,7 +2,13 @@ import { cleanup, fireEvent } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/design/api/designApi', () => ({
-  listDesignAssignees: vi.fn().mockResolvedValue([]),
+  listDesignAssignees: vi.fn().mockResolvedValue([
+    {
+      id: 'designer-1',
+      fullName: 'Designer One',
+      avatarUrl: '/api/hr/employee-profiles/profile-1/avatar',
+    },
+  ]),
   listPsdFiles: vi.fn().mockResolvedValue({
     items: [
       {
@@ -62,6 +68,9 @@ describe('PsdFileWorkspacePage', () => {
     expect(await view.findByText('reference.png')).toBeVisible()
     expect(view.getByAltText('reference.png')).toBeVisible()
     expect(view.queryByAltText('master.psd')).not.toBeInTheDocument()
+    expect(view.getByText('SKU-1')).toBeVisible()
+    expect(view.queryByText('Shirt')).not.toBeInTheDocument()
+    expect(view.getByPlaceholderText('Search file or SKU')).toBeVisible()
     fireEvent.click(view.getByRole('button', { name: 'Download master.psd' }))
     expect(downloadMediaAsset).toHaveBeenCalledWith(
       '/api/media/assets/asset-2/download',

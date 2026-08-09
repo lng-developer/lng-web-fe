@@ -55,6 +55,7 @@ export type ProductionTask = {
   orderItem?: {
     externalOrderId?: string | null
     asin?: string | null
+    sourceSku?: string | null
     sku?: string | null
     title?: string | null
   }

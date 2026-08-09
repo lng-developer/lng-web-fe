@@ -1,5 +1,6 @@
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { IdcardOutlined, PlusOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Select, Skeleton, Switch } from 'antd'
@@ -36,6 +37,7 @@ export function HrWorkspacePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>()
   const [includeDeleted, setIncludeDeleted] = useState(false)
@@ -70,6 +72,16 @@ export function HrWorkspacePage() {
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+  useEffect(() => {
+    if (!canWrite || searchParams.get('openCreate') !== '1' || editor === 'create') return
+    const timer = window.setTimeout(() => {
+      setEditor('create')
+      const next = new URLSearchParams(searchParams)
+      next.delete('openCreate')
+      setSearchParams(next, { replace: true })
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [canWrite, editor, searchParams, setSearchParams])
 
   const visibleProfiles = useMemo(() => {
     const term = search.trim().toLowerCase()

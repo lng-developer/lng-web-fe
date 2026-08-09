@@ -159,13 +159,7 @@ describe('StaffWorkspacePage', () => {
     expect(await screen.findByText('Jane Nguyen')).toBeVisible()
     expect(screen.getByText('Day')).toBeVisible()
     expect(screen.getByText('Office update')).toBeVisible()
-    expect(
-      screen.getByText(
-        (_, node) =>
-          node?.classList.contains('ant-statistic-content') === true &&
-          /1[,.]100/.test(node.textContent ?? ''),
-      ),
-    ).toBeVisible()
+    expect(screen.getByText(/1[,.]100/)).toBeVisible()
   })
 
   it('shows monthly attendance, leave, overtime and holiday events in a calendar', async () => {

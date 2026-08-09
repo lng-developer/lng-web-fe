@@ -33,15 +33,12 @@
   margin: 0;
 }
 
-.mark {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--ant-border-radius-lg);
-  place-items: center;
-  background: var(--ant-color-primary);
-  color: var(--ant-color-text-light-solid);
-  font-weight: 800;
+.logo {
+  width: 96px;
+  height: 52px;
+  border-radius: var(--ant-border-radius);
+  background: #fff;
+  object-fit: contain;
 }
 
 .railCopy {

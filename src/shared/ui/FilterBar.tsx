@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Flex } from 'antd'
 
+import styles from './sharedUi.module.scss'
+
 export interface FilterBarProps {
   readonly contentClassName?: string
   readonly label: string
@@ -10,11 +12,26 @@ export interface FilterBarProps {
 
 export function FilterBar({ contentClassName, label, children, actions }: FilterBarProps) {
   return (
-    <Flex role="search" aria-label={label} align="flex-end" justify="space-between" gap={16} wrap>
-      <Flex className={contentClassName} align="flex-end" gap={12} wrap>
+    <Flex
+      role="search"
+      aria-label={label}
+      className={styles.filterBar}
+      align="flex-end"
+      justify="space-between"
+      gap={16}
+      wrap
+    >
+      <Flex
+        className={[styles.filterBarContent, contentClassName].filter(Boolean).join(' ')}
+        role="group"
+        aria-label={label}
+        align="flex-end"
+        gap={12}
+        wrap
+      >
         {children}
       </Flex>
-      {actions}
+      {actions ? <div className={styles.filterBarActions}>{actions}</div> : null}
     </Flex>
   )
 }

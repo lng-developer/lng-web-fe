@@ -38,7 +38,7 @@ export function DateTimePicker({
   ...props
 }: DateTimePickerProps) {
   const pickerValue = parseValue(value, mode)
-  const pickerStyle = { width: '100%', ...style }
+  const pickerStyle = { width: '100%', maxWidth: 220, ...style }
   const handleChange = (nextValue: Dayjs | null) =>
     onChange?.(serializeDateTimeValue(nextValue, mode))
 
@@ -72,13 +72,29 @@ type MonthPickerProps = Omit<DatePickerProps, 'picker' | 'value' | 'defaultValue
   onChange?: (value: Dayjs | null, dateString: string | string[]) => void
 }
 
-export function MonthPicker({ onChange, ...props }: MonthPickerProps) {
+export function MonthPicker({ onChange, style, ...props }: MonthPickerProps) {
   return (
     <DatePicker
       {...props}
       picker="month"
-      format="MMMM YYYY"
+      format="MM/YYYY"
       multiple={false}
+      style={{ width: '100%', maxWidth: 160, ...style }}
+      onChange={(value, dateString) =>
+        onChange?.(Array.isArray(value) ? (value[0] ?? null) : value, dateString ?? '')
+      }
+    />
+  )
+}
+
+export function YearPicker({ onChange, style, ...props }: MonthPickerProps) {
+  return (
+    <DatePicker
+      {...props}
+      picker="year"
+      format="YYYY"
+      multiple={false}
+      style={{ width: '100%', maxWidth: 140, ...style }}
       onChange={(value, dateString) =>
         onChange?.(Array.isArray(value) ? (value[0] ?? null) : value, dateString ?? '')
       }

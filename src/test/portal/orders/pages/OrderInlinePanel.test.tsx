@@ -53,6 +53,7 @@ const row: OrderWorkbenchRow = {
     {
       item: {
         id: 'item-1',
+        sourceSku: 'J2501-DM-1',
         sku: 'J2501-DM-1',
         asin: null,
         title: 'Long marketplace product title',
@@ -89,15 +90,37 @@ function renderPanel(
   canWrite = true,
   requestedModal?: 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline',
   source = row,
+  canOperate = canWrite,
 ) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
       <App>
-        <OrderInlinePanel row={source} canWrite={canWrite} requestedModal={requestedModal} />
+        <OrderInlinePanel
+          row={source}
+          canWrite={canWrite}
+          canOperate={canOperate}
+          requestedModal={requestedModal}
+        />
       </App>
     </QueryClientProvider>,
   )
 }
+
+it('keeps replacement but hides operational actions for a cancelled order', () => {
+  renderPanel(true, undefined, { ...row, order: { ...row.order, status: 'CANCELLED' } }, false)
+
+  expect(screen.getByRole('button', { name: 'orders.actions.replaceShort' })).toBeVisible()
+  expect(
+    screen.queryByRole('button', { name: 'orders.actions.recheckShort' }),
+  ).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: 'orders.actions.readyShort' }),
+  ).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: 'orders.actions.cancelShort' }),
+  ).not.toBeInTheDocument()
+  expect(screen.getByRole('textbox')).toHaveAttribute('readonly')
+})
 
 describe('OrderInlinePanel', () => {
   beforeEach(() => {
@@ -136,20 +159,37 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByText('Listing product title')).not.toBeInTheDocument()
   })
 
+  it('shows the mapped SKU supplied by the order contract', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          item: { ...row.items[0].item, sku: 'J2501-DM2S-1' },
+        },
+      ],
+    })
+
+    expect(screen.getAllByText('J2501-DM2S-1').length).toBeGreaterThan(0)
+    expect(screen.queryByText('J2501-DM-1')).not.toBeInTheDocument()
+  })
+
   it('shows PSD readiness from the resolved listing variant', () => {
     renderPanel(true, undefined, {
       ...row,
-      items: [{
-        ...row.items[0],
-        mapping: {
-          status: 'BLOCKED',
-          listingVariant: {
-            id: 'variant-1',
-            psdReadiness: { status: 'PRESENT' },
-            psdTemplate: { downloadUrl: '/api/media/assets/asset-1/download' },
+      items: [
+        {
+          ...row.items[0],
+          mapping: {
+            status: 'BLOCKED',
+            listingVariant: {
+              id: 'variant-1',
+              psdReadiness: { status: 'PRESENT' },
+              psdTemplate: { downloadUrl: '/api/media/assets/asset-1/download' },
+            },
           },
         },
-      }],
+      ],
     })
 
     expect(screen.getByText('PSD PRESENT')).toBeInTheDocument()
@@ -298,9 +338,12 @@ describe('OrderInlinePanel', () => {
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
     fireEvent.click(await screen.findByText('Vendor One'))
-    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
-      productTypeGroupId: 'group-1',
-    }))
+    await waitFor(() =>
+      expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
+        productTypeGroupId: 'group-1',
+        includeDifferentProductType: true,
+      }),
+    )
     expect(screen.queryByRole('button', { name: 'orders.actions.apply' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('orders.fields.product')).toBeEnabled()
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
@@ -396,23 +439,28 @@ describe('OrderInlinePanel', () => {
   it('loads products for the listing variant product type after choosing a vendor', async () => {
     renderPanel(true, undefined, {
       ...row,
-      items: [{
-        ...row.items[0],
-        mapping: {
-          status: 'BLOCKED',
-          listingVariant: {
-            id: 'variant-1',
-            productTypeGroup: { id: 'group-1' },
+      items: [
+        {
+          ...row.items[0],
+          mapping: {
+            status: 'BLOCKED',
+            listingVariant: {
+              id: 'variant-1',
+              productTypeGroup: { id: 'group-1' },
+            },
           },
         },
-      }],
+      ],
     })
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
     fireEvent.click(await screen.findByText('Vendor One'))
-    await waitFor(() => expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
-      productTypeGroupId: 'group-1',
-    }))
+    await waitFor(() =>
+      expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
+        productTypeGroupId: 'group-1',
+        includeDifferentProductType: true,
+      }),
+    )
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
 
     expect(await screen.findByText('Product Two')).toBeInTheDocument()

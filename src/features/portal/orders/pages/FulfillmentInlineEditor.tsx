@@ -12,6 +12,7 @@ import {
 } from '@/features/portal/mapping/api/mappingApi'
 import { mappingKeys } from '@/features/portal/mapping/api/mappingKeys'
 import { normalizeApiError } from '@/shared/api'
+import { modalQueryOptions } from '@/shared/query/modalQuery'
 import { useFeedbackToast } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
@@ -51,13 +52,19 @@ export function FulfillmentInlineEditor({
     queryKey: mappingKeys.vendors(vendorSearch),
     queryFn: () => searchMappingVendors({ q: vendorSearch, limit: 20 }),
     enabled: active && canWrite,
+    ...modalQueryOptions,
     staleTime: 5 * 60_000,
     retry: false,
   })
   const products = useQuery({
-    queryKey: mappingKeys.vendorProducts(vendorId ?? '', productTypeGroupId ?? ''),
-    queryFn: () => listMappingVendorProducts(vendorId!, { productTypeGroupId: productTypeGroupId! }),
-    enabled: active && canWrite && Boolean(vendorId && productTypeGroupId),
+    queryKey: mappingKeys.vendorProducts(vendorId ?? '', productTypeGroupId ?? '', true),
+    queryFn: () =>
+      listMappingVendorProducts(vendorId!, {
+        productTypeGroupId,
+        includeDifferentProductType: true,
+      }),
+    enabled: active && canWrite && Boolean(vendorId),
+    ...modalQueryOptions,
     staleTime: 5 * 60_000,
     retry: false,
   })
@@ -65,6 +72,7 @@ export function FulfillmentInlineEditor({
     queryKey: mappingKeys.vendorProductOptions(productId ?? '', size, color),
     queryFn: () => getMappingVendorProductOptions(productId!, { size, color }),
     enabled: active && canWrite && Boolean(productId),
+    ...modalQueryOptions,
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
     retry: false,
@@ -80,6 +88,8 @@ export function FulfillmentInlineEditor({
     ? (candidates.find((candidate) => candidate.id === costCenterId) ??
       (candidates.length === 1 ? candidates[0] : undefined))
     : undefined
+  const hasProductSelected = Boolean(productId)
+  const canApply = hasProductSelected && Boolean(selectedCandidate)
 
   const save = useMutation({
     mutationFn: (candidate: MappingCostCenterOption) =>
@@ -280,13 +290,13 @@ export function FulfillmentInlineEditor({
       {error ? (
         <Typography.Text type="danger">{normalizeApiError(error).message}</Typography.Text>
       ) : null}
-      {selectedCandidate ? (
+      {canApply && selectedCandidate ? (
         <Flex align="center" justify="space-between" gap={8}>
           <Typography.Text type="secondary">
-            {t('orders.fields.baseCost')}:{' '}
+            {t('orders.fields.totalCost')}:{' '}
             <Typography.Text strong>
               {formatMinorMoney(
-                selectedCandidate.baseCostAmount,
+                selectedCandidate.totalCostAmount ?? selectedCandidate.baseCostAmount ?? 0,
                 selectedCandidate.currency || 'USD',
               )}
             </Typography.Text>

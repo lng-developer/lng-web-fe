@@ -10,12 +10,30 @@ export type ManagedAccount = {
   }
 }
 
+export type AccountAssignmentInput = {
+  roleId: string
+  scopeType: 'global' | 'department' | 'team' | 'shop' | 'vendor' | 'own'
+  scopeId: string | null
+  customPermissionIds?: string[]
+  overridePermissionIds?: string[]
+}
+
+export type CreateAccountInput = {
+  email: string
+  password: string
+  assignments: AccountAssignmentInput[]
+}
+
 function unwrap<T>(response: unknown): T {
   return (response as ApiResponse<T>).data
 }
 
 export async function loadAccount(accountId: string) {
   return unwrap<ManagedAccount>(await apiClient.get(`/api/auth/accounts/${accountId}`))
+}
+
+export async function createAccount(input: CreateAccountInput) {
+  return unwrap(await apiClient.post('/api/auth/accounts', input))
 }
 
 export async function updateAccountEmail(accountId: string, email: string) {

@@ -11,6 +11,8 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
     listMappingRules: vi.fn(),
     listAuthorableShops: vi.fn(),
     previewOrderItem: vi.fn(),
+    previewMappingRule: vi.fn(),
+    findMappingRuleConflicts: vi.fn(),
   }
 })
 vi.mock('@/features/portal/catalog/api/catalogApi', () => ({ getListingOptions: vi.fn() }))
@@ -19,8 +21,10 @@ vi.mock('@/features/portal/vendors/api/vendorApi', () => ({ listVendors: vi.fn()
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
 import {
+  findMappingRuleConflicts,
   listAuthorableShops,
   listMappingRules,
+  previewMappingRule,
   previewOrderItem,
 } from '@/features/portal/mapping/api/mappingApi'
 import { MappingRulePage } from '@/features/portal/mapping/pages/MappingRulePage'
@@ -48,9 +52,13 @@ describe('MappingRulePage', () => {
     vi.mocked(listAuthorableShops).mockResolvedValue({ canCreateGlobal: true, items: [] })
     vi.mocked(previewOrderItem).mockResolvedValue({
       ready: false,
+      skuNormalization: { originalSku: 'NTL-TS-240625-05' },
       skuMapping: { configCode: 'TS1S' },
+      productTypeGroup: { id: '69b12f8d99b2e3b197021d76' },
       blockingReasons: ['LISTING_NOT_FOUND'],
     })
+    vi.mocked(previewMappingRule).mockResolvedValue({ items: [] })
+    vi.mocked(findMappingRuleConflicts).mockResolvedValue({ conflicts: [] })
     vi.mocked(getListingOptions).mockResolvedValue({
       shops: [],
       productTypeGroups: [{ id: '69b12f8d99b2e3b197021d76', name: 'T-shirt', code: 'TS' }],
@@ -162,5 +170,43 @@ describe('MappingRulePage', () => {
     expect(row).not.toBeNull()
     fireEvent.click(row!)
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('previews an originating order item with the SKU string contract', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const router = createMemoryRouter(
+      [
+        {
+          id: 'workspace',
+          path: '/portal/mapping/product-mapping',
+          loader: () => account,
+          element: <MappingRulePage pageKey="product-mapping" />,
+        },
+      ],
+      { initialEntries: ['/portal/mapping/product-mapping?orderItemId=item-1&configCode=TS1S'] },
+    )
+    render(
+      <AntdApp>
+        <QueryClientProvider client={client}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </AntdApp>,
+    )
+
+    await screen.findByRole('dialog')
+    await waitFor(() =>
+      expect(screen.getByLabelText('Product group').closest('.ant-select')).toHaveTextContent(
+        'T-shirt',
+      ),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Preview changes' }))
+
+    await waitFor(() =>
+      expect(previewMappingRule).toHaveBeenCalledWith(
+        expect.objectContaining({
+          samples: ['NTL-TS-240625-05'],
+        }),
+      ),
+    )
   })
 })

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import 'dayjs/locale/vi'
+
+import { type MouseEvent, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircleFilled,
@@ -10,10 +12,11 @@ import {
   SwapOutlined,
   TruckOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Select, Skeleton, Space, Tooltip, Typography } from 'antd'
+import { Button, Space, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
@@ -21,19 +24,21 @@ import { getPermissions } from '@/shared/auth/session'
 import {
   CopyableOrderId,
   DataTable,
-  DateRangePicker,
   FeedbackAlert,
-  FilterBar,
-  SearchInput,
+  type PopupModalAnchor,
   StatusTag,
+  UiTabLabel,
   UiTabs,
 } from '@/shared/ui'
 
 import { getOrderSummary, listOrderWorkbench, type OrderWorkbenchRow } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
-import { OrderInlinePanel } from './OrderInlinePanel'
 import { formatMinorMoney, orderStatusTone } from './orderPresentation'
+import { OrderWorkbenchExpandedRow } from './OrderWorkbenchExpandedRow'
+import { OrderWorkbenchFilterBar } from './OrderWorkbenchFilterBar'
 import styles from './OrderWorkbenchPage.module.scss'
+
+dayjs.extend(relativeTime)
 
 const PAGE_SIZE = 10
 const TABS = [
@@ -46,91 +51,67 @@ const TABS = [
   'SHIPPED',
   'CANCELLED',
   'OPEN_CASE',
-]
-const ADDRESS_STATUSES = ['NOT_CHECKED', 'VALID', 'INVALID', 'WARNING', 'OVERRIDDEN']
+] as const
+const ADDRESS_STATUSES = ['NOT_CHECKED', 'VALID', 'INVALID', 'WARNING', 'OVERRIDDEN'] as const
+
+type TabKey = (typeof TABS)[number]
+type AddressValidationStatus = (typeof ADDRESS_STATUSES)[number]
 type OrderModal = 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline'
-
-function LazyOrderDetail({
-  row,
-  canWrite,
-  requestedModal,
-  onOrderModalClose,
-}: {
-  readonly row: OrderWorkbenchRow
-  readonly canWrite: boolean
-  readonly requestedModal?: OrderModal
-  readonly onOrderModalClose: () => void
-}) {
-  const elementRef = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
-
-  useEffect(() => {
-    if (visible || !elementRef.current) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return
-        setVisible(true)
-        observer.disconnect()
-      },
-      { rootMargin: '600px 0px' },
-    )
-    observer.observe(elementRef.current)
-    return () => observer.disconnect()
-  }, [visible])
-
-  return (
-    <div ref={elementRef} className={styles.lazyOrderDetail}>
-      {visible ? (
-        <OrderInlinePanel
-          row={row}
-          canWrite={canWrite}
-          requestedModal={requestedModal}
-          onOrderModalClose={onOrderModalClose}
-        />
-      ) : (
-        <Skeleton active title={false} paragraph={{ rows: 4 }} />
-      )}
-    </div>
-  )
-}
+type OrderAction = { orderId: string; modal: OrderModal; anchor?: PopupModalAnchor }
+const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
 
 export function OrderWorkbenchPage() {
   const { t, i18n } = useTranslation()
   const [page, setPage] = useState(1)
-  const [tab, setTab] = useState('ALL')
+  const [tab, setTab] = useState<TabKey>('ALL')
   const [search, setSearch] = useState('')
+  const deferredSearch = useDeferredValue(search)
   const [shopId, setShopId] = useState<string>()
   const [employeeCode, setEmployeeCode] = useState('')
-  const [addressValidationStatus, setAddressValidationStatus] = useState<string>()
-  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
-  const [orderAction, setOrderAction] = useState<{ orderId: string; modal: OrderModal }>()
+  const [addressValidationStatus, setAddressValidationStatus] = useState<AddressValidationStatus>()
+  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>(EMPTY_DATES)
+  const [orderAction, setOrderAction] = useState<OrderAction>()
   const canWrite = getPermissions().includes('ORDERS:WRITE')
   const params = useMemo(
     () => ({
       page,
       limit: PAGE_SIZE,
       tab,
-      search,
+      search: deferredSearch,
       shopId,
       employeeCode,
       addressValidationStatus,
       ...dates,
     }),
-    [addressValidationStatus, dates, employeeCode, page, search, shopId, tab],
+    [addressValidationStatus, dates, employeeCode, page, deferredSearch, shopId, tab],
   )
   const summaryParams = useMemo(
-    () => ({ page: 1, limit: 1, search, shopId, employeeCode, addressValidationStatus, ...dates }),
-    [addressValidationStatus, dates, employeeCode, search, shopId],
+    () => ({
+      page: 1,
+      limit: 1,
+      search: deferredSearch,
+      shopId,
+      employeeCode,
+      addressValidationStatus,
+      ...dates,
+    }),
+    [addressValidationStatus, dates, employeeCode, deferredSearch, shopId],
   )
   const orders = useQuery({
     queryKey: orderKeys.workbench(params),
     queryFn: () => listOrderWorkbench(params),
     retry: false,
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   })
   const summary = useQuery({
     queryKey: orderKeys.summary(summaryParams),
     queryFn: () => getOrderSummary(summaryParams),
     retry: false,
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   })
   const shopParams = useMemo(() => ({ page: 1, limit: 100, status: 'ACTIVE' as const }), [])
   const shops = useQuery({
@@ -138,11 +119,120 @@ export function OrderWorkbenchPage() {
     queryFn: () => listShops(shopParams),
     retry: false,
   })
+  const shopOptions = useMemo(
+    () => (shops.data?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name })),
+    [shops.data],
+  )
   const onSearchChange = useCallback((value: string) => {
     setSearch(value)
     setPage(1)
   }, [])
+  const onTabChange = useCallback((value: string) => {
+    setTab(value as TabKey)
+    setPage(1)
+  }, [])
+  const onShopChange = useCallback((value?: string) => {
+    setShopId(value)
+    setPage(1)
+  }, [])
+  const onEmployeeCodeChange = useCallback((value: string) => {
+    setEmployeeCode(value)
+    setPage(1)
+  }, [])
+  const onAddressValidationStatusChange = useCallback((value?: string) => {
+    setAddressValidationStatus(value as AddressValidationStatus | undefined)
+    setPage(1)
+  }, [])
+  const onDatesChange = useCallback((value: { dateFrom?: string; dateTo?: string }) => {
+    setDates(value)
+    setPage(1)
+  }, [])
   const closeOrderModal = useCallback(() => setOrderAction(undefined), [])
+  const openOrderModal = useCallback(
+    (event: MouseEvent<HTMLElement>, orderId: string, modal: OrderModal) => {
+      const target = event.currentTarget
+      const rect = target.getBoundingClientRect()
+      const anchor: PopupModalAnchor = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        width: rect.width,
+        height: rect.height,
+      }
+
+      setOrderAction({ orderId, modal, anchor })
+    },
+    [],
+  )
+  // W2: stable refetch handler — avoid new fn ref on every render
+  const handleRefetch = useCallback(
+    () => void Promise.all([orders.refetch(), summary.refetch()]),
+    [orders, summary],
+  )
+  // R4: stable clear filter handler
+  const handleClearFilters = useCallback(() => {
+    setShopId(undefined)
+    setEmployeeCode('')
+    setAddressValidationStatus(undefined)
+    setDates(EMPTY_DATES)
+    setPage(1)
+  }, [])
+  // R2: memoize address status options — avoids .map() on every render
+  const addressStatusOptions = useMemo(
+    () =>
+      ADDRESS_STATUSES.map((status) => ({
+        value: status,
+        label: t(`orders.addressStatuses.${status}`),
+      })),
+    [t],
+  )
+  // R2: memoize tab items — avoids recreating array on every render
+  const tabItems = useMemo(
+    () =>
+      TABS.map((key) => ({
+        key,
+        label: (
+          <UiTabLabel count={summary.data?.tabCounts[key] ?? 0} active={tab === key}>
+            {t(`orders.tabs.${key}`)}
+          </UiTabLabel>
+        ),
+      })),
+    [summary.data, tab, t],
+  )
+  // R2: memoize expandedRowKeys — avoids .map() on every render
+  const expandedRowKeys = useMemo(
+    () => (orders.data?.items ?? []).map((row) => row.order.id),
+    [orders.data],
+  )
+  const hasActiveFilters = Boolean(
+    shopId || employeeCode || addressValidationStatus || dates.dateFrom || dates.dateTo,
+  )
+  const pagination = useMemo(
+    () => ({
+      current: page,
+      pageSize: PAGE_SIZE,
+      total: orders.data?.pagination.total,
+      showSizeChanger: false,
+    }),
+    [page, orders.data?.pagination.total],
+  )
+  const handlePageChange = useCallback((nextPage: number) => {
+    setPage(nextPage)
+  }, [])
+  const renderExpandedRow = useCallback(
+    (row: OrderWorkbenchRow) => (
+      <OrderWorkbenchExpandedRow
+        row={row}
+        canWrite={canWrite}
+        canOperate={canWrite && row.order.status !== 'CANCELLED'}
+        requestedModal={orderAction?.orderId === row.order.id ? orderAction.modal : undefined}
+        requestedPopupAnchor={
+          orderAction?.orderId === row.order.id ? orderAction.anchor : undefined
+        }
+        onOrderModalClose={closeOrderModal}
+      />
+    ),
+    [canWrite, closeOrderModal, orderAction],
+  )
 
   const columns = useMemo<TableColumnsType<OrderWorkbenchRow>>(
     () => [
@@ -163,7 +253,7 @@ export function OrderWorkbenchPage() {
                 size="small"
                 aria-label={t('orders.actions.viewHistory')}
                 icon={<HistoryOutlined />}
-                onClick={() => setOrderAction({ orderId: row.order.id, modal: 'timeline' })}
+                onClick={(event) => openOrderModal(event, row.order.id, 'timeline')}
               />
             </Tooltip>
           </Space>
@@ -171,8 +261,22 @@ export function OrderWorkbenchPage() {
       },
       {
         title: t('orders.columns.created'),
-        render: (_, row) =>
-          row.order.createdAt ? dayjs(row.order.createdAt).format('DD/MM/YYYY HH:mm') : '—',
+        render: (_, row) => {
+          if (!row.order.createdAt) return '—'
+          const createdAt = dayjs(row.order.createdAt)
+          const localizedCreatedAt = createdAt.locale(i18n.language === 'vi' ? 'vi' : 'en')
+
+          return (
+            <Tooltip title={createdAt.format('DD/MM/YYYY HH:mm')}>
+              <Space direction="vertical" size={0}>
+                <Typography.Text>
+                  {localizedCreatedAt.format(i18n.language === 'vi' ? 'DD/MM/YYYY' : 'MMM D, YYYY')}
+                </Typography.Text>
+                <Typography.Text type="secondary">({localizedCreatedAt.fromNow()})</Typography.Text>
+              </Space>
+            </Tooltip>
+          )
+        },
       },
       {
         title: t('orders.columns.customer'),
@@ -184,25 +288,25 @@ export function OrderWorkbenchPage() {
                 <CheckCircleFilled className={styles.validIcon} />
               </Tooltip>
             ) : null}
-            {canWrite ? (
+            {canWrite && row.order.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editCustomer')}>
                 <Button
                   type="text"
                   size="small"
                   aria-label={t('orders.actions.editCustomer')}
                   icon={<EditOutlined />}
-                  onClick={() => setOrderAction({ orderId: row.order.id, modal: 'customer' })}
+                  onClick={(event) => openOrderModal(event, row.order.id, 'customer')}
                 />
               </Tooltip>
             ) : null}
-            {canWrite ? (
+            {canWrite && row.order.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editAddress')}>
                 <Button
                   type="text"
                   size="small"
                   aria-label={t('orders.actions.editAddress')}
                   icon={<EnvironmentOutlined />}
-                  onClick={() => setOrderAction({ orderId: row.order.id, modal: 'address' })}
+                  onClick={(event) => openOrderModal(event, row.order.id, 'address')}
                 />
               </Tooltip>
             ) : null}
@@ -214,14 +318,14 @@ export function OrderWorkbenchPage() {
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.shippingService.name || row.order.shippingService.level || '—'}</span>
-            {canWrite ? (
+            {canWrite && row.order.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editShipping')}>
                 <Button
                   type="text"
                   size="small"
                   aria-label={t('orders.actions.editShipping')}
                   icon={<TruckOutlined />}
-                  onClick={() => setOrderAction({ orderId: row.order.id, modal: 'shipping' })}
+                  onClick={(event) => openOrderModal(event, row.order.id, 'shipping')}
                 />
               </Tooltip>
             ) : null}
@@ -230,45 +334,65 @@ export function OrderWorkbenchPage() {
       },
       { title: t('orders.columns.shop'), render: (_, row) => row.order.shop?.name ?? '—' },
       {
-        title: t('orders.columns.cost'),
+        title: t('orders.columns.totalCost'),
         align: 'right',
         render: (_, row) =>
           formatMinorMoney(
-            row.order.pricing.baseCostAmount,
+            row.order.pricing.totalCostAmount ?? row.order.pricing.baseCostAmount,
             row.order.pricing.currency ?? 'USD',
             i18n.language === 'vi' ? 'vi-VN' : 'en-US',
           ),
       },
       {
         title: t('orders.columns.handling'),
-        width: 110,
-        render: (_, row) => row.order.handlingLabel ?? '—',
+        width: 150,
+        render: (_, row) => {
+          if (!row.order.shipByDate) return '—'
+          const shipBy = dayjs(row.order.shipByDate).locale(i18n.language === 'vi' ? 'vi' : 'en')
+
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text>
+                {shipBy.format(i18n.language === 'vi' ? 'DD/MM/YYYY' : 'MMM D, YYYY')}
+              </Typography.Text>
+              <Typography.Text type={shipBy.isBefore(dayjs()) ? 'danger' : 'secondary'}>
+                ({shipBy.fromNow()})
+              </Typography.Text>
+            </Space>
+          )
+        },
       },
       {
         title: t('orders.columns.case'),
-        width: 72,
-        align: 'center',
-        render: (_, row) =>
-          canWrite ? (
-            <Tooltip title={t('orders.actions.manageCase')}>
-              <Button
-                className={
-                  row.order.caseStatus && row.order.caseStatus !== 'NONE'
-                    ? styles.activeCaseIcon
-                    : undefined
-                }
-                type="text"
-                size="small"
-                aria-label={t('orders.actions.manageCase')}
-                icon={<FileExclamationOutlined />}
-                onClick={() => setOrderAction({ orderId: row.order.id, modal: 'case' })}
-              />
-            </Tooltip>
-          ) : row.order.caseStatus && row.order.caseStatus !== 'NONE' ? (
-            <FileExclamationOutlined className={styles.activeCaseIcon} />
-          ) : (
-            '—'
-          ),
+        width: 180,
+        render: (_, row) => {
+          const hasCase = Boolean(row.order.caseStatus && row.order.caseStatus !== 'NONE')
+
+          if (canWrite) {
+            return (
+              <Tooltip title={t('orders.actions.manageCase')}>
+                <Button
+                  className={hasCase ? styles.activeCaseIcon : undefined}
+                  type={row.order.caseTitle ? 'link' : 'text'}
+                  size="small"
+                  aria-label={t('orders.actions.manageCase')}
+                  icon={<FileExclamationOutlined />}
+                  onClick={(event) => openOrderModal(event, row.order.id, 'case')}
+                >
+                  {row.order.caseTitle}
+                </Button>
+              </Tooltip>
+            )
+          }
+
+          if (!hasCase) return '—'
+          return (
+            <Space size={4}>
+              <FileExclamationOutlined className={styles.activeCaseIcon} />
+              {row.order.caseTitle}
+            </Space>
+          )
+        },
       },
       {
         title: t('orders.sections.itemActions'),
@@ -282,7 +406,7 @@ export function OrderWorkbenchPage() {
                 size="small"
                 aria-label={t('orders.actions.replaceOrder')}
                 icon={<SwapOutlined />}
-                onClick={() => setOrderAction({ orderId: row.order.id, modal: 'replacement' })}
+                onClick={(event) => openOrderModal(event, row.order.id, 'replacement')}
               />
             </Tooltip>
           ) : (
@@ -300,89 +424,34 @@ export function OrderWorkbenchPage() {
           <Typography.Title level={3}>{t('orders.title')}</Typography.Title>
           <Typography.Text type="secondary">{t('orders.description')}</Typography.Text>
         </div>
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={() => void Promise.all([orders.refetch(), summary.refetch()])}
-        >
+        <Button icon={<ReloadOutlined />} onClick={handleRefetch}>
           {t('orders.actions.refresh')}
         </Button>
       </header>
-      <UiTabs
-        activeKey={tab}
-        onChange={(value) => {
-          setTab(value)
-          setPage(1)
-        }}
-        items={TABS.map((key) => ({
-          key,
-          label: `${t(`orders.tabs.${key}`)} ${summary.data?.tabCounts[key] ?? 0}`,
-        }))}
+      <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
+      <OrderWorkbenchFilterBar
+        search={search}
+        shopId={shopId}
+        employeeCode={employeeCode}
+        addressValidationStatus={addressValidationStatus}
+        dates={dates}
+        hasActiveFilters={hasActiveFilters}
+        shopOptions={shopOptions}
+        addressStatusOptions={addressStatusOptions}
+        filtersLabel={t('orders.filters.label')}
+        searchPlaceholder={t('orders.filters.search')}
+        shopPlaceholder={t('orders.filters.shop')}
+        sellerPlaceholder={t('orders.filters.seller')}
+        addressPlaceholder={t('orders.filters.addressStatus')}
+        clearLabel={t('orders.filters.clear')}
+        loadingShops={shops.isLoading}
+        onSearchChange={onSearchChange}
+        onShopChange={onShopChange}
+        onEmployeeCodeChange={onEmployeeCodeChange}
+        onAddressValidationStatusChange={onAddressValidationStatusChange}
+        onDatesChange={onDatesChange}
+        onClearFilters={handleClearFilters}
       />
-      <FilterBar label={t('orders.filters.label')} contentClassName={styles.filters}>
-        <SearchInput
-          className={styles.orderSearch}
-          value={search}
-          onSearchChange={onSearchChange}
-          placeholder={t('orders.filters.search')}
-        />
-        <Select
-          className={styles.filterSelect}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          value={shopId}
-          loading={shops.isLoading}
-          placeholder={t('orders.filters.shop')}
-          options={(shops.data?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name }))}
-          onChange={(value) => {
-            setShopId(value)
-            setPage(1)
-          }}
-        />
-        <SearchInput
-          className={styles.sellerFilter}
-          value={employeeCode}
-          onSearchChange={(value) => {
-            setEmployeeCode(value)
-            setPage(1)
-          }}
-          placeholder={t('orders.filters.seller')}
-        />
-        <Select
-          className={styles.filterSelect}
-          allowClear
-          value={addressValidationStatus}
-          placeholder={t('orders.filters.addressStatus')}
-          options={ADDRESS_STATUSES.map((status) => ({
-            value: status,
-            label: t(`orders.addressStatuses.${status}`),
-          }))}
-          onChange={(value) => {
-            setAddressValidationStatus(value)
-            setPage(1)
-          }}
-        />
-        <DateRangePicker
-          value={dates}
-          onChange={(value) => {
-            setDates(value)
-            setPage(1)
-          }}
-        />
-        {shopId || employeeCode || addressValidationStatus || dates.dateFrom || dates.dateTo ? (
-          <Button
-            onClick={() => {
-              setShopId(undefined)
-              setEmployeeCode('')
-              setAddressValidationStatus(undefined)
-              setDates({})
-              setPage(1)
-            }}
-          >
-            {t('orders.filters.clear')}
-          </Button>
-        ) : null}
-      </FilterBar>
       {orders.error ? (
         <FeedbackAlert
           type="error"
@@ -402,23 +471,13 @@ export function OrderWorkbenchPage() {
         loading={orders.isFetching}
         scroll={{ x: 1280 }}
         pagination={{
-          current: page,
-          pageSize: PAGE_SIZE,
-          total: orders.data?.pagination.total,
-          showSizeChanger: false,
-          onChange: setPage,
+          ...pagination,
+          onChange: handlePageChange,
         }}
         expandable={{
-          expandedRowKeys: (orders.data?.items ?? []).map((row) => row.order.id),
+          expandedRowKeys,
           showExpandColumn: false,
-          expandedRowRender: (row) => (
-            <LazyOrderDetail
-              row={row}
-              canWrite={canWrite}
-              requestedModal={orderAction?.orderId === row.order.id ? orderAction.modal : undefined}
-              onOrderModalClose={closeOrderModal}
-            />
-          ),
+          expandedRowRender: renderExpandedRow,
         }}
       />
     </section>

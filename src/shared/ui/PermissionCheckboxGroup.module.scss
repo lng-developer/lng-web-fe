@@ -1,0 +1,30 @@
+.checkboxGroup {
+  display: block;
+
+  :global(.ant-checkbox-group) {
+    width: 100%;
+  }
+
+  .section {
+    width: 100%;
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .sectionTitle {
+    margin-bottom: 6px;
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .sectionGrid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(var(--permission-columns), minmax(0, 1fr));
+    gap: 8px 12px;
+  }
+}

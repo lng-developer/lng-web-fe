@@ -13,6 +13,31 @@
   gap: 16px;
 }
 
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--ant-color-text-tertiary);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.sectionTitle {
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .filters {
   width: 100%;
   flex-wrap: nowrap !important;
@@ -43,6 +68,133 @@
 
 .unassignedIcon {
   color: var(--ant-color-warning);
+}
+
+.accountList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.accountCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+  transition: all 0.2s ease-in-out;
+  gap: 24px;
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.05);
+    transform: translateY(-1px);
+  }
+}
+
+.accountIdentity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1.5;
+  min-width: 0;
+}
+
+.emailText {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountRoles {
+  flex: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  color: var(--ant-color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.accountStatus {
+  flex-shrink: 0;
+  width: 100px;
+  display: flex;
+  justify-content: center;
+}
+
+.accountMeta {
+  font-size: 12px;
+}
+
+.pagination {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.accountActions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+
+  button {
+    color: var(--ant-color-text-secondary);
+
+    &:hover {
+      color: var(--ant-color-primary) !important;
+      background: var(--ant-color-fill-quaternary) !important;
+    }
+  }
+}
+
+.manageAccessLink {
+  text-decoration: none;
+}
+
+.scopeRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 991px) {
+  .accountCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .accountIdentity {
+    width: 100%;
+  }
+
+  .accountRoles {
+    width: 100%;
+  }
+
+  .accountStatus {
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .accountActions {
+    width: 100%;
+    justify-content: flex-end;
+    border-top: 1px solid var(--ant-color-border-secondary);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
 }
 
 @media (max-width: 767px) {

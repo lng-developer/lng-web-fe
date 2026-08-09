@@ -1,8 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { UploadOutlined, UserOutlined } from '@ant-design/icons'
-import { Alert, Avatar, Button, DatePicker, Form, Input, Select, Skeleton, Upload } from 'antd'
+import {
+  BankOutlined,
+  ContactsOutlined,
+  IdcardOutlined,
+  SaveOutlined,
+  UploadOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
+import {
+  Alert,
+  Avatar,
+  Button,
+  Col,
+  Divider,
+  Form,
+  Input,
+  Row,
+  Select,
+  Skeleton,
+  Tabs,
+  Tag,
+  Typography,
+  Upload,
+} from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 
 import {
@@ -12,7 +34,7 @@ import {
   uploadMyEmployeeAvatar,
 } from '@/features/hr/api/hrApi'
 import { ApiError } from '@/shared/api'
-import { PageHeader, useFeedbackToast } from '@/shared/ui'
+import { DateTimePicker, PageHeader, SectionCard, useFeedbackToast } from '@/shared/ui'
 
 import { SetupLayout } from '../components/SetupLayout'
 import styles from './ProfileSetupPage.module.scss'
@@ -109,10 +131,10 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       if (avatarFile) await uploadMyEmployeeAvatar(avatarFile)
       await updateMyPersonalProfile({
         ...values,
-        birthDate: values.birthDate?.format('YYYY-MM-DD') || null,
+        birthDate: values.birthDate ? values.birthDate.format('YYYY-MM-DD') : null,
       })
       showFeedbackToast('success', t('actionFeedback.updated'))
-      navigate(embedded ? '/hr/me/profile' : '/foundation', { replace: true })
+      navigate(embedded ? '/hr/me/profile' : '/operations-dashboard', { replace: true })
     } catch (cause) {
       form.setFieldsValue(values)
       const duplicateField = getDuplicateProfileField(cause)
@@ -135,14 +157,155 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
 
   const required = embedded ? [] : [{ required: true, message: t('auth.setup.required') }]
 
+  const tabItems = [
+    {
+      key: 'personal',
+      label: (
+        <span>
+          <UserOutlined style={{ marginRight: 6 }} />
+          {t('auth.setup.profile.personal', { defaultValue: 'Personal Information' })}
+        </span>
+      ),
+      children: (
+        <SectionCard title={t('auth.setup.profile.personal')}>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item name="gender" label={t('hr.gender')}>
+                <Select
+                  allowClear
+                  options={['MALE', 'FEMALE', 'OTHER'].map((value) => ({
+                    value,
+                    label: value,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="birthDate" label={t('hr.birthDate')}>
+                <DateTimePicker mode="date" style={{ width: '100%', maxWidth: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="phoneNumber" label={t('hr.phoneNumber')} rules={required}>
+                <Input placeholder="e.g. +84 987 654 321" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="personalEmail"
+                label={t('hr.personalEmail')}
+                rules={[...required, { type: 'email' }]}
+              >
+                <Input placeholder="name@example.com" />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item name="address" label={t('hr.address')} rules={required}>
+                <Input placeholder="Full residential address..." />
+              </Form.Item>
+            </Col>
+          </Row>
+        </SectionCard>
+      ),
+    },
+    {
+      key: 'emergency',
+      label: (
+        <span>
+          <ContactsOutlined style={{ marginRight: 6 }} />
+          {t('auth.setup.profile.emergency', { defaultValue: 'Emergency Contact' })}
+        </span>
+      ),
+      children: (
+        <SectionCard title={t('auth.setup.profile.emergency')}>
+          <Form.Item
+            name={['emergencyContact', 'name']}
+            label={t('auth.setup.profile.emergencyName')}
+            rules={required}
+          >
+            <Input placeholder="Contact person full name..." />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name={['emergencyContact', 'phone']}
+                label={t('auth.setup.profile.emergencyPhone')}
+                rules={required}
+              >
+                <Input placeholder="Phone number..." />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name={['emergencyContact', 'relation']}
+                label={t('auth.setup.profile.relation')}
+                rules={required}
+              >
+                <Input placeholder="Relationship (e.g. Spouse, Parent)..." />
+              </Form.Item>
+            </Col>
+          </Row>
+        </SectionCard>
+      ),
+    },
+    {
+      key: 'legal-bank',
+      label: (
+        <span>
+          <IdcardOutlined style={{ marginRight: 6 }} />
+          {t('auth.setup.profile.legal', { defaultValue: 'Legal & Bank Details' })}
+        </span>
+      ),
+      children: (
+        <SectionCard title={t('auth.setup.profile.legal')}>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item name="identityCard" label={t('hr.identityCard')}>
+                <Input placeholder="National ID / Passport No." />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="taxIdentification" label={t('hr.taxIdentification')}>
+                <Input placeholder="Personal Tax ID" />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item name="socialInsuranceNumber" label={t('hr.socialInsuranceNumber')}>
+                <Input placeholder="Social Insurance No." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider plain style={{ fontSize: 13, margin: '16px 0 20px' }}>
+            <BankOutlined style={{ marginRight: 6 }} />
+            {t('auth.setup.profile.bank', { defaultValue: 'Banking & Payroll' })}
+          </Divider>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item name={['bankAccount', 'bankName']} label={t('hr.bankName')}>
+                <Select allowClear showSearch options={bankOptions} placeholder="Select Bank..." />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name={['bankAccount', 'accountNumber']} label={t('hr.bankAccountNumber')}>
+                <Input placeholder="Bank account number..." />
+              </Form.Item>
+            </Col>
+          </Row>
+        </SectionCard>
+      ),
+    },
+  ]
+
   const content = (
     <>
-      {!profile && !error && <Skeleton active paragraph={{ rows: 8 }} />}
-      {error && <Alert showIcon type="error" title={error} />}
+      {!profile && !error && <Skeleton active paragraph={{ rows: 10 }} />}
+      {error && <Alert showIcon type="error" message={error} style={{ marginBottom: 16 }} />}
       {profile && (
         <div className={styles.workspace}>
           <aside className={styles.identity}>
-            <Avatar size={88} src={avatarPreview || profile.avatarUrl} icon={<UserOutlined />} />
+            <Avatar size={96} src={avatarPreview || profile.avatarUrl} icon={<UserOutlined />} />
             <Upload
               accept="image/jpeg,image/png,image/webp"
               beforeUpload={selectAvatar}
@@ -157,14 +320,20 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
             >
               <Button icon={<UploadOutlined />}>{t('hr.uploadAvatar')}</Button>
             </Upload>
-            {avatarError && <Alert type="error" title={avatarError} />}
+            {avatarError && <Alert type="error" message={avatarError} style={{ marginTop: 8 }} />}
             <div className={styles.identityText}>
-              <strong>{profile.fullName}</strong>
-              <span>{profile.employeeCode}</span>
-              <span>{profile.department?.name || '-'}</span>
-              <span>{profile.team?.name || '-'}</span>
+              <Typography.Title level={4} style={{ margin: 0, textAlign: 'center' }}>
+                {profile.fullName}
+              </Typography.Title>
+              <Tag color="blue" style={{ marginTop: 4 }}>
+                {profile.employeeCode}
+              </Tag>
+              <Typography.Text type="secondary" style={{ fontSize: 12, marginTop: 4 }}>
+                {profile.department?.name || '-'} · {profile.team?.name || '-'}
+              </Typography.Text>
             </div>
           </aside>
+
           <Form<ProfileValues>
             className={styles.form}
             form={form}
@@ -172,92 +341,16 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
             requiredMark="optional"
             onFinish={submit}
           >
-            <div className={styles.grid}>
-              <section className={styles.section}>
-                <h3>{t('auth.setup.profile.personal')}</h3>
-                <div className={styles.twoColumns}>
-                  <Form.Item name="gender" label={t('hr.gender')}>
-                    <Select
-                      allowClear
-                      options={['MALE', 'FEMALE', 'OTHER'].map((value) => ({
-                        value,
-                        label: value,
-                      }))}
-                    />
-                  </Form.Item>
-                  <Form.Item name="birthDate" label={t('hr.birthDate')}>
-                    <DatePicker className={styles.fullWidth} />
-                  </Form.Item>
-                  <Form.Item name="phoneNumber" label={t('hr.phoneNumber')} rules={required}>
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="personalEmail"
-                    label={t('hr.personalEmail')}
-                    rules={[...required, { type: 'email' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                </div>
-                <Form.Item name="address" label={t('hr.address')} rules={required}>
-                  <Input />
-                </Form.Item>
-              </section>
-              <section className={styles.section}>
-                <h3>{t('auth.setup.profile.emergency')}</h3>
-                <Form.Item
-                  name={['emergencyContact', 'name']}
-                  label={t('auth.setup.profile.emergencyName')}
-                  rules={required}
-                >
-                  <Input />
-                </Form.Item>
-                <div className={styles.twoColumns}>
-                  <Form.Item
-                    name={['emergencyContact', 'phone']}
-                    label={t('auth.setup.profile.emergencyPhone')}
-                    rules={required}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name={['emergencyContact', 'relation']}
-                    label={t('auth.setup.profile.relation')}
-                    rules={required}
-                  >
-                    <Input />
-                  </Form.Item>
-                </div>
-              </section>
-              <section className={styles.section}>
-                <h3>{t('auth.setup.profile.legal')}</h3>
-                <div className={styles.twoColumns}>
-                  <Form.Item name="identityCard" label={t('hr.identityCard')}>
-                    <Input />
-                  </Form.Item>
-                  <Form.Item name="taxIdentification" label={t('hr.taxIdentification')}>
-                    <Input />
-                  </Form.Item>
-                </div>
-                <Form.Item name="socialInsuranceNumber" label={t('hr.socialInsuranceNumber')}>
-                  <Input />
-                </Form.Item>
-                <h3 className={styles.bankTitle}>{t('auth.setup.profile.bank')}</h3>
-                <div className={styles.twoColumns}>
-                  <Form.Item name={['bankAccount', 'bankName']} label={t('hr.bankName')}>
-                    <Select allowClear showSearch options={bankOptions} />
-                  </Form.Item>
-                  <Form.Item
-                    name={['bankAccount', 'accountNumber']}
-                    label={t('hr.bankAccountNumber')}
-                  >
-                    <Input />
-                  </Form.Item>
-                </div>
-              </section>
-            </div>
+            <Tabs items={tabItems} defaultActiveKey="personal" />
+
             <div className={styles.actions}>
-              <Button size="large" type="primary" htmlType="submit" loading={submitting}>
+              <Button
+                size="large"
+                type="primary"
+                icon={<SaveOutlined />}
+                htmlType="submit"
+                loading={submitting}
+              >
                 {t(embedded ? 'hrOperations.common.save' : 'auth.setup.complete')}
               </Button>
             </div>
@@ -271,8 +364,11 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     return (
       <section>
         <PageHeader
-          title={t('auth.setup.profile.title')}
-          description={t('auth.setup.profile.description')}
+          title={t('auth.setup.profile.title', { defaultValue: 'My Employee Profile' })}
+          description={t('auth.setup.profile.description', {
+            defaultValue:
+              'Manage your personal information, emergency contacts, legal details, and bank account for payroll.',
+          })}
         />
         {content}
       </section>

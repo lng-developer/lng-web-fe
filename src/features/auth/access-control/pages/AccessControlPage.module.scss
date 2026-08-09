@@ -13,6 +13,12 @@
 .search {
   width: 320px;
 }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
 .tree,
 .branch {
   background: transparent;

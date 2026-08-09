@@ -121,35 +121,24 @@ describe('VendorTree', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Acme Print' }))
     expect(await screen.findByText('Tee')).toBeVisible()
-    expect(
-      screen.getByText(
-        (_, element) =>
-          element?.tagName === 'SMALL' && Boolean(element.textContent?.includes('1250 USD')),
-      ),
-    ).toBeVisible()
-    expect(
-      screen.getByText(
-        (_, element) =>
-          element?.tagName === 'SMALL' && Boolean(element.textContent?.includes('2-5')),
-      ),
-    ).toBeVisible()
+    expect(screen.getByText('$1250 USD')).toBeVisible()
+    expect(screen.getByText(/2-5/)).toBeVisible()
     expect(listVendorProducts).toHaveBeenCalledWith({
       limit: 20,
       page: 1,
-      q: '',
+      q: undefined,
       vendorId: 'vendor-1',
     })
     expect(listVendorCostCenters).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Tee' }))
     expect(await screen.findByText('Tee XL')).toBeVisible()
-    expect(
-      screen.getByText(
-        (_, element) =>
-          element?.tagName === 'SMALL' && Boolean(element.textContent?.includes('1750 USD')),
-      ),
-    ).toBeVisible()
-    expect(listVendorCostCenters).toHaveBeenCalledWith('product-1', { limit: 20, page: 1, q: '' })
+    expect(screen.getByText('$1750 USD')).toBeVisible()
+    expect(listVendorCostCenters).toHaveBeenCalledWith('product-1', {
+      limit: 30,
+      page: 1,
+      q: undefined,
+    })
   })
 
   it('retries a failed branch without closing its sibling branch', async () => {
@@ -241,7 +230,7 @@ describe('VendorTree', () => {
 
     const vendorSearch = await screen.findByRole('textbox', { name: 'Search vendors' })
     fireEvent.change(vendorSearch, { target: { value: 'acme' } })
-    await waitFor(() => expect(listVendors).toHaveBeenCalledWith({ limit: 20, page: 1, q: 'acme' }))
+    await waitFor(() => expect(listVendors).toHaveBeenCalledWith({ limit: 50, page: 1, q: 'acme' }))
 
     fireEvent.click(await screen.findByRole('button', { name: 'Open Acme Print' }))
     const productSearch = await screen.findByRole('textbox', { name: 'Search products' })
@@ -260,7 +249,7 @@ describe('VendorTree', () => {
     fireEvent.change(costCenterSearch, { target: { value: 'xl' } })
     await waitFor(() =>
       expect(listVendorCostCenters).toHaveBeenCalledWith('product-1', {
-        limit: 20,
+        limit: 30,
         page: 1,
         q: 'xl',
       }),

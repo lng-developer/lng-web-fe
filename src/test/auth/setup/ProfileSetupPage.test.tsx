@@ -58,12 +58,15 @@ describe('ProfileSetupPage', () => {
       target: { value: 'jane@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Ha Noi' } })
-    fireEvent.change(screen.getByLabelText('Emergency contact'), { target: { value: 'Parent' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
+    fireEvent.change(screen.getByLabelText('Emergency contact', { selector: 'input' }), {
+      target: { value: 'Parent' },
+    })
     fireEvent.change(screen.getByLabelText('Emergency phone'), { target: { value: '0911111111' } })
     fireEvent.change(screen.getByLabelText('Relationship'), { target: { value: 'PARENT' } })
     const avatar = new File(['avatar'], 'avatar.png', { type: 'image/png' })
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [avatar] } })
-    fireEvent.click(screen.getByRole('button', { name: 'Complete setup' }))
+    fireEvent.click(screen.getByRole('button', { name: /Complete setup/ }))
 
     await waitFor(() => expect(uploadMyEmployeeAvatar).toHaveBeenCalledWith(avatar))
     await waitFor(() =>
@@ -95,12 +98,16 @@ describe('ProfileSetupPage', () => {
       target: { value: 'duplicate@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Ha Noi' } })
-    fireEvent.change(screen.getByLabelText('Emergency contact'), { target: { value: 'Parent' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
+    fireEvent.change(screen.getByLabelText('Emergency contact', { selector: 'input' }), {
+      target: { value: 'Parent' },
+    })
     fireEvent.change(screen.getByLabelText('Emergency phone'), { target: { value: '0911111111' } })
     fireEvent.change(screen.getByLabelText('Relationship'), { target: { value: 'PARENT' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Complete setup' }))
+    fireEvent.click(screen.getByRole('button', { name: /Complete setup/ }))
     await waitFor(() => expect(updateMyPersonalProfile).toHaveBeenCalledOnce())
 
+    fireEvent.click(screen.getByRole('tab', { name: /Personal information/i }))
     fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '' } })
     fireEvent.change(screen.getByLabelText('Personal email'), { target: { value: '' } })
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: '' } })
@@ -121,7 +128,8 @@ describe('ProfileSetupPage', () => {
     expect(screen.getByLabelText('Phone number')).toHaveValue('0900000000')
     expect(screen.getByLabelText('Personal email')).toHaveValue('duplicate@example.com')
     expect(screen.getByLabelText('Address')).toHaveValue('Ha Noi')
-    expect(screen.getByLabelText('Emergency contact')).toHaveValue('Parent')
+    fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
+    expect(screen.getByLabelText('Emergency contact', { selector: 'input' })).toHaveValue('Parent')
     expect(screen.getByLabelText('Emergency phone')).toHaveValue('0911111111')
     expect(screen.getByLabelText('Relationship')).toHaveValue('PARENT')
     expect(loadMyEmployeeProfile).toHaveBeenCalledTimes(1)
@@ -141,7 +149,7 @@ function renderProfileSetup() {
       <MemoryRouter initialEntries={['/setup/profile']}>
         <Routes>
           <Route path="/setup/profile" element={<ProfileSetupPage />} />
-          <Route path="/foundation" element={<h1>Workspace reached</h1>} />
+          <Route path="/operations-dashboard" element={<h1>Workspace reached</h1>} />
         </Routes>
       </MemoryRouter>
     </AntdApp>,

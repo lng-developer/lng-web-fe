@@ -15,7 +15,7 @@ export function HrModulePage() {
   const route = navigation.find((item) => item.path === path)
   const defaultPath = getDefaultHrPath(permissions)
 
-  if (!route) return <Navigate to={defaultPath ?? '/foundation'} replace />
+  if (!route) return <Navigate to={defaultPath ?? '/operations-dashboard'} replace />
 
   return (
     <section className={styles.page}>

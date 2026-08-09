@@ -1,7 +1,13 @@
 import { useState } from 'react'
-import { PlusOutlined } from '@ant-design/icons'
+import {
+  EditOutlined,
+  FileImageOutlined,
+  PlusOutlined,
+  SendOutlined,
+  StarOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Modal, Select, Space, Table, Tag, Typography, Upload } from 'antd'
+import { Button, Form, Modal, Select, Space, Table, Tag, Tooltip, Typography, Upload } from 'antd'
 
 import { useFeedbackToast } from '@/shared/ui'
 
@@ -129,9 +135,16 @@ export function ListingVariantManager({
                   {row.psdReadiness.status}
                 </Tag>
                 {canWrite && row.psdReadiness.status === 'MISSING' ? (
-                  <Button type="link" size="small" onClick={() => requestPsd.mutate(row.id)}>
-                    Request PSD
-                  </Button>
+                  <Tooltip title="Request PSD">
+                    <Button
+                      aria-label="Request PSD"
+                      type="text"
+                      size="small"
+                      icon={<SendOutlined />}
+                      onClick={() => requestPsd.mutate(row.id)}
+                      loading={requestPsd.isPending && requestPsd.variables === row.id}
+                    />
+                  </Tooltip>
                 ) : null}
               </Space>
             ),
@@ -152,9 +165,9 @@ export function ListingVariantManager({
                       return false
                     }}
                   >
-                    <Button type="link" size="small">
-                      Upload preview
-                    </Button>
+                    <Tooltip title="Upload preview image">
+                      <Button type="text" size="small" icon={<FileImageOutlined />} />
+                    </Tooltip>
                   </Upload>
                 ) : null}
               </Space>
@@ -168,19 +181,32 @@ export function ListingVariantManager({
                 <Tag color="blue">Default</Tag>
               ) : (
                 canWrite && (
-                  <Button type="link" size="small" onClick={() => makeDefault.mutate(row.id)}>
-                    Set default
-                  </Button>
+                  <Tooltip title="Set as default variant">
+                    <Button
+                      aria-label="Set as default variant"
+                      type="text"
+                      size="small"
+                      icon={<StarOutlined />}
+                      onClick={() => makeDefault.mutate(row.id)}
+                    />
+                  </Tooltip>
                 )
               ),
           },
           canWrite
             ? {
                 title: '',
+                width: 40,
                 render: (_, row) => (
-                  <Button type="link" size="small" onClick={() => open(row)}>
-                    Edit
-                  </Button>
+                  <Tooltip title="Edit variant">
+                    <Button
+                      aria-label="Edit"
+                      type="text"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => open(row)}
+                    />
+                  </Tooltip>
                 ),
               }
             : {},

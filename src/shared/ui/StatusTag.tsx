@@ -11,6 +11,9 @@ type OperationalStatus =
   | 'approved'
   | 'rejected'
   | 'cancelled'
+  | 'draft'
+  | 'finalized'
+  | 'paid'
 
 export interface StatusTagProps {
   readonly status: OperationalStatus
@@ -26,7 +29,10 @@ const colors: Record<OperationalStatus, string> = {
   processing: 'processing',
   approved: 'success',
   rejected: 'error',
-  cancelled: 'default',
+  cancelled: 'error',
+  draft: 'default',
+  finalized: 'purple',
+  paid: 'success',
 }
 
 const backgrounds: Record<OperationalStatus, string> = {
@@ -38,15 +44,18 @@ const backgrounds: Record<OperationalStatus, string> = {
   processing: '#eff6ff',
   approved: '#f0fdf4',
   rejected: '#fef2f2',
-  cancelled: '#f5f5f5',
+  cancelled: '#fef2f2',
+  draft: '#f5f5f5',
+  finalized: '#faf5ff',
+  paid: '#f0fdf4',
 }
 
 export function StatusTag({ status, children }: StatusTagProps) {
   return (
     <Tag
-      color={colors[status]}
+      color={colors[status] || 'default'}
       style={{
-        backgroundColor: backgrounds[status],
+        backgroundColor: backgrounds[status] || '#f5f5f5',
         borderColor: 'currentColor',
         borderRadius: 999,
         paddingInline: 8,

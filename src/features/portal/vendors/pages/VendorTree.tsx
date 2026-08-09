@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PlusOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
@@ -30,8 +30,14 @@ export interface VendorTreeProps {
 export function VendorTree({ onEdit }: VendorTreeProps) {
   const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
   const [search, setSearch] = useState('')
-  const params = { limit: 20, page: 1, q: search }
+  const deferredSearch = useDeferredValue(search)
+
+  const params = useMemo(
+    () => ({ limit: 50, page: 1, q: deferredSearch || undefined }),
+    [deferredSearch],
+  )
   const canWrite = getGlobalPermissions().includes('VENDORS:WRITE')
+
   const vendors = useQuery({
     queryKey: vendorKeys.vendors(params),
     queryFn: () => listVendors(params),

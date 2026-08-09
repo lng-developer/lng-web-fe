@@ -33,12 +33,17 @@ export type DesignTask = {
   internalTemplate: { code: string | null; name: string | null } | null
   targetListingId: string | null
   assignedDesignerId: string | null
-  assignedDesigner: { id: string; fullName: string | null } | null
+  assignedDesigner: {
+    id: string
+    fullName: string | null
+    avatarUrl?: string | null
+  } | null
   shop: { id: string; name: string | null } | null
   brief: string | null
   expectedOutputs: string[]
   referenceAssetCount: number
   latestSubmission: DesignSubmission | null
+  thumbnailAsset?: DesignAsset | null
   submissions?: DesignSubmission[]
   rejectReason?: string | null
   createdAt: string
@@ -52,7 +57,12 @@ export type DesignListParams = {
   taskType?: string
   priority?: string
 }
-export type DesignAssignee = { id: string; fullName?: string | null; name?: string | null }
+export type DesignAssignee = {
+  id: string
+  fullName?: string | null
+  name?: string | null
+  avatarUrl?: string | null
+}
 export type PsdFileListParams = {
   page: number
   limit: number

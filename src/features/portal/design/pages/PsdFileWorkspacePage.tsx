@@ -8,6 +8,7 @@ import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   DateRangePicker,
+  EmployeeAvatar,
   FilterBar,
   PageHeader,
   SectionCard,
@@ -85,21 +86,29 @@ export function PsdFileWorkspacePage() {
       ),
     },
     {
-      title: 'Listing',
+      title: '',
       dataIndex: 'listing',
-      render: (value) => (
-        <Space direction="vertical" size={0}>
-          <strong>{value.code ?? '-'}</strong>
-          <Typography.Text type="secondary">{value.title ?? '-'}</Typography.Text>
-        </Space>
-      ),
+      render: (value) => <strong>{value.code ?? '-'}</strong>,
     },
     {
       title: 'Task status',
       dataIndex: 'task',
       render: (value) => <StatusTag status={tone(value.status)}>{value.status}</StatusTag>,
     },
-    { title: 'Designer', dataIndex: 'designer', render: (value) => value.name ?? 'Unassigned' },
+    {
+      title: 'Designer',
+      dataIndex: 'designer',
+      render: (value) => {
+        const assignee = (assignees.data ?? []).find(({ id }) => id === value.id)
+        const name = value.name ?? assignee?.fullName ?? assignee?.name ?? 'Unassigned'
+        return (
+          <Space size="small">
+            <EmployeeAvatar name={name} avatarUrl={assignee?.avatarUrl} />
+            <span>{name}</span>
+          </Space>
+        )
+      },
+    },
     {
       title: 'Version',
       dataIndex: 'submission',
@@ -157,7 +166,7 @@ export function PsdFileWorkspacePage() {
           toolbar={
             <FilterBar label="PSD file filters">
               <Input.Search
-                placeholder="Search file, SKU, or title"
+                placeholder="Search file or SKU"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 onSearch={() => setPage(1)}

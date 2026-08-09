@@ -4,6 +4,8 @@ import { Button, Result, Space, Typography } from 'antd'
 
 import { ApiError } from '@/shared/api'
 
+import styles from './ErrorPages.module.scss'
+
 export function RouteErrorPage() {
   const { t } = useTranslation()
   const error = useRouteError()
@@ -21,33 +23,47 @@ export function RouteErrorPage() {
       : undefined
 
   return (
-    <main className="route-state">
-      <Result
-        status="error"
-        title={t('errors.unexpected')}
-        subTitle={
-          <Space orientation="vertical" size={2}>
-            {message ? <Typography.Text>{message}</Typography.Text> : null}
-            {requestId ? (
-              <Typography.Text type="secondary">
-                {t('errors.requestId')}: {requestId}
-              </Typography.Text>
-            ) : null}
-          </Space>
-        }
-        extra={
-          <Space>
-            <Button onClick={() => navigate(-1)}>{t('errors.goBack')}</Button>
-            <Button
-              type="primary"
-              loading={revalidator.state !== 'idle'}
-              onClick={() => revalidator.revalidate()}
-            >
-              {t('errors.tryAgain')}
-            </Button>
-          </Space>
-        }
-      />
+    <main className={styles.errorShell}>
+      <section className={styles.errorCard}>
+        <div className={styles.media}>
+          <img
+            className={styles.illustration}
+            src="https://res.cloudinary.com/dlypxtccj/image/upload/f_auto,q_auto/v1786211323/lng-system/error-pages/500-error.png"
+            alt={t('errors.serverImageAlt')}
+          />
+        </div>
+        <Result
+          status="error"
+          icon={null}
+          title={<Typography.Title level={2}>{t('errors.serverTitle')}</Typography.Title>}
+          subTitle={
+            <div className={styles.errorDescription}>
+              <Typography.Text>{t('errors.technicalHint')}</Typography.Text>
+              <br />
+              <Space direction="vertical" size={4}>
+                {message ? <Typography.Text>{message}</Typography.Text> : null}
+                {requestId ? (
+                  <Typography.Text type="secondary">
+                    {t('errors.requestId')}: {requestId}
+                  </Typography.Text>
+                ) : null}
+              </Space>
+            </div>
+          }
+          extra={
+            <Space className={styles.errorActions}>
+              <Button onClick={() => navigate(-1)}>{t('errors.goBack')}</Button>
+              <Button
+                type="primary"
+                loading={revalidator.state !== 'idle'}
+                onClick={() => revalidator.revalidate()}
+              >
+                {t('errors.tryAgain')}
+              </Button>
+            </Space>
+          }
+        />
+      </section>
     </main>
   )
 }

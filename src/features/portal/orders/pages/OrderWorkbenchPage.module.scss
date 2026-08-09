@@ -14,19 +14,50 @@
 }
 .filters {
   width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
 }
 .orderSearch {
-  flex: 1 1 360px;
-  min-width: 300px;
-  width: auto;
+  flex: 0 0 260px;
+  width: 260px;
+  max-width: 260px;
+  min-width: 180px;
 }
 .sellerFilter {
   flex: 0 0 200px;
-  width: 200px;
+  min-width: 180px;
+  width: 100%;
 }
 .filterSelect {
   flex: 0 0 170px;
-  width: 170px;
+  min-width: 150px;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .orderSearch,
+  .sellerFilter,
+  .filterSelect {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .filters {
+    gap: 10px;
+  }
 }
 .validIcon {
   color: var(--ant-color-success);
@@ -120,6 +151,12 @@
   gap: 4px;
   padding-bottom: 8px;
 }
+.historyScroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+}
 .replacementForm {
   display: grid;
   gap: 12px;
@@ -135,10 +172,9 @@
 }
 .itemPanel {
   display: grid;
-  grid-template-columns: 150px minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(
-      150px,
-      0.65fr
-    ) minmax(150px, 0.9fr) minmax(170px, 1fr) 116px;
+  grid-template-columns:
+    150px minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(150px, 0.65fr)
+    minmax(150px, 0.9fr) minmax(170px, 1fr) 116px;
   gap: 20px;
   padding: 10px 20px 20px;
   border: 1px solid var(--color-border);
@@ -184,6 +220,20 @@
 .buyerImage :global(.ant-image-img) {
   object-fit: cover;
   border-radius: 6px;
+}
+.imagePreviewModal :global(.ant-modal-content) {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.imagePreviewModal :global(.ant-modal-body) {
+  padding: 0;
+}
+.imagePreviewToolbar :global(.ant-btn) {
+  color: #fff;
+}
+.imagePreviewToolbar :global(.ant-btn[disabled]) {
+  color: rgba(255, 255, 255, 0.42);
 }
 .identifierSection :global(.ant-descriptions) {
   display: none;

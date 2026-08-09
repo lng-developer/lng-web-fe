@@ -31,7 +31,7 @@ describe('ResolveQueuePanel', () => {
       />,
     )
 
-    fireEvent.click(screen.getByText('J2501-TS1S-01').closest('tr')!)
+    fireEvent.click(screen.getByText('J2501-TS1S-01').closest('[role="button"]')!)
 
     expect(onSelect).toHaveBeenCalledWith(item)
     expect(onRecommendedStage).toHaveBeenCalledWith('PRODUCT_MAPPING')
@@ -50,7 +50,7 @@ describe('ResolveQueuePanel', () => {
       />,
     )
 
-    fireEvent.scroll(container.querySelector('.overflow-auto')!)
+    fireEvent.scroll(container.firstElementChild!)
 
     expect(onSelect).not.toHaveBeenCalled()
   })
