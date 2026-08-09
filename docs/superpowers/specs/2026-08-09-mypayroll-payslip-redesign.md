@@ -6,7 +6,7 @@ Redesign the employee-facing MyPayroll view as a printable payslip inspired by t
 
 ## Scope
 
-- Change only the employee MyPayroll presentation and its focused tests/i18n.
+- Change the employee MyPayroll presentation and the employee cell in the HR Payroll results table, plus their focused tests/i18n.
 - Keep payroll administration, calculation, settings, lifecycle, and API routes unchanged unless a required payslip field is genuinely absent from the current response.
 - Reuse the existing `PayslipStatement` component, shared UI, Ant Design, authenticated employee avatar, and current locale-aware money/date formatting.
 - Add no frontend dependency.
@@ -36,6 +36,10 @@ The payslip is a centered white document surface with a restrained border and sh
    - Gross income, total deductions, and net income are visually separated at the bottom.
    - Net income is the primary value and uses the configured company currency.
 
+5. HR Payroll employee column
+   - Show the employee's authenticated avatar beside their full name and employee code in the payroll results table.
+   - Reuse the shared `EmployeeAvatar` component and fall back to initials when no avatar is available.
+
 ## Data Rules
 
 - `PayrollResult` remains the source of truth for calculated amounts.
@@ -53,7 +57,8 @@ The payslip is a centered white document surface with a restrained border and sh
 
 ## Verification
 
-- Update the focused `PayslipStatement` test to cover employee metadata, income/deduction grouping, zero values, totals, and missing optional data.
+- Update the focused `PayslipStatement` test to cover employee metadata, avatar, income/deduction grouping, zero values, totals, and missing optional data.
+- Cover the HR Payroll employee cell's avatar and fallback identity rendering.
 - Run focused ESLint, TypeScript typecheck, focused Vitest, production build, and `git diff --check`.
 
 ## Out of Scope
