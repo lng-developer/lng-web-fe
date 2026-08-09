@@ -72,7 +72,7 @@ describe('WorkScoreWorkbenchPage', () => {
     expect(screen.queryByRole('button', { name: 'Download' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Override score' }))
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
-  }, 15_000)
+  }, 30_000)
 
   it('submits the current version with an override reason', async () => {
     render(

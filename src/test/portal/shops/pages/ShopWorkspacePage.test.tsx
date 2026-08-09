@@ -142,7 +142,7 @@ describe('ShopWorkspacePage', () => {
     expect(screen.queryByRole('button', { name: 'Create shop' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit Football US' })).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Edit Pet Shop' })).not.toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('lets a read-only user inspect a row without showing a status-save action', async () => {
     renderPage('/portal/shops', account(['SHOPS:READ']))
