@@ -1,8 +1,131 @@
 .content {
-  width: min(460px, calc(100vw - 64px));
+  width: min(480px, calc(100vw - 48px));
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--ant-color-split);
+  background: var(--ant-color-bg-container);
 }
 
 .list {
-  max-height: min(560px, calc(100vh - 160px));
+  max-height: min(540px, calc(100vh - 160px));
   overflow-y: auto;
+  padding: 6px 0;
+}
+
+.title {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  display: block;
+  font-size: 12px;
+}
+
+.subtitle strong {
+  font-weight: 700;
+}
+
+.linkButton {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.item {
+  display: block;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--ant-color-split);
+  transition: background 0.12s ease;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background: var(--ant-color-fill-quaternary);
+  }
+}
+
+.itemContent {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.unreadItem {
+  @extend .item;
+  background: var(--ant-color-primary-bg);
+  border-left: 3px solid var(--ant-color-primary);
+  padding-left: 15px;
+
+  &:hover {
+    background: var(--ant-color-primary-bg-hover, #bae0ff22);
+  }
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.itemTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.itemTitleText {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.unreadDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--ant-color-warning);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.readButton {
+  white-space: nowrap;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.message {
+  display: block;
+  word-break: break-word;
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+  line-height: 1.5;
+}
+
+.timestamp {
+  display: block;
+  font-size: 11px;
+  color: var(--ant-color-text-quaternary);
+  margin-top: 2px;
+}
+
+.footer {
+  border-top: 1px solid var(--ant-color-split);
+  padding: 8px 0;
 }

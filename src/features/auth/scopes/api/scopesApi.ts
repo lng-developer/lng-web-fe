@@ -5,10 +5,10 @@ type ApiResponse<T> = { data: T; success: boolean }
 export type ScopeInput = {
   name: string
   scopeId: string
-  scopeType: 'DEPARTMENT' | 'SHOP' | 'TEAM' | 'VENDOR'
+  scopeType: 'department' | 'team' | 'shop' | 'vendor' | 'DEPARTMENT' | 'SHOP' | 'TEAM' | 'VENDOR'
 }
 export type ScopeUpdateInput = Partial<Pick<ScopeInput, 'name'>> & {
-  status?: 'ACTIVE' | 'INACTIVE'
+  status?: 'ACTIVE' | 'INACTIVE' | 'active' | 'inactive'
 }
 export type ScopeList = {
   items: {
@@ -16,9 +16,13 @@ export type ScopeList = {
     name: string
     scopeId: string
     scopeType: ScopeInput['scopeType']
-    status: 'ACTIVE' | 'INACTIVE'
+    status: 'ACTIVE' | 'INACTIVE' | 'active' | 'inactive'
   }[]
   total: number
+}
+
+function normalizeScopeType(scopeType: ScopeInput['scopeType']) {
+  return scopeType.toLowerCase()
 }
 
 function unwrap<T>(response: unknown): T {
@@ -30,7 +34,12 @@ export async function loadScopes(): Promise<ScopeList> {
 }
 
 export async function createScope(input: ScopeInput) {
-  return unwrap(await apiClient.post('/api/auth/scopes', input))
+  return unwrap(
+    await apiClient.post('/api/auth/scopes', {
+      ...input,
+      scopeType: normalizeScopeType(input.scopeType),
+    }),
+  )
 }
 
 export async function updateScope(scopeId: string, input: ScopeUpdateInput) {

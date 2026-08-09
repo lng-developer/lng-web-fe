@@ -6,17 +6,25 @@
 .accountSummary {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
 }
 
 .accountSummary :global(.ant-typography) {
   margin-bottom: 0;
 }
 
+.accountTitle {
+  line-height: 1.2 !important;
+}
+
 .grid {
   display: grid;
   gap: 24px;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
 }
 
 .hint {
@@ -34,6 +42,103 @@
 
 .sectionHeader :global(.ant-typography) {
   margin: 0;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.scopedTitleBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.assignmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.assignmentCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+  transition: all 0.2s ease-in-out;
+  gap: 16px;
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.05);
+  }
+}
+
+.assignmentIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1.2;
+  min-width: 0;
+}
+
+.assignmentInfo {
+  display: grid;
+  gap: 2px;
+}
+
+.assignmentRole {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assignmentDetails {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assignmentMeta {
+  font-size: 12px;
+}
+
+.scopedTitle {
+  margin: 0 !important;
+  line-height: 1.25 !important;
+}
+
+.scopedSubtitle {
+  display: block;
+  font-size: 12px;
+}
+
+.assignmentActions {
+  display: flex;
+  gap: 4px;
+
+  button {
+    color: var(--ant-color-text-secondary);
+
+    &:hover {
+      color: var(--ant-color-primary) !important;
+      background: var(--ant-color-fill-quaternary) !important;
+    }
+  }
+
+  button:last-child:hover {
+    color: var(--ant-color-error) !important;
+  }
 }
 
 @media (max-width: 1100px) {

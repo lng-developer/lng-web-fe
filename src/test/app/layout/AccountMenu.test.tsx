@@ -93,7 +93,7 @@ describe('AccountMenu', () => {
 
 function renderMenu() {
   const router = createMemoryRouter([{ path: '*', element: <AccountMenu account={account} /> }], {
-    initialEntries: ['/foundation'],
+    initialEntries: ['/operations-dashboard'],
   })
   render(
     <AppProviders>

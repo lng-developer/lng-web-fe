@@ -74,7 +74,7 @@ describe('shared UI', () => {
     expect(serializeDateTimeValue(dayjs('2026-07-31T13:45:00'), 'time')).toBe('13:45')
   })
 
-  it('renders only page actions and operational status', () => {
+  it('renders page context, actions, and operational status', () => {
     render(
       <>
         <PageHeader
@@ -87,8 +87,9 @@ describe('shared UI', () => {
       </>,
     )
 
-    expect(screen.queryByRole('heading', { name: 'Foundation' })).not.toBeInTheDocument()
-    expect(screen.queryByText('Long page description')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Foundation' })).toBeVisible()
+    expect(screen.getByText('Long page description')).toBeVisible()
+    expect(screen.getByText(/Cập nhật lúc:/)).toBeVisible()
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
     expect(screen.getByText('Operational')).toBeVisible()
   })

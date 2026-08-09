@@ -51,6 +51,6 @@ describe('AccessEditorPage', () => {
 
     expect(await screen.findByText('operator@lng.test')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Lưu quyền toàn cục' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Thêm quyền theo phạm vi' })).toBeVisible()
+    expect(screen.getAllByRole('button', { name: 'Thêm quyền theo phạm vi' })[0]).toBeVisible()
   })
 })

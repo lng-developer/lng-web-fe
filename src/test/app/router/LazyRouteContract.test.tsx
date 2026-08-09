@@ -19,7 +19,7 @@ describe('route loading contract', () => {
       expect(childByPath.get(path)?.lazy).toBeTypeOf('function')
       expect(childByPath.get(path)?.element).toBeUndefined()
     }
-    expect(childByPath.get('foundation')?.element).toBeDefined()
+    expect(childByPath.get('operations-dashboard')?.element).toBeDefined()
   })
 
   it('does not refresh the workspace session for child-route navigation', () => {

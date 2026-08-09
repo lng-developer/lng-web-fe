@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Steps, Typography } from 'antd'
 
+import { brandAssets } from '@/shared/config/brandAssets'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 
 import styles from './SetupLayout.module.scss'
@@ -24,7 +25,7 @@ export function SetupLayout({ currentStep, title, description, children, wide }:
       </div>
       <aside className={styles.rail}>
         <div className={styles.brand}>
-          <span className={styles.mark}>L</span>
+          <img className={styles.logo} src={brandAssets.logoWide} alt={t('app.name')} />
           <Typography.Title level={3}>{t('app.name')}</Typography.Title>
         </div>
         <div className={styles.railCopy}>

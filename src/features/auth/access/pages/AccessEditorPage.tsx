@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeftOutlined,
-  CloseOutlined,
+  BuildOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
+  SafetyCertificateOutlined,
   SaveOutlined,
   SettingOutlined,
+  ShopOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { TableColumnsType } from 'antd'
-import { Button, Form, Modal, Select, Space, Table, Tag, Typography } from 'antd'
+import { Avatar, Button, Form, Modal, Select, Tag, Tooltip, Typography } from 'antd'
 
 import {
   ConfirmDangerModal,
@@ -21,7 +22,9 @@ import {
   FeedbackAlert,
   LoadingState,
   PageHeader,
+  PermissionCheckboxGroup,
   SectionCard,
+  StatusTag,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -42,12 +45,14 @@ type AssignmentFormValues = Omit<AccessAssignmentInput, 'accountId'>
 export function AccessEditorPage() {
   const { t } = useTranslation()
   const { accountId = '' } = useParams()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [globalForm] = Form.useForm()
   const [assignmentForm] = Form.useForm<AssignmentFormValues>()
   const [overrideForm] = Form.useForm<{ permissionIds: string[] }>()
   const [editingAssignment, setEditingAssignment] = useState<Assignment>()
+  const [isAssignmentOpen, setIsAssignmentOpen] = useState(false)
   const [overrideAssignment, setOverrideAssignment] = useState<Assignment>()
   const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment>()
 
@@ -61,6 +66,7 @@ export function AccessEditorPage() {
     await queryClient.invalidateQueries({ queryKey: ['access-explorer', accountId] })
     await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
   }
+
   const globalMutation = useMutation({
     mutationFn: (values: { roleIds: string[]; customPermissionIds: string[] }) =>
       updateGlobalAccess(accountId, values),
@@ -70,6 +76,7 @@ export function AccessEditorPage() {
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+
   const assignmentMutation = useMutation({
     mutationFn: (values: AssignmentFormValues) =>
       editingAssignment
@@ -77,11 +84,13 @@ export function AccessEditorPage() {
         : createAccessAssignment({ ...values, accountId }),
     onSuccess: async () => {
       setEditingAssignment(undefined)
+      setIsAssignmentOpen(false)
       showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+
   const deleteMutation = useMutation({
     mutationFn: deleteAccessAssignment,
     onSuccess: async () => {
@@ -91,6 +100,7 @@ export function AccessEditorPage() {
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+
   const overrideMutation = useMutation({
     mutationFn: (permissionIds: string[]) =>
       setScopedRolePermissions({
@@ -120,10 +130,12 @@ export function AccessEditorPage() {
     () => new Map((data?.roles.items ?? []).map((role) => [role.id, role])),
     [data?.roles.items],
   )
+
   const scopeById = useMemo(
     () => new Map((data?.scopes.items ?? []).map((scope) => [scope.scopeId ?? scope.id, scope])),
     [data?.scopes.items],
   )
+
   const scopeOptions = (data?.scopes.items ?? []).map((scope) => ({
     label: `${scope.name} (${scope.scopeType ?? ''})`,
     value: scope.scopeId ?? scope.id,
@@ -132,72 +144,26 @@ export function AccessEditorPage() {
     label: role.name ?? role.code,
     value: role.id,
   }))
-  const permissionOptions = (data?.permissions.items ?? []).map((permission) => ({
-    label: `${permission.code}${permission.name ? ` — ${permission.name}` : ''}`,
-    value: permission.id,
-  }))
+  const permissionSections = useMemo(() => {
+    const groups = new Map<string, { title: string; options: { label: string; value: string }[] }>()
 
-  const columns: TableColumnsType<Assignment> = [
-    {
-      title: t('auth.accessEditor.scope'),
-      render: (_, item) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text strong>
-            {scopeById.get(item.scopeId ?? '')?.name ?? item.scopeId}
-          </Typography.Text>
-          <Typography.Text type="secondary">{item.scopeType}</Typography.Text>
-        </Space>
-      ),
-    },
-    {
-      title: t('auth.accessEditor.role'),
-      render: (_, item) =>
-        roleById.get(item.roleId ?? '')?.name ??
-        roleById.get(item.roleId ?? '')?.code ??
-        item.roleId,
-    },
-    {
-      title: t('auth.accessEditor.customPermissions'),
-      render: (_, item) =>
-        item.customPermissionIds?.length ? (
-          <Tag>
-            {t('auth.accessEditor.permissionCount', { count: item.customPermissionIds.length })}
-          </Tag>
-        ) : (
-          '—'
-        ),
-    },
-    {
-      title: t('auth.accessEditor.actions'),
-      align: 'right',
-      render: (_, item) => (
-        <Space wrap>
-          <Button
-            type="link"
-            icon={<EditOutlined aria-hidden />}
-            onClick={() => openAssignment(item)}
-          >
-            {t('auth.accessEditor.edit')}
-          </Button>
-          <Button
-            type="link"
-            icon={<SettingOutlined aria-hidden />}
-            onClick={() => openOverride(item)}
-          >
-            {t('auth.accessEditor.overridePermissions')}
-          </Button>
-          <Button
-            danger
-            type="link"
-            icon={<DeleteOutlined aria-hidden />}
-            onClick={() => setAssignmentToDelete(item)}
-          >
-            {t('auth.accessEditor.delete')}
-          </Button>
-        </Space>
-      ),
-    },
-  ]
+    for (const permission of data?.permissions.items ?? []) {
+      const label = `${permission.code}${permission.name ? ` - ${permission.name}` : ''}`
+      const key = permission.code.includes(':')
+        ? permission.code.split(':')[0]
+        : permission.code.includes('.')
+          ? permission.code.split('.')[0]
+          : permission.code.includes('_')
+            ? permission.code.split('_')[0]
+            : 'general'
+
+      const group = groups.get(key) ?? { title: key, options: [] }
+      group.options.push({ label, value: permission.id })
+      groups.set(key, group)
+    }
+
+    return Array.from(groups.values())
+  }, [data?.permissions.items])
 
   function openAssignment(assignment?: Assignment) {
     setEditingAssignment(assignment)
@@ -209,6 +175,7 @@ export function AccessEditorPage() {
         scopeType: undefined,
       },
     )
+    setIsAssignmentOpen(true)
   }
 
   function openOverride(assignment: Assignment) {
@@ -232,14 +199,25 @@ export function AccessEditorPage() {
     })
   }
 
+  const getScopeIcon = (scopeType?: string) => {
+    if (scopeType === 'shop') return <ShopOutlined />
+    if (scopeType === 'vendor') return <BuildOutlined />
+    return <SafetyCertificateOutlined />
+  }
+
+  const accountStatus = String(data?.account.account.status ?? '')
+
   return (
     <section className={styles.page}>
       <PageHeader
         title={t('auth.accessEditor.title')}
         description={t('auth.accessEditor.description')}
         actions={
-          <Button icon={<ArrowLeftOutlined aria-hidden />}>
-            <Link to="/auth/accounts">{t('auth.accessEditor.backToAccounts')}</Link>
+          <Button
+            icon={<ArrowLeftOutlined aria-hidden />}
+            onClick={() => navigate('/auth/accounts')}
+          >
+            {t('auth.accessEditor.backToAccounts')}
           </Button>
         }
       />
@@ -263,10 +241,17 @@ export function AccessEditorPage() {
       {data ? (
         <>
           <div className={styles.accountSummary}>
-            <Typography.Title level={3}>{data.account.account.email}</Typography.Title>
-            <Tag color={data.account.account.status === 'active' ? 'success' : 'default'}>
-              {data.account.account.status ?? t('auth.accessExplorer.unknown')}
-            </Tag>
+            <Avatar size={48} icon={<SafetyCertificateOutlined />} />
+            <div>
+              <Typography.Title level={4} className={styles.accountTitle}>
+                {data.account.account.email}
+              </Typography.Title>
+              <StatusTag
+                status={accountStatus.toLowerCase() === 'active' ? 'approved' : 'cancelled'}
+              >
+                {accountStatus || t('auth.accessExplorer.unknown')}
+              </StatusTag>
+            </div>
           </div>
           <div className={styles.grid}>
             <SectionCard title={t('auth.accessEditor.globalAccess')}>
@@ -290,7 +275,7 @@ export function AccessEditorPage() {
                   label={t('auth.accessEditor.customPermissions')}
                   name="customPermissionIds"
                 >
-                  <Select mode="multiple" options={permissionOptions} />
+                  <PermissionCheckboxGroup sections={permissionSections} columns={3} />
                 </Form.Item>
                 <Button
                   htmlType="submit"
@@ -302,42 +287,124 @@ export function AccessEditorPage() {
                 </Button>
               </Form>
             </SectionCard>
-            <SectionCard title={t('auth.accessEditor.scopedAccess')}>
-              <Typography.Text type="secondary" className={styles.hint}>
-                {t('auth.accessEditor.scopedAccessHint')}
-              </Typography.Text>
-              <Button
-                type="primary"
-                icon={<PlusOutlined aria-hidden />}
-                onClick={() => openAssignment()}
-              >
-                {t('auth.accessEditor.addScoped')}
-              </Button>
+
+            <SectionCard>
+              <div className={styles.scopedTitleBar}>
+                <div>
+                  <Typography.Title level={4} className={styles.scopedTitle}>
+                    {t('auth.accessEditor.scopedAccess')}
+                  </Typography.Title>
+                  <Typography.Text type="secondary" className={styles.scopedSubtitle}>
+                    {t('auth.accessEditor.scopedAccessHint')}
+                  </Typography.Text>
+                </div>
+                <Button
+                  type="primary"
+                  ghost
+                  icon={<PlusOutlined aria-hidden />}
+                  onClick={() => openAssignment()}
+                >
+                  {t('auth.accessEditor.addScoped')}
+                </Button>
+              </div>
+
+              <div className={styles.assignmentList}>
+                {(data.assignments.items ?? []).map((item) => {
+                  const scopeName = scopeById.get(item.scopeId ?? '')?.name ?? item.scopeId
+                  const roleName =
+                    roleById.get(item.roleId ?? '')?.name ??
+                    roleById.get(item.roleId ?? '')?.code ??
+                    item.roleId
+
+                  return (
+                    <div key={item.id} className={styles.assignmentCard}>
+                      <div className={styles.assignmentIdentity}>
+                        <Avatar
+                          style={{ backgroundColor: '#f0f2f5', color: '#1890ff' }}
+                          icon={getScopeIcon(item.scopeType)}
+                        />
+                        <div className={styles.assignmentInfo}>
+                          <Typography.Text strong>{scopeName}</Typography.Text>
+                          <Typography.Text type="secondary" className={styles.assignmentMeta}>
+                            {item.scopeType}
+                          </Typography.Text>
+                        </div>
+                      </div>
+
+                      <div className={styles.assignmentRole}>
+                        <Tag color="blue" style={{ borderRadius: 4, fontWeight: 500 }}>
+                          {roleName}
+                        </Tag>
+                        {item.customPermissionIds?.length ? (
+                          <Tag style={{ borderRadius: 4 }}>
+                            {t('auth.accessEditor.permissionCount', {
+                              count: item.customPermissionIds.length,
+                            })}
+                          </Tag>
+                        ) : null}
+                      </div>
+
+                      <div className={styles.assignmentActions}>
+                        <Tooltip title={t('auth.accessEditor.edit', 'Edit')}>
+                          <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            onClick={() => openAssignment(item)}
+                          />
+                        </Tooltip>
+                        <Tooltip
+                          title={t('auth.accessEditor.overridePermissions', 'Override Permissions')}
+                        >
+                          <Button
+                            type="text"
+                            icon={<SettingOutlined />}
+                            onClick={() => openOverride(item)}
+                          />
+                        </Tooltip>
+                        <Tooltip title={t('auth.accessEditor.delete', 'Delete')}>
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => setAssignmentToDelete(item)}
+                          />
+                        </Tooltip>
+                      </div>
+                    </div>
+                  )
+                })}
+                {(data.assignments.items ?? []).length === 0 ? (
+                  <EmptyState
+                    title={t('auth.accessEditor.emptyAssignments')}
+                    description={t('auth.accessEditor.emptyAssignmentsDescription')}
+                    action={
+                      <Button
+                        type="primary"
+                        ghost
+                        icon={<PlusOutlined aria-hidden />}
+                        onClick={() => openAssignment()}
+                      >
+                        {t('auth.accessEditor.addScoped')}
+                      </Button>
+                    }
+                  />
+                ) : null}
+              </div>
             </SectionCard>
           </div>
-          <SectionCard title={t('auth.accessEditor.scopedAssignments')}>
-            {(data.assignments.items ?? []).length ? (
-              <Table
-                rowKey="id"
-                columns={columns}
-                dataSource={data.assignments.items}
-                pagination={false}
-              />
-            ) : (
-              <EmptyState
-                title={t('auth.accessEditor.emptyAssignments')}
-                description={t('auth.accessEditor.emptyAssignmentsDescription')}
-              />
-            )}
-          </SectionCard>
         </>
       ) : null}
+
       <Modal
-        open={editingAssignment !== undefined}
+        open={isAssignmentOpen}
         title={
           editingAssignment ? t('auth.accessEditor.editScoped') : t('auth.accessEditor.addScoped')
         }
-        onCancel={() => setEditingAssignment(undefined)}
+        width={920}
+        onCancel={() => {
+          setEditingAssignment(undefined)
+          setIsAssignmentOpen(false)
+        }}
         footer={null}
         destroyOnHidden
       >
@@ -353,29 +420,33 @@ export function AccessEditorPage() {
             <Select options={roleOptions} />
           </Form.Item>
           <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
-            <Select mode="multiple" options={permissionOptions} />
+            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
           </Form.Item>
-          <Space>
+          <div className={styles.formActions}>
             <Button
-              icon={<CloseOutlined aria-hidden />}
-              onClick={() => setEditingAssignment(undefined)}
+              onClick={() => {
+                setEditingAssignment(undefined)
+                setIsAssignmentOpen(false)
+              }}
             >
               {t('auth.accessEditor.cancel')}
             </Button>
             <Button
               htmlType="submit"
               type="primary"
-              icon={<SaveOutlined aria-hidden />}
+              icon={<SaveOutlined />}
               loading={assignmentMutation.isPending}
             >
               {t('auth.accessEditor.save')}
             </Button>
-          </Space>
+          </div>
         </Form>
       </Modal>
+
       <Modal
         open={overrideAssignment !== undefined}
         title={t('auth.accessEditor.overridePermissions')}
+        width={920}
         onCancel={() => setOverrideAssignment(undefined)}
         footer={null}
         destroyOnHidden
@@ -386,26 +457,24 @@ export function AccessEditorPage() {
           onFinish={(values) => overrideMutation.mutate(values.permissionIds ?? [])}
         >
           <Form.Item label={t('auth.accessEditor.permissions')} name="permissionIds">
-            <Select mode="multiple" options={permissionOptions} />
+            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
           </Form.Item>
-          <Space>
-            <Button
-              icon={<CloseOutlined aria-hidden />}
-              onClick={() => setOverrideAssignment(undefined)}
-            >
+          <div className={styles.formActions}>
+            <Button onClick={() => setOverrideAssignment(undefined)}>
               {t('auth.accessEditor.cancel')}
             </Button>
             <Button
               htmlType="submit"
               type="primary"
-              icon={<SaveOutlined aria-hidden />}
+              icon={<SaveOutlined />}
               loading={overrideMutation.isPending}
             >
               {t('auth.accessEditor.save')}
             </Button>
-          </Space>
+          </div>
         </Form>
       </Modal>
+
       <ConfirmDangerModal
         open={assignmentToDelete !== undefined}
         title={t('auth.accessEditor.deleteAssignment')}

@@ -85,6 +85,7 @@ describe('AppSidebar', () => {
             coreLabel="HR"
             groups={[personal, team]}
             selectedKey="team-approvals"
+            navigationSearch=""
             collapsed={false}
             onCollapsedChange={() => undefined}
           />
@@ -104,6 +105,7 @@ function renderSidebar(groups: NavigationGroup[], selectedKey = 'self') {
         <AppSidebar
           coreLabel="HR"
           groups={groups}
+          navigationSearch=""
           selectedKey={selectedKey}
           collapsed={false}
           onCollapsedChange={() => undefined}

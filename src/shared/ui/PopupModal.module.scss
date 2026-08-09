@@ -1,0 +1,38 @@
+﻿.popupModal {
+  --popup-open-duration: var(--popup-duration, 180ms);
+  --popup-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.popupModalContent {
+  --popup-origin-x: 50%;
+  --popup-origin-y: 50%;
+  transform-origin: var(--popup-origin-x) var(--popup-origin-y);
+  transform: scale(1);
+  opacity: 1;
+  transition:
+    transform var(--popup-open-duration) var(--popup-ease),
+    opacity var(--popup-open-duration) var(--popup-ease);
+}
+
+.popupOpening .popupModalContent {
+  transform: scale(0.05);
+  opacity: 0;
+}
+
+.popupOpened .popupModalContent {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.popupClosing .popupModalContent {
+  transform: scale(0.05);
+  opacity: 0;
+}
+
+.popupClosing :global(.ant-modal-mask) {
+  opacity: 0;
+}
+
+.popupModal :global(.ant-modal-mask) {
+  transition: opacity var(--popup-open-duration) var(--popup-ease);
+}

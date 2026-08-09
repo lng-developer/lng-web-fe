@@ -12,6 +12,7 @@ export interface DateRangePickerProps {
   readonly allowClear?: boolean
   readonly disabled?: boolean
   readonly placeholder?: [string, string]
+  readonly style?: React.CSSProperties
   readonly 'aria-label'?: string
 }
 
@@ -26,7 +27,7 @@ export function serializeDateRange(value: DayjsRange): DateRangeValue {
   }
 }
 
-export function DateRangePicker({ value, onChange, ...props }: DateRangePickerProps) {
+export function DateRangePicker({ value, onChange, style, ...props }: DateRangePickerProps) {
   const pickerValue: DayjsRange =
     value?.dateFrom || value?.dateTo
       ? [value.dateFrom ? dayjs(value.dateFrom) : null, value.dateTo ? dayjs(value.dateTo) : null]
@@ -35,7 +36,9 @@ export function DateRangePicker({ value, onChange, ...props }: DateRangePickerPr
   return (
     <DatePicker.RangePicker
       {...props}
+      allowClear
       format="DD/MM/YYYY"
+      style={{ width: '100%', maxWidth: 280, ...style }}
       value={pickerValue}
       onChange={(nextValue) => onChange?.(serializeDateRange(nextValue))}
     />

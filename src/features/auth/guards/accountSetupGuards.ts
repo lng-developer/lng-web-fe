@@ -30,13 +30,13 @@ export async function requireWorkspace() {
 export async function requirePasswordSetup() {
   const state = await loadSetupState()
   const destination = setupDestination(state)
-  if (destination !== '/setup/password') throw redirect(destination || '/foundation')
+  if (destination !== '/setup/password') throw redirect(destination || '/operations-dashboard')
   return state
 }
 
 export async function requireProfileSetup() {
   const state = await loadSetupState()
   const destination = setupDestination(state)
-  if (destination !== '/setup/profile') throw redirect(destination || '/foundation')
+  if (destination !== '/setup/profile') throw redirect(destination || '/operations-dashboard')
   return state
 }

@@ -8,6 +8,8 @@ import {
 } from '@ant-design/icons'
 import { Button, Tooltip } from 'antd'
 
+import { brandAssets } from '@/shared/config/brandAssets'
+
 import type { AppCoreKey } from './appNavigation'
 import styles from './AppShell.module.scss'
 
@@ -33,7 +35,7 @@ export function AppRail({
   const { t } = useTranslation()
   return (
     <aside className={styles.rail} aria-label={t('shell.navigation.cores')}>
-      <div className={styles.railBrand}>L</div>
+      <img className={styles.railBrand} src={brandAssets.logoWide} alt={t('app.name')} />
       <div className={styles.railItems}>
         {cores.map(({ key, labelKey }) => (
           <Tooltip key={key} title={t(labelKey)} placement="right">

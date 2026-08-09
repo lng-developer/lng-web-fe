@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), post: vi.fn() } }))
+vi.mock('@/shared/api', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/api')>('@/shared/api')
+  return {
+    ...actual,
+    apiClient: { get: vi.fn(), post: vi.fn() },
+  }
+})
 
 import {
   changeOwnPassword,
@@ -8,7 +14,7 @@ import {
   logout,
   restoreSession,
 } from '@/features/auth/api/authApi'
-import { apiClient } from '@/shared/api'
+import { apiClient, ApiError } from '@/shared/api'
 import {
   getAccessToken,
   getGlobalPermissions,
@@ -43,7 +49,7 @@ describe('logout', () => {
   })
 
   it('clears a stale access token when refresh is rejected', async () => {
-    vi.mocked(apiClient.post).mockRejectedValue(new Error('Unauthorized'))
+    vi.mocked(apiClient.post).mockRejectedValue(new ApiError('Unauthorized', { status: 401 }))
 
     await expect(restoreSession()).rejects.toThrow('Unauthorized')
 

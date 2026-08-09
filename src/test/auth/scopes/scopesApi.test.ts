@@ -34,7 +34,7 @@ describe('scopesApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/auth/scopes', {
       name: 'Operations',
       scopeId: '507f1f77bcf86cd799439011',
-      scopeType: 'DEPARTMENT',
+      scopeType: 'department',
     })
     expect(apiClient.patch).toHaveBeenCalledWith('/api/auth/scopes/scope-1', {
       name: 'Operations team',

@@ -19,13 +19,29 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
     algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
       colorPrimary: '#E83B4A',
-      colorBgLayout: isDark ? '#111318' : '#F6F7F9',
-      colorText: isDark ? '#F3F4F6' : '#171A1F',
+      colorBgBase: isDark ? '#0B0F14' : '#F9FAFB',
+      colorBgContainer: isDark ? '#141A22' : '#FFFFFF',
+      colorBgElevated: isDark ? '#111827' : '#FFFFFF',
+      colorBgLayout: isDark ? '#0B0F14' : '#F3F4F6',
+      colorText: isDark ? '#E5E7EB' : '#111827',
+      colorTextSecondary: isDark ? '#9CA3AF' : '#374151',
+      colorTextTertiary: isDark ? '#6B7280' : '#6B7280',
+      colorBorder: isDark ? '#374151' : '#D1D5DB',
+      colorBorderSecondary: isDark ? '#273244' : '#E5E7EB',
+      colorSplit: isDark ? '#1F2937' : '#E5E7EB',
       borderRadius: 8,
       fontFamily: 'Inter, system-ui, sans-serif',
     },
     components: {
-      Table: { headerBg: isDark ? '#1C2027' : '#F6F7F9' },
+      Table: {
+        headerBg: isDark ? '#0F172A' : '#F3F4F6',
+      },
+      Menu: {
+        itemBg: isDark ? '#141A22' : '#FFFFFF',
+        itemSelectedBg: isDark ? '#1F2937' : '#E5E7EB',
+        itemColor: isDark ? '#E5E7EB' : '#111827',
+        itemSelectedColor: isDark ? '#F9FAFB' : '#111827',
+      },
     },
   }
 }

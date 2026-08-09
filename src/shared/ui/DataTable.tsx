@@ -28,8 +28,10 @@ export function DataTable<RecordType extends object>({
   error,
   ...tableProps
 }: DataTableProps<RecordType>) {
+  const tableClassName = `${styles.dataTable} ${tableProps.className ?? ''}`.trim()
+
   return (
-    <div className={styles.dataTable}>
+    <div className={tableClassName}>
       {toolbar ? <div className={styles.dataTableToolbar}>{toolbar}</div> : null}
       {error ?? (
         <Table

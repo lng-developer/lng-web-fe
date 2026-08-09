@@ -1,6 +1,127 @@
+.sectionCard {
+  border: 1px solid color-mix(in srgb, var(--ant-color-border) 72%, var(--ui-border-soft));
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ant-color-border) 14%, transparent);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.sectionCard:hover {
+  border-color: var(--ui-border-accent);
+  box-shadow: var(--ui-surface-elevate-shadow);
+  transform: translateY(-1px);
+}
+
 .selectedCard {
   border-color: var(--ant-color-primary);
   box-shadow: 0 0 0 1px var(--ant-color-primary);
+}
+
+/* ── MetricCard component styles ─────────────────────── */
+.metricCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+  transition: all 0.2s ease;
+  cursor: default;
+
+  &:hover {
+    border-color: var(--ant-color-border);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.metricCardClickable {
+  cursor: pointer;
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.metricIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.metricIconPrimary,
+.metricIconReady,
+.metricIconInfo {
+  background: #e6f4ff;
+  color: #1677ff;
+}
+
+.metricIconSuccess,
+.metricIconConfirmed {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.metricIconWarning,
+.metricIconAmbiguous {
+  background: #fffbe6;
+  color: #faad14;
+}
+
+.metricIconDanger,
+.metricIconBlocked {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.metricIconNeutral {
+  background: var(--ant-color-fill-tertiary);
+  color: var(--ant-color-text-secondary);
+}
+
+.metricBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.metricValueRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.metricValue {
+  font-size: clamp(14px, 1.8vw, 19px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ant-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.metricLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ant-color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .uiTabs :global(.ant-tabs-nav) {
@@ -8,7 +129,7 @@
   padding: 4px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 10px;
-  background: var(--ant-color-bg-container);
+  background: var(--ant-color-fill-quaternary);
 }
 
 .uiTabs :global(.ant-tabs-nav::before) {
@@ -16,15 +137,13 @@
 }
 
 .uiTabs :global(.ant-tabs-tab) {
-  padding: 10px 16px;
-  border-radius: 7px;
+  padding: 6px 16px;
+  border-radius: 8px;
   color: var(--ant-color-text-secondary);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 20px;
-  transition:
-    background 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
+  transition: all 0.2s ease;
+  background: transparent;
 }
 
 .uiTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
@@ -32,7 +151,6 @@
 }
 
 .uiTabs :global(.ant-tabs-tab:hover) {
-  background: var(--ant-color-fill-tertiary);
   color: var(--ant-color-text);
 }
 
@@ -41,7 +159,10 @@
 }
 
 .uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
-  background: var(--ant-color-primary-bg);
+  background: var(--ant-color-bg-container) !important;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
@@ -50,8 +171,39 @@
 }
 
 .uiTabs :global(.ant-tabs-ink-bar) {
-  height: 2px;
-  border-radius: 2px 2px 0 0;
+  display: none !important;
+}
+
+.tabLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tabLabelBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--ant-color-fill-secondary);
+  color: var(--ant-color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tabLabelBadgeActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--ant-color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -143,11 +295,54 @@
   text-decoration: underline;
 }
 
+.dataTable {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
 .dataTableToolbar {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filterBar {
+  width: 100%;
+}
+
+.filterBarContent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.filterBarContent :global(.ant-input-affix-wrapper),
+.filterBarContent :global(.ant-input-search) {
+  width: 240px;
+  max-width: 240px;
+  min-width: 180px;
+}
+
+.filterBarActions {
+  margin-left: auto;
+}
+
+@media (max-width: 960px) {
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filterBarActions {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 .dataTable :global(.ant-table-thead > tr > th) {
@@ -159,8 +354,17 @@
 
 .dataTable :global(.ant-table-container) {
   overflow: hidden;
-  border: 1px solid var(--ant-color-border);
+  border: 1px solid color-mix(in srgb, var(--ant-color-border) 82%, var(--ui-border-soft));
   border-radius: 10px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ant-color-border) 16%, transparent);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.dataTable:hover :global(.ant-table-container) {
+  border-color: var(--ui-border-accent);
+  box-shadow: var(--ui-surface-elevate-shadow);
 }
 
 .dataTable :global(.ant-table-thead > tr > th:not(:last-child)),

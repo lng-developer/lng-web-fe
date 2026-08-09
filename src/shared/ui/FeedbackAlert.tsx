@@ -1,10 +1,15 @@
 import type { ReactNode } from 'react'
-import { CheckCircleOutlined, ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons'
+import {
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  WarningOutlined,
+} from '@ant-design/icons'
 
 import styles from './sharedUi.module.scss'
 
 export interface FeedbackAlertProps {
-  readonly type: 'success' | 'warning' | 'error'
+  readonly type: 'success' | 'warning' | 'error' | 'info'
   readonly title: string
   readonly description?: string
   readonly action?: ReactNode
@@ -16,7 +21,9 @@ export function FeedbackAlert({ type, title, description, action }: FeedbackAler
       ? CheckCircleOutlined
       : type === 'warning'
         ? WarningOutlined
-        : ExclamationCircleOutlined
+        : type === 'info'
+          ? InfoCircleOutlined
+          : ExclamationCircleOutlined
 
   return (
     <div className={`${styles.feedbackAlert} ${styles[type]}`} role="alert">

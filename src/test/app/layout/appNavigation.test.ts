@@ -44,6 +44,7 @@ describe('app navigation', () => {
   it('shows the audit log only to audit readers', () => {
     expect(getContextNavigation('system', account(['AUDIT:READ']))[0]?.items).toEqual([
       { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' },
+      { key: 'monitoring', path: '/auth/monitoring', labelKey: 'shell.navigation.monitoring' },
     ])
     expect(getContextNavigation('system', account(['AUTH:READ']))[0]?.items).not.toContainEqual(
       expect.objectContaining({ key: 'audit-log' }),

@@ -1,22 +1,32 @@
 .filters {
-  display: grid !important;
-  flex: 1;
-  grid-template-columns:
-    minmax(220px, 2fr)
-    minmax(170px, 1fr)
-    minmax(210px, 1.4fr)
-    minmax(130px, 0.8fr)
-    minmax(120px, 0.7fr)
-    minmax(280px, 1.6fr);
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
   width: 100%;
 }
 
-.filters > * {
-  width: 100%;
+.filters > :global(.ant-input-affix-wrapper),
+.filters > :global(.ant-space) {
+  flex: 1 1 170px;
+  max-width: 220px;
+  min-width: 140px;
 }
 
-@media (max-width: 1400px) {
-  .filters {
-    grid-template-columns: repeat(3, minmax(200px, 1fr));
+.filters > :global(.ant-select) {
+  flex: 0 1 140px;
+  min-width: 120px;
+}
+
+.filters > :global(.ant-picker-range) {
+  flex: 1 1 240px;
+  max-width: 280px;
+  min-width: 220px;
+}
+
+@media (max-width: 768px) {
+  .filters > * {
+    max-width: none !important;
+    width: 100% !important;
   }
 }

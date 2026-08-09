@@ -156,6 +156,13 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           permissions.has('AUDIT:READ')
             ? { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' }
             : null,
+          permissions.has('AUDIT:READ')
+            ? {
+                key: 'monitoring',
+                path: '/auth/monitoring',
+                labelKey: 'shell.navigation.monitoring',
+              }
+            : null,
         ].filter((item): item is NavigationItem => item !== null),
       },
     ]
@@ -209,17 +216,17 @@ export function getCoreForPath(pathname: string): AppCoreKey | undefined {
 
 export function getDefaultWorkspacePath(account: CurrentAccount) {
   const core = getAvailableCores(account)[0]?.key
-  if (!core) return '/foundation'
+  if (!core) return '/operations-dashboard'
   const groups = getContextNavigation(core, account)
   if (core === 'hr') {
     const priority = ['operations', 'payroll', 'team', 'personal']
     return (
       priority
         .map((key) => groups.find((group) => group.key === key)?.items[0]?.path)
-        .find(Boolean) ?? '/foundation'
+        .find(Boolean) ?? '/operations-dashboard'
     )
   }
-  return groups[0]?.items[0]?.path ?? '/foundation'
+  return groups[0]?.items[0]?.path ?? '/operations-dashboard'
 }
 
 export function getNavigationGroupForItem(groups: NavigationGroup[], itemKey?: string) {

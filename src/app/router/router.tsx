@@ -7,7 +7,7 @@ import {
   requireWorkspace,
 } from '@/features/auth/guards/accountSetupGuards'
 import { LoginPage } from '@/features/auth/login/pages/LoginPage'
-import { FoundationPage } from '@/features/foundation/FoundationPage'
+import { OperationsDashboardPage } from '@/features/foundation/OperationsDashboardPage'
 import { LegacyMappingRedirect } from '@/features/portal/mapping/pages/LegacyMappingRedirect'
 
 import { NotFoundPage } from './NotFoundPage'
@@ -16,6 +16,7 @@ import { WorkspaceIndexRedirect } from './WorkspaceIndexRedirect'
 
 export const appRoutes: RouteObject[] = [
   { path: 'login', element: <LoginPage /> },
+  { path: '500', element: <RouteErrorPage /> },
   {
     path: 'setup/password',
     loader: requirePasswordSetup,
@@ -46,6 +47,13 @@ export const appRoutes: RouteObject[] = [
           import('@/features/audit/pages/AuditLogPage').then(({ AuditLogPage }) => ({
             Component: AuditLogPage,
           })),
+      },
+      {
+        path: 'auth/monitoring',
+        lazy: () =>
+          import('@/features/monitoring/pages/MonitoringDashboardPage').then(
+            ({ MonitoringDashboardPage }) => ({ Component: MonitoringDashboardPage }),
+          ),
       },
       {
         path: 'auth/accounts',
@@ -83,6 +91,11 @@ export const appRoutes: RouteObject[] = [
           ),
       },
       { path: 'auth/roles', element: <Navigate to="/auth/access-control?tab=roles" replace /> },
+      {
+        path: 'auth/permissions',
+        element: <Navigate to="/auth/access-control?tab=permissions" replace />,
+      },
+      { path: 'auth/scopes', element: <Navigate to="/auth/access-control?tab=scopes" replace /> },
       { path: 'auth/access', element: <Navigate to="/auth/accounts" replace /> },
       {
         path: 'auth/access/:accountId',
@@ -202,6 +215,20 @@ export const appRoutes: RouteObject[] = [
               </PortalPageBoundary>
             ),
           })),
+      },
+      {
+        path: 'portal/audit',
+        lazy: () =>
+          import('@/features/audit/pages/AuditLogPage').then(({ AuditLogPage }) => ({
+            Component: AuditLogPage,
+          })),
+      },
+      {
+        path: 'portal/monitoring',
+        lazy: () =>
+          import('@/features/monitoring/pages/MonitoringDashboardPage').then(
+            ({ MonitoringDashboardPage }) => ({ Component: MonitoringDashboardPage }),
+          ),
       },
       {
         path: 'portal/mapping',
@@ -359,7 +386,8 @@ export const appRoutes: RouteObject[] = [
             ),
           })),
       },
-      { path: 'foundation', element: <FoundationPage /> },
+      { path: 'operations-dashboard', element: <OperationsDashboardPage /> },
+      { path: 'foundation', element: <Navigate to="/operations-dashboard" replace /> },
     ],
   },
   {

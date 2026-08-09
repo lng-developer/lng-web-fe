@@ -27,6 +27,8 @@ import {
 } from '@ant-design/icons'
 import { Layout, Menu, type MenuProps, Typography } from 'antd'
 
+import { useThemePreference } from '@/shared/theme/themeContext'
+
 import {
   getNavigationGroupForItem,
   type NavigationGroup,
@@ -39,27 +41,61 @@ export function AppSidebar({
   groups,
   selectedKey,
   collapsed,
+  navigationSearch,
 }: {
   coreLabel: string
   groups: NavigationGroup[]
   selectedKey?: string
   collapsed: boolean
   onCollapsedChange?: (collapsed: boolean) => void
+  navigationSearch: string
 }) {
   const { t } = useTranslation()
+  const { resolved } = useThemePreference()
+  const searchTerm = navigationSearch
   const activeGroup = getNavigationGroupForItem(groups, selectedKey)
   const [openState, setOpenState] = useState({
     selectedKey,
     key: activeGroup ? `group:${activeGroup}` : undefined,
   })
-  const openKey =
-    openState.selectedKey === selectedKey
-      ? openState.key
-      : activeGroup
-        ? `group:${activeGroup}`
-        : undefined
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+  const visibleGroups = searchTerm
+    ? groups
+        .map((group) => {
+          const label = t(group.labelKey).toLowerCase()
+          const filteredItems = group.items.filter((item) =>
+            t(item.labelKey).toLowerCase().includes(normalizedSearch),
+          )
+          if (label.includes(normalizedSearch) || filteredItems.length) {
+            return {
+              ...group,
+              items: filteredItems.length
+                ? filteredItems
+                : label.includes(normalizedSearch)
+                  ? group.items
+                  : [],
+            }
+          }
+          return undefined
+        })
+        .filter((group): group is NavigationGroup => Boolean(group))
+        .filter((group) => group.items.length)
+    : groups
 
-  const items: MenuProps['items'] = groups.map((group) => ({
+  const openKeys =
+    searchTerm && visibleGroups.length
+      ? visibleGroups.map((group) => `group:${group.key}`)
+      : openState.selectedKey === selectedKey
+        ? openState.key
+          ? [openState.key]
+          : activeGroup && visibleGroups.some(({ key }) => key === activeGroup)
+            ? [`group:${activeGroup}`]
+            : []
+        : activeGroup && visibleGroups.some(({ key }) => key === activeGroup)
+          ? [`group:${activeGroup}`]
+          : []
+
+  const items: MenuProps['items'] = visibleGroups.map((group) => ({
     key: `group:${group.key}`,
     icon: iconForGroup(group.key),
     label: t(group.labelKey),
@@ -78,9 +114,9 @@ export function AppSidebar({
     <Layout.Sider
       className={styles.sidebar}
       width={220}
-      collapsedWidth={0}
+      collapsedWidth={68}
       collapsed={collapsed}
-      theme="light"
+      theme={resolved}
     >
       <div className={styles.contextTitle}>
         <Typography.Text strong>{coreLabel}</Typography.Text>
@@ -88,7 +124,9 @@ export function AppSidebar({
       <nav aria-label={t('shell.navigation.primary')} className={styles.navigation}>
         <Menu
           mode="inline"
-          openKeys={openKey ? [openKey] : []}
+          inlineCollapsed={collapsed}
+          triggerSubMenuAction="hover"
+          openKeys={collapsed ? undefined : openKeys}
           selectedKeys={selectedKey ? [selectedKey] : []}
           items={items}
           onOpenChange={(keys) => setOpenState({ selectedKey, key: keys.at(-1) })}

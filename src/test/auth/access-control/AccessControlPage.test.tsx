@@ -43,7 +43,7 @@ describe('AccessControlPage', () => {
     vi.clearAllMocks()
   })
 
-  it('manages role permissions and scope registry without switching tabs', async () => {
+  it('manages role permissions and scope registry across tabs', async () => {
     await i18n.changeLanguage('en')
     setPermissions(['AUTH:WRITE'])
     vi.mocked(loadRoleCatalog).mockResolvedValue({
@@ -83,12 +83,11 @@ describe('AccessControlPage', () => {
     renderPage()
 
     expect(await screen.findByText('Administrator')).toBeVisible()
+    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    fireEvent.click(screen.getByRole('tab', { name: /scope registry.*1/i }))
     expect(screen.getByText('Operations')).toBeVisible()
+    fireEvent.click(screen.getByRole('tab', { name: /roles.*2/i }))
     expect(screen.getByText(/full access.*automatic|toàn quyền.*tự động/i)).toBeVisible()
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /manage roles|quản lý vai trò/i }),
-    ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /administrator/i }))
     fireEvent.click(screen.getByRole('checkbox', { name: /manage access/i }))
@@ -122,7 +121,7 @@ describe('AccessControlPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /create role|tạo vai trò/i }))
     expect(screen.getByRole('dialog')).toHaveTextContent(/create role|tạo vai trò/i)
-    expect(screen.getByRole('dialog')).toHaveStyle({ width: '820px' })
+    expect(screen.getByRole('dialog')).toHaveStyle({ width: '720px' })
     expect(screen.getByRole('checkbox', { name: /read access/i })).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: /role catalog|danh mục vai trò/i }),

@@ -317,6 +317,7 @@
     "description": "Theo dõi item nhập vào, sửa quy tắc ánh xạ và chuẩn bị phương án fulfillment.",
     "pages": {
       "workbench": "Bàn xử lý ánh xạ",
+      "workbenchDesc": "Kiểm tra item đang bị chặn, xem luồng ánh xạ và thực hiện bước sửa tiếp theo.",
       "skuRules": "Quy tắc chuẩn hóa SKU",
       "skuRulesDescription": "Chuẩn hóa các phần của SKU trước khi xác định sản phẩm.",
       "productMapping": "Ánh xạ sản phẩm",
@@ -366,7 +367,9 @@
       "acknowledge": "Xác nhận phạm vi giao nhau",
       "retry": "Thử lại",
       "findCandidate": "Tìm vendor candidate",
-      "applyCandidate": "Áp dụng candidate"
+      "applyCandidate": "Áp dụng candidate",
+      "edit": "Chỉnh sửa",
+      "openRuleTab": "Mở tab quy tắc"
     },
     "sections": {
       "rules": "Quy tắc",
@@ -376,7 +379,9 @@
       "history": "Lịch sử quy tắc",
       "candidates": "Candidate",
       "normalizedInputs": "Dữ liệu đã chuẩn hóa",
-      "ruleEditor": "Sửa quy tắc"
+      "ruleEditor": "Sửa quy tắc",
+      "ruleFields": "Trường quy tắc",
+      "ruleMetadata": "Thông tin quy tắc"
     },
     "filters": {
       "vendorProduct": "Sản phẩm vendor",
@@ -416,6 +421,7 @@
       "normalizedColor": "Màu chuẩn hóa",
       "priority": "Độ ưu tiên",
       "status": "Trạng thái",
+      "sampleSku": "SKU mẫu",
       "updatedAt": "Cập nhật",
       "actions": "Thao tác"
     },
@@ -428,7 +434,19 @@
       "noRules": "Không có quy tắc phù hợp context này",
       "noQueue": "Không có item chưa ánh xạ",
       "selectContext": "Chọn một item hoặc nhập context để xem luồng xử lý",
-      "sampled": "Đây là dữ liệu mẫu, không phải tổng chính xác."
+      "sampled": "Đây là dữ liệu mẫu, không phải tổng chính xác.",
+      "noCandidates": "Không có candidate phù hợp"
+    },
+    "age": {
+      "today": "Hôm nay",
+      "over24h": "Quá 24 giờ",
+      "over3d": "Quá 3 ngày"
+    },
+    "summary": {
+      "blocked": "Mẫu đang bị chặn",
+      "ready": "Phương án sẵn sàng",
+      "confirmed": "Phương án đã xác nhận",
+      "ambiguous": "Cấu hình chưa rõ ràng"
     },
     "feedback": {
       "ruleSaved": "Đã lưu quy tắc ánh xạ",
@@ -502,6 +520,18 @@
       "apply": "Áp dụng"
     },
     "card": { "title": "Quản lý vận chuyển", "description": "Phiên hoạt động: 4 giờ 12 phút" },
+    "scope": {
+      "staff": "Nhan vien",
+      "leader": "Truong nhom",
+      "manager": "Quan ly",
+      "admin": "Quan tri vien"
+    },
+    "scopeDescription": {
+      "staff": "Ban chi xem du lieu nhan su cua chinh minh va pham vi cong viec cua minh.",
+      "leader": "Ban xem tong quan doi nhom va phe duyet yeu cau cua nhom.",
+      "manager": "Ban xem toan bo tong quan van hanh theo phong ban, HR va chi so van hanh.",
+      "admin": "Ban co the xem toan bo dashboard van hanh cho tat ca cac pham vi."
+    },
     "summary": {
       "totalAssets": "Tổng tài sản",
       "alerts": "Cảnh báo 24 giờ",
@@ -533,7 +563,12 @@
       "orders": "Mở đơn hàng",
       "create": "Tạo đơn hàng"
     },
-    "chart": { "ariaLabel": "Số lượng đơn hàng theo ngày" },
+    "chart": {
+      "ariaLabel": "Số lượng đơn hàng theo ngày",
+      "orders": "Biểu đồ tròn trạng thái đơn hàng",
+      "mapping": "Biểu đồ tròn tổng quan mapping",
+      "design": "Biểu đồ tròn trạng thái thiết kế"
+    },
     "drawer": { "title": "Chi tiết đơn hàng", "reference": "Mã đơn hàng" },
     "feedback": {
       "success": "Đã cập nhật vai trò",
@@ -890,6 +925,7 @@
       "updated": "Đã cập nhật yêu cầu",
       "payrollStarted": "Đã bắt đầu chạy bảng lương",
       "payrollUpdated": "Đã cập nhật bảng lương",
+      "payrollSettingsSaved": "Đã lưu cấu hình bảng lương",
       "adjustmentSaved": "Đã lưu điều chỉnh",
       "announcementPublished": "Đã đăng thông báo",
       "announcementDeleted": "Đã xoá thông báo"
@@ -947,6 +983,8 @@
       "title": "Nghỉ phép & làm thêm",
       "requestLeave": "Xin nghỉ phép",
       "requestOvertime": "Đăng ký OT",
+      "detail": "Chi tiết yêu cầu",
+      "minutes": "phút",
       "remainingLeave": "Phép còn lại",
       "pendingLeave": "Đơn nghỉ chờ duyệt",
       "pendingOvertime": "OT chờ duyệt",
@@ -963,6 +1001,7 @@
       "title": "Bảng lương",
       "export": "Xuất CSV",
       "addAdjustment": "Thêm điều chỉnh",
+      "addBulkAdjustment": "Thêm điều chỉnh hàng loạt",
       "run": "Chạy bảng lương",
       "employees": "Nhân viên",
       "gross": "Tổng gross",
@@ -978,12 +1017,67 @@
       "myPayroll": "Phiếu lương của tôi",
       "workdays": "Ngày công",
       "baseSalary": "Lương cơ bản",
+      "employeeCode": "Mã nhân viên",
+      "department": "Phòng ban",
+      "jobTitle": "Chức danh",
       "adjustments": "Điều chỉnh",
       "amount": "Số tiền",
       "mode": "Chế độ",
       "live": "Chạy thật",
       "shadow": "Shadow kiểm tra",
-      "confirm": "Xác nhận"
+      "confirm": "Xác nhận",
+      "settings": "Cấu hình bảng lương",
+      "company": "Thông tin công ty",
+      "companyName": "Tên công ty",
+      "logoUrl": "URL logo",
+      "companyAddress": "Địa chỉ công ty",
+      "taxCode": "Mã số thuế",
+      "payrollEmail": "Email bảng lương",
+      "payrollPhone": "Điện thoại bảng lương",
+      "currency": "Tiền tệ",
+      "calculationSettings": "Cấu hình tính lương",
+      "workHoursPerDay": "Giờ làm mỗi ngày",
+      "probationRate": "Tỷ lệ thử việc (điểm cơ bản)",
+      "insuranceCap": "Trần lương đóng bảo hiểm",
+      "personalDeduction": "Giảm trừ bản thân",
+      "dependantDeduction": "Giảm trừ người phụ thuộc",
+      "adjustmentTypes": "Loại điều chỉnh",
+      "adjustmentCodes": "Mã điều chỉnh",
+      "myTitle": "Phiếu lương của tôi",
+      "myDescription": "Chi tiết nhân viên, công ty, các khoản nhận, khấu trừ và thực lĩnh theo tháng.",
+      "emptyPayslip": "Chưa có phiếu lương cho kỳ {{period}}.",
+      "payslip": "Phiếu lương",
+      "employmentType": "Loại hình làm việc",
+      "startDate": "Ngày bắt đầu",
+      "earnings": "Các khoản nhận",
+      "salaryFromWork": "Lương theo ngày công",
+      "overtime": "Tiền tăng ca",
+      "approvedMinutes": "{{count}} phút đã duyệt",
+      "allowances": "Tổng phụ cấp",
+      "adjustmentEarnings": "Khoản nhận khác",
+      "deductionBreakdown": "Các khoản khấu trừ",
+      "personalIncomeTax": "Thuế thu nhập cá nhân",
+      "adjustmentDeductions": "Khoản trừ khác",
+      "netPayable": "Thực lĩnh",
+      "allowance": {
+        "lunch": "Phụ cấp ăn trưa",
+        "fuel": "Phụ cấp xăng xe",
+        "other": "Phụ cấp khác",
+        "responsibility": "Phụ cấp trách nhiệm"
+      },
+      "insurance": {
+        "social": "Bảo hiểm xã hội",
+        "health": "Bảo hiểm y tế",
+        "unemployment": "Bảo hiểm thất nghiệp"
+      },
+      "otRate": {
+        "weekday": "OT ngày thường",
+        "weekend": "OT cuối tuần",
+        "holiday": "OT ngày lễ",
+        "weekday_night": "OT đêm ngày thường",
+        "weekend_night": "OT đêm cuối tuần",
+        "holiday_night": "OT đêm ngày lễ"
+      }
     },
     "overview": {
       "title": "Tổng quan",
@@ -996,14 +1090,27 @@
       "onLeave": "Nghỉ phép",
       "absent": "Vắng mặt",
       "approvedOt": "OT đã duyệt hôm nay",
+      "attendanceTrend": "Xu hướng chấm công",
+      "days_one": "{{count}} ngày",
+      "days_other": "{{count}} ngày",
       "announcements": "Thông báo nội bộ",
       "createAnnouncement": "Tạo thông báo",
+      "editAnnouncement": "Sửa thông báo",
       "announcementTitle": "Tiêu đề",
       "content": "Nội dung",
       "category": "Danh mục",
       "priority": "Ưu tiên",
       "companyWide": "Gửi toàn công ty",
-      "publish": "Đăng"
+      "publish": "Lưu thông báo",
+      "targetDepartments": "Phòng ban nhận",
+      "targetEmployees": "Nhân viên nhận",
+      "pinned": "Ghim thông báo",
+      "scheduledAt": "Thời điểm đăng",
+      "remindAt": "Thời điểm nhắc",
+      "eventStart": "Bắt đầu sự kiện",
+      "eventEnd": "Kết thúc sự kiện",
+      "mandatory": "Sự kiện bắt buộc",
+      "attachmentIds": "ID media đính kèm"
     },
     "self": {
       "title": "Công việc của tôi",
@@ -1828,7 +1935,62 @@
       "confirmRefresh": "Làm mới thông tin xác thực dịch vụ ngay?",
       "refresh": "Làm mới thông tin xác thực",
       "refreshed": "Đã làm mới thông tin xác thực dịch vụ",
-      "status": { "ACTIVE": "Hoạt động", "INACTIVE": "Không hoạt động" }
+      "discard": "Bỏ thay đổi",
+      "costCenters": "Trung tâm chi phí",
+      "costCenterActions": "Thao tác trung tâm chi phí",
+      "importProducts": "Nhập sản phẩm",
+      "importCostCenters": "Nhập trung tâm chi phí",
+      "manageCostCenters": "Quản lý trung tâm chi phí",
+      "productCostCenters": "Trung tâm chi phí của sản phẩm",
+      "productsTabActions": "Thao tác sản phẩm",
+      "vendorsTabActions": "Thao tác nhà cung cấp",
+      "sectionIdentity": "Thông tin định danh",
+      "sectionFulfillment": "Hoàn tất đơn hàng",
+      "sectionStatus": "Trạng thái",
+      "sectionConnection": "Kết nối",
+      "sectionAuth": "Xác thực",
+      "sla": "Thời gian sản xuất",
+      "vendor": "Nhà cung cấp",
+      "tabs": { "vendors": "Nhà cung cấp", "products": "Sản phẩm" },
+      "filters": { "label": "Bộ lọc", "status": "Trạng thái", "vendor": "Nhà cung cấp" },
+      "metrics": {
+        "total": "Tổng nhà cung cấp",
+        "active": "Nhà cung cấp hoạt động",
+        "integrated": "Đã tích hợp API",
+        "types": "Loại hoàn tất đơn"
+      },
+      "import": {
+        "description": "Nhập dữ liệu nhà cung cấp từ tệp CSV.",
+        "chooseFile": "Chọn tệp CSV",
+        "downloadTemplate": "Tải tệp mẫu",
+        "submit": "Nhập dữ liệu",
+        "importing": "Đang nhập...",
+        "previewTitle": "Xem trước dữ liệu nhập",
+        "previewEmpty": "Chọn tệp CSV hợp lệ để xem trước dữ liệu.",
+        "summary": "Đã tạo {{created}}/{{total}} bản ghi; {{failed}} thất bại.",
+        "result": "Đã nhập {{created}}/{{total}} bản ghi; {{failed}} thất bại.",
+        "productTip": "Dùng tệp mẫu sản phẩm và cung cấp nhóm loại sản phẩm hợp lệ.",
+        "costCenterTip": "Dùng tệp mẫu trung tâm chi phí và mã sản phẩm hợp lệ.",
+        "fileRequired": "Hãy chọn một tệp CSV.",
+        "fileTooLarge": "Tệp CSV quá lớn.",
+        "fileType": "Chỉ hỗ trợ tệp CSV.",
+        "invalidCsv": "Tệp CSV không có dòng dữ liệu hợp lệ.",
+        "invalidStatus": "Trạng thái phải là ACTIVE hoặc INACTIVE.",
+        "requiredMissing": "Mã và tên là bắt buộc.",
+        "productTypeGroupMissing": "Không tìm thấy nhóm loại sản phẩm.",
+        "numberInvalid": "{{field}} phải là số không âm.",
+        "needProductTypeGroups": "Không thể tải danh sách nhóm loại sản phẩm.",
+        "notReady": "Chức năng nhập chưa sẵn sàng.",
+        "createFailed": "Không thể tạo các bản ghi được nhập.",
+        "failed": "Nhập dữ liệu nhà cung cấp thất bại.",
+        "rowError": "Dòng {{row}}: {{reason}}"
+      },
+      "status": {
+        "ACTIVE": "Hoạt động",
+        "INACTIVE": "Không hoạt động",
+        "CONNECTED": "Đã kết nối",
+        "DISCONNECTED": "Mất kết nối"
+      }
     }
   },
   "organization": {
@@ -1938,6 +2100,7 @@
       "image": "Ảnh",
       "quantity": "Số lượng",
       "customerPaid": "Khách đã trả",
+      "totalCost": "Tổng chi phí",
       "vendor": "Vendor",
       "product": "Sản phẩm",
       "costCenter": "Cost center",
@@ -2016,7 +2179,8 @@
       "shipping": "Vận chuyển",
       "shop": "Shop",
       "cost": "Giá gốc",
-      "handling": "Xử lý",
+      "totalCost": "Tổng chi phí",
+      "handling": "SLA",
       "case": "Case"
     },
     "tabs": {
@@ -2079,10 +2243,19 @@
     "updateFailed": "Không thể cập nhật thông báo"
   },
   "errors": {
-    "unexpected": "Đã xảy ra lỗi không mong muốn.",
-    "requestId": "Mã yêu cầu",
-    "goBack": "Quay lại",
-    "tryAgain": "Thử lại"
+    "unexpected": "Da xay ra loi khong mong muon.",
+    "serverTitle": "Anh em đợi tôi :))",
+    "technicalHint": "Hay thu lai, neu loi van con hay quay ve dashboard.",
+    "requestId": "Ma yeu cau",
+    "goBack": "Quay lai",
+    "tryAgain": "Thu lai",
+    "serverImageAlt": "Hinh minh hoa loi may chu"
   },
-  "notFound": { "title": "Không tìm thấy trang", "backHome": "Về trang chính" }
+  "notFound": {
+    "title": "Tính năng đang phát triển",
+    "subtitle": "Trang ban tim khong ton tai hoac da di chuyen.",
+    "hint": "Quay ve trang chinh hoac kiem tra lai URL roi thu tiep.",
+    "backHome": "Ve trang chinh",
+    "illustrationAlt": "Hinh minh hoa trang khong tim thay"
+  }
 }

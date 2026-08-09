@@ -30,10 +30,10 @@ describe('AppShell', () => {
           }),
           HydrateFallback: () => null,
           element: <AppShell />,
-          children: [{ path: 'foundation', element: <h1>Foundation test page</h1> }],
+          children: [{ path: 'operations-dashboard', element: <h1>Foundation test page</h1> }],
         },
       ],
-      { initialEntries: ['/foundation'] },
+      { initialEntries: ['/operations-dashboard'] },
     )
 
     render(

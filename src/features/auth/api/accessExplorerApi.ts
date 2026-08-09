@@ -13,7 +13,14 @@ type ApiResponse<T> = {
 }
 
 export type AccessExplorerSnapshot = {
-  accounts: AccessList<{ id: string; email: string; status?: string; roles?: string[] }>
+  accounts: AccessList<{
+    id: string
+    email: string
+    status?: string
+    roles?: string[]
+    lastLoginAt?: string | null
+    lastLoginIp?: string | null
+  }>
   account: {
     account: { id: string; email: string; status?: string; roles?: string[] }
     access?: { customPermissionIds?: string[]; roleIds?: string[] }

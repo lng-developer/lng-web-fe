@@ -24,7 +24,7 @@ import {
 import styles from './ScopesPage.module.scss'
 
 type Scope = Awaited<ReturnType<typeof loadScopes>>['items'][number]
-const scopeTypes: ScopeInput['scopeType'][] = ['DEPARTMENT', 'TEAM', 'SHOP', 'VENDOR']
+const scopeTypes: ScopeInput['scopeType'][] = ['department', 'team', 'shop', 'vendor']
 
 export function ScopesPage() {
   const { t } = useTranslation()
@@ -66,9 +66,10 @@ export function ScopesPage() {
     { title: t('auth.scopes.scopeId'), dataIndex: 'scopeId' },
     {
       title: t('auth.accessExplorer.status'),
-      render: (_, scope) => (
-        <Tag color={scope.status === 'ACTIVE' ? 'green' : undefined}>{scope.status}</Tag>
-      ),
+      render: (_, scope) => {
+        const scopeStatus = String(scope.status).toLowerCase()
+        return <Tag color={scopeStatus === 'active' ? 'green' : undefined}>{scope.status}</Tag>
+      },
     },
     {
       title: t('auth.accessEditor.actions'),
@@ -78,7 +79,7 @@ export function ScopesPage() {
           <Button type="link" icon={<EditOutlined aria-hidden />} onClick={() => openEditor(scope)}>
             {t('auth.accessEditor.edit')}
           </Button>
-          {scope.status === 'ACTIVE' && (
+          {String(scope.status).toLowerCase() === 'active' && (
             <Button
               danger
               type="link"
@@ -98,8 +99,12 @@ export function ScopesPage() {
     setIsEditorOpen(true)
     form.setFieldsValue(
       scope
-        ? { name: scope.name, scopeId: scope.scopeId, scopeType: scope.scopeType }
-        : { name: '', scopeId: '', scopeType: 'DEPARTMENT' },
+        ? {
+            name: scope.name,
+            scopeId: scope.scopeId,
+            scopeType: scope.scopeType.toLowerCase() as ScopeInput['scopeType'],
+          }
+        : { name: '', scopeId: '', scopeType: 'department' },
     )
   }
 

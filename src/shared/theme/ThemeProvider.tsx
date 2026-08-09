@@ -39,10 +39,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     () => ({ appearance, resolved, setAppearance }),
     [appearance, resolved],
   )
+  const appTheme = useMemo(() => createAppTheme(resolved), [resolved])
 
   return (
     <ThemePreferenceContext value={preference}>
-      <ConfigProvider modal={{ centered: true }} theme={createAppTheme(resolved)}>
+      <ConfigProvider modal={{ centered: true }} theme={appTheme}>
         {children}
       </ConfigProvider>
     </ThemePreferenceContext>

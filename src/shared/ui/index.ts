@@ -15,8 +15,10 @@ export {
   type DateTimePickerMode,
   type DateTimePickerProps,
   MonthPicker,
+  YearPicker,
 } from './DateTimePicker'
 export { DetailDrawer, type DetailDrawerProps } from './DetailDrawer'
+export { EmployeeAvatar, type EmployeeAvatarProps } from './EmployeeAvatar'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
 export { FeedbackAlert, type FeedbackAlertProps } from './FeedbackAlert'
 export { FileUpload, type FileUploadProps } from './FileUpload'
@@ -25,10 +27,23 @@ export { FormActions, type FormActionsProps } from './FormActions'
 export { LoadingState, type LoadingStateProps } from './LoadingState'
 export { MetricCard, type MetricCardProps } from './MetricCard'
 export { PageHeader, type PageHeaderProps } from './PageHeader'
+export {
+  PermissionCheckboxGroup,
+  type PermissionCheckboxGroupProps,
+  type PermissionCheckboxGroupSection,
+  type PermissionCheckboxOption,
+} from './PermissionCheckboxGroup'
 export { PermissionGate, type PermissionGateProps } from './PermissionGate'
+export {
+  getPopupAnchorFromMouseEvent,
+  PopupModal,
+  type PopupModalAnchor,
+  type PopupModalProps,
+} from './PopupModal'
 export { SearchInput, type SearchInputProps } from './SearchInput'
 export { SectionCard, type SectionCardProps } from './SectionCard'
 export { StatusTag, type StatusTagProps } from './StatusTag'
 export { TableFooter, type TableFooterProps } from './TableFooter'
+export { UiTabLabel } from './UiTabLabel'
 export { UiTabs, type UiTabsProps } from './UiTabs'
 export { useFeedbackToast } from './useFeedbackToast'

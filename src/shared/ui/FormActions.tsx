@@ -8,6 +8,8 @@ export interface FormActionsProps {
   readonly saving?: boolean
   readonly onCancel?: () => void
   readonly extra?: ReactNode
+  readonly form?: string
+  readonly onSubmit?: () => void
 }
 
 export function FormActions({
@@ -17,12 +19,21 @@ export function FormActions({
   saving = false,
   onCancel,
   extra,
+  form,
+  onSubmit,
 }: FormActionsProps) {
   return (
     <Space>
       {extra}
       <Button onClick={onCancel}>{cancelLabel}</Button>
-      <Button type="primary" htmlType="submit" disabled={!dirty} loading={saving}>
+      <Button
+        type="primary"
+        htmlType={onSubmit ? 'button' : 'submit'}
+        form={form}
+        disabled={!dirty}
+        loading={saving}
+        onClick={onSubmit}
+      >
         {submitLabel}
       </Button>
     </Space>
