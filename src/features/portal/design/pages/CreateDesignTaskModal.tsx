@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { UploadFile } from 'antd'
-import { Form, Input, Modal, Select, Upload } from 'antd'
+import { Form, Input, Modal, Select } from 'antd'
+
+import { FileUpload } from '@/shared/ui'
 
 import type { CreateDesignTaskInput } from '../api/designApi'
 
@@ -189,19 +191,13 @@ export function CreateDesignTaskModal({
           <Input.TextArea rows={2} />
         </Form.Item>
         <Form.Item label={t('portal.design.referenceFiles')}>
-          <Upload.Dragger
+          <FileUpload
             multiple
             fileList={referenceFiles}
-            beforeUpload={(file) => {
-              setReferenceFiles((current) => [...current, file])
-              return false
-            }}
-            onRemove={(file) =>
-              setReferenceFiles((current) => current.filter(({ uid }) => uid !== file.uid))
-            }
-          >
-            <p>{t('portal.design.dropFiles')}</p>
-          </Upload.Dragger>
+            title={t('portal.design.dropFiles')}
+            description={t('portal.design.referenceFiles')}
+            onChange={({ fileList }) => setReferenceFiles(fileList)}
+          />
         </Form.Item>
       </Form>
     </Modal>

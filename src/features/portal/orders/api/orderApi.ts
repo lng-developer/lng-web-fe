@@ -74,6 +74,7 @@ export type OrderCaseInput = Pick<OrderCase, 'caseType' | 'severity' | 'title'> 
 export type OrderWorkbenchItem = {
   item: {
     id: string
+    sourceSku: string | null
     sku: string | null
     asin: string | null
     title: string | null
@@ -118,7 +119,12 @@ export type OrderWorkbenchItem = {
       color: string | null
     } | null
   } | null
-  pricing: { customerPaidAmount: number; baseCostAmount: number | null; currency: string | null }
+  pricing: {
+    customerPaidAmount: number
+    baseCostAmount: number | null
+    totalCostAmount?: number | null
+    currency: string | null
+  }
   production: { status: string | null; scaleStatus: string | null; qcStatus: string | null } | null
   tracking: { trackingNumber?: string | null; status?: string | null } | null
   workflow: OrderWorkflow
@@ -135,9 +141,16 @@ export type OrderWorkbenchRow = {
     shippingService: ShippingService
     shippingAddress: ShippingAddress
     addressValidationStatus: string | null
-    pricing: { customerPaidAmount: number; baseCostAmount: number | null; currency: string | null }
+    pricing: {
+      customerPaidAmount: number
+      baseCostAmount: number | null
+      totalCostAmount?: number | null
+      currency: string | null
+    }
+    shipByDate?: string | null
     handlingLabel: string | null
     caseStatus: string | null
+    caseTitle?: string | null
     assignedStaffIds: string[]
   }
   items: OrderWorkbenchItem[]

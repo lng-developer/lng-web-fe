@@ -1,7 +1,15 @@
-import { useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
-import { EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import {
+  CheckCircleOutlined,
+  EditOutlined,
+  GlobalOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  ShopOutlined,
+  StopOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Empty, Select, Tooltip, Typography } from 'antd'
@@ -11,6 +19,7 @@ import {
   DataTable,
   FeedbackAlert,
   FilterBar,
+  MetricCard,
   PageHeader,
   SearchInput,
   SectionCard,
@@ -65,19 +74,32 @@ export function ShopWorkspacePage() {
   const showFeedbackToast = useFeedbackToast()
   const [editingShop, setEditingShop] = useState<Shop>()
   const [creating, setCreating] = useState(false)
-  const params = readParams(searchParams)
+  const [search, setSearch] = useState(() => searchParams.get('search') ?? '')
+  const deferredSearch = useDeferredValue(search)
+
+  const params = useMemo(() => {
+    const p = readParams(searchParams)
+    return { ...p, search: deferredSearch.trim().slice(0, 120) || undefined }
+  }, [searchParams, deferredSearch])
+
   const canCreate = account.permissions.includes('SHOPS:WRITE')
   const canWriteAnyShop =
     canCreate ||
     account.scopes.some(
       (scope) => scope.scopeType === 'shop' && scope.permissions.includes('SHOPS:WRITE'),
     )
+
   const shops = useQuery({
     queryKey: shopKeys.list(params),
     queryFn: () => listShops(params),
     retry: false,
   })
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: shopKeys.all })
+
+  const invalidate = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: shopKeys.all }),
+    [queryClient],
+  )
+
   const createMutation = useMutation({
     mutationFn: (input: CreateShopInput) => createShop(input),
     onSuccess: async () => {
@@ -87,6 +109,7 @@ export function ShopWorkspacePage() {
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+
   const statusMutation = useMutation({
     mutationFn: ({ shopId, status }: { shopId: string; status: ShopStatus }) =>
       updateShopStatus(shopId, status),
@@ -98,59 +121,97 @@ export function ShopWorkspacePage() {
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
-  const updateParams = (next: Record<string, string | undefined>) => {
-    const updated = new URLSearchParams(searchParams)
-    Object.entries(next).forEach(([key, value]) => {
-      if (value) updated.set(key, value)
-      else updated.delete(key)
-    })
-    setSearchParams(updated)
-  }
+  const updateParams = useCallback(
+    (next: Record<string, string | undefined>) => {
+      const updated = new URLSearchParams(searchParams)
+      Object.entries(next).forEach(([key, value]) => {
+        if (value) updated.set(key, value)
+        else updated.delete(key)
+      })
+      setSearchParams(updated)
+    },
+    [searchParams, setSearchParams],
+  )
 
-  const columns: TableColumnsType<Shop> = [
-    { title: t('portal.shops.name'), dataIndex: 'name' },
-    {
-      title: t('portal.shops.id'),
-      dataIndex: 'id',
-      width: 250,
-      render: (id: string) => <Typography.Text copyable={{ text: id }}>{id}</Typography.Text>,
-    },
-    { title: t('portal.shops.currency'), dataIndex: 'currency' },
-    {
-      title: t('portal.shops.status'),
-      dataIndex: 'status',
-      render: (status: ShopStatus) => (
-        <StatusTag status={statusTone(status)}>{t(`portal.shops.statuses.${status}`)}</StatusTag>
-      ),
-    },
-    {
-      title: t('portal.shops.updatedAt'),
-      dataIndex: 'updatedAt',
-      render: (value: string) => new Date(value).toLocaleString(),
-    },
-    ...(canWriteAnyShop
-      ? [
-          {
-            title: t('portal.shops.actions'),
-            align: 'right' as const,
-            render: (_: unknown, shop: Shop) =>
-              canWriteShop(account, shop.id) ? (
-                <Tooltip title={t('portal.shops.editAction', { name: shop.name })}>
-                  <Button
-                    aria-label={t('portal.shops.editAction', { name: shop.name })}
-                    icon={<EditOutlined aria-hidden />}
-                    type="text"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setEditingShop(shop)
-                    }}
-                  />
-                </Tooltip>
-              ) : null,
-          },
-        ]
-      : []),
-  ]
+  const columns = useMemo<TableColumnsType<Shop>>(
+    () => [
+      {
+        title: t('portal.shops.id'),
+        dataIndex: 'id',
+        width: 320,
+        render: (id: string) => (
+          <Typography.Text code copyable={{ text: id }}>
+            {id}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: t('portal.shops.name'),
+        dataIndex: 'name',
+        width: 220,
+        ellipsis: true,
+        render: (name: string, shop) => (
+          <Typography.Text strong style={{ fontSize: 13 }}>
+            {name || shop.id || '—'}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: t('portal.shops.currency'),
+        dataIndex: 'currency',
+        width: 100,
+        render: (curr: string) => curr || 'USD',
+      },
+      {
+        title: t('portal.shops.status'),
+        dataIndex: 'status',
+        width: 120,
+        render: (status: ShopStatus) => (
+          <StatusTag status={statusTone(status)}>{t(`portal.shops.statuses.${status}`)}</StatusTag>
+        ),
+      },
+      {
+        title: t('portal.shops.updatedAt'),
+        dataIndex: 'updatedAt',
+        width: 170,
+        render: (value: string) => (value ? new Date(value).toLocaleString() : '—'),
+      },
+      ...(canWriteAnyShop
+        ? [
+            {
+              title: t('portal.shops.actions'),
+              align: 'right' as const,
+              width: 90,
+              render: (_: unknown, shop: Shop) =>
+                canWriteShop(account, shop.id) ? (
+                  <Tooltip title={t('portal.shops.editAction', { name: shop.name })}>
+                    <Button
+                      aria-label={t('portal.shops.editAction', { name: shop.name })}
+                      icon={<EditOutlined aria-hidden />}
+                      type="text"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setEditingShop(shop)
+                      }}
+                    />
+                  </Tooltip>
+                ) : null,
+            },
+          ]
+        : []),
+    ],
+    [account, canWriteAnyShop, t],
+  )
+
+  const totalShops = shops.data?.pagination.total ?? 0
+  const activeCount = useMemo(
+    () => (shops.data?.items ?? []).filter((s) => s.status === 'ACTIVE').length,
+    [shops.data?.items],
+  )
+  const inactiveCount = useMemo(
+    () => (shops.data?.items ?? []).filter((s) => s.status !== 'ACTIVE').length,
+    [shops.data?.items],
+  )
 
   return (
     <section className={styles.page}>
@@ -169,6 +230,39 @@ export function ShopWorkspacePage() {
           ) : null
         }
       />
+
+      {/* Summary Metric Cards */}
+      <div className={styles.metrics}>
+        <MetricCard
+          icon={<ShopOutlined />}
+          variant="neutral"
+          label={t('portal.shops.metrics.total', { defaultValue: 'Total Shops' })}
+          value={totalShops}
+          loading={shops.isLoading}
+        />
+        <MetricCard
+          icon={<CheckCircleOutlined />}
+          variant="success"
+          label={t('portal.shops.metrics.active', { defaultValue: 'Active Shops' })}
+          value={activeCount}
+          loading={shops.isLoading}
+        />
+        <MetricCard
+          icon={<StopOutlined />}
+          variant="danger"
+          label={t('portal.shops.metrics.inactive', { defaultValue: 'Inactive Shops' })}
+          value={inactiveCount}
+          loading={shops.isLoading}
+        />
+        <MetricCard
+          icon={<GlobalOutlined />}
+          variant="info"
+          label={t('portal.shops.metrics.channel', { defaultValue: 'Sales Channels' })}
+          value="Amazon & Etsy"
+          loading={shops.isLoading}
+        />
+      </div>
+
       {shops.error ? (
         <FeedbackAlert
           type="error"
@@ -184,6 +278,7 @@ export function ShopWorkspacePage() {
           }
         />
       ) : null}
+
       <SectionCard>
         <DataTable
           columns={columns}
@@ -213,10 +308,11 @@ export function ShopWorkspacePage() {
               <SearchInput
                 aria-label={t('portal.shops.search')}
                 placeholder={t('portal.shops.search')}
-                value={params.search}
-                onSearchChange={(search) =>
-                  updateParams({ search: search || undefined, page: '1' })
-                }
+                value={search}
+                onSearchChange={(val) => {
+                  setSearch(val)
+                  updateParams({ search: val || undefined, page: '1' })
+                }}
               />
               <Select
                 aria-label={t('portal.shops.status')}
@@ -234,6 +330,7 @@ export function ShopWorkspacePage() {
           }
         />
       </SectionCard>
+
       <ShopEditorModal
         canWrite={Boolean(editingShop && canWriteShop(account, editingShop.id))}
         open={creating || Boolean(editingShop)}
@@ -253,3 +350,5 @@ export function ShopWorkspacePage() {
     </section>
   )
 }
+
+export default ShopWorkspacePage

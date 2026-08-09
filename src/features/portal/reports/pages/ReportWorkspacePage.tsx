@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -30,6 +30,7 @@ import {
   MetricCard,
   PageHeader,
   SectionCard,
+  UiTabLabel,
   UiTabs,
 } from '@/shared/ui'
 
@@ -199,21 +200,36 @@ export function ReportWorkspacePage() {
   ]
 
   const filterOptions = options.data
-  const select = (
-    key: keyof ReportFilters,
-    placeholder: string,
-    values: Array<{ value: string; label: string }>,
-  ) => (
-    <Select
-      allowClear
-      showSearch
-      optionFilterProp="label"
-      value={filters[key]}
-      placeholder={placeholder}
-      options={values}
-      onChange={(value) => setFilters((current) => ({ ...current, [key]: value }))}
-    />
+  const handleFilterChange = useCallback((key: keyof ReportFilters, value?: string) => {
+    setFilters((current) => ({ ...current, [key]: value }))
+  }, [])
+
+  const select = useCallback(
+    (
+      key: keyof ReportFilters,
+      placeholder: string,
+      values: Array<{ value: string; label: string }>,
+    ) => (
+      <Select
+        allowClear
+        showSearch
+        optionFilterProp="label"
+        value={filters[key]}
+        placeholder={placeholder}
+        options={values}
+        onChange={(value) => handleFilterChange(key, value)}
+      />
+    ),
+    [filters, handleFilterChange],
   )
+
+  const handleDateRangeChange = useCallback((range: { dateFrom?: string; dateTo?: string }) => {
+    setFilters((current) => ({ ...current, ...range }))
+  }, [])
+
+  const handleTabChange = useCallback((key: string) => {
+    setActiveTab(key as TabKey)
+  }, [])
 
   const filterBar = (
     <FilterBar label={t('reports.filters.label')} contentClassName={styles.filters}>
@@ -221,7 +237,7 @@ export function ReportWorkspacePage() {
         value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
         aria-label={t('reports.filters.date')}
         placeholder={[t('reports.filters.from'), t('reports.filters.to')]}
-        onChange={(range) => setFilters((current) => ({ ...current, ...range }))}
+        onChange={handleDateRangeChange}
       />
       {select(
         'shopId',
@@ -434,11 +450,23 @@ export function ReportWorkspacePage() {
       {filterBar}
       <UiTabs
         activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as TabKey)}
+        onChange={handleTabChange}
         items={[
-          { key: 'overview', label: t('reports.tabs.overview'), children: overviewTab },
-          { key: 'sales', label: t('reports.tabs.sales'), children: salesTab },
-          { key: 'operations', label: t('reports.tabs.operations'), children: operationsTab },
+          {
+            key: 'overview',
+            label: <UiTabLabel>{t('reports.tabs.overview')}</UiTabLabel>,
+            children: overviewTab,
+          },
+          {
+            key: 'sales',
+            label: <UiTabLabel>{t('reports.tabs.sales')}</UiTabLabel>,
+            children: salesTab,
+          },
+          {
+            key: 'operations',
+            label: <UiTabLabel>{t('reports.tabs.operations')}</UiTabLabel>,
+            children: operationsTab,
+          },
         ]}
       />
     </div>

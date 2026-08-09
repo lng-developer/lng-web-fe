@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AppstoreOutlined, LinkOutlined, SettingOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, InputNumber, Modal, Select, Space } from 'antd'
+import { Card, Drawer, Flex, Form, Image, Input, InputNumber, Modal, Switch, Tabs } from 'antd'
 
-import { useFeedbackToast } from '@/shared/ui'
+import { FormActions, useFeedbackToast } from '@/shared/ui'
 
 import {
   createVendorProduct,
@@ -36,6 +37,7 @@ export function VendorProductEditorModal({
   const [form] = Form.useForm<EditorValues>()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
+
   useEffect(() => {
     if (!open) return
     form.setFieldsValue(
@@ -49,6 +51,7 @@ export function VendorProductEditorModal({
         : { status: 'ACTIVE', vendorId },
     )
   }, [form, item, open, vendorId])
+
   const save = useMutation({
     mutationFn: (values: EditorValues) => {
       const { code, metadataText, vendorId: ignoredVendorId, ...rest } = values
@@ -76,163 +79,249 @@ export function VendorProductEditorModal({
       } else showFeedbackToast('error', t('actionFeedback.failed'))
     },
   })
+
   const close = () => {
-    if (form.isFieldsTouched() && !window.confirm(t('vendors.discardChanges'))) return
-    onCancel()
+    if (!form.isFieldsTouched()) return onCancel()
+    Modal.confirm({
+      title: t('actionFeedback.unsaved'),
+      content: t('vendors.discardChanges'),
+      okText: t('vendors.discard', { defaultValue: 'Discard' }),
+      cancelText: t('vendors.cancel'),
+      onOk: onCancel,
+    })
   }
+
   const maxDays = Form.useWatch('maxProductionDays', form)
   const minDays = Form.useWatch('minProductionDays', form)
+  const imageUrl = Form.useWatch('imageUrl', form)
   const numberRule = { type: 'integer' as const, min: 0 }
   const urlRules = [{ type: 'url' as const }, { max: 1000 }]
 
-  return (
-    <Modal
-      centered
-      destroyOnHidden
-      footer={null}
-      open={open}
-      title={t(item ? 'vendors.editProductTitle' : 'vendors.createProductTitle')}
-      width="min(880px, calc(100vw - 32px))"
-      onCancel={close}
-    >
-      <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.identity')}</legend>
-          <div className={styles.formGrid}>
-            <Form.Item
-              label={t('vendors.name')}
-              name="name"
-              rules={[{ required: true }, { max: 200 }]}
+  const tabItems = [
+    {
+      key: 'identity',
+      label: (
+        <span>
+          <AppstoreOutlined style={{ marginRight: 6 }} />
+          Product Identity & SLA
+        </span>
+      ),
+      children: (
+        <Flex flex={1} vertical gap={16}>
+          <Card size="small" title="Basic Info" style={{ background: '#fafafa' }}>
+            <div className={styles.formGrid}>
+              <Form.Item
+                label={t('vendors.name')}
+                name="name"
+                rules={[{ required: true }, { max: 200 }]}
+              >
+                <Input placeholder="e.g. Unisex Heavy Cotton Tee" />
+              </Form.Item>
+              <Form.Item
+                label={t('vendors.code')}
+                name="code"
+                rules={[{ required: !item }, { max: 80 }]}
+              >
+                <Input disabled={Boolean(item)} placeholder="TSHIRT_5000" />
+              </Form.Item>
+              <Form.Item
+                label={t('vendors.externalProductId')}
+                name="externalProductId"
+                rules={[{ max: 120 }]}
+              >
+                <Input placeholder="Vendor SKU or Product ID" />
+              </Form.Item>
+              <Form.Item
+                label={t('vendors.productTypeGroupId')}
+                name="productTypeGroupId"
+                rules={[{ required: true }, { len: 24 }, { pattern: /^[a-f\d]{24}$/i }]}
+              >
+                <Input placeholder="24-char ObjectId" />
+              </Form.Item>
+            </div>
+          </Card>
+
+          <Card size="small" title="Production SLA & Base Cost" style={{ background: '#fafafa' }}>
+            <div className={styles.formGrid}>
+              <Form.Item
+                label={t('vendors.minProductionDays')}
+                name="minProductionDays"
+                rules={[
+                  numberRule,
+                  {
+                    validator: (_, value) =>
+                      value != null && maxDays != null && value > maxDays
+                        ? Promise.reject(new Error(t('vendors.productionRangeInvalid')))
+                        : Promise.resolve(),
+                  },
+                ]}
+              >
+                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="2" />
+              </Form.Item>
+              <Form.Item
+                label={t('vendors.maxProductionDays')}
+                name="maxProductionDays"
+                rules={[
+                  numberRule,
+                  {
+                    validator: (_, value) =>
+                      value != null && minDays != null && value < minDays
+                        ? Promise.reject(new Error(t('vendors.productionRangeInvalid')))
+                        : Promise.resolve(),
+                  },
+                ]}
+              >
+                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="5" />
+              </Form.Item>
+              <Form.Item
+                label={t('vendors.baseCostAmount')}
+                name="baseCostAmount"
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="750 (in cents)"
+                />
+              </Form.Item>
+              <Form.Item
+                label={t('vendors.currency')}
+                name="currency"
+                normalize={(value) => String(value ?? '').toUpperCase()}
+                rules={[{ len: 3 }]}
+              >
+                <Input maxLength={3} placeholder="USD" />
+              </Form.Item>
+            </div>
+          </Card>
+        </Flex>
+      ),
+    },
+    {
+      key: 'media',
+      label: (
+        <span>
+          <LinkOutlined style={{ marginRight: 6 }} />
+          Asset Links & Media
+        </span>
+      ),
+      children: (
+        <Flex flex={1} vertical gap={16}>
+          {imageUrl ? (
+            <Card
+              size="small"
+              title="Image Preview"
+              style={{ background: '#fafafa', textAlign: 'center' }}
             >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.code')}
-              name="code"
-              rules={[{ required: !item }, { max: 80 }]}
-            >
-              <Input disabled={Boolean(item)} />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.externalProductId')}
-              name="externalProductId"
-              rules={[{ max: 120 }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.productTypeGroupId')}
-              name="productTypeGroupId"
-              rules={[{ required: true }, { len: 24 }, { pattern: /^[a-f\d]{24}$/i }]}
-            >
-              <Input />
-            </Form.Item>
-          </div>
-        </fieldset>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.production')}</legend>
-          <div className={styles.formGrid}>
-            <Form.Item
-              label={t('vendors.minProductionDays')}
-              name="minProductionDays"
-              rules={[
-                numberRule,
-                {
-                  validator: (_, value) =>
-                    value != null && maxDays != null && value > maxDays
-                      ? Promise.reject(new Error(t('vendors.productionRangeInvalid')))
-                      : Promise.resolve(),
-                },
-              ]}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.maxProductionDays')}
-              name="maxProductionDays"
-              rules={[
-                numberRule,
-                {
-                  validator: (_, value) =>
-                    value != null && minDays != null && value < minDays
-                      ? Promise.reject(new Error(t('vendors.productionRangeInvalid')))
-                      : Promise.resolve(),
-                },
-              ]}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.baseCostAmount')}
-              name="baseCostAmount"
-              rules={[numberRule]}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-            <Form.Item
-              label={t('vendors.currency')}
-              name="currency"
-              normalize={(value) => String(value ?? '').toUpperCase()}
-              rules={[{ len: 3 }]}
-            >
-              <Input maxLength={3} />
-            </Form.Item>
-          </div>
-        </fieldset>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.links')}</legend>
-          <div className={styles.formGrid}>
+              <Image
+                src={imageUrl}
+                alt="Product preview"
+                style={{ maxHeight: 180, borderRadius: 8, objectFit: 'contain' }}
+                fallback="https://placehold.co/200x200?text=Invalid+Image+URL"
+              />
+            </Card>
+          ) : null}
+
+          <Card size="small" title="URLs" style={{ background: '#fafafa' }}>
             <Form.Item label={t('vendors.imageUrl')} name="imageUrl" rules={urlRules}>
-              <Input />
+              <Input placeholder="https://..." />
             </Form.Item>
             <Form.Item label={t('vendors.productUrl')} name="productUrl" rules={urlRules}>
-              <Input />
+              <Input placeholder="https://..." />
             </Form.Item>
             <Form.Item
               label={t('vendors.designTemplateUrl')}
               name="designTemplateUrl"
               rules={urlRules}
             >
-              <Input />
+              <Input placeholder="https://..." />
             </Form.Item>
-          </div>
-        </fieldset>
-        <fieldset className={styles.formSection}>
-          <legend>{t('vendors.advanced')}</legend>
-          <Form.Item
-            label={t('vendors.metadata')}
-            name="metadataText"
-            rules={[
-              {
-                validator: (_, value) => {
-                  try {
-                    parseJsonObject(value)
-                    return Promise.resolve()
-                  } catch {
-                    return Promise.reject(new Error(t('vendors.invalidJson')))
-                  }
+          </Card>
+        </Flex>
+      ),
+    },
+    {
+      key: 'settings',
+      label: (
+        <span>
+          <SettingOutlined style={{ marginRight: 6 }} />
+          Status & Metadata
+        </span>
+      ),
+      children: (
+        <Flex flex={1} vertical gap={16}>
+          <Card size="small" title="Status" style={{ background: '#fafafa' }}>
+            <Form.Item
+              label={t('vendors.statusLabel')}
+              name="status"
+              valuePropName="checked"
+              getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+              getValueProps={(v) => ({ checked: v === 'ACTIVE' })}
+            >
+              <Switch
+                checkedChildren={t('vendors.status.ACTIVE')}
+                unCheckedChildren={t('vendors.status.INACTIVE')}
+              />
+            </Form.Item>
+          </Card>
+
+          <Card size="small" title="Metadata JSON" style={{ background: '#fafafa' }}>
+            <Form.Item
+              label={t('vendors.metadata')}
+              name="metadataText"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    try {
+                      parseJsonObject(value)
+                      return Promise.resolve()
+                    } catch {
+                      return Promise.reject(new Error(t('vendors.invalidJson')))
+                    }
+                  },
                 },
-              },
-            ]}
-          >
-            <Input.TextArea autoSize={{ minRows: 3, maxRows: 8 }} />
-          </Form.Item>
-          <Form.Item label={t('vendors.statusLabel')} name="status">
-            <Select
-              options={['ACTIVE', 'INACTIVE'].map((value) => ({
-                label: t(`vendors.status.${value}`),
-                value,
-              }))}
-            />
-          </Form.Item>
-        </fieldset>
-        <Space>
-          <Button onClick={close}>{t('vendors.cancel')}</Button>
-          <Button type="primary" htmlType="submit" loading={save.isPending}>
-            {t('vendors.save')}
-          </Button>
-        </Space>
+              ]}
+            >
+              <Input.TextArea
+                autoSize={{ minRows: 4, maxRows: 10 }}
+                placeholder="{}"
+                style={{ fontFamily: 'monospace', fontSize: 12 }}
+              />
+            </Form.Item>
+          </Card>
+        </Flex>
+      ),
+    },
+  ]
+
+  return (
+    <Drawer
+      destroyOnClose
+      open={open}
+      title={t(item ? 'vendors.editProductTitle' : 'vendors.createProductTitle')}
+      width={720}
+      onClose={close}
+      footer={
+        <FormActions
+          cancelLabel={t('vendors.cancel')}
+          dirty
+          form="vendor-product-form"
+          onSubmit={() => form.submit()}
+          onCancel={close}
+          saving={save.isPending}
+          submitLabel={t('vendors.save')}
+        />
+      }
+    >
+      <Form
+        id="vendor-product-form"
+        form={form}
+        layout="vertical"
+        onFinish={(values) => save.mutate(values)}
+      >
+        <Tabs items={tabItems} defaultActiveKey="identity" />
       </Form>
-    </Modal>
+    </Drawer>
   )
 }

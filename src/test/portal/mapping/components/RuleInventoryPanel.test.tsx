@@ -45,8 +45,7 @@ describe('RuleInventoryPanel', () => {
     fireEvent.click(screen.getByText('TS1S').closest('tr')!)
     expect(onSelect).toHaveBeenCalledWith(rule)
 
-    fireEvent.click(screen.getByLabelText('Rule actions'))
-    fireEvent.click(await screen.findByText('Disable'))
+    fireEvent.click(screen.getByRole('switch'))
     expect(onToggleStatus).toHaveBeenCalledWith(rule)
   })
 })

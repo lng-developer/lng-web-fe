@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Modal, Select, Space } from 'antd'
+import { Button, Divider, Form, Input, Modal, Select, Space, Switch } from 'antd'
 
 import { useFeedbackToast } from '@/shared/ui'
 
@@ -20,6 +20,7 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
   const [form] = Form.useForm<VendorInput>()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
+
   useEffect(() => {
     if (!open) return
     form.setFieldsValue(
@@ -28,6 +29,7 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
         : { fulfillmentType: 'POD', status: 'ACTIVE' },
     )
   }, [form, item, open])
+
   const save = useMutation({
     mutationFn: (values: VendorInput) => {
       if (!item) return createVendor(values)
@@ -42,6 +44,7 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+
   const close = () => {
     if (form.isFieldsTouched() && !window.confirm(t('vendors.discardChanges'))) return
     onCancel()
@@ -56,12 +59,22 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
       onCancel={close}
     >
       <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
+        <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+          {t('vendors.sectionIdentity', { defaultValue: 'Vendor Identity' })}
+        </Divider>
+
         <Form.Item label={t('vendors.name')} name="name" rules={[{ required: true }]}>
-          <Input />
+          <Input placeholder="e.g. Printway POD" />
         </Form.Item>
+
         <Form.Item label={t('vendors.code')} name="code" rules={[{ required: !item }]}>
-          <Input disabled={Boolean(item)} />
+          <Input disabled={Boolean(item)} placeholder="PRINTWAY" />
         </Form.Item>
+
+        <Divider plain style={{ fontSize: 12, margin: '16px 0' }}>
+          {t('vendors.sectionFulfillment', { defaultValue: 'Fulfillment & SLA' })}
+        </Divider>
+
         <Form.Item
           label={t('vendors.fulfillmentType')}
           name="fulfillmentType"
@@ -74,18 +87,29 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
             }))}
           />
         </Form.Item>
+
         <Form.Item label={t('vendors.providerKey')} name="providerKey">
-          <Input />
+          <Input placeholder="PRINTWAY" />
         </Form.Item>
-        <Form.Item label={t('vendors.statusLabel')} name="status">
-          <Select
-            options={['ACTIVE', 'INACTIVE'].map((value) => ({
-              label: t(`vendors.status.${value}`),
-              value,
-            }))}
+
+        <Divider plain style={{ fontSize: 12, margin: '16px 0' }}>
+          {t('vendors.sectionStatus', { defaultValue: 'Status' })}
+        </Divider>
+
+        <Form.Item
+          label={t('vendors.statusLabel')}
+          name="status"
+          valuePropName="checked"
+          getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+          getValueProps={(v) => ({ checked: v === 'ACTIVE' })}
+        >
+          <Switch
+            checkedChildren={t('vendors.status.ACTIVE')}
+            unCheckedChildren={t('vendors.status.INACTIVE')}
           />
         </Form.Item>
-        <Space>
+
+        <Space style={{ marginTop: 12 }}>
           <Button onClick={close}>{t('vendors.cancel')}</Button>
           <Button type="primary" htmlType="submit" loading={save.isPending}>
             {t('vendors.save')}

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Form, Input, Modal, Select } from 'antd'
+import { Button, Divider, Form, Input, Modal, Switch } from 'antd'
 
 import { FormActions } from '@/shared/ui'
 
@@ -70,27 +70,43 @@ export function ShopEditorModal({
           else onCreate({ name: values.name, currency: values.currency || 'USD' })
         }}
       >
+        <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+          {t('portal.shops.sectionInfo', { defaultValue: 'Store Identity' })}
+        </Divider>
+
         <Form.Item
           label={t('portal.shops.name')}
           name="name"
           rules={[{ required: true, message: t('portal.shops.required') }]}
         >
-          <Input disabled={isEditing} />
+          <Input disabled={isEditing} placeholder="e.g. My Amazon US Store" />
         </Form.Item>
+
         <Form.Item label={t('portal.shops.currency')} name="currency">
-          <Input disabled={isEditing} maxLength={3} />
+          <Input disabled={isEditing} maxLength={3} placeholder="USD" />
         </Form.Item>
+
         {isEditing && (
-          <Form.Item label={t('portal.shops.status')} name="status" rules={[{ required: true }]}>
-            <Select
-              disabled={!canWrite}
-              options={(['ACTIVE', 'INACTIVE', 'SUSPENDED'] as const).map((status) => ({
-                label: t(`portal.shops.statuses.${status}`),
-                value: status,
-              }))}
-            />
-          </Form.Item>
+          <>
+            <Divider plain style={{ fontSize: 12, margin: '16px 0' }}>
+              {t('portal.shops.sectionStatus', { defaultValue: 'Status & Access' })}
+            </Divider>
+            <Form.Item
+              label={t('portal.shops.status')}
+              name="status"
+              valuePropName="checked"
+              getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+              getValueProps={(v) => ({ checked: v === 'ACTIVE' })}
+            >
+              <Switch
+                disabled={!canWrite}
+                checkedChildren={t('portal.shops.statuses.ACTIVE')}
+                unCheckedChildren={t('portal.shops.statuses.INACTIVE')}
+              />
+            </Form.Item>
+          </>
         )}
+
         {canWrite || !isEditing ? (
           <Form.Item shouldUpdate noStyle>
             {() => (

@@ -1,0 +1,31 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1280' height='820' viewBox='0 0 1280 820' fill='none'>
+  <rect width='1280' height='820' fill='#f4f5f7'/>
+  <rect x='28' y='20' width='1224' height='780' rx='16' fill='white' stroke='#e2e8f0'/>
+  <rect x='56' y='50' width='1168' height='72' rx='12' fill='#ecfeff'/> <text x='96' y='94' fill='#0f172a' font-size='26' font-family='Inter, Arial'>Orders</text>
+  <rect x='56' y='132' width='1168' height='86' rx='12' fill='#f8fafc'/> <text x='86' y='158' fill='#64748b' font-size='12' font-family='Inter, Arial'>Summary cards</text>
+  <rect x='86' y='176' width='140' height='34' rx='8' fill='#ffffff' stroke='#e2e8f0'/><text x='110' y='198' font-size='13' fill='#0f172a'>Total: 128</text>
+  <rect x='236' y='176' width='130' height='34' rx='8' fill='#ffffff' stroke='#e2e8f0'/><text x='260' y='198' font-size='13' fill='#0f172a'>New: 32</text>
+  <rect x='376' y='176' width='160' height='34' rx='8' fill='#ffffff' stroke='#e2e8f0'/><text x='402' y='198' font-size='13' fill='#0f172a'>Ready to send: 18</text>
+  <rect x='552' y='176' width='150' height='34' rx='8' fill='#ffffff' stroke='#e2e8f0'/><text x='576' y='198' font-size='13' fill='#0f172a'>Open case: 7</text>
+  <rect x='56' y='232' width='1168' height='72' rx='12' fill='#fff7ed'/> <text x='92' y='260' font-size='14' fill='#92400e' font-family='Inter, Arial'>Horizontal tabs as chip strip + counts (compact)</text>
+  <rect x='92' y='244' width='86' height='32' rx='16' fill='#f59e0b'/><text x='120' y='265' font-size='12' fill='white'>ALL 52</text>
+  <rect x='188' y='244' width='110' height='32' rx='16' fill='white' stroke='#fdba74'/><text x='222' y='265' fill='#9a3412' font-size='12'>NEW 21</text>
+  <rect x='308' y='244' width='126' height='32' rx='16' fill='white' stroke='#fdba74'/><text x='350' y='265' fill='#9a3412' font-size='12'>COST 11</text>
+  <rect x='444' y='244' width='150' height='32' rx='16' fill='white' stroke='#fdba74'/><text x='484' y='265' fill='#9a3412' font-size='12'>PENDING 15</text>
+  <rect x='56' y='320' width='1168' height='66' rx='12' fill='#ffffff' stroke='#e2e8f0'/>
+  <rect x='82' y='340' width='224' height='34' rx='10' fill='#f1f5f9'/><text x='106' y='362' font-size='12' fill='#64748b'>Search order</text>
+  <rect x='316' y='340' width='180' height='34' rx='10' fill='#f1f5f9'/><text x='340' y='362' font-size='12' fill='#64748b'>Shop</text>
+  <rect x='506' y='340' width='140' height='34' rx='10' fill='#f1f5f9'/><text x='530' y='362' font-size='12' fill='#64748b'>Seller</text>
+  <rect x='656' y='340' width='170' height='34' rx='10' fill='#f1f5f9'/><text x='680' y='362' font-size='12' fill='#64748b'>Address status</text>
+  <rect x='836' y='340' width='190' height='34' rx='10' fill='#f1f5f9'/><text x='860' y='362' font-size='12' fill='#64748b'>Date range</text>
+  <rect x='1036' y='340' width='112' height='34' rx='10' fill='#22c55e'/><text x='1058' y='362' fill='white' font-size='12'>Clear</text>
+  <rect x='56' y='402' width='1168' height='382' rx='12' fill='#ffffff' stroke='#e2e8f0'/>
+  <rect x='90' y='440' width='1090' height='56' fill='#f8fafc'/><text x='122' y='474' font-size='13' fill='#0f172a'>Row list layout with action icons on right, no overcrowding</text>
+  <line x1='90' y1='516' x2='1180' y2='516' stroke='#e2e8f0'/> <line x1='90' y1='592' x2='1180' y2='592' stroke='#e2e8f0'/><line x1='90' y1='668' x2='1180' y2='668' stroke='#e2e8f0'/><line x1='90' y1='744' x2='1180' y2='744' stroke='#e2e8f0'/>
+  <text x='120' y='472' fill='#334155' font-size='12'>#ID-9087 · WAITING_SHIPMENT · Shop A</text>
+  <text x='120' y='548' fill='#334155' font-size='12'>#ID-9088 · IN_PROGRESS · Shop B</text>
+  <text x='120' y='624' fill='#334155' font-size='12'>#ID-9089 · SHIPPED · Shop C</text>
+  <text x='120' y='700' fill='#334155' font-size='12'>#ID-9090 · CANCELLED · Shop D</text>
+  <rect x='103' y='520' width='1040' height='48' fill='#f8fafc'/><text x='132' y='548' fill='#0f172a' font-size='12'>Expanded area example: customer + shipping + case + timeline mini cards</text>
+  <rect x='100' y='746' width='1020' height='36' rx='8' fill='#f8fafc'/><text x='548' y='768' text-anchor='middle' font-size='13' fill='#64748b'>pagination</text>
+</svg>

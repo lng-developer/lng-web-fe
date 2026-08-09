@@ -182,6 +182,7 @@ export type MappingCostCenterOption = {
   size?: string | null
   color?: string | null
   baseCostAmount?: number | null
+  totalCostAmount?: number | null
   currency?: string | null
 }
 export type MappingVendorProductOptions = {
@@ -213,7 +214,7 @@ export type RuleListParams = MappingContextParams & {
 export type RulePreviewInput = {
   ruleType: MappingRuleType
   rule: MappingRuleInput
-  samples?: Array<Record<string, unknown>>
+  samples?: string[]
 }
 export type RulePreviewResult = {
   items?: Array<Record<string, unknown>>
@@ -312,7 +313,10 @@ export async function searchMappingVendors(params: { q?: string; limit?: number 
 }
 export async function listMappingVendorProducts(
   vendorId: string,
-  params: { productTypeGroupId: string },
+  params: {
+    productTypeGroupId?: string
+    includeDifferentProductType?: boolean
+  },
 ) {
   return unwrap<MappingVendorProduct[]>(
     await apiClient.get(`/api/mapping/vendors/${vendorId}/products`, { params }),

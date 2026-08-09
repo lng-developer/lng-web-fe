@@ -6,6 +6,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { modalQueryOptions } from '@/shared/query/modalQuery'
 import {
   CopyableOrderId,
   DataTable,
@@ -71,12 +72,14 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
   const issues = useQuery({
     queryKey: integrationKeys.jobIssues(jobId ?? '', issueParams),
     queryFn: () => listJobIssues(jobId!, issueParams),
+    ...modalQueryOptions,
     enabled: open && Boolean(jobId),
     retry: false,
   })
   const rawRecords = useQuery({
     queryKey: integrationKeys.rawRecords(jobId ?? '', rawParams),
     queryFn: () => listJobRawRecords(jobId!, rawParams),
+    ...modalQueryOptions,
     enabled: open && Boolean(jobId),
     retry: false,
   })
@@ -182,6 +185,7 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
     <>
       <DetailDrawer
         open={open}
+        width={900}
         title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
         onClose={onClose}
         footer={

@@ -102,7 +102,7 @@ describe('VendorIntegrationModal', () => {
     fireEvent.change(await screen.findByLabelText('Access token'), {
       target: { value: 'old-api-secret' },
     })
-    fireEvent.click(screen.getByRole('radio', { name: 'LOGIN_PASSWORD' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Login & Password' }))
     fireEvent.change(await screen.findByLabelText('Username'), { target: { value: 'operator' } })
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'new-secret' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
@@ -186,7 +186,7 @@ describe('VendorIntegrationModal', () => {
       vendorId: 'vendor-1',
     })
     expect((await screen.findAllByText('CONNECTED')).length).toBeGreaterThan(0)
-    expect(screen.getByText('2026-07-31T00:00:00Z')).toBeInTheDocument()
+    expect(await screen.findByText('2026-07-31T00:00:00Z')).toBeInTheDocument()
     expect(screen.getAllByText('Configured')).toHaveLength(4)
     expect(screen.getByRole('button', { name: /Refresh credentials/ })).toBeEnabled()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
@@ -225,7 +225,7 @@ describe('VendorIntegrationModal', () => {
       </AppProviders>,
     )
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Retry' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Try again|Retry/ }))
     expect(await screen.findByDisplayValue('https://vendor.example')).toBeInTheDocument()
     let rejectRefresh!: (error: Error) => void
     vi.mocked(refreshVendorIntegrationCredential).mockReturnValue(

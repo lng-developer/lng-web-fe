@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import { ReloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Divider, Modal, Select, Space, Spin, Tabs, Typography } from 'antd'
+import { Button, Descriptions, Divider, Modal, Select, Space, Spin, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
@@ -19,6 +19,8 @@ import {
   SearchInput,
   SectionCard,
   StatusTag,
+  UiTabLabel,
+  UiTabs,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -74,18 +76,72 @@ export function FinanceWorkspacePage() {
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch>()
   const [selectedItemId, setSelectedItemId] = useState<string>()
   const [importOpen, setImportOpen] = useState(false)
-  const queryParams = {
-    page,
-    limit: PAGE_SIZE,
-    externalOrderId: search || undefined,
-    costStatus,
-    salesChannelCode,
-    marketplaceCode,
-    sellerEmployeeCode,
-    teamId,
-    departmentId,
-    ...dates,
-  }
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value)
+    setPage(1)
+  }, [])
+
+  const handleSalesChannelChange = useCallback((value?: string) => {
+    setSalesChannelCode(value)
+    setPage(1)
+  }, [])
+
+  const handleMarketplaceChange = useCallback((value?: string) => {
+    setMarketplaceCode(value)
+    setPage(1)
+  }, [])
+
+  const handleSellerChange = useCallback((value?: string) => {
+    setSellerEmployeeCode(value)
+    setPage(1)
+  }, [])
+
+  const handleTeamChange = useCallback((value?: string) => {
+    setTeamId(value)
+    setPage(1)
+  }, [])
+
+  const handleDepartmentChange = useCallback((value?: string) => {
+    setDepartmentId(value)
+    setPage(1)
+  }, [])
+
+  const handleDateRangeChange = useCallback((value: DateRangeValue) => {
+    setDates(value)
+    setPage(1)
+  }, [])
+
+  const handleCostStatusChange = useCallback((value?: string) => {
+    setCostStatus(value)
+    setPage(1)
+  }, [])
+
+  const queryParams = useMemo(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      externalOrderId: search || undefined,
+      costStatus,
+      salesChannelCode,
+      marketplaceCode,
+      sellerEmployeeCode,
+      teamId,
+      departmentId,
+      ...dates,
+    }),
+    [
+      page,
+      search,
+      costStatus,
+      salesChannelCode,
+      marketplaceCode,
+      sellerEmployeeCode,
+      teamId,
+      departmentId,
+      dates,
+    ],
+  )
   const snapshots = useQuery({
     queryKey: ['finance', 'snapshots', queryParams],
     queryFn: () => listFinanceSnapshots(queryParams),
@@ -260,20 +316,14 @@ export function FinanceWorkspacePage() {
       <FilterBar label={t('finance.filters.label')} contentClassName={styles.filters}>
         <SearchInput
           value={search}
-          onSearchChange={(value) => {
-            setSearch(value)
-            setPage(1)
-          }}
+          onSearchChange={handleSearchChange}
           placeholder={t('finance.filters.search')}
         />
         <Select
           allowClear
           aria-label={t('finance.filters.channel')}
           value={salesChannelCode}
-          onChange={(value) => {
-            setSalesChannelCode(value)
-            setPage(1)
-          }}
+          onChange={handleSalesChannelChange}
           placeholder={t('finance.filters.channel')}
           options={filterOptions.data?.channels.map((value) => ({ value, label: value }))}
         />
@@ -281,10 +331,7 @@ export function FinanceWorkspacePage() {
           allowClear
           aria-label={t('finance.filters.marketplace')}
           value={marketplaceCode}
-          onChange={(value) => {
-            setMarketplaceCode(value)
-            setPage(1)
-          }}
+          onChange={handleMarketplaceChange}
           placeholder={t('finance.filters.marketplace')}
           options={filterOptions.data?.marketplaces.map((value) => ({ value, label: value }))}
         />
@@ -294,10 +341,7 @@ export function FinanceWorkspacePage() {
           optionFilterProp="label"
           aria-label={t('finance.filters.seller')}
           value={sellerEmployeeCode}
-          onChange={(value) => {
-            setSellerEmployeeCode(value)
-            setPage(1)
-          }}
+          onChange={handleSellerChange}
           placeholder={t('finance.filters.seller')}
           options={filterOptions.data?.sellers.map((seller) => ({
             value: seller.employeeCode,
@@ -310,10 +354,7 @@ export function FinanceWorkspacePage() {
           optionFilterProp="label"
           aria-label={t('finance.filters.team')}
           value={teamId}
-          onChange={(value) => {
-            setTeamId(value)
-            setPage(1)
-          }}
+          onChange={handleTeamChange}
           placeholder={t('finance.filters.team')}
           options={filterOptions.data?.teams.map((team) => ({
             value: team.id,
@@ -326,10 +367,7 @@ export function FinanceWorkspacePage() {
           optionFilterProp="label"
           aria-label={t('finance.filters.department')}
           value={departmentId}
-          onChange={(value) => {
-            setDepartmentId(value)
-            setPage(1)
-          }}
+          onChange={handleDepartmentChange}
           placeholder={t('finance.filters.department')}
           options={filterOptions.data?.departments.map((department) => ({
             value: department.id,
@@ -338,19 +376,13 @@ export function FinanceWorkspacePage() {
         />
         <DateRangePicker
           value={dates}
-          onChange={(value) => {
-            setDates(value)
-            setPage(1)
-          }}
+          onChange={handleDateRangeChange}
           aria-label={t('finance.filters.date')}
         />
         <Select
           allowClear
           value={costStatus}
-          onChange={(value) => {
-            setCostStatus(value)
-            setPage(1)
-          }}
+          onChange={handleCostStatusChange}
           placeholder={t('finance.filters.cost')}
           options={[
             { value: 'PRESENT', label: 'PRESENT' },
@@ -385,11 +417,12 @@ export function FinanceWorkspacePage() {
           </Typography.Text>
         }
       />
-      <Tabs
+      <UiTabs
+        destroyOnHidden={false}
         items={[
           {
             key: 'overview',
-            label: t('finance.tabs.overview'),
+            label: <UiTabLabel>{t('finance.tabs.overview')}</UiTabLabel>,
             children: (
               <>
                 <div className={styles.summaryGroups}>
@@ -427,7 +460,7 @@ export function FinanceWorkspacePage() {
             ? [
                 {
                   key: 'imports',
-                  label: t('finance.tabs.imports'),
+                  label: <UiTabLabel>{t('finance.tabs.imports')}</UiTabLabel>,
                   children: (
                     <SectionCard title={t('finance.imports.title')}>
                       {globalWrite ? (

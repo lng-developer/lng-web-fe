@@ -1,24 +1,28 @@
-import { memo, useState } from 'react'
+﻿import { memo, type MouseEvent, useState, type WheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircleOutlined,
   DeleteOutlined,
   DownloadOutlined,
   HistoryOutlined,
+  HolderOutlined,
+  LeftOutlined,
   LinkOutlined,
   ReloadOutlined,
+  RightOutlined,
   SaveOutlined,
   SwapOutlined,
+  SyncOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
   Checkbox,
   Descriptions,
-  Image,
   Input,
   InputNumber,
-  Modal,
   Select,
   Space,
   Spin,
@@ -28,8 +32,16 @@ import {
 } from 'antd'
 import dayjs from 'dayjs'
 
-import { downloadMediaAsset } from '@/shared/media'
-import { FeedbackAlert, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
+import { modalQueryOptions } from '@/shared/query/modalQuery'
+import {
+  FeedbackAlert,
+  getPopupAnchorFromMouseEvent,
+  PopupModal,
+  type PopupModalAnchor,
+  StatusTag,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   addOrderCaseComment,
@@ -125,12 +137,16 @@ const emptyCase = (orderId: string): OrderCaseInput => ({
 export const OrderInlinePanel = memo(function OrderInlinePanel({
   row,
   canWrite,
+  canOperate = canWrite,
   requestedModal,
+  requestedPopupAnchor,
   onOrderModalClose,
 }: {
   readonly row: OrderWorkbenchRow
   readonly canWrite: boolean
+  readonly canOperate?: boolean
   readonly requestedModal?: OrderModal
+  readonly requestedPopupAnchor?: PopupModalAnchor
   readonly onOrderModalClose?: () => void
 }) {
   const { t } = useTranslation()
@@ -146,11 +162,14 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
   const [replacementItems, setReplacementItems] = useState<Record<string, number>>({})
   const [orderReplacementReason, setOrderReplacementReason] = useState('')
   const [itemTimelineId, setItemTimelineId] = useState<string>()
+  const [itemTimelineAnchor, setItemTimelineAnchor] = useState<PopupModalAnchor>()
   const [caseComment, setCaseComment] = useState('')
+  const [confirmationAnchor, setConfirmationAnchor] = useState<PopupModalAnchor>()
   const cases = useQuery({
     queryKey: orderKeys.cases(row.order.id),
     queryFn: () => listOrderCases(row.order.id),
     enabled: orderModal === 'case',
+    ...modalQueryOptions,
     retry: false,
   })
   const openCase = cases.data?.items.find((item) => item.status === 'OPEN')
@@ -158,6 +177,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
     queryKey: orderKeys.caseDetail(openCase?.id ?? ''),
     queryFn: () => getOrderCase(openCase!.id),
     enabled: orderModal === 'case' && Boolean(openCase?.id),
+    ...modalQueryOptions,
     retry: false,
   })
   const timeline = useQuery({
@@ -165,6 +185,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
     queryFn: () =>
       itemTimelineId ? listOrderItemTimeline(itemTimelineId) : listOrderTimeline(row.order.id),
     enabled: orderModal === 'timeline' || Boolean(itemTimelineId),
+    ...modalQueryOptions,
     retry: false,
   })
 
@@ -223,10 +244,25 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       toast('error', error instanceof Error ? error.message : t('orders.messages.actionFailed')),
   })
 
-  const openConfirmation = (kind: Confirmation['kind'], item: OrderWorkbenchItem) => {
+  const openConfirmation = (
+    event: MouseEvent<HTMLElement>,
+    kind: Confirmation['kind'],
+    item: OrderWorkbenchItem,
+  ) => {
     setReason('')
     setQuantity(item.item.quantity || 1)
     setConfirmation({ kind, item })
+    setConfirmationAnchor(getPopupAnchorFromMouseEvent(event))
+  }
+
+  const openTimelineForItem = (event: MouseEvent<HTMLElement>, itemId: string) => {
+    setItemTimelineId(itemId)
+    setItemTimelineAnchor(getPopupAnchorFromMouseEvent(event))
+  }
+
+  const closeTimeline = () => {
+    setItemTimelineId(undefined)
+    setItemTimelineAnchor(undefined)
   }
 
   return (
@@ -236,16 +272,18 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
           key={item.item.id}
           item={item}
           canWrite={canWrite}
+          canOperate={canOperate}
           pending={mutation.isPending}
           onAction={mutation.mutate}
           onConfirm={openConfirmation}
-          onHistory={setItemTimelineId}
+          onHistory={openTimelineForItem}
         />
       ))}
 
       {orderModal === 'address' ? (
-        <Modal
+        <PopupModal
           centered
+          anchor={requestedPopupAnchor}
           width={920}
           open
           title={t('orders.actions.editAddress')}
@@ -279,12 +317,13 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
               </label>
             ))}
           </div>
-        </Modal>
+        </PopupModal>
       ) : null}
 
       {orderModal === 'customer' ? (
-        <Modal
+        <PopupModal
           centered
+          anchor={requestedPopupAnchor}
           width={680}
           open
           title={t('orders.actions.editCustomer')}
@@ -306,12 +345,13 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
               </label>
             ))}
           </div>
-        </Modal>
+        </PopupModal>
       ) : null}
 
       {orderModal === 'shipping' ? (
-        <Modal
+        <PopupModal
           centered
+          anchor={requestedPopupAnchor}
           open
           title={t('orders.actions.editShipping')}
           okText={t('orders.actions.saveShipping')}
@@ -339,33 +379,36 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
               />
             </label>
           </div>
-        </Modal>
+        </PopupModal>
       ) : null}
 
       {orderModal === 'case' ? (
         cases.isLoading ? (
-          <Modal
+          <PopupModal
             centered
+            anchor={requestedPopupAnchor}
             open
             title={t('orders.actions.manageCase')}
             footer={null}
             onCancel={closeOrderModal}
           >
             <Spin />
-          </Modal>
+          </PopupModal>
         ) : cases.error ? (
-          <Modal
+          <PopupModal
             centered
+            anchor={requestedPopupAnchor}
             open
             title={t('orders.actions.manageCase')}
             footer={null}
             onCancel={closeOrderModal}
           >
             <FeedbackAlert type="error" title={t('orders.messages.caseLoadFailed')} />
-          </Modal>
+          </PopupModal>
         ) : (
           <CaseEditorModal
             orderId={row.order.id}
+            requestedPopupAnchor={requestedPopupAnchor}
             openCase={caseDetail.data ?? openCase}
             commentsLoading={caseDetail.isLoading}
             comment={caseComment}
@@ -378,53 +421,59 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       ) : null}
 
       {orderModal === 'timeline' || itemTimelineId ? (
-        <Modal
+        <PopupModal
           centered
+          anchor={itemTimelineId ? itemTimelineAnchor : requestedPopupAnchor}
           width={720}
           open
           footer={null}
           title={t(itemTimelineId ? 'orders.history.itemTitle' : 'orders.history.orderTitle')}
-          onCancel={() => (itemTimelineId ? setItemTimelineId(undefined) : closeOrderModal())}
+          onCancel={() => (itemTimelineId ? closeTimeline() : closeOrderModal())}
         >
-          {timeline.isLoading ? (
-            <Spin />
-          ) : timeline.error ? (
-            <FeedbackAlert type="error" title={t('orders.messages.historyLoadFailed')} />
-          ) : timeline.data?.items.length ? (
-            <Timeline
-              items={timeline.data.items.map((event) => ({
-                children: (
-                  <div className={styles.historyEntry}>
-                    <Space wrap>
-                      <Typography.Text strong>{event.eventType}</Typography.Text>
-                      <Typography.Text type="secondary">
-                        {event.createdAt ? dayjs(event.createdAt).format('DD/MM/YYYY HH:mm') : '—'}
-                      </Typography.Text>
-                    </Space>
-                    {event.message ? <Typography.Text>{event.message}</Typography.Text> : null}
-                    {event.fromStatus || event.toStatus ? (
-                      <Typography.Text type="secondary">
-                        {value(event.fromStatus)} → {value(event.toStatus)}
-                      </Typography.Text>
-                    ) : null}
-                    {event.actor ? (
-                      <Typography.Text type="secondary">
-                        {event.actor.displayName || event.actor.employeeCode}
-                      </Typography.Text>
-                    ) : null}
-                  </div>
-                ),
-              }))}
-            />
-          ) : (
-            <Typography.Text type="secondary">{t('orders.history.empty')}</Typography.Text>
-          )}
-        </Modal>
+          <div className={styles.historyScroll}>
+            {timeline.isLoading ? (
+              <Spin />
+            ) : timeline.error ? (
+              <FeedbackAlert type="error" title={t('orders.messages.historyLoadFailed')} />
+            ) : timeline.data?.items.length ? (
+              <Timeline
+                items={timeline.data.items.map((event) => ({
+                  children: (
+                    <div className={styles.historyEntry}>
+                      <Space wrap>
+                        <Typography.Text strong>{event.eventType}</Typography.Text>
+                        <Typography.Text type="secondary">
+                          {event.createdAt
+                            ? dayjs(event.createdAt).format('DD/MM/YYYY HH:mm')
+                            : '—'}
+                        </Typography.Text>
+                      </Space>
+                      {event.message ? <Typography.Text>{event.message}</Typography.Text> : null}
+                      {event.fromStatus || event.toStatus ? (
+                        <Typography.Text type="secondary">
+                          {value(event.fromStatus)} → {value(event.toStatus)}
+                        </Typography.Text>
+                      ) : null}
+                      {event.actor ? (
+                        <Typography.Text type="secondary">
+                          {event.actor.displayName || event.actor.employeeCode}
+                        </Typography.Text>
+                      ) : null}
+                    </div>
+                  ),
+                }))}
+              />
+            ) : (
+              <Typography.Text type="secondary">{t('orders.history.empty')}</Typography.Text>
+            )}
+          </div>
+        </PopupModal>
       ) : null}
 
       {orderModal === 'replacement' ? (
-        <Modal
+        <PopupModal
           centered
+          anchor={requestedPopupAnchor}
           width={760}
           open
           title={t('orders.actions.replaceOrder')}
@@ -484,11 +533,12 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
               onChange={(event) => setOrderReplacementReason(event.target.value)}
             />
           </div>
-        </Modal>
+        </PopupModal>
       ) : null}
 
-      <Modal
+      <PopupModal
         centered
+        anchor={confirmationAnchor}
         open={Boolean(confirmation)}
         title={t(
           confirmation?.kind === 'replacement'
@@ -497,7 +547,10 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
         )}
         okButtonProps={{ disabled: confirmation?.kind === 'cancel' && !reason.trim() }}
         confirmLoading={mutation.isPending}
-        onCancel={() => setConfirmation(undefined)}
+        onCancel={() => {
+          setConfirmation(undefined)
+          setConfirmationAnchor(undefined)
+        }}
         onOk={() => {
           if (!confirmation) return
           mutation.mutate(
@@ -536,13 +589,14 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
             </label>
           ) : null}
         </div>
-      </Modal>
+      </PopupModal>
     </div>
   )
 })
 
 function CaseEditorModal({
   orderId,
+  requestedPopupAnchor,
   openCase,
   commentsLoading,
   comment,
@@ -552,6 +606,7 @@ function CaseEditorModal({
   onAction,
 }: {
   readonly orderId: string
+  readonly requestedPopupAnchor?: PopupModalAnchor
   readonly openCase?: OrderCase
   readonly commentsLoading: boolean
   readonly comment: string
@@ -576,8 +631,9 @@ function CaseEditorModal({
   const [note, setNote] = useState('')
 
   return (
-    <Modal
+    <PopupModal
       centered
+      anchor={requestedPopupAnchor}
       width={720}
       open
       title={t('orders.actions.manageCase')}
@@ -680,13 +736,14 @@ function CaseEditorModal({
           </div>
         ) : null}
       </div>
-    </Modal>
+    </PopupModal>
   )
 }
 
 function OrderItemPanel({
   item,
   canWrite,
+  canOperate,
   pending,
   onAction,
   onConfirm,
@@ -694,10 +751,15 @@ function OrderItemPanel({
 }: {
   readonly item: OrderWorkbenchItem
   readonly canWrite: boolean
+  readonly canOperate: boolean
   readonly pending: boolean
   readonly onAction: (action: Action) => void
-  readonly onConfirm: (kind: Confirmation['kind'], item: OrderWorkbenchItem) => void
-  readonly onHistory: (itemId: string) => void
+  readonly onConfirm: (
+    event: MouseEvent<HTMLElement>,
+    kind: Confirmation['kind'],
+    item: OrderWorkbenchItem,
+  ) => void
+  readonly onHistory: (event: MouseEvent<HTMLElement>, itemId: string) => void
 }) {
   const { t } = useTranslation()
   const preview = item.customization?.previewImageUrl
@@ -705,27 +767,93 @@ function OrderItemPanel({
   const psdStatus = item.mapping?.listingVariant?.psdReadiness?.status
   const psdDownloadUrl = item.mapping?.listingVariant?.psdTemplate?.downloadUrl
   const canRecheck = item.workflow.nextActions.some((action) => action.startsWith('RECHECK_'))
+  const relatedImages = Array.from(
+    new Set([
+      preview,
+      customizationImage,
+      ...(item.customization?.inputs ?? []).map((input) => input.secureUrl),
+    ]),
+  )
+    .filter((image): image is string => Boolean(image))
+    .slice(0, 5)
+  const [imageViewer, setImageViewer] = useState<string>()
+  const [imageViewerAnchor, setImageViewerAnchor] = useState<PopupModalAnchor>()
+  const [imageZoom, setImageZoom] = useState(100)
+  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 })
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>()
   const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item.status ?? '')
+
+  const resetImageView = () => {
+    setImageZoom(100)
+    setImageOffset({ x: 0, y: 0 })
+    setDragStart(undefined)
+  }
+
+  const openImageViewer = (event: MouseEvent<HTMLElement>, url?: string | null) => {
+    if (!url) return
+    setImageViewer(url)
+    setImageViewerAnchor(getPopupAnchorFromMouseEvent(event))
+    resetImageView()
+  }
+
+  const closeImageViewer = () => {
+    setImageViewer(undefined)
+    setImageViewerAnchor(undefined)
+    resetImageView()
+  }
+
+  const showImageAt = (nextIndex: number) => {
+    const nextImage = relatedImages[nextIndex]
+    if (!nextImage) return
+    setImageViewer(nextImage)
+    setImageViewerAnchor(undefined)
+    resetImageView()
+  }
+
+  const currentImageIndex = Math.max(0, relatedImages.indexOf(imageViewer ?? ''))
+  const hasMultipleImages = relatedImages.length > 1
+
+  const zoomByWheel = (event: WheelEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setImageZoom((value) => Math.min(300, Math.max(75, value + (event.deltaY < 0 ? 15 : -15))))
+  }
+
+  const startDrag = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || imageZoom <= 100) return
+    event.preventDefault()
+    setDragStart({ x: event.clientX, y: event.clientY })
+  }
+
+  const moveDrag = (event: MouseEvent<HTMLDivElement>) => {
+    if (!dragStart) return
+    setImageOffset((current) => ({
+      x: current.x + event.clientX - dragStart.x,
+      y: current.y + event.clientY - dragStart.y,
+    }))
+    setDragStart({ x: event.clientX, y: event.clientY })
+  }
+
+  const stopDrag = () => setDragStart(undefined)
+
   return (
     <article className={styles.itemPanel}>
       <section className={styles.assetColumn}>
         <Typography.Text strong>{t('orders.sections.imagePrint')}</Typography.Text>
-        <Image
+        <AuthenticatedMediaImage
           width={112}
           height={112}
-          src={preview || customizationImage || undefined}
+          downloadUrl={preview || customizationImage || undefined}
+          alt={t('orders.fields.image')}
+          style={{ cursor: 'zoom-in' }}
+          onClick={(event) => openImageViewer(event, preview || customizationImage)}
           fallback="/favicon.svg"
         />
-        <StatusTag status={orderStatusTone(psdStatus)}>
-          PSD {value(psdStatus)}
-        </StatusTag>
+        <StatusTag status={orderStatusTone(psdStatus)}>PSD {value(psdStatus)}</StatusTag>
         {psdDownloadUrl ? (
           <Button
             size="small"
             icon={<DownloadOutlined />}
-            onClick={() =>
-              void downloadMediaAsset(psdDownloadUrl, 'template.psd')
-            }
+            onClick={() => void downloadMediaAsset(psdDownloadUrl, 'template.psd')}
           >
             PSD
           </Button>
@@ -769,7 +897,7 @@ function OrderItemPanel({
       <section>
         <Space className={styles.customizationHeader} size="small" wrap>
           <Typography.Text strong>{t('orders.sections.customization')}</Typography.Text>
-          {canWrite && item.customization?.sourceCustomizationUrl ? (
+          {canOperate && item.customization?.sourceCustomizationUrl ? (
             <Button
               size="small"
               icon={<DownloadOutlined />}
@@ -780,7 +908,7 @@ function OrderItemPanel({
               {t('orders.actions.downloadAmazonCustomization')}
             </Button>
           ) : null}
-          {canWrite && item.customization?.downloadedZip?.status === 'FAILED' ? (
+          {canOperate && item.customization?.downloadedZip?.status === 'FAILED' ? (
             <Button
               size="small"
               icon={<ReloadOutlined />}
@@ -797,12 +925,14 @@ function OrderItemPanel({
               <Typography.Text type="secondary">{input.label || input.type}: </Typography.Text>
               {input.secureUrl ? (
                 <div className={styles.buyerImage}>
-                  <Image
+                  <AuthenticatedMediaImage
                     width={72}
                     height={72}
-                    src={input.secureUrl}
+                    downloadUrl={input.secureUrl}
                     alt={input.label || t('orders.fields.image')}
                     fallback="/favicon.svg"
+                    style={{ cursor: 'zoom-in' }}
+                    onClick={(event) => openImageViewer(event, input.secureUrl)}
                   />
                   <a href={input.secureUrl} target="_blank" rel="noreferrer">
                     <LinkOutlined /> {t('orders.fields.image')}
@@ -817,6 +947,115 @@ function OrderItemPanel({
             <Typography.Text type="secondary">—</Typography.Text>
           ) : null}
         </div>
+
+        <PopupModal
+          centered
+          anchor={imageViewerAnchor}
+          open={Boolean(imageViewer)}
+          footer={null}
+          width="min(82vw, 760px)"
+          title={null}
+          closeIcon={null}
+          className={styles.imagePreviewModal}
+          onCancel={closeImageViewer}
+          style={{ padding: 0 }}
+          styles={{
+            body: { padding: 0 },
+            mask: { background: 'rgba(0, 0, 0, 0.52)' },
+          }}
+        >
+          {imageViewer ? (
+            <div
+              style={{
+                position: 'relative',
+                display: 'grid',
+                placeItems: 'center',
+              }}
+            >
+              <div
+                role="button"
+                aria-label="Image zoom and pan viewer"
+                tabIndex={0}
+                onWheel={zoomByWheel}
+                onMouseDown={startDrag}
+                onMouseMove={moveDrag}
+                onMouseUp={stopDrag}
+                onMouseLeave={stopDrag}
+                onKeyDown={(event) => event.key === 'Escape' && stopDrag()}
+                style={{
+                  width: '100%',
+                  height: 'min(78vh, 748px)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  overflow: 'hidden',
+                  background: '#fff',
+                  cursor: imageZoom > 100 ? (dragStart ? 'grabbing' : 'grab') : 'default',
+                }}
+              >
+                <AuthenticatedMediaImage
+                  downloadUrl={imageViewer}
+                  alt={t('orders.fields.image')}
+                  draggable={false}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    userSelect: 'none',
+                    transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom / 100})`,
+                    transition: dragStart ? undefined : 'transform 120ms ease',
+                  }}
+                />
+              </div>
+              <Space
+                className={styles.imagePreviewToolbar}
+                size={4}
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  bottom: -38,
+                  transform: 'translateX(-50%)',
+                  padding: '6px 10px',
+                  borderRadius: 999,
+                  background: 'rgba(80, 80, 80, 0.72)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<LeftOutlined />}
+                  disabled={!hasMultipleImages}
+                  onClick={() =>
+                    showImageAt(
+                      (currentImageIndex - 1 + relatedImages.length) % relatedImages.length,
+                    )
+                  }
+                />
+                <Button type="text" size="small" icon={<HolderOutlined />} disabled />
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<RightOutlined />}
+                  disabled={!hasMultipleImages}
+                  onClick={() => showImageAt((currentImageIndex + 1) % relatedImages.length)}
+                />
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<ZoomOutOutlined />}
+                  onClick={() => setImageZoom((value) => Math.max(75, value - 15))}
+                />
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<ZoomInOutlined />}
+                  onClick={() => setImageZoom((value) => Math.min(300, value + 15))}
+                />
+                <Button type="text" size="small" icon={<SyncOutlined />} onClick={resetImageView} />
+              </Space>
+            </div>
+          ) : null}
+        </PopupModal>
       </section>
       <section>
         <Typography.Text strong>{t('orders.sections.quantityCost')}</Typography.Text>
@@ -836,9 +1075,9 @@ function OrderItemPanel({
             },
             {
               key: 'base',
-              label: t('orders.columns.cost'),
+              label: t('orders.fields.totalCost'),
               children: formatMinorMoney(
-                item.pricing.baseCostAmount,
+                item.pricing.totalCostAmount ?? item.pricing.baseCostAmount,
                 item.pricing.currency ?? 'USD',
               ),
             },
@@ -847,7 +1086,7 @@ function OrderItemPanel({
       </section>
       <section>
         <Typography.Text strong>{t('orders.sections.fulfillment')}</Typography.Text>
-        <FulfillmentInlineEditor item={item} canWrite={canWrite} />
+        <FulfillmentInlineEditor item={item} canWrite={canOperate} />
       </section>
       <section>
         <Typography.Text strong>{t('orders.sections.trackingState')}</Typography.Text>
@@ -863,14 +1102,14 @@ function OrderItemPanel({
                 size="small"
                 aria-label={t('orders.actions.viewHistory')}
                 icon={<HistoryOutlined />}
-                onClick={() => onHistory(item.item.id)}
+                onClick={(event) => onHistory(event, item.item.id)}
               />
             </Tooltip>
           </Space>
         </div>
         <OrderItemNoteEditor
           key={`${item.item.id}:${item.item.csNote ?? ''}`}
-          canWrite={canWrite}
+          canWrite={canOperate}
           initialNote={item.item.csNote ?? ''}
           pending={pending}
           onSave={(note) => onAction({ kind: 'note', itemId: item.item.id, note })}
@@ -878,21 +1117,21 @@ function OrderItemPanel({
       </section>
       <section className={styles.itemActions}>
         <Typography.Text strong>{t('orders.sections.itemActions')}</Typography.Text>
-        {canWrite ? (
+        {canWrite || canOperate ? (
           <Space orientation="vertical" size={4}>
-            {!terminal ? (
+            {canWrite ? (
               <Tooltip title={t('orders.actions.createReplacement')} placement="left">
                 <Button
                   type="text"
                   aria-label={t('orders.actions.replaceShort')}
                   icon={<SwapOutlined />}
-                  onClick={() => onConfirm('replacement', item)}
+                  onClick={(event) => onConfirm(event, 'replacement', item)}
                 >
                   {t('orders.actions.replaceShort')}
                 </Button>
               </Tooltip>
             ) : null}
-            {canRecheck ? (
+            {canOperate && canRecheck ? (
               <Tooltip title={t('orders.actions.recheck')} placement="left">
                 <Button
                   type="text"
@@ -904,7 +1143,7 @@ function OrderItemPanel({
                 </Button>
               </Tooltip>
             ) : null}
-            {!terminal ? (
+            {canOperate && !terminal ? (
               <Tooltip title={t('orders.actions.markReady')} placement="left">
                 <Button
                   type="text"
@@ -916,14 +1155,14 @@ function OrderItemPanel({
                 </Button>
               </Tooltip>
             ) : null}
-            {!terminal ? (
+            {canOperate && !terminal ? (
               <Tooltip title={t('orders.actions.cancelItem')} placement="left">
                 <Button
                   danger
                   type="text"
                   aria-label={t('orders.actions.cancelShort')}
                   icon={<DeleteOutlined />}
-                  onClick={() => onConfirm('cancel', item)}
+                  onClick={(event) => onConfirm(event, 'cancel', item)}
                 >
                   {t('orders.actions.cancelShort')}
                 </Button>

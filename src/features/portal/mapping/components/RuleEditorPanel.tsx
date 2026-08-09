@@ -5,14 +5,17 @@ import {
   Button,
   Checkbox,
   Col,
+  Divider,
   Form,
   Input,
   InputNumber,
   Row,
   Select,
-  Space,
+  Switch,
   Typography,
 } from 'antd'
+
+import { normalizeApiError } from '@/shared/api'
 
 import type {
   MappingRule,
@@ -69,7 +72,6 @@ const fields: Record<MappingRuleType, Field[]> = {
       ],
     },
     { name: 'matchValue', required: true },
-    { name: 'matchType', required: true, kind: 'select', options: ['EXACT', 'CONTAINS'] },
     { name: 'productTypeGroupId' },
   ],
   valueAliases: [
@@ -81,7 +83,6 @@ const fields: Record<MappingRuleType, Field[]> = {
     },
     { name: 'matchValue', required: true },
     { name: 'normalizedValue', required: true },
-    { name: 'matchType', required: true, kind: 'select', options: ['EXACT', 'CONTAINS'] },
   ],
   vendorRouting: [
     { name: 'productTypeGroupId', required: true },
@@ -92,16 +93,41 @@ const fields: Record<MappingRuleType, Field[]> = {
     { name: 'normalizedColor' },
   ],
 }
+const fieldNamesByType = Object.fromEntries(
+  Object.entries(fields).map(([type, items]) => [type, new Set(items.map((field) => field.name))]),
+) as Record<MappingRuleType, Set<string>>
+const metadataFieldNames = new Set([
+  'shopId',
+  'salesChannelCode',
+  'marketplaceCode',
+  'status',
+  'priority',
+])
+const csvListFields = new Set(['appliesWhenValues', 'productTypeAliases'])
+const scopeFieldNames = ['shopId', 'salesChannelCode', 'marketplaceCode'] as const
 
-function initialValues(rule?: MappingRule): MappingRuleInput {
-  return rule ? { ...rule } : { status: 'ACTIVE', priority: 100, matchType: 'EXACT' }
+function scopeValues(rule?: MappingRule) {
+  return Object.fromEntries(
+    scopeFieldNames.flatMap((key) => (rule?.[key] ? [[key, rule[key]]] : [])),
+  )
 }
 
-function normalizeValues(values: MappingRuleInput) {
+function pickRuleValues(type: MappingRuleType, values: MappingRuleInput) {
+  const allowedFields = fieldNamesByType[type]
   return Object.fromEntries(
-    Object.entries(values).flatMap(([key, value]) => {
+    Object.entries(values).filter(([key]) => {
+      if (metadataFieldNames.has(key)) return true
+      return allowedFields.has(key)
+    }),
+  )
+}
+
+function normalizeValues(type: MappingRuleType, values: MappingRuleInput) {
+  const filtered = pickRuleValues(type, values)
+  return Object.fromEntries(
+    Object.entries(filtered).flatMap(([key, value]) => {
       if (value === '' || value == null || key === 'id') return []
-      if (key === 'appliesWhenValues' || key === 'productTypeAliases') {
+      if (csvListFields.has(key)) {
         return [
           [
             key,
@@ -117,6 +143,12 @@ function normalizeValues(values: MappingRuleInput) {
   )
 }
 
+function initialValues(type: MappingRuleType, rule?: MappingRule): MappingRuleInput {
+  const baseDefaults = { status: 'ACTIVE', priority: 100 }
+  const values = rule ? { ...baseDefaults, ...rule } : baseDefaults
+  return normalizeValues(type, values)
+}
+
 export function RuleEditorPanel({
   canWrite,
   rule,
@@ -125,6 +157,7 @@ export function RuleEditorPanel({
   productTypeGroups = [],
   internalTemplates = [],
   vendors = [],
+  initialSampleSku = '',
   onDirtyChange,
   onPreview,
   onConflicts,
@@ -137,8 +170,9 @@ export function RuleEditorPanel({
   readonly productTypeGroups?: ReferenceOption[]
   readonly internalTemplates?: Array<ReferenceOption & { productTypeGroup?: { id: string } | null }>
   readonly vendors?: ReferenceOption[]
+  readonly initialSampleSku?: string
   readonly onDirtyChange: (dirty: boolean) => void
-  readonly onPreview: (rule: MappingRuleInput) => Promise<RulePreviewResult>
+  readonly onPreview: (rule: MappingRuleInput, samples: string[]) => Promise<RulePreviewResult>
   readonly onConflicts: (rule: MappingRuleInput) => Promise<RuleConflictResult>
   readonly onSave: (rule: MappingRuleInput) => Promise<void>
 }) {
@@ -148,6 +182,8 @@ export function RuleEditorPanel({
   const [conflicts, setConflicts] = useState<RuleConflictResult>()
   const [acknowledged, setAcknowledged] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [sampleSku, setSampleSku] = useState(initialSampleSku)
+  const [previewError, setPreviewError] = useState<string>()
   const productTypeGroupId = Form.useWatch('productTypeGroupId', form)
 
   const exactConflict = Boolean(
@@ -181,8 +217,10 @@ export function RuleEditorPanel({
   }
 
   const inspect = async () => {
-    const values = normalizeValues(await form.validateFields())
-    const nextPreview = await onPreview(values)
+    setPreviewError(undefined)
+    const values = { ...scopeValues(rule), ...normalizeValues(type, await form.validateFields()) }
+    const sample = sampleSku.trim()
+    const nextPreview = await onPreview(values, sample ? [sample] : [])
     setPreview(nextPreview)
     setConflicts(await onConflicts(values))
     setAcknowledged(false)
@@ -190,7 +228,7 @@ export function RuleEditorPanel({
 
   const save = async () => {
     if (!readyToSave) return
-    await onSave(normalizeValues(await form.validateFields()))
+    await onSave({ ...scopeValues(rule), ...normalizeValues(type, await form.validateFields()) })
     setPreview(undefined)
     setConflicts(undefined)
     setAcknowledged(false)
@@ -201,13 +239,19 @@ export function RuleEditorPanel({
   return (
     <div style={{ minHeight: 0, overflow: 'auto', paddingRight: 4 }}>
       {!canWrite ? (
-        <Alert type="info" showIcon message={t('mapping.states.selectContext')} />
+        <Alert
+          type="info"
+          showIcon
+          message={t('mapping.states.selectContext')}
+          style={{ marginBottom: 16 }}
+        />
       ) : null}
+
       <Form
         form={form}
         disabled={!canWrite}
         layout="vertical"
-        initialValues={initialValues(rule)}
+        initialValues={initialValues(type, rule)}
         onValuesChange={() => {
           setDirty(true)
           setPreview(undefined)
@@ -215,6 +259,10 @@ export function RuleEditorPanel({
           onDirtyChange(true)
         }}
       >
+        {/* Rule-type specific fields */}
+        <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+          {t('mapping.sections.ruleFields', { defaultValue: 'Rule Definition' })}
+        </Divider>
         <Row gutter={[16, 0]}>
           {displayedFields.map((field) => (
             <Col key={field.name} xs={24} md={12}>
@@ -240,38 +288,86 @@ export function RuleEditorPanel({
               </Form.Item>
             </Col>
           ))}
+        </Row>
+
+        {/* Metadata */}
+        <Divider plain style={{ fontSize: 12, margin: '8px 0 16px' }}>
+          {t('mapping.sections.ruleMetadata', { defaultValue: 'Priority & Status' })}
+        </Divider>
+        <Row gutter={[16, 0]} align="middle">
           <Col xs={24} md={12}>
             <Form.Item name="priority" label={t('mapping.fields.priority')}>
               <InputNumber style={{ width: '100%' }} min={0} />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="status" label={t('mapping.fields.status')}>
-              <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))} />
+            <Form.Item
+              name="status"
+              label={t('mapping.fields.status')}
+              valuePropName="checked"
+              getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+              getValueProps={(v) => ({ checked: v === 'ACTIVE' })}
+            >
+              <Switch
+                checkedChildren={t('mapping.states.active')}
+                unCheckedChildren={t('mapping.states.inactive')}
+              />
             </Form.Item>
           </Col>
         </Row>
       </Form>
+
+      {/* Unsaved indicator */}
       {dirty ? (
-        <Typography.Text type="warning">{t('mapping.feedback.unsaved')}</Typography.Text>
+        <Typography.Text type="warning" style={{ fontSize: 12 }}>
+          ● {t('mapping.feedback.unsaved')}
+        </Typography.Text>
       ) : null}
+
+      {/* Impact preview */}
+      <Form.Item label={t('mapping.fields.sampleSku')} htmlFor="mapping-rule-sample-sku">
+        <Input
+          id="mapping-rule-sample-sku"
+          value={sampleSku}
+          onChange={(event) => setSampleSku(event.target.value)}
+        />
+      </Form.Item>
+      {previewError ? <Alert type="error" showIcon message={previewError} /> : null}
       {preview || conflicts ? <RuleImpactSamples conflicts={conflicts} preview={preview} /> : null}
+
+      {/* Conflict ack */}
       {hasWarning && !exactConflict ? (
         <Checkbox
           checked={acknowledged}
           onChange={(event) => setAcknowledged(event.target.checked)}
+          style={{ marginTop: 8 }}
         >
           {t('mapping.actions.acknowledge')}
         </Checkbox>
       ) : null}
-      <Space style={{ marginTop: 12 }}>
-        <Button disabled={!canWrite} onClick={() => void inspect().catch(() => undefined)}>
+
+      {/* Actions */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          marginTop: 20,
+          paddingTop: 16,
+          borderTop: '1px solid var(--ant-color-border)',
+        }}
+      >
+        <Button
+          disabled={!canWrite}
+          onClick={() =>
+            void inspect().catch((error) => setPreviewError(normalizeApiError(error).message))
+          }
+        >
           {t('mapping.actions.previewChanges')}
         </Button>
         <Button type="primary" disabled={!readyToSave} loading={saving} onClick={() => void save()}>
           {t('mapping.actions.saveRule')}
         </Button>
-      </Space>
+      </div>
     </div>
   )
 }

@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { Tabs } from 'antd'
+import { AppstoreOutlined, FileTextOutlined, TableOutlined } from '@ant-design/icons'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { UiTabLabel, UiTabs } from '@/shared/ui'
 
+import { CatalogDashboardPage } from './CatalogDashboardPage'
 import { CatalogListingWorkbenchPage } from './CatalogListingWorkbenchPage'
 import { InternalTemplateManagementPage } from './InternalTemplateManagementPage'
 import { ProductTypeManagementPage } from './ProductTypeManagementPage'
@@ -14,22 +16,43 @@ export function CatalogWorkspacePage() {
   const canManageMasterData = account.permissions.includes('CATALOG:WRITE')
 
   return (
-    <Tabs
+    <UiTabs
       destroyOnHidden={false}
       items={[
         {
+          key: 'dashboard',
+          label: (
+            <UiTabLabel>
+              <AppstoreOutlined /> Overview
+            </UiTabLabel>
+          ),
+          children: <CatalogDashboardPage />,
+        },
+        {
           key: 'listings',
-          label: t('portal.catalog.tabs.listings'),
+          label: (
+            <UiTabLabel>
+              <TableOutlined /> {t('portal.catalog.tabs.listings')}
+            </UiTabLabel>
+          ),
           children: <CatalogListingWorkbenchPage account={account} />,
         },
         {
           key: 'product-types',
-          label: t('portal.catalog.tabs.productTypes'),
+          label: (
+            <UiTabLabel>
+              <AppstoreOutlined /> {t('portal.catalog.tabs.productTypes')}
+            </UiTabLabel>
+          ),
           children: <ProductTypeManagementPage canManage={canManageMasterData} />,
         },
         {
           key: 'templates',
-          label: t('portal.catalog.tabs.templates'),
+          label: (
+            <UiTabLabel>
+              <FileTextOutlined /> {t('portal.catalog.tabs.templates')}
+            </UiTabLabel>
+          ),
           children: <InternalTemplateManagementPage canManage={canManageMasterData} />,
         },
       ]}

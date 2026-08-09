@@ -65,4 +65,77 @@ describe('RuleEditorPanel', () => {
     await screen.findByText('An exact-scope rule already exists.')
     expect(screen.getByRole('button', { name: 'Save rule' })).toBeDisabled()
   })
+
+  it('keeps semantic matching defaults out of the staff form', () => {
+    render(
+      <RuleEditorPanel
+        canWrite
+        type="semanticRules"
+        onDirtyChange={vi.fn()}
+        onPreview={vi.fn()}
+        onConflicts={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByLabelText('Match type')).not.toBeInTheDocument()
+  })
+
+  it('preserves the selected shop scope in submitted rule payloads', async () => {
+    const onPreview = vi.fn().mockResolvedValue({ items: [] })
+    render(
+      <RuleEditorPanel
+        canWrite
+        type="skuConfig"
+        rule={{ id: '', shopId: 'shop-1', configCode: 'TS1S' }}
+        productTypeGroups={[{ id: 'group-1', name: 'T-shirt', code: 'TS' }]}
+        onDirtyChange={vi.fn()}
+        onPreview={onPreview}
+        onConflicts={vi.fn().mockResolvedValue({ conflicts: [] })}
+        onSave={vi.fn()}
+      />,
+    )
+
+    chooseProductGroup()
+    fireEvent.click(screen.getByRole('button', { name: 'Preview changes' }))
+
+    await waitFor(() =>
+      expect(onPreview).toHaveBeenCalledWith(expect.objectContaining({ shopId: 'shop-1' }), []),
+    )
+  })
+
+  it('previews an explicitly entered sample SKU and shows preview failures', async () => {
+    const onPreview = vi.fn().mockRejectedValue(new Error('Preview unavailable'))
+    render(
+      <RuleEditorPanel
+        canWrite
+        type="skuNormalize"
+        rule={{
+          id: 'rule-1',
+          segmentIndex: 1,
+          segmentRole: 'CONFIG',
+          appliesWhenValues: ['TS'],
+          outputAction: 'REPLACE_SEGMENT',
+          replacementValue: 'TS2S',
+        }}
+        onDirtyChange={vi.fn()}
+        onPreview={onPreview}
+        onConflicts={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Sample SKU'), {
+      target: { value: ' J2522-TS-1 ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview changes' }))
+
+    await waitFor(() =>
+      expect(onPreview).toHaveBeenCalledWith(
+        expect.objectContaining({ replacementValue: 'TS2S' }),
+        ['J2522-TS-1'],
+      ),
+    )
+    expect(await screen.findByText('Preview unavailable')).toBeInTheDocument()
+  })
 })

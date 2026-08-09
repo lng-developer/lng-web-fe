@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card, Flex, Modal, Select } from 'antd'
+import { Badge, Card, Drawer, Flex, Modal, Select, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
@@ -122,8 +122,21 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
   const contextRule = useMemo<MappingRule | undefined>(() => {
     if (!creating) return undefined
     const configCode = contextConfigCode ?? originPreview.data?.skuMapping?.configCode
-    return { id: '', ...(configCode && page.ruleType === 'skuConfig' ? { configCode } : {}) }
-  }, [contextConfigCode, creating, originPreview.data?.skuMapping?.configCode, page.ruleType])
+    const productTypeGroupId = originPreview.data?.productTypeGroup?.id
+    return {
+      id: '',
+      ...(shopId ? { shopId } : {}),
+      ...(configCode && page.ruleType === 'skuConfig' ? { configCode } : {}),
+      ...(productTypeGroupId && page.ruleType === 'skuConfig' ? { productTypeGroupId } : {}),
+    }
+  }, [
+    contextConfigCode,
+    creating,
+    originPreview.data?.productTypeGroup?.id,
+    originPreview.data?.skuMapping?.configCode,
+    page.ruleType,
+    shopId,
+  ])
   const referenceLabels = useMemo(
     () => ({
       productGroups: Object.fromEntries(
@@ -180,7 +193,22 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
       {rules.error || originPreview.error ? (
         <FeedbackAlert type="error" title={t('mapping.feedback.loadFailed')} />
       ) : null}
-      <Card size="small" title={t('mapping.sections.rules')}>
+      <Card
+        size="small"
+        title={
+          <Space size={8}>
+            <span>{t('mapping.sections.rules')}</span>
+            {rules.data ? (
+              <Badge
+                count={rules.data.pagination.total}
+                showZero
+                color="blue"
+                style={{ fontSize: 11 }}
+              />
+            ) : null}
+          </Space>
+        }
+      >
         <RuleInventoryPanel
           canWrite={canWrite}
           shopFilter={
@@ -217,26 +245,49 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           onToggleStatus={toggleRuleStatus}
         />
       </Card>
-      <Modal
-        centered
+      {/* Rule Editor — Drawer */}
+      <Drawer
         destroyOnHidden
-        footer={null}
         open={editorOpen}
-        title={creating ? t('mapping.actions.createRule') : t('mapping.sections.ruleEditor')}
-        width={760}
-        onCancel={() => {
+        width={720}
+        title={
+          <Space size={8}>
+            <span>
+              {creating ? t('mapping.actions.createRule') : t('mapping.sections.ruleEditor')}
+            </span>
+            {selectedRule?.status ? (
+              <Tag color={selectedRule.status === 'ACTIVE' ? 'green' : 'default'}>
+                {selectedRule.status}
+              </Tag>
+            ) : null}
+          </Space>
+        }
+        onClose={() => {
           setCreating(false)
           setSelectedRule(undefined)
         }}
       >
         {orderItemId ? (
-          <FeedbackAlert
-            type="success"
-            title={originPreview.data?.skuMapping?.configCode || t('mapping.states.unavailable')}
-          />
+          <div
+            style={{
+              marginBottom: 12,
+              padding: '8px 12px',
+              background: '#f0f9ff',
+              borderRadius: 8,
+              border: '1px solid #bae0ff',
+            }}
+          >
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              Context order item
+            </Typography.Text>
+            <br />
+            <Typography.Text strong>
+              {originPreview.data?.skuMapping?.configCode || orderItemId}
+            </Typography.Text>
+          </div>
         ) : null}
         <RuleEditorPanel
-          key={`${page.ruleType}:${selectedRule?.id ?? contextConfigCode ?? 'new'}`}
+          key={`${page.ruleType}:${selectedRule?.id ?? contextConfigCode ?? 'new'}:${contextRule?.productTypeGroupId ?? ''}`}
           canWrite={canWrite}
           rule={selectedRule ?? contextRule}
           type={page.ruleType}
@@ -244,12 +295,13 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           productTypeGroups={catalogOptions.data?.productTypeGroups}
           internalTemplates={catalogOptions.data?.internalTemplates}
           vendors={vendors.data?.items}
+          initialSampleSku={originPreview.data?.skuNormalization?.originalSku || undefined}
           onDirtyChange={() => undefined}
-          onPreview={(rule) =>
+          onPreview={(rule, samples) =>
             previewMappingRule({
               ruleType: page.ruleType,
               rule,
-              samples: orderItemId ? [{ orderItemId }] : [],
+              samples,
             })
           }
           onConflicts={(rule) =>
@@ -257,7 +309,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           }
           onSave={(rule) => saveRule.mutateAsync(rule).then(() => undefined)}
         />
-      </Modal>
+      </Drawer>
       <RuleHistoryModal
         id={historyRule?.id}
         open={Boolean(historyRule)}

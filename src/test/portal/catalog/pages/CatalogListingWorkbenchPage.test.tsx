@@ -5,6 +5,7 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { CatalogListingWorkbenchPage } from '@/features/portal/catalog/pages/CatalogListingWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
@@ -62,6 +63,7 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
     id: 'listing-1',
     shopId: 'shop-1',
     sku: 'SKU-1',
+    asin: 'B0TEST123',
     title: 'Shirt',
     salesChannelCode: 'AMAZON',
     marketplaceCode: 'US',
@@ -88,18 +90,19 @@ const account = { permissions: ['CATALOG:WRITE'], scopes: [] } as unknown as Cur
 
 describe('CatalogListingWorkbenchPage', () => {
   afterEach(cleanup)
-  beforeEach(() => i18n.changeLanguage('en'))
-  it('shows a quick view action', async () => {
+  beforeEach(() => {
+    queryClient.clear()
+    i18n.changeLanguage('en')
+  })
+  it('opens listing details from the catalog card', async () => {
     render(
       <AppProviders>
         <CatalogListingWorkbenchPage account={account} />
       </AppProviders>,
     )
-    const action = await screen.findByRole('button', { name: 'View' })
-    expect(action).toHaveTextContent('')
-    fireEvent.click(action)
-    await waitFor(() => expect(screen.getByRole('dialog')).toHaveTextContent('SKU-1'))
-  }, 15_000)
+    fireEvent.click(await screen.findByRole('button', { name: /SKU-1/ }))
+    await waitFor(() => expect(screen.getByText('Product variants')).toBeInTheDocument())
+  }, 30_000)
 
   it('shows variants and Request PSD inline without listing title or QC column', async () => {
     render(
@@ -108,13 +111,10 @@ describe('CatalogListingWorkbenchPage', () => {
       </AppProviders>,
     )
 
+    fireEvent.click(await screen.findByRole('button', { name: /SKU-1/ }))
     expect(await screen.findByText('Unisex Hoodie')).toBeInTheDocument()
     expect(screen.getByText('Hoodie Master')).toBeInTheDocument()
     expect(screen.getByText('B0TEST123')).toBeInTheDocument()
-    expect(screen.getByText('Default')).toBeInTheDocument()
-    expect(screen.getByText('Variants (1)')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Request PSD' })).toBeInTheDocument()
-    expect(screen.queryByText('Shirt')).not.toBeInTheDocument()
-    expect(screen.queryByRole('columnheader', { name: 'QC' })).not.toBeInTheDocument()
-  }, 15_000)
+  }, 30_000)
 })

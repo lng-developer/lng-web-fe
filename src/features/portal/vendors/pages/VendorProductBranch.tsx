@@ -1,8 +1,16 @@
-import { memo, useState } from 'react'
+import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EditOutlined, PlusOutlined } from '@ant-design/icons'
+import {
+  AppstoreOutlined,
+  ClockCircleOutlined,
+  DownOutlined,
+  EditOutlined,
+  PlusOutlined,
+  RightOutlined,
+  TagOutlined,
+} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Empty, Space, Tooltip } from 'antd'
+import { Avatar, Button, Empty, Flex, Image, Space, Tag, Tooltip } from 'antd'
 
 import { getGlobalPermissions } from '@/shared/auth/session'
 import { SearchInput } from '@/shared/ui'
@@ -26,7 +34,12 @@ export const VendorProductBranch = memo(function VendorProductBranch({
   const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
   const [expanded, setExpanded] = useState(false)
   const [search, setSearch] = useState('')
-  const params = { limit: 20, page: 1, q: search }
+  const deferredSearch = useDeferredValue(search)
+
+  const params = useMemo(
+    () => ({ limit: 30, page: 1, q: deferredSearch || undefined }),
+    [deferredSearch],
+  )
   const costCenters = useQuery({
     enabled: expanded,
     queryKey: vendorKeys.costCenters(product.id, params),
@@ -34,6 +47,11 @@ export const VendorProductBranch = memo(function VendorProductBranch({
     retry: false,
   })
   const canWrite = getGlobalPermissions().includes('VENDORS:WRITE')
+
+  const slaDays =
+    product.minProductionDays !== null || product.maxProductionDays !== null
+      ? `${product.minProductionDays ?? 0}-${product.maxProductionDays ?? product.minProductionDays ?? 0} ${t('vendors.days')}`
+      : null
 
   return (
     <section
@@ -53,26 +71,59 @@ export const VendorProductBranch = memo(function VendorProductBranch({
           }
           onClick={() => setExpanded((value) => !value)}
         >
-          <span className={styles.nodeIdentity}>
-            <strong>{product.name}</strong>
-            <small>
-              {[
-                product.code,
-                product.productTypeGroup?.name,
-                product.baseCostAmount === undefined
-                  ? null
-                  : `${product.baseCostAmount} ${product.currency ?? ''}`.trim(),
-                product.minProductionDays === null && product.maxProductionDays === null
-                  ? null
-                  : `${product.minProductionDays ?? 0}-${product.maxProductionDays ?? product.minProductionDays ?? 0} ${t('vendors.days')}`,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </small>
+          {/* Chevron indicator */}
+          <span style={{ fontSize: 11, color: '#8c8c8c', width: 14 }}>
+            {expanded ? <DownOutlined /> : <RightOutlined />}
           </span>
-          <span>{product.costCenterCount}</span>
+
+          {/* Thumbnail preview / Icon */}
+          {product.imageUrl ? (
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }}
+              preview={false}
+            />
+          ) : (
+            <Avatar
+              shape="square"
+              size={32}
+              icon={<AppstoreOutlined />}
+              style={{ background: '#f5f5f5', color: '#8c8c8c', borderRadius: 4 }}
+            />
+          )}
+
+          {/* Product Info & Visual Badges */}
+          <span className={styles.nodeIdentity}>
+            <Flex align="center" gap={8} wrap="wrap">
+              <strong>{product.name}</strong>
+              <Tag color="default" style={{ fontSize: 11, fontFamily: 'monospace' }}>
+                {product.code}
+              </Tag>
+              {product.productTypeGroup?.name ? (
+                <Tag color="blue" style={{ fontSize: 11 }}>
+                  {product.productTypeGroup.name}
+                </Tag>
+              ) : null}
+              {slaDays ? (
+                <Tag color="cyan" icon={<ClockCircleOutlined />} style={{ fontSize: 11 }}>
+                  {slaDays}
+                </Tag>
+              ) : null}
+              {product.baseCostAmount !== undefined ? (
+                <Tag color="green" style={{ fontSize: 11, fontWeight: 600 }}>
+                  ${product.baseCostAmount} {product.currency ?? ''}
+                </Tag>
+              ) : null}
+              <Tag color="geekblue" style={{ fontSize: 11 }}>
+                {product.costCenterCount} cost centers
+              </Tag>
+            </Flex>
+          </span>
+
           <VendorStatus status={product.status} />
         </button>
+
         {canWrite ? (
           <Space size={2} onClick={(event) => event.stopPropagation()}>
             <Tooltip title={t('vendors.addCostCenter')}>
@@ -94,6 +145,7 @@ export const VendorProductBranch = memo(function VendorProductBranch({
           </Space>
         ) : null}
       </div>
+
       {expanded ? (
         <div className={styles.costCenterBranch} role="group">
           <SearchInput
@@ -124,20 +176,28 @@ export const VendorProductBranch = memo(function VendorProductBranch({
               key={costCenter.id}
             >
               <span className={styles.nodeIdentity}>
-                <strong>{costCenter.name}</strong>
-                <small>
-                  {[
-                    costCenter.code,
-                    costCenter.sku ?? costCenter.lngCode,
-                    costCenter.standardSize,
-                    costCenter.standardColor,
-                    costCenter.baseCostAmount === undefined
-                      ? null
-                      : `${costCenter.baseCostAmount} ${costCenter.currency ?? ''}`.trim(),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </small>
+                <Flex align="center" gap={8} wrap="wrap">
+                  <TagOutlined style={{ color: '#8c8c8c', fontSize: 12 }} />
+                  <strong>{costCenter.name}</strong>
+                  <Tag color="default" style={{ fontSize: 11, fontFamily: 'monospace' }}>
+                    {costCenter.code}
+                  </Tag>
+                  {costCenter.standardSize ? (
+                    <Tag color="purple" style={{ fontSize: 11 }}>
+                      Size: {costCenter.standardSize}
+                    </Tag>
+                  ) : null}
+                  {costCenter.standardColor ? (
+                    <Tag color="magenta" style={{ fontSize: 11 }}>
+                      Color: {costCenter.standardColor}
+                    </Tag>
+                  ) : null}
+                  {costCenter.baseCostAmount !== undefined ? (
+                    <Tag color="green" style={{ fontSize: 11, fontWeight: 600 }}>
+                      ${costCenter.baseCostAmount} {costCenter.currency ?? ''}
+                    </Tag>
+                  ) : null}
+                </Flex>
               </span>
               <VendorStatus status={costCenter.status} />
               {canWrite ? (
