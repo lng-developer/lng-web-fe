@@ -9,7 +9,7 @@ import globals from 'globals'
 import typescriptEslint from 'typescript-eslint'
 
 export default [
-  { ignores: ['dist', 'node_modules', '.husky'] },
+  { ignores: ['dist', 'node_modules', '.husky', '.agents'] },
   js.configs.recommended,
   ...typescriptEslint.configs.recommended,
   react.configs.flat.recommended,

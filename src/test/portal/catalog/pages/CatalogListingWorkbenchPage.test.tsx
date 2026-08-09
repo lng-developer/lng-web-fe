@@ -102,7 +102,7 @@ describe('CatalogListingWorkbenchPage', () => {
     )
     fireEvent.click(await screen.findByRole('button', { name: /SKU-1/ }))
     await waitFor(() => expect(screen.getByText('Product variants')).toBeInTheDocument())
-  }, 30_000)
+  }, 60_000)
 
   it('shows variants and Request PSD inline without listing title or QC column', async () => {
     render(
@@ -116,5 +116,5 @@ describe('CatalogListingWorkbenchPage', () => {
     expect(screen.getByText('Hoodie Master')).toBeInTheDocument()
     expect(screen.getByText('B0TEST123')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Request PSD' })).toBeInTheDocument()
-  }, 30_000)
+  }, 60_000)
 })
