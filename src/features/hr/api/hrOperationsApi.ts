@@ -117,6 +117,10 @@ export type RotationInput = {
   minPresent?: number
   customRotations?: Array<{ dateKey: string; employeeProfileIds: string[] }>
 }
+export type SaturdayRotationGenerateResponse = {
+  generated: number
+  items: SaturdayRotation[]
+}
 
 const list = async <T>(path: string, params: Query = {}) =>
   unwrap<Page<T>>(await apiClient.get(path, { params }))
@@ -178,7 +182,7 @@ export const createSaturdayRotation = (input: {
   minPresent?: number
 }) => create<SaturdayRotation>('/api/hr/saturday-rotations', input)
 export const generateSaturdayRotations = (input: RotationInput) =>
-  create<SaturdayRotation[]>('/api/hr/saturday-rotations/generate', input)
+  create<SaturdayRotationGenerateResponse>('/api/hr/saturday-rotations/generate', input)
 export const updateSaturdayRotation = (id: string, employeeProfileIds: string[]) =>
   update<SaturdayRotation>(`/api/hr/saturday-rotations/${id}`, { employeeProfileIds })
 export const deleteSaturdayRotation = async (id: string) =>

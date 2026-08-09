@@ -11,14 +11,13 @@ import {
   Radio,
   Select,
   Skeleton,
-  Space,
   Upload,
   type UploadFile,
 } from 'antd'
 
 import { loadDepartments, loadTeams } from '@/features/organization/api/organizationApi'
 import { getPermissions } from '@/shared/auth/session'
-import { DateTimePicker, FeedbackAlert, useFeedbackToast } from '@/shared/ui'
+import { DateTimePicker, FeedbackAlert, FormActions, useFeedbackToast } from '@/shared/ui'
 
 import {
   type EmployeeProfile,
@@ -622,14 +621,17 @@ export function StaffEditorModal({
               </div>
             ))}
           </div>
-          <Space className={styles.formActions}>
-            <Button onClick={onClose}>{t('hr.cancel')}</Button>
-            {!readOnly && (
-              <Button type="primary" htmlType="submit" loading={save.isPending}>
-                {t('hr.save')}
-              </Button>
+          <Form.Item shouldUpdate noStyle>
+            {() => (
+              <FormActions
+                cancelLabel={t('hr.cancel')}
+                dirty={form.isFieldsTouched()}
+                onCancel={onClose}
+                saving={save.isPending}
+                submitLabel={t('hr.save')}
+              />
             )}
-          </Space>
+          </Form.Item>
         </Form>
       )}
     </Modal>

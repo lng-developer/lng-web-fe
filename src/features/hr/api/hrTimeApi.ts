@@ -11,11 +11,13 @@ const get = async <T>(path: string, params?: Query) =>
   unwrap<T>(await apiClient.get(path, ...(params ? [{ params }] : [])))
 const post = async <T>(path: string, input?: object) =>
   unwrap<T>(await apiClient.post(path, ...(input ? [input] : [])))
+const put = async <T>(path: string, input?: object) =>
+  unwrap<T>(await apiClient.put(path, ...(input ? [input] : [])))
 
 export type Attendance = {
   id: string
   profileId: string
-  employee?: { fullName?: string; employeeCode?: string } | null
+  employee?: { fullName?: string; employeeCode?: string; avatarUrl?: string | null } | null
   workDateKey: string
   status: string
   workDayValue: number
@@ -41,7 +43,7 @@ export type LeaveBalance = {
 export type LeaveRequest = {
   id: string
   profileId: string
-  employee?: { fullName?: string; employeeCode?: string } | null
+  employee?: { fullName?: string; employeeCode?: string; avatarUrl?: string | null } | null
   leaveType: string
   portion: string
   startDateKey: string
@@ -54,7 +56,7 @@ export type LeaveRequest = {
 export type OvertimeRequest = {
   id: string
   profileId: string
-  employee?: { fullName?: string; employeeCode?: string } | null
+  employee?: { fullName?: string; employeeCode?: string; avatarUrl?: string | null } | null
   workDateKey: string
   plannedStartTime: string
   plannedEndTime: string
@@ -80,10 +82,37 @@ export type PayrollResult = {
   id: string
   payrollRunId: string
   profileId: string
-  employee?: { fullName?: string; employeeCode?: string; teamName?: string } | null
+  employee?: {
+    fullName?: string
+    employeeCode?: string
+    avatarUrl?: string | null
+    jobTitle?: string | null
+    departmentName?: string | null
+    teamName?: string | null
+    employmentType?: string | null
+    startDate?: string | null
+  } | null
+  company?: {
+    name?: string
+    logoUrl?: string | null
+    address?: string
+    taxCode?: string
+    payrollEmail?: string
+    payrollPhone?: string
+    currency?: string
+  } | null
   baseSalary: number
   workDays: number
+  salaryFromWork?: number
+  overtimePay?: number
+  overtimeBreakdown?: Array<{ rateClass: string; approvedMinutes: number; amount: number }>
+  totalAllowances?: number
+  allowanceBreakdown?: Record<string, number>
+  adjustmentEarnings?: number
+  adjustmentDeductions?: number
   grossIncome: number
+  insurance?: { social: number; health: number; unemployment: number; total: number }
+  personalIncomeTax?: number
   totalDeductions: number
   netIncome: number
   status: string
@@ -101,6 +130,27 @@ export type PayrollAdjustment = {
   status: string
   version: number
 }
+export type PayrollSettings = {
+  adjustmentTypes: string[]
+  adjustmentCodes: string[]
+  paidLeaveTypes?: string[]
+  workHoursPerDay?: number
+  pitBrackets?: Array<[number, number]>
+  formulaVersion?: string
+  otRateBasisPoints?: Record<string, number>
+  insuranceRates?: { social: number; health: number; unemployment: number }
+  insuranceCap?: number
+  personalDeduction?: number
+  dependantDeduction?: number
+  probationRateBasisPoints?: number
+  workUnitScale?: number
+  rateScale?: number
+  company?: NonNullable<PayrollResult['company']>
+  version: number
+  updatedAt?: string | null
+  [key: string]: unknown
+}
+export type PayrollSettingsPayload = Partial<PayrollSettings> & { expectedVersion: number }
 export type Announcement = {
   id: string
   title: string
@@ -112,6 +162,16 @@ export type Announcement = {
   isPinned: boolean
   scheduledAt: string | null
   publishedAt: string | null
+  targetDepartmentIds?: string[]
+  targetProfileIds?: string[]
+  attachments?: Array<{ mediaId: string; filename?: string | null; mimeType?: string | null }>
+  remindAt?: string | null
+  eventDetails?: {
+    startDate?: string | null
+    endDate?: string | null
+    location?: string | null
+    isMandatory?: boolean
+  } | null
   capabilities?: Record<string, boolean>
 }
 export type HrDashboard = {
@@ -133,6 +193,17 @@ export type HrDashboard = {
     totalPending: number
     approvedOvertimesToday: number
   }
+  rangeDays?: 1 | 7 | 30
+  attendanceTrend?: Array<{
+    date: string
+    records: number
+    present: number
+    late: number
+    absent: number
+    onLeave: number
+    missingCheckOuts: number
+    coverageRate: number
+  }>
 }
 export type WorkContext = {
   workDateKey: string
@@ -169,10 +240,12 @@ export type MyHrWorkspace = {
 }
 export type TeamHrWorkspace = {
   dateKey: string
+  rangeDays?: 1 | 7 | 30
   profiles: Page<{
     id: string
     employeeCode: string
     fullName: string
+    avatarUrl?: string | null
     jobTitle?: string
     status: string
   }>
@@ -276,8 +349,13 @@ export const markPayrollPaid = (id: string, payrollResultIds: string[], expected
 export const emailPayroll = (id: string) => post<unknown>(`/api/hr/payrolls/${id}/email`, {})
 export const listPayrollAdjustments = (params: Query = {}) =>
   get<Page<PayrollAdjustment>>('/api/hr/payroll-adjustments', params)
+export const getPayrollSettings = () => get<PayrollSettings>('/api/hr/payroll-settings')
+export const updatePayrollSettings = (input: PayrollSettingsPayload) =>
+  put<PayrollSettings>('/api/hr/payroll-settings', input)
 export const createPayrollAdjustment = (input: object) =>
   post<PayrollAdjustment>('/api/hr/payroll-adjustments', input)
+export const createBulkPayrollAdjustments = (input: object) =>
+  post<PayrollAdjustment[]>('/api/hr/payroll-adjustments/bulk', input)
 export const updatePayrollAdjustment = async (id: string, input: object) =>
   unwrap<PayrollAdjustment>(await apiClient.patch(`/api/hr/payroll-adjustments/${id}`, input))
 export const cancelPayrollAdjustment = async (id: string, expectedVersion: number) =>
@@ -294,8 +372,8 @@ export const updateAnnouncement = async (id: string, input: object) =>
   unwrap<Announcement>(await apiClient.patch(`/api/hr/announcements/${id}`, input))
 export const deleteAnnouncement = async (id: string) =>
   unwrap<Announcement>(await apiClient.delete(`/api/hr/announcements/${id}`))
-export const getHrDashboard = (dateKey?: string) =>
-  get<HrDashboard>('/api/hr/dashboard', dateKey ? { dateKey } : undefined)
+export const getHrDashboard = (dateKey?: string, days?: 1 | 7 | 30) =>
+  get<HrDashboard>('/api/hr/dashboard', { dateKey, days })
 export const getMyHrWorkspace = (params: Query) =>
   get<MyHrWorkspace>('/api/hr/workspace/me', params)
 export const getTeamHrWorkspace = (params: Query) =>

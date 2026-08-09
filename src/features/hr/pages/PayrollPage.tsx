@@ -2,27 +2,78 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DownloadOutlined, MailOutlined, PlayCircleOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, InputNumber, Modal, Select, Space, Table, Tag } from 'antd'
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from 'antd'
 import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
-import { MetricCard, MonthPicker, SectionCard, useFeedbackToast } from '@/shared/ui'
+import {
+  EmployeeAvatar,
+  MetricCard,
+  MonthPicker,
+  PageHeader,
+  SectionCard,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import { loadEmployeeProfiles } from '../api/hrApi'
 import {
-  createPayrollAdjustment,
+  createBulkPayrollAdjustments,
   emailPayroll,
   exportPayrollResults,
   finalizePayroll,
+  getPayrollSettings,
   listMyPayrolls,
   listPayrollAdjustments,
   listPayrollResults,
   listPayrolls,
   markPayrollPaid,
+  type PayrollResult,
   type PayrollRun,
+  type PayrollSettings,
   runPayroll,
+  updatePayrollSettings,
 } from '../api/hrTimeApi'
 import styles from './HrOperationsPage.module.scss'
+import { PayslipStatement } from './PayslipStatement'
+
+export function PayrollEmployeeCell({
+  employee,
+  fallbackLabel,
+}: {
+  employee?: PayrollResult['employee']
+  fallbackLabel: string
+}) {
+  return (
+    <Space>
+      <EmployeeAvatar
+        name={employee?.fullName || employee?.employeeCode}
+        avatarUrl={employee?.avatarUrl}
+        size={36}
+      />
+      <div>
+        <Typography.Text strong>
+          {employee?.fullName || employee?.employeeCode || fallbackLabel}
+        </Typography.Text>
+        {employee?.employeeCode && employee?.fullName && (
+          <Typography.Text type="secondary" style={{ display: 'block' }}>
+            {employee.employeeCode}
+          </Typography.Text>
+        )}
+      </div>
+    </Space>
+  )
+}
 
 export function PayrollPage() {
   const { t, i18n } = useTranslation()
@@ -32,8 +83,9 @@ export function PayrollPage() {
   const canFinalize = permissions.has('HR_PAYROLL:FINALIZE')
   const canPay = permissions.has('HR_PAYROLL:PAY')
   const [month, setMonth] = useState(dayjs())
-  const [editor, setEditor] = useState<'run' | 'adjustment'>()
+  const [editor, setEditor] = useState<'run' | 'adjustment' | 'settings'>()
   const [form] = Form.useForm()
+  const [settingsForm] = Form.useForm()
   const toast = useFeedbackToast()
   const queryClient = useQueryClient()
   const params = { month: month.month() + 1, year: month.year(), limit: 100 }
@@ -56,6 +108,11 @@ export function PayrollPage() {
     queryFn: () => loadEmployeeProfiles(false),
     enabled: canWrite,
   })
+  const settings = useQuery({
+    queryKey: ['hr-payroll', 'settings'],
+    queryFn: getPayrollSettings,
+    enabled: canRead,
+  })
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['hr-payroll'] })
   const run = useMutation({
     mutationFn: (values: object) =>
@@ -69,7 +126,7 @@ export function PayrollPage() {
   })
   const adjust = useMutation({
     mutationFn: (values: object) =>
-      createPayrollAdjustment({ ...values, month: params.month, year: params.year }),
+      createBulkPayrollAdjustments({ ...values, month: params.month, year: params.year }),
     onSuccess: () => {
       setEditor(undefined)
       form.resetFields()
@@ -78,6 +135,23 @@ export function PayrollPage() {
     },
     onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
   })
+  const saveSettings = useMutation({
+    mutationFn: (values: Partial<PayrollSettings>) =>
+      updatePayrollSettings({
+        ...values,
+        expectedVersion: settings.data?.version || 0,
+      }),
+    onSuccess: () => {
+      setEditor(undefined)
+      toast('success', t('hrOperations.messages.payrollSettingsSaved'))
+      void refresh()
+    },
+    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+  })
+  const openSettings = () => {
+    settingsForm.setFieldsValue(settings.data)
+    setEditor('settings')
+  }
   const lifecycle = useMutation({
     mutationFn: async ({
       action,
@@ -113,9 +187,35 @@ export function PayrollPage() {
     link.click()
     URL.revokeObjectURL(url)
   }
-  const money = (value: number) =>
+  const money = (value?: number) =>
     new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US').format(value || 0)
   const resultItems = results.data?.items ?? []
+  const myPayslip = !canRead ? resultItems[0] : null
+
+  if (!canRead) {
+    return (
+      <section className={styles.page}>
+        <PageHeader
+          title={t('hrOperations.payroll.myTitle')}
+          description={t('hrOperations.payroll.myDescription')}
+          actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
+        />
+        {myPayslip ? (
+          <PayslipStatement
+            result={myPayslip}
+            periodLabel={month.format('MM/YYYY')}
+            formatMoney={money}
+          />
+        ) : (
+          <SectionCard title={t('hrOperations.payroll.myPayroll')}>
+            <Typography.Text type="secondary">
+              {t('hrOperations.payroll.emptyPayslip', { period: month.format('MM/YYYY') })}
+            </Typography.Text>
+          </SectionCard>
+        )}
+      </section>
+    )
+  }
 
   return (
     <section className={styles.page}>
@@ -129,8 +229,11 @@ export function PayrollPage() {
           )}
           {canWrite && (
             <>
+              <Button onClick={openSettings} loading={settings.isLoading} disabled={!settings.data}>
+                {t('hrOperations.payroll.settings')}
+              </Button>
               <Button onClick={() => setEditor('adjustment')}>
-                {t('hrOperations.payroll.addAdjustment')}
+                {t('hrOperations.payroll.addBulkAdjustment')}
               </Button>
               <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => setEditor('run')}>
                 {t('hrOperations.payroll.run')}
@@ -220,10 +323,12 @@ export function PayrollPage() {
           columns={[
             {
               title: t('hrOperations.common.employee'),
-              render: (_, item) =>
-                item.employee?.fullName ||
-                item.employee?.employeeCode ||
-                t('hrOperations.common.me'),
+              render: (_, item) => (
+                <PayrollEmployeeCell
+                  employee={item.employee}
+                  fallbackLabel={t('hrOperations.common.me')}
+                />
+              ),
             },
             { title: t('hrOperations.payroll.workdays'), dataIndex: 'workDays' },
             {
@@ -274,9 +379,9 @@ export function PayrollPage() {
       )}
       <Modal
         centered
-        open={Boolean(editor)}
+        open={editor === 'run' || editor === 'adjustment'}
         title={t(
-          editor === 'run' ? 'hrOperations.payroll.run' : 'hrOperations.payroll.addAdjustment',
+          editor === 'run' ? 'hrOperations.payroll.run' : 'hrOperations.payroll.addBulkAdjustment',
         )}
         footer={null}
         onCancel={() => setEditor(undefined)}
@@ -298,11 +403,12 @@ export function PayrollPage() {
           ) : (
             <>
               <Form.Item
-                name="profileId"
+                name="profileIds"
                 label={t('hrOperations.common.employee')}
                 rules={[{ required: true }]}
               >
                 <Select
+                  mode="multiple"
                   showSearch
                   optionFilterProp="label"
                   options={profiles.data?.items.map((item) => ({
@@ -316,9 +422,7 @@ export function PayrollPage() {
                 label={t('hrOperations.common.type')}
                 rules={[{ required: true }]}
               >
-                <Select
-                  options={['EARNING', 'ALLOWANCE', 'DEDUCTION'].map((value) => ({ value }))}
-                />
+                <Select options={settings.data?.adjustmentTypes.map((value) => ({ value }))} />
               </Form.Item>
               <Form.Item
                 name="code"
@@ -326,7 +430,7 @@ export function PayrollPage() {
                 rules={[{ required: true }]}
               >
                 <Select
-                  options={['BONUS', 'PENALTY', 'ADVANCE', 'ARREARS', 'OTHER'].map((value) => ({
+                  options={settings.data?.adjustmentCodes.map((value) => ({
                     value,
                   }))}
                 />
@@ -354,6 +458,123 @@ export function PayrollPage() {
             <Button onClick={() => setEditor(undefined)}>{t('hrOperations.common.cancel')}</Button>
             <Button type="primary" htmlType="submit" loading={run.isPending || adjust.isPending}>
               {t('hrOperations.payroll.confirm')}
+            </Button>
+          </Space>
+        </Form>
+      </Modal>
+      <Modal
+        centered
+        width={760}
+        open={editor === 'settings'}
+        title={t('hrOperations.payroll.settings')}
+        footer={null}
+        onCancel={() => setEditor(undefined)}
+      >
+        <Form
+          form={settingsForm}
+          layout="vertical"
+          onFinish={(values) => saveSettings.mutate(values)}
+        >
+          <Typography.Title level={5}>{t('hrOperations.payroll.company')}</Typography.Title>
+          <Form.Item
+            name={['company', 'name']}
+            label={t('hrOperations.payroll.companyName')}
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item name={['company', 'logoUrl']} label={t('hrOperations.payroll.logoUrl')}>
+            <Input />
+          </Form.Item>
+          <Form.Item name={['company', 'address']} label={t('hrOperations.payroll.companyAddress')}>
+            <Input />
+          </Form.Item>
+          <Space wrap align="start">
+            <Form.Item name={['company', 'taxCode']} label={t('hrOperations.payroll.taxCode')}>
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name={['company', 'payrollEmail']}
+              label={t('hrOperations.payroll.payrollEmail')}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name={['company', 'payrollPhone']}
+              label={t('hrOperations.payroll.payrollPhone')}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item name={['company', 'currency']} label={t('hrOperations.payroll.currency')}>
+              <Input maxLength={3} />
+            </Form.Item>
+          </Space>
+
+          <Typography.Title level={5}>
+            {t('hrOperations.payroll.calculationSettings')}
+          </Typography.Title>
+          <Space wrap align="start">
+            <Form.Item name="workHoursPerDay" label={t('hrOperations.payroll.workHoursPerDay')}>
+              <InputNumber min={1} max={24} />
+            </Form.Item>
+            <Form.Item
+              name="probationRateBasisPoints"
+              label={t('hrOperations.payroll.probationRate')}
+            >
+              <InputNumber min={0} />
+            </Form.Item>
+            <Form.Item name="insuranceCap" label={t('hrOperations.payroll.insuranceCap')}>
+              <InputNumber min={0} />
+            </Form.Item>
+            <Form.Item name="personalDeduction" label={t('hrOperations.payroll.personalDeduction')}>
+              <InputNumber min={0} />
+            </Form.Item>
+            <Form.Item
+              name="dependantDeduction"
+              label={t('hrOperations.payroll.dependantDeduction')}
+            >
+              <InputNumber min={0} />
+            </Form.Item>
+          </Space>
+          <Space wrap align="start">
+            {['social', 'health', 'unemployment'].map((key) => (
+              <Form.Item
+                key={key}
+                name={['insuranceRates', key]}
+                label={t(`hrOperations.payroll.insurance.${key}`)}
+              >
+                <InputNumber min={0} />
+              </Form.Item>
+            ))}
+          </Space>
+          <Space wrap align="start">
+            {[
+              'weekday',
+              'weekend',
+              'holiday',
+              'weekday_night',
+              'weekend_night',
+              'holiday_night',
+            ].map((key) => (
+              <Form.Item
+                key={key}
+                name={['otRateBasisPoints', key]}
+                label={t(`hrOperations.payroll.otRate.${key}`)}
+              >
+                <InputNumber min={0} />
+              </Form.Item>
+            ))}
+          </Space>
+          <Form.Item name="adjustmentTypes" label={t('hrOperations.payroll.adjustmentTypes')}>
+            <Select mode="tags" tokenSeparators={[',']} />
+          </Form.Item>
+          <Form.Item name="adjustmentCodes" label={t('hrOperations.payroll.adjustmentCodes')}>
+            <Select mode="tags" tokenSeparators={[',']} />
+          </Form.Item>
+          <Space className={styles.actions}>
+            <Button onClick={() => setEditor(undefined)}>{t('hrOperations.common.cancel')}</Button>
+            <Button type="primary" htmlType="submit" loading={saveSettings.isPending}>
+              {t('hrOperations.common.save')}
             </Button>
           </Space>
         </Form>

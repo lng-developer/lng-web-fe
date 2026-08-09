@@ -1,12 +1,28 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ClockCircleOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons'
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+  LoginOutlined,
+  LogoutOutlined,
+  WarningOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Modal, Select, Space, Table, Tag } from 'antd'
+import { Button, Divider, Form, Input, Modal, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
-import { DateTimePicker, MetricCard, MonthPicker, SectionCard, useFeedbackToast } from '@/shared/ui'
+import {
+  DateTimePicker,
+  FormActions,
+  MetricCard,
+  MonthPicker,
+  PageHeader,
+  SectionCard,
+  StatusTag,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   adjustAttendance,
@@ -36,16 +52,20 @@ export function AttendancePage() {
     dateTo: month.endOf('month').format('YYYY-MM-DD'),
     limit: 100,
   }
+
   useQuery({
     queryKey: ['hr-time', 'attendance-matrix', params],
     queryFn: () => listAttendanceMatrix(params),
     enabled: canRead,
   })
+
   const records = useQuery({
     queryKey: ['hr-time', 'attendance', canRead ? 'all' : 'me', range.dateFrom],
     queryFn: () => (canRead ? listAttendance(range) : listMyAttendance(range)),
   })
+
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['hr-time', 'attendance'] })
+
   const action = useMutation({
     mutationFn: (kind: 'in' | 'out') =>
       kind === 'in'
@@ -57,6 +77,7 @@ export function AttendancePage() {
     },
     onError: (error) => toast('error', t('hrOperations.messages.attendanceFailed'), error.message),
   })
+
   const adjust = useMutation({
     mutationFn: (values: object) => adjustAttendance(adjusting!.id, values),
     onSuccess: () => {
@@ -67,6 +88,7 @@ export function AttendancePage() {
     },
     onError: (error) => toast('error', t('hrOperations.messages.adjustFailed'), error.message),
   })
+
   const items = records.data?.items ?? []
   const present = items.filter((item) => item.status === 'PRESENT').length
   const late = items.filter((item) => item.lateMinutes > 0).length
@@ -74,38 +96,76 @@ export function AttendancePage() {
 
   return (
     <section className={styles.page}>
-      <div className={styles.toolbar}>
-        <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
-        {canWrite && (
-          <Space>
-            <Button
-              icon={<LoginOutlined />}
-              loading={action.isPending}
-              onClick={() => action.mutate('in')}
-            >
-              {t('hrOperations.attendance.checkIn')}
-            </Button>
-            <Button
-              type="primary"
-              icon={<LogoutOutlined />}
-              loading={action.isPending}
-              onClick={() => action.mutate('out')}
-            >
-              {t('hrOperations.attendance.checkOut')}
-            </Button>
-          </Space>
+      <PageHeader
+        title={t(
+          canRead ? 'hrOperations.attendance.teamTitle' : 'hrOperations.attendance.myTitle',
+          {
+            defaultValue: canRead ? 'Attendance Records & Time Matrix' : 'My Attendance History',
+          },
         )}
-      </div>
+        description={t('hrOperations.attendance.description', {
+          defaultValue:
+            'Track daily check-ins, check-outs, late arrival minutes, and attendance adjustments.',
+        })}
+        actions={
+          <Space>
+            <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
+            {canWrite && (
+              <Space>
+                <Button
+                  icon={<LoginOutlined />}
+                  loading={action.isPending}
+                  onClick={() => action.mutate('in')}
+                >
+                  {t('hrOperations.attendance.checkIn')}
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<LogoutOutlined />}
+                  loading={action.isPending}
+                  onClick={() => action.mutate('out')}
+                >
+                  {t('hrOperations.attendance.checkOut')}
+                </Button>
+              </Space>
+            )}
+          </Space>
+        }
+      />
+
+      {/* Metric Cards */}
       <div className={styles.metrics}>
         <MetricCard
           icon={<ClockCircleOutlined />}
+          variant="neutral"
           label={t('hrOperations.attendance.records')}
           value={String(items.length)}
+          loading={records.isLoading}
         />
-        <MetricCard label={t('hrOperations.attendance.present')} value={String(present)} />
-        <MetricCard label={t('hrOperations.attendance.late')} value={String(late)} />
-        <MetricCard label={t('hrOperations.attendance.missingCheckout')} value={String(missing)} />
+        <MetricCard
+          icon={<CheckCircleOutlined />}
+          variant="success"
+          label={t('hrOperations.attendance.present')}
+          value={String(present)}
+          loading={records.isLoading}
+        />
+        <MetricCard
+          icon={<WarningOutlined />}
+          variant="danger"
+          label={t('hrOperations.attendance.late')}
+          value={String(late)}
+          loading={records.isLoading}
+        />
+        <MetricCard
+          icon={<ClockCircleOutlined />}
+          variant="warning"
+          label={t('hrOperations.attendance.missingCheckout')}
+          value={String(missing)}
+          loading={records.isLoading}
+        />
       </div>
+
+      {/* Main Table */}
       <SectionCard
         title={t(canRead ? 'hrOperations.attendance.teamTable' : 'hrOperations.attendance.myTable')}
       >
@@ -115,84 +175,125 @@ export function AttendancePage() {
           loading={records.isLoading}
           dataSource={items}
           pagination={{ pageSize: 15 }}
-          onRow={(item) => ({ onClick: () => canManage && setAdjusting(item) })}
           columns={[
             {
-              title: t('hrOperations.common.employee'),
-              render: (_, item) =>
-                item.employee?.fullName ||
-                item.employee?.employeeCode ||
-                t('hrOperations.common.me'),
+              title: t('hrOperations.common.date'),
+              dataIndex: 'workDateKey',
+              render: (v) => <Typography.Text strong>{v}</Typography.Text>,
             },
-            { title: t('hrOperations.common.date'), dataIndex: 'workDateKey' },
+            ...(canRead
+              ? [
+                  {
+                    title: t('hrOperations.common.employee'),
+                    render: (_: unknown, item: Attendance) =>
+                      item.employee?.fullName ||
+                      item.employee?.employeeCode ||
+                      item.profileId ||
+                      item.id,
+                  },
+                ]
+              : []),
+            {
+              title: t('hrOperations.attendance.checkInTime'),
+              dataIndex: 'checkInAt',
+              render: (v) => (v ? dayjs(v).format('HH:mm:ss') : '--:--:--'),
+            },
+            {
+              title: t('hrOperations.attendance.checkOutTime'),
+              dataIndex: 'checkOutAt',
+              render: (v) => (v ? dayjs(v).format('HH:mm:ss') : '--:--:--'),
+            },
+            {
+              title: t('hrOperations.attendance.lateMinutes'),
+              dataIndex: 'lateMinutes',
+              render: (v) =>
+                v > 0 ? <Tag color="red">{v} min</Tag> : <Tag color="green">0 min</Tag>,
+            },
             {
               title: t('hrOperations.common.status'),
               dataIndex: 'status',
-              render: (value) => <Tag>{value}</Tag>,
+              render: (v) => (
+                <StatusTag
+                  status={v === 'PRESENT' ? 'approved' : v === 'ABSENT' ? 'rejected' : 'pending'}
+                >
+                  {v}
+                </StatusTag>
+              ),
             },
-            {
-              title: t('hrOperations.attendance.in'),
-              dataIndex: 'checkInAt',
-              render: (value) => (value ? dayjs(value).format('HH:mm') : '-'),
-            },
-            {
-              title: t('hrOperations.attendance.out'),
-              dataIndex: 'checkOutAt',
-              render: (value) => (value ? dayjs(value).format('HH:mm') : '-'),
-            },
-            {
-              title: t('hrOperations.attendance.late'),
-              dataIndex: 'lateMinutes',
-              render: (value) => `${value}m`,
-            },
-            { title: t('hrOperations.attendance.workday'), dataIndex: 'workDayValue' },
+            ...(canManage
+              ? [
+                  {
+                    title: '',
+                    width: 44,
+                    render: (_: unknown, item: Attendance) => (
+                      <Tooltip title={t('hrOperations.attendance.adjust')}>
+                        <Button
+                          type="text"
+                          icon={<EditOutlined />}
+                          onClick={() => {
+                            setAdjusting(item)
+                            form.setFieldsValue({
+                              checkInAt: item.checkInAt,
+                              checkOutAt: item.checkOutAt,
+                              reason: '',
+                            })
+                          }}
+                        />
+                      </Tooltip>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
       </SectionCard>
+
+      {/* Adjust Modal */}
       <Modal
         centered
+        destroyOnHidden
         open={Boolean(adjusting)}
-        title={t('hrOperations.attendance.adjust')}
+        title={t('hrOperations.attendance.adjustTitle', { defaultValue: 'Adjust Attendance Log' })}
         footer={null}
+        width={500}
         onCancel={() => setAdjusting(undefined)}
       >
         <Form form={form} layout="vertical" onFinish={(values) => adjust.mutate(values)}>
-          <Form.Item name="status" label={t('hrOperations.common.status')}>
-            <Select
-              options={[
-                'PRESENT',
-                'ABSENT',
-                'PAID_LEAVE',
-                'UNPAID_LEAVE',
-                'HALF_DAY',
-                'HOLIDAY',
-                'REST_DAY',
-              ].map((value) => ({ value }))}
-            />
-          </Form.Item>
+          <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+            Correction Details
+          </Divider>
+
           <Form.Item name="checkInAt" label={t('hrOperations.attendance.checkInTime')}>
-            <DateTimePicker />
+            <DateTimePicker mode="datetime" />
           </Form.Item>
+
           <Form.Item name="checkOutAt" label={t('hrOperations.attendance.checkOutTime')}>
-            <DateTimePicker />
+            <DateTimePicker mode="datetime" />
           </Form.Item>
+
           <Form.Item
             name="reason"
-            label={t('hrOperations.common.reason')}
+            label={t('hrOperations.attendance.adjustReason')}
             rules={[{ required: true, message: t('hrOperations.common.required') }]}
           >
-            <Input.TextArea rows={3} />
+            <Input.TextArea rows={3} placeholder="Reason for adjusting check-in/out record..." />
           </Form.Item>
-          <Space className={styles.actions}>
-            <Button onClick={() => setAdjusting(undefined)}>
-              {t('hrOperations.common.cancel')}
-            </Button>
-            <Button type="primary" htmlType="submit" loading={adjust.isPending}>
-              {t('hrOperations.common.save')}
-            </Button>
-          </Space>
+
+          <Form.Item shouldUpdate noStyle>
+            {() => (
+              <FormActions
+                cancelLabel={t('hrOperations.common.cancel')}
+                dirty={form.isFieldsTouched()}
+                onCancel={() => setAdjusting(undefined)}
+                saving={adjust.isPending}
+                submitLabel={t('hrOperations.common.save')}
+              />
+            )}
+          </Form.Item>
         </Form>
       </Modal>
     </section>
   )
 }
+
+export default AttendancePage

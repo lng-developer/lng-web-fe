@@ -10,6 +10,8 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Space, Tag, Tooltip } from 'antd'
 
+import { StatusTag } from '@/shared/ui'
+
 import { type EmployeeProfile, loadEmployeeAvatar } from '../api/hrApi'
 import styles from './HrWorkspacePage.module.scss'
 
@@ -82,20 +84,24 @@ export const HrStaffDirectory = memo(function HrStaffDirectory({
                         {profile.employeeCode} · {profile.jobTitle ?? t('hr.noJobTitle')}
                       </small>
                     </span>
-                    <Tag
-                      color={
-                        profile.status === 'ACTIVE'
-                          ? 'green'
-                          : profile.status === 'PROBATION'
-                            ? 'gold'
-                            : undefined
-                      }
-                    >
-                      {profile.status}
-                    </Tag>
-                    <Tag color={profile.onboardingStatus === 'READY' ? 'blue' : 'orange'}>
-                      {profile.onboardingStatus}
-                    </Tag>
+                    <Space size={4} style={{ marginLeft: 8 }}>
+                      <StatusTag
+                        status={
+                          profile.status === 'ACTIVE'
+                            ? 'operational'
+                            : profile.status === 'PROBATION'
+                              ? 'warning'
+                              : 'pending'
+                        }
+                      >
+                        {profile.status}
+                      </StatusTag>
+                      <StatusTag
+                        status={profile.onboardingStatus === 'READY' ? 'ready' : 'pending'}
+                      >
+                        {profile.onboardingStatus}
+                      </StatusTag>
+                    </Space>
                   </button>
                   {canWrite && (
                     <Space size={2} className={styles.staffActions}>
