@@ -5,6 +5,10 @@ vi.mock('@/shared/api', () => ({
   uploadApiClient: { post: vi.fn() },
 }))
 
+vi.mock('@/shared/media', () => ({
+  uploadMultipartAsset: vi.fn(),
+}))
+
 import {
   assignCsTask,
   assignProductionTask,
@@ -20,8 +24,10 @@ import {
   updateProductionCsNote,
   updateProductionCsStatus,
   uploadManualScaledOutput,
+  uploadScaledOutput,
 } from '@/features/portal/production/api/productionApi'
 import { apiClient, uploadApiClient } from '@/shared/api'
+import { uploadMultipartAsset } from '@/shared/media'
 
 describe('productionApi', () => {
   beforeEach(() => {
@@ -32,6 +38,7 @@ describe('productionApi', () => {
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
     vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
     vi.mocked(uploadApiClient.post).mockResolvedValue({ data: {} })
+    vi.mocked(uploadMultipartAsset).mockResolvedValue({ id: 'asset-1', uploadStatus: 'READY' })
   })
 
   it('uses the production queue and per-file QC contracts', async () => {
@@ -147,5 +154,17 @@ describe('productionApi', () => {
     expect(body.get('slotKey')).toBe('LEFT_SLEEVE')
     expect(body.get('slotLabel')).toBe('Left sleeve')
     expect(body.get('file')).toBe(file)
+  })
+
+  it('uploads scaled output directly to storage and attaches the media asset', async () => {
+    const file = new File(['scaled'], 'front.png', { type: 'image/png' })
+
+    await uploadScaledOutput('task-1', 'check-1', file)
+
+    expect(uploadMultipartAsset).toHaveBeenCalledWith(file, { assetPurpose: 'PRINT_READY' })
+    expect(apiClient.patch).toHaveBeenCalledWith(
+      '/api/production/tasks/task-1/file-checks/check-1/scaled-output',
+      { mediaAssetId: 'asset-1' },
+    )
   })
 })
