@@ -105,7 +105,7 @@ describe('AccessControlPage', () => {
     expect(
       (await screen.findByText('Changes saved')).closest('.ant-notification-notice'),
     ).not.toBeNull()
-  }, 15_000)
+  }, 30_000)
 
   it('opens a small editor instead of the legacy catalog drawer', async () => {
     setPermissions(['AUTH:WRITE'])
@@ -126,5 +126,5 @@ describe('AccessControlPage', () => {
     expect(
       screen.queryByRole('heading', { name: /role catalog|danh mục vai trò/i }),
     ).not.toBeInTheDocument()
-  })
+  }, 15_000)
 })

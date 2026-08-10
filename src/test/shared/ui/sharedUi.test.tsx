@@ -1,5 +1,5 @@
 import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -27,7 +27,10 @@ import {
 import { serializeDateTimeValue } from '@/shared/ui/dateTimeValue'
 
 describe('shared UI', () => {
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+  })
 
   it('updates the search field immediately and debounces expensive consumers', () => {
     vi.useFakeTimers()
