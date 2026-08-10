@@ -11,7 +11,7 @@ export type EmployeeAvatarProps = Pick<AvatarProps, 'size' | 'className'> & {
 export function EmployeeAvatar({ name, avatarUrl, size = 32, className }: EmployeeAvatarProps) {
   const [failedUrl, setFailedUrl] = useState<string>()
   const label = name?.trim() || '?'
-  const resolvedAvatarUrl = avatarUrl?.endsWith('/hr/default-avatar.jpg') ? null : avatarUrl
+  const resolvedAvatarUrl = avatarUrl?.endsWith('/default-avatar.jpg') ? null : avatarUrl
   const initials = label
     .split(/\s+/)
     .slice(-2)

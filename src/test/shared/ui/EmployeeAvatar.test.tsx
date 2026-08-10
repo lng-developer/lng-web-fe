@@ -32,10 +32,13 @@ describe('EmployeeAvatar', () => {
     expect(screen.getByText('VA')).toBeVisible()
   })
 
-  it('ignores the legacy default avatar URL', () => {
-    render(<EmployeeAvatar name="Nguyen Van An" avatarUrl="/hr/default-avatar.jpg" />)
+  it.each(['/hr/default-avatar.jpg', '/portal/default-avatar.jpg'])(
+    'ignores the legacy default avatar URL %s',
+    (avatarUrl) => {
+      render(<EmployeeAvatar name="Nguyen Van An" avatarUrl={avatarUrl} />)
 
-    expect(screen.queryByRole('img', { name: 'Nguyen Van An' })).not.toBeInTheDocument()
-    expect(screen.getByText('VA')).toBeVisible()
-  })
+      expect(screen.queryByRole('img', { name: 'Nguyen Van An' })).not.toBeInTheDocument()
+      expect(screen.getByText('VA')).toBeVisible()
+    },
+  )
 })
