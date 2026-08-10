@@ -90,6 +90,7 @@ export function WorkScoreDetailDrawer({
   }
 
   const snapshot = score?.contextSnapshot ?? {}
+  const canPreviewAsset = score?.sourceType === 'PRODUCTION_SCALE'
   const sku = String(snapshot.sku || snapshot.externalOrderId || '—')
   const taskTitle = String(snapshot.taskTitle || snapshot.taskType || score?.sourceTaskId || '—')
   const slotLabel = String(snapshot.slotLabel || snapshot.fileName || '—')
@@ -120,12 +121,16 @@ export function WorkScoreDetailDrawer({
             <div
               style={{ textAlign: 'center', background: '#1f1f1f', borderRadius: 10, padding: 16 }}
             >
-              <AuthenticatedMediaImage
-                downloadUrl={score.assetDownloadUrl}
-                alt={slotLabel}
-                className={styles.drawerPreview}
-                fallback="/favicon.svg"
-              />
+              {canPreviewAsset ? (
+                <AuthenticatedMediaImage
+                  downloadUrl={score.assetDownloadUrl}
+                  alt={slotLabel}
+                  className={styles.drawerPreview}
+                  fallback="/favicon.svg"
+                />
+              ) : (
+                <FileImageOutlined style={{ fontSize: 48, color: '#fff' }} />
+              )}
               <Flex justify="center" gap={8} style={{ marginTop: 8 }}>
                 <Button
                   size="small"
