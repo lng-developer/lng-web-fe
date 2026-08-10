@@ -1,2 +1,2 @@
 export { ApiError, normalizeApiError } from './apiError'
-export { apiClient } from './client'
+export { apiClient, uploadApiClient } from './client'

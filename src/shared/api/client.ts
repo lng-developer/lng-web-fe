@@ -11,7 +11,19 @@ export const apiClient = axios.create({
   withCredentials: true,
 })
 
+export const uploadApiClient = axios.create({
+  baseURL: env.uploadApiBaseUrl,
+  timeout: 120_000,
+  withCredentials: true,
+})
+
 apiClient.interceptors.request.use((request) => {
+  const token = getAccessToken()
+  if (token) request.headers.Authorization = `Bearer ${token}`
+  return request
+})
+
+uploadApiClient.interceptors.request.use((request) => {
   const token = getAccessToken()
   if (token) request.headers.Authorization = `Bearer ${token}`
   return request
@@ -26,4 +38,9 @@ apiClient.interceptors.response.use(
     else if (apiError.status === 401 && requestUrl !== '/api/auth/login') setAccessToken(null)
     return Promise.reject(apiError)
   },
+)
+
+uploadApiClient.interceptors.response.use(
+  (response) => response.data,
+  (error: unknown) => Promise.reject(normalizeApiError(error)),
 )

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() } }))
+vi.mock('@/shared/api', () => ({
+  apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() },
+  uploadApiClient: { post: vi.fn() },
+}))
 
 import {
   assignCsTask,
@@ -18,7 +21,7 @@ import {
   updateProductionCsStatus,
   uploadManualScaledOutput,
 } from '@/features/portal/production/api/productionApi'
-import { apiClient } from '@/shared/api'
+import { apiClient, uploadApiClient } from '@/shared/api'
 
 describe('productionApi', () => {
   beforeEach(() => {
@@ -28,6 +31,7 @@ describe('productionApi', () => {
     })
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
     vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
+    vi.mocked(uploadApiClient.post).mockResolvedValue({ data: {} })
   })
 
   it('uses the production queue and per-file QC contracts', async () => {
@@ -135,8 +139,8 @@ describe('productionApi', () => {
       slotLabel: 'Left sleeve',
     })
 
-    const body = vi.mocked(apiClient.post).mock.calls[0][1] as FormData
-    expect(apiClient.post).toHaveBeenCalledWith(
+    const body = vi.mocked(uploadApiClient.post).mock.calls[0][1] as FormData
+    expect(uploadApiClient.post).toHaveBeenCalledWith(
       '/api/production/tasks/task-1/file-checks/manual/scaled-output-file',
       expect.any(FormData),
     )

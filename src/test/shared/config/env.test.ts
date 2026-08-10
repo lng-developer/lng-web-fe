@@ -6,6 +6,7 @@ describe('readEnv', () => {
   it('uses safe defaults when optional values are missing', () => {
     expect(readEnv({ DEV: false })).toEqual({
       apiBaseUrl: '',
+      uploadApiBaseUrl: '',
       appName: 'LNG Web FE',
       isDev: false,
     })
@@ -20,8 +21,21 @@ describe('readEnv', () => {
       }),
     ).toEqual({
       apiBaseUrl: 'https://api.example.test',
+      uploadApiBaseUrl: 'https://api.example.test',
       appName: 'LNG Operations',
       isDev: true,
+    })
+  })
+
+  it('allows upload API base URL to use a different origin', () => {
+    expect(
+      readEnv({
+        DEV: false,
+        VITE_API_BASE_URL: 'https://app.example.test/api/',
+        VITE_UPLOAD_API_BASE_URL: 'https://uploads.example.test///',
+      }),
+    ).toMatchObject({
+      uploadApiBaseUrl: 'https://uploads.example.test',
     })
   })
 })

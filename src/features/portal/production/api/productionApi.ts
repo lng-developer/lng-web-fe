@@ -1,4 +1,4 @@
-import { apiClient } from '@/shared/api'
+import { apiClient, uploadApiClient } from '@/shared/api'
 
 type ApiResponse<T> = { success: boolean; data: T }
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -179,7 +179,7 @@ export async function uploadScaledOutput(id: string, fileCheckId: string, file: 
   const body = new FormData()
   body.append('file', file)
   return unwrap<ProductionTask>(
-    await apiClient.post(
+    await uploadApiClient.post(
       `${basePath}/tasks/${id}/file-checks/${fileCheckId}/scaled-output-file`,
       body,
     ),
@@ -192,6 +192,9 @@ export async function uploadManualScaledOutput(id: string, input: ManualScaledOu
   if (input.slotLabel) body.append('slotLabel', input.slotLabel)
   body.append('file', input.file)
   return unwrap<ProductionTask>(
-    await apiClient.post(`${basePath}/tasks/${id}/file-checks/manual/scaled-output-file`, body),
+    await uploadApiClient.post(
+      `${basePath}/tasks/${id}/file-checks/manual/scaled-output-file`,
+      body,
+    ),
   )
 }
