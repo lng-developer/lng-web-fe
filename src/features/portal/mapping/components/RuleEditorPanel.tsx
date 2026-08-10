@@ -30,6 +30,12 @@ type Field = { name: string; required?: boolean; kind?: 'number' | 'select'; opt
 type ReferenceOption = { id: string; code?: string; name: string }
 const fields: Record<MappingRuleType, Field[]> = {
   skuNormalize: [
+    {
+      name: 'patternType',
+      required: true,
+      kind: 'select',
+      options: ['SEGMENT'],
+    },
     { name: 'configCode' },
     { name: 'segmentIndex', required: true, kind: 'number' },
     {
@@ -144,7 +150,10 @@ function normalizeValues(type: MappingRuleType, values: MappingRuleInput) {
 }
 
 function initialValues(type: MappingRuleType, rule?: MappingRule): MappingRuleInput {
-  const baseDefaults = { status: 'ACTIVE', priority: 100 }
+  const baseDefaults =
+    type === 'skuNormalize'
+      ? { status: 'ACTIVE', priority: 100, patternType: 'SEGMENT' }
+      : { status: 'ACTIVE', priority: 100 }
   const values = rule ? { ...baseDefaults, ...rule } : baseDefaults
   return normalizeValues(type, values)
 }
@@ -216,9 +225,15 @@ export function RuleEditorPanel({
     }))
   }
 
+  const rulePayload = async () => ({
+    ...initialValues(type, rule),
+    ...scopeValues(rule),
+    ...normalizeValues(type, await form.validateFields()),
+  })
+
   const inspect = async () => {
     setPreviewError(undefined)
-    const values = { ...scopeValues(rule), ...normalizeValues(type, await form.validateFields()) }
+    const values = await rulePayload()
     const sample = sampleSku.trim()
     const nextPreview = await onPreview(values, sample ? [sample] : [])
     setPreview(nextPreview)
@@ -228,7 +243,7 @@ export function RuleEditorPanel({
 
   const save = async () => {
     if (!readyToSave) return
-    await onSave({ ...scopeValues(rule), ...normalizeValues(type, await form.validateFields()) })
+    await onSave(await rulePayload())
     setPreview(undefined)
     setConflicts(undefined)
     setAcknowledged(false)

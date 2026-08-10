@@ -19,11 +19,7 @@ import { summarizeProductionTasks } from '@/features/portal/production/api/produ
 import { getPermissions, getRoles } from '@/shared/auth/session'
 import { BarChart, FeedbackAlert, MetricCard, PageHeader, SectionCard } from '@/shared/ui'
 
-import {
-  getOperationsDashboardTrends,
-  type OperationsDashboardTrendPayload,
-  toTrendSeries,
-} from './api/operationsDashboardApi'
+import { type OperationsDashboardTrendPayload, toTrendSeries } from './api/operationsDashboardApi'
 import styles from './FoundationPage.module.scss'
 
 type Scope = 'staff' | 'leader' | 'manager' | 'admin'
@@ -273,13 +269,6 @@ export function OperationsDashboardPage() {
     permissionSet.has('PRODUCTION:READ') ||
     permissionSet.has('PRODUCTION:WRITE') ||
     permissionSet.has('PRODUCTION:REVIEW')
-  const canLoadAnyTrend =
-    canAccessHrByScope ||
-    canPortalOrders ||
-    canPortalMapping ||
-    canPortalDesign ||
-    canPortalProduction
-
   const trendParams = useMemo(
     () => ({
       from: now.subtract(6, 'day').format('YYYY-MM-DD'),
@@ -292,16 +281,8 @@ export function OperationsDashboardPage() {
 
   const trendsQuery = useQuery({
     queryKey: ['foundation', 'trends', scope, trendParams],
-    queryFn: () =>
-      getOperationsDashboardTrends({
-        scope,
-        from: trendParams.from,
-        to: trendParams.to,
-        windowDays: trendParams.windowDays,
-        granularity: trendParams.granularity,
-      }),
-    enabled: canLoadAnyTrend,
-    refetchInterval: 30_000,
+    queryFn: async () => undefined as OperationsDashboardTrendPayload | undefined,
+    enabled: false,
   })
 
   const myHrWorkspace = useQuery({

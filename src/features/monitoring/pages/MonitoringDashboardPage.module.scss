@@ -17,6 +17,20 @@
   }
 }
 
+.queueCounts {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -26,5 +40,9 @@
 @media (max-width: 600px) {
   .metrics {
     grid-template-columns: 1fr;
+  }
+
+  .queueCounts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

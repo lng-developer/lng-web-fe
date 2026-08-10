@@ -10,18 +10,20 @@ vi.mock('@/features/portal/integrations/api/integrationApi', async (importOrigin
     await importOriginal<typeof import('@/features/portal/integrations/api/integrationApi')>()
   return {
     ...actual,
-    getImportJob: vi.fn(),
+    getImportJobProgress: vi.fn(),
     listJobIssues: vi.fn(),
     listJobRawRecords: vi.fn(),
     retryImportJob: vi.fn(),
+    retryPostImportRawRecords: vi.fn(),
   }
 })
 
 import {
-  getImportJob,
+  getImportJobProgress,
   listJobIssues,
   listJobRawRecords,
   retryImportJob,
+  retryPostImportRawRecords,
 } from '@/features/portal/integrations/api/integrationApi'
 import { integrationKeys } from '@/features/portal/integrations/api/integrationKeys'
 import { ImportJobPanel } from '@/features/portal/integrations/pages/ImportJobPanel'
@@ -50,6 +52,43 @@ const job = {
   errorMessage: 'Three rows failed',
   summary: { postImport: { completed: 7, failed: 1, pending: 0 } },
   createdAt: '2026-07-31T00:00:00.000Z',
+  updatedAt: '2026-07-31T00:01:00.000Z',
+}
+
+const progress = {
+  job,
+  phases: {
+    parse: {
+      total: 12,
+      pending: 0,
+      completed: 12,
+      failed: 1,
+      skipped: 0,
+      percentage: 100,
+    },
+    import: {
+      total: 12,
+      pending: 0,
+      completed: 12,
+      imported: 8,
+      failed: 3,
+      skipped: 1,
+      percentage: 100,
+    },
+    postImport: {
+      total: 12,
+      pending: 2,
+      queued: 1,
+      processing: 1,
+      completed: 7,
+      failed: 1,
+      skipped: 0,
+      percentage: 67,
+    },
+  },
+  issues: { total: 1, open: 1, resolved: 0, ignored: 0 },
+  percentage: 89,
+  isTerminal: false,
   updatedAt: '2026-07-31T00:01:00.000Z',
 }
 
@@ -88,7 +127,7 @@ function renderPanel(
 describe('ImportJobPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getImportJob).mockResolvedValue(job)
+    vi.mocked(getImportJobProgress).mockResolvedValue(progress)
     vi.mocked(listJobIssues).mockResolvedValue({
       items: [
         {
@@ -152,6 +191,12 @@ describe('ImportJobPanel', () => {
       requeuedPostImportJobs: 0,
       skippedCompletedRecords: 0,
     })
+    vi.mocked(retryPostImportRawRecords).mockResolvedValue({
+      requestedCount: 1,
+      eligibleCount: 1,
+      queuedCount: 1,
+      items: [{ rawRecordId: 'raw-1', queued: true }],
+    })
   })
 
   afterEach(cleanup)
@@ -160,6 +205,10 @@ describe('ImportJobPanel', () => {
     renderPanel()
 
     expect(await screen.findByText('8 imported')).toBeVisible()
+    expect(await screen.findByText('Parse file')).toBeVisible()
+    expect(await screen.findByText('Import orders')).toBeVisible()
+    expect(await screen.findByText('Assets and mapping')).toBeVisible()
+    expect(await screen.findByText('1 open import issues')).toBeVisible()
     expect((await screen.findAllByText('Postal code is missing')).length).toBeGreaterThan(0)
     expect(
       (
@@ -189,7 +238,7 @@ describe('ImportJobPanel', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Confirm retry' }))
 
     await waitFor(() => expect(retryImportJob).toHaveBeenCalledWith('job-1'))
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: integrationKeys.job('job-1') })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: integrationKeys.jobProgress('job-1') })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: [...integrationKeys.all, 'jobs'] })
     expect(invalidate).toHaveBeenCalledTimes(2)
   })
@@ -214,6 +263,14 @@ describe('ImportJobPanel', () => {
     expect(await screen.findByText('8 imported')).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Retry import' })).not.toBeInTheDocument()
   })
+
+  it('retries mapping for a selected raw record when writable', async () => {
+    renderPanel(undefined, account(['ORDERS:WRITE']))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry mapping' }))
+
+    await waitFor(() => expect(retryPostImportRawRecords).toHaveBeenCalledWith('job-1', ['raw-1']))
+  }, 10_000)
 
   it('resets diagnostics to page one when selecting another job', async () => {
     vi.mocked(listJobIssues).mockResolvedValue({

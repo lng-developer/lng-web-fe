@@ -401,6 +401,7 @@
       "searchCandidates": "Tìm vendor hoặc sản phẩm"
     },
     "fields": {
+      "patternType": "Kiểu mẫu",
       "configCode": "Mã cấu hình",
       "segmentIndex": "Vị trí đoạn SKU",
       "segmentRole": "Ý nghĩa đoạn SKU",

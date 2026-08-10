@@ -401,6 +401,7 @@
       "searchCandidates": "Search vendor or product"
     },
     "fields": {
+      "patternType": "Pattern type",
       "configCode": "Config code",
       "segmentIndex": "Segment position",
       "segmentRole": "Segment meaning",

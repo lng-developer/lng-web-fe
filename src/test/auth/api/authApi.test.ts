@@ -20,10 +20,15 @@ import {
   getGlobalPermissions,
   getPermissions,
   setAccessToken,
+  setHasRefreshSession,
 } from '@/shared/auth/session'
 
 describe('logout', () => {
-  beforeEach(() => setAccessToken('access-token'))
+  beforeEach(() => {
+    setAccessToken('access-token')
+    setHasRefreshSession(false)
+    vi.clearAllMocks()
+  })
 
   it('revokes the cookie session and clears the in-memory access token', async () => {
     vi.mocked(apiClient.post).mockResolvedValue(undefined)
@@ -36,6 +41,7 @@ describe('logout', () => {
 
   it('restores the access token from the refresh cookie', async () => {
     setAccessToken(null)
+    setHasRefreshSession(true)
     vi.mocked(apiClient.post).mockResolvedValue({
       data: { accessToken: 'restored-access', permissions: ['AUTH:WRITE'] },
     })
@@ -49,6 +55,8 @@ describe('logout', () => {
   })
 
   it('clears a stale access token when refresh is rejected', async () => {
+    setAccessToken(null)
+    setHasRefreshSession(true)
     vi.mocked(apiClient.post).mockRejectedValue(new ApiError('Unauthorized', { status: 401 }))
 
     await expect(restoreSession()).rejects.toThrow('Unauthorized')
@@ -67,6 +75,7 @@ describe('logout', () => {
 
   it('keeps scoped permissions available to permission-driven pages', async () => {
     setAccessToken(null)
+    setHasRefreshSession(true)
     vi.mocked(apiClient.post).mockResolvedValue({
       data: {
         accessToken: 'scoped-access',

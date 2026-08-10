@@ -254,7 +254,7 @@ describe('OrderInlinePanel', () => {
               {
                 type: 'IMAGE',
                 label: 'Buyer photo',
-                secureUrl: 'https://media.example.test/buyer-photo.png',
+                assetDownloadUrl: '/api/media/assets/buyer-photo/download',
               },
             ],
           },
@@ -264,10 +264,7 @@ describe('OrderInlinePanel', () => {
 
     renderPanel(true, undefined, source)
 
-    expect(screen.getByAltText('Buyer photo')).toHaveAttribute(
-      'src',
-      'https://media.example.test/buyer-photo.png',
-    )
+    expect(screen.getByAltText('Buyer photo')).toBeInTheDocument()
   })
 
   it('does not repeat extracted Amazon assets beside buyer-uploaded images', () => {
@@ -283,13 +280,13 @@ describe('OrderInlinePanel', () => {
               {
                 type: 'IMAGE',
                 label: 'Buyer photo',
-                secureUrl: 'https://media.example.test/buyer-photo.png',
+                assetDownloadUrl: '/api/media/assets/buyer-photo/download',
               },
             ],
             extractedImages: [
               {
                 filename: 'archive-preview.jpg',
-                secureUrl: 'https://media.example.test/archive-preview.jpg',
+                assetDownloadUrl: '/api/media/assets/archive-preview/download',
               },
             ],
           },

@@ -26,6 +26,24 @@
   white-space: pre-wrap;
 }
 
+.progressList {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.progressRow {
+  display: grid;
+  gap: 4px;
+}
+
+.progressMeta {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
 .issueFilters {
   display: grid;
   grid-template-columns: repeat(4, minmax(150px, 1fr));

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { getImportJob, type ImportJobStatus } from '../api/integrationApi'
+import { getImportJobProgress, type ImportJobStatus } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
 
 const ACTIVE_STATUSES = new Set<ImportJobStatus>(['PENDING', 'PARSING', 'IMPORTING'])
@@ -21,12 +21,12 @@ export function useImportJobPolling(jobId?: string, status?: ImportJobStatus) {
   }, [jobId])
 
   return useQuery({
-    queryKey: integrationKeys.job(jobId ?? ''),
-    queryFn: () => getImportJob(jobId!),
+    queryKey: integrationKeys.jobProgress(jobId ?? ''),
+    queryFn: () => getImportJobProgress(jobId!),
     enabled: Boolean(jobId),
     refetchInterval: (query) => {
       if (!jobId || !visible) return false
-      const currentStatus = query.state.data?.status ?? status
+      const currentStatus = query.state.data?.job.status ?? status
       return isActive(currentStatus) ? 5_000 : false
     },
     retry: false,

@@ -104,6 +104,58 @@ describe('RuleEditorPanel', () => {
     )
   })
 
+  it.each([
+    {
+      type: 'semanticRules' as const,
+      rule: { id: 'semantic-rule-1', semanticRole: 'COLOR', matchValue: 'Charcoal' },
+    },
+    {
+      type: 'valueAliases' as const,
+      rule: { id: 'alias-rule-1', semanticRole: 'SIZE', matchValue: 'Small', normalizedValue: 'S' },
+    },
+    {
+      type: 'vendorRouting' as const,
+      rule: {
+        id: 'routing-rule-1',
+        productTypeGroupId: 'group-1',
+        vendorId: 'vendor-1',
+        configCode: 'TS2S',
+        normalizedSize: 'S',
+      },
+    },
+    {
+      type: 'skuNormalize' as const,
+      rule: {
+        id: 'normalize-rule-1',
+        patternType: 'SEGMENT',
+        segmentIndex: 0,
+        segmentRole: 'CONFIG',
+        appliesWhenValues: ['J2522'],
+        outputAction: 'REPLACE_SEGMENT',
+        replacementValue: 'J2542',
+      },
+    },
+  ])('does not invent a sample for $type previews', async ({ type, rule }) => {
+    const onPreview = vi.fn().mockResolvedValue({ items: [] })
+    render(
+      <RuleEditorPanel
+        canWrite
+        type={type}
+        rule={rule}
+        productTypeGroups={[{ id: 'group-1', name: 'T-shirt', code: 'TS' }]}
+        vendors={[{ id: 'vendor-1', name: 'Vendor A' }]}
+        onDirtyChange={vi.fn()}
+        onPreview={onPreview}
+        onConflicts={vi.fn().mockResolvedValue({ conflicts: [] })}
+        onSave={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview changes' }))
+
+    await waitFor(() => expect(onPreview).toHaveBeenCalledWith(expect.any(Object), []))
+  })
+
   it('previews an explicitly entered sample SKU and shows preview failures', async () => {
     const onPreview = vi.fn().mockRejectedValue(new Error('Preview unavailable'))
     render(
@@ -137,5 +189,28 @@ describe('RuleEditorPanel', () => {
       ),
     )
     expect(await screen.findByText('Preview unavailable')).toBeInTheDocument()
+  })
+
+  it('uses the user-entered sample for product mapping previews', async () => {
+    const onPreview = vi.fn().mockResolvedValue({ items: [] })
+    render(
+      <RuleEditorPanel
+        canWrite
+        type="skuConfig"
+        rule={{ id: 'config-rule-1', configCode: 'TS2S', productTypeGroupId: 'group-1' }}
+        productTypeGroups={[{ id: 'group-1', name: 'T-shirt', code: 'TS' }]}
+        onDirtyChange={vi.fn()}
+        onPreview={onPreview}
+        onConflicts={vi.fn().mockResolvedValue({ conflicts: [] })}
+        onSave={vi.fn()}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Sample SKU'), {
+      target: { value: ' TS2S ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview changes' }))
+
+    await waitFor(() => expect(onPreview).toHaveBeenCalledWith(expect.any(Object), ['TS2S']))
   })
 })

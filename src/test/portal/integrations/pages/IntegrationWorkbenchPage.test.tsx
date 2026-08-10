@@ -247,12 +247,12 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.mouseDown(uploadShopSelect)
     const writableOptions = await screen.findAllByText('LNG Amazon US')
     expect(writableOptions.some((element) => element.closest('.ant-select-item-option'))).toBe(true)
+    fireEvent.click(writableOptions.find((element) => element.closest('.ant-select-item-option'))!)
     expect(
       screen
         .queryAllByText('Read-only shop')
         .some((element) => element.closest('.ant-select-item-option')),
     ).toBe(false)
-    fireEvent.change(screen.getByLabelText('Marketplace code'), { target: { value: 'AMAZON_US' } })
     const file = new File(['order-id,order-item-id\n1,2'], 'orders.csv', { type: 'text/csv' })
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } })
     fireEvent.click(screen.getByRole('button', { name: 'Upload' }))
@@ -273,7 +273,6 @@ describe('ImportUploadModal', () => {
 
     fireEvent.mouseDown(screen.getByLabelText('Import format'))
     fireEvent.click(await screen.findByText('Etsy sold order items'))
-    fireEvent.change(screen.getByLabelText('Marketplace code'), { target: { value: 'ETSY_US' } })
     const file = new File(['Order ID,Transaction ID'], 'etsy-orders.csv', { type: 'text/csv' })
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } })
     fireEvent.click(screen.getByRole('button', { name: 'Upload' }))
@@ -283,9 +282,7 @@ describe('ImportUploadModal', () => {
         source: 'ETSY_SOLD_ORDER_ITEMS',
         file,
         shopId: 'shop-1',
-        marketplaceCode: 'ETSY_US',
-        shopConnectionId: undefined,
-        externalAccountId: undefined,
+        marketplaceCode: 'US',
       }),
     )
   })
@@ -325,14 +322,13 @@ describe('ImportUploadModal', () => {
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
 
     fireEvent.click(await screen.findByRole('button', { name: 'Upload report' }))
-    fireEvent.change(screen.getByLabelText('Marketplace code'), { target: { value: 'AMAZON_US' } })
     const file = new File(['order-id,order-item-id\n1,2'], 'orders.csv', { type: 'text/csv' })
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } })
     fireEvent.click(screen.getByRole('button', { name: 'Upload' }))
 
     await waitFor(() => expect(uploadManualExcel).toHaveBeenCalled())
     expect(await screen.findByText('Invalid report')).toBeInTheDocument()
-    expect(screen.getByLabelText('Marketplace code')).toHaveValue('AMAZON_US')
+    expect(screen.getByText('US')).toBeInTheDocument()
     expect(screen.getByText('orders.csv')).toBeInTheDocument()
   })
 })

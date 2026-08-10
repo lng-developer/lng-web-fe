@@ -218,6 +218,7 @@ export type RulePreviewInput = {
 }
 export type RulePreviewResult = {
   items?: Array<Record<string, unknown>>
+  samples?: Array<Record<string, unknown>>
   before?: unknown
   after?: unknown
 }

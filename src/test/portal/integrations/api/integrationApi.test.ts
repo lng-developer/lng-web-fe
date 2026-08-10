@@ -6,12 +6,14 @@ vi.mock('@/shared/api', () => ({
 
 import {
   getImportJob,
+  getImportJobProgress,
   type ImportUploadResult,
   listImportJobs,
   listIssues,
   listJobIssues,
   listJobRawRecords,
   retryImportJob,
+  retryPostImportRawRecords,
   updateIssueStatus,
   uploadEtsySoldItems,
   uploadManualExcel,
@@ -54,16 +56,21 @@ describe('integrationApi', () => {
 
     await listImportJobs(jobParams)
     await getImportJob('job-1')
+    await getImportJobProgress('job-1')
     await listJobIssues('job-1', { limit: 10, page: 1 })
     await listJobRawRecords('job-1', { limit: 10, page: 2, postImportStatus: 'FAILED' })
     await listIssues(issueParams)
     await retryImportJob('job-1')
+    await retryPostImportRawRecords('job-1', ['raw-1'])
     await updateIssueStatus('issue-1', { note: 'Corrected source row', status: 'RESOLVED' })
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/integration/external-order-imports', {
       params: jobParams,
     })
     expect(apiClient.get).toHaveBeenCalledWith('/api/integration/external-order-imports/job-1')
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/api/integration/external-order-imports/job-1/progress',
+    )
     expect(apiClient.get).toHaveBeenCalledWith(
       '/api/integration/external-order-imports/job-1/issues',
       { params: { limit: 10, page: 1 } },
@@ -77,6 +84,10 @@ describe('integrationApi', () => {
     })
     expect(apiClient.post).toHaveBeenCalledWith(
       '/api/integration/external-order-imports/job-1/retry',
+    )
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/integration/external-order-imports/job-1/raw-records/retry-post-import',
+      { rawRecordIds: ['raw-1'] },
     )
     expect(apiClient.patch).toHaveBeenCalledWith(
       '/api/integration/external-order-imports/issues/issue-1',

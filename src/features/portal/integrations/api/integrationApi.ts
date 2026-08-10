@@ -35,6 +35,36 @@ export type ImportJobSummary = {
   productionTasks?: Record<string, number>
 }
 
+export type ImportJobProgressPhase = {
+  total: number
+  pending?: number
+  queued?: number
+  processing?: number
+  completed: number
+  imported?: number
+  failed: number
+  skipped: number
+  percentage: number
+}
+
+export type ImportJobProgress = {
+  job: ImportJob
+  phases: {
+    parse: ImportJobProgressPhase
+    import: ImportJobProgressPhase
+    postImport: ImportJobProgressPhase
+  }
+  issues: {
+    total: number
+    open: number
+    resolved: number
+    ignored: number
+  }
+  percentage: number
+  isTerminal: boolean
+  updatedAt: string
+}
+
 export type ImportJob = {
   id: string
   source: ImportSource
@@ -166,6 +196,18 @@ export type RetryImportResult = {
   skippedCompletedRecords: number
 }
 
+export type RetryPostImportResult = {
+  requestedCount: number
+  eligibleCount: number
+  queuedCount: number
+  items: Array<{
+    rawRecordId: string
+    queued: boolean
+    errorCode?: string
+    errorMessage?: string
+  }>
+}
+
 const basePath = '/api/integration/external-order-imports'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
@@ -199,6 +241,10 @@ export async function getImportJob(jobId: string) {
   return unwrap<ImportJob>(await apiClient.get(`${basePath}/${jobId}`))
 }
 
+export async function getImportJobProgress(jobId: string) {
+  return unwrap<ImportJobProgress>(await apiClient.get(`${basePath}/${jobId}/progress`))
+}
+
 export async function listJobIssues(jobId: string, params: PageParams = {}) {
   return unwrap<Paginated<ImportIssue>>(
     await apiClient.get(`${basePath}/${jobId}/issues`, { params }),
@@ -217,6 +263,12 @@ export async function listIssues(params: IssueListParams = {}) {
 
 export async function retryImportJob(jobId: string) {
   return unwrap<RetryImportResult>(await apiClient.post(`${basePath}/${jobId}/retry`))
+}
+
+export async function retryPostImportRawRecords(jobId: string, rawRecordIds: string[]) {
+  return unwrap<RetryPostImportResult>(
+    await apiClient.post(`${basePath}/${jobId}/raw-records/retry-post-import`, { rawRecordIds }),
+  )
 }
 
 export async function updateIssueStatus(issueId: string, input: IssueUpdateInput) {

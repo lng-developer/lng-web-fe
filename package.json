@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --mode localdev --host 0.0.0.0 --port 5173",
+    "dev:server": "vite --mode development --host 0.0.0.0 --port 5173",
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
     "build:dev": "tsc -b && vite build --mode development",

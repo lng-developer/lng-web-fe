@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { UploadFile } from 'antd'
-import { Form, Input, Modal, Select } from 'antd'
+import { Form, Modal, Select } from 'antd'
 
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { FeedbackAlert, FileUpload, FormActions } from '@/shared/ui'
@@ -37,9 +37,18 @@ export function ImportUploadModal({
   const [fileError, setFileError] = useState<string>()
   const source = Form.useWatch('source', form) ?? 'AMAZON_ORDER_REPORT'
 
+  useEffect(() => {
+    if (!open || !shops[0]?.id || form.getFieldValue('shopId')) return
+    form.setFieldValue('shopId', shops[0].id)
+  }, [form, open, shops])
+
   const resetForm = () => {
     form.resetFields()
-    form.setFieldsValue({ source: 'AMAZON_ORDER_REPORT', shopId: shops[0]?.id })
+    form.setFieldsValue({
+      source: 'AMAZON_ORDER_REPORT',
+      shopId: shops[0]?.id,
+      marketplaceCode: 'US',
+    })
     setFiles([])
     setFileError(undefined)
   }
@@ -83,7 +92,11 @@ export function ImportUploadModal({
       ) : null}
       <Form
         form={form}
-        initialValues={{ source: 'AMAZON_ORDER_REPORT', shopId: shops[0]?.id }}
+        initialValues={{
+          source: 'AMAZON_ORDER_REPORT',
+          shopId: shops[0]?.id,
+          marketplaceCode: 'US',
+        }}
         layout="vertical"
         onFinish={(values) => {
           const file = (files[0]?.originFileObj ?? files[0]) as File | undefined
@@ -94,9 +107,7 @@ export function ImportUploadModal({
             source: values.source,
             file,
             shopId: values.shopId,
-            marketplaceCode: values.marketplaceCode,
-            shopConnectionId: values.shopConnectionId || undefined,
-            externalAccountId: values.externalAccountId || undefined,
+            marketplaceCode: values.marketplaceCode || 'US',
           })
         }}
       >
@@ -145,36 +156,19 @@ export function ImportUploadModal({
         <Form.Item
           label={t('portal.integrations.upload.marketplace', { defaultValue: 'Marketplace code' })}
           name="marketplaceCode"
-          rules={[
-            {
-              required: true,
-              message: t('portal.integrations.upload.marketplaceRequired', {
-                defaultValue: 'Enter a marketplace code',
-              }),
-            },
-          ]}
         >
-          <Input
+          <Select
             aria-label={t('portal.integrations.upload.marketplace', {
               defaultValue: 'Marketplace code',
             })}
+            options={[
+              { label: 'US', value: 'US' },
+              { label: 'CA', value: 'CA' },
+              { label: 'UK', value: 'UK' },
+              { label: 'AU', value: 'AU' },
+            ]}
+            showSearch
           />
-        </Form.Item>
-        <Form.Item
-          label={t('portal.integrations.upload.shopConnection', {
-            defaultValue: 'Shop connection ID',
-          })}
-          name="shopConnectionId"
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item
-          label={t('portal.integrations.upload.externalAccount', {
-            defaultValue: 'External account ID',
-          })}
-          name="externalAccountId"
-        >
-          <Input />
         </Form.Item>
         <Form.Item
           label={t('portal.integrations.upload.file', { defaultValue: 'Report file' })}
@@ -203,7 +197,7 @@ export function ImportUploadModal({
           {() => (
             <FormActions
               cancelLabel={t('portal.integrations.cancel', { defaultValue: 'Cancel' })}
-              dirty={form.isFieldsTouched() || files.length > 0}
+              dirty
               onCancel={onClose}
               saving={saving}
               submitLabel={t('portal.integrations.upload.submit', { defaultValue: 'Upload' })}

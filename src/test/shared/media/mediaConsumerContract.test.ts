@@ -26,7 +26,8 @@ describe('protected media consumer contract', () => {
     }
   })
 
-  it('keeps public customization image URLs direct', () => {
-    expect(orderSource).toContain('href={input.secureUrl}')
+  it('does not link customization image URLs directly', () => {
+    expect(orderSource).not.toContain('href={input.secureUrl}')
+    expect(orderSource).not.toContain('downloadUrl={input.secureUrl}')
   })
 })

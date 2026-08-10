@@ -1,8 +1,10 @@
 import { apiClient, ApiError } from '@/shared/api'
 import {
   getAccessToken,
+  hasRefreshSession,
   setAccessToken,
   setGlobalPermissions,
+  setHasRefreshSession,
   setPermissions,
   setRoles,
 } from '@/shared/auth/session'
@@ -40,6 +42,7 @@ export async function login(identifier: string, password: string) {
   })
   const session = (response as unknown as ApiResponse<AuthSession>).data
   setAccessToken(session.accessToken)
+  setHasRefreshSession(true)
   setRoles(session.roles)
   setPermissions(effectivePermissions(session))
   setGlobalPermissions(session.permissions)
@@ -51,39 +54,47 @@ export async function logout() {
     await apiClient.post('/api/auth/logout')
   } finally {
     setAccessToken(null)
+    setHasRefreshSession(false)
   }
 }
 
 export async function restoreSession() {
+  const accessToken = getAccessToken()
+  if (accessToken) {
+    try {
+      const account = await getCurrentAccount()
+      return {
+        accessToken,
+        tokenType: 'Bearer',
+        account: account.account,
+        roles: account.roles,
+        permissions: account.permissions,
+        scopes: account.scopes,
+      }
+    } catch (fallbackError) {
+      if (fallbackError instanceof ApiError && fallbackError.status === 401) {
+        setAccessToken(null)
+        setHasRefreshSession(false)
+      }
+      throw fallbackError
+    }
+  }
+
+  if (!hasRefreshSession()) throw new ApiError('Session not found', { status: 401 })
+
   try {
     const response = await apiClient.post<ApiResponse<AuthSession>>('/api/auth/refresh')
     const session = (response as unknown as ApiResponse<AuthSession>).data
     setAccessToken(session.accessToken)
+    setHasRefreshSession(true)
     setRoles(session.roles)
     setPermissions(effectivePermissions(session))
     setGlobalPermissions(session.permissions)
     return session
   } catch (error) {
-    const accessToken = getAccessToken()
-    if (accessToken) {
-      try {
-        const account = await getCurrentAccount()
-        return {
-          accessToken,
-          tokenType: 'Bearer',
-          account: account.account,
-          roles: account.roles,
-          permissions: account.permissions,
-          scopes: account.scopes,
-        }
-      } catch (fallbackError) {
-        if (fallbackError instanceof ApiError && fallbackError.status === 401) {
-          setAccessToken(null)
-        }
-      }
-    }
-    if (error instanceof ApiError && error.status === 401) {
+    if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
       setAccessToken(null)
+      setHasRefreshSession(false)
     }
     throw error
   }

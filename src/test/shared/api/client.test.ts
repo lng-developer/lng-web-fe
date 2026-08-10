@@ -4,7 +4,9 @@ import { apiClient } from '@/shared/api'
 import {
   getAccessToken,
   getPermissions,
+  hasRefreshSession,
   setAccessToken,
+  setHasRefreshSession,
   setPermissions,
 } from '@/shared/auth/session'
 
@@ -28,14 +30,16 @@ const unauthorizedAdapter = async (config: object) =>
 describe('apiClient authentication expiry', () => {
   beforeEach(() => {
     setAccessToken('expired-access-token')
+    setHasRefreshSession(true)
     setPermissions(['HR_EMPLOYEES:READ'])
   })
 
   afterEach(() => {
     setAccessToken(null)
+    setHasRefreshSession(false)
   })
 
-  it('clears the session and announces expiry when a protected request returns 401', async () => {
+  it('clears only the access token when a protected request returns 401', async () => {
     const onExpired = vi.fn()
     window.addEventListener('auth:session-expired', onExpired, { once: true })
 
@@ -47,6 +51,22 @@ describe('apiClient authentication expiry', () => {
 
     expect(getAccessToken()).toBeNull()
     expect(getPermissions()).toEqual([])
+    expect(hasRefreshSession()).toBe(true)
+    expect(onExpired).not.toHaveBeenCalled()
+  })
+
+  it('expires the full session when refresh is rejected', async () => {
+    const onExpired = vi.fn()
+    window.addEventListener('auth:session-expired', onExpired, { once: true })
+
+    await expect(
+      apiClient.post('/api/auth/refresh', {}, { adapter: unauthorizedAdapter }),
+    ).rejects.toMatchObject({
+      status: 401,
+    })
+
+    expect(getAccessToken()).toBeNull()
+    expect(hasRefreshSession()).toBe(false)
     expect(onExpired).toHaveBeenCalledOnce()
   })
 

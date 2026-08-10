@@ -93,12 +93,12 @@ export type OrderWorkbenchItem = {
     sourceCustomizationUrl?: string | null
     downloadedZip?: { status?: string | null; sourceUrlRedacted?: string | null } | null
     previewImageUrl?: string | null
-    extractedImages?: Array<{ secureUrl: string | null; filename: string | null }>
+    extractedImages?: Array<{ assetDownloadUrl: string | null; filename: string | null }>
     inputs: Array<{
       type: string
       label: string | null
       value?: string | null
-      secureUrl?: string | null
+      assetDownloadUrl?: string | null
     }>
   } | null
   mapping: {

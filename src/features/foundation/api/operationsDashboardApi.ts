@@ -1,7 +1,3 @@
-import { apiClient } from '@/shared/api'
-
-type ApiResponse<T> = { success: boolean; data: T }
-
 type TrendBucket = { label?: unknown; value?: unknown; count?: unknown; total?: unknown }
 
 export type OperationsDashboardTrendSeries = Array<{
@@ -37,28 +33,6 @@ export type OperationsDashboardTrendPayload = {
     production?: OperationsDashboardTrendSeriesPayload
     hr?: OperationsDashboardTrendSeriesPayload
   }
-}
-
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
-
-export const getOperationsDashboardTrends = async (params: {
-  scope: 'staff' | 'leader' | 'manager' | 'admin'
-  from: string
-  to: string
-  windowDays?: number
-  granularity?: 'hour' | 'day'
-}) => {
-  return unwrap<OperationsDashboardTrendPayload>(
-    await apiClient.get('/api/foundation/dashboard/trends', {
-      params: {
-        scope: params.scope,
-        from: params.from,
-        to: params.to,
-        windowDays: params.windowDays ?? 7,
-        granularity: params.granularity ?? 'day',
-      },
-    }),
-  )
 }
 
 const toNumber = (value: unknown) => {

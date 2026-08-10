@@ -763,7 +763,9 @@ function OrderItemPanel({
 }) {
   const { t } = useTranslation()
   const preview = item.customization?.previewImageUrl
-  const customizationImage = item.customization?.inputs.find((input) => input.secureUrl)?.secureUrl
+  const customizationImage = item.customization?.inputs.find(
+    (input) => input.assetDownloadUrl,
+  )?.assetDownloadUrl
   const psdStatus = item.mapping?.listingVariant?.psdReadiness?.status
   const psdDownloadUrl = item.mapping?.listingVariant?.psdTemplate?.downloadUrl
   const canRecheck = item.workflow.nextActions.some((action) => action.startsWith('RECHECK_'))
@@ -771,7 +773,7 @@ function OrderItemPanel({
     new Set([
       preview,
       customizationImage,
-      ...(item.customization?.inputs ?? []).map((input) => input.secureUrl),
+      ...(item.customization?.inputs ?? []).map((input) => input.assetDownloadUrl),
     ]),
   )
     .filter((image): image is string => Boolean(image))
@@ -923,20 +925,25 @@ function OrderItemPanel({
           {(item.customization?.inputs ?? []).map((input, index) => (
             <div key={`${input.label}-${index}`}>
               <Typography.Text type="secondary">{input.label || input.type}: </Typography.Text>
-              {input.secureUrl ? (
+              {input.assetDownloadUrl ? (
                 <div className={styles.buyerImage}>
                   <AuthenticatedMediaImage
                     width={72}
                     height={72}
-                    downloadUrl={input.secureUrl}
+                    downloadUrl={input.assetDownloadUrl}
                     alt={input.label || t('orders.fields.image')}
                     fallback="/favicon.svg"
                     style={{ cursor: 'zoom-in' }}
-                    onClick={(event) => openImageViewer(event, input.secureUrl)}
+                    onClick={(event) => openImageViewer(event, input.assetDownloadUrl)}
                   />
-                  <a href={input.secureUrl} target="_blank" rel="noreferrer">
-                    <LinkOutlined /> {t('orders.fields.image')}
-                  </a>
+                  <Button
+                    size="small"
+                    type="link"
+                    icon={<LinkOutlined />}
+                    onClick={(event) => openImageViewer(event, input.assetDownloadUrl)}
+                  >
+                    {t('orders.fields.image')}
+                  </Button>
                 </div>
               ) : (
                 <Typography.Text>{value(input.value)}</Typography.Text>
