@@ -69,6 +69,18 @@ export type WorkScoreListParams = {
   sortBy?: 'scoredAt' | 'finalPoints' | 'updatedAt'
   sortOrder?: 'asc' | 'desc'
 }
+export type WorkScoreRule = {
+  id: string
+  sourceType: WorkScoreSourceType
+  taskType: string | null
+  priority: string | null
+  slotKey: string | null
+  scaleDifficultyLevel: 'NORMAL' | 'HARD' | 'SPECIAL' | null
+  points: number
+  status: 'ACTIVE' | 'INACTIVE'
+}
+export type WorkScoreRuleInput = Omit<WorkScoreRule, 'id'>
+export type WorkScoreRuleFormInput = Omit<WorkScoreRuleInput, 'priority' | 'slotKey'>
 
 const basePath = '/api/work-scores'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -83,6 +95,10 @@ export const getWorkScoreSummary = async (params: WorkScoreListParams) =>
   unwrap<WorkScoreSummary>(await apiClient.get(`${basePath}/summary`, { params: compact(params) }))
 export const getWorkScore = async (id: string) =>
   unwrap<WorkScoreDetail>(await apiClient.get(`${basePath}/${id}`))
+export const listWorkScoreRules = async () =>
+  unwrap<WorkScoreRule[]>(await apiClient.get(`${basePath}/rules`))
+export const upsertWorkScoreRule = async (input: WorkScoreRuleInput) =>
+  unwrap<WorkScoreRule>(await apiClient.put(`${basePath}/rules`, input))
 export const overrideWorkScore = async (
   id: string,
   input: { points: number; scoreLevel?: WorkScoreLevel; reason: string; expectedVersion: number },

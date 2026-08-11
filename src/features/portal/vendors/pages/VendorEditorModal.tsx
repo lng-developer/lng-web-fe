@@ -46,8 +46,14 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
   })
 
   const close = () => {
-    if (form.isFieldsTouched() && !window.confirm(t('vendors.discardChanges'))) return
-    onCancel()
+    if (!form.isFieldsTouched()) return onCancel()
+    Modal.confirm({
+      title: t('actionFeedback.unsaved'),
+      content: t('vendors.discardChanges'),
+      okText: t('vendors.discard', { defaultValue: 'Discard' }),
+      cancelText: t('vendors.cancel'),
+      onOk: onCancel,
+    })
   }
 
   return (

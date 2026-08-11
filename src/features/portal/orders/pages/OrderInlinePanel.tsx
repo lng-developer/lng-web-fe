@@ -23,6 +23,7 @@ import {
   Descriptions,
   Input,
   InputNumber,
+  Modal,
   Select,
   Space,
   Spin,
@@ -60,6 +61,7 @@ import {
   type OrderCaseInput,
   type OrderWorkbenchItem,
   type OrderWorkbenchRow,
+  overrideShippingAddress,
   recheckOrderItem,
   resolveOrderCase,
   retryCustomizationAssets,
@@ -83,6 +85,7 @@ type Action =
   | { kind: 'shipping'; shipping: ShippingService }
   | { kind: 'customer'; buyer: OrderBuyer }
   | { kind: 'validate-address' }
+  | { kind: 'override-address'; reason?: string }
   | { kind: 'note'; itemId: string; note: string }
   | { kind: 'recheck'; itemId: string }
   | { kind: 'retry-customization-assets'; itemId: string }
@@ -121,6 +124,7 @@ const CASE_TYPES: OrderCase['caseType'][] = [
   'OTHER',
 ]
 const CASE_SEVERITIES: OrderCase['severity'][] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+const SHIPPING_LEVEL_OPTIONS = ['Standard', 'Expedited', 'SecondDay', 'NextDay', 'Scheduled']
 
 function value(input?: string | number | null) {
   return input == null || input === '' ? '—' : input
@@ -165,6 +169,8 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
   const [itemTimelineAnchor, setItemTimelineAnchor] = useState<PopupModalAnchor>()
   const [caseComment, setCaseComment] = useState('')
   const [confirmationAnchor, setConfirmationAnchor] = useState<PopupModalAnchor>()
+  const [overrideReasonOpen, setOverrideReasonOpen] = useState(false)
+  const [overrideReason, setOverrideReason] = useState('')
   const cases = useQuery({
     queryKey: orderKeys.cases(row.order.id),
     queryFn: () => listOrderCases(row.order.id),
@@ -199,6 +205,8 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       if (action.kind === 'customer') return updateOrderBuyer(row.order.id, action.buyer)
       if (action.kind === 'shipping') return updateShippingService(row.order.id, action.shipping)
       if (action.kind === 'validate-address') return validateShippingAddress(row.order.id)
+      if (action.kind === 'override-address')
+        return overrideShippingAddress(row.order.id, action.reason)
       if (action.kind === 'note') return updateOrderItemCsNote(action.itemId, action.note)
       if (action.kind === 'recheck') return recheckOrderItem(action.itemId)
       if (action.kind === 'retry-customization-assets')
@@ -235,6 +243,8 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       closeOrderModal()
       setConfirmation(undefined)
       setReason('')
+      setOverrideReason('')
+      setOverrideReasonOpen(false)
       setReplacementItems({})
       setOrderReplacementReason('')
       await queryClient.invalidateQueries({ queryKey: orderKeys.all })
@@ -303,6 +313,9 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
             >
               {t('orders.actions.validateAddress')}
             </Button>
+            <Button loading={mutation.isPending} onClick={() => setOverrideReasonOpen(true)}>
+              {t('orders.actions.overrideAddress')}
+            </Button>
           </div>
           <div className={styles.addressEditor}>
             {ADDRESS_FIELDS.map((field) => (
@@ -319,6 +332,28 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
           </div>
         </PopupModal>
       ) : null}
+
+      <Modal
+        centered
+        open={overrideReasonOpen}
+        title={t('orders.actions.overrideAddress')}
+        okText={t('orders.actions.overrideAddress')}
+        confirmLoading={mutation.isPending}
+        onCancel={() => setOverrideReasonOpen(false)}
+        onOk={() =>
+          mutation.mutate({
+            kind: 'override-address',
+            reason: overrideReason.trim() || undefined,
+          })
+        }
+      >
+        <Input.TextArea
+          rows={4}
+          value={overrideReason}
+          placeholder={t('orders.actions.overrideAddressReason')}
+          onChange={(event) => setOverrideReason(event.target.value)}
+        />
+      </Modal>
 
       {orderModal === 'customer' ? (
         <PopupModal
@@ -371,10 +406,15 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
             </label>
             <label>
               <Typography.Text>{t('orders.shipping.level')}</Typography.Text>
-              <Input
-                value={shipping.level ?? ''}
-                onChange={(event) =>
-                  setShipping((current) => ({ ...current, level: event.target.value }))
+              <Select
+                showSearch
+                allowClear
+                mode="tags"
+                maxCount={1}
+                value={shipping.level ? [shipping.level] : []}
+                options={SHIPPING_LEVEL_OPTIONS.map((level) => ({ label: level, value: level }))}
+                onChange={(values) =>
+                  setShipping((current) => ({ ...current, level: values[0] ?? null }))
                 }
               />
             </label>
@@ -768,7 +808,9 @@ function OrderItemPanel({
   )?.assetDownloadUrl
   const psdStatus = item.mapping?.listingVariant?.psdReadiness?.status
   const psdDownloadUrl = item.mapping?.listingVariant?.psdTemplate?.downloadUrl
-  const canRecheck = item.workflow.nextActions.some((action) => action.startsWith('RECHECK_'))
+  const canRecheck =
+    item.workflow.nextActions.some((action) => action.startsWith('RECHECK_')) ||
+    (item.production?.status === 'BLOCKED' && psdStatus === 'PRESENT')
   const relatedImages = Array.from(
     new Set([
       preview,

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { UploadFile } from 'antd'
 import { Form, Input, Modal, Select } from 'antd'
 
-import { FileUpload } from '@/shared/ui'
+import { FileUpload, FormSection, FormSectionFull } from '@/shared/ui'
 
 import type { CreateDesignTaskInput } from '../api/designApi'
 
@@ -79,6 +79,7 @@ export function CreateDesignTaskModal({
       title={t('portal.design.createDesignTask')}
       okText={t('portal.design.create')}
       confirmLoading={saving}
+      width="min(760px, calc(100vw - 32px))"
       afterClose={() => {
         form.resetFields()
         setReferenceFiles([])
@@ -102,103 +103,127 @@ export function CreateDesignTaskModal({
           if (changed.sourceMode !== undefined) form.setFieldValue('sourceId', undefined)
         }}
       >
-        <Form.Item
-          name="listingId"
-          label={t('portal.design.listing')}
-          rules={[{ required: true, message: t('portal.design.listingRequired') }]}
-        >
-          <Select
-            aria-label={t('portal.design.listing')}
-            showSearch
-            optionFilterProp="label"
-            options={listings.map(({ id, sku }) => ({
-              value: id,
-              label: sku,
-            }))}
-          />
-        </Form.Item>
-        <Form.Item name="taskType" label={t('portal.design.taskType')} rules={[{ required: true }]}>
-          <Select
-            aria-label={t('portal.design.taskType')}
-            options={TASK_TYPES.map((value) => ({ value, label: value }))}
-          />
-        </Form.Item>
-        <Form.Item name="priority" label={t('portal.design.priority')} rules={[{ required: true }]}>
-          <Select
-            aria-label={t('portal.design.priority')}
-            options={PRIORITIES.map((value) => ({ value, label: value }))}
-          />
-        </Form.Item>
-        <Form.Item
-          name="brief"
-          label={t('portal.design.brief')}
-          rules={[{ required: taskType === 'IDEA', message: t('portal.design.briefRequired') }]}
-        >
-          <Input.TextArea rows={3} />
-        </Form.Item>
-        {taskType === 'CLONE' ? (
-          <>
+        <FormSection title={t('portal.design.taskSetup', 'Task setup')}>
+          <FormSectionFull>
             <Form.Item
-              name="sourceMode"
-              label={t('portal.design.sourceType')}
-              rules={[{ required: true, message: t('portal.design.sourceRequired') }]}
+              name="listingId"
+              label={t('portal.design.listing')}
+              rules={[{ required: true, message: t('portal.design.listingRequired') }]}
             >
               <Select
-                aria-label={t('portal.design.sourceType')}
-                options={[
-                  { value: 'LISTING', label: t('portal.design.sourceListing') },
-                  { value: 'TEMPLATE', label: t('portal.design.sourceTemplate') },
-                ]}
+                aria-label={t('portal.design.listing')}
+                showSearch
+                optionFilterProp="label"
+                options={listings.map(({ id, sku }) => ({
+                  value: id,
+                  label: sku,
+                }))}
               />
             </Form.Item>
-            {sourceMode ? (
+          </FormSectionFull>
+          <Form.Item
+            name="taskType"
+            label={t('portal.design.taskType')}
+            rules={[{ required: true }]}
+          >
+            <Select
+              aria-label={t('portal.design.taskType')}
+              options={TASK_TYPES.map((value) => ({ value, label: value }))}
+            />
+          </Form.Item>
+          <Form.Item
+            name="priority"
+            label={t('portal.design.priority')}
+            rules={[{ required: true }]}
+          >
+            <Select
+              aria-label={t('portal.design.priority')}
+              options={PRIORITIES.map((value) => ({ value, label: value }))}
+            />
+          </Form.Item>
+        </FormSection>
+
+        <FormSection title={t('portal.design.requirements', 'Requirements')}>
+          <FormSectionFull>
+            <Form.Item
+              name="brief"
+              label={t('portal.design.brief')}
+              rules={[{ required: taskType === 'IDEA', message: t('portal.design.briefRequired') }]}
+            >
+              <Input.TextArea rows={3} />
+            </Form.Item>
+          </FormSectionFull>
+          {taskType === 'CLONE' ? (
+            <>
               <Form.Item
-                name="sourceId"
-                label={t('portal.design.source')}
+                name="sourceMode"
+                label={t('portal.design.sourceType')}
                 rules={[{ required: true, message: t('portal.design.sourceRequired') }]}
               >
                 <Select
-                  aria-label={t('portal.design.source')}
-                  showSearch
-                  optionFilterProp="label"
-                  options={
-                    sourceMode === 'LISTING'
-                      ? listings.map(({ id, sku }) => ({
-                          value: id,
-                          label: sku,
-                        }))
-                      : templates.map(({ id, name }) => ({ value: id, label: name }))
-                  }
+                  aria-label={t('portal.design.sourceType')}
+                  options={[
+                    { value: 'LISTING', label: t('portal.design.sourceListing') },
+                    { value: 'TEMPLATE', label: t('portal.design.sourceTemplate') },
+                  ]}
                 />
               </Form.Item>
-            ) : null}
-          </>
-        ) : null}
-        {fixedOutput ? (
-          <Form.Item label={t('portal.design.expectedOutputs')}>
-            <Input value={fixedOutput} disabled />
-          </Form.Item>
-        ) : (
-          <Form.Item name="expectedOutputs" label={t('portal.design.expectedOutputs')}>
-            <Select
-              mode="multiple"
-              aria-label={t('portal.design.expectedOutputs')}
-              options={OUTPUT_TYPES.map((value) => ({ value, label: value }))}
-            />
-          </Form.Item>
-        )}
-        <Form.Item name="note" label={t('portal.design.note')}>
-          <Input.TextArea rows={2} />
-        </Form.Item>
-        <Form.Item label={t('portal.design.referenceFiles')}>
-          <FileUpload
-            multiple
-            fileList={referenceFiles}
-            title={t('portal.design.dropFiles')}
-            description={t('portal.design.referenceFiles')}
-            onChange={({ fileList }) => setReferenceFiles(fileList)}
-          />
-        </Form.Item>
+              {sourceMode ? (
+                <Form.Item
+                  name="sourceId"
+                  label={t('portal.design.source')}
+                  rules={[{ required: true, message: t('portal.design.sourceRequired') }]}
+                >
+                  <Select
+                    aria-label={t('portal.design.source')}
+                    showSearch
+                    optionFilterProp="label"
+                    options={
+                      sourceMode === 'LISTING'
+                        ? listings.map(({ id, sku }) => ({
+                            value: id,
+                            label: sku,
+                          }))
+                        : templates.map(({ id, name }) => ({ value: id, label: name }))
+                    }
+                  />
+                </Form.Item>
+              ) : null}
+            </>
+          ) : null}
+          {fixedOutput ? (
+            <Form.Item label={t('portal.design.expectedOutputs')}>
+              <Input value={fixedOutput} disabled />
+            </Form.Item>
+          ) : (
+            <Form.Item name="expectedOutputs" label={t('portal.design.expectedOutputs')}>
+              <Select
+                mode="multiple"
+                aria-label={t('portal.design.expectedOutputs')}
+                options={OUTPUT_TYPES.map((value) => ({ value, label: value }))}
+              />
+            </Form.Item>
+          )}
+          <FormSectionFull>
+            <Form.Item name="note" label={t('portal.design.note')}>
+              <Input.TextArea rows={2} />
+            </Form.Item>
+          </FormSectionFull>
+        </FormSection>
+
+        <FormSection title={t('portal.design.attachments', 'Attachments')}>
+          <FormSectionFull>
+            <Form.Item label={t('portal.design.referenceFiles')}>
+              <FileUpload
+                multiple
+                fileList={referenceFiles}
+                title={t('portal.design.dropFiles')}
+                description={t('portal.design.referenceFiles')}
+                onChange={({ fileList }) => setReferenceFiles(fileList)}
+              />
+            </Form.Item>
+          </FormSectionFull>
+        </FormSection>
       </Form>
     </Modal>
   )

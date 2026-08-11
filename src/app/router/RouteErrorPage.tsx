@@ -56,7 +56,7 @@ export function RouteErrorPage() {
               <Button
                 type="primary"
                 loading={revalidator.state !== 'idle'}
-                onClick={() => revalidator.revalidate()}
+                onClick={() => window.location.reload()}
               >
                 {t('errors.tryAgain')}
               </Button>

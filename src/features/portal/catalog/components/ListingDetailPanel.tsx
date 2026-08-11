@@ -1,7 +1,7 @@
 import { EditOutlined, GlobalOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Divider, Space, Tag, Typography } from 'antd'
 
-import { LoadingState, StatusTag } from '@/shared/ui'
+import { LoadingState, StatusTag, ZoomableImage } from '@/shared/ui'
 
 import type { InternalTemplate, Listing, ProductTypeGroup } from '../api/catalogApi'
 import { ListingVariantManager } from '../pages/ListingVariantManager'
@@ -66,6 +66,17 @@ export function ListingDetailPanel({
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerTop}>
+          <div className={styles.preview}>
+            {listing.productImageUrl ? (
+              <ZoomableImage
+                src={listing.productImageUrl}
+                alt={listing.title}
+                className={styles.previewImg}
+              />
+            ) : (
+              <GlobalOutlined />
+            )}
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <Space size={8} wrap>
               <StatusTag status={listing.salesChannelCode === 'AMAZON' ? 'processing' : 'ready'}>

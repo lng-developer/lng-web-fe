@@ -7,7 +7,19 @@ import {
   StarOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Modal, Select, Space, Table, Tag, Tooltip, Typography, Upload } from 'antd'
+import {
+  Button,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  Upload,
+} from 'antd'
 
 import { useFeedbackToast } from '@/shared/ui'
 
@@ -91,10 +103,11 @@ export function ListingVariantManager({
     setEditing(variant)
     form.setFieldsValue(
       variant === 'create'
-        ? { status: 'ACTIVE' }
+        ? { scaleDifficulty: { level: 'NORMAL', reason: null }, status: 'ACTIVE' }
         : {
             productTypeGroupId: variant.productTypeGroup.id,
             internalTemplateId: variant.internalTemplate?.id ?? null,
+            scaleDifficulty: variant.scaleDifficulty ?? { level: 'NORMAL', reason: null },
             status: variant.status,
           },
     )
@@ -173,6 +186,21 @@ export function ListingVariantManager({
               </Space>
             ),
           },
+          {
+            title: 'Scale',
+            render: (_, row) => (
+              <Space size="small">
+                <Tag color={row.scaleDifficulty?.level === 'NORMAL' ? 'default' : 'red'}>
+                  {row.scaleDifficulty?.level ?? 'NORMAL'}
+                </Tag>
+                {row.scaleDifficulty?.reason ? (
+                  <Typography.Text type="secondary" ellipsis style={{ maxWidth: 160 }}>
+                    {row.scaleDifficulty.reason}
+                  </Typography.Text>
+                ) : null}
+              </Space>
+            ),
+          },
           { title: 'Status', render: (_, row) => <Tag>{row.status}</Tag> },
           {
             title: 'Default',
@@ -226,6 +254,14 @@ export function ListingVariantManager({
           </Form.Item>
           <Form.Item name="internalTemplateId" label="Internal template">
             <Select allowClear options={templateOptions} />
+          </Form.Item>
+          <Form.Item name={['scaleDifficulty', 'level']} label="Scale difficulty">
+            <Select
+              options={['NORMAL', 'HARD', 'SPECIAL'].map((value) => ({ label: value, value }))}
+            />
+          </Form.Item>
+          <Form.Item name={['scaleDifficulty', 'reason']} label="Scale note">
+            <Input.TextArea rows={3} placeholder="What makes this variant hard to scale?" />
           </Form.Item>
           <Form.Item name="status" label="Status">
             <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ label: value, value }))} />

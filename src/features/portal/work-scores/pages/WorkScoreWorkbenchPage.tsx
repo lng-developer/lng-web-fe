@@ -6,7 +6,6 @@ import {
   DownloadOutlined,
   EditOutlined,
   EyeOutlined,
-  FileImageOutlined,
   PictureOutlined,
   ReloadOutlined,
   ScissorOutlined,
@@ -15,7 +14,7 @@ import {
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Input, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { Button, Form, Input, InputNumber, Select, Space, Table, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { ApiError } from '@/shared/api/apiError'
@@ -35,12 +34,15 @@ import {
 import {
   getWorkScore,
   getWorkScoreSummary,
+  listWorkScoreRules,
   listWorkScores,
   overrideWorkScore,
+  upsertWorkScoreRule,
   voidWorkScore,
   type WorkScoreDetail,
   type WorkScoreLevel,
   type WorkScoreListItem,
+  type WorkScoreRuleFormInput,
   type WorkScoreSourceType,
 } from '../api/workScoreApi'
 import { workScoreKeys } from '../api/workScoreKeys'
@@ -50,11 +52,15 @@ import styles from './WorkScoreWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20
 
-const LEVEL_COLOR_MAP: Record<WorkScoreLevel, string> = {
-  BASIC: 'blue',
-  STANDARD: 'cyan',
-  HARD: 'orange',
-  BONUS: 'purple',
+const RULE_TASK_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE']
+const SCALE_DIFFICULTIES = ['NORMAL', 'HARD', 'SPECIAL']
+const objectIdPattern = /^[a-f\d]{24}$/i
+const defaultAssetPreview =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' rx='10' fill='%23f1f5f9'/><path d='M28 70h44M34 30h32v28H34z' fill='none' stroke='%2394a3b8' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+
+function textOrNull(value: unknown) {
+  const text = String(value || '').trim()
+  return text && !objectIdPattern.test(text) ? text : null
 }
 
 export function WorkScoreWorkbenchPage({
@@ -127,6 +133,11 @@ export function WorkScoreWorkbenchPage({
     enabled: Boolean(selectedId),
     retry: false,
   })
+  const rules = useQuery({
+    queryKey: [...workScoreKeys.all, 'rules'],
+    queryFn: listWorkScoreRules,
+    enabled: canAdjust,
+  })
 
   const mutation = useMutation({
     mutationFn: async (input: {
@@ -169,6 +180,19 @@ export function WorkScoreWorkbenchPage({
       toast('error', error instanceof Error ? error.message : t('portal.workScores.actionFailed'))
     },
   })
+  const ruleMutation = useMutation({
+    mutationFn: (input: WorkScoreRuleFormInput) =>
+      upsertWorkScoreRule({ ...input, priority: null, slotKey: null }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [...workScoreKeys.all, 'rules'] })
+      toast('success', t('portal.workScores.updated'))
+    },
+    onError: (error) => {
+      toast('error', error instanceof Error ? error.message : t('portal.workScores.actionFailed'))
+    },
+  })
+  const [ruleForm] = Form.useForm<WorkScoreRuleFormInput>()
+  const ruleSourceType = Form.useWatch('sourceType', ruleForm)
 
   const openAction = useCallback((mode: 'override' | 'void', score: WorkScoreDetail) => {
     setSelectedId(undefined)
@@ -213,27 +237,42 @@ export function WorkScoreWorkbenchPage({
         width: 220,
         render: (_, row) => {
           const snapshot = row.contextSnapshot ?? {}
-          const sku = String(snapshot.sku || snapshot.externalOrderId || row.sourceTaskId)
-          const title = String(
-            snapshot.slotLabel || snapshot.taskTitle || snapshot.fileName || row.sourceUnitId,
-          )
+          const taskType = textOrNull(snapshot.taskType)
+          const title =
+            textOrNull(snapshot.slotLabel) ||
+            textOrNull(snapshot.taskTitle) ||
+            textOrNull(snapshot.fileName) ||
+            taskType ||
+            t(`portal.workScores.sources.${row.sourceType}`)
+          const sku =
+            textOrNull(snapshot.sku) ||
+            textOrNull(snapshot.externalOrderId) ||
+            textOrNull(snapshot.asin) ||
+            title
+          const listingImageUrl =
+            textOrNull(snapshot.productImageUrl) ||
+            textOrNull(snapshot.listingPreviewImageUrl) ||
+            textOrNull(snapshot.mainListingImageUrl)
+          const shouldUseListingImage =
+            row.sourceType === 'DESIGN_SUBMISSION' && taskType === 'PSD_TEMPLATE'
           return (
             <div className={styles.assetCell}>
-              {row.assetDownloadUrl ? (
+              {listingImageUrl && shouldUseListingImage ? (
+                <img alt={title} className={styles.assetThumb} src={listingImageUrl} />
+              ) : row.assetDownloadUrl && !shouldUseListingImage ? (
                 <AuthenticatedMediaImage
                   downloadUrl={row.assetDownloadUrl}
                   alt={title}
                   className={styles.assetThumb}
-                  fallback="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23666'><rect width='100' height='100'/></svg>"
+                  fallback={listingImageUrl || defaultAssetPreview}
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <div
+                <img
+                  alt={title}
                   className={styles.assetThumb}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <FileImageOutlined style={{ fontSize: 18, color: '#bfbfbf' }} />
-                </div>
+                  src={listingImageUrl || defaultAssetPreview}
+                />
               )}
               <div className={styles.assetMeta}>
                 <Typography.Text className={styles.assetName} title={sku}>
@@ -249,13 +288,26 @@ export function WorkScoreWorkbenchPage({
       },
       {
         title: t('portal.workScores.columns.source'),
-        dataIndex: 'sourceType',
-        width: 160,
-        render: (value) => (
-          <StatusTag status={value === 'DESIGN_SUBMISSION' ? 'processing' : 'ready'}>
-            {t(`portal.workScores.sources.${value}`)}
-          </StatusTag>
-        ),
+        width: 190,
+        render: (_, row) => {
+          const snapshot = row.contextSnapshot ?? {}
+          const subtype =
+            row.sourceType === 'DESIGN_SUBMISSION'
+              ? snapshot.taskType
+              : snapshot.scaleDifficultyLevel
+          return (
+            <Space direction="vertical" size={2}>
+              <StatusTag status={row.sourceType === 'DESIGN_SUBMISSION' ? 'processing' : 'ready'}>
+                {t(`portal.workScores.sources.${row.sourceType}`)}
+              </StatusTag>
+              {subtype ? (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  {String(subtype)}
+                </Typography.Text>
+              ) : null}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.workScores.columns.worker'),
@@ -263,16 +315,6 @@ export function WorkScoreWorkbenchPage({
           <Typography.Text strong style={{ fontSize: 13 }}>
             {row.workerName || row.workerId}
           </Typography.Text>
-        ),
-      },
-      {
-        title: t('portal.workScores.columns.level'),
-        dataIndex: 'scoreLevel',
-        width: 120,
-        render: (level: WorkScoreLevel) => (
-          <Tag color={LEVEL_COLOR_MAP[level] ?? 'blue'} style={{ fontWeight: 600 }}>
-            {level}
-          </Tag>
         ),
       },
       {
@@ -452,6 +494,79 @@ export function WorkScoreWorkbenchPage({
       ) : null}
 
       <SectionCard>
+        {canAdjust ? (
+          <div className={styles.ruleSetup}>
+            <Typography.Title level={4}>Score setup</Typography.Title>
+            <Form
+              form={ruleForm}
+              layout="inline"
+              initialValues={{ sourceType: 'DESIGN_SUBMISSION', status: 'ACTIVE' }}
+              onFinish={(values) => ruleMutation.mutate(values)}
+            >
+              <Form.Item name="sourceType" rules={[{ required: true }]}>
+                <Select
+                  className={styles.filter}
+                  onChange={(value) => {
+                    ruleForm.setFieldsValue({
+                      sourceType: value,
+                      taskType: null,
+                      scaleDifficultyLevel: null,
+                    })
+                  }}
+                  options={['DESIGN_SUBMISSION', 'PRODUCTION_SCALE'].map((value) => ({
+                    value,
+                    label: value,
+                  }))}
+                />
+              </Form.Item>
+              {ruleSourceType !== 'PRODUCTION_SCALE' ? (
+                <Form.Item name="taskType" preserve={false}>
+                  <Select
+                    allowClear
+                    className={styles.filter}
+                    placeholder="Task type"
+                    options={RULE_TASK_TYPES.map((value) => ({ value, label: value }))}
+                  />
+                </Form.Item>
+              ) : (
+                <Form.Item name="scaleDifficultyLevel" preserve={false}>
+                  <Select
+                    allowClear
+                    className={styles.filter}
+                    placeholder="Scale difficulty"
+                    options={SCALE_DIFFICULTIES.map((value) => ({ value, label: value }))}
+                  />
+                </Form.Item>
+              )}
+              <Form.Item name="points" rules={[{ required: true }]}>
+                <InputNumber min={0} placeholder="Points" />
+              </Form.Item>
+              <Form.Item name="status" rules={[{ required: true }]}>
+                <Select
+                  className={styles.filter}
+                  options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))}
+                />
+              </Form.Item>
+              <Button htmlType="submit" loading={ruleMutation.isPending} type="primary">
+                Save rule
+              </Button>
+            </Form>
+            <Table
+              size="small"
+              rowKey="id"
+              loading={rules.isLoading}
+              dataSource={rules.data ?? []}
+              pagination={false}
+              columns={[
+                { title: 'Source', dataIndex: 'sourceType' },
+                { title: 'Task type', render: (_, row) => row.taskType || '-' },
+                { title: 'Scale difficulty', render: (_, row) => row.scaleDifficultyLevel || '-' },
+                { title: 'Points', dataIndex: 'points' },
+                { title: 'Status', dataIndex: 'status' },
+              ]}
+            />
+          </div>
+        ) : null}
         <DataTable
           rowKey="id"
           columns={columns}

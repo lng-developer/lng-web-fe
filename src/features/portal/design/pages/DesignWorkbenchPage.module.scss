@@ -3,15 +3,9 @@
   gap: 20px;
 }
 
-.grid {
-  display: grid;
-  gap: 24px;
-  grid-template-columns: 280px minmax(0, 1fr);
-}
-
 .metricsList {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -45,48 +39,35 @@
   margin-bottom: 10px;
 }
 
-.taskList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.taskTable {
   margin-top: 16px;
 }
 
-.taskCard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
-  background: var(--ant-color-bg-container);
-  transition: all 0.2s ease-in-out;
-  gap: 24px;
-  cursor: pointer;
-
-  &:hover {
-    border-color: var(--ant-color-primary);
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.05);
-    transform: translateY(-1px);
-  }
-}
-
-.taskCardSelected {
-  border-color: var(--ant-color-primary);
-  background: rgba(24, 144, 255, 0.02);
-}
-
 .thumbnailContainer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.thumbnailFrame {
   width: 48px;
   height: 48px;
   border-radius: var(--ant-border-radius);
   overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--ant-color-fill-quaternary);
+}
+
+.thumbnailDownload {
+  width: 24px;
+  height: 22px;
+  min-width: 24px;
+  padding: 0;
+  color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
 }
 
 .thumbnailImg {
@@ -108,23 +89,15 @@
 }
 
 .taskAssignee {
-  flex-shrink: 0;
-  width: 180px;
   display: grid;
   gap: 2px;
-}
-
-.taskStatus {
-  flex-shrink: 0;
-  width: 120px;
-  display: flex;
-  justify-content: center;
+  min-width: 0;
 }
 
 .taskActions {
-  flex-shrink: 0;
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
 
   button {
     color: var(--ant-color-text-secondary);
@@ -133,6 +106,24 @@
       color: var(--ant-color-primary) !important;
       background: var(--ant-color-fill-quaternary) !important;
     }
+  }
+}
+
+.taskActions .approveAction {
+  color: var(--ant-color-success);
+
+  &:hover {
+    color: var(--ant-color-success) !important;
+    background: var(--ant-color-success-bg) !important;
+  }
+}
+
+.taskActions .rejectAction {
+  color: var(--ant-color-error);
+
+  &:hover {
+    color: var(--ant-color-error) !important;
+    background: var(--ant-color-error-bg) !important;
   }
 }
 
@@ -158,42 +149,13 @@
 }
 
 @media (max-width: 1200px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
   .metricsList {
-    flex-direction: row;
-
-    & > div {
-      flex: 1;
-    }
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 991px) {
-  .taskCard {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .taskAssignee {
-    width: 100%;
-    border-top: 1px solid var(--ant-color-border-secondary);
-    padding-top: 12px;
-  }
-
-  .taskStatus {
-    width: auto;
-    justify-content: flex-start;
-  }
-
-  .taskActions {
-    width: 100%;
-    justify-content: flex-end;
-    border-top: 1px solid var(--ant-color-border-secondary);
-    padding-top: 12px;
-    margin-top: 4px;
+  .metricsList {
+    grid-template-columns: 1fr;
   }
 }

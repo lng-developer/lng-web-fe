@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Input, Select, Space, Typography } from 'antd'
 
-import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
+import { downloadMediaAsset } from '@/shared/media'
 import {
   DataTable,
   DateRangePicker,
@@ -13,6 +13,7 @@ import {
   PageHeader,
   SectionCard,
   StatusTag,
+  ZoomableImage,
 } from '@/shared/ui'
 
 import { listDesignAssignees, listPsdFiles, type PsdFileListItem } from '../api/designApi'
@@ -57,7 +58,7 @@ export function PsdFileWorkspacePage() {
         asset ? (
           <Space>
             {asset.mimeType?.startsWith('image/') ? (
-              <AuthenticatedMediaImage
+              <ZoomableImage
                 alt={asset.originalFilename ?? 'File'}
                 downloadUrl={asset.downloadUrl}
                 width={32}

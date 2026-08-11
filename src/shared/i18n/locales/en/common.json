@@ -2139,6 +2139,8 @@
       "retry": "Retry",
       "editAddress": "Edit address",
       "validateAddress": "Validate address",
+      "overrideAddress": "Override address",
+      "overrideAddressReason": "Why override this address?",
       "saveAddress": "Save address",
       "cancelEdit": "Cancel",
       "saveNote": "Save note",

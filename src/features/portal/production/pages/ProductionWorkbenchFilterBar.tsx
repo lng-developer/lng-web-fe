@@ -18,9 +18,12 @@ type AssigneeOption = {
   readonly label: string
 }
 
+type ScaleDifficultyLevel = 'NORMAL' | 'HARD' | 'SPECIAL'
+
 export const ProductionWorkbenchFilterBar: FC<{
   readonly search: string
   readonly status?: ProductionStatus
+  readonly scaleDifficultyLevel?: ScaleDifficultyLevel
   readonly tab: 'scale' | 'qc'
   readonly statusOptions: FilterOption[]
   readonly scaleAssigneeId?: string
@@ -32,12 +35,14 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly onSearchChange: (value: string) => void
   readonly onSearchSubmit: (value: string) => void
   readonly onStatusChange: (value?: ProductionStatus) => void
+  readonly onScaleDifficultyChange: (value?: ScaleDifficultyLevel) => void
   readonly onExportQc: () => void
   readonly onScaleAssigneeChange: (value?: string) => void
   readonly onBulkAssign: () => void
 }> = ({
   search,
   status,
+  scaleDifficultyLevel,
   tab,
   statusOptions,
   scaleAssigneeId,
@@ -49,6 +54,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   onSearchChange,
   onSearchSubmit,
   onStatusChange,
+  onScaleDifficultyChange,
   onExportQc,
   onScaleAssigneeChange,
   onBulkAssign,
@@ -73,6 +79,14 @@ export const ProductionWorkbenchFilterBar: FC<{
           placeholder={t('portal.production.allStatuses')}
           options={statusOptions}
           onChange={onStatusChange}
+        />
+        <Select
+          className={styles.filter}
+          allowClear
+          value={scaleDifficultyLevel}
+          placeholder="All scale difficulty"
+          options={['NORMAL', 'HARD', 'SPECIAL'].map((value) => ({ value, label: value }))}
+          onChange={onScaleDifficultyChange}
         />
         {tab === 'qc' ? (
           <Button icon={<DownloadOutlined />} loading={exportQcLoading} onClick={onExportQc}>

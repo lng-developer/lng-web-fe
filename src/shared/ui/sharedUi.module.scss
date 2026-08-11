@@ -260,6 +260,27 @@
   margin-left: auto;
 }
 
+.formSectionDivider {
+  margin: 4px 0 16px;
+  font-size: 12px;
+}
+
+.formSectionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.formSectionFull {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .formSectionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .success {
   border-left: 4px solid var(--ant-color-success);
   box-shadow: 0 6px 14px rgb(23 26 31 / 8%);

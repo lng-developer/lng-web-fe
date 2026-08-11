@@ -17,6 +17,7 @@ import { queryClient } from '@/shared/query/queryClient'
 vi.mock('@/shared/media', () => ({
   AuthenticatedMediaImage: ({ alt }: { alt: string }) => <img alt={alt} />,
   downloadMediaAsset: vi.fn(),
+  useAuthenticatedMediaUrl: (downloadUrl?: string) => ({ url: downloadUrl }),
   uploadMultipartAsset: vi.fn().mockResolvedValue({ id: 'package-asset', uploadStatus: 'READY' }),
 }))
 
@@ -62,7 +63,11 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
         status: 'OPEN',
         taskType: 'PSD_TEMPLATE',
         priority: 'HIGH',
-        listing: { sku: 'SKU-1', title: 'Shirt' },
+        listing: {
+          sku: 'SKU-1',
+          title: 'Shirt',
+          productImageUrl: 'https://m.media-amazon.com/images/S/main-listing.png',
+        },
         shop: { name: 'Shop' },
         assignedDesigner: null,
         updatedAt: '2026-08-01T00:00:00Z',
@@ -138,13 +143,14 @@ describe('DesignWorkbenchPage', () => {
     formatDate.mockRestore()
   }, 15_000)
 
-  it('shows designer names instead of database ids in workload', async () => {
+  it('shows metric cards without the workload chart', async () => {
     render(
       <AppProviders>
         <DesignWorkbenchPage />
       </AppProviders>,
     )
-    expect(await screen.findByRole('img', { name: /Nguyen Van An: 2/ })).toBeInTheDocument()
+    expect(await screen.findByText('SKU-1')).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /Nguyen Van An: 2/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/6a339b5a033e2ff7753522c3/)).not.toBeInTheDocument()
   }, 15_000)
 
@@ -155,6 +161,19 @@ describe('DesignWorkbenchPage', () => {
       </AppProviders>,
     )
     expect((await screen.findByText('HIGH')).closest('.ant-tag')).not.toBeNull()
+  }, 15_000)
+
+  it('uses the listing product image when no media thumbnail exists', async () => {
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('img', { name: 'Preview' })).toHaveAttribute(
+      'src',
+      'https://m.media-amazon.com/images/S/main-listing.png',
+    )
   }, 15_000)
 
   it('shows a separate action for creating one design task', async () => {

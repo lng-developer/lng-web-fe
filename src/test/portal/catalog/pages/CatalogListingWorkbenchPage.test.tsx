@@ -37,6 +37,7 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
         asin: 'B0TEST123',
         etsyListingId: null,
         title: 'Shirt',
+        productImageUrl: 'https://m.media-amazon.com/images/S/listing.png',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'US',
         defaultVariantId: 'variant-1',
@@ -65,6 +66,7 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
     sku: 'SKU-1',
     asin: 'B0TEST123',
     title: 'Shirt',
+    productImageUrl: 'https://m.media-amazon.com/images/S/listing.png',
     salesChannelCode: 'AMAZON',
     marketplaceCode: 'US',
     productTypeGroup: null,
@@ -116,5 +118,20 @@ describe('CatalogListingWorkbenchPage', () => {
     expect(screen.getByText('Hoodie Master')).toBeInTheDocument()
     expect(screen.getByText('B0TEST123')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Request PSD' })).toBeInTheDocument()
+  }, 60_000)
+
+  it('shows the imported listing image in the card and detail panel', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('img', { name: 'Shirt' })).toHaveAttribute(
+      'src',
+      'https://m.media-amazon.com/images/S/listing.png',
+    )
+    fireEvent.click(await screen.findByRole('button', { name: /SKU-1/ }))
+    await waitFor(() => expect(screen.getAllByRole('img', { name: 'Shirt' })).toHaveLength(2))
   }, 60_000)
 })

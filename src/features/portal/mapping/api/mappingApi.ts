@@ -193,8 +193,13 @@ export type MappingVendorProductOptions = {
 export type RecheckBatchInput = Pick<
   MappingContextParams,
   'shopId' | 'salesChannelCode' | 'marketplaceCode'
-> & { limit: number }
-export type RecheckBatchResult = { processed?: number; resolved?: number; blocked?: number }
+> & { limit: number; page?: number }
+export type RecheckBatchResult = {
+  checked: number
+  resolved: number
+  blocked: number
+  skippedExisting: number
+}
 export type MappingRule = Record<string, unknown> & {
   id: string
   name?: string
@@ -297,7 +302,9 @@ export async function recheckOrderItem(orderItemId: string) {
   )
 }
 export async function recheckUnmatched(input: RecheckBatchInput) {
-  return unwrap<RecheckBatchResult>(await apiClient.post('/api/mapping/recheck-unmatched', input))
+  return unwrap<RecheckBatchResult>(
+    await apiClient.post('/api/mapping/recheck-unmatched', input, { timeout: 120_000 }),
+  )
 }
 export async function searchVendorCandidates(orderItemId: string, input: CandidateSearchInput) {
   return unwrap<CandidateResult>(

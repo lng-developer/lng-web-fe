@@ -1,12 +1,50 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BellOutlined, CheckOutlined } from '@ant-design/icons'
-import { Badge, Button, Empty, List, Popover, Skeleton, Typography } from 'antd'
+import {
+  BellOutlined,
+  CheckOutlined,
+  FileTextOutlined,
+  NotificationOutlined,
+  ShoppingOutlined,
+  ToolOutlined,
+  UserOutlined,
+  WarningOutlined,
+} from '@ant-design/icons'
+import { Avatar, Badge, Button, Empty, List, Popover, Segmented, Skeleton, Typography } from 'antd'
 
+import type { AppNotification } from '@/features/notifications/api/notificationApi'
 import { useNotificationCenter } from '@/features/notifications/useNotificationCenter'
 import { useFeedbackToast } from '@/shared/ui'
 
 import styles from './NotificationCenter.module.scss'
+
+const notificationIcon = (item: AppNotification) => {
+  const source = `${item.type} ${item.relatedResource?.type ?? ''}`.toLowerCase()
+  if (source.includes('order')) return <ShoppingOutlined />
+  if (source.includes('design') || source.includes('production')) return <ToolOutlined />
+  if (source.includes('hr') || source.includes('employee') || source.includes('staff')) {
+    return <UserOutlined />
+  }
+  if (source.includes('issue') || source.includes('fail') || source.includes('error')) {
+    return <WarningOutlined />
+  }
+  if (source.includes('file') || source.includes('asset') || source.includes('media')) {
+    return <FileTextOutlined />
+  }
+  return <NotificationOutlined />
+}
+
+const relativeTime = (value: string) => {
+  const diff = Date.now() - new Date(value).getTime()
+  const minute = 60_000
+  const hour = 60 * minute
+  const day = 24 * hour
+  if (diff < minute) return '<1m'
+  if (diff < hour) return `${Math.floor(diff / minute)}m`
+  if (diff < day) return `${Math.floor(diff / hour)}h`
+  if (diff < 7 * day) return `${Math.floor(diff / day)}d`
+  return new Date(value).toLocaleDateString()
+}
 
 export function NotificationCenter() {
   const { t } = useTranslation()
@@ -14,6 +52,7 @@ export function NotificationCenter() {
   const contentRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [limit, setLimit] = useState(8)
+  const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const { countQuery, inboxQuery, readMutation, readAllMutation, refresh } = useNotificationCenter(
     open,
     limit,
@@ -22,6 +61,8 @@ export function NotificationCenter() {
     toast('error', t('notifications.updateFailed'), error.message)
   const unreadCount = countQuery.data?.unreadCount ?? 0
   const notifications = inboxQuery.data?.items ?? []
+  const visibleNotifications =
+    filter === 'unread' ? notifications.filter((item) => !item.readAt) : notifications
   const hasMoreItems = (inboxQuery.data?.pagination.total ?? 0) > (notifications.length ?? 0)
 
   useEffect(() => {
@@ -71,6 +112,17 @@ export function NotificationCenter() {
           {t('notifications.markAllRead')}
         </Button>
       </div>
+      <div className={styles.tabs}>
+        <Segmented
+          size="small"
+          value={filter}
+          onChange={(value) => setFilter(value as 'all' | 'unread')}
+          options={[
+            { label: t('notifications.all', 'All'), value: 'all' },
+            { label: t('notifications.unread', 'Unread'), value: 'unread' },
+          ]}
+        />
+      </div>
       {inboxQuery.isLoading ? (
         <List
           dataSource={[1, 2, 3, 4]}
@@ -84,7 +136,7 @@ export function NotificationCenter() {
       ) : (
         <List
           className={styles.list}
-          dataSource={notifications}
+          dataSource={visibleNotifications}
           locale={{
             emptyText: (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('notifications.empty')} />
@@ -93,13 +145,23 @@ export function NotificationCenter() {
           renderItem={(item) => {
             const unread = !item.readAt
             return (
-              <List.Item className={unread ? styles.unreadItem : styles.item}>
+              <List.Item className={unread ? styles.unreadItem : styles.item} role="listitem">
+                <Avatar
+                  className={unread ? styles.unreadAvatar : styles.avatar}
+                  icon={notificationIcon(item)}
+                  size={44}
+                />
                 <div className={styles.itemContent}>
                   <div className={styles.itemHeader}>
-                    <div className={styles.itemTitle}>
-                      {unread && <span className={styles.unreadDot} aria-hidden="true" />}
+                    <div className={styles.itemText}>
                       <Typography.Text strong={unread} className={styles.itemTitleText}>
                         {item.title}
+                      </Typography.Text>
+                      <Typography.Text className={styles.message} title={item.message}>
+                        {item.message}
+                      </Typography.Text>
+                      <Typography.Text className={styles.timestamp}>
+                        {relativeTime(item.createdAt)}
                       </Typography.Text>
                     </div>
                     {unread ? (
@@ -116,17 +178,10 @@ export function NotificationCenter() {
                             onError: mutationError,
                           })
                         }
-                      >
-                        {t('notifications.markRead')}
-                      </Button>
+                      />
                     ) : null}
+                    {unread ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
                   </div>
-                  <Typography.Text className={styles.message} title={item.message}>
-                    {item.message}
-                  </Typography.Text>
-                  <Typography.Text type="secondary" className={styles.timestamp}>
-                    {new Date(item.createdAt).toLocaleString()}
-                  </Typography.Text>
                 </div>
               </List.Item>
             )

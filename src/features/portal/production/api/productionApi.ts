@@ -32,7 +32,11 @@ export type ProductionUser = { id: string; fullName: string | null; employeeCode
 export type ProductionScaleContext = {
   use?: {
     psdTemplate?: { assetDownloadUrl?: string | null; status?: string | null }
-    listing?: { psdStatus?: string | null; previewAssetDownloadUrl?: string | null }
+    listing?: {
+      psdStatus?: string | null
+      previewAssetDownloadUrl?: string | null
+      scaleDifficulty?: { level?: string | null; reason?: string | null } | null
+    }
   }
 }
 export type ProductionCustomization = {
@@ -93,6 +97,7 @@ export type ProductionParams = {
   view?: 'SCALE' | 'QC'
   search?: string
   status?: ProductionStatus
+  scaleDifficultyLevel?: 'NORMAL' | 'HARD' | 'SPECIAL'
   qcStatus?: QcStatus
 }
 export type FileDecision = { fileCheckId: string; decision: 'PASSED' | 'REJECTED'; note?: string }

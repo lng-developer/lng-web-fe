@@ -22,6 +22,7 @@ export type Listing = {
   asin: string | null
   etsyListingId: string | null
   title: string
+  productImageUrl?: string | null
   defaultVariantId?: string | null
   baseCostAmount: number
   currency: string
@@ -119,6 +120,10 @@ export type ListingVariant = {
   internalTemplate: CompactRef | null
   psdTemplateAssetId: string | null
   previewAssetId: string | null
+  scaleDifficulty?: {
+    level: 'NORMAL' | 'HARD' | 'SPECIAL'
+    reason?: string | null
+  } | null
   psdReadiness: {
     required: boolean
     status: 'MISSING' | 'PRESENT' | 'NOT_REQUIRED'
@@ -134,6 +139,10 @@ export type ListingVariantInput = {
   internalTemplateId?: string | null
   psdTemplateAssetId?: string | null
   previewAssetId?: string | null
+  scaleDifficulty?: {
+    level?: 'NORMAL' | 'HARD' | 'SPECIAL'
+    reason?: string | null
+  }
   status?: string
 }
 export type CreateListingInput = {
