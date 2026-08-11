@@ -127,6 +127,12 @@
   width: 260px;
 }
 
+.ruleSetup {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 /* ── Drawer Scoring Section ────────────────────────────── */
 .drawerPreview {
   width: 100%;

@@ -7,6 +7,7 @@ import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd'
 import { ApiError } from '@/shared/api'
 import { brandAssets } from '@/shared/config/brandAssets'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
+import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 
 import { login } from '../../api/authApi'
 import styles from './LoginPage.module.scss'
@@ -28,8 +29,9 @@ export function LoginPage() {
   }
   return (
     <main className={styles.page}>
-      <div className={styles.language}>
+      <div className={styles.preferences}>
         <LanguageSwitch />
+        <ThemeSwitch />
       </div>
       <section className={styles.intro} aria-label="LNG Web">
         <div className={styles.introInner}>

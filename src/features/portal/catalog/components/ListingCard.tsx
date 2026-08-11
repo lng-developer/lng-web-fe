@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { GlobalOutlined, ShopOutlined } from '@ant-design/icons'
 import { Space, Typography } from 'antd'
 
-import { StatusTag } from '@/shared/ui'
+import { StatusTag, ZoomableImage } from '@/shared/ui'
 
 import type { Listing } from '../api/catalogApi'
 import styles from './ListingCard.module.scss'
@@ -37,6 +37,18 @@ export function ListingCard({ listing, isSelected, onClick }: ListingCardProps) 
     >
       {/* Left accent bar coloured by QC status */}
       <div className={styles.accent} style={{ backgroundColor: qcColor }} />
+
+      <div className={styles.thumbnail}>
+        {listing.productImageUrl ? (
+          <ZoomableImage
+            src={listing.productImageUrl}
+            alt={listing.title}
+            className={styles.thumbnailImg}
+          />
+        ) : (
+          <GlobalOutlined />
+        )}
+      </div>
 
       <div className={styles.body}>
         <div className={styles.top}>

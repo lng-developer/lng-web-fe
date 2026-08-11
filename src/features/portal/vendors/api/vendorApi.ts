@@ -243,10 +243,13 @@ export async function updateVendorCostCenter(
   )
 }
 
-export async function getVendorIntegrationConfig(vendorId: string) {
+export async function getVendorIntegrationConfig(
+  vendorId: string,
+): Promise<VendorIntegrationConfig | null> {
   const config = unwrap<VendorIntegrationConfig & Record<string, unknown>>(
     await apiClient.get(`/api/vendors/${vendorId}/integration`),
   )
+  if (!config) return null
   const {
     accessToken: ignoredAccessToken,
     password: ignoredPassword,

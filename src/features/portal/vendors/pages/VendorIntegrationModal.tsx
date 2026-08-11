@@ -7,7 +7,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Descriptions, Divider, Form, Input, Modal, Radio, Switch, Tag } from 'antd'
+import { Button, Descriptions, Divider, Form, Input, Modal, Radio, Select, Tag } from 'antd'
 
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import { FeedbackAlert, FormActions, useFeedbackToast } from '@/shared/ui'
@@ -28,6 +28,24 @@ const fieldsByAuthType = {
   LOGIN_PASSWORD: ['username', 'password'],
 } as const
 const secretFields = ['accessToken', 'refreshToken', 'username', 'password'] as const
+const providerOptions = [
+  'BEEFUL',
+  'GRABINK',
+  'MERCHIZE',
+  'PRINTWAY',
+  'MANGOTEE',
+  'MERCHFOX',
+  'LENFUL',
+  'SS88',
+  'LUXURY_PRO',
+  'MANGO_P76',
+  'ZTB',
+  'PGPRINT',
+  'ONOSPOD',
+  'LNG_GROUP',
+  'CUSTOM',
+].map((value) => ({ label: value, value }))
+const refreshableProviders = new Set(['LENFUL', 'PRINTWAY'])
 
 export interface VendorIntegrationModalProps {
   readonly open: boolean
@@ -56,10 +74,13 @@ export function VendorIntegrationModal({
   })
 
   useEffect(() => {
-    if (!config.data) return
-    const { authType, baseUrl, expiresAt, providerKey, status } = config.data
-    form.setFieldsValue({ authType, baseUrl, expiresAt, providerKey, status })
-  }, [config.data, form])
+    if (config.data) {
+      const { authType, baseUrl, expiresAt, providerKey, status } = config.data
+      form.setFieldsValue({ authType, baseUrl, expiresAt, providerKey, status })
+      return
+    }
+    if (config.isSuccess) form.resetFields()
+  }, [config.data, config.isSuccess, form])
 
   const authType = Form.useWatch('authType', form) as VendorIntegrationAuthType | undefined
   const resolvedAuthType = authType ?? config.data?.authType
@@ -138,7 +159,11 @@ export function VendorIntegrationModal({
         </Divider>
 
         <Form.Item label={t('vendors.providerKey')} name="providerKey" rules={[{ required: true }]}>
-          <Input placeholder="e.g. PRINTWAY, MERCHIZE, LENFUL" />
+          <Select
+            aria-label={t('vendors.providerKey')}
+            options={providerOptions}
+            placeholder={t('vendors.providerKey')}
+          />
         </Form.Item>
 
         <Form.Item
@@ -189,23 +214,6 @@ export function VendorIntegrationModal({
           </>
         )}
 
-        <Divider plain style={{ fontSize: 12, margin: '16px 0' }}>
-          {t('vendors.sectionStatus', { defaultValue: 'Connection Status' })}
-        </Divider>
-
-        <Form.Item
-          label={t('vendors.statusLabel')}
-          name="status"
-          valuePropName="checked"
-          getValueFromEvent={(checked: boolean) => (checked ? 'CONNECTED' : 'DISCONNECTED')}
-          getValueProps={(v) => ({ checked: v === 'CONNECTED' })}
-        >
-          <Switch
-            checkedChildren={t('vendors.status.CONNECTED', { defaultValue: 'CONNECTED' })}
-            unCheckedChildren={t('vendors.status.DISCONNECTED', { defaultValue: 'DISCONNECTED' })}
-          />
-        </Form.Item>
-
         {config.data ? (
           <Descriptions
             bordered
@@ -253,16 +261,24 @@ export function VendorIntegrationModal({
               cancelLabel={t('vendors.cancel')}
               dirty={form.isFieldsTouched()}
               extra={
-                <Button
-                  icon={<ApiOutlined />}
-                  disabled={!config.data?.providerKey}
-                  loading={refresh.isPending}
-                  onClick={() => {
-                    if (window.confirm(t('vendors.confirmRefresh'))) refresh.mutate()
-                  }}
-                >
-                  {t('vendors.refresh')}
-                </Button>
+                config.data && refreshableProviders.has(config.data.providerKey) ? (
+                  <Button
+                    icon={<ApiOutlined />}
+                    disabled={!config.data?.providerKey}
+                    loading={refresh.isPending}
+                    onClick={() => {
+                      Modal.confirm({
+                        title: t('vendors.testConnection', { defaultValue: 'Test connection' }),
+                        content: t('vendors.confirmRefresh'),
+                        okText: t('vendors.testConnection', { defaultValue: 'Test connection' }),
+                        cancelText: t('vendors.cancel'),
+                        onOk: () => refresh.mutate(),
+                      })
+                    }}
+                  >
+                    {t('vendors.testConnection', { defaultValue: 'Test connection' })}
+                  </Button>
+                ) : null
               }
               onCancel={close}
               saving={save.isPending}

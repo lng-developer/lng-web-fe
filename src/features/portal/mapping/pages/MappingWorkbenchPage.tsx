@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App as AntdApp, Button, Card, Select, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { orderKeys } from '@/features/portal/orders/api/orderKeys'
 import { normalizeApiError } from '@/shared/api'
 import { CopyableOrderId, FeedbackAlert, PageHeader, useFeedbackToast } from '@/shared/ui'
 
@@ -28,17 +29,31 @@ import {
   selectFulfillmentCandidate,
   type UnmatchedMappingItem,
   type UnmatchedParams,
+  type VendorCandidateSearchRow,
 } from '../api/mappingApi'
 import { mappingKeys } from '../api/mappingKeys'
 import { LiveTracePanel } from '../components/LiveTracePanel'
 import { MappingContextBar, type MappingContextValue } from '../components/MappingContextBar'
 import { ResolveQueuePanel } from '../components/ResolveQueuePanel'
-import { VendorCandidatePickerModal } from '../components/VendorCandidatePickerModal'
-import { toMappingTraceView } from '../model/mappingModel'
+import { toMappingTraceView, type TraceCandidate } from '../model/mappingModel'
 import { getRulePageForFixType } from '../model/mappingPageConfig'
 import styles from './MappingWorkspacePage.module.scss'
 
 const PAGE_SIZE = 50
+
+const toTraceCandidate = (item: VendorCandidateSearchRow): TraceCandidate => ({
+  vendorProductId: item.vendorProduct.id,
+  vendorCostCenterId: item.vendorCostCenter.id,
+  vendorProductName: item.vendorProduct.name ?? item.vendorProduct.code ?? undefined,
+  vendorCostCenterCode: item.vendorCostCenter.code ?? undefined,
+  vendorName: item.vendor.name ?? item.vendor.code ?? undefined,
+  size: item.vendorCostCenter.standardSize,
+  color: item.vendorCostCenter.standardColor,
+  confidence: item.match.confidence,
+  matchScore: item.match.score,
+  baseCostAmount: item.vendorCostCenter.baseCostAmount,
+  currency: item.vendorCostCenter.currency,
+})
 
 type StageKey =
   | 'SKU_CLEANUP'
@@ -131,12 +146,12 @@ export function MappingWorkbenchPage({
   const [queueBlocker, setQueueBlocker] = useState<string>()
   const [queueStage, setQueueStage] = useState<UnmatchedParams['stage']>()
   const [queueAge, setQueueAge] = useState<UnmatchedParams['age']>()
+  const [batchPage, setBatchPage] = useState(1)
   const [selectedItem, setSelectedItem] = useState<UnmatchedMappingItem | undefined>(() => {
     return linkedOrderItemId
       ? { id: linkedOrderItemId, orderItemId: linkedOrderItemId, blockingReasons: [] }
       : undefined
   })
-  const [candidateOpen, setCandidateOpen] = useState(false)
   const [candidateSearch, setCandidateSearch] = useState('')
 
   const orderItemId = selectedItem?.orderItemId ?? selectedItem?.id
@@ -182,7 +197,7 @@ export function MappingWorkbenchPage({
   const candidates = useQuery({
     queryKey: mappingKeys.candidates(orderItemId ?? '', candidateSearch),
     queryFn: () => searchVendorCandidates(orderItemId!, { q: candidateSearch, limit: 100 }),
-    enabled: candidateOpen && Boolean(orderItemId),
+    enabled: Boolean(orderItemId),
     retry: false,
   })
 
@@ -195,13 +210,13 @@ export function MappingWorkbenchPage({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: mappingKeys.unmatchedRoot() }),
       queryClient.invalidateQueries({ queryKey: mappingKeys.summaryRoot() }),
+      queryClient.invalidateQueries({ queryKey: orderKeys.all }),
     ])
   }, [queryClient])
 
   const recheck = useMutation({
     mutationFn: recheckOrderItem,
     onSuccess: async () => {
-      setCandidateOpen(false)
       await refreshQueue()
       toast('success', t('mapping.feedback.itemRechecked'))
     },
@@ -222,26 +237,32 @@ export function MappingWorkbenchPage({
         vendorProductId: productId,
       }),
     onSuccess: () => {
-      setCandidateOpen(false)
       toast('success', t('mapping.feedback.candidateSelected'))
       void refreshQueue()
     },
     onError: notifyError,
   })
   const batch = useMutation({
-    mutationFn: () => recheckUnmatched({ ...apiContext, limit: 50 }),
+    mutationFn: () => recheckUnmatched({ ...apiContext, limit: 10, page: batchPage }),
     onSuccess: async (result) => {
+      setBatchPage((page) => page + 1)
       await refreshQueue()
       toast(
         'success',
         t('mapping.feedback.batchCompleted'),
-        `${result.processed ?? 0} / ${result.resolved ?? 0} / ${result.blocked ?? 0}`,
+        `checked ${result.checked} / resolved ${result.resolved} / blocked ${result.blocked} / skipped ${result.skippedExisting}`,
       )
     },
     onError: notifyError,
   })
 
-  const trace = preview.data ? toMappingTraceView(preview.data) : undefined
+  const candidateItems = candidates.data?.items
+  const trace = useMemo(() => {
+    if (!preview.data) return undefined
+    const view = toMappingTraceView(preview.data)
+    if (view.candidates.length || !candidateItems?.length) return view
+    return { ...view, candidates: candidateItems.map(toTraceCandidate) }
+  }, [candidateItems, preview.data])
   const rulePage = getRulePageForFixType(selectedItem?.recommendedFixTypes?.[0])
   const ruleSearch =
     orderItemId && rulePage
@@ -285,8 +306,14 @@ export function MappingWorkbenchPage({
         loading={shops.isLoading}
         shops={shops.data}
         value={context}
-        onChange={setContext}
-        onPreview={() => setQueueSearch(context.search ?? '')}
+        onChange={(nextContext) => {
+          setBatchPage(1)
+          setContext(nextContext)
+        }}
+        onPreview={() => {
+          setBatchPage(1)
+          setQueueSearch(context.search ?? '')
+        }}
       />
 
       {/* ── Stage Quick-Filter Pills ── */}
@@ -299,7 +326,10 @@ export function MappingWorkbenchPage({
               key={key}
               type="button"
               className={`${styles.stagePill} ${isActive ? styles.active : ''}`}
-              onClick={() => setQueueStage(isActive ? undefined : key)}
+              onClick={() => {
+                setBatchPage(1)
+                setQueueStage(isActive ? undefined : key)
+              }}
             >
               {icon}
               <span>{t(labelKey)}</span>
@@ -326,7 +356,10 @@ export function MappingWorkbenchPage({
             },
             { value: 'OVER_3_DAYS', label: t('mapping.age.over3d', { defaultValue: '>3 days' }) },
           ]}
-          onChange={setQueueAge}
+          onChange={(value) => {
+            setBatchPage(1)
+            setQueueAge(value)
+          }}
         />
       </div>
 
@@ -355,8 +388,14 @@ export function MappingWorkbenchPage({
             selectedId={selectedItem?.id}
             blocker={queueBlocker}
             search={queueSearch}
-            onBlockerChange={setQueueBlocker}
-            onSearchChange={setQueueSearch}
+            onBlockerChange={(value) => {
+              setBatchPage(1)
+              setQueueBlocker(value)
+            }}
+            onSearchChange={(value) => {
+              setBatchPage(1)
+              setQueueSearch(value)
+            }}
             onSelect={setSelectedItem}
             onRecommendedStage={() => undefined}
           />
@@ -397,30 +436,16 @@ export function MappingWorkbenchPage({
             selectingCandidateId={
               selectCandidate.isPending ? selectCandidate.variables?.costCenterId : undefined
             }
+            candidateSearch={candidateSearch}
             onRecheck={() => orderItemId && recheck.mutate(orderItemId)}
             onResolve={() => orderItemId && resolve.mutate(orderItemId)}
-            onFindCandidate={() => setCandidateOpen(true)}
+            onCandidateSearchChange={setCandidateSearch}
             onSelectCandidate={(costCenterId, productId) =>
               selectCandidate.mutate({ costCenterId, productId })
             }
           />
         </Card>
       </div>
-
-      <VendorCandidatePickerModal
-        applying={selectCandidate.isPending}
-        items={candidates.data?.items ?? []}
-        loading={candidates.isFetching}
-        open={candidateOpen}
-        onClose={() => setCandidateOpen(false)}
-        onSearch={setCandidateSearch}
-        onApply={(candidate) =>
-          selectCandidate.mutate({
-            costCenterId: candidate.vendorCostCenter.id,
-            productId: candidate.vendorProduct.id,
-          })
-        }
-      />
     </section>
   )
 }

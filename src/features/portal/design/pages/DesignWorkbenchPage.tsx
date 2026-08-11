@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
   AppstoreOutlined,
-  AuditOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
   EyeOutlined,
-  MoreOutlined,
   PictureOutlined,
   PlayCircleOutlined,
   PlusOutlined,
@@ -16,16 +18,12 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { UploadFile } from 'antd'
+import type { TableColumnsType, UploadFile } from 'antd'
 import {
   Button,
-  Checkbox,
   Descriptions,
-  Dropdown,
-  Empty,
   Input,
   Modal,
-  Pagination,
   Progress,
   Select,
   Space,
@@ -34,14 +32,6 @@ import {
   Typography,
 } from 'antd'
 import dayjs from 'dayjs'
-import {
-  Bar,
-  BarChart as RechartsBarChart,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -49,8 +39,10 @@ import {
   type ListingOptions,
   listListings,
 } from '@/features/portal/catalog/api/catalogApi'
-import { AuthenticatedMediaImage, downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
+import { downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
 import {
+  CopyableText,
+  DataTable,
   DetailDrawer,
   EmployeeAvatar,
   FileUpload,
@@ -60,6 +52,7 @@ import {
   SectionCard,
   StatusTag,
   useFeedbackToast,
+  ZoomableImage,
 } from '@/shared/ui'
 
 import {
@@ -99,7 +92,6 @@ const STATUSES = [
 const TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE'] as const
 type DesignTaskStatus = (typeof STATUSES)[number]
 type DesignTaskType = (typeof TYPES)[number]
-type SortableAction = 'assign' | 'start' | 'submit' | 'review'
 
 const tone = (status: string) =>
   status === 'APPROVED'
@@ -377,10 +369,6 @@ export function DesignWorkbenchPage() {
   const canAssign = permissions.has('DESIGN:WRITE')
   const canWork = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:WORK')
   const canReview = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:REVIEW')
-  const assigneeNames = useMemo(
-    () => new Map((assignees.data ?? []).map(({ id, fullName, name }) => [id, fullName ?? name])),
-    [assignees.data],
-  )
   const assigneeOptions = useMemo(
     () =>
       (assignees.data ?? []).map(({ id, fullName, name, avatarUrl }) => ({
@@ -397,22 +385,6 @@ export function DesignWorkbenchPage() {
   const statusOptions = useMemo(() => STATUSES.map((value) => ({ value, label: value })), [])
   const typeOptions = useMemo(() => TYPES.map((value) => ({ value, label: value })), [])
 
-  const openQuickAction = useCallback(
-    (task: DesignTask, type: SortableAction) => {
-      if (type === 'review') setSelectedId(task.id)
-      if (type === 'assign') {
-        setActiveTask(task)
-        setAssignOpen(true)
-      }
-      if (type === 'start') action.mutate({ type: 'start', task })
-      if (type === 'submit') {
-        setActiveTask(task)
-        setSubmitOpen(true)
-      }
-    },
-    [action],
-  )
-
   const handleBulkAssign = useCallback(() => {
     bulkAssign.mutate()
   }, [bulkAssign])
@@ -428,6 +400,19 @@ export function DesignWorkbenchPage() {
     setActiveTask(task)
     setSubmitOpen(true)
   }, [])
+  const handleOpenApprove = useCallback((task: DesignTask) => {
+    setActiveTask(task)
+    setApprovedAssetId(task.latestSubmission?.assets[0]?.id)
+    setApproveOpen(true)
+  }, [])
+  const handleOpenReject = useCallback((task: DesignTask) => {
+    setActiveTask(task)
+    setRejectOpen(true)
+  }, [])
+  const handleOpenCancel = useCallback((task: DesignTask) => {
+    setActiveTask(task)
+    setCancelOpen(true)
+  }, [])
 
   const selectableTasks = useMemo(
     () =>
@@ -436,29 +421,246 @@ export function DesignWorkbenchPage() {
       ),
     [displayedTasks],
   )
-  const selectedSet = useMemo(() => new Set(selectedRowKeys), [selectedRowKeys])
-
-  const isAllSelected = useMemo(
-    () => selectableTasks.length > 0 && selectableTasks.every((row) => selectedSet.has(row.id)),
-    [selectableTasks, selectedSet],
-  )
-
-  const toggleSelectAll = useCallback(
-    (checked: boolean) => {
-      setSelectedRowKeys((prev) =>
-        checked
-          ? [...new Set([...prev, ...selectableTasks.map((t) => t.id)])]
-          : prev.filter((id) => !selectableTasks.some((t) => t.id === id)),
-      )
-    },
+  const selectableTaskIds = useMemo(
+    () => new Set(selectableTasks.map((row) => row.id)),
     [selectableTasks],
   )
 
-  const toggleSelectRow = useCallback((id: string, checked: boolean) => {
-    setSelectedRowKeys((prev) => (checked ? [...prev, id] : prev.filter((key) => key !== id)))
-  }, [])
+  const renderTaskActions = useCallback(
+    (row: DesignTask) => (
+      <div className={styles.taskActions}>
+        {canAssign && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status) ? (
+          <Tooltip title={t('portal.design.assign')}>
+            <Button
+              aria-label={t('portal.design.assign')}
+              type="text"
+              icon={<UserAddOutlined />}
+              onClick={() => handleOpenAssign(row)}
+            />
+          </Tooltip>
+        ) : null}
+        {canWork && row.status === 'ASSIGNED' ? (
+          <Tooltip title={t('portal.design.start')}>
+            <Button
+              aria-label={t('portal.design.start')}
+              type="text"
+              icon={<PlayCircleOutlined />}
+              onClick={() => handleStartWork(row)}
+            />
+          </Tooltip>
+        ) : null}
+        {canWork && ['IN_PROGRESS', 'REJECTED'].includes(row.status) ? (
+          <Tooltip title={t('portal.design.submit')}>
+            <Button
+              aria-label={t('portal.design.submit')}
+              type="text"
+              icon={<UploadOutlined />}
+              onClick={() => handleOpenSubmit(row)}
+            />
+          </Tooltip>
+        ) : null}
+        {canReview && row.status === 'SUBMITTED' && row.latestSubmission?.assets.length ? (
+          <Tooltip title={t('portal.design.approve')}>
+            <Button
+              className={styles.approveAction}
+              aria-label={t('portal.design.approve')}
+              type="text"
+              icon={<CheckCircleOutlined />}
+              onClick={() => handleOpenApprove(row)}
+            />
+          </Tooltip>
+        ) : null}
+        {canReview && row.status === 'SUBMITTED' ? (
+          <Tooltip title={t('portal.design.reject')}>
+            <Button
+              danger
+              className={styles.rejectAction}
+              aria-label={t('portal.design.reject')}
+              type="text"
+              icon={<CloseCircleOutlined />}
+              onClick={() => handleOpenReject(row)}
+            />
+          </Tooltip>
+        ) : null}
+        {canAssign && !['APPROVED', 'CANCELLED'].includes(row.status) ? (
+          <Tooltip title={t('portal.design.cancel')}>
+            <Button
+              danger
+              aria-label={t('portal.design.cancel')}
+              type="text"
+              icon={<DeleteOutlined />}
+              onClick={() => handleOpenCancel(row)}
+            />
+          </Tooltip>
+        ) : null}
+        <Tooltip title={t('portal.design.view')}>
+          <Button
+            aria-label={t('portal.design.view')}
+            type="text"
+            icon={<EyeOutlined />}
+            onClick={() => setTaskDraft(row.id)}
+          />
+        </Tooltip>
+      </div>
+    ),
+    [
+      canAssign,
+      canReview,
+      canWork,
+      handleOpenApprove,
+      handleOpenAssign,
+      handleOpenCancel,
+      handleOpenReject,
+      handleOpenSubmit,
+      handleStartWork,
+      setTaskDraft,
+      t,
+    ],
+  )
+
+  const taskColumns = useMemo<TableColumnsType<DesignTask>>(
+    () => [
+      {
+        title: t('portal.design.image', 'Image'),
+        key: 'image',
+        width: 92,
+        render: (_, row) => (
+          <div className={styles.thumbnailContainer}>
+            <div className={styles.thumbnailFrame}>
+              {row.thumbnailAsset?.downloadUrl ? (
+                <ZoomableImage
+                  downloadUrl={row.thumbnailAsset.downloadUrl}
+                  alt="Preview"
+                  className={styles.thumbnailImg}
+                  fallback="/favicon.svg"
+                />
+              ) : row.listing?.productImageUrl ? (
+                <ZoomableImage
+                  src={row.listing.productImageUrl}
+                  alt="Preview"
+                  className={styles.thumbnailImg}
+                  loading="lazy"
+                />
+              ) : (
+                <div className={styles.thumbnailPlaceholder}>
+                  <PictureOutlined style={{ fontSize: 20, color: '#bfbfbf' }} />
+                </div>
+              )}
+            </div>
+            {(row.thumbnailAsset?.downloadUrl || row.listing?.productImageUrl) && (
+              <Button
+                aria-label="Download main listing image"
+                className={styles.thumbnailDownload}
+                icon={<DownloadOutlined />}
+                size="small"
+                type="text"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  if (row.thumbnailAsset?.downloadUrl) {
+                    void downloadMediaAsset(
+                      row.thumbnailAsset.downloadUrl,
+                      row.thumbnailAsset.originalFilename ?? undefined,
+                    )
+                    return
+                  }
+                  window.open(row.listing?.productImageUrl ?? '', '_blank', 'noopener,noreferrer')
+                }}
+              />
+            )}
+          </div>
+        ),
+      },
+      {
+        title: t('portal.design.task', 'Task'),
+        key: 'task',
+        width: 220,
+        render: (_, row) => <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>,
+      },
+      {
+        title: t('portal.design.type', 'Type'),
+        key: 'type',
+        width: 130,
+        render: (_, row) => (
+          <Tag color="cyan" style={{ borderRadius: 4 }}>
+            {row.taskType}
+          </Tag>
+        ),
+      },
+      {
+        title: t('portal.design.priority', 'Priority'),
+        key: 'priority',
+        width: 110,
+        render: (_, row) => (
+          <StatusTag status={priorityTone(row.priority)}>{row.priority}</StatusTag>
+        ),
+      },
+      {
+        title: t('portal.design.shop', 'Shop'),
+        key: 'shop',
+        width: 150,
+        render: (_, row) => (
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            {row.shop?.name ?? '-'}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: 'ASIN',
+        key: 'asin',
+        width: 140,
+        render: (_, row) =>
+          row.listing?.asin ? (
+            <CopyableText
+              value={row.listing.asin}
+              title={t('portal.design.copyAsin', 'Copy ASIN')}
+              copiedMessage={t('portal.design.asinCopied', 'ASIN copied')}
+            />
+          ) : (
+            <Typography.Text type="secondary">-</Typography.Text>
+          ),
+      },
+      {
+        title: t('portal.design.designer', 'Designer'),
+        key: 'designer',
+        width: 220,
+        render: (_, row) => (
+          <div className={styles.taskAssignee}>
+            <Space size="small">
+              <EmployeeAvatar
+                name={row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
+                avatarUrl={row.assignedDesigner?.avatarUrl}
+                size={28}
+              />
+              <Typography.Text style={{ fontSize: 13 }}>
+                {row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
+              </Typography.Text>
+            </Space>
+            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+              {dayjs(row.updatedAt).format('YYYY-MM-DD HH:mm')}
+            </Typography.Text>
+          </div>
+        ),
+      },
+      {
+        title: t('portal.design.status', 'Status'),
+        key: 'status',
+        width: 120,
+        align: 'center',
+        render: (_, row) => <StatusTag status={tone(row.status)}>{row.status}</StatusTag>,
+      },
+      {
+        title: t('portal.design.actions', 'Actions'),
+        key: 'actions',
+        width: 96,
+        align: 'right',
+        render: (_, row) => renderTaskActions(row),
+      },
+    ],
+    [renderTaskActions, t],
+  )
 
   const task = detail.data
+  const modalTask = activeTask ?? task
 
   return (
     <section className={styles.page}>
@@ -485,74 +687,28 @@ export function DesignWorkbenchPage() {
         }
       />
 
-      <div className={styles.grid}>
-        <div className={styles.metricsList}>
-          <MetricCard
-            icon={<AppstoreOutlined />}
-            variant="neutral"
-            label={t('portal.design.total', 'Total Tasks')}
-            value={summary.data?.total ?? 0}
-            loading={summary.isLoading}
-          />
-          <MetricCard
-            icon={<ThunderboltOutlined />}
-            variant="info"
-            label={t('portal.design.active', 'Active Tasks')}
-            value={summary.data?.active ?? 0}
-            loading={summary.isLoading}
-          />
-          <MetricCard
-            icon={<WarningOutlined />}
-            variant="warning"
-            label={t('portal.design.unassigned', 'Unassigned')}
-            value={workload.data?.totals.unassignedCount ?? 0}
-            loading={workload.isLoading}
-          />
-        </div>
-        <SectionCard>
-          <div
-            style={{ height: 160, width: '100%' }}
-            role="img"
-            aria-label={(workload.data?.byDesigner ?? [])
-              .map(
-                (item) =>
-                  `${assigneeNames.get(item.assignedDesignerId) || t('portal.design.unknownDesigner', 'Unknown')}: ${item.totalActive}`,
-              )
-              .join(', ')}
-          >
-            {workload.data?.byDesigner && workload.data.byDesigner.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart
-                  data={workload.data.byDesigner.map((d) => ({
-                    name:
-                      assigneeNames.get(d.assignedDesignerId) ||
-                      t('portal.design.unknownDesigner', 'Unknown'),
-                    active: d.totalActive,
-                  }))}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <RechartsTooltip />
-                  <Bar dataKey="active" fill="#1890ff" radius={[4, 4, 0, 0]} />
-                </RechartsBarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                }}
-              >
-                <Typography.Text type="secondary">
-                  {t('portal.design.noWorkload', 'No active workload')}
-                </Typography.Text>
-              </div>
-            )}
-          </div>
-        </SectionCard>
+      <div className={styles.metricsList}>
+        <MetricCard
+          icon={<AppstoreOutlined />}
+          variant="neutral"
+          label={t('portal.design.total', 'Total Tasks')}
+          value={summary.data?.total ?? 0}
+          loading={summary.isLoading}
+        />
+        <MetricCard
+          icon={<ThunderboltOutlined />}
+          variant="info"
+          label={t('portal.design.active', 'Active Tasks')}
+          value={summary.data?.active ?? 0}
+          loading={summary.isLoading}
+        />
+        <MetricCard
+          icon={<WarningOutlined />}
+          variant="warning"
+          label={t('portal.design.unassigned', 'Unassigned')}
+          value={workload.data?.totals.unassignedCount ?? 0}
+          loading={workload.isLoading}
+        />
       </div>
 
       <SectionCard>
@@ -617,219 +773,34 @@ export function DesignWorkbenchPage() {
           </FilterBar>
         </div>
 
-        {canAssign && selectableTasks.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 16px',
-              background: '#f5f5f5',
-              borderRadius: 4,
-              marginBottom: 12,
-            }}
-          >
-            <Checkbox
-              aria-label={t(
-                'portal.design.selectAllPage',
-                'Select all selectable tasks on this page',
-              )}
-              checked={isAllSelected}
-              onChange={(e) => toggleSelectAll(e.target.checked)}
-            />
-            <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-              {t('portal.design.selectAllPage', 'Select all selectable tasks on this page')}
-            </Typography.Text>
-          </div>
-        )}
-
-        {tasks.isFetching ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <Typography.Text type="secondary">
-              {t('portal.design.loading', 'Loading tasks...')}
-            </Typography.Text>
-          </div>
-        ) : (
-          <div className={styles.taskList}>
-            {displayedTasks?.items.map((row) => {
-              const isSelected = selectedSet.has(row.id)
-              const isSelectable =
-                canAssign && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status)
-              const primaryAction =
-                canAssign && ['REQUESTED', 'OPEN'].includes(row.status)
-                  ? ([
-                      'assign',
-                      t('portal.design.assign'),
-                      <UserAddOutlined key="assign" />,
-                    ] as const)
-                  : canWork && row.status === 'ASSIGNED'
-                    ? ([
-                        'start',
-                        t('portal.design.start'),
-                        <PlayCircleOutlined key="start" />,
-                      ] as const)
-                    : canWork && ['IN_PROGRESS', 'REJECTED'].includes(row.status)
-                      ? ([
-                          'submit',
-                          t('portal.design.submit'),
-                          <UploadOutlined key="submit" />,
-                        ] as const)
-                      : canReview && row.status === 'SUBMITTED'
-                        ? ([
-                            'review',
-                            t('portal.design.review'),
-                            <AuditOutlined key="review" />,
-                          ] as const)
-                        : null
-
-              return (
-                <div
-                  key={row.id}
-                  className={`${styles.taskCard} ${isSelected ? styles.taskCardSelected : ''}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setTaskDraft(row.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      setTaskDraft(row.id)
-                    }
-                  }}
-                >
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}
-                  >
-                    {canAssign && (
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Checkbox
-                          aria-label={`Select ${row.listing?.sku ?? row.id}`}
-                          disabled={!isSelectable}
-                          checked={isSelected}
-                          onClick={(event) => event.stopPropagation()}
-                          onChange={(event) => toggleSelectRow(row.id, event.target.checked)}
-                        />
-                      </div>
-                    )}
-
-                    <div className={styles.thumbnailContainer}>
-                      {row.thumbnailAsset?.downloadUrl ? (
-                        <AuthenticatedMediaImage
-                          downloadUrl={row.thumbnailAsset.downloadUrl}
-                          alt="Preview"
-                          className={styles.thumbnailImg}
-                          fallback="/favicon.svg"
-                        />
-                      ) : (
-                        <div className={styles.thumbnailPlaceholder}>
-                          <PictureOutlined style={{ fontSize: 20, color: '#bfbfbf' }} />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className={styles.taskMeta}>
-                      <div
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
-                      >
-                        <Typography.Text strong style={{ fontSize: 15 }}>
-                          {row.listing?.sku ?? '-'}
-                        </Typography.Text>
-                        <Tag color="cyan" style={{ borderRadius: 4 }}>
-                          {row.taskType}
-                        </Tag>
-                        <StatusTag status={priorityTone(row.priority)}>{row.priority}</StatusTag>
-                      </div>
-                      <div style={{ marginTop: 4 }}>
-                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                          {row.listing?.productTypeName ?? '-'} · {row.shop?.name ?? '-'}
-                        </Typography.Text>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={styles.taskAssignee}>
-                    <Space size="small">
-                      <EmployeeAvatar
-                        name={row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
-                        avatarUrl={row.assignedDesigner?.avatarUrl}
-                        size={28}
-                      />
-                      <Typography.Text style={{ fontSize: 13 }}>
-                        {row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
-                      </Typography.Text>
-                    </Space>
-                    <div style={{ marginTop: 4 }}>
-                      <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                        {dayjs(row.updatedAt).format('YYYY-MM-DD HH:mm')}
-                      </Typography.Text>
-                    </div>
-                  </div>
-
-                  <div className={styles.taskStatus}>
-                    <StatusTag status={tone(row.status)}>{row.status}</StatusTag>
-                  </div>
-
-                  <div className={styles.taskActions}>
-                    {primaryAction ? (
-                      <Tooltip title={primaryAction[1]}>
-                        <Button
-                          aria-label={primaryAction[1]}
-                          type="text"
-                          icon={primaryAction[2]}
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            openQuickAction(row, primaryAction[0])
-                          }}
-                        />
-                      </Tooltip>
-                    ) : (
-                      <Tooltip title={t('portal.design.view')}>
-                        <Button
-                          aria-label={t('portal.design.view')}
-                          type="text"
-                          icon={<EyeOutlined />}
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setTaskDraft(row.id)
-                          }}
-                        />
-                      </Tooltip>
-                    )}
-                    {primaryAction && (
-                      <Dropdown
-                        menu={{
-                          items: [{ key: 'view', label: t('portal.design.view') }],
-                          onClick: () => setTaskDraft(row.id),
-                        }}
-                      >
-                        <Button
-                          aria-label={t('portal.design.moreActions', 'More actions')}
-                          type="text"
-                          icon={<MoreOutlined />}
-                          onClick={(event) => event.stopPropagation()}
-                        />
-                      </Dropdown>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-            {(displayedTasks?.items ?? []).length === 0 && (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            )}
-          </div>
-        )}
-
-        {displayedTasks && displayedTasks.pagination.total > PAGE_SIZE && (
-          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
-            <Pagination
-              current={page}
-              pageSize={PAGE_SIZE}
-              total={displayedTasks.pagination.total}
-              onChange={handlePageChange}
-              showSizeChanger={false}
-            />
-          </div>
-        )}
+        <DataTable
+          className={styles.taskTable}
+          columns={taskColumns}
+          dataSource={displayedTasks?.items ?? []}
+          loading={tasks.isFetching}
+          rowKey="id"
+          rowSelection={
+            canAssign
+              ? {
+                  selectedRowKeys,
+                  onChange: (keys) => setSelectedRowKeys(keys),
+                  getCheckboxProps: (row) => ({
+                    disabled: !selectableTaskIds.has(row.id),
+                    'aria-label': `Select ${row.listing?.sku ?? row.id}`,
+                  }),
+                }
+              : undefined
+          }
+          pagination={{
+            current: page,
+            pageSize: PAGE_SIZE,
+            total: displayedTasks?.pagination.total ?? 0,
+            showSizeChanger: false,
+            hideOnSinglePage: true,
+            onChange: handlePageChange,
+          }}
+          scroll={{ x: 1360 }}
+        />
       </SectionCard>
 
       <DetailDrawer
@@ -859,16 +830,16 @@ export function DesignWorkbenchPage() {
               ) : null}
               {canReview && task.status === 'SUBMITTED' && task.latestSubmission?.assets.length ? (
                 <>
-                  <Button type="primary" onClick={() => setApproveOpen(true)}>
+                  <Button type="primary" onClick={() => handleOpenApprove(task)}>
                     {t('portal.design.approve')}
                   </Button>
-                  <Button danger onClick={() => setRejectOpen(true)}>
+                  <Button danger onClick={() => handleOpenReject(task)}>
                     {t('portal.design.reject')}
                   </Button>
                 </>
               ) : null}
               {canAssign && !['APPROVED', 'CANCELLED'].includes(task.status) ? (
-                <Button danger onClick={() => setCancelOpen(true)}>
+                <Button danger onClick={() => handleOpenCancel(task)}>
                   {t('portal.design.cancel')}
                 </Button>
               ) : null}
@@ -1010,15 +981,19 @@ export function DesignWorkbenchPage() {
         okText={t('portal.design.approve')}
         confirmLoading={action.isPending}
         okButtonProps={{ disabled: !approvedAssetId }}
-        onCancel={() => setApproveOpen(false)}
-        onOk={() => task && action.mutate({ type: 'approve', task })}
+        onCancel={() => {
+          setApproveOpen(false)
+          setActiveTask(undefined)
+          setApprovedAssetId(undefined)
+        }}
+        onOk={() => modalTask && action.mutate({ type: 'approve', task: modalTask })}
       >
         <Select
           style={{ width: '100%' }}
           placeholder={t('portal.design.chooseApprovedFile')}
           value={approvedAssetId}
           onChange={setApprovedAssetId}
-          options={(task?.latestSubmission?.assets ?? []).map(({ id, originalFilename }) => ({
+          options={(modalTask?.latestSubmission?.assets ?? []).map(({ id, originalFilename }) => ({
             value: id,
             label: originalFilename ?? id,
           }))}
@@ -1189,8 +1164,11 @@ export function DesignWorkbenchPage() {
         okText={t('portal.design.reject')}
         okButtonProps={{ danger: true, disabled: !rejectReason.trim() }}
         confirmLoading={action.isPending}
-        onCancel={() => setRejectOpen(false)}
-        onOk={() => task && action.mutate({ type: 'reject', task })}
+        onCancel={() => {
+          setRejectOpen(false)
+          setActiveTask(undefined)
+        }}
+        onOk={() => modalTask && action.mutate({ type: 'reject', task: modalTask })}
       >
         <Input.TextArea
           rows={4}
@@ -1208,8 +1186,9 @@ export function DesignWorkbenchPage() {
         onCancel={() => {
           setCancelOpen(false)
           setCancelReason('')
+          setActiveTask(undefined)
         }}
-        onOk={() => task && action.mutate({ type: 'cancel', task })}
+        onOk={() => modalTask && action.mutate({ type: 'cancel', task: modalTask })}
       >
         <Input.TextArea
           rows={3}

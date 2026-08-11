@@ -9,7 +9,7 @@ export type Language = 'vi' | 'en'
 
 function getInitialLanguage(): Language {
   const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
-  return storedLanguage === 'en' ? 'en' : 'vi'
+  return storedLanguage === 'vi' ? 'vi' : 'en'
 }
 
 void i18n.use(initReactI18next).init({
@@ -18,7 +18,7 @@ void i18n.use(initReactI18next).init({
     en: { common: en },
   },
   lng: getInitialLanguage(),
-  fallbackLng: 'vi',
+  fallbackLng: 'en',
   defaultNS: 'common',
   interpolation: { escapeValue: false },
 })

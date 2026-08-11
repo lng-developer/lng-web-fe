@@ -26,6 +26,10 @@ describe('RouteErrorPage', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     await i18n.changeLanguage('en')
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: vi.fn() },
+    })
   })
 
   it('explains the failure and lets users retry or go back', () => {
@@ -41,7 +45,7 @@ describe('RouteErrorPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     fireEvent.click(screen.getByRole('button', { name: 'Go back' }))
 
-    expect(router.revalidate).toHaveBeenCalledOnce()
+    expect(window.location.reload).toHaveBeenCalledOnce()
     expect(router.navigate).toHaveBeenCalledWith(-1)
   })
 })

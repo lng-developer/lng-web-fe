@@ -25,9 +25,11 @@ export type DesignTask = {
   priority: string
   listing: {
     sku: string | null
+    asin?: string | null
     title: string | null
     psdStatus: string | null
     productTypeName: string | null
+    productImageUrl?: string | null
   } | null
   listingVariantId: string | null
   internalTemplate: { code: string | null; name: string | null } | null

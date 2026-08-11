@@ -76,6 +76,17 @@ describe('VendorIntegrationModal', () => {
     )
   })
 
+  it('uses a provider dropdown when setting up a missing integration', async () => {
+    vi.mocked(getVendorIntegrationConfig).mockResolvedValue(null as never)
+    render(
+      <AppProviders>
+        <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('combobox', { name: /Provider/ })).toBeInTheDocument()
+  })
+
   it('drops hidden credentials after switching auth type and sends only entered active secrets', async () => {
     vi.mocked(getVendorIntegrationConfig).mockResolvedValue({
       accessTokenConfigured: false,
@@ -87,7 +98,7 @@ describe('VendorIntegrationModal', () => {
       lastError: null,
       metadata: {},
       passwordConfigured: false,
-      providerKey: 'CUSTOM',
+      providerKey: 'PRINTWAY',
       refreshTokenConfigured: false,
       status: 'DISCONNECTED',
       usernameConfigured: false,
@@ -128,7 +139,7 @@ describe('VendorIntegrationModal', () => {
       lastError: null,
       metadata: {},
       passwordConfigured: false,
-      providerKey: 'CUSTOM',
+      providerKey: 'PRINTWAY',
       refreshTokenConfigured: false,
       status: 'DISCONNECTED',
       usernameConfigured: false,
@@ -168,7 +179,7 @@ describe('VendorIntegrationModal', () => {
         <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
       </AppProviders>,
     )
-    expect(screen.getByRole('button', { name: /Refresh credentials/ })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /Refresh credentials/ })).not.toBeInTheDocument()
     resolveConfig({
       accessTokenConfigured: true,
       authType: 'ACCESS_REFRESH',
@@ -179,7 +190,7 @@ describe('VendorIntegrationModal', () => {
       lastError: null,
       metadata: {},
       passwordConfigured: true,
-      providerKey: 'CUSTOM',
+      providerKey: 'PRINTWAY',
       refreshTokenConfigured: true,
       status: 'CONNECTED',
       usernameConfigured: true,
@@ -188,13 +199,13 @@ describe('VendorIntegrationModal', () => {
     expect((await screen.findAllByText('CONNECTED')).length).toBeGreaterThan(0)
     expect(await screen.findByText('2026-07-31T00:00:00Z')).toBeInTheDocument()
     expect(screen.getAllByText('Configured')).toHaveLength(4)
-    expect(screen.getByRole('button', { name: /Refresh credentials/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Test connection/ })).toBeEnabled()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     vi.mocked(refreshVendorIntegrationCredential).mockResolvedValue({} as never)
-    fireEvent.click(screen.getByRole('button', { name: /Refresh credentials/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Test connection/ }))
     await waitFor(() =>
       expect(refreshVendorIntegrationCredential).toHaveBeenCalledWith('vendor-1', {
-        providerKey: 'CUSTOM',
+        providerKey: 'PRINTWAY',
       }),
     )
   })
@@ -210,7 +221,7 @@ describe('VendorIntegrationModal', () => {
       lastError: null,
       metadata: {},
       passwordConfigured: false,
-      providerKey: 'CUSTOM',
+      providerKey: 'PRINTWAY',
       refreshTokenConfigured: false,
       status: 'CONNECTED' as const,
       usernameConfigured: false,
@@ -234,7 +245,7 @@ describe('VendorIntegrationModal', () => {
       }),
     )
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const refresh = screen.getByRole('button', { name: /Refresh credentials/ })
+    const refresh = screen.getByRole('button', { name: /Test connection/ })
     fireEvent.click(refresh)
     await waitFor(() => expect(refresh).toHaveClass('ant-btn-loading'))
     rejectRefresh(new Error('credential-secret'))

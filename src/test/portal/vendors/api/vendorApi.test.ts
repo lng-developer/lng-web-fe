@@ -100,6 +100,12 @@ describe('vendorApi', () => {
     expect(result).not.toHaveProperty('password')
   })
 
+  it('returns null when the vendor has no integration config yet', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: null })
+
+    await expect(getVendorIntegrationConfig('vendor-1')).resolves.toBeNull()
+  })
+
   it('omits empty search params from list requests', async () => {
     await listVendors({ limit: 20, page: 1, q: '' })
     await listVendorProducts({ limit: 20, page: 1, q: '  ', vendorId: 'vendor-1' })

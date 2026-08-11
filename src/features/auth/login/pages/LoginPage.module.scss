@@ -35,11 +35,15 @@
   background: rgb(45 206 203 / 30%);
 }
 
-.language {
+.preferences {
   position: absolute;
   z-index: 1;
   top: 24px;
   right: 24px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .intro {
@@ -149,9 +153,10 @@
     grid-template-columns: 1fr;
   }
 
-  .language {
+  .preferences {
     top: 18px;
     right: 16px;
+    left: 16px;
   }
 
   .intro {

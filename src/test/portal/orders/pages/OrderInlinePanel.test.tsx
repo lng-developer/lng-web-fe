@@ -196,6 +196,33 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByText('PSD MISSING')).not.toBeInTheDocument()
   })
 
+  it('shows recheck for a production-blocked item after PSD becomes ready', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          mapping: {
+            status: 'READY',
+            listingVariant: {
+              id: 'variant-1',
+              psdReadiness: { status: 'PRESENT' },
+            },
+          },
+          production: { status: 'BLOCKED', scaleStatus: 'NEED_SCALE', qcStatus: 'NOT_READY' },
+          workflow: {
+            stage: 'NEED_PSD',
+            owner: 'DESIGN',
+            blockers: [{ code: 'PSD_MISSING' }],
+            nextActions: ['REQUEST_PSD_FROM_CATALOG'],
+          },
+        },
+      ],
+    })
+
+    expect(screen.getByRole('button', { name: 'orders.actions.recheckShort' })).toBeVisible()
+  })
+
   it('keeps order-level actions out of the expanded detail', () => {
     renderPanel(false)
     expect(

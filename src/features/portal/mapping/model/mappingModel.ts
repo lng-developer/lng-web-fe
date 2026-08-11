@@ -49,7 +49,9 @@ export type MappingTraceView = {
   impactLabel: 'SAMPLED'
 }
 
-type TraceCandidate = Required<Pick<VendorCandidate, 'vendorProductId' | 'vendorCostCenterId'>> &
+export type TraceCandidate = Required<
+  Pick<VendorCandidate, 'vendorProductId' | 'vendorCostCenterId'>
+> &
   VendorCandidate
 
 export const getRuleTypeForStage = (stage: MappingPipelineStage) => ruleTypes[stage]

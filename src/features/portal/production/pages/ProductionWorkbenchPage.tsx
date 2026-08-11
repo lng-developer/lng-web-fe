@@ -84,11 +84,13 @@ const REJECTION_PRESETS = [
 
 function ArtworkInspector({
   check,
+  listingReferenceUrl,
   onClose,
   onPass,
   onReject,
 }: {
   readonly check: FileCheck
+  readonly listingReferenceUrl?: string | null
   readonly onClose: () => void
   readonly onPass: (note?: string) => void
   readonly onReject: (note: string) => void
@@ -109,6 +111,7 @@ function ArtworkInspector({
   const dragStartRef = useRef({ x: 0, y: 0, originX: 0, originY: 0 })
 
   const originalUrl = check.inputAssetDownloadUrl
+  const originalLabel = originalUrl ? 'Customer input' : 'Main listing reference'
   const scaledUrl = check.outputAssetDownloadUrl
 
   const resetView = useCallback(() => {
@@ -321,12 +324,19 @@ function ArtworkInspector({
               onPointerUp={handlePointerUp}
             >
               <Typography.Text strong>
-                {t('portal.production.original')} (Customer Input)
+                {t('portal.production.original')} ({originalLabel})
               </Typography.Text>
               {originalUrl ? (
                 <AuthenticatedMediaImage
                   downloadUrl={originalUrl}
                   alt={t('portal.production.original')}
+                  style={transformStyle}
+                  draggable={false}
+                />
+              ) : listingReferenceUrl ? (
+                <img
+                  src={listingReferenceUrl}
+                  alt={originalLabel}
                   style={transformStyle}
                   draggable={false}
                 />
@@ -380,6 +390,8 @@ function ArtworkInspector({
                   alt="Original"
                   style={transformStyle}
                 />
+              ) : listingReferenceUrl ? (
+                <img src={listingReferenceUrl} alt={originalLabel} style={transformStyle} />
               ) : null}
             </div>
 
@@ -416,6 +428,8 @@ function ArtworkInspector({
                   alt="Original"
                   style={transformStyle}
                 />
+              ) : listingReferenceUrl ? (
+                <img src={listingReferenceUrl} alt={originalLabel} style={transformStyle} />
               ) : null}
             </div>
 
@@ -547,7 +561,11 @@ export function ProductionWorkbenchPage({
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [status, setStatus] = useState<ProductionStatus>()
-  const [inspect, setInspect] = useState<FileCheck>()
+  const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
+  const [inspect, setInspect] = useState<{
+    check: FileCheck
+    listingReferenceUrl?: string | null
+  }>()
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
@@ -557,10 +575,11 @@ export function ProductionWorkbenchPage({
   const filters = useMemo(
     () => ({
       search: deferredSearch || undefined,
+      scaleDifficultyLevel,
       status,
       view: tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
     }),
-    [deferredSearch, status, tab],
+    [deferredSearch, scaleDifficultyLevel, status, tab],
   )
   const params = useMemo(() => ({ ...filters, page, limit: PAGE_SIZE }), [filters, page])
   const summaryFilters = useMemo(() => ({ search: deferredSearch || undefined }), [deferredSearch])
@@ -632,6 +651,7 @@ export function ProductionWorkbenchPage({
     setTab(value as 'scale' | 'qc')
     setPage(1)
     setStatus(undefined)
+    setScaleDifficultyLevel(undefined)
     setSelectedRowKeys([])
     setDecisions({})
   }, [])
@@ -641,6 +661,10 @@ export function ProductionWorkbenchPage({
   }, [])
   const handleStatusChange = useCallback((value?: ProductionStatus) => {
     setStatus(value)
+    setPage(1)
+  }, [])
+  const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
+    setScaleDifficultyLevel(value)
     setPage(1)
   }, [])
   const handlePageChange = useCallback((nextPage: number) => {
@@ -702,7 +726,8 @@ export function ProductionWorkbenchPage({
       toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
   })
   const exportQc = useMutation({
-    mutationFn: () => exportProductionQcTasks({ search: search || undefined, status }),
+    mutationFn: () =>
+      exportProductionQcTasks({ search: search || undefined, scaleDifficultyLevel, status }),
     onSuccess: (result) => {
       const url = URL.createObjectURL(result as unknown as Blob)
       const link = document.createElement('a')
@@ -720,7 +745,9 @@ export function ProductionWorkbenchPage({
     () => operations.mutate({ kind: 'bulk-assign' }),
     [operations],
   )
-  const handleInspectSlot = useCallback((check: FileCheck) => setInspect(check), [])
+  const handleInspectSlot = useCallback((task: ProductionTask, check: FileCheck) => {
+    setInspect({ check, listingReferenceUrl: task.productImageUrl })
+  }, [])
   const handleSaveNote = useCallback(
     (taskId: string, note: string) => saveNote.mutate({ taskId, note }),
     [saveNote],
@@ -739,7 +766,7 @@ export function ProductionWorkbenchPage({
   const handleInspectionPass = useCallback(
     (note?: string) => {
       if (!inspect) return
-      handleSetInspectionDecision(inspect.id, 'PASSED', note)
+      handleSetInspectionDecision(inspect.check.id, 'PASSED', note)
       setInspect(undefined)
     },
     [handleSetInspectionDecision, inspect],
@@ -747,7 +774,7 @@ export function ProductionWorkbenchPage({
   const handleInspectionReject = useCallback(
     (note: string) => {
       if (!inspect) return
-      handleSetInspectionDecision(inspect.id, 'REJECTED', note)
+      handleSetInspectionDecision(inspect.check.id, 'REJECTED', note)
       setInspect(undefined)
     },
     [handleSetInspectionDecision, inspect],
@@ -759,8 +786,8 @@ export function ProductionWorkbenchPage({
     [handleSearchChange],
   )
   const handleInspectionSlotAction = useCallback(
-    (check: FileCheck) => {
-      handleInspectSlot(check)
+    (task: ProductionTask, check: FileCheck) => {
+      handleInspectSlot(task, check)
     },
     [handleInspectSlot],
   )
@@ -812,6 +839,14 @@ export function ProductionWorkbenchPage({
               {hasInput ? t('portal.production.psdReady') : t('portal.production.psdMissing')}
             </StatusTag>
           )
+        },
+      },
+      {
+        title: 'Scale',
+        width: 96,
+        render: (_, row) => {
+          const level = row.scaleContext?.use?.listing?.scaleDifficulty?.level || 'NORMAL'
+          return <StatusTag status={level === 'NORMAL' ? 'pending' : 'critical'}>{level}</StatusTag>
         },
       },
       {
@@ -909,6 +944,7 @@ export function ProductionWorkbenchPage({
           <ProductionWorkbenchFilterBar
             search={search}
             status={status}
+            scaleDifficultyLevel={scaleDifficultyLevel}
             tab={tab}
             statusOptions={statusOptions}
             scaleAssigneeId={scaleAssigneeId}
@@ -920,6 +956,7 @@ export function ProductionWorkbenchPage({
             onSearchChange={handleSearchChange}
             onSearchSubmit={handleSearchSubmit}
             onStatusChange={handleStatusChange}
+            onScaleDifficultyChange={handleScaleDifficultyChange}
             onExportQc={handleExportQc}
             onScaleAssigneeChange={handleScaleAssigneeChange}
             onBulkAssign={handleBulkAssign}
@@ -970,7 +1007,8 @@ export function ProductionWorkbenchPage({
       </div>
       {inspect ? (
         <ArtworkInspector
-          check={inspect}
+          check={inspect.check}
+          listingReferenceUrl={inspect.listingReferenceUrl}
           onClose={handleInspectClose}
           onPass={handleInspectionPass}
           onReject={handleInspectionReject}

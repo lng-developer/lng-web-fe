@@ -7,7 +7,6 @@ import {
   FieldStringOutlined,
   ReloadOutlined,
   ScissorOutlined,
-  SearchOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons'
 import {
@@ -24,7 +23,7 @@ import {
   Typography,
 } from 'antd'
 
-import { EmptyState, StatusTag } from '@/shared/ui'
+import { EmptyState, SearchInput, StatusTag } from '@/shared/ui'
 
 import type { MappingTraceView } from '../model/mappingModel'
 import { PIPELINE_STAGES } from '../model/mappingModel'
@@ -45,6 +44,9 @@ const STAGE_LABELS: Record<string, string> = {
   VALUE_ALIASES: 'Aliases',
   VENDOR_ROUTING: 'Routing',
 }
+
+const formatMoney = (amount: number, currency = 'USD') =>
+  new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount / 100)
 
 function getStepStatus(
   stage: string,
@@ -69,16 +71,18 @@ export function LiveTracePanel({
   selectingCandidateId,
   onRecheck,
   onResolve,
-  onFindCandidate,
+  candidateSearch,
+  onCandidateSearchChange,
   onSelectCandidate,
 }: {
   readonly canWrite: boolean
   readonly loading?: boolean
   readonly trace?: MappingTraceView
   readonly selectingCandidateId?: string
+  readonly candidateSearch?: string
   readonly onRecheck: () => void
   readonly onResolve: () => void
-  readonly onFindCandidate: () => void
+  readonly onCandidateSearchChange: (value: string) => void
   readonly onSelectCandidate: (candidateId: string, productId: string) => void
 }) {
   const { t } = useTranslation()
@@ -205,14 +209,14 @@ export function LiveTracePanel({
           {t('mapping.sections.candidates')}
         </Divider>
         {canWrite ? (
-          <Button
-            size="small"
-            style={{ marginBottom: 10 }}
-            icon={<SearchOutlined />}
-            onClick={onFindCandidate}
-          >
-            {t('mapping.actions.findCandidate')}
-          </Button>
+          <div style={{ marginBottom: 10 }}>
+            <SearchInput
+              aria-label={t('mapping.filters.searchCandidates')}
+              placeholder={t('mapping.filters.searchCandidates')}
+              value={candidateSearch}
+              onSearchChange={onCandidateSearchChange}
+            />
+          </div>
         ) : null}
 
         {trace.candidates.map((candidate) => {
@@ -239,7 +243,7 @@ export function LiveTracePanel({
                     .join(' · ')}
                   {candidate.baseCostAmount != null ? (
                     <span style={{ marginLeft: 6, color: 'var(--ant-color-success)' }}>
-                      ${candidate.baseCostAmount.toFixed(2)}
+                      {formatMoney(candidate.baseCostAmount, candidate.currency || 'USD')}
                     </span>
                   ) : null}
                 </div>

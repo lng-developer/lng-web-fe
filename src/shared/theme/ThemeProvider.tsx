@@ -10,7 +10,7 @@ const appearances: Appearance[] = ['light', 'dark', 'system']
 
 function getStoredAppearance(): Appearance {
   const stored = localStorage.getItem(THEME_STORAGE_KEY)
-  return appearances.includes(stored as Appearance) ? (stored as Appearance) : 'system'
+  return appearances.includes(stored as Appearance) ? (stored as Appearance) : 'light'
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {

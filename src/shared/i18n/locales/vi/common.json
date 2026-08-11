@@ -2135,6 +2135,8 @@
       "retry": "Thử lại",
       "editAddress": "Sửa địa chỉ",
       "validateAddress": "Kiểm tra địa chỉ",
+      "overrideAddress": "Ghi đè địa chỉ",
+      "overrideAddressReason": "Lý do ghi đè địa chỉ?",
       "saveAddress": "Lưu địa chỉ",
       "cancelEdit": "Hủy",
       "saveNote": "Lưu ghi chú",
