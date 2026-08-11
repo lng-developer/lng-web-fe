@@ -171,13 +171,13 @@ describe('StaffWorkspacePage', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByLabelText('Lịch làm việc theo tháng')).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Lịch của tôi' })).toBeVisible()
+    expect(await screen.findByLabelText('Monthly schedule calendar')).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'My calendar' })).toBeVisible()
     expect(screen.queryByText('Jane Nguyen')).not.toBeInTheDocument()
-    expect(screen.getAllByText('08:12 - 17:05')[0]).toBeVisible()
-    expect(screen.getAllByText('Đi muộn 12 phút')[0]).toBeVisible()
-    expect(screen.getAllByText('OT 90 min')[0]).toBeVisible()
-    expect(screen.getAllByText('Nghỉ phép năm')[0]).toBeVisible()
+    expect((await screen.findAllByText('08:12 - 17:05'))[0]).toBeVisible()
+    expect((await screen.findAllByText('Late 12 min'))[0]).toBeVisible()
+    expect((await screen.findAllByText('OT 90 min'))[0]).toBeVisible()
+    expect((await screen.findAllByText('Annual leave'))[0]).toBeVisible()
     expect(screen.getByText('Company holiday')).toBeVisible()
   })
 
@@ -194,7 +194,7 @@ describe('StaffWorkspacePage', () => {
       await screen.findByRole('button', { name: dayjs(attendanceDateKey).format('DD/MM/YYYY') }),
     )
     expect(screen.getByRole('button', { name: /OT/ })).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: /nghỉ/i }))
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }))
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(screen.getAllByDisplayValue(dayjs(attendanceDateKey).format('DD/MM/YYYY'))).toHaveLength(

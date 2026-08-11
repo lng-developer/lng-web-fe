@@ -53,6 +53,7 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
 vi.mock('@/shared/media', () => ({
   AuthenticatedMediaImage: ({ alt }: { alt: string }) => <img alt={alt} />,
   downloadMediaAsset: vi.fn(),
+  useAuthenticatedMediaUrl: (downloadUrl?: string) => ({ url: downloadUrl }),
 }))
 
 import { PsdFileWorkspacePage } from '@/features/portal/design/pages/PsdFileWorkspacePage'

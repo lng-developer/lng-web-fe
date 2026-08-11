@@ -7,7 +7,18 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Descriptions, Divider, Form, Input, Modal, Radio, Select, Tag } from 'antd'
+import {
+  App as AntdApp,
+  Button,
+  Descriptions,
+  Divider,
+  Form,
+  Input,
+  Modal,
+  Radio,
+  Select,
+  Tag,
+} from 'antd'
 
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import { FeedbackAlert, FormActions, useFeedbackToast } from '@/shared/ui'
@@ -62,6 +73,7 @@ export function VendorIntegrationModal({
 }: VendorIntegrationModalProps) {
   const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
   const [form] = Form.useForm<VendorIntegrationConfigInput>()
+  const { modal } = AntdApp.useApp()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
 
@@ -117,7 +129,7 @@ export function VendorIntegrationModal({
 
   const close = () => {
     if (!form.isFieldsTouched()) return onCancel()
-    Modal.confirm({
+    modal.confirm({
       title: t('actionFeedback.unsaved'),
       content: t('vendors.discardChanges'),
       okText: t('vendors.discard', { defaultValue: 'Discard' }),
@@ -267,7 +279,7 @@ export function VendorIntegrationModal({
                     disabled={!config.data?.providerKey}
                     loading={refresh.isPending}
                     onClick={() => {
-                      Modal.confirm({
+                      modal.confirm({
                         title: t('vendors.testConnection', { defaultValue: 'Test connection' }),
                         content: t('vendors.confirmRefresh'),
                         okText: t('vendors.testConnection', { defaultValue: 'Test connection' }),

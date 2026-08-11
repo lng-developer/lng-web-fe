@@ -30,15 +30,15 @@ import {
 } from 'antd'
 
 import {
+  createExtensionToken,
+  type ExtensionTokenInput,
+} from '@/features/auth/extension-tokens/api/extensionTokensApi'
+import {
   createPermission,
   deletePermission,
   type PermissionInput,
   updatePermission,
 } from '@/features/auth/permissions/api/permissionsApi'
-import {
-  createExtensionToken,
-  type ExtensionTokenInput,
-} from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import {
   createRole,
   deleteRole,

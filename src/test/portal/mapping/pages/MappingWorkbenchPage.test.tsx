@@ -145,18 +145,9 @@ describe('MappingWorkbenchPage', () => {
     renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
     fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('[role="button"]')!)
 
-    fireEvent.click((await screen.findByText('Find vendor candidate')).closest('button')!)
-    expect(await screen.findByRole('dialog')).toBeInTheDocument()
     await waitFor(() => expect(searchVendorCandidates).toHaveBeenCalled())
-    fireEvent.mouseDown(screen.getByLabelText('Vendor'))
-    fireEvent.click(await screen.findByText('Vendor One'))
-    fireEvent.mouseDown(screen.getByLabelText('Vendor product'))
-    fireEvent.click(await screen.findByText('Product A'))
-    fireEvent.mouseDown(screen.getByLabelText('Normalized size'))
-    fireEvent.click((await screen.findAllByText('M')).at(-1)!)
-    fireEvent.mouseDown(screen.getByLabelText('Normalized color'))
-    fireEvent.click((await screen.findAllByText('Black')).at(-1)!)
-    fireEvent.click(screen.getByRole('button', { name: 'Apply candidate' }))
+    expect(await screen.findByText('Product A')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Select candidate' }))
 
     await waitFor(() =>
       expect(selectFulfillmentCandidate).toHaveBeenCalledWith('item-1', {
@@ -173,6 +164,6 @@ describe('MappingWorkbenchPage', () => {
     )
 
     await waitFor(() => expect(previewOrderItem).toHaveBeenCalledWith('item-1'))
-    expect(await screen.findByText('Find vendor candidate')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Search vendor or product')).toBeInTheDocument()
   })
 })

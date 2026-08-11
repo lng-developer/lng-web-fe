@@ -267,7 +267,13 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
               defaultValue:
                 'View your monthly shift schedule, attendance, leaves, and overtime records.',
             })}
-            actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
+            actions={
+              <MonthPicker
+                aria-label={t('hrOperations.calendar.label')}
+                value={month}
+                onChange={(value) => value && setMonth(value)}
+              />
+            }
           />
 
           {/* Metric Overview Cards for My Schedule */}

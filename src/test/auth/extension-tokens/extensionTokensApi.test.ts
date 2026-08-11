@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { apiClient } from '@/shared/api'
 import {
   createExtensionToken,
   listExtensionTokens,
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
+import { apiClient } from '@/shared/api'
 
 vi.mock('@/shared/api', () => ({
   apiClient: { delete: vi.fn(), get: vi.fn(), post: vi.fn() },

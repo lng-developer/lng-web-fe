@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -203,6 +203,8 @@ describe('VendorIntegrationModal', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     vi.mocked(refreshVendorIntegrationCredential).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /Test connection/ }))
+    const confirm = (await screen.findAllByRole('dialog')).at(-1)!
+    fireEvent.click(within(confirm).getByRole('button', { name: /Test connection/ }))
     await waitFor(() =>
       expect(refreshVendorIntegrationCredential).toHaveBeenCalledWith('vendor-1', {
         providerKey: 'PRINTWAY',
@@ -247,6 +249,8 @@ describe('VendorIntegrationModal', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     const refresh = screen.getByRole('button', { name: /Test connection/ })
     fireEvent.click(refresh)
+    const confirm = (await screen.findAllByRole('dialog')).at(-1)!
+    fireEvent.click(within(confirm).getByRole('button', { name: /Test connection/ }))
     await waitFor(() => expect(refresh).toHaveClass('ant-btn-loading'))
     rejectRefresh(new Error('credential-secret'))
     await waitFor(() => expect(refresh).not.toHaveClass('ant-btn-loading'))

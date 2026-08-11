@@ -145,7 +145,7 @@ describe('HrWorkspacePage', () => {
     expect(await screen.findByLabelText(/phone number|số điện thoại/i)).toHaveValue('0901000001')
     expect(screen.getByLabelText(/contract number|số hợp đồng/i)).toHaveValue('HD-001')
     await waitFor(() =>
-      expect(screen.getByLabelText(/date of birth|ngày sinh/i)).toHaveValue('02/01/2000'),
+      expect(screen.getAllByLabelText(/birth date|ngày sinh/i)[0]).toHaveValue('02/01/2000'),
     )
     expect(screen.getByLabelText(/^(bank name|ngân hàng)$/i)).toHaveAttribute('role', 'combobox')
     expect(screen.getByLabelText(/employee code|mã nhân viên/i)).not.toBeRequired()
