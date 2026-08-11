@@ -46,10 +46,20 @@ export function AppShell() {
   )
   const { selectedKey } = getSidebarRouteState(location.pathname, groups)
   const activeItem = groups.flatMap((group) => group.items).find(({ key }) => key === selectedKey)
+  const pageTitle = activeItem
+    ? t(activeItem.labelKey)
+    : t(
+        routeCore && activeCore
+          ? `shell.cores.${activeCore}`
+          : 'shell.navigation.operationsDashboard',
+      )
 
   useEffect(() => {
     if (routeCore) rememberCoreRoute(routeCore, location.pathname, groups)
   }, [groups, location.pathname, routeCore])
+  useEffect(() => {
+    document.title = `${pageTitle} | ${t('app.name')}`
+  }, [pageTitle, t])
   const changeCore = (core: AppCoreKey) => {
     setNavigationSearch('')
     const target = getRememberedCoreRoute(core, getContextNavigation(core, account))
@@ -80,18 +90,7 @@ export function AppShell() {
           <div className={styles.headerLeft}>
             <Breadcrumb
               className={styles.breadcrumb}
-              items={[
-                { title: t('shell.workspace') },
-                {
-                  title: activeItem
-                    ? t(activeItem.labelKey)
-                    : t(
-                        activeCore
-                          ? `shell.cores.${activeCore}`
-                          : 'shell.navigation.operationsDashboard',
-                      ),
-                },
-              ]}
+              items={[{ title: t('shell.workspace') }, { title: pageTitle }]}
             />
             <Input.Search
               value={navigationSearch}
