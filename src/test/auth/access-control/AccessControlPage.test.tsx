@@ -1,9 +1,14 @@
 import { MemoryRouter } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { AccessControlPage } from '@/features/auth/access-control/pages/AccessControlPage'
+import {
+  createExtensionToken,
+  listExtensionTokens,
+  revokeExtensionToken,
+} from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import { loadRoleCatalog, updateRole } from '@/features/auth/roles/api/rolesApi'
 import { loadScopes } from '@/features/auth/scopes/api/scopesApi'
 import { setPermissions } from '@/shared/auth/session'
@@ -26,6 +31,11 @@ vi.mock('@/features/auth/permissions/api/permissionsApi', () => ({
   deletePermission: vi.fn(),
   updatePermission: vi.fn(),
 }))
+vi.mock('@/features/auth/extension-tokens/api/extensionTokensApi', () => ({
+  createExtensionToken: vi.fn(),
+  listExtensionTokens: vi.fn(),
+  revokeExtensionToken: vi.fn(),
+}))
 
 function renderPage() {
   return render(
@@ -38,6 +48,10 @@ function renderPage() {
 }
 
 describe('AccessControlPage', () => {
+  beforeEach(() => {
+    vi.mocked(listExtensionTokens).mockResolvedValue([])
+  })
+
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
@@ -83,7 +97,7 @@ describe('AccessControlPage', () => {
     renderPage()
 
     expect(await screen.findByText('Administrator')).toBeVisible()
-    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    expect(screen.getAllByRole('tab')).toHaveLength(4)
     fireEvent.click(screen.getByRole('tab', { name: /scope registry.*1/i }))
     expect(screen.getByText('Operations')).toBeVisible()
     fireEvent.click(screen.getByRole('tab', { name: /roles.*2/i }))
@@ -126,5 +140,70 @@ describe('AccessControlPage', () => {
     expect(
       screen.queryByRole('heading', { name: /role catalog|danh mục vai trò/i }),
     ).not.toBeInTheDocument()
+  }, 15_000)
+
+  it('shows an Extension Tokens tab only to an access administrator', async () => {
+    setPermissions(['AUTH:WRITE'])
+    vi.mocked(loadRoleCatalog).mockResolvedValue({
+      roles: { items: [], total: 0 },
+      permissions: { items: [], total: 0 },
+    })
+    vi.mocked(loadScopes).mockResolvedValue({ items: [], total: 0 })
+
+    renderPage()
+
+    expect(await screen.findByRole('tab', { name: /extension tokens/i })).toBeVisible()
+  })
+
+  it('opens the create-token workflow from the Extension Tokens tab', async () => {
+    setPermissions(['AUTH:WRITE'])
+    vi.mocked(loadRoleCatalog).mockResolvedValue({
+      roles: { items: [], total: 0 },
+      permissions: { items: [], total: 0 },
+    })
+    vi.mocked(loadScopes).mockResolvedValue({ items: [], total: 0 })
+
+    renderPage()
+    fireEvent.click(await screen.findByRole('tab', { name: /extension tokens/i }))
+
+    expect(screen.getByRole('button', { name: /create token/i })).toBeVisible()
+  })
+
+  it('creates an extension token and shows the raw token once', async () => {
+    setPermissions(['AUTH:WRITE'])
+    vi.mocked(loadRoleCatalog).mockResolvedValue({
+      roles: { items: [], total: 0 },
+      permissions: { items: [], total: 0 },
+    })
+    vi.mocked(loadScopes).mockResolvedValue({ items: [], total: 0 })
+    vi.mocked(createExtensionToken).mockResolvedValue({
+      token: 'lng_ext_raw_secret',
+      extensionToken: {
+        id: 'token-1',
+        name: 'Dev PC',
+        shopId: '507f1f77bcf86cd799439011',
+        environment: 'development',
+        tokenHint: 'cret',
+        revokedAt: null,
+      },
+    })
+
+    renderPage()
+    fireEvent.click(await screen.findByRole('tab', { name: /extension tokens/i }))
+    fireEvent.click(screen.getByRole('button', { name: /create token/i }))
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'Dev PC' } })
+    fireEvent.change(screen.getByLabelText(/shop id/i), {
+      target: { value: '507f1f77bcf86cd799439011' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^create$/i }))
+
+    expect(await screen.findByDisplayValue('lng_ext_raw_secret')).toBeInTheDocument()
+    expect(createExtensionToken).toHaveBeenCalledWith({
+      name: 'Dev PC',
+      shopId: '507f1f77bcf86cd799439011',
+      environment: 'development',
+      expiresAt: null,
+    })
+    expect(revokeExtensionToken).not.toHaveBeenCalled()
   }, 15_000)
 })
