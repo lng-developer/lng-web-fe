@@ -28,6 +28,7 @@
       "shipments": "Vận chuyển",
       "workScores": "Điểm công việc",
       "orders": "Đơn hàng",
+      "chat": "Chat",
       "mapping": "Ánh xạ",
       "media": "Tệp tin",
       "customizations": "Duyệt tùy chỉnh",
@@ -44,6 +45,7 @@
       "portalConfiguration": "Cấu hình Portal",
       "portalOperations": "Vận hành Portal",
       "portalSetup": "Thiết lập",
+      "communication": "Trao đổi",
       "portalOrderWorkflow": "Xử lý đơn",
       "portalFulfillment": "Hoàn tất đơn hàng",
       "portalPerformance": "Tài chính & hiệu suất"

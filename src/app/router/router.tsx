@@ -175,6 +175,15 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/chat',
+        lazy: () =>
+          import('@/features/portal/chat/pages/ChatWorkspacePage').then(
+            ({ ChatWorkspacePage }) => ({
+              Component: ChatWorkspacePage,
+            }),
+          ),
+      },
+      {
         path: 'portal/customizations',
         lazy: () =>
           Promise.all([

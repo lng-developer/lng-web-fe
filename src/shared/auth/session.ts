@@ -2,6 +2,7 @@ let accessToken: string | null = null
 let roles: string[] = []
 let permissions: string[] = []
 let globalPermissions: string[] = []
+let account: { id: string; email: string } | null = null
 let expirationAnnounced = false
 let refreshSessionAvailable = false
 const refreshSessionFlag = 'lng.refreshSession'
@@ -10,6 +11,7 @@ export const getAccessToken = () => accessToken
 export const getRoles = () => roles
 export const getPermissions = () => permissions
 export const getGlobalPermissions = () => globalPermissions
+export const getAccount = () => account
 export const hasRefreshSession = () => {
   if (typeof window === 'undefined') return refreshSessionAvailable
   return window.localStorage.getItem(refreshSessionFlag) === '1'
@@ -29,6 +31,9 @@ export const setPermissions = (nextPermissions: string[]) => {
 export const setGlobalPermissions = (nextPermissions: string[]) => {
   globalPermissions = nextPermissions
 }
+export const setAccount = (nextAccount: { id: string; email: string } | null) => {
+  account = nextAccount
+}
 export const setAccessToken = (token: string | null) => {
   accessToken = token
   if (token) expirationAnnounced = false
@@ -36,6 +41,7 @@ export const setAccessToken = (token: string | null) => {
     roles = []
     permissions = []
     globalPermissions = []
+    account = null
   }
 }
 

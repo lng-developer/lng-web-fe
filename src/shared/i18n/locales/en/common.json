@@ -28,6 +28,7 @@
       "shipments": "Shipments",
       "workScores": "Work scores",
       "orders": "Orders",
+      "chat": "Chat",
       "mapping": "Mapping",
       "media": "Media",
       "customizations": "Customization review",
@@ -44,6 +45,7 @@
       "portalConfiguration": "Portal configuration",
       "portalOperations": "Portal operations",
       "portalSetup": "Setup",
+      "communication": "Communication",
       "portalOrderWorkflow": "Order workflow",
       "portalFulfillment": "Fulfillment",
       "portalPerformance": "Finance & performance"

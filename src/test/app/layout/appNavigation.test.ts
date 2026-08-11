@@ -27,18 +27,29 @@ const account = (permissions: string[], scopedPermissions: string[] = []): Curre
     : [],
   profileSetupRequired: false,
 })
+const portalItems = (permissions: string[], scopedPermissions: string[] = []) =>
+  getContextNavigation('portal', account(permissions, scopedPermissions)).flatMap(
+    ({ items }) => items,
+  )
 
 describe('app navigation', () => {
   it('shows only cores backed by permitted routes', () => {
     expect(getAvailableCores(account(['SHOPS:READ'])).map(({ key }) => key)).toEqual(['portal'])
     expect(getAvailableCores(account(['HR_ATTENDANCE:WRITE'])).map(({ key }) => key)).toEqual([
+      'portal',
       'hr',
     ])
-    expect(getAvailableCores(account(['AUTH:READ'])).map(({ key }) => key)).toEqual(['system'])
-    expect(getAvailableCores(account(['AUDIT:READ'])).map(({ key }) => key)).toEqual(['system'])
+    expect(getAvailableCores(account(['AUTH:READ'])).map(({ key }) => key)).toEqual([
+      'portal',
+      'system',
+    ])
+    expect(getAvailableCores(account(['AUDIT:READ'])).map(({ key }) => key)).toEqual([
+      'portal',
+      'system',
+    ])
     expect(
       getAvailableCores(account(['HR_ATTENDANCE:WRITE', 'AUTH:READ'])).map(({ key }) => key),
-    ).toEqual(['hr', 'system'])
+    ).toEqual(['portal', 'hr', 'system'])
   })
 
   it('shows the audit log only to audit readers', () => {
@@ -59,40 +70,55 @@ describe('app navigation', () => {
   })
 
   it('shows Shop configuration only when the caller can read Shops', () => {
-    expect(getContextNavigation('portal', account(['SHOPS:READ']))).toMatchObject([
-      { key: 'setup', items: [{ key: 'shops', path: '/portal/shops' }] },
-    ])
-    expect(getAvailableCores(account([])).map(({ key }) => key)).not.toContain('portal')
+    expect(portalItems(['SHOPS:READ'])).toContainEqual({
+      key: 'shops',
+      path: '/portal/shops',
+      labelKey: 'shell.navigation.shops',
+    })
+    expect(portalItems(['SHOPS:READ'])).toContainEqual({
+      key: 'chat',
+      path: '/portal/chat',
+      labelKey: 'shell.navigation.chat',
+    })
+    expect(getAvailableCores(account([])).map(({ key }) => key)).toContain('portal')
   })
 
   it('shows Vendor configuration only when the caller can read Vendors', () => {
-    expect(getContextNavigation('portal', account(['VENDORS:READ']))).toMatchObject([
-      { key: 'setup', items: [{ key: 'vendors', path: '/portal/vendors' }] },
-    ])
+    expect(portalItems(['VENDORS:READ'])).toContainEqual({
+      key: 'vendors',
+      path: '/portal/vendors',
+      labelKey: 'shell.navigation.vendors',
+    })
     expect(getContextNavigation('portal', account(['SHOPS:READ']))[0]?.items).not.toContainEqual(
       expect.objectContaining({ key: 'vendors' }),
     )
   })
 
   it('does not expose global-only Vendor navigation from scoped permissions', () => {
-    expect(getContextNavigation('portal', account([], ['VENDORS:READ']))).toEqual([])
-    expect(getAvailableCores(account([], ['VENDORS:WRITE'])).map(({ key }) => key)).not.toContain(
+    expect(portalItems([], ['VENDORS:READ'])).not.toContainEqual(
+      expect.objectContaining({ key: 'vendors' }),
+    )
+    expect(getAvailableCores(account([], ['VENDORS:WRITE'])).map(({ key }) => key)).toContain(
       'portal',
     )
   })
 
   it('exposes Media only from global MEDIA:READ', () => {
-    expect(getContextNavigation('portal', account(['MEDIA:READ']))[0]?.items).toContainEqual({
+    expect(portalItems(['MEDIA:READ'])).toContainEqual({
       key: 'media',
       path: '/portal/media',
       labelKey: 'shell.navigation.media',
     })
-    expect(getContextNavigation('portal', account([], ['MEDIA:READ']))).toEqual([])
+    expect(portalItems([], ['MEDIA:READ'])).not.toContainEqual(
+      expect.objectContaining({ key: 'media' }),
+    )
   })
 
   it('keeps Shops before Vendors when both configuration permissions are granted', () => {
     expect(
-      getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ']))[0]?.items,
+      getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ'])).find(
+        ({ key }) => key === 'setup',
+      )?.items,
     ).toEqual([
       { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' },
       { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' },
@@ -120,10 +146,14 @@ describe('app navigation', () => {
     )
 
     expect(groups.map(({ key }) => key)).toEqual([
+      'communication',
       'setup',
       'order-workflow',
       'fulfillment',
       'performance',
+    ])
+    expect(groups.find(({ key }) => key === 'communication')?.items.map(({ key }) => key)).toEqual([
+      'chat',
     ])
     expect(groups.find(({ key }) => key === 'setup')?.items.map(({ key }) => key)).toEqual([
       'shops',
@@ -149,12 +179,12 @@ describe('app navigation', () => {
 
   it('shows Catalog for global or scoped readers and writers', () => {
     for (const permission of ['CATALOG:READ', 'CATALOG:WRITE']) {
-      expect(getContextNavigation('portal', account([permission]))[0]?.items).toContainEqual({
+      expect(portalItems([permission])).toContainEqual({
         key: 'catalog',
         path: '/portal/catalog',
         labelKey: 'shell.navigation.catalog',
       })
-      expect(getContextNavigation('portal', account([], [permission]))[0]?.items).toContainEqual({
+      expect(portalItems([], [permission])).toContainEqual({
         key: 'catalog',
         path: '/portal/catalog',
         labelKey: 'shell.navigation.catalog',
@@ -165,6 +195,17 @@ describe('app navigation', () => {
   it('groups external order imports under the order workflow for order readers and writers', () => {
     for (const permission of ['ORDERS:READ', 'ORDERS:WRITE']) {
       expect(getContextNavigation('portal', account([permission]))).toEqual([
+        {
+          key: 'communication',
+          labelKey: 'shell.groups.communication',
+          items: [
+            {
+              key: 'chat',
+              path: '/portal/chat',
+              labelKey: 'shell.navigation.chat',
+            },
+          ],
+        },
         {
           key: 'order-workflow',
           labelKey: 'shell.groups.portalOrderWorkflow',
@@ -209,10 +250,14 @@ describe('app navigation', () => {
     for (const permission of ['MAPPING:READ', 'MAPPING:WRITE']) {
       const expected = ['/portal/mapping']
       expect(
-        getContextNavigation('portal', account([permission]))[0]?.items.map(({ path }) => path),
+        portalItems([permission])
+          .filter(({ key }) => key === 'mapping')
+          .map(({ path }) => path),
       ).toEqual(expected)
       expect(
-        getContextNavigation('portal', account([], [permission]))[0]?.items.map(({ path }) => path),
+        portalItems([], [permission])
+          .filter(({ key }) => key === 'mapping')
+          .map(({ path }) => path),
       ).toEqual(expected)
     }
     expect(getContextNavigation('portal', account(['ORDERS:READ']))[0]?.items).not.toContainEqual(
@@ -221,22 +266,19 @@ describe('app navigation', () => {
   })
 
   it('shows shipment operations for global or scoped shipment readers', () => {
-    expect(getContextNavigation('portal', account(['SHIPMENTS:READ']))[0]?.items).toContainEqual({
+    expect(portalItems(['SHIPMENTS:READ'])).toContainEqual({
       key: 'shipments',
       path: '/portal/shipments',
       labelKey: 'shell.navigation.shipments',
     })
-    expect(
-      getContextNavigation('portal', account([], ['SHIPMENTS:READ']))[0]?.items,
-    ).toContainEqual(expect.objectContaining({ key: 'shipments' }))
+    expect(portalItems([], ['SHIPMENTS:READ'])).toContainEqual(
+      expect.objectContaining({ key: 'shipments' }),
+    )
   })
 
   it('shows Reports for global or scoped report readers', () => {
     for (const scoped of [false, true]) {
-      const items = getContextNavigation(
-        'portal',
-        scoped ? account([], ['REPORTS:READ']) : account(['REPORTS:READ']),
-      )[0]?.items
+      const items = scoped ? portalItems([], ['REPORTS:READ']) : portalItems(['REPORTS:READ'])
       expect(items).toContainEqual({
         key: 'reports',
         path: '/portal/reports',
@@ -258,7 +300,7 @@ describe('app navigation', () => {
     expect(getDefaultWorkspacePath(scopedWriter)).toBe('/portal/orders')
     expect(
       getContextNavigation('portal', account(['SHOPS:READ', 'ORDERS:READ'])).map(({ key }) => key),
-    ).toEqual(['setup', 'order-workflow'])
+    ).toEqual(['communication', 'setup', 'order-workflow'])
   })
 
   it('shows Shop configuration for an exact Shop-scoped reader', () => {
@@ -271,7 +313,9 @@ describe('app navigation', () => {
     }
 
     expect(getAvailableCores(shopReader).map(({ key }) => key)).toContain('portal')
-    expect(getContextNavigation('portal', shopReader)[0]?.items[0]?.path).toBe('/portal/shops')
+    expect(portalItems([], ['SHOPS:READ'])).toContainEqual(
+      expect.objectContaining({ path: '/portal/shops' }),
+    )
   })
 
   it('keeps staff navigation personal and exposes scoped manager groups', () => {
