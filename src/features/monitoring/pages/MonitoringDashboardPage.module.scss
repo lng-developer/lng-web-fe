@@ -31,6 +31,22 @@
   }
 }
 
+.logViewer {
+  min-height: 240px;
+  max-height: 520px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 6px;
+  background: #101418;
+  color: #d5dde5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 900px) {
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));

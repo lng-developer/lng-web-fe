@@ -11,7 +11,6 @@ vi.mock('@/features/portal/integrations/api/integrationApi', async (importOrigin
   return {
     ...actual,
     getImportJobProgress: vi.fn(),
-    listJobIssues: vi.fn(),
     listJobRawRecords: vi.fn(),
     retryImportJob: vi.fn(),
     retryPostImportRawRecords: vi.fn(),
@@ -20,7 +19,6 @@ vi.mock('@/features/portal/integrations/api/integrationApi', async (importOrigin
 
 import {
   getImportJobProgress,
-  listJobIssues,
   listJobRawRecords,
   retryImportJob,
   retryPostImportRawRecords,
@@ -128,32 +126,6 @@ describe('ImportJobPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getImportJobProgress).mockResolvedValue(progress)
-    vi.mocked(listJobIssues).mockResolvedValue({
-      items: [
-        {
-          id: 'issue-1',
-          importJobId: 'job-1',
-          shopId: 'shop-1',
-          rawRecordId: 'raw-1',
-          source: 'MANUAL_EXCEL',
-          externalOrderId: 'ORDER-1',
-          externalItemId: 'ITEM-1',
-          rowNumber: 4,
-          issueType: 'ORDER_IMPORT_FAILED',
-          severity: 'ERROR',
-          status: 'OPEN',
-          errorCode: 'INVALID_ADDRESS',
-          errorMessage: 'Postal code is missing',
-          details: { field: 'postalCode' },
-          resolvedBy: null,
-          resolvedAt: null,
-          resolutionNote: null,
-          createdAt: '2026-07-31T00:00:00.000Z',
-          updatedAt: '2026-07-31T00:00:00.000Z',
-        },
-      ],
-      pagination: { total: 1, page: 1, limit: 10 },
-    })
     vi.mocked(listJobRawRecords).mockResolvedValue({
       items: [
         {
@@ -201,7 +173,7 @@ describe('ImportJobPanel', () => {
 
   afterEach(cleanup)
 
-  it('shows job summary before issue and raw-record diagnostics', async () => {
+  it('shows job summary before raw-record diagnostics', async () => {
     renderPanel()
 
     expect(await screen.findByText('8 imported')).toBeVisible()
@@ -209,7 +181,6 @@ describe('ImportJobPanel', () => {
     expect(await screen.findByText('Import orders')).toBeVisible()
     expect(await screen.findByText('Assets and mapping')).toBeVisible()
     expect(await screen.findByText('1 open import issues')).toBeVisible()
-    expect((await screen.findAllByText('Postal code is missing')).length).toBeGreaterThan(0)
     expect(
       (
         await screen.findAllByText(
@@ -219,12 +190,11 @@ describe('ImportJobPanel', () => {
       ).length,
     ).toBeGreaterThan(0)
     const summary = screen.getByText('Summary')
-    const issues = screen.getByText('Issues')
     const rawRecords = screen.getByText('Raw records')
-    expect(summary.compareDocumentPosition(issues) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(
-      issues.compareDocumentPosition(rawRecords) & Node.DOCUMENT_POSITION_FOLLOWING,
+      summary.compareDocumentPosition(rawRecords) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
+    expect(screen.queryByText('Issues')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Retry import' })).not.toBeInTheDocument()
   })
 
@@ -273,40 +243,29 @@ describe('ImportJobPanel', () => {
   }, 10_000)
 
   it('resets diagnostics to page one when selecting another job', async () => {
-    vi.mocked(listJobIssues).mockResolvedValue({
-      items: [],
-      pagination: { total: 25, page: 1, limit: 10 },
-    })
     vi.mocked(listJobRawRecords).mockResolvedValue({
       items: [],
       pagination: { total: 25, page: 1, limit: 10 },
     })
     const { rerender, renderView } = renderPanel()
-    await waitFor(() => expect(listJobIssues).toHaveBeenCalledWith('job-1', { page: 1, limit: 10 }))
     const pageButtons = await screen.findAllByTitle('2')
     fireEvent.click(pageButtons[0])
-    fireEvent.click(pageButtons[1])
-    await waitFor(() => expect(listJobIssues).toHaveBeenCalledWith('job-1', { page: 2, limit: 10 }))
     await waitFor(() =>
       expect(listJobRawRecords).toHaveBeenCalledWith('job-1', { page: 2, limit: 10 }),
     )
 
     rerender(renderView('job-2'))
 
-    await waitFor(() => expect(listJobIssues).toHaveBeenCalledWith('job-2', { page: 1, limit: 10 }))
     await waitFor(() =>
       expect(listJobRawRecords).toHaveBeenCalledWith('job-2', { page: 1, limit: 10 }),
     )
   })
 
-  it('shows inline diagnostic errors with independent retry actions', async () => {
-    vi.mocked(listJobIssues).mockRejectedValue(new Error('Issue request failed'))
+  it('shows inline raw-record diagnostic errors with retry action', async () => {
     vi.mocked(listJobRawRecords).mockRejectedValue(new Error('Raw request failed'))
     renderPanel()
 
-    expect(await screen.findByText('Import issues are unavailable')).toBeVisible()
     expect(await screen.findByText('Raw records are unavailable')).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Retry issues' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Retry raw records' })).toBeVisible()
   })
 })

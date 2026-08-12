@@ -2,6 +2,7 @@ let accessToken: string | null = null
 let roles: string[] = []
 let permissions: string[] = []
 let globalPermissions: string[] = []
+let globalPermissionsHydrated = false
 let expirationAnnounced = false
 let refreshSessionAvailable = false
 const refreshSessionFlag = 'lng.refreshSession'
@@ -10,6 +11,7 @@ export const getAccessToken = () => accessToken
 export const getRoles = () => roles
 export const getPermissions = () => permissions
 export const getGlobalPermissions = () => globalPermissions
+export const hasHydratedGlobalPermissions = () => globalPermissionsHydrated
 export const hasRefreshSession = () => {
   if (typeof window === 'undefined') return refreshSessionAvailable
   return window.localStorage.getItem(refreshSessionFlag) === '1'
@@ -28,6 +30,7 @@ export const setPermissions = (nextPermissions: string[]) => {
 }
 export const setGlobalPermissions = (nextPermissions: string[]) => {
   globalPermissions = nextPermissions
+  globalPermissionsHydrated = true
 }
 export const setAccessToken = (token: string | null) => {
   accessToken = token
@@ -36,6 +39,7 @@ export const setAccessToken = (token: string | null) => {
     roles = []
     permissions = []
     globalPermissions = []
+    globalPermissionsHydrated = false
   }
 }
 

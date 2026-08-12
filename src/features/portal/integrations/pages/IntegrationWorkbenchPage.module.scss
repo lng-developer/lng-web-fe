@@ -11,6 +11,22 @@
   width: 180px;
 }
 
+.extensionSetup {
+  display: grid;
+  gap: 16px;
+}
+
+.extensionGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.tokenText {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .selectedJob {
   color: var(--ant-color-text-secondary);
 }
@@ -51,12 +67,20 @@
 }
 
 @media (max-width: 1100px) {
+  .extensionGrid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
   .issueFilters {
     grid-template-columns: repeat(2, minmax(160px, 1fr));
   }
 }
 
 @media (max-width: 640px) {
+  .extensionGrid {
+    grid-template-columns: 1fr;
+  }
+
   .issueFilters {
     grid-template-columns: 1fr;
   }

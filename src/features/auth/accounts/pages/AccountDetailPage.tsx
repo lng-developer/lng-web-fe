@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { LockOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Descriptions, Form, Input, Tag, Typography } from 'antd'
+import { Button, Descriptions, Form, Input, Result, Tag, Typography } from 'antd'
 
+import { hasAnyPermission } from '@/shared/auth/permissions'
 import { FeedbackAlert, LoadingState, PageHeader, SectionCard, useFeedbackToast } from '@/shared/ui'
 
 import { loadAccount, updateAccountEmail } from '../api/accountManagementApi'
@@ -16,6 +17,8 @@ export function AccountDetailPage() {
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [emailForm] = Form.useForm<{ email: string }>()
+  const canRead = hasAnyPermission(['AUTH:READ', 'AUTH:WRITE'], { globalOnly: true })
+  const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['auth-account', accountId],
     queryFn: () => loadAccount(accountId),
@@ -35,6 +38,7 @@ export function AccountDetailPage() {
     if (data?.account.email) emailForm.setFieldValue('email', data.account.email)
   }, [data?.account.email, emailForm])
 
+  if (!canRead) return <Result status="403" title="403" />
   if (isLoading) return <LoadingState variant="page" />
 
   if (error || !data) {
@@ -86,11 +90,13 @@ export function AccountDetailPage() {
             name="email"
             rules={[{ required: true, type: 'email' }]}
           >
-            <Input />
+            <Input disabled={!canWrite} />
           </Form.Item>
-          <Button htmlType="submit" loading={emailMutation.isPending}>
-            {t('auth.accountDetail.saveEmail')}
-          </Button>
+          {canWrite ? (
+            <Button htmlType="submit" loading={emailMutation.isPending}>
+              {t('auth.accountDetail.saveEmail')}
+            </Button>
+          ) : null}
         </Form>
       </SectionCard>
       <SectionCard title={t('auth.accountDetail.workspaces')}>
@@ -98,16 +104,20 @@ export function AccountDetailPage() {
           {t('auth.accountDetail.workspacesDescription')}
         </Typography.Paragraph>
         <div className={styles.actions}>
-          <Button type="primary" icon={<SafetyCertificateOutlined aria-hidden />}>
-            <Link to={`/auth/accounts/${account.id}/access`}>
-              {t('auth.accessExplorer.manageAccess')}
-            </Link>
-          </Button>
-          <Button icon={<LockOutlined aria-hidden />}>
-            <Link to={`/auth/accounts/${account.id}/security`}>
-              {t('auth.accountDetail.security')}
-            </Link>
-          </Button>
+          {canWrite ? (
+            <>
+              <Button type="primary" icon={<SafetyCertificateOutlined aria-hidden />}>
+                <Link to={`/auth/accounts/${account.id}/access`}>
+                  {t('auth.accessExplorer.manageAccess')}
+                </Link>
+              </Button>
+              <Button icon={<LockOutlined aria-hidden />}>
+                <Link to={`/auth/accounts/${account.id}/security`}>
+                  {t('auth.accountDetail.security')}
+                </Link>
+              </Button>
+            </>
+          ) : null}
         </div>
       </SectionCard>
     </section>

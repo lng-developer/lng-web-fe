@@ -20,6 +20,7 @@ import {
   Form,
   Input,
   Modal,
+  Result,
   Select,
   Space,
   Table,
@@ -29,10 +30,6 @@ import {
   Typography,
 } from 'antd'
 
-import {
-  createExtensionToken,
-  type ExtensionTokenInput,
-} from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import {
   createPermission,
   deletePermission,
@@ -54,7 +51,7 @@ import {
   type ScopeInput,
   updateScope,
 } from '@/features/auth/scopes/api/scopesApi'
-import { getPermissions, getRoles } from '@/shared/auth/session'
+import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   ConfirmDangerModal,
   FeedbackAlert,
@@ -81,8 +78,8 @@ type DeleteTarget =
   | { kind: 'permission'; item: Permission }
   | { kind: 'scope'; item: Scope }
 const scopeTypes: ScopeInput['scopeType'][] = ['department', 'team', 'shop', 'vendor']
-type AccessControlTab = 'roles' | 'permissions' | 'scopes' | 'tokens'
-const VALID_TABS: AccessControlTab[] = ['roles', 'permissions', 'scopes', 'tokens']
+type AccessControlTab = 'roles' | 'permissions' | 'scopes'
+const VALID_TABS: AccessControlTab[] = ['roles', 'permissions', 'scopes']
 
 const RolePermissions = memo(function RolePermissions({
   canWrite,
@@ -165,19 +162,11 @@ export function AccessControlPage() {
   const [rolePermissionSearch, setRolePermissionSearch] = useState('')
   const [editor, setEditor] = useState<Editor>()
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>()
-  const [tokenModalOpen, setTokenModalOpen] = useState(false)
-  const [createdToken, setCreatedToken] = useState<string>()
   const [roleForm] = Form.useForm<RoleInput>()
   const [permissionForm] = Form.useForm<PermissionInput>()
   const [scopeForm] = Form.useForm<ScopeInput>()
-  const [tokenForm] = Form.useForm<ExtensionTokenInput>()
-  const sessionPermissions = getPermissions().map((permission) => permission.toUpperCase())
-  const roleCodes = getRoles().map((role) => role.toUpperCase())
-  const canWrite =
-    sessionPermissions.includes('AUTH:WRITE') ||
-    roleCodes.includes('SUPER_ADMIN') ||
-    roleCodes.includes('SUPER ADMIN') ||
-    roleCodes.includes('ADMIN')
+  const canRead = hasAnyPermission(['AUTH:READ', 'AUTH:WRITE'], { globalOnly: true })
+  const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
   const activeTab = VALID_TABS.includes(searchParams.get('tab') as AccessControlTab)
     ? (searchParams.get('tab') as AccessControlTab)
     : 'roles'
@@ -235,16 +224,6 @@ export function AccessControlPage() {
         queryClient.invalidateQueries({ queryKey: ['auth-roles'] }),
         queryClient.invalidateQueries({ queryKey: ['auth-scopes'] }),
       ])
-    },
-    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
-  })
-
-  const tokenCreateMutation = useMutation({
-    mutationFn: (values: ExtensionTokenInput) =>
-      createExtensionToken({ ...values, expiresAt: values.expiresAt || null }),
-    onSuccess: (result) => {
-      setCreatedToken(result.token)
-      showFeedbackToast('success', t('actionFeedback.saved'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
@@ -517,38 +496,9 @@ export function AccessControlPage() {
         </SectionCard>
       ),
     },
-    ...(canWrite
-      ? [
-          {
-            key: 'tokens',
-            label: (
-              <span>
-                <KeyOutlined style={{ marginRight: 6 }} />
-                Extension Tokens
-              </span>
-            ),
-            children: (
-              <SectionCard
-                title="Extension Tokens"
-                extra={
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => setTokenModalOpen(true)}
-                  >
-                    Create Token
-                  </Button>
-                }
-              >
-                <Typography.Text type="secondary">
-                  Create and revoke shop-scoped extension credentials.
-                </Typography.Text>
-              </SectionCard>
-            ),
-          },
-        ]
-      : []),
   ]
+
+  if (!canRead) return <Result status="403" title="403" />
 
   return (
     <section className={styles.page}>
@@ -616,46 +566,6 @@ export function AccessControlPage() {
       </div>
 
       <Tabs items={tabItems} activeKey={activeTab} onChange={handleTabChange} />
-
-      <Modal
-        open={tokenModalOpen}
-        title="Create Extension Token"
-        onCancel={() => setTokenModalOpen(false)}
-        footer={null}
-      >
-        <Form
-          form={tokenForm}
-          layout="vertical"
-          initialValues={{ environment: 'development', expiresAt: null }}
-          onFinish={(values) => tokenCreateMutation.mutate(values)}
-        >
-          <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Shop ID" name="shopId" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Environment" name="environment" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'development', label: 'Development' },
-                { value: 'production', label: 'Production' },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item label="Expires at" name="expiresAt">
-            <Input type="datetime-local" />
-          </Form.Item>
-          {createdToken ? (
-            <Input.TextArea aria-label="Raw token" readOnly rows={3} value={createdToken} />
-          ) : null}
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={tokenCreateMutation.isPending}>
-              Create
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Role Editor Modal */}
       {editor?.kind === 'role' ? (

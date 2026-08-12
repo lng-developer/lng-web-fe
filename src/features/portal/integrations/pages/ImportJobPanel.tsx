@@ -18,10 +18,8 @@ import {
 } from '@/shared/ui'
 
 import {
-  type ImportIssue,
   type ImportJobStatus,
   type ImportRawRecord,
-  listJobIssues,
   listJobRawRecords,
   retryImportJob,
   retryPostImportRawRecords,
@@ -32,12 +30,6 @@ import { useImportJobPolling } from '../hooks/useImportJobPolling'
 import styles from './IntegrationWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 10
-
-function issueTone(status: ImportIssue['status']) {
-  if (status === 'RESOLVED') return 'approved'
-  if (status === 'IGNORED') return 'cancelled'
-  return 'warning'
-}
 
 function recordTone(status: string) {
   if (status === 'COMPLETED' || status === 'IMPORTED' || status === 'NORMALIZED') {
@@ -64,19 +56,10 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
-  const [issuePage, setIssuePage] = useState(1)
   const [rawPage, setRawPage] = useState(1)
   const [confirmRetry, setConfirmRetry] = useState(false)
   const job = useImportJobPolling(open ? jobId : undefined, status)
-  const issueParams = { page: issuePage, limit: PAGE_SIZE }
   const rawParams = { page: rawPage, limit: PAGE_SIZE }
-  const issues = useQuery({
-    queryKey: integrationKeys.jobIssues(jobId ?? '', issueParams),
-    queryFn: () => listJobIssues(jobId!, issueParams),
-    ...modalQueryOptions,
-    enabled: open && Boolean(jobId),
-    retry: false,
-  })
   const rawRecords = useQuery({
     queryKey: integrationKeys.rawRecords(jobId ?? '', rawParams),
     queryFn: () => listJobRawRecords(jobId!, rawParams),
@@ -155,56 +138,6 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
       ]
     : []
 
-  const issueColumns: TableColumnsType<ImportIssue> = [
-    {
-      title: t('portal.integrations.issues.severity', { defaultValue: 'Severity' }),
-      dataIndex: 'severity',
-      render: (severity: ImportIssue['severity']) => (
-        <StatusTag
-          status={severity === 'CRITICAL' || severity === 'ERROR' ? 'critical' : 'warning'}
-        >
-          {t(`portal.integrations.severities.${severity}`, { defaultValue: severity })}
-        </StatusTag>
-      ),
-    },
-    {
-      title: t('portal.integrations.issues.type', { defaultValue: 'Type' }),
-      dataIndex: 'issueType',
-      render: (issueType: string) =>
-        t(`portal.integrations.issueTypes.${issueType}`, { defaultValue: issueType }),
-    },
-    {
-      title: t('portal.integrations.issues.reference', { defaultValue: 'Reference' }),
-      render: (_, issue) => (
-        <>
-          <CopyableOrderId value={issue.externalOrderId} fallback="-" /> /{' '}
-          {issue.externalItemId ?? '-'}
-        </>
-      ),
-    },
-    {
-      title: t('portal.integrations.issues.message', { defaultValue: 'Message' }),
-      render: (_, issue) => (
-        <div>
-          <div>{issue.errorMessage ?? issue.errorCode ?? '-'}</div>
-          {Object.keys(issue.details).length > 0 ? (
-            <pre className={styles.diagnosticText}>{JSON.stringify(issue.details, null, 2)}</pre>
-          ) : null}
-        </div>
-      ),
-    },
-    {
-      title: t('portal.integrations.issues.status', { defaultValue: 'Status' }),
-      dataIndex: 'status',
-      render: (issueStatus: ImportIssue['status']) => (
-        <StatusTag status={issueTone(issueStatus)}>
-          {t(`portal.integrations.issueStatuses.${issueStatus}`, {
-            defaultValue: issueStatus,
-          })}
-        </StatusTag>
-      ),
-    },
-  ]
   const rawColumns: TableColumnsType<ImportRawRecord> = [
     {
       title: t('portal.integrations.raw.row', { defaultValue: 'Row' }),
@@ -354,43 +287,6 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
                   type="error"
                   title={job.data.job.errorMessage}
                   description={job.data.job.errorCode ?? undefined}
-                />
-              ) : null}
-            </section>
-            <section>
-              <Typography.Title level={3}>
-                {t('portal.integrations.panel.issues', { defaultValue: 'Issues' })}
-              </Typography.Title>
-              <DataTable
-                columns={issueColumns}
-                dataSource={issues.data?.items ?? []}
-                loading={issues.isLoading}
-                rowKey="id"
-                pagination={{
-                  current: issuePage,
-                  pageSize: PAGE_SIZE,
-                  total: issues.data?.pagination.total,
-                  onChange: setIssuePage,
-                }}
-              />
-              {issues.error ? (
-                <FeedbackAlert
-                  type="error"
-                  title={t('portal.integrations.panel.issuesUnavailable', {
-                    defaultValue: 'Import issues are unavailable',
-                  })}
-                  action={
-                    <Button
-                      aria-label={t('portal.integrations.panel.retryIssues', {
-                        defaultValue: 'Retry issues',
-                      })}
-                      icon={<ReloadOutlined aria-hidden />}
-                      type="link"
-                      onClick={() => void issues.refetch()}
-                    >
-                      {t('portal.integrations.retry', { defaultValue: 'Retry' })}
-                    </Button>
-                  }
                 />
               ) : null}
             </section>

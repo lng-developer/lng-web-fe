@@ -25,6 +25,19 @@ vi.mock('@/features/portal/shops/api/shopApi', async (importOriginal) => {
   return { ...actual, listShops: vi.fn() }
 })
 
+vi.mock('@/features/auth/extension-tokens/api/extensionTokensApi', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/auth/extension-tokens/api/extensionTokensApi')>()
+  return { ...actual, createExtensionToken: vi.fn() }
+})
+
+vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/portal/finance/api/financeApi')>()
+  return { ...actual, listImportBatches: vi.fn() }
+})
+
+import { createExtensionToken } from '@/features/auth/extension-tokens/api/extensionTokensApi'
+import { listImportBatches } from '@/features/portal/finance/api/financeApi'
 import {
   getImportJob,
   listImportJobs,
@@ -85,6 +98,24 @@ const job = {
   updatedAt: '2026-07-31T00:01:00.000Z',
 }
 
+const adsImportBatch = {
+  id: 'batch-ads-1',
+  sourceType: 'ADS',
+  originalFilename: 'ads-spend-2026-08-12.csv',
+  shopId: shop.id,
+  salesChannelCode: 'AMAZON',
+  marketplaceCode: 'AMAZON',
+  dryRun: false,
+  status: 'COMPLETED',
+  processedRows: 5,
+  validRows: 5,
+  skippedRows: 0,
+  unlinkedRows: 0,
+  errorCount: 0,
+  errors: [],
+  createdAt: '2026-08-12T00:00:00.000Z',
+}
+
 function renderWorkbench(path: string, currentAccount = account()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const view = render(
@@ -128,6 +159,20 @@ describe('IntegrationWorkbenchPage', () => {
     vi.mocked(listJobRawRecords).mockResolvedValue({
       items: [],
       pagination: { total: 0, page: 1, limit: 10 },
+    })
+    vi.mocked(createExtensionToken).mockResolvedValue({
+      token: 'lng_ext_test_token',
+      extensionToken: {
+        id: 'token-1',
+        name: 'Amazon Extension',
+        shopId: shop.id,
+        environment: 'development',
+        tokenHint: 'lng_...oken',
+      },
+    })
+    vi.mocked(listImportBatches).mockResolvedValue({
+      items: [adsImportBatch],
+      pagination: { total: 1, page: 1, limit: 20 },
     })
   })
 
@@ -261,6 +306,87 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ['portal', 'integrations', 'jobs'] }),
     )
+  })
+
+  it('creates an Amazon extension token from the integrations setup panel', async () => {
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    expect(await screen.findByText('Amazon Extension setup')).toBeVisible()
+    expect(screen.getByText('https://dev-api.lngmerch.co')).toBeVisible()
+    await waitFor(() => expect(screen.getByText('shop-1')).toBeVisible())
+    fireEvent.click(screen.getByRole('button', { name: 'Create token' }))
+
+    await waitFor(() =>
+      expect(createExtensionToken).toHaveBeenCalledWith({
+        name: 'Amazon Extension',
+        shopId: 'shop-1',
+        environment: 'development',
+        expiresAt: null,
+      }),
+    )
+    expect(await screen.findByText('lng_ext_test_token')).toBeVisible()
+  })
+
+  it('shows Amazon Ads import history for finance readers', async () => {
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Ads' }))
+    expect(await screen.findByText('Amazon Ads imports')).toBeVisible()
+    await waitFor(() =>
+      expect(listImportBatches).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+        sourceType: 'ADS',
+        salesChannelCode: 'AMAZON',
+        marketplaceCode: 'AMAZON',
+        shopId: undefined,
+        status: undefined,
+      }),
+    )
+    expect(await screen.findByText('ads-spend-2026-08-12.csv')).toBeVisible()
+    expect(screen.getByText('5 processed / 5 valid')).toBeVisible()
+  })
+
+  it('shows Amazon Transactions import history for finance readers', async () => {
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Transactions' }))
+    expect(await screen.findByText('Amazon Transactions imports')).toBeVisible()
+    await waitFor(() =>
+      expect(listImportBatches).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceType: 'TRANSACTIONS',
+          salesChannelCode: 'AMAZON',
+        }),
+      ),
+    )
+  })
+
+  it('shows Amazon Settlements import history for finance readers', async () => {
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Settlements' }))
+    expect(await screen.findByText('Amazon Settlements imports')).toBeVisible()
+    await waitFor(() =>
+      expect(listImportBatches).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceType: 'SETTLEMENTS',
+          salesChannelCode: 'AMAZON',
+        }),
+      ),
+    )
+  })
+
+  it('hides Amazon Ads import history without finance read access', async () => {
+    renderWorkbench('/portal/integrations', account(['ORDERS:READ']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Ads' }))
+    expect(await screen.findByText('Amazon Ads imports')).toBeVisible()
+    expect(
+      screen.getByText('Finance read permission is required to view Ads import history.'),
+    ).toBeVisible()
+    expect(listImportBatches).not.toHaveBeenCalled()
   })
 })
 

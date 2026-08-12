@@ -51,7 +51,29 @@ export type SystemHealth = {
   }>
 }
 
+export type SystemLogProcess = 'lng-web-be' | 'lng-web-be-import-workers' | 'lng-web-be-dev-tunnel'
+export type SystemLogStream = 'out' | 'error'
+
+export type SystemLogs = {
+  process: SystemLogProcess
+  stream: SystemLogStream
+  lines: number
+  filename: string
+  content: string[]
+  availableProcesses: Array<{ key: SystemLogProcess; label: string }>
+  availableStreams: SystemLogStream[]
+}
+
 export async function getSystemHealth() {
   const response = await apiClient.get<ApiResponse<SystemHealth>>('/api/system/health')
   return (response as unknown as ApiResponse<SystemHealth>).data
+}
+
+export async function getSystemLogs(params: {
+  process: SystemLogProcess
+  stream: SystemLogStream
+  lines: number
+}) {
+  const response = await apiClient.get<ApiResponse<SystemLogs>>('/api/system/logs', { params })
+  return (response as unknown as ApiResponse<SystemLogs>).data
 }

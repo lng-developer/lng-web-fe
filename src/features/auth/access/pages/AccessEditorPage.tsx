@@ -14,8 +14,9 @@ import {
   ShopOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Avatar, Button, Form, Modal, Select, Tag, Tooltip, Typography } from 'antd'
+import { Avatar, Button, Form, Modal, Result, Select, Tag, Tooltip, Typography } from 'antd'
 
+import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   ConfirmDangerModal,
   EmptyState,
@@ -55,6 +56,7 @@ export function AccessEditorPage() {
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false)
   const [overrideAssignment, setOverrideAssignment] = useState<Assignment>()
   const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment>()
+  const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
 
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['access-explorer', accountId],
@@ -206,6 +208,8 @@ export function AccessEditorPage() {
   }
 
   const accountStatus = String(data?.account.account.status ?? '')
+
+  if (!canWrite) return <Result status="403" title="403" />
 
   return (
     <section className={styles.page}>

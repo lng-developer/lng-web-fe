@@ -9,6 +9,7 @@ import {
 import { LoginPage } from '@/features/auth/login/pages/LoginPage'
 import { OperationsDashboardPage } from '@/features/foundation/OperationsDashboardPage'
 import { LegacyMappingRedirect } from '@/features/portal/mapping/pages/LegacyMappingRedirect'
+import { PermissionBoundary } from '@/shared/auth/PermissionBoundary'
 
 import { NotFoundPage } from './NotFoundPage'
 import { RouteErrorPage } from './RouteErrorPage'
@@ -45,49 +46,87 @@ export const appRoutes: RouteObject[] = [
         path: 'auth/audit-log',
         lazy: () =>
           import('@/features/audit/pages/AuditLogPage').then(({ AuditLogPage }) => ({
-            Component: AuditLogPage,
+            Component: () => (
+              <PermissionBoundary anyOf={['AUDIT:READ']} globalOnly>
+                <AuditLogPage />
+              </PermissionBoundary>
+            ),
           })),
       },
       {
         path: 'auth/monitoring',
         lazy: () =>
           import('@/features/monitoring/pages/MonitoringDashboardPage').then(
-            ({ MonitoringDashboardPage }) => ({ Component: MonitoringDashboardPage }),
+            ({ MonitoringDashboardPage }) => ({
+              Component: () => (
+                <PermissionBoundary anyOf={['AUDIT:READ']} globalOnly>
+                  <MonitoringDashboardPage />
+                </PermissionBoundary>
+              ),
+            }),
           ),
       },
       {
         path: 'auth/accounts',
         lazy: () =>
           import('@/features/auth/accounts/pages/AccessExplorerPage').then(
-            ({ AccessExplorerPage }) => ({ Component: AccessExplorerPage }),
+            ({ AccessExplorerPage }) => ({
+              Component: () => (
+                <PermissionBoundary anyOf={['AUTH:READ', 'AUTH:WRITE']} globalOnly>
+                  <AccessExplorerPage />
+                </PermissionBoundary>
+              ),
+            }),
           ),
       },
       {
         path: 'auth/accounts/:accountId',
         lazy: () =>
           import('@/features/auth/accounts/pages/AccountDetailPage').then(
-            ({ AccountDetailPage }) => ({ Component: AccountDetailPage }),
+            ({ AccountDetailPage }) => ({
+              Component: () => (
+                <PermissionBoundary anyOf={['AUTH:READ', 'AUTH:WRITE']} globalOnly>
+                  <AccountDetailPage />
+                </PermissionBoundary>
+              ),
+            }),
           ),
       },
       {
         path: 'auth/accounts/:accountId/access',
         lazy: () =>
           import('@/features/auth/access/pages/AccessEditorPage').then(({ AccessEditorPage }) => ({
-            Component: AccessEditorPage,
+            Component: () => (
+              <PermissionBoundary anyOf={['AUTH:WRITE']} globalOnly>
+                <AccessEditorPage />
+              </PermissionBoundary>
+            ),
           })),
       },
       {
         path: 'auth/accounts/:accountId/security',
         lazy: () =>
           import('@/features/auth/accounts/pages/AccountSecurityPage').then(
-            ({ AccountSecurityPage }) => ({ Component: AccountSecurityPage }),
+            ({ AccountSecurityPage }) => ({
+              Component: () => (
+                <PermissionBoundary anyOf={['AUTH:WRITE']} globalOnly>
+                  <AccountSecurityPage />
+                </PermissionBoundary>
+              ),
+            }),
           ),
       },
       {
         path: 'auth/access-control',
         lazy: () =>
           import('@/features/auth/access-control/pages/AccessControlPage').then(
-            ({ AccessControlPage }) => ({ Component: AccessControlPage }),
+            ({ AccessControlPage }) => ({
+              Component: () => (
+                <PermissionBoundary anyOf={['AUTH:READ', 'AUTH:WRITE']} globalOnly>
+                  <AccessControlPage />
+                </PermissionBoundary>
+              ),
+            }),
           ),
       },
       { path: 'auth/roles', element: <Navigate to="/auth/access-control?tab=roles" replace /> },
@@ -101,7 +140,11 @@ export const appRoutes: RouteObject[] = [
         path: 'auth/access/:accountId',
         lazy: () =>
           import('@/features/auth/access/pages/AccessEditorPage').then(({ AccessEditorPage }) => ({
-            Component: AccessEditorPage,
+            Component: () => (
+              <PermissionBoundary anyOf={['AUTH:WRITE']} globalOnly>
+                <AccessEditorPage />
+              </PermissionBoundary>
+            ),
           })),
       },
       {
@@ -220,14 +263,24 @@ export const appRoutes: RouteObject[] = [
         path: 'portal/audit',
         lazy: () =>
           import('@/features/audit/pages/AuditLogPage').then(({ AuditLogPage }) => ({
-            Component: AuditLogPage,
+            Component: () => (
+              <PermissionBoundary anyOf={['AUDIT:READ']} globalOnly>
+                <AuditLogPage />
+              </PermissionBoundary>
+            ),
           })),
       },
       {
         path: 'portal/monitoring',
         lazy: () =>
           import('@/features/monitoring/pages/MonitoringDashboardPage').then(
-            ({ MonitoringDashboardPage }) => ({ Component: MonitoringDashboardPage }),
+            ({ MonitoringDashboardPage }) => ({
+              Component: () => (
+                <PermissionBoundary anyOf={['AUDIT:READ']} globalOnly>
+                  <MonitoringDashboardPage />
+                </PermissionBoundary>
+              ),
+            }),
           ),
       },
       {

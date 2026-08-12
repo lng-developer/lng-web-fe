@@ -9,8 +9,9 @@ import {
   StopOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Typography } from 'antd'
+import { Button, Form, Input, Result, Typography } from 'antd'
 
+import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   ConfirmDangerModal,
   FeedbackAlert,
@@ -38,6 +39,7 @@ export function AccountSecurityPage() {
   const showFeedbackToast = useFeedbackToast()
   const [passwordForm] = Form.useForm<{ password: string }>()
   const [pendingAction, setPendingAction] = useState<SecurityAction>()
+  const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['auth-account', accountId],
     queryFn: () => loadAccount(accountId),
@@ -84,6 +86,7 @@ export function AccountSecurityPage() {
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
+  if (!canWrite) return <Result status="403" title="403" />
   if (isLoading) return <LoadingState variant="page" />
 
   if (error || !data) {

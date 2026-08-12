@@ -1,6 +1,8 @@
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 
 const ORDER_WRITE = 'ORDERS:WRITE'
+const FINANCE_READ = 'FINANCE:READ'
+const FINANCE_WRITE = 'FINANCE:WRITE'
 
 export function canWriteOrdersForShop(account: CurrentAccount, shopId: string | null) {
   if (account.permissions.includes(ORDER_WRITE)) return true
@@ -22,4 +24,8 @@ export function canWriteOrdersSomewhere(account: CurrentAccount) {
         scope.scopeType.toLowerCase() === 'shop' && scope.permissions.includes(ORDER_WRITE),
     )
   )
+}
+
+export function canReadFinanceImports(account: CurrentAccount) {
+  return account.permissions.includes(FINANCE_READ) || account.permissions.includes(FINANCE_WRITE)
 }

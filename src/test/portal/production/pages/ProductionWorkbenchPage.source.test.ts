@@ -26,7 +26,9 @@ describe('ProductionWorkbenchPage source contract', () => {
   })
 
   it('scopes assign permissions to the Scale queue and keeps QC operations separate', () => {
-    expect(source).toContain("const canAssignScale = tab === 'scale' && canScale")
+    expect(source).toContain(
+      "const canAssignScale = tab === 'scale' && allowed.has('PRODUCTION:WRITE')",
+    )
     expect(source).toContain('rowSelection={')
     expect(source).toContain('preserveSelectedRowKeys: true')
     expect(source).toContain('onPassSlot={handleQcSlotPass}')

@@ -137,6 +137,7 @@ export type OrderWorkbenchRow = {
     orderedAt: string | null
     status: string | null
     buyer: OrderBuyer
+    shopId?: string | null
     shop: { id: string; name: string | null } | null
     shippingService: ShippingService
     shippingAddress: ShippingAddress

@@ -21,7 +21,9 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { TableColumnsType, UploadFile } from 'antd'
 import {
   Button,
+  Checkbox,
   Descriptions,
+  Empty,
   Input,
   Modal,
   Progress,
@@ -39,6 +41,7 @@ import {
   type ListingOptions,
   listListings,
 } from '@/features/portal/catalog/api/catalogApi'
+import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
 import { downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
 import {
   CopyableText,
@@ -351,7 +354,14 @@ export function DesignWorkbenchPage() {
   )
 
   const bulkAssign = useMutation({
-    mutationFn: () => bulkAssignDesignTasks(selectedRowKeys.map(String), bulkDesignerId!),
+    mutationFn: () =>
+      bulkAssignDesignTasks(
+        selectableTasks
+          .filter((task) => selectedRowKeys.map(String).includes(task.id))
+          .filter(canAssignTask)
+          .map((task) => task.id),
+        bulkDesignerId!,
+      ),
     onSuccess: async ({ failed }) => {
       setSelectedRowKeys([])
       await refresh()
@@ -367,8 +377,24 @@ export function DesignWorkbenchPage() {
   })
 
   const canAssign = permissions.has('DESIGN:WRITE')
-  const canWork = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:WORK')
-  const canReview = permissions.has('DESIGN:WRITE') || permissions.has('DESIGN:REVIEW')
+  const currentAccountId = account.account?.id
+  const canAssignTask = (task: DesignTask) =>
+    canUseScopedPermission(account, 'DESIGN:WRITE', {
+      scopeType: 'shop',
+      scopeId: task.shop?.id,
+    }) || hasScopedPermission(account, 'DESIGN:WRITE', 'team')
+  const canWorkTask = (task: DesignTask) =>
+    canAssignTask(task) ||
+    (Boolean(currentAccountId) &&
+      task.assignedDesignerId === currentAccountId &&
+      permissions.has('DESIGN:WORK'))
+  const canReviewTask = (task: DesignTask) =>
+    canAssignTask(task) ||
+    canUseScopedPermission(account, 'DESIGN:REVIEW', {
+      scopeType: 'shop',
+      scopeId: task.shop?.id,
+    }) ||
+    hasScopedPermission(account, 'DESIGN:REVIEW', 'team')
   const assigneeOptions = useMemo(
     () =>
       (assignees.data ?? []).map(({ id, fullName, name, avatarUrl }) => ({
@@ -414,108 +440,86 @@ export function DesignWorkbenchPage() {
     setCancelOpen(true)
   }, [])
 
-  const selectableTasks = useMemo(
-    () =>
-      (displayedTasks?.items ?? []).filter((row) =>
-        ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status),
-      ),
-    [displayedTasks],
+  const selectableTasks = (displayedTasks?.items ?? []).filter(
+    (row) => canAssignTask(row) && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status),
   )
-  const selectableTaskIds = useMemo(
-    () => new Set(selectableTasks.map((row) => row.id)),
-    [selectableTasks],
-  )
+  const selectableTaskIds = new Set(selectableTasks.map((row) => row.id))
 
-  const renderTaskActions = useCallback(
-    (row: DesignTask) => (
-      <div className={styles.taskActions}>
-        {canAssign && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status) ? (
-          <Tooltip title={t('portal.design.assign')}>
-            <Button
-              aria-label={t('portal.design.assign')}
-              type="text"
-              icon={<UserAddOutlined />}
-              onClick={() => handleOpenAssign(row)}
-            />
-          </Tooltip>
-        ) : null}
-        {canWork && row.status === 'ASSIGNED' ? (
-          <Tooltip title={t('portal.design.start')}>
-            <Button
-              aria-label={t('portal.design.start')}
-              type="text"
-              icon={<PlayCircleOutlined />}
-              onClick={() => handleStartWork(row)}
-            />
-          </Tooltip>
-        ) : null}
-        {canWork && ['IN_PROGRESS', 'REJECTED'].includes(row.status) ? (
-          <Tooltip title={t('portal.design.submit')}>
-            <Button
-              aria-label={t('portal.design.submit')}
-              type="text"
-              icon={<UploadOutlined />}
-              onClick={() => handleOpenSubmit(row)}
-            />
-          </Tooltip>
-        ) : null}
-        {canReview && row.status === 'SUBMITTED' && row.latestSubmission?.assets.length ? (
-          <Tooltip title={t('portal.design.approve')}>
-            <Button
-              className={styles.approveAction}
-              aria-label={t('portal.design.approve')}
-              type="text"
-              icon={<CheckCircleOutlined />}
-              onClick={() => handleOpenApprove(row)}
-            />
-          </Tooltip>
-        ) : null}
-        {canReview && row.status === 'SUBMITTED' ? (
-          <Tooltip title={t('portal.design.reject')}>
-            <Button
-              danger
-              className={styles.rejectAction}
-              aria-label={t('portal.design.reject')}
-              type="text"
-              icon={<CloseCircleOutlined />}
-              onClick={() => handleOpenReject(row)}
-            />
-          </Tooltip>
-        ) : null}
-        {canAssign && !['APPROVED', 'CANCELLED'].includes(row.status) ? (
-          <Tooltip title={t('portal.design.cancel')}>
-            <Button
-              danger
-              aria-label={t('portal.design.cancel')}
-              type="text"
-              icon={<DeleteOutlined />}
-              onClick={() => handleOpenCancel(row)}
-            />
-          </Tooltip>
-        ) : null}
-        <Tooltip title={t('portal.design.view')}>
+  const renderTaskActions = (row: DesignTask) => (
+    <div className={styles.taskActions}>
+      {canAssignTask(row) && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status) ? (
+        <Tooltip title={t('portal.design.assign')}>
           <Button
-            aria-label={t('portal.design.view')}
+            aria-label={t('portal.design.assign')}
             type="text"
-            icon={<EyeOutlined />}
-            onClick={() => setTaskDraft(row.id)}
+            icon={<UserAddOutlined />}
+            onClick={() => handleOpenAssign(row)}
           />
         </Tooltip>
-      </div>
-    ),
-    [
-      canAssign,
-      canReview,
-      canWork,
-      handleOpenApprove,
-      handleOpenAssign,
-      handleOpenCancel,
-      handleOpenReject,
-      handleOpenSubmit,
-      handleStartWork,
-      setTaskDraft,
-      t,
-    ],
+      ) : null}
+      {canWorkTask(row) && row.status === 'ASSIGNED' ? (
+        <Tooltip title={t('portal.design.start')}>
+          <Button
+            aria-label={t('portal.design.start')}
+            type="text"
+            icon={<PlayCircleOutlined />}
+            onClick={() => handleStartWork(row)}
+          />
+        </Tooltip>
+      ) : null}
+      {canWorkTask(row) && ['IN_PROGRESS', 'REJECTED'].includes(row.status) ? (
+        <Tooltip title={t('portal.design.submit')}>
+          <Button
+            aria-label={t('portal.design.submit')}
+            type="text"
+            icon={<UploadOutlined />}
+            onClick={() => handleOpenSubmit(row)}
+          />
+        </Tooltip>
+      ) : null}
+      {canReviewTask(row) && row.status === 'SUBMITTED' && row.latestSubmission?.assets.length ? (
+        <Tooltip title={t('portal.design.approve')}>
+          <Button
+            className={styles.approveAction}
+            aria-label={t('portal.design.approve')}
+            type="text"
+            icon={<CheckCircleOutlined />}
+            onClick={() => handleOpenApprove(row)}
+          />
+        </Tooltip>
+      ) : null}
+      {canReviewTask(row) && row.status === 'SUBMITTED' ? (
+        <Tooltip title={t('portal.design.reject')}>
+          <Button
+            danger
+            className={styles.rejectAction}
+            aria-label={t('portal.design.reject')}
+            type="text"
+            icon={<CloseCircleOutlined />}
+            onClick={() => handleOpenReject(row)}
+          />
+        </Tooltip>
+      ) : null}
+      {canAssignTask(row) && !['APPROVED', 'CANCELLED'].includes(row.status) ? (
+        <Tooltip title={t('portal.design.cancel')}>
+          <Button
+            danger
+            aria-label={t('portal.design.cancel')}
+            type="text"
+            icon={<DeleteOutlined />}
+            onClick={() => handleOpenCancel(row)}
+          />
+        </Tooltip>
+      ) : null}
+      <Tooltip title={t('portal.design.view')}>
+        <Button
+          aria-label={t('portal.design.view')}
+          type="text"
+          icon={<EyeOutlined />}
+          onClick={() => setTaskDraft(row.id)}
+        />
+      </Tooltip>
+    </div>
   )
 
   const taskColumns = useMemo<TableColumnsType<DesignTask>>(
@@ -756,10 +760,11 @@ export function DesignWorkbenchPage() {
                   showSearch
                   optionFilterProp="label"
                   className={styles.filter}
-                  placeholder={t('portal.design.selectDesigner')}
+                  placeholder={t('portal.design.selectEligibleDesigner')}
                   value={bulkDesignerId}
                   onChange={setBulkDesignerId}
                   options={assigneeOptions}
+                  notFoundContent={t('portal.design.noEligibleDesigners')}
                 />
                 <Button
                   disabled={!selectedRowKeys.length || !bulkDesignerId}
@@ -811,15 +816,15 @@ export function DesignWorkbenchPage() {
         footer={
           task ? (
             <div className={styles.actions}>
-              {canAssign && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(task.status) ? (
+              {canAssignTask(task) && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(task.status) ? (
                 <Button onClick={() => handleOpenAssign(task)}>{t('portal.design.assign')}</Button>
               ) : null}
-              {canWork && task.status === 'ASSIGNED' ? (
+              {canWorkTask(task) && task.status === 'ASSIGNED' ? (
                 <Button type="primary" onClick={() => handleStartWork(task)}>
                   {t('portal.design.start')}
                 </Button>
               ) : null}
-              {canWork && ['IN_PROGRESS', 'REJECTED'].includes(task.status) ? (
+              {canWorkTask(task) && ['IN_PROGRESS', 'REJECTED'].includes(task.status) ? (
                 <Button
                   type="primary"
                   icon={<UploadOutlined />}
@@ -828,7 +833,9 @@ export function DesignWorkbenchPage() {
                   {t('portal.design.submitFiles')}
                 </Button>
               ) : null}
-              {canReview && task.status === 'SUBMITTED' && task.latestSubmission?.assets.length ? (
+              {canReviewTask(task) &&
+              task.status === 'SUBMITTED' &&
+              task.latestSubmission?.assets.length ? (
                 <>
                   <Button type="primary" onClick={() => handleOpenApprove(task)}>
                     {t('portal.design.approve')}
@@ -838,7 +845,7 @@ export function DesignWorkbenchPage() {
                   </Button>
                 </>
               ) : null}
-              {canAssign && !['APPROVED', 'CANCELLED'].includes(task.status) ? (
+              {canAssignTask(task) && !['APPROVED', 'CANCELLED'].includes(task.status) ? (
                 <Button danger onClick={() => handleOpenCancel(task)}>
                   {t('portal.design.cancel')}
                 </Button>
@@ -966,14 +973,30 @@ export function DesignWorkbenchPage() {
         }}
         onOk={() => activeTask && action.mutate({ type: 'assign', task: activeTask })}
       >
-        <Select
-          showSearch
-          optionFilterProp="label"
-          style={{ width: '100%' }}
-          value={designerId}
-          onChange={setDesignerId}
-          options={assigneeOptions}
-        />
+        <div style={{ display: 'grid', gap: 8, maxHeight: 320, overflowY: 'auto' }}>
+          {(assignees.data ?? []).length ? (
+            (assignees.data ?? []).map(({ id, fullName, name, avatarUrl }) => {
+              const displayName = fullName ?? name ?? id
+              return (
+                <Checkbox
+                  key={id}
+                  checked={designerId === id}
+                  onChange={(event) => setDesignerId(event.target.checked ? id : undefined)}
+                >
+                  <Space size="small">
+                    <EmployeeAvatar name={displayName} avatarUrl={avatarUrl} size={24} />
+                    <span>{displayName}</span>
+                  </Space>
+                </Checkbox>
+              )
+            })
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={t('portal.design.noEligibleDesigners')}
+            />
+          )}
+        </div>
       </Modal>
       <Modal
         open={approveOpen}

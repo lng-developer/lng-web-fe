@@ -125,6 +125,8 @@ describe('DesignWorkbenchPage', () => {
     fireEvent.click(quickAction)
     expect(screen.getAllByRole('button', { name: 'Assign' })).toHaveLength(2)
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(screen.getByText('Select eligible designer')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /Nguyen Van An/ })).toBeInTheDocument()
   }, 15_000)
 
   it('allows managers to select tasks for bulk designer assignment', async () => {

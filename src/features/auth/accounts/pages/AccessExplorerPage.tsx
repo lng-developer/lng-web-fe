@@ -22,6 +22,7 @@ import {
   Input,
   Modal,
   Pagination,
+  Result,
   Select,
   Space,
   Tag,
@@ -33,7 +34,7 @@ import dayjs from 'dayjs'
 import { updateGlobalAccess } from '@/features/auth/access/api/accessMutationsApi'
 import { loadRoleCatalog } from '@/features/auth/roles/api/rolesApi'
 import { loadScopes } from '@/features/auth/scopes/api/scopesApi'
-import { getPermissions, getRoles } from '@/shared/auth/session'
+import { hasAnyPermission } from '@/shared/auth/permissions'
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import {
   EmptyState,
@@ -93,13 +94,8 @@ export function AccessExplorerPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
-  const sessionPermissions = getPermissions().map((permission) => permission.toUpperCase())
-  const sessionRoles = getRoles().map((role) => role.toUpperCase())
-  const canWrite =
-    sessionPermissions.includes('AUTH:WRITE') ||
-    sessionRoles.includes('SUPER_ADMIN') ||
-    sessionRoles.includes('SUPER ADMIN') ||
-    sessionRoles.includes('ADMIN')
+  const canRead = hasAnyPermission(['AUTH:READ', 'AUTH:WRITE'], { globalOnly: true })
+  const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
 
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['access-accounts'],
@@ -292,6 +288,8 @@ export function AccessExplorerPage() {
       password: values.password,
     })
   }
+
+  if (!canRead) return <Result status="403" title="403" />
 
   return (
     <section className={styles.page}>

@@ -30,6 +30,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { canUseScopedPermission } from '@/shared/auth/permissions'
 import { AuthenticatedMediaImage } from '@/shared/media'
 import {
   CopyableOrderId,
@@ -554,6 +555,7 @@ export function ProductionWorkbenchPage({
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const account = accountProp ?? loadedAccount
   const allowed = permissions(account)
+  const currentAccountId = account?.account.id
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [tab, setTab] = useState<'scale' | 'qc'>('scale')
@@ -569,9 +571,30 @@ export function ProductionWorkbenchPage({
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
-  const canScale = allowed.has('PRODUCTION:WRITE')
-  const canAssignScale = tab === 'scale' && canScale
-  const canQc = allowed.has('PRODUCTION:WRITE') || allowed.has('DESIGN:REVIEW')
+  const canWriteProductionTask = useCallback(
+    (task: ProductionTask) =>
+      canUseScopedPermission(account, 'PRODUCTION:WRITE', {
+        scopeType: 'shop',
+        scopeId: task.shopId ?? task.shop?.id,
+      }),
+    [account],
+  )
+  const canScaleTask = useCallback(
+    (task: ProductionTask) =>
+      canWriteProductionTask(task) ||
+      (Boolean(currentAccountId) && task.assignedDesignUserId === currentAccountId),
+    [canWriteProductionTask, currentAccountId],
+  )
+  const canQcTask = useCallback(
+    (task: ProductionTask) =>
+      canWriteProductionTask(task) ||
+      canUseScopedPermission(account, 'DESIGN:REVIEW', {
+        scopeType: 'shop',
+        scopeId: task.shopId ?? task.shop?.id,
+      }),
+    [account, canWriteProductionTask],
+  )
+  const canAssignScale = tab === 'scale' && allowed.has('PRODUCTION:WRITE')
   const filters = useMemo(
     () => ({
       search: deferredSearch || undefined,
@@ -710,7 +733,7 @@ export function ProductionWorkbenchPage({
   })
   const operations = useMutation({
     mutationFn: async (input: { kind: 'bulk-assign' | 'recheck' }) => {
-      const taskIds = selectedRowKeys.map(String)
+      const taskIds = selectedTasks.filter(canWriteProductionTask).map((task) => task.id)
       if (input.kind === 'bulk-assign') {
         if (taskIds.length === 1) return assignProductionTask(taskIds[0], scaleAssigneeId!)
         return bulkAssignProductionTasks(taskIds, scaleAssigneeId!)
@@ -797,6 +820,10 @@ export function ProductionWorkbenchPage({
   )
   const displayedTasks = useDeferredValue(tasks.data)
   const rows = displayedTasks?.items ?? []
+  const selectedTasks = useMemo(
+    () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
+    [rows, selectedRowKeys],
+  )
   const columns: TableColumnsType<ProductionTask> = useMemo(
     () => [
       {
@@ -968,7 +995,12 @@ export function ProductionWorkbenchPage({
             loading={tasks.isFetching}
             rowSelection={
               canAssignScale
-                ? { selectedRowKeys, onChange: setSelectedRowKeys, preserveSelectedRowKeys: true }
+                ? {
+                    selectedRowKeys,
+                    onChange: setSelectedRowKeys,
+                    preserveSelectedRowKeys: true,
+                    getCheckboxProps: (row) => ({ disabled: !canWriteProductionTask(row) }),
+                  }
                 : undefined
             }
             pagination={{
@@ -987,8 +1019,8 @@ export function ProductionWorkbenchPage({
                   <ProductionWorkbenchExpandedRow
                     task={task}
                     tab={tab}
-                    canScale={canScale}
-                    canQc={canQc}
+                    canScale={canScaleTask(task)}
+                    canQc={canQcTask(task)}
                     decisions={decisions}
                     savingNoteTaskId={saveNote.variables?.taskId}
                     submittingQc={action.isPending}
