@@ -17,6 +17,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Avatar,
   Button,
+  Checkbox,
+  DatePicker,
   Dropdown,
   Form,
   Input,
@@ -29,9 +31,13 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 
-import { updateGlobalAccess } from '@/features/auth/access/api/accessMutationsApi'
+import {
+  type BulkGlobalAccessInput,
+  bulkUpdateGlobalAccess,
+  updateGlobalAccess,
+} from '@/features/auth/access/api/accessMutationsApi'
 import { loadRoleCatalog } from '@/features/auth/roles/api/rolesApi'
 import { loadScopes } from '@/features/auth/scopes/api/scopesApi'
 import { hasAnyPermission } from '@/shared/auth/permissions'
@@ -66,6 +72,12 @@ type CreateAccountForm = {
   scopeId?: string
   customPermissionIds?: string[]
 }
+type BulkAccessFormValues = {
+  roleIds: string[]
+  customPermissionIds: string[]
+  validFrom?: Dayjs | null
+  validUntil?: Dayjs | null
+}
 
 function statusTone(status?: string) {
   return String(status ?? '').toLowerCase() === 'active' ? 'operational' : 'cancelled'
@@ -83,11 +95,14 @@ export function AccessExplorerPage() {
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [quickAccessForm] = Form.useForm<{ roleIds: string[]; customPermissionIds: string[] }>()
+  const [bulkAccessForm] = Form.useForm<BulkAccessFormValues>()
   const [createForm] = Form.useForm<CreateAccountForm>()
   const [quickAccessAccount, setQuickAccessAccount] =
     useState<AccessExplorerSnapshot['accounts']['items'][number]>()
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([])
   const [isOpeningQuickAccess, setIsOpeningQuickAccess] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isBulkAssignOpen, setIsBulkAssignOpen] = useState(false)
   const [createScopeType, setCreateScopeType] = useState<ScopeType>('global')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>()
@@ -105,7 +120,7 @@ export function AccessExplorerPage() {
     queryKey: ['auth-role-catalog'],
     queryFn: loadRoleCatalog,
     ...modalQueryOptions,
-    enabled: Boolean(quickAccessAccount) || isCreateOpen,
+    enabled: Boolean(quickAccessAccount) || isCreateOpen || isBulkAssignOpen,
   })
   const scopeQuery = useQuery({
     queryKey: ['auth-scopes'],
@@ -180,6 +195,17 @@ export function AccessExplorerPage() {
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+  const bulkAccessMutation = useMutation({
+    mutationFn: (payload: BulkGlobalAccessInput) => bulkUpdateGlobalAccess(payload),
+    onSuccess: async () => {
+      setIsBulkAssignOpen(false)
+      bulkAccessForm.resetFields()
+      setSelectedAccountIds([])
+      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      showFeedbackToast('success', t('actionFeedback.saved'))
+    },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
+  })
   const createMutation = useMutation({
     mutationFn: (payload: CreateAccountInput) => createAccount(payload),
     onSuccess: async () => {
@@ -210,6 +236,9 @@ export function AccessExplorerPage() {
     const start = (currentPage - 1) * pageSize
     return accounts.slice(start, start + pageSize)
   }, [accounts, currentPage, pageSize])
+  const isAllCurrentPageSelected = paginatedAccounts.every((account) =>
+    selectedAccountIds.includes(account.id),
+  )
 
   const statuses = useMemo(() => {
     const keys = new Set(allAccounts.map((account) => normalize(account.status)).filter(Boolean))
@@ -242,6 +271,63 @@ export function AccessExplorerPage() {
   const closeQuickAccess = () => {
     setQuickAccessAccount(undefined)
     quickAccessForm.resetFields()
+  }
+
+  const toggleAccountSelection = (accountId: string, checked: boolean) => {
+    setSelectedAccountIds((previous) => {
+      if (checked) {
+        return previous.includes(accountId) ? previous : [...previous, accountId]
+      }
+      return previous.filter((id) => id !== accountId)
+    })
+  }
+
+  const toggleCurrentPageSelectAll = (checked: boolean) => {
+    const pageIds = paginatedAccounts.map((account) => account.id)
+    setSelectedAccountIds((previous) => {
+      if (!checked) {
+        return previous.filter((id) => !pageIds.includes(id))
+      }
+      const merged = [...previous]
+      for (const accountId of pageIds) {
+        if (!merged.includes(accountId)) merged.push(accountId)
+      }
+      return merged
+    })
+  }
+
+  const closeBulkAssign = () => {
+    setIsBulkAssignOpen(false)
+    bulkAccessForm.resetFields()
+  }
+
+  const openBulkAssign = () => {
+    setIsBulkAssignOpen(true)
+    bulkAccessForm.resetFields()
+    const defaultRoles =
+      selectedAccountIds.length === 1
+        ? (accounts.find((account) => account.id === selectedAccountIds[0])?.roles ?? [])
+        : []
+    bulkAccessForm.setFieldsValue({
+      roleIds: defaultRoles,
+      customPermissionIds: [],
+    })
+  }
+
+  const saveBulkAccess = (values: {
+    roleIds?: string[]
+    customPermissionIds?: string[]
+    validFrom?: Dayjs | null
+    validUntil?: Dayjs | null
+  }) => {
+    if (selectedAccountIds.length === 0) return
+    bulkAccessMutation.mutate({
+      accountIds: selectedAccountIds,
+      roleIds: values.roleIds ?? [],
+      customPermissionIds: values.customPermissionIds ?? [],
+      validFrom: values.validFrom ? values.validFrom.toISOString() : null,
+      validUntil: values.validUntil ? values.validUntil.toISOString() : null,
+    })
   }
 
   const saveQuickAccess = (values: { roleIds?: string[]; customPermissionIds?: string[] }) => {
@@ -298,6 +384,15 @@ export function AccessExplorerPage() {
         description={t('auth.accessExplorer.directoryDescription')}
         actions={
           <div className={styles.headerActions}>
+            {canWrite ? (
+              <Button
+                type="default"
+                onClick={() => void openBulkAssign()}
+                disabled={selectedAccountIds.length === 0}
+              >
+                {t('auth.accessExplorer.bulkAssign', 'Bulk assign')}
+              </Button>
+            ) : null}
             {canWrite ? (
               <Dropdown
                 menu={{
@@ -383,6 +478,15 @@ export function AccessExplorerPage() {
             </Typography.Text>
           </div>
           <FilterBar contentClassName={styles.filters} label={t('auth.accessExplorer.filterLabel')}>
+            {canWrite ? (
+              <Checkbox
+                checked={isAllCurrentPageSelected}
+                disabled={paginatedAccounts.length === 0}
+                onChange={(event) => toggleCurrentPageSelectAll(event.target.checked)}
+              >
+                {t('auth.accessExplorer.selectCurrentPage', 'Select current page')}
+              </Checkbox>
+            ) : null}
             <SearchInput
               className={styles.searchFilter}
               aria-label={t('auth.accessExplorer.searchAccounts')}
@@ -439,6 +543,15 @@ export function AccessExplorerPage() {
                 const initials = account.email ? account.email.charAt(0).toUpperCase() : 'U'
                 return (
                   <div key={account.id} className={styles.accountCard}>
+                    {canWrite ? (
+                      <Checkbox
+                        checked={selectedAccountIds.includes(account.id)}
+                        onChange={(event) =>
+                          toggleAccountSelection(account.id, event.target.checked)
+                        }
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    ) : null}
                     <div className={styles.accountIdentity}>
                       <Avatar size={40} style={{ backgroundColor: '#1890ff' }}>
                         {initials}
@@ -563,6 +676,57 @@ export function AccessExplorerPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <Button onClick={closeQuickAccess}>{t('auth.accessEditor.cancel')}</Button>
             <Button type="primary" htmlType="submit" loading={quickAccessMutation.isPending}>
+              {t('auth.accessEditor.saveGlobal')}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={isBulkAssignOpen}
+        title={t('auth.accessEditor.globalAccess')}
+        onCancel={closeBulkAssign}
+        width={900}
+        bodyStyle={{ paddingBottom: 16 }}
+        footer={null}
+        destroyOnHidden
+      >
+        <p>
+          {t(
+            'auth.accessExplorer.selectedAccounts',
+            `${selectedAccountIds.length} account(s) selected`,
+          )}
+        </p>
+        <Form form={bulkAccessForm} layout="vertical" onFinish={saveBulkAccess}>
+          <Form.Item label={t('auth.accessEditor.roles')} name="roleIds">
+            <Select
+              mode="multiple"
+              options={createRoleOptions}
+              loading={roleCatalogQuery.isLoading}
+            />
+          </Form.Item>
+          <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
+            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
+          </Form.Item>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Form.Item
+              label={t('auth.accessEditor.validFrom', 'Valid from')}
+              name="validFrom"
+              style={{ flex: 1, minWidth: 220 }}
+            >
+              <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+            </Form.Item>
+            <Form.Item
+              label={t('auth.accessEditor.validUntil', 'Valid until')}
+              name="validUntil"
+              style={{ flex: 1, minWidth: 220 }}
+            >
+              <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={closeBulkAssign}>{t('auth.accessEditor.cancel')}</Button>
+            <Button type="primary" htmlType="submit" loading={bulkAccessMutation.isPending}>
               {t('auth.accessEditor.saveGlobal')}
             </Button>
           </div>
