@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import { AccessExplorerPage } from '@/features/auth/accounts/pages/AccessExplorerPage'
 import { loadAccessAccounts } from '@/features/auth/api/accessExplorerApi'
+import { setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
 
@@ -27,6 +28,7 @@ describe('AccessExplorerPage', () => {
 
   beforeEach(async () => {
     queryClient.clear()
+    setPermissions(['AUTH:READ', 'AUTH:WRITE'])
     await i18n.changeLanguage('vi')
     vi.mocked(loadAccessAccounts).mockResolvedValue(accounts)
   })

@@ -4,6 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AccessEditorPage } from '@/features/auth/access/pages/AccessEditorPage'
+import { setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/auth/api/accessExplorerApi', () => ({
@@ -33,6 +34,7 @@ vi.mock('@/features/auth/access/api/accessMutationsApi', () => ({
 
 describe('AccessEditorPage', () => {
   beforeEach(async () => {
+    setPermissions(['AUTH:READ', 'AUTH:WRITE'])
     await i18n.changeLanguage('vi')
   })
 
