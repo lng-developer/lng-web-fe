@@ -45,6 +45,8 @@ describe('accessMutationsApi', () => {
       scopeType: 'SHOP',
       scopeId: 'shop-1',
       customPermissionIds: ['permission-1'],
+      validFrom: '2026-08-01T08:00:00',
+      validUntil: '2026-08-01T10:00:00',
     }
 
     await createAccessAssignment(assignment)

@@ -13,10 +13,14 @@ export type AccessAssignmentInput = {
   roleId: string
   scopeId: string
   scopeType: string
+  validFrom?: string | null
+  validUntil?: string | null
 }
 
 export type AccessAssignmentUpdate = Partial<Omit<AccessAssignmentInput, 'accountId'>> & {
   status?: string
+  validFrom?: string | null
+  validUntil?: string | null
 }
 
 export type ScopedRolePermissionInput = {

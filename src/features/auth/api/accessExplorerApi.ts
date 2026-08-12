@@ -32,6 +32,8 @@ export type AccessExplorerSnapshot = {
     roleId?: string
     scopeType?: string
     scopeId?: string
+    validFrom?: string | null
+    validUntil?: string | null
   }>
   roles: AccessList<{ id: string; code: string; name?: string; permissions?: string[] }>
   permissions: AccessList<{ id: string; code: string; name?: string }>
