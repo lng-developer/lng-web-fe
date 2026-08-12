@@ -23,7 +23,12 @@ vi.mock('@/shared/media', () => ({
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
-  useRouteLoaderData: () => ({ permissions: ['DESIGN:WRITE'], scopes: [] }),
+  useRouteLoaderData: () => ({
+    account: { id: '6a339b5a033e2ff7753522c3' },
+    permissions: ['DESIGN:WRITE'],
+    roles: [],
+    scopes: [],
+  }),
 }))
 vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
   listListings: vi.fn().mockResolvedValue({ items: [], pagination: { total: 0 } }),
