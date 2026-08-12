@@ -3,6 +3,13 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { App as AntdApp } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const navigateMock = vi.hoisted(() => vi.fn())
+
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router-dom')>()),
+  useNavigate: () => navigateMock,
+}))
+
 vi.mock('@/features/hr/api/hrApi', () => ({
   loadMyEmployeeProfile: vi.fn(),
   updateMyPersonalProfile: vi.fn(),
@@ -23,6 +30,7 @@ describe('ProfileSetupPage', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
+    navigateMock.mockReset()
     await i18n.changeLanguage('en')
     vi.mocked(loadMyEmployeeProfile).mockResolvedValue({
       id: 'profile-1',
@@ -79,7 +87,7 @@ describe('ProfileSetupPage', () => {
         }),
       ),
     )
-    expect(await screen.findByRole('heading', { name: 'Workspace reached' })).toBeVisible()
+    expect(navigateMock).toHaveBeenCalledWith('/operations-dashboard', { replace: true })
   })
 
   it('shows the normalized submit error in the designed feedback toast', async () => {
