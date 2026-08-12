@@ -38,6 +38,20 @@ import {
 } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
 
+function previewColor(previewAssetId: string | null) {
+  return previewAssetId ? 'green' : 'volcano'
+}
+
+function scaleColor(level?: string) {
+  if (level === 'HARD') return 'orange'
+  if (level === 'SPECIAL') return 'red'
+  return 'green'
+}
+
+function statusColor(status: string) {
+  return status === 'ACTIVE' ? 'green' : 'default'
+}
+
 export function ListingVariantManager({
   listing,
   productTypes,
@@ -59,6 +73,7 @@ export function ListingVariantManager({
   })
   const refresh = async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: catalogKeys.lists() }),
       queryClient.invalidateQueries({ queryKey: catalogKeys.variants(listing.id) }),
       queryClient.invalidateQueries({ queryKey: catalogKeys.detail(listing.id) }),
     ])
@@ -123,7 +138,7 @@ export function ListingVariantManager({
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       <Space style={{ width: '100%', justifyContent: 'space-between' }}>
         <Typography.Title level={5} style={{ margin: 0 }}>
-          Product variants
+          Product variants ({variants.data?.length ?? 0})
         </Typography.Title>
         {canWrite ? (
           <Button size="small" icon={<PlusOutlined />} onClick={() => open('create')}>
@@ -156,6 +171,7 @@ export function ListingVariantManager({
                       icon={<SendOutlined />}
                       onClick={() => requestPsd.mutate(row.id)}
                       loading={requestPsd.isPending && requestPsd.variables === row.id}
+                      disabled={requestPsd.isPending}
                     />
                   </Tooltip>
                 ) : null}
@@ -166,20 +182,29 @@ export function ListingVariantManager({
             title: 'Preview',
             render: (_, row) => (
               <Space size="small">
-                <Tag color={row.previewAssetId ? 'green' : 'default'}>
+                <Tag color={previewColor(row.previewAssetId)}>
                   {row.previewAssetId ? 'UPLOADED' : 'MISSING'}
                 </Tag>
                 {canWrite ? (
                   <Upload
                     accept="image/*"
                     showUploadList={false}
+                    disabled={uploadPreview.isPending}
                     beforeUpload={(file) => {
                       uploadPreview.mutate({ variantId: row.id, file })
                       return false
                     }}
                   >
                     <Tooltip title="Upload preview image">
-                      <Button type="text" size="small" icon={<FileImageOutlined />} />
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<FileImageOutlined />}
+                        loading={
+                          uploadPreview.isPending && uploadPreview.variables?.variantId === row.id
+                        }
+                        disabled={uploadPreview.isPending}
+                      />
                     </Tooltip>
                   </Upload>
                 ) : null}
@@ -190,7 +215,7 @@ export function ListingVariantManager({
             title: 'Scale',
             render: (_, row) => (
               <Space size="small">
-                <Tag color={row.scaleDifficulty?.level === 'NORMAL' ? 'default' : 'red'}>
+                <Tag color={scaleColor(row.scaleDifficulty?.level)}>
                   {row.scaleDifficulty?.level ?? 'NORMAL'}
                 </Tag>
                 {row.scaleDifficulty?.reason ? (
@@ -201,7 +226,10 @@ export function ListingVariantManager({
               </Space>
             ),
           },
-          { title: 'Status', render: (_, row) => <Tag>{row.status}</Tag> },
+          {
+            title: 'Status',
+            render: (_, row) => <Tag color={statusColor(row.status)}>{row.status}</Tag>,
+          },
           {
             title: 'Default',
             render: (_, row) =>
