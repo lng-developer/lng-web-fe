@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { DownOutlined, IdcardOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
+import { IdcardOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Dropdown } from 'antd'
 
@@ -42,7 +42,7 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
   }
 
   return (
-    <>
+    <div className={styles.accountWrapper}>
       <Dropdown
         trigger={['click']}
         placement="bottomRight"
@@ -85,7 +85,6 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
             }
             icon={<UserOutlined />}
           />
-          <DownOutlined className={styles.accountChevron} />
         </Button>
       </Dropdown>
       {isProfileOpen && (
@@ -93,6 +92,6 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
           <MyProfileModal open onClose={() => setIsProfileOpen(false)} />
         </Suspense>
       )}
-    </>
+    </div>
   )
 }

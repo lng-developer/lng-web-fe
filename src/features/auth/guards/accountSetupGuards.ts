@@ -1,6 +1,6 @@
 import { redirect } from 'react-router-dom'
 
-import { getCurrentAccount, restoreSession } from '../api/authApi'
+import { restoreSession } from '../api/authApi'
 
 async function loadSetupState() {
   try {
@@ -8,7 +8,11 @@ async function loadSetupState() {
     if (session.account.mustChangePassword) {
       return { ...session, scopes: session.scopes ?? [], profileSetupRequired: true }
     }
-    return await getCurrentAccount()
+    return {
+      ...session,
+      scopes: session.scopes ?? [],
+      profileSetupRequired: session.profileSetupRequired,
+    }
   } catch {
     throw redirect('/login')
   }

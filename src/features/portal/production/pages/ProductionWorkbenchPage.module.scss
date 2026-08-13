@@ -45,6 +45,16 @@
 
 .queueTabs :global(.ant-tabs-nav) {
   margin: 0;
+  border: none;
+  background: #fff;
+}
+
+.queueTabs :global(.ant-tabs-tab) {
+  border-radius: 0px !important;
+}
+
+.queueTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
+  border-bottom: 2px solid #ff4d4f !important;
 }
 
 .queuePane :global(.ant-table-wrapper) {
@@ -323,9 +333,11 @@
 .bgWhite {
   background-color: #ffffff !important;
 }
+
 .bgBlack {
   background-color: #000000 !important;
 }
+
 .bgNavy {
   background-color: #0b1d3a !important;
 }

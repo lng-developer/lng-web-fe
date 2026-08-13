@@ -70,6 +70,7 @@ export async function restoreSession() {
         roles: account.roles,
         permissions: account.permissions,
         scopes: account.scopes,
+        profileSetupRequired: account.profileSetupRequired,
       }
     } catch (fallbackError) {
       if (fallbackError instanceof ApiError && fallbackError.status === 401) {
@@ -90,7 +91,10 @@ export async function restoreSession() {
     setRoles(session.roles)
     setPermissions(effectivePermissions(session))
     setGlobalPermissions(session.permissions)
-    return session
+    return {
+      ...session,
+      profileSetupRequired: false,
+    }
   } catch (error) {
     if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
       setAccessToken(null)
