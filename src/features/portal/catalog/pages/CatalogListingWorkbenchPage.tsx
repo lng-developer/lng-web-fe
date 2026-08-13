@@ -1,12 +1,33 @@
 import { useDeferredValue, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import {
+  AppstoreOutlined,
+  CaretDownOutlined,
+  CaretRightOutlined,
+  CheckCircleOutlined,
+  EditOutlined,
+  FileImageOutlined,
+  FileTextOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  StopOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Input, Pagination, Select, Space } from 'antd'
+import type { TableColumnsType } from 'antd'
+import { Button, Input, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { EmptyState, FeedbackAlert, LoadingState, PageHeader, useFeedbackToast } from '@/shared/ui'
+import {
+  CopyableText,
+  FeedbackAlert,
+  MetricCard,
+  PageHeader,
+  StatusTag,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   type CatalogListParams,
@@ -21,10 +42,11 @@ import {
   type UpdateListingInput,
 } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
-import { ListingCard } from '../components/ListingCard'
-import { ListingDetailPanel } from '../components/ListingDetailPanel'
 import { CatalogListingEditorModal } from './CatalogListingEditorModal'
 import styles from './CatalogListingWorkbenchPage.module.scss'
+import { ListingVariantManager } from './ListingVariantManager'
+
+dayjs.extend(relativeTime)
 
 const PAGE_SIZE = 20
 
@@ -44,11 +66,10 @@ export function CatalogListingWorkbenchPage({
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
   const [qcStatus, setQcStatus] = useState<string>()
-  const [selectedId, setSelectedId] = useState<string>()
   const [editing, setEditing] = useState<Listing | 'create'>()
+  const [expandedRowKeys, setExpandedRowKeys] = useState<readonly string[]>([])
 
   const deferredSearch = useDeferredValue(search)
-
   const params: CatalogListParams = {
     page,
     limit: PAGE_SIZE,
@@ -57,7 +78,6 @@ export function CatalogListingWorkbenchPage({
     salesChannelCode,
     qcStatus,
   }
-
   const summaryParams = { search: params.search, shopId, salesChannelCode, qcStatus }
 
   const options = useQuery({
@@ -73,12 +93,6 @@ export function CatalogListingWorkbenchPage({
   const summary = useQuery({
     queryKey: catalogKeys.summary(summaryParams),
     queryFn: () => getListingSummary(summaryParams),
-    retry: false,
-  })
-  const detail = useQuery({
-    queryKey: catalogKeys.detail(selectedId ?? ''),
-    queryFn: () => getListing(selectedId!),
-    enabled: Boolean(selectedId),
     retry: false,
   })
 
@@ -114,9 +128,8 @@ export function CatalogListingWorkbenchPage({
       editing === 'create'
         ? createListing(input as CreateListingInput)
         : updateListing((editing as Listing).id, input as UpdateListingInput),
-    onSuccess: async (saved) => {
+    onSuccess: async () => {
       setEditing(undefined)
-      setSelectedId(saved.id)
       await refresh()
       toast('success', t('portal.catalog.saved'))
     },
@@ -130,9 +143,158 @@ export function CatalogListingWorkbenchPage({
       setPage(1)
     }
 
-  const selectedListing = selectedId
-    ? (detail.data ?? listings.data?.items.find((l) => l.id === selectedId))
-    : undefined
+  const psdSummary = (listing: Listing) => {
+    const total = listing.psdVariantCount ?? listing.variantCount ?? 0
+    const ready = listing.psdReadyCount ?? (listing.psdStatus === 'PRESENT' ? total : 0)
+    const label = total ? `${ready} / ${total}` : '-'
+    const state = !total
+      ? 'Not configured'
+      : ready === total
+        ? 'Ready'
+        : ready > 0
+          ? 'Partial'
+          : 'Missing'
+    return { label, state }
+  }
+
+  const metricPercent = (value = 0) => {
+    const total = summary.data?.totalListingCount ?? 0
+    return total ? `${Math.round((value / total) * 1000) / 10}%` : '0%'
+  }
+
+  const columns: TableColumnsType<Listing> = [
+    {
+      title: 'Image',
+      width: 76,
+      render: (_, listing) =>
+        listing.productImageUrl ? (
+          <img src={listing.productImageUrl} alt={listing.title} className={styles.thumbnail} />
+        ) : (
+          <div className={styles.thumbnailFallback}>-</div>
+        ),
+    },
+    {
+      title: 'Listing',
+      width: 240,
+      render: (_, listing) => (
+        <Space direction="vertical" size={2} className={styles.titleCell}>
+          <CopyableText
+            value={listing.sku}
+            strong
+            className={styles.skuButton}
+            title="Copy SKU"
+            copiedMessage="SKU copied"
+          />
+          <Typography.Text type="secondary">
+            {listing.asin ? 'ASIN ' : listing.etsyListingId ? 'Etsy ' : ''}
+            <CopyableText
+              value={listing.asin ?? listing.etsyListingId}
+              title={listing.asin ? 'Copy ASIN' : 'Copy listing ID'}
+              copiedMessage={listing.asin ? 'ASIN copied' : 'Listing ID copied'}
+            />
+          </Typography.Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'Channel',
+      width: 118,
+      render: (_, listing) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text>{listing.salesChannelCode}</Typography.Text>
+          <Typography.Text type="secondary">{listing.marketplaceCode}</Typography.Text>
+        </Space>
+      ),
+    },
+    { title: 'Shop', width: 150, render: (_, listing) => listing.shop?.name ?? listing.shopId },
+    {
+      title: 'Variants',
+      width: 92,
+      align: 'center',
+      render: (_, listing) => <Typography.Text strong>{listing.variantCount ?? 0}</Typography.Text>,
+    },
+    {
+      title: 'PSD',
+      width: 120,
+      render: (_, listing) => {
+        const summary = psdSummary(listing)
+        const dotClass =
+          summary.state === 'Ready'
+            ? styles.dotReady
+            : summary.state === 'Missing'
+              ? styles.dotMissing
+              : styles.dotPartial
+        return (
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong>{summary.label}</Typography.Text>
+            <span className={styles.psdState}>
+              <span className={`${styles.psdDot} ${dotClass}`} />
+              {summary.state}
+            </span>
+          </Space>
+        )
+      },
+    },
+    {
+      title: 'QC',
+      width: 112,
+      render: (_, listing) => (
+        <StatusTag
+          status={
+            listing.qcStatus === 'APPROVED'
+              ? 'operational'
+              : listing.qcStatus === 'REJECTED'
+                ? 'critical'
+                : 'pending'
+          }
+        >
+          {listing.qcStatus}
+        </StatusTag>
+      ),
+    },
+    {
+      title: 'Sales',
+      width: 116,
+      render: (_, listing) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text>{listing.salesStats.quantitySold} sold</Typography.Text>
+          <Typography.Text type="secondary">{listing.salesStats.orderCount} orders</Typography.Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'Status',
+      width: 96,
+      render: (_, listing) => (
+        <Tag color={listing.status === 'ACTIVE' ? 'green' : 'default'}>{listing.status}</Tag>
+      ),
+    },
+    {
+      title: 'Updated',
+      width: 150,
+      render: (_, listing) => (
+        <Tooltip title={dayjs(listing.updatedAt).format('YYYY-MM-DD HH:mm:ss')}>
+          {dayjs(listing.updatedAt).fromNow()}
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Actions',
+      width: 88,
+      fixed: 'right',
+      render: (_, listing) =>
+        canWrite(listing) ? (
+          <Tooltip title="Edit listing">
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              aria-label="Edit listing"
+              onClick={() => void openEdit(listing)}
+            />
+          </Tooltip>
+        ) : null,
+    },
+  ]
 
   return (
     <section className={styles.page}>
@@ -157,7 +319,60 @@ export function CatalogListingWorkbenchPage({
         <FeedbackAlert type="error" title={t('portal.catalog.unavailable')} />
       ) : null}
 
-      {/* Filters */}
+      <div className={styles.metrics}>
+        <MetricCard
+          icon={<AppstoreOutlined />}
+          label="Total listings"
+          value={summary.data?.totalListingCount ?? 0}
+          variant="primary"
+          status={<span className={styles.metricPercent}>100%</span>}
+        />
+        <MetricCard
+          icon={<CheckCircleOutlined />}
+          label="Approved"
+          value={summary.data?.approvedCount ?? 0}
+          variant="success"
+          status={
+            <span className={styles.metricPercentSuccess}>
+              {metricPercent(summary.data?.approvedCount ?? 0)}
+            </span>
+          }
+        />
+        <MetricCard
+          icon={<FileTextOutlined />}
+          label="Draft"
+          value={summary.data?.draftCount ?? 0}
+          variant="warning"
+          status={
+            <span className={styles.metricPercentWarning}>
+              {metricPercent(summary.data?.draftCount ?? 0)}
+            </span>
+          }
+        />
+        <MetricCard
+          icon={<FileImageOutlined />}
+          label="PSD missing"
+          value={summary.data?.noPsdCount ?? 0}
+          variant="danger"
+          status={
+            <span className={styles.metricPercentDanger}>
+              {metricPercent(summary.data?.noPsdCount ?? 0)}
+            </span>
+          }
+        />
+        <MetricCard
+          icon={<StopOutlined />}
+          label="Rejected"
+          value={summary.data?.rejectedCount ?? 0}
+          variant="danger"
+          status={
+            <span className={styles.metricPercentDanger}>
+              {metricPercent(summary.data?.rejectedCount ?? 0)}
+            </span>
+          }
+        />
+      </div>
+
       <div className={styles.filterRow}>
         <Input.Search
           allowClear
@@ -165,11 +380,11 @@ export function CatalogListingWorkbenchPage({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onSearch={() => setPage(1)}
-          style={{ maxWidth: 280 }}
+          className={styles.search}
         />
         <Select
           allowClear
-          style={{ width: 180 }}
+          className={styles.filter}
           placeholder={t('portal.catalog.allShops')}
           value={shopId}
           onChange={resetPage(setShopId)}
@@ -177,7 +392,7 @@ export function CatalogListingWorkbenchPage({
         />
         <Select
           allowClear
-          style={{ width: 150 }}
+          className={styles.filter}
           placeholder={t('portal.catalog.allChannels')}
           value={salesChannelCode}
           onChange={resetPage(setSalesChannelCode)}
@@ -185,7 +400,7 @@ export function CatalogListingWorkbenchPage({
         />
         <Select
           allowClear
-          style={{ width: 150 }}
+          className={styles.filter}
           placeholder="All QC Statuses"
           value={qcStatus}
           onChange={resetPage(setQcStatus)}
@@ -197,56 +412,58 @@ export function CatalogListingWorkbenchPage({
         />
       </div>
 
-      {/* Master-Detail Layout */}
-      <div className={styles.masterDetail}>
-        {/* Master Panel — Card List */}
-        <div className={styles.masterPanel}>
-          {listings.isLoading ? (
-            <div className={styles.loadingCenter}>
-              <LoadingState variant="card" />
-            </div>
-          ) : !listings.data?.items.length ? (
-            <EmptyState
-              title="No listings found"
-              description="Try adjusting your filters or create a new listing."
-            />
-          ) : (
-            <>
-              <div className={styles.cardList}>
-                {listings.data.items.map((listing) => (
-                  <ListingCard
-                    key={listing.id}
-                    listing={listing}
-                    isSelected={selectedId === listing.id}
-                    onClick={() => setSelectedId(listing.id)}
-                  />
-                ))}
-              </div>
-              <div className={styles.pagination}>
-                <Pagination
-                  size="small"
-                  current={page}
-                  pageSize={PAGE_SIZE}
-                  total={listings.data.pagination.total}
-                  onChange={setPage}
-                  showTotal={(total) => `${total} listings`}
+      <div className={styles.tableShell}>
+        <div className={styles.tableHeader}>
+          <div>
+            <Typography.Title level={4} className={styles.tableTitle}>
+              Listing table
+            </Typography.Title>
+            <Typography.Text type="secondary">
+              Expand a listing to manage its product variants, PSD, preview, and scale setup.
+            </Typography.Text>
+          </div>
+          <Tag color="blue">{listings.data?.pagination.total ?? 0} results</Tag>
+        </div>
+        <Table<Listing>
+          rowKey="id"
+          size="middle"
+          loading={listings.isLoading}
+          columns={columns}
+          dataSource={listings.data?.items ?? []}
+          scroll={{ x: 1500 }}
+          pagination={{
+            current: page,
+            pageSize: PAGE_SIZE,
+            total: listings.data?.pagination.total ?? 0,
+            showSizeChanger: false,
+            showTotal: (total) => `${total} listings`,
+            onChange: setPage,
+          }}
+          expandable={{
+            expandIcon: ({ expanded, onExpand, record }) => (
+              <Button
+                type="text"
+                size="small"
+                className={styles.expandButton}
+                icon={expanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
+                aria-label={expanded ? 'Collapse variants' : 'Expand variants'}
+                onClick={(event) => onExpand(record, event)}
+              />
+            ),
+            expandedRowKeys,
+            onExpandedRowsChange: (keys) => setExpandedRowKeys(keys.map(String)),
+            expandedRowRender: (listing) => (
+              <div className={styles.expandedVariants}>
+                <ListingVariantManager
+                  listing={listing}
+                  productTypes={options.data?.productTypeGroups ?? []}
+                  templates={options.data?.internalTemplates ?? []}
+                  canWrite={canWrite(listing)}
                 />
               </div>
-            </>
-          )}
-        </div>
-
-        {/* Detail Panel */}
-        <div className={styles.detailPanel}>
-          <ListingDetailPanel
-            listing={selectedListing}
-            isLoading={Boolean(selectedId && detail.isLoading)}
-            canWrite={canWrite(selectedListing)}
-            onEdit={() => selectedListing && void openEdit(selectedListing)}
-            productTypes={options.data?.productTypeGroups ?? []}
-            templates={options.data?.internalTemplates ?? []}
-          />
-        </div>
+            ),
+          }}
+        />
       </div>
 
       <CatalogListingEditorModal

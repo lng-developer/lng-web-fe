@@ -30,6 +30,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
 import { AuthenticatedMediaImage } from '@/shared/media'
 import {
   CopyableOrderId,
@@ -55,6 +56,7 @@ import {
   type ProductionTask,
   recheckPsdBlockedTasks,
   submitProductionQc,
+  submitScaleForQc,
   summarizeProductionTasks,
   updateDesignNote,
   uploadScaledOutput,
@@ -65,7 +67,9 @@ import { ProductionWorkbenchFilterBar } from './ProductionWorkbenchFilterBar'
 import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20
-const SCALE_STATUSES: ProductionStatus[] = ['NEED_SCALE', 'QC_REJECTED']
+type ProductionTab = 'scale' | 'blocked' | 'qc'
+const SCALE_STATUSES: ProductionStatus[] = ['NEED_SCALE', 'QC_REJECTED', 'BLOCKED']
+const BLOCKED_STATUSES: ProductionStatus[] = ['BLOCKED']
 const QC_STATUSES: ProductionStatus[] = [
   'QC_PENDING',
   'READY_TO_SEND_VENDOR',
@@ -85,12 +89,14 @@ const REJECTION_PRESETS = [
 function ArtworkInspector({
   check,
   listingReferenceUrl,
+  readonly = false,
   onClose,
   onPass,
   onReject,
 }: {
   readonly check: FileCheck
   readonly listingReferenceUrl?: string | null
+  readonly readonly?: boolean
   readonly onClose: () => void
   readonly onPass: (note?: string) => void
   readonly onReject: (note: string) => void
@@ -162,10 +168,10 @@ function ArtworkInspector({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return
 
-      if (e.key === 'p' || e.key === 'P') {
+      if (!readonly && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault()
         onPass()
-      } else if (e.key === 'r' || e.key === 'R') {
+      } else if (!readonly && (e.key === 'r' || e.key === 'R')) {
         e.preventDefault()
         setRejectModalOpen(true)
       } else if (e.key === '1') {
@@ -181,7 +187,7 @@ function ArtworkInspector({
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onPass, resetView])
+  }, [onPass, readonly, resetView])
 
   const handlePresetToggle = (preset: string) => {
     setSelectedPresets((prev) =>
@@ -447,40 +453,44 @@ function ArtworkInspector({
         )}
       </div>
 
-      {/* QC Keyboard Shortcuts Footer Guide */}
-      <div className={styles.shortcutBar}>
-        <span>
-          ⚡ <strong>QC Shortcuts</strong>:
-        </span>
-        <span>
-          <kbd>P</kbd> Pass Slot
-        </span>
-        <span>
-          <kbd>R</kbd> Reject Slot
-        </span>
-        <span>
-          <kbd>1</kbd> Side-by-Side
-        </span>
-        <span>
-          <kbd>2</kbd> Split Slider
-        </span>
-        <span>
-          <kbd>3</kbd> Overlay
-        </span>
-        <span>
-          <kbd>Space</kbd> Center View
-        </span>
-      </div>
+      {!readonly ? (
+        <>
+          {/* QC Keyboard Shortcuts Footer Guide */}
+          <div className={styles.shortcutBar}>
+            <span>
+              ⚡ <strong>QC Shortcuts</strong>:
+            </span>
+            <span>
+              <kbd>P</kbd> Pass Slot
+            </span>
+            <span>
+              <kbd>R</kbd> Reject Slot
+            </span>
+            <span>
+              <kbd>1</kbd> Side-by-Side
+            </span>
+            <span>
+              <kbd>2</kbd> Split Slider
+            </span>
+            <span>
+              <kbd>3</kbd> Overlay
+            </span>
+            <span>
+              <kbd>Space</kbd> Center View
+            </span>
+          </div>
 
-      {/* Main Action Bar */}
-      <Flex justify="end" gap={12} style={{ marginTop: 16 }}>
-        <Button danger icon={<StopOutlined />} onClick={() => setRejectModalOpen(true)}>
-          {t('portal.production.rejectSlot')} (R)
-        </Button>
-        <Button type="primary" icon={<CheckOutlined />} onClick={() => onPass()}>
-          {t('portal.production.passSlot')} (P)
-        </Button>
-      </Flex>
+          {/* Main Action Bar */}
+          <Flex justify="end" gap={12} style={{ marginTop: 16 }}>
+            <Button danger icon={<StopOutlined />} onClick={() => setRejectModalOpen(true)}>
+              {t('portal.production.rejectSlot')} (R)
+            </Button>
+            <Button type="primary" icon={<CheckOutlined />} onClick={() => onPass()}>
+              {t('portal.production.passSlot')} (P)
+            </Button>
+          </Flex>
+        </>
+      ) : null}
 
       {/* Quick Rejection Modal with Preset Reason Chips */}
       <Modal
@@ -554,9 +564,10 @@ export function ProductionWorkbenchPage({
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const account = accountProp ?? loadedAccount
   const allowed = permissions(account)
+  const currentAccountId = account?.account.id
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
-  const [tab, setTab] = useState<'scale' | 'qc'>('scale')
+  const [tab, setTab] = useState<ProductionTab>('scale')
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
@@ -565,36 +576,109 @@ export function ProductionWorkbenchPage({
   const [inspect, setInspect] = useState<{
     check: FileCheck
     listingReferenceUrl?: string | null
+    readonly?: boolean
   }>()
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
-  const canScale = allowed.has('PRODUCTION:WRITE')
-  const canAssignScale = tab === 'scale' && canScale
-  const canQc = allowed.has('PRODUCTION:WRITE') || allowed.has('DESIGN:REVIEW')
+  const [uploadingFileCheckIds, setUploadingFileCheckIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
+  const canWriteProductionTask = useCallback(
+    (task: ProductionTask) =>
+      canUseScopedPermission(account, 'PRODUCTION:WRITE', {
+        scopeType: 'shop',
+        scopeId: task.shopId ?? task.shop?.id,
+      }),
+    [account],
+  )
+  const canScaleTask = useCallback(
+    (task: ProductionTask) =>
+      canWriteProductionTask(task) ||
+      (Boolean(currentAccountId) && task.assignedDesignUserId === currentAccountId),
+    [canWriteProductionTask, currentAccountId],
+  )
+  const canQcTask = useCallback(
+    (task: ProductionTask) =>
+      canWriteProductionTask(task) ||
+      canUseScopedPermission(account, 'DESIGN:REVIEW', {
+        scopeType: 'shop',
+        scopeId: task.shopId ?? task.shop?.id,
+      }),
+    [account, canWriteProductionTask],
+  )
+  const hasTeamDesignReview = hasScopedPermission(account, 'DESIGN:REVIEW', 'team')
+  const hasScopedScaleAssign =
+    hasTeamDesignReview ||
+    hasScopedPermission(account, 'DESIGN:REVIEW', 'shop') ||
+    hasScopedPermission(account, 'PRODUCTION:WRITE', 'team') ||
+    hasScopedPermission(account, 'PRODUCTION:WRITE', 'shop')
+  const canAssignScale =
+    tab === 'scale' && (allowed.has('PRODUCTION:WRITE') || hasScopedScaleAssign)
+  const canAssignProductionTask = useCallback(
+    (task: ProductionTask) =>
+      canWriteProductionTask(task) ||
+      hasTeamDesignReview ||
+      canUseScopedPermission(account, 'DESIGN:REVIEW', {
+        scopeType: 'shop',
+        scopeId: task.shopId ?? task.shop?.id,
+      }),
+    [account, canWriteProductionTask, hasTeamDesignReview],
+  )
   const filters = useMemo(
     () => ({
       search: deferredSearch || undefined,
       scaleDifficultyLevel,
-      status,
-      view: tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
+      status: tab === 'blocked' ? ('BLOCKED' as const) : status,
+      view: tab === 'blocked' ? undefined : tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
     }),
     [deferredSearch, scaleDifficultyLevel, status, tab],
   )
   const params = useMemo(() => ({ ...filters, page, limit: PAGE_SIZE }), [filters, page])
-  const summaryFilters = useMemo(() => ({ search: deferredSearch || undefined }), [deferredSearch])
+  const summaryFilters = useMemo(
+    () => ({
+      search: deferredSearch || undefined,
+      status: tab === 'blocked' ? ('BLOCKED' as const) : status,
+      view: tab === 'blocked' ? undefined : ((tab === 'qc' ? 'QC' : 'SCALE') as 'QC' | 'SCALE'),
+    }),
+    [deferredSearch, status, tab],
+  )
+  const queueFilters = useMemo(() => ({ search: deferredSearch || undefined }), [deferredSearch])
   const statusOptions = useMemo(
     () =>
-      (tab === 'scale' ? SCALE_STATUSES : QC_STATUSES).map((value) => ({
-        value,
-        label: t(`portal.production.statuses.${value}`),
-      })),
+      (tab === 'blocked' ? BLOCKED_STATUSES : tab === 'scale' ? SCALE_STATUSES : QC_STATUSES).map(
+        (value) => ({
+          value,
+          label: t(`portal.production.statuses.${value}`),
+        }),
+      ),
     [tab, t],
   )
   const tasks = useQuery({
     queryKey: productionKeys.list(params),
     queryFn: () => listProductionTasks(params),
     placeholderData: keepPreviousData,
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+  const scaleQueueCount = useQuery({
+    queryKey: productionKeys.list({ ...queueFilters, view: 'SCALE', page: 1, limit: 1 }),
+    queryFn: () => listProductionTasks({ ...queueFilters, view: 'SCALE', page: 1, limit: 1 }),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+  const qcQueueCount = useQuery({
+    queryKey: productionKeys.list({ ...queueFilters, view: 'QC', page: 1, limit: 1 }),
+    queryFn: () => listProductionTasks({ ...queueFilters, view: 'QC', page: 1, limit: 1 }),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+  const blockedCount = useQuery({
+    queryKey: productionKeys.list({ ...queueFilters, status: 'BLOCKED', page: 1, limit: 1 }),
+    queryFn: () => listProductionTasks({ ...queueFilters, status: 'BLOCKED', page: 1, limit: 1 }),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,
@@ -606,26 +690,62 @@ export function ProductionWorkbenchPage({
     refetchOnWindowFocus: false,
     retry: false,
   })
+  const summaryRows = tasks.data?.items ?? []
+  const displaySummary = useMemo(() => {
+    if ((summary.data?.total ?? 0) > 0 || summaryRows.length === 0) return summary.data
+    return {
+      total: tasks.data?.total ?? summaryRows.length,
+      blocked: summaryRows.filter((task) => task.status === 'BLOCKED').length,
+      needScale: summaryRows.filter((task) => task.status === 'NEED_SCALE').length,
+      qcPending: summaryRows.filter((task) => task.status === 'QC_PENDING').length,
+      ready: summaryRows.filter((task) => task.status === 'READY_TO_SEND_VENDOR').length,
+      scaleQueue: summaryRows.filter((task) => SCALE_STATUSES.includes(task.status)).length,
+      qcQueue: summaryRows.filter((task) => task.qcStatus === 'PENDING').length,
+    }
+  }, [summary.data, summaryRows, tasks.data?.total])
+  const queueSummary = useMemo(
+    () => ({
+      ...displaySummary,
+      blocked: Math.max(displaySummary?.blocked ?? 0, blockedCount.data?.total ?? 0),
+      scaleQueue: Math.max(displaySummary?.scaleQueue ?? 0, scaleQueueCount.data?.total ?? 0),
+      qcQueue: Math.max(displaySummary?.qcQueue ?? 0, qcQueueCount.data?.total ?? 0),
+      qcPending: Math.max(displaySummary?.qcPending ?? 0, qcQueueCount.data?.total ?? 0),
+    }),
+    [
+      blockedCount.data?.total,
+      displaySummary,
+      qcQueueCount.data?.total,
+      scaleQueueCount.data?.total,
+    ],
+  )
   const tabItems = useMemo(
     () => [
       {
         key: 'scale',
         label: (
-          <UiTabLabel count={summary.data?.scaleQueue ?? 0} active={tab === 'scale'}>
+          <UiTabLabel count={queueSummary.scaleQueue ?? 0} active={tab === 'scale'}>
             {t('portal.production.scaleQueue')}
+          </UiTabLabel>
+        ),
+      },
+      {
+        key: 'blocked',
+        label: (
+          <UiTabLabel count={queueSummary.blocked ?? 0} active={tab === 'blocked'}>
+            {t('portal.production.blockedQueue')}
           </UiTabLabel>
         ),
       },
       {
         key: 'qc',
         label: (
-          <UiTabLabel count={summary.data?.qcQueue ?? 0} active={tab === 'qc'}>
+          <UiTabLabel count={queueSummary.qcQueue ?? 0} active={tab === 'qc'}>
             {t('portal.production.qcQueue')}
           </UiTabLabel>
         ),
       },
     ],
-    [summary.data?.qcQueue, summary.data?.scaleQueue, tab, t],
+    [queueSummary.blocked, queueSummary.qcQueue, queueSummary.scaleQueue, tab, t],
   )
   const scaleAssignees = useQuery({
     queryKey: [...productionKeys.all, 'scale-assignees'],
@@ -648,7 +768,7 @@ export function ProductionWorkbenchPage({
     [queryClient],
   )
   const handleTabChange = useCallback((value: string) => {
-    setTab(value as 'scale' | 'qc')
+    setTab(value as ProductionTab)
     setPage(1)
     setStatus(undefined)
     setScaleDifficultyLevel(undefined)
@@ -661,6 +781,13 @@ export function ProductionWorkbenchPage({
   }, [])
   const handleStatusChange = useCallback((value?: ProductionStatus) => {
     setStatus(value)
+    setPage(1)
+  }, [])
+  const handleBlockedMetricClick = useCallback(() => {
+    setTab('blocked')
+    setStatus(undefined)
+    setScaleDifficultyLevel(undefined)
+    setSelectedRowKeys([])
     setPage(1)
   }, [])
   const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
@@ -698,6 +825,15 @@ export function ProductionWorkbenchPage({
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
   })
+  const submitScale = useMutation({
+    mutationFn: (taskId: string) => submitScaleForQc(taskId),
+    onSuccess: async () => {
+      await refresh()
+      toast('success', t('portal.production.updated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+  })
   const saveNote = useMutation({
     mutationFn: (input: { taskId: string; note: string }) =>
       updateDesignNote(input.taskId, input.note),
@@ -710,7 +846,7 @@ export function ProductionWorkbenchPage({
   })
   const operations = useMutation({
     mutationFn: async (input: { kind: 'bulk-assign' | 'recheck' }) => {
-      const taskIds = selectedRowKeys.map(String)
+      const taskIds = selectedTasks.filter(canAssignProductionTask).map((task) => task.id)
       if (input.kind === 'bulk-assign') {
         if (taskIds.length === 1) return assignProductionTask(taskIds[0], scaleAssigneeId!)
         return bulkAssignProductionTasks(taskIds, scaleAssigneeId!)
@@ -745,9 +881,12 @@ export function ProductionWorkbenchPage({
     () => operations.mutate({ kind: 'bulk-assign' }),
     [operations],
   )
-  const handleInspectSlot = useCallback((task: ProductionTask, check: FileCheck) => {
-    setInspect({ check, listingReferenceUrl: task.productImageUrl })
-  }, [])
+  const handleInspectSlot = useCallback(
+    (task: ProductionTask, check: FileCheck, readonly = false) => {
+      setInspect({ check, listingReferenceUrl: task.productImageUrl, readonly })
+    },
+    [],
+  )
   const handleSaveNote = useCallback(
     (taskId: string, note: string) => saveNote.mutate({ taskId, note }),
     [saveNote],
@@ -756,11 +895,28 @@ export function ProductionWorkbenchPage({
     (task: ProductionTask, fileDecisions: FileDecision[]) => action.mutate({ task, fileDecisions }),
     [action],
   )
+  const handleSubmitScaleForQc = useCallback(
+    (taskId: string) => submitScale.mutate(taskId),
+    [submitScale],
+  )
   const handleUploadScaledOutput = useCallback(
-    (taskId: string, fileCheckId: string, file: File) => {
-      void uploadScaledOutput(taskId, fileCheckId, file).then(refresh)
+    async (taskId: string, fileCheckId: string, file: File) => {
+      setUploadingFileCheckIds((current) => new Set(current).add(fileCheckId))
+      try {
+        await uploadScaledOutput(taskId, fileCheckId, file)
+        await refresh()
+        toast('success', t('portal.production.updated'))
+      } catch (error) {
+        toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed'))
+      } finally {
+        setUploadingFileCheckIds((current) => {
+          const next = new Set(current)
+          next.delete(fileCheckId)
+          return next
+        })
+      }
     },
-    [refresh],
+    [refresh, t, toast],
   )
   const handleInspectClose = useCallback(() => setInspect(undefined), [])
   const handleInspectionPass = useCallback(
@@ -786,8 +942,8 @@ export function ProductionWorkbenchPage({
     [handleSearchChange],
   )
   const handleInspectionSlotAction = useCallback(
-    (task: ProductionTask, check: FileCheck) => {
-      handleInspectSlot(task, check)
+    (task: ProductionTask, check: FileCheck, readonly?: boolean) => {
+      handleInspectSlot(task, check, readonly)
     },
     [handleInspectSlot],
   )
@@ -797,6 +953,10 @@ export function ProductionWorkbenchPage({
   )
   const displayedTasks = useDeferredValue(tasks.data)
   const rows = displayedTasks?.items ?? []
+  const selectedTasks = useMemo(
+    () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
+    [rows, selectedRowKeys],
+  )
   const columns: TableColumnsType<ProductionTask> = useMemo(
     () => [
       {
@@ -901,35 +1061,36 @@ export function ProductionWorkbenchPage({
           icon={<AppstoreOutlined />}
           variant="neutral"
           label={t('portal.production.metrics.total')}
-          value={summary.data?.total ?? 0}
+          value={displaySummary?.total ?? 0}
           loading={summary.isLoading}
         />
         <MetricCard
           icon={<WarningOutlined />}
           variant="danger"
           label={t('portal.production.metrics.blocked')}
-          value={summary.data?.blocked ?? 0}
+          value={queueSummary.blocked ?? 0}
           loading={summary.isLoading}
+          onClick={handleBlockedMetricClick}
         />
         <MetricCard
           icon={<ScissorOutlined />}
           variant="warning"
           label={t('portal.production.metrics.needScale')}
-          value={summary.data?.needScale ?? 0}
+          value={displaySummary?.needScale ?? 0}
           loading={summary.isLoading}
         />
         <MetricCard
           icon={<ClockCircleOutlined />}
           variant="info"
           label={t('portal.production.metrics.qcPending')}
-          value={summary.data?.qcPending ?? 0}
+          value={queueSummary.qcPending ?? 0}
           loading={summary.isLoading}
         />
         <MetricCard
           icon={<CheckCircleOutlined />}
           variant="success"
           label={t('portal.production.metrics.ready')}
-          value={summary.data?.ready ?? 0}
+          value={displaySummary?.ready ?? 0}
           loading={summary.isLoading}
         />
       </div>
@@ -968,7 +1129,12 @@ export function ProductionWorkbenchPage({
             loading={tasks.isFetching}
             rowSelection={
               canAssignScale
-                ? { selectedRowKeys, onChange: setSelectedRowKeys, preserveSelectedRowKeys: true }
+                ? {
+                    selectedRowKeys,
+                    onChange: setSelectedRowKeys,
+                    preserveSelectedRowKeys: true,
+                    getCheckboxProps: (row) => ({ disabled: !canAssignProductionTask(row) }),
+                  }
                 : undefined
             }
             pagination={{
@@ -987,13 +1153,16 @@ export function ProductionWorkbenchPage({
                   <ProductionWorkbenchExpandedRow
                     task={task}
                     tab={tab}
-                    canScale={canScale}
-                    canQc={canQc}
+                    canScale={canScaleTask(task)}
+                    canQc={canQcTask(task)}
                     decisions={decisions}
                     savingNoteTaskId={saveNote.variables?.taskId}
                     submittingQc={action.isPending}
+                    submittingScale={submitScale.isPending && submitScale.variables === task.id}
+                    uploadingFileCheckIds={uploadingFileCheckIds}
                     onSaveNote={handleSaveNote}
                     onSubmitQc={handleSubmitQc}
+                    onSubmitScaleForQc={handleSubmitScaleForQc}
                     onUploadScaledOutput={handleUploadScaledOutput}
                     onInspectSlot={handleInspectionSlotAction}
                     onPassSlot={handleQcSlotPass}
@@ -1009,6 +1178,7 @@ export function ProductionWorkbenchPage({
         <ArtworkInspector
           check={inspect.check}
           listingReferenceUrl={inspect.listingReferenceUrl}
+          readonly={inspect.readonly}
           onClose={handleInspectClose}
           onPass={handleInspectionPass}
           onReject={handleInspectionReject}

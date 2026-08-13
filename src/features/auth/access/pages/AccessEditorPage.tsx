@@ -14,10 +14,13 @@ import {
   ShopOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Avatar, Button, Form, Modal, Select, Tag, Tooltip, Typography } from 'antd'
+import { Avatar, Button, Form, Modal, Result, Select, Tag, Tooltip, Typography } from 'antd'
+import dayjs from 'dayjs'
 
+import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   ConfirmDangerModal,
+  DateTimePicker,
   EmptyState,
   FeedbackAlert,
   LoadingState,
@@ -55,6 +58,7 @@ export function AccessEditorPage() {
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false)
   const [overrideAssignment, setOverrideAssignment] = useState<Assignment>()
   const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment>()
+  const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
 
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['access-explorer', accountId],
@@ -173,6 +177,8 @@ export function AccessEditorPage() {
         roleId: undefined,
         scopeId: undefined,
         scopeType: undefined,
+        validFrom: null,
+        validUntil: null,
       },
     )
     setIsAssignmentOpen(true)
@@ -206,6 +212,17 @@ export function AccessEditorPage() {
   }
 
   const accountStatus = String(data?.account.account.status ?? '')
+  const getAssignmentWindowText = (item: Assignment) => {
+    const from = item.validFrom
+      ? `${t('auth.accessEditor.from')}: ${dayjs(item.validFrom).format('YYYY-MM-DD HH:mm')}`
+      : null
+    const until = item.validUntil
+      ? `${t('auth.accessEditor.until')}: ${dayjs(item.validUntil).format('YYYY-MM-DD HH:mm')}`
+      : null
+    return [from, until].filter(Boolean).join(' • ') || t('auth.accessEditor.always')
+  }
+
+  if (!canWrite) return <Result status="403" title="403" />
 
   return (
     <section className={styles.page}>
@@ -335,6 +352,7 @@ export function AccessEditorPage() {
                         <Tag color="blue" style={{ borderRadius: 4, fontWeight: 500 }}>
                           {roleName}
                         </Tag>
+                        <Tag style={{ borderRadius: 4 }}>{getAssignmentWindowText(item)}</Tag>
                         {item.customPermissionIds?.length ? (
                           <Tag style={{ borderRadius: 4 }}>
                             {t('auth.accessEditor.permissionCount', {
@@ -421,6 +439,12 @@ export function AccessEditorPage() {
           </Form.Item>
           <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
             <PermissionCheckboxGroup sections={permissionSections} columns={3} />
+          </Form.Item>
+          <Form.Item label={t('auth.accessEditor.validFrom')} name="validFrom">
+            <DateTimePicker mode="datetime" />
+          </Form.Item>
+          <Form.Item label={t('auth.accessEditor.validUntil')} name="validUntil">
+            <DateTimePicker mode="datetime" />
           </Form.Item>
           <div className={styles.formActions}>
             <Button

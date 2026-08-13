@@ -7,16 +7,28 @@ export type GlobalAccessInput = {
   roleIds: string[]
 }
 
+export type BulkGlobalAccessInput = {
+  accountIds: string[]
+  customPermissionIds: string[]
+  roleIds: string[]
+  validFrom?: string | null
+  validUntil?: string | null
+}
+
 export type AccessAssignmentInput = {
   accountId: string
   customPermissionIds?: string[]
   roleId: string
   scopeId: string
   scopeType: string
+  validFrom?: string | null
+  validUntil?: string | null
 }
 
 export type AccessAssignmentUpdate = Partial<Omit<AccessAssignmentInput, 'accountId'>> & {
   status?: string
+  validFrom?: string | null
+  validUntil?: string | null
 }
 
 export type ScopedRolePermissionInput = {
@@ -32,6 +44,10 @@ function unwrap<T>(response: unknown): T {
 
 export async function updateGlobalAccess(accountId: string, input: GlobalAccessInput) {
   return unwrap(await apiClient.patch(`/api/auth/accounts/${accountId}/access`, input))
+}
+
+export async function bulkUpdateGlobalAccess(input: BulkGlobalAccessInput) {
+  return unwrap(await apiClient.post('/api/auth/accounts/access/bulk', input))
 }
 
 export async function createAccessAssignment(input: AccessAssignmentInput) {

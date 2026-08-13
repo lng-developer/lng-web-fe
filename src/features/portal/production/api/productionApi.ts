@@ -1,5 +1,4 @@
 import { apiClient, uploadApiClient } from '@/shared/api'
-import { uploadMultipartAsset } from '@/shared/media'
 
 type ApiResponse<T> = { success: boolean; data: T }
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -173,6 +172,8 @@ export const bulkAssignProductionTasks = async (taskIds: string[], assignedDesig
   unwrap<unknown>(
     await apiClient.patch(`${basePath}/tasks/bulk-assign`, { taskIds, assignedDesignUserId }),
   )
+export const submitScaleForQc = async (id: string) =>
+  unwrap<ProductionTask>(await apiClient.patch(`${basePath}/tasks/${id}/submit-scale-qc`))
 export const recheckPsdBlockedTasks = async (input: { shopId?: string; limit?: number } = {}) =>
   unwrap<unknown>(await apiClient.post(`${basePath}/tasks/recheck-psd-blocked`, input))
 export const updateDesignNote = async (id: string, designNote: string) =>
@@ -182,11 +183,13 @@ export const updateDesignNote = async (id: string, designNote: string) =>
 export const submitProductionQc = async (id: string, fileDecisions: FileDecision[]) =>
   unwrap<ProductionTask>(await apiClient.patch(`${basePath}/tasks/${id}/qc`, { fileDecisions }))
 export async function uploadScaledOutput(id: string, fileCheckId: string, file: File) {
-  const asset = await uploadMultipartAsset(file, { assetPurpose: 'PRINT_READY' })
+  const body = new FormData()
+  body.append('file', file)
   return unwrap<ProductionTask>(
-    await apiClient.patch(`${basePath}/tasks/${id}/file-checks/${fileCheckId}/scaled-output`, {
-      mediaAssetId: asset.id,
-    }),
+    await uploadApiClient.post(
+      `${basePath}/tasks/${id}/file-checks/${fileCheckId}/scaled-output-file`,
+      body,
+    ),
   )
 }
 

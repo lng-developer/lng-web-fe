@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import { loadAccount, updateAccountEmail } from '@/features/auth/accounts/api/accountManagementApi'
 import { AccountDetailPage } from '@/features/auth/accounts/pages/AccountDetailPage'
+import { setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
 
@@ -22,6 +23,7 @@ describe('AccountDetailPage', () => {
 
   beforeEach(async () => {
     queryClient.clear()
+    setPermissions(['AUTH:READ', 'AUTH:WRITE'])
     await i18n.changeLanguage('en')
     vi.mocked(loadAccount).mockResolvedValue({
       account: { email: 'linh@lng.local', id: 'account-1', status: 'active' },

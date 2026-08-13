@@ -8,6 +8,7 @@ import {
   resetAccountPassword,
 } from '@/features/auth/accounts/api/accountManagementApi'
 import { AccountSecurityPage } from '@/features/auth/accounts/pages/AccountSecurityPage'
+import { setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
 
@@ -27,6 +28,7 @@ describe('AccountSecurityPage', () => {
 
   beforeEach(async () => {
     queryClient.clear()
+    setPermissions(['AUTH:READ', 'AUTH:WRITE'])
     await i18n.changeLanguage('en')
     vi.mocked(loadAccount).mockResolvedValue({
       account: { email: 'linh@lng.local', id: 'account-1', status: 'active' },

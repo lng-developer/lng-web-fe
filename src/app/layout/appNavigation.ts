@@ -27,6 +27,10 @@ const chatItem = { key: 'chat', path: '/portal/chat', labelKey: 'shell.navigatio
 const effectivePermissions = (account: CurrentAccount) =>
   new Set([...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)])
 
+const hasExplicitHrAccess = (permissions: Set<string>) =>
+  [...permissions].some((permission) => permission.startsWith('HR_')) ||
+  organizationPermissions.some((permission) => permissions.has(permission))
+
 export function getContextNavigation(core: AppCoreKey, account: CurrentAccount): NavigationGroup[] {
   const permissions = effectivePermissions(account)
   const globalPermissions = new Set(account.permissions)
@@ -221,10 +225,18 @@ export function getCoreForPath(pathname: string): AppCoreKey | undefined {
 }
 
 export function getDefaultWorkspacePath(account: CurrentAccount) {
-  const core = getAvailableCores(account).find(({ key }) => {
-    if (key !== 'portal') return true
-    return getContextNavigation(key, account).some((group) => group.key !== 'communication')
-  })?.key
+  const availableCores = getAvailableCores(account)
+  const permissions = effectivePermissions(account)
+  const core =
+    availableCores.find(
+      ({ key }) =>
+        key === 'portal' &&
+        getContextNavigation(key, account).some((group) => group.key !== 'communication'),
+    )?.key ??
+    (hasExplicitHrAccess(permissions)
+      ? availableCores.find(({ key }) => key === 'hr')?.key
+      : availableCores.find(({ key }) => key === 'system')?.key) ??
+    availableCores.find(({ key }) => key === 'hr')?.key
   if (!core) return '/operations-dashboard'
   const groups = getContextNavigation(core, account)
   if (core === 'portal') {

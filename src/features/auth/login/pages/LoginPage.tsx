@@ -16,8 +16,10 @@ export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [error, setError] = useState<string>()
+  const [submitting, setSubmitting] = useState(false)
   async function onFinish(values: LoginValues) {
     setError(undefined)
+    setSubmitting(true)
     try {
       const session = await login(values.identifier, values.password)
       navigate(session.account.mustChangePassword ? '/setup/password' : '/operations-dashboard', {
@@ -25,6 +27,8 @@ export function LoginPage() {
       })
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : t('errors.unexpected'))
+    } finally {
+      setSubmitting(false)
     }
   }
   return (
@@ -73,7 +77,7 @@ export function LoginPage() {
               />
             </Form.Item>
             <Form.Item className={styles.submit}>
-              <Button block size="large" type="primary" htmlType="submit">
+              <Button block size="large" type="primary" htmlType="submit" loading={submitting}>
                 {t('auth.login.submit')}
               </Button>
             </Form.Item>

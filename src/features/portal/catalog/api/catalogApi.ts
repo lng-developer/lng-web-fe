@@ -24,6 +24,9 @@ export type Listing = {
   title: string
   productImageUrl?: string | null
   defaultVariantId?: string | null
+  variantCount?: number
+  psdReadyCount?: number
+  psdVariantCount?: number
   baseCostAmount: number
   currency: string
   costCenterStatus: string

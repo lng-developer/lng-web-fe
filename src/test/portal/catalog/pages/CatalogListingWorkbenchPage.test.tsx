@@ -96,31 +96,20 @@ describe('CatalogListingWorkbenchPage', () => {
     queryClient.clear()
     i18n.changeLanguage('en')
   })
-  it('opens listing details from the catalog card', async () => {
+  it('opens listing variants from the listing table', async () => {
     render(
       <AppProviders>
         <CatalogListingWorkbenchPage account={account} />
       </AppProviders>,
     )
-    fireEvent.click(await screen.findByRole('button', { name: /SKU-1/ }))
-    await waitFor(() => expect(screen.getByText('Product variants')).toBeInTheDocument())
-  }, 60_000)
-
-  it('shows variants and Request PSD inline without listing title or QC column', async () => {
-    render(
-      <AppProviders>
-        <CatalogListingWorkbenchPage account={account} />
-      </AppProviders>,
-    )
-
-    fireEvent.click(await screen.findByRole('button', { name: /SKU-1/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Expand variants' }))
+    await waitFor(() => expect(screen.getByText(/Product variants/)).toBeInTheDocument())
     expect(await screen.findByText('Unisex Hoodie')).toBeInTheDocument()
     expect(screen.getByText('Hoodie Master')).toBeInTheDocument()
-    expect(screen.getByText('B0TEST123')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Request PSD' })).toBeInTheDocument()
-  }, 60_000)
+    expect(document.querySelector('button[aria-label="Request PSD"]')).not.toBeNull()
+  }, 15_000)
 
-  it('shows the imported listing image in the card and detail panel', async () => {
+  it('shows the imported listing image in the listing table', async () => {
     render(
       <AppProviders>
         <CatalogListingWorkbenchPage account={account} />
@@ -131,7 +120,6 @@ describe('CatalogListingWorkbenchPage', () => {
       'src',
       'https://m.media-amazon.com/images/S/listing.png',
     )
-    fireEvent.click(await screen.findByRole('button', { name: /SKU-1/ }))
-    await waitFor(() => expect(screen.getAllByRole('img', { name: 'Shirt' })).toHaveLength(2))
-  }, 60_000)
+    expect(screen.getAllByRole('img', { name: 'Shirt' })).toHaveLength(1)
+  }, 15_000)
 })

@@ -17,7 +17,7 @@ export function CatalogWorkspacePage() {
 
   return (
     <UiTabs
-      destroyOnHidden={false}
+      destroyOnHidden
       items={[
         {
           key: 'dashboard',

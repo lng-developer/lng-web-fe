@@ -24,7 +24,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly search: string
   readonly status?: ProductionStatus
   readonly scaleDifficultyLevel?: ScaleDifficultyLevel
-  readonly tab: 'scale' | 'qc'
+  readonly tab: 'scale' | 'blocked' | 'qc'
   readonly statusOptions: FilterOption[]
   readonly scaleAssigneeId?: string
   readonly canAssignScale: boolean

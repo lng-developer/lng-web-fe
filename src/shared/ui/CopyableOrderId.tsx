@@ -4,12 +4,14 @@ import { App, Typography } from 'antd'
 export function CopyableText({
   value,
   fallback = '-',
+  className,
   strong = false,
   copiedMessage,
   title,
 }: {
   readonly value?: string | null
   readonly fallback?: string
+  readonly className?: string
   readonly strong?: boolean
   readonly copiedMessage: string
   readonly title: string
@@ -19,12 +21,15 @@ export function CopyableText({
   if (!value) return <>{fallback}</>
 
   const copyValue = async () => {
-    await navigator.clipboard.writeText(value)
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value)
+    }
     message.success(copiedMessage)
   }
 
   return (
     <Typography.Text
+      className={className}
       strong={strong}
       role="button"
       tabIndex={0}

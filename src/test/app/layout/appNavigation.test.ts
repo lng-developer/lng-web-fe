@@ -34,17 +34,22 @@ const portalItems = (permissions: string[], scopedPermissions: string[] = []) =>
 
 describe('app navigation', () => {
   it('shows only cores backed by permitted routes', () => {
-    expect(getAvailableCores(account(['SHOPS:READ'])).map(({ key }) => key)).toEqual(['portal'])
+    expect(getAvailableCores(account(['SHOPS:READ'])).map(({ key }) => key)).toEqual([
+      'portal',
+      'hr',
+    ])
     expect(getAvailableCores(account(['HR_ATTENDANCE:WRITE'])).map(({ key }) => key)).toEqual([
       'portal',
       'hr',
     ])
     expect(getAvailableCores(account(['AUTH:READ'])).map(({ key }) => key)).toEqual([
       'portal',
+      'hr',
       'system',
     ])
     expect(getAvailableCores(account(['AUDIT:READ'])).map(({ key }) => key)).toEqual([
       'portal',
+      'hr',
       'system',
     ])
     expect(
@@ -80,7 +85,17 @@ describe('app navigation', () => {
       path: '/portal/chat',
       labelKey: 'shell.navigation.chat',
     })
-    expect(getAvailableCores(account([])).map(({ key }) => key)).toContain('portal')
+    expect(getContextNavigation('portal', account(['SHOPS:READ']))).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'setup',
+          items: expect.arrayContaining([
+            expect.objectContaining({ key: 'shops', path: '/portal/shops' }),
+          ]),
+        }),
+      ]),
+    )
+    expect(getAvailableCores(account([])).map(({ key }) => key)).toEqual(['portal', 'hr'])
   })
 
   it('shows Vendor configuration only when the caller can read Vendors', () => {
@@ -319,19 +334,31 @@ describe('app navigation', () => {
   })
 
   it('keeps staff navigation personal and exposes scoped manager groups', () => {
+    expect(getContextNavigation('hr', account([])).map(({ key }) => key)).toEqual(['personal'])
     expect(
       getContextNavigation('hr', account(['HR_ATTENDANCE:WRITE'])).map(({ key }) => key),
     ).toEqual(['personal'])
     expect(
       getContextNavigation('hr', account([], ['HR_ATTENDANCE:READ'])).map(({ key }) => key),
-    ).toEqual(['team'])
+    ).toEqual(['personal', 'team'])
   })
 
   it('groups organization under HR and chooses the first permitted route', () => {
     const organizationAccount = account(['DEPARTMENTS:READ'])
-    expect(getContextNavigation('hr', organizationAccount)).toMatchObject([
-      { key: 'operations', items: [{ path: '/organization' }] },
-    ])
+    expect(getContextNavigation('hr', organizationAccount)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'operations',
+          items: [
+            {
+              key: 'organization',
+              path: '/organization',
+              labelKey: 'shell.navigation.organization',
+            },
+          ],
+        }),
+      ]),
+    )
     expect(getDefaultWorkspacePath(organizationAccount)).toBe('/organization')
   })
 
@@ -356,6 +383,7 @@ describe('app navigation', () => {
       '/hr/team',
     )
     expect(getDefaultWorkspacePath(account(['HR_ATTENDANCE:WRITE']))).toBe('/hr/me')
+    expect(getDefaultWorkspacePath(account([]))).toBe('/hr/me')
     expect(getDefaultWorkspacePath(account(['AUTH:READ']))).toBe('/auth/accounts')
   })
 

@@ -2,6 +2,7 @@ import 'dayjs/locale/vi'
 
 import { type MouseEvent, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRouteLoaderData } from 'react-router-dom'
 import {
   CheckCircleFilled,
   EditOutlined,
@@ -18,9 +19,10 @@ import { Button, Space, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
-import { getPermissions } from '@/shared/auth/session'
+import { canUseScopedPermission } from '@/shared/auth/permissions'
 import {
   CopyableOrderId,
   DataTable,
@@ -62,6 +64,7 @@ const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
 
 export function OrderWorkbenchPage() {
   const { t, i18n } = useTranslation()
+  const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const [page, setPage] = useState(1)
   const [tab, setTab] = useState<TabKey>('ALL')
   const [search, setSearch] = useState('')
@@ -71,7 +74,14 @@ export function OrderWorkbenchPage() {
   const [addressValidationStatus, setAddressValidationStatus] = useState<AddressValidationStatus>()
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>(EMPTY_DATES)
   const [orderAction, setOrderAction] = useState<OrderAction>()
-  const canWrite = getPermissions().includes('ORDERS:WRITE')
+  const canWriteOrder = useCallback(
+    (row: OrderWorkbenchRow) =>
+      canUseScopedPermission(account, 'ORDERS:WRITE', {
+        scopeType: 'shop',
+        scopeId: row.order.shopId ?? row.order.shop?.id,
+      }),
+    [account],
+  )
   const params = useMemo(
     () => ({
       page,
@@ -219,19 +229,22 @@ export function OrderWorkbenchPage() {
     setPage(nextPage)
   }, [])
   const renderExpandedRow = useCallback(
-    (row: OrderWorkbenchRow) => (
-      <OrderWorkbenchExpandedRow
-        row={row}
-        canWrite={canWrite}
-        canOperate={canWrite && row.order.status !== 'CANCELLED'}
-        requestedModal={orderAction?.orderId === row.order.id ? orderAction.modal : undefined}
-        requestedPopupAnchor={
-          orderAction?.orderId === row.order.id ? orderAction.anchor : undefined
-        }
-        onOrderModalClose={closeOrderModal}
-      />
-    ),
-    [canWrite, closeOrderModal, orderAction],
+    (row: OrderWorkbenchRow) => {
+      const canWrite = canWriteOrder(row)
+      return (
+        <OrderWorkbenchExpandedRow
+          row={row}
+          canWrite={canWrite}
+          canOperate={canWrite && row.order.status !== 'CANCELLED'}
+          requestedModal={orderAction?.orderId === row.order.id ? orderAction.modal : undefined}
+          requestedPopupAnchor={
+            orderAction?.orderId === row.order.id ? orderAction.anchor : undefined
+          }
+          onOrderModalClose={closeOrderModal}
+        />
+      )
+    },
+    [canWriteOrder, closeOrderModal, orderAction],
   )
 
   const columns = useMemo<TableColumnsType<OrderWorkbenchRow>>(
@@ -288,7 +301,7 @@ export function OrderWorkbenchPage() {
                 <CheckCircleFilled className={styles.validIcon} />
               </Tooltip>
             ) : null}
-            {canWrite && row.order.status !== 'CANCELLED' ? (
+            {canWriteOrder(row) && row.order.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editCustomer')}>
                 <Button
                   type="text"
@@ -299,7 +312,7 @@ export function OrderWorkbenchPage() {
                 />
               </Tooltip>
             ) : null}
-            {canWrite && row.order.status !== 'CANCELLED' ? (
+            {canWriteOrder(row) && row.order.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editAddress')}>
                 <Button
                   type="text"
@@ -318,7 +331,7 @@ export function OrderWorkbenchPage() {
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.shippingService.name || row.order.shippingService.level || '—'}</span>
-            {canWrite && row.order.status !== 'CANCELLED' ? (
+            {canWriteOrder(row) && row.order.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editShipping')}>
                 <Button
                   type="text"
@@ -368,7 +381,7 @@ export function OrderWorkbenchPage() {
         render: (_, row) => {
           const hasCase = Boolean(row.order.caseStatus && row.order.caseStatus !== 'NONE')
 
-          if (canWrite) {
+          if (canWriteOrder(row)) {
             return (
               <Tooltip title={t('orders.actions.manageCase')}>
                 <Button
@@ -399,7 +412,7 @@ export function OrderWorkbenchPage() {
         width: 72,
         align: 'center',
         render: (_, row) =>
-          canWrite ? (
+          canWriteOrder(row) ? (
             <Tooltip title={t('orders.actions.replaceOrder')}>
               <Button
                 type="text"
@@ -414,7 +427,7 @@ export function OrderWorkbenchPage() {
           ),
       },
     ],
-    [canWrite, i18n.language, t],
+    [canWriteOrder, i18n.language, t],
   )
 
   return (

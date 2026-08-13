@@ -5,10 +5,6 @@ vi.mock('@/shared/api', () => ({
   uploadApiClient: { post: vi.fn() },
 }))
 
-vi.mock('@/shared/media', () => ({
-  uploadMultipartAsset: vi.fn(),
-}))
-
 import {
   assignCsTask,
   assignProductionTask,
@@ -20,6 +16,7 @@ import {
   listScaleAssignees,
   recheckPsdBlockedTasks,
   submitProductionQc,
+  submitScaleForQc,
   summarizeProductionTasks,
   updateProductionCsNote,
   updateProductionCsStatus,
@@ -27,7 +24,6 @@ import {
   uploadScaledOutput,
 } from '@/features/portal/production/api/productionApi'
 import { apiClient, uploadApiClient } from '@/shared/api'
-import { uploadMultipartAsset } from '@/shared/media'
 
 describe('productionApi', () => {
   beforeEach(() => {
@@ -38,7 +34,6 @@ describe('productionApi', () => {
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
     vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
     vi.mocked(uploadApiClient.post).mockResolvedValue({ data: {} })
-    vi.mocked(uploadMultipartAsset).mockResolvedValue({ id: 'asset-1', uploadStatus: 'READY' })
   })
 
   it('uses the production queue and per-file QC contracts', async () => {
@@ -61,6 +56,7 @@ describe('productionApi', () => {
     await assignProductionTask('task-1', 'user-1', 'Priority')
     await assignCsTask('task-1', 'cs-1', 'Check address')
     await bulkAssignProductionTasks(['task-1', 'task-2'], 'user-1')
+    await submitScaleForQc('task-1')
     await recheckPsdBlockedTasks({ limit: 50 })
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/production/tasks/scale-assignees', {
@@ -81,6 +77,7 @@ describe('productionApi', () => {
       taskIds: ['task-1', 'task-2'],
       assignedDesignUserId: 'user-1',
     })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/submit-scale-qc')
     expect(apiClient.post).toHaveBeenCalledWith('/api/production/tasks/recheck-psd-blocked', {
       limit: 50,
     })
@@ -156,15 +153,16 @@ describe('productionApi', () => {
     expect(body.get('file')).toBe(file)
   })
 
-  it('uploads scaled output directly to storage and attaches the media asset', async () => {
+  it('uploads scaled output through the production file endpoint', async () => {
     const file = new File(['scaled'], 'front.png', { type: 'image/png' })
 
     await uploadScaledOutput('task-1', 'check-1', file)
 
-    expect(uploadMultipartAsset).toHaveBeenCalledWith(file, { assetPurpose: 'PRINT_READY' })
-    expect(apiClient.patch).toHaveBeenCalledWith(
-      '/api/production/tasks/task-1/file-checks/check-1/scaled-output',
-      { mediaAssetId: 'asset-1' },
+    const body = vi.mocked(uploadApiClient.post).mock.calls[0][1] as FormData
+    expect(uploadApiClient.post).toHaveBeenCalledWith(
+      '/api/production/tasks/task-1/file-checks/check-1/scaled-output-file',
+      expect.any(FormData),
     )
+    expect(body.get('file')).toBe(file)
   })
 })

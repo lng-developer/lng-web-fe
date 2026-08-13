@@ -4,6 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AccessEditorPage } from '@/features/auth/access/pages/AccessEditorPage'
+import { setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/auth/api/accessExplorerApi', () => ({
@@ -12,7 +13,20 @@ vi.mock('@/features/auth/api/accessExplorerApi', () => ({
       account: { email: 'operator@lng.test', id: 'account-1', status: 'active' },
       access: { customPermissionIds: [], roleIds: ['role-1'] },
     },
-    assignments: { items: [], total: 0 },
+    assignments: {
+      items: [
+        {
+          id: 'assignment-1',
+          accountId: 'account-1',
+          roleId: 'role-1',
+          scopeType: 'shop',
+          scopeId: 'shop-1',
+          validFrom: '2026-08-01T08:00:00',
+          validUntil: '2026-08-01T10:00:00',
+        },
+      ],
+      total: 1,
+    },
     permissions: {
       items: [{ code: 'AUTH:READ', id: 'permission-1', name: 'Read access' }],
       total: 1,
@@ -33,12 +47,13 @@ vi.mock('@/features/auth/access/api/accessMutationsApi', () => ({
 
 describe('AccessEditorPage', () => {
   beforeEach(async () => {
-    await i18n.changeLanguage('vi')
+    setPermissions(['AUTH:READ', 'AUTH:WRITE'])
+    await i18n.changeLanguage('en')
   })
 
   afterEach(cleanup)
 
-  it('opens a focused access editor for the selected account', async () => {
+  it('shows scoped assignment validity window', async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter initialEntries={['/auth/access/account-1']}>
@@ -50,7 +65,7 @@ describe('AccessEditorPage', () => {
     )
 
     expect(await screen.findByText('operator@lng.test')).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Lưu quyền toàn cục' })).toBeVisible()
-    expect(screen.getAllByRole('button', { name: 'Thêm quyền theo phạm vi' })[0]).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Add scoped access' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Save global access' })).toBeVisible()
   })
 })

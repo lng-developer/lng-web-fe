@@ -10,11 +10,31 @@ import {
   SafetyCertificateOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { Button, Card, Col, Flex, Progress, Row, Space, Tag, Typography } from 'antd'
+import {
+  Button,
+  Card,
+  Col,
+  Flex,
+  Progress,
+  Result,
+  Row,
+  Select,
+  Space,
+  Tag,
+  Typography,
+} from 'antd'
 
-import { MetricCard, PageHeader, SectionCard } from '@/shared/ui'
+import { hasAnyPermission } from '@/shared/auth/permissions'
+import { MetricCard, PageHeader, SectionCard, UiTabLabel, UiTabs } from '@/shared/ui'
 
-import { getSystemHealth, type SystemHealth } from '../api/monitoringApi'
+import {
+  getSystemHealth,
+  getSystemLogs,
+  type SystemHealth,
+  type SystemLogProcess,
+  type SystemLogs,
+  type SystemLogStream,
+} from '../api/monitoringApi'
 import styles from './MonitoringDashboardPage.module.scss'
 
 const statusColor = (status?: string) => {
@@ -27,12 +47,20 @@ const statusColor = (status?: string) => {
 
 export function MonitoringDashboardPage() {
   const { t } = useTranslation()
+  const canRead = hasAnyPermission(['AUDIT:READ'], { globalOnly: true })
   const [health, setHealth] = useState<SystemHealth>()
   const [error, setError] = useState<string>()
   const [latencyMs, setLatencyMs] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [logProcess, setLogProcess] = useState<SystemLogProcess>('lng-web-be')
+  const [logStream, setLogStream] = useState<SystemLogStream>('out')
+  const [logLines, setLogLines] = useState(200)
+  const [logs, setLogs] = useState<SystemLogs>()
+  const [logsError, setLogsError] = useState<string>()
+  const [logsLoading, setLogsLoading] = useState(false)
 
   const refresh = useCallback(async () => {
+    if (!canRead) return
     const startedAt = performance.now()
     setLoading(true)
     setError(undefined)
@@ -45,13 +73,31 @@ export function MonitoringDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [canRead])
+
+  const refreshLogs = useCallback(async () => {
+    if (!canRead) return
+    setLogsLoading(true)
+    setLogsError(undefined)
+    try {
+      setLogs(await getSystemLogs({ process: logProcess, stream: logStream, lines: logLines }))
+    } catch (cause) {
+      setLogsError(cause instanceof Error ? cause.message : 'System logs failed to load')
+      setLogs(undefined)
+    } finally {
+      setLogsLoading(false)
+    }
+  }, [canRead, logLines, logProcess, logStream])
 
   useEffect(() => {
+    if (!canRead) return undefined
     queueMicrotask(() => void refresh())
     const timer = window.setInterval(() => void refresh(), 60_000)
     return () => window.clearInterval(timer)
-  }, [refresh])
+  }, [canRead, refresh])
+  useEffect(() => {
+    queueMicrotask(() => void refreshLogs())
+  }, [refreshLogs])
 
   const modules = health?.modules ?? []
   const queues = health?.queues ?? []
@@ -60,63 +106,10 @@ export function MonitoringDashboardPage() {
   const totalModules = modules.length
   const isHealthy = health?.status === 'ok' && !error
 
-  return (
-    <section className={styles.page}>
-      <PageHeader
-        title={t('portal.monitoring.title', { defaultValue: 'System Monitoring & Observability' })}
-        description={t('portal.monitoring.description', {
-          defaultValue: 'Live backend health, infrastructure status, and module readiness.',
-        })}
-        actions={
-          <Space>
-            {health?.generatedAt ? (
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                Updated at {new Date(health.generatedAt).toLocaleTimeString()}
-              </Typography.Text>
-            ) : null}
-            <Button
-              type="primary"
-              icon={<ReloadOutlined spin={loading} />}
-              loading={loading}
-              onClick={() => void refresh()}
-            >
-              Refresh
-            </Button>
-          </Space>
-        }
-      />
+  if (!canRead) return <Result status="403" title="403" />
 
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<SafetyCertificateOutlined />}
-          variant={isHealthy ? 'success' : 'danger'}
-          label="System Health"
-          value={error ? 'UNREACHABLE' : isHealthy ? 'OPERATIONAL' : 'DEGRADED'}
-          loading={loading}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="info"
-          label="Health API Latency"
-          value={`${latencyMs} ms`}
-          loading={loading}
-        />
-        <MetricCard
-          icon={<CloudServerOutlined />}
-          variant="neutral"
-          label="Modules"
-          value={`${healthyModules} / ${totalModules} Healthy`}
-          loading={loading}
-        />
-        <MetricCard
-          icon={<DatabaseOutlined />}
-          variant={health?.infrastructure.mongo === 'CONNECTED' ? 'success' : 'danger'}
-          label="MongoDB"
-          value={health?.infrastructure.mongo ?? 'UNKNOWN'}
-          loading={loading}
-        />
-      </div>
-
+  const healthTab = (
+    <>
       {error ? (
         <SectionCard title="Health Check Error">
           <Typography.Text type="danger">{error}</Typography.Text>
@@ -171,6 +164,53 @@ export function MonitoringDashboardPage() {
         </Row>
       </SectionCard>
 
+      <SectionCard title={`Module Health (${healthyModules}/${totalModules})`}>
+        <Row gutter={[16, 16]}>
+          {modules.map((module) => {
+            const isOk = module.status === 'ok'
+            return (
+              <Col xs={24} sm={12} md={8} lg={6} key={module.key}>
+                <Card
+                  size="small"
+                  hoverable
+                  className={styles.moduleCard}
+                  style={{ borderColor: isOk ? 'var(--ant-color-border-secondary)' : '#ff4d4f' }}
+                >
+                  <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
+                    <Typography.Text strong style={{ fontSize: 13 }}>
+                      {module.name}
+                    </Typography.Text>
+                    <Tag
+                      color={isOk ? 'success' : 'error'}
+                      icon={isOk ? <CheckCircleOutlined /> : <WarningOutlined />}
+                    >
+                      {module.status.toUpperCase()}
+                    </Tag>
+                  </Flex>
+                  <Typography.Text
+                    type="secondary"
+                    style={{ fontSize: 11, display: 'block', fontFamily: 'monospace' }}
+                  >
+                    {module.endpoint}
+                  </Typography.Text>
+                  <Progress
+                    percent={isOk ? 100 : 0}
+                    status={isOk ? 'success' : 'exception'}
+                    showInfo={false}
+                    strokeWidth={4}
+                    style={{ marginTop: 12 }}
+                  />
+                </Card>
+              </Col>
+            )
+          })}
+        </Row>
+      </SectionCard>
+    </>
+  )
+
+  const workersTab = (
+    <>
       <SectionCard title="Workers">
         <Row gutter={[16, 16]}>
           {workers.map((worker) => (
@@ -234,49 +274,140 @@ export function MonitoringDashboardPage() {
           ))}
         </Row>
       </SectionCard>
+    </>
+  )
 
-      <SectionCard title={`Module Health (${healthyModules}/${totalModules})`}>
-        <Row gutter={[16, 16]}>
-          {modules.map((module) => {
-            const isOk = module.status === 'ok'
-            return (
-              <Col xs={24} sm={12} md={8} lg={6} key={module.key}>
-                <Card
-                  size="small"
-                  hoverable
-                  className={styles.moduleCard}
-                  style={{ borderColor: isOk ? 'var(--ant-color-border-secondary)' : '#ff4d4f' }}
-                >
-                  <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
-                    <Typography.Text strong style={{ fontSize: 13 }}>
-                      {module.name}
-                    </Typography.Text>
-                    <Tag
-                      color={isOk ? 'success' : 'error'}
-                      icon={isOk ? <CheckCircleOutlined /> : <WarningOutlined />}
-                    >
-                      {module.status.toUpperCase()}
-                    </Tag>
-                  </Flex>
-                  <Typography.Text
-                    type="secondary"
-                    style={{ fontSize: 11, display: 'block', fontFamily: 'monospace' }}
-                  >
-                    {module.endpoint}
-                  </Typography.Text>
-                  <Progress
-                    percent={isOk ? 100 : 0}
-                    status={isOk ? 'success' : 'exception'}
-                    showInfo={false}
-                    strokeWidth={4}
-                    style={{ marginTop: 12 }}
-                  />
-                </Card>
-              </Col>
-            )
-          })}
-        </Row>
-      </SectionCard>
+  const logsTab = (
+    <SectionCard title="Server Logs">
+      <Space wrap style={{ marginBottom: 12 }}>
+        <Select
+          aria-label="Process"
+          style={{ width: 220 }}
+          value={logProcess}
+          options={[
+            { label: 'Backend API', value: 'lng-web-be' },
+            { label: 'Import Workers', value: 'lng-web-be-import-workers' },
+            { label: 'Dev Tunnel', value: 'lng-web-be-dev-tunnel' },
+          ]}
+          onChange={setLogProcess}
+        />
+        <Select
+          aria-label="Stream"
+          style={{ width: 120 }}
+          value={logStream}
+          options={[
+            { label: 'Output', value: 'out' },
+            { label: 'Error', value: 'error' },
+          ]}
+          onChange={setLogStream}
+        />
+        <Select
+          aria-label="Lines"
+          style={{ width: 120 }}
+          value={logLines}
+          options={[100, 200, 500].map((value) => ({ label: `${value} lines`, value }))}
+          onChange={setLogLines}
+        />
+        <Button
+          icon={<ReloadOutlined spin={logsLoading} />}
+          loading={logsLoading}
+          onClick={() => void refreshLogs()}
+        >
+          Refresh Logs
+        </Button>
+        {logs?.filename ? (
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            {logs.filename}
+          </Typography.Text>
+        ) : null}
+      </Space>
+      {logsError ? (
+        <Typography.Text type="danger">{logsError}</Typography.Text>
+      ) : (
+        <pre className={styles.logViewer}>
+          {(logs?.content ?? []).join('\n') || 'No log lines found.'}
+        </pre>
+      )}
+    </SectionCard>
+  )
+
+  return (
+    <section className={styles.page}>
+      <PageHeader
+        title={t('portal.monitoring.title', { defaultValue: 'System Monitoring & Observability' })}
+        description={t('portal.monitoring.description', {
+          defaultValue: 'Live backend health, infrastructure status, and module readiness.',
+        })}
+        actions={
+          <Space>
+            {health?.generatedAt ? (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                Updated at {new Date(health.generatedAt).toLocaleTimeString()}
+              </Typography.Text>
+            ) : null}
+            <Button
+              type="primary"
+              icon={<ReloadOutlined spin={loading} />}
+              loading={loading}
+              onClick={() => void refresh()}
+            >
+              Refresh
+            </Button>
+          </Space>
+        }
+      />
+
+      <div className={styles.metrics}>
+        <MetricCard
+          icon={<SafetyCertificateOutlined />}
+          variant={isHealthy ? 'success' : 'danger'}
+          label="System Health"
+          value={error ? 'UNREACHABLE' : isHealthy ? 'OPERATIONAL' : 'DEGRADED'}
+          loading={loading}
+        />
+        <MetricCard
+          icon={<ClockCircleOutlined />}
+          variant="info"
+          label="Health API Latency"
+          value={`${latencyMs} ms`}
+          loading={loading}
+        />
+        <MetricCard
+          icon={<CloudServerOutlined />}
+          variant="neutral"
+          label="Modules"
+          value={`${healthyModules} / ${totalModules} Healthy`}
+          loading={loading}
+        />
+        <MetricCard
+          icon={<DatabaseOutlined />}
+          variant={health?.infrastructure.mongo === 'CONNECTED' ? 'success' : 'danger'}
+          label="MongoDB"
+          value={health?.infrastructure.mongo ?? 'UNKNOWN'}
+          loading={loading}
+        />
+      </div>
+
+      <UiTabs
+        destroyOnHidden={false}
+        items={[
+          {
+            key: 'health',
+            label: <UiTabLabel>Health</UiTabLabel>,
+            children: healthTab,
+          },
+          {
+            key: 'workers',
+            label: <UiTabLabel>Workers & Queues</UiTabLabel>,
+            children: workersTab,
+          },
+          {
+            key: 'logs',
+            label: <UiTabLabel>Logs</UiTabLabel>,
+            children: logsTab,
+          },
+        ]}
+      />
     </section>
   )
 }

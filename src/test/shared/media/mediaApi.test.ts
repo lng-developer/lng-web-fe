@@ -25,7 +25,7 @@ describe('authenticated media API', () => {
     vi.mocked(apiClient.get).mockResolvedValue(blob)
 
     await expect(fetchMediaBlob('/api/media/assets/a/download', signal)).resolves.toBe(blob)
-    expect(apiClient.get).toHaveBeenCalledWith('/api/media/assets/a/download', {
+    expect(apiClient.get).toHaveBeenCalledWith('/api/media/assets/a/download?disposition=inline', {
       responseType: 'blob',
       signal,
     })
@@ -52,21 +52,43 @@ describe('authenticated media API', () => {
 
   it('uses the backend multipart control contract', async () => {
     vi.mocked(apiClient.post)
-      .mockResolvedValueOnce({ success: true, data: { assetId: 'asset-1', partSize: 64, totalParts: 2 } })
+      .mockResolvedValueOnce({
+        success: true,
+        data: { assetId: 'asset-1', partSize: 64, totalParts: 2 },
+      })
       .mockResolvedValueOnce({ success: true, data: { parts: [{ partNumber: 1, url: 'signed' }] } })
       .mockResolvedValueOnce({ success: true, data: { id: 'asset-1', uploadStatus: 'READY' } })
-    vi.mocked(apiClient.delete).mockResolvedValue({ success: true, data: { id: 'asset-1', uploadStatus: 'ABORTED' } })
+    vi.mocked(apiClient.delete).mockResolvedValue({
+      success: true,
+      data: { id: 'asset-1', uploadStatus: 'ABORTED' },
+    })
 
-    await expect(initiateMultipartUpload({
-      filename: 'package.zip', mimeType: 'application/zip', size: 100, assetPurpose: 'DESIGN_PACKAGE',
-    })).resolves.toMatchObject({ assetId: 'asset-1' })
-    await expect(presignMultipartParts('asset-1', [1])).resolves.toEqual([{ partNumber: 1, url: 'signed' }])
-    await expect(completeMultipartUpload('asset-1', [{ partNumber: 1, etag: 'etag' }]))
-      .resolves.toMatchObject({ uploadStatus: 'READY' })
+    await expect(
+      initiateMultipartUpload({
+        filename: 'package.zip',
+        mimeType: 'application/zip',
+        size: 100,
+        assetPurpose: 'DESIGN_PACKAGE',
+      }),
+    ).resolves.toMatchObject({ assetId: 'asset-1' })
+    await expect(presignMultipartParts('asset-1', [1])).resolves.toEqual([
+      { partNumber: 1, url: 'signed' },
+    ])
+    await expect(
+      completeMultipartUpload('asset-1', [{ partNumber: 1, etag: 'etag' }]),
+    ).resolves.toMatchObject({ uploadStatus: 'READY' })
     await abortMultipartUpload('asset-1')
 
-    expect(apiClient.post).toHaveBeenNthCalledWith(1, '/api/media/multipart/initiate', expect.any(Object))
-    expect(apiClient.post).toHaveBeenNthCalledWith(2, '/api/media/multipart/asset-1/presign-parts', { partNumbers: [1] })
+    expect(apiClient.post).toHaveBeenNthCalledWith(
+      1,
+      '/api/media/multipart/initiate',
+      expect.any(Object),
+    )
+    expect(apiClient.post).toHaveBeenNthCalledWith(
+      2,
+      '/api/media/multipart/asset-1/presign-parts',
+      { partNumbers: [1] },
+    )
     expect(apiClient.post).toHaveBeenNthCalledWith(3, '/api/media/multipart/asset-1/complete', {
       parts: [{ partNumber: 1, etag: 'etag' }],
     })
