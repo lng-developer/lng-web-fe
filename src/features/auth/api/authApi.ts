@@ -3,6 +3,7 @@ import {
   getAccessToken,
   hasRefreshSession,
   setAccessToken,
+  setAccount,
   setGlobalPermissions,
   setHasRefreshSession,
   setPermissions,
@@ -42,6 +43,7 @@ export async function login(identifier: string, password: string) {
   })
   const session = (response as unknown as ApiResponse<AuthSession>).data
   setAccessToken(session.accessToken)
+  setAccount(session.account)
   setHasRefreshSession(true)
   setRoles(session.roles)
   setPermissions(effectivePermissions(session))
@@ -87,6 +89,7 @@ export async function restoreSession() {
     const response = await apiClient.post<ApiResponse<AuthSession>>('/api/auth/refresh')
     const session = (response as unknown as ApiResponse<AuthSession>).data
     setAccessToken(session.accessToken)
+    setAccount(session.account)
     setHasRefreshSession(true)
     setRoles(session.roles)
     setPermissions(effectivePermissions(session))
@@ -107,6 +110,7 @@ export async function restoreSession() {
 export async function getCurrentAccount() {
   const response = await apiClient.get<ApiResponse<CurrentAccount>>('/api/auth/me')
   const account = (response as unknown as ApiResponse<CurrentAccount>).data
+  setAccount(account.account)
   setRoles(account.roles)
   setPermissions(effectivePermissions(account))
   setGlobalPermissions(account.permissions)

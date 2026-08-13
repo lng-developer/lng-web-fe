@@ -5,6 +5,7 @@ import { Breadcrumb, Layout, Space } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
+import { ChatShell } from '@/features/portal/chat/components/ChatShell'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 
@@ -45,6 +46,7 @@ export function AppShell() {
     [account, cores, groups, navigationSearch],
   )
   const { selectedKey } = getSidebarRouteState(location.pathname, groups)
+  const isFixedWorkspace = location.pathname === '/portal/chat'
   const activeItem = groups.flatMap((group) => group.items).find(({ key }) => key === selectedKey)
   const pageTitle = activeItem
     ? t(activeItem.labelKey)
@@ -65,7 +67,6 @@ export function AppShell() {
     const target = getRememberedCoreRoute(core, getContextNavigation(core, account))
     if (target) navigate(target)
   }
-
   return (
     <Layout className={styles.shell}>
       <AppRail
@@ -112,15 +113,16 @@ export function AppShell() {
             /> */}
           </div>
           <Space size={12}>
+            <ChatShell account={account} />
+            <NotificationCenter />
             <ThemeSwitch />
             <LanguageSwitch />
-            <NotificationCenter />
             <AccountMenu account={account} />
           </Space>
         </Header>
 
-        <Content className={styles.content}>
-          <div className={styles.workspace}>
+        <Content className={`${styles.content} ${isFixedWorkspace ? styles.contentFixed : ''}`}>
+          <div className={`${styles.workspace} ${isFixedWorkspace ? styles.workspaceFixed : ''}`}>
             <Outlet />
           </div>
         </Content>

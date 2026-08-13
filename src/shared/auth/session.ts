@@ -2,6 +2,7 @@ let accessToken: string | null = null
 let roles: string[] = []
 let permissions: string[] = []
 let globalPermissions: string[] = []
+let account: { id: string; email: string } | null = null
 let globalPermissionsHydrated = false
 let expirationAnnounced = false
 let refreshSessionAvailable = false
@@ -11,6 +12,7 @@ export const getAccessToken = () => accessToken
 export const getRoles = () => roles
 export const getPermissions = () => permissions
 export const getGlobalPermissions = () => globalPermissions
+export const getAccount = () => account
 export const hasHydratedGlobalPermissions = () => globalPermissionsHydrated
 export const hasRefreshSession = () => {
   if (typeof window === 'undefined') return refreshSessionAvailable
@@ -32,6 +34,9 @@ export const setGlobalPermissions = (nextPermissions: string[]) => {
   globalPermissions = nextPermissions
   globalPermissionsHydrated = true
 }
+export const setAccount = (nextAccount: { id: string; email: string } | null) => {
+  account = nextAccount
+}
 export const setAccessToken = (token: string | null) => {
   accessToken = token
   if (token) expirationAnnounced = false
@@ -39,6 +44,7 @@ export const setAccessToken = (token: string | null) => {
     roles = []
     permissions = []
     globalPermissions = []
+    account = null
     globalPermissionsHydrated = false
   }
 }

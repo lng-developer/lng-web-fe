@@ -4,7 +4,8 @@
   },
   "common": {
     "copyOrderId": "Sao chép mã đơn",
-    "orderIdCopied": "Đã sao chép mã đơn"
+    "orderIdCopied": "Đã sao chép mã đơn",
+    "close": "Đóng"
   },
   "language": {
     "label": "Ngôn ngữ",
@@ -43,6 +44,7 @@
       "shipments": "Vận chuyển",
       "workScores": "Điểm công việc",
       "orders": "Đơn hàng",
+      "chat": "Chat",
       "mapping": "Ánh xạ",
       "media": "Tệp tin",
       "customizations": "Duyệt tùy chỉnh",
@@ -63,6 +65,7 @@
       "portalConfiguration": "Cấu hình Portal",
       "portalOperations": "Vận hành Portal",
       "portalSetup": "Thiết lập",
+      "communication": "Trao đổi",
       "portalOrderWorkflow": "Xử lý đơn",
       "portalFulfillment": "Hoàn tất đơn hàng",
       "portalPerformance": "Tài chính & hiệu suất"
@@ -818,6 +821,9 @@
       "createAccount": "Tạo tài khoản",
       "createAccountDirect": "Tạo tài khoản trực tiếp",
       "createAccountFromProfile": "Tạo từ hồ sơ nhân viên",
+      "bulkRevoke": "Thu hồi ngay",
+      "bulkRevokeTitle": "Thu hồi quyền đã chọn ngay?",
+      "bulkRevokeDescription": "Thao tác này gỡ quyền global khỏi các tài khoản đã chọn ngay lập tức. Quyền theo scope không thay đổi.",
       "lastLogin": "Đăng nhập cuối",
       "loading": "Đang tải tài khoản...",
       "neverLoggedIn": "Chưa đăng nhập",
@@ -844,6 +850,8 @@
       "scope": "Phạm vi",
       "permissions": "Quyền",
       "customPermissions": "Quyền bổ sung",
+      "searchPermissions": "Tìm quyền",
+      "emptyPermissionSearch": "Không có quyền nào khớp tìm kiếm",
       "validFrom": "Có hiệu lực từ",
       "validUntil": "Có hiệu lực đến",
       "permissionCount": "{{count}} quyền bổ sung",
@@ -2450,6 +2458,24 @@
     "loadMore": "Xem thêm",
     "markedAllRead": "Đã đánh dấu tất cả thông báo là đã đọc",
     "updateFailed": "Không thể cập nhật thông báo"
+  },
+  "chat": {
+    "title": "Đoạn chat",
+    "newGroup": "Tạo nhóm mới",
+    "searchMessenger": "Tìm kiếm Messenger",
+    "noMessages": "Chưa có tin nhắn",
+    "emptyMessages": "Chưa có tin nhắn",
+    "viewAll": "Xem tất cả trong Messenger",
+    "messageInput": "Tin nhắn",
+    "messagePlaceholder": "Aa",
+    "send": "Gửi",
+    "you": "Bạn",
+    "time": {
+      "now": "vừa xong",
+      "minute": " phút",
+      "hour": " giờ",
+      "day": " ngày"
+    }
   },
   "errors": {
     "unexpected": "Da xay ra loi khong mong muon.",

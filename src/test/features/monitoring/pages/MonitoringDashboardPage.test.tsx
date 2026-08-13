@@ -24,6 +24,18 @@ describe('MonitoringDashboardPage', () => {
       nodeVersion: 'v22.0.0',
       memory: { heapUsedMb: 10, heapTotalMb: 20, rssMb: 30 },
       infrastructure: { mongo: 'CONNECTED', redis: 'CONNECTED', metrics: 'ENABLED' },
+      realtime: {
+        status: 'ok',
+        connectedClients: 2,
+        authenticatedUsers: 1,
+        rooms: 3,
+        connections: 4,
+        disconnections: 2,
+        authFailures: 0,
+        eventFailures: 1,
+        lastErrorAt: null,
+        lastErrorMessage: null,
+      },
       modules: [],
       workers: [],
       queues: [],
@@ -56,5 +68,14 @@ describe('MonitoringDashboardPage', () => {
         lines: 200,
       }),
     )
+  })
+
+  it('shows realtime socket health', async () => {
+    render(<MonitoringDashboardPage />)
+
+    expect(await screen.findByText('Realtime Socket')).toBeVisible()
+    expect(screen.getByText('Clients')).toBeVisible()
+    expect(screen.getByText('Users')).toBeVisible()
+    expect(screen.getByText('Event failed')).toBeVisible()
   })
 })

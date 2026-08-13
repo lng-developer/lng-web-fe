@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  bulkRevokeGlobalAccess,
   bulkUpdateGlobalAccess,
   createAccessAssignment,
   deleteAccessAssignment,
@@ -31,11 +32,15 @@ describe('accessMutationsApi', () => {
     await updateGlobalAccess('account-1', {
       roleIds: ['role-1'],
       customPermissionIds: ['permission-1'],
+      validFrom: '2026-08-01T08:00:00Z',
+      validUntil: '2026-08-01T10:00:00Z',
     })
 
     expect(apiClient.patch).toHaveBeenCalledWith('/api/auth/accounts/account-1/access', {
       roleIds: ['role-1'],
       customPermissionIds: ['permission-1'],
+      validFrom: '2026-08-01T08:00:00Z',
+      validUntil: '2026-08-01T10:00:00Z',
     })
   })
 
@@ -54,6 +59,14 @@ describe('accessMutationsApi', () => {
       customPermissionIds: ['permission-1'],
       validFrom: '2026-08-01T08:00:00Z',
       validUntil: '2026-08-01T10:00:00Z',
+    })
+  })
+
+  it('revokes global access for multiple accounts', async () => {
+    await bulkRevokeGlobalAccess({ accountIds: ['account-1', 'account-2'] })
+
+    expect(apiClient.post).toHaveBeenCalledWith('/api/auth/accounts/access/bulk-revoke', {
+      accountIds: ['account-1', 'account-2'],
     })
   })
 

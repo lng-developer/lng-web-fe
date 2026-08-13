@@ -1,13 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 28px;
 }
 
 .moduleCard {
@@ -17,11 +11,19 @@
   }
 }
 
+.page :global(.ant-tabs-tabpane) > * + * {
+  margin-top: 28px;
+}
+
+.page :global(.ant-card-small .ant-card-body) {
+  padding: 18px;
+}
+
 .queueCounts {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 16px;
 
   > div {
     display: flex;
@@ -47,17 +49,7 @@
   white-space: pre-wrap;
 }
 
-@media (max-width: 900px) {
-  .metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 600px) {
-  .metrics {
-    grid-template-columns: 1fr;
-  }
-
   .queueCounts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

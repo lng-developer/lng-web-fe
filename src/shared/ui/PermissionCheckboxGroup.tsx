@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react'
-import { Checkbox } from 'antd'
+import { type ReactNode, useState } from 'react'
+import { Checkbox, Input } from 'antd'
 
 import styles from './PermissionCheckboxGroup.module.scss'
 
@@ -23,6 +23,8 @@ export interface PermissionCheckboxGroupProps {
   readonly loading?: boolean
   readonly className?: string
   readonly disabled?: boolean
+  readonly searchPlaceholder?: string
+  readonly emptyText?: string
 }
 
 export function PermissionCheckboxGroup({
@@ -34,18 +36,35 @@ export function PermissionCheckboxGroup({
   loading = false,
   className,
   disabled = false,
+  searchPlaceholder = 'Search permissions',
+  emptyText = 'No permissions found',
 }: PermissionCheckboxGroupProps) {
-  if (loading) {
-    return (
-      <div className={className}>{/* TODO: load state handled by parent while data loads */}</div>
-    )
-  }
-
+  const [search, setSearch] = useState('')
   const groupedSections = sections?.length
     ? sections
     : options?.length
       ? [{ title: '', options }]
       : []
+  const selectedValues = new Set(value ?? [])
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredSections = groupedSections
+    .map((section) => ({
+      ...section,
+      options: normalizedSearch
+        ? section.options.filter((option) =>
+            String(option.label ?? option.value)
+              .toLowerCase()
+              .includes(normalizedSearch),
+          )
+        : section.options,
+    }))
+    .filter((section) => section.options.length > 0)
+
+  if (loading) {
+    return (
+      <div className={className}>{/* TODO: load state handled by parent while data loads */}</div>
+    )
+  }
 
   if (groupedSections.length === 0) {
     return <div className={className} />
@@ -61,24 +80,45 @@ export function PermissionCheckboxGroup({
       onChange={(selected) => onChange?.(selected as string[])}
       style={{ '--permission-columns': String(columns) } as Record<string, string>}
     >
-      {groupedSections.map((section) => (
-        <div key={section.title || 'permissions'} className={styles.section}>
-          {showSectionTitle && section.title ? (
-            <div className={styles.sectionTitle}>{section.title}</div>
-          ) : null}
-          <div className={styles.sectionGrid}>
-            {section.options.map((option) => (
-              <Checkbox
-                key={option.value}
-                value={option.value}
-                disabled={option.disabled || disabled}
-              >
-                {option.label}
-              </Checkbox>
-            ))}
-          </div>
-        </div>
-      ))}
+      <Input.Search
+        className={styles.search}
+        allowClear
+        placeholder={searchPlaceholder}
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+      />
+      {filteredSections.length === 0 ? <div className={styles.empty}>{emptyText}</div> : null}
+      <div className={styles.sections}>
+        {filteredSections.map((section) => {
+          const selectedCount = section.options.filter((option) =>
+            selectedValues.has(option.value),
+          ).length
+
+          return (
+            <div key={section.title || 'permissions'} className={styles.section}>
+              {showSectionTitle && section.title ? (
+                <div className={styles.sectionTitle}>
+                  <span>{section.title}</span>
+                  <span className={styles.sectionCount}>
+                    {selectedCount}/{section.options.length}
+                  </span>
+                </div>
+              ) : null}
+              <div className={styles.sectionGrid}>
+                {section.options.map((option) => (
+                  <Checkbox
+                    key={option.value}
+                    value={option.value}
+                    disabled={option.disabled || disabled}
+                  >
+                    {option.label}
+                  </Checkbox>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </Checkbox.Group>
   )
 }

@@ -5,6 +5,8 @@ type ApiResponse<T> = { data: T; success: boolean }
 export type GlobalAccessInput = {
   customPermissionIds: string[]
   roleIds: string[]
+  validFrom?: string | null
+  validUntil?: string | null
 }
 
 export type BulkGlobalAccessInput = {
@@ -13,6 +15,10 @@ export type BulkGlobalAccessInput = {
   roleIds: string[]
   validFrom?: string | null
   validUntil?: string | null
+}
+
+export type BulkRevokeAccessInput = {
+  accountIds: string[]
 }
 
 export type AccessAssignmentInput = {
@@ -48,6 +54,10 @@ export async function updateGlobalAccess(accountId: string, input: GlobalAccessI
 
 export async function bulkUpdateGlobalAccess(input: BulkGlobalAccessInput) {
   return unwrap(await apiClient.post('/api/auth/accounts/access/bulk', input))
+}
+
+export async function bulkRevokeGlobalAccess(input: BulkRevokeAccessInput) {
+  return unwrap(await apiClient.post('/api/auth/accounts/access/bulk-revoke', input))
 }
 
 export async function createAccessAssignment(input: AccessAssignmentInput) {

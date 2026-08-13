@@ -44,6 +44,12 @@ import styles from './AccessEditorPage.module.scss'
 
 type Assignment = AccessExplorerSnapshot['assignments']['items'][number]
 type AssignmentFormValues = Omit<AccessAssignmentInput, 'accountId'>
+type GlobalAccessFormValues = {
+  customPermissionIds?: string[]
+  roleIds?: string[]
+  validFrom?: string | null
+  validUntil?: string | null
+}
 
 export function AccessEditorPage() {
   const { t } = useTranslation()
@@ -51,7 +57,7 @@ export function AccessEditorPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
-  const [globalForm] = Form.useForm()
+  const [globalForm] = Form.useForm<GlobalAccessFormValues>()
   const [assignmentForm] = Form.useForm<AssignmentFormValues>()
   const [overrideForm] = Form.useForm<{ permissionIds: string[] }>()
   const [editingAssignment, setEditingAssignment] = useState<Assignment>()
@@ -72,8 +78,12 @@ export function AccessEditorPage() {
   }
 
   const globalMutation = useMutation({
-    mutationFn: (values: { roleIds: string[]; customPermissionIds: string[] }) =>
-      updateGlobalAccess(accountId, values),
+    mutationFn: (values: {
+      roleIds: string[]
+      customPermissionIds: string[]
+      validFrom?: string | null
+      validUntil?: string | null
+    }) => updateGlobalAccess(accountId, values),
     onSuccess: async () => {
       showFeedbackToast('success', t('actionFeedback.saved'))
       await invalidate()
@@ -126,6 +136,8 @@ export function AccessEditorPage() {
       globalForm.setFieldsValue({
         customPermissionIds: data.account.access.customPermissionIds ?? [],
         roleIds: data.account.access.roleIds ?? [],
+        validFrom: data.account.access.validFrom ?? null,
+        validUntil: data.account.access.validUntil ?? null,
       })
     }
   }, [data?.account.access, globalForm])
@@ -152,7 +164,7 @@ export function AccessEditorPage() {
     const groups = new Map<string, { title: string; options: { label: string; value: string }[] }>()
 
     for (const permission of data?.permissions.items ?? []) {
-      const label = `${permission.code}${permission.name ? ` - ${permission.name}` : ''}`
+      const label = permission.code
       const key = permission.code.includes(':')
         ? permission.code.split(':')[0]
         : permission.code.includes('.')
@@ -282,17 +294,32 @@ export function AccessEditorPage() {
                   globalMutation.mutate({
                     customPermissionIds: values.customPermissionIds ?? [],
                     roleIds: values.roleIds ?? [],
+                    validFrom: values.validFrom ?? null,
+                    validUntil: values.validUntil ?? null,
                   })
                 }
               >
                 <Form.Item label={t('auth.accessEditor.roles')} name="roleIds">
                   <Select mode="multiple" options={roleOptions} />
                 </Form.Item>
+                <div className={styles.globalWindow}>
+                  <Form.Item label={t('auth.accessEditor.validFrom')} name="validFrom">
+                    <DateTimePicker mode="datetime" />
+                  </Form.Item>
+                  <Form.Item label={t('auth.accessEditor.validUntil')} name="validUntil">
+                    <DateTimePicker mode="datetime" />
+                  </Form.Item>
+                </div>
                 <Form.Item
                   label={t('auth.accessEditor.customPermissions')}
                   name="customPermissionIds"
                 >
-                  <PermissionCheckboxGroup sections={permissionSections} columns={3} />
+                  <PermissionCheckboxGroup
+                    sections={permissionSections}
+                    columns={4}
+                    searchPlaceholder={t('auth.accessEditor.searchPermissions')}
+                    emptyText={t('auth.accessEditor.emptyPermissionSearch')}
+                  />
                 </Form.Item>
                 <Button
                   htmlType="submit"
@@ -418,7 +445,7 @@ export function AccessEditorPage() {
         title={
           editingAssignment ? t('auth.accessEditor.editScoped') : t('auth.accessEditor.addScoped')
         }
-        width={920}
+        width={1180}
         onCancel={() => {
           setEditingAssignment(undefined)
           setIsAssignmentOpen(false)
@@ -438,7 +465,12 @@ export function AccessEditorPage() {
             <Select options={roleOptions} />
           </Form.Item>
           <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
-            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
+            <PermissionCheckboxGroup
+              sections={permissionSections}
+              columns={4}
+              searchPlaceholder={t('auth.accessEditor.searchPermissions')}
+              emptyText={t('auth.accessEditor.emptyPermissionSearch')}
+            />
           </Form.Item>
           <Form.Item label={t('auth.accessEditor.validFrom')} name="validFrom">
             <DateTimePicker mode="datetime" />
@@ -470,7 +502,7 @@ export function AccessEditorPage() {
       <Modal
         open={overrideAssignment !== undefined}
         title={t('auth.accessEditor.overridePermissions')}
-        width={920}
+        width={1180}
         onCancel={() => setOverrideAssignment(undefined)}
         footer={null}
         destroyOnHidden
@@ -481,7 +513,12 @@ export function AccessEditorPage() {
           onFinish={(values) => overrideMutation.mutate(values.permissionIds ?? [])}
         >
           <Form.Item label={t('auth.accessEditor.permissions')} name="permissionIds">
-            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
+            <PermissionCheckboxGroup
+              sections={permissionSections}
+              columns={4}
+              searchPlaceholder={t('auth.accessEditor.searchPermissions')}
+              emptyText={t('auth.accessEditor.emptyPermissionSearch')}
+            />
           </Form.Item>
           <div className={styles.formActions}>
             <Button onClick={() => setOverrideAssignment(undefined)}>

@@ -208,6 +208,7 @@ export function NotificationCenter() {
       trigger="click"
       placement="bottomRight"
       open={open}
+      overlayClassName={styles.popover}
       content={content}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen)

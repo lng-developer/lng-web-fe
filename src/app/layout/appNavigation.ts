@@ -229,6 +229,9 @@ export function getDefaultWorkspacePath(account: CurrentAccount) {
     availableCores.find(({ key }) => key === 'hr')?.key
   if (!core) return '/operations-dashboard'
   const groups = getContextNavigation(core, account)
+  if (core === 'portal') {
+    return groups[0]?.items[0]?.path ?? '/operations-dashboard'
+  }
   if (core === 'hr') {
     const priority = ['operations', 'payroll', 'team', 'personal']
     return (

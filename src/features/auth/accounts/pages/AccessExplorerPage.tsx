@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   CheckCircleOutlined,
+  DeleteOutlined,
   DownOutlined,
   EyeOutlined,
   IdcardOutlined,
@@ -27,6 +28,7 @@ import {
   Result,
   Select,
   Space,
+  Spin,
   Tag,
   Tooltip,
   Typography,
@@ -35,6 +37,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 
 import {
   type BulkGlobalAccessInput,
+  bulkRevokeGlobalAccess,
   bulkUpdateGlobalAccess,
   updateGlobalAccess,
 } from '@/features/auth/access/api/accessMutationsApi'
@@ -43,6 +46,7 @@ import { loadScopes } from '@/features/auth/scopes/api/scopesApi'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import {
+  ConfirmDangerModal,
   EmptyState,
   FeedbackAlert,
   FilterBar,
@@ -94,7 +98,12 @@ export function AccessExplorerPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
-  const [quickAccessForm] = Form.useForm<{ roleIds: string[]; customPermissionIds: string[] }>()
+  const [quickAccessForm] = Form.useForm<{
+    roleIds: string[]
+    customPermissionIds: string[]
+    validFrom?: Dayjs | null
+    validUntil?: Dayjs | null
+  }>()
   const [bulkAccessForm] = Form.useForm<BulkAccessFormValues>()
   const [createForm] = Form.useForm<CreateAccountForm>()
   const [quickAccessAccount, setQuickAccessAccount] =
@@ -103,6 +112,7 @@ export function AccessExplorerPage() {
   const [isOpeningQuickAccess, setIsOpeningQuickAccess] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isBulkAssignOpen, setIsBulkAssignOpen] = useState(false)
+  const [isBulkRevokeOpen, setIsBulkRevokeOpen] = useState(false)
   const [createScopeType, setCreateScopeType] = useState<ScopeType>('global')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>()
@@ -141,7 +151,7 @@ export function AccessExplorerPage() {
     const groups = new Map<string, { title: string; options: { label: string; value: string }[] }>()
 
     for (const permission of roleCatalogQuery.data?.permissions.items ?? []) {
-      const label = `${permission.code}${permission.name ? ` - ${permission.name}` : ''}`
+      const label = permission.code
       const sectionKey = permission.code.includes(':')
         ? permission.code.split(':')[0]
         : permission.code.includes('.')
@@ -182,10 +192,14 @@ export function AccessExplorerPage() {
       accountId: string
       roleIds: string[]
       customPermissionIds: string[]
+      validFrom?: string | null
+      validUntil?: string | null
     }) =>
       updateGlobalAccess(payload.accountId, {
         roleIds: payload.roleIds,
         customPermissionIds: payload.customPermissionIds,
+        validFrom: payload.validFrom,
+        validUntil: payload.validUntil,
       }),
     onSuccess: async () => {
       setQuickAccessAccount(undefined)
@@ -200,6 +214,16 @@ export function AccessExplorerPage() {
     onSuccess: async () => {
       setIsBulkAssignOpen(false)
       bulkAccessForm.resetFields()
+      setSelectedAccountIds([])
+      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      showFeedbackToast('success', t('actionFeedback.saved'))
+    },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
+  })
+  const bulkRevokeMutation = useMutation({
+    mutationFn: (accountIds: string[]) => bulkRevokeGlobalAccess({ accountIds }),
+    onSuccess: async () => {
+      setIsBulkRevokeOpen(false)
       setSelectedAccountIds([])
       await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
       showFeedbackToast('success', t('actionFeedback.saved'))
@@ -253,13 +277,20 @@ export function AccessExplorerPage() {
   }
 
   const openQuickAccess = async (account: AccessExplorerSnapshot['accounts']['items'][number]) => {
+    quickAccessForm.resetFields()
     setQuickAccessAccount(account)
     setIsOpeningQuickAccess(true)
     try {
       const snapshot = await loadAccessExplorer(account.id)
       quickAccessForm.setFieldsValue({
-        roleIds: snapshot.account.access?.roleIds ?? [],
+        roleIds: snapshot.account.access?.roleIds ?? snapshot.account.account.roles ?? [],
         customPermissionIds: snapshot.account.access?.customPermissionIds ?? [],
+        validFrom: snapshot.account.access?.validFrom
+          ? dayjs(snapshot.account.access.validFrom)
+          : null,
+        validUntil: snapshot.account.access?.validUntil
+          ? dayjs(snapshot.account.access.validUntil)
+          : null,
       })
     } catch {
       quickAccessForm.resetFields()
@@ -301,15 +332,34 @@ export function AccessExplorerPage() {
     bulkAccessForm.resetFields()
   }
 
-  const openBulkAssign = () => {
+  const openBulkAssign = async () => {
     setIsBulkAssignOpen(true)
     bulkAccessForm.resetFields()
-    const defaultRoles =
-      selectedAccountIds.length === 1
-        ? (accounts.find((account) => account.id === selectedAccountIds[0])?.roles ?? [])
-        : []
+    if (selectedAccountIds.length === 1) {
+      try {
+        const snapshot = await loadAccessExplorer(selectedAccountIds[0])
+        bulkAccessForm.setFieldsValue({
+          roleIds: snapshot.account.access?.roleIds ?? snapshot.account.account.roles ?? [],
+          customPermissionIds: snapshot.account.access?.customPermissionIds ?? [],
+          validFrom: snapshot.account.access?.validFrom
+            ? dayjs(snapshot.account.access.validFrom)
+            : null,
+          validUntil: snapshot.account.access?.validUntil
+            ? dayjs(snapshot.account.access.validUntil)
+            : null,
+        })
+      } catch (error) {
+        showFeedbackToast(
+          'error',
+          t('actionFeedback.failed'),
+          error instanceof Error ? error.message : undefined,
+        )
+      }
+      return
+    }
+
     bulkAccessForm.setFieldsValue({
-      roleIds: defaultRoles,
+      roleIds: [],
       customPermissionIds: [],
     })
   }
@@ -330,12 +380,19 @@ export function AccessExplorerPage() {
     })
   }
 
-  const saveQuickAccess = (values: { roleIds?: string[]; customPermissionIds?: string[] }) => {
+  const saveQuickAccess = (values: {
+    roleIds?: string[]
+    customPermissionIds?: string[]
+    validFrom?: Dayjs | null
+    validUntil?: Dayjs | null
+  }) => {
     if (!quickAccessAccount?.id) return
     quickAccessMutation.mutate({
       accountId: quickAccessAccount.id,
       roleIds: values.roleIds ?? [],
       customPermissionIds: values.customPermissionIds ?? [],
+      validFrom: values.validFrom ? values.validFrom.toISOString() : null,
+      validUntil: values.validUntil ? values.validUntil.toISOString() : null,
     })
   }
 
@@ -391,6 +448,16 @@ export function AccessExplorerPage() {
                 disabled={selectedAccountIds.length === 0}
               >
                 {t('auth.accessExplorer.bulkAssign', 'Bulk assign')}
+              </Button>
+            ) : null}
+            {canWrite ? (
+              <Button
+                danger
+                icon={<DeleteOutlined aria-hidden />}
+                onClick={() => setIsBulkRevokeOpen(true)}
+                disabled={selectedAccountIds.length === 0}
+              >
+                {t('auth.accessExplorer.bulkRevoke', 'Revoke now')}
               </Button>
             ) : null}
             {canWrite ? (
@@ -657,36 +724,59 @@ export function AccessExplorerPage() {
         open={Boolean(quickAccessAccount)}
         title={`${t('auth.accessEditor.globalAccess')} - ${quickAccessAccount?.email ?? ''}`}
         onCancel={closeQuickAccess}
-        width={900}
+        width={1180}
         bodyStyle={{ paddingBottom: 16 }}
         footer={null}
         destroyOnHidden
       >
-        <Form form={quickAccessForm} layout="vertical" onFinish={saveQuickAccess}>
-          <Form.Item label={t('auth.accessEditor.roles')} name="roleIds">
-            <Select
-              mode="multiple"
-              options={createRoleOptions}
-              loading={roleCatalogQuery.isLoading}
-            />
-          </Form.Item>
-          <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
-            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
-          </Form.Item>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Button onClick={closeQuickAccess}>{t('auth.accessEditor.cancel')}</Button>
-            <Button type="primary" htmlType="submit" loading={quickAccessMutation.isPending}>
-              {t('auth.accessEditor.saveGlobal')}
-            </Button>
-          </div>
-        </Form>
+        <Spin spinning={isOpeningQuickAccess}>
+          <Form form={quickAccessForm} layout="vertical" onFinish={saveQuickAccess}>
+            <Form.Item label={t('auth.accessEditor.roles')} name="roleIds">
+              <Select
+                mode="multiple"
+                options={createRoleOptions}
+                loading={roleCatalogQuery.isLoading}
+              />
+            </Form.Item>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Form.Item
+                label={t('auth.accessEditor.validFrom', 'Valid from')}
+                name="validFrom"
+                style={{ flex: 1, minWidth: 220 }}
+              >
+                <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+              </Form.Item>
+              <Form.Item
+                label={t('auth.accessEditor.validUntil', 'Valid until')}
+                name="validUntil"
+                style={{ flex: 1, minWidth: 220 }}
+              >
+                <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+              </Form.Item>
+            </div>
+            <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
+              <PermissionCheckboxGroup
+                sections={permissionSections}
+                columns={4}
+                searchPlaceholder={t('auth.accessEditor.searchPermissions')}
+                emptyText={t('auth.accessEditor.emptyPermissionSearch')}
+              />
+            </Form.Item>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <Button onClick={closeQuickAccess}>{t('auth.accessEditor.cancel')}</Button>
+              <Button type="primary" htmlType="submit" loading={quickAccessMutation.isPending}>
+                {t('auth.accessEditor.saveGlobal')}
+              </Button>
+            </div>
+          </Form>
+        </Spin>
       </Modal>
 
       <Modal
         open={isBulkAssignOpen}
         title={t('auth.accessEditor.globalAccess')}
         onCancel={closeBulkAssign}
-        width={900}
+        width={1180}
         bodyStyle={{ paddingBottom: 16 }}
         footer={null}
         destroyOnHidden
@@ -706,7 +796,12 @@ export function AccessExplorerPage() {
             />
           </Form.Item>
           <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
-            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
+            <PermissionCheckboxGroup
+              sections={permissionSections}
+              columns={4}
+              searchPlaceholder={t('auth.accessEditor.searchPermissions')}
+              emptyText={t('auth.accessEditor.emptyPermissionSearch')}
+            />
           </Form.Item>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <Form.Item
@@ -737,7 +832,7 @@ export function AccessExplorerPage() {
         open={isCreateOpen}
         title={t('auth.accessExplorer.createAccount')}
         onCancel={closeCreateAccount}
-        width={980}
+        width={1180}
         bodyStyle={{ paddingBottom: 16 }}
         footer={null}
         destroyOnHidden
@@ -790,7 +885,12 @@ export function AccessExplorerPage() {
             ) : null}
           </div>
           <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
-            <PermissionCheckboxGroup sections={permissionSections} columns={3} />
+            <PermissionCheckboxGroup
+              sections={permissionSections}
+              columns={4}
+              searchPlaceholder={t('auth.accessEditor.searchPermissions')}
+              emptyText={t('auth.accessEditor.emptyPermissionSearch')}
+            />
           </Form.Item>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <Button onClick={closeCreateAccount}>{t('auth.accessEditor.cancel')}</Button>
@@ -800,6 +900,21 @@ export function AccessExplorerPage() {
           </div>
         </Form>
       </Modal>
+
+      <ConfirmDangerModal
+        open={isBulkRevokeOpen}
+        title={t('auth.accessExplorer.bulkRevokeTitle', 'Revoke selected access now?')}
+        description={t(
+          'auth.accessExplorer.bulkRevokeDescription',
+          'This immediately removes global access from selected accounts. Scoped access is not changed.',
+        )}
+        confirmIcon={<DeleteOutlined aria-hidden />}
+        confirmLabel={t('auth.accessExplorer.bulkRevoke', 'Revoke now')}
+        cancelLabel={t('auth.accessEditor.cancel')}
+        loading={bulkRevokeMutation.isPending}
+        onCancel={() => setIsBulkRevokeOpen(false)}
+        onConfirm={() => bulkRevokeMutation.mutate(selectedAccountIds)}
+      />
     </section>
   )
 }
