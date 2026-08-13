@@ -29,6 +29,7 @@ import {
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
+  MetricCard,
   PageHeader,
   SectionCard,
   StatusTag,
@@ -296,12 +297,12 @@ export function VendorSubmissionWorkbenchPage({
       ) : null}
       <div className={styles.metrics}>
         {(['total', 'ready', 'submitted', 'failed', 'cancelled'] as const).map((key) => (
-          <div className={styles.metric} key={key}>
-            <Typography.Text type="secondary">
-              {t(`portal.vendorSubmissions.metrics.${key}`)}
-            </Typography.Text>
-            <Typography.Title level={3}>{summary.data?.[key] ?? 0}</Typography.Title>
-          </div>
+          <MetricCard
+            key={key}
+            label={t(`portal.vendorSubmissions.metrics.${key}`)}
+            value={summary.data?.[key] ?? 0}
+            loading={summary.isLoading}
+          />
         ))}
       </div>
       <SectionCard>

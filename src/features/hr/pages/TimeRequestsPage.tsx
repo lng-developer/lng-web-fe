@@ -73,21 +73,18 @@ export function TimeRequestsPage() {
   const balances = useQuery({
     queryKey: ['hr-time', 'leave-balances', year],
     queryFn: listMyLeaveBalances,
-    enabled: canLeaveWrite,
   })
 
   const leaves = useQuery({
     queryKey: ['hr-time', 'leave', managerLeave ? 'all' : 'me'],
     queryFn: () =>
       managerLeave ? listLeaveRequests({ limit: 100 }) : listMyLeaveRequests({ limit: 100 }),
-    enabled: managerLeave || canLeaveWrite,
   })
 
   const overtime = useQuery({
     queryKey: ['hr-time', 'overtime', managerOt ? 'all' : 'me'],
     queryFn: () =>
       managerOt ? listOvertimeRequests({ limit: 100 }) : listMyOvertimeRequests({ limit: 100 }),
-    enabled: managerOt || canOvertimeWrite,
   })
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['hr-time'] })

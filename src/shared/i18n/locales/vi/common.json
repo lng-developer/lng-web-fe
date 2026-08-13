@@ -1,8 +1,22 @@
 {
-  "app": { "name": "LNG Web" },
-  "common": { "copyOrderId": "Sao chép mã đơn", "orderIdCopied": "Đã sao chép mã đơn" },
-  "language": { "label": "Ngôn ngữ", "vi": "Tiếng Việt", "en": "Tiếng Anh" },
-  "theme": { "label": "Giao diện", "light": "Sáng", "dark": "Tối", "system": "Hệ thống" },
+  "app": {
+    "name": "LNG Web"
+  },
+  "common": {
+    "copyOrderId": "Sao chép mã đơn",
+    "orderIdCopied": "Đã sao chép mã đơn"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "vi": "Tiếng Việt",
+    "en": "Tiếng Anh"
+  },
+  "theme": {
+    "label": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Hệ thống"
+  },
   "shell": {
     "navigation": {
       "primary": "Điều hướng chính",
@@ -35,7 +49,11 @@
       "finance": "Tài chính",
       "reports": "Báo cáo"
     },
-    "cores": { "portal": "Portal", "hr": "HR", "system": "Hệ thống" },
+    "cores": {
+      "portal": "Portal",
+      "hr": "HR",
+      "system": "Hệ thống"
+    },
     "groups": {
       "personal": "Cá nhân",
       "team": "Quản lý đội nhóm",
@@ -78,7 +96,10 @@
       "orders": "Lợi nhuận theo đơn",
       "imports": "Nhập liệu & đối soát"
     },
-    "scope": { "global": "Toàn công ty", "scoped": "Phạm vi được giao" },
+    "scope": {
+      "global": "Toàn công ty",
+      "scoped": "Phạm vi được giao"
+    },
     "metrics": {
       "revenue": "Khách thanh toán",
       "cost": "Tổng chi phí",
@@ -144,7 +165,11 @@
       "modal": {
         "title": "Nhập dữ liệu tài chính",
         "type": "Loại dữ liệu",
-        "types": { "transactions": "Giao dịch", "settlements": "Đối soát", "ads": "Quảng cáo" },
+        "types": {
+          "transactions": "Giao dịch",
+          "settlements": "Đối soát",
+          "ads": "Quảng cáo"
+        },
         "shop": "Cửa hàng",
         "salesChannel": "Kênh bán",
         "marketplace": "Thị trường",
@@ -177,8 +202,13 @@
     "loadError": "Không thể tải dữ liệu báo cáo.",
     "empty": "Chưa có dữ liệu",
     "trend": "Xu hướng doanh thu theo ngày",
-    "cadence": { "daily": "Theo ngày", "weekly": "Theo tuần" },
-    "channels": { "title": "Kênh nổi bật" },
+    "cadence": {
+      "daily": "Theo ngày",
+      "weekly": "Theo tuần"
+    },
+    "channels": {
+      "title": "Kênh nổi bật"
+    },
     "scopeLimited": "Báo cáo vận hành và quảng cáo hiện dành cho phạm vi toàn cục hoặc shop. Dữ liệu tài chính vẫn được giới hạn theo phạm vi tổ chức của bạn.",
     "tabs": {
       "overview": "Tổng quan điều hành",
@@ -245,7 +275,11 @@
     "title": "Duyệt tùy chỉnh",
     "description": "Xử lý dữ liệu tùy chỉnh của khách đang chặn hoàn tất đơn.",
     "queue": "Tùy chỉnh đang bị chặn",
-    "summary": { "pending": "Đang chờ", "review": "Cần duyệt", "failed": "Thất bại" },
+    "summary": {
+      "pending": "Đang chờ",
+      "review": "Cần duyệt",
+      "failed": "Thất bại"
+    },
     "filters": {
       "label": "Bộ lọc",
       "search": "Tìm đơn, SKU hoặc khách hàng",
@@ -272,7 +306,10 @@
       "inputs": "Nội dung khách nhập",
       "assets": "Đã trích xuất {{extracted}}/{{total}} tệp, {{failed}} lỗi"
     },
-    "feedback": { "updated": "Đã cập nhật tùy chỉnh", "failed": "Không thể cập nhật tùy chỉnh" }
+    "feedback": {
+      "updated": "Đã cập nhật tùy chỉnh",
+      "failed": "Không thể cập nhật tùy chỉnh"
+    }
   },
   "media": {
     "title": "Quản lý tệp tin",
@@ -301,8 +338,13 @@
       "status": "Trạng thái",
       "actions": "Thao tác"
     },
-    "actions": { "download": "Tải xuống", "retry": "Thử lại" },
-    "detail": { "title": "Chi tiết tệp" },
+    "actions": {
+      "download": "Tải xuống",
+      "retry": "Thử lại"
+    },
+    "detail": {
+      "title": "Chi tiết tệp"
+    },
     "upload": {
       "action": "Tải tệp lên",
       "title": "Tải tệp lên",
@@ -499,7 +541,10 @@
       "hr": "Nhân sự",
       "portal": "Portal"
     },
-    "input": { "label": "Tìm kiếm", "placeholder": "Tìm trong foundation" },
+    "input": {
+      "label": "Tìm kiếm",
+      "placeholder": "Tìm trong foundation"
+    },
     "controls": {
       "filters": "Bộ lọc",
       "requiredName": "Tên bắt buộc",
@@ -525,7 +570,10 @@
       "clear": "Xoá lọc",
       "apply": "Áp dụng"
     },
-    "card": { "title": "Quản lý vận chuyển", "description": "Phiên hoạt động: 4 giờ 12 phút" },
+    "card": {
+      "title": "Quản lý vận chuyển",
+      "description": "Phiên hoạt động: 4 giờ 12 phút"
+    },
     "scope": {
       "staff": "Nhan vien",
       "leader": "Truong nhom",
@@ -544,9 +592,21 @@
       "showing": "Hiển thị",
       "rowsPerPage": "Số dòng mỗi trang:"
     },
-    "modal": { "title": "Xoá vai trò?", "description": "Thao tác này không thể hoàn tác." },
-    "status": { "operational": "Đang vận hành", "warning": "Cảnh báo", "critical": "Nghiêm trọng" },
-    "priority": { "low": "Thấp", "medium": "Trung bình", "high": "Cao", "urgent": "Khẩn cấp" },
+    "modal": {
+      "title": "Xoá vai trò?",
+      "description": "Thao tác này không thể hoàn tác."
+    },
+    "status": {
+      "operational": "Đang vận hành",
+      "warning": "Cảnh báo",
+      "critical": "Nghiêm trọng"
+    },
+    "priority": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao",
+      "urgent": "Khẩn cấp"
+    },
     "form": {
       "note": "Ghi chú duyệt",
       "notePlaceholder": "Thêm ghi chú duyệt",
@@ -562,7 +622,10 @@
       "export": "Xuất dữ liệu",
       "archive": "Lưu trữ"
     },
-    "upload": { "title": "Tải tệp lên", "description": "Kéo thả tệp vào đây hoặc bấm để chọn." },
+    "upload": {
+      "title": "Tải tệp lên",
+      "description": "Kéo thả tệp vào đây hoặc bấm để chọn."
+    },
     "command": {
       "open": "Lệnh",
       "placeholder": "Tìm lệnh",
@@ -593,7 +656,10 @@
         "production": "Sản xuất thể hiện đồng thời cơ cấu thông lượng và chuyển động ngắn hạn."
       }
     },
-    "drawer": { "title": "Chi tiết đơn hàng", "reference": "Mã đơn hàng" },
+    "drawer": {
+      "title": "Chi tiết đơn hàng",
+      "reference": "Mã đơn hàng"
+    },
     "feedback": {
       "success": "Đã cập nhật vai trò",
       "successDescription": "Thay đổi đã được áp dụng đến các node đang hoạt động.",
@@ -1245,7 +1311,11 @@
       "unresolved": "Chưa được phân lịch",
       "lateMinutes": "Đi muộn {{minutes}} phút",
       "noRecords": "Không có dữ liệu chấm công hoặc yêu cầu",
-      "leaveTypes": { "ANNUAL": "Nghỉ phép năm", "SICK": "Nghỉ ốm", "UNPAID": "Nghỉ không lương" },
+      "leaveTypes": {
+        "ANNUAL": "Nghỉ phép năm",
+        "SICK": "Nghỉ ốm",
+        "UNPAID": "Nghỉ không lương"
+      },
       "legend": {
         "attendance": "Giờ vào / ra",
         "late": "Đi muộn",
@@ -1300,7 +1370,11 @@
       "dropPsd": "Thả tệp PSD, ZIP hoặc RAR vào đây",
       "psdUploaded": "Đã tải PSD lên",
       "title": "Danh mục listing",
-      "tabs": { "listings": "Listing", "productTypes": "Loại sản phẩm", "templates": "Mẫu nội bộ" },
+      "tabs": {
+        "listings": "Listing",
+        "productTypes": "Loại sản phẩm",
+        "templates": "Mẫu nội bộ"
+      },
       "description": "Quản lý cấu hình listing, trạng thái PSD thực tế và QC.",
       "refresh": "Làm mới",
       "create": "Tạo listing",
@@ -1651,7 +1725,11 @@
       "noFilteredResults": "Không có cửa hàng phù hợp với bộ lọc",
       "clearFilters": "Xóa bộ lọc",
       "noAuthorizedShops": "Chưa có cửa hàng nào được cấp cho quyền truy cập của bạn",
-      "statuses": { "ACTIVE": "Hoạt động", "INACTIVE": "Không hoạt động", "SUSPENDED": "Tạm ngưng" }
+      "statuses": {
+        "ACTIVE": "Hoạt động",
+        "INACTIVE": "Không hoạt động",
+        "SUSPENDED": "Tạm ngưng"
+      }
     },
     "production": {
       "title": "Vận hành sản xuất",
@@ -1661,6 +1739,7 @@
       "updated": "Đã cập nhật tác vụ sản xuất",
       "actionFailed": "Thao tác thất bại",
       "scaleQueue": "Hàng đợi Scale",
+      "blockedQueue": "Đang chặn",
       "qcQueue": "Hàng đợi QC",
       "scaleTask": "Tác vụ Scale",
       "qcReview": "Kiểm tra QC",
@@ -1781,7 +1860,8 @@
         "PENDING": "Đang chờ",
         "PASSED": "Đã duyệt",
         "REJECTED": "Đã từ chối"
-      }
+      },
+      "submitScaleQc": "G?i sang QC"
     },
     "vendorSubmissions": {
       "title": "Gửi đơn nhà cung cấp",
@@ -1915,8 +1995,15 @@
         "designFiles": "File Design",
         "scaleFiles": "File Scale"
       },
-      "sources": { "DESIGN_SUBMISSION": "Design", "PRODUCTION_SCALE": "Scale" },
-      "statuses": { "ACTIVE": "Đang hiệu lực", "VOIDED": "Đã hủy", "ALL": "Tất cả trạng thái" },
+      "sources": {
+        "DESIGN_SUBMISSION": "Design",
+        "PRODUCTION_SCALE": "Scale"
+      },
+      "statuses": {
+        "ACTIVE": "Đang hiệu lực",
+        "VOIDED": "Đã hủy",
+        "ALL": "Tất cả trạng thái"
+      },
       "columns": {
         "source": "Nguồn",
         "context": "File / ngữ cảnh",
@@ -2056,8 +2143,15 @@
       "sectionAuth": "Xác thực",
       "sla": "Thời gian sản xuất",
       "vendor": "Nhà cung cấp",
-      "tabs": { "vendors": "Nhà cung cấp", "products": "Sản phẩm" },
-      "filters": { "label": "Bộ lọc", "status": "Trạng thái", "vendor": "Nhà cung cấp" },
+      "tabs": {
+        "vendors": "Nhà cung cấp",
+        "products": "Sản phẩm"
+      },
+      "filters": {
+        "label": "Bộ lọc",
+        "status": "Trạng thái",
+        "vendor": "Nhà cung cấp"
+      },
       "metrics": {
         "total": "Tổng nhà cung cấp",
         "active": "Nhà cung cấp hoạt động",
@@ -2241,7 +2335,10 @@
       "historyLoadFailed": "Không thể tải lịch sử hoạt động",
       "commentAdded": "Đã thêm bình luận"
     },
-    "shipping": { "name": "Dịch vụ vận chuyển", "level": "Cấp độ vận chuyển" },
+    "shipping": {
+      "name": "Dịch vụ vận chuyển",
+      "level": "Cấp độ vận chuyển"
+    },
     "case": {
       "type": "Loại case",
       "severity": "Mức độ",
@@ -2311,7 +2408,9 @@
     "loadMore": "Tải thêm",
     "globalScope": "Toàn hệ thống",
     "notAvailable": "Không có dữ liệu",
-    "entities": { "session": "Phiên đăng nhập" },
+    "entities": {
+      "session": "Phiên đăng nhập"
+    },
     "detailTitle": "Chi tiết sự kiện",
     "loadingDetail": "Đang tải chi tiết sự kiện",
     "filters": {
@@ -2331,7 +2430,10 @@
       "source": "Nguồn",
       "outcome": "Kết quả"
     },
-    "outcomes": { "SUCCEEDED": "Thành công", "FAILED": "Thất bại" },
+    "outcomes": {
+      "SUCCEEDED": "Thành công",
+      "FAILED": "Thất bại"
+    },
     "detail": {
       "requestId": "Mã yêu cầu",
       "ip": "Địa chỉ IP",

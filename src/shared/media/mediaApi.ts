@@ -9,10 +9,16 @@ export type MultipartPart = { partNumber: number; etag: string }
 export type MultipartAsset = { id: string; uploadStatus: 'READY' | 'ABORTED' | string }
 export type MultipartInitiateResult = { assetId: string; partSize: number; totalParts: number }
 
+const withInlineDisposition = (downloadUrl: string) => {
+  const url = new URL(downloadUrl, env.apiBaseUrl || window.location.origin)
+  url.searchParams.set('disposition', 'inline')
+  return url.pathname + url.search
+}
+
 export async function fetchMediaBlob(downloadUrl: string, signal?: AbortSignal) {
   if (!downloadUrl.trim()) throw new Error('Media download URL is required')
 
-  return (await apiClient.get(downloadUrl, {
+  return (await apiClient.get(withInlineDisposition(downloadUrl), {
     responseType: 'blob',
     signal,
   })) as Blob

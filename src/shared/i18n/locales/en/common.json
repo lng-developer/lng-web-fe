@@ -1665,6 +1665,7 @@
       "updated": "Production task updated",
       "actionFailed": "Action failed",
       "scaleQueue": "Scale queue",
+      "blockedQueue": "Blocked",
       "qcQueue": "QC queue",
       "scaleTask": "Scale task",
       "qcReview": "QC review",
@@ -1757,6 +1758,7 @@
       "qcReworkRequired": "QC rework required",
       "rejectReason": "Rejection reason",
       "reasonRequired": "A rejection reason is required",
+      "submitScaleQc": "Send to QC",
       "submitQc": "Submit QC decision",
       "metrics": {
         "total": "Total",

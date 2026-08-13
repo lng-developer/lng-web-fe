@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Button, Input, Typography, Upload } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
-import { FeedbackAlert, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   type FileCheck,
@@ -122,31 +122,40 @@ export function ProductionWorkbenchExpandedRow({
   decisions,
   savingNoteTaskId,
   submittingQc,
+  submittingScale,
+  uploadingFileCheckIds,
   onSaveNote,
   onSubmitQc,
+  onSubmitScaleForQc,
   onUploadScaledOutput,
   onInspectSlot,
   onPassSlot,
   onManualSlotUploaded,
 }: {
   readonly task: ProductionTask
-  readonly tab: 'scale' | 'qc'
+  readonly tab: 'scale' | 'blocked' | 'qc'
   readonly canScale: boolean
   readonly canQc: boolean
   readonly decisions: Record<string, FileDecision>
   readonly savingNoteTaskId?: string
   readonly submittingQc: boolean
+  readonly submittingScale: boolean
+  readonly uploadingFileCheckIds: ReadonlySet<string>
   readonly onSaveNote: (taskId: string, note: string) => void
   readonly onSubmitQc: (task: ProductionTask, fileDecisions: FileDecision[]) => void
-  readonly onUploadScaledOutput: (taskId: string, fileCheckId: string, file: File) => void
-  readonly onInspectSlot: (task: ProductionTask, check: FileCheck) => void
+  readonly onSubmitScaleForQc: (taskId: string) => void
+  readonly onUploadScaledOutput: (
+    taskId: string,
+    fileCheckId: string,
+    file: File,
+  ) => void | Promise<void>
+  readonly onInspectSlot: (task: ProductionTask, check: FileCheck, readonly?: boolean) => void
   readonly onPassSlot: (checkId: string) => void
   readonly onManualSlotUploaded: () => void | Promise<void>
 }) {
   const { t } = useTranslation()
   const checks = task.fileChecks ?? task.qcPreviewFileChecks ?? []
   const psdTemplate = task.scaleContext?.use?.psdTemplate
-  const scaleDifficulty = task.scaleContext?.use?.listing?.scaleDifficulty
   const artworkCheck = checks.find(
     (check) => check.sourceType === 'CUSTOMER_IMAGE' && check.inputAssetDownloadUrl,
   )
@@ -158,6 +167,8 @@ export function ProductionWorkbenchExpandedRow({
       check.sourceType !== 'PSD_TEMPLATE' && (check.required || check.outputAssetDownloadUrl),
   )
   const canSubmitQc = outputChecks.length > 0 && outputChecks.every((check) => decisions[check.id])
+  const canSubmitScale =
+    outputChecks.length > 0 && outputChecks.every((check) => check.outputAssetDownloadUrl)
   const taskDecisions = outputChecks
     .map((check) => decisions[check.id])
     .filter((decision): decision is FileDecision => Boolean(decision))
@@ -174,9 +185,6 @@ export function ProductionWorkbenchExpandedRow({
         <div className={styles.sectionHeader}>
           <div>
             <Typography.Text strong>{t('portal.production.taskContext')}</Typography.Text>
-            <Typography.Text type="secondary">
-              {t(`portal.production.statuses.${tab === 'qc' ? task.qcStatus : task.status}`)}
-            </Typography.Text>
           </div>
         </div>
         <div className={styles.metaItem}>
@@ -203,13 +211,6 @@ export function ProductionWorkbenchExpandedRow({
             <Typography.Text strong>{color || '-'}</Typography.Text>
           </div>
         </div>
-        {scaleDifficulty && scaleDifficulty.level && scaleDifficulty.level !== 'NORMAL' ? (
-          <FeedbackAlert
-            type="warning"
-            title={`Scale difficulty: ${scaleDifficulty.level}`}
-            description={scaleDifficulty.reason || undefined}
-          />
-        ) : null}
         {tab === 'qc' ? (
           <div className={styles.notesSummary}>
             <div>
@@ -263,17 +264,12 @@ export function ProductionWorkbenchExpandedRow({
         <div className={styles.sectionHeader}>
           <div>
             <Typography.Text strong>{t('portal.production.productInput')}</Typography.Text>
-            <Typography.Text type="secondary">{task.orderItem?.sku || '-'}</Typography.Text>
           </div>
         </div>
         <div className={styles.productIdentifiers}>
           <div>
             <Typography.Text type="secondary">ASIN</Typography.Text>
             <Typography.Text>{task.orderItem?.asin || '-'}</Typography.Text>
-          </div>
-          <div>
-            <Typography.Text type="secondary">SKU</Typography.Text>
-            <Typography.Text>{task.orderItem?.sku || '-'}</Typography.Text>
           </div>
         </div>
         <div className={styles.artworkPreview}>
@@ -316,74 +312,79 @@ export function ProductionWorkbenchExpandedRow({
           ) : null}
         </div>
         <div className={styles.inlineSlots}>
-          {outputChecks.map((check) => (
-            <div className={styles.inlineSlot} key={check.id}>
-              <div className={styles.slotHeader}>
-                <Typography.Text strong>{check.slotLabel || check.slotKey}</Typography.Text>
-                <StatusTag status={check.outputAssetDownloadUrl ? 'operational' : 'pending'}>
-                  {check.outputAssetDownloadUrl
-                    ? t('portal.production.outputReady')
-                    : t('portal.production.outputMissing')}
-                </StatusTag>
-              </div>
-              <div className={styles.slotOutput}>
-                <Typography.Text type="secondary">{t('portal.production.scaled')}</Typography.Text>
-                {check.outputAssetDownloadUrl ? (
-                  <AuthenticatedMediaImage
-                    downloadUrl={check.outputAssetDownloadUrl}
-                    alt={t('portal.production.scaled')}
-                  />
-                ) : (
-                  <span className={styles.outputPlaceholder}>
-                    {t('portal.production.outputMissing')}
-                  </span>
-                )}
-              </div>
-              {tab === 'scale' && check.qcStatus === 'REJECTED' && check.note?.trim() ? (
-                <div className={styles.rejectionNote}>
-                  <Typography.Text strong>
-                    {t('portal.production.qcReworkRequired')}
-                  </Typography.Text>
-                  <Typography.Text>{check.note}</Typography.Text>
+          {outputChecks.map((check) => {
+            const uploading = uploadingFileCheckIds.has(check.id)
+            return (
+              <div className={styles.inlineSlot} key={check.id}>
+                <div className={styles.slotHeader}>
+                  <Typography.Text strong>{check.slotLabel || check.slotKey}</Typography.Text>
+                  <StatusTag status={check.outputAssetDownloadUrl ? 'operational' : 'pending'}>
+                    {check.outputAssetDownloadUrl
+                      ? t('portal.production.outputReady')
+                      : t('portal.production.outputMissing')}
+                  </StatusTag>
                 </div>
-              ) : null}
-              <div className={styles.slotActions}>
-                {tab === 'qc' && canQc ? (
-                  <Button onClick={() => onInspectSlot(task, check)}>
-                    {t('portal.production.inspect')}
-                  </Button>
+                <div className={styles.slotOutput}>
+                  <Typography.Text type="secondary">
+                    {t('portal.production.scaled')}
+                  </Typography.Text>
+                  {check.outputAssetDownloadUrl ? (
+                    <AuthenticatedMediaImage
+                      downloadUrl={check.outputAssetDownloadUrl}
+                      alt={t('portal.production.scaled')}
+                    />
+                  ) : (
+                    <span className={styles.outputPlaceholder}>
+                      {t('portal.production.outputMissing')}
+                    </span>
+                  )}
+                </div>
+                {tab === 'scale' && check.qcStatus === 'REJECTED' && check.note?.trim() ? (
+                  <div className={styles.rejectionNote}>
+                    <Typography.Text strong>
+                      {t('portal.production.qcReworkRequired')}
+                    </Typography.Text>
+                    <Typography.Text>{check.note}</Typography.Text>
+                  </div>
                 ) : null}
-                {tab === 'scale' && canScale ? (
-                  <Upload
-                    showUploadList={false}
-                    beforeUpload={(file) => {
-                      onUploadScaledOutput(task.id, check.id, file)
-                      return false
-                    }}
-                  >
-                    <Button type="primary">{t('portal.production.uploadOutput')}</Button>
-                  </Upload>
-                ) : null}
-                {tab === 'qc' && canQc && check.outputAssetDownloadUrl ? (
-                  <Button
-                    type={decisions[check.id]?.decision === 'PASSED' ? 'primary' : 'default'}
-                    onClick={() => onPassSlot(check.id)}
-                  >
-                    {t('portal.production.passSlot')}
-                  </Button>
-                ) : null}
+                <div className={styles.slotActions}>
+                  {tab === 'scale' && canScale && check.outputAssetDownloadUrl ? (
+                    <Button onClick={() => onInspectSlot(task, check, true)}>
+                      {t('portal.production.inspect')}
+                    </Button>
+                  ) : null}
+                  {tab === 'qc' && canQc ? (
+                    <Button onClick={() => onInspectSlot(task, check)}>
+                      {t('portal.production.inspect')}
+                    </Button>
+                  ) : null}
+                  {tab === 'scale' && canScale ? (
+                    <Upload
+                      disabled={uploading}
+                      showUploadList={false}
+                      beforeUpload={(file) => {
+                        void onUploadScaledOutput(task.id, check.id, file)
+                        return false
+                      }}
+                    >
+                      <Button loading={uploading} disabled={uploading} type="primary">
+                        {t('portal.production.uploadOutput')}
+                      </Button>
+                    </Upload>
+                  ) : null}
+                  {tab === 'qc' && canQc && check.outputAssetDownloadUrl ? (
+                    <Button
+                      type={decisions[check.id]?.decision === 'PASSED' ? 'primary' : 'default'}
+                      onClick={() => onPassSlot(check.id)}
+                    >
+                      {t('portal.production.passSlot')}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
-        {task.blockers.some((blocker) => blocker !== 'SCALED_OUTPUT_MISSING') ? (
-          <FeedbackAlert
-            type="warning"
-            title={task.blockers
-              .filter((blocker) => blocker !== 'SCALED_OUTPUT_MISSING')
-              .join(', ')}
-          />
-        ) : null}
         {tab === 'qc' && canQc ? (
           <Button
             type="primary"
@@ -392,6 +393,15 @@ export function ProductionWorkbenchExpandedRow({
             onClick={() => onSubmitQc(task, taskDecisions)}
           >
             {t('portal.production.submitQc')}
+          </Button>
+        ) : null}
+        {tab === 'scale' && canScale && canSubmitScale ? (
+          <Button
+            type="primary"
+            loading={submittingScale}
+            onClick={() => onSubmitScaleForQc(task.id)}
+          >
+            {t('portal.production.submitScaleQc')}
           </Button>
         ) : null}
       </div>

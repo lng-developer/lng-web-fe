@@ -17,15 +17,6 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
-.metric {
-  padding: 16px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
-  background: var(--ant-color-bg-container);
-}
-.metric :global(.ant-typography) {
-  margin: 4px 0 0;
-}
 .payload {
   max-height: 60vh;
   margin: 0;

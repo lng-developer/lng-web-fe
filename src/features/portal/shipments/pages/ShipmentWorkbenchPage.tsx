@@ -23,6 +23,7 @@ import {
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
+  MetricCard,
   PageHeader,
   SectionCard,
   StatusTag,
@@ -255,12 +256,12 @@ export function ShipmentWorkbenchPage({
       ) : null}
       <div className={styles.metrics}>
         {metrics.map(([key, value]) => (
-          <div className={styles.metric} key={key}>
-            <Typography.Text type="secondary">
-              {t(`portal.shipments.metrics.${key}`)}
-            </Typography.Text>
-            <Typography.Title level={3}>{value}</Typography.Title>
-          </div>
+          <MetricCard
+            key={key}
+            label={t(`portal.shipments.metrics.${key}`)}
+            value={value}
+            loading={summary.isLoading}
+          />
         ))}
       </div>
       <SectionCard>
