@@ -1,6 +1,10 @@
+.popover :global(.ant-popover-inner) {
+  padding: 0;
+}
+
 .content {
   width: min(420px, calc(100vw - 24px));
-  padding: 8px;
+  padding: 8px 0 8px 8px;
   border-radius: 18px;
   overflow: hidden;
   background: var(--ant-color-bg-elevated);
@@ -11,13 +15,13 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 8px 8px 4px;
+  padding: 8px 14px 4px 8px;
 }
 
 .list {
   max-height: min(560px, calc(100vh - 172px));
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 4px 8px 4px 0;
 }
 
 .title {
@@ -44,7 +48,7 @@
 }
 
 .tabs {
-  padding: 4px 6px 8px;
+  padding: 4px 14px 8px 6px;
 }
 
 .item {

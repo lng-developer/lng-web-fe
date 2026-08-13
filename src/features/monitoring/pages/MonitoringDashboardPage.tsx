@@ -117,7 +117,7 @@ export function MonitoringDashboardPage() {
       ) : null}
 
       <SectionCard title="Infrastructure">
-        <Row gutter={[16, 16]}>
+        <Row gutter={[24, 24]}>
           {[
             ['MongoDB', health?.infrastructure.mongo, <DatabaseOutlined key="mongo" />],
             ['Redis', health?.infrastructure.redis, <HddOutlined key="redis" />],
@@ -141,8 +141,39 @@ export function MonitoringDashboardPage() {
         </Row>
       </SectionCard>
 
+      <SectionCard title="Realtime Socket">
+        <Row gutter={[24, 24]}>
+          {[
+            ['Status', health?.realtime?.status ?? 'disabled'],
+            ['Clients', health?.realtime?.connectedClients ?? 0],
+            ['Users', health?.realtime?.authenticatedUsers ?? 0],
+            ['Rooms', health?.realtime?.rooms ?? 0],
+            ['Auth failed', health?.realtime?.authFailures ?? 0],
+            ['Event failed', health?.realtime?.eventFailures ?? 0],
+          ].map(([label, value]) => (
+            <Col xs={24} sm={12} md={8} lg={4} key={String(label)}>
+              <Card size="small">
+                <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
+                  {label}
+                </Typography.Text>
+                {label === 'Status' ? (
+                  <Tag color={statusColor(String(value))}>{String(value).toUpperCase()}</Tag>
+                ) : (
+                  <Typography.Title level={4}>{value}</Typography.Title>
+                )}
+              </Card>
+            </Col>
+          ))}
+        </Row>
+        {health?.realtime?.lastErrorAt ? (
+          <Typography.Text type="secondary" style={{ display: 'block', marginTop: 12 }}>
+            Last error: {health.realtime.lastErrorMessage} at {health.realtime.lastErrorAt}
+          </Typography.Text>
+        ) : null}
+      </SectionCard>
+
       <SectionCard title="Runtime">
-        <Row gutter={[16, 16]}>
+        <Row gutter={[24, 24]}>
           <Col xs={24} md={8}>
             <Card size="small">
               <Typography.Text type="secondary">Uptime</Typography.Text>
@@ -165,7 +196,7 @@ export function MonitoringDashboardPage() {
       </SectionCard>
 
       <SectionCard title={`Module Health (${healthyModules}/${totalModules})`}>
-        <Row gutter={[16, 16]}>
+        <Row gutter={[24, 24]}>
           {modules.map((module) => {
             const isOk = module.status === 'ok'
             return (
@@ -212,7 +243,7 @@ export function MonitoringDashboardPage() {
   const workersTab = (
     <>
       <SectionCard title="Workers">
-        <Row gutter={[16, 16]}>
+        <Row gutter={[24, 24]}>
           {workers.map((worker) => (
             <Col xs={24} sm={12} md={8} lg={6} key={worker.key}>
               <Card size="small">
@@ -240,7 +271,7 @@ export function MonitoringDashboardPage() {
       </SectionCard>
 
       <SectionCard title="Queues">
-        <Row gutter={[16, 16]}>
+        <Row gutter={[24, 24]}>
           {queues.map((queue) => (
             <Col xs={24} lg={12} key={queue.key}>
               <Card size="small">
@@ -357,36 +388,44 @@ export function MonitoringDashboardPage() {
         }
       />
 
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<SafetyCertificateOutlined />}
-          variant={isHealthy ? 'success' : 'danger'}
-          label="System Health"
-          value={error ? 'UNREACHABLE' : isHealthy ? 'OPERATIONAL' : 'DEGRADED'}
-          loading={loading}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="info"
-          label="Health API Latency"
-          value={`${latencyMs} ms`}
-          loading={loading}
-        />
-        <MetricCard
-          icon={<CloudServerOutlined />}
-          variant="neutral"
-          label="Modules"
-          value={`${healthyModules} / ${totalModules} Healthy`}
-          loading={loading}
-        />
-        <MetricCard
-          icon={<DatabaseOutlined />}
-          variant={health?.infrastructure.mongo === 'CONNECTED' ? 'success' : 'danger'}
-          label="MongoDB"
-          value={health?.infrastructure.mongo ?? 'UNKNOWN'}
-          loading={loading}
-        />
-      </div>
+      <Row gutter={[24, 24]}>
+        <Col xs={24} md={12} xl={6}>
+          <MetricCard
+            icon={<SafetyCertificateOutlined />}
+            variant={isHealthy ? 'success' : 'danger'}
+            label="System Health"
+            value={error ? 'UNREACHABLE' : isHealthy ? 'OPERATIONAL' : 'DEGRADED'}
+            loading={loading}
+          />
+        </Col>
+        <Col xs={24} md={12} xl={6}>
+          <MetricCard
+            icon={<ClockCircleOutlined />}
+            variant="info"
+            label="Health API Latency"
+            value={`${latencyMs} ms`}
+            loading={loading}
+          />
+        </Col>
+        <Col xs={24} md={12} xl={6}>
+          <MetricCard
+            icon={<CloudServerOutlined />}
+            variant="neutral"
+            label="Modules"
+            value={`${healthyModules} / ${totalModules} Healthy`}
+            loading={loading}
+          />
+        </Col>
+        <Col xs={24} md={12} xl={6}>
+          <MetricCard
+            icon={<DatabaseOutlined />}
+            variant={health?.infrastructure.mongo === 'CONNECTED' ? 'success' : 'danger'}
+            label="MongoDB"
+            value={health?.infrastructure.mongo ?? 'UNKNOWN'}
+            loading={loading}
+          />
+        </Col>
+      </Row>
 
       <UiTabs
         destroyOnHidden={false}

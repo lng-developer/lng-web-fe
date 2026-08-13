@@ -1,6 +1,10 @@
 {
   "app": { "name": "LNG Web" },
-  "common": { "copyOrderId": "Copy order ID", "orderIdCopied": "Order ID copied" },
+  "common": {
+    "copyOrderId": "Copy order ID",
+    "orderIdCopied": "Order ID copied",
+    "close": "Close"
+  },
   "language": { "label": "Language", "vi": "Vietnamese", "en": "English" },
   "theme": { "label": "Appearance", "light": "Light", "dark": "Dark", "system": "System" },
   "shell": {
@@ -754,6 +758,9 @@
       "createAccount": "Create account",
       "createAccountDirect": "Create account directly",
       "createAccountFromProfile": "Create from employee profile",
+      "bulkRevoke": "Revoke now",
+      "bulkRevokeTitle": "Revoke selected access now?",
+      "bulkRevokeDescription": "This immediately removes global access from selected accounts. Scoped access is not changed.",
       "lastLogin": "Last login",
       "loading": "Loading accounts...",
       "neverLoggedIn": "Never logged in",
@@ -780,6 +787,8 @@
       "scope": "Scope",
       "permissions": "Permissions",
       "customPermissions": "Additional permissions",
+      "searchPermissions": "Search permissions",
+      "emptyPermissionSearch": "No permissions match this search",
       "validFrom": "Valid from",
       "validUntil": "Valid until",
       "permissionCount": "{{count}} additional permissions",
@@ -2356,6 +2365,24 @@
     "loadMore": "View more",
     "markedAllRead": "All notifications marked as read",
     "updateFailed": "Could not update notifications"
+  },
+  "chat": {
+    "title": "Chat",
+    "newGroup": "New group",
+    "searchMessenger": "Search Messenger",
+    "noMessages": "No messages yet",
+    "emptyMessages": "No messages yet",
+    "viewAll": "View all in Messenger",
+    "messageInput": "Message",
+    "messagePlaceholder": "Aa",
+    "send": "Send",
+    "you": "You",
+    "time": {
+      "now": "now",
+      "minute": "m",
+      "hour": "h",
+      "day": "d"
+    }
   },
   "errors": {
     "unexpected": "Something unexpected happened.",

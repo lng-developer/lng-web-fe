@@ -23,6 +23,9 @@ export type ChatConversation = {
   directKey?: string | null
   lastMessageAt: string | null
   lastMessagePreview: string | null
+  lastMessageSenderAccountId: string | null
+  unreadCount: number
+  hasUnreadFromOthers: boolean
   createdAt: string
   updatedAt: string
 }

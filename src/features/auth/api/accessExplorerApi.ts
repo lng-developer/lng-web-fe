@@ -23,7 +23,12 @@ export type AccessExplorerSnapshot = {
   }>
   account: {
     account: { id: string; email: string; status?: string; roles?: string[] }
-    access?: { customPermissionIds?: string[]; roleIds?: string[] }
+    access?: {
+      customPermissionIds?: string[]
+      roleIds?: string[]
+      validFrom?: string | null
+      validUntil?: string | null
+    }
   }
   assignments: AccessList<{
     id: string

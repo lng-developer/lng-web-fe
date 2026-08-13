@@ -24,6 +24,18 @@ export type SystemHealth = {
     redis: 'CONNECTED' | 'DISCONNECTED' | 'DISABLED'
     metrics: 'ENABLED' | 'DISABLED'
   }
+  realtime?: {
+    status: 'ok' | 'disabled'
+    connectedClients: number
+    authenticatedUsers: number
+    rooms: number
+    connections: number
+    disconnections: number
+    authFailures: number
+    eventFailures: number
+    lastErrorAt: string | null
+    lastErrorMessage: string | null
+  }
   modules: ModuleHealth[]
   workers: Array<{
     key: string
