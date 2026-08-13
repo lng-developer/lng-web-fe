@@ -12,13 +12,14 @@ import {
   requireWorkspace,
 } from '@/features/auth/guards/accountSetupGuards'
 
-const session = (mustChangePassword: boolean) => ({
+const session = (mustChangePassword: boolean, profileSetupRequired = false) => ({
   accessToken: 'token',
   tokenType: 'Bearer' as const,
   account: { id: 'account-1', email: 'staff@lng.co', mustChangePassword },
   roles: [],
   permissions: [],
   scopes: [],
+  profileSetupRequired,
 })
 
 async function redirectLocation(loader: () => Promise<unknown>) {
@@ -42,10 +43,7 @@ describe('account setup guards', () => {
 
   it('sends an account with a changed password to profile setup', async () => {
     vi.mocked(restoreSession).mockResolvedValue(session(false))
-    vi.mocked(getCurrentAccount).mockResolvedValue({
-      ...session(false),
-      profileSetupRequired: true,
-    })
+    vi.mocked(getCurrentAccount).mockResolvedValue(session(false, true))
 
     await expect(redirectLocation(requireWorkspace)).resolves.toBe('/setup/profile')
   })
@@ -57,19 +55,13 @@ describe('account setup guards', () => {
     })
 
     vi.mocked(restoreSession).mockResolvedValue(session(false))
-    vi.mocked(getCurrentAccount).mockResolvedValue({
-      ...session(false),
-      profileSetupRequired: true,
-    })
+    vi.mocked(getCurrentAccount).mockResolvedValue(session(false, true))
     await expect(requireProfileSetup()).resolves.toMatchObject({ profileSetupRequired: true })
   })
 
   it('allows completed accounts into the workspace', async () => {
     vi.mocked(restoreSession).mockResolvedValue(session(false))
-    vi.mocked(getCurrentAccount).mockResolvedValue({
-      ...session(false),
-      profileSetupRequired: false,
-    })
+    vi.mocked(getCurrentAccount).mockResolvedValue(session(false, false))
 
     await expect(requireWorkspace()).resolves.toMatchObject({ profileSetupRequired: false })
   })

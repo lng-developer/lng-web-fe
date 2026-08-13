@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
-import { Breadcrumb, Input, Layout, Space } from 'antd'
+import { Breadcrumb, Layout, Space } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
@@ -90,15 +90,26 @@ export function AppShell() {
           <div className={styles.headerLeft}>
             <Breadcrumb
               className={styles.breadcrumb}
-              items={[{ title: t('shell.workspace') }, { title: pageTitle }]}
+              items={[
+                { title: t('shell.workspace') },
+                {
+                  title: activeItem
+                    ? t(activeItem.labelKey)
+                    : t(
+                        activeCore
+                          ? `shell.cores.${activeCore}`
+                          : 'shell.navigation.operationsDashboard',
+                      ),
+                },
+              ]}
             />
-            <Input.Search
+            {/* <Input.Search
               value={navigationSearch}
               onChange={(event) => setNavigationSearch(event.target.value)}
               allowClear
               placeholder={t('shell.searchPlaceholder')}
               className={styles.navSearch}
-            />
+            /> */}
           </div>
           <Space size={12}>
             <ThemeSwitch />

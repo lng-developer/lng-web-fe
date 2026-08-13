@@ -138,7 +138,7 @@ export function ShopWorkspacePage() {
       {
         title: t('portal.shops.id'),
         dataIndex: 'id',
-        width: 320,
+        width: 150,
         render: (id: string) => (
           <Typography.Text code copyable={{ text: id }}>
             {id}
@@ -180,7 +180,7 @@ export function ShopWorkspacePage() {
         ? [
             {
               title: t('portal.shops.actions'),
-              align: 'right' as const,
+              align: 'center' as const,
               width: 90,
               render: (_: unknown, shop: Shop) =>
                 canWriteShop(account, shop.id) ? (

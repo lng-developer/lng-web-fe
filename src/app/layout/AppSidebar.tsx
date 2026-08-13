@@ -123,6 +123,7 @@ export function AppSidebar({
       </div>
       <nav aria-label={t('shell.navigation.primary')} className={styles.navigation}>
         <Menu
+          style={{ border: 'none' }}
           mode="inline"
           inlineCollapsed={collapsed}
           triggerSubMenuAction="hover"
