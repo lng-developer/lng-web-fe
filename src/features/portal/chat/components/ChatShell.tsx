@@ -206,6 +206,16 @@ export function ChatShell({ account }: ChatShellProps) {
     },
   })
   const canQuickSend = Boolean(quickConversationId && quickDraft.trim() && !quickSend.isPending)
+  const markQuickChatRead = () => {
+    if (
+      !quickConversation?.hasUnreadFromOthers ||
+      readQuickConversationIds.has(quickConversation.id)
+    ) {
+      return
+    }
+    setReadQuickConversationIds((current) => new Set(current).add(quickConversation.id))
+    quickRead.mutate(quickConversation.id)
+  }
   const openQuickChat = (conversation: ChatConversation, markRead = true) => {
     if (isChatWorkspace) return
     setIsChatPreviewOpen(false)
@@ -382,6 +392,7 @@ export function ChatShell({ account }: ChatShellProps) {
               placeholder={t('chat.messagePlaceholder', 'Aa')}
               value={quickDraft}
               onChange={(event) => setQuickDraft(event.target.value)}
+              onFocus={markQuickChatRead}
               onPressEnter={() => {
                 if (canQuickSend) quickSend.mutate()
               }}

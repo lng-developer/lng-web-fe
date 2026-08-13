@@ -136,9 +136,13 @@ const routes: HrRoute[] = [
   },
 ]
 
-export function getHrNavigation(permissions: Iterable<string>) {
+export function getHrNavigation(
+  permissions: Iterable<string>,
+  options: { includeSelf?: boolean } = {},
+) {
   const granted = new Set(permissions)
   const workspaces = new Set(getHrWorkspaces(granted).map(({ key }) => key))
+  if (options.includeSelf) workspaces.add('self')
   return routes.filter(
     (route) =>
       workspaces.has(route.workspace) &&

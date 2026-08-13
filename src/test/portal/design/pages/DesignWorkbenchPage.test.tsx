@@ -25,7 +25,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useRouteLoaderData: () => ({
     account: { id: '6a339b5a033e2ff7753522c3' },
-    permissions: ['DESIGN:WRITE'],
+    permissions: ['DESIGN:WRITE', 'DESIGN:WORK'],
     roles: [],
     scopes: [],
   }),

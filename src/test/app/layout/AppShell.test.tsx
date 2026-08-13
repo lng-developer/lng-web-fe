@@ -141,7 +141,7 @@ describe('AppShell', () => {
     expect(router.state.location.pathname).toBe('/operations-dashboard')
     expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(1)
 
-    fireEvent.click(screen.getByRole('region', { name: 'designer@lng.co' }))
+    fireEvent.focus(screen.getByRole('textbox', { name: 'Message' }))
     await waitFor(() => expect(markChatConversationRead).toHaveBeenCalledWith('conversation-1'))
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))

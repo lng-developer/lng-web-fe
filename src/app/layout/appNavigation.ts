@@ -172,7 +172,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
     ]
   }
 
-  const routes = getHrNavigation(permissions)
+  const routes = getHrNavigation(permissions, { includeSelf: true })
   const groups: NavigationGroup[] = [
     {
       key: 'personal',

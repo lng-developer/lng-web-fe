@@ -2,7 +2,10 @@ export type HrViewKey = 'people' | 'schedule' | 'attendance' | 'requests' | 'pay
 export type HrWorkspaceKey = 'self' | 'team' | 'operations' | 'payroll'
 
 const workspacePermissions: Array<{ key: HrWorkspaceKey; permissions?: string[] }> = [
-  { key: 'self' },
+  {
+    key: 'self',
+    permissions: ['HR_ATTENDANCE:WRITE', 'HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE', 'HR_PAYROLL:WRITE'],
+  },
   {
     key: 'team',
     permissions: [
@@ -88,4 +91,4 @@ export const getHrWorkspaces = (permissions: Iterable<string>) => {
 }
 
 export const hasHrAccess = (permissions: Iterable<string>) =>
-  getHrWorkspaces(permissions).length > 0
+  [...permissions].some((permission) => permission.startsWith('HR_'))
