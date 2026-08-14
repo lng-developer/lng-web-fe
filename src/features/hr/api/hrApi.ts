@@ -116,7 +116,6 @@ export type StaffProvisioningInput = Omit<
   employmentType?: string
   workMode?: string
   startDate?: string
-  status?: string
   baseCurrency?: string
   baseSalary?: number
   assignments: Array<{

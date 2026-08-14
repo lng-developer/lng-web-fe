@@ -213,7 +213,6 @@ export function StaffEditorModal({
         workMode: values.workMode,
         startDate: values.startDate,
         probationEndDate: values.probationEndDate || null,
-        status: values.status,
         baseCurrency: values.baseCurrency || 'VND',
         baseSalary: values.baseSalary,
         assignments: [
