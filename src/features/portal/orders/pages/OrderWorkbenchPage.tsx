@@ -27,6 +27,7 @@ import {
   CopyableOrderId,
   DataTable,
   FeedbackAlert,
+  PageHeader,
   type PopupModalAnchor,
   StatusTag,
   UiTabLabel,
@@ -419,20 +420,20 @@ export function OrderWorkbenchPage() {
           ),
       },
     ],
-    [canWriteOrder, i18n.language, t],
+    [canWriteOrder, i18n.language, openOrderModal, t],
   )
 
   return (
     <section className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <Typography.Title level={3}>{t('orders.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('orders.description')}</Typography.Text>
-        </div>
-        <Button icon={<ReloadOutlined />} onClick={handleRefetch}>
-          {t('orders.actions.refresh')}
-        </Button>
-      </header>
+      <PageHeader
+        title={t('orders.title')}
+        description={t('orders.description')}
+        actions={
+          <Button icon={<ReloadOutlined />} onClick={handleRefetch}>
+            {t('orders.actions.refresh')}
+          </Button>
+        }
+      />
       <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
       <OrderWorkbenchFilterBar
         search={search}
