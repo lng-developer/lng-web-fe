@@ -85,6 +85,7 @@ export type OrderWorkbenchItem = {
   seller: { employeeCode: string | null; name: string | null } | null
   listing: {
     title: string | null
+    productImageUrl?: string | null
   } | null
   customization: {
     status: string | null

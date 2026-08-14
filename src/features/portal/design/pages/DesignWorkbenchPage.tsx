@@ -8,6 +8,7 @@ import {
   DeleteOutlined,
   DownloadOutlined,
   EyeOutlined,
+  LinkOutlined,
   PictureOutlined,
   PlayCircleOutlined,
   PlusOutlined,
@@ -116,6 +117,15 @@ const priorityTone = (priority: string) =>
         ? 'ready'
         : 'cancelled'
 
+function listingUrl(listing: DesignTask['listing']) {
+  if (!listing) return null
+  if (listing.salesChannelCode === 'ETSY' && listing.etsyListingId) {
+    return `https://www.etsy.com/listing/${listing.etsyListingId}`
+  }
+  if (listing.asin) return `https://www.amazon.com/dp/${listing.asin}`
+  return null
+}
+
 export function DesignWorkbenchPage() {
   const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount
@@ -134,6 +144,7 @@ export function DesignWorkbenchPage() {
   const [search, setSearch] = useState('')
   // Defer search to avoid network request on every keystroke
   const deferredSearch = useDeferredValue(search)
+  const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()
   const [status, setStatus] = useState<DesignTaskStatus>()
   const [taskType, setTaskType] = useState<DesignTaskType>()
   const [selectedId, setSelectedId] = useState<string>()
@@ -160,12 +171,19 @@ export function DesignWorkbenchPage() {
   // R2: Memoize query params — prevents useQuery from seeing a new object ref every render
   // Uses deferredSearch so search only triggers fetch after typing pauses (not every keystroke)
   const params = useMemo(
-    () => ({ page, limit: PAGE_SIZE, search: deferredSearch || undefined, status, taskType }),
-    [page, deferredSearch, status, taskType],
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      search: deferredSearch || undefined,
+      salesChannelCode,
+      status,
+      taskType,
+    }),
+    [page, deferredSearch, salesChannelCode, status, taskType],
   )
   const dashboardParams = useMemo(
-    () => ({ search: deferredSearch || undefined, status, taskType }),
-    [deferredSearch, status, taskType],
+    () => ({ search: deferredSearch || undefined, salesChannelCode, status, taskType }),
+    [deferredSearch, salesChannelCode, status, taskType],
   )
 
   const tasks = useQuery({
@@ -246,6 +264,11 @@ export function DesignWorkbenchPage() {
   }, [])
   const handleTaskTypeChange = useCallback((value?: DesignTaskType) => {
     setTaskType(value)
+    setPage(1)
+  }, [])
+  const handleSalesChannelChange = useCallback((value: string | number) => {
+    setSalesChannelCode(value === 'ALL' ? undefined : (value as 'AMAZON' | 'ETSY'))
+    setSelectedRowKeys([])
     setPage(1)
   }, [])
   const handlePageChange = useCallback((nextPage: number) => {
@@ -447,6 +470,16 @@ export function DesignWorkbenchPage() {
 
   const renderTaskActions = (row: DesignTask) => (
     <div className={styles.taskActions}>
+      {listingUrl(row.listing) ? (
+        <Tooltip title={t('portal.design.openProduct', 'Open SP')}>
+          <Button
+            aria-label={t('portal.design.openProduct', 'Open SP')}
+            type="text"
+            icon={<LinkOutlined />}
+            onClick={() => window.open(listingUrl(row.listing)!, '_blank', 'noopener,noreferrer')}
+          />
+        </Tooltip>
+      ) : null}
       {canAssignTask(row) && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status) ? (
         <Tooltip title={t('portal.design.assign')}>
           <Button
@@ -603,9 +636,14 @@ export function DesignWorkbenchPage() {
         key: 'shop',
         width: 150,
         render: (_, row) => (
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {row.shop?.name ?? '-'}
-          </Typography.Text>
+          <Space direction="vertical" size={0}>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {row.shop?.name ?? '-'}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+              {row.listing?.salesChannelCode ?? '-'}
+            </Typography.Text>
+          </Space>
         ),
       },
       {
@@ -655,7 +693,7 @@ export function DesignWorkbenchPage() {
       {
         title: t('portal.design.actions', 'Actions'),
         key: 'actions',
-        width: 96,
+        width: 130,
         align: 'right',
         render: (_, row) => renderTaskActions(row),
       },
@@ -730,6 +768,17 @@ export function DesignWorkbenchPage() {
             {t('portal.design.tasks', 'Design Tasks')}
           </Typography.Title>
           <FilterBar label={t('portal.design.filters')} contentClassName={styles.filters}>
+            <Select
+              className={styles.channelFilter}
+              value={salesChannelCode ?? 'ALL'}
+              aria-label="Channel"
+              options={[
+                { label: 'Channel: All', value: 'ALL' },
+                { label: 'Amazon', value: 'AMAZON' },
+                { label: 'Etsy', value: 'ETSY' },
+              ]}
+              onChange={handleSalesChannelChange}
+            />
             <Input.Search
               className={styles.search}
               allowClear
@@ -804,7 +853,7 @@ export function DesignWorkbenchPage() {
             hideOnSinglePage: true,
             onChange: handlePageChange,
           }}
-          scroll={{ x: 1360 }}
+          scroll={{ x: 1360, y: 'calc(100vh - 430px)' }}
         />
       </SectionCard>
 

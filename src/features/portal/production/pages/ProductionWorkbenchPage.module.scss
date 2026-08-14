@@ -69,13 +69,27 @@
 }
 
 .queueControls {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   padding: 12px 12px 4px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+}
+
+.channelFilter {
+  width: 150px;
+  margin: 12px 12px 0;
+}
+
+.queuePane :global(.ant-table-body) {
+  scrollbar-gutter: stable;
 }
 
 .inlineWorkspace {
   display: grid;
   grid-template-areas: 'product customization task output';
-  grid-template-columns: minmax(230px, 0.7fr) minmax(300px, 0.95fr) minmax(250px, 0.75fr) minmax(
+  grid-template-columns: minmax(340px, 0.9fr) minmax(300px, 0.9fr) minmax(250px, 0.75fr) minmax(
       400px,
       1.35fr
     );
@@ -167,9 +181,13 @@
 }
 
 .productActions {
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.productActions :global(.ant-btn) {
+  min-width: 0;
 }
 
 .customizationSection {
@@ -181,14 +199,16 @@
 }
 
 .productIdentifiers {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .productIdentifiers > div {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 8px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .sectionHeader {
@@ -204,6 +224,14 @@
 .sectionHeader > div {
   display: grid;
   gap: 2px;
+}
+
+.sectionHeader strong,
+.metaItem > span:first-child,
+.optionGrid > div > span:first-child,
+.inputValue > span:first-child {
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .customizationList {
@@ -656,7 +684,7 @@
 .artworkPreview {
   display: grid;
   place-items: center;
-  min-height: 180px;
+  min-height: 240px;
   margin-top: 6px;
   overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);
@@ -666,8 +694,14 @@
 
 .artworkPreview img {
   max-width: 100%;
-  max-height: 240px;
+  max-height: 280px;
   object-fit: contain;
+}
+
+.artworkPreview :global(.ant-image) {
+  display: grid;
+  place-items: center;
+  width: 100%;
 }
 
 .slotSummary {

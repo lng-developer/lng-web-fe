@@ -25,11 +25,6 @@
   max-width: 260px;
   min-width: 180px;
 }
-.sellerFilter {
-  flex: 0 0 200px;
-  min-width: 180px;
-  width: 100%;
-}
 .filterSelect {
   flex: 0 0 170px;
   min-width: 150px;
@@ -48,7 +43,6 @@
   }
 
   .orderSearch,
-  .sellerFilter,
   .filterSelect {
     min-width: 0;
   }

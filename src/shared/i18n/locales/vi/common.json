@@ -1478,6 +1478,7 @@
         "code": "Mã",
         "name": "Tên",
         "order": "Thứ tự",
+        "printMethod": "Phương thức in",
         "status": "Trạng thái"
       },
       "details": {
@@ -2142,6 +2143,7 @@
       "imageUrl": "URL hình ảnh",
       "productUrl": "URL sản phẩm",
       "designTemplateUrl": "URL mẫu thiết kế",
+      "printMethod": "Phương thức in",
       "sku": "SKU",
       "lngCode": "Mã LNG",
       "vendorSize": "Kích thước của nhà cung cấp",

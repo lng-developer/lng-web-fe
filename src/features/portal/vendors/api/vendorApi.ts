@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/api'
+import type { PrintMethod } from '@/shared/constants/printMethods'
 
 type ApiResponse<T> = { success: boolean; data: T }
 
@@ -54,6 +55,7 @@ export type VendorCostCenter = {
   vendorColor: string | null
   standardSize: string | null
   standardColor: string | null
+  printMethod: PrintMethod | null
   attributes: Record<string, unknown>
   weight: number | null
   weightUnit: string | null

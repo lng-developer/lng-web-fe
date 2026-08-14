@@ -1,7 +1,14 @@
 import { apiClient } from '@/shared/api'
+import type { PrintMethod } from '@/shared/constants/printMethods'
 
 type ApiResponse<T> = { success: boolean; data: T }
-type CompactRef = { id: string; code?: string; name: string; status?: string }
+type CompactRef = {
+  id: string
+  code?: string
+  name: string
+  printMethod?: PrintMethod | null
+  status?: string
+}
 export type CatalogListParams = {
   page: number
   limit: number
@@ -54,6 +61,7 @@ export type CatalogSummary = {
 }
 export type ProductTypeGroup = CompactRef & {
   sortOrder?: number
+  printMethod?: PrintMethod | null
   createdAt?: string
   updatedAt?: string
 }
@@ -98,6 +106,7 @@ export type ProductTypeGroupInput = {
   code: string
   name: string
   sortOrder?: number
+  printMethod?: PrintMethod | null
   status?: string
 }
 export type InternalTemplateInput = {
@@ -123,6 +132,7 @@ export type ListingVariant = {
   internalTemplate: CompactRef | null
   psdTemplateAssetId: string | null
   previewAssetId: string | null
+  printMethod?: PrintMethod | null
   scaleDifficulty?: {
     level: 'NORMAL' | 'HARD' | 'SPECIAL'
     reason?: string | null
@@ -142,6 +152,7 @@ export type ListingVariantInput = {
   internalTemplateId?: string | null
   psdTemplateAssetId?: string | null
   previewAssetId?: string | null
+  printMethod?: PrintMethod | null
   scaleDifficulty?: {
     level?: 'NORMAL' | 'HARD' | 'SPECIAL'
     reason?: string | null

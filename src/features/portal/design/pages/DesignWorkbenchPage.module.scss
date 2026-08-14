@@ -24,6 +24,10 @@
   flex: 0 0 160px;
 }
 
+.channelFilter {
+  flex: 0 0 150px;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -43,6 +47,10 @@
   margin-top: 16px;
 }
 
+.taskTable :global(.ant-table-body) {
+  scrollbar-gutter: stable;
+}
+
 .thumbnailContainer {
   flex-shrink: 0;
   display: flex;
@@ -53,8 +61,8 @@
 }
 
 .thumbnailFrame {
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   border-radius: var(--ant-border-radius);
   overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);

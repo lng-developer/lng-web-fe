@@ -11,8 +11,8 @@ describe('ProductionWorkbenchPage source contract', () => {
 
   it('keeps expanded inline rows with full toolbar context', () => {
     expect(source).toContain('expandedRowRender: (row) =>')
-    expect(source).toContain('expandedRowKeys: rows.map((row) => row.id)')
-    expect(source).toContain('showExpandColumn: false')
+    expect(source).toContain('expandedRowKeys')
+    expect(source).toContain('onExpandedRowsChange')
     expect(source).toContain('ProductionWorkbenchExpandedRow')
   })
 

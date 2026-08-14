@@ -14,7 +14,6 @@ type SelectOption = {
 type OrderWorkbenchFilterBarProps = {
   readonly search: string
   readonly shopId?: string
-  readonly employeeCode: string
   readonly addressValidationStatus?: string
   readonly dates: DateRangeValue
   readonly hasActiveFilters: boolean
@@ -23,13 +22,11 @@ type OrderWorkbenchFilterBarProps = {
   readonly filtersLabel: string
   readonly searchPlaceholder: string
   readonly shopPlaceholder: string
-  readonly sellerPlaceholder: string
   readonly addressPlaceholder: string
   readonly clearLabel: string
   readonly loadingShops: boolean
   readonly onSearchChange: (value: string) => void
   readonly onShopChange: (value?: string) => void
-  readonly onEmployeeCodeChange: (value: string) => void
   readonly onAddressValidationStatusChange: (value?: string) => void
   readonly onDatesChange: (value: { dateFrom?: string; dateTo?: string }) => void
   readonly onClearFilters: () => void
@@ -38,7 +35,6 @@ type OrderWorkbenchFilterBarProps = {
 export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = ({
   search,
   shopId,
-  employeeCode,
   addressValidationStatus,
   dates,
   hasActiveFilters,
@@ -47,13 +43,11 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = ({
   filtersLabel,
   searchPlaceholder,
   shopPlaceholder,
-  sellerPlaceholder,
   addressPlaceholder,
   clearLabel,
   loadingShops,
   onSearchChange,
   onShopChange,
-  onEmployeeCodeChange,
   onAddressValidationStatusChange,
   onDatesChange,
   onClearFilters,
@@ -76,12 +70,6 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = ({
         placeholder={shopPlaceholder}
         options={shopOptions}
         onChange={onShopChange}
-      />
-      <SearchInput
-        className={styles.sellerFilter}
-        value={employeeCode}
-        onSearchChange={onEmployeeCodeChange}
-        placeholder={sellerPlaceholder}
       />
       <Select
         className={styles.filterSelect}

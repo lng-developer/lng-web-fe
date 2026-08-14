@@ -89,6 +89,33 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
   return [item, ...items.filter(({ id }) => id !== item.id)]
 }
 
+function mergeRealtimeConversation(
+  items: ChatConversation[],
+  conversation: ChatConversation,
+  message: ChatMessage,
+  currentAccountId: string,
+  openConversationId: string | null,
+) {
+  const existing = items.find(({ id }) => id === conversation.id)
+  const alreadyApplied =
+    existing?.lastMessageAt === conversation.lastMessageAt &&
+    existing?.lastMessageSenderAccountId === conversation.lastMessageSenderAccountId &&
+    existing?.lastMessagePreview === conversation.lastMessagePreview
+  const shouldMarkUnread =
+    message.senderAccountId !== currentAccountId && message.conversationId !== openConversationId
+  const unreadCount = shouldMarkUnread
+    ? alreadyApplied
+      ? existing?.unreadCount || conversation.unreadCount || 1
+      : Math.max(existing?.unreadCount || 0, conversation.unreadCount || 0) + 1
+    : 0
+
+  return upsertById(items, {
+    ...conversation,
+    unreadCount,
+    hasUnreadFromOthers: shouldMarkUnread,
+  })
+}
+
 export function ChatShell({ account }: ChatShellProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -104,6 +131,8 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatPreviewRef = useRef<HTMLDivElement>(null)
   const quickMessagesEndRef = useRef<HTMLDivElement | null>(null)
   const chatSocketRef = useRef<ChatSocket | null>(null)
+  const quickConversationIdRef = useRef<string | null>(null)
+  const isChatWorkspaceRef = useRef(false)
   const chatLabel = t('shell.navigation.chat')
   const isChatWorkspace = location.pathname === '/portal/chat'
   const overlayRoot = typeof document === 'undefined' ? null : document.body
@@ -125,6 +154,14 @@ export function ChatShell({ account }: ChatShellProps) {
   }, [isChatPreviewOpen])
 
   useEffect(() => {
+    quickConversationIdRef.current = quickConversationId
+  }, [quickConversationId])
+
+  useEffect(() => {
+    isChatWorkspaceRef.current = isChatWorkspace
+  }, [isChatWorkspace])
+
+  useEffect(() => {
     const socket = createChatSocket()
     chatSocketRef.current = socket
     if (!socket) return
@@ -132,6 +169,7 @@ export function ChatShell({ account }: ChatShellProps) {
     socket.on('disconnect', () => setSocketReady(false))
     socket.on('connect_error', () => setSocketReady(false))
     socket.on('message.created', ({ conversation, message }) => {
+      if (isChatWorkspaceRef.current) return
       queryClient.setQueryData<ChatPage<ChatMessage>>(
         chatKeys.messages(message.conversationId),
         (current) =>
@@ -145,7 +183,18 @@ export function ChatShell({ account }: ChatShellProps) {
       queryClient.setQueriesData<ChatPage<ChatConversation>>(
         { queryKey: [...chatKeys.all, 'conversations'] },
         (current) =>
-          current ? { ...current, items: upsertById(current.items, conversation) } : current,
+          current
+            ? {
+                ...current,
+                items: mergeRealtimeConversation(
+                  current.items,
+                  conversation,
+                  message,
+                  account.account.id,
+                  quickConversationIdRef.current,
+                ),
+              }
+            : current,
       )
     })
     return () => {

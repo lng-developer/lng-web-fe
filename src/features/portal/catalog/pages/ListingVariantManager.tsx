@@ -21,6 +21,7 @@ import {
   Upload,
 } from 'antd'
 
+import { printMethodSelectOptions } from '@/shared/constants/printMethods'
 import { useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -122,6 +123,7 @@ export function ListingVariantManager({
         : {
             productTypeGroupId: variant.productTypeGroup.id,
             internalTemplateId: variant.internalTemplate?.id ?? null,
+            printMethod: variant.printMethod ?? null,
             scaleDifficulty: variant.scaleDifficulty ?? { level: 'NORMAL', reason: null },
             status: variant.status,
           },
@@ -154,6 +156,10 @@ export function ListingVariantManager({
         pagination={false}
         columns={[
           { title: 'Product type', render: (_, row) => row.productTypeGroup.name },
+          {
+            title: 'Method',
+            render: (_, row) => row.printMethod || row.productTypeGroup.printMethod || '-',
+          },
           { title: 'Template', render: (_, row) => row.internalTemplate?.name ?? '-' },
           {
             title: 'PSD',
@@ -282,6 +288,13 @@ export function ListingVariantManager({
           </Form.Item>
           <Form.Item name="internalTemplateId" label="Internal template">
             <Select allowClear options={templateOptions} />
+          </Form.Item>
+          <Form.Item name="printMethod" label="Print method">
+            <Select
+              allowClear
+              options={printMethodSelectOptions}
+              placeholder="Inherit product type"
+            />
           </Form.Item>
           <Form.Item name={['scaleDifficulty', 'level']} label="Scale difficulty">
             <Select

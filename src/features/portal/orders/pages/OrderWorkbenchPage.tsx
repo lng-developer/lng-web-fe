@@ -70,7 +70,6 @@ export function OrderWorkbenchPage() {
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [shopId, setShopId] = useState<string>()
-  const [employeeCode, setEmployeeCode] = useState('')
   const [addressValidationStatus, setAddressValidationStatus] = useState<AddressValidationStatus>()
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>(EMPTY_DATES)
   const [orderAction, setOrderAction] = useState<OrderAction>()
@@ -89,11 +88,10 @@ export function OrderWorkbenchPage() {
       tab,
       search: deferredSearch,
       shopId,
-      employeeCode,
       addressValidationStatus,
       ...dates,
     }),
-    [addressValidationStatus, dates, employeeCode, page, deferredSearch, shopId, tab],
+    [addressValidationStatus, dates, page, deferredSearch, shopId, tab],
   )
   const summaryParams = useMemo(
     () => ({
@@ -101,11 +99,10 @@ export function OrderWorkbenchPage() {
       limit: 1,
       search: deferredSearch,
       shopId,
-      employeeCode,
       addressValidationStatus,
       ...dates,
     }),
-    [addressValidationStatus, dates, employeeCode, deferredSearch, shopId],
+    [addressValidationStatus, dates, deferredSearch, shopId],
   )
   const orders = useQuery({
     queryKey: orderKeys.workbench(params),
@@ -145,10 +142,6 @@ export function OrderWorkbenchPage() {
     setShopId(value)
     setPage(1)
   }, [])
-  const onEmployeeCodeChange = useCallback((value: string) => {
-    setEmployeeCode(value)
-    setPage(1)
-  }, [])
   const onAddressValidationStatusChange = useCallback((value?: string) => {
     setAddressValidationStatus(value as AddressValidationStatus | undefined)
     setPage(1)
@@ -181,7 +174,6 @@ export function OrderWorkbenchPage() {
   // R4: stable clear filter handler
   const handleClearFilters = useCallback(() => {
     setShopId(undefined)
-    setEmployeeCode('')
     setAddressValidationStatus(undefined)
     setDates(EMPTY_DATES)
     setPage(1)
@@ -214,7 +206,7 @@ export function OrderWorkbenchPage() {
     [orders.data],
   )
   const hasActiveFilters = Boolean(
-    shopId || employeeCode || addressValidationStatus || dates.dateFrom || dates.dateTo,
+    shopId || addressValidationStatus || dates.dateFrom || dates.dateTo,
   )
   const pagination = useMemo(
     () => ({
@@ -445,7 +437,6 @@ export function OrderWorkbenchPage() {
       <OrderWorkbenchFilterBar
         search={search}
         shopId={shopId}
-        employeeCode={employeeCode}
         addressValidationStatus={addressValidationStatus}
         dates={dates}
         hasActiveFilters={hasActiveFilters}
@@ -454,13 +445,11 @@ export function OrderWorkbenchPage() {
         filtersLabel={t('orders.filters.label')}
         searchPlaceholder={t('orders.filters.search')}
         shopPlaceholder={t('orders.filters.shop')}
-        sellerPlaceholder={t('orders.filters.seller')}
         addressPlaceholder={t('orders.filters.addressStatus')}
         clearLabel={t('orders.filters.clear')}
         loadingShops={shops.isLoading}
         onSearchChange={onSearchChange}
         onShopChange={onShopChange}
-        onEmployeeCodeChange={onEmployeeCodeChange}
         onAddressValidationStatusChange={onAddressValidationStatusChange}
         onDatesChange={onDatesChange}
         onClearFilters={handleClearFilters}

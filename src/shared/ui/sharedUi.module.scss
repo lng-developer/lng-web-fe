@@ -328,6 +328,10 @@
   margin-top: 8px;
 }
 
+.dataTable :global(.ant-table-body) {
+  scrollbar-gutter: stable;
+}
+
 .dataTableToolbar {
   display: flex;
   justify-content: space-between;

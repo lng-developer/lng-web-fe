@@ -144,6 +144,33 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
   return [item, ...items.filter(({ id }) => id !== item.id)]
 }
 
+function mergeRealtimeConversation(
+  items: ChatConversation[],
+  conversation: ChatConversation,
+  message: ChatMessage,
+  currentAccountId: string | undefined,
+  activeConversationId: string | null,
+) {
+  const existing = items.find(({ id }) => id === conversation.id)
+  const alreadyApplied =
+    existing?.lastMessageAt === conversation.lastMessageAt &&
+    existing?.lastMessageSenderAccountId === conversation.lastMessageSenderAccountId &&
+    existing?.lastMessagePreview === conversation.lastMessagePreview
+  const shouldMarkUnread =
+    message.senderAccountId !== currentAccountId && message.conversationId !== activeConversationId
+  const unreadCount = shouldMarkUnread
+    ? alreadyApplied
+      ? existing?.unreadCount || conversation.unreadCount || 1
+      : Math.max(existing?.unreadCount || 0, conversation.unreadCount || 0) + 1
+    : 0
+
+  return upsertById(items, {
+    ...conversation,
+    unreadCount,
+    hasUnreadFromOthers: shouldMarkUnread,
+  })
+}
+
 export function ChatWorkspacePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -159,6 +186,7 @@ export function ChatWorkspacePage() {
   const [files, setFiles] = useState<UploadFile[]>([])
   const socketRef = useRef<ChatSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const activeConversationIdRef = useRef<string | null>(null)
   const account = getAccount()
 
   const conversations = useQuery({
@@ -214,6 +242,10 @@ export function ChatWorkspacePage() {
   })
 
   useEffect(() => {
+    activeConversationIdRef.current = activeConversationId
+  }, [activeConversationId])
+
+  useEffect(() => {
     const socket = createChatSocket()
     socketRef.current = socket
     if (!socket) return
@@ -231,7 +263,18 @@ export function ChatWorkspacePage() {
       queryClient.setQueriesData<ChatPage<ChatConversation>>(
         { queryKey: [...chatKeys.all, 'conversations'] },
         (current) =>
-          current ? { ...current, items: upsertById(current.items, conversation) } : current,
+          current
+            ? {
+                ...current,
+                items: mergeRealtimeConversation(
+                  current.items,
+                  conversation,
+                  message,
+                  account?.id,
+                  activeConversationIdRef.current,
+                ),
+              }
+            : current,
       )
     })
     socket.on('presence.changed', ({ accountId, presence }) => {

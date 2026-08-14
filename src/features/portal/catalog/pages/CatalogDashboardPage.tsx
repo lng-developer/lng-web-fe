@@ -59,6 +59,14 @@ const topListingsColumns = [
   },
 ]
 
+function marketplaceListingUrl(listing: Listing) {
+  if (listing.salesChannelCode === 'ETSY' && listing.etsyListingId) {
+    return `https://www.etsy.com/listing/${listing.etsyListingId}`
+  }
+  if (listing.asin) return `https://www.amazon.com/dp/${listing.asin}`
+  return null
+}
+
 export function CatalogDashboardPage() {
   const summary = useQuery({
     queryKey: catalogKeys.summary({}),
@@ -151,6 +159,13 @@ export function CatalogDashboardPage() {
               loading={topListings.isLoading}
               pagination={false}
               rowKey="id"
+              onRow={(listing) => ({
+                onClick: () => {
+                  const url = marketplaceListingUrl(listing)
+                  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+                },
+                style: { cursor: marketplaceListingUrl(listing) ? 'pointer' : undefined },
+              })}
             />
           </Card>
         </Col>

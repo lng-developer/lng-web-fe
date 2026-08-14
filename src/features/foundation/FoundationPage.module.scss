@@ -302,9 +302,34 @@
   font-size: 13px;
 }
 
-.recentOrderRow > span:first-child {
+.recentOrderProduct {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.recentOrderProduct > span:last-child {
   min-width: 0;
   display: grid;
+}
+
+.recentOrderImage {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+  color: var(--mock-orange);
+}
+
+.recentOrderImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .recentOrderRow strong,

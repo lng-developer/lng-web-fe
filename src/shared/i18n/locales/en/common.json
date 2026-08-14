@@ -1411,6 +1411,7 @@
         "code": "Code",
         "name": "Name",
         "order": "Sort order",
+        "printMethod": "Print method",
         "status": "Status"
       },
       "details": {
@@ -2064,6 +2065,7 @@
       "imageUrl": "Image URL",
       "productUrl": "Product URL",
       "designTemplateUrl": "Design template URL",
+      "printMethod": "Print method",
       "sku": "SKU",
       "lngCode": "LNG code",
       "vendorSize": "Vendor size",
