@@ -225,6 +225,18 @@ export const requestListingVariantPsd = async (listingId: string, variantId: str
   unwrap<{ id: string }>(
     await apiClient.post(`/api/catalog/listings/${listingId}/variants/${variantId}/request-psd`),
   )
+export const applyListingVariantPsdToCompatible = async (listingId: string, variantId: string) =>
+  unwrap<{
+    matchedCount: number
+    psdTemplateAssetId: string
+    sourceVariantId: string
+    updatedVariantIds: string[]
+  }>(
+    await apiClient.post(
+      `/api/catalog/listings/${listingId}/variants/${variantId}/apply-psd-compatible`,
+      { onlyMissing: true },
+    ),
+  )
 
 export const listProductTypeGroups = async (params: {
   page: number
