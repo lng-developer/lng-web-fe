@@ -105,8 +105,8 @@ describe('shared UI', () => {
       </>,
     )
 
-    expect(screen.getByText('Ready')).toHaveClass('ant-tag-blue')
-    expect(screen.getByText('Submitting')).toHaveClass('ant-tag-processing')
+    expect(screen.getByText('Ready')).toHaveStyle({ color: 'var(--ant-color-info)' })
+    expect(screen.getByText('Submitting')).toHaveStyle({ color: 'var(--ant-color-primary)' })
   })
 
   it('renders accessible empty and error states', () => {
@@ -191,6 +191,17 @@ describe('shared UI', () => {
       expect(within(dialog!).getByRole('button', { name: /Delete role/ })).toBeVisible()
       expect(within(dialog!).getByLabelText('Delete action icon')).toBeVisible()
     })
+  })
+
+  it('activates clickable metric cards with Enter and Space', () => {
+    const onClick = vi.fn()
+    render(<MetricCard label="Blocked" value={3} onClick={onClick} />)
+
+    const metric = screen.getByRole('button', { name: /Blocked/i })
+    fireEvent.keyDown(metric, { key: 'Enter' })
+    fireEvent.keyDown(metric, { key: ' ' })
+
+    expect(onClick).toHaveBeenCalledTimes(2)
   })
 
   it('renders upload, bulk action, command palette, and chart foundations', () => {

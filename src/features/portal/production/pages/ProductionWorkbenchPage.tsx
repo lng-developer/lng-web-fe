@@ -18,7 +18,6 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   ClockCircleOutlined,
-  ReloadOutlined,
   ScissorOutlined,
   StopOutlined,
   WarningOutlined,
@@ -27,7 +26,19 @@ import {
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typography } from 'antd'
+import {
+  Button,
+  Flex,
+  Input,
+  Modal,
+  Radio,
+  Segmented,
+  Select,
+  Slider,
+  Space,
+  Tag,
+  Typography,
+} from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
@@ -571,6 +582,7 @@ export function ProductionWorkbenchPage({
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
+  const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()
   const [status, setStatus] = useState<ProductionStatus>()
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
   const [inspect, setInspect] = useState<{
@@ -580,6 +592,7 @@ export function ProductionWorkbenchPage({
   }>()
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [expandedRowKeys, setExpandedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
   const [uploadingFileCheckIds, setUploadingFileCheckIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -628,22 +641,29 @@ export function ProductionWorkbenchPage({
   const filters = useMemo(
     () => ({
       search: deferredSearch || undefined,
+      salesChannelCode,
+      psdReadyOnly: true,
       scaleDifficultyLevel,
       status: tab === 'blocked' ? ('BLOCKED' as const) : status,
       view: tab === 'blocked' ? undefined : tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
     }),
-    [deferredSearch, scaleDifficultyLevel, status, tab],
+    [deferredSearch, salesChannelCode, scaleDifficultyLevel, status, tab],
   )
   const params = useMemo(() => ({ ...filters, page, limit: PAGE_SIZE }), [filters, page])
   const summaryFilters = useMemo(
     () => ({
       search: deferredSearch || undefined,
+      salesChannelCode,
+      psdReadyOnly: true,
       status: tab === 'blocked' ? ('BLOCKED' as const) : status,
       view: tab === 'blocked' ? undefined : ((tab === 'qc' ? 'QC' : 'SCALE') as 'QC' | 'SCALE'),
     }),
-    [deferredSearch, status, tab],
+    [deferredSearch, salesChannelCode, status, tab],
   )
-  const queueFilters = useMemo(() => ({ search: deferredSearch || undefined }), [deferredSearch])
+  const queueFilters = useMemo(
+    () => ({ search: deferredSearch || undefined, salesChannelCode, psdReadyOnly: true }),
+    [deferredSearch, salesChannelCode],
+  )
   const statusOptions = useMemo(
     () =>
       (tab === 'blocked' ? BLOCKED_STATUSES : tab === 'scale' ? SCALE_STATUSES : QC_STATUSES).map(
@@ -690,7 +710,7 @@ export function ProductionWorkbenchPage({
     refetchOnWindowFocus: false,
     retry: false,
   })
-  const summaryRows = tasks.data?.items ?? []
+  const summaryRows = useMemo(() => tasks.data?.items ?? [], [tasks.data?.items])
   const displaySummary = useMemo(() => {
     if ((summary.data?.total ?? 0) > 0 || summaryRows.length === 0) return summary.data
     return {
@@ -773,6 +793,7 @@ export function ProductionWorkbenchPage({
     setStatus(undefined)
     setScaleDifficultyLevel(undefined)
     setSelectedRowKeys([])
+    setExpandedRowKeys([])
     setDecisions({})
   }, [])
   const handleSearchChange = useCallback((value: string) => {
@@ -783,11 +804,18 @@ export function ProductionWorkbenchPage({
     setStatus(value)
     setPage(1)
   }, [])
+  const handleSalesChannelChange = useCallback((value: string | number) => {
+    setSalesChannelCode(value === 'ALL' ? undefined : (value as 'AMAZON' | 'ETSY'))
+    setPage(1)
+    setSelectedRowKeys([])
+    setExpandedRowKeys([])
+  }, [])
   const handleBlockedMetricClick = useCallback(() => {
     setTab('blocked')
     setStatus(undefined)
     setScaleDifficultyLevel(undefined)
     setSelectedRowKeys([])
+    setExpandedRowKeys([])
     setPage(1)
   }, [])
   const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
@@ -796,8 +824,11 @@ export function ProductionWorkbenchPage({
   }, [])
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage)
+    setExpandedRowKeys([])
   }, [])
-  const handleRefresh = useCallback(() => void refresh(), [refresh])
+  const handleExpandedRowsChange = useCallback((keys: readonly Key[]) => {
+    setExpandedRowKeys([...keys])
+  }, [])
   const handleScaleAssigneeChange = useCallback((value?: string) => {
     setScaleAssigneeId(value)
   }, [])
@@ -952,7 +983,7 @@ export function ProductionWorkbenchPage({
     [handleSetInspectionDecision],
   )
   const displayedTasks = useDeferredValue(tasks.data)
-  const rows = displayedTasks?.items ?? []
+  const rows = useMemo(() => displayedTasks?.items ?? [], [displayedTasks?.items])
   const selectedTasks = useMemo(
     () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
     [rows, selectedRowKeys],
@@ -981,7 +1012,7 @@ export function ProductionWorkbenchPage({
           const checks = row.qcPreviewFileChecks || row.fileChecks || []
           return (
             checks
-              .filter((check) => check.required)
+              .filter((check) => check.required && check.sourceType !== 'PSD_TEMPLATE')
               .map((check) => check.slotLabel || check.slotKey)
               .join(', ') || '-'
           )
@@ -1047,9 +1078,6 @@ export function ProductionWorkbenchPage({
                 {t('portal.production.recheckBlocked')}
               </Button>
             ) : null}
-            <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
-              {t('portal.production.refresh')}
-            </Button>
           </Space>
         }
       />
@@ -1096,12 +1124,25 @@ export function ProductionWorkbenchPage({
       </div>
       <div className={styles.workspace}>
         <section className={styles.queuePane} aria-label={t('portal.production.title')}>
-          <UiTabs
-            className={styles.queueTabs}
-            activeKey={tab}
-            onChange={handleTabChange}
-            items={tabItems}
-          />
+          <div className={styles.queueHeader}>
+            <UiTabs
+              className={styles.queueTabs}
+              activeKey={tab}
+              onChange={handleTabChange}
+              items={tabItems}
+            />
+            <Select
+              className={styles.channelFilter}
+              value={salesChannelCode ?? 'ALL'}
+              aria-label={t('portal.production.channel')}
+              options={[
+                { label: t('portal.production.channelAll'), value: 'ALL' },
+                { label: 'Amazon', value: 'AMAZON' },
+                { label: 'Etsy', value: 'ETSY' },
+              ]}
+              onChange={handleSalesChannelChange}
+            />
+          </div>
           <ProductionWorkbenchFilterBar
             search={search}
             status={status}
@@ -1144,9 +1185,10 @@ export function ProductionWorkbenchPage({
               showSizeChanger: false,
               onChange: handlePageChange,
             }}
+            scroll={{ x: 1240, y: 'calc(100vh - 410px)' }}
             expandable={{
-              expandedRowKeys: rows.map((row) => row.id),
-              showExpandColumn: false,
+              expandedRowKeys,
+              onExpandedRowsChange: handleExpandedRowsChange,
               expandedRowRender: (row) => {
                 const task = row
                 return (

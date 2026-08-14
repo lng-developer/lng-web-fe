@@ -376,14 +376,6 @@ export function MonitoringDashboardPage() {
                 Updated at {new Date(health.generatedAt).toLocaleTimeString()}
               </Typography.Text>
             ) : null}
-            <Button
-              type="primary"
-              icon={<ReloadOutlined spin={loading} />}
-              loading={loading}
-              onClick={() => void refresh()}
-            >
-              Refresh
-            </Button>
           </Space>
         }
       />

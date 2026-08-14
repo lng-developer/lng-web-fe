@@ -10,7 +10,6 @@ import {
   FileImageOutlined,
   FileTextOutlined,
   PlusOutlined,
-  ReloadOutlined,
   StopOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -303,9 +302,6 @@ export function CatalogListingWorkbenchPage({
         description={t('portal.catalog.description')}
         actions={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => void refresh()}>
-              {t('portal.catalog.refresh')}
-            </Button>
             {canWrite() ? (
               <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing('create')}>
                 {t('portal.catalog.create')}

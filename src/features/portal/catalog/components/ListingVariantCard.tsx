@@ -43,15 +43,7 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
 
   if (!data.length) {
     return (
-      <div
-        style={{
-          padding: '16px',
-          color: '#aaa',
-          textAlign: 'center',
-          border: '1.5px dashed #e8e8e8',
-          borderRadius: 8,
-        }}
-      >
+      <div className={styles.empty}>
         <Typography.Text type="secondary">No variants configured yet</Typography.Text>
       </div>
     )

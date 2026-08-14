@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Button, Space } from 'antd'
 
+import styles from './sharedUi.module.scss'
+
 export interface FormActionsProps {
   readonly dirty: boolean
   readonly submitLabel: string
@@ -23,7 +25,7 @@ export function FormActions({
   onSubmit,
 }: FormActionsProps) {
   return (
-    <Space>
+    <Space className={styles.formActions}>
       {extra}
       <Button onClick={onCancel}>{cancelLabel}</Button>
       <Button

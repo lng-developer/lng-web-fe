@@ -9,7 +9,6 @@ import {
   EnvironmentOutlined,
   FileExclamationOutlined,
   HistoryOutlined,
-  ReloadOutlined,
   SwapOutlined,
   TruckOutlined,
 } from '@ant-design/icons'
@@ -22,11 +21,14 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
+import { listVendors } from '@/features/portal/vendors/api/vendorApi'
+import { vendorKeys } from '@/features/portal/vendors/api/vendorKeys'
 import { canUseScopedPermission } from '@/shared/auth/permissions'
 import {
   CopyableOrderId,
   DataTable,
   FeedbackAlert,
+  PageHeader,
   type PopupModalAnchor,
   StatusTag,
   UiTabLabel,
@@ -54,10 +56,7 @@ const TABS = [
   'CANCELLED',
   'OPEN_CASE',
 ] as const
-const ADDRESS_STATUSES = ['NOT_CHECKED', 'VALID', 'INVALID', 'WARNING', 'OVERRIDDEN'] as const
-
 type TabKey = (typeof TABS)[number]
-type AddressValidationStatus = (typeof ADDRESS_STATUSES)[number]
 type OrderModal = 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline'
 type OrderAction = { orderId: string; modal: OrderModal; anchor?: PopupModalAnchor }
 const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
@@ -70,8 +69,7 @@ export function OrderWorkbenchPage() {
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [shopId, setShopId] = useState<string>()
-  const [employeeCode, setEmployeeCode] = useState('')
-  const [addressValidationStatus, setAddressValidationStatus] = useState<AddressValidationStatus>()
+  const [vendorId, setVendorId] = useState<string>()
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>(EMPTY_DATES)
   const [orderAction, setOrderAction] = useState<OrderAction>()
   const canWriteOrder = useCallback(
@@ -89,11 +87,10 @@ export function OrderWorkbenchPage() {
       tab,
       search: deferredSearch,
       shopId,
-      employeeCode,
-      addressValidationStatus,
+      vendorId,
       ...dates,
     }),
-    [addressValidationStatus, dates, employeeCode, page, deferredSearch, shopId, tab],
+    [dates, page, deferredSearch, shopId, tab, vendorId],
   )
   const summaryParams = useMemo(
     () => ({
@@ -101,11 +98,10 @@ export function OrderWorkbenchPage() {
       limit: 1,
       search: deferredSearch,
       shopId,
-      employeeCode,
-      addressValidationStatus,
+      vendorId,
       ...dates,
     }),
-    [addressValidationStatus, dates, employeeCode, deferredSearch, shopId],
+    [dates, deferredSearch, shopId, vendorId],
   )
   const orders = useQuery({
     queryKey: orderKeys.workbench(params),
@@ -129,9 +125,19 @@ export function OrderWorkbenchPage() {
     queryFn: () => listShops(shopParams),
     retry: false,
   })
+  const vendorParams = useMemo(() => ({ page: 1, limit: 100, status: 'ACTIVE' as const }), [])
+  const vendors = useQuery({
+    queryKey: vendorKeys.vendors(vendorParams),
+    queryFn: () => listVendors(vendorParams),
+    retry: false,
+  })
   const shopOptions = useMemo(
     () => (shops.data?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name })),
     [shops.data],
+  )
+  const vendorOptions = useMemo(
+    () => (vendors.data?.items ?? []).map((vendor) => ({ value: vendor.id, label: vendor.name })),
+    [vendors.data],
   )
   const onSearchChange = useCallback((value: string) => {
     setSearch(value)
@@ -145,12 +151,8 @@ export function OrderWorkbenchPage() {
     setShopId(value)
     setPage(1)
   }, [])
-  const onEmployeeCodeChange = useCallback((value: string) => {
-    setEmployeeCode(value)
-    setPage(1)
-  }, [])
-  const onAddressValidationStatusChange = useCallback((value?: string) => {
-    setAddressValidationStatus(value as AddressValidationStatus | undefined)
+  const onVendorChange = useCallback((value?: string) => {
+    setVendorId(value)
     setPage(1)
   }, [])
   const onDatesChange = useCallback((value: { dateFrom?: string; dateTo?: string }) => {
@@ -173,28 +175,13 @@ export function OrderWorkbenchPage() {
     },
     [],
   )
-  // W2: stable refetch handler — avoid new fn ref on every render
-  const handleRefetch = useCallback(
-    () => void Promise.all([orders.refetch(), summary.refetch()]),
-    [orders, summary],
-  )
   // R4: stable clear filter handler
   const handleClearFilters = useCallback(() => {
     setShopId(undefined)
-    setEmployeeCode('')
-    setAddressValidationStatus(undefined)
+    setVendorId(undefined)
     setDates(EMPTY_DATES)
     setPage(1)
   }, [])
-  // R2: memoize address status options — avoids .map() on every render
-  const addressStatusOptions = useMemo(
-    () =>
-      ADDRESS_STATUSES.map((status) => ({
-        value: status,
-        label: t(`orders.addressStatuses.${status}`),
-      })),
-    [t],
-  )
   // R2: memoize tab items — avoids recreating array on every render
   const tabItems = useMemo(
     () =>
@@ -213,9 +200,7 @@ export function OrderWorkbenchPage() {
     () => (orders.data?.items ?? []).map((row) => row.order.id),
     [orders.data],
   )
-  const hasActiveFilters = Boolean(
-    shopId || employeeCode || addressValidationStatus || dates.dateFrom || dates.dateTo,
-  )
+  const hasActiveFilters = Boolean(shopId || vendorId || dates.dateFrom || dates.dateTo)
   const pagination = useMemo(
     () => ({
       current: page,
@@ -427,41 +412,31 @@ export function OrderWorkbenchPage() {
           ),
       },
     ],
-    [canWriteOrder, i18n.language, t],
+    [canWriteOrder, i18n.language, openOrderModal, t],
   )
 
   return (
     <section className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <Typography.Title level={3}>{t('orders.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('orders.description')}</Typography.Text>
-        </div>
-        <Button icon={<ReloadOutlined />} onClick={handleRefetch}>
-          {t('orders.actions.refresh')}
-        </Button>
-      </header>
+      <PageHeader title={t('orders.title')} description={t('orders.description')} />
       <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
       <OrderWorkbenchFilterBar
         search={search}
         shopId={shopId}
-        employeeCode={employeeCode}
-        addressValidationStatus={addressValidationStatus}
+        vendorId={vendorId}
         dates={dates}
         hasActiveFilters={hasActiveFilters}
         shopOptions={shopOptions}
-        addressStatusOptions={addressStatusOptions}
+        vendorOptions={vendorOptions}
         filtersLabel={t('orders.filters.label')}
         searchPlaceholder={t('orders.filters.search')}
         shopPlaceholder={t('orders.filters.shop')}
-        sellerPlaceholder={t('orders.filters.seller')}
-        addressPlaceholder={t('orders.filters.addressStatus')}
+        vendorPlaceholder={t('orders.filters.vendor')}
         clearLabel={t('orders.filters.clear')}
         loadingShops={shops.isLoading}
+        loadingVendors={vendors.isLoading}
         onSearchChange={onSearchChange}
         onShopChange={onShopChange}
-        onEmployeeCodeChange={onEmployeeCodeChange}
-        onAddressValidationStatusChange={onAddressValidationStatusChange}
+        onVendorChange={onVendorChange}
         onDatesChange={onDatesChange}
         onClearFilters={handleClearFilters}
       />

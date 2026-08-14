@@ -20,44 +20,44 @@ export interface StatusTagProps {
   readonly children: ReactNode
 }
 
-const colors: Record<OperationalStatus, string> = {
-  operational: 'success',
-  warning: 'warning',
-  critical: 'error',
-  pending: 'warning',
-  ready: 'blue',
-  processing: 'processing',
-  approved: 'success',
-  rejected: 'error',
-  cancelled: 'error',
-  draft: 'default',
-  finalized: 'purple',
-  paid: 'success',
+const tones: Record<OperationalStatus, { bg: string; border: string; color: string }> = {
+  operational: tone('success'),
+  warning: tone('warning'),
+  critical: tone('error'),
+  pending: tone('warning'),
+  ready: tone('info'),
+  processing: tone('processing'),
+  approved: tone('success'),
+  rejected: tone('error'),
+  cancelled: tone('error'),
+  draft: {
+    bg: 'var(--ant-color-fill-tertiary)',
+    border: 'var(--ant-color-border)',
+    color: 'var(--ant-color-text-secondary)',
+  },
+  finalized: tone('purple'),
+  paid: tone('success'),
 }
 
-const backgrounds: Record<OperationalStatus, string> = {
-  operational: '#f0fdf4',
-  warning: '#fffbeb',
-  critical: '#fef2f2',
-  pending: '#fffbeb',
-  ready: '#eff6ff',
-  processing: '#eff6ff',
-  approved: '#f0fdf4',
-  rejected: '#fef2f2',
-  cancelled: '#fef2f2',
-  draft: '#f5f5f5',
-  finalized: '#faf5ff',
-  paid: '#f0fdf4',
+function tone(token: 'error' | 'info' | 'processing' | 'purple' | 'success' | 'warning') {
+  const colorToken = token === 'processing' ? 'primary' : token
+  return {
+    bg: `color-mix(in srgb, var(--ant-color-${colorToken}-bg) 64%, var(--ant-color-bg-container))`,
+    border: `color-mix(in srgb, var(--ant-color-${colorToken}) 42%, var(--ant-color-border))`,
+    color: `var(--ant-color-${colorToken})`,
+  }
 }
 
 export function StatusTag({ status, children }: StatusTagProps) {
+  const tone = tones[status] ?? tones.draft
   return (
     <Tag
-      color={colors[status] || 'default'}
       style={{
-        backgroundColor: backgrounds[status] || '#f5f5f5',
-        borderColor: 'currentColor',
+        backgroundColor: tone.bg,
+        borderColor: tone.border,
         borderRadius: 999,
+        color: tone.color,
+        fontWeight: 700,
         paddingInline: 8,
       }}
     >

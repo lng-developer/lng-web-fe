@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined, LinkOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { Button, Input, Typography, Upload } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
-import { StatusTag, useFeedbackToast } from '@/shared/ui'
+import { StatusTag, useFeedbackToast, ZoomableImage } from '@/shared/ui'
 
 import {
   type FileCheck,
@@ -43,6 +43,18 @@ function formatCustomization(inputs: Record<string, unknown> | null | undefined)
       return [[label, formatted] as const]
     })
   })
+}
+
+function productUrl(task: ProductionTask) {
+  const channel =
+    task.orderItem?.salesChannelCode ||
+    task.listing?.salesChannelCode ||
+    task.scaleContext?.use?.listing?.salesChannelCode
+  const asin = task.orderItem?.asin || task.listing?.asin
+  const etsyListingId = task.orderItem?.etsyListingId || task.listing?.etsyListingId
+  if (channel === 'ETSY' && etsyListingId) return `https://www.etsy.com/listing/${etsyListingId}`
+  if (asin) return `https://www.amazon.com/dp/${asin}`
+  return null
 }
 
 function TaskNoteEditor({
@@ -160,7 +172,12 @@ export function ProductionWorkbenchExpandedRow({
     (check) => check.sourceType === 'CUSTOMER_IMAGE' && check.inputAssetDownloadUrl,
   )
   const sourceArtwork = artworkCheck?.inputAssetDownloadUrl
+  const customerImage = sourceArtwork || task.customization?.imageAssets?.[0]?.assetDownloadUrl
+  const customerImageName =
+    artworkCheck?.inputImageName || task.customization?.imageAssets?.[0]?.filename
   const listingArtwork = task.productImageUrl
+  const listingPreview = task.listing?.previewAssetDownloadUrl
+  const spUrl = productUrl(task)
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
   const outputChecks = checks.filter(
     (check) =>
@@ -273,18 +290,36 @@ export function ProductionWorkbenchExpandedRow({
           </div>
         </div>
         <div className={styles.artworkPreview}>
-          {sourceArtwork ? (
-            <AuthenticatedMediaImage
+          {customerImage || listingPreview || listingArtwork ? (
+            <ZoomableImage
               alt={t('portal.production.originalArtwork')}
-              downloadUrl={sourceArtwork}
+              downloadUrl={customerImage || listingPreview}
+              src={listingArtwork}
+              loading="lazy"
             />
-          ) : listingArtwork ? (
-            <img alt={t('portal.production.originalArtwork')} loading="lazy" src={listingArtwork} />
           ) : (
             t('portal.production.fileMissing')
           )}
         </div>
         <div className={styles.productActions}>
+          {spUrl ? (
+            <Button
+              icon={<LinkOutlined />}
+              onClick={() => window.open(spUrl, '_blank', 'noopener,noreferrer')}
+            >
+              {t('portal.production.openProduct', 'Open SP')}
+            </Button>
+          ) : null}
+          {customerImage ? (
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={() =>
+                void downloadMediaAsset(customerImage, customerImageName ?? 'customer-image')
+              }
+            >
+              {t('portal.production.downloadCustomerImage', 'Customer image')}
+            </Button>
+          ) : null}
           {psdTemplate?.assetDownloadUrl ? (
             <Button
               icon={<DownloadOutlined />}

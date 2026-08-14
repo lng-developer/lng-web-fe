@@ -4,6 +4,7 @@ import { CarOutlined, DollarOutlined, SettingOutlined, TagOutlined } from '@ant-
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, Drawer, Flex, Form, Input, InputNumber, Modal, Select, Switch, Tabs } from 'antd'
 
+import { printMethodSelectOptions } from '@/shared/constants/printMethods'
 import { FormActions, useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -141,6 +142,9 @@ export function VendorCostCenterEditorModal({
               </Form.Item>
               <Form.Item label={t('vendors.vendorColor')} name="vendorColor">
                 <Input placeholder="Vendor specific color" />
+              </Form.Item>
+              <Form.Item label={t('vendors.printMethod')} name="printMethod">
+                <Select allowClear options={printMethodSelectOptions} />
               </Form.Item>
             </div>
           </Card>

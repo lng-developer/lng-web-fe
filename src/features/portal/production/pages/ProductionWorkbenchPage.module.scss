@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .metrics {
@@ -33,8 +33,9 @@
 .taskPane {
   min-width: 0;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 8px;
   background: var(--ant-color-bg-container);
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
   overflow: hidden;
 }
 
@@ -46,7 +47,7 @@
 .queueTabs :global(.ant-tabs-nav) {
   margin: 0;
   border: none;
-  background: #fff;
+  background: var(--ant-color-bg-container);
 }
 
 .queueTabs :global(.ant-tabs-tab) {
@@ -54,7 +55,7 @@
 }
 
 .queueTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
-  border-bottom: 2px solid #ff4d4f !important;
+  border-bottom: 2px solid var(--ant-color-primary) !important;
 }
 
 .queuePane :global(.ant-table-wrapper) {
@@ -69,19 +70,50 @@
 }
 
 .queueControls {
-  padding: 12px 12px 4px;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  padding: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: linear-gradient(
+    180deg,
+    var(--ant-color-bg-container),
+    var(--ant-color-fill-quaternary)
+  );
+}
+
+.queuePane :global(.ant-table-body) {
+  scrollbar-gutter: stable;
+}
+
+.queueHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.queueHeader .channelFilter {
+  width: 150px;
+  flex-shrink: 0;
+  margin-top: 4px;
 }
 
 .inlineWorkspace {
   display: grid;
   grid-template-areas: 'product customization task output';
-  grid-template-columns: minmax(230px, 0.7fr) minmax(300px, 0.95fr) minmax(250px, 0.75fr) minmax(
+  grid-template-columns: minmax(340px, 0.9fr) minmax(300px, 0.9fr) minmax(250px, 0.75fr) minmax(
       400px,
       1.35fr
     );
-  gap: 12px;
+  gap: 14px;
   padding: 14px;
-  background: var(--ant-color-bg-layout);
+  background: linear-gradient(
+    180deg,
+    var(--ant-color-bg-container),
+    var(--ant-color-fill-quaternary)
+  );
 }
 
 .inlineSection {
@@ -91,9 +123,9 @@
   min-width: 0;
   padding: 16px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 8px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--ant-color-text) 5%, transparent);
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
 }
 
 .taskMeta {
@@ -104,9 +136,9 @@
   min-width: 0;
   padding: 16px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 8px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--ant-color-text) 5%, transparent);
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
 }
 
 .metaItem {
@@ -167,9 +199,13 @@
 }
 
 .productActions {
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.productActions :global(.ant-btn) {
+  min-width: 0;
 }
 
 .customizationSection {
@@ -181,14 +217,16 @@
 }
 
 .productIdentifiers {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .productIdentifiers > div {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 8px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .sectionHeader {
@@ -204,6 +242,14 @@
 .sectionHeader > div {
   display: grid;
   gap: 2px;
+}
+
+.sectionHeader strong,
+.metaItem > span:first-child,
+.optionGrid > div > span:first-child,
+.inputValue > span:first-child {
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .customizationList {
@@ -240,8 +286,9 @@
   align-content: start;
   padding: 12px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
-  background: var(--ant-color-fill-quaternary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 6px 16px rgb(15 23 42 / 4%);
 }
 
 .slotHeader,
@@ -490,14 +537,14 @@
   transition: all 0.18s;
 
   &:hover {
-    border-color: #ff4d4f;
-    color: #ff4d4f;
+    border-color: var(--ant-color-primary);
+    color: var(--ant-color-primary);
   }
 
   &.selected {
-    background: #fff1f0;
-    border-color: #ff4d4f;
-    color: #ff4d4f;
+    border-color: var(--ant-color-primary);
+    color: var(--ant-color-primary);
+    background: var(--ant-color-primary-bg);
     font-weight: 600;
   }
 }
@@ -517,7 +564,7 @@
   min-height: 420px;
   padding: 8px 12px;
   overflow: auto;
-  background: var(--ant-color-fill-quaternary);
+  background: var(--ant-color-bg-layout);
 }
 
 .queueTask {
@@ -525,8 +572,8 @@
   display: grid;
   gap: 7px;
   padding: 12px;
-  border: 1px solid transparent;
-  border-radius: var(--ant-border-radius-lg);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
   background: var(--ant-color-bg-container);
   transition:
     border-color 160ms ease,
@@ -656,7 +703,7 @@
 .artworkPreview {
   display: grid;
   place-items: center;
-  min-height: 180px;
+  min-height: 240px;
   margin-top: 6px;
   overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);
@@ -666,8 +713,14 @@
 
 .artworkPreview img {
   max-width: 100%;
-  max-height: 240px;
+  max-height: 280px;
   object-fit: contain;
+}
+
+.artworkPreview :global(.ant-image) {
+  display: grid;
+  place-items: center;
+  width: 100%;
 }
 
 .slotSummary {
@@ -681,7 +734,7 @@
   gap: 2px;
   padding: 10px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 8px;
   background: var(--ant-color-fill-quaternary);
 }
 
@@ -731,7 +784,7 @@
   width: 100%;
   padding: 12px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 8px;
   background: var(--ant-color-fill-quaternary);
 }
 

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Typography } from 'antd'
 
+import styles from './sharedUi.module.scss'
+
 export interface PageHeaderProps {
   /** Retained for page call-site compatibility. */
   readonly title: string
@@ -13,56 +15,24 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, description, updatedAt, actions }: PageHeaderProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        borderBottom: '1px solid var(--ant-color-border-secondary)',
-        paddingBottom: 16,
-        marginBottom: 24,
-        flexWrap: 'wrap',
-        gap: 16,
-      }}
-    >
-      <div>
-        <Typography.Title
-          level={2}
-          style={{ margin: 0, fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}
-        >
+    <header className={styles.pageHeader}>
+      <div className={styles.pageHeaderMain}>
+        <Typography.Title level={2} className={styles.pageHeaderTitle}>
           {title}
         </Typography.Title>
         {(description || updatedAt) && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              marginTop: 6,
-              flexWrap: 'wrap',
-            }}
-          >
-            {description && (
-              <Typography.Text type="secondary" style={{ fontSize: 14 }}>
-                {description}
-              </Typography.Text>
-            )}
-            {description && updatedAt && (
-              <span style={{ color: 'var(--ant-color-text-quaternary)' }}>|</span>
-            )}
+          <div className={styles.pageHeaderMeta}>
+            {description && <Typography.Text type="secondary">{description}</Typography.Text>}
+            {description && updatedAt && <span aria-hidden="true">|</span>}
             {updatedAt && (
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              <Typography.Text type="secondary">
                 Cập nhật lúc: {new Date(updatedAt).toLocaleString()}
               </Typography.Text>
             )}
           </div>
         )}
       </div>
-      {actions && (
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
-          {actions}
-        </div>
-      )}
-    </div>
+      {actions && <div className={styles.pageHeaderActions}>{actions}</div>}
+    </header>
   )
 }

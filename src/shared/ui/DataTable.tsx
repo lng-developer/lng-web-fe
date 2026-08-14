@@ -29,6 +29,10 @@ export function DataTable<RecordType extends object>({
   ...tableProps
 }: DataTableProps<RecordType>) {
   const tableClassName = `${styles.dataTable} ${tableProps.className ?? ''}`.trim()
+  const scroll = {
+    y: 'calc(100vh - 360px)',
+    ...tableProps.scroll,
+  }
 
   return (
     <div className={tableClassName}>
@@ -36,6 +40,7 @@ export function DataTable<RecordType extends object>({
       {error ?? (
         <Table
           {...tableProps}
+          scroll={scroll}
           locale={{ emptyText: emptyText ?? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
         />
       )}

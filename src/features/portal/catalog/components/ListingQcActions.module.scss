@@ -1,0 +1,49 @@
+.notice {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--notice-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--notice-bg) 34%, var(--ant-color-bg-container));
+  color: var(--ant-color-text);
+}
+
+.draft {
+  --notice-border: color-mix(in srgb, var(--ant-color-warning) 34%, var(--ant-color-border));
+  --notice-bg: var(--ant-color-warning-bg);
+
+  margin-bottom: 12px;
+}
+
+.approved {
+  --notice-border: color-mix(in srgb, var(--ant-color-success) 34%, var(--ant-color-border));
+  --notice-bg: var(--ant-color-success-bg);
+
+  align-items: center;
+}
+
+.rejected {
+  --notice-border: color-mix(in srgb, var(--ant-color-error) 34%, var(--ant-color-border));
+  --notice-bg: var(--ant-color-error-bg);
+
+  align-items: flex-start;
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--notice-color);
+  font-size: 18px;
+}
+
+.draft .noticeIcon {
+  --notice-color: var(--ant-color-warning);
+}
+
+.approved .noticeIcon {
+  --notice-color: var(--ant-color-success);
+}
+
+.rejected .noticeIcon {
+  --notice-color: var(--ant-color-error);
+}

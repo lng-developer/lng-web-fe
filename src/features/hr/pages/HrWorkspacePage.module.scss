@@ -7,11 +7,21 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
+.profileMix {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
 .toolbar {
   display: grid;
   grid-template-columns: minmax(280px, 1fr) 220px auto;
   gap: 12px;
   margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
 }
 .archivedToggle {
   display: flex;
@@ -21,7 +31,9 @@
 }
 .tree {
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 10px;
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
   overflow: hidden;
 }
 .department + .department {
@@ -32,7 +44,13 @@
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  background: var(--ant-color-fill-quaternary);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ant-color-fill-quaternary) 78%, transparent),
+      transparent
+    ),
+    var(--ant-color-bg-container);
 }
 .team {
   padding-left: 28px;
@@ -53,10 +71,13 @@
   width: 100%;
   align-items: center;
   border-top: 1px solid var(--ant-color-border-secondary);
-  transition: background-color 160ms ease;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 }
 .staffRow:hover {
   background: var(--ant-color-fill-tertiary);
+  box-shadow: inset 3px 0 0 var(--ant-color-primary);
 }
 .staff {
   display: flex;
@@ -98,8 +119,9 @@
 .staffEditorModal :global(.ant-modal-body) {
   flex: 1;
   min-height: 0;
-  padding: 10px 14px 8px;
+  padding: 12px 16px 10px;
   overflow: hidden;
+  background: var(--ant-color-fill-quaternary);
 }
 .staffCreateModal :global(.ant-modal-content) {
   height: auto;
@@ -124,7 +146,7 @@
   display: grid;
   flex: 1;
   grid-template-columns: 0.95fr 1.2fr 1fr;
-  gap: 8px;
+  gap: 10px;
   min-height: 0;
 }
 .editorColumn {
@@ -135,14 +157,21 @@
 }
 .editorSection {
   min-width: 0;
-  padding: 7px 8px 2px;
+  padding: 10px 10px 4px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 10px 24px rgb(15 23 42 / 5%);
 }
 .editorSection h3 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  color: var(--ant-color-text-secondary);
   font-size: 12px;
+  font-weight: 700;
   line-height: 1.2;
+  text-transform: uppercase;
 }
 .editorForm :global(.ant-form-item) {
   margin-bottom: 5px;
@@ -226,4 +255,21 @@
   margin-top: 8px;
   padding-top: 7px;
   border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+@media (max-width: 760px) {
+  .metrics,
+  .profileMix,
+  .toolbar,
+  .formGrid,
+  .dependantList,
+  .roleChoices {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staffRow {
+    transition: none;
+  }
 }

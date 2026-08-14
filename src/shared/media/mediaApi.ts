@@ -27,15 +27,18 @@ export async function fetchMediaBlob(downloadUrl: string, signal?: AbortSignal) 
 export async function downloadMediaAsset(downloadUrl: string, filename?: string) {
   if (!downloadUrl.trim()) throw new Error('Media download URL is required')
 
+  const blob = await fetchMediaBlob(downloadUrl)
+  const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
 
   try {
-    anchor.href = new URL(downloadUrl, env.apiBaseUrl || window.location.origin).href
+    anchor.href = objectUrl
     if (filename) anchor.download = filename
     document.body.append(anchor)
     anchor.click()
   } finally {
     anchor.remove()
+    URL.revokeObjectURL(objectUrl)
   }
 }
 

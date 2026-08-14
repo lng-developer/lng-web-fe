@@ -32,6 +32,7 @@ export type ProductionScaleContext = {
   use?: {
     psdTemplate?: { assetDownloadUrl?: string | null; status?: string | null }
     listing?: {
+      salesChannelCode?: string | null
       psdStatus?: string | null
       previewAssetDownloadUrl?: string | null
       scaleDifficulty?: { level?: string | null; reason?: string | null } | null
@@ -40,6 +41,7 @@ export type ProductionScaleContext = {
 }
 export type ProductionCustomization = {
   customerInputs?: Record<string, unknown> | null
+  imageAssets?: Array<{ assetDownloadUrl?: string | null; filename?: string | null }> | null
 }
 export type ProductionTask = {
   id: string
@@ -58,11 +60,21 @@ export type ProductionTask = {
   updatedAt: string
   orderItem?: {
     externalOrderId?: string | null
+    salesChannelCode?: string | null
+    marketplaceCode?: string | null
     asin?: string | null
+    etsyListingId?: string | null
     sourceSku?: string | null
     sku?: string | null
     title?: string | null
   }
+  listing?: {
+    salesChannelCode?: string | null
+    asin?: string | null
+    etsyListingId?: string | null
+    previewAssetDownloadUrl?: string | null
+    psdTemplateAssetId?: string | null
+  } | null
   order?: { id?: string | null }
   shop?: { id?: string | null; name?: string | null }
   shopId?: string | null
@@ -95,6 +107,8 @@ export type ProductionParams = {
   limit: number
   view?: 'SCALE' | 'QC'
   search?: string
+  salesChannelCode?: 'AMAZON' | 'ETSY'
+  psdReadyOnly?: boolean
   status?: ProductionStatus
   scaleDifficultyLevel?: 'NORMAL' | 'HARD' | 'SPECIAL'
   qcStatus?: QcStatus

@@ -7,6 +7,7 @@ export type OrderWorkbenchParams = {
   tab?: string
   search?: string
   shopId?: string
+  vendorId?: string
   employeeCode?: string
   addressValidationStatus?: string
   salesChannelCode?: string
@@ -85,6 +86,7 @@ export type OrderWorkbenchItem = {
   seller: { employeeCode: string | null; name: string | null } | null
   listing: {
     title: string | null
+    productImageUrl?: string | null
   } | null
   customization: {
     status: string | null

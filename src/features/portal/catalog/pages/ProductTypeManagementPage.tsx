@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip } from 'antd'
 
+import { printMethodSelectOptions } from '@/shared/constants/printMethods'
 import { DataTable, PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -52,13 +53,25 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
     setEditing(item)
     form.setFieldsValue(
       item
-        ? { code: item.code ?? '', name: item.name, sortOrder: item.sortOrder, status: item.status }
-        : { code: '', name: '', sortOrder: 0, status: 'ACTIVE' },
+        ? {
+            code: item.code ?? '',
+            name: item.name,
+            sortOrder: item.sortOrder,
+            printMethod: item.printMethod ?? null,
+            status: item.status,
+          }
+        : { code: '', name: '', sortOrder: 0, printMethod: null, status: 'ACTIVE' },
     )
   }
   const columns: TableColumnsType<ProductTypeGroup> = [
     { title: t('portal.catalog.master.code'), dataIndex: 'code', width: 180 },
     { title: t('portal.catalog.master.name'), dataIndex: 'name' },
+    {
+      title: t('portal.catalog.master.printMethod', { defaultValue: 'Print method' }),
+      dataIndex: 'printMethod',
+      width: 130,
+      render: (value) => value || '-',
+    },
     { title: t('portal.catalog.master.order'), dataIndex: 'sortOrder', width: 100 },
     {
       title: t('portal.catalog.master.status'),
@@ -100,9 +113,6 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
         description={t('portal.catalog.master.productTypeDescription')}
         actions={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => void groups.refetch()}>
-              {t('portal.catalog.refresh')}
-            </Button>
             {canManage ? (
               <Button type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>
                 {t('portal.catalog.master.createProductType')}
@@ -165,6 +175,12 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
           </Form.Item>
           <Form.Item name="sortOrder" label={t('portal.catalog.master.order')}>
             <InputNumber precision={0} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            name="printMethod"
+            label={t('portal.catalog.master.printMethod', { defaultValue: 'Print method' })}
+          >
+            <Select allowClear options={printMethodSelectOptions} />
           </Form.Item>
           <Form.Item name="status" label={t('portal.catalog.master.status')}>
             <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))} />

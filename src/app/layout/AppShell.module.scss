@@ -2,6 +2,26 @@
   min-height: 100dvh;
 }
 
+.skipLink {
+  position: fixed;
+  z-index: 1000;
+  top: 10px;
+  left: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--ant-color-bg-elevated);
+  color: var(--ant-color-primary);
+  box-shadow: var(--ant-box-shadow-secondary);
+  transform: translateY(-140%);
+  transition: transform 160ms ease-out;
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+
 .rail {
   position: sticky;
   z-index: 12;
@@ -14,13 +34,14 @@
   height: 100dvh;
   border-right: 1px solid var(--ant-color-border-secondary);
   background: var(--ant-color-bg-container);
+  box-shadow: 1px 0 0 rgb(15 23 42 / 3%);
 }
 
 .railBrand {
   width: 36px;
   height: 36px;
   margin-block: 14px 22px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff;
   object-fit: cover;
   object-position: left center;
@@ -52,6 +73,7 @@
 .railButtonActive {
   color: #fff !important;
   background: #e83b4a !important;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--ant-color-primary) 28%, transparent);
 }
 
 .railCollapse {
@@ -68,6 +90,7 @@
   flex-direction: column;
   height: 100dvh;
   border-right: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease;
@@ -83,6 +106,11 @@
   height: 64px;
   padding-inline: 20px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: color-mix(
+    in srgb,
+    var(--ant-color-bg-container) 92%,
+    var(--ant-color-fill-quaternary)
+  );
 }
 
 .navigation {
@@ -137,9 +165,13 @@
   align-items: center;
   justify-content: space-between;
   height: 64px;
-  padding-inline: 18px 24px;
+  gap: 18px;
+  padding-inline: 20px 24px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
-  background: color-mix(in srgb, var(--ant-color-bg-container) 94%, transparent);
+  background: color-mix(in srgb, var(--ant-color-bg-elevated) 94%, transparent);
+  box-shadow:
+    0 1px 0 var(--ant-color-border-secondary),
+    0 10px 30px rgb(15 23 42 / 4%);
   backdrop-filter: blur(12px);
   transition:
     background-color 180ms ease,
@@ -148,30 +180,72 @@
 }
 
 .header:hover {
-  box-shadow: 0 4px 18px rgb(23 32 51 / 3%);
+  box-shadow:
+    0 1px 0 var(--ant-color-border-secondary),
+    0 14px 34px rgb(15 23 42 / 6%);
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
   min-width: 0;
 }
 
+.headerContext {
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+}
+
+.headerCore {
+  color: var(--ant-color-text-tertiary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.headerTitle {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--ant-color-text);
+  font-size: 15px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .navSearch {
-  width: clamp(260px, 27vw, 360px);
+  width: clamp(240px, 24vw, 340px);
+  height: 36px;
+  padding-block: 0;
+  border-radius: 999px;
+  background: var(--ant-color-bg-container);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 45%);
 }
 
 .navSearch :global(.ant-input-affix-wrapper) {
-  height: 34px;
-  border-radius: 999px !important;
+  align-items: center;
+}
+
+.navSearch :global(.ant-input-prefix) {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ant-color-text-tertiary);
+}
+
+.navSearch :global(.ant-input) {
+  line-height: 20px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 8px 22px rgb(15 23 42 / 4%);
 }
 
 .headerActions {
-  padding-left: 18px;
-  border-left: 1px solid var(--ant-color-border-secondary);
+  padding: 5px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ant-color-bg-container) 88%, transparent);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 5%);
 }
 
 .accountWrapper {
@@ -232,7 +306,13 @@
 .content {
   min-height: calc(100dvh - 64px);
   padding: 18px 28px 28px;
-  background: var(--ant-color-bg-layout);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ant-color-bg-container) 46%, transparent),
+      transparent 180px
+    ),
+    var(--ant-color-bg-layout);
 }
 
 .contentFixed {
@@ -255,6 +335,10 @@
     padding-inline: 16px;
   }
 
+  .headerContext {
+    display: none;
+  }
+
   .breadcrumb {
     min-width: 0;
     overflow: hidden;
@@ -271,6 +355,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .skipLink,
   .sidebar,
   .railButton,
   .railButtonActive,
@@ -281,4 +366,12 @@
   .navigation :global(.ant-menu-item a) {
     transition: none;
   }
+}
+
+.railButton:focus-visible,
+.railButtonActive:focus-visible,
+.railCollapse:focus-visible,
+.accountButton:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
 }

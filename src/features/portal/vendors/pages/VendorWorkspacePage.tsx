@@ -318,7 +318,7 @@ export function VendorWorkspacePage() {
     retry: false,
   })
 
-  const vendorItems = summaryVendors.data?.items ?? []
+  const vendorItems = useMemo(() => summaryVendors.data?.items ?? [], [summaryVendors.data?.items])
   const totalCount = summaryVendors.data?.pagination.total ?? vendorItems.length
   const activeCount = useMemo(
     () => vendorItems.filter((vendor) => vendor.status === 'ACTIVE').length,
@@ -942,7 +942,7 @@ export function VendorWorkspacePage() {
           okText={importing ? t('vendors.import.importing') : t('vendors.import.submit')}
           cancelText={t('vendors.cancel')}
         >
-          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Space className={styles.importModalBody} direction="vertical" size={12}>
             <Space size={8} wrap>
               <Button type="default" icon={<DownloadOutlined />} onClick={downloadImportTemplate}>
                 {t('vendors.import.downloadTemplate')}
@@ -999,12 +999,10 @@ export function VendorWorkspacePage() {
                   <Typography.Text strong>
                     {t('vendors.import.previewTitle', { limit: IMPORT_PREVIEW_LIMIT })}
                   </Typography.Text>
-                  <ul>
+                  <ul className={styles.importPreviewList}>
                     {importPreviewRows.map((row, index) => (
                       <li key={row.code || String(index)}>
-                        <Typography.Text type="secondary" style={{ whiteSpace: 'pre-wrap' }}>
-                          {JSON.stringify(row)}
-                        </Typography.Text>
+                        <Typography.Text type="secondary">{JSON.stringify(row)}</Typography.Text>
                       </li>
                     ))}
                   </ul>
@@ -1025,12 +1023,10 @@ export function VendorWorkspacePage() {
                   })}
                 </Typography.Text>
                 {importSummary.failed.length ? (
-                  <ul>
+                  <ul className={styles.importPreviewList}>
                     {importSummary.failed.map((error) => (
                       <li key={error}>
-                        <Typography.Text type="danger" style={{ fontSize: 12 }}>
-                          {error}
-                        </Typography.Text>
+                        <Typography.Text type="danger">{error}</Typography.Text>
                       </li>
                     ))}
                   </ul>

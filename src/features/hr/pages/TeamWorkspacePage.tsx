@@ -211,20 +211,9 @@ export function TeamWorkspacePage({
     <SectionCard title={t('hrOperations.team.approvals')}>
       {approvals.length ? (
         view === 'dashboard' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          <div className={styles.stackList}>
             {approvals.slice(0, 5).map((item) => (
-              <div
-                key={`${item.requestKind}-${item.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: 12,
-                  border: '1px solid #f0f0f0',
-                  borderRadius: 8,
-                  background: '#fafafa',
-                }}
-              >
+              <div key={`${item.requestKind}-${item.id}`} className={styles.surfaceRow}>
                 <Space size="middle">
                   <EmployeeAvatar
                     name={item.employee?.fullName}

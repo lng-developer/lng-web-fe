@@ -191,6 +191,24 @@ export function PayrollPage() {
     new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US').format(value || 0)
   const resultItems = results.data?.items ?? []
   const myPayslip = !canRead ? resultItems[0] : null
+  const payrollSummary = results.data?.summary
+  const payrollTotals = {
+    gross:
+      payrollSummary?.amounts.grossIncome ??
+      resultItems.reduce((sum, item) => sum + item.grossIncome, 0),
+    deductions:
+      payrollSummary?.amounts.totalDeductions ??
+      resultItems.reduce((sum, item) => sum + item.totalDeductions, 0),
+    net:
+      payrollSummary?.amounts.netIncome ??
+      resultItems.reduce((sum, item) => sum + item.netIncome, 0),
+  }
+  const statusCounts = payrollSummary?.statusCounts ?? {}
+  const statusRows = ['DRAFT', 'FINALIZED', 'PAID'].map((status) => ({
+    status,
+    count: statusCounts[status] ?? resultItems.filter((item) => item.status === status).length,
+  }))
+  const latestRun = runs.data?.items?.[0]
 
   if (!canRead) {
     return (
@@ -219,164 +237,223 @@ export function PayrollPage() {
 
   return (
     <section className={styles.page}>
-      <div className={styles.toolbar}>
-        <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
-        <Space>
-          {canRead && (
+      <section className={styles.payrollCommand}>
+        <div className={styles.payrollCommandMain}>
+          <Typography.Text className={styles.payrollEyebrow}>
+            {t('hrOperations.payroll.period')}
+          </Typography.Text>
+          <Typography.Title level={2}>{month.format('MM/YYYY')}</Typography.Title>
+          <Space wrap>
+            <Tag>{latestRun?.status ?? t('hrOperations.common.status')}</Tag>
+            <Tag>{`${t('hrOperations.payroll.version')}: ${latestRun?.version ?? '-'}`}</Tag>
+            <Tag>{`${t('hrOperations.payroll.results')}: ${payrollSummary?.total ?? resultItems.length}`}</Tag>
+          </Space>
+        </div>
+        <div className={styles.payrollCommandActions}>
+          <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
+          <Space wrap>
             <Button icon={<DownloadOutlined />} onClick={() => void download()}>
               {t('hrOperations.payroll.export')}
             </Button>
-          )}
-          {canWrite && (
-            <>
-              <Button onClick={openSettings} loading={settings.isLoading} disabled={!settings.data}>
-                {t('hrOperations.payroll.settings')}
-              </Button>
-              <Button onClick={() => setEditor('adjustment')}>
-                {t('hrOperations.payroll.addBulkAdjustment')}
-              </Button>
-              <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => setEditor('run')}>
-                {t('hrOperations.payroll.run')}
-              </Button>
-            </>
-          )}
-        </Space>
-      </div>
-      <div className={styles.metrics}>
+            {canWrite && (
+              <>
+                <Button
+                  onClick={openSettings}
+                  loading={settings.isLoading}
+                  disabled={!settings.data}
+                >
+                  {t('hrOperations.payroll.settings')}
+                </Button>
+                <Button onClick={() => setEditor('adjustment')}>
+                  {t('hrOperations.payroll.addBulkAdjustment')}
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<PlayCircleOutlined />}
+                  onClick={() => setEditor('run')}
+                >
+                  {t('hrOperations.payroll.run')}
+                </Button>
+              </>
+            )}
+          </Space>
+        </div>
+      </section>
+
+      <div className={styles.payrollSummaryGrid}>
         <MetricCard
+          className={styles.payrollMetricPeople}
           label={t('hrOperations.payroll.employees')}
-          value={String(resultItems.length)}
+          value={String(payrollSummary?.total ?? resultItems.length)}
+          variant="info"
         />
         <MetricCard
+          className={styles.payrollMetricGross}
           label={t('hrOperations.payroll.gross')}
-          value={money(resultItems.reduce((sum, item) => sum + item.grossIncome, 0))}
+          value={money(payrollTotals.gross)}
+          variant="success"
         />
         <MetricCard
+          className={styles.payrollMetricDeductions}
           label={t('hrOperations.payroll.deductions')}
-          value={money(resultItems.reduce((sum, item) => sum + item.totalDeductions, 0))}
+          value={money(payrollTotals.deductions)}
+          variant="warning"
         />
         <MetricCard
+          className={styles.payrollMetricNet}
           label={t('hrOperations.payroll.net')}
-          value={money(resultItems.reduce((sum, item) => sum + item.netIncome, 0))}
+          value={money(payrollTotals.net)}
+          variant="primary"
         />
       </div>
-      {canRead && (
-        <SectionCard title={t('hrOperations.payroll.periods')}>
-          <Table
-            size="small"
-            rowKey="id"
-            loading={runs.isLoading}
-            dataSource={runs.data?.items}
-            pagination={false}
-            columns={[
-              {
-                title: t('hrOperations.payroll.period'),
-                render: (_, item: PayrollRun) => `${item.month}/${item.year}`,
-              },
-              {
-                title: t('hrOperations.common.status'),
-                dataIndex: 'status',
-                render: (value) => <Tag>{value}</Tag>,
-              },
-              { title: t('hrOperations.payroll.results'), dataIndex: 'resultCount' },
-              { title: t('hrOperations.payroll.version'), dataIndex: 'version' },
-              {
-                title: '',
-                render: (_, item: PayrollRun) => (
-                  <Space>
-                    {canFinalize && item.capabilities?.finalize && (
-                      <Button onClick={() => lifecycle.mutate({ action: 'finalize', item })}>
-                        {t('hrOperations.payroll.finalize')}
-                      </Button>
-                    )}
-                    {canPay && item.capabilities?.markPaid && (
-                      <Button
-                        type="primary"
-                        onClick={() => lifecycle.mutate({ action: 'pay', item })}
-                      >
-                        {t('hrOperations.payroll.paid')}
-                      </Button>
-                    )}
-                    {canWrite && (
-                      <Button
-                        type="text"
-                        icon={<MailOutlined />}
-                        onClick={() => lifecycle.mutate({ action: 'email', item })}
-                      />
-                    )}
-                  </Space>
-                ),
-              },
-            ]}
-          />
-        </SectionCard>
-      )}
-      <SectionCard
-        title={t(canRead ? 'hrOperations.payroll.staffPayroll' : 'hrOperations.payroll.myPayroll')}
-      >
-        <Table
-          size="small"
-          rowKey="id"
-          loading={results.isLoading}
-          dataSource={resultItems}
-          pagination={{ pageSize: 12 }}
-          columns={[
-            {
-              title: t('hrOperations.common.employee'),
-              render: (_, item) => (
-                <PayrollEmployeeCell
-                  employee={item.employee}
-                  fallbackLabel={t('hrOperations.common.me')}
-                />
-              ),
-            },
-            { title: t('hrOperations.payroll.workdays'), dataIndex: 'workDays' },
-            {
-              title: t('hrOperations.payroll.baseSalary'),
-              dataIndex: 'baseSalary',
-              render: (value) => <span className={styles.money}>{money(value)}</span>,
-            },
-            {
-              title: t('hrOperations.payroll.gross'),
-              dataIndex: 'grossIncome',
-              render: (value) => <span className={styles.money}>{money(value)}</span>,
-            },
-            {
-              title: t('hrOperations.payroll.deductions'),
-              dataIndex: 'totalDeductions',
-              render: (value) => money(value),
-            },
-            {
-              title: t('hrOperations.payroll.net'),
-              dataIndex: 'netIncome',
-              render: (value) => <span className={styles.money}>{money(value)}</span>,
-            },
-            { title: t('hrOperations.common.status'), dataIndex: 'status' },
-          ]}
-        />
-      </SectionCard>
-      {canRead && (
-        <SectionCard title={t('hrOperations.payroll.adjustments')}>
-          <Table
-            size="small"
-            rowKey="id"
-            loading={adjustments.isLoading}
-            dataSource={adjustments.data?.items}
-            pagination={{ pageSize: 8 }}
-            columns={[
-              { title: t('hrOperations.common.employee'), dataIndex: 'profileId' },
-              { title: t('hrOperations.common.type'), dataIndex: 'type' },
-              { title: t('hrOperations.common.name'), dataIndex: 'name' },
-              {
-                title: t('hrOperations.payroll.amount'),
-                dataIndex: 'amount',
-                render: (value) => money(value),
-              },
-              { title: t('hrOperations.common.status'), dataIndex: 'status' },
-            ]}
-          />
-        </SectionCard>
-      )}
+
+      <div className={styles.payrollWorkspace}>
+        <div className={styles.payrollPrimary}>
+          <SectionCard
+            title={t(
+              canRead ? 'hrOperations.payroll.staffPayroll' : 'hrOperations.payroll.myPayroll',
+            )}
+          >
+            <Table
+              size="small"
+              rowKey="id"
+              loading={results.isLoading}
+              dataSource={resultItems}
+              pagination={{ pageSize: 12 }}
+              columns={[
+                {
+                  title: t('hrOperations.common.employee'),
+                  render: (_, item) => (
+                    <PayrollEmployeeCell
+                      employee={item.employee}
+                      fallbackLabel={t('hrOperations.common.me')}
+                    />
+                  ),
+                },
+                { title: t('hrOperations.payroll.workdays'), dataIndex: 'workDays' },
+                {
+                  title: t('hrOperations.payroll.baseSalary'),
+                  dataIndex: 'baseSalary',
+                  render: (value) => <span className={styles.money}>{money(value)}</span>,
+                },
+                {
+                  title: t('hrOperations.payroll.gross'),
+                  dataIndex: 'grossIncome',
+                  render: (value) => <span className={styles.money}>{money(value)}</span>,
+                },
+                {
+                  title: t('hrOperations.payroll.deductions'),
+                  dataIndex: 'totalDeductions',
+                  render: (value) => money(value),
+                },
+                {
+                  title: t('hrOperations.payroll.net'),
+                  dataIndex: 'netIncome',
+                  render: (value) => <span className={styles.payrollNetCell}>{money(value)}</span>,
+                },
+                { title: t('hrOperations.common.status'), dataIndex: 'status' },
+              ]}
+            />
+          </SectionCard>
+        </div>
+
+        <aside className={styles.payrollSide}>
+          <SectionCard title={t('hrOperations.payroll.resultSummary')}>
+            <div className={styles.payrollBreakdown}>
+              {statusRows.map((item) => (
+                <div
+                  className={`${styles.payrollBreakdownRow} ${styles[`payrollStatus${item.status}`]}`}
+                  key={item.status}
+                >
+                  <span>
+                    <Tag>{item.status}</Tag>
+                  </span>
+                  <strong>{item.count}</strong>
+                </div>
+              ))}
+              <div className={styles.payrollBreakdownMoney}>
+                <span>{t('hrOperations.payroll.paidNet')}</span>
+                <strong>{money(payrollSummary?.amounts.paidNetIncome)}</strong>
+              </div>
+              <div className={styles.payrollBreakdownMoney}>
+                <span>{t('hrOperations.payroll.unpaidNet')}</span>
+                <strong>{money(payrollSummary?.amounts.unpaidNetIncome)}</strong>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title={t('hrOperations.payroll.periods')}>
+            <Table
+              size="small"
+              rowKey="id"
+              loading={runs.isLoading}
+              dataSource={runs.data?.items}
+              pagination={false}
+              columns={[
+                {
+                  title: t('hrOperations.payroll.period'),
+                  render: (_, item: PayrollRun) => `${item.month}/${item.year}`,
+                },
+                {
+                  title: t('hrOperations.common.status'),
+                  dataIndex: 'status',
+                  render: (value) => <Tag>{value}</Tag>,
+                },
+                {
+                  title: '',
+                  render: (_, item: PayrollRun) => (
+                    <Space size={4}>
+                      {canFinalize && item.capabilities?.finalize && (
+                        <Button
+                          size="small"
+                          onClick={() => lifecycle.mutate({ action: 'finalize', item })}
+                        >
+                          {t('hrOperations.payroll.finalize')}
+                        </Button>
+                      )}
+                      {canPay && item.capabilities?.markPaid && (
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => lifecycle.mutate({ action: 'pay', item })}
+                        >
+                          {t('hrOperations.payroll.paid')}
+                        </Button>
+                      )}
+                      {canWrite && (
+                        <Button
+                          type="text"
+                          icon={<MailOutlined />}
+                          onClick={() => lifecycle.mutate({ action: 'email', item })}
+                        />
+                      )}
+                    </Space>
+                  ),
+                },
+              ]}
+            />
+          </SectionCard>
+
+          <SectionCard title={t('hrOperations.payroll.adjustments')}>
+            <Table
+              size="small"
+              rowKey="id"
+              loading={adjustments.isLoading}
+              dataSource={adjustments.data?.items}
+              pagination={{ pageSize: 6 }}
+              columns={[
+                { title: t('hrOperations.common.name'), dataIndex: 'name' },
+                {
+                  title: t('hrOperations.payroll.amount'),
+                  dataIndex: 'amount',
+                  render: (value) => money(value),
+                },
+                { title: t('hrOperations.common.status'), dataIndex: 'status' },
+              ]}
+            />
+          </SectionCard>
+        </aside>
+      </div>
       <Modal
         centered
         open={editor === 'run' || editor === 'adjustment'}
@@ -387,71 +464,87 @@ export function PayrollPage() {
         onCancel={() => setEditor(undefined)}
       >
         <Form
+          className={styles.modalForm}
           form={form}
           layout="vertical"
           onFinish={(values) => (editor === 'run' ? run.mutate(values) : adjust.mutate(values))}
         >
           {editor === 'run' ? (
-            <Form.Item name="shadow" label={t('hrOperations.payroll.mode')} initialValue={false}>
-              <Select
-                options={[
-                  { value: false, label: t('hrOperations.payroll.live') },
-                  { value: true, label: t('hrOperations.payroll.shadow') },
-                ]}
-              />
-            </Form.Item>
+            <>
+              <Typography.Title level={5} className={styles.modalSection}>
+                {month.format('MM/YYYY')}
+              </Typography.Title>
+              <Form.Item name="shadow" label={t('hrOperations.payroll.mode')} initialValue={false}>
+                <Select
+                  options={[
+                    { value: false, label: t('hrOperations.payroll.live') },
+                    { value: true, label: t('hrOperations.payroll.shadow') },
+                  ]}
+                />
+              </Form.Item>
+            </>
           ) : (
             <>
-              <Form.Item
-                name="profileIds"
-                label={t('hrOperations.common.employee')}
-                rules={[{ required: true }]}
-              >
-                <Select
-                  mode="multiple"
-                  showSearch
-                  optionFilterProp="label"
-                  options={profiles.data?.items.map((item) => ({
-                    value: item.id,
-                    label: `${item.fullName} · ${item.employeeCode}`,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item
-                name="type"
-                label={t('hrOperations.common.type')}
-                rules={[{ required: true }]}
-              >
-                <Select options={settings.data?.adjustmentTypes.map((value) => ({ value }))} />
-              </Form.Item>
-              <Form.Item
-                name="code"
-                label={t('hrOperations.common.code')}
-                rules={[{ required: true }]}
-              >
-                <Select
-                  options={settings.data?.adjustmentCodes.map((value) => ({
-                    value,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item
-                name="name"
-                label={t('hrOperations.common.name')}
-                rules={[{ required: true }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                name="amount"
-                label={t('hrOperations.payroll.amount')}
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={0} className={styles.money} />
-              </Form.Item>
-              <Form.Item name="note" label={t('hrOperations.common.note')}>
-                <Input />
-              </Form.Item>
+              <Typography.Title level={5} className={styles.modalSection}>
+                {t('hrOperations.payroll.addBulkAdjustment')}
+              </Typography.Title>
+              <div className={styles.modalGrid}>
+                <Form.Item
+                  className={styles.modalGridWide}
+                  name="profileIds"
+                  label={t('hrOperations.common.employee')}
+                  rules={[{ required: true }]}
+                >
+                  <Select
+                    mode="multiple"
+                    showSearch
+                    optionFilterProp="label"
+                    options={profiles.data?.items.map((item) => ({
+                      value: item.id,
+                      label: `${item.fullName} · ${item.employeeCode}`,
+                    }))}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="type"
+                  label={t('hrOperations.common.type')}
+                  rules={[{ required: true }]}
+                >
+                  <Select options={settings.data?.adjustmentTypes.map((value) => ({ value }))} />
+                </Form.Item>
+                <Form.Item
+                  name="code"
+                  label={t('hrOperations.common.code')}
+                  rules={[{ required: true }]}
+                >
+                  <Select
+                    options={settings.data?.adjustmentCodes.map((value) => ({
+                      value,
+                    }))}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="name"
+                  label={t('hrOperations.common.name')}
+                  rules={[{ required: true }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  name="amount"
+                  label={t('hrOperations.payroll.amount')}
+                  rules={[{ required: true }]}
+                >
+                  <InputNumber min={0} className={styles.money} />
+                </Form.Item>
+                <Form.Item
+                  className={styles.modalGridWide}
+                  name="note"
+                  label={t('hrOperations.common.note')}
+                >
+                  <Input />
+                </Form.Item>
+              </div>
             </>
           )}
           <Space className={styles.actions}>
@@ -471,25 +564,32 @@ export function PayrollPage() {
         onCancel={() => setEditor(undefined)}
       >
         <Form
+          className={styles.modalForm}
           form={settingsForm}
           layout="vertical"
           onFinish={(values) => saveSettings.mutate(values)}
         >
-          <Typography.Title level={5}>{t('hrOperations.payroll.company')}</Typography.Title>
-          <Form.Item
-            name={['company', 'name']}
-            label={t('hrOperations.payroll.companyName')}
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item name={['company', 'logoUrl']} label={t('hrOperations.payroll.logoUrl')}>
-            <Input />
-          </Form.Item>
-          <Form.Item name={['company', 'address']} label={t('hrOperations.payroll.companyAddress')}>
-            <Input />
-          </Form.Item>
-          <Space wrap align="start">
+          <Typography.Title level={5} className={styles.modalSection}>
+            {t('hrOperations.payroll.company')}
+          </Typography.Title>
+          <div className={styles.modalGrid}>
+            <Form.Item
+              className={styles.modalGridWide}
+              name={['company', 'name']}
+              label={t('hrOperations.payroll.companyName')}
+              rules={[{ required: true }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item name={['company', 'logoUrl']} label={t('hrOperations.payroll.logoUrl')}>
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name={['company', 'address']}
+              label={t('hrOperations.payroll.companyAddress')}
+            >
+              <Input />
+            </Form.Item>
             <Form.Item name={['company', 'taxCode']} label={t('hrOperations.payroll.taxCode')}>
               <Input />
             </Form.Item>
@@ -508,12 +608,12 @@ export function PayrollPage() {
             <Form.Item name={['company', 'currency']} label={t('hrOperations.payroll.currency')}>
               <Input maxLength={3} />
             </Form.Item>
-          </Space>
+          </div>
 
-          <Typography.Title level={5}>
+          <Typography.Title level={5} className={styles.modalSection}>
             {t('hrOperations.payroll.calculationSettings')}
           </Typography.Title>
-          <Space wrap align="start">
+          <div className={styles.modalGrid}>
             <Form.Item name="workHoursPerDay" label={t('hrOperations.payroll.workHoursPerDay')}>
               <InputNumber min={1} max={24} />
             </Form.Item>
@@ -535,8 +635,6 @@ export function PayrollPage() {
             >
               <InputNumber min={0} />
             </Form.Item>
-          </Space>
-          <Space wrap align="start">
             {['social', 'health', 'unemployment'].map((key) => (
               <Form.Item
                 key={key}
@@ -546,8 +644,6 @@ export function PayrollPage() {
                 <InputNumber min={0} />
               </Form.Item>
             ))}
-          </Space>
-          <Space wrap align="start">
             {[
               'weekday',
               'weekend',
@@ -564,13 +660,21 @@ export function PayrollPage() {
                 <InputNumber min={0} />
               </Form.Item>
             ))}
-          </Space>
-          <Form.Item name="adjustmentTypes" label={t('hrOperations.payroll.adjustmentTypes')}>
-            <Select mode="tags" tokenSeparators={[',']} />
-          </Form.Item>
-          <Form.Item name="adjustmentCodes" label={t('hrOperations.payroll.adjustmentCodes')}>
-            <Select mode="tags" tokenSeparators={[',']} />
-          </Form.Item>
+            <Form.Item
+              className={styles.modalGridWide}
+              name="adjustmentTypes"
+              label={t('hrOperations.payroll.adjustmentTypes')}
+            >
+              <Select mode="tags" tokenSeparators={[',']} />
+            </Form.Item>
+            <Form.Item
+              className={styles.modalGridWide}
+              name="adjustmentCodes"
+              label={t('hrOperations.payroll.adjustmentCodes')}
+            >
+              <Select mode="tags" tokenSeparators={[',']} />
+            </Form.Item>
+          </div>
           <Space className={styles.actions}>
             <Button onClick={() => setEditor(undefined)}>{t('hrOperations.common.cancel')}</Button>
             <Button type="primary" htmlType="submit" loading={saveSettings.isPending}>

@@ -8,10 +8,10 @@ import {
   DeleteOutlined,
   DownloadOutlined,
   EyeOutlined,
+  LinkOutlined,
   PictureOutlined,
   PlayCircleOutlined,
   PlusOutlined,
-  ReloadOutlined,
   ThunderboltOutlined,
   UploadOutlined,
   UserAddOutlined,
@@ -116,6 +116,15 @@ const priorityTone = (priority: string) =>
         ? 'ready'
         : 'cancelled'
 
+function listingUrl(listing: DesignTask['listing']) {
+  if (!listing) return null
+  if (listing.salesChannelCode === 'ETSY' && listing.etsyListingId) {
+    return `https://www.etsy.com/listing/${listing.etsyListingId}`
+  }
+  if (listing.asin) return `https://www.amazon.com/dp/${listing.asin}`
+  return null
+}
+
 export function DesignWorkbenchPage() {
   const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount
@@ -134,6 +143,7 @@ export function DesignWorkbenchPage() {
   const [search, setSearch] = useState('')
   // Defer search to avoid network request on every keystroke
   const deferredSearch = useDeferredValue(search)
+  const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()
   const [status, setStatus] = useState<DesignTaskStatus>()
   const [taskType, setTaskType] = useState<DesignTaskType>()
   const [selectedId, setSelectedId] = useState<string>()
@@ -160,12 +170,19 @@ export function DesignWorkbenchPage() {
   // R2: Memoize query params — prevents useQuery from seeing a new object ref every render
   // Uses deferredSearch so search only triggers fetch after typing pauses (not every keystroke)
   const params = useMemo(
-    () => ({ page, limit: PAGE_SIZE, search: deferredSearch || undefined, status, taskType }),
-    [page, deferredSearch, status, taskType],
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      search: deferredSearch || undefined,
+      salesChannelCode,
+      status,
+      taskType,
+    }),
+    [page, deferredSearch, salesChannelCode, status, taskType],
   )
   const dashboardParams = useMemo(
-    () => ({ search: deferredSearch || undefined, status, taskType }),
-    [deferredSearch, status, taskType],
+    () => ({ search: deferredSearch || undefined, salesChannelCode, status, taskType }),
+    [deferredSearch, salesChannelCode, status, taskType],
   )
 
   const tasks = useQuery({
@@ -248,6 +265,11 @@ export function DesignWorkbenchPage() {
     setTaskType(value)
     setPage(1)
   }, [])
+  const handleSalesChannelChange = useCallback((value: string | number) => {
+    setSalesChannelCode(value === 'ALL' ? undefined : (value as 'AMAZON' | 'ETSY'))
+    setSelectedRowKeys([])
+    setPage(1)
+  }, [])
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage)
   }, [])
@@ -326,7 +348,7 @@ export function DesignWorkbenchPage() {
       toast('success', t('portal.design.updated'))
     },
     onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not update design task'),
+      toast('error', error instanceof Error ? error.message : t('portal.design.updateFailed')),
   })
 
   const createTask = useMutation({
@@ -346,7 +368,7 @@ export function DesignWorkbenchPage() {
       toast('success', t('portal.design.tasksCreated'))
     },
     onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not create design task'),
+      toast('error', error instanceof Error ? error.message : t('portal.design.createFailed')),
   })
   const handleCreateTaskSubmit = useCallback(
     (draft: CreateDesignTaskDraft) => createTask.mutate(draft),
@@ -447,6 +469,16 @@ export function DesignWorkbenchPage() {
 
   const renderTaskActions = (row: DesignTask) => (
     <div className={styles.taskActions}>
+      {listingUrl(row.listing) ? (
+        <Tooltip title={t('portal.design.openProduct', 'Open SP')}>
+          <Button
+            aria-label={t('portal.design.openProduct', 'Open SP')}
+            type="text"
+            icon={<LinkOutlined />}
+            onClick={() => window.open(listingUrl(row.listing)!, '_blank', 'noopener,noreferrer')}
+          />
+        </Tooltip>
+      ) : null}
       {canAssignTask(row) && ['REQUESTED', 'OPEN', 'ASSIGNED'].includes(row.status) ? (
         <Tooltip title={t('portal.design.assign')}>
           <Button
@@ -522,146 +554,146 @@ export function DesignWorkbenchPage() {
     </div>
   )
 
-  const taskColumns = useMemo<TableColumnsType<DesignTask>>(
-    () => [
-      {
-        title: t('portal.design.image', 'Image'),
-        key: 'image',
-        width: 92,
-        render: (_, row) => (
-          <div className={styles.thumbnailContainer}>
-            <div className={styles.thumbnailFrame}>
-              {row.thumbnailAsset?.downloadUrl ? (
-                <ZoomableImage
-                  downloadUrl={row.thumbnailAsset.downloadUrl}
-                  alt="Preview"
-                  className={styles.thumbnailImg}
-                  fallback="/favicon.svg"
-                />
-              ) : row.listing?.productImageUrl ? (
-                <ZoomableImage
-                  src={row.listing.productImageUrl}
-                  alt="Preview"
-                  className={styles.thumbnailImg}
-                  loading="lazy"
-                />
-              ) : (
-                <div className={styles.thumbnailPlaceholder}>
-                  <PictureOutlined style={{ fontSize: 20, color: '#bfbfbf' }} />
-                </div>
-              )}
-            </div>
-            {(row.thumbnailAsset?.downloadUrl || row.listing?.productImageUrl) && (
-              <Button
-                aria-label="Download main listing image"
-                className={styles.thumbnailDownload}
-                icon={<DownloadOutlined />}
-                size="small"
-                type="text"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  if (row.thumbnailAsset?.downloadUrl) {
-                    void downloadMediaAsset(
-                      row.thumbnailAsset.downloadUrl,
-                      row.thumbnailAsset.originalFilename ?? undefined,
-                    )
-                    return
-                  }
-                  window.open(row.listing?.productImageUrl ?? '', '_blank', 'noopener,noreferrer')
-                }}
+  const taskColumns: TableColumnsType<DesignTask> = [
+    {
+      title: t('portal.design.image', 'Image'),
+      key: 'image',
+      width: 92,
+      render: (_, row) => (
+        <div className={styles.thumbnailContainer}>
+          <div className={styles.thumbnailFrame}>
+            {row.thumbnailAsset?.downloadUrl ? (
+              <ZoomableImage
+                downloadUrl={row.thumbnailAsset.downloadUrl}
+                alt={t('portal.design.preview')}
+                className={styles.thumbnailImg}
+                fallback="/favicon.svg"
               />
+            ) : row.listing?.productImageUrl ? (
+              <ZoomableImage
+                src={row.listing.productImageUrl}
+                alt={t('portal.design.preview')}
+                className={styles.thumbnailImg}
+                loading="lazy"
+              />
+            ) : (
+              <div className={styles.thumbnailPlaceholder}>
+                <PictureOutlined className={styles.thumbnailPlaceholderIcon} />
+              </div>
             )}
           </div>
-        ),
-      },
-      {
-        title: t('portal.design.task', 'Task'),
-        key: 'task',
-        width: 220,
-        render: (_, row) => <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>,
-      },
-      {
-        title: t('portal.design.type', 'Type'),
-        key: 'type',
-        width: 130,
-        render: (_, row) => (
-          <Tag color="cyan" style={{ borderRadius: 4 }}>
-            {row.taskType}
-          </Tag>
-        ),
-      },
-      {
-        title: t('portal.design.priority', 'Priority'),
-        key: 'priority',
-        width: 110,
-        render: (_, row) => (
-          <StatusTag status={priorityTone(row.priority)}>{row.priority}</StatusTag>
-        ),
-      },
-      {
-        title: t('portal.design.shop', 'Shop'),
-        key: 'shop',
-        width: 150,
-        render: (_, row) => (
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          {(row.thumbnailAsset?.downloadUrl || row.listing?.productImageUrl) && (
+            <Button
+              aria-label={t('portal.design.downloadMainImage')}
+              className={styles.thumbnailDownload}
+              icon={<DownloadOutlined />}
+              size="small"
+              type="text"
+              onClick={(event) => {
+                event.stopPropagation()
+                if (row.thumbnailAsset?.downloadUrl) {
+                  void downloadMediaAsset(
+                    row.thumbnailAsset.downloadUrl,
+                    row.thumbnailAsset.originalFilename ?? undefined,
+                  )
+                  return
+                }
+                window.open(row.listing?.productImageUrl ?? '', '_blank', 'noopener,noreferrer')
+              }}
+            />
+          )}
+        </div>
+      ),
+    },
+    {
+      title: t('portal.design.task', 'Task'),
+      key: 'task',
+      width: 220,
+      render: (_, row) => <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>,
+    },
+    {
+      title: t('portal.design.type', 'Type'),
+      key: 'type',
+      width: 130,
+      render: (_, row) => (
+        <Tag className={styles.typeTag} color="cyan">
+          {row.taskType}
+        </Tag>
+      ),
+    },
+    {
+      title: t('portal.design.priority', 'Priority'),
+      key: 'priority',
+      width: 110,
+      render: (_, row) => <StatusTag status={priorityTone(row.priority)}>{row.priority}</StatusTag>,
+    },
+    {
+      title: t('portal.design.shop', 'Shop'),
+      key: 'shop',
+      width: 150,
+      render: (_, row) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text className={styles.metaPrimary} type="secondary">
             {row.shop?.name ?? '-'}
           </Typography.Text>
+          <Typography.Text className={styles.metaSecondary} type="secondary">
+            {row.listing?.salesChannelCode ?? '-'}
+          </Typography.Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'ASIN',
+      key: 'asin',
+      width: 140,
+      render: (_, row) =>
+        row.listing?.asin ? (
+          <CopyableText
+            value={row.listing.asin}
+            title={t('portal.design.copyAsin', 'Copy ASIN')}
+            copiedMessage={t('portal.design.asinCopied', 'ASIN copied')}
+          />
+        ) : (
+          <Typography.Text type="secondary">-</Typography.Text>
         ),
-      },
-      {
-        title: 'ASIN',
-        key: 'asin',
-        width: 140,
-        render: (_, row) =>
-          row.listing?.asin ? (
-            <CopyableText
-              value={row.listing.asin}
-              title={t('portal.design.copyAsin', 'Copy ASIN')}
-              copiedMessage={t('portal.design.asinCopied', 'ASIN copied')}
+    },
+    {
+      title: t('portal.design.designer', 'Designer'),
+      key: 'designer',
+      width: 220,
+      render: (_, row) => (
+        <div className={styles.taskAssignee}>
+          <Space size="small">
+            <EmployeeAvatar
+              name={row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
+              avatarUrl={row.assignedDesigner?.avatarUrl}
+              size={28}
             />
-          ) : (
-            <Typography.Text type="secondary">-</Typography.Text>
-          ),
-      },
-      {
-        title: t('portal.design.designer', 'Designer'),
-        key: 'designer',
-        width: 220,
-        render: (_, row) => (
-          <div className={styles.taskAssignee}>
-            <Space size="small">
-              <EmployeeAvatar
-                name={row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
-                avatarUrl={row.assignedDesigner?.avatarUrl}
-                size={28}
-              />
-              <Typography.Text style={{ fontSize: 13 }}>
-                {row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
-              </Typography.Text>
-            </Space>
-            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-              {dayjs(row.updatedAt).format('YYYY-MM-DD HH:mm')}
+            <Typography.Text className={styles.assigneeName}>
+              {row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
             </Typography.Text>
-          </div>
-        ),
-      },
-      {
-        title: t('portal.design.status', 'Status'),
-        key: 'status',
-        width: 120,
-        align: 'center',
-        render: (_, row) => <StatusTag status={tone(row.status)}>{row.status}</StatusTag>,
-      },
-      {
-        title: t('portal.design.actions', 'Actions'),
-        key: 'actions',
-        width: 96,
-        align: 'right',
-        render: (_, row) => renderTaskActions(row),
-      },
-    ],
-    [renderTaskActions, t],
-  )
+          </Space>
+          <Typography.Text className={styles.metaSecondary} type="secondary">
+            {dayjs(row.updatedAt).format('YYYY-MM-DD HH:mm')}
+          </Typography.Text>
+        </div>
+      ),
+    },
+    {
+      title: t('portal.design.status', 'Status'),
+      key: 'status',
+      width: 120,
+      align: 'center',
+      render: (_, row) => <StatusTag status={tone(row.status)}>{row.status}</StatusTag>,
+    },
+    {
+      title: t('portal.design.actions', 'Actions'),
+      key: 'actions',
+      width: 130,
+      align: 'right',
+      render: (_, row) => renderTaskActions(row),
+    },
+  ]
 
   const task = detail.data
   const modalTask = activeTask ?? task
@@ -673,7 +705,7 @@ export function DesignWorkbenchPage() {
         description={t('portal.design.description')}
         actions={
           <Space>
-            <Button href="/portal/design/files">PSD files</Button>
+            <Button href="/portal/design/files">{t('portal.design.psdFiles')}</Button>
             {canAssign ? (
               <Button
                 type="primary"
@@ -684,9 +716,6 @@ export function DesignWorkbenchPage() {
                 {t('portal.design.createDesignTask')}
               </Button>
             ) : null}
-            <Button icon={<ReloadOutlined />} onClick={refresh}>
-              {t('portal.design.refresh')}
-            </Button>
           </Space>
         }
       />
@@ -716,19 +745,23 @@ export function DesignWorkbenchPage() {
       </div>
 
       <SectionCard>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 20,
-            flexWrap: 'wrap',
-            gap: 16,
-          }}
-        >
-          <Typography.Title level={4} style={{ margin: 0 }}>
-            {t('portal.design.tasks', 'Design Tasks')}
-          </Typography.Title>
+        <div className={styles.taskToolbar}>
+          <div className={styles.taskToolbarTitleGroup}>
+            <Typography.Title className={styles.taskToolbarTitle} level={4}>
+              {t('portal.design.tasks', 'Design Tasks')}
+            </Typography.Title>
+            <Select
+              className={styles.channelFilter}
+              value={salesChannelCode ?? 'ALL'}
+              aria-label={t('portal.design.channel')}
+              options={[
+                { label: t('portal.design.channelAll'), value: 'ALL' },
+                { label: 'Amazon', value: 'AMAZON' },
+                { label: 'Etsy', value: 'ETSY' },
+              ]}
+              onChange={handleSalesChannelChange}
+            />
+          </div>
           <FilterBar label={t('portal.design.filters')} contentClassName={styles.filters}>
             <Input.Search
               className={styles.search}
@@ -804,7 +837,7 @@ export function DesignWorkbenchPage() {
             hideOnSinglePage: true,
             onChange: handlePageChange,
           }}
-          scroll={{ x: 1360 }}
+          scroll={{ x: 1360, y: 'calc(100vh - 430px)' }}
         />
       </SectionCard>
 

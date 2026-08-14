@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  CopyOutlined,
   EditOutlined,
   FileImageOutlined,
   PlusOutlined,
@@ -21,9 +22,11 @@ import {
   Upload,
 } from 'antd'
 
+import { printMethodSelectOptions } from '@/shared/constants/printMethods'
 import { useFeedbackToast } from '@/shared/ui'
 
 import {
+  applyListingVariantPsdToCompatible,
   createListingVariant,
   type InternalTemplate,
   type Listing,
@@ -102,6 +105,15 @@ export function ListingVariantManager({
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : 'Could not request PSD'),
   })
+  const applyPsd = useMutation({
+    mutationFn: (variantId: string) => applyListingVariantPsdToCompatible(listing.id, variantId),
+    onSuccess: async (result) => {
+      await refresh()
+      toast('success', `Applied PSD to ${result.matchedCount} compatible variant(s)`)
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : 'Could not apply PSD'),
+  })
   const uploadPreview = useMutation({
     mutationFn: async ({ variantId, file }: { variantId: string; file: File }) => {
       const asset = await uploadCatalogAsset(file)
@@ -122,6 +134,7 @@ export function ListingVariantManager({
         : {
             productTypeGroupId: variant.productTypeGroup.id,
             internalTemplateId: variant.internalTemplate?.id ?? null,
+            printMethod: variant.printMethod ?? null,
             scaleDifficulty: variant.scaleDifficulty ?? { level: 'NORMAL', reason: null },
             status: variant.status,
           },
@@ -154,6 +167,10 @@ export function ListingVariantManager({
         pagination={false}
         columns={[
           { title: 'Product type', render: (_, row) => row.productTypeGroup.name },
+          {
+            title: 'Method',
+            render: (_, row) => row.printMethod || row.productTypeGroup.printMethod || '-',
+          },
           { title: 'Template', render: (_, row) => row.internalTemplate?.name ?? '-' },
           {
             title: 'PSD',
@@ -172,6 +189,27 @@ export function ListingVariantManager({
                       onClick={() => requestPsd.mutate(row.id)}
                       loading={requestPsd.isPending && requestPsd.variables === row.id}
                       disabled={requestPsd.isPending}
+                    />
+                  </Tooltip>
+                ) : null}
+                {canWrite && row.psdReadiness.status === 'PRESENT' ? (
+                  <Tooltip title="Apply PSD to compatible variants">
+                    <Button
+                      aria-label="Apply PSD to compatible variants"
+                      type="text"
+                      size="small"
+                      icon={<CopyOutlined />}
+                      loading={applyPsd.isPending && applyPsd.variables === row.id}
+                      disabled={applyPsd.isPending}
+                      onClick={() =>
+                        Modal.confirm({
+                          title: 'Apply PSD to compatible variants?',
+                          content:
+                            'This will copy this PSD reference to variants with the same template and print method that do not have PSD yet.',
+                          okText: 'Apply',
+                          onOk: () => applyPsd.mutate(row.id),
+                        })
+                      }
                     />
                   </Tooltip>
                 ) : null}
@@ -282,6 +320,13 @@ export function ListingVariantManager({
           </Form.Item>
           <Form.Item name="internalTemplateId" label="Internal template">
             <Select allowClear options={templateOptions} />
+          </Form.Item>
+          <Form.Item name="printMethod" label="Print method">
+            <Select
+              allowClear
+              options={printMethodSelectOptions}
+              placeholder="Inherit product type"
+            />
           </Form.Item>
           <Form.Item name={['scaleDifficulty', 'level']} label="Scale difficulty">
             <Select

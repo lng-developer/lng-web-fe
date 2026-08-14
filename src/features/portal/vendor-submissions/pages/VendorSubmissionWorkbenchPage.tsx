@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import {
-  EyeOutlined,
-  ReloadOutlined,
-  SendOutlined,
-  StopOutlined,
-  WarningOutlined,
-} from '@ant-design/icons'
+import { EyeOutlined, SendOutlined, StopOutlined, WarningOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -286,11 +280,6 @@ export function VendorSubmissionWorkbenchPage({
       <PageHeader
         title={t('portal.vendorSubmissions.title')}
         description={t('portal.vendorSubmissions.description')}
-        actions={
-          <Button icon={<ReloadOutlined />} onClick={() => void submissions.refetch()}>
-            {t('portal.vendorSubmissions.refresh')}
-          </Button>
-        }
       />
       {submissions.error ? (
         <FeedbackAlert type="error" title={t('portal.vendorSubmissions.unavailable')} />

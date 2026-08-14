@@ -22,6 +22,10 @@ import { FeedbackAlert, SectionCard } from '@/shared/ui'
 import styles from './FoundationPage.module.scss'
 
 const numberOf = (value: number | undefined | null) => Number(value ?? 0)
+const money = (amount: number | undefined | null, currency = 'USD') =>
+  amount == null
+    ? '-'
+    : new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount / 100)
 
 function normalizeDataKey(key: string) {
   return key.replaceAll('_', ' ')
@@ -84,10 +88,11 @@ function DonutChart({ data }: { data: ChartDatum[] }) {
 }
 
 function ProductImage({ listing }: { listing: Listing }) {
+  const label = listing.asin || listing.etsyListingId || listing.sku || 'Listing image'
   return (
     <div className={styles.topAsinImage}>
       {listing.productImageUrl ? (
-        <img src={listing.productImageUrl} alt={listing.title} loading="lazy" />
+        <img src={listing.productImageUrl} alt={label} loading="lazy" />
       ) : (
         <ShoppingOutlined />
       )}
@@ -98,18 +103,21 @@ function ProductImage({ listing }: { listing: Listing }) {
 function TopAsins({ listings }: { listings: Listing[] }) {
   return (
     <div className={styles.topAsinGrid}>
-      {listings.slice(0, 4).map((listing) => (
-        <article className={styles.topAsinCard} key={listing.id}>
-          <Typography.Text strong ellipsis title={listing.title}>
-            {listing.asin || listing.etsyListingId || listing.sku}
-          </Typography.Text>
-          <ProductImage listing={listing} />
-          <div className={styles.topAsinMeta}>
-            <span>{numberOf(listing.salesStats?.quantitySold)} sold</span>
-            <strong>{numberOf(listing.salesStats?.orderCount)} orders</strong>
-          </div>
-        </article>
-      ))}
+      {listings.slice(0, 4).map((listing) => {
+        const label = listing.asin || listing.etsyListingId || listing.sku
+        return (
+          <article className={styles.topAsinCard} key={listing.id}>
+            <Typography.Text strong ellipsis title={label}>
+              {label}
+            </Typography.Text>
+            <ProductImage listing={listing} />
+            <div className={styles.topAsinMeta}>
+              <span>{numberOf(listing.salesStats?.quantitySold)} sold</span>
+              <strong>{numberOf(listing.salesStats?.orderCount)} orders</strong>
+            </div>
+          </article>
+        )
+      })}
     </div>
   )
 }
@@ -126,17 +134,29 @@ function RecentOrders({ rows }: { rows: OrderWorkbenchRow[] }) {
       </div>
       {rows.slice(0, 6).map((row) => {
         const firstItem = row.items[0]
+        const asin = firstItem?.item.asin || '-'
+        const sku = firstItem?.item.sku || firstItem?.item.sourceSku || '-'
+        const imageUrl = firstItem?.listing?.productImageUrl
         return (
           <div className={styles.recentOrderRow} key={row.order.id}>
-            <span>
-              <strong>{firstItem?.item.title || row.order.externalOrderId}</strong>
-              <small>
-                {dayjs(row.order.orderedAt ?? row.order.createdAt).format('DD MMM YYYY')}
-              </small>
+            <span className={styles.recentOrderProduct}>
+              <span className={styles.recentOrderImage}>
+                {imageUrl ? (
+                  <img src={imageUrl} alt={asin || sku} loading="lazy" />
+                ) : (
+                  <ShoppingOutlined />
+                )}
+              </span>
+              <span>
+                <strong>{asin}</strong>
+                <small>{sku}</small>
+              </span>
             </span>
             <span>{row.order.externalOrderId}</span>
             <span>{firstItem?.item.quantity ?? row.items.length}</span>
-            <span>{row.order.pricing.customerPaidAmount || '-'}</span>
+            <span>
+              {money(row.order.pricing.customerPaidAmount, row.order.pricing.currency ?? 'USD')}
+            </span>
             <Tag color="green">{row.order.status ?? 'OPEN'}</Tag>
           </div>
         )

@@ -630,75 +630,61 @@ export function ScheduleCalendarPage() {
       label: (
         <span>
           <CalendarOutlined style={{ marginRight: 6 }} />
-          Saturday Rotation
+          {t('hrOperations.schedule.saturday')}
         </span>
       ),
       children: (
-        <SectionCard
-          title={
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-              }}
-            >
-              <span>{t('hrOperations.schedule.saturday')}</span>
-              {canRotationRead && (
-                <Select
-                  allowClear
-                  showSearch
-                  style={{ maxWidth: 220 }}
-                  value={rotationTeamId}
-                  onChange={setRotationTeamId}
-                  options={teamOptions}
-                  placeholder={t('hrOperations.schedule.filterTeam', {
-                    defaultValue: 'Filter team',
-                  })}
-                />
-              )}
+        <SectionCard title={t('hrOperations.schedule.saturday')}>
+          <div className={styles.rotationCommand}>
+            <div>
+              <Typography.Text className={styles.rotationEyebrow}>
+                {t('hrOperations.schedule.rotationPlanner')}
+              </Typography.Text>
+              <Typography.Paragraph type="secondary" className={styles.rotationHint}>
+                {t('hrOperations.schedule.saturdayRotationHint')}
+              </Typography.Paragraph>
             </div>
-          }
-        >
-          <Space size={8} style={{ marginBottom: 16 }}>
-            {canManageRotation && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => openEditor({ kind: 'rotation' })}
-              >
-                {t('hrOperations.schedule.generateMonth')}
-              </Button>
+            {canRotationRead && (
+              <Select
+                allowClear
+                showSearch
+                className={styles.rotationTeamFilter}
+                value={rotationTeamId}
+                onChange={setRotationTeamId}
+                options={teamOptions}
+                placeholder={t('hrOperations.schedule.filterTeam')}
+              />
             )}
+          </div>
+          <Space size={8} className={styles.rotationActions} wrap>
             {canManageRotation && (
-              <Button
-                icon={<PlusOutlined />}
-                onClick={() => openEditor({ kind: 'rotationManual' })}
-              >
-                {t('hrOperations.schedule.addRotation', { defaultValue: 'Add rotation' })}
-              </Button>
-            )}
-            {canManageRotation && (
-              <Popconfirm
-                title={t('hrOperations.schedule.resetMonthRotationConfirm')}
-                onConfirm={() => resetMonthRotation.mutate()}
-                okText={t('hrOperations.common.yes', { defaultValue: 'Yes' })}
-                cancelText={t('hrOperations.common.no', { defaultValue: 'No' })}
-              >
-                <Button danger loading={resetMonthRotation.isPending} disabled={!rotationTeamId}>
-                  {t('hrOperations.schedule.resetMonthRotation', {
-                    defaultValue: 'Reset this month',
-                  })}
+              <>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openEditor({ kind: 'rotation' })}
+                >
+                  {t('hrOperations.schedule.generateMonth')}
                 </Button>
-              </Popconfirm>
+                <Button
+                  icon={<PlusOutlined />}
+                  onClick={() => openEditor({ kind: 'rotationManual' })}
+                >
+                  {t('hrOperations.schedule.addRotation')}
+                </Button>
+                <Popconfirm
+                  title={t('hrOperations.schedule.resetMonthRotationConfirm')}
+                  onConfirm={() => resetMonthRotation.mutate()}
+                  okText={t('hrOperations.common.yes')}
+                  cancelText={t('hrOperations.common.no')}
+                >
+                  <Button danger loading={resetMonthRotation.isPending} disabled={!rotationTeamId}>
+                    {t('hrOperations.schedule.resetMonthRotation')}
+                  </Button>
+                </Popconfirm>
+              </>
             )}
           </Space>
-          <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
-            {t('hrOperations.schedule.saturdayRotationHint', {
-              defaultValue: 'Generate all Saturdays in selected month for the chosen team.',
-            })}
-          </Typography.Paragraph>
           <Table
             size="small"
             pagination={false}
@@ -718,22 +704,24 @@ export function ScheduleCalendarPage() {
               },
               {
                 title: t('hrOperations.schedule.staffCount'),
-                render: (_: unknown, item: SaturdayRotation) => item.employeeProfileIds.length,
+                render: (_: unknown, item: SaturdayRotation) => (
+                  <Tag color="orange">{item.employeeProfileIds.length}</Tag>
+                ),
               },
               {
-                title: t('hrOperations.schedule.sourceLabel', { defaultValue: 'Source' }),
+                title: t('hrOperations.schedule.sourceLabel'),
                 dataIndex: 'source',
                 render: (source: string) => (
                   <Tag color={source === 'MANUAL' ? 'gold' : 'blue'}>{source}</Tag>
                 ),
               },
               {
-                title: t('hrOperations.schedule.minPresent', { defaultValue: 'Min staff' }),
+                title: t('hrOperations.schedule.minPresent'),
                 dataIndex: 'minPresent',
                 render: (value: number) => <Tag color="purple">{value}</Tag>,
               },
               {
-                title: t('hrOperations.schedule.staff', { defaultValue: 'Staff' }),
+                title: t('hrOperations.schedule.restingStaff'),
                 render: (_, item: SaturdayRotation) => {
                   const visible = item.employeeProfileIds.slice(0, 3)
                   const rest = item.employeeProfileIds.length - visible.length
@@ -752,7 +740,7 @@ export function ScheduleCalendarPage() {
               ...(canManageRotation
                 ? [
                     {
-                      title: t('hrOperations.common.action', { defaultValue: 'Action' }),
+                      title: t('hrOperations.common.action'),
                       width: 120,
                       render: (_: unknown, item: SaturdayRotation) => (
                         <Space size={6}>
@@ -762,12 +750,10 @@ export function ScheduleCalendarPage() {
                             onClick={() => openEditor({ kind: 'rotationManual', item })}
                           />
                           <Popconfirm
-                            title={t('hrOperations.schedule.deleteRotation', {
-                              defaultValue: 'Delete this rotation?',
-                            })}
+                            title={t('hrOperations.schedule.deleteRotation')}
                             onConfirm={() => removeRotation.mutate(item.id)}
-                            okText={t('hrOperations.common.yes', { defaultValue: 'Yes' })}
-                            cancelText={t('hrOperations.common.no', { defaultValue: 'No' })}
+                            okText={t('hrOperations.common.yes')}
+                            cancelText={t('hrOperations.common.no')}
                           >
                             <Button
                               type="text"
@@ -848,10 +834,15 @@ export function ScheduleCalendarPage() {
         style={{ maxWidth: 1200 }}
         onCancel={() => setEditor(undefined)}
       >
-        <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
+        <Form
+          className={styles.modalForm}
+          form={form}
+          layout="vertical"
+          onFinish={(values) => save.mutate(values)}
+        >
           {editor?.kind === 'location' && (
             <>
-              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+              <Divider plain className={styles.modalSection}>
                 Location Identity
               </Divider>
               <Form.Item name="code" label={t('hrOperations.common.code')} rules={required}>
@@ -873,7 +864,7 @@ export function ScheduleCalendarPage() {
 
           {editor?.kind === 'shift' && (
             <>
-              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+              <Divider plain className={styles.modalSection}>
                 Shift Details
               </Divider>
               <Form.Item name="code" label={t('hrOperations.common.code')} rules={required}>
@@ -924,7 +915,7 @@ export function ScheduleCalendarPage() {
 
           {editor?.kind === 'assignment' && (
             <>
-              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+              <Divider plain className={styles.modalSection}>
                 Shift Assignment
               </Divider>
               <Form.Item
@@ -977,7 +968,7 @@ export function ScheduleCalendarPage() {
 
           {editor?.kind === 'override' && (
             <>
-              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+              <Divider plain className={styles.modalSection}>
                 Calendar Override
               </Divider>
               <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>
@@ -1008,7 +999,7 @@ export function ScheduleCalendarPage() {
 
           {editor?.kind === 'holiday' && (
             <>
-              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
+              <Divider plain className={styles.modalSection}>
                 Holiday Info
               </Divider>
               <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>
@@ -1034,8 +1025,8 @@ export function ScheduleCalendarPage() {
 
           {editor?.kind === 'rotation' && (
             <>
-              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
-                Saturday Rotation Generator
+              <Divider plain className={styles.modalSection}>
+                {t('hrOperations.schedule.rotationGenerator')}
               </Divider>
               <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
                 <Select
@@ -1056,8 +1047,8 @@ export function ScheduleCalendarPage() {
           )}
           {editor?.kind === 'rotationManual' && (
             <>
-              <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
-                Saturday Rotation Detail
+              <Divider plain className={styles.modalSection}>
+                {t('hrOperations.schedule.rotationDetail')}
               </Divider>
               <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
                 <Select
@@ -1103,12 +1094,12 @@ export function ScheduleCalendarPage() {
                     mode="multiple"
                     showSearch
                     optionFilterProp="label"
-                    options={employeeOptions}
+                    options={manualTeamEmployees}
                     placeholder="Select staff..."
                   />
                 </Form.Item>
               ) : (
-                <div style={{ display: 'grid', gap: 12 }}>
+                <div className={styles.modalStack}>
                   {manualSaturdays.map((dateKey) => (
                     <Form.Item
                       key={dateKey}

@@ -25,7 +25,9 @@ export type DesignTask = {
   priority: string
   listing: {
     sku: string | null
+    salesChannelCode?: 'AMAZON' | 'ETSY' | string | null
     asin?: string | null
+    etsyListingId?: string | null
     title: string | null
     psdStatus: string | null
     productTypeName: string | null
@@ -55,6 +57,7 @@ export type DesignListParams = {
   page: number
   limit: number
   search?: string
+  salesChannelCode?: 'AMAZON' | 'ETSY'
   status?: string
   taskType?: string
   priority?: string

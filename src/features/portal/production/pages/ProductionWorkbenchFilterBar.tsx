@@ -84,7 +84,7 @@ export const ProductionWorkbenchFilterBar: FC<{
           className={styles.filter}
           allowClear
           value={scaleDifficultyLevel}
-          placeholder="All scale difficulty"
+          placeholder={t('portal.production.allScaleDifficulty')}
           options={['NORMAL', 'HARD', 'SPECIAL'].map((value) => ({ value, label: value }))}
           onChange={onScaleDifficultyChange}
         />

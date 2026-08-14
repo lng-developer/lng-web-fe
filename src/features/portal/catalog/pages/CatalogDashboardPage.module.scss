@@ -1,0 +1,37 @@
+.pendingList {
+  display: grid;
+  gap: 8px;
+}
+
+.pendingItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--ant-color-warning) 34%, var(--ant-color-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ant-color-warning-bg) 28%, var(--ant-color-bg-container));
+  box-shadow: inset 3px 0 0 var(--ant-color-warning);
+}
+
+.pendingSku {
+  display: block;
+  color: var(--ant-color-text) !important;
+  font-size: 13px;
+}
+
+.pendingShop {
+  display: block;
+  color: var(--ant-color-text-secondary) !important;
+  font-size: 11px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pendingItem {
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease;
+  }
+}

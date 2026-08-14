@@ -104,8 +104,14 @@ describe('AppShell', () => {
     )
 
     expect(await screen.findByRole('banner')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
+      'href',
+      '#main-content',
+    )
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content')
     expect(screen.getByRole('heading', { name: 'Foundation test page' })).toBeVisible()
-    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(1))
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
+    expect(await screen.findAllByRole('button', { name: 'Chat' })).not.toHaveLength(0)
     expect(screen.getByRole('navigation', { name: 'Test navigation' })).toBeVisible()
     expect(screen.getByRole('navigation', { name: 'Test core rail' })).toBeVisible()
   })

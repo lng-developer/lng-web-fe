@@ -258,9 +258,14 @@ export function AttendancePage() {
         width={500}
         onCancel={() => setAdjusting(undefined)}
       >
-        <Form form={form} layout="vertical" onFinish={(values) => adjust.mutate(values)}>
-          <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
-            Correction Details
+        <Form
+          className={styles.modalForm}
+          form={form}
+          layout="vertical"
+          onFinish={(values) => adjust.mutate(values)}
+        >
+          <Divider plain className={styles.modalSection}>
+            {t('hrOperations.attendance.adjustTitle', { defaultValue: 'Adjust Attendance Log' })}
           </Divider>
 
           <Form.Item name="checkInAt" label={t('hrOperations.attendance.checkInTime')}>
