@@ -69,6 +69,9 @@ export function AppShell() {
   }
   return (
     <Layout className={styles.shell}>
+      <a className={styles.skipLink} href="#main-content">
+        {t('shell.skipToContent')}
+      </a>
       <AppRail
         cores={cores}
         activeCore={activeCore}
@@ -106,7 +109,11 @@ export function AppShell() {
           </Space>
         </Header>
 
-        <Content className={`${styles.content} ${isFixedWorkspace ? styles.contentFixed : ''}`}>
+        <Content
+          id="main-content"
+          role="main"
+          className={`${styles.content} ${isFixedWorkspace ? styles.contentFixed : ''}`}
+        >
           <div className={`${styles.workspace} ${isFixedWorkspace ? styles.workspaceFixed : ''}`}>
             <Outlet />
           </div>
