@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: 20px;
+  gap: 18px;
 }
 
 .metricsList {
@@ -34,6 +34,19 @@
   gap: 12px;
 }
 
+.taskToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.taskToolbarTitle {
+  margin: 0 !important;
+}
+
 .detail {
   display: grid;
   gap: 20px;
@@ -45,6 +58,10 @@
 
 .taskTable {
   margin-top: 16px;
+}
+
+.taskTable :global(.ant-table-container) {
+  border-radius: 8px;
 }
 
 .taskTable :global(.ant-table-body) {
@@ -63,10 +80,11 @@
 .thumbnailFrame {
   width: 72px;
   height: 72px;
-  border-radius: var(--ant-border-radius);
-  overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
   background: var(--ant-color-fill-quaternary);
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgb(15 23 42 / 5%);
 }
 
 .thumbnailDownload {
@@ -88,6 +106,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.thumbnailPlaceholderIcon {
+  color: var(--ant-color-text-tertiary);
+  font-size: 20px;
+}
+
+.typeTag {
+  border-radius: 4px;
 }
 
 .taskMeta {
@@ -100,6 +129,18 @@
   display: grid;
   gap: 2px;
   min-width: 0;
+}
+
+.metaPrimary {
+  font-size: 12px;
+}
+
+.metaSecondary {
+  font-size: 11px;
+}
+
+.assigneeName {
+  font-size: 13px;
 }
 
 .taskActions {
@@ -142,8 +183,13 @@
   gap: 16px;
   padding: 14px 16px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 12px;
-  background: var(--ant-color-fill-quaternary);
+  border-radius: 8px;
+  background: linear-gradient(
+    180deg,
+    var(--ant-color-bg-container),
+    var(--ant-color-fill-quaternary)
+  );
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
 }
 
 .submitContextMain {
