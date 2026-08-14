@@ -711,7 +711,7 @@ export function ProductionWorkbenchPage({
     refetchOnWindowFocus: false,
     retry: false,
   })
-  const summaryRows = tasks.data?.items ?? []
+  const summaryRows = useMemo(() => tasks.data?.items ?? [], [tasks.data?.items])
   const displaySummary = useMemo(() => {
     if ((summary.data?.total ?? 0) > 0 || summaryRows.length === 0) return summary.data
     return {
@@ -985,7 +985,7 @@ export function ProductionWorkbenchPage({
     [handleSetInspectionDecision],
   )
   const displayedTasks = useDeferredValue(tasks.data)
-  const rows = displayedTasks?.items ?? []
+  const rows = useMemo(() => displayedTasks?.items ?? [], [displayedTasks?.items])
   const selectedTasks = useMemo(
     () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
     [rows, selectedRowKeys],
@@ -1138,9 +1138,9 @@ export function ProductionWorkbenchPage({
           <Select
             className={styles.channelFilter}
             value={salesChannelCode ?? 'ALL'}
-            aria-label="Channel"
+            aria-label={t('portal.production.channel')}
             options={[
-              { label: 'Channel: All', value: 'ALL' },
+              { label: t('portal.production.channelAll'), value: 'ALL' },
               { label: 'Amazon', value: 'AMAZON' },
               { label: 'Etsy', value: 'ETSY' },
             ]}
