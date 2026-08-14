@@ -56,7 +56,9 @@ describe('HR time and payroll API', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/hr/attendance/check-in', {
       occurredAt: '2026-08-01T01:00:00.000Z',
     })
-    expect(apiClient.get).toHaveBeenCalledWith('/api/hr/leave-balances/me')
+    expect(apiClient.get).toHaveBeenCalledWith('/api/hr/leave-balances/me', {
+      params: { year: new Date().getFullYear() },
+    })
     expect(apiClient.post).toHaveBeenCalledWith('/api/hr/leave-requests/leave-1/approve', {
       comment: 'Approved',
     })

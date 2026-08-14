@@ -155,7 +155,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     }
   }
 
-  const required = embedded ? [] : [{ required: true, message: t('auth.setup.required') }]
+  const required = [{ required: true, message: t('auth.setup.required') }]
 
   const tabItems = [
     {

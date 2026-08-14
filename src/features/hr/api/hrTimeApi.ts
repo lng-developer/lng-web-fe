@@ -268,7 +268,8 @@ export const checkOut = (input: object = {}) =>
 export const adjustAttendance = async (id: string, input: object) =>
   unwrap<Attendance>(await apiClient.patch(`/api/hr/attendance/${id}`, input))
 
-export const listMyLeaveBalances = () => get<LeaveBalance[]>('/api/hr/leave-balances/me')
+export const listMyLeaveBalances = () =>
+  get<LeaveBalance[]>('/api/hr/leave-balances/me', { year: new Date().getFullYear() })
 export const getLeaveBalance = (profileId: string, year: number, leaveType: string) =>
   get<LeaveBalance>(`/api/hr/leave-balances/${profileId}/${year}/${leaveType}`)
 export const upsertLeaveBalance = async (
