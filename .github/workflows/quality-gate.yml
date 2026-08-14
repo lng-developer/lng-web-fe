@@ -69,19 +69,18 @@ jobs:
       - run: npm i -g npm@11.6.2
       - run: npm ci
       - run: npm run build
-      - name: Install SSH key
+      - name: Install deploy tools
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.FE_DEPLOY_SSH_KEY }}" > ~/.ssh/fe_deploy_key
-          chmod 600 ~/.ssh/fe_deploy_key
-          ssh-keyscan -p "${{ secrets.FE_DEPLOY_PORT }}" "${{ secrets.FE_DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          sudo apt-get update
+          sudo apt-get install -y sshpass rsync
       - name: Upload dist
         run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/fe_deploy_key -p ${{ secrets.FE_DEPLOY_PORT }}" \
+          sshpass -p "${{ secrets.FE_DEPLOY_PASSWORD }}" rsync -az --delete \
+            -e "ssh -p ${{ secrets.FE_DEPLOY_PORT }} -o StrictHostKeyChecking=no" \
             dist/ "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}:/home/lng/apps/lng-web-fe/dist/"
       - name: Restart FE
         run: |
-          ssh -i ~/.ssh/fe_deploy_key -p "${{ secrets.FE_DEPLOY_PORT }}" \
+          sshpass -p "${{ secrets.FE_DEPLOY_PASSWORD }}" ssh \
+            -p "${{ secrets.FE_DEPLOY_PORT }}" -o StrictHostKeyChecking=no \
             "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}" \
             "pm2 restart lng-web-fe"
