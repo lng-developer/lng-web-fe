@@ -51,3 +51,37 @@ jobs:
       - run: npm i -g npm@11.6.2
       - run: npm ci
       - run: npm run test:ui -- --shard=${{ matrix.shard }}
+
+  deploy:
+    name: deploy-server
+    needs: [quality-gate, ui-tests]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Asia/Ho_Chi_Minh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm i -g npm@11.6.2
+      - run: npm ci
+      - run: npm run build
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.FE_DEPLOY_SSH_KEY }}" > ~/.ssh/fe_deploy_key
+          chmod 600 ~/.ssh/fe_deploy_key
+          ssh-keyscan -p "${{ secrets.FE_DEPLOY_PORT }}" "${{ secrets.FE_DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+      - name: Upload dist
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/fe_deploy_key -p ${{ secrets.FE_DEPLOY_PORT }}" \
+            dist/ "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}:/home/lng/apps/lng-web-fe/dist/"
+      - name: Restart FE
+        run: |
+          ssh -i ~/.ssh/fe_deploy_key -p "${{ secrets.FE_DEPLOY_PORT }}" \
+            "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}" \
+            "pm2 restart lng-web-fe"
