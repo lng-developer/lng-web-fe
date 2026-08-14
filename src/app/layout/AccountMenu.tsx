@@ -21,11 +21,18 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profile = useQuery({
-    queryKey: ['hr', 'employee-profiles', 'me'],
+    queryKey: ['hr', 'employee-profiles', 'me', account.account.id],
     queryFn: loadMyEmployeeProfile,
   })
   const avatar = useQuery({
-    queryKey: ['hr', 'employee-profiles', 'me', 'avatar', profile.data?.avatarAssetId],
+    queryKey: [
+      'hr',
+      'employee-profiles',
+      'me',
+      'avatar',
+      account.account.id,
+      profile.data?.avatarAssetId,
+    ],
     queryFn: () => loadEmployeeAvatar(profile.data!.avatarUrl!),
     enabled: Boolean(profile.data?.avatarAssetId && profile.data.avatarUrl),
   })

@@ -46,6 +46,7 @@ import styles from './ChatWorkspacePage.module.scss'
 
 const PAGE_SIZE = 20
 const MESSAGE_LIMIT = 50
+type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
 
 function participantLabel(account?: ChatParticipant) {
   return account?.employeeCode || account?.email || ''
@@ -139,6 +140,10 @@ function sendSocketMessage(
   })
 }
 
+function upsertById<T extends { id: string }>(items: T[], item: T) {
+  return [item, ...items.filter(({ id }) => id !== item.id)]
+}
+
 export function ChatWorkspacePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -202,13 +207,9 @@ export function ChatWorkspacePage() {
         ? sendSocketMessage(socketRef.current, activeConversationId, input)
         : sendChatMessage(activeConversationId, input)
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setDraft('')
       setFiles([])
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: chatKeys.messages(activeConversationId) }),
-        queryClient.invalidateQueries({ queryKey: chatKeys.all }),
-      ])
     },
   })
 
@@ -216,8 +217,8 @@ export function ChatWorkspacePage() {
     const socket = createChatSocket()
     socketRef.current = socket
     if (!socket) return
-    socket.on('message.created', (message) => {
-      queryClient.setQueryData<Awaited<ReturnType<typeof listChatMessages>>>(
+    socket.on('message.created', ({ conversation, message }) => {
+      queryClient.setQueryData<ChatPage<ChatMessage>>(
         chatKeys.messages(message.conversationId),
         (current) =>
           current
@@ -227,7 +228,11 @@ export function ChatWorkspacePage() {
               }
             : current,
       )
-      void queryClient.invalidateQueries({ queryKey: chatKeys.all })
+      queryClient.setQueriesData<ChatPage<ChatConversation>>(
+        { queryKey: [...chatKeys.all, 'conversations'] },
+        (current) =>
+          current ? { ...current, items: upsertById(current.items, conversation) } : current,
+      )
     })
     socket.on('presence.changed', ({ accountId, presence }) => {
       setPresenceByAccountId((current) => ({ ...current, [accountId]: presence }))

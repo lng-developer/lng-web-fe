@@ -159,6 +159,7 @@ describe('app navigation', () => {
       'performance',
     ])
     expect(groups.find(({ key }) => key === 'setup')?.items.map(({ key }) => key)).toEqual([
+      'operations-dashboard',
       'shops',
       'catalog',
       'vendors',

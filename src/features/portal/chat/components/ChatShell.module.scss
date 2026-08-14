@@ -118,7 +118,7 @@
   position: fixed;
   right: max(20px, env(safe-area-inset-right));
   bottom: max(20px, env(safe-area-inset-bottom));
-  z-index: 30;
+  z-index: 2147483000;
 }
 
 .floatingChatButton {
@@ -152,15 +152,19 @@
   position: fixed;
   right: max(92px, calc(env(safe-area-inset-right) + 92px));
   bottom: max(20px, env(safe-area-inset-bottom));
-  z-index: 31;
+  z-index: 2147483001;
+  isolation: isolate;
   display: grid;
-  grid-template-rows: auto minmax(220px, 360px) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(360px, calc(100vw - 32px));
+  max-height: min(520px, calc(100dvh - 96px));
+  min-height: 320px;
   overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 12px;
-  background: var(--ant-color-bg-elevated);
+  background: var(--ant-color-bg-elevated, #fff);
   box-shadow: 0 18px 42px rgb(23 32 51 / 24%);
+  transform: translateZ(0);
 }
 
 .quickChatWindowUnread {
@@ -183,12 +187,15 @@
 }
 
 .quickChatHeader {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-elevated, #fff);
 }
 
 .quickChatHeader strong {
@@ -198,11 +205,15 @@
 }
 
 .quickChatMessages {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
   padding: 14px 12px;
   overflow-y: auto;
+  background: var(--ant-color-bg-elevated, #fff);
 }
 
 .quickMessageOwn,
@@ -231,11 +242,14 @@
 }
 
 .quickChatComposer {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-elevated, #fff);
 }
 
 .quickChatComposer :global(.ant-input) {
@@ -246,5 +260,14 @@
   .chatPreviewItem,
   .floatingChatButton {
     transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .quickChatWindow {
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-height: calc(100dvh - 96px);
   }
 }

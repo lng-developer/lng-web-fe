@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -14,6 +15,7 @@ import { Avatar, Badge, Button, Empty, Input, Tooltip, Typography } from 'antd'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   type ChatConversation,
+  type ChatMessage,
   type ChatParticipant,
   listChatConversations,
   listChatMessages,
@@ -81,6 +83,12 @@ type ChatShellProps = {
   account: CurrentAccount
 }
 
+type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
+
+function upsertById<T extends { id: string }>(items: T[], item: T) {
+  return [item, ...items.filter(({ id }) => id !== item.id)]
+}
+
 export function ChatShell({ account }: ChatShellProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -92,12 +100,13 @@ export function ChatShell({ account }: ChatShellProps) {
   const [readQuickConversationIds, setReadQuickConversationIds] = useState<Set<string>>(
     () => new Set(),
   )
+  const [socketReady, setSocketReady] = useState(false)
   const chatPreviewRef = useRef<HTMLDivElement>(null)
-  const autoOpenedConversationRef = useRef<string | null>(null)
   const quickMessagesEndRef = useRef<HTMLDivElement | null>(null)
   const chatSocketRef = useRef<ChatSocket | null>(null)
   const chatLabel = t('shell.navigation.chat')
   const isChatWorkspace = location.pathname === '/portal/chat'
+  const overlayRoot = typeof document === 'undefined' ? null : document.body
   const timeLabels = {
     now: t('chat.time.now'),
     minute: t('chat.time.minute'),
@@ -119,8 +128,11 @@ export function ChatShell({ account }: ChatShellProps) {
     const socket = createChatSocket()
     chatSocketRef.current = socket
     if (!socket) return
-    socket.on('message.created', (message) => {
-      queryClient.setQueryData<Awaited<ReturnType<typeof listChatMessages>>>(
+    socket.on('connect', () => setSocketReady(true))
+    socket.on('disconnect', () => setSocketReady(false))
+    socket.on('connect_error', () => setSocketReady(false))
+    socket.on('message.created', ({ conversation, message }) => {
+      queryClient.setQueryData<ChatPage<ChatMessage>>(
         chatKeys.messages(message.conversationId),
         (current) =>
           current
@@ -130,11 +142,16 @@ export function ChatShell({ account }: ChatShellProps) {
               }
             : current,
       )
-      void queryClient.invalidateQueries({ queryKey: chatKeys.all })
+      queryClient.setQueriesData<ChatPage<ChatConversation>>(
+        { queryKey: [...chatKeys.all, 'conversations'] },
+        (current) =>
+          current ? { ...current, items: upsertById(current.items, conversation) } : current,
+      )
     })
     return () => {
       socket.disconnect()
       chatSocketRef.current = null
+      setSocketReady(false)
     }
   }, [queryClient])
 
@@ -146,7 +163,7 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatConversations = useQuery({
     queryKey: chatKeys.conversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
     queryFn: () => listChatConversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
-    refetchInterval: 10_000,
+    refetchInterval: false,
   })
   const chatParticipants = useQuery({
     queryKey: ['chat-participants'],
@@ -180,7 +197,7 @@ export function ChatShell({ account }: ChatShellProps) {
     queryKey: chatKeys.messages(quickConversationId),
     queryFn: () => listChatMessages(quickConversationId!, { page: 1, limit: 25 }),
     enabled: Boolean(quickConversationId) && !isChatWorkspace,
-    refetchInterval: quickConversationId && !isChatWorkspace ? 5_000 : false,
+    refetchInterval: quickConversationId && !isChatWorkspace && !socketReady ? 30_000 : false,
   })
   const quickMessageItems = [...(quickMessages.data?.items ?? [])].sort(
     (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
@@ -193,13 +210,9 @@ export function ChatShell({ account }: ChatShellProps) {
       }),
     onSuccess: async () => {
       setQuickDraft('')
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: chatKeys.messages(quickConversationId) }),
-        queryClient.invalidateQueries({ queryKey: chatKeys.all }),
-      ])
     },
   })
-  const quickRead = useMutation({
+  const { mutate: markQuickConversationRead } = useMutation({
     mutationFn: (conversationId: string) => markChatConversationRead(conversationId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: chatKeys.all })
@@ -214,7 +227,7 @@ export function ChatShell({ account }: ChatShellProps) {
       return
     }
     setReadQuickConversationIds((current) => new Set(current).add(quickConversation.id))
-    quickRead.mutate(quickConversation.id)
+    markQuickConversationRead(quickConversation.id)
   }
   const openQuickChat = (conversation: ChatConversation, markRead = true) => {
     if (isChatWorkspace) return
@@ -222,23 +235,9 @@ export function ChatShell({ account }: ChatShellProps) {
     setQuickConversationId(conversation.id)
     if (markRead && conversation.hasUnreadFromOthers) {
       setReadQuickConversationIds((current) => new Set(current).add(conversation.id))
-      quickRead.mutate(conversation.id)
+      markQuickConversationRead(conversation.id)
     }
   }
-
-  useEffect(() => {
-    if (isChatWorkspace || !unreadConversation || quickConversationId) return
-    if (autoOpenedConversationRef.current === unreadConversation.id) return
-    autoOpenedConversationRef.current = unreadConversation.id
-    openQuickChat(unreadConversation, false)
-  }, [isChatWorkspace, quickConversationId, unreadConversation])
-
-  useEffect(() => {
-    if (!quickConversation?.hasUnreadFromOthers) return
-    if (autoOpenedConversationRef.current === quickConversation.id) return
-    quickRead.mutate(quickConversation.id)
-    void quickMessages.refetch()
-  }, [quickConversation?.hasUnreadFromOthers, quickConversation?.id])
 
   useEffect(() => {
     if (!quickConversationId || quickMessages.isLoading) return
@@ -331,83 +330,92 @@ export function ChatShell({ account }: ChatShellProps) {
         </Tooltip>
         {isChatPreviewOpen ? <div className={styles.chatPreviewPopup}>{chatPreview}</div> : null}
       </div>
-      {!isChatWorkspace && hasUnreadFromOthers && quickConversationId !== unreadConversation?.id ? (
-        <Badge count={unreadCount} className={styles.floatingChatBadge}>
-          <button
-            className={styles.floatingChatButton}
-            type="button"
-            aria-label={chatLabel}
-            onClick={() => {
-              if (!unreadConversation) return
-              if (quickConversationId === unreadConversation.id) {
-                setQuickConversationId(null)
-                return
-              }
-              openQuickChat(unreadConversation)
-            }}
-          >
-            <MessageOutlined />
-          </button>
-        </Badge>
-      ) : null}
-      {!isChatWorkspace && quickConversation ? (
-        <section
-          className={`${styles.quickChatWindow} ${
-            isQuickConversationUnread ? styles.quickChatWindowUnread : ''
-          }`}
-          aria-label={quickTitle}
-        >
-          <div className={styles.quickChatHeader}>
-            <Avatar size={32} icon={<UserOutlined />} />
-            <strong>{quickTitle}</strong>
-            <Button
-              aria-label={t('common.close', 'Close')}
-              icon={<CloseOutlined />}
-              shape="circle"
-              type="text"
-              onClick={() => setQuickConversationId(null)}
-            />
-          </div>
-          <div className={styles.quickChatMessages}>
-            {quickMessageItems.map((message) => (
-              <div
-                className={
-                  message.senderAccountId === account.account.id
-                    ? styles.quickMessageOwn
-                    : styles.quickMessageOther
-                }
-                key={message.id}
+      {overlayRoot &&
+      !isChatWorkspace &&
+      hasUnreadFromOthers &&
+      quickConversationId !== unreadConversation?.id
+        ? createPortal(
+            <Badge count={unreadCount} className={styles.floatingChatBadge}>
+              <button
+                className={styles.floatingChatButton}
+                type="button"
+                aria-label={chatLabel}
+                onClick={() => {
+                  if (!unreadConversation) return
+                  if (quickConversationId === unreadConversation.id) {
+                    setQuickConversationId(null)
+                    return
+                  }
+                  openQuickChat(unreadConversation)
+                }}
               >
-                {message.body}
+                <MessageOutlined />
+              </button>
+            </Badge>,
+            overlayRoot,
+          )
+        : null}
+      {overlayRoot && !isChatWorkspace && quickConversation
+        ? createPortal(
+            <section
+              className={`${styles.quickChatWindow} ${
+                isQuickConversationUnread ? styles.quickChatWindowUnread : ''
+              }`}
+              aria-label={quickTitle}
+            >
+              <div className={styles.quickChatHeader}>
+                <Avatar size={32} icon={<UserOutlined />} />
+                <strong>{quickTitle}</strong>
+                <Button
+                  aria-label={t('common.close', 'Close')}
+                  icon={<CloseOutlined />}
+                  shape="circle"
+                  type="text"
+                  onClick={() => setQuickConversationId(null)}
+                />
               </div>
-            ))}
-            <div ref={quickMessagesEndRef} aria-hidden="true" />
-            {!quickMessages.isLoading && !quickMessageItems.length ? (
-              <Empty description={t('chat.noMessages', 'No messages yet')} />
-            ) : null}
-          </div>
-          <div className={styles.quickChatComposer}>
-            <Input
-              aria-label={t('chat.messageInput', 'Message')}
-              placeholder={t('chat.messagePlaceholder', 'Aa')}
-              value={quickDraft}
-              onChange={(event) => setQuickDraft(event.target.value)}
-              onFocus={markQuickChatRead}
-              onPressEnter={() => {
-                if (canQuickSend) quickSend.mutate()
-              }}
-            />
-            <Button
-              aria-label={t('chat.send', 'Send')}
-              disabled={!canQuickSend}
-              icon={<SendOutlined />}
-              shape="circle"
-              type="primary"
-              onClick={() => quickSend.mutate()}
-            />
-          </div>
-        </section>
-      ) : null}
+              <div className={styles.quickChatMessages}>
+                {quickMessageItems.map((message) => (
+                  <div
+                    className={
+                      message.senderAccountId === account.account.id
+                        ? styles.quickMessageOwn
+                        : styles.quickMessageOther
+                    }
+                    key={message.id}
+                  >
+                    {message.body}
+                  </div>
+                ))}
+                <div ref={quickMessagesEndRef} aria-hidden="true" />
+                {!quickMessages.isLoading && !quickMessageItems.length ? (
+                  <Empty description={t('chat.noMessages', 'No messages yet')} />
+                ) : null}
+              </div>
+              <div className={styles.quickChatComposer}>
+                <Input
+                  aria-label={t('chat.messageInput', 'Message')}
+                  placeholder={t('chat.messagePlaceholder', 'Aa')}
+                  value={quickDraft}
+                  onChange={(event) => setQuickDraft(event.target.value)}
+                  onFocus={markQuickChatRead}
+                  onPressEnter={() => {
+                    if (canQuickSend) quickSend.mutate()
+                  }}
+                />
+                <Button
+                  aria-label={t('chat.send', 'Send')}
+                  disabled={!canQuickSend}
+                  icon={<SendOutlined />}
+                  shape="circle"
+                  type="primary"
+                  onClick={() => quickSend.mutate()}
+                />
+              </div>
+            </section>,
+            overlayRoot,
+          )
+        : null}
     </>
   )
 }

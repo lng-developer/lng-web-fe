@@ -44,6 +44,7 @@
       "shipments": "Vận chuyển",
       "workScores": "Điểm công việc",
       "orders": "Đơn hàng",
+      "customers": "KhÃ¡ch hÃ ng",
       "chat": "Chat",
       "mapping": "Ánh xạ",
       "media": "Tệp tin",
@@ -521,9 +522,9 @@
     "unsaved": "Có thay đổi chưa lưu"
   },
   "foundation": {
-    "eyebrow": "Nền tảng mới",
-    "title": "Foundation đã sẵn sàng",
-    "description": "Các pattern desktop để xây lại từng màn hình theo hợp đồng backend.",
+    "eyebrow": "Vận hành",
+    "title": "Bảng điều khiển vận hành",
+    "description": "Tín hiệu HR, đơn hàng, mapping, design và sản xuất từ hợp đồng backend.",
     "actions": {
       "primary": "Thao tác chính",
       "secondary": "Phụ",
@@ -1367,6 +1368,59 @@
       "scheduling": "Điều phối lịch",
       "announcements": "Thông báo",
       "open": "Mở trang đầy đủ"
+    }
+  },
+  "customers": {
+    "title": "Khách hàng",
+    "description": "Theo dõi khách mới, khách quay lại, VIP và các khách cần chăm sóc.",
+    "columns": {
+      "customer": "Khách hàng",
+      "lifecycle": "Vòng đời",
+      "care": "Chăm sóc",
+      "orders": "Đơn hàng",
+      "revenue": "Doanh thu",
+      "lastOrder": "Đơn gần nhất",
+      "country": "Quốc gia",
+      "shop": "Shop"
+    },
+    "metrics": {
+      "total": "Tổng khách",
+      "new": "Khách mới",
+      "returning": "Quay lại",
+      "followUp": "Cần chăm sóc",
+      "revenue": "Doanh thu"
+    },
+    "filters": {
+      "label": "Bộ lọc khách hàng",
+      "search": "Tìm khách hàng",
+      "lifecycle": "Vòng đời",
+      "careStatus": "Trạng thái chăm sóc"
+    },
+    "actions": {
+      "view": "Xem",
+      "add": "Thêm",
+      "addNote": "Thêm ghi chú chăm sóc"
+    },
+    "messages": {
+      "updated": "Đã cập nhật khách hàng",
+      "noteAdded": "Đã thêm ghi chú"
+    },
+    "empty": {
+      "unknown": "Chưa rõ",
+      "noContact": "Chưa có liên hệ",
+      "noCustomers": "Chưa có khách hàng",
+      "dash": "-"
+    },
+    "values": {
+      "NEW": "Mới",
+      "RETURNING": "Quay lại",
+      "VIP": "VIP",
+      "AT_RISK": "Rủi ro",
+      "ISSUE_PRONE": "Hay phát sinh vấn đề",
+      "NONE": "Không",
+      "NEEDS_FOLLOW_UP": "Cần chăm sóc",
+      "IN_PROGRESS": "Đang xử lý",
+      "RESOLVED": "Đã xử lý"
     }
   },
   "portal": {

@@ -30,6 +30,11 @@ const hasExplicitHrAccess = (permissions: Set<string>) =>
   [...permissions].some((permission) => permission.startsWith('HR_')) ||
   organizationPermissions.some((permission) => permissions.has(permission))
 
+const canReadOperationsDashboard = (permissions: Set<string>) =>
+  ['REPORTS:READ', 'FINANCE:READ', 'FINANCE:WRITE'].some((permission) =>
+    permissions.has(permission),
+  )
+
 export function getContextNavigation(core: AppCoreKey, account: CurrentAccount): NavigationGroup[] {
   const permissions = effectivePermissions(account)
   const globalPermissions = new Set(account.permissions)
@@ -39,6 +44,13 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
         key: 'setup',
         labelKey: 'shell.groups.portalSetup',
         items: [
+          canReadOperationsDashboard(permissions)
+            ? {
+                key: 'operations-dashboard',
+                path: '/operations-dashboard',
+                labelKey: 'shell.navigation.operationsDashboard',
+              }
+            : null,
           permissions.has('SHOPS:READ')
             ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
             : null,
@@ -59,6 +71,13 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
         items: [
           permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
             ? { key: 'orders', path: '/portal/orders', labelKey: 'shell.navigation.orders' }
+            : null,
+          permissions.has('CUSTOMERS:READ')
+            ? {
+                key: 'customers',
+                path: '/portal/customers',
+                labelKey: 'shell.navigation.customers',
+              }
             : null,
           permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
             ? {
@@ -212,6 +231,8 @@ export function getAvailableCores(account: CurrentAccount) {
 }
 
 export function getCoreForPath(pathname: string): AppCoreKey | undefined {
+  if (pathname.startsWith('/operations-dashboard') || pathname.startsWith('/foundation'))
+    return 'portal'
   if (pathname.startsWith('/portal')) return 'portal'
   if (pathname.startsWith('/hr') || pathname.startsWith('/organization')) return 'hr'
   if (pathname.startsWith('/auth')) return 'system'

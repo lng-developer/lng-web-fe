@@ -33,6 +33,7 @@
       "shipments": "Shipments",
       "workScores": "Work scores",
       "orders": "Orders",
+      "customers": "Customers",
       "chat": "Chat",
       "mapping": "Mapping",
       "media": "Media",
@@ -482,9 +483,9 @@
     "unsaved": "Unsaved changes"
   },
   "foundation": {
-    "eyebrow": "New foundation",
-    "title": "Foundation is ready",
-    "description": "Desktop application patterns for rebuilding each screen against backend contracts.",
+    "eyebrow": "Operations",
+    "title": "Operations dashboard",
+    "description": "Live HR, order, mapping, design, and production signals from backend contracts.",
     "actions": {
       "primary": "Primary action",
       "secondary": "Secondary",
@@ -1300,6 +1301,59 @@
       "scheduling": "Scheduling",
       "announcements": "Announcements",
       "open": "Open full page"
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "description": "Track new, returning, VIP and follow-up customers.",
+    "columns": {
+      "customer": "Customer",
+      "lifecycle": "Lifecycle",
+      "care": "Care",
+      "orders": "Orders",
+      "revenue": "Revenue",
+      "lastOrder": "Last order",
+      "country": "Country",
+      "shop": "Shop"
+    },
+    "metrics": {
+      "total": "Total customers",
+      "new": "New",
+      "returning": "Returning",
+      "followUp": "Needs follow-up",
+      "revenue": "Revenue"
+    },
+    "filters": {
+      "label": "Customer filters",
+      "search": "Search customer",
+      "lifecycle": "Lifecycle",
+      "careStatus": "Care status"
+    },
+    "actions": {
+      "view": "View",
+      "add": "Add",
+      "addNote": "Add care note"
+    },
+    "messages": {
+      "updated": "Customer updated",
+      "noteAdded": "Note added"
+    },
+    "empty": {
+      "unknown": "Unknown",
+      "noContact": "No contact",
+      "noCustomers": "No customers",
+      "dash": "-"
+    },
+    "values": {
+      "NEW": "New",
+      "RETURNING": "Returning",
+      "VIP": "VIP",
+      "AT_RISK": "At risk",
+      "ISSUE_PRONE": "Issue-prone",
+      "NONE": "None",
+      "NEEDS_FOLLOW_UP": "Needs follow-up",
+      "IN_PROGRESS": "In progress",
+      "RESOLVED": "Resolved"
     }
   },
   "portal": {

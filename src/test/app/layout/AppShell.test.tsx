@@ -110,7 +110,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('navigation', { name: 'Test core rail' })).toBeVisible()
   })
 
-  it('auto-opens unread quick chat and keeps the floating badge hidden for that chat', async () => {
+  it('opens unread quick chat from the floating badge', async () => {
     const router = createMemoryRouter(
       [
         {
@@ -136,10 +136,11 @@ describe('AppShell', () => {
       </AppProviders>,
     )
 
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(2))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Chat' })[1])
     expect(await screen.findByRole('region', { name: 'designer@lng.co' })).toBeVisible()
-    expect(markChatConversationRead).not.toHaveBeenCalled()
+    expect(markChatConversationRead).toHaveBeenCalledWith('conversation-1')
     expect(router.state.location.pathname).toBe('/operations-dashboard')
-    expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(1)
 
     fireEvent.focus(screen.getByRole('textbox', { name: 'Message' }))
     await waitFor(() => expect(markChatConversationRead).toHaveBeenCalledWith('conversation-1'))
@@ -183,8 +184,6 @@ describe('AppShell', () => {
     const previewText = (_: string, node: Element | null) =>
       Boolean(node?.textContent?.includes('designer@lng.co: New file is ready'))
 
-    const closeQuickChat = await screen.findByRole('button', { name: 'Close' })
-    fireEvent.click(closeQuickChat)
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(2))
     fireEvent.click(screen.getAllByRole('button', { name: 'Chat' })[0])
     expect((await screen.findAllByText(previewText))[0]).toBeVisible()

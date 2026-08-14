@@ -139,6 +139,7 @@ export function AppSidebar({
 
 function iconFor({ key, path }: NavigationItem) {
   const portalIcons = {
+    'operations-dashboard': <BarChartOutlined />,
     shops: <ShopOutlined />,
     catalog: <AppstoreOutlined />,
     vendors: <TruckOutlined />,

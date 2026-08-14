@@ -1,12 +1,12 @@
 import { io, type Socket } from 'socket.io-client'
 
-import type { ChatMessage } from '@/features/portal/chat/api/chatApi'
+import type { ChatConversation, ChatMessage } from '@/features/portal/chat/api/chatApi'
 import type { SendChatMessageInput } from '@/features/portal/chat/api/chatApi'
 import { getAccessToken } from '@/shared/auth/session'
 import { env } from '@/shared/config/env'
 
 type ServerToClientEvents = {
-  'message.created': (message: ChatMessage) => void
+  'message.created': (payload: { conversation: ChatConversation; message: ChatMessage }) => void
   'message.read': (state: { conversationId: string; accountId: string; lastReadAt: string }) => void
   'presence.changed': (event: { accountId: string; presence: 'ONLINE' | 'OFFLINE' }) => void
   typing: (event: { conversationId: string; accountId: string; isTyping: boolean }) => void

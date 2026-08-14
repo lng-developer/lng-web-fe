@@ -218,6 +218,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/customers',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/customers/pages/CustomerWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { CustomerWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['CUSTOMERS:READ']}>
+                <CustomerWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/chat',
         lazy: () =>
           import('@/features/portal/chat/pages/ChatWorkspacePage').then(
