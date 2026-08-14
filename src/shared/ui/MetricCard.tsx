@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react'
 import { Skeleton } from 'antd'
 
 import styles from './sharedUi.module.scss'
@@ -63,6 +63,14 @@ export function MetricCard({
   const iconClass = [styles.metricIcon, variantClassMap[variant] ?? styles.metricIconNeutral]
     .filter(Boolean)
     .join(' ')
+  const handleKeyDown = isClickable
+    ? (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick?.()
+        }
+      }
+    : undefined
 
   return (
     <div
@@ -71,7 +79,7 @@ export function MetricCard({
       className={rootClass}
       style={style}
       onClick={onClick}
-      onKeyDown={isClickable ? (e) => e.key === 'Enter' && onClick?.() : undefined}
+      onKeyDown={handleKeyDown}
     >
       {icon ? <span className={iconClass}>{icon}</span> : null}
       <div className={styles.metricBody}>

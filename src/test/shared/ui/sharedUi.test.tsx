@@ -193,6 +193,17 @@ describe('shared UI', () => {
     })
   })
 
+  it('activates clickable metric cards with Enter and Space', () => {
+    const onClick = vi.fn()
+    render(<MetricCard label="Blocked" value={3} onClick={onClick} />)
+
+    const metric = screen.getByRole('button', { name: /Blocked/i })
+    fireEvent.keyDown(metric, { key: 'Enter' })
+    fireEvent.keyDown(metric, { key: ' ' })
+
+    expect(onClick).toHaveBeenCalledTimes(2)
+  })
+
   it('renders upload, bulk action, command palette, and chart foundations', () => {
     render(
       <>
