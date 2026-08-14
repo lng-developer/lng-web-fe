@@ -71,6 +71,7 @@ function renderPage(
 
 describe('ShopWorkspacePage', () => {
   beforeEach(async () => {
+    vi.useRealTimers()
     queryClient.clear()
     await i18n.changeLanguage('en')
     vi.mocked(listShops).mockResolvedValue({
