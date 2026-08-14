@@ -172,10 +172,7 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                 {[...(data?.leave.requests ?? []), ...(data?.overtime.requests ?? [])]
                   .slice(0, 4)
                   .map((item) => (
-                    <Space
-                      key={item.id}
-                      style={{ padding: '8px 0', borderBottom: '1px solid #f0f0f0', width: '100%' }}
-                    >
+                    <Space key={item.id} className={styles.surfaceRowDivider}>
                       <StatusTag
                         status={
                           item.status === 'APPROVED'
@@ -201,28 +198,14 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
 
           <div className={styles.split}>
             <SectionCard title={t('hrOperations.self.mySchedule')}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div className={styles.stackList}>
                 {(data?.schedule ?? [])
                   .filter((item) => item.isWorkingDay)
                   .slice(0, 5)
                   .map((item: WorkContext) => (
-                    <div
-                      key={item.workDateKey}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: 12,
-                        border: '1px solid #f0f0f0',
-                        borderRadius: 8,
-                        background: '#fafafa',
-                      }}
-                    >
+                    <div key={item.workDateKey} className={styles.surfaceRow}>
                       <Space size="middle">
-                        <Avatar
-                          icon={<CalendarOutlined />}
-                          style={{ backgroundColor: '#1890ff' }}
-                        />
+                        <Avatar icon={<CalendarOutlined />} className={styles.surfaceAvatar} />
                         <div>
                           <Typography.Text strong>{item.workDateKey}</Typography.Text>
                           <br />

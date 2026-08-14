@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
-import { Input, Layout, Space } from 'antd'
+import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { useIsFetching, useQueryClient } from '@tanstack/react-query'
+import { Button, Input, Layout, Space, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
@@ -26,6 +28,8 @@ const { Content, Header } = Layout
 
 export function AppShell() {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const isFetching = useIsFetching()
   const [collapsed, setCollapsed] = useState(false)
   const [navigationSearch, setNavigationSearch] = useState('')
   const location = useLocation()
@@ -67,6 +71,7 @@ export function AppShell() {
     const target = getRememberedCoreRoute(core, getContextNavigation(core, account))
     if (target) navigate(target)
   }
+  const refreshWorkspace = () => void queryClient.invalidateQueries()
   return (
     <Layout className={styles.shell}>
       <a className={styles.skipLink} href="#main-content">
@@ -92,15 +97,32 @@ export function AppShell() {
       <Layout>
         <Header className={styles.header}>
           <div className={styles.headerLeft}>
-            <Input.Search
+            <div className={styles.headerContext}>
+              <Typography.Text className={styles.headerCore}>
+                {activeCore ? t(`shell.cores.${activeCore}`) : t('app.name')}
+              </Typography.Text>
+              <Typography.Text strong className={styles.headerTitle}>
+                {pageTitle}
+              </Typography.Text>
+            </div>
+            <Input
               value={navigationSearch}
               onChange={(event) => setNavigationSearch(event.target.value)}
               allowClear
+              prefix={<SearchOutlined />}
               placeholder={t('shell.searchPlaceholder')}
               className={styles.navSearch}
             />
           </div>
           <Space size={10} className={styles.headerActions}>
+            <Tooltip title={t('shell.refresh')}>
+              <Button
+                type="text"
+                aria-label={t('shell.refresh')}
+                icon={<ReloadOutlined spin={isFetching > 0} />}
+                onClick={refreshWorkspace}
+              />
+            </Tooltip>
             <ChatShell account={account} />
             <NotificationCenter />
             <ThemeSwitch />

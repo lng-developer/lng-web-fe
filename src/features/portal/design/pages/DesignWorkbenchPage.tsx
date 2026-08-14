@@ -12,7 +12,6 @@ import {
   PictureOutlined,
   PlayCircleOutlined,
   PlusOutlined,
-  ReloadOutlined,
   ThunderboltOutlined,
   UploadOutlined,
   UserAddOutlined,
@@ -717,9 +716,6 @@ export function DesignWorkbenchPage() {
                 {t('portal.design.createDesignTask')}
               </Button>
             ) : null}
-            <Button icon={<ReloadOutlined />} onClick={refresh}>
-              {t('portal.design.refresh')}
-            </Button>
           </Space>
         }
       />
@@ -750,10 +746,10 @@ export function DesignWorkbenchPage() {
 
       <SectionCard>
         <div className={styles.taskToolbar}>
-          <Typography.Title className={styles.taskToolbarTitle} level={4}>
-            {t('portal.design.tasks', 'Design Tasks')}
-          </Typography.Title>
-          <FilterBar label={t('portal.design.filters')} contentClassName={styles.filters}>
+          <div className={styles.taskToolbarTitleGroup}>
+            <Typography.Title className={styles.taskToolbarTitle} level={4}>
+              {t('portal.design.tasks', 'Design Tasks')}
+            </Typography.Title>
             <Select
               className={styles.channelFilter}
               value={salesChannelCode ?? 'ALL'}
@@ -765,6 +761,8 @@ export function DesignWorkbenchPage() {
               ]}
               onChange={handleSalesChannelChange}
             />
+          </div>
+          <FilterBar label={t('portal.design.filters')} contentClassName={styles.filters}>
             <Input.Search
               className={styles.search}
               allowClear

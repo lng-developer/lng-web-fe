@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip } from 'antd'
@@ -113,9 +113,6 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
         description={t('portal.catalog.master.productTypeDescription')}
         actions={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => void groups.refetch()}>
-              {t('portal.catalog.refresh')}
-            </Button>
             {canManage ? (
               <Button type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>
                 {t('portal.catalog.master.createProductType')}

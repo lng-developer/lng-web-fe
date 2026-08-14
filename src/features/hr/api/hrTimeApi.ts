@@ -117,6 +117,21 @@ export type PayrollResult = {
   netIncome: number
   status: string
 }
+export type PayrollResultsSummary = {
+  total: number
+  statusCounts: Record<string, number>
+  amounts: {
+    grossIncome: number
+    totalDeductions: number
+    netIncome: number
+    unpaidNetIncome: number
+    paidNetIncome: number
+  }
+}
+export type PayrollResultsPage = Page<PayrollResult> & {
+  summary?: PayrollResultsSummary
+  capabilities?: { view?: boolean }
+}
 export type PayrollAdjustment = {
   id: string
   profileId: string
@@ -176,7 +191,12 @@ export type Announcement = {
 }
 export type HrDashboard = {
   date: string
-  employees: { total: number; active: number; probation: number; onLeave: number }
+  employees: {
+    total: number
+    active: number
+    probation: number
+    onLeave: number
+  }
   attendance: {
     expectedEmployees: number
     records: number
@@ -192,6 +212,29 @@ export type HrDashboard = {
     pendingOvertimes: number
     totalPending: number
     approvedOvertimesToday: number
+  }
+  operations?: { attendanceExceptions: number; pendingActions: number }
+  payroll?: {
+    id: string
+    month: number
+    year: number
+    status: string
+    resultCount: number
+    finalizedAt: string | null
+    paidAt: string | null
+    pendingAdjustments: number
+    summary: {
+      total: number
+      statusCounts: Record<string, number>
+      amounts: { grossIncome: number; netIncome: number }
+    }
+  } | null
+  announcements?: {
+    published: number
+    scheduled: number
+    pinned: number
+    urgent: number
+    dueReminders: number
   }
   rangeDays?: 1 | 7 | 30
   attendanceTrend?: Array<{
@@ -336,9 +379,9 @@ export const listPayrolls = (params: Query = {}) =>
   get<Page<PayrollRun>>('/api/hr/payrolls', params)
 export const runPayroll = (input: object) => post<PayrollRun>('/api/hr/payrolls/run', input)
 export const listMyPayrolls = (params: Query = {}) =>
-  get<Page<PayrollResult>>('/api/hr/payrolls/me', params)
+  get<PayrollResultsPage>('/api/hr/payrolls/me', params)
 export const listPayrollResults = (params: Query = {}) =>
-  get<Page<PayrollResult>>('/api/hr/payrolls/results', params)
+  get<PayrollResultsPage>('/api/hr/payrolls/results', params)
 export const exportPayrollResults = async (params: Query = {}) =>
   apiClient.get('/api/hr/payrolls/results/export', { params, responseType: 'blob' })
 export const getPayrollResult = (id: string) => get<PayrollResult>(`/api/hr/payrolls/results/${id}`)

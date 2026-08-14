@@ -14,6 +14,7 @@ import {
   updateLeaveRequest,
   updateOvertimeRequest,
 } from '../api/hrTimeApi'
+import styles from './HrOperationsPage.module.scss'
 
 export type TimeRequestKind = 'leave' | 'overtime'
 
@@ -90,11 +91,16 @@ export function TimeRequestEditorModal({
       width={520}
       onCancel={onClose}
     >
-      <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
+      <Form
+        className={styles.modalForm}
+        form={form}
+        layout="vertical"
+        onFinish={(values) => save.mutate(values)}
+      >
         {kind === 'leave' ? (
           <>
-            <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
-              Leave Request Details
+            <Divider plain className={styles.modalSection}>
+              {t('hrOperations.requests.leave')}
             </Divider>
             <Form.Item
               name="leaveType"
@@ -120,7 +126,7 @@ export function TimeRequestEditorModal({
               />
             </Form.Item>
             <Row gutter={12}>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="startDateKey"
                   label={t('hrOperations.common.from')}
@@ -129,7 +135,7 @@ export function TimeRequestEditorModal({
                   <DateTimePicker mode="date" />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="endDateKey"
                   label={t('hrOperations.common.to')}
@@ -142,8 +148,8 @@ export function TimeRequestEditorModal({
           </>
         ) : (
           <>
-            <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
-              Overtime Request Details
+            <Divider plain className={styles.modalSection}>
+              {t('hrOperations.requests.overtime')}
             </Divider>
             <Form.Item
               name="workDateKey"
@@ -153,7 +159,7 @@ export function TimeRequestEditorModal({
               <DateTimePicker mode="date" />
             </Form.Item>
             <Row gutter={12}>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="plannedStartTime"
                   label={t('hrOperations.common.from')}
@@ -162,7 +168,7 @@ export function TimeRequestEditorModal({
                   <DateTimePicker mode="time" />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="plannedEndTime"
                   label={t('hrOperations.common.to')}

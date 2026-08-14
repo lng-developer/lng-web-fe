@@ -1,12 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -175,9 +169,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         description={t('portal.catalog.master.templateDescription')}
         actions={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => void templates.refetch()}>
-              {t('portal.catalog.refresh')}
-            </Button>
             {canManage ? (
               <Button type="primary" icon={<PlusOutlined />} onClick={() => void open(null)}>
                 {t('portal.catalog.master.createTemplate')}

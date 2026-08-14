@@ -13,6 +13,7 @@ import { useFeedbackToast } from '@/shared/ui'
 
 import { approveListing, type Listing, rejectListing } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
+import styles from './ListingQcActions.module.scss'
 
 interface ListingQcActionsProps {
   listing: Listing
@@ -49,22 +50,10 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
 
   if (listing.qcStatus === 'APPROVED') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '12px 16px',
-          background: '#f6ffed',
-          borderRadius: 8,
-          border: '1px solid #b7eb8f',
-        }}
-      >
-        <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 18 }} />
+      <div className={`${styles.notice} ${styles.approved}`}>
+        <CheckCircleOutlined className={styles.noticeIcon} />
         <div>
-          <Typography.Text strong style={{ color: '#52c41a' }}>
-            Approved
-          </Typography.Text>
+          <Typography.Text strong>Approved</Typography.Text>
           {listing.approvedAt ? (
             <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
               {new Date(listing.approvedAt).toLocaleString()}
@@ -77,24 +66,10 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
 
   if (listing.qcStatus === 'REJECTED') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 8,
-          padding: '12px 16px',
-          background: '#fff2f0',
-          borderRadius: 8,
-          border: '1px solid #ffccc7',
-        }}
-      >
-        <CloseCircleOutlined
-          style={{ color: '#ff4d4f', fontSize: 18, flexShrink: 0, marginTop: 2 }}
-        />
+      <div className={`${styles.notice} ${styles.rejected}`}>
+        <CloseCircleOutlined className={styles.noticeIcon} />
         <div>
-          <Typography.Text strong style={{ color: '#ff4d4f' }}>
-            Rejected
-          </Typography.Text>
+          <Typography.Text strong>Rejected</Typography.Text>
           {listing.rejectionReason ? (
             <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
               {listing.rejectionReason}
@@ -108,18 +83,10 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
   // DRAFT — show action buttons
   return (
     <>
-      <div
-        style={{
-          padding: '12px 16px',
-          background: '#fffbe6',
-          borderRadius: 8,
-          border: '1px solid #ffe58f',
-          marginBottom: 12,
-        }}
-      >
+      <div className={`${styles.notice} ${styles.draft}`}>
         <Space size={4}>
-          <ClockCircleOutlined style={{ color: '#faad14' }} />
-          <Typography.Text style={{ color: '#ad6800' }}>
+          <ClockCircleOutlined className={styles.noticeIcon} />
+          <Typography.Text>
             This listing is in <strong>DRAFT</strong> — it will not receive orders until approved.
           </Typography.Text>
         </Space>

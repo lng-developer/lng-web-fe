@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { EditOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons'
+import { EditOutlined, SyncOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -242,12 +242,6 @@ export function ShipmentWorkbenchPage({
                 {t('portal.shipments.recheckSubmitted')}
               </Button>
             ) : null}
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => void queryClient.invalidateQueries({ queryKey: shipmentKeys.all })}
-            >
-              {t('portal.shipments.refresh')}
-            </Button>
           </Space>
         }
       />

@@ -105,8 +105,8 @@ describe('shared UI', () => {
       </>,
     )
 
-    expect(screen.getByText('Ready')).toHaveClass('ant-tag-blue')
-    expect(screen.getByText('Submitting')).toHaveClass('ant-tag-processing')
+    expect(screen.getByText('Ready')).toHaveStyle({ color: 'var(--ant-color-info)' })
+    expect(screen.getByText('Submitting')).toHaveStyle({ color: 'var(--ant-color-primary)' })
   })
 
   it('renders accessible empty and error states', () => {

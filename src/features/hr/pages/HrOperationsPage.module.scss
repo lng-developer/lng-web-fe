@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .toolbar {
@@ -8,7 +8,12 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
 }
 
 .metrics {
@@ -20,8 +25,108 @@
 .split {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
   align-items: start;
+}
+
+.overviewCommand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--ant-color-primary) 18%, var(--ant-color-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 24%, var(--ant-color-bg-container));
+  box-shadow:
+    0 14px 32px rgb(15 23 42 / 8%),
+    inset 4px 0 0 var(--ant-color-primary);
+}
+
+.overviewCommand :global(.ant-typography) {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(320px, 0.78fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.overviewGrid > :last-child {
+  grid-column: 1 / -1;
+}
+
+.overviewRows,
+.overviewSignalList {
+  display: grid;
+  gap: 10px;
+}
+
+.overviewMiniGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.overviewRow,
+.overviewSignal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 9px 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.overviewRow span,
+.overviewSignal span {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.overviewRow strong,
+.overviewSignal strong {
+  color: var(--ant-color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.overviewSignal {
+  border-color: color-mix(in srgb, var(--overview-signal) 28%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--overview-signal-bg) 42%, var(--ant-color-bg-container));
+}
+
+.overviewSignalinfo {
+  --overview-signal: var(--ant-color-info);
+  --overview-signal-bg: var(--ant-color-info-bg);
+}
+
+.overviewSignalwarning {
+  --overview-signal: var(--ant-color-warning);
+  --overview-signal-bg: var(--ant-color-warning-bg);
+}
+
+.overviewSignaldanger {
+  --overview-signal: var(--ant-color-error);
+  --overview-signal-bg: var(--ant-color-error-bg);
+}
+
+.overviewSignalprimary {
+  --overview-signal: var(--ant-color-primary);
+  --overview-signal-bg: var(--ant-color-primary-bg);
+}
+
+.overviewChart {
+  height: 260px;
+  width: 100%;
+  margin-top: 6px;
 }
 
 .actions {
@@ -30,9 +135,219 @@
   width: 100%;
 }
 
+.modalForm {
+  display: grid;
+  gap: 14px;
+}
+
+.modalSection {
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.modalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.modalGridWide {
+  grid-column: 1 / -1;
+}
+
+.modalStack {
+  display: grid;
+  gap: 12px;
+}
+
+.modalForm :global(.ant-space) {
+  max-width: 100%;
+}
+
 .money {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+}
+
+.payrollCommand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--ant-color-border) 78%, var(--ant-color-primary));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 30%, var(--ant-color-bg-container));
+  box-shadow:
+    0 16px 36px rgb(15 23 42 / 10%),
+    inset 4px 0 0 var(--ant-color-primary);
+}
+
+.payrollCommandMain {
+  min-width: 0;
+}
+
+.payrollCommandMain :global(.ant-typography) {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.payrollEyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.payrollCommandActions {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.payrollSummaryGrid {
+  display: grid;
+  grid-template-columns: 0.8fr repeat(3, 1fr);
+  gap: 12px;
+}
+
+.payrollMetricPeople,
+.payrollMetricGross,
+.payrollMetricDeductions,
+.payrollMetricNet {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--payroll-accent) 28%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--payroll-accent-bg) 42%, var(--ant-color-bg-container));
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--payroll-accent) 12%, transparent);
+}
+
+.payrollMetricPeople::before,
+.payrollMetricGross::before,
+.payrollMetricDeductions::before,
+.payrollMetricNet::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  content: '';
+  background: var(--payroll-accent);
+}
+
+.payrollMetricPeople {
+  --payroll-accent: var(--ant-color-info);
+  --payroll-accent-bg: var(--ant-color-info-bg);
+}
+
+.payrollMetricGross {
+  --payroll-accent: var(--ant-color-success);
+  --payroll-accent-bg: var(--ant-color-success-bg);
+}
+
+.payrollMetricDeductions {
+  --payroll-accent: var(--ant-color-warning);
+  --payroll-accent-bg: var(--ant-color-warning-bg);
+}
+
+.payrollMetricNet {
+  --payroll-accent: var(--ant-color-primary);
+  --payroll-accent-bg: var(--ant-color-primary-bg);
+}
+
+.payrollWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.75fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.payrollPrimary,
+.payrollSide {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.payrollBreakdown {
+  display: grid;
+  gap: 10px;
+}
+
+.payrollBreakdownRow,
+.payrollBreakdownMoney {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ant-color-fill-quaternary) 70%, transparent);
+}
+
+.payrollBreakdownRow {
+  border-color: color-mix(in srgb, var(--payroll-status-color) 30%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--payroll-status-bg) 46%, var(--ant-color-bg-container));
+}
+
+.payrollBreakdownRow :global(.ant-tag) {
+  border-color: color-mix(in srgb, var(--payroll-status-color) 42%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--payroll-status-bg) 84%, var(--ant-color-bg-container));
+  color: color-mix(in srgb, var(--payroll-status-color) 82%, var(--ant-color-text));
+  font-weight: 700;
+}
+
+.payrollStatusDRAFT {
+  --payroll-status-color: var(--ant-color-warning);
+  --payroll-status-bg: var(--ant-color-warning-bg);
+}
+
+.payrollStatusFINALIZED {
+  --payroll-status-color: var(--ant-color-info);
+  --payroll-status-bg: var(--ant-color-info-bg);
+}
+
+.payrollStatusPAID {
+  --payroll-status-color: var(--ant-color-success);
+  --payroll-status-bg: var(--ant-color-success-bg);
+}
+
+.payrollBreakdownMoney {
+  border-color: color-mix(in srgb, var(--ant-color-primary) 16%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 34%, var(--ant-color-bg-container));
+}
+
+.payrollBreakdownMoney span {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.payrollBreakdownMoney strong {
+  color: var(--ant-color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.payrollNetCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 96px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 78%, transparent);
+  color: color-mix(in srgb, var(--ant-color-primary) 80%, var(--ant-color-text));
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
 }
 
 .compactList {
@@ -41,13 +356,51 @@
   gap: 12px;
 }
 
+.stackList {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.surfaceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.surfaceRow:hover {
+  border-color: var(--ui-border-accent);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 8%);
+  transform: translateY(-1px);
+}
+
+.surfaceRowDivider {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.surfaceAvatar {
+  background: var(--ant-color-info);
+}
+
 .miniStat {
   display: flex;
   flex-direction: column;
   padding: 12px;
   border-radius: 8px;
-  background: var(--ant-color-fill-quaternary);
   border: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 8px 22px rgb(15 23 42 / 5%);
 }
 
 .miniStatLabel {
@@ -72,16 +425,19 @@
   padding: 16px;
   margin-bottom: 12px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--ant-color-bg-container);
+  box-shadow: 0 8px 22px rgb(15 23 42 / 5%);
   transition:
+    transform 180ms ease,
     box-shadow 200ms ease,
     border-color 200ms ease;
 }
 
 .announcement:hover {
-  border-color: var(--ant-color-primary-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: var(--ui-border-accent);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 8%);
+  transform: translateY(-1px);
 }
 
 .announcement:last-child {
@@ -164,13 +520,16 @@
   min-height: 108px;
   padding: 7px;
   border: 1px solid transparent;
+  border-radius: 8px;
   transition:
     border-color 140ms ease,
-    background-color 140ms ease;
+    background-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .calendarCell:hover {
   background: var(--ant-color-fill-tertiary);
+  box-shadow: inset 0 0 0 1px var(--ant-color-border-secondary);
 }
 
 .calendarCellSelected {
@@ -248,8 +607,9 @@
   gap: 16px;
   padding: 18px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 8px;
   background: var(--ant-color-bg-container);
+  box-shadow: 0 12px 30px rgb(15 23 42 / 7%);
 }
 
 .calendarDetailHeader {
@@ -280,8 +640,36 @@
 
 @media (max-width: 1100px) {
   .metrics,
-  .split {
+  .split,
+  .payrollSummaryGrid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .payrollCommand,
+  .payrollWorkspace,
+  .overviewCommand,
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .payrollCommandActions {
+    justify-items: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .modalGrid,
+  .payrollSummaryGrid,
+  .overviewMiniGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement,
+  .surfaceRow,
+  .calendarCell {
+    transition: none;
   }
 }
 

@@ -1,9 +1,17 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import { IdcardOutlined, PlusOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
+import {
+  CalendarOutlined,
+  FieldTimeOutlined,
+  IdcardOutlined,
+  PlusOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Select, Skeleton, Switch } from 'antd'
+import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
 import {
@@ -32,6 +40,7 @@ const StaffEditorModal = lazy(() =>
 )
 
 const statuses = ['ACTIVE', 'PROBATION', 'ON_LEAVE', 'SUSPENDED', 'RESIGNED']
+const contractTypes = new Set(['CONTRACT', 'INTERNSHIP'])
 
 export function HrWorkspacePage() {
   const { t } = useTranslation()
@@ -130,6 +139,25 @@ export function HrWorkspacePage() {
   const incompleteCount = (profiles.data?.items ?? []).filter(
     (profile) => profile.onboardingStatus === 'PROFILE_INCOMPLETE' && !profile.isDeleted,
   ).length
+  const profileStats = useMemo(() => {
+    const today = dayjs()
+    const activeProfiles = (profiles.data?.items ?? []).filter((profile) => !profile.isDeleted)
+    return {
+      fullTime: activeProfiles.filter((profile) => profile.employmentType === 'FULL_TIME').length,
+      partTime: activeProfiles.filter((profile) => profile.employmentType === 'PART_TIME').length,
+      contract: activeProfiles.filter((profile) => contractTypes.has(profile.employmentType ?? ''))
+        .length,
+      probation: activeProfiles.filter((profile) => profile.status === 'PROBATION').length,
+      newThisMonth: activeProfiles.filter(
+        (profile) => profile.startDate && dayjs(profile.startDate).isSame(today, 'month'),
+      ).length,
+      endingSoon: activeProfiles.filter((profile) => {
+        if (!profile.endDate) return false
+        const endDate = dayjs(profile.endDate)
+        return endDate.isAfter(today.startOf('day')) && endDate.diff(today, 'day') <= 30
+      }).length,
+    }
+  }, [profiles.data])
 
   return (
     <section className={styles.page}>
@@ -177,7 +205,32 @@ export function HrWorkspacePage() {
           label={t('hr.incompleteProfiles')}
           value={String(incompleteCount)}
         />
+        <MetricCard
+          icon={<FieldTimeOutlined />}
+          label={t('hr.probationStaff')}
+          value={String(profileStats.probation)}
+          variant="warning"
+        />
+        <MetricCard
+          icon={<CalendarOutlined />}
+          label={t('hr.newThisMonth')}
+          value={String(profileStats.newThisMonth)}
+          variant="success"
+        />
+        <MetricCard
+          icon={<CalendarOutlined />}
+          label={t('hr.endingSoon')}
+          value={String(profileStats.endingSoon)}
+          variant="danger"
+        />
       </div>
+      <SectionCard title={t('hr.employmentMix')}>
+        <div className={styles.profileMix}>
+          <MetricCard label={t('hr.fullTime')} value={String(profileStats.fullTime)} />
+          <MetricCard label={t('hr.partTime')} value={String(profileStats.partTime)} />
+          <MetricCard label={t('hr.contractStaff')} value={String(profileStats.contract)} />
+        </div>
+      </SectionCard>
       <SectionCard title={t('hr.directory')}>
         <div className={styles.toolbar}>
           <SearchInput placeholder={t('hr.search')} value={search} onSearchChange={setSearch} />

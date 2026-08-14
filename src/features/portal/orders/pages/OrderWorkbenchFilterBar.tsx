@@ -11,23 +11,27 @@ type SelectOption = {
   readonly label: string
 }
 
+const filterSelectOption = (input: string, option?: SelectOption) =>
+  (option?.label ?? '').toLowerCase().includes(input.trim().toLowerCase())
+
 type OrderWorkbenchFilterBarProps = {
   readonly search: string
   readonly shopId?: string
-  readonly addressValidationStatus?: string
+  readonly vendorId?: string
   readonly dates: DateRangeValue
   readonly hasActiveFilters: boolean
   readonly shopOptions: SelectOption[]
-  readonly addressStatusOptions: SelectOption[]
+  readonly vendorOptions: SelectOption[]
   readonly filtersLabel: string
   readonly searchPlaceholder: string
   readonly shopPlaceholder: string
-  readonly addressPlaceholder: string
+  readonly vendorPlaceholder: string
   readonly clearLabel: string
   readonly loadingShops: boolean
+  readonly loadingVendors: boolean
   readonly onSearchChange: (value: string) => void
   readonly onShopChange: (value?: string) => void
-  readonly onAddressValidationStatusChange: (value?: string) => void
+  readonly onVendorChange: (value?: string) => void
   readonly onDatesChange: (value: { dateFrom?: string; dateTo?: string }) => void
   readonly onClearFilters: () => void
 }
@@ -35,20 +39,21 @@ type OrderWorkbenchFilterBarProps = {
 export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = ({
   search,
   shopId,
-  addressValidationStatus,
+  vendorId,
   dates,
   hasActiveFilters,
   shopOptions,
-  addressStatusOptions,
+  vendorOptions,
   filtersLabel,
   searchPlaceholder,
   shopPlaceholder,
-  addressPlaceholder,
+  vendorPlaceholder,
   clearLabel,
   loadingShops,
+  loadingVendors,
   onSearchChange,
   onShopChange,
-  onAddressValidationStatusChange,
+  onVendorChange,
   onDatesChange,
   onClearFilters,
 }) => {
@@ -65,6 +70,7 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = ({
         allowClear
         showSearch
         optionFilterProp="label"
+        filterOption={filterSelectOption}
         value={shopId}
         loading={loadingShops}
         placeholder={shopPlaceholder}
@@ -74,12 +80,16 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = ({
       <Select
         className={styles.filterSelect}
         allowClear
-        value={addressValidationStatus}
-        placeholder={addressPlaceholder}
-        options={addressStatusOptions}
-        onChange={onAddressValidationStatusChange}
+        showSearch
+        optionFilterProp="label"
+        filterOption={filterSelectOption}
+        value={vendorId}
+        loading={loadingVendors}
+        placeholder={vendorPlaceholder}
+        options={vendorOptions}
+        onChange={onVendorChange}
       />
-      <DateRangePicker value={dates} onChange={onDatesChange} />
+      <DateRangePicker style={{ maxWidth: 'none' }} value={dates} onChange={onDatesChange} />
       {hasActiveFilters ? <Button onClick={onClearFilters}>{clearLabel}</Button> : null}
     </FilterBar>
   )

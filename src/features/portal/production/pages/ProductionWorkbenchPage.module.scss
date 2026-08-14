@@ -82,13 +82,22 @@
   );
 }
 
-.channelFilter {
-  width: 150px;
-  margin: 12px 12px 0;
-}
-
 .queuePane :global(.ant-table-body) {
   scrollbar-gutter: stable;
+}
+
+.queueHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.queueHeader .channelFilter {
+  width: 150px;
+  flex-shrink: 0;
+  margin-top: 4px;
 }
 
 .inlineWorkspace {

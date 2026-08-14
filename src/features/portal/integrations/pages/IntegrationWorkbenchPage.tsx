@@ -640,9 +640,6 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
                   resetPage()
                 }}
               />
-              <Button icon={<ReloadOutlined aria-hidden />} onClick={() => void imports.refetch()}>
-                {t('portal.integrations.retry', { defaultValue: 'Retry' })}
-              </Button>
             </FilterBar>
           }
         />

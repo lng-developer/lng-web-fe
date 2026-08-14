@@ -15,7 +15,7 @@
 }
 
 .popupOpening .popupModalContent {
-  transform: scale(0.05);
+  transform: translateY(6px) scale(0.98);
   opacity: 0;
 }
 
@@ -25,7 +25,7 @@
 }
 
 .popupClosing .popupModalContent {
-  transform: scale(0.05);
+  transform: translateY(4px) scale(0.98);
   opacity: 0;
 }
 
@@ -35,4 +35,10 @@
 
 .popupModal :global(.ant-modal-mask) {
   transition: opacity var(--popup-open-duration) var(--popup-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popupModalContent {
+    transition: none;
+  }
 }

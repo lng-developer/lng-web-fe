@@ -18,7 +18,6 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   ClockCircleOutlined,
-  ReloadOutlined,
   ScissorOutlined,
   StopOutlined,
   WarningOutlined,
@@ -830,7 +829,6 @@ export function ProductionWorkbenchPage({
   const handleExpandedRowsChange = useCallback((keys: readonly Key[]) => {
     setExpandedRowKeys([...keys])
   }, [])
-  const handleRefresh = useCallback(() => void refresh(), [refresh])
   const handleScaleAssigneeChange = useCallback((value?: string) => {
     setScaleAssigneeId(value)
   }, [])
@@ -1080,9 +1078,6 @@ export function ProductionWorkbenchPage({
                 {t('portal.production.recheckBlocked')}
               </Button>
             ) : null}
-            <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
-              {t('portal.production.refresh')}
-            </Button>
           </Space>
         }
       />
@@ -1129,23 +1124,25 @@ export function ProductionWorkbenchPage({
       </div>
       <div className={styles.workspace}>
         <section className={styles.queuePane} aria-label={t('portal.production.title')}>
-          <UiTabs
-            className={styles.queueTabs}
-            activeKey={tab}
-            onChange={handleTabChange}
-            items={tabItems}
-          />
-          <Select
-            className={styles.channelFilter}
-            value={salesChannelCode ?? 'ALL'}
-            aria-label={t('portal.production.channel')}
-            options={[
-              { label: t('portal.production.channelAll'), value: 'ALL' },
-              { label: 'Amazon', value: 'AMAZON' },
-              { label: 'Etsy', value: 'ETSY' },
-            ]}
-            onChange={handleSalesChannelChange}
-          />
+          <div className={styles.queueHeader}>
+            <UiTabs
+              className={styles.queueTabs}
+              activeKey={tab}
+              onChange={handleTabChange}
+              items={tabItems}
+            />
+            <Select
+              className={styles.channelFilter}
+              value={salesChannelCode ?? 'ALL'}
+              aria-label={t('portal.production.channel')}
+              options={[
+                { label: t('portal.production.channelAll'), value: 'ALL' },
+                { label: 'Amazon', value: 'AMAZON' },
+                { label: 'Etsy', value: 'ETSY' },
+              ]}
+              onChange={handleSalesChannelChange}
+            />
+          </div>
           <ProductionWorkbenchFilterBar
             search={search}
             status={status}

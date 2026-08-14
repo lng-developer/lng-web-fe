@@ -325,6 +325,13 @@
   grid-column: 1 / -1;
 }
 
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 8px;
+}
+
 @media (max-width: 640px) {
   .pageHeader {
     flex-direction: column;

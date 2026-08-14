@@ -4,7 +4,7 @@
 
 html {
   min-width: 320px;
-  background: #f5f7fa;
+  background: #f4f6f8;
 }
 
 :root {
@@ -12,6 +12,7 @@ html {
   --ui-border-strong: color-mix(in srgb, var(--ant-color-border) 88%, transparent);
   --ui-border-accent: color-mix(in srgb, var(--ant-color-primary) 26%, var(--ant-color-border));
   --ui-surface-elevate-shadow: 0 10px 28px rgb(15 23 42 / 10%);
+  --ui-modal-shadow: 0 22px 52px rgb(15 23 42 / 18%);
 }
 
 body {
@@ -41,5 +42,70 @@ select {
   min-height: 100dvh;
   place-items: center;
   padding: 24px;
-  background: #f5f7fa;
+  background: #f4f6f8;
+}
+
+.ant-modal .ant-modal-content {
+  border: 1px solid color-mix(in srgb, var(--ant-color-border) 72%, transparent);
+  border-radius: 8px;
+  box-shadow: var(--ui-modal-shadow);
+  overflow: hidden;
+}
+
+.ant-modal .ant-modal-header {
+  margin: -20px -24px 20px;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ant-color-fill-quaternary) 72%, transparent),
+      transparent
+    ),
+    var(--ant-color-bg-container);
+}
+
+.ant-modal .ant-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.ant-modal .ant-modal-footer {
+  margin: 20px -24px -20px;
+  padding: 14px 24px 16px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.ant-modal .ant-form-vertical .ant-form-item-label > label {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ant-modal .ant-input,
+.ant-modal .ant-input-affix-wrapper,
+.ant-modal .ant-select-selector,
+.ant-modal .ant-input-number {
+  border-radius: 8px;
+}
+
+.ant-modal .ant-btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.ant-modal-root .ant-modal-mask {
+  backdrop-filter: blur(2px);
+}
+
+html[data-theme='dark'] {
+  --ui-modal-shadow: 0 22px 52px rgb(0 0 0 / 38%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ant-modal-root .ant-modal-mask {
+    backdrop-filter: none;
+  }
 }

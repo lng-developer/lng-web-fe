@@ -5,22 +5,23 @@
 }
 
 .variantItem {
-  border: 1.5px solid #f0f0f0;
+  border: 1.5px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  background: var(--ant-color-bg-container);
   transition: border-color 0.15s;
 
   &:hover {
-    border-color: #d9d9d9;
+    border-color: var(--ant-color-border);
   }
 }
 
 .psdAlert {
-  border-color: #ffe58f;
-  background: #fffbe6;
+  border-color: color-mix(in srgb, var(--ant-color-warning) 34%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--ant-color-warning-bg) 28%, var(--ant-color-bg-container));
 }
 
 .variantHeader {
@@ -38,4 +39,12 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.empty {
+  padding: 16px;
+  border: 1.5px dashed var(--ant-color-border);
+  border-radius: 8px;
+  color: var(--ant-color-text-tertiary);
+  text-align: center;
 }

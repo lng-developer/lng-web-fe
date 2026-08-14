@@ -25,7 +25,7 @@
 }
 
 .channelFilter {
-  flex: 0 0 150px;
+  width: 150px;
 }
 
 .actions {
@@ -45,6 +45,13 @@
 
 .taskToolbarTitle {
   margin: 0 !important;
+}
+
+.taskToolbarTitleGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .detail {

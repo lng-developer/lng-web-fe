@@ -13,6 +13,7 @@ import { EmptyState, MetricCard, StatusTag } from '@/shared/ui'
 
 import { getListingSummary, type Listing, listListings } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
+import styles from './CatalogDashboardPage.module.scss'
 
 const topListingsColumns = [
   {
@@ -192,25 +193,14 @@ export function CatalogDashboardPage() {
             ) : !draftListings.data?.items.length ? (
               <EmptyState title="All caught up!" description="No listings pending QC review." />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className={styles.pendingList}>
                 {draftListings.data.items.map((l) => (
-                  <div
-                    key={l.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      background: '#fffbe6',
-                      borderRadius: 8,
-                      border: '1px solid #ffe58f',
-                    }}
-                  >
+                  <div className={styles.pendingItem} key={l.id}>
                     <div>
-                      <Typography.Text strong style={{ fontSize: 13 }}>
+                      <Typography.Text strong className={styles.pendingSku}>
                         {l.sku}
                       </Typography.Text>
-                      <Typography.Text type="secondary" style={{ display: 'block', fontSize: 11 }}>
+                      <Typography.Text type="secondary" className={styles.pendingShop}>
                         {l.shop?.name}
                       </Typography.Text>
                     </div>

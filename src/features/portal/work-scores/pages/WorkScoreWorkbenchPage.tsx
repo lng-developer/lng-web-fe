@@ -7,7 +7,6 @@ import {
   EditOutlined,
   EyeOutlined,
   PictureOutlined,
-  ReloadOutlined,
   ScissorOutlined,
   StopOutlined,
   TrophyOutlined,
@@ -423,14 +422,6 @@ export function WorkScoreWorkbenchPage({
       <PageHeader
         title={t('portal.workScores.title')}
         description={t('portal.workScores.description')}
-        actions={
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => void queryClient.invalidateQueries({ queryKey: workScoreKeys.all })}
-          >
-            {t('portal.workScores.refresh')}
-          </Button>
-        }
       />
 
       {rows.error || summary.error ? (

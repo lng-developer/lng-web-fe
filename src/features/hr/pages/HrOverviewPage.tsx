@@ -2,10 +2,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BellOutlined,
+  CalendarOutlined,
   DeleteOutlined,
+  FieldTimeOutlined,
   PlusOutlined,
   PushpinFilled,
+  ReadOutlined,
   TeamOutlined,
+  WalletOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -26,8 +30,6 @@ import {
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Legend,
   Line,
@@ -71,6 +73,8 @@ const announcementTone = (status: string) =>
     : status === 'ARCHIVED'
       ? ('cancelled' as const)
       : ('draft' as const)
+
+const percent = (value?: number) => `${value ?? 0}%`
 
 export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'announcements' }) {
   const { t } = useTranslation()
@@ -130,6 +134,36 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
     onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
   })
   const data = dashboard.data
+  const attendanceExceptionRows = data
+    ? [
+        { label: t('hrOperations.attendance.late'), value: data.attendance.late, tone: 'warning' },
+        { label: t('hrOperations.overview.absent'), value: data.attendance.absent, tone: 'danger' },
+        {
+          label: t('hrOperations.attendance.missingCheckout'),
+          value: data.attendance.missingCheckOuts,
+          tone: 'danger',
+        },
+      ]
+    : []
+  const actionRows = data
+    ? [
+        {
+          label: t('hrOperations.requests.pendingLeave'),
+          value: data.approvals.pendingLeaves,
+          tone: 'info',
+        },
+        {
+          label: t('hrOperations.requests.pendingOvertime'),
+          value: data.approvals.pendingOvertimes,
+          tone: 'warning',
+        },
+        {
+          label: t('hrOperations.overview.payrollAdjustments'),
+          value: data.payroll?.pendingAdjustments ?? 0,
+          tone: 'primary',
+        },
+      ]
+    : []
   const openEditor = (item?: Announcement) => {
     setSelected(item)
     form.resetFields()
@@ -179,89 +213,162 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
   return (
     <section className={styles.page}>
       {view === 'dashboard' && data && (
+        <section className={styles.overviewCommand}>
+          <div>
+            <Typography.Text className={styles.payrollEyebrow}>
+              {t('hrOperations.overview.title')}
+            </Typography.Text>
+            <Typography.Title level={2}>{dayjs(data.date).format('DD/MM/YYYY')}</Typography.Title>
+            <Space wrap>
+              <Tag>{`${t('hrOperations.overview.attendanceExceptions')}: ${data.operations?.attendanceExceptions ?? 0}`}</Tag>
+              <Tag>{`${t('hrOperations.overview.pendingActions')}: ${data.operations?.pendingActions ?? data.approvals.totalPending}`}</Tag>
+              {data.payroll && (
+                <Tag>{`${data.payroll.month}/${data.payroll.year} · ${data.payroll.status}`}</Tag>
+              )}
+            </Space>
+          </div>
+          <Segmented
+            value={rangeDays}
+            options={[1, 7, 30].map((value) => ({
+              label: t('hrOperations.overview.days', { count: value }),
+              value,
+            }))}
+            onChange={(value) => setRangeDays(value as 1 | 7 | 30)}
+          />
+        </section>
+      )}
+      {view === 'dashboard' && data && (
         <div className={styles.metrics}>
           <MetricCard
             icon={<TeamOutlined />}
             label={t('hrOperations.overview.activeStaff')}
             value={String(data.employees.active)}
+            variant="info"
           />
           <MetricCard
+            icon={<CalendarOutlined />}
             label={t('hrOperations.overview.presentToday')}
             value={String(data.attendance.present)}
+            variant="success"
           />
           <MetricCard
+            icon={<FieldTimeOutlined />}
             label={t('hrOperations.overview.coverage')}
-            value={`${data.attendance.coverageRate}%`}
+            value={percent(data.attendance.coverageRate)}
+            variant="primary"
           />
           <MetricCard
+            icon={<ReadOutlined />}
             label={t('hrOperations.overview.pendingApproval')}
             value={String(data.approvals.totalPending)}
+            variant="warning"
           />
         </div>
       )}
-      <div className={view === 'dashboard' ? styles.split : undefined}>
+      <div className={view === 'dashboard' ? styles.overviewGrid : undefined}>
         {view === 'dashboard' && data && (
-          <SectionCard title={t('hrOperations.overview.today')}>
-            <div style={{ height: 260, width: '100%', marginTop: 24 }}>
-              <ResponsiveContainer>
-                <BarChart
-                  data={[
-                    {
-                      name: t('hrOperations.overview.probation'),
-                      count: data.employees.probation,
-                      fill: '#8884d8',
-                    },
-                    {
-                      name: t('hrOperations.overview.onLeave'),
-                      count: data.attendance.onLeave,
-                      fill: '#ffc658',
-                    },
-                    {
-                      name: t('hrOperations.attendance.late'),
-                      count: data.attendance.late,
-                      fill: '#faad14',
-                    },
-                    {
-                      name: t('hrOperations.overview.absent'),
-                      count: data.attendance.absent,
-                      fill: '#ff4d4f',
-                    },
-                    {
-                      name: t('hrOperations.attendance.missingCheckout'),
-                      count: data.attendance.missingCheckOuts,
-                      fill: '#cf1322',
-                    },
-                    {
-                      name: t('hrOperations.overview.approvedOt'),
-                      count: data.approvals.approvedOvertimesToday,
-                      fill: '#52c41a',
-                    },
-                  ]}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          <SectionCard title={t('hrOperations.overview.todayOperations')}>
+            <div className={styles.overviewRows}>
+              <div className={styles.overviewRow}>
+                <span>{t('hrOperations.overview.expectedStaff')}</span>
+                <strong>{data.attendance.expectedEmployees}</strong>
+              </div>
+              <div className={styles.overviewRow}>
+                <span>{t('hrOperations.attendance.records')}</span>
+                <strong>{data.attendance.records}</strong>
+              </div>
+              <div className={styles.overviewRow}>
+                <span>{t('hrOperations.overview.onLeave')}</span>
+                <strong>{data.attendance.onLeave}</strong>
+              </div>
+              <div className={styles.overviewRow}>
+                <span>{t('hrOperations.overview.approvedOt')}</span>
+                <strong>{data.approvals.approvedOvertimesToday}</strong>
+              </div>
+            </div>
+            <div className={styles.overviewSignalList}>
+              {attendanceExceptionRows.map((item) => (
+                <div
+                  className={`${styles.overviewSignal} ${styles[`overviewSignal${item.tone}`]}`}
+                  key={item.label}
                 >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <RechartsTooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        )}
+        {view === 'dashboard' && data && (
+          <SectionCard title={t('hrOperations.overview.actionQueue')}>
+            <div className={styles.overviewSignalList}>
+              {actionRows.map((item) => (
+                <div
+                  className={`${styles.overviewSignal} ${styles[`overviewSignal${item.tone}`]}`}
+                  key={item.label}
+                >
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        )}
+        {view === 'dashboard' && data && (
+          <SectionCard title={t('hrOperations.overview.payrollSnapshot')}>
+            {data.payroll ? (
+              <div className={styles.overviewRows}>
+                <div className={styles.overviewRow}>
+                  <span>{t('hrOperations.payroll.period')}</span>
+                  <strong>{`${data.payroll.month}/${data.payroll.year}`}</strong>
+                </div>
+                <div className={styles.overviewRow}>
+                  <span>{t('hrOperations.common.status')}</span>
+                  <Tag>{data.payroll.status}</Tag>
+                </div>
+                <div className={styles.overviewRow}>
+                  <span>{t('hrOperations.payroll.results')}</span>
+                  <strong>{data.payroll.resultCount}</strong>
+                </div>
+                <div className={styles.overviewRow}>
+                  <span>{t('hrOperations.payroll.net')}</span>
+                  <strong>{data.payroll.summary.amounts.netIncome.toLocaleString()}</strong>
+                </div>
+              </div>
+            ) : (
+              <Typography.Text type="secondary">
+                {t('hrOperations.overview.noPayroll')}
+              </Typography.Text>
+            )}
+          </SectionCard>
+        )}
+        {view === 'dashboard' && data && (
+          <SectionCard title={t('hrOperations.overview.commsSnapshot')}>
+            <div className={styles.overviewMiniGrid}>
+              <MetricCard
+                icon={<BellOutlined />}
+                label={t('hrOperations.overview.published')}
+                value={String(data.announcements?.published ?? 0)}
+                variant="info"
+              />
+              <MetricCard
+                icon={<PushpinFilled />}
+                label={t('hrOperations.overview.pinnedShort')}
+                value={String(data.announcements?.pinned ?? 0)}
+                variant="warning"
+              />
+              <MetricCard
+                icon={<WalletOutlined />}
+                label={t('hrOperations.overview.scheduled')}
+                value={String(data.announcements?.scheduled ?? 0)}
+                variant="neutral"
+              />
             </div>
           </SectionCard>
         )}
         {view === 'dashboard' && data && (
           <SectionCard title={t('hrOperations.overview.attendanceTrend')}>
-            <Flex justify="flex-end">
-              <Segmented
-                value={rangeDays}
-                options={[1, 7, 30].map((value) => ({
-                  label: t('hrOperations.overview.days', { count: value }),
-                  value,
-                }))}
-                onChange={(value) => setRangeDays(value as 1 | 7 | 30)}
-              />
-            </Flex>
-            <div style={{ height: 260, width: '100%', marginTop: 16 }}>
+            <div className={styles.overviewChart}>
               <ResponsiveContainer>
                 <LineChart data={data.attendanceTrend || []}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -272,19 +379,19 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
                   <Line
                     type="monotone"
                     dataKey="present"
-                    stroke="#52c41a"
+                    stroke="var(--ant-color-success)"
                     name={t('hrOperations.team.present')}
                   />
                   <Line
                     type="monotone"
                     dataKey="late"
-                    stroke="#faad14"
+                    stroke="var(--ant-color-warning)"
                     name={t('hrOperations.attendance.late')}
                   />
                   <Line
                     type="monotone"
                     dataKey="absent"
-                    stroke="#ff4d4f"
+                    stroke="var(--ant-color-error)"
                     name={t('hrOperations.overview.absent')}
                   />
                 </LineChart>
@@ -374,7 +481,12 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
           setSelected(undefined)
         }}
       >
-        <Form form={form} layout="vertical" onFinish={submitAnnouncement}>
+        <Form
+          className={styles.modalForm}
+          form={form}
+          layout="vertical"
+          onFinish={submitAnnouncement}
+        >
           <Form.Item
             name="title"
             label={t('hrOperations.overview.announcementTitle')}

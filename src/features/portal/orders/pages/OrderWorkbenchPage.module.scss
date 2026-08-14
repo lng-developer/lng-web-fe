@@ -1,22 +1,46 @@
 .page {
   display: grid;
-  gap: 18px;
+  gap: 12px;
   min-width: 0;
+}
+
+.page > header {
+  margin-bottom: 0;
+  padding-bottom: 10px;
+}
+
+.page :global(.ant-tabs-nav) {
+  margin-bottom: 0;
+}
+
+.page :global(.ant-table-wrapper) {
+  margin-top: 2px;
 }
 
 .filters {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: minmax(240px, 0.75fr) minmax(280px, 1fr) minmax(280px, 1fr) minmax(
+      280px,
+      0.8fr
+    );
   gap: 12px;
   align-items: end;
 }
+
+.filters :global(.ant-input-affix-wrapper),
+.filters :global(.ant-picker),
+.filters :global(.ant-select) {
+  width: 100%;
+  max-width: none;
+}
+
 .orderSearch {
   width: 100%;
-  min-width: 220px;
+  min-width: 0;
 }
 .filterSelect {
-  min-width: 170px;
+  min-width: 0;
   width: 100%;
 }
 
@@ -243,16 +267,16 @@
   white-space: nowrap;
 }
 .skuChip {
-  color: #0891b2;
-  background: #ecfeff;
+  color: var(--ant-color-cyan-text, var(--ant-color-cyan));
+  background: color-mix(in srgb, var(--ant-color-cyan-bg) 68%, var(--ant-color-fill-quaternary));
 }
 .asinChip {
-  color: #2563eb;
-  background: #eff6ff;
+  color: var(--ant-color-primary-text, var(--ant-color-primary));
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 68%, var(--ant-color-fill-quaternary));
 }
 .sellerChip {
-  color: #ea580c;
-  background: #fff7ed;
+  color: var(--ant-color-warning-text, var(--ant-color-warning));
+  background: color-mix(in srgb, var(--ant-color-warning-bg) 68%, var(--ant-color-fill-quaternary));
 }
 @media (max-width: 1500px) {
   .itemPanel {
