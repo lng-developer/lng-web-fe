@@ -35,11 +35,6 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly onOpenCostCenters: (product: VendorProduct) => void
 }
 
-const formatMoney = (value?: number | null, currency = 'USD') => {
-  if (value == null) return '�'
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value / 100)
-}
-
 export function VendorWorkspaceProductsTabPage({
   canWrite,
   searchProducts,
@@ -103,51 +98,6 @@ export function VendorWorkspaceProductsTabPage({
           ) : (
             <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
           ),
-      },
-      {
-        title: t('vendors.productTypeGroupId'),
-        width: 200,
-        ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 240 } }),
-        render: (_, row) =>
-          row.productTypeGroup?.name ? (
-            <Tag>{row.productTypeGroup.name}</Tag>
-          ) : (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
-          ),
-      },
-      {
-        title: t('vendors.sla', { defaultValue: 'SLA' }),
-        width: 150,
-        ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 170 } }),
-        render: (_, row) =>
-          row.minProductionDays == null && row.maxProductionDays == null ? (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
-          ) : (
-            `${row.minProductionDays ?? 0}-${row.maxProductionDays ?? row.minProductionDays ?? 0} ${t('vendors.days')}`
-          ),
-      },
-      {
-        title: t('vendors.baseCostAmount'),
-        width: 150,
-        ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 170 } }),
-        align: 'right',
-        render: (_, row) =>
-          row.baseCostAmount == null ? (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
-          ) : (
-            `${formatMoney(row.baseCostAmount, row.currency || 'USD')}`
-          ),
-      },
-      {
-        title: t('vendors.costCenters'),
-        width: 120,
-        align: 'right',
-        ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 140 } }),
-        render: (_, row) => <Tag>{row.costCenterCount}</Tag>,
       },
       {
         title: t('vendors.statusLabel'),
@@ -252,7 +202,7 @@ export function VendorWorkspaceProductsTabPage({
         rowKey="id"
         columns={productColumns}
         className={styles.dataTable}
-        scroll={{ x: 1600 }}
+        scroll={{ x: 980 }}
         dataSource={products}
         loading={productsLoading}
         error={
