@@ -6,6 +6,7 @@ import {
   CaretDownOutlined,
   CaretRightOutlined,
   CheckCircleOutlined,
+  DownloadOutlined,
   EditOutlined,
   FileImageOutlined,
   FileTextOutlined,
@@ -32,6 +33,7 @@ import {
   type CatalogListParams,
   createListing,
   type CreateListingInput,
+  exportListingsCsv,
   getListing,
   getListingOptions,
   getListingSummary,
@@ -146,6 +148,19 @@ export function CatalogListingWorkbenchPage({
     },
     onError: (err) =>
       toast('error', err instanceof Error ? err.message : t('portal.catalog.psd.requestFailed')),
+  })
+  const exportCsv = useMutation({
+    mutationFn: () => exportListingsCsv(params),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result as unknown as Blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'catalog-listings.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+    onError: (err) =>
+      toast('error', err instanceof Error ? err.message : t('portal.catalog.unavailable')),
   })
 
   const resetPage =
@@ -348,6 +363,13 @@ export function CatalogListingWorkbenchPage({
         description={t('portal.catalog.description')}
         actions={
           <Space>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exportCsv.isPending}
+              onClick={() => exportCsv.mutate()}
+            >
+              {t('portal.catalog.exportCsv')}
+            </Button>
             {canWrite() ? (
               <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing('create')}>
                 {t('portal.catalog.create')}

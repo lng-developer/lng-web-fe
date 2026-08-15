@@ -48,6 +48,7 @@ import {
   assignProductionTask,
   bulkAssignProductionTasks,
   exportProductionQcTasks,
+  exportProductionTasksCsv,
   type FileCheck,
   type FileDecision,
   listProductionTasks,
@@ -895,8 +896,22 @@ export function ProductionWorkbenchPage({
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
   })
+  const exportCsv = useMutation({
+    mutationFn: () => exportProductionTasksCsv(params),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result as unknown as Blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'production-tasks.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+  })
   const handleRecheck = useCallback(() => operations.mutate({ kind: 'recheck' }), [operations])
   const handleExportQc = useCallback(() => exportQc.mutate(), [exportQc])
+  const handleExportCsv = useCallback(() => exportCsv.mutate(), [exportCsv])
   const handleBulkAssign = useCallback(
     () => operations.mutate({ kind: 'bulk-assign' }),
     [operations],
@@ -1062,6 +1077,9 @@ export function ProductionWorkbenchPage({
         description={t('portal.production.description')}
         actions={
           <Space>
+            <Button loading={exportCsv.isPending} onClick={handleExportCsv}>
+              {t('portal.production.exportCsv')}
+            </Button>
             {canAssignScale ? (
               <Button loading={operations.isPending} onClick={handleRecheck}>
                 {t('portal.production.recheckBlocked')}

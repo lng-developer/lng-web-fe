@@ -77,6 +77,11 @@ const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export const listShipments = async (params: ShipmentParams) =>
   unwrap<ShipmentList>(await apiClient.get(basePath, { params }))
+export const exportShipmentsCsv = async (params: ShipmentParams) =>
+  (await apiClient.get(`${basePath}/export.csv`, {
+    params: { ...params, page: 1, limit: 5000 },
+    responseType: 'blob',
+  })) as unknown as Blob
 export const summarizeShipments = async (params: Omit<ShipmentParams, 'page' | 'limit'>) =>
   unwrap<ShipmentSummary>(await apiClient.get(`${basePath}/summary`, { params }))
 export const getShipment = async (id: string) =>

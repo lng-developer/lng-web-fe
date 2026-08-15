@@ -67,6 +67,7 @@ import {
   createDesignTask,
   type CreateDesignTaskInput,
   type DesignTask,
+  exportDesignTasksCsv,
   getDesignSummary,
   getDesignTask,
   getDesignWorkload,
@@ -398,6 +399,19 @@ export function DesignWorkbenchPage() {
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.design.actionFailed')),
   })
+  const exportCsv = useMutation({
+    mutationFn: () => exportDesignTasksCsv(params),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result as unknown as Blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'design-tasks.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.design.actionFailed')),
+  })
 
   const canAssign = permissions.has('DESIGN:WRITE')
   const currentAccountId = account.account?.id
@@ -437,6 +451,7 @@ export function DesignWorkbenchPage() {
   const handleBulkAssign = useCallback(() => {
     bulkAssign.mutate()
   }, [bulkAssign])
+  const handleExportCsv = useCallback(() => exportCsv.mutate(), [exportCsv])
   const handleOpenAssign = useCallback((task: DesignTask) => {
     setActiveTask(task)
     setAssignOpen(true)
@@ -706,6 +721,13 @@ export function DesignWorkbenchPage() {
         description={t('portal.design.description')}
         actions={
           <Space>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exportCsv.isPending}
+              onClick={handleExportCsv}
+            >
+              {t('portal.design.exportCsv')}
+            </Button>
             <Button href="/portal/design/files">{t('portal.design.psdFiles')}</Button>
             {canAssign ? (
               <Button

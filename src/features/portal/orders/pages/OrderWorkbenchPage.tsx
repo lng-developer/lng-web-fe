@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
   CheckCircleFilled,
+  DownloadOutlined,
   EditOutlined,
   EnvironmentOutlined,
   FileExclamationOutlined,
@@ -12,7 +13,7 @@ import {
   SwapOutlined,
   TruckOutlined,
 } from '@ant-design/icons'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Space, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
@@ -33,9 +34,15 @@ import {
   StatusTag,
   UiTabLabel,
   UiTabs,
+  useFeedbackToast,
 } from '@/shared/ui'
 
-import { getOrderSummary, listOrderWorkbench, type OrderWorkbenchRow } from '../api/orderApi'
+import {
+  downloadOrdersCsv,
+  getOrderSummary,
+  listOrderWorkbench,
+  type OrderWorkbenchRow,
+} from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
 import { formatMinorMoney, orderStatusTone } from './orderPresentation'
 import { OrderWorkbenchExpandedRow } from './OrderWorkbenchExpandedRow'
@@ -63,6 +70,7 @@ const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
 
 export function OrderWorkbenchPage() {
   const { t, i18n } = useTranslation()
+  const toast = useFeedbackToast()
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const [page, setPage] = useState(1)
   const [tab, setTab] = useState<TabKey>('ALL')
@@ -130,6 +138,11 @@ export function OrderWorkbenchPage() {
     queryKey: vendorKeys.vendors(vendorParams),
     queryFn: () => listVendors(vendorParams),
     retry: false,
+  })
+  const exportOrders = useMutation({
+    mutationFn: () => downloadOrdersCsv(params),
+    onSuccess: () => toast('success', t('orders.export.success')),
+    onError: () => toast('error', t('orders.export.error')),
   })
   const shopOptions = useMemo(
     () => (shops.data?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name })),
@@ -417,7 +430,19 @@ export function OrderWorkbenchPage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader title={t('orders.title')} description={t('orders.description')} />
+      <PageHeader
+        title={t('orders.title')}
+        description={t('orders.description')}
+        actions={
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportOrders.isPending}
+            onClick={() => exportOrders.mutate()}
+          >
+            {t('orders.export.button')}
+          </Button>
+        }
+      />
       <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
       <OrderWorkbenchFilterBar
         search={search}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { EditOutlined, SyncOutlined } from '@ant-design/icons'
+import { DownloadOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -31,6 +31,7 @@ import {
 } from '@/shared/ui'
 
 import {
+  exportShipmentsCsv,
   getShipment,
   listShipments,
   listWebhookLogs,
@@ -167,6 +168,17 @@ export function ShipmentWorkbenchPage({
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.shipments.recheckFailed')),
   })
+  const exportCsv = useMutation({
+    mutationFn: () => exportShipmentsCsv(params),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'shipments.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+  })
   const columns: TableColumnsType<Shipment> = [
     {
       title: t('portal.shipments.columns.order'),
@@ -233,6 +245,13 @@ export function ShipmentWorkbenchPage({
         description={t('portal.shipments.description')}
         actions={
           <Space>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exportCsv.isPending}
+              onClick={() => exportCsv.mutate()}
+            >
+              {t('portal.shipments.exportCsv')}
+            </Button>
             {canWrite ? (
               <Button
                 icon={<SyncOutlined />}

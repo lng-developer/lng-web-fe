@@ -60,6 +60,13 @@ export async function listVendorSubmissions(params: VendorSubmissionParams) {
   return unwrap<VendorSubmissionList>(await apiClient.get(basePath, { params }))
 }
 
+export async function exportVendorSubmissionsCsv(params: VendorSubmissionParams) {
+  return (await apiClient.get(`${basePath}/export.csv`, {
+    params: { ...params, page: 1, limit: 5000 },
+    responseType: 'blob',
+  })) as unknown as Blob
+}
+
 export async function getVendorSubmission(id: string) {
   return unwrap<VendorSubmission>(await apiClient.get(`${basePath}/${id}`))
 }

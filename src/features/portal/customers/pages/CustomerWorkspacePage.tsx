@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   DollarOutlined,
+  DownloadOutlined,
   EyeOutlined,
   TeamOutlined,
   UserAddOutlined,
@@ -30,6 +31,7 @@ import {
   type Customer,
   type CustomerCareStatus,
   type CustomerLifecycle,
+  exportCustomersCsv,
   getCustomer,
   getCustomerSummary,
   getCustomerTimeline,
@@ -121,6 +123,17 @@ export function CustomerWorkspacePage() {
       message.success(t('customers.messages.noteAdded'))
     },
   })
+  const exportCsv = useMutation({
+    mutationFn: () => exportCustomersCsv(params),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'customers.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+  })
 
   const columns: ColumnsType<Customer> = [
     {
@@ -182,7 +195,19 @@ export function CustomerWorkspacePage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader title={t('customers.title')} description={t('customers.description')} />
+      <PageHeader
+        title={t('customers.title')}
+        description={t('customers.description')}
+        actions={
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportCsv.isPending}
+            onClick={() => exportCsv.mutate()}
+          >
+            {t('customers.actions.exportCsv')}
+          </Button>
+        }
+      />
 
       <section className={styles.metrics}>
         <MetricCard

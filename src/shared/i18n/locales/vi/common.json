@@ -194,7 +194,8 @@
       "recalculate": "Tính lại",
       "recalculateOrder": "Tính lại toàn bộ đơn",
       "recalculateItem": "Tính lại item",
-      "inspectItem": "Xem item"
+      "inspectItem": "Xem item",
+      "exportCsv": "Xuất CSV"
     },
     "feedback": {
       "reprocessed": "Đã chạy lại batch",
@@ -208,6 +209,7 @@
     "description": "Theo dõi hiệu quả kinh doanh và vận hành theo đúng phạm vi, không gộp lẫn tiền tệ.",
     "loadError": "Không thể tải dữ liệu báo cáo.",
     "empty": "Chưa có dữ liệu",
+    "exportCsv": "Xuất CSV",
     "trend": "Xu hướng doanh thu theo ngày",
     "cadence": {
       "daily": "Theo ngày",
@@ -1464,7 +1466,8 @@
     "actions": {
       "view": "Xem",
       "add": "Thêm",
-      "addNote": "Thêm ghi chú chăm sóc"
+      "addNote": "Thêm ghi chú chăm sóc",
+      "exportCsv": "Xuất CSV"
     },
     "messages": {
       "updated": "Đã cập nhật khách hàng",
@@ -1542,6 +1545,7 @@
       },
       "description": "Quản lý cấu hình listing, trạng thái PSD thực tế và QC.",
       "refresh": "Làm mới",
+      "exportCsv": "Xuất CSV",
       "create": "Tạo listing",
       "edit": "Sửa listing",
       "save": "Lưu thay đổi",
@@ -1664,6 +1668,7 @@
       "title": "Vận hành thiết kế",
       "description": "Phân công, thực hiện, nộp và duyệt tài nguyên thiết kế gắn với listing.",
       "refresh": "Làm mới",
+      "exportCsv": "Xuất CSV",
       "psdFiles": "Tệp PSD",
       "filters": "Bộ lọc thiết kế",
       "channel": "Kênh bán",
@@ -1982,6 +1987,7 @@
       "csNote": "Ghi chú CS",
       "saveCsNote": "Lưu ghi chú CS",
       "exportQc": "Xuất QC",
+      "exportCsv": "Xuất CSV",
       "csStatuses": {
         "UNASSIGNED": "Chưa gán",
         "ASSIGNED": "Đã gán",
@@ -2067,6 +2073,7 @@
       "title": "Gửi đơn nhà cung cấp",
       "description": "Theo dõi bàn giao tự động sau QC và xử lý an toàn các trường hợp gửi lỗi hoặc chưa rõ kết quả.",
       "refresh": "Tải lại",
+      "exportCsv": "Xuất CSV",
       "unavailable": "Không thể tải danh sách gửi đơn",
       "filters": "Bộ lọc gửi đơn",
       "externalOrderId": "Mã đơn ngoài hệ thống",
@@ -2131,6 +2138,7 @@
       "title": "Vận hành vận chuyển",
       "description": "Theo dõi mã vận đơn, ngoại lệ giao hàng và đối soát an toàn với nhà cung cấp.",
       "refresh": "Tải lại",
+      "exportCsv": "Xuất CSV",
       "unavailable": "Không thể tải danh sách vận chuyển",
       "filters": "Bộ lọc vận chuyển",
       "externalOrderId": "Mã đơn ngoài hệ thống",
@@ -2574,6 +2582,11 @@
       "vendor": "Tất cả vendor",
       "clear": "Xóa bộ lọc"
     },
+    "export": {
+      "button": "Xuất CSV",
+      "success": "Đã tải file đơn hàng",
+      "error": "Không thể xuất đơn hàng"
+    },
     "addressStatuses": {
       "NOT_CHECKED": "Chưa kiểm tra",
       "VALID": "Hợp lệ",
@@ -2610,6 +2623,7 @@
     "description": "Theo dõi hoạt động, thay đổi và thao tác thất bại trong hệ thống.",
     "loadFailed": "Không thể tải nhật ký hệ thống",
     "retry": "Thử lại",
+    "exportCsv": "Xuất CSV",
     "empty": "Không có sự kiện phù hợp với bộ lọc.",
     "loadMore": "Tải thêm",
     "globalScope": "Toàn hệ thống",

@@ -192,6 +192,11 @@ export const listListings = async (params: CatalogListParams) =>
   unwrap<PaginatedListings>(
     await apiClient.get('/api/catalog/listings', { params: compact(params) }),
   )
+export const exportListingsCsv = (params: CatalogListParams) =>
+  apiClient.get('/api/catalog/listings/export.csv', {
+    params: compact({ ...params, page: 1, limit: 5000 }),
+    responseType: 'blob',
+  })
 export const getListingSummary = async (params: CatalogSummaryParams) =>
   unwrap<CatalogSummary>(
     await apiClient.get('/api/catalog/listings/summary', { params: compact(params) }),

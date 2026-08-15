@@ -182,6 +182,11 @@ export const updateProductionCsStatus = async (id: string, csStatus: CsStatus) =
 export const exportProductionQcTasks = (
   params: Omit<ProductionParams, 'page' | 'limit' | 'view'>,
 ) => apiClient.get(`${basePath}/tasks/qc/export`, { params, responseType: 'blob' })
+export const exportProductionTasksCsv = (params: ProductionParams) =>
+  apiClient.get(`${basePath}/tasks/export.csv`, {
+    params: { ...params, page: 1, limit: 5000 },
+    responseType: 'blob',
+  })
 export const bulkAssignProductionTasks = async (taskIds: string[], assignedDesignUserId: string) =>
   unwrap<unknown>(
     await apiClient.patch(`${basePath}/tasks/bulk-assign`, { taskIds, assignedDesignUserId }),

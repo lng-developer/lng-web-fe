@@ -172,7 +172,8 @@
       "recalculate": "Recalculate",
       "recalculateOrder": "Recalculate order",
       "recalculateItem": "Recalculate item",
-      "inspectItem": "Inspect item"
+      "inspectItem": "Inspect item",
+      "exportCsv": "Export CSV"
     },
     "feedback": {
       "reprocessed": "Import batch reprocessed",
@@ -186,6 +187,7 @@
     "description": "Track scoped commercial and operational performance without mixing currencies.",
     "loadError": "Report data could not be loaded.",
     "empty": "No data",
+    "exportCsv": "Export CSV",
     "trend": "Daily revenue trend",
     "cadence": { "daily": "Daily", "weekly": "Weekly" },
     "channels": { "title": "Top channels" },
@@ -1397,7 +1399,8 @@
     "actions": {
       "view": "View",
       "add": "Add",
-      "addNote": "Add care note"
+      "addNote": "Add care note",
+      "exportCsv": "Export CSV"
     },
     "messages": {
       "updated": "Customer updated",
@@ -1475,6 +1478,7 @@
       },
       "description": "Manage listing setup, effective PSD readiness, and QC.",
       "refresh": "Refresh",
+      "exportCsv": "Export CSV",
       "create": "Create listing",
       "edit": "Edit listing",
       "save": "Save changes",
@@ -1597,6 +1601,7 @@
       "moreActions": "More actions",
       "description": "Assign, produce, submit, and review design assets linked to Catalog listings.",
       "refresh": "Refresh",
+      "exportCsv": "Export CSV",
       "psdFiles": "PSD files",
       "filters": "Design filters",
       "channel": "Channel",
@@ -1911,6 +1916,7 @@
       "csNote": "CS note",
       "saveCsNote": "Save CS note",
       "exportQc": "Export QC",
+      "exportCsv": "Export CSV",
       "csStatuses": {
         "UNASSIGNED": "Unassigned",
         "ASSIGNED": "Assigned",
@@ -1996,6 +2002,7 @@
       "title": "Vendor submissions",
       "description": "Monitor automatic QC handoffs and safely resolve failed or ambiguous vendor outcomes.",
       "refresh": "Refresh",
+      "exportCsv": "Export CSV",
       "unavailable": "Vendor submissions are unavailable",
       "filters": "Submission filters",
       "externalOrderId": "External order ID",
@@ -2060,6 +2067,7 @@
       "title": "Shipment operations",
       "description": "Monitor tracking, delivery exceptions, and safe vendor rechecks.",
       "refresh": "Refresh",
+      "exportCsv": "Export CSV",
       "unavailable": "Shipments are unavailable",
       "filters": "Shipment filters",
       "externalOrderId": "External order ID",
@@ -2486,6 +2494,11 @@
       "vendor": "All vendors",
       "clear": "Clear filters"
     },
+    "export": {
+      "button": "Export CSV",
+      "success": "Orders export downloaded",
+      "error": "Could not export orders"
+    },
     "addressStatuses": {
       "NOT_CHECKED": "Not checked",
       "VALID": "Valid",
@@ -2522,6 +2535,7 @@
     "description": "Trace system activity, changes, and failed operations.",
     "loadFailed": "Audit events could not be loaded",
     "retry": "Retry",
+    "exportCsv": "Export CSV",
     "empty": "No audit events match these filters.",
     "loadMore": "Load more",
     "globalScope": "System-wide",
