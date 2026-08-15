@@ -60,6 +60,7 @@ describe('MappingRulePage', () => {
     vi.mocked(previewMappingRule).mockResolvedValue({ items: [] })
     vi.mocked(findMappingRuleConflicts).mockResolvedValue({ conflicts: [] })
     vi.mocked(getListingOptions).mockResolvedValue({
+      salesChannels: [],
       shops: [],
       productTypeGroups: [{ id: '69b12f8d99b2e3b197021d76', name: 'T-shirt', code: 'TS' }],
       internalTemplates: [],

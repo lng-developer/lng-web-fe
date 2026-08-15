@@ -9,16 +9,35 @@ export type MultipartPart = { partNumber: number; etag: string }
 export type MultipartAsset = { id: string; uploadStatus: 'READY' | 'ABORTED' | string }
 export type MultipartInitiateResult = { assetId: string; partSize: number; totalParts: number }
 
-const withInlineDisposition = (downloadUrl: string) => {
+type MediaDisposition = 'attachment' | 'inline'
+
+const withDisposition = (downloadUrl: string, disposition: MediaDisposition) => {
   const url = new URL(downloadUrl, env.apiBaseUrl || window.location.origin)
-  url.searchParams.set('disposition', 'inline')
+  url.searchParams.set('disposition', disposition)
   return url.pathname + url.search
 }
 
-export async function fetchMediaBlob(downloadUrl: string, signal?: AbortSignal) {
+const withDispositionHref = (downloadUrl: string, disposition: MediaDisposition) => {
+  const url = new URL(downloadUrl, env.apiBaseUrl || window.location.origin)
+  url.searchParams.set('disposition', disposition)
+  return url.href
+}
+
+const withSignedUrlRequest = (downloadUrl: string, disposition: MediaDisposition) => {
+  const url = new URL(downloadUrl, env.apiBaseUrl || window.location.origin)
+  url.searchParams.set('disposition', disposition)
+  url.searchParams.set('redirect', 'false')
+  return url.pathname + url.search
+}
+
+export async function fetchMediaBlob(
+  downloadUrl: string,
+  signal?: AbortSignal,
+  disposition: MediaDisposition = 'inline',
+) {
   if (!downloadUrl.trim()) throw new Error('Media download URL is required')
 
-  return (await apiClient.get(withInlineDisposition(downloadUrl), {
+  return (await apiClient.get(withDisposition(downloadUrl, disposition), {
     responseType: 'blob',
     signal,
   })) as Blob
@@ -27,18 +46,19 @@ export async function fetchMediaBlob(downloadUrl: string, signal?: AbortSignal) 
 export async function downloadMediaAsset(downloadUrl: string, filename?: string) {
   if (!downloadUrl.trim()) throw new Error('Media download URL is required')
 
-  const blob = await fetchMediaBlob(downloadUrl)
-  const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
+  const signed = await apiClient
+    .get(withSignedUrlRequest(downloadUrl, 'attachment'))
+    .then((response) => unwrap<{ url: string }>(response).url)
+    .catch(() => null)
 
   try {
-    anchor.href = objectUrl
+    anchor.href = signed || withDispositionHref(downloadUrl, 'attachment')
     if (filename) anchor.download = filename
     document.body.append(anchor)
     anchor.click()
   } finally {
     anchor.remove()
-    URL.revokeObjectURL(objectUrl)
   }
 }
 

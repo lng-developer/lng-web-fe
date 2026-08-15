@@ -31,7 +31,7 @@ describe('ListingVariantManager', () => {
     render(
       <AppProviders>
         <ListingVariantManager
-          listing={{ id: 'listing-1', defaultVariantId: null } as Listing}
+          listing={{ id: 'listing-1' } as Listing}
           productTypes={[{ id: 'group-1', name: 'Unisex Hoodie' }]}
           templates={[
             {

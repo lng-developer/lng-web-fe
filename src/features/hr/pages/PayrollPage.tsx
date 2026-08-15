@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { DownloadOutlined, MailOutlined, PlayCircleOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  Alert,
   Button,
+  Card,
   Form,
   Input,
   InputNumber,
@@ -11,6 +13,7 @@ import {
   Select,
   Space,
   Table,
+  Tabs,
   Tag,
   Typography,
 } from 'antd'
@@ -152,6 +155,11 @@ export function PayrollPage() {
     settingsForm.setFieldsValue(settings.data)
     setEditor('settings')
   }
+  const openAdjustment = () => {
+    form.resetFields()
+    form.setFieldsValue({ amount: 0 })
+    setEditor('adjustment')
+  }
   const lifecycle = useMutation({
     mutationFn: async ({
       action,
@@ -264,7 +272,7 @@ export function PayrollPage() {
                 >
                   {t('hrOperations.payroll.settings')}
                 </Button>
-                <Button onClick={() => setEditor('adjustment')}>
+                <Button onClick={openAdjustment}>
                   {t('hrOperations.payroll.addBulkAdjustment')}
                 </Button>
                 <Button
@@ -456,6 +464,7 @@ export function PayrollPage() {
       </div>
       <Modal
         centered
+        width={editor === 'adjustment' ? 760 : 520}
         open={editor === 'run' || editor === 'adjustment'}
         title={t(
           editor === 'run' ? 'hrOperations.payroll.run' : 'hrOperations.payroll.addBulkAdjustment',
@@ -485,12 +494,16 @@ export function PayrollPage() {
             </>
           ) : (
             <>
-              <Typography.Title level={5} className={styles.modalSection}>
-                {t('hrOperations.payroll.addBulkAdjustment')}
-              </Typography.Title>
-              <div className={styles.modalGrid}>
+              <Alert
+                showIcon
+                type="info"
+                message={t('hrOperations.payroll.bulkAdjustmentHelp', {
+                  defaultValue:
+                    'Create the same payroll adjustment for every selected employee in this period.',
+                })}
+              />
+              <Card size="small" title={t('hrOperations.payroll.employees')}>
                 <Form.Item
-                  className={styles.modalGridWide}
                   name="profileIds"
                   label={t('hrOperations.common.employee')}
                   rules={[{ required: true }]}
@@ -498,53 +511,77 @@ export function PayrollPage() {
                   <Select
                     mode="multiple"
                     showSearch
+                    maxTagCount="responsive"
                     optionFilterProp="label"
+                    placeholder={t('hrOperations.payroll.selectEmployees', {
+                      defaultValue: 'Select employees',
+                    })}
+                    loading={profiles.isLoading}
                     options={profiles.data?.items.map((item) => ({
                       value: item.id,
-                      label: `${item.fullName} · ${item.employeeCode}`,
+                      label: `${item.fullName || item.employeeCode} · ${item.employeeCode}`,
                     }))}
                   />
                 </Form.Item>
-                <Form.Item
-                  name="type"
-                  label={t('hrOperations.common.type')}
-                  rules={[{ required: true }]}
-                >
-                  <Select options={settings.data?.adjustmentTypes.map((value) => ({ value }))} />
-                </Form.Item>
-                <Form.Item
-                  name="code"
-                  label={t('hrOperations.common.code')}
-                  rules={[{ required: true }]}
-                >
-                  <Select
-                    options={settings.data?.adjustmentCodes.map((value) => ({
-                      value,
-                    }))}
-                  />
-                </Form.Item>
-                <Form.Item
-                  name="name"
-                  label={t('hrOperations.common.name')}
-                  rules={[{ required: true }]}
-                >
-                  <Input />
-                </Form.Item>
-                <Form.Item
-                  name="amount"
-                  label={t('hrOperations.payroll.amount')}
-                  rules={[{ required: true }]}
-                >
-                  <InputNumber min={0} className={styles.money} />
-                </Form.Item>
-                <Form.Item
-                  className={styles.modalGridWide}
-                  name="note"
-                  label={t('hrOperations.common.note')}
-                >
-                  <Input />
-                </Form.Item>
-              </div>
+              </Card>
+              <Card
+                size="small"
+                title={t('hrOperations.payroll.adjustmentDetails', {
+                  defaultValue: 'Adjustment details',
+                })}
+              >
+                <div className={styles.modalGrid}>
+                  <Form.Item
+                    name="type"
+                    label={t('hrOperations.common.type')}
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      showSearch
+                      optionFilterProp="label"
+                      options={settings.data?.adjustmentTypes.map((value) => ({
+                        value,
+                        label: value,
+                      }))}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="code"
+                    label={t('hrOperations.common.code')}
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      showSearch
+                      optionFilterProp="label"
+                      options={settings.data?.adjustmentCodes.map((value) => ({
+                        value,
+                        label: value,
+                      }))}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="name"
+                    label={t('hrOperations.common.name')}
+                    rules={[{ required: true }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="amount"
+                    label={t('hrOperations.payroll.amount')}
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={0} className={styles.money} />
+                  </Form.Item>
+                  <Form.Item
+                    className={styles.modalGridWide}
+                    name="note"
+                    label={t('hrOperations.common.note')}
+                  >
+                    <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} />
+                  </Form.Item>
+                </div>
+              </Card>
             </>
           )}
           <Space className={styles.actions}>
@@ -557,7 +594,7 @@ export function PayrollPage() {
       </Modal>
       <Modal
         centered
-        width={760}
+        width={980}
         open={editor === 'settings'}
         title={t('hrOperations.payroll.settings')}
         footer={null}
@@ -569,112 +606,175 @@ export function PayrollPage() {
           layout="vertical"
           onFinish={(values) => saveSettings.mutate(values)}
         >
-          <Typography.Title level={5} className={styles.modalSection}>
-            {t('hrOperations.payroll.company')}
-          </Typography.Title>
-          <div className={styles.modalGrid}>
-            <Form.Item
-              className={styles.modalGridWide}
-              name={['company', 'name']}
-              label={t('hrOperations.payroll.companyName')}
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item name={['company', 'logoUrl']} label={t('hrOperations.payroll.logoUrl')}>
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name={['company', 'address']}
-              label={t('hrOperations.payroll.companyAddress')}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item name={['company', 'taxCode']} label={t('hrOperations.payroll.taxCode')}>
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name={['company', 'payrollEmail']}
-              label={t('hrOperations.payroll.payrollEmail')}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name={['company', 'payrollPhone']}
-              label={t('hrOperations.payroll.payrollPhone')}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item name={['company', 'currency']} label={t('hrOperations.payroll.currency')}>
-              <Input maxLength={3} />
-            </Form.Item>
-          </div>
-
-          <Typography.Title level={5} className={styles.modalSection}>
-            {t('hrOperations.payroll.calculationSettings')}
-          </Typography.Title>
-          <div className={styles.modalGrid}>
-            <Form.Item name="workHoursPerDay" label={t('hrOperations.payroll.workHoursPerDay')}>
-              <InputNumber min={1} max={24} />
-            </Form.Item>
-            <Form.Item
-              name="probationRateBasisPoints"
-              label={t('hrOperations.payroll.probationRate')}
-            >
-              <InputNumber min={0} />
-            </Form.Item>
-            <Form.Item name="insuranceCap" label={t('hrOperations.payroll.insuranceCap')}>
-              <InputNumber min={0} />
-            </Form.Item>
-            <Form.Item name="personalDeduction" label={t('hrOperations.payroll.personalDeduction')}>
-              <InputNumber min={0} />
-            </Form.Item>
-            <Form.Item
-              name="dependantDeduction"
-              label={t('hrOperations.payroll.dependantDeduction')}
-            >
-              <InputNumber min={0} />
-            </Form.Item>
-            {['social', 'health', 'unemployment'].map((key) => (
-              <Form.Item
-                key={key}
-                name={['insuranceRates', key]}
-                label={t(`hrOperations.payroll.insurance.${key}`)}
-              >
-                <InputNumber min={0} />
-              </Form.Item>
-            ))}
-            {[
-              'weekday',
-              'weekend',
-              'holiday',
-              'weekday_night',
-              'weekend_night',
-              'holiday_night',
-            ].map((key) => (
-              <Form.Item
-                key={key}
-                name={['otRateBasisPoints', key]}
-                label={t(`hrOperations.payroll.otRate.${key}`)}
-              >
-                <InputNumber min={0} />
-              </Form.Item>
-            ))}
-            <Form.Item
-              className={styles.modalGridWide}
-              name="adjustmentTypes"
-              label={t('hrOperations.payroll.adjustmentTypes')}
-            >
-              <Select mode="tags" tokenSeparators={[',']} />
-            </Form.Item>
-            <Form.Item
-              className={styles.modalGridWide}
-              name="adjustmentCodes"
-              label={t('hrOperations.payroll.adjustmentCodes')}
-            >
-              <Select mode="tags" tokenSeparators={[',']} />
-            </Form.Item>
-          </div>
+          <Tabs
+            items={[
+              {
+                key: 'company',
+                label: t('hrOperations.payroll.company'),
+                children: (
+                  <Card size="small">
+                    <div className={styles.modalGrid}>
+                      <Form.Item
+                        className={styles.modalGridWide}
+                        name={['company', 'name']}
+                        label={t('hrOperations.payroll.companyName')}
+                        rules={[{ required: true }]}
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        name={['company', 'logoUrl']}
+                        label={t('hrOperations.payroll.logoUrl')}
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        name={['company', 'taxCode']}
+                        label={t('hrOperations.payroll.taxCode')}
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        className={styles.modalGridWide}
+                        name={['company', 'address']}
+                        label={t('hrOperations.payroll.companyAddress')}
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        name={['company', 'payrollEmail']}
+                        label={t('hrOperations.payroll.payrollEmail')}
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        name={['company', 'payrollPhone']}
+                        label={t('hrOperations.payroll.payrollPhone')}
+                      >
+                        <Input />
+                      </Form.Item>
+                      <Form.Item
+                        name={['company', 'currency']}
+                        label={t('hrOperations.payroll.currency')}
+                      >
+                        <Input maxLength={3} />
+                      </Form.Item>
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: 'calculation',
+                label: t('hrOperations.payroll.calculationSettings'),
+                children: (
+                  <Card size="small">
+                    <div className={styles.modalGrid}>
+                      <Form.Item
+                        name="workHoursPerDay"
+                        label={t('hrOperations.payroll.workHoursPerDay')}
+                      >
+                        <InputNumber min={1} max={24} className={styles.money} />
+                      </Form.Item>
+                      <Form.Item
+                        name="probationRateBasisPoints"
+                        label={t('hrOperations.payroll.probationRate')}
+                      >
+                        <InputNumber min={0} className={styles.money} />
+                      </Form.Item>
+                      <Form.Item name="insuranceCap" label={t('hrOperations.payroll.insuranceCap')}>
+                        <InputNumber min={0} className={styles.money} />
+                      </Form.Item>
+                      <Form.Item
+                        name="personalDeduction"
+                        label={t('hrOperations.payroll.personalDeduction')}
+                      >
+                        <InputNumber min={0} className={styles.money} />
+                      </Form.Item>
+                      <Form.Item
+                        name="dependantDeduction"
+                        label={t('hrOperations.payroll.dependantDeduction')}
+                      >
+                        <InputNumber min={0} className={styles.money} />
+                      </Form.Item>
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: 'insurance',
+                label: t('hrOperations.payroll.insuranceRates', {
+                  defaultValue: 'Insurance rates',
+                }),
+                children: (
+                  <Card size="small">
+                    <div className={styles.modalGrid}>
+                      {['social', 'health', 'unemployment'].map((key) => (
+                        <Form.Item
+                          key={key}
+                          name={['insuranceRates', key]}
+                          label={t(`hrOperations.payroll.insurance.${key}`)}
+                        >
+                          <InputNumber min={0} className={styles.money} />
+                        </Form.Item>
+                      ))}
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: 'overtime',
+                label: t('hrOperations.payroll.overtimeRates', {
+                  defaultValue: 'Overtime rates',
+                }),
+                children: (
+                  <Card size="small">
+                    <div className={styles.modalGrid}>
+                      {[
+                        'weekday',
+                        'weekend',
+                        'holiday',
+                        'weekday_night',
+                        'weekend_night',
+                        'holiday_night',
+                      ].map((key) => (
+                        <Form.Item
+                          key={key}
+                          name={['otRateBasisPoints', key]}
+                          label={t(`hrOperations.payroll.otRate.${key}`)}
+                        >
+                          <InputNumber min={0} className={styles.money} />
+                        </Form.Item>
+                      ))}
+                    </div>
+                  </Card>
+                ),
+              },
+              {
+                key: 'adjustments',
+                label: t('hrOperations.payroll.adjustmentCatalog', {
+                  defaultValue: 'Adjustment catalog',
+                }),
+                children: (
+                  <Card size="small">
+                    <div className={styles.modalGrid}>
+                      <Form.Item
+                        name="adjustmentTypes"
+                        label={t('hrOperations.payroll.adjustmentTypes')}
+                      >
+                        <Select mode="tags" tokenSeparators={[',']} />
+                      </Form.Item>
+                      <Form.Item
+                        name="adjustmentCodes"
+                        label={t('hrOperations.payroll.adjustmentCodes')}
+                      >
+                        <Select mode="tags" tokenSeparators={[',']} />
+                      </Form.Item>
+                    </div>
+                  </Card>
+                ),
+              },
+            ]}
+          />
           <Space className={styles.actions}>
             <Button onClick={() => setEditor(undefined)}>{t('hrOperations.common.cancel')}</Button>
             <Button type="primary" htmlType="submit" loading={saveSettings.isPending}>

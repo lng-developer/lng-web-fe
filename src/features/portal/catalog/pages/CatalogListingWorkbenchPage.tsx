@@ -37,6 +37,7 @@ import {
   getListingSummary,
   type Listing,
   listListings,
+  requestListingPsd,
   updateListing,
   type UpdateListingInput,
 } from '../api/catalogApi'
@@ -65,6 +66,7 @@ export function CatalogListingWorkbenchPage({
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
   const [qcStatus, setQcStatus] = useState<string>()
+  const [psdState, setPsdState] = useState<'missing' | 'ready'>()
   const [editing, setEditing] = useState<Listing | 'create'>()
   const [expandedRowKeys, setExpandedRowKeys] = useState<readonly string[]>([])
 
@@ -76,8 +78,9 @@ export function CatalogListingWorkbenchPage({
     shopId,
     salesChannelCode,
     qcStatus,
+    psdState,
   }
-  const summaryParams = { search: params.search, shopId, salesChannelCode, qcStatus }
+  const summaryParams = { search: params.search, shopId, salesChannelCode, qcStatus, psdState }
 
   const options = useQuery({
     queryKey: catalogKeys.options(),
@@ -111,6 +114,7 @@ export function CatalogListingWorkbenchPage({
   const refresh = async () => queryClient.invalidateQueries({ queryKey: catalogKeys.all })
 
   const openEdit = async (listing: Listing) => {
+    setEditing(listing)
     try {
       const latest = await queryClient.fetchQuery({
         queryKey: catalogKeys.detail(listing.id),
@@ -134,6 +138,15 @@ export function CatalogListingWorkbenchPage({
     },
     onError: (err) => toast('error', err instanceof Error ? err.message : 'Could not save'),
   })
+  const requestDefaultPsd = useMutation({
+    mutationFn: (listingId: string) => requestListingPsd(listingId),
+    onSuccess: async () => {
+      await refresh()
+      toast('success', t('portal.catalog.psd.taskRequested'))
+    },
+    onError: (err) =>
+      toast('error', err instanceof Error ? err.message : t('portal.catalog.psd.requestFailed')),
+  })
 
   const resetPage =
     <T,>(setter: (v: T) => void) =>
@@ -143,17 +156,32 @@ export function CatalogListingWorkbenchPage({
     }
 
   const psdSummary = (listing: Listing) => {
+    if (listing.defaultPsdTemplateAssetId) {
+      return {
+        label: t('portal.catalog.psd.default'),
+        state: t('portal.catalog.psd.ready'),
+        stateKey: 'ready',
+        detail: listing.variantCount
+          ? t('portal.catalog.psd.variantsCovered', { count: listing.variantCount })
+          : t('portal.catalog.psd.listingTemplate'),
+      }
+    }
     const total = listing.psdVariantCount ?? listing.variantCount ?? 0
-    const ready = listing.psdReadyCount ?? (listing.psdStatus === 'PRESENT' ? total : 0)
+    const ready = listing.psdReadyCount ?? 0
     const label = total ? `${ready} / ${total}` : '-'
-    const state = !total
-      ? 'Not configured'
+    const stateKey = !total
+      ? 'notConfigured'
       : ready === total
-        ? 'Ready'
+        ? 'ready'
         : ready > 0
-          ? 'Partial'
-          : 'Missing'
-    return { label, state }
+          ? 'partial'
+          : 'missing'
+    return {
+      label,
+      state: t(`portal.catalog.psd.${stateKey}`),
+      stateKey,
+      detail: total ? t('portal.catalog.psd.variant') : t('portal.catalog.psd.noVariant'),
+    }
   }
 
   const metricPercent = (value = 0) => {
@@ -218,9 +246,9 @@ export function CatalogListingWorkbenchPage({
       render: (_, listing) => {
         const summary = psdSummary(listing)
         const dotClass =
-          summary.state === 'Ready'
+          summary.stateKey === 'ready'
             ? styles.dotReady
-            : summary.state === 'Missing'
+            : summary.stateKey === 'missing'
               ? styles.dotMissing
               : styles.dotPartial
         return (
@@ -230,6 +258,9 @@ export function CatalogListingWorkbenchPage({
               <span className={`${styles.psdDot} ${dotClass}`} />
               {summary.state}
             </span>
+            <Typography.Text type="secondary" className={styles.psdSource}>
+              {summary.detail}
+            </Typography.Text>
           </Space>
         )
       },
@@ -279,18 +310,33 @@ export function CatalogListingWorkbenchPage({
     },
     {
       title: 'Actions',
-      width: 88,
+      width: 112,
       fixed: 'right',
       render: (_, listing) =>
         canWrite(listing) ? (
-          <Tooltip title="Edit listing">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              aria-label="Edit listing"
-              onClick={() => void openEdit(listing)}
-            />
-          </Tooltip>
+          <Space size={2}>
+            {!listing.defaultPsdTemplateAssetId ? (
+              <Tooltip title={t('portal.catalog.psd.requestDefault')}>
+                <Button
+                  type="text"
+                  icon={<FileImageOutlined />}
+                  aria-label={t('portal.catalog.psd.requestDefault')}
+                  loading={
+                    requestDefaultPsd.isPending && requestDefaultPsd.variables === listing.id
+                  }
+                  onClick={() => requestDefaultPsd.mutate(listing.id)}
+                />
+              </Tooltip>
+            ) : null}
+            <Tooltip title="Edit listing">
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                aria-label="Edit listing"
+                onClick={() => void openEdit(listing)}
+              />
+            </Tooltip>
+          </Space>
         ) : null,
     },
   ]
@@ -347,9 +393,13 @@ export function CatalogListingWorkbenchPage({
         />
         <MetricCard
           icon={<FileImageOutlined />}
-          label="PSD missing"
+          label={t('portal.catalog.psd.missingTag')}
           value={summary.data?.noPsdCount ?? 0}
           variant="danger"
+          onClick={() => {
+            setPsdState('missing')
+            setPage(1)
+          }}
           status={
             <span className={styles.metricPercentDanger}>
               {metricPercent(summary.data?.noPsdCount ?? 0)}
@@ -388,11 +438,14 @@ export function CatalogListingWorkbenchPage({
         />
         <Select
           allowClear
-          className={styles.filter}
+          className={styles.channelFilter}
           placeholder={t('portal.catalog.allChannels')}
           value={salesChannelCode}
           onChange={resetPage(setSalesChannelCode)}
-          options={['AMAZON', 'ETSY'].map((v) => ({ value: v, label: v }))}
+          options={(options.data?.salesChannels ?? []).map(({ code, name }) => ({
+            value: code,
+            label: name || code,
+          }))}
         />
         <Select
           allowClear
@@ -404,6 +457,17 @@ export function CatalogListingWorkbenchPage({
             { value: 'DRAFT', label: 'Draft' },
             { value: 'APPROVED', label: 'Approved' },
             { value: 'REJECTED', label: 'Rejected' },
+          ]}
+        />
+        <Select
+          allowClear
+          className={styles.filter}
+          placeholder={t('portal.catalog.allPsdStatuses')}
+          value={psdState}
+          onChange={resetPage(setPsdState)}
+          options={[
+            { value: 'missing', label: t('portal.catalog.psd.missingTag') },
+            { value: 'ready', label: t('portal.catalog.psd.readyTag') },
           ]}
         />
       </div>
@@ -466,6 +530,7 @@ export function CatalogListingWorkbenchPage({
         open={Boolean(editing)}
         listing={editing === 'create' ? undefined : editing}
         shops={options.data?.shops ?? []}
+        salesChannels={options.data?.salesChannels ?? []}
         saving={save.isPending}
         onClose={() => setEditing(undefined)}
         onSubmit={(input) => save.mutate(input)}

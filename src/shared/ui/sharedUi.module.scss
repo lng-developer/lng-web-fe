@@ -178,11 +178,11 @@
 }
 
 .uiTabs :global(.ant-tabs-nav) {
-  margin-bottom: 24px;
-  padding: 4px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 10px;
-  background: var(--ant-color-fill-quaternary);
+  margin-bottom: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .uiTabs :global(.ant-tabs-nav::before) {
@@ -190,13 +190,19 @@
 }
 
 .uiTabs :global(.ant-tabs-tab) {
-  padding: 6px 16px;
-  border-radius: 8px;
-  color: var(--ant-color-text-secondary);
+  min-width: 92px;
+  height: 36px;
+  justify-content: center;
+  padding: 7px 16px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 10px;
+  color: var(--ant-color-text);
   font-size: 14px;
+  font-weight: 500;
   line-height: 20px;
   transition: all 0.2s ease;
-  background: transparent;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
 }
 
 .uiTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
@@ -212,16 +218,41 @@
 }
 
 .uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
-  background: var(--ant-color-bg-container) !important;
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-primary) !important;
+  box-shadow: none;
 }
 
 .uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
-  color: var(--ant-color-primary);
+  color: #fff;
   font-weight: 600;
 }
 
 .uiTabs :global(.ant-tabs-ink-bar) {
   display: none !important;
+}
+
+.uiButtonTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.uiButtonTabs :global(.ant-btn) {
+  min-width: 92px;
+  height: 36px;
+  border-color: var(--ant-color-border);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  font-weight: 500;
+}
+
+.uiButtonTabs :global(.ant-btn-primary) {
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-primary);
+  color: #fff;
+  box-shadow: none;
 }
 
 .tabLabel {

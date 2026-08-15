@@ -37,26 +37,23 @@ describe('authenticated media API', () => {
   })
 
   it('downloads protected media through an authenticated blob URL', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue(
-      new Blob(['psd'], { type: 'application/octet-stream' }),
-    )
-    URL.createObjectURL = vi.fn(() => 'blob:download')
-    URL.revokeObjectURL = vi.fn()
+    vi.mocked(apiClient.get).mockResolvedValue({
+      success: true,
+      data: { url: 'https://wasabi.example/signed' },
+    })
     const anchor = document.createElement('a')
     const click = vi.spyOn(anchor, 'click').mockImplementation(() => {})
     vi.spyOn(document, 'createElement').mockReturnValue(anchor)
 
     await downloadMediaAsset('/api/media/assets/a/download', 'design.psd')
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/media/assets/a/download?disposition=inline', {
-      responseType: 'blob',
-      signal: undefined,
-    })
-    expect(anchor.href).toBe('blob:download')
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/api/media/assets/a/download?disposition=attachment&redirect=false',
+    )
+    expect(anchor.href).toBe('https://wasabi.example/signed')
     expect(anchor.download).toBe('design.psd')
     expect(click).toHaveBeenCalledTimes(1)
     expect(anchor.isConnected).toBe(false)
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:download')
   })
 
   it('uses the backend multipart control contract', async () => {

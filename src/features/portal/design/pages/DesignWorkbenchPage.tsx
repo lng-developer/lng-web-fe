@@ -54,6 +54,7 @@ import {
   PageHeader,
   SectionCard,
   StatusTag,
+  UiButtonTabs,
   useFeedbackToast,
   ZoomableImage,
 } from '@/shared/ui'
@@ -750,11 +751,10 @@ export function DesignWorkbenchPage() {
             <Typography.Title className={styles.taskToolbarTitle} level={4}>
               {t('portal.design.tasks', 'Design Tasks')}
             </Typography.Title>
-            <Select
+            <UiButtonTabs
               className={styles.channelFilter}
               value={salesChannelCode ?? 'ALL'}
-              aria-label={t('portal.design.channel')}
-              options={[
+              items={[
                 { label: t('portal.design.channelAll'), value: 'ALL' },
                 { label: 'Amazon', value: 'AMAZON' },
                 { label: 'Etsy', value: 'ETSY' },

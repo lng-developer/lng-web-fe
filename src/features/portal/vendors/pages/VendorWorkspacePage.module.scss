@@ -1,6 +1,61 @@
 .page {
   display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
+  align-items: end;
+  padding: 18px 20px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgb(239 68 68 / 8%), transparent 36%), var(--ant-color-bg-container);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 6%);
+}
+
+.headerCopy {
+  display: grid;
+  gap: 4px;
+}
+
+.headerCopy :global(.ant-typography) {
+  margin: 0;
+}
+
+.kicker {
+  color: var(--ant-color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.headerStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.headerStats > div {
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: color-mix(
+    in srgb,
+    var(--ant-color-bg-container) 86%,
+    var(--ant-color-fill-quaternary)
+  );
+}
+
+.headerStats strong {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .dataTable :global(.ant-table-cell) {
@@ -13,7 +68,18 @@
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.directoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.directoryHeader :global(.ant-typography) {
+  margin: 0;
 }
 
 .importModalBody {
@@ -37,9 +103,35 @@
   white-space: pre-wrap;
 }
 .filters {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(180px, 220px) minmax(180px, 220px);
-  gap: 12px;
+  flex: 1 1 auto;
+  align-items: center !important;
+  width: auto !important;
+  min-width: 0;
+}
+
+.filters :global(.ant-select) {
+  width: 220px;
+}
+
+.filters :global(.ant-input-affix-wrapper),
+.filters :global(.ant-input-search) {
+  width: min(280px, 100%);
+  max-width: 280px;
+}
+
+.dataTable {
+  margin-top: 12px;
+}
+
+.dataTable :global(.ant-table-thead > tr > th) {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.dataTable :global(.ant-table-tbody > tr > td) {
+  vertical-align: middle;
 }
 .costCenterDrawer {
   display: flex;
@@ -49,16 +141,28 @@
 }
 
 @media (max-width: 900px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .filters {
-    grid-template-columns: 1fr;
+    width: 100% !important;
+  }
+
+  .filters :global(.ant-select),
+  .filters :global(.ant-input-affix-wrapper),
+  .filters :global(.ant-input-search) {
+    width: 100%;
+    max-width: none;
   }
 }
 
 @media (max-width: 600px) {
+  .headerStats,
   .metrics {
     grid-template-columns: 1fr;
   }

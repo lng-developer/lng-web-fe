@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Collapse, Drawer, Form, Input, InputNumber, Select, Space, Typography } from 'antd'
 
@@ -9,22 +9,44 @@ type Props = {
   open: boolean
   listing?: Listing
   shops: Array<{ id: string; name: string; currency: string }>
+  salesChannels: Array<{ code: string; name: string }>
   saving: boolean
   onClose: () => void
   onSubmit: (input: CreateListingInput | UpdateListingInput) => void
+}
+
+const CHANNEL_IDENTITY_FIELD: Record<string, 'asin' | 'etsyListingId'> = {
+  AMAZON: 'asin',
+  ETSY: 'etsyListingId',
 }
 
 export function CatalogListingEditorModal({
   open,
   listing,
   shops,
+  salesChannels,
   saving,
   onClose,
   onSubmit,
 }: Props) {
   const { t } = useTranslation()
   const [form] = Form.useForm<CreateListingInput>()
-  const channel = Form.useWatch('salesChannelCode', form) ?? listing?.salesChannelCode ?? 'AMAZON'
+  const defaultChannel = salesChannels[0]?.code ?? 'AMAZON'
+  const channel =
+    Form.useWatch('salesChannelCode', form) ?? listing?.salesChannelCode ?? defaultChannel
+  const identityField = CHANNEL_IDENTITY_FIELD[channel] ?? null
+  const shopOptions = useMemo(
+    () => shops.map(({ id, name }) => ({ value: id, label: name })),
+    [shops],
+  )
+  const channelOptions = useMemo(
+    () => salesChannels.map(({ code, name }) => ({ value: code, label: name || code })),
+    [salesChannels],
+  )
+  const statusOptions = useMemo(
+    () => ['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value })),
+    [],
+  )
 
   useEffect(() => {
     if (!open) return
@@ -39,20 +61,21 @@ export function CatalogListingEditorModal({
             title: listing.title,
             asin: listing.asin,
             etsyListingId: listing.etsyListingId,
+            defaultPsdTemplateAssetId: listing.defaultPsdTemplateAssetId,
             baseCostAmount: listing.baseCostAmount,
             currency: listing.currency,
             costCenterStatus: listing.costCenterStatus,
             status: listing.status,
           }
-        : { salesChannelCode: 'AMAZON', currency: 'USD', baseCostAmount: 0 },
+        : { salesChannelCode: defaultChannel, currency: 'USD', baseCostAmount: 0 },
     )
-  }, [form, listing, open])
+  }, [defaultChannel, form, listing, open])
 
   const submit = (values: CreateListingInput) => {
     const channelValues = {
       ...values,
-      asin: channel === 'AMAZON' ? values.asin : null,
-      etsyListingId: channel === 'ETSY' ? values.etsyListingId : null,
+      asin: identityField === 'asin' ? values.asin : null,
+      etsyListingId: identityField === 'etsyListingId' ? values.etsyListingId : null,
     }
     if (!listing) return onSubmit(channelValues)
     const { shopId, salesChannelCode, marketplaceCode, sku, ...update } = channelValues
@@ -71,20 +94,25 @@ export function CatalogListingEditorModal({
       <Form.Item label={t('portal.catalog.fields.currency')} name="currency" rules={[{ len: 3 }]}>
         <Input maxLength={3} />
       </Form.Item>
+      <Form.Item
+        className={styles.spanTwo}
+        label={t('portal.catalog.fields.defaultPsdTemplateAssetId')}
+        name="defaultPsdTemplateAssetId"
+      >
+        <Input allowClear placeholder="MediaAsset ID" />
+      </Form.Item>
       <Form.Item label={t('portal.catalog.fields.costCenterStatus')} name="costCenterStatus">
         <Select
           allowClear
-          options={['MISSING', 'PRESENT', 'NOT_REQUIRED'].map((value) => ({
-            value,
-            label: value,
-          }))}
+          options={[
+            { value: 'MISSING', label: 'MISSING' },
+            { value: 'PRESENT', label: 'PRESENT' },
+            { value: 'NOT_REQUIRED', label: 'NOT_REQUIRED' },
+          ]}
         />
       </Form.Item>
       <Form.Item label={t('portal.catalog.fields.recordStatus')} name="status">
-        <Select
-          allowClear
-          options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))}
-        />
+        <Select allowClear options={statusOptions} />
       </Form.Item>
     </div>
   )
@@ -135,7 +163,7 @@ export function CatalogListingEditorModal({
                 <Select
                   showSearch
                   optionFilterProp="label"
-                  options={shops.map(({ id, name }) => ({ value: id, label: name }))}
+                  options={shopOptions}
                   onChange={(shopId) => {
                     const shop = shops.find(({ id }) => id === shopId)
                     if (shop) form.setFieldValue('currency', shop.currency)
@@ -147,14 +175,14 @@ export function CatalogListingEditorModal({
                 name="salesChannelCode"
                 rules={[{ required: true }]}
               >
-                <Select options={['AMAZON', 'ETSY'].map((value) => ({ value, label: value }))} />
+                <Select options={channelOptions} />
               </Form.Item>
               <Form.Item
                 label={t('portal.catalog.fields.marketplace')}
                 name="marketplaceCode"
                 rules={[{ required: true }]}
               >
-                <Input placeholder={channel === 'AMAZON' ? 'AMAZON_US' : 'ETSY_US'} />
+                <Input placeholder={`${channel}_US`} />
               </Form.Item>
               <Form.Item
                 label={t('portal.catalog.fields.sku')}
@@ -178,15 +206,16 @@ export function CatalogListingEditorModal({
             >
               <Input />
             </Form.Item>
-            {channel === 'AMAZON' ? (
+            {identityField === 'asin' ? (
               <Form.Item label={t('portal.catalog.fields.asin')} name="asin">
                 <Input />
               </Form.Item>
-            ) : (
+            ) : null}
+            {identityField === 'etsyListingId' ? (
               <Form.Item label={t('portal.catalog.fields.etsyListingId')} name="etsyListingId">
                 <Input />
               </Form.Item>
-            )}
+            ) : null}
           </div>
         </section>
 

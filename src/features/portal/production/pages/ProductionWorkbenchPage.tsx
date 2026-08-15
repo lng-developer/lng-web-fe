@@ -26,19 +26,7 @@ import {
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import {
-  Button,
-  Flex,
-  Input,
-  Modal,
-  Radio,
-  Segmented,
-  Select,
-  Slider,
-  Space,
-  Tag,
-  Typography,
-} from 'antd'
+import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
@@ -50,6 +38,7 @@ import {
   MetricCard,
   PageHeader,
   StatusTag,
+  UiButtonTabs,
   UiTabLabel,
   UiTabs,
   useFeedbackToast,
@@ -1131,11 +1120,10 @@ export function ProductionWorkbenchPage({
               onChange={handleTabChange}
               items={tabItems}
             />
-            <Select
+            <UiButtonTabs
               className={styles.channelFilter}
               value={salesChannelCode ?? 'ALL'}
-              aria-label={t('portal.production.channel')}
-              options={[
+              items={[
                 { label: t('portal.production.channelAll'), value: 'ALL' },
                 { label: 'Amazon', value: 'AMAZON' },
                 { label: 'Etsy', value: 'ETSY' },

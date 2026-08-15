@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import { AppstoreOutlined, FileTextOutlined, TableOutlined } from '@ant-design/icons'
@@ -12,21 +13,24 @@ import { ProductTypeManagementPage } from './ProductTypeManagementPage'
 
 export function CatalogWorkspacePage() {
   const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState('dashboard')
   const account = useRouteLoaderData('workspace') as CurrentAccount
   const canManageMasterData = account.permissions.includes('CATALOG:WRITE')
 
   return (
     <UiTabs
+      activeKey={activeTab}
+      onChange={setActiveTab}
       destroyOnHidden
       items={[
         {
           key: 'dashboard',
           label: (
             <UiTabLabel>
-              <AppstoreOutlined /> Overview
+              <AppstoreOutlined /> {t('portal.catalog.tabs.overview')}
             </UiTabLabel>
           ),
-          children: <CatalogDashboardPage />,
+          children: <CatalogDashboardPage onOpenListings={() => setActiveTab('listings')} />,
         },
         {
           key: 'listings',

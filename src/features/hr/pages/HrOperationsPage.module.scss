@@ -140,6 +140,19 @@
   gap: 14px;
 }
 
+.modalForm :global(.ant-card) {
+  border-radius: 10px;
+}
+
+.modalForm :global(.ant-card-head) {
+  min-height: 42px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.modalForm :global(.ant-form-item:last-child) {
+  margin-bottom: 0;
+}
+
 .modalSection {
   margin: 0 0 4px;
   padding: 10px 12px;
@@ -172,6 +185,7 @@
 }
 
 .money {
+  width: 100%;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
@@ -444,9 +458,58 @@
   margin-bottom: 0;
 }
 
+.calendarShell {
+  display: grid;
+  gap: 16px;
+}
+
+.calendarTopbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+}
+
+.calendarTopbar h4 {
+  margin: 0 0 0 16px !important;
+  min-width: 150px;
+}
+
+.calendarTabs {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px !important;
+}
+
+.calendarTabs :global(.ant-btn) {
+  min-width: 92px;
+  height: 36px;
+  border-color: var(--ant-color-border);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  font-weight: 500;
+}
+
+.calendarTabs :global(.ant-btn-primary) {
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-primary);
+  color: var(--ant-color-white);
+  box-shadow: none;
+}
+
+.calendarViewActive {
+  background: var(--ant-color-fill-secondary) !important;
+  box-shadow: inset 0 0 0 1px var(--ant-color-border);
+}
+
 .calendarWorkspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 16px;
   align-items: start;
 }
@@ -478,8 +541,10 @@
 .calendarLegend {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-bottom: 12px;
+  gap: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
 }
 
 .calendarLegend span,
@@ -489,38 +554,79 @@
   align-items: center;
   width: fit-content;
   overflow: hidden;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 12px;
   line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.calendarEvents span::before,
 .calendarLegend span::before,
 .calendarDetailEvents span::before {
   content: '';
-  flex: 0 0 6px;
-  width: 6px;
-  height: 6px;
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
   margin-right: 6px;
   border-radius: 999px;
   background: transparent;
-  border: 2px solid currentColor;
+  border: 0;
   box-sizing: border-box;
+}
+
+.calendarLegend span {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ant-color-text);
+}
+
+.calendarEvents span {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+.calendarEvents span::before {
+  content: none;
 }
 
 .calendarMore::before {
   display: none;
 }
 
-.calendarCell {
-  min-height: 108px;
-  padding: 7px;
-  border: 1px solid transparent;
+.calendarMonthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(112px, 1fr));
+  overflow: auto;
+  border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
+  background: var(--ant-color-bg-container);
+}
+
+.calendarWeekday {
+  padding: 8px 12px;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.calendarCell {
+  min-height: 120px;
+  padding: 12px;
+  border: 0;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
   transition:
     border-color 140ms ease,
     background-color 140ms ease,
@@ -529,33 +635,105 @@
 
 .calendarCell:hover {
   background: var(--ant-color-fill-tertiary);
-  box-shadow: inset 0 0 0 1px var(--ant-color-border-secondary);
+  box-shadow: inset 0 0 0 1px var(--ant-color-primary-border);
 }
 
 .calendarCellSelected {
   border-color: var(--ant-color-primary);
   background: var(--ant-color-primary-bg);
+  box-shadow: inset 0 0 0 2px var(--ant-color-primary);
 }
 
-.calendarDate {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-variant-numeric: tabular-nums;
-}
-
-.calendarDate span {
-  font-weight: 600;
-}
-
-.calendarDate small {
+.calendarCellMuted {
   color: var(--ant-color-text-tertiary);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.calendarDateBubble {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.calendarCellSelected .calendarDateBubble {
+  color: var(--ant-color-primary-bg);
+  background: var(--ant-color-primary);
+}
+
+.calendarWeekGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(128px, 1fr));
+  gap: 12px;
+  overflow: auto;
+}
+
+.calendarWeekCard {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 380px;
+  padding: 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  color: inherit;
+  text-align: left;
+}
+
+.calendarWeekCard > span {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.calendarWeekCard em {
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+}
+
+.calendarTimeline {
+  display: grid;
+  gap: 10px;
+  max-height: 620px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.calendarTimelineRow {
+  display: grid;
+  grid-template-columns: 56px 140px minmax(120px, 1fr) minmax(160px, 2fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  color: inherit;
+  text-align: left;
+}
+
+.calendarTimelineDate {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.calendarTimelineDate small {
+  font-size: 10px;
 }
 
 .calendarEvents,
 .calendarDetailEvents {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
@@ -571,33 +749,53 @@
 }
 
 .event_attendance {
-  border-color: var(--ant-color-info);
-  color: var(--ant-color-info-text);
-  background: var(--ant-color-info-bg);
+  border-color: var(--ant-blue-3);
+  color: var(--ant-blue-7);
+  background: var(--ant-blue-1);
 }
 
 .event_late {
-  border-color: var(--ant-color-warning);
-  color: var(--ant-color-warning-text);
-  background: var(--ant-color-warning-bg);
+  border-color: var(--ant-red-3);
+  color: var(--ant-red-7);
+  background: var(--ant-red-1);
 }
 
 .event_leave {
-  border-color: var(--ant-color-purple);
-  color: var(--ant-color-purple-text);
-  background: var(--ant-color-purple-bg);
+  border-color: var(--ant-purple-3);
+  color: var(--ant-purple-7);
+  background: var(--ant-purple-1);
 }
 
 .event_overtime {
-  border-color: var(--ant-color-cyan);
-  color: var(--ant-color-cyan-text);
-  background: var(--ant-color-cyan-bg);
+  border-color: var(--ant-cyan-3);
+  color: var(--ant-cyan-7);
+  background: var(--ant-cyan-1);
 }
 
 .event_holiday {
-  border-color: var(--ant-color-error);
-  color: var(--ant-color-error-text);
-  background: var(--ant-color-error-bg);
+  border-color: var(--ant-magenta-3);
+  color: var(--ant-magenta-7);
+  background: var(--ant-magenta-1);
+}
+
+.calendarLegend .event_attendance::before {
+  background: var(--ant-blue-6);
+}
+
+.calendarLegend .event_late::before {
+  background: var(--ant-red-6);
+}
+
+.calendarLegend .event_leave::before {
+  background: var(--ant-purple-6);
+}
+
+.calendarLegend .event_overtime::before {
+  background: var(--ant-cyan-6);
+}
+
+.calendarLegend .event_holiday::before {
+  background: var(--ant-magenta-6);
 }
 
 .calendarDetail {

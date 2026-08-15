@@ -16,6 +16,7 @@ export type CatalogListParams = {
   shopId?: string
   salesChannelCode?: string
   qcStatus?: string
+  psdState?: 'missing' | 'ready'
   sort?: string
 }
 export type CatalogSummaryParams = Omit<CatalogListParams, 'page' | 'limit' | 'sort'>
@@ -23,21 +24,20 @@ export type Listing = {
   id: string
   shopId: string
   shop: { id: string; name: string } | null
-  salesChannelCode: 'AMAZON' | 'ETSY'
+  salesChannelCode: string
   marketplaceCode: string
   sku: string
   asin: string | null
   etsyListingId: string | null
   title: string
   productImageUrl?: string | null
-  defaultVariantId?: string | null
+  defaultPsdTemplateAssetId?: string | null
   variantCount?: number
   psdReadyCount?: number
   psdVariantCount?: number
   baseCostAmount: number
   currency: string
   costCenterStatus: string
-  psdStatus: string
   status: string
   qcStatus: 'DRAFT' | 'APPROVED' | 'REJECTED'
   salesStats: {
@@ -54,6 +54,7 @@ export type Listing = {
 }
 export type CatalogSummary = {
   totalListingCount: number
+  channelCounts?: Array<{ code: string; count: number }>
   noPsdCount: number
   draftCount: number
   approvedCount: number
@@ -121,6 +122,7 @@ export type InternalTemplateInput = {
   status?: string
 }
 export type ListingOptions = {
+  salesChannels: Array<{ code: string; name: string }>
   shops: Array<{ id: string; name: string; currency: string; status: string }>
   productTypeGroups: ProductTypeGroup[]
   internalTemplates: InternalTemplate[]
@@ -161,12 +163,13 @@ export type ListingVariantInput = {
 }
 export type CreateListingInput = {
   shopId: string
-  salesChannelCode: 'AMAZON' | 'ETSY'
+  salesChannelCode: string
   marketplaceCode: string
   sku: string
   title: string
   asin?: string | null
   etsyListingId?: string | null
+  defaultPsdTemplateAssetId?: string | null
   baseCostAmount?: number
   currency?: string
   costCenterStatus?: string
@@ -201,6 +204,8 @@ export const createListing = async (input: CreateListingInput) =>
   unwrap<Listing>(await apiClient.post('/api/catalog/listings', input))
 export const updateListing = async (id: string, input: UpdateListingInput) =>
   unwrap<Listing>(await apiClient.patch(`/api/catalog/listings/${id}`, input))
+export const requestListingPsd = async (listingId: string) =>
+  unwrap<{ id: string }>(await apiClient.post(`/api/catalog/listings/${listingId}/request-psd`))
 export const approveListing = async (id: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/approve`))
 export const rejectListing = async (id: string, rejectionReason: string) =>
@@ -216,10 +221,6 @@ export const updateListingVariant = async (
 ) =>
   unwrap<ListingVariant>(
     await apiClient.patch(`/api/catalog/listings/${listingId}/variants/${variantId}`, input),
-  )
-export const setDefaultListingVariant = async (listingId: string, variantId: string) =>
-  unwrap<ListingVariant>(
-    await apiClient.post(`/api/catalog/listings/${listingId}/variants/${variantId}/default`),
   )
 export const requestListingVariantPsd = async (listingId: string, variantId: string) =>
   unwrap<{ id: string }>(

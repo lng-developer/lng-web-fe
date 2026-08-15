@@ -297,6 +297,7 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
               month={month}
               days={data?.calendar ?? []}
               loading={workspace.isLoading}
+              onMonthChange={setMonth}
             />
           </SectionCard>
         </>

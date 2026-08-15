@@ -1,11 +1,24 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppstoreOutlined, LinkOutlined, SettingOutlined } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Drawer, Flex, Form, Image, Input, InputNumber, Modal, Switch, Tabs } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  Card,
+  Drawer,
+  Flex,
+  Form,
+  Image,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Switch,
+  Tabs,
+} from 'antd'
 
 import { FormActions, useFeedbackToast } from '@/shared/ui'
 
+import { listProductTypeGroups } from '../../catalog/api/catalogApi'
 import {
   createVendorProduct,
   updateVendorProduct,
@@ -37,6 +50,11 @@ export function VendorProductEditorModal({
   const [form] = Form.useForm<EditorValues>()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
+  const productTypeGroups = useQuery({
+    queryKey: ['portal', 'catalog', 'product-type-groups', 'vendor-product-editor'],
+    queryFn: () => listProductTypeGroups({ page: 1, limit: 100, status: 'ACTIVE' }),
+    enabled: open,
+  })
 
   useEffect(() => {
     if (!open) return
@@ -132,11 +150,20 @@ export function VendorProductEditorModal({
                 <Input placeholder="Vendor SKU or Product ID" />
               </Form.Item>
               <Form.Item
-                label={t('vendors.productTypeGroupId')}
+                label={t('vendors.productTypeGroup')}
                 name="productTypeGroupId"
-                rules={[{ required: true }, { len: 24 }, { pattern: /^[a-f\d]{24}$/i }]}
+                rules={[{ required: true }]}
               >
-                <Input placeholder="24-char ObjectId" />
+                <Select
+                  showSearch
+                  loading={productTypeGroups.isLoading}
+                  optionFilterProp="label"
+                  placeholder={t('vendors.selectProductTypeGroup')}
+                  options={(productTypeGroups.data?.items ?? []).map((group) => ({
+                    value: group.id,
+                    label: `${group.code} · ${group.name}`,
+                  }))}
+                />
               </Form.Item>
             </div>
           </Card>
