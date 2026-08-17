@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import {
   createDesignTask,
+  getDesignSummary,
   getDesignTask,
   listDesignTasks,
   submitDesignTask,
@@ -61,32 +62,8 @@ vi.mock('@/features/portal/design/pages/CreateDesignTaskModal', () => ({
     ) : null,
 }))
 vi.mock('@/features/portal/design/api/designApi', () => ({
-  listDesignTasks: vi.fn().mockResolvedValue({
-    items: [
-      {
-        id: 'task-1',
-        status: 'OPEN',
-        taskType: 'PSD_TEMPLATE',
-        priority: 'HIGH',
-        listing: {
-          sku: 'SKU-1',
-          title: 'Shirt',
-          productImageUrl: 'https://m.media-amazon.com/images/S/main-listing.png',
-        },
-        shop: { name: 'Shop' },
-        assignedDesigner: null,
-        updatedAt: '2026-08-01T00:00:00Z',
-      },
-    ],
-    pagination: { total: 1 },
-  }),
-  getDesignTask: vi.fn().mockResolvedValue({
-    id: 'task-1',
-    status: 'OPEN',
-    taskType: 'PSD_TEMPLATE',
-    expectedOutputs: [],
-    latestSubmission: null,
-  }),
+  listDesignTasks: vi.fn(),
+  getDesignTask: vi.fn(),
   listDesignAssignees: vi
     .fn()
     .mockResolvedValue([{ id: '6a339b5a033e2ff7753522c3', fullName: 'Nguyen Van An' }]),
@@ -97,9 +74,7 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
   approveDesignTask: vi.fn(),
   rejectDesignTask: vi.fn(),
   uploadDesignAsset: vi.fn().mockResolvedValue({ id: 'asset-1' }),
-  getDesignSummary: vi
-    .fn()
-    .mockResolvedValue({ total: 1, active: 1, unassigned: 1, byStatus: {}, byTaskType: {} }),
+  getDesignSummary: vi.fn(),
   getDesignWorkload: vi.fn().mockResolvedValue({
     totals: { unassignedCount: 1, activeCount: 1 },
     byDesigner: [{ assignedDesignerId: '6a339b5a033e2ff7753522c3', totalActive: 2 }],
@@ -118,6 +93,41 @@ describe('DesignWorkbenchPage', () => {
     vi.clearAllMocks()
     queryClient.clear()
     i18n.changeLanguage('en')
+    vi.mocked(listDesignTasks).mockResolvedValue({
+      items: [
+        {
+          id: 'task-1',
+          status: 'OPEN',
+          taskType: 'PSD_TEMPLATE',
+          priority: 'HIGH',
+          listing: {
+            sku: 'SKU-1',
+            title: 'Shirt',
+            asin: 'B0TESTASIN1',
+            salesChannelCode: 'AMAZON',
+            productImageUrl: 'https://m.media-amazon.com/images/S/main-listing.png',
+          },
+          shop: { name: 'Shop' },
+          assignedDesigner: null,
+          updatedAt: '2026-08-01T00:00:00Z',
+        },
+      ],
+      pagination: { total: 1 },
+    } as never)
+    vi.mocked(getDesignTask).mockResolvedValue({
+      id: 'task-1',
+      status: 'OPEN',
+      taskType: 'PSD_TEMPLATE',
+      expectedOutputs: [],
+      latestSubmission: null,
+    } as never)
+    vi.mocked(getDesignSummary).mockResolvedValue({
+      total: 1,
+      active: 1,
+      unassigned: 1,
+      byStatus: {},
+      byTaskType: {},
+    })
   })
   it('shows Assign as the primary action for an open task', async () => {
     render(
@@ -177,7 +187,7 @@ describe('DesignWorkbenchPage', () => {
       </AppProviders>,
     )
 
-    expect(await screen.findByRole('img', { name: 'Preview' })).toHaveAttribute(
+    expect(await screen.findByAltText('Preview')).toHaveAttribute(
       'src',
       'https://m.media-amazon.com/images/S/main-listing.png',
     )
@@ -232,7 +242,12 @@ describe('DesignWorkbenchPage', () => {
           status: 'IN_PROGRESS',
           taskType: 'PSD_TEMPLATE',
           priority: 'HIGH',
-          listing: { sku: 'SKU-1', title: 'Shirt' },
+          listing: {
+            sku: 'SKU-1',
+            title: 'Shirt',
+            asin: 'B0TESTASIN1',
+            salesChannelCode: 'AMAZON',
+          },
           shop: { name: 'Shop' },
           assignedDesigner: {
             id: '6a339b5a033e2ff7753522c3',
@@ -258,6 +273,7 @@ describe('DesignWorkbenchPage', () => {
         <DesignWorkbenchPage />
       </AppProviders>,
     )
+    expect(await screen.findByText('SKU-1')).toBeInTheDocument()
     fireEvent.click(await screen.findByRole('button', { name: 'Submit' }))
     const dialog = screen.getByRole('dialog', { hidden: true })
     expect(within(dialog).getByText('SKU-1')).toBeInTheDocument()

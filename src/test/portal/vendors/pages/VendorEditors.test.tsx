@@ -3,6 +3,7 @@ import { Modal } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
+import { listProductTypeGroups } from '@/features/portal/catalog/api/catalogApi'
 import {
   createVendorCostCenter,
   createVendorProduct,
@@ -23,6 +24,16 @@ vi.mock('@/features/portal/vendors/api/vendorApi', () => ({
   updateVendorCostCenter: vi.fn(),
   updateVendorProduct: vi.fn(),
 }))
+vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
+  listProductTypeGroups: vi.fn(),
+}))
+
+const productTypeGroupId = '660000000000000000000001'
+
+async function selectProductTypeGroup() {
+  fireEvent.mouseDown(screen.getByLabelText('Product type group'))
+  fireEvent.click(await screen.findByText('APPAREL · Apparel'))
+}
 
 describe('VendorEditorModal', () => {
   afterEach(() => {
@@ -33,6 +44,10 @@ describe('VendorEditorModal', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     queryClient.clear()
+    vi.mocked(listProductTypeGroups).mockResolvedValue({
+      items: [{ id: productTypeGroupId, code: 'APPAREL', name: 'Apparel', status: 'ACTIVE' }],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
     i18n.addResourceBundle(
       'en',
       'common',
@@ -61,7 +76,7 @@ describe('VendorEditorModal', () => {
             minProductionDays: 'Minimum production days',
             name: 'Name',
             priorityShipping: 'Priority shipping',
-            productTypeGroupId: 'Product type group ID',
+            productTypeGroup: 'Product type group',
             productUrl: 'Product URL',
             save: 'Save',
             sku: 'SKU',
@@ -144,9 +159,7 @@ describe('VendorEditorModal', () => {
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Tee' } })
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'TEE' } })
-    fireEvent.change(screen.getByLabelText('Product type group ID'), {
-      target: { value: '660000000000000000000001' },
-    })
+    await selectProductTypeGroup()
     fireEvent.change(screen.getByLabelText('External product ID'), {
       target: { value: 'external-1' },
     })
@@ -181,17 +194,11 @@ describe('VendorEditorModal', () => {
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Tee' } })
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'TEE' } })
-    fireEvent.change(screen.getByLabelText('Product type group ID'), {
-      target: { value: 'invalid' },
-    })
     fireEvent.change(screen.getByLabelText('Minimum production days'), { target: { value: '5' } })
     fireEvent.change(screen.getByLabelText('Maximum production days'), { target: { value: '2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
-      expect(screen.getByLabelText('Product type group ID')).toHaveAttribute(
-        'aria-invalid',
-        'true',
-      ),
+      expect(screen.getByLabelText('Product type group')).toHaveAttribute('aria-invalid', 'true'),
     )
     expect(createVendorProduct).not.toHaveBeenCalled()
   })
@@ -208,9 +215,7 @@ describe('VendorEditorModal', () => {
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Tee' } })
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'TEE' } })
-    fireEvent.change(screen.getByLabelText('Product type group ID'), {
-      target: { value: '660000000000000000000001' },
-    })
+    await selectProductTypeGroup()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(

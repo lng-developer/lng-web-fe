@@ -6,6 +6,7 @@ import { getWorkScore, overrideWorkScore } from '@/features/portal/work-scores/a
 import { WorkScoreWorkbenchPage } from '@/features/portal/work-scores/pages/WorkScoreWorkbenchPage'
 import { ApiError } from '@/shared/api/apiError'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
@@ -58,6 +59,7 @@ describe('WorkScoreWorkbenchPage', () => {
   afterEach(cleanup)
   beforeEach(() => {
     vi.clearAllMocks()
+    queryClient.clear()
     i18n.changeLanguage('en')
   })
 

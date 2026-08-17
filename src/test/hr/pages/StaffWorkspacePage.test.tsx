@@ -193,8 +193,8 @@ describe('StaffWorkspacePage', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: dayjs(attendanceDateKey).format('DD/MM/YYYY') }),
     )
-    expect(screen.getByRole('button', { name: /OT/ })).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: /leave/i }))
+    expect(screen.getByRole('button', { name: /Request OT/ })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: /Request leave/i }))
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(screen.getAllByDisplayValue(dayjs(attendanceDateKey).format('DD/MM/YYYY'))).toHaveLength(
