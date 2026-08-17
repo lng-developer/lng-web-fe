@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { EditOutlined, GlobalOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Divider, Space, Tag, Typography } from 'antd'
 
@@ -7,6 +8,11 @@ import type { InternalTemplate, Listing, ProductTypeGroup } from '../api/catalog
 import { ListingVariantManager } from '../pages/ListingVariantManager'
 import styles from './ListingDetailPanel.module.scss'
 import { ListingQcActions } from './ListingQcActions'
+
+const CHANNEL_ICON = {
+  AMAZON: <GlobalOutlined />,
+  ETSY: <ShopOutlined />,
+} as Record<string, ReactNode>
 
 interface ListingDetailPanelProps {
   listing: Listing | undefined
@@ -79,8 +85,8 @@ export function ListingDetailPanel({
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <Space size={8} wrap>
-              <StatusTag status={listing.salesChannelCode === 'AMAZON' ? 'processing' : 'ready'}>
-                {listing.salesChannelCode === 'AMAZON' ? <GlobalOutlined /> : <ShopOutlined />}{' '}
+              <StatusTag status="ready">
+                {CHANNEL_ICON[listing.salesChannelCode] ?? <ShopOutlined />}{' '}
                 {listing.salesChannelCode}
               </StatusTag>
               <Tag>{listing.marketplaceCode}</Tag>

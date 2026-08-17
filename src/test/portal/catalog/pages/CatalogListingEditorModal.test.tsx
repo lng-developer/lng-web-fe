@@ -6,6 +6,11 @@ import type { Listing } from '@/features/portal/catalog/api/catalogApi'
 import { CatalogListingEditorModal } from '@/features/portal/catalog/pages/CatalogListingEditorModal'
 import i18n from '@/shared/i18n/i18n'
 
+const salesChannels = [
+  { code: 'AMAZON', name: 'AMAZON' },
+  { code: 'ETSY', name: 'ETSY' },
+]
+
 const listing: Listing = {
   id: 'listing-1',
   shopId: 'shop-1',
@@ -19,7 +24,6 @@ const listing: Listing = {
   baseCostAmount: 0,
   currency: 'USD',
   costCenterStatus: 'MISSING',
-  psdStatus: 'MISSING',
   status: 'ACTIVE',
   qcStatus: 'DRAFT',
   salesStats: { orderCount: 0, orderItemCount: 0, quantitySold: 0, lastSoldAt: null },
@@ -41,6 +45,7 @@ describe('CatalogListingEditorModal', () => {
           open
           listing={listing}
           shops={[{ id: 'shop-1', name: 'Football', currency: 'USD' }]}
+          salesChannels={salesChannels}
           saving={false}
           onClose={vi.fn()}
           onSubmit={onSubmit}
@@ -66,6 +71,7 @@ describe('CatalogListingEditorModal', () => {
         <CatalogListingEditorModal
           open
           shops={[{ id: 'shop-1', name: 'Football', currency: 'USD' }]}
+          salesChannels={salesChannels}
           saving={false}
           onClose={vi.fn()}
           onSubmit={vi.fn()}

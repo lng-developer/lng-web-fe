@@ -46,6 +46,13 @@ export async function listAuditEvents(filters: AuditFilters, cursor?: string): P
   return response.data
 }
 
+export async function exportAuditEventsCsv(filters: AuditFilters): Promise<Blob> {
+  return (await apiClient.get('/api/audit/events/export.csv', {
+    params: { ...filters, limit: 5000 },
+    responseType: 'blob',
+  })) as unknown as Blob
+}
+
 export async function getAuditEvent(eventId: string): Promise<AuditEvent> {
   const response = (await apiClient.get(`/api/audit/events/${eventId}`)) as ApiResponse<AuditEvent>
   return response.data

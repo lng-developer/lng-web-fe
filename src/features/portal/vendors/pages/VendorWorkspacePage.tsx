@@ -15,7 +15,6 @@ import { getGlobalPermissions } from '@/shared/auth/session'
 import {
   FileUpload,
   MetricCard,
-  PageHeader,
   SectionCard,
   UiTabLabel,
   UiTabs,
@@ -722,7 +721,25 @@ export function VendorWorkspacePage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader title={t('vendors.title')} description={t('vendors.description')} />
+      <div className={styles.header}>
+        <div className={styles.headerCopy}>
+          <Typography.Text className={styles.kicker}>{t('vendors.kicker')}</Typography.Text>
+          <Typography.Title level={2}>{t('vendors.title')}</Typography.Title>
+          <Typography.Text type="secondary">{t('vendors.description')}</Typography.Text>
+        </div>
+        <div className={styles.headerStats}>
+          <div>
+            <Typography.Text type="secondary">{t('vendors.metrics.active')}</Typography.Text>
+            <Typography.Text strong>
+              {activeCount} / {totalCount}
+            </Typography.Text>
+          </div>
+          <div>
+            <Typography.Text type="secondary">{t('vendors.metrics.integrated')}</Typography.Text>
+            <Typography.Text strong>{integratedCount}</Typography.Text>
+          </div>
+        </div>
+      </div>
 
       <div className={styles.metrics}>
         <MetricCard
@@ -755,7 +772,18 @@ export function VendorWorkspacePage() {
         />
       </div>
 
-      <SectionCard title={t('vendors.directory')}>
+      <SectionCard
+        title={
+          <div className={styles.directoryHeader}>
+            <div>
+              <Typography.Title level={3}>{t('vendors.directory')}</Typography.Title>
+              <Typography.Text type="secondary">
+                {t('vendors.directoryDescription')}
+              </Typography.Text>
+            </div>
+          </div>
+        }
+      >
         <UiTabs
           activeKey={tab}
           onChange={(value) => setTab(value as VendorManagementTab)}

@@ -83,6 +83,13 @@ export async function listCustomers(params: CustomerListParams) {
   )
 }
 
+export async function exportCustomersCsv(params: CustomerListParams) {
+  return (await apiClient.get('/api/customers/export.csv', {
+    params: compact({ ...params, page: 1, limit: 5000 }),
+    responseType: 'blob',
+  })) as unknown as Blob
+}
+
 export async function getCustomerSummary(params: Partial<CustomerListParams> = {}) {
   return unwrap<CustomerSummary>(
     await apiClient.get('/api/customers/summary', { params: compact(params) }),

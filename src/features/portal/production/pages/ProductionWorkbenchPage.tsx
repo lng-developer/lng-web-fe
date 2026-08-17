@@ -26,19 +26,7 @@ import {
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import {
-  Button,
-  Flex,
-  Input,
-  Modal,
-  Radio,
-  Segmented,
-  Select,
-  Slider,
-  Space,
-  Tag,
-  Typography,
-} from 'antd'
+import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
@@ -50,6 +38,7 @@ import {
   MetricCard,
   PageHeader,
   StatusTag,
+  UiButtonTabs,
   UiTabLabel,
   UiTabs,
   useFeedbackToast,
@@ -59,6 +48,7 @@ import {
   assignProductionTask,
   bulkAssignProductionTasks,
   exportProductionQcTasks,
+  exportProductionTasksCsv,
   type FileCheck,
   type FileDecision,
   listProductionTasks,
@@ -906,8 +896,22 @@ export function ProductionWorkbenchPage({
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
   })
+  const exportCsv = useMutation({
+    mutationFn: () => exportProductionTasksCsv(params),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result as unknown as Blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'production-tasks.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+  })
   const handleRecheck = useCallback(() => operations.mutate({ kind: 'recheck' }), [operations])
   const handleExportQc = useCallback(() => exportQc.mutate(), [exportQc])
+  const handleExportCsv = useCallback(() => exportCsv.mutate(), [exportCsv])
   const handleBulkAssign = useCallback(
     () => operations.mutate({ kind: 'bulk-assign' }),
     [operations],
@@ -1073,6 +1077,9 @@ export function ProductionWorkbenchPage({
         description={t('portal.production.description')}
         actions={
           <Space>
+            <Button loading={exportCsv.isPending} onClick={handleExportCsv}>
+              {t('portal.production.exportCsv')}
+            </Button>
             {canAssignScale ? (
               <Button loading={operations.isPending} onClick={handleRecheck}>
                 {t('portal.production.recheckBlocked')}
@@ -1131,11 +1138,10 @@ export function ProductionWorkbenchPage({
               onChange={handleTabChange}
               items={tabItems}
             />
-            <Select
+            <UiButtonTabs
               className={styles.channelFilter}
               value={salesChannelCode ?? 'ALL'}
-              aria-label={t('portal.production.channel')}
-              options={[
+              items={[
                 { label: t('portal.production.channelAll'), value: 'ALL' },
                 { label: 'Amazon', value: 'AMAZON' },
                 { label: 'Etsy', value: 'ETSY' },

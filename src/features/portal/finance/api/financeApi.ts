@@ -146,6 +146,13 @@ export async function listFinanceSnapshots(query: FinanceParams) {
   )
   return normalizePagination(data, query)
 }
+export async function exportFinanceSnapshotsCsv(query: FinanceParams) {
+  const response = await apiClient.get('/api/finance/snapshots/export.csv', {
+    params: params({ ...query, page: 1, limit: 5000 }),
+    responseType: 'blob',
+  })
+  return response as unknown as Blob
+}
 export async function listFinanceFilterOptions() {
   return unwrap<FinanceFilterOptions>(await apiClient.get('/api/finance/filter-options'))
 }

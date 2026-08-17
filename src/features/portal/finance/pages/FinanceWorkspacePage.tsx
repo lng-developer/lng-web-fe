@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { ReloadOutlined, UploadOutlined } from '@ant-design/icons'
+import { DownloadOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Divider, Modal, Select, Space, Spin, Typography } from 'antd'
@@ -25,6 +25,7 @@ import {
 } from '@/shared/ui'
 
 import {
+  exportFinanceSnapshotsCsv,
   type FinanceImportInput,
   type FinanceSnapshot,
   getFinanceImportBatch,
@@ -237,6 +238,18 @@ export function FinanceWorkspacePage() {
     },
     onError: (error) => toast('error', t('finance.feedback.failed'), error.message),
   })
+  const exportCsv = useMutation({
+    mutationFn: () => exportFinanceSnapshotsCsv(queryParams),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result as unknown as Blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'finance-snapshots.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+    onError: (error) => toast('error', t('finance.feedback.failed'), error.message),
+  })
   const columns = useMemo<TableColumnsType<FinanceSnapshot>>(
     () => [
       {
@@ -412,9 +425,18 @@ export function FinanceWorkspacePage() {
         title={t('finance.title')}
         description={t('finance.description')}
         actions={
-          <Typography.Text type="secondary">
-            {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
-          </Typography.Text>
+          <Space>
+            <Typography.Text type="secondary">
+              {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
+            </Typography.Text>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exportCsv.isPending}
+              onClick={() => exportCsv.mutate()}
+            >
+              {t('finance.actions.exportCsv')}
+            </Button>
+          </Space>
         }
       />
       <UiTabs

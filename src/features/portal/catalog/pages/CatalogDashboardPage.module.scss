@@ -1,37 +1,224 @@
-.pendingList {
+.page {
   display: grid;
-  gap: 8px;
+  gap: 16px;
+  padding: 0 0 32px;
 }
 
-.pendingItem {
+.header,
+.filterBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 56px;
-  padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--ant-color-warning) 34%, var(--ant-color-border));
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ant-color-warning-bg) 28%, var(--ant-color-bg-container));
-  box-shadow: inset 3px 0 0 var(--ant-color-warning);
+  gap: 16px;
 }
 
-.pendingSku {
-  display: block;
-  color: var(--ant-color-text) !important;
+.title {
+  margin: 0 0 4px !important;
+}
+
+.filterBar {
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+}
+
+.quickLabel {
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 8px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ant-color-warning);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.insightGrid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) minmax(260px, 1fr);
+  gap: 16px;
+}
+
+.workGrid {
+  display: grid;
+  grid-template-columns: minmax(520px, 1.45fr) minmax(360px, 1fr);
+  gap: 16px;
+}
+
+.panel {
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 5%);
+}
+
+.channelGrid,
+.masterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.channelCard,
+.masterBox {
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.channelValue {
+  margin: 12px 0 6px;
+  color: var(--ant-color-text);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.pipeline {
+  margin: 14px 0 8px;
+}
+
+.pipelineLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+
+.readyDot,
+.missingDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 999px;
+}
+
+.readyDot {
+  background: var(--ant-color-success);
+}
+
+.missingDot {
+  background: var(--ant-color-error);
+}
+
+.masterBox :global(.ant-typography) {
+  margin-bottom: 0;
+}
+
+.topTable {
+  margin-top: 14px;
+}
+
+.thumb,
+.pendingImage {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.thumbFallback,
+.pendingImageFallback {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--ant-color-fill-secondary);
+  color: var(--ant-color-text-tertiary);
+}
+
+.marketplaceId {
+  color: var(--ant-color-text);
   font-size: 13px;
 }
 
-.pendingShop {
+.externalArrow {
+  color: var(--ant-color-primary);
+  font-weight: 700;
+}
+
+.channelTag {
+  margin-inline-end: 0;
+}
+
+.smallText {
   display: block;
-  color: var(--ant-color-text-secondary) !important;
-  font-size: 11px;
+  max-width: 220px;
+  font-size: 12px;
+}
+
+.pendingList {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.pendingItem {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--ant-color-warning) 42%, var(--ant-color-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ant-color-warning-bg) 36%, var(--ant-color-bg-container));
+}
+
+.pendingBody {
+  min-width: 0;
+}
+
+@media (max-width: 1280px) {
+  .metrics {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+
+  .insightGrid,
+  .workGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .header,
+  .filterBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .metrics,
+  .channelGrid,
+  .masterGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .panel,
+  .channelCard,
+  .masterBox,
   .pendingItem {
     transition:
       border-color 160ms ease,
-      background-color 160ms ease;
+      box-shadow 160ms ease;
   }
 }

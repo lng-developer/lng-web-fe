@@ -180,6 +180,25 @@ export async function getOrderSummary(params: OrderWorkbenchParams) {
   )
 }
 
+export async function downloadOrdersCsv(params: OrderWorkbenchParams) {
+  const blob = (await apiClient.get('/api/orders/export.csv', {
+    params: compact({ ...params, page: 1, limit: 5000 }),
+    responseType: 'blob',
+  })) as Blob
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+
+  try {
+    anchor.href = url
+    anchor.download = `orders-export-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.append(anchor)
+    anchor.click()
+  } finally {
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  }
+}
+
 export async function updateShippingAddress(orderId: string, input: ShippingAddress) {
   return unwrap(await apiClient.patch(`/api/orders/${orderId}/shipping-address`, input))
 }

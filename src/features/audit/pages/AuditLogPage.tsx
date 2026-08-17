@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
+  DownloadOutlined,
   HistoryOutlined,
   ReloadOutlined,
   SafetyOutlined,
 } from '@ant-design/icons'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Result, Select, Space, Typography } from 'antd'
 
@@ -23,7 +24,13 @@ import {
   StatusTag,
 } from '@/shared/ui'
 
-import { type AuditEvent, type AuditFilters, getAuditEvent, listAuditEvents } from '../api/auditApi'
+import {
+  type AuditEvent,
+  type AuditFilters,
+  exportAuditEventsCsv,
+  getAuditEvent,
+  listAuditEvents,
+} from '../api/auditApi'
 import styles from './AuditLogPage.module.scss'
 
 const outcomeOptions = ['SUCCEEDED', 'FAILED'] as const
@@ -54,6 +61,17 @@ export function AuditLogPage() {
     queryFn: () => getAuditEvent(selected!.id),
     enabled: Boolean(selected?.id),
     retry: false,
+  })
+  const exportCsv = useMutation({
+    mutationFn: () => exportAuditEventsCsv(filters),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'audit-events.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
   })
 
   const events = useMemo(() => query.data?.pages.flatMap((page) => page.items) ?? [], [query.data])
@@ -138,7 +156,19 @@ export function AuditLogPage() {
 
   return (
     <section className="grid gap-6">
-      <PageHeader title={t('audit.title')} description={t('audit.description')} />
+      <PageHeader
+        title={t('audit.title')}
+        description={t('audit.description')}
+        actions={
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportCsv.isPending}
+            onClick={() => exportCsv.mutate()}
+          >
+            {t('audit.exportCsv', { defaultValue: 'Export CSV' })}
+          </Button>
+        }
+      />
 
       {/* Summary Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>

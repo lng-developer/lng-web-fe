@@ -1,13 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { DownloadOutlined } from '@ant-design/icons'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Alert, Select, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Select, Space, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  exportReportCsv,
   type FinanceDaily,
   getBuyerInsights,
   getOperationsOverview,
@@ -124,6 +126,17 @@ export function ReportWorkspacePage() {
     queryKey: ['reports', 'vendors', filters],
     queryFn: () => listVendorPerformance(filters),
     enabled: activeTab === 'operations' && operationalScope,
+  })
+  const exportCsv = useMutation({
+    mutationFn: () => exportReportCsv(filters),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'reports.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
   })
 
   const byCurrency = useMemo(
@@ -446,7 +459,19 @@ export function ReportWorkspacePage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader title={t('reports.title')} description={t('reports.description')} />
+      <PageHeader
+        title={t('reports.title')}
+        description={t('reports.description')}
+        actions={
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportCsv.isPending}
+            onClick={() => exportCsv.mutate()}
+          >
+            {t('reports.exportCsv')}
+          </Button>
+        }
+      />
       {filterBar}
       <UiTabs
         activeKey={activeTab}

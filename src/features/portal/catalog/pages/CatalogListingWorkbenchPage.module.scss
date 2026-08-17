@@ -7,7 +7,7 @@
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  grid-template-columns: repeat(5, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -41,14 +41,19 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  padding: 2px 0 6px;
 }
 
 .search {
-  width: min(360px, 100%);
+  width: min(420px, 100%);
 }
 
 .filter {
   width: 180px;
+}
+
+.channelFilter {
+  width: 132px;
 }
 
 .tableShell {
@@ -107,6 +112,16 @@
   outline-offset: 2px;
 }
 
+.marketplaceIdentity {
+  min-width: 0;
+}
+
+.marketplaceLink {
+  width: 22px;
+  height: 22px;
+  color: var(--ant-color-text-tertiary);
+}
+
 .expandedVariants {
   margin: 0 12px 12px;
   padding: 12px;
@@ -132,6 +147,11 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
+}
+
+.psdSource {
+  font-size: 11px;
+  line-height: 16px;
 }
 
 .dotReady {

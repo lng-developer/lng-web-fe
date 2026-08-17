@@ -109,8 +109,15 @@ const params = (value: ReportFilters) =>
   Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== ''))
 const get = async <T>(path: string, filters?: ReportFilters) =>
   unwrap<T>(await apiClient.get(path, ...(filters ? [{ params: params(filters) }] : [])))
+const getBlob = async (path: string, filters?: ReportFilters) =>
+  (await apiClient.get(path, {
+    params: params(filters || {}),
+    responseType: 'blob',
+  })) as unknown as Blob
 
 export const getReportFilterOptions = () => get<ReportFilterOptions>('/api/reports/filter-options')
+export const exportReportCsv = (filters: ReportFilters) =>
+  getBlob('/api/reports/export.csv', filters)
 export const listFinanceDaily = (filters: ReportFilters) =>
   get<FinanceDaily[]>('/api/reports/finance/daily', filters)
 export const listFinanceDailyProfit = (filters: ReportFilters) =>

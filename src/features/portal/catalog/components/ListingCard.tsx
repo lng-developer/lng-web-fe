@@ -74,7 +74,7 @@ export function ListingCard({ listing, isSelected, onClick }: ListingCardProps) 
 
         <div className={styles.meta}>
           <Space size={4}>
-            {CHANNEL_ICON[listing.salesChannelCode] ?? null}
+            {CHANNEL_ICON[listing.salesChannelCode] ?? <ShopOutlined />}
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
               {listing.shop?.name ?? listing.shopId}
             </Typography.Text>

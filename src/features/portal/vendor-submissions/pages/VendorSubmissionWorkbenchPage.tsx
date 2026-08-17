@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { EyeOutlined, SendOutlined, StopOutlined, WarningOutlined } from '@ant-design/icons'
+import {
+  DownloadOutlined,
+  EyeOutlined,
+  SendOutlined,
+  StopOutlined,
+  WarningOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -32,6 +38,7 @@ import {
 
 import {
   cancelVendorSubmission,
+  exportVendorSubmissionsCsv,
   getVendorSubmission,
   getVendorSubmissionPayloadPreview,
   getVendorSubmissionSummary,
@@ -167,6 +174,17 @@ export function VendorSubmissionWorkbenchPage({
         error instanceof Error ? error.message : t('portal.vendorSubmissions.actionFailed'),
       ),
   })
+  const exportCsv = useMutation({
+    mutationFn: () => exportVendorSubmissionsCsv(params),
+    onSuccess: (result) => {
+      const url = URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'vendor-submissions.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+  })
   const run = (kind: 'submit' | 'retry' | 'found' | 'missing', row: VendorSubmission) => {
     if (kind === 'found') {
       setReconcileRow(row)
@@ -280,6 +298,15 @@ export function VendorSubmissionWorkbenchPage({
       <PageHeader
         title={t('portal.vendorSubmissions.title')}
         description={t('portal.vendorSubmissions.description')}
+        actions={
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportCsv.isPending}
+            onClick={() => exportCsv.mutate()}
+          >
+            {t('portal.vendorSubmissions.exportCsv')}
+          </Button>
+        }
       />
       {submissions.error ? (
         <FeedbackAlert type="error" title={t('portal.vendorSubmissions.unavailable')} />

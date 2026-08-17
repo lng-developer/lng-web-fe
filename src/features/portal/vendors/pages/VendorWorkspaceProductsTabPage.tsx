@@ -76,7 +76,7 @@ export function VendorWorkspaceProductsTabPage({
         render: (value) => <Typography.Text strong>{value}</Typography.Text>,
       },
       {
-        title: t('vendors.code'),
+        title: t('vendors.vendorCode'),
         width: 130,
         ellipsis: true,
         onCell: () => ({ style: { maxWidth: 180 } }),

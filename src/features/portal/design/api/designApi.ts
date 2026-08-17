@@ -116,6 +116,11 @@ export const listDesignTasks = async (params: DesignListParams) =>
   unwrap<{ items: DesignTask[]; pagination: { total: number; page: number; limit: number } }>(
     await apiClient.get('/api/design/tasks', { params: compact(params) }),
   )
+export const exportDesignTasksCsv = (params: DesignListParams) =>
+  apiClient.get('/api/design/tasks/export.csv', {
+    params: compact({ ...params, page: 1, limit: 5000 }),
+    responseType: 'blob',
+  })
 export const getDesignTask = async (id: string) =>
   unwrap<DesignTask>(await apiClient.get(`/api/design/tasks/${id}`))
 export const listDesignAssignees = async () =>

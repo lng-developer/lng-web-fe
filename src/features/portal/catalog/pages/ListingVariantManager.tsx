@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   CopyOutlined,
   EditOutlined,
   FileImageOutlined,
   PlusOutlined,
   SendOutlined,
-  StarOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -35,7 +35,6 @@ import {
   listListingVariants,
   type ProductTypeGroup,
   requestListingVariantPsd,
-  setDefaultListingVariant,
   updateListingVariant,
   uploadCatalogAsset,
 } from '../api/catalogApi'
@@ -43,6 +42,13 @@ import { catalogKeys } from '../api/catalogKeys'
 
 function previewColor(previewAssetId: string | null) {
   return previewAssetId ? 'green' : 'volcano'
+}
+
+function psdSourceKey(source?: string | null) {
+  if (source === 'LISTING_VARIANT') return 'variant'
+  if (source === 'LISTING_DEFAULT') return 'default'
+  if (source === 'TEMPLATE') return 'template'
+  return 'noSource'
 }
 
 function scaleColor(level?: string) {
@@ -66,6 +72,7 @@ export function ListingVariantManager({
   readonly templates: InternalTemplate[]
   readonly canWrite: boolean
 }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [editing, setEditing] = useState<ListingVariant | 'create'>()
@@ -92,18 +99,17 @@ export function ListingVariantManager({
       await refresh()
     },
   })
-  const makeDefault = useMutation({
-    mutationFn: (variantId: string) => setDefaultListingVariant(listing.id, variantId),
-    onSuccess: refresh,
-  })
   const requestPsd = useMutation({
     mutationFn: (variantId: string) => requestListingVariantPsd(listing.id, variantId),
     onSuccess: async () => {
       await refresh()
-      toast('success', 'PSD task requested')
+      toast('success', t('portal.catalog.psd.taskRequested'))
     },
     onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not request PSD'),
+      toast(
+        'error',
+        error instanceof Error ? error.message : t('portal.catalog.psd.requestFailed'),
+      ),
   })
   const applyPsd = useMutation({
     mutationFn: (variantId: string) => applyListingVariantPsdToCompatible(listing.id, variantId),
@@ -175,14 +181,17 @@ export function ListingVariantManager({
           {
             title: 'PSD',
             render: (_, row) => (
-              <Space size="small">
+              <Space size="small" wrap>
                 <Tag color={row.psdReadiness.status === 'PRESENT' ? 'green' : 'orange'}>
                   {row.psdReadiness.status}
                 </Tag>
+                <Tag color={row.psdReadiness.source === 'LISTING_DEFAULT' ? 'blue' : 'default'}>
+                  {t(`portal.catalog.psd.${psdSourceKey(row.psdReadiness.source)}`)}
+                </Tag>
                 {canWrite && row.psdReadiness.status === 'MISSING' ? (
-                  <Tooltip title="Request PSD">
+                  <Tooltip title={t('portal.catalog.psd.request')}>
                     <Button
-                      aria-label="Request PSD"
+                      aria-label={t('portal.catalog.psd.request')}
                       type="text"
                       size="small"
                       icon={<SendOutlined />}
@@ -267,25 +276,6 @@ export function ListingVariantManager({
           {
             title: 'Status',
             render: (_, row) => <Tag color={statusColor(row.status)}>{row.status}</Tag>,
-          },
-          {
-            title: 'Default',
-            render: (_, row) =>
-              row.id === listing.defaultVariantId ? (
-                <Tag color="blue">Default</Tag>
-              ) : (
-                canWrite && (
-                  <Tooltip title="Set as default variant">
-                    <Button
-                      aria-label="Set as default variant"
-                      type="text"
-                      size="small"
-                      icon={<StarOutlined />}
-                      onClick={() => makeDefault.mutate(row.id)}
-                    />
-                  </Tooltip>
-                )
-              ),
           },
           canWrite
             ? {

@@ -4,6 +4,7 @@ import {
   CheckCircleOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  ExportOutlined,
   HistoryOutlined,
   HolderOutlined,
   LeftOutlined,
@@ -128,6 +129,11 @@ const SHIPPING_LEVEL_OPTIONS = ['Standard', 'Expedited', 'SecondDay', 'NextDay',
 
 function value(input?: string | number | null) {
   return input == null || input === '' ? '—' : input
+}
+
+function amazonProductUrl(asin?: string | null) {
+  const cleanAsin = asin?.trim()
+  return cleanAsin ? `https://www.amazon.com/dp/${encodeURIComponent(cleanAsin)}` : null
 }
 
 const emptyCase = (orderId: string): OrderCaseInput => ({
@@ -878,6 +884,29 @@ function OrderItemPanel({
   }
 
   const stopDrag = () => setDragStart(undefined)
+  const renderAsin = (asin?: string | null, chip = false) => {
+    const productUrl = amazonProductUrl(asin)
+
+    return (
+      <Space size={4} className={styles.asinWithLink}>
+        <span className={chip ? styles.asinChip : undefined}>{value(asin)}</span>
+        {productUrl ? (
+          <Tooltip title={t('orders.actions.openProduct', { defaultValue: 'Open product' })}>
+            <Button
+              type="text"
+              size="small"
+              className={styles.asinLink}
+              icon={<ExportOutlined />}
+              href={productUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={t('orders.actions.openProduct', { defaultValue: 'Open product' })}
+            />
+          </Tooltip>
+        ) : null}
+      </Space>
+    )
+  }
 
   return (
     <article className={styles.itemPanel}>
@@ -911,7 +940,7 @@ function OrderItemPanel({
           colon={false}
           items={[
             { key: 'sku', label: 'SKU', children: value(item.item.sku) },
-            { key: 'asin', label: 'ASIN', children: value(item.item.asin) },
+            { key: 'asin', label: 'ASIN', children: renderAsin(item.item.asin) },
             {
               key: 'seller',
               label: t('orders.fields.seller'),
@@ -928,7 +957,7 @@ function OrderItemPanel({
           </div>
           <div>
             <Typography.Text type="secondary">ASIN</Typography.Text>
-            <span className={styles.asinChip}>{value(item.item.asin)}</span>
+            {renderAsin(item.item.asin, true)}
           </div>
           <div>
             <Typography.Text type="secondary">{t('orders.fields.seller')}</Typography.Text>
