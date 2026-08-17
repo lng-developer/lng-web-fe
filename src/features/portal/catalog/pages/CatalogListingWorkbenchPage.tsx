@@ -8,6 +8,7 @@ import {
   CheckCircleOutlined,
   DownloadOutlined,
   EditOutlined,
+  ExportOutlined,
   FileImageOutlined,
   FileTextOutlined,
   PlusOutlined,
@@ -51,6 +52,14 @@ import { ListingVariantManager } from './ListingVariantManager'
 dayjs.extend(relativeTime)
 
 const PAGE_SIZE = 20
+
+function marketplaceProductUrl(listing: Listing) {
+  if (listing.salesChannelCode === 'ETSY' && listing.etsyListingId) {
+    return `https://www.etsy.com/listing/${listing.etsyListingId}`
+  }
+  if (listing.asin) return `https://www.amazon.com/dp/${listing.asin}`
+  return null
+}
 
 export function CatalogListingWorkbenchPage({
   account: accountProp,
@@ -227,14 +236,29 @@ export function CatalogListingWorkbenchPage({
             title="Copy SKU"
             copiedMessage="SKU copied"
           />
-          <Typography.Text type="secondary">
-            {listing.asin ? 'ASIN ' : listing.etsyListingId ? 'Etsy ' : ''}
-            <CopyableText
-              value={listing.asin ?? listing.etsyListingId}
-              title={listing.asin ? 'Copy ASIN' : 'Copy listing ID'}
-              copiedMessage={listing.asin ? 'ASIN copied' : 'Listing ID copied'}
-            />
-          </Typography.Text>
+          <Space size={4} className={styles.marketplaceIdentity}>
+            <Typography.Text type="secondary">
+              {listing.asin ? 'ASIN ' : listing.etsyListingId ? 'Etsy ' : ''}
+              <CopyableText
+                value={listing.asin ?? listing.etsyListingId}
+                title={listing.asin ? 'Copy ASIN' : 'Copy listing ID'}
+                copiedMessage={listing.asin ? 'ASIN copied' : 'Listing ID copied'}
+              />
+            </Typography.Text>
+            {marketplaceProductUrl(listing) ? (
+              <Tooltip title={listing.asin ? 'Open Amazon product' : 'Open Etsy listing'}>
+                <Button
+                  type="text"
+                  size="small"
+                  className={styles.marketplaceLink}
+                  icon={<ExportOutlined />}
+                  href={marketplaceProductUrl(listing) ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              </Tooltip>
+            ) : null}
+          </Space>
         </Space>
       ),
     },

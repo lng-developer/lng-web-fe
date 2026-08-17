@@ -112,6 +112,16 @@
   outline-offset: 2px;
 }
 
+.marketplaceIdentity {
+  min-width: 0;
+}
+
+.marketplaceLink {
+  width: 22px;
+  height: 22px;
+  color: var(--ant-color-text-tertiary);
+}
+
 .expandedVariants {
   margin: 0 12px 12px;
   padding: 12px;
