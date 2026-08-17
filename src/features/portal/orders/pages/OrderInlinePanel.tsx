@@ -812,8 +812,9 @@ function OrderItemPanel({
   const customizationImage = item.customization?.inputs.find(
     (input) => input.assetDownloadUrl,
   )?.assetDownloadUrl
-  const psdStatus = item.mapping?.listingVariant?.psdReadiness?.status
-  const psdDownloadUrl = item.mapping?.listingVariant?.psdTemplate?.downloadUrl
+  const psdSource = item.mapping?.listingVariant || item.mapping?.listingPsd
+  const psdStatus = psdSource?.psdReadiness?.status
+  const psdDownloadUrl = psdSource?.psdTemplate?.downloadUrl
   const canRecheck =
     item.workflow.nextActions.some((action) => action.startsWith('RECHECK_')) ||
     (item.production?.status === 'BLOCKED' && psdStatus === 'PRESENT')

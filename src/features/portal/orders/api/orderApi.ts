@@ -112,6 +112,10 @@ export type OrderWorkbenchItem = {
       psdReadiness?: { status?: string | null } | null
       psdTemplate?: { downloadUrl?: string | null } | null
     } | null
+    listingPsd?: {
+      psdReadiness?: { status?: string | null } | null
+      psdTemplate?: { downloadUrl?: string | null } | null
+    } | null
     vendor?: { id?: string | null; name: string | null } | null
     vendorProduct?: { id?: string | null; name: string | null } | null
     vendorCostCenter?: {
@@ -138,6 +142,7 @@ export type OrderWorkbenchRow = {
     createdAt: string | null
     orderedAt: string | null
     status: string | null
+    psdStatus?: string | null
     buyer: OrderBuyer
     shopId?: string | null
     shop: { id: string; name: string | null } | null

@@ -1996,7 +1996,7 @@
       },
       "bulkAssign": "Gán {{count}} tác vụ",
       "bulkPush": "Gửi {{count}} tác vụ sang vendor",
-      "recheckBlocked": "Kiểm tra lại PSD bị chặn",
+      "recheckBlocked": "Kiểm tra task bị chặn PSD",
       "claim": "Nhận tác vụ",
       "designNote": "Ghi chú thiết kế",
       "saveNote": "Lưu ghi chú",

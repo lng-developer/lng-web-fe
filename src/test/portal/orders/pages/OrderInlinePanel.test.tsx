@@ -196,6 +196,28 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByText('PSD MISSING')).not.toBeInTheDocument()
   })
 
+  it('shows PSD readiness from listing default PSD when no variant is mapped', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          mapping: {
+            status: 'BLOCKED',
+            listingVariant: null,
+            listingPsd: {
+              psdReadiness: { status: 'PRESENT' },
+              psdTemplate: { downloadUrl: '/api/media/assets/default-psd/download' },
+            },
+          },
+        },
+      ],
+    })
+
+    expect(screen.getByText('PSD PRESENT')).toBeInTheDocument()
+    expect(screen.queryByText('PSD MISSING')).not.toBeInTheDocument()
+  })
+
   it('shows recheck for a production-blocked item after PSD becomes ready', () => {
     renderPanel(true, undefined, {
       ...row,
