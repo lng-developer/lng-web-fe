@@ -39,7 +39,8 @@ import { DateTimePicker, PageHeader, SectionCard, useFeedbackToast } from '@/sha
 import { SetupLayout } from '../components/SetupLayout'
 import styles from './ProfileSetupPage.module.scss'
 
-type ProfileValues = Omit<PersonalProfileInput, 'birthDate'> & { birthDate?: Dayjs | null }
+type ProfileValues = Omit<PersonalProfileInput, 'birthDate'> & { birthDate?: Dayjs | string | null }
+type ProfileTabKey = 'personal' | 'emergency' | 'legal-bank'
 type DuplicateProfileField =
   | 'identityCard'
   | 'personalEmail'
@@ -65,11 +66,30 @@ const bankOptions = ['VCB', 'BIDV', 'CTG', 'AGR', 'TCB', 'MB', 'ACB', 'VPB', 'TP
   (value) => ({ label: value, value }),
 )
 
+function tabKeyForField(name: readonly (string | number)[]): ProfileTabKey {
+  const [field] = name
+  if (field === 'emergencyContact') return 'emergency'
+  if (
+    field === 'identityCard' ||
+    field === 'taxIdentification' ||
+    field === 'socialInsuranceNumber' ||
+    field === 'bankAccount'
+  )
+    return 'legal-bank'
+  return 'personal'
+}
+
+function serializeBirthDate(value: ProfileValues['birthDate']) {
+  if (!value) return null
+  return typeof value === 'string' ? value : value.format('YYYY-MM-DD')
+}
+
 export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const showFeedbackToast = useFeedbackToast()
   const [form] = Form.useForm<ProfileValues>()
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>('personal')
   const [profile, setProfile] = useState<Awaited<ReturnType<typeof loadMyEmployeeProfile>>>()
   const [error, setError] = useState<string>()
   const [avatarError, setAvatarError] = useState<string>()
@@ -131,7 +151,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       if (avatarFile) await uploadMyEmployeeAvatar(avatarFile)
       await updateMyPersonalProfile({
         ...values,
-        birthDate: values.birthDate ? values.birthDate.format('YYYY-MM-DD') : null,
+        birthDate: serializeBirthDate(values.birthDate),
       })
       showFeedbackToast('success', t('actionFeedback.updated'))
       navigate(embedded ? '/hr/me/profile' : '/operations-dashboard', { replace: true })
@@ -155,7 +175,14 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     }
   }
 
-  const required = [{ required: true, message: t('auth.setup.required') }]
+  const required = [{ required: true, whitespace: true, message: t('auth.setup.required') }]
+  const phoneRules = [
+    ...required,
+    {
+      pattern: /^\+?[0-9 ()-]{7,20}$/,
+      message: t('auth.setup.phoneInvalid'),
+    },
+  ]
 
   const tabItems = [
     {
@@ -186,7 +213,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item name="phoneNumber" label={t('hr.phoneNumber')} rules={required}>
+              <Form.Item name="phoneNumber" label={t('hr.phoneNumber')} rules={phoneRules}>
                 <Input placeholder="e.g. +84 987 654 321" />
               </Form.Item>
             </Col>
@@ -194,7 +221,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
               <Form.Item
                 name="personalEmail"
                 label={t('hr.personalEmail')}
-                rules={[...required, { type: 'email' }]}
+                rules={[...required, { type: 'email', message: t('auth.setup.emailInvalid') }]}
               >
                 <Input placeholder="name@example.com" />
               </Form.Item>
@@ -230,7 +257,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
               <Form.Item
                 name={['emergencyContact', 'phone']}
                 label={t('auth.setup.profile.emergencyPhone')}
-                rules={required}
+                rules={phoneRules}
               >
                 <Input placeholder="Phone number..." />
               </Form.Item>
@@ -340,8 +367,21 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
             layout="vertical"
             requiredMark="optional"
             onFinish={submit}
+            onFinishFailed={({ errorFields }) => {
+              const firstField = errorFields[0]?.name
+              if (firstField) setActiveTab(tabKeyForField(firstField))
+              showFeedbackToast(
+                'warning',
+                t('auth.setup.validationTitle'),
+                t('auth.setup.validationDescription'),
+              )
+            }}
           >
-            <Tabs items={tabItems} defaultActiveKey="personal" />
+            <Tabs
+              items={tabItems}
+              activeKey={activeTab}
+              onChange={(key) => setActiveTab(key as ProfileTabKey)}
+            />
 
             <div className={styles.actions}>
               <Button

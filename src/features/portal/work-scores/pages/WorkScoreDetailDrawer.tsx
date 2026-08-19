@@ -29,11 +29,11 @@ import { DetailDrawer, FeedbackAlert, LoadingState, StatusTag } from '@/shared/u
 import type { WorkScoreDetail, WorkScoreLevel } from '../api/workScoreApi'
 import styles from './WorkScoreWorkbenchPage.module.scss'
 
-const LEVEL_CONFIG: Record<WorkScoreLevel, { label: string; points: number; color: string }> = {
-  BASIC: { label: 'BASIC (5pt)', points: 5, color: 'blue' },
-  STANDARD: { label: 'STANDARD (10pt)', points: 10, color: 'cyan' },
-  HARD: { label: 'HARD (15pt)', points: 15, color: 'orange' },
-  BONUS: { label: 'BONUS (20pt)', points: 20, color: 'purple' },
+const LEVEL_CONFIG: Record<WorkScoreLevel, { points: number; color: string }> = {
+  BASIC: { points: 5, color: 'blue' },
+  STANDARD: { points: 10, color: 'cyan' },
+  HARD: { points: 15, color: 'orange' },
+  BONUS: { points: 20, color: 'purple' },
 }
 
 export function WorkScoreDetailDrawer({
@@ -92,7 +92,12 @@ export function WorkScoreDetailDrawer({
   const snapshot = score?.contextSnapshot ?? {}
   const canPreviewAsset = score?.sourceType === 'PRODUCTION_SCALE'
   const sku = String(snapshot.sku || snapshot.externalOrderId || '—')
-  const taskTitle = String(snapshot.taskTitle || snapshot.taskType || score?.sourceTaskId || '—')
+  const rawTaskType = snapshot.taskType ? String(snapshot.taskType) : undefined
+  const taskTitle = snapshot.taskTitle
+    ? String(snapshot.taskTitle)
+    : rawTaskType
+      ? t(`portal.workScores.taskTypes.${rawTaskType}`, { defaultValue: rawTaskType })
+      : String(score?.sourceTaskId || '—')
   const slotLabel = String(snapshot.slotLabel || snapshot.fileName || '—')
 
   return (
@@ -103,7 +108,7 @@ export function WorkScoreDetailDrawer({
           <span>{t('portal.workScores.detail')}</span>
           {score?.status ? (
             <StatusTag status={score.status === 'ACTIVE' ? 'operational' : 'cancelled'}>
-              {score.status}
+              {t(`portal.workScores.statuses.${score.status}`, { defaultValue: score.status })}
             </StatusTag>
           ) : null}
         </Flex>
@@ -165,23 +170,28 @@ export function WorkScoreDetailDrawer({
           <Descriptions bordered size="small" column={2}>
             <Descriptions.Item label={t('portal.workScores.columns.source')}>
               <Tag color={score.sourceType === 'DESIGN_SUBMISSION' ? 'purple' : 'cyan'}>
-                {score.sourceType}
+                {t(`portal.workScores.sources.${score.sourceType}`, {
+                  defaultValue: score.sourceType,
+                })}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label={t('portal.workScores.columns.worker')}>
               <Typography.Text strong>{score.workerName || score.workerId}</Typography.Text>
             </Descriptions.Item>
 
-            <Descriptions.Item label="SKU / Order">
+            <Descriptions.Item label={t('portal.workScores.fields.skuOrder')}>
               <Typography.Text code>{sku}</Typography.Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Task / Slot">
-              {taskTitle} {slotLabel !== '—' ? `· ${slotLabel}` : ''}
+            <Descriptions.Item label={t('portal.workScores.fields.taskSlot')}>
+              {taskTitle} {slotLabel !== '—' ? `- ${slotLabel}` : ''}
             </Descriptions.Item>
 
             <Descriptions.Item label={t('portal.workScores.columns.level')}>
               <Tag color={LEVEL_CONFIG[score.scoreLevel]?.color ?? 'blue'}>
-                {score.scoreLevel} ({score.basePoints}pt)
+                {t(`portal.workScores.levels.${score.scoreLevel}`, {
+                  defaultValue: score.scoreLevel,
+                  points: score.basePoints,
+                })}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label={t('portal.workScores.fields.points')}>
@@ -244,7 +254,12 @@ export function WorkScoreDetailDrawer({
                       onClick={() => handleLevelSelect(level)}
                     >
                       {isActive ? <CheckOutlined style={{ fontSize: 11 }} /> : null}
-                      <span>{cfg.label}</span>
+                      <span>
+                        {t(`portal.workScores.levels.${level}`, {
+                          defaultValue: level,
+                          points: cfg.points,
+                        })}
+                      </span>
                     </button>
                   )
                 })}
@@ -344,9 +359,16 @@ export function WorkScoreDetailDrawer({
                   children: (
                     <div key={idx}>
                       <Space size={8}>
-                        <Tag color={item.type === 'VOID' ? 'red' : 'blue'}>{item.type}</Tag>
+                        <Tag color={item.type === 'VOID' ? 'red' : 'blue'}>
+                          {t(`portal.workScores.adjustments.types.${item.type}`, {
+                            defaultValue: item.type,
+                          })}
+                        </Tag>
                         <Typography.Text strong>
-                          {item.oldPoints} → {item.newPoints} pts
+                          {t('portal.workScores.adjustments.pointsChange', {
+                            oldPoints: item.oldPoints,
+                            newPoints: item.newPoints,
+                          })}
                         </Typography.Text>
                       </Space>
                       <Typography.Paragraph

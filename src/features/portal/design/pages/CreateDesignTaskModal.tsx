@@ -11,6 +11,9 @@ const TASK_TYPES = ['MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE'] as const
 const PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const
 const OUTPUT_TYPES = ['MOCKUP', 'PNG_ASSET', 'IDEA'] as const
 
+const enumLabelKey = (group: 'taskTypes' | 'priorities' | 'outputTypes', value: string) =>
+  `portal.design.${group}.${value}`
+
 type ListingOption = { id: string; sku: string; title: string }
 type TemplateOption = { id: string; name: string }
 type FormValues = {
@@ -128,7 +131,10 @@ export function CreateDesignTaskModal({
           >
             <Select
               aria-label={t('portal.design.taskType')}
-              options={TASK_TYPES.map((value) => ({ value, label: value }))}
+              options={TASK_TYPES.map((value) => ({
+                value,
+                label: t(enumLabelKey('taskTypes', value)),
+              }))}
             />
           </Form.Item>
           <Form.Item
@@ -138,7 +144,10 @@ export function CreateDesignTaskModal({
           >
             <Select
               aria-label={t('portal.design.priority')}
-              options={PRIORITIES.map((value) => ({ value, label: value }))}
+              options={PRIORITIES.map((value) => ({
+                value,
+                label: t(enumLabelKey('priorities', value)),
+              }))}
             />
           </Form.Item>
         </FormSection>
@@ -193,14 +202,17 @@ export function CreateDesignTaskModal({
           ) : null}
           {fixedOutput ? (
             <Form.Item label={t('portal.design.expectedOutputs')}>
-              <Input value={fixedOutput} disabled />
+              <Input value={t(enumLabelKey('outputTypes', fixedOutput))} disabled />
             </Form.Item>
           ) : (
             <Form.Item name="expectedOutputs" label={t('portal.design.expectedOutputs')}>
               <Select
                 mode="multiple"
                 aria-label={t('portal.design.expectedOutputs')}
-                options={OUTPUT_TYPES.map((value) => ({ value, label: value }))}
+                options={OUTPUT_TYPES.map((value) => ({
+                  value,
+                  label: t(enumLabelKey('outputTypes', value)),
+                }))}
               />
             </Form.Item>
           )}

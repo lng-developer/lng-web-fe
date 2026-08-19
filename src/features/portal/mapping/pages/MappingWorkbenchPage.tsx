@@ -372,9 +372,6 @@ export function MappingWorkbenchPage({
         {/* Queue */}
         <Card
           size="small"
-          style={{
-            height: 'calc(100vh - 270px)',
-          }}
           className={styles.queueCard}
           title={
             <Space size={6}>

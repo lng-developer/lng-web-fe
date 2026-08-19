@@ -62,10 +62,12 @@
   font-size: 12px;
 }
 
-.mockHeroCard button {
+.mockHeroAction {
   position: absolute;
   right: 16px;
   bottom: 16px;
+  display: grid;
+  place-items: center;
   width: 34px;
   height: 34px;
   border: 0;
@@ -73,6 +75,12 @@
   background: var(--mock-orange);
   color: #fff;
   cursor: pointer;
+}
+
+.mockHeroAction :global(.anticon),
+.mockHeroAction svg {
+  color: #fff;
+  fill: #fff;
 }
 
 .mockHeroImages {
@@ -127,20 +135,39 @@
 }
 
 .mockHeroCard .mockBars {
-  height: 74px;
+  height: 86px;
   margin-top: auto;
-  gap: 9px;
+  gap: 10px;
 }
 
-.mockBars span {
+.mockBarButton {
   flex: 1;
   min-width: 6px;
+  display: flex;
+  align-items: end;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mockBarFill {
+  width: 100%;
+  height: 100%;
   border-radius: 999px 999px 4px 4px;
   background: linear-gradient(180deg, var(--mock-blue), #93c5fd);
 }
 
-.mockHeroCard .mockBars span {
-  background: #dce3ef;
+.mockHeroCard .mockBarFill {
+  background: linear-gradient(180deg, #bfd2f2, #d8e3f5);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 60%);
+}
+
+.mockBarButton:focus-visible,
+.mockDonutSegment:focus-visible,
+.mockLegendButton:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 3px;
 }
 
 .mockDonutWrap {
@@ -151,6 +178,7 @@
 }
 
 .mockDonut {
+  position: relative;
   width: 166px;
   height: 166px;
   display: grid;
@@ -158,7 +186,29 @@
   border-radius: 50%;
 }
 
-.mockDonut > div {
+.mockDonutSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.mockDonutSegment {
+  cursor: pointer;
+  transition:
+    opacity 160ms ease,
+    stroke-width 160ms ease;
+}
+
+.mockDonutSegment:hover,
+.mockDonutSegment:focus-visible {
+  opacity: 0.86;
+  stroke-width: 30;
+}
+
+.mockDonutCenter {
+  position: relative;
   width: 94px;
   height: 94px;
   display: grid;
@@ -187,16 +237,126 @@
 }
 
 .mockLegend li {
+  min-width: 0;
+}
+
+.mockLegendButton {
+  width: 100%;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.mockLegendButton span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mockLegendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chartPopover {
+  min-width: 156px;
+  display: grid;
+  gap: 8px;
+}
+
+.chartPopover > strong {
+  color: var(--ant-color-text);
+  font-size: 13px;
+}
+
+.chartPopoverRows {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 6px 18px;
+  align-items: center;
+}
+
+.chartPopoverRows span {
+  color: var(--ant-color-text-secondary);
+}
+
+.chartPopoverRows b {
+  justify-self: end;
+  color: var(--ant-color-text);
+}
+
+.queueBreakdown {
+  display: grid;
+  gap: 14px;
+}
+
+.queueTotal {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.queueTotal strong {
+  color: var(--ant-color-text);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.queueTotal span {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+
+.queueList {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+
+.queueList .mockLegendButton {
+  grid-template-columns: minmax(130px, 1fr) minmax(90px, 1.3fr) auto;
+}
+
+.queueLabel {
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.mockLegend span {
-  width: 8px;
+.queueLabel span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queueTrack {
   height: 8px;
-  border-radius: 50%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ant-color-fill-tertiary);
+}
+
+.queueTrack i {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: inherit;
 }
 
 .monthlyTarget {
@@ -214,7 +374,10 @@
   border-radius: 50%;
   background:
     radial-gradient(circle, var(--ant-color-bg-container) 57%, transparent 58%),
-    conic-gradient(var(--mock-orange) 0 236deg, #e8edf5 236deg 360deg);
+    conic-gradient(
+      var(--mock-orange) 0 var(--target-percent, 0%),
+      #e8edf5 var(--target-percent, 0%) 100%
+    );
   color: var(--ant-color-text);
   font-size: 24px;
   font-weight: 800;

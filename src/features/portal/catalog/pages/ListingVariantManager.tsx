@@ -103,22 +103,25 @@ export function ListingVariantManager({
     mutationFn: (variantId: string) => requestListingVariantPsd(listing.id, variantId),
     onSuccess: async () => {
       await refresh()
-      toast('success', t('portal.catalog.psd.taskRequested'))
+      toast('success', t('portal.catalog.variants.psdTaskRequested'))
     },
     onError: (error) =>
       toast(
         'error',
-        error instanceof Error ? error.message : t('portal.catalog.psd.requestFailed'),
+        error instanceof Error ? error.message : t('portal.catalog.variants.requestPsdFailed'),
       ),
   })
   const applyPsd = useMutation({
     mutationFn: (variantId: string) => applyListingVariantPsdToCompatible(listing.id, variantId),
     onSuccess: async (result) => {
       await refresh()
-      toast('success', `Applied PSD to ${result.matchedCount} compatible variant(s)`)
+      toast('success', t('portal.catalog.variants.psdApplied', { count: result.matchedCount }))
     },
     onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not apply PSD'),
+      toast(
+        'error',
+        error instanceof Error ? error.message : t('portal.catalog.variants.applyPsdFailed'),
+      ),
   })
   const uploadPreview = useMutation({
     mutationFn: async ({ variantId, file }: { variantId: string; file: File }) => {
@@ -127,10 +130,13 @@ export function ListingVariantManager({
     },
     onSuccess: async () => {
       await refresh()
-      toast('success', 'Preview uploaded')
+      toast('success', t('portal.catalog.variants.previewUploaded'))
     },
     onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not upload preview'),
+      toast(
+        'error',
+        error instanceof Error ? error.message : t('portal.catalog.variants.uploadPreviewFailed'),
+      ),
   })
   const open = (variant: ListingVariant | 'create') => {
     setEditing(variant)
@@ -157,11 +163,11 @@ export function ListingVariantManager({
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       <Space style={{ width: '100%', justifyContent: 'space-between' }}>
         <Typography.Title level={5} style={{ margin: 0 }}>
-          Product variants ({variants.data?.length ?? 0})
+          {t('portal.catalog.variants.title', { count: variants.data?.length ?? 0 })}
         </Typography.Title>
         {canWrite ? (
           <Button size="small" icon={<PlusOutlined />} onClick={() => open('create')}>
-            Add variant
+            {t('portal.catalog.variants.add')}
           </Button>
         ) : null}
       </Space>
@@ -172,12 +178,18 @@ export function ListingVariantManager({
         dataSource={variants.data ?? []}
         pagination={false}
         columns={[
-          { title: 'Product type', render: (_, row) => row.productTypeGroup.name },
           {
-            title: 'Method',
+            title: t('portal.catalog.fields.productType'),
+            render: (_, row) => row.productTypeGroup.name,
+          },
+          {
+            title: t('portal.catalog.variants.method'),
             render: (_, row) => row.printMethod || row.productTypeGroup.printMethod || '-',
           },
-          { title: 'Template', render: (_, row) => row.internalTemplate?.name ?? '-' },
+          {
+            title: t('portal.catalog.variants.template'),
+            render: (_, row) => row.internalTemplate?.name ?? '-',
+          },
           {
             title: 'PSD',
             render: (_, row) => (
@@ -189,9 +201,9 @@ export function ListingVariantManager({
                   {t(`portal.catalog.psd.${psdSourceKey(row.psdReadiness.source)}`)}
                 </Tag>
                 {canWrite && row.psdReadiness.status === 'MISSING' ? (
-                  <Tooltip title={t('portal.catalog.psd.request')}>
+                  <Tooltip title={t('portal.catalog.variants.requestPsd')}>
                     <Button
-                      aria-label={t('portal.catalog.psd.request')}
+                      aria-label={t('portal.catalog.variants.requestPsd')}
                       type="text"
                       size="small"
                       icon={<SendOutlined />}
@@ -202,9 +214,9 @@ export function ListingVariantManager({
                   </Tooltip>
                 ) : null}
                 {canWrite && row.psdReadiness.status === 'PRESENT' ? (
-                  <Tooltip title="Apply PSD to compatible variants">
+                  <Tooltip title={t('portal.catalog.variants.applyPsd')}>
                     <Button
-                      aria-label="Apply PSD to compatible variants"
+                      aria-label={t('portal.catalog.variants.applyPsd')}
                       type="text"
                       size="small"
                       icon={<CopyOutlined />}
@@ -212,10 +224,9 @@ export function ListingVariantManager({
                       disabled={applyPsd.isPending}
                       onClick={() =>
                         Modal.confirm({
-                          title: 'Apply PSD to compatible variants?',
-                          content:
-                            'This will copy this PSD reference to variants with the same template and print method that do not have PSD yet.',
-                          okText: 'Apply',
+                          title: t('portal.catalog.variants.applyPsdTitle'),
+                          content: t('portal.catalog.variants.applyPsdContent'),
+                          okText: t('portal.catalog.variants.apply'),
                           onOk: () => applyPsd.mutate(row.id),
                         })
                       }
@@ -226,7 +237,7 @@ export function ListingVariantManager({
             ),
           },
           {
-            title: 'Preview',
+            title: t('portal.catalog.columns.preview'),
             render: (_, row) => (
               <Space size="small">
                 <Tag color={previewColor(row.previewAssetId)}>
@@ -242,7 +253,7 @@ export function ListingVariantManager({
                       return false
                     }}
                   >
-                    <Tooltip title="Upload preview image">
+                    <Tooltip title={t('portal.catalog.variants.uploadPreview')}>
                       <Button
                         type="text"
                         size="small"
@@ -259,7 +270,7 @@ export function ListingVariantManager({
             ),
           },
           {
-            title: 'Scale',
+            title: t('portal.catalog.variants.scale'),
             render: (_, row) => (
               <Space size="small">
                 <Tag color={scaleColor(row.scaleDifficulty?.level)}>
@@ -274,7 +285,7 @@ export function ListingVariantManager({
             ),
           },
           {
-            title: 'Status',
+            title: t('portal.catalog.master.status'),
             render: (_, row) => <Tag color={statusColor(row.status)}>{row.status}</Tag>,
           },
           canWrite
@@ -282,9 +293,9 @@ export function ListingVariantManager({
                 title: '',
                 width: 40,
                 render: (_, row) => (
-                  <Tooltip title="Edit variant">
+                  <Tooltip title={t('portal.catalog.variants.edit')}>
                     <Button
-                      aria-label="Edit"
+                      aria-label={t('portal.catalog.variants.edit')}
                       type="text"
                       size="small"
                       icon={<EditOutlined />}
@@ -298,35 +309,52 @@ export function ListingVariantManager({
       />
       <Modal
         open={Boolean(editing)}
-        title={editing === 'create' ? 'Add listing variant' : 'Edit listing variant'}
-        okText="Save"
+        title={
+          editing === 'create'
+            ? t('portal.catalog.variants.addTitle')
+            : t('portal.catalog.variants.editTitle')
+        }
+        okText={t('portal.catalog.save')}
         confirmLoading={save.isPending}
         onCancel={() => setEditing(undefined)}
         onOk={() => form.submit()}
       >
         <Form form={form} layout="vertical" onFinish={(input) => save.mutate(input)}>
-          <Form.Item name="productTypeGroupId" label="Product type" rules={[{ required: true }]}>
+          <Form.Item
+            name="productTypeGroupId"
+            label={t('portal.catalog.fields.productType')}
+            rules={[{ required: true }]}
+          >
             <Select options={productTypes.map(({ id, name }) => ({ label: name, value: id }))} />
           </Form.Item>
-          <Form.Item name="internalTemplateId" label="Internal template">
+          <Form.Item name="internalTemplateId" label={t('portal.catalog.fields.internalTemplate')}>
             <Select allowClear options={templateOptions} />
           </Form.Item>
-          <Form.Item name="printMethod" label="Print method">
+          <Form.Item name="printMethod" label={t('portal.catalog.master.printMethod')}>
             <Select
               allowClear
               options={printMethodSelectOptions}
-              placeholder="Inherit product type"
+              placeholder={t('portal.catalog.variants.inheritProductType')}
             />
           </Form.Item>
-          <Form.Item name={['scaleDifficulty', 'level']} label="Scale difficulty">
+          <Form.Item
+            name={['scaleDifficulty', 'level']}
+            label={t('portal.catalog.variants.scaleDifficulty')}
+          >
             <Select
               options={['NORMAL', 'HARD', 'SPECIAL'].map((value) => ({ label: value, value }))}
             />
           </Form.Item>
-          <Form.Item name={['scaleDifficulty', 'reason']} label="Scale note">
-            <Input.TextArea rows={3} placeholder="What makes this variant hard to scale?" />
+          <Form.Item
+            name={['scaleDifficulty', 'reason']}
+            label={t('portal.catalog.variants.scaleNote')}
+          >
+            <Input.TextArea
+              rows={3}
+              placeholder={t('portal.catalog.variants.scaleNotePlaceholder')}
+            />
           </Form.Item>
-          <Form.Item name="status" label="Status">
+          <Form.Item name="status" label={t('portal.catalog.master.status')}>
             <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ label: value, value }))} />
           </Form.Item>
         </Form>

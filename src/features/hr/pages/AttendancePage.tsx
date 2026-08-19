@@ -33,6 +33,7 @@ import {
   listAttendanceMatrix,
   listMyAttendance,
 } from '../api/hrTimeApi'
+import { PAGE_SIZE_OPTIONS } from './enum'
 import styles from './HrOperationsPage.module.scss'
 
 export function AttendancePage() {
@@ -97,16 +98,8 @@ export function AttendancePage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t(
-          canRead ? 'hrOperations.attendance.teamTitle' : 'hrOperations.attendance.myTitle',
-          {
-            defaultValue: canRead ? 'Attendance Records & Time Matrix' : 'My Attendance History',
-          },
-        )}
-        description={t('hrOperations.attendance.description', {
-          defaultValue:
-            'Track daily check-ins, check-outs, late arrival minutes, and attendance adjustments.',
-        })}
+        title={t(canRead ? 'hrOperations.attendance.teamTitle' : 'hrOperations.attendance.myTitle')}
+        description={t('hrOperations.attendance.description')}
         actions={
           <Space>
             <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
@@ -174,12 +167,14 @@ export function AttendancePage() {
           rowKey="id"
           loading={records.isLoading}
           dataSource={items}
-          pagination={{ pageSize: 15 }}
+          pagination={{ defaultPageSize: 10, pageSizeOptions: PAGE_SIZE_OPTIONS }}
           columns={[
             {
               title: t('hrOperations.common.date'),
               dataIndex: 'workDateKey',
-              render: (v) => <Typography.Text strong>{v}</Typography.Text>,
+              render: (v) => (
+                <Typography.Text strong>{dayjs(v).format('DD/MM/YYYY')}</Typography.Text>
+              ),
             },
             ...(canRead
               ? [
@@ -207,7 +202,11 @@ export function AttendancePage() {
               title: t('hrOperations.attendance.lateMinutes'),
               dataIndex: 'lateMinutes',
               render: (v) =>
-                v > 0 ? <Tag color="red">{v} min</Tag> : <Tag color="green">0 min</Tag>,
+                v > 0 ? (
+                  <Tag color="red">{t('hrOperations.attendance.minutes', { count: v })}</Tag>
+                ) : (
+                  <Tag color="green">{t('hrOperations.attendance.minutes', { count: 0 })}</Tag>
+                ),
             },
             {
               title: t('hrOperations.common.status'),
@@ -216,7 +215,7 @@ export function AttendancePage() {
                 <StatusTag
                   status={v === 'PRESENT' ? 'approved' : v === 'ABSENT' ? 'rejected' : 'pending'}
                 >
-                  {v}
+                  {t(`hrOperations.attendance.statuses.${v}`, { defaultValue: v })}
                 </StatusTag>
               ),
             },
@@ -253,7 +252,7 @@ export function AttendancePage() {
         centered
         destroyOnHidden
         open={Boolean(adjusting)}
-        title={t('hrOperations.attendance.adjustTitle', { defaultValue: 'Adjust Attendance Log' })}
+        title={t('hrOperations.attendance.adjustTitle')}
         footer={null}
         width={500}
         onCancel={() => setAdjusting(undefined)}
@@ -265,7 +264,7 @@ export function AttendancePage() {
           onFinish={(values) => adjust.mutate(values)}
         >
           <Divider plain className={styles.modalSection}>
-            {t('hrOperations.attendance.adjustTitle', { defaultValue: 'Adjust Attendance Log' })}
+            {t('hrOperations.attendance.adjustTitle')}
           </Divider>
 
           <Form.Item name="checkInAt" label={t('hrOperations.attendance.checkInTime')}>
@@ -281,7 +280,10 @@ export function AttendancePage() {
             label={t('hrOperations.attendance.adjustReason')}
             rules={[{ required: true, message: t('hrOperations.common.required') }]}
           >
-            <Input.TextArea rows={3} placeholder="Reason for adjusting check-in/out record..." />
+            <Input.TextArea
+              rows={3}
+              placeholder={t('hrOperations.attendance.adjustReasonPlaceholder')}
+            />
           </Form.Item>
 
           <Form.Item shouldUpdate noStyle>

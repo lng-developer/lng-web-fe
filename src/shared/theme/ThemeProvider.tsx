@@ -1,5 +1,11 @@
+import 'dayjs/locale/vi'
+
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ConfigProvider } from 'antd'
+import enUS from 'antd/locale/en_US'
+import viVN from 'antd/locale/vi_VN'
+import dayjs from 'dayjs'
 
 import { type Appearance, createAppTheme, resolveAppearance, THEME_STORAGE_KEY } from './theme'
 import { ThemePreferenceContext } from './themeContext'
@@ -14,11 +20,13 @@ function getStoredAppearance(): Appearance {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
+  const { i18n } = useTranslation()
   const [appearance, setAppearance] = useState<Appearance>(getStoredAppearance)
   const [systemIsDark, setSystemIsDark] = useState(
     () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
   )
   const resolved = resolveAppearance(appearance, systemIsDark)
+  const language = i18n.resolvedLanguage === 'vi' ? 'vi' : 'en'
 
   useEffect(() => {
     const query = window.matchMedia?.('(prefers-color-scheme: dark)')
@@ -35,15 +43,20 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     document.documentElement.style.colorScheme = resolved
   }, [appearance, resolved])
 
+  useEffect(() => {
+    dayjs.locale(language)
+  }, [language])
+
   const preference = useMemo(
     () => ({ appearance, resolved, setAppearance }),
     [appearance, resolved],
   )
   const appTheme = useMemo(() => createAppTheme(resolved), [resolved])
+  const antdLocale = language === 'vi' ? viVN : enUS
 
   return (
     <ThemePreferenceContext value={preference}>
-      <ConfigProvider modal={{ centered: true }} theme={appTheme}>
+      <ConfigProvider locale={antdLocale} modal={{ centered: true }} theme={appTheme}>
         {children}
       </ConfigProvider>
     </ThemePreferenceContext>

@@ -50,6 +50,8 @@ import {
 import styles from './HrOperationsPage.module.scss'
 import { PayslipStatement } from './PayslipStatement'
 
+const PAGE_SIZE_OPTIONS = ['10', '20', '50', '100']
+
 export function PayrollEmployeeCell({
   employee,
   fallbackLabel,
@@ -197,6 +199,10 @@ export function PayrollPage() {
   }
   const money = (value?: number) =>
     new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US').format(value || 0)
+  const payrollStatus = (value?: string | null) =>
+    value
+      ? t(`hrOperations.payroll.statuses.${value}`, { defaultValue: value })
+      : t('hrOperations.common.status')
   const resultItems = results.data?.items ?? []
   const myPayslip = !canRead ? resultItems[0] : null
   const payrollSummary = results.data?.summary
@@ -252,7 +258,7 @@ export function PayrollPage() {
           </Typography.Text>
           <Typography.Title level={2}>{month.format('MM/YYYY')}</Typography.Title>
           <Space wrap>
-            <Tag>{latestRun?.status ?? t('hrOperations.common.status')}</Tag>
+            <Tag>{payrollStatus(latestRun?.status)}</Tag>
             <Tag>{`${t('hrOperations.payroll.version')}: ${latestRun?.version ?? '-'}`}</Tag>
             <Tag>{`${t('hrOperations.payroll.results')}: ${payrollSummary?.total ?? resultItems.length}`}</Tag>
           </Space>
@@ -327,7 +333,7 @@ export function PayrollPage() {
               rowKey="id"
               loading={results.isLoading}
               dataSource={resultItems}
-              pagination={{ pageSize: 12 }}
+              pagination={{ defaultPageSize: 10, pageSizeOptions: PAGE_SIZE_OPTIONS }}
               columns={[
                 {
                   title: t('hrOperations.common.employee'),
@@ -359,7 +365,11 @@ export function PayrollPage() {
                   dataIndex: 'netIncome',
                   render: (value) => <span className={styles.payrollNetCell}>{money(value)}</span>,
                 },
-                { title: t('hrOperations.common.status'), dataIndex: 'status' },
+                {
+                  title: t('hrOperations.common.status'),
+                  dataIndex: 'status',
+                  render: (value) => <Tag>{payrollStatus(value)}</Tag>,
+                },
               ]}
             />
           </SectionCard>
@@ -374,7 +384,7 @@ export function PayrollPage() {
                   key={item.status}
                 >
                   <span>
-                    <Tag>{item.status}</Tag>
+                    <Tag>{payrollStatus(item.status)}</Tag>
                   </span>
                   <strong>{item.count}</strong>
                 </div>
@@ -405,7 +415,7 @@ export function PayrollPage() {
                 {
                   title: t('hrOperations.common.status'),
                   dataIndex: 'status',
-                  render: (value) => <Tag>{value}</Tag>,
+                  render: (value) => <Tag>{payrollStatus(value)}</Tag>,
                 },
                 {
                   title: '',
@@ -448,7 +458,7 @@ export function PayrollPage() {
               rowKey="id"
               loading={adjustments.isLoading}
               dataSource={adjustments.data?.items}
-              pagination={{ pageSize: 6 }}
+              pagination={{ defaultPageSize: 10, pageSizeOptions: PAGE_SIZE_OPTIONS }}
               columns={[
                 { title: t('hrOperations.common.name'), dataIndex: 'name' },
                 {
@@ -456,7 +466,11 @@ export function PayrollPage() {
                   dataIndex: 'amount',
                   render: (value) => money(value),
                 },
-                { title: t('hrOperations.common.status'), dataIndex: 'status' },
+                {
+                  title: t('hrOperations.common.status'),
+                  dataIndex: 'status',
+                  render: (value) => <Tag>{payrollStatus(value)}</Tag>,
+                },
               ]}
             />
           </SectionCard>

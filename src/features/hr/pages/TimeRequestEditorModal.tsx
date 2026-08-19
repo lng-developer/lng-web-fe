@@ -109,7 +109,10 @@ export function TimeRequestEditorModal({
             >
               <Select
                 options={['ANNUAL', 'SICK', 'UNPAID', 'PERSONAL_PAID', 'PERSONAL_UNPAID'].map(
-                  (value) => ({ value, label: value }),
+                  (value) => ({
+                    value,
+                    label: t(`hrOperations.requests.leaveTypes.${value}`, { defaultValue: value }),
+                  }),
                 )}
               />
             </Form.Item>
@@ -121,7 +124,7 @@ export function TimeRequestEditorModal({
               <Select
                 options={['FULL_DAY', 'MORNING', 'AFTERNOON'].map((value) => ({
                   value,
-                  label: value,
+                  label: t(`hrOperations.requests.portions.${value}`, { defaultValue: value }),
                 }))}
               />
             </Form.Item>
@@ -185,7 +188,7 @@ export function TimeRequestEditorModal({
           label={t('hrOperations.common.reason')}
           rules={[{ required: true }]}
         >
-          <Input.TextArea rows={3} placeholder="Please provide reason for this request..." />
+          <Input.TextArea rows={3} placeholder={t('hrOperations.requests.reasonPlaceholder')} />
         </Form.Item>
 
         <Form.Item shouldUpdate noStyle>

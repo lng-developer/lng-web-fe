@@ -133,7 +133,7 @@ export function CatalogListingWorkbenchPage({
       })
       setEditing(latest)
     } catch {
-      toast('error', 'Could not load listing')
+      toast('error', t('portal.catalog.loadFailed'))
     }
   }
 
@@ -147,7 +147,8 @@ export function CatalogListingWorkbenchPage({
       await refresh()
       toast('success', t('portal.catalog.saved'))
     },
-    onError: (err) => toast('error', err instanceof Error ? err.message : 'Could not save'),
+    onError: (err) =>
+      toast('error', err instanceof Error ? err.message : t('portal.catalog.saveFailed')),
   })
   const requestDefaultPsd = useMutation({
     mutationFn: (listingId: string) => requestListingPsd(listingId),
@@ -215,7 +216,7 @@ export function CatalogListingWorkbenchPage({
 
   const columns: TableColumnsType<Listing> = [
     {
-      title: 'Image',
+      title: t('portal.catalog.columns.preview'),
       width: 76,
       render: (_, listing) =>
         listing.productImageUrl ? (
@@ -225,7 +226,7 @@ export function CatalogListingWorkbenchPage({
         ),
     },
     {
-      title: 'Listing',
+      title: t('portal.catalog.columns.listing'),
       width: 240,
       render: (_, listing) => (
         <Space direction="vertical" size={2} className={styles.titleCell}>
@@ -233,20 +234,32 @@ export function CatalogListingWorkbenchPage({
             value={listing.sku}
             strong
             className={styles.skuButton}
-            title="Copy SKU"
-            copiedMessage="SKU copied"
+            title={t('portal.catalog.copySku')}
+            copiedMessage={t('portal.catalog.skuCopied')}
           />
           <Space size={4} className={styles.marketplaceIdentity}>
             <Typography.Text type="secondary">
               {listing.asin ? 'ASIN ' : listing.etsyListingId ? 'Etsy ' : ''}
               <CopyableText
                 value={listing.asin ?? listing.etsyListingId}
-                title={listing.asin ? 'Copy ASIN' : 'Copy listing ID'}
-                copiedMessage={listing.asin ? 'ASIN copied' : 'Listing ID copied'}
+                title={
+                  listing.asin ? t('portal.catalog.copyAsin') : t('portal.catalog.copyListingId')
+                }
+                copiedMessage={
+                  listing.asin
+                    ? t('portal.catalog.asinCopied')
+                    : t('portal.catalog.listingIdCopied')
+                }
               />
             </Typography.Text>
             {marketplaceProductUrl(listing) ? (
-              <Tooltip title={listing.asin ? 'Open Amazon product' : 'Open Etsy listing'}>
+              <Tooltip
+                title={
+                  listing.asin
+                    ? t('portal.catalog.openAmazonProduct')
+                    : t('portal.catalog.openEtsyListing')
+                }
+              >
                 <Button
                   type="text"
                   size="small"
@@ -263,7 +276,7 @@ export function CatalogListingWorkbenchPage({
       ),
     },
     {
-      title: 'Channel',
+      title: t('portal.catalog.fields.salesChannel'),
       width: 118,
       render: (_, listing) => (
         <Space direction="vertical" size={0}>
@@ -272,9 +285,13 @@ export function CatalogListingWorkbenchPage({
         </Space>
       ),
     },
-    { title: 'Shop', width: 150, render: (_, listing) => listing.shop?.name ?? listing.shopId },
     {
-      title: 'Variants',
+      title: t('portal.catalog.fields.shop'),
+      width: 150,
+      render: (_, listing) => listing.shop?.name ?? listing.shopId,
+    },
+    {
+      title: t('portal.catalog.variants.shortTitle'),
       width: 92,
       align: 'center',
       render: (_, listing) => <Typography.Text strong>{listing.variantCount ?? 0}</Typography.Text>,
@@ -295,7 +312,7 @@ export function CatalogListingWorkbenchPage({
             <Typography.Text strong>{summary.label}</Typography.Text>
             <span className={styles.psdState}>
               <span className={`${styles.psdDot} ${dotClass}`} />
-              {summary.state}
+              {t(`portal.catalog.psdStates.${summary.state}`)}
             </span>
             <Typography.Text type="secondary" className={styles.psdSource}>
               {summary.detail}
@@ -322,24 +339,28 @@ export function CatalogListingWorkbenchPage({
       ),
     },
     {
-      title: 'Sales',
+      title: t('portal.catalog.columns.sales'),
       width: 116,
       render: (_, listing) => (
         <Space direction="vertical" size={0}>
-          <Typography.Text>{listing.salesStats.quantitySold} sold</Typography.Text>
-          <Typography.Text type="secondary">{listing.salesStats.orderCount} orders</Typography.Text>
+          <Typography.Text>
+            {t('portal.catalog.sales.soldCount', { count: listing.salesStats.quantitySold })}
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            {t('portal.catalog.sales.orderCount', { count: listing.salesStats.orderCount })}
+          </Typography.Text>
         </Space>
       ),
     },
     {
-      title: 'Status',
+      title: t('portal.catalog.master.status'),
       width: 96,
       render: (_, listing) => (
         <Tag color={listing.status === 'ACTIVE' ? 'green' : 'default'}>{listing.status}</Tag>
       ),
     },
     {
-      title: 'Updated',
+      title: t('portal.catalog.columns.updated'),
       width: 150,
       render: (_, listing) => (
         <Tooltip title={dayjs(listing.updatedAt).format('YYYY-MM-DD HH:mm:ss')}>
@@ -348,7 +369,7 @@ export function CatalogListingWorkbenchPage({
       ),
     },
     {
-      title: 'Actions',
+      title: t('portal.catalog.actions'),
       width: 112,
       fixed: 'right',
       render: (_, listing) =>
@@ -367,11 +388,11 @@ export function CatalogListingWorkbenchPage({
                 />
               </Tooltip>
             ) : null}
-            <Tooltip title="Edit listing">
+            <Tooltip title={t('portal.catalog.edit')}>
               <Button
                 type="text"
                 icon={<EditOutlined />}
-                aria-label="Edit listing"
+                aria-label={t('portal.catalog.edit')}
                 onClick={() => void openEdit(listing)}
               />
             </Tooltip>
@@ -410,14 +431,14 @@ export function CatalogListingWorkbenchPage({
       <div className={styles.metrics}>
         <MetricCard
           icon={<AppstoreOutlined />}
-          label="Total listings"
+          label={t('portal.catalog.metrics.totalListings')}
           value={summary.data?.totalListingCount ?? 0}
           variant="primary"
           status={<span className={styles.metricPercent}>100%</span>}
         />
         <MetricCard
           icon={<CheckCircleOutlined />}
-          label="Approved"
+          label={t('portal.catalog.metrics.approved')}
           value={summary.data?.approvedCount ?? 0}
           variant="success"
           status={
@@ -428,7 +449,7 @@ export function CatalogListingWorkbenchPage({
         />
         <MetricCard
           icon={<FileTextOutlined />}
-          label="Draft"
+          label={t('portal.catalog.metrics.draft')}
           value={summary.data?.draftCount ?? 0}
           variant="warning"
           status={
@@ -439,7 +460,7 @@ export function CatalogListingWorkbenchPage({
         />
         <MetricCard
           icon={<FileImageOutlined />}
-          label={t('portal.catalog.psd.missingTag')}
+          label={t('portal.catalog.metrics.psdMissing')}
           value={summary.data?.noPsdCount ?? 0}
           variant="danger"
           onClick={() => {
@@ -454,7 +475,7 @@ export function CatalogListingWorkbenchPage({
         />
         <MetricCard
           icon={<StopOutlined />}
-          label="Rejected"
+          label={t('portal.catalog.metrics.rejected')}
           value={summary.data?.rejectedCount ?? 0}
           variant="danger"
           status={
@@ -496,13 +517,13 @@ export function CatalogListingWorkbenchPage({
         <Select
           allowClear
           className={styles.filter}
-          placeholder="All QC Statuses"
+          placeholder={t('portal.catalog.allQcStatuses')}
           value={qcStatus}
           onChange={resetPage(setQcStatus)}
           options={[
-            { value: 'DRAFT', label: 'Draft' },
-            { value: 'APPROVED', label: 'Approved' },
-            { value: 'REJECTED', label: 'Rejected' },
+            { value: 'DRAFT', label: t('portal.catalog.metrics.draft') },
+            { value: 'APPROVED', label: t('portal.catalog.metrics.approved') },
+            { value: 'REJECTED', label: t('portal.catalog.metrics.rejected') },
           ]}
         />
         <Select
@@ -522,13 +543,15 @@ export function CatalogListingWorkbenchPage({
         <div className={styles.tableHeader}>
           <div>
             <Typography.Title level={4} className={styles.tableTitle}>
-              Listing table
+              {t('portal.catalog.tableTitle')}
             </Typography.Title>
             <Typography.Text type="secondary">
-              Expand a listing to manage its product variants, PSD, preview, and scale setup.
+              {t('portal.catalog.tableDescription')}
             </Typography.Text>
           </div>
-          <Tag color="blue">{listings.data?.pagination.total ?? 0} results</Tag>
+          <Tag color="blue">
+            {t('portal.catalog.results', { count: listings.data?.pagination.total ?? 0 })}
+          </Tag>
         </div>
         <Table<Listing>
           rowKey="id"
@@ -542,7 +565,7 @@ export function CatalogListingWorkbenchPage({
             pageSize: PAGE_SIZE,
             total: listings.data?.pagination.total ?? 0,
             showSizeChanger: false,
-            showTotal: (total) => `${total} listings`,
+            showTotal: (total) => t('portal.catalog.listingCount', { count: total }),
             onChange: setPage,
           }}
           expandable={{
@@ -552,7 +575,11 @@ export function CatalogListingWorkbenchPage({
                 size="small"
                 className={styles.expandButton}
                 icon={expanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
-                aria-label={expanded ? 'Collapse variants' : 'Expand variants'}
+                aria-label={
+                  expanded
+                    ? t('portal.catalog.variants.collapse')
+                    : t('portal.catalog.variants.expand')
+                }
                 onClick={(event) => onExpand(record, event)}
               />
             ),

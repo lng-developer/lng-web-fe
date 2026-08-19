@@ -126,7 +126,7 @@ export function VendorProductEditorModal({
       ),
       children: (
         <Flex flex={1} vertical gap={16}>
-          <Card size="small" title="Basic Info" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Basic Info">
             <div className={styles.formGrid}>
               <Form.Item
                 label={t('vendors.name')}
@@ -168,7 +168,7 @@ export function VendorProductEditorModal({
             </div>
           </Card>
 
-          <Card size="small" title="Production SLA & Base Cost" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Production SLA & Base Cost">
             <div className={styles.formGrid}>
               <Form.Item
                 label={t('vendors.minProductionDays')}
@@ -236,11 +236,7 @@ export function VendorProductEditorModal({
       children: (
         <Flex flex={1} vertical gap={16}>
           {imageUrl ? (
-            <Card
-              size="small"
-              title="Image Preview"
-              style={{ background: '#fafafa', textAlign: 'center' }}
-            >
+            <Card className={styles.editorPreviewCard} size="small" title="Image Preview">
               <Image
                 src={imageUrl}
                 alt="Product preview"
@@ -250,7 +246,7 @@ export function VendorProductEditorModal({
             </Card>
           ) : null}
 
-          <Card size="small" title="URLs" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="URLs">
             <Form.Item label={t('vendors.imageUrl')} name="imageUrl" rules={urlRules}>
               <Input placeholder="https://..." />
             </Form.Item>
@@ -278,7 +274,7 @@ export function VendorProductEditorModal({
       ),
       children: (
         <Flex flex={1} vertical gap={16}>
-          <Card size="small" title="Status" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Status">
             <Form.Item
               label={t('vendors.statusLabel')}
               name="status"
@@ -293,7 +289,7 @@ export function VendorProductEditorModal({
             </Form.Item>
           </Card>
 
-          <Card size="small" title="Metadata JSON" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Metadata JSON">
             <Form.Item
               label={t('vendors.metadata')}
               name="metadataText"
@@ -324,6 +320,7 @@ export function VendorProductEditorModal({
 
   return (
     <Drawer
+      className={styles.editorDrawer}
       destroyOnClose
       open={open}
       title={t(item ? 'vendors.editProductTitle' : 'vendors.createProductTitle')}

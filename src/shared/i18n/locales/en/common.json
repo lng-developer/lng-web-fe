@@ -1,12 +1,23 @@
 {
-  "app": { "name": "LNG Web" },
+  "app": {
+    "name": "LNG Web"
+  },
   "common": {
     "copyOrderId": "Copy order ID",
     "orderIdCopied": "Order ID copied",
     "close": "Close"
   },
-  "language": { "label": "Language", "vi": "Vietnamese", "en": "English" },
-  "theme": { "label": "Appearance", "light": "Light", "dark": "Dark", "system": "System" },
+  "language": {
+    "label": "Language",
+    "vi": "Vietnamese",
+    "en": "English"
+  },
+  "theme": {
+    "label": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "shell": {
     "refresh": "Refresh",
     "searchPlaceholder": "Search navigation",
@@ -43,7 +54,11 @@
       "finance": "Finance",
       "reports": "Reports"
     },
-    "cores": { "portal": "Portal", "hr": "HR", "system": "System" },
+    "cores": {
+      "portal": "Portal",
+      "hr": "HR",
+      "system": "System"
+    },
     "groups": {
       "personal": "Personal",
       "team": "Team management",
@@ -88,7 +103,10 @@
       "orders": "Order profitability",
       "imports": "Imports & reconciliation"
     },
-    "scope": { "global": "All company", "scoped": "Your assigned scope" },
+    "scope": {
+      "global": "All company",
+      "scoped": "Your assigned scope"
+    },
     "metrics": {
       "revenue": "Customer paid",
       "cost": "Total cost",
@@ -154,7 +172,11 @@
       "modal": {
         "title": "Import finance data",
         "type": "Data type",
-        "types": { "transactions": "Transactions", "settlements": "Settlements", "ads": "Ads" },
+        "types": {
+          "transactions": "Transactions",
+          "settlements": "Settlements",
+          "ads": "Ads"
+        },
         "shop": "Shop",
         "salesChannel": "Sales channel",
         "marketplace": "Marketplace",
@@ -189,8 +211,13 @@
     "empty": "No data",
     "exportCsv": "Export CSV",
     "trend": "Daily revenue trend",
-    "cadence": { "daily": "Daily", "weekly": "Weekly" },
-    "channels": { "title": "Top channels" },
+    "cadence": {
+      "daily": "Daily",
+      "weekly": "Weekly"
+    },
+    "channels": {
+      "title": "Top channels"
+    },
     "scopeLimited": "Operational and advertising reports are available for global or shop scope. Your finance data remains scoped to your organization assignment.",
     "tabs": {
       "overview": "Executive overview",
@@ -257,7 +284,15 @@
     "title": "Customization review",
     "description": "Resolve buyer customization issues blocking fulfillment.",
     "queue": "Blocked customizations",
-    "summary": { "pending": "Pending", "review": "Needs review", "failed": "Failed" },
+    "summary": {
+      "pending": "Pending",
+      "review": "Needs review",
+      "failed": "Failed",
+      "status": {
+        "warning": "Warning",
+        "critical": "Critical"
+      }
+    },
     "filters": {
       "label": "Filters",
       "search": "Search order, SKU, or customer",
@@ -284,7 +319,10 @@
       "inputs": "Customer inputs",
       "assets": "{{extracted}}/{{total}} assets extracted, {{failed}} failed"
     },
-    "feedback": { "updated": "Customization updated", "failed": "Could not update customization" }
+    "feedback": {
+      "updated": "Customization updated",
+      "failed": "Could not update customization"
+    }
   },
   "media": {
     "title": "Media assets",
@@ -299,7 +337,34 @@
       "provider": "All providers",
       "resourceType": "All resource types",
       "ownerType": "All owners",
-      "status": "All statuses"
+      "status": "All statuses",
+      "startDate": "Start date",
+      "endDate": "End date"
+    },
+    "mimeGroups": {
+      "IMAGE": "Images",
+      "DOCUMENT": "Documents",
+      "ARCHIVE": "Archives",
+      "OTHER": "Other"
+    },
+    "providers": {
+      "local": "Local storage",
+      "cloudinary": "Cloudinary"
+    },
+    "resourceTypes": {
+      "image": "Image",
+      "video": "Video",
+      "raw": "Raw file"
+    },
+    "ownerTypes": {
+      "ORDER_ITEM": "Order item",
+      "CUSTOMIZATION_PAYLOAD": "Customization payload",
+      "PRODUCTION_TASK": "Production task",
+      "EMPLOYEE_PROFILE": "Employee profile"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "DISCARDED": "Discarded"
     },
     "columns": {
       "file": "File",
@@ -313,8 +378,13 @@
       "status": "Status",
       "actions": "Actions"
     },
-    "actions": { "download": "Download", "retry": "Retry" },
-    "detail": { "title": "Asset details" },
+    "actions": {
+      "download": "Download",
+      "retry": "Retry"
+    },
+    "detail": {
+      "title": "Asset details"
+    },
     "upload": {
       "action": "Upload file",
       "title": "Upload media",
@@ -354,6 +424,7 @@
       "shop": "Shop",
       "marketplace": "Marketplace",
       "orderItem": "SKU or order item",
+      "contextOrderItem": "Context order item",
       "allShops": "All readable shops",
       "allMarketplaces": "All marketplaces"
     },
@@ -434,6 +505,8 @@
       "asin": "ASIN",
       "normalizedSize": "Normalized size",
       "normalizedColor": "Normalized color",
+      "originalSku": "Original SKU",
+      "canonicalSku": "Canonical SKU",
       "priority": "Priority",
       "status": "Status",
       "sampleSku": "Sample SKU",
@@ -450,7 +523,41 @@
       "noQueue": "No unmatched items",
       "selectContext": "Select an item or enter a context to inspect its trace",
       "sampled": "These are sampled records, not an exact total.",
-      "noCandidates": "No matching candidates"
+      "noCandidates": "No matching candidates",
+      "autoMatched": "Auto-matched"
+    },
+    "confidence": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "blockers": {
+      "NO_HIGH_CONFIDENCE_VENDOR_CANDIDATE": "No high-confidence vendor candidate",
+      "NO_VENDOR_PRODUCT_CANDIDATE": "No vendor product candidate",
+      "VENDOR_ROUTING": "Vendor routing",
+      "PRODUCT_MAPPING": "Product mapping",
+      "LISTING_CONFIGURATION_REQUIRED": "Listing configuration required",
+      "SKU_CONFIG_REQUIRED": "SKU configuration required",
+      "SEMANTIC_RULE_REQUIRED": "Semantic rule required",
+      "VALUE_ALIAS_REQUIRED": "Value alias required"
+    },
+    "semanticRoles": {
+      "PRODUCT_TYPE": "Product type",
+      "SIZE": "Size",
+      "COLOR": "Color",
+      "STYLE": "Style",
+      "MATERIAL": "Material",
+      "CONFIG": "Configuration",
+      "COUNTRY": "Country",
+      "EMPLOYEE": "Employee",
+      "OTHER": "Other"
+    },
+    "sources": {
+      "RULE": "Rule",
+      "SKU": "SKU",
+      "CUSTOMER_INPUT": "Customer input",
+      "DEFAULT": "Default",
+      "SYSTEM": "System"
     },
     "age": {
       "today": "Today",
@@ -511,7 +618,10 @@
       "hr": "Human resources",
       "portal": "Portal"
     },
-    "input": { "label": "Search", "placeholder": "Search foundation" },
+    "input": {
+      "label": "Search",
+      "placeholder": "Search foundation"
+    },
     "controls": {
       "filters": "Filters",
       "requiredName": "Required name",
@@ -537,7 +647,10 @@
       "clear": "Clear",
       "apply": "Apply"
     },
-    "card": { "title": "Logistics Manager", "description": "Active session: 4h 12m" },
+    "card": {
+      "title": "Logistics Manager",
+      "description": "Active session: 4h 12m"
+    },
     "scope": {
       "staff": "Staff",
       "leader": "Team lead",
@@ -556,9 +669,21 @@
       "showing": "Showing",
       "rowsPerPage": "Rows per page:"
     },
-    "modal": { "title": "Delete role?", "description": "This action cannot be undone." },
-    "status": { "operational": "Operational", "warning": "Warning", "critical": "Critical" },
-    "priority": { "low": "Low", "medium": "Medium", "high": "High", "urgent": "Urgent" },
+    "modal": {
+      "title": "Delete role?",
+      "description": "This action cannot be undone."
+    },
+    "status": {
+      "operational": "Operational",
+      "warning": "Warning",
+      "critical": "Critical"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
     "form": {
       "note": "Review note",
       "notePlaceholder": "Add a review note",
@@ -574,7 +699,10 @@
       "export": "Export",
       "archive": "Archive"
     },
-    "upload": { "title": "Upload files", "description": "Drop files here or click to browse." },
+    "upload": {
+      "title": "Upload files",
+      "description": "Drop files here or click to browse."
+    },
     "command": {
       "open": "Commands",
       "placeholder": "Search commands",
@@ -605,7 +733,10 @@
         "production": "Production displays throughput mix and short-term movement together."
       }
     },
-    "drawer": { "title": "Order details", "reference": "Order reference" },
+    "drawer": {
+      "title": "Order details",
+      "reference": "Order reference"
+    },
     "feedback": {
       "success": "Role updated",
       "successDescription": "Changes propagated to active nodes.",
@@ -627,6 +758,40 @@
       "mapping": "Mapping",
       "design": "Design",
       "production": "Production"
+    },
+    "portalDashboard": {
+      "dashboard": "Dashboard",
+      "noData": "No data",
+      "orders": "Orders",
+      "listingImage": "Listing image",
+      "soldCount": "{{count}} sold",
+      "orderCount": "{{count}} orders",
+      "product": "Product",
+      "orderId": "Order ID",
+      "quantity": "Qty",
+      "total": "Total",
+      "value": "Value",
+      "share": "Share",
+      "percentValue": "{{percent}}%",
+      "metricAriaLabel": "{{label}}: {{value}}",
+      "status": "Status",
+      "totalOrders": "Total orders",
+      "approvedListings": "Approved listings",
+      "approvedPercent": "{{percent}}% approved",
+      "newCustomers": "New customers",
+      "openListingQueue": "Open listing queue",
+      "productInStock": "Product in stock",
+      "summary": "Summary",
+      "approved": "Approved",
+      "draft": "Draft",
+      "noPsd": "No PSD",
+      "rejected": "Rejected",
+      "orderStatus": "Order status",
+      "orderQueues": "Order queues",
+      "monthlyTarget": "Monthly target",
+      "approvedFromListings": "{{approved}} approved from {{total}} listings",
+      "topAsins": "Top ASINs",
+      "recentOrders": "Recent orders"
     },
     "accessDenied": "You do not have permission to access operations dashboard.",
     "metrics": {
@@ -694,6 +859,10 @@
       "continue": "Continue",
       "complete": "Complete setup",
       "required": "This field is required",
+      "emailInvalid": "Enter a valid email address",
+      "phoneInvalid": "Enter a valid phone number",
+      "validationTitle": "Check the highlighted fields",
+      "validationDescription": "The form moved to the first tab that needs attention.",
       "password": {
         "step": "Secure account",
         "stepDescription": "Replace your temporary password",
@@ -774,7 +943,9 @@
       "resultsSummary": "{{count}} result",
       "scopeType": "Scope type",
       "securitySettings": "Security settings",
-      "viewDetails": "View details"
+      "viewDetails": "View details",
+      "bulkAssign": "Bulk assign",
+      "selectCurrentPage": "Select current page"
     },
     "accessEditor": {
       "title": "Manage access",
@@ -1064,6 +1235,7 @@
     "retry": "Retry",
     "schedule": {
       "title": "Schedule",
+      "description": "Manage work locations, shifts, employee assignments, and holiday calendars.",
       "workLocations": "Work locations",
       "addLocation": "Add location",
       "shifts": "Shifts",
@@ -1104,31 +1276,116 @@
       "assignmentEditor": "Assign shift",
       "overrideEditor": "Calendar override",
       "holidayEditor": "Holiday",
-      "rotationEditor": "Saturday rotation"
+      "rotationEditor": "Saturday rotation",
+      "minutes": "{{count}} min",
+      "tabs": {
+        "assignments": "Shift assignments ({{count}})",
+        "locationsShifts": "Locations & work shifts",
+        "holidaysOverrides": "Holidays & overrides"
+      },
+      "metrics": {
+        "locations": "Work locations",
+        "shifts": "Work shifts",
+        "assignments": "Active assignments",
+        "holidays": "Holidays & overrides"
+      },
+      "sections": {
+        "locationIdentity": "Location identity",
+        "shiftDetails": "Shift details",
+        "shiftAssignment": "Shift assignment",
+        "calendarOverride": "Calendar override",
+        "holidayInfo": "Holiday info"
+      },
+      "placeholders": {
+        "locationCode": "e.g. HQ_HAN",
+        "locationName": "e.g. Hanoi headquarter office",
+        "shiftCode": "e.g. SHIFT_DAY",
+        "shiftName": "e.g. Day shift (08:00 - 17:00)",
+        "searchEmployee": "Search employee...",
+        "overrideName": "e.g. Special maintenance day",
+        "holidayName": "e.g. Independence Day",
+        "optionalNote": "Optional note",
+        "selectTeam": "Select team...",
+        "selectStaff": "Select staff..."
+      },
+      "statuses": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive"
+      },
+      "rotationSources": {
+        "MANUAL": "Manual",
+        "GENERATED": "Generated",
+        "SYSTEM": "System"
+      },
+      "overrideKinds": {
+        "HOLIDAY": "Holiday",
+        "REST_DAY": "Rest day",
+        "WORKING_DAY": "Working day"
+      },
+      "scopeTypes": {
+        "GLOBAL": "Global",
+        "WORK_LOCATION": "Work location",
+        "DEPARTMENT": "Department",
+        "TEAM": "Team",
+        "PROFILE": "Employee"
+      },
+      "holidayTypes": {
+        "PUBLIC_HOLIDAY": "Public holiday",
+        "SUBSTITUTE_WORK_DAY": "Substitute workday"
+      }
     },
     "attendance": {
       "title": "Attendance",
+      "myTitle": "My Attendance History",
+      "teamTitle": "Attendance Records & Time Matrix",
+      "description": "Track daily check-ins, check-outs, late arrival minutes, and attendance adjustments.",
       "checkIn": "Check in",
       "checkOut": "Check out",
       "records": "Records",
       "present": "Present",
       "late": "Late",
       "missingCheckout": "Missing check-out",
+      "lateMinutes": "Late minutes",
+      "minutes": "{{count}} min",
       "teamTable": "Staff attendance",
       "myTable": "My attendance",
       "in": "In",
       "out": "Out",
       "workday": "Workday",
       "adjust": "Adjust attendance",
+      "adjustTitle": "Adjust Attendance Log",
+      "adjustReason": "Adjustment reason",
+      "adjustReasonPlaceholder": "Reason for adjusting check-in/out record...",
       "checkInTime": "Check-in time",
-      "checkOutTime": "Check-out time"
+      "checkOutTime": "Check-out time",
+      "statuses": {
+        "PRESENT": "Present",
+        "ABSENT": "Absent",
+        "LATE": "Late",
+        "LEAVE": "Leave",
+        "ANNUAL_LEAVE": "Annual leave",
+        "SICK_LEAVE": "Sick leave",
+        "UNPAID_LEAVE": "Unpaid leave",
+        "PERSONAL_PAID": "Paid personal leave",
+        "PERSONAL_UNPAID": "Unpaid personal leave",
+        "MATERNITY_LEAVE": "Maternity leave",
+        "PATERNITY_LEAVE": "Paternity leave",
+        "BEREAVEMENT_LEAVE": "Bereavement leave",
+        "MARRIAGE_LEAVE": "Marriage leave",
+        "BUSINESS_TRIP": "Business trip",
+        "HOLIDAY": "Holiday",
+        "REST_DAY": "Rest day",
+        "MISSING_CHECKOUT": "Missing check-out"
+      }
     },
     "requests": {
       "title": "Leave & overtime",
+      "description": "Submit leave and overtime applications, manage leave balances, and approve employee requests.",
       "requestLeave": "Request leave",
       "requestOvertime": "Request OT",
       "detail": "Request detail",
       "minutes": "minutes",
+      "minutesWithCount": "{{count}} minutes",
       "remainingLeave": "Remaining leave",
       "pendingLeave": "Pending leave",
       "pendingOvertime": "Pending OT",
@@ -1139,7 +1396,42 @@
       "duration": "Duration",
       "createLeave": "Create leave request",
       "createOvertime": "Create overtime request",
-      "leaveType": "Leave type"
+      "leaveType": "Leave type",
+      "dateRange": "{{from}} to {{to}}",
+      "overtimeRange": "{{date}} · {{from}}-{{to}}",
+      "noReason": "No reason provided",
+      "reasonPlaceholder": "Please provide reason for this request...",
+      "tabs": {
+        "leave": "Leave requests ({{count}})",
+        "overtime": "Overtime requests ({{count}})"
+      },
+      "decisionReasons": {
+        "approve": "Approved by HR Manager",
+        "reject": "Rejected by HR Manager"
+      },
+      "statuses": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "CANCELLED": "Cancelled",
+        "REFUNDED": "Refunded"
+      },
+      "leaveTypes": {
+        "ANNUAL": "Annual leave",
+        "SICK": "Sick leave",
+        "UNPAID": "Unpaid leave",
+        "PERSONAL_PAID": "Paid personal leave",
+        "PERSONAL_UNPAID": "Unpaid personal leave",
+        "MATERNITY_LEAVE": "Maternity leave",
+        "PATERNITY_LEAVE": "Paternity leave",
+        "BEREAVEMENT_LEAVE": "Bereavement leave",
+        "MARRIAGE_LEAVE": "Marriage leave"
+      },
+      "portions": {
+        "FULL_DAY": "Full day",
+        "MORNING": "Morning",
+        "AFTERNOON": "Afternoon"
+      }
     },
     "payroll": {
       "title": "Payroll",
@@ -1158,6 +1450,21 @@
       "version": "Version",
       "finalize": "Finalize",
       "paid": "Mark paid",
+      "statuses": {
+        "DRAFT": "Draft",
+        "PROCESSING": "Processing",
+        "FINALIZED": "Finalized",
+        "PAID": "Paid",
+        "PARTIALLY_PAID": "Partially paid",
+        "CANCELLED": "Cancelled",
+        "FAILED": "Failed",
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "VOIDED": "Voided",
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected"
+      },
       "staffPayroll": "Staff payroll",
       "myPayroll": "My payslips",
       "workdays": "Workdays",
@@ -1257,8 +1564,12 @@
       "absent": "Absent",
       "approvedOt": "OT approved today",
       "attendanceTrend": "Attendance trend",
+      "days": "{{count}} days",
       "days_one": "{{count}} day",
       "days_other": "{{count}} days",
+      "times": "{{count}} times",
+      "times_one": "{{count}} time",
+      "times_other": "{{count}} times",
       "announcements": "Internal announcements",
       "createAnnouncement": "Create announcement",
       "editAnnouncement": "Edit announcement",
@@ -1282,6 +1593,7 @@
       "title": "My work",
       "today": "Today",
       "greeting": "Personal work overview",
+      "scheduleDescription": "View your monthly shift schedule, attendance, leaves, and overtime records.",
       "shift": "Today's shift",
       "noShift": "No shift",
       "attendance": "Attendance",
@@ -1303,17 +1615,64 @@
     },
     "calendar": {
       "label": "Monthly schedule calendar",
+      "monthYear": "{{month}} {{year}}",
       "selectedDay": "Selected day",
       "holiday": "Holiday",
       "unresolved": "No schedule assigned",
       "lateMinutes": "Late {{minutes}} min",
+      "overtimeMinutes": "{{minutes}} min overtime",
       "noRecords": "No attendance or request records",
       "noAttendanceRecords": "No attendance records recorded for this day",
       "today": "Today",
       "workLocation": "Work location",
       "workingTimeline": "Working timeline",
       "hasRequests": "{{count}} request(s)",
-      "leaveTypes": { "ANNUAL": "Annual leave", "SICK": "Sick leave", "UNPAID": "Unpaid leave" },
+      "leaveTypes": {
+        "ANNUAL": "Annual leave",
+        "SICK": "Sick leave",
+        "UNPAID": "Unpaid leave"
+      },
+      "months": {
+        "0": "January",
+        "1": "February",
+        "2": "March",
+        "3": "April",
+        "4": "May",
+        "5": "June",
+        "6": "July",
+        "7": "August",
+        "8": "September",
+        "9": "October",
+        "10": "November",
+        "11": "December"
+      },
+      "weekdaysNarrow": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      },
+      "weekdaysShort": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      },
+      "weekdaysLong": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
       "filters": {
         "all": "All events",
         "attendance": "Attendance",
@@ -1533,7 +1892,9 @@
       },
       "metrics": {
         "total": "Total",
+        "totalListings": "Total listings",
         "noPsd": "No PSD",
+        "psdMissing": "PSD missing",
         "draft": "Draft",
         "approved": "Approved",
         "rejected": "Rejected"
@@ -1590,8 +1951,151 @@
         "costCenterStatus": "Cost center status",
         "recordStatus": "Record status"
       },
+      "detail": {
+        "selectListing": "Select a listing to view details",
+        "quantitySold": "Quantity sold",
+        "orders": "Orders",
+        "orderItems": "Order items",
+        "lastSold": "Last sold",
+        "never": "Never",
+        "qcStatus": "QC status",
+        "productionVariants": "Production variants",
+        "created": "Created: {{value}}",
+        "updated": "Updated: {{value}}",
+        "baseCost": "Base cost: {{amount}} {{currency}}"
+      },
+      "qc": {
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "approvedToast": "Listing approved successfully",
+        "rejectedToast": "Listing rejected",
+        "approveFailed": "Could not approve",
+        "rejectFailed": "Could not reject",
+        "draftPrefix": "This listing is in",
+        "draftSuffix": "- it will not receive orders until approved.",
+        "approveTooltip": "Mark this listing as ready for production",
+        "approveConfirmTitle": "Approve listing?",
+        "approveConfirmContent": "SKU: {{sku}} will be set to APPROVED and become eligible for order matching.",
+        "rejectTooltip": "Reject with reason",
+        "rejectTitle": "Reject listing - {{sku}}",
+        "confirmRejection": "Confirm rejection",
+        "rejectDescription": "Provide a clear reason so the responsible team can address the issue.",
+        "rejectPlaceholder": "e.g. Missing artwork slot configuration, incorrect SKU format..."
+      },
+      "variants": {
+        "title": "Product variants ({{count}})",
+        "shortTitle": "Variants",
+        "add": "Add variant",
+        "addTitle": "Add listing variant",
+        "editTitle": "Edit listing variant",
+        "edit": "Edit variant",
+        "empty": "No variants configured yet",
+        "method": "Method",
+        "template": "Template",
+        "default": "Default",
+        "defaultTooltip": "This is the default variant used for production",
+        "notConfigured": "Not configured",
+        "psdReady": "PSD ready",
+        "psdNotRequired": "PSD not required",
+        "psdMissing": "PSD missing",
+        "requestPsd": "Request PSD",
+        "psdTaskCreated": "PSD task created successfully",
+        "psdTaskRequested": "PSD task requested",
+        "requestPsdFailed": "Could not request PSD",
+        "applyPsd": "Apply PSD to compatible variants",
+        "applyPsdTitle": "Apply PSD to compatible variants?",
+        "applyPsdContent": "This will copy this PSD reference to variants with the same template and print method that do not have PSD yet.",
+        "apply": "Apply",
+        "psdApplied": "Applied PSD to {{count}} compatible variant(s)",
+        "applyPsdFailed": "Could not apply PSD",
+        "uploadPreview": "Upload preview image",
+        "previewUploaded": "Preview uploaded",
+        "uploadPreviewFailed": "Could not upload preview",
+        "scale": "Scale",
+        "scaleDifficulty": "Scale difficulty",
+        "scaleNote": "Scale note",
+        "scaleNotePlaceholder": "What makes this variant hard to scale?",
+        "inheritProductType": "Inherit product type",
+        "setDefault": "Set as default variant",
+        "expand": "Expand variants",
+        "collapse": "Collapse variants"
+      },
+      "psdStates": {
+        "notConfigured": "Not configured",
+        "ready": "Ready",
+        "partial": "Partial",
+        "missing": "Missing"
+      },
+      "sales": {
+        "soldCount": "{{count}} sold",
+        "orderCount": "{{count}} orders"
+      },
+      "copySku": "Copy SKU",
+      "skuCopied": "SKU copied",
+      "copyAsin": "Copy ASIN",
+      "asinCopied": "ASIN copied",
+      "copyListingId": "Copy listing ID",
+      "listingIdCopied": "Listing ID copied",
+      "loadFailed": "Could not load listing",
+      "saveFailed": "Could not save",
+      "tableTitle": "Listing table",
+      "tableDescription": "Expand a listing to manage its product variants, PSD, preview, and scale setup.",
+      "results": "{{count}} results",
+      "listingCount": "{{count}} listings",
       "rejectReason": "Rejection reason",
       "reasonRequired": "Reason is required"
+    },
+    "monitoring": {
+      "title": "System Monitoring & Observability",
+      "description": "Live backend health, infrastructure status, and module readiness.",
+      "healthCheckFailed": "System health check failed",
+      "logsFailed": "System logs failed to load",
+      "healthCheckError": "Health check error",
+      "infrastructure": "Infrastructure",
+      "realtimeSocket": "Realtime socket",
+      "status": "Status",
+      "clients": "Clients",
+      "users": "Users",
+      "rooms": "Rooms",
+      "authFailed": "Auth failed",
+      "eventFailed": "Event failed",
+      "lastError": "Last error: {{message}} at {{time}}",
+      "runtime": "Runtime",
+      "uptime": "Uptime",
+      "heapUsed": "Heap used",
+      "moduleHealth": "Module health ({{healthy}}/{{total}})",
+      "workers": "Workers",
+      "queues": "Queues",
+      "embeddedApiProcess": "Embedded in API process",
+      "separatePm2Process": "Separate PM2 process",
+      "queueCounts": {
+        "waiting": "Waiting",
+        "active": "Active",
+        "delayed": "Delayed",
+        "completed": "Completed",
+        "failed": "Failed",
+        "paused": "Paused"
+      },
+      "serverLogs": "Server logs",
+      "process": "Process",
+      "stream": "Stream",
+      "lines": "Lines",
+      "backendApi": "Backend API",
+      "importWorkers": "Import workers",
+      "devTunnel": "Dev tunnel",
+      "output": "Output",
+      "error": "Error",
+      "lineCount": "{{count}} lines",
+      "refreshLogs": "Refresh logs",
+      "noLogLines": "No log lines found.",
+      "updatedAt": "Updated at {{time}}",
+      "systemHealth": "System health",
+      "healthApiLatency": "Health API latency",
+      "modules": "Modules",
+      "healthyModules": "{{healthy}} / {{total}} healthy",
+      "health": "Health",
+      "workersAndQueues": "Workers & queues",
+      "logs": "Logs"
     },
     "design": {
       "title": "Design operations",
@@ -1628,6 +2132,8 @@
       "briefRequired": "Brief is required",
       "sourceType": "Source type",
       "source": "Source",
+      "template": "Template",
+      "productType": "Product type",
       "sourceRequired": "Select a source",
       "sourceListing": "Listing",
       "sourceTemplate": "Internal template",
@@ -1672,7 +2178,44 @@
       "submissionHistory": "Submission history",
       "version": "Version",
       "files": "Files",
-      "rejectReason": "Reject reason"
+      "rejectReason": "Reject reason",
+      "taskSetup": "Task setup",
+      "requirements": "Requirements",
+      "attachments": "Attachments",
+      "openProduct": "Open SP",
+      "image": "Image",
+      "copyAsin": "Copy ASIN",
+      "asinCopied": "ASIN copied",
+      "tasks": "Design tasks",
+      "taskTypes": {
+        "PSD_TEMPLATE": "PSD template",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "PNG asset",
+        "IDEA": "Idea",
+        "CLONE": "Clone"
+      },
+      "priorities": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      },
+      "outputTypes": {
+        "PSD_TEMPLATE": "PSD template",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "PNG asset",
+        "IDEA": "Idea"
+      },
+      "statuses": {
+        "REQUESTED": "Requested",
+        "OPEN": "Open",
+        "ASSIGNED": "Assigned",
+        "IN_PROGRESS": "In progress",
+        "SUBMITTED": "Submitted",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "CANCELLED": "Cancelled"
+      }
     },
     "integrations": {
       "title": "External order imports",
@@ -1849,6 +2392,8 @@
       "createTitle": "Create shop",
       "editTitle": "Edit shop",
       "inspectTitle": "Shop details",
+      "sectionInfo": "Store identity",
+      "sectionStatus": "Status & access",
       "create": "Create",
       "saveStatus": "Save status",
       "cancel": "Cancel",
@@ -1860,7 +2405,17 @@
       "noFilteredResults": "No shops match these filters",
       "clearFilters": "Clear filters",
       "noAuthorizedShops": "No shops are assigned to your access",
-      "statuses": { "ACTIVE": "Active", "INACTIVE": "Inactive", "SUSPENDED": "Suspended" }
+      "metrics": {
+        "total": "Total shops",
+        "active": "Active shops",
+        "inactive": "Inactive shops",
+        "channel": "Sales channels"
+      },
+      "statuses": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "SUSPENDED": "Suspended"
+      }
     },
     "production": {
       "title": "Production operations",
@@ -1996,7 +2551,9 @@
         "PENDING": "Pending",
         "PASSED": "Passed",
         "REJECTED": "Rejected"
-      }
+      },
+      "openProduct": "Open SP",
+      "downloadCustomerImage": "Customer image"
     },
     "vendorSubmissions": {
       "title": "Vendor submissions",
@@ -2126,15 +2683,65 @@
       "history": "Adjustment history",
       "updated": "Work score updated",
       "actionFailed": "Work score update failed",
+      "topWorkers": "Top contributors",
+      "noAssetPreview": "No asset preview available for this task",
+      "evalHeading": "Evaluate and adjust work score",
+      "reasonPlaceholder": "Enter audit reason for score adjustment...",
+      "voidReasonPlaceholder": "Reason for voiding this work score...",
+      "noAdjustments": "No manual score overrides or voids recorded.",
+      "ruleSetup": {
+        "title": "Score setup",
+        "taskType": "Task type",
+        "scaleDifficulty": "Scale difficulty",
+        "saveRule": "Save rule"
+      },
+      "units": {
+        "points": "{{count}} pts",
+        "basePoints": " / {{count}}pt",
+        "files": "{{count}} files"
+      },
       "metrics": {
         "totalFiles": "Files",
         "totalPoints": "Points",
         "designFiles": "Design files",
         "scaleFiles": "Scale files"
       },
-      "sources": { "DESIGN_SUBMISSION": "Design", "PRODUCTION_SCALE": "Scale" },
-      "statuses": { "ACTIVE": "Active", "VOIDED": "Voided", "ALL": "All statuses" },
+      "sources": {
+        "DESIGN_SUBMISSION": "Design",
+        "PRODUCTION_SCALE": "Scale"
+      },
+      "statuses": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "VOIDED": "Voided",
+        "ALL": "All statuses"
+      },
+      "taskTypes": {
+        "PSD_TEMPLATE": "PSD template",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "PNG asset",
+        "IDEA": "Idea",
+        "CLONE": "Clone"
+      },
+      "scaleDifficulties": {
+        "NORMAL": "Normal",
+        "HARD": "Hard",
+        "SPECIAL": "Special"
+      },
+      "levelNames": {
+        "BASIC": "Basic",
+        "STANDARD": "Standard",
+        "HARD": "Hard",
+        "BONUS": "Bonus"
+      },
+      "levels": {
+        "BASIC": "Basic ({{points}}pt)",
+        "STANDARD": "Standard ({{points}}pt)",
+        "HARD": "Hard ({{points}}pt)",
+        "BONUS": "Bonus ({{points}}pt)"
+      },
       "columns": {
+        "asset": "Asset",
         "source": "Source",
         "context": "File / context",
         "worker": "Worker",
@@ -2148,14 +2755,26 @@
         "points": "Points",
         "level": "Score level",
         "reason": "Reason",
-        "context": "Source context"
+        "context": "Source context",
+        "skuOrder": "SKU / order",
+        "taskSlot": "Task / slot"
       },
       "actions": {
         "view": "View",
         "download": "Download",
         "override": "Override score",
         "void": "Void score",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "confirmVoid": "Confirm void",
+        "saveOverride": "Save score override"
+      },
+      "adjustments": {
+        "pointsChange": "{{oldPoints}} -> {{newPoints}} pts",
+        "types": {
+          "OVERRIDE": "Override",
+          "VOID": "Void",
+          "SYSTEM_VOID": "System void"
+        }
       }
     },
     "vendors": {
@@ -2279,8 +2898,15 @@
       "sectionAuth": "Authentication",
       "sla": "Production SLA",
       "vendor": "Vendor",
-      "tabs": { "vendors": "Vendors", "products": "Products" },
-      "filters": { "label": "Filters", "status": "Status", "vendor": "Vendor" },
+      "tabs": {
+        "vendors": "Vendors",
+        "products": "Products"
+      },
+      "filters": {
+        "label": "Filters",
+        "status": "Status",
+        "vendor": "Vendor"
+      },
       "metrics": {
         "total": "Total vendors",
         "active": "Active vendors",
@@ -2374,7 +3000,9 @@
       "members": "Members",
       "status": "Status",
       "actions": "Actions"
-    }
+    },
+    "memberCount": "Total members",
+    "selectDepartment": "Select a department to view details"
   },
   "orders": {
     "title": "Order workbench",
@@ -2464,7 +3092,10 @@
       "historyLoadFailed": "Unable to load activity history",
       "commentAdded": "Comment added"
     },
-    "shipping": { "name": "Shipping service", "level": "Shipping level" },
+    "shipping": {
+      "name": "Shipping service",
+      "level": "Shipping level"
+    },
     "case": {
       "type": "Case type",
       "severity": "Severity",
@@ -2527,7 +3158,25 @@
       "IN_PROGRESS": "In progress",
       "SHIPPED": "Shipped",
       "CANCELLED": "Cancelled",
-      "OPEN_CASE": "Open case"
+      "OPEN_CASE": "Open case",
+      "ADDRESS_ISSUE": "Address issue",
+      "READY_FOR_PRODUCTION": "Ready for production"
+    },
+    "statuses": {
+      "OPEN": "Open",
+      "NEW_ORDER": "New order",
+      "PROCESSING": "Processing",
+      "IMPORTED": "Imported",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "FULFILLED": "Fulfilled",
+      "CANCELLED": "Cancelled",
+      "FAILED": "Failed",
+      "ON_HOLD": "On hold",
+      "ADDRESS_INVALID": "Invalid address",
+      "INVALID": "Invalid",
+      "READY": "Ready",
+      "APPROVED": "Approved"
     }
   },
   "audit": {
@@ -2540,7 +3189,9 @@
     "loadMore": "Load more",
     "globalScope": "System-wide",
     "notAvailable": "Not available",
-    "entities": { "session": "Login session" },
+    "entities": {
+      "session": "Login session"
+    },
     "detailTitle": "Audit event details",
     "loadingDetail": "Loading audit event details",
     "filters": {
@@ -2560,7 +3211,10 @@
       "source": "Source",
       "outcome": "Outcome"
     },
-    "outcomes": { "SUCCEEDED": "Succeeded", "FAILED": "Failed" },
+    "outcomes": {
+      "SUCCEEDED": "Succeeded",
+      "FAILED": "Failed"
+    },
     "detail": {
       "requestId": "Request ID",
       "ip": "IP address",
@@ -2576,7 +3230,9 @@
     "markAllRead": "Mark all as read",
     "loadMore": "View more",
     "markedAllRead": "All notifications marked as read",
-    "updateFailed": "Could not update notifications"
+    "updateFailed": "Could not update notifications",
+    "all": "All",
+    "unread": "Unread"
   },
   "chat": {
     "title": "Chat",
@@ -2594,7 +3250,22 @@
       "minute": "m",
       "hour": "h",
       "day": "d"
-    }
+    },
+    "description": "Internal conversations and file handoffs",
+    "people": "People",
+    "online": "Online",
+    "offline": "Offline",
+    "groups": "Groups",
+    "emptyPeople": "No chat participants",
+    "select": "Select a conversation",
+    "internalThread": "Internal message thread",
+    "composerLabel": "Message",
+    "placeholder": "Write a message",
+    "attach": "Attach",
+    "createGroup": "Create group",
+    "cancel": "Cancel",
+    "groupTitle": "Group title",
+    "participants": "Participants"
   },
   "errors": {
     "unexpected": "Something unexpected happened.",

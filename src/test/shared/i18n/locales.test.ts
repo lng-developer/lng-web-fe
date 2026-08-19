@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
+import foundationDashboardSource from '@/features/foundation/OperationsDashboardPage.tsx?raw'
+import monitoringDashboardSource from '@/features/monitoring/pages/MonitoringDashboardPage.tsx?raw'
+import listingDetailSource from '@/features/portal/catalog/components/ListingDetailPanel.tsx?raw'
+import listingQcActionsSource from '@/features/portal/catalog/components/ListingQcActions.tsx?raw'
+import listingVariantCardSource from '@/features/portal/catalog/components/ListingVariantCard.tsx?raw'
+import catalogListingSource from '@/features/portal/catalog/pages/CatalogListingWorkbenchPage.tsx?raw'
+import listingVariantManagerSource from '@/features/portal/catalog/pages/ListingVariantManager.tsx?raw'
 import importIssueQueueSource from '@/features/portal/integrations/pages/ImportIssueQueue.tsx?raw'
 import importJobPanelSource from '@/features/portal/integrations/pages/ImportJobPanel.tsx?raw'
 import integrationWorkbenchSource from '@/features/portal/integrations/pages/IntegrationWorkbenchPage.tsx?raw'
@@ -34,6 +41,10 @@ describe('foundation locales', () => {
         'foundation.sections.controls',
         'foundation.status.operational',
         'foundation.empty.title',
+        'foundation.portalDashboard.value',
+        'foundation.portalDashboard.share',
+        'foundation.portalDashboard.percentValue',
+        'foundation.portalDashboard.metricAriaLabel',
         'shell.navigation.primary',
         'theme.light',
         'theme.dark',
@@ -271,6 +282,41 @@ describe('foundation locales', () => {
     expect(flatten(vi)).toEqual(expect.arrayContaining(requiredKeys))
   })
 
+  it('contains every Orders dashboard status tab key in both locales', () => {
+    const orderTabKeys = [
+      'ALL',
+      'NEW_ORDER',
+      'NO_COST_CENTER',
+      'NO_PSD',
+      'PAYMENT_PENDING',
+      'IN_PROGRESS',
+      'SHIPPED',
+      'CANCELLED',
+      'OPEN_CASE',
+      'ADDRESS_ISSUE',
+      'READY_FOR_PRODUCTION',
+    ]
+    const requiredKeys = orderTabKeys.map((key) => `orders.tabs.${key}`)
+
+    expect(flatten(en)).toEqual(expect.arrayContaining(requiredKeys))
+    expect(flatten(vi)).toEqual(expect.arrayContaining(requiredKeys))
+
+    for (const key of orderTabKeys) {
+      expect(vi.orders.tabs[key as keyof typeof vi.orders.tabs]).not.toBe(key.replaceAll('_', ' '))
+    }
+  })
+
+  it('contains the recent order status labels in both locales', () => {
+    const requiredKeys = [
+      'orders.statuses.OPEN',
+      'orders.statuses.PROCESSING',
+      'orders.statuses.IMPORTED',
+    ]
+
+    expect(flatten(en)).toEqual(expect.arrayContaining(requiredKeys))
+    expect(flatten(vi)).toEqual(expect.arrayContaining(requiredKeys))
+  })
+
   it('keeps Integration accessibility labels out of hardcoded source strings', () => {
     const pages = [
       integrationWorkbenchSource,
@@ -281,6 +327,37 @@ describe('foundation locales', () => {
 
     for (const source of pages) {
       expect(source).not.toMatch(/aria-label=["'][^"']+["']/)
+    }
+  })
+
+  it('keeps audited UI surfaces free of hardcoded English copy', () => {
+    const auditedSources = [
+      catalogListingSource,
+      foundationDashboardSource,
+      listingDetailSource,
+      listingQcActionsSource,
+      listingVariantCardSource,
+      listingVariantManagerSource,
+      monitoringDashboardSource,
+    ]
+    const forbiddenCopy = [
+      'No data',
+      'Total orders',
+      'Approved listings',
+      'Select a listing to view details',
+      'Listing approved successfully',
+      'Mark this listing as ready for production',
+      'No variants configured yet',
+      'Total listings',
+      'Listing table',
+      'Health Check Error',
+      'System Health',
+    ]
+
+    for (const source of auditedSources) {
+      for (const copy of forbiddenCopy) {
+        expect(source).not.toContain(copy)
+      }
     }
   })
 })

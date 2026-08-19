@@ -53,6 +53,8 @@ const PAGE_SIZE = 20
 
 const RULE_TASK_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE']
 const SCALE_DIFFICULTIES = ['NORMAL', 'HARD', 'SPECIAL']
+const RULE_SOURCE_TYPES: WorkScoreSourceType[] = ['DESIGN_SUBMISSION', 'PRODUCTION_SCALE']
+const RULE_STATUSES = ['ACTIVE', 'INACTIVE']
 const objectIdPattern = /^[a-f\d]{24}$/i
 const defaultAssetPreview =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' rx='10' fill='%23f1f5f9'/><path d='M28 70h44M34 30h32v28H34z' fill='none' stroke='%2394a3b8' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/></svg>"
@@ -192,6 +194,22 @@ export function WorkScoreWorkbenchPage({
   })
   const [ruleForm] = Form.useForm<WorkScoreRuleFormInput>()
   const ruleSourceType = Form.useWatch('sourceType', ruleForm)
+  const sourceLabel = useCallback(
+    (value: string) => t(`portal.workScores.sources.${value}`, { defaultValue: value }),
+    [t],
+  )
+  const taskTypeLabel = useCallback(
+    (value: string) => t(`portal.workScores.taskTypes.${value}`, { defaultValue: value }),
+    [t],
+  )
+  const scaleDifficultyLabel = useCallback(
+    (value: string) => t(`portal.workScores.scaleDifficulties.${value}`, { defaultValue: value }),
+    [t],
+  )
+  const statusLabel = useCallback(
+    (value: string) => t(`portal.workScores.statuses.${value}`, { defaultValue: value }),
+    [t],
+  )
 
   const openAction = useCallback((mode: 'override' | 'void', score: WorkScoreDetail) => {
     setSelectedId(undefined)
@@ -301,7 +319,9 @@ export function WorkScoreWorkbenchPage({
               </StatusTag>
               {subtype ? (
                 <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  {String(subtype)}
+                  {row.sourceType === 'DESIGN_SUBMISSION'
+                    ? taskTypeLabel(String(subtype))
+                    : scaleDifficultyLabel(String(subtype))}
                 </Typography.Text>
               ) : null}
             </Space>
@@ -326,7 +346,7 @@ export function WorkScoreWorkbenchPage({
           >
             {row.finalPoints}{' '}
             <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-              / {row.basePoints}pt
+              {t('portal.workScores.units.basePoints', { count: row.basePoints })}
             </Typography.Text>
           </Typography.Text>
         ),
@@ -407,7 +427,7 @@ export function WorkScoreWorkbenchPage({
         ),
       },
     ],
-    [canAdjust, openAction, t],
+    [canAdjust, openAction, scaleDifficultyLabel, t, taskTypeLabel],
   )
 
   const designFiles = summary.data?.bySourceType?.find((item) => item._id === 'DESIGN_SUBMISSION')
@@ -465,7 +485,7 @@ export function WorkScoreWorkbenchPage({
         <div className={styles.leaderboardCard}>
           <span className={styles.leaderboardTitle}>
             <TrophyOutlined style={{ color: '#faad14' }} />
-            {t('portal.workScores.topWorkers', { defaultValue: 'Top Contributors' })}:
+            {t('portal.workScores.topWorkers')}:
           </span>
           <div className={styles.leaderboardList}>
             {topWorkers.map((w, idx) => (
@@ -474,9 +494,11 @@ export function WorkScoreWorkbenchPage({
                   {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
                 </span>
                 <span className={styles.name}>{w.workerName || w._id}</span>
-                <span className={styles.pts}>{w.totalPoints} pts</span>
+                <span className={styles.pts}>
+                  {t('portal.workScores.units.points', { count: w.totalPoints })}
+                </span>
                 <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                  ({w.totalFiles} files)
+                  ({t('portal.workScores.units.files', { count: w.totalFiles })})
                 </Typography.Text>
               </span>
             ))}
@@ -487,7 +509,7 @@ export function WorkScoreWorkbenchPage({
       <SectionCard>
         {canAdjust ? (
           <div className={styles.ruleSetup}>
-            <Typography.Title level={4}>Score setup</Typography.Title>
+            <Typography.Title level={4}>{t('portal.workScores.ruleSetup.title')}</Typography.Title>
             <Form
               form={ruleForm}
               layout="inline"
@@ -504,9 +526,9 @@ export function WorkScoreWorkbenchPage({
                       scaleDifficultyLevel: null,
                     })
                   }}
-                  options={['DESIGN_SUBMISSION', 'PRODUCTION_SCALE'].map((value) => ({
+                  options={RULE_SOURCE_TYPES.map((value) => ({
                     value,
-                    label: value,
+                    label: sourceLabel(value),
                   }))}
                 />
               </Form.Item>
@@ -515,8 +537,11 @@ export function WorkScoreWorkbenchPage({
                   <Select
                     allowClear
                     className={styles.filter}
-                    placeholder="Task type"
-                    options={RULE_TASK_TYPES.map((value) => ({ value, label: value }))}
+                    placeholder={t('portal.workScores.ruleSetup.taskType')}
+                    options={RULE_TASK_TYPES.map((value) => ({
+                      value,
+                      label: taskTypeLabel(value),
+                    }))}
                   />
                 </Form.Item>
               ) : (
@@ -524,22 +549,25 @@ export function WorkScoreWorkbenchPage({
                   <Select
                     allowClear
                     className={styles.filter}
-                    placeholder="Scale difficulty"
-                    options={SCALE_DIFFICULTIES.map((value) => ({ value, label: value }))}
+                    placeholder={t('portal.workScores.ruleSetup.scaleDifficulty')}
+                    options={SCALE_DIFFICULTIES.map((value) => ({
+                      value,
+                      label: scaleDifficultyLabel(value),
+                    }))}
                   />
                 </Form.Item>
               )}
               <Form.Item name="points" rules={[{ required: true }]}>
-                <InputNumber min={0} placeholder="Points" />
+                <InputNumber min={0} placeholder={t('portal.workScores.fields.points')} />
               </Form.Item>
               <Form.Item name="status" rules={[{ required: true }]}>
                 <Select
                   className={styles.filter}
-                  options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))}
+                  options={RULE_STATUSES.map((value) => ({ value, label: statusLabel(value) }))}
                 />
               </Form.Item>
               <Button htmlType="submit" loading={ruleMutation.isPending} type="primary">
-                Save rule
+                {t('portal.workScores.ruleSetup.saveRule')}
               </Button>
             </Form>
             <Table
@@ -549,11 +577,24 @@ export function WorkScoreWorkbenchPage({
               dataSource={rules.data ?? []}
               pagination={false}
               columns={[
-                { title: 'Source', dataIndex: 'sourceType' },
-                { title: 'Task type', render: (_, row) => row.taskType || '-' },
-                { title: 'Scale difficulty', render: (_, row) => row.scaleDifficultyLevel || '-' },
-                { title: 'Points', dataIndex: 'points' },
-                { title: 'Status', dataIndex: 'status' },
+                {
+                  title: t('portal.workScores.columns.source'),
+                  render: (_, row) => sourceLabel(row.sourceType),
+                },
+                {
+                  title: t('portal.workScores.ruleSetup.taskType'),
+                  render: (_, row) => (row.taskType ? taskTypeLabel(row.taskType) : '-'),
+                },
+                {
+                  title: t('portal.workScores.ruleSetup.scaleDifficulty'),
+                  render: (_, row) =>
+                    row.scaleDifficultyLevel ? scaleDifficultyLabel(row.scaleDifficultyLevel) : '-',
+                },
+                { title: t('portal.workScores.fields.points'), dataIndex: 'points' },
+                {
+                  title: t('portal.workScores.columns.status'),
+                  render: (_, row) => statusLabel(row.status),
+                },
               ]}
             />
           </div>
@@ -589,7 +630,7 @@ export function WorkScoreWorkbenchPage({
                   setSourceType(value)
                   setPage(1)
                 }}
-                options={['DESIGN_SUBMISSION', 'PRODUCTION_SCALE'].map((value) => ({
+                options={RULE_SOURCE_TYPES.map((value) => ({
                   value,
                   label: t(`portal.workScores.sources.${value}`),
                 }))}

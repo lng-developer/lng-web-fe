@@ -34,6 +34,18 @@ import { MediaAssetDetailModal } from './MediaAssetDetailModal'
 import { MediaUploadModal } from './MediaUploadModal'
 
 const PAGE_SIZE = 20
+const MIME_GROUPS: MediaMimeGroup[] = ['IMAGE', 'DOCUMENT', 'ARCHIVE', 'OTHER']
+const PROVIDERS = ['local', 'cloudinary'] as const
+const RESOURCE_TYPES = ['image', 'video', 'raw'] as const
+const OWNER_TYPES = [
+  'ORDER_ITEM',
+  'CUSTOMIZATION_PAYLOAD',
+  'PRODUCTION_TASK',
+  'EMPLOYEE_PROFILE',
+] as const
+const MEDIA_STATUSES: MediaAssetStatus[] = ['ACTIVE', 'DISCARDED']
+const FILTER_SELECT_WIDTH = 160
+const OWNER_TYPE_SELECT_WIDTH = 210
 const formatSize = (size: number | null) =>
   size === null ? '-' : `${(size / 1024 / 1024).toFixed(2)} MB`
 
@@ -198,47 +210,63 @@ export function MediaWorkspacePage() {
               <Select
                 allowClear
                 placeholder={t('media.filters.mime')}
+                style={{ width: FILTER_SELECT_WIDTH }}
                 value={mimeGroup}
                 onChange={updateFilter(setMimeGroup)}
-                options={['IMAGE', 'DOCUMENT', 'ARCHIVE', 'OTHER'].map((value) => ({
+                options={MIME_GROUPS.map((value) => ({
                   value,
-                  label: value,
+                  label: t(`media.mimeGroups.${value}`),
                 }))}
               />
               <Select
                 allowClear
                 placeholder={t('media.filters.provider')}
+                style={{ width: FILTER_SELECT_WIDTH }}
                 value={provider}
                 onChange={updateFilter(setProvider)}
-                options={['local', 'cloudinary'].map((value) => ({ value, label: value }))}
+                options={PROVIDERS.map((value) => ({
+                  value,
+                  label: t(`media.providers.${value}`),
+                }))}
               />
               <Select
                 allowClear
                 placeholder={t('media.filters.resourceType')}
+                style={{ width: FILTER_SELECT_WIDTH }}
                 value={resourceType}
                 onChange={updateFilter(setResourceType)}
-                options={['image', 'video', 'raw'].map((value) => ({ value, label: value }))}
+                options={RESOURCE_TYPES.map((value) => ({
+                  value,
+                  label: t(`media.resourceTypes.${value}`),
+                }))}
               />
               <Select
                 allowClear
                 placeholder={t('media.filters.ownerType')}
+                style={{ width: OWNER_TYPE_SELECT_WIDTH }}
                 value={ownerType}
                 onChange={updateFilter(setOwnerType)}
-                options={[
-                  'ORDER_ITEM',
-                  'CUSTOMIZATION_PAYLOAD',
-                  'PRODUCTION_TASK',
-                  'EMPLOYEE_PROFILE',
-                ].map((value) => ({ value, label: value }))}
+                options={OWNER_TYPES.map((value) => ({
+                  value,
+                  label: t(`media.ownerTypes.${value}`),
+                }))}
               />
               <Select
                 allowClear
                 placeholder={t('media.filters.status')}
+                style={{ width: FILTER_SELECT_WIDTH }}
                 value={status}
                 onChange={updateFilter(setStatus)}
-                options={['ACTIVE', 'DISCARDED'].map((value) => ({ value, label: value }))}
+                options={MEDIA_STATUSES.map((value) => ({
+                  value,
+                  label: t(`media.statuses.${value}`),
+                }))}
               />
-              <DateRangePicker value={dates} onChange={updateFilter(setDates)} />
+              <DateRangePicker
+                placeholder={[t('media.filters.startDate'), t('media.filters.endDate')]}
+                value={dates}
+                onChange={updateFilter(setDates)}
+              />
             </FilterBar>
           }
         />

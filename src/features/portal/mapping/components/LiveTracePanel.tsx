@@ -37,16 +37,24 @@ const STAGE_ICONS: Record<string, React.ReactNode> = {
   VENDOR_ROUTING: <BranchesOutlined />,
 }
 
-const STAGE_LABELS: Record<string, string> = {
-  SKU_CLEANUP: 'SKU Cleanup',
-  PRODUCT_MAPPING: 'Product Map',
-  INPUT_SEMANTICS: 'Semantics',
-  VALUE_ALIASES: 'Aliases',
-  VENDOR_ROUTING: 'Routing',
+const STAGE_LABEL_KEYS: Record<string, string> = {
+  SKU_CLEANUP: 'mapping.pipeline.skuCleanup',
+  PRODUCT_MAPPING: 'mapping.pipeline.productMapping',
+  INPUT_SEMANTICS: 'mapping.pipeline.inputSemantics',
+  VALUE_ALIASES: 'mapping.pipeline.valueAliases',
+  VENDOR_ROUTING: 'mapping.pipeline.vendorRouting',
 }
 
 const formatMoney = (amount: number, currency = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount / 100)
+
+const fallbackCodeLabel = (value: string) => value.replace(/_/g, ' ')
+
+const translateCode = (
+  t: ReturnType<typeof useTranslation>['t'],
+  namespace: 'semanticRoles' | 'sources',
+  value?: string | null,
+) => (value ? t(`mapping.${namespace}.${value}`, { defaultValue: fallbackCodeLabel(value) }) : '')
 
 function getStepStatus(
   stage: string,
@@ -100,7 +108,7 @@ export function LiveTracePanel({
     : undefined
 
   const stepItems = PIPELINE_STAGES.map((stage) => ({
-    title: STAGE_LABELS[stage],
+    title: t(STAGE_LABEL_KEYS[stage]),
     icon: STAGE_ICONS[stage],
     status: getStepStatus(stage, blockedStageGuess, trace.ready),
   }))
@@ -146,7 +154,7 @@ export function LiveTracePanel({
               <Flex wrap gap={6}>
                 {trace.blockingReasons.map((r) => (
                   <Tag key={r} color="orange" style={{ margin: 0 }}>
-                    {r.replace(/_/g, ' ')}
+                    {t(`mapping.blockers.${r}`, { defaultValue: fallbackCodeLabel(r) })}
                   </Tag>
                 ))}
               </Flex>
@@ -162,17 +170,17 @@ export function LiveTracePanel({
           items={[
             {
               key: 'original',
-              label: 'Original SKU',
+              label: t('mapping.fields.originalSku'),
               children: <Typography.Text code>{trace.originalSku}</Typography.Text>,
             },
             {
               key: 'canonical',
-              label: 'Canonical SKU',
+              label: t('mapping.fields.canonicalSku'),
               children: <Typography.Text code>{trace.canonicalSku}</Typography.Text>,
             },
             {
               key: 'config',
-              label: 'Config Code',
+              label: t('mapping.fields.configCode'),
               children: trace.configCode !== '—' ? <Tag>{trace.configCode}</Tag> : '—',
             },
           ]}
@@ -191,13 +199,17 @@ export function LiveTracePanel({
             <List.Item style={{ padding: '4px 0' }}>
               <Flex align="center" gap={8} style={{ width: '100%' }}>
                 <Tag color="geekblue" style={{ margin: 0, flexShrink: 0 }}>
-                  {input.semanticRole || input.originalLabel || input.label || 'OTHER'}
+                  {translateCode(
+                    t,
+                    'semanticRoles',
+                    input.semanticRole || input.originalLabel || input.label || 'OTHER',
+                  )}
                 </Tag>
                 <Typography.Text strong style={{ flex: 1 }}>
                   {input.normalizedValue || input.rawValue || '—'}
                 </Typography.Text>
                 <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                  {input.source || ''}
+                  {translateCode(t, 'sources', input.source)}
                 </Typography.Text>
               </Flex>
             </List.Item>
@@ -251,12 +263,12 @@ export function LiveTracePanel({
 
               {confidence ? (
                 <span className={`${styles.confidenceBadge} ${styles[confidence]}`}>
-                  {confidence}
+                  {t(`mapping.confidence.${confidence.toLowerCase()}`)}
                 </span>
               ) : null}
 
               {isAuto ? (
-                <Tooltip title="Auto-matched">
+                <Tooltip title={t('mapping.states.autoMatched')}>
                   <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 16 }} />
                 </Tooltip>
               ) : null}

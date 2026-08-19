@@ -59,7 +59,7 @@ describe('AppSidebar', () => {
     expect(screen.getByText('Team management')).toBeVisible()
   })
 
-  it('keeps only one workspace expanded and follows the active route', async () => {
+  it('keeps the active workspace expanded when another group opens', async () => {
     renderSidebar([personal, team, operations], 'team-approvals')
 
     const approvalsLink = screen.getByRole('link', { name: 'Approvals' })
@@ -70,7 +70,7 @@ describe('AppSidebar', () => {
     fireEvent.click(screen.getByText('HR operations'))
 
     await waitFor(() => expect(screen.getByRole('link', { name: 'Employees' })).toBeVisible())
-    expect(approvalsLink).not.toBeVisible()
+    expect(approvalsLink).toBeVisible()
   })
 
   it('opens the newly active group when the route changes', async () => {

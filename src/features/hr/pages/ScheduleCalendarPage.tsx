@@ -227,6 +227,16 @@ export function ScheduleCalendarPage() {
     `${t('hrOperations.schedule.weekLabel')} ${
       Math.floor(dayjs(dateKey).startOf('day').diff(dayjs(dateKey).startOf('month'), 'day') / 7) + 1
     } (${dayjs(dateKey).format('DD/MM/YYYY')})`
+  const statusLabel = (value: string) =>
+    t(`hrOperations.schedule.statuses.${value}`, { defaultValue: value })
+  const rotationSourceLabel = (value: string) =>
+    t(`hrOperations.schedule.rotationSources.${value}`, { defaultValue: value })
+  const overrideKindLabel = (value: string) =>
+    t(`hrOperations.schedule.overrideKinds.${value}`, { defaultValue: value })
+  const scopeTypeLabel = (value: string) =>
+    t(`hrOperations.schedule.scopeTypes.${value}`, { defaultValue: value })
+  const holidayTypeLabel = (value: string) =>
+    t(`hrOperations.schedule.holidayTypes.${value}`, { defaultValue: value })
 
   const openEditor = (next: Editor) => {
     form.resetFields()
@@ -340,7 +350,7 @@ export function ScheduleCalendarPage() {
       label: (
         <span>
           <UserSwitchOutlined style={{ marginRight: 6 }} />
-          Shift Assignments ({assignmentCount})
+          {t('hrOperations.schedule.tabs.assignments', { count: assignmentCount })}
         </span>
       ),
       children: (
@@ -393,7 +403,7 @@ export function ScheduleCalendarPage() {
                 dataIndex: 'status',
                 render: (value) => (
                   <StatusTag status={value === 'ACTIVE' ? 'approved' : 'cancelled'}>
-                    {value}
+                    {statusLabel(value)}
                   </StatusTag>
                 ),
               },
@@ -407,7 +417,7 @@ export function ScheduleCalendarPage() {
       label: (
         <span>
           <CompassOutlined style={{ marginRight: 6 }} />
-          Locations & Work Shifts
+          {t('hrOperations.schedule.tabs.locationsShifts')}
         </span>
       ),
       children: (
@@ -446,7 +456,7 @@ export function ScheduleCalendarPage() {
                     dataIndex: 'status',
                     render: (value) => (
                       <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
-                        {value}
+                        {statusLabel(value)}
                       </StatusTag>
                     ),
                   },
@@ -511,7 +521,7 @@ export function ScheduleCalendarPage() {
                   {
                     title: t('hrOperations.schedule.break'),
                     dataIndex: 'breakMinutes',
-                    render: (value) => `${value} min`,
+                    render: (value) => t('hrOperations.schedule.minutes', { count: value }),
                   },
                   ...(canScheduleWrite
                     ? [
@@ -540,7 +550,7 @@ export function ScheduleCalendarPage() {
       label: (
         <span>
           <CalendarOutlined style={{ marginRight: 6 }} />
-          Holidays & Overrides
+          {t('hrOperations.schedule.tabs.holidaysOverrides')}
         </span>
       ),
       children: (
@@ -712,7 +722,9 @@ export function ScheduleCalendarPage() {
                 title: t('hrOperations.schedule.sourceLabel'),
                 dataIndex: 'source',
                 render: (source: string) => (
-                  <Tag color={source === 'MANUAL' ? 'gold' : 'blue'}>{source}</Tag>
+                  <Tag color={source === 'MANUAL' ? 'gold' : 'blue'}>
+                    {rotationSourceLabel(source)}
+                  </Tag>
                 ),
               },
               {
@@ -777,11 +789,8 @@ export function ScheduleCalendarPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('hrOperations.schedule.title', { defaultValue: 'Work Schedule & Shift Calendar' })}
-        description={t('hrOperations.schedule.description', {
-          defaultValue:
-            'Manage work locations, shifts, employee assignments, and holiday calendars.',
-        })}
+        title={t('hrOperations.schedule.title')}
+        description={t('hrOperations.schedule.description')}
         actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
       />
 
@@ -790,32 +799,28 @@ export function ScheduleCalendarPage() {
         <MetricCard
           icon={<CompassOutlined />}
           variant="neutral"
-          label={t('hrOperations.schedule.metrics.locations', { defaultValue: 'Work Locations' })}
+          label={t('hrOperations.schedule.metrics.locations')}
           value={locationCount}
           loading={locations.isLoading}
         />
         <MetricCard
           icon={<ClockCircleOutlined />}
           variant="info"
-          label={t('hrOperations.schedule.metrics.shifts', { defaultValue: 'Work Shifts' })}
+          label={t('hrOperations.schedule.metrics.shifts')}
           value={shiftCount}
           loading={shifts.isLoading}
         />
         <MetricCard
           icon={<TeamOutlined />}
           variant="success"
-          label={t('hrOperations.schedule.metrics.assignments', {
-            defaultValue: 'Active Assignments',
-          })}
+          label={t('hrOperations.schedule.metrics.assignments')}
           value={assignmentCount}
           loading={assignments.isLoading}
         />
         <MetricCard
           icon={<CalendarOutlined />}
           variant="warning"
-          label={t('hrOperations.schedule.metrics.holidays', {
-            defaultValue: 'Holidays & Overrides',
-          })}
+          label={t('hrOperations.schedule.metrics.holidays')}
           value={holidayCount}
           loading={holidays.isLoading}
         />
@@ -843,13 +848,13 @@ export function ScheduleCalendarPage() {
           {editor?.kind === 'location' && (
             <>
               <Divider plain className={styles.modalSection}>
-                Location Identity
+                {t('hrOperations.schedule.sections.locationIdentity')}
               </Divider>
               <Form.Item name="code" label={t('hrOperations.common.code')} rules={required}>
-                <Input placeholder="e.g. HQ_HAN" />
+                <Input placeholder={t('hrOperations.schedule.placeholders.locationCode')} />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input placeholder="e.g. Hanoi Headquarter Office" />
+                <Input placeholder={t('hrOperations.schedule.placeholders.locationName')} />
               </Form.Item>
               <Form.Item
                 name="timezone"
@@ -865,13 +870,13 @@ export function ScheduleCalendarPage() {
           {editor?.kind === 'shift' && (
             <>
               <Divider plain className={styles.modalSection}>
-                Shift Details
+                {t('hrOperations.schedule.sections.shiftDetails')}
               </Divider>
               <Form.Item name="code" label={t('hrOperations.common.code')} rules={required}>
-                <Input placeholder="e.g. SHIFT_DAY" />
+                <Input placeholder={t('hrOperations.schedule.placeholders.shiftCode')} />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input placeholder="e.g. Day Shift (08:00 - 17:00)" />
+                <Input placeholder={t('hrOperations.schedule.placeholders.shiftName')} />
               </Form.Item>
               <Form.Item name="workLocationId" label={t('hrOperations.common.location')}>
                 <Select
@@ -916,7 +921,7 @@ export function ScheduleCalendarPage() {
           {editor?.kind === 'assignment' && (
             <>
               <Divider plain className={styles.modalSection}>
-                Shift Assignment
+                {t('hrOperations.schedule.sections.shiftAssignment')}
               </Divider>
               <Form.Item
                 name="profileId"
@@ -927,7 +932,7 @@ export function ScheduleCalendarPage() {
                   showSearch
                   optionFilterProp="label"
                   options={employeeOptions}
-                  placeholder="Search employee..."
+                  placeholder={t('hrOperations.schedule.placeholders.searchEmployee')}
                 />
               </Form.Item>
               <Form.Item name="shiftId" label={t('hrOperations.schedule.shift')} rules={required}>
@@ -969,17 +974,20 @@ export function ScheduleCalendarPage() {
           {editor?.kind === 'override' && (
             <>
               <Divider plain className={styles.modalSection}>
-                Calendar Override
+                {t('hrOperations.schedule.sections.calendarOverride')}
               </Divider>
               <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>
                 <DateTimePicker mode="date" />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input placeholder="e.g. Special Maintenance Day" />
+                <Input placeholder={t('hrOperations.schedule.placeholders.overrideName')} />
               </Form.Item>
               <Form.Item name="kind" label={t('hrOperations.common.type')} rules={required}>
                 <Select
-                  options={['HOLIDAY', 'REST_DAY', 'WORKING_DAY'].map((value) => ({ value }))}
+                  options={['HOLIDAY', 'REST_DAY', 'WORKING_DAY'].map((value) => ({
+                    value,
+                    label: overrideKindLabel(value),
+                  }))}
                 />
               </Form.Item>
               <Form.Item
@@ -990,7 +998,7 @@ export function ScheduleCalendarPage() {
               >
                 <Select
                   options={['GLOBAL', 'WORK_LOCATION', 'DEPARTMENT', 'TEAM', 'PROFILE'].map(
-                    (value) => ({ value }),
+                    (value) => ({ value, label: scopeTypeLabel(value) }),
                   )}
                 />
               </Form.Item>
@@ -1000,13 +1008,13 @@ export function ScheduleCalendarPage() {
           {editor?.kind === 'holiday' && (
             <>
               <Divider plain className={styles.modalSection}>
-                Holiday Info
+                {t('hrOperations.schedule.sections.holidayInfo')}
               </Divider>
               <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>
                 <DateTimePicker mode="date" />
               </Form.Item>
               <Form.Item name="name" label={t('hrOperations.common.name')} rules={required}>
-                <Input placeholder="e.g. Independence Day" />
+                <Input placeholder={t('hrOperations.schedule.placeholders.holidayName')} />
               </Form.Item>
               <Form.Item
                 name="holidayType"
@@ -1014,11 +1022,14 @@ export function ScheduleCalendarPage() {
                 initialValue="PUBLIC_HOLIDAY"
               >
                 <Select
-                  options={['PUBLIC_HOLIDAY', 'SUBSTITUTE_WORK_DAY'].map((value) => ({ value }))}
+                  options={['PUBLIC_HOLIDAY', 'SUBSTITUTE_WORK_DAY'].map((value) => ({
+                    value,
+                    label: holidayTypeLabel(value),
+                  }))}
                 />
               </Form.Item>
               <Form.Item name="note" label={t('hrOperations.common.note')}>
-                <Input placeholder="Optional note" />
+                <Input placeholder={t('hrOperations.schedule.placeholders.optionalNote')} />
               </Form.Item>
             </>
           )}
@@ -1033,7 +1044,7 @@ export function ScheduleCalendarPage() {
                   showSearch
                   optionFilterProp="label"
                   options={teams.data?.items.map((item) => ({ value: item.id, label: item.name }))}
-                  placeholder="Select Team..."
+                  placeholder={t('hrOperations.schedule.placeholders.selectTeam')}
                 />
               </Form.Item>
               <Form.Item
@@ -1055,7 +1066,7 @@ export function ScheduleCalendarPage() {
                   showSearch
                   optionFilterProp="label"
                   options={teamOptions}
-                  placeholder="Select Team..."
+                  placeholder={t('hrOperations.schedule.placeholders.selectTeam')}
                   disabled={Boolean(editor.item)}
                   onChange={() => {
                     form.setFieldsValue({ employeeProfileIdsByDate: manualDefaultOffByDate })
@@ -1067,11 +1078,7 @@ export function ScheduleCalendarPage() {
                   <DateTimePicker mode="date" disabled={Boolean(editor.item)} />
                 </Form.Item>
               ) : (
-                <Form.Item
-                  name="month"
-                  label={t('hrOperations.common.month', { defaultValue: 'Month' })}
-                  rules={required}
-                >
+                <Form.Item name="month" label={t('hrOperations.common.month')} rules={required}>
                   <MonthPicker
                     onChange={(value) => {
                       if (!value) return
@@ -1087,7 +1094,7 @@ export function ScheduleCalendarPage() {
               {editor.item ? (
                 <Form.Item
                   name="employeeProfileIds"
-                  label={t('hrOperations.schedule.staff', { defaultValue: 'Staff' })}
+                  label={t('hrOperations.schedule.staff')}
                   rules={required}
                 >
                   <Select
@@ -1095,7 +1102,7 @@ export function ScheduleCalendarPage() {
                     showSearch
                     optionFilterProp="label"
                     options={manualTeamEmployees}
-                    placeholder="Select staff..."
+                    placeholder={t('hrOperations.schedule.placeholders.selectStaff')}
                   />
                 </Form.Item>
               ) : (

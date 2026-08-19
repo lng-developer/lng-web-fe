@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { DatePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 
@@ -28,16 +29,22 @@ export function serializeDateRange(value: DayjsRange): DateRangeValue {
 }
 
 export function DateRangePicker({ value, onChange, style, ...props }: DateRangePickerProps) {
+  const { t } = useTranslation()
   const pickerValue: DayjsRange =
     value?.dateFrom || value?.dateTo
       ? [value.dateFrom ? dayjs(value.dateFrom) : null, value.dateTo ? dayjs(value.dateTo) : null]
       : null
+  const placeholder = props.placeholder ?? [
+    t('foundation.controls.startDate'),
+    t('foundation.controls.endDate'),
+  ]
 
   return (
     <DatePicker.RangePicker
       {...props}
       allowClear
       format="DD/MM/YYYY"
+      placeholder={placeholder}
       style={{ width: '100%', maxWidth: 280, ...style }}
       value={pickerValue}
       onChange={(nextValue) => onChange?.(serializeDateRange(nextValue))}

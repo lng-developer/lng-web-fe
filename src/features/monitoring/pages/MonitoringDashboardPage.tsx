@@ -45,7 +45,7 @@ const statusColor = (status?: string) => {
   return 'error'
 }
 
-export function MonitoringDashboardPage() {
+export const MonitoringDashboardPage = () => {
   const { t } = useTranslation()
   const canRead = hasAnyPermission(['AUDIT:READ'], { globalOnly: true })
   const [health, setHealth] = useState<SystemHealth>()
@@ -68,12 +68,12 @@ export function MonitoringDashboardPage() {
       setHealth(await getSystemHealth())
       setLatencyMs(Math.round(performance.now() - startedAt))
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'System health check failed')
+      setError(cause instanceof Error ? cause.message : t('portal.monitoring.healthCheckFailed'))
       setHealth(undefined)
     } finally {
       setLoading(false)
     }
-  }, [canRead])
+  }, [canRead, t])
 
   const refreshLogs = useCallback(async () => {
     if (!canRead) return
@@ -82,12 +82,12 @@ export function MonitoringDashboardPage() {
     try {
       setLogs(await getSystemLogs({ process: logProcess, stream: logStream, lines: logLines }))
     } catch (cause) {
-      setLogsError(cause instanceof Error ? cause.message : 'System logs failed to load')
+      setLogsError(cause instanceof Error ? cause.message : t('portal.monitoring.logsFailed'))
       setLogs(undefined)
     } finally {
       setLogsLoading(false)
     }
-  }, [canRead, logLines, logProcess, logStream])
+  }, [canRead, logLines, logProcess, logStream, t])
 
   useEffect(() => {
     if (!canRead) return undefined
@@ -111,12 +111,12 @@ export function MonitoringDashboardPage() {
   const healthTab = (
     <>
       {error ? (
-        <SectionCard title="Health Check Error">
+        <SectionCard title={t('portal.monitoring.healthCheckError')}>
           <Typography.Text type="danger">{error}</Typography.Text>
         </SectionCard>
       ) : null}
 
-      <SectionCard title="Infrastructure">
+      <SectionCard title={t('portal.monitoring.infrastructure')}>
         <Row gutter={[24, 24]}>
           {[
             ['MongoDB', health?.infrastructure.mongo, <DatabaseOutlined key="mongo" />],
@@ -141,22 +141,22 @@ export function MonitoringDashboardPage() {
         </Row>
       </SectionCard>
 
-      <SectionCard title="Realtime Socket">
+      <SectionCard title={t('portal.monitoring.realtimeSocket')}>
         <Row gutter={[24, 24]}>
           {[
-            ['Status', health?.realtime?.status ?? 'disabled'],
-            ['Clients', health?.realtime?.connectedClients ?? 0],
-            ['Users', health?.realtime?.authenticatedUsers ?? 0],
-            ['Rooms', health?.realtime?.rooms ?? 0],
-            ['Auth failed', health?.realtime?.authFailures ?? 0],
-            ['Event failed', health?.realtime?.eventFailures ?? 0],
+            [t('portal.monitoring.status'), health?.realtime?.status ?? 'disabled'],
+            [t('portal.monitoring.clients'), health?.realtime?.connectedClients ?? 0],
+            [t('portal.monitoring.users'), health?.realtime?.authenticatedUsers ?? 0],
+            [t('portal.monitoring.rooms'), health?.realtime?.rooms ?? 0],
+            [t('portal.monitoring.authFailed'), health?.realtime?.authFailures ?? 0],
+            [t('portal.monitoring.eventFailed'), health?.realtime?.eventFailures ?? 0],
           ].map(([label, value]) => (
             <Col xs={24} sm={12} md={8} lg={4} key={String(label)}>
               <Card size="small">
                 <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
                   {label}
                 </Typography.Text>
-                {label === 'Status' ? (
+                {label === t('portal.monitoring.status') ? (
                   <Tag color={statusColor(String(value))}>{String(value).toUpperCase()}</Tag>
                 ) : (
                   <Typography.Title level={4}>{value}</Typography.Title>
@@ -167,22 +167,25 @@ export function MonitoringDashboardPage() {
         </Row>
         {health?.realtime?.lastErrorAt ? (
           <Typography.Text type="secondary" style={{ display: 'block', marginTop: 12 }}>
-            Last error: {health.realtime.lastErrorMessage} at {health.realtime.lastErrorAt}
+            {t('portal.monitoring.lastError', {
+              message: health.realtime.lastErrorMessage,
+              time: health.realtime.lastErrorAt,
+            })}
           </Typography.Text>
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Runtime">
+      <SectionCard title={t('portal.monitoring.runtime')}>
         <Row gutter={[24, 24]}>
           <Col xs={24} md={8}>
             <Card size="small">
-              <Typography.Text type="secondary">Uptime</Typography.Text>
+              <Typography.Text type="secondary">{t('portal.monitoring.uptime')}</Typography.Text>
               <Typography.Title level={4}>{health?.uptimeSeconds ?? 0}s</Typography.Title>
             </Card>
           </Col>
           <Col xs={24} md={8}>
             <Card size="small">
-              <Typography.Text type="secondary">Heap Used</Typography.Text>
+              <Typography.Text type="secondary">{t('portal.monitoring.heapUsed')}</Typography.Text>
               <Typography.Title level={4}>{health?.memory.heapUsedMb ?? 0} MB</Typography.Title>
             </Card>
           </Col>
@@ -195,7 +198,12 @@ export function MonitoringDashboardPage() {
         </Row>
       </SectionCard>
 
-      <SectionCard title={`Module Health (${healthyModules}/${totalModules})`}>
+      <SectionCard
+        title={t('portal.monitoring.moduleHealth', {
+          healthy: healthyModules,
+          total: totalModules,
+        })}
+      >
         <Row gutter={[24, 24]}>
           {modules.map((module) => {
             const isOk = module.status === 'ok'
@@ -242,7 +250,7 @@ export function MonitoringDashboardPage() {
 
   const workersTab = (
     <>
-      <SectionCard title="Workers">
+      <SectionCard title={t('portal.monitoring.workers')}>
         <Row gutter={[24, 24]}>
           {workers.map((worker) => (
             <Col xs={24} sm={12} md={8} lg={6} key={worker.key}>
@@ -261,8 +269,8 @@ export function MonitoringDashboardPage() {
                 </Flex>
                 <Typography.Text type="secondary" style={{ fontSize: 11 }}>
                   {worker.process === 'embedded-api'
-                    ? 'Embedded in API process'
-                    : 'Separate PM2 process'}
+                    ? t('portal.monitoring.embeddedApiProcess')
+                    : t('portal.monitoring.separatePm2Process')}
                 </Typography.Text>
               </Card>
             </Col>
@@ -270,7 +278,7 @@ export function MonitoringDashboardPage() {
         </Row>
       </SectionCard>
 
-      <SectionCard title="Queues">
+      <SectionCard title={t('portal.monitoring.queues')}>
         <Row gutter={[24, 24]}>
           {queues.map((queue) => (
             <Col xs={24} lg={12} key={queue.key}>
@@ -291,7 +299,9 @@ export function MonitoringDashboardPage() {
                   {(['waiting', 'active', 'delayed', 'completed', 'failed', 'paused'] as const).map(
                     (key) => (
                       <div key={key}>
-                        <Typography.Text type="secondary">{key}</Typography.Text>
+                        <Typography.Text type="secondary">
+                          {t(`portal.monitoring.queueCounts.${key}`)}
+                        </Typography.Text>
                         <Typography.Text strong>{queue.counts[key]}</Typography.Text>
                       </div>
                     ),
@@ -309,34 +319,37 @@ export function MonitoringDashboardPage() {
   )
 
   const logsTab = (
-    <SectionCard title="Server Logs">
+    <SectionCard title={t('portal.monitoring.serverLogs')}>
       <Space wrap style={{ marginBottom: 12 }}>
         <Select
-          aria-label="Process"
+          aria-label={t('portal.monitoring.process')}
           style={{ width: 220 }}
           value={logProcess}
           options={[
-            { label: 'Backend API', value: 'lng-web-be' },
-            { label: 'Import Workers', value: 'lng-web-be-import-workers' },
-            { label: 'Dev Tunnel', value: 'lng-web-be-dev-tunnel' },
+            { label: t('portal.monitoring.backendApi'), value: 'lng-web-be' },
+            { label: t('portal.monitoring.importWorkers'), value: 'lng-web-be-import-workers' },
+            { label: t('portal.monitoring.devTunnel'), value: 'lng-web-be-dev-tunnel' },
           ]}
           onChange={setLogProcess}
         />
         <Select
-          aria-label="Stream"
+          aria-label={t('portal.monitoring.stream')}
           style={{ width: 120 }}
           value={logStream}
           options={[
-            { label: 'Output', value: 'out' },
-            { label: 'Error', value: 'error' },
+            { label: t('portal.monitoring.output'), value: 'out' },
+            { label: t('portal.monitoring.error'), value: 'error' },
           ]}
           onChange={setLogStream}
         />
         <Select
-          aria-label="Lines"
+          aria-label={t('portal.monitoring.lines')}
           style={{ width: 120 }}
           value={logLines}
-          options={[100, 200, 500].map((value) => ({ label: `${value} lines`, value }))}
+          options={[100, 200, 500].map((value) => ({
+            label: t('portal.monitoring.lineCount', { count: value }),
+            value,
+          }))}
           onChange={setLogLines}
         />
         <Button
@@ -344,7 +357,7 @@ export function MonitoringDashboardPage() {
           loading={logsLoading}
           onClick={() => void refreshLogs()}
         >
-          Refresh Logs
+          {t('portal.monitoring.refreshLogs')}
         </Button>
         {logs?.filename ? (
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
@@ -356,7 +369,7 @@ export function MonitoringDashboardPage() {
         <Typography.Text type="danger">{logsError}</Typography.Text>
       ) : (
         <pre className={styles.logViewer}>
-          {(logs?.content ?? []).join('\n') || 'No log lines found.'}
+          {(logs?.content ?? []).join('\n') || t('portal.monitoring.noLogLines')}
         </pre>
       )}
     </SectionCard>
@@ -373,7 +386,9 @@ export function MonitoringDashboardPage() {
           <Space>
             {health?.generatedAt ? (
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                Updated at {new Date(health.generatedAt).toLocaleTimeString()}
+                {t('portal.monitoring.updatedAt', {
+                  time: new Date(health.generatedAt).toLocaleTimeString(),
+                })}
               </Typography.Text>
             ) : null}
           </Space>
@@ -385,7 +400,7 @@ export function MonitoringDashboardPage() {
           <MetricCard
             icon={<SafetyCertificateOutlined />}
             variant={isHealthy ? 'success' : 'danger'}
-            label="System Health"
+            label={t('portal.monitoring.systemHealth')}
             value={error ? 'UNREACHABLE' : isHealthy ? 'OPERATIONAL' : 'DEGRADED'}
             loading={loading}
           />
@@ -394,7 +409,7 @@ export function MonitoringDashboardPage() {
           <MetricCard
             icon={<ClockCircleOutlined />}
             variant="info"
-            label="Health API Latency"
+            label={t('portal.monitoring.healthApiLatency')}
             value={`${latencyMs} ms`}
             loading={loading}
           />
@@ -403,8 +418,11 @@ export function MonitoringDashboardPage() {
           <MetricCard
             icon={<CloudServerOutlined />}
             variant="neutral"
-            label="Modules"
-            value={`${healthyModules} / ${totalModules} Healthy`}
+            label={t('portal.monitoring.modules')}
+            value={t('portal.monitoring.healthyModules', {
+              healthy: healthyModules,
+              total: totalModules,
+            })}
             loading={loading}
           />
         </Col>
@@ -424,17 +442,17 @@ export function MonitoringDashboardPage() {
         items={[
           {
             key: 'health',
-            label: <UiTabLabel>Health</UiTabLabel>,
+            label: <UiTabLabel>{t('portal.monitoring.health')}</UiTabLabel>,
             children: healthTab,
           },
           {
             key: 'workers',
-            label: <UiTabLabel>Workers & Queues</UiTabLabel>,
+            label: <UiTabLabel>{t('portal.monitoring.workersAndQueues')}</UiTabLabel>,
             children: workersTab,
           },
           {
             key: 'logs',
-            label: <UiTabLabel>Logs</UiTabLabel>,
+            label: <UiTabLabel>{t('portal.monitoring.logs')}</UiTabLabel>,
             children: logsTab,
           },
         ]}
@@ -443,4 +461,4 @@ export function MonitoringDashboardPage() {
   )
 }
 
-export default MonitoringDashboardPage
+// export default MonitoringDashboardPage

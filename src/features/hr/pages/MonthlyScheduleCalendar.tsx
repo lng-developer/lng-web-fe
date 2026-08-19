@@ -45,10 +45,28 @@ export function MonthlyScheduleCalendar({
   const [eventFilter, setEventFilter] = useState<EventFilter>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [editor, setEditor] = useState<TimeRequestKind>()
-  const permissions = new Set(getPermissions())
+  const { canLeaveWrite, canOvertimeWrite } = useMemo(() => {
+    const permissions = new Set(getPermissions())
+
+    return {
+      canLeaveWrite: permissions.has('HR_LEAVE:WRITE'),
+      canOvertimeWrite: permissions.has('HR_OVERTIME:WRITE'),
+    }
+  }, [])
   const daysByKey = useMemo(() => new Map(days.map((day) => [day.workDateKey, day])), [days])
   const selectedDay = daysByKey.get(selectedDateKey)
   const selectedDate = dayjs(selectedDateKey)
+  const weekdayShort = (date: Dayjs) =>
+    t(`hrOperations.calendar.weekdaysShort.${date.day()}`, { defaultValue: date.format('ddd') })
+  const weekdayLong = (date: Dayjs) =>
+    t(`hrOperations.calendar.weekdaysLong.${date.day()}`, { defaultValue: date.format('dddd') })
+  const monthLabel = (date: Dayjs) =>
+    t('hrOperations.calendar.monthYear', {
+      month: t(`hrOperations.calendar.months.${date.month()}`, {
+        defaultValue: date.format('MMMM'),
+      }),
+      year: date.year(),
+    })
   const visibleDays = useMemo(() => {
     const start = month.startOf('month').subtract(month.startOf('month').day(), 'day')
     return Array.from({ length: 42 }, (_, index) => start.add(index, 'day'))
@@ -94,9 +112,9 @@ export function MonthlyScheduleCalendar({
       .forEach((item) =>
         items.push({
           kind: 'overtime',
-          label: `OT ${item.approvedMinutes ?? item.requestedMinutes} min${
-            item.status === 'PENDING' ? ` (${t('hrOperations.self.pending')})` : ''
-          }`,
+          label: `${t('hrOperations.calendar.overtimeMinutes', {
+            minutes: item.approvedMinutes ?? item.requestedMinutes,
+          })}${item.status === 'PENDING' ? ` (${t('hrOperations.self.pending')})` : ''}`,
         }),
       )
     return items
@@ -144,7 +162,7 @@ export function MonthlyScheduleCalendar({
           <Button icon={<LeftOutlined />} onClick={() => setMonth(month.subtract(1, 'month'))} />
           <Button onClick={() => setMonth(today)}>{t('hrOperations.calendar.today')}</Button>
           <Button icon={<RightOutlined />} onClick={() => setMonth(month.add(1, 'month'))} />
-          <Typography.Title level={4}>{month.format('MMMM YYYY')}</Typography.Title>
+          <Typography.Title level={4}>{monthLabel(month)}</Typography.Title>
         </Space>
         <Space className={styles.calendarTabs}>
           {(['all', 'attendance', 'leave', 'overtime'] as const).map((filter) => (
@@ -189,9 +207,9 @@ export function MonthlyScheduleCalendar({
         <div className={styles.calendarMain}>
           {viewMode === 'month' && (
             <div className={styles.calendarMonthGrid}>
-              {['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map((day) => (
+              {Array.from({ length: 7 }, (_, day) => (
                 <div className={styles.calendarWeekday} key={day}>
-                  {day}
+                  {t(`hrOperations.calendar.weekdaysNarrow.${day}`)}
                 </div>
               ))}
               {visibleDays.map((date) => {
@@ -230,7 +248,7 @@ export function MonthlyScheduleCalendar({
                     key={dateKey}
                     onClick={() => setSelectedDateKey(dateKey)}
                   >
-                    <strong>{date.format('ddd').toUpperCase()}</strong>
+                    <strong>{weekdayShort(date)}</strong>
                     <span>{date.format('DD/MM')}</span>
                     {date.isSame(today, 'day') && (
                       <Tag color="blue">{t('hrOperations.calendar.today')}</Tag>
@@ -256,7 +274,7 @@ export function MonthlyScheduleCalendar({
                 >
                   <span className={styles.calendarTimelineDate}>
                     <strong>{dayjs(day.workDateKey).format('D')}</strong>
-                    <small>{dayjs(day.workDateKey).format('ddd')}</small>
+                    <small>{weekdayShort(dayjs(day.workDateKey))}</small>
                   </span>
                   <strong>{dayjs(day.workDateKey).format('DD/MM/YYYY')}</strong>
                   <span>
@@ -282,7 +300,7 @@ export function MonthlyScheduleCalendar({
             <Typography.Title level={4} style={{ marginTop: 4, marginBottom: 0 }}>
               {selectedDate.format('DD/MM/YYYY')}
             </Typography.Title>
-            <Typography.Text>{selectedDate.format('dddd')}</Typography.Text>
+            <Typography.Text>{weekdayLong(selectedDate)}</Typography.Text>
           </div>
           <Tag
             color={
@@ -335,12 +353,12 @@ export function MonthlyScheduleCalendar({
             </Typography.Text>
           </div>
           <Space className={styles.calendarQuickActions} orientation="vertical">
-            {permissions.has('HR_LEAVE:WRITE') && (
+            {canLeaveWrite && (
               <Button block icon={<PlusOutlined />} onClick={() => setEditor('leave')}>
                 {t('hrOperations.requests.requestLeave')}
               </Button>
             )}
-            {permissions.has('HR_OVERTIME:WRITE') && (
+            {canOvertimeWrite && (
               <Button
                 block
                 type="primary"

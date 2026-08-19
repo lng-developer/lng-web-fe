@@ -272,13 +272,13 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
             style={{
               marginBottom: 12,
               padding: '8px 12px',
-              background: '#f0f9ff',
+              background: 'var(--ant-color-info-bg)',
               borderRadius: 8,
-              border: '1px solid #bae0ff',
+              border: '1px solid var(--ant-color-info-border)',
             }}
           >
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-              Context order item
+              {t('mapping.context.contextOrderItem')}
             </Typography.Text>
             <br />
             <Typography.Text strong>

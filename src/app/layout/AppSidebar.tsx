@@ -54,10 +54,8 @@ export function AppSidebar({
   const { resolved } = useThemePreference()
   const searchTerm = navigationSearch
   const activeGroup = getNavigationGroupForItem(groups, selectedKey)
-  const [openState, setOpenState] = useState({
-    selectedKey,
-    key: activeGroup ? `group:${activeGroup}` : undefined,
-  })
+  const [manualOpenKey, setManualOpenKey] = useState<string | undefined>()
+  const [closedActiveGroupKey, setClosedActiveGroupKey] = useState<string | undefined>()
   const normalizedSearch = searchTerm.trim().toLowerCase()
   const visibleGroups = searchTerm
     ? groups
@@ -82,18 +80,21 @@ export function AppSidebar({
         .filter((group) => group.items.length)
     : groups
 
+  const activeGroupKey =
+    activeGroup && visibleGroups.some(({ key }) => key === activeGroup)
+      ? `group:${activeGroup}`
+      : undefined
+  const visibleGroupKeys = new Set(visibleGroups.map((group) => `group:${group.key}`))
+  const candidateOpenKeys = [
+    activeGroupKey === closedActiveGroupKey ? undefined : activeGroupKey,
+    manualOpenKey,
+  ].filter((key): key is string => Boolean(key))
   const openKeys =
     searchTerm && visibleGroups.length
       ? visibleGroups.map((group) => `group:${group.key}`)
-      : openState.selectedKey === selectedKey
-        ? openState.key
-          ? [openState.key]
-          : activeGroup && visibleGroups.some(({ key }) => key === activeGroup)
-            ? [`group:${activeGroup}`]
-            : []
-        : activeGroup && visibleGroups.some(({ key }) => key === activeGroup)
-          ? [`group:${activeGroup}`]
-          : []
+      : candidateOpenKeys
+          .filter((key) => visibleGroupKeys.has(key))
+          .filter((key, index, keys) => keys.indexOf(key) === index)
 
   const items: MenuProps['items'] = visibleGroups.map((group) => ({
     key: `group:${group.key}`,
@@ -130,7 +131,13 @@ export function AppSidebar({
           openKeys={collapsed ? undefined : openKeys}
           selectedKeys={selectedKey ? [selectedKey] : []}
           items={items}
-          onOpenChange={(keys) => setOpenState({ selectedKey, key: keys.at(-1) })}
+          onOpenChange={(keys) => {
+            if (activeGroupKey) {
+              setClosedActiveGroupKey(keys.includes(activeGroupKey) ? undefined : activeGroupKey)
+            }
+            const nextManualKey = [...keys].reverse().find((key) => key !== activeGroupKey)
+            setManualOpenKey(nextManualKey)
+          }}
         />
       </nav>
     </Layout.Sider>

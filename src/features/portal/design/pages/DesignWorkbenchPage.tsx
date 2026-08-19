@@ -98,6 +98,11 @@ const TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE'] as const
 type DesignTaskStatus = (typeof STATUSES)[number]
 type DesignTaskType = (typeof TYPES)[number]
 
+const designEnumLabelKey = (
+  group: 'statuses' | 'taskTypes' | 'priorities' | 'outputTypes',
+  value: string,
+) => `portal.design.${group}.${value}`
+
 const tone = (status: string) =>
   status === 'APPROVED'
     ? 'approved'
@@ -445,8 +450,14 @@ export function DesignWorkbenchPage() {
       })),
     [assignees.data],
   )
-  const statusOptions = useMemo(() => STATUSES.map((value) => ({ value, label: value })), [])
-  const typeOptions = useMemo(() => TYPES.map((value) => ({ value, label: value })), [])
+  const statusOptions = useMemo(
+    () => STATUSES.map((value) => ({ value, label: t(designEnumLabelKey('statuses', value)) })),
+    [t],
+  )
+  const typeOptions = useMemo(
+    () => TYPES.map((value) => ({ value, label: t(designEnumLabelKey('taskTypes', value)) })),
+    [t],
+  )
 
   const handleBulkAssign = useCallback(() => {
     bulkAssign.mutate()
@@ -633,7 +644,7 @@ export function DesignWorkbenchPage() {
       width: 130,
       render: (_, row) => (
         <Tag className={styles.typeTag} color="cyan">
-          {row.taskType}
+          {t(designEnumLabelKey('taskTypes', row.taskType))}
         </Tag>
       ),
     },
@@ -641,7 +652,11 @@ export function DesignWorkbenchPage() {
       title: t('portal.design.priority', 'Priority'),
       key: 'priority',
       width: 110,
-      render: (_, row) => <StatusTag status={priorityTone(row.priority)}>{row.priority}</StatusTag>,
+      render: (_, row) => (
+        <StatusTag status={priorityTone(row.priority)}>
+          {t(designEnumLabelKey('priorities', row.priority))}
+        </StatusTag>
+      ),
     },
     {
       title: t('portal.design.shop', 'Shop'),
@@ -700,7 +715,11 @@ export function DesignWorkbenchPage() {
       key: 'status',
       width: 120,
       align: 'center',
-      render: (_, row) => <StatusTag status={tone(row.status)}>{row.status}</StatusTag>,
+      render: (_, row) => (
+        <StatusTag status={tone(row.status)}>
+          {t(designEnumLabelKey('statuses', row.status))}
+        </StatusTag>
+      ),
     },
     {
       title: t('portal.design.actions', 'Actions'),
@@ -916,37 +935,48 @@ export function DesignWorkbenchPage() {
               size="small"
               column={1}
               items={[
-                { key: 'status', label: 'Status', children: task.status },
-                { key: 'type', label: 'Task type', children: task.taskType },
+                {
+                  key: 'status',
+                  label: t('portal.design.status'),
+                  children: t(designEnumLabelKey('statuses', task.status)),
+                },
+                {
+                  key: 'type',
+                  label: t('portal.design.taskType'),
+                  children: t(designEnumLabelKey('taskTypes', task.taskType)),
+                },
                 {
                   key: 'listing',
-                  label: 'Listing',
+                  label: t('portal.design.listing'),
                   children: task.listing?.sku ?? '-',
                 },
                 {
                   key: 'template',
-                  label: 'Template',
+                  label: t('portal.design.template'),
                   children: task.internalTemplate?.name ?? '-',
                 },
                 {
                   key: 'productType',
-                  label: 'Product type',
+                  label: t('portal.design.productType'),
                   children: task.listing?.productTypeName ?? '-',
                 },
                 {
                   key: 'designer',
-                  label: 'Designer',
+                  label: t('portal.design.designer'),
                   children: task.assignedDesigner?.fullName ?? '-',
                 },
-                { key: 'brief', label: 'Brief', children: task.brief ?? '-' },
+                { key: 'brief', label: t('portal.design.brief'), children: task.brief ?? '-' },
                 {
                   key: 'outputs',
-                  label: 'Expected outputs',
-                  children: task.expectedOutputs.join(', ') || '-',
+                  label: t('portal.design.expectedOutputs'),
+                  children:
+                    task.expectedOutputs
+                      .map((output) => t(designEnumLabelKey('outputTypes', output)))
+                      .join(', ') || '-',
                 },
                 {
                   key: 'rejection',
-                  label: 'Reject reason',
+                  label: t('portal.design.rejectReason'),
                   children: task.rejectReason ?? task.latestSubmission?.rejectReason ?? '-',
                 },
               ]}
@@ -1098,8 +1128,14 @@ export function DesignWorkbenchPage() {
             <div className={styles.submitContextMain}>
               <Typography.Text strong>{activeTask?.listing?.sku ?? '-'}</Typography.Text>
               <Space size={6} wrap>
-                <Tag color="cyan">{activeTask?.taskType}</Tag>
-                <StatusTag status={tone(activeTask?.status ?? '')}>{activeTask?.status}</StatusTag>
+                {activeTask?.taskType ? (
+                  <Tag color="cyan">{t(designEnumLabelKey('taskTypes', activeTask.taskType))}</Tag>
+                ) : null}
+                {activeTask?.status ? (
+                  <StatusTag status={tone(activeTask.status)}>
+                    {t(designEnumLabelKey('statuses', activeTask.status))}
+                  </StatusTag>
+                ) : null}
               </Space>
             </div>
             <Space size="small">

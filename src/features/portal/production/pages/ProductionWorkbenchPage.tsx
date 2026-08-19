@@ -582,7 +582,6 @@ export function ProductionWorkbenchPage({
   }>()
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [expandedRowKeys, setExpandedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
   const [uploadingFileCheckIds, setUploadingFileCheckIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -783,7 +782,6 @@ export function ProductionWorkbenchPage({
     setStatus(undefined)
     setScaleDifficultyLevel(undefined)
     setSelectedRowKeys([])
-    setExpandedRowKeys([])
     setDecisions({})
   }, [])
   const handleSearchChange = useCallback((value: string) => {
@@ -798,14 +796,12 @@ export function ProductionWorkbenchPage({
     setSalesChannelCode(value === 'ALL' ? undefined : (value as 'AMAZON' | 'ETSY'))
     setPage(1)
     setSelectedRowKeys([])
-    setExpandedRowKeys([])
   }, [])
   const handleBlockedMetricClick = useCallback(() => {
     setTab('blocked')
     setStatus(undefined)
     setScaleDifficultyLevel(undefined)
     setSelectedRowKeys([])
-    setExpandedRowKeys([])
     setPage(1)
   }, [])
   const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
@@ -814,10 +810,6 @@ export function ProductionWorkbenchPage({
   }, [])
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage)
-    setExpandedRowKeys([])
-  }, [])
-  const handleExpandedRowsChange = useCallback((keys: readonly Key[]) => {
-    setExpandedRowKeys([...keys])
   }, [])
   const handleScaleAssigneeChange = useCallback((value?: string) => {
     setScaleAssigneeId(value)
@@ -988,6 +980,8 @@ export function ProductionWorkbenchPage({
   )
   const displayedTasks = useDeferredValue(tasks.data)
   const rows = useMemo(() => displayedTasks?.items ?? [], [displayedTasks?.items])
+  console.log('rows', rows)
+  const expandedRowKeys = useMemo(() => rows.map((row) => row.id), [rows])
   const selectedTasks = useMemo(
     () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
     [rows, selectedRowKeys],
@@ -999,11 +993,11 @@ export function ProductionWorkbenchPage({
         width: 136,
         render: (_, row) => <CopyableOrderId value={row.orderItem?.externalOrderId} />,
       },
-      {
-        title: t('portal.production.columns.product'),
-        width: 230,
-        render: (_, row) => <Typography.Text strong>{row.orderItem?.sku || '-'}</Typography.Text>,
-      },
+      // {
+      //   title: t('portal.production.columns.product'),
+      //   width: 230,
+      //   render: (_, row) => <Typography.Text strong>{row.orderItem?.sku || '-'}</Typography.Text>,
+      // },
       {
         title: t('portal.production.columns.shop'),
         width: 150,
@@ -1174,6 +1168,7 @@ export function ProductionWorkbenchPage({
             columns={columns}
             dataSource={rows}
             loading={tasks.isFetching}
+            rowClassName={() => styles.stickyOrderRow}
             rowSelection={
               canAssignScale
                 ? {
@@ -1194,7 +1189,7 @@ export function ProductionWorkbenchPage({
             scroll={{ x: 1240, y: 'calc(100vh - 410px)' }}
             expandable={{
               expandedRowKeys,
-              onExpandedRowsChange: handleExpandedRowsChange,
+              showExpandColumn: false,
               expandedRowRender: (row) => {
                 const task = row
                 return (

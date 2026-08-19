@@ -12,6 +12,16 @@ import styles from '../pages/MappingWorkspacePage.module.scss'
 
 dayjs.extend(relativeTime)
 
+const STAGE_LABEL_KEYS: Record<string, string> = {
+  SKU_CLEANUP: 'mapping.pipeline.skuCleanup',
+  PRODUCT_MAPPING: 'mapping.pipeline.productMapping',
+  INPUT_SEMANTICS: 'mapping.pipeline.inputSemantics',
+  VALUE_ALIASES: 'mapping.pipeline.valueAliases',
+  VENDOR_ROUTING: 'mapping.pipeline.vendorRouting',
+}
+
+const fallbackCodeLabel = (value: string) => value.replace(/_/g, ' ')
+
 function getAgeLabel(createdAt?: string | null): { label: string; overdue: boolean } {
   if (!createdAt) return { label: '—', overdue: false }
   const d = dayjs(createdAt)
@@ -59,9 +69,9 @@ export function ResolveQueuePanel({
     () =>
       [...new Set(items.flatMap((item) => item.blockingReasons))].map((v) => ({
         value: v,
-        label: v,
+        label: t(`mapping.blockers.${v}`, { defaultValue: fallbackCodeLabel(v) }),
       })),
-    [items],
+    [items, t],
   )
 
   const filteredItems = useMemo(() => {
@@ -155,7 +165,9 @@ export function ResolveQueuePanel({
                   ) : null}
                   {item.blockedStage ? (
                     <span className={`${styles.stageBadge} ${styles[item.blockedStage]}`}>
-                      {item.blockedStage.replace('_', ' ')}
+                      {t(STAGE_LABEL_KEYS[item.blockedStage] ?? '', {
+                        defaultValue: fallbackCodeLabel(item.blockedStage),
+                      })}
                     </span>
                   ) : null}
                   {item.blockingReasons.slice(0, 1).map((reason) => (
@@ -169,7 +181,7 @@ export function ResolveQueuePanel({
                         borderRadius: 4,
                       }}
                     >
-                      {reason.replace(/_/g, ' ')}
+                      {t(`mapping.blockers.${reason}`, { defaultValue: fallbackCodeLabel(reason) })}
                     </span>
                   ))}
                 </div>

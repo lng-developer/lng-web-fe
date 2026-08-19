@@ -287,7 +287,11 @@
     "summary": {
       "pending": "Đang chờ",
       "review": "Cần duyệt",
-      "failed": "Thất bại"
+      "failed": "Thất bại",
+      "status": {
+        "warning": "Cảnh báo",
+        "critical": "Nghiêm trọng"
+      }
     },
     "filters": {
       "label": "Bộ lọc",
@@ -333,7 +337,34 @@
       "provider": "Tất cả nhà cung cấp",
       "resourceType": "Tất cả loại tài nguyên",
       "ownerType": "Tất cả nguồn sử dụng",
-      "status": "Tất cả trạng thái"
+      "status": "Tất cả trạng thái",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc"
+    },
+    "mimeGroups": {
+      "IMAGE": "Hình ảnh",
+      "DOCUMENT": "Tài liệu",
+      "ARCHIVE": "Tệp nén",
+      "OTHER": "Khác"
+    },
+    "providers": {
+      "local": "Lưu trữ nội bộ",
+      "cloudinary": "Cloudinary"
+    },
+    "resourceTypes": {
+      "image": "Ảnh",
+      "video": "Video",
+      "raw": "Tệp gốc"
+    },
+    "ownerTypes": {
+      "ORDER_ITEM": "Item đơn hàng",
+      "CUSTOMIZATION_PAYLOAD": "Dữ liệu tùy chỉnh",
+      "PRODUCTION_TASK": "Task sản xuất",
+      "EMPLOYEE_PROFILE": "Hồ sơ nhân viên"
+    },
+    "statuses": {
+      "ACTIVE": "Đang hoạt động",
+      "DISCARDED": "Đã loại bỏ"
     },
     "columns": {
       "file": "Tệp",
@@ -393,6 +424,7 @@
       "shop": "Shop",
       "marketplace": "Marketplace",
       "orderItem": "SKU hoặc item đơn hàng",
+      "contextOrderItem": "Item đơn hàng theo ngữ cảnh",
       "allShops": "Tất cả shop được xem",
       "allMarketplaces": "Tất cả marketplace"
     },
@@ -403,7 +435,7 @@
       "previewChanges": "Xem trước thay đổi",
       "recheck": "Kiểm tra lại item",
       "resolve": "Tự động xử lý",
-      "select": "Chọn candidate",
+      "select": "Chọn ứng viên",
       "batchRecheck": "Kiểm tra lại item an toàn",
       "history": "Xem lịch sử",
       "ruleActions": "Thao tác quy tắc",
@@ -419,8 +451,8 @@
       "closeEditor": "Đóng trình sửa quy tắc",
       "acknowledge": "Xác nhận phạm vi giao nhau",
       "retry": "Thử lại",
-      "findCandidate": "Tìm vendor candidate",
-      "applyCandidate": "Áp dụng candidate",
+      "findCandidate": "Tìm ứng viên vendor",
+      "applyCandidate": "Áp dụng ứng viên",
       "edit": "Chỉnh sửa",
       "openRuleTab": "Sửa tại"
     },
@@ -430,7 +462,7 @@
       "resolveQueue": "Hàng đợi xử lý",
       "impact": "Mẫu bị ảnh hưởng",
       "history": "Lịch sử quy tắc",
-      "candidates": "Candidate",
+      "candidates": "Ứng viên",
       "normalizedInputs": "Dữ liệu đã chuẩn hóa",
       "ruleEditor": "Sửa quy tắc",
       "ruleFields": "Trường quy tắc",
@@ -473,6 +505,8 @@
       "asin": "ASIN",
       "normalizedSize": "Kích thước chuẩn hóa",
       "normalizedColor": "Màu chuẩn hóa",
+      "originalSku": "SKU gốc",
+      "canonicalSku": "SKU chuẩn hóa",
       "priority": "Độ ưu tiên",
       "status": "Trạng thái",
       "sampleSku": "SKU mẫu",
@@ -489,7 +523,41 @@
       "noQueue": "Không có item chưa ánh xạ",
       "selectContext": "Chọn một item hoặc nhập context để xem luồng xử lý",
       "sampled": "Đây là dữ liệu mẫu, không phải tổng chính xác.",
-      "noCandidates": "Không có candidate phù hợp"
+      "noCandidates": "Không có ứng viên phù hợp",
+      "autoMatched": "Tự động khớp"
+    },
+    "confidence": {
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp"
+    },
+    "blockers": {
+      "NO_HIGH_CONFIDENCE_VENDOR_CANDIDATE": "Không có ứng viên vendor đủ tin cậy",
+      "NO_VENDOR_PRODUCT_CANDIDATE": "Không có ứng viên sản phẩm vendor",
+      "VENDOR_ROUTING": "Điều phối vendor",
+      "PRODUCT_MAPPING": "Ánh xạ sản phẩm",
+      "LISTING_CONFIGURATION_REQUIRED": "Cần cấu hình listing",
+      "SKU_CONFIG_REQUIRED": "Cần cấu hình SKU",
+      "SEMANTIC_RULE_REQUIRED": "Cần quy tắc ý nghĩa dữ liệu",
+      "VALUE_ALIAS_REQUIRED": "Cần giá trị tương đương"
+    },
+    "semanticRoles": {
+      "PRODUCT_TYPE": "Loại sản phẩm",
+      "SIZE": "Kích thước",
+      "COLOR": "Màu",
+      "STYLE": "Kiểu dáng",
+      "MATERIAL": "Chất liệu",
+      "CONFIG": "Cấu hình",
+      "COUNTRY": "Quốc gia",
+      "EMPLOYEE": "Nhân viên",
+      "OTHER": "Khác"
+    },
+    "sources": {
+      "RULE": "Quy tắc",
+      "SKU": "SKU",
+      "CUSTOMER_INPUT": "Dữ liệu khách nhập",
+      "DEFAULT": "Mặc định",
+      "SYSTEM": "Hệ thống"
     },
     "age": {
       "today": "Hôm nay",
@@ -507,7 +575,7 @@
       "ruleDisabled": "Đã vô hiệu hóa quy tắc",
       "ruleEnabled": "Đã kích hoạt quy tắc",
       "itemRechecked": "Đã kiểm tra lại ánh xạ",
-      "candidateSelected": "Đã chọn candidate fulfillment",
+      "candidateSelected": "Đã chọn ứng viên fulfillment",
       "batchCompleted": "Đã hoàn tất kiểm tra lại theo lô",
       "loadFailed": "Không thể tải dữ liệu ánh xạ",
       "actionFailed": "Thao tác ánh xạ thất bại",
@@ -691,6 +759,40 @@
       "design": "Thiết kế",
       "production": "Sản xuất"
     },
+    "portalDashboard": {
+      "dashboard": "Bảng điều khiển",
+      "noData": "Chưa có dữ liệu",
+      "orders": "Đơn hàng",
+      "listingImage": "Ảnh listing",
+      "soldCount": "Đã bán {{count}}",
+      "orderCount": "{{count}} đơn hàng",
+      "product": "Sản phẩm",
+      "orderId": "Mã đơn hàng",
+      "quantity": "SL",
+      "total": "Tổng",
+      "value": "Giá trị",
+      "share": "Tỷ lệ",
+      "percentValue": "{{percent}}%",
+      "metricAriaLabel": "{{label}}: {{value}}",
+      "status": "Trạng thái",
+      "totalOrders": "Tổng đơn hàng",
+      "approvedListings": "Listing đã duyệt",
+      "approvedPercent": "{{percent}}% đã duyệt",
+      "newCustomers": "Khách hàng mới",
+      "openListingQueue": "Mở hàng đợi listing",
+      "productInStock": "Sản phẩm còn hàng",
+      "summary": "Tổng quan",
+      "approved": "Đã duyệt",
+      "draft": "Bản nháp",
+      "noPsd": "Thiếu PSD",
+      "rejected": "Đã từ chối",
+      "orderStatus": "Trạng thái đơn hàng",
+      "orderQueues": "Hàng đợi đơn hàng",
+      "monthlyTarget": "Mục tiêu tháng",
+      "approvedFromListings": "{{approved}} đã duyệt trên {{total}} listing",
+      "topAsins": "ASIN nổi bật",
+      "recentOrders": "Đơn hàng gần đây"
+    },
     "accessDenied": "Bạn không có quyền truy cập bảng điều khiển vận hành.",
     "metrics": {
       "staff": {
@@ -757,6 +859,10 @@
       "continue": "Tiếp tục",
       "complete": "Hoàn tất thiết lập",
       "required": "Trường này là bắt buộc",
+      "emailInvalid": "Hãy nhập email hợp lệ",
+      "phoneInvalid": "Hãy nhập số điện thoại hợp lệ",
+      "validationTitle": "Kiểm tra các trường được đánh dấu",
+      "validationDescription": "Biểu mẫu đã chuyển đến tab đầu tiên cần chỉnh sửa.",
       "password": {
         "step": "Bảo mật tài khoản",
         "stepDescription": "Thay mật khẩu tạm thời",
@@ -837,7 +943,9 @@
       "resultsSummary": "{{count}} kết quả",
       "scopeType": "Loại phạm vi",
       "securitySettings": "Thiết lập bảo mật",
-      "viewDetails": "Xem chi tiết"
+      "viewDetails": "Xem chi tiết",
+      "bulkAssign": "Gán hàng loạt",
+      "selectCurrentPage": "Chọn trang hiện tại"
     },
     "accessEditor": {
       "title": "Quản lý quyền truy cập",
@@ -1127,6 +1235,7 @@
     "retry": "Thử lại",
     "schedule": {
       "title": "Lịch làm việc",
+      "description": "Quản lý địa điểm làm việc, ca, phân ca nhân viên và lịch ngày lễ.",
       "workLocations": "Địa điểm làm việc",
       "addLocation": "Thêm địa điểm",
       "shifts": "Ca làm việc",
@@ -1167,31 +1276,116 @@
       "assignmentEditor": "Gán ca",
       "overrideEditor": "Ngoại lệ lịch",
       "holidayEditor": "Ngày lễ",
-      "rotationEditor": "Lịch trực thứ Bảy"
+      "rotationEditor": "Lịch trực thứ Bảy",
+      "minutes": "{{count}} phút",
+      "tabs": {
+        "assignments": "Phân ca nhân sự ({{count}})",
+        "locationsShifts": "Địa điểm & ca làm việc",
+        "holidaysOverrides": "Ngày lễ & ngoại lệ"
+      },
+      "metrics": {
+        "locations": "Địa điểm làm việc",
+        "shifts": "Ca làm việc",
+        "assignments": "Phân ca hiệu lực",
+        "holidays": "Ngày lễ & ngoại lệ"
+      },
+      "sections": {
+        "locationIdentity": "Thông tin địa điểm",
+        "shiftDetails": "Chi tiết ca",
+        "shiftAssignment": "Phân ca",
+        "calendarOverride": "Ngoại lệ lịch",
+        "holidayInfo": "Thông tin ngày lễ"
+      },
+      "placeholders": {
+        "locationCode": "VD: HQ_HAN",
+        "locationName": "VD: Văn phòng Hà Nội",
+        "shiftCode": "VD: SHIFT_DAY",
+        "shiftName": "VD: Ca ngày (08:00 - 17:00)",
+        "searchEmployee": "Tìm nhân viên...",
+        "overrideName": "VD: Ngày bảo trì đặc biệt",
+        "holidayName": "VD: Quốc khánh",
+        "optionalNote": "Ghi chú tuỳ chọn",
+        "selectTeam": "Chọn nhóm...",
+        "selectStaff": "Chọn nhân sự..."
+      },
+      "statuses": {
+        "ACTIVE": "Đang hoạt động",
+        "INACTIVE": "Không hoạt động"
+      },
+      "rotationSources": {
+        "MANUAL": "Thủ công",
+        "GENERATED": "Tự động tạo",
+        "SYSTEM": "Hệ thống"
+      },
+      "overrideKinds": {
+        "HOLIDAY": "Ngày lễ",
+        "REST_DAY": "Ngày nghỉ",
+        "WORKING_DAY": "Ngày làm việc"
+      },
+      "scopeTypes": {
+        "GLOBAL": "Toàn hệ thống",
+        "WORK_LOCATION": "Địa điểm làm việc",
+        "DEPARTMENT": "Phòng ban",
+        "TEAM": "Nhóm",
+        "PROFILE": "Nhân viên"
+      },
+      "holidayTypes": {
+        "PUBLIC_HOLIDAY": "Ngày lễ",
+        "SUBSTITUTE_WORK_DAY": "Ngày làm bù"
+      }
     },
     "attendance": {
       "title": "Chấm công",
+      "myTitle": "Lịch sử chấm công của tôi",
+      "teamTitle": "Bản ghi chấm công & ma trận thời gian",
+      "description": "Theo dõi giờ vào, giờ ra, số phút đi muộn và các điều chỉnh chấm công.",
       "checkIn": "Vào ca",
       "checkOut": "Ra ca",
       "records": "Bản ghi",
       "present": "Có mặt",
       "late": "Đi muộn",
       "missingCheckout": "Thiếu check-out",
+      "lateMinutes": "Số phút đi muộn",
+      "minutes": "{{count}} phút",
       "teamTable": "Bảng chấm công nhân sự",
       "myTable": "Chấm công của tôi",
       "in": "Vào",
       "out": "Ra",
       "workday": "Công",
       "adjust": "Điều chỉnh chấm công",
+      "adjustTitle": "Điều chỉnh bản ghi chấm công",
+      "adjustReason": "Lý do điều chỉnh",
+      "adjustReasonPlaceholder": "Nhập lý do điều chỉnh giờ vào/ra...",
       "checkInTime": "Thời gian vào",
-      "checkOutTime": "Thời gian ra"
+      "checkOutTime": "Thời gian ra",
+      "statuses": {
+        "PRESENT": "Có mặt",
+        "ABSENT": "Vắng mặt",
+        "LATE": "Đi muộn",
+        "LEAVE": "Nghỉ phép",
+        "ANNUAL_LEAVE": "Nghỉ phép năm",
+        "SICK_LEAVE": "Nghỉ ốm",
+        "UNPAID_LEAVE": "Nghỉ không lương",
+        "PERSONAL_PAID": "Nghỉ việc riêng hưởng lương",
+        "PERSONAL_UNPAID": "Nghỉ việc riêng không lương",
+        "MATERNITY_LEAVE": "Nghỉ thai sản",
+        "PATERNITY_LEAVE": "Nghỉ thai sản cho cha",
+        "BEREAVEMENT_LEAVE": "Nghỉ tang chế",
+        "MARRIAGE_LEAVE": "Nghỉ kết hôn",
+        "BUSINESS_TRIP": "Công tác",
+        "HOLIDAY": "Ngày lễ",
+        "REST_DAY": "Ngày nghỉ",
+        "MISSING_CHECKOUT": "Thiếu check-out"
+      }
     },
     "requests": {
       "title": "Nghỉ phép & làm thêm",
+      "description": "Gửi đơn nghỉ phép và làm thêm, theo dõi phép còn lại và duyệt yêu cầu nhân viên.",
       "requestLeave": "Xin nghỉ phép",
       "requestOvertime": "Đăng ký OT",
       "detail": "Chi tiết yêu cầu",
       "minutes": "phút",
+      "minutesWithCount": "{{count}} phút",
       "remainingLeave": "Phép còn lại",
       "pendingLeave": "Đơn nghỉ chờ duyệt",
       "pendingOvertime": "OT chờ duyệt",
@@ -1202,7 +1396,42 @@
       "duration": "Thời lượng",
       "createLeave": "Tạo đơn nghỉ phép",
       "createOvertime": "Đăng ký làm thêm giờ",
-      "leaveType": "Loại phép"
+      "leaveType": "Loại phép",
+      "dateRange": "{{from}} đến {{to}}",
+      "overtimeRange": "{{date}} · {{from}}-{{to}}",
+      "noReason": "Không có lý do",
+      "reasonPlaceholder": "Nhập lý do cho yêu cầu này...",
+      "tabs": {
+        "leave": "Đơn nghỉ phép ({{count}})",
+        "overtime": "Đơn làm thêm ({{count}})"
+      },
+      "decisionReasons": {
+        "approve": "Đã được quản lý HR duyệt",
+        "reject": "Đã bị quản lý HR từ chối"
+      },
+      "statuses": {
+        "PENDING": "Đang chờ",
+        "APPROVED": "Đã duyệt",
+        "REJECTED": "Đã từ chối",
+        "CANCELLED": "Đã huỷ",
+        "REFUNDED": "Đã hoàn phép"
+      },
+      "leaveTypes": {
+        "ANNUAL": "Nghỉ phép năm",
+        "SICK": "Nghỉ ốm",
+        "UNPAID": "Nghỉ không lương",
+        "PERSONAL_PAID": "Nghỉ việc riêng hưởng lương",
+        "PERSONAL_UNPAID": "Nghỉ việc riêng không lương",
+        "MATERNITY_LEAVE": "Nghỉ thai sản",
+        "PATERNITY_LEAVE": "Nghỉ thai sản cho cha",
+        "BEREAVEMENT_LEAVE": "Nghỉ tang chế",
+        "MARRIAGE_LEAVE": "Nghỉ kết hôn"
+      },
+      "portions": {
+        "FULL_DAY": "Cả ngày",
+        "MORNING": "Buổi sáng",
+        "AFTERNOON": "Buổi chiều"
+      }
     },
     "payroll": {
       "title": "Bảng lương",
@@ -1221,6 +1450,21 @@
       "version": "Phiên bản",
       "finalize": "Chốt",
       "paid": "Đã trả",
+      "statuses": {
+        "DRAFT": "Bản nháp",
+        "PROCESSING": "Đang xử lý",
+        "FINALIZED": "Đã chốt",
+        "PAID": "Đã trả",
+        "PARTIALLY_PAID": "Trả một phần",
+        "CANCELLED": "Đã hủy",
+        "FAILED": "Thất bại",
+        "ACTIVE": "Đang hiệu lực",
+        "INACTIVE": "Không hiệu lực",
+        "VOIDED": "Đã hủy",
+        "PENDING": "Chờ duyệt",
+        "APPROVED": "Đã duyệt",
+        "REJECTED": "Từ chối"
+      },
       "staffPayroll": "Bảng lương nhân viên",
       "myPayroll": "Phiếu lương của tôi",
       "workdays": "Ngày công",
@@ -1320,8 +1564,12 @@
       "absent": "Vắng mặt",
       "approvedOt": "OT đã duyệt hôm nay",
       "attendanceTrend": "Xu hướng chấm công",
+      "days": "{{count}} ngày",
       "days_one": "{{count}} ngày",
       "days_other": "{{count}} ngày",
+      "times": "{{count}} lần",
+      "times_one": "{{count}} lần",
+      "times_other": "{{count}} lần",
       "announcements": "Thông báo nội bộ",
       "createAnnouncement": "Tạo thông báo",
       "editAnnouncement": "Sửa thông báo",
@@ -1345,6 +1593,7 @@
       "title": "Công việc của tôi",
       "today": "Hôm nay",
       "greeting": "Tổng quan công việc cá nhân",
+      "scheduleDescription": "Xem lịch ca theo tháng, chấm công, nghỉ phép và làm thêm của bạn.",
       "shift": "Ca hôm nay",
       "noShift": "Không có ca",
       "attendance": "Chấm công",
@@ -1366,10 +1615,12 @@
     },
     "calendar": {
       "label": "Lịch làm việc theo tháng",
+      "monthYear": "{{month}}/{{year}}",
       "selectedDay": "Ngày đang chọn",
       "holiday": "Ngày lễ",
       "unresolved": "Chưa được phân lịch",
       "lateMinutes": "Đi muộn {{minutes}} phút",
+      "overtimeMinutes": "Làm thêm {{minutes}} phút",
       "noRecords": "Không có dữ liệu chấm công hoặc yêu cầu",
       "noAttendanceRecords": "Không có dữ liệu chấm công trong ngày này",
       "today": "Hôm nay",
@@ -1380,6 +1631,47 @@
         "ANNUAL": "Nghỉ phép năm",
         "SICK": "Nghỉ ốm",
         "UNPAID": "Nghỉ không lương"
+      },
+      "months": {
+        "0": "01",
+        "1": "02",
+        "2": "03",
+        "3": "04",
+        "4": "05",
+        "5": "06",
+        "6": "07",
+        "7": "08",
+        "8": "09",
+        "9": "10",
+        "10": "11",
+        "11": "12"
+      },
+      "weekdaysNarrow": {
+        "0": "CN",
+        "1": "T2",
+        "2": "T3",
+        "3": "T4",
+        "4": "T5",
+        "5": "T6",
+        "6": "T7"
+      },
+      "weekdaysShort": {
+        "0": "CN",
+        "1": "T2",
+        "2": "T3",
+        "3": "T4",
+        "4": "T5",
+        "5": "T6",
+        "6": "T7"
+      },
+      "weekdaysLong": {
+        "0": "chủ nhật",
+        "1": "thứ hai",
+        "2": "thứ ba",
+        "3": "thứ tư",
+        "4": "thứ năm",
+        "5": "thứ sáu",
+        "6": "thứ bảy"
       },
       "filters": {
         "all": "Tất cả sự kiện",
@@ -1600,7 +1892,9 @@
       },
       "metrics": {
         "total": "Tổng",
+        "totalListings": "Tổng listing",
         "noPsd": "Thiếu PSD",
+        "psdMissing": "Thiếu PSD",
         "draft": "Chờ QC",
         "approved": "Đã duyệt",
         "rejected": "Đã từ chối"
@@ -1657,8 +1951,151 @@
         "costCenterStatus": "Trạng thái cost center",
         "recordStatus": "Trạng thái bản ghi"
       },
+      "detail": {
+        "selectListing": "Chọn một listing để xem chi tiết",
+        "quantitySold": "Số lượng đã bán",
+        "orders": "Đơn hàng",
+        "orderItems": "Dòng đơn hàng",
+        "lastSold": "Bán gần nhất",
+        "never": "Chưa bán",
+        "qcStatus": "Trạng thái QC",
+        "productionVariants": "Biến thể sản xuất",
+        "created": "Tạo lúc: {{value}}",
+        "updated": "Cập nhật: {{value}}",
+        "baseCost": "Chi phí gốc: {{amount}} {{currency}}"
+      },
+      "qc": {
+        "approved": "Đã duyệt",
+        "rejected": "Đã từ chối",
+        "approvedToast": "Đã duyệt listing",
+        "rejectedToast": "Đã từ chối listing",
+        "approveFailed": "Không thể duyệt",
+        "rejectFailed": "Không thể từ chối",
+        "draftPrefix": "Listing này đang ở trạng thái",
+        "draftSuffix": "- listing sẽ chưa nhận đơn cho đến khi được duyệt.",
+        "approveTooltip": "Đánh dấu listing sẵn sàng sản xuất",
+        "approveConfirmTitle": "Duyệt listing?",
+        "approveConfirmContent": "SKU: {{sku}} sẽ được chuyển sang APPROVED và đủ điều kiện ghép đơn.",
+        "rejectTooltip": "Từ chối kèm lý do",
+        "rejectTitle": "Từ chối listing - {{sku}}",
+        "confirmRejection": "Xác nhận từ chối",
+        "rejectDescription": "Nhập lý do rõ ràng để đội phụ trách xử lý vấn đề.",
+        "rejectPlaceholder": "VD: Thiếu cấu hình slot artwork, sai định dạng SKU..."
+      },
+      "variants": {
+        "title": "Biến thể sản phẩm ({{count}})",
+        "shortTitle": "Biến thể",
+        "add": "Thêm biến thể",
+        "addTitle": "Thêm biến thể listing",
+        "editTitle": "Sửa biến thể listing",
+        "edit": "Sửa biến thể",
+        "empty": "Chưa cấu hình biến thể",
+        "method": "Phương thức",
+        "template": "Mẫu",
+        "default": "Mặc định",
+        "defaultTooltip": "Đây là biến thể mặc định dùng cho sản xuất",
+        "notConfigured": "Chưa cấu hình",
+        "psdReady": "PSD sẵn sàng",
+        "psdNotRequired": "Không cần PSD",
+        "psdMissing": "Thiếu PSD",
+        "requestPsd": "Yêu cầu PSD",
+        "psdTaskCreated": "Đã tạo tác vụ PSD",
+        "psdTaskRequested": "Đã gửi yêu cầu PSD",
+        "requestPsdFailed": "Không thể yêu cầu PSD",
+        "applyPsd": "Áp PSD cho biến thể tương thích",
+        "applyPsdTitle": "Áp PSD cho biến thể tương thích?",
+        "applyPsdContent": "Thao tác này sẽ sao chép tham chiếu PSD sang các biến thể cùng mẫu và phương thức in chưa có PSD.",
+        "apply": "Áp dụng",
+        "psdApplied": "Đã áp PSD cho {{count}} biến thể tương thích",
+        "applyPsdFailed": "Không thể áp PSD",
+        "uploadPreview": "Tải ảnh xem trước lên",
+        "previewUploaded": "Đã tải ảnh xem trước",
+        "uploadPreviewFailed": "Không thể tải ảnh xem trước",
+        "scale": "Scale",
+        "scaleDifficulty": "Độ khó scale",
+        "scaleNote": "Ghi chú scale",
+        "scaleNotePlaceholder": "Điều gì khiến biến thể này khó scale?",
+        "inheritProductType": "Kế thừa loại sản phẩm",
+        "setDefault": "Đặt làm biến thể mặc định",
+        "expand": "Mở biến thể",
+        "collapse": "Thu gọn biến thể"
+      },
+      "psdStates": {
+        "notConfigured": "Chưa cấu hình",
+        "ready": "Sẵn sàng",
+        "partial": "Một phần",
+        "missing": "Thiếu"
+      },
+      "sales": {
+        "soldCount": "Đã bán {{count}}",
+        "orderCount": "{{count}} đơn hàng"
+      },
+      "copySku": "Sao chép SKU",
+      "skuCopied": "Đã sao chép SKU",
+      "copyAsin": "Sao chép ASIN",
+      "asinCopied": "Đã sao chép ASIN",
+      "copyListingId": "Sao chép ID listing",
+      "listingIdCopied": "Đã sao chép ID listing",
+      "loadFailed": "Không thể tải listing",
+      "saveFailed": "Không thể lưu",
+      "tableTitle": "Bảng listing",
+      "tableDescription": "Mở rộng listing để quản lý biến thể sản phẩm, PSD, ảnh xem trước và thiết lập scale.",
+      "results": "{{count}} kết quả",
+      "listingCount": "{{count}} listing",
       "rejectReason": "Lý do từ chối",
       "reasonRequired": "Bắt buộc nhập lý do"
+    },
+    "monitoring": {
+      "title": "Giám sát hệ thống",
+      "description": "Theo dõi sức khỏe backend, hạ tầng và mức sẵn sàng của module theo thời gian thực.",
+      "healthCheckFailed": "Kiểm tra sức khỏe hệ thống thất bại",
+      "logsFailed": "Không thể tải log hệ thống",
+      "healthCheckError": "Lỗi kiểm tra sức khỏe",
+      "infrastructure": "Hạ tầng",
+      "realtimeSocket": "Realtime socket",
+      "status": "Trạng thái",
+      "clients": "Client",
+      "users": "Người dùng",
+      "rooms": "Phòng",
+      "authFailed": "Lỗi xác thực",
+      "eventFailed": "Lỗi sự kiện",
+      "lastError": "Lỗi gần nhất: {{message}} lúc {{time}}",
+      "runtime": "Runtime",
+      "uptime": "Thời gian chạy",
+      "heapUsed": "Heap đã dùng",
+      "moduleHealth": "Sức khỏe module ({{healthy}}/{{total}})",
+      "workers": "Worker",
+      "queues": "Hàng đợi",
+      "embeddedApiProcess": "Chạy trong tiến trình API",
+      "separatePm2Process": "Tiến trình PM2 riêng",
+      "queueCounts": {
+        "waiting": "Chờ",
+        "active": "Đang chạy",
+        "delayed": "Trì hoãn",
+        "completed": "Hoàn tất",
+        "failed": "Thất bại",
+        "paused": "Tạm dừng"
+      },
+      "serverLogs": "Log máy chủ",
+      "process": "Tiến trình",
+      "stream": "Luồng",
+      "lines": "Số dòng",
+      "backendApi": "Backend API",
+      "importWorkers": "Worker import",
+      "devTunnel": "Dev tunnel",
+      "output": "Output",
+      "error": "Error",
+      "lineCount": "{{count}} dòng",
+      "refreshLogs": "Làm mới log",
+      "noLogLines": "Không tìm thấy dòng log.",
+      "updatedAt": "Cập nhật lúc {{time}}",
+      "systemHealth": "Sức khỏe hệ thống",
+      "healthApiLatency": "Độ trễ Health API",
+      "modules": "Module",
+      "healthyModules": "{{healthy}} / {{total}} khỏe",
+      "health": "Sức khỏe",
+      "workersAndQueues": "Worker & hàng đợi",
+      "logs": "Log"
     },
     "design": {
       "actions": "Thao tác",
@@ -1695,6 +2132,8 @@
       "briefRequired": "Bắt buộc nhập yêu cầu thiết kế",
       "sourceType": "Loại nguồn",
       "source": "Nguồn",
+      "template": "Mẫu",
+      "productType": "Loại sản phẩm",
       "sourceRequired": "Chọn nguồn",
       "sourceListing": "Listing",
       "sourceTemplate": "Mẫu nội bộ",
@@ -1739,7 +2178,44 @@
       "submissionHistory": "Lịch sử bản nộp",
       "version": "Phiên bản",
       "files": "Tệp",
-      "rejectReason": "Lý do từ chối"
+      "rejectReason": "Lý do từ chối",
+      "taskSetup": "Thiết lập tác vụ",
+      "requirements": "Yêu cầu",
+      "attachments": "Tệp đính kèm",
+      "openProduct": "Mở SP",
+      "image": "Ảnh",
+      "copyAsin": "Sao chép ASIN",
+      "asinCopied": "Đã sao chép ASIN",
+      "tasks": "Tác vụ thiết kế",
+      "taskTypes": {
+        "PSD_TEMPLATE": "Mẫu PSD",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "Tệp PNG",
+        "IDEA": "Ý tưởng",
+        "CLONE": "Nhân bản"
+      },
+      "priorities": {
+        "LOW": "Thấp",
+        "NORMAL": "Thường",
+        "HIGH": "Cao",
+        "URGENT": "Khẩn cấp"
+      },
+      "outputTypes": {
+        "PSD_TEMPLATE": "Mẫu PSD",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "Tệp PNG",
+        "IDEA": "Ý tưởng"
+      },
+      "statuses": {
+        "REQUESTED": "Đã yêu cầu",
+        "OPEN": "Đang mở",
+        "ASSIGNED": "Đã phân công",
+        "IN_PROGRESS": "Đang thực hiện",
+        "SUBMITTED": "Đã nộp",
+        "APPROVED": "Đã duyệt",
+        "REJECTED": "Đã từ chối",
+        "CANCELLED": "Đã hủy"
+      }
     },
     "integrations": {
       "title": "Nhập đơn hàng bên ngoài",
@@ -1916,6 +2392,8 @@
       "createTitle": "Tạo cửa hàng",
       "editTitle": "Sửa cửa hàng",
       "inspectTitle": "Chi tiết cửa hàng",
+      "sectionInfo": "Thông tin cửa hàng",
+      "sectionStatus": "Trạng thái & quyền truy cập",
       "create": "Tạo",
       "saveStatus": "Lưu trạng thái",
       "cancel": "Hủy",
@@ -1927,6 +2405,12 @@
       "noFilteredResults": "Không có cửa hàng phù hợp với bộ lọc",
       "clearFilters": "Xóa bộ lọc",
       "noAuthorizedShops": "Chưa có cửa hàng nào được cấp cho quyền truy cập của bạn",
+      "metrics": {
+        "total": "Tổng cửa hàng",
+        "active": "Cửa hàng hoạt động",
+        "inactive": "Cửa hàng không hoạt động",
+        "channel": "Kênh bán hàng"
+      },
       "statuses": {
         "ACTIVE": "Hoạt động",
         "INACTIVE": "Không hoạt động",
@@ -2067,7 +2551,9 @@
         "PASSED": "Đã duyệt",
         "REJECTED": "Đã từ chối"
       },
-      "submitScaleQc": "G?i sang QC"
+      "submitScaleQc": "G?i sang QC",
+      "openProduct": "Mở SP",
+      "downloadCustomerImage": "Ảnh khách hàng"
     },
     "vendorSubmissions": {
       "title": "Gửi đơn nhà cung cấp",
@@ -2191,12 +2677,29 @@
       "refresh": "Tải lại",
       "unavailable": "Không thể tải điểm công việc",
       "filters": "Bộ lọc điểm",
-      "search": "Tìm SKU, đơn hàng hoặc task",
+      "search": "Tìm SKU, đơn hàng hoặc tác vụ",
       "allSources": "Tất cả nguồn",
       "detail": "Chi tiết điểm",
       "history": "Lịch sử điều chỉnh",
       "updated": "Đã cập nhật điểm",
       "actionFailed": "Cập nhật điểm thất bại",
+      "topWorkers": "Nhân viên nổi bật",
+      "noAssetPreview": "Không có ảnh xem trước cho tác vụ này",
+      "evalHeading": "Đánh giá và điều chỉnh điểm",
+      "reasonPlaceholder": "Nhập lý do audit khi điều chỉnh điểm...",
+      "voidReasonPlaceholder": "Lý do hủy điểm công việc này...",
+      "noAdjustments": "Chưa có điều chỉnh hoặc hủy điểm thủ công.",
+      "ruleSetup": {
+        "title": "Thiết lập điểm",
+        "taskType": "Loại tác vụ",
+        "scaleDifficulty": "Độ khó Scale",
+        "saveRule": "Lưu quy tắc"
+      },
+      "units": {
+        "points": "{{count}} điểm",
+        "basePoints": " / {{count}}đ",
+        "files": "{{count}} file"
+      },
       "metrics": {
         "totalFiles": "Số file",
         "totalPoints": "Tổng điểm",
@@ -2209,10 +2712,36 @@
       },
       "statuses": {
         "ACTIVE": "Đang hiệu lực",
+        "INACTIVE": "Không hiệu lực",
         "VOIDED": "Đã hủy",
         "ALL": "Tất cả trạng thái"
       },
+      "taskTypes": {
+        "PSD_TEMPLATE": "Mẫu PSD",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "Tệp PNG",
+        "IDEA": "Ý tưởng",
+        "CLONE": "Clone"
+      },
+      "scaleDifficulties": {
+        "NORMAL": "Thường",
+        "HARD": "Khó",
+        "SPECIAL": "Đặc biệt"
+      },
+      "levelNames": {
+        "BASIC": "Cơ bản",
+        "STANDARD": "Tiêu chuẩn",
+        "HARD": "Khó",
+        "BONUS": "Thưởng"
+      },
+      "levels": {
+        "BASIC": "Cơ bản ({{points}}đ)",
+        "STANDARD": "Tiêu chuẩn ({{points}}đ)",
+        "HARD": "Khó ({{points}}đ)",
+        "BONUS": "Thưởng ({{points}}đ)"
+      },
       "columns": {
+        "asset": "Tệp",
         "source": "Nguồn",
         "context": "File / ngữ cảnh",
         "worker": "Nhân viên",
@@ -2226,14 +2755,26 @@
         "points": "Điểm",
         "level": "Mức điểm",
         "reason": "Lý do",
-        "context": "Ngữ cảnh nguồn"
+        "context": "Ngữ cảnh nguồn",
+        "skuOrder": "SKU / đơn hàng",
+        "taskSlot": "Tác vụ / vị trí"
       },
       "actions": {
         "view": "Xem",
         "download": "Tải file",
         "override": "Điều chỉnh điểm",
         "void": "Hủy điểm",
-        "confirm": "Xác nhận"
+        "confirm": "Xác nhận",
+        "confirmVoid": "Xác nhận hủy",
+        "saveOverride": "Lưu điều chỉnh điểm"
+      },
+      "adjustments": {
+        "pointsChange": "{{oldPoints}} -> {{newPoints}} điểm",
+        "types": {
+          "OVERRIDE": "Điều chỉnh",
+          "VOID": "Hủy",
+          "SYSTEM_VOID": "Hệ thống hủy"
+        }
       }
     },
     "vendors": {
@@ -2459,7 +3000,9 @@
       "members": "Thành viên",
       "status": "Trạng thái",
       "actions": "Thao tác"
-    }
+    },
+    "memberCount": "Tổng thành viên",
+    "selectDepartment": "Chọn một phòng ban để xem chi tiết"
   },
   "orders": {
     "title": "Bàn làm việc đơn hàng",
@@ -2615,7 +3158,25 @@
       "IN_PROGRESS": "Đang xử lý",
       "SHIPPED": "Đã gửi",
       "CANCELLED": "Đã huỷ",
-      "OPEN_CASE": "Case đang mở"
+      "OPEN_CASE": "Case đang mở",
+      "ADDRESS_ISSUE": "Lỗi address",
+      "READY_FOR_PRODUCTION": "Sẵn sàng sản xuất"
+    },
+    "statuses": {
+      "OPEN": "Đang mở",
+      "NEW_ORDER": "Đơn mới",
+      "PROCESSING": "Đang xử lý",
+      "IMPORTED": "Đã nhập",
+      "SHIPPED": "Đã gửi",
+      "DELIVERED": "Đã giao",
+      "FULFILLED": "Đã fulfilled",
+      "CANCELLED": "Đã hủy",
+      "FAILED": "Thất bại",
+      "ON_HOLD": "Tạm giữ",
+      "ADDRESS_INVALID": "Address không hợp lệ",
+      "INVALID": "Không hợp lệ",
+      "READY": "Sẵn sàng",
+      "APPROVED": "Đã duyệt"
     }
   },
   "audit": {
@@ -2669,7 +3230,9 @@
     "markAllRead": "Đánh dấu tất cả đã đọc",
     "loadMore": "Xem thêm",
     "markedAllRead": "Đã đánh dấu tất cả thông báo là đã đọc",
-    "updateFailed": "Không thể cập nhật thông báo"
+    "updateFailed": "Không thể cập nhật thông báo",
+    "all": "Tất cả",
+    "unread": "Chưa đọc"
   },
   "chat": {
     "title": "Đoạn chat",
@@ -2687,7 +3250,22 @@
       "minute": " phút",
       "hour": " giờ",
       "day": " ngày"
-    }
+    },
+    "description": "Trao đổi nội bộ và bàn giao tệp",
+    "people": "Mọi người",
+    "online": "Đang online",
+    "offline": "Offline",
+    "groups": "Nhóm",
+    "emptyPeople": "Chưa có người tham gia chat",
+    "select": "Chọn một cuộc trò chuyện",
+    "internalThread": "Luồng tin nhắn nội bộ",
+    "composerLabel": "Tin nhắn",
+    "placeholder": "Viết tin nhắn",
+    "attach": "Đính kèm",
+    "createGroup": "Tạo nhóm",
+    "cancel": "Hủy",
+    "groupTitle": "Tên nhóm",
+    "participants": "Người tham gia"
   },
   "errors": {
     "unexpected": "Da xay ra loi khong mong muon.",

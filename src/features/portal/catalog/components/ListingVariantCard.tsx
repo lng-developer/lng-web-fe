@@ -35,10 +35,13 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
     mutationFn: (variantId: string) => requestListingVariantPsd(listing.id, variantId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: catalogKeys.variants(listing.id) })
-      toast('success', t('portal.catalog.psd.taskCreated'))
+      toast('success', t('portal.catalog.variants.psdTaskCreated'))
     },
     onError: (err) =>
-      toast('error', err instanceof Error ? err.message : t('portal.catalog.psd.createFailed')),
+      toast(
+        'error',
+        err instanceof Error ? err.message : t('portal.catalog.variants.requestPsdFailed'),
+      ),
   })
 
   if (variants.isLoading) {
@@ -54,7 +57,7 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
   if (!data.length) {
     return (
       <div className={styles.empty}>
-        <Typography.Text type="secondary">No variants configured yet</Typography.Text>
+        <Typography.Text type="secondary">{t('portal.catalog.variants.empty')}</Typography.Text>
       </div>
     )
   }
@@ -85,7 +88,10 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
 
             <div className={styles.variantMeta}>
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                Template: {variant.internalTemplate?.name ?? <em>Not configured</em>}
+                {t('portal.catalog.variants.template')}:{' '}
+                {variant.internalTemplate?.name ?? (
+                  <em>{t('portal.catalog.variants.notConfigured')}</em>
+                )}
               </Typography.Text>
             </div>
 
@@ -108,7 +114,7 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
               {psdMissing && (
                 <Space size={8}>
                   <Tag icon={<AlertOutlined />} color="warning">
-                    {t('portal.catalog.psd.missingTag')}
+                    {t('portal.catalog.variants.psdMissing')}
                   </Tag>
                   {canWrite && (
                     <Button
@@ -118,7 +124,7 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
                       loading={requestPsd.isPending && requestPsd.variables === variant.id}
                       onClick={() => requestPsd.mutate(variant.id)}
                     >
-                      {t('portal.catalog.psd.request')}
+                      {t('portal.catalog.variants.requestPsd')}
                     </Button>
                   )}
                 </Space>

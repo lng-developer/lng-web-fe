@@ -97,7 +97,10 @@ export function TimeRequestsPage() {
     mutationFn: ({ kind, action, id }) => {
       if (action === 'cancel')
         return kind === 'leave' ? cancelLeaveRequest(id) : cancelOvertimeRequest(id)
-      const reason = action === 'approve' ? 'Approved by HR Manager' : 'Rejected by HR Manager'
+      const reason =
+        action === 'approve'
+          ? t('hrOperations.requests.decisionReasons.approve')
+          : t('hrOperations.requests.decisionReasons.reject')
       if (kind === 'leave')
         return action === 'approve'
           ? approveLeaveRequest(id, { reason })
@@ -113,7 +116,9 @@ export function TimeRequestsPage() {
     onError: (error) => toast('error', t('hrOperations.messages.requestFailed'), error.message),
   })
 
-  const status = (value: string) => <StatusTag status={statusTone(value)}>{value}</StatusTag>
+  const status = (value: string) => (
+    <StatusTag status={statusTone(value)}>{requestStatus(value)}</StatusTag>
+  )
 
   const action = (label: string, icon: React.ReactNode, onClick: () => void, danger = false) => (
     <Tooltip title={label}>
@@ -157,6 +162,11 @@ export function TimeRequestsPage() {
     0,
   )
   const totalRequests = (leaves.data?.items.length ?? 0) + (overtime.data?.items.length ?? 0)
+  const date = (value: string) => dayjs(value).format('DD/MM/YYYY')
+  const requestStatus = (value: string) =>
+    t(`hrOperations.requests.statuses.${value}`, { defaultValue: value })
+  const leaveType = (value: string) =>
+    t(`hrOperations.requests.leaveTypes.${value}`, { defaultValue: value })
 
   const tabItems = [
     {
@@ -164,7 +174,7 @@ export function TimeRequestsPage() {
       label: (
         <span>
           <RestOutlined style={{ marginRight: 6 }} />
-          Leave Requests ({leaves.data?.items.length ?? 0})
+          {t('hrOperations.requests.tabs.leave', { count: leaves.data?.items.length ?? 0 })}
         </span>
       ),
       children: (
@@ -191,14 +201,17 @@ export function TimeRequestsPage() {
                 title: t('hrOperations.requests.time'),
                 render: (_, item: LeaveRequest) => (
                   <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-                    {item.startDateKey} → {item.endDateKey}
+                    {t('hrOperations.requests.dateRange', {
+                      from: date(item.startDateKey),
+                      to: date(item.endDateKey),
+                    })}
                   </Typography.Text>
                 ),
               },
               {
                 title: t('hrOperations.common.type'),
                 dataIndex: 'leaveType',
-                render: (v) => <Tag color="purple">{v}</Tag>,
+                render: (v) => <Tag color="purple">{leaveType(v)}</Tag>,
               },
               { title: t('hrOperations.common.status'), dataIndex: 'status', render: status },
               {
@@ -216,7 +229,7 @@ export function TimeRequestsPage() {
       label: (
         <span>
           <FieldTimeOutlined style={{ marginRight: 6 }} />
-          Overtime Requests ({overtime.data?.items.length ?? 0})
+          {t('hrOperations.requests.tabs.overtime', { count: overtime.data?.items.length ?? 0 })}
         </span>
       ),
       children: (
@@ -242,7 +255,7 @@ export function TimeRequestsPage() {
               {
                 title: t('hrOperations.common.date'),
                 dataIndex: 'workDateKey',
-                render: (v) => <Tag color="blue">{v}</Tag>,
+                render: (v) => <Tag color="blue">{date(v)}</Tag>,
               },
               {
                 title: t('hrOperations.requests.time'),
@@ -265,11 +278,8 @@ export function TimeRequestsPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('hrOperations.requests.title', { defaultValue: 'Time Off & Overtime Requests' })}
-        description={t('hrOperations.requests.description', {
-          defaultValue:
-            'Submit leave and overtime applications, manage leave balances, and approve employee requests.',
-        })}
+        title={t('hrOperations.requests.title')}
+        description={t('hrOperations.requests.description')}
         actions={
           <Space>
             {canLeaveWrite && (
@@ -358,21 +368,30 @@ export function TimeRequestsPage() {
               </Descriptions.Item>
               <Descriptions.Item label={t('hrOperations.common.type')}>
                 {detail.kind === 'leave'
-                  ? (detail.request as LeaveRequest).leaveType
+                  ? leaveType((detail.request as LeaveRequest).leaveType)
                   : t('hrOperations.requests.overtime')}
               </Descriptions.Item>
               <Descriptions.Item label={t('hrOperations.requests.time')}>
                 {detail.kind === 'leave'
-                  ? `${(detail.request as LeaveRequest).startDateKey} → ${(detail.request as LeaveRequest).endDateKey}`
-                  : `${(detail.request as OvertimeRequest).workDateKey} · ${(detail.request as OvertimeRequest).plannedStartTime}–${(detail.request as OvertimeRequest).plannedEndTime}`}
+                  ? t('hrOperations.requests.dateRange', {
+                      from: date((detail.request as LeaveRequest).startDateKey),
+                      to: date((detail.request as LeaveRequest).endDateKey),
+                    })
+                  : t('hrOperations.requests.overtimeRange', {
+                      date: date((detail.request as OvertimeRequest).workDateKey),
+                      from: (detail.request as OvertimeRequest).plannedStartTime,
+                      to: (detail.request as OvertimeRequest).plannedEndTime,
+                    })}
               </Descriptions.Item>
               <Descriptions.Item label={t('hrOperations.requests.duration')}>
                 {detail.kind === 'leave'
                   ? (detail.request as LeaveRequest).requestedUnits
-                  : `${(detail.request as OvertimeRequest).requestedMinutes} ${t('hrOperations.requests.minutes')}`}
+                  : t('hrOperations.requests.minutesWithCount', {
+                      count: (detail.request as OvertimeRequest).requestedMinutes,
+                    })}
               </Descriptions.Item>
               <Descriptions.Item label={t('hrOperations.common.reason')}>
-                {detail.request.reason || '—'}
+                {detail.request.reason || t('hrOperations.requests.noReason')}
               </Descriptions.Item>
             </Descriptions>
           </Space>

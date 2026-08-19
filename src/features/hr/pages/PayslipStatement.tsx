@@ -20,6 +20,8 @@ export function PayslipStatement({ result, periodLabel, formatMoney }: Props) {
   const value = (input?: null | number | string) =>
     input === null || input === undefined || input === '' ? '—' : String(input)
   const money = (amount: number) => `${formatMoney(amount)} ${currency}`
+  const payrollStatus = (status: string) =>
+    t(`hrOperations.payroll.statuses.${status}`, { defaultValue: status })
   const moneyRow = (label: string, amount: number, detail?: string) => (
     <div className={styles.moneyRow} key={`${label}-${detail || ''}`}>
       <div>
@@ -73,7 +75,7 @@ export function PayslipStatement({ result, periodLabel, formatMoney }: Props) {
                   : 'pending'
             }
           >
-            {result.status}
+            {payrollStatus(result.status)}
           </StatusTag>
         </div>
       </header>

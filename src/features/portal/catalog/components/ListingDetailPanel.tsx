@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EditOutlined, GlobalOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Divider, Space, Tag, Typography } from 'antd'
 
@@ -44,11 +45,15 @@ export function ListingDetailPanel({
   productTypes,
   templates,
 }: ListingDetailPanelProps) {
+  const { t } = useTranslation()
+
   if (!listing && !isLoading) {
     return (
       <div className={styles.empty}>
         <GlobalOutlined style={{ fontSize: 40, color: '#d9d9d9' }} />
-        <Typography.Text type="secondary">Select a listing to view details</Typography.Text>
+        <Typography.Text type="secondary">
+          {t('portal.catalog.detail.selectListing')}
+        </Typography.Text>
       </div>
     )
   }
@@ -106,7 +111,7 @@ export function ListingDetailPanel({
             </Typography.Text>
           </div>
           <Button icon={<EditOutlined />} onClick={onEdit}>
-            Edit
+            {t('portal.catalog.edit')}
           </Button>
         </div>
 
@@ -150,15 +155,21 @@ export function ListingDetailPanel({
 
       {/* Sales Stats */}
       <div className={styles.statsRow}>
-        <StatItem label="Quantity Sold" value={listing.salesStats.quantitySold} />
-        <StatItem label="Orders" value={listing.salesStats.orderCount} />
-        <StatItem label="Order Items" value={listing.salesStats.orderItemCount} />
         <StatItem
-          label="Last Sold"
+          label={t('portal.catalog.detail.quantitySold')}
+          value={listing.salesStats.quantitySold}
+        />
+        <StatItem label={t('portal.catalog.detail.orders')} value={listing.salesStats.orderCount} />
+        <StatItem
+          label={t('portal.catalog.detail.orderItems')}
+          value={listing.salesStats.orderItemCount}
+        />
+        <StatItem
+          label={t('portal.catalog.detail.lastSold')}
           value={
             listing.salesStats.lastSoldAt
               ? new Date(listing.salesStats.lastSoldAt).toLocaleDateString()
-              : 'Never'
+              : t('portal.catalog.detail.never')
           }
         />
       </div>
@@ -178,7 +189,7 @@ export function ListingDetailPanel({
             letterSpacing: '0.5px',
           }}
         >
-          QC Status
+          {t('portal.catalog.detail.qcStatus')}
         </Typography.Text>
         <ListingQcActions listing={listing} canWrite={canWrite} />
       </div>
@@ -198,7 +209,7 @@ export function ListingDetailPanel({
             letterSpacing: '0.5px',
           }}
         >
-          Production Variants
+          {t('portal.catalog.detail.productionVariants')}
         </Typography.Text>
         <ListingVariantManager
           listing={listing}
@@ -214,14 +225,21 @@ export function ListingDetailPanel({
       <div className={styles.section}>
         <Space direction="vertical" size={2}>
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Created: {new Date(listing.createdAt).toLocaleString()}
+            {t('portal.catalog.detail.created', {
+              value: new Date(listing.createdAt).toLocaleString(),
+            })}
           </Typography.Text>
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Updated: {new Date(listing.updatedAt).toLocaleString()}
+            {t('portal.catalog.detail.updated', {
+              value: new Date(listing.updatedAt).toLocaleString(),
+            })}
           </Typography.Text>
           {listing.baseCostAmount ? (
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-              Base Cost: {listing.baseCostAmount} {listing.currency}
+              {t('portal.catalog.detail.baseCost', {
+                amount: listing.baseCostAmount,
+                currency: listing.currency,
+              })}
             </Typography.Text>
           ) : null}
         </Space>

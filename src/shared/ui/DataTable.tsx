@@ -14,6 +14,7 @@ export type DataTableProps<RecordType extends object> = Pick<
   | 'onRow'
   | 'pagination'
   | 'rowKey'
+  | 'rowClassName'
   | 'rowSelection'
   | 'scroll'
 > & {

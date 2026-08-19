@@ -11,7 +11,7 @@ import { CatalogListingWorkbenchPage } from './CatalogListingWorkbenchPage'
 import { InternalTemplateManagementPage } from './InternalTemplateManagementPage'
 import { ProductTypeManagementPage } from './ProductTypeManagementPage'
 
-export function CatalogWorkspacePage() {
+export const CatalogWorkspacePage = () => {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('dashboard')
   const account = useRouteLoaderData('workspace') as CurrentAccount

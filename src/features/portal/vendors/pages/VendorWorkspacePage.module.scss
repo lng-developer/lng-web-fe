@@ -302,6 +302,41 @@
 .formGrid :global(.ant-input-number) {
   width: 100%;
 }
+.editorDrawer :global(.ant-drawer-body) {
+  background: var(--ant-color-bg-elevated);
+}
+.editorDrawer :global(.ant-drawer-header),
+.editorDrawer :global(.ant-drawer-footer) {
+  border-color: var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-elevated);
+}
+.editorDrawer :global(.ant-tabs-nav::before) {
+  border-color: var(--ant-color-border-secondary);
+}
+.editorDrawer :global(.ant-form-item-label > label) {
+  color: var(--ant-color-text-secondary);
+}
+.editorCard {
+  border-color: var(--ant-color-border-secondary);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ant-color-fill-quaternary) 72%, transparent),
+      transparent
+    ),
+    var(--ant-color-bg-container);
+}
+.editorCard :global(.ant-card-head) {
+  border-color: var(--ant-color-border-secondary);
+}
+.editorCard :global(.ant-card-head-title) {
+  color: var(--ant-color-text-heading);
+  font-weight: 700;
+}
+.editorPreviewCard {
+  composes: editorCard;
+  text-align: center;
+}
 @keyframes loading {
   from {
     background-position: 0 0;

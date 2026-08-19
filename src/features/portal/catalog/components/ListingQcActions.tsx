@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -6,8 +7,7 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Space, Tooltip, Typography } from 'antd'
-import { Input, Modal } from 'antd'
+import { Button, Input, Modal, Space, Tooltip, Typography } from 'antd'
 
 import { useFeedbackToast } from '@/shared/ui'
 
@@ -21,6 +21,7 @@ interface ListingQcActionsProps {
 }
 
 export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [rejectOpen, setRejectOpen] = useState(false)
@@ -30,9 +31,10 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
     mutationFn: () => approveListing(listing.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: catalogKeys.all })
-      toast('success', 'Listing approved successfully')
+      toast('success', t('portal.catalog.qc.approvedToast'))
     },
-    onError: (err) => toast('error', err instanceof Error ? err.message : 'Could not approve'),
+    onError: (err) =>
+      toast('error', err instanceof Error ? err.message : t('portal.catalog.qc.approveFailed')),
   })
 
   const reject = useMutation({
@@ -41,9 +43,10 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
       await queryClient.invalidateQueries({ queryKey: catalogKeys.all })
       setRejectOpen(false)
       setRejectReason('')
-      toast('success', 'Listing rejected')
+      toast('success', t('portal.catalog.qc.rejectedToast'))
     },
-    onError: (err) => toast('error', err instanceof Error ? err.message : 'Could not reject'),
+    onError: (err) =>
+      toast('error', err instanceof Error ? err.message : t('portal.catalog.qc.rejectFailed')),
   })
 
   if (!canWrite) return null
@@ -53,7 +56,7 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
       <div className={`${styles.notice} ${styles.approved}`}>
         <CheckCircleOutlined className={styles.noticeIcon} />
         <div>
-          <Typography.Text strong>Approved</Typography.Text>
+          <Typography.Text strong>{t('portal.catalog.qc.approved')}</Typography.Text>
           {listing.approvedAt ? (
             <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
               {new Date(listing.approvedAt).toLocaleString()}
@@ -69,7 +72,7 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
       <div className={`${styles.notice} ${styles.rejected}`}>
         <CloseCircleOutlined className={styles.noticeIcon} />
         <div>
-          <Typography.Text strong>Rejected</Typography.Text>
+          <Typography.Text strong>{t('portal.catalog.qc.rejected')}</Typography.Text>
           {listing.rejectionReason ? (
             <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
               {listing.rejectionReason}
@@ -80,19 +83,19 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
     )
   }
 
-  // DRAFT — show action buttons
   return (
     <>
       <div className={`${styles.notice} ${styles.draft}`}>
         <Space size={4}>
           <ClockCircleOutlined className={styles.noticeIcon} />
           <Typography.Text>
-            This listing is in <strong>DRAFT</strong> — it will not receive orders until approved.
+            {t('portal.catalog.qc.draftPrefix')} <strong>DRAFT</strong>{' '}
+            {t('portal.catalog.qc.draftSuffix')}
           </Typography.Text>
         </Space>
       </div>
       <Space size={12}>
-        <Tooltip title="Mark this listing as ready for production">
+        <Tooltip title={t('portal.catalog.qc.approveTooltip')}>
           <Button
             type="primary"
             size="large"
@@ -100,19 +103,19 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
             loading={approve.isPending}
             onClick={() =>
               Modal.confirm({
-                title: 'Approve listing?',
-                content: `SKU: ${listing.sku} will be set to APPROVED and become eligible for order matching.`,
-                okText: 'Approve',
+                title: t('portal.catalog.qc.approveConfirmTitle'),
+                content: t('portal.catalog.qc.approveConfirmContent', { sku: listing.sku }),
+                okText: t('portal.catalog.approve'),
                 okButtonProps: { style: { backgroundColor: '#52c41a', borderColor: '#52c41a' } },
                 onOk: () => approve.mutate(),
               })
             }
             style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', minWidth: 120 }}
           >
-            Approve
+            {t('portal.catalog.approve')}
           </Button>
         </Tooltip>
-        <Tooltip title="Reject with reason">
+        <Tooltip title={t('portal.catalog.qc.rejectTooltip')}>
           <Button
             danger
             size="large"
@@ -120,7 +123,7 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
             onClick={() => setRejectOpen(true)}
             style={{ minWidth: 120 }}
           >
-            Reject
+            {t('portal.catalog.reject')}
           </Button>
         </Tooltip>
       </Space>
@@ -130,7 +133,7 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
         title={
           <Space>
             <FileTextOutlined />
-            Reject Listing — {listing.sku}
+            {t('portal.catalog.qc.rejectTitle', { sku: listing.sku })}
           </Space>
         }
         onCancel={() => {
@@ -139,17 +142,17 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
         }}
         onOk={() => reject.mutate(rejectReason)}
         okButtonProps={{ danger: true, disabled: !rejectReason.trim(), loading: reject.isPending }}
-        okText="Confirm Rejection"
+        okText={t('portal.catalog.qc.confirmRejection')}
         destroyOnClose
       >
         <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-          Provide a clear reason so the responsible team can address the issue.
+          {t('portal.catalog.qc.rejectDescription')}
         </Typography.Text>
         <Input.TextArea
           rows={4}
-          placeholder="e.g. Missing artwork slot configuration, incorrect SKU format..."
+          placeholder={t('portal.catalog.qc.rejectPlaceholder')}
           value={rejectReason}
-          onChange={(e) => setRejectReason(e.target.value)}
+          onChange={(event) => setRejectReason(event.target.value)}
           maxLength={500}
           showCount
         />

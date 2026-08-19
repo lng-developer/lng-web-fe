@@ -37,7 +37,7 @@ const keys = {
   summary: ['customizations', 'summary'] as const,
 }
 
-export function CustomizationReviewPage() {
+export const CustomizationReviewPage = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const account = useRouteLoaderData('workspace') as CurrentAccount
@@ -156,12 +156,12 @@ export function CustomizationReviewPage() {
         <MetricCard
           label={t('customization.summary.review')}
           value={String(summary.data?.needsReview ?? '—')}
-          status="warning"
+          status={t('customization.summary.status.warning')}
         />
         <MetricCard
           label={t('customization.summary.failed')}
           value={String(summary.data?.failed ?? '—')}
-          status="critical"
+          status={t('customization.summary.status.critical')}
         />
       </div>
       <SectionCard title={t('customization.queue')}>

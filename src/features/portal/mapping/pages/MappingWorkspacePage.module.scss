@@ -1,8 +1,10 @@
 .page {
   display: flex;
+  min-width: 0;
   min-height: calc(100vh - var(--app-header-height, 64px));
   flex-direction: column;
   gap: 20px;
+  overflow: hidden;
 }
 
 /* ── Summary metric cards ─────────────────────────────── */
@@ -144,9 +146,10 @@
 .workspace {
   display: grid;
   flex: 1;
-  min-height: 600px;
-  max-height: calc(100vh - 360px);
-  grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  height: calc(100vh - 270px);
+  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
 }
@@ -285,6 +288,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 4px;
 }
 
@@ -299,12 +303,16 @@
 .pipelineSteps {
   margin-bottom: 16px;
   flex-shrink: 0;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .candidateCard {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
+  min-width: 0;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1.5px solid var(--ant-color-border);
@@ -319,7 +327,7 @@
 }
 
 .candidateMeta {
-  flex: 1;
+  flex: 1 1 220px;
   min-width: 0;
 }
 
@@ -346,6 +354,11 @@
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.candidateCard :global(.ant-btn) {
+  flex: 0 0 auto;
+  max-width: 100%;
 }
 
 .confidenceBadge.HIGH {
@@ -390,8 +403,8 @@
   }
 
   .workspace {
-    grid-template-columns: minmax(320px, 0.42fr) minmax(0, 1fr);
-    max-height: calc(100vh - 420px);
+    grid-template-columns: minmax(280px, 0.38fr) minmax(0, 1fr);
+    height: calc(100vh - 300px);
   }
 }
 
@@ -403,6 +416,7 @@
   .workspace,
   .editorWorkspace {
     grid-template-columns: minmax(0, 1fr);
-    max-height: none;
+    height: auto;
+    overflow: visible;
   }
 }

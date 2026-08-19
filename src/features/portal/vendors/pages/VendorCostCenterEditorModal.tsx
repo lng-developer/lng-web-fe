@@ -112,7 +112,7 @@ export function VendorCostCenterEditorModal({
       ),
       children: (
         <Flex flex={1} vertical gap={16}>
-          <Card size="small" title="Variant Identity" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Variant Identity">
             <div className={styles.formGrid}>
               <Form.Item label={t('vendors.name')} name="name" rules={[{ required: true }]}>
                 <Input placeholder="e.g. Black / XL" />
@@ -129,7 +129,7 @@ export function VendorCostCenterEditorModal({
             </div>
           </Card>
 
-          <Card size="small" title="Size & Color Matrix" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Size & Color Matrix">
             <div className={styles.formGrid}>
               <Form.Item label={t('vendors.standardSize')} name="standardSize">
                 <Input placeholder="XL, L, M, S" />
@@ -161,7 +161,7 @@ export function VendorCostCenterEditorModal({
       ),
       children: (
         <Flex flex={1} vertical gap={16}>
-          <Card size="small" title="Base Production Cost" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Base Production Cost">
             <div className={styles.formGrid}>
               <Form.Item
                 label={t('vendors.baseCostAmount')}
@@ -193,7 +193,7 @@ export function VendorCostCenterEditorModal({
             </div>
           </Card>
 
-          <Card size="small" title="Additional Printing Costs" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Additional Printing Costs">
             <div className={styles.formGrid}>
               <Form.Item
                 label="Embroidery Cost (cents)"
@@ -234,7 +234,7 @@ export function VendorCostCenterEditorModal({
           <Card
             size="small"
             title="Domestic Shipping Rates (Nội địa)"
-            style={{ background: '#fafafa' }}
+            className={styles.editorCard}
           >
             <div className={styles.formGrid}>
               <Form.Item
@@ -267,7 +267,7 @@ export function VendorCostCenterEditorModal({
           <Card
             size="small"
             title="International Shipping Rates (Quốc tế)"
-            style={{ background: '#fafafa' }}
+            className={styles.editorCard}
           >
             <div className={styles.formGrid}>
               <Form.Item
@@ -300,7 +300,7 @@ export function VendorCostCenterEditorModal({
           <Card
             size="small"
             title="Priority / Express Shipping Rates (Hỏa tốc)"
-            style={{ background: '#fafafa' }}
+            className={styles.editorCard}
           >
             <div className={styles.formGrid}>
               <Form.Item
@@ -330,7 +330,7 @@ export function VendorCostCenterEditorModal({
             </div>
           </Card>
 
-          <Card size="small" title="Weight & Package Dimensions" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Weight & Package Dimensions">
             <div className={styles.formGrid}>
               <Form.Item label="Weight" name="weight" rules={[numberRule]}>
                 <InputNumber
@@ -381,7 +381,7 @@ export function VendorCostCenterEditorModal({
       ),
       children: (
         <Flex flex={1} vertical gap={16}>
-          <Card size="small" title="Status" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Status">
             <Form.Item
               label={t('vendors.statusLabel')}
               name="status"
@@ -396,7 +396,7 @@ export function VendorCostCenterEditorModal({
             </Form.Item>
           </Card>
 
-          <Card size="small" title="Attributes JSON" style={{ background: '#fafafa' }}>
+          <Card className={styles.editorCard} size="small" title="Attributes JSON">
             <Form.Item
               label={t('vendors.attributes')}
               name="attributesText"
@@ -427,6 +427,7 @@ export function VendorCostCenterEditorModal({
 
   return (
     <Drawer
+      className={styles.editorDrawer}
       destroyOnClose
       open={open}
       title={t(item ? 'vendors.editCostCenterTitle' : 'vendors.createCostCenterTitle')}

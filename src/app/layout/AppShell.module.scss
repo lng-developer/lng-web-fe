@@ -121,6 +121,7 @@
 }
 
 .navigation :global(.ant-menu-item) {
+  position: relative;
   margin-block: 4px;
   border-radius: 8px;
   transition:
@@ -154,7 +155,34 @@
 }
 
 .navigation :global(.ant-menu-item-selected) {
-  box-shadow: none;
+  background: color-mix(
+    in srgb,
+    var(--ant-color-primary) 12%,
+    var(--ant-color-bg-container)
+  ) !important;
+  box-shadow:
+    inset 3px 0 0 var(--ant-color-primary),
+    0 8px 18px rgb(22 119 255 / 10%);
+}
+
+.navigation :global(.ant-menu-item-selected::after) {
+  display: none;
+}
+
+.navigation :global(.ant-menu-item-selected .ant-menu-item-icon),
+.navigation :global(.ant-menu-item-selected a) {
+  color: var(--ant-color-primary) !important;
+  font-weight: 700;
+}
+
+.navigation :global(.ant-menu-submenu-selected > .ant-menu-submenu-title) {
+  color: var(--ant-color-primary);
+}
+
+.navigation :global(.ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-item-icon),
+.navigation :global(.ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-title-content),
+.navigation :global(.ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow) {
+  color: var(--ant-color-primary);
 }
 
 .header {

@@ -65,7 +65,12 @@ export function WorkScoreAdjustmentModal({ mode, score, open, loading, onClose, 
             </Form.Item>
             <Form.Item name="scoreLevel" label={t('portal.workScores.fields.level')}>
               <Select
-                options={['BASIC', 'STANDARD', 'HARD', 'BONUS'].map((value) => ({ value }))}
+                options={(['BASIC', 'STANDARD', 'HARD', 'BONUS'] as WorkScoreLevel[]).map(
+                  (value) => ({
+                    value,
+                    label: t(`portal.workScores.levelNames.${value}`, { defaultValue: value }),
+                  }),
+                )}
               />
             </Form.Item>
           </>

@@ -245,11 +245,8 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
       {view === 'schedule' && (
         <>
           <PageHeader
-            title={t('hrOperations.self.mySchedule', { defaultValue: 'My Work Schedule' })}
-            description={t('hrOperations.self.scheduleDescription', {
-              defaultValue:
-                'View your monthly shift schedule, attendance, leaves, and overtime records.',
-            })}
+            title={t('hrOperations.self.mySchedule')}
+            description={t('hrOperations.self.scheduleDescription')}
             actions={
               <MonthPicker
                 aria-label={t('hrOperations.calendar.label')}
@@ -264,29 +261,29 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
             <MetricCard
               icon={<CheckCircleOutlined />}
               variant="success"
-              label={t('hrOperations.overview.presentToday', { defaultValue: 'Present Days' })}
-              value={`${presentCount} days`}
+              label={t('hrOperations.overview.presentToday')}
+              value={t('hrOperations.overview.days', { count: presentCount })}
               loading={workspace.isLoading}
             />
             <MetricCard
               icon={<WarningOutlined />}
               variant="danger"
-              label={t('hrOperations.attendance.late', { defaultValue: 'Late Check-ins' })}
-              value={`${lateCount} times`}
+              label={t('hrOperations.attendance.late')}
+              value={t('hrOperations.overview.times', { count: lateCount })}
               loading={workspace.isLoading}
             />
             <MetricCard
               icon={<RestOutlined />}
               variant="warning"
-              label={t('hrOperations.overview.onLeave', { defaultValue: 'Approved Leaves' })}
-              value={`${leaveCount} days`}
+              label={t('hrOperations.overview.onLeave')}
+              value={t('hrOperations.overview.days', { count: leaveCount })}
               loading={workspace.isLoading}
             />
             <MetricCard
               icon={<FieldTimeOutlined />}
               variant="info"
-              label={t('hrOperations.overview.approvedOt', { defaultValue: 'Overtime Sessions' })}
-              value={`${overtimeCount} days`}
+              label={t('hrOperations.overview.approvedOt')}
+              value={t('hrOperations.overview.days', { count: overtimeCount })}
               loading={workspace.isLoading}
             />
           </div>
