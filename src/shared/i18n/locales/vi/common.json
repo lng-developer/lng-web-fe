@@ -2359,7 +2359,8 @@
       "vendor": "Nhà cung cấp",
       "tabs": {
         "vendors": "Nhà cung cấp",
-        "products": "Sản phẩm"
+        "products": "Sản phẩm",
+        "migration": "Rà soát migration"
       },
       "filters": {
         "label": "Bộ lọc",
@@ -2371,6 +2372,18 @@
         "active": "Nhà cung cấp hoạt động",
         "integrated": "Đã tích hợp API",
         "types": "Loại hoàn tất đơn"
+      },
+      "migration": {
+        "vendor": "Nhà cung cấp",
+        "product": "Sản phẩm",
+        "externalProductId": "Mã ngoài hệ thống",
+        "variants": "Biến thể",
+        "unresolved": "Chưa xác định",
+        "loadFailed": "Không thể tải danh sách rà soát migration",
+        "pending": "{{count}} sản phẩm cần được gán Nhóm loại sản phẩm trước khi migration.",
+        "selectProductTypeGroup": "Chọn Nhóm loại sản phẩm",
+        "assign": "Gán cho {{count}} sản phẩm đã chọn",
+        "assigned": "Đã gán Nhóm loại sản phẩm cho {{count}} sản phẩm"
       },
       "import": {
         "description": "Nhập dữ liệu nhà cung cấp từ tệp CSV.",
