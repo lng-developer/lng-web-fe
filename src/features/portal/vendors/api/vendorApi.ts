@@ -91,6 +91,20 @@ export type VendorIntegrationConfig = {
   metadata: Record<string, unknown>
 }
 
+export type VendorMigrationReviewItem = {
+  legacyProductId: string
+  vendorCode: string | null
+  vendorName: string | null
+  code: string
+  name: string
+  externalProductId: string | null
+  variantCount: number
+  productTypeGroupCode: string | null
+}
+export type VendorMigrationReview = Paginated<VendorMigrationReviewItem> & {
+  summary: { pending: number; ready: number; orphaned: number }
+}
+
 export type VendorListParams = {
   page?: number
   limit?: number
@@ -210,6 +224,23 @@ export async function importVendorProducts(payload: VendorProductImportPayload) 
 
 export async function updateVendorProduct(productId: string, input: VendorProductUpdateInput) {
   return unwrap<VendorProduct>(await apiClient.patch(`/api/vendors/products/${productId}`, input))
+}
+
+export async function listVendorMigrationReview(
+  params: { page?: number; limit?: number; q?: string } = {},
+) {
+  return unwrap<VendorMigrationReview>(
+    await apiClient.get('/api/vendors/migration/review', { params: toListParams(params) }),
+  )
+}
+
+export async function bulkAssignVendorMigrationProductTypeGroup(input: {
+  legacyProductIds: string[]
+  productTypeGroupId: string
+}) {
+  return unwrap<{ updated: number }>(
+    await apiClient.patch('/api/vendors/migration/review/product-type-group', input),
+  )
 }
 
 export async function listVendorCostCenters(productId: string, params: CostCenterListParams = {}) {

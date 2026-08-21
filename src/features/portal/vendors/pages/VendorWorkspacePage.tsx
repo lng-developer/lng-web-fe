@@ -7,7 +7,7 @@ import {
   CheckCircleOutlined,
   DownloadOutlined,
 } from '@ant-design/icons'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UploadFile } from 'antd'
 import { Button, Modal, Space, Typography } from 'antd'
 
@@ -23,9 +23,11 @@ import {
 
 import { listProductTypeGroups } from '../../catalog/api/catalogApi'
 import {
+  bulkAssignVendorMigrationProductTypeGroup,
   importVendorCostCenters,
   importVendorProducts,
   listVendorCostCenters,
+  listVendorMigrationReview,
   listVendorProducts,
   listVendors,
   type RecordStatus,
@@ -37,6 +39,7 @@ import { vendorKeys } from '../api/vendorKeys'
 import { VendorCostCenterEditorModal } from './VendorCostCenterEditorModal'
 import { VendorEditorModal } from './VendorEditorModal'
 import { VendorIntegrationModal } from './VendorIntegrationModal'
+import { VendorMigrationTabPage } from './VendorMigrationTabPage'
 import { VendorProductEditorModal } from './VendorProductEditorModal'
 import { VendorWorkspaceCostCenterDrawer } from './VendorWorkspaceCostCenterDrawer'
 import styles from './VendorWorkspacePage.module.scss'
@@ -116,7 +119,7 @@ type ImportTarget =
   | { kind: 'costCenter'; productId: string; vendorId: string; productName: string }
 type ImportSummary = { total: number; created: number; failed: string[] }
 
-type VendorManagementTab = 'vendors' | 'products'
+type VendorManagementTab = 'vendors' | 'products' | 'migration'
 
 const buildImportTemplate = (target: ImportTarget) => {
   const quote = (value: string) => `"${value.replaceAll('"', '""')}"`
@@ -346,9 +349,22 @@ export function VendorWorkspacePage() {
 
   const productTypeGroups = useQuery({
     queryKey: ['portal', 'catalog', 'product-type-groups', 'all'],
-    queryFn: () => listProductTypeGroups({ page: 1, limit: 500 }),
-    enabled: importTarget?.kind === 'product',
+    queryFn: () => listProductTypeGroups({ page: 1, limit: 100 }),
+    enabled: importTarget?.kind === 'product' || tab === 'migration',
     retry: false,
+  })
+  const migrationReview = useQuery({
+    queryKey: vendorKeys.migrationReview({ page: 1, limit: 100 }),
+    queryFn: () => listVendorMigrationReview({ page: 1, limit: 100 }),
+    enabled: tab === 'migration',
+    retry: false,
+  })
+  const assignMigrationGroup = useMutation({
+    mutationFn: bulkAssignVendorMigrationProductTypeGroup,
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: vendorKeys.migrationReview({}) })
+      showFeedbackToast('success', t('vendors.migration.assigned', { count: result.updated }))
+    },
   })
 
   const resolveProductTypeGroupId = (row: CsvRecord) => {
@@ -804,6 +820,7 @@ export function VendorWorkspacePage() {
                 </UiTabLabel>
               ),
             },
+            { key: 'migration', label: <UiTabLabel>{t('vendors.tabs.migration')}</UiTabLabel> },
           ]}
         />
         {tab === 'vendors' ? (
@@ -830,7 +847,7 @@ export function VendorWorkspacePage() {
             onEditVendor={(vendor) => setEditor({ kind: 'vendor', item: vendor })}
             onOpenIntegration={(vendor) => setEditor({ kind: 'integration', vendor })}
           />
-        ) : (
+        ) : tab === 'products' ? (
           <VendorWorkspaceProductsTabPage
             canWrite={canWrite}
             searchProducts={searchProducts}
@@ -867,6 +884,19 @@ export function VendorWorkspacePage() {
               setSearchCostCenters('')
               setCostCentersPage(1)
             }}
+          />
+        ) : (
+          <VendorMigrationTabPage
+            canWrite={canWrite}
+            rows={migrationReview.data?.items ?? []}
+            loading={migrationReview.isLoading}
+            error={migrationReview.error}
+            productTypeGroups={productTypeGroups.data?.items ?? []}
+            pending={migrationReview.data?.summary.pending ?? 0}
+            assigning={assignMigrationGroup.isPending}
+            onAssign={(legacyProductIds, productTypeGroupId) =>
+              assignMigrationGroup.mutate({ legacyProductIds, productTypeGroupId })
+            }
           />
         )}
       </SectionCard>

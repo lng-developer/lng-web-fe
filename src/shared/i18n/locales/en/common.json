@@ -2279,13 +2279,25 @@
       "sectionAuth": "Authentication",
       "sla": "Production SLA",
       "vendor": "Vendor",
-      "tabs": { "vendors": "Vendors", "products": "Products" },
+      "tabs": { "vendors": "Vendors", "products": "Products", "migration": "Migration review" },
       "filters": { "label": "Filters", "status": "Status", "vendor": "Vendor" },
       "metrics": {
         "total": "Total vendors",
         "active": "Active vendors",
         "integrated": "API integrated",
         "types": "Fulfillment types"
+      },
+      "migration": {
+        "vendor": "Vendor",
+        "product": "Product",
+        "externalProductId": "External ID",
+        "variants": "Variants",
+        "unresolved": "Unresolved",
+        "loadFailed": "Could not load migration review",
+        "pending": "{{count}} products need a Product Type Group before migration.",
+        "selectProductTypeGroup": "Choose Product Type Group",
+        "assign": "Assign to {{count}} selected",
+        "assigned": "Assigned Product Type Group to {{count}} products"
       },
       "import": {
         "description": "Import vendor records from a CSV file.",
