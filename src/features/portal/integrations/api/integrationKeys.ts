@@ -15,4 +15,7 @@ export const integrationKeys = {
     [...integrationKeys.job(jobId), 'issues', params] as const,
   rawRecords: (jobId: string, params: RawRecordListParams) =>
     [...integrationKeys.job(jobId), 'raw-records', params] as const,
+  extensionAgents: () => [...integrationKeys.all, 'extension-agents'] as const,
+  extensionManagementAgents: () => [...integrationKeys.all, 'extension-management-agents'] as const,
+  extensionCommands: () => [...integrationKeys.all, 'extension-commands'] as const,
 }

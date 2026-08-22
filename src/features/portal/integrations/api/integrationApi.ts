@@ -22,6 +22,40 @@ export type PostImportStatus =
   | 'FAILED'
   | 'SKIPPED'
 export type ImportUploadSource = 'AMAZON_ORDER_REPORT' | 'ETSY_SOLD_ORDER_ITEMS'
+export type ExtensionCommandStatus = 'QUEUED' | 'CLAIMED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
+export type ExtensionAgent = {
+  id: string
+  shopId: string
+  clientId: string
+  label: string
+  version: string | null
+  apiBaseUrl: string | null
+  lastSeenAt: string
+}
+export type ExtensionManagementAgent = ExtensionAgent & {
+  status: 'ONLINE' | 'OFFLINE'
+  token: {
+    id: string
+    name: string
+    tokenHint: string
+    environment: string
+    lastUsedAt: string | null
+    expiresAt: string | null
+    revokedAt: string | null
+  } | null
+}
+export type ExtensionCommand = {
+  id: string
+  type: 'IMPORT_NEW_ORDERS'
+  status: ExtensionCommandStatus
+  shopId: string
+  agentId: string
+  importJobId: string | null
+  attemptCount: number
+  errorMessage: string | null
+  createdAt: string
+  completedAt: string | null
+}
 
 export type Pagination = { total: number; page: number; limit: number }
 export type Paginated<T> = { items: T[]; pagination: Pagination }
@@ -209,6 +243,7 @@ export type RetryPostImportResult = {
 }
 
 const basePath = '/api/integration/external-order-imports'
+const extensionCommandPath = '/api/integration/extension-commands'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export async function listImportJobs(params: ImportJobListParams = {}) {
@@ -273,4 +308,26 @@ export async function retryPostImportRawRecords(jobId: string, rawRecordIds: str
 
 export async function updateIssueStatus(issueId: string, input: IssueUpdateInput) {
   return unwrap<ImportIssue>(await apiClient.patch(`${basePath}/issues/${issueId}`, input))
+}
+
+export async function listExtensionAgents() {
+  return unwrap<{ items: ExtensionAgent[] }>(await apiClient.get(`${extensionCommandPath}/agents`))
+}
+export async function listExtensionManagementAgents() {
+  return unwrap<{ items: ExtensionManagementAgent[] }>(
+    await apiClient.get(`${extensionCommandPath}/management-agents`),
+  )
+}
+export async function listExtensionCommands(params: PageParams = {}) {
+  return unwrap<Paginated<ExtensionCommand>>(
+    await apiClient.get(`${extensionCommandPath}/commands`, { params }),
+  )
+}
+export async function createExtensionCommand(input: { shopId: string; agentId: string }) {
+  return unwrap<ExtensionCommand>(
+    await apiClient.post(`${extensionCommandPath}/commands`, {
+      type: 'IMPORT_NEW_ORDERS',
+      ...input,
+    }),
+  )
 }

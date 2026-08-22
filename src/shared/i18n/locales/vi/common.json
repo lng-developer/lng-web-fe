@@ -1814,7 +1814,7 @@
         "success": "Đã tải báo cáo lên",
         "title": "Tải báo cáo đơn hàng lên",
         "source": "Định dạng nhập",
-        "amazon": "Báo cáo đơn hàng Amazon",
+        "amazon": "Báo cáo đơn hàng Amazon (tải thủ công)",
         "etsy": "Danh sách đơn đã bán trên Etsy",
         "marketplace": "Mã thị trường",
         "marketplaceRequired": "Nhập mã thị trường",
@@ -1829,6 +1829,16 @@
         "fileType": "Chọn định dạng báo cáo được hỗ trợ",
         "failed": "Tải lên thất bại",
         "submit": "Tải lên"
+      },
+      "extension": {
+        "commandsTitle": "Kéo đơn từ xa",
+        "selectAgent": "Chọn extension đang online",
+        "pullOrders": "Kéo đơn mới",
+        "noAgents": "Chưa có extension online. Hãy mở extension trên RDC trước.",
+        "commandQueued": "Đã xếp lệnh nhập đơn.",
+        "command": "Lệnh",
+        "status": "Trạng thái",
+        "created": "Đã tạo"
       },
       "panel": {
         "title": "Lượt nhập đơn",

@@ -1747,7 +1747,7 @@
         "success": "Report uploaded",
         "title": "Upload order report",
         "source": "Import format",
-        "amazon": "Amazon order report",
+        "amazon": "Amazon order report (manual upload)",
         "etsy": "Etsy sold order items",
         "marketplace": "Marketplace code",
         "marketplaceRequired": "Enter a marketplace code",
@@ -1762,6 +1762,16 @@
         "fileType": "Select a supported report file",
         "failed": "Upload failed",
         "submit": "Upload"
+      },
+      "extension": {
+        "commandsTitle": "Remote order import",
+        "selectAgent": "Select an online extension",
+        "pullOrders": "Pull new orders",
+        "noAgents": "No online extension found. Open the extension on the RDC first.",
+        "commandQueued": "Import command queued.",
+        "command": "Command",
+        "status": "Status",
+        "created": "Created"
       },
       "panel": {
         "title": "Import job",

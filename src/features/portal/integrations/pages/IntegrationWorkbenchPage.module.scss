@@ -27,6 +27,15 @@
   overflow-wrap: anywhere;
 }
 
+.commandPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.commandAgent {
+  min-width: 280px;
+}
+
 .selectedJob {
   color: var(--ant-color-text-secondary);
 }
