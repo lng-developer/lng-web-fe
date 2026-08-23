@@ -49,18 +49,16 @@ import {
 import { listImportBatches } from '@/features/portal/finance/api/financeApi'
 import {
   getImportJob,
-  createExtensionCommand,
-  listExtensionOrderSchedules,
   listExtensionAgents,
   listExtensionCommands,
   listExtensionManagementAgents,
+  listExtensionOrderSchedules,
   listImportJobs,
   listIssues,
   listJobIssues,
   listJobRawRecords,
   uploadEtsySoldItems,
   uploadManualExcel,
-  upsertExtensionOrderSchedule,
 } from '@/features/portal/integrations/api/integrationApi'
 import { ImportUploadModal } from '@/features/portal/integrations/pages/ImportUploadModal'
 import { IntegrationWorkbenchPage } from '@/features/portal/integrations/pages/IntegrationWorkbenchPage'
@@ -194,20 +192,12 @@ describe('IntegrationWorkbenchPage', () => {
       revokedAt: '2026-08-22T00:00:00.000Z',
     })
     vi.mocked(listExtensionAgents).mockResolvedValue({ items: [] })
-    vi.mocked(createExtensionCommand).mockResolvedValue({
-      id: 'command-1', type: 'IMPORT_NEW_ORDERS', status: 'QUEUED', shopId: shop.id, agentId: 'agent-1',
-      importJobId: null, attemptCount: 0, errorMessage: null, createdAt: '2026-08-22T00:00:00.000Z', completedAt: null,
-    })
     vi.mocked(listExtensionCommands).mockResolvedValue({
       items: [],
       pagination: { total: 0, page: 1, limit: 10 },
     })
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({ items: [] })
     vi.mocked(listExtensionOrderSchedules).mockResolvedValue({ items: [] })
-    vi.mocked(upsertExtensionOrderSchedule).mockResolvedValue({
-      id: 'schedule-1', shopId: shop.id, agentId: 'agent-1', enabled: true, intervalMinutes: 120,
-      nextRunAt: '2026-08-22T02:00:00.000Z', lastQueuedAt: null, lastError: null,
-    })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [adsImportBatch],
       pagination: { total: 1, page: 1, limit: 20 },
@@ -387,46 +377,67 @@ describe('IntegrationWorkbenchPage', () => {
     expect(screen.queryByText('lng_ext_test_token')).not.toBeInTheDocument()
   })
 
-  it('queues a connection test for the selected extension', async () => {
-    vi.mocked(listExtensionAgents).mockResolvedValue({
-      items: [{ id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0', lastSeenAt: '2026-08-22T00:00:00.000Z', apiBaseUrl: 'https://dev-api.lngmerch.co' }],
+  it('groups a connection test under the extension More action', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
     })
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
     expect(await screen.findByText('RDC 1')).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
-
-    await waitFor(() => expect(createExtensionCommand).toHaveBeenCalledWith({
-      type: 'TEST_CONNECTION', shopId: shop.id, agentId: 'agent-1',
-    }))
+    expect(screen.getByRole('button', { name: 'More extension actions' })).toBeVisible()
   })
 
-  it('keeps Ads date selection inside the Pull Ads popover', async () => {
+  it('keeps Ads configuration out of the primary table actions', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
-      items: [{
-        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
-        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
-        status: 'ONLINE', token: null,
-      }],
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:WRITE']))
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
 
-    expect(await screen.findByRole('button', { name: 'Configure Pull Ads' })).toBeVisible()
     expect(screen.queryByText('Ads period')).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Configure Pull Ads' }))
-    expect(await screen.findByText('Ads period')).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'More extension actions' })).toBeVisible()
   })
 
   it('keeps the order history window inside the Pull Orders popover', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
-      items: [{
-        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
-        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
-        status: 'ONLINE', token: null,
-      }],
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
@@ -439,32 +450,43 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByText('Order history')).toBeVisible()
   })
 
-  it('saves an order schedule for an extension', async () => {
+  it('puts order schedule configuration in the Automation tab', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
-      items: [{
-        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
-        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
-        status: 'ONLINE', token: null,
-      }],
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Configure order schedule' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Save schedule' }))
-
-    await waitFor(() => expect(upsertExtensionOrderSchedule).toHaveBeenCalledWith('agent-1', {
-      enabled: true, intervalMinutes: 120,
-    }))
+    expect(await screen.findByRole('tab', { name: 'Automation' })).toBeVisible()
   })
 
-  it('shows when an extension has reconnected', async () => {
+  it('shows Reconnected only for an online extension that reconnected recently', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
-      items: [{
-        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
-        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
-        lastReconnectedAt: '2026-08-22T00:00:00.000Z', status: 'ONLINE', token: null,
-      }],
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          lastReconnectedAt: new Date().toISOString(),
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
@@ -473,13 +495,72 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByText('Reconnected')).toBeVisible()
   })
 
+  it('does not show Reconnected for an offline extension', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          lastReconnectedAt: new Date().toISOString(),
+          status: 'OFFLINE',
+          token: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    await screen.findByText('RDC 1')
+    expect(screen.queryByText('Reconnected')).not.toBeInTheDocument()
+  })
+
+  it('does not show Reconnected after the recent-connection window expires', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: new Date().toISOString(),
+          lastReconnectedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    await screen.findByText('RDC 1')
+    expect(screen.queryByText('Reconnected')).not.toBeInTheDocument()
+  })
+
   it('exposes the failure detail through the extension command drawer', async () => {
     vi.mocked(listExtensionCommands).mockResolvedValue({
-      items: [{
-        id: 'command-1', type: 'IMPORT_ADS_SPEND', status: 'FAILED', shopId: shop.id, agentId: 'agent-1',
-        importJobId: null, attemptCount: 1, errorMessage: 'Amazon Ads session expired',
-        createdAt: '2026-08-22T00:00:00.000Z', completedAt: '2026-08-22T00:01:00.000Z',
-      }],
+      items: [
+        {
+          id: 'command-1',
+          type: 'IMPORT_ADS_SPEND',
+          status: 'FAILED',
+          shopId: shop.id,
+          agentId: 'agent-1',
+          importJobId: null,
+          attemptCount: 1,
+          errorMessage: 'Amazon Ads session expired',
+          createdAt: '2026-08-22T00:00:00.000Z',
+          completedAt: '2026-08-22T00:01:00.000Z',
+        },
+      ],
       pagination: { total: 1, page: 1, limit: 10 },
     })
 
@@ -493,12 +574,22 @@ describe('IntegrationWorkbenchPage', () => {
 
   it('shows a task timeline for an extension command', async () => {
     vi.mocked(listExtensionCommands).mockResolvedValue({
-      items: [{
-        id: 'command-1', type: 'IMPORT_ADS_SPEND', status: 'FAILED', shopId: shop.id, agentId: 'agent-1',
-        importJobId: null, attemptCount: 1, errorMessage: 'Amazon Ads session expired',
-        createdAt: '2026-08-22T00:00:00.000Z', claimedAt: '2026-08-22T00:00:30.000Z',
-        startedAt: '2026-08-22T00:00:31.000Z', completedAt: '2026-08-22T00:01:00.000Z',
-      }],
+      items: [
+        {
+          id: 'command-1',
+          type: 'IMPORT_ADS_SPEND',
+          status: 'FAILED',
+          shopId: shop.id,
+          agentId: 'agent-1',
+          importJobId: null,
+          attemptCount: 1,
+          errorMessage: 'Amazon Ads session expired',
+          createdAt: '2026-08-22T00:00:00.000Z',
+          claimedAt: '2026-08-22T00:00:30.000Z',
+          startedAt: '2026-08-22T00:00:31.000Z',
+          completedAt: '2026-08-22T00:01:00.000Z',
+        },
+      ],
       pagination: { total: 1, page: 1, limit: 10 },
     })
 
@@ -511,7 +602,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(screen.getByText('Amazon Ads session expired')).toBeVisible()
   })
 
-  it('groups duplicate extension records into one card and revokes its token', async () => {
+  it('groups duplicate extension records into one card with a More action', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
         {
@@ -565,23 +656,33 @@ describe('IntegrationWorkbenchPage', () => {
       screen.getByLabelText('Extension management').querySelectorAll('.ant-card'),
     ).toHaveLength(1)
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Revoke token' })[0])
-    fireEvent.click(await screen.findByRole('button', { name: 'Revoke' }))
-    await waitFor(() => expect(vi.mocked(revokeExtensionToken).mock.calls[0]?.[0]).toBe('token-1'))
+    expect(screen.getAllByRole('button', { name: 'More extension actions' })).toHaveLength(2)
   })
 
   it('shows extension cards across every accessible shop', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
         {
-          id: 'agent-shop-1', shopId: shop.id, clientId: 'ext-shop-1', label: 'Shop one Chrome',
-          version: '0.3.0', apiBaseUrl: 'https://dev-api.lngmerch.co',
-          lastSeenAt: '2026-08-22T09:43:13.000Z', status: 'ONLINE', token: null,
+          id: 'agent-shop-1',
+          shopId: shop.id,
+          clientId: 'ext-shop-1',
+          label: 'Shop one Chrome',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T09:43:13.000Z',
+          status: 'ONLINE',
+          token: null,
         },
         {
-          id: 'agent-shop-2', shopId: 'shop-2', clientId: 'ext-shop-2', label: 'Shop two Chrome',
-          version: '0.3.0', apiBaseUrl: 'https://dev-api.lngmerch.co',
-          lastSeenAt: '2026-08-22T09:43:13.000Z', status: 'ONLINE', token: null,
+          id: 'agent-shop-2',
+          shopId: 'shop-2',
+          clientId: 'ext-shop-2',
+          label: 'Shop two Chrome',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T09:43:13.000Z',
+          status: 'ONLINE',
+          token: null,
         },
       ],
     })

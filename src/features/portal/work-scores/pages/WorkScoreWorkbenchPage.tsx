@@ -42,6 +42,7 @@ import {
   type WorkScoreLevel,
   type WorkScoreListItem,
   type WorkScoreRuleFormInput,
+  type WorkScoreRuleInput,
   type WorkScoreSourceType,
 } from '../api/workScoreApi'
 import { workScoreKeys } from '../api/workScoreKeys'
@@ -52,6 +53,7 @@ import styles from './WorkScoreWorkbenchPage.module.scss'
 const PAGE_SIZE = 20
 
 const RULE_TASK_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE']
+const RULE_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
 const SCALE_DIFFICULTIES = ['NORMAL', 'HARD', 'SPECIAL']
 const objectIdPattern = /^[a-f\d]{24}$/i
 const defaultAssetPreview =
@@ -60,6 +62,28 @@ const defaultAssetPreview =
 function textOrNull(value: unknown) {
   const text = String(value || '').trim()
   return text && !objectIdPattern.test(text) ? text : null
+}
+
+function normalizeRuleInput(input: WorkScoreRuleFormInput): WorkScoreRuleInput {
+  const common = {
+    sourceType: input.sourceType,
+    points: input.points,
+    status: input.status,
+  }
+  if (input.sourceType === 'DESIGN_SUBMISSION') {
+    return {
+      ...common,
+      taskType: input.taskType || null,
+      priority: input.priority || null,
+      scaleDifficultyLevel: null,
+    }
+  }
+  return {
+    ...common,
+    taskType: null,
+    priority: null,
+    scaleDifficultyLevel: input.scaleDifficultyLevel || null,
+  }
 }
 
 export function WorkScoreWorkbenchPage({
@@ -180,8 +204,7 @@ export function WorkScoreWorkbenchPage({
     },
   })
   const ruleMutation = useMutation({
-    mutationFn: (input: WorkScoreRuleFormInput) =>
-      upsertWorkScoreRule({ ...input, priority: null, slotKey: null }),
+    mutationFn: (input: WorkScoreRuleFormInput) => upsertWorkScoreRule(normalizeRuleInput(input)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [...workScoreKeys.all, 'rules'] })
       toast('success', t('portal.workScores.updated'))
@@ -487,59 +510,94 @@ export function WorkScoreWorkbenchPage({
       <SectionCard>
         {canAdjust ? (
           <div className={styles.ruleSetup}>
-            <Typography.Title level={4}>Score setup</Typography.Title>
+            <Typography.Title level={4}>{t('portal.workScores.rules.title')}</Typography.Title>
             <Form
               form={ruleForm}
               layout="inline"
               initialValues={{ sourceType: 'DESIGN_SUBMISSION', status: 'ACTIVE' }}
               onFinish={(values) => ruleMutation.mutate(values)}
             >
-              <Form.Item name="sourceType" rules={[{ required: true }]}>
+              <Form.Item
+                label={t('portal.workScores.rules.sourceType')}
+                name="sourceType"
+                rules={[{ required: true }]}
+              >
                 <Select
                   className={styles.filter}
                   onChange={(value) => {
                     ruleForm.setFieldsValue({
                       sourceType: value,
                       taskType: null,
+                      priority: null,
                       scaleDifficultyLevel: null,
                     })
                   }}
                   options={['DESIGN_SUBMISSION', 'PRODUCTION_SCALE'].map((value) => ({
                     value,
-                    label: value,
+                    label: t(`portal.workScores.sources.${value}`),
                   }))}
                 />
               </Form.Item>
               {ruleSourceType !== 'PRODUCTION_SCALE' ? (
-                <Form.Item name="taskType" preserve={false}>
-                  <Select
-                    allowClear
-                    className={styles.filter}
-                    placeholder="Task type"
-                    options={RULE_TASK_TYPES.map((value) => ({ value, label: value }))}
-                  />
-                </Form.Item>
+                <>
+                  <Form.Item
+                    label={t('portal.workScores.rules.taskType')}
+                    name="taskType"
+                    preserve={false}
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      className={styles.filter}
+                      placeholder={t('portal.workScores.rules.taskType')}
+                      options={RULE_TASK_TYPES.map((value) => ({ value, label: value }))}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label={t('portal.workScores.rules.priority')}
+                    name="priority"
+                    preserve={false}
+                  >
+                    <Select
+                      allowClear
+                      className={styles.filter}
+                      placeholder={t('portal.workScores.rules.allPriorities')}
+                      options={RULE_PRIORITIES.map((value) => ({ value, label: value }))}
+                    />
+                  </Form.Item>
+                </>
               ) : (
-                <Form.Item name="scaleDifficultyLevel" preserve={false}>
+                <Form.Item
+                  label={t('portal.workScores.rules.scaleDifficulty')}
+                  name="scaleDifficultyLevel"
+                  preserve={false}
+                >
                   <Select
                     allowClear
                     className={styles.filter}
-                    placeholder="Scale difficulty"
+                    placeholder={t('portal.workScores.rules.allDifficulties')}
                     options={SCALE_DIFFICULTIES.map((value) => ({ value, label: value }))}
                   />
                 </Form.Item>
               )}
-              <Form.Item name="points" rules={[{ required: true }]}>
-                <InputNumber min={0} placeholder="Points" />
+              <Form.Item
+                label={t('portal.workScores.rules.points')}
+                name="points"
+                rules={[{ required: true }]}
+              >
+                <InputNumber min={0} placeholder={t('portal.workScores.rules.points')} />
               </Form.Item>
-              <Form.Item name="status" rules={[{ required: true }]}>
+              <Form.Item
+                label={t('portal.workScores.rules.status')}
+                name="status"
+                rules={[{ required: true }]}
+              >
                 <Select
                   className={styles.filter}
                   options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))}
                 />
               </Form.Item>
               <Button htmlType="submit" loading={ruleMutation.isPending} type="primary">
-                Save rule
+                {t('portal.workScores.rules.save')}
               </Button>
             </Form>
             <Table
@@ -549,11 +607,24 @@ export function WorkScoreWorkbenchPage({
               dataSource={rules.data ?? []}
               pagination={false}
               columns={[
-                { title: 'Source', dataIndex: 'sourceType' },
-                { title: 'Task type', render: (_, row) => row.taskType || '-' },
-                { title: 'Scale difficulty', render: (_, row) => row.scaleDifficultyLevel || '-' },
-                { title: 'Points', dataIndex: 'points' },
-                { title: 'Status', dataIndex: 'status' },
+                {
+                  title: t('portal.workScores.rules.sourceType'),
+                  render: (_, row) => t(`portal.workScores.sources.${row.sourceType}`),
+                },
+                {
+                  title: t('portal.workScores.rules.taskType'),
+                  render: (_, row) => row.taskType || '-',
+                },
+                {
+                  title: t('portal.workScores.rules.priority'),
+                  render: (_, row) => row.priority || '-',
+                },
+                {
+                  title: t('portal.workScores.rules.scaleDifficulty'),
+                  render: (_, row) => row.scaleDifficultyLevel || '-',
+                },
+                { title: t('portal.workScores.rules.points'), dataIndex: 'points' },
+                { title: t('portal.workScores.rules.status'), dataIndex: 'status' },
               ]}
             />
           </div>
