@@ -31,6 +31,12 @@ const CHANNEL_ICON = {
   ETSY: <ShopOutlined />,
 } as Record<string, ReactNode>
 
+const QC_STATUS_I18N_KEY: Record<string, string> = {
+  DRAFT: 'portal.catalog.qc.statuses.DRAFT',
+  APPROVED: 'portal.catalog.qc.statuses.APPROVED',
+  REJECTED: 'portal.catalog.qc.statuses.REJECTED',
+}
+
 const quickFilterParams = {
   all: {},
   approved: { qcStatus: 'APPROVED' },
@@ -107,7 +113,8 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
     () => [
       {
         title: t('portal.catalog.overview.preview'),
-        width: 70,
+        align: 'center',
+        width: 60,
         render: (_, row) =>
           row.productImageUrl ? (
             <img
@@ -124,6 +131,8 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
       },
       {
         title: t('portal.catalog.overview.marketplaceId'),
+        align: 'left',
+        width: 180,
         render: (_, row) => {
           const url = marketplaceListingUrl(row)
           return (
@@ -145,7 +154,8 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
       },
       {
         title: t('portal.catalog.overview.channel'),
-        width: 116,
+        align: 'left',
+        width: 110,
         render: (_, row) => (
           <Space direction="vertical" size={0}>
             <Tag
@@ -162,7 +172,7 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
       },
       {
         title: t('portal.catalog.overview.qtySold'),
-        width: 96,
+        width: 76,
         align: 'right',
         render: (_, row) => (
           <Space direction="vertical" size={0}>
@@ -175,7 +185,8 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
       },
       {
         title: t('portal.catalog.overview.status'),
-        width: 104,
+        align: 'center',
+        width: 116,
         render: (_, row) => (
           <StatusTag
             status={
@@ -186,12 +197,15 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
                   : 'pending'
             }
           >
-            {row.qcStatus}
+            {t(QC_STATUS_I18N_KEY[row.qcStatus] ?? '', {
+              defaultValue: row.qcStatus,
+            })}
           </StatusTag>
         ),
       },
       {
         title: '',
+        align: 'center',
         width: 44,
         render: (_, row) => (
           <Button
@@ -332,7 +346,7 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
             icon={<GlobalOutlined />}
             title={t('portal.catalog.overview.channelDistribution')}
           />
-          <Typography.Text type="secondary">
+          <Typography.Text type="secondary" className={styles.insightDescription}>
             {t('portal.catalog.overview.channelDescription')}
           </Typography.Text>
           <div className={styles.channelGrid}>
@@ -355,7 +369,7 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
             icon={<FileImageOutlined />}
             title={t('portal.catalog.overview.psdPipeline')}
           />
-          <Typography.Text type="secondary">
+          <Typography.Text type="secondary" className={styles.insightDescription}>
             {t('portal.catalog.overview.psdDescription')}
           </Typography.Text>
           <Progress
@@ -382,7 +396,7 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
             icon={<DatabaseOutlined />}
             title={t('portal.catalog.overview.masterDataSourcing')}
           />
-          <Typography.Text type="secondary">
+          <Typography.Text type="secondary" className={styles.insightDescription}>
             {t('portal.catalog.master.productTypeDescription')}
           </Typography.Text>
           <div className={styles.masterGrid}>
@@ -426,6 +440,7 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
             loading={topListings.isLoading}
             pagination={false}
             scroll={{ y: 360 }}
+            tableLayout="fixed"
           />
         </Card>
 
@@ -484,7 +499,7 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
 
 function PanelTitle({ icon, title }: { readonly icon: ReactNode; readonly title: ReactNode }) {
   return (
-    <Space size={8}>
+    <Space size={8} className={styles.panelTitle}>
       {icon}
       <Typography.Text strong>{title}</Typography.Text>
     </Space>

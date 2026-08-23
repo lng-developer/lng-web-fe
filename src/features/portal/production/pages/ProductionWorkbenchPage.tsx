@@ -1031,11 +1031,15 @@ export function ProductionWorkbenchPage({
         },
       },
       {
-        title: 'Scale',
+        title: t('portal.production.columns.scaleDifficulty'),
         width: 96,
         render: (_, row) => {
           const level = row.scaleContext?.use?.listing?.scaleDifficulty?.level || 'NORMAL'
-          return <StatusTag status={level === 'NORMAL' ? 'pending' : 'critical'}>{level}</StatusTag>
+          return (
+            <StatusTag status={level === 'NORMAL' ? 'pending' : 'critical'}>
+              {t(`portal.production.scaleDifficulties.${level}`, { defaultValue: level })}
+            </StatusTag>
+          )
         },
       },
       {

@@ -51,7 +51,7 @@ import styles from './OrderWorkbenchPage.module.scss'
 
 dayjs.extend(relativeTime)
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 20
 const TABS = [
   'ALL',
   'NEW_ORDER',
@@ -73,6 +73,7 @@ export function OrderWorkbenchPage() {
   const toast = useFeedbackToast()
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [tab, setTab] = useState<TabKey>('ALL')
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
@@ -91,14 +92,14 @@ export function OrderWorkbenchPage() {
   const params = useMemo(
     () => ({
       page,
-      limit: PAGE_SIZE,
+      limit: pageSize,
       tab,
       search: deferredSearch,
       shopId,
       vendorId,
       ...dates,
     }),
-    [dates, page, deferredSearch, shopId, tab, vendorId],
+    [dates, page, pageSize, deferredSearch, shopId, tab, vendorId],
   )
   const summaryParams = useMemo(
     () => ({
@@ -217,15 +218,20 @@ export function OrderWorkbenchPage() {
   const pagination = useMemo(
     () => ({
       current: page,
-      pageSize: PAGE_SIZE,
-      total: orders.data?.pagination.total,
-      showSizeChanger: false,
+      pageSize,
+      total: orders.data?.pagination.total ?? orders.data?.items.length ?? 0,
+      hideOnSinglePage: false,
+      showSizeChanger: true,
     }),
-    [page, orders.data?.pagination.total],
+    [orders.data?.items.length, orders.data?.pagination.total, page, pageSize],
   )
-  const handlePageChange = useCallback((nextPage: number) => {
-    setPage(nextPage)
-  }, [])
+  const handlePageChange = useCallback(
+    (nextPage: number, nextPageSize: number) => {
+      setPage(nextPageSize === pageSize ? nextPage : 1)
+      setPageSize(nextPageSize)
+    },
+    [pageSize],
+  )
   const renderExpandedRow = useCallback(
     (row: OrderWorkbenchRow) => {
       const canWrite = canWriteOrder(row)
@@ -482,6 +488,7 @@ export function OrderWorkbenchPage() {
         columns={columns}
         dataSource={orders.data?.items ?? []}
         loading={orders.isFetching}
+        rowClassName={() => styles.stickyOrderRow}
         scroll={{ x: 1280 }}
         pagination={{
           ...pagination,

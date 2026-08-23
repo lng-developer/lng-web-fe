@@ -705,7 +705,7 @@ export function DesignWorkbenchPage() {
             </Typography.Text>
           </Space>
           <Typography.Text className={styles.metaSecondary} type="secondary">
-            {dayjs(row.updatedAt).format('YYYY-MM-DD HH:mm')}
+            {dayjs(row.updatedAt).format('DD/MM/YYYY HH:mm')}
           </Typography.Text>
         </div>
       ),

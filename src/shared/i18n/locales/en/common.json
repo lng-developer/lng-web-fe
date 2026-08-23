@@ -125,6 +125,10 @@
       "cost": "Cost status",
       "unnamed": "Unnamed"
     },
+    "costStatuses": {
+      "PRESENT": "Cost available",
+      "MISSING": "Missing cost"
+    },
     "columns": {
       "order": "Order",
       "channel": "Channel",
@@ -297,6 +301,12 @@
       "label": "Filters",
       "search": "Search order, SKU, or customer",
       "status": "All statuses"
+    },
+    "statuses": {
+      "PENDING": "Pending",
+      "NEEDS_REVIEW": "Needs review",
+      "FAILED": "Failed",
+      "PARSED": "Parsed"
     },
     "columns": {
       "order": "Order / SKU",
@@ -885,8 +895,26 @@
         "emergencyName": "Emergency contact",
         "emergencyPhone": "Emergency phone",
         "relation": "Relationship",
+        "relationships": {
+          "PARENT": "Parent",
+          "SPOUSE": "Spouse",
+          "SIBLING": "Sibling",
+          "CHILD": "Child",
+          "OTHER": "Other"
+        },
         "legal": "Legal information",
-        "bank": "Bank information"
+        "bank": "Bank information",
+        "phonePlaceholder": "For example: +84 987 654 321",
+        "emailPlaceholder": "For example: name@example.com",
+        "addressPlaceholder": "Enter the full residential address",
+        "emergencyNamePlaceholder": "Enter the contact person's full name",
+        "emergencyPhonePlaceholder": "Enter the contact phone number",
+        "relationPlaceholder": "Select a relationship",
+        "identityPlaceholder": "Enter national ID or passport number",
+        "taxPlaceholder": "Enter personal tax ID",
+        "insurancePlaceholder": "Enter social insurance number",
+        "bankPlaceholder": "Select a bank",
+        "bankAccountPlaceholder": "Enter bank account number"
       }
     },
     "accessExplorer": {
@@ -1064,6 +1092,18 @@
       "name": "Scope name",
       "type": "Scope type",
       "scopeId": "Resource ID",
+      "status": "Status",
+      "types": {
+        "department": "Department",
+        "team": "Team",
+        "shop": "Shop",
+        "vendor": "Vendor"
+      },
+      "statuses": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "disabled": "Disabled"
+      },
       "deactivate": "Deactivate",
       "deactivateTitle": "Deactivate this scope?",
       "deactivateDescription": "Active access assignments must be removed before this scope can be deactivated.",
@@ -1110,6 +1150,17 @@
     "workEmail": "Work email",
     "status": "Status",
     "onboarding": "Onboarding",
+    "statuses": {
+      "ACTIVE": "Active",
+      "PROBATION": "Probation",
+      "ON_LEAVE": "On leave",
+      "SUSPENDED": "Suspended",
+      "RESIGNED": "Resigned"
+    },
+    "onboardingStatuses": {
+      "READY": "Profile complete",
+      "PROFILE_INCOMPLETE": "Profile incomplete"
+    },
     "unavailable": "HR directory is unavailable",
     "addStaff": "Add staff",
     "editProfile": "Edit profile",
@@ -1119,7 +1170,18 @@
     "department": "Department",
     "team": "Team",
     "employmentType": "Employment type",
+    "employmentTypes": {
+      "FULL_TIME": "Full-time",
+      "PART_TIME": "Part-time",
+      "INTERNSHIP": "Internship",
+      "CONTRACT": "Contract"
+    },
     "workMode": "Work mode",
+    "workModes": {
+      "ONSITE": "On-site",
+      "REMOTE": "Remote",
+      "HYBRID": "Hybrid"
+    },
     "startDate": "Start date",
     "probationEndDate": "Probation end date",
     "baseSalary": "Base salary (VND)",
@@ -1146,6 +1208,11 @@
     "uploadAvatar": "Upload avatar",
     "avatarInvalid": "Choose a JPEG, PNG, or WebP image up to 5MB",
     "gender": "Gender",
+    "genders": {
+      "MALE": "Male",
+      "FEMALE": "Female",
+      "OTHER": "Other"
+    },
     "birthDate": "Birth date",
     "phoneNumber": "Phone number",
     "personalEmail": "Personal email",
@@ -1332,10 +1399,12 @@
       "holidayTypes": {
         "PUBLIC_HOLIDAY": "Public holiday",
         "SUBSTITUTE_WORK_DAY": "Substitute workday"
-      }
+      },
+      "weekLabel": "Week"
     },
     "attendance": {
       "title": "Attendance",
+      "completedToday": "Attendance completed today · {{checkIn}} - {{checkOut}}",
       "myTitle": "My Attendance History",
       "teamTitle": "Attendance Records & Time Matrix",
       "description": "Track daily check-ins, check-outs, late arrival minutes, and attendance adjustments.",
@@ -1358,10 +1427,22 @@
       "adjustReasonPlaceholder": "Reason for adjusting check-in/out record...",
       "checkInTime": "Check-in time",
       "checkOutTime": "Check-out time",
+      "errors": {
+        "generic": "Unable to record attendance. Please try again.",
+        "ATTENDANCE_OPEN_RECORD_EXISTS": "You already have an attendance record waiting for check-out.",
+        "ATTENDANCE_SCHEDULE_UNAVAILABLE": "No effective work schedule is available.",
+        "ATTENDANCE_CHECK_IN_NOT_ALLOWED": "Check-in is not allowed for this work date.",
+        "ATTENDANCE_CHANGED_BEFORE_CHECK_IN": "Attendance or approved leave changed. Please try again.",
+        "ATTENDANCE_LEAVE_EXISTS": "Approved leave already exists for this work date.",
+        "ATTENDANCE_ALREADY_EXISTS": "Attendance already exists for this work date.",
+        "ATTENDANCE_NO_ELIGIBLE_OPEN_RECORD": "There is no eligible check-in record to check out.",
+        "ATTENDANCE_ALREADY_CHECKED_OUT": "This attendance record has already been checked out."
+      },
       "statuses": {
         "PRESENT": "Present",
         "ABSENT": "Absent",
         "LATE": "Late",
+        "HALF_DAY": "Half day",
         "LEAVE": "Leave",
         "ANNUAL_LEAVE": "Annual leave",
         "SICK_LEAVE": "Sick leave",
@@ -1429,6 +1510,7 @@
       },
       "portions": {
         "FULL_DAY": "Full day",
+        "HALF_DAY": "Half day",
         "MORNING": "Morning",
         "AFTERNOON": "Afternoon"
       }
@@ -1450,6 +1532,7 @@
       "version": "Version",
       "finalize": "Finalize",
       "paid": "Mark paid",
+      "sendPayslips": "Send payslips by email",
       "statuses": {
         "DRAFT": "Draft",
         "PROCESSING": "Processing",
@@ -1493,8 +1576,26 @@
       "insuranceCap": "Insurance salary cap",
       "personalDeduction": "Personal deduction",
       "dependantDeduction": "Dependant deduction",
+      "insuranceRates": "Insurance rates",
+      "overtimeRates": "Overtime rates",
+      "adjustmentCatalog": "Adjustment catalog",
+      "bulkAdjustmentHelp": "Create the same payroll adjustment for every selected employee in this period.",
+      "selectEmployees": "Select employees",
+      "adjustmentDetails": "Adjustment details",
       "adjustmentTypes": "Adjustment types",
       "adjustmentCodes": "Adjustment codes",
+      "adjustmentTypeValues": {
+        "EARNING": "Earning",
+        "ALLOWANCE": "Allowance",
+        "DEDUCTION": "Deduction"
+      },
+      "adjustmentCodeValues": {
+        "BONUS": "Bonus",
+        "PENALTY": "Penalty",
+        "ADVANCE": "Advance",
+        "ARREARS": "Arrears",
+        "OTHER": "Other"
+      },
       "myTitle": "My payslip statement",
       "myDescription": "Monthly employee, company, earnings, deductions, and net pay details.",
       "emptyPayslip": "No payslip is available for {{period}}.",
@@ -1574,7 +1675,11 @@
       "createAnnouncement": "Create announcement",
       "editAnnouncement": "Edit announcement",
       "announcementTitle": "Title",
+      "announcementTitlePlaceholder": "Enter announcement title",
+      "requiredAnnouncementTitle": "Please enter the announcement title",
       "content": "Content",
+      "contentPlaceholder": "Enter announcement content",
+      "requiredContent": "Please enter the announcement content",
       "category": "Category",
       "priority": "Priority",
       "companyWide": "Send to whole company",
@@ -1587,7 +1692,26 @@
       "eventStart": "Event starts",
       "eventEnd": "Event ends",
       "mandatory": "Mandatory event",
-      "attachmentIds": "Media attachment IDs"
+      "attachmentIds": "Media attachment IDs",
+      "requiredScheduledAt": "Please select the publish time",
+      "announcementCategories": {
+        "NEWS": "News",
+        "POLICY": "Policy",
+        "EVENT": "Event",
+        "OTHER": "Other"
+      },
+      "announcementPriorities": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      },
+      "announcementStatuses": {
+        "DRAFT": "Draft",
+        "SCHEDULED": "Scheduled",
+        "PUBLISHED": "Published",
+        "ARCHIVED": "Archived"
+      }
     },
     "self": {
       "title": "My work",
@@ -1878,7 +2002,88 @@
         "name": "Name",
         "order": "Sort order",
         "printMethod": "Print method",
-        "status": "Status"
+        "status": "Status",
+        "statuses": {
+          "ACTIVE": "Active",
+          "INACTIVE": "Inactive"
+        },
+        "templateEditor": {
+          "columns": {
+            "template": "Template",
+            "productType": "Product type",
+            "fields": "Fields",
+            "slots": "Slots",
+            "assets": "Assets",
+            "psd": "PSD"
+          },
+          "productType": "Product type",
+          "description": "Description",
+          "psdTemplate": "PSD template",
+          "required": "Required",
+          "optional": "Optional",
+          "notRequired": "Not required",
+          "requiredFieldsCount": "Required fields ({{count}})",
+          "fieldKey": "Field key",
+          "slotKey": "Slot key",
+          "userLabel": "User label",
+          "type": "Type",
+          "source": "Source",
+          "output": "Output",
+          "acceptedFields": "Accepted fields",
+          "addField": "Add field",
+          "artworkSlots": "Artwork slots",
+          "addArtworkSlot": "Add artwork slot",
+          "designAssets": "Design assets",
+          "addDesignAsset": "Add design asset",
+          "uploadFile": "Upload file",
+          "uploaded": "{{filename}} uploaded",
+          "uploadFailed": "Could not upload asset",
+          "uploadFileRequired": "Upload a file",
+          "assetIdPlaceholder": "Asset ID is filled after upload",
+          "assetType": "Asset type",
+          "label": "Label",
+          "version": "Version",
+          "saveFailed": "Could not save internal template",
+          "fieldTypes": {
+            "TEXT": "Text",
+            "IMAGE": "Image",
+            "OPTION": "Option",
+            "FILE": "File",
+            "NUMBER": "Number",
+            "DATE": "Date",
+            "UNKNOWN": "Unknown"
+          },
+          "fieldSources": {
+            "CUSTOMER_INPUT": "Customer input",
+            "AMAZON_CUSTOMIZATION": "Amazon customization",
+            "MANUAL": "Manual",
+            "SYSTEM": "System"
+          },
+          "slotTypes": {
+            "IMAGE": "Image",
+            "TEXT": "Text",
+            "VECTOR": "Vector",
+            "PDF": "PDF",
+            "MIXED": "Mixed"
+          },
+          "outputRoles": {
+            "FRONT": "Front",
+            "BACK": "Back",
+            "LEFT_SLEEVE": "Left sleeve",
+            "RIGHT_SLEEVE": "Right sleeve",
+            "MOCKUP": "Mockup",
+            "PREVIEW": "Preview",
+            "OTHER": "Other"
+          },
+          "assetTypes": {
+            "PSD_TEMPLATE": "PSD template",
+            "PREVIEW_IMAGE": "Preview image",
+            "MASK_FILE": "Mask file",
+            "SVG_TEMPLATE": "SVG template",
+            "SAMPLE_OUTPUT": "Sample output",
+            "OTHER": "Other"
+          }
+        }
       },
       "details": {
         "psdReadiness": "PSD readiness",
@@ -1965,6 +2170,11 @@
         "baseCost": "Base cost: {{amount}} {{currency}}"
       },
       "qc": {
+        "statuses": {
+          "DRAFT": "Pending review",
+          "APPROVED": "Approved",
+          "REJECTED": "Rejected"
+        },
         "approved": "Approved",
         "rejected": "Rejected",
         "approvedToast": "Listing approved successfully",
@@ -2063,6 +2273,7 @@
       "runtime": "Runtime",
       "uptime": "Uptime",
       "heapUsed": "Heap used",
+      "seconds": "{{count}} seconds",
       "moduleHealth": "Module health ({{healthy}}/{{total}})",
       "workers": "Workers",
       "queues": "Queues",
@@ -2095,7 +2306,21 @@
       "healthyModules": "{{healthy}} / {{total}} healthy",
       "health": "Health",
       "workersAndQueues": "Workers & queues",
-      "logs": "Logs"
+      "logs": "Logs",
+      "statuses": {
+        "ok": "Healthy",
+        "running": "Running",
+        "connected": "Connected",
+        "enabled": "Enabled",
+        "external": "External service",
+        "disabled": "Disabled",
+        "unknown": "Unknown",
+        "unreachable": "Unreachable",
+        "operational": "Operational",
+        "degraded": "Degraded",
+        "paused": "Paused",
+        "failed": "Failed"
+      }
     },
     "design": {
       "title": "Design operations",
@@ -2463,6 +2688,11 @@
       "channelAll": "Channel: All",
       "allStatuses": "All statuses",
       "allScaleDifficulty": "All scale difficulty",
+      "scaleDifficulties": {
+        "NORMAL": "Normal",
+        "HARD": "Hard",
+        "SPECIAL": "Special"
+      },
       "selectAssignee": "Select Scale assignee",
       "selectCsAssignee": "Select CS assignee",
       "assignScale": "Assign Scale",
@@ -2536,6 +2766,7 @@
         "product": "SKU / Product",
         "shop": "Shop",
         "files": "Files",
+        "scaleDifficulty": "Scale difficulty",
         "status": "Status",
         "updated": "Updated"
       },
@@ -3189,6 +3420,39 @@
     "loadMore": "Load more",
     "globalScope": "System-wide",
     "notAvailable": "Not available",
+    "metrics": {
+      "total": "Total events",
+      "succeeded": "Successful actions",
+      "failed": "Failed actions",
+      "security": "Audit scope",
+      "systemWide": "System-wide"
+    },
+    "sources": {
+      "HTTP": "HTTP request",
+      "WORKER": "Background worker",
+      "SYSTEM": "System",
+      "IMPORT": "Data import"
+    },
+    "codeTerms": {
+      "AUTH": "Authentication",
+      "SESSION": "Session",
+      "ACCOUNT": "Account",
+      "ROLE": "Role",
+      "PERMISSION": "Permission",
+      "SCOPE": "Scope",
+      "ORDER": "Order",
+      "USER": "User",
+      "PROFILE": "Profile",
+      "CREATED": "Created",
+      "UPDATED": "Updated",
+      "DELETED": "Deleted",
+      "LOGIN": "Login",
+      "LOGOUT": "Logout",
+      "ASSIGNED": "Assigned",
+      "REVOKED": "Revoked",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
     "entities": {
       "session": "Login session"
     },

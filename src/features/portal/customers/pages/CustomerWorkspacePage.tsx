@@ -9,7 +9,7 @@ import {
   UserSwitchOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
   Card,
@@ -54,11 +54,13 @@ const lifecycleColors: Record<CustomerLifecycle, string> = {
 
 const careOptions: CustomerCareStatus[] = ['NONE', 'NEEDS_FOLLOW_UP', 'IN_PROGRESS', 'RESOLVED']
 const lifecycleOptions: CustomerLifecycle[] = ['NEW', 'RETURNING', 'VIP', 'AT_RISK', 'ISSUE_PRONE']
+const PAGE_SIZE = 20
 
 export function CustomerWorkspacePage() {
   const { i18n, t } = useTranslation()
   const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [lifecycle, setLifecycle] = useState<CustomerLifecycle | undefined>()
   const [careStatus, setCareStatus] = useState<CustomerCareStatus | undefined>()
@@ -83,13 +85,14 @@ export function CustomerWorkspacePage() {
     t(`customers.values.${value}`, { defaultValue: value.replaceAll('_', ' ') })
 
   const params = useMemo(
-    () => ({ page, limit: 20, search, lifecycle, careStatus, sort: 'lastOrderDesc' }),
-    [page, search, lifecycle, careStatus],
+    () => ({ page, limit: pageSize, search, lifecycle, careStatus, sort: 'lastOrderDesc' }),
+    [page, pageSize, search, lifecycle, careStatus],
   )
 
   const customers = useQuery({
     queryKey: customerKeys.list(params),
     queryFn: () => listCustomers(params),
+    placeholderData: keepPreviousData,
   })
   const summary = useQuery({
     queryKey: customerKeys.summary({ search, lifecycle, careStatus }),
@@ -291,10 +294,14 @@ export function CustomerWorkspacePage() {
           emptyText={t('customers.empty.noCustomers')}
           pagination={{
             current: page,
-            pageSize: 20,
-            total: customers.data?.total ?? 0,
-            onChange: setPage,
-            showSizeChanger: false,
+            pageSize,
+            total: customers.data?.total ?? customers.data?.items.length ?? 0,
+            hideOnSinglePage: false,
+            showSizeChanger: true,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPageSize === pageSize ? nextPage : 1)
+              setPageSize(nextPageSize)
+            },
           }}
         />
       </Card>

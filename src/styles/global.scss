@@ -37,6 +37,15 @@ select {
   font: inherit;
 }
 
+// Keep table headers consistent across shared DataTable and direct Ant Design Table usage.
+.ant-table-wrapper .ant-table-thead > tr > th {
+  text-align: left !important;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th .ant-table-column-sorters {
+  justify-content: flex-start;
+}
+
 .route-state {
   display: grid;
   min-height: 100dvh;

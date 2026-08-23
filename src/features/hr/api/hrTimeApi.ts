@@ -29,6 +29,12 @@ export type Attendance = {
   shift?: { name?: string } | null
   capabilities?: { adjust?: boolean }
 }
+export type MyAttendancePage = Page<Attendance> & {
+  capabilities: {
+    checkIn: boolean
+    checkOut: boolean
+  }
+}
 export type LeaveBalance = {
   id: string
   profileId: string
@@ -303,7 +309,7 @@ export const listAttendance = (params: Query = {}) =>
 export const listAttendanceMatrix = (params: Query) =>
   get<unknown>('/api/hr/attendance/month-matrix', params)
 export const listMyAttendance = (params: Query = {}) =>
-  get<Page<Attendance>>('/api/hr/attendance/me', params)
+  get<MyAttendancePage>('/api/hr/attendance/me', params)
 export const checkIn = (input: object = {}) =>
   post<Attendance>('/api/hr/attendance/check-in', input)
 export const checkOut = (input: object = {}) =>

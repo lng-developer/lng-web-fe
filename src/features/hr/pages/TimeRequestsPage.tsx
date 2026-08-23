@@ -16,6 +16,7 @@ import { Button, Descriptions, Drawer, Space, Table, Tabs, Tag, Tooltip, Typogra
 import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
+import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
   EmployeeAvatar,
   MetricCard,
@@ -185,7 +186,8 @@ export function TimeRequestsPage() {
             loading={leaves.isLoading}
             dataSource={leaves.data?.items}
             onRow={(item) => ({ onClick: () => setDetail({ kind: 'leave', request: item }) })}
-            pagination={{ pageSize: 10 }}
+            scroll={{ y: 'calc(100vh - 360px)' }}
+            pagination={DEFAULT_TABLE_PAGINATION}
             columns={[
               {
                 title: t('hrOperations.common.employee'),
@@ -240,7 +242,8 @@ export function TimeRequestsPage() {
             loading={overtime.isLoading}
             dataSource={overtime.data?.items}
             onRow={(item) => ({ onClick: () => setDetail({ kind: 'overtime', request: item }) })}
-            pagination={{ pageSize: 10 }}
+            scroll={{ y: 'calc(100vh - 360px)' }}
+            pagination={DEFAULT_TABLE_PAGINATION}
             columns={[
               {
                 title: t('hrOperations.common.employee'),

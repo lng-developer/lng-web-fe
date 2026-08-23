@@ -14,7 +14,7 @@ import {
   PlusOutlined,
   StopOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Input, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
@@ -52,6 +52,15 @@ import { ListingVariantManager } from './ListingVariantManager'
 dayjs.extend(relativeTime)
 
 const PAGE_SIZE = 20
+const QC_STATUS_I18N_KEY: Record<string, string> = {
+  DRAFT: 'portal.catalog.qc.statuses.DRAFT',
+  APPROVED: 'portal.catalog.qc.statuses.APPROVED',
+  REJECTED: 'portal.catalog.qc.statuses.REJECTED',
+}
+const RECORD_STATUS_I18N_KEY: Record<string, string> = {
+  ACTIVE: 'portal.catalog.master.statuses.ACTIVE',
+  INACTIVE: 'portal.catalog.master.statuses.INACTIVE',
+}
 
 function marketplaceProductUrl(listing: Listing) {
   if (listing.salesChannelCode === 'ETSY' && listing.etsyListingId) {
@@ -73,6 +82,7 @@ export function CatalogListingWorkbenchPage({
   const toast = useFeedbackToast()
 
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
@@ -84,7 +94,7 @@ export function CatalogListingWorkbenchPage({
   const deferredSearch = useDeferredValue(search)
   const params: CatalogListParams = {
     page,
-    limit: PAGE_SIZE,
+    limit: pageSize,
     search: deferredSearch || undefined,
     shopId,
     salesChannelCode,
@@ -101,6 +111,7 @@ export function CatalogListingWorkbenchPage({
   const listings = useQuery({
     queryKey: catalogKeys.list(params),
     queryFn: () => listListings(params),
+    placeholderData: keepPreviousData,
     retry: false,
   })
   const summary = useQuery({
@@ -184,7 +195,6 @@ export function CatalogListingWorkbenchPage({
     if (listing.defaultPsdTemplateAssetId) {
       return {
         label: t('portal.catalog.psd.default'),
-        state: t('portal.catalog.psd.ready'),
         stateKey: 'ready',
         detail: listing.variantCount
           ? t('portal.catalog.psd.variantsCovered', { count: listing.variantCount })
@@ -203,7 +213,6 @@ export function CatalogListingWorkbenchPage({
           : 'missing'
     return {
       label,
-      state: t(`portal.catalog.psd.${stateKey}`),
       stateKey,
       detail: total ? t('portal.catalog.psd.variant') : t('portal.catalog.psd.noVariant'),
     }
@@ -297,8 +306,8 @@ export function CatalogListingWorkbenchPage({
       render: (_, listing) => <Typography.Text strong>{listing.variantCount ?? 0}</Typography.Text>,
     },
     {
-      title: 'PSD',
-      width: 120,
+      title: t('portal.catalog.columns.psd'),
+      width: 150,
       render: (_, listing) => {
         const summary = psdSummary(listing)
         const dotClass =
@@ -308,11 +317,11 @@ export function CatalogListingWorkbenchPage({
               ? styles.dotMissing
               : styles.dotPartial
         return (
-          <Space direction="vertical" size={0}>
+          <Space direction="vertical" size={0} className={styles.psdCell}>
             <Typography.Text strong>{summary.label}</Typography.Text>
             <span className={styles.psdState}>
               <span className={`${styles.psdDot} ${dotClass}`} />
-              {t(`portal.catalog.psdStates.${summary.state}`)}
+              {t(`portal.catalog.psdStates.${summary.stateKey}`)}
             </span>
             <Typography.Text type="secondary" className={styles.psdSource}>
               {summary.detail}
@@ -322,8 +331,9 @@ export function CatalogListingWorkbenchPage({
       },
     },
     {
-      title: 'QC',
-      width: 112,
+      title: t('portal.catalog.columns.qc'),
+      align: 'center',
+      width: 126,
       render: (_, listing) => (
         <StatusTag
           status={
@@ -334,7 +344,9 @@ export function CatalogListingWorkbenchPage({
                 : 'pending'
           }
         >
-          {listing.qcStatus}
+          {t(QC_STATUS_I18N_KEY[listing.qcStatus] ?? '', {
+            defaultValue: listing.qcStatus,
+          })}
         </StatusTag>
       ),
     },
@@ -354,16 +366,21 @@ export function CatalogListingWorkbenchPage({
     },
     {
       title: t('portal.catalog.master.status'),
-      width: 96,
+      align: 'center',
+      width: 150,
       render: (_, listing) => (
-        <Tag color={listing.status === 'ACTIVE' ? 'green' : 'default'}>{listing.status}</Tag>
+        <Tag color={listing.status === 'ACTIVE' ? 'green' : 'default'}>
+          {t(RECORD_STATUS_I18N_KEY[listing.status] ?? '', {
+            defaultValue: listing.status,
+          })}
+        </Tag>
       ),
     },
     {
       title: t('portal.catalog.columns.updated'),
       width: 150,
       render: (_, listing) => (
-        <Tooltip title={dayjs(listing.updatedAt).format('YYYY-MM-DD HH:mm:ss')}>
+        <Tooltip title={dayjs(listing.updatedAt).format('DD/MM/YYYY HH:mm:ss')}>
           {dayjs(listing.updatedAt).fromNow()}
         </Tooltip>
       ),
@@ -559,14 +576,18 @@ export function CatalogListingWorkbenchPage({
           loading={listings.isLoading}
           columns={columns}
           dataSource={listings.data?.items ?? []}
-          scroll={{ x: 1500 }}
+          scroll={{ x: 1500, y: 'max(280px, calc(100vh - 500px))' }}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
-            total: listings.data?.pagination.total ?? 0,
-            showSizeChanger: false,
+            pageSize,
+            total: listings.data?.pagination.total ?? listings.data?.items.length ?? 0,
+            hideOnSinglePage: false,
+            showSizeChanger: true,
             showTotal: (total) => t('portal.catalog.listingCount', { count: total }),
-            onChange: setPage,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPageSize === pageSize ? nextPage : 1)
+              setPageSize(nextPageSize)
+            },
           }}
           expandable={{
             expandIcon: ({ expanded, onExpand, record }) => (

@@ -125,6 +125,10 @@
       "cost": "Trạng thái chi phí",
       "unnamed": "Chưa đặt tên"
     },
+    "costStatuses": {
+      "PRESENT": "Đã có chi phí",
+      "MISSING": "Thiếu chi phí"
+    },
     "columns": {
       "order": "Đơn hàng",
       "channel": "Kênh",
@@ -297,6 +301,12 @@
       "label": "Bộ lọc",
       "search": "Tìm đơn, SKU hoặc khách hàng",
       "status": "Tất cả trạng thái"
+    },
+    "statuses": {
+      "PENDING": "Đang chờ",
+      "NEEDS_REVIEW": "Cần duyệt",
+      "FAILED": "Thất bại",
+      "PARSED": "Đã xử lý"
     },
     "columns": {
       "order": "Đơn / SKU",
@@ -885,8 +895,26 @@
         "emergencyName": "Người liên hệ khẩn cấp",
         "emergencyPhone": "SĐT khẩn cấp",
         "relation": "Mối quan hệ",
+        "relationships": {
+          "PARENT": "Cha/mẹ",
+          "SPOUSE": "Vợ/chồng",
+          "SIBLING": "Anh/chị/em",
+          "CHILD": "Con",
+          "OTHER": "Khác"
+        },
         "legal": "Thông tin giấy tờ",
-        "bank": "Thông tin ngân hàng"
+        "bank": "Thông tin ngân hàng",
+        "phonePlaceholder": "Ví dụ: +84 987 654 321",
+        "emailPlaceholder": "Ví dụ: ten@example.com",
+        "addressPlaceholder": "Nhập địa chỉ cư trú đầy đủ",
+        "emergencyNamePlaceholder": "Nhập họ tên người liên hệ",
+        "emergencyPhonePlaceholder": "Nhập số điện thoại liên hệ",
+        "relationPlaceholder": "Chọn mối quan hệ",
+        "identityPlaceholder": "Nhập số CCCD/CMND hoặc hộ chiếu",
+        "taxPlaceholder": "Nhập mã số thuế cá nhân",
+        "insurancePlaceholder": "Nhập mã số bảo hiểm xã hội",
+        "bankPlaceholder": "Chọn ngân hàng",
+        "bankAccountPlaceholder": "Nhập số tài khoản ngân hàng"
       }
     },
     "accessExplorer": {
@@ -1064,6 +1092,18 @@
       "name": "Tên phạm vi",
       "type": "Loại phạm vi",
       "scopeId": "ID tài nguyên",
+      "status": "Trạng thái",
+      "types": {
+        "department": "Phòng ban",
+        "team": "Nhóm",
+        "shop": "Cửa hàng",
+        "vendor": "Nhà cung cấp"
+      },
+      "statuses": {
+        "active": "Đang hoạt động",
+        "inactive": "Ngừng hoạt động",
+        "disabled": "Đã vô hiệu hóa"
+      },
       "deactivate": "Ngưng hoạt động",
       "deactivateTitle": "Ngưng hoạt động phạm vi này?",
       "deactivateDescription": "Cần gỡ các phân quyền đang hoạt động trước khi ngưng phạm vi này.",
@@ -1110,6 +1150,17 @@
     "workEmail": "Email công việc",
     "status": "Trạng thái",
     "onboarding": "Onboarding",
+    "statuses": {
+      "ACTIVE": "Đang làm việc",
+      "PROBATION": "Thử việc",
+      "ON_LEAVE": "Đang nghỉ phép",
+      "SUSPENDED": "Tạm đình chỉ",
+      "RESIGNED": "Đã nghỉ việc"
+    },
+    "onboardingStatuses": {
+      "READY": "Đã hoàn tất hồ sơ",
+      "PROFILE_INCOMPLETE": "Chưa hoàn tất hồ sơ"
+    },
     "unavailable": "Không thể tải danh bạ nhân sự",
     "addStaff": "Thêm nhân viên",
     "editProfile": "Sửa hồ sơ",
@@ -1119,7 +1170,18 @@
     "department": "Phòng ban",
     "team": "Nhóm",
     "employmentType": "Loại hình làm việc",
+    "employmentTypes": {
+      "FULL_TIME": "Toàn thời gian",
+      "PART_TIME": "Bán thời gian",
+      "INTERNSHIP": "Thực tập",
+      "CONTRACT": "Hợp đồng"
+    },
     "workMode": "Hình thức làm việc",
+    "workModes": {
+      "ONSITE": "Tại văn phòng",
+      "REMOTE": "Từ xa",
+      "HYBRID": "Kết hợp"
+    },
     "startDate": "Ngày bắt đầu",
     "probationEndDate": "Ngày kết thúc thử việc",
     "baseSalary": "Lương cơ bản (VND)",
@@ -1146,6 +1208,11 @@
     "uploadAvatar": "Tải ảnh đại diện",
     "avatarInvalid": "Chọn ảnh JPEG, PNG hoặc WebP tối đa 5MB",
     "gender": "Giới tính",
+    "genders": {
+      "MALE": "Nam",
+      "FEMALE": "Nữ",
+      "OTHER": "Khác"
+    },
     "birthDate": "Ngày sinh",
     "phoneNumber": "Số điện thoại",
     "personalEmail": "Email cá nhân",
@@ -1332,7 +1399,8 @@
       "holidayTypes": {
         "PUBLIC_HOLIDAY": "Ngày lễ",
         "SUBSTITUTE_WORK_DAY": "Ngày làm bù"
-      }
+      },
+      "weekLabel": "Tuần"
     },
     "attendance": {
       "title": "Chấm công",
@@ -1344,6 +1412,7 @@
       "records": "Bản ghi",
       "present": "Có mặt",
       "late": "Đi muộn",
+      "completedToday": "Đã hoàn thành chấm công hôm nay · {{checkIn}} - {{checkOut}}",
       "missingCheckout": "Thiếu check-out",
       "lateMinutes": "Số phút đi muộn",
       "minutes": "{{count}} phút",
@@ -1358,10 +1427,22 @@
       "adjustReasonPlaceholder": "Nhập lý do điều chỉnh giờ vào/ra...",
       "checkInTime": "Thời gian vào",
       "checkOutTime": "Thời gian ra",
+      "errors": {
+        "generic": "Không thể thực hiện chấm công. Vui lòng thử lại.",
+        "ATTENDANCE_OPEN_RECORD_EXISTS": "Bạn đang có một bản ghi chấm công chưa ra ca.",
+        "ATTENDANCE_SCHEDULE_UNAVAILABLE": "Không tìm thấy lịch làm việc có hiệu lực.",
+        "ATTENDANCE_CHECK_IN_NOT_ALLOWED": "Không thể vào ca trong ngày làm việc này.",
+        "ATTENDANCE_CHANGED_BEFORE_CHECK_IN": "Dữ liệu chấm công hoặc nghỉ phép đã thay đổi. Vui lòng thử lại.",
+        "ATTENDANCE_LEAVE_EXISTS": "Ngày này đã có nghỉ phép được duyệt.",
+        "ATTENDANCE_ALREADY_EXISTS": "Ngày này đã có bản ghi chấm công.",
+        "ATTENDANCE_NO_ELIGIBLE_OPEN_RECORD": "Không có bản ghi vào ca hợp lệ để ra ca.",
+        "ATTENDANCE_ALREADY_CHECKED_OUT": "Bản ghi này đã được ra ca."
+      },
       "statuses": {
         "PRESENT": "Có mặt",
         "ABSENT": "Vắng mặt",
         "LATE": "Đi muộn",
+        "HALF_DAY": "Nửa ngày công",
         "LEAVE": "Nghỉ phép",
         "ANNUAL_LEAVE": "Nghỉ phép năm",
         "SICK_LEAVE": "Nghỉ ốm",
@@ -1429,6 +1510,7 @@
       },
       "portions": {
         "FULL_DAY": "Cả ngày",
+        "HALF_DAY": "Nửa ngày",
         "MORNING": "Buổi sáng",
         "AFTERNOON": "Buổi chiều"
       }
@@ -1450,6 +1532,7 @@
       "version": "Phiên bản",
       "finalize": "Chốt",
       "paid": "Đã trả",
+      "sendPayslips": "Gửi phiếu lương qua email",
       "statuses": {
         "DRAFT": "Bản nháp",
         "PROCESSING": "Đang xử lý",
@@ -1493,8 +1576,26 @@
       "insuranceCap": "Trần lương đóng bảo hiểm",
       "personalDeduction": "Giảm trừ bản thân",
       "dependantDeduction": "Giảm trừ người phụ thuộc",
+      "insuranceRates": "Tỷ lệ bảo hiểm",
+      "overtimeRates": "Tỷ lệ tăng ca",
+      "adjustmentCatalog": "Danh mục điều chỉnh",
+      "bulkAdjustmentHelp": "Tạo cùng một khoản điều chỉnh lương cho tất cả nhân viên được chọn trong kỳ này.",
+      "selectEmployees": "Chọn nhân viên",
+      "adjustmentDetails": "Chi tiết điều chỉnh",
       "adjustmentTypes": "Loại điều chỉnh",
       "adjustmentCodes": "Mã điều chỉnh",
+      "adjustmentTypeValues": {
+        "EARNING": "Khoản cộng",
+        "ALLOWANCE": "Phụ cấp",
+        "DEDUCTION": "Khấu trừ"
+      },
+      "adjustmentCodeValues": {
+        "BONUS": "Thưởng",
+        "PENALTY": "Phạt",
+        "ADVANCE": "Tạm ứng",
+        "ARREARS": "Truy lĩnh",
+        "OTHER": "Khác"
+      },
       "myTitle": "Phiếu lương của tôi",
       "myDescription": "Chi tiết nhân viên, công ty, các khoản nhận, khấu trừ và thực lĩnh theo tháng.",
       "emptyPayslip": "Chưa có phiếu lương cho kỳ {{period}}.",
@@ -1574,7 +1675,11 @@
       "createAnnouncement": "Tạo thông báo",
       "editAnnouncement": "Sửa thông báo",
       "announcementTitle": "Tiêu đề",
+      "announcementTitlePlaceholder": "Nhập tiêu đề thông báo",
+      "requiredAnnouncementTitle": "Vui lòng nhập tiêu đề thông báo",
       "content": "Nội dung",
+      "contentPlaceholder": "Nhập nội dung thông báo",
+      "requiredContent": "Vui lòng nhập nội dung thông báo",
       "category": "Danh mục",
       "priority": "Ưu tiên",
       "companyWide": "Gửi toàn công ty",
@@ -1587,7 +1692,26 @@
       "eventStart": "Bắt đầu sự kiện",
       "eventEnd": "Kết thúc sự kiện",
       "mandatory": "Sự kiện bắt buộc",
-      "attachmentIds": "ID media đính kèm"
+      "attachmentIds": "ID media đính kèm",
+      "requiredScheduledAt": "Vui lòng chọn thời điểm đăng",
+      "announcementCategories": {
+        "NEWS": "Tin tức",
+        "POLICY": "Chính sách",
+        "EVENT": "Sự kiện",
+        "OTHER": "Khác"
+      },
+      "announcementPriorities": {
+        "LOW": "Thấp",
+        "NORMAL": "Bình thường",
+        "HIGH": "Cao",
+        "URGENT": "Khẩn cấp"
+      },
+      "announcementStatuses": {
+        "DRAFT": "Bản nháp",
+        "SCHEDULED": "Đã lên lịch",
+        "PUBLISHED": "Đã đăng",
+        "ARCHIVED": "Đã lưu trữ"
+      }
     },
     "self": {
       "title": "Công việc của tôi",
@@ -1878,7 +2002,88 @@
         "name": "Tên",
         "order": "Thứ tự",
         "printMethod": "Phương thức in",
-        "status": "Trạng thái"
+        "status": "Trạng thái",
+        "statuses": {
+          "ACTIVE": "Đang hoạt động",
+          "INACTIVE": "Không hoạt động"
+        },
+        "templateEditor": {
+          "columns": {
+            "template": "Mẫu",
+            "productType": "Loại sản phẩm",
+            "fields": "Trường",
+            "slots": "Vị trí in",
+            "assets": "Tài nguyên",
+            "psd": "PSD"
+          },
+          "productType": "Loại sản phẩm",
+          "description": "Mô tả",
+          "psdTemplate": "Mẫu PSD",
+          "required": "Bắt buộc",
+          "optional": "Không bắt buộc",
+          "notRequired": "Không yêu cầu",
+          "requiredFieldsCount": "Trường bắt buộc ({{count}})",
+          "fieldKey": "Khóa trường",
+          "slotKey": "Khóa vị trí",
+          "userLabel": "Nhãn hiển thị",
+          "type": "Loại",
+          "source": "Nguồn",
+          "output": "Đầu ra",
+          "acceptedFields": "Các trường được chấp nhận",
+          "addField": "Thêm trường",
+          "artworkSlots": "Vị trí thiết kế",
+          "addArtworkSlot": "Thêm vị trí thiết kế",
+          "designAssets": "Tài nguyên thiết kế",
+          "addDesignAsset": "Thêm tài nguyên thiết kế",
+          "uploadFile": "Tải tệp lên",
+          "uploaded": "Đã tải lên {{filename}}",
+          "uploadFailed": "Không thể tải tài nguyên lên",
+          "uploadFileRequired": "Vui lòng tải lên một tệp",
+          "assetIdPlaceholder": "ID tài nguyên được tự động điền sau khi tải lên",
+          "assetType": "Loại tài nguyên",
+          "label": "Nhãn",
+          "version": "Phiên bản",
+          "saveFailed": "Không thể lưu mẫu nội bộ",
+          "fieldTypes": {
+            "TEXT": "Văn bản",
+            "IMAGE": "Hình ảnh",
+            "OPTION": "Lựa chọn",
+            "FILE": "Tệp",
+            "NUMBER": "Số",
+            "DATE": "Ngày",
+            "UNKNOWN": "Chưa xác định"
+          },
+          "fieldSources": {
+            "CUSTOMER_INPUT": "Khách hàng nhập",
+            "AMAZON_CUSTOMIZATION": "Tùy chỉnh Amazon",
+            "MANUAL": "Nhập thủ công",
+            "SYSTEM": "Hệ thống"
+          },
+          "slotTypes": {
+            "IMAGE": "Hình ảnh",
+            "TEXT": "Văn bản",
+            "VECTOR": "Vector",
+            "PDF": "PDF",
+            "MIXED": "Hỗn hợp"
+          },
+          "outputRoles": {
+            "FRONT": "Mặt trước",
+            "BACK": "Mặt sau",
+            "LEFT_SLEEVE": "Tay áo trái",
+            "RIGHT_SLEEVE": "Tay áo phải",
+            "MOCKUP": "Mockup",
+            "PREVIEW": "Xem trước",
+            "OTHER": "Khác"
+          },
+          "assetTypes": {
+            "PSD_TEMPLATE": "Mẫu PSD",
+            "PREVIEW_IMAGE": "Ảnh xem trước",
+            "MASK_FILE": "Tệp mask",
+            "SVG_TEMPLATE": "Mẫu SVG",
+            "SAMPLE_OUTPUT": "Sản phẩm mẫu",
+            "OTHER": "Khác"
+          }
+        }
       },
       "details": {
         "psdReadiness": "Mức sẵn sàng PSD",
@@ -1965,6 +2170,11 @@
         "baseCost": "Chi phí gốc: {{amount}} {{currency}}"
       },
       "qc": {
+        "statuses": {
+          "DRAFT": "Chờ duyệt",
+          "APPROVED": "Đã duyệt",
+          "REJECTED": "Đã từ chối"
+        },
         "approved": "Đã duyệt",
         "rejected": "Đã từ chối",
         "approvedToast": "Đã duyệt listing",
@@ -2063,6 +2273,7 @@
       "runtime": "Runtime",
       "uptime": "Thời gian chạy",
       "heapUsed": "Heap đã dùng",
+      "seconds": "{{count}} giây",
       "moduleHealth": "Sức khỏe module ({{healthy}}/{{total}})",
       "workers": "Worker",
       "queues": "Hàng đợi",
@@ -2095,7 +2306,21 @@
       "healthyModules": "{{healthy}} / {{total}} khỏe",
       "health": "Sức khỏe",
       "workersAndQueues": "Worker & hàng đợi",
-      "logs": "Log"
+      "logs": "Log",
+      "statuses": {
+        "ok": "Ổn định",
+        "running": "Đang chạy",
+        "connected": "Đã kết nối",
+        "enabled": "Đã bật",
+        "external": "Dịch vụ bên ngoài",
+        "disabled": "Đã tắt",
+        "unknown": "Không xác định",
+        "unreachable": "Không thể kết nối",
+        "operational": "Hoạt động ổn định",
+        "degraded": "Hoạt động suy giảm",
+        "paused": "Tạm dừng",
+        "failed": "Thất bại"
+      }
     },
     "design": {
       "actions": "Thao tác",
@@ -2463,6 +2688,11 @@
       "channelAll": "Kênh: Tất cả",
       "allStatuses": "Tất cả trạng thái",
       "allScaleDifficulty": "Tất cả độ khó scale",
+      "scaleDifficulties": {
+        "NORMAL": "Bình thường",
+        "HARD": "Khó",
+        "SPECIAL": "Đặc biệt"
+      },
       "selectAssignee": "Chọn người phụ trách Scale",
       "selectCsAssignee": "Chọn CS phụ trách",
       "assignScale": "Gán Scale",
@@ -2535,6 +2765,7 @@
         "product": "SKU / Sản phẩm",
         "shop": "Shop",
         "files": "File",
+        "scaleDifficulty": "Độ khó scale",
         "status": "Trạng thái",
         "updated": "Cập nhật"
       },
@@ -3189,6 +3420,39 @@
     "loadMore": "Tải thêm",
     "globalScope": "Toàn hệ thống",
     "notAvailable": "Không có dữ liệu",
+    "metrics": {
+      "total": "Tổng sự kiện",
+      "succeeded": "Thao tác thành công",
+      "failed": "Thao tác thất bại",
+      "security": "Phạm vi nhật ký",
+      "systemWide": "Toàn hệ thống"
+    },
+    "sources": {
+      "HTTP": "Yêu cầu HTTP",
+      "WORKER": "Tiến trình nền",
+      "SYSTEM": "Hệ thống",
+      "IMPORT": "Nhập dữ liệu"
+    },
+    "codeTerms": {
+      "AUTH": "Xác thực",
+      "SESSION": "Phiên đăng nhập",
+      "ACCOUNT": "Tài khoản",
+      "ROLE": "Vai trò",
+      "PERMISSION": "Quyền",
+      "SCOPE": "Phạm vi",
+      "ORDER": "Đơn hàng",
+      "USER": "Người dùng",
+      "PROFILE": "Hồ sơ",
+      "CREATED": "Đã tạo",
+      "UPDATED": "Đã cập nhật",
+      "DELETED": "Đã xóa",
+      "LOGIN": "Đăng nhập",
+      "LOGOUT": "Đăng xuất",
+      "ASSIGNED": "Đã gán",
+      "REVOKED": "Đã thu hồi",
+      "APPROVED": "Đã duyệt",
+      "REJECTED": "Đã từ chối"
+    },
     "entities": {
       "session": "Phiên đăng nhập"
     },

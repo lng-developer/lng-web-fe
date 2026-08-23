@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip } from 'antd'
 
@@ -25,12 +25,14 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
   const toast = useFeedbackToast()
   const [form] = Form.useForm<ProductTypeGroupInput>()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<ProductTypeGroup | null>()
-  const params = { page, limit: PAGE_SIZE, search: search || undefined }
+  const params = { page, limit: pageSize, search: search || undefined }
   const groups = useQuery({
     queryKey: catalogKeys.productTypes(params),
     queryFn: () => listProductTypeGroups(params),
+    placeholderData: keepPreviousData,
     retry: false,
   })
   const save = useMutation({
@@ -76,9 +78,11 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
     {
       title: t('portal.catalog.master.status'),
       dataIndex: 'status',
-      width: 120,
+      width: 150,
       render: (value) => (
-        <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
+        <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
+          {t(`portal.catalog.master.statuses.${value}`, { defaultValue: value })}
+        </StatusTag>
       ),
     },
     ...(canManage
@@ -130,9 +134,14 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
           onRow={(row) => ({ onClick: () => canManage && open(row) })}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
-            total: groups.data?.pagination.total,
-            onChange: setPage,
+            pageSize,
+            total: groups.data?.pagination.total ?? groups.data?.items.length ?? 0,
+            hideOnSinglePage: false,
+            showSizeChanger: true,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPageSize === pageSize ? nextPage : 1)
+              setPageSize(nextPageSize)
+            },
           }}
           toolbar={
             <Input.Search
@@ -183,7 +192,12 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
             <Select allowClear options={printMethodSelectOptions} />
           </Form.Item>
           <Form.Item name="status" label={t('portal.catalog.master.status')}>
-            <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))} />
+            <Select
+              options={['ACTIVE', 'INACTIVE'].map((value) => ({
+                value,
+                label: t(`portal.catalog.master.statuses.${value}`, { defaultValue: value }),
+              }))}
+            />
           </Form.Item>
         </Form>
       </Modal>

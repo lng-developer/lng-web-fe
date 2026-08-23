@@ -47,6 +47,9 @@ type DuplicateProfileField =
   | 'socialInsuranceNumber'
   | 'taxIdentification'
 
+const genders = ['MALE', 'FEMALE', 'OTHER'] as const
+const relationships = ['PARENT', 'SPOUSE', 'SIBLING', 'CHILD', 'OTHER'] as const
+
 const duplicateProfileFields = new Set<DuplicateProfileField>([
   'identityCard',
   'personalEmail',
@@ -190,7 +193,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       label: (
         <span>
           <UserOutlined style={{ marginRight: 6 }} />
-          {t('auth.setup.profile.personal', { defaultValue: 'Personal Information' })}
+          {t('auth.setup.profile.personal')}
         </span>
       ),
       children: (
@@ -200,9 +203,9 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
               <Form.Item name="gender" label={t('hr.gender')}>
                 <Select
                   allowClear
-                  options={['MALE', 'FEMALE', 'OTHER'].map((value) => ({
+                  options={genders.map((value) => ({
                     value,
-                    label: value,
+                    label: t(`hr.genders.${value}`),
                   }))}
                 />
               </Form.Item>
@@ -214,7 +217,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item name="phoneNumber" label={t('hr.phoneNumber')} rules={phoneRules}>
-                <Input placeholder="e.g. +84 987 654 321" />
+                <Input placeholder={t('auth.setup.profile.phonePlaceholder')} />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -223,12 +226,12 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
                 label={t('hr.personalEmail')}
                 rules={[...required, { type: 'email', message: t('auth.setup.emailInvalid') }]}
               >
-                <Input placeholder="name@example.com" />
+                <Input placeholder={t('auth.setup.profile.emailPlaceholder')} />
               </Form.Item>
             </Col>
             <Col span={24}>
               <Form.Item name="address" label={t('hr.address')} rules={required}>
-                <Input placeholder="Full residential address..." />
+                <Input placeholder={t('auth.setup.profile.addressPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
@@ -240,7 +243,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       label: (
         <span>
           <ContactsOutlined style={{ marginRight: 6 }} />
-          {t('auth.setup.profile.emergency', { defaultValue: 'Emergency Contact' })}
+          {t('auth.setup.profile.emergency')}
         </span>
       ),
       children: (
@@ -250,7 +253,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
             label={t('auth.setup.profile.emergencyName')}
             rules={required}
           >
-            <Input placeholder="Contact person full name..." />
+            <Input placeholder={t('auth.setup.profile.emergencyNamePlaceholder')} />
           </Form.Item>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
@@ -259,7 +262,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
                 label={t('auth.setup.profile.emergencyPhone')}
                 rules={phoneRules}
               >
-                <Input placeholder="Phone number..." />
+                <Input placeholder={t('auth.setup.profile.emergencyPhonePlaceholder')} />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -268,7 +271,15 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
                 label={t('auth.setup.profile.relation')}
                 rules={required}
               >
-                <Input placeholder="Relationship (e.g. Spouse, Parent)..." />
+                <Select
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder={t('auth.setup.profile.relationPlaceholder')}
+                  options={relationships.map((value) => ({
+                    value,
+                    label: t(`auth.setup.profile.relationships.${value}`),
+                  }))}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -280,7 +291,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       label: (
         <span>
           <IdcardOutlined style={{ marginRight: 6 }} />
-          {t('auth.setup.profile.legal', { defaultValue: 'Legal & Bank Details' })}
+          {t('auth.setup.profile.legal')}
         </span>
       ),
       children: (
@@ -288,35 +299,40 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item name="identityCard" label={t('hr.identityCard')}>
-                <Input placeholder="National ID / Passport No." />
+                <Input placeholder={t('auth.setup.profile.identityPlaceholder')} />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item name="taxIdentification" label={t('hr.taxIdentification')}>
-                <Input placeholder="Personal Tax ID" />
+                <Input placeholder={t('auth.setup.profile.taxPlaceholder')} />
               </Form.Item>
             </Col>
             <Col span={24}>
               <Form.Item name="socialInsuranceNumber" label={t('hr.socialInsuranceNumber')}>
-                <Input placeholder="Social Insurance No." />
+                <Input placeholder={t('auth.setup.profile.insurancePlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
 
           <Divider plain style={{ fontSize: 13, margin: '16px 0 20px' }}>
             <BankOutlined style={{ marginRight: 6 }} />
-            {t('auth.setup.profile.bank', { defaultValue: 'Banking & Payroll' })}
+            {t('auth.setup.profile.bank')}
           </Divider>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item name={['bankAccount', 'bankName']} label={t('hr.bankName')}>
-                <Select allowClear showSearch options={bankOptions} placeholder="Select Bank..." />
+                <Select
+                  allowClear
+                  showSearch
+                  options={bankOptions}
+                  placeholder={t('auth.setup.profile.bankPlaceholder')}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item name={['bankAccount', 'accountNumber']} label={t('hr.bankAccountNumber')}>
-                <Input placeholder="Bank account number..." />
+                <Input placeholder={t('auth.setup.profile.bankAccountPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>

@@ -185,7 +185,9 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                         {item.status}
                       </StatusTag>
                       <Typography.Text>
-                        {'leaveType' in item ? item.leaveType : item.workDateKey}
+                        {'leaveType' in item
+                          ? item.leaveType
+                          : dayjs(item.workDateKey).format('DD/MM/YYYY')}
                       </Typography.Text>
                     </Space>
                   ))}
@@ -207,7 +209,9 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                       <Space size="middle">
                         <Avatar icon={<CalendarOutlined />} className={styles.surfaceAvatar} />
                         <div>
-                          <Typography.Text strong>{item.workDateKey}</Typography.Text>
+                          <Typography.Text strong>
+                            {dayjs(item.workDateKey).format('DD/MM/YYYY')}
+                          </Typography.Text>
                           <br />
                           <Typography.Text type="secondary">
                             {item.shift?.name ?? '-'} · {item.workLocation?.name ?? '-'}

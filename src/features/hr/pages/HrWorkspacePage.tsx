@@ -239,7 +239,10 @@ export function HrWorkspacePage() {
             placeholder={t('hr.allStatuses')}
             value={status}
             onChange={setStatus}
-            options={statuses.map((value) => ({ label: value, value }))}
+            options={statuses.map((value) => ({
+              label: t(`hr.statuses.${value}`, { defaultValue: value }),
+              value,
+            }))}
           />
           {canWrite && (
             <label className={styles.archivedToggle}>

@@ -85,7 +85,10 @@ export const ProductionWorkbenchFilterBar: FC<{
           allowClear
           value={scaleDifficultyLevel}
           placeholder={t('portal.production.allScaleDifficulty')}
-          options={['NORMAL', 'HARD', 'SPECIAL'].map((value) => ({ value, label: value }))}
+          options={(['NORMAL', 'HARD', 'SPECIAL'] as const).map((value) => ({
+            value,
+            label: t(`portal.production.scaleDifficulties.${value}`),
+          }))}
           onChange={onScaleDifficultyChange}
         />
         {tab === 'qc' ? (

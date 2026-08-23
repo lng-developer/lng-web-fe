@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DeleteOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
   Button,
@@ -52,12 +52,14 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
   const toast = useFeedbackToast()
   const [form] = Form.useForm<InternalTemplateInput & { code?: string }>()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<InternalTemplate | null>()
-  const params = { page, limit: PAGE_SIZE, q: search || undefined }
+  const params = { page, limit: pageSize, q: search || undefined }
   const templates = useQuery({
     queryKey: catalogKeys.templates(params),
     queryFn: () => listInternalTemplates(params),
+    placeholderData: keepPreviousData,
     retry: false,
   })
   const groups = useQuery({
@@ -82,7 +84,12 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       toast('success', t('portal.catalog.master.templateSaved'))
     },
     onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not save internal template'),
+      toast(
+        'error',
+        error instanceof Error
+          ? error.message
+          : t('portal.catalog.master.templateEditor.saveFailed'),
+      ),
   })
   const open = async (item: InternalTemplate | null) => {
     setEditing(item)
@@ -115,7 +122,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
   }
   const columns: TableColumnsType<InternalTemplate> = [
     {
-      title: 'Template',
+      title: t('portal.catalog.master.templateEditor.columns.template'),
       render: (_, row) => (
         <>
           <Typography.Text strong>{row.code}</Typography.Text>
@@ -124,17 +131,43 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         </>
       ),
     },
-    { title: 'Product type', render: (_, row) => row.productTypeGroup?.name ?? '-' },
-    { title: 'Fields', dataIndex: 'requiredFieldsCount', width: 90 },
-    { title: 'Slots', dataIndex: 'artworkSlotsCount', width: 90 },
-    { title: 'Assets', dataIndex: 'designAssetsCount', width: 90 },
-    { title: 'PSD', width: 100, render: (_, row) => (row.requiresPsd ? 'Required' : 'Optional') },
     {
-      title: 'Status',
+      title: t('portal.catalog.master.templateEditor.columns.productType'),
+      render: (_, row) => row.productTypeGroup?.name ?? '-',
+    },
+    {
+      title: t('portal.catalog.master.templateEditor.columns.fields'),
+      dataIndex: 'requiredFieldsCount',
+      width: 90,
+    },
+    {
+      title: t('portal.catalog.master.templateEditor.columns.slots'),
+      dataIndex: 'artworkSlotsCount',
+      width: 90,
+    },
+    {
+      title: t('portal.catalog.master.templateEditor.columns.assets'),
+      dataIndex: 'designAssetsCount',
+      width: 90,
+    },
+    {
+      title: t('portal.catalog.master.templateEditor.columns.psd'),
+      width: 100,
+      render: (_, row) =>
+        t(
+          row.requiresPsd
+            ? 'portal.catalog.master.templateEditor.required'
+            : 'portal.catalog.master.templateEditor.optional',
+        ),
+    },
+    {
+      title: t('portal.catalog.master.status'),
       dataIndex: 'status',
-      width: 110,
+      width: 150,
       render: (value) => (
-        <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
+        <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
+          {t(`portal.catalog.master.statuses.${value}`, { defaultValue: value })}
+        </StatusTag>
       ),
     },
     ...(canManage
@@ -186,9 +219,14 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
           onRow={(row) => ({ onClick: () => canManage && void open(row) })}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
-            total: templates.data?.pagination.total,
-            onChange: setPage,
+            pageSize,
+            total: templates.data?.pagination.total ?? templates.data?.items.length ?? 0,
+            hideOnSinglePage: false,
+            showSizeChanger: true,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPageSize === pageSize ? nextPage : 1)
+              setPageSize(nextPageSize)
+            },
           }}
           toolbar={
             <Input.Search
@@ -216,13 +254,25 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       >
         <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <Form.Item name="code" label="Code" rules={[{ required: true }]}>
+            <Form.Item
+              name="code"
+              label={t('portal.catalog.master.code')}
+              rules={[{ required: true }]}
+            >
               <Input disabled={Boolean(editing)} />
             </Form.Item>
-            <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+            <Form.Item
+              name="name"
+              label={t('portal.catalog.master.name')}
+              rules={[{ required: true }]}
+            >
               <Input />
             </Form.Item>
-            <Form.Item name="productTypeGroupId" label="Product type" rules={[{ required: true }]}>
+            <Form.Item
+              name="productTypeGroupId"
+              label={t('portal.catalog.master.templateEditor.productType')}
+              rules={[{ required: true }]}
+            >
               <Select
                 showSearch
                 optionFilterProp="label"
@@ -232,21 +282,38 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                 }))}
               />
             </Form.Item>
-            <Form.Item name="status" label="Status">
-              <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value }))} />
+            <Form.Item name="status" label={t('portal.catalog.master.status')}>
+              <Select
+                options={['ACTIVE', 'INACTIVE'].map((value) => ({
+                  value,
+                  label: t(`portal.catalog.master.statuses.${value}`),
+                }))}
+              />
             </Form.Item>
           </div>
-          <Form.Item name="description" label="Description">
+          <Form.Item
+            name="description"
+            label={t('portal.catalog.master.templateEditor.description')}
+          >
             <Input.TextArea rows={2} />
           </Form.Item>
-          <Form.Item name="requiresPsd" label="PSD template" valuePropName="checked">
-            <Switch checkedChildren="Required" unCheckedChildren="Not required" />
+          <Form.Item
+            name="requiresPsd"
+            label={t('portal.catalog.master.templateEditor.psdTemplate')}
+            valuePropName="checked"
+          >
+            <Switch
+              checkedChildren={t('portal.catalog.master.templateEditor.required')}
+              unCheckedChildren={t('portal.catalog.master.templateEditor.notRequired')}
+            />
           </Form.Item>
           <Tabs
             items={[
               {
                 key: 'fields',
-                label: `Required fields (${fieldKeys.length})`,
+                label: t('portal.catalog.master.templateEditor.requiredFieldsCount', {
+                  count: fieldKeys.length,
+                }),
                 children: (
                   <Form.List name="requiredFields">
                     {(fields, { add, remove }) => (
@@ -254,27 +321,43 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                         {fields.map(({ key, name }) => (
                           <Space key={key} align="start" wrap>
                             <Form.Item name={[name, 'key']} rules={[{ required: true }]}>
-                              <Input placeholder="Field key" />
+                              <Input
+                                placeholder={t('portal.catalog.master.templateEditor.fieldKey')}
+                              />
                             </Form.Item>
                             <Form.Item name={[name, 'label']}>
-                              <Input placeholder="User label" />
+                              <Input
+                                placeholder={t('portal.catalog.master.templateEditor.userLabel')}
+                              />
                             </Form.Item>
                             <Form.Item name={[name, 'type']} rules={[{ required: true }]}>
                               <Select
                                 style={{ width: 130 }}
-                                placeholder="Type"
-                                options={FIELD_TYPES.map((value) => ({ value, label: value }))}
+                                placeholder={t('portal.catalog.master.templateEditor.type')}
+                                options={FIELD_TYPES.map((value) => ({
+                                  value,
+                                  label: t(
+                                    `portal.catalog.master.templateEditor.fieldTypes.${value}`,
+                                  ),
+                                }))}
                               />
                             </Form.Item>
                             <Form.Item name={[name, 'source']}>
                               <Select
                                 style={{ width: 190 }}
-                                placeholder="Source"
-                                options={FIELD_SOURCES.map((value) => ({ value, label: value }))}
+                                placeholder={t('portal.catalog.master.templateEditor.source')}
+                                options={FIELD_SOURCES.map((value) => ({
+                                  value,
+                                  label: t(
+                                    `portal.catalog.master.templateEditor.fieldSources.${value}`,
+                                  ),
+                                }))}
                               />
                             </Form.Item>
                             <Form.Item name={[name, 'required']} valuePropName="checked">
-                              <Checkbox>Required</Checkbox>
+                              <Checkbox>
+                                {t('portal.catalog.master.templateEditor.required')}
+                              </Checkbox>
                             </Form.Item>
                             <Button
                               danger
@@ -297,7 +380,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                             })
                           }
                         >
-                          Add field
+                          {t('portal.catalog.master.templateEditor.addField')}
                         </Button>
                       </Space>
                     )}
@@ -306,7 +389,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
               },
               {
                 key: 'slots',
-                label: 'Artwork slots',
+                label: t('portal.catalog.master.templateEditor.artworkSlots'),
                 children: (
                   <Form.List name="artworkSlots">
                     {(fields, { add, remove }) => (
@@ -314,35 +397,53 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                         {fields.map(({ key, name }) => (
                           <Space key={key} align="start" wrap>
                             <Form.Item name={[name, 'key']} rules={[{ required: true }]}>
-                              <Input placeholder="Slot key" />
+                              <Input
+                                placeholder={t('portal.catalog.master.templateEditor.slotKey')}
+                              />
                             </Form.Item>
                             <Form.Item name={[name, 'label']}>
-                              <Input placeholder="User label" />
+                              <Input
+                                placeholder={t('portal.catalog.master.templateEditor.userLabel')}
+                              />
                             </Form.Item>
                             <Form.Item name={[name, 'type']}>
                               <Select
                                 style={{ width: 130 }}
-                                placeholder="Type"
-                                options={SLOT_TYPES.map((value) => ({ value, label: value }))}
+                                placeholder={t('portal.catalog.master.templateEditor.type')}
+                                options={SLOT_TYPES.map((value) => ({
+                                  value,
+                                  label: t(
+                                    `portal.catalog.master.templateEditor.slotTypes.${value}`,
+                                  ),
+                                }))}
                               />
                             </Form.Item>
                             <Form.Item name={[name, 'outputRole']}>
                               <Select
                                 style={{ width: 150 }}
-                                placeholder="Output"
-                                options={OUTPUT_ROLES.map((value) => ({ value, label: value }))}
+                                placeholder={t('portal.catalog.master.templateEditor.output')}
+                                options={OUTPUT_ROLES.map((value) => ({
+                                  value,
+                                  label: t(
+                                    `portal.catalog.master.templateEditor.outputRoles.${value}`,
+                                  ),
+                                }))}
                               />
                             </Form.Item>
                             <Form.Item name={[name, 'acceptedFieldKeys']}>
                               <Select
                                 mode="multiple"
                                 style={{ minWidth: 210 }}
-                                placeholder="Accepted fields"
+                                placeholder={t(
+                                  'portal.catalog.master.templateEditor.acceptedFields',
+                                )}
                                 options={fieldKeys.map((value) => ({ value, label: value }))}
                               />
                             </Form.Item>
                             <Form.Item name={[name, 'required']} valuePropName="checked">
-                              <Checkbox>Required</Checkbox>
+                              <Checkbox>
+                                {t('portal.catalog.master.templateEditor.required')}
+                              </Checkbox>
                             </Form.Item>
                             <Button
                               danger
@@ -360,7 +461,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                             add({ type: 'MIXED', required: true, acceptedFieldKeys: [] })
                           }
                         >
-                          Add artwork slot
+                          {t('portal.catalog.master.templateEditor.addArtworkSlot')}
                         </Button>
                       </Space>
                     )}
@@ -369,7 +470,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
               },
               {
                 key: 'assets',
-                label: 'Design assets',
+                label: t('portal.catalog.master.templateEditor.designAssets'),
                 children: (
                   <Form.List name="designAssets">
                     {(fields, { add, remove }) => (
@@ -385,45 +486,73 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                                     ['designAssets', name, 'mediaAssetId'],
                                     asset.id,
                                   )
-                                  toast('success', `${asset.originalFilename} uploaded`)
+                                  toast(
+                                    'success',
+                                    t('portal.catalog.master.templateEditor.uploaded', {
+                                      filename: asset.originalFilename,
+                                    }),
+                                  )
                                 } catch (error) {
                                   toast(
                                     'error',
                                     error instanceof Error
                                       ? error.message
-                                      : 'Could not upload asset',
+                                      : t('portal.catalog.master.templateEditor.uploadFailed'),
                                   )
                                 }
                                 return Upload.LIST_IGNORE
                               }}
                             >
-                              <Button icon={<UploadOutlined />}>Upload file</Button>
+                              <Button icon={<UploadOutlined />}>
+                                {t('portal.catalog.master.templateEditor.uploadFile')}
+                              </Button>
                             </Upload>
                             <Form.Item
                               name={[name, 'mediaAssetId']}
-                              rules={[{ required: true, message: 'Upload a file' }]}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: t(
+                                    'portal.catalog.master.templateEditor.uploadFileRequired',
+                                  ),
+                                },
+                              ]}
                             >
-                              <Input readOnly placeholder="Asset ID is filled after upload" />
+                              <Input
+                                readOnly
+                                placeholder={t(
+                                  'portal.catalog.master.templateEditor.assetIdPlaceholder',
+                                )}
+                              />
                             </Form.Item>
                             <Form.Item name={[name, 'type']} rules={[{ required: true }]}>
                               <Select
                                 style={{ width: 170 }}
-                                placeholder="Asset type"
-                                options={ASSET_TYPES.map((value) => ({ value, label: value }))}
+                                placeholder={t('portal.catalog.master.templateEditor.assetType')}
+                                options={ASSET_TYPES.map((value) => ({
+                                  value,
+                                  label: t(
+                                    `portal.catalog.master.templateEditor.assetTypes.${value}`,
+                                  ),
+                                }))}
                               />
                             </Form.Item>
                             <Form.Item name={[name, 'label']}>
-                              <Input placeholder="Label" />
+                              <Input
+                                placeholder={t('portal.catalog.master.templateEditor.label')}
+                              />
                             </Form.Item>
                             <Form.Item name={[name, 'version']}>
-                              <Input placeholder="Version" />
+                              <Input
+                                placeholder={t('portal.catalog.master.templateEditor.version')}
+                              />
                             </Form.Item>
                             <Form.Item name={[name, 'status']}>
                               <Select
                                 style={{ width: 110 }}
                                 options={['ACTIVE', 'INACTIVE'].map((value) => ({
                                   value,
-                                  label: value,
+                                  label: t(`portal.catalog.master.statuses.${value}`),
                                 }))}
                               />
                             </Form.Item>
@@ -443,7 +572,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                             add({ type: 'PSD_TEMPLATE', version: 'v1', status: 'ACTIVE' })
                           }
                         >
-                          Add design asset
+                          {t('portal.catalog.master.templateEditor.addDesignAsset')}
                         </Button>
                       </Space>
                     )}

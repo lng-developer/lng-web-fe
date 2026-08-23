@@ -1,0 +1,122 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rotationCommand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--ant-color-warning) 22%, var(--ant-color-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ant-color-warning-bg) 32%, var(--ant-color-bg-container));
+  box-shadow: 0 12px 28px rgb(15 23 42 / 6%);
+}
+
+.rotationEyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.rotationHint {
+  max-width: 720px;
+  margin: 0 !important;
+}
+
+.rotationTeamFilter {
+  width: 100%;
+}
+
+.rotationActions {
+  margin-bottom: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.modalForm {
+  display: grid;
+  gap: 14px;
+}
+
+.modalSection {
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.modalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.modalGridWide {
+  grid-column: 1 / -1;
+}
+
+.modalStack {
+  display: grid;
+  gap: 12px;
+}
+
+.checkboxGroup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.checkboxGroup :global(.ant-checkbox-wrapper) {
+  min-width: 0;
+  margin-inline-start: 0;
+}
+
+@media (max-width: 900px) {
+  .metrics,
+  .modalGrid,
+  .rotationCommand {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .metrics,
+  .modalGrid,
+  .rotationCommand,
+  .checkboxGroup {
+    grid-template-columns: 1fr;
+  }
+}

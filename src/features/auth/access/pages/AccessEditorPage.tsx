@@ -226,10 +226,10 @@ export function AccessEditorPage() {
   const accountStatus = String(data?.account.account.status ?? '')
   const getAssignmentWindowText = (item: Assignment) => {
     const from = item.validFrom
-      ? `${t('auth.accessEditor.from')}: ${dayjs(item.validFrom).format('YYYY-MM-DD HH:mm')}`
+      ? `${t('auth.accessEditor.from')}: ${dayjs(item.validFrom).format('DD/MM/YYYY HH:mm')}`
       : null
     const until = item.validUntil
-      ? `${t('auth.accessEditor.until')}: ${dayjs(item.validUntil).format('YYYY-MM-DD HH:mm')}`
+      ? `${t('auth.accessEditor.until')}: ${dayjs(item.validUntil).format('DD/MM/YYYY HH:mm')}`
       : null
     return [from, until].filter(Boolean).join(' • ') || t('auth.accessEditor.always')
   }

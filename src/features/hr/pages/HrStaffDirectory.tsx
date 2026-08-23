@@ -94,12 +94,14 @@ export const HrStaffDirectory = memo(function HrStaffDirectory({
                               : 'pending'
                         }
                       >
-                        {profile.status}
+                        {t(`hr.statuses.${profile.status}`, { defaultValue: profile.status ?? '' })}
                       </StatusTag>
                       <StatusTag
                         status={profile.onboardingStatus === 'READY' ? 'ready' : 'pending'}
                       >
-                        {profile.onboardingStatus}
+                        {t(`hr.onboardingStatuses.${profile.onboardingStatus}`, {
+                          defaultValue: profile.onboardingStatus,
+                        })}
                       </StatusTag>
                     </Space>
                   </button>

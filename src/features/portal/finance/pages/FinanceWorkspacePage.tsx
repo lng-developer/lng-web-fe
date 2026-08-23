@@ -398,8 +398,8 @@ export function FinanceWorkspacePage() {
           onChange={handleCostStatusChange}
           placeholder={t('finance.filters.cost')}
           options={[
-            { value: 'PRESENT', label: 'PRESENT' },
-            { value: 'MISSING', label: 'MISSING' },
+            { value: 'PRESENT', label: t('finance.costStatuses.PRESENT') },
+            { value: 'MISSING', label: t('finance.costStatuses.MISSING') },
           ]}
         />
       </FilterBar>

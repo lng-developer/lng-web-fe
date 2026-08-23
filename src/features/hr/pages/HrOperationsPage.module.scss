@@ -1,6 +1,12 @@
 .page {
   display: grid;
+  min-width: 0;
   gap: 18px;
+}
+
+.page > *,
+.split > * {
+  min-width: 0;
 }
 
 .toolbar {
@@ -182,6 +188,22 @@
 
 .modalForm :global(.ant-space) {
   max-width: 100%;
+}
+
+.announcementMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.announcementMetaGrid :global(.ant-select) {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .announcementMetaGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .money {

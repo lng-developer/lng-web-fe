@@ -47,6 +47,10 @@ const statusColor = (status?: string) => {
 
 export const MonitoringDashboardPage = () => {
   const { t } = useTranslation()
+  const statusLabel = (status?: string) => {
+    const normalized = String(status ?? 'unknown').toLowerCase()
+    return t(`portal.monitoring.statuses.${normalized}`, { defaultValue: String(status ?? '') })
+  }
   const canRead = hasAnyPermission(['AUDIT:READ'], { globalOnly: true })
   const [health, setHealth] = useState<SystemHealth>()
   const [error, setError] = useState<string>()
@@ -132,7 +136,7 @@ export const MonitoringDashboardPage = () => {
                     <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
                       {label}
                     </Typography.Text>
-                    <Tag color={statusColor(String(value))}>{String(value ?? 'UNKNOWN')}</Tag>
+                    <Tag color={statusColor(String(value))}>{statusLabel(String(value))}</Tag>
                   </div>
                 </Flex>
               </Card>
@@ -157,7 +161,7 @@ export const MonitoringDashboardPage = () => {
                   {label}
                 </Typography.Text>
                 {label === t('portal.monitoring.status') ? (
-                  <Tag color={statusColor(String(value))}>{String(value).toUpperCase()}</Tag>
+                  <Tag color={statusColor(String(value))}>{statusLabel(String(value))}</Tag>
                 ) : (
                   <Typography.Title level={4}>{value}</Typography.Title>
                 )}
@@ -180,7 +184,9 @@ export const MonitoringDashboardPage = () => {
           <Col xs={24} md={8}>
             <Card size="small">
               <Typography.Text type="secondary">{t('portal.monitoring.uptime')}</Typography.Text>
-              <Typography.Title level={4}>{health?.uptimeSeconds ?? 0}s</Typography.Title>
+              <Typography.Title level={4}>
+                {t('portal.monitoring.seconds', { count: health?.uptimeSeconds ?? 0 })}
+              </Typography.Title>
             </Card>
           </Col>
           <Col xs={24} md={8}>
@@ -223,7 +229,7 @@ export const MonitoringDashboardPage = () => {
                       color={isOk ? 'success' : 'error'}
                       icon={isOk ? <CheckCircleOutlined /> : <WarningOutlined />}
                     >
-                      {module.status.toUpperCase()}
+                      {statusLabel(module.status)}
                     </Tag>
                   </Flex>
                   <Typography.Text
@@ -265,7 +271,7 @@ export const MonitoringDashboardPage = () => {
                       {worker.queueName ?? worker.script ?? worker.process}
                     </Typography.Text>
                   </div>
-                  <Tag color={statusColor(worker.status)}>{worker.status.toUpperCase()}</Tag>
+                  <Tag color={statusColor(worker.status)}>{statusLabel(worker.status)}</Tag>
                 </Flex>
                 <Typography.Text type="secondary" style={{ fontSize: 11 }}>
                   {worker.process === 'embedded-api'
@@ -293,7 +299,7 @@ export const MonitoringDashboardPage = () => {
                       {queue.queueName}
                     </Typography.Text>
                   </div>
-                  <Tag color={statusColor(queue.status)}>{queue.status.toUpperCase()}</Tag>
+                  <Tag color={statusColor(queue.status)}>{statusLabel(queue.status)}</Tag>
                 </Flex>
                 <div className={styles.queueCounts}>
                   {(['waiting', 'active', 'delayed', 'completed', 'failed', 'paused'] as const).map(
@@ -378,10 +384,8 @@ export const MonitoringDashboardPage = () => {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('portal.monitoring.title', { defaultValue: 'System Monitoring & Observability' })}
-        description={t('portal.monitoring.description', {
-          defaultValue: 'Live backend health, infrastructure status, and module readiness.',
-        })}
+        title={t('portal.monitoring.title')}
+        description={t('portal.monitoring.description')}
         actions={
           <Space>
             {health?.generatedAt ? (
@@ -401,7 +405,7 @@ export const MonitoringDashboardPage = () => {
             icon={<SafetyCertificateOutlined />}
             variant={isHealthy ? 'success' : 'danger'}
             label={t('portal.monitoring.systemHealth')}
-            value={error ? 'UNREACHABLE' : isHealthy ? 'OPERATIONAL' : 'DEGRADED'}
+            value={statusLabel(error ? 'unreachable' : isHealthy ? 'operational' : 'degraded')}
             loading={loading}
           />
         </Col>
@@ -431,7 +435,7 @@ export const MonitoringDashboardPage = () => {
             icon={<DatabaseOutlined />}
             variant={health?.infrastructure.mongo === 'CONNECTED' ? 'success' : 'danger'}
             label="MongoDB"
-            value={health?.infrastructure.mongo ?? 'UNKNOWN'}
+            value={statusLabel(health?.infrastructure.mongo)}
             loading={loading}
           />
         </Col>

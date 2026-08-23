@@ -1,5 +1,9 @@
 .page {
   display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   gap: 20px;
 }
 .icon {
@@ -18,6 +22,15 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+}
+
+.metrics > *,
+.page :global(.ant-tabs),
+.page :global(.ant-tabs-content-holder),
+.page :global(.ant-tabs-tabpane),
+.page :global(.ant-table-wrapper) {
+  min-width: 0;
+  max-width: 100%;
 }
 .tree,
 .branch {

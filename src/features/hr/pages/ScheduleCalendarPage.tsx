@@ -33,6 +33,7 @@ import dayjs from 'dayjs'
 
 import { loadTeams } from '@/features/organization/api/organizationApi'
 import { getPermissions } from '@/shared/auth/session'
+import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
   DateTimePicker,
   FormActions,
@@ -367,7 +368,8 @@ export function ScheduleCalendarPage() {
           )}
           <Table
             size="small"
-            pagination={{ pageSize: 10 }}
+            scroll={{ y: 'calc(100vh - 360px)' }}
+            pagination={DEFAULT_TABLE_PAGINATION}
             rowKey="id"
             loading={assignments.isLoading}
             dataSource={assignments.data?.items}
@@ -394,7 +396,8 @@ export function ScheduleCalendarPage() {
                 title: t('hrOperations.schedule.effective'),
                 render: (_, item) => (
                   <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-                    {item.effectiveFrom} → {item.effectiveTo || '∞'}
+                    {dayjs(item.effectiveFrom).format('DD/MM/YYYY')} →{' '}
+                    {item.effectiveTo ? dayjs(item.effectiveTo).format('DD/MM/YYYY') : '∞'}
                   </Typography.Text>
                 ),
               },
@@ -436,7 +439,8 @@ export function ScheduleCalendarPage() {
               )}
               <Table
                 size="small"
-                pagination={false}
+                scroll={{ y: 'calc(100vh - 360px)' }}
+                pagination={DEFAULT_TABLE_PAGINATION}
                 rowKey="id"
                 loading={locations.isLoading}
                 dataSource={locations.data?.items}
@@ -494,7 +498,8 @@ export function ScheduleCalendarPage() {
               )}
               <Table
                 size="small"
-                pagination={false}
+                scroll={{ y: 'calc(100vh - 360px)' }}
+                pagination={DEFAULT_TABLE_PAGINATION}
                 rowKey="id"
                 loading={shifts.isLoading}
                 dataSource={shifts.data?.items}
@@ -555,7 +560,7 @@ export function ScheduleCalendarPage() {
       ),
       children: (
         <Row gutter={[16, 16]}>
-          <Col xs={24} lg={8}>
+          <Col xs={24} lg={12}>
             <SectionCard title={t('hrOperations.schedule.holidays')}>
               {canCalendarWrite && (
                 <Button
@@ -569,7 +574,8 @@ export function ScheduleCalendarPage() {
               )}
               <Table
                 size="small"
-                pagination={false}
+                scroll={{ y: 'calc(100vh - 360px)' }}
+                pagination={DEFAULT_TABLE_PAGINATION}
                 rowKey="id"
                 loading={holidays.isLoading}
                 dataSource={holidays.data?.items}
@@ -577,10 +583,14 @@ export function ScheduleCalendarPage() {
                   {
                     title: t('hrOperations.common.date'),
                     dataIndex: 'dateKey',
-                    render: (v) => <Tag color="gold">{v}</Tag>,
+                    render: (v: string) => <Tag color="gold">{dayjs(v).format('DD/MM/YYYY')}</Tag>,
                   },
                   { title: t('hrOperations.common.name'), dataIndex: 'name' },
-                  { title: t('hrOperations.common.type'), dataIndex: 'holidayType' },
+                  {
+                    title: t('hrOperations.common.type'),
+                    dataIndex: 'holidayType',
+                    render: (v: string) => holidayTypeLabel(v),
+                  },
                   ...(canCalendarWrite
                     ? [
                         {
@@ -601,7 +611,7 @@ export function ScheduleCalendarPage() {
             </SectionCard>
           </Col>
 
-          <Col xs={24} lg={8}>
+          <Col xs={24} lg={12}>
             <SectionCard title={t('hrOperations.schedule.overrides')}>
               {canScheduleWrite && (
                 <Button
@@ -615,7 +625,8 @@ export function ScheduleCalendarPage() {
               )}
               <Table
                 size="small"
-                pagination={false}
+                scroll={{ y: 'calc(100vh - 360px)' }}
+                pagination={DEFAULT_TABLE_PAGINATION}
                 rowKey="id"
                 loading={overrides.isLoading}
                 dataSource={overrides.data?.items}
@@ -623,11 +634,21 @@ export function ScheduleCalendarPage() {
                   {
                     title: t('hrOperations.common.date'),
                     dataIndex: 'dateKey',
-                    render: (v) => <Tag color="orange">{v}</Tag>,
+                    render: (v: string) => (
+                      <Tag color="orange">{dayjs(v).format('DD/MM/YYYY')}</Tag>
+                    ),
                   },
                   { title: t('hrOperations.common.name'), dataIndex: 'name' },
-                  { title: t('hrOperations.common.type'), dataIndex: 'kind' },
-                  { title: t('hrOperations.common.scope'), dataIndex: 'scopeType' },
+                  {
+                    title: t('hrOperations.common.type'),
+                    dataIndex: 'kind',
+                    render: (v: string) => overrideKindLabel(v),
+                  },
+                  {
+                    title: t('hrOperations.common.scope'),
+                    dataIndex: 'scopeType',
+                    render: (v: string) => scopeTypeLabel(v),
+                  },
                 ]}
               />
             </SectionCard>
@@ -697,7 +718,8 @@ export function ScheduleCalendarPage() {
           </Space>
           <Table
             size="small"
-            pagination={false}
+            scroll={{ y: 'calc(100vh - 360px)' }}
+            pagination={DEFAULT_TABLE_PAGINATION}
             rowKey="id"
             loading={rotations.isLoading}
             dataSource={rotations.data?.items}
@@ -705,7 +727,7 @@ export function ScheduleCalendarPage() {
               {
                 title: t('hrOperations.common.date'),
                 dataIndex: 'dateKey',
-                render: (v) => <Tag color="blue">{v}</Tag>,
+                render: (v) => <Tag color="blue">{dayjs(v).format('DD/MM/YYYY')}</Tag>,
               },
               {
                 title: t('hrOperations.common.team'),

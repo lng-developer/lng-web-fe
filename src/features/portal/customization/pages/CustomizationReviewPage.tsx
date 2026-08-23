@@ -116,7 +116,11 @@ export const CustomizationReviewPage = () => {
       { title: t('customization.columns.shop'), render: (_, row) => row.shop.name || '—' },
       {
         title: t('customization.columns.status'),
-        render: (_, row) => <StatusTag status={tone(row.status)}>{row.status}</StatusTag>,
+        render: (_, row) => (
+          <StatusTag status={tone(row.status)}>
+            {t(`customization.statuses.${row.status}`)}
+          </StatusTag>
+        ),
       },
       {
         title: t('customization.columns.issue'),
@@ -184,7 +188,7 @@ export const CustomizationReviewPage = () => {
             placeholder={t('customization.filters.status')}
             options={['PENDING', 'NEEDS_REVIEW', 'FAILED', 'PARSED'].map((value) => ({
               value,
-              label: value,
+              label: t(`customization.statuses.${value}`),
             }))}
           />
         </FilterBar>
@@ -243,7 +247,11 @@ export const CustomizationReviewPage = () => {
                 {
                   key: 'status',
                   label: t('customization.columns.status'),
-                  children: <StatusTag status={tone(selected.status)}>{selected.status}</StatusTag>,
+                  children: (
+                    <StatusTag status={tone(selected.status)}>
+                      {t(`customization.statuses.${selected.status}`)}
+                    </StatusTag>
+                  ),
                 },
                 {
                   key: 'issue',

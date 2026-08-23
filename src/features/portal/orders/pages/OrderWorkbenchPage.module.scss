@@ -79,6 +79,15 @@
   color: var(--ant-color-text);
   text-align: left;
 }
+.stickyOrderRow {
+  > td {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    background: var(--ant-color-bg-container) !important;
+    box-shadow: 0 1px 0 var(--ant-color-border-secondary);
+  }
+}
 .inlinePanel {
   display: grid;
   gap: 14px;

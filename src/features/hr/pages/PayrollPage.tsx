@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined, MailOutlined, PlayCircleOutlined } from '@ant-design/icons'
+import { DownloadOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Alert,
@@ -15,11 +15,13 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd'
 import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
+import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
   EmployeeAvatar,
   MetricCard,
@@ -49,8 +51,6 @@ import {
 } from '../api/hrTimeApi'
 import styles from './HrOperationsPage.module.scss'
 import { PayslipStatement } from './PayslipStatement'
-
-const PAGE_SIZE_OPTIONS = ['10', '20', '50', '100']
 
 export function PayrollEmployeeCell({
   employee,
@@ -333,7 +333,13 @@ export function PayrollPage() {
               rowKey="id"
               loading={results.isLoading}
               dataSource={resultItems}
-              pagination={{ defaultPageSize: 10, pageSizeOptions: PAGE_SIZE_OPTIONS }}
+              scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
+              pagination={{
+                defaultPageSize: 20,
+                pageSizeOptions: PAGE_SIZE_OPTIONS,
+                hideOnSinglePage: false,
+                showSizeChanger: true,
+              }}
               columns={[
                 {
                   title: t('hrOperations.common.employee'),
@@ -439,11 +445,14 @@ export function PayrollPage() {
                         </Button>
                       )}
                       {canWrite && (
-                        <Button
-                          type="text"
-                          icon={<MailOutlined />}
-                          onClick={() => lifecycle.mutate({ action: 'email', item })}
-                        />
+                        <Tooltip title={t('hrOperations.payroll.sendPayslips')}>
+                          <Button
+                            type="text"
+                            icon={<SendOutlined />}
+                            aria-label={t('hrOperations.payroll.sendPayslips')}
+                            onClick={() => lifecycle.mutate({ action: 'email', item })}
+                          />
+                        </Tooltip>
                       )}
                     </Space>
                   ),
@@ -458,7 +467,13 @@ export function PayrollPage() {
               rowKey="id"
               loading={adjustments.isLoading}
               dataSource={adjustments.data?.items}
-              pagination={{ defaultPageSize: 10, pageSizeOptions: PAGE_SIZE_OPTIONS }}
+              scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
+              pagination={{
+                defaultPageSize: 20,
+                pageSizeOptions: PAGE_SIZE_OPTIONS,
+                hideOnSinglePage: false,
+                showSizeChanger: true,
+              }}
               columns={[
                 { title: t('hrOperations.common.name'), dataIndex: 'name' },
                 {
@@ -508,14 +523,7 @@ export function PayrollPage() {
             </>
           ) : (
             <>
-              <Alert
-                showIcon
-                type="info"
-                message={t('hrOperations.payroll.bulkAdjustmentHelp', {
-                  defaultValue:
-                    'Create the same payroll adjustment for every selected employee in this period.',
-                })}
-              />
+              <Alert showIcon type="info" message={t('hrOperations.payroll.bulkAdjustmentHelp')} />
               <Card size="small" title={t('hrOperations.payroll.employees')}>
                 <Form.Item
                   name="profileIds"
@@ -527,9 +535,7 @@ export function PayrollPage() {
                     showSearch
                     maxTagCount="responsive"
                     optionFilterProp="label"
-                    placeholder={t('hrOperations.payroll.selectEmployees', {
-                      defaultValue: 'Select employees',
-                    })}
+                    placeholder={t('hrOperations.payroll.selectEmployees')}
                     loading={profiles.isLoading}
                     options={profiles.data?.items.map((item) => ({
                       value: item.id,
@@ -538,12 +544,7 @@ export function PayrollPage() {
                   />
                 </Form.Item>
               </Card>
-              <Card
-                size="small"
-                title={t('hrOperations.payroll.adjustmentDetails', {
-                  defaultValue: 'Adjustment details',
-                })}
-              >
+              <Card size="small" title={t('hrOperations.payroll.adjustmentDetails')}>
                 <div className={styles.modalGrid}>
                   <Form.Item
                     name="type"
@@ -555,7 +556,9 @@ export function PayrollPage() {
                       optionFilterProp="label"
                       options={settings.data?.adjustmentTypes.map((value) => ({
                         value,
-                        label: value,
+                        label: t(`hrOperations.payroll.adjustmentTypeValues.${value}`, {
+                          defaultValue: value,
+                        }),
                       }))}
                     />
                   </Form.Item>
@@ -569,7 +572,9 @@ export function PayrollPage() {
                       optionFilterProp="label"
                       options={settings.data?.adjustmentCodes.map((value) => ({
                         value,
-                        label: value,
+                        label: t(`hrOperations.payroll.adjustmentCodeValues.${value}`, {
+                          defaultValue: value,
+                        }),
                       }))}
                     />
                   </Form.Item>
@@ -716,9 +721,7 @@ export function PayrollPage() {
               },
               {
                 key: 'insurance',
-                label: t('hrOperations.payroll.insuranceRates', {
-                  defaultValue: 'Insurance rates',
-                }),
+                label: t('hrOperations.payroll.insuranceRates'),
                 children: (
                   <Card size="small">
                     <div className={styles.modalGrid}>
@@ -737,9 +740,7 @@ export function PayrollPage() {
               },
               {
                 key: 'overtime',
-                label: t('hrOperations.payroll.overtimeRates', {
-                  defaultValue: 'Overtime rates',
-                }),
+                label: t('hrOperations.payroll.overtimeRates'),
                 children: (
                   <Card size="small">
                     <div className={styles.modalGrid}>
@@ -765,9 +766,7 @@ export function PayrollPage() {
               },
               {
                 key: 'adjustments',
-                label: t('hrOperations.payroll.adjustmentCatalog', {
-                  defaultValue: 'Adjustment catalog',
-                }),
+                label: t('hrOperations.payroll.adjustmentCatalog'),
                 children: (
                   <Card size="small">
                     <div className={styles.modalGrid}>
@@ -775,13 +774,31 @@ export function PayrollPage() {
                         name="adjustmentTypes"
                         label={t('hrOperations.payroll.adjustmentTypes')}
                       >
-                        <Select mode="tags" tokenSeparators={[',']} />
+                        <Select
+                          mode="tags"
+                          tokenSeparators={[',']}
+                          options={settings.data?.adjustmentTypes.map((value) => ({
+                            value,
+                            label: t(`hrOperations.payroll.adjustmentTypeValues.${value}`, {
+                              defaultValue: value,
+                            }),
+                          }))}
+                        />
                       </Form.Item>
                       <Form.Item
                         name="adjustmentCodes"
                         label={t('hrOperations.payroll.adjustmentCodes')}
                       >
-                        <Select mode="tags" tokenSeparators={[',']} />
+                        <Select
+                          mode="tags"
+                          tokenSeparators={[',']}
+                          options={settings.data?.adjustmentCodes.map((value) => ({
+                            value,
+                            label: t(`hrOperations.payroll.adjustmentCodeValues.${value}`, {
+                              defaultValue: value,
+                            }),
+                          }))}
+                        />
                       </Form.Item>
                     </div>
                   </Card>

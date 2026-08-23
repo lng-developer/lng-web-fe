@@ -49,6 +49,8 @@
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) minmax(260px, 1fr);
   gap: 16px;
+  border: 0;
+  outline: 0;
 }
 
 .workGrid {
@@ -147,8 +149,22 @@
 }
 
 .marketplaceId {
+  display: block;
+  overflow: hidden;
   color: var(--ant-color-text);
   font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panelTitle {
+  display: flex;
+  margin-bottom: 6px;
+}
+
+.insightDescription {
+  display: block;
+  line-height: 1.5;
 }
 
 .externalArrow {

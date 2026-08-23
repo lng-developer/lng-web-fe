@@ -16,6 +16,7 @@ import {
   YAxis,
 } from 'recharts'
 
+import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
   EmployeeAvatar,
   FeedbackAlert,
@@ -175,7 +176,13 @@ export function TeamWorkspacePage({
           rowKey="id"
           loading={workspace.isLoading}
           dataSource={attendance}
-          pagination={false}
+          scroll={{ y: 'calc(100vh - 430px)' }}
+          pagination={{
+            defaultPageSize: 20,
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
+            hideOnSinglePage: false,
+            showSizeChanger: true,
+          }}
           columns={[
             {
               title: t('hrOperations.common.employee'),
@@ -184,7 +191,11 @@ export function TeamWorkspacePage({
             {
               title: t('hrOperations.common.status'),
               dataIndex: 'status',
-              render: (value) => <StatusTag status={statusTone(String(value))}>{value}</StatusTag>,
+              render: (value) => (
+                <StatusTag status={statusTone(String(value))}>
+                  {t(`hrOperations.attendance.statuses.${value}`, { defaultValue: value })}
+                </StatusTag>
+              ),
             },
             {
               title: t('hrOperations.attendance.in'),
@@ -254,7 +265,13 @@ export function TeamWorkspacePage({
             size="small"
             rowKey={(item) => `${item.requestKind}-${item.id}`}
             dataSource={approvals}
-            pagination={{ pageSize: 12 }}
+            scroll={{ y: 'calc(100vh - 430px)' }}
+            pagination={{
+              defaultPageSize: 20,
+              pageSizeOptions: PAGE_SIZE_OPTIONS,
+              hideOnSinglePage: false,
+              showSizeChanger: true,
+            }}
             columns={[
               {
                 title: t('hrOperations.common.employee'),
@@ -347,7 +364,13 @@ export function TeamWorkspacePage({
             rowKey="id"
             loading={workspace.isLoading}
             dataSource={data?.profiles.items}
-            pagination={{ pageSize: view === 'members' ? 15 : 8 }}
+            scroll={{ y: 'calc(100vh - 430px)' }}
+            pagination={{
+              defaultPageSize: 20,
+              pageSizeOptions: PAGE_SIZE_OPTIONS,
+              hideOnSinglePage: false,
+              showSizeChanger: true,
+            }}
             columns={[
               {
                 title: t('hrOperations.common.employee'),
@@ -367,7 +390,9 @@ export function TeamWorkspacePage({
                 title: t('hrOperations.common.status'),
                 dataIndex: 'status',
                 render: (value) => (
-                  <StatusTag status={statusTone(String(value))}>{value}</StatusTag>
+                  <StatusTag status={statusTone(String(value))}>
+                    {t(`hr.statuses.${value}`, { defaultValue: value })}
+                  </StatusTag>
                 ),
               },
             ]}

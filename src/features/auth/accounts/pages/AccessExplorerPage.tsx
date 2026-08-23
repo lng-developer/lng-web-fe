@@ -491,7 +491,6 @@ export function AccessExplorerPage() {
                 </Button>
               </Dropdown>
             ) : null}
-            <StatusTag status="operational">AUTH:READ</StatusTag>
           </div>
         }
       />
@@ -629,7 +628,7 @@ export function AccessExplorerPage() {
                         </Typography.Text>
                         <Typography.Text type="secondary" className={styles.accountMeta}>
                           {account.lastLoginAt
-                            ? `${t('auth.accessExplorer.lastLogin', 'Last login')}: ${dayjs(account.lastLoginAt).format('YYYY-MM-DD HH:mm')}`
+                            ? `${t('auth.accessExplorer.lastLogin', 'Last login')}: ${dayjs(account.lastLoginAt).format('DD/MM/YYYY HH:mm')}`
                             : t('auth.accessExplorer.neverLoggedIn', 'Never logged in')}
                         </Typography.Text>
                       </div>
@@ -744,14 +743,14 @@ export function AccessExplorerPage() {
                 name="validFrom"
                 style={{ flex: 1, minWidth: 220 }}
               >
-                <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+                <DatePicker showTime format="DD/MM/YYYY HH:mm" />
               </Form.Item>
               <Form.Item
                 label={t('auth.accessEditor.validUntil', 'Valid until')}
                 name="validUntil"
                 style={{ flex: 1, minWidth: 220 }}
               >
-                <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+                <DatePicker showTime format="DD/MM/YYYY HH:mm" />
               </Form.Item>
             </div>
             <Form.Item label={t('auth.accessEditor.customPermissions')} name="customPermissionIds">
@@ -809,14 +808,14 @@ export function AccessExplorerPage() {
               name="validFrom"
               style={{ flex: 1, minWidth: 220 }}
             >
-              <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+              <DatePicker showTime format="DD/MM/YYYY HH:mm" />
             </Form.Item>
             <Form.Item
               label={t('auth.accessEditor.validUntil', 'Valid until')}
               name="validUntil"
               style={{ flex: 1, minWidth: 220 }}
             >
-              <DatePicker showTime format="YYYY-MM-DD HH:mm" />
+              <DatePicker showTime format="DD/MM/YYYY HH:mm" />
             </Form.Item>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

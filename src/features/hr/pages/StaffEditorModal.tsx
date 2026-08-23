@@ -31,6 +31,7 @@ import {
 import styles from './HrWorkspacePage.module.scss'
 
 const statuses = ['ACTIVE', 'PROBATION', 'ON_LEAVE', 'SUSPENDED', 'RESIGNED']
+const genders = ['MALE', 'FEMALE', 'OTHER']
 const employmentTypes = ['FULL_TIME', 'PART_TIME', 'INTERNSHIP', 'CONTRACT']
 const workModes = ['ONSITE', 'REMOTE', 'HYBRID']
 const banks = [
@@ -271,13 +272,28 @@ export function StaffEditorModal({
         <Input />
       </Form.Item>
       <Form.Item name="employmentType" label={t('hr.employmentType')}>
-        <Select options={employmentTypes.map((value) => ({ label: value, value }))} />
+        <Select
+          options={employmentTypes.map((value) => ({
+            label: t(`hr.employmentTypes.${value}`, { defaultValue: value }),
+            value,
+          }))}
+        />
       </Form.Item>
       <Form.Item name="workMode" label={t('hr.workMode')}>
-        <Select options={workModes.map((value) => ({ label: value, value }))} />
+        <Select
+          options={workModes.map((value) => ({
+            label: t(`hr.workModes.${value}`, { defaultValue: value }),
+            value,
+          }))}
+        />
       </Form.Item>
       <Form.Item name="status" label={t('hr.status')}>
-        <Select options={statuses.map((value) => ({ label: value, value }))} />
+        <Select
+          options={statuses.map((value) => ({
+            label: t(`hr.statuses.${value}`, { defaultValue: value }),
+            value,
+          }))}
+        />
       </Form.Item>
       <Form.Item name="startDate" label={t('hr.startDate')}>
         <DateTimePicker mode="date" />
@@ -360,7 +376,13 @@ export function StaffEditorModal({
             children: (
               <div className={styles.formGrid}>
                 <Form.Item name="gender" label={t('hr.gender')}>
-                  <Input />
+                  <Select
+                    allowClear
+                    options={genders.map((value) => ({
+                      label: t(`hr.genders.${value}`, { defaultValue: value }),
+                      value,
+                    }))}
+                  />
                 </Form.Item>
                 <Form.Item name="birthDate" label={t('hr.birthDate')}>
                   <DateTimePicker mode="date" />
@@ -449,7 +471,13 @@ export function StaffEditorModal({
                             <DateTimePicker mode="date" />
                           </Form.Item>
                           <Form.Item name={[field.name, 'gender']} label={t('hr.gender')}>
-                            <Input />
+                            <Select
+                              allowClear
+                              options={genders.map((value) => ({
+                                label: t(`hr.genders.${value}`, { defaultValue: value }),
+                                value,
+                              }))}
+                            />
                           </Form.Item>
                           <Button
                             danger

@@ -19,7 +19,7 @@ const ProfilePage = lazy(() =>
   })),
 )
 const ScheduleCalendarPage = lazy(() =>
-  import('./ScheduleCalendarPage').then(({ ScheduleCalendarPage }) => ({
+  import('../ScheduleCalendar').then(({ ScheduleCalendarPage }) => ({
     default: ScheduleCalendarPage,
   })),
 )

@@ -58,7 +58,6 @@
 
 .tableShell {
   min-height: 0;
-  border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   overflow: hidden;
   background: var(--ant-color-bg-container);
@@ -141,6 +140,19 @@
   color: var(--ant-color-text-secondary);
   font-size: 12px;
   line-height: 18px;
+}
+
+.psdCell {
+  min-width: 0;
+  max-width: 126px;
+}
+
+.psdSource {
+  display: block;
+  overflow: hidden;
+  max-width: 126px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .psdDot {

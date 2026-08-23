@@ -223,7 +223,10 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
               <Tag>{`${t('hrOperations.overview.attendanceExceptions')}: ${data.operations?.attendanceExceptions ?? 0}`}</Tag>
               <Tag>{`${t('hrOperations.overview.pendingActions')}: ${data.operations?.pendingActions ?? data.approvals.totalPending}`}</Tag>
               {data.payroll && (
-                <Tag>{`${data.payroll.month}/${data.payroll.year} · ${data.payroll.status}`}</Tag>
+                <Tag>{`${data.payroll.month}/${data.payroll.year} · ${t(
+                  `hrOperations.payroll.statuses.${data.payroll.status}`,
+                  { defaultValue: data.payroll.status },
+                )}`}</Tag>
               )}
             </Space>
           </div>
@@ -324,7 +327,11 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
                 </div>
                 <div className={styles.overviewRow}>
                   <span>{t('hrOperations.common.status')}</span>
-                  <Tag>{data.payroll.status}</Tag>
+                  <Tag>
+                    {t(`hrOperations.payroll.statuses.${data.payroll.status}`, {
+                      defaultValue: data.payroll.status,
+                    })}
+                  </Tag>
                 </div>
                 <div className={styles.overviewRow}>
                   <span>{t('hrOperations.payroll.results')}</span>
@@ -437,7 +444,11 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
                       )}
                     </Space>
                     <Space>
-                      <StatusTag status={announcementTone(item.status)}>{item.status}</StatusTag>
+                      <StatusTag status={announcementTone(item.status)}>
+                        {t(`hrOperations.overview.announcementStatuses.${item.status}`, {
+                          defaultValue: item.status,
+                        })}
+                      </StatusTag>
                       {canWrite && (
                         <Tooltip title={t('hrOperations.common.delete')}>
                           <Button
@@ -469,6 +480,7 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
       </div>
       <Modal
         centered
+        width={860}
         open={open}
         title={t(
           selected
@@ -490,28 +502,47 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
           <Form.Item
             name="title"
             label={t('hrOperations.overview.announcementTitle')}
-            rules={[{ required: true }]}
+            rules={[
+              { required: true, message: t('hrOperations.overview.requiredAnnouncementTitle') },
+            ]}
           >
-            <Input />
+            <Input placeholder={t('hrOperations.overview.announcementTitlePlaceholder')} />
           </Form.Item>
           <Form.Item
             name="content"
             label={t('hrOperations.overview.content')}
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: t('hrOperations.overview.requiredContent') }]}
           >
-            <Input.TextArea rows={6} />
+            <Input.TextArea rows={6} placeholder={t('hrOperations.overview.contentPlaceholder')} />
           </Form.Item>
-          <Space>
+          <div className={styles.announcementMetaGrid}>
             <Form.Item name="category" label={t('hrOperations.overview.category')}>
-              <Select options={['NEWS', 'POLICY', 'EVENT', 'OTHER'].map((value) => ({ value }))} />
+              <Select
+                options={['NEWS', 'POLICY', 'EVENT', 'OTHER'].map((value) => ({
+                  value,
+                  label: t(`hrOperations.overview.announcementCategories.${value}`),
+                }))}
+              />
             </Form.Item>
             <Form.Item name="priority" label={t('hrOperations.overview.priority')}>
-              <Select options={['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((value) => ({ value }))} />
+              <Select
+                options={['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((value) => ({
+                  value,
+                  label: t(`hrOperations.overview.announcementPriorities.${value}`),
+                }))}
+              />
             </Form.Item>
             <Form.Item name="status" label={t('hrOperations.common.status')}>
-              <Select options={['DRAFT', 'SCHEDULED', 'PUBLISHED'].map((value) => ({ value }))} />
+              <Select
+                options={['DRAFT', 'SCHEDULED', 'PUBLISHED'].map((value) => ({
+                  value,
+                  label: t(`hrOperations.overview.announcementStatuses.${value}`, {
+                    defaultValue: value,
+                  }),
+                }))}
+              />
             </Form.Item>
-          </Space>
+          </div>
           <Form.Item
             name="sendToAll"
             label={t('hrOperations.overview.companyWide')}
@@ -558,13 +589,15 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
               <Form.Item
                 name="scheduledAt"
                 label={t('hrOperations.overview.scheduledAt')}
-                rules={[{ required: true }]}
+                rules={[
+                  { required: true, message: t('hrOperations.overview.requiredScheduledAt') },
+                ]}
               >
-                <DatePicker showTime />
+                <DatePicker showTime format="DD/MM/YYYY HH:mm" />
               </Form.Item>
             )}
             <Form.Item name="remindAt" label={t('hrOperations.overview.remindAt')}>
-              <DatePicker showTime />
+              <DatePicker showTime format="DD/MM/YYYY HH:mm" />
             </Form.Item>
           </Space>
           {category === 'EVENT' && (
@@ -574,13 +607,13 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
                   name={['eventDetails', 'startDate']}
                   label={t('hrOperations.overview.eventStart')}
                 >
-                  <DatePicker showTime />
+                  <DatePicker showTime format="DD/MM/YYYY HH:mm" />
                 </Form.Item>
                 <Form.Item
                   name={['eventDetails', 'endDate']}
                   label={t('hrOperations.overview.eventEnd')}
                 >
-                  <DatePicker showTime />
+                  <DatePicker showTime format="DD/MM/YYYY HH:mm" />
                 </Form.Item>
               </Space>
               <Form.Item

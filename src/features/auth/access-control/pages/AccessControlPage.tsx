@@ -52,6 +52,7 @@ import {
   updateScope,
 } from '@/features/auth/scopes/api/scopesApi'
 import { hasAnyPermission } from '@/shared/auth/permissions'
+import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
   ConfirmDangerModal,
   FeedbackAlert,
@@ -445,7 +446,8 @@ export function AccessControlPage() {
             rowKey="id"
             loading={scopesQuery.isLoading}
             dataSource={scopes}
-            pagination={{ pageSize: 12 }}
+            scroll={{ y: 'calc(100vh - 500px)' }}
+            pagination={DEFAULT_TABLE_PAGINATION}
             columns={[
               {
                 title: t('auth.scopes.name'),
@@ -467,7 +469,13 @@ export function AccessControlPage() {
               {
                 title: t('auth.scopes.type'),
                 dataIndex: 'scopeType',
-                render: (val) => <Tag color="geekblue">{val}</Tag>,
+                render: (val) => (
+                  <Tag color="geekblue">
+                    {t(`auth.scopes.types.${String(val).toLowerCase()}`, {
+                      defaultValue: String(val),
+                    })}
+                  </Tag>
+                ),
               },
               {
                 title: t('auth.scopes.status'),
@@ -476,7 +484,7 @@ export function AccessControlPage() {
                   const normalized = String(val).toLowerCase()
                   return (
                     <StatusTag status={normalized === 'active' ? 'approved' : 'cancelled'}>
-                      {val}
+                      {t(`auth.scopes.statuses.${normalized}`, { defaultValue: String(val) })}
                     </StatusTag>
                   )
                 },
@@ -722,7 +730,10 @@ export function AccessControlPage() {
             <Form.Item label={t('auth.scopes.type')} name="scopeType" rules={[{ required: true }]}>
               <Select
                 disabled={editor?.kind === 'scope' && Boolean(editor.item)}
-                options={scopeTypes.map((scopeType) => ({ label: scopeType, value: scopeType }))}
+                options={scopeTypes.map((scopeType) => ({
+                  label: t(`auth.scopes.types.${scopeType}`),
+                  value: scopeType,
+                }))}
               />
             </Form.Item>
             <Form.Item label={t('auth.scopes.scopeId')} name="scopeId" rules={[{ required: true }]}>

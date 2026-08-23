@@ -24,6 +24,7 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { PAGE_SIZE_OPTIONS } from '../../../shared/constants/enum'
 import {
   adjustAttendance,
   type Attendance,
@@ -33,7 +34,6 @@ import {
   listAttendanceMatrix,
   listMyAttendance,
 } from '../api/hrTimeApi'
-import { PAGE_SIZE_OPTIONS } from './enum'
 import styles from './HrOperationsPage.module.scss'
 
 export function AttendancePage() {
@@ -61,10 +61,35 @@ export function AttendancePage() {
   })
 
   const records = useQuery({
-    queryKey: ['hr-time', 'attendance', canRead ? 'all' : 'me', range.dateFrom],
+    queryKey: ['hr-time', 'attendance', range, canRead],
     queryFn: () => (canRead ? listAttendance(range) : listMyAttendance(range)),
   })
 
+  const myAttendance = useQuery({
+    queryKey: ['hr-time', 'attendance', 'me', 'capabilities'],
+    queryFn: () =>
+      listMyAttendance({
+        dateFrom: dayjs().format('YYYY-MM-DD'),
+        dateTo: dayjs().format('YYYY-MM-DD'),
+        limit: 10,
+      }),
+    enabled: canWrite,
+  })
+
+  const attendanceCapabilities = myAttendance.data?.capabilities
+  const todayDateKey = dayjs().format('YYYY-MM-DD')
+
+  const todayAttendance = myAttendance.data?.items.find((item) => item.workDateKey === todayDateKey)
+
+  const completedCheckIn = todayAttendance?.checkInAt
+    ? dayjs(todayAttendance.checkInAt).format('HH:mm')
+    : ''
+
+  const completedCheckOut = todayAttendance?.checkOutAt
+    ? dayjs(todayAttendance.checkOutAt).format('HH:mm')
+    : ''
+
+  const hasCompletedAttendance = Boolean(completedCheckIn && completedCheckOut)
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['hr-time', 'attendance'] })
 
   const action = useMutation({
@@ -103,25 +128,36 @@ export function AttendancePage() {
         actions={
           <Space>
             <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
-            {canWrite && (
-              <Space>
-                <Button
-                  icon={<LoginOutlined />}
-                  loading={action.isPending}
-                  onClick={() => action.mutate('in')}
-                >
-                  {t('hrOperations.attendance.checkIn')}
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<LogoutOutlined />}
-                  loading={action.isPending}
-                  onClick={() => action.mutate('out')}
-                >
-                  {t('hrOperations.attendance.checkOut')}
-                </Button>
-              </Space>
-            )}
+            {canWrite &&
+              (hasCompletedAttendance ? (
+                <Tag color="success" icon={<CheckCircleOutlined />}>
+                  {t('hrOperations.attendance.completedToday', {
+                    checkIn: completedCheckIn,
+                    checkOut: completedCheckOut,
+                  })}
+                </Tag>
+              ) : (
+                <Space>
+                  <Button
+                    icon={<LoginOutlined />}
+                    loading={action.isPending}
+                    disabled={!attendanceCapabilities?.checkIn}
+                    onClick={() => action.mutate('in')}
+                  >
+                    {t('hrOperations.attendance.checkIn')}
+                  </Button>
+
+                  <Button
+                    type="primary"
+                    icon={<LogoutOutlined />}
+                    loading={action.isPending}
+                    disabled={!attendanceCapabilities?.checkOut}
+                    onClick={() => action.mutate('out')}
+                  >
+                    {t('hrOperations.attendance.checkOut')}
+                  </Button>
+                </Space>
+              ))}
           </Space>
         }
       />
