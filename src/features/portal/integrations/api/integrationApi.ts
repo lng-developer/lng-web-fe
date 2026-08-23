@@ -31,6 +31,7 @@ export type ExtensionAgent = {
   version: string | null
   apiBaseUrl: string | null
   lastSeenAt: string
+  lastReconnectedAt?: string | null
 }
 export type ExtensionManagementAgent = ExtensionAgent & {
   status: 'ONLINE' | 'OFFLINE'
@@ -46,16 +47,22 @@ export type ExtensionManagementAgent = ExtensionAgent & {
 }
 export type ExtensionCommand = {
   id: string
-  type: 'IMPORT_NEW_ORDERS'
+  type: ExtensionCommandType
   status: ExtensionCommandStatus
   shopId: string
   agentId: string
+  dateFrom?: string | null
+  dateTo?: string | null
   importJobId: string | null
   attemptCount: number
   errorMessage: string | null
   createdAt: string
+  claimedAt?: string | null
+  startedAt?: string | null
   completedAt: string | null
 }
+export type ExtensionCommandType = 'IMPORT_NEW_ORDERS' | 'IMPORT_ADS_SPEND' | 'TEST_CONNECTION'
+export type ExtensionImportDays = 1 | 2 | 7 | 15 | 30
 
 export type Pagination = { total: number; page: number; limit: number }
 export type Paginated<T> = { items: T[]; pagination: Pagination }
@@ -323,11 +330,15 @@ export async function listExtensionCommands(params: PageParams = {}) {
     await apiClient.get(`${extensionCommandPath}/commands`, { params }),
   )
 }
-export async function createExtensionCommand(input: { shopId: string; agentId: string }) {
+export async function createExtensionCommand(input: {
+  type: ExtensionCommandType
+  shopId: string
+  agentId: string
+  numDays?: ExtensionImportDays
+  dateFrom?: string
+  dateTo?: string
+}) {
   return unwrap<ExtensionCommand>(
-    await apiClient.post(`${extensionCommandPath}/commands`, {
-      type: 'IMPORT_NEW_ORDERS',
-      ...input,
-    }),
+    await apiClient.post(`${extensionCommandPath}/commands`, input),
   )
 }

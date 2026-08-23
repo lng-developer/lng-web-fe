@@ -15,6 +15,10 @@ vi.mock('@/features/portal/integrations/api/integrationApi', async (importOrigin
     listImportJobs: vi.fn(),
     listJobIssues: vi.fn(),
     listJobRawRecords: vi.fn(),
+    listExtensionAgents: vi.fn(),
+    listExtensionCommands: vi.fn(),
+    listExtensionManagementAgents: vi.fn(),
+    createExtensionCommand: vi.fn(),
     uploadEtsySoldItems: vi.fn(),
     uploadManualExcel: vi.fn(),
   }
@@ -28,7 +32,7 @@ vi.mock('@/features/portal/shops/api/shopApi', async (importOriginal) => {
 vi.mock('@/features/auth/extension-tokens/api/extensionTokensApi', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/features/auth/extension-tokens/api/extensionTokensApi')>()
-  return { ...actual, createExtensionToken: vi.fn() }
+  return { ...actual, createExtensionToken: vi.fn(), revokeExtensionToken: vi.fn() }
 })
 
 vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => {
@@ -36,10 +40,17 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => {
   return { ...actual, listImportBatches: vi.fn() }
 })
 
-import { createExtensionToken } from '@/features/auth/extension-tokens/api/extensionTokensApi'
+import {
+  createExtensionToken,
+  revokeExtensionToken,
+} from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import { listImportBatches } from '@/features/portal/finance/api/financeApi'
 import {
   getImportJob,
+  createExtensionCommand,
+  listExtensionAgents,
+  listExtensionCommands,
+  listExtensionManagementAgents,
   listImportJobs,
   listIssues,
   listJobIssues,
@@ -170,6 +181,24 @@ describe('IntegrationWorkbenchPage', () => {
         tokenHint: 'lng_...oken',
       },
     })
+    vi.mocked(revokeExtensionToken).mockResolvedValue({
+      id: 'token-1',
+      name: 'Amazon Extension',
+      shopId: shop.id,
+      environment: 'development',
+      tokenHint: 'oken',
+      revokedAt: '2026-08-22T00:00:00.000Z',
+    })
+    vi.mocked(listExtensionAgents).mockResolvedValue({ items: [] })
+    vi.mocked(createExtensionCommand).mockResolvedValue({
+      id: 'command-1', type: 'IMPORT_NEW_ORDERS', status: 'QUEUED', shopId: shop.id, agentId: 'agent-1',
+      importJobId: null, attemptCount: 0, errorMessage: null, createdAt: '2026-08-22T00:00:00.000Z', completedAt: null,
+    })
+    vi.mocked(listExtensionCommands).mockResolvedValue({
+      items: [],
+      pagination: { total: 0, page: 1, limit: 10 },
+    })
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({ items: [] })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [adsImportBatch],
       pagination: { total: 1, page: 1, limit: 20 },
@@ -313,8 +342,9 @@ describe('IntegrationWorkbenchPage', () => {
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
     expect(await screen.findByText('Amazon Extension setup')).toBeVisible()
-    expect(screen.getByText('https://dev-api.lngmerch.co')).toBeVisible()
-    await waitFor(() => expect(screen.getByText('shop-1')).toBeVisible())
+    expect(screen.queryByText('API Base URL')).not.toBeInTheDocument()
+    expect(screen.queryByText('Shop ID')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Shop' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Create token' }))
 
     await waitFor(() =>
@@ -328,10 +358,228 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByText('lng_ext_test_token')).toBeVisible()
   })
 
+  it('clears the created token when the setup shop changes', async () => {
+    const shopB = { ...shop, id: 'shop-2', name: 'LNG Amazon CA' }
+    vi.mocked(listShops).mockResolvedValue({
+      items: [shop, shopB],
+      pagination: { total: 2, page: 1, limit: 100 },
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    await waitFor(() => expect(screen.getByText('shop-1')).toBeVisible())
+    fireEvent.click(screen.getByRole('button', { name: 'Create token' }))
+    expect(await screen.findByText('lng_ext_test_token')).toBeVisible()
+
+    fireEvent.mouseDown(document.querySelector('#shopId')!)
+    const options = await screen.findAllByText('LNG Amazon CA')
+    fireEvent.click(options.find((element) => element.closest('.ant-select-item-option'))!)
+
+    expect(screen.queryByText('lng_ext_test_token')).not.toBeInTheDocument()
+  })
+
+  it('queues a connection test for the selected extension', async () => {
+    vi.mocked(listExtensionAgents).mockResolvedValue({
+      items: [{ id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0', lastSeenAt: '2026-08-22T00:00:00.000Z', apiBaseUrl: 'https://dev-api.lngmerch.co' }],
+    })
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    expect(await screen.findByText('RDC 1')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+
+    await waitFor(() => expect(createExtensionCommand).toHaveBeenCalledWith({
+      type: 'TEST_CONNECTION', shopId: shop.id, agentId: 'agent-1',
+    }))
+  })
+
+  it('keeps Ads date selection inside the Pull Ads popover', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [{
+        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
+        status: 'ONLINE', token: null,
+      }],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    expect(await screen.findByRole('button', { name: 'Configure Pull Ads' })).toBeVisible()
+    expect(screen.queryByText('Ads period')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configure Pull Ads' }))
+    expect(await screen.findByText('Ads period')).toBeVisible()
+  })
+
+  it('keeps the order history window inside the Pull Orders popover', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [{
+        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
+        status: 'ONLINE', token: null,
+      }],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    expect(await screen.findByRole('button', { name: 'Configure Pull Orders' })).toBeVisible()
+    expect(screen.queryByText('Order history')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configure Pull Orders' }))
+    expect(await screen.findByText('Order history')).toBeVisible()
+  })
+
+  it('shows when an extension has reconnected', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [{
+        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
+        lastReconnectedAt: '2026-08-22T00:00:00.000Z', status: 'ONLINE', token: null,
+      }],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    expect(await screen.findByText('Reconnected')).toBeVisible()
+  })
+
+  it('exposes the failure detail through the extension command drawer', async () => {
+    vi.mocked(listExtensionCommands).mockResolvedValue({
+      items: [{
+        id: 'command-1', type: 'IMPORT_ADS_SPEND', status: 'FAILED', shopId: shop.id, agentId: 'agent-1',
+        importJobId: null, attemptCount: 1, errorMessage: 'Amazon Ads session expired',
+        createdAt: '2026-08-22T00:00:00.000Z', completedAt: '2026-08-22T00:01:00.000Z',
+      }],
+      pagination: { total: 1, page: 1, limit: 10 },
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    expect(screen.queryByRole('button', { name: 'View command error' })).not.toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: 'View task details' }))
+    expect(await screen.findByText('Amazon Ads session expired')).toBeVisible()
+  })
+
+  it('shows a task timeline for an extension command', async () => {
+    vi.mocked(listExtensionCommands).mockResolvedValue({
+      items: [{
+        id: 'command-1', type: 'IMPORT_ADS_SPEND', status: 'FAILED', shopId: shop.id, agentId: 'agent-1',
+        importJobId: null, attemptCount: 1, errorMessage: 'Amazon Ads session expired',
+        createdAt: '2026-08-22T00:00:00.000Z', claimedAt: '2026-08-22T00:00:30.000Z',
+        startedAt: '2026-08-22T00:00:31.000Z', completedAt: '2026-08-22T00:01:00.000Z',
+      }],
+      pagination: { total: 1, page: 1, limit: 10 },
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'View task details' }))
+
+    expect(await screen.findByText('Task details')).toBeVisible()
+    expect(screen.getByText('Claimed')).toBeVisible()
+    expect(screen.getByText('Amazon Ads session expired')).toBeVisible()
+  })
+
+  it('groups duplicate extension records into one card and revokes its token', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'ext-duplicate',
+          label: 'Chrome 6d3f79',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T09:43:13.000Z',
+          status: 'ONLINE',
+          token: {
+            id: 'token-1',
+            name: 'Amazon Extension',
+            tokenHint: '6eec',
+            environment: 'development',
+            lastUsedAt: null,
+            expiresAt: null,
+            revokedAt: null,
+          },
+        },
+        {
+          id: 'agent-2',
+          shopId: shop.id,
+          clientId: 'ext-duplicate',
+          label: 'Chrome 6d3f79',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T09:38:55.000Z',
+          status: 'OFFLINE',
+          token: {
+            id: 'token-2',
+            name: 'Amazon Extension',
+            tokenHint: 'df7d',
+            environment: 'development',
+            lastUsedAt: null,
+            expiresAt: null,
+            revokedAt: null,
+          },
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    expect(await screen.findByText('Chrome 6d3f79')).toBeVisible()
+    expect(screen.getByText(/6eec/)).toBeVisible()
+    expect(screen.getByText(/df7d/)).toBeVisible()
+    expect(
+      screen.getByLabelText('Extension management').querySelectorAll('.ant-card'),
+    ).toHaveLength(1)
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Revoke token' })[0])
+    fireEvent.click(await screen.findByRole('button', { name: 'Revoke' }))
+    await waitFor(() => expect(vi.mocked(revokeExtensionToken).mock.calls[0]?.[0]).toBe('token-1'))
+  })
+
+  it('shows extension cards across every accessible shop', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-shop-1', shopId: shop.id, clientId: 'ext-shop-1', label: 'Shop one Chrome',
+          version: '0.3.0', apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T09:43:13.000Z', status: 'ONLINE', token: null,
+        },
+        {
+          id: 'agent-shop-2', shopId: 'shop-2', clientId: 'ext-shop-2', label: 'Shop two Chrome',
+          version: '0.3.0', apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T09:43:13.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+
+    expect(await screen.findByText('Shop one Chrome')).toBeVisible()
+    expect(screen.getByText('Shop two Chrome')).toBeVisible()
+  })
+
+  it('groups finance import histories under the Finance data tab', async () => {
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+
+    expect(await screen.findByRole('tab', { name: 'Ads' })).toBeVisible()
+    expect(screen.getByRole('tab', { name: 'Transactions' })).toBeVisible()
+    expect(screen.getByRole('tab', { name: 'Settlements' })).toBeVisible()
+  })
+
   it('shows Amazon Ads import history for finance readers', async () => {
     renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Ads' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Ads' }))
     expect(await screen.findByText('Amazon Ads imports')).toBeVisible()
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith({
@@ -351,7 +599,8 @@ describe('IntegrationWorkbenchPage', () => {
   it('shows Amazon Transactions import history for finance readers', async () => {
     renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Transactions' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Transactions' }))
     expect(await screen.findByText('Amazon Transactions imports')).toBeVisible()
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith(
@@ -366,7 +615,8 @@ describe('IntegrationWorkbenchPage', () => {
   it('shows Amazon Settlements import history for finance readers', async () => {
     renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Settlements' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Settlements' }))
     expect(await screen.findByText('Amazon Settlements imports')).toBeVisible()
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith(
@@ -381,7 +631,8 @@ describe('IntegrationWorkbenchPage', () => {
   it('hides Amazon Ads import history without finance read access', async () => {
     renderWorkbench('/portal/integrations', account(['ORDERS:READ']))
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Ads' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Ads' }))
     expect(await screen.findByText('Amazon Ads imports')).toBeVisible()
     expect(
       screen.getByText('Finance read permission is required to view Ads import history.'),

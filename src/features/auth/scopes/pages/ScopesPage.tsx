@@ -11,6 +11,7 @@ import {
   FeedbackAlert,
   PageHeader,
   SectionCard,
+  StatusTag,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -68,7 +69,7 @@ export function ScopesPage() {
       title: t('auth.accessExplorer.status'),
       render: (_, scope) => {
         const scopeStatus = String(scope.status).toLowerCase()
-        return <Tag color={scopeStatus === 'active' ? 'green' : undefined}>{scope.status}</Tag>
+        return <StatusTag status={scopeStatus === 'active' ? 'operational' : 'draft'}>{scope.status}</StatusTag>
       },
     },
     {

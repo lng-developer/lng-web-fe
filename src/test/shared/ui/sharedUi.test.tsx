@@ -109,6 +109,18 @@ describe('shared UI', () => {
     expect(screen.getByText('Submitting')).toHaveStyle({ color: 'var(--ant-color-primary)' })
   })
 
+  it('renders online and offline through the shared status badge', () => {
+    render(
+      <>
+        <StatusTag status="online">ONLINE</StatusTag>
+        <StatusTag status="offline">OFFLINE</StatusTag>
+      </>,
+    )
+
+    expect(screen.getByText('ONLINE')).toHaveStyle({ color: 'var(--ant-color-success)' })
+    expect(screen.getByText('OFFLINE')).toHaveStyle({ color: 'var(--ant-color-text-secondary)' })
+  })
+
   it('renders accessible empty and error states', () => {
     render(
       <>

@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
-import { ReloadOutlined, UploadOutlined } from '@ant-design/icons'
+import { ApiOutlined, CloudDownloadOutlined, InfoCircleOutlined, ReloadOutlined, StopOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Form, Input, Select, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Drawer, Form, Input, Popconfirm, Popover, Select, Space, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type {
   ExtensionTokenEnvironment,
   ExtensionTokenInput,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
-import { createExtensionToken } from '@/features/auth/extension-tokens/api/extensionTokensApi'
+import {
+  createExtensionToken,
+  revokeExtensionToken,
+} from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import { type ImportBatch, listImportBatches } from '@/features/portal/finance/api/financeApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { env } from '@/shared/config/env'
@@ -30,6 +34,11 @@ import {
 
 import {
   createExtensionCommand,
+  type ExtensionCommandType,
+  type ExtensionCommand,
+  type ExtensionAgent,
+  type ExtensionImportDays,
+  type ExtensionManagementAgent,
   type ImportJob,
   type ImportJobListParams,
   type ImportJobStatus,
@@ -47,6 +56,7 @@ import { integrationKeys } from '../api/integrationKeys'
 import { listAllActiveShops } from '../api/loadActiveShops'
 import {
   canReadFinanceImports,
+  canWriteFinanceForShop,
   canWriteOrdersForShop,
   canWriteOrdersSomewhere,
 } from '../auth/integrationAccess'
@@ -125,6 +135,28 @@ function statusTone(status: ImportJobStatus) {
   return 'pending'
 }
 
+function nextPollLabel(lastSeenAt: string, now: number) {
+  const remaining = Math.max(0, 60_000 - (now - Date.parse(lastSeenAt)))
+  if (!remaining) return 'Polling…'
+  return `Poll in ${Math.ceil(remaining / 1000)}s`
+}
+
+function groupExtensionAgents(agents: ExtensionManagementAgent[]) {
+  const groups = new Map<string, ExtensionManagementAgent[]>()
+  agents.forEach((agent) =>
+    groups.set(agent.clientId, [...(groups.get(agent.clientId) ?? []), agent]),
+  )
+
+  return [...groups.values()].map((items) => {
+    const sorted = [...items].sort(
+      (left, right) =>
+        Number(right.status === 'ONLINE') - Number(left.status === 'ONLINE') ||
+        Date.parse(right.lastSeenAt) - Date.parse(left.lastSeenAt),
+    )
+    return { primary: sorted[0], items: sorted }
+  })
+}
+
 export interface IntegrationWorkbenchPageProps {
   readonly account?: CurrentAccount
 }
@@ -146,7 +178,10 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const [uploadOpen, setUploadOpen] = useState(false)
   const [tokenForm] = Form.useForm<ExtensionTokenInput>()
   const [createdToken, setCreatedToken] = useState<string>()
-  const [commandAgentId, setCommandAgentId] = useState<string>()
+  const [selectedCommand, setSelectedCommand] = useState<ExtensionCommand>()
+  const [commandImportDays, setCommandImportDays] = useState<Record<string, ExtensionImportDays>>({})
+  const [adsCommandDates, setAdsCommandDates] = useState<Record<string, { dateFrom?: string; dateTo?: string }>>({})
+  const [now, setNow] = useState(() => Date.now())
   const [adsShopId, setAdsShopId] = useState<string>()
   const [adsStatus, setAdsStatus] = useState<string>()
   const [adsDates, setAdsDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
@@ -282,10 +317,11 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     },
   })
   const createCommand = useMutation({
-    mutationFn: (agentId: string) => {
+    mutationFn: ({ agentId, type, numDays, dateFrom, dateTo }: { agentId: string; type: ExtensionCommandType; numDays?: ExtensionImportDays; dateFrom?: string; dateTo?: string }) => {
       const agent = extensionAgents.data?.items.find((item) => item.id === agentId)
       if (!agent) throw new Error('Extension agent is unavailable')
-      return createExtensionCommand({ shopId: agent.shopId, agentId })
+      if (type === 'IMPORT_ADS_SPEND' && (!dateFrom || !dateTo || dayjs(dateTo).diff(dayjs(dateFrom), 'day') > 119)) throw new Error('Choose an Ads date range of up to 120 days')
+      return createExtensionCommand({ type, shopId: agent.shopId, agentId, ...(numDays ? { numDays } : {}), ...(dateFrom ? { dateFrom: dayjs(dateFrom).format('YYYY-MM-DD') } : {}), ...(dateTo ? { dateTo: dayjs(dateTo).format('YYYY-MM-DD') } : {}) })
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: integrationKeys.extensionCommands() })
@@ -295,6 +331,16 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
           defaultValue: 'Import command queued.',
         }),
       )
+    },
+  })
+  const revokeToken = useMutation({
+    mutationFn: revokeExtensionToken,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: integrationKeys.extensionAgents() }),
+        queryClient.invalidateQueries({ queryKey: integrationKeys.extensionManagementAgents() }),
+      ])
+      showFeedbackToast('success', 'Extension token revoked.')
     },
   })
 
@@ -319,11 +365,19 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const resetTransactionPage = () => setTransactionPage(1)
   const resetSettlementPage = () => setSettlementPage(1)
   const apiBaseUrl = EXTENSION_API_BASE_URLS[selectedEnvironment]
+  const extensionCards = groupExtensionAgents(extensionManagementAgents.data?.items ?? [])
+  const extensionAgentById = new Map(
+    (extensionManagementAgents.data?.items ?? []).map((agent) => [agent.id, agent]),
+  )
   useEffect(() => {
     if (!selectedShopId && setupShopOptions[0]?.value) {
       tokenForm.setFieldValue('shopId', setupShopOptions[0].value)
     }
   }, [selectedShopId, setupShopOptions, tokenForm])
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [])
   const columns: TableColumnsType<ImportJob> = [
     {
       title: t('portal.integrations.jobs.createdAt', { defaultValue: 'Created' }),
@@ -517,12 +571,14 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
                 placeholder={t('portal.integrations.allShops', { defaultValue: 'All shops' })}
                 showSearch
                 optionFilterProp="label"
+                onChange={() => setCreatedToken(undefined)}
               />
             </Form.Item>
             <Form.Item
               label={t('portal.integrations.extension.environment', {
                 defaultValue: 'Environment',
               })}
+              tooltip={apiBaseUrl}
               name="environment"
               rules={[{ required: true }]}
             >
@@ -542,123 +598,94 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
             >
               <Input />
             </Form.Item>
-            <Form.Item label="API Base URL">
-              <Typography.Text copyable>{apiBaseUrl}</Typography.Text>
-            </Form.Item>
-            <Form.Item label="Shop ID">
-              <Typography.Text copyable>{selectedShopId || '-'}</Typography.Text>
-            </Form.Item>
-            <Form.Item label="API Access Token">
-              {createdToken ? (
-                <Typography.Text copyable className={styles.tokenText}>
-                  {createdToken}
-                </Typography.Text>
-              ) : (
-                <Typography.Text type="secondary">
-                  {t('portal.integrations.extension.createTokenHint', {
-                    defaultValue: 'Create a token, then copy it into the extension.',
-                  })}
-                </Typography.Text>
-              )}
-            </Form.Item>
-          </div>
-          <Space wrap>
-            <Button type="primary" htmlType="submit" loading={createToken.isPending}>
+            <Button className={styles.createTokenButton} type="primary" htmlType="submit" loading={createToken.isPending}>
               {t('portal.integrations.extension.createToken', {
                 defaultValue: 'Create token',
               })}
             </Button>
-            <Typography.Text type="secondary">
-              {t('portal.integrations.extension.flowHint', {
-                defaultValue:
-                  'After saving these values in Chrome, use Import Orders in the extension.',
-              })}
-            </Typography.Text>
-          </Space>
+          </div>
         </Form>
         {createdToken ? (
           <Alert
             type="warning"
             showIcon
-            message={t('portal.integrations.extension.tokenWarning', {
-              defaultValue: 'This token is shown once. Copy it before leaving the page.',
+            title={t('portal.integrations.extension.tokenWarning', {
+              defaultValue: 'API access token — copy it before leaving this page.',
             })}
+            description={
+              <Typography.Text copyable className={styles.tokenText}>
+                {createdToken}
+              </Typography.Text>
+            }
           />
         ) : null}
         {createToken.error ? (
           <Alert type="error" showIcon message={(createToken.error as Error).message} />
         ) : null}
         <div className={styles.commandPanel}>
-          <Typography.Title level={5}>Extension management</Typography.Title>
-          <DataTable
+          <Typography.Title level={5}>Extension operations</Typography.Title>
+          {extensionManagementAgents.isLoading ? (
+            <Typography.Text>Loading extensions…</Typography.Text>
+          ) : null}
+          <DataTable<ExtensionManagementAgent>
             rowKey="id"
             loading={extensionManagementAgents.isLoading}
             dataSource={extensionManagementAgents.data?.items ?? []}
             pagination={false}
             columns={[
+              { title: 'Shop', dataIndex: 'shopId', width: 160, render: (shopId: string) => shopNames.get(shopId) ?? shopId },
+              { title: 'RDC / Chrome', dataIndex: 'label', width: 170 },
+              { title: 'Status', dataIndex: 'status', width: 100, render: (status: string) => <StatusTag status={status === 'ONLINE' ? 'online' : 'offline'}>{status}</StatusTag> },
               {
-                title: 'Status',
-                dataIndex: 'status',
-                render: (status: string) => (
-                  <Tag color={status === 'ONLINE' ? 'green' : 'default'}>{status}</Tag>
-                ),
+                title: 'Connection',
+                dataIndex: 'lastReconnectedAt',
+                width: 120,
+                render: (value: string | null | undefined) => value ? <Tooltip title={`Reconnected at ${new Date(value).toLocaleString()}`}><StatusTag status="processing">Reconnected</StatusTag></Tooltip> : '-',
               },
+              { title: 'Last seen', dataIndex: 'lastSeenAt', width: 180, render: (value: string) => new Date(value).toLocaleString() },
+              { title: 'Next poll', dataIndex: 'lastSeenAt', width: 120, render: (value: string) => <Typography.Text type="secondary">{nextPollLabel(value, now)}</Typography.Text> },
               {
-                title: 'RDC / machine',
-                dataIndex: 'label',
-                render: (label: string, agent) => (
-                  <>
-                    {label}
-                    <br />
-                    <Typography.Text type="secondary">{agent.clientId}</Typography.Text>
-                  </>
-                ),
-              },
-              {
-                title: 'Shop',
-                dataIndex: 'shopId',
-                render: (shopId: string) => shopNames.get(shopId) ?? shopId,
-              },
-              {
-                title: 'Last heartbeat',
-                dataIndex: 'lastSeenAt',
-                render: (value: string) => new Date(value).toLocaleString(),
-              },
-              {
-                title: 'Token',
-                dataIndex: 'token',
-                render: (token) => (token ? `${token.name} · ••••${token.tokenHint}` : '-'),
+                title: 'Actions',
+                width: 180,
+                render: (_, agent) => {
+                  const numDays = commandImportDays[agent.id] ?? 1
+                  const adsDateRange = adsCommandDates[agent.id]
+                  return <Space size={6}>
+                    <Popover
+                      title="Pull Orders"
+                      trigger="click"
+                      content={<div className={styles.commandPopover}>
+                        <Typography.Text strong>Order history</Typography.Text>
+                        <Select
+                          aria-label={`Order history window for ${agent.label}`}
+                          value={numDays}
+                          onChange={(value: ExtensionImportDays) => setCommandImportDays((current) => ({ ...current, [agent.id]: value }))}
+                          options={[1, 2, 7, 15, 30].map((value) => ({ value, label: `${value} day${value === 1 ? '' : 's'}` }))}
+                        />
+                        <Button aria-label={t('portal.integrations.extension.pullOrders', { defaultValue: 'Pull orders' })} type="primary" icon={<CloudDownloadOutlined />} loading={createCommand.isPending} onClick={() => createCommand.mutate({ agentId: agent.id, type: 'IMPORT_NEW_ORDERS', numDays })}>Pull orders</Button>
+                      </div>}
+                    >
+                      <Tooltip title="Configure and pull orders"><Button aria-label={t('portal.integrations.extension.configurePullOrders', { defaultValue: 'Configure Pull Orders' })} type="primary" icon={<CloudDownloadOutlined />} disabled={agent.status !== 'ONLINE'} /></Tooltip>
+                    </Popover>
+                    <Popover
+                      title="Pull Ads"
+                      trigger="click"
+                      content={<div className={styles.commandPopover}>
+                        <Typography.Text strong>Ads period</Typography.Text>
+                        <DateRangePicker aria-label={`Ads date range for ${agent.label}`} value={adsDateRange} onChange={(value) => setAdsCommandDates((current) => ({ ...current, [agent.id]: value }))} />
+                        <Button aria-label={t('portal.integrations.extension.pullAds', { defaultValue: 'Pull Ads' })} type="primary" icon={<CloudDownloadOutlined />} loading={createCommand.isPending} disabled={!adsDateRange?.dateFrom || !adsDateRange?.dateTo} onClick={() => createCommand.mutate({ agentId: agent.id, type: 'IMPORT_ADS_SPEND', ...adsDateRange })}>Pull Ads</Button>
+                      </div>}
+                    >
+                      <Tooltip title="Configure and pull Ads"><Button aria-label={t('portal.integrations.extension.configurePullAds', { defaultValue: 'Configure Pull Ads' })} icon={<CloudDownloadOutlined />} disabled={agent.status !== 'ONLINE' || !canWriteFinanceForShop(account, agent.shopId)} /></Tooltip>
+                    </Popover>
+                    <Tooltip title="Test connection"><Button aria-label={t('portal.integrations.extension.testConnection', { defaultValue: 'Test connection' })} icon={<ApiOutlined />} loading={createCommand.isPending} disabled={agent.status !== 'ONLINE'} onClick={() => createCommand.mutate({ agentId: agent.id, type: 'TEST_CONNECTION' })} /></Tooltip>
+                    {!agent.token?.revokedAt && agent.token ? <Popconfirm title="Revoke this extension token?" okText="Revoke" onConfirm={() => revokeToken.mutate(agent.token!.id)}><Tooltip title="Revoke token"><Button aria-label={t('portal.integrations.extension.revokeToken', { defaultValue: 'Revoke token' })} danger icon={<StopOutlined />} /></Tooltip></Popconfirm> : null}
+                  </Space>
+                },
               },
             ]}
+            scroll={{ x: 'max-content' }}
           />
-          <Typography.Title level={5}>
-            {t('portal.integrations.extension.commandsTitle', {
-              defaultValue: 'Remote order import',
-            })}
-          </Typography.Title>
-          <Space wrap>
-            <Select
-              className={styles.commandAgent}
-              loading={extensionAgents.isLoading}
-              value={commandAgentId}
-              onChange={setCommandAgentId}
-              placeholder={t('portal.integrations.extension.selectAgent', {
-                defaultValue: 'Select an online extension',
-              })}
-              options={(extensionAgents.data?.items ?? []).map((agent) => ({
-                value: agent.id,
-                label: `${agent.label} · ${shopNames.get(agent.shopId) ?? agent.shopId} · ${agent.apiBaseUrl ?? '-'}`,
-              }))}
-            />
-            <Button
-              type="primary"
-              disabled={!commandAgentId}
-              loading={createCommand.isPending}
-              onClick={() => commandAgentId && createCommand.mutate(commandAgentId)}
-            >
-              {t('portal.integrations.extension.pullOrders', { defaultValue: 'Pull new orders' })}
-            </Button>
-          </Space>
           {extensionAgents.data?.items.length === 0 ? (
             <Typography.Text type="secondary">
               {t('portal.integrations.extension.noAgents', {
@@ -682,27 +709,67 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
               {
                 title: t('portal.integrations.extension.status', { defaultValue: 'Status' }),
                 dataIndex: 'status',
-                render: (status: string) => (
-                  <StatusTag
-                    status={
-                      status === 'SUCCEEDED'
-                        ? 'operational'
-                        : status === 'FAILED'
-                          ? 'critical'
-                          : 'pending'
-                    }
-                  >
-                    {status}
-                  </StatusTag>
+                render: (status: string, command) => (
+                  <Space size={6}>
+                    <StatusTag
+                      status={
+                        status === 'SUCCEEDED'
+                          ? 'operational'
+                          : status === 'FAILED'
+                            ? 'critical'
+                            : 'pending'
+                      }
+                    >
+                      {status}
+                    </StatusTag>
+                    <Tooltip title="View task details">
+                      <Button aria-label={t('portal.integrations.extension.viewTaskDetails', { defaultValue: 'View task details' })} type="text" icon={<InfoCircleOutlined />} onClick={() => setSelectedCommand(command)} />
+                    </Tooltip>
+                  </Space>
                 ),
+            },
+            {
+              title: 'Next poll',
+              render: (_, command) => {
+                if (command.status === 'FAILED') return 'Not retrying'
+                if (command.status === 'SUCCEEDED') return 'Completed'
+                if (command.status === 'RUNNING' || command.status === 'CLAIMED') return 'Processing…'
+                const agentId = command.agentId
+                const agent = extensionAgentById.get(agentId)
+                return agent ? nextPollLabel(agent.lastSeenAt, now) : '-'
               },
-              {
+            },
+            {
                 title: t('portal.integrations.extension.created', { defaultValue: 'Created' }),
                 dataIndex: 'createdAt',
                 render: (value: string) => new Date(value).toLocaleString(),
               },
             ]}
           />
+          <Drawer title="Task details" open={Boolean(selectedCommand)} onClose={() => setSelectedCommand(undefined)}>
+            {selectedCommand ? (
+              <div className={styles.commandTimeline}>
+                <Space>
+                  <StatusTag status={selectedCommand.status === 'SUCCEEDED' ? 'operational' : selectedCommand.status === 'FAILED' ? 'critical' : 'pending'}>
+                    {selectedCommand.status}
+                  </StatusTag>
+                  <Typography.Text>{selectedCommand.type}</Typography.Text>
+                </Space>
+                {[
+                  ['Created', selectedCommand.createdAt],
+                  ['Claimed', selectedCommand.claimedAt],
+                  ['Started', selectedCommand.startedAt],
+                  [selectedCommand.status === 'FAILED' ? 'Failed' : selectedCommand.status === 'SUCCEEDED' ? 'Completed' : 'Last update', selectedCommand.completedAt],
+                ].filter(([, value]) => value).map(([label, value]) => (
+                  <div className={styles.commandTimelineRow} key={String(label)}>
+                    <Typography.Text strong>{label}</Typography.Text>
+                    <Typography.Text type="secondary">{new Date(String(value)).toLocaleString()}</Typography.Text>
+                  </div>
+                ))}
+                {selectedCommand.errorMessage ? <Alert type="error" showIcon title={selectedCommand.errorMessage} /> : null}
+              </div>
+            ) : null}
+          </Drawer>
         </div>
       </div>
     </SectionCard>
@@ -863,6 +930,27 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     setDates: setSettlementDates,
     resetPage: resetSettlementPage,
   })
+  const financeTab = (
+    <UiTabs
+      items={[
+        {
+          key: 'ads',
+          label: <UiTabLabel>Ads</UiTabLabel>,
+          children: adsTab,
+        },
+        {
+          key: 'transactions',
+          label: <UiTabLabel>Transactions</UiTabLabel>,
+          children: transactionsTab,
+        },
+        {
+          key: 'settlements',
+          label: <UiTabLabel>Settlements</UiTabLabel>,
+          children: settlementsTab,
+        },
+      ]}
+    />
+  )
 
   return (
     <section className={styles.page}>
@@ -905,35 +993,13 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
             children: extensionTab,
           },
           {
-            key: 'ads',
+            key: 'finance',
             label: (
               <UiTabLabel>
-                {t('portal.integrations.tabs.ads', { defaultValue: 'Amazon Ads' })}
+                Finance data
               </UiTabLabel>
             ),
-            children: adsTab,
-          },
-          {
-            key: 'transactions',
-            label: (
-              <UiTabLabel>
-                {t('portal.integrations.tabs.transactions', {
-                  defaultValue: 'Amazon Transactions',
-                })}
-              </UiTabLabel>
-            ),
-            children: transactionsTab,
-          },
-          {
-            key: 'settlements',
-            label: (
-              <UiTabLabel>
-                {t('portal.integrations.tabs.settlements', {
-                  defaultValue: 'Amazon Settlements',
-                })}
-              </UiTabLabel>
-            ),
-            children: settlementsTab,
+            children: financeTab,
           },
         ]}
       />

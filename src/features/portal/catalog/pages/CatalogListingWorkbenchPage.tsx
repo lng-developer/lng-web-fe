@@ -335,7 +335,7 @@ export function CatalogListingWorkbenchPage({
       title: 'Status',
       width: 96,
       render: (_, listing) => (
-        <Tag color={listing.status === 'ACTIVE' ? 'green' : 'default'}>{listing.status}</Tag>
+        <StatusTag status={listing.status === 'ACTIVE' ? 'operational' : 'draft'}>{listing.status}</StatusTag>
       ),
     },
     {
