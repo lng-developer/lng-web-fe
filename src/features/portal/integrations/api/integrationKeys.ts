@@ -18,4 +18,5 @@ export const integrationKeys = {
   extensionAgents: () => [...integrationKeys.all, 'extension-agents'] as const,
   extensionManagementAgents: () => [...integrationKeys.all, 'extension-management-agents'] as const,
   extensionCommands: () => [...integrationKeys.all, 'extension-commands'] as const,
+  extensionOrderSchedules: () => [...integrationKeys.all, 'extension-order-schedules'] as const,
 }

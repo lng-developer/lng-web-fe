@@ -63,6 +63,16 @@ export type ExtensionCommand = {
 }
 export type ExtensionCommandType = 'IMPORT_NEW_ORDERS' | 'IMPORT_ADS_SPEND' | 'TEST_CONNECTION'
 export type ExtensionImportDays = 1 | 2 | 7 | 15 | 30
+export type ExtensionOrderSchedule = {
+  id: string
+  shopId: string
+  agentId: string
+  enabled: boolean
+  intervalMinutes: 60 | 120 | 180 | 240
+  nextRunAt: string
+  lastQueuedAt: string | null
+  lastError: string | null
+}
 
 export type Pagination = { total: number; page: number; limit: number }
 export type Paginated<T> = { items: T[]; pagination: Pagination }
@@ -340,5 +350,18 @@ export async function createExtensionCommand(input: {
 }) {
   return unwrap<ExtensionCommand>(
     await apiClient.post(`${extensionCommandPath}/commands`, input),
+  )
+}
+export async function listExtensionOrderSchedules() {
+  return unwrap<{ items: ExtensionOrderSchedule[] }>(
+    await apiClient.get(`${extensionCommandPath}/order-schedules`),
+  )
+}
+export async function upsertExtensionOrderSchedule(
+  agentId: string,
+  input: Pick<ExtensionOrderSchedule, 'enabled' | 'intervalMinutes'>,
+) {
+  return unwrap<ExtensionOrderSchedule>(
+    await apiClient.put(`${extensionCommandPath}/order-schedules/${agentId}`, input),
   )
 }

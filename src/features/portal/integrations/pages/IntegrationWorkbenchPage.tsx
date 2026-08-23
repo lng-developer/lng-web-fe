@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
-import { ApiOutlined, CloudDownloadOutlined, InfoCircleOutlined, ReloadOutlined, StopOutlined, UploadOutlined } from '@ant-design/icons'
+import { ApiOutlined, ClockCircleOutlined, CloudDownloadOutlined, InfoCircleOutlined, ReloadOutlined, StopOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import type { TableColumnsType } from 'antd'
@@ -48,9 +48,11 @@ import {
   listExtensionAgents,
   listExtensionCommands,
   listExtensionManagementAgents,
+  listExtensionOrderSchedules,
   listImportJobs,
   uploadEtsySoldItems,
   uploadManualExcel,
+  upsertExtensionOrderSchedule,
 } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
 import { listAllActiveShops } from '../api/loadActiveShops'
@@ -234,6 +236,12 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     retry: false,
     refetchInterval: 10_000,
   })
+  const extensionOrderSchedules = useQuery({
+    queryKey: integrationKeys.extensionOrderSchedules(),
+    queryFn: listExtensionOrderSchedules,
+    enabled: canWrite,
+    retry: false,
+  })
   const adsImports = useQuery({
     queryKey: [
       ...integrationKeys.all,
@@ -343,6 +351,13 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       showFeedbackToast('success', 'Extension token revoked.')
     },
   })
+  const saveOrderSchedule = useMutation({
+    mutationFn: ({ agentId, enabled, intervalMinutes }: { agentId: string; enabled: boolean; intervalMinutes: 60 | 120 | 180 | 240 }) => upsertExtensionOrderSchedule(agentId, { enabled, intervalMinutes }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: integrationKeys.extensionOrderSchedules() })
+      showFeedbackToast('success', 'Order schedule saved.')
+    },
+  })
 
   const updateParams = (next: Record<string, string | undefined>, resetPage = true) => {
     const updated = new URLSearchParams(searchParams)
@@ -368,6 +383,9 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const extensionCards = groupExtensionAgents(extensionManagementAgents.data?.items ?? [])
   const extensionAgentById = new Map(
     (extensionManagementAgents.data?.items ?? []).map((agent) => [agent.id, agent]),
+  )
+  const orderScheduleByAgentId = new Map(
+    (extensionOrderSchedules.data?.items ?? []).map((schedule) => [schedule.agentId, schedule]),
   )
   useEffect(() => {
     if (!selectedShopId && setupShopOptions[0]?.value) {
@@ -650,6 +668,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
                 render: (_, agent) => {
                   const numDays = commandImportDays[agent.id] ?? 1
                   const adsDateRange = adsCommandDates[agent.id]
+                  const schedule = orderScheduleByAgentId.get(agent.id)
                   return <Space size={6}>
                     <Popover
                       title="Pull Orders"
@@ -666,6 +685,23 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
                       </div>}
                     >
                       <Tooltip title="Configure and pull orders"><Button aria-label={t('portal.integrations.extension.configurePullOrders', { defaultValue: 'Configure Pull Orders' })} type="primary" icon={<CloudDownloadOutlined />} disabled={agent.status !== 'ONLINE'} /></Tooltip>
+                    </Popover>
+                    <Popover
+                      title="Order schedule"
+                      trigger="click"
+                      content={<div className={styles.commandPopover}>
+                        <Select
+                          aria-label={`Order schedule interval for ${agent.label}`}
+                          defaultValue={schedule?.intervalMinutes ?? 120}
+                          options={[60, 120, 180, 240].map((value) => ({ value, label: `Every ${value / 60} hour${value === 60 ? '' : 's'}` }))}
+                          onChange={(intervalMinutes: 60 | 120 | 180 | 240) => saveOrderSchedule.mutate({ agentId: agent.id, enabled: schedule?.enabled ?? true, intervalMinutes })}
+                        />
+                        <Button aria-label={t('portal.integrations.extension.saveOrderSchedule', { defaultValue: 'Save schedule' })} type="primary" loading={saveOrderSchedule.isPending} onClick={() => saveOrderSchedule.mutate({ agentId: agent.id, enabled: !(schedule?.enabled ?? false), intervalMinutes: schedule?.intervalMinutes ?? 120 })}>
+                          {schedule?.enabled ? 'Disable schedule' : 'Save schedule'}
+                        </Button>
+                      </div>}
+                    >
+                      <Tooltip title={schedule?.enabled ? `Orders scheduled every ${schedule.intervalMinutes / 60}h` : 'Configure order schedule'}><Button aria-label={t('portal.integrations.extension.configureOrderSchedule', { defaultValue: 'Configure order schedule' })} icon={<ClockCircleOutlined />} /></Tooltip>
                     </Popover>
                     <Popover
                       title="Pull Ads"

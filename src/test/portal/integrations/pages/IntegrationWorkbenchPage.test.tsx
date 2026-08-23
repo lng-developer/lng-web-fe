@@ -18,7 +18,9 @@ vi.mock('@/features/portal/integrations/api/integrationApi', async (importOrigin
     listExtensionAgents: vi.fn(),
     listExtensionCommands: vi.fn(),
     listExtensionManagementAgents: vi.fn(),
+    listExtensionOrderSchedules: vi.fn(),
     createExtensionCommand: vi.fn(),
+    upsertExtensionOrderSchedule: vi.fn(),
     uploadEtsySoldItems: vi.fn(),
     uploadManualExcel: vi.fn(),
   }
@@ -48,6 +50,7 @@ import { listImportBatches } from '@/features/portal/finance/api/financeApi'
 import {
   getImportJob,
   createExtensionCommand,
+  listExtensionOrderSchedules,
   listExtensionAgents,
   listExtensionCommands,
   listExtensionManagementAgents,
@@ -57,6 +60,7 @@ import {
   listJobRawRecords,
   uploadEtsySoldItems,
   uploadManualExcel,
+  upsertExtensionOrderSchedule,
 } from '@/features/portal/integrations/api/integrationApi'
 import { ImportUploadModal } from '@/features/portal/integrations/pages/ImportUploadModal'
 import { IntegrationWorkbenchPage } from '@/features/portal/integrations/pages/IntegrationWorkbenchPage'
@@ -199,6 +203,11 @@ describe('IntegrationWorkbenchPage', () => {
       pagination: { total: 0, page: 1, limit: 10 },
     })
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({ items: [] })
+    vi.mocked(listExtensionOrderSchedules).mockResolvedValue({ items: [] })
+    vi.mocked(upsertExtensionOrderSchedule).mockResolvedValue({
+      id: 'schedule-1', shopId: shop.id, agentId: 'agent-1', enabled: true, intervalMinutes: 120,
+      nextRunAt: '2026-08-22T02:00:00.000Z', lastQueuedAt: null, lastError: null,
+    })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [adsImportBatch],
       pagination: { total: 1, page: 1, limit: 20 },
@@ -428,6 +437,25 @@ describe('IntegrationWorkbenchPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Configure Pull Orders' }))
     expect(await screen.findByText('Order history')).toBeVisible()
+  })
+
+  it('saves an order schedule for an extension', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [{
+        id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+        apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-08-22T00:00:00.000Z',
+        status: 'ONLINE', token: null,
+      }],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Configure order schedule' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save schedule' }))
+
+    await waitFor(() => expect(upsertExtensionOrderSchedule).toHaveBeenCalledWith('agent-1', {
+      enabled: true, intervalMinutes: 120,
+    }))
   })
 
   it('shows when an extension has reconnected', async () => {
