@@ -69,6 +69,6 @@ export function createServer() {
   })
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (!process.env.VITEST) {
   createServer().listen(port, '0.0.0.0', () => console.log(`lng-web-fe listening on ${port}`))
 }
