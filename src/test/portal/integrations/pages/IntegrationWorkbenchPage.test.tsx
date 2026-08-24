@@ -1,9 +1,47 @@
+import type { ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui')>()
+  return {
+    ...actual,
+    DataTable: ({
+      columns = [],
+      dataSource = [],
+      onRow,
+    }: {
+      columns?: Array<{
+        dataIndex?: string
+        render?: (value: unknown, record: Record<string, unknown>) => ReactNode
+      }>
+      dataSource?: Array<Record<string, unknown>>
+      onRow?: (record: Record<string, unknown>) => { onClick?: () => void }
+    }) => (
+      <table>
+        <tbody>
+          {dataSource.map((record, rowIndex) => (
+            <tr key={String(record.id ?? rowIndex)} onClick={onRow?.(record).onClick}>
+              {columns.map((column, columnIndex) => (
+                <td key={columnIndex}>
+                  {column.render
+                    ? column.render(column.dataIndex ? record[column.dataIndex] : undefined, record)
+                    : column.dataIndex
+                      ? String(record[column.dataIndex] ?? '')
+                      : null}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+  }
+})
 
 vi.mock('@/features/portal/integrations/api/integrationApi', async (importOriginal) => {
   const actual =
@@ -366,7 +404,11 @@ describe('IntegrationWorkbenchPage', () => {
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
-    await waitFor(() => expect(screen.getByText('shop-1')).toBeVisible())
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'Shop' }).parentElement).toHaveTextContent(
+        'LNG Amazon US',
+      ),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Create token' }))
     expect(await screen.findByText('lng_ext_test_token')).toBeVisible()
 

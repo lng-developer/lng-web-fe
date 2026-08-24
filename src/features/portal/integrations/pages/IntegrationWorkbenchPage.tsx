@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
@@ -175,6 +175,33 @@ function isRecentlyReconnected(agent: ExtensionManagementAgent, now: number) {
 
 export interface IntegrationWorkbenchPageProps {
   readonly account?: CurrentAccount
+}
+
+function LazyActionPopover({
+  renderContent,
+  renderTrigger,
+  title,
+}: {
+  readonly renderContent: () => ReactNode
+  readonly renderTrigger: (onOpen: () => void) => ReactNode
+  readonly title: ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+
+  if (!open) return renderTrigger(() => setOpen(true))
+
+  return (
+    <Popover
+      destroyOnHidden
+      title={title}
+      trigger="click"
+      open={open}
+      onOpenChange={setOpen}
+      content={open ? renderContent() : null}
+    >
+      {renderTrigger(() => undefined)}
+    </Popover>
+  )
 }
 
 function LoadedIntegrationWorkbenchPage() {
@@ -756,10 +783,22 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
                   const adsDateRange = adsCommandDates[agent.id]
                   return (
                     <Space size={6}>
-                      <Popover
+                      <LazyActionPopover
                         title="Pull Orders"
-                        trigger="click"
-                        content={
+                        renderTrigger={(onOpen) => (
+                          <Tooltip title="Configure and pull orders">
+                            <Button
+                              aria-label={t('portal.integrations.extension.configurePullOrders', {
+                                defaultValue: 'Configure Pull Orders',
+                              })}
+                              type="primary"
+                              icon={<CloudDownloadOutlined />}
+                              disabled={agent.status !== 'ONLINE'}
+                              onClick={onOpen}
+                            />
+                          </Tooltip>
+                        )}
+                        renderContent={() => (
                           <div className={styles.commandPopover}>
                             <Typography.Text strong>Order history</Typography.Text>
                             <Select
@@ -796,23 +835,22 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
                               Pull orders
                             </Button>
                           </div>
-                        }
-                      >
-                        <Tooltip title="Configure and pull orders">
-                          <Button
-                            aria-label={t('portal.integrations.extension.configurePullOrders', {
-                              defaultValue: 'Configure Pull Orders',
-                            })}
-                            type="primary"
-                            icon={<CloudDownloadOutlined />}
-                            disabled={agent.status !== 'ONLINE'}
-                          />
-                        </Tooltip>
-                      </Popover>
-                      <Popover
+                        )}
+                      />
+                      <LazyActionPopover
                         title="More actions"
-                        trigger="click"
-                        content={
+                        renderTrigger={(onOpen) => (
+                          <Tooltip title="More extension actions">
+                            <Button
+                              aria-label={t('portal.integrations.extension.moreActions', {
+                                defaultValue: 'More extension actions',
+                              })}
+                              icon={<MoreOutlined />}
+                              onClick={onOpen}
+                            />
+                          </Tooltip>
+                        )}
+                        renderContent={() => (
                           <Space direction="vertical" size={4}>
                             <Popover
                               title="Pull Ads"
@@ -903,17 +941,8 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
                               </>
                             ) : null}
                           </Space>
-                        }
-                      >
-                        <Tooltip title="More extension actions">
-                          <Button
-                            aria-label={t('portal.integrations.extension.moreActions', {
-                              defaultValue: 'More extension actions',
-                            })}
-                            icon={<MoreOutlined />}
-                          />
-                        </Tooltip>
-                      </Popover>
+                        )}
+                      />
                     </Space>
                   )
                 },
@@ -1350,7 +1379,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         }
       />
       <UiTabs
-        destroyOnHidden={false}
+        destroyOnHidden
         items={[
           {
             key: 'orders',
