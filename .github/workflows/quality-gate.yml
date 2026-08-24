@@ -80,6 +80,8 @@ jobs:
         run: |
           rsync -az --delete -e "ssh -i ~/.ssh/fe_deploy_key -p ${{ secrets.FE_DEPLOY_PORT }}" \
             dist/ "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}:/home/lng/apps/lng-web-fe/dist/"
+          rsync -az -e "ssh -i ~/.ssh/fe_deploy_key -p ${{ secrets.FE_DEPLOY_PORT }}" \
+            server.mjs "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}:/home/lng/apps/lng-web-fe/server.mjs"
       - name: Restart FE
         run: |
           ssh -i ~/.ssh/fe_deploy_key -p "${{ secrets.FE_DEPLOY_PORT }}" \

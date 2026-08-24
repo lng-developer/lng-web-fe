@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
           test: {
             name: 'unit',
             environment: 'node',
-            include: ['src/test/**/*.test.ts'],
+            include: ['src/test/**/*.test.ts', 'src/test/server/**/*.test.js'],
             exclude: [
               'src/test/app/layout/coreRouteMemory.test.ts',
               'src/test/hr/api/hrApi.test.ts',
