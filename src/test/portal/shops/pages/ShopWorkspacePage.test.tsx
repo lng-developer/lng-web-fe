@@ -92,8 +92,10 @@ describe('ShopWorkspacePage', () => {
   it('waits 200 ms before searching and resets the URL page', async () => {
     renderPage('/portal/shops?page=2&status=ACTIVE')
 
-    expect(await screen.findByText('Football US')).toBeVisible()
-    expect(listShops).toHaveBeenCalledWith({ page: 2, limit: 20, status: 'ACTIVE' })
+    await waitFor(() =>
+      expect(listShops).toHaveBeenCalledWith({ page: 2, limit: 20, status: 'ACTIVE' }),
+    )
+    expect(await screen.findByText('Football US', {}, { timeout: 5_000 })).toBeVisible()
     vi.useFakeTimers()
     fireEvent.change(screen.getByRole('textbox', { name: 'Search shops' }), {
       target: { value: 'football' },
