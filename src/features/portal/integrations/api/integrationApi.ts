@@ -22,6 +22,57 @@ export type PostImportStatus =
   | 'FAILED'
   | 'SKIPPED'
 export type ImportUploadSource = 'AMAZON_ORDER_REPORT' | 'ETSY_SOLD_ORDER_ITEMS'
+export type ExtensionCommandStatus = 'QUEUED' | 'CLAIMED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
+export type ExtensionAgent = {
+  id: string
+  shopId: string
+  clientId: string
+  label: string
+  version: string | null
+  apiBaseUrl: string | null
+  lastSeenAt: string
+  lastReconnectedAt?: string | null
+}
+export type ExtensionManagementAgent = ExtensionAgent & {
+  status: 'ONLINE' | 'OFFLINE'
+  token: {
+    id: string
+    name: string
+    tokenHint: string
+    environment: string
+    lastUsedAt: string | null
+    expiresAt: string | null
+    revokedAt: string | null
+  } | null
+}
+export type ExtensionCommand = {
+  id: string
+  type: ExtensionCommandType
+  status: ExtensionCommandStatus
+  shopId: string
+  agentId: string
+  dateFrom?: string | null
+  dateTo?: string | null
+  importJobId: string | null
+  attemptCount: number
+  errorMessage: string | null
+  createdAt: string
+  claimedAt?: string | null
+  startedAt?: string | null
+  completedAt: string | null
+}
+export type ExtensionCommandType = 'IMPORT_NEW_ORDERS' | 'IMPORT_ADS_SPEND' | 'TEST_CONNECTION'
+export type ExtensionImportDays = 1 | 2 | 7 | 15 | 30
+export type ExtensionOrderSchedule = {
+  id: string
+  shopId: string
+  agentId: string
+  enabled: boolean
+  intervalMinutes: 60 | 120 | 180 | 240
+  nextRunAt: string
+  lastQueuedAt: string | null
+  lastError: string | null
+}
 
 export type Pagination = { total: number; page: number; limit: number }
 export type Paginated<T> = { items: T[]; pagination: Pagination }
@@ -209,6 +260,7 @@ export type RetryPostImportResult = {
 }
 
 const basePath = '/api/integration/external-order-imports'
+const extensionCommandPath = '/api/integration/extension-commands'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export async function listImportJobs(params: ImportJobListParams = {}) {
@@ -273,4 +325,43 @@ export async function retryPostImportRawRecords(jobId: string, rawRecordIds: str
 
 export async function updateIssueStatus(issueId: string, input: IssueUpdateInput) {
   return unwrap<ImportIssue>(await apiClient.patch(`${basePath}/issues/${issueId}`, input))
+}
+
+export async function listExtensionAgents() {
+  return unwrap<{ items: ExtensionAgent[] }>(await apiClient.get(`${extensionCommandPath}/agents`))
+}
+export async function listExtensionManagementAgents() {
+  return unwrap<{ items: ExtensionManagementAgent[] }>(
+    await apiClient.get(`${extensionCommandPath}/management-agents`),
+  )
+}
+export async function listExtensionCommands(params: PageParams = {}) {
+  return unwrap<Paginated<ExtensionCommand>>(
+    await apiClient.get(`${extensionCommandPath}/commands`, { params }),
+  )
+}
+export async function createExtensionCommand(input: {
+  type: ExtensionCommandType
+  shopId: string
+  agentId: string
+  numDays?: ExtensionImportDays
+  dateFrom?: string
+  dateTo?: string
+}) {
+  return unwrap<ExtensionCommand>(
+    await apiClient.post(`${extensionCommandPath}/commands`, input),
+  )
+}
+export async function listExtensionOrderSchedules() {
+  return unwrap<{ items: ExtensionOrderSchedule[] }>(
+    await apiClient.get(`${extensionCommandPath}/order-schedules`),
+  )
+}
+export async function upsertExtensionOrderSchedule(
+  agentId: string,
+  input: Pick<ExtensionOrderSchedule, 'enabled' | 'intervalMinutes'>,
+) {
+  return unwrap<ExtensionOrderSchedule>(
+    await apiClient.put(`${extensionCommandPath}/order-schedules/${agentId}`, input),
+  )
 }

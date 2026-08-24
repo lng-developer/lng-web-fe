@@ -17,14 +17,66 @@
 }
 
 .extensionGrid {
+  align-items: end;
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 1fr) minmax(180px, 1fr) auto;
+}
+
+.extensionGrid :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.createTokenButton {
+  min-width: 116px;
 }
 
 .tokenText {
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+
+.commandPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.commandTimeline {
+  display: grid;
+  gap: 16px;
+}
+
+.commandTimelineRow {
+  display: grid;
+  gap: 2px;
+  padding-left: 12px;
+  border-left: 2px solid var(--ant-color-primary-border);
+}
+
+.commandPopover {
+  display: grid;
+  gap: 12px;
+  width: 280px;
+}
+
+.extensionCards {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.extensionCard {
+  min-width: 0;
+}
+
+.tokenList {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.commandAgent {
+  min-width: 280px;
 }
 
 .selectedJob {
@@ -79,6 +131,10 @@
 @media (max-width: 640px) {
   .extensionGrid {
     grid-template-columns: 1fr;
+  }
+
+  .createTokenButton {
+    width: 100%;
   }
 
   .issueFilters {

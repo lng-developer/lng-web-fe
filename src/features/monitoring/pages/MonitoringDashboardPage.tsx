@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  CheckCircleOutlined,
   ClockCircleOutlined,
   CloudServerOutlined,
   DatabaseOutlined,
   HddOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
-  WarningOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -20,12 +18,11 @@ import {
   Row,
   Select,
   Space,
-  Tag,
   Typography,
 } from 'antd'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
-import { MetricCard, PageHeader, SectionCard, UiTabLabel, UiTabs } from '@/shared/ui'
+import { MetricCard, PageHeader, SectionCard, StatusTag, UiTabLabel, UiTabs } from '@/shared/ui'
 
 import {
   getSystemHealth,
@@ -37,12 +34,12 @@ import {
 } from '../api/monitoringApi'
 import styles from './MonitoringDashboardPage.module.scss'
 
-const statusColor = (status?: string) => {
+const statusTone = (status?: string) => {
   if (status === 'ok' || status === 'running' || status === 'CONNECTED' || status === 'ENABLED')
-    return 'success'
-  if (status === 'external') return 'processing'
-  if (status === 'disabled' || status === 'DISABLED') return 'default'
-  return 'error'
+    return 'operational' as const
+  if (status === 'external') return 'processing' as const
+  if (status === 'disabled' || status === 'DISABLED') return 'draft' as const
+  return 'critical' as const
 }
 
 export function MonitoringDashboardPage() {
@@ -132,7 +129,7 @@ export function MonitoringDashboardPage() {
                     <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
                       {label}
                     </Typography.Text>
-                    <Tag color={statusColor(String(value))}>{String(value ?? 'UNKNOWN')}</Tag>
+                    <StatusTag status={statusTone(String(value))}>{String(value ?? 'UNKNOWN')}</StatusTag>
                   </div>
                 </Flex>
               </Card>
@@ -157,7 +154,7 @@ export function MonitoringDashboardPage() {
                   {label}
                 </Typography.Text>
                 {label === 'Status' ? (
-                  <Tag color={statusColor(String(value))}>{String(value).toUpperCase()}</Tag>
+                  <StatusTag status={statusTone(String(value))}>{String(value).toUpperCase()}</StatusTag>
                 ) : (
                   <Typography.Title level={4}>{value}</Typography.Title>
                 )}
@@ -211,12 +208,9 @@ export function MonitoringDashboardPage() {
                     <Typography.Text strong style={{ fontSize: 13 }}>
                       {module.name}
                     </Typography.Text>
-                    <Tag
-                      color={isOk ? 'success' : 'error'}
-                      icon={isOk ? <CheckCircleOutlined /> : <WarningOutlined />}
-                    >
+                    <StatusTag status={isOk ? 'operational' : 'critical'}>
                       {module.status.toUpperCase()}
-                    </Tag>
+                    </StatusTag>
                   </Flex>
                   <Typography.Text
                     type="secondary"
@@ -257,7 +251,7 @@ export function MonitoringDashboardPage() {
                       {worker.queueName ?? worker.script ?? worker.process}
                     </Typography.Text>
                   </div>
-                  <Tag color={statusColor(worker.status)}>{worker.status.toUpperCase()}</Tag>
+                  <StatusTag status={statusTone(worker.status)}>{worker.status.toUpperCase()}</StatusTag>
                 </Flex>
                 <Typography.Text type="secondary" style={{ fontSize: 11 }}>
                   {worker.process === 'embedded-api'
@@ -285,7 +279,7 @@ export function MonitoringDashboardPage() {
                       {queue.queueName}
                     </Typography.Text>
                   </div>
-                  <Tag color={statusColor(queue.status)}>{queue.status.toUpperCase()}</Tag>
+                  <StatusTag status={statusTone(queue.status)}>{queue.status.toUpperCase()}</StatusTag>
                 </Flex>
                 <div className={styles.queueCounts}>
                   {(['waiting', 'active', 'delayed', 'completed', 'failed', 'paused'] as const).map(

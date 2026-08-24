@@ -4,7 +4,7 @@ import { ApiOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tag, Typography } from 'antd'
 
-import { DataTable, FilterBar, SearchInput } from '@/shared/ui'
+import { DataTable, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { RecordStatus, Vendor } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -96,9 +96,9 @@ export function VendorWorkspaceVendorsTabPage({
         width: 110,
         ellipsis: true,
         render: (status) => (
-          <Tag color={status === 'ACTIVE' ? 'success' : 'default'}>
+          <StatusTag status={status === 'ACTIVE' ? 'operational' : 'draft'}>
             {t(`vendors.status.${status}`)}
-          </Tag>
+          </StatusTag>
         ),
       },
       {

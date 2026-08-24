@@ -30,6 +30,7 @@ import {
   MetricCard,
   PageHeader,
   SectionCard,
+  StatusTag,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -87,7 +88,7 @@ const OrganizationTeamNode = memo(function OrganizationTeamNode({
               {team.code} · {team.memberCount} {t('organization.members', 'members').toLowerCase()}
             </small>
           </span>
-          <Tag color={team.status === 'active' ? 'success' : 'default'}>{team.status}</Tag>
+          <StatusTag status={team.status === 'active' ? 'operational' : 'draft'}>{team.status}</StatusTag>
         </button>
         {actions}
       </div>

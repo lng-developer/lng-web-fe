@@ -2,13 +2,13 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Badge, Card, Drawer, Flex, Modal, Select, Space, Tag, Typography } from 'antd'
+import { Badge, Card, Drawer, Flex, Modal, Select, Space, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
 import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import { normalizeApiError } from '@/shared/api'
-import { FeedbackAlert, PageHeader, useFeedbackToast } from '@/shared/ui'
+import { FeedbackAlert, PageHeader, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createMappingRule,
@@ -256,9 +256,9 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
               {creating ? t('mapping.actions.createRule') : t('mapping.sections.ruleEditor')}
             </span>
             {selectedRule?.status ? (
-              <Tag color={selectedRule.status === 'ACTIVE' ? 'green' : 'default'}>
+              <StatusTag status={selectedRule.status === 'ACTIVE' ? 'operational' : 'draft'}>
                 {selectedRule.status}
-              </Tag>
+              </StatusTag>
             ) : null}
           </Space>
         }

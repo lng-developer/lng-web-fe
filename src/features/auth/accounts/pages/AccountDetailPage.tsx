@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { LockOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Descriptions, Form, Input, Result, Tag, Typography } from 'antd'
+import { Button, Descriptions, Form, Input, Result, Typography } from 'antd'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
-import { FeedbackAlert, LoadingState, PageHeader, SectionCard, useFeedbackToast } from '@/shared/ui'
+import { FeedbackAlert, LoadingState, PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import { loadAccount, updateAccountEmail } from '../api/accountManagementApi'
 import styles from './AccountDetailPage.module.scss'
@@ -63,9 +63,9 @@ export function AccountDetailPage() {
         title={account.email}
         description={t('auth.accountDetail.description')}
         actions={
-          <Tag color={account.status === 'active' ? 'success' : 'default'}>
+          <StatusTag status={account.status === 'active' ? 'operational' : 'draft'}>
             {account.status ?? t('auth.accessExplorer.unknown')}
-          </Tag>
+          </StatusTag>
         }
       />
       <SectionCard title={t('auth.accountDetail.profile')}>
