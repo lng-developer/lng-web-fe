@@ -1,6 +1,5 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
-
-type ApiResponse<T> = { data: T; success: boolean }
 
 export type RoleInput = {
   code: string

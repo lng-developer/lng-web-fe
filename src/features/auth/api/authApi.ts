@@ -1,3 +1,4 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient, ApiError } from '@/shared/api'
 import {
   getAccessToken,
@@ -9,7 +10,6 @@ import {
   setPermissions,
   setRoles,
 } from '@/shared/auth/session'
-type ApiResponse<T> = { success: boolean; data: T }
 export type ScopedAccess = {
   assignmentId: string
   scopeType: string

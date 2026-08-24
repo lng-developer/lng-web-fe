@@ -1,11 +1,8 @@
+import { ApiResponse, Page } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
-type ApiResponse<T> = { success: boolean; data: T }
 type Query = Record<string, boolean | number | string | null | undefined>
-export type Page<T> = {
-  items: T[]
-  pagination?: { page: number; limit: number; total: number; totalPages: number }
-}
+
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 const get = async <T>(path: string, params?: Query) =>
   unwrap<T>(await apiClient.get(path, ...(params ? [{ params }] : [])))

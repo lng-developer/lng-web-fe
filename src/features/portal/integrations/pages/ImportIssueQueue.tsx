@@ -5,11 +5,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tooltip, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import {
   CopyableOrderId,
-  DataTable,
   FeedbackAlert,
   FilterBar,
   SearchInput,
@@ -197,7 +197,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
           }
         />
       ) : null}
-      <DataTable
+      <CoreDataTable
         columns={columns}
         dataSource={issues.data?.items ?? []}
         loading={issues.isLoading}

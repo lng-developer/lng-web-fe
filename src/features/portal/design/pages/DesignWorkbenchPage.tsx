@@ -35,6 +35,7 @@ import {
 } from 'antd'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   getListingOptions,
@@ -45,7 +46,6 @@ import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permi
 import { downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
 import {
   CopyableText,
-  DataTable,
   DetailDrawer,
   EmployeeAvatar,
   FileUpload,
@@ -852,7 +852,7 @@ export function DesignWorkbenchPage() {
           </FilterBar>
         </div>
 
-        <DataTable
+        <CoreDataTable
           className={styles.taskTable}
           columns={taskColumns}
           dataSource={displayedTasks?.items ?? []}

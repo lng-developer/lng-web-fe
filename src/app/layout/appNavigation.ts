@@ -13,6 +13,7 @@ export type NavigationGroup = {
   key: string
   labelKey: string
   items: NavigationItem[]
+  standalone?: boolean
 }
 
 const organizationPermissions = [
@@ -21,7 +22,18 @@ const organizationPermissions = [
   'TEAMS:READ',
   'TEAMS:WRITE',
 ]
-const systemPermissions = ['AUTH:READ', 'AUTH:WRITE', 'AUDIT:READ']
+const systemPermissions = [
+  'AUTH:READ',
+  'AUTH:WRITE',
+  'AUDIT:READ',
+  'MEDIA:READ',
+  'CUSTOMERS:READ',
+  'ORDERS:READ',
+  'ORDERS:WRITE',
+  'WORK_SCORES:READ',
+  'WORK_SCORES:ADJUST',
+  'DESIGN:WORK',
+]
 
 const effectivePermissions = (account: CurrentAccount) =>
   new Set([...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)])
@@ -35,160 +47,183 @@ const canReadOperationsDashboard = (permissions: Set<string>) =>
     permissions.has(permission),
   )
 
+const getDashboardGroup = (permissions: Set<string>): NavigationGroup | undefined =>
+  canReadOperationsDashboard(permissions)
+    ? {
+        key: 'dashboard',
+        labelKey: 'shell.navigation.operationsDashboard',
+        standalone: true,
+        items: [
+          {
+            key: 'operations-dashboard',
+            path: '/operations-dashboard',
+            labelKey: 'shell.navigation.operationsDashboard',
+          },
+        ],
+      }
+    : undefined
+
+const withDashboardGroup = (
+  groups: NavigationGroup[],
+  permissions: Set<string>,
+): NavigationGroup[] => {
+  const dashboardGroup = getDashboardGroup(permissions)
+  return dashboardGroup ? [dashboardGroup, ...groups] : groups
+}
+
 export function getContextNavigation(core: AppCoreKey, account: CurrentAccount): NavigationGroup[] {
   const permissions = effectivePermissions(account)
   const globalPermissions = new Set(account.permissions)
   if (core === 'portal') {
-    return [
-      {
-        key: 'setup',
-        labelKey: 'shell.groups.portalSetup',
-        items: [
-          canReadOperationsDashboard(permissions)
-            ? {
-                key: 'operations-dashboard',
-                path: '/operations-dashboard',
-                labelKey: 'shell.navigation.operationsDashboard',
-              }
-            : null,
-          permissions.has('SHOPS:READ')
-            ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
-            : null,
-          permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
-            ? { key: 'catalog', path: '/portal/catalog', labelKey: 'shell.navigation.catalog' }
-            : null,
-          globalPermissions.has('VENDORS:READ')
-            ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
-            : null,
-          globalPermissions.has('MEDIA:READ')
-            ? { key: 'media', path: '/portal/media', labelKey: 'shell.navigation.media' }
-            : null,
-        ].filter((item): item is NavigationItem => item !== null),
-      },
-      {
-        key: 'order-workflow',
-        labelKey: 'shell.groups.portalOrderWorkflow',
-        items: [
-          permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
-            ? { key: 'orders', path: '/portal/orders', labelKey: 'shell.navigation.orders' }
-            : null,
-          permissions.has('CUSTOMERS:READ')
-            ? {
-                key: 'customers',
-                path: '/portal/customers',
-                labelKey: 'shell.navigation.customers',
-              }
-            : null,
-          permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
-            ? {
-                key: 'customizations',
-                path: '/portal/customizations',
-                labelKey: 'shell.navigation.customizations',
-              }
-            : null,
-          permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
-            ? {
-                key: 'mapping',
-                path: '/portal/mapping',
-                labelKey: 'shell.navigation.mapping',
-              }
-            : null,
-          permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
-            ? {
-                key: 'integrations',
-                path: '/portal/integrations',
-                labelKey: 'shell.navigation.integrations',
-              }
-            : null,
-        ].flatMap((item) => item ?? []),
-      },
-      {
-        key: 'fulfillment',
-        labelKey: 'shell.groups.portalFulfillment',
-        items: [
-          ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((permission) =>
-            permissions.has(permission),
-          )
-            ? { key: 'design', path: '/portal/design', labelKey: 'shell.navigation.design' }
-            : null,
-          ['PRODUCTION:READ', 'PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some(
-            (permission) => permissions.has(permission),
-          )
-            ? {
-                key: 'production',
-                path: '/portal/production',
-                labelKey: 'shell.navigation.production',
-              }
-            : null,
-          permissions.has('VENDOR_SUBMISSIONS:READ')
-            ? {
-                key: 'vendor-submissions',
-                path: '/portal/vendor-submissions',
-                labelKey: 'shell.navigation.vendorSubmissions',
-              }
-            : null,
-          permissions.has('SHIPMENTS:READ') || permissions.has('SHIPMENTS:WRITE')
-            ? {
-                key: 'shipments',
-                path: '/portal/shipments',
-                labelKey: 'shell.navigation.shipments',
-              }
-            : null,
-        ].flatMap((item) => item ?? []),
-      },
-      {
-        key: 'performance',
-        labelKey: 'shell.groups.portalPerformance',
-        items: [
-          permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
-            ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
-            : null,
-          permissions.has('REPORTS:READ')
-            ? { key: 'reports', path: '/portal/reports', labelKey: 'shell.navigation.reports' }
-            : null,
-          ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK'].some((permission) =>
-            permissions.has(permission),
-          )
-            ? {
-                key: 'work-scores',
-                path: '/portal/work-scores',
-                labelKey: 'shell.navigation.workScores',
-              }
-            : null,
-        ].filter((item): item is NavigationItem => item !== null),
-      },
-    ].filter(({ items }) => items.length)
+    return withDashboardGroup(
+      [
+        {
+          key: 'setup',
+          labelKey: 'shell.groups.portalSetup',
+          items: [
+            permissions.has('SHOPS:READ')
+              ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
+              : null,
+            permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+              ? { key: 'catalog', path: '/portal/catalog', labelKey: 'shell.navigation.catalog' }
+              : null,
+            globalPermissions.has('VENDORS:READ')
+              ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
+              : null,
+          ].filter((item): item is NavigationItem => item !== null),
+        },
+        {
+          key: 'order-workflow',
+          labelKey: 'shell.groups.portalOrderWorkflow',
+          items: [
+            permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
+              ? { key: 'orders', path: '/portal/orders', labelKey: 'shell.navigation.orders' }
+              : null,
+            permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
+              ? {
+                  key: 'mapping',
+                  path: '/portal/mapping',
+                  labelKey: 'shell.navigation.mapping',
+                }
+              : null,
+            permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
+              ? {
+                  key: 'integrations',
+                  path: '/portal/integrations',
+                  labelKey: 'shell.navigation.integrations',
+                }
+              : null,
+          ].flatMap((item) => item ?? []),
+        },
+        {
+          key: 'fulfillment',
+          labelKey: 'shell.groups.portalFulfillment',
+          items: [
+            ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((permission) =>
+              permissions.has(permission),
+            )
+              ? { key: 'design', path: '/portal/design', labelKey: 'shell.navigation.design' }
+              : null,
+            ['PRODUCTION:READ', 'PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some(
+              (permission) => permissions.has(permission),
+            )
+              ? {
+                  key: 'production',
+                  path: '/portal/production',
+                  labelKey: 'shell.navigation.production',
+                }
+              : null,
+            permissions.has('VENDOR_SUBMISSIONS:READ')
+              ? {
+                  key: 'vendor-submissions',
+                  path: '/portal/vendor-submissions',
+                  labelKey: 'shell.navigation.vendorSubmissions',
+                }
+              : null,
+            permissions.has('SHIPMENTS:READ') || permissions.has('SHIPMENTS:WRITE')
+              ? {
+                  key: 'shipments',
+                  path: '/portal/shipments',
+                  labelKey: 'shell.navigation.shipments',
+                }
+              : null,
+          ].flatMap((item) => item ?? []),
+        },
+        {
+          key: 'performance',
+          labelKey: 'shell.groups.portalPerformance',
+          items: [
+            permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
+              ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
+              : null,
+            permissions.has('REPORTS:READ')
+              ? { key: 'reports', path: '/portal/reports', labelKey: 'shell.navigation.reports' }
+              : null,
+          ].filter((item): item is NavigationItem => item !== null),
+        },
+      ].filter(({ items }) => items.length),
+      permissions,
+    )
   }
   if (core === 'system') {
     if (!systemPermissions.some((permission) => permissions.has(permission))) return []
-    return [
-      {
-        key: 'system',
-        labelKey: 'shell.groups.system',
-        items: [
-          permissions.has('AUTH:READ') || permissions.has('AUTH:WRITE')
-            ? { key: 'accounts', path: '/auth/accounts', labelKey: 'shell.navigation.accounts' }
-            : null,
-          permissions.has('AUTH:READ') || permissions.has('AUTH:WRITE')
-            ? {
-                key: 'access-control',
-                path: '/auth/access-control',
-                labelKey: 'shell.navigation.accessControl',
-              }
-            : null,
-          permissions.has('AUDIT:READ')
-            ? { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' }
-            : null,
-          permissions.has('AUDIT:READ')
-            ? {
-                key: 'monitoring',
-                path: '/auth/monitoring',
-                labelKey: 'shell.navigation.monitoring',
-              }
-            : null,
-        ].filter((item): item is NavigationItem => item !== null),
-      },
-    ]
+    return withDashboardGroup(
+      [
+        {
+          key: 'system',
+          labelKey: 'shell.groups.system',
+          items: [
+            permissions.has('AUTH:READ') || permissions.has('AUTH:WRITE')
+              ? { key: 'accounts', path: '/auth/accounts', labelKey: 'shell.navigation.accounts' }
+              : null,
+            permissions.has('AUTH:READ') || permissions.has('AUTH:WRITE')
+              ? {
+                  key: 'access-control',
+                  path: '/auth/access-control',
+                  labelKey: 'shell.navigation.accessControl',
+                }
+              : null,
+            permissions.has('AUDIT:READ')
+              ? { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' }
+              : null,
+            permissions.has('AUDIT:READ')
+              ? {
+                  key: 'monitoring',
+                  path: '/auth/monitoring',
+                  labelKey: 'shell.navigation.monitoring',
+                }
+              : null,
+            globalPermissions.has('MEDIA:READ')
+              ? { key: 'media', path: '/portal/media', labelKey: 'shell.navigation.media' }
+              : null,
+            permissions.has('CUSTOMERS:READ')
+              ? {
+                  key: 'customers',
+                  path: '/portal/customers',
+                  labelKey: 'shell.navigation.customers',
+                }
+              : null,
+            permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
+              ? {
+                  key: 'customizations',
+                  path: '/portal/customizations',
+                  labelKey: 'shell.navigation.customizations',
+                }
+              : null,
+            ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK'].some((permission) =>
+              permissions.has(permission),
+            )
+              ? {
+                  key: 'work-scores',
+                  path: '/portal/work-scores',
+                  labelKey: 'shell.navigation.workScores',
+                }
+              : null,
+          ].filter((item): item is NavigationItem => item !== null),
+        },
+      ],
+      permissions,
+    )
   }
 
   const routes = getHrNavigation(permissions, { includeSelf: true })
@@ -221,7 +256,10 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
       labelKey: 'shell.navigation.organization',
     })
   }
-  return groups.filter(({ items }) => items.length)
+  return withDashboardGroup(
+    groups.filter(({ items }) => items.length),
+    permissions,
+  )
 }
 
 export function getAvailableCores(account: CurrentAccount) {
@@ -233,6 +271,13 @@ export function getAvailableCores(account: CurrentAccount) {
 export function getCoreForPath(pathname: string): AppCoreKey | undefined {
   if (pathname.startsWith('/operations-dashboard') || pathname.startsWith('/foundation'))
     return 'portal'
+  if (
+    pathname.startsWith('/portal/media') ||
+    pathname.startsWith('/portal/customers') ||
+    pathname.startsWith('/portal/customizations') ||
+    pathname.startsWith('/portal/work-scores')
+  )
+    return 'system'
   if (pathname.startsWith('/portal')) return 'portal'
   if (pathname.startsWith('/hr') || pathname.startsWith('/organization')) return 'hr'
   if (pathname.startsWith('/auth')) return 'system'
@@ -261,7 +306,11 @@ export function getDefaultWorkspacePath(account: CurrentAccount) {
         .find(Boolean) ?? '/operations-dashboard'
     )
   }
-  return groups[0]?.items[0]?.path ?? '/operations-dashboard'
+  return (
+    groups.find(({ key }) => key !== 'dashboard')?.items[0]?.path ??
+    groups[0]?.items[0]?.path ??
+    '/operations-dashboard'
+  )
 }
 
 export function getNavigationGroupForItem(groups: NavigationGroup[], itemKey?: string) {

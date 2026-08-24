@@ -5,9 +5,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, Modal, Select, Space, Tag } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
   ConfirmDangerModal,
-  DataTable,
   FeedbackAlert,
   PageHeader,
   SectionCard,
@@ -135,7 +135,7 @@ export function ScopesPage() {
         />
       ) : null}
       <SectionCard title={t('auth.scopes.catalog')}>
-        <DataTable
+        <CoreDataTable
           columns={columns}
           dataSource={data?.items ?? []}
           loading={isLoading}

@@ -4,7 +4,8 @@ import { EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Drawer, Space, Tag, Typography } from 'antd'
 
-import { DataTable, FilterBar, SearchInput } from '@/shared/ui'
+import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { FilterBar, SearchInput } from '@/shared/ui'
 
 import { VendorCostCenter, VendorProduct } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -171,7 +172,7 @@ export function VendorWorkspaceCostCenterDrawer({
               placeholder={t('vendors.searchCostCenters')}
             />
           </FilterBar>
-          <DataTable
+          <CoreDataTable
             rowKey="id"
             columns={costCenterColumns}
             className={styles.dataTable}

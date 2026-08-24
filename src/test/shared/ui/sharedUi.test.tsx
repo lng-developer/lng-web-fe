@@ -3,12 +3,12 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import dayjs from 'dayjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
   BarChart,
   BulkActionBar,
   CommandPalette,
   ConfirmDangerModal,
-  DataTable,
   DateTimePicker,
   DetailDrawer,
   EmptyState,
@@ -135,7 +135,7 @@ describe('shared UI', () => {
   it('renders table, drawer, form, loading, and permission foundations', () => {
     render(
       <>
-        <DataTable
+        <CoreDataTable
           columns={[{ dataIndex: 'name', title: 'Name' }]}
           dataSource={[{ key: 'order-1', name: 'Order 1' }]}
           rowSelection={{}}

@@ -28,12 +28,12 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { TableColumnsType } from 'antd'
 import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
 import { AuthenticatedMediaImage } from '@/shared/media'
 import {
   CopyableOrderId,
-  DataTable,
   FeedbackAlert,
   MetricCard,
   PageHeader,
@@ -1167,7 +1167,7 @@ export function ProductionWorkbenchPage({
             onScaleAssigneeChange={handleScaleAssigneeChange}
             onBulkAssign={handleBulkAssign}
           />
-          <DataTable
+          <CoreDataTable
             rowKey="id"
             columns={columns}
             dataSource={rows}

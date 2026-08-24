@@ -23,13 +23,13 @@ import {
   Result,
   Select,
   Space,
-  Table,
   Tabs,
   Tag,
   Tooltip,
   Typography,
 } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
   createPermission,
   deletePermission,
@@ -441,7 +441,7 @@ export function AccessControlPage() {
             ) : null
           }
         >
-          <Table
+          <CoreDataTable
             size="small"
             rowKey="id"
             loading={scopesQuery.isLoading}

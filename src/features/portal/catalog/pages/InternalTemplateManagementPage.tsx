@@ -18,7 +18,8 @@ import {
   Upload,
 } from 'antd'
 
-import { DataTable, PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createInternalTemplate,
@@ -211,7 +212,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         }
       />
       <SectionCard>
-        <DataTable
+        <CoreDataTable
           rowKey="id"
           columns={columns}
           dataSource={templates.data?.items ?? []}

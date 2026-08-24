@@ -5,8 +5,9 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { DataTable, PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createProductTypeGroup,
@@ -126,7 +127,7 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
         }
       />
       <SectionCard>
-        <DataTable
+        <CoreDataTable
           rowKey="id"
           columns={columns}
           dataSource={groups.data?.items ?? []}

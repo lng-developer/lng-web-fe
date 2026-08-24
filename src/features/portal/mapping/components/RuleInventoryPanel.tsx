@@ -1,11 +1,12 @@
 import { type ReactNode, useDeferredValue, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, HistoryOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Flex, Select, Space, Switch, Table, Tooltip, Typography } from 'antd'
+import { Button, Flex, Select, Space, Switch, Tooltip, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { SearchInput } from '@/shared/ui'
 
 import type { MappingRule, MappingRuleType } from '../api/mappingApi'
@@ -218,13 +219,13 @@ export function RuleInventoryPanel({
       </Flex>
 
       {/* Rule table */}
-      <Table
+      <CoreDataTable
         rowKey="id"
         size="small"
         loading={loading}
         columns={columns}
         dataSource={filtered}
-        locale={{ emptyText: t('mapping.states.noRules') }}
+        emptyText={t('mapping.states.noRules')}
         pagination={{ pageSize: 20, showSizeChanger: false }}
         scroll={{ x: 960 }}
         rowClassName={(rule) => (rule.status === 'INACTIVE' ? 'opacity-50' : 'cursor-pointer')}

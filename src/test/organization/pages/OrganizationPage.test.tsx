@@ -30,6 +30,11 @@ vi.mock('@/features/organization/api/organizationApi', () => ({
   updateTeam: vi.fn(),
 }))
 
+const pageOf = <T,>(items: T[]) => ({
+  items,
+  pagination: { limit: 100, page: 1, total: items.length, totalPages: 1 },
+})
+
 describe('OrganizationPage', () => {
   afterEach(() => {
     cleanup()
@@ -39,13 +44,13 @@ describe('OrganizationPage', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('en')
     setPermissions(['AUTH:WRITE', 'TEAMS:WRITE'])
-    vi.mocked(loadDepartments).mockResolvedValue({
-      items: [
+    vi.mocked(loadDepartments).mockResolvedValue(
+      pageOf([
         { code: 'OPS', id: 'department-1', name: 'Operations', status: 'active', teamCount: 1 },
-      ],
-    })
-    vi.mocked(loadTeams).mockResolvedValue({
-      items: [
+      ]),
+    )
+    vi.mocked(loadTeams).mockResolvedValue(
+      pageOf([
         {
           code: 'FULFILLMENT',
           departmentId: 'department-1',
@@ -54,8 +59,8 @@ describe('OrganizationPage', () => {
           name: 'Fulfillment',
           status: 'active',
         },
-      ],
-    })
+      ]),
+    )
     vi.mocked(loadTeamMembers).mockResolvedValue({
       leaders: [],
       members: [
@@ -169,8 +174,8 @@ describe('OrganizationPage', () => {
   }, 15_000)
 
   it('keeps each team expansion independent from the organization tree', async () => {
-    vi.mocked(loadTeams).mockResolvedValue({
-      items: [
+    vi.mocked(loadTeams).mockResolvedValue(
+      pageOf([
         {
           code: 'FULFILLMENT',
           departmentId: 'department-1',
@@ -187,8 +192,8 @@ describe('OrganizationPage', () => {
           name: 'Quality',
           status: 'active',
         },
-      ],
-    })
+      ]),
+    )
     render(
       <MemoryRouter>
         <AppProviders>

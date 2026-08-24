@@ -1,6 +1,5 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
-
-type ApiResponse<T> = { success: boolean; data: T }
 
 export type ImportSource = 'AMAZON_EXTENSION_REPORT' | 'MANUAL_EXCEL'
 export type ImportJobStatus =

@@ -1,6 +1,6 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
-type ApiResponse<T> = { success: boolean; data: T }
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export type ReportFilters = {

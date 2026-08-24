@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { CheckOutlined, CloseOutlined, TeamOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Empty, Flex, Segmented, Space, Table, Typography } from 'antd'
+import { Button, Empty, Flex, Segmented, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 import {
   CartesianGrid,
@@ -16,6 +16,7 @@ import {
   YAxis,
 } from 'recharts'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
   EmployeeAvatar,
@@ -171,7 +172,7 @@ export function TeamWorkspacePage({
           )}
         </div>
       ) : (
-        <Table
+        <CoreDataTable
           size="small"
           rowKey="id"
           loading={workspace.isLoading}
@@ -261,7 +262,7 @@ export function TeamWorkspacePage({
             ))}
           </div>
         ) : (
-          <Table
+          <CoreDataTable
             size="small"
             rowKey={(item) => `${item.requestKind}-${item.id}`}
             dataSource={approvals}
@@ -359,7 +360,7 @@ export function TeamWorkspacePage({
       {view === 'approvals' && approvalsCard}
       {(view === 'dashboard' || view === 'members') && (
         <SectionCard title={t('hrOperations.team.directory')}>
-          <Table
+          <CoreDataTable
             size="small"
             rowKey="id"
             loading={workspace.isLoading}

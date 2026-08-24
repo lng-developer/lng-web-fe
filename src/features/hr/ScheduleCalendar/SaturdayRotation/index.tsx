@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
+import { Button, Popconfirm, Select, Space, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import { SectionCard } from '@/shared/ui'
 
@@ -69,7 +70,7 @@ export function SaturdayRotation({ model }: SaturdayRotationProps) {
         )}
       </Space>
 
-      <Table
+      <CoreDataTable
         size="small"
         scroll={{ y: 'calc(100vh - 360px)' }}
         pagination={DEFAULT_TABLE_PAGINATION}

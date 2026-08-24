@@ -15,11 +15,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Select, Space, Table, Tooltip, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { ApiError } from '@/shared/api/apiError'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
-  DataTable,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
@@ -599,7 +599,7 @@ export function WorkScoreWorkbenchPage({
             />
           </div>
         ) : null}
-        <DataTable
+        <CoreDataTable
           rowKey="id"
           columns={columns}
           dataSource={rows.data?.items ?? []}

@@ -96,6 +96,13 @@
     box-shadow 180ms ease;
 }
 
+.sidebar :global(.ant-layout-sider-children) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 .sidebar:hover {
   box-shadow: 8px 0 24px rgb(23 32 51 / 4%);
 }
@@ -113,11 +120,31 @@
   );
 }
 
+.contextSpacer {
+  flex: 0 0 64px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: color-mix(
+    in srgb,
+    var(--ant-color-bg-container) 92%,
+    var(--ant-color-fill-quaternary)
+  );
+}
+
 .navigation {
   flex: 1;
   min-height: 0;
   padding: 8px;
+  overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.navigation :global(.ant-menu) {
+  min-width: 0;
+}
+
+.sidebar:global(.ant-layout-sider-collapsed) .navigation {
+  padding-inline: 6px;
 }
 
 .navigation :global(.ant-menu-item) {

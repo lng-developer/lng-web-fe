@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Skeleton } from 'antd'
 
 const AttendancePage = lazy(() =>
-  import('./AttendancePage').then(({ AttendancePage }) => ({ default: AttendancePage })),
+  import('./Attendance/AttendancePage').then(({ AttendancePage }) => ({ default: AttendancePage })),
 )
 const HrOverviewPage = lazy(() =>
   import('./HrOverviewPage').then(({ HrOverviewPage }) => ({ default: HrOverviewPage })),
@@ -32,7 +32,9 @@ const TeamWorkspacePage = lazy(() =>
   import('./TeamWorkspacePage').then(({ TeamWorkspacePage }) => ({ default: TeamWorkspacePage })),
 )
 const TimeRequestsPage = lazy(() =>
-  import('./TimeRequestsPage').then(({ TimeRequestsPage }) => ({ default: TimeRequestsPage })),
+  import('./TimeRequests/TimeRequestsPage').then(({ TimeRequestsPage }) => ({
+    default: TimeRequestsPage,
+  })),
 )
 
 export function HrActionPage({ routeKey }: { routeKey: string }) {

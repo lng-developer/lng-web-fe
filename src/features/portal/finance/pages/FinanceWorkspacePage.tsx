@@ -6,11 +6,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Divider, Modal, Select, Space, Spin, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import {
   CopyableOrderId,
-  DataTable,
   DateRangePicker,
   type DateRangeValue,
   FilterBar,
@@ -403,7 +403,7 @@ export function FinanceWorkspacePage() {
           ]}
         />
       </FilterBar>
-      <DataTable
+      <CoreDataTable
         rowKey="id"
         columns={columns}
         dataSource={snapshots.data?.items}
@@ -496,7 +496,7 @@ export function FinanceWorkspacePage() {
                           </Button>
                         </Space>
                       ) : null}
-                      <DataTable
+                      <CoreDataTable
                         rowKey="id"
                         columns={importColumns}
                         dataSource={batches.data?.items}

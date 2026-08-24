@@ -12,6 +12,8 @@ export function rememberCoreRoute(core: AppCoreKey, pathname: string, groups: Na
 
 export function getRememberedCoreRoute(core: AppCoreKey, groups: NavigationGroup[]) {
   const available = items(groups)
+  const coreRoutes =
+    core === 'portal' ? available : available.filter(({ path }) => path !== '/operations-dashboard')
   const remembered = localStorage.getItem(storageKey(core))
-  return available.find(({ path }) => path === remembered)?.path ?? available[0]?.path
+  return coreRoutes.find(({ path }) => path === remembered)?.path ?? coreRoutes[0]?.path
 }

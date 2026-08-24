@@ -31,6 +31,10 @@ const portalItems = (permissions: string[], scopedPermissions: string[] = []) =>
   getContextNavigation('portal', account(permissions, scopedPermissions)).flatMap(
     ({ items }) => items,
   )
+const systemItems = (permissions: string[], scopedPermissions: string[] = []) =>
+  getContextNavigation('system', account(permissions, scopedPermissions)).flatMap(
+    ({ items }) => items,
+  )
 
 describe('app navigation', () => {
   it('shows only cores backed by permitted routes', () => {
@@ -46,6 +50,10 @@ describe('app navigation', () => {
       'system',
     ])
     expect(getAvailableCores(account(['AUDIT:READ'])).map(({ key }) => key)).toEqual([
+      'hr',
+      'system',
+    ])
+    expect(getAvailableCores(account(['MEDIA:READ'])).map(({ key }) => key)).toEqual([
       'hr',
       'system',
     ])
@@ -66,6 +74,10 @@ describe('app navigation', () => {
 
   it('maps nested organization and account routes to their owning core', () => {
     expect(getCoreForPath('/portal/shops')).toBe('portal')
+    expect(getCoreForPath('/portal/media')).toBe('system')
+    expect(getCoreForPath('/portal/customers')).toBe('system')
+    expect(getCoreForPath('/portal/customizations')).toBe('system')
+    expect(getCoreForPath('/portal/work-scores')).toBe('system')
     expect(getCoreForPath('/organization')).toBe('hr')
     expect(getCoreForPath('/auth/accounts/account-1')).toBe('system')
     expect(getCoreForPath('/auth/access-control')).toBe('system')
@@ -111,13 +123,35 @@ describe('app navigation', () => {
   })
 
   it('exposes Media only from global MEDIA:READ', () => {
-    expect(portalItems(['MEDIA:READ'])).toContainEqual({
+    expect(systemItems(['MEDIA:READ'])).toContainEqual({
       key: 'media',
       path: '/portal/media',
       labelKey: 'shell.navigation.media',
     })
-    expect(portalItems([], ['MEDIA:READ'])).not.toContainEqual(
+    expect(portalItems(['MEDIA:READ'])).not.toContainEqual(
       expect.objectContaining({ key: 'media' }),
+    )
+    expect(systemItems([], ['MEDIA:READ'])).not.toContainEqual(
+      expect.objectContaining({ key: 'media' }),
+    )
+  })
+
+  it('moves customer and customization workspaces under System navigation', () => {
+    expect(systemItems(['CUSTOMERS:READ'])).toContainEqual({
+      key: 'customers',
+      path: '/portal/customers',
+      labelKey: 'shell.navigation.customers',
+    })
+    expect(systemItems(['ORDERS:READ'])).toContainEqual({
+      key: 'customizations',
+      path: '/portal/customizations',
+      labelKey: 'shell.navigation.customizations',
+    })
+    expect(portalItems(['CUSTOMERS:READ', 'ORDERS:READ'])).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'customers' }),
+        expect.objectContaining({ key: 'customizations' }),
+      ]),
     )
   })
 
@@ -139,7 +173,6 @@ describe('app navigation', () => {
         'SHOPS:READ',
         'CATALOG:READ',
         'VENDORS:READ',
-        'MEDIA:READ',
         'ORDERS:READ',
         'MAPPING:READ',
         'DESIGN:READ',
@@ -148,25 +181,35 @@ describe('app navigation', () => {
         'SHIPMENTS:READ',
         'FINANCE:READ',
         'REPORTS:READ',
-        'WORK_SCORES:READ',
       ]),
     )
 
     expect(groups.map(({ key }) => key)).toEqual([
+      'dashboard',
       'setup',
       'order-workflow',
       'fulfillment',
       'performance',
     ])
+    expect(groups.find(({ key }) => key === 'dashboard')).toEqual({
+      key: 'dashboard',
+      labelKey: 'shell.navigation.operationsDashboard',
+      standalone: true,
+      items: [
+        {
+          key: 'operations-dashboard',
+          path: '/operations-dashboard',
+          labelKey: 'shell.navigation.operationsDashboard',
+        },
+      ],
+    })
     expect(groups.find(({ key }) => key === 'setup')?.items.map(({ key }) => key)).toEqual([
-      'operations-dashboard',
       'shops',
       'catalog',
       'vendors',
-      'media',
     ])
     expect(groups.find(({ key }) => key === 'order-workflow')?.items.map(({ key }) => key)).toEqual(
-      ['orders', 'customizations', 'mapping', 'integrations'],
+      ['orders', 'mapping', 'integrations'],
     )
     expect(groups.find(({ key }) => key === 'fulfillment')?.items.map(({ key }) => key)).toEqual([
       'design',
@@ -177,8 +220,18 @@ describe('app navigation', () => {
     expect(groups.find(({ key }) => key === 'performance')?.items.map(({ key }) => key)).toEqual([
       'finance',
       'reports',
-      'work-scores',
     ])
+  })
+
+  it('keeps the operations dashboard visible across HR and System navigation', () => {
+    const currentAccount = account(['REPORTS:READ', 'AUTH:READ'])
+
+    expect(getContextNavigation('hr', currentAccount)[0]).toEqual(
+      expect.objectContaining({ key: 'dashboard', standalone: true }),
+    )
+    expect(getContextNavigation('system', currentAccount)[0]).toEqual(
+      expect.objectContaining({ key: 'dashboard', standalone: true }),
+    )
   })
 
   it('shows Catalog for global or scoped readers and writers', () => {
@@ -196,7 +249,7 @@ describe('app navigation', () => {
     }
   })
 
-  it('groups external order imports under the order workflow for order readers and writers', () => {
+  it('groups order operations under the order workflow for order readers and writers', () => {
     for (const permission of ['ORDERS:READ', 'ORDERS:WRITE']) {
       expect(getContextNavigation('portal', account([permission]))).toEqual([
         {
@@ -207,11 +260,6 @@ describe('app navigation', () => {
               key: 'orders',
               path: '/portal/orders',
               labelKey: 'shell.navigation.orders',
-            },
-            {
-              key: 'customizations',
-              path: '/portal/customizations',
-              labelKey: 'shell.navigation.customizations',
             },
             {
               key: 'integrations',
@@ -227,14 +275,14 @@ describe('app navigation', () => {
   it('shows Work Scores only from scoring or own-work permissions', () => {
     for (const permission of ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK']) {
       expect(
-        getContextNavigation('portal', account([], [permission])).flatMap(({ items }) => items),
+        getContextNavigation('system', account([], [permission])).flatMap(({ items }) => items),
       ).toContainEqual({
         key: 'work-scores',
         path: '/portal/work-scores',
         labelKey: 'shell.navigation.workScores',
       })
     }
-    expect(getContextNavigation('portal', account(['ORDERS:READ']))[0]?.items).not.toContainEqual(
+    expect(getContextNavigation('system', account(['ORDERS:READ']))[0]?.items).not.toContainEqual(
       expect.objectContaining({ key: 'work-scores' }),
     )
   })

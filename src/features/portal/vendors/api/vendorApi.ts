@@ -1,7 +1,6 @@
+import { ApiResponse, Paginated } from '@/server/type'
 import { apiClient } from '@/shared/api'
 import type { PrintMethod } from '@/shared/constants/printMethods'
-
-type ApiResponse<T> = { success: boolean; data: T }
 
 export type RecordStatus = 'ACTIVE' | 'INACTIVE'
 export type VendorFulfillmentType = 'FBM' | 'FBA' | 'POD' | 'DROPSHIP' | 'CUSTOM'
@@ -101,10 +100,6 @@ export type VendorListParams = {
 }
 export type ProductListParams = VendorListParams & { vendorId?: string }
 export type CostCenterListParams = VendorListParams
-export type Paginated<T> = {
-  items: T[]
-  pagination: { total: number; page: number; limit: number }
-}
 
 export type VendorInput = {
   code: string

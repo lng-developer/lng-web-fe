@@ -1,6 +1,6 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
-type ApiResponse<T> = { success: boolean; data: T }
 export type OrderWorkbenchParams = {
   page: number
   limit: number

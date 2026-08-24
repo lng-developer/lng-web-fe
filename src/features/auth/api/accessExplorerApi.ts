@@ -1,15 +1,11 @@
 import type { AxiosRequestConfig } from 'axios'
 
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
 export type AccessList<T> = {
   items: T[]
   total: number
-}
-
-type ApiResponse<T> = {
-  success: boolean
-  data: T
 }
 
 export type AccessExplorerSnapshot = {

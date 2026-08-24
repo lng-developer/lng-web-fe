@@ -5,6 +5,12 @@ import { getRememberedCoreRoute, rememberCoreRoute } from '@/app/layout/coreRout
 
 const hrGroups: NavigationGroup[] = [
   {
+    key: 'dashboard',
+    labelKey: 'dashboard',
+    standalone: true,
+    items: [{ key: 'operations-dashboard', path: '/operations-dashboard', labelKey: 'dashboard' }],
+  },
+  {
     key: 'personal',
     labelKey: 'personal',
     items: [
@@ -14,6 +20,12 @@ const hrGroups: NavigationGroup[] = [
   },
 ]
 const systemGroups: NavigationGroup[] = [
+  {
+    key: 'dashboard',
+    labelKey: 'dashboard',
+    standalone: true,
+    items: [{ key: 'operations-dashboard', path: '/operations-dashboard', labelKey: 'dashboard' }],
+  },
   {
     key: 'system',
     labelKey: 'system',
@@ -32,6 +44,11 @@ describe('core route memory', () => {
   it('falls back when a remembered route is no longer permitted', () => {
     localStorage.setItem('lng:last-route:hr', '/hr/operations/employees')
     expect(getRememberedCoreRoute('hr', hrGroups)).toBe('/hr/me')
+  })
+
+  it('does not use the fixed dashboard item as the HR or System fallback', () => {
+    expect(getRememberedCoreRoute('hr', hrGroups)).toBe('/hr/me')
+    expect(getRememberedCoreRoute('system', systemGroups)).toBe('/auth/accounts')
   })
 
   it('stores the navigation base instead of a record identifier', () => {

@@ -7,6 +7,7 @@ import type { TableColumnsType } from 'antd'
 import { Alert, Button, Select, Space, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   exportReportCsv,
@@ -26,7 +27,6 @@ import {
   type VendorPerformance,
 } from '@/features/portal/reports/api/reportApi'
 import {
-  DataTable,
   DateRangePicker,
   FilterBar,
   MetricCard,
@@ -382,7 +382,7 @@ export function ReportWorkspacePage() {
     <div className={styles.stack}>
       <div className={styles.twoColumns}>
         <SectionCard title={t('reports.sales.bySeller')}>
-          <DataTable
+          <CoreDataTable
             rowKey={(row) => `${row.sellerEmployeeCode}-${row.currency}`}
             columns={sellerColumns}
             dataSource={sellers.data || []}
@@ -391,7 +391,7 @@ export function ReportWorkspacePage() {
           />
         </SectionCard>
         <SectionCard title={t('reports.sales.byTeam')}>
-          <DataTable
+          <CoreDataTable
             rowKey={(row) => `${row.teamId}-${row.currency}`}
             columns={teamColumns}
             dataSource={teams.data || []}
@@ -402,7 +402,7 @@ export function ReportWorkspacePage() {
       </div>
       {operationalScope ? (
         <SectionCard title={t('reports.sales.acquisition')}>
-          <DataTable
+          <CoreDataTable
             rowKey={(row) => `${row.salesChannelCode}-${row.marketplaceCode}-${row.currency}`}
             dataSource={channels.data || []}
             pagination={false}
@@ -444,7 +444,7 @@ export function ReportWorkspacePage() {
         </SectionCard>
       </div>
       <SectionCard title={t('reports.operations.vendors')}>
-        <DataTable
+        <CoreDataTable
           rowKey={(row) => row.vendorId || row.vendorCode || 'vendor'}
           columns={vendorColumns}
           dataSource={vendors.data?.items || []}

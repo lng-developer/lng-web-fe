@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
@@ -25,15 +24,11 @@ import {
   TruckOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Layout, Menu, type MenuProps, Typography } from 'antd'
+import { Layout, Menu, type MenuProps } from 'antd'
 
 import { useThemePreference } from '@/shared/theme/themeContext'
 
-import {
-  getNavigationGroupForItem,
-  type NavigationGroup,
-  type NavigationItem,
-} from './appNavigation'
+import { type NavigationGroup, type NavigationItem } from './appNavigation'
 import styles from './AppShell.module.scss'
 
 export function AppSidebar({
@@ -53,9 +48,6 @@ export function AppSidebar({
   const { t } = useTranslation()
   const { resolved } = useThemePreference()
   const searchTerm = navigationSearch
-  const activeGroup = getNavigationGroupForItem(groups, selectedKey)
-  const [manualOpenKey, setManualOpenKey] = useState<string | undefined>()
-  const [closedActiveGroupKey, setClosedActiveGroupKey] = useState<string | undefined>()
   const normalizedSearch = searchTerm.trim().toLowerCase()
   const visibleGroups = searchTerm
     ? groups
@@ -80,48 +72,56 @@ export function AppSidebar({
         .filter((group) => group.items.length)
     : groups
 
-  const activeGroupKey =
-    activeGroup && visibleGroups.some(({ key }) => key === activeGroup)
-      ? `group:${activeGroup}`
-      : undefined
-  const visibleGroupKeys = new Set(visibleGroups.map((group) => `group:${group.key}`))
-  const candidateOpenKeys = [
-    activeGroupKey === closedActiveGroupKey ? undefined : activeGroupKey,
-    manualOpenKey,
-  ].filter((key): key is string => Boolean(key))
-  const openKeys =
-    searchTerm && visibleGroups.length
-      ? visibleGroups.map((group) => `group:${group.key}`)
-      : candidateOpenKeys
-          .filter((key) => visibleGroupKeys.has(key))
-          .filter((key, index, keys) => keys.indexOf(key) === index)
+  const openKeys = visibleGroups
+    .filter((group) => !group.standalone)
+    .map((group) => `group:${group.key}`)
 
-  const items: MenuProps['items'] = visibleGroups.map((group) => ({
-    key: `group:${group.key}`,
-    icon: iconForGroup(group.key),
-    label: t(group.labelKey),
-    children: group.items.map((item) => ({
-      key: item.key,
-      icon: iconFor(item),
-      label: (
-        <Link to={item.path} prefetch="intent">
-          {t(item.labelKey)}
-        </Link>
-      ),
-    })),
-  }))
+  const items: MenuProps['items'] = visibleGroups.flatMap(
+    (group): NonNullable<MenuProps['items']> => {
+      if (group.standalone) {
+        const [item] = group.items
+        return item
+          ? [
+              {
+                key: item.key,
+                icon: iconFor(item),
+                label: (
+                  <Link to={item.path} prefetch="intent">
+                    {t(item.labelKey)}
+                  </Link>
+                ),
+              },
+            ]
+          : []
+      }
+      return [
+        {
+          key: `group:${group.key}`,
+          icon: collapsed ? iconForGroup(group.key) : undefined,
+          label: t(group.labelKey),
+          children: group.items.map((item) => ({
+            key: item.key,
+            icon: iconFor(item),
+            label: (
+              <Link to={item.path} prefetch="intent">
+                {t(item.labelKey)}
+              </Link>
+            ),
+          })),
+        },
+      ]
+    },
+  )
 
   return (
     <Layout.Sider
+      aria-label={coreLabel}
       className={styles.sidebar}
-      width={220}
+      width={260}
       collapsedWidth={68}
       collapsed={collapsed}
       theme={resolved}
     >
-      <div className={styles.contextTitle}>
-        <Typography.Text strong>{coreLabel}</Typography.Text>
-      </div>
       <nav aria-label={t('shell.navigation.primary')} className={styles.navigation}>
         <Menu
           style={{ border: 'none' }}
@@ -129,15 +129,9 @@ export function AppSidebar({
           inlineCollapsed={collapsed}
           triggerSubMenuAction="hover"
           openKeys={collapsed ? undefined : openKeys}
+          expandIcon={() => null}
           selectedKeys={selectedKey ? [selectedKey] : []}
           items={items}
-          onOpenChange={(keys) => {
-            if (activeGroupKey) {
-              setClosedActiveGroupKey(keys.includes(activeGroupKey) ? undefined : activeGroupKey)
-            }
-            const nextManualKey = [...keys].reverse().find((key) => key !== activeGroupKey)
-            setManualOpenKey(nextManualKey)
-          }}
         />
       </nav>
     </Layout.Sider>
@@ -178,12 +172,15 @@ function iconFor({ key, path }: NavigationItem) {
 }
 
 function iconForGroup(key: string) {
+  if (key === 'dashboard') return <BarChartOutlined />
   if (key === 'setup') return <SettingOutlined />
   if (key === 'order-workflow') return <ShoppingCartOutlined />
   if (key === 'fulfillment') return <ToolOutlined />
   if (key === 'performance') return <BarChartOutlined />
+  if (key === 'personal') return <UserOutlined />
   if (key === 'team') return <TeamOutlined />
+  if (key === 'operations') return <CalendarOutlined />
   if (key === 'payroll') return <DollarOutlined />
   if (key === 'system') return <SafetyCertificateOutlined />
-  return <UserOutlined />
+  return <AppstoreOutlined />
 }

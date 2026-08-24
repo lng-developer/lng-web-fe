@@ -22,10 +22,10 @@ import {
   Typography,
 } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   CopyableOrderId,
-  DataTable,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
@@ -322,7 +322,7 @@ export function VendorSubmissionWorkbenchPage({
         ))}
       </div>
       <SectionCard>
-        <DataTable
+        <CoreDataTable
           rowKey="id"
           columns={columns}
           dataSource={submissions.data?.items ?? []}

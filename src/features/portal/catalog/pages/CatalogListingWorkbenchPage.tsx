@@ -16,10 +16,11 @@ import {
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Input, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Button, Input, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   CopyableText,
@@ -570,7 +571,7 @@ export function CatalogListingWorkbenchPage({
             {t('portal.catalog.results', { count: listings.data?.pagination.total ?? 0 })}
           </Tag>
         </div>
-        <Table<Listing>
+        <CoreDataTable
           rowKey="id"
           size="middle"
           loading={listings.isLoading}
@@ -583,7 +584,6 @@ export function CatalogListingWorkbenchPage({
             total: listings.data?.pagination.total ?? listings.data?.items.length ?? 0,
             hideOnSinglePage: false,
             showSizeChanger: true,
-            showTotal: (total) => t('portal.catalog.listingCount', { count: total }),
             onChange: (nextPage, nextPageSize) => {
               setPage(nextPageSize === pageSize ? nextPage : 1)
               setPageSize(nextPageSize)

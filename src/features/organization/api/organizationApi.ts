@@ -1,11 +1,6 @@
+import { Page } from '@/features/hr/api/hrOperationsApi'
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
-
-type ApiResponse<T> = { success: boolean; data: T }
-
-export type OrganizationList<T> = {
-  items: T[]
-  pagination?: { page: number; limit: number; total: number; totalPages: number }
-}
 
 export type Department = {
   id: string
@@ -52,9 +47,8 @@ async function get<T>(path: string, params?: Record<string, string | number | un
 }
 
 export const loadDepartments = () =>
-  get<OrganizationList<Department>>('/api/organization/departments', { limit: 100 })
-export const loadTeams = () =>
-  get<OrganizationList<Team>>('/api/organization/teams', { limit: 100 })
+  get<Page<Department>>('/api/organization/departments', { limit: 100 })
+export const loadTeams = () => get<Page<Team>>('/api/organization/teams', { limit: 100 })
 export const loadTeamMembers = (teamId: string) =>
   get<TeamMembers>(`/api/organization/teams/${teamId}/members`)
 export const loadMemberCandidates = () =>

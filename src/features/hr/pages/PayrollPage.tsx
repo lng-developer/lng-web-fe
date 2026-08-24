@@ -12,7 +12,6 @@ import {
   Modal,
   Select,
   Space,
-  Table,
   Tabs,
   Tag,
   Tooltip,
@@ -20,6 +19,7 @@ import {
 } from 'antd'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { getPermissions } from '@/shared/auth/session'
 import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
@@ -328,7 +328,7 @@ export function PayrollPage() {
               canRead ? 'hrOperations.payroll.staffPayroll' : 'hrOperations.payroll.myPayroll',
             )}
           >
-            <Table
+            <CoreDataTable
               size="small"
               rowKey="id"
               loading={results.isLoading}
@@ -407,7 +407,7 @@ export function PayrollPage() {
           </SectionCard>
 
           <SectionCard title={t('hrOperations.payroll.periods')}>
-            <Table
+            <CoreDataTable
               size="small"
               rowKey="id"
               loading={runs.isLoading}
@@ -462,7 +462,7 @@ export function PayrollPage() {
           </SectionCard>
 
           <SectionCard title={t('hrOperations.payroll.adjustments')}>
-            <Table
+            <CoreDataTable
               size="small"
               rowKey="id"
               loading={adjustments.isLoading}

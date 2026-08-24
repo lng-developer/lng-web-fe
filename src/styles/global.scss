@@ -37,7 +37,7 @@ select {
   font: inherit;
 }
 
-// Keep table headers consistent across shared DataTable and direct Ant Design Table usage.
+// Keep table headers consistent across common CoreDataTable and direct Ant Design Table usage.
 .ant-table-wrapper .ant-table-thead > tr > th {
   text-align: left !important;
 }

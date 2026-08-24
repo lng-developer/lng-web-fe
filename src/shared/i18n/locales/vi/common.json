@@ -5,7 +5,13 @@
   "common": {
     "copyOrderId": "Sao chép mã đơn",
     "orderIdCopied": "Đã sao chép mã đơn",
-    "close": "Đóng"
+    "close": "Đóng",
+    "pagination": {
+      "rowsPerPage": "Số hàng hiển thị trên trang",
+      "jumpToPage": "Nhảy tới trang",
+      "firstPage": "Trang đầu",
+      "lastPage": "Trang cuối"
+    }
   },
   "language": {
     "label": "Ngôn ngữ",

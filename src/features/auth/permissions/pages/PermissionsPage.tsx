@@ -5,9 +5,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, Modal, Space } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
   ConfirmDangerModal,
-  DataTable,
   FeedbackAlert,
   PageHeader,
   SectionCard,
@@ -128,7 +128,7 @@ export function PermissionsPage() {
         />
       ) : null}
       <SectionCard title={t('auth.permissions.catalog')}>
-        <DataTable
+        <CoreDataTable
           columns={columns}
           dataSource={data?.items ?? []}
           loading={isLoading}

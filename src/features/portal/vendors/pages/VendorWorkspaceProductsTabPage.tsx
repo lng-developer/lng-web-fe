@@ -4,7 +4,8 @@ import { AppstoreOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@a
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tag, Typography } from 'antd'
 
-import { DataTable, FilterBar, SearchInput } from '@/shared/ui'
+import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { FilterBar, SearchInput } from '@/shared/ui'
 
 import { RecordStatus, VendorProduct } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -198,7 +199,7 @@ export function VendorWorkspaceProductsTabPage({
           onChange={(value) => onProductStatusChange(value as RecordStatus | undefined)}
         />
       </FilterBar>
-      <DataTable
+      <CoreDataTable
         rowKey="id"
         columns={productColumns}
         className={styles.dataTable}

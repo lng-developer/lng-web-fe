@@ -24,13 +24,13 @@ import {
   Row,
   Select,
   Space,
-  Table,
   Tabs,
   Tag,
   Typography,
 } from 'antd'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { loadTeams } from '@/features/organization/api/organizationApi'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
@@ -366,7 +366,7 @@ export function ScheduleCalendarPage() {
               {t('hrOperations.schedule.assignShift')}
             </Button>
           )}
-          <Table
+          <CoreDataTable
             size="small"
             scroll={{ y: 'calc(100vh - 360px)' }}
             pagination={DEFAULT_TABLE_PAGINATION}
@@ -437,7 +437,7 @@ export function ScheduleCalendarPage() {
                   {t('hrOperations.schedule.addLocation')}
                 </Button>
               )}
-              <Table
+              <CoreDataTable
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -496,7 +496,7 @@ export function ScheduleCalendarPage() {
                   {t('hrOperations.schedule.addShift')}
                 </Button>
               )}
-              <Table
+              <CoreDataTable
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -572,7 +572,7 @@ export function ScheduleCalendarPage() {
                   {t('hrOperations.schedule.addHoliday')}
                 </Button>
               )}
-              <Table
+              <CoreDataTable
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -623,7 +623,7 @@ export function ScheduleCalendarPage() {
                   {t('hrOperations.schedule.addOverride')}
                 </Button>
               )}
-              <Table
+              <CoreDataTable
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -716,7 +716,7 @@ export function ScheduleCalendarPage() {
               </>
             )}
           </Space>
-          <Table
+          <CoreDataTable
             size="small"
             scroll={{ y: 'calc(100vh - 360px)' }}
             pagination={DEFAULT_TABLE_PAGINATION}

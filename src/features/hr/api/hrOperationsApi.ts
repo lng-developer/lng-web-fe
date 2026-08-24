@@ -1,6 +1,6 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
-type ApiResponse<T> = { success: boolean; data: T }
 export type Page<T> = {
   items: T[]
   pagination: { page: number; limit: number; total: number; totalPages: number }

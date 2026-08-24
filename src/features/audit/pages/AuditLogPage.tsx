@@ -12,10 +12,10 @@ import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Result, Select, Space, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
-  DataTable,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
@@ -236,7 +236,7 @@ export function AuditLogPage() {
         />
       ) : null}
 
-      <DataTable
+      <CoreDataTable
         rowKey="id"
         columns={columns}
         dataSource={events}

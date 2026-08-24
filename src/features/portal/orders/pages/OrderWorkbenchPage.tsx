@@ -19,6 +19,7 @@ import { Button, Space, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
@@ -27,7 +28,6 @@ import { vendorKeys } from '@/features/portal/vendors/api/vendorKeys'
 import { canUseScopedPermission } from '@/shared/auth/permissions'
 import {
   CopyableOrderId,
-  DataTable,
   FeedbackAlert,
   PageHeader,
   type PopupModalAnchor,
@@ -68,7 +68,7 @@ type OrderModal = 'address' | 'customer' | 'shipping' | 'case' | 'replacement' |
 type OrderAction = { orderId: string; modal: OrderModal; anchor?: PopupModalAnchor }
 const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
 
-export function OrderWorkbenchPage() {
+export const OrderWorkbenchPage = () => {
   const { t, i18n } = useTranslation()
   const toast = useFeedbackToast()
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
@@ -220,8 +220,6 @@ export function OrderWorkbenchPage() {
       current: page,
       pageSize,
       total: orders.data?.pagination.total ?? orders.data?.items.length ?? 0,
-      hideOnSinglePage: false,
-      showSizeChanger: true,
     }),
     [orders.data?.items.length, orders.data?.pagination.total, page, pageSize],
   )
@@ -255,10 +253,12 @@ export function OrderWorkbenchPage() {
     () => [
       {
         title: t('orders.columns.order'),
+        width: '12%',
         render: (_, row) => <CopyableOrderId strong value={row.order.externalOrderId} />,
       },
       {
         title: t('orders.columns.status'),
+        width: '11%',
         render: (_, row) => (
           <Space size={4}>
             <StatusTag status={orderStatusTone(row.order.status)}>
@@ -278,6 +278,7 @@ export function OrderWorkbenchPage() {
       },
       {
         title: t('orders.columns.created'),
+        width: '11%',
         render: (_, row) => {
           if (!row.order.createdAt) return '—'
           const createdAt = dayjs(row.order.createdAt)
@@ -297,6 +298,7 @@ export function OrderWorkbenchPage() {
       },
       {
         title: t('orders.columns.customer'),
+        width: '12%',
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.buyer.name ?? '—'}</span>
@@ -332,6 +334,7 @@ export function OrderWorkbenchPage() {
       },
       {
         title: t('orders.columns.shipping'),
+        width: '11%',
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.shippingService.name || row.order.shippingService.level || '—'}</span>
@@ -349,9 +352,14 @@ export function OrderWorkbenchPage() {
           </Space>
         ),
       },
-      { title: t('orders.columns.shop'), render: (_, row) => row.order.shop?.name ?? '—' },
+      {
+        title: t('orders.columns.shop'),
+        width: '11%',
+        render: (_, row) => row.order.shop?.name ?? '—',
+      },
       {
         title: t('orders.columns.totalCost'),
+        width: '11%',
         align: 'right',
         render: (_, row) =>
           formatMinorMoney(
@@ -360,28 +368,28 @@ export function OrderWorkbenchPage() {
             i18n.language === 'vi' ? 'vi-VN' : 'en-US',
           ),
       },
-      {
-        title: t('orders.columns.handling'),
-        width: 150,
-        render: (_, row) => {
-          if (!row.order.shipByDate) return '—'
-          const shipBy = dayjs(row.order.shipByDate).locale(i18n.language === 'vi' ? 'vi' : 'en')
+      // {
+      //   title: t('orders.columns.handling'),
+      //   width: 150,
+      //   render: (_, row) => {
+      //     if (!row.order.shipByDate) return '—'
+      //     const shipBy = dayjs(row.order.shipByDate).locale(i18n.language === 'vi' ? 'vi' : 'en')
 
-          return (
-            <Space direction="vertical" size={0}>
-              <Typography.Text>
-                {shipBy.format(i18n.language === 'vi' ? 'DD/MM/YYYY' : 'MMM D, YYYY')}
-              </Typography.Text>
-              <Typography.Text type={shipBy.isBefore(dayjs()) ? 'danger' : 'secondary'}>
-                ({shipBy.fromNow()})
-              </Typography.Text>
-            </Space>
-          )
-        },
-      },
+      //     return (
+      //       <Space direction="vertical" size={0}>
+      //         <Typography.Text>
+      //           {shipBy.format(i18n.language === 'vi' ? 'DD/MM/YYYY' : 'MMM D, YYYY')}
+      //         </Typography.Text>
+      //         <Typography.Text type={shipBy.isBefore(dayjs()) ? 'danger' : 'secondary'}>
+      //           ({shipBy.fromNow()})
+      //         </Typography.Text>
+      //       </Space>
+      //     )
+      //   },
+      // },
       {
         title: t('orders.columns.case'),
-        width: 180,
+        width: '14%',
         render: (_, row) => {
           const hasCase = Boolean(row.order.caseStatus && row.order.caseStatus !== 'NONE')
 
@@ -389,7 +397,9 @@ export function OrderWorkbenchPage() {
             return (
               <Tooltip title={t('orders.actions.manageCase')}>
                 <Button
-                  className={hasCase ? styles.activeCaseIcon : undefined}
+                  className={[styles.caseButton, hasCase ? styles.activeCaseIcon : undefined]
+                    .filter(Boolean)
+                    .join(' ')}
                   type={row.order.caseTitle ? 'link' : 'text'}
                   size="small"
                   aria-label={t('orders.actions.manageCase')}
@@ -404,7 +414,7 @@ export function OrderWorkbenchPage() {
 
           if (!hasCase) return '—'
           return (
-            <Space size={4}>
+            <Space className={styles.caseText} size={4}>
               <FileExclamationOutlined className={styles.activeCaseIcon} />
               {row.order.caseTitle}
             </Space>
@@ -413,7 +423,7 @@ export function OrderWorkbenchPage() {
       },
       {
         title: t('orders.sections.itemActions'),
-        width: 72,
+        width: '7%',
         align: 'center',
         render: (_, row) =>
           canWriteOrder(row) ? (
@@ -482,14 +492,13 @@ export function OrderWorkbenchPage() {
           }
         />
       ) : null}
-      <DataTable
+      <CoreDataTable
         className={styles.table}
         rowKey={(row) => row.order.id}
         columns={columns}
         dataSource={orders.data?.items ?? []}
         loading={orders.isFetching}
         rowClassName={() => styles.stickyOrderRow}
-        scroll={{ x: 1280 }}
         pagination={{
           ...pagination,
           onChange: handlePageChange,

@@ -1,6 +1,6 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
-type ApiResponse<T> = { success: boolean; data: T }
 export type WorkScoreSourceType = 'DESIGN_SUBMISSION' | 'PRODUCTION_SCALE'
 export type WorkScoreStatus = 'ACTIVE' | 'VOIDED'
 export type WorkScoreLevel = 'BASIC' | 'STANDARD' | 'HARD' | 'BONUS'

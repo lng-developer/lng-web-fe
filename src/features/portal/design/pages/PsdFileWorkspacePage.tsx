@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Input, Select, Space, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { downloadMediaAsset } from '@/shared/media'
 import {
-  DataTable,
   DateRangePicker,
   EmployeeAvatar,
   FilterBar,
@@ -153,7 +153,7 @@ export function PsdFileWorkspacePage() {
         description="Browse PSD references, submissions, and approved files."
       />
       <SectionCard>
-        <DataTable
+        <CoreDataTable
           rowKey="rowKey"
           columns={columns}
           dataSource={files.data?.items ?? []}

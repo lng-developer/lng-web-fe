@@ -17,6 +17,7 @@ import {
   getAvailableCores,
   getContextNavigation,
   getCoreForPath,
+  type NavigationGroup,
 } from './appNavigation'
 import { AppRail } from './AppRail'
 import styles from './AppShell.module.scss'
@@ -25,6 +26,21 @@ import { getRememberedCoreRoute, rememberCoreRoute } from './coreRouteMemory'
 import { getSidebarRouteState } from './sidebarRouteState'
 
 const { Content, Header } = Layout
+
+function uniqueNavigationGroups(groups: NavigationGroup[]) {
+  const seenItems = new Set<string>()
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        const key = `${item.key}:${item.path}`
+        if (seenItems.has(key)) return false
+        seenItems.add(key)
+        return true
+      }),
+    }))
+    .filter(({ items }) => items.length)
+}
 
 export function AppShell() {
   const { t } = useTranslation()
@@ -45,7 +61,7 @@ export function AppShell() {
   const searchableGroups = useMemo(
     () =>
       navigationSearch.trim()
-        ? cores.flatMap(({ key }) => getContextNavigation(key, account))
+        ? uniqueNavigationGroups(cores.flatMap(({ key }) => getContextNavigation(key, account)))
         : groups,
     [account, cores, groups, navigationSearch],
   )

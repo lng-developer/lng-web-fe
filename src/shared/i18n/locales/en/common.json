@@ -5,7 +5,13 @@
   "common": {
     "copyOrderId": "Copy order ID",
     "orderIdCopied": "Order ID copied",
-    "close": "Close"
+    "close": "Close",
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "jumpToPage": "Jump to page",
+      "firstPage": "First page",
+      "lastPage": "Last page"
+    }
   },
   "language": {
     "label": "Language",

@@ -5,4 +5,6 @@ export const DEFAULT_TABLE_PAGINATION = {
   pageSizeOptions: ['20', '50', '100'],
   hideOnSinglePage: false,
   showSizeChanger: true,
+  showQuickJumper: true,
+  responsive: true,
 }

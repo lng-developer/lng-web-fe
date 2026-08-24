@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Col, Row, Table, Tag } from 'antd'
+import { Button, Col, Row, Tag } from 'antd'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import { SectionCard } from '@/shared/ui'
 
@@ -30,7 +31,7 @@ export function HolidaysOverrides({ model }: HolidaysOverridesProps) {
               {t('hrOperations.schedule.addHoliday')}
             </Button>
           )}
-          <Table
+          <CoreDataTable
             size="small"
             scroll={{ y: 'calc(100vh - 360px)' }}
             pagination={DEFAULT_TABLE_PAGINATION}
@@ -83,7 +84,7 @@ export function HolidaysOverrides({ model }: HolidaysOverridesProps) {
               {t('hrOperations.schedule.addOverride')}
             </Button>
           )}
-          <Table
+          <CoreDataTable
             size="small"
             scroll={{ y: 'calc(100vh - 360px)' }}
             pagination={DEFAULT_TABLE_PAGINATION}

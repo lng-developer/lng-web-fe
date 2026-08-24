@@ -3,7 +3,6 @@ export { BulkActionBar, type BulkActionBarProps } from './BulkActionBar'
 export { type Command, CommandPalette, type CommandPaletteProps } from './CommandPalette'
 export { ConfirmDangerModal, type ConfirmDangerModalProps } from './ConfirmDangerModal'
 export { CopyableOrderId, CopyableText } from './CopyableOrderId'
-export { DataTable, type DataTableProps } from './DataTable'
 export {
   DateRangePicker,
   type DateRangePickerProps,

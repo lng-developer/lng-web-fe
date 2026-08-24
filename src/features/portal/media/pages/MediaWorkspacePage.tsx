@@ -6,10 +6,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tooltip, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
-  DataTable,
   DateRangePicker,
   type DateRangeValue,
   FeedbackAlert,
@@ -174,7 +174,7 @@ export function MediaWorkspacePage() {
         }
       />
       <SectionCard>
-        <DataTable
+        <CoreDataTable
           rowKey="id"
           columns={columns}
           dataSource={assets.data?.items ?? []}

@@ -6,10 +6,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Input, Modal, Select, Space, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   CopyableOrderId,
-  DataTable,
   FilterBar,
   MetricCard,
   PageHeader,
@@ -192,7 +192,7 @@ export const CustomizationReviewPage = () => {
             }))}
           />
         </FilterBar>
-        <DataTable
+        <CoreDataTable
           rowKey="id"
           columns={columns}
           dataSource={queue.data?.items}

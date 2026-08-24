@@ -26,6 +26,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
   addCustomerNote,
   type Customer,
@@ -40,7 +41,7 @@ import {
 } from '@/features/portal/customers/api/customerApi'
 import { customerKeys } from '@/features/portal/customers/api/customerKeys'
 import { getPermissions } from '@/shared/auth/session'
-import { DataTable, FilterBar, MetricCard, PageHeader } from '@/shared/ui'
+import { FilterBar, MetricCard, PageHeader } from '@/shared/ui'
 
 import styles from './CustomerWorkspacePage.module.scss'
 
@@ -56,7 +57,7 @@ const careOptions: CustomerCareStatus[] = ['NONE', 'NEEDS_FOLLOW_UP', 'IN_PROGRE
 const lifecycleOptions: CustomerLifecycle[] = ['NEW', 'RETURNING', 'VIP', 'AT_RISK', 'ISSUE_PRONE']
 const PAGE_SIZE = 20
 
-export function CustomerWorkspacePage() {
+export const CustomerWorkspacePage = () => {
   const { i18n, t } = useTranslation()
   const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
@@ -286,7 +287,7 @@ export function CustomerWorkspacePage() {
           />
         </FilterBar>
 
-        <DataTable
+        <CoreDataTable
           rowKey="id"
           columns={columns}
           dataSource={customers.data?.items ?? []}

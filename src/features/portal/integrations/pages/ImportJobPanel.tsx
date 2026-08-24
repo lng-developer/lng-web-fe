@@ -5,11 +5,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Progress, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import {
   CopyableOrderId,
-  DataTable,
   DetailDrawer,
   FeedbackAlert,
   LoadingState,
@@ -294,7 +294,7 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
               <Typography.Title level={3}>
                 {t('portal.integrations.panel.rawRecords', { defaultValue: 'Raw records' })}
               </Typography.Title>
-              <DataTable
+              <CoreDataTable
                 columns={rawColumns}
                 dataSource={rawRecords.data?.items ?? []}
                 loading={rawRecords.isLoading}

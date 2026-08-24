@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { PlusOutlined } from '@ant-design/icons'
-import { Button, Table, Tag, Typography } from 'antd'
+import { Button, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { SectionCard, StatusTag } from '@/shared/ui'
 
 import { DEFAULT_TABLE_PAGINATION } from '../../../../shared/constants/enum'
@@ -28,7 +29,7 @@ export function ShiftAssignments({ model }: ShiftAssignmentsProps) {
         </Button>
       )}
 
-      <Table
+      <CoreDataTable
         size="small"
         scroll={{ y: 'calc(100vh - 360px)' }}
         pagination={DEFAULT_TABLE_PAGINATION}

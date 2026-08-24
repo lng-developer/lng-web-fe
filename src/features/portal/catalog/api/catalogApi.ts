@@ -1,7 +1,7 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 import type { PrintMethod } from '@/shared/constants/printMethods'
 
-type ApiResponse<T> = { success: boolean; data: T }
 type CompactRef = {
   id: string
   code?: string

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Alert, Button, Form, Input, Select, Space, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type {
   ExtensionTokenEnvironment,
@@ -15,7 +16,6 @@ import { createExtensionToken } from '@/features/auth/extension-tokens/api/exten
 import { type ImportBatch, listImportBatches } from '@/features/portal/finance/api/financeApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import {
-  DataTable,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
@@ -368,7 +368,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         />
       ) : null}
       <SectionCard>
-        <DataTable
+        <CoreDataTable
           columns={columns}
           dataSource={jobs.data?.items ?? []}
           loading={jobs.isLoading}
@@ -580,7 +580,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   }) => (
     <SectionCard title={title}>
       {canReadAdsImports ? (
-        <DataTable
+        <CoreDataTable
           columns={adsImportColumns}
           dataSource={imports.data?.items ?? []}
           loading={imports.isLoading}

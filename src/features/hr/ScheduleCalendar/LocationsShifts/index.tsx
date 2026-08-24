@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Col, Row, Space, Table, Tag, Typography } from 'antd'
+import { Button, Col, Row, Space, Tag, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import { SectionCard, StatusTag } from '@/shared/ui'
 
@@ -29,7 +30,7 @@ export function LocationsShifts({ model }: LocationsShiftsProps) {
               {t('hrOperations.schedule.addLocation')}
             </Button>
           )}
-          <Table
+          <CoreDataTable
             size="small"
             scroll={{ y: 'calc(100vh - 360px)' }}
             pagination={DEFAULT_TABLE_PAGINATION}
@@ -88,7 +89,7 @@ export function LocationsShifts({ model }: LocationsShiftsProps) {
               {t('hrOperations.schedule.addShift')}
             </Button>
           )}
-          <Table
+          <CoreDataTable
             size="small"
             scroll={{ y: 'calc(100vh - 360px)' }}
             pagination={DEFAULT_TABLE_PAGINATION}

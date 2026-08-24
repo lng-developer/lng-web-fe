@@ -4,8 +4,9 @@ import { EditOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Empty, Select, Tooltip, Typography } from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { DataTable, FilterBar, SearchInput, SectionCard, StatusTag } from '@/shared/ui'
+import { FilterBar, SearchInput, SectionCard, StatusTag } from '@/shared/ui'
 
 import type { Shop, ShopListParams, ShopStatus } from '../../api/shopApi'
 import styles from '../ShopWorkspacePage.module.scss'
@@ -113,7 +114,7 @@ export function ShopWorkspaceTable({
 
   return (
     <SectionCard>
-      <DataTable
+      <CoreDataTable
         columns={columns}
         dataSource={data?.items ?? []}
         emptyText={

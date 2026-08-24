@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import type { NavigationGroup } from '@/app/layout/appNavigation'
@@ -59,24 +59,19 @@ describe('AppSidebar', () => {
     expect(screen.getByText('Team management')).toBeVisible()
   })
 
-  it('keeps the active workspace expanded when another group opens', async () => {
+  it('keeps all contextual groups expanded', () => {
     renderSidebar([personal, team, operations], 'team-approvals')
 
-    const approvalsLink = screen.getByRole('link', { name: 'Approvals' })
-    expect(approvalsLink).toBeVisible()
-    expect(screen.queryByRole('link', { name: 'Profile' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Employees' })).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('HR operations'))
-
-    await waitFor(() => expect(screen.getByRole('link', { name: 'Employees' })).toBeVisible())
-    expect(approvalsLink).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Employees' })).toBeVisible()
   })
 
-  it('opens the newly active group when the route changes', async () => {
+  it('keeps groups visible when the route changes', () => {
     const view = renderSidebar([personal, team], 'self')
 
     expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible()
 
     view.rerender(
       <MemoryRouter initialEntries={['/hr/team/approvals']}>
@@ -93,8 +88,8 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    await waitFor(() => expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible())
-    expect(screen.queryByRole('link', { name: 'Profile' })).not.toBeVisible()
+    expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
   })
 })
 

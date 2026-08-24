@@ -1,7 +1,7 @@
+import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 import { env } from '@/shared/config/env'
 
-type ApiResponse<T> = { success: boolean; data: T }
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export type MultipartPurpose = 'PSD_TEMPLATE' | 'DESIGN_PACKAGE' | 'PRINT_READY'
