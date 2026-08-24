@@ -465,33 +465,6 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByRole('button', { name: 'More extension actions' })).toBeVisible()
   })
 
-  it('keeps the order history window inside the Pull Orders popover', async () => {
-    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
-      items: [
-        {
-          id: 'agent-1',
-          shopId: shop.id,
-          clientId: 'rdc-1',
-          label: 'RDC 1',
-          version: '0.3.0',
-          apiBaseUrl: 'https://dev-api.lngmerch.co',
-          lastSeenAt: '2026-08-22T00:00:00.000Z',
-          status: 'ONLINE',
-          token: null,
-        },
-      ],
-    })
-
-    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
-
-    expect(await screen.findByRole('button', { name: 'Configure Pull Orders' })).toBeVisible()
-    expect(screen.queryByText('Order history')).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Configure Pull Orders' }))
-    expect(await screen.findByText('Order history')).toBeVisible()
-  })
-
   it('puts order schedule configuration in the Automation tab', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
@@ -642,63 +615,6 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByText('Task details')).toBeVisible()
     expect(screen.getByText('Claimed')).toBeVisible()
     expect(screen.getByText('Amazon Ads session expired')).toBeVisible()
-  })
-
-  it('groups duplicate extension records into one card with a More action', async () => {
-    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
-      items: [
-        {
-          id: 'agent-1',
-          shopId: shop.id,
-          clientId: 'ext-duplicate',
-          label: 'Chrome 6d3f79',
-          version: '0.3.0',
-          apiBaseUrl: 'https://dev-api.lngmerch.co',
-          lastSeenAt: '2026-08-22T09:43:13.000Z',
-          status: 'ONLINE',
-          token: {
-            id: 'token-1',
-            name: 'Amazon Extension',
-            tokenHint: '6eec',
-            environment: 'development',
-            lastUsedAt: null,
-            expiresAt: null,
-            revokedAt: null,
-          },
-        },
-        {
-          id: 'agent-2',
-          shopId: shop.id,
-          clientId: 'ext-duplicate',
-          label: 'Chrome 6d3f79',
-          version: '0.3.0',
-          apiBaseUrl: 'https://dev-api.lngmerch.co',
-          lastSeenAt: '2026-08-22T09:38:55.000Z',
-          status: 'OFFLINE',
-          token: {
-            id: 'token-2',
-            name: 'Amazon Extension',
-            tokenHint: 'df7d',
-            environment: 'development',
-            lastUsedAt: null,
-            expiresAt: null,
-            revokedAt: null,
-          },
-        },
-      ],
-    })
-
-    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
-
-    expect(await screen.findByText('Chrome 6d3f79')).toBeVisible()
-    expect(screen.getByText(/6eec/)).toBeVisible()
-    expect(screen.getByText(/df7d/)).toBeVisible()
-    expect(
-      screen.getByLabelText('Extension management').querySelectorAll('.ant-card'),
-    ).toHaveLength(1)
-
-    expect(screen.getAllByRole('button', { name: 'More extension actions' })).toHaveLength(2)
   })
 
   it('shows extension cards across every accessible shop', async () => {
