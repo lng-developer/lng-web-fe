@@ -632,7 +632,7 @@ export function ProductionWorkbenchPage({
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
-      psdReadyOnly: true,
+      psdReadyOnly: tab !== 'blocked',
       scaleDifficultyLevel,
       status: tab === 'blocked' ? ('BLOCKED' as const) : status,
       view: tab === 'blocked' ? undefined : tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
@@ -644,7 +644,7 @@ export function ProductionWorkbenchPage({
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
-      psdReadyOnly: true,
+      psdReadyOnly: tab !== 'blocked',
       status: tab === 'blocked' ? ('BLOCKED' as const) : status,
       view: tab === 'blocked' ? undefined : ((tab === 'qc' ? 'QC' : 'SCALE') as 'QC' | 'SCALE'),
     }),
@@ -687,8 +687,21 @@ export function ProductionWorkbenchPage({
     retry: false,
   })
   const blockedCount = useQuery({
-    queryKey: productionKeys.list({ ...queueFilters, status: 'BLOCKED', page: 1, limit: 1 }),
-    queryFn: () => listProductionTasks({ ...queueFilters, status: 'BLOCKED', page: 1, limit: 1 }),
+    queryKey: productionKeys.list({
+      ...queueFilters,
+      psdReadyOnly: false,
+      status: 'BLOCKED',
+      page: 1,
+      limit: 1,
+    }),
+    queryFn: () =>
+      listProductionTasks({
+        ...queueFilters,
+        psdReadyOnly: false,
+        status: 'BLOCKED',
+        page: 1,
+        limit: 1,
+      }),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,
@@ -1035,6 +1048,11 @@ export function ProductionWorkbenchPage({
             </StatusTag>
           )
         },
+      },
+      {
+        title: t('portal.production.blockers'),
+        width: 180,
+        render: (_, row) => (row.blockers || []).join(', ') || '-',
       },
       {
         title: 'Scale',

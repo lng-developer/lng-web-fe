@@ -131,6 +131,12 @@ function value(input?: string | number | null) {
   return input == null || input === '' ? '—' : input
 }
 
+function timelineBlockers(metadata?: Record<string, unknown> | null) {
+  return Array.isArray(metadata?.blockers)
+    ? metadata.blockers.filter((blocker): blocker is string => typeof blocker === 'string')
+    : []
+}
+
 function amazonProductUrl(asin?: string | null) {
   const cleanAsin = asin?.trim()
   return cleanAsin ? `https://www.amazon.com/dp/${encodeURIComponent(cleanAsin)}` : null
@@ -498,6 +504,12 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
                       {event.fromStatus || event.toStatus ? (
                         <Typography.Text type="secondary">
                           {value(event.fromStatus)} → {value(event.toStatus)}
+                        </Typography.Text>
+                      ) : null}
+                      {timelineBlockers(event.metadata).length ? (
+                        <Typography.Text type="danger">
+                          {t('orders.history.blockers')}:{' '}
+                          {timelineBlockers(event.metadata).join(', ')}
                         </Typography.Text>
                       ) : null}
                       {event.actor ? (

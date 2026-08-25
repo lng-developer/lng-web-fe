@@ -2007,6 +2007,7 @@
       "psdStatus": "Trạng thái PSD",
       "psdReady": "Đã có PSD",
       "psdMissing": "Chưa có PSD",
+      "blockers": "Nguyên nhân chặn",
       "assignedTo": "Người phụ trách",
       "unassigned": "Chưa gán",
       "originalArtwork": "Artwork gốc",
@@ -2637,6 +2638,7 @@
     "history": {
       "orderTitle": "Lịch sử đơn hàng",
       "itemTitle": "Lịch sử item",
+      "blockers": "Vướng mắc",
       "empty": "Chưa có hoạt động"
     },
     "filters": {

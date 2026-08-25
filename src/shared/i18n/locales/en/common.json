@@ -1936,6 +1936,7 @@
       "psdStatus": "PSD status",
       "psdReady": "PSD uploaded",
       "psdMissing": "No PSD",
+      "blockers": "Blockers",
       "assignedTo": "Assigned to",
       "unassigned": "Unassigned",
       "originalArtwork": "Original artwork",
@@ -2548,6 +2549,7 @@
     "history": {
       "orderTitle": "Order activity",
       "itemTitle": "Item activity",
+      "blockers": "Blockers",
       "empty": "No activity recorded yet"
     },
     "filters": {
