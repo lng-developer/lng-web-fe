@@ -1425,6 +1425,32 @@
     }
   },
   "portal": {
+    "monitoring": {
+      "indexes": {
+        "tab": "Mongo Indexes",
+        "title": "MongoDB index usage",
+        "snapshotDate": "Snapshot date",
+        "refresh": "Refresh",
+        "database": "Database",
+        "indexes": "Indexes",
+        "indexSize": "Index size",
+        "capturedAt": "Captured at",
+        "empty": "No index usage snapshot is available yet.",
+        "loadFailed": "Could not load index usage snapshots.",
+        "filter": "Index filter",
+        "allIndexes": "All indexes",
+        "reviewCandidates": "Review candidates",
+        "idleDaysValue": "{{count}} days",
+        "columns": {
+          "collection": "Collection",
+          "index": "Index",
+          "key": "Key",
+          "operations": "Operations",
+          "idleDays": "No increase",
+          "decision": "Decision"
+        }
+      }
+    },
     "catalog": {
       "title": "Catalog listings",
       "actions": "Actions",

@@ -77,14 +77,19 @@ vi.mock('@/features/auth/extension-tokens/api/extensionTokensApi', async (import
 
 vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/finance/api/financeApi')>()
-  return { ...actual, listImportBatches: vi.fn() }
+  return {
+    ...actual,
+    listAdsUnassignedRows: vi.fn(),
+    listImportBatches: vi.fn(),
+    upsertAdsShopMapping: vi.fn(),
+  }
 })
 
 import {
   createExtensionToken,
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
-import { listImportBatches } from '@/features/portal/finance/api/financeApi'
+import { listAdsUnassignedRows, listImportBatches } from '@/features/portal/finance/api/financeApi'
 import {
   getImportJob,
   listExtensionAgents,
@@ -239,6 +244,10 @@ describe('IntegrationWorkbenchPage', () => {
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [adsImportBatch],
       pagination: { total: 1, page: 1, limit: 20 },
+    })
+    vi.mocked(listAdsUnassignedRows).mockResolvedValue({
+      items: [],
+      pagination: { total: 0, page: 1, limit: 100 },
     })
   })
 
@@ -658,8 +667,42 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
 
     expect(await screen.findByRole('tab', { name: 'Ads' })).toBeVisible()
+    expect(screen.getByRole('tab', { name: 'Ads mapping' })).toBeVisible()
     expect(screen.getByRole('tab', { name: 'Transactions' })).toBeVisible()
     expect(screen.getByRole('tab', { name: 'Settlements' })).toBeVisible()
+  })
+
+  it('lists pending Ads rows in the Ads mapping tab', async () => {
+    vi.mocked(listAdsUnassignedRows).mockResolvedValue({
+      items: [
+        {
+          id: 'unassigned-1',
+          reportDate: '2026-08-25',
+          advertiserAccountId: 'amzn1.ads-account.example',
+          campaignId: 'campaign-123',
+          campaignName: 'J2605 Campaign',
+          portfolioId: null,
+          portfolioName: null,
+          salesChannelCode: 'AMAZON',
+          marketplaceCode: 'US',
+          status: 'PENDING',
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Ads mapping' }))
+
+    expect(await screen.findByText('J2605 Campaign')).toBeVisible()
+    await waitFor(() =>
+      expect(listAdsUnassignedRows).toHaveBeenCalledWith({
+        status: 'PENDING',
+        page: 1,
+        limit: 100,
+      }),
+    )
   })
 
   it('shows Amazon Ads import history for finance readers', async () => {
@@ -674,7 +717,7 @@ describe('IntegrationWorkbenchPage', () => {
         limit: 20,
         sourceType: 'ADS',
         salesChannelCode: 'AMAZON',
-        marketplaceCode: 'AMAZON',
+        marketplaceCode: 'US',
         shopId: undefined,
         status: undefined,
       }),

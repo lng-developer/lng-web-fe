@@ -1492,6 +1492,32 @@
     }
   },
   "portal": {
+    "monitoring": {
+      "indexes": {
+        "tab": "Mongo Indexes",
+        "title": "Theo dõi MongoDB index",
+        "snapshotDate": "Ngày snapshot",
+        "refresh": "Làm mới",
+        "database": "Cơ sở dữ liệu",
+        "indexes": "Index",
+        "indexSize": "Dung lượng index",
+        "capturedAt": "Thời điểm ghi nhận",
+        "empty": "Chưa có snapshot theo dõi index.",
+        "loadFailed": "Không thể tải snapshot theo dõi index.",
+        "filter": "Bộ lọc index",
+        "allIndexes": "Tất cả index",
+        "reviewCandidates": "Ứng viên cần xem xét",
+        "idleDaysValue": "{{count}} ngày",
+        "columns": {
+          "collection": "Collection",
+          "index": "Index",
+          "key": "Key",
+          "operations": "Lượt sử dụng",
+          "idleDays": "Không tăng usage",
+          "decision": "Đánh giá"
+        }
+      }
+    },
     "catalog": {
       "actions": "Thao tác",
       "view": "Xem",

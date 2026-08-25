@@ -18,6 +18,8 @@ import {
   Row,
   Select,
   Space,
+  Table,
+  type TableColumnsType,
   Typography,
 } from 'antd'
 
@@ -25,13 +27,16 @@ import { hasAnyPermission } from '@/shared/auth/permissions'
 import { MetricCard, PageHeader, SectionCard, StatusTag, UiTabLabel, UiTabs } from '@/shared/ui'
 
 import {
+  getMongoIndexUsageSnapshots,
   getSystemHealth,
   getSystemLogs,
+  type MongoIndexUsageSnapshot,
   type SystemHealth,
   type SystemLogProcess,
   type SystemLogs,
   type SystemLogStream,
 } from '../api/monitoringApi'
+import { getIndexReview } from '../utils/indexUsageReview'
 import styles from './MonitoringDashboardPage.module.scss'
 
 const statusTone = (status?: string) => {
@@ -40,6 +45,21 @@ const statusTone = (status?: string) => {
   if (status === 'external') return 'processing' as const
   if (status === 'disabled' || status === 'DISABLED') return 'draft' as const
   return 'critical' as const
+}
+
+type IndexRow = MongoIndexUsageSnapshot['collections'][number]['indexes'][number] & {
+  collection: string
+  usageAvailable: boolean
+  classification: string
+  idleDays: number
+  candidate: boolean
+}
+
+function formatBytes(value = 0) {
+  if (!value) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1)
+  return `${(value / 1024 ** index).toFixed(index ? 1 : 0)} ${units[index]}`
 }
 
 export function MonitoringDashboardPage() {
@@ -55,6 +75,11 @@ export function MonitoringDashboardPage() {
   const [logs, setLogs] = useState<SystemLogs>()
   const [logsError, setLogsError] = useState<string>()
   const [logsLoading, setLogsLoading] = useState(false)
+  const [indexSnapshots, setIndexSnapshots] = useState<MongoIndexUsageSnapshot[]>([])
+  const [indexSnapshotDate, setIndexSnapshotDate] = useState<string>()
+  const [indexError, setIndexError] = useState<string>()
+  const [indexLoading, setIndexLoading] = useState(false)
+  const [indexFilter, setIndexFilter] = useState<'ALL' | 'CANDIDATES'>('ALL')
 
   const refresh = useCallback(async () => {
     if (!canRead) return
@@ -86,6 +111,28 @@ export function MonitoringDashboardPage() {
     }
   }, [canRead, logLines, logProcess, logStream])
 
+  const refreshIndexSnapshots = useCallback(async () => {
+    if (!canRead) return
+    setIndexLoading(true)
+    setIndexError(undefined)
+    try {
+      const snapshots = await getMongoIndexUsageSnapshots(30)
+      setIndexSnapshots(snapshots)
+      setIndexSnapshotDate((current) =>
+        current && snapshots.some((snapshot) => snapshot.capturedOn === current)
+          ? current
+          : snapshots[0]?.capturedOn,
+      )
+    } catch (cause) {
+      setIndexError(
+        cause instanceof Error ? cause.message : t('portal.monitoring.indexes.loadFailed'),
+      )
+      setIndexSnapshots([])
+    } finally {
+      setIndexLoading(false)
+    }
+  }, [canRead, t])
+
   useEffect(() => {
     if (!canRead) return undefined
     queueMicrotask(() => void refresh())
@@ -95,6 +142,9 @@ export function MonitoringDashboardPage() {
   useEffect(() => {
     queueMicrotask(() => void refreshLogs())
   }, [refreshLogs])
+  useEffect(() => {
+    queueMicrotask(() => void refreshIndexSnapshots())
+  }, [refreshIndexSnapshots])
 
   const modules = health?.modules ?? []
   const queues = health?.queues ?? []
@@ -102,6 +152,54 @@ export function MonitoringDashboardPage() {
   const healthyModules = modules.filter((module) => module.status === 'ok').length
   const totalModules = modules.length
   const isHealthy = health?.status === 'ok' && !error
+  const selectedIndexSnapshot = indexSnapshots.find(
+    (snapshot) => snapshot.capturedOn === indexSnapshotDate,
+  )
+  const allIndexRows: IndexRow[] = (selectedIndexSnapshot?.collections ?? []).flatMap(
+    (collection) =>
+      collection.indexes.map((index) => ({
+        ...index,
+        collection: collection.name,
+        usageAvailable: collection.usageAvailable,
+        ...getIndexReview(index, collection.name, indexSnapshots),
+      })),
+  )
+  const indexRows =
+    indexFilter === 'CANDIDATES' ? allIndexRows.filter(({ candidate }) => candidate) : allIndexRows
+  const indexColumns: TableColumnsType<IndexRow> = [
+    { title: t('portal.monitoring.indexes.columns.collection'), dataIndex: 'collection' },
+    { title: t('portal.monitoring.indexes.columns.index'), dataIndex: 'name' },
+    {
+      title: t('portal.monitoring.indexes.columns.key'),
+      dataIndex: 'key',
+      render: (key) => <Typography.Text code>{JSON.stringify(key)}</Typography.Text>,
+    },
+    {
+      title: t('portal.monitoring.indexes.columns.operations'),
+      dataIndex: 'operations',
+      align: 'right',
+      render: (operations, row) =>
+        row.usageAvailable && operations !== null ? Number(operations).toLocaleString() : '—',
+    },
+    {
+      title: t('portal.monitoring.indexes.columns.idleDays'),
+      dataIndex: 'idleDays',
+      align: 'right',
+      render: (idleDays, row) =>
+        row.usageAvailable
+          ? t('portal.monitoring.indexes.idleDaysValue', { count: idleDays })
+          : '—',
+    },
+    {
+      title: t('portal.monitoring.indexes.columns.decision'),
+      dataIndex: 'classification',
+      render: (classification) => (
+        <StatusTag status={classification === 'KEEP' ? 'operational' : 'warning'}>
+          {classification}
+        </StatusTag>
+      ),
+    },
+  ]
 
   if (!canRead) return <Result status="403" title="403" />
 
@@ -129,7 +227,9 @@ export function MonitoringDashboardPage() {
                     <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
                       {label}
                     </Typography.Text>
-                    <StatusTag status={statusTone(String(value))}>{String(value ?? 'UNKNOWN')}</StatusTag>
+                    <StatusTag status={statusTone(String(value))}>
+                      {String(value ?? 'UNKNOWN')}
+                    </StatusTag>
                   </div>
                 </Flex>
               </Card>
@@ -154,7 +254,9 @@ export function MonitoringDashboardPage() {
                   {label}
                 </Typography.Text>
                 {label === 'Status' ? (
-                  <StatusTag status={statusTone(String(value))}>{String(value).toUpperCase()}</StatusTag>
+                  <StatusTag status={statusTone(String(value))}>
+                    {String(value).toUpperCase()}
+                  </StatusTag>
                 ) : (
                   <Typography.Title level={4}>{value}</Typography.Title>
                 )}
@@ -251,7 +353,9 @@ export function MonitoringDashboardPage() {
                       {worker.queueName ?? worker.script ?? worker.process}
                     </Typography.Text>
                   </div>
-                  <StatusTag status={statusTone(worker.status)}>{worker.status.toUpperCase()}</StatusTag>
+                  <StatusTag status={statusTone(worker.status)}>
+                    {worker.status.toUpperCase()}
+                  </StatusTag>
                 </Flex>
                 <Typography.Text type="secondary" style={{ fontSize: 11 }}>
                   {worker.process === 'embedded-api'
@@ -279,7 +383,9 @@ export function MonitoringDashboardPage() {
                       {queue.queueName}
                     </Typography.Text>
                   </div>
-                  <StatusTag status={statusTone(queue.status)}>{queue.status.toUpperCase()}</StatusTag>
+                  <StatusTag status={statusTone(queue.status)}>
+                    {queue.status.toUpperCase()}
+                  </StatusTag>
                 </Flex>
                 <div className={styles.queueCounts}>
                   {(['waiting', 'active', 'delayed', 'completed', 'failed', 'paused'] as const).map(
@@ -356,6 +462,98 @@ export function MonitoringDashboardPage() {
     </SectionCard>
   )
 
+  const indexesTab = (
+    <>
+      <SectionCard
+        title={t('portal.monitoring.indexes.title')}
+        extra={
+          <Space wrap>
+            <Select
+              aria-label={t('portal.monitoring.indexes.snapshotDate')}
+              className="min-w-40"
+              loading={indexLoading}
+              value={indexSnapshotDate}
+              options={indexSnapshots.map((snapshot) => ({
+                label: snapshot.capturedOn,
+                value: snapshot.capturedOn,
+              }))}
+              onChange={setIndexSnapshotDate}
+            />
+            <Select
+              aria-label={t('portal.monitoring.indexes.filter')}
+              className="min-w-40"
+              value={indexFilter}
+              options={[
+                { label: t('portal.monitoring.indexes.allIndexes'), value: 'ALL' },
+                { label: t('portal.monitoring.indexes.reviewCandidates'), value: 'CANDIDATES' },
+              ]}
+              onChange={setIndexFilter}
+            />
+            <Button
+              icon={<ReloadOutlined spin={indexLoading} />}
+              loading={indexLoading}
+              onClick={() => void refreshIndexSnapshots()}
+            >
+              {t('portal.monitoring.indexes.refresh')}
+            </Button>
+          </Space>
+        }
+      >
+        {indexError ? <Typography.Text type="danger">{indexError}</Typography.Text> : null}
+        {!indexError && !selectedIndexSnapshot ? (
+          <Result status="info" title={t('portal.monitoring.indexes.empty')} />
+        ) : null}
+        {selectedIndexSnapshot ? (
+          <>
+            <Row gutter={[24, 24]} className="mb-6">
+              <Col xs={24} sm={12} lg={6}>
+                <MetricCard
+                  icon={<DatabaseOutlined />}
+                  variant="info"
+                  label={t('portal.monitoring.indexes.database')}
+                  value={selectedIndexSnapshot.database}
+                />
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <MetricCard
+                  icon={<HddOutlined />}
+                  variant="neutral"
+                  label={t('portal.monitoring.indexes.indexes')}
+                  value={selectedIndexSnapshot.totals.indexes.toLocaleString()}
+                />
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <MetricCard
+                  icon={<DatabaseOutlined />}
+                  variant="neutral"
+                  label={t('portal.monitoring.indexes.indexSize')}
+                  value={formatBytes(selectedIndexSnapshot.totals.indexBytes)}
+                />
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <MetricCard
+                  icon={<ClockCircleOutlined />}
+                  variant="neutral"
+                  label={t('portal.monitoring.indexes.capturedAt')}
+                  value={new Date(selectedIndexSnapshot.capturedAt).toLocaleString()}
+                />
+              </Col>
+            </Row>
+            <Table<IndexRow>
+              rowKey={(row) => `${row.collection}:${row.name}`}
+              columns={indexColumns}
+              dataSource={indexRows}
+              loading={indexLoading}
+              pagination={{ pageSize: 20, showSizeChanger: false }}
+              scroll={{ x: 920 }}
+              size="small"
+            />
+          </>
+        ) : null}
+      </SectionCard>
+    </>
+  )
+
   return (
     <section className={styles.page}>
       <PageHeader
@@ -430,6 +628,11 @@ export function MonitoringDashboardPage() {
             key: 'logs',
             label: <UiTabLabel>Logs</UiTabLabel>,
             children: logsTab,
+          },
+          {
+            key: 'mongo-indexes',
+            label: <UiTabLabel>{t('portal.monitoring.indexes.tab')}</UiTabLabel>,
+            children: indexesTab,
           },
         ]}
       />

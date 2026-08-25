@@ -76,6 +76,39 @@ export type SystemLogs = {
   availableStreams: SystemLogStream[]
 }
 
+export type MongoIndexUsageSnapshot = {
+  capturedOn: string
+  capturedAt: string
+  database: string
+  totals: {
+    dataBytes: number
+    storageBytes: number
+    indexBytes: number
+    collections: number
+    indexes: number
+  }
+  collections: Array<{
+    name: string
+    documentCount: number
+    dataBytes: number
+    storageBytes: number
+    indexBytes: number
+    indexCount: number
+    usageAvailable: boolean
+    indexes: Array<{
+      name: string
+      key: Record<string, number | string>
+      operations: number | null
+    }>
+    findings: Array<{
+      indexName: string
+      classification: string
+      coveredBy: string | null
+      reason: string
+    }>
+  }>
+}
+
 export async function getSystemHealth() {
   const response = await apiClient.get<ApiResponse<SystemHealth>>('/api/system/health')
   return (response as unknown as ApiResponse<SystemHealth>).data
@@ -88,4 +121,12 @@ export async function getSystemLogs(params: {
 }) {
   const response = await apiClient.get<ApiResponse<SystemLogs>>('/api/system/logs', { params })
   return (response as unknown as ApiResponse<SystemLogs>).data
+}
+
+export async function getMongoIndexUsageSnapshots(limit = 30) {
+  const response = await apiClient.get<ApiResponse<MongoIndexUsageSnapshot[]>>(
+    '/api/audit/mongo-index-usage-snapshots',
+    { params: { limit } },
+  )
+  return (response as unknown as ApiResponse<MongoIndexUsageSnapshot[]>).data
 }

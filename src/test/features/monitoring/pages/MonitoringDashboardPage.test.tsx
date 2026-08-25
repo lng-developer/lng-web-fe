@@ -4,9 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/features/monitoring/api/monitoringApi', () => ({
   getSystemHealth: vi.fn(),
   getSystemLogs: vi.fn(),
+  getMongoIndexUsageSnapshots: vi.fn(),
 }))
 
-import { getSystemHealth, getSystemLogs } from '@/features/monitoring/api/monitoringApi'
+import {
+  getMongoIndexUsageSnapshots,
+  getSystemHealth,
+  getSystemLogs,
+} from '@/features/monitoring/api/monitoringApi'
 import { MonitoringDashboardPage } from '@/features/monitoring/pages/MonitoringDashboardPage'
 import { setGlobalPermissions, setPermissions } from '@/shared/auth/session'
 
@@ -52,6 +57,27 @@ describe('MonitoringDashboardPage', () => {
       ],
       availableStreams: ['out', 'error'],
     })
+    vi.mocked(getMongoIndexUsageSnapshots).mockResolvedValue([
+      {
+        capturedOn: '2026-08-25',
+        capturedAt: '2026-08-25T01:00:00.000Z',
+        database: 'lng_web_be',
+        totals: { dataBytes: 10, storageBytes: 20, indexBytes: 30, collections: 2, indexes: 3 },
+        collections: [
+          {
+            name: 'orders',
+            documentCount: 12,
+            dataBytes: 10,
+            storageBytes: 20,
+            indexBytes: 30,
+            indexCount: 3,
+            usageAvailable: true,
+            indexes: [{ name: 'psdStatus_1', key: { psdStatus: 1 }, operations: 42 }],
+            findings: [],
+          },
+        ],
+      },
+    ])
   })
 
   it('loads and displays backend logs for global audit readers', async () => {
@@ -77,5 +103,15 @@ describe('MonitoringDashboardPage', () => {
     expect(screen.getByText('Clients')).toBeVisible()
     expect(screen.getByText('Users')).toBeVisible()
     expect(screen.getByText('Event failed')).toBeVisible()
+  })
+
+  it('shows the selected Mongo index snapshot', async () => {
+    render(<MonitoringDashboardPage />)
+
+    fireEvent.click(document.querySelector('[data-node-key="mongo-indexes"]') as HTMLElement)
+    expect(await screen.findByText('psdStatus_1')).toBeVisible()
+    expect(screen.getByText('42')).toBeVisible()
+    expect(screen.getByText('KEEP')).toBeVisible()
+    await waitFor(() => expect(getMongoIndexUsageSnapshots).toHaveBeenCalledWith(30))
   })
 })

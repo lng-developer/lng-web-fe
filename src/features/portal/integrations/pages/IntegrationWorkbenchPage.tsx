@@ -38,7 +38,13 @@ import {
   createExtensionToken,
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
-import { type ImportBatch, listImportBatches } from '@/features/portal/finance/api/financeApi'
+import {
+  type AdsUnassignedRow,
+  type ImportBatch,
+  listAdsUnassignedRows,
+  listImportBatches,
+  upsertAdsShopMapping,
+} from '@/features/portal/finance/api/financeApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { env } from '@/shared/config/env'
 import {
@@ -233,6 +239,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const [adsStatus, setAdsStatus] = useState<string>()
   const [adsDates, setAdsDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [adsPage, setAdsPage] = useState(1)
+  const [adsMappingShopIds, setAdsMappingShopIds] = useState<Record<string, string>>({})
   const [transactionShopId, setTransactionShopId] = useState<string>()
   const [transactionStatus, setTransactionStatus] = useState<string>()
   const [transactionDates, setTransactionDates] = useState<{ dateFrom?: string; dateTo?: string }>(
@@ -250,6 +257,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const selectedJobId = searchParams.get('selectedJobId') || undefined
   const canWrite = canWriteOrdersSomewhere(account)
   const canReadAdsImports = canReadFinanceImports(account)
+  const canWriteAdsMappings = account.permissions.includes('FINANCE:WRITE')
   const shops = useQuery({
     queryKey: shopKeys.list({ page: 1, limit: 100, status: 'ACTIVE' }),
     queryFn: listAllActiveShops,
@@ -299,11 +307,17 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         limit: PAGE_SIZE,
         sourceType: 'ADS',
         salesChannelCode: 'AMAZON',
-        marketplaceCode: 'AMAZON',
+        marketplaceCode: 'US',
         shopId: adsShopId,
         status: adsStatus,
         ...adsDates,
       }),
+    enabled: canReadAdsImports,
+    retry: false,
+  })
+  const adsUnassignedRows = useQuery({
+    queryKey: [...integrationKeys.all, 'ads-unassigned-rows'],
+    queryFn: () => listAdsUnassignedRows({ status: 'PENDING', page: 1, limit: 100 }),
     enabled: canReadAdsImports,
     retry: false,
   })
@@ -417,6 +431,32 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         queryClient.invalidateQueries({ queryKey: integrationKeys.extensionManagementAgents() }),
       ])
       showFeedbackToast('success', 'Extension token revoked.')
+    },
+  })
+  const saveAdsMapping = useMutation({
+    mutationFn: (row: AdsUnassignedRow) => {
+      const externalId = row.campaignId || row.portfolioId
+      const shopId = adsMappingShopIds[row.id]
+      if (!externalId || !shopId || !row.advertiserAccountId) {
+        throw new Error('Choose a shop for a campaign or portfolio with an advertiser account.')
+      }
+      return upsertAdsShopMapping({
+        advertiserAccountId: row.advertiserAccountId,
+        matchType: row.campaignId ? 'CAMPAIGN' : 'PORTFOLIO',
+        externalId,
+        shopId,
+        salesChannelCode: row.salesChannelCode || 'AMAZON',
+        marketplaceCode: row.marketplaceCode || 'US',
+        active: true,
+      })
+    },
+    onSuccess: (_, row) => {
+      showFeedbackToast('success', 'Ads mapping saved. Reimport the report to apply it.')
+      setAdsMappingShopIds((current) => {
+        const next = { ...current }
+        delete next[row.id]
+        return next
+      })
     },
   })
   const saveOrderSchedule = useMutation({
@@ -535,6 +575,53 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       title: t('portal.integrations.ads.file', { defaultValue: 'File' }),
       dataIndex: 'originalFilename',
       render: (value: string) => value || '-',
+    },
+  ]
+  const adsMappingColumns: TableColumnsType<AdsUnassignedRow> = [
+    {
+      title: 'Report date',
+      dataIndex: 'reportDate',
+      render: (value: string) => value || '-',
+    },
+    {
+      title: 'Advertiser account',
+      dataIndex: 'advertiserAccountId',
+      render: (value: string | null) => value || '-',
+    },
+    {
+      title: 'Campaign / portfolio',
+      render: (_, row) =>
+        row.campaignName || row.portfolioName || row.campaignId || row.portfolioId || '-',
+    },
+    {
+      title: 'Action',
+      render: (_, row) => {
+        const hasExternalId = Boolean(row.campaignId || row.portfolioId)
+        return (
+          <Space>
+            <Select
+              aria-label={`Shop for ${row.id}`}
+              disabled={!canWriteAdsMappings || !hasExternalId}
+              options={(shops.data?.items ?? []).map((shop) => ({
+                label: shop.name,
+                value: shop.id,
+              }))}
+              placeholder="Select shop"
+              value={adsMappingShopIds[row.id]}
+              onChange={(shopId) =>
+                setAdsMappingShopIds((current) => ({ ...current, [row.id]: shopId }))
+              }
+            />
+            <Button
+              disabled={!canWriteAdsMappings || !hasExternalId || !adsMappingShopIds[row.id]}
+              loading={saveAdsMapping.isPending && saveAdsMapping.variables?.id === row.id}
+              onClick={() => saveAdsMapping.mutate(row)}
+            >
+              Map
+            </Button>
+          </Space>
+        )
+      },
     },
   ]
 
@@ -1227,6 +1314,38 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     setDates: setSettlementDates,
     resetPage: resetSettlementPage,
   })
+  const adsMappingTab = (
+    <SectionCard title="Ads mapping">
+      {canReadAdsImports ? (
+        <>
+          <Typography.Paragraph type="secondary">
+            Assign each unrecognized Amazon campaign or portfolio to a shop. Reimport the report
+            after saving a mapping to apply it.
+          </Typography.Paragraph>
+          {!canWriteAdsMappings ? (
+            <Alert
+              type="info"
+              showIcon
+              message="Global Finance write permission is required to save Ads mappings."
+            />
+          ) : null}
+          <DataTable
+            columns={adsMappingColumns}
+            dataSource={adsUnassignedRows.data?.items ?? []}
+            loading={adsUnassignedRows.isLoading}
+            rowKey="id"
+            pagination={false}
+          />
+        </>
+      ) : (
+        <Alert
+          type="info"
+          showIcon
+          message="Finance read permission is required to view Ads mappings."
+        />
+      )}
+    </SectionCard>
+  )
   const financeTab = (
     <UiTabs
       items={[
@@ -1234,6 +1353,11 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
           key: 'ads',
           label: <UiTabLabel>Ads</UiTabLabel>,
           children: adsTab,
+        },
+        {
+          key: 'ads-mapping',
+          label: <UiTabLabel>Ads mapping</UiTabLabel>,
+          children: adsMappingTab,
         },
         {
           key: 'transactions',

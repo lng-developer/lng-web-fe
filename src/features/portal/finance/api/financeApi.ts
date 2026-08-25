@@ -117,6 +117,27 @@ export type ImportBatch = {
   errors: Array<{ row?: number; message?: string; code?: string }>
   createdAt: string
 }
+export type AdsUnassignedRow = {
+  id: string
+  reportDate: string
+  advertiserAccountId: string | null
+  campaignId: string | null
+  campaignName: string | null
+  portfolioId: string | null
+  portfolioName: string | null
+  salesChannelCode: string | null
+  marketplaceCode: string | null
+  status: 'PENDING' | 'RESOLVED'
+}
+export type AdsShopMappingInput = {
+  advertiserAccountId: string
+  matchType: 'CAMPAIGN' | 'PORTFOLIO'
+  externalId: string
+  shopId: string
+  salesChannelCode?: string
+  marketplaceCode?: string
+  active?: boolean
+}
 export type ImportedFinanceData = Record<string, unknown> & { id: string }
 export type FinanceImportInput = {
   kind: 'transactions' | 'settlements' | 'ads'
@@ -170,6 +191,15 @@ export async function listImportBatches(query: Record<string, unknown> = {}) {
     page: Number(query.page) || 1,
     limit: Number(query.limit) || 20,
   })
+}
+export async function listAdsUnassignedRows(query: Record<string, unknown> = {}) {
+  const data = unwrap<Paginated<AdsUnassignedRow>>(
+    await apiClient.get('/api/finance/ads-unassigned-rows', { params: params(query) }),
+  )
+  return normalizePagination(data, query)
+}
+export async function upsertAdsShopMapping(input: AdsShopMappingInput) {
+  return unwrap(await apiClient.put('/api/finance/ads-shop-mappings', input))
 }
 export const getFinanceImportBatch = async (id: string) =>
   unwrap<ImportBatch>(await apiClient.get(`/api/finance/import-batches/${id}`))
