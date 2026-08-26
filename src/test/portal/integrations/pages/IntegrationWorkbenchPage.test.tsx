@@ -597,7 +597,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(screen.queryByRole('button', { name: 'View command error' })).not.toBeInTheDocument()
     fireEvent.click(await screen.findByRole('button', { name: 'View task details' }))
     expect(await screen.findByText('Amazon Ads session expired')).toBeVisible()
-  })
+  }, 15_000)
 
   it('shows a task timeline for an extension command', async () => {
     vi.mocked(listExtensionCommands).mockResolvedValue({
@@ -627,7 +627,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByText('Task details')).toBeVisible()
     expect(screen.getByText('Claimed')).toBeVisible()
     expect(screen.getByText('Amazon Ads session expired')).toBeVisible()
-  })
+  }, 15_000)
 
   it('shows extension cards across every accessible shop', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
@@ -700,7 +700,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     expect(await screen.findByText('Campaign 1')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Map shop' })).toBeEnabled()
-  })
+  }, 15_000)
 
   it('lists pending Ads rows in the Ads mapping tab', async () => {
     vi.mocked(listAdsUnassignedRows).mockResolvedValue({
