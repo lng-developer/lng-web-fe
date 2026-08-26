@@ -52,7 +52,7 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
 
 vi.mock('@/shared/media', () => ({
   AuthenticatedMediaImage: ({ alt }: { alt: string }) => <img alt={alt} />,
-  downloadMediaAsset: vi.fn(),
+  downloadMediaAsset: vi.fn().mockResolvedValue(undefined),
   useAuthenticatedMediaUrl: (downloadUrl?: string) => ({ url: downloadUrl }),
 }))
 
