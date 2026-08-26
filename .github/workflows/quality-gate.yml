@@ -2,6 +2,11 @@ name: Quality Gate
 
 on:
   workflow_dispatch:
+    inputs:
+      ui_test_file:
+        description: UI test file to run by itself
+        required: false
+        type: string
   pull_request:
     branches: [develop]
   push:
@@ -16,6 +21,7 @@ concurrency:
 
 jobs:
   quality-gate:
+    if: ${{ inputs.ui_test_file == '' }}
     name: lint-unit-build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -34,6 +40,7 @@ jobs:
       - run: npm run build
 
   ui-tests:
+    if: ${{ inputs.ui_test_file == '' }}
     name: ui-tests-${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -53,10 +60,28 @@ jobs:
       - run: npm ci
       - run: npm run test:ui -- --shard=${{ matrix.shard }}
 
+  ui-test-file:
+    name: ui-test-file
+    if: ${{ inputs.ui_test_file != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Asia/Ho_Chi_Minh
+      UI_TEST_FILE: ${{ inputs.ui_test_file }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm i -g npm@11.6.2
+      - run: npm ci
+      - run: npm run test:ui -- "$UI_TEST_FILE"
+
   deploy:
     name: deploy-server
     needs: [quality-gate, ui-tests]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && inputs.ui_test_file == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
