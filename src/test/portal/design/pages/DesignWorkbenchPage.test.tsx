@@ -1,6 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/app/common/CoreDataTable', async () => ({
+  CoreDataTable: (await import('@/test/mocks/CoreDataTable')).CoreDataTable,
+}))
+
 import { AppProviders } from '@/app/providers/AppProviders'
 import {
   createDesignTask,
@@ -177,7 +181,8 @@ describe('DesignWorkbenchPage', () => {
         <DesignWorkbenchPage />
       </AppProviders>,
     )
-    expect((await screen.findByText('HIGH')).closest('.ant-tag')).not.toBeNull()
+    await screen.findByText('SKU-1')
+    expect((await screen.findByText('High')).closest('.ant-tag')).not.toBeNull()
   }, 15_000)
 
   it('uses the listing product image when no media thumbnail exists', async () => {

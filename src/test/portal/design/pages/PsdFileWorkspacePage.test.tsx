@@ -1,6 +1,10 @@
 import { cleanup, fireEvent } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/app/common/CoreDataTable', async () => ({
+  CoreDataTable: (await import('@/test/mocks/CoreDataTable')).CoreDataTable,
+}))
+
 vi.mock('@/features/portal/design/api/designApi', () => ({
   listDesignAssignees: vi.fn().mockResolvedValue([
     {

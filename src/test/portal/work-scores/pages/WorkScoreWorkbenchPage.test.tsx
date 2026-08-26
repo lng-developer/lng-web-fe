@@ -1,6 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/app/common/CoreDataTable', async () => ({
+  CoreDataTable: (await import('@/test/mocks/CoreDataTable')).CoreDataTable,
+}))
+
 import { AppProviders } from '@/app/providers/AppProviders'
 import {
   getWorkScore,

@@ -43,37 +43,8 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   }
 })
 
-vi.mock('@/app/common/CoreDataTable', () => ({
-  CoreDataTable: ({
-    columns = [],
-    dataSource = [],
-    onRow,
-  }: {
-    columns?: Array<{
-      dataIndex?: string
-      render?: (value: unknown, record: Record<string, unknown>) => ReactNode
-    }>
-    dataSource?: Array<Record<string, unknown>>
-    onRow?: (record: Record<string, unknown>) => { onClick?: () => void }
-  }) => (
-    <table>
-      <tbody>
-        {dataSource.map((record, rowIndex) => (
-          <tr key={String(record.id ?? rowIndex)} onClick={onRow?.(record).onClick}>
-            {columns.map((column, columnIndex) => (
-              <td key={columnIndex}>
-                {column.render
-                  ? column.render(column.dataIndex ? record[column.dataIndex] : undefined, record)
-                  : column.dataIndex
-                    ? String(record[column.dataIndex] ?? '')
-                    : null}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ),
+vi.mock('@/app/common/CoreDataTable', async () => ({
+  CoreDataTable: (await import('@/test/mocks/CoreDataTable')).CoreDataTable,
 }))
 
 vi.mock('@/features/portal/integrations/api/integrationApi', async (importOriginal) => {
