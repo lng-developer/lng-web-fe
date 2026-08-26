@@ -30,6 +30,7 @@ import { useImportJobPolling } from '../hooks/useImportJobPolling'
 import styles from './IntegrationWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 10
+const ACTIVE_POST_IMPORT_STATUSES = new Set(['QUEUED', 'PROCESSING'])
 
 function recordTone(status: string) {
   if (status === 'COMPLETED' || status === 'IMPORTED' || status === 'NORMALIZED') {
@@ -66,6 +67,12 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
     ...modalQueryOptions,
     enabled: open && Boolean(jobId),
     retry: false,
+    refetchInterval: (query) =>
+      query.state.data?.items.some(({ postImportStatus }) =>
+        ACTIVE_POST_IMPORT_STATUSES.has(postImportStatus),
+      )
+        ? 5_000
+        : false,
   })
   const retry = useMutation({
     mutationFn: () => retryImportJob(jobId!),

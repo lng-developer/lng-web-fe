@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { App } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -173,7 +173,10 @@ describe('ImportJobPanel', () => {
     })
   })
 
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+  })
 
   it('shows job summary before raw-record diagnostics', async () => {
     renderPanel()
@@ -243,6 +246,47 @@ describe('ImportJobPanel', () => {
 
     await waitFor(() => expect(retryPostImportRawRecords).toHaveBeenCalledWith('job-1', ['raw-1']))
   }, 10_000)
+
+  it('refreshes raw records while post-import mapping is processing', async () => {
+    vi.useFakeTimers()
+    vi.mocked(listJobRawRecords).mockResolvedValue({
+      items: [
+        {
+          id: 'raw-1',
+          importJobId: 'job-1',
+          source: 'MANUAL_EXCEL',
+          rowNumber: 4,
+          externalOrderId: 'ORDER-1',
+          externalItemId: 'ITEM-1',
+          asin: 'B001',
+          sku: 'SKU-1',
+          normalizeStatus: 'NORMALIZED',
+          importStatus: 'IMPORTED',
+          postImportStatus: 'PROCESSING',
+          postImportAttempts: 1,
+          postImportQueuedAt: null,
+          postImportStartedAt: null,
+          postImportFinishedAt: null,
+          postImportErrorCode: null,
+          postImportErrorMessage: null,
+          orderId: 'order-1',
+          orderItemId: 'item-1',
+          errorCode: null,
+          errorMessage: null,
+          createdAt: '2026-07-31T00:00:00.000Z',
+          updatedAt: '2026-07-31T00:00:00.000Z',
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 10 },
+    })
+
+    renderPanel()
+    await act(async () => vi.advanceTimersByTimeAsync(1))
+    expect(listJobRawRecords).toHaveBeenCalledTimes(1)
+
+    await act(async () => vi.advanceTimersByTimeAsync(5_000))
+    expect(listJobRawRecords).toHaveBeenCalledTimes(2)
+  })
 
   it('resets diagnostics to page one when selecting another job', async () => {
     vi.mocked(listJobRawRecords).mockResolvedValue({
