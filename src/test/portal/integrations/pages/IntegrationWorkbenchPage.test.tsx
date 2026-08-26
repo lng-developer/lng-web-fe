@@ -672,6 +672,20 @@ describe('IntegrationWorkbenchPage', () => {
     expect(screen.getByRole('tab', { name: 'Settlements' })).toBeVisible()
   })
 
+  it('shows pending Ads rows in the mapping tab', async () => {
+    vi.mocked(listAdsUnassignedRows).mockResolvedValue({
+      items: [{ id: 'row-1', reportDate: '2026-08-25T00:00:00.000Z', advertiserAccountId: 'account-1', campaignId: 'campaign-1', campaignName: 'Campaign 1', portfolioId: null, portfolioName: null, salesChannelCode: 'AMAZON', marketplaceCode: 'US', status: 'PENDING' }],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ', 'FINANCE:WRITE']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Ads mapping' }))
+
+    expect(await screen.findByText('Campaign 1')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Map shop' })).toBeEnabled()
+  })
+
   it('lists pending Ads rows in the Ads mapping tab', async () => {
     vi.mocked(listAdsUnassignedRows).mockResolvedValue({
       items: [

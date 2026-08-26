@@ -20,6 +20,7 @@ import {
   Drawer,
   Form,
   Input,
+  Modal,
   Popconfirm,
   Popover,
   Select,
@@ -39,6 +40,7 @@ import {
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import {
+  type AdsShopMappingInput,
   type AdsUnassignedRow,
   type ImportBatch,
   listAdsUnassignedRows,
@@ -239,7 +241,6 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const [adsStatus, setAdsStatus] = useState<string>()
   const [adsDates, setAdsDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [adsPage, setAdsPage] = useState(1)
-  const [adsMappingShopIds, setAdsMappingShopIds] = useState<Record<string, string>>({})
   const [transactionShopId, setTransactionShopId] = useState<string>()
   const [transactionStatus, setTransactionStatus] = useState<string>()
   const [transactionDates, setTransactionDates] = useState<{ dateFrom?: string; dateTo?: string }>(
@@ -250,6 +251,8 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const [settlementStatus, setSettlementStatus] = useState<string>()
   const [settlementDates, setSettlementDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [settlementPage, setSettlementPage] = useState(1)
+  const [selectedAdsUnassignedRow, setSelectedAdsUnassignedRow] = useState<AdsUnassignedRow>()
+  const [adsMappingForm] = Form.useForm<{ shopId: string; matchType: 'CAMPAIGN' | 'PORTFOLIO' }>()
   const selectedEnvironment =
     Form.useWatch('environment', tokenForm) ?? ('development' as ExtensionTokenEnvironment)
   const selectedShopId = Form.useWatch('shopId', tokenForm)
@@ -257,7 +260,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const selectedJobId = searchParams.get('selectedJobId') || undefined
   const canWrite = canWriteOrdersSomewhere(account)
   const canReadAdsImports = canReadFinanceImports(account)
-  const canWriteAdsMappings = account.permissions.includes('FINANCE:WRITE')
+  const canManageAdsMappings = account.permissions.includes('FINANCE:WRITE')
   const shops = useQuery({
     queryKey: shopKeys.list({ page: 1, limit: 100, status: 'ACTIVE' }),
     queryFn: listAllActiveShops,
@@ -315,12 +318,6 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     enabled: canReadAdsImports,
     retry: false,
   })
-  const adsUnassignedRows = useQuery({
-    queryKey: [...integrationKeys.all, 'ads-unassigned-rows'],
-    queryFn: () => listAdsUnassignedRows({ status: 'PENDING', page: 1, limit: 100 }),
-    enabled: canReadAdsImports,
-    retry: false,
-  })
   const transactionImports = useQuery({
     queryKey: [
       ...integrationKeys.all,
@@ -358,6 +355,12 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         status: settlementStatus,
         ...settlementDates,
       }),
+    enabled: canReadAdsImports,
+    retry: false,
+  })
+  const adsUnassignedRows = useQuery({
+    queryKey: [...integrationKeys.all, 'ads-unassigned-rows'],
+    queryFn: () => listAdsUnassignedRows({ status: 'PENDING', page: 1, limit: 100 }),
     enabled: canReadAdsImports,
     retry: false,
   })
@@ -433,32 +436,6 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       showFeedbackToast('success', 'Extension token revoked.')
     },
   })
-  const saveAdsMapping = useMutation({
-    mutationFn: (row: AdsUnassignedRow) => {
-      const externalId = row.campaignId || row.portfolioId
-      const shopId = adsMappingShopIds[row.id]
-      if (!externalId || !shopId || !row.advertiserAccountId) {
-        throw new Error('Choose a shop for a campaign or portfolio with an advertiser account.')
-      }
-      return upsertAdsShopMapping({
-        advertiserAccountId: row.advertiserAccountId,
-        matchType: row.campaignId ? 'CAMPAIGN' : 'PORTFOLIO',
-        externalId,
-        shopId,
-        salesChannelCode: row.salesChannelCode || 'AMAZON',
-        marketplaceCode: row.marketplaceCode || 'US',
-        active: true,
-      })
-    },
-    onSuccess: (_, row) => {
-      showFeedbackToast('success', 'Ads mapping saved. Reimport the report to apply it.')
-      setAdsMappingShopIds((current) => {
-        const next = { ...current }
-        delete next[row.id]
-        return next
-      })
-    },
-  })
   const saveOrderSchedule = useMutation({
     mutationFn: ({
       agentId,
@@ -472,6 +449,20 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: integrationKeys.extensionOrderSchedules() })
       showFeedbackToast('success', 'Order schedule saved.')
+    },
+  })
+  const saveAdsMapping = useMutation({
+    mutationFn: upsertAdsShopMapping,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [...integrationKeys.all, 'ads-unassigned-rows'],
+      })
+      setSelectedAdsUnassignedRow(undefined)
+      adsMappingForm.resetFields()
+      showFeedbackToast(
+        'success',
+        'Mapping saved. The unread Amazon email will retry on the next scan.',
+      )
     },
   })
 
@@ -577,54 +568,6 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       render: (value: string) => value || '-',
     },
   ]
-  const adsMappingColumns: TableColumnsType<AdsUnassignedRow> = [
-    {
-      title: 'Report date',
-      dataIndex: 'reportDate',
-      render: (value: string) => value || '-',
-    },
-    {
-      title: 'Advertiser account',
-      dataIndex: 'advertiserAccountId',
-      render: (value: string | null) => value || '-',
-    },
-    {
-      title: 'Campaign / portfolio',
-      render: (_, row) =>
-        row.campaignName || row.portfolioName || row.campaignId || row.portfolioId || '-',
-    },
-    {
-      title: 'Action',
-      render: (_, row) => {
-        const hasExternalId = Boolean(row.campaignId || row.portfolioId)
-        return (
-          <Space>
-            <Select
-              aria-label={`Shop for ${row.id}`}
-              disabled={!canWriteAdsMappings || !hasExternalId}
-              options={(shops.data?.items ?? []).map((shop) => ({
-                label: shop.name,
-                value: shop.id,
-              }))}
-              placeholder="Select shop"
-              value={adsMappingShopIds[row.id]}
-              onChange={(shopId) =>
-                setAdsMappingShopIds((current) => ({ ...current, [row.id]: shopId }))
-              }
-            />
-            <Button
-              disabled={!canWriteAdsMappings || !hasExternalId || !adsMappingShopIds[row.id]}
-              loading={saveAdsMapping.isPending && saveAdsMapping.variables?.id === row.id}
-              onClick={() => saveAdsMapping.mutate(row)}
-            >
-              Map
-            </Button>
-          </Space>
-        )
-      },
-    },
-  ]
-
   const ordersTab = (
     <>
       {jobs.error ? (
@@ -1276,6 +1219,65 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     setDates: setAdsDates,
     resetPage: resetAdsPage,
   })
+  const adsMappingTab = (
+    <SectionCard title="Unassigned Amazon Ads rows">
+      <Typography.Paragraph type="secondary">
+        Map each campaign or portfolio to an internal shop. The unread Amazon report retries on the
+        next scan.
+      </Typography.Paragraph>
+      {canReadAdsImports ? (
+        <DataTable<AdsUnassignedRow>
+          rowKey="id"
+          loading={adsUnassignedRows.isLoading}
+          dataSource={adsUnassignedRows.data?.items ?? []}
+          pagination={false}
+          columns={[
+            {
+              title: 'Report date',
+              dataIndex: 'reportDate',
+              render: (value: string) => value.slice(0, 10),
+            },
+            { title: 'Advertiser account', dataIndex: 'advertiserAccountId' },
+            {
+              title: 'Campaign / portfolio',
+              render: (_, row) =>
+                row.campaignName || row.campaignId || row.portfolioName || row.portfolioId || '—',
+            },
+            {
+              title: 'Action',
+              render: (_, row) => (
+                <Button
+                  disabled={!canManageAdsMappings}
+                  onClick={() => {
+                    setSelectedAdsUnassignedRow(row)
+                    adsMappingForm.setFieldsValue({
+                      matchType: row.campaignId ? 'CAMPAIGN' : 'PORTFOLIO',
+                      shopId: undefined,
+                    })
+                  }}
+                >
+                  Map shop
+                </Button>
+              ),
+            },
+          ]}
+        />
+      ) : (
+        <Alert
+          type="info"
+          showIcon
+          message="Finance read permission is required to view unassigned Ads rows."
+        />
+      )}
+      {canReadAdsImports && !canManageAdsMappings ? (
+        <Alert
+          type="info"
+          showIcon
+          message="Finance write permission is required to change Ads mappings."
+        />
+      ) : null}
+    </SectionCard>
+  )
   const transactionsTab = renderFinanceImportTab({
     title: t('portal.integrations.transactions.title', {
       defaultValue: 'Amazon Transactions imports',
@@ -1314,38 +1316,6 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     setDates: setSettlementDates,
     resetPage: resetSettlementPage,
   })
-  const adsMappingTab = (
-    <SectionCard title="Ads mapping">
-      {canReadAdsImports ? (
-        <>
-          <Typography.Paragraph type="secondary">
-            Assign each unrecognized Amazon campaign or portfolio to a shop. Reimport the report
-            after saving a mapping to apply it.
-          </Typography.Paragraph>
-          {!canWriteAdsMappings ? (
-            <Alert
-              type="info"
-              showIcon
-              message="Global Finance write permission is required to save Ads mappings."
-            />
-          ) : null}
-          <DataTable
-            columns={adsMappingColumns}
-            dataSource={adsUnassignedRows.data?.items ?? []}
-            loading={adsUnassignedRows.isLoading}
-            rowKey="id"
-            pagination={false}
-          />
-        </>
-      ) : (
-        <Alert
-          type="info"
-          showIcon
-          message="Finance read permission is required to view Ads mappings."
-        />
-      )}
-    </SectionCard>
-  )
   const financeTab = (
     <UiTabs
       items={[
@@ -1550,6 +1520,60 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         onClose={() => setUploadOpen(false)}
         onSubmit={(input) => upload.mutate(input)}
       />
+      <Modal
+        title="Map Amazon Ads row to a shop"
+        open={Boolean(selectedAdsUnassignedRow)}
+        confirmLoading={saveAdsMapping.isPending}
+        okText="Save mapping"
+        onCancel={() => setSelectedAdsUnassignedRow(undefined)}
+        onOk={() => {
+          if (!selectedAdsUnassignedRow) return
+          adsMappingForm.validateFields().then(({ matchType, shopId }) => {
+            const externalId =
+              matchType === 'CAMPAIGN'
+                ? selectedAdsUnassignedRow.campaignId
+                : selectedAdsUnassignedRow.portfolioId
+            if (!externalId || !selectedAdsUnassignedRow.advertiserAccountId) return
+            saveAdsMapping.mutate({
+              advertiserAccountId: selectedAdsUnassignedRow.advertiserAccountId,
+              matchType,
+              externalId,
+              shopId,
+              salesChannelCode: selectedAdsUnassignedRow.salesChannelCode ?? undefined,
+              marketplaceCode: selectedAdsUnassignedRow.marketplaceCode ?? undefined,
+            } satisfies AdsShopMappingInput)
+          })
+        }}
+      >
+        <Form form={adsMappingForm} layout="vertical">
+          <Form.Item label="Match by" name="matchType" rules={[{ required: true }]}>
+            <Select
+              options={[
+                ...(selectedAdsUnassignedRow?.campaignId
+                  ? [{ value: 'CAMPAIGN', label: 'Campaign' }]
+                  : []),
+                ...(selectedAdsUnassignedRow?.portfolioId
+                  ? [{ value: 'PORTFOLIO', label: 'Portfolio' }]
+                  : []),
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Shop"
+            name="shopId"
+            rules={[{ required: true, message: 'Select a shop' }]}
+          >
+            <Select
+              options={(shops.data?.items ?? []).map((shop) => ({
+                value: shop.id,
+                label: shop.name,
+              }))}
+              showSearch
+              optionFilterProp="label"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </section>
   )
 }
