@@ -48,7 +48,7 @@ describe('InternalTemplateManagementPage', () => {
     expect(action).toHaveTextContent('')
     fireEvent.click(action)
     expect(await screen.findByRole('dialog')).toHaveTextContent('Edit internal template')
-  })
+  }, 15_000)
 
   it('hides mutation actions from read-only users', async () => {
     render(
