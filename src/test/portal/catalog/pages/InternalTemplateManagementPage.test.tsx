@@ -29,7 +29,10 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
 
 describe('InternalTemplateManagementPage', () => {
   afterEach(cleanup)
-  beforeEach(() => i18n.changeLanguage('en'))
+  beforeEach(async () => {
+    window.localStorage.setItem('lng.language', 'en')
+    await i18n.changeLanguage('en')
+  })
   it('shows a quick edit action for managers', async () => {
     render(
       <AppProviders>
