@@ -107,6 +107,7 @@ import { ImportUploadModal } from '@/features/portal/integrations/pages/ImportUp
 import { IntegrationWorkbenchPage } from '@/features/portal/integrations/pages/IntegrationWorkbenchPage'
 import { listShops, type Shop } from '@/features/portal/shops/api/shopApi'
 import { setPermissions } from '@/shared/auth/session'
+import i18n from '@/shared/i18n/i18n'
 
 const shop: Shop = {
   id: 'shop-1',
@@ -192,9 +193,11 @@ function renderWorkbench(path: string, currentAccount = account()) {
 describe('IntegrationWorkbenchPage', () => {
   afterEach(cleanup)
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     setPermissions(['ORDERS:READ'])
+    window.localStorage.setItem('lng.language', 'en')
+    await i18n.changeLanguage('en')
     vi.mocked(listShops).mockResolvedValue({
       items: [shop],
       pagination: { total: 1, page: 1, limit: 100 },
