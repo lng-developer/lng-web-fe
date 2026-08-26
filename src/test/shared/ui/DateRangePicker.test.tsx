@@ -2,10 +2,12 @@ import { render, screen } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 
+import i18n from '@/shared/i18n/i18n'
 import { DateRangePicker, serializeDateRange } from '@/shared/ui/DateRangePicker'
 
 describe('DateRangePicker', () => {
-  it('renders UTC filter boundaries as local calendar dates', () => {
+  it('renders UTC filter boundaries as local calendar dates', async () => {
+    await i18n.changeLanguage('en')
     render(
       <DateRangePicker
         aria-label="Created range"

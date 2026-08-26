@@ -26,6 +26,7 @@ import {
 import { integrationKeys } from '@/features/portal/integrations/api/integrationKeys'
 import { ImportJobPanel } from '@/features/portal/integrations/pages/ImportJobPanel'
 import { setPermissions } from '@/shared/auth/session'
+import i18n from '@/shared/i18n/i18n'
 
 const job = {
   id: 'job-1',
@@ -123,8 +124,9 @@ function renderPanel(
 }
 
 describe('ImportJobPanel', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    await i18n.changeLanguage('en')
     vi.mocked(getImportJobProgress).mockResolvedValue(progress)
     vi.mocked(listJobRawRecords).mockResolvedValue({
       items: [

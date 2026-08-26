@@ -71,7 +71,7 @@ describe('ProfileSetupPage', () => {
       target: { value: 'Parent' },
     })
     fireEvent.change(screen.getByLabelText('Emergency phone'), { target: { value: '0911111111' } })
-    fireEvent.change(screen.getByLabelText('Relationship'), { target: { value: 'PARENT' } })
+    await selectRelationship('Parent')
     const avatar = new File(['avatar'], 'avatar.png', { type: 'image/png' })
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [avatar] } })
     fireEvent.click(screen.getByRole('button', { name: /Complete setup/ }))
@@ -111,7 +111,7 @@ describe('ProfileSetupPage', () => {
       target: { value: 'Parent' },
     })
     fireEvent.change(screen.getByLabelText('Emergency phone'), { target: { value: '0911111111' } })
-    fireEvent.change(screen.getByLabelText('Relationship'), { target: { value: 'PARENT' } })
+    await selectRelationship('Parent')
     fireEvent.click(screen.getByRole('button', { name: /Complete setup/ }))
     await waitFor(() => expect(updateMyPersonalProfile).toHaveBeenCalledOnce())
 
@@ -139,7 +139,7 @@ describe('ProfileSetupPage', () => {
     fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
     expect(screen.getByLabelText('Emergency contact', { selector: 'input' })).toHaveValue('Parent')
     expect(screen.getByLabelText('Emergency phone')).toHaveValue('0911111111')
-    expect(screen.getByLabelText('Relationship')).toHaveValue('PARENT')
+    expect(screen.getByLabelText('Relationship').closest('.ant-select')).toHaveTextContent('Parent')
     expect(loadMyEmployeeProfile).toHaveBeenCalledTimes(1)
   })
 
@@ -162,4 +162,12 @@ function renderProfileSetup() {
       </MemoryRouter>
     </AntdApp>,
   )
+}
+
+async function selectRelationship(label: string) {
+  const select = document.querySelector('#emergencyContact_relation')
+  if (!select) throw new Error('Emergency contact relationship select was not rendered')
+  fireEvent.mouseDown(select)
+  const options = await screen.findAllByText(label)
+  fireEvent.click(options.find((option) => option.closest('.ant-select-item-option'))!)
 }
