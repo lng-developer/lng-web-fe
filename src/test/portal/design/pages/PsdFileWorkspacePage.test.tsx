@@ -1,5 +1,5 @@
 import { cleanup, fireEvent } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/design/api/designApi', () => ({
   listDesignAssignees: vi.fn().mockResolvedValue([
@@ -57,11 +57,16 @@ vi.mock('@/shared/media', () => ({
 }))
 
 import { PsdFileWorkspacePage } from '@/features/portal/design/pages/PsdFileWorkspacePage'
+import i18n from '@/shared/i18n/i18n'
 import { downloadMediaAsset } from '@/shared/media'
 import { renderWithTestProviders } from '@/test/helpers/testProviders'
 
 describe('PsdFileWorkspacePage', () => {
   afterEach(cleanup)
+  beforeEach(async () => {
+    window.localStorage.setItem('lng.language', 'en')
+    await i18n.changeLanguage('en')
+  })
 
   it('uses authenticated media actions and only previews image files', async () => {
     const view = renderWithTestProviders(<PsdFileWorkspacePage />)

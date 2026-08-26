@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import { InternalTemplateManagementPage } from '@/features/portal/catalog/pages/InternalTemplateManagementPage'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
   listInternalTemplates: vi.fn().mockResolvedValue({
@@ -28,8 +29,12 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
 }))
 
 describe('InternalTemplateManagementPage', () => {
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    queryClient.clear()
+  })
   beforeEach(async () => {
+    queryClient.clear()
     window.localStorage.setItem('lng.language', 'en')
     await i18n.changeLanguage('en')
   })
