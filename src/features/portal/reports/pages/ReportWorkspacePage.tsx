@@ -30,7 +30,6 @@ import {
   DateRangePicker,
   FilterBar,
   MetricCard,
-  PageHeader,
   SectionCard,
   UiTabLabel,
   UiTabs,
@@ -294,6 +293,13 @@ export function ReportWorkspacePage() {
           label: row.name || row.code || t('reports.filters.unnamed'),
         })),
       )}
+      <Button
+        icon={<DownloadOutlined />}
+        loading={exportCsv.isPending}
+        onClick={() => exportCsv.mutate()}
+      >
+        {t('reports.exportCsv')}
+      </Button>
     </FilterBar>
   )
 
@@ -459,19 +465,6 @@ export function ReportWorkspacePage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader
-        title={t('reports.title')}
-        description={t('reports.description')}
-        actions={
-          <Button
-            icon={<DownloadOutlined />}
-            loading={exportCsv.isPending}
-            onClick={() => exportCsv.mutate()}
-          >
-            {t('reports.exportCsv')}
-          </Button>
-        }
-      />
       {filterBar}
       <UiTabs
         activeKey={activeTab}

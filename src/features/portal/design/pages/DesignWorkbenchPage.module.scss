@@ -54,6 +54,11 @@
   gap: 10px;
 }
 
+.taskToolbarActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .detail {
   display: grid;
   gap: 20px;
@@ -218,5 +223,10 @@
 @media (max-width: 991px) {
   .metricsList {
     grid-template-columns: 1fr;
+  }
+
+  .taskToolbarActions {
+    justify-content: flex-start;
+    width: 100%;
   }
 }

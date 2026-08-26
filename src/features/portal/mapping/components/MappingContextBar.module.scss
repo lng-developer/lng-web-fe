@@ -1,7 +1,7 @@
 .bar {
   display: grid;
-  grid-template-columns: minmax(190px, 240px) minmax(180px, 220px) minmax(340px, 1fr) auto;
-  gap: 16px;
+  grid-template-columns: 220px 190px minmax(300px, 1fr) auto auto;
+  gap: 12px;
   align-items: center;
 }
 

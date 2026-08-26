@@ -19,7 +19,6 @@ import {
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
-  PageHeader,
   SectionCard,
   StatusTag,
   UiTabLabel,
@@ -446,18 +445,14 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   )
 
   const extensionTab = (
-    <SectionCard
-      title={t('portal.integrations.extension.title', {
-        defaultValue: 'Amazon Extension setup',
-      })}
-    >
+    <SectionCard title={t('portal.integrations.extension.title')}>
       <div className={styles.extensionSetup}>
         <Form
           form={tokenForm}
           layout="vertical"
           initialValues={{
             environment: 'development',
-            name: 'Amazon Extension',
+            name: t('portal.integrations.extension.defaultTokenName'),
             shopId: writableShops[0]?.id ?? shops.data?.items[0]?.id,
           }}
           onFinish={(values) => createToken.mutate(values)}
@@ -477,59 +472,48 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
               />
             </Form.Item>
             <Form.Item
-              label={t('portal.integrations.extension.environment', {
-                defaultValue: 'Environment',
-              })}
+              label={t('portal.integrations.extension.environment')}
               name="environment"
               rules={[{ required: true }]}
             >
               <Select
                 options={[
-                  { label: 'Development', value: 'development' },
-                  { label: 'Production', value: 'production' },
+                  { label: t('portal.integrations.extension.development'), value: 'development' },
+                  { label: t('portal.integrations.extension.production'), value: 'production' },
                 ]}
               />
             </Form.Item>
             <Form.Item
-              label={t('portal.integrations.extension.tokenName', {
-                defaultValue: 'Token name',
-              })}
+              label={t('portal.integrations.extension.tokenName')}
               name="name"
               rules={[{ required: true }]}
             >
               <Input />
             </Form.Item>
-            <Form.Item label="API Base URL">
+            <Form.Item label={t('portal.integrations.extension.apiBaseUrl')}>
               <Typography.Text copyable>{apiBaseUrl}</Typography.Text>
             </Form.Item>
-            <Form.Item label="Shop ID">
+            <Form.Item label={t('portal.integrations.extension.shopId')}>
               <Typography.Text copyable>{selectedShopId || '-'}</Typography.Text>
             </Form.Item>
-            <Form.Item label="API Access Token">
+            <Form.Item label={t('portal.integrations.extension.apiAccessToken')}>
               {createdToken ? (
                 <Typography.Text copyable className={styles.tokenText}>
                   {createdToken}
                 </Typography.Text>
               ) : (
                 <Typography.Text type="secondary">
-                  {t('portal.integrations.extension.createTokenHint', {
-                    defaultValue: 'Create a token, then copy it into the extension.',
-                  })}
+                  {t('portal.integrations.extension.createTokenHint')}
                 </Typography.Text>
               )}
             </Form.Item>
           </div>
           <Space wrap>
             <Button type="primary" htmlType="submit" loading={createToken.isPending}>
-              {t('portal.integrations.extension.createToken', {
-                defaultValue: 'Create token',
-              })}
+              {t('portal.integrations.extension.createToken')}
             </Button>
             <Typography.Text type="secondary">
-              {t('portal.integrations.extension.flowHint', {
-                defaultValue:
-                  'After saving these values in Chrome, use Import Orders in the extension.',
-              })}
+              {t('portal.integrations.extension.flowHint')}
             </Typography.Text>
           </Space>
         </Form>
@@ -537,9 +521,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
           <Alert
             type="warning"
             showIcon
-            message={t('portal.integrations.extension.tokenWarning', {
-              defaultValue: 'This token is shown once. Copy it before leaving the page.',
-            })}
+            message={t('portal.integrations.extension.tokenWarning')}
           />
         ) : null}
         {createToken.error ? (
@@ -707,73 +689,45 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.integrations.title', { defaultValue: 'Integrations' })}
-        description={t('portal.integrations.description', {
-          defaultValue: 'Manage imports, extension setup, and marketplace data sync evidence.',
-        })}
-        actions={
-          canWrite ? (
-            <Button
-              icon={<UploadOutlined aria-hidden />}
-              type="primary"
-              onClick={() => setUploadOpen(true)}
-            >
-              {t('portal.integrations.upload.action', { defaultValue: 'Upload report' })}
-            </Button>
-          ) : null
-        }
-      />
       <UiTabs
         destroyOnHidden={false}
+        tabBarExtraContent={
+          canWrite ? (
+            <div className={styles.tabsAction}>
+              <Button
+                icon={<UploadOutlined aria-hidden />}
+                type="primary"
+                onClick={() => setUploadOpen(true)}
+              >
+                {t('portal.integrations.upload.action', { defaultValue: 'Upload report' })}
+              </Button>
+            </div>
+          ) : null
+        }
         items={[
           {
             key: 'orders',
-            label: (
-              <UiTabLabel>
-                {t('portal.integrations.tabs.orders', { defaultValue: 'Orders' })}
-              </UiTabLabel>
-            ),
+            label: <UiTabLabel>{t('portal.integrations.tabs.orders')}</UiTabLabel>,
             children: ordersTab,
           },
           {
             key: 'extension',
-            label: (
-              <UiTabLabel>
-                {t('portal.integrations.tabs.extension', { defaultValue: 'Amazon Extension' })}
-              </UiTabLabel>
-            ),
+            label: <UiTabLabel>{t('portal.integrations.tabs.extension')}</UiTabLabel>,
             children: extensionTab,
           },
           {
             key: 'ads',
-            label: (
-              <UiTabLabel>
-                {t('portal.integrations.tabs.ads', { defaultValue: 'Amazon Ads' })}
-              </UiTabLabel>
-            ),
+            label: <UiTabLabel>{t('portal.integrations.tabs.ads')}</UiTabLabel>,
             children: adsTab,
           },
           {
             key: 'transactions',
-            label: (
-              <UiTabLabel>
-                {t('portal.integrations.tabs.transactions', {
-                  defaultValue: 'Amazon Transactions',
-                })}
-              </UiTabLabel>
-            ),
+            label: <UiTabLabel>{t('portal.integrations.tabs.transactions')}</UiTabLabel>,
             children: transactionsTab,
           },
           {
             key: 'settlements',
-            label: (
-              <UiTabLabel>
-                {t('portal.integrations.tabs.settlements', {
-                  defaultValue: 'Amazon Settlements',
-                })}
-              </UiTabLabel>
-            ),
+            label: <UiTabLabel>{t('portal.integrations.tabs.settlements')}</UiTabLabel>,
             children: settlementsTab,
           },
         ]}

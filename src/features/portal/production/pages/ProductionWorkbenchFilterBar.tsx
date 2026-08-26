@@ -1,7 +1,7 @@
-import type { FC } from 'react'
+import { type FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined } from '@ant-design/icons'
-import { Button, Input, Select } from 'antd'
+import { DownloadOutlined, SyncOutlined } from '@ant-design/icons'
+import { Button, Input, Select, Space } from 'antd'
 
 import { FilterBar } from '@/shared/ui'
 
@@ -30,13 +30,17 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly canAssignScale: boolean
   readonly scaleAssigneeOptions: AssigneeOption[]
   readonly selectedRowCount: number
+  readonly exportCsvLoading: boolean
   readonly exportQcLoading: boolean
+  readonly recheckLoading: boolean
   readonly reassignLoading: boolean
   readonly onSearchChange: (value: string) => void
   readonly onSearchSubmit: (value: string) => void
   readonly onStatusChange: (value?: ProductionStatus) => void
   readonly onScaleDifficultyChange: (value?: ScaleDifficultyLevel) => void
+  readonly onExportCsv: () => void
   readonly onExportQc: () => void
+  readonly onRecheck: () => void
   readonly onScaleAssigneeChange: (value?: string) => void
   readonly onBulkAssign: () => void
 }> = ({
@@ -49,13 +53,17 @@ export const ProductionWorkbenchFilterBar: FC<{
   canAssignScale,
   scaleAssigneeOptions,
   selectedRowCount,
+  exportCsvLoading,
   exportQcLoading,
+  recheckLoading,
   reassignLoading,
   onSearchChange,
   onSearchSubmit,
   onStatusChange,
   onScaleDifficultyChange,
+  onExportCsv,
   onExportQc,
+  onRecheck,
   onScaleAssigneeChange,
   onBulkAssign,
 }) => {
@@ -116,6 +124,16 @@ export const ProductionWorkbenchFilterBar: FC<{
             </Button>
           </>
         ) : null}
+        <Space className={styles.filterActions}>
+          <Button icon={<DownloadOutlined />} loading={exportCsvLoading} onClick={onExportCsv}>
+            {t('portal.production.exportCsv')}
+          </Button>
+          {canAssignScale ? (
+            <Button icon={<SyncOutlined />} loading={recheckLoading} onClick={onRecheck}>
+              {t('portal.production.recheckBlocked')}
+            </Button>
+          ) : null}
+        </Space>
       </FilterBar>
     </div>
   )

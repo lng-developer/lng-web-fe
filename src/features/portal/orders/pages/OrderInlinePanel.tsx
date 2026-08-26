@@ -1145,14 +1145,6 @@ function OrderItemPanel({
           items={[
             { key: 'qty', label: t('orders.fields.quantity'), children: item.item.quantity },
             {
-              key: 'paid',
-              label: t('orders.fields.customerPaid'),
-              children: formatMinorMoney(
-                item.pricing.customerPaidAmount,
-                item.pricing.currency ?? 'USD',
-              ),
-            },
-            {
               key: 'base',
               label: t('orders.fields.totalCost'),
               children: formatMinorMoney(

@@ -51,7 +51,6 @@ import {
   FileUpload,
   FilterBar,
   MetricCard,
-  PageHeader,
   SectionCard,
   StatusTag,
   UiButtonTabs,
@@ -735,33 +734,6 @@ export function DesignWorkbenchPage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.design.title')}
-        description={t('portal.design.description')}
-        actions={
-          <Space>
-            <Button
-              icon={<DownloadOutlined />}
-              loading={exportCsv.isPending}
-              onClick={handleExportCsv}
-            >
-              {t('portal.design.exportCsv')}
-            </Button>
-            <Button href="/portal/design/files">{t('portal.design.psdFiles')}</Button>
-            {canAssign ? (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onMouseEnter={prefetchCreateData}
-                onClick={handleCreateTaskOpen}
-              >
-                {t('portal.design.createDesignTask')}
-              </Button>
-            ) : null}
-          </Space>
-        }
-      />
-
       <div className={styles.metricsList}>
         <MetricCard
           icon={<AppstoreOutlined />}
@@ -803,6 +775,26 @@ export function DesignWorkbenchPage() {
               onChange={handleSalesChannelChange}
             />
           </div>
+          <Space className={styles.taskToolbarActions}>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exportCsv.isPending}
+              onClick={handleExportCsv}
+            >
+              {t('portal.design.exportCsv')}
+            </Button>
+            <Button href="/portal/design/files">{t('portal.design.psdFiles')}</Button>
+            {canAssign ? (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onMouseEnter={prefetchCreateData}
+                onClick={handleCreateTaskOpen}
+              >
+                {t('portal.design.createDesignTask')}
+              </Button>
+            ) : null}
+          </Space>
           <FilterBar label={t('portal.design.filters')} contentClassName={styles.filters}>
             <Input.Search
               className={styles.search}

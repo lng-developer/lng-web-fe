@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 
-import { FeedbackAlert, PageHeader } from '@/shared/ui'
+import { FeedbackAlert } from '@/shared/ui'
 
 import { type CreateShopInput } from '../api/shopApi'
 import { ShopWorkspaceMetrics } from './components/ShopWorkspaceMetrics'
@@ -17,18 +17,6 @@ export function ShopWorkspacePage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.shops.title')}
-        description={t('portal.shops.description')}
-        actions={
-          value.canCreate ? (
-            <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={handle.createOpen}>
-              {t('portal.shops.createAction')}
-            </Button>
-          ) : null
-        }
-      />
-
       <ShopWorkspaceMetrics
         totalShops={value.totalShops}
         activeCount={value.activeCount}
@@ -60,6 +48,13 @@ export function ShopWorkspacePage() {
         onPageChange={handle.pageChange}
         onSearchChange={handle.searchChange}
         onStatusChange={handle.statusChange}
+        actions={
+          value.canCreate ? (
+            <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={handle.createOpen}>
+              {t('portal.shops.createAction')}
+            </Button>
+          ) : null
+        }
       />
 
       <ShopEditorModal

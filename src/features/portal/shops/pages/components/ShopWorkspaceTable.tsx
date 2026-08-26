@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
@@ -28,6 +28,7 @@ export function ShopWorkspaceTable({
   onPageChange,
   onSearchChange,
   onStatusChange,
+  actions,
 }: {
   account: CurrentAccount
   canWriteAnyShop: boolean
@@ -40,6 +41,7 @@ export function ShopWorkspaceTable({
   onPageChange: (page: number) => void
   onSearchChange: (value: string) => void
   onStatusChange: (status?: ShopStatus) => void
+  actions?: ReactNode
 }) {
   const { t } = useTranslation()
   const columns = useMemo<TableColumnsType<Shop>>(
@@ -143,6 +145,7 @@ export function ShopWorkspaceTable({
               value={search}
               onSearchChange={onSearchChange}
             />
+
             <Select
               aria-label={t('portal.shops.status')}
               allowClear
@@ -155,6 +158,8 @@ export function ShopWorkspaceTable({
               value={params.status}
               onChange={onStatusChange}
             />
+
+            <div className={styles.filterActions}>{actions}</div>
           </FilterBar>
         }
       />

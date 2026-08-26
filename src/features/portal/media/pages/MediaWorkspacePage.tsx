@@ -162,17 +162,7 @@ export function MediaWorkspacePage() {
   ]
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <PageHeader
-        title={t('media.title')}
-        description={t('media.description')}
-        actions={
-          account.permissions.includes('MEDIA:WRITE') ? (
-            <Button type="primary" icon={<UploadOutlined />} onClick={() => setUploadOpen(true)}>
-              {t('media.upload.action')}
-            </Button>
-          ) : undefined
-        }
-      />
+      <PageHeader title={t('media.title')} description={t('media.description')} />
       <SectionCard>
         <CoreDataTable
           rowKey="id"
@@ -267,6 +257,15 @@ export function MediaWorkspacePage() {
                 value={dates}
                 onChange={updateFilter(setDates)}
               />
+              {account.permissions.includes('MEDIA:WRITE') ? (
+                <Button
+                  type="primary"
+                  icon={<UploadOutlined />}
+                  onClick={() => setUploadOpen(true)}
+                >
+                  {t('media.upload.action')}
+                </Button>
+              ) : null}
             </FilterBar>
           }
         />

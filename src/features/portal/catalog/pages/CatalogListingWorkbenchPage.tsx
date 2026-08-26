@@ -421,26 +421,7 @@ export function CatalogListingWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.catalog.title')}
-        description={t('portal.catalog.description')}
-        actions={
-          <Space>
-            <Button
-              icon={<DownloadOutlined />}
-              loading={exportCsv.isPending}
-              onClick={() => exportCsv.mutate()}
-            >
-              {t('portal.catalog.exportCsv')}
-            </Button>
-            {canWrite() ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing('create')}>
-                {t('portal.catalog.create')}
-              </Button>
-            ) : null}
-          </Space>
-        }
-      />
+      <PageHeader title={t('portal.catalog.title')} description={t('portal.catalog.description')} />
 
       {listings.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.catalog.unavailable')} />
@@ -555,6 +536,20 @@ export function CatalogListingWorkbenchPage({
             { value: 'ready', label: t('portal.catalog.psd.readyTag') },
           ]}
         />
+        <Space className={styles.filterActions}>
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportCsv.isPending}
+            onClick={() => exportCsv.mutate()}
+          >
+            {t('portal.catalog.exportCsv')}
+          </Button>
+          {canWrite() ? (
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing('create')}>
+              {t('portal.catalog.create')}
+            </Button>
+          ) : null}
+        </Space>
       </div>
 
       <div className={styles.tableShell}>

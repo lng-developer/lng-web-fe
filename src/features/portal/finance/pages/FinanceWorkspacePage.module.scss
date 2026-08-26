@@ -36,6 +36,10 @@
   min-width: 280px;
   flex-grow: 2;
 }
+.filterActions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
 .detail {
   width: 100%;
 }

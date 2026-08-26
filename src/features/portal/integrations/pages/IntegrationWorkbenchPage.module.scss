@@ -11,6 +11,13 @@
   width: 180px;
 }
 
+.tabsAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 36px;
+}
+
 .extensionSetup {
   display: grid;
   gap: 16px;
@@ -77,6 +84,12 @@
 }
 
 @media (max-width: 640px) {
+  .tabsAction {
+    justify-content: flex-start;
+    width: 100%;
+    margin-top: 8px;
+  }
+
   .extensionGrid {
     grid-template-columns: 1fr;
   }

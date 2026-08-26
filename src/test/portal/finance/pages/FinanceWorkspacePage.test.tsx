@@ -1,3 +1,4 @@
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -31,6 +32,22 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
   getOrderItemFinanceSnapshot: vi.fn(),
   recalculateOrder: vi.fn(),
 }))
+
+function LocationProbe() {
+  const location = useLocation()
+  return <output aria-label="Current location">{location.pathname + location.search}</output>
+}
+
+function renderPage(initialEntry = '/portal/finance') {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <AppProviders>
+        <FinanceWorkspacePage />
+        <LocationProbe />
+      </AppProviders>
+    </MemoryRouter>,
+  )
+}
 
 describe('FinanceWorkspacePage', () => {
   beforeEach(async () => {
@@ -76,7 +93,7 @@ describe('FinanceWorkspacePage', () => {
           calculationHistory: [],
         },
       ],
-      pagination: { total: 0, page: 1, limit: 20 },
+      pagination: { total: 120, page: 1, limit: 20 },
       summaryByCurrency: [
         {
           currency: 'USD',
@@ -105,7 +122,7 @@ describe('FinanceWorkspacePage', () => {
     })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [],
-      pagination: { total: 0, page: 1, limit: 20 },
+      pagination: { total: 120, page: 1, limit: 20 },
     })
     vi.mocked(getOrderFinanceSummary).mockResolvedValue({
       orderId: 'order-1',
@@ -181,11 +198,7 @@ describe('FinanceWorkspacePage', () => {
   })
 
   it('shows every currency summary without exposing option IDs', async () => {
-    render(
-      <AppProviders>
-        <FinanceWorkspacePage />
-      </AppProviders>,
-    )
+    renderPage()
 
     expect(await screen.findByText('USD')).toBeVisible()
     expect(screen.getByText('VND')).toBeVisible()
@@ -195,11 +208,7 @@ describe('FinanceWorkspacePage', () => {
   })
 
   it('applies readable team and channel filters to the snapshot query', async () => {
-    render(
-      <AppProviders>
-        <FinanceWorkspacePage />
-      </AppProviders>,
-    )
+    renderPage()
     await screen.findByText('USD')
 
     fireEvent.mouseDown(screen.getByLabelText('Sales channel'))
@@ -224,11 +233,7 @@ describe('FinanceWorkspacePage', () => {
       ...accountState.current,
       permissions: ['FINANCE:READ', 'FINANCE:WRITE'],
     }
-    render(
-      <AppProviders>
-        <FinanceWorkspacePage />
-      </AppProviders>,
-    )
+    renderPage()
 
     fireEvent.click((await screen.findByText('ORDER-100')).closest('tr')!)
     expect(await screen.findByText('Additional fulfillment cost')).toBeInTheDocument()
@@ -253,11 +258,7 @@ describe('FinanceWorkspacePage', () => {
         },
       ],
     }
-    render(
-      <AppProviders>
-        <FinanceWorkspacePage />
-      </AppProviders>,
-    )
+    renderPage()
     fireEvent.click((await screen.findByText('ORDER-100')).closest('tr')!)
 
     expect(await screen.findByText('Financial breakdown')).toBeInTheDocument()
@@ -265,11 +266,7 @@ describe('FinanceWorkspacePage', () => {
   })
 
   it('opens a direct item snapshot returned by the backend', async () => {
-    render(
-      <AppProviders>
-        <FinanceWorkspacePage />
-      </AppProviders>,
-    )
+    renderPage()
     fireEvent.click((await screen.findByText('ORDER-100')).closest('tr')!)
     fireEvent.click(await screen.findByRole('button', { name: 'Inspect item' }))
 
@@ -283,15 +280,56 @@ describe('FinanceWorkspacePage', () => {
       permissions: ['FINANCE:READ', 'FINANCE:WRITE'],
     }
     vi.mocked(recalculateOrder).mockRejectedValueOnce(new Error('Cost service unavailable'))
-    render(
-      <AppProviders>
-        <FinanceWorkspacePage />
-      </AppProviders>,
-    )
+    renderPage()
     fireEvent.click((await screen.findByText('ORDER-100')).closest('tr')!)
     fireEvent.click(await screen.findByRole('button', { name: /Recalculate order/ }))
 
     expect(await screen.findByText('Finance action failed')).toBeInTheDocument()
     expect(screen.getByText('Cost service unavailable')).toBeInTheDocument()
+  })
+
+  it('restores the selected finance tab from the URL after reload', async () => {
+    const firstLoad = renderPage()
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Imports & reconciliation' }))
+    await waitFor(() =>
+      expect(screen.getByRole('status', { name: 'Current location' })).toHaveTextContent(
+        '/portal/finance?tab=imports',
+      ),
+    )
+
+    firstLoad.unmount()
+    renderPage('/portal/finance?tab=imports')
+
+    expect(await screen.findByRole('tab', { name: 'Imports & reconciliation' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+  })
+
+  it('reloads finance snapshots when the shared page-size control changes', async () => {
+    renderPage()
+
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Rows per page' }))
+    fireEvent.click((await screen.findAllByText('50')).at(-1)!)
+
+    await waitFor(() =>
+      expect(listFinanceSnapshots).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 50, page: 1 }),
+      ),
+    )
+  })
+
+  it('reloads import batches when their shared page-size control changes', async () => {
+    renderPage('/portal/finance?tab=imports')
+
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Rows per page' }))
+    fireEvent.click((await screen.findAllByText('50')).at(-1)!)
+
+    await waitFor(() =>
+      expect(listImportBatches).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 50, page: 1 }),
+      ),
+    )
   })
 })

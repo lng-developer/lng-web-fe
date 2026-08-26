@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData } from 'react-router-dom'
+import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { DownloadOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
@@ -15,7 +15,6 @@ import {
   type DateRangeValue,
   FilterBar,
   MetricCard,
-  PageHeader,
   SearchInput,
   SectionCard,
   StatusTag,
@@ -44,7 +43,8 @@ import {
 import { FinanceImportModal } from './FinanceImportModal'
 import styles from './FinanceWorkspacePage.module.scss'
 
-const PAGE_SIZE = 20
+const DEFAULT_PAGE_SIZE = 20
+type FinanceTab = 'overview' | 'imports'
 const money = (amount: number | null | undefined, currency = 'USD') =>
   amount == null
     ? '—'
@@ -63,8 +63,13 @@ export function FinanceWorkspacePage() {
   const canWrite = permissions.includes('FINANCE:WRITE')
   const client = useQueryClient()
   const toast = useFeedbackToast()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab')
+  const activeTab: FinanceTab = globalRead && requestedTab === 'imports' ? 'imports' : 'overview'
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [importPage, setImportPage] = useState(1)
+  const [importPageSize, setImportPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [costStatus, setCostStatus] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
@@ -77,6 +82,19 @@ export function FinanceWorkspacePage() {
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch>()
   const [selectedItemId, setSelectedItemId] = useState<string>()
   const [importOpen, setImportOpen] = useState(false)
+
+  const handleTabChange = useCallback(
+    (nextTab: string) => {
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (nextTab === 'imports' && globalRead) {
+        nextSearchParams.set('tab', 'imports')
+      } else {
+        nextSearchParams.delete('tab')
+      }
+      setSearchParams(nextSearchParams, { replace: true })
+    },
+    [globalRead, searchParams, setSearchParams],
+  )
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
@@ -121,7 +139,7 @@ export function FinanceWorkspacePage() {
   const queryParams = useMemo(
     () => ({
       page,
-      limit: PAGE_SIZE,
+      limit: pageSize,
       externalOrderId: search || undefined,
       costStatus,
       salesChannelCode,
@@ -133,6 +151,7 @@ export function FinanceWorkspacePage() {
     }),
     [
       page,
+      pageSize,
       search,
       costStatus,
       salesChannelCode,
@@ -149,8 +168,8 @@ export function FinanceWorkspacePage() {
     retry: false,
   })
   const batches = useQuery({
-    queryKey: ['finance', 'imports', importPage],
-    queryFn: () => listImportBatches({ page: importPage, limit: PAGE_SIZE }),
+    queryKey: ['finance', 'imports', importPage, importPageSize],
+    queryFn: () => listImportBatches({ page: importPage, limit: importPageSize }),
     enabled: globalRead,
     retry: false,
   })
@@ -402,6 +421,18 @@ export function FinanceWorkspacePage() {
             { value: 'MISSING', label: t('finance.costStatuses.MISSING') },
           ]}
         />
+        <Space className={styles.filterActions}>
+          <Typography.Text type="secondary">
+            {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
+          </Typography.Text>
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportCsv.isPending}
+            onClick={() => exportCsv.mutate()}
+          >
+            {t('finance.actions.exportCsv')}
+          </Button>
+        </Space>
       </FilterBar>
       <CoreDataTable
         rowKey="id"
@@ -411,36 +442,23 @@ export function FinanceWorkspacePage() {
         onRow={(row) => ({ onClick: () => setSelected(row) })}
         pagination={{
           current: page,
-          pageSize: PAGE_SIZE,
+          pageSize,
           total: snapshots.data?.pagination.total,
-          showSizeChanger: false,
-          onChange: setPage,
+          onChange: (nextPage, nextPageSize) => {
+            setPage(nextPage)
+            setPageSize(nextPageSize)
+          },
         }}
+        scroll={{ x: '100%' }}
       />
     </SectionCard>
   )
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('finance.title')}
-        description={t('finance.description')}
-        actions={
-          <Space>
-            <Typography.Text type="secondary">
-              {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
-            </Typography.Text>
-            <Button
-              icon={<DownloadOutlined />}
-              loading={exportCsv.isPending}
-              onClick={() => exportCsv.mutate()}
-            >
-              {t('finance.actions.exportCsv')}
-            </Button>
-          </Space>
-        }
-      />
       <UiTabs
+        activeKey={activeTab}
         destroyOnHidden={false}
+        onChange={handleTabChange}
         items={[
           {
             key: 'overview',
@@ -504,11 +522,14 @@ export function FinanceWorkspacePage() {
                         onRow={(row) => ({ onClick: () => setSelectedBatch(row) })}
                         pagination={{
                           current: importPage,
-                          pageSize: PAGE_SIZE,
+                          pageSize: importPageSize,
                           total: batches.data?.pagination.total,
-                          showSizeChanger: false,
-                          onChange: setImportPage,
+                          onChange: (nextPage, nextPageSize) => {
+                            setImportPage(nextPage)
+                            setImportPageSize(nextPageSize)
+                          },
                         }}
+                        scroll={{ x: '100%' }}
                       />
                     </SectionCard>
                   ),

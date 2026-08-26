@@ -228,7 +228,7 @@ const validateImportFile = (
   return IMPORT_CSV_EXTENSIONS.includes(extension) ? undefined : t('portal.vendors.import.fileType')
 }
 
-export function VendorWorkspacePage() {
+export const VendorWorkspacePage = () => {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const canWrite = getGlobalPermissions().includes('VENDORS:WRITE')
@@ -730,28 +730,6 @@ export function VendorWorkspacePage() {
 
   return (
     <section className={styles.page}>
-      <div className={styles.header}>
-        <div className={styles.headerCopy}>
-          <Typography.Text className={styles.kicker}>{t('portal.vendors.kicker')}</Typography.Text>
-          <Typography.Title level={2}>{t('portal.vendors.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('portal.vendors.description')}</Typography.Text>
-        </div>
-        <div className={styles.headerStats}>
-          <div>
-            <Typography.Text type="secondary">{t('portal.vendors.metrics.active')}</Typography.Text>
-            <Typography.Text strong>
-              {activeCount} / {totalCount}
-            </Typography.Text>
-          </div>
-          <div>
-            <Typography.Text type="secondary">
-              {t('portal.vendors.metrics.integrated')}
-            </Typography.Text>
-            <Typography.Text strong>{integratedCount}</Typography.Text>
-          </div>
-        </div>
-      </div>
-
       <div className={styles.metrics}>
         <MetricCard
           icon={<AppstoreOutlined />}
@@ -783,18 +761,7 @@ export function VendorWorkspacePage() {
         />
       </div>
 
-      <SectionCard
-        title={
-          <div className={styles.directoryHeader}>
-            <div>
-              <Typography.Title level={3}>{t('portal.vendors.directory')}</Typography.Title>
-              <Typography.Text type="secondary">
-                {t('portal.vendors.directoryDescription')}
-              </Typography.Text>
-            </div>
-          </div>
-        }
-      >
+      <SectionCard>
         <UiTabs
           activeKey={tab}
           onChange={(value) => setTab(value as VendorManagementTab)}

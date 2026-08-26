@@ -2459,6 +2459,13 @@
       "dateRange": "Khoảng ngày tạo",
       "retry": "Thử lại",
       "cancel": "Hủy",
+      "tabs": {
+        "orders": "Đơn hàng",
+        "extension": "Tiện ích Amazon",
+        "ads": "Quảng cáo Amazon",
+        "transactions": "Giao dịch Amazon",
+        "settlements": "Đối soát Amazon"
+      },
       "jobs": {
         "createdAt": "Đã tạo",
         "source": "Nguồn",
@@ -2536,6 +2543,21 @@
         "fileType": "Chọn định dạng báo cáo được hỗ trợ",
         "failed": "Tải lên thất bại",
         "submit": "Tải lên"
+      },
+      "extension": {
+        "title": "Thiết lập tiện ích Amazon",
+        "environment": "Môi trường",
+        "development": "Phát triển",
+        "production": "Sản xuất",
+        "tokenName": "Tên token",
+        "defaultTokenName": "Tiện ích Amazon",
+        "apiBaseUrl": "URL API cơ sở",
+        "shopId": "Mã cửa hàng",
+        "apiAccessToken": "Token truy cập API",
+        "createTokenHint": "Tạo token rồi sao chép vào tiện ích.",
+        "createToken": "Tạo token",
+        "flowHint": "Sau khi lưu các giá trị này trong Chrome, dùng Import Orders trong tiện ích.",
+        "tokenWarning": "Token này chỉ hiển thị một lần. Hãy sao chép trước khi rời trang."
       },
       "panel": {
         "title": "Lượt nhập đơn",

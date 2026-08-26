@@ -7,6 +7,7 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import { getMyHrWorkspace } from '@/features/hr/api/hrTimeApi'
 import { StaffWorkspacePage } from '@/features/hr/pages/StaffWorkspacePage'
 import { setPermissions } from '@/shared/auth/session'
+import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/features/hr/api/hrTimeApi', () => ({
@@ -20,11 +21,13 @@ describe('StaffWorkspacePage', () => {
   const attendanceDateKey = dayjs().date(2).format('YYYY-MM-DD')
   const leaveDateKey = dayjs().date(3).format('YYYY-MM-DD')
   const holidayDateKey = dayjs().date(4).format('YYYY-MM-DD')
+  let workspaceData: Awaited<ReturnType<typeof getMyHrWorkspace>>
 
-  beforeEach(() => {
+  beforeEach(async () => {
     queryClient.clear()
     setPermissions(['HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'])
-    vi.mocked(getMyHrWorkspace).mockResolvedValue({
+    await i18n.changeLanguage('en')
+    workspaceData = {
       dateKey,
       profile: {
         id: 'profile-1',
@@ -140,7 +143,8 @@ describe('StaffWorkspacePage', () => {
           publishedAt: null,
         },
       ],
-    })
+    }
+    vi.mocked(getMyHrWorkspace).mockResolvedValue(workspaceData)
   })
   afterEach(() => {
     cleanup()
@@ -160,6 +164,70 @@ describe('StaffWorkspacePage', () => {
     expect(screen.getByText('Day')).toBeVisible()
     expect(screen.getByText('Office update')).toBeVisible()
     expect(screen.getByText(/1[,.]100/)).toBeVisible()
+  })
+
+  it('translates request statuses and leave types in the my requests card', async () => {
+    await i18n.changeLanguage('vi')
+    vi.mocked(getMyHrWorkspace).mockResolvedValue({
+      ...workspaceData,
+      leave: {
+        ...workspaceData.leave,
+        requests: [
+          {
+            id: 'leave-cancelled',
+            profileId: 'profile-1',
+            leaveType: 'ANNUAL',
+            portion: 'FULL_DAY',
+            startDateKey: leaveDateKey,
+            endDateKey: leaveDateKey,
+            requestedUnits: 1,
+            reason: '',
+            status: 'CANCELLED',
+          },
+          {
+            id: 'leave-pending',
+            profileId: 'profile-1',
+            leaveType: 'ANNUAL',
+            portion: 'FULL_DAY',
+            startDateKey: leaveDateKey,
+            endDateKey: leaveDateKey,
+            requestedUnits: 1,
+            reason: '',
+            status: 'PENDING',
+          },
+        ],
+      },
+      overtime: {
+        requests: [
+          {
+            id: 'overtime-pending',
+            profileId: 'profile-1',
+            workDateKey: attendanceDateKey,
+            plannedStartTime: '17:30',
+            plannedEndTime: '19:00',
+            requestedMinutes: 90,
+            approvedMinutes: null,
+            reason: '',
+            status: 'PENDING',
+          },
+        ],
+      },
+    })
+
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <StaffWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Đã huỷ')).toBeVisible()
+    expect(screen.getAllByText('Đang chờ')).toHaveLength(2)
+    expect(screen.getAllByText('Nghỉ phép năm')).toHaveLength(2)
+    expect(screen.queryByText('CANCELLED')).not.toBeInTheDocument()
+    expect(screen.queryByText('PENDING')).not.toBeInTheDocument()
+    expect(screen.queryByText('ANNUAL')).not.toBeInTheDocument()
   })
 
   it('shows monthly attendance, leave, overtime and holiday events in a calendar', async () => {

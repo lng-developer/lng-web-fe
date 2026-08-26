@@ -45,7 +45,7 @@ export const useAttendance = () => {
   const range = {
     dateFrom: month.startOf('month').format('YYYY-MM-DD'),
     dateTo: month.endOf('month').format('YYYY-MM-DD'),
-    limit: 100,
+    limit: 1000,
   }
 
   useQuery({
@@ -65,7 +65,7 @@ export const useAttendance = () => {
       listMyAttendance({
         dateFrom: dayjs().format('YYYY-MM-DD'),
         dateTo: dayjs().format('YYYY-MM-DD'),
-        limit: 10,
+        limit: 1000,
       }),
     enabled: canWrite,
   })
@@ -188,8 +188,10 @@ export const useAttendance = () => {
   ]
 
   const pagination = {
-    defaultPageSize: 10,
+    defaultPageSize: 20,
     pageSizeOptions: PAGE_SIZE_OPTIONS,
+    showSizeChanger: true,
+    hideOnSinglePage: false,
   }
 
   return [

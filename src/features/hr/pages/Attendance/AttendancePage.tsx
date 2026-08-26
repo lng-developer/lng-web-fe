@@ -44,8 +44,37 @@ export const AttendancePage = () => {
     },
     { records, canRead, canWrite },
   ] = useAttendance()
+  const attendanceActions = canWrite ? (
+    hasCompletedAttendance ? (
+      <Tag color="success" icon={<CheckCircleOutlined />}>
+        {t('hrOperations.attendance.completedToday', {
+          checkIn: completedCheckIn,
+          checkOut: completedCheckOut,
+        })}
+      </Tag>
+    ) : (
+      <Space>
+        <Button
+          icon={<LoginOutlined />}
+          loading={action.isPending}
+          disabled={!attendanceCapabilities?.checkIn}
+          onClick={() => action.mutate('in')}
+        >
+          {t('hrOperations.attendance.checkIn')}
+        </Button>
 
-  console.log(1)
+        <Button
+          type="primary"
+          icon={<LogoutOutlined />}
+          loading={action.isPending}
+          disabled={!attendanceCapabilities?.checkOut}
+          onClick={() => action.mutate('out')}
+        >
+          {t('hrOperations.attendance.checkOut')}
+        </Button>
+      </Space>
+    )
+  ) : null
 
   return (
     <section className={styles.page}>
@@ -54,41 +83,7 @@ export const AttendancePage = () => {
           canRead ? t('hrOperations.attendance.teamTitle') : t('hrOperations.attendance.myTitle')
         }
         description={t('hrOperations.attendance.description')}
-        actions={
-          <Space>
-            <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
-            {canWrite &&
-              (hasCompletedAttendance ? (
-                <Tag color="success" icon={<CheckCircleOutlined />}>
-                  {t('hrOperations.attendance.completedToday', {
-                    checkIn: completedCheckIn,
-                    checkOut: completedCheckOut,
-                  })}
-                </Tag>
-              ) : (
-                <Space>
-                  <Button
-                    icon={<LoginOutlined />}
-                    loading={action.isPending}
-                    disabled={!attendanceCapabilities?.checkIn}
-                    onClick={() => action.mutate('in')}
-                  >
-                    {t('hrOperations.attendance.checkIn')}
-                  </Button>
-
-                  <Button
-                    type="primary"
-                    icon={<LogoutOutlined />}
-                    loading={action.isPending}
-                    disabled={!attendanceCapabilities?.checkOut}
-                    onClick={() => action.mutate('out')}
-                  >
-                    {t('hrOperations.attendance.checkOut')}
-                  </Button>
-                </Space>
-              ))}
-          </Space>
-        }
+        actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
       />
 
       <div className={styles.metrics}>
@@ -126,6 +121,7 @@ export const AttendancePage = () => {
         title={
           canRead ? t('hrOperations.attendance.teamTable') : t('hrOperations.attendance.myTable')
         }
+        extra={attendanceActions}
       >
         <CoreDataTable
           size="small"

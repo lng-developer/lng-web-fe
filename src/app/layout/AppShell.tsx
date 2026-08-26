@@ -66,7 +66,8 @@ export function AppShell() {
     [account, cores, groups, navigationSearch],
   )
   const { selectedKey } = getSidebarRouteState(location.pathname, groups)
-  const isFixedWorkspace = location.pathname === '/portal/chat'
+  const isOrderWorkspace = location.pathname === '/portal/orders'
+  const isFixedWorkspace = location.pathname === '/portal/chat' || isOrderWorkspace
   const activeItem = groups.flatMap((group) => group.items).find(({ key }) => key === selectedKey)
   const pageTitle = activeItem
     ? t(activeItem.labelKey)
@@ -150,7 +151,13 @@ export function AppShell() {
         <Content
           id="main-content"
           role="main"
-          className={`${styles.content} ${isFixedWorkspace ? styles.contentFixed : ''}`}
+          className={[
+            styles.content,
+            isFixedWorkspace ? styles.contentFixed : undefined,
+            isOrderWorkspace ? styles.contentOrderWorkspace : undefined,
+          ]
+            .filter(Boolean)
+            .join(' ')}
         >
           <div className={`${styles.workspace} ${isFixedWorkspace ? styles.workspaceFixed : ''}`}>
             <Outlet />

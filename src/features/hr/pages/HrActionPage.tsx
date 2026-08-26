@@ -29,7 +29,9 @@ const StaffWorkspacePage = lazy(() =>
   })),
 )
 const TeamWorkspacePage = lazy(() =>
-  import('./TeamWorkspacePage').then(({ TeamWorkspacePage }) => ({ default: TeamWorkspacePage })),
+  import('./TeamWorkspace/TeamWorkspacePage').then(({ TeamWorkspacePage }) => ({
+    default: TeamWorkspacePage,
+  })),
 )
 const TimeRequestsPage = lazy(() =>
   import('./TimeRequests/TimeRequestsPage').then(({ TimeRequestsPage }) => ({

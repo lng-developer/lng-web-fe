@@ -201,15 +201,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       <PageHeader
         title={t('portal.catalog.master.templates')}
         description={t('portal.catalog.master.templateDescription')}
-        actions={
-          <Space>
-            {canManage ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => void open(null)}>
-                {t('portal.catalog.master.createTemplate')}
-              </Button>
-            ) : null}
-          </Space>
-        }
       />
       <SectionCard>
         <CoreDataTable
@@ -230,13 +221,20 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
             },
           }}
           toolbar={
-            <Input.Search
-              allowClear
-              placeholder={t('portal.catalog.master.searchTemplates')}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onSearch={() => setPage(1)}
-            />
+            <Space wrap>
+              <Input.Search
+                allowClear
+                placeholder={t('portal.catalog.master.searchTemplates')}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                onSearch={() => setPage(1)}
+              />
+              {canManage ? (
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => void open(null)}>
+                  {t('portal.catalog.master.createTemplate')}
+                </Button>
+              ) : null}
+            </Space>
           }
         />
       </SectionCard>

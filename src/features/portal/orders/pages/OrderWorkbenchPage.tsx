@@ -2,7 +2,7 @@ import 'dayjs/locale/vi'
 
 import { type MouseEvent, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData } from 'react-router-dom'
+import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
   CheckCircleFilled,
   DownloadOutlined,
@@ -29,7 +29,6 @@ import { canUseScopedPermission } from '@/shared/auth/permissions'
 import {
   CopyableOrderId,
   FeedbackAlert,
-  PageHeader,
   type PopupModalAnchor,
   StatusTag,
   UiTabLabel,
@@ -74,7 +73,9 @@ export const OrderWorkbenchPage = () => {
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
-  const [tab, setTab] = useState<TabKey>('ALL')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab')
+  const tab: TabKey = TABS.includes(requestedTab as TabKey) ? (requestedTab as TabKey) : 'ALL'
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [shopId, setShopId] = useState<string>()
@@ -157,10 +158,18 @@ export const OrderWorkbenchPage = () => {
     setSearch(value)
     setPage(1)
   }, [])
-  const onTabChange = useCallback((value: string) => {
-    setTab(value as TabKey)
-    setPage(1)
-  }, [])
+  const onTabChange = useCallback(
+    (value: string) => {
+      if (!TABS.includes(value as TabKey)) return
+
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (value === 'ALL') nextSearchParams.delete('tab')
+      else nextSearchParams.set('tab', value)
+      setSearchParams(nextSearchParams, { replace: true })
+      setPage(1)
+    },
+    [searchParams, setSearchParams],
+  )
   const onShopChange = useCallback((value?: string) => {
     setShopId(value)
     setPage(1)
@@ -446,20 +455,19 @@ export const OrderWorkbenchPage = () => {
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('orders.title')}
-        description={t('orders.description')}
-        actions={
-          <Button
-            icon={<DownloadOutlined />}
-            loading={exportOrders.isPending}
-            onClick={() => exportOrders.mutate()}
-          >
-            {t('orders.export.button')}
-          </Button>
-        }
-      />
-      <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
+      <div className={styles.tabsRow}>
+        <div className={styles.tabs}>
+          <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
+        </div>
+
+        <Button
+          icon={<DownloadOutlined />}
+          loading={exportOrders.isPending}
+          onClick={() => exportOrders.mutate()}
+        >
+          {t('orders.export.button')}
+        </Button>
+      </div>
       <OrderWorkbenchFilterBar
         search={search}
         shopId={shopId}
@@ -493,6 +501,7 @@ export const OrderWorkbenchPage = () => {
         />
       ) : null}
       <CoreDataTable
+        fillViewport
         className={styles.table}
         rowKey={(row) => row.order.id}
         columns={columns}

@@ -1,3 +1,4 @@
+import { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EyeOutlined } from '@ant-design/icons'
 import { Button, Select } from 'antd'
@@ -13,19 +14,21 @@ export type MappingContextValue = {
   search?: string
 }
 
-export function MappingContextBar({
+export const MappingContextBar = ({
   loading,
   shops,
   value,
   onChange,
   onPreview,
+  actions,
 }: {
   readonly loading?: boolean
   readonly shops?: AuthorableShopResult
   readonly value: MappingContextValue
   readonly onChange: (value: MappingContextValue) => void
   readonly onPreview: () => void
-}) {
+  readonly actions?: ReactNode
+}) => {
   const { t } = useTranslation()
   return (
     <div className={styles.bar}>
@@ -60,6 +63,7 @@ export function MappingContextBar({
           onSearchChange={(search) => onChange({ ...value, search })}
         />
       </div>
+      {actions}
       <Button type="primary" icon={<EyeOutlined />} loading={loading} onClick={onPreview}>
         {t('mapping.actions.preview')}
       </Button>

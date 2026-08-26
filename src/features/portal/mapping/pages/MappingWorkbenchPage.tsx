@@ -15,7 +15,7 @@ import { App as AntdApp, Button, Card, Select, Space, Tag, Typography } from 'an
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { orderKeys } from '@/features/portal/orders/api/orderKeys'
 import { normalizeApiError } from '@/shared/api'
-import { CopyableOrderId, FeedbackAlert, PageHeader, useFeedbackToast } from '@/shared/ui'
+import { CopyableOrderId, FeedbackAlert, useFeedbackToast } from '@/shared/ui'
 
 import {
   getMappingSummary,
@@ -278,11 +278,11 @@ export function MappingWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('mapping.pages.workbench')}
-        description={t('mapping.pages.workbenchDesc', {
-          defaultValue: 'Resolve blocked fulfillment plans across the 5-stage mapping pipeline.',
-        })}
+      {/* ── Context Filter Bar ── */}
+      <MappingContextBar
+        loading={shops.isLoading}
+        shops={shops.data}
+        value={context}
         actions={
           canWrite ? (
             <Button
@@ -299,13 +299,6 @@ export function MappingWorkbenchPage({
             </Button>
           ) : null
         }
-      />
-
-      {/* ── Context Filter Bar ── */}
-      <MappingContextBar
-        loading={shops.isLoading}
-        shops={shops.data}
-        value={context}
         onChange={(nextContext) => {
           setBatchPage(1)
           setContext(nextContext)

@@ -29,6 +29,18 @@
   min-width: min(100%, 440px);
 }
 
+.filters {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 240px 180px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.filterActions {
+  justify-self: end;
+}
+
 .statusFilter {
   width: 180px;
 }
@@ -36,6 +48,20 @@
 @media (max-width: 900px) {
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .statusFilter {
+    width: 100%;
+  }
+
+  .filterActions {
+    justify-self: end;
   }
 }
 

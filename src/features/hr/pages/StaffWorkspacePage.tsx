@@ -20,7 +20,6 @@ import {
   FeedbackAlert,
   MetricCard,
   MonthPicker,
-  PageHeader,
   SectionCard,
   StatusTag,
   useFeedbackToast,
@@ -182,11 +181,15 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                               : 'pending'
                         }
                       >
-                        {item.status}
+                        {t(`hrOperations.requests.statuses.${item.status}`, {
+                          defaultValue: item.status,
+                        })}
                       </StatusTag>
                       <Typography.Text>
                         {'leaveType' in item
-                          ? item.leaveType
+                          ? t(`hrOperations.requests.leaveTypes.${item.leaveType}`, {
+                              defaultValue: item.leaveType,
+                            })
                           : dayjs(item.workDateKey).format('DD/MM/YYYY')}
                       </Typography.Text>
                     </Space>
@@ -248,18 +251,6 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
 
       {view === 'schedule' && (
         <>
-          <PageHeader
-            title={t('hrOperations.self.mySchedule')}
-            description={t('hrOperations.self.scheduleDescription')}
-            actions={
-              <MonthPicker
-                aria-label={t('hrOperations.calendar.label')}
-                value={month}
-                onChange={(value) => value && setMonth(value)}
-              />
-            }
-          />
-
           {/* Metric Overview Cards for My Schedule */}
           <div className={styles.metrics}>
             <MetricCard

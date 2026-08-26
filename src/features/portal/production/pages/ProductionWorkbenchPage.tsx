@@ -36,11 +36,10 @@ import {
   CopyableOrderId,
   FeedbackAlert,
   MetricCard,
-  PageHeader,
   StatusTag,
+  type UiButtonTabItem,
   UiButtonTabs,
   UiTabLabel,
-  UiTabs,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -727,10 +726,10 @@ export function ProductionWorkbenchPage({
       scaleQueueCount.data?.total,
     ],
   )
-  const tabItems = useMemo(
+  const queueTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
     () => [
       {
-        key: 'scale',
+        value: 'scale',
         label: (
           <UiTabLabel count={queueSummary.scaleQueue ?? 0} active={tab === 'scale'}>
             {t('portal.production.scaleQueue')}
@@ -738,7 +737,7 @@ export function ProductionWorkbenchPage({
         ),
       },
       {
-        key: 'blocked',
+        value: 'blocked',
         label: (
           <UiTabLabel count={queueSummary.blocked ?? 0} active={tab === 'blocked'}>
             {t('portal.production.blockedQueue')}
@@ -746,7 +745,7 @@ export function ProductionWorkbenchPage({
         ),
       },
       {
-        key: 'qc',
+        value: 'qc',
         label: (
           <UiTabLabel count={queueSummary.qcQueue ?? 0} active={tab === 'qc'}>
             {t('portal.production.qcQueue')}
@@ -776,8 +775,8 @@ export function ProductionWorkbenchPage({
     () => queryClient.invalidateQueries({ queryKey: productionKeys.all }),
     [queryClient],
   )
-  const handleTabChange = useCallback((value: string) => {
-    setTab(value as ProductionTab)
+  const handleTabChange = useCallback((value: ProductionTab) => {
+    setTab(value)
     setPage(1)
     setStatus(undefined)
     setScaleDifficultyLevel(undefined)
@@ -807,9 +806,6 @@ export function ProductionWorkbenchPage({
   const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
     setScaleDifficultyLevel(value)
     setPage(1)
-  }, [])
-  const handlePageChange = useCallback((nextPage: number) => {
-    setPage(nextPage)
   }, [])
   const handleScaleAssigneeChange = useCallback((value?: string) => {
     setScaleAssigneeId(value)
@@ -993,11 +989,6 @@ export function ProductionWorkbenchPage({
         width: 136,
         render: (_, row) => <CopyableOrderId value={row.orderItem?.externalOrderId} />,
       },
-      // {
-      //   title: t('portal.production.columns.product'),
-      //   width: 230,
-      //   render: (_, row) => <Typography.Text strong>{row.orderItem?.sku || '-'}</Typography.Text>,
-      // },
       {
         title: t('portal.production.columns.shop'),
         width: 150,
@@ -1070,22 +1061,6 @@ export function ProductionWorkbenchPage({
   )
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.production.title')}
-        description={t('portal.production.description')}
-        actions={
-          <Space>
-            <Button loading={exportCsv.isPending} onClick={handleExportCsv}>
-              {t('portal.production.exportCsv')}
-            </Button>
-            {canAssignScale ? (
-              <Button loading={operations.isPending} onClick={handleRecheck}>
-                {t('portal.production.recheckBlocked')}
-              </Button>
-            ) : null}
-          </Space>
-        }
-      />
       {tasks.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.production.unavailable')} />
       ) : null}
@@ -1130,11 +1105,11 @@ export function ProductionWorkbenchPage({
       <div className={styles.workspace}>
         <section className={styles.queuePane} aria-label={t('portal.production.title')}>
           <div className={styles.queueHeader}>
-            <UiTabs
+            <UiButtonTabs
               className={styles.queueTabs}
-              activeKey={tab}
+              value={tab}
               onChange={handleTabChange}
-              items={tabItems}
+              items={queueTabItems}
             />
             <UiButtonTabs
               className={styles.channelFilter}
@@ -1157,13 +1132,17 @@ export function ProductionWorkbenchPage({
             canAssignScale={canAssignScale}
             scaleAssigneeOptions={scaleAssigneeOptions}
             selectedRowCount={selectedRowKeys.length}
+            exportCsvLoading={exportCsv.isPending}
             exportQcLoading={exportQc.isPending}
+            recheckLoading={operations.isPending}
             reassignLoading={operations.isPending}
             onSearchChange={handleSearchChange}
             onSearchSubmit={handleSearchSubmit}
             onStatusChange={handleStatusChange}
             onScaleDifficultyChange={handleScaleDifficultyChange}
+            onExportCsv={handleExportCsv}
             onExportQc={handleExportQc}
+            onRecheck={handleRecheck}
             onScaleAssigneeChange={handleScaleAssigneeChange}
             onBulkAssign={handleBulkAssign}
           />
@@ -1183,13 +1162,6 @@ export function ProductionWorkbenchPage({
                   }
                 : undefined
             }
-            pagination={{
-              current: page,
-              pageSize: PAGE_SIZE,
-              total: displayedTasks?.total,
-              showSizeChanger: false,
-              onChange: handlePageChange,
-            }}
             scroll={{ x: 1240, y: 'calc(100vh - 410px)' }}
             expandable={{
               expandedRowKeys,

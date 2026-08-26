@@ -4,22 +4,35 @@
   padding: 0 0 32px;
 }
 
-.header,
-.filterBar {
+.header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.title {
-  margin: 0 0 4px !important;
 }
 
 .filterBar {
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+}
+
+.filterBar :global(.ant-card-body) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.filterBar :global(.ant-card-body) > :first-child {
+  min-width: 0;
+}
+
+.filterBar :global(.ant-card-body) > :last-child {
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0 0 4px !important;
 }
 
 .quickLabel {
@@ -215,10 +228,13 @@
 }
 
 @media (max-width: 760px) {
-  .header,
-  .filterBar {
+  .filterBar :global(.ant-card-body) {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .filterBar :global(.ant-card-body) > :last-child {
+    justify-content: flex-end;
   }
 
   .metrics,

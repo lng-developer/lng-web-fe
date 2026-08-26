@@ -41,7 +41,6 @@
 
 .queueTabs {
   min-width: 0;
-  margin-top: 4px;
 }
 
 .queuePane :global(.ant-table-wrapper) {
@@ -74,15 +73,26 @@
 
 .queueHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 12px;
+  padding: 12px;
+}
+
+.queueHeader .queueTabs,
+.queueHeader .channelFilter {
+  align-items: center;
+  align-self: center;
 }
 
 .queueHeader .channelFilter {
   flex-shrink: 0;
-  margin-top: 4px;
+}
+
+.queueHeader :global(.ant-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .inlineWorkspace {
@@ -652,6 +662,11 @@
   width: 100%;
 }
 
+.filterActions {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .search {
   width: 280px;
 }
@@ -869,6 +884,10 @@
   .search,
   .filter {
     width: 100%;
+  }
+
+  .filterActions {
+    margin-left: 0;
   }
 
   .taskHeader {

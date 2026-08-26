@@ -226,25 +226,6 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
 
   return (
     <section className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <Typography.Title level={3} className={styles.title}>
-            {t('portal.catalog.overview.title')}
-          </Typography.Title>
-          <Typography.Text type="secondary">
-            {t('portal.catalog.overview.description')}
-          </Typography.Text>
-        </div>
-        <Space wrap>
-          <Button icon={<ReloadOutlined />} onClick={refresh}>
-            {t('portal.catalog.refresh')}
-          </Button>
-          <Button type="primary" danger icon={<TableOutlined />} onClick={onOpenListings}>
-            {t('portal.catalog.overview.goToWorkbench')}
-          </Button>
-        </Space>
-      </div>
-
       <Card className={styles.filterBar} bordered={false}>
         <Space wrap size={10}>
           <Typography.Text type="secondary" className={styles.quickLabel}>
@@ -270,6 +251,14 @@ export function CatalogDashboardPage({ onOpenListings }: { readonly onOpenListin
               ) : null}
             </Button>
           ))}
+        </Space>
+        <Space wrap>
+          <Button icon={<ReloadOutlined />} onClick={refresh}>
+            {t('portal.catalog.refresh')}
+          </Button>
+          <Button type="primary" danger icon={<TableOutlined />} onClick={onOpenListings}>
+            {t('portal.catalog.overview.goToWorkbench')}
+          </Button>
         </Space>
       </Card>
 

@@ -20,7 +20,7 @@ import styles from './MappingWorkspacePage.module.scss'
 
 const WORKBENCH = 'workbench'
 
-export function MappingWorkspacePage() {
+export const MappingWorkspacePage = () => {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')

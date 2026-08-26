@@ -90,7 +90,7 @@
   flex-direction: column;
   height: 100dvh;
   border-right: 1px solid var(--ant-color-border-secondary);
-  background: var(--ant-color-bg-container);
+  background: var(--ant-color-fill-quaternary);
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease;
@@ -134,6 +134,7 @@
   flex: 1;
   min-height: 0;
   padding: 8px;
+  background: var(--ant-color-fill-quaternary);
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -141,6 +142,7 @@
 
 .navigation :global(.ant-menu) {
   min-width: 0;
+  background: var(--ant-color-fill-quaternary);
 }
 
 .sidebar:global(.ant-layout-sider-collapsed) .navigation {
@@ -371,9 +373,14 @@
 }
 
 .contentFixed {
+  box-sizing: border-box;
   height: calc(100dvh - 64px);
   min-height: 0;
   overflow: hidden;
+}
+
+.contentOrderWorkspace {
+  padding-bottom: 0;
 }
 
 .workspace {

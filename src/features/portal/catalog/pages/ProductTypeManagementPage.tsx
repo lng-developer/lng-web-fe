@@ -116,15 +116,6 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
       <PageHeader
         title={t('portal.catalog.master.productTypes')}
         description={t('portal.catalog.master.productTypeDescription')}
-        actions={
-          <Space>
-            {canManage ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>
-                {t('portal.catalog.master.createProductType')}
-              </Button>
-            ) : null}
-          </Space>
-        }
       />
       <SectionCard>
         <CoreDataTable
@@ -145,13 +136,20 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
             },
           }}
           toolbar={
-            <Input.Search
-              allowClear
-              placeholder={t('portal.catalog.master.searchProductTypes')}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onSearch={() => setPage(1)}
-            />
+            <Space wrap>
+              <Input.Search
+                allowClear
+                placeholder={t('portal.catalog.master.searchProductTypes')}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                onSearch={() => setPage(1)}
+              />
+              {canManage ? (
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>
+                  {t('portal.catalog.master.createProductType')}
+                </Button>
+              ) : null}
+            </Space>
           }
         />
       </SectionCard>

@@ -2459,6 +2459,13 @@
       "dateRange": "Created date range",
       "retry": "Retry",
       "cancel": "Cancel",
+      "tabs": {
+        "orders": "Orders",
+        "extension": "Amazon Extension",
+        "ads": "Amazon Ads",
+        "transactions": "Amazon Transactions",
+        "settlements": "Amazon Settlements"
+      },
       "jobs": {
         "createdAt": "Created",
         "source": "Source",
@@ -2536,6 +2543,21 @@
         "fileType": "Select a supported report file",
         "failed": "Upload failed",
         "submit": "Upload"
+      },
+      "extension": {
+        "title": "Amazon Extension setup",
+        "environment": "Environment",
+        "development": "Development",
+        "production": "Production",
+        "tokenName": "Token name",
+        "defaultTokenName": "Amazon Extension",
+        "apiBaseUrl": "API Base URL",
+        "shopId": "Shop ID",
+        "apiAccessToken": "API Access Token",
+        "createTokenHint": "Create a token, then copy it into the extension.",
+        "createToken": "Create token",
+        "flowHint": "After saving these values in Chrome, use Import Orders in the extension.",
+        "tokenWarning": "This token is shown once. Copy it before leaving the page."
       },
       "panel": {
         "title": "Import job",

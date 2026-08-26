@@ -56,12 +56,12 @@ export function VendorWorkspaceProductsTabPage({
   onEditProduct,
   onOpenCostCenters,
 }: VendorWorkspaceProductsTabPageProps) {
-  const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
+  const { t } = useTranslation()
 
   const productColumns = useMemo<TableColumnsType<VendorProduct>>(
     () => [
       {
-        title: t('vendors.code'),
+        title: t('portal.vendors.code'),
         dataIndex: 'code',
         width: 140,
         ellipsis: true,
@@ -69,7 +69,7 @@ export function VendorWorkspaceProductsTabPage({
         render: (value) => <Typography.Text code>{value}</Typography.Text>,
       },
       {
-        title: t('vendors.name'),
+        title: t('portal.vendors.name'),
         dataIndex: 'name',
         width: 280,
         ellipsis: true,
@@ -77,7 +77,7 @@ export function VendorWorkspaceProductsTabPage({
         render: (value) => <Typography.Text strong>{value}</Typography.Text>,
       },
       {
-        title: t('vendors.vendorCode'),
+        title: t('portal.vendors.vendorCode'),
         width: 130,
         ellipsis: true,
         onCell: () => ({ style: { maxWidth: 180 } }),
@@ -85,11 +85,11 @@ export function VendorWorkspaceProductsTabPage({
           row.vendor ? (
             row.vendor.code
           ) : (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
+            <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
       },
       {
-        title: t('vendors.vendor', { defaultValue: 'Vendor' }),
+        title: t('portal.vendors.vendor', { defaultValue: 'Vendor' }),
         width: 240,
         ellipsis: true,
         onCell: () => ({ style: { maxWidth: 280 } }),
@@ -97,22 +97,22 @@ export function VendorWorkspaceProductsTabPage({
           row.vendor ? (
             row.vendor.name
           ) : (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
+            <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
       },
       {
-        title: t('vendors.statusLabel'),
+        title: t('portal.vendors.statusLabel'),
         width: 110,
         ellipsis: true,
         onCell: () => ({ style: { maxWidth: 140 } }),
         render: (_, row) => (
           <Tag color={row.status === 'ACTIVE' ? 'success' : 'default'}>
-            {t(`vendors.status.${row.status}`)}
+            {t(`portal.vendors.status.${row.status}`)}
           </Tag>
         ),
       },
       {
-        title: t('vendors.productsTabActions'),
+        title: t('portal.vendors.productsTabActions'),
         fixed: 'right',
         width: 130,
         render: (_, row) => (
@@ -123,16 +123,16 @@ export function VendorWorkspaceProductsTabPage({
                   type="text"
                   size="small"
                   icon={<EditOutlined />}
-                  aria-label={t('vendors.editProduct', { name: row.name })}
-                  title={t('vendors.editProduct', { name: row.name })}
+                  aria-label={t('portal.vendors.editProduct', { name: row.name })}
+                  title={t('portal.vendors.editProduct', { name: row.name })}
                   onClick={() => onEditProduct(row)}
                 />
                 <Button
                   type="text"
                   size="small"
                   icon={<AppstoreOutlined />}
-                  aria-label={t('vendors.manageCostCenters')}
-                  title={t('vendors.manageCostCenters')}
+                  aria-label={t('portal.vendors.manageCostCenters')}
+                  title={t('portal.vendors.manageCostCenters')}
                   onClick={() => onOpenCostCenters(row)}
                 />
               </>
@@ -145,14 +145,14 @@ export function VendorWorkspaceProductsTabPage({
   )
 
   const statusOptions = [
-    { value: 'ACTIVE', label: t('vendors.status.ACTIVE') },
-    { value: 'INACTIVE', label: t('vendors.status.INACTIVE') },
+    { value: 'ACTIVE', label: t('portal.vendors.status.ACTIVE') },
+    { value: 'INACTIVE', label: t('portal.vendors.status.INACTIVE') },
   ]
 
   return (
     <>
       <FilterBar
-        label={t('vendors.filters.label')}
+        label={t('portal.vendors.filters.label')}
         contentClassName={styles.filters}
         actions={
           canWrite ? (
@@ -163,14 +163,14 @@ export function VendorWorkspaceProductsTabPage({
                 type="primary"
                 onClick={() => onAddProduct(vendorFilter || '')}
               >
-                {t('vendors.addProduct')}
+                {t('portal.vendors.addProduct')}
               </Button>
               <Button
                 disabled={!vendorFilter}
                 icon={<UploadOutlined />}
                 onClick={() => onOpenProductImport(vendorFilter)}
               >
-                {t('vendors.importProducts')}
+                {t('portal.vendors.importProducts')}
               </Button>
             </Space>
           ) : null
@@ -181,12 +181,12 @@ export function VendorWorkspaceProductsTabPage({
           onSearchChange={(value) => {
             onSearchProductsChange(value)
           }}
-          placeholder={t('vendors.searchProducts')}
+          placeholder={t('portal.vendors.searchProducts')}
         />
         <Select
           allowClear
           options={vendorFilterOptions}
-          placeholder={t('vendors.filters.vendor')}
+          placeholder={t('portal.vendors.filters.vendor')}
           value={vendorFilter}
           showSearch
           onChange={(value) => onVendorFilterChange(value as string | undefined)}
@@ -194,7 +194,7 @@ export function VendorWorkspaceProductsTabPage({
         <Select
           allowClear
           options={statusOptions}
-          placeholder={t('vendors.filters.status')}
+          placeholder={t('portal.vendors.filters.status')}
           value={productStatus}
           onChange={(value) => onProductStatusChange(value as RecordStatus | undefined)}
         />
@@ -211,7 +211,7 @@ export function VendorWorkspaceProductsTabPage({
             <Typography.Text type="danger">
               {productsError instanceof Error
                 ? productsError.message
-                : t('vendors.branchUnavailable')}
+                : t('portal.vendors.branchUnavailable')}
             </Typography.Text>
           ) : undefined
         }

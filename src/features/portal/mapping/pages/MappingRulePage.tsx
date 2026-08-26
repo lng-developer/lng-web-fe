@@ -8,7 +8,7 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
 import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import { normalizeApiError } from '@/shared/api'
-import { FeedbackAlert, PageHeader, useFeedbackToast } from '@/shared/ui'
+import { FeedbackAlert, useFeedbackToast } from '@/shared/ui'
 
 import {
   createMappingRule,
@@ -164,11 +164,11 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
     const active = rule.status === 'ACTIVE'
     Modal.confirm({
       centered: true,
-      title: t(active ? 'mapping.actions.disableTitle' : 'mapping.actions.enableTitle'),
-      content: t(
-        active ? 'mapping.actions.disableDescription' : 'mapping.actions.enableDescription',
-      ),
-      okText: t(active ? 'mapping.actions.disableRule' : 'mapping.actions.enableRule'),
+      title: active ? t('mapping.actions.disableTitle') : t('mapping.actions.enableTitle'),
+      content: active
+        ? t('mapping.actions.disableDescription')
+        : t('mapping.actions.enableDescription'),
+      okText: active ? t('mapping.actions.disableRule') : t('mapping.actions.enableRule'),
       okButtonProps: { danger: active },
       onOk: () =>
         updateMappingRule(page.ruleType, rule.id, {
@@ -180,7 +180,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           .then(() =>
             toast(
               'success',
-              t(active ? 'mapping.feedback.ruleDisabled' : 'mapping.feedback.ruleEnabled'),
+              active ? t('mapping.feedback.ruleDisabled') : t('mapping.feedback.ruleEnabled'),
             ),
           )
           .catch(notifyError),
@@ -189,7 +189,6 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
 
   return (
     <Flex vertical gap={16} style={{ minHeight: 0 }}>
-      <PageHeader title={t(page.titleKey)} description={t(page.descriptionKey)} />
       {rules.error || originPreview.error ? (
         <FeedbackAlert type="error" title={t('mapping.feedback.loadFailed')} />
       ) : null}

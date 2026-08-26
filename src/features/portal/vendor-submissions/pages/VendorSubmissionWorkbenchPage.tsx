@@ -30,7 +30,6 @@ import {
   FeedbackAlert,
   FilterBar,
   MetricCard,
-  PageHeader,
   SectionCard,
   StatusTag,
   useFeedbackToast,
@@ -295,19 +294,6 @@ export function VendorSubmissionWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.vendorSubmissions.title')}
-        description={t('portal.vendorSubmissions.description')}
-        actions={
-          <Button
-            icon={<DownloadOutlined />}
-            loading={exportCsv.isPending}
-            onClick={() => exportCsv.mutate()}
-          >
-            {t('portal.vendorSubmissions.exportCsv')}
-          </Button>
-        }
-      />
       {submissions.error ? (
         <FeedbackAlert type="error" title={t('portal.vendorSubmissions.unavailable')} />
       ) : null}
@@ -367,6 +353,13 @@ export function VendorSubmissionWorkbenchPage({
                   setPage(1)
                 }}
               />
+              <Button
+                icon={<DownloadOutlined />}
+                loading={exportCsv.isPending}
+                onClick={() => exportCsv.mutate()}
+              >
+                {t('portal.vendorSubmissions.exportCsv')}
+              </Button>
             </FilterBar>
           }
         />

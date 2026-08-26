@@ -24,7 +24,6 @@ import {
   FeedbackAlert,
   FilterBar,
   MetricCard,
-  PageHeader,
   SectionCard,
   StatusTag,
   useFeedbackToast,
@@ -54,7 +53,7 @@ const STATUSES: ShipmentStatus[] = [
   'RETURNED',
   'CANCELLED',
 ]
-const PAGE_SIZE = 20
+const DEFAULT_PAGE_SIZE = 20
 
 function tone(status: ShipmentStatus) {
   if (status === 'DELIVERED') return 'operational'
@@ -75,6 +74,7 @@ export function ShipmentWorkbenchPage({
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [status, setStatus] = useState<ShipmentStatus>()
   const [externalOrderId, setExternalOrderId] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
@@ -94,7 +94,7 @@ export function ShipmentWorkbenchPage({
   const canWrite = permissions.includes('SHIPMENTS:WRITE')
   const params = {
     page,
-    limit: PAGE_SIZE,
+    limit: pageSize,
     status,
     externalOrderId: externalOrderId || undefined,
     trackingNumber: trackingNumber || undefined,
@@ -240,30 +240,6 @@ export function ShipmentWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.shipments.title')}
-        description={t('portal.shipments.description')}
-        actions={
-          <Space>
-            <Button
-              icon={<DownloadOutlined />}
-              loading={exportCsv.isPending}
-              onClick={() => exportCsv.mutate()}
-            >
-              {t('portal.shipments.exportCsv')}
-            </Button>
-            {canWrite ? (
-              <Button
-                icon={<SyncOutlined />}
-                loading={batchRecheck.isPending}
-                onClick={() => batchRecheck.mutate()}
-              >
-                {t('portal.shipments.recheckSubmitted')}
-              </Button>
-            ) : null}
-          </Space>
-        }
-      />
       {shipments.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.shipments.unavailable')} />
       ) : null}
@@ -286,10 +262,14 @@ export function ShipmentWorkbenchPage({
           onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize,
             total: shipments.data?.pagination.total,
-            onChange: setPage,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPage)
+              setPageSize(nextPageSize)
+            },
           }}
+          scroll={{ x: '100%' }}
           toolbar={
             <FilterBar label={t('portal.shipments.filters')} contentClassName={styles.filters}>
               <Input.Search
@@ -331,6 +311,22 @@ export function ShipmentWorkbenchPage({
                   }}
                 />
               </div>
+              <Button
+                icon={<DownloadOutlined />}
+                loading={exportCsv.isPending}
+                onClick={() => exportCsv.mutate()}
+              >
+                {t('portal.shipments.exportCsv')}
+              </Button>
+              {canWrite ? (
+                <Button
+                  icon={<SyncOutlined />}
+                  loading={batchRecheck.isPending}
+                  onClick={() => batchRecheck.mutate()}
+                >
+                  {t('portal.shipments.recheckSubmitted')}
+                </Button>
+              ) : null}
             </FilterBar>
           }
         />

@@ -199,19 +199,7 @@ export const CustomerWorkspacePage = () => {
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('customers.title')}
-        description={t('customers.description')}
-        actions={
-          <Button
-            icon={<DownloadOutlined />}
-            loading={exportCsv.isPending}
-            onClick={() => exportCsv.mutate()}
-          >
-            {t('customers.actions.exportCsv')}
-          </Button>
-        }
-      />
+      <PageHeader title={t('customers.title')} description={t('customers.description')} />
 
       <section className={styles.metrics}>
         <MetricCard
@@ -285,6 +273,13 @@ export const CustomerWorkspacePage = () => {
             }}
             className={styles.select}
           />
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exportCsv.isPending}
+            onClick={() => exportCsv.mutate()}
+          >
+            {t('customers.actions.exportCsv')}
+          </Button>
         </FilterBar>
 
         <CoreDataTable

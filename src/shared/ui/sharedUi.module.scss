@@ -48,7 +48,6 @@
 }
 
 .sectionCard:hover {
-  border-color: var(--ui-border-accent);
   box-shadow: var(--ui-surface-elevate-shadow);
 }
 
@@ -494,7 +493,6 @@
 }
 
 .dataTable:hover :global(.ant-table-container) {
-  border-color: var(--ui-border-accent);
   box-shadow: var(--ui-surface-elevate-shadow);
 }
 
@@ -511,6 +509,38 @@
 .dataTable :global(.ant-table-expanded-row > .ant-table-cell) {
   background: var(--ant-color-bg-container);
   color: var(--ant-color-text);
+}
+
+.dataTableFillViewport {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dataTableFillViewport .dataTableBody {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dataTableFillViewport :global(.ant-table-wrapper),
+.dataTableFillViewport :global(.ant-spin-nested-loading),
+.dataTableFillViewport :global(.ant-spin-container),
+.dataTableFillViewport :global(.ant-table),
+.dataTableFillViewport :global(.ant-table-container) {
+  min-height: 0;
+}
+
+.dataTableFillViewport {
+  :global(.ant-table-body) {
+    min-height: calc(100vh - 360px);
+  }
+}
+
+.dataTablePaginationDock {
+  flex: 0 0 auto;
+  background: var(--ant-color-bg-layout);
 }
 
 .tablePagination {
