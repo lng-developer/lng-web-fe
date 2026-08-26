@@ -47,14 +47,14 @@ describe('CreateDesignTaskModal', () => {
 
   it('does not offer PSD as a generic task output', async () => {
     openModal()
-    await selectOption('Task type', 'IDEA')
+    await selectOption('Task type', 'Idea')
     fireEvent.mouseDown(await screen.findByLabelText('Expected outputs'))
-    expect(screen.queryByText('PSD_TEMPLATE')).not.toBeInTheDocument()
+    expect(screen.queryByText('PSD template')).not.toBeInTheDocument()
   })
 
   it('requires a brief for an IDEA task', async () => {
     openModal()
-    await selectOption('Task type', 'IDEA')
+    await selectOption('Task type', 'Idea')
     await selectOption('Listing', 'SKU-1')
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
     expect(await screen.findByText('Brief is required')).toBeInTheDocument()
@@ -63,7 +63,7 @@ describe('CreateDesignTaskModal', () => {
 
   it('requires a source for a CLONE task', async () => {
     openModal()
-    await selectOption('Task type', 'CLONE')
+    await selectOption('Task type', 'Clone')
     await selectOption('Listing', 'SKU-1')
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
     expect(await screen.findByText('Select a source')).toBeInTheDocument()
@@ -72,7 +72,7 @@ describe('CreateDesignTaskModal', () => {
 
   it('submits only the selected source for a CLONE task', async () => {
     openModal()
-    await selectOption('Task type', 'CLONE')
+    await selectOption('Task type', 'Clone')
     await selectOption('Listing', 'SKU-1')
     await selectOption('Source type', 'Internal template')
     fireEvent.mouseDown(await screen.findByLabelText('Source'))

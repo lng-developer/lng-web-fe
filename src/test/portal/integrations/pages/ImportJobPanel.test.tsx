@@ -239,7 +239,7 @@ describe('ImportJobPanel', () => {
   it('retries mapping for a selected raw record when writable', async () => {
     renderPanel(undefined, account(['ORDERS:WRITE']))
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Retry mapping' }))
+    fireEvent.click((await screen.findByText('Retry mapping')).closest('button')!)
 
     await waitFor(() => expect(retryPostImportRawRecords).toHaveBeenCalledWith('job-1', ['raw-1']))
   }, 10_000)
