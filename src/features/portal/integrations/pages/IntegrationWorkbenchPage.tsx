@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
@@ -227,6 +227,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const showFeedbackToast = useFeedbackToast()
   const [uploadOpen, setUploadOpen] = useState(false)
   const [tokenForm] = Form.useForm<ExtensionTokenInput>()
+  const initializedTokenShop = useRef(false)
   const [createdToken, setCreatedToken] = useState<string>()
   const [selectedCommand, setSelectedCommand] = useState<ExtensionCommand>()
   const [commandImportDays, setCommandImportDays] = useState<Record<string, ExtensionImportDays>>(
@@ -254,7 +255,6 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const [adsMappingForm] = Form.useForm<{ shopId: string; matchType: 'CAMPAIGN' | 'PORTFOLIO' }>()
   const selectedEnvironment =
     Form.useWatch('environment', tokenForm) ?? ('development' as ExtensionTokenEnvironment)
-  const selectedShopId = Form.useWatch('shopId', tokenForm)
   const params = readParams(searchParams)
   const selectedJobId = searchParams.get('selectedJobId') || undefined
   const canWrite = canWriteOrdersSomewhere(account)
@@ -482,6 +482,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     label: shop.name,
     value: shop.id,
   }))
+  const defaultSetupShopId = setupShopOptions[0]?.value
   const resetAdsPage = () => setAdsPage(1)
   const resetTransactionPage = () => setTransactionPage(1)
   const resetSettlementPage = () => setSettlementPage(1)
@@ -493,10 +494,11 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     (extensionOrderSchedules.data?.items ?? []).map((schedule) => [schedule.agentId, schedule]),
   )
   useEffect(() => {
-    if (!selectedShopId && setupShopOptions[0]?.value) {
-      tokenForm.setFieldValue('shopId', setupShopOptions[0].value)
+    if (!initializedTokenShop.current && defaultSetupShopId) {
+      tokenForm.setFieldValue('shopId', defaultSetupShopId)
+      initializedTokenShop.current = true
     }
-  }, [selectedShopId, setupShopOptions, tokenForm])
+  }, [defaultSetupShopId, tokenForm])
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(timer)
