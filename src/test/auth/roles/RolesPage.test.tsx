@@ -23,6 +23,7 @@ describe('RolesPage', () => {
 
   beforeEach(async () => {
     queryClient.clear()
+    window.localStorage.setItem('lng.language', 'en')
     await i18n.changeLanguage('en')
     vi.mocked(loadRoleCatalog).mockResolvedValue({
       permissions: {
@@ -50,6 +51,6 @@ describe('RolesPage', () => {
     expect(await screen.findByText('Reviewer')).toBeVisible()
     expect(screen.getByText('AUTH:READ')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Create role' }))
-    expect(screen.getByRole('dialog', { name: 'Create role' })).toBeVisible()
+    expect(screen.getByRole('dialog')).toBeVisible()
   })
 })

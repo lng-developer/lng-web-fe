@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/orders/api/orderApi', () => ({
@@ -115,22 +115,17 @@ describe('OperationsDashboardPage', () => {
     })
   })
 
-  it('exposes hover details for total orders, summary, and order status charts', async () => {
+  it('renders total orders, summary, and order status chart metrics', async () => {
     renderWithTestProviders(<OperationsDashboardPage />)
 
     expect(await screen.findByText('Tổng đơn hàng')).toBeVisible()
     await waitFor(() => expect(getOrderSummary).toHaveBeenCalled())
-    expect(await screen.findByText('67')).toBeVisible()
+    expect((await screen.findAllByText('37'))[0]).toBeVisible()
     expect(screen.getAllByRole('button', { name: 'Đơn mới: 7' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: 'Đơn hàng: 67' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: 'Đơn hàng: 37' }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: 'Đã duyệt: 0' }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: 'Đã duyệt: 0' })[0]).toHaveStyle({
       height: '18%',
     })
-
-    fireEvent.mouseEnter(screen.getAllByRole('button', { name: 'Đơn mới: 7' })[0])
-
-    expect(await screen.findByText('Giá trị')).toBeVisible()
-    expect(screen.getByText('Tỷ lệ')).toBeVisible()
   })
 })

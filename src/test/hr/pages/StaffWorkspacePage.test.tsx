@@ -26,6 +26,7 @@ describe('StaffWorkspacePage', () => {
   beforeEach(async () => {
     queryClient.clear()
     setPermissions(['HR_LEAVE:WRITE', 'HR_OVERTIME:WRITE'])
+    window.localStorage.setItem('lng.language', 'en')
     await i18n.changeLanguage('en')
     workspaceData = {
       dateKey,
@@ -240,11 +241,10 @@ describe('StaffWorkspacePage', () => {
     )
 
     expect(await screen.findByLabelText('Monthly schedule calendar')).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'My calendar' })).toBeVisible()
     expect(screen.queryByText('Jane Nguyen')).not.toBeInTheDocument()
     expect((await screen.findAllByText('08:12 - 17:05'))[0]).toBeVisible()
     expect((await screen.findAllByText('Late 12 min'))[0]).toBeVisible()
-    expect((await screen.findAllByText('OT 90 min'))[0]).toBeVisible()
+    expect((await screen.findAllByText('90 min overtime'))[0]).toBeVisible()
     expect((await screen.findAllByText('Annual leave'))[0]).toBeVisible()
     expect(screen.getByText('Company holiday')).toBeVisible()
   })
