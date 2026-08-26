@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { Listing } from '@/features/portal/catalog/api/catalogApi'
 import { ListingVariantManager } from '@/features/portal/catalog/pages/ListingVariantManager'
+import i18n from '@/shared/i18n/i18n'
 
 const { requestListingVariantPsd } = vi.hoisted(() => ({ requestListingVariantPsd: vi.fn() }))
 
@@ -25,7 +26,10 @@ vi.mock('@/features/portal/catalog/api/catalogApi', async (importOriginal) => ({
 }))
 
 describe('ListingVariantManager', () => {
-  beforeEach(() => requestListingVariantPsd.mockReset())
+  beforeEach(async () => {
+    requestListingVariantPsd.mockReset()
+    await i18n.changeLanguage('en')
+  })
 
   it('uses staff actions instead of raw asset ID fields', async () => {
     render(
@@ -45,9 +49,13 @@ describe('ListingVariantManager', () => {
       </AppProviders>,
     )
 
-    expect(await screen.findByRole('button', { name: 'Request PSD' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
-    await waitFor(() => expect(screen.getByText('Edit listing variant')).toBeInTheDocument())
+    expect(
+      await screen.findByRole('button', { name: i18n.t('portal.catalog.variants.requestPsd') }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('portal.catalog.variants.edit') }))
+    await waitFor(() =>
+      expect(screen.getByText(i18n.t('portal.catalog.variants.editTitle'))).toBeInTheDocument(),
+    )
     expect(screen.queryByLabelText('PSD asset ID')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Preview asset ID')).not.toBeInTheDocument()
   }, 15_000)

@@ -23,7 +23,7 @@ import {
 } from 'antd'
 
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { useFeedbackToast } from '@/shared/ui'
+import { StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   applyListingVariantPsdToCompatible,
@@ -55,10 +55,6 @@ function scaleColor(level?: string) {
   if (level === 'HARD') return 'orange'
   if (level === 'SPECIAL') return 'red'
   return 'green'
-}
-
-function statusColor(status: string) {
-  return status === 'ACTIVE' ? 'green' : 'default'
 }
 
 export function ListingVariantManager({
@@ -194,9 +190,11 @@ export function ListingVariantManager({
             title: 'PSD',
             render: (_, row) => (
               <Space size="small" wrap>
-                <Tag color={row.psdReadiness.status === 'PRESENT' ? 'green' : 'orange'}>
+                <StatusTag
+                  status={row.psdReadiness.status === 'PRESENT' ? 'operational' : 'warning'}
+                >
                   {row.psdReadiness.status}
-                </Tag>
+                </StatusTag>
                 <Tag color={row.psdReadiness.source === 'LISTING_DEFAULT' ? 'blue' : 'default'}>
                   {t(`portal.catalog.psd.${psdSourceKey(row.psdReadiness.source)}`)}
                 </Tag>
@@ -286,7 +284,13 @@ export function ListingVariantManager({
           },
           {
             title: t('portal.catalog.master.status'),
-            render: (_, row) => <Tag color={statusColor(row.status)}>{row.status}</Tag>,
+            render: (_, row) => (
+              <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
+                {t(`portal.catalog.master.statuses.${row.status}`, {
+                  defaultValue: row.status,
+                })}
+              </StatusTag>
+            ),
           },
           canWrite
             ? {

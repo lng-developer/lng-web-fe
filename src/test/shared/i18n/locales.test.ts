@@ -241,6 +241,7 @@ describe('foundation locales', () => {
       'sla',
       'tabs.products',
       'tabs.vendors',
+      'tabs.migration',
       'vendor',
       'vendorsTabActions',
       'filters.label',
@@ -276,6 +277,16 @@ describe('foundation locales', () => {
       'import.rowError',
       'import.submit',
       'import.summary',
+      'migration.assign',
+      'migration.assigned',
+      'migration.loadFailed',
+      'migration.pending',
+      'migration.selectProductTypeGroup',
+      'migration.unresolved',
+      'migration.vendor',
+      'migration.product',
+      'migration.externalProductId',
+      'migration.variants',
     ].map((key) => `portal.vendors.${key}`)
 
     expect(flatten(en)).toEqual(expect.arrayContaining(requiredKeys))

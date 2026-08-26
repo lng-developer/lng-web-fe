@@ -12,7 +12,7 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData } from 'react-router-dom'
+import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
   AppstoreOutlined,
   CheckCircleOutlined,
@@ -567,8 +567,13 @@ export function ProductionWorkbenchPage({
   const currentAccountId = account?.account.id
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
-  const [tab, setTab] = useState<ProductionTab>('scale')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedTab = searchParams.get('queue')
+  const tab: ProductionTab = ['scale', 'blocked', 'qc'].includes(requestedTab ?? '')
+    ? (requestedTab as ProductionTab)
+    : 'scale'
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()
@@ -581,6 +586,7 @@ export function ProductionWorkbenchPage({
   }>()
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [expandedRowKeys, setExpandedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
   const [uploadingFileCheckIds, setUploadingFileCheckIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -630,19 +636,19 @@ export function ProductionWorkbenchPage({
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
-      psdReadyOnly: true,
+      psdReadyOnly: tab !== 'blocked',
       scaleDifficultyLevel,
       status: tab === 'blocked' ? ('BLOCKED' as const) : status,
       view: tab === 'blocked' ? undefined : tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
     }),
     [deferredSearch, salesChannelCode, scaleDifficultyLevel, status, tab],
   )
-  const params = useMemo(() => ({ ...filters, page, limit: PAGE_SIZE }), [filters, page])
+  const params = useMemo(() => ({ ...filters, page, limit: pageSize }), [filters, page, pageSize])
   const summaryFilters = useMemo(
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
-      psdReadyOnly: true,
+      psdReadyOnly: tab !== 'blocked',
       status: tab === 'blocked' ? ('BLOCKED' as const) : status,
       view: tab === 'blocked' ? undefined : ((tab === 'qc' ? 'QC' : 'SCALE') as 'QC' | 'SCALE'),
     }),
@@ -685,8 +691,21 @@ export function ProductionWorkbenchPage({
     retry: false,
   })
   const blockedCount = useQuery({
-    queryKey: productionKeys.list({ ...queueFilters, status: 'BLOCKED', page: 1, limit: 1 }),
-    queryFn: () => listProductionTasks({ ...queueFilters, status: 'BLOCKED', page: 1, limit: 1 }),
+    queryKey: productionKeys.list({
+      ...queueFilters,
+      psdReadyOnly: false,
+      status: 'BLOCKED',
+      page: 1,
+      limit: 1,
+    }),
+    queryFn: () =>
+      listProductionTasks({
+        ...queueFilters,
+        psdReadyOnly: false,
+        status: 'BLOCKED',
+        page: 1,
+        limit: 1,
+      }),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,
@@ -775,14 +794,21 @@ export function ProductionWorkbenchPage({
     () => queryClient.invalidateQueries({ queryKey: productionKeys.all }),
     [queryClient],
   )
-  const handleTabChange = useCallback((value: ProductionTab) => {
-    setTab(value)
-    setPage(1)
-    setStatus(undefined)
-    setScaleDifficultyLevel(undefined)
-    setSelectedRowKeys([])
-    setDecisions({})
-  }, [])
+  const handleTabChange = useCallback(
+    (value: ProductionTab) => {
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (value === 'scale') nextSearchParams.delete('queue')
+      else nextSearchParams.set('queue', value)
+      setSearchParams(nextSearchParams, { replace: true })
+      setPage(1)
+      setStatus(undefined)
+      setScaleDifficultyLevel(undefined)
+      setSelectedRowKeys([])
+      setExpandedRowKeys([])
+      setDecisions({})
+    },
+    [searchParams, setSearchParams],
+  )
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
     setPage(1)
@@ -796,16 +822,21 @@ export function ProductionWorkbenchPage({
     setPage(1)
     setSelectedRowKeys([])
   }, [])
-  const handleBlockedMetricClick = useCallback(() => {
-    setTab('blocked')
-    setStatus(undefined)
-    setScaleDifficultyLevel(undefined)
-    setSelectedRowKeys([])
-    setPage(1)
-  }, [])
+  const handleBlockedMetricClick = useCallback(() => handleTabChange('blocked'), [handleTabChange])
   const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
     setScaleDifficultyLevel(value)
     setPage(1)
+  }, [])
+  const handlePageChange = useCallback(
+    (nextPage: number, nextPageSize: number) => {
+      setPage(nextPageSize === pageSize ? nextPage : 1)
+      setPageSize(nextPageSize)
+      setExpandedRowKeys([])
+    },
+    [pageSize],
+  )
+  const handleExpandedRowsChange = useCallback((keys: readonly Key[]) => {
+    setExpandedRowKeys([...keys])
   }, [])
   const handleScaleAssigneeChange = useCallback((value?: string) => {
     setScaleAssigneeId(value)
@@ -976,8 +1007,6 @@ export function ProductionWorkbenchPage({
   )
   const displayedTasks = useDeferredValue(tasks.data)
   const rows = useMemo(() => displayedTasks?.items ?? [], [displayedTasks?.items])
-  console.log('rows', rows)
-  const expandedRowKeys = useMemo(() => rows.map((row) => row.id), [rows])
   const selectedTasks = useMemo(
     () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
     [rows, selectedRowKeys],
@@ -1020,6 +1049,11 @@ export function ProductionWorkbenchPage({
             </StatusTag>
           )
         },
+      },
+      {
+        title: t('portal.production.blockers'),
+        width: 180,
+        render: (_, row) => (row.blockers || []).join(', ') || '-',
       },
       {
         title: t('portal.production.columns.scaleDifficulty'),
@@ -1147,6 +1181,7 @@ export function ProductionWorkbenchPage({
             onBulkAssign={handleBulkAssign}
           />
           <CoreDataTable
+            className={styles.table}
             rowKey="id"
             columns={columns}
             dataSource={rows}
@@ -1162,10 +1197,16 @@ export function ProductionWorkbenchPage({
                   }
                 : undefined
             }
-            scroll={{ x: 1240, y: 'calc(100vh - 410px)' }}
+            pagination={{
+              current: page,
+              pageSize,
+              total: displayedTasks?.total,
+              onChange: handlePageChange,
+            }}
+            scroll={{ x: '100%', y: 'calc(100vh - 410px)' }}
             expandable={{
               expandedRowKeys,
-              showExpandColumn: false,
+              onExpandedRowsChange: handleExpandedRowsChange,
               expandedRowRender: (row) => {
                 const task = row
                 return (

@@ -370,11 +370,11 @@ export function CatalogListingWorkbenchPage({
       align: 'center',
       width: 150,
       render: (_, listing) => (
-        <Tag color={listing.status === 'ACTIVE' ? 'green' : 'default'}>
+        <StatusTag status={listing.status === 'ACTIVE' ? 'operational' : 'draft'}>
           {t(RECORD_STATUS_I18N_KEY[listing.status] ?? '', {
             defaultValue: listing.status,
           })}
-        </Tag>
+        </StatusTag>
       ),
     },
     {

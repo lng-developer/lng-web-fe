@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Form, Input, Modal, Select, Space, Tag } from 'antd'
+import { Button, Form, Input, Modal, Select, Space } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
@@ -11,6 +11,7 @@ import {
   FeedbackAlert,
   PageHeader,
   SectionCard,
+  StatusTag,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -68,7 +69,11 @@ export function ScopesPage() {
       title: t('auth.accessExplorer.status'),
       render: (_, scope) => {
         const scopeStatus = String(scope.status).toLowerCase()
-        return <Tag color={scopeStatus === 'active' ? 'green' : undefined}>{scope.status}</Tag>
+        return (
+          <StatusTag status={scopeStatus === 'active' ? 'operational' : 'draft'}>
+            {scope.status}
+          </StatusTag>
+        )
       },
     },
     {

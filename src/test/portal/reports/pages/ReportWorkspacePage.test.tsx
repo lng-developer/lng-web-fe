@@ -216,6 +216,73 @@ describe('ReportWorkspacePage', () => {
     })
   })
 
+  it('shows attributed Ads spend beside seller net profit', async () => {
+    vi.mocked(listFinanceBySeller).mockResolvedValueOnce([
+      {
+        sellerEmployeeCode: 'J2508',
+        sellerName: 'Ads seller',
+        currency: 'USD',
+        itemCount: 1,
+        revenueAmount: 12000,
+        grossProfitAmount: 6000,
+        operatingCostAmount: 3000,
+        adSpendAmount: 800,
+        netProfitAmount: 2200,
+        netMarginBps: 1833,
+        missingCostCount: 0,
+      },
+    ])
+
+    render(
+      <AppProviders>
+        <ReportWorkspacePage />
+      </AppProviders>,
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'Sales & finance' }))
+
+    const sellerCard = (await screen.findByRole('heading', { name: 'Seller performance' })).closest(
+      '.ant-card',
+    ) as HTMLElement
+    expect(within(sellerCard).getByRole('columnheader', { name: 'Ad spend' })).toBeVisible()
+    expect(await within(sellerCard).findByText('$8.00')).toBeVisible()
+  })
+
+  it('shows ads spend in team performance', async () => {
+    vi.mocked(listFinanceByTeam).mockResolvedValueOnce([
+      {
+        teamId: 'team-sales',
+        teamCode: 'SALES',
+        teamName: 'Sales',
+        departmentName: 'Commercial',
+        sellerEmployeeCode: null,
+        sellerName: null,
+        currency: 'USD',
+        itemCount: 0,
+        revenueAmount: 0,
+        grossProfitAmount: 0,
+        operatingCostAmount: 0,
+        adSpendAmount: 291,
+        netProfitAmount: -291,
+        netMarginBps: null,
+        missingCostCount: 0,
+        activeSellerCount: 1,
+      },
+    ])
+
+    render(
+      <AppProviders>
+        <ReportWorkspacePage />
+      </AppProviders>,
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'Sales & finance' }))
+
+    const teamCard = (await screen.findByRole('heading', { name: 'Team performance' })).closest(
+      '.ant-card',
+    ) as HTMLElement
+    expect(within(teamCard).getByRole('columnheader', { name: 'Ad spend' })).toBeVisible()
+    expect(await within(teamCard).findByText('$2.91')).toBeVisible()
+  })
+
   it('does not request unsupported operational aggregates for a team-only reader', async () => {
     accountState.current = {
       ...accountState.current,

@@ -42,6 +42,7 @@ import {
   type WorkScoreLevel,
   type WorkScoreListItem,
   type WorkScoreRuleFormInput,
+  type WorkScoreRuleInput,
   type WorkScoreSourceType,
 } from '../api/workScoreApi'
 import { workScoreKeys } from '../api/workScoreKeys'
@@ -52,6 +53,7 @@ import styles from './WorkScoreWorkbenchPage.module.scss'
 const PAGE_SIZE = 20
 
 const RULE_TASK_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE']
+const RULE_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
 const SCALE_DIFFICULTIES = ['NORMAL', 'HARD', 'SPECIAL']
 const RULE_SOURCE_TYPES: WorkScoreSourceType[] = ['DESIGN_SUBMISSION', 'PRODUCTION_SCALE']
 const RULE_STATUSES = ['ACTIVE', 'INACTIVE']
@@ -62,6 +64,28 @@ const defaultAssetPreview =
 function textOrNull(value: unknown) {
   const text = String(value || '').trim()
   return text && !objectIdPattern.test(text) ? text : null
+}
+
+function normalizeRuleInput(input: WorkScoreRuleFormInput): WorkScoreRuleInput {
+  const common = {
+    sourceType: input.sourceType,
+    points: input.points,
+    status: input.status,
+  }
+  if (input.sourceType === 'DESIGN_SUBMISSION') {
+    return {
+      ...common,
+      taskType: input.taskType || null,
+      priority: input.priority || null,
+      scaleDifficultyLevel: null,
+    }
+  }
+  return {
+    ...common,
+    taskType: null,
+    priority: null,
+    scaleDifficultyLevel: input.scaleDifficultyLevel || null,
+  }
 }
 
 export function WorkScoreWorkbenchPage({
@@ -182,8 +206,7 @@ export function WorkScoreWorkbenchPage({
     },
   })
   const ruleMutation = useMutation({
-    mutationFn: (input: WorkScoreRuleFormInput) =>
-      upsertWorkScoreRule({ ...input, priority: null, slotKey: null }),
+    mutationFn: (input: WorkScoreRuleFormInput) => upsertWorkScoreRule(normalizeRuleInput(input)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [...workScoreKeys.all, 'rules'] })
       toast('success', t('portal.workScores.updated'))
@@ -204,6 +227,10 @@ export function WorkScoreWorkbenchPage({
   )
   const scaleDifficultyLabel = useCallback(
     (value: string) => t(`portal.workScores.scaleDifficulties.${value}`, { defaultValue: value }),
+    [t],
+  )
+  const priorityLabel = useCallback(
+    (value: string) => t(`portal.workScores.priorities.${value}`, { defaultValue: value }),
     [t],
   )
   const statusLabel = useCallback(
@@ -509,20 +536,25 @@ export function WorkScoreWorkbenchPage({
       <SectionCard>
         {canAdjust ? (
           <div className={styles.ruleSetup}>
-            <Typography.Title level={4}>{t('portal.workScores.ruleSetup.title')}</Typography.Title>
+            <Typography.Title level={4}>{t('portal.workScores.rules.title')}</Typography.Title>
             <Form
               form={ruleForm}
               layout="inline"
               initialValues={{ sourceType: 'DESIGN_SUBMISSION', status: 'ACTIVE' }}
               onFinish={(values) => ruleMutation.mutate(values)}
             >
-              <Form.Item name="sourceType" rules={[{ required: true }]}>
+              <Form.Item
+                label={t('portal.workScores.rules.sourceType')}
+                name="sourceType"
+                rules={[{ required: true }]}
+              >
                 <Select
                   className={styles.filter}
                   onChange={(value) => {
                     ruleForm.setFieldsValue({
                       sourceType: value,
                       taskType: null,
+                      priority: null,
                       scaleDifficultyLevel: null,
                     })
                   }}
@@ -533,23 +565,48 @@ export function WorkScoreWorkbenchPage({
                 />
               </Form.Item>
               {ruleSourceType !== 'PRODUCTION_SCALE' ? (
-                <Form.Item name="taskType" preserve={false}>
-                  <Select
-                    allowClear
-                    className={styles.filter}
-                    placeholder={t('portal.workScores.ruleSetup.taskType')}
-                    options={RULE_TASK_TYPES.map((value) => ({
-                      value,
-                      label: taskTypeLabel(value),
-                    }))}
-                  />
-                </Form.Item>
+                <>
+                  <Form.Item
+                    label={t('portal.workScores.rules.taskType')}
+                    name="taskType"
+                    preserve={false}
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      className={styles.filter}
+                      placeholder={t('portal.workScores.rules.taskType')}
+                      options={RULE_TASK_TYPES.map((value) => ({
+                        value,
+                        label: taskTypeLabel(value),
+                      }))}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label={t('portal.workScores.rules.priority')}
+                    name="priority"
+                    preserve={false}
+                  >
+                    <Select
+                      allowClear
+                      className={styles.filter}
+                      placeholder={t('portal.workScores.rules.allPriorities')}
+                      options={RULE_PRIORITIES.map((value) => ({
+                        value,
+                        label: priorityLabel(value),
+                      }))}
+                    />
+                  </Form.Item>
+                </>
               ) : (
-                <Form.Item name="scaleDifficultyLevel" preserve={false}>
+                <Form.Item
+                  label={t('portal.workScores.rules.scaleDifficulty')}
+                  name="scaleDifficultyLevel"
+                  preserve={false}
+                >
                   <Select
                     allowClear
                     className={styles.filter}
-                    placeholder={t('portal.workScores.ruleSetup.scaleDifficulty')}
+                    placeholder={t('portal.workScores.rules.allDifficulties')}
                     options={SCALE_DIFFICULTIES.map((value) => ({
                       value,
                       label: scaleDifficultyLabel(value),
@@ -557,17 +614,25 @@ export function WorkScoreWorkbenchPage({
                   />
                 </Form.Item>
               )}
-              <Form.Item name="points" rules={[{ required: true }]}>
-                <InputNumber min={0} placeholder={t('portal.workScores.fields.points')} />
+              <Form.Item
+                label={t('portal.workScores.rules.points')}
+                name="points"
+                rules={[{ required: true }]}
+              >
+                <InputNumber min={0} placeholder={t('portal.workScores.rules.points')} />
               </Form.Item>
-              <Form.Item name="status" rules={[{ required: true }]}>
+              <Form.Item
+                label={t('portal.workScores.rules.status')}
+                name="status"
+                rules={[{ required: true }]}
+              >
                 <Select
                   className={styles.filter}
                   options={RULE_STATUSES.map((value) => ({ value, label: statusLabel(value) }))}
                 />
               </Form.Item>
               <Button htmlType="submit" loading={ruleMutation.isPending} type="primary">
-                {t('portal.workScores.ruleSetup.saveRule')}
+                {t('portal.workScores.rules.save')}
               </Button>
             </Form>
             <Table
@@ -578,21 +643,25 @@ export function WorkScoreWorkbenchPage({
               pagination={false}
               columns={[
                 {
-                  title: t('portal.workScores.columns.source'),
+                  title: t('portal.workScores.rules.sourceType'),
                   render: (_, row) => sourceLabel(row.sourceType),
                 },
                 {
-                  title: t('portal.workScores.ruleSetup.taskType'),
+                  title: t('portal.workScores.rules.taskType'),
                   render: (_, row) => (row.taskType ? taskTypeLabel(row.taskType) : '-'),
                 },
                 {
-                  title: t('portal.workScores.ruleSetup.scaleDifficulty'),
+                  title: t('portal.workScores.rules.priority'),
+                  render: (_, row) => (row.priority ? priorityLabel(row.priority) : '-'),
+                },
+                {
+                  title: t('portal.workScores.rules.scaleDifficulty'),
                   render: (_, row) =>
                     row.scaleDifficultyLevel ? scaleDifficultyLabel(row.scaleDifficultyLevel) : '-',
                 },
-                { title: t('portal.workScores.fields.points'), dataIndex: 'points' },
+                { title: t('portal.workScores.rules.points'), dataIndex: 'points' },
                 {
-                  title: t('portal.workScores.columns.status'),
+                  title: t('portal.workScores.rules.status'),
                   render: (_, row) => statusLabel(row.status),
                 },
               ]}

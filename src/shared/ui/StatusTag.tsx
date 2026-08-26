@@ -14,6 +14,8 @@ type OperationalStatus =
   | 'draft'
   | 'finalized'
   | 'paid'
+  | 'online'
+  | 'offline'
 
 export interface StatusTagProps {
   readonly status: OperationalStatus
@@ -37,6 +39,12 @@ const tones: Record<OperationalStatus, { bg: string; border: string; color: stri
   },
   finalized: tone('purple'),
   paid: tone('success'),
+  online: tone('success'),
+  offline: {
+    bg: 'var(--ant-color-fill-tertiary)',
+    border: 'var(--ant-color-border)',
+    color: 'var(--ant-color-text-secondary)',
+  },
 }
 
 function tone(token: 'error' | 'info' | 'processing' | 'purple' | 'success' | 'warning') {

@@ -2,7 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
-import { getWorkScore, overrideWorkScore } from '@/features/portal/work-scores/api/workScoreApi'
+import {
+  getWorkScore,
+  listWorkScoreRules,
+  overrideWorkScore,
+  upsertWorkScoreRule,
+} from '@/features/portal/work-scores/api/workScoreApi'
 import { WorkScoreWorkbenchPage } from '@/features/portal/work-scores/pages/WorkScoreWorkbenchPage'
 import { ApiError } from '@/shared/api/apiError'
 import i18n from '@/shared/i18n/i18n'
@@ -51,7 +56,9 @@ vi.mock('@/features/portal/work-scores/api/workScoreApi', async (importOriginal)
     byTaskType: [],
   }),
   getWorkScore: vi.fn().mockResolvedValue({}),
+  listWorkScoreRules: vi.fn().mockResolvedValue([]),
   overrideWorkScore: vi.fn().mockResolvedValue({}),
+  upsertWorkScoreRule: vi.fn().mockResolvedValue({}),
   voidWorkScore: vi.fn().mockResolvedValue({}),
 }))
 
@@ -59,6 +66,8 @@ describe('WorkScoreWorkbenchPage', () => {
   afterEach(cleanup)
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(listWorkScoreRules).mockResolvedValue([])
+    vi.mocked(upsertWorkScoreRule).mockResolvedValue({} as never)
     queryClient.clear()
     i18n.changeLanguage('en')
   })
@@ -133,5 +142,16 @@ describe('WorkScoreWorkbenchPage', () => {
       </AppProviders>,
     )
     expect(await screen.findByText('Tổng điểm')).toBeVisible()
+  }, 15_000)
+
+  it('shows priority in Design rule setup and no obsolete slot field', async () => {
+    render(
+      <AppProviders>
+        <WorkScoreWorkbenchPage />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByLabelText('Priority')).toBeVisible()
+    expect(screen.queryByLabelText('Slot key')).not.toBeInTheDocument()
   }, 15_000)
 })

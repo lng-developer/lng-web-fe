@@ -2,10 +2,10 @@ import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PlusOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Empty, Tag } from 'antd'
+import { Button, Empty } from 'antd'
 
 import { getGlobalPermissions } from '@/shared/auth/session'
-import { SearchInput } from '@/shared/ui'
+import { SearchInput, StatusTag } from '@/shared/ui'
 
 import { listVendors, type Vendor } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
@@ -83,6 +83,8 @@ export function VendorTree({ onEdit }: VendorTreeProps) {
 export const VendorStatus = memo(function VendorStatus({ status }: { readonly status: string }) {
   const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
   return (
-    <Tag color={status === 'ACTIVE' ? 'success' : 'default'}>{t(`vendors.status.${status}`)}</Tag>
+    <StatusTag status={status === 'ACTIVE' ? 'operational' : 'draft'}>
+      {t(`vendors.status.${status}`)}
+    </StatusTag>
   )
 })

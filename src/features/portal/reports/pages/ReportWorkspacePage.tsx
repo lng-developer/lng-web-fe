@@ -166,6 +166,11 @@ export function ReportWorkspacePage() {
       render: (_, row) => money(row.revenueAmount, row.currency || 'USD'),
     },
     {
+      title: t('reports.columns.spend'),
+      sorter: (a, b) => (a.adSpendAmount || 0) - (b.adSpendAmount || 0),
+      render: (_, row) => money(row.adSpendAmount || 0, row.currency || 'USD'),
+    },
+    {
       title: t('reports.columns.netProfit'),
       sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
       render: (_, row) => money(row.netProfitAmount, row.currency || 'USD'),
@@ -188,6 +193,11 @@ export function ReportWorkspacePage() {
       title: t('reports.columns.revenue'),
       sorter: (a, b) => a.revenueAmount - b.revenueAmount,
       render: (_, row) => money(row.revenueAmount, row.currency || 'USD'),
+    },
+    {
+      title: t('reports.columns.spend'),
+      sorter: (a, b) => (a.adSpendAmount || 0) - (b.adSpendAmount || 0),
+      render: (_, row) => money(row.adSpendAmount || 0, row.currency || 'USD'),
     },
     {
       title: t('reports.columns.netProfit'),

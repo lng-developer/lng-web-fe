@@ -7,7 +7,7 @@ import {
   CheckCircleOutlined,
   DownloadOutlined,
 } from '@ant-design/icons'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UploadFile } from 'antd'
 import { Button, Modal, Space, Typography } from 'antd'
 
@@ -23,9 +23,11 @@ import {
 
 import { listProductTypeGroups } from '../../catalog/api/catalogApi'
 import {
+  bulkAssignVendorMigrationProductTypeGroup,
   importVendorCostCenters,
   importVendorProducts,
   listVendorCostCenters,
+  listVendorMigrationReview,
   listVendorProducts,
   listVendors,
   type RecordStatus,
@@ -37,6 +39,7 @@ import { vendorKeys } from '../api/vendorKeys'
 import { VendorCostCenterEditorModal } from './VendorCostCenterEditorModal'
 import { VendorEditorModal } from './VendorEditorModal'
 import { VendorIntegrationModal } from './VendorIntegrationModal'
+import { VendorMigrationTabPage } from './VendorMigrationTabPage'
 import { VendorProductEditorModal } from './VendorProductEditorModal'
 import { VendorWorkspaceCostCenterDrawer } from './VendorWorkspaceCostCenterDrawer'
 import styles from './VendorWorkspacePage.module.scss'
@@ -116,7 +119,7 @@ type ImportTarget =
   | { kind: 'costCenter'; productId: string; vendorId: string; productName: string }
 type ImportSummary = { total: number; created: number; failed: string[] }
 
-type VendorManagementTab = 'vendors' | 'products'
+type VendorManagementTab = 'vendors' | 'products' | 'migration'
 
 const buildImportTemplate = (target: ImportTarget) => {
   const quote = (value: string) => `"${value.replaceAll('"', '""')}"`
@@ -215,21 +218,21 @@ const appendImportFailure = (
   reason: string,
   t: (key: string, options?: Record<string, unknown>) => string,
 ) => {
-  list.push(t('portal.vendors.import.rowError', { row: rowNumber, reason }))
+  list.push(t('vendors.import.rowError', { row: rowNumber, reason }))
 }
 
 const validateImportFile = (
   t: (key: string, options?: Record<string, unknown>) => string,
   file: File | undefined,
 ) => {
-  if (!file) return t('portal.vendors.import.fileRequired')
-  if (file.size > MAX_IMPORT_FILE_BYTES) return t('portal.vendors.import.fileTooLarge')
+  if (!file) return t('vendors.import.fileRequired')
+  if (file.size > MAX_IMPORT_FILE_BYTES) return t('vendors.import.fileTooLarge')
   const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
-  return IMPORT_CSV_EXTENSIONS.includes(extension) ? undefined : t('portal.vendors.import.fileType')
+  return IMPORT_CSV_EXTENSIONS.includes(extension) ? undefined : t('vendors.import.fileType')
 }
 
 export const VendorWorkspacePage = () => {
-  const { t } = useTranslation()
+  const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
   const queryClient = useQueryClient()
   const canWrite = getGlobalPermissions().includes('VENDORS:WRITE')
   const [tab, setTab] = useState<VendorManagementTab>('vendors')
@@ -346,9 +349,22 @@ export const VendorWorkspacePage = () => {
 
   const productTypeGroups = useQuery({
     queryKey: ['portal', 'catalog', 'product-type-groups', 'all'],
-    queryFn: () => listProductTypeGroups({ page: 1, limit: 500 }),
-    enabled: importTarget?.kind === 'product',
+    queryFn: () => listProductTypeGroups({ page: 1, limit: 100 }),
+    enabled: importTarget?.kind === 'product' || tab === 'migration',
     retry: false,
+  })
+  const migrationReview = useQuery({
+    queryKey: vendorKeys.migrationReview({ page: 1, limit: 100 }),
+    queryFn: () => listVendorMigrationReview({ page: 1, limit: 100 }),
+    enabled: tab === 'migration',
+    retry: false,
+  })
+  const assignMigrationGroup = useMutation({
+    mutationFn: bulkAssignVendorMigrationProductTypeGroup,
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: vendorKeys.migrationReview({}) })
+      showFeedbackToast('success', t('vendors.migration.assigned', { count: result.updated }))
+    },
   })
 
   const resolveProductTypeGroupId = (row: CsvRecord) => {
@@ -378,11 +394,11 @@ export const VendorWorkspacePage = () => {
 
   const runProductImport = async (rows: CsvRecord[]): Promise<ImportSummary> => {
     if (!importTarget || importTarget.kind !== 'product') {
-      throw new Error(t('portal.vendors.import.notReady'))
+      throw new Error(t('vendors.import.notReady'))
     }
 
     if (productTypeGroups.isLoading || productTypeGroups.isError) {
-      throw new Error(t('portal.vendors.import.needProductTypeGroups'))
+      throw new Error(t('vendors.import.needProductTypeGroups'))
     }
 
     const importRows: Array<Record<string, string>> = []
@@ -403,24 +419,19 @@ export const VendorWorkspacePage = () => {
       const status = statusValue ? parseStatus(statusValue) : undefined
 
       if (!code || !name) {
-        appendImportFailure(failed, rowNumber, t('portal.vendors.import.requiredMissing'), t)
+        appendImportFailure(failed, rowNumber, t('vendors.import.requiredMissing'), t)
         continue
       }
       if (!productTypeGroupId) {
-        appendImportFailure(
-          failed,
-          rowNumber,
-          t('portal.vendors.import.productTypeGroupMissing'),
-          t,
-        )
+        appendImportFailure(failed, rowNumber, t('vendors.import.productTypeGroupMissing'), t)
         continue
       }
       if (hasTextValue(minProductionDaysValue) && Number.isNaN(minProductionDays)) {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', {
-            field: t('portal.vendors.minProductionDays'),
+          t('vendors.import.numberInvalid', {
+            field: t('vendors.minProductionDays'),
           }),
           t,
         )
@@ -430,8 +441,8 @@ export const VendorWorkspacePage = () => {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', {
-            field: t('portal.vendors.maxProductionDays'),
+          t('vendors.import.numberInvalid', {
+            field: t('vendors.maxProductionDays'),
           }),
           t,
         )
@@ -444,20 +455,20 @@ export const VendorWorkspacePage = () => {
         maxProductionDays != null &&
         minProductionDays > maxProductionDays
       ) {
-        appendImportFailure(failed, rowNumber, t('portal.vendors.productionRangeInvalid'), t)
+        appendImportFailure(failed, rowNumber, t('vendors.productionRangeInvalid'), t)
         continue
       }
       if (hasTextValue(baseCostAmountValue) && Number.isNaN(baseCostAmount)) {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', { field: t('portal.vendors.baseCostAmount') }),
+          t('vendors.import.numberInvalid', { field: t('vendors.baseCostAmount') }),
           t,
         )
         continue
       }
       if (statusValue && !status) {
-        appendImportFailure(failed, rowNumber, t('portal.vendors.import.invalidStatus'), t)
+        appendImportFailure(failed, rowNumber, t('vendors.import.invalidStatus'), t)
         continue
       }
 
@@ -493,7 +504,7 @@ export const VendorWorkspacePage = () => {
       appendImportFailure(
         failed,
         rows.length + 1,
-        error instanceof Error ? error.message : t('portal.vendors.import.createFailed'),
+        error instanceof Error ? error.message : t('vendors.import.createFailed'),
         t,
       )
       return { total: rows.length, created: 0, failed }
@@ -502,7 +513,7 @@ export const VendorWorkspacePage = () => {
 
   const runCostCenterImport = async (rows: CsvRecord[]): Promise<ImportSummary> => {
     if (!importTarget || importTarget.kind !== 'costCenter') {
-      throw new Error(t('portal.vendors.import.notReady'))
+      throw new Error(t('vendors.import.notReady'))
     }
 
     const importRows: Array<Record<string, string>> = []
@@ -526,14 +537,14 @@ export const VendorWorkspacePage = () => {
       const status = statusValue ? parseStatus(statusValue) : undefined
 
       if (!code || !name) {
-        appendImportFailure(failed, rowNumber, t('portal.vendors.import.requiredMissing'), t)
+        appendImportFailure(failed, rowNumber, t('vendors.import.requiredMissing'), t)
         continue
       }
       if (hasTextValue(baseCostAmountValue) && Number.isNaN(baseCostAmount)) {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', { field: t('portal.vendors.baseCostAmount') }),
+          t('vendors.import.numberInvalid', { field: t('vendors.baseCostAmount') }),
           t,
         )
         continue
@@ -542,7 +553,7 @@ export const VendorWorkspacePage = () => {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', { field: t('portal.vendors.weight') }),
+          t('vendors.import.numberInvalid', { field: t('vendors.weight') }),
           t,
         )
         continue
@@ -551,7 +562,7 @@ export const VendorWorkspacePage = () => {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', { field: t('portal.vendors.width') }),
+          t('vendors.import.numberInvalid', { field: t('vendors.width') }),
           t,
         )
         continue
@@ -560,7 +571,7 @@ export const VendorWorkspacePage = () => {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', { field: t('portal.vendors.length') }),
+          t('vendors.import.numberInvalid', { field: t('vendors.length') }),
           t,
         )
         continue
@@ -569,13 +580,13 @@ export const VendorWorkspacePage = () => {
         appendImportFailure(
           failed,
           rowNumber,
-          t('portal.vendors.import.numberInvalid', { field: t('portal.vendors.height') }),
+          t('vendors.import.numberInvalid', { field: t('vendors.height') }),
           t,
         )
         continue
       }
       if (statusValue && !status) {
-        appendImportFailure(failed, rowNumber, t('portal.vendors.import.invalidStatus'), t)
+        appendImportFailure(failed, rowNumber, t('vendors.import.invalidStatus'), t)
         continue
       }
 
@@ -618,7 +629,7 @@ export const VendorWorkspacePage = () => {
       appendImportFailure(
         failed,
         rows.length + 1,
-        error instanceof Error ? error.message : t('portal.vendors.import.createFailed'),
+        error instanceof Error ? error.message : t('vendors.import.createFailed'),
         t,
       )
       return { total: rows.length, created: 0, failed }
@@ -640,7 +651,7 @@ export const VendorWorkspacePage = () => {
 
     try {
       const rows = parseCsv(await importFile!.text())
-      if (rows.length === 0) throw new Error(t('portal.vendors.import.invalidCsv'))
+      if (rows.length === 0) throw new Error(t('vendors.import.invalidCsv'))
 
       const summary =
         importTarget.kind === 'product'
@@ -670,7 +681,7 @@ export const VendorWorkspacePage = () => {
 
       showFeedbackToast(
         summary.failed.length ? 'warning' : 'success',
-        t('portal.vendors.import.result', {
+        t('vendors.import.result', {
           total: summary.total,
           created: summary.created,
           failed: summary.failed.length,
@@ -678,9 +689,9 @@ export const VendorWorkspacePage = () => {
       )
       if (summary.failed.length === 0) closeImport()
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('portal.vendors.import.failed')
+      const message = error instanceof Error ? error.message : t('vendors.import.failed')
       setImportError(message)
-      showFeedbackToast('error', t('portal.vendors.import.failed'), message)
+      showFeedbackToast('error', t('vendors.import.failed'), message)
     } finally {
       setImporting(false)
     }
@@ -734,28 +745,28 @@ export const VendorWorkspacePage = () => {
         <MetricCard
           icon={<AppstoreOutlined />}
           variant="neutral"
-          label={t('portal.vendors.metrics.total', { defaultValue: 'Total Vendors' })}
+          label={t('vendors.metrics.total', { defaultValue: 'Total Vendors' })}
           value={totalCount}
           loading={summaryVendors.isLoading}
         />
         <MetricCard
           icon={<CheckCircleOutlined />}
           variant="success"
-          label={t('portal.vendors.metrics.active', { defaultValue: 'Active Vendors' })}
+          label={t('vendors.metrics.active', { defaultValue: 'Active Vendors' })}
           value={activeCount}
           loading={summaryVendors.isLoading}
         />
         <MetricCard
           icon={<ApiOutlined />}
           variant="info"
-          label={t('portal.vendors.metrics.integrated', { defaultValue: 'API Integrated' })}
+          label={t('vendors.metrics.integrated', { defaultValue: 'API Integrated' })}
           value={integratedCount}
           loading={summaryVendors.isLoading}
         />
         <MetricCard
           icon={<BlockOutlined />}
           variant="warning"
-          label={t('portal.vendors.metrics.types', { defaultValue: 'Fulfillment Types' })}
+          label={t('vendors.metrics.types', { defaultValue: 'Fulfillment Types' })}
           value="POD, FBM, FBA"
           loading={summaryVendors.isLoading}
         />
@@ -770,7 +781,7 @@ export const VendorWorkspacePage = () => {
               key: 'vendors',
               label: (
                 <UiTabLabel count={vendors.data?.pagination.total}>
-                  {t('portal.vendors.tabs.vendors')}
+                  {t('vendors.tabs.vendors')}
                 </UiTabLabel>
               ),
             },
@@ -778,10 +789,11 @@ export const VendorWorkspacePage = () => {
               key: 'products',
               label: (
                 <UiTabLabel count={products.data?.pagination.total}>
-                  {t('portal.vendors.tabs.products')}
+                  {t('vendors.tabs.products')}
                 </UiTabLabel>
               ),
             },
+            { key: 'migration', label: <UiTabLabel>{t('vendors.tabs.migration')}</UiTabLabel> },
           ]}
         />
         {tab === 'vendors' ? (
@@ -808,7 +820,7 @@ export const VendorWorkspacePage = () => {
             onEditVendor={(vendor) => setEditor({ kind: 'vendor', item: vendor })}
             onOpenIntegration={(vendor) => setEditor({ kind: 'integration', vendor })}
           />
-        ) : (
+        ) : tab === 'products' ? (
           <VendorWorkspaceProductsTabPage
             canWrite={canWrite}
             searchProducts={searchProducts}
@@ -845,6 +857,19 @@ export const VendorWorkspacePage = () => {
               setSearchCostCenters('')
               setCostCentersPage(1)
             }}
+          />
+        ) : (
+          <VendorMigrationTabPage
+            canWrite={canWrite}
+            rows={migrationReview.data?.items ?? []}
+            loading={migrationReview.isLoading}
+            error={migrationReview.error}
+            productTypeGroups={productTypeGroups.data?.items ?? []}
+            pending={migrationReview.data?.summary.pending ?? 0}
+            assigning={assignMigrationGroup.isPending}
+            onAssign={(legacyProductIds, productTypeGroupId) =>
+              assignMigrationGroup.mutate({ legacyProductIds, productTypeGroupId })
+            }
           />
         )}
       </SectionCard>
@@ -930,8 +955,8 @@ export const VendorWorkspacePage = () => {
           centered
           title={
             importTarget.kind === 'product'
-              ? t('portal.vendors.importProducts')
-              : t('portal.vendors.importCostCenters')
+              ? t('vendors.importProducts')
+              : t('vendors.importCostCenters')
           }
           open
           destroyOnClose
@@ -945,20 +970,18 @@ export const VendorWorkspacePage = () => {
               (importTarget.kind === 'product' &&
                 (productTypeGroups.isLoading || productTypeGroups.isError)),
           }}
-          okText={
-            importing ? t('portal.vendors.import.importing') : t('portal.vendors.import.submit')
-          }
-          cancelText={t('portal.vendors.cancel')}
+          okText={importing ? t('vendors.import.importing') : t('vendors.import.submit')}
+          cancelText={t('vendors.cancel')}
         >
           <Space className={styles.importModalBody} direction="vertical" size={12}>
             <Space size={8} wrap>
               <Button type="default" icon={<DownloadOutlined />} onClick={downloadImportTemplate}>
-                {t('portal.vendors.import.downloadTemplate')}
+                {t('vendors.import.downloadTemplate')}
               </Button>
               <FileUpload
                 accept=".csv"
-                title={t('portal.vendors.import.chooseFile')}
-                description={t('portal.vendors.import.description')}
+                title={t('vendors.import.chooseFile')}
+                description={t('vendors.import.description')}
                 maxCount={1}
                 fileList={importFiles}
                 onChange={async (info) => {
@@ -975,7 +998,7 @@ export const VendorWorkspacePage = () => {
                     const fileRows = parseCsv(await selected.text())
                     setImportPreviewRows(fileRows.slice(0, IMPORT_PREVIEW_LIMIT))
                     if (!fileRows.length) {
-                      setImportError(t('portal.vendors.import.invalidCsv'))
+                      setImportError(t('vendors.import.invalidCsv'))
                     }
                   }
 
@@ -994,12 +1017,10 @@ export const VendorWorkspacePage = () => {
               />
             </Space>
             {importTarget.kind === 'product' ? (
-              <Typography.Text type="secondary">
-                {t('portal.vendors.import.productTip')}
-              </Typography.Text>
+              <Typography.Text type="secondary">{t('vendors.import.productTip')}</Typography.Text>
             ) : (
               <Typography.Text type="secondary">
-                {t('portal.vendors.import.costCenterTip')}
+                {t('vendors.import.costCenterTip')}
               </Typography.Text>
             )}
             {importError ? <Typography.Text type="danger">{importError}</Typography.Text> : null}
@@ -1007,7 +1028,7 @@ export const VendorWorkspacePage = () => {
               importPreviewRows.length ? (
                 <>
                   <Typography.Text strong>
-                    {t('portal.vendors.import.previewTitle', { limit: IMPORT_PREVIEW_LIMIT })}
+                    {t('vendors.import.previewTitle', { limit: IMPORT_PREVIEW_LIMIT })}
                   </Typography.Text>
                   <ul className={styles.importPreviewList}>
                     {importPreviewRows.map((row, index) => (
@@ -1019,14 +1040,14 @@ export const VendorWorkspacePage = () => {
                 </>
               ) : (
                 <Typography.Text type="secondary">
-                  {t('portal.vendors.import.previewEmpty')}
+                  {t('vendors.import.previewEmpty')}
                 </Typography.Text>
               )
             ) : null}
             {importSummary ? (
               <>
                 <Typography.Text strong>
-                  {t('portal.vendors.import.summary', {
+                  {t('vendors.import.summary', {
                     total: importSummary.total,
                     created: importSummary.created,
                     failed: importSummary.failed.length,

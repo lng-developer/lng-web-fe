@@ -74,13 +74,19 @@ export type WorkScoreRule = {
   sourceType: WorkScoreSourceType
   taskType: string | null
   priority: string | null
-  slotKey: string | null
   scaleDifficultyLevel: 'NORMAL' | 'HARD' | 'SPECIAL' | null
   points: number
   status: 'ACTIVE' | 'INACTIVE'
 }
 export type WorkScoreRuleInput = Omit<WorkScoreRule, 'id'>
-export type WorkScoreRuleFormInput = Omit<WorkScoreRuleInput, 'priority' | 'slotKey'>
+export type WorkScoreRuleFormInput = Omit<
+  WorkScoreRuleInput,
+  'taskType' | 'priority' | 'scaleDifficultyLevel'
+> & {
+  taskType?: string | null
+  priority?: string | null
+  scaleDifficultyLevel?: 'NORMAL' | 'HARD' | 'SPECIAL' | null
+}
 
 const basePath = '/api/work-scores'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data

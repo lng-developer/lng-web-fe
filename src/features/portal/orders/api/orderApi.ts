@@ -51,6 +51,7 @@ export type OrderTimelineEvent = {
   fromStatus: string | null
   toStatus: string | null
   source: string | null
+  metadata: Record<string, unknown> | null
   actor: { displayName: string | null; employeeCode: string | null } | null
   createdAt: string | null
 }

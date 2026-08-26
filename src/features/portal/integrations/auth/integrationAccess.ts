@@ -26,6 +26,18 @@ export function canWriteOrdersSomewhere(account: CurrentAccount) {
   )
 }
 
+export function canWriteFinanceForShop(account: CurrentAccount, shopId: string | null) {
+  if (account.permissions.includes(FINANCE_WRITE)) return true
+  if (!shopId) return false
+
+  return account.scopes.some(
+    (scope) =>
+      scope.scopeType.toLowerCase() === 'shop' &&
+      (scope.scopeId === shopId || scope.resourceId === shopId) &&
+      scope.permissions.includes(FINANCE_WRITE),
+  )
+}
+
 export function canReadFinanceImports(account: CurrentAccount) {
   return account.permissions.includes(FINANCE_READ) || account.permissions.includes(FINANCE_WRITE)
 }

@@ -34,4 +34,10 @@ describe('ProductionWorkbenchPage source contract', () => {
     expect(source).toContain('onPassSlot={handleQcSlotPass}')
     expect(source).toContain('onPass={handleInspectionPass}')
   })
+
+  it('keeps PSD-missing tasks in the blocked queue and shows their blockers', () => {
+    expect(source).toContain("psdReadyOnly: tab !== 'blocked'")
+    expect(source).toContain("title: t('portal.production.blockers')")
+    expect(source).toContain("(row.blockers || []).join(', ')")
+  })
 })

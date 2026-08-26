@@ -2,10 +2,10 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppstoreOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Select, Space, Tag, Typography } from 'antd'
+import { Button, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { FilterBar, SearchInput } from '@/shared/ui'
+import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { RecordStatus, VendorProduct } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -106,9 +106,9 @@ export function VendorWorkspaceProductsTabPage({
         ellipsis: true,
         onCell: () => ({ style: { maxWidth: 140 } }),
         render: (_, row) => (
-          <Tag color={row.status === 'ACTIVE' ? 'success' : 'default'}>
+          <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
             {t(`portal.vendors.status.${row.status}`)}
-          </Tag>
+          </StatusTag>
         ),
       },
       {

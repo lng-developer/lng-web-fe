@@ -1914,6 +1914,32 @@
     }
   },
   "portal": {
+    "monitoring": {
+      "indexes": {
+        "tab": "Mongo Indexes",
+        "title": "MongoDB index usage",
+        "snapshotDate": "Snapshot date",
+        "refresh": "Refresh",
+        "database": "Database",
+        "indexes": "Indexes",
+        "indexSize": "Index size",
+        "capturedAt": "Captured at",
+        "empty": "No index usage snapshot is available yet.",
+        "loadFailed": "Could not load index usage snapshots.",
+        "filter": "Index filter",
+        "allIndexes": "All indexes",
+        "reviewCandidates": "Review candidates",
+        "idleDaysValue": "{{count}} days",
+        "columns": {
+          "collection": "Collection",
+          "index": "Index",
+          "key": "Key",
+          "operations": "Operations",
+          "idleDays": "No increase",
+          "decision": "Decision"
+        }
+      }
+    },
     "catalog": {
       "title": "Catalog listings",
       "actions": "Actions",
@@ -2462,6 +2488,8 @@
       "tabs": {
         "orders": "Orders",
         "extension": "Amazon Extension",
+        "automation": "Automation",
+        "finance": "Finance data",
         "ads": "Amazon Ads",
         "transactions": "Amazon Transactions",
         "settlements": "Amazon Settlements"
@@ -2528,7 +2556,7 @@
         "success": "Report uploaded",
         "title": "Upload order report",
         "source": "Import format",
-        "amazon": "Amazon order report",
+        "amazon": "Amazon order report (manual upload)",
         "etsy": "Etsy sold order items",
         "marketplace": "Marketplace code",
         "marketplaceRequired": "Enter a marketplace code",
@@ -2557,7 +2585,19 @@
         "createTokenHint": "Create a token, then copy it into the extension.",
         "createToken": "Create token",
         "flowHint": "After saving these values in Chrome, use Import Orders in the extension.",
-        "tokenWarning": "This token is shown once. Copy it before leaving the page."
+        "tokenWarning": "This token is shown once. Copy it before leaving the page.",
+        "commandsTitle": "Remote order import",
+        "selectAgent": "Select an online extension",
+        "pullOrders": "Pull new orders",
+        "orderHistoryWindow": "Order history window",
+        "adsDateRange": "Ads date range",
+        "moreActions": "More extension actions",
+        "orderScheduleInterval": "Order schedule interval",
+        "noAgents": "No online extension found. Open the extension on the RDC first.",
+        "commandQueued": "Import command queued.",
+        "command": "Command",
+        "status": "Status",
+        "created": "Created"
       },
       "panel": {
         "title": "Import job",
@@ -2704,6 +2744,7 @@
       "psdStatus": "PSD status",
       "psdReady": "PSD uploaded",
       "psdMissing": "No PSD",
+      "blockers": "Blockers",
       "assignedTo": "Assigned to",
       "unassigned": "Unassigned",
       "originalArtwork": "Original artwork",
@@ -2959,6 +3000,18 @@
         "basePoints": " / {{count}}pt",
         "files": "{{count}} files"
       },
+      "rules": {
+        "title": "Score setup",
+        "sourceType": "Source type",
+        "taskType": "Task type",
+        "priority": "Priority",
+        "allPriorities": "All priorities",
+        "scaleDifficulty": "Scale difficulty",
+        "allDifficulties": "All difficulties",
+        "points": "Points",
+        "status": "Status",
+        "save": "Save rule"
+      },
       "metrics": {
         "totalFiles": "Files",
         "totalPoints": "Points",
@@ -2981,6 +3034,12 @@
         "PNG_ASSET": "PNG asset",
         "IDEA": "Idea",
         "CLONE": "Clone"
+      },
+      "priorities": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
       },
       "scaleDifficulties": {
         "NORMAL": "Normal",
@@ -3159,7 +3218,8 @@
       "vendor": "Vendor",
       "tabs": {
         "vendors": "Vendors",
-        "products": "Products"
+        "products": "Products",
+        "migration": "Migration review"
       },
       "filters": {
         "label": "Filters",
@@ -3171,6 +3231,18 @@
         "active": "Active vendors",
         "integrated": "API integrated",
         "types": "Fulfillment types"
+      },
+      "migration": {
+        "vendor": "Vendor",
+        "product": "Product",
+        "externalProductId": "External ID",
+        "variants": "Variants",
+        "unresolved": "Unresolved",
+        "loadFailed": "Could not load migration review",
+        "pending": "{{count}} products need a Product Type Group before migration.",
+        "selectProductTypeGroup": "Choose Product Type Group",
+        "assign": "Assign to {{count}} selected",
+        "assigned": "Assigned Product Type Group to {{count}} products"
       },
       "import": {
         "description": "Import vendor records from a CSV file.",
@@ -3374,6 +3446,7 @@
     "history": {
       "orderTitle": "Order activity",
       "itemTitle": "Item activity",
+      "blockers": "Blockers",
       "empty": "No activity recorded yet"
     },
     "filters": {

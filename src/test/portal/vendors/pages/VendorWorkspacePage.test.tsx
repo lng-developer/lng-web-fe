@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { VendorWorkspacePage } from '@/features/portal/vendors/pages/VendorWorkspacePage'
+import vendorWorkspaceSource from '@/features/portal/vendors/pages/VendorWorkspacePage.tsx?raw'
 import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/portal/vendors/pages/VendorTree', () => ({
@@ -21,7 +22,11 @@ describe('VendorWorkspacePage', () => {
       </AppProviders>,
     )
 
-    expect(screen.getByRole('heading', { name: 'Vendor directory' })).toBeVisible()
+    expect(screen.getByRole('tab', { name: i18n.t('portal.vendors.tabs.vendors') })).toBeVisible()
     expect(screen.queryByText('vendors.title')).not.toBeInTheDocument()
+  })
+
+  it('does not repeat the portal prefix in translation keys', () => {
+    expect(vendorWorkspaceSource).not.toContain("t('portal.")
   })
 })
