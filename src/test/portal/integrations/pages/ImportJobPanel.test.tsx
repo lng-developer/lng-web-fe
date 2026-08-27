@@ -203,6 +203,29 @@ describe('ImportJobPanel', () => {
     expect(screen.queryByRole('button', { name: 'Retry import' })).not.toBeInTheDocument()
   })
 
+  it('opens raw records in a wide drawer from the compact panel', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <App>
+          <ImportJobPanel
+            account={account()}
+            jobId="job-1"
+            status="FAILED"
+            open
+            onClose={vi.fn()}
+            presentation="panel"
+          />
+        </App>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('Summary')).toBeVisible()
+    expect(screen.queryByText('Raw records')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'View raw records' }))
+    expect(await screen.findByText('Raw records')).toBeVisible()
+  })
+
   it('confirms retry and invalidates only the affected integration queries', async () => {
     setPermissions(['ORDERS:WRITE'])
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

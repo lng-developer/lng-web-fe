@@ -190,7 +190,8 @@ export function MappingWorkbenchPage({
   })
   const candidates = useQuery({
     queryKey: mappingKeys.candidates(orderItemId ?? '', candidateSearch),
-    queryFn: () => searchVendorCandidates(orderItemId!, { q: candidateSearch, limit: 100 }),
+    queryFn: () =>
+      searchVendorCandidates(orderItemId!, { q: candidateSearch, includeTotal: false, limit: 100 }),
     enabled: Boolean(orderItemId),
     retry: false,
   })

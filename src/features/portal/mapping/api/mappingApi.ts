@@ -149,6 +149,7 @@ export type CandidateSearchInput = {
   lngCode?: string
   manualBrowse?: boolean
   includeDifferentProductType?: boolean
+  includeTotal?: boolean
   page?: number
   limit?: number
 }
@@ -171,7 +172,7 @@ export type CandidateResult = {
   signals: Record<string, unknown>
   items: VendorCandidateSearchRow[]
   products?: Array<{ id: string; code?: string | null; name?: string | null }>
-  pagination: { total: number; page: number; limit: number }
+  pagination: { total: number | null; page: number; limit: number }
 }
 export type CandidateSelection = { vendorProductId: string; vendorCostCenterId: string }
 export type MappingVendor = { id: string; code?: string | null; name?: string | null }

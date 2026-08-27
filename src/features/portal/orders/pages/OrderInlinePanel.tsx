@@ -4,6 +4,7 @@ import {
   CheckCircleOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  EllipsisOutlined,
   ExportOutlined,
   HistoryOutlined,
   HolderOutlined,
@@ -22,8 +23,10 @@ import {
   Button,
   Checkbox,
   Descriptions,
+  Dropdown,
   Input,
   InputNumber,
+  type MenuProps,
   Modal,
   Select,
   Space,
@@ -81,6 +84,7 @@ import { formatMinorMoney, orderStatusTone } from './orderPresentation'
 import styles from './OrderWorkbenchPage.module.scss'
 
 type OrderModal = 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline'
+type MenuClickInfo = Parameters<NonNullable<MenuProps['onClick']>>[0]
 type Action =
   | { kind: 'address'; address: ShippingAddress }
   | { kind: 'shipping'; shipping: ShippingService }
@@ -267,14 +271,24 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
   })
 
   const openConfirmation = (
-    event: MouseEvent<HTMLElement>,
+    target: EventTarget | null,
     kind: Confirmation['kind'],
     item: OrderWorkbenchItem,
   ) => {
     setReason('')
     setQuantity(item.item.quantity || 1)
     setConfirmation({ kind, item })
-    setConfirmationAnchor(getPopupAnchorFromMouseEvent(event))
+    const rect = target instanceof Element ? target.getBoundingClientRect() : undefined
+    setConfirmationAnchor(
+      rect
+        ? {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+            width: rect.width,
+            height: rect.height,
+          }
+        : undefined,
+    )
   }
 
   const openTimelineForItem = (event: MouseEvent<HTMLElement>, itemId: string) => {
@@ -813,7 +827,7 @@ function OrderItemPanel({
   readonly pending: boolean
   readonly onAction: (action: Action) => void
   readonly onConfirm: (
-    event: MouseEvent<HTMLElement>,
+    target: EventTarget | null,
     kind: Confirmation['kind'],
     item: OrderWorkbenchItem,
   ) => void
@@ -846,6 +860,52 @@ function OrderItemPanel({
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 })
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>()
   const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item.status ?? '')
+  const customizationInputs = item.customization?.inputs ?? []
+  const [showAllCustomizations, setShowAllCustomizations] = useState(false)
+  const visibleCustomizationInputs = showAllCustomizations
+    ? customizationInputs
+    : customizationInputs.slice(0, 4)
+  const hiddenCustomizationCount = customizationInputs.length - visibleCustomizationInputs.length
+  const actionMenuItems: NonNullable<MenuProps['items']> = [
+    ...(canWrite
+      ? [
+          {
+            key: 'replace',
+            icon: <SwapOutlined />,
+            label: t('orders.actions.replaceShort'),
+            onClick: ({ domEvent }: MenuClickInfo) =>
+              onConfirm(domEvent.target, 'replacement', item),
+          },
+        ]
+      : []),
+    ...(canOperate && canRecheck
+      ? [
+          {
+            key: 'recheck',
+            icon: <ReloadOutlined />,
+            label: t('orders.actions.recheckShort'),
+            onClick: () => onAction({ kind: 'recheck', itemId: item.item.id }),
+          },
+        ]
+      : []),
+    ...(canOperate && !terminal
+      ? [
+          {
+            key: 'ready',
+            icon: <CheckCircleOutlined />,
+            label: t('orders.actions.readyShort'),
+            onClick: () => onAction({ kind: 'ready', itemId: item.item.id }),
+          },
+          {
+            key: 'cancel',
+            danger: true,
+            icon: <DeleteOutlined />,
+            label: t('orders.actions.cancelShort'),
+            onClick: ({ domEvent }: MenuClickInfo) => onConfirm(domEvent.target, 'cancel', item),
+          },
+        ]
+      : []),
+  ]
 
   const resetImageView = () => {
     setImageZoom(100)
@@ -1007,7 +1067,7 @@ function OrderItemPanel({
           ) : null}
         </Space>
         <div className={styles.inputList}>
-          {(item.customization?.inputs ?? []).map((input, index) => (
+          {visibleCustomizationInputs.map((input, index) => (
             <div key={`${input.label}-${index}`}>
               <Typography.Text type="secondary">{input.label || input.type}: </Typography.Text>
               {input.assetDownloadUrl ? (
@@ -1035,10 +1095,21 @@ function OrderItemPanel({
               )}
             </div>
           ))}
-          {!item.customization?.inputs.length ? (
+          {!customizationInputs.length ? (
             <Typography.Text type="secondary">—</Typography.Text>
           ) : null}
         </div>
+        {customizationInputs.length > 4 ? (
+          <Button
+            size="small"
+            type="link"
+            onClick={() => setShowAllCustomizations((current) => !current)}
+          >
+            {showAllCustomizations
+              ? t('orders.actions.showLessCustomization')
+              : t('orders.actions.showMoreCustomization', { count: hiddenCustomizationCount })}
+          </Button>
+        ) : null}
 
         <PopupModal
           centered
@@ -1200,59 +1271,10 @@ function OrderItemPanel({
         />
       </section>
       <section className={styles.itemActions}>
-        <Typography.Text strong>{t('orders.sections.itemActions')}</Typography.Text>
-        {canWrite || canOperate ? (
-          <Space orientation="vertical" size={4}>
-            {canWrite ? (
-              <Tooltip title={t('orders.actions.createReplacement')} placement="left">
-                <Button
-                  type="text"
-                  aria-label={t('orders.actions.replaceShort')}
-                  icon={<SwapOutlined />}
-                  onClick={(event) => onConfirm(event, 'replacement', item)}
-                >
-                  {t('orders.actions.replaceShort')}
-                </Button>
-              </Tooltip>
-            ) : null}
-            {canOperate && canRecheck ? (
-              <Tooltip title={t('orders.actions.recheck')} placement="left">
-                <Button
-                  type="text"
-                  aria-label={t('orders.actions.recheckShort')}
-                  icon={<ReloadOutlined />}
-                  onClick={() => onAction({ kind: 'recheck', itemId: item.item.id })}
-                >
-                  {t('orders.actions.recheckShort')}
-                </Button>
-              </Tooltip>
-            ) : null}
-            {canOperate && !terminal ? (
-              <Tooltip title={t('orders.actions.markReady')} placement="left">
-                <Button
-                  type="text"
-                  aria-label={t('orders.actions.readyShort')}
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => onAction({ kind: 'ready', itemId: item.item.id })}
-                >
-                  {t('orders.actions.readyShort')}
-                </Button>
-              </Tooltip>
-            ) : null}
-            {canOperate && !terminal ? (
-              <Tooltip title={t('orders.actions.cancelItem')} placement="left">
-                <Button
-                  danger
-                  type="text"
-                  aria-label={t('orders.actions.cancelShort')}
-                  icon={<DeleteOutlined />}
-                  onClick={(event) => onConfirm(event, 'cancel', item)}
-                >
-                  {t('orders.actions.cancelShort')}
-                </Button>
-              </Tooltip>
-            ) : null}
-          </Space>
+        {actionMenuItems.length ? (
+          <Dropdown menu={{ items: actionMenuItems }} placement="bottomRight" trigger={['click']}>
+            <Button type="text" aria-label={t('orders.actions.more')} icon={<EllipsisOutlined />} />
+          </Dropdown>
         ) : null}
       </section>
     </article>

@@ -112,8 +112,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('heading', { name: 'Foundation test page' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
     expect(await screen.findAllByRole('button', { name: 'Chat' })).not.toHaveLength(0)
-    expect(screen.getByRole('navigation', { name: 'Test navigation' })).toBeVisible()
-    expect(screen.getByRole('navigation', { name: 'Test core rail' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toBeVisible()
   })
 
   it('opens unread quick chat from the floating badge', async () => {

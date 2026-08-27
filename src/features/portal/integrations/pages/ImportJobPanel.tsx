@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Modal, Progress, Typography } from 'antd'
+import { Button, Descriptions, Drawer, Modal, Progress, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -47,18 +47,27 @@ export interface ImportJobPanelProps {
   readonly status?: ImportJobStatus
   readonly open: boolean
   readonly onClose: () => void
+  readonly presentation?: 'drawer' | 'panel'
 }
 
 export function ImportJobPanel(props: ImportJobPanelProps) {
   return <ImportJobPanelForJob key={props.jobId ?? 'none'} {...props} />
 }
 
-function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJobPanelProps) {
+function ImportJobPanelForJob({
+  account,
+  jobId,
+  status,
+  open,
+  onClose,
+  presentation = 'drawer',
+}: ImportJobPanelProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [rawPage, setRawPage] = useState(1)
   const [confirmRetry, setConfirmRetry] = useState(false)
+  const [rawDrawerOpen, setRawDrawerOpen] = useState(false)
   const job = useImportJobPolling(open ? jobId : undefined, status)
   const rawParams = { page: rawPage, limit: PAGE_SIZE }
   const rawRecords = useQuery({
@@ -182,121 +191,107 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
     },
   ]
 
-  return (
+  const detailContent = (
     <>
-      <DetailDrawer
-        open={open}
-        width={900}
-        title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
-        onClose={onClose}
-        footer={
-          canRetry ? (
-            <Button onClick={() => setConfirmRetry(true)}>
-              {t('portal.integrations.panel.retry', { defaultValue: 'Retry import' })}
+      {job.isLoading ? <LoadingState variant="card" /> : null}
+      {job.error ? (
+        <FeedbackAlert
+          type="error"
+          title={t('portal.integrations.panel.unavailable', {
+            defaultValue: 'Import job is unavailable',
+          })}
+          action={
+            <Button
+              icon={<ReloadOutlined aria-hidden />}
+              type="link"
+              onClick={() => void job.refetch()}
+            >
+              {t('portal.integrations.retry', { defaultValue: 'Retry' })}
             </Button>
-          ) : undefined
-        }
-      >
-        {job.isLoading ? <LoadingState variant="card" /> : null}
-        {job.error ? (
-          <FeedbackAlert
-            type="error"
-            title={t('portal.integrations.panel.unavailable', {
-              defaultValue: 'Import job is unavailable',
-            })}
-            action={
-              <Button
-                icon={<ReloadOutlined aria-hidden />}
-                type="link"
-                onClick={() => void job.refetch()}
+          }
+        />
+      ) : null}
+      {job.data ? (
+        <div className={styles.panelContent}>
+          <section>
+            <Typography.Title level={3}>
+              {t('portal.integrations.panel.summary', { defaultValue: 'Summary' })}
+            </Typography.Title>
+            <Descriptions column={2} size="small">
+              <Descriptions.Item
+                label={t('portal.integrations.jobs.status', { defaultValue: 'Status' })}
               >
-                {t('portal.integrations.retry', { defaultValue: 'Retry' })}
-              </Button>
-            }
-          />
-        ) : null}
-        {job.data ? (
-          <div className={styles.panelContent}>
-            <section>
-              <Typography.Title level={3}>
-                {t('portal.integrations.panel.summary', { defaultValue: 'Summary' })}
-              </Typography.Title>
-              <Descriptions column={2} size="small">
-                <Descriptions.Item
-                  label={t('portal.integrations.jobs.status', { defaultValue: 'Status' })}
-                >
-                  {t(`portal.integrations.statuses.${job.data.job.status}`, {
-                    defaultValue: job.data.job.status,
-                  })}
-                </Descriptions.Item>
-                <Descriptions.Item
-                  label={t('portal.integrations.jobs.source', { defaultValue: 'Source' })}
-                >
-                  {t(`portal.integrations.sources.${job.data.job.source}`, {
-                    defaultValue: job.data.job.source,
-                  })}
-                </Descriptions.Item>
-                <Descriptions.Item
-                  label={t('portal.integrations.panel.imported', { defaultValue: 'Imported' })}
-                >
-                  {`${job.data.job.importedCount} ${t('portal.integrations.jobs.imported', { defaultValue: 'imported' })}`}
-                </Descriptions.Item>
-                <Descriptions.Item
-                  label={t('portal.integrations.panel.failed', { defaultValue: 'Failed' })}
-                >
-                  {job.data.job.failedCount}
-                </Descriptions.Item>
-                <Descriptions.Item
-                  label={t('portal.integrations.panel.started', { defaultValue: 'Started' })}
-                >
-                  {job.data.job.startedAt ? new Date(job.data.job.startedAt).toLocaleString() : '-'}
-                </Descriptions.Item>
-                <Descriptions.Item
-                  label={t('portal.integrations.panel.finished', { defaultValue: 'Finished' })}
-                >
-                  {job.data.job.finishedAt
-                    ? new Date(job.data.job.finishedAt).toLocaleString()
-                    : '-'}
-                </Descriptions.Item>
-              </Descriptions>
-              <div className={styles.progressList}>
-                {progressItems.map(({ key, label, phase }) => (
-                  <div className={styles.progressRow} key={key}>
-                    <div className={styles.progressMeta}>
-                      <Typography.Text strong>{label}</Typography.Text>
-                      <Typography.Text type="secondary">
-                        {`${phase.completed}/${phase.total}`}
-                        {phase.failed ? ` · ${phase.failed} failed` : ''}
-                        {phase.processing ? ` · ${phase.processing} processing` : ''}
-                        {phase.queued ? ` · ${phase.queued} queued` : ''}
-                      </Typography.Text>
-                    </div>
-                    <Progress
-                      percent={phase.percentage}
-                      status={
-                        phase.failed ? 'exception' : phase.percentage >= 100 ? 'success' : 'active'
-                      }
-                    />
+                {t(`portal.integrations.statuses.${job.data.job.status}`, {
+                  defaultValue: job.data.job.status,
+                })}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={t('portal.integrations.jobs.source', { defaultValue: 'Source' })}
+              >
+                {t(`portal.integrations.sources.${job.data.job.source}`, {
+                  defaultValue: job.data.job.source,
+                })}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={t('portal.integrations.panel.imported', { defaultValue: 'Imported' })}
+              >
+                {`${job.data.job.importedCount} ${t('portal.integrations.jobs.imported', { defaultValue: 'imported' })}`}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={t('portal.integrations.panel.failed', { defaultValue: 'Failed' })}
+              >
+                {job.data.job.failedCount}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={t('portal.integrations.panel.started', { defaultValue: 'Started' })}
+              >
+                {job.data.job.startedAt ? new Date(job.data.job.startedAt).toLocaleString() : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={t('portal.integrations.panel.finished', { defaultValue: 'Finished' })}
+              >
+                {job.data.job.finishedAt ? new Date(job.data.job.finishedAt).toLocaleString() : '-'}
+              </Descriptions.Item>
+            </Descriptions>
+            <div className={styles.progressList}>
+              {progressItems.map(({ key, label, phase }) => (
+                <div className={styles.progressRow} key={key}>
+                  <div className={styles.progressMeta}>
+                    <Typography.Text strong>{label}</Typography.Text>
+                    <Typography.Text type="secondary">
+                      {`${phase.completed}/${phase.total}`}
+                      {phase.failed ? ` · ${phase.failed} failed` : ''}
+                      {phase.processing ? ` · ${phase.processing} processing` : ''}
+                      {phase.queued ? ` · ${phase.queued} queued` : ''}
+                    </Typography.Text>
                   </div>
-                ))}
-              </div>
-              {job.data.issues.open ? (
-                <FeedbackAlert
-                  type="warning"
-                  title={t('portal.integrations.panel.openIssues', {
-                    defaultValue: `${job.data.issues.open} open import issues`,
-                    count: job.data.issues.open,
-                  })}
-                />
-              ) : null}
-              {job.data.job.errorMessage ? (
-                <FeedbackAlert
-                  type="error"
-                  title={job.data.job.errorMessage}
-                  description={job.data.job.errorCode ?? undefined}
-                />
-              ) : null}
-            </section>
+                  <Progress
+                    percent={phase.percentage}
+                    status={
+                      phase.failed ? 'exception' : phase.percentage >= 100 ? 'success' : 'active'
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+            {job.data.issues.open ? (
+              <FeedbackAlert
+                type="warning"
+                title={t('portal.integrations.panel.openIssues', {
+                  defaultValue: `${job.data.issues.open} open import issues`,
+                  count: job.data.issues.open,
+                })}
+              />
+            ) : null}
+            {job.data.job.errorMessage ? (
+              <FeedbackAlert
+                type="error"
+                title={job.data.job.errorMessage}
+                description={job.data.job.errorCode ?? undefined}
+              />
+            ) : null}
+          </section>
+          {presentation !== 'panel' ? (
             <section>
               <Typography.Title level={3}>
                 {t('portal.integrations.panel.rawRecords', { defaultValue: 'Raw records' })}
@@ -334,9 +329,73 @@ function ImportJobPanelForJob({ account, jobId, status, open, onClose }: ImportJ
                 />
               ) : null}
             </section>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  )
+
+  const retryAction = canRetry ? (
+    <Button onClick={() => setConfirmRetry(true)}>
+      {t('portal.integrations.panel.retry', { defaultValue: 'Retry import' })}
+    </Button>
+  ) : null
+
+  return (
+    <>
+      {presentation === 'panel' ? (
+        <aside
+          aria-label={t('portal.integrations.panel.detailRegion', {
+            defaultValue: 'Import job details',
+          })}
+          className={styles.contextPanel}
+        >
+          <div className={styles.contextPanelHeader}>
+            <Typography.Text strong>
+              {`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
+            </Typography.Text>
+            <Button size="small" type="text" onClick={onClose}>
+              {t('common.close', { defaultValue: 'Close' })}
+            </Button>
           </div>
-        ) : null}
-      </DetailDrawer>
+          {detailContent}
+          <Button block onClick={() => setRawDrawerOpen(true)}>
+            {t('portal.integrations.panel.viewRawRecords', { defaultValue: 'View raw records' })}
+          </Button>
+          {retryAction ? <div className={styles.contextPanelFooter}>{retryAction}</div> : null}
+          <Drawer
+            destroyOnHidden
+            open={rawDrawerOpen}
+            placement="right"
+            title={t('portal.integrations.panel.rawRecords', { defaultValue: 'Raw records' })}
+            width={960}
+            onClose={() => setRawDrawerOpen(false)}
+          >
+            <CoreDataTable
+              columns={rawColumns}
+              dataSource={rawRecords.data?.items ?? []}
+              loading={rawRecords.isLoading}
+              rowKey="id"
+              pagination={{
+                current: rawPage,
+                pageSize: PAGE_SIZE,
+                total: rawRecords.data?.pagination.total,
+                onChange: setRawPage,
+              }}
+            />
+          </Drawer>
+        </aside>
+      ) : (
+        <DetailDrawer
+          open={open}
+          width={900}
+          title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
+          onClose={onClose}
+          footer={retryAction}
+        >
+          {detailContent}
+        </DetailDrawer>
+      )}
       <Modal
         open={confirmRetry}
         title={t('portal.integrations.panel.confirmTitle', { defaultValue: 'Retry this import?' })}

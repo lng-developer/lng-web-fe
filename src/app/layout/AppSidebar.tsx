@@ -36,14 +36,18 @@ export function AppSidebar({
   groups,
   selectedKey,
   collapsed,
+  embedded = false,
   navigationSearch,
+  onNavigate,
 }: {
   coreLabel: string
   groups: NavigationGroup[]
   selectedKey?: string
   collapsed: boolean
   onCollapsedChange?: (collapsed: boolean) => void
+  embedded?: boolean
   navigationSearch: string
+  onNavigate?: () => void
 }) {
   const { t } = useTranslation()
   const { resolved } = useThemePreference()
@@ -86,7 +90,7 @@ export function AppSidebar({
                 key: item.key,
                 icon: iconFor(item),
                 label: (
-                  <Link to={item.path} prefetch="intent">
+                  <Link to={item.path} prefetch="intent" onClick={onNavigate}>
                     {t(item.labelKey)}
                   </Link>
                 ),
@@ -103,7 +107,7 @@ export function AppSidebar({
             key: item.key,
             icon: iconFor(item),
             label: (
-              <Link to={item.path} prefetch="intent">
+              <Link to={item.path} prefetch="intent" onClick={onNavigate}>
                 {t(item.labelKey)}
               </Link>
             ),
@@ -112,6 +116,26 @@ export function AppSidebar({
       ]
     },
   )
+
+  const navigation = (
+    <nav
+      aria-label={t('shell.navigation.primary')}
+      className={embedded ? styles.mobileNavigation : styles.navigation}
+    >
+      <Menu
+        style={{ border: 'none' }}
+        mode="inline"
+        inlineCollapsed={collapsed}
+        triggerSubMenuAction="hover"
+        openKeys={collapsed ? undefined : openKeys}
+        expandIcon={() => null}
+        selectedKeys={selectedKey ? [selectedKey] : []}
+        items={items}
+      />
+    </nav>
+  )
+
+  if (embedded) return navigation
 
   return (
     <Layout.Sider
@@ -122,18 +146,7 @@ export function AppSidebar({
       collapsed={collapsed}
       theme={resolved}
     >
-      <nav aria-label={t('shell.navigation.primary')} className={styles.navigation}>
-        <Menu
-          style={{ border: 'none' }}
-          mode="inline"
-          inlineCollapsed={collapsed}
-          triggerSubMenuAction="hover"
-          openKeys={collapsed ? undefined : openKeys}
-          expandIcon={() => null}
-          selectedKeys={selectedKey ? [selectedKey] : []}
-          items={items}
-        />
-      </nav>
+      {navigation}
     </Layout.Sider>
   )
 }

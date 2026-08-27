@@ -3,6 +3,7 @@
     "name": "LNG Web"
   },
   "common": {
+    "updatedAt": "Cập nhật lúc {{time}}",
     "copyOrderId": "Sao chép mã đơn",
     "orderIdCopied": "Đã sao chép mã đơn",
     "close": "Đóng",
@@ -81,6 +82,7 @@
     },
     "workspace": "Không gian làm việc",
     "skipToContent": "Bỏ qua tới nội dung chính",
+    "openNavigation": "Mở điều hướng",
     "collapse": "Thu gọn thanh bên",
     "expand": "Mở rộng thanh bên",
     "logout": "Đăng xuất",
@@ -805,6 +807,8 @@
       "newCustomers": "Khách hàng mới",
       "openListingQueue": "Mở hàng đợi listing",
       "productInStock": "Sản phẩm còn hàng",
+      "actionQueue": "Hàng đợi cần xử lý",
+      "orderAnalytics": "Phân tích đơn hàng",
       "summary": "Tổng quan",
       "approved": "Đã duyệt",
       "draft": "Bản nháp",
@@ -2486,6 +2490,12 @@
       "title": "Nhập đơn hàng bên ngoài",
       "description": "Tải báo cáo lên, theo dõi quá trình nhập và xử lý các sự cố vận hành.",
       "filters": "Bộ lọc nhập đơn",
+      "importsSummary": "Tổng quan import",
+      "imports": {
+        "needsReview": "Cần xem lại",
+        "processing": "Đang xử lý",
+        "completed": "Hoàn tất"
+      },
       "shop": "Cửa hàng",
       "allShops": "Tất cả cửa hàng",
       "allSources": "Tất cả nguồn",
@@ -2496,6 +2506,7 @@
       "tabs": {
         "orders": "Đơn hàng",
         "extension": "Tiện ích Amazon",
+        "operations": "Vận hành",
         "automation": "Tự động hóa",
         "finance": "Dữ liệu tài chính",
         "ads": "Quảng cáo Amazon",
@@ -2609,6 +2620,8 @@
       },
       "panel": {
         "title": "Lượt nhập đơn",
+        "detailRegion": "Chi tiết công việc import",
+        "selectJob": "Chọn một import để xem tiến trình và các vấn đề.",
         "summary": "Tóm tắt",
         "imported": "Đã nhập",
         "failed": "Thất bại",
@@ -2616,6 +2629,7 @@
         "finished": "Kết thúc",
         "issues": "Sự cố",
         "rawRecords": "Bản ghi gốc",
+        "viewRawRecords": "Xem bản ghi gốc",
         "unavailable": "Không thể tải lượt nhập đơn",
         "issuesUnavailable": "Không thể tải sự cố nhập đơn",
         "rawRecordsUnavailable": "Không thể tải bản ghi gốc",
@@ -3141,6 +3155,12 @@
       "measurements": "Kích thước và trọng lượng",
       "pricing": "Chi phí",
       "advanced": "Nâng cao",
+      "overview": "Tổng quan",
+      "shipping": "Vận chuyển",
+      "domesticShipping": "Nội địa",
+      "internationalShipping": "Quốc tế",
+      "priorityShipping": "Hỏa tốc",
+      "dimensions": "Kích thước",
       "name": "Tên",
       "code": "Mã",
       "vendorCode": "Mã vendor",
@@ -3375,6 +3395,8 @@
       "recheckShort": "Kiểm tra",
       "readyShort": "Sẵn sàng",
       "cancelShort": "Hủy",
+      "showMoreCustomization": "Xem thêm {{count}} trường",
+      "showLessCustomization": "Thu gọn",
       "viewHistory": "Xem lịch sử",
       "editCustomer": "Sửa thông tin khách hàng",
       "saveCustomer": "Lưu khách hàng",
@@ -3501,6 +3523,10 @@
       "OPEN_CASE": "Case đang mở",
       "ADDRESS_ISSUE": "Lỗi address",
       "READY_FOR_PRODUCTION": "Sẵn sàng sản xuất"
+    },
+    "queue": {
+      "current": "Hàng đợi hiện tại",
+      "currentValue": "{{queue}} · {{count}} đơn"
     },
     "statuses": {
       "OPEN": "Đang mở",

@@ -128,4 +128,12 @@ describe('OperationsDashboardPage', () => {
       height: '18%',
     })
   })
+
+  it('puts the action queue before analytic charts', async () => {
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    const queue = await screen.findByRole('region', { name: 'Hàng đợi cần xử lý' })
+    const charts = screen.getByRole('region', { name: 'Phân tích đơn hàng' })
+    expect(queue.compareDocumentPosition(charts)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
 })

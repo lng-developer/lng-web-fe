@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { MenuOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { useIsFetching, useQueryClient } from '@tanstack/react-query'
-import { Button, Input, Layout, Space, Tooltip, Typography } from 'antd'
+import { Button, Drawer, Grid, Input, Layout, Select, Space, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
@@ -21,6 +21,7 @@ import {
 } from './appNavigation'
 import { AppRail } from './AppRail'
 import styles from './AppShell.module.scss'
+import { isCompactBreakpoint } from './appShellResponsive'
 import { AppSidebar } from './AppSidebar'
 import { getRememberedCoreRoute, rememberCoreRoute } from './coreRouteMemory'
 import { getSidebarRouteState } from './sidebarRouteState'
@@ -46,7 +47,9 @@ export function AppShell() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isFetching = useIsFetching()
+  const screens = Grid.useBreakpoint()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
   const [navigationSearch, setNavigationSearch] = useState('')
   const location = useLocation()
   const navigate = useNavigate()
@@ -54,6 +57,7 @@ export function AppShell() {
   const cores = useMemo(() => getAvailableCores(account), [account])
   const routeCore = getCoreForPath(location.pathname)
   const activeCore = routeCore ?? cores[0]?.key
+  const isCompact = isCompactBreakpoint(screens)
   const groups = useMemo(
     () => (activeCore ? getContextNavigation(activeCore, account) : []),
     [account, activeCore],
@@ -94,14 +98,16 @@ export function AppShell() {
       <a className={styles.skipLink} href="#main-content">
         {t('shell.skipToContent')}
       </a>
-      <AppRail
-        cores={cores}
-        activeCore={activeCore}
-        contextCollapsed={collapsed}
-        onCoreChange={changeCore}
-        onContextCollapsedChange={setCollapsed}
-      />
-      {activeCore && (
+      {!isCompact && (
+        <AppRail
+          cores={cores}
+          activeCore={activeCore}
+          contextCollapsed={collapsed}
+          onCoreChange={changeCore}
+          onContextCollapsedChange={setCollapsed}
+        />
+      )}
+      {activeCore && !isCompact && (
         <AppSidebar
           coreLabel={t(`shell.cores.${activeCore}`)}
           groups={searchableGroups}
@@ -110,10 +116,45 @@ export function AppShell() {
           navigationSearch={navigationSearch}
         />
       )}
+      {activeCore && isCompact && (
+        <Drawer
+          className={styles.mobileNavigationDrawer}
+          open={mobileNavigationOpen}
+          placement="left"
+          title={t('shell.navigation.cores')}
+          onClose={() => setMobileNavigationOpen(false)}
+        >
+          <Select
+            aria-label={t('shell.navigation.cores')}
+            className={styles.mobileCoreSelect}
+            options={cores.map(({ key, labelKey }) => ({ label: t(labelKey), value: key }))}
+            value={activeCore}
+            onChange={(core) => changeCore(core as AppCoreKey)}
+          />
+          <AppSidebar
+            coreLabel={t(`shell.cores.${activeCore}`)}
+            groups={searchableGroups}
+            selectedKey={selectedKey}
+            collapsed={false}
+            embedded
+            navigationSearch={navigationSearch}
+            onNavigate={() => setMobileNavigationOpen(false)}
+          />
+        </Drawer>
+      )}
 
       <Layout>
         <Header className={styles.header}>
           <div className={styles.headerLeft}>
+            {isCompact && (
+              <Button
+                aria-label={t('shell.openNavigation')}
+                className={styles.mobileMenuButton}
+                icon={<MenuOutlined />}
+                type="text"
+                onClick={() => setMobileNavigationOpen(true)}
+              />
+            )}
             <div className={styles.headerContext}>
               <Typography.Text className={styles.headerCore}>
                 {activeCore ? t(`shell.cores.${activeCore}`) : t('app.name')}

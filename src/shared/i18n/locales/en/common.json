@@ -3,6 +3,7 @@
     "name": "LNG Web"
   },
   "common": {
+    "updatedAt": "Updated at {{time}}",
     "copyOrderId": "Copy order ID",
     "orderIdCopied": "Order ID copied",
     "close": "Close",
@@ -81,6 +82,7 @@
     },
     "workspace": "Workspace",
     "skipToContent": "Skip to main content",
+    "openNavigation": "Open navigation",
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
     "logout": "Sign out",
@@ -805,6 +807,8 @@
       "newCustomers": "New customers",
       "openListingQueue": "Open listing queue",
       "productInStock": "Product in stock",
+      "actionQueue": "Action queue",
+      "orderAnalytics": "Order analytics",
       "summary": "Summary",
       "approved": "Approved",
       "draft": "Draft",
@@ -2486,6 +2490,12 @@
       "title": "External order imports",
       "description": "Upload reports, monitor imports, and resolve operational issues.",
       "filters": "Import filters",
+      "importsSummary": "Import summary",
+      "imports": {
+        "needsReview": "Needs review",
+        "processing": "Processing",
+        "completed": "Completed"
+      },
       "shop": "Shop",
       "allShops": "All shops",
       "allSources": "All sources",
@@ -2496,6 +2506,7 @@
       "tabs": {
         "orders": "Orders",
         "extension": "Amazon Extension",
+        "operations": "Operations",
         "automation": "Automation",
         "finance": "Finance data",
         "ads": "Amazon Ads",
@@ -2609,6 +2620,8 @@
       },
       "panel": {
         "title": "Import job",
+        "detailRegion": "Import job details",
+        "selectJob": "Select an import to inspect its progress and issues.",
         "summary": "Summary",
         "imported": "Imported",
         "failed": "Failed",
@@ -2616,6 +2629,7 @@
         "finished": "Finished",
         "issues": "Issues",
         "rawRecords": "Raw records",
+        "viewRawRecords": "View raw records",
         "unavailable": "Import job is unavailable",
         "issuesUnavailable": "Import issues are unavailable",
         "rawRecordsUnavailable": "Raw records are unavailable",
@@ -3141,6 +3155,12 @@
       "measurements": "Measurements",
       "pricing": "Pricing",
       "advanced": "Advanced",
+      "overview": "Overview",
+      "shipping": "Shipping",
+      "domesticShipping": "Domestic",
+      "internationalShipping": "International",
+      "priorityShipping": "Priority",
+      "dimensions": "Dimensions",
       "name": "Name",
       "code": "Code",
       "vendorCode": "Vendor code",
@@ -3375,6 +3395,8 @@
       "recheckShort": "Recheck",
       "readyShort": "Ready",
       "cancelShort": "Cancel",
+      "showMoreCustomization": "Show {{count}} more",
+      "showLessCustomization": "Show less",
       "viewHistory": "View history",
       "editCustomer": "Edit customer",
       "saveCustomer": "Save customer",
@@ -3501,6 +3523,10 @@
       "OPEN_CASE": "Open case",
       "ADDRESS_ISSUE": "Address issue",
       "READY_FOR_PRODUCTION": "Ready for production"
+    },
+    "queue": {
+      "current": "Current queue",
+      "currentValue": "{{queue}} · {{count}} orders"
     },
     "statuses": {
       "OPEN": "Open",

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Typography } from 'antd'
 
 import styles from './sharedUi.module.scss'
@@ -14,6 +15,7 @@ export interface PageHeaderProps {
 }
 
 export function PageHeader({ title, description, updatedAt, actions }: PageHeaderProps) {
+  const { t } = useTranslation()
   return (
     <header className={styles.pageHeader}>
       <div className={styles.pageHeaderMain}>
@@ -26,7 +28,7 @@ export function PageHeader({ title, description, updatedAt, actions }: PageHeade
             {description && updatedAt && <span aria-hidden="true">|</span>}
             {updatedAt && (
               <Typography.Text type="secondary">
-                Cập nhật lúc: {new Date(updatedAt).toLocaleString()}
+                {t('common.updatedAt', { time: new Date(updatedAt).toLocaleString() })}
               </Typography.Text>
             )}
           </div>

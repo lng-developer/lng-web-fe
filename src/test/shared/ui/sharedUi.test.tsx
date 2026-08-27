@@ -1,9 +1,10 @@
 import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import i18n from '@/shared/i18n/i18n'
 import {
   BarChart,
   BulkActionBar,
@@ -27,6 +28,10 @@ import {
 import { serializeDateTimeValue } from '@/shared/ui/dateTimeValue'
 
 describe('shared UI', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+
   afterEach(() => {
     cleanup()
     vi.useRealTimers()
@@ -92,7 +97,7 @@ describe('shared UI', () => {
 
     expect(screen.getByRole('heading', { name: 'Foundation' })).toBeVisible()
     expect(screen.getByText('Long page description')).toBeVisible()
-    expect(screen.getByText(/Cập nhật lúc:/)).toBeVisible()
+    expect(screen.getByText(/Updated at/)).toBeVisible()
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
     expect(screen.getByText('Operational')).toBeVisible()
   })

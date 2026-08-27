@@ -69,39 +69,32 @@ export function VendorWorkspaceProductsTabPage({
       {
         title: t('portal.vendors.code'),
         dataIndex: 'code',
-        width: 140,
+        width: 170,
         ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 170 } }),
         render: (value) => <Typography.Text code>{value}</Typography.Text>,
       },
       {
         title: t('portal.vendors.name'),
         dataIndex: 'name',
-        width: 280,
-        ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 320 } }),
-        render: (value) => <Typography.Text strong>{value}</Typography.Text>,
-      },
-      {
-        title: t('portal.vendors.vendorCode'),
-        width: 130,
-        ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 180 } }),
-        render: (_, row) =>
-          row.vendor ? (
-            row.vendor.code
-          ) : (
-            <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
-          ),
+        width: 420,
+        render: (value) => (
+          <Typography.Text className={styles.productName} strong>
+            {value}
+          </Typography.Text>
+        ),
       },
       {
         title: t('portal.vendors.vendor', { defaultValue: 'Vendor' }),
-        width: 240,
+        width: 210,
         ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 280 } }),
         render: (_, row) =>
           row.vendor ? (
-            row.vendor.name
+            <Space className={styles.vendorCell} direction="vertical" size={0}>
+              <Typography.Text ellipsis>{row.vendor.name}</Typography.Text>
+              <Typography.Text type="secondary" ellipsis>
+                {row.vendor.code}
+              </Typography.Text>
+            </Space>
           ) : (
             <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
@@ -120,7 +113,7 @@ export function VendorWorkspaceProductsTabPage({
       {
         title: t('portal.vendors.productsTabActions'),
         fixed: 'right',
-        width: 130,
+        width: 96,
         render: (_, row) => (
           <Space size={4}>
             {canWrite ? (
@@ -214,7 +207,7 @@ export function VendorWorkspaceProductsTabPage({
         rowKey="id"
         columns={productColumns}
         className={styles.dataTable}
-        scroll={{ x: 980 }}
+        scroll={{ x: 820 }}
         dataSource={products}
         loading={productsLoading}
         error={

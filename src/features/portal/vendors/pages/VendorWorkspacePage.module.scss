@@ -133,11 +133,105 @@
 .dataTable :global(.ant-table-tbody > tr > td) {
   vertical-align: middle;
 }
+
+.productName {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.vendorCell {
+  display: flex;
+  max-width: 100%;
+}
 .costCenterDrawer {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 12px;
+}
+
+.costCenterWorkbench {
+  display: grid;
+  grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+  min-height: 560px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.costCenterList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.costCenterList :global(.ant-list) {
+  flex: 1;
+  overflow: auto;
+}
+
+.costCenterListItem {
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.costCenterListButton,
+.costCenterListButtonActive {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: 100%;
+  gap: 3px 8px;
+  padding: 10px;
+  color: inherit;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.costCenterListButton:hover,
+.costCenterListButton:focus-visible {
+  border-color: var(--ant-color-primary-border);
+  background: var(--ant-color-primary-bg);
+  outline: none;
+}
+
+.costCenterListButtonActive {
+  border-color: var(--ant-color-primary-border);
+  background: var(--ant-color-primary-bg);
+}
+
+.costCenterListButton :global(.ant-tag),
+.costCenterListButtonActive :global(.ant-tag) {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.costCenterDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow: auto;
+  background: var(--ant-color-bg-container);
+}
+
+.costCenterDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.costCenterDetailHeader :global(.ant-typography) {
+  margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -158,6 +252,16 @@
   .filters :global(.ant-input-search) {
     width: 100%;
     max-width: none;
+  }
+
+  .costCenterWorkbench {
+    grid-template-columns: 1fr;
+  }
+
+  .costCenterList {
+    max-height: 260px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ant-color-border-secondary);
   }
 }
 

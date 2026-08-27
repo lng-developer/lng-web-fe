@@ -56,6 +56,15 @@
   flex-shrink: 0;
 }
 
+.queueContext {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
 .filters {
   width: 100%;
   display: grid;
@@ -247,7 +256,7 @@
   display: grid;
   grid-template-columns:
     150px minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(150px, 0.65fr)
-    minmax(150px, 0.9fr) minmax(170px, 1fr) 116px;
+    minmax(150px, 0.9fr) minmax(170px, 1fr) 48px;
   gap: 16px;
   padding: 16px;
   border: 1px solid var(--ant-color-border-secondary);
@@ -266,11 +275,7 @@
   gap: 10px;
 }
 .itemActions {
-  justify-items: start;
-}
-.itemActions :global(.ant-btn) {
-  justify-content: flex-start;
-  width: 100%;
+  justify-items: end;
 }
 .assetColumn {
   justify-items: start;
@@ -333,9 +338,12 @@
   height: 22px;
   color: var(--ant-color-primary);
 }
+.orderIdChip,
 .skuChip,
 .asinChip,
 .sellerChip {
+  display: inline-flex;
+  align-items: center;
   max-width: 100%;
   overflow: hidden;
   padding: 1px 8px;
@@ -345,6 +353,10 @@
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.orderIdChip {
+  color: var(--ant-color-primary-text, var(--ant-color-primary));
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 54%, var(--ant-color-fill-quaternary));
 }
 .skuChip {
   color: var(--ant-color-cyan-text, var(--ant-color-cyan));
@@ -360,7 +372,7 @@
 }
 @media (max-width: 1500px) {
   .itemPanel {
-    grid-template-columns: 140px minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr) 116px;
+    grid-template-columns: 140px minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr) 48px;
   }
   .addressEditor {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
@@ -379,6 +391,14 @@
 }
 
 @media (max-width: 720px) {
+  .tabsRow {
+    flex-wrap: wrap;
+  }
+
+  .tabs {
+    flex-basis: 100%;
+  }
+
   .itemPanel,
   .addressEditor,
   .customerEditor,

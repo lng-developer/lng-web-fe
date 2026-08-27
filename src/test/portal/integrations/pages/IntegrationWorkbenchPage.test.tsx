@@ -197,6 +197,18 @@ function renderWorkbench(path: string, currentAccount = account()) {
 describe('IntegrationWorkbenchPage', () => {
   afterEach(cleanup)
 
+  it('keeps each top-level workflow in its own accessible workbench region', async () => {
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:READ']))
+
+    expect(await screen.findByRole('region', { name: 'Imports workbench' })).toBeVisible()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Amazon Extension' }))
+    expect(await screen.findByRole('region', { name: 'Amazon Extension workbench' })).toBeVisible()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Finance data' }))
+    expect(await screen.findByRole('region', { name: 'Finance workbench' })).toBeVisible()
+  })
+
   beforeEach(async () => {
     vi.clearAllMocks()
     setPermissions(['ORDERS:READ'])
@@ -317,16 +329,15 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 20 }))
   })
 
-  it('selects a job without navigating away from the workbench', async () => {
+  it('opens selected job detail in a drawer', async () => {
     renderWorkbench('/portal/integrations')
 
     const matches = await screen.findAllByText('LNG Amazon US')
     fireEvent.click(matches[matches.length - 1])
 
     await waitFor(() => expect(window.location.pathname).not.toBe('/portal/integrations/job-1'))
-    expect(
-      (await screen.findAllByText('Import job job-1')).some((element) => element.textContent),
-    ).toBe(true)
+    expect(await screen.findByRole('dialog')).toBeVisible()
+    expect(screen.getByText('Import job job-1')).toBeVisible()
   })
 
   it('shows upload only for writable shops and invalidates every jobs list after success', async () => {
@@ -481,7 +492,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByRole('button', { name: 'More extension actions' })).toBeVisible()
   })
 
-  it('puts order schedule configuration in the Automation tab', async () => {
+  it('keeps automation inside the extension workbench and loads it on demand', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
         {
@@ -499,7 +510,22 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+
+    expect(await screen.findByText('8 imported / 1 skipped / 3 failed')).toBeVisible()
+    expect(listExtensionManagementAgents).not.toHaveBeenCalled()
+    expect(screen.queryByRole('tab', { name: 'Automation' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Amazon Extension' }))
     expect(await screen.findByRole('tab', { name: 'Automation' })).toBeVisible()
+    await waitFor(() => expect(listExtensionManagementAgents).toHaveBeenCalled())
+  })
+
+  it('keeps the upload action scoped to Imports', async () => {
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
+
+    expect(await screen.findByRole('button', { name: 'Upload report' })).toBeVisible()
+    fireEvent.click(screen.getByRole('tab', { name: 'Finance data' }))
+    expect(screen.queryByRole('button', { name: 'Upload report' })).not.toBeInTheDocument()
   })
 
   it('shows Reconnected only for an online extension that reconnected recently', async () => {

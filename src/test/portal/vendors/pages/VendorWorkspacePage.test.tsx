@@ -29,4 +29,14 @@ describe('VendorWorkspacePage', () => {
   it('does not repeat the portal prefix in translation keys', () => {
     expect(vendorWorkspaceSource).not.toContain("t('portal.")
   })
+
+  it('passes the active state to each shared tab label', () => {
+    expect(vendorWorkspaceSource).toContain(
+      "<UiTabLabel count={vendors.data?.pagination.total} active={tab === 'vendors'}>",
+    )
+    expect(vendorWorkspaceSource).toContain(
+      "<UiTabLabel count={products.data?.pagination.total} active={tab === 'products'}>",
+    )
+    expect(vendorWorkspaceSource).toContain("<UiTabLabel active={tab === 'migration'}>")
+  })
 })

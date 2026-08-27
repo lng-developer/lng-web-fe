@@ -262,12 +262,16 @@ export const OrderWorkbenchPage = () => {
     () => [
       {
         title: t('orders.columns.order'),
-        width: '12%',
-        render: (_, row) => <CopyableOrderId strong value={row.order.externalOrderId} />,
+        width: '13%',
+        render: (_, row) => (
+          <span className={styles.orderIdChip}>
+            <CopyableOrderId strong value={row.order.externalOrderId} />
+          </span>
+        ),
       },
       {
         title: t('orders.columns.status'),
-        width: '11%',
+        width: '10%',
         render: (_, row) => (
           <Space size={4}>
             <StatusTag status={orderStatusTone(row.order.status)}>
@@ -287,7 +291,7 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.created'),
-        width: '11%',
+        width: '12%',
         render: (_, row) => {
           if (!row.order.createdAt) return '—'
           const createdAt = dayjs(row.order.createdAt)
@@ -307,7 +311,7 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.customer'),
-        width: '12%',
+        width: '15%',
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.buyer.name ?? '—'}</span>
@@ -343,7 +347,7 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.shipping'),
-        width: '11%',
+        width: '10%',
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.shippingService.name || row.order.shippingService.level || '—'}</span>
@@ -363,12 +367,12 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.shop'),
-        width: '11%',
+        width: '12%',
         render: (_, row) => row.order.shop?.name ?? '—',
       },
       {
         title: t('orders.columns.totalCost'),
-        width: '11%',
+        width: '10%',
         align: 'right',
         render: (_, row) =>
           formatMinorMoney(
@@ -398,7 +402,7 @@ export const OrderWorkbenchPage = () => {
       // },
       {
         title: t('orders.columns.case'),
-        width: '14%',
+        width: '12%',
         render: (_, row) => {
           const hasCase = Boolean(row.order.caseStatus && row.order.caseStatus !== 'NONE')
 
@@ -432,7 +436,7 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.sections.itemActions'),
-        width: '7%',
+        width: '6%',
         align: 'center',
         render: (_, row) =>
           canWriteOrder(row) ? (
@@ -459,6 +463,17 @@ export const OrderWorkbenchPage = () => {
         <div className={styles.tabs}>
           <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
         </div>
+
+        <Typography.Text
+          aria-label={t('orders.queue.current')}
+          className={styles.queueContext}
+          role="status"
+        >
+          {t('orders.queue.currentValue', {
+            count: summary.data?.tabCounts[tab] ?? 0,
+            queue: t(`orders.tabs.${tab}`),
+          })}
+        </Typography.Text>
 
         <Button
           icon={<DownloadOutlined />}

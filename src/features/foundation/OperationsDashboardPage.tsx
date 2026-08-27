@@ -68,13 +68,17 @@ export function OperationsDashboardPage() {
       </section>
 
       <section className={styles.mockGrid}>
-        <SectionCard title={t('foundation.portalDashboard.summary')}>
-          <MiniBars data={value.summaryBars} total={value.summaryTotal} />
-        </SectionCard>
+        <section aria-label={t('foundation.portalDashboard.actionQueue')}>
+          <SectionCard title={t('foundation.portalDashboard.actionQueue')}>
+            <DonutChart data={value.orderStatus} />
+          </SectionCard>
+        </section>
 
-        <SectionCard title={t('foundation.portalDashboard.orderStatus')}>
-          <DonutChart data={value.orderStatus} />
-        </SectionCard>
+        <section aria-label={t('foundation.portalDashboard.orderAnalytics')}>
+          <SectionCard title={t('foundation.portalDashboard.summary')}>
+            <MiniBars data={value.summaryBars} total={value.summaryTotal} />
+          </SectionCard>
+        </section>
 
         <aside className={styles.mockSide}>
           <SectionCard title={t('foundation.portalDashboard.monthlyTarget')}>

@@ -849,7 +849,7 @@ export const VendorWorkspacePage = () => {
             {
               key: 'vendors',
               label: (
-                <UiTabLabel count={vendors.data?.pagination.total}>
+                <UiTabLabel count={vendors.data?.pagination.total} active={tab === 'vendors'}>
                   {t('vendors.tabs.vendors')}
                 </UiTabLabel>
               ),
@@ -857,12 +857,17 @@ export const VendorWorkspacePage = () => {
             {
               key: 'products',
               label: (
-                <UiTabLabel count={products.data?.pagination.total}>
+                <UiTabLabel count={products.data?.pagination.total} active={tab === 'products'}>
                   {t('vendors.tabs.products')}
                 </UiTabLabel>
               ),
             },
-            { key: 'migration', label: <UiTabLabel>{t('vendors.tabs.migration')}</UiTabLabel> },
+            {
+              key: 'migration',
+              label: (
+                <UiTabLabel active={tab === 'migration'}>{t('vendors.tabs.migration')}</UiTabLabel>
+              ),
+            },
           ]}
         />
         {tab === 'vendors' ? (

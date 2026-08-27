@@ -103,12 +103,12 @@
 .inlineWorkspace {
   display: grid;
   grid-template-areas: 'product customization task output';
-  grid-template-columns: minmax(340px, 0.9fr) minmax(300px, 0.9fr) minmax(250px, 0.75fr) minmax(
-      400px,
-      1.35fr
+  grid-template-columns: minmax(260px, 1fr) minmax(250px, 1fr) minmax(220px, 0.85fr) minmax(
+      260px,
+      0.9fr
     );
-  gap: 14px;
-  padding: 14px;
+  gap: 12px;
+  padding: 12px;
   background: linear-gradient(
     180deg,
     var(--ant-color-bg-container),
@@ -119,9 +119,9 @@
 .inlineSection {
   display: grid;
   align-content: start;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
@@ -132,9 +132,9 @@
   display: grid;
   grid-area: task;
   align-content: start;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
@@ -144,7 +144,7 @@
 .metaItem {
   display: grid;
   gap: 4px;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -161,7 +161,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -174,19 +174,19 @@
 .csNote {
   display: grid;
   gap: 4px;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
 .notesSummary {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .notesSummary > div {
   display: grid;
   gap: 4px;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -234,8 +234,8 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  min-height: 34px;
-  padding-bottom: 12px;
+  min-height: 28px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -254,15 +254,15 @@
 
 .customizationList {
   display: grid;
-  max-height: 430px;
+  max-height: 220px;
   overflow: auto;
 }
 
 .inputValue {
   display: grid;
   grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1.1fr);
-  gap: 12px;
-  padding: 9px 0;
+  gap: 8px;
+  padding: 6px 0;
   border-bottom: 1px solid var(--ant-color-border-secondary);
   font-size: 13px;
 }
@@ -273,18 +273,18 @@
 
 .inlineSlots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-  max-height: 360px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  max-height: 240px;
   overflow: auto;
   padding-right: 2px;
 }
 
 .inlineSlot {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   align-content: start;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
@@ -307,7 +307,7 @@
 
 .slotOutput {
   display: grid;
-  grid-template-rows: auto 112px;
+  grid-template-rows: auto 88px;
   gap: 6px;
   min-width: 0;
 }
@@ -315,7 +315,7 @@
 .slotOutput img,
 .slotOutput > span:last-child {
   width: 100%;
-  height: 112px;
+  height: 88px;
   object-fit: contain;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius-md);
@@ -708,7 +708,7 @@
 .artworkPreview {
   display: grid;
   place-items: center;
-  min-height: 240px;
+  min-height: 160px;
   margin-top: 6px;
   overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);
@@ -718,7 +718,7 @@
 
 .artworkPreview img {
   max-width: 100%;
-  max-height: 280px;
+  max-height: 180px;
   object-fit: contain;
 }
 
@@ -811,17 +811,6 @@
   border-color: var(--ant-color-primary) !important;
   background: var(--ant-color-primary-bg) !important;
   box-shadow: inset 3px 0 0 var(--ant-color-primary);
-}
-
-.stickyOrderRow {
-  > td {
-    position: sticky !important;
-    top: 0;
-    z-index: 10;
-    background: #101a29 !important;
-
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
 }
 
 @media (max-width: 1280px) {

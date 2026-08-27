@@ -14,4 +14,12 @@ describe('theme foundation', () => {
     expect(createAppTheme('light').token?.colorPrimary).toBe('#E83B4A')
     expect(createAppTheme('dark').token?.colorPrimary).toBe('#E83B4A')
   })
+
+  it('uses a muted light canvas instead of a white-heavy surface stack', () => {
+    const light = createAppTheme('light').token
+
+    expect(light?.colorBgBase).toBe('#EEF1F5')
+    expect(light?.colorBgContainer).toBe('#F7F8FA')
+    expect(light?.colorBgLayout).toBe('#E5EAF0')
+  })
 })

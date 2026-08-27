@@ -106,18 +106,27 @@ function renderPanel(
   )
 }
 
+function openMoreActions() {
+  fireEvent.click(screen.getByRole('button', { name: 'orders.actions.more' }))
+}
+
+function actionMenuItem(name: string) {
+  return screen.getAllByRole('menuitem', { name: new RegExp(`${name}$`) }).at(-1)!
+}
+
 it('keeps replacement but hides operational actions for a cancelled order', () => {
   renderPanel(true, undefined, { ...row, order: { ...row.order, status: 'CANCELLED' } }, false)
 
-  expect(screen.getByRole('button', { name: 'orders.actions.replaceShort' })).toBeVisible()
+  openMoreActions()
+  expect(actionMenuItem('orders.actions.replaceShort')).toBeInTheDocument()
   expect(
-    screen.queryByRole('button', { name: 'orders.actions.recheckShort' }),
+    screen.queryByRole('menuitem', { name: /orders\.actions\.recheckShort$/ }),
   ).not.toBeInTheDocument()
   expect(
-    screen.queryByRole('button', { name: 'orders.actions.readyShort' }),
+    screen.queryByRole('menuitem', { name: /orders\.actions\.readyShort$/ }),
   ).not.toBeInTheDocument()
   expect(
-    screen.queryByRole('button', { name: 'orders.actions.cancelShort' }),
+    screen.queryByRole('menuitem', { name: /orders\.actions\.cancelShort$/ }),
   ).not.toBeInTheDocument()
   expect(screen.getByRole('textbox')).toHaveAttribute('readonly')
 })
@@ -177,7 +186,8 @@ describe('OrderInlinePanel', () => {
   it('shows recheck for a mapping-blocked item', () => {
     renderPanel()
 
-    expect(screen.getByRole('button', { name: 'orders.actions.recheckShort' })).toBeVisible()
+    openMoreActions()
+    expect(actionMenuItem('orders.actions.recheckShort')).toBeInTheDocument()
   })
 
   it('shows PSD readiness from the resolved listing variant', () => {
@@ -248,7 +258,8 @@ describe('OrderInlinePanel', () => {
       ],
     })
 
-    expect(screen.getByRole('button', { name: 'orders.actions.recheckShort' })).toBeVisible()
+    openMoreActions()
+    expect(actionMenuItem('orders.actions.recheckShort')).toBeInTheDocument()
   })
 
   it('keeps order-level actions out of the expanded detail', () => {
@@ -266,7 +277,8 @@ describe('OrderInlinePanel', () => {
 
   it('opens the address modal when requested by the customer column', () => {
     renderPanel(true, 'address')
-    const replacement = screen.getByRole('button', { name: 'orders.actions.replaceShort' })
+    openMoreActions()
+    const replacement = actionMenuItem('orders.actions.replaceShort')
 
     expect(replacement).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -320,6 +332,46 @@ describe('OrderInlinePanel', () => {
     renderPanel(true, undefined, source)
 
     expect(screen.getByAltText('Buyer photo')).toBeInTheDocument()
+  })
+
+  it('collapses long customization lists until expanded', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            inputs: [
+              { type: 'TEXT', label: 'Field 1', value: 'Value 1' },
+              { type: 'TEXT', label: 'Field 2', value: 'Value 2' },
+              { type: 'TEXT', label: 'Field 3', value: 'Value 3' },
+              { type: 'TEXT', label: 'Field 4', value: 'Value 4' },
+              { type: 'TEXT', label: 'Field 5', value: 'Value 5' },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByText(/Field 4/)).toBeInTheDocument()
+    expect(screen.queryByText(/Field 5/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'orders.actions.showMoreCustomization' }))
+    expect(screen.getByText(/Field 5/)).toBeInTheDocument()
+  })
+
+  it('keeps item actions in the more menu', () => {
+    renderPanel()
+
+    expect(screen.getByRole('button', { name: 'orders.actions.more' })).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: 'orders.actions.replaceShort' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'orders.actions.more' }))
+    expect(actionMenuItem('orders.actions.replaceShort')).toBeInTheDocument()
   })
 
   it('does not repeat extracted Amazon assets beside buyer-uploaded images', () => {

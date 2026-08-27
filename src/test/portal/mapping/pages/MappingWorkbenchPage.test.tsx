@@ -178,7 +178,13 @@ describe('MappingWorkbenchPage', () => {
     renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
     fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('[role="button"]')!)
 
-    await waitFor(() => expect(searchVendorCandidates).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(searchVendorCandidates).toHaveBeenCalledWith('item-1', {
+        q: '',
+        includeTotal: false,
+        limit: 100,
+      }),
+    )
     expect(await screen.findByText('Product A')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Select candidate' }))
 

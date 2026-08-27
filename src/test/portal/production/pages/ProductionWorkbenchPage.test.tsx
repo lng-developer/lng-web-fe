@@ -35,6 +35,20 @@ const account: CurrentAccount = {
   profileSetupRequired: false,
 }
 
+const blockedTask: Awaited<ReturnType<typeof listProductionTasks>>['items'][number] = {
+  id: 'production-task-1',
+  status: 'BLOCKED',
+  qcStatus: 'NOT_READY',
+  blockers: ['PSD_MISSING'],
+  assignedDesignUserId: null,
+  designNote: null,
+  readyAt: null,
+  updatedAt: '2026-08-27T00:00:00.000Z',
+  orderItem: { externalOrderId: '113-2183249-0763446' },
+  shop: undefined,
+  qcPreviewFileChecks: undefined,
+}
+
 function LocationProbe() {
   const location = useLocation()
   return <output aria-label="Current location">{location.pathname + location.search}</output>
@@ -90,6 +104,38 @@ describe('ProductionWorkbenchPage', () => {
     const tables = document.querySelectorAll<HTMLTableElement>('.ant-table-container table')
     expect(tables.length).toBeGreaterThan(0)
     tables.forEach((table) => expect(table).toHaveStyle({ width: '100%' }))
+  })
+
+  it('keeps normal task rows in the document flow', async () => {
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [blockedTask],
+      total: 1,
+      page: 1,
+      limit: 20,
+    })
+    renderPage()
+
+    const row = (await screen.findByText('113-2183249-0763446')).closest('tr')
+    expect(row?.className).not.toMatch(/stickyOrderRow/)
+  })
+
+  it('keeps every visible task detail expanded', async () => {
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [
+        { ...blockedTask, id: 'production-task-1' },
+        {
+          ...blockedTask,
+          id: 'production-task-2',
+          orderItem: { externalOrderId: '113-2183249-0763447' },
+        },
+      ],
+      total: 2,
+      page: 1,
+      limit: 20,
+    })
+    renderPage()
+
+    expect(await screen.findAllByText('Task context')).toHaveLength(2)
   })
 
   it('restores the selected queue tab from the URL after reload', async () => {

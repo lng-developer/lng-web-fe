@@ -586,7 +586,6 @@ export function ProductionWorkbenchPage({
   }>()
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [expandedRowKeys, setExpandedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
   const [uploadingFileCheckIds, setUploadingFileCheckIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -804,7 +803,6 @@ export function ProductionWorkbenchPage({
       setStatus(undefined)
       setScaleDifficultyLevel(undefined)
       setSelectedRowKeys([])
-      setExpandedRowKeys([])
       setDecisions({})
     },
     [searchParams, setSearchParams],
@@ -831,13 +829,9 @@ export function ProductionWorkbenchPage({
     (nextPage: number, nextPageSize: number) => {
       setPage(nextPageSize === pageSize ? nextPage : 1)
       setPageSize(nextPageSize)
-      setExpandedRowKeys([])
     },
     [pageSize],
   )
-  const handleExpandedRowsChange = useCallback((keys: readonly Key[]) => {
-    setExpandedRowKeys([...keys])
-  }, [])
   const handleScaleAssigneeChange = useCallback((value?: string) => {
     setScaleAssigneeId(value)
   }, [])
@@ -1007,6 +1001,7 @@ export function ProductionWorkbenchPage({
   )
   const displayedTasks = useDeferredValue(tasks.data)
   const rows = useMemo(() => displayedTasks?.items ?? [], [displayedTasks?.items])
+  const expandedRowKeys = useMemo(() => rows.map((row) => row.id), [rows])
   const selectedTasks = useMemo(
     () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
     [rows, selectedRowKeys],
@@ -1186,7 +1181,6 @@ export function ProductionWorkbenchPage({
             columns={columns}
             dataSource={rows}
             loading={tasks.isFetching}
-            rowClassName={() => styles.stickyOrderRow}
             rowSelection={
               canAssignScale
                 ? {
@@ -1206,7 +1200,7 @@ export function ProductionWorkbenchPage({
             scroll={{ x: '100%', y: 'calc(100vh - 410px)' }}
             expandable={{
               expandedRowKeys,
-              onExpandedRowsChange: handleExpandedRowsChange,
+              showExpandColumn: false,
               expandedRowRender: (row) => {
                 const task = row
                 return (
