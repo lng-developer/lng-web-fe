@@ -51,13 +51,13 @@ const getDashboardGroup = (permissions: Set<string>): NavigationGroup | undefine
   canReadOperationsDashboard(permissions)
     ? {
         key: 'dashboard',
-        labelKey: 'shell.navigation.operationsDashboard',
+        labelKey: 'shell.navigation.dashboard',
         standalone: true,
         items: [
           {
             key: 'operations-dashboard',
             path: '/operations-dashboard',
-            labelKey: 'shell.navigation.operationsDashboard',
+            labelKey: 'shell.navigation.dashboard',
           },
         ],
       }

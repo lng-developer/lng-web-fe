@@ -50,19 +50,19 @@ export function VendorWorkspaceCostCenterDrawer({
   onOpenCostCenterImport,
   onEditCostCenter,
 }: VendorWorkspaceCostCenterDrawerProps) {
-  const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
+  const { t } = useTranslation()
 
   const costCenterColumns = useMemo<TableColumnsType<VendorCostCenter>>(
     () => [
       {
-        title: t('vendors.code'),
+        title: t('portal.vendors.code'),
         dataIndex: 'code',
         width: 150,
         ellipsis: true,
         render: (value) => <Typography.Text code>{value}</Typography.Text>,
       },
       {
-        title: t('vendors.name'),
+        title: t('portal.vendors.name'),
         dataIndex: 'name',
         width: 260,
         ellipsis: true,
@@ -70,12 +70,12 @@ export function VendorWorkspaceCostCenterDrawer({
         render: (value, row) => (
           <Typography.Text>
             {value}
-            {row.sku ? <Typography.Text type="secondary"> � {row.sku}</Typography.Text> : null}
+            {row.sku ? <Typography.Text type="secondary"> - {row.sku}</Typography.Text> : null}
           </Typography.Text>
         ),
       },
       {
-        title: t('vendors.sku', { defaultValue: 'SKU' }),
+        title: t('portal.vendors.sku', { defaultValue: 'SKU' }),
         dataIndex: 'sku',
         width: 150,
         ellipsis: true,
@@ -84,24 +84,24 @@ export function VendorWorkspaceCostCenterDrawer({
           value ? (
             <Typography.Text type="secondary">{value}</Typography.Text>
           ) : (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
+            <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
       },
       {
-        title: t('vendors.baseCostAmount'),
+        title: t('portal.vendors.baseCostAmount'),
         align: 'right',
         width: 150,
         ellipsis: true,
         onCell: () => ({ style: { maxWidth: 180 } }),
         render: (_, row) =>
           row.baseCostAmount == null ? (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
+            <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ) : (
             formatMoney(row.baseCostAmount, row.currency || 'USD')
           ),
       },
       {
-        title: t('vendors.statusLabel'),
+        title: t('portal.vendors.statusLabel'),
         width: 110,
         ellipsis: true,
         onCell: () => ({ style: { maxWidth: 140 } }),
@@ -112,7 +112,7 @@ export function VendorWorkspaceCostCenterDrawer({
         ),
       },
       {
-        title: t('vendors.costCenterActions'),
+        title: t('portal.vendors.costCenterActions'),
         fixed: 'right',
         width: 100,
         render: (_, row) =>
@@ -121,8 +121,8 @@ export function VendorWorkspaceCostCenterDrawer({
               type="text"
               size="small"
               icon={<EditOutlined />}
-              aria-label={t('vendors.editCostCenter', { name: row.name })}
-              title={t('vendors.editCostCenter', { name: row.name })}
+              aria-label={t('portal.vendors.editCostCenter', { name: row.name })}
+              title={t('portal.vendors.editCostCenter', { name: row.name })}
               onClick={() => product && onEditCostCenter(product, row)}
             />
           ) : null,
@@ -134,7 +134,9 @@ export function VendorWorkspaceCostCenterDrawer({
   return (
     <Drawer
       title={
-        product ? t('vendors.productCostCenters', { name: product.name }) : t('vendors.costCenters')
+        product
+          ? t('portal.vendors.productCostCenters', { name: product.name })
+          : t('portal.vendors.costCenters')
       }
       destroyOnClose
       width="min(1100px, calc(100vw - 32px))"
@@ -145,7 +147,7 @@ export function VendorWorkspaceCostCenterDrawer({
       {product ? (
         <div className={styles.costCenterDrawer}>
           <FilterBar
-            label={t('vendors.filters.label')}
+            label={t('portal.vendors.filters.label')}
             contentClassName={styles.filters}
             actions={
               canWrite ? (
@@ -155,10 +157,10 @@ export function VendorWorkspaceCostCenterDrawer({
                     icon={<PlusOutlined />}
                     onClick={() => onAddCostCenter(product)}
                   >
-                    {t('vendors.addCostCenter')}
+                    {t('portal.vendors.addCostCenter')}
                   </Button>
                   <Button icon={<UploadOutlined />} onClick={() => onOpenCostCenterImport(product)}>
-                    {t('vendors.importCostCenters')}
+                    {t('portal.vendors.importCostCenters')}
                   </Button>
                 </Space>
               ) : null
@@ -169,7 +171,7 @@ export function VendorWorkspaceCostCenterDrawer({
               onSearchChange={(value) => {
                 onSearchCostCentersChange(value)
               }}
-              placeholder={t('vendors.searchCostCenters')}
+              placeholder={t('portal.vendors.searchCostCenters')}
             />
           </FilterBar>
           <CoreDataTable
@@ -184,7 +186,7 @@ export function VendorWorkspaceCostCenterDrawer({
                 <Typography.Text type="danger">
                   {costCentersError instanceof Error
                     ? costCentersError.message
-                    : t('vendors.branchUnavailable')}
+                    : t('portal.vendors.branchUnavailable')}
                 </Typography.Text>
               ) : undefined
             }

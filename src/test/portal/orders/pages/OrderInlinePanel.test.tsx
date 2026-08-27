@@ -245,6 +245,21 @@ describe('OrderInlinePanel', () => {
     expect(screen.getByRole('button', { name: 'orders.actions.recheckShort' })).toBeVisible()
   })
 
+  it('renders infrequent item actions as compact icon controls', () => {
+    renderPanel()
+
+    for (const label of [
+      'orders.actions.replaceShort',
+      'orders.actions.readyShort',
+      'orders.actions.cancelShort',
+    ]) {
+      expect(screen.getByRole('button', { name: label })).toHaveClass('ant-btn-icon-only')
+    }
+    expect(screen.getByRole('button', { name: 'orders.actions.readyShort' })).not.toHaveClass(
+      'ant-btn-primary',
+    )
+  })
+
   it('keeps order-level actions out of the expanded detail', () => {
     renderPanel(false)
     expect(

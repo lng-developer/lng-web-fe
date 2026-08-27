@@ -91,6 +91,17 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
   })
+
+  it('uses a compact 240px width when expanded', () => {
+    renderSidebar([personal])
+
+    expect(document.querySelector('.ant-layout-sider')).toHaveStyle({
+      flex: '0 0 240px',
+      maxWidth: '240px',
+      minWidth: '240px',
+      width: '240px',
+    })
+  })
 })
 
 function renderSidebar(groups: NavigationGroup[], selectedKey = 'self') {

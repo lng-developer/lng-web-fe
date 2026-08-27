@@ -21,4 +21,8 @@ describe('AppShell sidebar styles', () => {
       /\.navigation\s+:global\(\.ant-menu\)\s*\{[^}]*background:\s*var\(--ant-color-fill-quaternary\)/s,
     )
   })
+
+  it('keeps header actions from inheriting the header line height', () => {
+    expect(appShellStyles).toMatch(/\.headerActions\s*\{[^}]*line-height:\s*normal/s)
+  })
 })

@@ -1201,54 +1201,54 @@ function OrderItemPanel({
       <section className={styles.itemActions}>
         <Typography.Text strong>{t('orders.sections.itemActions')}</Typography.Text>
         {canWrite || canOperate ? (
-          <Space orientation="vertical" size={4}>
+          <Space className={styles.itemActionList} size={4}>
             {canWrite ? (
               <Tooltip title={t('orders.actions.createReplacement')} placement="left">
                 <Button
+                  size="small"
                   type="text"
+                  className={styles.itemActionButton}
                   aria-label={t('orders.actions.replaceShort')}
                   icon={<SwapOutlined />}
                   onClick={(event) => onConfirm(event, 'replacement', item)}
-                >
-                  {t('orders.actions.replaceShort')}
-                </Button>
+                />
               </Tooltip>
             ) : null}
             {canOperate && canRecheck ? (
               <Tooltip title={t('orders.actions.recheck')} placement="left">
                 <Button
+                  size="small"
                   type="text"
+                  className={styles.itemActionButton}
                   aria-label={t('orders.actions.recheckShort')}
                   icon={<ReloadOutlined />}
                   onClick={() => onAction({ kind: 'recheck', itemId: item.item.id })}
-                >
-                  {t('orders.actions.recheckShort')}
-                </Button>
+                />
               </Tooltip>
             ) : null}
             {canOperate && !terminal ? (
               <Tooltip title={t('orders.actions.markReady')} placement="left">
                 <Button
+                  size="small"
                   type="text"
+                  className={`${styles.itemActionButton} ${styles.itemActionReady}`}
                   aria-label={t('orders.actions.readyShort')}
                   icon={<CheckCircleOutlined />}
                   onClick={() => onAction({ kind: 'ready', itemId: item.item.id })}
-                >
-                  {t('orders.actions.readyShort')}
-                </Button>
+                />
               </Tooltip>
             ) : null}
             {canOperate && !terminal ? (
               <Tooltip title={t('orders.actions.cancelItem')} placement="left">
                 <Button
+                  size="small"
                   danger
                   type="text"
+                  className={`${styles.itemActionButton} ${styles.itemActionDanger}`}
                   aria-label={t('orders.actions.cancelShort')}
                   icon={<DeleteOutlined />}
                   onClick={(event) => onConfirm(event, 'cancel', item)}
-                >
-                  {t('orders.actions.cancelShort')}
-                </Button>
+                />
               </Tooltip>
             ) : null}
           </Space>

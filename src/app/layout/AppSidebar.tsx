@@ -117,7 +117,7 @@ export function AppSidebar({
     <Layout.Sider
       aria-label={coreLabel}
       className={styles.sidebar}
-      width={260}
+      width={240}
       collapsedWidth={68}
       collapsed={collapsed}
       theme={resolved}

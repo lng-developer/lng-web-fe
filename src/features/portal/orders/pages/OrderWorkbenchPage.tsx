@@ -262,12 +262,16 @@ export const OrderWorkbenchPage = () => {
     () => [
       {
         title: t('orders.columns.order'),
-        width: '12%',
-        render: (_, row) => <CopyableOrderId strong value={row.order.externalOrderId} />,
+        width: '14%',
+        render: (_, row) => (
+          <span className={styles.orderIdChip}>
+            <CopyableOrderId strong value={row.order.externalOrderId} />
+          </span>
+        ),
       },
       {
         title: t('orders.columns.status'),
-        width: '11%',
+        width: '12%',
         render: (_, row) => (
           <Space size={4}>
             <StatusTag status={orderStatusTone(row.order.status)}>
@@ -287,7 +291,7 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.created'),
-        width: '11%',
+        width: '12%',
         render: (_, row) => {
           if (!row.order.createdAt) return '—'
           const createdAt = dayjs(row.order.createdAt)
@@ -307,7 +311,7 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.customer'),
-        width: '12%',
+        width: '14%',
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.buyer.name ?? '—'}</span>
@@ -343,7 +347,7 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.shipping'),
-        width: '11%',
+        width: '12%',
         render: (_, row) => (
           <Space size={4}>
             <span>{row.order.shippingService.name || row.order.shippingService.level || '—'}</span>
@@ -363,13 +367,12 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.shop'),
-        width: '11%',
+        width: '12%',
         render: (_, row) => row.order.shop?.name ?? '—',
       },
       {
         title: t('orders.columns.totalCost'),
-        width: '11%',
-        align: 'right',
+        width: '12%',
         render: (_, row) =>
           formatMinorMoney(
             row.order.pricing.totalCostAmount ?? row.order.pricing.baseCostAmount,
@@ -398,7 +401,7 @@ export const OrderWorkbenchPage = () => {
       // },
       {
         title: t('orders.columns.case'),
-        width: '14%',
+        width: '5%',
         render: (_, row) => {
           const hasCase = Boolean(row.order.caseStatus && row.order.caseStatus !== 'NONE')
 
@@ -409,24 +412,23 @@ export const OrderWorkbenchPage = () => {
                   className={[styles.caseButton, hasCase ? styles.activeCaseIcon : undefined]
                     .filter(Boolean)
                     .join(' ')}
-                  type={row.order.caseTitle ? 'link' : 'text'}
+                  type="text"
                   size="small"
                   aria-label={t('orders.actions.manageCase')}
                   icon={<FileExclamationOutlined />}
                   onClick={(event) => openOrderModal(event, row.order.id, 'case')}
-                >
-                  {row.order.caseTitle}
-                </Button>
+                />
               </Tooltip>
             )
           }
 
           if (!hasCase) return '—'
           return (
-            <Space className={styles.caseText} size={4}>
-              <FileExclamationOutlined className={styles.activeCaseIcon} />
-              {row.order.caseTitle}
-            </Space>
+            <Tooltip title={row.order.caseTitle ?? t('orders.actions.manageCase')}>
+              <span className={styles.caseIndicator} aria-label={t('orders.actions.manageCase')}>
+                <FileExclamationOutlined className={styles.activeCaseIcon} />
+              </span>
+            </Tooltip>
           )
         },
       },
@@ -457,7 +459,12 @@ export const OrderWorkbenchPage = () => {
     <section className={styles.page}>
       <div className={styles.tabsRow}>
         <div className={styles.tabs}>
-          <UiTabs activeKey={tab} onChange={onTabChange} items={tabItems} />
+          <UiTabs
+            className={styles.orderTabs}
+            activeKey={tab}
+            onChange={onTabChange}
+            items={tabItems}
+          />
         </div>
 
         <Button
@@ -507,6 +514,7 @@ export const OrderWorkbenchPage = () => {
         columns={columns}
         dataSource={orders.data?.items ?? []}
         loading={orders.isFetching}
+        scroll={{ x: 1320 }}
         rowClassName={() => styles.stickyOrderRow}
         pagination={{
           ...pagination,

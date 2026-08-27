@@ -15,13 +15,14 @@ interface VendorWorkspaceVendorsTabPageProps {
   readonly searchVendors: string
   readonly vendorStatus?: RecordStatus
   readonly vendorsPage: number
+  readonly vendorsPageSize: number
   readonly vendors: Vendor[] | undefined
   readonly vendorsLoading: boolean
   readonly vendorsTotal: number | undefined
   readonly vendorsError: unknown
   readonly onSearchVendorsChange: (value: string) => void
   readonly onVendorStatusChange: (value: RecordStatus | undefined) => void
-  readonly onVendorsPageChange: (page: number) => void
+  readonly onVendorsPageChange: (page: number, pageSize: number) => void
   readonly onAddVendor: () => void
   readonly onAddProduct: (vendorId: string) => void
   readonly onEditVendor: (vendor: Vendor) => void
@@ -41,6 +42,7 @@ export function VendorWorkspaceVendorsTabPage({
   searchVendors,
   vendorStatus,
   vendorsPage,
+  vendorsPageSize,
   vendors,
   vendorsLoading,
   vendorsTotal,
@@ -104,7 +106,6 @@ export function VendorWorkspaceVendorsTabPage({
       },
       {
         title: t('vendors.vendorsTabActions'),
-        fixed: 'right',
         width: 190,
         render: (_, vendor) => (
           <Space size={4}>
@@ -192,10 +193,9 @@ export function VendorWorkspaceVendorsTabPage({
         }
         pagination={{
           current: vendorsPage,
-          pageSize: 20,
+          pageSize: vendorsPageSize,
           total: vendorsTotal,
           onChange: onVendorsPageChange,
-          showSizeChanger: false,
         }}
       />
     </>
