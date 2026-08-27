@@ -54,7 +54,7 @@ vi.mock('antd', () => ({
               column.render?.(column.dataIndex ? row[column.dataIndex] : undefined, row),
             ),
           )
-          .concat(dataSource.map((row) => row.id))
+          .concat(dataSource.map((row) => row.id as React.ReactNode))
           .map((value, index) => (
             <span key={index}>{value}</span>
           ))}
