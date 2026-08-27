@@ -91,14 +91,14 @@ export type VendorIntegrationConfig = {
 }
 
 export type VendorMigrationReviewItem = {
-  legacyProductId: string
+  id: string
   vendorCode: string | null
   vendorName: string | null
   code: string
   name: string
   externalProductId: string | null
+  imageUrl: string | null
   variantCount: number
-  productTypeGroupCode: string | null
 }
 export type VendorMigrationReview = Paginated<VendorMigrationReviewItem> & {
   summary: { pending: number; ready: number; orphaned: number }
@@ -153,7 +153,7 @@ export type VendorProductImportPayload = {
   dryRun?: boolean
 }
 export type VendorCostCenterImportPayload = {
-  rows: VendorImportRow[]
+  rows: Array<Record<string, unknown>>
   dryRun?: boolean
 }
 export type VendorImportSummary = {
@@ -230,7 +230,7 @@ export async function listVendorMigrationReview(
 }
 
 export async function bulkAssignVendorMigrationProductTypeGroup(input: {
-  legacyProductIds: string[]
+  productIds: string[]
   productTypeGroupId: string
 }) {
   return unwrap<{ updated: number }>(

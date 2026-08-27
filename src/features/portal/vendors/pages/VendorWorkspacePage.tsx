@@ -21,7 +21,11 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { listProductTypeGroups } from '../../catalog/api/catalogApi'
+import {
+  createProductTypeGroup,
+  listProductTypeGroups,
+  type ProductTypeGroupInput,
+} from '../../catalog/api/catalogApi'
 import {
   bulkAssignVendorMigrationProductTypeGroup,
   importVendorCostCenters,
@@ -59,6 +63,16 @@ const PRODUCT_IMPORT_TEMPLATE_HEADERS = [
   'externalProductId',
   'baseCostAmount',
   'currency',
+  'domesticEconomyAmount',
+  'domesticAdditionalAmount',
+  'internationalEconomyAmount',
+  'internationalAdditionalAmount',
+  'priorityEconomyAmount',
+  'priorityAdditionalAmount',
+  'importTaxAmount',
+  'embroideryAmount',
+  'twoSidedPrintAmount',
+  'twoPositionPrintAmount',
   'status',
 ] as const
 const COST_CENTER_IMPORT_TEMPLATE_HEADERS = [
@@ -108,6 +122,16 @@ const COST_CENTER_IMPORT_SAMPLE_ROW = [
   'cm',
   '800',
   'USD',
+  '450',
+  '150',
+  '800',
+  '300',
+  '1200',
+  '400',
+  '0',
+  '0',
+  '150',
+  '150',
   'ACTIVE',
 ] as const
 
@@ -235,6 +259,7 @@ export const VendorWorkspacePage = () => {
   const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
   const queryClient = useQueryClient()
   const canWrite = getGlobalPermissions().includes('VENDORS:WRITE')
+  const canCreateProductType = getGlobalPermissions().includes('CATALOG:WRITE')
   const [tab, setTab] = useState<VendorManagementTab>('vendors')
   const [editor, setEditor] = useState<
     | { kind: 'vendor'; item?: Vendor }
@@ -258,6 +283,7 @@ export const VendorWorkspacePage = () => {
   const [vendorStatus, setVendorStatus] = useState<RecordStatus>()
   const [productStatus, setProductStatus] = useState<RecordStatus>()
   const [productVendorFilter, setProductVendorFilter] = useState<string>()
+  const [productTypeGroupFilter, setProductTypeGroupFilter] = useState<string>()
   const [importTarget, setImportTarget] = useState<ImportTarget>()
   const [importFiles, setImportFiles] = useState<UploadFile[]>([])
   const [importPreviewRows, setImportPreviewRows] = useState<CsvRecord[]>([])
@@ -350,12 +376,12 @@ export const VendorWorkspacePage = () => {
   const productTypeGroups = useQuery({
     queryKey: ['portal', 'catalog', 'product-type-groups', 'all'],
     queryFn: () => listProductTypeGroups({ page: 1, limit: 100 }),
-    enabled: importTarget?.kind === 'product' || tab === 'migration',
+    enabled: importTarget?.kind === 'product' || tab === 'migration' || tab === 'products',
     retry: false,
   })
   const migrationReview = useQuery({
-    queryKey: vendorKeys.migrationReview({ page: 1, limit: 100 }),
-    queryFn: () => listVendorMigrationReview({ page: 1, limit: 100 }),
+    queryKey: vendorKeys.migrationReview({ page: 1, limit: 500 }),
+    queryFn: () => listVendorMigrationReview({ page: 1, limit: 500 }),
     enabled: tab === 'migration',
     retry: false,
   })
@@ -364,6 +390,14 @@ export const VendorWorkspacePage = () => {
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: vendorKeys.migrationReview({}) })
       showFeedbackToast('success', t('vendors.migration.assigned', { count: result.updated }))
+    },
+  })
+  const createMigrationProductType = useMutation({
+    mutationFn: (input: ProductTypeGroupInput) => createProductTypeGroup(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['portal', 'catalog', 'product-type-groups'],
+      })
     },
   })
 
@@ -516,7 +550,7 @@ export const VendorWorkspacePage = () => {
       throw new Error(t('vendors.import.notReady'))
     }
 
-    const importRows: Array<Record<string, string>> = []
+    const importRows: Array<Record<string, unknown>> = []
     const failed: string[] = []
 
     for (const [index, row] of rows.entries()) {
@@ -528,6 +562,20 @@ export const VendorWorkspacePage = () => {
       const widthValue = getField(row, ['width'])
       const lengthValue = getField(row, ['length'])
       const heightValue = getField(row, ['height'])
+      const feeValues = Object.fromEntries(
+        [
+          'domesticEconomyAmount',
+          'domesticAdditionalAmount',
+          'internationalEconomyAmount',
+          'internationalAdditionalAmount',
+          'priorityEconomyAmount',
+          'priorityAdditionalAmount',
+          'importTaxAmount',
+          'embroideryAmount',
+          'twoSidedPrintAmount',
+          'twoPositionPrintAmount',
+        ].map((key) => [key, getField(row, [key]) || '']),
+      )
       const statusValue = getField(row, ['status']) || ''
       const baseCostAmount = parseIntegerField(baseCostAmountValue)
       const weight = parseDecimalField(weightValue)
@@ -607,6 +655,24 @@ export const VendorWorkspacePage = () => {
         dimensionUnit: getField(row, ['dimensionunit']) || '',
         baseCostAmount: baseCostAmountValue || '',
         currency: getField(row, ['currency']) || 'USD',
+        domesticShipping: {
+          economyAmount: feeValues.domesticEconomyAmount,
+          additionalAmount: feeValues.domesticAdditionalAmount,
+        },
+        internationalShipping: {
+          economyAmount: feeValues.internationalEconomyAmount,
+          additionalAmount: feeValues.internationalAdditionalAmount,
+        },
+        priorityShipping: {
+          economyAmount: feeValues.priorityEconomyAmount,
+          additionalAmount: feeValues.priorityAdditionalAmount,
+        },
+        importTaxAmount: feeValues.importTaxAmount,
+        additionalCosts: {
+          embroideryAmount: feeValues.embroideryAmount,
+          twoSidedPrintAmount: feeValues.twoSidedPrintAmount,
+          twoPositionPrintAmount: feeValues.twoPositionPrintAmount,
+        },
         status: statusValue || '',
       })
     }
@@ -664,7 +730,7 @@ export const VendorWorkspacePage = () => {
           void queryClient.invalidateQueries({
             queryKey: vendorKeys.productsRoot(importTarget.vendorId),
           })
-        } else {
+        } else if (importTarget.kind === 'costCenter') {
           void queryClient.invalidateQueries({
             queryKey: vendorKeys.costCentersRoot(importTarget.productId),
           })
@@ -676,6 +742,8 @@ export const VendorWorkspacePage = () => {
               queryKey: vendorKeys.productsRoot(selectedProductForCostCenters.vendor?.id ?? ''),
             })
           }
+        } else {
+          void queryClient.invalidateQueries({ queryKey: ['portal', 'vendors'] })
         }
       }
 
@@ -703,9 +771,10 @@ export const VendorWorkspacePage = () => {
       page: productsPage,
       q: searchProducts.trim() || undefined,
       status: productStatus,
+      productTypeGroupId: productTypeGroupFilter,
       ...(productVendorFilter ? { vendorId: productVendorFilter } : {}),
     }),
-    [productsPage, searchProducts, productStatus, productVendorFilter],
+    [productsPage, searchProducts, productStatus, productTypeGroupFilter, productVendorFilter],
   )
   const products = useQuery({
     queryKey: vendorKeys.products(productVendorFilter ?? ALL_PRODUCTS_VENDOR_ID, productParams),
@@ -826,18 +895,27 @@ export const VendorWorkspacePage = () => {
             searchProducts={searchProducts}
             productStatus={productStatus}
             vendorFilter={productVendorFilter}
+            productTypeGroupFilter={productTypeGroupFilter}
             productsPage={productsPage}
             products={products.data?.items}
             productsLoading={products.isLoading}
             productsTotal={products.data?.pagination.total}
             productsError={products.error}
             vendorFilterOptions={vendorFilterOptions}
+            productTypeGroupOptions={(productTypeGroups.data?.items ?? []).map((group) => ({
+              value: group.id,
+              label: `${group.name} · ${group.code}`,
+            }))}
             onSearchProductsChange={(value) => {
               setSearchProducts(value)
               setProductsPage(1)
             }}
             onVendorFilterChange={(value) => {
               setProductVendorFilter(value)
+              setProductsPage(1)
+            }}
+            onProductTypeGroupFilterChange={(value) => {
+              setProductTypeGroupFilter(value)
               setProductsPage(1)
             }}
             onProductStatusChange={(value) => {
@@ -866,9 +944,13 @@ export const VendorWorkspacePage = () => {
             error={migrationReview.error}
             productTypeGroups={productTypeGroups.data?.items ?? []}
             pending={migrationReview.data?.summary.pending ?? 0}
+            orphaned={migrationReview.data?.summary.orphaned ?? 0}
             assigning={assignMigrationGroup.isPending}
-            onAssign={(legacyProductIds, productTypeGroupId) =>
-              assignMigrationGroup.mutate({ legacyProductIds, productTypeGroupId })
+            canCreateProductType={canCreateProductType}
+            creatingProductType={createMigrationProductType.isPending}
+            onCreateProductType={(input) => createMigrationProductType.mutateAsync(input)}
+            onAssign={(productIds, productTypeGroupId) =>
+              assignMigrationGroup.mutate({ productIds, productTypeGroupId })
             }
           />
         )}

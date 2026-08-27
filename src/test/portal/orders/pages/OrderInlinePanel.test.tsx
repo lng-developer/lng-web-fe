@@ -174,6 +174,12 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByText('J2501-DM-1')).not.toBeInTheDocument()
   })
 
+  it('shows recheck for a mapping-blocked item', () => {
+    renderPanel()
+
+    expect(screen.getByRole('button', { name: 'orders.actions.recheckShort' })).toBeVisible()
+  })
+
   it('shows PSD readiness from the resolved listing variant', () => {
     renderPanel(true, undefined, {
       ...row,

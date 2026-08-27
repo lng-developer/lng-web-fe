@@ -90,7 +90,7 @@ export const MappingWorkspacePage = () => {
       {/* ── Tabs ── */}
       <UiTabs
         activeKey={activeTab}
-        destroyOnHidden
+        destroyOnHidden={false}
         items={tabItems}
         onChange={(tab) => {
           const next = new URLSearchParams(searchParams)

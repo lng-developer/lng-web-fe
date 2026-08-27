@@ -138,6 +138,20 @@ describe('MappingRulePage', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
   })
 
+  it('keeps combined parser settings out of product mappings', async () => {
+    renderRuleTable()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Create rule/ }))
+
+    expect(
+      screen.queryByRole('textbox', { name: 'Product type & color keys' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('textbox', { name: 'Product type & size keys' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Size keys' })).not.toBeInTheDocument()
+  })
+
   const renderRuleTable = () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const router = createMemoryRouter(

@@ -1,5 +1,5 @@
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { App as AntdApp } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -30,6 +30,7 @@ import {
 } from '@/features/portal/mapping/api/mappingApi'
 import { MappingWorkbenchPage } from '@/features/portal/mapping/pages/MappingWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
 
 const account: CurrentAccount = {
   account: { id: 'operator-1', email: 'operator@lng.co', mustChangePassword: false },
@@ -40,14 +41,14 @@ const account: CurrentAccount = {
 }
 
 function renderPage(currentAccount = account, initialEntry = '/portal/mapping/workbench') {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  queryClient.clear()
   const router = createMemoryRouter(
     [
       {
         id: 'workspace',
         path: '/portal/mapping/workbench',
         loader: () => currentAccount,
-        element: <MappingWorkbenchPage />,
+        element: <MappingWorkbenchPage account={currentAccount} />,
       },
       { path: '/portal/mapping', element: <div>Product Mapping</div> },
     ],
@@ -55,7 +56,7 @@ function renderPage(currentAccount = account, initialEntry = '/portal/mapping/wo
   )
   return render(
     <AntdApp>
-      <QueryClientProvider client={client}>
+      <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
     </AntdApp>,
@@ -78,7 +79,14 @@ describe('MappingWorkbenchPage', () => {
       missingVendorProductCount: 0,
       missingVendorCostCenterCount: 0,
       ambiguousSkuConfigCount: 0,
-    })
+      stageCounts: {
+        SKU_CLEANUP: 0,
+        PRODUCT_MAPPING: 11,
+        INPUT_SEMANTICS: 0,
+        VALUE_ALIASES: 5,
+        VENDOR_ROUTING: 5,
+      },
+    } as never)
     vi.mocked(listAuthorableShops).mockResolvedValue({ items: [], canCreateGlobal: false })
     vi.mocked(listUnmatchedItems).mockResolvedValue({
       items: [
@@ -141,6 +149,31 @@ describe('MappingWorkbenchPage', () => {
     expect(listAuthorableShops).not.toHaveBeenCalled()
   })
 
+  it('shows pipeline counts returned by the same backend stage filters', async () => {
+    renderPage()
+
+    expect(await screen.findByRole('button', { name: /Product mapping.*11/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Value aliases.*5/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Vendor routing.*5/ })).toBeInTheDocument()
+  })
+
+  it('reuses a recent queue search result', async () => {
+    renderPage()
+    await screen.findByText('J2501-TS1S-01')
+    vi.mocked(listUnmatchedItems).mockClear()
+
+    const search = screen.getByLabelText('Search order, SKU, or ASIN')
+    fireEvent.change(search, { target: { value: 'J2501' } })
+    await waitFor(() => expect(listUnmatchedItems).toHaveBeenCalledTimes(1))
+
+    fireEvent.change(search, { target: { value: '' } })
+    await new Promise((resolve) => window.setTimeout(resolve, 250))
+    fireEvent.change(search, { target: { value: 'J2501' } })
+    await new Promise((resolve) => window.setTimeout(resolve, 250))
+
+    expect(listUnmatchedItems).toHaveBeenCalledTimes(1)
+  })
+
   it('searches and applies a manual vendor candidate from the selected item', async () => {
     renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
     fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('[role="button"]')!)
@@ -155,6 +188,17 @@ describe('MappingWorkbenchPage', () => {
         vendorCostCenterId: 'cost-1',
       }),
     )
+  })
+
+  it('uses one clearly named item recheck action instead of duplicate resolve controls', async () => {
+    renderPage({ ...account, permissions: ['MAPPING:READ', 'MAPPING:WRITE'] })
+    fireEvent.click((await screen.findByText('J2501-TS1S-01')).closest('[role="button"]')!)
+
+    await screen.findByText('Product A')
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toContain(
+      'Recheck & auto-match',
+    )
+    expect(screen.queryByRole('button', { name: 'Auto resolve' })).not.toBeInTheDocument()
   })
 
   it('opens a linked order item directly in the workbench', async () => {

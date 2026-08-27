@@ -450,6 +450,7 @@
       "saveRule": "Lưu quy tắc",
       "previewChanges": "Xem trước thay đổi",
       "recheck": "Kiểm tra lại item",
+      "recheckAutoMatch": "Kiểm tra lại và tự động ghép",
       "resolve": "Tự động xử lý",
       "select": "Chọn ứng viên",
       "batchRecheck": "Kiểm tra lại item an toàn",
@@ -482,7 +483,8 @@
       "normalizedInputs": "Dữ liệu đã chuẩn hóa",
       "ruleEditor": "Sửa quy tắc",
       "ruleFields": "Trường quy tắc",
-      "ruleMetadata": "Thông tin quy tắc"
+      "ruleMetadata": "Thông tin quy tắc",
+      "additionalConditions": "Điều kiện thêm"
     },
     "filters": {
       "vendorProduct": "Sản phẩm vendor",
@@ -510,6 +512,9 @@
       "replacementValue": "Giá trị thay thế",
       "platformProductType": "Loại sản phẩm marketplace",
       "productTypeAliases": "Tên tương đương (ngăn cách bằng dấu phẩy)",
+      "productTypeColorKeys": "Nhãn loại sản phẩm và màu",
+      "productTypeSizeKeys": "Nhãn loại sản phẩm và kích thước",
+      "sizeKeys": "Nhãn kích thước",
       "countryCode": "Mã quốc gia",
       "productTypeGroupId": "Nhóm sản phẩm",
       "internalTemplateId": "Mẫu nội bộ",
@@ -526,6 +531,7 @@
       "priority": "Độ ưu tiên",
       "status": "Trạng thái",
       "sampleSku": "SKU mẫu",
+      "sampleValue": "Giá trị mẫu",
       "updatedAt": "Cập nhật",
       "actions": "Thao tác"
     },
@@ -559,6 +565,8 @@
     },
     "semanticRoles": {
       "PRODUCT_TYPE": "Loại sản phẩm",
+      "PRODUCT_TYPE_COLOR": "Loại sản phẩm + màu",
+      "PRODUCT_TYPE_SIZE": "Loại sản phẩm + kích thước",
       "SIZE": "Kích thước",
       "COLOR": "Màu",
       "STYLE": "Kiểu dáng",

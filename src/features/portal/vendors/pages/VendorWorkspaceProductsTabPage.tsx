@@ -20,14 +20,17 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly searchProducts: string
   readonly productStatus: RecordStatus | undefined
   readonly vendorFilter: string | undefined
+  readonly productTypeGroupFilter: string | undefined
   readonly productsPage: number
   readonly products: VendorProduct[] | undefined
   readonly productsLoading: boolean
   readonly productsTotal: number | undefined
   readonly productsError: unknown
   readonly vendorFilterOptions: SelectOption[]
+  readonly productTypeGroupOptions: SelectOption[]
   readonly onSearchProductsChange: (value: string) => void
   readonly onVendorFilterChange: (value: string | undefined) => void
+  readonly onProductTypeGroupFilterChange: (value: string | undefined) => void
   readonly onProductStatusChange: (value: RecordStatus | undefined) => void
   readonly onProductsPageChange: (page: number) => void
   readonly onAddProduct: (vendorId: string) => void
@@ -41,14 +44,17 @@ export function VendorWorkspaceProductsTabPage({
   searchProducts,
   productStatus,
   vendorFilter,
+  productTypeGroupFilter,
   productsPage,
   products,
   productsLoading,
   productsTotal,
   productsError,
   vendorFilterOptions,
+  productTypeGroupOptions,
   onSearchProductsChange,
   onVendorFilterChange,
+  onProductTypeGroupFilterChange,
   onProductStatusChange,
   onProductsPageChange,
   onAddProduct,
@@ -155,21 +161,16 @@ export function VendorWorkspaceProductsTabPage({
         label={t('portal.vendors.filters.label')}
         contentClassName={styles.filters}
         actions={
-          canWrite ? (
+          canWrite && vendorFilter ? (
             <Space size={8} align="center">
               <Button
-                disabled={!vendorFilter}
                 icon={<PlusOutlined />}
                 type="primary"
-                onClick={() => onAddProduct(vendorFilter || '')}
+                onClick={() => onAddProduct(vendorFilter)}
               >
                 {t('portal.vendors.addProduct')}
               </Button>
-              <Button
-                disabled={!vendorFilter}
-                icon={<UploadOutlined />}
-                onClick={() => onOpenProductImport(vendorFilter)}
-              >
+              <Button icon={<UploadOutlined />} onClick={() => onOpenProductImport(vendorFilter)}>
                 {t('portal.vendors.importProducts')}
               </Button>
             </Space>
@@ -189,7 +190,17 @@ export function VendorWorkspaceProductsTabPage({
           placeholder={t('portal.vendors.filters.vendor')}
           value={vendorFilter}
           showSearch
+          optionFilterProp="label"
           onChange={(value) => onVendorFilterChange(value as string | undefined)}
+        />
+        <Select
+          allowClear
+          options={productTypeGroupOptions}
+          placeholder={t('portal.vendors.filters.productType', { defaultValue: 'Product type' })}
+          value={productTypeGroupFilter}
+          showSearch
+          optionFilterProp="label"
+          onChange={(value) => onProductTypeGroupFilterChange(value as string | undefined)}
         />
         <Select
           allowClear

@@ -450,6 +450,7 @@
       "saveRule": "Save rule",
       "previewChanges": "Preview changes",
       "recheck": "Recheck item",
+      "recheckAutoMatch": "Recheck & auto-match",
       "resolve": "Auto resolve",
       "select": "Select candidate",
       "batchRecheck": "Recheck safe items",
@@ -482,7 +483,8 @@
       "normalizedInputs": "Normalized inputs",
       "ruleEditor": "Rule editor",
       "ruleFields": "Rule fields",
-      "ruleMetadata": "Rule metadata"
+      "ruleMetadata": "Rule metadata",
+      "additionalConditions": "Additional conditions"
     },
     "filters": {
       "vendorProduct": "Vendor product",
@@ -510,6 +512,9 @@
       "replacementValue": "Replacement value",
       "platformProductType": "Marketplace product type",
       "productTypeAliases": "Product aliases (comma separated)",
+      "productTypeColorKeys": "Product type & color keys",
+      "productTypeSizeKeys": "Product type & size keys",
+      "sizeKeys": "Size keys",
       "countryCode": "Country code",
       "productTypeGroupId": "Product group",
       "internalTemplateId": "Internal template",
@@ -526,6 +531,7 @@
       "priority": "Priority",
       "status": "Status",
       "sampleSku": "Sample SKU",
+      "sampleValue": "Sample value",
       "updatedAt": "Updated",
       "actions": "Actions"
     },
@@ -559,6 +565,8 @@
     },
     "semanticRoles": {
       "PRODUCT_TYPE": "Product type",
+      "PRODUCT_TYPE_COLOR": "Product type + color",
+      "PRODUCT_TYPE_SIZE": "Product type + size",
       "SIZE": "Size",
       "COLOR": "Color",
       "STYLE": "Style",

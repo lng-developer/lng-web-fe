@@ -2,9 +2,17 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 
 let tableRenderCount = 0
+let latestTableProps: Record<string, unknown> = {}
 
 vi.mock('antd', () => ({
   Alert: ({ message }: { message: string }) => <div>{message}</div>,
+  Image: ({ alt, src, onClick }: { alt: string; src: string; onClick?: () => void }) => (
+    <button type="button" aria-label={alt} onClick={onClick}>
+      <img alt={alt} src={src} />
+    </button>
+  ),
+  Modal: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
+    open ? <div role="dialog">{children}</div> : null,
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
@@ -25,9 +33,33 @@ vi.mock('antd', () => ({
     </select>
   ),
   Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Table: ({ dataSource }: { dataSource: Array<{ legacyProductId: string }> }) => {
+  Table: ({
+    columns = [],
+    dataSource,
+    ...props
+  }: {
+    columns?: Array<{
+      dataIndex?: string
+      render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode
+    }>
+    dataSource: Array<Record<string, unknown>>
+  }) => {
     tableRenderCount += 1
-    return <div>{dataSource.map((row) => row.legacyProductId).join(',')}</div>
+    latestTableProps = props
+    return (
+      <div>
+        {dataSource
+          .flatMap((row) =>
+            columns.map((column) =>
+              column.render?.(column.dataIndex ? row[column.dataIndex] : undefined, row),
+            ),
+          )
+          .concat(dataSource.map((row) => row.id))
+          .map((value, index) => (
+            <span key={index}>{value}</span>
+          ))}
+      </div>
+    )
   },
   Typography: { Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span> },
 }))
@@ -37,6 +69,7 @@ import { VendorMigrationTabPage } from '@/features/portal/vendors/pages/VendorMi
 afterEach(() => {
   cleanup()
   tableRenderCount = 0
+  latestTableProps = {}
 })
 
 test('does not re-render the review table when only the Product Type Group changes', () => {
@@ -45,28 +78,167 @@ test('does not re-render the review table when only the Product Type Group chang
       canWrite
       rows={[
         {
-          legacyProductId: 'legacy-1',
+          id: 'product-1',
           vendorCode: 'VENDOR',
           vendorName: 'Vendor',
           code: 'PRODUCT',
           name: 'Product',
           externalProductId: null,
+          imageUrl: null,
           variantCount: 1,
-          productTypeGroupCode: null,
         },
       ]}
       loading={false}
       error={null}
       productTypeGroups={[{ id: 'group-1', code: 'TS', name: 'T-Shirt', status: 'ACTIVE' }]}
       pending={1}
+      orphaned={0}
       assigning={false}
+      canCreateProductType
+      creatingProductType={false}
+      onCreateProductType={vi.fn()}
       onAssign={vi.fn()}
     />,
   )
 
   expect(tableRenderCount).toBe(1)
+  expect(screen.getByRole('button', { name: 'Create product type' })).toBeTruthy()
   fireEvent.change(screen.getByLabelText('Product Type Group for selected migration products'), {
     target: { value: 'group-1' },
   })
   expect(tableRenderCount).toBe(1)
+})
+
+test('shows the vendor product thumbnail in migration review', () => {
+  render(
+    <VendorMigrationTabPage
+      canWrite
+      rows={[
+        {
+          id: 'product-1',
+          vendorCode: 'VENDOR',
+          vendorName: 'Vendor',
+          code: 'PRODUCT',
+          name: 'Product',
+          externalProductId: null,
+          imageUrl: 'https://cdn.example.test/product.jpg',
+          variantCount: 1,
+        },
+      ]}
+      loading={false}
+      error={null}
+      productTypeGroups={[]}
+      pending={1}
+      orphaned={0}
+      assigning={false}
+      canCreateProductType={false}
+      creatingProductType={false}
+      onCreateProductType={vi.fn()}
+      onAssign={vi.fn()}
+    />,
+  )
+
+  expect(screen.getByRole('img', { name: 'Product' }).getAttribute('src')).toBe(
+    'https://cdn.example.test/product.jpg',
+  )
+})
+
+test('virtualizes migration products so checkbox selection does not render every row', () => {
+  render(
+    <VendorMigrationTabPage
+      canWrite
+      rows={[]}
+      loading={false}
+      error={null}
+      productTypeGroups={[]}
+      pending={0}
+      orphaned={0}
+      assigning={false}
+      canCreateProductType={false}
+      creatingProductType={false}
+      onCreateProductType={vi.fn()}
+      onAssign={vi.fn()}
+    />,
+  )
+
+  expect(latestTableProps.virtual).toBe(true)
+  expect(latestTableProps.scroll).toEqual(expect.objectContaining({ y: 560 }))
+})
+
+test('keeps the selection column compact and shows only the product name', () => {
+  render(
+    <VendorMigrationTabPage
+      canWrite
+      rows={[
+        {
+          id: 'product-1010',
+          vendorCode: 'VENDOR',
+          vendorName: 'Vendor',
+          code: 'PRODUCT_1010',
+          name: "Women's Micro Rib Baby Tee",
+          externalProductId: '1010',
+          imageUrl: null,
+          variantCount: 0,
+        },
+      ]}
+      loading={false}
+      error={null}
+      productTypeGroups={[]}
+      pending={1}
+      orphaned={0}
+      assigning={false}
+      canCreateProductType={false}
+      creatingProductType={false}
+      onCreateProductType={vi.fn()}
+      onAssign={vi.fn()}
+    />,
+  )
+
+  expect((latestTableProps.rowSelection as { columnWidth?: number }).columnWidth).toBe(40)
+  expect(screen.getByText("Women's Micro Rib Baby Tee")).toBeTruthy()
+  expect(screen.queryByText('PRODUCT_1010')).toBeNull()
+})
+
+test('opens one image preview and leaves missing images blank', () => {
+  render(
+    <VendorMigrationTabPage
+      canWrite
+      rows={[
+        {
+          id: 'product-image',
+          vendorCode: 'VENDOR',
+          vendorName: 'Vendor',
+          code: 'IMAGE',
+          name: 'With image',
+          externalProductId: '1',
+          imageUrl: 'https://cdn.example.test/product.jpg',
+          variantCount: 0,
+        },
+        {
+          id: 'product-empty',
+          vendorCode: 'VENDOR',
+          vendorName: 'Vendor',
+          code: 'EMPTY',
+          name: 'Without image',
+          externalProductId: '2',
+          imageUrl: null,
+          variantCount: 0,
+        },
+      ]}
+      loading={false}
+      error={null}
+      productTypeGroups={[]}
+      pending={2}
+      orphaned={0}
+      assigning={false}
+      canCreateProductType={false}
+      creatingProductType={false}
+      onCreateProductType={vi.fn()}
+      onAssign={vi.fn()}
+    />,
+  )
+
+  expect(screen.queryByText('—')).toBeNull()
+  fireEvent.click(screen.getByRole('img', { name: 'With image' }))
+  expect(screen.getByRole('dialog')).toBeTruthy()
 })

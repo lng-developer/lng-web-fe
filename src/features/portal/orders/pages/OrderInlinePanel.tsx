@@ -829,6 +829,7 @@ function OrderItemPanel({
   const psdDownloadUrl = psdSource?.psdTemplate?.downloadUrl
   const canRecheck =
     item.workflow.nextActions.some((action) => action.startsWith('RECHECK_')) ||
+    item.mapping?.status === 'BLOCKED' ||
     (item.production?.status === 'BLOCKED' && psdStatus === 'PRESENT')
   const relatedImages = Array.from(
     new Set([

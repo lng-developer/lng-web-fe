@@ -7,7 +7,6 @@ import {
   FieldStringOutlined,
   ReloadOutlined,
   ScissorOutlined,
-  ThunderboltOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
@@ -78,7 +77,6 @@ export function LiveTracePanel({
   trace,
   selectingCandidateId,
   onRecheck,
-  onResolve,
   candidateSearch,
   onCandidateSearchChange,
   onSelectCandidate,
@@ -89,7 +87,6 @@ export function LiveTracePanel({
   readonly selectingCandidateId?: string
   readonly candidateSearch?: string
   readonly onRecheck: () => void
-  readonly onResolve: () => void
   readonly onCandidateSearchChange: (value: string) => void
   readonly onSelectCandidate: (candidateId: string, productId: string) => void
 }) {
@@ -122,18 +119,17 @@ export function LiveTracePanel({
         </StatusTag>
         {canWrite ? (
           <Space size={6}>
-            <Button size="small" icon={<ReloadOutlined />} loading={loading} onClick={onRecheck}>
-              {t('mapping.actions.recheck')}
-            </Button>
-            <Button
-              size="small"
-              type="primary"
-              icon={<ThunderboltOutlined />}
-              loading={loading}
-              onClick={onResolve}
-            >
-              {t('mapping.actions.resolve')}
-            </Button>
+            <Tooltip title="Re-run mapping and apply a confident vendor match.">
+              <Button
+                size="small"
+                type="primary"
+                icon={<ReloadOutlined />}
+                loading={loading}
+                onClick={onRecheck}
+              >
+                Recheck & auto-match
+              </Button>
+            </Tooltip>
           </Space>
         ) : null}
       </div>

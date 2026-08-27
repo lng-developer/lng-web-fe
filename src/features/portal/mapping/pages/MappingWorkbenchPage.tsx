@@ -21,10 +21,10 @@ import {
   getMappingSummary,
   listAuthorableShops,
   listUnmatchedItems,
+  type MappingSummary,
   previewOrderItem,
   recheckOrderItem,
   recheckUnmatched,
-  resolveOrderItem,
   searchVendorCandidates,
   selectFulfillmentCandidate,
   type UnmatchedMappingItem,
@@ -102,19 +102,13 @@ const STAGE_CONFIG: {
   },
 ]
 
-function buildStageCounters(summary?: {
-  missingSkuConfigCount?: number
-  missingSemanticRuleCount?: number
-  missingVendorProductCount?: number
-  missingVendorCostCenterCount?: number
-}): StageCounts {
+function buildStageCounters(summary?: MappingSummary): StageCounts {
   return {
     SKU_CLEANUP: 0,
-    PRODUCT_MAPPING: summary?.missingSkuConfigCount ?? 0,
-    INPUT_SEMANTICS: summary?.missingSemanticRuleCount ?? 0,
-    VALUE_ALIASES: 0,
-    VENDOR_ROUTING:
-      (summary?.missingVendorProductCount ?? 0) + (summary?.missingVendorCostCenterCount ?? 0),
+    PRODUCT_MAPPING: summary?.stageCounts?.PRODUCT_MAPPING ?? 0,
+    INPUT_SEMANTICS: summary?.stageCounts?.INPUT_SEMANTICS ?? 0,
+    VALUE_ALIASES: summary?.stageCounts?.VALUE_ALIASES ?? 0,
+    VENDOR_ROUTING: summary?.stageCounts?.VENDOR_ROUTING ?? 0,
   }
 }
 
@@ -216,14 +210,6 @@ export function MappingWorkbenchPage({
 
   const recheck = useMutation({
     mutationFn: recheckOrderItem,
-    onSuccess: async () => {
-      await refreshQueue()
-      toast('success', t('mapping.feedback.itemRechecked'))
-    },
-    onError: notifyError,
-  })
-  const resolve = useMutation({
-    mutationFn: resolveOrderItem,
     onSuccess: async () => {
       await refreshQueue()
       toast('success', t('mapping.feedback.itemRechecked'))
@@ -424,14 +410,13 @@ export function MappingWorkbenchPage({
         >
           <LiveTracePanel
             canWrite={canWrite}
-            loading={preview.isFetching || recheck.isPending || resolve.isPending}
+            loading={preview.isFetching || recheck.isPending}
             trace={trace}
             selectingCandidateId={
               selectCandidate.isPending ? selectCandidate.variables?.costCenterId : undefined
             }
             candidateSearch={candidateSearch}
             onRecheck={() => orderItemId && recheck.mutate(orderItemId)}
-            onResolve={() => orderItemId && resolve.mutate(orderItemId)}
             onCandidateSearchChange={setCandidateSearch}
             onSelectCandidate={(costCenterId, productId) =>
               selectCandidate.mutate({ costCenterId, productId })

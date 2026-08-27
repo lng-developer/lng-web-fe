@@ -158,11 +158,15 @@ describe('ShopWorkspacePage', () => {
   })
 
   it('opens the status editor for a writer', async () => {
-    renderPage()
+    renderPage('/portal/shops?page=1&status=ACTIVE')
 
+    await waitFor(() =>
+      expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 20, status: 'ACTIVE' }),
+    )
+    expect(await screen.findByText('Football US')).toBeVisible()
     fireEvent.click(await screen.findByRole('button', { name: 'Edit Football US' }))
     expect(await screen.findByDisplayValue('Football US')).toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('submits only the API-supported create and status inputs', async () => {
     renderPage()

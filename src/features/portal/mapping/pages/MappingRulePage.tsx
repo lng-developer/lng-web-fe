@@ -294,7 +294,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           productTypeGroups={catalogOptions.data?.productTypeGroups}
           internalTemplates={catalogOptions.data?.internalTemplates}
           vendors={vendors.data?.items}
-          initialSampleSku={originPreview.data?.skuNormalization?.originalSku || undefined}
+          initialSampleSku={originPreview.data?.skuNormalization?.originalSku}
           onDirtyChange={() => undefined}
           onPreview={(rule, samples) =>
             previewMappingRule({

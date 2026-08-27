@@ -27,6 +27,12 @@ export type MappingSummary = {
   missingVendorProductCount: number
   missingVendorCostCenterCount: number
   ambiguousSkuConfigCount: number
+  stageCounts?: Partial<
+    Record<
+      'SKU_CLEANUP' | 'PRODUCT_MAPPING' | 'INPUT_SEMANTICS' | 'VALUE_ALIASES' | 'VENDOR_ROUTING',
+      number
+    >
+  >
   byStatus?: Record<string, number>
   bySelectionMode?: Record<string, number>
 }
