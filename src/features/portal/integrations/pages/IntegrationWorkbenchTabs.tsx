@@ -33,7 +33,7 @@ export function IntegrationWorkbenchTabs({
   return (
     <UiTabs
       activeKey={activeTab}
-      destroyOnHidden={false}
+      destroyOnHidden
       onChange={(key) => onChange(key as IntegrationWorkbenchTab)}
       tabBarExtraContent={
         activeTab === 'orders' && canUpload ? (

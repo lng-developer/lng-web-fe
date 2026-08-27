@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { isValidElement, type ReactNode, useState } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { TabsProps } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -40,6 +41,40 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         </tbody>
       </table>
     ),
+    UiTabs: ({
+      activeKey,
+      defaultActiveKey,
+      items = [],
+      onChange,
+      tabBarExtraContent,
+    }: TabsProps) => {
+      const [uncontrolledKey, setUncontrolledKey] = useState(defaultActiveKey ?? items[0]?.key)
+      const selectedKey = activeKey ?? uncontrolledKey
+      const selectedItem = items.find((item) => item?.key === selectedKey)
+
+      return (
+        <div>
+          <div role="tablist">
+            {items.map((item) => (
+              <button
+                aria-selected={item?.key === selectedKey}
+                key={item?.key}
+                role="tab"
+                type="button"
+                onClick={() => {
+                  setUncontrolledKey(item?.key)
+                  onChange?.(String(item?.key))
+                }}
+              >
+                {item?.label}
+              </button>
+            ))}
+          </div>
+          {isValidElement(tabBarExtraContent) ? tabBarExtraContent : null}
+          {selectedItem?.children}
+        </div>
+      )
+    },
   }
 })
 

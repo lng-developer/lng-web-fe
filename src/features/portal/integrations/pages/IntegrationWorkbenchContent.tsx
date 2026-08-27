@@ -1362,6 +1362,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const extensionTab = (
     <UiTabs
       defaultActiveKey="operations"
+      destroyOnHidden
       items={[
         {
           key: 'operations',
