@@ -75,7 +75,7 @@ export async function downloadMediaAsset(downloadUrl: string, filename?: string)
     : response instanceof Blob
       ? response
       : await fetchMediaBlob(downloadUrl, undefined, 'attachment')
-  const objectUrl = signed ? null : URL.createObjectURL(blob)
+  const objectUrl = blob ? URL.createObjectURL(blob) : null
 
   try {
     anchor.href = signed || objectUrl!
