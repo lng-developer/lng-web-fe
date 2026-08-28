@@ -14,14 +14,14 @@ type Props = {
   rows: VendorMigrationReviewItem[]
   loading: boolean
   error: unknown
-  currentPage: number
-  currentPageSize: number
-  total: number
+  currentPage?: number
+  currentPageSize?: number
+  total?: number
   productTypeGroups: ProductTypeGroup[]
   pending: number
   orphaned: number
   onAssign: (productIds: string[], productTypeGroupId: string) => void
-  onPageChange: (page: number, pageSize: number) => void
+  onPageChange?: (page: number, pageSize: number) => void
   assigning: boolean
   canCreateProductType: boolean
   creatingProductType: boolean
@@ -40,10 +40,10 @@ type ReviewTableProps = Pick<
 const ReviewTable = memo(function ReviewTable({
   rows,
   loading,
-  currentPage,
-  currentPageSize,
-  total,
-  onPageChange,
+  currentPage = 1,
+  currentPageSize = 20,
+  total = 0,
+  onPageChange = () => undefined,
   selectedIds,
   onSelectedIdsChange,
   onPreviewImage,

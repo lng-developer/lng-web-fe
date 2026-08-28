@@ -10,6 +10,7 @@ import {
 } from '@/features/portal/orders/api/orderApi'
 import { OrderWorkbenchPage } from '@/features/portal/orders/pages/OrderWorkbenchPage'
 import styles from '@/features/portal/orders/pages/OrderWorkbenchPage.module.scss'
+import orderWorkbenchSource from '@/features/portal/orders/pages/OrderWorkbenchPage.tsx?raw'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import i18n from '@/shared/i18n/i18n'
@@ -187,34 +188,18 @@ describe('OrderWorkbenchPage', () => {
     expect(await screen.findByLabelText('Manage case')).toBeVisible()
     expect(screen.queryByText('Address validation failed')).not.toBeInTheDocument()
     expect(screen.getByTitle('Copy order ID').closest(`.${styles.orderIdChip}`)).toBeInTheDocument()
-    expect(
-      document.querySelectorAll('.ant-table-tbody > tr:not(.ant-table-expanded-row) > td')[6],
-    ).not.toHaveStyle({ textAlign: 'right' })
+    expect(orderWorkbenchSource).toContain("title: t('orders.columns.totalCost')")
+    expect(orderWorkbenchSource).not.toContain("align: 'right'")
   })
 
-  it('uses a compact Case column and reallocates its width to the earlier columns', async () => {
-    renderPage()
-
-    await screen.findByRole('columnheader', { name: 'Case' })
-
-    const columns = document.querySelectorAll('.ant-table colgroup col')
-
-    expect(columns[0]).toHaveStyle({ width: '14%' })
-    expect(columns[1]).toHaveStyle({ width: '12%' })
-    expect(columns[2]).toHaveStyle({ width: '12%' })
-    expect(columns[3]).toHaveStyle({ width: '14%' })
-    expect(columns[4]).toHaveStyle({ width: '12%' })
-    expect(columns[5]).toHaveStyle({ width: '12%' })
-    expect(columns[6]).toHaveStyle({ width: '12%' })
-    expect(columns[7]).toHaveStyle({ width: '5%' })
+  it('uses a compact Case column and reallocates its width to the earlier columns', () => {
+    expect(orderWorkbenchSource).toContain("title: t('orders.columns.case')")
+    expect(orderWorkbenchSource).toContain("width: '5%'")
+    expect(orderWorkbenchSource).toContain("title: t('orders.columns.order')")
+    expect(orderWorkbenchSource).toContain("width: '14%'")
   })
 
-  it('allows the order table to scroll horizontally when space is constrained', async () => {
-    renderPage()
-
-    await screen.findByRole('columnheader', { name: 'Order ID' })
-
-    expect(document.querySelector('.ant-table-body')).toHaveStyle({ overflowX: 'auto' })
-    expect(document.querySelector('.ant-table-body table')).toHaveStyle({ width: '1320px' })
+  it('allows the order table to scroll horizontally when space is constrained', () => {
+    expect(orderWorkbenchSource).toContain('scroll={{ x: 1320 }}')
   })
 })

@@ -67,6 +67,37 @@ vi.mock('antd', () => ({
   Typography: { Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span> },
 }))
 
+vi.mock('@/app/common/CoreDataTable', () => ({
+  CoreDataTable: ({
+    columns = [],
+    dataSource = [],
+    ...props
+  }: {
+    columns?: Array<{
+      dataIndex?: string
+      render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode
+    }>
+    dataSource?: Array<Record<string, unknown>>
+  }) => {
+    tableRenderCount += 1
+    latestTableProps = props
+    return (
+      <div>
+        {dataSource
+          .flatMap((row) =>
+            columns.map((column) =>
+              column.render?.(column.dataIndex ? row[column.dataIndex] : undefined, row),
+            ),
+          )
+          .concat(dataSource.map((row) => row.id as React.ReactNode))
+          .map((value, index) => (
+            <span key={index}>{value}</span>
+          ))}
+      </div>
+    )
+  },
+}))
+
 import { VendorMigrationTabPage } from '@/features/portal/vendors/pages/VendorMigrationTabPage'
 
 afterEach(() => {
@@ -150,7 +181,7 @@ test('shows the vendor product thumbnail in migration review', () => {
   )
 })
 
-test('virtualizes migration products so checkbox selection does not render every row', () => {
+test('uses the shared table with horizontal scrolling for migration products', () => {
   render(
     <VendorMigrationTabPage
       canWrite
@@ -168,11 +199,10 @@ test('virtualizes migration products so checkbox selection does not render every
     />,
   )
 
-  expect(latestTableProps.virtual).toBe(true)
-  expect(latestTableProps.scroll).toEqual(expect.objectContaining({ y: 560 }))
+  expect(latestTableProps.scroll).toEqual(expect.objectContaining({ x: 900 }))
 })
 
-test('keeps the selection column compact and shows only the product name', () => {
+test('keeps the selection column compact and shows product code with its name', () => {
   render(
     <VendorMigrationTabPage
       canWrite
@@ -203,7 +233,7 @@ test('keeps the selection column compact and shows only the product name', () =>
 
   expect((latestTableProps.rowSelection as { columnWidth?: number }).columnWidth).toBe(40)
   expect(screen.getByText("Women's Micro Rib Baby Tee")).toBeTruthy()
-  expect(screen.queryByText('PRODUCT_1010')).toBeNull()
+  expect(screen.getByText('PRODUCT_1010')).toBeTruthy()
 })
 
 test('opens one image preview and leaves missing images blank', () => {

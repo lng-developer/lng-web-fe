@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -18,9 +19,11 @@ describe('VendorWorkspacePage', () => {
 
   it('renders the Vendor locale instead of raw translation keys', () => {
     render(
-      <AppProviders>
-        <VendorWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <VendorWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     expect(screen.getByRole('tab', { name: i18n.t('portal.vendors.tabs.vendors') })).toBeVisible()
