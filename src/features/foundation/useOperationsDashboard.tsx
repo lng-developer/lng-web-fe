@@ -54,8 +54,8 @@ export function useOperationsDashboard(dateFrom?: string, dateTo?: string) {
     enabled: canCatalog,
   })
   const customerSummary = useQuery({
-    queryKey: ['foundation', 'customers', 'summary', dateFrom, dateTo],
-    queryFn: () => getCustomerSummary({ dateFrom, dateTo }),
+    queryKey: ['foundation', 'customers', 'summary'],
+    queryFn: () => getCustomerSummary(),
     enabled: canCustomers,
   })
   const reportFilters = useMemo(() => ({ dateFrom, dateTo }), [dateFrom, dateTo])

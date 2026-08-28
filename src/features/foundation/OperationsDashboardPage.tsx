@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { DatePicker, Typography } from 'antd'
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 
 import { FeedbackAlert, SectionCard } from '@/shared/ui'
 
@@ -14,7 +14,7 @@ import { useOperationsDashboard } from './useOperationsDashboard'
 
 export function OperationsDashboardPage() {
   const { t } = useTranslation()
-  const [dates, setDates] = useState(() => [dayjs().startOf('month'), dayjs().endOf('day')] as const)
+  const [dates, setDates] = useState<[Dayjs, Dayjs]>(() => [dayjs().startOf('month'), dayjs().endOf('day')])
   const { value, handle } = useOperationsDashboard(dates[0].toISOString(), dates[1].toISOString())
 
   if (!value.canViewDashboard) {
