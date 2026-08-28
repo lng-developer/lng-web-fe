@@ -39,6 +39,18 @@ const operations: NavigationGroup = {
     },
   ],
 }
+const dashboard: NavigationGroup = {
+  key: 'dashboard',
+  labelKey: 'shell.navigation.operationsDashboard',
+  standalone: true,
+  items: [
+    {
+      key: 'operations-dashboard',
+      path: '/operations-dashboard',
+      labelKey: 'shell.navigation.operationsDashboard',
+    },
+  ],
+}
 
 describe('AppSidebar', () => {
   beforeEach(() => i18n.changeLanguage('en'))
@@ -50,6 +62,13 @@ describe('AppSidebar', () => {
     expect(screen.getByText('Personal')).toBeVisible()
     expect(screen.queryByText('Team management')).not.toBeInTheDocument()
     expect(document.querySelector('a[href="/hr/me"]')).not.toBeNull()
+  })
+
+  it('shows Dashboard with a home icon', () => {
+    renderSidebar([dashboard], 'operations-dashboard')
+
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeVisible()
+    expect(document.querySelector('.anticon-home')).not.toBeNull()
   })
 
   it('renders personal and team groups for a manager', () => {

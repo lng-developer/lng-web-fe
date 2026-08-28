@@ -14,6 +14,6 @@ export const vendorKeys = {
   costCenters: (productId: string, params: CostCenterListParams) =>
     [...vendorKeys.costCentersRoot(productId), params] as const,
   integration: (vendorId: string) => [...vendorKeys.all, vendorId, 'integration'] as const,
-  migrationReview: (params: { page?: number; limit?: number; q?: string }) =>
+  migrationReview: (params: { page?: number; limit?: number; q?: string; vendorId?: string }) =>
     [...vendorKeys.all, 'migration-review', params] as const,
 }

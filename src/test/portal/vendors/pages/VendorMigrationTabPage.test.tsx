@@ -19,6 +19,7 @@ vi.mock('antd', () => ({
   Empty: Object.assign(() => <div />, { PRESENTED_IMAGE_SIMPLE: 'simple' }),
   InputNumber: () => <input />,
   Pagination: () => <div />,
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   Select: ({
     options = [],
     onChange,
@@ -145,6 +146,34 @@ test('does not re-render the review table when only the Product Type Group chang
     target: { value: 'group-1' },
   })
   expect(tableRenderCount).toBe(1)
+})
+
+test('filters migration products by vendor before bulk selection', () => {
+  const onFiltersChange = vi.fn()
+  render(
+    <VendorMigrationTabPage
+      canWrite
+      rows={[]}
+      loading={false}
+      error={null}
+      productTypeGroups={[]}
+      pending={0}
+      orphaned={0}
+      assigning={false}
+      canCreateProductType={false}
+      creatingProductType={false}
+      onCreateProductType={vi.fn()}
+      onAssign={vi.fn()}
+      vendorOptions={[{ value: 'vendor-1', label: 'Beeful' }]}
+      onFiltersChange={onFiltersChange}
+    />,
+  )
+
+  fireEvent.change(screen.getByLabelText('Migration vendor filter'), {
+    target: { value: 'vendor-1' },
+  })
+
+  expect(onFiltersChange).toHaveBeenCalledWith({ vendorId: 'vendor-1', q: undefined })
 })
 
 test('shows the vendor product thumbnail in migration review', () => {

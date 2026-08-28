@@ -222,7 +222,7 @@ export async function updateVendorProduct(productId: string, input: VendorProduc
 }
 
 export async function listVendorMigrationReview(
-  params: { page?: number; limit?: number; q?: string } = {},
+  params: { page?: number; limit?: number; q?: string; vendorId?: string } = {},
 ) {
   return unwrap<VendorMigrationReview>(
     await apiClient.get('/api/vendors/migration/review', { params: toListParams(params) }),

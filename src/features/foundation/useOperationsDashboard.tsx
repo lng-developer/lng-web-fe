@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { getListingSummary, listListings } from '@/features/portal/catalog/api/catalogApi'
 import { getCustomerSummary } from '@/features/portal/customers/api/customerApi'
 import { getOrderSummary, listOrderWorkbench } from '@/features/portal/orders/api/orderApi'
+import { getOperationsOverview, listFinanceDailyProfit } from '@/features/portal/reports/api/reportApi'
 import { getPermissions } from '@/shared/auth/session'
 
 import { formatDashboardDate, numberOf } from './operationsDashboardFormatters'
@@ -18,7 +19,7 @@ function normalizeDataKey(key: string) {
   return key.replaceAll('_', ' ')
 }
 
-export function useOperationsDashboard() {
+export function useOperationsDashboard(dateFrom?: string, dateTo?: string) {
   const { t, i18n } = useTranslation()
   const handleOpenListingQueue = useCallback(() => console.log('Opening listing queue'), [])
   const permissionSet = useMemo(
@@ -28,15 +29,17 @@ export function useOperationsDashboard() {
   const canOrders = permissionSet.has('ORDERS:READ') || permissionSet.has('ORDERS:WRITE')
   const canCatalog = permissionSet.has('CATALOG:READ') || permissionSet.has('CATALOG:WRITE')
   const canCustomers = permissionSet.has('CUSTOMERS:READ')
+  const canFinance = permissionSet.has('FINANCE:READ') || permissionSet.has('FINANCE:WRITE')
+  const canReports = permissionSet.has('REPORTS:READ')
 
-  const orderParams = useMemo(() => ({ page: 1, limit: 8 }) as const, [])
+  const orderParams = useMemo(() => ({ page: 1, limit: 8, dateFrom, dateTo }), [dateFrom, dateTo])
   const orderSummary = useQuery({
-    queryKey: ['foundation', 'orders', 'summary'],
+    queryKey: ['foundation', 'orders', 'summary', dateFrom, dateTo],
     queryFn: () => getOrderSummary(orderParams),
     enabled: canOrders,
   })
   const recentOrders = useQuery({
-    queryKey: ['foundation', 'orders', 'recent'],
+    queryKey: ['foundation', 'orders', 'recent', dateFrom, dateTo],
     queryFn: () => listOrderWorkbench(orderParams),
     enabled: canOrders,
   })
@@ -51,10 +54,15 @@ export function useOperationsDashboard() {
     enabled: canCatalog,
   })
   const customerSummary = useQuery({
-    queryKey: ['foundation', 'customers', 'summary'],
-    queryFn: () => getCustomerSummary(),
+    queryKey: ['foundation', 'customers', 'summary', dateFrom, dateTo],
+    queryFn: () => getCustomerSummary({ dateFrom, dateTo }),
     enabled: canCustomers,
   })
+  const reportFilters = useMemo(() => ({ dateFrom, dateTo }), [dateFrom, dateTo])
+  const finance = useQuery({ queryKey: ['foundation', 'finance', reportFilters], queryFn: () => listFinanceDailyProfit(reportFilters), enabled: canFinance })
+  const operations = useQuery({ queryKey: ['foundation', 'reports', reportFilters], queryFn: () => getOperationsOverview(reportFilters), enabled: canReports })
+  const financeRevenue = (finance.data ?? []).reduce((sum, row) => sum + row.revenueAmount, 0)
+  const reportItems = Object.values(operations.data?.orderItemsByStatus ?? {}).reduce((sum, value) => sum + value, 0)
 
   const tabCounts = orderSummary.data?.tabCounts ?? {}
   const orderStatusEntries = Object.entries(tabCounts).filter(
@@ -114,6 +122,10 @@ export function useOperationsDashboard() {
       safeTargetPercent,
       targetPercent,
       newCustomerCount: numberOf(customerSummary.data?.newCount),
+      financeRevenue,
+      reportItems,
+      canFinance,
+      canReports,
       topListings: topListings.data?.items ?? [],
       recentOrders: recentOrders.data?.items ?? [],
     },

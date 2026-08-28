@@ -26,6 +26,9 @@ type Props = {
   canCreateProductType: boolean
   creatingProductType: boolean
   onCreateProductType: (input: ProductTypeGroupInput) => Promise<ProductTypeGroup>
+  filters?: { vendorId?: string; q?: string }
+  vendorOptions?: Array<{ value: string; label: string }>
+  onFiltersChange?: (filters: { vendorId?: string; q?: string }) => void
 }
 
 type ReviewTableProps = Pick<
@@ -140,6 +143,9 @@ export function VendorMigrationTabPage({
   canCreateProductType,
   creatingProductType,
   onCreateProductType,
+  filters,
+  vendorOptions = [],
+  onFiltersChange,
 }: Props) {
   const { t } = useTranslation()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -165,6 +171,10 @@ export function VendorMigrationTabPage({
     (url: string, name: string) => setPreviewImage({ url, name }),
     [],
   )
+  const updateFilters = (next: { vendorId?: string; q?: string }) => {
+    setSelectedIds([])
+    onFiltersChange?.(next)
+  }
   if (error)
     return <Alert type="error" showIcon message={t('portal.vendors.migration.loadFailed')} />
   return (
@@ -184,6 +194,25 @@ export function VendorMigrationTabPage({
         }
       />
       <Space wrap>
+        <Select
+          aria-label="Migration vendor filter"
+          allowClear
+          placeholder={t('portal.vendors.filters.vendor')}
+          value={filters?.vendorId}
+          options={vendorOptions}
+          showSearch
+          optionFilterProp="label"
+          style={{ minWidth: 200 }}
+          onChange={(vendorId) => updateFilters({ ...filters, vendorId: vendorId || undefined })}
+        />
+        <Input
+          aria-label="Migration product search"
+          allowClear
+          placeholder={t('portal.vendors.filters.search', { defaultValue: 'Search product or External ID' })}
+          value={filters?.q}
+          style={{ width: 260 }}
+          onChange={(event) => updateFilters({ ...filters, q: event.target.value.trim() || undefined })}
+        />
         <Select
           aria-label="Product Type Group for selected migration products"
           style={{ minWidth: 280 }}

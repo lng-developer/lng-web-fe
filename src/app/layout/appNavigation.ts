@@ -42,32 +42,48 @@ const hasExplicitHrAccess = (permissions: Set<string>) =>
   [...permissions].some((permission) => permission.startsWith('HR_')) ||
   organizationPermissions.some((permission) => permissions.has(permission))
 
+const canReadHrDashboard = (permissions: Set<string>) =>
+  [...permissions].some((permission) => permission.startsWith('HR_'))
+
 const canReadOperationsDashboard = (permissions: Set<string>) =>
   ['REPORTS:READ', 'FINANCE:READ', 'FINANCE:WRITE'].some((permission) =>
     permissions.has(permission),
   )
 
-const getDashboardGroup = (permissions: Set<string>): NavigationGroup | undefined =>
-  canReadOperationsDashboard(permissions)
+const getDashboardGroup = (
+  core: AppCoreKey,
+  permissions: Set<string>,
+): NavigationGroup | undefined => {
+  const item =
+    core === 'portal' && canReadOperationsDashboard(permissions)
+      ? { key: 'operations-dashboard', path: '/portal/dashboard' }
+      : core === 'hr' && canReadHrDashboard(permissions)
+        ? { key: 'hr-dashboard', path: '/hr/dashboard' }
+        : core === 'system' && ['AUTH:READ', 'AUDIT:READ'].some((permission) => permissions.has(permission))
+          ? { key: 'system-dashboard', path: '/system/dashboard' }
+          : null
+
+  return item
     ? {
         key: 'dashboard',
         labelKey: 'shell.navigation.dashboard',
         standalone: true,
         items: [
           {
-            key: 'operations-dashboard',
-            path: '/operations-dashboard',
+            ...item,
             labelKey: 'shell.navigation.dashboard',
           },
         ],
       }
     : undefined
+}
 
 const withDashboardGroup = (
   groups: NavigationGroup[],
+  core: AppCoreKey,
   permissions: Set<string>,
 ): NavigationGroup[] => {
-  const dashboardGroup = getDashboardGroup(permissions)
+  const dashboardGroup = getDashboardGroup(core, permissions)
   return dashboardGroup ? [dashboardGroup, ...groups] : groups
 }
 
@@ -162,6 +178,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           ].filter((item): item is NavigationItem => item !== null),
         },
       ].filter(({ items }) => items.length),
+      'portal',
       permissions,
     )
   }
@@ -222,6 +239,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           ].filter((item): item is NavigationItem => item !== null),
         },
       ],
+      'system',
       permissions,
     )
   }
@@ -258,6 +276,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
   }
   return withDashboardGroup(
     groups.filter(({ items }) => items.length),
+    'hr',
     permissions,
   )
 }
@@ -271,6 +290,7 @@ export function getAvailableCores(account: CurrentAccount) {
 export function getCoreForPath(pathname: string): AppCoreKey | undefined {
   if (pathname.startsWith('/operations-dashboard') || pathname.startsWith('/foundation'))
     return 'portal'
+  if (pathname.startsWith('/system/dashboard')) return 'system'
   if (
     pathname.startsWith('/portal/media') ||
     pathname.startsWith('/portal/customers') ||
@@ -299,6 +319,7 @@ export function getDefaultWorkspacePath(account: CurrentAccount) {
     return groups[0]?.items[0]?.path ?? '/operations-dashboard'
   }
   if (core === 'hr') {
+    if (groups[0]?.key === 'dashboard') return groups[0].items[0]?.path ?? '/operations-dashboard'
     const priority = ['operations', 'payroll', 'team', 'personal']
     return (
       priority

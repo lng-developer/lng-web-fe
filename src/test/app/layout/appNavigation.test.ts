@@ -63,7 +63,7 @@ describe('app navigation', () => {
   })
 
   it('shows the audit log only to audit readers', () => {
-    expect(getContextNavigation('system', account(['AUDIT:READ']))[0]?.items).toEqual([
+    expect(getContextNavigation('system', account(['AUDIT:READ'])).find(({ key }) => key === 'system')?.items).toEqual([
       { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' },
       { key: 'monitoring', path: '/auth/monitoring', labelKey: 'shell.navigation.monitoring' },
     ])
@@ -198,7 +198,7 @@ describe('app navigation', () => {
       items: [
         {
           key: 'operations-dashboard',
-          path: '/operations-dashboard',
+          path: '/portal/dashboard',
           labelKey: 'shell.navigation.dashboard',
         },
       ],
@@ -223,15 +223,17 @@ describe('app navigation', () => {
     ])
   })
 
-  it('keeps the operations dashboard visible across HR and System navigation', () => {
-    const currentAccount = account(['REPORTS:READ', 'AUTH:READ'])
-
-    expect(getContextNavigation('hr', currentAccount)[0]).toEqual(
-      expect.objectContaining({ key: 'dashboard', standalone: true }),
-    )
-    expect(getContextNavigation('system', currentAccount)[0]).toEqual(
-      expect.objectContaining({ key: 'dashboard', standalone: true }),
-    )
+  it('gives HR and System their own dashboard entry points', () => {
+    expect(getContextNavigation('hr', account(['HR_ATTENDANCE:WRITE']))[0]?.items).toContainEqual({
+      key: 'hr-dashboard',
+      path: '/hr/dashboard',
+      labelKey: 'shell.navigation.dashboard',
+    })
+    expect(getContextNavigation('system', account(['AUTH:READ']))[0]?.items).toContainEqual({
+      key: 'system-dashboard',
+      path: '/system/dashboard',
+      labelKey: 'shell.navigation.dashboard',
+    })
   })
 
   it('shows Catalog for global or scoped readers and writers', () => {
@@ -363,10 +365,10 @@ describe('app navigation', () => {
     expect(getContextNavigation('hr', account([])).map(({ key }) => key)).toEqual(['personal'])
     expect(
       getContextNavigation('hr', account(['HR_ATTENDANCE:WRITE'])).map(({ key }) => key),
-    ).toEqual(['personal'])
+    ).toEqual(['dashboard', 'personal'])
     expect(
       getContextNavigation('hr', account([], ['HR_ATTENDANCE:READ'])).map(({ key }) => key),
-    ).toEqual(['personal', 'team'])
+    ).toEqual(['dashboard', 'personal', 'team'])
   })
 
   it('groups organization under HR and chooses the first permitted route', () => {
@@ -400,15 +402,15 @@ describe('app navigation', () => {
 
   it('chooses the highest-priority HR workspace on first visit', () => {
     expect(getDefaultWorkspacePath(account(['HR_EMPLOYEES:READ', 'HR_ATTENDANCE:WRITE']))).toBe(
-      '/hr/operations',
+      '/hr/dashboard',
     )
     expect(getDefaultWorkspacePath(account(['HR_PAYROLL:READ', 'HR_ATTENDANCE:WRITE']))).toBe(
-      '/hr/payroll',
+      '/hr/dashboard',
     )
     expect(getDefaultWorkspacePath(account(['HR_ATTENDANCE:READ', 'HR_ATTENDANCE:WRITE']))).toBe(
-      '/hr/team',
+      '/hr/dashboard',
     )
-    expect(getDefaultWorkspacePath(account(['HR_ATTENDANCE:WRITE']))).toBe('/hr/me')
+    expect(getDefaultWorkspacePath(account(['HR_ATTENDANCE:WRITE']))).toBe('/hr/dashboard')
     expect(getDefaultWorkspacePath(account([]))).toBe('/hr/me')
     expect(getDefaultWorkspacePath(account(['AUTH:READ']))).toBe('/auth/accounts')
   })

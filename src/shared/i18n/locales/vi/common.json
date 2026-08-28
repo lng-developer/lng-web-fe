@@ -33,7 +33,7 @@
       "primary": "Điều hướng chính",
       "cores": "Khu vực ứng dụng",
       "foundation": "Nền tảng",
-      "operationsDashboard": "Bảng điều khiển vận hành",
+      "operationsDashboard": "Bảng điều khiển",
       "accounts": "Tài khoản",
       "accessControl": "Kiểm soát truy cập",
       "auditLog": "Nhật ký hệ thống",
@@ -3672,6 +3672,15 @@
     "cancel": "Hủy",
     "groupTitle": "Tên nhóm",
     "participants": "Người tham gia"
+  },
+  "systemDashboard": {
+    "title": "Bảng điều khiển hệ thống",
+    "description": "Sức khỏe hệ thống, quyền truy cập tài khoản và hoạt động kiểm toán gần đây",
+    "accounts": "Tài khoản",
+    "activeAccounts": "Tài khoản hoạt động",
+    "health": "Sức khỏe hệ thống",
+    "infrastructure": "Hạ tầng",
+    "recentAudit": "Hoạt động kiểm toán gần đây"
   },
   "errors": {
     "unexpected": "Da xay ra loi khong mong muon.",
