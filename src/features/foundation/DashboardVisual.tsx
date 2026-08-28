@@ -1,5 +1,5 @@
-import { Typography } from 'antd'
 import type { CSSProperties } from 'react'
+import { Typography } from 'antd'
 
 import { SectionCard } from '@/shared/ui'
 

@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+
 import { DashboardVisual } from '@/features/foundation/DashboardVisual'
 
 import { getSystemDashboard } from '../api/systemDashboardApi'

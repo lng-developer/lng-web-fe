@@ -1,8 +1,8 @@
 import { type CSSProperties } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { DatePicker, Tag, Typography } from 'antd'
-import { useState } from 'react'
+import { DatePicker, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { FeedbackAlert, SectionCard } from '@/shared/ui'
