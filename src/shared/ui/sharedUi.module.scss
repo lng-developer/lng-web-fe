@@ -515,11 +515,13 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
 }
 
 .dataTableFillViewport .dataTableBody {
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
 }

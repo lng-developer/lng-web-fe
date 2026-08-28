@@ -1,6 +1,12 @@
 .page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+  min-width: 0;
+}
+
+.page > * {
+  min-width: 0;
 }
 
 .header {
@@ -121,6 +127,39 @@
 
 .dataTable {
   margin-top: 12px;
+}
+
+.workspaceSection {
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+}
+
+.inlineEditorActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.inlineEditorTable {
+  margin-top: 0;
+}
+
+.inlineEditorTable :global(.ant-input-number) {
+  width: 100%;
+}
+
+.inlineTableCell {
+  display: flex;
+  min-width: 140px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inlineTableCell :global(.ant-input-number),
+.inlineTableCell :global(.ant-select) {
+  width: 100%;
 }
 
 .dataTable :global(.ant-table-thead > tr > th) {

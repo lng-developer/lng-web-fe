@@ -1,11 +1,35 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CarOutlined, DollarOutlined, SettingOutlined, TagOutlined } from '@ant-design/icons'
+import {
+  CarOutlined,
+  CloseOutlined,
+  DollarOutlined,
+  EditOutlined,
+  SaveOutlined,
+  SettingOutlined,
+  TagOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Drawer, Flex, Form, Input, InputNumber, Modal, Select, Switch, Tabs } from 'antd'
+import type { TableColumnsType } from 'antd'
+import {
+  Button,
+  Card,
+  Drawer,
+  Flex,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Space,
+  Switch,
+  Tabs,
+  Typography,
+} from 'antd'
 
+import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { FormActions, useFeedbackToast } from '@/shared/ui'
+import { FormActions, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createVendorCostCenter,
@@ -24,6 +48,9 @@ export interface VendorCostCenterEditorModalProps {
   readonly open: boolean
   readonly productId: string
   readonly vendorId: string
+  readonly mode?: 'drawer' | 'page' | 'inline'
+  readonly readOnly?: boolean
+  readonly onEdit?: () => void
   readonly onCancel: () => void
   readonly onSaved: (costCenter: VendorCostCenter) => void
 }
@@ -33,10 +60,13 @@ export function VendorCostCenterEditorModal({
   open,
   productId,
   vendorId,
+  mode = 'drawer',
+  readOnly = false,
+  onEdit,
   onCancel,
   onSaved,
 }: VendorCostCenterEditorModalProps) {
-  const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
+  const { t, i18n } = useTranslation(undefined, { keyPrefix: 'portal' })
   const [form] = Form.useForm<EditorValues>()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
@@ -70,7 +100,7 @@ export function VendorCostCenterEditorModal({
     onSuccess: (costCenter) => {
       void queryClient.invalidateQueries({ queryKey: vendorKeys.costCentersRoot(productId) })
       void queryClient.invalidateQueries({ queryKey: vendorKeys.productsRoot(vendorId) })
-      showFeedbackToast('success', t('actionFeedback.saved'))
+      showFeedbackToast('success', i18n.t('actionFeedback.saved'))
       onSaved(costCenter)
     },
     onError: (error) => {
@@ -84,14 +114,14 @@ export function VendorCostCenterEditorModal({
               'A record with this code already exists. Review the form and choose another code.',
           }),
         )
-      } else showFeedbackToast('error', t('actionFeedback.failed'))
+      } else showFeedbackToast('error', i18n.t('actionFeedback.failed'))
     },
   })
 
   const close = () => {
     if (!form.isFieldsTouched()) return onCancel()
     Modal.confirm({
-      title: t('actionFeedback.unsaved'),
+      title: i18n.t('actionFeedback.unsaved'),
       content: t('vendors.discardChanges'),
       okText: t('vendors.discard', { defaultValue: 'Discard' }),
       cancelText: t('vendors.cancel'),
@@ -425,6 +455,281 @@ export function VendorCostCenterEditorModal({
     },
   ]
 
+  const formContent = (
+    <Form
+      disabled={readOnly}
+      id="vendor-cost-center-form"
+      form={form}
+      layout="vertical"
+      onFinish={(values) => save.mutate(values)}
+    >
+      <Tabs items={tabItems} defaultActiveKey="identity" />
+    </Form>
+  )
+
+  const inlineTableColumns: TableColumnsType<VendorCostCenter> = [
+    {
+      title: t('vendors.sku'),
+      width: 170,
+      render: () => (
+        <div className={styles.inlineTableCell}>
+          <Form.Item name="sku" noStyle>
+            <Input placeholder={t('vendors.sku')} />
+          </Form.Item>
+        </div>
+      ),
+    },
+    {
+      title: t('vendors.vendorColor'),
+      width: 180,
+      render: () => (
+        <div className={styles.inlineTableCell}>
+          <Form.Item name="vendorColor" noStyle>
+            <Input placeholder={t('vendors.vendorColor')} />
+          </Form.Item>
+        </div>
+      ),
+    },
+    {
+      title: t('vendors.printMethod'),
+      width: 170,
+      render: () => (
+        <div className={styles.inlineTableCell}>
+          <Form.Item name="printMethod" noStyle>
+            <Select
+              allowClear
+              options={printMethodSelectOptions}
+              placeholder={t('vendors.printMethod')}
+            />
+          </Form.Item>
+        </div>
+      ),
+    },
+    {
+      title: t('vendors.pricing'),
+      width: 190,
+      render: () => (
+        <div className={styles.inlineTableCell}>
+          <Form.Item name="baseCostAmount" noStyle rules={[numberRule]}>
+            <InputNumber<number>
+              addonAfter="USD"
+              formatter={(value) => (value == null ? '' : String(Number(value) / 100))}
+              min={0}
+              parser={(value) => Number(value || 0) * 100}
+              precision={2}
+              placeholder={t('vendors.baseCostAmount')}
+            />
+          </Form.Item>
+        </div>
+      ),
+    },
+    {
+      title: 'Domestic shipping',
+      align: 'center',
+      children: [
+        {
+          title: 'Economy',
+          align: 'center',
+          width: 130,
+          render: () => (
+            <Form.Item name={['domesticShipping', 'economyAmount']} noStyle rules={[numberRule]}>
+              <InputNumber min={0} precision={0} />
+            </Form.Item>
+          ),
+        },
+        {
+          title: 'Additional',
+          align: 'center',
+          width: 130,
+          render: () => (
+            <Form.Item name={['domesticShipping', 'additionalAmount']} noStyle rules={[numberRule]}>
+              <InputNumber min={0} precision={0} />
+            </Form.Item>
+          ),
+        },
+      ],
+    },
+    {
+      title: 'International shipping',
+      align: 'center',
+      children: [
+        {
+          title: 'Economy',
+          align: 'center',
+          width: 130,
+          render: () => (
+            <Form.Item
+              name={['internationalShipping', 'economyAmount']}
+              noStyle
+              rules={[numberRule]}
+            >
+              <InputNumber min={0} precision={0} />
+            </Form.Item>
+          ),
+        },
+        {
+          title: 'Additional',
+          align: 'center',
+          width: 130,
+          render: () => (
+            <Form.Item
+              name={['internationalShipping', 'additionalAmount']}
+              noStyle
+              rules={[numberRule]}
+            >
+              <InputNumber min={0} precision={0} />
+            </Form.Item>
+          ),
+        },
+      ],
+    },
+    {
+      title: 'Priority shipping',
+      align: 'center',
+      children: [
+        {
+          title: 'Economy',
+          align: 'center',
+          width: 130,
+          render: () => (
+            <Form.Item name={['priorityShipping', 'economyAmount']} noStyle rules={[numberRule]}>
+              <InputNumber min={0} precision={0} />
+            </Form.Item>
+          ),
+        },
+        {
+          title: 'Additional',
+          align: 'center',
+          width: 130,
+          render: () => (
+            <Form.Item name={['priorityShipping', 'additionalAmount']} noStyle rules={[numberRule]}>
+              <InputNumber min={0} precision={0} />
+            </Form.Item>
+          ),
+        },
+      ],
+    },
+    {
+      title: t('vendors.statusLabel'),
+      align: 'center',
+      width: 100,
+      render: (_, row) =>
+        readOnly ? (
+          <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
+            {t(`vendors.status.${row.status}`)}
+          </StatusTag>
+        ) : (
+          <Form.Item
+            name="status"
+            noStyle
+            valuePropName="checked"
+            getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+            getValueProps={(value) => ({ checked: value === 'ACTIVE' })}
+          >
+            <Switch
+              checkedChildren={t('vendors.status.ACTIVE')}
+              unCheckedChildren={t('vendors.status.INACTIVE')}
+            />
+          </Form.Item>
+        ),
+    },
+    {
+      title: t('vendors.costCenterActions'),
+      align: 'center',
+      width: 100,
+      render: () =>
+        readOnly ? (
+          <Button
+            aria-label={t('vendors.edit')}
+            disabled={!onEdit}
+            icon={<EditOutlined />}
+            size="small"
+            title={t('vendors.edit')}
+            type="text"
+            onClick={onEdit}
+          />
+        ) : (
+          <Space size={2}>
+            <Button
+              aria-label={t('vendors.cancel')}
+              icon={<CloseOutlined />}
+              size="small"
+              title={t('vendors.cancel')}
+              type="text"
+              onClick={close}
+            />
+            <Button
+              aria-label={t('vendors.save')}
+              icon={<SaveOutlined />}
+              loading={save.isPending}
+              size="small"
+              title={t('vendors.save')}
+              type="text"
+              onClick={() => form.submit()}
+            />
+          </Space>
+        ),
+    },
+  ]
+
+  const inlineTableFormContent = (
+    <Form
+      disabled={readOnly}
+      id="vendor-cost-center-form"
+      form={form}
+      layout="vertical"
+      onFinish={(values) => save.mutate(values)}
+    >
+      <CoreDataTable
+        className={styles.inlineEditorTable}
+        columns={inlineTableColumns}
+        dataSource={item ? [item] : [{ id: 'new-cost-center' } as VendorCostCenter]}
+        pagination={false}
+        rowKey="id"
+        scroll={{ x: 1770 }}
+      />
+    </Form>
+  )
+
+  const formActions = (
+    <FormActions
+      cancelLabel={readOnly ? t('vendors.backToCostCenters') : t('vendors.cancel')}
+      dirty={readOnly ? Boolean(onEdit) : true}
+      form="vendor-cost-center-form"
+      onSubmit={readOnly ? onEdit : () => form.submit()}
+      onCancel={close}
+      saving={readOnly ? false : save.isPending}
+      submitLabel={readOnly ? t('vendors.edit') : t('vendors.save')}
+    />
+  )
+
+  if (mode === 'page') {
+    return (
+      <section className={styles.page}>
+        <header className={styles.header}>
+          <div className={styles.headerCopy}>
+            <Typography.Text className={styles.kicker}>{t('vendors.costCenters')}</Typography.Text>
+            <Typography.Title level={3}>
+              {t(
+                readOnly && item
+                  ? 'vendors.costCenterDetails'
+                  : item
+                    ? 'vendors.editCostCenterTitle'
+                    : 'vendors.createCostCenterTitle',
+              )}
+            </Typography.Title>
+          </div>
+          {formActions}
+        </header>
+        <div className={styles.workspaceSection}>{formContent}</div>
+      </section>
+    )
+  }
+
+  if (mode === 'inline') {
+    return <div className={styles.workspaceSection}>{inlineTableFormContent}</div>
+  }
+
   return (
     <Drawer
       className={styles.editorDrawer}
@@ -433,26 +738,9 @@ export function VendorCostCenterEditorModal({
       title={t(item ? 'vendors.editCostCenterTitle' : 'vendors.createCostCenterTitle')}
       width={760}
       onClose={close}
-      footer={
-        <FormActions
-          cancelLabel={t('vendors.cancel')}
-          dirty
-          form="vendor-cost-center-form"
-          onSubmit={() => form.submit()}
-          onCancel={close}
-          saving={save.isPending}
-          submitLabel={t('vendors.save')}
-        />
-      }
+      footer={formActions}
     >
-      <Form
-        id="vendor-cost-center-form"
-        form={form}
-        layout="vertical"
-        onFinish={(values) => save.mutate(values)}
-      >
-        <Tabs items={tabItems} defaultActiveKey="identity" />
-      </Form>
+      {formContent}
     </Drawer>
   )
 }

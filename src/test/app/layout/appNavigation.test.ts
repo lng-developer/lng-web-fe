@@ -193,13 +193,13 @@ describe('app navigation', () => {
     ])
     expect(groups.find(({ key }) => key === 'dashboard')).toEqual({
       key: 'dashboard',
-      labelKey: 'shell.navigation.operationsDashboard',
+      labelKey: 'shell.navigation.dashboard',
       standalone: true,
       items: [
         {
           key: 'operations-dashboard',
           path: '/operations-dashboard',
-          labelKey: 'shell.navigation.operationsDashboard',
+          labelKey: 'shell.navigation.dashboard',
         },
       ],
     })

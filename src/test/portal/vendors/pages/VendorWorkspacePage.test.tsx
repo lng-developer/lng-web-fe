@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import { VendorWorkspacePage } from '@/features/portal/vendors/pages/VendorWorkspacePage'
 import vendorWorkspaceSource from '@/features/portal/vendors/pages/VendorWorkspacePage.tsx?raw'
+import productsTabSource from '@/features/portal/vendors/pages/VendorWorkspaceProductsTabPage.tsx?raw'
 import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/portal/vendors/pages/VendorTree', () => ({
@@ -26,17 +27,17 @@ describe('VendorWorkspacePage', () => {
     expect(screen.queryByText('vendors.title')).not.toBeInTheDocument()
   })
 
-  it('does not repeat the portal prefix in translation keys', () => {
-    expect(vendorWorkspaceSource).not.toContain("t('portal.")
+  it('uses the shared permission helper so Admin keeps Vendor write actions', () => {
+    expect(vendorWorkspaceSource).toContain(
+      "import { hasAnyPermission } from '@/shared/auth/permissions'",
+    )
+    expect(vendorWorkspaceSource).toContain(
+      "hasAnyPermission(['VENDORS:WRITE'], { globalOnly: true })",
+    )
   })
 
-  it('passes the active state to each shared tab label', () => {
-    expect(vendorWorkspaceSource).toContain(
-      "<UiTabLabel count={vendors.data?.pagination.total} active={tab === 'vendors'}>",
-    )
-    expect(vendorWorkspaceSource).toContain(
-      "<UiTabLabel count={products.data?.pagination.total} active={tab === 'products'}>",
-    )
-    expect(vendorWorkspaceSource).toContain("<UiTabLabel active={tab === 'migration'}>")
+  it('opens cost centers on their dedicated product route instead of a workspace drawer', () => {
+    expect(vendorWorkspaceSource).not.toContain('VendorWorkspaceCostCenterDrawer')
+    expect(productsTabSource).toContain('/portal/vendors/products/${row.id}/cost-centers')
   })
 })

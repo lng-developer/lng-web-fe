@@ -16,6 +16,9 @@ vi.mock('antd', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
+  Empty: Object.assign(() => <div />, { PRESENTED_IMAGE_SIMPLE: 'simple' }),
+  InputNumber: () => <input />,
+  Pagination: () => <div />,
   Select: ({
     options = [],
     onChange,
@@ -90,6 +93,9 @@ test('does not re-render the review table when only the Product Type Group chang
       ]}
       loading={false}
       error={null}
+      currentPage={1}
+      currentPageSize={20}
+      total={1}
       productTypeGroups={[{ id: 'group-1', code: 'TS', name: 'T-Shirt', status: 'ACTIVE' }]}
       pending={1}
       orphaned={0}
@@ -97,6 +103,7 @@ test('does not re-render the review table when only the Product Type Group chang
       canCreateProductType
       creatingProductType={false}
       onCreateProductType={vi.fn()}
+      onPageChange={vi.fn()}
       onAssign={vi.fn()}
     />,
   )

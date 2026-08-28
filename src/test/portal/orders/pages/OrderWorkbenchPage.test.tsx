@@ -141,4 +141,80 @@ describe('OrderWorkbenchPage', () => {
     const orderId = await screen.findByRole('button', { name: '113-2183249-0763446' })
     expect(orderId.closest(`.${styles.orderIdChip}`)).not.toBeNull()
   })
+
+  it('uses the Orders tab rail so status tabs stay on one line', async () => {
+    renderPage()
+
+    expect((await screen.findByRole('tablist')).closest(`.${styles.orderTabs}`)).toBeInTheDocument()
+  })
+
+  it('shows an open case as an icon without exposing its title in the table', async () => {
+    vi.mocked(listOrderWorkbench).mockResolvedValue({
+      items: [
+        {
+          order: {
+            id: 'order-with-case',
+            externalOrderId: 'ORDER-WITH-CASE',
+            createdAt: null,
+            orderedAt: null,
+            status: 'IMPORTED',
+            buyer: { name: 'Customer', emailMasked: 'customer@example.test' },
+            shop: null,
+            shippingService: {},
+            shippingAddress: {
+              name: 'Customer',
+              addressLine1: '123 Main St',
+              city: 'Austin',
+              stateOrProvinceCode: 'TX',
+              postalCode: '78701',
+              countryCode: 'US',
+            },
+            addressValidationStatus: 'NOT_CHECKED',
+            pricing: { customerPaidAmount: 0, baseCostAmount: null, currency: 'USD' },
+            handlingLabel: null,
+            caseStatus: 'OPEN',
+            caseTitle: 'Address validation failed',
+            assignedStaffIds: [],
+          },
+          items: [],
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByLabelText('Manage case')).toBeVisible()
+    expect(screen.queryByText('Address validation failed')).not.toBeInTheDocument()
+    expect(screen.getByTitle('Copy order ID').closest(`.${styles.orderIdChip}`)).toBeInTheDocument()
+    expect(
+      document.querySelectorAll('.ant-table-tbody > tr:not(.ant-table-expanded-row) > td')[6],
+    ).not.toHaveStyle({ textAlign: 'right' })
+  })
+
+  it('uses a compact Case column and reallocates its width to the earlier columns', async () => {
+    renderPage()
+
+    await screen.findByRole('columnheader', { name: 'Case' })
+
+    const columns = document.querySelectorAll('.ant-table colgroup col')
+
+    expect(columns[0]).toHaveStyle({ width: '14%' })
+    expect(columns[1]).toHaveStyle({ width: '12%' })
+    expect(columns[2]).toHaveStyle({ width: '12%' })
+    expect(columns[3]).toHaveStyle({ width: '14%' })
+    expect(columns[4]).toHaveStyle({ width: '12%' })
+    expect(columns[5]).toHaveStyle({ width: '12%' })
+    expect(columns[6]).toHaveStyle({ width: '12%' })
+    expect(columns[7]).toHaveStyle({ width: '5%' })
+  })
+
+  it('allows the order table to scroll horizontally when space is constrained', async () => {
+    renderPage()
+
+    await screen.findByRole('columnheader', { name: 'Order ID' })
+
+    expect(document.querySelector('.ant-table-body')).toHaveStyle({ overflowX: 'auto' })
+    expect(document.querySelector('.ant-table-body table')).toHaveStyle({ width: '1320px' })
+  })
 })

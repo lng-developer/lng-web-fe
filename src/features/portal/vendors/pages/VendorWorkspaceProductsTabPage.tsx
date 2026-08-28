@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { AppstoreOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Typography } from 'antd'
@@ -8,6 +9,7 @@ import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { RecordStatus, VendorProduct } from '../api/vendorApi'
+import { mockVendorProducts } from './vendorProductTabMocks'
 import styles from './VendorWorkspacePage.module.scss'
 
 interface SelectOption {
@@ -22,6 +24,7 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly vendorFilter: string | undefined
   readonly productTypeGroupFilter: string | undefined
   readonly productsPage: number
+  readonly productsPageSize: number
   readonly products: VendorProduct[] | undefined
   readonly productsLoading: boolean
   readonly productsTotal: number | undefined
@@ -32,11 +35,10 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly onVendorFilterChange: (value: string | undefined) => void
   readonly onProductTypeGroupFilterChange: (value: string | undefined) => void
   readonly onProductStatusChange: (value: RecordStatus | undefined) => void
-  readonly onProductsPageChange: (page: number) => void
+  readonly onProductsPageChange: (page: number, pageSize: number) => void
   readonly onAddProduct: (vendorId: string) => void
   readonly onOpenProductImport: (vendorId: string | undefined) => void
   readonly onEditProduct: (product: VendorProduct) => void
-  readonly onOpenCostCenters: (product: VendorProduct) => void
 }
 
 export function VendorWorkspaceProductsTabPage({
@@ -46,6 +48,7 @@ export function VendorWorkspaceProductsTabPage({
   vendorFilter,
   productTypeGroupFilter,
   productsPage,
+  productsPageSize,
   products,
   productsLoading,
   productsTotal,
@@ -60,33 +63,70 @@ export function VendorWorkspaceProductsTabPage({
   onAddProduct,
   onOpenProductImport,
   onEditProduct,
-  onOpenCostCenters,
 }: VendorWorkspaceProductsTabPageProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const useProductTabMocks = import.meta.env.VITE_USE_VENDOR_PRODUCTS_TAB_MOCKS === 'true'
+  const displayedProducts = useMemo(() => {
+    if (!useProductTabMocks) return products
+
+    const query = searchProducts.trim().toLowerCase()
+    const matching = mockVendorProducts.filter((product) => {
+      const matchesQuery =
+        !query || [product.code, product.name].some((value) => value.toLowerCase().includes(query))
+      const matchesStatus = !productStatus || product.status === productStatus
+      return matchesQuery && matchesStatus
+    })
+    const offset = (productsPage - 1) * productsPageSize
+    return matching.slice(offset, offset + productsPageSize)
+  }, [productStatus, products, productsPage, productsPageSize, searchProducts, useProductTabMocks])
+  const displayedTotal = useMemo(() => {
+    if (!useProductTabMocks) return productsTotal
+
+    const query = searchProducts.trim().toLowerCase()
+    return mockVendorProducts.filter(
+      (product) =>
+        (!query ||
+          [product.code, product.name].some((value) => value.toLowerCase().includes(query))) &&
+        (!productStatus || product.status === productStatus),
+    ).length
+  }, [productStatus, productsTotal, searchProducts, useProductTabMocks])
 
   const productColumns = useMemo<TableColumnsType<VendorProduct>>(
     () => [
       {
         title: t('portal.vendors.code'),
         dataIndex: 'code',
-        width: 170,
+        width: 220,
         ellipsis: true,
+        onCell: () => ({ style: { maxWidth: 240 } }),
         render: (value) => <Typography.Text code>{value}</Typography.Text>,
       },
       {
         title: t('portal.vendors.name'),
         dataIndex: 'name',
-        width: 420,
-        render: (value) => (
-          <Typography.Text className={styles.productName} strong>
-            {value}
-          </Typography.Text>
-        ),
+        width: 340,
+        ellipsis: true,
+        onCell: () => ({ style: { maxWidth: 380 } }),
+        render: (value) => <Typography.Text strong>{value}</Typography.Text>,
+      },
+      {
+        title: t('portal.vendors.vendorCode'),
+        width: 110,
+        ellipsis: true,
+        onCell: () => ({ style: { maxWidth: 130 } }),
+        render: (_, row) =>
+          row.vendor ? (
+            row.vendor.code
+          ) : (
+            <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
+          ),
       },
       {
         title: t('portal.vendors.vendor', { defaultValue: 'Vendor' }),
-        width: 210,
+        width: 160,
         ellipsis: true,
+        onCell: () => ({ style: { maxWidth: 180 } }),
         render: (_, row) =>
           row.vendor ? (
             <Space className={styles.vendorCell} direction="vertical" size={0}>
@@ -112,7 +152,6 @@ export function VendorWorkspaceProductsTabPage({
       },
       {
         title: t('portal.vendors.productsTabActions'),
-        fixed: 'right',
         width: 96,
         render: (_, row) => (
           <Space size={4}>
@@ -132,7 +171,7 @@ export function VendorWorkspaceProductsTabPage({
                   icon={<AppstoreOutlined />}
                   aria-label={t('portal.vendors.manageCostCenters')}
                   title={t('portal.vendors.manageCostCenters')}
-                  onClick={() => onOpenCostCenters(row)}
+                  onClick={() => navigate(`/portal/vendors/products/${row.id}/cost-centers`)}
                 />
               </>
             ) : null}
@@ -140,7 +179,7 @@ export function VendorWorkspaceProductsTabPage({
         ),
       },
     ],
-    [canWrite, onEditProduct, onOpenCostCenters, t],
+    [canWrite, navigate, onEditProduct, t],
   )
 
   const statusOptions = [
@@ -207,8 +246,8 @@ export function VendorWorkspaceProductsTabPage({
         rowKey="id"
         columns={productColumns}
         className={styles.dataTable}
-        scroll={{ x: 820 }}
-        dataSource={products}
+        scroll={{ x: 1200 }}
+        dataSource={displayedProducts}
         loading={productsLoading}
         error={
           productsError ? (
@@ -221,10 +260,9 @@ export function VendorWorkspaceProductsTabPage({
         }
         pagination={{
           current: productsPage,
-          pageSize: 20,
-          total: productsTotal,
+          pageSize: productsPageSize,
+          total: displayedTotal,
           onChange: onProductsPageChange,
-          showSizeChanger: false,
         }}
       />
     </>

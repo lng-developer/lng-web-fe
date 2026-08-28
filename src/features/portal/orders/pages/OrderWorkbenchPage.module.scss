@@ -1,8 +1,10 @@
 .page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto auto minmax(0, 1fr);
   gap: 12px;
   height: 100%;
+  container-type: inline-size;
   min-width: 0;
   min-height: 0;
 }
@@ -22,7 +24,6 @@
 
 .table :global(.ant-table table) {
   table-layout: fixed !important;
-  width: 100% !important;
 }
 
 .table {
@@ -50,6 +51,20 @@
 .tabs {
   flex: 1;
   min-width: 0;
+}
+.orderTabs :global(.ant-tabs-nav) {
+  overflow: hidden;
+}
+.orderTabs :global(.ant-tabs-nav-wrap) {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.orderTabs :global(.ant-tabs-nav-list) {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.orderTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+  margin-left: 0;
 }
 
 .tabsRow > button {
@@ -92,9 +107,16 @@
   width: 100%;
 }
 
-@media (max-width: 960px) {
+@container (max-width: 1200px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 720px) {
   .filters {
     grid-template-columns: 1fr;
+    gap: 10px;
     align-items: stretch;
   }
 
@@ -104,36 +126,31 @@
   }
 }
 
-@media (max-width: 720px) {
-  .filters {
-    gap: 10px;
-  }
-}
 .validIcon {
   color: var(--ant-color-success);
 }
 .activeCaseIcon {
   color: var(--ant-color-warning);
 }
+.orderIdChip {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 999px;
+  background: var(--ant-color-fill-quaternary);
+  white-space: nowrap;
+}
+.orderIdChip :global(.ant-typography) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .caseButton {
-  max-width: 100%;
-  padding-inline: 0;
-  justify-content: flex-start;
+  padding-inline: 4px;
 }
-.caseButton :global(span:not(.ant-btn-icon)) {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.caseText {
-  max-width: 100%;
-}
-.caseText :global(.ant-space-item:last-child) {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.caseIndicator {
+  display: inline-flex;
+  align-items: center;
 }
 .table :global(.ant-table-expanded-row > .ant-table-cell) {
   padding: 0 0 18px;
@@ -370,7 +387,7 @@
   color: var(--ant-color-warning-text, var(--ant-color-warning));
   background: color-mix(in srgb, var(--ant-color-warning-bg) 68%, var(--ant-color-fill-quaternary));
 }
-@media (max-width: 1500px) {
+@container (max-width: 1500px) {
   .itemPanel {
     grid-template-columns: 140px minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr) 48px;
   }
@@ -379,7 +396,7 @@
   }
 }
 
-@media (max-width: 1180px) {
+@container (max-width: 1180px) {
   .itemPanel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -390,15 +407,7 @@
   }
 }
 
-@media (max-width: 720px) {
-  .tabsRow {
-    flex-wrap: wrap;
-  }
-
-  .tabs {
-    flex-basis: 100%;
-  }
-
+@container (max-width: 720px) {
   .itemPanel,
   .addressEditor,
   .customerEditor,

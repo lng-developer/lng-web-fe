@@ -98,7 +98,9 @@ export function VendorWorkspaceCostCenterDrawer({
   return (
     <Drawer
       title={
-        product ? t('vendors.productCostCenters', { name: product.name }) : t('vendors.costCenters')
+        product
+          ? t('portal.vendors.productCostCenters', { name: product.name })
+          : t('portal.vendors.costCenters')
       }
       destroyOnClose
       width="min(1440px, calc(100vw - 32px))"
@@ -109,7 +111,7 @@ export function VendorWorkspaceCostCenterDrawer({
       {product ? (
         <div className={styles.costCenterDrawer}>
           <FilterBar
-            label={t('vendors.filters.label')}
+            label={t('portal.vendors.filters.label')}
             contentClassName={styles.filters}
             actions={
               canWrite ? (
@@ -119,10 +121,10 @@ export function VendorWorkspaceCostCenterDrawer({
                     icon={<PlusOutlined />}
                     onClick={() => onAddCostCenter(product)}
                   >
-                    {t('vendors.addCostCenter')}
+                    {t('portal.vendors.addCostCenter')}
                   </Button>
                   <Button icon={<UploadOutlined />} onClick={() => onOpenCostCenterImport(product)}>
-                    {t('vendors.importCostCenters')}
+                    {t('portal.vendors.importCostCenters')}
                   </Button>
                 </Space>
               ) : null

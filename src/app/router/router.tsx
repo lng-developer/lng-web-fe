@@ -204,6 +204,62 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/vendors/products/:productId/cost-centers',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/vendors/pages/VendorProductCostCentersPage'),
+          ]).then(([{ PortalPageBoundary }, { VendorProductCostCentersPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['VENDORS:READ']} globalOnly>
+                <VendorProductCostCentersPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/vendors/products/:productId/cost-centers/new',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/vendors/pages/VendorCostCenterEditorPage'),
+          ]).then(([{ PortalPageBoundary }, { VendorCostCenterEditorPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['VENDORS:WRITE']} globalOnly>
+                <VendorCostCenterEditorPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/vendors/cost-centers/:costCenterId/edit',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/vendors/pages/VendorCostCenterEditorPage'),
+          ]).then(([{ PortalPageBoundary }, { VendorCostCenterEditorPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['VENDORS:WRITE']} globalOnly>
+                <VendorCostCenterEditorPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/vendors/cost-centers/:costCenterId',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/vendors/pages/VendorCostCenterEditorPage'),
+          ]).then(([{ PortalPageBoundary }, { VendorCostCenterEditorPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['VENDORS:READ']} globalOnly>
+                <VendorCostCenterEditorPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/orders',
         lazy: () =>
           Promise.all([
