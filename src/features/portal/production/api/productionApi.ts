@@ -41,7 +41,11 @@ export type ProductionScaleContext = {
 }
 export type ProductionCustomization = {
   customerInputs?: Record<string, unknown> | null
-  imageAssets?: Array<{ assetDownloadUrl?: string | null; filename?: string | null }> | null
+  imageAssets?: Array<{
+    assetId?: string | null
+    assetDownloadUrl?: string | null
+    filename?: string | null
+  }> | null
 }
 export type ProductionTask = {
   id: string

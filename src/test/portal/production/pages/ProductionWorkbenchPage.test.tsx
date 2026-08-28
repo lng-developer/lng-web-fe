@@ -138,6 +138,38 @@ describe('ProductionWorkbenchPage', () => {
     expect(await screen.findAllByText('Task context')).toHaveLength(2)
   })
 
+  it('offers one download action for every customer image on the task', async () => {
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [
+        {
+          ...blockedTask,
+          customization: {
+            imageAssets: [
+              {
+                assetDownloadUrl: '/api/media/assets/customer-front/download',
+                filename: 'front.jpg',
+              },
+              {
+                assetDownloadUrl: '/api/media/assets/customer-back/download',
+                filename: 'back.jpg',
+              },
+            ],
+          },
+          productImageUrl: 'https://example.com/listing.jpg',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 20,
+    })
+    renderPage()
+
+    expect(await screen.findAllByText('Customer image')).toHaveLength(1)
+    const downloadButton = screen.getByRole('button', { name: 'Download customer images (2)' })
+    expect(downloadButton).toBeVisible()
+    expect(downloadButton.className).toContain('customerImageDownload')
+  })
+
   it('restores the selected queue tab from the URL after reload', async () => {
     const firstLoad = renderPage()
 

@@ -4,7 +4,7 @@ import { DownloadOutlined, LinkOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { Button, Input, Typography, Upload } from 'antd'
 
-import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
+import { AuthenticatedMediaImage, downloadMediaAsset, downloadMediaAssets } from '@/shared/media'
 import { StatusTag, useFeedbackToast, ZoomableImage } from '@/shared/ui'
 
 import {
@@ -172,9 +172,20 @@ export function ProductionWorkbenchExpandedRow({
     (check) => check.sourceType === 'CUSTOMER_IMAGE' && check.inputAssetDownloadUrl,
   )
   const sourceArtwork = artworkCheck?.inputAssetDownloadUrl
-  const customerImage = sourceArtwork || task.customization?.imageAssets?.[0]?.assetDownloadUrl
-  const customerImageName =
-    artworkCheck?.inputImageName || task.customization?.imageAssets?.[0]?.filename
+  const customerImages = [
+    ...(sourceArtwork
+      ? [{ downloadUrl: sourceArtwork, filename: artworkCheck?.inputImageName }]
+      : []),
+    ...(task.customization?.imageAssets ?? []).map((asset) => ({
+      downloadUrl: asset.assetDownloadUrl ?? '',
+      filename: asset.filename,
+    })),
+  ].filter(
+    (asset, index, all) =>
+      asset.downloadUrl &&
+      all.findIndex((candidate) => candidate.downloadUrl === asset.downloadUrl) === index,
+  )
+  const customerImage = customerImages[0]?.downloadUrl
   const listingArtwork = task.productImageUrl
   const listingPreview = task.listing?.previewAssetDownloadUrl
   const spUrl = productUrl(task)
@@ -290,9 +301,18 @@ export function ProductionWorkbenchExpandedRow({
           </div>
         </div>
         <div className={styles.artworkPreview}>
+          <Typography.Text type="secondary">
+            {customerImage
+              ? t('portal.production.downloadCustomerImage', 'Customer image')
+              : t('portal.production.originalArtwork')}
+          </Typography.Text>
           {customerImage || listingPreview || listingArtwork ? (
             <ZoomableImage
-              alt={t('portal.production.originalArtwork')}
+              alt={
+                customerImage
+                  ? t('portal.production.downloadCustomerImage', 'Customer image')
+                  : t('portal.production.originalArtwork')
+              }
               downloadUrl={customerImage || listingPreview}
               src={listingArtwork}
               loading="lazy"
@@ -312,12 +332,19 @@ export function ProductionWorkbenchExpandedRow({
           ) : null}
           {customerImage ? (
             <Button
+              className={styles.customerImageDownload}
               icon={<DownloadOutlined />}
               onClick={() =>
-                void downloadMediaAsset(customerImage, customerImageName ?? 'customer-image')
+                void downloadMediaAssets(
+                  customerImages,
+                  `${task.orderItem?.externalOrderId || task.id}-customer-images.zip`,
+                )
               }
             >
-              {t('portal.production.downloadCustomerImage', 'Customer image')}
+              {t('portal.production.downloadCustomerImages', {
+                defaultValue: 'Download customer images ({{count}})',
+                count: customerImages.length,
+              })}
             </Button>
           ) : null}
           {psdTemplate?.assetDownloadUrl ? (

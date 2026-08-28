@@ -2876,7 +2876,8 @@
         "REJECTED": "Rejected"
       },
       "openProduct": "Open SP",
-      "downloadCustomerImage": "Customer image"
+      "downloadCustomerImage": "Customer image",
+      "downloadCustomerImages": "Download customer images ({{count}})"
     },
     "vendorSubmissions": {
       "title": "Vendor submissions",

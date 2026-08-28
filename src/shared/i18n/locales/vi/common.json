@@ -2876,7 +2876,8 @@
       },
       "submitScaleQc": "G?i sang QC",
       "openProduct": "Mở SP",
-      "downloadCustomerImage": "Ảnh khách hàng"
+      "downloadCustomerImage": "Ảnh khách hàng",
+      "downloadCustomerImages": "Tải {{count}} ảnh khách hàng"
     },
     "vendorSubmissions": {
       "title": "Gửi đơn nhà cung cấp",
