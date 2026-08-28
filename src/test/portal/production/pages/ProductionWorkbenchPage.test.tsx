@@ -165,7 +165,7 @@ describe('ProductionWorkbenchPage', () => {
     renderPage()
 
     expect(await screen.findAllByText('Customer image')).toHaveLength(1)
-    const downloadButton = screen.getByRole('button', { name: 'Download customer images (2)' })
+    const downloadButton = screen.getByRole('button', { name: /Download customer images \(2\)$/ })
     expect(downloadButton).toBeVisible()
     expect(downloadButton.className).toContain('customerImageDownload')
   })
