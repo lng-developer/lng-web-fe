@@ -21,7 +21,7 @@ describe('WorkspaceIndexRedirect', () => {
         }),
         children: [
           { index: true, element: <WorkspaceIndexRedirect /> },
-          { path: 'hr/me', element: <h1>Personal workspace</h1> },
+          { path: 'hr/dashboard', element: <h1>HR dashboard</h1> },
         ],
       },
     ])
@@ -32,7 +32,7 @@ describe('WorkspaceIndexRedirect', () => {
       </AppProviders>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Personal workspace' })).toBeVisible()
-    expect(router.state.location.pathname).toBe('/hr/me')
+    expect(await screen.findByRole('heading', { name: 'HR dashboard' })).toBeVisible()
+    expect(router.state.location.pathname).toBe('/hr/dashboard')
   })
 })

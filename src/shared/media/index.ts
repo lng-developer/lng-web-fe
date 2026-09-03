@@ -1,9 +1,10 @@
 export { AuthenticatedMediaImage } from './AuthenticatedMediaImage'
-export type { MultipartAsset, MultipartPart, MultipartPurpose } from './mediaApi'
+export type { MediaDownload, MultipartAsset, MultipartPart, MultipartPurpose } from './mediaApi'
 export {
   abortMultipartUpload,
   completeMultipartUpload,
   downloadMediaAsset,
+  downloadMediaAssets,
   fetchMediaBlob,
   initiateMultipartUpload,
   presignMultipartParts,

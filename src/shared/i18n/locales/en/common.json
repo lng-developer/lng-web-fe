@@ -33,7 +33,7 @@
       "primary": "Primary",
       "cores": "Application areas",
       "foundation": "Foundation",
-      "operationsDashboard": "Operations dashboard",
+      "operationsDashboard": "Dashboard",
       "accounts": "Accounts",
       "accessControl": "Access control",
       "auditLog": "Audit log",
@@ -2876,7 +2876,8 @@
         "REJECTED": "Rejected"
       },
       "openProduct": "Open SP",
-      "downloadCustomerImage": "Customer image"
+      "downloadCustomerImage": "Customer image",
+      "downloadCustomerImages": "Download customer images ({{count}})"
     },
     "vendorSubmissions": {
       "title": "Vendor submissions",
@@ -3672,6 +3673,15 @@
     "cancel": "Cancel",
     "groupTitle": "Group title",
     "participants": "Participants"
+  },
+  "systemDashboard": {
+    "title": "System dashboard",
+    "description": "System health, account access, and recent audit activity",
+    "accounts": "Accounts",
+    "activeAccounts": "Active accounts",
+    "health": "System health",
+    "infrastructure": "Infrastructure",
+    "recentAudit": "Recent audit activity"
   },
   "errors": {
     "unexpected": "Something unexpected happened.",

@@ -54,6 +54,17 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'system/dashboard',
+        lazy: () =>
+          import('@/features/system/pages/SystemDashboardPage').then(({ SystemDashboardPage }) => ({
+            Component: () => (
+              <PermissionBoundary anyOf={['AUTH:READ', 'AUDIT:READ']} globalOnly>
+                <SystemDashboardPage />
+              </PermissionBoundary>
+            ),
+          })),
+      },
+      {
         path: 'auth/monitoring',
         lazy: () =>
           import('@/features/monitoring/pages/MonitoringDashboardPage').then(
@@ -521,8 +532,9 @@ export const appRoutes: RouteObject[] = [
             ),
           })),
       },
-      { path: 'operations-dashboard', element: <OperationsDashboardPage /> },
-      { path: 'foundation', element: <Navigate to="/operations-dashboard" replace /> },
+      { path: 'portal/dashboard', element: <OperationsDashboardPage /> },
+      { path: 'operations-dashboard', element: <Navigate to="/portal/dashboard" replace /> },
+      { path: 'foundation', element: <Navigate to="/portal/dashboard" replace /> },
     ],
   },
   {

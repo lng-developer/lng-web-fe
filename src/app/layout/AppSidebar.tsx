@@ -12,6 +12,7 @@ import {
   EditOutlined,
   FileTextOutlined,
   HistoryOutlined,
+  HomeOutlined,
   PictureOutlined,
   SafetyCertificateOutlined,
   SendOutlined,
@@ -153,7 +154,7 @@ export function AppSidebar({
 
 function iconFor({ key, path }: NavigationItem) {
   const portalIcons = {
-    'operations-dashboard': <BarChartOutlined />,
+    'operations-dashboard': <HomeOutlined />,
     shops: <ShopOutlined />,
     catalog: <AppstoreOutlined />,
     vendors: <TruckOutlined />,
@@ -185,7 +186,7 @@ function iconFor({ key, path }: NavigationItem) {
 }
 
 function iconForGroup(key: string) {
-  if (key === 'dashboard') return <BarChartOutlined />
+  if (key === 'dashboard') return <HomeOutlined />
   if (key === 'setup') return <SettingOutlined />
   if (key === 'order-workflow') return <ShoppingCartOutlined />
   if (key === 'fulfillment') return <ToolOutlined />

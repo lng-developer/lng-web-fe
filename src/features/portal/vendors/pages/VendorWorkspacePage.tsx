@@ -275,6 +275,7 @@ export const VendorWorkspacePage = () => {
   >()
   const [searchVendors, setSearchVendors] = useState('')
   const [searchProducts, setSearchProducts] = useState('')
+  const [migrationFilters, setMigrationFilters] = useState<{ vendorId?: string; q?: string }>({})
   const [vendorsPage, setVendorsPage] = useState(1)
   const [vendorsPageSize, setVendorsPageSize] = useState(PAGE_SIZE)
   const [productsPage, setProductsPage] = useState(1)
@@ -374,9 +375,19 @@ export const VendorWorkspacePage = () => {
     enabled: importTarget?.kind === 'product' || tab === 'migration' || tab === 'products',
     retry: false,
   })
+  const migrationVendorOptions = useQuery({
+    queryKey: vendorKeys.vendors({ page: 1, limit: 100 }),
+    queryFn: () => listVendors({ page: 1, limit: 100 }),
+    enabled: tab === 'migration',
+    retry: false,
+  })
+  const migrationReviewParams = useMemo(
+    () => ({ page: migrationPage, limit: migrationPageSize, ...migrationFilters }),
+    [migrationFilters, migrationPage, migrationPageSize],
+  )
   const migrationReview = useQuery({
-    queryKey: vendorKeys.migrationReview({ page: migrationPage, limit: migrationPageSize }),
-    queryFn: () => listVendorMigrationReview({ page: migrationPage, limit: migrationPageSize }),
+    queryKey: vendorKeys.migrationReview(migrationReviewParams),
+    queryFn: () => listVendorMigrationReview(migrationReviewParams),
     enabled: tab === 'migration',
     retry: false,
   })
@@ -954,6 +965,12 @@ export const VendorWorkspacePage = () => {
             onAssign={(productIds, productTypeGroupId) =>
               assignMigrationGroup.mutate({ productIds, productTypeGroupId })
             }
+            filters={migrationFilters}
+            vendorOptions={(migrationVendorOptions.data?.items ?? []).map((vendor) => ({
+              value: vendor.id,
+              label: `${vendor.code} — ${vendor.name}`,
+            }))}
+            onFiltersChange={setMigrationFilters}
           />
         )}
       </SectionCard>

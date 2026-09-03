@@ -1,7 +1,9 @@
 import { type CSSProperties } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { Tag, Typography } from 'antd'
+import { DatePicker, Typography } from 'antd'
+import dayjs, { type Dayjs } from 'dayjs'
 
 import { FeedbackAlert, SectionCard } from '@/shared/ui'
 
@@ -12,7 +14,11 @@ import { useOperationsDashboard } from './useOperationsDashboard'
 
 export function OperationsDashboardPage() {
   const { t } = useTranslation()
-  const { value, handle } = useOperationsDashboard()
+  const [dates, setDates] = useState<[Dayjs, Dayjs]>(() => [
+    dayjs().startOf('month'),
+    dayjs().endOf('day'),
+  ])
+  const { value, handle } = useOperationsDashboard(dates[0].toISOString(), dates[1].toISOString())
 
   if (!value.canViewDashboard) {
     return <FeedbackAlert type="info" title={t('foundation.portal.noPermission')} />
@@ -25,7 +31,10 @@ export function OperationsDashboardPage() {
           <Typography.Title level={2}>{t('foundation.portalDashboard.dashboard')}</Typography.Title>
           <Typography.Text type="secondary">{value.dateRangeLabel}</Typography.Text>
         </div>
-        <Tag color="orange">{value.todayLabel}</Tag>
+        <DatePicker.RangePicker
+          value={dates}
+          onChange={(next) => next?.[0] && next[1] && setDates([next[0], next[1]])}
+        />
       </header>
 
       <section className={styles.mockHeroCards}>
@@ -57,8 +66,12 @@ export function OperationsDashboardPage() {
           </button>
         </article>
         <article className={styles.mockHeroCard}>
-          <strong>{value.listingTotal}</strong>
-          <span>{t('foundation.portalDashboard.productInStock')}</span>
+          <strong>
+            {value.canFinance ? (value.financeRevenue / 100).toLocaleString() : value.listingTotal}
+          </strong>
+          <span>
+            {value.canFinance ? 'Revenue' : t('foundation.portalDashboard.productInStock')}
+          </span>
           <div className={styles.mockHeroImages}>
             {value.topListings.slice(0, 2).map((listing) => (
               <ProductImage key={listing.id} listing={listing} />

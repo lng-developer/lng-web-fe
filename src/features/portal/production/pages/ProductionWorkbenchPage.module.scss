@@ -208,6 +208,11 @@
   min-width: 0;
 }
 
+.customerImageDownload {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
 .customizationSection {
   grid-area: customization;
 }

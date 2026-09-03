@@ -5,6 +5,7 @@ import { getPermissions } from '@/shared/auth/session'
 
 import { getDefaultHrPath, getHrNavigation } from '../hrNavigation'
 import { HrActionPage } from './HrActionPage'
+import { HrDashboardPage } from './HrDashboardPage'
 import styles from './HrModulePage.module.scss'
 
 export function HrModulePage() {
@@ -14,6 +15,8 @@ export function HrModulePage() {
   const path = location.pathname.replace(/\/$/, '')
   const route = navigation.find((item) => item.path === path)
   const defaultPath = getDefaultHrPath(permissions)
+
+  if (path === '/hr/dashboard') return <HrDashboardPage />
 
   if (!route) return <Navigate to={defaultPath ?? '/operations-dashboard'} replace />
 
