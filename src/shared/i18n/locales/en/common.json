@@ -3260,7 +3260,8 @@
       "filters": {
         "label": "Filters",
         "status": "Status",
-        "vendor": "Vendor"
+        "vendor": "Vendor",
+        "search": "Search product or external ID"
       },
       "metrics": {
         "total": "Total vendors",
@@ -3269,14 +3270,26 @@
         "types": "Fulfillment types"
       },
       "migration": {
+        "image": "Image",
         "vendor": "Vendor",
         "product": "Product",
         "externalProductId": "External ID",
         "variants": "Variants",
         "unresolved": "Unresolved",
+        "unresolvedCount": "{{count}} source products are unresolved because their vendor is missing.",
+        "emptyValue": "—",
         "loadFailed": "Could not load migration review",
         "pending": "{{count}} products need a Product Type Group before migration.",
         "selectProductTypeGroup": "Choose Product Type Group",
+        "vendorFilterAria": "Migration vendor filter",
+        "productSearchAria": "Migration product search",
+        "productTypeGroupAria": "Product Type Group for selected migration products",
+        "createProductType": "Create product type",
+        "createAndSelect": "Create and select",
+        "productTypeCode": "Product type code",
+        "productTypeName": "Product type name",
+        "productTypePrintMethod": "Print method",
+        "productTypeSortOrder": "Sort order",
         "assign": "Assign to {{count}} selected",
         "assigned": "Assigned Product Type Group to {{count}} products"
       },

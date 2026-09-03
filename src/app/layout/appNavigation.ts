@@ -59,7 +59,8 @@ const getDashboardGroup = (
       ? { key: 'operations-dashboard', path: '/portal/dashboard' }
       : core === 'hr' && canReadHrDashboard(permissions)
         ? { key: 'hr-dashboard', path: '/hr/dashboard' }
-        : core === 'system' && ['AUTH:READ', 'AUDIT:READ'].some((permission) => permissions.has(permission))
+        : core === 'system' &&
+            ['AUTH:READ', 'AUDIT:READ'].some((permission) => permissions.has(permission))
           ? { key: 'system-dashboard', path: '/system/dashboard' }
           : null
 

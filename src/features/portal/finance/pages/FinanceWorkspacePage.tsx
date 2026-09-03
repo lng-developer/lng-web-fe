@@ -50,7 +50,7 @@ const money = (amount: number | null | undefined, currency = 'USD') =>
     ? '—'
     : new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount / 100)
 
-export function FinanceWorkspacePage() {
+export const FinanceWorkspacePage = () => {
   const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount
   const permissions = [

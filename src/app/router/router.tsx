@@ -106,13 +106,16 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'auth/accounts/:accountId/access',
         lazy: () =>
-          import('@/features/auth/access/pages/AccessEditorPage').then(({ AccessEditorPage }) => ({
-            Component: () => (
-              <PermissionBoundary anyOf={['AUTH:WRITE']} globalOnly>
-                <AccessEditorPage />
-              </PermissionBoundary>
-            ),
-          })),
+          // import('@/features/auth/access/pages/AccessEditorPage').then(({ AccessEditorPage }) => ({
+          import('@/features/auth/access/pages/AccessEditor/index').then(
+            ({ AccessEditorPage }) => ({
+              Component: () => (
+                <PermissionBoundary anyOf={['AUTH:WRITE']} globalOnly>
+                  <AccessEditorPage />
+                </PermissionBoundary>
+              ),
+            }),
+          ),
       },
       {
         path: 'auth/accounts/:accountId/security',

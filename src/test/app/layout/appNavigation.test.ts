@@ -63,7 +63,10 @@ describe('app navigation', () => {
   })
 
   it('shows the audit log only to audit readers', () => {
-    expect(getContextNavigation('system', account(['AUDIT:READ'])).find(({ key }) => key === 'system')?.items).toEqual([
+    expect(
+      getContextNavigation('system', account(['AUDIT:READ'])).find(({ key }) => key === 'system')
+        ?.items,
+    ).toEqual([
       { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' },
       { key: 'monitoring', path: '/auth/monitoring', labelKey: 'shell.navigation.monitoring' },
     ])

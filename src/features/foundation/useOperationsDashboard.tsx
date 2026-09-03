@@ -6,7 +6,10 @@ import dayjs from 'dayjs'
 import { getListingSummary, listListings } from '@/features/portal/catalog/api/catalogApi'
 import { getCustomerSummary } from '@/features/portal/customers/api/customerApi'
 import { getOrderSummary, listOrderWorkbench } from '@/features/portal/orders/api/orderApi'
-import { getOperationsOverview, listFinanceDailyProfit } from '@/features/portal/reports/api/reportApi'
+import {
+  getOperationsOverview,
+  listFinanceDailyProfit,
+} from '@/features/portal/reports/api/reportApi'
 import { getPermissions } from '@/shared/auth/session'
 
 import { formatDashboardDate, numberOf } from './operationsDashboardFormatters'
@@ -59,10 +62,21 @@ export function useOperationsDashboard(dateFrom?: string, dateTo?: string) {
     enabled: canCustomers,
   })
   const reportFilters = useMemo(() => ({ dateFrom, dateTo }), [dateFrom, dateTo])
-  const finance = useQuery({ queryKey: ['foundation', 'finance', reportFilters], queryFn: () => listFinanceDailyProfit(reportFilters), enabled: canFinance })
-  const operations = useQuery({ queryKey: ['foundation', 'reports', reportFilters], queryFn: () => getOperationsOverview(reportFilters), enabled: canReports })
+  const finance = useQuery({
+    queryKey: ['foundation', 'finance', reportFilters],
+    queryFn: () => listFinanceDailyProfit(reportFilters),
+    enabled: canFinance,
+  })
+  const operations = useQuery({
+    queryKey: ['foundation', 'reports', reportFilters],
+    queryFn: () => getOperationsOverview(reportFilters),
+    enabled: canReports,
+  })
   const financeRevenue = (finance.data ?? []).reduce((sum, row) => sum + row.revenueAmount, 0)
-  const reportItems = Object.values(operations.data?.orderItemsByStatus ?? {}).reduce((sum, value) => sum + value, 0)
+  const reportItems = Object.values(operations.data?.orderItemsByStatus ?? {}).reduce(
+    (sum, value) => sum + value,
+    0,
+  )
 
   const tabCounts = orderSummary.data?.tabCounts ?? {}
   const orderStatusEntries = Object.entries(tabCounts).filter(
@@ -104,14 +118,14 @@ export function useOperationsDashboard(dateFrom?: string, dateTo?: string) {
       value: numberOf(listingSummary.data?.rejectedCount),
     },
   ]
-  const monthStart = dayjs().startOf('month').toDate()
-  const today = dayjs().toDate()
+  const rangeStart = dateFrom ? dayjs(dateFrom).toDate() : dayjs().startOf('month').toDate()
+  const rangeEnd = dateTo ? dayjs(dateTo).toDate() : dayjs().toDate()
 
   return {
     value: {
       canViewDashboard: canOrders || canCatalog,
-      dateRangeLabel: `${formatDashboardDate(monthStart, i18n.language)} - ${formatDashboardDate(today, i18n.language)}`,
-      todayLabel: formatDashboardDate(today, i18n.language),
+      dateRangeLabel: `${formatDashboardDate(rangeStart, i18n.language)} - ${formatDashboardDate(rangeEnd, i18n.language)}`,
+      todayLabel: formatDashboardDate(rangeEnd, i18n.language),
       displayedOrderTotal,
       orderBars,
       orderStatus,
