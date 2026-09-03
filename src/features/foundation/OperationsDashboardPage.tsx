@@ -2,10 +2,10 @@ import { type CSSProperties } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { DatePicker, Typography } from 'antd'
+import { Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 
-import { FeedbackAlert, SectionCard } from '@/shared/ui'
+import { DateRangePicker, FeedbackAlert, SectionCard } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
 import { DonutChart, MiniBars } from './OperationsDashboardCharts'
@@ -31,9 +31,13 @@ export function OperationsDashboardPage() {
           <Typography.Title level={2}>{t('foundation.portalDashboard.dashboard')}</Typography.Title>
           <Typography.Text type="secondary">{value.dateRangeLabel}</Typography.Text>
         </div>
-        <DatePicker.RangePicker
-          value={dates}
-          onChange={(next) => next?.[0] && next[1] && setDates([next[0], next[1]])}
+        <DateRangePicker
+          aria-label={t('foundation.portalDashboard.dateRange')}
+          style={{ width: 288 }}
+          value={{ dateFrom: dates[0].toISOString(), dateTo: dates[1].toISOString() }}
+          onChange={(next) => {
+            if (next.dateFrom && next.dateTo) setDates([dayjs(next.dateFrom), dayjs(next.dateTo)])
+          }}
         />
       </header>
 

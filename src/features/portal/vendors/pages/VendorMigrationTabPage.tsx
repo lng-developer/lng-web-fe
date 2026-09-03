@@ -106,7 +106,7 @@ const ReviewTable = memo(function ReviewTable({
   )
   return (
     <CoreDataTable
-      rowKey="legacyProductId"
+      rowKey="id"
       loading={loading}
       columns={columns}
       dataSource={rows}
@@ -195,7 +195,7 @@ export function VendorMigrationTabPage({
       />
       <Space wrap>
         <Select
-          aria-label="Migration vendor filter"
+          aria-label={t('portal.vendors.migration.vendorFilterAria')}
           allowClear
           placeholder={t('portal.vendors.filters.vendor')}
           value={filters?.vendorId}
@@ -206,11 +206,9 @@ export function VendorMigrationTabPage({
           onChange={(vendorId) => updateFilters({ ...filters, vendorId: vendorId || undefined })}
         />
         <Input
-          aria-label="Migration product search"
+          aria-label={t('portal.vendors.migration.productSearchAria')}
           allowClear
-          placeholder={t('portal.vendors.filters.search', {
-            defaultValue: 'Search product or External ID',
-          })}
+          placeholder={t('portal.vendors.filters.search')}
           value={filters?.q}
           style={{ width: 260 }}
           onChange={(event) =>
@@ -218,7 +216,7 @@ export function VendorMigrationTabPage({
           }
         />
         <Select
-          aria-label="Product Type Group for selected migration products"
+          aria-label={t('portal.vendors.migration.productTypeGroupAria')}
           style={{ minWidth: 280 }}
           placeholder={t('portal.vendors.migration.selectProductTypeGroup')}
           value={groupId}
@@ -230,10 +228,11 @@ export function VendorMigrationTabPage({
           onChange={setGroupId}
         />
         {canCreateProductType ? (
-          <Button aria-label="Create product type" onClick={() => setCreateOpen(true)}>
-            {t('portal.vendors.migration.createProductType', {
-              defaultValue: 'Create product type',
-            })}
+          <Button
+            aria-label={t('portal.vendors.migration.createProductType')}
+            onClick={() => setCreateOpen(true)}
+          >
+            {t('portal.vendors.migration.createProductType')}
           </Button>
         ) : null}
         <Button
@@ -264,12 +263,8 @@ export function VendorMigrationTabPage({
       {createOpen ? (
         <Modal
           open
-          title={t('portal.vendors.migration.createProductType', {
-            defaultValue: 'Create product type',
-          })}
-          okText={t('portal.vendors.migration.createAndSelect', {
-            defaultValue: 'Create and select',
-          })}
+          title={t('portal.vendors.migration.createProductType')}
+          okText={t('portal.vendors.migration.createAndSelect')}
           confirmLoading={creatingProductType}
           okButtonProps={{ disabled: !draft.code.trim() || !draft.name.trim() }}
           onCancel={() => setCreateOpen(false)}
@@ -285,21 +280,21 @@ export function VendorMigrationTabPage({
         >
           <Space direction="vertical" style={{ width: '100%' }}>
             <Input
-              aria-label="Product type code"
-              placeholder="Code"
+              aria-label={t('portal.vendors.migration.productTypeCode')}
+              placeholder={t('portal.vendors.migration.productTypeCode')}
               value={draft.code}
               onChange={(event) => setDraft((value) => ({ ...value, code: event.target.value }))}
             />
             <Input
-              aria-label="Product type name"
-              placeholder="Name"
+              aria-label={t('portal.vendors.migration.productTypeName')}
+              placeholder={t('portal.vendors.migration.productTypeName')}
               value={draft.name}
               onChange={(event) => setDraft((value) => ({ ...value, name: event.target.value }))}
             />
             <Select
-              aria-label="Product type print method"
+              aria-label={t('portal.vendors.migration.productTypePrintMethod')}
               allowClear
-              placeholder="Print method"
+              placeholder={t('portal.vendors.migration.productTypePrintMethod')}
               value={draft.printMethod}
               options={printMethodSelectOptions}
               onChange={(value) =>
@@ -307,7 +302,7 @@ export function VendorMigrationTabPage({
               }
             />
             <InputNumber
-              aria-label="Product type sort order"
+              aria-label={t('portal.vendors.migration.productTypeSortOrder')}
               min={0}
               precision={0}
               value={draft.sortOrder}

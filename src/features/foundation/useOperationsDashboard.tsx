@@ -118,14 +118,14 @@ export function useOperationsDashboard(dateFrom?: string, dateTo?: string) {
       value: numberOf(listingSummary.data?.rejectedCount),
     },
   ]
-  const monthStart = dayjs().startOf('month').toDate()
-  const today = dayjs().toDate()
+  const rangeStart = dateFrom ? dayjs(dateFrom).toDate() : dayjs().startOf('month').toDate()
+  const rangeEnd = dateTo ? dayjs(dateTo).toDate() : dayjs().toDate()
 
   return {
     value: {
       canViewDashboard: canOrders || canCatalog,
-      dateRangeLabel: `${formatDashboardDate(monthStart, i18n.language)} - ${formatDashboardDate(today, i18n.language)}`,
-      todayLabel: formatDashboardDate(today, i18n.language),
+      dateRangeLabel: `${formatDashboardDate(rangeStart, i18n.language)} - ${formatDashboardDate(rangeEnd, i18n.language)}`,
+      todayLabel: formatDashboardDate(rangeEnd, i18n.language),
       displayedOrderTotal,
       orderBars,
       orderStatus,

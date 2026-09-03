@@ -838,36 +838,37 @@ export const VendorWorkspacePage = () => {
         />
       </div>
 
+      <UiTabs
+        activeKey={tab}
+        onChange={(value) => {
+          const nextTab = value as VendorManagementTab
+          setSearchParams(nextTab === 'vendors' ? {} : { tab: nextTab })
+        }}
+        items={[
+          {
+            key: 'vendors',
+            label: (
+              <UiTabLabel count={vendors.data?.pagination.total}>
+                {t('portal.vendors.tabs.vendors')}
+              </UiTabLabel>
+            ),
+          },
+          {
+            key: 'products',
+            label: (
+              <UiTabLabel count={products.data?.pagination.total}>
+                {t('portal.vendors.tabs.products')}
+              </UiTabLabel>
+            ),
+          },
+          {
+            key: 'migration',
+            label: <UiTabLabel>{t('portal.vendors.tabs.migration')}</UiTabLabel>,
+          },
+        ]}
+      />
+
       <SectionCard>
-        <UiTabs
-          activeKey={tab}
-          onChange={(value) => {
-            const nextTab = value as VendorManagementTab
-            setSearchParams(nextTab === 'vendors' ? {} : { tab: nextTab })
-          }}
-          items={[
-            {
-              key: 'vendors',
-              label: (
-                <UiTabLabel count={vendors.data?.pagination.total}>
-                  {t('portal.vendors.tabs.vendors')}
-                </UiTabLabel>
-              ),
-            },
-            {
-              key: 'products',
-              label: (
-                <UiTabLabel count={products.data?.pagination.total}>
-                  {t('portal.vendors.tabs.products')}
-                </UiTabLabel>
-              ),
-            },
-            {
-              key: 'migration',
-              label: <UiTabLabel>{t('portal.vendors.tabs.migration')}</UiTabLabel>,
-            },
-          ]}
-        />
         {tab === 'vendors' ? (
           <VendorWorkspaceVendorsTabPage
             canWrite={canWrite}

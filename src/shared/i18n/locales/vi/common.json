@@ -3260,7 +3260,8 @@
       "filters": {
         "label": "Bộ lọc",
         "status": "Trạng thái",
-        "vendor": "Nhà cung cấp"
+        "vendor": "Nhà cung cấp",
+        "search": "Tìm sản phẩm hoặc mã ngoài hệ thống"
       },
       "metrics": {
         "total": "Tổng nhà cung cấp",
@@ -3269,14 +3270,26 @@
         "types": "Loại hoàn tất đơn"
       },
       "migration": {
+        "image": "Hình ảnh",
         "vendor": "Nhà cung cấp",
         "product": "Sản phẩm",
         "externalProductId": "Mã ngoài hệ thống",
         "variants": "Biến thể",
         "unresolved": "Chưa xác định",
+        "unresolvedCount": "{{count}} sản phẩm nguồn chưa được xác định vì thiếu nhà cung cấp.",
+        "emptyValue": "—",
         "loadFailed": "Không thể tải danh sách rà soát migration",
         "pending": "{{count}} sản phẩm cần được gán Nhóm loại sản phẩm trước khi migration.",
         "selectProductTypeGroup": "Chọn Nhóm loại sản phẩm",
+        "vendorFilterAria": "Bộ lọc nhà cung cấp migration",
+        "productSearchAria": "Tìm sản phẩm migration",
+        "productTypeGroupAria": "Nhóm loại sản phẩm cho các sản phẩm migration đã chọn",
+        "createProductType": "Tạo nhóm loại sản phẩm",
+        "createAndSelect": "Tạo và chọn",
+        "productTypeCode": "Mã nhóm loại sản phẩm",
+        "productTypeName": "Tên nhóm loại sản phẩm",
+        "productTypePrintMethod": "Phương thức in",
+        "productTypeSortOrder": "Thứ tự sắp xếp",
         "assign": "Gán cho {{count}} sản phẩm đã chọn",
         "assigned": "Đã gán Nhóm loại sản phẩm cho {{count}} sản phẩm"
       },
