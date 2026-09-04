@@ -3414,6 +3414,8 @@
       "replaceOrder": "Replace order",
       "replaceShort": "Replace",
       "recheckShort": "Recheck",
+      "recheckMappingShort": "Recheck mapping",
+      "recheckProductionShort": "Recheck production",
       "readyShort": "Ready",
       "cancelShort": "Cancel",
       "showMoreCustomization": "Show {{count}} more",

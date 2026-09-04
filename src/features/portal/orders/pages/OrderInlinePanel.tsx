@@ -66,7 +66,8 @@ import {
   type OrderWorkbenchItem,
   type OrderWorkbenchRow,
   overrideShippingAddress,
-  recheckOrderItem,
+  recheckMapping,
+  recheckProduction,
   resolveOrderCase,
   retryCustomizationAssets,
   type ShippingAddress,
@@ -92,7 +93,8 @@ type Action =
   | { kind: 'validate-address' }
   | { kind: 'override-address'; reason?: string }
   | { kind: 'note'; itemId: string; note: string }
-  | { kind: 'recheck'; itemId: string }
+  | { kind: 'recheck-mapping'; itemId: string }
+  | { kind: 'recheck-production'; itemId: string }
   | { kind: 'retry-customization-assets'; itemId: string }
   | { kind: 'ready'; itemId: string }
   | { kind: 'cancel'; itemId: string; reason: string }
@@ -224,7 +226,8 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       if (action.kind === 'override-address')
         return overrideShippingAddress(row.order.id, action.reason)
       if (action.kind === 'note') return updateOrderItemCsNote(action.itemId, action.note)
-      if (action.kind === 'recheck') return recheckOrderItem(action.itemId)
+      if (action.kind === 'recheck-mapping') return recheckMapping(action.itemId)
+      if (action.kind === 'recheck-production') return recheckProduction(action.itemId)
       if (action.kind === 'retry-customization-assets')
         return retryCustomizationAssets(action.itemId)
       if (action.kind === 'ready') return markOrderItemFulfillmentReady(action.itemId)
@@ -881,10 +884,16 @@ function OrderItemPanel({
     ...(canOperate && canRecheck
       ? [
           {
-            key: 'recheck',
+            key: 'recheck-mapping',
             icon: <ReloadOutlined />,
-            label: t('orders.actions.recheckShort'),
-            onClick: () => onAction({ kind: 'recheck', itemId: item.item.id }),
+            label: t('orders.actions.recheckMappingShort'),
+            onClick: () => onAction({ kind: 'recheck-mapping', itemId: item.item.id }),
+          },
+          {
+            key: 'recheck-production',
+            icon: <ReloadOutlined />,
+            label: t('orders.actions.recheckProductionShort'),
+            onClick: () => onAction({ kind: 'recheck-production', itemId: item.item.id }),
           },
         ]
       : []),

@@ -17,6 +17,7 @@ import {
   recheckPsdBlockedTasks,
   submitProductionQc,
   submitScaleForQc,
+  summarizeProductionQueueCounts,
   summarizeProductionTasks,
   updateProductionCsNote,
   updateProductionCsStatus,
@@ -47,6 +48,14 @@ describe('productionApi', () => {
     expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/claim')
     expect(apiClient.patch).toHaveBeenCalledWith('/api/production/tasks/task-1/qc', {
       fileDecisions,
+    })
+  })
+
+  it('uses one dedicated request for canonical queue badge counts', async () => {
+    await summarizeProductionQueueCounts({ search: 'ORDER-1', salesChannelCode: 'AMAZON' })
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/production/tasks/queue-summary', {
+      params: { search: 'ORDER-1', salesChannelCode: 'AMAZON' },
     })
   })
 

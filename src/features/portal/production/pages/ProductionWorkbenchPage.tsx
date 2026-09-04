@@ -57,6 +57,7 @@ import {
   recheckPsdBlockedTasks,
   submitProductionQc,
   submitScaleForQc,
+  summarizeProductionQueueCounts,
   summarizeProductionTasks,
   updateDesignNote,
   uploadScaledOutput,
@@ -654,7 +655,7 @@ export function ProductionWorkbenchPage({
     [deferredSearch, salesChannelCode, status, tab],
   )
   const queueFilters = useMemo(
-    () => ({ search: deferredSearch || undefined, salesChannelCode, psdReadyOnly: true }),
+    () => ({ search: deferredSearch || undefined, salesChannelCode }),
     [deferredSearch, salesChannelCode],
   )
   const statusOptions = useMemo(
@@ -675,36 +676,9 @@ export function ProductionWorkbenchPage({
     refetchOnWindowFocus: false,
     retry: false,
   })
-  const scaleQueueCount = useQuery({
-    queryKey: productionKeys.list({ ...queueFilters, view: 'SCALE', page: 1, limit: 1 }),
-    queryFn: () => listProductionTasks({ ...queueFilters, view: 'SCALE', page: 1, limit: 1 }),
-    staleTime: 20_000,
-    refetchOnWindowFocus: false,
-    retry: false,
-  })
-  const qcQueueCount = useQuery({
-    queryKey: productionKeys.list({ ...queueFilters, view: 'QC', page: 1, limit: 1 }),
-    queryFn: () => listProductionTasks({ ...queueFilters, view: 'QC', page: 1, limit: 1 }),
-    staleTime: 20_000,
-    refetchOnWindowFocus: false,
-    retry: false,
-  })
-  const blockedCount = useQuery({
-    queryKey: productionKeys.list({
-      ...queueFilters,
-      psdReadyOnly: false,
-      status: 'BLOCKED',
-      page: 1,
-      limit: 1,
-    }),
-    queryFn: () =>
-      listProductionTasks({
-        ...queueFilters,
-        psdReadyOnly: false,
-        status: 'BLOCKED',
-        page: 1,
-        limit: 1,
-      }),
+  const queueCounts = useQuery({
+    queryKey: productionKeys.queueSummary(queueFilters),
+    queryFn: () => summarizeProductionQueueCounts(queueFilters),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,
@@ -732,17 +706,12 @@ export function ProductionWorkbenchPage({
   const queueSummary = useMemo(
     () => ({
       ...displaySummary,
-      blocked: Math.max(displaySummary?.blocked ?? 0, blockedCount.data?.total ?? 0),
-      scaleQueue: Math.max(displaySummary?.scaleQueue ?? 0, scaleQueueCount.data?.total ?? 0),
-      qcQueue: Math.max(displaySummary?.qcQueue ?? 0, qcQueueCount.data?.total ?? 0),
-      qcPending: Math.max(displaySummary?.qcPending ?? 0, qcQueueCount.data?.total ?? 0),
+      blocked: queueCounts.data?.blocked ?? 0,
+      scaleQueue: queueCounts.data?.scaleQueue ?? 0,
+      qcQueue: queueCounts.data?.qcQueue ?? 0,
+      qcPending: queueCounts.data?.qcQueue ?? 0,
     }),
-    [
-      blockedCount.data?.total,
-      displaySummary,
-      qcQueueCount.data?.total,
-      scaleQueueCount.data?.total,
-    ],
+    [displaySummary, queueCounts.data],
   )
   const queueTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
     () => [

@@ -3414,6 +3414,8 @@
       "replaceOrder": "Tạo đơn thay thế",
       "replaceShort": "Thay thế",
       "recheckShort": "Kiểm tra",
+      "recheckMappingShort": "Kiểm tra mapping",
+      "recheckProductionShort": "Kiểm tra production",
       "readyShort": "Sẵn sàng",
       "cancelShort": "Hủy",
       "showMoreCustomization": "Xem thêm {{count}} trường",
