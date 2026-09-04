@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import {
-  AppstoreOutlined,
-  MedicineBoxOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
+  ShopOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
 import { Button, Tooltip } from 'antd'
 
@@ -14,8 +14,8 @@ import type { AppCoreKey } from './appNavigation'
 import styles from './AppShell.module.scss'
 
 const coreIcons = {
-  portal: <AppstoreOutlined />,
-  hr: <MedicineBoxOutlined />,
+  portal: <ShopOutlined />,
+  hr: <TeamOutlined />,
   system: <SettingOutlined />,
 }
 

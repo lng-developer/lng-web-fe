@@ -13,6 +13,7 @@ import type { UploadFile } from 'antd'
 import { Button, Modal, Space, Typography } from 'antd'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   FileUpload,
   MetricCard,
@@ -48,7 +49,6 @@ import styles from './VendorWorkspacePage.module.scss'
 import { VendorWorkspaceProductsTabPage } from './VendorWorkspaceProductsTabPage'
 import { VendorWorkspaceVendorsTabPage } from './VendorWorkspaceVendorsTabPage'
 
-const PAGE_SIZE = 20
 const ALL_PRODUCTS_VENDOR_ID = '__all'
 const MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024
 const IMPORT_CSV_EXTENSIONS = ['.csv']
@@ -277,11 +277,11 @@ export const VendorWorkspacePage = () => {
   const [searchProducts, setSearchProducts] = useState('')
   const [migrationFilters, setMigrationFilters] = useState<{ vendorId?: string; q?: string }>({})
   const [vendorsPage, setVendorsPage] = useState(1)
-  const [vendorsPageSize, setVendorsPageSize] = useState(PAGE_SIZE)
+  const [vendorsPageSize, setVendorsPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [productsPage, setProductsPage] = useState(1)
-  const [productsPageSize, setProductsPageSize] = useState(PAGE_SIZE)
+  const [productsPageSize, setProductsPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [migrationPage, setMigrationPage] = useState(1)
-  const [migrationPageSize, setMigrationPageSize] = useState(PAGE_SIZE)
+  const [migrationPageSize, setMigrationPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [vendorStatus, setVendorStatus] = useState<RecordStatus>()
   const [productStatus, setProductStatus] = useState<RecordStatus>()
   const [productVendorFilter, setProductVendorFilter] = useState<string>()
@@ -335,25 +335,6 @@ export const VendorWorkspacePage = () => {
     }
   }
 
-  const summaryVendorsParams = useMemo(() => ({ limit: 100, page: 1 }), [])
-  const summaryVendors = useQuery({
-    queryKey: vendorKeys.vendors(summaryVendorsParams),
-    queryFn: () => listVendors(summaryVendorsParams),
-    retry: false,
-  })
-
-  const vendorItems = useMemo(() => summaryVendors.data?.items ?? [], [summaryVendors.data?.items])
-  const totalCount = summaryVendors.data?.pagination.total ?? vendorItems.length
-  const activeCount = useMemo(
-    () => vendorItems.filter((vendor) => vendor.status === 'ACTIVE').length,
-    [vendorItems],
-  )
-  const integratedCount = useMemo(
-    () =>
-      vendorItems.filter((vendor) => vendor.providerKey && vendor.providerKey !== 'CUSTOM').length,
-    [vendorItems],
-  )
-
   const vendorParams = useMemo(
     () => ({
       limit: vendorsPageSize,
@@ -369,9 +350,21 @@ export const VendorWorkspacePage = () => {
     retry: false,
   })
 
+  const vendorItems = useMemo(() => vendors.data?.items ?? [], [vendors.data?.items])
+  const totalCount = vendors.data?.pagination.total ?? vendorItems.length
+  const activeCount = useMemo(
+    () => vendorItems.filter((vendor) => vendor.status === 'ACTIVE').length,
+    [vendorItems],
+  )
+  const integratedCount = useMemo(
+    () =>
+      vendorItems.filter((vendor) => vendor.providerKey && vendor.providerKey !== 'CUSTOM').length,
+    [vendorItems],
+  )
+
   const productTypeGroups = useQuery({
     queryKey: ['portal', 'catalog', 'product-type-groups', 'all'],
-    queryFn: () => listProductTypeGroups({ page: 1, limit: 100 }),
+    queryFn: () => listProductTypeGroups({ page: 1, limit: DEFAULT_PAGE_SIZE }),
     enabled: importTarget?.kind === 'product' || tab === 'migration' || tab === 'products',
     retry: false,
   })
@@ -793,6 +786,7 @@ export const VendorWorkspacePage = () => {
   const products = useQuery({
     queryKey: vendorKeys.products(productVendorFilter ?? ALL_PRODUCTS_VENDOR_ID, productParams),
     queryFn: () => listVendorProducts(productParams),
+    enabled: tab === 'products',
     retry: false,
   })
 
@@ -813,28 +807,28 @@ export const VendorWorkspacePage = () => {
           variant="neutral"
           label={t('portal.vendors.metrics.total', { defaultValue: 'Total Vendors' })}
           value={totalCount}
-          loading={summaryVendors.isLoading}
+          loading={vendors.isLoading}
         />
         <MetricCard
           icon={<CheckCircleOutlined />}
           variant="success"
           label={t('portal.vendors.metrics.active', { defaultValue: 'Active Vendors' })}
           value={activeCount}
-          loading={summaryVendors.isLoading}
+          loading={vendors.isLoading}
         />
         <MetricCard
           icon={<ApiOutlined />}
           variant="info"
           label={t('portal.vendors.metrics.integrated', { defaultValue: 'API Integrated' })}
           value={integratedCount}
-          loading={summaryVendors.isLoading}
+          loading={vendors.isLoading}
         />
         <MetricCard
           icon={<BlockOutlined />}
           variant="warning"
           label={t('portal.vendors.metrics.types', { defaultValue: 'Fulfillment Types' })}
           value="POD, FBM, FBA"
-          loading={summaryVendors.isLoading}
+          loading={vendors.isLoading}
         />
       </div>
 
@@ -868,7 +862,7 @@ export const VendorWorkspacePage = () => {
         ]}
       />
 
-      <SectionCard>
+      <SectionCard className={styles.workspaceContent}>
         {tab === 'vendors' ? (
           <VendorWorkspaceVendorsTabPage
             canWrite={canWrite}

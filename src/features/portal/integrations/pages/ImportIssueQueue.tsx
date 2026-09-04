@@ -8,6 +8,7 @@ import { Button, Select, Space, Tooltip, Typography } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   FeedbackAlert,
@@ -33,7 +34,6 @@ import { canWriteOrdersForShop, canWriteOrdersSomewhere } from '../auth/integrat
 import styles from './IntegrationWorkbenchPage.module.scss'
 import { IssueResolutionModal } from './IssueResolutionModal'
 
-const PAGE_SIZE = 20
 const SOURCES: ImportSource[] = ['AMAZON_EXTENSION_REPORT', 'MANUAL_EXCEL']
 const SEVERITIES: ImportIssueSeverity[] = ['INFO', 'WARNING', 'ERROR', 'CRITICAL']
 const STATUSES: ImportIssueStatus[] = ['OPEN', 'RESOLVED', 'IGNORED']
@@ -68,7 +68,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
-  const [params, setParams] = useState<IssueListParams>({ page: 1, limit: PAGE_SIZE })
+  const [params, setParams] = useState<IssueListParams>({ page: 1, limit: DEFAULT_PAGE_SIZE })
   const issueParams = selectedJobId ? { ...params, importJobId: selectedJobId } : params
   const [resolvingIssue, setResolvingIssue] = useState<ImportIssue>()
   const issues = useQuery({
@@ -204,7 +204,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
         rowKey="id"
         pagination={{
           current: params.page,
-          pageSize: PAGE_SIZE,
+          pageSize: DEFAULT_PAGE_SIZE,
           total: issues.data?.pagination.total,
           onChange: (page) => setParams((current) => ({ ...current, page })),
         }}

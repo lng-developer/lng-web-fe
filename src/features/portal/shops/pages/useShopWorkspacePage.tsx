@@ -4,6 +4,7 @@ import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -17,7 +18,6 @@ import {
 } from '../api/shopApi'
 import { shopKeys } from '../api/shopKeys'
 
-const PAGE_SIZE = 20
 export const SHOP_STATUSES: ShopStatus[] = ['ACTIVE', 'INACTIVE', 'SUSPENDED']
 
 function readParams(searchParams: URLSearchParams): ShopListParams {
@@ -26,7 +26,12 @@ function readParams(searchParams: URLSearchParams): ShopListParams {
   const search = searchParams.get('search')?.trim().slice(0, 120) || undefined
   const rawStatus = searchParams.get('status')
   const status = SHOP_STATUSES.find((item) => item === rawStatus)
-  return { page, limit: PAGE_SIZE, ...(search ? { search } : {}), ...(status ? { status } : {}) }
+  return {
+    page,
+    limit: DEFAULT_PAGE_SIZE,
+    ...(search ? { search } : {}),
+    ...(status ? { status } : {}),
+  }
 }
 
 export function canWriteShop(account: CurrentAccount, shopId: string) {

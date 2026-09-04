@@ -3169,6 +3169,7 @@
       "dimensions": "Dimensions",
       "name": "Name",
       "code": "Code",
+      "image": "Image",
       "vendorCode": "Vendor code",
       "fulfillmentType": "Fulfillment type",
       "providerKey": "Provider key",

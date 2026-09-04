@@ -40,11 +40,11 @@ import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
 import { getAccount } from '@/shared/auth/session'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage } from '@/shared/media'
 
 import styles from './ChatWorkspacePage.module.scss'
 
-const PAGE_SIZE = 20
 const MESSAGE_LIMIT = 50
 type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
 
@@ -190,8 +190,8 @@ export function ChatWorkspacePage() {
   const account = getAccount()
 
   const conversations = useQuery({
-    queryKey: chatKeys.conversations({ page: 1, limit: PAGE_SIZE }),
-    queryFn: () => listChatConversations({ page: 1, limit: PAGE_SIZE }),
+    queryKey: chatKeys.conversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
+    queryFn: () => listChatConversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
   })
   const firstConversationId = conversations.data?.items[0]?.id ?? null
   const activeConversationId = selectedId ?? firstConversationId

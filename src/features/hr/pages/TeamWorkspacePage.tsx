@@ -17,7 +17,7 @@ import {
 } from 'recharts'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
   EmployeeAvatar,
   FeedbackAlert,
@@ -179,7 +179,7 @@ export function TeamWorkspacePage({
           dataSource={attendance}
           scroll={{ y: 'calc(100vh - 430px)' }}
           pagination={{
-            defaultPageSize: 20,
+            defaultPageSize: DEFAULT_PAGE_SIZE,
             pageSizeOptions: PAGE_SIZE_OPTIONS,
             hideOnSinglePage: false,
             showSizeChanger: true,
@@ -268,7 +268,7 @@ export function TeamWorkspacePage({
             dataSource={approvals}
             scroll={{ y: 'calc(100vh - 430px)' }}
             pagination={{
-              defaultPageSize: 20,
+              defaultPageSize: DEFAULT_PAGE_SIZE,
               pageSizeOptions: PAGE_SIZE_OPTIONS,
               hideOnSinglePage: false,
               showSizeChanger: true,
@@ -367,7 +367,7 @@ export function TeamWorkspacePage({
             dataSource={data?.profiles.items}
             scroll={{ y: 'calc(100vh - 430px)' }}
             pagination={{
-              defaultPageSize: 20,
+              defaultPageSize: DEFAULT_PAGE_SIZE,
               pageSizeOptions: PAGE_SIZE_OPTIONS,
               hideOnSinglePage: false,
               showSizeChanger: true,

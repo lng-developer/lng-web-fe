@@ -21,7 +21,7 @@ import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { getPermissions } from '@/shared/auth/session'
-import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
   EmployeeAvatar,
   MetricCard,
@@ -335,7 +335,7 @@ export function PayrollPage() {
               dataSource={resultItems}
               scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
               pagination={{
-                defaultPageSize: 20,
+                defaultPageSize: DEFAULT_PAGE_SIZE,
                 pageSizeOptions: PAGE_SIZE_OPTIONS,
                 hideOnSinglePage: false,
                 showSizeChanger: true,
@@ -469,7 +469,7 @@ export function PayrollPage() {
               dataSource={adjustments.data?.items}
               scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
               pagination={{
-                defaultPageSize: 20,
+                defaultPageSize: DEFAULT_PAGE_SIZE,
                 pageSizeOptions: PAGE_SIZE_OPTIONS,
                 hideOnSinglePage: false,
                 showSizeChanger: true,

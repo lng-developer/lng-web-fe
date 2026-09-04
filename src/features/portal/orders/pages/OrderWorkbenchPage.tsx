@@ -26,6 +26,7 @@ import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import { vendorKeys } from '@/features/portal/vendors/api/vendorKeys'
 import { canUseScopedPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   FeedbackAlert,
@@ -50,7 +51,6 @@ import styles from './OrderWorkbenchPage.module.scss'
 
 dayjs.extend(relativeTime)
 
-const PAGE_SIZE = 20
 const TABS = [
   'ALL',
   'NEW_ORDER',
@@ -72,7 +72,7 @@ export const OrderWorkbenchPage = () => {
   const toast = useFeedbackToast()
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
   const tab: TabKey = TABS.includes(requestedTab as TabKey) ? (requestedTab as TabKey) : 'ALL'

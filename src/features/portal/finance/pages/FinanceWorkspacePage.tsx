@@ -9,6 +9,7 @@ import { Button, Descriptions, Divider, Modal, Select, Space, Spin, Typography }
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { listShops } from '@/features/portal/shops/api/shopApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   DateRangePicker,
@@ -43,7 +44,6 @@ import {
 import { FinanceImportModal } from './FinanceImportModal'
 import styles from './FinanceWorkspacePage.module.scss'
 
-const DEFAULT_PAGE_SIZE = 20
 type FinanceTab = 'overview' | 'imports'
 const money = (amount: number | null | undefined, currency = 'USD') =>
   amount == null

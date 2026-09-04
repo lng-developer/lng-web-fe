@@ -5,17 +5,26 @@ import styles from './sharedUi.module.scss'
 
 export interface FilterBarProps {
   readonly contentClassName?: string
+  readonly bordered?: boolean
   readonly label: string
   readonly children: ReactNode
   readonly actions?: ReactNode
 }
 
-export function FilterBar({ contentClassName, label, children, actions }: FilterBarProps) {
+export function FilterBar({
+  contentClassName,
+  bordered = true,
+  label,
+  children,
+  actions,
+}: FilterBarProps) {
   return (
     <Flex
       role="search"
       aria-label={label}
-      className={styles.filterBar}
+      className={[styles.filterBar, !bordered && styles.filterBarBorderless]
+        .filter(Boolean)
+        .join(' ')}
       align="flex-end"
       justify="space-between"
       gap={16}

@@ -24,6 +24,7 @@ import {
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   DateRangePicker,
@@ -60,8 +61,6 @@ const STATUSES: VendorSubmissionStatus[] = [
   'SUBMITTED',
   'CANCELLED',
 ]
-const PAGE_SIZE = 20
-
 function tone(status: VendorSubmissionStatus) {
   if (status === 'SUBMITTED') return 'operational'
   if (status === 'READY') return 'ready'
@@ -103,7 +102,7 @@ export function VendorSubmissionWorkbenchPage({
   )
   const params = {
     page,
-    limit: PAGE_SIZE,
+    limit: DEFAULT_PAGE_SIZE,
     status,
     externalOrderId: externalOrderId || undefined,
     ...dates,
@@ -316,7 +315,7 @@ export function VendorSubmissionWorkbenchPage({
           onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: submissions.data?.pagination.total,
             onChange: setPage,
           }}

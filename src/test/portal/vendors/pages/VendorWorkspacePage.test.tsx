@@ -6,6 +6,7 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import { VendorWorkspacePage } from '@/features/portal/vendors/pages/VendorWorkspacePage'
 import vendorWorkspaceSource from '@/features/portal/vendors/pages/VendorWorkspacePage.tsx?raw'
 import productsTabSource from '@/features/portal/vendors/pages/VendorWorkspaceProductsTabPage.tsx?raw'
+import vendorsTabSource from '@/features/portal/vendors/pages/VendorWorkspaceVendorsTabPage.tsx?raw'
 import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/portal/vendors/pages/VendorTree', () => ({
@@ -42,5 +43,19 @@ describe('VendorWorkspacePage', () => {
   it('opens cost centers on their dedicated product route instead of a workspace drawer', () => {
     expect(vendorWorkspaceSource).not.toContain('VendorWorkspaceCostCenterDrawer')
     expect(productsTabSource).toContain('/portal/vendors/products/${row.id}/cost-centers')
+  })
+
+  it('loads only visible-tab data at the default page size', () => {
+    expect(vendorWorkspaceSource).not.toContain('summaryVendors')
+    expect(vendorWorkspaceSource).toContain("enabled: tab === 'products'")
+    expect(vendorWorkspaceSource).toContain(
+      'listProductTypeGroups({ page: 1, limit: DEFAULT_PAGE_SIZE })',
+    )
+    expect(vendorWorkspaceSource).not.toContain('listProductTypeGroups({ page: 1, limit: 100 })')
+  })
+
+  it('fits both vendor tables within the workspace viewport', () => {
+    expect(productsTabSource).toContain('fillViewport')
+    expect(vendorsTabSource).toContain('fillViewport')
   })
 })

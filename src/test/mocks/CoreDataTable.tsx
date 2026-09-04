@@ -9,12 +9,18 @@ export function CoreDataTable({
   columns = [],
   dataSource = [],
   onRow,
+  pagination,
   rowSelection,
   toolbar,
 }: {
   columns?: Column[]
   dataSource?: Record<string, unknown>[]
   onRow?: (record: Record<string, unknown>) => { onClick?: () => void }
+  pagination?: {
+    current?: number
+    pageSize?: number
+    onChange?: (page: number, pageSize: number) => void
+  }
   rowSelection?: {
     selectedRowKeys?: Key[]
     onChange?: (keys: Key[]) => void
@@ -25,6 +31,15 @@ export function CoreDataTable({
   return (
     <>
       {toolbar}
+      {pagination?.onChange ? (
+        <button
+          type="button"
+          aria-label="Page 2"
+          onClick={() => pagination.onChange?.(2, pagination.pageSize ?? 10)}
+        >
+          2
+        </button>
+      ) : null}
       <table>
         <tbody>
           {dataSource.map((record, rowIndex) => (

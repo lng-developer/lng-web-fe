@@ -43,6 +43,7 @@ import {
   listListings,
 } from '@/features/portal/catalog/api/catalogApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
 import {
   CopyableText,
@@ -82,7 +83,6 @@ import { designKeys } from '../api/designKeys'
 import { type CreateDesignTaskDraft, CreateDesignTaskModal } from './CreateDesignTaskModal'
 import styles from './DesignWorkbenchPage.module.scss'
 
-const PAGE_SIZE = 20
 const STATUSES = [
   'REQUESTED',
   'OPEN',
@@ -178,7 +178,7 @@ export function DesignWorkbenchPage() {
   const params = useMemo(
     () => ({
       page,
-      limit: PAGE_SIZE,
+      limit: DEFAULT_PAGE_SIZE,
       search: deferredSearch || undefined,
       salesChannelCode,
       status,
@@ -864,7 +864,7 @@ export function DesignWorkbenchPage() {
           }
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: displayedTasks?.pagination.total ?? 0,
             showSizeChanger: false,
             hideOnSinglePage: true,

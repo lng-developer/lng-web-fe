@@ -8,6 +8,7 @@ import { Button, Descriptions, Input, Modal, Select, Space, Typography } from 'a
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   FilterBar,
@@ -30,7 +31,6 @@ import {
 } from '../api/customizationApi'
 import styles from './CustomizationReviewPage.module.scss'
 
-const PAGE_SIZE = 20
 const keys = {
   all: ['customizations'] as const,
   list: (params: object) => ['customizations', 'list', params] as const,
@@ -53,7 +53,7 @@ export const CustomizationReviewPage = () => {
   const [status, setStatus] = useState<CustomizationStatus>()
   const [selected, setSelected] = useState<CustomizationRow>()
   const [failureReason, setFailureReason] = useState('')
-  const params = { page, limit: PAGE_SIZE, q: q || undefined, status, blockedOnly: true }
+  const params = { page, limit: DEFAULT_PAGE_SIZE, q: q || undefined, status, blockedOnly: true }
   const queue = useQuery({
     queryKey: keys.list(params),
     queryFn: () => listCustomizations(params),
@@ -205,7 +205,7 @@ export const CustomizationReviewPage = () => {
           onRow={(row) => ({ onClick: () => setSelected(row) })}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: queue.data?.pagination.total,
             onChange: setPage,
             showSizeChanger: false,

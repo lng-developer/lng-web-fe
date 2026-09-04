@@ -22,14 +22,8 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import {
-  CopyableText,
-  FeedbackAlert,
-  MetricCard,
-  PageHeader,
-  StatusTag,
-  useFeedbackToast,
-} from '@/shared/ui'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+import { CopyableText, FeedbackAlert, MetricCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   type CatalogListParams,
@@ -52,7 +46,6 @@ import { ListingVariantManager } from './ListingVariantManager'
 
 dayjs.extend(relativeTime)
 
-const PAGE_SIZE = 20
 const QC_STATUS_I18N_KEY: Record<string, string> = {
   DRAFT: 'portal.catalog.qc.statuses.DRAFT',
   APPROVED: 'portal.catalog.qc.statuses.APPROVED',
@@ -83,7 +76,7 @@ export function CatalogListingWorkbenchPage({
   const toast = useFeedbackToast()
 
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
@@ -421,8 +414,6 @@ export function CatalogListingWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      <PageHeader title={t('portal.catalog.title')} description={t('portal.catalog.description')} />
-
       {listings.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.catalog.unavailable')} />
       ) : null}
@@ -490,7 +481,10 @@ export function CatalogListingWorkbenchPage({
           allowClear
           placeholder={t('portal.catalog.search')}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
           onSearch={() => setPage(1)}
           className={styles.search}
         />
@@ -567,12 +561,14 @@ export function CatalogListingWorkbenchPage({
           </Tag>
         </div>
         <CoreDataTable
+          className={styles.listingTable}
           rowKey="id"
           size="middle"
           loading={listings.isLoading}
           columns={columns}
           dataSource={listings.data?.items ?? []}
-          scroll={{ x: 1500, y: 'max(280px, calc(100vh - 500px))' }}
+          fillViewport
+          scroll={{ x: 1500 }}
           pagination={{
             current: page,
             pageSize,

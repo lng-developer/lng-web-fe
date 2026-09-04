@@ -8,6 +8,7 @@ import { UiTabLabel, UiTabs } from '@/shared/ui'
 
 import { CatalogDashboardPage } from './CatalogDashboardPage'
 import { CatalogListingWorkbenchPage } from './CatalogListingWorkbenchPage'
+import styles from './CatalogWorkspacePage.module.scss'
 import { InternalTemplateManagementPage } from './InternalTemplateManagementPage'
 import { ProductTypeManagementPage } from './ProductTypeManagementPage'
 
@@ -20,6 +21,9 @@ export const CatalogWorkspacePage = () => {
   return (
     <UiTabs
       activeKey={activeTab}
+      className={[styles.workspace, activeTab === 'listings' ? styles.listingsWorkspace : '']
+        .filter(Boolean)
+        .join(' ')}
       onChange={setActiveTab}
       destroyOnHidden
       items={[

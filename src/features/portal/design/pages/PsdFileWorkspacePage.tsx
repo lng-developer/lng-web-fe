@@ -5,6 +5,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Input, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
@@ -19,7 +20,6 @@ import {
 import { listDesignAssignees, listPsdFiles, type PsdFileListItem } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
 
-const PAGE_SIZE = 20
 const tone = (status: string) =>
   status === 'APPROVED'
     ? 'approved'
@@ -38,7 +38,7 @@ export function PsdFileWorkspacePage() {
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const params = {
     page,
-    limit: PAGE_SIZE,
+    limit: DEFAULT_PAGE_SIZE,
     search: search || undefined,
     role,
     designerId,
@@ -160,7 +160,7 @@ export function PsdFileWorkspacePage() {
           loading={files.isLoading}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: files.data?.total,
             onChange: setPage,
           }}

@@ -19,7 +19,8 @@ import {
 } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+import { SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createInternalTemplate,
@@ -33,7 +34,6 @@ import {
 } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
 
-const PAGE_SIZE = 20
 const FIELD_TYPES = ['TEXT', 'IMAGE', 'OPTION', 'FILE', 'NUMBER', 'DATE', 'UNKNOWN']
 const FIELD_SOURCES = ['CUSTOMER_INPUT', 'AMAZON_CUSTOMIZATION', 'MANUAL', 'SYSTEM']
 const SLOT_TYPES = ['IMAGE', 'TEXT', 'VECTOR', 'PDF', 'MIXED']
@@ -53,7 +53,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
   const toast = useFeedbackToast()
   const [form] = Form.useForm<InternalTemplateInput & { code?: string }>()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<InternalTemplate | null>()
   const params = { page, limit: pageSize, q: search || undefined }
@@ -155,11 +155,9 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       title: t('portal.catalog.master.templateEditor.columns.psd'),
       width: 100,
       render: (_, row) =>
-        t(
-          row.requiresPsd
-            ? 'portal.catalog.master.templateEditor.required'
-            : 'portal.catalog.master.templateEditor.optional',
-        ),
+        row.requiresPsd
+          ? t('portal.catalog.master.templateEditor.required')
+          : t('portal.catalog.master.templateEditor.optional'),
     },
     {
       title: t('portal.catalog.master.status'),
@@ -198,10 +196,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
 
   return (
     <section>
-      <PageHeader
-        title={t('portal.catalog.master.templates')}
-        description={t('portal.catalog.master.templateDescription')}
-      />
       <SectionCard>
         <CoreDataTable
           rowKey="id"
@@ -226,7 +220,10 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                 allowClear
                 placeholder={t('portal.catalog.master.searchTemplates')}
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
                 onSearch={() => setPage(1)}
               />
               {canManage ? (
@@ -241,9 +238,11 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       <Modal
         open={editing !== undefined}
         width={920}
-        title={t(
-          editing ? 'portal.catalog.master.editTemplate' : 'portal.catalog.master.createTemplate',
-        )}
+        title={
+          editing
+            ? t('portal.catalog.master.editTemplate')
+            : t('portal.catalog.master.createTemplate')
+        }
         okText={t('portal.catalog.master.saveTemplate')}
         confirmLoading={save.isPending}
         onCancel={() => setEditing(undefined)}

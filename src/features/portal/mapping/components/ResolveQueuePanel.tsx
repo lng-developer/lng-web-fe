@@ -91,13 +91,7 @@ export function ResolveQueuePanel({
   }, [items, deferredSearch, blocker])
 
   return (
-    <Flex
-      vertical
-      gap={0}
-      style={{
-        overflowY: 'auto',
-      }}
-    >
+    <Flex className={styles.queuePanel} vertical gap={0}>
       {/* Filters */}
       <div className={styles.queueFilters}>
         <div style={{ flex: '1 1 0', minWidth: 0 }}>

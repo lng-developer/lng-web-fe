@@ -31,6 +31,7 @@ import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typog
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage } from '@/shared/media'
 import {
   CopyableOrderId,
@@ -66,7 +67,6 @@ import { ProductionWorkbenchExpandedRow } from './ProductionWorkbenchExpandedRow
 import { ProductionWorkbenchFilterBar } from './ProductionWorkbenchFilterBar'
 import styles from './ProductionWorkbenchPage.module.scss'
 
-const PAGE_SIZE = 20
 type ProductionTab = 'scale' | 'blocked' | 'qc'
 const SCALE_STATUSES: ProductionStatus[] = ['NEED_SCALE', 'QC_REJECTED', 'BLOCKED']
 const BLOCKED_STATUSES: ProductionStatus[] = ['BLOCKED']
@@ -573,7 +573,7 @@ export function ProductionWorkbenchPage({
     ? (requestedTab as ProductionTab)
     : 'scale'
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()

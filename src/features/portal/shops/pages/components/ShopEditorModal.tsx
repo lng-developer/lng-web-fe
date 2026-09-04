@@ -4,7 +4,7 @@ import { Button, Divider, Form, Input, Modal, Switch } from 'antd'
 
 import { FormActions } from '@/shared/ui'
 
-import type { CreateShopInput, Shop, ShopStatus } from '../api/shopApi'
+import type { CreateShopInput, Shop, ShopStatus } from '../../api/shopApi'
 
 type EditorValues = CreateShopInput & { status?: ShopStatus }
 
@@ -37,30 +37,23 @@ export function ShopEditorModal({
     form.setFieldsValue(shop ? { ...shop } : { currency: 'USD' })
   }, [form, open, shop])
 
-  const close = () => {
-    if (!form.isFieldsTouched()) return onClose()
-    Modal.confirm({
-      title: t('actionFeedback.unsaved'),
-      content: t('portal.shops.unsavedDescription'),
-      okText: t('portal.shops.discard'),
-      cancelText: t('portal.shops.cancel'),
-      onOk: onClose,
-    })
-  }
+  const hasChanges = () =>
+    shop ? form.getFieldValue('status') !== shop.status : form.isFieldsTouched()
 
   return (
     <Modal
+      centered
       destroyOnHidden
       footer={null}
       open={open}
-      title={t(
+      title={
         isEditing
           ? canWrite
-            ? 'portal.shops.editTitle'
-            : 'portal.shops.inspectTitle'
-          : 'portal.shops.createTitle',
-      )}
-      onCancel={close}
+            ? t('portal.shops.editTitle')
+            : t('portal.shops.inspectTitle')
+          : t('portal.shops.createTitle')
+      }
+      onCancel={onClose}
     >
       <Form
         form={form}
@@ -112,15 +105,15 @@ export function ShopEditorModal({
             {() => (
               <FormActions
                 cancelLabel={t('portal.shops.cancel')}
-                dirty={form.isFieldsTouched()}
-                onCancel={close}
+                dirty={hasChanges()}
+                onCancel={onClose}
                 saving={saving}
-                submitLabel={t(isEditing ? 'portal.shops.saveStatus' : 'portal.shops.create')}
+                submitLabel={isEditing ? t('portal.shops.saveStatus') : t('portal.shops.create')}
               />
             )}
           </Form.Item>
         ) : (
-          <Button onClick={close}>{t('portal.shops.cancel')}</Button>
+          <Button onClick={onClose}>{t('portal.shops.cancel')}</Button>
         )}
       </Form>
     </Modal>

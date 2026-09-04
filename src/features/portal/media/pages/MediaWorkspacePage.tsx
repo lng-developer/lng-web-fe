@@ -8,6 +8,7 @@ import { Button, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
@@ -33,7 +34,6 @@ import { mediaKeys } from '../api/mediaKeys'
 import { MediaAssetDetailModal } from './MediaAssetDetailModal'
 import { MediaUploadModal } from './MediaUploadModal'
 
-const PAGE_SIZE = 20
 const MIME_GROUPS: MediaMimeGroup[] = ['IMAGE', 'DOCUMENT', 'ARCHIVE', 'OTHER']
 const PROVIDERS = ['local', 'cloudinary'] as const
 const RESOURCE_TYPES = ['image', 'video', 'raw'] as const
@@ -66,7 +66,7 @@ export function MediaWorkspacePage() {
   const [uploadOpen, setUploadOpen] = useState(false)
   const params: MediaAssetListParams = {
     page,
-    limit: PAGE_SIZE,
+    limit: DEFAULT_PAGE_SIZE,
     q: q || undefined,
     mimeGroup,
     provider,
@@ -186,7 +186,7 @@ export function MediaWorkspacePage() {
           onRow={(asset) => ({ onClick: () => setSelected(asset), style: { cursor: 'pointer' } })}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: assets.data?.pagination.total,
             onChange: setPage,
           }}

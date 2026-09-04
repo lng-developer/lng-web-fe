@@ -46,6 +46,7 @@ import {
 } from '@/features/portal/finance/api/financeApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { env } from '@/shared/config/env'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   DateRangePicker,
   FilterBar,
@@ -91,7 +92,6 @@ import { IntegrationImportsWorkbench } from './IntegrationImportsWorkbench'
 import styles from './IntegrationWorkbenchPage.module.scss'
 import { IntegrationWorkbenchTabs } from './IntegrationWorkbenchTabs'
 
-const PAGE_SIZE = 20
 type IntegrationWorkbenchTab = 'orders' | 'extension' | 'finance'
 const EXTENSION_API_BASE_URLS: Record<ExtensionTokenEnvironment, string> = {
   development: env.apiBaseUrl || 'https://dev-api.lngmerch.co',
@@ -146,7 +146,7 @@ function readParams(searchParams: URLSearchParams): ImportJobListParams {
   }
   return {
     page,
-    limit: PAGE_SIZE,
+    limit: DEFAULT_PAGE_SIZE,
     ...(shopId ? { shopId } : {}),
     ...(source ? { source } : {}),
     ...(status ? { status } : {}),
@@ -305,7 +305,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     queryFn: () =>
       listImportBatches({
         page: adsPage,
-        limit: PAGE_SIZE,
+        limit: DEFAULT_PAGE_SIZE,
         sourceType: 'ADS',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'US',
@@ -325,7 +325,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     queryFn: () =>
       listImportBatches({
         page: transactionPage,
-        limit: PAGE_SIZE,
+        limit: DEFAULT_PAGE_SIZE,
         sourceType: 'TRANSACTIONS',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'AMAZON',
@@ -345,7 +345,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     queryFn: () =>
       listImportBatches({
         page: settlementPage,
-        limit: PAGE_SIZE,
+        limit: DEFAULT_PAGE_SIZE,
         sourceType: 'SETTLEMENTS',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'AMAZON',
@@ -1046,7 +1046,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
           rowKey="id"
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: imports.data?.pagination.total,
             onChange: setPage,
           }}

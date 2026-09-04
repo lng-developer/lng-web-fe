@@ -71,7 +71,15 @@ export function AppShell() {
   )
   const { selectedKey } = getSidebarRouteState(location.pathname, groups)
   const isOrderWorkspace = location.pathname === '/portal/orders'
-  const isFixedWorkspace = location.pathname === '/portal/chat' || isOrderWorkspace
+  const isVendorWorkspace = location.pathname === '/portal/vendors'
+  const isMappingWorkspace = location.pathname === '/portal/mapping'
+  const isFixedWorkspace =
+    location.pathname === '/portal/chat' ||
+    isOrderWorkspace ||
+    location.pathname === '/portal/shops' ||
+    location.pathname === '/portal/catalog' ||
+    isVendorWorkspace ||
+    isMappingWorkspace
   const activeItem = groups.flatMap((group) => group.items).find(({ key }) => key === selectedKey)
   const pageTitle = activeItem
     ? t(activeItem.labelKey)
@@ -195,7 +203,9 @@ export function AppShell() {
           className={[
             styles.content,
             isFixedWorkspace ? styles.contentFixed : undefined,
-            isOrderWorkspace ? styles.contentOrderWorkspace : undefined,
+            isOrderWorkspace || isVendorWorkspace || isMappingWorkspace
+              ? styles.contentOrderWorkspace
+              : undefined,
           ]
             .filter(Boolean)
             .join(' ')}

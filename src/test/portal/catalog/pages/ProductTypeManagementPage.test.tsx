@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/app/common/CoreDataTable', async () => ({
@@ -6,6 +6,7 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 }))
 
 import { AppProviders } from '@/app/providers/AppProviders'
+import { listProductTypeGroups } from '@/features/portal/catalog/api/catalogApi'
 import { ProductTypeManagementPage } from '@/features/portal/catalog/pages/ProductTypeManagementPage'
 import i18n from '@/shared/i18n/i18n'
 
@@ -41,5 +42,34 @@ describe('ProductTypeManagementPage', () => {
     )
     await screen.findByText('SHIRT')
     expect(screen.queryByRole('button', { name: 'Edit product type' })).not.toBeInTheDocument()
+  })
+
+  it('resets to the first page and searches while typing', async () => {
+    render(
+      <AppProviders>
+        <ProductTypeManagementPage canManage />
+      </AppProviders>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Page 2' }))
+    await waitFor(() =>
+      expect(listProductTypeGroups).toHaveBeenLastCalledWith({
+        page: 2,
+        limit: 10,
+        search: undefined,
+      }),
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Search product types'), {
+      target: { value: 'shirt' },
+    })
+
+    await waitFor(() =>
+      expect(listProductTypeGroups).toHaveBeenLastCalledWith({
+        page: 1,
+        limit: 10,
+        search: 'shirt',
+      }),
+    )
   })
 })

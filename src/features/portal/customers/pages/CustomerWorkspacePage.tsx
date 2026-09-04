@@ -41,6 +41,7 @@ import {
 } from '@/features/portal/customers/api/customerApi'
 import { customerKeys } from '@/features/portal/customers/api/customerKeys'
 import { getPermissions } from '@/shared/auth/session'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { FilterBar, MetricCard, PageHeader } from '@/shared/ui'
 
 import styles from './CustomerWorkspacePage.module.scss'
@@ -55,13 +56,12 @@ const lifecycleColors: Record<CustomerLifecycle, string> = {
 
 const careOptions: CustomerCareStatus[] = ['NONE', 'NEEDS_FOLLOW_UP', 'IN_PROGRESS', 'RESOLVED']
 const lifecycleOptions: CustomerLifecycle[] = ['NEW', 'RETURNING', 'VIP', 'AT_RISK', 'ISSUE_PRONE']
-const PAGE_SIZE = 20
 
 export const CustomerWorkspacePage = () => {
   const { i18n, t } = useTranslation()
   const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [lifecycle, setLifecycle] = useState<CustomerLifecycle | undefined>()
   const [careStatus, setCareStatus] = useState<CustomerCareStatus | undefined>()

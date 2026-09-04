@@ -11,11 +11,18 @@ describe('Vendor workspace responsive tabs', () => {
     expect(productsTabSource).not.toContain('showSizeChanger: false')
   })
 
+  it('shows the product image instead of a redundant vendor-code column', () => {
+    expect(productsTabSource).toContain("dataIndex: 'imageUrl'")
+    expect(productsTabSource).not.toContain("title: t('portal.vendors.vendorCode')")
+  })
+
   it('gives Migration review a dedicated horizontal table scroll', () => {
     expect(migrationTabSource).toContain(
       "import { CoreDataTable } from '@/app/common/CoreDataTable'",
     )
     expect(migrationTabSource).toContain('<CoreDataTable')
+    expect(migrationTabSource).toContain('fillViewport')
+    expect(migrationTabSource).toContain('paginationAtBottom')
     expect(migrationTabSource).toContain('scroll={{ x: 900 }}')
     expect(migrationTabSource).toContain('pagination={{')
     expect(migrationTabSource).not.toContain('showSizeChanger: false')

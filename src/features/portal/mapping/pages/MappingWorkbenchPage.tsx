@@ -264,7 +264,7 @@ export function MappingWorkbenchPage({
   const stageCounters = useMemo(() => buildStageCounters(summary.data), [summary.data])
 
   return (
-    <section className={styles.page}>
+    <section className={styles.workbenchPage}>
       {/* ── Context Filter Bar ── */}
       <MappingContextBar
         loading={shops.isLoading}

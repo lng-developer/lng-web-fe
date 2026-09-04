@@ -3169,6 +3169,7 @@
       "dimensions": "Kích thước",
       "name": "Tên",
       "code": "Mã",
+      "image": "Hình ảnh",
       "vendorCode": "Mã vendor",
       "fulfillmentType": "Loại hoàn tất đơn",
       "providerKey": "Mã dịch vụ",

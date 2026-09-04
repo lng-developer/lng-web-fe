@@ -8,14 +8,13 @@ import { Button, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { hasAnyPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { getVendorProduct, listVendorCostCenters, type VendorCostCenter } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
 import { VendorCostCenterEditorModal } from './VendorCostCenterEditorModal'
 import styles from './VendorWorkspacePage.module.scss'
-
-const PAGE_SIZE = 20
 
 const formatMoney = (value?: number | null, currency = 'USD') => {
   if (value == null) return '—'
@@ -42,7 +41,7 @@ export function VendorProductCostCentersPage() {
   })
 
   const params = useMemo(
-    () => ({ limit: PAGE_SIZE, page, q: search.trim() || undefined }),
+    () => ({ limit: DEFAULT_PAGE_SIZE, page, q: search.trim() || undefined }),
     [page, search],
   )
   const costCenters = useQuery({
@@ -225,7 +224,7 @@ export function VendorProductCostCentersPage() {
           }}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: costCenters.data?.pagination.total,
             onChange: (nextPage) => setPage(nextPage),
             showSizeChanger: false,

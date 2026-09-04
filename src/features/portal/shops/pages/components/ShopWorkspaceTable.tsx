@@ -46,16 +46,16 @@ export function ShopWorkspaceTable({
   const { t } = useTranslation()
   const columns = useMemo<TableColumnsType<Shop>>(
     () => [
-      {
-        title: t('portal.shops.id'),
-        dataIndex: 'id',
-        width: 150,
-        render: (id: string) => (
-          <Typography.Text code copyable={{ text: id }}>
-            {id}
-          </Typography.Text>
-        ),
-      },
+      // {
+      //   title: t('portal.shops.id'),
+      //   dataIndex: 'id',
+      //   width: 150,
+      //   render: (id: string) => (
+      //     <Typography.Text code copyable={{ text: id }}>
+      //       {id}
+      //     </Typography.Text>
+      //   ),
+      // },
       {
         title: t('portal.shops.name'),
         dataIndex: 'name',
@@ -117,8 +117,10 @@ export function ShopWorkspaceTable({
   return (
     <SectionCard>
       <CoreDataTable
+        className={styles.compactTable}
         columns={columns}
         dataSource={data?.items ?? []}
+        fillViewport
         emptyText={
           params.search || params.status ? (
             <Empty description={t('portal.shops.noFilteredResults')}>

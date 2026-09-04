@@ -6,8 +6,9 @@ import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createProductTypeGroup,
@@ -18,15 +19,13 @@ import {
 } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
 
-const PAGE_SIZE = 20
-
 export function ProductTypeManagementPage({ canManage }: { readonly canManage: boolean }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [form] = Form.useForm<ProductTypeGroupInput>()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<ProductTypeGroup | null>()
   const params = { page, limit: pageSize, search: search || undefined }
@@ -67,8 +66,8 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
     )
   }
   const columns: TableColumnsType<ProductTypeGroup> = [
-    { title: t('portal.catalog.master.code'), dataIndex: 'code', width: 180 },
-    { title: t('portal.catalog.master.name'), dataIndex: 'name' },
+    { title: t('portal.catalog.master.code'), dataIndex: 'code', width: 520 },
+    { title: t('portal.catalog.master.name'), dataIndex: 'name', width: 520 },
     {
       title: t('portal.catalog.master.printMethod', { defaultValue: 'Print method' }),
       dataIndex: 'printMethod',
@@ -113,10 +112,6 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
 
   return (
     <section>
-      <PageHeader
-        title={t('portal.catalog.master.productTypes')}
-        description={t('portal.catalog.master.productTypeDescription')}
-      />
       <SectionCard>
         <CoreDataTable
           rowKey="id"
@@ -141,7 +136,10 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
                 allowClear
                 placeholder={t('portal.catalog.master.searchProductTypes')}
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
                 onSearch={() => setPage(1)}
               />
               {canManage ? (

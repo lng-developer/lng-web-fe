@@ -6,7 +6,7 @@ import { Button, Form, type TableProps, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
-import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import { StatusTag } from '@/shared/ui'
 import { useFeedbackToast } from '@/shared/ui/useFeedbackToast'
 
@@ -188,7 +188,7 @@ export const useAttendance = () => {
   ]
 
   const pagination = {
-    defaultPageSize: 20,
+    defaultPageSize: DEFAULT_PAGE_SIZE,
     pageSizeOptions: PAGE_SIZE_OPTIONS,
     showSizeChanger: true,
     hideOnSinglePage: false,
