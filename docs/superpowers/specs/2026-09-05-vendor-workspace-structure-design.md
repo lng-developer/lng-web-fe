@@ -1,19 +1,19 @@
-# Vendor Workspace Structure Design
+# Thiết kế cấu trúc Vendor Workspace
 
-## Goal
+## Mục tiêu
 
-Refactor the vendor UI into colocated UI-and-logic units while preserving the existing routes, visual output, API calls, permissions, i18n usage, and operator workflows.
+Tái cấu trúc UI vendor thành các đơn vị chứa cả UI và logic liên quan, nhưng giữ nguyên route, giao diện, API call, quyền truy cập, i18n và luồng thao tác hiện có.
 
-## Scope
+## Phạm vi
 
-- Reorganize source and vendor tests only.
-- Keep the existing `vendors/api/vendorApi.ts` and `vendors/api/vendorKeys.ts` public API unchanged in this refactor.
-- Do not change backend contracts, route paths, user-visible copy, or feature behavior.
-- Do not modify the current unrelated working-tree changes under integrations, orders, shared UI, or i18n.
+- Chỉ tổ chức lại source và test của vendor.
+- Giữ nguyên public API hiện tại tại `vendors/api/vendorApi.ts` và `vendors/api/vendorKeys.ts`.
+- Không thay đổi backend contract, route path, nội dung hiển thị cho người dùng hay hành vi của feature.
+- Không sửa các thay đổi đang có nhưng không liên quan tại integrations, orders, shared UI và i18n.
 
-## Directory Design
+## Thiết kế thư mục
 
-`pages/` remains the route surface. Each route page becomes a directory whose `index.tsx` is the UI composition entry point; its adjacent `use*.tsx` owns page-specific orchestration.
+`pages/` vẫn là bề mặt route. Mỗi route page trở thành một thư mục: `index.tsx` là điểm vào để ghép UI, còn `use*.tsx` liền kề sở hữu phần điều phối dành riêng cho page đó.
 
 ```text
 src/features/portal/vendors/
@@ -67,25 +67,25 @@ src/features/portal/vendors/
       useVendorCostCenterEditorPage.tsx
 ```
 
-## Boundaries
+## Ranh giới trách nhiệm
 
-- `index.tsx` renders the unit and is limited to presentation composition, props, and event wiring. It must not contain lengthy query/mutation/form/import orchestration.
-- `use*.tsx` owns the state and side effects exclusive to its colocated UI unit. It exposes a small view model consumed by its sibling `index.tsx`.
-- Leaf components with no meaningful local orchestration, such as tree branches, remain colocated next to their parent rather than receiving artificial hooks.
-- Dialog folders own their own form state and mutation behavior, preserving their existing exported component interfaces where practical.
-- `VendorWorkspacePage/index.tsx` is the sole route entry and composes tabs, dialogs, and the workspace hook. It owns no detailed tab UI.
-- The two existing standalone route pages move into their own page directories and use dedicated page hooks.
+- `index.tsx` render đơn vị UI và chỉ gồm việc ghép presentation, props và event wiring. Không chứa query/mutation/form/import orchestration dài.
+- `use*.tsx` sở hữu state và side effect dành riêng cho đơn vị UI cùng thư mục. Hook trả về một view model nhỏ cho `index.tsx` kế bên sử dụng.
+- Leaf component không có điều phối cục bộ đáng kể, như các branch trong tree, được đặt cạnh component cha thay vì tạo hook gượng ép.
+- Mỗi dialog folder tự sở hữu form state và mutation của nó, đồng thời giữ interface component export hiện tại ở mức có thể.
+- `VendorWorkspacePage/index.tsx` là entry duy nhất của route; nó ghép tabs, dialogs và workspace hook, không chứa UI chi tiết của từng tab.
+- Hai route page độc lập đang có được chuyển vào thư mục page riêng và dùng hook riêng cho page.
 
-## Import and Route Compatibility
+## Tương thích import và route
 
-- Update router lazy imports to target each page directory's `index.tsx`.
-- Update source and tests to import from the new directory paths.
-- Preserve the default export of `VendorWorkspacePage` and named exports used by routes/tests, unless every local consumer is migrated in the same change.
-- Do not introduce barrel files outside the local `index.tsx` component entries.
+- Cập nhật lazy import của router để trỏ vào `index.tsx` trong thư mục page.
+- Cập nhật source và test để import từ đường dẫn mới.
+- Giữ default export của `VendorWorkspacePage` và named export đang được route/test sử dụng, trừ khi mọi local consumer được migrate cùng thay đổi này.
+- Không tạo barrel file ngoài các entry `index.tsx` cục bộ.
 
-## Testing and Verification
+## Test và kiểm chứng
 
-- Move vendor tests to mirror the new page/unit paths under `src/test/portal/vendors/`.
-- Retain behavioral tests for dialogs, tree expansion/loading, tabs, cost center pages, migration review, and the vendor API.
-- Replace source-path assertions only where relocation changes the path; preserve assertions that protect intended behavior.
-- Run the vendor test suite, then `npm run lint`, then `npm run build`.
+- Di chuyển vendor test để mirror cấu trúc page/unit mới dưới `src/test/portal/vendors/`.
+- Giữ behavioral test cho dialog, tree expansion/loading, tabs, cost center pages, migration review và vendor API.
+- Chỉ thay source-path assertion tại nơi việc di chuyển làm thay đổi đường dẫn; giữ các assertion bảo vệ hành vi mong muốn.
+- Chạy vendor test suite, sau đó `npm run lint`, rồi `npm run build`.
