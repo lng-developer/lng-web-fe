@@ -76,6 +76,7 @@ export function PsdFileWorkspacePage() {
     {
       title: 'Role',
       dataIndex: 'role',
+      width: 120,
       render: (value) => (
         <StatusTag
           status={
@@ -89,16 +90,19 @@ export function PsdFileWorkspacePage() {
     {
       title: '',
       dataIndex: 'listing',
+      width: 140,
       render: (value) => <strong>{value.code ?? '-'}</strong>,
     },
     {
       title: 'Task status',
       dataIndex: 'task',
+      width: 140,
       render: (value) => <StatusTag status={tone(value.status)}>{value.status}</StatusTag>,
     },
     {
       title: 'Designer',
       dataIndex: 'designer',
+      width: 180,
       render: (value) => {
         const assignee = (assignees.data ?? []).find(({ id }) => id === value.id)
         const name = value.name ?? assignee?.fullName ?? assignee?.name ?? 'Unassigned'
@@ -113,11 +117,13 @@ export function PsdFileWorkspacePage() {
     {
       title: 'Version',
       dataIndex: 'submission',
+      width: 88,
       render: (value) => (value.version ? `v${value.version}` : '-'),
     },
     {
       title: 'Actions',
       dataIndex: 'asset',
+      width: 144,
       render: (asset) =>
         asset?.downloadUrl ? (
           <Space size={0}>
@@ -154,6 +160,8 @@ export function PsdFileWorkspacePage() {
       />
       <SectionCard>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 980 }}
           rowKey="rowKey"
           columns={columns}
           dataSource={files.data?.items ?? []}

@@ -38,6 +38,7 @@
 }
 
 .sectionCard {
+  min-width: 0;
   border: 1px solid color-mix(in srgb, var(--ant-color-border) 72%, var(--ui-border-soft));
   border-radius: 8px;
   background: var(--ant-color-bg-container);
@@ -419,7 +420,8 @@
 
 .dataTable {
   width: 100%;
-  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
   margin-top: 8px;
 }
 
@@ -480,6 +482,14 @@
   background: var(--ant-color-fill-alter);
   color: var(--ant-color-text-heading);
   text-align: left;
+
+  &:global(.ant-table-cell-align-right) {
+    text-align: right;
+  }
+
+  &:global(.ant-table-cell-align-center) {
+    text-align: center;
+  }
 }
 
 .dataTable :global(.ant-table-container) {
@@ -504,6 +514,14 @@
 .dataTable :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td) {
   border-bottom: 1px solid var(--ant-color-border-secondary);
   text-align: left;
+
+  &:global(.ant-table-cell-align-right) {
+    text-align: right;
+  }
+
+  &:global(.ant-table-cell-align-center) {
+    text-align: center;
+  }
 }
 
 .dataTable :global(.ant-table-expanded-row > .ant-table-cell) {

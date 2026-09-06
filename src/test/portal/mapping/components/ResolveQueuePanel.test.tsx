@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ResolveQueuePanel } from '@/features/portal/mapping/components/ResolveQueuePanel'
+import styles from '@/features/portal/mapping/pages/MappingWorkspacePage.module.scss'
 import i18n from '@/shared/i18n/i18n'
 
 const item = {
@@ -53,5 +54,36 @@ describe('ResolveQueuePanel', () => {
     fireEvent.scroll(container.firstElementChild!)
 
     expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('keeps the filters outside the independently scrollable queue list', () => {
+    const { container } = render(
+      <ResolveQueuePanel
+        items={[item]}
+        search=""
+        onBlockerChange={vi.fn()}
+        onSearchChange={vi.fn()}
+        onSelect={vi.fn()}
+        onRecommendedStage={vi.fn()}
+      />,
+    )
+
+    expect(container.firstElementChild).toHaveClass(styles.queuePanel)
+    expect(container.querySelector(`.${styles.queueList}`)).toBeInTheDocument()
+  })
+
+  it('shows the full order ID as a copyable badge', () => {
+    render(
+      <ResolveQueuePanel
+        items={[item]}
+        search=""
+        onBlockerChange={vi.fn()}
+        onSearchChange={vi.fn()}
+        onSelect={vi.fn()}
+        onRecommendedStage={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'order-1' })).toBeVisible()
   })
 })

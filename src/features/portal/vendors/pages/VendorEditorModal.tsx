@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Divider, Form, Input, Modal, Select, Space, Switch } from 'antd'
+import { Button, Divider, Form, Input, InputNumber, Modal, Select, Space, Switch } from 'antd'
 
 import { useFeedbackToast } from '@/shared/ui'
 
@@ -96,6 +96,10 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
 
         <Form.Item label={t('vendors.providerKey')} name="providerKey">
           <Input placeholder="PRINTWAY" />
+        </Form.Item>
+
+        <Form.Item label={t('vendors.unitSurchargeAmount')} name="unitSurchargeAmount">
+          <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="100" />
         </Form.Item>
 
         <Divider plain style={{ fontSize: 12, margin: '16px 0' }}>

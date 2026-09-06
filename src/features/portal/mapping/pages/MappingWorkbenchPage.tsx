@@ -1,16 +1,9 @@
-import { type ReactNode, useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouteLoaderData, useSearchParams } from 'react-router-dom'
-import {
-  ApartmentOutlined,
-  BlockOutlined,
-  BranchesOutlined,
-  FieldStringOutlined,
-  ScissorOutlined,
-  SyncOutlined,
-} from '@ant-design/icons'
+import { SyncOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App as AntdApp, Button, Card, Select, Space, Tag, Typography } from 'antd'
+import { App as AntdApp, Button, Card, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { orderKeys } from '@/features/portal/orders/api/orderKeys'
@@ -18,17 +11,14 @@ import { normalizeApiError } from '@/shared/api'
 import { CopyableOrderId, FeedbackAlert, useFeedbackToast } from '@/shared/ui'
 
 import {
-  getMappingSummary,
   listAuthorableShops,
   listUnmatchedItems,
-  type MappingSummary,
   previewOrderItem,
   recheckOrderItem,
   recheckUnmatched,
   searchVendorCandidates,
   selectFulfillmentCandidate,
   type UnmatchedMappingItem,
-  type UnmatchedParams,
   type VendorCandidateSearchRow,
 } from '../api/mappingApi'
 import { mappingKeys } from '../api/mappingKeys'
@@ -54,63 +44,6 @@ const toTraceCandidate = (item: VendorCandidateSearchRow): TraceCandidate => ({
   baseCostAmount: item.vendorCostCenter.baseCostAmount,
   currency: item.vendorCostCenter.currency,
 })
-
-type StageKey =
-  | 'SKU_CLEANUP'
-  | 'PRODUCT_MAPPING'
-  | 'INPUT_SEMANTICS'
-  | 'VALUE_ALIASES'
-  | 'VENDOR_ROUTING'
-
-type StageCounts = Record<StageKey, number>
-
-const STAGE_CONFIG: {
-  key: StageKey
-  icon: ReactNode
-  labelKey: string
-  countKey: StageKey
-}[] = [
-  {
-    key: 'SKU_CLEANUP',
-    icon: <ScissorOutlined />,
-    labelKey: 'mapping.pipeline.skuCleanup',
-    countKey: 'SKU_CLEANUP',
-  },
-  {
-    key: 'PRODUCT_MAPPING',
-    icon: <BlockOutlined />,
-    labelKey: 'mapping.pipeline.productMapping',
-    countKey: 'PRODUCT_MAPPING',
-  },
-  {
-    key: 'INPUT_SEMANTICS',
-    icon: <FieldStringOutlined />,
-    labelKey: 'mapping.pipeline.inputSemantics',
-    countKey: 'INPUT_SEMANTICS',
-  },
-  {
-    key: 'VALUE_ALIASES',
-    icon: <ApartmentOutlined />,
-    labelKey: 'mapping.pipeline.valueAliases',
-    countKey: 'VALUE_ALIASES',
-  },
-  {
-    key: 'VENDOR_ROUTING',
-    icon: <BranchesOutlined />,
-    labelKey: 'mapping.pipeline.vendorRouting',
-    countKey: 'VENDOR_ROUTING',
-  },
-]
-
-function buildStageCounters(summary?: MappingSummary): StageCounts {
-  return {
-    SKU_CLEANUP: 0,
-    PRODUCT_MAPPING: summary?.stageCounts?.PRODUCT_MAPPING ?? 0,
-    INPUT_SEMANTICS: summary?.stageCounts?.INPUT_SEMANTICS ?? 0,
-    VALUE_ALIASES: summary?.stageCounts?.VALUE_ALIASES ?? 0,
-    VENDOR_ROUTING: summary?.stageCounts?.VENDOR_ROUTING ?? 0,
-  }
-}
 
 export function MappingWorkbenchPage({
   account: accountProp,
@@ -138,8 +71,6 @@ export function MappingWorkbenchPage({
   const [queueSearch, setQueueSearch] = useState(linkedOrderItemId)
   const deferredQueueSearch = useDeferredValue(queueSearch)
   const [queueBlocker, setQueueBlocker] = useState<string>()
-  const [queueStage, setQueueStage] = useState<UnmatchedParams['stage']>()
-  const [queueAge, setQueueAge] = useState<UnmatchedParams['age']>()
   const [batchPage, setBatchPage] = useState(1)
   const [selectedItem, setSelectedItem] = useState<UnmatchedMappingItem | undefined>(() => {
     return linkedOrderItemId
@@ -158,19 +89,11 @@ export function MappingWorkbenchPage({
       ...apiContext,
       q: deferredQueueSearch,
       blocker: queueBlocker,
-      stage: queueStage,
-      age: queueAge,
       page: 1,
       limit: PAGE_SIZE,
     }),
-    [apiContext, deferredQueueSearch, queueBlocker, queueStage, queueAge],
+    [apiContext, deferredQueueSearch, queueBlocker],
   )
-
-  const summary = useQuery({
-    queryKey: mappingKeys.summary(apiContext),
-    queryFn: () => getMappingSummary(apiContext),
-    retry: false,
-  })
   const shops = useQuery({
     queryKey: mappingKeys.shops(),
     queryFn: listAuthorableShops,
@@ -261,8 +184,6 @@ export function MappingWorkbenchPage({
         }).toString()
       : ''
 
-  const stageCounters = useMemo(() => buildStageCounters(summary.data), [summary.data])
-
   return (
     <section className={styles.page}>
       {/* ── Context Filter Bar ── */}
@@ -296,54 +217,7 @@ export function MappingWorkbenchPage({
         }}
       />
 
-      {/* ── Stage Quick-Filter Pills ── */}
-      <div className={styles.stageFilters}>
-        {STAGE_CONFIG.map(({ key, icon, labelKey }) => {
-          const count = stageCounters[key]
-          const isActive = queueStage === key
-          return (
-            <button
-              key={key}
-              type="button"
-              className={`${styles.stagePill} ${isActive ? styles.active : ''}`}
-              onClick={() => {
-                setBatchPage(1)
-                setQueueStage(isActive ? undefined : key)
-              }}
-            >
-              {icon}
-              <span>{t(labelKey)}</span>
-              <span
-                className={`${styles.stagePillCount} ${count > 0 && !isActive ? styles.urgent : ''}`}
-              >
-                {count}
-              </span>
-            </button>
-          )
-        })}
-        <Select
-          allowClear
-          size="small"
-          style={{ minWidth: 140 }}
-          aria-label={t('mapping.filters.age')}
-          placeholder={t('mapping.filters.age')}
-          value={queueAge}
-          options={[
-            { value: 'TODAY', label: t('mapping.age.today', { defaultValue: 'Today' }) },
-            {
-              value: 'OVER_24_HOURS',
-              label: t('mapping.age.over24h', { defaultValue: '>24 hours' }),
-            },
-            { value: 'OVER_3_DAYS', label: t('mapping.age.over3d', { defaultValue: '>3 days' }) },
-          ]}
-          onChange={(value) => {
-            setBatchPage(1)
-            setQueueAge(value)
-          }}
-        />
-      </div>
-
-      {summary.error || unmatched.error ? (
+      {unmatched.error ? (
         <FeedbackAlert type="error" title={t('mapping.feedback.loadFailed')} />
       ) : null}
 

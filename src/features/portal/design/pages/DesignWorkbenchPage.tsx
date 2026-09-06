@@ -758,22 +758,24 @@ export function DesignWorkbenchPage() {
         />
       </div>
 
+      <div className={styles.taskNavigation}>
+        <UiButtonTabs
+          className={styles.channelFilter}
+          value={salesChannelCode ?? 'ALL'}
+          items={[
+            { label: t('portal.design.channelAll'), value: 'ALL' },
+            { label: 'Amazon', value: 'AMAZON' },
+            { label: 'Etsy', value: 'ETSY' },
+          ]}
+          onChange={handleSalesChannelChange}
+        />
+      </div>
       <SectionCard>
         <div className={styles.taskToolbar}>
           <div className={styles.taskToolbarTitleGroup}>
             <Typography.Title className={styles.taskToolbarTitle} level={4}>
               {t('portal.design.tasks', 'Design Tasks')}
             </Typography.Title>
-            <UiButtonTabs
-              className={styles.channelFilter}
-              value={salesChannelCode ?? 'ALL'}
-              items={[
-                { label: t('portal.design.channelAll'), value: 'ALL' },
-                { label: 'Amazon', value: 'AMAZON' },
-                { label: 'Etsy', value: 'ETSY' },
-              ]}
-              onChange={handleSalesChannelChange}
-            />
           </div>
           <Space className={styles.taskToolbarActions}>
             <Button

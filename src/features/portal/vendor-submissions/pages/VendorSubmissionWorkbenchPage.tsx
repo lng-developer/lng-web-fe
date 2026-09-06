@@ -204,6 +204,7 @@ export function VendorSubmissionWorkbenchPage({
     {
       title: t('portal.vendorSubmissions.columns.order'),
       dataIndex: 'externalOrderId',
+      width: 176,
       render: (value) => <CopyableOrderId value={value} />,
     },
     {
@@ -214,11 +215,13 @@ export function VendorSubmissionWorkbenchPage({
     },
     {
       title: t('portal.vendorSubmissions.columns.vendor'),
+      width: 172,
       render: (_, row) => `${row.vendorName || '-'} / ${row.provider || '-'}`,
     },
     {
       title: t('portal.vendorSubmissions.columns.status'),
       dataIndex: 'status',
+      width: 128,
       render: (value: VendorSubmissionStatus) => (
         <StatusTag status={tone(value)}>
           {t(`portal.vendorSubmissions.statuses.${value}`)}
@@ -309,6 +312,8 @@ export function VendorSubmissionWorkbenchPage({
       </div>
       <SectionCard>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 1_100 }}
           rowKey="id"
           columns={columns}
           dataSource={submissions.data?.items ?? []}
@@ -420,9 +425,7 @@ export function VendorSubmissionWorkbenchPage({
               <StatusTag status={tone(detail.data.status)}>
                 {t(`portal.vendorSubmissions.statuses.${detail.data.status}`)}
               </StatusTag>
-              <Typography.Text strong style={{ fontSize: 15 }}>
-                {detail.data.externalOrderId}
-              </Typography.Text>
+              <CopyableOrderId strong value={detail.data.externalOrderId} />
             </div>
 
             <Descriptions

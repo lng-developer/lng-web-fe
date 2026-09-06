@@ -213,6 +213,18 @@ export function VendorProductEditorModal({
                 />
               </Form.Item>
               <Form.Item
+                label={t('vendors.unitSurchargeAmount')}
+                name="unitSurchargeAmount"
+                rules={[numberRule]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="100 (in cents)"
+                />
+              </Form.Item>
+              <Form.Item
                 label={t('vendors.currency')}
                 name="currency"
                 normalize={(value) => String(value ?? '').toUpperCase()}

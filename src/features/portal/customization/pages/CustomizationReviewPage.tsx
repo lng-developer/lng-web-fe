@@ -101,6 +101,7 @@ export const CustomizationReviewPage = () => {
     () => [
       {
         title: t('customization.columns.order'),
+        width: 184,
         render: (_, row) => (
           <>
             <CopyableOrderId strong value={row.order.externalOrderId} />
@@ -111,11 +112,17 @@ export const CustomizationReviewPage = () => {
       },
       {
         title: t('customization.columns.customer'),
+        width: 168,
         render: (_, row) => row.customer.name || row.customer.email || '—',
       },
-      { title: t('customization.columns.shop'), render: (_, row) => row.shop.name || '—' },
+      {
+        title: t('customization.columns.shop'),
+        width: 148,
+        render: (_, row) => row.shop.name || '—',
+      },
       {
         title: t('customization.columns.status'),
+        width: 132,
         render: (_, row) => (
           <StatusTag status={tone(row.status)}>
             {t(`customization.statuses.${row.status}`)}
@@ -128,6 +135,7 @@ export const CustomizationReviewPage = () => {
       },
       {
         title: t('customization.columns.assets'),
+        width: 88,
         render: (_, row) => `${row.assets.extracted}/${row.assets.total}`,
       },
       {
@@ -193,6 +201,8 @@ export const CustomizationReviewPage = () => {
           />
         </FilterBar>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 1_040 }}
           rowKey="id"
           columns={columns}
           dataSource={queue.data?.items}

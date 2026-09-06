@@ -135,14 +135,12 @@
 .orderIdChip {
   display: inline-flex;
   max-width: 100%;
-  padding: 2px 8px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 999px;
-  background: var(--ant-color-fill-quaternary);
-  white-space: nowrap;
 }
 .orderIdChip :global(.ant-typography) {
   overflow: hidden;
+  border: 0;
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 82%, var(--ant-color-bg-container));
+  font-weight: 700;
   text-overflow: ellipsis;
 }
 .caseButton {
@@ -376,8 +374,8 @@
   background: color-mix(in srgb, var(--ant-color-primary-bg) 54%, var(--ant-color-fill-quaternary));
 }
 .skuChip {
-  color: var(--ant-color-cyan-text, var(--ant-color-cyan));
-  background: color-mix(in srgb, var(--ant-color-cyan-bg) 68%, var(--ant-color-fill-quaternary));
+  color: var(--ant-color-info-text);
+  background: var(--ant-color-info-bg);
 }
 .asinChip {
   color: var(--ant-color-primary-text, var(--ant-color-primary));

@@ -100,7 +100,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
     {
       title: t('portal.integrations.issues.severity', { defaultValue: 'Severity' }),
       dataIndex: 'severity',
-      width: 110,
+      width: 96,
       render: (severity: ImportIssueSeverity, issue) => (
         <StatusTag status={issueTone(issue)}>
           {t(`portal.integrations.severities.${severity}`, { defaultValue: severity })}
@@ -110,17 +110,19 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
     {
       title: t('portal.integrations.issues.type', { defaultValue: 'Type' }),
       dataIndex: 'issueType',
-      width: 190,
+      width: 200,
       render: (issueType: string) =>
         t(`portal.integrations.issueTypes.${issueType}`, { defaultValue: issueType }),
     },
     {
       title: t('portal.integrations.issues.reference', { defaultValue: 'Reference' }),
-      width: 210,
+      width: 220,
       render: (_, issue) => (
         <Space orientation="vertical" size={0}>
           <CopyableOrderId value={issue.externalOrderId} fallback="-" />
-          <Typography.Text type="secondary">{issue.externalItemId ?? '-'}</Typography.Text>
+          {issue.externalItemId ? (
+            <Typography.Text type="secondary">{issue.externalItemId}</Typography.Text>
+          ) : null}
         </Space>
       ),
     },
@@ -138,7 +140,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
     {
       title: t('portal.integrations.issues.status', { defaultValue: 'Status' }),
       dataIndex: 'status',
-      width: 120,
+      width: 104,
       render: (status: ImportIssueStatus, issue) => (
         <StatusTag status={issueTone(issue)}>
           {t(`portal.integrations.issueStatuses.${status}`, { defaultValue: status })}
@@ -149,8 +151,8 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
       ? [
           {
             title: t('portal.integrations.issues.actions', { defaultValue: 'Actions' }),
-            align: 'right' as const,
-            width: 72,
+            align: 'center' as const,
+            width: 84,
             render: (_: unknown, issue: ImportIssue) =>
               issue.status === 'OPEN' && canWriteOrdersForShop(account, issue.shopId) ? (
                 <Tooltip
@@ -176,152 +178,158 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
   ]
 
   return (
-    <SectionCard>
-      <Typography.Title level={2}>
-        {t('portal.integrations.issues.title', { defaultValue: 'Import issue queue' })}
-      </Typography.Title>
-      {issues.error ? (
-        <FeedbackAlert
-          type="error"
-          title={t('portal.integrations.issues.unavailable', {
-            defaultValue: 'Import issues are unavailable',
-          })}
-          action={
-            <Button
-              type="link"
-              icon={<ReloadOutlined aria-hidden />}
-              onClick={() => void issues.refetch()}
+    <section className={styles.issueQueue}>
+      <SectionCard>
+        <Typography.Title level={2}>
+          {t('portal.integrations.issues.title', { defaultValue: 'Import issue queue' })}
+        </Typography.Title>
+        {issues.error ? (
+          <FeedbackAlert
+            type="error"
+            title={t('portal.integrations.issues.unavailable', {
+              defaultValue: 'Import issues are unavailable',
+            })}
+            action={
+              <Button
+                type="link"
+                icon={<ReloadOutlined aria-hidden />}
+                onClick={() => void issues.refetch()}
+              >
+                {t('portal.integrations.retry', { defaultValue: 'Retry' })}
+              </Button>
+            }
+          />
+        ) : null}
+        <CoreDataTable
+          columns={columns}
+          dataSource={issues.data?.items ?? []}
+          loading={issues.isLoading}
+          rowKey="id"
+          pagination={{
+            current: params.page,
+            pageSize: PAGE_SIZE,
+            total: issues.data?.pagination.total,
+            onChange: (page) => setParams((current) => ({ ...current, page })),
+          }}
+          toolbar={
+            <FilterBar
+              label={t('portal.integrations.issues.filters', { defaultValue: 'Issue filters' })}
+              contentClassName={styles.issueFilters}
             >
-              {t('portal.integrations.retry', { defaultValue: 'Retry' })}
-            </Button>
+              <Select
+                aria-label={t('portal.integrations.issues.shopFilter', {
+                  defaultValue: 'Issue shop',
+                })}
+                allowClear
+                options={shops.map((shop) => ({ label: shop.name, value: shop.id }))}
+                placeholder={t('portal.integrations.issues.allShops', {
+                  defaultValue: 'All shops',
+                })}
+                value={params.shopId}
+                onChange={(shopId) => updateParams('shopId', shopId)}
+              />
+              <Select
+                aria-label={t('portal.integrations.issues.sourceFilter', {
+                  defaultValue: 'Issue source',
+                })}
+                allowClear
+                options={SOURCES.map((source) => ({
+                  label: t(`portal.integrations.sources.${source}`, { defaultValue: source }),
+                  value: source,
+                }))}
+                placeholder={t('portal.integrations.issues.allSources', {
+                  defaultValue: 'All sources',
+                })}
+                value={params.source}
+                onChange={(source) => updateParams('source', source)}
+              />
+              <Select
+                aria-label={t('portal.integrations.issues.severityFilter', {
+                  defaultValue: 'Issue severity',
+                })}
+                allowClear
+                options={SEVERITIES.map((severity) => ({
+                  label: t(`portal.integrations.severities.${severity}`, {
+                    defaultValue: severity,
+                  }),
+                  value: severity,
+                }))}
+                placeholder={t('portal.integrations.issues.allSeverities', {
+                  defaultValue: 'All severities',
+                })}
+                value={params.severity}
+                onChange={(severity) => updateParams('severity', severity)}
+              />
+              <Select
+                aria-label={t('portal.integrations.issues.statusFilter', {
+                  defaultValue: 'Issue status',
+                })}
+                allowClear
+                options={STATUSES.map((status) => ({
+                  label: t(`portal.integrations.issueStatuses.${status}`, { defaultValue: status }),
+                  value: status,
+                }))}
+                placeholder={t('portal.integrations.issues.allStatuses', {
+                  defaultValue: 'All statuses',
+                })}
+                value={params.status}
+                onChange={(status) => updateParams('status', status)}
+              />
+              <Select
+                aria-label={t('portal.integrations.issues.typeFilter', {
+                  defaultValue: 'Issue type',
+                })}
+                allowClear
+                showSearch
+                options={ISSUE_TYPES.map((issueType) => ({
+                  label: t(`portal.integrations.issueTypes.${issueType}`, {
+                    defaultValue: issueType,
+                  }),
+                  value: issueType,
+                }))}
+                placeholder={t('portal.integrations.issues.allTypes', {
+                  defaultValue: 'All issue types',
+                })}
+                value={params.issueType}
+                onChange={(issueType) => updateParams('issueType', issueType)}
+              />
+              <SearchInput
+                aria-label={t('portal.integrations.issues.externalOrderId', {
+                  defaultValue: 'External order ID',
+                })}
+                allowClear
+                placeholder={t('portal.integrations.issues.externalOrderId', {
+                  defaultValue: 'External order ID',
+                })}
+                value={params.externalOrderId}
+                onSearchChange={(value) => updateParams('externalOrderId', value)}
+              />
+              <SearchInput
+                aria-label={t('portal.integrations.issues.externalItemId', {
+                  defaultValue: 'External item ID',
+                })}
+                allowClear
+                placeholder={t('portal.integrations.issues.externalItemId', {
+                  defaultValue: 'External item ID',
+                })}
+                value={params.externalItemId}
+                onSearchChange={(value) => updateParams('externalItemId', value)}
+              />
+            </FilterBar>
           }
         />
-      ) : null}
-      <CoreDataTable
-        columns={columns}
-        dataSource={issues.data?.items ?? []}
-        loading={issues.isLoading}
-        rowKey="id"
-        pagination={{
-          current: params.page,
-          pageSize: PAGE_SIZE,
-          total: issues.data?.pagination.total,
-          onChange: (page) => setParams((current) => ({ ...current, page })),
-        }}
-        toolbar={
-          <FilterBar
-            label={t('portal.integrations.issues.filters', { defaultValue: 'Issue filters' })}
-            contentClassName={styles.issueFilters}
-          >
-            <Select
-              aria-label={t('portal.integrations.issues.shopFilter', {
-                defaultValue: 'Issue shop',
-              })}
-              allowClear
-              options={shops.map((shop) => ({ label: shop.name, value: shop.id }))}
-              placeholder={t('portal.integrations.issues.allShops', { defaultValue: 'All shops' })}
-              value={params.shopId}
-              onChange={(shopId) => updateParams('shopId', shopId)}
-            />
-            <Select
-              aria-label={t('portal.integrations.issues.sourceFilter', {
-                defaultValue: 'Issue source',
-              })}
-              allowClear
-              options={SOURCES.map((source) => ({
-                label: t(`portal.integrations.sources.${source}`, { defaultValue: source }),
-                value: source,
-              }))}
-              placeholder={t('portal.integrations.issues.allSources', {
-                defaultValue: 'All sources',
-              })}
-              value={params.source}
-              onChange={(source) => updateParams('source', source)}
-            />
-            <Select
-              aria-label={t('portal.integrations.issues.severityFilter', {
-                defaultValue: 'Issue severity',
-              })}
-              allowClear
-              options={SEVERITIES.map((severity) => ({
-                label: t(`portal.integrations.severities.${severity}`, { defaultValue: severity }),
-                value: severity,
-              }))}
-              placeholder={t('portal.integrations.issues.allSeverities', {
-                defaultValue: 'All severities',
-              })}
-              value={params.severity}
-              onChange={(severity) => updateParams('severity', severity)}
-            />
-            <Select
-              aria-label={t('portal.integrations.issues.statusFilter', {
-                defaultValue: 'Issue status',
-              })}
-              allowClear
-              options={STATUSES.map((status) => ({
-                label: t(`portal.integrations.issueStatuses.${status}`, { defaultValue: status }),
-                value: status,
-              }))}
-              placeholder={t('portal.integrations.issues.allStatuses', {
-                defaultValue: 'All statuses',
-              })}
-              value={params.status}
-              onChange={(status) => updateParams('status', status)}
-            />
-            <Select
-              aria-label={t('portal.integrations.issues.typeFilter', {
-                defaultValue: 'Issue type',
-              })}
-              allowClear
-              showSearch
-              options={ISSUE_TYPES.map((issueType) => ({
-                label: t(`portal.integrations.issueTypes.${issueType}`, {
-                  defaultValue: issueType,
-                }),
-                value: issueType,
-              }))}
-              placeholder={t('portal.integrations.issues.allTypes', {
-                defaultValue: 'All issue types',
-              })}
-              value={params.issueType}
-              onChange={(issueType) => updateParams('issueType', issueType)}
-            />
-            <SearchInput
-              aria-label={t('portal.integrations.issues.externalOrderId', {
-                defaultValue: 'External order ID',
-              })}
-              allowClear
-              placeholder={t('portal.integrations.issues.externalOrderId', {
-                defaultValue: 'External order ID',
-              })}
-              value={params.externalOrderId}
-              onSearchChange={(value) => updateParams('externalOrderId', value)}
-            />
-            <SearchInput
-              aria-label={t('portal.integrations.issues.externalItemId', {
-                defaultValue: 'External item ID',
-              })}
-              allowClear
-              placeholder={t('portal.integrations.issues.externalItemId', {
-                defaultValue: 'External item ID',
-              })}
-              value={params.externalItemId}
-              onSearchChange={(value) => updateParams('externalItemId', value)}
-            />
-          </FilterBar>
-        }
-      />
-      <IssueResolutionModal
-        issue={resolvingIssue}
-        open={Boolean(resolvingIssue)}
-        saving={resolution.isPending}
-        error={resolution.error}
-        onClose={() => {
-          resolution.reset()
-          setResolvingIssue(undefined)
-        }}
-        onSubmit={(input) => resolution.mutate(input)}
-      />
-    </SectionCard>
+        <IssueResolutionModal
+          issue={resolvingIssue}
+          open={Boolean(resolvingIssue)}
+          saving={resolution.isPending}
+          error={resolution.error}
+          onClose={() => {
+            resolution.reset()
+            setResolvingIssue(undefined)
+          }}
+          onSubmit={(input) => resolution.mutate(input)}
+        />
+      </SectionCard>
+    </section>
   )
 }

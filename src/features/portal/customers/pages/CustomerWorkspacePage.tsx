@@ -156,6 +156,7 @@ export const CustomerWorkspacePage = () => {
     {
       title: t('customers.columns.lifecycle'),
       dataIndex: 'lifecycle',
+      width: 128,
       render: (value: CustomerLifecycle) => (
         <Tag color={lifecycleColors[value]}>{labelOf(value)}</Tag>
       ),
@@ -163,6 +164,7 @@ export const CustomerWorkspacePage = () => {
     {
       title: t('customers.columns.care'),
       dataIndex: 'careStatus',
+      width: 156,
       render: (value: CustomerCareStatus, row) =>
         canWrite ? (
           <Select
@@ -175,18 +177,21 @@ export const CustomerWorkspacePage = () => {
           <Tag>{labelOf(value)}</Tag>
         ),
     },
-    { title: t('customers.columns.orders'), dataIndex: 'orderCount', sorter: true },
+    { title: t('customers.columns.orders'), dataIndex: 'orderCount', sorter: true, width: 88 },
     {
       title: t('customers.columns.revenue'),
+      width: 128,
       render: (_, row) => money(row.totalRevenueAmount, row.currency),
     },
     {
       title: t('customers.columns.lastOrder'),
+      width: 144,
       render: (_, row) =>
         row.lastOrderAt ? dayjs(row.lastOrderAt).format('DD MMM YYYY') : t('customers.empty.dash'),
     },
     {
       title: '',
+      width: 104,
       render: (_, row) => (
         <Button type="link" onClick={() => setSelectedId(row.id)}>
           <EyeOutlined /> {t('customers.actions.view')}
@@ -283,6 +288,8 @@ export const CustomerWorkspacePage = () => {
         </FilterBar>
 
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 960 }}
           rowKey="id"
           columns={columns}
           dataSource={customers.data?.items ?? []}

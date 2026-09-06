@@ -15,12 +15,19 @@ function sampleDetails(item: Record<string, unknown>): Array<[string, unknown]> 
     ['Product group', item.productTypeGroupId],
     ['Template', item.internalTemplateId],
     ['Product type', item.platformProductType],
-    ['Role', item.semanticRole],
-    ['Match', item.matchValue],
+    [item.matchTarget === 'LABEL' ? 'Semantic role' : 'Role', item.semanticRole],
+    [item.matchTarget === 'LABEL' ? 'Matched label alias' : 'Matched input', item.matchValue],
     ['Normalized', item.normalizedValue],
     ['Vendor', item.vendorId],
   ]
-  return details.filter(([, value]) => value != null && value !== '')
+  const parsedDetails = Array.isArray(item.parsedInputs)
+    ? item.parsedInputs.flatMap((parsed) => {
+        if (!parsed || typeof parsed !== 'object') return []
+        const { semanticRole, value } = parsed as Record<string, unknown>
+        return semanticRole && value ? [[String(semanticRole), value] as [string, unknown]] : []
+      })
+    : []
+  return [...details, ...parsedDetails].filter(([, value]) => value != null && value !== '')
 }
 
 export function RuleImpactSamples({

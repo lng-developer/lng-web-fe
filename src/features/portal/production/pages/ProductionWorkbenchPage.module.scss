@@ -76,25 +76,46 @@
   scrollbar-gutter: stable;
 }
 
-.queueHeader {
+.queueToolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px;
 }
 
-.queueHeader .queueTabs,
-.queueHeader .channelFilter {
+.queueToolbar .queueTabs,
+.queueToolbar .channelFilter {
   align-items: center;
   align-self: center;
 }
 
-.queueHeader .channelFilter {
+.queueToolbar .channelFilter {
   flex-shrink: 0;
+  gap: 0;
 }
 
-.queueHeader :global(.ant-btn) {
+.queueToolbar .channelFilter :global(.ant-btn) {
+  border-radius: 0;
+}
+
+.queueToolbar .channelFilter :global(.ant-btn + .ant-btn) {
+  margin-left: -1px;
+}
+
+.queueToolbar .channelFilter :global(.ant-btn:first-child) {
+  border-radius: 8px 0 0 8px;
+}
+
+.queueToolbar .channelFilter :global(.ant-btn:last-child) {
+  border-radius: 0 8px 8px 0;
+}
+
+.queueToolbar .channelFilter :global(.ant-btn-primary) {
+  position: relative;
+  z-index: 1;
+}
+
+.queueToolbar :global(.ant-btn) {
   display: inline-flex;
   align-items: center;
   justify-content: center;

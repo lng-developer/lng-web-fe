@@ -183,9 +183,14 @@ export function ShipmentWorkbenchPage({
     {
       title: t('portal.shipments.columns.order'),
       dataIndex: 'externalOrderId',
+      width: 176,
       render: (value) => <CopyableOrderId value={value} />,
     },
-    { title: t('portal.shipments.columns.vendorOrder'), dataIndex: 'vendorExternalOrderId' },
+    {
+      title: t('portal.shipments.columns.vendorOrder'),
+      dataIndex: 'vendorExternalOrderId',
+      width: 172,
+    },
     { title: t('portal.shipments.columns.provider'), dataIndex: 'provider', width: 120 },
     {
       title: t('portal.shipments.columns.tracking'),
@@ -255,6 +260,7 @@ export function ShipmentWorkbenchPage({
       </div>
       <SectionCard>
         <CoreDataTable
+          tableLayout="fixed"
           rowKey="id"
           columns={columns}
           dataSource={shipments.data?.items ?? []}
@@ -269,7 +275,7 @@ export function ShipmentWorkbenchPage({
               setPageSize(nextPageSize)
             },
           }}
-          scroll={{ x: '100%' }}
+          scroll={{ x: 1_100 }}
           toolbar={
             <FilterBar label={t('portal.shipments.filters')} contentClassName={styles.filters}>
               <Input.Search

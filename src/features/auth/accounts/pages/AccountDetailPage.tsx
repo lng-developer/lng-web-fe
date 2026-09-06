@@ -3,7 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { LockOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Descriptions, Form, Input, Result, Typography } from 'antd'
+import {
+  Button,
+  DatePicker,
+  Descriptions,
+  Form,
+  Input,
+  InputNumber,
+  Result,
+  Typography,
+} from 'antd'
+import dayjs from 'dayjs'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
@@ -15,7 +25,11 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { loadAccount, updateAccountEmail } from '../api/accountManagementApi'
+import {
+  loadAccount,
+  updateAccountEmail,
+  updateAccountOperatingCost,
+} from '../api/accountManagementApi'
 import styles from './AccountDetailPage.module.scss'
 
 export function AccountDetailPage() {
@@ -24,6 +38,7 @@ export function AccountDetailPage() {
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [emailForm] = Form.useForm<{ email: string }>()
+  const [costForm] = Form.useForm<{ amount: number; startedAt: dayjs.Dayjs | null }>()
   const canRead = hasAnyPermission(['AUTH:READ', 'AUTH:WRITE'], { globalOnly: true })
   const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
   const { data, error, isLoading, refetch } = useQuery({
@@ -40,10 +55,32 @@ export function AccountDetailPage() {
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+  const operatingCostMutation = useMutation({
+    mutationFn: ({ amount, startedAt }: { amount: number; startedAt: dayjs.Dayjs | null }) =>
+      updateAccountOperatingCost(
+        accountId,
+        Math.round(amount * 100),
+        startedAt?.toISOString() || null,
+      ),
+    onSuccess: async () => {
+      showFeedbackToast('success', t('actionFeedback.saved'))
+      await queryClient.invalidateQueries({ queryKey: ['auth-account', accountId] })
+    },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
+  })
 
   useEffect(() => {
     if (data?.account.email) emailForm.setFieldValue('email', data.account.email)
   }, [data?.account.email, emailForm])
+  useEffect(() => {
+    if (data?.account)
+      costForm.setFieldsValue({
+        amount: (data.account.operatingCostAmount || 0) / 100,
+        startedAt: data.account.operatingCostStartedAt
+          ? dayjs(data.account.operatingCostStartedAt)
+          : null,
+      })
+  }, [data?.account, costForm])
 
   if (!canRead) return <Result status="403" title="403" />
   if (isLoading) return <LoadingState variant="page" />
@@ -102,6 +139,40 @@ export function AccountDetailPage() {
           {canWrite ? (
             <Button htmlType="submit" loading={emailMutation.isPending}>
               {t('auth.accountDetail.saveEmail')}
+            </Button>
+          ) : null}
+        </Form>
+      </SectionCard>
+      <SectionCard title="Operating cost">
+        <Typography.Paragraph type="secondary">
+          Daily cost is charged from the start date through the account deactivation date.
+        </Typography.Paragraph>
+        <Form
+          form={costForm}
+          layout="vertical"
+          onFinish={(values) => operatingCostMutation.mutate(values)}
+        >
+          <Form.Item label="Daily cost (USD)" name="amount" rules={[{ required: true }]}>
+            <InputNumber min={0} precision={2} prefix="$" disabled={!canWrite} />
+          </Form.Item>
+          <Form.Item label="Start date" name="startedAt">
+            <DatePicker disabled={!canWrite} />
+          </Form.Item>
+          <Descriptions
+            column={1}
+            items={[
+              {
+                key: 'end',
+                label: 'End date',
+                children: account.deactivatedAt
+                  ? new Date(account.deactivatedAt).toLocaleDateString()
+                  : 'Active account',
+              },
+            ]}
+          />
+          {canWrite ? (
+            <Button htmlType="submit" loading={operatingCostMutation.isPending}>
+              Save operating cost
             </Button>
           ) : null}
         </Form>

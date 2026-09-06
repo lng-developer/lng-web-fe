@@ -12,6 +12,7 @@ import {
   recalculateOrder,
 } from '@/features/portal/finance/api/financeApi'
 import { FinanceWorkspacePage } from '@/features/portal/finance/pages/FinanceWorkspacePage'
+import { listShops } from '@/features/portal/shops/api/shopApi'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
 
@@ -31,6 +32,9 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
   getOrderFinanceSummary: vi.fn(),
   getOrderItemFinanceSnapshot: vi.fn(),
   recalculateOrder: vi.fn(),
+}))
+vi.mock('@/features/portal/shops/api/shopApi', () => ({
+  listShops: vi.fn(),
 }))
 
 function LocationProbe() {
@@ -66,6 +70,7 @@ describe('FinanceWorkspacePage', () => {
           id: 'snapshot-1',
           orderId: 'order-1',
           orderItemId: 'item-1',
+          shopId: 'shop-1',
           externalOrderId: 'ORDER-100',
           salesChannelCode: 'AMAZON',
           marketplaceCode: 'AMAZON_US',
@@ -75,6 +80,7 @@ describe('FinanceWorkspacePage', () => {
           revenue: {
             customerPaidAmount: 10000,
             feeAmount: 900,
+            feeSource: 'ESTIMATED_15_PERCENT',
             refundAmount: 200,
             discountAmount: 300,
             currency: 'USD',
@@ -84,7 +90,7 @@ describe('FinanceWorkspacePage', () => {
             totalCostAmount: 4500,
             costLines: [],
             costStatus: 'PRESENT',
-            missingCostReason: null,
+            missingCostReason: 'COST_ESTIMATE_NOT_AVAILABLE',
           },
           margin: { grossProfitAmount: 4100, grossMarginBps: 4100 },
           orderPnl: null,
@@ -97,7 +103,14 @@ describe('FinanceWorkspacePage', () => {
       summaryByCurrency: [
         {
           currency: 'USD',
+          orderCount: 64,
           revenueAmount: 10000,
+          marketplaceFeeAmount: 1000,
+          refundAmount: 200,
+          discountAmount: 100,
+          baseCostAmount: 5000,
+          additionalFulfillmentCostAmount: 1000,
+          knownCostAmount: 6000,
           totalCostAmount: 6000,
           profitAmount: 4000,
           grossMarginBps: 4000,
@@ -105,7 +118,14 @@ describe('FinanceWorkspacePage', () => {
         },
         {
           currency: 'VND',
+          orderCount: 12,
           revenueAmount: 25000000,
+          marketplaceFeeAmount: 2000000,
+          refundAmount: 0,
+          discountAmount: 0,
+          baseCostAmount: 16000000,
+          additionalFulfillmentCostAmount: 4000000,
+          knownCostAmount: 18000000,
           totalCostAmount: 20000000,
           profitAmount: 5000000,
           grossMarginBps: 2000,
@@ -123,6 +143,19 @@ describe('FinanceWorkspacePage', () => {
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [],
       pagination: { total: 120, page: 1, limit: 20 },
+    })
+    vi.mocked(listShops).mockResolvedValue({
+      items: [
+        {
+          id: 'shop-1',
+          name: 'Evermore LLC',
+          currency: 'USD',
+          status: 'ACTIVE',
+          createdAt: '',
+          updatedAt: '',
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 100 },
     })
     vi.mocked(getOrderFinanceSummary).mockResolvedValue({
       orderId: 'order-1',
@@ -163,6 +196,7 @@ describe('FinanceWorkspacePage', () => {
       id: 'snapshot-1',
       orderId: 'order-1',
       orderItemId: 'item-1',
+      shopId: 'shop-1',
       externalOrderId: 'ORDER-100',
       salesChannelCode: 'AMAZON',
       marketplaceCode: 'AMAZON_US',
@@ -172,6 +206,7 @@ describe('FinanceWorkspacePage', () => {
       revenue: {
         customerPaidAmount: 10000,
         feeAmount: 900,
+        feeSource: 'ESTIMATED_15_PERCENT',
         refundAmount: 200,
         discountAmount: 300,
         currency: 'USD',
@@ -228,6 +263,68 @@ describe('FinanceWorkspacePage', () => {
     )
   })
 
+  it('keeps profitability filters in one scrollable row', async () => {
+    renderPage()
+
+    const filters = await screen.findByTestId('finance-filters-row')
+    expect(filters).toContainElement(screen.getByLabelText('Sales channel'))
+    expect(filters).toContainElement(screen.getByLabelText('Cost status'))
+    expect(
+      screen
+        .getAllByLabelText('Order date')
+        .every((input) => filters.lastElementChild?.contains(input)),
+    ).toBe(true)
+  })
+
+  it('keeps shop, status, and fee source within existing table cells', async () => {
+    renderPage()
+
+    expect(await screen.findByText('Evermore LLC')).toBeVisible()
+    expect(screen.getAllByText('Missing cost').length).toBeGreaterThan(0)
+    expect(screen.getByText('Estimated 15%')).toBeVisible()
+  })
+
+  it('renders USD with a single symbol', async () => {
+    renderPage()
+
+    await screen.findByText('USD')
+    expect(screen.getAllByText('$100.00')).not.toHaveLength(0)
+    expect(screen.queryByText(/US\$/)).not.toBeInTheDocument()
+  })
+
+  it('uses semantic shared metric cards for the finance summary', async () => {
+    renderPage()
+
+    await screen.findByText('USD')
+    expect(document.querySelectorAll('[data-icon="dollar-circle"]')).toHaveLength(2)
+    expect(document.querySelectorAll('[data-icon="wallet"]')).toHaveLength(4)
+    expect(document.querySelectorAll('[data-icon="rise"]')).toHaveLength(2)
+    expect(document.querySelectorAll('[data-icon="exclamation-circle"]')).toHaveLength(2)
+  })
+
+  it('shows known cost separately from an incomplete total cost', async () => {
+    renderPage()
+
+    expect(await screen.findAllByText('Known cost')).toHaveLength(2)
+  })
+
+  it('offers a collapsed cost and deductions breakdown for every currency', async () => {
+    renderPage()
+
+    expect(await screen.findAllByText('Cost & deductions')).toHaveLength(2)
+    fireEvent.click(screen.getAllByText('Cost & deductions')[0])
+    expect(await screen.findByText('Additional fulfillment cost')).toBeInTheDocument()
+  })
+
+  it('keeps one filter row, omits marketplace, and puts export in the profitability header', async () => {
+    renderPage()
+
+    await screen.findByText('USD')
+    expect(screen.queryByLabelText('Marketplace')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('finance-secondary-filters')).not.toBeInTheDocument()
+    expect(screen.getByText('Export CSV').closest('.ant-card-head')).not.toBeNull()
+  })
+
   it('opens an order-level breakdown and recalculates every item for writers', async () => {
     accountState.current = {
       ...accountState.current,
@@ -236,7 +333,13 @@ describe('FinanceWorkspacePage', () => {
     renderPage()
 
     fireEvent.click((await screen.findByText('ORDER-100')).closest('tr')!)
+    expect((await screen.findAllByText('Gross sales')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Net profit').length).toBeGreaterThan(0)
     expect(await screen.findByText('Additional fulfillment cost')).toBeInTheDocument()
+    expect(screen.getAllByText('Estimated 15%')).toHaveLength(2)
+    expect(screen.getByText('Revenue & deductions')).toBeInTheDocument()
+    expect(screen.getByText('Costs & profit')).toBeInTheDocument()
+    expect(screen.getByText('Current calculation')).toBeInTheDocument()
     expect(screen.getByText('Total deductions')).toBeInTheDocument()
     expect(screen.getByText('Calculation history')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Recalculate order/ }))
@@ -288,22 +391,14 @@ describe('FinanceWorkspacePage', () => {
     expect(screen.getByText('Cost service unavailable')).toBeInTheDocument()
   })
 
-  it('restores the selected finance tab from the URL after reload', async () => {
-    const firstLoad = renderPage()
+  it('keeps Finance focused on profitability and links reconciliation to Integrations', async () => {
+    renderPage()
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Imports & reconciliation' }))
-    await waitFor(() =>
-      expect(screen.getByRole('status', { name: 'Current location' })).toHaveTextContent(
-        '/portal/finance?tab=imports',
-      ),
-    )
-
-    firstLoad.unmount()
-    renderPage('/portal/finance?tab=imports')
-
-    expect(await screen.findByRole('tab', { name: 'Imports & reconciliation' })).toHaveAttribute(
-      'aria-selected',
-      'true',
+    expect(await screen.findByText('Order profitability')).toBeVisible()
+    expect(screen.queryByRole('tab', { name: 'Imports & reconciliation' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Manage reconciliation' })).toHaveAttribute(
+      'href',
+      '/portal/integrations?tab=finance',
     )
   })
 
@@ -315,19 +410,6 @@ describe('FinanceWorkspacePage', () => {
 
     await waitFor(() =>
       expect(listFinanceSnapshots).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 50, page: 1 }),
-      ),
-    )
-  })
-
-  it('reloads import batches when their shared page-size control changes', async () => {
-    renderPage('/portal/finance?tab=imports')
-
-    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Rows per page' }))
-    fireEvent.click((await screen.findAllByText('50')).at(-1)!)
-
-    await waitFor(() =>
-      expect(listImportBatches).toHaveBeenCalledWith(
         expect.objectContaining({ limit: 50, page: 1 }),
       ),
     )

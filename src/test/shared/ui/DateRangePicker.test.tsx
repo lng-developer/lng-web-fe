@@ -3,9 +3,30 @@ import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 
 import i18n from '@/shared/i18n/i18n'
-import { DateRangePicker, serializeDateRange } from '@/shared/ui/DateRangePicker'
+import {
+  DateRangePicker,
+  getDateRangePreset,
+  serializeDateRange,
+} from '@/shared/ui/DateRangePicker'
 
 describe('DateRangePicker', () => {
+  it('provides inclusive one, seven, and thirty-day presets', () => {
+    const today = dayjs('2026-09-06T12:00:00')
+
+    expect(getDateRangePreset(1, today).map((date) => date.format('YYYY-MM-DD'))).toEqual([
+      '2026-09-06',
+      '2026-09-06',
+    ])
+    expect(getDateRangePreset(7, today).map((date) => date.format('YYYY-MM-DD'))).toEqual([
+      '2026-08-31',
+      '2026-09-06',
+    ])
+    expect(getDateRangePreset(30, today).map((date) => date.format('YYYY-MM-DD'))).toEqual([
+      '2026-08-08',
+      '2026-09-06',
+    ])
+  })
+
   it('renders UTC filter boundaries as local calendar dates', async () => {
     await i18n.changeLanguage('en')
     render(

@@ -36,6 +36,7 @@ export type SellerPerformance = {
   currency: string | null
   itemCount: number
   revenueAmount: number
+  baseCostAmount: number
   grossProfitAmount: number
   operatingCostAmount: number
   adSpendAmount?: number
@@ -71,6 +72,31 @@ export type ChannelPerformance = {
   clicks: number
   attributedOrdersCount: number
   newBuyerCount: number
+  ctrBps: number | null
+  conversionBps: number | null
+  cpaAmount: number | null
+}
+
+export type SellerDailyProfit = SellerPerformance & {
+  date: string
+  totalCostAmount: number | null
+  additionalFulfillmentCostAmount: number | null
+  marketplaceFeeAmount: number
+  refundAmount: number
+  discountAmount: number
+  taxAmount: number
+}
+
+export type AdsDaily = {
+  reportDate: string | null
+  salesChannelCode: string | null
+  marketplaceCode: string | null
+  currency: string | null
+  spendAmount: number
+  attributedSalesAmount: number
+  impressions: number
+  clicks: number
+  attributedOrdersCount: number
   ctrBps: number | null
   conversionBps: number | null
   cpaAmount: number | null
@@ -125,12 +151,16 @@ export const listFinanceDailyProfit = (filters: ReportFilters) =>
   get<FinanceDaily[]>('/api/reports/finance/daily-profit', filters)
 export const listFinanceBySeller = (filters: ReportFilters) =>
   get<SellerPerformance[]>('/api/reports/finance/by-seller', filters)
+export const listFinanceSellerDaily = (filters: ReportFilters) =>
+  get<SellerDailyProfit[]>('/api/reports/finance/seller-daily', filters)
 export const listFinanceByTeam = (filters: ReportFilters) =>
   get<TeamPerformance[]>('/api/reports/finance/by-team', filters)
 export const getBuyerInsights = (filters: ReportFilters) =>
   get<BuyerInsights>('/api/reports/buyers/insights', filters)
 export const listChannelPerformance = (filters: ReportFilters) =>
   get<ChannelPerformance[]>('/api/reports/ads/channel-performance', filters)
+export const listAdsDaily = (filters: ReportFilters) =>
+  get<AdsDaily[]>('/api/reports/ads/daily', filters)
 export const getOperationsOverview = (filters: ReportFilters) =>
   get<OperationsOverview>('/api/reports/operations/overview', filters)
 export const listVendorPerformance = (filters: ReportFilters) =>

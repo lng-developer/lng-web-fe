@@ -20,6 +20,11 @@ export interface DateRangePickerProps {
 type DayjsRange = [Dayjs | null, Dayjs | null] | null
 
 // eslint-disable-next-line react-refresh/only-export-components -- exported for deterministic date-boundary tests
+export function getDateRangePreset(days: 1 | 7 | 30, today = dayjs()): [Dayjs, Dayjs] {
+  return [today.subtract(days - 1, 'day').startOf('day'), today.endOf('day')]
+}
+
+// eslint-disable-next-line react-refresh/only-export-components -- exported for deterministic date-boundary tests
 export function serializeDateRange(value: DayjsRange): DateRangeValue {
   if (!value?.[0] || !value[1]) return {}
   return {
@@ -44,6 +49,11 @@ export function DateRangePicker({ value, onChange, style, ...props }: DateRangeP
       {...props}
       allowClear
       format="DD/MM/YYYY"
+      presets={[
+        { label: t('foundation.controls.today'), value: getDateRangePreset(1) },
+        { label: t('foundation.controls.last7Days'), value: getDateRangePreset(7) },
+        { label: t('foundation.controls.last30Days'), value: getDateRangePreset(30) },
+      ]}
       placeholder={placeholder}
       style={{ width: '100%', maxWidth: 280, ...style }}
       value={pickerValue}

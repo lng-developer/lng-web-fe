@@ -51,7 +51,7 @@ const workbenchRow: OrderWorkbenchRow = {
     id: 'order-1',
     externalOrderId: '113-2183249-0763446',
     createdAt: '2026-08-27T00:00:00.000Z',
-    orderedAt: null,
+    orderedAt: '2026-08-13T18:56:50.000Z',
     status: 'PROCESSING',
     buyer: { name: 'BRANT EDRINGTON' },
     shopId: 'shop-1',
@@ -143,6 +143,19 @@ describe('OrderWorkbenchPage', () => {
     expect(orderId.closest(`.${styles.orderIdChip}`)).not.toBeNull()
   })
 
+  it('shows the marketplace order time separately from the import time', async () => {
+    vi.mocked(listOrderWorkbench).mockResolvedValue({
+      items: [workbenchRow],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Aug 14, 2026')).toBeVisible()
+    expect(orderWorkbenchSource).toContain("title: t('orders.columns.orderedAt')")
+    expect(orderWorkbenchSource).toContain("title: t('orders.columns.importedAt')")
+  })
+
   it('uses the Orders tab rail so status tabs stay on one line', async () => {
     renderPage()
 
@@ -200,6 +213,10 @@ describe('OrderWorkbenchPage', () => {
   })
 
   it('allows the order table to scroll horizontally when space is constrained', () => {
-    expect(orderWorkbenchSource).toContain('scroll={{ x: 1320 }}')
+    expect(orderWorkbenchSource).toContain('scroll={{ x: 1460 }}')
+  })
+
+  it('does not retain an earlier page while the next page is loading', () => {
+    expect(orderWorkbenchSource.match(/placeholderData: keepPreviousData/g)).toHaveLength(1)
   })
 })

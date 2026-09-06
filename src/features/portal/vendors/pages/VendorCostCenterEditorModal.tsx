@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CarOutlined,
@@ -71,9 +71,8 @@ export function VendorCostCenterEditorModal({
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
 
-  useEffect(() => {
-    if (!open) return
-    form.setFieldsValue(
+  const initialValues = useMemo<Partial<EditorValues>>(
+    () =>
       item
         ? {
             ...item,
@@ -81,8 +80,13 @@ export function VendorCostCenterEditorModal({
             metadataText: JSON.stringify(item.metadata ?? {}, null, 2),
           }
         : { status: 'ACTIVE', currency: 'USD' },
-    )
-  }, [form, item, open])
+    [item],
+  )
+
+  useEffect(() => {
+    if (!open) return
+    form.setFieldsValue(initialValues)
+  }, [form, initialValues, open])
 
   const save = useMutation({
     mutationFn: (values: EditorValues) => {
@@ -118,7 +122,7 @@ export function VendorCostCenterEditorModal({
     },
   })
 
-  const close = () => {
+  const close = useCallback(() => {
     if (!form.isFieldsTouched()) return onCancel()
     Modal.confirm({
       title: i18n.t('actionFeedback.unsaved'),
@@ -127,339 +131,344 @@ export function VendorCostCenterEditorModal({
       cancelText: t('vendors.cancel'),
       onOk: onCancel,
     })
-  }
+  }, [form, i18n, onCancel, t])
 
-  const numberRule = { type: 'number' as const, min: 0 }
+  const numberRule = useMemo(() => ({ type: 'number' as const, min: 0 }), [])
 
-  const tabItems = [
-    {
-      key: 'identity',
-      label: (
-        <span>
-          <TagOutlined style={{ marginRight: 6 }} />
-          Identity & Attributes
-        </span>
-      ),
-      children: (
-        <Flex flex={1} vertical gap={16}>
-          <Card className={styles.editorCard} size="small" title="Variant Identity">
-            <div className={styles.formGrid}>
-              <Form.Item label={t('vendors.name')} name="name" rules={[{ required: true }]}>
-                <Input placeholder="e.g. Black / XL" />
-              </Form.Item>
-              <Form.Item label={t('vendors.code')} name="code" rules={[{ required: !item }]}>
-                <Input disabled={Boolean(item)} placeholder="BLACK_XL" />
-              </Form.Item>
-              <Form.Item label={t('vendors.sku')} name="sku">
-                <Input placeholder="Vendor SKU Code" />
-              </Form.Item>
-              <Form.Item label={t('vendors.lngCode')} name="lngCode">
-                <Input placeholder="LNG Internal Code" />
-              </Form.Item>
-            </div>
-          </Card>
+  const tabItems = useMemo(
+    () => [
+      {
+        key: 'identity',
+        label: (
+          <span>
+            <TagOutlined style={{ marginRight: 6 }} />
+            Identity & Attributes
+          </span>
+        ),
+        children: (
+          <Flex flex={1} vertical gap={16}>
+            <Card className={styles.editorCard} size="small" title="Variant Identity">
+              <div className={styles.formGrid}>
+                <Form.Item label={t('vendors.name')} name="name" rules={[{ required: true }]}>
+                  <Input placeholder="e.g. Black / XL" />
+                </Form.Item>
+                <Form.Item label={t('vendors.code')} name="code" rules={[{ required: !item }]}>
+                  <Input disabled={Boolean(item)} placeholder="BLACK_XL" />
+                </Form.Item>
+                <Form.Item label={t('vendors.sku')} name="sku">
+                  <Input placeholder="Vendor SKU Code" />
+                </Form.Item>
+                <Form.Item label={t('vendors.lngCode')} name="lngCode">
+                  <Input placeholder="LNG Internal Code" />
+                </Form.Item>
+              </div>
+            </Card>
 
-          <Card className={styles.editorCard} size="small" title="Size & Color Matrix">
-            <div className={styles.formGrid}>
-              <Form.Item label={t('vendors.standardSize')} name="standardSize">
-                <Input placeholder="XL, L, M, S" />
-              </Form.Item>
-              <Form.Item label={t('vendors.standardColor')} name="standardColor">
-                <Input placeholder="Black, White, Navy" />
-              </Form.Item>
-              <Form.Item label={t('vendors.vendorSize')} name="vendorSize">
-                <Input placeholder="Vendor specific size" />
-              </Form.Item>
-              <Form.Item label={t('vendors.vendorColor')} name="vendorColor">
-                <Input placeholder="Vendor specific color" />
-              </Form.Item>
-              <Form.Item label={t('vendors.printMethod')} name="printMethod">
-                <Select allowClear options={printMethodSelectOptions} />
-              </Form.Item>
-            </div>
-          </Card>
-        </Flex>
-      ),
-    },
-    {
-      key: 'pricing',
-      label: (
-        <span>
-          <DollarOutlined style={{ marginRight: 6 }} />
-          Base Pricing & Taxes
-        </span>
-      ),
-      children: (
-        <Flex flex={1} vertical gap={16}>
-          <Card className={styles.editorCard} size="small" title="Base Production Cost">
-            <div className={styles.formGrid}>
-              <Form.Item
-                label={t('vendors.baseCostAmount')}
-                name="baseCostAmount"
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="Base cost (cents)"
-                />
-              </Form.Item>
-              <Form.Item
-                label="Import Tax Amount (cents)"
-                name="importTaxAmount"
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="Import Tax (cents)"
-                />
-              </Form.Item>
-              <Form.Item label={t('vendors.currency')} name="currency">
-                <Input maxLength={3} placeholder="USD" />
-              </Form.Item>
-            </div>
-          </Card>
+            <Card className={styles.editorCard} size="small" title="Size & Color Matrix">
+              <div className={styles.formGrid}>
+                <Form.Item label={t('vendors.standardSize')} name="standardSize">
+                  <Input placeholder="XL, L, M, S" />
+                </Form.Item>
+                <Form.Item label={t('vendors.standardColor')} name="standardColor">
+                  <Input placeholder="Black, White, Navy" />
+                </Form.Item>
+                <Form.Item label={t('vendors.vendorSize')} name="vendorSize">
+                  <Input placeholder="Vendor specific size" />
+                </Form.Item>
+                <Form.Item label={t('vendors.vendorColor')} name="vendorColor">
+                  <Input placeholder="Vendor specific color" />
+                </Form.Item>
+                <Form.Item label={t('vendors.printMethod')} name="printMethod">
+                  <Select allowClear options={printMethodSelectOptions} />
+                </Form.Item>
+              </div>
+            </Card>
+          </Flex>
+        ),
+      },
+      {
+        key: 'pricing',
+        label: (
+          <span>
+            <DollarOutlined style={{ marginRight: 6 }} />
+            Base Pricing & Taxes
+          </span>
+        ),
+        children: (
+          <Flex flex={1} vertical gap={16}>
+            <Card className={styles.editorCard} size="small" title="Base Production Cost">
+              <div className={styles.formGrid}>
+                <Form.Item
+                  label={t('vendors.baseCostAmount')}
+                  name="baseCostAmount"
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="Base cost (cents)"
+                  />
+                </Form.Item>
+                <Form.Item
+                  label="Import Tax Amount (cents)"
+                  name="importTaxAmount"
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="Import Tax (cents)"
+                  />
+                </Form.Item>
+                <Form.Item label={t('vendors.currency')} name="currency">
+                  <Input maxLength={3} placeholder="USD" />
+                </Form.Item>
+              </div>
+            </Card>
 
-          <Card className={styles.editorCard} size="small" title="Additional Printing Costs">
-            <div className={styles.formGrid}>
-              <Form.Item
-                label="Embroidery Cost (cents)"
-                name={['additionalCosts', 'embroideryAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
-              </Form.Item>
-              <Form.Item
-                label="Two-Sided Print Cost (cents)"
-                name={['additionalCosts', 'twoSidedPrintAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
-              </Form.Item>
-              <Form.Item
-                label="Two-Position Print Cost (cents)"
-                name={['additionalCosts', 'twoPositionPrintAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
-              </Form.Item>
-            </div>
-          </Card>
-        </Flex>
-      ),
-    },
-    {
-      key: 'shipping',
-      label: (
-        <span>
-          <CarOutlined style={{ marginRight: 6 }} />
-          Shipping Rates & Dimensions
-        </span>
-      ),
-      children: (
-        <Flex flex={1} vertical gap={16}>
-          <Card
-            size="small"
-            title="Domestic Shipping Rates (Nội địa)"
-            className={styles.editorCard}
-          >
-            <div className={styles.formGrid}>
-              <Form.Item
-                label="Base Shipping (cents)"
-                name={['domesticShipping', 'economyAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="e.g. 450"
-                />
-              </Form.Item>
-              <Form.Item
-                label="Additional Item Cost (cents)"
-                name={['domesticShipping', 'additionalAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="e.g. 200"
-                />
-              </Form.Item>
-            </div>
-          </Card>
-
-          <Card
-            size="small"
-            title="International Shipping Rates (Quốc tế)"
-            className={styles.editorCard}
-          >
-            <div className={styles.formGrid}>
-              <Form.Item
-                label="Base Shipping (cents)"
-                name={['internationalShipping', 'economyAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="e.g. 850"
-                />
-              </Form.Item>
-              <Form.Item
-                label="Additional Item Cost (cents)"
-                name={['internationalShipping', 'additionalAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="e.g. 350"
-                />
-              </Form.Item>
-            </div>
-          </Card>
-
-          <Card
-            size="small"
-            title="Priority / Express Shipping Rates (Hỏa tốc)"
-            className={styles.editorCard}
-          >
-            <div className={styles.formGrid}>
-              <Form.Item
-                label="Base Express Cost (cents)"
-                name={['priorityShipping', 'economyAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="e.g. 1500"
-                />
-              </Form.Item>
-              <Form.Item
-                label="Additional Express Item (cents)"
-                name={['priorityShipping', 'additionalAmount']}
-                rules={[numberRule]}
-              >
-                <InputNumber
-                  min={0}
-                  precision={0}
-                  style={{ width: '100%' }}
-                  placeholder="e.g. 600"
-                />
-              </Form.Item>
-            </div>
-          </Card>
-
-          <Card className={styles.editorCard} size="small" title="Weight & Package Dimensions">
-            <div className={styles.formGrid}>
-              <Form.Item label="Weight" name="weight" rules={[numberRule]}>
-                <InputNumber
-                  min={0}
-                  precision={2}
-                  style={{ width: '100%' }}
-                  placeholder="e.g. 8.5"
-                />
-              </Form.Item>
-              <Form.Item label="Weight Unit" name="weightUnit">
-                <Select
-                  options={['oz', 'g', 'kg', 'lb'].map((u) => ({ label: u, value: u }))}
-                  placeholder="oz"
-                />
-              </Form.Item>
-
-              <Form.Item label="Width / Length / Height" style={{ marginBottom: 0 }}>
-                <Flex gap={8}>
-                  <Form.Item name="width" noStyle rules={[numberRule]}>
-                    <InputNumber min={0} precision={1} placeholder="W" style={{ width: '33%' }} />
-                  </Form.Item>
-                  <Form.Item name="length" noStyle rules={[numberRule]}>
-                    <InputNumber min={0} precision={1} placeholder="L" style={{ width: '33%' }} />
-                  </Form.Item>
-                  <Form.Item name="height" noStyle rules={[numberRule]}>
-                    <InputNumber min={0} precision={1} placeholder="H" style={{ width: '33%' }} />
-                  </Form.Item>
-                </Flex>
-              </Form.Item>
-              <Form.Item label="Dimension Unit" name="dimensionUnit">
-                <Select
-                  options={['in', 'cm', 'mm'].map((u) => ({ label: u, value: u }))}
-                  placeholder="in"
-                />
-              </Form.Item>
-            </div>
-          </Card>
-        </Flex>
-      ),
-    },
-    {
-      key: 'settings',
-      label: (
-        <span>
-          <SettingOutlined style={{ marginRight: 6 }} />
-          Status & Metadata
-        </span>
-      ),
-      children: (
-        <Flex flex={1} vertical gap={16}>
-          <Card className={styles.editorCard} size="small" title="Status">
-            <Form.Item
-              label={t('vendors.statusLabel')}
-              name="status"
-              valuePropName="checked"
-              getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
-              getValueProps={(v) => ({ checked: v === 'ACTIVE' })}
+            <Card className={styles.editorCard} size="small" title="Additional Printing Costs">
+              <div className={styles.formGrid}>
+                <Form.Item
+                  label="Embroidery Cost (cents)"
+                  name={['additionalCosts', 'embroideryAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
+                </Form.Item>
+                <Form.Item
+                  label="Two-Sided Print Cost (cents)"
+                  name={['additionalCosts', 'twoSidedPrintAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
+                </Form.Item>
+                <Form.Item
+                  label="Two-Position Print Cost (cents)"
+                  name={['additionalCosts', 'twoPositionPrintAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber min={0} precision={0} style={{ width: '100%' }} placeholder="0" />
+                </Form.Item>
+              </div>
+            </Card>
+          </Flex>
+        ),
+      },
+      {
+        key: 'shipping',
+        label: (
+          <span>
+            <CarOutlined style={{ marginRight: 6 }} />
+            Shipping Rates & Dimensions
+          </span>
+        ),
+        children: (
+          <Flex flex={1} vertical gap={16}>
+            <Card
+              size="small"
+              title="Domestic Shipping Rates (Nội địa)"
+              className={styles.editorCard}
             >
-              <Switch
-                checkedChildren={t('vendors.status.ACTIVE')}
-                unCheckedChildren={t('vendors.status.INACTIVE')}
-              />
-            </Form.Item>
-          </Card>
+              <div className={styles.formGrid}>
+                <Form.Item
+                  label="Base Shipping (cents)"
+                  name={['domesticShipping', 'economyAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="e.g. 450"
+                  />
+                </Form.Item>
+                <Form.Item
+                  label="Additional Item Cost (cents)"
+                  name={['domesticShipping', 'additionalAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="e.g. 200"
+                  />
+                </Form.Item>
+              </div>
+            </Card>
 
-          <Card className={styles.editorCard} size="small" title="Attributes JSON">
-            <Form.Item
-              label={t('vendors.attributes')}
-              name="attributesText"
-              rules={[
-                {
-                  validator: (_, value) => {
-                    try {
-                      parseJsonObject(value)
-                      return Promise.resolve()
-                    } catch {
-                      return Promise.reject(new Error(t('vendors.invalidJson')))
-                    }
+            <Card
+              size="small"
+              title="International Shipping Rates (Quốc tế)"
+              className={styles.editorCard}
+            >
+              <div className={styles.formGrid}>
+                <Form.Item
+                  label="Base Shipping (cents)"
+                  name={['internationalShipping', 'economyAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="e.g. 850"
+                  />
+                </Form.Item>
+                <Form.Item
+                  label="Additional Item Cost (cents)"
+                  name={['internationalShipping', 'additionalAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="e.g. 350"
+                  />
+                </Form.Item>
+              </div>
+            </Card>
+
+            <Card
+              size="small"
+              title="Priority / Express Shipping Rates (Hỏa tốc)"
+              className={styles.editorCard}
+            >
+              <div className={styles.formGrid}>
+                <Form.Item
+                  label="Base Express Cost (cents)"
+                  name={['priorityShipping', 'economyAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="e.g. 1500"
+                  />
+                </Form.Item>
+                <Form.Item
+                  label="Additional Express Item (cents)"
+                  name={['priorityShipping', 'additionalAmount']}
+                  rules={[numberRule]}
+                >
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    placeholder="e.g. 600"
+                  />
+                </Form.Item>
+              </div>
+            </Card>
+
+            <Card className={styles.editorCard} size="small" title="Weight & Package Dimensions">
+              <div className={styles.formGrid}>
+                <Form.Item label="Weight" name="weight" rules={[numberRule]}>
+                  <InputNumber
+                    min={0}
+                    precision={2}
+                    style={{ width: '100%' }}
+                    placeholder="e.g. 8.5"
+                  />
+                </Form.Item>
+                <Form.Item label="Weight Unit" name="weightUnit">
+                  <Select
+                    options={['oz', 'g', 'kg', 'lb'].map((u) => ({ label: u, value: u }))}
+                    placeholder="oz"
+                  />
+                </Form.Item>
+
+                <Form.Item label="Width / Length / Height" style={{ marginBottom: 0 }}>
+                  <Flex gap={8}>
+                    <Form.Item name="width" noStyle rules={[numberRule]}>
+                      <InputNumber min={0} precision={1} placeholder="W" style={{ width: '33%' }} />
+                    </Form.Item>
+                    <Form.Item name="length" noStyle rules={[numberRule]}>
+                      <InputNumber min={0} precision={1} placeholder="L" style={{ width: '33%' }} />
+                    </Form.Item>
+                    <Form.Item name="height" noStyle rules={[numberRule]}>
+                      <InputNumber min={0} precision={1} placeholder="H" style={{ width: '33%' }} />
+                    </Form.Item>
+                  </Flex>
+                </Form.Item>
+                <Form.Item label="Dimension Unit" name="dimensionUnit">
+                  <Select
+                    options={['in', 'cm', 'mm'].map((u) => ({ label: u, value: u }))}
+                    placeholder="in"
+                  />
+                </Form.Item>
+              </div>
+            </Card>
+          </Flex>
+        ),
+      },
+      {
+        key: 'settings',
+        label: (
+          <span>
+            <SettingOutlined style={{ marginRight: 6 }} />
+            Status & Metadata
+          </span>
+        ),
+        children: (
+          <Flex flex={1} vertical gap={16}>
+            <Card className={styles.editorCard} size="small" title="Status">
+              <Form.Item
+                label={t('vendors.statusLabel')}
+                name="status"
+                valuePropName="checked"
+                getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+                getValueProps={(v) => ({ checked: v === 'ACTIVE' })}
+              >
+                <Switch
+                  checkedChildren={t('vendors.status.ACTIVE')}
+                  unCheckedChildren={t('vendors.status.INACTIVE')}
+                />
+              </Form.Item>
+            </Card>
+
+            <Card className={styles.editorCard} size="small" title="Attributes JSON">
+              <Form.Item
+                label={t('vendors.attributes')}
+                name="attributesText"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      try {
+                        parseJsonObject(value)
+                        return Promise.resolve()
+                      } catch {
+                        return Promise.reject(new Error(t('vendors.invalidJson')))
+                      }
+                    },
                   },
-                },
-              ]}
-            >
-              <Input.TextArea
-                autoSize={{ minRows: 3, maxRows: 8 }}
-                placeholder="{}"
-                style={{ fontFamily: 'monospace', fontSize: 12 }}
-              />
-            </Form.Item>
-          </Card>
-        </Flex>
-      ),
-    },
-  ]
+                ]}
+              >
+                <Input.TextArea
+                  autoSize={{ minRows: 3, maxRows: 8 }}
+                  placeholder="{}"
+                  style={{ fontFamily: 'monospace', fontSize: 12 }}
+                />
+              </Form.Item>
+            </Card>
+          </Flex>
+        ),
+      },
+    ],
+    [item, numberRule, t],
+  )
 
   const formContent = (
     <Form
       disabled={readOnly}
       id="vendor-cost-center-form"
+      key={item?.id ?? 'new'}
       form={form}
+      initialValues={initialValues}
       layout="vertical"
       onFinish={(values) => save.mutate(values)}
     >
@@ -467,216 +476,229 @@ export function VendorCostCenterEditorModal({
     </Form>
   )
 
-  const inlineTableColumns: TableColumnsType<VendorCostCenter> = [
-    {
-      title: t('vendors.sku'),
-      width: 170,
-      render: () => (
-        <div className={styles.inlineTableCell}>
-          <Form.Item name="sku" noStyle>
-            <Input placeholder={t('vendors.sku')} />
-          </Form.Item>
-        </div>
-      ),
-    },
-    {
-      title: t('vendors.vendorColor'),
-      width: 180,
-      render: () => (
-        <div className={styles.inlineTableCell}>
-          <Form.Item name="vendorColor" noStyle>
-            <Input placeholder={t('vendors.vendorColor')} />
-          </Form.Item>
-        </div>
-      ),
-    },
-    {
-      title: t('vendors.printMethod'),
-      width: 170,
-      render: () => (
-        <div className={styles.inlineTableCell}>
-          <Form.Item name="printMethod" noStyle>
-            <Select
-              allowClear
-              options={printMethodSelectOptions}
-              placeholder={t('vendors.printMethod')}
-            />
-          </Form.Item>
-        </div>
-      ),
-    },
-    {
-      title: t('vendors.pricing'),
-      width: 190,
-      render: () => (
-        <div className={styles.inlineTableCell}>
-          <Form.Item name="baseCostAmount" noStyle rules={[numberRule]}>
-            <InputNumber<number>
-              addonAfter="USD"
-              formatter={(value) => (value == null ? '' : String(Number(value) / 100))}
-              min={0}
-              parser={(value) => Number(value || 0) * 100}
-              precision={2}
-              placeholder={t('vendors.baseCostAmount')}
-            />
-          </Form.Item>
-        </div>
-      ),
-    },
-    {
-      title: 'Domestic shipping',
-      align: 'center',
-      children: [
-        {
-          title: 'Economy',
-          align: 'center',
-          width: 130,
-          render: () => (
-            <Form.Item name={['domesticShipping', 'economyAmount']} noStyle rules={[numberRule]}>
-              <InputNumber min={0} precision={0} />
+  const inlineTableColumns: TableColumnsType<VendorCostCenter> = useMemo(
+    () => [
+      {
+        title: t('vendors.sku'),
+        width: 170,
+        render: () => (
+          <div className={styles.inlineTableCell}>
+            <Form.Item name="sku" noStyle>
+              <Input placeholder={t('vendors.sku')} />
             </Form.Item>
-          ),
-        },
-        {
-          title: 'Additional',
-          align: 'center',
-          width: 130,
-          render: () => (
-            <Form.Item name={['domesticShipping', 'additionalAmount']} noStyle rules={[numberRule]}>
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-          ),
-        },
-      ],
-    },
-    {
-      title: 'International shipping',
-      align: 'center',
-      children: [
-        {
-          title: 'Economy',
-          align: 'center',
-          width: 130,
-          render: () => (
-            <Form.Item
-              name={['internationalShipping', 'economyAmount']}
-              noStyle
-              rules={[numberRule]}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-          ),
-        },
-        {
-          title: 'Additional',
-          align: 'center',
-          width: 130,
-          render: () => (
-            <Form.Item
-              name={['internationalShipping', 'additionalAmount']}
-              noStyle
-              rules={[numberRule]}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-          ),
-        },
-      ],
-    },
-    {
-      title: 'Priority shipping',
-      align: 'center',
-      children: [
-        {
-          title: 'Economy',
-          align: 'center',
-          width: 130,
-          render: () => (
-            <Form.Item name={['priorityShipping', 'economyAmount']} noStyle rules={[numberRule]}>
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-          ),
-        },
-        {
-          title: 'Additional',
-          align: 'center',
-          width: 130,
-          render: () => (
-            <Form.Item name={['priorityShipping', 'additionalAmount']} noStyle rules={[numberRule]}>
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-          ),
-        },
-      ],
-    },
-    {
-      title: t('vendors.statusLabel'),
-      align: 'center',
-      width: 100,
-      render: (_, row) =>
-        readOnly ? (
-          <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
-            {t(`vendors.status.${row.status}`)}
-          </StatusTag>
-        ) : (
-          <Form.Item
-            name="status"
-            noStyle
-            valuePropName="checked"
-            getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
-            getValueProps={(value) => ({ checked: value === 'ACTIVE' })}
-          >
-            <Switch
-              checkedChildren={t('vendors.status.ACTIVE')}
-              unCheckedChildren={t('vendors.status.INACTIVE')}
-            />
-          </Form.Item>
+          </div>
         ),
-    },
-    {
-      title: t('vendors.costCenterActions'),
-      align: 'center',
-      width: 100,
-      render: () =>
-        readOnly ? (
-          <Button
-            aria-label={t('vendors.edit')}
-            disabled={!onEdit}
-            icon={<EditOutlined />}
-            size="small"
-            title={t('vendors.edit')}
-            type="text"
-            onClick={onEdit}
-          />
-        ) : (
-          <Space size={2}>
-            <Button
-              aria-label={t('vendors.cancel')}
-              icon={<CloseOutlined />}
-              size="small"
-              title={t('vendors.cancel')}
-              type="text"
-              onClick={close}
-            />
-            <Button
-              aria-label={t('vendors.save')}
-              icon={<SaveOutlined />}
-              loading={save.isPending}
-              size="small"
-              title={t('vendors.save')}
-              type="text"
-              onClick={() => form.submit()}
-            />
-          </Space>
+      },
+      {
+        title: t('vendors.vendorColor'),
+        width: 180,
+        render: () => (
+          <div className={styles.inlineTableCell}>
+            <Form.Item name="vendorColor" noStyle>
+              <Input placeholder={t('vendors.vendorColor')} />
+            </Form.Item>
+          </div>
         ),
-    },
-  ]
+      },
+      {
+        title: t('vendors.printMethod'),
+        width: 170,
+        render: () => (
+          <div className={styles.inlineTableCell}>
+            <Form.Item name="printMethod" noStyle>
+              <Select
+                allowClear
+                options={printMethodSelectOptions}
+                placeholder={t('vendors.printMethod')}
+              />
+            </Form.Item>
+          </div>
+        ),
+      },
+      {
+        title: t('vendors.pricing'),
+        width: 190,
+        render: () => (
+          <div className={styles.inlineTableCell}>
+            <Form.Item name="baseCostAmount" noStyle rules={[numberRule]}>
+              <InputNumber<number>
+                addonAfter="USD"
+                formatter={(value) => (value == null ? '' : String(Number(value) / 100))}
+                min={0}
+                parser={(value) => Number(value || 0) * 100}
+                precision={2}
+                placeholder={t('vendors.baseCostAmount')}
+              />
+            </Form.Item>
+          </div>
+        ),
+      },
+      {
+        title: 'Domestic shipping',
+        align: 'center',
+        children: [
+          {
+            title: 'Economy',
+            align: 'center',
+            width: 130,
+            render: () => (
+              <Form.Item name={['domesticShipping', 'economyAmount']} noStyle rules={[numberRule]}>
+                <InputNumber min={0} precision={0} />
+              </Form.Item>
+            ),
+          },
+          {
+            title: 'Additional',
+            align: 'center',
+            width: 130,
+            render: () => (
+              <Form.Item
+                name={['domesticShipping', 'additionalAmount']}
+                noStyle
+                rules={[numberRule]}
+              >
+                <InputNumber min={0} precision={0} />
+              </Form.Item>
+            ),
+          },
+        ],
+      },
+      {
+        title: 'International shipping',
+        align: 'center',
+        children: [
+          {
+            title: 'Economy',
+            align: 'center',
+            width: 130,
+            render: () => (
+              <Form.Item
+                name={['internationalShipping', 'economyAmount']}
+                noStyle
+                rules={[numberRule]}
+              >
+                <InputNumber min={0} precision={0} />
+              </Form.Item>
+            ),
+          },
+          {
+            title: 'Additional',
+            align: 'center',
+            width: 130,
+            render: () => (
+              <Form.Item
+                name={['internationalShipping', 'additionalAmount']}
+                noStyle
+                rules={[numberRule]}
+              >
+                <InputNumber min={0} precision={0} />
+              </Form.Item>
+            ),
+          },
+        ],
+      },
+      {
+        title: 'Priority shipping',
+        align: 'center',
+        children: [
+          {
+            title: 'Economy',
+            align: 'center',
+            width: 130,
+            render: () => (
+              <Form.Item name={['priorityShipping', 'economyAmount']} noStyle rules={[numberRule]}>
+                <InputNumber min={0} precision={0} />
+              </Form.Item>
+            ),
+          },
+          {
+            title: 'Additional',
+            align: 'center',
+            width: 130,
+            render: () => (
+              <Form.Item
+                name={['priorityShipping', 'additionalAmount']}
+                noStyle
+                rules={[numberRule]}
+              >
+                <InputNumber min={0} precision={0} />
+              </Form.Item>
+            ),
+          },
+        ],
+      },
+      {
+        title: t('vendors.statusLabel'),
+        align: 'center',
+        width: 100,
+        render: (_: unknown, row: VendorCostCenter) =>
+          readOnly ? (
+            <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
+              {t(`vendors.status.${row.status}`)}
+            </StatusTag>
+          ) : (
+            <Form.Item
+              name="status"
+              noStyle
+              valuePropName="checked"
+              getValueFromEvent={(checked: boolean) => (checked ? 'ACTIVE' : 'INACTIVE')}
+              getValueProps={(value) => ({ checked: value === 'ACTIVE' })}
+            >
+              <Switch
+                checkedChildren={t('vendors.status.ACTIVE')}
+                unCheckedChildren={t('vendors.status.INACTIVE')}
+              />
+            </Form.Item>
+          ),
+      },
+      {
+        title: t('vendors.costCenterActions'),
+        align: 'center',
+        width: 100,
+        render: () =>
+          readOnly ? (
+            <Button
+              aria-label={t('vendors.edit')}
+              disabled={!onEdit}
+              icon={<EditOutlined />}
+              size="small"
+              title={t('vendors.edit')}
+              type="text"
+              onClick={onEdit}
+            />
+          ) : (
+            <Space size={2}>
+              <Button
+                aria-label={t('vendors.cancel')}
+                icon={<CloseOutlined />}
+                size="small"
+                title={t('vendors.cancel')}
+                type="text"
+                onClick={close}
+              />
+              <Button
+                aria-label={t('vendors.save')}
+                icon={<SaveOutlined />}
+                loading={save.isPending}
+                size="small"
+                title={t('vendors.save')}
+                type="text"
+                onClick={() => form.submit()}
+              />
+            </Space>
+          ),
+      },
+    ],
+    [close, form, numberRule, onEdit, readOnly, save.isPending, t],
+  )
 
   const inlineTableFormContent = (
     <Form
       disabled={readOnly}
       id="vendor-cost-center-form"
+      key={item?.id ?? 'new'}
       form={form}
+      initialValues={initialValues}
       layout="vertical"
       onFinish={(values) => save.mutate(values)}
     >

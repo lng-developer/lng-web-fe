@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import { type FC, memo } from 'react'
 import { Button, Select } from 'antd'
 
 import { DateRangePicker, FilterBar, SearchInput } from '@/shared/ui'
@@ -36,63 +36,65 @@ type OrderWorkbenchFilterBarProps = {
   readonly onClearFilters: () => void
 }
 
-export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = ({
-  search,
-  shopId,
-  vendorId,
-  dates,
-  hasActiveFilters,
-  shopOptions,
-  vendorOptions,
-  filtersLabel,
-  searchPlaceholder,
-  shopPlaceholder,
-  vendorPlaceholder,
-  clearLabel,
-  loadingShops,
-  loadingVendors,
-  onSearchChange,
-  onShopChange,
-  onVendorChange,
-  onDatesChange,
-  onClearFilters,
-}) => {
-  return (
-    <FilterBar label={filtersLabel} contentClassName={styles.filters}>
-      <SearchInput
-        className={styles.orderSearch}
-        value={search}
-        onSearchChange={onSearchChange}
-        placeholder={searchPlaceholder}
-      />
-      <Select
-        className={styles.filterSelect}
-        allowClear
-        showSearch
-        optionFilterProp="label"
-        filterOption={filterSelectOption}
-        value={shopId}
-        loading={loadingShops}
-        placeholder={shopPlaceholder}
-        options={shopOptions}
-        onChange={onShopChange}
-      />
-      <Select
-        className={styles.filterSelect}
-        allowClear
-        showSearch
-        optionFilterProp="label"
-        filterOption={filterSelectOption}
-        value={vendorId}
-        loading={loadingVendors}
-        placeholder={vendorPlaceholder}
-        options={vendorOptions}
-        onChange={onVendorChange}
-      />
-      <DateRangePicker style={{ maxWidth: 'none' }} value={dates} onChange={onDatesChange} />
-      {hasActiveFilters ? <Button onClick={onClearFilters}>{clearLabel}</Button> : null}
-    </FilterBar>
-  )
-}
+export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
+  function OrderWorkbenchFilterBar({
+    search,
+    shopId,
+    vendorId,
+    dates,
+    hasActiveFilters,
+    shopOptions,
+    vendorOptions,
+    filtersLabel,
+    searchPlaceholder,
+    shopPlaceholder,
+    vendorPlaceholder,
+    clearLabel,
+    loadingShops,
+    loadingVendors,
+    onSearchChange,
+    onShopChange,
+    onVendorChange,
+    onDatesChange,
+    onClearFilters,
+  }) {
+    return (
+      <FilterBar label={filtersLabel} contentClassName={styles.filters}>
+        <SearchInput
+          className={styles.orderSearch}
+          value={search}
+          onSearchChange={onSearchChange}
+          placeholder={searchPlaceholder}
+        />
+        <Select
+          className={styles.filterSelect}
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          filterOption={filterSelectOption}
+          value={shopId}
+          loading={loadingShops}
+          placeholder={shopPlaceholder}
+          options={shopOptions}
+          onChange={onShopChange}
+        />
+        <Select
+          className={styles.filterSelect}
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          filterOption={filterSelectOption}
+          value={vendorId}
+          loading={loadingVendors}
+          placeholder={vendorPlaceholder}
+          options={vendorOptions}
+          onChange={onVendorChange}
+        />
+        <DateRangePicker style={{ maxWidth: 'none' }} value={dates} onChange={onDatesChange} />
+        {hasActiveFilters ? <Button onClick={onClearFilters}>{clearLabel}</Button> : null}
+      </FilterBar>
+    )
+  },
+)
 
 export default OrderWorkbenchFilterBar

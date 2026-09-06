@@ -1101,25 +1101,25 @@ export function ProductionWorkbenchPage({
         />
       </div>
       <div className={styles.workspace}>
+        <div className={styles.queueToolbar}>
+          <UiButtonTabs
+            className={styles.queueTabs}
+            value={tab}
+            onChange={handleTabChange}
+            items={queueTabItems}
+          />
+          <UiButtonTabs
+            className={styles.channelFilter}
+            value={salesChannelCode ?? 'ALL'}
+            items={[
+              { label: t('portal.production.channelAll'), value: 'ALL' },
+              { label: 'Amazon', value: 'AMAZON' },
+              { label: 'Etsy', value: 'ETSY' },
+            ]}
+            onChange={handleSalesChannelChange}
+          />
+        </div>
         <section className={styles.queuePane} aria-label={t('portal.production.title')}>
-          <div className={styles.queueHeader}>
-            <UiButtonTabs
-              className={styles.queueTabs}
-              value={tab}
-              onChange={handleTabChange}
-              items={queueTabItems}
-            />
-            <UiButtonTabs
-              className={styles.channelFilter}
-              value={salesChannelCode ?? 'ALL'}
-              items={[
-                { label: t('portal.production.channelAll'), value: 'ALL' },
-                { label: 'Amazon', value: 'AMAZON' },
-                { label: 'Etsy', value: 'ETSY' },
-              ]}
-              onChange={handleSalesChannelChange}
-            />
-          </div>
           <ProductionWorkbenchFilterBar
             search={search}
             status={status}

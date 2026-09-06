@@ -13,6 +13,7 @@ export type Vendor = {
   name: string
   providerKey: string | null
   fulfillmentType: VendorFulfillmentType | null
+  unitSurchargeAmount?: number | null
   status: RecordStatus
   metadata?: Record<string, unknown>
 }
@@ -30,6 +31,7 @@ export type VendorProduct = {
   minProductionDays: number | null
   maxProductionDays: number | null
   baseCostAmount?: number
+  unitSurchargeAmount?: number | null
   currency?: string
   costCenterCount: number
   status: RecordStatus
@@ -63,6 +65,7 @@ export type VendorCostCenter = {
   height: number | null
   dimensionUnit: string | null
   baseCostAmount?: number
+  unitSurchargeAmount?: number | null
   currency?: string
   domesticShipping: ShippingCost
   internationalShipping: ShippingCost
@@ -120,6 +123,7 @@ export type VendorInput = {
   name: string
   providerKey?: string | null
   fulfillmentType: VendorFulfillmentType
+  unitSurchargeAmount?: number | null
   status?: RecordStatus
   metadata?: Record<string, unknown>
 }
@@ -136,6 +140,7 @@ export type VendorProductInput = {
   minProductionDays?: number | null
   maxProductionDays?: number | null
   baseCostAmount?: number
+  unitSurchargeAmount?: number | null
   currency?: string
   status?: RecordStatus
   metadata?: Record<string, unknown>

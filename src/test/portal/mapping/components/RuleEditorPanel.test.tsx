@@ -99,7 +99,7 @@ describe('RuleEditorPanel', () => {
       />,
     )
 
-    expect(screen.getByLabelText('Sample value')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sample label')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Preview changes' })).toBeInTheDocument()
 
     unmount()
@@ -113,6 +113,76 @@ describe('RuleEditorPanel', () => {
 
     expect(screen.getByLabelText('Sample value')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Preview changes' })).toBeInTheDocument()
+  })
+
+  it('suggests a composite value format for product type and color parsing', () => {
+    render(
+      <RuleEditorPanel
+        canWrite
+        type="semanticRules"
+        rule={{
+          id: '',
+          semanticRole: 'PRODUCT_TYPE_COLOR',
+          matchValues: ['Select Product Type & Color'],
+        }}
+        onDirtyChange={vi.fn()}
+        onPreview={vi.fn()}
+        onConflicts={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('Sample label')).toHaveAttribute(
+      'placeholder',
+      'Example: Select Product Type & Color',
+    )
+  })
+
+  it('distinguishes semantic label aliases from the sample option value', () => {
+    render(
+      <RuleEditorPanel
+        canWrite
+        type="semanticRules"
+        rule={{ id: '', semanticRole: 'SIZE', matchValues: ['Select Size'] }}
+        onDirtyChange={vi.fn()}
+        onPreview={vi.fn()}
+        onConflicts={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('Option label aliases')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sample label')).toHaveAttribute(
+      'placeholder',
+      'Example: Select Size',
+    )
+    expect(screen.getByText('Enter an option label to test this rule.')).toBeInTheDocument()
+  })
+
+  it('submits several input aliases as one semantic rule', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(
+      <RuleEditorPanel
+        canWrite
+        type="semanticRules"
+        rule={{ id: '', semanticRole: 'SIZE', matchValues: ['Select Size', 'SizeKey'] }}
+        onDirtyChange={vi.fn()}
+        onPreview={vi.fn().mockResolvedValue({ items: [] })}
+        onConflicts={vi.fn().mockResolvedValue({ conflicts: [] })}
+        onSave={onSave}
+      />,
+    )
+
+    expect(screen.getByLabelText('Option label aliases')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save rule' }))
+
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          matchValues: ['Select Size', 'SizeKey'],
+        }),
+      ),
+    )
   })
 
   it('blocks saving when an exact conflict exists', async () => {
@@ -137,19 +207,25 @@ describe('RuleEditorPanel', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
-  it('keeps semantic matching defaults out of the staff form', () => {
+  it('preserves exact matching when staff saves a semantic label rule', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
     render(
       <RuleEditorPanel
         canWrite
         type="semanticRules"
+        rule={{ id: '', semanticRole: 'COLOR', matchValues: ['Color'], matchType: 'EXACT' }}
         onDirtyChange={vi.fn()}
-        onPreview={vi.fn()}
-        onConflicts={vi.fn()}
-        onSave={vi.fn()}
+        onPreview={vi.fn().mockResolvedValue({ items: [] })}
+        onConflicts={vi.fn().mockResolvedValue({ conflicts: [] })}
+        onSave={onSave}
       />,
     )
 
-    expect(screen.queryByLabelText('Match type')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Match type')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save rule' }))
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ matchType: 'EXACT' })),
+    )
   })
 
   it('keeps product mapping create and update forms to their required fields', () => {
