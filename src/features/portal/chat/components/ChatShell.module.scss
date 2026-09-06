@@ -18,20 +18,16 @@
   position: relative;
 }
 
-.chatPreviewPopup {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  z-index: 40;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 12px;
-  background: var(--ant-color-bg-elevated);
-  box-shadow: var(--ant-box-shadow-secondary);
+.popover :global(.ant-popover-inner) {
+  padding: 0;
 }
 
 .chatPreview {
   width: min(390px, calc(100vw - 32px));
   padding: 16px 0 0 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--ant-color-bg-elevated);
 }
 
 .chatPreviewHeader {

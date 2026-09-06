@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -12,7 +12,7 @@ import {
   UserOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Avatar, Button, Empty, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 
@@ -25,7 +25,9 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { checkIn, checkOut, getMyHrWorkspace, type WorkContext } from '../api/hrTimeApi'
+import { hrKeys } from '../api/hrKeys'
+import { checkIn, checkOut, type WorkContext } from '../api/hrTimeApi'
+import { useStaffWorkspaceQuery } from '../hooks'
 import styles from './HrOperationsPage.module.scss'
 import { MonthlyScheduleCalendar } from './MonthlyScheduleCalendar'
 
@@ -35,15 +37,18 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
   const [month, setMonth] = useState(dayjs())
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
-  const params = {
-    dateKey: dayjs().format('YYYY-MM-DD'),
-    month: month.month() + 1,
-    year: month.year(),
-  }
-  const workspace = useQuery({
-    queryKey: ['hr-workspace', 'self', params],
-    queryFn: () => getMyHrWorkspace(params),
-  })
+
+  const params = useMemo(
+    () => ({
+      dateKey: dayjs().format('YYYY-MM-DD'),
+      month: month.month() + 1,
+      year: month.year(),
+    }),
+    [month],
+  )
+
+  const workspace = useStaffWorkspaceQuery(params)
+
   const attendance = useMutation({
     mutationFn: (action: 'in' | 'out') =>
       action === 'in'
@@ -51,24 +56,70 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
         : checkOut({ occurredAt: new Date().toISOString() }),
     onSuccess: () => {
       toast('success', t('hrOperations.messages.recorded'))
-      void queryClient.invalidateQueries({ queryKey: ['hr-workspace', 'self'] })
+      void queryClient.invalidateQueries({ queryKey: hrKeys.workspaceSelfRoot })
     },
-    onError: (error) => toast('error', t('hrOperations.messages.attendanceFailed'), error.message),
+    onError: (error) =>
+      toast(
+        'error',
+        t('hrOperations.messages.attendanceFailed'),
+        error instanceof Error ? error.message : String(error),
+      ),
   })
+
   const data = workspace.data
+
   const pending = [...(data?.leave.requests ?? []), ...(data?.overtime.requests ?? [])].filter(
     (item) => item.status === 'PENDING',
   ).length
-  const money = (value?: number) =>
-    new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US').format(value ?? 0)
+
+  const money = useCallback(
+    (value?: number) =>
+      new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US').format(value ?? 0),
+    [i18n.language],
+  )
+
   const shift = data?.today.schedule?.shift
 
-  const presentCount = data?.calendar?.filter((d) => d.attendance?.status === 'PRESENT').length || 0
-  const lateCount = data?.calendar?.filter((d) => (d.attendance?.lateMinutes ?? 0) > 0).length || 0
-  const leaveCount =
-    data?.calendar?.filter((d) => d.leave?.some((l) => l.status === 'APPROVED')).length || 0
-  const overtimeCount =
-    data?.calendar?.filter((d) => d.overtime?.some((o) => o.status === 'APPROVED')).length || 0
+  const presentCount = useMemo(
+    () => data?.calendar?.filter((d) => d.attendance?.status === 'PRESENT').length || 0,
+    [data?.calendar],
+  )
+
+  const lateCount = useMemo(
+    () => data?.calendar?.filter((d) => (d.attendance?.lateMinutes ?? 0) > 0).length || 0,
+    [data?.calendar],
+  )
+
+  const leaveCount = useMemo(
+    () => data?.calendar?.filter((d) => d.leave?.some((l) => l.status === 'APPROVED')).length || 0,
+    [data?.calendar],
+  )
+
+  const overtimeCount = useMemo(
+    () =>
+      data?.calendar?.filter((d) => d.overtime?.some((o) => o.status === 'APPROVED')).length || 0,
+    [data?.calendar],
+  )
+
+  const handleCheckIn = useCallback(() => {
+    attendance.mutate('in')
+  }, [attendance])
+
+  const handleCheckOut = useCallback(() => {
+    attendance.mutate('out')
+  }, [attendance])
+
+  const handleNavigateRequests = useCallback(() => {
+    navigate('/hr/me/requests')
+  }, [navigate])
+
+  const handleNavigateSchedule = useCallback(() => {
+    navigate('/hr/me/schedule')
+  }, [navigate])
+
+  const handleMonthChange = useCallback((value: dayjs.Dayjs | null) => {
+    if (value) setMonth(value)
+  }, [])
 
   return (
     <section className={styles.page}>
@@ -97,7 +148,7 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                 </Typography.Text>
               </div>
             </Space>
-            <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
+            <MonthPicker value={month} onChange={handleMonthChange} />
           </div>
 
           <div className={styles.metrics}>
@@ -144,7 +195,7 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                     icon={<LoginOutlined />}
                     loading={attendance.isPending}
                     disabled={Boolean(data?.today.attendance?.checkInAt)}
-                    onClick={() => attendance.mutate('in')}
+                    onClick={handleCheckIn}
                   >
                     {t('hrOperations.self.checkIn')}
                   </Button>
@@ -156,7 +207,7 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                       !data?.today.attendance?.checkInAt ||
                       Boolean(data?.today.attendance?.checkOutAt)
                     }
-                    onClick={() => attendance.mutate('out')}
+                    onClick={handleCheckOut}
                   >
                     {t('hrOperations.self.checkOut')}
                   </Button>
@@ -194,7 +245,7 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                       </Typography.Text>
                     </Space>
                   ))}
-                <Button type="link" onClick={() => navigate('/hr/me/requests')}>
+                <Button type="link" onClick={handleNavigateRequests}>
                   {t('hrOperations.navigation.open')}
                 </Button>
               </div>
@@ -224,7 +275,7 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
                     </div>
                   ))}
               </div>
-              <Button type="link" onClick={() => navigate('/hr/me/schedule')}>
+              <Button type="link" onClick={handleNavigateSchedule}>
                 {t('hrOperations.navigation.open')}
               </Button>
             </SectionCard>
@@ -251,7 +302,6 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
 
       {view === 'schedule' && (
         <>
-          {/* Metric Overview Cards for My Schedule */}
           <div className={styles.metrics}>
             <MetricCard
               icon={<CheckCircleOutlined />}

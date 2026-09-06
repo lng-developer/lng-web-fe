@@ -5,4 +5,5 @@ export const workScoreKeys = {
   list: (params: WorkScoreListParams) => [...workScoreKeys.all, 'list', params] as const,
   summary: (params: WorkScoreListParams) => [...workScoreKeys.all, 'summary', params] as const,
   detail: (id: string) => [...workScoreKeys.all, 'detail', id] as const,
+  rules: () => [...workScoreKeys.all, 'rules'] as const,
 }

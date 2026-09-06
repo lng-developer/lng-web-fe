@@ -7,6 +7,7 @@ vi.mock('@/features/monitoring/api/monitoringApi', () => ({
   getMongoIndexUsageSnapshots: vi.fn(),
 }))
 
+import { AppProviders } from '@/app/providers/AppProviders'
 import {
   getMongoIndexUsageSnapshots,
   getSystemHealth,
@@ -15,9 +16,13 @@ import {
 import { MonitoringDashboardPage } from '@/features/monitoring/pages/MonitoringDashboardPage'
 import { setGlobalPermissions, setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
 
 describe('MonitoringDashboardPage', () => {
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    queryClient.clear()
+  })
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -83,7 +88,11 @@ describe('MonitoringDashboardPage', () => {
   })
 
   it('loads and displays backend logs for global audit readers', async () => {
-    render(<MonitoringDashboardPage />)
+    render(
+      <AppProviders>
+        <MonitoringDashboardPage />
+      </AppProviders>,
+    )
 
     fireEvent.click(await screen.findByRole('tab', { name: i18n.t('portal.monitoring.logs') }))
     expect(await screen.findByText(i18n.t('portal.monitoring.serverLogs'))).toBeVisible()
@@ -99,7 +108,11 @@ describe('MonitoringDashboardPage', () => {
   })
 
   it('shows realtime socket health', async () => {
-    render(<MonitoringDashboardPage />)
+    render(
+      <AppProviders>
+        <MonitoringDashboardPage />
+      </AppProviders>,
+    )
 
     expect(await screen.findByText(i18n.t('portal.monitoring.realtimeSocket'))).toBeVisible()
     expect(screen.getByText(i18n.t('portal.monitoring.clients'))).toBeVisible()
@@ -108,7 +121,11 @@ describe('MonitoringDashboardPage', () => {
   })
 
   it('shows the selected Mongo index snapshot', async () => {
-    render(<MonitoringDashboardPage />)
+    render(
+      <AppProviders>
+        <MonitoringDashboardPage />
+      </AppProviders>,
+    )
 
     fireEvent.click(document.querySelector('[data-node-key="mongo-indexes"]') as HTMLElement)
     expect(await screen.findByText('psdStatus_1')).toBeVisible()

@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData } from 'react-router-dom'
 import { CheckOutlined, ReloadOutlined, ShopOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Input, Modal, Select, Space, Typography } from 'antd'
 
@@ -19,23 +18,15 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { type CustomizationRow, type CustomizationStatus } from '../api/customizationApi'
 import {
-  confirmCustomization,
-  type CustomizationRow,
-  type CustomizationStatus,
-  failCustomization,
-  getCustomizationSummary,
-  listCustomizations,
-  retryCustomization,
-} from '../api/customizationApi'
+  useCustomizationActionMutation,
+  useCustomizationsQuery,
+  useCustomizationSummaryQuery,
+} from '../hooks'
 import styles from './CustomizationReviewPage.module.scss'
 
 const PAGE_SIZE = 20
-const keys = {
-  all: ['customizations'] as const,
-  list: (params: object) => ['customizations', 'list', params] as const,
-  summary: ['customizations', 'summary'] as const,
-}
 
 export const CustomizationReviewPage = () => {
   const { t } = useTranslation()
@@ -47,56 +38,53 @@ export const CustomizationReviewPage = () => {
   ]
   const canWrite = permissions.includes('ORDERS:WRITE')
   const toast = useFeedbackToast()
-  const client = useQueryClient()
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<CustomizationStatus>()
   const [selected, setSelected] = useState<CustomizationRow>()
   const [failureReason, setFailureReason] = useState('')
-  const params = { page, limit: PAGE_SIZE, q: q || undefined, status, blockedOnly: true }
-  const queue = useQuery({
-    queryKey: keys.list(params),
-    queryFn: () => listCustomizations(params),
-    retry: false,
-  })
-  const summary = useQuery({
-    queryKey: keys.summary,
-    queryFn: () => getCustomizationSummary({ blockedOnly: true }),
-    retry: false,
-  })
-  const action = useMutation({
-    mutationFn: async ({
-      kind,
-      row,
-    }: {
-      kind: 'retry' | 'confirm' | 'fail'
-      row: CustomizationRow
-    }) => {
-      if (kind === 'retry') return retryCustomization(row.id)
-      if (kind === 'confirm') return confirmCustomization(row.id)
-      return failCustomization(row.id, failureReason.trim())
+
+  const params = useMemo(
+    () => ({ page, limit: PAGE_SIZE, q: q || undefined, status, blockedOnly: true }),
+    [page, q, status],
+  )
+  const queue = useCustomizationsQuery(params)
+  const summary = useCustomizationSummaryQuery()
+  const action = useCustomizationActionMutation()
+
+  const handleAction = useCallback(
+    (kind: 'retry' | 'confirm' | 'fail', row: CustomizationRow) => {
+      action.mutate(
+        { kind, row, failureReason },
+        {
+          onSuccess: () => {
+            toast('success', t('customization.feedback.updated'))
+            setSelected(undefined)
+            setFailureReason('')
+          },
+          onError: (error) =>
+            toast(
+              'error',
+              t('customization.feedback.failed'),
+              error instanceof Error ? error.message : undefined,
+            ),
+        },
+      )
     },
-    onSuccess: async () => {
-      toast('success', t('customization.feedback.updated'))
-      setSelected(undefined)
-      setFailureReason('')
-      await client.invalidateQueries({ queryKey: keys.all })
-    },
-    onError: (error) =>
-      toast(
-        'error',
-        t('customization.feedback.failed'),
-        error instanceof Error ? error.message : undefined,
-      ),
-  })
-  const tone = (value: CustomizationStatus) =>
-    value === 'FAILED'
-      ? 'critical'
-      : value === 'NEEDS_REVIEW'
-        ? 'warning'
-        : value === 'PARSED'
-          ? 'approved'
-          : 'pending'
+    [action, failureReason, t, toast],
+  )
+
+  const tone = useCallback(
+    (value: CustomizationStatus) =>
+      value === 'FAILED'
+        ? 'critical'
+        : value === 'NEEDS_REVIEW'
+          ? 'warning'
+          : value === 'PARSED'
+            ? 'approved'
+            : 'pending',
+    [],
+  )
   const columns = useMemo<TableColumnsType<CustomizationRow>>(
     () => [
       {
@@ -154,7 +142,7 @@ export const CustomizationReviewPage = () => {
         ),
       },
     ],
-    [t],
+    [t, tone],
   )
 
   return (
@@ -293,7 +281,7 @@ export const CustomizationReviewPage = () => {
                 <Button
                   icon={<ReloadOutlined />}
                   loading={action.isPending}
-                  onClick={() => action.mutate({ kind: 'retry', row: selected })}
+                  onClick={() => handleAction('retry', selected)}
                 >
                   {t('customization.actions.retry')}
                 </Button>
@@ -301,7 +289,7 @@ export const CustomizationReviewPage = () => {
                   type="primary"
                   icon={<CheckOutlined />}
                   loading={action.isPending}
-                  onClick={() => action.mutate({ kind: 'confirm', row: selected })}
+                  onClick={() => handleAction('confirm', selected)}
                 >
                   {t('customization.actions.confirm')}
                 </Button>
@@ -315,7 +303,7 @@ export const CustomizationReviewPage = () => {
                   danger
                   disabled={!failureReason.trim()}
                   loading={action.isPending}
-                  onClick={() => action.mutate({ kind: 'fail', row: selected })}
+                  onClick={() => handleAction('fail', selected)}
                 >
                   {t('customization.actions.fail')}
                 </Button>

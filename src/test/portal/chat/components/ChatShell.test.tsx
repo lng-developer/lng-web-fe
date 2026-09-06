@@ -89,7 +89,8 @@ describe('ChatShell', () => {
     await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
     expect(screen.getAllByRole('button', { name: 'shell.navigation.chat' })).toHaveLength(1)
     fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
-    expect(await screen.findByText('designer@lng.co')).toBeVisible()
+    const el = await screen.findByText('designer@lng.co')
+    expect(el).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
 
     act(() => {
@@ -128,5 +129,18 @@ describe('ChatShell', () => {
     await waitFor(() =>
       expect(screen.getAllByRole('button', { name: 'shell.navigation.chat' })).toHaveLength(2),
     )
+  })
+
+  it('closes preview popup when clicking outside', async () => {
+    renderShell()
+
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    expect(await screen.findByText('designer@lng.co')).toBeVisible()
+
+    fireEvent.mouseDown(document.body)
+    await waitFor(() => {
+      expect(screen.queryByText('designer@lng.co')).not.toBeInTheDocument()
+    })
   })
 })

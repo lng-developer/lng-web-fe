@@ -2,7 +2,7 @@ import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { SyncOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { App as AntdApp, Button, Card, Space, Tag, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -11,12 +11,8 @@ import { normalizeApiError } from '@/shared/api'
 import { CopyableOrderId, FeedbackAlert, useFeedbackToast } from '@/shared/ui'
 
 import {
-  listAuthorableShops,
-  listUnmatchedItems,
-  previewOrderItem,
   recheckOrderItem,
   recheckUnmatched,
-  searchVendorCandidates,
   selectFulfillmentCandidate,
   type UnmatchedMappingItem,
   type VendorCandidateSearchRow,
@@ -25,6 +21,12 @@ import { mappingKeys } from '../api/mappingKeys'
 import { LiveTracePanel } from '../components/LiveTracePanel'
 import { MappingContextBar, type MappingContextValue } from '../components/MappingContextBar'
 import { ResolveQueuePanel } from '../components/ResolveQueuePanel'
+import {
+  useAuthorableShopsQuery,
+  useOrderItemPreviewQuery,
+  useUnmatchedItemsQuery,
+  useVendorCandidatesQuery,
+} from '../hooks'
 import { toMappingTraceView, type TraceCandidate } from '../model/mappingModel'
 import { getRulePageForFixType } from '../model/mappingPageConfig'
 import styles from './MappingWorkspacePage.module.scss'
@@ -94,30 +96,10 @@ export function MappingWorkbenchPage({
     }),
     [apiContext, deferredQueueSearch, queueBlocker],
   )
-  const shops = useQuery({
-    queryKey: mappingKeys.shops(),
-    queryFn: listAuthorableShops,
-    enabled: canWrite,
-    retry: false,
-  })
-  const unmatched = useQuery({
-    queryKey: mappingKeys.unmatched(unmatchedParams),
-    queryFn: () => listUnmatchedItems(unmatchedParams),
-    retry: false,
-  })
-  const preview = useQuery({
-    queryKey: mappingKeys.preview(selectedItem?.orderItemId ?? selectedItem?.id ?? ''),
-    queryFn: () => previewOrderItem(selectedItem!.orderItemId ?? selectedItem!.id),
-    enabled: Boolean(selectedItem),
-    retry: false,
-  })
-  const candidates = useQuery({
-    queryKey: mappingKeys.candidates(orderItemId ?? '', candidateSearch),
-    queryFn: () =>
-      searchVendorCandidates(orderItemId!, { q: candidateSearch, includeTotal: false, limit: 100 }),
-    enabled: Boolean(orderItemId),
-    retry: false,
-  })
+  const shops = useAuthorableShopsQuery({ enabled: canWrite })
+  const unmatched = useUnmatchedItemsQuery(unmatchedParams)
+  const preview = useOrderItemPreviewQuery(selectedItem?.orderItemId ?? selectedItem?.id)
+  const candidates = useVendorCandidatesQuery(orderItemId, candidateSearch)
 
   const notifyError = useCallback(
     (error: unknown) =>
@@ -184,6 +166,48 @@ export function MappingWorkbenchPage({
         }).toString()
       : ''
 
+  const handleBlockerChange = useCallback((value?: string) => {
+    setBatchPage(1)
+    setQueueBlocker(value)
+  }, [])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setBatchPage(1)
+    setQueueSearch(value)
+  }, [])
+
+  const handleSelectCandidate = useCallback(
+    (costCenterId: string, productId: string) => {
+      selectCandidate.mutate({ costCenterId, productId })
+    },
+    [selectCandidate],
+  )
+
+  const handleRecheck = useCallback(() => {
+    if (orderItemId) recheck.mutate(orderItemId)
+  }, [orderItemId, recheck])
+
+  const handleCandidateSearchChange = useCallback((value: string) => {
+    setCandidateSearch(value)
+  }, [])
+
+  const handleContextChange = useCallback((nextContext: MappingContextValue) => {
+    setBatchPage(1)
+    setContext(nextContext)
+  }, [])
+
+  const handleContextPreview = useCallback(() => {
+    setBatchPage(1)
+    setQueueSearch(context.search ?? '')
+  }, [context.search])
+
+  const handleBatchConfirm = useCallback(() => {
+    modal.confirm({
+      title: t('mapping.actions.batchRecheck'),
+      onOk: () => batch.mutateAsync(),
+    })
+  }, [batch, modal, t])
+
   return (
     <section className={styles.page}>
       {/* ── Context Filter Bar ── */}
@@ -193,28 +217,13 @@ export function MappingWorkbenchPage({
         value={context}
         actions={
           canWrite ? (
-            <Button
-              icon={<SyncOutlined />}
-              loading={batch.isPending}
-              onClick={() =>
-                modal.confirm({
-                  title: t('mapping.actions.batchRecheck'),
-                  onOk: () => batch.mutateAsync(),
-                })
-              }
-            >
+            <Button icon={<SyncOutlined />} loading={batch.isPending} onClick={handleBatchConfirm}>
               {t('mapping.actions.batchRecheck')}
             </Button>
           ) : null
         }
-        onChange={(nextContext) => {
-          setBatchPage(1)
-          setContext(nextContext)
-        }}
-        onPreview={() => {
-          setBatchPage(1)
-          setQueueSearch(context.search ?? '')
-        }}
+        onChange={handleContextChange}
+        onPreview={handleContextPreview}
       />
 
       {unmatched.error ? (
@@ -242,14 +251,8 @@ export function MappingWorkbenchPage({
             selectedId={selectedItem?.id}
             blocker={queueBlocker}
             search={queueSearch}
-            onBlockerChange={(value) => {
-              setBatchPage(1)
-              setQueueBlocker(value)
-            }}
-            onSearchChange={(value) => {
-              setBatchPage(1)
-              setQueueSearch(value)
-            }}
+            onBlockerChange={handleBlockerChange}
+            onSearchChange={handleSearchChange}
             onSelect={setSelectedItem}
             onRecommendedStage={() => undefined}
           />
@@ -291,11 +294,9 @@ export function MappingWorkbenchPage({
               selectCandidate.isPending ? selectCandidate.variables?.costCenterId : undefined
             }
             candidateSearch={candidateSearch}
-            onRecheck={() => orderItemId && recheck.mutate(orderItemId)}
-            onCandidateSearchChange={setCandidateSearch}
-            onSelectCandidate={(costCenterId, productId) =>
-              selectCandidate.mutate({ costCenterId, productId })
-            }
+            onRecheck={handleRecheck}
+            onCandidateSearchChange={handleCandidateSearchChange}
+            onSelectCandidate={handleSelectCandidate}
           />
         </Card>
       </div>

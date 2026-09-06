@@ -27,6 +27,7 @@ import {
   Pagination,
   Result,
   Select,
+  Skeleton,
   Space,
   Spin,
   Tag,
@@ -41,6 +42,7 @@ import {
   bulkUpdateGlobalAccess,
   updateGlobalAccess,
 } from '@/features/auth/access/api/accessMutationsApi'
+import { authKeys } from '@/features/auth/api/authKeys'
 import { loadRoleCatalog } from '@/features/auth/roles/api/rolesApi'
 import { loadScopes } from '@/features/auth/scopes/api/scopesApi'
 import { hasAnyPermission } from '@/shared/auth/permissions'
@@ -59,12 +61,10 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import {
-  type AccessExplorerSnapshot,
-  loadAccessAccounts,
-  loadAccessExplorer,
-} from '../../api/accessExplorerApi'
+import { type AccessExplorerSnapshot, loadAccessExplorer } from '../../api/accessExplorerApi'
+import { accountKeys } from '../api/accountKeys'
 import { createAccount, type CreateAccountInput } from '../api/accountManagementApi'
+import { useAccessAccountsQuery } from '../hooks'
 import styles from './AccessExplorerPage.module.scss'
 
 type ScopeType = 'global' | 'department' | 'team' | 'shop' | 'vendor' | 'own'
@@ -121,19 +121,15 @@ export function AccessExplorerPage() {
 
   const canRead = hasAnyPermission(['AUTH:READ', 'AUTH:WRITE'], { globalOnly: true })
   const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
-
-  const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['access-accounts'],
-    queryFn: loadAccessAccounts,
-  })
+  const { data, error, isLoading, refetch } = useAccessAccountsQuery()
   const roleCatalogQuery = useQuery({
-    queryKey: ['auth-role-catalog'],
+    queryKey: authKeys.roles.catalog(),
     queryFn: loadRoleCatalog,
     ...modalQueryOptions,
     enabled: Boolean(quickAccessAccount) || isCreateOpen || isBulkAssignOpen,
   })
   const scopeQuery = useQuery({
-    queryKey: ['auth-scopes'],
+    queryKey: authKeys.scopes.all(),
     queryFn: loadScopes,
     ...modalQueryOptions,
     enabled: isCreateOpen,
@@ -236,13 +232,13 @@ export function AccessExplorerPage() {
       setIsCreateOpen(false)
       createForm.resetFields()
       setCreateScopeType('global')
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       showFeedbackToast('success', t('actionFeedback.saved'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
-  const allAccounts = data?.items ?? []
+  const allAccounts = useMemo(() => data?.items ?? [], [data?.items])
   const searchValue = search.trim().toLowerCase()
   const statusFilter = normalize(status)
 
@@ -584,7 +580,9 @@ export function AccessExplorerPage() {
 
         {isLoading ? (
           <div className={styles.loading}>
-            {t('auth.accessExplorer.loading', 'Loading accounts...')}
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton.Input key={i} active block style={{ height: 68, borderRadius: 10 }} />
+            ))}
           </div>
         ) : (
           <div className={styles.accountList}>
@@ -607,8 +605,16 @@ export function AccessExplorerPage() {
             ) : (
               paginatedAccounts.map((account) => {
                 const initials = account.email ? account.email.charAt(0).toUpperCase() : 'U'
+                const isSelected = selectedAccountIds.includes(account.id)
                 return (
-                  <div key={account.id} className={styles.accountCard}>
+                  <div
+                    key={account.id}
+                    className={
+                      isSelected
+                        ? `${styles.accountCard} ${styles.accountCardSelected}`
+                        : styles.accountCard
+                    }
+                  >
                     {canWrite ? (
                       <Checkbox
                         checked={selectedAccountIds.includes(account.id)}
@@ -619,7 +625,7 @@ export function AccessExplorerPage() {
                       />
                     ) : null}
                     <div className={styles.accountIdentity}>
-                      <Avatar size={40} style={{ backgroundColor: '#1890ff' }}>
+                      <Avatar size={40} style={{ backgroundColor: 'var(--ant-color-primary)' }}>
                         {initials}
                       </Avatar>
                       <div>
@@ -718,6 +724,28 @@ export function AccessExplorerPage() {
           </div>
         )}
       </SectionCard>
+
+      {selectedAccountIds.length > 0 && canWrite ? (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkBarLabel}>
+            {t('auth.accessExplorer.selectedCount', {
+              count: selectedAccountIds.length,
+              defaultValue: `${selectedAccountIds.length} account(s) selected`,
+            })}
+          </span>
+          <div className={styles.bulkBarActions}>
+            <Button onClick={() => void openBulkAssign()}>
+              {t('auth.accessExplorer.bulkAssign', 'Bulk assign')}
+            </Button>
+            <Button danger onClick={() => setIsBulkRevokeOpen(true)}>
+              {t('auth.accessExplorer.bulkRevoke', 'Revoke now')}
+            </Button>
+            <Button type="text" onClick={() => setSelectedAccountIds([])}>
+              {t('auth.accessExplorer.clearSelection', 'Clear')}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <Modal
         open={Boolean(quickAccessAccount)}

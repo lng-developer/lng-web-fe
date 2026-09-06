@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
@@ -52,70 +53,75 @@ export function AppSidebar({
 }) {
   const { t } = useTranslation()
   const { resolved } = useThemePreference()
-  const searchTerm = navigationSearch
-  const normalizedSearch = searchTerm.trim().toLowerCase()
-  const visibleGroups = searchTerm
-    ? groups
-        .map((group) => {
-          const label = t(group.labelKey).toLowerCase()
-          const filteredItems = group.items.filter((item) =>
-            t(item.labelKey).toLowerCase().includes(normalizedSearch),
-          )
-          if (label.includes(normalizedSearch) || filteredItems.length) {
-            return {
-              ...group,
-              items: filteredItems.length
-                ? filteredItems
-                : label.includes(normalizedSearch)
-                  ? group.items
-                  : [],
-            }
+
+  const visibleGroups = useMemo(() => {
+    const searchTerm = navigationSearch
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+    if (!searchTerm) return groups
+    return groups
+      .map((group) => {
+        const label = t(group.labelKey).toLowerCase()
+        const filteredItems = group.items.filter((item) =>
+          t(item.labelKey).toLowerCase().includes(normalizedSearch),
+        )
+        if (label.includes(normalizedSearch) || filteredItems.length) {
+          return {
+            ...group,
+            items: filteredItems.length
+              ? filteredItems
+              : label.includes(normalizedSearch)
+                ? group.items
+                : [],
           }
-          return undefined
-        })
-        .filter((group): group is NavigationGroup => Boolean(group))
-        .filter((group) => group.items.length)
-    : groups
+        }
+        return undefined
+      })
+      .filter((group): group is NavigationGroup => Boolean(group))
+      .filter((group) => group.items.length)
+  }, [groups, navigationSearch, t])
 
-  const openKeys = visibleGroups
-    .filter((group) => !group.standalone)
-    .map((group) => `group:${group.key}`)
+  const openKeys = useMemo(
+    () => visibleGroups.filter((group) => !group.standalone).map((group) => `group:${group.key}`),
+    [visibleGroups],
+  )
 
-  const items: MenuProps['items'] = visibleGroups.flatMap(
-    (group): NonNullable<MenuProps['items']> => {
-      if (group.standalone) {
-        const [item] = group.items
-        return item
-          ? [
-              {
-                key: item.key,
-                icon: iconFor(item),
-                label: (
-                  <Link to={item.path} prefetch="intent" onClick={onNavigate}>
-                    {t(item.labelKey)}
-                  </Link>
-                ),
-              },
-            ]
-          : []
-      }
-      return [
-        {
-          key: `group:${group.key}`,
-          icon: collapsed ? iconForGroup(group.key) : undefined,
-          label: t(group.labelKey),
-          children: group.items.map((item) => ({
-            key: item.key,
-            icon: iconFor(item),
-            label: (
-              <Link to={item.path} prefetch="intent" onClick={onNavigate}>
-                {t(item.labelKey)}
-              </Link>
-            ),
-          })),
-        },
-      ]
-    },
+  const items: MenuProps['items'] = useMemo(
+    () =>
+      visibleGroups.flatMap((group): NonNullable<MenuProps['items']> => {
+        if (group.standalone) {
+          const [item] = group.items
+          return item
+            ? [
+                {
+                  key: item.key,
+                  icon: iconFor(item),
+                  label: (
+                    <Link to={item.path} prefetch="intent" onClick={onNavigate}>
+                      {t(item.labelKey)}
+                    </Link>
+                  ),
+                },
+              ]
+            : []
+        }
+        return [
+          {
+            key: `group:${group.key}`,
+            icon: collapsed ? iconForGroup(group.key) : undefined,
+            label: t(group.labelKey),
+            children: group.items.map((item) => ({
+              key: item.key,
+              icon: iconFor(item),
+              label: (
+                <Link to={item.path} prefetch="intent" onClick={onNavigate}>
+                  {t(item.labelKey)}
+                </Link>
+              ),
+            })),
+          },
+        ]
+      }),
+    [collapsed, onNavigate, t, visibleGroups],
   )
 
   const navigation = (

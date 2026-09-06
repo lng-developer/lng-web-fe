@@ -269,7 +269,13 @@ export function AccessEditorPage() {
       ) : null}
       {data ? (
         <>
-          <div className={styles.accountSummary}>
+          <div
+            className={`${styles.accountSummary} ${
+              accountStatus.toLowerCase() === 'active'
+                ? styles.accountSummaryActive
+                : styles.accountSummaryInactive
+            }`}
+          >
             <Avatar size={48} icon={<SafetyCertificateOutlined />} />
             <div>
               <Typography.Title level={4} className={styles.accountTitle}>

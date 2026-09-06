@@ -11,7 +11,7 @@ import {
   ReloadOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
   Checkbox,
@@ -30,6 +30,7 @@ import {
 } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { authKeys } from '@/features/auth/api/authKeys'
 import {
   createPermission,
   deletePermission,
@@ -39,7 +40,6 @@ import {
 import {
   createRole,
   deleteRole,
-  loadRoleCatalog,
   type RoleCatalog,
   type RoleInput,
   updateRole,
@@ -65,6 +65,7 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { useRolesQuery, useScopesQuery } from '../hooks'
 import styles from './AccessControlPage.module.scss'
 
 type Role = RoleCatalog['roles']['items'][number]
@@ -176,8 +177,8 @@ export function AccessControlPage() {
     setSearchParams({ tab: nextTab })
   }
 
-  const rolesQuery = useQuery({ queryKey: ['auth-roles'], queryFn: loadRoleCatalog })
-  const scopesQuery = useQuery({ queryKey: ['auth-scopes'], queryFn: loadScopes })
+  const rolesQuery = useRolesQuery()
+  const scopesQuery = useScopesQuery()
 
   const closeEditor = () => setEditor(undefined)
 
@@ -202,8 +203,9 @@ export function AccessControlPage() {
       closeEditor()
       showFeedbackToast('success', t('actionFeedback.saved'))
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['auth-roles'] }),
-        queryClient.invalidateQueries({ queryKey: ['auth-scopes'] }),
+        queryClient.invalidateQueries({ queryKey: authKeys.roles.all() }),
+        queryClient.invalidateQueries({ queryKey: authKeys.scopes.all() }),
+        queryClient.invalidateQueries({ queryKey: authKeys.roles.catalog() }),
       ])
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -222,8 +224,9 @@ export function AccessControlPage() {
         t(target.kind === 'scope' ? 'actionFeedback.deactivated' : 'actionFeedback.deleted'),
       )
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['auth-roles'] }),
-        queryClient.invalidateQueries({ queryKey: ['auth-scopes'] }),
+        queryClient.invalidateQueries({ queryKey: authKeys.roles.all() }),
+        queryClient.invalidateQueries({ queryKey: authKeys.scopes.all() }),
+        queryClient.invalidateQueries({ queryKey: authKeys.roles.catalog() }),
       ])
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -237,17 +240,32 @@ export function AccessControlPage() {
       ),
     [query, rolesQuery.data],
   )
-  const permissions = rolesQuery.data?.permissions.items ?? []
-  const visiblePermissions = permissions.filter((permission) =>
-    `${permission.name ?? ''} ${permission.code}`.toLowerCase().includes(query),
+  const permissions = useMemo(
+    () => rolesQuery.data?.permissions.items ?? [],
+    [rolesQuery.data?.permissions.items],
   )
-  const scopes = (scopesQuery.data?.items ?? []).filter((scope) =>
-    `${scope.name} ${scope.scopeType} ${scope.scopeId}`.toLowerCase().includes(query),
+  const visiblePermissions = useMemo(
+    () =>
+      permissions.filter((permission) =>
+        `${permission.name ?? ''} ${permission.code}`.toLowerCase().includes(query),
+      ),
+    [permissions, query],
   )
-  const roleFormPermissions = permissions.filter((permission) =>
-    `${permission.name ?? ''} ${permission.code}`
-      .toLowerCase()
-      .includes(rolePermissionSearch.toLowerCase()),
+  const scopes = useMemo(
+    () =>
+      (scopesQuery.data?.items ?? []).filter((scope) =>
+        `${scope.name} ${scope.scopeType} ${scope.scopeId}`.toLowerCase().includes(query),
+      ),
+    [query, scopesQuery.data?.items],
+  )
+  const roleFormPermissions = useMemo(
+    () =>
+      permissions.filter((permission) =>
+        `${permission.name ?? ''} ${permission.code}`
+          .toLowerCase()
+          .includes(rolePermissionSearch.toLowerCase()),
+      ),
+    [permissions, rolePermissionSearch],
   )
 
   function openEditor(nextEditor: Editor) {
@@ -401,19 +419,34 @@ export function AccessControlPage() {
           }
         >
           <div className={styles.catalogGrid}>
-            {visiblePermissions.map((permission) => (
-              <div className={styles.catalogItem} key={permission.id}>
-                <span>{permission.name ?? permission.code}</span>
-                <Typography.Text type="secondary" style={{ fontSize: 11, fontFamily: 'monospace' }}>
-                  {permission.code}
-                </Typography.Text>
-                {nodeActions(
-                  () => openEditor({ kind: 'permission', item: permission }),
-                  () => setDeleteTarget({ kind: 'permission', item: permission }),
-                  t('auth.accessEditor.delete'),
-                )}
-              </div>
-            ))}
+            {visiblePermissions.map((permission) => {
+              const domain = permission.code.includes(':')
+                ? permission.code.split(':')[0]
+                : permission.code.includes('.')
+                  ? permission.code.split('.')[0]
+                  : null
+              return (
+                <div className={styles.catalogItem} key={permission.id}>
+                  <div className={styles.catalogItemHeader}>
+                    {domain ? <span className={styles.domainBadge}>{domain}</span> : null}
+                    <span style={{ fontWeight: 500 }}>{permission.name ?? permission.code}</span>
+                    <div className={styles.catalogItemActions}>
+                      {nodeActions(
+                        () => openEditor({ kind: 'permission', item: permission }),
+                        () => setDeleteTarget({ kind: 'permission', item: permission }),
+                        t('auth.accessEditor.delete'),
+                      )}
+                    </div>
+                  </div>
+                  <Typography.Text
+                    type="secondary"
+                    style={{ fontSize: 11, fontFamily: 'monospace' }}
+                  >
+                    {permission.code}
+                  </Typography.Text>
+                </div>
+              )
+            })}
           </div>
         </SectionCard>
       ),
@@ -567,6 +600,7 @@ export function AccessControlPage() {
 
       <div className={styles.toolbar}>
         <SearchInput
+          className={styles.toolbarSearch}
           placeholder={t('auth.accessControl.search')}
           value={search}
           onSearchChange={setSearch}

@@ -23,7 +23,18 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 const originalGetComputedStyle = window.getComputedStyle
-window.getComputedStyle = (element) => originalGetComputedStyle(element)
+window.getComputedStyle = (element) => {
+  const style = originalGetComputedStyle(element)
+  if (element.classList?.contains('ant-popover')) {
+    return new Proxy(style, {
+      get(target, prop) {
+        if (prop === 'opacity') return '1'
+        return Reflect.get(target, prop)
+      },
+    })
+  }
+  return style
+}
 
 class ResizeObserverMock {
   observe() {}
