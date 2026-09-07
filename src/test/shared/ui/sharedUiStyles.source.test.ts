@@ -10,6 +10,12 @@ const sharedUiStyles = readFileSync(
 )
 
 describe('shared data table styles', () => {
+  it('keeps every table within its card without adding a second horizontal scrollbar', () => {
+    expect(sharedUiStyles).toMatch(
+      /\.dataTable\s*\{[^}]*min-width:\s*0[^}]*max-width:\s*100%(?![^}]*overflow-x)/s,
+    )
+  })
+
   it('allows viewport-filling tables to shrink so their own body can scroll horizontally', () => {
     expect(sharedUiStyles).toMatch(/\.dataTableFillViewport\s*\{[^}]*min-width:\s*0/s)
     expect(sharedUiStyles).toMatch(

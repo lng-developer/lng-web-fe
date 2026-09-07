@@ -63,13 +63,13 @@ describe('ShipmentWorkbenchPage', () => {
     })
   })
 
-  it('stretches the shipment table across the available width', async () => {
+  it('keeps short shipment columns compact within a stable table width', async () => {
     renderPage()
 
     await waitFor(() => expect(listShipments).toHaveBeenCalled())
 
     const table = document.querySelector<HTMLTableElement>('.ant-table-container table')
-    expect(table).toHaveStyle({ width: '100%' })
+    expect(table).toHaveStyle({ width: '1100px', tableLayout: 'fixed' })
   })
 
   it('reloads server data when the shared page-size control changes', async () => {

@@ -11,7 +11,7 @@ import {
   StopOutlined,
   TrophyOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Select, Space, Table, Tooltip, Typography } from 'antd'
 
@@ -33,9 +33,6 @@ import {
 
 import {
   getWorkScore,
-  getWorkScoreSummary,
-  listWorkScoreRules,
-  listWorkScores,
   overrideWorkScore,
   upsertWorkScoreRule,
   voidWorkScore,
@@ -47,6 +44,12 @@ import {
   type WorkScoreSourceType,
 } from '../api/workScoreApi'
 import { workScoreKeys } from '../api/workScoreKeys'
+import {
+  useWorkScoreDetailQuery,
+  useWorkScoreRulesQuery,
+  useWorkScoresQuery,
+  useWorkScoreSummaryQuery,
+} from '../hooks'
 import { WorkScoreAdjustmentModal } from './WorkScoreAdjustmentModal'
 import { WorkScoreDetailDrawer } from './WorkScoreDetailDrawer'
 import styles from './WorkScoreWorkbenchPage.module.scss'
@@ -141,27 +144,10 @@ export function WorkScoreWorkbenchPage({
     [deferredSearch, sourceType, scoreStatus, dates],
   )
 
-  const rows = useQuery({
-    queryKey: workScoreKeys.list(params),
-    queryFn: () => listWorkScores(params),
-    retry: false,
-  })
-  const summary = useQuery({
-    queryKey: workScoreKeys.summary(summaryParams),
-    queryFn: () => getWorkScoreSummary(summaryParams),
-    retry: false,
-  })
-  const detail = useQuery({
-    queryKey: workScoreKeys.detail(selectedId ?? ''),
-    queryFn: () => getWorkScore(selectedId!),
-    enabled: Boolean(selectedId),
-    retry: false,
-  })
-  const rules = useQuery({
-    queryKey: [...workScoreKeys.all, 'rules'],
-    queryFn: listWorkScoreRules,
-    enabled: canAdjust,
-  })
+  const rows = useWorkScoresQuery(params)
+  const summary = useWorkScoreSummaryQuery(summaryParams)
+  const detail = useWorkScoreDetailQuery(selectedId)
+  const rules = useWorkScoreRulesQuery(canAdjust)
 
   const mutation = useMutation({
     mutationFn: async (input: {

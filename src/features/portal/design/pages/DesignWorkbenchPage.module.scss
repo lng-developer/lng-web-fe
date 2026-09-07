@@ -26,6 +26,33 @@
 
 .channelFilter {
   flex: 0 1 auto;
+  gap: 0;
+}
+
+.taskNavigation {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.channelFilter :global(.ant-btn) {
+  border-radius: 0;
+}
+
+.channelFilter :global(.ant-btn + .ant-btn) {
+  margin-left: -1px;
+}
+
+.channelFilter :global(.ant-btn:first-child) {
+  border-radius: 8px 0 0 8px;
+}
+
+.channelFilter :global(.ant-btn:last-child) {
+  border-radius: 0 8px 8px 0;
+}
+
+.channelFilter :global(.ant-btn-primary) {
+  position: relative;
+  z-index: 1;
 }
 
 .actions {

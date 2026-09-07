@@ -7,6 +7,7 @@ export type FinanceSnapshot = {
   id: string
   orderId: string
   orderItemId: string
+  shopId?: string | null
   externalOrderId: string | null
   salesChannelCode: string | null
   marketplaceCode: string | null
@@ -16,6 +17,7 @@ export type FinanceSnapshot = {
   revenue: {
     customerPaidAmount: number
     feeAmount: number
+    feeSource?: string | null
     refundAmount: number
     discountAmount: number
     currency: string
@@ -73,17 +75,25 @@ export type FinanceParams = {
   dateFrom?: string
   dateTo?: string
 }
+export type FinanceSnapshotSummary = {
+  currency: string
+  orderCount: number
+  revenueAmount: number
+  marketplaceFeeAmount: number
+  refundAmount: number
+  discountAmount: number
+  baseCostAmount: number | null
+  additionalFulfillmentCostAmount: number
+  knownCostAmount: number
+  totalCostAmount: number | null
+  profitAmount: number
+  grossMarginBps: number | null
+  missingCostCount: number
+}
 export type FinancePage = {
   items: FinanceSnapshot[]
   pagination: { total: number; page: number; limit: number }
-  summaryByCurrency: Array<{
-    currency: string
-    revenueAmount: number
-    totalCostAmount: number
-    profitAmount: number
-    grossMarginBps: number | null
-    missingCostCount: number
-  }>
+  summaryByCurrency: FinanceSnapshotSummary[]
 }
 type FinancePageResponse = FinancePage & Partial<FinancePage['pagination']>
 type Paginated<T> = {

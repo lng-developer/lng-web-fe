@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 let tableRenderCount = 0
 let latestTableProps: Record<string, unknown> = {}
@@ -100,11 +100,16 @@ vi.mock('@/app/common/CoreDataTable', () => ({
 }))
 
 import { VendorMigrationTabPage } from '@/features/portal/vendors/pages/VendorMigrationTabPage'
+import i18n from '@/shared/i18n/i18n'
 
 afterEach(() => {
   cleanup()
   tableRenderCount = 0
   latestTableProps = {}
+})
+
+beforeEach(async () => {
+  await i18n.changeLanguage('en')
 })
 
 test('does not re-render the review table when only the Product Type Group changes', () => {

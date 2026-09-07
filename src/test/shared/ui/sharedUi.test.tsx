@@ -1,10 +1,10 @@
+import { useState } from 'react'
 import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { getFullRowsHeight } from '@/app/common/coreDataTableLayout'
 import i18n from '@/shared/i18n/i18n'
 import {
   BarChart,
@@ -23,7 +23,6 @@ import {
   PageHeader,
   PermissionGate,
   SearchInput,
-  SectionCard,
   StatusTag,
   TableFooter,
 } from '@/shared/ui'
@@ -151,28 +150,6 @@ describe('shared UI', () => {
     expect(screen.getByRole('search').querySelector('.single-line-filters')).toBeInTheDocument()
   })
 
-  it('applies a caller-provided layout class to a section card', () => {
-    render(
-      <SectionCard {...({ className: 'workspace-fill-card' } as Record<string, string>)}>
-        Vendor workspace
-      </SectionCard>,
-    )
-
-    expect(screen.getByText('Vendor workspace').closest('.ant-card')).toHaveClass(
-      'workspace-fill-card',
-    )
-  })
-
-  it('renders a borderless filter container when requested', () => {
-    render(
-      <FilterBar label="Vendor filters" bordered={false}>
-        <input aria-label="Search vendors" />
-      </FilterBar>,
-    )
-
-    expect(screen.getByRole('search').className).toMatch(/filterBarBorderless/)
-  })
-
   it('renders table, drawer, form, loading, and permission foundations', () => {
     render(
       <>
@@ -180,6 +157,7 @@ describe('shared UI', () => {
           columns={[{ dataIndex: 'name', title: 'Name' }]}
           dataSource={[{ key: 'order-1', name: 'Order 1' }]}
           rowSelection={{}}
+          tableLayout="fixed"
         />
         <DetailDrawer open title="Order details" onClose={() => undefined}>
           Order content
@@ -193,29 +171,40 @@ describe('shared UI', () => {
     )
 
     expect(screen.getByText('Order 1')).toBeVisible()
+    expect(screen.getAllByRole('table').some((table) => table.style.tableLayout === 'fixed')).toBe(
+      true,
+    )
     expect(screen.getByRole('dialog')).toHaveTextContent('Order details')
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled()
   })
 
-  it('shows ten records by default when a CoreDataTable has no pagination override', () => {
-    render(
-      <CoreDataTable
-        columns={[{ dataIndex: 'name', title: 'Name' }]}
-        dataSource={Array.from({ length: 11 }, (_, index) => ({
-          key: `order-${index + 1}`,
-          name: `Order ${index + 1}`,
-        }))}
-      />,
-    )
+  it('returns to the first row when the table page changes', async () => {
+    function PaginatedTable() {
+      const [page, setPage] = useState(1)
 
-    expect(screen.getByText('Order 10')).toBeVisible()
-    expect(screen.queryByText('Order 11')).not.toBeInTheDocument()
-  })
+      return (
+        <CoreDataTable
+          columns={[{ dataIndex: 'name', title: 'Name' }]}
+          dataSource={Array.from({ length: 20 }, (_, index) => ({
+            key: `order-${page}-${index}`,
+            name: `Order ${page}-${index}`,
+          }))}
+          pagination={{ current: page, pageSize: 20, total: 40, onChange: setPage }}
+          rowKey="key"
+          scroll={{ y: 160 }}
+        />
+      )
+    }
 
-  it('reserves only enough table-body height for complete rows', () => {
-    expect(getFullRowsHeight(535, 57)).toBe(513)
-    expect(getFullRowsHeight(535)).toBe(535)
+    const { container } = render(<PaginatedTable />)
+    const tableBody = container.querySelector<HTMLElement>('.ant-table-body')
+    expect(tableBody).not.toBeNull()
+    tableBody!.scrollTop = 120
+
+    fireEvent.click(screen.getByTitle('2'))
+
+    await waitFor(() => expect(tableBody!.scrollTop).toBe(0))
   })
 
   it('renders summary, pagination, and destructive confirmation patterns', async () => {

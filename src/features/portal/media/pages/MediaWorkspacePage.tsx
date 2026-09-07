@@ -1,14 +1,12 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import { DownloadOutlined, FileOutlined, UploadOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
@@ -19,21 +17,19 @@ import {
   SearchInput,
   SectionCard,
   StatusTag,
-  useFeedbackToast,
 } from '@/shared/ui'
 
 import {
-  listMediaAssets,
   type MediaAsset,
   type MediaAssetListParams,
   type MediaAssetStatus,
   type MediaMimeGroup,
-  uploadMediaAsset,
 } from '../api/mediaApi'
-import { mediaKeys } from '../api/mediaKeys'
+import { useMediaAssetsQuery, useUploadMediaAssetMutation } from '../hooks'
 import { MediaAssetDetailModal } from './MediaAssetDetailModal'
 import { MediaUploadModal } from './MediaUploadModal'
 
+const PAGE_SIZE = 20
 const MIME_GROUPS: MediaMimeGroup[] = ['IMAGE', 'DOCUMENT', 'ARCHIVE', 'OTHER']
 const PROVIDERS = ['local', 'cloudinary'] as const
 const RESOURCE_TYPES = ['image', 'video', 'raw'] as const
@@ -52,8 +48,6 @@ const formatSize = (size: number | null) =>
 export function MediaWorkspacePage() {
   const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount
-  const queryClient = useQueryClient()
-  const toast = useFeedbackToast()
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
   const [mimeGroup, setMimeGroup] = useState<MediaMimeGroup>()
@@ -64,102 +58,104 @@ export function MediaWorkspacePage() {
   const [dates, setDates] = useState<DateRangeValue>({})
   const [selected, setSelected] = useState<MediaAsset | null>(null)
   const [uploadOpen, setUploadOpen] = useState(false)
-  const params: MediaAssetListParams = {
-    page,
-    limit: DEFAULT_PAGE_SIZE,
-    q: q || undefined,
-    mimeGroup,
-    provider,
-    resourceType,
-    ownerType,
-    status,
-    ...dates,
-  }
-  const assets = useQuery({
-    queryKey: mediaKeys.list(params),
-    queryFn: () => listMediaAssets(params),
-  })
-  const upload = useMutation({
-    mutationFn: uploadMediaAsset,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: mediaKeys.all })
-      toast('success', t('media.upload.success'))
-    },
-    onError: () => toast('error', t('media.upload.error')),
-  })
-  const updateFilter =
+
+  const params: MediaAssetListParams = useMemo(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      q: q || undefined,
+      mimeGroup,
+      provider,
+      resourceType,
+      ownerType,
+      status,
+      ...dates,
+    }),
+    [page, q, mimeGroup, provider, resourceType, ownerType, status, dates],
+  )
+
+  const assets = useMediaAssetsQuery(params)
+  const upload = useUploadMediaAssetMutation()
+
+  const updateFilter = useCallback(
     <T,>(setter: (value: T) => void) =>
-    (value: T) => {
-      setter(value)
-      setPage(1)
-    }
-  const columns: TableColumnsType<MediaAsset> = [
-    {
-      title: t('media.columns.file'),
-      render: (_, asset) => (
-        <Space>
-          {asset.mimeType?.startsWith('image/') ? (
-            <AuthenticatedMediaImage
-              alt={asset.originalFilename ?? ''}
-              downloadUrl={asset.downloadUrl}
-              width={40}
-              height={40}
-              style={{ objectFit: 'cover', borderRadius: 6 }}
-            />
-          ) : (
-            <FileOutlined />
-          )}
-          <Typography.Text strong>
-            {asset.originalFilename ?? t('media.unknownFile')}
-          </Typography.Text>
-        </Space>
-      ),
-    },
-    { title: t('media.columns.mime'), dataIndex: 'mimeType', render: (value) => value ?? '-' },
-    { title: t('media.columns.size'), dataIndex: 'size', render: formatSize },
-    {
-      title: t('media.columns.source'),
-      render: (_, asset) => (
-        <Space direction="vertical" size={0}>
-          <span>{asset.provider ?? '-'}</span>
-          <Typography.Text type="secondary">{asset.resourceType ?? '-'}</Typography.Text>
-        </Space>
-      ),
-    },
-    {
-      title: t('media.columns.ownerType'),
-      dataIndex: 'ownerType',
-      render: (value) => value ?? '-',
-    },
-    {
-      title: t('media.columns.createdAt'),
-      dataIndex: 'createdAt',
-      render: (value) => new Date(value).toLocaleString(),
-    },
-    {
-      title: t('media.columns.status'),
-      dataIndex: 'status',
-      render: (value) => (
-        <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
-      ),
-    },
-    {
-      title: t('media.columns.actions'),
-      render: (_, asset) =>
-        asset.downloadUrl ? (
-          <Tooltip title={t('media.actions.download')}>
-            <Button
-              aria-label={t('media.actions.download')}
-              icon={<DownloadOutlined />}
-              onClick={(event) => {
-                event.stopPropagation()
-                void downloadMediaAsset(asset.downloadUrl!, asset.originalFilename ?? undefined)
-              }}
-            />
-          </Tooltip>
-        ) : null,
-    },
-  ]
+      (value: T) => {
+        setter(value)
+        setPage(1)
+      },
+    [],
+  )
+
+  const columns = useMemo<TableColumnsType<MediaAsset>>(
+    () => [
+      {
+        title: t('media.columns.file'),
+        render: (_, asset) => (
+          <Space>
+            {asset.mimeType?.startsWith('image/') ? (
+              <AuthenticatedMediaImage
+                alt={asset.originalFilename ?? ''}
+                downloadUrl={asset.downloadUrl}
+                width={40}
+                height={40}
+                style={{ objectFit: 'cover', borderRadius: 6 }}
+              />
+            ) : (
+              <FileOutlined />
+            )}
+            <Typography.Text strong>
+              {asset.originalFilename ?? t('media.unknownFile')}
+            </Typography.Text>
+          </Space>
+        ),
+      },
+      { title: t('media.columns.mime'), dataIndex: 'mimeType', render: (value) => value ?? '-' },
+      { title: t('media.columns.size'), dataIndex: 'size', render: formatSize },
+      {
+        title: t('media.columns.source'),
+        render: (_, asset) => (
+          <Space direction="vertical" size={0}>
+            <span>{asset.provider ?? '-'}</span>
+            <Typography.Text type="secondary">{asset.resourceType ?? '-'}</Typography.Text>
+          </Space>
+        ),
+      },
+      {
+        title: t('media.columns.ownerType'),
+        dataIndex: 'ownerType',
+        render: (value) => value ?? '-',
+      },
+      {
+        title: t('media.columns.createdAt'),
+        dataIndex: 'createdAt',
+        render: (value) => new Date(value).toLocaleString(),
+      },
+      {
+        title: t('media.columns.status'),
+        dataIndex: 'status',
+        render: (value) => (
+          <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
+        ),
+      },
+      {
+        title: t('media.columns.actions'),
+        render: (_, asset) =>
+          asset.downloadUrl ? (
+            <Tooltip title={t('media.actions.download')}>
+              <Button
+                aria-label={t('media.actions.download')}
+                icon={<DownloadOutlined />}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  void downloadMediaAsset(asset.downloadUrl!, asset.originalFilename ?? undefined)
+                }}
+              />
+            </Tooltip>
+          ) : null,
+      },
+    ],
+    [t],
+  )
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       <PageHeader title={t('media.title')} description={t('media.description')} />
@@ -186,7 +182,7 @@ export function MediaWorkspacePage() {
           onRow={(asset) => ({ onClick: () => setSelected(asset), style: { cursor: 'pointer' } })}
           pagination={{
             current: page,
-            pageSize: DEFAULT_PAGE_SIZE,
+            pageSize: PAGE_SIZE,
             total: assets.data?.pagination.total,
             onChange: setPage,
           }}

@@ -7,12 +7,10 @@ import {
   ThunderboltOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
 
 import { MetricCard, UiTabs } from '@/shared/ui'
 
-import { getMappingSummary } from '../api/mappingApi'
-import { mappingKeys } from '../api/mappingKeys'
+import { useMappingSummaryQuery } from '../hooks'
 import { MAPPING_RULE_PAGES } from '../model/mappingPageConfig'
 import { MappingRulePage } from './MappingRulePage'
 import { MappingWorkbenchPage } from './MappingWorkbenchPage'
@@ -30,12 +28,7 @@ export const MappingWorkspacePage = () => {
       ? requestedTab
       : WORKBENCH
 
-  const summary = useQuery({
-    queryKey: mappingKeys.summaryRoot(),
-    queryFn: () => getMappingSummary({}),
-    retry: false,
-    staleTime: 30_000,
-  })
+  const summary = useMappingSummaryQuery()
 
   const tabItems = useMemo(
     () => [

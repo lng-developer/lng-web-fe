@@ -3,6 +3,19 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { App } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const feedbackToast = vi.fn()
+
+vi.mock('@/shared/ui', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/shared/ui')>()),
+  useFeedbackToast: () => feedbackToast,
+}))
+
+vi.mock('@/features/portal/orders/api/orderApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/portal/orders/api/orderApi')>()),
+  recheckMapping: vi.fn(),
+  recheckProduction: vi.fn(),
+}))
+
 vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/mapping/api/mappingApi')>()
   return {
@@ -20,7 +33,11 @@ import {
   searchMappingVendors,
   selectFulfillmentCandidate,
 } from '@/features/portal/mapping/api/mappingApi'
-import type { OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
+import {
+  type OrderWorkbenchRow,
+  recheckMapping,
+  recheckProduction,
+} from '@/features/portal/orders/api/orderApi'
 import { OrderInlinePanel } from '@/features/portal/orders/pages/OrderInlinePanel'
 
 afterEach(cleanup)
@@ -134,6 +151,8 @@ it('keeps replacement but hides operational actions for a cancelled order', () =
 describe('OrderInlinePanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(recheckMapping).mockResolvedValue({ status: 'BLOCKED' })
+    vi.mocked(recheckProduction).mockResolvedValue({ status: 'BLOCKED', blockers: ['OPEN_CASE'] })
     vi.mocked(searchMappingVendors).mockResolvedValue({
       items: [{ id: 'vendor-1', name: 'Vendor One' }],
       hasMore: false,
@@ -187,7 +206,52 @@ describe('OrderInlinePanel', () => {
     renderPanel()
 
     openMoreActions()
-    expect(actionMenuItem('orders.actions.recheckShort')).toBeInTheDocument()
+    expect(actionMenuItem('orders.actions.recheckMappingShort')).toBeInTheDocument()
+  })
+
+  it('shows mapping recheck for a mapped processing item', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          item: { ...row.items[0].item, status: 'PROCESSING' },
+          mapping: { status: 'READY' },
+          workflow: { ...row.items[0].workflow, nextActions: [] },
+        },
+      ],
+    })
+
+    openMoreActions()
+    expect(actionMenuItem('orders.actions.recheckMappingShort')).toBeInTheDocument()
+  })
+
+  it('warns when mapping recheck remains blocked without a vendor', async () => {
+    renderPanel()
+
+    openMoreActions()
+    fireEvent.click(actionMenuItem('orders.actions.recheckMappingShort'))
+
+    await waitFor(() => {
+      expect(feedbackToast).toHaveBeenCalledWith('warning', 'orders.messages.mappingStillBlocked')
+    })
+    expect(feedbackToast).not.toHaveBeenCalledWith('success', 'orders.messages.updated')
+  })
+
+  it('confirms a successful mapping recheck with a vendor-specific message', async () => {
+    vi.mocked(recheckMapping).mockResolvedValue({
+      status: 'READY',
+      vendorProduct: { id: 'product-1' },
+      vendorCostCenter: { id: 'cost-1' },
+    })
+    renderPanel()
+
+    openMoreActions()
+    fireEvent.click(actionMenuItem('orders.actions.recheckMappingShort'))
+
+    await waitFor(() => {
+      expect(feedbackToast).toHaveBeenCalledWith('success', 'orders.messages.mappingMatched')
+    })
   })
 
   it('shows PSD readiness from the resolved listing variant', () => {
@@ -259,7 +323,34 @@ describe('OrderInlinePanel', () => {
     })
 
     openMoreActions()
-    expect(actionMenuItem('orders.actions.recheckShort')).toBeInTheDocument()
+    expect(actionMenuItem('orders.actions.recheckProductionShort')).toBeInTheDocument()
+  })
+
+  it('warns when production recheck is blocked by an open case', async () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          mapping: {
+            status: 'READY',
+            listingVariant: { id: 'variant-1', psdReadiness: { status: 'PRESENT' } },
+          },
+          production: { status: 'BLOCKED', scaleStatus: 'NEED_SCALE', qcStatus: 'NOT_READY' },
+        },
+      ],
+    })
+
+    openMoreActions()
+    fireEvent.click(actionMenuItem('orders.actions.recheckProductionShort'))
+
+    await waitFor(() => {
+      expect(feedbackToast).toHaveBeenCalledWith(
+        'warning',
+        'orders.messages.productionBlockedOpenCase',
+      )
+    })
+    expect(feedbackToast).not.toHaveBeenCalledWith('success', 'orders.messages.updated')
   })
 
   it('groups infrequent item actions in the more-actions menu', () => {

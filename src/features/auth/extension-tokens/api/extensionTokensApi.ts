@@ -1,7 +1,7 @@
 import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
-export type ExtensionTokenEnvironment = 'development' | 'production'
+export type ExtensionTokenEnvironment = 'local' | 'development' | 'production'
 
 export type ExtensionToken = {
   id: string

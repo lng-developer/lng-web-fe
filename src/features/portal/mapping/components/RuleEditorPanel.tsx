@@ -28,8 +28,9 @@ import { RuleImpactSamples } from './RuleImpactSamples'
 
 type Field = {
   name: string
+  labelKey?: string
   required?: boolean
-  kind?: 'number' | 'select'
+  kind?: 'number' | 'select' | 'tags'
   options?: string[]
   advanced?: boolean
   visibleWhen?: { name: string; value: string }
@@ -75,7 +76,13 @@ const fields: Record<MappingRuleType, Field[]> = {
         'OTHER',
       ],
     },
-    { name: 'matchValue', required: true },
+    {
+      name: 'matchValues',
+      labelKey: 'mapping.fields.optionLabelAliases',
+      required: true,
+      kind: 'tags',
+    },
+    { name: 'matchType', kind: 'select', options: ['EXACT', 'CONTAINS'] },
   ],
   valueAliases: [
     {
@@ -84,7 +91,7 @@ const fields: Record<MappingRuleType, Field[]> = {
       kind: 'select',
       options: ['SIZE', 'COLOR', 'PRODUCT_TYPE', 'STYLE', 'MATERIAL', 'OTHER'],
     },
-    { name: 'matchValue', required: true },
+    { name: 'matchValues', required: true, kind: 'tags' },
     { name: 'normalizedValue', required: true },
   ],
   vendorRouting: [
@@ -114,6 +121,15 @@ const csvListFields = new Set([
   'sizeKeys',
 ])
 const scopeFieldNames = ['shopId', 'salesChannelCode', 'marketplaceCode'] as const
+
+function semanticSamplePlaceholder(semanticRole: unknown) {
+  if (semanticRole === 'SIZE') return 'Example: Select Size'
+  if (semanticRole === 'COLOR') return 'Example: Select Color'
+  if (semanticRole === 'PRODUCT_TYPE') return 'Example: Select Product Type'
+  if (semanticRole === 'PRODUCT_TYPE_COLOR') return 'Example: Select Product Type & Color'
+  if (semanticRole === 'PRODUCT_TYPE_SIZE') return 'Example: Select Product Type & Size'
+  return undefined
+}
 
 function scopeValues(rule?: MappingRule) {
   return Object.fromEntries(
@@ -157,7 +173,14 @@ function initialValues(type: MappingRuleType, rule?: MappingRule): MappingRuleIn
     type === 'skuNormalize'
       ? { status: 'ACTIVE', priority: 100, patternType: 'SEGMENT' }
       : { status: 'ACTIVE', priority: 100 }
-  const values = rule ? { ...baseDefaults, ...rule } : baseDefaults
+  const values: MappingRuleInput = rule ? { ...baseDefaults, ...rule } : baseDefaults
+  if (
+    ['semanticRules', 'valueAliases'].includes(type) &&
+    !values.matchValues &&
+    values.matchValue
+  ) {
+    values.matchValues = [values.matchValue]
+  }
   return normalizeValues(type, values)
 }
 
@@ -198,6 +221,7 @@ export function RuleEditorPanel({
   const [previewError, setPreviewError] = useState<string>()
   const productTypeGroupId = Form.useWatch('productTypeGroupId', form)
   const outputAction = Form.useWatch('outputAction', form)
+  const semanticRole = Form.useWatch('semanticRole', form)
   const supportsSamplePreview = [
     'skuNormalize',
     'skuConfig',
@@ -288,7 +312,7 @@ export function RuleEditorPanel({
     <Col key={field.name} xs={24} md={12}>
       <Form.Item
         name={field.name}
-        label={t(`mapping.fields.${field.name}`)}
+        label={t(field.labelKey ?? `mapping.fields.${field.name}`)}
         rules={field.required ? [{ required: true }] : undefined}
       >
         {referenceOptions(field.name) ? (
@@ -302,6 +326,8 @@ export function RuleEditorPanel({
           <Select options={field.options?.map((value) => ({ value, label: value }))} />
         ) : field.kind === 'number' ? (
           <InputNumber style={{ width: '100%' }} />
+        ) : field.kind === 'tags' ? (
+          <Select mode="tags" tokenSeparators={[',']} />
         ) : (
           <Input />
         )}
@@ -368,12 +394,20 @@ export function RuleEditorPanel({
       {supportsSamplePreview ? (
         <>
           <Form.Item
-            label={t(`mapping.fields.${type === 'skuNormalize' ? 'sampleSku' : 'sampleValue'}`)}
+            label={t(
+              type === 'semanticRules'
+                ? 'mapping.fields.sampleLabel'
+                : `mapping.fields.${type === 'skuNormalize' ? 'sampleSku' : 'sampleValue'}`,
+            )}
             htmlFor="mapping-rule-sample-sku"
+            extra={type === 'semanticRules' ? t('mapping.help.semanticSampleLabel') : undefined}
           >
             <Input
               id="mapping-rule-sample-sku"
               value={sampleSku || initialSampleSku}
+              placeholder={
+                type === 'semanticRules' ? semanticSamplePlaceholder(semanticRole) : undefined
+              }
               onChange={(event) => setSampleSku(event.target.value)}
             />
           </Form.Item>

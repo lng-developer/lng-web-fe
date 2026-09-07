@@ -4,10 +4,10 @@ import { Skeleton } from 'antd'
 import { type PopupModalAnchor } from '@/shared/ui'
 
 import { type OrderWorkbenchRow } from '../api/orderApi'
+import type { OrderModal } from '../components/orderTypes'
+import { useOrderActionStore } from '../hooks/useOrderActionStore'
 import { OrderInlinePanel } from './OrderInlinePanel'
 import styles from './OrderWorkbenchPage.module.scss'
-
-type OrderModal = 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline'
 
 type OrderWorkbenchExpandedRowProps = {
   readonly row: OrderWorkbenchRow
@@ -15,7 +15,7 @@ type OrderWorkbenchExpandedRowProps = {
   readonly canOperate: boolean
   readonly requestedModal?: OrderModal
   readonly requestedPopupAnchor?: PopupModalAnchor
-  readonly onOrderModalClose: () => void
+  readonly onOrderModalClose?: () => void
 }
 
 const LazyOrderDetail = memo(function LazyOrderDetail({
@@ -61,14 +61,23 @@ const LazyOrderDetail = memo(function LazyOrderDetail({
   )
 })
 
-export function OrderWorkbenchExpandedRow({
+export const OrderWorkbenchExpandedRow = memo(function OrderWorkbenchExpandedRow({
   row,
   canWrite,
   canOperate,
-  requestedModal,
-  requestedPopupAnchor,
-  onOrderModalClose,
+  requestedModal: propModal,
+  requestedPopupAnchor: propAnchor,
+  onOrderModalClose: propOnClose,
 }: OrderWorkbenchExpandedRowProps) {
+  const storeAction = useOrderActionStore((state) =>
+    state.orderAction?.orderId === row.order.id ? state.orderAction : undefined,
+  )
+  const storeClose = useOrderActionStore((state) => state.closeOrderModal)
+
+  const requestedModal = propModal ?? storeAction?.modal
+  const requestedPopupAnchor = propAnchor ?? storeAction?.anchor
+  const onOrderModalClose = propOnClose ?? storeClose
+
   return (
     <LazyOrderDetail
       row={row}
@@ -79,6 +88,6 @@ export function OrderWorkbenchExpandedRow({
       onOrderModalClose={onOrderModalClose}
     />
   )
-}
+})
 
 export default OrderWorkbenchExpandedRow

@@ -74,7 +74,7 @@ export function IntegrationImportsWorkbench({
   const { t } = useTranslation()
 
   return (
-    <>
+    <div className={styles.importsWorkbench}>
       {error ? (
         <FeedbackAlert
           type="error"
@@ -99,11 +99,14 @@ export function IntegrationImportsWorkbench({
             label={t(`portal.integrations.imports.${key}`, { defaultValue: fallback })}
             value={counts[key]}
             variant={variant}
+            className={styles.compactMetric}
           />
         ))}
       </section>
       <SectionCard>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 900 }}
           columns={columns}
           dataSource={jobs}
           loading={isLoading}
@@ -176,6 +179,6 @@ export function IntegrationImportsWorkbench({
         />
       ) : null}
       <ImportIssueQueue account={account} shops={shops} selectedJobId={selectedJobId} />
-    </>
+    </div>
   )
 }

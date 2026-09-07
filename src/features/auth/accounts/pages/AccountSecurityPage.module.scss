@@ -3,6 +3,91 @@
   gap: 20px;
 }
 
+/* ── Danger Zone container ──────────────────── */
+.dangerZone {
+  border: 1px solid color-mix(in srgb, var(--ant-color-error) 32%, var(--ant-color-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ant-color-error-bg) 60%, var(--ant-color-bg-container));
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.dangerZoneTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--ant-color-error);
+  margin-bottom: 4px;
+}
+
+/* ── Individual danger action row ───────────── */
+.dangerAction {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--ant-color-error) 40%, var(--ant-color-border));
+    box-shadow: 0 2px 10px rgb(239 68 68 / 8%);
+  }
+}
+
+.dangerActionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.dangerActionIconSession {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+}
+
+.dangerActionIconDeactivate {
+  background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+  color: #fff;
+}
+
+.dangerActionIconArchive {
+  background: linear-gradient(135deg, #6b7280 0%, #374151 100%);
+  color: #fff;
+}
+
+.dangerActionText {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+
+.dangerActionLabel {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dangerActionDescription {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+.dangerActionBtn {
+  flex-shrink: 0;
+}
+
+/* ── Old flat actions (kept for fallback) ────── */
 .dangerActions {
   display: flex;
   flex-wrap: wrap;
@@ -12,5 +97,14 @@
 @media (max-width: 767px) {
   .page {
     gap: 16px;
+  }
+
+  .dangerAction {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .dangerActionBtn {
+    width: 100%;
   }
 }

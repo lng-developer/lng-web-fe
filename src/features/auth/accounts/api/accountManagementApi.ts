@@ -6,6 +6,9 @@ export type ManagedAccount = {
     email: string
     id: string
     status?: string
+    operatingCostAmount?: number
+    operatingCostStartedAt?: string | null
+    deactivatedAt?: string | null
   }
 }
 
@@ -41,6 +44,18 @@ export async function updateAccountEmail(accountId: string, email: string) {
 
 export async function updateAccountStatus(accountId: string, status: 'active' | 'inactive') {
   return unwrap(await apiClient.patch(`/api/auth/accounts/${accountId}/status`, { status }))
+}
+export async function updateAccountOperatingCost(
+  accountId: string,
+  operatingCostAmount: number,
+  operatingCostStartedAt: string | null,
+) {
+  return unwrap(
+    await apiClient.patch(`/api/auth/accounts/${accountId}/operating-cost`, {
+      operatingCostAmount,
+      operatingCostStartedAt,
+    }),
+  )
 }
 
 export async function resetAccountPassword(accountId: string, password: string) {

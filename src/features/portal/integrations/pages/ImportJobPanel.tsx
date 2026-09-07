@@ -158,9 +158,11 @@ function ImportJobPanelForJob({
     {
       title: t('portal.integrations.raw.row', { defaultValue: 'Row' }),
       dataIndex: 'rowNumber',
+      width: 80,
     },
     {
       title: t('portal.integrations.raw.reference', { defaultValue: 'Reference' }),
+      width: 240,
       render: (_, raw) => (
         <>
           <CopyableOrderId value={raw.externalOrderId} fallback="-" /> / {raw.externalItemId ?? '-'}
@@ -170,6 +172,7 @@ function ImportJobPanelForJob({
     ...(['normalizeStatus', 'importStatus', 'postImportStatus'] as const).map((field) => ({
       title: t(`portal.integrations.raw.${field}`, { defaultValue: field }),
       dataIndex: field,
+      width: 128,
       render: (value: string) => (
         <StatusTag status={recordTone(value)}>
           {t(`portal.integrations.recordStatuses.${value}`, { defaultValue: value })}
@@ -178,6 +181,7 @@ function ImportJobPanelForJob({
     })),
     {
       title: t('portal.integrations.raw.actions', { defaultValue: 'Actions' }),
+      width: 132,
       render: (_, raw) =>
         canRetryPostImport && raw.postImportStatus !== 'COMPLETED' ? (
           <Button
@@ -297,6 +301,8 @@ function ImportJobPanelForJob({
                 {t('portal.integrations.panel.rawRecords', { defaultValue: 'Raw records' })}
               </Typography.Title>
               <CoreDataTable
+                tableLayout="fixed"
+                scroll={{ x: 960 }}
                 columns={rawColumns}
                 dataSource={rawRecords.data?.items ?? []}
                 loading={rawRecords.isLoading}
@@ -372,6 +378,8 @@ function ImportJobPanelForJob({
             onClose={() => setRawDrawerOpen(false)}
           >
             <CoreDataTable
+              tableLayout="fixed"
+              scroll={{ x: 960 }}
               columns={rawColumns}
               dataSource={rawRecords.data?.items ?? []}
               loading={rawRecords.isLoading}

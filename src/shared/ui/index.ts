@@ -24,6 +24,10 @@ export { FileUpload, type FileUploadProps } from './FileUpload'
 export { FilterBar, type FilterBarProps } from './FilterBar'
 export { FormActions, type FormActionsProps } from './FormActions'
 export { FormSection, FormSectionFull } from './FormSection'
+export {
+  InteractiveImageViewerModal,
+  type InteractiveImageViewerModalProps,
+} from './InteractiveImageViewerModal'
 export { LoadingState, type LoadingStateProps } from './LoadingState'
 export { MetricCard, type MetricCardProps } from './MetricCard'
 export { PageHeader, type PageHeaderProps } from './PageHeader'
@@ -47,5 +51,6 @@ export { TableFooter, type TableFooterProps } from './TableFooter'
 export { type UiButtonTabItem, UiButtonTabs } from './UiButtonTabs'
 export { UiTabLabel } from './UiTabLabel'
 export { UiTabs, type UiTabsProps } from './UiTabs'
+export { useDebouncedValue } from './useDebouncedValue'
 export { useFeedbackToast } from './useFeedbackToast'
 export { ZoomableImage, type ZoomableImageProps } from './ZoomableImage'

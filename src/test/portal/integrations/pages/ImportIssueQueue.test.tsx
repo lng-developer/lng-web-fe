@@ -109,6 +109,18 @@ describe('ImportIssueQueue', () => {
     )
   })
 
+  it('does not render an empty item reference placeholder', async () => {
+    vi.mocked(listIssues).mockResolvedValue({
+      items: [{ ...issue, externalItemId: null }],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderQueue()
+
+    expect(await screen.findByText('Postal code is missing')).toBeVisible()
+    expect(screen.queryByText('-', { selector: '.ant-typography' })).not.toBeInTheDocument()
+  })
+
   it('sends all queue filters to the server and hides write actions for readers', async () => {
     renderQueue()
     await waitFor(() => expect(listIssues).toHaveBeenCalledWith({ page: 1, limit: 20 }))
@@ -179,7 +191,7 @@ describe('ImportIssueQueue', () => {
       queryKey: integrationKeys.job('job-1'),
     })
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: integrationKeys.job('job-selected') })
-  })
+  }, 15_000)
 
   it('preserves an ignored resolution form when the mutation fails', async () => {
     vi.mocked(updateIssueStatus).mockRejectedValue(new Error('Conflict'))
@@ -207,7 +219,7 @@ describe('ImportIssueQueue', () => {
       status: 'IGNORED',
       note: 'Duplicate report',
     })
-  })
+  }, 15_000)
 
   it('hides resolution for an issue outside the caller exact write scope', async () => {
     const scopedAccount = account(

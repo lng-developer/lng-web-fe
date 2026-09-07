@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react'
+import { memo, type ReactNode, useCallback, useMemo, useState } from 'react'
 import { Checkbox, Input } from 'antd'
 
 import styles from './PermissionCheckboxGroup.module.scss'
@@ -27,7 +27,7 @@ export interface PermissionCheckboxGroupProps {
   readonly emptyText?: string
 }
 
-export function PermissionCheckboxGroup({
+export const PermissionCheckboxGroup = memo(function PermissionCheckboxGroup({
   options,
   sections,
   value,
@@ -40,25 +40,46 @@ export function PermissionCheckboxGroup({
   emptyText = 'No permissions found',
 }: PermissionCheckboxGroupProps) {
   const [search, setSearch] = useState('')
-  const groupedSections = sections?.length
-    ? sections
-    : options?.length
-      ? [{ title: '', options }]
-      : []
-  const selectedValues = new Set(value ?? [])
-  const normalizedSearch = search.trim().toLowerCase()
-  const filteredSections = groupedSections
-    .map((section) => ({
-      ...section,
-      options: normalizedSearch
-        ? section.options.filter((option) =>
-            String(option.label ?? option.value)
-              .toLowerCase()
-              .includes(normalizedSearch),
-          )
-        : section.options,
-    }))
-    .filter((section) => section.options.length > 0)
+
+  const groupedSections = useMemo(
+    () => (sections?.length ? sections : options?.length ? [{ title: '', options }] : []),
+    [sections, options],
+  )
+
+  const selectedValues = useMemo(() => new Set(value ?? []), [value])
+  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search])
+
+  const filteredSections = useMemo(
+    () =>
+      groupedSections
+        .map((section) => ({
+          ...section,
+          options: normalizedSearch
+            ? section.options.filter((option) =>
+                String(option.label ?? option.value)
+                  .toLowerCase()
+                  .includes(normalizedSearch),
+              )
+            : section.options,
+        }))
+        .filter((section) => section.options.length > 0),
+    [groupedSections, normalizedSearch],
+  )
+
+  const showSectionTitle = useMemo(
+    () => groupedSections.some((section) => Boolean(section.title)),
+    [groupedSections],
+  )
+
+  const groupStyle = useMemo(
+    () => ({ '--permission-columns': String(columns) }) as Record<string, string>,
+    [columns],
+  )
+
+  const handleChange = useCallback(
+    (selected: unknown[]) => onChange?.(selected as string[]),
+    [onChange],
+  )
 
   if (loading) {
     return (
@@ -70,15 +91,13 @@ export function PermissionCheckboxGroup({
     return <div className={className} />
   }
 
-  const showSectionTitle = groupedSections.some((section) => Boolean(section.title))
-
   return (
     <Checkbox.Group
       className={`${styles.checkboxGroup} ${className ?? ''}`}
       value={value}
       disabled={disabled}
-      onChange={(selected) => onChange?.(selected as string[])}
-      style={{ '--permission-columns': String(columns) } as Record<string, string>}
+      onChange={handleChange}
+      style={groupStyle}
     >
       <Input.Search
         className={styles.search}
@@ -121,4 +140,4 @@ export function PermissionCheckboxGroup({
       </div>
     </Checkbox.Group>
   )
-}
+})

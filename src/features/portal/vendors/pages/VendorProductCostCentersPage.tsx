@@ -8,13 +8,14 @@ import { Button, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { hasAnyPermission } from '@/shared/auth/permissions'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
+import { FilterBar, SearchInput, StatusTag, useDebouncedValue } from '@/shared/ui'
 
 import { getVendorProduct, listVendorCostCenters, type VendorCostCenter } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
 import { VendorCostCenterEditorModal } from './VendorCostCenterEditorModal'
 import styles from './VendorWorkspacePage.module.scss'
+
+const PAGE_SIZE = 20
 
 const formatMoney = (value?: number | null, currency = 'USD') => {
   if (value == null) return '—'
@@ -26,6 +27,7 @@ export function VendorProductCostCentersPage() {
   const { productId } = useParams<{ productId: string }>()
   const canWrite = hasAnyPermission(['VENDORS:WRITE'], { globalOnly: true })
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 250)
   const [page, setPage] = useState(1)
   const [selectedCostCenter, setSelectedCostCenter] = useState<VendorCostCenter>()
   const [isCreating, setIsCreating] = useState(false)
@@ -41,8 +43,8 @@ export function VendorProductCostCentersPage() {
   })
 
   const params = useMemo(
-    () => ({ limit: DEFAULT_PAGE_SIZE, page, q: search.trim() || undefined }),
-    [page, search],
+    () => ({ limit: PAGE_SIZE, page, q: debouncedSearch.trim() || undefined }),
+    [page, debouncedSearch],
   )
   const costCenters = useQuery({
     queryKey: productId
@@ -224,7 +226,7 @@ export function VendorProductCostCentersPage() {
           }}
           pagination={{
             current: page,
-            pageSize: DEFAULT_PAGE_SIZE,
+            pageSize: PAGE_SIZE,
             total: costCenters.data?.pagination.total,
             onChange: (nextPage) => setPage(nextPage),
             showSizeChanger: false,

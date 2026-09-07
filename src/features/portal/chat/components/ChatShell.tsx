@@ -10,7 +10,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Avatar, Badge, Button, Empty, Input, Tooltip, Typography } from 'antd'
+import { Avatar, Badge, Button, Empty, Input, Popover, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -365,7 +365,27 @@ export function ChatShell({ account }: ChatShellProps) {
   return (
     <>
       <div className={styles.chatMenuWrapper}>
-        <Tooltip title={chatLabel}>
+        {isChatPreviewOpen ? (
+          <Popover
+            trigger="click"
+            placement="bottomRight"
+            open={isChatPreviewOpen}
+            overlayClassName={styles.popover}
+            content={chatPreview}
+            onOpenChange={setIsChatPreviewOpen}
+          >
+            <Badge count={unreadCount} size="small">
+              <Button
+                aria-label={chatLabel}
+                className={`${styles.headerChatButton} ${hasUnreadFromOthers ? styles.headerChatButtonUnread : ''}`}
+                icon={<MessageOutlined />}
+                shape="circle"
+                type={isChatWorkspace ? 'primary' : 'text'}
+                onClick={() => setIsChatPreviewOpen((open) => !open)}
+              />
+            </Badge>
+          </Popover>
+        ) : (
           <Badge count={unreadCount} size="small">
             <Button
               aria-label={chatLabel}
@@ -376,8 +396,7 @@ export function ChatShell({ account }: ChatShellProps) {
               onClick={() => setIsChatPreviewOpen((open) => !open)}
             />
           </Badge>
-        </Tooltip>
-        {isChatPreviewOpen ? <div className={styles.chatPreviewPopup}>{chatPreview}</div> : null}
+        )}
       </div>
       {overlayRoot &&
       !isChatWorkspace &&

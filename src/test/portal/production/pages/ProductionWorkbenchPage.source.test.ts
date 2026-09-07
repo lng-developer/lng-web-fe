@@ -40,4 +40,10 @@ describe('ProductionWorkbenchPage source contract', () => {
     expect(source).toContain("title: t('portal.production.blockers')")
     expect(source).toContain("(row.blockers || []).join(', ')")
   })
+
+  it('keeps queue navigation outside the queue card', () => {
+    expect(source).toMatch(
+      /<div className=\{styles\.queueToolbar\}>[\s\S]*?<\/div>\s*<section className=\{styles\.queuePane\}/,
+    )
+  })
 })

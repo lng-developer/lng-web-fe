@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   DollarOutlined,
@@ -9,14 +9,12 @@ import {
   UserSwitchOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
   Card,
   Descriptions,
   Drawer,
   Input,
-  message,
   Select,
   Space,
   Tag,
@@ -28,18 +26,19 @@ import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
-  addCustomerNote,
   type Customer,
   type CustomerCareStatus,
   type CustomerLifecycle,
-  exportCustomersCsv,
-  getCustomer,
-  getCustomerSummary,
-  getCustomerTimeline,
-  listCustomers,
-  updateCustomerCareStatus,
 } from '@/features/portal/customers/api/customerApi'
-import { customerKeys } from '@/features/portal/customers/api/customerKeys'
+import {
+  useAddCustomerNoteMutation,
+  useCustomerDetailQuery,
+  useCustomersQuery,
+  useCustomerSummaryQuery,
+  useCustomerTimelineQuery,
+  useExportCustomersCsvMutation,
+  useUpdateCustomerCareStatusMutation,
+} from '@/features/portal/customers/hooks'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { FilterBar, MetricCard, PageHeader } from '@/shared/ui'
@@ -59,7 +58,6 @@ const lifecycleOptions: CustomerLifecycle[] = ['NEW', 'RETURNING', 'VIP', 'AT_RI
 
 export const CustomerWorkspacePage = () => {
   const { i18n, t } = useTranslation()
-  const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
@@ -82,118 +80,94 @@ export const CustomerWorkspacePage = () => {
     [i18n.language],
   )
 
-  const labelOf = (value: string) =>
-    t(`customers.values.${value}`, { defaultValue: value.replaceAll('_', ' ') })
+  const labelOf = useCallback(
+    (value: string) => t(`customers.values.${value}`, { defaultValue: value.replaceAll('_', ' ') }),
+    [t],
+  )
 
   const params = useMemo(
     () => ({ page, limit: pageSize, search, lifecycle, careStatus, sort: 'lastOrderDesc' }),
     [page, pageSize, search, lifecycle, careStatus],
   )
+  const summaryParams = useMemo(
+    () => ({ search, lifecycle, careStatus }),
+    [search, lifecycle, careStatus],
+  )
 
-  const customers = useQuery({
-    queryKey: customerKeys.list(params),
-    queryFn: () => listCustomers(params),
-    placeholderData: keepPreviousData,
-  })
-  const summary = useQuery({
-    queryKey: customerKeys.summary({ search, lifecycle, careStatus }),
-    queryFn: () => getCustomerSummary({ search, lifecycle, careStatus }),
-  })
-  const detail = useQuery({
-    queryKey: selectedId ? customerKeys.detail(selectedId) : ['customers', 'detail', 'empty'],
-    queryFn: () => getCustomer(selectedId as string),
-    enabled: Boolean(selectedId),
-  })
-  const timeline = useQuery({
-    queryKey: selectedId ? customerKeys.timeline(selectedId) : ['customers', 'timeline', 'empty'],
-    queryFn: () => getCustomerTimeline(selectedId as string),
-    enabled: Boolean(selectedId),
-  })
+  const customers = useCustomersQuery(params)
+  const summary = useCustomerSummaryQuery(summaryParams)
+  const detail = useCustomerDetailQuery(selectedId)
+  const timeline = useCustomerTimelineQuery(selectedId)
 
-  const careMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: CustomerCareStatus }) =>
-      updateCustomerCareStatus(id, status),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: customerKeys.all })
-      message.success(t('customers.messages.updated'))
-    },
-  })
+  const careMutation = useUpdateCustomerCareStatusMutation()
+  const noteMutation = useAddCustomerNoteMutation()
+  const exportCsv = useExportCustomersCsvMutation(params)
 
-  const noteMutation = useMutation({
-    mutationFn: ({ id, body }: { id: string; body: string }) => addCustomerNote(id, body),
-    onSuccess: async () => {
-      setNote('')
-      await queryClient.invalidateQueries({ queryKey: customerKeys.all })
-      message.success(t('customers.messages.noteAdded'))
-    },
-  })
-  const exportCsv = useMutation({
-    mutationFn: () => exportCustomersCsv(params),
-    onSuccess: (result) => {
-      const url = URL.createObjectURL(result)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'customers.csv'
-      link.click()
-      URL.revokeObjectURL(url)
-    },
-  })
-
-  const columns: ColumnsType<Customer> = [
-    {
-      title: t('customers.columns.customer'),
-      render: (_, row) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text strong>
-            {row.name || row.emailMasked || row.phoneMasked || t('customers.empty.unknown')}
-          </Typography.Text>
-          <Typography.Text type="secondary">
-            {row.emailMasked || row.phoneMasked || t('customers.empty.noContact')}
-          </Typography.Text>
-        </Space>
-      ),
-    },
-    {
-      title: t('customers.columns.lifecycle'),
-      dataIndex: 'lifecycle',
-      render: (value: CustomerLifecycle) => (
-        <Tag color={lifecycleColors[value]}>{labelOf(value)}</Tag>
-      ),
-    },
-    {
-      title: t('customers.columns.care'),
-      dataIndex: 'careStatus',
-      render: (value: CustomerCareStatus, row) =>
-        canWrite ? (
-          <Select
-            size="small"
-            value={value}
-            options={careOptions.map((option) => ({ value: option, label: labelOf(option) }))}
-            onChange={(status) => careMutation.mutate({ id: row.id, status })}
-          />
-        ) : (
-          <Tag>{labelOf(value)}</Tag>
+  const columns = useMemo<ColumnsType<Customer>>(
+    () => [
+      {
+        title: t('customers.columns.customer'),
+        render: (_, row) => (
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong>
+              {row.name || row.emailMasked || row.phoneMasked || t('customers.empty.unknown')}
+            </Typography.Text>
+            <Typography.Text type="secondary">
+              {row.emailMasked || row.phoneMasked || t('customers.empty.noContact')}
+            </Typography.Text>
+          </Space>
         ),
-    },
-    { title: t('customers.columns.orders'), dataIndex: 'orderCount', sorter: true },
-    {
-      title: t('customers.columns.revenue'),
-      render: (_, row) => money(row.totalRevenueAmount, row.currency),
-    },
-    {
-      title: t('customers.columns.lastOrder'),
-      render: (_, row) =>
-        row.lastOrderAt ? dayjs(row.lastOrderAt).format('DD MMM YYYY') : t('customers.empty.dash'),
-    },
-    {
-      title: '',
-      render: (_, row) => (
-        <Button type="link" onClick={() => setSelectedId(row.id)}>
-          <EyeOutlined /> {t('customers.actions.view')}
-        </Button>
-      ),
-    },
-  ]
+      },
+      {
+        title: t('customers.columns.lifecycle'),
+        dataIndex: 'lifecycle',
+        width: 128,
+        render: (value: CustomerLifecycle) => (
+          <Tag color={lifecycleColors[value]}>{labelOf(value)}</Tag>
+        ),
+      },
+      {
+        title: t('customers.columns.care'),
+        dataIndex: 'careStatus',
+        width: 156,
+        render: (value: CustomerCareStatus, row) =>
+          canWrite ? (
+            <Select
+              size="small"
+              value={value}
+              options={careOptions.map((option) => ({ value: option, label: labelOf(option) }))}
+              onChange={(status) => careMutation.mutate({ id: row.id, status })}
+            />
+          ) : (
+            <Tag>{labelOf(value)}</Tag>
+          ),
+      },
+      { title: t('customers.columns.orders'), dataIndex: 'orderCount', sorter: true, width: 88 },
+      {
+        title: t('customers.columns.revenue'),
+        width: 128,
+        render: (_, row) => money(row.totalRevenueAmount, row.currency),
+      },
+      {
+        title: t('customers.columns.lastOrder'),
+        width: 144,
+        render: (_, row) =>
+          row.lastOrderAt
+            ? dayjs(row.lastOrderAt).format('DD MMM YYYY')
+            : t('customers.empty.dash'),
+      },
+      {
+        title: '',
+        width: 104,
+        render: (_, row) => (
+          <Button type="link" onClick={() => setSelectedId(row.id)}>
+            <EyeOutlined /> {t('customers.actions.view')}
+          </Button>
+        ),
+      },
+    ],
+    [t, labelOf, canWrite, money, careMutation],
+  )
 
   const selected = detail.data
 
@@ -283,6 +257,8 @@ export const CustomerWorkspacePage = () => {
         </FilterBar>
 
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 960 }}
           rowKey="id"
           columns={columns}
           dataSource={customers.data?.items ?? []}

@@ -1,14 +1,17 @@
 .page {
   display: grid;
-  gap: 24px;
+  gap: 16px;
 }
 
 .filters {
-  min-width: min(100%, 920px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 8px;
+  width: min(100%, 960px);
 }
 
 .filterControl {
-  width: 180px;
+  width: 100%;
 }
 
 .tabsAction {
@@ -92,8 +95,44 @@
 
 .importSummary {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.compactMetric {
+  min-height: 64px;
+  padding: 10px 14px;
+}
+
+.importsWorkbench {
+  display: grid;
+  gap: 16px;
+}
+
+.segmentedTabs {
+  gap: 0;
+  margin-bottom: 12px;
+}
+
+.segmentedTabs :global(.ant-btn) {
+  border-radius: 0;
+}
+
+.segmentedTabs :global(.ant-btn + .ant-btn) {
+  margin-left: -1px;
+}
+
+.segmentedTabs :global(.ant-btn:first-child) {
+  border-radius: 8px 0 0 8px;
+}
+
+.segmentedTabs :global(.ant-btn:last-child) {
+  border-radius: 0 8px 8px 0;
+}
+
+.segmentedTabs :global(.ant-btn-primary) {
+  position: relative;
+  z-index: 1;
 }
 
 .workbenchSplit {
@@ -187,7 +226,35 @@
 .issueFilters {
   display: grid;
   grid-template-columns: repeat(4, minmax(150px, 1fr));
-  width: min(100%, 1080px);
+  gap: 8px;
+  width: 100%;
+}
+
+.issueQueue :global(.ant-card-body) {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.issueQueue :global(.ant-typography.ant-typography-h2) {
+  margin: 0;
+}
+
+.issueQueue :global(.ant-table-thead > tr > th) {
+  white-space: nowrap;
+}
+
+.issueQueue :global(.ant-table-tbody > tr > td) {
+  padding-block: 12px;
+}
+
+.filters :global(.ant-picker),
+.issueFilters :global(.ant-select),
+.issueFilters :global(.ant-input-affix-wrapper),
+.issueFilters :global(.ant-input-search) {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
 }
 
 @media (max-width: 1100px) {
@@ -205,6 +272,10 @@
   }
 
   .issueFilters {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  .filters {
     grid-template-columns: repeat(2, minmax(160px, 1fr));
   }
 }
@@ -229,6 +300,10 @@
   }
 
   .issueFilters {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
     grid-template-columns: 1fr;
   }
 }

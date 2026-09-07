@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Flex, Pagination, Select, Typography } from 'antd'
 
 const { Text } = Typography
@@ -12,7 +13,15 @@ export interface TableFooterProps {
   readonly onPageSizeChange?: (value: number) => void
 }
 
-export function TableFooter({
+const PAGE_SIZE_OPTIONS = [
+  { value: 10, label: 10 },
+  { value: 20, label: 20 },
+  { value: 50, label: 50 },
+]
+
+const SELECT_STYLE = { width: 80 } as const
+
+export const TableFooter = memo(function TableFooter({
   from,
   to,
   total,
@@ -30,12 +39,12 @@ export function TableFooter({
         <Text type="secondary">{rowsPerPageLabel}</Text>
         <Select
           value={pageSize}
-          options={[10, 20, 50].map((value) => ({ value, label: value }))}
+          options={PAGE_SIZE_OPTIONS}
           onChange={onPageSizeChange}
-          style={{ width: 80 }}
+          style={SELECT_STYLE}
         />
         <Pagination defaultCurrent={1} pageSize={pageSize} total={total} showSizeChanger={false} />
       </Flex>
     </Flex>
   )
-}
+})

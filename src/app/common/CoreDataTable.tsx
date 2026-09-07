@@ -22,6 +22,7 @@ export type CoreDataTableProps<RecordType extends object> = Pick<
   | 'rowSelection'
   | 'scroll'
   | 'size'
+  | 'tableLayout'
 > & {
   readonly toolbar?: ReactNode
   readonly emptyText?: ReactNode
@@ -76,6 +77,11 @@ export function CoreDataTable<RecordType extends object>({
   const effectiveCurrent = customPagination.current ?? internalPage
 
   const effectivePageSize = customPagination.pageSize ?? internalPageSize
+
+  useLayoutEffect(() => {
+    const tableBody = containerRef.current?.querySelector<HTMLElement>('.ant-table-body')
+    if (tableBody) tableBody.scrollTop = 0
+  }, [effectiveCurrent])
 
   const dataSource = tableProps.dataSource
   const dataSourceLength = Array.isArray(dataSource) ? dataSource.length : 0

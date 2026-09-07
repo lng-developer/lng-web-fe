@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ClockCircleOutlined,
@@ -27,15 +27,11 @@ import { hasAnyPermission } from '@/shared/auth/permissions'
 import { MetricCard, PageHeader, SectionCard, StatusTag, UiTabLabel, UiTabs } from '@/shared/ui'
 
 import {
-  getMongoIndexUsageSnapshots,
-  getSystemHealth,
-  getSystemLogs,
   type MongoIndexUsageSnapshot,
-  type SystemHealth,
   type SystemLogProcess,
-  type SystemLogs,
   type SystemLogStream,
 } from '../api/monitoringApi'
+import { useMongoIndexSnapshotsQuery, useSystemHealthQuery, useSystemLogsQuery } from '../hooks'
 import { getIndexReview } from '../utils/indexUsageReview'
 import styles from './MonitoringDashboardPage.module.scss'
 
@@ -64,146 +60,156 @@ function formatBytes(value = 0) {
 
 export const MonitoringDashboardPage = () => {
   const { t } = useTranslation()
-  const statusLabel = (status?: string) => {
-    const normalized = String(status ?? 'unknown').toLowerCase()
-    return t(`portal.monitoring.statuses.${normalized}`, { defaultValue: String(status ?? '') })
-  }
+  const statusLabel = useCallback(
+    (status?: string) => {
+      const normalized = String(status ?? 'unknown').toLowerCase()
+      return t(`portal.monitoring.statuses.${normalized}`, { defaultValue: String(status ?? '') })
+    },
+    [t],
+  )
   const canRead = hasAnyPermission(['AUDIT:READ'], { globalOnly: true })
-  const [health, setHealth] = useState<SystemHealth>()
-  const [error, setError] = useState<string>()
-  const [latencyMs, setLatencyMs] = useState(0)
-  const [loading, setLoading] = useState(false)
   const [logProcess, setLogProcess] = useState<SystemLogProcess>('lng-web-be')
   const [logStream, setLogStream] = useState<SystemLogStream>('out')
   const [logLines, setLogLines] = useState(200)
-  const [logs, setLogs] = useState<SystemLogs>()
-  const [logsError, setLogsError] = useState<string>()
-  const [logsLoading, setLogsLoading] = useState(false)
-  const [indexSnapshots, setIndexSnapshots] = useState<MongoIndexUsageSnapshot[]>([])
   const [indexSnapshotDate, setIndexSnapshotDate] = useState<string>()
-  const [indexError, setIndexError] = useState<string>()
-  const [indexLoading, setIndexLoading] = useState(false)
   const [indexFilter, setIndexFilter] = useState<'ALL' | 'CANDIDATES'>('ALL')
+
+  const {
+    data: healthData,
+    error: healthQueryError,
+    isLoading: healthLoading,
+    isFetching: healthFetching,
+    refetch: refetchHealth,
+  } = useSystemHealthQuery(canRead)
+  const health = healthData?.data
+  const latencyMs = healthData?.latencyMs ?? 0
+  const loading = healthLoading || healthFetching
+  const error = healthQueryError
+    ? healthQueryError instanceof Error
+      ? healthQueryError.message
+      : t('portal.monitoring.healthCheckFailed')
+    : undefined
+
+  const logParams = useMemo(
+    () => ({ process: logProcess, stream: logStream, lines: logLines }),
+    [logProcess, logStream, logLines],
+  )
+  const {
+    data: logs,
+    error: logsQueryError,
+    isLoading: logsLoading,
+    refetch: refetchLogs,
+  } = useSystemLogsQuery(logParams, canRead)
+  const logsError = logsQueryError
+    ? logsQueryError instanceof Error
+      ? logsQueryError.message
+      : t('portal.monitoring.logsFailed')
+    : undefined
+
+  const {
+    data: snapshotsData,
+    error: snapshotsQueryError,
+    isLoading: indexLoading,
+    refetch: refetchIndexSnapshots,
+  } = useMongoIndexSnapshotsQuery(30, canRead)
+  const indexSnapshots = useMemo(() => snapshotsData ?? [], [snapshotsData])
+  const indexError = snapshotsQueryError
+    ? snapshotsQueryError instanceof Error
+      ? snapshotsQueryError.message
+      : t('portal.monitoring.indexes.loadFailed')
+    : undefined
 
   const refresh = useCallback(async () => {
     if (!canRead) return
-    const startedAt = performance.now()
-    setLoading(true)
-    setError(undefined)
-    try {
-      setHealth(await getSystemHealth())
-      setLatencyMs(Math.round(performance.now() - startedAt))
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t('portal.monitoring.healthCheckFailed'))
-      setHealth(undefined)
-    } finally {
-      setLoading(false)
-    }
-  }, [canRead, t])
+    await refetchHealth()
+  }, [canRead, refetchHealth])
 
   const refreshLogs = useCallback(async () => {
     if (!canRead) return
-    setLogsLoading(true)
-    setLogsError(undefined)
-    try {
-      setLogs(await getSystemLogs({ process: logProcess, stream: logStream, lines: logLines }))
-    } catch (cause) {
-      setLogsError(cause instanceof Error ? cause.message : t('portal.monitoring.logsFailed'))
-      setLogs(undefined)
-    } finally {
-      setLogsLoading(false)
-    }
-  }, [canRead, logLines, logProcess, logStream, t])
+    await refetchLogs()
+  }, [canRead, refetchLogs])
 
   const refreshIndexSnapshots = useCallback(async () => {
     if (!canRead) return
-    setIndexLoading(true)
-    setIndexError(undefined)
-    try {
-      const snapshots = await getMongoIndexUsageSnapshots(30)
-      setIndexSnapshots(snapshots)
-      setIndexSnapshotDate((current) =>
-        current && snapshots.some((snapshot) => snapshot.capturedOn === current)
-          ? current
-          : snapshots[0]?.capturedOn,
-      )
-    } catch (cause) {
-      setIndexError(
-        cause instanceof Error ? cause.message : t('portal.monitoring.indexes.loadFailed'),
-      )
-      setIndexSnapshots([])
-    } finally {
-      setIndexLoading(false)
-    }
-  }, [canRead, t])
+    await refetchIndexSnapshots()
+  }, [canRead, refetchIndexSnapshots])
 
-  useEffect(() => {
-    if (!canRead) return undefined
-    queueMicrotask(() => void refresh())
-    const timer = window.setInterval(() => void refresh(), 60_000)
-    return () => window.clearInterval(timer)
-  }, [canRead, refresh])
-  useEffect(() => {
-    queueMicrotask(() => void refreshLogs())
-  }, [refreshLogs])
-  useEffect(() => {
-    queueMicrotask(() => void refreshIndexSnapshots())
-  }, [refreshIndexSnapshots])
-
-  const modules = health?.modules ?? []
-  const queues = health?.queues ?? []
-  const workers = health?.workers ?? []
-  const healthyModules = modules.filter((module) => module.status === 'ok').length
+  const modules = useMemo(() => health?.modules ?? [], [health?.modules])
+  const queues = useMemo(() => health?.queues ?? [], [health?.queues])
+  const workers = useMemo(() => health?.workers ?? [], [health?.workers])
+  const healthyModules = useMemo(
+    () => modules.filter((module) => module.status === 'ok').length,
+    [modules],
+  )
   const totalModules = modules.length
   const isHealthy = health?.status === 'ok' && !error
-  const selectedIndexSnapshot = indexSnapshots.find(
-    (snapshot) => snapshot.capturedOn === indexSnapshotDate,
+  const effectiveSnapshotDate = useMemo(() => {
+    if (indexSnapshotDate && indexSnapshots.some((s) => s.capturedOn === indexSnapshotDate)) {
+      return indexSnapshotDate
+    }
+    return indexSnapshots[0]?.capturedOn
+  }, [indexSnapshotDate, indexSnapshots])
+
+  const selectedIndexSnapshot = useMemo(
+    () => indexSnapshots.find((snapshot) => snapshot.capturedOn === effectiveSnapshotDate),
+    [indexSnapshots, effectiveSnapshotDate],
   )
-  const allIndexRows: IndexRow[] = (selectedIndexSnapshot?.collections ?? []).flatMap(
-    (collection) =>
-      collection.indexes.map((index) => ({
-        ...index,
-        collection: collection.name,
-        usageAvailable: collection.usageAvailable,
-        ...getIndexReview(index, collection.name, indexSnapshots),
-      })),
-  )
-  const indexRows =
-    indexFilter === 'CANDIDATES' ? allIndexRows.filter(({ candidate }) => candidate) : allIndexRows
-  const indexColumns: TableColumnsType<IndexRow> = [
-    { title: t('portal.monitoring.indexes.columns.collection'), dataIndex: 'collection' },
-    { title: t('portal.monitoring.indexes.columns.index'), dataIndex: 'name' },
-    {
-      title: t('portal.monitoring.indexes.columns.key'),
-      dataIndex: 'key',
-      render: (key) => <Typography.Text code>{JSON.stringify(key)}</Typography.Text>,
-    },
-    {
-      title: t('portal.monitoring.indexes.columns.operations'),
-      dataIndex: 'operations',
-      align: 'right',
-      render: (operations, row) =>
-        row.usageAvailable && operations !== null ? Number(operations).toLocaleString() : '—',
-    },
-    {
-      title: t('portal.monitoring.indexes.columns.idleDays'),
-      dataIndex: 'idleDays',
-      align: 'right',
-      render: (idleDays, row) =>
-        row.usageAvailable
-          ? t('portal.monitoring.indexes.idleDaysValue', { count: idleDays })
-          : '—',
-    },
-    {
-      title: t('portal.monitoring.indexes.columns.decision'),
-      dataIndex: 'classification',
-      render: (classification) => (
-        <StatusTag status={classification === 'KEEP' ? 'operational' : 'warning'}>
-          {classification}
-        </StatusTag>
+  const allIndexRows: IndexRow[] = useMemo(
+    () =>
+      (selectedIndexSnapshot?.collections ?? []).flatMap((collection) =>
+        collection.indexes.map((index) => ({
+          ...index,
+          collection: collection.name,
+          usageAvailable: collection.usageAvailable,
+          ...getIndexReview(index, collection.name, indexSnapshots),
+        })),
       ),
-    },
-  ]
+    [selectedIndexSnapshot, indexSnapshots],
+  )
+  const indexRows = useMemo(
+    () =>
+      indexFilter === 'CANDIDATES'
+        ? allIndexRows.filter(({ candidate }) => candidate)
+        : allIndexRows,
+    [allIndexRows, indexFilter],
+  )
+  const indexColumns = useMemo<TableColumnsType<IndexRow>>(
+    () => [
+      { title: t('portal.monitoring.indexes.columns.collection'), dataIndex: 'collection' },
+      { title: t('portal.monitoring.indexes.columns.index'), dataIndex: 'name' },
+      {
+        title: t('portal.monitoring.indexes.columns.key'),
+        dataIndex: 'key',
+        render: (key) => <Typography.Text code>{JSON.stringify(key)}</Typography.Text>,
+      },
+      {
+        title: t('portal.monitoring.indexes.columns.operations'),
+        dataIndex: 'operations',
+        align: 'right',
+        render: (operations, row) =>
+          row.usageAvailable && operations !== null ? Number(operations).toLocaleString() : '—',
+      },
+      {
+        title: t('portal.monitoring.indexes.columns.idleDays'),
+        dataIndex: 'idleDays',
+        align: 'right',
+        render: (idleDays, row) =>
+          row.usageAvailable
+            ? t('portal.monitoring.indexes.idleDaysValue', { count: idleDays })
+            : '—',
+      },
+      {
+        title: t('portal.monitoring.indexes.columns.decision'),
+        dataIndex: 'classification',
+        render: (classification) => (
+          <StatusTag status={classification === 'KEEP' ? 'operational' : 'warning'}>
+            {classification}
+          </StatusTag>
+        ),
+      },
+    ],
+    [t],
+  )
 
   if (!canRead) return <Result status="403" title="403" />
 
@@ -491,7 +497,7 @@ export const MonitoringDashboardPage = () => {
               aria-label={t('portal.monitoring.indexes.snapshotDate')}
               className="min-w-40"
               loading={indexLoading}
-              value={indexSnapshotDate}
+              value={effectiveSnapshotDate}
               options={indexSnapshots.map((snapshot) => ({
                 label: snapshot.capturedOn,
                 value: snapshot.capturedOn,
@@ -587,6 +593,13 @@ export const MonitoringDashboardPage = () => {
                 })}
               </Typography.Text>
             ) : null}
+            <Button
+              icon={<ReloadOutlined spin={loading} />}
+              loading={loading}
+              onClick={() => void refresh()}
+            >
+              {t('portal.monitoring.indexes.refresh')}
+            </Button>
           </Space>
         }
       />

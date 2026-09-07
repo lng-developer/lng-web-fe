@@ -58,7 +58,7 @@ jobs:
           cache: npm
       - run: npm i -g npm@11.6.2
       - run: npm ci
-      - run: npm run test:ui -- --shard=${{ matrix.shard }}
+      - run: npm run test:ui:ci -- --shard=${{ matrix.shard }}
 
   ui-test-file:
     name: ui-test-file
@@ -76,7 +76,7 @@ jobs:
           cache: npm
       - run: npm i -g npm@11.6.2
       - run: npm ci
-      - run: npm run test:ui -- "$UI_TEST_FILE"
+      - run: npm run test:ui:ci -- "$UI_TEST_FILE"
 
   deploy:
     name: deploy-server

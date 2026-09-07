@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
@@ -8,7 +8,6 @@ import {
   StopOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
   Button,
@@ -24,7 +23,6 @@ import {
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   DateRangePicker,
@@ -36,21 +34,19 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import {
-  cancelVendorSubmission,
-  exportVendorSubmissionsCsv,
-  getVendorSubmission,
-  getVendorSubmissionPayloadPreview,
-  getVendorSubmissionSummary,
-  listVendorSubmissions,
-  markVendorSubmissionFailed,
-  reconcileVendorSubmission,
-  retryVendorSubmission,
-  submitVendorSubmission,
-  type VendorSubmission,
-  type VendorSubmissionStatus,
+import type {
+  VendorSubmission,
+  VendorSubmissionParams,
+  VendorSubmissionStatus,
 } from '../api/vendorSubmissionApi'
-import { vendorSubmissionKeys } from '../api/vendorSubmissionKeys'
+import {
+  useExportVendorSubmissionsCsvMutation,
+  useVendorSubmissionActionMutation,
+  useVendorSubmissionDetailQuery,
+  useVendorSubmissionPayloadQuery,
+  useVendorSubmissionsQuery,
+  useVendorSubmissionSummaryQuery,
+} from '../hooks'
 import styles from './VendorSubmissionWorkbenchPage.module.scss'
 
 const STATUSES: VendorSubmissionStatus[] = [
@@ -61,6 +57,8 @@ const STATUSES: VendorSubmissionStatus[] = [
   'SUBMITTED',
   'CANCELLED',
 ]
+const PAGE_SIZE = 20
+
 function tone(status: VendorSubmissionStatus) {
   if (status === 'SUBMITTED') return 'operational'
   if (status === 'READY') return 'ready'
@@ -79,7 +77,6 @@ export function VendorSubmissionWorkbenchPage({
   const { t } = useTranslation()
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const account = accountProp ?? loadedAccount
-  const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<VendorSubmissionStatus>()
@@ -94,202 +91,238 @@ export function VendorSubmissionWorkbenchPage({
     row: VendorSubmission
   }>()
   const [reason, setReason] = useState('')
-  const canWrite = Boolean(
-    account &&
-    [...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)].includes(
-      'VENDOR_SUBMISSIONS:WRITE',
-    ),
+
+  const canWrite = useMemo(
+    () =>
+      Boolean(
+        account &&
+        [...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)].includes(
+          'VENDOR_SUBMISSIONS:WRITE',
+        ),
+      ),
+    [account],
   )
-  const params = {
-    page,
-    limit: DEFAULT_PAGE_SIZE,
-    status,
-    externalOrderId: externalOrderId || undefined,
-    ...dates,
-  }
-  const submissions = useQuery({
-    queryKey: vendorSubmissionKeys.list(params),
-    queryFn: () => listVendorSubmissions(params),
-    retry: false,
-  })
-  const summary = useQuery({
-    queryKey: [...vendorSubmissionKeys.all, 'summary', { status, externalOrderId, ...dates }],
-    queryFn: () =>
-      getVendorSubmissionSummary({
-        status,
-        externalOrderId: externalOrderId || undefined,
-        ...dates,
-      }),
-    retry: false,
-  })
-  const payload = useQuery({
-    queryKey: [...vendorSubmissionKeys.all, 'payload', payloadId],
-    queryFn: () => getVendorSubmissionPayloadPreview(payloadId!),
-    enabled: Boolean(payloadId),
-    retry: false,
-  })
-  const detail = useQuery({
-    queryKey: vendorSubmissionKeys.detail(selectedId ?? ''),
-    queryFn: () => getVendorSubmission(selectedId!),
-    enabled: Boolean(selectedId),
-    retry: false,
-  })
-  const refresh = async () => queryClient.invalidateQueries({ queryKey: vendorSubmissionKeys.all })
-  const action = useMutation({
-    mutationFn: async ({
-      kind,
-      row,
-      externalId,
-    }: {
-      kind: 'submit' | 'retry' | 'found' | 'missing' | 'fail' | 'cancel'
-      row: VendorSubmission
-      externalId?: string
-    }) => {
-      if (kind === 'submit') return submitVendorSubmission(row.id)
-      if (kind === 'retry')
-        return retryVendorSubmission(row.id, t('portal.vendorSubmissions.reasons.payloadCorrected'))
-      if (kind === 'fail') return markVendorSubmissionFailed(row.id, externalId || '')
-      if (kind === 'cancel') return cancelVendorSubmission(row.id, externalId || '')
-      if (kind === 'missing')
-        return reconcileVendorSubmission(row.id, {
-          outcome: 'REMOTE_NOT_FOUND',
-          reason: t('portal.vendorSubmissions.reasons.remoteMissing'),
-        })
-      if (!externalId) throw new Error(t('portal.vendorSubmissions.externalIdRequired'))
-      return reconcileVendorSubmission(row.id, {
-        outcome: 'REMOTE_FOUND',
-        vendorExternalOrderId: externalId,
-        reason: t('portal.vendorSubmissions.reasons.remoteFound'),
-      })
-    },
-    onSuccess: async () => {
-      await refresh()
+
+  const params: VendorSubmissionParams = useMemo(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      status,
+      externalOrderId: externalOrderId || undefined,
+      ...dates,
+    }),
+    [page, status, externalOrderId, dates],
+  )
+
+  const summaryFilters = useMemo(
+    () => ({
+      status,
+      externalOrderId: externalOrderId || undefined,
+      ...dates,
+    }),
+    [status, externalOrderId, dates],
+  )
+
+  const submissions = useVendorSubmissionsQuery(params)
+  const summary = useVendorSubmissionSummaryQuery(summaryFilters)
+  const payload = useVendorSubmissionPayloadQuery(payloadId)
+  const detail = useVendorSubmissionDetailQuery(selectedId)
+
+  const action = useVendorSubmissionActionMutation({
+    onSuccess: () => {
       toast('success', t('portal.vendorSubmissions.updated'))
     },
-    onError: (error) =>
+    onError: (error) => {
       toast(
         'error',
         error instanceof Error ? error.message : t('portal.vendorSubmissions.actionFailed'),
-      ),
-  })
-  const exportCsv = useMutation({
-    mutationFn: () => exportVendorSubmissionsCsv(params),
-    onSuccess: (result) => {
-      const url = URL.createObjectURL(result)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'vendor-submissions.csv'
-      link.click()
-      URL.revokeObjectURL(url)
+      )
     },
   })
-  const run = (kind: 'submit' | 'retry' | 'found' | 'missing', row: VendorSubmission) => {
-    if (kind === 'found') {
-      setReconcileRow(row)
-      setVendorExternalOrderId('')
-      return
-    }
-    Modal.confirm({
-      title:
-        kind === 'submit'
-          ? t('portal.vendorSubmissions.confirmSubmit')
-          : t('portal.vendorSubmissions.confirmReconcile'),
-      content: kind === 'missing' ? t('portal.vendorSubmissions.remoteMissingHelp') : undefined,
-      okText: t('portal.vendorSubmissions.confirm'),
-      onOk: () => action.mutateAsync({ kind, row }),
+
+  const exportCsv = useExportVendorSubmissionsCsvMutation()
+
+  const handleRun = useCallback(
+    (kind: 'submit' | 'retry' | 'found' | 'missing', row: VendorSubmission) => {
+      if (kind === 'found') {
+        setReconcileRow(row)
+        setVendorExternalOrderId('')
+        return
+      }
+      Modal.confirm({
+        title:
+          kind === 'submit'
+            ? t('portal.vendorSubmissions.confirmSubmit')
+            : t('portal.vendorSubmissions.confirmReconcile'),
+        content: kind === 'missing' ? t('portal.vendorSubmissions.remoteMissingHelp') : undefined,
+        okText: t('portal.vendorSubmissions.confirm'),
+        onOk: () =>
+          action.mutateAsync({
+            kind,
+            row,
+            retryReason: t('portal.vendorSubmissions.reasons.payloadCorrected'),
+            remoteMissingReason: t('portal.vendorSubmissions.reasons.remoteMissing'),
+          }),
+      })
+    },
+    [action, t],
+  )
+
+  const handleCloseDrawer = useCallback(() => {
+    setSelectedId(undefined)
+  }, [])
+
+  const handleClosePayloadModal = useCallback(() => {
+    setPayloadId(undefined)
+  }, [])
+
+  const handleCloseOperationalModal = useCallback(() => {
+    setOperationalAction(undefined)
+  }, [])
+
+  const handleConfirmOperationalAction = useCallback(async () => {
+    if (!operationalAction) return
+    await action.mutateAsync({
+      kind: operationalAction.kind,
+      row: operationalAction.row,
+      externalId: reason.trim(),
     })
-  }
-  const columns: TableColumnsType<VendorSubmission> = [
-    {
-      title: t('portal.vendorSubmissions.columns.order'),
-      dataIndex: 'externalOrderId',
-      render: (value) => <CopyableOrderId value={value} />,
-    },
-    {
-      title: t('portal.vendorSubmissions.columns.product'),
-      render: (_, row) => (
-        <Typography.Text strong>{row.sku || row.costCenterCode || '-'}</Typography.Text>
-      ),
-    },
-    {
-      title: t('portal.vendorSubmissions.columns.vendor'),
-      render: (_, row) => `${row.vendorName || '-'} / ${row.provider || '-'}`,
-    },
-    {
-      title: t('portal.vendorSubmissions.columns.status'),
-      dataIndex: 'status',
-      render: (value: VendorSubmissionStatus) => (
-        <StatusTag status={tone(value)}>
-          {t(`portal.vendorSubmissions.statuses.${value}`)}
-        </StatusTag>
-      ),
-    },
-    {
-      title: t('portal.vendorSubmissions.columns.attempts'),
-      dataIndex: 'submitAttemptCount',
-      width: 90,
-    },
-    {
-      title: t('portal.vendorSubmissions.columns.failure'),
-      dataIndex: 'failureReason',
-      ellipsis: true,
-    },
-    {
-      title: t('portal.vendorSubmissions.columns.action'),
-      key: 'action',
-      width: 260,
-      render: (_, row) =>
-        canWrite ? (
-          <Space wrap>
-            {row.status === 'READY' ? (
-              <Button
-                size="small"
-                icon={<SendOutlined />}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  run('submit', row)
-                }}
-              >
-                {t('portal.vendorSubmissions.actions.submit')}
-              </Button>
-            ) : null}
-            {row.status === 'FAILED' ? (
-              <Button
-                size="small"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  run('retry', row)
-                }}
-              >
-                {t('portal.vendorSubmissions.actions.returnReady')}
-              </Button>
-            ) : null}
-            {row.status === 'NEEDS_REVIEW' ? (
-              <>
+    setOperationalAction(undefined)
+  }, [action, operationalAction, reason])
+
+  const handleCloseReconcileModal = useCallback(() => {
+    setReconcileRow(undefined)
+  }, [])
+
+  const handleConfirmReconcile = useCallback(async () => {
+    if (!reconcileRow) return
+    await action.mutateAsync({
+      kind: 'found',
+      row: reconcileRow,
+      externalId: vendorExternalOrderId.trim(),
+      remoteFoundReason: t('portal.vendorSubmissions.reasons.remoteFound'),
+    })
+    setReconcileRow(undefined)
+  }, [action, reconcileRow, vendorExternalOrderId, t])
+
+  const columns: TableColumnsType<VendorSubmission> = useMemo(
+    () => [
+      {
+        title: t('portal.vendorSubmissions.columns.order'),
+        dataIndex: 'externalOrderId',
+        width: 176,
+        render: (value) => <CopyableOrderId value={value} />,
+      },
+      {
+        title: t('portal.vendorSubmissions.columns.product'),
+        render: (_, row) => (
+          <Typography.Text strong>{row.sku || row.costCenterCode || '-'}</Typography.Text>
+        ),
+      },
+      {
+        title: t('portal.vendorSubmissions.columns.vendor'),
+        width: 172,
+        render: (_, row) => `${row.vendorName || '-'} / ${row.provider || '-'}`,
+      },
+      {
+        title: t('portal.vendorSubmissions.columns.status'),
+        dataIndex: 'status',
+        width: 128,
+        render: (value: VendorSubmissionStatus) => (
+          <StatusTag status={tone(value)}>
+            {t(`portal.vendorSubmissions.statuses.${value}`)}
+          </StatusTag>
+        ),
+      },
+      {
+        title: t('portal.vendorSubmissions.columns.attempts'),
+        dataIndex: 'submitAttemptCount',
+        width: 90,
+      },
+      {
+        title: t('portal.vendorSubmissions.columns.failure'),
+        dataIndex: 'failureReason',
+        ellipsis: true,
+      },
+      {
+        title: t('portal.vendorSubmissions.columns.action'),
+        key: 'action',
+        width: 260,
+        render: (_, row) =>
+          canWrite ? (
+            <Space wrap>
+              {row.status === 'READY' ? (
+                <Button
+                  size="small"
+                  icon={<SendOutlined />}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    handleRun('submit', row)
+                  }}
+                >
+                  {t('portal.vendorSubmissions.actions.submit')}
+                </Button>
+              ) : null}
+              {row.status === 'FAILED' ? (
                 <Button
                   size="small"
                   onClick={(event) => {
                     event.stopPropagation()
-                    run('found', row)
+                    handleRun('retry', row)
                   }}
                 >
-                  {t('portal.vendorSubmissions.actions.remoteFound')}
+                  {t('portal.vendorSubmissions.actions.returnReady')}
                 </Button>
-                <Button
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    run('missing', row)
-                  }}
-                >
-                  {t('portal.vendorSubmissions.actions.remoteMissing')}
-                </Button>
-              </>
-            ) : null}
-          </Space>
-        ) : null,
-    },
-  ]
+              ) : null}
+              {row.status === 'NEEDS_REVIEW' ? (
+                <>
+                  <Button
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      handleRun('found', row)
+                    }}
+                  >
+                    {t('portal.vendorSubmissions.actions.remoteFound')}
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      handleRun('missing', row)
+                    }}
+                  >
+                    {t('portal.vendorSubmissions.actions.remoteMissing')}
+                  </Button>
+                </>
+              ) : null}
+            </Space>
+          ) : null,
+      },
+    ],
+    [canWrite, handleRun, t],
+  )
+
+  const timelineItems = useMemo(
+    () =>
+      (detail.data?.statusHistory ?? [])
+        .slice()
+        .reverse()
+        .map((entry) => ({
+          children: (
+            <>
+              <strong>{t(`portal.vendorSubmissions.statuses.${entry.status}`)}</strong>
+              <br />
+              {entry.reason || ''}
+              <br />
+              <Typography.Text type="secondary">
+                {entry.at ? new Date(entry.at).toLocaleString() : ''}
+              </Typography.Text>
+            </>
+          ),
+        })),
+    [detail.data?.statusHistory, t],
+  )
 
   return (
     <section className={styles.page}>
@@ -308,6 +341,8 @@ export function VendorSubmissionWorkbenchPage({
       </div>
       <SectionCard>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 1_100 }}
           rowKey="id"
           columns={columns}
           dataSource={submissions.data?.items ?? []}
@@ -315,7 +350,7 @@ export function VendorSubmissionWorkbenchPage({
           onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
           pagination={{
             current: page,
-            pageSize: DEFAULT_PAGE_SIZE,
+            pageSize: PAGE_SIZE,
             total: submissions.data?.pagination.total,
             onChange: setPage,
           }}
@@ -355,7 +390,7 @@ export function VendorSubmissionWorkbenchPage({
               <Button
                 icon={<DownloadOutlined />}
                 loading={exportCsv.isPending}
-                onClick={() => exportCsv.mutate()}
+                onClick={() => exportCsv.mutate(params)}
               >
                 {t('portal.vendorSubmissions.exportCsv')}
               </Button>
@@ -364,10 +399,10 @@ export function VendorSubmissionWorkbenchPage({
         />
       </SectionCard>
       <Drawer
-        width={720}
+        size={720}
         open={Boolean(selectedId)}
         title={t('portal.vendorSubmissions.detail')}
-        onClose={() => setSelectedId(undefined)}
+        onClose={handleCloseDrawer}
         loading={detail.isLoading}
         extra={
           detail.data ? (
@@ -404,7 +439,6 @@ export function VendorSubmissionWorkbenchPage({
       >
         {detail.data ? (
           <div className={styles.detail}>
-            {/* Status badge at top */}
             <div
               style={{
                 display: 'flex',
@@ -419,9 +453,7 @@ export function VendorSubmissionWorkbenchPage({
               <StatusTag status={tone(detail.data.status)}>
                 {t(`portal.vendorSubmissions.statuses.${detail.data.status}`)}
               </StatusTag>
-              <Typography.Text strong style={{ fontSize: 15 }}>
-                {detail.data.externalOrderId}
-              </Typography.Text>
+              <CopyableOrderId strong value={detail.data.externalOrderId} />
             </div>
 
             <Descriptions
@@ -461,28 +493,10 @@ export function VendorSubmissionWorkbenchPage({
               ]}
             />
 
-            {/* Timeline section */}
             <Typography.Text strong style={{ display: 'block', marginBottom: 12, fontSize: 13 }}>
               Status History
             </Typography.Text>
-            <Timeline
-              items={(detail.data.statusHistory ?? [])
-                .slice()
-                .reverse()
-                .map((entry) => ({
-                  children: (
-                    <>
-                      <strong>{t(`portal.vendorSubmissions.statuses.${entry.status}`)}</strong>
-                      <br />
-                      {entry.reason || ''}
-                      <br />
-                      <Typography.Text type="secondary">
-                        {entry.at ? new Date(entry.at).toLocaleString() : ''}
-                      </Typography.Text>
-                    </>
-                  ),
-                }))}
-            />
+            <Timeline items={timelineItems} />
           </div>
         ) : null}
       </Drawer>
@@ -491,7 +505,7 @@ export function VendorSubmissionWorkbenchPage({
         width={760}
         footer={null}
         title={t('portal.vendorSubmissions.payloadPreview')}
-        onCancel={() => setPayloadId(undefined)}
+        onCancel={handleClosePayloadModal}
       >
         {payload.isError ? (
           <FeedbackAlert type="error" title={t('portal.vendorSubmissions.payloadUnavailable')} />
@@ -507,16 +521,8 @@ export function VendorSubmissionWorkbenchPage({
           disabled: operationalAction?.kind === 'fail' && !reason.trim(),
         }}
         confirmLoading={action.isPending}
-        onCancel={() => setOperationalAction(undefined)}
-        onOk={async () => {
-          if (!operationalAction) return
-          await action.mutateAsync({
-            kind: operationalAction.kind,
-            row: operationalAction.row,
-            externalId: reason.trim(),
-          })
-          setOperationalAction(undefined)
-        }}
+        onCancel={handleCloseOperationalModal}
+        onOk={handleConfirmOperationalAction}
       >
         <Input.TextArea
           rows={4}
@@ -531,16 +537,8 @@ export function VendorSubmissionWorkbenchPage({
         okText={t('portal.vendorSubmissions.markSubmitted')}
         okButtonProps={{ disabled: !vendorExternalOrderId.trim() }}
         confirmLoading={action.isPending}
-        onCancel={() => setReconcileRow(undefined)}
-        onOk={async () => {
-          if (!reconcileRow) return
-          await action.mutateAsync({
-            kind: 'found',
-            row: reconcileRow,
-            externalId: vendorExternalOrderId.trim(),
-          })
-          setReconcileRow(undefined)
-        }}
+        onCancel={handleCloseReconcileModal}
+        onOk={handleConfirmReconcile}
       >
         <Input
           aria-label={t('portal.vendorSubmissions.vendorOrderId')}

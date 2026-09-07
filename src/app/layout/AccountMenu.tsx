@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { IdcardOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
@@ -36,17 +36,45 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
     queryFn: () => loadEmployeeAvatar(profile.data!.avatarUrl!),
     enabled: Boolean(profile.data?.avatarAssetId && profile.data.avatarUrl),
   })
-  const roles = [...new Set([...account.roles, ...account.scopes.flatMap((scope) => scope.roles)])]
-  const scopes = [
-    ...new Set(account.scopes.map((scope) => t(`shell.account.scopes.${scope.scopeType}`))),
-  ]
-  const accessSummary = [...roles, ...scopes].join(' \u00b7 ') || t('shell.account.noAccess')
 
-  async function handleLogout() {
+  const accessSummary = useMemo(() => {
+    const roles = [
+      ...new Set([...account.roles, ...account.scopes.flatMap((scope) => scope.roles)]),
+    ]
+    const scopes = [
+      ...new Set(account.scopes.map((scope) => t(`shell.account.scopes.${scope.scopeType}`))),
+    ]
+    return [...roles, ...scopes].join(' \u00b7 ') || t('shell.account.noAccess')
+  }, [account.roles, account.scopes, t])
+
+  const handleLogout = useCallback(async () => {
     setIsLoggingOut(true)
     await logout()
     navigate('/login', { replace: true })
-  }
+  }, [navigate])
+
+  const menuItems = useMemo(
+    () => [
+      { key: 'profile', icon: <IdcardOutlined />, label: t('shell.account.myProfile') },
+      { type: 'divider' as const },
+      {
+        key: 'logout',
+        danger: true,
+        disabled: isLoggingOut,
+        icon: <LogoutOutlined />,
+        label: t('shell.logout'),
+      },
+    ],
+    [isLoggingOut, t],
+  )
+
+  const handleMenuClick = useCallback(
+    ({ key }: { key: string }) => {
+      if (key === 'profile') setIsProfileOpen(true)
+      else void handleLogout()
+    },
+    [handleLogout],
+  )
 
   return (
     <div className={styles.accountWrapper}>
@@ -54,18 +82,8 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
         trigger={['click']}
         placement="bottomRight"
         menu={{
-          items: [
-            { key: 'profile', icon: <IdcardOutlined />, label: t('shell.account.myProfile') },
-            { type: 'divider' },
-            {
-              key: 'logout',
-              danger: true,
-              disabled: isLoggingOut,
-              icon: <LogoutOutlined />,
-              label: t('shell.logout'),
-            },
-          ],
-          onClick: ({ key }) => (key === 'profile' ? setIsProfileOpen(true) : void handleLogout()),
+          items: menuItems,
+          onClick: handleMenuClick,
         }}
         popupRender={(menu) => (
           <div className={styles.accountPopup}>

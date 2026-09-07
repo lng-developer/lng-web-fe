@@ -1,120 +1,118 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { PageHeader, SectionCard, StatusTag } from '@/shared/ui'
 
-import {
-  createProductTypeGroup,
-  listProductTypeGroups,
-  type ProductTypeGroup,
-  type ProductTypeGroupInput,
-  updateProductTypeGroup,
-} from '../api/catalogApi'
-import { catalogKeys } from '../api/catalogKeys'
+import type { ProductTypeGroup, ProductTypeGroupInput } from '../api/catalogApi'
+import { useProductTypesQuery } from '../hooks'
+
+const PAGE_SIZE = 20
 
 export function ProductTypeManagementPage({ canManage }: { readonly canManage: boolean }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const toast = useFeedbackToast()
   const [form] = Form.useForm<ProductTypeGroupInput>()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<ProductTypeGroup | null>()
-  const params = { page, limit: pageSize, search: search || undefined }
-  const groups = useQuery({
-    queryKey: catalogKeys.productTypes(params),
-    queryFn: () => listProductTypeGroups(params),
-    placeholderData: keepPreviousData,
-    retry: false,
-  })
-  const save = useMutation({
-    mutationFn: (input: ProductTypeGroupInput) => {
-      if (!editing) return createProductTypeGroup(input)
-      const patch: Partial<ProductTypeGroupInput> = { ...input }
-      delete patch.code
-      return updateProductTypeGroup(editing.id, patch)
-    },
-    onSuccess: async () => {
+
+  const { groups, save } = useProductTypesQuery({
+    page,
+    pageSize,
+    search,
+    onSaveSuccess: () => {
       setEditing(undefined)
       form.resetFields()
-      await queryClient.invalidateQueries({ queryKey: catalogKeys.all })
-      toast('success', t('portal.catalog.master.saved'))
     },
-    onError: (error) =>
-      toast('error', error instanceof Error ? error.message : 'Could not save product type'),
   })
-  const open = (item: ProductTypeGroup | null) => {
-    setEditing(item)
-    form.setFieldsValue(
-      item
-        ? {
-            code: item.code ?? '',
-            name: item.name,
-            sortOrder: item.sortOrder,
-            printMethod: item.printMethod ?? null,
-            status: item.status,
-          }
-        : { code: '', name: '', sortOrder: 0, printMethod: null, status: 'ACTIVE' },
-    )
-  }
-  const columns: TableColumnsType<ProductTypeGroup> = [
-    { title: t('portal.catalog.master.code'), dataIndex: 'code', width: 520 },
-    { title: t('portal.catalog.master.name'), dataIndex: 'name', width: 520 },
-    {
-      title: t('portal.catalog.master.printMethod', { defaultValue: 'Print method' }),
-      dataIndex: 'printMethod',
-      width: 130,
-      render: (value) => value || '-',
+
+  const open = useCallback(
+    (item: ProductTypeGroup | null) => {
+      setEditing(item)
+      form.setFieldsValue(
+        item
+          ? {
+              code: item.code ?? '',
+              name: item.name,
+              sortOrder: item.sortOrder,
+              printMethod: item.printMethod ?? null,
+              status: item.status,
+            }
+          : { code: '', name: '', sortOrder: 0, printMethod: null, status: 'ACTIVE' },
+      )
     },
-    { title: t('portal.catalog.master.order'), dataIndex: 'sortOrder', width: 100 },
-    {
-      title: t('portal.catalog.master.status'),
-      dataIndex: 'status',
-      width: 150,
-      render: (value) => (
-        <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
-          {t(`portal.catalog.master.statuses.${value}`, { defaultValue: value })}
-        </StatusTag>
-      ),
-    },
-    ...(canManage
-      ? [
-          {
-            key: 'actions',
-            title: t('portal.catalog.actions'),
-            width: 76,
-            fixed: 'right' as const,
-            render: (_: unknown, row: ProductTypeGroup) => (
-              <Tooltip title={t('portal.catalog.master.editProductType')}>
-                <Button
-                  type="text"
-                  aria-label={t('portal.catalog.master.editProductType')}
-                  icon={<EditOutlined />}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    open(row)
-                  }}
-                />
-              </Tooltip>
-            ),
-          },
-        ]
-      : []),
-  ]
+    [form],
+  )
+  const columns: TableColumnsType<ProductTypeGroup> = useMemo(
+    () => [
+      { title: t('portal.catalog.master.code'), dataIndex: 'code', width: 160, ellipsis: true },
+      { title: t('portal.catalog.master.name'), dataIndex: 'name', width: 220, ellipsis: true },
+      {
+        title: t('portal.catalog.master.printMethod', { defaultValue: 'Print method' }),
+        dataIndex: 'printMethod',
+        width: 130,
+        render: (value) => value || '-',
+      },
+      {
+        title: t('portal.catalog.master.order'),
+        dataIndex: 'sortOrder',
+        width: 80,
+        align: 'right',
+      },
+      {
+        title: t('portal.catalog.master.status'),
+        dataIndex: 'status',
+        width: 110,
+        align: 'center',
+        render: (value) => (
+          <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
+            {t(`portal.catalog.master.statuses.${value}`, { defaultValue: value })}
+          </StatusTag>
+        ),
+      },
+      ...(canManage
+        ? [
+            {
+              key: 'actions',
+              title: t('portal.catalog.actions'),
+              width: 76,
+              fixed: 'right' as const,
+              render: (_: unknown, row: ProductTypeGroup) => (
+                <Tooltip title={t('portal.catalog.master.editProductType')}>
+                  <Button
+                    type="text"
+                    aria-label={t('portal.catalog.master.editProductType')}
+                    icon={<EditOutlined />}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      open(row)
+                    }}
+                  />
+                </Tooltip>
+              ),
+            },
+          ]
+        : []),
+    ],
+    [canManage, open, t],
+  )
 
   return (
     <section>
+      <PageHeader
+        title={t('portal.catalog.master.productTypes')}
+        description={t('portal.catalog.master.productTypeDescription')}
+      />
       <SectionCard>
         <CoreDataTable
           rowKey="id"
+          tableLayout="fixed"
+          scroll={{ x: 780 }}
           columns={columns}
           dataSource={groups.data?.items ?? []}
           loading={groups.isLoading}
@@ -136,10 +134,7 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
                 allowClear
                 placeholder={t('portal.catalog.master.searchProductTypes')}
                 value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value)
-                  setPage(1)
-                }}
+                onChange={(event) => setSearch(event.target.value)}
                 onSearch={() => setPage(1)}
               />
               {canManage ? (
@@ -164,7 +159,11 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
         onOk={() => form.submit()}
         destroyOnHidden
       >
-        <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={(values) => save.mutate({ input: values, editing })}
+        >
           <Form.Item
             name="code"
             label={t('portal.catalog.master.code')}

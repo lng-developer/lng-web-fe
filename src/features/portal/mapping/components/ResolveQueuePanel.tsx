@@ -4,7 +4,7 @@ import { Flex, Select, Spin, Typography } from 'antd'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-import { EmptyState, SearchInput } from '@/shared/ui'
+import { CopyableOrderId, EmptyState, SearchInput } from '@/shared/ui'
 
 import type { UnmatchedMappingItem } from '../api/mappingApi'
 import { getStageForFixType, type MappingPipelineStage } from '../model/mappingModel'
@@ -91,7 +91,7 @@ export function ResolveQueuePanel({
   }, [items, deferredSearch, blocker])
 
   return (
-    <Flex className={styles.queuePanel} vertical gap={0}>
+    <Flex vertical gap={0} className={styles.queuePanel}>
       {/* Filters */}
       <div className={styles.queueFilters}>
         <div style={{ flex: '1 1 0', minWidth: 0 }}>
@@ -147,11 +147,7 @@ export function ResolveQueuePanel({
 
                 {/* Row 2: Order ID + Stage badge + Blockers */}
                 <div className={styles.queueItemMeta}>
-                  {item.externalOrderId ? (
-                    <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                      #{item.externalOrderId.slice(-8)}
-                    </Typography.Text>
-                  ) : null}
+                  {item.externalOrderId ? <CopyableOrderId value={item.externalOrderId} /> : null}
                   {item.shop?.name ? (
                     <Typography.Text type="secondary" style={{ fontSize: 11 }}>
                       · {item.shop.name}

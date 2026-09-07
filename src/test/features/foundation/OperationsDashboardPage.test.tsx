@@ -136,4 +136,10 @@ describe('OperationsDashboardPage', () => {
     const charts = screen.getByRole('region', { name: 'Phân tích đơn hàng' })
     expect(queue.compareDocumentPosition(charts)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
+
+  it('renders recent order IDs as copyable badges', async () => {
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    expect(await screen.findByRole('button', { name: '111-1111111-1111111' })).toBeVisible()
+  })
 })

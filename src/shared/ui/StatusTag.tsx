@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type CSSProperties, memo, type ReactNode } from 'react'
 import { Tag } from 'antd'
 
 type OperationalStatus =
@@ -56,20 +56,30 @@ function tone(token: 'error' | 'info' | 'processing' | 'purple' | 'success' | 'w
   }
 }
 
-export function StatusTag({ status, children }: StatusTagProps) {
-  const tone = tones[status] ?? tones.draft
-  return (
-    <Tag
-      style={{
-        backgroundColor: tone.bg,
-        borderColor: tone.border,
-        borderRadius: 999,
-        color: tone.color,
-        fontWeight: 700,
-        paddingInline: 8,
-      }}
-    >
-      {children}
-    </Tag>
-  )
+const defaultTagStyle: CSSProperties = {
+  backgroundColor: tones.draft.bg,
+  borderColor: tones.draft.border,
+  borderRadius: 999,
+  color: tones.draft.color,
+  fontWeight: 700,
+  paddingInline: 8,
 }
+
+const tagStyles: Record<OperationalStatus, CSSProperties> = Object.fromEntries(
+  Object.entries(tones).map(([key, item]) => [
+    key,
+    {
+      backgroundColor: item.bg,
+      borderColor: item.border,
+      borderRadius: 999,
+      color: item.color,
+      fontWeight: 700,
+      paddingInline: 8,
+    },
+  ]),
+) as Record<OperationalStatus, CSSProperties>
+
+export const StatusTag = memo(function StatusTag({ status, children }: StatusTagProps) {
+  const style = tagStyles[status] ?? defaultTagStyle
+  return <Tag style={style}>{children}</Tag>
+})

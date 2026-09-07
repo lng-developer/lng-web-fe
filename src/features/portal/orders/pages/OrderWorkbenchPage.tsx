@@ -37,13 +37,10 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import {
-  downloadOrdersCsv,
-  getOrderSummary,
-  listOrderWorkbench,
-  type OrderWorkbenchRow,
-} from '../api/orderApi'
-import { orderKeys } from '../api/orderKeys'
+import { downloadOrdersCsv, type OrderWorkbenchRow } from '../api/orderApi'
+import { type OrderModal, useOrderActionStore } from '../hooks/useOrderActionStore'
+import { useOrderSummaryQuery } from '../hooks/useOrderSummaryQuery'
+import { useOrderWorkbenchQuery } from '../hooks/useOrderWorkbenchQuery'
 import { formatMinorMoney, orderStatusTone } from './orderPresentation'
 import { OrderWorkbenchExpandedRow } from './OrderWorkbenchExpandedRow'
 import { OrderWorkbenchFilterBar } from './OrderWorkbenchFilterBar'
@@ -63,8 +60,6 @@ const TABS = [
   'OPEN_CASE',
 ] as const
 type TabKey = (typeof TABS)[number]
-type OrderModal = 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline'
-type OrderAction = { orderId: string; modal: OrderModal; anchor?: PopupModalAnchor }
 const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
 
 export const OrderWorkbenchPage = () => {
@@ -81,7 +76,6 @@ export const OrderWorkbenchPage = () => {
   const [shopId, setShopId] = useState<string>()
   const [vendorId, setVendorId] = useState<string>()
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>(EMPTY_DATES)
-  const [orderAction, setOrderAction] = useState<OrderAction>()
   const canWriteOrder = useCallback(
     (row: OrderWorkbenchRow) =>
       canUseScopedPermission(account, 'ORDERS:WRITE', {
@@ -113,20 +107,8 @@ export const OrderWorkbenchPage = () => {
     }),
     [dates, deferredSearch, shopId, vendorId],
   )
-  const orders = useQuery({
-    queryKey: orderKeys.workbench(params),
-    queryFn: () => listOrderWorkbench(params),
-    retry: false,
-    staleTime: 20_000,
-    refetchOnWindowFocus: false,
-    placeholderData: keepPreviousData,
-  })
-  const summary = useQuery({
-    queryKey: orderKeys.summary(summaryParams),
-    queryFn: () => getOrderSummary(summaryParams),
-    retry: false,
-    staleTime: 20_000,
-    refetchOnWindowFocus: false,
+  const orders = useOrderWorkbenchQuery(params)
+  const summary = useOrderSummaryQuery(summaryParams, {
     placeholderData: keepPreviousData,
   })
   const shopParams = useMemo(() => ({ page: 1, limit: 100, status: 'ACTIVE' as const }), [])
@@ -182,7 +164,6 @@ export const OrderWorkbenchPage = () => {
     setDates(value)
     setPage(1)
   }, [])
-  const closeOrderModal = useCallback(() => setOrderAction(undefined), [])
   const openOrderModal = useCallback(
     (event: MouseEvent<HTMLElement>, orderId: string, modal: OrderModal) => {
       const target = event.currentTarget
@@ -194,7 +175,7 @@ export const OrderWorkbenchPage = () => {
         height: rect.height,
       }
 
-      setOrderAction({ orderId, modal, anchor })
+      useOrderActionStore.getState().openOrderModal(orderId, modal, anchor)
     },
     [],
   )
@@ -247,15 +228,30 @@ export const OrderWorkbenchPage = () => {
           row={row}
           canWrite={canWrite}
           canOperate={canWrite && row.order.status !== 'CANCELLED'}
-          requestedModal={orderAction?.orderId === row.order.id ? orderAction.modal : undefined}
-          requestedPopupAnchor={
-            orderAction?.orderId === row.order.id ? orderAction.anchor : undefined
-          }
-          onOrderModalClose={closeOrderModal}
         />
       )
     },
-    [canWriteOrder, closeOrderModal, orderAction],
+    [canWriteOrder],
+  )
+
+  const renderOrderDate = useCallback(
+    (value?: string | null) => {
+      if (!value) return '—'
+      const date = dayjs(value)
+      const localizedDate = date.locale(i18n.language === 'vi' ? 'vi' : 'en')
+
+      return (
+        <Tooltip title={date.format('DD/MM/YYYY HH:mm')}>
+          <Space direction="vertical" size={0}>
+            <Typography.Text>
+              {localizedDate.format(i18n.language === 'vi' ? 'DD/MM/YYYY' : 'MMM D, YYYY')}
+            </Typography.Text>
+            <Typography.Text type="secondary">({localizedDate.fromNow()})</Typography.Text>
+          </Space>
+        </Tooltip>
+      )
+    },
+    [i18n.language],
   )
 
   const columns = useMemo<TableColumnsType<OrderWorkbenchRow>>(
@@ -290,24 +286,14 @@ export const OrderWorkbenchPage = () => {
         ),
       },
       {
-        title: t('orders.columns.created'),
-        width: '12%',
-        render: (_, row) => {
-          if (!row.order.createdAt) return '—'
-          const createdAt = dayjs(row.order.createdAt)
-          const localizedCreatedAt = createdAt.locale(i18n.language === 'vi' ? 'vi' : 'en')
-
-          return (
-            <Tooltip title={createdAt.format('DD/MM/YYYY HH:mm')}>
-              <Space direction="vertical" size={0}>
-                <Typography.Text>
-                  {localizedCreatedAt.format(i18n.language === 'vi' ? 'DD/MM/YYYY' : 'MMM D, YYYY')}
-                </Typography.Text>
-                <Typography.Text type="secondary">({localizedCreatedAt.fromNow()})</Typography.Text>
-              </Space>
-            </Tooltip>
-          )
-        },
+        title: t('orders.columns.orderedAt'),
+        width: '11%',
+        render: (_, row) => renderOrderDate(row.order.orderedAt),
+      },
+      {
+        title: t('orders.columns.importedAt'),
+        width: '11%',
+        render: (_, row) => renderOrderDate(row.order.createdAt),
       },
       {
         title: t('orders.columns.customer'),
@@ -452,7 +438,7 @@ export const OrderWorkbenchPage = () => {
           ),
       },
     ],
-    [canWriteOrder, i18n.language, openOrderModal, t],
+    [canWriteOrder, i18n.language, openOrderModal, renderOrderDate, t],
   )
 
   return (
@@ -525,7 +511,7 @@ export const OrderWorkbenchPage = () => {
         columns={columns}
         dataSource={orders.data?.items ?? []}
         loading={orders.isFetching}
-        scroll={{ x: 1320 }}
+        scroll={{ x: 1460 }}
         rowClassName={() => styles.stickyOrderRow}
         pagination={{
           ...pagination,

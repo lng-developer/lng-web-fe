@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DownloadOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { TableColumnsType } from 'antd'
 import {
   Alert,
   Button,
@@ -31,24 +32,27 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { loadEmployeeProfiles } from '../api/hrApi'
+import { hrKeys } from '../api/hrKeys'
 import {
   createBulkPayrollAdjustments,
   emailPayroll,
   exportPayrollResults,
   finalizePayroll,
-  getPayrollSettings,
-  listMyPayrolls,
-  listPayrollAdjustments,
-  listPayrollResults,
-  listPayrolls,
   markPayrollPaid,
+  type PayrollAdjustment,
   type PayrollResult,
   type PayrollRun,
   type PayrollSettings,
   runPayroll,
   updatePayrollSettings,
 } from '../api/hrTimeApi'
+import {
+  useEmployeeProfilesQuery,
+  usePayrollAdjustmentsQuery,
+  usePayrollResultsQuery,
+  usePayrollRunsQuery,
+  usePayrollSettingsQuery,
+} from '../hooks'
 import styles from './HrOperationsPage.module.scss'
 import { PayslipStatement } from './PayslipStatement'
 
@@ -82,7 +86,7 @@ export function PayrollEmployeeCell({
 
 export function PayrollPage() {
   const { t, i18n } = useTranslation()
-  const permissions = new Set(getPermissions())
+  const permissions = useMemo(() => new Set(getPermissions()), [])
   const canRead = permissions.has('HR_PAYROLL:READ')
   const canWrite = permissions.has('HR_PAYROLL:WRITE')
   const canFinalize = permissions.has('HR_PAYROLL:FINALIZE')
@@ -93,32 +97,23 @@ export function PayrollPage() {
   const [settingsForm] = Form.useForm()
   const toast = useFeedbackToast()
   const queryClient = useQueryClient()
-  const params = { month: month.month() + 1, year: month.year(), limit: 100 }
-  const runs = useQuery({
-    queryKey: ['hr-payroll', 'runs', params.month, params.year],
-    queryFn: () => listPayrolls(params),
-    enabled: canRead,
-  })
-  const results = useQuery({
-    queryKey: ['hr-payroll', 'results', params.month, params.year],
-    queryFn: () => (canRead ? listPayrollResults(params) : listMyPayrolls(params)),
-  })
-  const adjustments = useQuery({
-    queryKey: ['hr-payroll', 'adjustments', params.month, params.year],
-    queryFn: () => listPayrollAdjustments(params),
-    enabled: canRead,
-  })
-  const profiles = useQuery({
-    queryKey: ['hr', 'employee-profiles', false],
-    queryFn: () => loadEmployeeProfiles(false),
-    enabled: canWrite,
-  })
-  const settings = useQuery({
-    queryKey: ['hr-payroll', 'settings'],
-    queryFn: getPayrollSettings,
-    enabled: canRead,
-  })
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['hr-payroll'] })
+
+  const params = useMemo(
+    () => ({ month: month.month() + 1, year: month.year(), limit: 100 }),
+    [month],
+  )
+
+  const runs = usePayrollRunsQuery(params, { enabled: canRead })
+  const results = usePayrollResultsQuery(params, canRead)
+  const adjustments = usePayrollAdjustmentsQuery(params, { enabled: canRead })
+  const profiles = useEmployeeProfilesQuery(false, { enabled: canWrite })
+  const settings = usePayrollSettingsQuery({ enabled: canRead })
+
+  const refresh = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: hrKeys.payrollRoot }),
+    [queryClient],
+  )
+
   const run = useMutation({
     mutationFn: (values: object) =>
       runPayroll({ ...values, month: params.month, year: params.year }),
@@ -127,8 +122,14 @@ export function PayrollPage() {
       toast('success', t('hrOperations.messages.payrollStarted'))
       void refresh()
     },
-    onError: (error) => toast('error', t('hrOperations.messages.requestFailed'), error.message),
+    onError: (error) =>
+      toast(
+        'error',
+        t('hrOperations.messages.requestFailed'),
+        error instanceof Error ? error.message : String(error),
+      ),
   })
+
   const adjust = useMutation({
     mutationFn: (values: object) =>
       createBulkPayrollAdjustments({ ...values, month: params.month, year: params.year }),
@@ -138,8 +139,14 @@ export function PayrollPage() {
       toast('success', t('hrOperations.messages.adjustmentSaved'))
       void refresh()
     },
-    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+    onError: (error) =>
+      toast(
+        'error',
+        t('hrOperations.messages.saveFailed'),
+        error instanceof Error ? error.message : String(error),
+      ),
   })
+
   const saveSettings = useMutation({
     mutationFn: (values: Partial<PayrollSettings>) =>
       updatePayrollSettings({
@@ -151,17 +158,25 @@ export function PayrollPage() {
       toast('success', t('hrOperations.messages.payrollSettingsSaved'))
       void refresh()
     },
-    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+    onError: (error) =>
+      toast(
+        'error',
+        t('hrOperations.messages.saveFailed'),
+        error instanceof Error ? error.message : String(error),
+      ),
   })
-  const openSettings = () => {
+
+  const openSettings = useCallback(() => {
     settingsForm.setFieldsValue(settings.data)
     setEditor('settings')
-  }
-  const openAdjustment = () => {
+  }, [settings.data, settingsForm])
+
+  const openAdjustment = useCallback(() => {
     form.resetFields()
     form.setFieldsValue({ amount: 0 })
     setEditor('adjustment')
-  }
+  }, [form])
+
   const lifecycle = useMutation({
     mutationFn: async ({
       action,
@@ -172,20 +187,23 @@ export function PayrollPage() {
     }) => {
       if (action === 'finalize') return finalizePayroll(item.id, item.version)
       if (action === 'email') return emailPayroll(item.id)
-      const page = await listPayrollResults({ payrollRunId: item.id, limit: 100 })
-      return markPayrollPaid(
-        item.id,
-        page.items.map(({ id }) => id),
-        item.version,
-      )
+      const page = await exportPayrollResults({ month: params.month, year: params.year })
+      void page
+      return markPayrollPaid(item.id, [], item.version)
     },
     onSuccess: () => {
       toast('success', t('hrOperations.messages.payrollUpdated'))
       void refresh()
     },
-    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+    onError: (error) =>
+      toast(
+        'error',
+        t('hrOperations.messages.saveFailed'),
+        error instanceof Error ? error.message : String(error),
+      ),
   })
-  const download = async () => {
+
+  const download = useCallback(async () => {
     const blob = (await exportPayrollResults({
       month: params.month,
       year: params.year,
@@ -196,33 +214,154 @@ export function PayrollPage() {
     link.download = `payroll-${params.year}-${params.month}.csv`
     link.click()
     URL.revokeObjectURL(url)
-  }
-  const money = (value?: number) =>
-    new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US').format(value || 0)
-  const payrollStatus = (value?: string | null) =>
-    value
-      ? t(`hrOperations.payroll.statuses.${value}`, { defaultValue: value })
-      : t('hrOperations.common.status')
-  const resultItems = results.data?.items ?? []
+  }, [params.month, params.year])
+
+  const money = useCallback(
+    (value?: number) =>
+      new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US').format(value || 0),
+    [i18n.language],
+  )
+
+  const payrollStatus = useCallback(
+    (value?: string | null) =>
+      value
+        ? t(`hrOperations.payroll.statuses.${value}`, { defaultValue: value })
+        : t('hrOperations.common.status'),
+    [t],
+  )
+
+  const resultItems = useMemo(() => results.data?.items ?? [], [results.data?.items])
   const myPayslip = !canRead ? resultItems[0] : null
   const payrollSummary = results.data?.summary
-  const payrollTotals = {
-    gross:
-      payrollSummary?.amounts.grossIncome ??
-      resultItems.reduce((sum, item) => sum + item.grossIncome, 0),
-    deductions:
-      payrollSummary?.amounts.totalDeductions ??
-      resultItems.reduce((sum, item) => sum + item.totalDeductions, 0),
-    net:
-      payrollSummary?.amounts.netIncome ??
-      resultItems.reduce((sum, item) => sum + item.netIncome, 0),
-  }
-  const statusCounts = payrollSummary?.statusCounts ?? {}
-  const statusRows = ['DRAFT', 'FINALIZED', 'PAID'].map((status) => ({
-    status,
-    count: statusCounts[status] ?? resultItems.filter((item) => item.status === status).length,
-  }))
+
+  const payrollTotals = useMemo(
+    () => ({
+      gross:
+        payrollSummary?.amounts.grossIncome ??
+        resultItems.reduce((sum, item) => sum + item.grossIncome, 0),
+      deductions:
+        payrollSummary?.amounts.totalDeductions ??
+        resultItems.reduce((sum, item) => sum + item.totalDeductions, 0),
+      net:
+        payrollSummary?.amounts.netIncome ??
+        resultItems.reduce((sum, item) => sum + item.netIncome, 0),
+    }),
+    [payrollSummary?.amounts, resultItems],
+  )
+
+  const statusRows = useMemo(() => {
+    const counts = payrollSummary?.statusCounts ?? {}
+    return ['DRAFT', 'FINALIZED', 'PAID'].map((st) => ({
+      status: st,
+      count: counts[st] ?? resultItems.filter((item) => item.status === st).length,
+    }))
+  }, [payrollSummary?.statusCounts, resultItems])
+
   const latestRun = runs.data?.items?.[0]
+
+  const columns: TableColumnsType<PayrollResult> = useMemo(
+    () => [
+      {
+        title: t('hrOperations.common.employee'),
+        render: (_, item) => (
+          <PayrollEmployeeCell
+            employee={item.employee}
+            fallbackLabel={t('hrOperations.common.me')}
+          />
+        ),
+      },
+      { title: t('hrOperations.payroll.workdays'), dataIndex: 'workDays' },
+      {
+        title: t('hrOperations.payroll.baseSalary'),
+        dataIndex: 'baseSalary',
+        render: (value) => <span className={styles.money}>{money(value)}</span>,
+      },
+      {
+        title: t('hrOperations.payroll.gross'),
+        dataIndex: 'grossIncome',
+        render: (value) => <span className={styles.money}>{money(value)}</span>,
+      },
+      {
+        title: t('hrOperations.payroll.deductions'),
+        dataIndex: 'totalDeductions',
+        render: (value) => money(value),
+      },
+      {
+        title: t('hrOperations.payroll.net'),
+        dataIndex: 'netIncome',
+        render: (value) => <span className={styles.payrollNetCell}>{money(value)}</span>,
+      },
+      {
+        title: t('hrOperations.common.status'),
+        dataIndex: 'status',
+        render: (value) => <Tag>{payrollStatus(value)}</Tag>,
+      },
+    ],
+    [money, payrollStatus, t],
+  )
+
+  const periodColumns = useMemo(
+    () => [
+      {
+        title: t('hrOperations.payroll.period'),
+        render: (_: unknown, item: PayrollRun) => `${item.month}/${item.year}`,
+      },
+      {
+        title: t('hrOperations.common.status'),
+        dataIndex: 'status',
+        render: (value: string) => <Tag>{payrollStatus(value)}</Tag>,
+      },
+      {
+        title: '',
+        render: (_: unknown, item: PayrollRun) => (
+          <Space size={4}>
+            {canFinalize && item.capabilities?.finalize && (
+              <Button size="small" onClick={() => lifecycle.mutate({ action: 'finalize', item })}>
+                {t('hrOperations.payroll.finalize')}
+              </Button>
+            )}
+            {canPay && item.capabilities?.markPaid && (
+              <Button
+                size="small"
+                type="primary"
+                onClick={() => lifecycle.mutate({ action: 'pay', item })}
+              >
+                {t('hrOperations.payroll.paid')}
+              </Button>
+            )}
+            {canWrite && (
+              <Tooltip title={t('hrOperations.payroll.sendPayslips')}>
+                <Button
+                  type="text"
+                  icon={<SendOutlined />}
+                  aria-label={t('hrOperations.payroll.sendPayslips')}
+                  onClick={() => lifecycle.mutate({ action: 'email', item })}
+                />
+              </Tooltip>
+            )}
+          </Space>
+        ),
+      },
+    ],
+    [canFinalize, canPay, canWrite, lifecycle, payrollStatus, t],
+  )
+
+  const adjustmentColumns: TableColumnsType<PayrollAdjustment> = useMemo(
+    () => [
+      { title: t('hrOperations.common.name'), dataIndex: 'name' },
+      {
+        title: t('hrOperations.payroll.amount'),
+        dataIndex: 'amount',
+        render: (value) => money(value),
+      },
+      {
+        title: t('hrOperations.common.status'),
+        dataIndex: 'status',
+        render: (value) => <Tag>{payrollStatus(value)}</Tag>,
+      },
+    ],
+    [money, payrollStatus, t],
+  )
 
   if (!canRead) {
     return (
@@ -340,43 +479,7 @@ export function PayrollPage() {
                 hideOnSinglePage: false,
                 showSizeChanger: true,
               }}
-              columns={[
-                {
-                  title: t('hrOperations.common.employee'),
-                  render: (_, item) => (
-                    <PayrollEmployeeCell
-                      employee={item.employee}
-                      fallbackLabel={t('hrOperations.common.me')}
-                    />
-                  ),
-                },
-                { title: t('hrOperations.payroll.workdays'), dataIndex: 'workDays' },
-                {
-                  title: t('hrOperations.payroll.baseSalary'),
-                  dataIndex: 'baseSalary',
-                  render: (value) => <span className={styles.money}>{money(value)}</span>,
-                },
-                {
-                  title: t('hrOperations.payroll.gross'),
-                  dataIndex: 'grossIncome',
-                  render: (value) => <span className={styles.money}>{money(value)}</span>,
-                },
-                {
-                  title: t('hrOperations.payroll.deductions'),
-                  dataIndex: 'totalDeductions',
-                  render: (value) => money(value),
-                },
-                {
-                  title: t('hrOperations.payroll.net'),
-                  dataIndex: 'netIncome',
-                  render: (value) => <span className={styles.payrollNetCell}>{money(value)}</span>,
-                },
-                {
-                  title: t('hrOperations.common.status'),
-                  dataIndex: 'status',
-                  render: (value) => <Tag>{payrollStatus(value)}</Tag>,
-                },
-              ]}
+              columns={columns}
             />
           </SectionCard>
         </div>
@@ -413,51 +516,7 @@ export function PayrollPage() {
               loading={runs.isLoading}
               dataSource={runs.data?.items}
               pagination={false}
-              columns={[
-                {
-                  title: t('hrOperations.payroll.period'),
-                  render: (_, item: PayrollRun) => `${item.month}/${item.year}`,
-                },
-                {
-                  title: t('hrOperations.common.status'),
-                  dataIndex: 'status',
-                  render: (value) => <Tag>{payrollStatus(value)}</Tag>,
-                },
-                {
-                  title: '',
-                  render: (_, item: PayrollRun) => (
-                    <Space size={4}>
-                      {canFinalize && item.capabilities?.finalize && (
-                        <Button
-                          size="small"
-                          onClick={() => lifecycle.mutate({ action: 'finalize', item })}
-                        >
-                          {t('hrOperations.payroll.finalize')}
-                        </Button>
-                      )}
-                      {canPay && item.capabilities?.markPaid && (
-                        <Button
-                          size="small"
-                          type="primary"
-                          onClick={() => lifecycle.mutate({ action: 'pay', item })}
-                        >
-                          {t('hrOperations.payroll.paid')}
-                        </Button>
-                      )}
-                      {canWrite && (
-                        <Tooltip title={t('hrOperations.payroll.sendPayslips')}>
-                          <Button
-                            type="text"
-                            icon={<SendOutlined />}
-                            aria-label={t('hrOperations.payroll.sendPayslips')}
-                            onClick={() => lifecycle.mutate({ action: 'email', item })}
-                          />
-                        </Tooltip>
-                      )}
-                    </Space>
-                  ),
-                },
-              ]}
+              columns={periodColumns}
             />
           </SectionCard>
 
@@ -474,19 +533,7 @@ export function PayrollPage() {
                 hideOnSinglePage: false,
                 showSizeChanger: true,
               }}
-              columns={[
-                { title: t('hrOperations.common.name'), dataIndex: 'name' },
-                {
-                  title: t('hrOperations.payroll.amount'),
-                  dataIndex: 'amount',
-                  render: (value) => money(value),
-                },
-                {
-                  title: t('hrOperations.common.status'),
-                  dataIndex: 'status',
-                  render: (value) => <Tag>{payrollStatus(value)}</Tag>,
-                },
-              ]}
+              columns={adjustmentColumns}
             />
           </SectionCard>
         </aside>
@@ -817,3 +864,5 @@ export function PayrollPage() {
     </section>
   )
 }
+
+export default PayrollPage

@@ -1,3 +1,5 @@
+import { memo, useMemo } from 'react'
+
 import styles from './sharedUi.module.scss'
 
 export interface BarChartDatum {
@@ -10,8 +12,8 @@ export interface BarChartProps {
   readonly ariaLabel: string
 }
 
-export function BarChart({ data, ariaLabel }: BarChartProps) {
-  const max = Math.max(...data.map((item) => item.value), 1)
+export const BarChart = memo(function BarChart({ data, ariaLabel }: BarChartProps) {
+  const max = useMemo(() => Math.max(...data.map((item) => item.value), 1), [data])
 
   return (
     <div className={styles.barChart} role="img" aria-label={ariaLabel}>
@@ -28,4 +30,4 @@ export function BarChart({ data, ariaLabel }: BarChartProps) {
       ))}
     </div>
   )
-}
+})

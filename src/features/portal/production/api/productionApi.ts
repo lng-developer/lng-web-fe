@@ -155,6 +155,12 @@ export const summarizeProductionTasks = async (
   )
   return { ...result, ready: result.ready ?? result.readyToSendVendor ?? 0 } as ProductionSummary
 }
+export const summarizeProductionQueueCounts = async (
+  params: Pick<ProductionParams, 'search' | 'salesChannelCode'>,
+) =>
+  unwrap<Pick<ProductionSummary, 'blocked' | 'scaleQueue' | 'qcQueue'>>(
+    await apiClient.get(`${basePath}/tasks/queue-summary`, { params }),
+  )
 export const getProductionTask = async (id: string) =>
   unwrap<ProductionTask>(await apiClient.get(`${basePath}/tasks/${id}`))
 export const claimProductionTask = async (id: string) =>
