@@ -13,12 +13,9 @@ import { FeedbackAlert, StatusTag, useFeedbackToast } from '@/shared/ui'
 import {
   createMappingRule,
   findMappingRuleConflicts,
-  listAuthorableShops,
-  listMappingRules,
   type MappingRule,
   type MappingRuleInput,
   previewMappingRule,
-  previewOrderItem,
   recheckOrderItem,
   updateMappingRule,
 } from '../api/mappingApi'
@@ -26,6 +23,7 @@ import { mappingKeys } from '../api/mappingKeys'
 import { RuleEditorPanel } from '../components/RuleEditorPanel'
 import { RuleHistoryModal } from '../components/RuleHistoryModal'
 import { RuleInventoryPanel } from '../components/RuleInventoryPanel'
+import { useAuthorableShopsQuery, useMappingRulesQuery, useOrderItemPreviewQuery } from '../hooks'
 import {
   getMappingRulePage,
   type MappingRulePageKey,
@@ -62,17 +60,9 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
   const [historyRule, setHistoryRule] = useState<MappingRule>()
   const editorOpen = creating || Boolean(selectedRule)
 
-  const rules = useQuery({
-    queryKey: mappingKeys.rules(page.ruleType, { shopId, page: 1, limit: 100 }),
-    queryFn: () => listMappingRules(page.ruleType, { shopId, page: 1, limit: 100 }),
-    retry: false,
-  })
-  const shops = useQuery({
-    queryKey: mappingKeys.shops(),
-    queryFn: listAuthorableShops,
-    enabled: canWrite,
-    retry: false,
-  })
+  const ruleParams = useMemo(() => ({ shopId, page: 1, limit: 100 }), [shopId])
+  const rules = useMappingRulesQuery(page.ruleType, ruleParams)
+  const shops = useAuthorableShopsQuery({ enabled: canWrite })
   const catalogOptions = useQuery({
     queryKey: ['portal', 'catalog', 'listing-options'],
     queryFn: getListingOptions,
@@ -85,12 +75,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
     enabled: page.ruleType === 'vendorRouting',
     retry: false,
   })
-  const originPreview = useQuery({
-    queryKey: mappingKeys.preview(orderItemId ?? ''),
-    queryFn: () => previewOrderItem(orderItemId!),
-    enabled: Boolean(orderItemId),
-    retry: false,
-  })
+  const originPreview = useOrderItemPreviewQuery(orderItemId)
   const notifyError = useCallback(
     (error: unknown) =>
       toast('error', t('mapping.feedback.actionFailed'), normalizeApiError(error).message),
@@ -160,32 +145,60 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
     }),
     [catalogOptions.data, vendors.data],
   )
-  const toggleRuleStatus = (rule: MappingRule) => {
-    const active = rule.status === 'ACTIVE'
-    Modal.confirm({
-      centered: true,
-      title: active ? t('mapping.actions.disableTitle') : t('mapping.actions.enableTitle'),
-      content: active
-        ? t('mapping.actions.disableDescription')
-        : t('mapping.actions.enableDescription'),
-      okText: active ? t('mapping.actions.disableRule') : t('mapping.actions.enableRule'),
-      okButtonProps: { danger: active },
-      onOk: () =>
-        updateMappingRule(page.ruleType, rule.id, {
-          status: active ? 'INACTIVE' : 'ACTIVE',
-        })
-          .then(() =>
-            queryClient.invalidateQueries({ queryKey: mappingKeys.rulesRoot(page.ruleType) }),
-          )
-          .then(() =>
-            toast(
-              'success',
-              active ? t('mapping.feedback.ruleDisabled') : t('mapping.feedback.ruleEnabled'),
-            ),
-          )
-          .catch(notifyError),
-    })
-  }
+
+  const shopOptions = useMemo(
+    () =>
+      (shops.data?.items ?? []).map((shop) => ({
+        value: shop.id,
+        label: shop.name || shop.code || t('mapping.states.unavailable'),
+      })),
+    [shops.data?.items, t],
+  )
+
+  const handleCreateRule = useCallback(() => {
+    setSelectedRule(undefined)
+    setCreating(true)
+  }, [])
+
+  const handleSelectRule = useCallback((rule: MappingRule) => {
+    setSelectedRule(rule)
+    setCreating(false)
+  }, [])
+
+  const handleCloseDrawer = useCallback(() => {
+    setCreating(false)
+    setSelectedRule(undefined)
+  }, [])
+
+  const toggleRuleStatus = useCallback(
+    (rule: MappingRule) => {
+      const active = rule.status === 'ACTIVE'
+      Modal.confirm({
+        centered: true,
+        title: active ? t('mapping.actions.disableTitle') : t('mapping.actions.enableTitle'),
+        content: active
+          ? t('mapping.actions.disableDescription')
+          : t('mapping.actions.enableDescription'),
+        okText: active ? t('mapping.actions.disableRule') : t('mapping.actions.enableRule'),
+        okButtonProps: { danger: active },
+        onOk: () =>
+          updateMappingRule(page.ruleType, rule.id, {
+            status: active ? 'INACTIVE' : 'ACTIVE',
+          })
+            .then(() =>
+              queryClient.invalidateQueries({ queryKey: mappingKeys.rulesRoot(page.ruleType) }),
+            )
+            .then(() =>
+              toast(
+                'success',
+                active ? t('mapping.feedback.ruleDisabled') : t('mapping.feedback.ruleEnabled'),
+              ),
+            )
+            .catch(notifyError),
+      })
+    },
+    [notifyError, page.ruleType, queryClient, t, toast],
+  )
 
   return (
     <Flex vertical gap={16} style={{ minHeight: 0 }}>
@@ -217,10 +230,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
               placeholder={t('mapping.context.allShops')}
               loading={shops.isLoading}
               value={shopId}
-              options={(shops.data?.items ?? []).map((shop) => ({
-                value: shop.id,
-                label: shop.name || shop.code || t('mapping.states.unavailable'),
-              }))}
+              options={shopOptions}
               onChange={setShopId}
             />
           }
@@ -230,16 +240,10 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           search={search}
           status={status}
           type={page.ruleType}
-          onCreate={() => {
-            setSelectedRule(undefined)
-            setCreating(true)
-          }}
+          onCreate={handleCreateRule}
           onHistory={setHistoryRule}
           onSearchChange={setSearch}
-          onSelect={(rule) => {
-            setSelectedRule(rule)
-            setCreating(false)
-          }}
+          onSelect={handleSelectRule}
           onStatusChange={setStatus}
           onToggleStatus={toggleRuleStatus}
         />
@@ -261,10 +265,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
             ) : null}
           </Space>
         }
-        onClose={() => {
-          setCreating(false)
-          setSelectedRule(undefined)
-        }}
+        onClose={handleCloseDrawer}
       >
         {orderItemId ? (
           <div

@@ -6,14 +6,25 @@
   overflow-x: hidden;
   gap: 20px;
 }
+
 .icon {
   color: var(--ant-color-primary);
   font-size: 28px;
 }
+
+/* ── Toolbar ────────────────────────────────── */
 .toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
+
+.toolbarSearch {
+  flex: 1;
+  max-width: 480px;
+}
+
 .search {
   width: 320px;
 }
@@ -32,23 +43,40 @@
   min-width: 0;
   max-width: 100%;
 }
+
 .tree,
 .branch {
   background: transparent;
 }
+
 .tree :global(.ant-collapse-item),
 .branch :global(.ant-collapse-item) {
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
+
 .tree > :global(.ant-collapse-item > .ant-collapse-header) {
   padding: 16px 4px;
 }
+
 .branch :global(.ant-collapse-header) {
   padding: 13px 12px 13px 28px;
 }
+
 .branch :global(.ant-collapse-content-box) {
   padding: 0 12px 16px 48px;
 }
+
+/* ── Left-accent for role collapse items ─────── */
+.branch :global(.ant-collapse-item) {
+  border-left: 3px solid transparent;
+  transition: border-left-color 160ms ease;
+}
+
+.branch :global(.ant-collapse-item.ant-collapse-item-active) {
+  border-left-color: var(--ant-color-primary);
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 36%, transparent);
+}
+
 .rootLabel,
 .nodeLabel {
   display: flex;
@@ -56,24 +84,31 @@
   align-items: center;
   gap: 10px;
 }
+
 .rootLabel {
   font-size: 16px;
   font-weight: 600;
 }
+
 .addButton {
   margin-left: auto;
 }
+
 .nodeActions {
   margin-left: auto;
 }
+
 .nodeLabel strong {
   min-width: 180px;
 }
+
 .code {
   color: var(--ant-color-text-secondary);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 12px;
 }
+
+/* ── Permission editor panel ─────────────────── */
 .permissionEditor {
   display: grid;
   gap: 14px;
@@ -82,11 +117,13 @@
   border-radius: 10px;
   background: var(--ant-color-fill-quaternary);
 }
+
 .editorToolbar {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) auto;
   gap: 12px;
 }
+
 .permissionGrid,
 .roleFormPermissions,
 .catalogGrid {
@@ -94,50 +131,132 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px 16px;
 }
+
 .permissionGrid :global(.ant-checkbox-wrapper) {
   min-width: 0;
-  padding: 8px;
+  padding: 8px 10px;
   border-radius: 8px;
+  border: 1px solid transparent;
   background: var(--ant-color-bg-container);
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary-border);
+    background: var(--ant-color-primary-bg);
+  }
 }
+
+.permissionGrid :global(.ant-checkbox-wrapper.ant-checkbox-wrapper-checked) {
+  border-color: var(--ant-color-primary-border);
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 72%, var(--ant-color-bg-container));
+  box-shadow: 0 0 0 1px var(--ant-color-primary-border);
+}
+
 .roleFormPermissions {
   max-height: 280px;
   overflow-x: hidden;
   overflow-y: auto;
 }
+
 .roleFormPermissions :global(.ant-checkbox-wrapper) {
   padding: 8px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary-border);
+    background: var(--ant-color-primary-bg);
+  }
 }
+
 .permissionName {
   display: block;
 }
+
+/* ── Catalog items (permission grid cards) ────── */
 .catalogItem,
 .scopeRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary-border);
+    box-shadow: 0 2px 8px rgb(15 23 42 / 5%);
+  }
 }
+
 .catalogItem {
   flex-direction: column;
   align-items: flex-start;
+  gap: 6px;
 }
+
+/* ── Permission domain badge ─────────────────── */
+.domainBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--ant-color-primary) 14%, var(--ant-color-bg-container));
+  color: var(--ant-color-primary);
+  border: 1px solid var(--ant-color-primary-border);
+  flex-shrink: 0;
+}
+
+.catalogItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.catalogItemActions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
 .scopeList {
   display: grid;
   gap: 8px;
 }
+
 .scopeIdentity {
   display: grid;
   margin-right: auto;
 }
+
 @media (max-width: 1100px) {
   .permissionGrid,
   .catalogGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .toolbarSearch {
+    max-width: 100%;
   }
 }

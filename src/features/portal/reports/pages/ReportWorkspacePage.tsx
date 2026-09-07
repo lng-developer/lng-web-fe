@@ -1,31 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { DownloadOutlined } from '@ant-design/icons'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { DollarOutlined, DownloadOutlined, FundOutlined, RiseOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Select, Space, Tag, Typography } from 'antd'
+import { Button, Select, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import {
-  exportReportCsv,
-  type FinanceDaily,
-  getBuyerInsights,
-  getOperationsOverview,
-  getReportFilterOptions,
-  listChannelPerformance,
-  listFinanceBySeller,
-  listFinanceByTeam,
-  listFinanceDaily,
-  listFinanceDailyProfit,
-  listVendorPerformance,
-  type ReportFilters,
-  type SellerPerformance,
-  type TeamPerformance,
-  type VendorPerformance,
-} from '@/features/portal/reports/api/reportApi'
 import {
   DateRangePicker,
   FilterBar,
@@ -35,51 +17,46 @@ import {
   UiTabs,
 } from '@/shared/ui'
 
-import { buildRevenueTrend } from './reportTrend'
-import { ReportTrendChart } from './ReportTrendChart'
+import type { ReportFilters, SellerDailyProfit, SellerPerformance } from '../api/reportApi'
+import { ReportAdsTab } from '../components/ReportAdsTab'
+import { formatReportMoney, formatReportPercent } from '../components/reportFormatters'
+import { ReportProfitComparisonChart } from '../components/ReportProfitComparisonChart'
+import { ReportTeamTab } from '../components/ReportTeamTab'
+import { type ProfitabilityView, type TabKey, useReportData } from '../hooks/useReportData'
 import styles from './ReportWorkspacePage.module.scss'
 
-type TabKey = 'overview' | 'sales' | 'operations'
+type DailyMatrixRow = {
+  key: string
+  seller: string
+  metric: string
+  metricKey: keyof SellerDailyProfit
+  sellerGroup: number
+  isFirstSellerRow: boolean
+  total: number | null
+  values: Record<string, number | null>
+}
 
-const money = (amount: number, currency: string) =>
-  new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount / 100)
-const percent = (bps: number | null) => (bps === null ? '—' : `${(bps / 100).toFixed(1)}%`)
-const sum = (rows: FinanceDaily[], key: keyof FinanceDaily) =>
-  rows.reduce((total, row) => total + Number(row[key] || 0), 0)
-const topChannels = (rows: FinanceDaily[]) =>
-  Object.entries(
-    rows.reduce<Record<string, number>>((result, row) => {
-      const channel = [row.salesChannelCode, row.marketplaceCode].filter(Boolean).join(' / ') || '—'
-      result[channel] = (result[channel] || 0) + row.revenueAmount
-      return result
-    }, {}),
-  )
-    .sort(([, left], [, right]) => right - left)
-    .slice(0, 4)
-
-function statusSummary(rows: Record<string, number>, empty: string) {
-  const entries = Object.entries(rows)
-  return entries.length ? (
-    <Space wrap>
-      {entries.map(([key, value]) => (
-        <Tag key={key}>
-          {key}: {value}
-        </Tag>
-      ))}
-    </Space>
-  ) : (
-    <Typography.Text type="secondary">{empty}</Typography.Text>
-  )
+const datesInRange = (dateFrom?: string, dateTo?: string) => {
+  const start = dayjs(dateFrom).startOf('day')
+  const end = dayjs(dateTo).startOf('day')
+  if (!start.isValid() || !end.isValid() || end.isBefore(start)) return []
+  const dates: string[] = []
+  for (let date = start; !date.isAfter(end, 'day'); date = date.add(1, 'day')) {
+    dates.push(date.format('YYYY-MM-DD'))
+  }
+  return dates
 }
 
 export function ReportWorkspacePage() {
   const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
+  const [profitabilityView, setProfitabilityView] = useState<ProfitabilityView>('summary')
   const [filters, setFilters] = useState<ReportFilters>(() => ({
-    dateFrom: dayjs().subtract(29, 'day').startOf('day').toISOString(),
+    dateFrom: dayjs().subtract(6, 'day').startOf('day').toISOString(),
     dateTo: dayjs().endOf('day').toISOString(),
   }))
+
   const globalRead = account.permissions.includes('REPORTS:READ')
   const operationalScope =
     globalRead ||
@@ -87,141 +64,15 @@ export function ReportWorkspacePage() {
       (scope) => scope.scopeType === 'shop' && scope.permissions.includes('REPORTS:READ'),
     )
 
-  const options = useQuery({
-    queryKey: ['reports', 'filter-options'],
-    queryFn: getReportFilterOptions,
+  const { options, sellers, sellerDaily, teams, channels, adsDaily, exportCsv } = useReportData({
+    filters,
+    activeTab,
+    profitabilityView,
+    operationalScope,
   })
-  const daily = useQuery({
-    queryKey: ['reports', globalRead ? 'daily-profit' : 'daily', filters],
-    queryFn: () => (globalRead ? listFinanceDailyProfit(filters) : listFinanceDaily(filters)),
-    enabled: activeTab === 'overview',
-  })
-  const buyers = useQuery({
-    queryKey: ['reports', 'buyers', filters],
-    queryFn: () => getBuyerInsights(filters),
-    enabled: activeTab === 'overview' && operationalScope,
-  })
-  const overview = useQuery({
-    queryKey: ['reports', 'operations', filters],
-    queryFn: () => getOperationsOverview(filters),
-    enabled: (activeTab === 'overview' || activeTab === 'operations') && operationalScope,
-  })
-  const sellers = useQuery({
-    queryKey: ['reports', 'sellers', filters],
-    queryFn: () => listFinanceBySeller(filters),
-    enabled: activeTab === 'sales',
-  })
-  const teams = useQuery({
-    queryKey: ['reports', 'teams', filters],
-    queryFn: () => listFinanceByTeam(filters),
-    enabled: activeTab === 'sales',
-  })
-  const channels = useQuery({
-    queryKey: ['reports', 'channels', filters],
-    queryFn: () => listChannelPerformance(filters),
-    enabled: activeTab === 'sales' && operationalScope,
-  })
-  const vendors = useQuery({
-    queryKey: ['reports', 'vendors', filters],
-    queryFn: () => listVendorPerformance(filters),
-    enabled: activeTab === 'operations' && operationalScope,
-  })
-  const exportCsv = useMutation({
-    mutationFn: () => exportReportCsv(filters),
-    onSuccess: (result) => {
-      const url = URL.createObjectURL(result)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'reports.csv'
-      link.click()
-      URL.revokeObjectURL(url)
-    },
-  })
-
-  const byCurrency = useMemo(
-    () =>
-      Object.entries(
-        (daily.data || []).reduce<Record<string, FinanceDaily[]>>((result, row) => {
-          const currency = row.currency || 'USD'
-          result[currency] = [...(result[currency] || []), row]
-          return result
-        }, {}),
-      ),
-    [daily.data],
-  )
-
-  const sellerColumns: TableColumnsType<SellerPerformance> = [
-    {
-      title: t('reports.columns.seller'),
-      render: (_, row) => row.sellerName || row.sellerEmployeeCode || '—',
-    },
-    {
-      title: t('reports.columns.items'),
-      dataIndex: 'itemCount',
-      sorter: (a, b) => a.itemCount - b.itemCount,
-    },
-    {
-      title: t('reports.columns.revenue'),
-      sorter: (a, b) => a.revenueAmount - b.revenueAmount,
-      render: (_, row) => money(row.revenueAmount, row.currency || 'USD'),
-    },
-    {
-      title: t('reports.columns.spend'),
-      sorter: (a, b) => (a.adSpendAmount || 0) - (b.adSpendAmount || 0),
-      render: (_, row) => money(row.adSpendAmount || 0, row.currency || 'USD'),
-    },
-    {
-      title: t('reports.columns.netProfit'),
-      sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
-      render: (_, row) => money(row.netProfitAmount, row.currency || 'USD'),
-    },
-    {
-      title: t('reports.columns.margin'),
-      sorter: (a, b) => (a.netMarginBps ?? -Infinity) - (b.netMarginBps ?? -Infinity),
-      render: (_, row) => percent(row.netMarginBps),
-    },
-  ]
-  const teamColumns: TableColumnsType<TeamPerformance> = [
-    { title: t('reports.columns.team'), render: (_, row) => row.teamName || row.teamCode || '—' },
-    { title: t('reports.columns.sellers'), dataIndex: 'activeSellerCount' },
-    {
-      title: t('reports.columns.items'),
-      dataIndex: 'itemCount',
-      sorter: (a, b) => a.itemCount - b.itemCount,
-    },
-    {
-      title: t('reports.columns.revenue'),
-      sorter: (a, b) => a.revenueAmount - b.revenueAmount,
-      render: (_, row) => money(row.revenueAmount, row.currency || 'USD'),
-    },
-    {
-      title: t('reports.columns.spend'),
-      sorter: (a, b) => (a.adSpendAmount || 0) - (b.adSpendAmount || 0),
-      render: (_, row) => money(row.adSpendAmount || 0, row.currency || 'USD'),
-    },
-    {
-      title: t('reports.columns.netProfit'),
-      sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
-      render: (_, row) => money(row.netProfitAmount, row.currency || 'USD'),
-    },
-    {
-      title: t('reports.columns.margin'),
-      sorter: (a, b) => (a.netMarginBps ?? -Infinity) - (b.netMarginBps ?? -Infinity),
-      render: (_, row) => percent(row.netMarginBps),
-    },
-  ]
-  const vendorColumns: TableColumnsType<VendorPerformance> = [
-    {
-      title: t('reports.columns.vendor'),
-      render: (_, row) => row.vendorName || row.vendorCode || '—',
-    },
-    { title: t('reports.columns.submitted'), dataIndex: 'submittedCount' },
-    { title: t('reports.columns.failed'), dataIndex: 'failedCount' },
-    { title: t('reports.columns.shipped'), dataIndex: 'shippedCount' },
-    { title: t('reports.columns.successRate'), render: (_, row) => percent(row.successRateBps) },
-  ]
 
   const filterOptions = options.data
+
   const handleFilterChange = useCallback((key: keyof ReportFilters, value?: string) => {
     setFilters((current) => ({ ...current, [key]: value }))
   }, [])
@@ -253,14 +104,81 @@ export function ReportWorkspacePage() {
     setActiveTab(key as TabKey)
   }, [])
 
+  const sellersByCurrency = useMemo(
+    () =>
+      Object.entries(
+        (sellers.data || []).reduce<Record<string, SellerPerformance[]>>((result, row) => {
+          const currency = row.currency || 'USD'
+          result[currency] = [...(result[currency] || []), row]
+          return result
+        }, {}),
+      ),
+    [sellers.data],
+  )
+
+  const sellerColumns: TableColumnsType<SellerPerformance> = useMemo(
+    () => [
+      {
+        title: t('reports.columns.seller'),
+        width: 200,
+        ellipsis: true,
+        render: (_, row) => row.sellerName || row.sellerEmployeeCode || '—',
+      },
+      {
+        title: t('reports.columns.items'),
+        dataIndex: 'itemCount',
+        width: 80,
+        align: 'right',
+        sorter: (a, b) => a.itemCount - b.itemCount,
+      },
+      {
+        title: t('reports.columns.revenue'),
+        width: 120,
+        align: 'right',
+        sorter: (a, b) => a.revenueAmount - b.revenueAmount,
+        render: (_, row) => formatReportMoney(row.revenueAmount, row.currency || 'USD'),
+      },
+      {
+        title: t('reports.columns.baseCost'),
+        width: 120,
+        align: 'right',
+        sorter: (a, b) => a.baseCostAmount - b.baseCostAmount,
+        render: (_, row) => formatReportMoney(row.baseCostAmount, row.currency || 'USD'),
+      },
+      {
+        title: t('reports.columns.operatingCost'),
+        width: 128,
+        align: 'right',
+        sorter: (a, b) => a.operatingCostAmount - b.operatingCostAmount,
+        render: (_, row) => formatReportMoney(row.operatingCostAmount, row.currency || 'USD'),
+      },
+      {
+        title: t('reports.columns.spend'),
+        width: 110,
+        align: 'right',
+        sorter: (a, b) => (a.adSpendAmount || 0) - (b.adSpendAmount || 0),
+        render: (_, row) => formatReportMoney(row.adSpendAmount || 0, row.currency || 'USD'),
+      },
+      {
+        title: t('reports.columns.netProfit'),
+        width: 120,
+        align: 'right',
+        sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
+        render: (_, row) => formatReportMoney(row.netProfitAmount, row.currency || 'USD'),
+      },
+      {
+        title: t('reports.columns.margin'),
+        width: 90,
+        align: 'right',
+        sorter: (a, b) => (a.netMarginBps ?? -Infinity) - (b.netMarginBps ?? -Infinity),
+        render: (_, row) => formatReportPercent(row.netMarginBps),
+      },
+    ],
+    [t],
+  )
+
   const filterBar = (
     <FilterBar label={t('reports.filters.label')} contentClassName={styles.filters}>
-      <DateRangePicker
-        value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
-        aria-label={t('reports.filters.date')}
-        placeholder={[t('reports.filters.from'), t('reports.filters.to')]}
-        onChange={handleDateRangeChange}
-      />
       {select(
         'shopId',
         t('reports.filters.shop'),
@@ -303,174 +221,257 @@ export function ReportWorkspacePage() {
           label: row.name || row.code || t('reports.filters.unnamed'),
         })),
       )}
-      <Button
-        icon={<DownloadOutlined />}
-        loading={exportCsv.isPending}
-        onClick={() => exportCsv.mutate()}
-      >
-        {t('reports.exportCsv')}
-      </Button>
+      <DateRangePicker
+        value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
+        aria-label={t('reports.filters.date')}
+        placeholder={[t('reports.filters.from'), t('reports.filters.to')]}
+        onChange={handleDateRangeChange}
+      />
     </FilterBar>
   )
 
-  const overviewTab = (
+  const profitabilityFormula = () => (
+    <SectionCard title={t('reports.profitability.explanation')}>
+      <Space orientation="vertical" size={4}>
+        <Typography.Text>{t('reports.profitability.grossFormula')}</Typography.Text>
+        <Typography.Text strong>{t('reports.profitability.netFormula')}</Typography.Text>
+        <Typography.Text type="secondary">
+          {t('reports.profitability.excludedCostNote')}
+        </Typography.Text>
+        <Typography.Text type="secondary">{t('reports.profitability.dataNote')}</Typography.Text>
+      </Space>
+    </SectionCard>
+  )
+
+  const sellerProfitabilitySummary = (
     <div className={styles.stack}>
-      {daily.isError ? <Alert type="error" showIcon message={t('reports.loadError')} /> : null}
-      {byCurrency.map(([currency, rows]) => (
-        <SectionCard key={currency} title={currency}>
-          <div className={styles.metrics}>
-            <MetricCard
-              label={t('reports.metrics.revenue')}
-              value={money(sum(rows, 'revenueAmount'), currency)}
-            />
-            <MetricCard
-              label={t('reports.metrics.grossProfit')}
-              value={money(sum(rows, 'grossProfitAmount'), currency)}
-            />
-            <MetricCard
-              label={t('reports.metrics.netProfit')}
-              value={money(sum(rows, 'netProfitAmount'), currency)}
-            />
-            <MetricCard
-              label={t('reports.metrics.missingCost')}
-              value={String(sum(rows, 'missingCostCount'))}
-            />
-          </div>
-          <div className={styles.trendLayout}>
-            <div className={styles.trendPanel}>
-              <div className={styles.trendHeader}>
-                <Typography.Text strong>{t('reports.trend')}</Typography.Text>
-                <Typography.Text type="secondary">
-                  {t(
-                    dayjs(filters.dateTo).diff(dayjs(filters.dateFrom), 'day') >= 60
-                      ? 'reports.cadence.weekly'
-                      : 'reports.cadence.daily',
-                  )}
-                </Typography.Text>
-              </div>
-              <ReportTrendChart
-                ariaLabel={t('reports.trend')}
-                data={buildRevenueTrend(rows, filters.dateFrom, filters.dateTo)}
-                formatValue={(value) => money(value, currency)}
-              />
-            </div>
-            <div className={styles.channelPanel}>
-              <Typography.Text strong>{t('reports.channels.title')}</Typography.Text>
-              <div className={styles.channelList}>
-                {topChannels(rows).map(([channel, value]) => (
-                  <div key={channel} className={styles.channelRow}>
-                    <Typography.Text>{channel}</Typography.Text>
-                    <Typography.Text strong>{money(value, currency)}</Typography.Text>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </SectionCard>
-      ))}
-      {operationalScope ? (
-        <div className={styles.twoColumns}>
-          <SectionCard title={t('reports.buyers.title')}>
-            <div className={styles.metricsCompact}>
+      {sellersByCurrency.map(([currency, rows]) => {
+        const revenue = rows.reduce((total, row) => total + row.revenueAmount, 0)
+        const grossProfit = rows.reduce((total, row) => total + row.grossProfitAmount, 0)
+        const netProfit = rows.reduce((total, row) => total + row.netProfitAmount, 0)
+        return (
+          <section key={currency} className={styles.currencySection} aria-label={currency}>
+            <Typography.Text strong className={styles.currencyLabel}>
+              {currency}
+            </Typography.Text>
+            <div className={styles.metrics}>
               <MetricCard
-                label={t('reports.buyers.total')}
-                value={String(buyers.data?.totalOrderCount || 0)}
+                icon={<FundOutlined />}
+                variant="primary"
+                label={t('reports.metrics.sellers')}
+                value={String(rows.length)}
               />
               <MetricCard
-                label={t('reports.buyers.new')}
-                value={String(buyers.data?.newBuyerCount || 0)}
+                icon={<DollarOutlined />}
+                variant="info"
+                label={t('reports.metrics.revenue')}
+                value={formatReportMoney(revenue, currency)}
               />
               <MetricCard
-                label={t('reports.buyers.returning')}
-                value={String(buyers.data?.returningBuyerCount || 0)}
+                icon={<RiseOutlined />}
+                variant="success"
+                label={t('reports.metrics.grossProfit')}
+                value={formatReportMoney(grossProfit, currency)}
+              />
+              <MetricCard
+                icon={<RiseOutlined />}
+                variant="success"
+                label={t('reports.metrics.netProfit')}
+                value={formatReportMoney(netProfit, currency)}
               />
             </div>
-          </SectionCard>
-          <SectionCard title={t('reports.operations.blockers')}>
-            {statusSummary(overview.data?.productionBlockers || {}, t('reports.empty'))}
-          </SectionCard>
-        </div>
-      ) : null}
+            <ReportProfitComparisonChart rows={rows} currency={currency} />
+            <SectionCard title={t('reports.profitability.table')}>
+              <CoreDataTable
+                className={styles.dailyTable}
+                tableLayout="fixed"
+                rowKey={(row) => `${row.sellerEmployeeCode}-${row.currency}`}
+                columns={sellerColumns}
+                dataSource={rows}
+                loading={sellers.isPending}
+                pagination={false}
+                scroll={{ x: 970 }}
+              />
+            </SectionCard>
+          </section>
+        )
+      })}
     </div>
   )
 
-  const salesTab = (
+  const sellerDailySections = useMemo(() => {
+    const metrics: Array<{ key: keyof SellerDailyProfit; label: string }> = [
+      { key: 'revenueAmount', label: t('reports.columns.revenue') },
+      { key: 'baseCostAmount', label: t('reports.columns.baseCost') },
+      { key: 'additionalFulfillmentCostAmount', label: t('reports.columns.fulfillmentCost') },
+      { key: 'marketplaceFeeAmount', label: t('reports.columns.marketplaceFee') },
+      { key: 'adSpendAmount', label: t('reports.columns.spend') },
+      { key: 'refundAmount', label: t('reports.columns.refund') },
+      { key: 'discountAmount', label: t('reports.columns.discount') },
+      { key: 'taxAmount', label: t('reports.columns.tax') },
+      { key: 'grossProfitAmount', label: t('reports.metrics.grossProfit') },
+      { key: 'operatingCostAmount', label: t('reports.columns.operatingCost') },
+      { key: 'netProfitAmount', label: t('reports.columns.netProfit') },
+    ]
+    const byCurrency = new Map<string, SellerDailyProfit[]>()
+    ;(sellerDaily.data || []).forEach((row) => {
+      const currency = row.currency || 'USD'
+      byCurrency.set(currency, [...(byCurrency.get(currency) || []), row])
+    })
+    return [...byCurrency.entries()].map(([currency, rows]) => {
+      const dates = datesInRange(filters.dateFrom, filters.dateTo)
+      if (!dates.length) dates.push(...new Set(rows.map((row) => row.date)).values())
+      const sellersByKey = new Map<string, SellerDailyProfit[]>()
+      rows.forEach((row) => {
+        const key = `${row.sellerEmployeeCode || 'UNASSIGNED'}-${row.sellerName || ''}`
+        sellersByKey.set(key, [...(sellersByKey.get(key) || []), row])
+      })
+      const matrixRows: DailyMatrixRow[] = [...sellersByKey.entries()].flatMap(
+        ([sellerKey, sellerRows], sellerGroup) =>
+          metrics.map(({ key, label }, metricIndex) => {
+            const sellerName = sellerRows[0]?.sellerName || sellerRows[0]?.sellerEmployeeCode || '—'
+            const values = Object.fromEntries(
+              dates.map((date) => {
+                const row = sellerRows.find((item) => item.date === date)
+                const value = row?.[key]
+                return [date, value === null || value === undefined ? null : Number(value)]
+              }),
+            )
+            const knownValues = Object.values(values).filter(
+              (value): value is number => value !== null,
+            )
+            return {
+              key: `${sellerKey}-${key}`,
+              seller: metricIndex === 0 ? sellerName : '',
+              metric: label,
+              metricKey: key,
+              sellerGroup,
+              isFirstSellerRow: metricIndex === 0,
+              total: knownValues.length
+                ? knownValues.reduce((total, value) => total + value, 0)
+                : null,
+              values,
+            }
+          }),
+      )
+      return { currency, dates, matrixRows }
+    })
+  }, [filters.dateFrom, filters.dateTo, sellerDaily.data, t])
+
+  const sellerDailyTab = (
     <div className={styles.stack}>
-      <div className={styles.twoColumns}>
-        <SectionCard title={t('reports.sales.bySeller')}>
-          <CoreDataTable
-            rowKey={(row) => `${row.sellerEmployeeCode}-${row.currency}`}
-            columns={sellerColumns}
-            dataSource={sellers.data || []}
-            loading={sellers.isPending}
-            pagination={false}
-          />
-        </SectionCard>
-        <SectionCard title={t('reports.sales.byTeam')}>
-          <CoreDataTable
-            rowKey={(row) => `${row.teamId}-${row.currency}`}
-            columns={teamColumns}
-            dataSource={teams.data || []}
-            loading={teams.isPending}
-            pagination={false}
-          />
-        </SectionCard>
-      </div>
-      {operationalScope ? (
-        <SectionCard title={t('reports.sales.acquisition')}>
-          <CoreDataTable
-            rowKey={(row) => `${row.salesChannelCode}-${row.marketplaceCode}-${row.currency}`}
-            dataSource={channels.data || []}
-            pagination={false}
-            columns={[
-              {
-                title: t('reports.columns.channel'),
-                render: (_, row) =>
-                  `${row.salesChannelCode || '—'} · ${row.marketplaceCode || '—'}`,
-              },
-              {
-                title: t('reports.columns.spend'),
-                render: (_, row) => money(row.spendAmount, row.currency || 'USD'),
-              },
-              {
-                title: t('reports.columns.sales'),
-                render: (_, row) => money(row.attributedSalesAmount, row.currency || 'USD'),
-              },
-              { title: t('reports.columns.newBuyers'), dataIndex: 'newBuyerCount' },
-            ]}
-          />
-        </SectionCard>
-      ) : (
-        <Alert type="info" showIcon message={t('reports.scopeLimited')} />
-      )}
+      {profitabilityFormula()}
+      {sellerDailySections.map(({ currency, dates, matrixRows }) => {
+        const renderAmount = (amount: number | null, row: DailyMatrixRow) => {
+          if (amount === null) return '—'
+          const className =
+            row.metricKey === 'revenueAmount'
+              ? styles.dailyMoneyRevenue
+              : row.metricKey === 'netProfitAmount'
+                ? amount < 0
+                  ? styles.dailyMoneyLoss
+                  : styles.dailyMoneyProfit
+                : styles.dailyMoneyCost
+          return <span className={className}>{formatReportMoney(amount, currency)}</span>
+        }
+        const columns: TableColumnsType<DailyMatrixRow> = [
+          {
+            title: t('reports.columns.seller'),
+            dataIndex: 'seller',
+            width: 150,
+            fixed: 'left',
+            render: (_, row) =>
+              row.seller ? <Typography.Text strong>{row.seller}</Typography.Text> : null,
+            onCell: () => ({ className: styles.dailySellerCell }),
+          },
+          {
+            title: t('reports.columns.metric'),
+            dataIndex: 'metric',
+            width: 176,
+            fixed: 'left',
+            render: (_, row) => <span className={styles.dailyMetric}>{row.metric}</span>,
+            onCell: () => ({ className: styles.dailyMetricCell }),
+          },
+          {
+            title: t('reports.columns.total'),
+            width: 116,
+            fixed: 'left',
+            align: 'right',
+            render: (_, row) => renderAmount(row.total, row),
+            onCell: () => ({ className: styles.dailyTotalCell }),
+          },
+          ...dates.map((date) => {
+            const d = dayjs(date)
+            return {
+              title: (
+                <div style={{ textAlign: 'center', lineHeight: 1.2 }}>
+                  <div>{d.format('DD/MM')}</div>
+                  <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                    {d.format('ddd')}
+                  </Typography.Text>
+                </div>
+              ),
+              width: 112,
+              align: 'right' as const,
+              render: (_: unknown, row: DailyMatrixRow) => renderAmount(row.values[date], row),
+            }
+          }),
+        ]
+        return (
+          <section key={currency} className={styles.currencySection} aria-label={currency}>
+            <Typography.Text strong className={styles.currencyLabel}>
+              {currency}
+            </Typography.Text>
+            <SectionCard title={t('reports.profitability.dailyTable')}>
+              <CoreDataTable
+                className={styles.dailyTable}
+                tableLayout="fixed"
+                rowKey="key"
+                columns={columns}
+                dataSource={matrixRows}
+                loading={sellerDaily.isPending}
+                pagination={false}
+                scroll={{ x: 520 + dates.length * 112, y: 560 }}
+                rowClassName={(row) =>
+                  [
+                    row.metricKey === 'grossProfitAmount'
+                      ? styles.dailyRowGrossProfit
+                      : row.metricKey === 'netProfitAmount'
+                        ? styles.dailyRowNetProfit
+                        : row.sellerGroup % 2
+                          ? styles.dailySellerStripe
+                          : '',
+                    row.isFirstSellerRow ? styles.dailySellerGroupStart : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
+                }
+              />
+            </SectionCard>
+          </section>
+        )
+      })}
     </div>
   )
 
-  const operationsTab = operationalScope ? (
+  const sellerProfitabilityTab = (
     <div className={styles.stack}>
-      <div className={styles.operationsGrid}>
-        <SectionCard title={t('reports.operations.orders')}>
-          {statusSummary(overview.data?.orderItemsByStatus || {}, t('reports.empty'))}
-        </SectionCard>
-        <SectionCard title={t('reports.operations.production')}>
-          {statusSummary(overview.data?.productionByStatus || {}, t('reports.empty'))}
-        </SectionCard>
-        <SectionCard title={t('reports.operations.shipments')}>
-          {statusSummary(overview.data?.shipmentsByStatus || {}, t('reports.empty'))}
-        </SectionCard>
-      </div>
-      <SectionCard title={t('reports.operations.vendors')}>
-        <CoreDataTable
-          rowKey={(row) => row.vendorId || row.vendorCode || 'vendor'}
-          columns={vendorColumns}
-          dataSource={vendors.data?.items || []}
-          loading={vendors.isPending}
-          pagination={false}
-        />
-      </SectionCard>
+      <Space className={styles.profitabilityMode}>
+        <Button
+          type={profitabilityView === 'summary' ? 'primary' : 'default'}
+          onClick={() => setProfitabilityView('summary')}
+        >
+          {t('reports.profitability.summary')}
+        </Button>
+        <Button
+          type={profitabilityView === 'daily' ? 'primary' : 'default'}
+          onClick={() => setProfitabilityView('daily')}
+        >
+          {t('reports.profitability.daily')}
+        </Button>
+      </Space>
+      {profitabilityView === 'summary' ? sellerProfitabilitySummary : sellerDailyTab}
     </div>
-  ) : (
-    <Alert type="info" showIcon message={t('reports.scopeLimited')} />
   )
 
   return (
@@ -479,21 +480,42 @@ export function ReportWorkspacePage() {
       <UiTabs
         activeKey={activeTab}
         onChange={handleTabChange}
+        tabBarExtraContent={{
+          right: (
+            <span data-testid="reports-tab-actions">
+              <Button
+                icon={<DownloadOutlined />}
+                loading={exportCsv.isPending}
+                onClick={() => exportCsv.mutate()}
+              >
+                {t('reports.exportCsv')}
+              </Button>
+            </span>
+          ),
+        }}
         items={[
           {
             key: 'overview',
-            label: <UiTabLabel>{t('reports.tabs.overview')}</UiTabLabel>,
-            children: overviewTab,
+            label: <UiTabLabel>{t('reports.tabs.profitability')}</UiTabLabel>,
+            children: sellerProfitabilityTab,
           },
           {
             key: 'sales',
-            label: <UiTabLabel>{t('reports.tabs.sales')}</UiTabLabel>,
-            children: salesTab,
+            label: <UiTabLabel>{t('reports.tabs.ads')}</UiTabLabel>,
+            children: (
+              <ReportAdsTab
+                operationalScope={operationalScope}
+                adsDailyData={adsDaily.data}
+                isAdsDailyPending={adsDaily.isPending}
+                channelsData={channels.data}
+                isChannelsPending={channels.isPending}
+              />
+            ),
           },
           {
             key: 'operations',
-            label: <UiTabLabel>{t('reports.tabs.operations')}</UiTabLabel>,
-            children: operationsTab,
+            label: <UiTabLabel>{t('reports.tabs.teams')}</UiTabLabel>,
+            children: <ReportTeamTab teamsData={teams.data} isTeamsPending={teams.isPending} />,
           },
         ]}
       />

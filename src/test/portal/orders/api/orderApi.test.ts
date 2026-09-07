@@ -16,7 +16,8 @@ import {
   listOrderTimeline,
   listOrderWorkbench,
   markOrderItemFulfillmentReady,
-  recheckOrderItem,
+  recheckMapping,
+  recheckProduction,
   resolveOrderCase,
   updateOrderBuyer,
   updateOrderCase,
@@ -108,7 +109,8 @@ describe('orderApi', () => {
     await listOrderItemTimeline('item-1')
     await validateShippingAddress('order-1')
     await updateOrderItemCsNote('item-1', 'Check artwork')
-    await recheckOrderItem('item-1')
+    await recheckMapping('item-1')
+    await recheckProduction('item-1')
     await cancelOrderItem('item-1', 'Customer requested cancellation')
     await createOrderItemReplacement('item-1', { reason: 'Damaged', quantity: 2 })
     await createOrderReplacement('order-1', {
@@ -134,7 +136,8 @@ describe('orderApi', () => {
     expect(apiClient.patch).toHaveBeenCalledWith('/api/orders/items/item-1/cs-note', {
       csNote: 'Check artwork',
     })
-    expect(apiClient.post).toHaveBeenCalledWith('/api/orders/items/item-1/recheck')
+    expect(apiClient.post).toHaveBeenCalledWith('/api/mapping/order-items/item-1/recheck')
+    expect(apiClient.post).toHaveBeenCalledWith('/api/production/order-items/item-1/recheck')
     expect(apiClient.post).toHaveBeenCalledWith('/api/orders/items/item-1/cancel', {
       reason: 'Customer requested cancellation',
     })

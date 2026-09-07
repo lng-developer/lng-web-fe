@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BellOutlined,
@@ -44,16 +44,17 @@ import { loadDepartments } from '@/features/organization/api/organizationApi'
 import { getPermissions } from '@/shared/auth/session'
 import { MetricCard, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
-import { loadEmployeeProfiles } from '../api/hrApi'
+import { hrKeys } from '../api/hrKeys'
 import {
   type Announcement,
   createAnnouncement,
   deleteAnnouncement,
-  getHrDashboard,
-  listAnnouncements,
   updateAnnouncement,
 } from '../api/hrTimeApi'
+import { useEmployeeProfilesQuery, useHrAnnouncementsQuery, useHrDashboardQuery } from '../hooks'
 import styles from './HrOperationsPage.module.scss'
+
+type SignalRow = { label: string; value: number | string; tone: string }
 
 type AnnouncementFormValues = Record<string, unknown> & {
   scheduledAt?: Dayjs | null
@@ -78,7 +79,7 @@ const percent = (value?: number) => `${value ?? 0}%`
 
 export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'announcements' }) {
   const { t } = useTranslation()
-  const permissions = new Set(getPermissions())
+  const permissions = useMemo(() => new Set(getPermissions()), [])
   const canEmployeeRead =
     permissions.has('HR_EMPLOYEES:READ') || permissions.has('HR_EMPLOYEES:WRITE')
   const canAnnouncementRead =
@@ -93,26 +94,27 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
   const announcementStatus = Form.useWatch('status', form)
   const toast = useFeedbackToast()
   const queryClient = useQueryClient()
-  const dashboard = useQuery({
-    queryKey: ['hr-overview', 'dashboard', rangeDays],
-    queryFn: () => getHrDashboard(dayjs().format('YYYY-MM-DD'), rangeDays),
+
+  const todayDateKey = useMemo(() => dayjs().format('YYYY-MM-DD'), [])
+
+  const dashboard = useHrDashboardQuery(todayDateKey, rangeDays, {
     enabled: view === 'dashboard' && canEmployeeRead,
   })
-  const announcements = useQuery({
-    queryKey: ['hr-overview', 'announcements'],
-    queryFn: () => listAnnouncements({ limit: 100 }),
+
+  const announcements = useHrAnnouncementsQuery({
     enabled: canAnnouncementRead,
   })
+
   const departments = useQuery({
     queryKey: ['organization', 'departments'],
     queryFn: loadDepartments,
     enabled: open && !sendToAll,
   })
-  const profiles = useQuery({
-    queryKey: ['hr', 'employee-profiles', false],
-    queryFn: () => loadEmployeeProfiles(false),
+
+  const profiles = useEmployeeProfilesQuery(false, {
     enabled: open && !sendToAll,
   })
+
   const save = useMutation({
     mutationFn: (values: Record<string, unknown>) =>
       selected ? updateAnnouncement(selected.id, values) : createAnnouncement(values),
@@ -121,94 +123,132 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
       setSelected(undefined)
       form.resetFields()
       toast('success', t('hrOperations.messages.announcementPublished'))
-      void queryClient.invalidateQueries({ queryKey: ['hr-overview', 'announcements'] })
+      void queryClient.invalidateQueries({ queryKey: hrKeys.overviewAnnouncements() })
     },
-    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+    onError: (error) =>
+      toast(
+        'error',
+        t('hrOperations.messages.saveFailed'),
+        error instanceof Error ? error.message : String(error),
+      ),
   })
+
   const remove = useMutation({
     mutationFn: deleteAnnouncement,
     onSuccess: () => {
       toast('success', t('hrOperations.messages.announcementDeleted'))
-      void queryClient.invalidateQueries({ queryKey: ['hr-overview', 'announcements'] })
+      void queryClient.invalidateQueries({ queryKey: hrKeys.overviewAnnouncements() })
     },
-    onError: (error) => toast('error', t('hrOperations.messages.saveFailed'), error.message),
+    onError: (error) =>
+      toast(
+        'error',
+        t('hrOperations.messages.saveFailed'),
+        error instanceof Error ? error.message : String(error),
+      ),
   })
+
   const data = dashboard.data
-  const attendanceExceptionRows = data
-    ? [
-        { label: t('hrOperations.attendance.late'), value: data.attendance.late, tone: 'warning' },
-        { label: t('hrOperations.overview.absent'), value: data.attendance.absent, tone: 'danger' },
-        {
-          label: t('hrOperations.attendance.missingCheckout'),
-          value: data.attendance.missingCheckOuts,
-          tone: 'danger',
-        },
-      ]
-    : []
-  const actionRows = data
-    ? [
-        {
-          label: t('hrOperations.requests.pendingLeave'),
-          value: data.approvals.pendingLeaves,
-          tone: 'info',
-        },
-        {
-          label: t('hrOperations.requests.pendingOvertime'),
-          value: data.approvals.pendingOvertimes,
-          tone: 'warning',
-        },
-        {
-          label: t('hrOperations.overview.payrollAdjustments'),
-          value: data.payroll?.pendingAdjustments ?? 0,
-          tone: 'primary',
-        },
-      ]
-    : []
-  const openEditor = (item?: Announcement) => {
-    setSelected(item)
-    form.resetFields()
-    form.setFieldsValue(
-      item
-        ? {
-            ...item,
-            scheduledAt: item.scheduledAt ? dayjs(item.scheduledAt) : null,
-            remindAt: item.remindAt ? dayjs(item.remindAt) : null,
-            eventDetails: item.eventDetails
-              ? {
-                  ...item.eventDetails,
-                  startDate: item.eventDetails.startDate
-                    ? dayjs(item.eventDetails.startDate)
-                    : null,
-                  endDate: item.eventDetails.endDate ? dayjs(item.eventDetails.endDate) : null,
-                }
-              : null,
-            attachmentIds: item.attachments?.map(({ mediaId }) => mediaId),
-          }
-        : {
-            category: 'NEWS',
-            priority: 'NORMAL',
-            status: 'PUBLISHED',
-            sendToAll: true,
-            isPinned: false,
-          },
-    )
-    setOpen(true)
-  }
-  const submitAnnouncement = (values: AnnouncementFormValues) =>
-    save.mutate({
-      ...values,
-      scheduledAt: values.scheduledAt?.toISOString?.() || null,
-      remindAt: values.remindAt?.toISOString?.() || null,
-      eventDetails: values.eventDetails
-        ? {
-            ...values.eventDetails,
-            startDate: values.eventDetails.startDate?.toISOString?.() || null,
-            endDate: values.eventDetails.endDate?.toISOString?.() || null,
-          }
-        : null,
-      attachments: (values.attachmentIds || []).map((mediaId: string) => ({ mediaId })),
-      attachmentIds: undefined,
-    })
+
+  const attendanceExceptionRows: SignalRow[] = useMemo(
+    () =>
+      data
+        ? [
+            {
+              label: t('hrOperations.attendance.late'),
+              value: data.attendance.late,
+              tone: 'warning',
+            },
+            {
+              label: t('hrOperations.overview.absent'),
+              value: data.attendance.absent,
+              tone: 'danger',
+            },
+            {
+              label: t('hrOperations.attendance.missingCheckout'),
+              value: data.attendance.missingCheckOuts,
+              tone: 'danger',
+            },
+          ]
+        : [],
+    [data, t],
+  )
+
+  const actionRows: SignalRow[] = useMemo(
+    () =>
+      data
+        ? [
+            {
+              label: t('hrOperations.requests.pendingLeave'),
+              value: data.approvals.pendingLeaves,
+              tone: 'info',
+            },
+            {
+              label: t('hrOperations.requests.pendingOvertime'),
+              value: data.approvals.pendingOvertimes,
+              tone: 'warning',
+            },
+            {
+              label: t('hrOperations.overview.payrollAdjustments'),
+              value: data.payroll?.pendingAdjustments ?? 0,
+              tone: 'primary',
+            },
+          ]
+        : [],
+    [data, t],
+  )
+
+  const openEditor = useCallback(
+    (item?: Announcement) => {
+      setSelected(item)
+      form.resetFields()
+      form.setFieldsValue(
+        item
+          ? {
+              ...item,
+              scheduledAt: item.scheduledAt ? dayjs(item.scheduledAt) : null,
+              remindAt: item.remindAt ? dayjs(item.remindAt) : null,
+              eventDetails: item.eventDetails
+                ? {
+                    ...item.eventDetails,
+                    startDate: item.eventDetails.startDate
+                      ? dayjs(item.eventDetails.startDate)
+                      : null,
+                    endDate: item.eventDetails.endDate ? dayjs(item.eventDetails.endDate) : null,
+                  }
+                : null,
+              attachmentIds: item.attachments?.map(({ mediaId }) => mediaId),
+            }
+          : {
+              category: 'NEWS',
+              priority: 'NORMAL',
+              status: 'PUBLISHED',
+              sendToAll: true,
+              isPinned: false,
+            },
+      )
+      setOpen(true)
+    },
+    [form],
+  )
+
+  const submitAnnouncement = useCallback(
+    (values: AnnouncementFormValues) =>
+      save.mutate({
+        ...values,
+        scheduledAt: values.scheduledAt?.toISOString?.() || null,
+        remindAt: values.remindAt?.toISOString?.() || null,
+        eventDetails: values.eventDetails
+          ? {
+              ...values.eventDetails,
+              startDate: values.eventDetails.startDate?.toISOString?.() || null,
+              endDate: values.eventDetails.endDate?.toISOString?.() || null,
+            }
+          : null,
+        attachments: (values.attachmentIds || []).map((mediaId: string) => ({ mediaId })),
+        attachmentIds: undefined,
+      }),
+    [save],
+  )
 
   return (
     <section className={styles.page}>

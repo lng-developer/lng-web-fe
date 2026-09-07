@@ -245,8 +245,12 @@ export async function updateOrderItemCsNote(orderItemId: string, csNote: string)
   return unwrap(await apiClient.patch(`/api/orders/items/${orderItemId}/cs-note`, { csNote }))
 }
 
-export async function recheckOrderItem(orderItemId: string) {
-  return unwrap(await apiClient.post(`/api/orders/items/${orderItemId}/recheck`))
+export async function recheckMapping(orderItemId: string) {
+  return unwrap(await apiClient.post(`/api/mapping/order-items/${orderItemId}/recheck`))
+}
+
+export async function recheckProduction(orderItemId: string) {
+  return unwrap(await apiClient.post(`/api/production/order-items/${orderItemId}/recheck`))
 }
 
 export async function retryCustomizationAssets(orderItemId: string) {

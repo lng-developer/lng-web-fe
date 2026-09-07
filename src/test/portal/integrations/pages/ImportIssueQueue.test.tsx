@@ -109,6 +109,18 @@ describe('ImportIssueQueue', () => {
     )
   })
 
+  it('does not render an empty item reference placeholder', async () => {
+    vi.mocked(listIssues).mockResolvedValue({
+      items: [{ ...issue, externalItemId: null }],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderQueue()
+
+    expect(await screen.findByText('Postal code is missing')).toBeVisible()
+    expect(screen.queryByText('-', { selector: '.ant-typography' })).not.toBeInTheDocument()
+  })
+
   it('sends all queue filters to the server and hides write actions for readers', async () => {
     renderQueue()
     await waitFor(() => expect(listIssues).toHaveBeenCalledWith({ page: 1, limit: 20 }))

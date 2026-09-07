@@ -3,24 +3,139 @@
   gap: 20px;
 }
 
-.accountSummary {
+/* ── Profile hero ───────────────────────────── */
+.profileHero {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ant-color-primary-bg) 60%, var(--ant-color-bg-container)) 0%,
+    var(--ant-color-bg-container) 100%
+  );
+  border: 1px solid var(--ant-color-primary-border);
 }
 
-.accountSummary :global(.ant-typography) {
+.profileHero :global(.ant-typography) {
   margin: 0;
 }
 
+.profileInfo {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.profileEmail {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Form section actions ───────────────────── */
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* ── Operating cost fields ──────────────────── */
+.costFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── Workspace actions ──────────────────────── */
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
+}
+
+.workspaceLinks {
+  display: grid;
+  gap: 10px;
+}
+
+.workspaceLink {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary-border);
+    background: var(--ant-color-primary-bg);
+    box-shadow: 0 2px 12px rgb(15 23 42 / 6%);
+  }
+}
+
+.workspaceLinkIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.workspaceLinkIconPrimary {
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+  color: #fff;
+}
+
+.workspaceLinkIconNeutral {
+  background: linear-gradient(135deg, #94a3b8 0%, #475569 100%);
+  color: #fff;
+}
+
+.workspaceLinkText {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+
+.workspaceLinkArrow {
+  color: var(--ant-color-text-quaternary);
+  font-size: 12px;
 }
 
 @media (max-width: 767px) {
   .page {
     gap: 16px;
+  }
+
+  .costFields {
+    grid-template-columns: 1fr;
+  }
+
+  .profileHero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 }

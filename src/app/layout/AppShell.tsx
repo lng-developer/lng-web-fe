@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
 import { MenuOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
@@ -87,12 +87,21 @@ export function AppShell() {
   useEffect(() => {
     document.title = `${pageTitle} | ${t('app.name')}`
   }, [pageTitle, t])
-  const changeCore = (core: AppCoreKey) => {
-    setNavigationSearch('')
-    const target = getRememberedCoreRoute(core, getContextNavigation(core, account))
-    if (target) navigate(target)
-  }
-  const refreshWorkspace = () => void queryClient.invalidateQueries()
+
+  const changeCore = useCallback(
+    (core: AppCoreKey) => {
+      setNavigationSearch('')
+      const target = getRememberedCoreRoute(core, getContextNavigation(core, account))
+      if (target) navigate(target)
+    },
+    [account, navigate],
+  )
+
+  const refreshWorkspace = useCallback(() => void queryClient.invalidateQueries(), [queryClient])
+
+  const handleOpenMobileNavigation = useCallback(() => setMobileNavigationOpen(true), [])
+  const handleCloseMobileNavigation = useCallback(() => setMobileNavigationOpen(false), [])
+
   return (
     <Layout className={styles.shell}>
       <a className={styles.skipLink} href="#main-content">
@@ -122,7 +131,7 @@ export function AppShell() {
           open={mobileNavigationOpen}
           placement="left"
           title={t('shell.navigation.cores')}
-          onClose={() => setMobileNavigationOpen(false)}
+          onClose={handleCloseMobileNavigation}
         >
           <Select
             aria-label={t('shell.navigation.cores')}
@@ -138,7 +147,7 @@ export function AppShell() {
             collapsed={false}
             embedded
             navigationSearch={navigationSearch}
-            onNavigate={() => setMobileNavigationOpen(false)}
+            onNavigate={handleCloseMobileNavigation}
           />
         </Drawer>
       )}
@@ -152,7 +161,7 @@ export function AppShell() {
                 className={styles.mobileMenuButton}
                 icon={<MenuOutlined />}
                 type="text"
-                onClick={() => setMobileNavigationOpen(true)}
+                onClick={handleOpenMobileNavigation}
               />
             )}
             <div className={styles.headerContext}>

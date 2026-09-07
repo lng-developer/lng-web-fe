@@ -6,6 +6,7 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   listProductionTasks,
+  summarizeProductionQueueCounts,
   summarizeProductionTasks,
 } from '@/features/portal/production/api/productionApi'
 import { ProductionWorkbenchPage } from '@/features/portal/production/pages/ProductionWorkbenchPage'
@@ -20,6 +21,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 vi.mock('@/features/portal/production/api/productionApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/production/api/productionApi')>()),
   listProductionTasks: vi.fn(),
+  summarizeProductionQueueCounts: vi.fn(),
   summarizeProductionTasks: vi.fn(),
 }))
 
@@ -94,6 +96,11 @@ describe('ProductionWorkbenchPage', () => {
       scaleQueue: 0,
       qcQueue: 0,
     })
+    vi.mocked(summarizeProductionQueueCounts).mockResolvedValue({
+      blocked: 0,
+      scaleQueue: 0,
+      qcQueue: 0,
+    })
   })
 
   it('stretches every table layer across the available width', async () => {
@@ -104,6 +111,14 @@ describe('ProductionWorkbenchPage', () => {
     const tables = document.querySelectorAll<HTMLTableElement>('.ant-table-container table')
     expect(tables.length).toBeGreaterThan(0)
     tables.forEach((table) => expect(table).toHaveStyle({ width: '100%' }))
+  })
+
+  it('uses one queue-summary request instead of three count-only task lists', async () => {
+    renderPage()
+
+    await waitFor(() => expect(summarizeProductionQueueCounts).toHaveBeenCalledTimes(1))
+    expect(listProductionTasks).toHaveBeenCalledTimes(1)
+    expect(summarizeProductionQueueCounts).toHaveBeenCalledWith({})
   })
 
   it('keeps normal task rows in the document flow', async () => {

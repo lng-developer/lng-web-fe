@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DatePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -20,6 +21,11 @@ export interface DateRangePickerProps {
 type DayjsRange = [Dayjs | null, Dayjs | null] | null
 
 // eslint-disable-next-line react-refresh/only-export-components -- exported for deterministic date-boundary tests
+export function getDateRangePreset(days: 1 | 7 | 30, today = dayjs()): [Dayjs, Dayjs] {
+  return [today.subtract(days - 1, 'day').startOf('day'), today.endOf('day')]
+}
+
+// eslint-disable-next-line react-refresh/only-export-components -- exported for deterministic date-boundary tests
 export function serializeDateRange(value: DayjsRange): DateRangeValue {
   if (!value?.[0] || !value[1]) return {}
   return {
@@ -28,26 +34,54 @@ export function serializeDateRange(value: DayjsRange): DateRangeValue {
   }
 }
 
-export function DateRangePicker({ value, onChange, style, ...props }: DateRangePickerProps) {
+export const DateRangePicker = memo(function DateRangePicker({
+  value,
+  onChange,
+  style,
+  ...props
+}: DateRangePickerProps) {
   const { t } = useTranslation()
-  const pickerValue: DayjsRange =
-    value?.dateFrom || value?.dateTo
-      ? [value.dateFrom ? dayjs(value.dateFrom) : null, value.dateTo ? dayjs(value.dateTo) : null]
-      : null
-  const placeholder = props.placeholder ?? [
-    t('foundation.controls.startDate'),
-    t('foundation.controls.endDate'),
-  ]
+
+  const pickerValue: DayjsRange = useMemo(
+    () =>
+      value?.dateFrom || value?.dateTo
+        ? [value.dateFrom ? dayjs(value.dateFrom) : null, value.dateTo ? dayjs(value.dateTo) : null]
+        : null,
+    [value?.dateFrom, value?.dateTo],
+  )
+
+  const placeholder: [string, string] = useMemo(
+    (): [string, string] =>
+      props.placeholder ?? [t('foundation.controls.startDate'), t('foundation.controls.endDate')],
+    [props.placeholder, t],
+  )
+
+  const presets = useMemo(
+    () => [
+      { label: t('foundation.controls.today'), value: getDateRangePreset(1) },
+      { label: t('foundation.controls.last7Days'), value: getDateRangePreset(7) },
+      { label: t('foundation.controls.last30Days'), value: getDateRangePreset(30) },
+    ],
+    [t],
+  )
+
+  const pickerStyle = useMemo(() => ({ width: '100%', maxWidth: 280, ...style }), [style])
+
+  const handleChange = useCallback(
+    (nextValue: DayjsRange) => onChange?.(serializeDateRange(nextValue)),
+    [onChange],
+  )
 
   return (
     <DatePicker.RangePicker
       {...props}
       allowClear
       format="DD/MM/YYYY"
+      presets={presets}
       placeholder={placeholder}
-      style={{ width: '100%', maxWidth: 280, ...style }}
+      style={pickerStyle}
       value={pickerValue}
-      onChange={(nextValue) => onChange?.(serializeDateRange(nextValue))}
+      onChange={handleChange}
     />
   )
-}
+})

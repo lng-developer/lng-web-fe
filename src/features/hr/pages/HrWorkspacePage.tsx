@@ -9,7 +9,7 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Select, Skeleton, Switch } from 'antd'
 import dayjs from 'dayjs'
 
@@ -24,13 +24,13 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { type EmployeeProfile, loadEmployeeProfile } from '../api/hrApi'
+import { hrKeys } from '../api/hrKeys'
 import {
-  deleteEmployeeProfile,
-  type EmployeeProfile,
-  loadEmployeeProfile,
-  loadEmployeeProfiles,
-  restoreEmployeeProfile,
-} from '../api/hrApi'
+  useDeleteEmployeeProfileMutation,
+  useEmployeeProfilesQuery,
+  useRestoreEmployeeProfileMutation,
+} from '../hooks'
 import { type HrDepartmentGroup, HrStaffDirectory } from './HrStaffDirectory'
 import styles from './HrWorkspacePage.module.scss'
 
@@ -52,35 +52,40 @@ export function HrWorkspacePage() {
   const [includeDeleted, setIncludeDeleted] = useState(false)
   const [editor, setEditor] = useState<EmployeeProfile | 'create'>()
   const [deleteTarget, setDeleteTarget] = useState<EmployeeProfile>()
-  const permissions = getPermissions()
+
+  const permissions = useMemo(() => getPermissions(), [])
   const canWrite = permissions.includes('HR_EMPLOYEES:WRITE')
-  const canReadCompensation = permissions.some((permission) =>
-    ['HR_COMPENSATION:READ', 'HR_COMPENSATION:WRITE'].includes(permission),
+  const canReadCompensation = useMemo(
+    () =>
+      permissions.some((permission) =>
+        ['HR_COMPENSATION:READ', 'HR_COMPENSATION:WRITE'].includes(permission),
+      ),
+    [permissions],
   )
 
-  const profiles = useQuery({
-    queryKey: ['hr', 'employee-profiles', includeDeleted],
-    queryFn: () => loadEmployeeProfiles(includeDeleted),
-  })
-  const refreshProfiles = () =>
-    queryClient.invalidateQueries({ queryKey: ['hr', 'employee-profiles'] })
-  const deleteMutation = useMutation({
-    mutationFn: () => deleteEmployeeProfile(deleteTarget!.id),
+  const profiles = useEmployeeProfilesQuery(includeDeleted)
+
+  const refreshProfiles = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: hrKeys.profilesRoot })
+  }, [queryClient])
+
+  const deleteMutation = useDeleteEmployeeProfileMutation({
     onSuccess: () => {
       setDeleteTarget(undefined)
       showFeedbackToast('success', t('actionFeedback.deleted'))
-      void refreshProfiles()
+      refreshProfiles()
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
-  const restoreMutation = useMutation({
-    mutationFn: restoreEmployeeProfile,
+
+  const restoreMutation = useRestoreEmployeeProfileMutation({
     onSuccess: () => {
       showFeedbackToast('success', t('actionFeedback.restored'))
-      void refreshProfiles()
+      refreshProfiles()
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+
   useEffect(() => {
     if (!canWrite || searchParams.get('openCreate') !== '1' || editor === 'create') return
     const timer = window.setTimeout(() => {
@@ -100,6 +105,7 @@ export function HrWorkspacePage() {
       return (!term || identity.includes(term)) && (!status || profile.status === status)
     })
   }, [profiles.data, search, status])
+
   const departmentGroups = useMemo(() => {
     const groups = new Map<string, HrDepartmentGroup>()
     visibleProfiles.forEach((profile) => {
@@ -119,26 +125,42 @@ export function HrWorkspacePage() {
     })
     return [...groups.entries()]
   }, [t, visibleProfiles])
+
   const openEditor = useCallback((profile: EmployeeProfile) => setEditor(profile), [])
   const deleteProfile = useCallback((profile: EmployeeProfile) => setDeleteTarget(profile), [])
-  const restoreProfile = restoreMutation.mutate
+  const restoreProfile = useCallback(
+    (profileId: string) => restoreMutation.mutate(profileId),
+    [restoreMutation],
+  )
+
   const prefetchProfile = useCallback(
     (profile: EmployeeProfile) => {
       if (profile.isDeleted) return
       void loadStaffEditorModal()
       void queryClient.prefetchQuery({
-        queryKey: ['hr', 'employee-profiles', profile.id, canReadCompensation],
+        queryKey: hrKeys.profile(profile.id, canReadCompensation),
         queryFn: () => loadEmployeeProfile(profile.id, canReadCompensation),
       })
     },
     [canReadCompensation, queryClient],
   )
-  const activeCount = (profiles.data?.items ?? []).filter(
-    (profile) => profile.status === 'ACTIVE' && !profile.isDeleted,
-  ).length
-  const incompleteCount = (profiles.data?.items ?? []).filter(
-    (profile) => profile.onboardingStatus === 'PROFILE_INCOMPLETE' && !profile.isDeleted,
-  ).length
+
+  const activeCount = useMemo(
+    () =>
+      (profiles.data?.items ?? []).filter(
+        (profile) => profile.status === 'ACTIVE' && !profile.isDeleted,
+      ).length,
+    [profiles.data],
+  )
+
+  const incompleteCount = useMemo(
+    () =>
+      (profiles.data?.items ?? []).filter(
+        (profile) => profile.onboardingStatus === 'PROFILE_INCOMPLETE' && !profile.isDeleted,
+      ).length,
+    [profiles.data],
+  )
+
   const profileStats = useMemo(() => {
     const today = dayjs()
     const activeProfiles = (profiles.data?.items ?? []).filter((profile) => !profile.isDeleted)
@@ -159,6 +181,28 @@ export function HrWorkspacePage() {
     }
   }, [profiles.data])
 
+  const handleOpenCreate = useCallback(() => {
+    setEditor('create')
+  }, [])
+
+  const handleCloseEditor = useCallback(() => {
+    setEditor(undefined)
+  }, [])
+
+  const handleEditorSaved = useCallback(() => {
+    setEditor(undefined)
+    refreshProfiles()
+  }, [refreshProfiles])
+
+  const handleCloseDeleteModal = useCallback(() => {
+    setDeleteTarget(undefined)
+  }, [])
+
+  const handleConfirmDelete = useCallback(() => {
+    if (!deleteTarget) return
+    deleteMutation.mutate(deleteTarget.id)
+  }, [deleteMutation, deleteTarget])
+
   return (
     <section className={styles.page}>
       <PageHeader
@@ -169,7 +213,7 @@ export function HrWorkspacePage() {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => setEditor('create')}
+              onClick={handleOpenCreate}
               onFocus={() => void loadStaffEditorModal()}
               onMouseEnter={() => void loadStaffEditorModal()}
             >
@@ -273,11 +317,8 @@ export function HrWorkspacePage() {
           <StaffEditorModal
             editor={editor}
             readOnly={!canWrite}
-            onClose={() => setEditor(undefined)}
-            onSaved={() => {
-              setEditor(undefined)
-              void refreshProfiles()
-            }}
+            onClose={handleCloseEditor}
+            onSaved={handleEditorSaved}
           />
         </Suspense>
       )}
@@ -288,9 +329,11 @@ export function HrWorkspacePage() {
         confirmLabel={t('hr.delete')}
         cancelLabel={t('hr.cancel')}
         loading={deleteMutation.isPending}
-        onConfirm={() => deleteMutation.mutate()}
-        onCancel={() => setDeleteTarget(undefined)}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCloseDeleteModal}
       />
     </section>
   )
 }
+
+export default HrWorkspacePage

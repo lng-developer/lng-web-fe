@@ -1,7 +1,10 @@
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { App, Typography } from 'antd'
 
-export function CopyableText({
+import styles from './CopyableOrderId.module.scss'
+
+export const CopyableText = memo(function CopyableText({
   value,
   fallback = '-',
   className,
@@ -46,9 +49,9 @@ export function CopyableText({
       {value}
     </Typography.Text>
   )
-}
+})
 
-export function CopyableOrderId({
+export const CopyableOrderId = memo(function CopyableOrderId({
   value,
   fallback = '-',
   strong = false,
@@ -63,9 +66,10 @@ export function CopyableOrderId({
     <CopyableText
       value={value}
       fallback={fallback}
+      className={styles.orderIdBadge}
       strong={strong}
       title={t('common.copyOrderId')}
       copiedMessage={t('common.orderIdCopied')}
     />
   )
-}
+})

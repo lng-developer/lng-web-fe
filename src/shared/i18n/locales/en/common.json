@@ -117,10 +117,21 @@
       "scoped": "Your assigned scope"
     },
     "metrics": {
-      "revenue": "Customer paid",
+      "orders": "Orders",
+      "revenue": "Gross sales",
       "cost": "Total cost",
-      "profit": "Gross profit",
-      "missing": "Missing cost"
+      "knownCost": "Known cost",
+      "profit": "Net profit",
+      "missing": "Missing cost",
+      "incomplete": "Incomplete"
+    },
+    "breakdown": {
+      "title": "Cost & deductions",
+      "baseCost": "Product cost",
+      "fulfillmentCost": "Additional fulfillment cost",
+      "fees": "Marketplace fees",
+      "refund": "Refund",
+      "discount": "Discount"
     },
     "filters": {
       "label": "Filters",
@@ -142,9 +153,9 @@
       "order": "Order",
       "channel": "Channel",
       "seller": "Seller / team",
-      "revenue": "Customer paid",
+      "revenue": "Gross sales",
       "cost": "Total cost",
-      "profit": "Profit",
+      "profit": "Net profit",
       "margin": "Margin",
       "status": "Status"
     },
@@ -153,13 +164,22 @@
       "items": "Items",
       "item": "Item {{number}}",
       "fees": "Marketplace fees",
+      "revenueDeductions": "Revenue & deductions",
+      "costProfit": "Costs & profit",
+      "currentCalculation": "Current calculation",
+      "feeSources": {
+        "ESTIMATED_15_PERCENT": "Estimated 15%",
+        "ORDER_IMPORT": "Actual import",
+        "SETTLEMENT": "Actual settlement"
+      },
       "refund": "Refund",
       "discount": "Discount",
-      "baseCost": "Base cost",
+      "baseCost": "Product cost",
       "additionalCost": "Additional fulfillment cost",
       "deductions": "Total deductions",
       "history": "Calculation history",
       "itemSnapshot": "Item financial snapshot",
+      "pnlWaterfall": "P&L breakdown waterfall",
       "missingReason": "Missing cost reason",
       "costLines": "Cost lines"
     },
@@ -208,6 +228,7 @@
       "recalculateOrder": "Recalculate order",
       "recalculateItem": "Recalculate item",
       "inspectItem": "Inspect item",
+      "manageReconciliation": "Manage reconciliation",
       "exportCsv": "Export CSV"
     },
     "feedback": {
@@ -235,7 +256,10 @@
     "tabs": {
       "overview": "Executive overview",
       "sales": "Sales & finance",
-      "operations": "Operations"
+      "operations": "Operations",
+      "profitability": "Seller profitability",
+      "ads": "Ads & attribution",
+      "teams": "Team comparison"
     },
     "filters": {
       "label": "Report filters",
@@ -254,7 +278,8 @@
       "revenue": "Revenue",
       "grossProfit": "Gross profit",
       "netProfit": "Net profit",
-      "missingCost": "Missing cost"
+      "missingCost": "Missing cost",
+      "sellers": "Sellers"
     },
     "buyers": {
       "title": "Buyer signals",
@@ -265,7 +290,20 @@
     "sales": {
       "bySeller": "Seller performance",
       "byTeam": "Team performance",
+      "dailyAds": "Daily ad performance",
       "acquisition": "Channel acquisition"
+    },
+    "profitability": {
+      "comparison": "Profit comparison",
+      "table": "Seller P&L",
+      "summary": "Summary",
+      "daily": "Daily detail",
+      "dailyTable": "Daily seller P&L",
+      "explanation": "How profit is calculated",
+      "grossFormula": "Gross profit = Revenue − Product cost − Additional fulfillment − Marketplace fee − Refund − Discount",
+      "netFormula": "Net profit = Gross profit − Operating cost − Ads spend",
+      "excludedCostNote": "Tax is shown separately because it is excluded from Revenue and is not deducted a second time.",
+      "dataNote": "Rows with missing cost should be treated as incomplete until their fulfillment cost is available."
     },
     "operations": {
       "orders": "Order items",
@@ -281,11 +319,26 @@
       "vendor": "Vendor",
       "items": "Items",
       "revenue": "Revenue",
+      "baseCost": "Product cost",
+      "fulfillmentCost": "Additional fulfillment",
+      "marketplaceFee": "Marketplace fee",
+      "refund": "Refund",
+      "discount": "Discount",
+      "tax": "Tax",
+      "operatingCost": "Operating cost",
+      "metric": "Metric",
+      "total": "Total",
       "netProfit": "Net profit",
       "margin": "Margin",
       "channel": "Channel / marketplace",
+      "date": "Date",
       "spend": "Ad spend",
       "sales": "Attributed sales",
+      "impressions": "Impressions",
+      "clicks": "Clicks",
+      "orders": "Orders",
+      "cpa": "CPA",
+      "roas": "ROAS",
       "newBuyers": "New buyers",
       "submitted": "Submitted",
       "failed": "Failed",
@@ -523,6 +576,8 @@
       "internalTemplateId": "Internal template",
       "semanticRole": "Input meaning",
       "matchValue": "Value to match",
+      "matchValues": "Values to match",
+      "optionLabelAliases": "Option label aliases",
       "matchType": "Match type",
       "normalizedValue": "Normalized value",
       "vendorId": "Vendor",
@@ -535,8 +590,14 @@
       "status": "Status",
       "sampleSku": "Sample SKU",
       "sampleValue": "Sample value",
+      "sampleOptionValue": "Sample option value",
+      "sampleLabel": "Sample label",
       "updatedAt": "Updated",
       "actions": "Actions"
+    },
+    "help": {
+      "semanticSampleValue": "Enter the option value, not its label.",
+      "semanticSampleLabel": "Enter an option label to test this rule."
     },
     "states": {
       "ready": "Ready",
@@ -3182,6 +3243,7 @@
       "productionRangeInvalid": "Minimum production days cannot exceed maximum production days",
       "days": "days",
       "baseCostAmount": "Base cost (minor units)",
+      "unitSurchargeAmount": "Unit surcharge (minor units)",
       "currency": "Currency",
       "imageUrl": "Image URL",
       "productUrl": "Product URL",
@@ -3414,6 +3476,8 @@
       "replaceOrder": "Replace order",
       "replaceShort": "Replace",
       "recheckShort": "Recheck",
+      "recheckMappingShort": "Recheck mapping",
+      "recheckProductionShort": "Recheck production",
       "readyShort": "Ready",
       "cancelShort": "Cancel",
       "showMoreCustomization": "Show {{count}} more",
@@ -3469,6 +3533,9 @@
     },
     "messages": {
       "updated": "Order updated",
+      "mappingMatched": "Mapping successful — vendor selected",
+      "mappingStillBlocked": "Mapping rechecked, but no vendor match was found",
+      "productionBlockedOpenCase": "Production is blocked until the open order case is resolved",
       "actionFailed": "Order action failed",
       "caseLoadFailed": "Unable to load order cases",
       "historyLoadFailed": "Unable to load activity history",
@@ -3523,7 +3590,8 @@
     "columns": {
       "order": "Order ID",
       "status": "Status",
-      "created": "Created",
+      "orderedAt": "Ordered at",
+      "importedAt": "Imported at",
       "customer": "Customer",
       "shipping": "Shipping",
       "shop": "Shop",

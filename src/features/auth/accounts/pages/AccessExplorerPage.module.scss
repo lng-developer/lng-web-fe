@@ -14,9 +14,10 @@
 }
 
 .loading {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--ant-color-text-tertiary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
 }
 
 .sectionHeader {
@@ -73,7 +74,7 @@
 .accountList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   margin-top: 16px;
 }
 
@@ -81,33 +82,51 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius-lg);
   background: var(--ant-color-bg-container);
-  transition: all 0.2s ease-in-out;
-  gap: 24px;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+  gap: 20px;
 
   &:hover {
-    border-color: var(--ant-color-primary);
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.05);
+    border-color: var(--ant-color-primary-border);
+    box-shadow: 0 4px 16px rgb(15 23 42 / 7%);
     transform: translateY(-1px);
+  }
+}
+
+.accountCardSelected {
+  border-color: var(--ant-color-primary);
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 80%, var(--ant-color-bg-container));
+  box-shadow: 0 0 0 1px var(--ant-color-primary-border);
+
+  &:hover {
+    box-shadow:
+      0 4px 16px rgb(15 23 42 / 8%),
+      0 0 0 1px var(--ant-color-primary);
   }
 }
 
 .accountIdentity {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   flex: 1.5;
   min-width: 0;
 }
 
 .emailText {
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: block;
 }
 
 .accountRoles {
@@ -116,19 +135,21 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .sectionLabel {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--ant-color-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   white-space: nowrap;
 }
 
 .accountStatus {
   flex-shrink: 0;
-  width: 100px;
+  width: 90px;
   display: flex;
   justify-content: center;
 }
@@ -146,14 +167,21 @@
 .accountActions {
   flex-shrink: 0;
   display: flex;
-  gap: 8px;
+  gap: 2px;
+  background: var(--ant-color-fill-quaternary);
+  border-radius: 8px;
+  padding: 3px;
 
   button {
-    color: var(--ant-color-text-secondary);
+    color: var(--ant-color-text-tertiary);
+    border-radius: 6px !important;
+    transition:
+      color 150ms ease,
+      background 150ms ease !important;
 
     &:hover {
       color: var(--ant-color-primary) !important;
-      background: var(--ant-color-fill-quaternary) !important;
+      background: var(--ant-color-bg-container) !important;
     }
   }
 }
@@ -168,11 +196,52 @@
   gap: 12px;
 }
 
+/* ── Bulk action sticky bar ─────────────────────── */
+.bulkBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--ant-color-primary-border);
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 72%, var(--ant-color-bg-container));
+  box-shadow: 0 -4px 24px rgb(15 23 42 / 10%);
+  backdrop-filter: blur(6px);
+  animation: slideUp 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bulkBarLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ant-color-primary);
+  flex: 1;
+}
+
+.bulkBarActions {
+  display: flex;
+  gap: 8px;
+}
+
 @media (max-width: 991px) {
   .accountCard {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 14px;
   }
 
   .accountIdentity {
@@ -191,9 +260,7 @@
   .accountActions {
     width: 100%;
     justify-content: flex-end;
-    border-top: 1px solid var(--ant-color-border-secondary);
-    padding-top: 12px;
-    margin-top: 4px;
+    padding: 4px;
   }
 }
 
@@ -212,5 +279,15 @@
 
   .searchFilter {
     flex-basis: 100%;
+  }
+
+  .bulkBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .bulkBarActions {
+    width: 100%;
   }
 }

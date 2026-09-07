@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircleOutlined,
@@ -8,7 +8,6 @@ import {
   ReloadOutlined,
   SafetyOutlined,
 } from '@ant-design/icons'
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Result, Select, Space, Typography } from 'antd'
 
@@ -25,13 +24,12 @@ import {
   StatusTag,
 } from '@/shared/ui'
 
+import { type AuditEvent, type AuditFilters } from '../api/auditApi'
 import {
-  type AuditEvent,
-  type AuditFilters,
-  exportAuditEventsCsv,
-  getAuditEvent,
-  listAuditEvents,
-} from '../api/auditApi'
+  useAuditEventDetailQuery,
+  useAuditEventsInfiniteQuery,
+  useExportAuditCsvMutation,
+} from '../hooks'
 import styles from './AuditLogPage.module.scss'
 
 const outcomeOptions = ['SUCCEEDED', 'FAILED'] as const
@@ -52,37 +50,16 @@ export function AuditLogPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_TABLE_PAGINATION.defaultPageSize)
 
-  const query = useInfiniteQuery({
-    queryKey: ['audit-events', filters],
-    queryFn: ({ pageParam }) => listAuditEvents(filters, pageParam),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (page) => page.nextCursor ?? undefined,
-  })
-
-  const detail = useQuery({
-    queryKey: ['audit-event', selected?.id],
-    queryFn: () => getAuditEvent(selected!.id),
-    enabled: Boolean(selected?.id),
-    retry: false,
-  })
-  const exportCsv = useMutation({
-    mutationFn: () => exportAuditEventsCsv(filters),
-    onSuccess: (result) => {
-      const url = URL.createObjectURL(result)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'audit-events.csv'
-      link.click()
-      URL.revokeObjectURL(url)
-    },
-  })
+  const query = useAuditEventsInfiniteQuery(filters)
+  const detail = useAuditEventDetailQuery(selected?.id)
+  const exportCsv = useExportAuditCsvMutation(filters)
 
   const events = useMemo(() => query.data?.pages.flatMap((page) => page.items) ?? [], [query.data])
   const event = detail.data ?? selected
-  const updateFilters = (nextFilters: AuditFilters) => {
+  const updateFilters = useCallback((nextFilters: AuditFilters) => {
     setCurrentPage(1)
     setFilters(nextFilters)
-  }
+  }, [])
 
   const totalCount = events.length
   const succeededCount = useMemo(
@@ -90,91 +67,99 @@ export function AuditLogPage() {
     [events],
   )
   const failedCount = useMemo(() => events.filter((e) => e.outcome === 'FAILED').length, [events])
-  const localizedCode = (value: string) =>
-    value
-      .split(/[._:]+/)
-      .filter(Boolean)
-      .map((part) =>
-        t(`audit.codeTerms.${part.toUpperCase()}`, {
-          defaultValue: readableCode(part),
-        }),
-      )
-      .join(' · ')
 
-  if (!getPermissions().includes('AUDIT:READ')) return <Result status="403" title="403" />
+  const localizedCode = useCallback(
+    (value: string) =>
+      value
+        .split(/[._:]+/)
+        .filter(Boolean)
+        .map((part) =>
+          t(`audit.codeTerms.${part.toUpperCase()}`, {
+            defaultValue: readableCode(part),
+          }),
+        )
+        .join(' · '),
+    [t],
+  )
 
-  const columns: TableColumnsType<AuditEvent> = [
-    {
-      title: t('audit.columns.time'),
-      dataIndex: 'createdAt',
-      width: 170,
-      render: (value) => new Date(value).toLocaleString(i18n.language === 'vi' ? 'vi-VN' : 'en-US'),
-    },
-    {
-      title: t('audit.columns.actor'),
-      render: (_, event) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text strong>
-            {event.actorLabel ?? String(event.actorSnapshot.email ?? event.actorType)}
-          </Typography.Text>
-          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-            {[event.actorEmployeeCode, event.actorEmail, shortId(event.actorAccountId)]
-              .filter(Boolean)
-              .filter((value, index, values) => values.indexOf(value) === index)
-              .join(' | ')}
-          </Typography.Text>
-        </Space>
-      ),
-    },
-    { title: t('audit.columns.action'), dataIndex: 'action', render: localizedCode },
-    {
-      title: t('audit.columns.entity'),
-      render: (_, event) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text strong>
-            {event.entityLabel ??
-              (event.entityType === 'AUTH_SESSION' && event.actorLabel
-                ? `${event.actorLabel} - ${t('audit.entities.session')}`
-                : localizedCode(event.entityType))}
-          </Typography.Text>
-          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-            {localizedCode(event.entityType)} | {shortId(event.entityId)}
-          </Typography.Text>
-        </Space>
-      ),
-    },
-    {
-      title: t('audit.columns.scope'),
-      render: (_, event) =>
-        event.scopeType ? (
+  const columns = useMemo<TableColumnsType<AuditEvent>>(
+    () => [
+      {
+        title: t('audit.columns.time'),
+        dataIndex: 'createdAt',
+        width: 170,
+        render: (value) =>
+          new Date(value).toLocaleString(i18n.language === 'vi' ? 'vi-VN' : 'en-US'),
+      },
+      {
+        title: t('audit.columns.actor'),
+        render: (_, event) => (
           <Space direction="vertical" size={0}>
             <Typography.Text strong>
-              {event.scopeLabel ?? localizedCode(event.scopeType)}
+              {event.actorLabel ?? String(event.actorSnapshot.email ?? event.actorType)}
             </Typography.Text>
             <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-              {localizedCode(event.scopeType)} | {shortId(event.scopeId)}
+              {[event.actorEmployeeCode, event.actorEmail, shortId(event.actorAccountId)]
+                .filter(Boolean)
+                .filter((value, index, values) => values.indexOf(value) === index)
+                .join(' | ')}
             </Typography.Text>
           </Space>
-        ) : (
-          t('audit.globalScope')
         ),
-    },
-    {
-      title: t('audit.columns.source'),
-      dataIndex: 'source',
-      width: 110,
-      render: (value) => t(`audit.sources.${value}`, { defaultValue: value }),
-    },
-    {
-      title: t('audit.columns.outcome'),
-      width: 120,
-      render: (_, event) => (
-        <StatusTag status={event.outcome === 'SUCCEEDED' ? 'approved' : 'rejected'}>
-          {t(`audit.outcomes.${event.outcome}`)}
-        </StatusTag>
-      ),
-    },
-  ]
+      },
+      { title: t('audit.columns.action'), dataIndex: 'action', render: localizedCode },
+      {
+        title: t('audit.columns.entity'),
+        render: (_, event) => (
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong>
+              {event.entityLabel ??
+                (event.entityType === 'AUTH_SESSION' && event.actorLabel
+                  ? `${event.actorLabel} - ${t('audit.entities.session')}`
+                  : localizedCode(event.entityType))}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+              {localizedCode(event.entityType)} | {shortId(event.entityId)}
+            </Typography.Text>
+          </Space>
+        ),
+      },
+      {
+        title: t('audit.columns.scope'),
+        render: (_, event) =>
+          event.scopeType ? (
+            <Space direction="vertical" size={0}>
+              <Typography.Text strong>
+                {event.scopeLabel ?? localizedCode(event.scopeType)}
+              </Typography.Text>
+              <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                {localizedCode(event.scopeType)} | {shortId(event.scopeId)}
+              </Typography.Text>
+            </Space>
+          ) : (
+            t('audit.globalScope')
+          ),
+      },
+      {
+        title: t('audit.columns.source'),
+        dataIndex: 'source',
+        width: 110,
+        render: (value) => t(`audit.sources.${value}`, { defaultValue: value }),
+      },
+      {
+        title: t('audit.columns.outcome'),
+        width: 120,
+        render: (_, event) => (
+          <StatusTag status={event.outcome === 'SUCCEEDED' ? 'approved' : 'rejected'}>
+            {t(`audit.outcomes.${event.outcome}`)}
+          </StatusTag>
+        ),
+      },
+    ],
+    [t, i18n.language, localizedCode],
+  )
+
+  if (!getPermissions().includes('AUDIT:READ')) return <Result status="403" title="403" />
 
   return (
     <section className="grid gap-6">

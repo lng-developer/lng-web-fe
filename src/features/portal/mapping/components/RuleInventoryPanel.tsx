@@ -24,8 +24,8 @@ const emptyReferences: RuleReferenceLabels = {}
 const ruleFields: Record<MappingRuleType, string[]> = {
   skuNormalize: ['segmentIndex', 'segmentRole', 'appliesWhenValues', 'outputAction'],
   skuConfig: ['configCode', 'platformProductType', 'productTypeGroupId', 'internalTemplateId'],
-  semanticRules: ['semanticRole', 'matchValue', 'matchType', 'productTypeGroupId'],
-  valueAliases: ['semanticRole', 'matchValue', 'normalizedValue', 'matchType'],
+  semanticRules: ['semanticRole', 'matchValues', 'matchType', 'productTypeGroupId'],
+  valueAliases: ['semanticRole', 'matchValues', 'normalizedValue', 'matchType'],
   vendorRouting: ['productTypeGroupId', 'vendorId', 'normalizedSize', 'normalizedColor'],
 }
 

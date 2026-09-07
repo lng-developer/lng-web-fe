@@ -5,6 +5,7 @@ import { Tag, Typography } from 'antd'
 import { type Listing } from '@/features/portal/catalog/api/catalogApi'
 import { type OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
 import { formatOrderStatusLabel } from '@/features/portal/orders/pages/orderPresentation'
+import { CopyableOrderId } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
 import { money, numberOf } from './operationsDashboardFormatters'
@@ -89,7 +90,7 @@ export function RecentOrders({ rows }: { rows: OrderWorkbenchRow[] }) {
                 <small>{sku}</small>
               </span>
             </span>
-            <span>{row.order.externalOrderId}</span>
+            <CopyableOrderId value={row.order.externalOrderId} />
             <span>{firstItem?.item.quantity ?? row.items.length}</span>
             <span>
               {money(row.order.pricing.customerPaidAmount, row.order.pricing.currency ?? 'USD')}

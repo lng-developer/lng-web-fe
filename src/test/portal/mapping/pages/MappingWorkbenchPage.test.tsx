@@ -8,7 +8,6 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/mapping/api/mappingApi')>()
   return {
     ...actual,
-    getMappingSummary: vi.fn(),
     listAuthorableShops: vi.fn(),
     listMappingRules: vi.fn(),
     listUnmatchedItems: vi.fn(),
@@ -20,7 +19,6 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
-  getMappingSummary,
   listAuthorableShops,
   listMappingRules,
   listUnmatchedItems,
@@ -69,24 +67,6 @@ describe('MappingWorkbenchPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     void i18n.changeLanguage('en')
-    vi.mocked(getMappingSummary).mockResolvedValue({
-      readyPlanCount: 1,
-      confirmedPlanCount: 0,
-      totalPlanCount: 1,
-      blockedSampleCount: 1,
-      missingSkuConfigCount: 1,
-      missingSemanticRuleCount: 0,
-      missingVendorProductCount: 0,
-      missingVendorCostCenterCount: 0,
-      ambiguousSkuConfigCount: 0,
-      stageCounts: {
-        SKU_CLEANUP: 0,
-        PRODUCT_MAPPING: 11,
-        INPUT_SEMANTICS: 0,
-        VALUE_ALIASES: 5,
-        VENDOR_ROUTING: 5,
-      },
-    } as never)
     vi.mocked(listAuthorableShops).mockResolvedValue({ items: [], canCreateGlobal: false })
     vi.mocked(listUnmatchedItems).mockResolvedValue({
       items: [
@@ -149,12 +129,12 @@ describe('MappingWorkbenchPage', () => {
     expect(listAuthorableShops).not.toHaveBeenCalled()
   })
 
-  it('shows pipeline counts returned by the same backend stage filters', async () => {
+  it('keeps the workbench focused on queue search instead of stage and age filters', async () => {
     renderPage()
 
-    expect(await screen.findByRole('button', { name: /Product mapping.*11/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Value aliases.*5/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Vendor routing.*5/ })).toBeInTheDocument()
+    await screen.findByText('J2501-TS1S-01')
+    expect(screen.queryByRole('button', { name: /Product mapping 11/ })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Age')).not.toBeInTheDocument()
   })
 
   it('reuses a recent queue search result', async () => {

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
@@ -156,6 +157,7 @@ describe('shared UI', () => {
           columns={[{ dataIndex: 'name', title: 'Name' }]}
           dataSource={[{ key: 'order-1', name: 'Order 1' }]}
           rowSelection={{}}
+          tableLayout="fixed"
         />
         <DetailDrawer open title="Order details" onClose={() => undefined}>
           Order content
@@ -169,9 +171,40 @@ describe('shared UI', () => {
     )
 
     expect(screen.getByText('Order 1')).toBeVisible()
+    expect(screen.getAllByRole('table').some((table) => table.style.tableLayout === 'fixed')).toBe(
+      true,
+    )
     expect(screen.getByRole('dialog')).toHaveTextContent('Order details')
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled()
+  })
+
+  it('returns to the first row when the table page changes', async () => {
+    function PaginatedTable() {
+      const [page, setPage] = useState(1)
+
+      return (
+        <CoreDataTable
+          columns={[{ dataIndex: 'name', title: 'Name' }]}
+          dataSource={Array.from({ length: 20 }, (_, index) => ({
+            key: `order-${page}-${index}`,
+            name: `Order ${page}-${index}`,
+          }))}
+          pagination={{ current: page, pageSize: 20, total: 40, onChange: setPage }}
+          rowKey="key"
+          scroll={{ y: 160 }}
+        />
+      )
+    }
+
+    const { container } = render(<PaginatedTable />)
+    const tableBody = container.querySelector<HTMLElement>('.ant-table-body')
+    expect(tableBody).not.toBeNull()
+    tableBody!.scrollTop = 120
+
+    fireEvent.click(screen.getByTitle('2'))
+
+    await waitFor(() => expect(tableBody!.scrollTop).toBe(0))
   })
 
   it('renders summary, pagination, and destructive confirmation patterns', async () => {

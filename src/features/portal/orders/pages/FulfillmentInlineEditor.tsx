@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Descriptions, Flex, Select, Typography } from 'antd'
@@ -13,7 +13,7 @@ import {
 import { mappingKeys } from '@/features/portal/mapping/api/mappingKeys'
 import { normalizeApiError } from '@/shared/api'
 import { modalQueryOptions } from '@/shared/query/modalQuery'
-import { useFeedbackToast } from '@/shared/ui'
+import { useDebouncedValue, useFeedbackToast } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
@@ -40,13 +40,8 @@ export function FulfillmentInlineEditor({
   const [color, setColor] = useState(item.mapping?.vendorCostCenter?.color ?? undefined)
   const [costCenterId, setCostCenterId] = useState<string>()
   const [vendorSearchDraft, setVendorSearchDraft] = useState('')
-  const [vendorSearch, setVendorSearch] = useState('')
+  const vendorSearch = useDebouncedValue(vendorSearchDraft, 200)
   const productTypeGroupId = item.mapping?.listingVariant?.productTypeGroup?.id ?? undefined
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setVendorSearch(vendorSearchDraft), 200)
-    return () => window.clearTimeout(timer)
-  }, [vendorSearchDraft])
 
   const vendors = useQuery({
     queryKey: mappingKeys.vendors(vendorSearch),
@@ -97,9 +92,10 @@ export function FulfillmentInlineEditor({
         vendorProductId: productId!,
         vendorCostCenterId: candidate.id,
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast('success', t('orders.messages.updated'))
-      void queryClient.invalidateQueries({ queryKey: orderKeys.all })
+      await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'workbench'] })
+      await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'summary'] })
     },
     onError: (error) => toast('error', normalizeApiError(error).message),
   })

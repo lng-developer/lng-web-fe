@@ -7,10 +7,28 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
-  background: var(--ant-color-bg-container);
+  padding: 18px 22px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 12px;
+  transition: border-color 160ms ease;
+}
+
+.accountSummaryActive {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ant-color-primary-bg) 64%, var(--ant-color-bg-container)) 0%,
+    var(--ant-color-bg-container) 100%
+  );
+  border-color: var(--ant-color-primary-border);
+}
+
+.accountSummaryInactive {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ant-color-error-bg) 48%, var(--ant-color-bg-container)) 0%,
+    var(--ant-color-bg-container) 100%
+  );
+  border-color: color-mix(in srgb, var(--ant-color-error) 28%, var(--ant-color-border));
 }
 
 .accountSummary :global(.ant-typography) {
@@ -75,17 +93,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
+  padding: 14px 16px;
   border: 1px solid var(--ant-color-border-secondary);
+  border-left: 3px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius-lg);
   background: var(--ant-color-bg-container);
-  transition: all 0.2s ease-in-out;
-  gap: 16px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+  gap: 14px;
   min-width: 0;
 
   &:hover {
-    border-color: var(--ant-color-primary);
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.05);
+    border-color: var(--ant-color-primary-border);
+    border-left-color: var(--ant-color-primary);
+    box-shadow: 0 4px 16px rgb(15 23 42 / 7%);
+    transform: translateY(-1px);
   }
 }
 
@@ -134,14 +158,21 @@
 
 .assignmentActions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
+  background: var(--ant-color-fill-quaternary);
+  border-radius: 8px;
+  padding: 3px;
 
   button {
-    color: var(--ant-color-text-secondary);
+    color: var(--ant-color-text-tertiary);
+    border-radius: 6px !important;
+    transition:
+      color 150ms ease,
+      background 150ms ease !important;
 
     &:hover {
       color: var(--ant-color-primary) !important;
-      background: var(--ant-color-fill-quaternary) !important;
+      background: var(--ant-color-bg-container) !important;
     }
   }
 

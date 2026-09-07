@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Input, type InputProps } from 'antd'
 
@@ -11,7 +11,7 @@ export interface SearchInputProps extends Omit<
   readonly value?: string
 }
 
-export function SearchInput({
+export const SearchInput = memo(function SearchInput({
   allowClear = true,
   delay = 200,
   onSearchChange,
@@ -24,6 +24,10 @@ export function SearchInput({
   useEffect(() => {
     onSearchChangeRef.current = onSearchChange
   }, [onSearchChange])
+
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
 
   useEffect(() => {
     if (draft === value) return
@@ -40,4 +44,4 @@ export function SearchInput({
       onChange={(event) => setDraft(event.target.value)}
     />
   )
-}
+})

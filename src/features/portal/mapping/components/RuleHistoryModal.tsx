@@ -1,12 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
 import { Modal, Timeline, Typography } from 'antd'
 
-import { modalQueryOptions } from '@/shared/query/modalQuery'
 import { FeedbackAlert } from '@/shared/ui'
 
-import { listMappingRuleHistory, type MappingRuleType } from '../api/mappingApi'
-import { mappingKeys } from '../api/mappingKeys'
+import type { MappingRuleType } from '../api/mappingApi'
+import { useRuleHistoryQuery } from '../hooks'
 
 function changedFields(
   before: Record<string, unknown> | null | undefined,
@@ -33,13 +31,7 @@ export function RuleHistoryModal({
   readonly onClose: () => void
 }) {
   const { t } = useTranslation()
-  const history = useQuery({
-    queryKey: mappingKeys.history(type, id ?? ''),
-    queryFn: () => listMappingRuleHistory(type, id!),
-    ...modalQueryOptions,
-    enabled: open && Boolean(id),
-    retry: false,
-  })
+  const history = useRuleHistoryQuery(type, id, { enabled: open && Boolean(id) })
   return (
     <Modal open={open} title={t('mapping.sections.history')} footer={null} onCancel={onClose}>
       {history.error ? (

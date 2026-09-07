@@ -1,4 +1,11 @@
-import type { CSSProperties, KeyboardEvent, ReactNode } from 'react'
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  memo,
+  type ReactNode,
+  useCallback,
+  useMemo,
+} from 'react'
 import { Skeleton } from 'antd'
 
 import styles from './sharedUi.module.scss'
@@ -40,7 +47,7 @@ const variantClassMap: Record<MetricCardVariant, string> = {
   ambiguous: styles.metricIconAmbiguous,
 }
 
-export function MetricCard({
+export const MetricCard = memo(function MetricCard({
   label,
   value,
   icon,
@@ -52,25 +59,32 @@ export function MetricCard({
   onClick,
 }: MetricCardProps) {
   const isClickable = Boolean(onClick)
-  const rootClass = [
-    styles.metricCard,
-    isClickable ? styles.metricCardClickable : '',
-    className ?? '',
-  ]
-    .filter(Boolean)
-    .join(' ')
 
-  const iconClass = [styles.metricIcon, variantClassMap[variant] ?? styles.metricIconNeutral]
-    .filter(Boolean)
-    .join(' ')
-  const handleKeyDown = isClickable
-    ? (event: KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onClick?.()
-        }
+  const rootClass = useMemo(
+    () =>
+      [styles.metricCard, isClickable ? styles.metricCardClickable : '', className ?? '']
+        .filter(Boolean)
+        .join(' '),
+    [isClickable, className],
+  )
+
+  const iconClass = useMemo(
+    () =>
+      [styles.metricIcon, variantClassMap[variant] ?? styles.metricIconNeutral]
+        .filter(Boolean)
+        .join(' '),
+    [variant],
+  )
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (isClickable && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault()
+        onClick?.()
       }
-    : undefined
+    },
+    [isClickable, onClick],
+  )
 
   return (
     <div
@@ -79,7 +93,7 @@ export function MetricCard({
       className={rootClass}
       style={style}
       onClick={onClick}
-      onKeyDown={handleKeyDown}
+      onKeyDown={isClickable ? handleKeyDown : undefined}
     >
       {icon ? <span className={iconClass}>{icon}</span> : null}
       <div className={styles.metricBody}>
@@ -102,4 +116,4 @@ export function MetricCard({
       </div>
     </div>
   )
-}
+})

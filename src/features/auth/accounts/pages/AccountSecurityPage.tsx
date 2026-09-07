@@ -7,6 +7,7 @@ import {
   LockOutlined,
   ReloadOutlined,
   StopOutlined,
+  SyncOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Form, Input, Result, Typography } from 'antd'
@@ -173,29 +174,84 @@ export function AccountSecurityPage() {
         <Typography.Paragraph type="secondary">
           {t('auth.accountSecurity.sessionAndAccessDescription')}
         </Typography.Paragraph>
-        <div className={styles.dangerActions}>
-          <Button
-            icon={<ReloadOutlined aria-hidden />}
-            onClick={() => setPendingAction('revoke-sessions')}
-          >
-            {t('auth.accountSecurity.revokeSessions')}
-          </Button>
+        <div className={styles.dangerZone}>
+          <div className={styles.dangerZoneTitle}>
+            {t('auth.accountSecurity.dangerZone', 'Danger Zone')}
+          </div>
+          {/* Revoke sessions */}
+          <div className={styles.dangerAction}>
+            <span className={`${styles.dangerActionIcon} ${styles.dangerActionIconSession}`}>
+              <SyncOutlined />
+            </span>
+            <div className={styles.dangerActionText}>
+              <span className={styles.dangerActionLabel}>
+                {t('auth.accountSecurity.revokeSessions')}
+              </span>
+              <span className={styles.dangerActionDescription}>
+                {t(
+                  'auth.accountSecurity.revokeSessionsDescription',
+                  'Immediately terminates all active login sessions.',
+                )}
+              </span>
+            </div>
+            <Button
+              className={styles.dangerActionBtn}
+              icon={<SyncOutlined aria-hidden />}
+              onClick={() => setPendingAction('revoke-sessions')}
+            >
+              {t('auth.accountSecurity.revokeSessions')}
+            </Button>
+          </div>
+          {/* Deactivate */}
           {data.account.status === 'active' ? (
+            <div className={styles.dangerAction}>
+              <span className={`${styles.dangerActionIcon} ${styles.dangerActionIconDeactivate}`}>
+                <StopOutlined />
+              </span>
+              <div className={styles.dangerActionText}>
+                <span className={styles.dangerActionLabel}>
+                  {t('auth.accountSecurity.deactivate')}
+                </span>
+                <span className={styles.dangerActionDescription}>
+                  {t(
+                    'auth.accountSecurity.deactivateDescription',
+                    'Prevents login while preserving all data and assignments.',
+                  )}
+                </span>
+              </div>
+              <Button
+                danger
+                className={styles.dangerActionBtn}
+                icon={<StopOutlined aria-hidden />}
+                onClick={() => setPendingAction('deactivate')}
+              >
+                {t('auth.accountSecurity.deactivate')}
+              </Button>
+            </div>
+          ) : null}
+          {/* Archive */}
+          <div className={styles.dangerAction}>
+            <span className={`${styles.dangerActionIcon} ${styles.dangerActionIconArchive}`}>
+              <DeleteOutlined />
+            </span>
+            <div className={styles.dangerActionText}>
+              <span className={styles.dangerActionLabel}>{t('auth.accountSecurity.archive')}</span>
+              <span className={styles.dangerActionDescription}>
+                {t(
+                  'auth.accountSecurity.archiveDescription',
+                  'Permanently archives the account. This action cannot be undone.',
+                )}
+              </span>
+            </div>
             <Button
               danger
-              icon={<StopOutlined aria-hidden />}
-              onClick={() => setPendingAction('deactivate')}
+              className={styles.dangerActionBtn}
+              icon={<DeleteOutlined aria-hidden />}
+              onClick={() => setPendingAction('archive')}
             >
-              {t('auth.accountSecurity.deactivate')}
+              {t('auth.accountSecurity.archive')}
             </Button>
-          ) : null}
-          <Button
-            danger
-            icon={<DeleteOutlined aria-hidden />}
-            onClick={() => setPendingAction('archive')}
-          >
-            {t('auth.accountSecurity.archive')}
-          </Button>
+          </div>
         </div>
       </SectionCard>
       <ConfirmDangerModal

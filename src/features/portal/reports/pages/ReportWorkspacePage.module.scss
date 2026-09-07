@@ -2,7 +2,7 @@
 .stack {
   display: grid;
   min-width: 0;
-  gap: 20px;
+  gap: 16px;
 }
 
 .page > *,
@@ -12,7 +12,7 @@
 
 .filters {
   display: grid !important;
-  grid-template-columns: minmax(220px, 1.35fr) repeat(7, minmax(100px, 1fr));
+  grid-template-columns: repeat(7, minmax(100px, 1fr)) minmax(240px, 1.35fr);
   width: 100%;
 }
 
@@ -23,14 +23,132 @@
 .metrics,
 .metricsCompact,
 .twoColumns,
-.operationsGrid {
+.operationsGrid,
+.currencySection {
   display: grid;
   gap: 16px;
 }
 
+.currencySection {
+  padding: 4px 0;
+}
+
+.currencyLabel {
+  padding-left: 2px;
+}
+
+.dailyTable {
+  min-width: 0;
+}
+
+.dailyTable :global(.ant-table-cell-fix-left) {
+  background: var(--ant-color-bg-container);
+}
+
+.dailyTable :global(.ant-table-thead > tr > th.ant-table-cell-fix-left) {
+  background: var(--ant-color-bg-container) !important;
+  z-index: 3 !important;
+}
+
+.dailySellerStripe > :global(td) {
+  background:
+    linear-gradient(0deg, var(--ant-color-fill-quaternary), var(--ant-color-fill-quaternary)),
+    var(--ant-color-bg-container) !important;
+}
+
+.dailySellerGroupStart > :global(td) {
+  border-top: 3px solid var(--ant-color-border-secondary) !important;
+}
+
+.dailyRowGrossProfit > :global(td) {
+  background:
+    linear-gradient(0deg, rgba(82, 196, 26, 0.08), rgba(82, 196, 26, 0.08)),
+    var(--ant-color-bg-container) !important;
+}
+
+.dailyRowNetProfit > :global(td) {
+  background:
+    linear-gradient(0deg, rgba(22, 119, 255, 0.08), rgba(22, 119, 255, 0.08)),
+    var(--ant-color-bg-container) !important;
+}
+
+.dailySellerCell {
+  background:
+    linear-gradient(0deg, var(--ant-color-fill-secondary), var(--ant-color-fill-secondary)),
+    var(--ant-color-bg-container) !important;
+  border-right: 1px solid var(--ant-color-border-secondary) !important;
+  color: var(--ant-color-text-heading);
+  font-size: 14px;
+}
+
+.dailyMetricCell {
+  border-right: 1px solid var(--ant-color-border-secondary) !important;
+}
+
+.dailyTotalCell {
+  border-right: 2px solid var(--ant-color-border-secondary) !important;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+}
+
+.dailyMetric {
+  font-weight: 600;
+}
+
+.dailyMoneyRevenue {
+  color: var(--ant-color-primary);
+  font-weight: 600;
+}
+
+.dailyMoneyCost {
+  color: var(--ant-color-warning);
+}
+
+.dailyMoneyProfit {
+  color: var(--ant-color-success);
+  font-weight: 700;
+}
+
+.dailyMoneyLoss {
+  color: var(--ant-color-error);
+  font-weight: 700;
+}
+
+.profitComparison {
+  display: grid;
+  gap: 12px;
+}
+
+.profitRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(260px, 1fr) max-content;
+  align-items: center;
+  gap: 10px;
+}
+
+.profitTrack {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ant-color-fill-tertiary);
+}
+
+.profitBar,
+.profitBarNegative {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.profitBar {
+  background: var(--ant-color-success);
+}
+
+.profitBarNegative {
+  background: var(--ant-color-error);
+}
+
 .metrics {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-bottom: 24px;
 }
 
 .metricsCompact {

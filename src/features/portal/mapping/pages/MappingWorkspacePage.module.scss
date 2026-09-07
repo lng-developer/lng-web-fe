@@ -83,65 +83,6 @@
   text-overflow: ellipsis;
 }
 
-/* ── Stage filter pills ───────────────────────────────── */
-.stageFilters {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.stagePill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 14px;
-  border-radius: 20px;
-  border: 1.5px solid var(--ant-color-border);
-  background: var(--ant-color-bg-container);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  color: var(--ant-color-text);
-  white-space: nowrap;
-
-  &:hover {
-    border-color: var(--ant-color-primary);
-    color: var(--ant-color-primary);
-  }
-}
-
-.stagePill.active {
-  background: var(--ant-color-primary);
-  border-color: var(--ant-color-primary);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.28);
-}
-
-.stagePillCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  font-size: 11px;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.28);
-}
-
-.stagePill:not(.active) .stagePillCount {
-  background: var(--ant-color-fill-tertiary);
-  color: var(--ant-color-text-secondary);
-}
-
-.stagePillCount.urgent {
-  background: #ff4d4f;
-  color: #fff;
-}
-
 /* ── Workspace split layout ───────────────────────────── */
 .workspace {
   display: grid;
@@ -274,6 +215,12 @@
   min-height: 0;
   overflow-y: auto;
   padding-right: 2px;
+}
+
+.queuePanel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .queueFilters {
