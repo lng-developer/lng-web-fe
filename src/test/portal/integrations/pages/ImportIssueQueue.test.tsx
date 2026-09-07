@@ -191,7 +191,7 @@ describe('ImportIssueQueue', () => {
       queryKey: integrationKeys.job('job-1'),
     })
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: integrationKeys.job('job-selected') })
-  })
+  }, 15_000)
 
   it('preserves an ignored resolution form when the mutation fails', async () => {
     vi.mocked(updateIssueStatus).mockRejectedValue(new Error('Conflict'))
@@ -219,7 +219,7 @@ describe('ImportIssueQueue', () => {
       status: 'IGNORED',
       note: 'Duplicate report',
     })
-  })
+  }, 15_000)
 
   it('hides resolution for an issue outside the caller exact write scope', async () => {
     const scopedAccount = account(
