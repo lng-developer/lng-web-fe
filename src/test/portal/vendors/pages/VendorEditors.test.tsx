@@ -36,8 +36,9 @@ async function selectProductTypeGroup() {
 }
 
 describe('VendorEditorModal', () => {
-  afterEach(() => {
+  afterEach(async () => {
     Modal.destroyAll()
+    await new Promise((resolve) => setTimeout(resolve, 0))
     cleanup()
     vi.restoreAllMocks()
   })
