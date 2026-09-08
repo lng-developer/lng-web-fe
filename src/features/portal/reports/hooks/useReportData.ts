@@ -7,6 +7,7 @@ import {
   listChannelPerformance,
   listFinanceBySeller,
   listFinanceByTeam,
+  listFinanceCoverage,
   listFinanceSellerDaily,
   type ReportFilters,
 } from '../api/reportApi'
@@ -36,6 +37,12 @@ export const useReportData = ({
     queryKey: ['reports', 'sellers', filters],
     queryFn: () => listFinanceBySeller(filters),
     enabled: activeTab === 'overview' && profitabilityView === 'summary',
+  })
+
+  const coverage = useQuery({
+    queryKey: ['reports', 'coverage', filters],
+    queryFn: () => listFinanceCoverage(filters),
+    enabled: activeTab === 'overview',
   })
 
   const sellerDaily = useQuery({
@@ -77,6 +84,7 @@ export const useReportData = ({
   return {
     options,
     sellers,
+    coverage,
     sellerDaily,
     teams,
     channels,

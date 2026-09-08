@@ -304,6 +304,17 @@
       "missingCost": "Thiếu giá vốn",
       "sellers": "Seller"
     },
+    "coverage": {
+      "title": "Độ phủ dữ liệu",
+      "actual": "Thực tế",
+      "estimated": "Ước tính",
+      "incomplete": "Thiếu chi phí",
+      "missingDate": "Thiếu ngày đặt hàng",
+      "basis": {
+        "ORDERED_AT": "Theo ngày đặt hàng",
+        "CALCULATED_AT": "Theo ngày tính lại"
+      }
+    },
     "buyers": {
       "title": "Tín hiệu khách hàng",
       "total": "Đơn hàng",

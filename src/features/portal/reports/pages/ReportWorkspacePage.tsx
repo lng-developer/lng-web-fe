@@ -19,6 +19,7 @@ import {
 
 import type { ReportFilters, SellerDailyProfit, SellerPerformance } from '../api/reportApi'
 import { ReportAdsTab } from '../components/ReportAdsTab'
+import { ReportCoverageStrip } from '../components/ReportCoverageStrip'
 import { formatReportMoney, formatReportPercent } from '../components/reportFormatters'
 import { ReportProfitComparisonChart } from '../components/ReportProfitComparisonChart'
 import { ReportTeamTab } from '../components/ReportTeamTab'
@@ -55,6 +56,7 @@ export function ReportWorkspacePage() {
   const [filters, setFilters] = useState<ReportFilters>(() => ({
     dateFrom: dayjs().subtract(6, 'day').startOf('day').toISOString(),
     dateTo: dayjs().endOf('day').toISOString(),
+    dateBasis: 'ORDERED_AT',
   }))
 
   const globalRead = account.permissions.includes('REPORTS:READ')
@@ -64,7 +66,7 @@ export function ReportWorkspacePage() {
       (scope) => scope.scopeType === 'shop' && scope.permissions.includes('REPORTS:READ'),
     )
 
-  const { options, sellers, sellerDaily, teams, channels, adsDaily, exportCsv } = useReportData({
+  const { options, sellers, coverage, sellerDaily, teams, channels, adsDaily, exportCsv } = useReportData({
     filters,
     activeTab,
     profitabilityView,
@@ -456,6 +458,7 @@ export function ReportWorkspacePage() {
 
   const sellerProfitabilityTab = (
     <div className={styles.stack}>
+      <ReportCoverageStrip rows={coverage.data} dateBasis={filters.dateBasis} />
       <Space className={styles.profitabilityMode}>
         <Button
           type={profitabilityView === 'summary' ? 'primary' : 'default'}

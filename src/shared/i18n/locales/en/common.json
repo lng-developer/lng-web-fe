@@ -304,6 +304,17 @@
       "missingCost": "Missing cost",
       "sellers": "Sellers"
     },
+    "coverage": {
+      "title": "Data coverage",
+      "actual": "Actual",
+      "estimated": "Estimated",
+      "incomplete": "Incomplete cost",
+      "missingDate": "Missing order date",
+      "basis": {
+        "ORDERED_AT": "Order date basis",
+        "CALCULATED_AT": "Recalculated date basis"
+      }
+    },
     "buyers": {
       "title": "Buyer signals",
       "total": "Orders",

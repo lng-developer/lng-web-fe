@@ -4,6 +4,7 @@ import { apiClient } from '@/shared/api'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export type ReportFilters = {
+  dateBasis?: 'ORDERED_AT' | 'CALCULATED_AT'
   dateFrom?: string
   dateTo?: string
   shopId?: string
@@ -12,6 +13,15 @@ export type ReportFilters = {
   sellerEmployeeCode?: string
   teamId?: string
   departmentId?: string
+}
+export type FinanceCoverage = {
+  currency: string | null
+  itemCount: number
+  actualCount: number
+  estimatedCount: number
+  incompleteCostCount: number
+  missingDateCount: number
+  latestCalculatedAt: string | null
 }
 
 export type FinanceDaily = {
@@ -147,6 +157,8 @@ export const exportReportCsv = (filters: ReportFilters) =>
   getBlob('/api/reports/export.csv', filters)
 export const listFinanceDaily = (filters: ReportFilters) =>
   get<FinanceDaily[]>('/api/reports/finance/daily', filters)
+export const listFinanceCoverage = (filters: ReportFilters) =>
+  get<FinanceCoverage[]>('/api/reports/finance/coverage', filters)
 export const listFinanceDailyProfit = (filters: ReportFilters) =>
   get<FinanceDaily[]>('/api/reports/finance/daily-profit', filters)
 export const listFinanceBySeller = (filters: ReportFilters) =>

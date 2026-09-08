@@ -11,6 +11,7 @@ import {
   listChannelPerformance,
   listFinanceBySeller,
   listFinanceByTeam,
+  listFinanceCoverage,
   listFinanceDaily,
   listFinanceDailyProfit,
   listFinanceSellerDaily,
@@ -38,6 +39,7 @@ vi.mock('@/features/portal/reports/api/reportApi', async (importOriginal) => ({
   listAdsDaily: vi.fn(),
   listChannelPerformance: vi.fn(),
   listFinanceBySeller: vi.fn(),
+  listFinanceCoverage: vi.fn(),
   listFinanceSellerDaily: vi.fn(),
   listFinanceByTeam: vi.fn(),
   listFinanceDaily: vi.fn(),
@@ -126,6 +128,17 @@ describe('ReportWorkspacePage', () => {
       shipmentsByStatus: {},
     })
     vi.mocked(listFinanceBySeller).mockResolvedValue([])
+    vi.mocked(listFinanceCoverage).mockResolvedValue([
+      {
+        currency: 'USD',
+        itemCount: 10,
+        actualCount: 3,
+        estimatedCount: 5,
+        incompleteCostCount: 2,
+        missingDateCount: 1,
+        latestCalculatedAt: '2026-09-08T00:00:00.000Z',
+      },
+    ])
     vi.mocked(listFinanceSellerDaily).mockResolvedValue([])
     vi.mocked(listFinanceByTeam).mockResolvedValue([])
     vi.mocked(listAdsDaily).mockResolvedValue([])
@@ -145,6 +158,19 @@ describe('ReportWorkspacePage', () => {
     await waitFor(() => expect(listFinanceBySeller).toHaveBeenCalledTimes(1))
     const initialFilters = vi.mocked(listFinanceBySeller).mock.calls[0][0]
     expect(dayjs(initialFilters.dateTo).diff(dayjs(initialFilters.dateFrom), 'day')).toBe(6)
+  })
+
+  it('shows finance coverage beside seller profitability without mixing it into profit totals', async () => {
+    render(
+      <AppProviders>
+        <ReportWorkspacePage />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Data coverage' })).toBeInTheDocument()
+    await waitFor(() => expect(listFinanceCoverage).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText('Actual · USD')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
   })
 
   it('loads daily ads performance after opening the sales tab', async () => {
