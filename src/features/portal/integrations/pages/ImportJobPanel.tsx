@@ -7,6 +7,7 @@ import { Button, Descriptions, Drawer, Modal, Progress, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import {
   CopyableOrderId,
@@ -29,7 +30,6 @@ import { canWriteOrdersForShop } from '../auth/integrationAccess'
 import { useImportJobPolling } from '../hooks/useImportJobPolling'
 import styles from './IntegrationWorkbenchPage.module.scss'
 
-const PAGE_SIZE = 10
 const ACTIVE_POST_IMPORT_STATUSES = new Set(['QUEUED', 'PROCESSING'])
 
 function recordTone(status: string) {
@@ -69,7 +69,7 @@ function ImportJobPanelForJob({
   const [confirmRetry, setConfirmRetry] = useState(false)
   const [rawDrawerOpen, setRawDrawerOpen] = useState(false)
   const job = useImportJobPolling(open ? jobId : undefined, status)
-  const rawParams = { page: rawPage, limit: PAGE_SIZE }
+  const rawParams = { page: rawPage, limit: DEFAULT_PAGE_SIZE }
   const rawRecords = useQuery({
     queryKey: integrationKeys.rawRecords(jobId ?? '', rawParams),
     queryFn: () => listJobRawRecords(jobId!, rawParams),
@@ -309,7 +309,7 @@ function ImportJobPanelForJob({
                 rowKey="id"
                 pagination={{
                   current: rawPage,
-                  pageSize: PAGE_SIZE,
+                  pageSize: DEFAULT_PAGE_SIZE,
                   total: rawRecords.data?.pagination.total,
                   onChange: setRawPage,
                 }}
@@ -386,7 +386,7 @@ function ImportJobPanelForJob({
               rowKey="id"
               pagination={{
                 current: rawPage,
-                pageSize: PAGE_SIZE,
+                pageSize: DEFAULT_PAGE_SIZE,
                 total: rawRecords.data?.pagination.total,
                 onChange: setRawPage,
               }}

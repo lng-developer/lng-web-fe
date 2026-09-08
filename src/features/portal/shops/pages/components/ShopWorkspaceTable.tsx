@@ -117,8 +117,10 @@ export function ShopWorkspaceTable({
   return (
     <SectionCard>
       <CoreDataTable
+        className={styles.compactTable}
         columns={columns}
         dataSource={data?.items ?? []}
+        fillViewport
         emptyText={
           params.search || params.status ? (
             <Empty description={t('portal.shops.noFilteredResults')}>

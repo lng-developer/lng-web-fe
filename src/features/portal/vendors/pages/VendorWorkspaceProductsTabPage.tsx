@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { AppstoreOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Select, Space, Typography } from 'antd'
+import { Button, Image, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
@@ -111,13 +111,20 @@ export function VendorWorkspaceProductsTabPage({
         render: (value) => <Typography.Text strong>{value}</Typography.Text>,
       },
       {
-        title: t('portal.vendors.vendorCode'),
-        width: 110,
-        ellipsis: true,
-        onCell: () => ({ style: { maxWidth: 130 } }),
-        render: (_, row) =>
-          row.vendor ? (
-            row.vendor.code
+        title: t('portal.vendors.image'),
+        dataIndex: 'imageUrl',
+        width: 96,
+        render: (imageUrl, row) =>
+          imageUrl ? (
+            <Image
+              alt={row.name}
+              fallback="https://placehold.co/48x48?text=Image"
+              height={48}
+              preview
+              src={imageUrl}
+              style={{ borderRadius: 6, objectFit: 'cover' }}
+              width={48}
+            />
           ) : (
             <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
@@ -246,6 +253,7 @@ export function VendorWorkspaceProductsTabPage({
         rowKey="id"
         columns={productColumns}
         className={styles.dataTable}
+        fillViewport
         scroll={{ x: 1200 }}
         dataSource={displayedProducts}
         loading={productsLoading}

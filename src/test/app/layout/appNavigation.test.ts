@@ -64,8 +64,9 @@ describe('app navigation', () => {
 
   it('shows the audit log only to audit readers', () => {
     expect(
-      getContextNavigation('system', account(['AUDIT:READ'])).find(({ key }) => key === 'system')
-        ?.items,
+      getContextNavigation('system', account(['AUDIT:READ'])).find(
+        ({ key }) => key === 'monitoring',
+      )?.items,
     ).toEqual([
       { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' },
       { key: 'monitoring', path: '/auth/monitoring', labelKey: 'shell.navigation.monitoring' },
@@ -95,7 +96,7 @@ describe('app navigation', () => {
     expect(getContextNavigation('portal', account(['SHOPS:READ']))).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          key: 'setup',
+          key: 'listing',
           items: expect.arrayContaining([
             expect.objectContaining({ key: 'shops', path: '/portal/shops' }),
           ]),
@@ -158,15 +159,17 @@ describe('app navigation', () => {
     )
   })
 
-  it('keeps Shops before Vendors when both configuration permissions are granted', () => {
+  it('separates Shops and Vendors into their legacy menu sections', () => {
     expect(
       getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ'])).find(
-        ({ key }) => key === 'setup',
+        ({ key }) => key === 'listing',
       )?.items,
-    ).toEqual([
-      { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' },
-      { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' },
-    ])
+    ).toEqual([{ key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }])
+    expect(
+      getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ'])).find(
+        ({ key }) => key === 'cost-centers',
+      )?.items,
+    ).toEqual([{ key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }])
   })
 
   it('groups Portal navigation by the operational workflow', () => {
@@ -189,10 +192,11 @@ describe('app navigation', () => {
 
     expect(groups.map(({ key }) => key)).toEqual([
       'dashboard',
-      'setup',
-      'order-workflow',
-      'fulfillment',
-      'performance',
+      'orders',
+      'team-tasks',
+      'listing',
+      'cost-centers',
+      'reports',
     ])
     expect(groups.find(({ key }) => key === 'dashboard')).toEqual({
       key: 'dashboard',
@@ -206,22 +210,26 @@ describe('app navigation', () => {
         },
       ],
     })
-    expect(groups.find(({ key }) => key === 'setup')?.items.map(({ key }) => key)).toEqual([
+    expect(groups.find(({ key }) => key === 'listing')?.items.map(({ key }) => key)).toEqual([
       'shops',
       'catalog',
-      'vendors',
     ])
-    expect(groups.find(({ key }) => key === 'order-workflow')?.items.map(({ key }) => key)).toEqual(
-      ['orders', 'mapping', 'integrations'],
-    )
-    expect(groups.find(({ key }) => key === 'fulfillment')?.items.map(({ key }) => key)).toEqual([
+    expect(groups.find(({ key }) => key === 'orders')?.items.map(({ key }) => key)).toEqual([
+      'orders',
+      'mapping',
+      'integrations',
+    ])
+    expect(groups.find(({ key }) => key === 'team-tasks')?.items.map(({ key }) => key)).toEqual([
       'design',
       'production',
       'vendor-submissions',
       'shipments',
     ])
-    expect(groups.find(({ key }) => key === 'performance')?.items.map(({ key }) => key)).toEqual([
+    expect(groups.find(({ key }) => key === 'cost-centers')?.items.map(({ key }) => key)).toEqual([
+      'vendors',
       'finance',
+    ])
+    expect(groups.find(({ key }) => key === 'reports')?.items.map(({ key }) => key)).toEqual([
       'reports',
     ])
   })
@@ -254,12 +262,12 @@ describe('app navigation', () => {
     }
   })
 
-  it('groups order operations under the order workflow for order readers and writers', () => {
+  it('groups order operations under Orders for order readers and writers', () => {
     for (const permission of ['ORDERS:READ', 'ORDERS:WRITE']) {
       expect(getContextNavigation('portal', account([permission]))).toEqual([
         {
-          key: 'order-workflow',
-          labelKey: 'shell.groups.portalOrderWorkflow',
+          key: 'orders',
+          labelKey: 'shell.groups.legacyOrders',
           items: [
             {
               key: 'orders',
@@ -333,7 +341,7 @@ describe('app navigation', () => {
     }
   })
 
-  it('exposes the order workflow for scoped order access and keeps it separate from setup', () => {
+  it('exposes Orders for scoped order access and keeps it separate from Listing', () => {
     const scopedWriter = account([], ['ORDERS:WRITE'])
     scopedWriter.scopes[0] = {
       ...scopedWriter.scopes[0],
@@ -346,7 +354,7 @@ describe('app navigation', () => {
     expect(getDefaultWorkspacePath(scopedWriter)).toBe('/portal/orders')
     expect(
       getContextNavigation('portal', account(['SHOPS:READ', 'ORDERS:READ'])).map(({ key }) => key),
-    ).toEqual(['setup', 'order-workflow'])
+    ).toEqual(['orders', 'listing'])
   })
 
   it('shows Shop configuration for an exact Shop-scoped reader', () => {
@@ -438,5 +446,55 @@ describe('app navigation', () => {
     expect(groups.find(({ key }) => key === 'operations')?.items[0].labelKey).toBe(
       'shell.navigation.hrOverview',
     )
+  })
+})
+
+describe('legacy sidebar navigation', () => {
+  it('groups portal workspaces beneath the legacy menu labels', () => {
+    expect(
+      getContextNavigation(
+        'portal',
+        account([
+          'SHOPS:READ',
+          'CATALOG:READ',
+          'VENDORS:READ',
+          'ORDERS:READ',
+          'MAPPING:READ',
+          'DESIGN:READ',
+          'PRODUCTION:READ',
+          'VENDOR_SUBMISSIONS:READ',
+          'SHIPMENTS:READ',
+          'FINANCE:READ',
+          'REPORTS:READ',
+        ]),
+      ).map(({ labelKey }) => labelKey),
+    ).toEqual([
+      'shell.navigation.dashboard',
+      'shell.groups.legacyOrders',
+      'shell.groups.legacyTeamTasks',
+      'shell.groups.legacyListing',
+      'shell.groups.legacyCostCenters',
+      'shell.navigation.reports',
+    ])
+  })
+
+  it('groups system tools beneath monitoring and configuration', () => {
+    expect(
+      getContextNavigation(
+        'system',
+        account([
+          'AUTH:READ',
+          'AUDIT:READ',
+          'MEDIA:READ',
+          'CUSTOMERS:READ',
+          'ORDERS:READ',
+          'WORK_SCORES:READ',
+        ]),
+      ).map(({ labelKey }) => labelKey),
+    ).toEqual([
+      'shell.navigation.dashboard',
+      'shell.groups.legacyMonitoring',
+      'shell.groups.legacyConfiguration',
+    ])
   })
 })

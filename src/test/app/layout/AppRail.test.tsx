@@ -27,4 +27,27 @@ describe('AppRail', () => {
     expect(onCoreChange).toHaveBeenCalledWith('hr')
     expect(screen.queryByRole('button', { name: 'Portal' })).not.toBeInTheDocument()
   })
+
+  it('uses work-area icons for Portal and HR while preserving the system settings icon', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <AppProviders>
+          <AppRail
+            activeCore="portal"
+            cores={[
+              { key: 'portal', labelKey: 'shell.cores.portal' },
+              { key: 'hr', labelKey: 'shell.cores.hr' },
+              { key: 'system', labelKey: 'shell.cores.system' },
+            ]}
+            onCoreChange={vi.fn()}
+          />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('button', { name: 'Portal' })).toHaveClass('ant-btn')
+    expect(container.querySelector('.anticon-shop')).toBeInTheDocument()
+    expect(container.querySelector('.anticon-team')).toBeInTheDocument()
+    expect(container.querySelector('.anticon-setting')).toBeInTheDocument()
+  })
 })

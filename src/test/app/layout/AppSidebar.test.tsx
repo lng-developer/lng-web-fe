@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import type { NavigationGroup } from '@/app/layout/appNavigation'
@@ -78,19 +78,19 @@ describe('AppSidebar', () => {
     expect(screen.getByText('Team management')).toBeVisible()
   })
 
-  it('keeps all contextual groups expanded', () => {
+  it('expands the group that owns the active route', async () => {
     renderSidebar([personal, team, operations], 'team-approvals')
 
-    expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Employees' })).toBeVisible()
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible())
+    expect(screen.queryByRole('link', { name: 'Profile' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Employees' })).not.toBeInTheDocument()
   })
 
-  it('keeps groups visible when the route changes', () => {
+  it('keeps groups visible when the route changes', async () => {
     const view = renderSidebar([personal, team], 'self')
 
-    expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible()
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible())
+    expect(screen.queryByRole('link', { name: 'Approvals' })).not.toBeInTheDocument()
 
     view.rerender(
       <MemoryRouter initialEntries={['/hr/team/approvals']}>
@@ -107,19 +107,38 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Profile' })).toBeVisible()
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Approvals' })).toBeVisible())
+    expect(screen.queryByRole('link', { name: 'Profile' })).not.toBeInTheDocument()
   })
 
-  it('uses a compact 240px width when expanded', () => {
+  it('uses the legacy menu panel width when expanded', () => {
     renderSidebar([personal])
 
     expect(document.querySelector('.ant-layout-sider')).toHaveStyle({
-      flex: '0 0 240px',
-      maxWidth: '240px',
-      minWidth: '240px',
-      width: '240px',
+      flex: '0 0 202px',
+      maxWidth: '202px',
+      minWidth: '202px',
+      width: '202px',
     })
+  })
+
+  it('renders the legacy system identity above the navigation', () => {
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <AppSidebar
+            accountLabel="Ngô Văn Hiếu"
+            collapsed={false}
+            coreLabel="Portal"
+            groups={[personal]}
+            navigationSearch=""
+          />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('LNG System')).toBeVisible()
+    expect(screen.getByText('Ngô Văn Hiếu')).toBeVisible()
   })
 })
 
@@ -139,3 +158,39 @@ function renderSidebar(groups: NavigationGroup[], selectedKey = 'self') {
     </MemoryRouter>,
   )
 }
+
+describe('legacy AppSidebar interactions', () => {
+  it('keeps a legacy menu section closed until the operator opens it', () => {
+    render(
+      <AppProviders>
+        <MemoryRouter>
+          <AppSidebar
+            accountLabel="Ngô Văn Hiếu"
+            collapsed={false}
+            coreLabel="Portal"
+            groups={[
+              {
+                key: 'listing',
+                labelKey: 'shell.groups.legacyListing',
+                items: [
+                  {
+                    key: 'catalog',
+                    path: '/portal/catalog',
+                    labelKey: 'shell.navigation.catalog',
+                  },
+                ],
+              },
+            ]}
+            navigationSearch=""
+          />
+        </MemoryRouter>
+      </AppProviders>,
+    )
+
+    expect(screen.queryByRole('link', { name: 'Catalog' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Listing'))
+
+    expect(screen.getByRole('link', { name: 'Catalog' })).toHaveAttribute('href', '/portal/catalog')
+  })
+})

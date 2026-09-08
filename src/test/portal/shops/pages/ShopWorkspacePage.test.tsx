@@ -6,8 +6,10 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount, ScopedAccess } from '@/features/auth/api/authApi'
 import { createShop, listShops, updateShopStatus } from '@/features/portal/shops/api/shopApi'
 import { ShopWorkspacePage } from '@/features/portal/shops/pages/ShopWorkspacePage'
+import styles from '@/features/portal/shops/pages/ShopWorkspacePage.module.scss'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
+import sharedStyles from '@/shared/ui/sharedUi.module.scss'
 
 vi.mock('@/features/portal/shops/api/shopApi', () => ({
   createShop: vi.fn(),
@@ -93,7 +95,7 @@ describe('ShopWorkspacePage', () => {
     renderPage('/portal/shops?page=2&status=ACTIVE')
 
     await waitFor(() =>
-      expect(listShops).toHaveBeenCalledWith({ page: 2, limit: 20, status: 'ACTIVE' }),
+      expect(listShops).toHaveBeenCalledWith({ page: 2, limit: 10, status: 'ACTIVE' }),
     )
     expect(await screen.findByText('Football US', {}, { timeout: 5_000 })).toBeVisible()
     vi.useFakeTimers()
@@ -106,7 +108,7 @@ describe('ShopWorkspacePage', () => {
     await act(() => vi.advanceTimersByTimeAsync(1))
     expect(listShops).toHaveBeenCalledWith({
       page: 1,
-      limit: 20,
+      limit: 10,
       search: 'football',
       status: 'ACTIVE',
     })
@@ -119,6 +121,22 @@ describe('ShopWorkspacePage', () => {
     renderPage()
 
     expect(await screen.findByText('shop-1')).toBeVisible()
+  })
+
+  it('uses the compact table layout on the shop workspace', async () => {
+    renderPage()
+
+    await screen.findByText('Football US', {}, { timeout: 5_000 })
+
+    expect(
+      screen
+        .getAllByRole('table')
+        .some(
+          (table) =>
+            table.closest(`.${styles.compactTable}`) &&
+            table.closest(`.${sharedStyles.dataTableFillViewport}`),
+        ),
+    ).toBe(true)
   })
 
   it('keeps global Create hidden and limits status actions to the exact scoped shop', async () => {
@@ -161,7 +179,7 @@ describe('ShopWorkspacePage', () => {
     renderPage('/portal/shops?page=1&status=ACTIVE')
 
     await waitFor(() =>
-      expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 20, status: 'ACTIVE' }),
+      expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 10, status: 'ACTIVE' }),
     )
     expect(await screen.findByText('Football US')).toBeVisible()
     fireEvent.click(await screen.findByRole('button', { name: 'Edit Football US' }))
@@ -220,7 +238,7 @@ describe('ShopWorkspacePage', () => {
     renderPage('/portal/shops?page=-3&status=UNKNOWN&search=%20football%20')
 
     expect(await screen.findByText('Football US')).toBeVisible()
-    expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 20, search: 'football' })
+    expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 10, search: 'football' })
   })
 
   it('shows filtered no-results with a Clear filters action', async () => {

@@ -8,6 +8,7 @@ import { printMethodSelectOptions } from '@/shared/constants/printMethods'
 
 import type { ProductTypeGroup, ProductTypeGroupInput } from '../../catalog/api/catalogApi'
 import type { VendorMigrationReviewItem } from '../api/vendorApi'
+import styles from './VendorWorkspacePage.module.scss'
 
 type Props = {
   canWrite: boolean
@@ -107,6 +108,9 @@ const ReviewTable = memo(function ReviewTable({
   return (
     <CoreDataTable
       rowKey="id"
+      className={styles.dataTable}
+      fillViewport
+      paginationAtBottom
       loading={loading}
       columns={columns}
       dataSource={rows}
@@ -178,7 +182,7 @@ export function VendorMigrationTabPage({
   if (error)
     return <Alert type="error" showIcon message={t('portal.vendors.migration.loadFailed')} />
   return (
-    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+    <div className={styles.migrationContent}>
       <Alert
         type="warning"
         showIcon
@@ -314,6 +318,6 @@ export function VendorMigrationTabPage({
           </Space>
         </Modal>
       ) : null}
-    </Space>
+    </div>
   )
 }

@@ -10,15 +10,15 @@ const appShellStyles = readFileSync(
 )
 
 describe('AppShell sidebar styles', () => {
-  it('uses the menu surface color across the entire navigation area', () => {
+  it('uses the legacy white menu surface across the entire navigation area', () => {
     expect(appShellStyles).toMatch(
-      /\.sidebar\s*\{[^}]*background:\s*var\(--ant-color-fill-quaternary\)/s,
+      /\.sidebar\s*\{[^}]*background:\s*var\(--ant-color-bg-container\)/s,
     )
     expect(appShellStyles).toMatch(
-      /\.navigation\s*\{[^}]*background:\s*var\(--ant-color-fill-quaternary\)/s,
+      /\.navigation\s*\{[^}]*background:\s*var\(--ant-color-bg-container\)/s,
     )
     expect(appShellStyles).toMatch(
-      /\.navigation\s+:global\(\.ant-menu\)\s*\{[^}]*background:\s*var\(--ant-color-fill-quaternary\)/s,
+      /\.navigation\s+:global\(\.ant-menu\)\s*\{[^}]*background:\s*var\(--ant-color-bg-container\)/s,
     )
   })
 

@@ -55,26 +55,26 @@ export function VendorWorkspaceVendorsTabPage({
   onEditVendor,
   onOpenIntegration,
 }: VendorWorkspaceVendorsTabPageProps) {
-  const { t } = useTranslation(undefined, { keyPrefix: 'portal' })
+  const { t } = useTranslation()
 
   const vendorColumns = useMemo<TableColumnsType<Vendor>>(
     () => [
       {
-        title: t('vendors.code'),
+        title: t('portal.vendors.code'),
         dataIndex: 'code',
         width: 140,
         ellipsis: true,
         render: (value) => <Typography.Text code>{value}</Typography.Text>,
       },
       {
-        title: t('vendors.name'),
+        title: t('portal.vendors.name'),
         dataIndex: 'name',
         width: 220,
         ellipsis: true,
         render: (value) => <Typography.Text strong>{value}</Typography.Text>,
       },
       {
-        title: t('vendors.fulfillmentType'),
+        title: t('portal.vendors.fulfillmentType'),
         dataIndex: 'fulfillmentType',
         width: 130,
         ellipsis: true,
@@ -82,7 +82,7 @@ export function VendorWorkspaceVendorsTabPage({
           value ? <Tag color={fulfillmentTypeColors[value]}>{value}</Tag> : null,
       },
       {
-        title: t('vendors.providerKey'),
+        title: t('portal.vendors.providerKey'),
         dataIndex: 'providerKey',
         width: 170,
         ellipsis: true,
@@ -90,22 +90,22 @@ export function VendorWorkspaceVendorsTabPage({
           value ? (
             <Tag color="processing">{value}</Tag>
           ) : (
-            <Typography.Text type="secondary">{t('vendors.none')}</Typography.Text>
+            <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
       },
       {
-        title: t('vendors.statusLabel'),
+        title: t('portal.vendors.statusLabel'),
         dataIndex: 'status',
         width: 110,
         ellipsis: true,
         render: (status) => (
           <StatusTag status={status === 'ACTIVE' ? 'operational' : 'draft'}>
-            {t(`vendors.status.${status}`)}
+            {t(`portal.vendors.status.${status}`)}
           </StatusTag>
         ),
       },
       {
-        title: t('vendors.vendorsTabActions'),
+        title: t('portal.vendors.vendorsTabActions'),
         width: 190,
         render: (_, vendor) => (
           <Space size={4}>
@@ -115,24 +115,24 @@ export function VendorWorkspaceVendorsTabPage({
                   type="text"
                   size="small"
                   icon={<PlusOutlined />}
-                  aria-label={t('vendors.addProduct')}
-                  title={t('vendors.addProduct')}
+                  aria-label={t('portal.vendors.addProduct')}
+                  title={t('portal.vendors.addProduct')}
                   onClick={() => onAddProduct(vendor.id)}
                 />
                 <Button
                   type="text"
                   size="small"
                   icon={<EditOutlined />}
-                  aria-label={t('vendors.editVendor', { name: vendor.name })}
-                  title={t('vendors.editVendor', { name: vendor.name })}
+                  aria-label={t('portal.vendors.editVendor', { name: vendor.name })}
+                  title={t('portal.vendors.editVendor', { name: vendor.name })}
                   onClick={() => onEditVendor(vendor)}
                 />
                 <Button
                   type="text"
                   size="small"
                   icon={<ApiOutlined />}
-                  aria-label={t('vendors.configureIntegration', { name: vendor.name })}
-                  title={t('vendors.configureIntegration', { name: vendor.name })}
+                  aria-label={t('portal.vendors.configureIntegration', { name: vendor.name })}
+                  title={t('portal.vendors.configureIntegration', { name: vendor.name })}
                   onClick={() => onOpenIntegration(vendor)}
                 />
               </>
@@ -145,19 +145,20 @@ export function VendorWorkspaceVendorsTabPage({
   )
 
   const statusOptions = [
-    { value: 'ACTIVE', label: t('vendors.status.ACTIVE') },
-    { value: 'INACTIVE', label: t('vendors.status.INACTIVE') },
+    { value: 'ACTIVE', label: t('portal.vendors.status.ACTIVE') },
+    { value: 'INACTIVE', label: t('portal.vendors.status.INACTIVE') },
   ]
 
   return (
     <>
       <FilterBar
-        label={t('vendors.filters.label')}
+        bordered={false}
+        label={t('portal.vendors.filters.label')}
         contentClassName={styles.filters}
         actions={
           canWrite ? (
             <Button type="primary" icon={<PlusOutlined />} onClick={onAddVendor}>
-              {t('vendors.addVendor')}
+              {t('portal.vendors.addVendor')}
             </Button>
           ) : null
         }
@@ -167,12 +168,12 @@ export function VendorWorkspaceVendorsTabPage({
           onSearchChange={(value) => {
             onSearchVendorsChange(value)
           }}
-          placeholder={t('vendors.searchVendors')}
+          placeholder={t('portal.vendors.searchVendors')}
         />
         <Select
           allowClear
           options={statusOptions}
-          placeholder={t('vendors.filters.status')}
+          placeholder={t('portal.vendors.filters.status')}
           value={vendorStatus}
           onChange={(value) => onVendorStatusChange(value as RecordStatus | undefined)}
         />
@@ -181,13 +182,16 @@ export function VendorWorkspaceVendorsTabPage({
         rowKey="id"
         columns={vendorColumns}
         className={styles.dataTable}
+        fillViewport
         scroll={{ x: 1200 }}
         dataSource={vendors}
         loading={vendorsLoading}
         error={
           vendorsError ? (
             <Typography.Text type="danger">
-              {vendorsError instanceof Error ? vendorsError.message : t('vendors.unavailable')}
+              {vendorsError instanceof Error
+                ? vendorsError.message
+                : t('portal.vendors.unavailable')}
             </Typography.Text>
           ) : undefined
         }

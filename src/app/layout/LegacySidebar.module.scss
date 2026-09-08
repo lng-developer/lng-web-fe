@@ -1,0 +1,228 @@
+.sidebar {
+  position: fixed;
+  z-index: 101;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 254px;
+  overflow: visible;
+  border-right: 1px solid #f1f5f9;
+  background: #fff;
+  transition: width 0.3s;
+}
+.collapsed {
+  width: 52px;
+}
+.identity {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 7.5px;
+  border-bottom: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  color: #000;
+  background: #fff;
+}
+.logo {
+  display: flex;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+}
+.logo :global(.ant-image),
+.logo img {
+  width: 35px !important;
+  height: 35px;
+  object-fit: contain;
+}
+.account {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: 17px;
+}
+.account span {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account button {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  color: #52657d;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+}
+.star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: #ffce3a;
+  font-size: 22px;
+}
+.menuLayout {
+  display: grid !important;
+  grid-template-columns: 52px 202px;
+  height: calc(100dvh - 60px);
+  background: #fff !important;
+  overflow: hidden;
+}
+.collapsed .menuLayout {
+  grid-template-columns: 52px 0;
+}
+.rail {
+  grid-column: 1;
+  width: 52px;
+  padding-top: 4px;
+  border-right: 1px solid #eee;
+  background: #fff;
+  overflow: hidden;
+}
+.railMenu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 52px;
+  height: 100%;
+  padding: 0;
+  background: #fff;
+}
+.railSpacer {
+  flex: 1 1 auto;
+  min-height: 12px;
+}
+.railButton,
+.railButtonActive {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  margin: 0 0 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: #000;
+  background: transparent;
+  cursor: pointer;
+}
+.railButtonActive,
+.detailMenu :global(.ant-menu-item-selected) {
+  color: #000 !important;
+  background: #f1f5f9 !important;
+}
+.railButton svg,
+.railButtonActive svg,
+.detailMenu :global(.ant-menu-item svg),
+.detailMenu :global(.ant-menu-submenu-title svg) {
+  width: 20px;
+  height: 20px;
+}
+.railIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detailSider {
+  grid-column: 2;
+  min-width: 202px !important;
+  max-width: 202px !important;
+  background: #fff !important;
+  overflow-y: auto;
+  transition: width 0.3s !important;
+}
+.collapsed .detailSider {
+  min-width: 0 !important;
+  max-width: 0 !important;
+}
+.detailMenu {
+  height: 100%;
+  padding-top: 4px;
+  border-inline-end: 0 !important;
+  background: #fff !important;
+  color: #000;
+}
+.detailMenu :global(.ant-menu-item),
+.detailMenu :global(.ant-menu-submenu-title) {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: calc(100% - 8px) !important;
+  height: 40px;
+  margin: 0 4px 4px !important;
+  padding-left: 8px !important;
+  border-radius: 6px;
+  color: #000 !important;
+  font-weight: 500;
+  transform: translateX(4px);
+}
+.detailMenu :global(.ant-menu-item:hover),
+.detailMenu :global(.ant-menu-submenu-title:hover) {
+  color: #000 !important;
+  background: #f1f5f9 !important;
+}
+.detailMenu :global(.ant-menu-submenu .ant-menu) {
+  background: #fff !important;
+}
+.detailMenu :global(.ant-menu-submenu .ant-menu-item) {
+  padding-left: 22px !important;
+}
+.detailMenu :global(.ant-menu-item a) {
+  display: block;
+  color: inherit;
+}
+.amazonMark {
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+}
+.etsyMark {
+  font-family: Georgia, serif;
+  font-size: 25px;
+  line-height: 1;
+}
+.collapseButton {
+  position: absolute;
+  right: -16px;
+  bottom: 120px;
+  z-index: 102;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d3d9e1;
+  border-radius: 50%;
+  color: #000;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+  cursor: pointer;
+}
+.popoverMenu {
+  width: auto;
+  padding: 0;
+}
+.popoverTitle {
+  padding: 4px;
+  font-weight: 600;
+}
+.accountMenu {
+  width: 150px;
+  padding: 10px 16px;
+  border: 1px solid #d3d9e1;
+  border-radius: 8px;
+  color: #52657d;
+  background: #fff;
+}

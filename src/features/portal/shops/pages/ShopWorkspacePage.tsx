@@ -5,31 +5,58 @@ import { Button } from 'antd'
 import { FeedbackAlert } from '@/shared/ui'
 
 import { type CreateShopInput } from '../api/shopApi'
+import { ShopEditorModal } from './components/ShopEditorModal'
 import { ShopWorkspaceMetrics } from './components/ShopWorkspaceMetrics'
 import { ShopWorkspaceTable } from './components/ShopWorkspaceTable'
-import { ShopEditorModal } from './ShopEditorModal'
 import styles from './ShopWorkspacePage.module.scss'
 import { useShopWorkspacePage } from './useShopWorkspacePage'
 
 export function ShopWorkspacePage() {
   const { t } = useTranslation()
   const { value, handle } = useShopWorkspacePage()
+  const {
+    retry,
+    clearFilters,
+    create,
+    createOpen,
+    editShop,
+    pageChange,
+    searchChange,
+    statusChange,
+    editorClose,
+    updateStatus,
+  } = handle
+  const {
+    account,
+    activeCount,
+    canCreate,
+    totalShops,
+    inactiveCount,
+    canWriteAnyShop,
+    shops,
+    canWriteEditingShop,
+    editingShop,
+    modalOpen,
+    modalSaving,
+    params,
+    search,
+  } = value
 
   return (
     <section className={styles.page}>
       <ShopWorkspaceMetrics
-        totalShops={value.totalShops}
-        activeCount={value.activeCount}
-        inactiveCount={value.inactiveCount}
-        loading={value.shops.isLoading}
+        totalShops={totalShops}
+        activeCount={activeCount}
+        inactiveCount={inactiveCount}
+        loading={shops.isLoading}
       />
 
-      {value.shops.error ? (
+      {shops.error ? (
         <FeedbackAlert
           type="error"
           title={t('portal.shops.unavailable')}
           action={
-            <Button type="link" icon={<ReloadOutlined aria-hidden />} onClick={handle.retry}>
+            <Button type="link" icon={<ReloadOutlined aria-hidden />} onClick={retry}>
               {t('portal.shops.retry')}
             </Button>
           }
@@ -37,20 +64,20 @@ export function ShopWorkspacePage() {
       ) : null}
 
       <ShopWorkspaceTable
-        account={value.account}
-        canWriteAnyShop={value.canWriteAnyShop}
-        data={value.shops.data}
-        loading={value.shops.isLoading}
-        params={value.params}
-        search={value.search}
-        onClearFilters={handle.clearFilters}
-        onEditShop={handle.editShop}
-        onPageChange={handle.pageChange}
-        onSearchChange={handle.searchChange}
-        onStatusChange={handle.statusChange}
+        account={account}
+        canWriteAnyShop={canWriteAnyShop}
+        data={shops.data}
+        loading={shops.isLoading}
+        params={params}
+        search={search}
+        onClearFilters={clearFilters}
+        onEditShop={editShop}
+        onPageChange={pageChange}
+        onSearchChange={searchChange}
+        onStatusChange={statusChange}
         actions={
-          value.canCreate ? (
-            <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={handle.createOpen}>
+          canCreate ? (
+            <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={createOpen}>
               {t('portal.shops.createAction')}
             </Button>
           ) : null
@@ -58,13 +85,13 @@ export function ShopWorkspacePage() {
       />
 
       <ShopEditorModal
-        canWrite={value.canWriteEditingShop}
-        open={value.modalOpen}
-        saving={value.modalSaving}
-        shop={value.editingShop}
-        onClose={handle.editorClose}
-        onCreate={(input: CreateShopInput) => handle.create(input)}
-        onUpdateStatus={handle.updateStatus}
+        canWrite={canWriteEditingShop}
+        open={modalOpen}
+        saving={modalSaving}
+        shop={editingShop}
+        onClose={editorClose}
+        onCreate={(input: CreateShopInput) => create(input)}
+        onUpdateStatus={updateStatus}
       />
     </section>
   )

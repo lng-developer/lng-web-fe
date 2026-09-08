@@ -17,7 +17,7 @@ import {
 } from 'recharts'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import { EmployeeAvatar, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -130,7 +130,7 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
   }
 
   const pagination = {
-    defaultPageSize: 20,
+    defaultPageSize: DEFAULT_PAGE_SIZE,
     pageSizeOptions: PAGE_SIZE_OPTIONS,
     hideOnSinglePage: false,
     showSizeChanger: true,

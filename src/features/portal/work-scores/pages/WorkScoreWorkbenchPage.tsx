@@ -18,6 +18,7 @@ import { Button, Form, Input, InputNumber, Select, Space, Table, Tooltip, Typogr
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { ApiError } from '@/shared/api/apiError'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
@@ -52,8 +53,6 @@ import {
 import { WorkScoreAdjustmentModal } from './WorkScoreAdjustmentModal'
 import { WorkScoreDetailDrawer } from './WorkScoreDetailDrawer'
 import styles from './WorkScoreWorkbenchPage.module.scss'
-
-const PAGE_SIZE = 20
 
 const RULE_TASK_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE']
 const RULE_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
@@ -126,7 +125,7 @@ export function WorkScoreWorkbenchPage({
   const params = useMemo(
     () => ({
       page,
-      limit: PAGE_SIZE,
+      limit: DEFAULT_PAGE_SIZE,
       search: deferredSearch || undefined,
       sourceType,
       scoreStatus,
@@ -662,7 +661,7 @@ export function WorkScoreWorkbenchPage({
           onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
           pagination={{
             current: page,
-            pageSize: PAGE_SIZE,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: rows.data?.total,
             onChange: setPage,
           }}

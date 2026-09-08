@@ -6,7 +6,7 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import { VendorWorkspaceProductsTabPage } from '@/features/portal/vendors/pages/VendorWorkspaceProductsTabPage'
 
 describe('VendorWorkspaceProductsTabPage', () => {
-  it('renders vendor code in its dedicated column', () => {
+  it('renders the vendor identity in the vendor column', () => {
     render(
       <MemoryRouter>
         <AppProviders>
@@ -61,7 +61,6 @@ describe('VendorWorkspaceProductsTabPage', () => {
     )
 
     expect(screen.getByRole('columnheader', { name: 'Vendor' })).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Vendor code' })).toBeVisible()
-    expect(screen.getAllByText('MERCHIZE')).toHaveLength(2)
+    expect(screen.getByText('MERCHIZE')).toBeVisible()
   })
 })

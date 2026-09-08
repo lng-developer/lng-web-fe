@@ -134,7 +134,10 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
                 allowClear
                 placeholder={t('portal.catalog.master.searchProductTypes')}
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
                 onSearch={() => setPage(1)}
               />
               {canManage ? (

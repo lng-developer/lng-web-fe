@@ -2,8 +2,10 @@ import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'reac
 import type { TableProps } from 'antd'
 import { Empty, Table } from 'antd'
 
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import styles from '@/shared/ui/sharedUi.module.scss'
 
+import { getFullRowsHeight } from './coreDataTableLayout'
 import { CommonTablePagination } from './TablePagination'
 
 export type CoreDataTableProps<RecordType extends object> = Pick<
@@ -31,6 +33,9 @@ export type CoreDataTableProps<RecordType extends object> = Pick<
 
   // Khoảng cách muốn chừa ở đáy
   readonly viewportBottomGap?: number
+
+  // Đẩy thanh pagination xuống đáy mà không thay đổi chiều cao phần bảng
+  readonly paginationAtBottom?: boolean
 }
 
 export function CoreDataTable<RecordType extends object>({
@@ -39,6 +44,7 @@ export function CoreDataTable<RecordType extends object>({
   error,
   fillViewport = false,
   viewportBottomGap = 0,
+  paginationAtBottom = true,
   ...tableProps
 }: CoreDataTableProps<RecordType>) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -49,6 +55,7 @@ export function CoreDataTable<RecordType extends object>({
   const tableClassName = [
     styles.dataTable,
     fillViewport ? styles.dataTableFillViewport : undefined,
+    fillViewport && paginationAtBottom ? styles.dataTablePaginationAtBottom : undefined,
     tableProps.className,
   ]
     .filter(Boolean)
@@ -62,7 +69,7 @@ export function CoreDataTable<RecordType extends object>({
   const [internalPage, setInternalPage] = useState(customPagination.defaultCurrent ?? 1)
 
   const [internalPageSize, setInternalPageSize] = useState(
-    customPagination.pageSize ?? customPagination.defaultPageSize ?? 20,
+    customPagination.pageSize ?? customPagination.defaultPageSize ?? DEFAULT_PAGE_SIZE,
   )
 
   const shouldPageClientSide = paginationEnabled && !customPagination.onChange
@@ -77,6 +84,7 @@ export function CoreDataTable<RecordType extends object>({
   }, [effectiveCurrent])
 
   const dataSource = tableProps.dataSource
+  const dataSourceLength = Array.isArray(dataSource) ? dataSource.length : 0
 
   const pagedDataSource = useMemo(() => {
     if (!shouldPageClientSide || !Array.isArray(dataSource)) {
@@ -115,6 +123,9 @@ export function CoreDataTable<RecordType extends object>({
     const calculateHeight = () => {
       const container = containerRef.current
       const tableHeader = container?.querySelector<HTMLElement>('.ant-table-thead')
+      const firstDataRow = container?.querySelector<HTMLElement>(
+        '.ant-table-tbody > tr:not(.ant-table-measure-row)',
+      )
 
       if (!container || !tableHeader) return
 
@@ -131,7 +142,10 @@ export function CoreDataTable<RecordType extends object>({
       const availableHeight =
         window.innerHeight - headerBottom - paginationHeight - mainPaddingBottom - viewportBottomGap
 
-      const nextHeight = Math.max(120, Math.floor(availableHeight))
+      const nextHeight = getFullRowsHeight(
+        Math.max(120, Math.floor(availableHeight)),
+        firstDataRow?.getBoundingClientRect().height,
+      )
 
       setViewportScrollY((current) => (current === nextHeight ? current : nextHeight))
     }
@@ -143,6 +157,9 @@ export function CoreDataTable<RecordType extends object>({
     if (paginationRef.current) {
       resizeObserver.observe(paginationRef.current)
     }
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
 
     window.addEventListener('resize', calculateHeight)
 
@@ -151,7 +168,7 @@ export function CoreDataTable<RecordType extends object>({
       resizeObserver.disconnect()
       window.removeEventListener('resize', calculateHeight)
     }
-  }, [fillViewport, viewportBottomGap])
+  }, [dataSourceLength, fillViewport, viewportBottomGap])
 
   const scroll = {
     y: fillViewport ? (viewportScrollY ?? 'calc(100vh - 360px)') : 'calc(100vh - 360px)',

@@ -1,0 +1,36 @@
+.workspace :global(.ant-tabs-nav) {
+  flex: 0 0 auto;
+  margin-bottom: 12px;
+}
+
+.workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.workspace :global(.ant-tabs-content-holder),
+.workspace :global(.ant-tabs-content),
+.workspace :global(.ant-tabs-tabpane) {
+  min-height: 0;
+}
+
+.workspace :global(.ant-tabs-content-holder) {
+  flex: 1;
+  overflow: hidden;
+}
+
+.workspace :global(.ant-tabs-content),
+.workspace :global(.ant-tabs-tabpane-active) {
+  height: 100%;
+}
+
+.workspace :global(.ant-tabs-tabpane-active) {
+  overflow: auto;
+}
+
+.listingsWorkspace :global(.ant-tabs-tabpane-active) {
+  overflow: hidden;
+}

@@ -4,16 +4,10 @@ import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons'
 import type { TablePaginationConfig } from 'antd'
 import { Button, InputNumber, Pagination, Select } from 'antd'
 
+import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import styles from '@/shared/ui/sharedUi.module.scss'
 
-const COMMON_TABLE_PAGINATION = {
-  defaultPageSize: 20,
-  pageSizeOptions: ['20', '50', '100'],
-  hideOnSinglePage: false,
-  showSizeChanger: true,
-  showQuickJumper: true,
-  responsive: true,
-} satisfies TablePaginationConfig
+const COMMON_TABLE_PAGINATION = DEFAULT_TABLE_PAGINATION satisfies TablePaginationConfig
 
 export function CommonTablePagination({ pagination }: { pagination: TablePaginationConfig }) {
   const { t } = useTranslation()

@@ -209,7 +209,7 @@ export function MappingWorkbenchPage({
   }, [batch, modal, t])
 
   return (
-    <section className={styles.page}>
+    <section className={styles.workbenchPage}>
       {/* ── Context Filter Bar ── */}
       <MappingContextBar
         loading={shops.isLoading}

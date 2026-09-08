@@ -1,9 +1,63 @@
-.page {
+.workspacePage {
   display: flex;
+  height: 100%;
   min-width: 0;
-  min-height: calc(100vh - var(--app-header-height, 64px));
+  min-height: 0;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.tabs :global(.ant-tabs-nav) {
+  flex: 0 0 auto;
+}
+
+.tabs :global(.ant-tabs-content-holder),
+.tabs :global(.ant-tabs-content),
+.tabs :global(.ant-tabs-tabpane-active) {
+  min-height: 0;
+}
+
+.tabs :global(.ant-tabs-content-holder) {
+  flex: 1 1 auto;
+}
+
+.tabs :global(.ant-tabs-content),
+.tabs :global(.ant-tabs-tabpane-active) {
+  height: 100%;
+}
+
+.workbenchTabs :global(.ant-tabs-tabpane-active) {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.workbenchTabs :global(.ant-tabs-content-holder),
+.workbenchTabs :global(.ant-tabs-content) {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.workbenchPage {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
   overflow: hidden;
 }
 
@@ -86,10 +140,10 @@
 /* ── Workspace split layout ───────────────────────────── */
 .workspace {
   display: grid;
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
   min-height: 0;
-  height: calc(100vh - 270px);
+  height: calc(100dvh - 328px);
   grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
@@ -112,6 +166,12 @@
   display: flex;
   flex-direction: column;
   padding: 12px;
+}
+
+.queuePanel {
+  min-height: 0;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 
 /* ── Queue item cards ─────────────────────────────────── */
@@ -211,10 +271,12 @@
 }
 
 .queueList {
-  flex: 1;
+  flex: 1 1 0;
+  height: 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding-right: 2px;
+  scrollbar-gutter: stable;
 }
 
 .queuePanel {

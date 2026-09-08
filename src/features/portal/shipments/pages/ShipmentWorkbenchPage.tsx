@@ -17,6 +17,7 @@ import {
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   DateRangePicker,
@@ -50,8 +51,6 @@ const STATUSES: ShipmentStatus[] = [
   'RETURNED',
   'CANCELLED',
 ]
-const DEFAULT_PAGE_SIZE = 20
-
 function tone(status: ShipmentStatus) {
   if (status === 'DELIVERED') return 'operational'
   if (status === 'SHIPPED') return 'processing'

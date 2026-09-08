@@ -47,7 +47,7 @@ export const MappingWorkspacePage = () => {
   )
 
   return (
-    <div className={styles.page}>
+    <div className={styles.workspacePage}>
       {/* ── Summary Metric Cards ── */}
       <div className={styles.summaryGrid}>
         <MetricCard
@@ -83,6 +83,9 @@ export const MappingWorkspacePage = () => {
       {/* ── Tabs ── */}
       <UiTabs
         activeKey={activeTab}
+        className={[styles.tabs, activeTab === WORKBENCH ? styles.workbenchTabs : '']
+          .filter(Boolean)
+          .join(' ')}
         destroyOnHidden={false}
         items={tabItems}
         onChange={(tab) => {
