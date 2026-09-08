@@ -39,3 +39,9 @@ This repo is the frontend for the LNG Web POD FBM system.
 npm run lint
 npm run build
 ```
+
+## Agent skills
+
+### Domain docs
+
+This is a single-context repository. See `docs/agents/domain.md`.
