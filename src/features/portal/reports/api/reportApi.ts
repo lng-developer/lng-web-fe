@@ -89,6 +89,7 @@ export type ChannelPerformance = {
 
 export type SellerDailyProfit = SellerPerformance & {
   date: string
+  orderCount: number
   totalCostAmount: number | null
   additionalFulfillmentCostAmount: number | null
   marketplaceFeeAmount: number

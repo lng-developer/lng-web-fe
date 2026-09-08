@@ -212,6 +212,7 @@ describe('ReportWorkspacePage', () => {
         sellerName: 'Alex',
         currency: 'USD',
         itemCount: 1,
+        orderCount: 3,
         revenueAmount: 10000,
         baseCostAmount: 4000,
         totalCostAmount: 4500,
@@ -254,6 +255,10 @@ describe('ReportWorkspacePage', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText('Tax')).not.toBeInTheDocument()
     expect(screen.getByText('Tax is excluded from revenue and P&L.')).toBeInTheDocument()
+    const dailyTable = screen.getByText('Product cost').closest('table')
+    expect(dailyTable).not.toBeNull()
+    expect(within(dailyTable as HTMLTableElement).getByText('Orders')).toBeInTheDocument()
+    expect(within(dailyTable as HTMLTableElement).getAllByText('3', { exact: true })).toHaveLength(2)
     expect(
       screen.getByText('Net profit = Gross profit − Operating cost − Ads spend'),
     ).toBeInTheDocument()

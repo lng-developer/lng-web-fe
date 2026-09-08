@@ -303,6 +303,7 @@ export function ReportWorkspacePage() {
 
   const sellerDailySections = useMemo(() => {
     const metrics: Array<{ key: keyof SellerDailyProfit; label: string }> = [
+      { key: 'orderCount', label: t('reports.columns.orders') },
       { key: 'revenueAmount', label: t('reports.columns.revenue') },
       { key: 'baseCostAmount', label: t('reports.columns.baseCost') },
       { key: 'additionalFulfillmentCostAmount', label: t('reports.columns.fulfillmentCost') },
@@ -335,6 +336,7 @@ export function ReportWorkspacePage() {
               dates.map((date) => {
                 const row = sellerRows.find((item) => item.date === date)
                 const value = row?.[key]
+                if (key === 'orderCount') return [date, Number(value || 0)]
                 return [date, value === null || value === undefined ? null : Number(value)]
               }),
             )
@@ -365,6 +367,7 @@ export function ReportWorkspacePage() {
       {sellerDailySections.map(({ currency, dates, matrixRows }) => {
         const renderAmount = (amount: number | null, row: DailyMatrixRow) => {
           if (amount === null) return '—'
+          if (row.metricKey === 'orderCount') return <span>{amount}</span>
           const className =
             row.metricKey === 'revenueAmount'
               ? styles.dailyMoneyRevenue
