@@ -26,6 +26,7 @@ export type FinanceSnapshot = {
   cost: {
     baseCostAmount: number | null
     totalCostAmount: number | null
+    costBasis?: string | null
     costLines: Array<{ code: string; label: string | null; amount: number }>
     costStatus: 'PRESENT' | 'MISSING'
     missingCostReason: string | null
@@ -141,23 +142,37 @@ export type ImportBatch = {
   unlinkedRows: number
   errorCount: number
   errors: Array<{ row?: number; field?: string; message?: string; code?: string }>
-  recalculationStatus?: string
-  recalculationTotal?: number
-  recalculationCompleted?: number
-  recalculationFailed?: number
+  recalculationStatus: 'NOT_REQUIRED' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL_FAILED'
+  recalculationTotal: number
+  recalculationCompleted: number
+  recalculationFailed: number
+  recalculationErrors: Array<{ orderItemId?: string | null; message?: string }>
   finishedAt?: string | null
   createdAt: string
 }
 export type Settlement = {
   id: string
-  settlementId: string
+  settlementId: string | null
+  shopId: string
+  salesChannelCode: string
+  marketplaceCode: string
   currency: string
   periodStartAt?: string | null
   periodEndAt?: string | null
   depositAt?: string | null
-  totalAmount?: number | null
+  totalAmount: number
+  grossSalesAmount?: number | null
+  refundAmount?: number | null
+  feeAmount?: number | null
+  advertisingCostAmount?: number | null
   netSettlementAmount?: number | null
+  lineCount?: number
+  sourceRef?: string | null
+  importBatchId?: string | null
   ledgerSummary: {
+    inflowAmount: number
+    outflowAmount: number
+    netAmount: number
     payoutAmount: number
     ledgerNetAmount: number
     cashVarianceAmount: number
@@ -197,6 +212,30 @@ export type AdsShopMappingInput = {
   active?: boolean
 }
 export type ImportedFinanceData = Record<string, unknown> & { id: string }
+export type SettlementSummary = Settlement
+export type SettlementLedgerLine = ImportedFinanceData & {
+  settlementId: string | null
+  orderId: string | null
+  orderItemId: string | null
+  externalOrderId: string | null
+  externalItemId: string | null
+  sku: string | null
+  transactionType: string | null
+  amountType: string | null
+  amountDescription: string | null
+  amount: number
+  currency: string
+  quantityPurchased: number | null
+  postedAt: string | null
+}
+export type SettlementDetail = {
+  settlement: SettlementSummary
+  ledger: {
+    items: SettlementLedgerLine[]
+    pagination: { total: number; page: number; limit: number }
+    summary: Pick<Settlement['ledgerSummary'], 'inflowAmount' | 'outflowAmount' | 'netAmount' | 'lineCount' | 'linkedCount' | 'unlinkedCount'>
+  }
+}
 export type FinanceImportInput = {
   kind: 'transactions' | 'settlements' | 'ads'
   file: File
@@ -224,6 +263,11 @@ export async function listFinanceSnapshots(query: FinanceParams) {
     await apiClient.get('/api/finance/snapshots', { params: params(query) }),
   )
   return normalizePagination(data, query)
+}
+export async function getSettlement(id: string, query: Record<string, unknown> = {}) {
+  return unwrap<SettlementDetail>(
+    await apiClient.get(`/api/finance/settlements/${id}`, { params: params(query) }),
+  )
 }
 export async function exportFinanceSnapshotsCsv(query: FinanceParams) {
   const response = await apiClient.get('/api/finance/snapshots/export.csv', {

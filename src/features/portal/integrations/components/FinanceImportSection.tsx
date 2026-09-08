@@ -1,18 +1,23 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TableColumnsType } from 'antd'
-import { Alert, Select } from 'antd'
+import { Alert, Button, Drawer, Progress, Select, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { ImportBatch } from '@/features/portal/finance/api/financeApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { DateRangePicker, FilterBar, SectionCard, StatusTag } from '@/shared/ui'
 
+import { canWriteFinanceForShop } from '../auth/integrationAccess'
 import {
   ADS_IMPORT_STATUSES,
   type FinanceImportSourceType,
+  useReprocessFinanceImportMutation,
   useFinanceImportBatches,
+  useImportedFinanceData,
 } from '../hooks/useFinanceImports'
+import { useFinanceImportPolling } from '../hooks/useFinanceImportPolling'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20
@@ -26,6 +31,7 @@ function statusTone(status: string) {
 }
 
 export interface FinanceImportSectionProps {
+  readonly account: CurrentAccount
   readonly title: string
   readonly permissionHint: string
   readonly sourceType: FinanceImportSourceType
@@ -37,6 +43,7 @@ export interface FinanceImportSectionProps {
 }
 
 export function FinanceImportSection({
+  account,
   title,
   permissionHint,
   sourceType,
@@ -51,6 +58,7 @@ export function FinanceImportSection({
   const [shopId, setShopId] = useState<string>()
   const [status, setStatus] = useState<string>()
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [selectedBatch, setSelectedBatch] = useState<ImportBatch>()
 
   const imports = useFinanceImportBatches({
     sourceType,
@@ -62,6 +70,10 @@ export function FinanceImportSection({
     dateTo: dates.dateTo,
     enabled: isActiveTab && canRead,
   })
+  const selectedBatchQuery = useFinanceImportPolling(selectedBatch?.id, selectedBatch)
+  const currentBatch = selectedBatchQuery.data ?? selectedBatch
+  const importedData = useImportedFinanceData(sourceType, currentBatch?.id, Boolean(canRead))
+  const reprocess = useReprocessFinanceImportMutation(() => setSelectedBatch(undefined))
 
   const resetPage = () => setPage(1)
 
@@ -96,6 +108,13 @@ export function FinanceImportSection({
         dataIndex: 'errorCount',
       },
       {
+        title: 'Profit recalculation',
+        render: (_, batch) =>
+          batch.recalculationTotal > 0
+            ? `${batch.recalculationStatus} ${batch.recalculationCompleted}/${batch.recalculationTotal} (${batch.recalculationFailed} failed)`
+            : 'Not required',
+      },
+      {
         title: t('portal.integrations.ads.file', { defaultValue: 'File' }),
         dataIndex: 'originalFilename',
         render: (value: string) => value || '-',
@@ -103,6 +122,37 @@ export function FinanceImportSection({
     ],
     [shopNames, t],
   )
+
+  const detailColumns = useMemo(() => {
+    const amount = (value: unknown, currency = 'USD') => {
+      const number = Number(value)
+      return Number.isFinite(number) ? `${(number / 100).toFixed(2)} ${currency}` : '-'
+    }
+    const date = (value: unknown) => (value ? new Date(String(value)).toLocaleString() : '-')
+    if (sourceType === 'TRANSACTIONS') {
+      return [
+        { title: 'Posted', dataIndex: 'postedAt', render: date },
+        { title: 'Type', dataIndex: 'transactionType' },
+        { title: 'Status', dataIndex: 'transactionStatus' },
+        { title: 'Order ID', dataIndex: 'externalOrderId' },
+        { title: 'Amount', render: (_: unknown, row: Record<string, unknown>) => amount(row.amount, String(row.currency || 'USD')) },
+      ]
+    }
+    if (sourceType === 'SETTLEMENTS') {
+      return [
+        { title: 'Posted', dataIndex: 'postedAt', render: date },
+        { title: 'Type', dataIndex: 'transactionType' },
+        { title: 'Order ID', dataIndex: 'externalOrderId' },
+        { title: 'Amount type', dataIndex: 'amountType' },
+        { title: 'Amount', render: (_: unknown, row: Record<string, unknown>) => amount(row.amount, String(row.currency || 'USD')) },
+      ]
+    }
+    return [
+      { title: 'Date', dataIndex: 'reportDate', render: date },
+      { title: 'Campaign', dataIndex: 'campaignName' },
+      { title: 'Spend', render: (_: unknown, row: Record<string, unknown>) => amount(row.spendAmount, String(row.currency || 'USD')) },
+    ]
+  }, [sourceType])
 
   return (
     <SectionCard title={title}>
@@ -169,10 +219,62 @@ export function FinanceImportSection({
               />
             </FilterBar>
           }
+          onRow={(batch) => ({ onClick: () => setSelectedBatch(batch) })}
         />
       ) : (
         <Alert type="info" showIcon message={permissionHint} />
       )}
+      <Drawer
+        open={Boolean(selectedBatch)}
+        title={currentBatch?.originalFilename || title}
+        size="large"
+        onClose={() => setSelectedBatch(undefined)}
+      >
+        {currentBatch ? (
+          <Space orientation="vertical" size={8} style={{ width: '100%' }}>
+            <Typography.Text type="secondary">
+              {`${currentBatch.processedRows} processed · ${currentBatch.validRows} valid · ${currentBatch.errorCount} errors`}
+            </Typography.Text>
+            <Space wrap>
+              <StatusTag status={statusTone(currentBatch.status)}>{currentBatch.status}</StatusTag>
+              <Typography.Text>
+                {currentBatch.recalculationTotal > 0
+                  ? `Profit recalculation: ${currentBatch.recalculationStatus} (${currentBatch.recalculationCompleted}/${currentBatch.recalculationTotal}; ${currentBatch.recalculationFailed} failed)`
+                  : 'Profit recalculation: not required'}
+              </Typography.Text>
+            </Space>
+            {currentBatch.recalculationTotal > 0 ? (
+              <Progress
+                percent={Math.round(
+                  ((currentBatch.recalculationCompleted + currentBatch.recalculationFailed) /
+                    currentBatch.recalculationTotal) *
+                    100,
+                )}
+                status={currentBatch.recalculationFailed > 0 ? 'exception' : undefined}
+              />
+            ) : null}
+            {canWriteFinanceForShop(account, currentBatch.shopId ?? null) &&
+            (['FAILED', 'PARTIAL_FAILED'].includes(currentBatch.status) ||
+              currentBatch.recalculationStatus === 'PARTIAL_FAILED') ? (
+              <Button
+                loading={reprocess.isPending}
+                onClick={() => reprocess.mutate(currentBatch.id)}
+              >
+                Reprocess
+              </Button>
+            ) : null}
+          </Space>
+        ) : null}
+        <Table
+          rowKey="id"
+          size="small"
+          loading={importedData.isLoading}
+          dataSource={importedData.data?.items ?? []}
+          columns={detailColumns}
+          pagination={false}
+          scroll={{ x: 800 }}
+        />
+      </Drawer>
     </SectionCard>
   )
 }

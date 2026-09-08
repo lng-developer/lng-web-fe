@@ -339,6 +339,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/finance/settlements',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/finance/pages/SettlementWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { SettlementWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['FINANCE:READ', 'FINANCE:WRITE']}>
+                <SettlementWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/reports',
         lazy: () =>
           Promise.all([

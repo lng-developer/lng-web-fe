@@ -12,20 +12,24 @@ export type IntegrationWorkbenchTab = 'orders' | 'extension' | 'finance'
 interface IntegrationWorkbenchTabsProps {
   readonly activeTab: IntegrationWorkbenchTab
   readonly canUpload: boolean
+  readonly canUploadFinance: boolean
   readonly extension: ReactNode
   readonly finance: ReactNode
   readonly imports: ReactNode
   readonly onChange: (tab: IntegrationWorkbenchTab) => void
+  readonly onFinanceUpload: () => void
   readonly onUpload: () => void
 }
 
 export function IntegrationWorkbenchTabs({
   activeTab,
   canUpload,
+  canUploadFinance,
   extension,
   finance,
   imports,
   onChange,
+  onFinanceUpload,
   onUpload,
 }: IntegrationWorkbenchTabsProps) {
   const { t } = useTranslation()
@@ -40,6 +44,12 @@ export function IntegrationWorkbenchTabs({
           <div className={styles.tabsAction}>
             <Button icon={<UploadOutlined aria-hidden />} type="primary" onClick={onUpload}>
               {t('portal.integrations.upload.action', { defaultValue: 'Upload report' })}
+            </Button>
+          </div>
+        ) : activeTab === 'finance' && canUploadFinance ? (
+          <div className={styles.tabsAction}>
+            <Button icon={<UploadOutlined aria-hidden />} type="primary" onClick={onFinanceUpload}>
+              {t('finance.imports.actions.import', { defaultValue: 'Import finance data' })}
             </Button>
           </div>
         ) : null

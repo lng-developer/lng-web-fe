@@ -6,6 +6,7 @@ import type { TabsProps } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import type { ImportBatch } from '@/features/portal/finance/api/financeApi'
 
 vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui')>()
@@ -41,6 +42,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         </tbody>
       </table>
     ),
+    useFeedbackToast: () => vi.fn(),
     UiTabs: ({
       activeKey,
       defaultActiveKey,
@@ -118,8 +120,12 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/finance/api/financeApi')>()
   return {
     ...actual,
+    getFinanceImportBatch: vi.fn(),
+    importFinanceFile: vi.fn(),
     listAdsUnassignedRows: vi.fn(),
     listImportBatches: vi.fn(),
+    listImportedFinanceData: vi.fn(),
+    reprocessImportBatch: vi.fn(),
     upsertAdsShopMapping: vi.fn(),
   }
 })
@@ -128,7 +134,14 @@ import {
   createExtensionToken,
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
-import { listAdsUnassignedRows, listImportBatches } from '@/features/portal/finance/api/financeApi'
+import {
+  listAdsUnassignedRows,
+  getFinanceImportBatch,
+  importFinanceFile,
+  listImportBatches,
+  listImportedFinanceData,
+  reprocessImportBatch,
+} from '@/features/portal/finance/api/financeApi'
 import {
   getImportJob,
   listExtensionAgents,
@@ -195,7 +208,7 @@ const job = {
   updatedAt: '2026-07-31T00:01:00.000Z',
 }
 
-const adsImportBatch = {
+const adsImportBatch: ImportBatch = {
   id: 'batch-ads-1',
   sourceType: 'ADS',
   originalFilename: 'ads-spend-2026-08-12.csv',
@@ -210,6 +223,11 @@ const adsImportBatch = {
   unlinkedRows: 0,
   errorCount: 0,
   errors: [],
+  recalculationStatus: 'NOT_REQUIRED',
+  recalculationTotal: 0,
+  recalculationCompleted: 0,
+  recalculationFailed: 0,
+  recalculationErrors: [],
   createdAt: '2026-08-12T00:00:00.000Z',
 }
 
@@ -337,6 +355,13 @@ describe('IntegrationWorkbenchPage', () => {
       items: [],
       pagination: { total: 0, page: 1, limit: 100 },
     })
+    vi.mocked(listImportedFinanceData).mockResolvedValue({
+      items: [],
+      pagination: { total: 0, page: 1, limit: 100 },
+    })
+    vi.mocked(getFinanceImportBatch).mockResolvedValue(adsImportBatch)
+    vi.mocked(importFinanceFile).mockResolvedValue({ importBatchId: 'batch-new', status: 'QUEUED' })
+    vi.mocked(reprocessImportBatch).mockResolvedValue({ importBatchId: 'batch-retry' })
   })
 
   it('loads URL-backed filters and renders operational job counts', async () => {
@@ -964,6 +989,110 @@ describe('IntegrationWorkbenchPage', () => {
         expect.objectContaining({
           sourceType: 'TRANSACTIONS',
           salesChannelCode: 'AMAZON',
+          marketplaceCode: 'US',
+        }),
+      ),
+    )
+  })
+
+  it('opens imported transaction records for a selected batch', async () => {
+    vi.mocked(listImportBatches).mockResolvedValue({
+      items: [{
+        ...adsImportBatch,
+        id: 'batch-transactions-1',
+        sourceType: 'TRANSACTIONS',
+        originalFilename: 'transactions-2026-09-06-2026-09-07.csv',
+        marketplaceCode: 'US',
+        processedRows: 2,
+        validRows: 2,
+      }],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+    vi.mocked(listImportedFinanceData).mockResolvedValue({
+      items: [{
+        id: 'ledger-1',
+        postedAt: '2026-09-07T00:00:00.000Z',
+        transactionType: 'Order Payment',
+        transactionStatus: 'Released',
+        externalOrderId: '114-1',
+        amount: -274,
+        currency: 'USD',
+      }],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Transactions' }))
+    fireEvent.click(await screen.findByText('transactions-2026-09-06-2026-09-07.csv'))
+
+    expect(await screen.findByText('Order Payment')).toBeVisible()
+    await waitFor(() => expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
+      importBatchId: 'batch-transactions-1',
+      page: 1,
+      limit: 100,
+    }))
+  })
+
+  it('shows recalculation progress and reprocesses a failed finance batch', async () => {
+    const failedBatch: ImportBatch = {
+      ...adsImportBatch,
+      id: 'batch-transactions-failed',
+      sourceType: 'TRANSACTIONS',
+      originalFilename: 'transactions-failed.csv',
+      status: 'PARTIAL_FAILED',
+      recalculationStatus: 'PARTIAL_FAILED',
+      recalculationTotal: 3,
+      recalculationCompleted: 2,
+      recalculationFailed: 1,
+      recalculationErrors: [{ orderItemId: 'item-3', message: 'snapshot failed' }],
+    }
+    vi.mocked(listImportBatches).mockResolvedValue({
+      items: [failedBatch],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+    vi.mocked(getFinanceImportBatch).mockResolvedValue(failedBatch)
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ', 'FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Transactions' }))
+    fireEvent.click(await screen.findByText('transactions-failed.csv'))
+
+    expect((await screen.findAllByText(/2\/3/)).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText(/1 failed/)).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Reprocess' }))
+
+    await waitFor(() => expect(reprocessImportBatch).toHaveBeenCalledWith('batch-transactions-failed'))
+  })
+
+  it('mounts and submits the finance import modal for finance writers', async () => {
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import finance data' }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toBeInTheDocument()
+    fireEvent.mouseDown(within(dialog).getByLabelText('Shop'))
+    fireEvent.click(await screen.findByText('LNG Amazon US'))
+    fireEvent.change(within(dialog).getByLabelText('Sales channel'), {
+      target: { value: 'amazon' },
+    })
+    fireEvent.change(within(dialog).getByLabelText('Marketplace'), {
+      target: { value: 'amazon_us' },
+    })
+    const file = new File(['order-id,total\n1,10'], 'transactions.csv', { type: 'text/csv' })
+    fireEvent.change(dialog.querySelector('input[type="file"]')!, { target: { files: [file] } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Run import' }))
+
+    await waitFor(() =>
+      expect(importFinanceFile).toHaveBeenCalledWith(
+        'transactions',
+        file,
+        expect.objectContaining({
+          shopId: 'shop-1',
+          salesChannelCode: 'amazon',
+          marketplaceCode: 'amazon_us',
+          dryRun: true,
         }),
       ),
     )
@@ -980,6 +1109,7 @@ describe('IntegrationWorkbenchPage', () => {
         expect.objectContaining({
           sourceType: 'SETTLEMENTS',
           salesChannelCode: 'AMAZON',
+          marketplaceCode: 'US',
         }),
       ),
     )

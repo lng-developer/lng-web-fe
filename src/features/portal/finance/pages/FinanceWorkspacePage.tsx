@@ -250,6 +250,9 @@ export const FinanceWorkspacePage = () => {
             <Button type="link" href="/portal/integrations?tab=finance">
               {t('finance.actions.manageReconciliation')}
             </Button>
+            <Button type="link" href="/portal/finance/settlements">
+              {t('finance.actions.settlements')}
+            </Button>
             <Typography.Text type="secondary">
               {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
             </Typography.Text>

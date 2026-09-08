@@ -46,6 +46,7 @@ export function FinanceImportsTab({
       />
       {activeFinanceTab === 'ads' ? (
         <FinanceImportSection
+          account={account}
           title={t('portal.integrations.ads.title', { defaultValue: 'Amazon Ads imports' })}
           permissionHint={t('portal.integrations.ads.permissionHint', {
             defaultValue: 'Finance read permission is required to view Ads import history.',
@@ -68,6 +69,7 @@ export function FinanceImportsTab({
       ) : null}
       {activeFinanceTab === 'transactions' ? (
         <FinanceImportSection
+          account={account}
           title={t('portal.integrations.transactions.title', {
             defaultValue: 'Amazon Transactions imports',
           })}
@@ -85,6 +87,7 @@ export function FinanceImportsTab({
       ) : null}
       {activeFinanceTab === 'settlements' ? (
         <FinanceImportSection
+          account={account}
           title={t('portal.integrations.settlements.title', {
             defaultValue: 'Amazon Settlements imports',
           })}
