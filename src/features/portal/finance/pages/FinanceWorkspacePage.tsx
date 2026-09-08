@@ -22,6 +22,7 @@ import { FinanceCurrencySummary } from '../components/FinanceCurrencySummary'
 import { formatFinanceMoney } from '../components/financeFormatters'
 import { FinanceItemSnapshotModal } from '../components/FinanceItemSnapshotModal'
 import { FinanceOrderDetailModal } from '../components/FinanceOrderDetailModal'
+import { SettlementCashFlow } from '../components/SettlementCashFlow'
 import { useFinanceMutations } from '../hooks/useFinanceMutations'
 import { useFinanceWorkspace } from '../hooks/useFinanceWorkspace'
 import styles from './FinanceWorkspacePage.module.scss'
@@ -248,6 +249,9 @@ export const FinanceWorkspacePage = () => {
             <Button type="link" href="/portal/integrations?tab=finance">
               {t('finance.actions.manageReconciliation')}
             </Button>
+            <Button type="link" href="/portal/finance/settlements">
+              {t('finance.actions.settlements')}
+            </Button>
             <Typography.Text type="secondary">
               {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
             </Typography.Text>
@@ -353,6 +357,8 @@ export const FinanceWorkspacePage = () => {
           scroll={{ x: 1010 }}
         />
       </SectionCard>
+
+      {globalRead ? <SettlementCashFlow /> : null}
 
       <FinanceOrderDetailModal
         selectedOrder={selected}

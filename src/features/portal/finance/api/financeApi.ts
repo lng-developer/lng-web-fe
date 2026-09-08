@@ -18,6 +18,7 @@ export type FinanceSnapshot = {
     customerPaidAmount: number
     feeAmount: number
     feeSource?: string | null
+    feeConfidence?: string | null
     refundAmount: number
     discountAmount: number
     currency: string
@@ -25,6 +26,7 @@ export type FinanceSnapshot = {
   cost: {
     baseCostAmount: number | null
     totalCostAmount: number | null
+    costBasis?: string | null
     costLines: Array<{ code: string; label: string | null; amount: number }>
     costStatus: 'PRESENT' | 'MISSING'
     missingCostReason: string | null
@@ -40,7 +42,20 @@ export type FinanceSnapshot = {
     totalDeductionAmount: number | null
     profitAmount: number | null
   } | null
+  costRate?: { version: number | null; effectiveFrom: string | null }
   snapshotStatus: 'ESTIMATED' | 'MISSING_COST'
+  profitStatus?: 'ACTUAL' | 'ESTIMATED' | 'INCOMPLETE_COST' | null
+  evidence?: {
+    sourceReferences: Array<{
+      sourceKind: string
+      sourceRef: string | null
+      importBatchId: string | null
+      occurredAt?: string | null
+      settlementId?: string | null
+      category?: string | null
+      externalReference?: string | null
+    }>
+  }
   calculatedAt: string
   calculationHistory: Array<{
     calculatedAt: string
@@ -114,6 +129,8 @@ export type ImportBatch = {
   id: string
   sourceType: string
   originalFilename: string
+  contentHash?: string | null
+  sourceRef?: string | null
   shopId?: string | null
   salesChannelCode?: string | null
   marketplaceCode?: string | null
@@ -124,8 +141,54 @@ export type ImportBatch = {
   skippedRows: number
   unlinkedRows: number
   errorCount: number
-  errors: Array<{ row?: number; message?: string; code?: string }>
+  errors: Array<{ row?: number; field?: string; message?: string; code?: string }>
+  recalculationStatus: 'NOT_REQUIRED' | 'PROCESSING' | 'COMPLETED' | 'PARTIAL_FAILED'
+  recalculationTotal: number
+  recalculationCompleted: number
+  recalculationFailed: number
+  recalculationErrors: Array<{ orderItemId?: string | null; message?: string }>
+  finishedAt?: string | null
   createdAt: string
+}
+export type Settlement = {
+  id: string
+  settlementId: string | null
+  shopId: string
+  salesChannelCode: string
+  marketplaceCode: string
+  currency: string
+  periodStartAt?: string | null
+  periodEndAt?: string | null
+  depositAt?: string | null
+  totalAmount: number
+  grossSalesAmount?: number | null
+  refundAmount?: number | null
+  feeAmount?: number | null
+  advertisingCostAmount?: number | null
+  netSettlementAmount?: number | null
+  lineCount?: number
+  sourceRef?: string | null
+  importBatchId?: string | null
+  ledgerSummary: {
+    inflowAmount: number
+    outflowAmount: number
+    netAmount: number
+    payoutAmount: number
+    ledgerNetAmount: number
+    cashVarianceAmount: number
+    lineCount: number
+    linkedCount: number
+    unlinkedCount?: number
+    linkCoverageBps: number | null
+  }
+}
+export type SettlementPage = Paginated<Settlement> & {
+  summaryByCurrency: Array<{
+    currency: string
+    settlementCount: number
+    totalAmount: number
+    netSettlementAmount: number
+  }>
 }
 export type AdsUnassignedRow = {
   id: string
@@ -149,6 +212,30 @@ export type AdsShopMappingInput = {
   active?: boolean
 }
 export type ImportedFinanceData = Record<string, unknown> & { id: string }
+export type SettlementSummary = Settlement
+export type SettlementLedgerLine = ImportedFinanceData & {
+  settlementId: string | null
+  orderId: string | null
+  orderItemId: string | null
+  externalOrderId: string | null
+  externalItemId: string | null
+  sku: string | null
+  transactionType: string | null
+  amountType: string | null
+  amountDescription: string | null
+  amount: number
+  currency: string
+  quantityPurchased: number | null
+  postedAt: string | null
+}
+export type SettlementDetail = {
+  settlement: SettlementSummary
+  ledger: {
+    items: SettlementLedgerLine[]
+    pagination: { total: number; page: number; limit: number }
+    summary: Pick<Settlement['ledgerSummary'], 'inflowAmount' | 'outflowAmount' | 'netAmount' | 'lineCount' | 'linkedCount' | 'unlinkedCount'>
+  }
+}
 export type FinanceImportInput = {
   kind: 'transactions' | 'settlements' | 'ads'
   file: File
@@ -177,6 +264,11 @@ export async function listFinanceSnapshots(query: FinanceParams) {
   )
   return normalizePagination(data, query)
 }
+export async function getSettlement(id: string, query: Record<string, unknown> = {}) {
+  return unwrap<SettlementDetail>(
+    await apiClient.get(`/api/finance/settlements/${id}`, { params: params(query) }),
+  )
+}
 export async function exportFinanceSnapshotsCsv(query: FinanceParams) {
   const response = await apiClient.get('/api/finance/snapshots/export.csv', {
     params: params({ ...query, page: 1, limit: 5000 }),
@@ -196,6 +288,15 @@ export async function recalculateOrder(orderId: string) {
 export async function listImportBatches(query: Record<string, unknown> = {}) {
   const data = unwrap<Paginated<ImportBatch>>(
     await apiClient.get('/api/finance/import-batches', { params: params(query) }),
+  )
+  return normalizePagination(data, {
+    page: Number(query.page) || 1,
+    limit: Number(query.limit) || 20,
+  })
+}
+export async function listSettlements(query: Record<string, unknown> = {}) {
+  const data = unwrap<SettlementPage>(
+    await apiClient.get('/api/finance/settlements', { params: params(query) }),
   )
   return normalizePagination(data, {
     page: Number(query.page) || 1,

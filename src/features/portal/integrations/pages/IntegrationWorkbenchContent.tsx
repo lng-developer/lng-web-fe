@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { importFinanceFile } from '@/features/portal/finance/api/financeApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { StatusTag, useFeedbackToast } from '@/shared/ui'
 
@@ -21,10 +22,15 @@ import {
 } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
 import { listAllActiveShops } from '../api/loadActiveShops'
-import { canWriteOrdersForShop, canWriteOrdersSomewhere } from '../auth/integrationAccess'
+import {
+  canWriteFinanceForShop,
+  canWriteOrdersForShop,
+  canWriteOrdersSomewhere,
+} from '../auth/integrationAccess'
 import { ExtensionTabContent } from '../components/ExtensionTabContent'
 import { FinanceImportsTab } from '../components/FinanceImportsTab'
 import { ImportUploadModal } from './ImportUploadModal'
+import { FinanceImportModal } from '@/features/portal/finance/pages/FinanceImportModal'
 import { IntegrationImportsWorkbench } from './IntegrationImportsWorkbench'
 import styles from './IntegrationWorkbenchPage.module.scss'
 import { IntegrationWorkbenchTabs } from './IntegrationWorkbenchTabs'
@@ -113,6 +119,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [uploadOpen, setUploadOpen] = useState(false)
+  const [financeUploadOpen, setFinanceUploadOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<IntegrationWorkbenchTab>(() =>
     searchParams.get('tab') === 'finance' ? 'finance' : 'orders',
   )
@@ -169,6 +176,11 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
     [account, shops.data?.items],
   )
 
+  const financeWritableShops = useMemo(
+    () => (shops.data?.items ?? []).filter((shop) => canWriteFinanceForShop(account, shop.id)),
+    [account, shops.data?.items],
+  )
+
   const setupShopOptions = useMemo(
     () =>
       (canWrite ? writableShops : (shops.data?.items ?? [])).map((shop) => ({
@@ -177,6 +189,17 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       })),
     [canWrite, shops.data?.items, writableShops],
   )
+
+  const financeUpload = useMutation({
+    mutationFn: ({ kind, file, ...context }: import('@/features/portal/finance/api/financeApi').FinanceImportInput) =>
+      importFinanceFile(kind, file, context),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: integrationKeys.all })
+      setFinanceUploadOpen(false)
+      showFeedbackToast('success', 'Finance import queued')
+    },
+    onError: (error) => showFeedbackToast('error', 'Finance import failed', error.message),
+  })
 
   const columns: TableColumnsType<ImportJob> = useMemo(
     () => [
@@ -257,6 +280,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       <IntegrationWorkbenchTabs
         activeTab={activeTab}
         canUpload={canWrite}
+        canUploadFinance={financeWritableShops.length > 0}
         extension={extensionTab}
         finance={financeTab}
         imports={
@@ -281,6 +305,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
           setActiveTab(nextTab)
           if (nextTab !== 'orders') updateParams({ selectedJobId: undefined }, false)
         }}
+        onFinanceUpload={() => setFinanceUploadOpen(true)}
         onUpload={() => setUploadOpen(true)}
       />
       <ImportUploadModal
@@ -290,6 +315,14 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         shops={writableShops}
         onClose={() => setUploadOpen(false)}
         onSubmit={(input) => upload.mutate(input)}
+      />
+      <FinanceImportModal
+        error={financeUpload.error}
+        open={financeUploadOpen}
+        saving={financeUpload.isPending}
+        shops={financeWritableShops}
+        onClose={() => setFinanceUploadOpen(false)}
+        onSubmit={(input) => financeUpload.mutate(input)}
       />
     </section>
   )

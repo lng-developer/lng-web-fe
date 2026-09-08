@@ -181,7 +181,14 @@
       "itemSnapshot": "Item financial snapshot",
       "pnlWaterfall": "P&L breakdown waterfall",
       "missingReason": "Missing cost reason",
-      "costLines": "Cost lines"
+      "costLines": "Cost lines",
+      "profitStatus": "Profit status",
+      "feeConfidence": "Fee confidence",
+      "costBasis": "Cost basis",
+      "rateCard": "Rate card",
+      "rateVersion": "Version {{version}}",
+      "lastRecalculated": "Last recalculated",
+      "sourceReferences": "Source references"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Fulfillment plan is missing",
@@ -195,6 +202,11 @@
       "processed": "Processed",
       "unlinked": "Unlinked",
       "file": "File",
+      "hash": "File hash",
+      "quality": "Accepted / parsed",
+      "reason": "Failure reason",
+      "importedAt": "Imported at",
+      "actions": "Actions",
       "valid": "Valid",
       "errors": "Errors",
       "detailTitle": "Import batch details",
@@ -221,6 +233,42 @@
         "submit": "Run import"
       }
     },
+    "settlements": {
+      "title": "Settlement cash flow",
+      "note": "Cash reconciliation, separate from order profit",
+      "description": "Follow Amazon money from settlement activity to the expected deposit.",
+      "total": "Net settlements",
+      "periods": "Settlement periods",
+      "ledgerLines": "Ledger lines",
+      "settlement": "Settlement",
+      "settlementId": "Settlement ID",
+      "period": "Settlement period",
+      "deposit": "Deposit date",
+      "depositDate": "Deposit date",
+      "payout": "Amazon payout",
+      "netSettlement": "Net settlement",
+      "ledgerNet": "Imported ledger",
+      "variance": "Variance",
+      "linked": "Linked lines",
+      "unlinked": "Unlinked lines",
+      "linkedValue": "{{coverage}} linked ({{linked}} / {{total}})",
+      "movement": "Cash movement",
+      "ledgerMovement": "Ledger movement",
+      "inflow": "Inflows",
+      "outflow": "Outflows",
+      "posted": "Posted",
+      "type": "Transaction type",
+      "amountType": "Amount type",
+      "order": "Order",
+      "sku": "SKU",
+      "status": "Status",
+      "allPeriods": "All periods",
+      "noData": "No settlement data found.",
+      "unavailable": "Amazon has not provided a detailed settlement breakdown for this record.",
+      "currencyNote": "Totals are kept separate by currency.",
+      "showing": "Showing {{count}} ledger lines",
+      "unknown": "Unknown"
+    },
     "actions": {
       "import": "Import finance data",
       "reprocess": "Reprocess",
@@ -229,6 +277,7 @@
       "recalculateItem": "Recalculate item",
       "inspectItem": "Inspect item",
       "manageReconciliation": "Manage reconciliation",
+      "settlements": "Settlement cash flow",
       "exportCsv": "Export CSV"
     },
     "feedback": {
@@ -281,6 +330,17 @@
       "missingCost": "Missing cost",
       "sellers": "Sellers"
     },
+    "coverage": {
+      "title": "Data coverage",
+      "actual": "Actual",
+      "estimated": "Estimated",
+      "incomplete": "Incomplete cost",
+      "missingDate": "Missing order date",
+      "basis": {
+        "ORDERED_AT": "Order date basis",
+        "CALCULATED_AT": "Recalculated date basis"
+      }
+    },
     "buyers": {
       "title": "Buyer signals",
       "total": "Orders",
@@ -302,7 +362,7 @@
       "explanation": "How profit is calculated",
       "grossFormula": "Gross profit = Revenue − Product cost − Additional fulfillment − Marketplace fee − Refund − Discount",
       "netFormula": "Net profit = Gross profit − Operating cost − Ads spend",
-      "excludedCostNote": "Tax is shown separately because it is excluded from Revenue and is not deducted a second time.",
+      "excludedCostNote": "Tax is excluded from revenue and P&L.",
       "dataNote": "Rows with missing cost should be treated as incomplete until their fulfillment cost is available."
     },
     "operations": {

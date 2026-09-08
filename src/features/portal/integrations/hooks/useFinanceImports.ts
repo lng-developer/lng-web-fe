@@ -3,15 +3,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   listAdsUnassignedRows,
   listImportBatches,
+  listImportedFinanceData,
+  reprocessImportBatch,
   upsertAdsShopMapping,
 } from '@/features/portal/finance/api/financeApi'
 import { useFeedbackToast } from '@/shared/ui'
 
 import { integrationKeys } from '../api/integrationKeys'
+import { isFinanceImportBatchActive } from './useFinanceImportPolling'
 
 export type FinanceImportSourceType = 'ADS' | 'TRANSACTIONS' | 'SETTLEMENTS'
 
-export const ADS_IMPORT_STATUSES = ['PROCESSING', 'COMPLETED', 'PARTIAL_FAILED', 'FAILED'] as const
+export const ADS_IMPORT_STATUSES = ['QUEUED', 'PROCESSING', 'COMPLETED', 'PARTIAL_FAILED', 'FAILED'] as const
 
 export interface UseFinanceImportBatchesParams {
   sourceType: FinanceImportSourceType
@@ -29,7 +32,7 @@ export interface UseFinanceImportBatchesParams {
 export function useFinanceImportBatches({
   sourceType,
   salesChannelCode = 'AMAZON',
-  marketplaceCode = sourceType === 'ADS' ? 'US' : 'AMAZON',
+  marketplaceCode = 'US',
   page,
   pageSize = 20,
   shopId,
@@ -59,9 +62,42 @@ export function useFinanceImportBatches({
         shopId,
         status,
         ...dates,
-      }),
+    }),
     enabled,
     retry: false,
+    refetchInterval: (query) =>
+      query.state.data?.items.some((batch) => isFinanceImportBatchActive(batch)) ? 5_000 : false,
+    refetchIntervalInBackground: false,
+  })
+}
+
+export function useImportedFinanceData(
+  sourceType: FinanceImportSourceType,
+  importBatchId: string | undefined,
+  enabled: boolean,
+) {
+  const source = sourceType.toLowerCase() as 'ads' | 'transactions' | 'settlements'
+
+  return useQuery({
+    queryKey: [...integrationKeys.all, 'imported-data', source, importBatchId],
+    queryFn: () => listImportedFinanceData(source, { importBatchId, page: 1, limit: 100 }),
+    enabled: enabled && Boolean(importBatchId),
+    retry: false,
+  })
+}
+
+export function useReprocessFinanceImportMutation(onSuccess?: () => void) {
+  const queryClient = useQueryClient()
+  const showFeedbackToast = useFeedbackToast()
+
+  return useMutation({
+    mutationFn: (batchId: string) => reprocessImportBatch(batchId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: integrationKeys.all })
+      showFeedbackToast('success', 'Import batch reprocessed')
+      onSuccess?.()
+    },
+    onError: (error) => showFeedbackToast('error', 'Import batch reprocess failed', error.message),
   })
 }
 

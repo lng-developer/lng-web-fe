@@ -8,7 +8,7 @@ import {
   getOrderItemFinanceSnapshot,
   listFinanceFilterOptions,
   listFinanceSnapshots,
-  listImportBatches,
+  listSettlements,
   recalculateOrder,
 } from '@/features/portal/finance/api/financeApi'
 import { FinanceWorkspacePage } from '@/features/portal/finance/pages/FinanceWorkspacePage'
@@ -28,7 +28,7 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/finance/api/financeApi')>()),
   listFinanceFilterOptions: vi.fn(),
   listFinanceSnapshots: vi.fn(),
-  listImportBatches: vi.fn(),
+  listSettlements: vi.fn(),
   getOrderFinanceSummary: vi.fn(),
   getOrderItemFinanceSnapshot: vi.fn(),
   recalculateOrder: vi.fn(),
@@ -140,9 +140,34 @@ describe('FinanceWorkspacePage', () => {
       teams: [{ id: 'team-id', code: 'SALE_A', name: 'Sales A' }],
       departments: [{ id: 'department-id', code: 'SALE', name: 'Sales' }],
     })
-    vi.mocked(listImportBatches).mockResolvedValue({
-      items: [],
-      pagination: { total: 120, page: 1, limit: 20 },
+    vi.mocked(listSettlements).mockResolvedValue({
+      items: [
+        {
+          id: 'settlement-1',
+          settlementId: '55521020702',
+          shopId: 'shop-1',
+          salesChannelCode: 'AMAZON',
+          marketplaceCode: 'US',
+          currency: 'USD',
+          periodStartAt: '2026-09-05T00:00:00.000Z',
+          periodEndAt: '2026-09-06T00:00:00.000Z',
+          depositAt: '2026-09-07T00:00:00.000Z',
+          totalAmount: 96215,
+          ledgerSummary: {
+            inflowAmount: 130929,
+            outflowAmount: -34714,
+            netAmount: 96215,
+            payoutAmount: 96215,
+            ledgerNetAmount: 96215,
+            cashVarianceAmount: 0,
+            lineCount: 10,
+            linkedCount: 8,
+            linkCoverageBps: 8000,
+          },
+        },
+      ],
+      summaryByCurrency: [{ currency: 'USD', settlementCount: 1, totalAmount: 96215, netSettlementAmount: 96215 }],
+      pagination: { total: 1, page: 1, limit: 10 },
     })
     vi.mocked(listShops).mockResolvedValue({
       items: [
@@ -221,6 +246,15 @@ describe('FinanceWorkspacePage', () => {
       margin: { grossProfitAmount: 4100, grossMarginBps: 4100 },
       orderPnl: null,
       snapshotStatus: 'ESTIMATED',
+      profitStatus: 'ESTIMATED',
+      costRate: { version: 2, effectiveFrom: '2026-08-01T00:00:00.000Z' },
+      evidence: {
+        sourceReferences: [{
+          sourceKind: 'FEE',
+          sourceRef: 'transactions.csv',
+          importBatchId: 'batch-1',
+        }],
+      },
       calculatedAt: '2026-08-03T03:00:00.000Z',
       calculationHistory: [],
     })
@@ -375,6 +409,8 @@ describe('FinanceWorkspacePage', () => {
 
     await waitFor(() => expect(getOrderItemFinanceSnapshot).toHaveBeenCalledWith('item-1'))
     expect(await screen.findByText('Item financial snapshot')).toBeInTheDocument()
+    expect(screen.getByText('Source references')).toBeVisible()
+    expect(screen.getByText(/FEE: transactions.csv/)).toBeVisible()
   })
 
   it('shows a useful toast when order recalculation fails', async () => {
@@ -400,6 +436,15 @@ describe('FinanceWorkspacePage', () => {
       'href',
       '/portal/integrations?tab=finance',
     )
+  })
+
+  it('keeps settlement cash flow separate from order profitability', async () => {
+    renderPage()
+
+    expect(await screen.findByText('55521020702')).toBeVisible()
+    expect(screen.getAllByText('$962.15').length).toBeGreaterThan(0)
+    expect(screen.getByText('80% linked (8 / 10)')).toBeVisible()
+    expect(listSettlements).toHaveBeenCalledWith({ page: 1, limit: 10 })
   })
 
   it('reloads finance snapshots when the shared page-size control changes', async () => {

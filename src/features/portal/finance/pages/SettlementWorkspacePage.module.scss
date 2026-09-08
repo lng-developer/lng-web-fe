@@ -1,0 +1,67 @@
+.page {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.description {
+  margin-bottom: 16px;
+}
+
+.metrics {
+  display: grid;
+  gap: 16px;
+}
+
+.currencyGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.metricRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.currencyNote {
+  margin-top: 16px;
+}
+
+.filters {
+  margin-bottom: 12px;
+}
+
+.idButton {
+  padding-inline: 0;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.detailAmount {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.movementGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .metricRow,
+  .movementGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailHeader {
+    flex-direction: column;
+  }
+}

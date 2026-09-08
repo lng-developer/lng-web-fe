@@ -5,6 +5,7 @@ import type { UploadFile } from 'antd'
 import { Button, Form, Input, Modal, Select, Space, Switch, Typography, Upload } from 'antd'
 
 import type { FinanceImportInput } from '../api/financeApi'
+import { FeedbackAlert } from '@/shared/ui'
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['.csv', '.txt']
@@ -15,12 +16,14 @@ export function FinanceImportModal({
   open,
   shops,
   saving = false,
+  error,
   onClose,
   onSubmit,
 }: {
   readonly open: boolean
   readonly shops: ReadonlyArray<{ id: string; name: string }>
   readonly saving?: boolean
+  readonly error?: Error | null
   readonly onClose: () => void
   readonly onSubmit: (input: FinanceImportInput) => void
 }) {
@@ -37,6 +40,7 @@ export function FinanceImportModal({
   return (
     <Modal centered width={720} open={open} title={t('finance.imports.modal.title')} footer={null}
       destroyOnHidden afterClose={reset} onCancel={onClose}>
+      {error ? <FeedbackAlert type="error" title={error.message} /> : null}
       <Form form={form} layout="vertical" initialValues={{ kind: 'transactions', dryRun: true }}
         onFinish={(values) => {
           const file = (files[0]?.originFileObj ?? files[0]) as File | undefined

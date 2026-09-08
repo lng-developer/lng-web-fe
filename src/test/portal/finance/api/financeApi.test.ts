@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getFinanceImportBatch,
   getOrderItemFinanceSnapshot,
+  getSettlement,
   listFinanceSnapshots,
   listImportBatches,
   listImportedFinanceData,
+  listSettlements,
   recalculateOrderItem,
 } from '@/features/portal/finance/api/financeApi'
 import { apiClient } from '@/shared/api'
@@ -52,5 +54,22 @@ describe('financeApi', () => {
     })
     expect(apiClient.get).toHaveBeenCalledWith('/api/finance/order-items/item-1/snapshot')
     expect(apiClient.post).toHaveBeenCalledWith('/api/finance/order-items/item-1/recalculate')
+  })
+
+  it('uses the settlement cash-flow contracts', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({
+      success: true,
+      data: { items: [], total: 0, page: 1, limit: 20, summaryByCurrency: [] },
+    })
+
+    await listSettlements({ dateFrom: '2026-09-01', dateTo: '2026-09-30' })
+    await getSettlement('settlement-1', { page: 2, limit: 10 })
+
+    expect(apiClient.get).toHaveBeenNthCalledWith(1, '/api/finance/settlements', {
+      params: { dateFrom: '2026-09-01', dateTo: '2026-09-30' },
+    })
+    expect(apiClient.get).toHaveBeenNthCalledWith(2, '/api/finance/settlements/settlement-1', {
+      params: { page: 2, limit: 10 },
+    })
   })
 })

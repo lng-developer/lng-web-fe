@@ -181,7 +181,14 @@
       "itemSnapshot": "Snapshot tài chính item",
       "pnlWaterfall": "Phân tách dòng tiền P&L",
       "missingReason": "Lý do thiếu chi phí",
-      "costLines": "Các dòng chi phí"
+      "costLines": "Các dòng chi phí",
+      "profitStatus": "Trạng thái lợi nhuận",
+      "feeConfidence": "Độ tin cậy phí",
+      "costBasis": "Cơ sở chi phí",
+      "rateCard": "Bảng giá áp dụng",
+      "rateVersion": "Phiên bản {{version}}",
+      "lastRecalculated": "Tính lại lần cuối",
+      "sourceReferences": "Nguồn tham chiếu"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Chưa có phương án fulfillment",
@@ -195,6 +202,11 @@
       "processed": "Đã xử lý",
       "unlinked": "Chưa liên kết",
       "file": "Tệp",
+      "hash": "Mã băm tệp",
+      "quality": "Hợp lệ / đã đọc",
+      "reason": "Lý do thất bại",
+      "importedAt": "Thời điểm nhập",
+      "actions": "Thao tác",
       "valid": "Hợp lệ",
       "errors": "Lỗi",
       "detailTitle": "Chi tiết batch nhập liệu",
@@ -221,6 +233,42 @@
         "submit": "Chạy nhập liệu"
       }
     },
+    "settlements": {
+      "title": "Dòng tiền settlement",
+      "note": "Đối soát dòng tiền, tách biệt với lợi nhuận đơn hàng",
+      "description": "Theo dõi tiền Amazon từ hoạt động settlement đến ngày dự kiến chuyển tiền.",
+      "total": "Settlement ròng",
+      "periods": "Các kỳ settlement",
+      "ledgerLines": "Dòng ledger",
+      "settlement": "Settlement",
+      "settlementId": "Settlement ID",
+      "period": "Kỳ settlement",
+      "deposit": "Ngày ghi có",
+      "depositDate": "Ngày chuyển tiền",
+      "payout": "Amazon chi trả",
+      "netSettlement": "Settlement ròng",
+      "ledgerNet": "Ledger đã nhập",
+      "variance": "Chênh lệch",
+      "linked": "Dòng đã liên kết",
+      "unlinked": "Dòng chưa link",
+      "linkedValue": "Đã liên kết {{coverage}} ({{linked}} / {{total}})",
+      "movement": "Biến động tiền",
+      "ledgerMovement": "Chi tiết ledger",
+      "inflow": "Tiền vào",
+      "outflow": "Tiền ra",
+      "posted": "Ngày ghi nhận",
+      "type": "Loại giao dịch",
+      "amountType": "Loại khoản tiền",
+      "order": "Đơn hàng",
+      "sku": "SKU",
+      "status": "Trạng thái",
+      "allPeriods": "Tất cả kỳ",
+      "noData": "Chưa có dữ liệu settlement.",
+      "unavailable": "Amazon chưa cung cấp breakdown chi tiết cho settlement này.",
+      "currencyNote": "Tổng tiền được tách riêng theo từng loại tiền.",
+      "showing": "Đang hiển thị {{count}} dòng ledger",
+      "unknown": "Không xác định"
+    },
     "actions": {
       "import": "Nhập dữ liệu tài chính",
       "reprocess": "Chạy lại",
@@ -229,6 +277,7 @@
       "recalculateItem": "Tính lại item",
       "inspectItem": "Xem item",
       "manageReconciliation": "Quản lý đối soát",
+      "settlements": "Dòng tiền settlement",
       "exportCsv": "Xuất CSV"
     },
     "feedback": {
@@ -281,6 +330,17 @@
       "missingCost": "Thiếu giá vốn",
       "sellers": "Seller"
     },
+    "coverage": {
+      "title": "Độ phủ dữ liệu",
+      "actual": "Thực tế",
+      "estimated": "Ước tính",
+      "incomplete": "Thiếu chi phí",
+      "missingDate": "Thiếu ngày đặt hàng",
+      "basis": {
+        "ORDERED_AT": "Theo ngày đặt hàng",
+        "CALCULATED_AT": "Theo ngày tính lại"
+      }
+    },
     "buyers": {
       "title": "Tín hiệu khách hàng",
       "total": "Đơn hàng",
@@ -302,7 +362,7 @@
       "explanation": "Cách tính lợi nhuận",
       "grossFormula": "Lợi nhuận gộp = Doanh thu − Chi phí sản phẩm − Fulfillment phát sinh − Phí marketplace − Hoàn tiền − Giảm giá",
       "netFormula": "Lợi nhuận ròng = Lợi nhuận gộp − Chi phí vận hành − Chi quảng cáo",
-      "excludedCostNote": "Thuế được hiển thị riêng vì đã không được cộng vào Doanh thu; không trừ thêm lần nữa.",
+      "excludedCostNote": "Thuế không được tính vào doanh thu hoặc P&L.",
       "dataNote": "Các dòng thiếu giá vốn là chưa hoàn chỉnh cho đến khi có chi phí fulfillment."
     },
     "operations": {

@@ -19,6 +19,7 @@ import {
 
 import type { ReportFilters, SellerDailyProfit, SellerPerformance } from '../api/reportApi'
 import { ReportAdsTab } from '../components/ReportAdsTab'
+import { ReportCoverageStrip } from '../components/ReportCoverageStrip'
 import { formatReportMoney, formatReportPercent } from '../components/reportFormatters'
 import { ReportProfitComparisonChart } from '../components/ReportProfitComparisonChart'
 import { ReportTeamTab } from '../components/ReportTeamTab'
@@ -55,6 +56,7 @@ export function ReportWorkspacePage() {
   const [filters, setFilters] = useState<ReportFilters>(() => ({
     dateFrom: dayjs().subtract(6, 'day').startOf('day').toISOString(),
     dateTo: dayjs().endOf('day').toISOString(),
+    dateBasis: 'ORDERED_AT',
   }))
 
   const globalRead = account.permissions.includes('REPORTS:READ')
@@ -64,7 +66,7 @@ export function ReportWorkspacePage() {
       (scope) => scope.scopeType === 'shop' && scope.permissions.includes('REPORTS:READ'),
     )
 
-  const { options, sellers, sellerDaily, teams, channels, adsDaily, exportCsv } = useReportData({
+  const { options, sellers, coverage, sellerDaily, teams, channels, adsDaily, exportCsv } = useReportData({
     filters,
     activeTab,
     profitabilityView,
@@ -301,6 +303,7 @@ export function ReportWorkspacePage() {
 
   const sellerDailySections = useMemo(() => {
     const metrics: Array<{ key: keyof SellerDailyProfit; label: string }> = [
+      { key: 'orderCount', label: t('reports.columns.orders') },
       { key: 'revenueAmount', label: t('reports.columns.revenue') },
       { key: 'baseCostAmount', label: t('reports.columns.baseCost') },
       { key: 'additionalFulfillmentCostAmount', label: t('reports.columns.fulfillmentCost') },
@@ -308,7 +311,6 @@ export function ReportWorkspacePage() {
       { key: 'adSpendAmount', label: t('reports.columns.spend') },
       { key: 'refundAmount', label: t('reports.columns.refund') },
       { key: 'discountAmount', label: t('reports.columns.discount') },
-      { key: 'taxAmount', label: t('reports.columns.tax') },
       { key: 'grossProfitAmount', label: t('reports.metrics.grossProfit') },
       { key: 'operatingCostAmount', label: t('reports.columns.operatingCost') },
       { key: 'netProfitAmount', label: t('reports.columns.netProfit') },
@@ -334,6 +336,7 @@ export function ReportWorkspacePage() {
               dates.map((date) => {
                 const row = sellerRows.find((item) => item.date === date)
                 const value = row?.[key]
+                if (key === 'orderCount') return [date, Number(value || 0)]
                 return [date, value === null || value === undefined ? null : Number(value)]
               }),
             )
@@ -364,6 +367,7 @@ export function ReportWorkspacePage() {
       {sellerDailySections.map(({ currency, dates, matrixRows }) => {
         const renderAmount = (amount: number | null, row: DailyMatrixRow) => {
           if (amount === null) return '—'
+          if (row.metricKey === 'orderCount') return <span>{amount}</span>
           const className =
             row.metricKey === 'revenueAmount'
               ? styles.dailyMoneyRevenue
@@ -456,6 +460,7 @@ export function ReportWorkspacePage() {
 
   const sellerProfitabilityTab = (
     <div className={styles.stack}>
+      <ReportCoverageStrip rows={coverage.data} dateBasis={filters.dateBasis} />
       <Space className={styles.profitabilityMode}>
         <Button
           type={profitabilityView === 'summary' ? 'primary' : 'default'}
