@@ -6,6 +6,7 @@ import type { TableColumnsType } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { importFinanceFile } from '@/features/portal/finance/api/financeApi'
+import { FinanceImportModal } from '@/features/portal/finance/pages/FinanceImportModal'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { StatusTag, useFeedbackToast } from '@/shared/ui'
 
@@ -30,7 +31,6 @@ import {
 import { ExtensionTabContent } from '../components/ExtensionTabContent'
 import { FinanceImportsTab } from '../components/FinanceImportsTab'
 import { ImportUploadModal } from './ImportUploadModal'
-import { FinanceImportModal } from '@/features/portal/finance/pages/FinanceImportModal'
 import { IntegrationImportsWorkbench } from './IntegrationImportsWorkbench'
 import styles from './IntegrationWorkbenchPage.module.scss'
 import { IntegrationWorkbenchTabs } from './IntegrationWorkbenchTabs'

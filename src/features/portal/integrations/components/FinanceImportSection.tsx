@@ -10,14 +10,14 @@ import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { DateRangePicker, FilterBar, SectionCard, StatusTag } from '@/shared/ui'
 
 import { canWriteFinanceForShop } from '../auth/integrationAccess'
+import { useFinanceImportPolling } from '../hooks/useFinanceImportPolling'
 import {
   ADS_IMPORT_STATUSES,
   type FinanceImportSourceType,
-  useReprocessFinanceImportMutation,
   useFinanceImportBatches,
   useImportedFinanceData,
+  useReprocessFinanceImportMutation,
 } from '../hooks/useFinanceImports'
-import { useFinanceImportPolling } from '../hooks/useFinanceImportPolling'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20

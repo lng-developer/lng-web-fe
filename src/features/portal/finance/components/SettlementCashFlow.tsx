@@ -7,9 +7,9 @@ import { Space, Typography } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { MetricCard, SectionCard, StatusTag } from '@/shared/ui'
 
-import { type Settlement, listSettlements } from '../api/financeApi'
-import { formatFinanceMoney } from './financeFormatters'
+import { listSettlements,type Settlement } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
+import { formatFinanceMoney } from './financeFormatters'
 
 const coverageLabel = (coverage?: number | null) =>
   coverage === null || coverage === undefined ? '—' : `${Math.round(coverage / 100)}%`

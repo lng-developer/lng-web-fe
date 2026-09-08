@@ -4,8 +4,9 @@ import { InboxOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { Button, Form, Input, Modal, Select, Space, Switch, Typography, Upload } from 'antd'
 
-import type { FinanceImportInput } from '../api/financeApi'
 import { FeedbackAlert } from '@/shared/ui'
+
+import type { FinanceImportInput } from '../api/financeApi'
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['.csv', '.txt']
