@@ -181,7 +181,14 @@
       "itemSnapshot": "Item financial snapshot",
       "pnlWaterfall": "P&L breakdown waterfall",
       "missingReason": "Missing cost reason",
-      "costLines": "Cost lines"
+      "costLines": "Cost lines",
+      "profitStatus": "Profit status",
+      "feeConfidence": "Fee confidence",
+      "costBasis": "Cost basis",
+      "rateCard": "Rate card",
+      "rateVersion": "Version {{version}}",
+      "lastRecalculated": "Last recalculated",
+      "sourceReferences": "Source references"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Fulfillment plan is missing",

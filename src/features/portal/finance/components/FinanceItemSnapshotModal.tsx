@@ -2,7 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Descriptions, Modal, Space, Spin, Typography } from 'antd'
+import { Button, Descriptions, Drawer, Space, Spin, Typography } from 'antd'
 
 import { getOrderItemFinanceSnapshot } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
@@ -33,13 +33,12 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
   })
 
   return (
-    <Modal
-      centered
+    <Drawer
+      placement="right"
       width={760}
       open={Boolean(selectedItemId)}
       title={t('finance.detail.itemSnapshot')}
-      footer={null}
-      onCancel={onClose}
+      onClose={onClose}
       destroyOnHidden
     >
       {itemDetail.isLoading ? (
@@ -87,6 +86,35 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
                   ? t(`finance.missingReasons.${itemDetail.data.cost.missingCostReason}`)
                   : '—',
               },
+              {
+                key: 'profit-status',
+                label: t('finance.detail.profitStatus'),
+                children: itemDetail.data.profitStatus || '—',
+              },
+              {
+                key: 'fee-confidence',
+                label: t('finance.detail.feeConfidence'),
+                children: itemDetail.data.revenue.feeConfidence || '—',
+              },
+              {
+                key: 'cost-basis',
+                label: t('finance.detail.costBasis'),
+                children: itemDetail.data.cost.costBasis || '—',
+              },
+              {
+                key: 'rate-card',
+                label: t('finance.detail.rateCard'),
+                children: itemDetail.data.costRate?.version == null
+                  ? '—'
+                  : `${t('finance.detail.rateVersion', { version: itemDetail.data.costRate.version })} · ${itemDetail.data.costRate.effectiveFrom ? new Date(itemDetail.data.costRate.effectiveFrom).toLocaleDateString() : '—'}`,
+              },
+              {
+                key: 'calculated-at',
+                label: t('finance.detail.lastRecalculated'),
+                children: itemDetail.data.calculatedAt
+                  ? new Date(itemDetail.data.calculatedAt).toLocaleString()
+                  : '—',
+              },
             ]}
           />
           <section>
@@ -97,6 +125,19 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
                 {formatFinanceMoney(line.amount, itemDetail.data!.revenue.currency)}
               </Typography.Paragraph>
             ))}
+          </section>
+          <section>
+            <Typography.Title level={5}>{t('finance.detail.sourceReferences')}</Typography.Title>
+            {(itemDetail.data.evidence?.sourceReferences || []).length ? (
+              itemDetail.data.evidence?.sourceReferences.map((reference, index) => (
+                <Typography.Paragraph key={`${reference.importBatchId || reference.sourceRef || 'source'}-${index}`}>
+                  {reference.sourceKind}: {reference.sourceRef || '—'}
+                  {reference.settlementId ? ` · ${reference.settlementId}` : ''}
+                </Typography.Paragraph>
+              ))
+            ) : (
+              <Typography.Text type="secondary">—</Typography.Text>
+            )}
           </section>
           {canWrite && selectedItemId ? (
             <Button
@@ -109,6 +150,6 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
           ) : null}
         </Space>
       ) : null}
-    </Modal>
+    </Drawer>
   )
 }

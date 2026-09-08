@@ -181,7 +181,14 @@
       "itemSnapshot": "Snapshot tài chính item",
       "pnlWaterfall": "Phân tách dòng tiền P&L",
       "missingReason": "Lý do thiếu chi phí",
-      "costLines": "Các dòng chi phí"
+      "costLines": "Các dòng chi phí",
+      "profitStatus": "Trạng thái lợi nhuận",
+      "feeConfidence": "Độ tin cậy phí",
+      "costBasis": "Cơ sở chi phí",
+      "rateCard": "Bảng giá áp dụng",
+      "rateVersion": "Phiên bản {{version}}",
+      "lastRecalculated": "Tính lại lần cuối",
+      "sourceReferences": "Nguồn tham chiếu"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Chưa có phương án fulfillment",

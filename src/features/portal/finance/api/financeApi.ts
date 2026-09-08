@@ -18,6 +18,7 @@ export type FinanceSnapshot = {
     customerPaidAmount: number
     feeAmount: number
     feeSource?: string | null
+    feeConfidence?: string | null
     refundAmount: number
     discountAmount: number
     currency: string
@@ -40,7 +41,20 @@ export type FinanceSnapshot = {
     totalDeductionAmount: number | null
     profitAmount: number | null
   } | null
+  costRate?: { version: number | null; effectiveFrom: string | null }
   snapshotStatus: 'ESTIMATED' | 'MISSING_COST'
+  profitStatus?: 'ACTUAL' | 'ESTIMATED' | 'INCOMPLETE_COST' | null
+  evidence?: {
+    sourceReferences: Array<{
+      sourceKind: string
+      sourceRef: string | null
+      importBatchId: string | null
+      occurredAt?: string | null
+      settlementId?: string | null
+      category?: string | null
+      externalReference?: string | null
+    }>
+  }
   calculatedAt: string
   calculationHistory: Array<{
     calculatedAt: string

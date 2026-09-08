@@ -240,6 +240,15 @@ describe('FinanceWorkspacePage', () => {
       margin: { grossProfitAmount: 4100, grossMarginBps: 4100 },
       orderPnl: null,
       snapshotStatus: 'ESTIMATED',
+      profitStatus: 'ESTIMATED',
+      costRate: { version: 2, effectiveFrom: '2026-08-01T00:00:00.000Z' },
+      evidence: {
+        sourceReferences: [{
+          sourceKind: 'FEE',
+          sourceRef: 'transactions.csv',
+          importBatchId: 'batch-1',
+        }],
+      },
       calculatedAt: '2026-08-03T03:00:00.000Z',
       calculationHistory: [],
     })
@@ -394,6 +403,8 @@ describe('FinanceWorkspacePage', () => {
 
     await waitFor(() => expect(getOrderItemFinanceSnapshot).toHaveBeenCalledWith('item-1'))
     expect(await screen.findByText('Item financial snapshot')).toBeInTheDocument()
+    expect(screen.getByText('Source references')).toBeVisible()
+    expect(screen.getByText(/FEE: transactions.csv/)).toBeVisible()
   })
 
   it('shows a useful toast when order recalculation fails', async () => {
