@@ -66,12 +66,13 @@ export function ReportWorkspacePage() {
       (scope) => scope.scopeType === 'shop' && scope.permissions.includes('REPORTS:READ'),
     )
 
-  const { options, sellers, coverage, sellerDaily, teams, channels, adsDaily, exportCsv } = useReportData({
-    filters,
-    activeTab,
-    profitabilityView,
-    operationalScope,
-  })
+  const { options, sellers, coverage, sellerDaily, teams, channels, adsDaily, exportCsv } =
+    useReportData({
+      filters,
+      activeTab,
+      profitabilityView,
+      operationalScope,
+    })
 
   const filterOptions = options.data
 
@@ -165,8 +166,11 @@ export function ReportWorkspacePage() {
         title: t('reports.columns.netProfit'),
         width: 120,
         align: 'right',
-        sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
-        render: (_, row) => formatReportMoney(row.netProfitAmount, row.currency || 'USD'),
+        sorter: (a, b) => (a.netProfitAmount ?? -Infinity) - (b.netProfitAmount ?? -Infinity),
+        render: (_, row) =>
+          row.netProfitAmount === null
+            ? '—'
+            : formatReportMoney(row.netProfitAmount, row.currency || 'USD'),
       },
       {
         title: t('reports.columns.margin'),
@@ -249,8 +253,12 @@ export function ReportWorkspacePage() {
     <div className={styles.stack}>
       {sellersByCurrency.map(([currency, rows]) => {
         const revenue = rows.reduce((total, row) => total + row.revenueAmount, 0)
-        const grossProfit = rows.reduce((total, row) => total + row.grossProfitAmount, 0)
-        const netProfit = rows.reduce((total, row) => total + row.netProfitAmount, 0)
+        const grossProfit = rows.some((row) => row.grossProfitAmount === null)
+          ? null
+          : rows.reduce((total, row) => total + (row.grossProfitAmount ?? 0), 0)
+        const netProfit = rows.some((row) => row.netProfitAmount === null)
+          ? null
+          : rows.reduce((total, row) => total + (row.netProfitAmount ?? 0), 0)
         return (
           <section key={currency} className={styles.currencySection} aria-label={currency}>
             <Typography.Text strong className={styles.currencyLabel}>
@@ -273,13 +281,13 @@ export function ReportWorkspacePage() {
                 icon={<RiseOutlined />}
                 variant="success"
                 label={t('reports.metrics.grossProfit')}
-                value={formatReportMoney(grossProfit, currency)}
+                value={grossProfit === null ? '—' : formatReportMoney(grossProfit, currency)}
               />
               <MetricCard
                 icon={<RiseOutlined />}
                 variant="success"
                 label={t('reports.metrics.netProfit')}
-                value={formatReportMoney(netProfit, currency)}
+                value={netProfit === null ? '—' : formatReportMoney(netProfit, currency)}
               />
             </div>
             <ReportProfitComparisonChart rows={rows} currency={currency} />

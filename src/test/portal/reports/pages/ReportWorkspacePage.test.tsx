@@ -258,7 +258,9 @@ describe('ReportWorkspacePage', () => {
     const dailyTable = screen.getByText('Product cost').closest('table')
     expect(dailyTable).not.toBeNull()
     expect(within(dailyTable as HTMLTableElement).getByText('Orders')).toBeInTheDocument()
-    expect(within(dailyTable as HTMLTableElement).getAllByText('3', { exact: true })).toHaveLength(2)
+    expect(within(dailyTable as HTMLTableElement).getAllByText('3', { exact: true })).toHaveLength(
+      2,
+    )
     expect(
       screen.getByText('Net profit = Gross profit − Operating cost − Ads spend'),
     ).toBeInTheDocument()
@@ -308,6 +310,37 @@ describe('ReportWorkspacePage', () => {
       screen.queryByRole('heading', { name: 'How profit is calculated' }),
     ).not.toBeInTheDocument()
     expect((await screen.findAllByText('Alex')).length).toBeGreaterThan(1)
+  })
+
+  it('compares the known-cost subtotal when final profit is incomplete', async () => {
+    vi.mocked(listFinanceBySeller).mockResolvedValueOnce([
+      {
+        sellerEmployeeCode: 'seller-1',
+        sellerName: 'Alex',
+        currency: 'USD',
+        itemCount: 3,
+        revenueAmount: 10000,
+        baseCostAmount: 4000,
+        grossProfitAmount: null,
+        partialGrossProfitAmount: 3200,
+        costedItemCount: 2,
+        operatingCostAmount: 0,
+        netProfitAmount: null,
+        netMarginBps: null,
+        grossMarginBps: null,
+        missingCostCount: 1,
+      } as unknown as Awaited<ReturnType<typeof listFinanceBySeller>>[number],
+    ])
+
+    render(
+      <AppProviders>
+        <ReportWorkspacePage />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('Partial gross profit')).toBeInTheDocument()
+    expect(screen.getByText('$32.00')).toBeInTheDocument()
+    expect(screen.getByText('2 / 3 items with cost')).toBeInTheDocument()
   })
 
   it('groups long date ranges into weekly revenue points', () => {

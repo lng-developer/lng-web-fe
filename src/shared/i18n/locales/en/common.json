@@ -428,6 +428,8 @@
     },
     "profitability": {
       "comparison": "Profit comparison",
+      "partialGrossProfit": "Partial gross profit",
+      "costCoverage": "{{costed}} / {{total}} items with cost",
       "table": "Seller P&L",
       "summary": "Summary",
       "daily": "Daily detail",

@@ -428,6 +428,8 @@
     },
     "profitability": {
       "comparison": "So sánh lợi nhuận",
+      "partialGrossProfit": "Lợi nhuận gộp tạm tính",
+      "costCoverage": "{{costed}} / {{total}} sản phẩm đã có cost",
       "table": "P&L theo seller",
       "summary": "Tổng quan",
       "daily": "Chi tiết theo ngày",

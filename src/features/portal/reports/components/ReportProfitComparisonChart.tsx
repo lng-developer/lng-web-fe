@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, Typography } from 'antd'
 
@@ -22,22 +22,14 @@ const rankBadges: Record<number, { text: string; bg: string; color: string }> = 
 export const ReportProfitComparisonChart: React.FC<ReportProfitComparisonChartProps> = React.memo(
   ({ rows, currency }) => {
     const { t } = useTranslation()
-
-    const sortedRows = useMemo(
-      () =>
-        [...rows].sort((left, right) => right.netProfitAmount - left.netProfitAmount).slice(0, 8),
-      [rows],
-    )
-
-    const scale = useMemo(
-      () => Math.max(...rows.map((row) => Math.abs(row.netProfitAmount)), 1),
-      [rows],
-    )
-
-    const totalPositiveProfit = useMemo(
-      () => rows.reduce((sum, r) => sum + Math.max(r.netProfitAmount, 0), 0),
-      [rows],
-    )
+    const usesPartialGrossProfit = rows.some((row) => row.missingCostCount > 0)
+    const profitAmount = (row: SellerPerformance) =>
+      usesPartialGrossProfit ? (row.partialGrossProfitAmount ?? 0) : (row.netProfitAmount ?? 0)
+    const sortedRows = [...rows]
+      .sort((left, right) => profitAmount(right) - profitAmount(left))
+      .slice(0, 8)
+    const scale = Math.max(...rows.map((row) => Math.abs(profitAmount(row))), 1)
+    const totalPositiveProfit = rows.reduce((sum, row) => sum + Math.max(profitAmount(row), 0), 0)
 
     return (
       <SectionCard title={t('reports.profitability.comparison')}>
@@ -46,11 +38,17 @@ export const ReportProfitComparisonChart: React.FC<ReportProfitComparisonChartPr
           role="img"
           aria-label={t('reports.profitability.comparison')}
         >
+          {usesPartialGrossProfit ? (
+            <Typography.Text type="secondary">
+              {t('reports.profitability.partialGrossProfit')}
+            </Typography.Text>
+          ) : null}
           {sortedRows.map((row, index) => {
             const rank = rankBadges[index]
+            const amount = profitAmount(row)
             const contributionPct =
-              totalPositiveProfit > 0 && row.netProfitAmount > 0
-                ? ((row.netProfitAmount / totalPositiveProfit) * 100).toFixed(1)
+              totalPositiveProfit > 0 && amount > 0
+                ? ((amount / totalPositiveProfit) * 100).toFixed(1)
                 : null
 
             return (
@@ -77,6 +75,15 @@ export const ReportProfitComparisonChart: React.FC<ReportProfitComparisonChartPr
                   <Typography.Text ellipsis style={{ flex: 1, minWidth: 0 }}>
                     {row.sellerName || row.sellerEmployeeCode || '—'}
                   </Typography.Text>
+                  {usesPartialGrossProfit ? (
+                    <Typography.Text type="secondary">
+                      {t('reports.profitability.costCoverage', {
+                        costed:
+                          row.costedItemCount ?? Math.max(row.itemCount - row.missingCostCount, 0),
+                        total: row.itemCount,
+                      })}
+                    </Typography.Text>
+                  ) : null}
                 </div>
                 <Tooltip
                   title={
@@ -85,17 +92,13 @@ export const ReportProfitComparisonChart: React.FC<ReportProfitComparisonChartPr
                 >
                   <div className={styles.profitTrack}>
                     <span
-                      className={
-                        row.netProfitAmount >= 0 ? styles.profitBar : styles.profitBarNegative
-                      }
-                      style={{ width: `${(Math.abs(row.netProfitAmount) / scale) * 100}%` }}
+                      className={amount >= 0 ? styles.profitBar : styles.profitBarNegative}
+                      style={{ width: `${(Math.abs(amount) / scale) * 100}%` }}
                     />
                   </div>
                 </Tooltip>
                 <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                  <Typography.Text strong>
-                    {formatReportMoney(row.netProfitAmount, currency)}
-                  </Typography.Text>
+                  <Typography.Text strong>{formatReportMoney(amount, currency)}</Typography.Text>
                   {contributionPct != null ? (
                     <div
                       style={{

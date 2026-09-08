@@ -56,8 +56,11 @@ export const ReportTeamTab: React.FC<ReportTeamTabProps> = React.memo(
           title: t('reports.columns.netProfit'),
           width: 130,
           align: 'right',
-          sorter: (a, b) => a.netProfitAmount - b.netProfitAmount,
-          render: (_, row) => formatReportMoney(row.netProfitAmount, row.currency || 'USD'),
+          sorter: (a, b) => (a.netProfitAmount ?? -Infinity) - (b.netProfitAmount ?? -Infinity),
+          render: (_, row) =>
+            row.netProfitAmount === null
+              ? '—'
+              : formatReportMoney(row.netProfitAmount, row.currency || 'USD'),
         },
         {
           title: t('reports.columns.margin'),

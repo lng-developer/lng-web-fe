@@ -47,10 +47,12 @@ export type SellerPerformance = {
   itemCount: number
   revenueAmount: number
   baseCostAmount: number
-  grossProfitAmount: number
+  grossProfitAmount: number | null
+  partialGrossProfitAmount?: number
+  costedItemCount?: number
   operatingCostAmount: number
   adSpendAmount?: number
-  netProfitAmount: number
+  netProfitAmount: number | null
   netMarginBps: number | null
   missingCostCount: number
 }
