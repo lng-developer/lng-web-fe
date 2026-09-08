@@ -76,7 +76,7 @@ describe('ShipmentWorkbenchPage', () => {
     renderPage()
 
     await waitFor(() =>
-      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 20, page: 1 })),
+      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 10, page: 1 })),
     )
 
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Rows per page' }))
@@ -93,7 +93,7 @@ describe('ShipmentWorkbenchPage', () => {
     fireEvent.click(await screen.findByTitle('2'))
 
     await waitFor(() =>
-      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 20, page: 2 })),
+      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 10, page: 2 })),
     )
   })
 })

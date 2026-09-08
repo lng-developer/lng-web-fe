@@ -61,8 +61,12 @@ function marketplaceProductUrl(listing: Listing) {
 
 export function CatalogListingWorkbenchPage({
   account: accountProp,
+  fixedSalesChannelCode,
+  hideCatalogHeader = false,
 }: {
   readonly account?: CurrentAccount
+  readonly fixedSalesChannelCode?: string
+  readonly hideCatalogHeader?: boolean
 }) {
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const { t } = useTranslation()
@@ -80,12 +84,14 @@ export function CatalogListingWorkbenchPage({
   const [editing, setEditing] = useState<Listing | 'create'>()
   const [expandedRowKeys, setExpandedRowKeys] = useState<readonly string[]>([])
 
+  const effectiveSalesChannelCode = fixedSalesChannelCode ?? salesChannelCode
+
   const { params, options, listings, summary } = useCatalogListingsQuery({
     page,
     pageSize,
     search,
     shopId,
-    salesChannelCode,
+    salesChannelCode: effectiveSalesChannelCode,
     qcStatus,
     psdState,
   })
@@ -388,7 +394,12 @@ export function CatalogListingWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      <PageHeader title={t('portal.catalog.title')} description={t('portal.catalog.description')} />
+      {!hideCatalogHeader ? (
+        <PageHeader
+          title={t('portal.catalog.title')}
+          description={t('portal.catalog.description')}
+        />
+      ) : null}
 
       {listings.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.catalog.unavailable')} />
@@ -473,7 +484,8 @@ export function CatalogListingWorkbenchPage({
           allowClear
           className={styles.channelFilter}
           placeholder={t('portal.catalog.allChannels')}
-          value={salesChannelCode}
+          value={effectiveSalesChannelCode}
+          disabled={Boolean(fixedSalesChannelCode)}
           onChange={resetPage(setSalesChannelCode)}
           options={(options.data?.salesChannels ?? []).map(({ code, name }) => ({
             value: code,

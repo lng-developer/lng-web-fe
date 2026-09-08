@@ -19,11 +19,11 @@ import {
   getCoreForPath,
   type NavigationGroup,
 } from './appNavigation'
-import { AppRail } from './AppRail'
 import styles from './AppShell.module.scss'
 import { isCompactBreakpoint } from './appShellResponsive'
 import { AppSidebar } from './AppSidebar'
 import { getRememberedCoreRoute, rememberCoreRoute } from './coreRouteMemory'
+import { LegacySidebar } from './LegacySidebar'
 import { getSidebarRouteState } from './sidebarRouteState'
 
 const { Content, Header } = Layout
@@ -61,6 +61,13 @@ export function AppShell() {
   const groups = useMemo(
     () => (activeCore ? getContextNavigation(activeCore, account) : []),
     [account, activeCore],
+  )
+  const legacyBottomMenus = useMemo(
+    () => ({
+      hr: getContextNavigation('hr', account),
+      system: getContextNavigation('system', account),
+    }),
+    [account],
   )
   const searchableGroups = useMemo(
     () =>
@@ -116,21 +123,10 @@ export function AppShell() {
         {t('shell.skipToContent')}
       </a>
       {!isCompact && (
-        <AppRail
-          cores={cores}
-          activeCore={activeCore}
-          contextCollapsed={collapsed}
-          onCoreChange={changeCore}
-          onContextCollapsedChange={setCollapsed}
-        />
-      )}
-      {activeCore && !isCompact && (
-        <AppSidebar
-          coreLabel={t(`shell.cores.${activeCore}`)}
-          groups={searchableGroups}
-          selectedKey={selectedKey}
+        <LegacySidebar
           collapsed={collapsed}
-          navigationSearch={navigationSearch}
+          onCollapsedChange={setCollapsed}
+          bottomMenus={legacyBottomMenus}
         />
       )}
       {activeCore && isCompact && (
@@ -149,6 +145,7 @@ export function AppShell() {
             onChange={(core) => changeCore(core as AppCoreKey)}
           />
           <AppSidebar
+            accountLabel={account.account.email}
             coreLabel={t(`shell.cores.${activeCore}`)}
             groups={searchableGroups}
             selectedKey={selectedKey}
@@ -160,7 +157,15 @@ export function AppShell() {
         </Drawer>
       )}
 
-      <Layout>
+      <Layout
+        className={
+          !isCompact
+            ? collapsed
+              ? styles.legacyContentCollapsed
+              : styles.legacyContentExpanded
+            : undefined
+        }
+      >
         <Header className={styles.header}>
           <div className={styles.headerLeft}>
             {isCompact && (

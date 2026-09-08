@@ -61,6 +61,11 @@ const TABS = [
 ] as const
 type TabKey = (typeof TABS)[number]
 const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
+const SALES_CHANNEL_BY_QUERY = {
+  amazon: 'AMAZON',
+  etsy: 'ETSY',
+  shopify: 'SHOPIFY',
+} as const
 
 export const OrderWorkbenchPage = () => {
   const { t, i18n } = useTranslation()
@@ -69,6 +74,10 @@ export const OrderWorkbenchPage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [searchParams, setSearchParams] = useSearchParams()
+  const salesChannelCode =
+    SALES_CHANNEL_BY_QUERY[
+      searchParams.get('salesChannelCode')?.toLowerCase() as keyof typeof SALES_CHANNEL_BY_QUERY
+    ]
   const requestedTab = searchParams.get('tab')
   const tab: TabKey = TABS.includes(requestedTab as TabKey) ? (requestedTab as TabKey) : 'ALL'
   const [search, setSearch] = useState('')
@@ -92,9 +101,10 @@ export const OrderWorkbenchPage = () => {
       search: deferredSearch,
       shopId,
       vendorId,
+      salesChannelCode,
       ...dates,
     }),
-    [dates, page, pageSize, deferredSearch, shopId, tab, vendorId],
+    [dates, page, pageSize, deferredSearch, salesChannelCode, shopId, tab, vendorId],
   )
   const summaryParams = useMemo(
     () => ({
@@ -103,9 +113,10 @@ export const OrderWorkbenchPage = () => {
       search: deferredSearch,
       shopId,
       vendorId,
+      salesChannelCode,
       ...dates,
     }),
-    [dates, deferredSearch, shopId, vendorId],
+    [dates, deferredSearch, salesChannelCode, shopId, vendorId],
   )
   const orders = useOrderWorkbenchQuery(params)
   const summary = useOrderSummaryQuery(summaryParams, {

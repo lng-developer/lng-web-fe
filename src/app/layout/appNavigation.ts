@@ -1,3 +1,4 @@
+import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getHrNavigation } from '@/features/hr/hrNavigation'
 
@@ -95,26 +96,15 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
     return withDashboardGroup(
       [
         {
-          key: 'setup',
-          labelKey: 'shell.groups.portalSetup',
-          items: [
-            permissions.has('SHOPS:READ')
-              ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
-              : null,
-            permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
-              ? { key: 'catalog', path: '/portal/catalog', labelKey: 'shell.navigation.catalog' }
-              : null,
-            globalPermissions.has('VENDORS:READ')
-              ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
-              : null,
-          ].filter((item): item is NavigationItem => item !== null),
-        },
-        {
-          key: 'order-workflow',
-          labelKey: 'shell.groups.portalOrderWorkflow',
+          key: 'orders',
+          labelKey: 'shell.groups.legacyOrders',
           items: [
             permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
-              ? { key: 'orders', path: '/portal/orders', labelKey: 'shell.navigation.orders' }
+              ? {
+                  key: 'orders',
+                  path: workspaceRouteLinks.orders,
+                  labelKey: 'shell.navigation.orders',
+                }
               : null,
             permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
               ? {
@@ -133,8 +123,8 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           ].flatMap((item) => item ?? []),
         },
         {
-          key: 'fulfillment',
-          labelKey: 'shell.groups.portalFulfillment',
+          key: 'team-tasks',
+          labelKey: 'shell.groups.legacyTeamTasks',
           items: [
             ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((permission) =>
               permissions.has(permission),
@@ -167,12 +157,33 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           ].flatMap((item) => item ?? []),
         },
         {
-          key: 'performance',
-          labelKey: 'shell.groups.portalPerformance',
+          key: 'listing',
+          labelKey: 'shell.groups.legacyListing',
           items: [
+            permissions.has('SHOPS:READ')
+              ? { key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }
+              : null,
+            permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+              ? { key: 'catalog', path: '/portal/catalog', labelKey: 'shell.navigation.catalog' }
+              : null,
+          ].filter((item): item is NavigationItem => item !== null),
+        },
+        {
+          key: 'cost-centers',
+          labelKey: 'shell.groups.legacyCostCenters',
+          items: [
+            globalPermissions.has('VENDORS:READ')
+              ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
+              : null,
             permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
               ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
               : null,
+          ].filter((item): item is NavigationItem => item !== null),
+        },
+        {
+          key: 'reports',
+          labelKey: 'shell.navigation.reports',
+          items: [
             permissions.has('REPORTS:READ')
               ? { key: 'reports', path: '/portal/reports', labelKey: 'shell.navigation.reports' }
               : null,
@@ -188,8 +199,24 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
     return withDashboardGroup(
       [
         {
-          key: 'system',
-          labelKey: 'shell.groups.system',
+          key: 'monitoring',
+          labelKey: 'shell.groups.legacyMonitoring',
+          items: [
+            permissions.has('AUDIT:READ')
+              ? { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' }
+              : null,
+            permissions.has('AUDIT:READ')
+              ? {
+                  key: 'monitoring',
+                  path: '/auth/monitoring',
+                  labelKey: 'shell.navigation.monitoring',
+                }
+              : null,
+          ].filter((item): item is NavigationItem => item !== null),
+        },
+        {
+          key: 'configuration',
+          labelKey: 'shell.groups.legacyConfiguration',
           items: [
             permissions.has('AUTH:READ') || permissions.has('AUTH:WRITE')
               ? { key: 'accounts', path: '/auth/accounts', labelKey: 'shell.navigation.accounts' }
@@ -199,16 +226,6 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                   key: 'access-control',
                   path: '/auth/access-control',
                   labelKey: 'shell.navigation.accessControl',
-                }
-              : null,
-            permissions.has('AUDIT:READ')
-              ? { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' }
-              : null,
-            permissions.has('AUDIT:READ')
-              ? {
-                  key: 'monitoring',
-                  path: '/auth/monitoring',
-                  labelKey: 'shell.navigation.monitoring',
                 }
               : null,
             globalPermissions.has('MEDIA:READ')
@@ -239,7 +256,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
               : null,
           ].filter((item): item is NavigationItem => item !== null),
         },
-      ],
+      ].filter(({ items }) => items.length),
       'system',
       permissions,
     )

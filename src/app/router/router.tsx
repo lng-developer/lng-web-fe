@@ -204,6 +204,20 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/listing/:salesChannelCode',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/catalog/pages/CatalogWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { CatalogWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
+                <CatalogWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/vendors',
         lazy: () =>
           Promise.all([

@@ -45,13 +45,12 @@ describe('VendorWorkspacePage', () => {
     expect(productsTabSource).toContain('/portal/vendors/products/${row.id}/cost-centers')
   })
 
-  it('loads only visible-tab data at the default page size', () => {
+  it('loads product-type groups only when the active workflow needs them', () => {
     expect(vendorWorkspaceSource).not.toContain('summaryVendors')
-    expect(vendorWorkspaceSource).toContain("enabled: tab === 'products'")
     expect(vendorWorkspaceSource).toContain(
-      'listProductTypeGroups({ page: 1, limit: DEFAULT_PAGE_SIZE })',
+      "enabled: importTarget?.kind === 'product' || tab === 'migration' || tab === 'products'",
     )
-    expect(vendorWorkspaceSource).not.toContain('listProductTypeGroups({ page: 1, limit: 100 })')
+    expect(vendorWorkspaceSource).toContain('listProductTypeGroups({ page: 1, limit: 100 })')
   })
 
   it('fits both vendor tables within the workspace viewport', () => {

@@ -125,6 +125,19 @@ describe('OrderWorkbenchPage', () => {
     )
   })
 
+  it('sends the sales channel query on every workbench and summary request', async () => {
+    renderPage('/portal/orders?salesChannelCode=etsy')
+
+    await waitFor(() =>
+      expect(listOrderWorkbench).toHaveBeenCalledWith(
+        expect.objectContaining({ salesChannelCode: 'ETSY' }),
+      ),
+    )
+    expect(getOrderSummary).toHaveBeenCalledWith(
+      expect.objectContaining({ salesChannelCode: 'ETSY' }),
+    )
+  })
+
   it('keeps the active queue context visible above the filters', async () => {
     renderPage('/portal/orders?tab=NEW_ORDER')
 

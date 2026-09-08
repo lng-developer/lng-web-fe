@@ -55,7 +55,7 @@ describe('ProductTypeManagementPage', () => {
     await waitFor(() =>
       expect(listProductTypeGroups).toHaveBeenLastCalledWith({
         page: 2,
-        limit: 10,
+        limit: 20,
         search: undefined,
       }),
     )
@@ -67,7 +67,7 @@ describe('ProductTypeManagementPage', () => {
     await waitFor(() =>
       expect(listProductTypeGroups).toHaveBeenLastCalledWith({
         page: 1,
-        limit: 10,
+        limit: 20,
         search: 'shirt',
       }),
     )

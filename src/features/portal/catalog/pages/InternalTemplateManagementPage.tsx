@@ -206,7 +206,10 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
                 allowClear
                 placeholder={t('portal.catalog.master.searchTemplates')}
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
                 onSearch={() => setPage(1)}
               />
               {canManage ? (

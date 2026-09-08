@@ -74,7 +74,7 @@ describe('InternalTemplateManagementPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Page 2' }))
     await waitFor(() =>
-      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 2, limit: 10, q: undefined }),
+      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 2, limit: 20, q: undefined }),
     )
 
     fireEvent.change(screen.getByPlaceholderText('Search templates'), {
@@ -82,7 +82,7 @@ describe('InternalTemplateManagementPage', () => {
     })
 
     await waitFor(() =>
-      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 1, limit: 10, q: 'canvas' }),
+      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 1, limit: 20, q: 'canvas' }),
     )
   })
 })
