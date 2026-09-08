@@ -114,6 +114,8 @@ export type ImportBatch = {
   id: string
   sourceType: string
   originalFilename: string
+  contentHash?: string | null
+  sourceRef?: string | null
   shopId?: string | null
   salesChannelCode?: string | null
   marketplaceCode?: string | null
@@ -124,7 +126,12 @@ export type ImportBatch = {
   skippedRows: number
   unlinkedRows: number
   errorCount: number
-  errors: Array<{ row?: number; message?: string; code?: string }>
+  errors: Array<{ row?: number; field?: string; message?: string; code?: string }>
+  recalculationStatus?: string
+  recalculationTotal?: number
+  recalculationCompleted?: number
+  recalculationFailed?: number
+  finishedAt?: string | null
   createdAt: string
 }
 export type AdsUnassignedRow = {

@@ -10,6 +10,7 @@ import {
   listFinanceSnapshots,
   listImportBatches,
   recalculateOrder,
+  reprocessImportBatch,
 } from '@/features/portal/finance/api/financeApi'
 import { FinanceWorkspacePage } from '@/features/portal/finance/pages/FinanceWorkspacePage'
 import { listShops } from '@/features/portal/shops/api/shopApi'
@@ -32,6 +33,7 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
   getOrderFinanceSummary: vi.fn(),
   getOrderItemFinanceSnapshot: vi.fn(),
   recalculateOrder: vi.fn(),
+  reprocessImportBatch: vi.fn(),
 }))
 vi.mock('@/features/portal/shops/api/shopApi', () => ({
   listShops: vi.fn(),
@@ -141,7 +143,23 @@ describe('FinanceWorkspacePage', () => {
       departments: [{ id: 'department-id', code: 'SALE', name: 'Sales' }],
     })
     vi.mocked(listImportBatches).mockResolvedValue({
-      items: [],
+      items: [
+        {
+          id: 'batch-1',
+          sourceType: 'TRANSACTIONS',
+          originalFilename: 'transactions.csv',
+          contentHash: 'a'.repeat(64),
+          dryRun: false,
+          status: 'PARTIAL_FAILED',
+          processedRows: 10,
+          validRows: 8,
+          skippedRows: 2,
+          unlinkedRows: 1,
+          errorCount: 2,
+          errors: [{ row: 4, message: 'total is required' }],
+          createdAt: '2026-09-08T00:00:00.000Z',
+        },
+      ],
       pagination: { total: 120, page: 1, limit: 20 },
     })
     vi.mocked(listShops).mockResolvedValue({
@@ -192,6 +210,7 @@ describe('FinanceWorkspacePage', () => {
       ],
     })
     vi.mocked(recalculateOrder).mockResolvedValue({})
+    vi.mocked(reprocessImportBatch).mockResolvedValue({})
     vi.mocked(getOrderItemFinanceSnapshot).mockResolvedValue({
       id: 'snapshot-1',
       orderId: 'order-1',
@@ -400,6 +419,20 @@ describe('FinanceWorkspacePage', () => {
       'href',
       '/portal/integrations?tab=finance',
     )
+  })
+
+  it('shows batch quality and reprocesses the stored source only for finance writers', async () => {
+    accountState.current = {
+      ...accountState.current,
+      permissions: ['FINANCE:READ', 'FINANCE:WRITE'],
+    }
+    renderPage()
+
+    expect(await screen.findByText('transactions.csv')).toBeVisible()
+    expect(screen.getByText('8 / 10')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Reprocess' }))
+
+    await waitFor(() => expect(reprocessImportBatch).toHaveBeenCalledWith('batch-1'))
   })
 
   it('reloads finance snapshots when the shared page-size control changes', async () => {

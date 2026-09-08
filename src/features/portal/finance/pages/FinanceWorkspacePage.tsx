@@ -20,6 +20,7 @@ import {
 import type { FinanceSnapshot } from '../api/financeApi'
 import { FinanceCurrencySummary } from '../components/FinanceCurrencySummary'
 import { formatFinanceMoney } from '../components/financeFormatters'
+import { FinanceImportHistory } from '../components/FinanceImportHistory'
 import { FinanceItemSnapshotModal } from '../components/FinanceItemSnapshotModal'
 import { FinanceOrderDetailModal } from '../components/FinanceOrderDetailModal'
 import { useFinanceMutations } from '../hooks/useFinanceMutations'
@@ -353,6 +354,8 @@ export const FinanceWorkspacePage = () => {
           scroll={{ x: 1010 }}
         />
       </SectionCard>
+
+      {globalRead ? <FinanceImportHistory canReprocess={account.permissions.includes('FINANCE:WRITE')} /> : null}
 
       <FinanceOrderDetailModal
         selectedOrder={selected}
