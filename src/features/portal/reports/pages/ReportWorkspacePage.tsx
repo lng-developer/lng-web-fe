@@ -310,7 +310,6 @@ export function ReportWorkspacePage() {
       { key: 'adSpendAmount', label: t('reports.columns.spend') },
       { key: 'refundAmount', label: t('reports.columns.refund') },
       { key: 'discountAmount', label: t('reports.columns.discount') },
-      { key: 'taxAmount', label: t('reports.columns.tax') },
       { key: 'grossProfitAmount', label: t('reports.metrics.grossProfit') },
       { key: 'operatingCostAmount', label: t('reports.columns.operatingCost') },
       { key: 'netProfitAmount', label: t('reports.columns.netProfit') },

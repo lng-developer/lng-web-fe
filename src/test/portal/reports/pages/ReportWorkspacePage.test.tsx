@@ -252,6 +252,8 @@ describe('ReportWorkspacePage', () => {
         'Gross profit = Revenue − Product cost − Additional fulfillment − Marketplace fee − Refund − Discount',
       ),
     ).toBeInTheDocument()
+    expect(screen.queryByText('Tax')).not.toBeInTheDocument()
+    expect(screen.getByText('Tax is excluded from revenue and P&L.')).toBeInTheDocument()
     expect(
       screen.getByText('Net profit = Gross profit − Operating cost − Ads spend'),
     ).toBeInTheDocument()

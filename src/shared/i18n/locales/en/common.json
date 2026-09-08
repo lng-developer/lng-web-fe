@@ -336,7 +336,7 @@
       "explanation": "How profit is calculated",
       "grossFormula": "Gross profit = Revenue − Product cost − Additional fulfillment − Marketplace fee − Refund − Discount",
       "netFormula": "Net profit = Gross profit − Operating cost − Ads spend",
-      "excludedCostNote": "Tax is shown separately because it is excluded from Revenue and is not deducted a second time.",
+      "excludedCostNote": "Tax is excluded from revenue and P&L.",
       "dataNote": "Rows with missing cost should be treated as incomplete until their fulfillment cost is available."
     },
     "operations": {
