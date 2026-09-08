@@ -9,6 +9,7 @@ import {
   listFinanceFilterOptions,
   listFinanceSnapshots,
   listImportBatches,
+  listSettlements,
   recalculateOrder,
   reprocessImportBatch,
 } from '@/features/portal/finance/api/financeApi'
@@ -30,6 +31,7 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
   listFinanceFilterOptions: vi.fn(),
   listFinanceSnapshots: vi.fn(),
   listImportBatches: vi.fn(),
+  listSettlements: vi.fn(),
   getOrderFinanceSummary: vi.fn(),
   getOrderItemFinanceSnapshot: vi.fn(),
   recalculateOrder: vi.fn(),
@@ -161,6 +163,29 @@ describe('FinanceWorkspacePage', () => {
         },
       ],
       pagination: { total: 120, page: 1, limit: 20 },
+    })
+    vi.mocked(listSettlements).mockResolvedValue({
+      items: [
+        {
+          id: 'settlement-1',
+          settlementId: '55521020702',
+          currency: 'USD',
+          periodStartAt: '2026-09-05T00:00:00.000Z',
+          periodEndAt: '2026-09-06T00:00:00.000Z',
+          depositAt: '2026-09-07T00:00:00.000Z',
+          totalAmount: 96215,
+          ledgerSummary: {
+            payoutAmount: 96215,
+            ledgerNetAmount: 96215,
+            cashVarianceAmount: 0,
+            lineCount: 10,
+            linkedCount: 8,
+            linkCoverageBps: 8000,
+          },
+        },
+      ],
+      summaryByCurrency: [{ currency: 'USD', settlementCount: 1, totalAmount: 96215, netSettlementAmount: 96215 }],
+      pagination: { total: 1, page: 1, limit: 10 },
     })
     vi.mocked(listShops).mockResolvedValue({
       items: [
@@ -444,6 +469,16 @@ describe('FinanceWorkspacePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reprocess' }))
 
     await waitFor(() => expect(reprocessImportBatch).toHaveBeenCalledWith('batch-1'))
+  })
+
+  it('keeps settlement cash flow separate from order profitability', async () => {
+    renderPage()
+
+    expect(await screen.findByText('Settlement cash flow')).toBeVisible()
+    expect(screen.getByText('55521020702')).toBeVisible()
+    expect(screen.getByText('$962.15')).toBeVisible()
+    expect(screen.getByText('80% linked')).toBeVisible()
+    expect(listSettlements).toHaveBeenCalledWith({ page: 1, limit: 10 })
   })
 
   it('reloads finance snapshots when the shared page-size control changes', async () => {

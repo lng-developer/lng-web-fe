@@ -23,6 +23,7 @@ import { formatFinanceMoney } from '../components/financeFormatters'
 import { FinanceImportHistory } from '../components/FinanceImportHistory'
 import { FinanceItemSnapshotModal } from '../components/FinanceItemSnapshotModal'
 import { FinanceOrderDetailModal } from '../components/FinanceOrderDetailModal'
+import { SettlementCashFlow } from '../components/SettlementCashFlow'
 import { useFinanceMutations } from '../hooks/useFinanceMutations'
 import { useFinanceWorkspace } from '../hooks/useFinanceWorkspace'
 import styles from './FinanceWorkspacePage.module.scss'
@@ -356,6 +357,7 @@ export const FinanceWorkspacePage = () => {
       </SectionCard>
 
       {globalRead ? <FinanceImportHistory canReprocess={account.permissions.includes('FINANCE:WRITE')} /> : null}
+      {globalRead ? <SettlementCashFlow /> : null}
 
       <FinanceOrderDetailModal
         selectedOrder={selected}

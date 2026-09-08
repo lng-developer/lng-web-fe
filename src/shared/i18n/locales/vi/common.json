@@ -233,6 +233,17 @@
         "submit": "Chạy nhập liệu"
       }
     },
+    "settlements": {
+      "title": "Dòng tiền settlement",
+      "note": "Đối soát dòng tiền, tách biệt với lợi nhuận đơn hàng",
+      "settlement": "Settlement",
+      "deposit": "Ngày ghi có",
+      "payout": "Amazon chi trả",
+      "ledgerNet": "Ledger đã nhập",
+      "variance": "Chênh lệch",
+      "linked": "Dòng đã liên kết",
+      "linkedValue": "Đã liên kết {{coverage}} ({{linked}} / {{total}})"
+    },
     "actions": {
       "import": "Nhập dữ liệu tài chính",
       "reprocess": "Chạy lại",

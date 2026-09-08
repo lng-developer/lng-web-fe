@@ -148,6 +148,33 @@ export type ImportBatch = {
   finishedAt?: string | null
   createdAt: string
 }
+export type Settlement = {
+  id: string
+  settlementId: string
+  currency: string
+  periodStartAt?: string | null
+  periodEndAt?: string | null
+  depositAt?: string | null
+  totalAmount?: number | null
+  netSettlementAmount?: number | null
+  ledgerSummary: {
+    payoutAmount: number
+    ledgerNetAmount: number
+    cashVarianceAmount: number
+    lineCount: number
+    linkedCount: number
+    unlinkedCount?: number
+    linkCoverageBps: number | null
+  }
+}
+export type SettlementPage = Paginated<Settlement> & {
+  summaryByCurrency: Array<{
+    currency: string
+    settlementCount: number
+    totalAmount: number
+    netSettlementAmount: number
+  }>
+}
 export type AdsUnassignedRow = {
   id: string
   reportDate: string
@@ -217,6 +244,15 @@ export async function recalculateOrder(orderId: string) {
 export async function listImportBatches(query: Record<string, unknown> = {}) {
   const data = unwrap<Paginated<ImportBatch>>(
     await apiClient.get('/api/finance/import-batches', { params: params(query) }),
+  )
+  return normalizePagination(data, {
+    page: Number(query.page) || 1,
+    limit: Number(query.limit) || 20,
+  })
+}
+export async function listSettlements(query: Record<string, unknown> = {}) {
+  const data = unwrap<SettlementPage>(
+    await apiClient.get('/api/finance/settlements', { params: params(query) }),
   )
   return normalizePagination(data, {
     page: Number(query.page) || 1,

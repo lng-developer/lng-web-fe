@@ -233,6 +233,17 @@
         "submit": "Run import"
       }
     },
+    "settlements": {
+      "title": "Settlement cash flow",
+      "note": "Cash reconciliation, separate from order profit",
+      "settlement": "Settlement",
+      "deposit": "Deposit date",
+      "payout": "Amazon payout",
+      "ledgerNet": "Imported ledger",
+      "variance": "Variance",
+      "linked": "Linked lines",
+      "linkedValue": "{{coverage}} linked ({{linked}} / {{total}})"
+    },
     "actions": {
       "import": "Import finance data",
       "reprocess": "Reprocess",
