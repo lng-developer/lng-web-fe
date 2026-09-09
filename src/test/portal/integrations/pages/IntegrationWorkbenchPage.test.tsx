@@ -744,6 +744,36 @@ describe('IntegrationWorkbenchPage', () => {
     )
   })
 
+  it('shows an agent schedule as a compact card without stale next-run data', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+    vi.mocked(listExtensionOrderSchedules).mockResolvedValue({
+      items: [
+        {
+          id: 'order-schedule-1', shopId: shop.id, agentId: 'agent-1', enabled: false,
+          intervalMinutes: 120, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastError: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
+    expect(within(agentCard).getByText('Online')).toBeVisible()
+    const orderSchedule = within(agentCard).getByRole('region', { name: 'Order import schedule' })
+    expect(within(orderSchedule).getByText('Order import')).toBeVisible()
+    expect(within(orderSchedule).getByText('Not scheduled')).toBeVisible()
+  })
+
   it('keeps the upload action scoped to Imports', async () => {
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
 

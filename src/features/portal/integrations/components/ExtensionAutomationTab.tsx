@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ClockCircleOutlined } from '@ant-design/icons'
-import { Button, Popover, Select, Space, Typography } from 'antd'
+import { Button, Empty, Popover, Select, Spin, Typography } from 'antd'
 
-import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { SectionCard, StatusTag } from '@/shared/ui'
 
 import type {
@@ -57,18 +56,70 @@ export function ExtensionAutomationTab({
   onRequestFinanceScheduleNow,
 }: ExtensionAutomationTabProps) {
   const { t } = useTranslation()
-
   const orderScheduleByAgentId = useMemo(
     () => new Map(schedules.map((schedule) => [schedule.agentId, schedule])),
     [schedules],
   )
   const financeScheduleByAgentSource = useMemo(
-    () =>
-      new Map(
-        financeSchedules.map((schedule) => [`${schedule.agentId}:${schedule.source}`, schedule]),
-      ),
+    () => new Map(financeSchedules.map((schedule) => [`${schedule.agentId}:${schedule.source}`, schedule])),
     [financeSchedules],
   )
+  const agentGroups = useMemo(() => {
+    const groups = new Map<string, ExtensionManagementAgent[]>()
+    agents.forEach((agent) => groups.set(agent.shopId, [...(groups.get(agent.shopId) ?? []), agent]))
+    return [...groups].map(([shopId, groupAgents]) => ({
+      agents: groupAgents,
+      name: shopNames.get(shopId) ?? shopId,
+      shopId,
+    }))
+  }, [agents, shopNames])
+
+  const renderOrderSchedule = (agent: ExtensionManagementAgent) => {
+    const schedule = orderScheduleByAgentId.get(agent.id)
+    const enabled = schedule?.enabled ?? false
+    return (
+      <section aria-label="Order import schedule" className={styles.automationSchedule}>
+        <div className={styles.automationScheduleHeader}>
+          <Typography.Text strong>Order import</Typography.Text>
+          <StatusTag status={enabled ? 'operational' : 'draft'}>{enabled ? 'Enabled' : 'Disabled'}</StatusTag>
+        </div>
+        <Typography.Text type="secondary">
+          {enabled && schedule ? `Every ${schedule.intervalMinutes / 60}h · Next: ${new Date(schedule.nextRunAt).toLocaleString()}` : 'Not scheduled'}
+        </Typography.Text>
+        {schedule?.lastError ? <Typography.Text type="danger">{schedule.lastError}</Typography.Text> : null}
+        {canWriteOrders ? (
+          <Popover
+            content={
+              <div className={styles.commandPopover}>
+                <Select
+                  aria-label={t('portal.integrations.extension.orderScheduleInterval', { defaultValue: 'Order schedule interval' })}
+                  defaultValue={schedule?.intervalMinutes ?? 120}
+                  options={[60, 120, 180, 240].map((value) => ({ value, label: `Every ${value / 60} hour${value === 60 ? '' : 's'}` }))}
+                  onChange={(intervalMinutes: 60 | 120 | 180 | 240) =>
+                    onSaveSchedule({ agentId: agent.id, enabled, intervalMinutes })
+                  }
+                />
+                <Button
+                  aria-label={t('portal.integrations.extension.saveOrderSchedule', { defaultValue: 'Save schedule' })}
+                  loading={isSavingSchedule}
+                  type="primary"
+                  onClick={() => onSaveSchedule({ agentId: agent.id, enabled: !enabled, intervalMinutes: schedule?.intervalMinutes ?? 120 })}
+                >
+                  {enabled ? 'Disable schedule' : 'Save schedule'}
+                </Button>
+              </div>
+            }
+            title="Order schedule"
+            trigger="click"
+          >
+            <Button aria-label={t('portal.integrations.extension.configureOrderSchedule', { defaultValue: 'Configure order schedule' })} icon={<ClockCircleOutlined />} size="small">
+              Configure
+            </Button>
+          </Popover>
+        ) : null}
+      </section>
+    )
+  }
 
   const renderFinanceSchedule = (
     agent: ExtensionManagementAgent,
@@ -76,173 +127,82 @@ export function ExtensionAutomationTab({
     label: string,
   ) => {
     const schedule = financeScheduleByAgentSource.get(`${agent.id}:${source}`)
+    const enabled = schedule?.enabled ?? false
     return (
-      <Space direction="vertical" size={2}>
-        <Space size={6}>
-          <Typography.Text>{label}</Typography.Text>
-          {schedule?.enabled ? (
-            <StatusTag status="operational">Enabled</StatusTag>
-          ) : (
-            <Typography.Text type="secondary">Disabled</Typography.Text>
-          )}
-          {canWriteFinance ? (
+      <section aria-label={`${label} schedule`} className={styles.automationSchedule}>
+        <div className={styles.automationScheduleHeader}>
+          <Typography.Text strong>{label}</Typography.Text>
+          <StatusTag status={enabled ? 'operational' : 'draft'}>{enabled ? 'Enabled' : 'Disabled'}</StatusTag>
+        </div>
+        <Typography.Text type="secondary">
+          {enabled ? `Daily · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}` : 'Not scheduled'}
+        </Typography.Text>
+        {schedule?.lastError ? <Typography.Text type="danger">{schedule.lastError}</Typography.Text> : null}
+        {canWriteFinance ? (
+          <div className={styles.automationScheduleActions}>
             <Button
-              aria-label={`${schedule?.enabled ? 'Disable' : 'Enable'} ${label.toLowerCase()} sync`}
+              aria-label={`${enabled ? 'Disable' : 'Enable'} ${label.toLowerCase()} sync`}
               loading={isSavingFinanceSchedule}
               size="small"
-              onClick={() =>
-                onSaveFinanceSchedule({
-                  agentId: agent.id,
-                  source,
-                  enabled: !(schedule?.enabled ?? false),
-                })
-              }
+              onClick={() => onSaveFinanceSchedule({ agentId: agent.id, source, enabled: !enabled })}
             >
-              {schedule?.enabled ? 'Disable' : 'Enable'}
+              {enabled ? 'Disable' : 'Enable'}
             </Button>
-          ) : null}
-          {canWriteFinance && schedule?.enabled ? (
-            <Button
-              aria-label={`Request ${label.toLowerCase()} sync now`}
-              loading={isRequestingFinanceSchedule}
-              size="small"
-              onClick={() => onRequestFinanceScheduleNow({ agentId: agent.id, source })}
-            >
-              Request now
-            </Button>
-          ) : null}
-        </Space>
-        {schedule?.enabled ? (
-          <Typography.Text type="secondary">
-            Next: {new Date(schedule.nextRunAt).toLocaleString()}
-          </Typography.Text>
+            {enabled ? (
+              <Button
+                aria-label={`Request ${label.toLowerCase()} sync now`}
+                loading={isRequestingFinanceSchedule}
+                size="small"
+                type="primary"
+                onClick={() => onRequestFinanceScheduleNow({ agentId: agent.id, source })}
+              >
+                Request now
+              </Button>
+            ) : null}
+          </div>
         ) : null}
-        {schedule?.lastError ? (
-          <Typography.Text type="danger">{schedule.lastError}</Typography.Text>
-        ) : null}
-      </Space>
+      </section>
     )
   }
 
   return (
     <SectionCard title="Automation">
       <Typography.Paragraph type="secondary">
-        Configure recurring orders plus daily Transactions and Settlements imports for each
-        connected extension.
+        Configure recurring orders plus daily Transactions and Settlements imports for each connected extension.
       </Typography.Paragraph>
-      <CoreDataTable<ExtensionManagementAgent>
-        rowKey="id"
-        loading={isLoading}
-        dataSource={agents}
-        pagination={false}
-        columns={[
-          {
-            title: 'Shop',
-            dataIndex: 'shopId',
-            width: 180,
-            render: (shopId: string) => shopNames.get(shopId) ?? shopId,
-          },
-          { title: 'RDC / Chrome', dataIndex: 'label', width: 200 },
-          {
-            title: 'Order schedule',
-            width: 150,
-            render: (_, agent) => {
-              const schedule = orderScheduleByAgentId.get(agent.id)
-              return schedule?.enabled ? (
-                <StatusTag status="operational">Enabled</StatusTag>
-              ) : (
-                <Typography.Text type="secondary">Disabled</Typography.Text>
-              )
-            },
-          },
-          {
-            title: 'Interval',
-            width: 150,
-            render: (_, agent) => {
-              const schedule = orderScheduleByAgentId.get(agent.id)
-              return schedule?.enabled ? `Every ${schedule.intervalMinutes / 60}h` : '—'
-            },
-          },
-          {
-            title: 'Next run',
-            width: 180,
-            render: (_, agent) => {
-              const nextRunAt = orderScheduleByAgentId.get(agent.id)?.nextRunAt
-              return nextRunAt ? new Date(nextRunAt).toLocaleString() : '—'
-            },
-          },
-          {
-            title: 'Finance sync',
-            width: 300,
-            render: (_, agent) => (
-              <Space direction="vertical" size={8}>
-                {renderFinanceSchedule(agent, 'TRANSACTIONS', 'Transaction')}
-                {renderFinanceSchedule(agent, 'SETTLEMENTS', 'Settlement')}
-              </Space>
-            ),
-          },
-          {
-            title: 'Actions',
-            width: 130,
-            render: (_, agent) => {
-              if (!canWriteOrders) return null
-              const schedule = orderScheduleByAgentId.get(agent.id)
-              return (
-                <Popover
-                  title="Order schedule"
-                  trigger="click"
-                  content={
-                    <div className={styles.commandPopover}>
-                      <Select
-                        aria-label={t('portal.integrations.extension.orderScheduleInterval', {
-                          defaultValue: 'Order schedule interval',
-                        })}
-                        defaultValue={schedule?.intervalMinutes ?? 120}
-                        options={[60, 120, 180, 240].map((value) => ({
-                          value,
-                          label: `Every ${value / 60} hour${value === 60 ? '' : 's'}`,
-                        }))}
-                        onChange={(intervalMinutes: 60 | 120 | 180 | 240) =>
-                          onSaveSchedule({
-                            agentId: agent.id,
-                            enabled: schedule?.enabled ?? true,
-                            intervalMinutes,
-                          })
-                        }
-                      />
-                      <Button
-                        aria-label={t('portal.integrations.extension.saveOrderSchedule', {
-                          defaultValue: 'Save schedule',
-                        })}
-                        type="primary"
-                        loading={isSavingSchedule}
-                        onClick={() =>
-                          onSaveSchedule({
-                            agentId: agent.id,
-                            enabled: !(schedule?.enabled ?? false),
-                            intervalMinutes: schedule?.intervalMinutes ?? 120,
-                          })
-                        }
-                      >
-                        {schedule?.enabled ? 'Disable schedule' : 'Save schedule'}
-                      </Button>
-                    </div>
-                  }
-                >
-                  <Button
-                    aria-label={t('portal.integrations.extension.configureOrderSchedule', {
-                      defaultValue: 'Configure order schedule',
-                    })}
-                    icon={<ClockCircleOutlined />}
-                  >
-                    Configure
-                  </Button>
-                </Popover>
-              )
-            },
-          },
-        ]}
-      />
+      <Spin spinning={isLoading}>
+        {agentGroups.length ? (
+          <div className={styles.automationGroups}>
+            {agentGroups.map((group) => (
+              <section key={group.shopId} aria-label={`${group.name} automation`} className={styles.automationGroup}>
+                <Typography.Title level={5}>{group.name}</Typography.Title>
+                <div className={styles.automationGrid}>
+                  {group.agents.map((agent) => (
+                    <article key={agent.id} aria-label={`${group.name} / ${agent.label}`} className={styles.automationAgentCard}>
+                      <div className={styles.automationAgentHeader}>
+                        <div>
+                          <Typography.Text strong>{agent.label}</Typography.Text>
+                          <Typography.Text type="secondary">Chrome extension</Typography.Text>
+                        </div>
+                        <StatusTag status={agent.status === 'ONLINE' ? 'online' : 'offline'}>
+                          {agent.status === 'ONLINE' ? 'Online' : 'Offline'}
+                        </StatusTag>
+                      </div>
+                      <div className={styles.automationScheduleGrid}>
+                        {renderOrderSchedule(agent)}
+                        {renderFinanceSchedule(agent, 'TRANSACTIONS', 'Transaction')}
+                        {renderFinanceSchedule(agent, 'SETTLEMENTS', 'Settlement')}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <Empty description="No extension agents connected" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+      </Spin>
     </SectionCard>
   )
 }

@@ -69,6 +69,67 @@
   width: 280px;
 }
 
+.automationGroups {
+  display: grid;
+  gap: 20px;
+}
+
+.automationGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.automationGroup :global(.ant-typography.ant-typography-h5) {
+  margin: 0;
+}
+
+.automationGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.automationAgentCard {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+
+.automationAgentHeader,
+.automationScheduleHeader,
+.automationScheduleActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.automationAgentHeader > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.automationScheduleGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.automationSchedule {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.automationScheduleActions {
+  justify-content: flex-start;
+}
+
 .extensionCards {
   display: grid;
   gap: 12px;
