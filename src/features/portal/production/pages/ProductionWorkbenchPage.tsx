@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/preserve-manual-memoization -- stable React state setters are intentionally wrapped for memoized workbench children */
 import { type Key, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
+import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
   AppstoreOutlined,
   CheckCircleOutlined,
@@ -53,6 +53,10 @@ import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = 20
 type ProductionTab = 'scale' | 'blocked' | 'qc'
+const SALES_CHANNEL_BY_QUERY: Record<string, 'AMAZON' | 'ETSY'> = {
+  amazon: 'AMAZON',
+  etsy: 'ETSY',
+}
 const SCALE_STATUSES: ProductionStatus[] = ['NEED_SCALE', 'QC_REJECTED', 'BLOCKED']
 const BLOCKED_STATUSES: ProductionStatus[] = ['BLOCKED']
 const QC_STATUSES: ProductionStatus[] = [
@@ -92,15 +96,24 @@ export function ProductionWorkbenchPage({
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { queue: routeQueue } = useParams()
   const requestedTab = searchParams.get('queue')
-  const tab: ProductionTab = ['scale', 'blocked', 'qc'].includes(requestedTab ?? '')
-    ? (requestedTab as ProductionTab)
-    : 'scale'
+  const dedicatedTab: ProductionTab | undefined = ['scale', 'blocked', 'qc'].includes(
+    routeQueue ?? '',
+  )
+    ? (routeQueue as ProductionTab)
+    : undefined
+  const tab: ProductionTab =
+    dedicatedTab ??
+    (['scale', 'blocked', 'qc'].includes(requestedTab ?? '')
+      ? (requestedTab as ProductionTab)
+      : 'scale')
+  const salesChannelCode =
+    SALES_CHANNEL_BY_QUERY[searchParams.get('salesChannelCode')?.toLowerCase() ?? '']
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
-  const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()
   const [status, setStatus] = useState<ProductionStatus>()
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
   const [inspect, setInspect] = useState<{
@@ -310,11 +323,20 @@ export function ProductionWorkbenchPage({
     setStatus(value)
     setPage(1)
   }, [])
-  const handleSalesChannelChange = useCallback((value: string | number) => {
-    setSalesChannelCode(value === 'ALL' ? undefined : (value as 'AMAZON' | 'ETSY'))
-    setPage(1)
-    setSelectedRowKeys([])
-  }, [])
+  const handleSalesChannelChange = useCallback(
+    (value: string | number) => {
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (value === 'AMAZON' || value === 'ETSY') {
+        nextSearchParams.set('salesChannelCode', value.toLowerCase())
+      } else {
+        nextSearchParams.delete('salesChannelCode')
+      }
+      setSearchParams(nextSearchParams, { replace: true })
+      setPage(1)
+      setSelectedRowKeys([])
+    },
+    [searchParams, setSearchParams],
+  )
   const handleBlockedMetricClick = useCallback(() => handleTabChange('blocked'), [handleTabChange])
   const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
     setScaleDifficultyLevel(value)
@@ -642,7 +664,7 @@ export function ProductionWorkbenchPage({
           label={t('portal.production.metrics.blocked')}
           value={queueSummary.blocked ?? 0}
           loading={summary.isLoading}
-          onClick={handleBlockedMetricClick}
+          onClick={dedicatedTab ? undefined : handleBlockedMetricClick}
         />
         <MetricCard
           icon={<ScissorOutlined />}
@@ -667,24 +689,26 @@ export function ProductionWorkbenchPage({
         />
       </div>
       <div className={styles.workspace}>
-        <div className={styles.queueToolbar}>
-          <UiButtonTabs
-            className={styles.queueTabs}
-            value={tab}
-            onChange={handleTabChange}
-            items={queueTabItems}
-          />
-          <UiButtonTabs
-            className={styles.channelFilter}
-            value={salesChannelCode ?? 'ALL'}
-            items={[
-              { label: t('portal.production.channelAll'), value: 'ALL' },
-              { label: 'Amazon', value: 'AMAZON' },
-              { label: 'Etsy', value: 'ETSY' },
-            ]}
-            onChange={handleSalesChannelChange}
-          />
-        </div>
+        {dedicatedTab ? null : (
+          <div className={styles.queueToolbar}>
+            <UiButtonTabs
+              className={styles.queueTabs}
+              value={tab}
+              onChange={handleTabChange}
+              items={queueTabItems}
+            />
+            <UiButtonTabs
+              className={styles.channelFilter}
+              value={salesChannelCode ?? 'ALL'}
+              items={[
+                { label: t('portal.production.channelAll'), value: 'ALL' },
+                { label: 'Amazon', value: 'AMAZON' },
+                { label: 'Etsy', value: 'ETSY' },
+              ]}
+              onChange={handleSalesChannelChange}
+            />
+          </div>
+        )}
         <section className={styles.queuePane} aria-label={t('portal.production.title')}>
           <ProductionWorkbenchFilterBar
             search={search}

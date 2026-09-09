@@ -1,4 +1,4 @@
-import { MemoryRouter, useLocation } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -60,7 +60,16 @@ function renderPage(initialEntry = '/portal/production') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <AppProviders>
-        <ProductionWorkbenchPage account={account} />
+        <Routes>
+          <Route
+            path="/portal/production"
+            element={<ProductionWorkbenchPage account={account} />}
+          />
+          <Route
+            path="/portal/production/:queue"
+            element={<ProductionWorkbenchPage account={account} />}
+          />
+        </Routes>
         <LocationProbe />
       </AppProviders>
     </MemoryRouter>,
@@ -167,6 +176,32 @@ describe('ProductionWorkbenchPage', () => {
     renderPage('/portal/production?queue=blocked')
 
     expect(await findBlockedQueueTab()).toHaveClass('ant-btn-primary')
+  })
+
+  it('uses the sales channel from the URL for production queue requests', async () => {
+    renderPage('/portal/production?queue=qc&salesChannelCode=etsy')
+
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'QC' }),
+      ),
+    )
+    expect(summarizeProductionTasks).toHaveBeenCalledWith(
+      expect.objectContaining({ salesChannelCode: 'ETSY', view: 'QC' }),
+    )
+    expect(summarizeProductionQueueCounts).toHaveBeenCalledWith({ salesChannelCode: 'ETSY' })
+  })
+
+  it('renders a dedicated queue route without the shared queue and channel tabs', async () => {
+    renderPage('/portal/production/scale?salesChannelCode=etsy')
+
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'SCALE' }),
+      ),
+    )
+    expect(screen.queryByRole('button', { name: /Scale queue/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Amazon' })).not.toBeInTheDocument()
   })
 
   it('reloads server data when the shared page-size control changes', async () => {

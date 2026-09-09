@@ -401,7 +401,8 @@
       "grossProfit": "Gross profit",
       "netProfit": "Net profit",
       "missingCost": "Missing cost",
-      "sellers": "Sellers"
+      "sellers": "Sellers",
+      "adjustments": "Adjustments"
     },
     "coverage": {
       "title": "Data coverage",
@@ -423,13 +424,20 @@
     "sales": {
       "bySeller": "Seller performance",
       "byTeam": "Team performance",
+      "dailyFinance": "Daily sales",
+      "dailyProfit": "Daily net P&L",
+      "orderCost": "Order profitability",
+      "dailyEmployeeAds": "Daily employee ads",
       "dailyAds": "Daily ad performance",
       "acquisition": "Channel acquisition"
     },
     "profitability": {
       "comparison": "Profit comparison",
       "partialGrossProfit": "Partial gross profit",
+      "partialNetProfit": "Partial net profit",
+      "incomplete": "Incomplete",
       "costCoverage": "{{costed}} / {{total}} items with cost",
+      "contribution": "{{percent}}% of {{metric}}",
       "table": "Seller P&L",
       "summary": "Summary",
       "daily": "Daily detail",
@@ -440,6 +448,17 @@
       "excludedCostNote": "Tax is excluded from revenue and P&L.",
       "dataNote": "Rows with missing cost should be treated as incomplete until their fulfillment cost is available."
     },
+    "orderCost": {
+      "overview": "Order cost overview",
+      "missingFulfillmentCost": "Missing fulfilment cost",
+      "completePnl": "Complete order P&L",
+      "costCoverage": "Cost coverage",
+      "costCoverageValue": "{{costed}} / {{total}} orders with cost"
+    },
+    "adsEmployee": {
+      "ranking": "Employee ranking",
+      "trend": "Employee trend"
+    },
     "operations": {
       "orders": "Order items",
       "production": "Production",
@@ -448,6 +467,7 @@
       "blockers": "Production blockers"
     },
     "columns": {
+      "order": "Order",
       "seller": "Seller",
       "team": "Team",
       "sellers": "Active sellers",
@@ -462,6 +482,7 @@
       "tax": "Tax",
       "operatingCost": "Operating cost",
       "metric": "Metric",
+      "type": "Type",
       "total": "Total",
       "netProfit": "Net profit",
       "margin": "Margin",
@@ -474,6 +495,7 @@
       "orders": "Orders",
       "cpa": "CPA",
       "roas": "ROAS",
+      "conversion": "Conversion rate",
       "newBuyers": "New buyers",
       "submitted": "Submitted",
       "failed": "Failed",

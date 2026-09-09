@@ -401,7 +401,8 @@
       "grossProfit": "Lợi nhuận gộp",
       "netProfit": "Lợi nhuận ròng",
       "missingCost": "Thiếu giá vốn",
-      "sellers": "Seller"
+      "sellers": "Seller",
+      "adjustments": "Điều chỉnh"
     },
     "coverage": {
       "title": "Độ phủ dữ liệu",
@@ -423,13 +424,20 @@
     "sales": {
       "bySeller": "Hiệu quả seller",
       "byTeam": "Hiệu quả nhóm",
+      "dailyFinance": "Doanh thu theo ngày",
+      "dailyProfit": "P&L ròng theo ngày",
+      "orderCost": "Lợi nhuận theo đơn",
+      "dailyEmployeeAds": "Quảng cáo nhân viên theo ngày",
       "dailyAds": "Hiệu quả quảng cáo theo ngày",
       "acquisition": "Hiệu quả theo kênh"
     },
     "profitability": {
       "comparison": "So sánh lợi nhuận",
       "partialGrossProfit": "Lợi nhuận gộp tạm tính",
+      "partialNetProfit": "Lợi nhuận ròng tạm tính",
+      "incomplete": "Chưa đủ dữ liệu",
       "costCoverage": "{{costed}} / {{total}} sản phẩm đã có cost",
+      "contribution": "{{percent}}% {{metric}}",
       "table": "P&L theo seller",
       "summary": "Tổng quan",
       "daily": "Chi tiết theo ngày",
@@ -440,6 +448,17 @@
       "excludedCostNote": "Thuế không được tính vào doanh thu hoặc P&L.",
       "dataNote": "Các dòng thiếu giá vốn là chưa hoàn chỉnh cho đến khi có chi phí fulfillment."
     },
+    "orderCost": {
+      "overview": "Tổng quan chi phí đơn hàng",
+      "missingFulfillmentCost": "Thiếu fulfillment cost",
+      "completePnl": "P&L đơn hàng đã đủ cost",
+      "costCoverage": "Độ phủ cost",
+      "costCoverageValue": "{{costed}} / {{total}} đơn đã có cost"
+    },
+    "adsEmployee": {
+      "ranking": "Xếp hạng nhân viên",
+      "trend": "Xu hướng nhân viên"
+    },
     "operations": {
       "orders": "Sản phẩm trong đơn",
       "production": "Sản xuất",
@@ -448,6 +467,7 @@
       "blockers": "Điểm nghẽn sản xuất"
     },
     "columns": {
+      "order": "Đơn hàng",
       "seller": "Seller",
       "team": "Nhóm",
       "sellers": "Seller hoạt động",
@@ -462,6 +482,7 @@
       "tax": "Thuế",
       "operatingCost": "Chi phí vận hành",
       "metric": "Chỉ tiêu",
+      "type": "Loại",
       "total": "Tổng",
       "netProfit": "Lợi nhuận ròng",
       "margin": "Biên lợi nhuận",
@@ -474,6 +495,7 @@
       "orders": "Đơn hàng",
       "cpa": "CPA",
       "roas": "ROAS",
+      "conversion": "Tỷ lệ chuyển đổi",
       "newBuyers": "Khách mới",
       "submitted": "Đã gửi",
       "failed": "Thất bại",

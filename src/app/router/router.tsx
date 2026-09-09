@@ -367,7 +367,7 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
-        path: 'portal/reports',
+        path: 'portal/reports/:salesChannelCode?/:reportView?',
         lazy: () =>
           Promise.all([
             import('@/features/portal/components/PortalPageBoundary'),
@@ -489,7 +489,7 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
-        path: 'portal/production',
+        path: 'portal/production/:queue?',
         lazy: () =>
           Promise.all([
             import('@/features/portal/components/PortalPageBoundary'),

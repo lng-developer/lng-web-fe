@@ -145,4 +145,84 @@ describe('LegacySidebar', () => {
       ),
     )
   })
+
+  it('links fulfillment channel queues to the filtered production workbench', async () => {
+    render(
+      <MemoryRouter initialEntries={['/portal/production']}>
+        <AppProviders>
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fulfillment' }))
+    fireEvent.click(screen.getByText('Scale'))
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'AMAZON Scale' })).toHaveAttribute(
+        'href',
+        '/portal/production/scale?salesChannelCode=AMAZON',
+      ),
+    )
+    expect(screen.getByRole('link', { name: 'ETSY Scale' })).toHaveAttribute(
+      'href',
+      '/portal/production/scale?salesChannelCode=ETSY',
+    )
+
+    fireEvent.click(screen.getByText('QC'))
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'AMAZON QC' })).toHaveAttribute(
+        'href',
+        '/portal/production/qc?salesChannelCode=AMAZON',
+      ),
+    )
+    expect(screen.getByRole('link', { name: 'ETSY QC' })).toHaveAttribute(
+      'href',
+      '/portal/production/qc?salesChannelCode=ETSY',
+    )
+  })
+
+  it('links reports to dedicated Amazon and Etsy report pages', async () => {
+    render(
+      <MemoryRouter initialEntries={['/portal/reports']}>
+        <AppProviders>
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sales' }))
+    fireEvent.click(screen.getByText('Reports'))
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Amazon' }))
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Orders Cost' })).toHaveAttribute(
+        'href',
+        '/portal/reports/amazon/order-cost',
+      ),
+    )
+    expect(screen.getByRole('link', { name: 'Ads Report' })).toHaveAttribute(
+      'href',
+      '/portal/reports/amazon/ads',
+    )
+    expect(screen.getByRole('link', { name: 'Sale Report' })).toHaveAttribute(
+      'href',
+      '/portal/reports/amazon/sales',
+    )
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Etsy' }))
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Etsy Orders Cost' })).toHaveAttribute(
+        'href',
+        '/portal/reports/etsy/order-cost',
+      ),
+    )
+    expect(screen.getByRole('link', { name: 'ADS Etsy' })).toHaveAttribute(
+      'href',
+      '/portal/reports/etsy/ads',
+    )
+    expect(screen.getByRole('link', { name: 'Etsy Sale Report' })).toHaveAttribute(
+      'href',
+      '/portal/reports/etsy/sales',
+    )
+  })
 })

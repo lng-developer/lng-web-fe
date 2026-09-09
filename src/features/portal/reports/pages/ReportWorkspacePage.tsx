@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData } from 'react-router-dom'
+import { useParams, useRouteLoaderData } from 'react-router-dom'
 import { DollarOutlined, DownloadOutlined, FundOutlined, RiseOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Typography } from 'antd'
@@ -18,10 +18,13 @@ import {
 } from '@/shared/ui'
 
 import type { ReportFilters, SellerDailyProfit, SellerPerformance } from '../api/reportApi'
+import { ReportAdsEmployeeTab } from '../components/ReportAdsEmployeeTab'
 import { ReportAdsTab } from '../components/ReportAdsTab'
 import { ReportCoverageStrip } from '../components/ReportCoverageStrip'
 import { formatReportMoney, formatReportPercent } from '../components/reportFormatters'
+import { ReportOrderCostTab } from '../components/ReportOrderCostTab'
 import { ReportProfitComparisonChart } from '../components/ReportProfitComparisonChart'
+import { ReportSalesTab } from '../components/ReportSalesTab'
 import { ReportTeamTab } from '../components/ReportTeamTab'
 import { type ProfitabilityView, type TabKey, useReportData } from '../hooks/useReportData'
 import styles from './ReportWorkspacePage.module.scss'
@@ -37,6 +40,8 @@ type DailyMatrixRow = {
   values: Record<string, number | null>
 }
 
+type SelectFilterKey = Exclude<keyof ReportFilters, 'dateBasis' | 'page' | 'limit'>
+
 const datesInRange = (dateFrom?: string, dateTo?: string) => {
   const start = dayjs(dateFrom).startOf('day')
   const end = dayjs(dateTo).startOf('day')
@@ -48,16 +53,39 @@ const datesInRange = (dateFrom?: string, dateTo?: string) => {
   return dates
 }
 
+const SALES_CHANNEL_BY_ROUTE: Record<string, 'AMAZON' | 'ETSY'> = {
+  amazon: 'AMAZON',
+  etsy: 'ETSY',
+}
+
+const TAB_BY_REPORT_VIEW: Record<string, TabKey> = {
+  'order-cost': 'order-cost',
+  ads: 'ads-employee',
+  sales: 'sales-profit',
+}
+
 export function ReportWorkspacePage() {
   const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount
-  const [activeTab, setActiveTab] = useState<TabKey>('overview')
+  const { salesChannelCode: routeSalesChannelCode, reportView } = useParams()
+  const fixedSalesChannelCode = SALES_CHANNEL_BY_ROUTE[routeSalesChannelCode?.toLowerCase() ?? '']
+  const [selectedTab, setSelectedTab] = useState<TabKey>('overview')
+  const [orderCostPage, setOrderCostPage] = useState(1)
+  const dedicatedTab = TAB_BY_REPORT_VIEW[reportView?.toLowerCase() ?? '']
+  const activeTab = dedicatedTab || selectedTab
+  const isDedicatedReport = Boolean(dedicatedTab)
   const [profitabilityView, setProfitabilityView] = useState<ProfitabilityView>('summary')
   const [filters, setFilters] = useState<ReportFilters>(() => ({
     dateFrom: dayjs().subtract(6, 'day').startOf('day').toISOString(),
     dateTo: dayjs().endOf('day').toISOString(),
     dateBasis: 'ORDERED_AT',
   }))
+  const effectiveFilters = fixedSalesChannelCode
+    ? { ...filters, salesChannelCode: fixedSalesChannelCode }
+    : filters
+  const reportFilters =
+    activeTab === 'order-cost' ? { ...effectiveFilters, page: orderCostPage } : effectiveFilters
+  const reportDates = datesInRange(filters.dateFrom, filters.dateTo)
 
   const globalRead = account.permissions.includes('REPORTS:READ')
   const operationalScope =
@@ -66,23 +94,34 @@ export function ReportWorkspacePage() {
       (scope) => scope.scopeType === 'shop' && scope.permissions.includes('REPORTS:READ'),
     )
 
-  const { options, sellers, coverage, sellerDaily, teams, channels, adsDaily, exportCsv } =
-    useReportData({
-      filters,
-      activeTab,
-      profitabilityView,
-      operationalScope,
-    })
+  const {
+    options,
+    sellers,
+    coverage,
+    sellerDaily,
+    orderProfitability,
+    adsSellerDaily,
+    teams,
+    channels,
+    adsDaily,
+    exportCsv,
+  } = useReportData({
+    filters: reportFilters,
+    activeTab,
+    profitabilityView,
+    operationalScope,
+  })
 
   const filterOptions = options.data
 
   const handleFilterChange = useCallback((key: keyof ReportFilters, value?: string) => {
     setFilters((current) => ({ ...current, [key]: value }))
+    setOrderCostPage(1)
   }, [])
 
   const select = useCallback(
     (
-      key: keyof ReportFilters,
+      key: SelectFilterKey,
       placeholder: string,
       values: Array<{ value: string; label: string }>,
     ) => (
@@ -101,11 +140,24 @@ export function ReportWorkspacePage() {
 
   const handleDateRangeChange = useCallback((range: { dateFrom?: string; dateTo?: string }) => {
     setFilters((current) => ({ ...current, ...range }))
+    setOrderCostPage(1)
   }, [])
 
   const handleTabChange = useCallback((key: string) => {
-    setActiveTab(key as TabKey)
+    setSelectedTab(key as TabKey)
   }, [])
+
+  const exportButton = (
+    <span className={styles.filterAction} data-testid="reports-tab-actions">
+      <Button
+        icon={<DownloadOutlined />}
+        loading={exportCsv.isPending}
+        onClick={() => exportCsv.mutate()}
+      >
+        {t('reports.exportCsv')}
+      </Button>
+    </span>
+  )
 
   const sellersByCurrency = useMemo(
     () =>
@@ -193,11 +245,13 @@ export function ReportWorkspacePage() {
           label: row.name || row.code || t('reports.filters.unnamed'),
         })),
       )}
-      {select(
-        'salesChannelCode',
-        t('reports.filters.channel'),
-        (filterOptions?.channels || []).map((value) => ({ value, label: value })),
-      )}
+      {fixedSalesChannelCode
+        ? null
+        : select(
+            'salesChannelCode',
+            t('reports.filters.channel'),
+            (filterOptions?.channels || []).map((value) => ({ value, label: value })),
+          )}
       {select(
         'marketplaceCode',
         t('reports.filters.marketplace'),
@@ -227,12 +281,16 @@ export function ReportWorkspacePage() {
           label: row.name || row.code || t('reports.filters.unnamed'),
         })),
       )}
-      <DateRangePicker
-        value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
-        aria-label={t('reports.filters.date')}
-        placeholder={[t('reports.filters.from'), t('reports.filters.to')]}
-        onChange={handleDateRangeChange}
-      />
+      <div className={styles.dateFilter}>
+        <DateRangePicker
+          value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
+          aria-label={t('reports.filters.date')}
+          placeholder={[t('reports.filters.from'), t('reports.filters.to')]}
+          style={{ maxWidth: 'none' }}
+          onChange={handleDateRangeChange}
+        />
+      </div>
+      {exportButton}
     </FilterBar>
   )
 
@@ -487,51 +545,72 @@ export function ReportWorkspacePage() {
     </div>
   )
 
+  const reportContent =
+    activeTab === 'order-cost' ? (
+      <ReportOrderCostTab
+        data={orderProfitability.data}
+        isPending={orderProfitability.isPending}
+        onPageChange={setOrderCostPage}
+      />
+    ) : activeTab === 'ads-employee' ? (
+      <ReportAdsEmployeeTab data={adsSellerDaily.data} isPending={adsSellerDaily.isPending} />
+    ) : activeTab === 'sales-profit' ? (
+      <ReportSalesTab
+        data={sellerDaily.data}
+        isPending={sellerDaily.isPending}
+        canCompareSellers={operationalScope}
+        dates={reportDates}
+      />
+    ) : activeTab === 'overview' ? (
+      sellerProfitabilityTab
+    ) : activeTab === 'sales' ? (
+      <ReportAdsTab
+        operationalScope={operationalScope}
+        adsDailyData={adsDaily.data}
+        isAdsDailyPending={adsDaily.isPending}
+        channelsData={channels.data}
+        isChannelsPending={channels.isPending}
+      />
+    ) : (
+      <ReportTeamTab teamsData={teams.data} isTeamsPending={teams.isPending} />
+    )
+
   return (
     <div className={styles.page}>
       {filterBar}
-      <UiTabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        tabBarExtraContent={{
-          right: (
-            <span data-testid="reports-tab-actions">
-              <Button
-                icon={<DownloadOutlined />}
-                loading={exportCsv.isPending}
-                onClick={() => exportCsv.mutate()}
-              >
-                {t('reports.exportCsv')}
-              </Button>
-            </span>
-          ),
-        }}
-        items={[
-          {
-            key: 'overview',
-            label: <UiTabLabel>{t('reports.tabs.profitability')}</UiTabLabel>,
-            children: sellerProfitabilityTab,
-          },
-          {
-            key: 'sales',
-            label: <UiTabLabel>{t('reports.tabs.ads')}</UiTabLabel>,
-            children: (
-              <ReportAdsTab
-                operationalScope={operationalScope}
-                adsDailyData={adsDaily.data}
-                isAdsDailyPending={adsDaily.isPending}
-                channelsData={channels.data}
-                isChannelsPending={channels.isPending}
-              />
-            ),
-          },
-          {
-            key: 'operations',
-            label: <UiTabLabel>{t('reports.tabs.teams')}</UiTabLabel>,
-            children: <ReportTeamTab teamsData={teams.data} isTeamsPending={teams.isPending} />,
-          },
-        ]}
-      />
+      {isDedicatedReport ? (
+        <div className={styles.stack}>{reportContent}</div>
+      ) : (
+        <UiTabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          items={[
+            {
+              key: 'overview',
+              label: <UiTabLabel>{t('reports.tabs.profitability')}</UiTabLabel>,
+              children: sellerProfitabilityTab,
+            },
+            {
+              key: 'sales',
+              label: <UiTabLabel>{t('reports.tabs.ads')}</UiTabLabel>,
+              children: (
+                <ReportAdsTab
+                  operationalScope={operationalScope}
+                  adsDailyData={adsDaily.data}
+                  isAdsDailyPending={adsDaily.isPending}
+                  channelsData={channels.data}
+                  isChannelsPending={channels.isPending}
+                />
+              ),
+            },
+            {
+              key: 'operations',
+              label: <UiTabLabel>{t('reports.tabs.teams')}</UiTabLabel>,
+              children: <ReportTeamTab teamsData={teams.data} isTeamsPending={teams.isPending} />,
+            },
+          ]}
+        />
+      )}
     </div>
   )
 }

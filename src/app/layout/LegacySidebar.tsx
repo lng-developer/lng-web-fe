@@ -159,34 +159,48 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <TbReport size={20} />,
       children: [
         {
-          key: '/portal/reports/orders-cost',
-          labelKey: 'legacyMenu.ordersCost',
-          icon: <CgShoppingBag size={20} />,
+          key: 'reports-amazon',
+          labelKey: 'legacyMenu.amazon',
+          icon: <FaAmazon size={20} />,
+          children: [
+            {
+              key: '/portal/reports/amazon/order-cost',
+              labelKey: 'legacyMenu.ordersCost',
+              icon: <CgShoppingBag size={20} />,
+            },
+            {
+              key: '/portal/reports/amazon/ads',
+              labelKey: 'legacyMenu.adsReport',
+              icon: <RiAdvertisementLine size={20} />,
+            },
+            {
+              key: '/portal/reports/amazon/sales',
+              labelKey: 'legacyMenu.saleReport',
+              icon: <TbReportSearch size={20} />,
+            },
+          ],
         },
         {
-          key: '/portal/reports/sales',
-          labelKey: 'legacyMenu.saleReport',
-          icon: <TbReportSearch size={20} />,
-        },
-        {
-          key: '/portal/reports/etsy-sales',
-          labelKey: 'legacyMenu.etsySaleReport',
+          key: 'reports-etsy',
+          labelKey: 'legacyMenu.etsy',
           icon: <FaEtsy size={20} />,
-        },
-        {
-          key: '/portal/reports/etsy-orders-cost',
-          labelKey: 'legacyMenu.etsyOrdersCost',
-          icon: <FaEtsy size={20} />,
-        },
-        {
-          key: '/portal/reports/ads',
-          labelKey: 'legacyMenu.adsReport',
-          icon: <RiAdvertisementLine size={20} />,
-        },
-        {
-          key: '/portal/reports/ads-etsy',
-          labelKey: 'legacyMenu.adsEtsy',
-          icon: <FaEtsy size={20} />,
+          children: [
+            {
+              key: '/portal/reports/etsy/order-cost',
+              labelKey: 'legacyMenu.etsyOrdersCost',
+              icon: <CgShoppingBag size={20} />,
+            },
+            {
+              key: '/portal/reports/etsy/ads',
+              labelKey: 'legacyMenu.adsEtsy',
+              icon: <RiAdvertisementLine size={20} />,
+            },
+            {
+              key: '/portal/reports/etsy/sales',
+              labelKey: 'legacyMenu.etsySaleReport',
+              icon: <TbReportSearch size={20} />,
+            },
+          ],
         },
       ],
     },
@@ -247,12 +261,12 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <MdBalance size={20} />,
       children: [
         {
-          key: '/portal/fulfillment/scale/amazon',
+          key: '/portal/production/scale?salesChannelCode=AMAZON',
           labelKey: 'legacyMenu.amazonScale',
           icon: <FaAmazon size={20} />,
         },
         {
-          key: '/portal/fulfillment/scale/etsy',
+          key: '/portal/production/scale?salesChannelCode=ETSY',
           labelKey: 'legacyMenu.etsyScale',
           icon: <FaEtsy size={20} />,
         },
@@ -264,12 +278,12 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <TbBlender size={20} />,
       children: [
         {
-          key: '/portal/fulfillment/qc/amazon',
+          key: '/portal/production/qc?salesChannelCode=AMAZON',
           labelKey: 'legacyMenu.amazonQc',
           icon: <FaAmazon size={20} />,
         },
         {
-          key: '/portal/fulfillment/qc/etsy',
+          key: '/portal/production/qc?salesChannelCode=ETSY',
           labelKey: 'legacyMenu.etsyQc',
           icon: <FaEtsy size={20} />,
         },
