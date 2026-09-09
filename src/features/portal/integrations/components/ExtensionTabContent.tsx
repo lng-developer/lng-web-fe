@@ -22,6 +22,7 @@ export interface ExtensionTabContentProps {
   readonly setupShopOptions: Array<{ label: string; value: string }>
   readonly writableShops: Shop[]
   readonly canWrite: boolean
+  readonly canWriteFinance: boolean
 }
 
 export function ExtensionTabContent({
@@ -32,9 +33,12 @@ export function ExtensionTabContent({
   setupShopOptions,
   writableShops,
   canWrite,
+  canWriteFinance,
 }: ExtensionTabContentProps) {
   const { t } = useTranslation()
-  const [activeExtensionTab, setActiveExtensionTab] = useState<ExtensionSubTab>('operations')
+  const [activeExtensionTab, setActiveExtensionTab] = useState<ExtensionSubTab>(
+    canWrite ? 'operations' : 'automation',
+  )
   const [selectedCommand, setSelectedCommand] = useState<ExtensionCommand>()
 
   const {
@@ -46,13 +50,17 @@ export function ExtensionTabContent({
     extensionManagementAgents,
     extensionCommands,
     extensionOrderSchedules,
+    extensionFinanceSchedules,
     createCommand,
     revokeToken,
     saveOrderSchedule,
-  } = useExtensionWorkbench({ account, canWrite })
+    saveFinanceSchedule,
+    requestFinanceScheduleNow,
+  } = useExtensionWorkbench({ account, canWrite, canWriteFinance })
 
   const managementAgents = extensionManagementAgents.data?.items ?? []
   const schedules = extensionOrderSchedules.data?.items ?? []
+  const financeSchedules = extensionFinanceSchedules.data?.items ?? []
 
   return (
     <>
@@ -61,7 +69,9 @@ export function ExtensionTabContent({
         value={activeExtensionTab}
         onChange={(tab) => setActiveExtensionTab(tab as ExtensionSubTab)}
         items={[
-          { value: 'operations', label: t('portal.integrations.tabs.operations') },
+          ...(canWrite
+            ? [{ value: 'operations', label: t('portal.integrations.tabs.operations') }]
+            : []),
           { value: 'automation', label: t('portal.integrations.tabs.automation') },
         ]}
       />
@@ -94,10 +104,21 @@ export function ExtensionTabContent({
         <ExtensionAutomationTab
           agents={managementAgents}
           schedules={schedules}
-          isLoading={extensionManagementAgents.isLoading || extensionOrderSchedules.isLoading}
+          financeSchedules={financeSchedules}
+          isLoading={
+            extensionManagementAgents.isLoading ||
+            extensionOrderSchedules.isLoading ||
+            extensionFinanceSchedules.isLoading
+          }
           shopNames={shopNames}
+          canWriteOrders={canWrite}
+          canWriteFinance={canWriteFinance}
           isSavingSchedule={saveOrderSchedule.isPending}
+          isSavingFinanceSchedule={saveFinanceSchedule.isPending}
+          isRequestingFinanceSchedule={requestFinanceScheduleNow.isPending}
           onSaveSchedule={(input) => saveOrderSchedule.mutate(input)}
+          onSaveFinanceSchedule={(input) => saveFinanceSchedule.mutate(input)}
+          onRequestFinanceScheduleNow={(input) => requestFinanceScheduleNow.mutate(input)}
         />
       )}
       <ExtensionCommandDrawer

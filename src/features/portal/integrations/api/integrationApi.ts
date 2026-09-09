@@ -60,7 +60,12 @@ export type ExtensionCommand = {
   startedAt?: string | null
   completedAt: string | null
 }
-export type ExtensionCommandType = 'IMPORT_NEW_ORDERS' | 'IMPORT_ADS_SPEND' | 'TEST_CONNECTION'
+export type ExtensionCommandType =
+  | 'IMPORT_NEW_ORDERS'
+  | 'IMPORT_ADS_SPEND'
+  | 'IMPORT_TRANSACTIONS'
+  | 'IMPORT_SETTLEMENTS'
+  | 'TEST_CONNECTION'
 export type ExtensionImportDays = 1 | 2 | 7 | 15 | 30
 export type ExtensionOrderSchedule = {
   id: string
@@ -70,6 +75,20 @@ export type ExtensionOrderSchedule = {
   intervalMinutes: 60 | 120 | 180 | 240
   nextRunAt: string
   lastQueuedAt: string | null
+  lastError: string | null
+}
+export type ExtensionFinanceScheduleSource = 'TRANSACTIONS' | 'SETTLEMENTS'
+export type ExtensionFinanceSchedule = {
+  id: string
+  shopId: string
+  agentId: string
+  source: ExtensionFinanceScheduleSource
+  enabled: boolean
+  intervalMinutes: 1440
+  nextRunAt: string
+  lastQueuedAt: string | null
+  lastCompletedAt: string | null
+  lastSuccessfulDate: string | null
   lastError: string | null
 }
 
@@ -360,5 +379,27 @@ export async function upsertExtensionOrderSchedule(
 ) {
   return unwrap<ExtensionOrderSchedule>(
     await apiClient.put(`${extensionCommandPath}/order-schedules/${agentId}`, input),
+  )
+}
+export async function listExtensionFinanceSchedules() {
+  return unwrap<{ items: ExtensionFinanceSchedule[] }>(
+    await apiClient.get(`${extensionCommandPath}/finance-schedules`),
+  )
+}
+export async function upsertExtensionFinanceSchedule(
+  agentId: string,
+  source: ExtensionFinanceScheduleSource,
+  input: Pick<ExtensionFinanceSchedule, 'enabled'>,
+) {
+  return unwrap<ExtensionFinanceSchedule>(
+    await apiClient.put(`${extensionCommandPath}/finance-schedules/${agentId}/${source}`, input),
+  )
+}
+export async function requestExtensionFinanceScheduleNow(
+  agentId: string,
+  source: ExtensionFinanceScheduleSource,
+) {
+  return unwrap<ExtensionFinanceSchedule>(
+    await apiClient.post(`${extensionCommandPath}/finance-schedules/${agentId}/${source}/request-now`),
   )
 }

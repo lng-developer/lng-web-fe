@@ -191,7 +191,11 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   )
 
   const financeUpload = useMutation({
-    mutationFn: ({ kind, file, ...context }: import('@/features/portal/finance/api/financeApi').FinanceImportInput) =>
+    mutationFn: ({
+      kind,
+      file,
+      ...context
+    }: import('@/features/portal/finance/api/financeApi').FinanceImportInput) =>
       importFinanceFile(kind, file, context),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: integrationKeys.all })
@@ -272,6 +276,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       setupShopOptions={setupShopOptions}
       writableShops={writableShops}
       canWrite={canWrite}
+      canWriteFinance={financeWritableShops.length > 0}
     />
   )
 
