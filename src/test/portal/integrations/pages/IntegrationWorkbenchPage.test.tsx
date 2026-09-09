@@ -97,9 +97,12 @@ vi.mock('@/features/portal/integrations/api/integrationApi', async (importOrigin
     listExtensionAgents: vi.fn(),
     listExtensionCommands: vi.fn(),
     listExtensionManagementAgents: vi.fn(),
+    listExtensionFinanceSchedules: vi.fn(),
     listExtensionOrderSchedules: vi.fn(),
     createExtensionCommand: vi.fn(),
+    requestExtensionFinanceScheduleNow: vi.fn(),
     upsertExtensionOrderSchedule: vi.fn(),
+    upsertExtensionFinanceSchedule: vi.fn(),
     uploadEtsySoldItems: vi.fn(),
     uploadManualExcel: vi.fn(),
   }
@@ -146,14 +149,17 @@ import {
   getImportJob,
   listExtensionAgents,
   listExtensionCommands,
+  listExtensionFinanceSchedules,
   listExtensionManagementAgents,
   listExtensionOrderSchedules,
   listImportJobs,
   listIssues,
   listJobIssues,
   listJobRawRecords,
+  requestExtensionFinanceScheduleNow,
   uploadEtsySoldItems,
   uploadManualExcel,
+  upsertExtensionFinanceSchedule,
 } from '@/features/portal/integrations/api/integrationApi'
 import { shouldPollExtensionCommands } from '@/features/portal/integrations/hooks/extensionCommandPolling'
 import { ImportUploadModal } from '@/features/portal/integrations/pages/ImportUploadModal'
@@ -346,6 +352,7 @@ describe('IntegrationWorkbenchPage', () => {
       pagination: { total: 0, page: 1, limit: 10 },
     })
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({ items: [] })
+    vi.mocked(listExtensionFinanceSchedules).mockResolvedValue({ items: [] })
     vi.mocked(listExtensionOrderSchedules).mockResolvedValue({ items: [] })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [adsImportBatch],
@@ -659,6 +666,164 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Amazon Extension' }))
     expect(await screen.findByRole('button', { name: 'Automation' })).toBeVisible()
     await waitFor(() => expect(listExtensionManagementAgents).toHaveBeenCalled())
+  })
+
+  it('enables daily settlement sync for a Finance operator', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-09-09T00:00:00.000Z',
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
+    })
+    vi.mocked(upsertExtensionFinanceSchedule).mockResolvedValue({
+      id: 'schedule-1',
+      shopId: shop.id,
+      agentId: 'agent-1',
+      source: 'SETTLEMENTS',
+      enabled: true,
+      intervalMinutes: 1440,
+      nextRunAt: '2026-09-10T00:00:00.000Z',
+      lastQueuedAt: null,
+      lastCompletedAt: null,
+      lastSuccessfulDate: null,
+      lastError: null,
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Enable settlement sync' }))
+    await waitFor(() =>
+      expect(upsertExtensionFinanceSchedule).toHaveBeenCalledWith('agent-1', 'SETTLEMENTS', {
+        enabled: true,
+      }),
+    )
+  })
+
+  it('requests an enabled settlement sync immediately', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+    vi.mocked(listExtensionFinanceSchedules).mockResolvedValue({
+      items: [
+        {
+          id: 'schedule-1', shopId: shop.id, agentId: 'agent-1', source: 'SETTLEMENTS', enabled: true,
+          intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+        },
+      ],
+    })
+    vi.mocked(requestExtensionFinanceScheduleNow).mockResolvedValue({
+      id: 'schedule-1', shopId: shop.id, agentId: 'agent-1', source: 'SETTLEMENTS', enabled: true,
+      intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: '2026-09-09T00:00:00.000Z',
+      lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Request settlement sync now' }))
+    await waitFor(() =>
+      expect(requestExtensionFinanceScheduleNow).toHaveBeenCalledWith('agent-1', 'SETTLEMENTS'),
+    )
+  })
+
+  it('explains the daily finance import safeguards', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+    vi.mocked(listExtensionFinanceSchedules).mockResolvedValue({
+      items: [
+        {
+          id: 'transactions-1', shopId: shop.id, agentId: 'agent-1', source: 'TRANSACTIONS', enabled: true,
+          intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+        },
+        {
+          id: 'settlements-1', shopId: shop.id, agentId: 'agent-1', source: 'SETTLEMENTS', enabled: true,
+          intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    expect(await screen.findByText(/Daily · Up to 7 days per run · Next:/)).toBeVisible()
+    expect(screen.getByText(/Daily · Newly closed statements only · Next:/)).toBeVisible()
+  })
+
+  it('shows an agent schedule as a compact card without stale next-run data', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+    vi.mocked(listExtensionOrderSchedules).mockResolvedValue({
+      items: [
+        {
+          id: 'order-schedule-1', shopId: shop.id, agentId: 'agent-1', enabled: false,
+          intervalMinutes: 120, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastError: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
+    expect(within(agentCard).getByText('Online')).toBeVisible()
+    const orderSchedule = within(agentCard).getByRole('region', { name: 'Order import schedule' })
+    expect(within(orderSchedule).getByText('Order import')).toBeVisible()
+    expect(within(orderSchedule).getByText('Not scheduled')).toBeVisible()
+  })
+
+  it('shows the three schedules as rows in an agent card', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
+    expect(within(agentCard).getByRole('list')).toBeVisible()
+    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(3)
+    expect(within(agentCard).queryByText('Chrome extension')).not.toBeInTheDocument()
   })
 
   it('keeps the upload action scoped to Imports', async () => {
@@ -997,27 +1162,31 @@ describe('IntegrationWorkbenchPage', () => {
 
   it('opens imported transaction records for a selected batch', async () => {
     vi.mocked(listImportBatches).mockResolvedValue({
-      items: [{
-        ...adsImportBatch,
-        id: 'batch-transactions-1',
-        sourceType: 'TRANSACTIONS',
-        originalFilename: 'transactions-2026-09-06-2026-09-07.csv',
-        marketplaceCode: 'US',
-        processedRows: 2,
-        validRows: 2,
-      }],
+      items: [
+        {
+          ...adsImportBatch,
+          id: 'batch-transactions-1',
+          sourceType: 'TRANSACTIONS',
+          originalFilename: 'transactions-2026-09-06-2026-09-07.csv',
+          marketplaceCode: 'US',
+          processedRows: 2,
+          validRows: 2,
+        },
+      ],
       pagination: { total: 1, page: 1, limit: 20 },
     })
     vi.mocked(listImportedFinanceData).mockResolvedValue({
-      items: [{
-        id: 'ledger-1',
-        postedAt: '2026-09-07T00:00:00.000Z',
-        transactionType: 'Order Payment',
-        transactionStatus: 'Released',
-        externalOrderId: '114-1',
-        amount: -274,
-        currency: 'USD',
-      }],
+      items: [
+        {
+          id: 'ledger-1',
+          postedAt: '2026-09-07T00:00:00.000Z',
+          transactionType: 'Order Payment',
+          transactionStatus: 'Released',
+          externalOrderId: '114-1',
+          amount: -274,
+          currency: 'USD',
+        },
+      ],
       pagination: { total: 1, page: 1, limit: 100 },
     })
 
@@ -1027,11 +1196,13 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByText('transactions-2026-09-06-2026-09-07.csv'))
 
     expect(await screen.findByText('Order Payment')).toBeVisible()
-    await waitFor(() => expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
-      importBatchId: 'batch-transactions-1',
-      page: 1,
-      limit: 100,
-    }))
+    await waitFor(() =>
+      expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
+        importBatchId: 'batch-transactions-1',
+        page: 1,
+        limit: 100,
+      }),
+    )
   })
 
   it('shows recalculation progress and reprocesses a failed finance batch', async () => {
@@ -1062,7 +1233,9 @@ describe('IntegrationWorkbenchPage', () => {
     expect((await screen.findAllByText(/1 failed/)).length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Reprocess' }))
 
-    await waitFor(() => expect(reprocessImportBatch).toHaveBeenCalledWith('batch-transactions-failed'))
+    await waitFor(() =>
+      expect(reprocessImportBatch).toHaveBeenCalledWith('batch-transactions-failed'),
+    )
   })
 
   it('mounts and submits the finance import modal for finance writers', async () => {

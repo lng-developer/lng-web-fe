@@ -69,6 +69,95 @@
   width: 280px;
 }
 
+.automationGroups {
+  display: grid;
+  gap: 20px;
+}
+
+.automationGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.automationGroup :global(.ant-typography.ant-typography-h5) {
+  margin: 0;
+}
+
+.automationGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.automationAgentCard {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+
+.automationAgentHeader,
+.automationScheduleActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.automationAgentHeader > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.automationScheduleList {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.automationScheduleRow {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.75fr) minmax(150px, 1.25fr) auto minmax(90px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.automationScheduleList > li:first-child .automationScheduleRow {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.automationScheduleMeta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.automationScheduleActions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .automationScheduleRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .automationScheduleMeta,
+  .automationScheduleActions {
+    grid-column: 1 / -1;
+  }
+
+  .automationScheduleActions {
+    justify-content: flex-start;
+  }
+}
+
 .extensionCards {
   display: grid;
   gap: 12px;
