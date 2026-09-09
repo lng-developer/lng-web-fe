@@ -16,8 +16,10 @@ import {
   createExtensionCommand,
   listExtensionAgents,
   listExtensionCommands,
+  listExtensionFinanceSchedules,
   listExtensionManagementAgents,
   listExtensionOrderSchedules,
+  upsertExtensionFinanceSchedule,
   upsertExtensionOrderSchedule,
 } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
@@ -27,20 +29,22 @@ import { shouldPollExtensionCommands } from './extensionCommandPolling'
 export interface UseExtensionWorkbenchParams {
   readonly account: CurrentAccount
   readonly canWrite: boolean
+  readonly canWriteFinance: boolean
 }
 
-export function useExtensionWorkbench({ canWrite }: UseExtensionWorkbenchParams) {
+export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensionWorkbenchParams) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
 
   const [tokenForm] = Form.useForm<ExtensionTokenInput>()
   const [createdToken, setCreatedToken] = useState<string>()
+  const canUseExtension = canWrite || canWriteFinance
 
   const extensionAgents = useQuery({
     queryKey: integrationKeys.extensionAgents(),
     queryFn: listExtensionAgents,
-    enabled: canWrite,
+    enabled: canUseExtension,
     retry: false,
     refetchInterval: 30_000,
   })
@@ -48,7 +52,7 @@ export function useExtensionWorkbench({ canWrite }: UseExtensionWorkbenchParams)
   const extensionManagementAgents = useQuery({
     queryKey: integrationKeys.extensionManagementAgents(),
     queryFn: listExtensionManagementAgents,
-    enabled: canWrite,
+    enabled: canUseExtension,
     retry: false,
     refetchInterval: 30_000,
   })
@@ -56,7 +60,7 @@ export function useExtensionWorkbench({ canWrite }: UseExtensionWorkbenchParams)
   const extensionCommands = useQuery({
     queryKey: integrationKeys.extensionCommands(),
     queryFn: () => listExtensionCommands({ page: 1, limit: 10 }),
-    enabled: canWrite,
+    enabled: canUseExtension,
     retry: false,
     refetchInterval: (query) =>
       shouldPollExtensionCommands(query.state.data?.items) ? 10_000 : false,
@@ -66,6 +70,13 @@ export function useExtensionWorkbench({ canWrite }: UseExtensionWorkbenchParams)
     queryKey: integrationKeys.extensionOrderSchedules(),
     queryFn: listExtensionOrderSchedules,
     enabled: canWrite,
+    retry: false,
+  })
+
+  const extensionFinanceSchedules = useQuery({
+    queryKey: integrationKeys.extensionFinanceSchedules(),
+    queryFn: listExtensionFinanceSchedules,
+    enabled: canUseExtension,
     retry: false,
   })
 
@@ -133,6 +144,22 @@ export function useExtensionWorkbench({ canWrite }: UseExtensionWorkbenchParams)
     },
   })
 
+  const saveFinanceSchedule = useMutation({
+    mutationFn: ({
+      agentId,
+      source,
+      enabled,
+    }: {
+      agentId: string
+      source: 'TRANSACTIONS' | 'SETTLEMENTS'
+      enabled: boolean
+    }) => upsertExtensionFinanceSchedule(agentId, source, { enabled }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: integrationKeys.extensionFinanceSchedules() })
+      showFeedbackToast('success', 'Finance schedule saved.')
+    },
+  })
+
   return {
     tokenForm,
     createdToken,
@@ -142,8 +169,10 @@ export function useExtensionWorkbench({ canWrite }: UseExtensionWorkbenchParams)
     extensionManagementAgents,
     extensionCommands,
     extensionOrderSchedules,
+    extensionFinanceSchedules,
     createCommand,
     revokeToken,
     saveOrderSchedule,
+    saveFinanceSchedule,
   }
 }
