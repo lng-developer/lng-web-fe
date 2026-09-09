@@ -774,6 +774,26 @@ describe('IntegrationWorkbenchPage', () => {
     expect(within(orderSchedule).getByText('Not scheduled')).toBeVisible()
   })
 
+  it('shows the three schedules as rows in an agent card', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
+    expect(within(agentCard).getByRole('list')).toBeVisible()
+    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(3)
+    expect(within(agentCard).queryByText('Chrome extension')).not.toBeInTheDocument()
+  })
+
   it('keeps the upload action scoped to Imports', async () => {
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
 
