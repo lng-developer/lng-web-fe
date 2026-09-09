@@ -744,6 +744,38 @@ describe('IntegrationWorkbenchPage', () => {
     )
   })
 
+  it('explains the daily finance import safeguards', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+    vi.mocked(listExtensionFinanceSchedules).mockResolvedValue({
+      items: [
+        {
+          id: 'transactions-1', shopId: shop.id, agentId: 'agent-1', source: 'TRANSACTIONS', enabled: true,
+          intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+        },
+        {
+          id: 'settlements-1', shopId: shop.id, agentId: 'agent-1', source: 'SETTLEMENTS', enabled: true,
+          intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    expect(await screen.findByText(/Daily · Up to 7 days per run · Next:/)).toBeVisible()
+    expect(screen.getByText(/Daily · Newly closed statements only · Next:/)).toBeVisible()
+  })
+
   it('shows an agent schedule as a compact card without stale next-run data', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [

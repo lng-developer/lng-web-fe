@@ -138,7 +138,9 @@ export function ExtensionAutomationTab({
           <Typography.Text strong>{label}</Typography.Text>
           <div className={styles.automationScheduleMeta}>
             <Typography.Text type="secondary">
-              {enabled ? `Daily · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}` : 'Not scheduled'}
+              {enabled
+                ? `${source === 'TRANSACTIONS' ? 'Daily · Up to 7 days per run' : 'Daily · Newly closed statements only'} · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}`
+                : 'Not scheduled'}
             </Typography.Text>
             {schedule?.lastError ? <Typography.Text type="danger">{schedule.lastError}</Typography.Text> : null}
           </div>
