@@ -100,6 +100,7 @@ vi.mock('@/features/portal/integrations/api/integrationApi', async (importOrigin
     listExtensionFinanceSchedules: vi.fn(),
     listExtensionOrderSchedules: vi.fn(),
     createExtensionCommand: vi.fn(),
+    requestExtensionFinanceScheduleNow: vi.fn(),
     upsertExtensionOrderSchedule: vi.fn(),
     upsertExtensionFinanceSchedule: vi.fn(),
     uploadEtsySoldItems: vi.fn(),
@@ -155,6 +156,7 @@ import {
   listIssues,
   listJobIssues,
   listJobRawRecords,
+  requestExtensionFinanceScheduleNow,
   uploadEtsySoldItems,
   uploadManualExcel,
   upsertExtensionFinanceSchedule,
@@ -705,6 +707,40 @@ describe('IntegrationWorkbenchPage', () => {
       expect(upsertExtensionFinanceSchedule).toHaveBeenCalledWith('agent-1', 'SETTLEMENTS', {
         enabled: true,
       }),
+    )
+  })
+
+  it('requests an enabled settlement sync immediately', async () => {
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1', shopId: shop.id, clientId: 'rdc-1', label: 'RDC 1', version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co', lastSeenAt: '2026-09-09T00:00:00.000Z', status: 'ONLINE', token: null,
+        },
+      ],
+    })
+    vi.mocked(listExtensionFinanceSchedules).mockResolvedValue({
+      items: [
+        {
+          id: 'schedule-1', shopId: shop.id, agentId: 'agent-1', source: 'SETTLEMENTS', enabled: true,
+          intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: null,
+          lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+        },
+      ],
+    })
+    vi.mocked(requestExtensionFinanceScheduleNow).mockResolvedValue({
+      id: 'schedule-1', shopId: shop.id, agentId: 'agent-1', source: 'SETTLEMENTS', enabled: true,
+      intervalMinutes: 1440, nextRunAt: '2026-09-10T00:00:00.000Z', lastQueuedAt: '2026-09-09T00:00:00.000Z',
+      lastCompletedAt: null, lastSuccessfulDate: null, lastError: null,
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Automation' }))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Request settlement sync now' }))
+    await waitFor(() =>
+      expect(requestExtensionFinanceScheduleNow).toHaveBeenCalledWith('agent-1', 'SETTLEMENTS'),
     )
   })
 

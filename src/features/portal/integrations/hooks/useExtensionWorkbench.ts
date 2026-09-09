@@ -19,6 +19,7 @@ import {
   listExtensionFinanceSchedules,
   listExtensionManagementAgents,
   listExtensionOrderSchedules,
+  requestExtensionFinanceScheduleNow,
   upsertExtensionFinanceSchedule,
   upsertExtensionOrderSchedule,
 } from '../api/integrationApi'
@@ -160,6 +161,21 @@ export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensio
     },
   })
 
+  const requestFinanceScheduleNow = useMutation({
+    mutationFn: ({ agentId, source }: { agentId: string; source: 'TRANSACTIONS' | 'SETTLEMENTS' }) =>
+      requestExtensionFinanceScheduleNow(agentId, source),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: integrationKeys.extensionFinanceSchedules() }),
+        queryClient.invalidateQueries({ queryKey: integrationKeys.extensionCommands() }),
+      ])
+      showFeedbackToast('success', 'Finance import requested.')
+    },
+    onError: (error) => {
+      showFeedbackToast('error', error instanceof Error ? error.message : 'Finance import request failed.')
+    },
+  })
+
   return {
     tokenForm,
     createdToken,
@@ -174,5 +190,6 @@ export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensio
     revokeToken,
     saveOrderSchedule,
     saveFinanceSchedule,
+    requestFinanceScheduleNow,
   }
 }

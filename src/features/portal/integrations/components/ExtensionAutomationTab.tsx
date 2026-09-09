@@ -24,6 +24,7 @@ export interface ExtensionAutomationTabProps {
   readonly canWriteFinance: boolean
   readonly isSavingSchedule: boolean
   readonly isSavingFinanceSchedule: boolean
+  readonly isRequestingFinanceSchedule: boolean
   readonly onSaveSchedule: (input: {
     agentId: string
     enabled: boolean
@@ -33,6 +34,10 @@ export interface ExtensionAutomationTabProps {
     agentId: string
     source: ExtensionFinanceScheduleSource
     enabled: boolean
+  }) => void
+  readonly onRequestFinanceScheduleNow: (input: {
+    agentId: string
+    source: ExtensionFinanceScheduleSource
   }) => void
 }
 
@@ -46,8 +51,10 @@ export function ExtensionAutomationTab({
   canWriteFinance,
   isSavingSchedule,
   isSavingFinanceSchedule,
+  isRequestingFinanceSchedule,
   onSaveSchedule,
   onSaveFinanceSchedule,
+  onRequestFinanceScheduleNow,
 }: ExtensionAutomationTabProps) {
   const { t } = useTranslation()
 
@@ -92,6 +99,16 @@ export function ExtensionAutomationTab({
               }
             >
               {schedule?.enabled ? 'Disable' : 'Enable'}
+            </Button>
+          ) : null}
+          {canWriteFinance && schedule?.enabled ? (
+            <Button
+              aria-label={`Request ${label.toLowerCase()} sync now`}
+              loading={isRequestingFinanceSchedule}
+              size="small"
+              onClick={() => onRequestFinanceScheduleNow({ agentId: agent.id, source })}
+            >
+              Request now
             </Button>
           ) : null}
         </Space>

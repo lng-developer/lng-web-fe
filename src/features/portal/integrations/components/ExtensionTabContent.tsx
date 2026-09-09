@@ -55,6 +55,7 @@ export function ExtensionTabContent({
     revokeToken,
     saveOrderSchedule,
     saveFinanceSchedule,
+    requestFinanceScheduleNow,
   } = useExtensionWorkbench({ account, canWrite, canWriteFinance })
 
   const managementAgents = extensionManagementAgents.data?.items ?? []
@@ -114,8 +115,10 @@ export function ExtensionTabContent({
           canWriteFinance={canWriteFinance}
           isSavingSchedule={saveOrderSchedule.isPending}
           isSavingFinanceSchedule={saveFinanceSchedule.isPending}
+          isRequestingFinanceSchedule={requestFinanceScheduleNow.isPending}
           onSaveSchedule={(input) => saveOrderSchedule.mutate(input)}
           onSaveFinanceSchedule={(input) => saveFinanceSchedule.mutate(input)}
+          onRequestFinanceScheduleNow={(input) => requestFinanceScheduleNow.mutate(input)}
         />
       )}
       <ExtensionCommandDrawer

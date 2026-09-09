@@ -395,3 +395,11 @@ export async function upsertExtensionFinanceSchedule(
     await apiClient.put(`${extensionCommandPath}/finance-schedules/${agentId}/${source}`, input),
   )
 }
+export async function requestExtensionFinanceScheduleNow(
+  agentId: string,
+  source: ExtensionFinanceScheduleSource,
+) {
+  return unwrap<ExtensionFinanceSchedule>(
+    await apiClient.post(`${extensionCommandPath}/finance-schedules/${agentId}/${source}/request-now`),
+  )
+}
