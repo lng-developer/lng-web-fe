@@ -23,6 +23,7 @@ import {
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   DateRangePicker,
@@ -57,7 +58,7 @@ const STATUSES: VendorSubmissionStatus[] = [
   'SUBMITTED',
   'CANCELLED',
 ]
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 function tone(status: VendorSubmissionStatus) {
   if (status === 'SUBMITTED') return 'operational'

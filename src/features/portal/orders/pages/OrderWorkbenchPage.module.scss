@@ -48,8 +48,21 @@
   gap: 12px;
 }
 
-.tabs {
+.queueRail {
   flex: 1;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--ant-color-bg-container) 72%,
+    var(--ant-color-fill-quaternary)
+  );
+  box-shadow: 0 8px 20px rgb(15 23 42 / 4%);
+}
+
+.tabs {
   min-width: 0;
 }
 .orderTabs :global(.ant-tabs-nav) {
@@ -65,6 +78,21 @@
 }
 .orderTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
   margin-left: 0;
+}
+.orderTabs :global(.ant-tabs-tab) {
+  min-width: auto;
+  border: 1px solid transparent;
+  background: var(--ant-color-fill-quaternary);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  font-weight: 600;
+}
+.orderTabs :global(.ant-tabs-tab:hover) {
+  border-color: var(--ant-color-primary-border);
+  background: var(--ant-color-primary-bg);
+  transform: translateY(-1px);
+}
+.orderTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--ant-color-primary) 28%, transparent);
 }
 
 .tabsRow > button {
@@ -161,15 +189,6 @@
   );
   color: var(--ant-color-text);
   text-align: left;
-}
-.stickyOrderRow {
-  > td {
-    position: sticky !important;
-    top: 0;
-    z-index: 8;
-    background: var(--ant-color-bg-container) !important;
-    box-shadow: 0 1px 0 var(--ant-color-border-secondary);
-  }
 }
 .inlinePanel {
   display: grid;

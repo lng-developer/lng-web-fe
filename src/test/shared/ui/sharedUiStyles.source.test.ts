@@ -10,6 +10,18 @@ const sharedUiStyles = readFileSync(
 )
 
 describe('shared data table styles', () => {
+  it('uses the GXON border and shadow treatment for shared cards and tables', () => {
+    expect(sharedUiStyles).toMatch(
+      /\.sectionCard\s*\{[^}]*border:\s*1px solid var\(--ant-color-border\)/s,
+    )
+    expect(sharedUiStyles).toMatch(
+      /\.metricCard\s*\{[^}]*border:\s*1px solid var\(--ant-color-border\)/s,
+    )
+    expect(sharedUiStyles).toMatch(
+      /\.dataTable :global\(\.ant-table-container\)\s*\{[^}]*border:\s*1px solid var\(--ant-color-border\)/s,
+    )
+  })
+
   it('keeps every table within its card without adding a second horizontal scrollbar', () => {
     expect(sharedUiStyles).toMatch(
       /\.dataTable\s*\{[^}]*min-width:\s*0[^}]*max-width:\s*100%(?![^}]*overflow-x)/s,

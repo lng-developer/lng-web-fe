@@ -84,7 +84,6 @@ export function AppShell() {
     location.pathname === '/portal/chat' ||
     isOrderWorkspace ||
     location.pathname === '/portal/shops' ||
-    location.pathname === '/portal/catalog' ||
     isVendorWorkspace ||
     isMappingWorkspace
   const activeItem = groups.flatMap((group) => group.items).find(({ key }) => key === selectedKey)

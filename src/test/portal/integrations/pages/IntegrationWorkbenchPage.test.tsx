@@ -307,11 +307,11 @@ describe('IntegrationWorkbenchPage', () => {
     })
     vi.mocked(listImportJobs).mockResolvedValue({
       items: [job],
-      pagination: { total: 1, page: 2, limit: 20 },
+      pagination: { total: 1, page: 2, limit: 10 },
     })
     vi.mocked(listIssues).mockResolvedValue({
       items: [],
-      pagination: { total: 0, page: 1, limit: 20 },
+      pagination: { total: 0, page: 1, limit: 10 },
     })
     vi.mocked(getImportJob).mockResolvedValue(job)
     vi.mocked(listJobIssues).mockResolvedValue({
@@ -349,7 +349,7 @@ describe('IntegrationWorkbenchPage', () => {
     vi.mocked(listExtensionOrderSchedules).mockResolvedValue({ items: [] })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [adsImportBatch],
-      pagination: { total: 1, page: 1, limit: 20 },
+      pagination: { total: 1, page: 1, limit: 10 },
     })
     vi.mocked(listAdsUnassignedRows).mockResolvedValue({
       items: [],
@@ -375,7 +375,7 @@ describe('IntegrationWorkbenchPage', () => {
         source: 'MANUAL_EXCEL',
         status: 'FAILED',
         page: 2,
-        limit: 20,
+        limit: 10,
         dateFrom: '2026-07-01T00:00:00.000Z',
         dateTo: '2026-07-31T23:59:59.999Z',
       }),
@@ -388,7 +388,7 @@ describe('IntegrationWorkbenchPage', () => {
   it('sanitizes malformed page, source, and status URL filters before querying', async () => {
     renderWorkbench('/portal/integrations?page=-3&source=UNKNOWN_SOURCE&status=UNKNOWN_STATUS')
 
-    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 20 }))
+    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 10 }))
     expect(await screen.findByText('8 imported / 1 skipped / 3 failed')).toBeVisible()
   })
 
@@ -398,7 +398,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportJobs).toHaveBeenCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         dateFrom: '2026-07-01',
         dateTo: '2026-07-31',
       }),
@@ -411,7 +411,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportJobs).toHaveBeenCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         dateTo: '2026-07-31',
       }),
     )
@@ -420,7 +420,7 @@ describe('IntegrationWorkbenchPage', () => {
   it('drops a reversed date range before querying', async () => {
     renderWorkbench('/portal/integrations?dateFrom=2026-08-01&dateTo=2026-07-31')
 
-    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 20 }))
+    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 10 }))
   })
 
   it('opens selected job detail in a drawer', async () => {
@@ -966,7 +966,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         sourceType: 'ADS',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'US',
@@ -997,27 +997,31 @@ describe('IntegrationWorkbenchPage', () => {
 
   it('opens imported transaction records for a selected batch', async () => {
     vi.mocked(listImportBatches).mockResolvedValue({
-      items: [{
-        ...adsImportBatch,
-        id: 'batch-transactions-1',
-        sourceType: 'TRANSACTIONS',
-        originalFilename: 'transactions-2026-09-06-2026-09-07.csv',
-        marketplaceCode: 'US',
-        processedRows: 2,
-        validRows: 2,
-      }],
+      items: [
+        {
+          ...adsImportBatch,
+          id: 'batch-transactions-1',
+          sourceType: 'TRANSACTIONS',
+          originalFilename: 'transactions-2026-09-06-2026-09-07.csv',
+          marketplaceCode: 'US',
+          processedRows: 2,
+          validRows: 2,
+        },
+      ],
       pagination: { total: 1, page: 1, limit: 20 },
     })
     vi.mocked(listImportedFinanceData).mockResolvedValue({
-      items: [{
-        id: 'ledger-1',
-        postedAt: '2026-09-07T00:00:00.000Z',
-        transactionType: 'Order Payment',
-        transactionStatus: 'Released',
-        externalOrderId: '114-1',
-        amount: -274,
-        currency: 'USD',
-      }],
+      items: [
+        {
+          id: 'ledger-1',
+          postedAt: '2026-09-07T00:00:00.000Z',
+          transactionType: 'Order Payment',
+          transactionStatus: 'Released',
+          externalOrderId: '114-1',
+          amount: -274,
+          currency: 'USD',
+        },
+      ],
       pagination: { total: 1, page: 1, limit: 100 },
     })
 
@@ -1027,11 +1031,13 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByText('transactions-2026-09-06-2026-09-07.csv'))
 
     expect(await screen.findByText('Order Payment')).toBeVisible()
-    await waitFor(() => expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
-      importBatchId: 'batch-transactions-1',
-      page: 1,
-      limit: 100,
-    }))
+    await waitFor(() =>
+      expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
+        importBatchId: 'batch-transactions-1',
+        page: 1,
+        limit: 100,
+      }),
+    )
   })
 
   it('shows recalculation progress and reprocesses a failed finance batch', async () => {
@@ -1062,7 +1068,9 @@ describe('IntegrationWorkbenchPage', () => {
     expect((await screen.findAllByText(/1 failed/)).length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Reprocess' }))
 
-    await waitFor(() => expect(reprocessImportBatch).toHaveBeenCalledWith('batch-transactions-failed'))
+    await waitFor(() =>
+      expect(reprocessImportBatch).toHaveBeenCalledWith('batch-transactions-failed'),
+    )
   })
 
   it('mounts and submits the finance import modal for finance writers', async () => {

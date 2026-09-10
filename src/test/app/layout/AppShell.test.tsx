@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShell } from '@/app/layout/AppShell'
+import styles from '@/app/layout/AppShell.module.scss'
 import { AppProviders } from '@/app/providers/AppProviders'
 import { markChatConversationRead } from '@/features/portal/chat/api/chatApi'
 import i18n from '@/shared/i18n/i18n'
@@ -224,6 +225,36 @@ describe('AppShell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Orders test page' })).toBeVisible()
     expect(document.title).toBe('Orders | LNG Web')
+  })
+
+  it('allows the Catalog workspace to use the page vertical scrollbar', async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          loader: () => ({
+            account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
+            roles: [],
+            permissions: ['CATALOG:READ'],
+            scopes: [],
+            profileSetupRequired: false,
+          }),
+          HydrateFallback: () => null,
+          element: <AppShell />,
+          children: [{ path: 'portal/catalog', element: <h1>Catalog test page</h1> }],
+        },
+      ],
+      { initialEntries: ['/portal/catalog'] },
+    )
+
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Catalog test page' })).toBeVisible()
+    expect(screen.getByRole('main')).not.toHaveClass(styles.contentFixed)
   })
 
   it('does not auto-open quick chat on the full chat page', async () => {

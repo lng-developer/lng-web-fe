@@ -126,7 +126,7 @@ describe('ProductionWorkbenchPage', () => {
       items: [blockedTask],
       total: 1,
       page: 1,
-      limit: 20,
+      limit: 10,
     })
     renderPage()
 
@@ -146,7 +146,7 @@ describe('ProductionWorkbenchPage', () => {
       ],
       total: 2,
       page: 1,
-      limit: 20,
+      limit: 10,
     })
     renderPage()
 
@@ -174,7 +174,7 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 20, page: 1, view: 'SCALE' }),
+        expect.objectContaining({ limit: 10, page: 1, view: 'SCALE' }),
       ),
     )
 

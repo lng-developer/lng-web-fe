@@ -8,6 +8,18 @@ import styles from '@/shared/ui/sharedUi.module.scss'
 import { getFullRowsHeight } from './coreDataTableLayout'
 import { CommonTablePagination } from './TablePagination'
 
+export type ServerSortColumn = {
+  asc: string
+  desc: string
+}
+
+export type CoreDataTableServerSorting = {
+  enabled: boolean
+  value?: string
+  columns: Record<string, ServerSortColumn>
+  onChange: (value?: string) => void
+}
+
 export type CoreDataTableProps<RecordType extends object> = Pick<
   TableProps<RecordType>,
   | 'columns'
@@ -17,6 +29,7 @@ export type CoreDataTableProps<RecordType extends object> = Pick<
   | 'loading'
   | 'onRow'
   | 'pagination'
+  | 'onChange'
   | 'rowKey'
   | 'rowClassName'
   | 'rowSelection'
@@ -36,6 +49,7 @@ export type CoreDataTableProps<RecordType extends object> = Pick<
 
   // Đẩy thanh pagination xuống đáy mà không thay đổi chiều cao phần bảng
   readonly paginationAtBottom?: boolean
+  readonly serverSorting?: CoreDataTableServerSorting
 }
 
 export function CoreDataTable<RecordType extends object>({
@@ -45,6 +59,7 @@ export function CoreDataTable<RecordType extends object>({
   fillViewport = false,
   viewportBottomGap = 0,
   paginationAtBottom = true,
+  serverSorting,
   ...tableProps
 }: CoreDataTableProps<RecordType>) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -77,6 +92,56 @@ export function CoreDataTable<RecordType extends object>({
   const effectiveCurrent = customPagination.current ?? internalPage
 
   const effectivePageSize = customPagination.pageSize ?? internalPageSize
+
+  const sortableColumns = useMemo(() => {
+    if (!serverSorting?.enabled || !tableProps.columns) return tableProps.columns
+
+    return tableProps.columns.map((column) => {
+      if ('children' in column) return column
+
+      const columnKey =
+        column.key != null
+          ? String(column.key)
+          : typeof column.dataIndex === 'string'
+            ? column.dataIndex
+            : undefined
+      const sortColumn = columnKey ? serverSorting.columns[columnKey] : undefined
+      if (!sortColumn) return column
+
+      return {
+        ...column,
+        sorter: true,
+        sortDirections: ['descend', 'ascend', null] as Array<'descend' | 'ascend' | null>,
+        sortOrder:
+          serverSorting.value === sortColumn.asc
+            ? ('ascend' as const)
+            : serverSorting.value === sortColumn.desc
+              ? ('descend' as const)
+              : undefined,
+      }
+    })
+  }, [serverSorting, tableProps.columns])
+
+  const handleTableChange: TableProps<RecordType>['onChange'] = (
+    pagination,
+    filters,
+    sorter,
+    extra,
+  ) => {
+    if (serverSorting?.enabled) {
+      const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter
+      const columnKey = activeSorter?.columnKey ?? activeSorter?.field
+      const sortColumn = columnKey != null ? serverSorting.columns[String(columnKey)] : undefined
+      const nextValue =
+        sortColumn && activeSorter?.order === 'ascend'
+          ? sortColumn.asc
+          : sortColumn && activeSorter?.order === 'descend'
+            ? sortColumn.desc
+            : undefined
+      serverSorting.onChange(nextValue)
+    }
+    tableProps.onChange?.(pagination, filters, sorter, extra)
+  }
 
   useLayoutEffect(() => {
     const tableBody = containerRef.current?.querySelector<HTMLElement>('.ant-table-body')
@@ -183,6 +248,8 @@ export function CoreDataTable<RecordType extends object>({
         {error ?? (
           <Table
             {...tableProps}
+            columns={sortableColumns}
+            onChange={serverSorting?.enabled ? handleTableChange : tableProps.onChange}
             pagination={paginationEnabled ? false : tableProps.pagination}
             dataSource={pagedDataSource}
             scroll={scroll}

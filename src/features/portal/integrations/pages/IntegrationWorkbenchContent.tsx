@@ -8,6 +8,7 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { importFinanceFile } from '@/features/portal/finance/api/financeApi'
 import { FinanceImportModal } from '@/features/portal/finance/pages/FinanceImportModal'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -35,7 +36,7 @@ import { IntegrationImportsWorkbench } from './IntegrationImportsWorkbench'
 import styles from './IntegrationWorkbenchPage.module.scss'
 import { IntegrationWorkbenchTabs } from './IntegrationWorkbenchTabs'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 type IntegrationWorkbenchTab = 'orders' | 'extension' | 'finance'
 const JOB_STATUSES: ImportJobStatus[] = [
   'PENDING',
@@ -191,7 +192,11 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   )
 
   const financeUpload = useMutation({
-    mutationFn: ({ kind, file, ...context }: import('@/features/portal/finance/api/financeApi').FinanceImportInput) =>
+    mutationFn: ({
+      kind,
+      file,
+      ...context
+    }: import('@/features/portal/finance/api/financeApi').FinanceImportInput) =>
       importFinanceFile(kind, file, context),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: integrationKeys.all })

@@ -6,6 +6,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Input, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
@@ -21,7 +22,7 @@ import {
 import { listDesignAssignees, listPsdFiles, type PsdFileListItem } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 const tone = (status: string) =>
   status === 'APPROVED'
     ? 'approved'

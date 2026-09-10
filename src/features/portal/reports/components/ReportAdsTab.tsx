@@ -42,41 +42,41 @@ export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
 
     const adsDailyColumns = useMemo<TableColumnsType<AdsDaily>>(
       () => [
-        { title: t('reports.columns.date'), dataIndex: 'reportDate', width: 110 },
+        { title: t('reports.columns.date'), dataIndex: 'reportDate', width: '10%' },
         {
           title: t('reports.columns.channel'),
-          width: 180,
+          width: '20%',
           ellipsis: true,
           render: (_, row) => `${row.salesChannelCode || '—'} · ${row.marketplaceCode || '—'}`,
         },
         {
           title: t('reports.columns.spend'),
-          width: 110,
+          width: '13%',
           align: 'right',
           render: (_, row) => formatReportMoney(row.spendAmount, row.currency || 'USD'),
         },
         {
           title: t('reports.columns.sales'),
-          width: 120,
+          width: '14%',
           align: 'right',
           render: (_, row) => formatReportMoney(row.attributedSalesAmount, row.currency || 'USD'),
         },
         {
           title: t('reports.columns.impressions'),
           dataIndex: 'impressions',
-          width: 100,
+          width: '13%',
           align: 'right',
         },
-        { title: t('reports.columns.clicks'), dataIndex: 'clicks', width: 80, align: 'right' },
+        { title: t('reports.columns.clicks'), dataIndex: 'clicks', width: '10%', align: 'right' },
         {
           title: t('reports.columns.orders'),
           dataIndex: 'attributedOrdersCount',
-          width: 80,
+          width: '10%',
           align: 'right',
         },
         {
           title: t('reports.columns.cpa'),
-          width: 100,
+          width: '10%',
           align: 'right',
           render: (_, row) =>
             row.cpaAmount === null ? '—' : formatReportMoney(row.cpaAmount, row.currency || 'USD'),
@@ -89,26 +89,26 @@ export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
       () => [
         {
           title: t('reports.columns.channel'),
-          width: 240,
+          width: '34%',
           ellipsis: true,
           render: (_, row) => `${row.salesChannelCode || '—'} · ${row.marketplaceCode || '—'}`,
         },
         {
           title: t('reports.columns.spend'),
-          width: 140,
+          width: '22%',
           align: 'right',
           render: (_, row) => formatReportMoney(row.spendAmount, row.currency || 'USD'),
         },
         {
           title: t('reports.columns.sales'),
-          width: 140,
+          width: '25%',
           align: 'right',
           render: (_, row) => formatReportMoney(row.attributedSalesAmount, row.currency || 'USD'),
         },
         {
           title: t('reports.columns.newBuyers'),
           dataIndex: 'newBuyerCount',
-          width: 120,
+          width: '19%',
           align: 'right',
         },
       ],
@@ -165,7 +165,7 @@ export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
             loading={isAdsDailyPending}
             pagination={false}
             columns={adsDailyColumns}
-            scroll={{ x: 880 }}
+            scroll={{}}
           />
         </SectionCard>
         <SectionCard title={t('reports.sales.acquisition')}>
@@ -176,7 +176,7 @@ export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
             loading={isChannelsPending}
             pagination={false}
             columns={channelColumns}
-            scroll={{ x: 640 }}
+            scroll={{}}
           />
         </SectionCard>
       </div>

@@ -7,6 +7,7 @@ import { Button, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   DateRangePicker,
@@ -26,8 +27,6 @@ import { SettlementCashFlow } from '../components/SettlementCashFlow'
 import { useFinanceMutations } from '../hooks/useFinanceMutations'
 import { useFinanceWorkspace } from '../hooks/useFinanceWorkspace'
 import styles from './FinanceWorkspacePage.module.scss'
-
-const DEFAULT_PAGE_SIZE = 20
 
 export const FinanceWorkspacePage = () => {
   const { t } = useTranslation()

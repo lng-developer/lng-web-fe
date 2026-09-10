@@ -1072,7 +1072,42 @@
       "password": "Mật khẩu",
       "identifierRequired": "Nhập email hoặc mã nhân viên",
       "passwordRequired": "Nhập mật khẩu",
-      "submit": "Đăng nhập"
+      "submit": "Đăng nhập",
+      "rememberMe": "Ghi nhớ đăng nhập",
+      "forgotPassword": "Quên mật khẩu?",
+      "registerPrompt": "Chưa có tài khoản?",
+      "register": "Đăng ký",
+      "welcomeTitle": "Chào mừng đến LNG Web",
+      "welcomeDescription": "Đăng nhập để truy cập không gian vận hành an toàn.",
+      "continueWith": "Hoặc tiếp tục với",
+      "socialOptions": "Các lựa chọn đăng nhập mạng xã hội",
+      "socialFacebook": "Tiếp tục với Facebook",
+      "socialGoogle": "Tiếp tục với Google",
+      "socialX": "Tiếp tục với X",
+      "socialGithub": "Tiếp tục với GitHub"
+    },
+    "public": {
+      "fullName": "Họ và tên",
+      "email": "Địa chỉ email",
+      "newPassword": "Mật khẩu mới",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "backToLogin": "Quay lại đăng nhập",
+      "terms": "Tôi đồng ý với chính sách quyền riêng tư và điều khoản",
+      "register": {
+        "title": "Tạo tài khoản LNG",
+        "description": "Thiết lập không gian vận hành an toàn của bạn.",
+        "submit": "Tạo tài khoản"
+      },
+      "forgot-password": {
+        "title": "Quên mật khẩu?",
+        "description": "Nhập email để nhận hướng dẫn đặt lại mật khẩu.",
+        "submit": "Gửi liên kết đặt lại"
+      },
+      "reset-password": {
+        "title": "Đặt mật khẩu mới",
+        "description": "Chọn mật khẩu mạnh cho tài khoản LNG của bạn.",
+        "submit": "Cập nhật mật khẩu"
+      }
     },
     "setup": {
       "eyebrow": "Thiết lập tài khoản",

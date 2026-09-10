@@ -204,6 +204,43 @@ describe('ReportWorkspacePage', () => {
     expect(await screen.findByText('2026-08-01')).toBeInTheDocument()
   })
 
+  it('lets both ads tables use the full report width', async () => {
+    vi.mocked(listAdsDaily).mockResolvedValueOnce([
+      {
+        reportDate: '2026-08-01',
+        salesChannelCode: 'AMAZON',
+        marketplaceCode: 'US',
+        currency: 'USD',
+        spendAmount: 1200,
+        attributedSalesAmount: 4800,
+        impressions: 1000,
+        clicks: 50,
+        attributedOrdersCount: 4,
+        ctrBps: 500,
+        conversionBps: 800,
+        cpaAmount: 300,
+      },
+    ])
+
+    render(
+      <AppProviders>
+        <ReportWorkspacePage />
+      </AppProviders>,
+    )
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Ads & attribution' }))
+
+    const dailyCard = (
+      await screen.findByRole('heading', { name: 'Daily ad performance' })
+    ).closest('.ant-card') as HTMLElement
+    const acquisitionCard = screen
+      .getByRole('heading', { name: 'Channel acquisition' })
+      .closest('.ant-card') as HTMLElement
+
+    expect(dailyCard.querySelector('table')).not.toHaveStyle({ width: '880px' })
+    expect(acquisitionCard.querySelector('table')).not.toHaveStyle({ width: '640px' })
+  })
+
   it('loads the seller-day P&L matrix only after selecting daily detail', async () => {
     vi.mocked(listFinanceSellerDaily).mockResolvedValueOnce([
       {
@@ -258,7 +295,9 @@ describe('ReportWorkspacePage', () => {
     const dailyTable = screen.getByText('Product cost').closest('table')
     expect(dailyTable).not.toBeNull()
     expect(within(dailyTable as HTMLTableElement).getByText('Orders')).toBeInTheDocument()
-    expect(within(dailyTable as HTMLTableElement).getAllByText('3', { exact: true })).toHaveLength(2)
+    expect(within(dailyTable as HTMLTableElement).getAllByText('3', { exact: true })).toHaveLength(
+      2,
+    )
     expect(
       screen.getByText('Net profit = Gross profit − Operating cost − Ads spend'),
     ).toBeInTheDocument()

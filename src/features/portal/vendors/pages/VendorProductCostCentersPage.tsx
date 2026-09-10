@@ -8,6 +8,7 @@ import { Button, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { hasAnyPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { FilterBar, SearchInput, StatusTag, useDebouncedValue } from '@/shared/ui'
 
 import { getVendorProduct, listVendorCostCenters, type VendorCostCenter } from '../api/vendorApi'
@@ -15,7 +16,7 @@ import { vendorKeys } from '../api/vendorKeys'
 import { VendorCostCenterEditorModal } from './VendorCostCenterEditorModal'
 import styles from './VendorWorkspacePage.module.scss'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 const formatMoney = (value?: number | null, currency = 'USD') => {
   if (value == null) return '—'
@@ -60,21 +61,21 @@ export function VendorProductCostCentersPage() {
       {
         title: t('portal.vendors.code'),
         dataIndex: 'code',
-        width: 250,
+        width: '24%',
         ellipsis: true,
         render: (value) => <Typography.Text code>{value}</Typography.Text>,
       },
       {
         title: t('portal.vendors.name'),
         dataIndex: 'name',
-        width: 280,
+        width: '24%',
         ellipsis: true,
         render: (value) => <Typography.Text>{value}</Typography.Text>,
       },
       {
         title: t('portal.vendors.sku', { defaultValue: 'SKU' }),
         dataIndex: 'sku',
-        width: 130,
+        width: '13%',
         ellipsis: true,
         render: (value) =>
           value ? (
@@ -85,7 +86,7 @@ export function VendorProductCostCentersPage() {
       },
       {
         title: t('portal.vendors.baseCostAmount'),
-        width: 150,
+        width: '15%',
         render: (_, row) =>
           row.baseCostAmount == null ? (
             <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
@@ -95,7 +96,7 @@ export function VendorProductCostCentersPage() {
       },
       {
         title: t('portal.vendors.statusLabel'),
-        width: 110,
+        width: '10%',
         render: (_, row) => (
           <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
             {t(`portal.vendors.status.${row.status}`)}
@@ -104,7 +105,7 @@ export function VendorProductCostCentersPage() {
       },
       {
         title: t('portal.vendors.costCenterActions'),
-        width: 90,
+        width: '10%',
         render: (_, row) =>
           canWrite ? (
             <Button
@@ -180,10 +181,11 @@ export function VendorProductCostCentersPage() {
         <CoreDataTable
           rowKey="id"
           className={styles.dataTable}
+          tableLayout="fixed"
           columns={columns}
           dataSource={costCenters.data?.items}
           loading={product.isLoading || costCenters.isLoading}
-          scroll={{ x: 1010 }}
+          scroll={{ x: '100%' }}
           error={
             error ? (
               <Typography.Text type="danger">
@@ -192,6 +194,7 @@ export function VendorProductCostCentersPage() {
             ) : undefined
           }
           expandable={{
+            columnWidth: '4%',
             expandedRowKeys: selectedCostCenter ? [selectedCostCenter.id] : [],
             onExpand: (expanded, row) => {
               if (expanded) {

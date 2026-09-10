@@ -17,6 +17,20 @@ import { WorkspaceIndexRedirect } from './WorkspaceIndexRedirect'
 
 export const appRoutes: RouteObject[] = [
   { path: 'login', element: <LoginPage /> },
+  {
+    path: 'forgot-password',
+    lazy: () =>
+      import('@/features/auth/public/pages/PublicAuthPage').then(({ PublicAuthPage }) => ({
+        Component: () => <PublicAuthPage mode="forgot-password" />,
+      })),
+  },
+  {
+    path: 'reset-password',
+    lazy: () =>
+      import('@/features/auth/public/pages/PublicAuthPage').then(({ PublicAuthPage }) => ({
+        Component: () => <PublicAuthPage mode="reset-password" />,
+      })),
+  },
   { path: '500', element: <RouteErrorPage /> },
   {
     path: 'setup/password',

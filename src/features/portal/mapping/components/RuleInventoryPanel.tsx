@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { SearchInput } from '@/shared/ui'
 
 import type { MappingRule, MappingRuleType } from '../api/mappingApi'
@@ -226,7 +227,7 @@ export function RuleInventoryPanel({
         columns={columns}
         dataSource={filtered}
         emptyText={t('mapping.states.noRules')}
-        pagination={{ pageSize: 20, showSizeChanger: false }}
+        pagination={{ pageSize: DEFAULT_PAGE_SIZE, showSizeChanger: false }}
         scroll={{ x: 960 }}
         rowClassName={(rule) => (rule.status === 'INACTIVE' ? 'opacity-50' : 'cursor-pointer')}
         onRow={(rule) => ({ onClick: () => onSelect(rule) })}

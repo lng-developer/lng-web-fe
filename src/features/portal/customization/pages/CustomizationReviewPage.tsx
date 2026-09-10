@@ -7,6 +7,7 @@ import { Button, Descriptions, Input, Modal, Select, Space, Typography } from 'a
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   FilterBar,
@@ -26,7 +27,7 @@ import {
 } from '../hooks'
 import styles from './CustomizationReviewPage.module.scss'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 export const CustomizationReviewPage = () => {
   const { t } = useTranslation()

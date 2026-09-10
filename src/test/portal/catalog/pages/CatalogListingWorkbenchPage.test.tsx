@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { listListings } from '@/features/portal/catalog/api/catalogApi'
 import { CatalogListingWorkbenchPage } from '@/features/portal/catalog/pages/CatalogListingWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
@@ -120,4 +121,50 @@ describe('CatalogListingWorkbenchPage', () => {
     )
     expect(screen.getAllByRole('img', { name: 'Shirt' })).toHaveLength(1)
   }, 15_000)
+
+  it('gives the QC column enough room for review status badges', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    const qcHeader = await screen.findByRole('columnheader', { name: 'QC' })
+    const table = qcHeader.closest('table')
+    expect(
+      Array.from(table?.querySelectorAll('col') ?? []).some(
+        (column) => column.style.width === '150px',
+      ),
+    ).toBe(true)
+  })
+
+  it('loads ten listings on the first page by default', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    await waitFor(() =>
+      expect(listListings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, limit: 10 }),
+      ),
+    )
+  })
+
+  it('requests listings sorted by sold quantity when Sales is selected', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    fireEvent.click(await screen.findByRole('columnheader', { name: 'Sales' }))
+
+    await waitFor(() =>
+      expect(listListings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, limit: 10, sort: 'quantitySoldDesc' }),
+      ),
+    )
+  })
 })

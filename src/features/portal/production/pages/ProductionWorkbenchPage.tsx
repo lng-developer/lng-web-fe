@@ -15,6 +15,7 @@ import type { TableColumnsType } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   FeedbackAlert,
@@ -51,7 +52,7 @@ import { ProductionWorkbenchExpandedRow } from './ProductionWorkbenchExpandedRow
 import { ProductionWorkbenchFilterBar } from './ProductionWorkbenchFilterBar'
 import styles from './ProductionWorkbenchPage.module.scss'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 type ProductionTab = 'scale' | 'blocked' | 'qc'
 const SCALE_STATUSES: ProductionStatus[] = ['NEED_SCALE', 'QC_REJECTED', 'BLOCKED']
 const BLOCKED_STATUSES: ProductionStatus[] = ['BLOCKED']

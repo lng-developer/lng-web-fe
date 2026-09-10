@@ -207,6 +207,26 @@ describe('shared UI', () => {
     await waitFor(() => expect(tableBody!.scrollTop).toBe(0))
   })
 
+  it('emits configured server sort values only when server sorting is enabled', () => {
+    const onSortChange = vi.fn()
+    render(
+      <CoreDataTable
+        columns={[{ key: 'sales', dataIndex: 'sales', title: 'Sales' }]}
+        dataSource={[{ key: 'listing-1', sales: 4 }]}
+        serverSorting={{
+          enabled: true,
+          value: undefined,
+          onChange: onSortChange,
+          columns: { sales: { asc: 'quantitySoldAsc', desc: 'quantitySoldDesc' } },
+        }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('columnheader', { name: 'Sales' }))
+
+    expect(onSortChange).toHaveBeenCalledWith('quantitySoldDesc')
+  })
+
   it('renders summary, pagination, and destructive confirmation patterns', async () => {
     render(
       <>

@@ -5,7 +5,8 @@ import type { TableColumnsType } from 'antd'
 import { Button, Form, Input, Modal, Select, Space, Switch, Tabs, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+import { SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   getInternalTemplate,
@@ -19,14 +20,12 @@ import {
 } from '../components'
 import { useInternalTemplatesQuery } from '../hooks'
 
-const PAGE_SIZE = 20
-
 export function InternalTemplateManagementPage({ canManage }: { readonly canManage: boolean }) {
   const { t } = useTranslation()
   const toast = useFeedbackToast()
   const [form] = Form.useForm<InternalTemplateInput & { code?: string }>()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<InternalTemplate | null>()
 
@@ -176,10 +175,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
 
   return (
     <section>
-      <PageHeader
-        title={t('portal.catalog.master.templates')}
-        description={t('portal.catalog.master.templateDescription')}
-      />
       <SectionCard>
         <CoreDataTable
           rowKey="id"
