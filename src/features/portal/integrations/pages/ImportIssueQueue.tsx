@@ -8,6 +8,7 @@ import { Button, Select, Space, Tooltip, Typography } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   FeedbackAlert,
@@ -33,7 +34,7 @@ import { canWriteOrdersForShop, canWriteOrdersSomewhere } from '../auth/integrat
 import styles from './IntegrationWorkbenchPage.module.scss'
 import { IssueResolutionModal } from './IssueResolutionModal'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 const SOURCES: ImportSource[] = ['AMAZON_EXTENSION_REPORT', 'MANUAL_EXCEL']
 const SEVERITIES: ImportIssueSeverity[] = ['INFO', 'WARNING', 'ERROR', 'CRITICAL']
 const STATUSES: ImportIssueStatus[] = ['OPEN', 'RESOLVED', 'IGNORED']

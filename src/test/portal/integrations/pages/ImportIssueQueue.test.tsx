@@ -83,7 +83,7 @@ describe('ImportIssueQueue', () => {
     setPermissions(['ORDERS:READ'])
     vi.mocked(listIssues).mockResolvedValue({
       items: [issue],
-      pagination: { total: 1, page: 1, limit: 20 },
+      pagination: { total: 1, page: 1, limit: 10 },
     })
     vi.mocked(updateIssueStatus).mockResolvedValue({
       ...issue,
@@ -103,7 +103,7 @@ describe('ImportIssueQueue', () => {
     await waitFor(() =>
       expect(listIssues).toHaveBeenCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         importJobId: 'job-selected',
       }),
     )
@@ -112,7 +112,7 @@ describe('ImportIssueQueue', () => {
   it('does not render an empty item reference placeholder', async () => {
     vi.mocked(listIssues).mockResolvedValue({
       items: [{ ...issue, externalItemId: null }],
-      pagination: { total: 1, page: 1, limit: 20 },
+      pagination: { total: 1, page: 1, limit: 10 },
     })
 
     renderQueue()
@@ -123,7 +123,7 @@ describe('ImportIssueQueue', () => {
 
   it('sends all queue filters to the server and hides write actions for readers', async () => {
     renderQueue()
-    await waitFor(() => expect(listIssues).toHaveBeenCalledWith({ page: 1, limit: 20 }))
+    await waitFor(() => expect(listIssues).toHaveBeenCalledWith({ page: 1, limit: 10 }))
 
     const selections = [
       ['Issue shop', 'LNG Amazon US', 'shopId', 'shop-1'],
@@ -152,7 +152,7 @@ describe('ImportIssueQueue', () => {
     await waitFor(() =>
       expect(listIssues).toHaveBeenLastCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         shopId: 'shop-1',
         source: 'MANUAL_EXCEL',
         severity: 'ERROR',
@@ -258,7 +258,7 @@ describe('ImportIssueQueue', () => {
     expect(listIssues).toHaveBeenCalledTimes(1)
     expect(listIssues).toHaveBeenCalledWith({
       page: 1,
-      limit: 20,
+      limit: 10,
       externalOrderId: 'ORDER-1',
     })
     vi.useRealTimers()

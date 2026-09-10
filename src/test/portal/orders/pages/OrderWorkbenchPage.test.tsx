@@ -175,6 +175,12 @@ describe('OrderWorkbenchPage', () => {
     expect((await screen.findByRole('tablist')).closest(`.${styles.orderTabs}`)).toBeInTheDocument()
   })
 
+  it('places the order queue tabs on a visually distinct rail', async () => {
+    renderPage()
+
+    expect((await screen.findByRole('tablist')).closest(`.${styles.queueRail}`)).toBeInTheDocument()
+  })
+
   it('shows an open case as an icon without exposing its title in the table', async () => {
     vi.mocked(listOrderWorkbench).mockResolvedValue({
       items: [
@@ -227,6 +233,10 @@ describe('OrderWorkbenchPage', () => {
 
   it('allows the order table to scroll horizontally when space is constrained', () => {
     expect(orderWorkbenchSource).toContain('scroll={{ x: 1460 }}')
+  })
+
+  it('does not pin order rows while the table scrolls', () => {
+    expect(orderWorkbenchSource).not.toContain('rowClassName={() => styles.stickyOrderRow}')
   })
 
   it('does not retain an earlier page while the next page is loading', () => {

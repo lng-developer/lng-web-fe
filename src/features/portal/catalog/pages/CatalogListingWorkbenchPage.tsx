@@ -22,6 +22,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableText,
   FeedbackAlert,
@@ -40,7 +41,6 @@ import { ListingVariantManager } from './ListingVariantManager'
 
 dayjs.extend(relativeTime)
 
-const PAGE_SIZE = 20
 const QC_STATUS_I18N_KEY: Record<string, string> = {
   DRAFT: 'portal.catalog.qc.statuses.DRAFT',
   APPROVED: 'portal.catalog.qc.statuses.APPROVED',
@@ -75,12 +75,13 @@ export function CatalogListingWorkbenchPage({
   const toast = useFeedbackToast()
 
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
   const [qcStatus, setQcStatus] = useState<string>()
   const [psdState, setPsdState] = useState<'missing' | 'ready'>()
+  const [sort, setSort] = useState<string>()
   const [editing, setEditing] = useState<Listing | 'create'>()
   const [expandedRowKeys, setExpandedRowKeys] = useState<readonly string[]>([])
 
@@ -94,6 +95,7 @@ export function CatalogListingWorkbenchPage({
     salesChannelCode: effectiveSalesChannelCode,
     qcStatus,
     psdState,
+    sort,
   })
 
   const { save, requestDefaultPsd, exportCsv } = useCatalogMutations({
@@ -290,7 +292,7 @@ export function CatalogListingWorkbenchPage({
       {
         title: t('portal.catalog.columns.qc'),
         align: 'center',
-        width: 110,
+        width: 150,
         render: (_, listing) => (
           <StatusTag
             status={
@@ -309,6 +311,7 @@ export function CatalogListingWorkbenchPage({
       },
       {
         title: t('portal.catalog.columns.sales'),
+        key: 'sales',
         width: 100,
         align: 'right',
         render: (_, listing) => (
@@ -400,7 +403,6 @@ export function CatalogListingWorkbenchPage({
           description={t('portal.catalog.description')}
         />
       ) : null}
-
       {listings.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.catalog.unavailable')} />
       ) : null}
@@ -551,6 +553,15 @@ export function CatalogListingWorkbenchPage({
           size="middle"
           loading={listings.isLoading}
           columns={columns}
+          serverSorting={{
+            enabled: true,
+            value: sort,
+            columns: { sales: { asc: 'quantitySoldAsc', desc: 'quantitySoldDesc' } },
+            onChange: (nextSort) => {
+              setSort(nextSort)
+              setPage(1)
+            },
+          }}
           dataSource={listings.data?.items ?? []}
           scroll={{ x: 1200, y: 'max(280px, calc(100vh - 500px))' }}
           pagination={{

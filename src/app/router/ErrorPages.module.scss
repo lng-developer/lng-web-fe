@@ -6,6 +6,10 @@
   background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 45%, #ffffff 100%);
 }
 
+:global(html[data-theme='dark']) .errorShell {
+  background: #26283e;
+}
+
 .errorCard {
   width: min(980px, 100%);
   background: var(--ant-color-bg-container);

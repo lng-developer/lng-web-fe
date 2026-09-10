@@ -455,13 +455,15 @@ export const OrderWorkbenchPage = () => {
   return (
     <section className={styles.page}>
       <div className={styles.tabsRow}>
-        <div className={styles.tabs}>
-          <UiTabs
-            className={styles.orderTabs}
-            activeKey={tab}
-            onChange={onTabChange}
-            items={tabItems}
-          />
+        <div className={styles.queueRail}>
+          <div className={styles.tabs}>
+            <UiTabs
+              className={styles.orderTabs}
+              activeKey={tab}
+              onChange={onTabChange}
+              items={tabItems}
+            />
+          </div>
         </div>
 
         <Typography.Text
@@ -523,7 +525,6 @@ export const OrderWorkbenchPage = () => {
         dataSource={orders.data?.items ?? []}
         loading={orders.isFetching}
         scroll={{ x: 1460 }}
-        rowClassName={() => styles.stickyOrderRow}
         pagination={{
           ...pagination,
           onChange: handlePageChange,

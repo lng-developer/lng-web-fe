@@ -89,6 +89,13 @@
   overflow-x: auto;
 }
 
+.dataTable :global(.ant-table-header table),
+.dataTable :global(.ant-table-body table),
+.dataTable :global(.ant-table-content table) {
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

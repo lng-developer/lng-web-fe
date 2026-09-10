@@ -7,6 +7,7 @@ import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { ImportBatch } from '@/features/portal/finance/api/financeApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { DateRangePicker, FilterBar, SectionCard, StatusTag } from '@/shared/ui'
 
 import { canWriteFinanceForShop } from '../auth/integrationAccess'
@@ -20,7 +21,7 @@ import {
 } from '../hooks/useFinanceImports'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 function statusTone(status: string) {
   if (status === 'COMPLETED') return 'operational'
@@ -135,7 +136,11 @@ export function FinanceImportSection({
         { title: 'Type', dataIndex: 'transactionType' },
         { title: 'Status', dataIndex: 'transactionStatus' },
         { title: 'Order ID', dataIndex: 'externalOrderId' },
-        { title: 'Amount', render: (_: unknown, row: Record<string, unknown>) => amount(row.amount, String(row.currency || 'USD')) },
+        {
+          title: 'Amount',
+          render: (_: unknown, row: Record<string, unknown>) =>
+            amount(row.amount, String(row.currency || 'USD')),
+        },
       ]
     }
     if (sourceType === 'SETTLEMENTS') {
@@ -144,13 +149,21 @@ export function FinanceImportSection({
         { title: 'Type', dataIndex: 'transactionType' },
         { title: 'Order ID', dataIndex: 'externalOrderId' },
         { title: 'Amount type', dataIndex: 'amountType' },
-        { title: 'Amount', render: (_: unknown, row: Record<string, unknown>) => amount(row.amount, String(row.currency || 'USD')) },
+        {
+          title: 'Amount',
+          render: (_: unknown, row: Record<string, unknown>) =>
+            amount(row.amount, String(row.currency || 'USD')),
+        },
       ]
     }
     return [
       { title: 'Date', dataIndex: 'reportDate', render: date },
       { title: 'Campaign', dataIndex: 'campaignName' },
-      { title: 'Spend', render: (_: unknown, row: Record<string, unknown>) => amount(row.spendAmount, String(row.currency || 'USD')) },
+      {
+        title: 'Spend',
+        render: (_: unknown, row: Record<string, unknown>) =>
+          amount(row.spendAmount, String(row.currency || 'USD')),
+      },
     ]
   }, [sourceType])
 

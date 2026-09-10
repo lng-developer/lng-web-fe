@@ -6,9 +6,21 @@
   left: 0;
   width: 254px;
   overflow: visible;
-  border-right: 1px solid #f1f5f9;
+  border-right: 1px solid #e8ebf1;
   background: #fff;
+  box-shadow: 0 0 30px 10px rgb(0 0 0 / 2%);
   transition: width 0.3s;
+}
+.sidebar::after {
+  position: absolute;
+  z-index: 1;
+  top: 63px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: var(--ant-color-border-secondary);
+  pointer-events: none;
 }
 .collapsed {
   width: 52px;
@@ -16,10 +28,10 @@
 .identity {
   display: flex;
   align-items: center;
-  height: 60px;
+  height: 64px;
   padding: 0 7.5px;
-  border-bottom: 1px solid #f1f5f9;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  border-bottom: 0;
+  box-shadow: none;
   color: #000;
   background: #fff;
 }
@@ -74,7 +86,7 @@
 .menuLayout {
   display: grid !important;
   grid-template-columns: 52px 202px;
-  height: calc(100dvh - 60px);
+  height: calc(100dvh - 64px);
   background: #fff !important;
   overflow: hidden;
 }
@@ -225,4 +237,82 @@
   border-radius: 8px;
   color: #52657d;
   background: #fff;
+}
+
+:global(html[data-theme='dark']) .sidebar {
+  border-right-color: rgb(51 65 85);
+  background: #282b44;
+  box-shadow: 1px 0 0 rgb(148 163 184 / 8%);
+}
+
+:global(html[data-theme='dark']) .identity {
+  color: rgb(241 245 249);
+  background: #282b44;
+}
+
+:global(html[data-theme='dark']) .account span {
+  color: rgb(241 245 249);
+}
+
+:global(html[data-theme='dark']) .account button {
+  color: rgb(148 163 184);
+}
+
+:global(html[data-theme='dark']) .menuLayout,
+:global(html[data-theme='dark']) .detailSider {
+  background: #282b44 !important;
+}
+
+:global(html[data-theme='dark']) .detailMenu {
+  background: #282b44 !important;
+}
+
+:global(html[data-theme='dark']) .detailMenu :global(.ant-menu-submenu .ant-menu) {
+  background: #282b44 !important;
+}
+
+:global(html[data-theme='dark']) .rail,
+:global(html[data-theme='dark']) .railMenu {
+  border-right-color: rgb(51 65 85);
+  background: #282b44;
+}
+
+:global(html[data-theme='dark']) .railButton,
+:global(html[data-theme='dark']) .railButtonActive {
+  color: rgb(203 213 225);
+}
+
+:global(html[data-theme='dark']) .railButton:hover,
+:global(html[data-theme='dark']) .railButtonActive,
+:global(html[data-theme='dark']) .detailMenu :global(.ant-menu-item-selected) {
+  color: rgb(255 255 255) !important;
+  background: rgb(30 41 59) !important;
+}
+
+:global(html[data-theme='dark']) .detailMenu :global(.ant-menu-item) {
+  color: rgb(226 232 240) !important;
+}
+
+:global(html[data-theme='dark']) .detailMenu :global(.ant-menu-submenu-title) {
+  color: rgb(226 232 240) !important;
+}
+
+:global(html[data-theme='dark']) .detailMenu :global(.ant-menu-item:hover),
+:global(html[data-theme='dark']) .detailMenu :global(.ant-menu-submenu-title:hover) {
+  color: rgb(255 255 255) !important;
+  background: rgb(30 41 59) !important;
+}
+
+:global(html[data-theme='dark']) .collapseButton {
+  border-color: rgb(72 75 108);
+  color: rgb(241 245 249);
+  background: #282b44;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 30%);
+}
+
+:global(html[data-theme='dark']) .accountMenu,
+:global(html[data-theme='dark']) .popoverMenu {
+  border-color: rgb(71 85 105);
+  color: rgb(203 213 225);
+  background: #282b44;
 }

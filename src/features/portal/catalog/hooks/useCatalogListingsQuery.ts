@@ -20,6 +20,7 @@ export interface UseCatalogListingsQueryParams {
   salesChannelCode?: string
   qcStatus?: string
   psdState?: 'missing' | 'ready'
+  sort?: string
 }
 
 export function useCatalogListingsQuery({
@@ -30,6 +31,7 @@ export function useCatalogListingsQuery({
   salesChannelCode,
   qcStatus,
   psdState,
+  sort,
 }: UseCatalogListingsQueryParams) {
   const debouncedSearch = useDebouncedValue(search, 250)
 
@@ -42,8 +44,9 @@ export function useCatalogListingsQuery({
       salesChannelCode,
       qcStatus,
       psdState,
+      sort,
     }),
-    [page, pageSize, debouncedSearch, shopId, salesChannelCode, qcStatus, psdState],
+    [page, pageSize, debouncedSearch, shopId, salesChannelCode, qcStatus, psdState, sort],
   )
 
   const summaryParams = useMemo<CatalogSummaryParams>(

@@ -313,11 +313,11 @@ describe('IntegrationWorkbenchPage', () => {
     })
     vi.mocked(listImportJobs).mockResolvedValue({
       items: [job],
-      pagination: { total: 1, page: 2, limit: 20 },
+      pagination: { total: 1, page: 2, limit: 10 },
     })
     vi.mocked(listIssues).mockResolvedValue({
       items: [],
-      pagination: { total: 0, page: 1, limit: 20 },
+      pagination: { total: 0, page: 1, limit: 10 },
     })
     vi.mocked(getImportJob).mockResolvedValue(job)
     vi.mocked(listJobIssues).mockResolvedValue({
@@ -356,7 +356,7 @@ describe('IntegrationWorkbenchPage', () => {
     vi.mocked(listExtensionOrderSchedules).mockResolvedValue({ items: [] })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [adsImportBatch],
-      pagination: { total: 1, page: 1, limit: 20 },
+      pagination: { total: 1, page: 1, limit: 10 },
     })
     vi.mocked(listAdsUnassignedRows).mockResolvedValue({
       items: [],
@@ -382,7 +382,7 @@ describe('IntegrationWorkbenchPage', () => {
         source: 'MANUAL_EXCEL',
         status: 'FAILED',
         page: 2,
-        limit: 20,
+        limit: 10,
         dateFrom: '2026-07-01T00:00:00.000Z',
         dateTo: '2026-07-31T23:59:59.999Z',
       }),
@@ -395,7 +395,7 @@ describe('IntegrationWorkbenchPage', () => {
   it('sanitizes malformed page, source, and status URL filters before querying', async () => {
     renderWorkbench('/portal/integrations?page=-3&source=UNKNOWN_SOURCE&status=UNKNOWN_STATUS')
 
-    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 20 }))
+    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 10 }))
     expect(await screen.findByText('8 imported / 1 skipped / 3 failed')).toBeVisible()
   })
 
@@ -405,7 +405,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportJobs).toHaveBeenCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         dateFrom: '2026-07-01',
         dateTo: '2026-07-31',
       }),
@@ -418,7 +418,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportJobs).toHaveBeenCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         dateTo: '2026-07-31',
       }),
     )
@@ -427,7 +427,7 @@ describe('IntegrationWorkbenchPage', () => {
   it('drops a reversed date range before querying', async () => {
     renderWorkbench('/portal/integrations?dateFrom=2026-08-01&dateTo=2026-07-31')
 
-    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 20 }))
+    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 10 }))
   })
 
   it('opens selected job detail in a drawer', async () => {
@@ -1131,7 +1131,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith({
         page: 1,
-        limit: 20,
+        limit: 10,
         sourceType: 'ADS',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'US',

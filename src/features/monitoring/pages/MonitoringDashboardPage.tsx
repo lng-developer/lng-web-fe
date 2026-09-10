@@ -24,6 +24,7 @@ import {
 } from 'antd'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { MetricCard, PageHeader, SectionCard, StatusTag, UiTabLabel, UiTabs } from '@/shared/ui'
 
 import {
@@ -569,7 +570,7 @@ export const MonitoringDashboardPage = () => {
               columns={indexColumns}
               dataSource={indexRows}
               loading={indexLoading}
-              pagination={{ pageSize: 20, showSizeChanger: false }}
+              pagination={{ pageSize: DEFAULT_PAGE_SIZE, showSizeChanger: false }}
               scroll={{ x: 920 }}
               size="small"
             />

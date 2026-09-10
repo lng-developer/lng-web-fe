@@ -583,10 +583,10 @@ export function LegacySidebar({
       <button
         className={styles.collapseButton}
         type="button"
-        aria-label={t(collapsed ? 'shell.collapse' : 'shell.expand')}
+        aria-label={t(collapsed ? 'shell.expand' : 'shell.collapse')}
         onClick={() => onCollapsedChange(!collapsed)}
       >
-        {collapsed ? <FaAnglesLeft size={15} /> : <FaAnglesRight size={15} />}
+        {collapsed ? <FaAnglesRight size={15} /> : <FaAnglesLeft size={15} />}
       </button>
     </aside>
   )

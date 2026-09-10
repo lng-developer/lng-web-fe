@@ -1,8 +1,17 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 import routerSource from '@/app/router/router.tsx?raw'
 import editorTemplateSource from '@/features/portal/vendors/pages/VendorCostCenterEditorModal.tsx?raw'
 import costCentersPageSource from '@/features/portal/vendors/pages/VendorProductCostCentersPage.tsx?raw'
+
+const vendorWorkspaceStyles = readFileSync(
+  new URL(
+    '../../../../features/portal/vendors/pages/VendorWorkspacePage.module.scss',
+    import.meta.url,
+  ),
+  'utf8',
+)
 
 describe('VendorProductCostCentersPage', () => {
   it('loads the selected product and its cost centers from the route product id', () => {
@@ -33,6 +42,18 @@ describe('VendorProductCostCentersPage', () => {
     expect(costCentersPageSource).toContain('readOnly={!isEditing}')
     expect(costCentersPageSource).toContain('onEdit={() => setIsEditing(true)}')
     expect(editorTemplateSource).toContain('readOnly')
+  })
+
+  it('keeps empty and populated table columns stretched to the same container width', () => {
+    expect(vendorWorkspaceStyles).toContain('.dataTable :global(.ant-table-header table)')
+    expect(vendorWorkspaceStyles).toContain('.dataTable :global(.ant-table-body table)')
+    expect(vendorWorkspaceStyles).toContain('.dataTable :global(.ant-table-content table)')
+    expect(vendorWorkspaceStyles).toContain('width: 100% !important')
+    expect(costCentersPageSource).toContain("columnWidth: '4%'")
+    expect(costCentersPageSource).toContain("width: '24%'")
+    expect(costCentersPageSource).toContain("title: t('portal.vendors.costCenterActions')")
+    expect(costCentersPageSource).toContain("width: '10%'")
+    expect(costCentersPageSource).toContain("scroll={{ x: '100%' }}")
   })
 
   it('renders inline cost center details as a nested table with editable cells', () => {

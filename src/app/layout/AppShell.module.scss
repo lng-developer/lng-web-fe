@@ -90,6 +90,12 @@
   margin-bottom: 12px;
 }
 
+:global(html[data-theme='dark']) .rail {
+  border-right-color: rgb(51 65 85);
+  background: rgb(15 23 42);
+  box-shadow: 1px 0 0 rgb(148 163 184 / 8%);
+}
+
 .sidebar {
   position: sticky !important;
   top: 0;
@@ -177,6 +183,37 @@
 .navigation :global(.ant-menu) {
   min-width: 0;
   background: var(--ant-color-bg-container);
+}
+
+:global(html[data-theme='dark']) .sidebar {
+  border-color: rgb(51 65 85);
+  background: rgb(15 23 42);
+}
+
+:global(html[data-theme='dark']) .navigation {
+  background: rgb(15 23 42);
+}
+
+:global(html[data-theme='dark']) .navigation :global(.ant-menu) {
+  background: rgb(15 23 42);
+}
+
+:global(html[data-theme='dark']) .navigation :global(.ant-menu-item),
+:global(html[data-theme='dark']) .navigation :global(.ant-menu-submenu-title),
+:global(html[data-theme='dark']) .navigation :global(.ant-menu-item a) {
+  color: rgb(226 232 240);
+}
+
+:global(html[data-theme='dark']) .navigation :global(.ant-menu-item:hover),
+:global(html[data-theme='dark']) .navigation :global(.ant-menu-submenu-title:hover) {
+  background: rgb(30 41 59);
+}
+
+:global(html[data-theme='dark']) .navigation :global(.ant-menu-item-selected) {
+  background: rgb(69 29 42) !important;
+  box-shadow:
+    inset 3px 0 0 var(--ant-color-primary),
+    0 8px 18px rgb(0 0 0 / 18%);
 }
 
 .sidebar:global(.ant-layout-sider-collapsed) .navigation {
@@ -399,13 +436,11 @@
 .content {
   min-height: calc(100dvh - 64px);
   padding: 18px 28px 28px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ant-color-bg-container) 46%, transparent),
-      transparent 180px
-    ),
-    var(--ant-color-bg-layout);
+  background: #fdfdfd;
+}
+
+:global(html[data-theme='dark']) .content {
+  background: #26283e;
 }
 
 .contentFixed {

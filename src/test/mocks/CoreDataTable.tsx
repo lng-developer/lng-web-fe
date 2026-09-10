@@ -1,5 +1,7 @@
 import type { Key, ReactNode } from 'react'
 
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+
 type Column = {
   dataIndex?: string
   render?: (value: unknown, record: Record<string, unknown>) => ReactNode
@@ -35,7 +37,7 @@ export function CoreDataTable({
         <button
           type="button"
           aria-label="Page 2"
-          onClick={() => pagination.onChange?.(2, pagination.pageSize ?? 10)}
+          onClick={() => pagination.onChange?.(2, pagination.pageSize ?? DEFAULT_PAGE_SIZE)}
         >
           2
         </button>

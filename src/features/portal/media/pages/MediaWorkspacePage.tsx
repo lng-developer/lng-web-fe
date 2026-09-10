@@ -7,6 +7,7 @@ import { Button, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
@@ -29,7 +30,7 @@ import { useMediaAssetsQuery, useUploadMediaAssetMutation } from '../hooks'
 import { MediaAssetDetailModal } from './MediaAssetDetailModal'
 import { MediaUploadModal } from './MediaUploadModal'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 const MIME_GROUPS: MediaMimeGroup[] = ['IMAGE', 'DOCUMENT', 'ARCHIVE', 'OTHER']
 const PROVIDERS = ['local', 'cloudinary'] as const
 const RESOURCE_TYPES = ['image', 'video', 'raw'] as const

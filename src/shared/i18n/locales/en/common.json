@@ -1068,11 +1068,46 @@
       "description": "A secure workspace for managing the POD operation.",
       "welcome": "Welcome back",
       "instruction": "Sign in to continue to LNG Web.",
-      "identifier": "Email or employee code",
+      "identifier": "Email Address",
       "password": "Password",
       "identifierRequired": "Enter your email or employee code",
       "passwordRequired": "Enter your password",
-      "submit": "Sign in"
+      "submit": "Login",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "registerPrompt": "Don’t have an account?",
+      "register": "Sign Up here",
+      "welcomeTitle": "Welcome to LNG",
+      "welcomeDescription": "Sign in to access your secure admin dashboard.",
+      "continueWith": "Or Continue With",
+      "socialOptions": "Social sign-in options",
+      "socialFacebook": "Continue with Facebook",
+      "socialGoogle": "Continue with Google",
+      "socialX": "Continue with X",
+      "socialGithub": "Continue with GitHub"
+    },
+    "public": {
+      "fullName": "Name",
+      "email": "Email Address",
+      "newPassword": "Password",
+      "confirmPassword": "Confirm password",
+      "backToLogin": "Sign In here",
+      "terms": "I agree to privacy policy & terms",
+      "register": {
+        "title": "Create your LNG account",
+        "description": "Set up your secure operations workspace.",
+        "submit": "Create account"
+      },
+      "forgot-password": {
+        "title": "Forgot your password?",
+        "description": "Enter your email and we will send reset instructions.",
+        "submit": "Send reset link"
+      },
+      "reset-password": {
+        "title": "Set a new password",
+        "description": "Choose a strong password for your LNG account.",
+        "submit": "Update password"
+      }
     },
     "setup": {
       "eyebrow": "Account setup",

@@ -10,6 +10,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   MetricCard,
   SectionCard,
@@ -48,7 +49,7 @@ import styles from './VendorWorkspacePage.module.scss'
 import { VendorWorkspaceProductsTabPage } from './VendorWorkspaceProductsTabPage'
 import { VendorWorkspaceVendorsTabPage } from './VendorWorkspaceVendorsTabPage'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = DEFAULT_PAGE_SIZE
 const ALL_PRODUCTS_VENDOR_ID = '__all'
 
 type VendorManagementTab = 'vendors' | 'products' | 'migration'
