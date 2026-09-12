@@ -161,6 +161,7 @@ export function MediaWorkspacePage() {
       <PageHeader title={t('media.title')} description={t('media.description')} />
       <SectionCard>
         <CoreDataTable
+          fillViewport
           rowKey="id"
           columns={columns}
           dataSource={assets.data?.items ?? []}

@@ -32,9 +32,10 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
 
   const save = useMutation({
     mutationFn: (values: VendorInput) => {
-      if (!item) return createVendor(values)
-      const { code: _code, ...input } = values
+      if (!item) return createVendor({ ...values, providerKey: null })
+      const { code: _code, providerKey: _providerKey, ...input } = values
       void _code
+      void _providerKey
       return updateVendor(item.id, input)
     },
     onSuccess: (vendor) => {
@@ -45,16 +46,7 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
-  const close = () => {
-    if (!form.isFieldsTouched()) return onCancel()
-    Modal.confirm({
-      title: t('actionFeedback.unsaved'),
-      content: t('vendors.discardChanges'),
-      okText: t('vendors.discard', { defaultValue: 'Discard' }),
-      cancelText: t('vendors.cancel'),
-      onOk: onCancel,
-    })
-  }
+  const close = onCancel
 
   return (
     <Modal
@@ -92,10 +84,6 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
               value,
             }))}
           />
-        </Form.Item>
-
-        <Form.Item label={t('vendors.providerKey')} name="providerKey">
-          <Input placeholder="PRINTWAY" />
         </Form.Item>
 
         <Form.Item label={t('vendors.unitSurchargeAmount')} name="unitSurchargeAmount">

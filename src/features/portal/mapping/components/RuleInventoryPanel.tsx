@@ -1,6 +1,7 @@
-import { type ReactNode, useDeferredValue, useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, HistoryOutlined, PlusOutlined } from '@ant-design/icons'
+import type { TablePaginationConfig } from 'antd'
 import { Button, Flex, Select, Space, Switch, Tooltip, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -49,6 +50,7 @@ export function RuleInventoryPanel({
   loading,
   references,
   rules,
+  pagination,
   search,
   status,
   type,
@@ -64,6 +66,7 @@ export function RuleInventoryPanel({
   readonly loading?: boolean
   readonly references?: RuleReferenceLabels
   readonly rules: MappingRule[]
+  readonly pagination?: TablePaginationConfig
   readonly search: string
   readonly status?: 'ACTIVE' | 'INACTIVE'
   readonly type: MappingRuleType
@@ -77,22 +80,6 @@ export function RuleInventoryPanel({
   const { t } = useTranslation()
   const refs = references ?? emptyReferences
   const fallback = t('mapping.states.unavailable')
-  const deferredSearch = useDeferredValue(search)
-
-  const filtered = useMemo(() => {
-    const query = deferredSearch.trim().toLowerCase()
-    return rules.filter(
-      (rule) =>
-        (!status || rule.status === status) &&
-        (!query ||
-          ruleFields[type]
-            .map((field) => displayValue(rule, field, refs, fallback))
-            .join(' ')
-            .toLowerCase()
-            .includes(query)),
-    )
-  }, [fallback, refs, rules, deferredSearch, status, type])
-
   const columns = useMemo<ColumnsType<MappingRule>>(
     () => [
       // Priority column
@@ -186,7 +173,11 @@ export function RuleInventoryPanel({
   )
 
   return (
-    <Flex vertical gap={12} style={{ minHeight: 0 }}>
+    <Flex
+      vertical
+      gap={12}
+      style={{ display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr)', height: '100%', minHeight: 0 }}
+    >
       {/* Filter bar */}
       <Flex gap={10} wrap="wrap" align="center">
         {shopFilter ? <div style={{ flex: '0 0 200px' }}>{shopFilter}</div> : null}
@@ -220,13 +211,14 @@ export function RuleInventoryPanel({
 
       {/* Rule table */}
       <CoreDataTable
+        fillViewport
         rowKey="id"
         size="small"
         loading={loading}
         columns={columns}
-        dataSource={filtered}
+        dataSource={rules}
         emptyText={t('mapping.states.noRules')}
-        pagination={{ pageSize: 20, showSizeChanger: false }}
+        pagination={pagination ?? { pageSize: 20, showSizeChanger: false }}
         scroll={{ x: 960 }}
         rowClassName={(rule) => (rule.status === 'INACTIVE' ? 'opacity-50' : 'cursor-pointer')}
         onRow={(rule) => ({ onClick: () => onSelect(rule) })}

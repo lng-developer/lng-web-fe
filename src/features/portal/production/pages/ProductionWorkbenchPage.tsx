@@ -735,6 +735,7 @@ export function ProductionWorkbenchPage({
             onBulkAssign={handleBulkAssign}
           />
           <CoreDataTable
+            fillViewport
             className={styles.table}
             rowKey="id"
             columns={columns}

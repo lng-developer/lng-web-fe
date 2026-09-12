@@ -189,6 +189,7 @@ export const CustomizationReviewPage = () => {
           />
         </FilterBar>
         <CoreDataTable
+          fillViewport
           tableLayout="fixed"
           scroll={{ x: 1_040 }}
           rowKey="id"

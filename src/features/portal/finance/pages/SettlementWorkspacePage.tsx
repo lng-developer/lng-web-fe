@@ -188,6 +188,7 @@ export function SettlementWorkspacePage() {
           />
         </FilterBar>
         <CoreDataTable
+          fillViewport
           rowKey="id"
           columns={columns}
           dataSource={settlements.data?.items ?? []}

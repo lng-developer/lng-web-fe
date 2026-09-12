@@ -71,6 +71,26 @@ export type ShipmentStatusInput = {
   status: Extract<ShipmentStatus, 'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'>
   note?: string | null
 }
+export type TrackingSyncConfig = {
+  enabled: boolean
+  intervalMinutes: 5 | 15 | 30 | 60
+  batchSize: 10 | 25 | 50 | 100
+  lastRunAt: string | null
+  lastRunFinishedAt: string | null
+  lastRunSummary: {
+    checked: number
+    applied: number
+    skipped: number
+    failed: number
+  } | null
+  updatedAt: string | null
+}
+export type TrackingSyncRunResult = {
+  checked: number
+  applied: number
+  skipped: number
+  failed: number
+}
 
 const basePath = '/api/shipments'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -112,3 +132,10 @@ export const recheckSubmittedShipments = async (input: {
   shopId?: string
   limit?: number
 }) => unwrap<unknown>(await apiClient.post(`${basePath}/vendor-tracking/recheck-submitted`, input))
+export const getTrackingSyncConfig = async () =>
+  unwrap<TrackingSyncConfig>(await apiClient.get(`${basePath}/tracking-sync/config`))
+export const updateTrackingSyncConfig = async (
+  input: Pick<TrackingSyncConfig, 'enabled' | 'intervalMinutes' | 'batchSize'>,
+) => unwrap<TrackingSyncConfig>(await apiClient.patch(`${basePath}/tracking-sync/config`, input))
+export const runTrackingSyncNow = async () =>
+  unwrap<TrackingSyncRunResult>(await apiClient.post(`${basePath}/tracking-sync/run`))

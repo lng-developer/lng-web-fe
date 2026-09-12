@@ -178,6 +178,7 @@ export function VendorProductCostCentersPage() {
           />
         ) : null}
         <CoreDataTable
+          fillViewport
           rowKey="id"
           className={styles.dataTable}
           columns={columns}

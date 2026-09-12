@@ -106,17 +106,6 @@ describe('app navigation', () => {
     expect(getAvailableCores(account([])).map(({ key }) => key)).toEqual(['hr'])
   })
 
-  it('shows Vendor configuration only when the caller can read Vendors', () => {
-    expect(portalItems(['VENDORS:READ'])).toContainEqual({
-      key: 'vendors',
-      path: '/portal/vendors',
-      labelKey: 'shell.navigation.vendors',
-    })
-    expect(getContextNavigation('portal', account(['SHOPS:READ']))[0]?.items).not.toContainEqual(
-      expect.objectContaining({ key: 'vendors' }),
-    )
-  })
-
   it('does not expose global-only Vendor navigation from scoped permissions', () => {
     expect(portalItems([], ['VENDORS:READ'])).not.toContainEqual(
       expect.objectContaining({ key: 'vendors' }),
@@ -157,19 +146,6 @@ describe('app navigation', () => {
         expect.objectContaining({ key: 'customizations' }),
       ]),
     )
-  })
-
-  it('separates Shops and Vendors into their legacy menu sections', () => {
-    expect(
-      getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ'])).find(
-        ({ key }) => key === 'listing',
-      )?.items,
-    ).toEqual([{ key: 'shops', path: '/portal/shops', labelKey: 'shell.navigation.shops' }])
-    expect(
-      getContextNavigation('portal', account(['SHOPS:READ', 'VENDORS:READ'])).find(
-        ({ key }) => key === 'cost-centers',
-      )?.items,
-    ).toEqual([{ key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }])
   })
 
   it('groups Portal navigation by the operational workflow', () => {
@@ -216,7 +192,6 @@ describe('app navigation', () => {
     ])
     expect(groups.find(({ key }) => key === 'orders')?.items.map(({ key }) => key)).toEqual([
       'orders',
-      'mapping',
       'integrations',
     ])
     expect(groups.find(({ key }) => key === 'team-tasks')?.items.map(({ key }) => key)).toEqual([
@@ -225,9 +200,18 @@ describe('app navigation', () => {
       'vendor-submissions',
       'shipments',
     ])
-    expect(groups.find(({ key }) => key === 'cost-centers')?.items.map(({ key }) => key)).toEqual([
-      'vendors',
-      'finance',
+    expect(groups.find(({ key }) => key === 'cost-centers')?.items).toEqual([
+      {
+        key: 'product-types',
+        path: '/portal/catalog/product-types',
+        labelKey: 'shell.navigation.productTypes',
+      },
+      {
+        key: 'internal-templates',
+        path: '/portal/catalog/templates',
+        labelKey: 'shell.navigation.internalTemplates',
+      },
+      { key: 'mapping', path: '/portal/mapping', labelKey: 'shell.navigation.mapping' },
     ])
     expect(groups.find(({ key }) => key === 'reports')?.items.map(({ key }) => key)).toEqual([
       'reports',

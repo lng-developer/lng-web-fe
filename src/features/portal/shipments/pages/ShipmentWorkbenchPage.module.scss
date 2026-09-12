@@ -10,6 +10,19 @@
 .filters {
   width: 100%;
 }
+.trackingSync {
+  display: grid;
+  gap: 12px;
+}
+.trackingSyncMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.trackingSyncSelect {
+  width: 160px;
+}
 .searchControl {
   width: 280px;
 }
@@ -46,6 +59,9 @@
     width: 100%;
   }
   .dateControl {
+    width: 100%;
+  }
+  .trackingSyncSelect {
     width: 100%;
   }
 }

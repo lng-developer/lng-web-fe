@@ -63,8 +63,7 @@ describe('VendorProductCostCentersPage', () => {
     expect(editorTemplateSource).toContain('StatusTag')
   })
 
-  it('resolves unsaved-change feedback from the root i18n namespace', () => {
-    expect(editorTemplateSource).toContain("i18n.t('actionFeedback.unsaved')")
-    expect(editorTemplateSource).toContain("i18n.t('actionFeedback.failed')")
+  it('does not restore the removed unsaved-change confirmation', () => {
+    expect(editorTemplateSource).not.toContain("actionFeedback.unsaved")
   })
 })

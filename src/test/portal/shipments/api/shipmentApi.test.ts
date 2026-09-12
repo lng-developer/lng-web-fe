@@ -6,6 +6,7 @@ vi.mock('@/shared/api', () => ({
 
 import {
   getShipment,
+  getTrackingSyncConfig,
   listShipments,
   listWebhookLogs,
   recheckShipment,
@@ -14,6 +15,8 @@ import {
   summarizeShipments,
   updateShipmentStatus,
   updateShipmentTracking,
+  updateTrackingSyncConfig,
+  runTrackingSyncNow,
 } from '@/features/portal/shipments/api/shipmentApi'
 import { apiClient } from '@/shared/api'
 
@@ -54,6 +57,9 @@ describe('shipmentApi', () => {
     await updateShipmentStatus('shipment-1', { status: 'EXCEPTION', note: 'Delayed' })
     await recheckVendorTracking({ vendorSubmissionId: 'submission-1' })
     await recheckSubmittedShipments({ provider: 'MERCHIZE', limit: 50 })
+    await getTrackingSyncConfig()
+    await updateTrackingSyncConfig({ enabled: true, intervalMinutes: 15, batchSize: 50 })
+    await runTrackingSyncNow()
 
     expect(apiClient.patch).toHaveBeenCalledWith('/api/shipments/shipment-1/tracking', {
       carrier: 'USPS',
@@ -72,5 +78,12 @@ describe('shipmentApi', () => {
       '/api/shipments/vendor-tracking/recheck-submitted',
       { provider: 'MERCHIZE', limit: 50 },
     )
+    expect(apiClient.get).toHaveBeenCalledWith('/api/shipments/tracking-sync/config')
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/shipments/tracking-sync/config', {
+      enabled: true,
+      intervalMinutes: 15,
+      batchSize: 50,
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/api/shipments/tracking-sync/run')
   })
 })

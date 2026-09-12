@@ -119,7 +119,7 @@ export function LiveTracePanel({
         </StatusTag>
         {canWrite ? (
           <Space size={6}>
-            <Tooltip title="Re-run mapping and apply a confident vendor match.">
+            <Tooltip title={t('mapping.help.recheckAutoMatch')}>
               <Button
                 size="small"
                 type="primary"
@@ -127,7 +127,7 @@ export function LiveTracePanel({
                 loading={loading}
                 onClick={onRecheck}
               >
-                Recheck & auto-match
+                {t('mapping.actions.recheckAutoMatch')}
               </Button>
             </Tooltip>
           </Space>
@@ -287,7 +287,7 @@ export function LiveTracePanel({
 
         {trace.candidates.length === 0 ? (
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {t('mapping.states.noCandidates', { defaultValue: 'No vendor candidates found.' })}
+            {t('mapping.states.noCandidates')}
           </Typography.Text>
         ) : null}
       </div>

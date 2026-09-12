@@ -5,8 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import { listProductTypeGroups } from '@/features/portal/catalog/api/catalogApi'
 import {
+  createVendor,
   createVendorCostCenter,
   createVendorProduct,
+  listVendors,
   updateVendor,
 } from '@/features/portal/vendors/api/vendorApi'
 import { VendorCostCenterEditorModal } from '@/features/portal/vendors/pages/VendorCostCenterEditorModal'
@@ -20,6 +22,7 @@ vi.mock('@/features/portal/vendors/api/vendorApi', () => ({
   createVendor: vi.fn(),
   createVendorCostCenter: vi.fn(),
   createVendorProduct: vi.fn(),
+  listVendors: vi.fn(),
   updateVendor: vi.fn(),
   updateVendorCostCenter: vi.fn(),
   updateVendorProduct: vi.fn(),
@@ -129,7 +132,7 @@ describe('VendorEditorModal', () => {
             fulfillmentType: 'POD',
             id: 'vendor-1',
             name: 'Acme Print',
-            providerKey: null,
+            providerKey: 'PRINTWAY',
             status: 'ACTIVE',
           }}
           open
@@ -146,8 +149,51 @@ describe('VendorEditorModal', () => {
 
     await waitFor(() => expect(updateVendor).toHaveBeenCalledWith('vendor-1', expect.any(Object)))
     expect(vi.mocked(updateVendor).mock.calls[0][1]).not.toHaveProperty('code')
+    expect(vi.mocked(updateVendor).mock.calls[0][1]).not.toHaveProperty('providerKey')
     expect(onSaved).toHaveBeenCalled()
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['portal', 'vendors', 'list'] })
+  })
+
+  it('sends an unconfigured provider as null when creating a vendor', async () => {
+    vi.mocked(createVendor).mockResolvedValue({
+      code: 'TEST',
+      fulfillmentType: 'POD',
+      id: 'vendor-1',
+      name: 'Test',
+      providerKey: null,
+      status: 'ACTIVE',
+    })
+
+    render(
+      <AppProviders>
+        <VendorEditorModal open onCancel={vi.fn()} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Test' } })
+    fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'TEST' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(createVendor).toHaveBeenCalledWith(
+        expect.objectContaining({ providerKey: null }),
+      ),
+    )
+  })
+
+  it('closes a dirty Vendor form without a discard confirmation', async () => {
+    const onCancel = vi.fn()
+    render(
+      <AppProviders>
+        <VendorEditorModal open onCancel={onCancel} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Unsaved vendor' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(onCancel).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
   })
 
   it('submits every supported Product group with minor-unit money unchanged', async () => {
@@ -184,6 +230,49 @@ describe('VendorEditorModal', () => {
       maxProductionDays: 5,
       minProductionDays: 2,
     })
+  })
+
+  it('selects a Vendor while keeping the Product Type preset', async () => {
+    vi.mocked(listVendors).mockResolvedValue({
+      items: [
+        {
+          code: 'ACME',
+          fulfillmentType: 'POD',
+          id: 'vendor-1',
+          name: 'Acme Print',
+          providerKey: null,
+          status: 'ACTIVE',
+        },
+      ],
+      pagination: { total: 1 },
+    } as never)
+
+    render(
+      <AppProviders>
+        <VendorProductEditorModal
+          {...{ initialProductTypeGroupId: productTypeGroupId }}
+          open
+          onCancel={vi.fn()}
+          onSaved={vi.fn()}
+        />
+      </AppProviders>,
+    )
+
+    expect(screen.getByLabelText('Product type group')).toBeDisabled()
+    fireEvent.mouseDown(screen.getByLabelText('Vendor'))
+    fireEvent.click(await screen.findByText('ACME — Acme Print'))
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Acrylic clip' } })
+    fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'ACRYLIC-CLIP' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(createVendorProduct).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productTypeGroupId,
+          vendorId: 'vendor-1',
+        }),
+      ),
+    )
   })
 
   it('blocks invalid Product IDs and production ranges', async () => {
@@ -228,7 +317,7 @@ describe('VendorEditorModal', () => {
     expect(screen.getByLabelText('Code')).toHaveValue('TEE')
   })
 
-  it('does not discard a dirty Product form when confirmation is declined', async () => {
+  it('closes a dirty Product form without a discard confirmation', async () => {
     const onCancel = vi.fn()
     render(
       <AppProviders>
@@ -243,8 +332,8 @@ describe('VendorEditorModal', () => {
       }),
     )
 
-    expect(onCancel).not.toHaveBeenCalled()
-    expect(await screen.findByText('Discard unsaved changes?')).toBeInTheDocument()
+    expect(onCancel).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
   })
 
   it('submits Cost Center money as integer minor units and refreshes child rows and parent counts', async () => {
@@ -355,7 +444,7 @@ describe('VendorEditorModal', () => {
     expect(screen.getByLabelText('Code')).toHaveValue('TEE-XL')
   })
 
-  it('keeps a dirty Cost Center modal open when discard is declined', async () => {
+  it('closes a dirty Cost Center modal without a discard confirmation', async () => {
     const onCancel = vi.fn()
     render(
       <AppProviders>
@@ -374,7 +463,7 @@ describe('VendorEditorModal', () => {
         name: 'Cancel',
       }),
     )
-    expect(onCancel).not.toHaveBeenCalled()
-    expect((await screen.findAllByText('Discard unsaved changes?')).length).toBeGreaterThan(0)
+    expect(onCancel).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
   })
 })

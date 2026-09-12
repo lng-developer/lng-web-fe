@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/preserve-manual-memoization -- stable permission callbacks are intentionally wrapped for memoized table columns */
 import { type Key, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData } from 'react-router-dom'
+import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
   AppstoreOutlined,
   CheckCircleOutlined,
@@ -146,13 +146,14 @@ export function DesignWorkbenchPage() {
   )
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const taskType = TYPES.find((value) => value === searchParams.get('taskType'))
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   // Defer search to avoid network request on every keystroke
   const deferredSearch = useDeferredValue(search)
   const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()
   const [status, setStatus] = useState<DesignTaskStatus>()
-  const [taskType, setTaskType] = useState<DesignTaskType>()
   const [selectedId, setSelectedId] = useState<string>()
   const [activeTask, setActiveTask] = useState<DesignTask>()
   const [assignOpen, setAssignOpen] = useState(false)
@@ -272,9 +273,12 @@ export function DesignWorkbenchPage() {
     setPage(1)
   }, [])
   const handleTaskTypeChange = useCallback((value?: DesignTaskType) => {
-    setTaskType(value)
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (value) nextSearchParams.set('taskType', value)
+    else nextSearchParams.delete('taskType')
+    setSearchParams(nextSearchParams, { replace: true })
     setPage(1)
-  }, [])
+  }, [searchParams, setSearchParams])
   const handleSalesChannelChange = useCallback((value: string | number) => {
     setSalesChannelCode(value === 'ALL' ? undefined : (value as 'AMAZON' | 'ETSY'))
     setSelectedRowKeys([])
@@ -878,6 +882,7 @@ export function DesignWorkbenchPage() {
         </div>
 
         <CoreDataTable
+          fillViewport
           className={styles.taskTable}
           columns={taskColumns}
           dataSource={displayedTasks?.items ?? []}

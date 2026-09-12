@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Form, Input, Modal, Select, Space, Switch, Tabs, Tooltip, Typography } from 'antd'
+import { Button, Flex, Form, Input, Modal, Select, Switch, Tabs, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
@@ -21,7 +21,13 @@ import { useInternalTemplatesQuery } from '../hooks'
 
 const PAGE_SIZE = 20
 
-export function InternalTemplateManagementPage({ canManage }: { readonly canManage: boolean }) {
+export function InternalTemplateManagementPage({
+  canManage,
+  showHeader = true,
+}: {
+  readonly canManage: boolean
+  readonly showHeader?: boolean
+}) {
   const { t } = useTranslation()
   const toast = useFeedbackToast()
   const [form] = Form.useForm<InternalTemplateInput & { code?: string }>()
@@ -29,6 +35,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<InternalTemplate | null>()
+  const [templateDetailLoading, setTemplateDetailLoading] = useState(false)
 
   const {
     templates,
@@ -52,6 +59,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
     async (item: InternalTemplate | null) => {
       setEditing(item)
       if (!item) {
+        setTemplateDetailLoading(false)
         form.setFieldsValue({
           code: '',
           name: '',
@@ -65,6 +73,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         })
         return
       }
+      setTemplateDetailLoading(true)
       try {
         const detail = await getInternalTemplate(item.id)
         form.setFieldsValue({
@@ -80,6 +89,9 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         })
       } catch {
         toast('error', t('portal.catalog.master.templateEditor.saveFailed'))
+        setEditing(undefined)
+      } finally {
+        setTemplateDetailLoading(false)
       }
     },
     [form, t, toast],
@@ -88,7 +100,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
     () => [
       {
         title: t('portal.catalog.master.templateEditor.columns.template'),
-        width: 220,
         render: (_, row) => (
           <div>
             <Typography.Text strong ellipsis>
@@ -103,31 +114,26 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.productType'),
-        width: 160,
         ellipsis: true,
         render: (_, row) => row.productTypeGroup?.name ?? '-',
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.fields'),
         dataIndex: 'requiredFieldsCount',
-        width: 80,
         align: 'right',
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.slots'),
         dataIndex: 'artworkSlotsCount',
-        width: 80,
         align: 'right',
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.assets'),
         dataIndex: 'designAssetsCount',
-        width: 80,
         align: 'right',
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.psd'),
-        width: 90,
         align: 'center',
         render: (_, row) =>
           t(
@@ -139,7 +145,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       {
         title: t('portal.catalog.master.status'),
         dataIndex: 'status',
-        width: 110,
         align: 'center',
         render: (value) => (
           <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
@@ -152,8 +157,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
             {
               key: 'actions',
               title: t('portal.catalog.actions'),
-              width: 76,
-              fixed: 'right' as const,
               render: (_: unknown, row: InternalTemplate) => (
                 <Tooltip title={t('portal.catalog.master.editTemplate')}>
                   <Button
@@ -176,15 +179,42 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
 
   return (
     <section>
-      <PageHeader
-        title={t('portal.catalog.master.templates')}
-        description={t('portal.catalog.master.templateDescription')}
-      />
+      {showHeader ? (
+        <PageHeader
+          title={t('portal.catalog.master.templates')}
+          description={t('portal.catalog.master.templateDescription')}
+        />
+      ) : null}
+      <Flex
+        align="center"
+        justify="space-between"
+        gap={12}
+        wrap
+        style={{ marginBottom: 16, width: '100%' }}
+      >
+        <Input.Search
+          allowClear
+          placeholder={t('portal.catalog.master.searchTemplates')}
+          style={{ maxWidth: '100%', width: 320 }}
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value)
+            setPage(1)
+          }}
+          onSearch={() => setPage(1)}
+        />
+        {canManage ? (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => void open(null)}>
+            {t('portal.catalog.master.createTemplate')}
+          </Button>
+        ) : null}
+      </Flex>
       <SectionCard>
         <CoreDataTable
+          fillViewport
           rowKey="id"
-          tableLayout="fixed"
-          scroll={{ x: 900 }}
+          tableLayout="auto"
+          scroll={{ x: 'max-content' }}
           columns={columns}
           dataSource={templates.data?.items ?? []}
           loading={templates.isLoading}
@@ -200,25 +230,6 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
               setPageSize(nextPageSize)
             },
           }}
-          toolbar={
-            <Space wrap>
-              <Input.Search
-                allowClear
-                placeholder={t('portal.catalog.master.searchTemplates')}
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value)
-                  setPage(1)
-                }}
-                onSearch={() => setPage(1)}
-              />
-              {canManage ? (
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => void open(null)}>
-                  {t('portal.catalog.master.createTemplate')}
-                </Button>
-              ) : null}
-            </Space>
-          }
         />
       </SectionCard>
       <Modal
@@ -228,14 +239,19 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
           editing ? 'portal.catalog.master.editTemplate' : 'portal.catalog.master.createTemplate',
         )}
         okText={t('portal.catalog.master.saveTemplate')}
+        okButtonProps={{ disabled: templateDetailLoading }}
         confirmLoading={save.isPending}
-        onCancel={() => setEditing(undefined)}
-        onOk={() => form.submit()}
+        onCancel={() => {
+          setEditing(undefined)
+          setTemplateDetailLoading(false)
+        }}
+        onOk={() => !templateDetailLoading && form.submit()}
         destroyOnHidden
         styles={{ body: { maxHeight: 'calc(100dvh - 220px)', overflowY: 'auto' } }}
       >
         <Form
           form={form}
+          disabled={templateDetailLoading}
           layout="vertical"
           onFinish={(values) => save.mutate({ input: values, editing })}
         >

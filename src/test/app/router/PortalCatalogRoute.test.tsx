@@ -28,4 +28,13 @@ describe('Portal Catalog route', () => {
     render(<loaded.Component />)
     expect(screen.getByText('403')).toBeVisible()
   })
+
+  it('exposes Product Type and Internal Template as deep links', () => {
+    const workspace = appRoutes.find((route) => route.id === 'workspace')
+    const paths = workspace?.children?.map(({ path }) => path)
+
+    expect(paths).toContain('portal/catalog/listings')
+    expect(paths).toContain('portal/catalog/product-types')
+    expect(paths).toContain('portal/catalog/templates')
+  })
 })

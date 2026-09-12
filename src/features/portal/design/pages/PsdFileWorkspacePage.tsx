@@ -213,6 +213,7 @@ export function PsdFileWorkspacePage() {
       />
       <SectionCard>
         <CoreDataTable
+          fillViewport
           tableLayout="fixed"
           scroll={{ x: 980 }}
           rowKey="rowKey"

@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const routeState = vi.hoisted(() => ({ search: '' }))
+
 vi.mock('@/app/common/CoreDataTable', async () => ({
   CoreDataTable: (await import('@/test/mocks/CoreDataTable')).CoreDataTable,
 }))
@@ -28,6 +30,7 @@ vi.mock('@/shared/media', () => ({
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
+  useSearchParams: () => [new URLSearchParams(routeState.search), vi.fn()],
   useRouteLoaderData: () => ({
     account: { id: '6a339b5a033e2ff7753522c3' },
     permissions: ['DESIGN:WRITE', 'DESIGN:WORK'],
@@ -96,6 +99,7 @@ describe('DesignWorkbenchPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     queryClient.clear()
+    routeState.search = ''
     i18n.changeLanguage('en')
     vi.mocked(listDesignTasks).mockResolvedValue({
       items: [
@@ -205,6 +209,21 @@ describe('DesignWorkbenchPage', () => {
       </AppProviders>,
     )
     expect(await screen.findByText('Create design task')).toBeInTheDocument()
+  }, 15_000)
+
+  it('filters the Design Workbench from a task-type URL parameter', async () => {
+    routeState.search = 'taskType=PNG_ASSET'
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
+
+    await waitFor(() =>
+      expect(listDesignTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ taskType: 'PNG_ASSET' }),
+      ),
+    )
   }, 15_000)
 
   it('uploads references before creating a design task', async () => {

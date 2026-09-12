@@ -30,6 +30,7 @@ import {
 } from '@/shared/ui'
 
 import type { Shipment, ShipmentParams, ShipmentStatus } from '../api/shipmentApi'
+import { TrackingSyncCard } from '../components/TrackingSyncCard'
 import {
   useBatchRecheckShipmentsMutation,
   useExportShipmentsCsvMutation,
@@ -38,8 +39,11 @@ import {
   useShipmentLogsQuery,
   useShipmentsQuery,
   useShipmentSummaryQuery,
+  useTrackingSyncConfigQuery,
+  useUpdateTrackingSyncConfigMutation,
   useUpdateShipmentStatusMutation,
   useUpdateShipmentTrackingMutation,
+  useRunTrackingSyncNowMutation,
 } from '../hooks'
 import styles from './ShipmentWorkbenchPage.module.scss'
 
@@ -119,6 +123,7 @@ export function ShipmentWorkbenchPage({
   const summary = useShipmentSummaryQuery(filters)
   const detail = useShipmentDetailQuery(selectedId)
   const logs = useShipmentLogsQuery(detail.data?.vendorSubmissionId)
+  const trackingSyncConfig = useTrackingSyncConfigQuery({ enabled: canWrite })
 
   const recheck = useRecheckShipmentMutation({
     onSuccess: () => {
@@ -159,6 +164,14 @@ export function ShipmentWorkbenchPage({
   })
 
   const exportCsv = useExportShipmentsCsvMutation()
+  const updateTrackingSyncConfig = useUpdateTrackingSyncConfigMutation({
+    onSuccess: () => toast('success', t('portal.shipments.trackingSync.saved')),
+    onError: (error) => toast('error', error instanceof Error ? error.message : t('portal.shipments.trackingSync.saveFailed')),
+  })
+  const runTrackingSyncNow = useRunTrackingSyncNowMutation({
+    onSuccess: () => toast('success', t('portal.shipments.trackingSync.runComplete')),
+    onError: (error) => toast('error', error instanceof Error ? error.message : t('portal.shipments.trackingSync.runFailed')),
+  })
 
   const handleRecheckRow = useCallback(
     (event: React.MouseEvent, rowId: string) => {
@@ -299,8 +312,19 @@ export function ShipmentWorkbenchPage({
           />
         ))}
       </div>
+      {canWrite ? (
+        <TrackingSyncCard
+          config={trackingSyncConfig.data}
+          loading={trackingSyncConfig.isLoading}
+          saving={updateTrackingSyncConfig.isPending}
+          running={runTrackingSyncNow.isPending}
+          onChange={(input) => updateTrackingSyncConfig.mutate(input)}
+          onRunNow={() => runTrackingSyncNow.mutate()}
+        />
+      ) : null}
       <SectionCard>
         <CoreDataTable
+          fillViewport
           tableLayout="fixed"
           rowKey="id"
           columns={columns}

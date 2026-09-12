@@ -10,7 +10,6 @@ import {
   Image,
   Input,
   InputNumber,
-  Modal,
   Select,
   Switch,
   Tabs,
@@ -21,6 +20,7 @@ import { FormActions, useFeedbackToast } from '@/shared/ui'
 import { listProductTypeGroups } from '../../catalog/api/catalogApi'
 import {
   createVendorProduct,
+  listVendors,
   updateVendorProduct,
   type VendorProduct,
   type VendorProductInput,
@@ -33,14 +33,16 @@ type EditorValues = VendorProductInput & { metadataText?: string }
 
 export interface VendorProductEditorModalProps {
   readonly item?: VendorProduct
+  readonly initialProductTypeGroupId?: string
   readonly open: boolean
-  readonly vendorId: string
+  readonly vendorId?: string
   readonly onCancel: () => void
   readonly onSaved: (product: VendorProduct) => void
 }
 
 export function VendorProductEditorModal({
   item,
+  initialProductTypeGroupId,
   open,
   vendorId,
   onCancel,
@@ -55,6 +57,11 @@ export function VendorProductEditorModal({
     queryFn: () => listProductTypeGroups({ page: 1, limit: 100, status: 'ACTIVE' }),
     enabled: open,
   })
+  const vendors = useQuery({
+    queryKey: ['portal', 'vendors', 'vendor-product-editor'],
+    queryFn: () => listVendors({ page: 1, limit: 100, status: 'ACTIVE' }),
+    enabled: open && !vendorId,
+  })
 
   useEffect(() => {
     if (!open) return
@@ -64,22 +71,24 @@ export function VendorProductEditorModal({
             ...item,
             metadataText: JSON.stringify(item.metadata ?? {}, null, 2),
             productTypeGroupId: item.productTypeGroup?.id ?? '',
-            vendorId,
+            vendorId: vendorId ?? item.vendor?.id ?? '',
           }
-        : { status: 'ACTIVE', vendorId },
-    )
-  }, [form, item, open, vendorId])
+        : { status: 'ACTIVE', vendorId: vendorId ?? '', productTypeGroupId: initialProductTypeGroupId },
+      )
+  }, [form, initialProductTypeGroupId, item, open, vendorId])
 
   const save = useMutation({
     mutationFn: (values: EditorValues) => {
-      const { code, metadataText, vendorId: ignoredVendorId, ...rest } = values
+      const { code, metadataText, vendorId: selectedVendorId, ...rest } = values
       const input = { ...rest, metadata: parseJsonObject(metadataText) }
-      if (!item) return createVendorProduct({ ...input, code, vendorId })
-      void ignoredVendorId
+      if (!item) return createVendorProduct({ ...input, code, vendorId: selectedVendorId })
       return updateVendorProduct(item.id, input)
     },
     onSuccess: (product) => {
-      void queryClient.invalidateQueries({ queryKey: vendorKeys.productsRoot(vendorId) })
+      const savedVendorId = product.vendor?.id ?? vendorId
+      if (savedVendorId) {
+        void queryClient.invalidateQueries({ queryKey: vendorKeys.productsRoot(savedVendorId) })
+      }
       showFeedbackToast('success', t('actionFeedback.saved'))
       onSaved(product)
     },
@@ -98,16 +107,7 @@ export function VendorProductEditorModal({
     },
   })
 
-  const close = () => {
-    if (!form.isFieldsTouched()) return onCancel()
-    Modal.confirm({
-      title: t('actionFeedback.unsaved'),
-      content: t('vendors.discardChanges'),
-      okText: t('vendors.discard', { defaultValue: 'Discard' }),
-      cancelText: t('vendors.cancel'),
-      onOk: onCancel,
-    })
-  }
+  const close = onCancel
 
   const maxDays = Form.useWatch('maxProductionDays', form)
   const minDays = Form.useWatch('minProductionDays', form)
@@ -128,6 +128,23 @@ export function VendorProductEditorModal({
         <Flex flex={1} vertical gap={16}>
           <Card className={styles.editorCard} size="small" title="Basic Info">
             <div className={styles.formGrid}>
+              {!vendorId ? (
+                <Form.Item
+                  label={t('vendors.vendor')}
+                  name="vendorId"
+                  rules={[{ required: true }]}
+                >
+                  <Select
+                    showSearch
+                    loading={vendors.isLoading}
+                    optionFilterProp="label"
+                    options={(vendors.data?.items ?? []).map((vendor) => ({
+                      value: vendor.id,
+                      label: `${vendor.code} — ${vendor.name}`,
+                    }))}
+                  />
+                </Form.Item>
+              ) : null}
               <Form.Item
                 label={t('vendors.name')}
                 name="name"
@@ -155,6 +172,7 @@ export function VendorProductEditorModal({
                 rules={[{ required: true }]}
               >
                 <Select
+                  disabled={Boolean(initialProductTypeGroupId)}
                   showSearch
                   loading={productTypeGroups.isLoading}
                   optionFilterProp="label"

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -29,6 +29,9 @@ import {
   type MappingRulePageKey,
   safeMappingReturnTo,
 } from '../model/mappingPageConfig'
+import styles from './MappingWorkspacePage.module.scss'
+
+const RULE_PAGE_SIZE = 20
 
 export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePageKey }) {
   const { t } = useTranslation()
@@ -55,12 +58,18 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
   const [shopId, setShopId] = useState<string>()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>()
+  const [rulePage, setRulePage] = useState(1)
+  const [rulePageSize, setRulePageSize] = useState(RULE_PAGE_SIZE)
   const [selectedRule, setSelectedRule] = useState<MappingRule>()
   const [creating, setCreating] = useState(Boolean(orderItemId))
   const [historyRule, setHistoryRule] = useState<MappingRule>()
   const editorOpen = creating || Boolean(selectedRule)
 
-  const ruleParams = useMemo(() => ({ shopId, page: 1, limit: 100 }), [shopId])
+  const deferredSearch = useDeferredValue(search)
+  const ruleParams = useMemo(
+    () => ({ shopId, q: deferredSearch, status, page: rulePage, limit: rulePageSize }),
+    [deferredSearch, rulePage, rulePageSize, shopId, status],
+  )
   const rules = useMappingRulesQuery(page.ruleType, ruleParams)
   const shops = useAuthorableShopsQuery({ enabled: canWrite })
   const catalogOptions = useQuery({
@@ -201,12 +210,13 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
   )
 
   return (
-    <Flex vertical gap={16} style={{ minHeight: 0 }}>
+    <Flex vertical gap={16} className={styles.rulePage}>
       {rules.error || originPreview.error ? (
         <FeedbackAlert type="error" title={t('mapping.feedback.loadFailed')} />
       ) : null}
       <Card
         size="small"
+        className={styles.ruleCard}
         title={
           <Space size={8}>
             <span>{t('mapping.sections.rules')}</span>
@@ -231,20 +241,38 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
               loading={shops.isLoading}
               value={shopId}
               options={shopOptions}
-              onChange={setShopId}
+              onChange={(value) => {
+                setRulePage(1)
+                setShopId(value)
+              }}
             />
           }
           loading={rules.isLoading}
           references={referenceLabels}
           rules={rules.data?.items ?? []}
+          pagination={{
+            current: rulePage,
+            pageSize: rulePageSize,
+            total: rules.data?.pagination.total ?? 0,
+            onChange: (nextPage, nextPageSize) => {
+              setRulePage(nextPage)
+              setRulePageSize(nextPageSize)
+            },
+          }}
           search={search}
           status={status}
           type={page.ruleType}
           onCreate={handleCreateRule}
           onHistory={setHistoryRule}
-          onSearchChange={setSearch}
+          onSearchChange={(value) => {
+            setRulePage(1)
+            setSearch(value)
+          }}
           onSelect={handleSelectRule}
-          onStatusChange={setStatus}
+          onStatusChange={(value) => {
+            setRulePage(1)
+            setStatus(value)
+          }}
           onToggleStatus={toggleRuleStatus}
         />
       </Card>

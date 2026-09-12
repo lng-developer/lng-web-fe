@@ -57,6 +57,9 @@ const fields: Record<MappingRuleType, Field[]> = {
   skuConfig: [
     { name: 'configCode', required: true },
     { name: 'productTypeGroupId', required: true },
+    { name: 'internalTemplateId' },
+    { name: 'platformProductType' },
+    { name: 'productTypeAliases', kind: 'tags' },
   ],
   semanticRules: [
     {

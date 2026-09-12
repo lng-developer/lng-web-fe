@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   exportShipmentsCsv,
   getShipment,
+  getTrackingSyncConfig,
   listShipments,
   listWebhookLogs,
   recheckShipment,
@@ -14,6 +15,9 @@ import {
   summarizeShipments,
   updateShipmentStatus,
   updateShipmentTracking,
+  updateTrackingSyncConfig,
+  runTrackingSyncNow,
+  type TrackingSyncConfig,
 } from '../api/shipmentApi'
 import { shipmentKeys } from '../api/shipmentKeys'
 
@@ -46,6 +50,48 @@ export function useShipmentSummaryQuery(
     refetchOnWindowFocus: false,
     retry: false,
     enabled: options?.enabled ?? true,
+  })
+}
+
+export function useTrackingSyncConfigQuery(options?: { readonly enabled?: boolean }) {
+  return useQuery({
+    queryKey: shipmentKeys.trackingSyncConfig(),
+    queryFn: getTrackingSyncConfig,
+    enabled: options?.enabled ?? true,
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+}
+
+export function useUpdateTrackingSyncConfigMutation(options?: {
+  readonly onSuccess?: () => void | Promise<void>
+  readonly onError?: (error: unknown) => void
+}) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: Pick<TrackingSyncConfig, 'enabled' | 'intervalMinutes' | 'batchSize'>) =>
+      updateTrackingSyncConfig(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: shipmentKeys.trackingSyncConfig() })
+      await options?.onSuccess?.()
+    },
+    onError: options?.onError,
+  })
+}
+
+export function useRunTrackingSyncNowMutation(options?: {
+  readonly onSuccess?: () => void | Promise<void>
+  readonly onError?: (error: unknown) => void
+}) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: runTrackingSyncNow,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: shipmentKeys.all })
+      await options?.onSuccess?.()
+    },
+    onError: options?.onError,
   })
 }
 

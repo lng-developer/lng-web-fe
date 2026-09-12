@@ -82,7 +82,8 @@ export function CreateDesignTaskModal({
       title={t('portal.design.createDesignTask')}
       okText={t('portal.design.create')}
       confirmLoading={saving}
-      width="min(760px, calc(100vw - 32px))"
+      width="min(640px, calc(100vw - 32px))"
+      styles={{ body: { maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' } }}
       afterClose={() => {
         form.resetFields()
         setReferenceFiles([])
@@ -159,7 +160,7 @@ export function CreateDesignTaskModal({
               label={t('portal.design.brief')}
               rules={[{ required: taskType === 'IDEA', message: t('portal.design.briefRequired') }]}
             >
-              <Input.TextArea rows={3} />
+              <Input.TextArea rows={2} />
             </Form.Item>
           </FormSectionFull>
           {taskType === 'CLONE' ? (

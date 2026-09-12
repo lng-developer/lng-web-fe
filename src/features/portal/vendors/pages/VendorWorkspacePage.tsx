@@ -13,8 +13,6 @@ import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   MetricCard,
   SectionCard,
-  UiTabLabel,
-  UiTabs,
   useDebouncedValue,
   useFeedbackToast,
 } from '@/shared/ui'
@@ -51,17 +49,19 @@ import { VendorWorkspaceVendorsTabPage } from './VendorWorkspaceVendorsTabPage'
 const PAGE_SIZE = 20
 const ALL_PRODUCTS_VENDOR_ID = '__all'
 
-type VendorManagementTab = 'vendors' | 'products' | 'migration'
+type VendorManagementTab = 'vendors' | 'products' | 'integrations' | 'migration'
 
 export const VendorWorkspacePage = () => {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const canWrite = hasAnyPermission(['VENDORS:WRITE'], { globalOnly: true })
   const canCreateProductType = hasAnyPermission(['CATALOG:WRITE'], { globalOnly: true })
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const tab: VendorManagementTab =
-    tabParam === 'products' || tabParam === 'migration' ? tabParam : 'vendors'
+    tabParam === 'products' || tabParam === 'integrations' || tabParam === 'migration'
+      ? tabParam
+      : 'vendors'
   const [editor, setEditor] = useState<
     | { kind: 'vendor'; item?: Vendor }
     | { kind: 'product'; item?: VendorProduct; vendorId: string }
@@ -233,40 +233,11 @@ export const VendorWorkspacePage = () => {
         />
       </div>
 
-      <UiTabs
-        activeKey={tab}
-        onChange={(value) => {
-          const nextTab = value as VendorManagementTab
-          setSearchParams(nextTab === 'vendors' ? {} : { tab: nextTab })
-        }}
-        items={[
-          {
-            key: 'vendors',
-            label: (
-              <UiTabLabel count={vendors.data?.pagination.total}>
-                {t('portal.vendors.tabs.vendors')}
-              </UiTabLabel>
-            ),
-          },
-          {
-            key: 'products',
-            label: (
-              <UiTabLabel count={products.data?.pagination.total}>
-                {t('portal.vendors.tabs.products')}
-              </UiTabLabel>
-            ),
-          },
-          {
-            key: 'migration',
-            label: <UiTabLabel>{t('portal.vendors.tabs.migration')}</UiTabLabel>,
-          },
-        ]}
-      />
-
       <SectionCard>
-        {tab === 'vendors' ? (
+        {tab === 'vendors' || tab === 'integrations' ? (
           <VendorWorkspaceVendorsTabPage
             canWrite={canWrite}
+            integrationOnly={tab === 'integrations'}
             searchVendors={searchVendors}
             vendorStatus={vendorStatus}
             vendorsPage={vendorsPage}
@@ -288,7 +259,6 @@ export const VendorWorkspacePage = () => {
               setVendorsPageSize(pageSize)
             }}
             onAddVendor={() => setEditor({ kind: 'vendor' })}
-            onAddProduct={(vendorId) => setEditor({ kind: 'product', vendorId })}
             onEditVendor={(vendor) => setEditor({ kind: 'vendor', item: vendor })}
             onOpenIntegration={(vendor) => setEditor({ kind: 'integration', vendor })}
           />

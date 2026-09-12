@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CarOutlined,
@@ -19,7 +19,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Select,
   Space,
   Switch,
@@ -122,16 +121,7 @@ export function VendorCostCenterEditorModal({
     },
   })
 
-  const close = useCallback(() => {
-    if (!form.isFieldsTouched()) return onCancel()
-    Modal.confirm({
-      title: i18n.t('actionFeedback.unsaved'),
-      content: t('vendors.discardChanges'),
-      okText: t('vendors.discard', { defaultValue: 'Discard' }),
-      cancelText: t('vendors.cancel'),
-      onOk: onCancel,
-    })
-  }, [form, i18n, onCancel, t])
+  const close = onCancel
 
   const numberRule = useMemo(() => ({ type: 'number' as const, min: 0 }), [])
 

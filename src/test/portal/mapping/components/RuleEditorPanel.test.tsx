@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RuleEditorPanel } from '@/features/portal/mapping/components/RuleEditorPanel'
@@ -228,8 +228,9 @@ describe('RuleEditorPanel', () => {
     )
   })
 
-  it('keeps product mapping create and update forms to their required fields', () => {
-    render(
+  it('exposes supported product matching and template fields', () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const { container } = render(
       <RuleEditorPanel
         canWrite
         type="skuConfig"
@@ -238,25 +239,35 @@ describe('RuleEditorPanel', () => {
           configCode: 'TS1S',
           productTypeGroupId: 'group-1',
           platformProductType: 'Unisex T-Shirt',
+          productTypeAliases: ['T shirt'],
           countryCode: 'US',
           priority: 10,
           status: 'INACTIVE',
         }}
         productTypeGroups={[{ id: 'group-1', name: 'T-shirt', code: 'TS' }]}
+        internalTemplates={[{ id: 'template-1', name: 'T-shirt Default', code: 'TS_DEFAULT' }]}
         onDirtyChange={vi.fn()}
-        onPreview={vi.fn()}
-        onConflicts={vi.fn()}
-        onSave={vi.fn()}
+        onPreview={vi.fn().mockResolvedValue({ items: [] })}
+        onConflicts={vi.fn().mockResolvedValue({ conflicts: [] })}
+        onSave={onSave}
       />,
     )
 
-    expect(screen.getByLabelText('Config code')).toBeInTheDocument()
-    expect(screen.getByLabelText('Product group')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Platform product type')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Country code')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Internal template')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Priority')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Status')).not.toBeInTheDocument()
+    expect(within(container).getByLabelText('Config code')).toBeInTheDocument()
+    expect(within(container).getByLabelText('Product group')).toBeInTheDocument()
+    expect(within(container).getByLabelText('Internal template')).toBeInTheDocument()
+    expect(within(container).queryByLabelText('Country code')).not.toBeInTheDocument()
+    expect(within(container).queryByLabelText('Priority')).not.toBeInTheDocument()
+    expect(within(container).queryByLabelText('Status')).not.toBeInTheDocument()
+    fireEvent.click(within(container).getByRole('button', { name: 'Save rule' }))
+    return waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          platformProductType: 'Unisex T-Shirt',
+          productTypeAliases: ['T shirt'],
+        }),
+      ),
+    )
   })
 
   it('keeps vendor routing conditions collapsed until needed', () => {
