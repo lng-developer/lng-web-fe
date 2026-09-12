@@ -44,7 +44,14 @@ const fieldsByAuthType = {
   ACCESS_REFRESH: ['accessToken', 'refreshToken'],
   LOGIN_PASSWORD: ['username', 'password'],
 } as const
-const secretFields = ['accessToken', 'refreshToken', 'username', 'password', 'apiKey', 'apiSecret'] as const
+const secretFields = [
+  'accessToken',
+  'refreshToken',
+  'username',
+  'password',
+  'apiKey',
+  'apiSecret',
+] as const
 const providerOptions = [
   'BEEFUL',
   'GRABINK',
@@ -104,8 +111,8 @@ export function VendorIntegrationModal({
   useEffect(() => {
     if (config.data) {
       const { authType, baseUrl, expiresAt, status } = config.data
-      const integrationMode = config.data.mode
-        ?? (config.data.providerKey === 'CUSTOM' ? 'GENERIC_API' : 'NATIVE')
+      const integrationMode =
+        config.data.mode ?? (config.data.providerKey === 'CUSTOM' ? 'GENERIC_API' : 'NATIVE')
       const providerKey = config.data.adapterKey ?? config.data.providerKey
       form.setFieldsValue({
         authType: authType ?? undefined,
@@ -126,15 +133,14 @@ export function VendorIntegrationModal({
   const authType = Form.useWatch('authType', form) as VendorIntegrationAuthType | undefined
   const selectedProviderKey = Form.useWatch('providerKey', form)
   const resolvedAuthType = authType ?? config.data?.authType
-  const isMerchfox = resolvedMode === 'NATIVE'
-    && (selectedProviderKey || config.data?.adapterKey || config.data?.providerKey) === 'MERCHFOX'
+  const isMerchfox =
+    resolvedMode === 'NATIVE' &&
+    (selectedProviderKey || config.data?.adapterKey || config.data?.providerKey) === 'MERCHFOX'
 
   const save = useMutation<VendorIntegrationSaveResult, Error, VendorIntegrationFormValues>({
     mutationFn: (values: VendorIntegrationFormValues) => {
       if (values.mode === 'MANUAL') {
-        return config.data
-          ? deleteVendorIntegrationConfig(vendorId)
-          : Promise.resolve(null)
+        return config.data ? deleteVendorIntegrationConfig(vendorId) : Promise.resolve(null)
       }
       const { mode: _mode, ...connectionValues } = values
       void _mode
@@ -185,8 +191,8 @@ export function VendorIntegrationModal({
   const close = onCancel
 
   const isConnected = config.data?.status === 'CONNECTED'
-  const isLenful = resolvedMode === 'NATIVE'
-    && (config.data?.adapterKey ?? config.data?.providerKey) === 'LENFUL'
+  const isLenful =
+    resolvedMode === 'NATIVE' && (config.data?.adapterKey ?? config.data?.providerKey) === 'LENFUL'
   const configuredLabel = (configured: boolean) =>
     t(configured ? 'vendors.configured' : 'vendors.notConfigured')
 
@@ -250,18 +256,32 @@ export function VendorIntegrationModal({
               <Input placeholder="https://api.vendor.com/v1" />
             </Form.Item>
 
-            {resolvedMode === 'NATIVE' && (config.data?.adapterKey ?? config.data?.providerKey) === 'LENFUL' ? (
-              <Form.Item label={t('vendors.orderEndpointUrl')} name="orderEndpointUrl" rules={[{ type: 'url' }]}>
+            {resolvedMode === 'NATIVE' &&
+            (config.data?.adapterKey ?? config.data?.providerKey) === 'LENFUL' ? (
+              <Form.Item
+                label={t('vendors.orderEndpointUrl')}
+                name="orderEndpointUrl"
+                rules={[{ type: 'url' }]}
+              >
                 <Input placeholder="https://provider.example/api/order/list" />
               </Form.Item>
             ) : null}
 
-            {resolvedMode === 'NATIVE' && (config.data?.adapterKey ?? config.data?.providerKey) === 'MERCHIZE' ? (
+            {resolvedMode === 'NATIVE' &&
+            (config.data?.adapterKey ?? config.data?.providerKey) === 'MERCHIZE' ? (
               <>
-                <Form.Item label={t('vendors.trackingEndpointUrl')} name="trackingEndpointUrl" rules={[{ type: 'url' }]}>
+                <Form.Item
+                  label={t('vendors.trackingEndpointUrl')}
+                  name="trackingEndpointUrl"
+                  rules={[{ type: 'url' }]}
+                >
                   <Input placeholder="https://provider.example/order/external/orders/tracking" />
                 </Form.Item>
-                <Form.Item label={t('vendors.pushOrderEndpointUrl')} name="pushOrderEndpointUrl" rules={[{ type: 'url' }]}>
+                <Form.Item
+                  label={t('vendors.pushOrderEndpointUrl')}
+                  name="pushOrderEndpointUrl"
+                  rules={[{ type: 'url' }]}
+                >
                   <Input placeholder="https://provider.example/order/external/orders" />
                 </Form.Item>
               </>
@@ -288,10 +308,12 @@ export function VendorIntegrationModal({
                   <Input.Password aria-label={t('vendors.apiSecret')} />
                 </Form.Item>
               </>
-            ) : resolvedAuthType === 'API_KEY' && (
-              <Form.Item label={t('vendors.accessToken')} name="accessToken">
-                <Input.Password placeholder="Enter new API Token (encrypted at rest)" />
-              </Form.Item>
+            ) : (
+              resolvedAuthType === 'API_KEY' && (
+                <Form.Item label={t('vendors.accessToken')} name="accessToken">
+                  <Input.Password placeholder="Enter new API Token (encrypted at rest)" />
+                </Form.Item>
+              )
             )}
 
             {resolvedAuthType === 'ACCESS_REFRESH' && (
@@ -355,7 +377,7 @@ export function VendorIntegrationModal({
               ).map(([key, configured]) => ({
                 key,
                 label: t(`vendors.${key}`),
-                children: configuredLabel(configured),
+                children: configuredLabel(Boolean(configured)),
               })),
             ]}
           />
@@ -390,20 +412,63 @@ export function VendorIntegrationModal({
                           size="small"
                           style={{ marginTop: 16 }}
                           items={[
-                            { key: 'orderNumber', label: t('vendors.orderNumber'), children: lenfulOrder.data.orderNumber },
-                            { key: 'status', label: t('vendors.statusLabel'), children: lenfulOrder.data.status ?? '—' },
-                            { key: 'payment', label: t('vendors.paymentStatus'), children: lenfulOrder.data.paymentStatus ?? '—' },
-                            { key: 'total', label: t('vendors.total'), children: [lenfulOrder.data.totalPrice, lenfulOrder.data.currency].filter(Boolean).join(' ') || '—' },
-                            { key: 'shipping', label: t('vendors.shippingMethod'), children: lenfulOrder.data.shippingMethod?.name ?? '—' },
-                            { key: 'createdAt', label: t('vendors.createdAt'), children: lenfulOrder.data.createdAt ?? '—' },
+                            {
+                              key: 'orderNumber',
+                              label: t('vendors.orderNumber'),
+                              children: lenfulOrder.data.orderNumber,
+                            },
+                            {
+                              key: 'status',
+                              label: t('vendors.statusLabel'),
+                              children: lenfulOrder.data.status ?? '—',
+                            },
+                            {
+                              key: 'payment',
+                              label: t('vendors.paymentStatus'),
+                              children: lenfulOrder.data.paymentStatus ?? '—',
+                            },
+                            {
+                              key: 'total',
+                              label: t('vendors.total'),
+                              children:
+                                [lenfulOrder.data.totalPrice, lenfulOrder.data.currency]
+                                  .filter(Boolean)
+                                  .join(' ') || '—',
+                            },
+                            {
+                              key: 'shipping',
+                              label: t('vendors.shippingMethod'),
+                              children: lenfulOrder.data.shippingMethod?.name ?? '—',
+                            },
+                            {
+                              key: 'createdAt',
+                              label: t('vendors.createdAt'),
+                              children: lenfulOrder.data.createdAt ?? '—',
+                            },
                           ]}
                         />
                         <Table
                           columns={[
-                            { dataIndex: 'productName', key: 'productName', title: t('vendors.product') },
-                            { key: 'variant', title: t('vendors.variantSku'), render: (_, item) => item.variant?.sku ?? item.variant?.name ?? '—' },
-                            { dataIndex: 'quantity', key: 'quantity', title: t('vendors.quantity') },
-                            { dataIndex: 'fulfillment', key: 'fulfillment', title: t('vendors.fulfillment') },
+                            {
+                              dataIndex: 'productName',
+                              key: 'productName',
+                              title: t('vendors.product'),
+                            },
+                            {
+                              key: 'variant',
+                              title: t('vendors.variantSku'),
+                              render: (_, item) => item.variant?.sku ?? item.variant?.name ?? '—',
+                            },
+                            {
+                              dataIndex: 'quantity',
+                              key: 'quantity',
+                              title: t('vendors.quantity'),
+                            },
+                            {
+                              dataIndex: 'fulfillment',
+                              key: 'fulfillment',
+                              title: t('vendors.fulfillment'),
+                            },
                             { dataIndex: 'status', key: 'status', title: t('vendors.statusLabel') },
                           ]}
                           dataSource={lenfulOrder.data.items}
