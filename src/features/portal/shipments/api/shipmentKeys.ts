@@ -7,4 +7,5 @@ export const shipmentKeys = {
     [...shipmentKeys.all, 'summary', params] as const,
   detail: (id: string) => [...shipmentKeys.all, 'detail', id] as const,
   logs: (vendorSubmissionId: string) => [...shipmentKeys.all, 'logs', vendorSubmissionId] as const,
+  trackingSyncConfig: () => [...shipmentKeys.all, 'tracking-sync-config'] as const,
 }

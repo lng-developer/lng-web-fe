@@ -338,6 +338,7 @@ export const FinanceWorkspacePage = () => {
         </FilterBar>
 
         <CoreDataTable
+          fillViewport
           tableLayout="fixed"
           rowKey="id"
           columns={columns}

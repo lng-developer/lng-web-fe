@@ -12,6 +12,7 @@ import styles from './VendorWorkspacePage.module.scss'
 
 interface VendorWorkspaceVendorsTabPageProps {
   readonly canWrite: boolean
+  readonly integrationOnly?: boolean
   readonly searchVendors: string
   readonly vendorStatus?: RecordStatus
   readonly vendorsPage: number
@@ -24,7 +25,6 @@ interface VendorWorkspaceVendorsTabPageProps {
   readonly onVendorStatusChange: (value: RecordStatus | undefined) => void
   readonly onVendorsPageChange: (page: number, pageSize: number) => void
   readonly onAddVendor: () => void
-  readonly onAddProduct: (vendorId: string) => void
   readonly onEditVendor: (vendor: Vendor) => void
   readonly onOpenIntegration: (vendor: Vendor) => void
 }
@@ -39,6 +39,7 @@ const fulfillmentTypeColors = {
 
 export function VendorWorkspaceVendorsTabPage({
   canWrite,
+  integrationOnly = false,
   searchVendors,
   vendorStatus,
   vendorsPage,
@@ -51,7 +52,6 @@ export function VendorWorkspaceVendorsTabPage({
   onVendorStatusChange,
   onVendorsPageChange,
   onAddVendor,
-  onAddProduct,
   onEditVendor,
   onOpenIntegration,
 }: VendorWorkspaceVendorsTabPageProps) {
@@ -110,23 +110,7 @@ export function VendorWorkspaceVendorsTabPage({
         render: (_, vendor) => (
           <Space size={4}>
             {canWrite ? (
-              <>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<PlusOutlined />}
-                  aria-label={t('portal.vendors.addProduct')}
-                  title={t('portal.vendors.addProduct')}
-                  onClick={() => onAddProduct(vendor.id)}
-                />
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined />}
-                  aria-label={t('portal.vendors.editVendor', { name: vendor.name })}
-                  title={t('portal.vendors.editVendor', { name: vendor.name })}
-                  onClick={() => onEditVendor(vendor)}
-                />
+              integrationOnly ? (
                 <Button
                   type="text"
                   size="small"
@@ -135,13 +119,24 @@ export function VendorWorkspaceVendorsTabPage({
                   title={t('portal.vendors.configureIntegration', { name: vendor.name })}
                   onClick={() => onOpenIntegration(vendor)}
                 />
-              </>
+              ) : (
+                <>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined />}
+                    aria-label={t('portal.vendors.editVendor', { name: vendor.name })}
+                    title={t('portal.vendors.editVendor', { name: vendor.name })}
+                    onClick={() => onEditVendor(vendor)}
+                  />
+                </>
+              )
             ) : null}
           </Space>
         ),
       },
     ],
-    [canWrite, onAddProduct, onEditVendor, onOpenIntegration, t],
+    [canWrite, integrationOnly, onEditVendor, onOpenIntegration, t],
   )
 
   const statusOptions = [
@@ -156,7 +151,7 @@ export function VendorWorkspaceVendorsTabPage({
         label={t('portal.vendors.filters.label')}
         contentClassName={styles.filters}
         actions={
-          canWrite ? (
+          canWrite && !integrationOnly ? (
             <Button type="primary" icon={<PlusOutlined />} onClick={onAddVendor}>
               {t('portal.vendors.addVendor')}
             </Button>

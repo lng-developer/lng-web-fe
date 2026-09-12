@@ -342,6 +342,7 @@ export function VendorSubmissionWorkbenchPage({
       </div>
       <SectionCard>
         <CoreDataTable
+          fillViewport
           tableLayout="fixed"
           scroll={{ x: 1_100 }}
           rowKey="id"

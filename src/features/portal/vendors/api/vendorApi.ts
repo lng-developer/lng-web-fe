@@ -6,6 +6,7 @@ export type RecordStatus = 'ACTIVE' | 'INACTIVE'
 export type VendorFulfillmentType = 'FBM' | 'FBA' | 'POD' | 'DROPSHIP' | 'CUSTOM'
 export type VendorIntegrationAuthType = 'API_KEY' | 'ACCESS_REFRESH' | 'LOGIN_PASSWORD'
 export type VendorIntegrationStatus = 'CONNECTED' | 'DISCONNECTED'
+export type VendorIntegrationMode = 'MANUAL' | 'GENERIC_API' | 'NATIVE'
 
 export type Vendor = {
   id: string
@@ -79,9 +80,14 @@ export type VendorCostCenter = {
 export type VendorIntegrationConfig = {
   id: string
   vendorId: string
-  providerKey: string
-  baseUrl: string
-  authType: VendorIntegrationAuthType
+  mode?: VendorIntegrationMode
+  adapterKey?: string | null
+  providerKey: string | null
+  baseUrl: string | null
+  orderEndpointUrl?: string | null
+  trackingEndpointUrl?: string | null
+  pushOrderEndpointUrl?: string | null
+  authType: VendorIntegrationAuthType | null
   status: VendorIntegrationStatus
   expiresAt: string | null
   lastCheckedAt: string | null
@@ -90,7 +96,31 @@ export type VendorIntegrationConfig = {
   refreshTokenConfigured: boolean
   usernameConfigured: boolean
   passwordConfigured: boolean
+  apiKeyConfigured?: boolean
+  apiSecretConfigured?: boolean
   metadata: Record<string, unknown>
+}
+
+export type LenfulOrder = {
+  id: string
+  orderNumber: string
+  shortId: string | null
+  status: string | null
+  paymentStatus: string | null
+  currency: string | null
+  totalItems: number | null
+  totalPrice: number | null
+  createdAt: string | null
+  shippingMethod: { name: string | null; description: string | null; price: number | null } | null
+  items: Array<{
+    id: string
+    productId: string | null
+    productName: string | null
+    quantity: number | null
+    fulfillment: string | null
+    status: string | null
+    variant: { id: string | null; name: string | null; sku: string | null } | null
+  }>
 }
 
 export type VendorMigrationReviewItem = {
@@ -115,7 +145,7 @@ export type VendorListParams = {
   providerKey?: string
   fulfillmentType?: VendorFulfillmentType
 }
-export type ProductListParams = VendorListParams & { vendorId?: string }
+export type ProductListParams = VendorListParams & { vendorId?: string; productTypeGroupId?: string }
 export type CostCenterListParams = VendorListParams
 
 export type VendorInput = {
@@ -167,13 +197,20 @@ export type VendorImportSummary = {
   failed: string[]
 }
 export type VendorIntegrationConfigInput = {
+  mode?: VendorIntegrationMode
+  adapterKey?: string | null
   providerKey: string
   baseUrl: string
+  orderEndpointUrl?: string | null
+  trackingEndpointUrl?: string | null
+  pushOrderEndpointUrl?: string | null
   authType: VendorIntegrationAuthType
   accessToken?: string
   refreshToken?: string
   username?: string
   password?: string
+  apiKey?: string
+  apiSecret?: string
   expiresAt?: string | null
   status?: VendorIntegrationStatus
   metadata?: Record<string, unknown>
@@ -303,6 +340,26 @@ export async function updateVendorIntegrationConfig(
 ) {
   return unwrap<VendorIntegrationConfig>(
     await apiClient.patch(`/api/vendors/${vendorId}/integration`, input),
+  )
+}
+
+export async function deleteVendorIntegrationConfig(vendorId: string) {
+  return unwrap<{ deleted: boolean }>(
+    await apiClient.delete(`/api/vendors/${vendorId}/integration`),
+  )
+}
+
+export async function testVendorIntegrationConnection(vendorId: string) {
+  return unwrap<VendorIntegrationConfig>(
+    await apiClient.post(`/api/vendors/${vendorId}/integration/test-connection`),
+  )
+}
+
+export async function getLenfulOrder(vendorId: string, orderNumber: string) {
+  return unwrap<LenfulOrder>(
+    await apiClient.get(`/api/vendors/${vendorId}/integration/lenful/order`, {
+      params: { orderNumber: orderNumber.trim() },
+    }),
   )
 }
 

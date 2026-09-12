@@ -13,6 +13,8 @@ export type ReportFilters = {
   sellerEmployeeCode?: string
   teamId?: string
   departmentId?: string
+  page?: number
+  limit?: number
 }
 export type FinanceCoverage = {
   currency: string | null
@@ -32,6 +34,11 @@ export type FinanceDaily = {
   itemCount: number
   revenueAmount: number
   baseCostAmount: number
+  totalCostAmount?: number | null
+  additionalFulfillmentCostAmount?: number | null
+  marketplaceFeeAmount?: number
+  refundAmount?: number
+  discountAmount?: number
   grossProfitAmount: number
   grossMarginBps: number | null
   missingCostCount: number
@@ -47,10 +54,13 @@ export type SellerPerformance = {
   itemCount: number
   revenueAmount: number
   baseCostAmount: number
-  grossProfitAmount: number
+  grossProfitAmount: number | null
+  partialGrossProfitAmount?: number
+  costedItemCount?: number
   operatingCostAmount: number
   adSpendAmount?: number
-  netProfitAmount: number
+  netProfitAmount: number | null
+  partialNetProfitAmount?: number | null
   netMarginBps: number | null
   missingCostCount: number
 }
@@ -113,6 +123,58 @@ export type AdsDaily = {
   cpaAmount: number | null
 }
 
+export type AdsSellerDaily = Omit<
+  AdsDaily,
+  'reportDate' | 'salesChannelCode' | 'marketplaceCode'
+> & {
+  date: string | null
+  sellerEmployeeCode: string
+  sellerName: string | null
+}
+
+export type OrderProfitability = {
+  orderId: string | null
+  externalOrderId: string | null
+  orderedAt: string | null
+  reportDate: string | null
+  shopId: string | null
+  salesChannelCode: string | null
+  marketplaceCode: string | null
+  currency: string | null
+  itemCount: number
+  revenueAmount: number
+  baseCostAmount: number
+  totalCostAmount: number | null
+  marketplaceFeeAmount: number
+  refundAmount: number
+  discountAmount: number
+  profitAmount: number | null
+  marginBps: number | null
+  missingCostCount: number
+}
+
+export type PaginatedReport<T> = {
+  items: T[]
+  pagination: { total: number; page: number; limit: number }
+}
+
+export type OrderProfitabilitySummary = {
+  currency: string | null
+  orderCount: number
+  costedOrderCount: number
+  missingCostOrderCount: number
+  revenueAmount: number
+  totalCostAmount: number
+  profitAmount: number
+  marginBps: number | null
+  profitableOrderCount: number
+  lossOrderCount: number
+}
+
+export type OrderProfitabilityReport = PaginatedReport<OrderProfitability> & {
+  summaryByCurrency: OrderProfitabilitySummary[]
+}
+
 export type OperationsOverview = {
   orderItemsByStatus: Record<string, number>
   productionByStatus: Record<string, number>
@@ -162,6 +224,8 @@ export const listFinanceCoverage = (filters: ReportFilters) =>
   get<FinanceCoverage[]>('/api/reports/finance/coverage', filters)
 export const listFinanceDailyProfit = (filters: ReportFilters) =>
   get<FinanceDaily[]>('/api/reports/finance/daily-profit', filters)
+export const listFinanceOrderProfitability = (filters: ReportFilters) =>
+  get<OrderProfitabilityReport>('/api/reports/finance/orders-profitability', filters)
 export const listFinanceBySeller = (filters: ReportFilters) =>
   get<SellerPerformance[]>('/api/reports/finance/by-seller', filters)
 export const listFinanceSellerDaily = (filters: ReportFilters) =>
@@ -174,6 +238,8 @@ export const listChannelPerformance = (filters: ReportFilters) =>
   get<ChannelPerformance[]>('/api/reports/ads/channel-performance', filters)
 export const listAdsDaily = (filters: ReportFilters) =>
   get<AdsDaily[]>('/api/reports/ads/daily', filters)
+export const listAdsSellerDaily = (filters: ReportFilters) =>
+  get<AdsSellerDaily[]>('/api/reports/ads/seller-daily', filters)
 export const getOperationsOverview = (filters: ReportFilters) =>
   get<OperationsOverview>('/api/reports/operations/overview', filters)
 export const listVendorPerformance = (filters: ReportFilters) =>

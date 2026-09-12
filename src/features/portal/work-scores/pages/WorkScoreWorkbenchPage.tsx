@@ -654,6 +654,7 @@ export function WorkScoreWorkbenchPage({
           </div>
         ) : null}
         <CoreDataTable
+          fillViewport
           rowKey="id"
           columns={columns}
           dataSource={rows.data?.items ?? []}

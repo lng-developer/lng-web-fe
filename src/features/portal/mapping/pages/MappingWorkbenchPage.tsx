@@ -80,6 +80,7 @@ export function MappingWorkbenchPage({
       : undefined
   })
   const [candidateSearch, setCandidateSearch] = useState('')
+  const deferredCandidateSearch = useDeferredValue(candidateSearch)
 
   const orderItemId = selectedItem?.orderItemId ?? selectedItem?.id
   const apiContext = useMemo(
@@ -99,7 +100,7 @@ export function MappingWorkbenchPage({
   const shops = useAuthorableShopsQuery({ enabled: canWrite })
   const unmatched = useUnmatchedItemsQuery(unmatchedParams)
   const preview = useOrderItemPreviewQuery(selectedItem?.orderItemId ?? selectedItem?.id)
-  const candidates = useVendorCandidatesQuery(orderItemId, candidateSearch)
+  const candidates = useVendorCandidatesQuery(orderItemId, deferredCandidateSearch)
 
   const notifyError = useCallback(
     (error: unknown) =>

@@ -1,27 +1,20 @@
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AiOutlineFileSync } from 'react-icons/ai'
-import { AiOutlineFundView } from 'react-icons/ai'
 import { BiExtension } from 'react-icons/bi'
-import { BiCubeAlt } from 'react-icons/bi'
 import { BsFiletypePsd } from 'react-icons/bs'
 import { CgShoppingBag } from 'react-icons/cg'
 import { CgFileDocument } from 'react-icons/cg'
 import { FaAmazon, FaEtsy, FaShopify } from 'react-icons/fa'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
 import { FcRating } from 'react-icons/fc'
-import { GrDocumentConfig } from 'react-icons/gr'
 import { HiOutlineBuildingStorefront } from 'react-icons/hi2'
-import { HiOutlineKey } from 'react-icons/hi2'
 import { IoStorefrontOutline } from 'react-icons/io5'
 import { IoImageOutline } from 'react-icons/io5'
-import { LiaReact } from 'react-icons/lia'
 import { LuBox, LuBrain, LuLayoutList, LuNotebook, LuTruck } from 'react-icons/lu'
 import { MdBalance, MdOutlineConnectedTv, MdOutlinePendingActions } from 'react-icons/md'
 import {
-  RiAdminLine,
   RiAdvertisementLine,
-  RiErrorWarningLine,
   RiPaletteLine,
   RiSettings2Line,
   RiTokenSwapLine,
@@ -29,14 +22,11 @@ import {
 import {
   TbBlender,
   TbBuildingFactory2,
-  TbBuildingStore,
-  TbCookie,
   TbHomeDollar,
   TbHomeStats,
   TbPackages,
   TbReport,
   TbReportSearch,
-  TbUsersGroup,
 } from 'react-icons/tb'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -132,24 +122,19 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <TbHomeDollar size={20} />,
       children: [
         {
-          key: '/portal/cost-centers/config',
-          labelKey: 'legacyMenu.config',
-          icon: <GrDocumentConfig size={20} />,
-        },
-        {
-          key: '/portal/cost-centers/product-types',
-          labelKey: 'legacyMenu.productTypes',
+          key: '/portal/catalog/product-types',
+          labelKey: 'shell.navigation.productTypes',
           icon: <TbPackages size={20} />,
         },
         {
-          key: '/portal/cost-centers/mapping',
-          labelKey: 'legacyMenu.mapping',
-          icon: <RiTokenSwapLine size={20} />,
+          key: '/portal/catalog/templates',
+          labelKey: 'shell.navigation.internalTemplates',
+          icon: <BsFiletypePsd size={20} />,
         },
         {
-          key: '/portal/cost-centers/group-standards',
-          labelKey: 'legacyMenu.groupStandards',
-          icon: <TbUsersGroup size={20} />,
+          key: '/portal/mapping',
+          labelKey: 'shell.navigation.mapping',
+          icon: <RiTokenSwapLine size={20} />,
         },
       ],
     },
@@ -159,53 +144,55 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <TbReport size={20} />,
       children: [
         {
-          key: '/portal/reports/orders-cost',
-          labelKey: 'legacyMenu.ordersCost',
-          icon: <CgShoppingBag size={20} />,
+          key: 'reports-amazon',
+          labelKey: 'legacyMenu.amazon',
+          icon: <FaAmazon size={20} />,
+          children: [
+            {
+              key: '/portal/reports/amazon/order-cost',
+              labelKey: 'legacyMenu.ordersCost',
+              icon: <CgShoppingBag size={20} />,
+            },
+            {
+              key: '/portal/reports/amazon/ads',
+              labelKey: 'legacyMenu.adsReport',
+              icon: <RiAdvertisementLine size={20} />,
+            },
+            {
+              key: '/portal/reports/amazon/sales',
+              labelKey: 'legacyMenu.saleReport',
+              icon: <TbReportSearch size={20} />,
+            },
+          ],
         },
         {
-          key: '/portal/reports/sales',
-          labelKey: 'legacyMenu.saleReport',
-          icon: <TbReportSearch size={20} />,
-        },
-        {
-          key: '/portal/reports/etsy-sales',
-          labelKey: 'legacyMenu.etsySaleReport',
+          key: 'reports-etsy',
+          labelKey: 'legacyMenu.etsy',
           icon: <FaEtsy size={20} />,
-        },
-        {
-          key: '/portal/reports/etsy-orders-cost',
-          labelKey: 'legacyMenu.etsyOrdersCost',
-          icon: <FaEtsy size={20} />,
-        },
-        {
-          key: '/portal/reports/ads',
-          labelKey: 'legacyMenu.adsReport',
-          icon: <RiAdvertisementLine size={20} />,
-        },
-        {
-          key: '/portal/reports/ads-etsy',
-          labelKey: 'legacyMenu.adsEtsy',
-          icon: <FaEtsy size={20} />,
+          children: [
+            {
+              key: '/portal/reports/etsy/order-cost',
+              labelKey: 'legacyMenu.etsyOrdersCost',
+              icon: <CgShoppingBag size={20} />,
+            },
+            {
+              key: '/portal/reports/etsy/ads',
+              labelKey: 'legacyMenu.adsEtsy',
+              icon: <RiAdvertisementLine size={20} />,
+            },
+            {
+              key: '/portal/reports/etsy/sales',
+              labelKey: 'legacyMenu.etsySaleReport',
+              icon: <TbReportSearch size={20} />,
+            },
+          ],
         },
       ],
     },
     {
-      key: 'monitoring',
+      key: '/portal/monitoring',
       labelKey: 'legacyMenu.monitoring',
       icon: <AiOutlineFileSync size={20} />,
-      children: [
-        {
-          key: '/portal/monitoring/order-lifecycle',
-          labelKey: 'legacyMenu.orderLifecycle',
-          icon: <AiOutlineFileSync size={20} />,
-        },
-        {
-          key: '/portal/monitoring/order-missing-sync',
-          labelKey: 'legacyMenu.orderMissingSync',
-          icon: <AiOutlineFileSync size={20} />,
-        },
-      ],
     },
     {
       key: 'configuration',
@@ -213,29 +200,14 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <RiSettings2Line size={20} />,
       children: [
         {
-          key: '/portal/configuration/manage-stores',
-          labelKey: 'legacyMenu.manageStores',
+          key: '/portal/shops',
+          labelKey: 'shell.navigation.shops',
           icon: <IoStorefrontOutline size={20} />,
         },
         {
-          key: '/portal/configuration/sku-mapping',
-          labelKey: 'legacyMenu.skuMapping',
-          icon: <CgShoppingBag size={20} />,
-        },
-        {
-          key: '/portal/configuration/cookies',
-          labelKey: 'legacyMenu.cookies',
-          icon: <TbCookie size={20} />,
-        },
-        {
-          key: '/portal/configuration/tm-keywords',
-          labelKey: 'legacyMenu.tmKeywords',
-          icon: <HiOutlineKey size={20} />,
-        },
-        {
-          key: '/portal/configuration/account',
-          labelKey: 'legacyMenu.account',
-          icon: <RiAdminLine size={20} />,
+          key: '/portal/integrations',
+          labelKey: 'shell.navigation.integrations',
+          icon: <BiExtension size={20} />,
         },
       ],
     },
@@ -247,12 +219,12 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <MdBalance size={20} />,
       children: [
         {
-          key: '/portal/fulfillment/scale/amazon',
+          key: '/portal/production/scale?salesChannelCode=AMAZON',
           labelKey: 'legacyMenu.amazonScale',
           icon: <FaAmazon size={20} />,
         },
         {
-          key: '/portal/fulfillment/scale/etsy',
+          key: '/portal/production/scale?salesChannelCode=ETSY',
           labelKey: 'legacyMenu.etsyScale',
           icon: <FaEtsy size={20} />,
         },
@@ -264,107 +236,75 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <TbBlender size={20} />,
       children: [
         {
-          key: '/portal/fulfillment/qc/amazon',
+          key: '/portal/production/qc?salesChannelCode=AMAZON',
           labelKey: 'legacyMenu.amazonQc',
           icon: <FaAmazon size={20} />,
         },
         {
-          key: '/portal/fulfillment/qc/etsy',
+          key: '/portal/production/qc?salesChannelCode=ETSY',
           labelKey: 'legacyMenu.etsyQc',
           icon: <FaEtsy size={20} />,
         },
       ],
     },
     {
-      key: '/portal/fulfillment/working-status',
-      labelKey: 'legacyMenu.workingStatus',
+      key: '/portal/work-scores',
+      labelKey: 'shell.navigation.workScores',
       icon: <TbHomeStats size={20} />,
     },
     {
-      key: 'fulfillment-reports',
-      labelKey: 'legacyMenu.reports',
-      icon: <MdBalance size={20} />,
-      children: [
-        {
-          key: '/portal/fulfillment/reports/vendor',
-          labelKey: 'legacyMenu.vendorFulfillment',
-          icon: <TbBuildingFactory2 size={20} />,
-        },
-        {
-          key: '/portal/fulfillment/reports/vendor-pending',
-          labelKey: 'legacyMenu.vendorPending',
-          icon: <MdOutlinePendingActions size={20} />,
-        },
-        {
-          key: '/portal/fulfillment/reports/lng-pending',
-          labelKey: 'legacyMenu.lngPending',
-          icon: <LiaReact size={20} />,
-        },
-        {
-          key: '/portal/fulfillment/reports/working-results',
-          labelKey: 'legacyMenu.workingResults',
-          icon: <TbReport size={20} />,
-        },
-      ],
+      key: '/portal/production/blocked',
+      labelKey: 'portal.production.blockedQueue',
+      icon: <MdOutlinePendingActions size={20} />,
+    },
+    {
+      key: '/portal/vendor-submissions',
+      labelKey: 'shell.navigation.vendorSubmissions',
+      icon: <TbBuildingFactory2 size={20} />,
+    },
+    {
+      key: '/portal/shipments',
+      labelKey: 'shell.navigation.shipments',
+      icon: <LuTruck size={20} />,
     },
   ],
   design: [
     {
-      key: '/portal/design/idea-tasks',
-      labelKey: 'legacyMenu.ideaTasks',
+      key: '/portal/design',
+      labelKey: 'portal.design.tasks',
       icon: <LuBrain size={20} />,
     },
     {
-      key: '/portal/design/psd-tasks',
-      labelKey: 'legacyMenu.psdTasks',
+      key: '/portal/design/files',
+      labelKey: 'portal.design.psdFiles',
       icon: <BsFiletypePsd size={20} />,
     },
     {
-      key: '/portal/design/png-tasks',
-      labelKey: 'legacyMenu.pngTasks',
+      key: '/portal/media',
+      labelKey: 'shell.navigation.media',
       icon: <IoImageOutline size={20} />,
-    },
-    {
-      key: '/portal/design/embroider-listing',
-      labelKey: 'legacyMenu.embroiderListing',
-      icon: <LuLayoutList size={20} />,
-    },
-    {
-      key: '/portal/design/product-types',
-      labelKey: 'legacyMenu.designProductTypes',
-      icon: <TbPackages size={20} />,
-    },
-    {
-      key: '/portal/design/points-dashboard',
-      labelKey: 'legacyMenu.pointsDashboard',
-      icon: <AiOutlineFundView size={20} />,
     },
   ],
   vendor: [
     {
-      key: '/portal/vendor/list',
-      labelKey: 'legacyMenu.listVendor',
+      key: '/portal/vendors',
+      labelKey: 'shell.navigation.vendors',
       icon: <LuLayoutList size={20} />,
     },
     {
-      key: '/portal/vendor/token',
-      labelKey: 'legacyMenu.tokenVendor',
-      icon: <RiErrorWarningLine size={20} />,
-    },
-    {
-      key: '/portal/vendor/products',
+      key: '/portal/vendors?tab=products',
       labelKey: 'legacyMenu.vendorProducts',
       icon: <CgFileDocument size={20} />,
     },
     {
-      key: '/portal/vendor/store-fulfill',
-      labelKey: 'legacyMenu.storeFulfill',
-      icon: <TbBuildingStore size={20} />,
+      key: '/portal/vendors?tab=integrations',
+      labelKey: 'portal.vendors.tabs.integrations',
+      icon: <BiExtension size={20} />,
     },
     {
-      key: '/portal/vendor/design-product-types',
-      labelKey: 'legacyMenu.designProductTypes',
-      icon: <BiCubeAlt size={20} />,
+      key: '/portal/vendors?tab=migration',
+      labelKey: 'portal.vendors.tabs.migration',
+      icon: <TbPackages size={20} />,
     },
   ],
   extensions: [

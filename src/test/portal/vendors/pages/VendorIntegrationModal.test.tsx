@@ -1,10 +1,12 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import {
+  deleteVendorIntegrationConfig,
+  getLenfulOrder,
   getVendorIntegrationConfig,
-  refreshVendorIntegrationCredential,
+  testVendorIntegrationConnection,
   updateVendorIntegrationConfig,
 } from '@/features/portal/vendors/api/vendorApi'
 import { VendorIntegrationModal } from '@/features/portal/vendors/pages/VendorIntegrationModal'
@@ -13,7 +15,9 @@ import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/features/portal/vendors/api/vendorApi', () => ({
   getVendorIntegrationConfig: vi.fn(),
-  refreshVendorIntegrationCredential: vi.fn(),
+  deleteVendorIntegrationConfig: vi.fn(),
+  getLenfulOrder: vi.fn(),
+  testVendorIntegrationConnection: vi.fn(),
   updateVendorIntegrationConfig: vi.fn(),
 }))
 
@@ -68,6 +72,10 @@ describe('VendorIntegrationModal', () => {
     expect(await screen.findByDisplayValue('https://vendor.example')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(updateVendorIntegrationConfig).toHaveBeenCalled())
+    expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).toMatchObject({
+      mode: 'GENERIC_API',
+      adapterKey: null,
+    })
     expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).not.toHaveProperty(
       'accessToken',
     )
@@ -76,7 +84,102 @@ describe('VendorIntegrationModal', () => {
     )
   })
 
-  it('uses a provider dropdown when setting up a missing integration', async () => {
+  it('looks up a Lenful order only when the operator searches', async () => {
+    vi.mocked(getVendorIntegrationConfig).mockResolvedValue({
+      accessTokenConfigured: true,
+      authType: 'LOGIN_PASSWORD',
+      baseUrl: 'https://s-lencam.lenful.com/api',
+      expiresAt: null,
+      id: 'integration-1',
+      lastCheckedAt: null,
+      lastError: null,
+      metadata: {},
+      passwordConfigured: true,
+      providerKey: 'LENFUL',
+      refreshTokenConfigured: false,
+      status: 'CONNECTED',
+      usernameConfigured: true,
+      vendorId: 'vendor-1',
+    })
+    vi.mocked(getLenfulOrder).mockResolvedValue({
+      createdAt: '2026-09-12T00:00:00.000Z',
+      currency: 'USD',
+      id: 'order-1',
+      items: [
+        {
+          fulfillment: 'POD',
+          id: 'item-1',
+          productId: 'product-1',
+          productName: 'Acrylic shirt',
+          quantity: 2,
+          status: 'NEW',
+          variant: { id: 'variant-1', name: 'Blue / L', sku: 'SHIRT-BL-L' },
+        },
+      ],
+      orderNumber: 'LF-100',
+      paymentStatus: 'PAID',
+      shippingMethod: { description: 'Standard', name: 'Economy', price: 5 },
+      shortId: 'LF100',
+      status: 'PROCESSING',
+      totalItems: 2,
+      totalPrice: 25,
+    })
+    render(
+      <AppProviders>
+        <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('Order lookup')).toBeInTheDocument()
+    expect(getLenfulOrder).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText('Order lookup'))
+    fireEvent.change(await screen.findByLabelText('Order number'), { target: { value: 'LF-100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    await waitFor(() => expect(getLenfulOrder).toHaveBeenCalledWith('vendor-1', 'LF-100'))
+    expect(await screen.findByText('Acrylic shirt')).toBeInTheDocument()
+    expect(screen.getByText('SHIRT-BL-L')).toBeInTheDocument()
+  })
+
+  it('submits Merchfox API key and secret instead of an access token', async () => {
+    vi.mocked(getVendorIntegrationConfig).mockResolvedValue({
+      accessTokenConfigured: false,
+      apiKeyConfigured: false,
+      apiSecretConfigured: false,
+      authType: 'API_KEY',
+      baseUrl: 'https://api.merchfox.example',
+      expiresAt: null,
+      id: 'integration-1',
+      lastCheckedAt: null,
+      lastError: null,
+      metadata: {},
+      passwordConfigured: false,
+      providerKey: 'MERCHFOX',
+      refreshTokenConfigured: false,
+      status: 'DISCONNECTED',
+      usernameConfigured: false,
+      vendorId: 'vendor-1',
+    })
+    vi.mocked(updateVendorIntegrationConfig).mockResolvedValue({} as never)
+    render(
+      <AppProviders>
+        <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    fireEvent.change(await screen.findByLabelText('API key'), { target: { value: 'app-key' } })
+    fireEvent.change(screen.getByLabelText('API secret'), { target: { value: 'app-secret' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(updateVendorIntegrationConfig).toHaveBeenCalled())
+    expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).toMatchObject({
+      apiKey: 'app-key',
+      apiSecret: 'app-secret',
+    })
+    expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).not.toHaveProperty('accessToken')
+  })
+
+  it('defaults to manual mode and reveals connection fields only for an explicit mode', async () => {
     vi.mocked(getVendorIntegrationConfig).mockResolvedValue(null as never)
     render(
       <AppProviders>
@@ -84,7 +187,35 @@ describe('VendorIntegrationModal', () => {
       </AppProviders>,
     )
 
+    expect(await screen.findByText('Manual')).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: /Provider/ })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Base URL')).not.toBeInTheDocument()
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: /Integration mode/ }))
+    fireEvent.click(await screen.findByText('Generic API'))
+    expect(screen.queryByRole('combobox', { name: /Provider/ })).not.toBeInTheDocument()
+    expect(await screen.findByLabelText('Base URL')).toBeInTheDocument()
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: /Integration mode/ }))
+    fireEvent.click(await screen.findByText('Native integration'))
     expect(await screen.findByRole('combobox', { name: /Provider/ })).toBeInTheDocument()
+  })
+
+  it('closes a dirty integration form without a discard confirmation', async () => {
+    vi.mocked(getVendorIntegrationConfig).mockResolvedValue(null as never)
+    const onCancel = vi.fn()
+    render(
+      <AppProviders>
+        <VendorIntegrationModal open vendorId="vendor-1" onCancel={onCancel} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: /Integration mode/ }))
+    fireEvent.click(await screen.findByText('Native integration'))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(onCancel).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
   })
 
   it('drops hidden credentials after switching auth type and sends only entered active secrets', async () => {
@@ -128,6 +259,39 @@ describe('VendorIntegrationModal', () => {
     )
   })
 
+  it('deletes an existing integration when switched to manual mode', async () => {
+    vi.mocked(getVendorIntegrationConfig).mockResolvedValue({
+      accessTokenConfigured: true,
+      authType: 'API_KEY',
+      baseUrl: 'https://vendor.example',
+      expiresAt: null,
+      id: 'integration-1',
+      lastCheckedAt: null,
+      lastError: null,
+      metadata: {},
+      passwordConfigured: false,
+      providerKey: 'PRINTWAY',
+      refreshTokenConfigured: false,
+      status: 'DISCONNECTED',
+      usernameConfigured: false,
+      vendorId: 'vendor-1',
+    })
+    vi.mocked(deleteVendorIntegrationConfig).mockResolvedValue({ deleted: true })
+    const onCancel = vi.fn()
+    render(
+      <AppProviders>
+        <VendorIntegrationModal open vendorId="vendor-1" onCancel={onCancel} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: /Integration mode/ }))
+    fireEvent.click(await screen.findByText('Manual'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(deleteVendorIntegrationConfig).toHaveBeenCalledWith('vendor-1'))
+    expect(onCancel).toHaveBeenCalled()
+  })
+
   it('submits both active ACCESS_REFRESH credentials', async () => {
     vi.mocked(getVendorIntegrationConfig).mockResolvedValue({
       accessTokenConfigured: false,
@@ -167,7 +331,7 @@ describe('VendorIntegrationModal', () => {
     })
   })
 
-  it('renders every redacted status field and blocks refresh until a valid provider key is loaded', async () => {
+  it('renders every redacted status field and tests connection after a valid provider key is loaded', async () => {
     let resolveConfig!: (value: Awaited<ReturnType<typeof getVendorIntegrationConfig>>) => void
     vi.mocked(getVendorIntegrationConfig).mockReturnValue(
       new Promise((resolve) => {
@@ -200,16 +364,12 @@ describe('VendorIntegrationModal', () => {
     expect(await screen.findByText('2026-07-31T00:00:00Z')).toBeInTheDocument()
     expect(screen.getAllByText('Configured')).toHaveLength(4)
     expect(screen.getByRole('button', { name: /Test connection/ })).toBeEnabled()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    vi.mocked(refreshVendorIntegrationCredential).mockResolvedValue({} as never)
+    vi.mocked(testVendorIntegrationConnection).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /Test connection/ }))
-    const confirm = (await screen.findAllByRole('dialog')).at(-1)!
-    fireEvent.click(within(confirm).getByRole('button', { name: /Test connection/ }))
     await waitFor(() =>
-      expect(refreshVendorIntegrationCredential).toHaveBeenCalledWith('vendor-1', {
-        providerKey: 'PRINTWAY',
-      }),
+      expect(testVendorIntegrationConnection).toHaveBeenCalledWith('vendor-1'),
     )
+    expect(screen.queryByText('Test the provider connection now?')).not.toBeInTheDocument()
   })
 
   it('recovers a failed config query and exposes refresh loading without leaking errors', async () => {
@@ -241,16 +401,13 @@ describe('VendorIntegrationModal', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Try again|Retry/ }))
     expect(await screen.findByDisplayValue('https://vendor.example')).toBeInTheDocument()
     let rejectRefresh!: (error: Error) => void
-    vi.mocked(refreshVendorIntegrationCredential).mockReturnValue(
+    vi.mocked(testVendorIntegrationConnection).mockReturnValue(
       new Promise((_, reject) => {
         rejectRefresh = reject
       }),
     )
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const refresh = screen.getByRole('button', { name: /Test connection/ })
     fireEvent.click(refresh)
-    const confirm = (await screen.findAllByRole('dialog')).at(-1)!
-    fireEvent.click(within(confirm).getByRole('button', { name: /Test connection/ }))
     await waitFor(() => expect(refresh).toHaveClass('ant-btn-loading'))
     rejectRefresh(new Error('credential-secret'))
     await waitFor(() => expect(refresh).not.toHaveClass('ant-btn-loading'))

@@ -10,7 +10,7 @@ import { setPermissions } from '@/shared/auth/session'
 
 async function loadRoute() {
   const workspace = appRoutes.find((route) => route.id === 'workspace')
-  const route = workspace?.children?.find(({ path }) => path === 'portal/production')
+  const route = workspace?.children?.find(({ path }) => path === 'portal/production/:queue?')
   if (typeof route?.lazy !== 'function') throw new Error('Production route must be lazy')
   const loaded = await route.lazy()
   if (!('Component' in loaded) || !loaded.Component) throw new Error('Route component is required')

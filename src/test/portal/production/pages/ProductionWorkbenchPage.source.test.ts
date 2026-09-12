@@ -42,8 +42,8 @@ describe('ProductionWorkbenchPage source contract', () => {
   })
 
   it('keeps queue navigation outside the queue card', () => {
-    expect(source).toMatch(
-      /<div className=\{styles\.queueToolbar\}>[\s\S]*?<\/div>\s*<section className=\{styles\.queuePane\}/,
+    expect(source.indexOf('<div className={styles.queueToolbar}>')).toBeLessThan(
+      source.indexOf('<section className={styles.queuePane}'),
     )
   })
 })

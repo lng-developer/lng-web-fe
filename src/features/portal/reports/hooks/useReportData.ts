@@ -4,15 +4,23 @@ import {
   exportReportCsv,
   getReportFilterOptions,
   listAdsDaily,
+  listAdsSellerDaily,
   listChannelPerformance,
   listFinanceBySeller,
   listFinanceByTeam,
   listFinanceCoverage,
+  listFinanceOrderProfitability,
   listFinanceSellerDaily,
   type ReportFilters,
 } from '../api/reportApi'
 
-export type TabKey = 'overview' | 'sales' | 'operations'
+export type TabKey =
+  | 'overview'
+  | 'sales'
+  | 'operations'
+  | 'order-cost'
+  | 'ads-employee'
+  | 'sales-profit'
 export type ProfitabilityView = 'summary' | 'daily'
 
 export interface UseReportDataParams {
@@ -48,7 +56,20 @@ export const useReportData = ({
   const sellerDaily = useQuery({
     queryKey: ['reports', 'seller-daily', filters],
     queryFn: () => listFinanceSellerDaily(filters),
-    enabled: activeTab === 'overview' && profitabilityView === 'daily',
+    enabled:
+      (activeTab === 'overview' && profitabilityView === 'daily') || activeTab === 'sales-profit',
+  })
+
+  const orderProfitability = useQuery({
+    queryKey: ['reports', 'order-profitability', filters],
+    queryFn: () => listFinanceOrderProfitability(filters),
+    enabled: activeTab === 'order-cost',
+  })
+
+  const adsSellerDaily = useQuery({
+    queryKey: ['reports', 'ads-seller-daily', filters],
+    queryFn: () => listAdsSellerDaily(filters),
+    enabled: activeTab === 'ads-employee',
   })
 
   const teams = useQuery({
@@ -86,6 +107,8 @@ export const useReportData = ({
     sellers,
     coverage,
     sellerDaily,
+    orderProfitability,
+    adsSellerDaily,
     teams,
     channels,
     adsDaily,

@@ -18,7 +18,7 @@ describe('VendorWorkspacePage', () => {
     await i18n.changeLanguage('en')
   })
 
-  it('renders the Vendor locale instead of raw translation keys', () => {
+  it('renders the Vendor locale without a duplicate workspace tab bar', () => {
     render(
       <MemoryRouter>
         <AppProviders>
@@ -27,8 +27,20 @@ describe('VendorWorkspacePage', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('tab', { name: i18n.t('portal.vendors.tabs.vendors') })).toBeVisible()
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
     expect(screen.queryByText('vendors.title')).not.toBeInTheDocument()
+  })
+
+  it('opens the integrations workflow from its URL parameter without a tab bar', () => {
+    render(
+      <MemoryRouter initialEntries={['/portal/vendors?tab=integrations']}>
+        <AppProviders>
+          <VendorWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
   })
 
   it('uses the shared permission helper so Admin keeps Vendor write actions', () => {

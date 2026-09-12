@@ -36,6 +36,7 @@ export type CoreDataTableProps<RecordType extends object> = Pick<
   | 'scroll'
   | 'size'
   | 'tableLayout'
+  | 'virtual'
 > & {
   readonly toolbar?: ReactNode
   readonly emptyText?: ReactNode

@@ -257,6 +257,7 @@ export const CustomerWorkspacePage = () => {
         </FilterBar>
 
         <CoreDataTable
+          fillViewport
           tableLayout="fixed"
           scroll={{ x: 960 }}
           rowKey="id"

@@ -1,10 +1,19 @@
-import type { Key, ReactNode } from 'react'
+import { type Key, type ReactNode,useState } from 'react'
 
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 
 type Column = {
   dataIndex?: string
   render?: (value: unknown, record: Record<string, unknown>) => ReactNode
+}
+
+type Expandable = {
+  expandedRowRender?: (record: Record<string, unknown>) => ReactNode
+  expandIcon?: (props: {
+    expanded: boolean
+    onExpand: (record: Record<string, unknown>) => void
+    record: Record<string, unknown>
+  }) => ReactNode
 }
 
 export function CoreDataTable({
@@ -14,6 +23,7 @@ export function CoreDataTable({
   pagination,
   rowSelection,
   toolbar,
+  expandable,
 }: {
   columns?: Column[]
   dataSource?: Record<string, unknown>[]
@@ -29,7 +39,9 @@ export function CoreDataTable({
     getCheckboxProps?: (record: Record<string, unknown>) => Record<string, unknown>
   }
   toolbar?: ReactNode
+  expandable?: Expandable
 }) {
+  const [expandedKeys, setExpandedKeys] = useState<Key[]>([])
   return (
     <>
       {toolbar}
@@ -45,35 +57,58 @@ export function CoreDataTable({
       <table>
         <tbody>
           {dataSource.map((record, rowIndex) => (
-            <tr key={String(record.id ?? rowIndex)} onClick={onRow?.(record).onClick}>
-              {rowSelection
-                ? (() => {
-                    const props = rowSelection.getCheckboxProps?.(record) ?? {}
-                    const id = record.id as Key
-                    return (
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={rowSelection.selectedRowKeys?.includes(id) ?? false}
-                          onChange={(event) =>
-                            rowSelection.onChange?.(event.target.checked ? [id] : [])
-                          }
-                          {...props}
-                        />
-                      </td>
-                    )
-                  })()
-                : null}
-              {columns.map((column, columnIndex) => (
-                <td key={columnIndex}>
-                  {column.render
-                    ? column.render(column.dataIndex ? record[column.dataIndex] : undefined, record)
-                    : column.dataIndex
-                      ? String(record[column.dataIndex] ?? '')
-                      : null}
-                </td>
-              ))}
-            </tr>
+            <>
+              <tr key={String(record.id ?? rowIndex)} onClick={onRow?.(record).onClick}>
+                {expandable ? (
+                  <td>
+                    {expandable.expandIcon?.({
+                      expanded: expandedKeys.includes(record.id as Key),
+                      onExpand: (nextRecord) =>
+                        setExpandedKeys((keys) =>
+                          keys.includes(nextRecord.id as Key)
+                            ? keys.filter((key) => key !== nextRecord.id)
+                            : [...keys, nextRecord.id as Key],
+                        ),
+                      record,
+                    })}
+                  </td>
+                ) : null}
+                {rowSelection
+                  ? (() => {
+                      const props = rowSelection.getCheckboxProps?.(record) ?? {}
+                      const id = record.id as Key
+                      return (
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={rowSelection.selectedRowKeys?.includes(id) ?? false}
+                            onChange={(event) =>
+                              rowSelection.onChange?.(event.target.checked ? [id] : [])
+                            }
+                            {...props}
+                          />
+                        </td>
+                      )
+                    })()
+                  : null}
+                {columns.map((column, columnIndex) => (
+                  <td key={columnIndex}>
+                    {column.render
+                      ? column.render(column.dataIndex ? record[column.dataIndex] : undefined, record)
+                      : column.dataIndex
+                        ? String(record[column.dataIndex] ?? '')
+                        : null}
+                  </td>
+                ))}
+              </tr>
+              {expandedKeys.includes(record.id as Key) ? (
+                <tr key={`${String(record.id ?? rowIndex)}-expanded`}>
+                  <td colSpan={columns.length + (rowSelection ? 1 : 0) + 1}>
+                    {expandable?.expandedRowRender?.(record)}
+                  </td>
+                </tr>
+              ) : null}
+            </>
           ))}
         </tbody>
       </table>

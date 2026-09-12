@@ -105,6 +105,7 @@ export function IntegrationImportsWorkbench({
       </section>
       <SectionCard>
         <CoreDataTable
+          fillViewport
           tableLayout="fixed"
           scroll={{ x: 900 }}
           columns={columns}

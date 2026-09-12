@@ -106,13 +106,6 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
                   labelKey: 'shell.navigation.orders',
                 }
               : null,
-            permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
-              ? {
-                  key: 'mapping',
-                  path: '/portal/mapping',
-                  labelKey: 'shell.navigation.mapping',
-                }
-              : null,
             permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
               ? {
                   key: 'integrations',
@@ -172,11 +165,22 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           key: 'cost-centers',
           labelKey: 'shell.groups.legacyCostCenters',
           items: [
-            globalPermissions.has('VENDORS:READ')
-              ? { key: 'vendors', path: '/portal/vendors', labelKey: 'shell.navigation.vendors' }
+            permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+              ? {
+                  key: 'product-types',
+                  path: '/portal/catalog/product-types',
+                  labelKey: 'shell.navigation.productTypes',
+                }
               : null,
-            permissions.has('FINANCE:READ') || permissions.has('FINANCE:WRITE')
-              ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
+            permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+              ? {
+                  key: 'internal-templates',
+                  path: '/portal/catalog/templates',
+                  labelKey: 'shell.navigation.internalTemplates',
+                }
+              : null,
+            permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
+              ? { key: 'mapping', path: '/portal/mapping', labelKey: 'shell.navigation.mapping' }
               : null,
           ].filter((item): item is NavigationItem => item !== null),
         },

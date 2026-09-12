@@ -15,6 +15,18 @@ import { NotFoundPage } from './NotFoundPage'
 import { RouteErrorPage } from './RouteErrorPage'
 import { WorkspaceIndexRedirect } from './WorkspaceIndexRedirect'
 
+const loadCatalogWorkspaceRoute = () =>
+  Promise.all([
+    import('@/features/portal/components/PortalPageBoundary'),
+    import('@/features/portal/catalog/pages/CatalogWorkspacePage'),
+  ]).then(([{ PortalPageBoundary }, { CatalogWorkspacePage }]) => ({
+    Component: () => (
+      <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
+        <CatalogWorkspacePage />
+      </PortalPageBoundary>
+    ),
+  }))
+
 export const appRoutes: RouteObject[] = [
   { path: 'login', element: <LoginPage /> },
   {
@@ -205,17 +217,19 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'portal/catalog',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/catalog/pages/CatalogWorkspacePage'),
-          ]).then(([{ PortalPageBoundary }, { CatalogWorkspacePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
-                <CatalogWorkspacePage />
-              </PortalPageBoundary>
-            ),
-          })),
+        lazy: loadCatalogWorkspaceRoute,
+      },
+      {
+        path: 'portal/catalog/product-types',
+        lazy: loadCatalogWorkspaceRoute,
+      },
+      {
+        path: 'portal/catalog/listings',
+        lazy: loadCatalogWorkspaceRoute,
+      },
+      {
+        path: 'portal/catalog/templates',
+        lazy: loadCatalogWorkspaceRoute,
       },
       {
         path: 'portal/listing/:salesChannelCode',
@@ -381,7 +395,7 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
-        path: 'portal/reports',
+        path: 'portal/reports/:salesChannelCode?/:reportView?',
         lazy: () =>
           Promise.all([
             import('@/features/portal/components/PortalPageBoundary'),
@@ -503,7 +517,7 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
-        path: 'portal/production',
+        path: 'portal/production/:queue?',
         lazy: () =>
           Promise.all([
             import('@/features/portal/components/PortalPageBoundary'),

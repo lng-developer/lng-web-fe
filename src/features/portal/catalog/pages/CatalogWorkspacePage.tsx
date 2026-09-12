@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useRouteLoaderData } from 'react-router-dom'
-import { AppstoreOutlined, FileTextOutlined, TableOutlined } from '@ant-design/icons'
+import { useLocation, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom'
+import { AppstoreOutlined, TableOutlined } from '@ant-design/icons'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { UiTabLabel, UiTabs } from '@/shared/ui'
@@ -14,12 +13,13 @@ import { ProductTypeManagementPage } from './ProductTypeManagementPage'
 
 export const CatalogWorkspacePage = () => {
   const { t } = useTranslation()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { salesChannelCode: channelParam } = useParams()
   const salesChannelCode =
     channelParam && ['amazon', 'etsy', 'shopify'].includes(channelParam.toLowerCase())
       ? channelParam.toUpperCase()
       : undefined
-  const [activeTab, setActiveTab] = useState(salesChannelCode ? 'listings' : 'dashboard')
   const account = useRouteLoaderData('workspace') as CurrentAccount
   const canManageMasterData = account.permissions.includes('CATALOG:WRITE')
 
@@ -33,13 +33,34 @@ export const CatalogWorkspacePage = () => {
     )
   }
 
+  const catalogTab = location.pathname.endsWith('/listings')
+    ? 'listings'
+    : location.pathname.endsWith('/product-types')
+      ? 'product-types'
+      : location.pathname.endsWith('/templates')
+        ? 'templates'
+        : 'dashboard'
+
+  if (catalogTab === 'product-types') {
+    return <ProductTypeManagementPage canManage={canManageMasterData} />
+  }
+
+  if (catalogTab === 'templates') {
+    return <InternalTemplateManagementPage canManage={canManageMasterData} />
+  }
+
+  const handleTabChange = (nextTab: string) => {
+    if (nextTab === 'listings') navigate('/portal/catalog/listings')
+    else navigate('/portal/catalog')
+  }
+
   return (
     <UiTabs
-      activeKey={activeTab}
-      className={[styles.workspace, activeTab === 'listings' ? styles.listingsWorkspace : '']
+      activeKey={catalogTab}
+      className={[styles.workspace, catalogTab === 'listings' ? styles.listingsWorkspace : '']
         .filter(Boolean)
         .join(' ')}
-      onChange={setActiveTab}
+      onChange={handleTabChange}
       destroyOnHidden
       items={[
         {
@@ -49,7 +70,7 @@ export const CatalogWorkspacePage = () => {
               <AppstoreOutlined /> {t('portal.catalog.tabs.overview')}
             </UiTabLabel>
           ),
-          children: <CatalogDashboardPage onOpenListings={() => setActiveTab('listings')} />,
+          children: <CatalogDashboardPage onOpenListings={() => navigate('/portal/catalog/listings')} />,
         },
         {
           key: 'listings',
@@ -59,24 +80,6 @@ export const CatalogWorkspacePage = () => {
             </UiTabLabel>
           ),
           children: <CatalogListingWorkbenchPage account={account} />,
-        },
-        {
-          key: 'product-types',
-          label: (
-            <UiTabLabel>
-              <AppstoreOutlined /> {t('portal.catalog.tabs.productTypes')}
-            </UiTabLabel>
-          ),
-          children: <ProductTypeManagementPage canManage={canManageMasterData} />,
-        },
-        {
-          key: 'templates',
-          label: (
-            <UiTabLabel>
-              <FileTextOutlined /> {t('portal.catalog.tabs.templates')}
-            </UiTabLabel>
-          ),
-          children: <InternalTemplateManagementPage canManage={canManageMasterData} />,
         },
       ]}
     />

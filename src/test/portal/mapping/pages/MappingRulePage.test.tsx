@@ -97,7 +97,13 @@ describe('MappingRulePage', () => {
     )
 
     await waitFor(() =>
-      expect(listMappingRules).toHaveBeenCalledWith('skuConfig', expect.anything()),
+      expect(listMappingRules).toHaveBeenCalledWith('skuConfig', {
+        limit: 20,
+        page: 1,
+        q: '',
+        shopId: undefined,
+        status: undefined,
+      }),
     )
     expect(listMappingRules).toHaveBeenCalledTimes(1)
     expect(previewOrderItem).toHaveBeenCalledWith('item-1')

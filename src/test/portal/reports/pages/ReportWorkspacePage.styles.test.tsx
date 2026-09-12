@@ -22,9 +22,11 @@ const styles = readFileSync(
 
 describe('ReportWorkspacePage filter layout', () => {
   it('keeps all filters and CSV export in one desktop row', () => {
-    expect(styles).toContain(
-      'grid-template-columns: repeat(7, minmax(100px, 1fr)) minmax(240px, 1.35fr);',
-    )
+    expect(styles).toContain('.filters {')
+    expect(styles).toContain('display: flex !important;')
+    expect(styles).toContain('flex-wrap: wrap;')
+    expect(styles).toContain('.filterAction {')
+    expect(styles).toContain('flex: 0 0 auto !important;')
   })
 
   it('does not combine row-spanning seller cells with fixed daily columns', () => {

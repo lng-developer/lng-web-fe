@@ -1,3 +1,4 @@
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,14 +9,17 @@ import {
   getOperationsOverview,
   getReportFilterOptions,
   listAdsDaily,
+  listAdsSellerDaily,
   listChannelPerformance,
   listFinanceBySeller,
   listFinanceByTeam,
   listFinanceCoverage,
   listFinanceDaily,
   listFinanceDailyProfit,
+  listFinanceOrderProfitability,
   listFinanceSellerDaily,
   listVendorPerformance,
+  type SellerDailyProfit,
 } from '@/features/portal/reports/api/reportApi'
 import { buildRevenueTrend } from '@/features/portal/reports/pages/reportTrend'
 import { ReportWorkspacePage } from '@/features/portal/reports/pages/ReportWorkspacePage'
@@ -37,6 +41,7 @@ vi.mock('@/features/portal/reports/api/reportApi', async (importOriginal) => ({
   getOperationsOverview: vi.fn(),
   getReportFilterOptions: vi.fn(),
   listAdsDaily: vi.fn(),
+  listAdsSellerDaily: vi.fn(),
   listChannelPerformance: vi.fn(),
   listFinanceBySeller: vi.fn(),
   listFinanceCoverage: vi.fn(),
@@ -44,6 +49,7 @@ vi.mock('@/features/portal/reports/api/reportApi', async (importOriginal) => ({
   listFinanceByTeam: vi.fn(),
   listFinanceDaily: vi.fn(),
   listFinanceDailyProfit: vi.fn(),
+  listFinanceOrderProfitability: vi.fn(),
   listVendorPerformance: vi.fn(),
 }))
 
@@ -68,6 +74,12 @@ describe('ReportWorkspacePage', () => {
       shops: [],
     })
     vi.mocked(listFinanceDaily).mockResolvedValue([])
+    vi.mocked(listAdsSellerDaily).mockResolvedValue([])
+    vi.mocked(listFinanceOrderProfitability).mockResolvedValue({
+      items: [],
+      pagination: { total: 0, page: 1, limit: 20 },
+      summaryByCurrency: [],
+    })
     vi.mocked(listFinanceDailyProfit).mockResolvedValue([
       {
         date: '2026-08-01',
@@ -160,6 +172,172 @@ describe('ReportWorkspacePage', () => {
     expect(dayjs(initialFilters.dateTo).diff(dayjs(initialFilters.dateFrom), 'day')).toBe(6)
   })
 
+  it('loads Amazon order cost per order with the channel filter locked by its route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/portal/reports/amazon/order-cost']}>
+        <AppProviders>
+          <Routes>
+            <Route
+              path="/portal/reports/:salesChannelCode/:reportView"
+              element={<ReportWorkspacePage />}
+            />
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() =>
+      expect(listFinanceOrderProfitability).toHaveBeenCalledWith(
+        expect.objectContaining({ salesChannelCode: 'AMAZON' }),
+      ),
+    )
+    expect(screen.queryByText('Sales channel')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Ads & attribution' })).not.toBeInTheDocument()
+  })
+
+  it('loads Amazon daily employee ads with the channel filter locked by its route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/portal/reports/amazon/ads']}>
+        <AppProviders>
+          <Routes>
+            <Route
+              path="/portal/reports/:salesChannelCode/:reportView"
+              element={<ReportWorkspacePage />}
+            />
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() =>
+      expect(listAdsSellerDaily).toHaveBeenCalledWith(
+        expect.objectContaining({ salesChannelCode: 'AMAZON' }),
+      ),
+    )
+    expect(screen.queryByText('Sales channel')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Seller profitability' })).not.toBeInTheDocument()
+  })
+
+  it('loads Amazon net P&L with the channel filter locked by its route', async () => {
+    const sellerRows = Array.from(
+      { length: 9 },
+      (_, index): SellerDailyProfit => ({
+        date: '2026-09-01',
+        sellerEmployeeCode: `seller-${index + 1}`,
+        sellerName: index === 0 ? 'Đặng Thành Trung' : `Seller ${index + 1}`,
+        currency: 'USD',
+        itemCount: 2,
+        orderCount: 2,
+        revenueAmount: 10000,
+        baseCostAmount: 4000,
+        totalCostAmount: index === 8 ? null : 4800,
+        additionalFulfillmentCostAmount: 800,
+        marketplaceFeeAmount: 500,
+        refundAmount: 1200,
+        discountAmount: 800,
+        taxAmount: 0,
+        grossProfitAmount: 3500,
+        operatingCostAmount: 500,
+        adSpendAmount: 1000,
+        netProfitAmount: index === 8 ? null : 2000,
+        partialNetProfitAmount: index === 8 ? 1500 : 2000,
+        netMarginBps: index === 8 ? null : 2000,
+        missingCostCount: index === 8 ? 1 : 0,
+      }),
+    )
+    vi.mocked(listFinanceSellerDaily).mockResolvedValueOnce(sellerRows)
+
+    render(
+      <MemoryRouter initialEntries={['/portal/reports/amazon/sales']}>
+        <AppProviders>
+          <Routes>
+            <Route
+              path="/portal/reports/:salesChannelCode/:reportView"
+              element={<ReportWorkspacePage />}
+            />
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() =>
+      expect(listFinanceSellerDaily).toHaveBeenCalledWith(
+        expect.objectContaining({ salesChannelCode: 'AMAZON' }),
+      ),
+    )
+    expect(screen.queryByText('Sales channel')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Seller profitability' })).not.toBeInTheDocument()
+    const adjustments = await screen.findByText('Adjustments')
+    expect(adjustments).toBeInTheDocument()
+    expect(
+      within(adjustments.closest('[class*="metricCard"]') as HTMLElement).getByText('180.00'),
+    ).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: 'Profit comparison' })).toBeInTheDocument()
+    expect(screen.getAllByText('Đặng Thành Trung')).toHaveLength(2)
+    expect(screen.getByText('Seller 9')).toBeInTheDocument()
+    expect(screen.getByText('15.00')).toBeInTheDocument()
+    expect(screen.getByText('1 / 2 items with cost')).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Daily seller P&L · USD' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Total' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: dayjs().subtract(6, 'day').format('MM-DD') }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: dayjs().format('MM-DD') })).toBeInTheDocument()
+  })
+
+  it('does not show a scrollbar for a short seller comparison', async () => {
+    vi.mocked(listFinanceSellerDaily).mockResolvedValueOnce(
+      (
+        [
+          ['seller-1', 'Alex', 740195],
+          ['seller-2', 'Mai', 500705],
+        ] as Array<[string, string, number]>
+      ).map(([sellerEmployeeCode, sellerName, revenueAmount]) => ({
+        date: '2026-09-01',
+        sellerEmployeeCode,
+        sellerName,
+        currency: 'USD',
+        itemCount: 2,
+        orderCount: 2,
+        revenueAmount,
+        baseCostAmount: 400000,
+        totalCostAmount: 480000,
+        additionalFulfillmentCostAmount: 80000,
+        marketplaceFeeAmount: 50000,
+        refundAmount: 0,
+        discountAmount: 0,
+        taxAmount: 0,
+        grossProfitAmount: 200000,
+        operatingCostAmount: 50000,
+        adSpendAmount: 100000,
+        netProfitAmount: 50000,
+        partialNetProfitAmount: 50000,
+        netMarginBps: 1000,
+        missingCostCount: 0,
+      })),
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/portal/reports/amazon/sales']}>
+        <AppProviders>
+          <Routes>
+            <Route
+              path="/portal/reports/:salesChannelCode/:reportView"
+              element={<ReportWorkspacePage />}
+            />
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    const chart = await screen.findByRole('img', { name: 'Profit comparison' })
+    fireEvent.click(within(chart).getByRole('button', { name: 'Revenue' }))
+    expect(chart.querySelector('[class*="profitComparisonRowsScrollable"]')).toBeNull()
+  })
+
   it('shows finance coverage beside seller profitability without mixing it into profit totals', async () => {
     render(
       <AppProviders>
@@ -244,7 +422,7 @@ describe('ReportWorkspacePage', () => {
   it('loads the seller-day P&L matrix only after selecting daily detail', async () => {
     vi.mocked(listFinanceSellerDaily).mockResolvedValueOnce([
       {
-        date: '2026-09-05',
+        date: dayjs().format('YYYY-MM-DD'),
         sellerEmployeeCode: 'seller-1',
         sellerName: 'Alex',
         currency: 'USD',
@@ -305,14 +483,15 @@ describe('ReportWorkspacePage', () => {
     expect(listFinanceSellerDaily).toHaveBeenCalledTimes(1)
   })
 
-  it('places export alongside the report tabs instead of inside filters', async () => {
+  it('places export in the filter bar', async () => {
     render(
       <AppProviders>
         <ReportWorkspacePage />
       </AppProviders>,
     )
 
-    expect(await screen.findByTestId('reports-tab-actions')).toHaveTextContent('Export CSV')
+    const filters = await screen.findByRole('group', { name: 'Report filters' })
+    expect(within(filters).getByTestId('reports-tab-actions')).toHaveTextContent('Export CSV')
   })
 
   it('opens on seller profitability with a profit comparison chart', async () => {
@@ -347,6 +526,37 @@ describe('ReportWorkspacePage', () => {
       screen.queryByRole('heading', { name: 'How profit is calculated' }),
     ).not.toBeInTheDocument()
     expect((await screen.findAllByText('Alex')).length).toBeGreaterThan(1)
+  })
+
+  it('compares the known-cost subtotal when final profit is incomplete', async () => {
+    vi.mocked(listFinanceBySeller).mockResolvedValueOnce([
+      {
+        sellerEmployeeCode: 'seller-1',
+        sellerName: 'Alex',
+        currency: 'USD',
+        itemCount: 3,
+        revenueAmount: 10000,
+        baseCostAmount: 4000,
+        grossProfitAmount: null,
+        partialGrossProfitAmount: 3200,
+        costedItemCount: 2,
+        operatingCostAmount: 0,
+        netProfitAmount: null,
+        netMarginBps: null,
+        grossMarginBps: null,
+        missingCostCount: 1,
+      } as unknown as Awaited<ReturnType<typeof listFinanceBySeller>>[number],
+    ])
+
+    render(
+      <AppProviders>
+        <ReportWorkspacePage />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('Partial gross profit')).toBeInTheDocument()
+    expect(screen.getByText('32.00')).toBeInTheDocument()
+    expect(screen.getByText('2 / 3 items with cost')).toBeInTheDocument()
   })
 
   it('groups long date ranges into weekly revenue points', () => {
@@ -444,7 +654,7 @@ describe('ReportWorkspacePage', () => {
       '.ant-card',
     ) as HTMLElement
     expect(within(sellerCard).getByRole('columnheader', { name: 'Ad spend' })).toBeVisible()
-    expect(await within(sellerCard).findByText('$8.00')).toBeVisible()
+    expect(await within(sellerCard).findByText('8.00')).toBeVisible()
   })
 
   it('shows ads spend in team performance', async () => {
@@ -481,7 +691,7 @@ describe('ReportWorkspacePage', () => {
       '.ant-card',
     ) as HTMLElement
     expect(within(teamCard).getByRole('columnheader', { name: 'Ad spend' })).toBeVisible()
-    expect(await within(teamCard).findByText('$2.91')).toBeVisible()
+    expect(await within(teamCard).findByText('2.91')).toBeVisible()
   })
 
   it('does not request unsupported operational aggregates for a team-only reader', async () => {
