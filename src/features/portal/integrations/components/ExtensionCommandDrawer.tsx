@@ -1,4 +1,4 @@
-import { Alert, Drawer, Space, Typography } from 'antd'
+import { Alert, Modal, Space, Typography } from 'antd'
 
 import { StatusTag } from '@/shared/ui'
 
@@ -12,7 +12,15 @@ export interface ExtensionCommandDrawerProps {
 
 export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDrawerProps) {
   return (
-    <Drawer title="Task details" open={Boolean(command)} onClose={onClose}>
+    <Modal
+      title="Task details"
+      open={Boolean(command)}
+      onCancel={onClose}
+      footer={null}
+      width="min(1000px, 85vw)"
+      style={{ top: 40 }}
+      destroyOnClose
+    >
       {command ? (
         <div className={styles.commandTimeline}>
           <Space>
@@ -56,6 +64,6 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
           ) : null}
         </div>
       ) : null}
-    </Drawer>
+    </Modal>
   )
 }

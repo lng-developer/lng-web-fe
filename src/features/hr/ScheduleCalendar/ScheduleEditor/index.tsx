@@ -37,7 +37,6 @@ export const ScheduleEditor = ({ model }: ScheduleEditorProps) => {
 
   return (
     <Modal
-      centered
       destroyOnHidden
       open={Boolean(model.editor)}
       title={title}

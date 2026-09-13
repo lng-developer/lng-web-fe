@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AiOutlineFileSync } from 'react-icons/ai'
 import { BiExtension } from 'react-icons/bi'
@@ -41,11 +41,14 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Dropdown, Image, Layout, Menu, Popover } from 'antd'
+import { Badge, Dropdown, Image, Layout, Menu, Popover } from 'antd'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
+import { useDesignSummaryQuery } from '@/features/portal/design/hooks/useDesignTasksQuery'
+import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
+import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
 
-import type { NavigationGroup, NavigationItem } from './appNavigation'
+import { getCoreForPath, type NavigationGroup, type NavigationItem } from './appNavigation'
 import styles from './LegacySidebar.module.scss'
 
 const { Sider } = Layout
@@ -69,6 +72,7 @@ const bottomMenus = [
   { key: 'hr', labelKey: 'shell.cores.hr', icon: <TeamOutlined /> },
   { key: 'system', labelKey: 'legacyMenu.setting', icon: <SettingOutlined /> },
 ]
+const emptyBottomMenuGroups: Record<'hr' | 'system', NavigationGroup[]> = { hr: [], system: [] }
 
 const detailMenus: Record<string, LegacyMenuItem[]> = {
   sales: [
@@ -273,6 +277,18 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       key: '/portal/design',
       labelKey: 'portal.design.tasks',
       icon: <LuBrain size={20} />,
+      children: [
+        {
+          key: '/portal/design/amazon',
+          labelKey: 'portal.design.amazonTasks',
+          icon: <FaAmazon size={20} />,
+        },
+        {
+          key: '/portal/design/etsy',
+          labelKey: 'portal.design.etsyTasks',
+          icon: <FaEtsy size={20} />,
+        },
+      ],
     },
     {
       key: '/portal/design/files',
@@ -344,13 +360,61 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
 function toMenuItems(
   items: LegacyMenuItem[],
   t: (key: string) => string,
+  badgeCounts: Partial<Record<string, number>> = {},
 ): Parameters<typeof Menu>[0]['items'] {
   return items.map((item) => ({
     key: item.key,
     icon: item.icon,
-    label: item.children ? t(item.labelKey) : <Link to={item.key}>{t(item.labelKey)}</Link>,
-    children: item.children ? toMenuItems(item.children, t) : undefined,
+    label: (
+      <span className={styles.menuLabel}>
+        <span className={styles.menuLabelText}>
+          {item.children ? t(item.labelKey) : <Link to={item.key}>{t(item.labelKey)}</Link>}
+        </span>
+        {(badgeCounts[item.key] ?? 0) > 0 ? (
+          <span className={styles.menuBadge}>
+            <Badge count={badgeCounts[item.key]} overflowCount={99} />
+          </span>
+        ) : null}
+      </span>
+    ),
+    children: item.children ? toMenuItems(item.children, t, badgeCounts) : undefined,
   }))
+}
+
+function matchesRoute(key: string, pathname: string, search: string) {
+  if (!key.startsWith('/')) return false
+  if (key.includes('?')) return key === pathname + search
+  return pathname === key || pathname.startsWith(`${key}/`)
+}
+
+function findOpenKeys(
+  items: LegacyMenuItem[],
+  pathname: string,
+  search: string,
+): string[] | undefined {
+  for (const item of items) {
+    const childKeys = item.children && findOpenKeys(item.children, pathname, search)
+    if (childKeys) return [item.key, ...childKeys]
+    if (matchesRoute(item.key, pathname, search)) return []
+  }
+}
+
+function getRouteMenuState(
+  pathname: string,
+  search: string,
+  bottomMenuGroups: Record<'hr' | 'system', NavigationGroup[]>,
+) {
+  for (const [menuKey, items] of Object.entries(detailMenus)) {
+    const openKeys = findOpenKeys(items, pathname, search)
+    if (openKeys) return { menuKey, openKeys }
+  }
+
+  const core = getCoreForPath(pathname)
+  const menuKey = core === 'hr' ? 'hr' : core === 'system' ? 'system' : 'sales'
+  const items =
+    detailMenus[menuKey] ??
+    (menuKey === 'hr' || menuKey === 'system' ? toLegacyMenuItems(bottomMenuGroups[menuKey]) : [])
+  return { menuKey, openKeys: findOpenKeys(items, pathname, search) ?? [] }
 }
 
 function iconForNavigationItem(item: NavigationItem) {
@@ -397,7 +461,7 @@ function toLegacyMenuItems(groups: NavigationGroup[]): LegacyMenuItem[] {
 export function LegacySidebar({
   collapsed,
   onCollapsedChange,
-  bottomMenus: bottomMenuGroups = { hr: [], system: [] },
+  bottomMenus: bottomMenuGroups = emptyBottomMenuGroups,
 }: {
   collapsed: boolean
   onCollapsedChange: (value: boolean) => void
@@ -406,21 +470,31 @@ export function LegacySidebar({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [activeMenu, setActiveMenu] = useState('sales')
+  const orderSummary = useOrderSummaryQuery({ page: 1, limit: 1 })
+  const designSummary = useDesignSummaryQuery({})
+  const productionQueueCounts = useProductionQueueCountsQuery({})
+  const [activeMenu, setActiveMenu] = useState(
+    () => getRouteMenuState(location.pathname, location.search, bottomMenuGroups).menuKey,
+  )
   const [openDropdown, setOpenDropdown] = useState(false)
-  const [openKeys, setOpenKeys] = useState<string[]>(() => {
-    if (
-      location.pathname === workspaceRouteLinks.orders &&
-      location.search.includes('salesChannelCode=')
-    )
-      return [workspaceRouteLinks.orders]
-    if (location.pathname.startsWith('/portal/listing')) return ['listing']
-    return []
-  })
+  const [openKeys, setOpenKeys] = useState<string[]>(
+    () => getRouteMenuState(location.pathname, location.search, bottomMenuGroups).openKeys,
+  )
+  useEffect(() => {
+    const routeState = getRouteMenuState(location.pathname, location.search, bottomMenuGroups)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveMenu(routeState.menuKey)
+    setOpenKeys(routeState.openKeys)
+  }, [bottomMenuGroups, location.pathname, location.search])
   const activeDetailMenu =
     detailMenus[activeMenu] ??
     toLegacyMenuItems(bottomMenuGroups[activeMenu as 'hr' | 'system'] ?? [])
-  const menuItems = toMenuItems(activeDetailMenu, t)
+  const badgeCounts = {
+    [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
+    '/portal/design': designSummary.data?.unassigned,
+    '/portal/production/blocked': productionQueueCounts.data?.blocked,
+  }
+  const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
 
   const popover = (menuKey: string) => (
     <div className={styles.popoverMenu}>
@@ -434,6 +508,7 @@ export function LegacySidebar({
           detailMenus[menuKey] ??
             toLegacyMenuItems(bottomMenuGroups[menuKey as 'hr' | 'system'] ?? []),
           t,
+          badgeCounts,
         )}
         onClick={({ key }) => navigate(String(key))}
       />

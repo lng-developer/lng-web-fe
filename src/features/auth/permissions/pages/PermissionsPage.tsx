@@ -104,8 +104,6 @@ export function PermissionsPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.permissions.title')}
-        description={t('auth.permissions.description')}
         actions={
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => openEditor()}>
             {t('auth.permissions.create')}

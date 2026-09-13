@@ -37,7 +37,8 @@ import styles from './IntegrationWorkbenchPage.module.scss'
 import { IntegrationWorkbenchTabs } from './IntegrationWorkbenchTabs'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
-type IntegrationWorkbenchTab = 'orders' | 'extension' | 'finance'
+const INTEGRATION_TABS = ['orders', 'extension', 'finance'] as const
+type IntegrationWorkbenchTab = (typeof INTEGRATION_TABS)[number]
 const JOB_STATUSES: ImportJobStatus[] = [
   'PENDING',
   'PARSING',
@@ -121,9 +122,24 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const showFeedbackToast = useFeedbackToast()
   const [uploadOpen, setUploadOpen] = useState(false)
   const [financeUploadOpen, setFinanceUploadOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<IntegrationWorkbenchTab>(() =>
-    searchParams.get('tab') === 'finance' ? 'finance' : 'orders',
-  )
+  const requestedTab = searchParams.get('tab')
+  const activeTab: IntegrationWorkbenchTab =
+    requestedTab && (INTEGRATION_TABS as readonly string[]).includes(requestedTab)
+      ? (requestedTab as IntegrationWorkbenchTab)
+      : 'orders'
+
+  const handleTabChange = (nextTab: IntegrationWorkbenchTab) => {
+    const next = new URLSearchParams(searchParams)
+    if (nextTab === 'orders') {
+      next.delete('tab')
+    } else {
+      next.set('tab', nextTab)
+    }
+    if (nextTab !== 'orders') {
+      next.delete('selectedJobId')
+    }
+    setSearchParams(next, { replace: true })
+  }
   const params = readParams(searchParams)
   const selectedJobId = searchParams.get('selectedJobId') || undefined
   const canWrite = canWriteOrdersSomewhere(account)
@@ -307,10 +323,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
             onRetry={() => void jobs.refetch()}
           />
         }
-        onChange={(nextTab) => {
-          setActiveTab(nextTab)
-          if (nextTab !== 'orders') updateParams({ selectedJobId: undefined }, false)
-        }}
+        onChange={handleTabChange}
         onFinanceUpload={() => setFinanceUploadOpen(true)}
         onUpload={() => setUploadOpen(true)}
       />

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Drawer, Progress, Select, Space, Table, Typography } from 'antd'
+import { Alert, Button, Modal, Progress, Select, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -237,14 +237,17 @@ export function FinanceImportSection({
       ) : (
         <Alert type="info" showIcon message={permissionHint} />
       )}
-      <Drawer
+      <Modal
         open={Boolean(selectedBatch)}
         title={currentBatch?.originalFilename || title}
-        size="large"
-        onClose={() => setSelectedBatch(undefined)}
+        width="min(1360px, 92vw)"
+        style={{ top: 40 }}
+        onCancel={() => setSelectedBatch(undefined)}
+        footer={null}
+        destroyOnClose
       >
         {currentBatch ? (
-          <Space orientation="vertical" size={8} style={{ width: '100%' }}>
+          <Space direction="vertical" size={8} style={{ width: '100%', marginBottom: 16 }}>
             <Typography.Text type="secondary">
               {`${currentBatch.processedRows} processed · ${currentBatch.validRows} valid · ${currentBatch.errorCount} errors`}
             </Typography.Text>
@@ -287,7 +290,7 @@ export function FinanceImportSection({
           pagination={false}
           scroll={{ x: 800 }}
         />
-      </Drawer>
+      </Modal>
     </SectionCard>
   )
 }

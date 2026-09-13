@@ -68,12 +68,12 @@ vi.mock('@/features/portal/work-scores/api/workScoreApi', async (importOriginal)
 
 describe('WorkScoreWorkbenchPage', () => {
   afterEach(cleanup)
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     vi.mocked(listWorkScoreRules).mockResolvedValue([])
     vi.mocked(upsertWorkScoreRule).mockResolvedValue({} as never)
     queryClient.clear()
-    i18n.changeLanguage('en')
+    await i18n.changeLanguage('en')
   })
 
   it('renders Scale rows and keeps quick actions in one overlay', async () => {
@@ -155,6 +155,7 @@ describe('WorkScoreWorkbenchPage', () => {
       </AppProviders>,
     )
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Score setup' }))
     expect(await screen.findByLabelText('Priority')).toBeVisible()
     expect(screen.queryByLabelText('Slot key')).not.toBeInTheDocument()
   }, 15_000)

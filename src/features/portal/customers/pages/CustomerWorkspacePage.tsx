@@ -13,8 +13,8 @@ import {
   Button,
   Card,
   Descriptions,
-  Drawer,
   Input,
+  Modal,
   Select,
   Space,
   Tag,
@@ -41,7 +41,7 @@ import {
 } from '@/features/portal/customers/hooks'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { FilterBar, MetricCard, PageHeader } from '@/shared/ui'
+import { FilterBar, MetricCard } from '@/shared/ui'
 
 import styles from './CustomerWorkspacePage.module.scss'
 
@@ -173,8 +173,6 @@ export const CustomerWorkspacePage = () => {
 
   return (
     <section className={styles.page}>
-      <PageHeader title={t('customers.title')} description={t('customers.description')} />
-
       <section className={styles.metrics}>
         <MetricCard
           icon={<TeamOutlined />}
@@ -279,11 +277,14 @@ export const CustomerWorkspacePage = () => {
         />
       </Card>
 
-      <Drawer
+      <Modal
+        destroyOnClose
         title={selected?.name || selected?.emailMasked || t('customers.title')}
         open={Boolean(selectedId)}
-        width={520}
-        onClose={() => setSelectedId(null)}
+        width="min(1080px, 88vw)"
+        style={{ top: 40 }}
+        onCancel={() => setSelectedId(null)}
+        footer={null}
       >
         {selected ? (
           <Space direction="vertical" size="large" className={styles.drawer}>
@@ -360,7 +361,7 @@ export const CustomerWorkspacePage = () => {
             />
           </Space>
         ) : null}
-      </Drawer>
+      </Modal>
     </section>
   )
 }

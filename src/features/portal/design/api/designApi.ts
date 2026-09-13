@@ -18,11 +18,12 @@ export type DesignSubmission = {
   rejectReason: string | null
   approvedAssetId: string | null
 }
+export type DesignTaskPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 export type DesignTask = {
   id: string
   taskType: string
   status: string
-  priority: string
+  priority: DesignTaskPriority
   listing: {
     sku: string | null
     salesChannelCode?: 'AMAZON' | 'ETSY' | string | null
@@ -60,7 +61,7 @@ export type DesignListParams = {
   salesChannelCode?: 'AMAZON' | 'ETSY'
   status?: string
   taskType?: string
-  priority?: string
+  priority?: DesignTaskPriority
 }
 export type DesignAssignee = {
   id: string
@@ -100,7 +101,7 @@ export type DesignSummary = {
 export type CreateDesignTaskInput = {
   listingId: string
   taskType: 'MOCKUP' | 'PNG_ASSET' | 'IDEA' | 'CLONE'
-  priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
+  priority?: DesignTaskPriority
   brief?: string
   note?: string
   referenceAssetIds?: string[]
@@ -130,6 +131,8 @@ export const assignDesignTask = async (id: string, assignedDesignerId: string) =
   unwrap<DesignTask>(
     await apiClient.patch(`/api/design/tasks/${id}/assign`, { assignedDesignerId }),
   )
+export const updateDesignTaskPriority = async (id: string, priority: DesignTaskPriority) =>
+  unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/priority`, { priority }))
 export const bulkAssignDesignTasks = async (taskIds: string[], assignedDesignerId: string) =>
   unwrap<{
     assigned: DesignTask[]

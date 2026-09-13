@@ -23,14 +23,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import {
-  CopyableText,
-  FeedbackAlert,
-  MetricCard,
-  PageHeader,
-  StatusTag,
-  useFeedbackToast,
-} from '@/shared/ui'
+import { CopyableText, FeedbackAlert, MetricCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import { getListing, type Listing } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
@@ -59,15 +52,12 @@ function marketplaceProductUrl(listing: Listing) {
   return null
 }
 
-export function CatalogListingWorkbenchPage({
-  account: accountProp,
-  fixedSalesChannelCode,
-  hideCatalogHeader = false,
-}: {
+export function CatalogListingWorkbenchPage(props: {
   readonly account?: CurrentAccount
   readonly fixedSalesChannelCode?: string
   readonly hideCatalogHeader?: boolean
 }) {
+  const { account: accountProp, fixedSalesChannelCode } = props
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const { t } = useTranslation()
   const account = accountProp ?? loadedAccount
@@ -397,12 +387,6 @@ export function CatalogListingWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      {!hideCatalogHeader ? (
-        <PageHeader
-          title={t('portal.catalog.title')}
-          description={t('portal.catalog.description')}
-        />
-      ) : null}
       {listings.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.catalog.unavailable')} />
       ) : null}

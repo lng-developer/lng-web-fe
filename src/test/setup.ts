@@ -25,7 +25,12 @@ Object.defineProperty(window, 'matchMedia', {
 const originalGetComputedStyle = window.getComputedStyle
 window.getComputedStyle = (element) => {
   const style = originalGetComputedStyle(element)
-  if (element.classList?.contains('ant-popover')) {
+  if (
+    element.classList?.contains('ant-popover') ||
+    element.classList?.contains('ant-modal') ||
+    element.classList?.contains('ant-modal-wrap') ||
+    element.classList?.contains('ant-modal-content')
+  ) {
     return new Proxy(style, {
       get(target, prop) {
         if (prop === 'opacity') return '1'

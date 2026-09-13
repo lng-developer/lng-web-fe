@@ -4,12 +4,14 @@ import { useSearchParams } from 'react-router-dom'
 import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
+  InboxOutlined,
   ThunderboltOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
 
 import { MetricCard, UiTabs } from '@/shared/ui'
 
+import { MappingTabLabel } from '../components/MappingTabLabel'
 import { useMappingSummaryQuery } from '../hooks'
 import { MAPPING_RULE_PAGES } from '../model/mappingPageConfig'
 import { MappingRulePage } from './MappingRulePage'
@@ -17,6 +19,14 @@ import { MappingWorkbenchPage } from './MappingWorkbenchPage'
 import styles from './MappingWorkspacePage.module.scss'
 
 const WORKBENCH = 'workbench'
+
+const STAGE_BY_PAGE_KEY = {
+  'sku-rules': 'SKU_CLEANUP',
+  'product-mapping': 'PRODUCT_MAPPING',
+  'input-semantics': 'INPUT_SEMANTICS',
+  'value-aliases': 'VALUE_ALIASES',
+  'vendor-routing': 'VENDOR_ROUTING',
+} as const
 
 export const MappingWorkspacePage = () => {
   const { t } = useTranslation()
@@ -34,16 +44,34 @@ export const MappingWorkspacePage = () => {
     () => [
       {
         key: WORKBENCH,
-        label: t('mapping.pages.workbench'),
+        label: (
+          <MappingTabLabel
+            active={activeTab === WORKBENCH}
+            count={summary.data?.blockedSampleCount}
+            icon={<InboxOutlined />}
+            label={t('mapping.pages.workbench')}
+          />
+        ),
         children: <MappingWorkbenchPage />,
       },
-      ...MAPPING_RULE_PAGES.map((page) => ({
-        key: page.key,
-        label: t(page.titleKey),
-        children: <MappingRulePage pageKey={page.key} />,
-      })),
+      ...MAPPING_RULE_PAGES.map((page, index) => {
+        const stage = STAGE_BY_PAGE_KEY[page.key]
+        const count = summary.data?.stageCounts?.[stage]
+        return {
+          key: page.key,
+          label: (
+            <MappingTabLabel
+              active={activeTab === page.key}
+              count={count}
+              label={t(page.titleKey)}
+              step={index + 1}
+            />
+          ),
+          children: <MappingRulePage pageKey={page.key} />,
+        }
+      }),
     ],
-    [t],
+    [activeTab, summary.data?.blockedSampleCount, summary.data?.stageCounts, t],
   )
 
   return (

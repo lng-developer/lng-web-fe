@@ -110,6 +110,31 @@
   color: var(--ant-color-text-tertiary);
 }
 
+/* ── Controls Bar (Filters & Actions outside table) ──── */
+.controlsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filtersWrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.actionsWrapper {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.tableCard :global(.ant-card-body) {
+  padding: 0;
+  overflow: hidden;
+}
+
 /* ── Filters ─────────────────────────────────────────── */
 .filters {
   width: 100%;
@@ -125,12 +150,6 @@
 
 .dates {
   width: 260px;
-}
-
-.ruleSetup {
-  display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
 }
 
 /* ── Drawer Scoring Section ────────────────────────────── */

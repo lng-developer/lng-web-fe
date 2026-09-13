@@ -13,7 +13,7 @@ export interface FilterBarProps {
 
 export function FilterBar({
   contentClassName,
-  bordered = true,
+  bordered = false,
   label,
   children,
   actions,
@@ -22,7 +22,10 @@ export function FilterBar({
     <Flex
       role="search"
       aria-label={label}
-      className={[styles.filterBar, !bordered && styles.filterBarBorderless]
+      className={[
+        styles.filterBar,
+        bordered ? styles.filterBarBordered : styles.filterBarBorderless,
+      ]
         .filter(Boolean)
         .join(' ')}
       align="flex-end"

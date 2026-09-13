@@ -111,8 +111,6 @@ export function RolesPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.roles.title')}
-        description={t('auth.roles.description')}
         actions={
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => openEditor()}>
             {t('auth.roles.create')}

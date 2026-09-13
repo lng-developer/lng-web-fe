@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -6,11 +7,28 @@ let latestTableProps: Record<string, unknown> = {}
 
 vi.mock('antd', () => ({
   Alert: ({ message }: { message: string }) => <div>{message}</div>,
-  Image: ({ alt, src, onClick }: { alt: string; src: string; onClick?: () => void }) => (
-    <button type="button" aria-label={alt} onClick={onClick}>
-      <img alt={alt} src={src} />
-    </button>
-  ),
+  Image: ({ alt, src, onClick }: { alt: string; src: string; onClick?: () => void }) => {
+    const [open, setOpen] = useState(false)
+    return (
+      <>
+        <button
+          type="button"
+          aria-label={alt}
+          onClick={() => {
+            onClick?.()
+            setOpen(true)
+          }}
+        >
+          <img alt={alt} src={src} />
+        </button>
+        {open ? (
+          <div role="dialog">
+            <img alt={alt} src={src} />
+          </div>
+        ) : null}
+      </>
+    )
+  },
   Modal: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
     open ? <div role="dialog">{children}</div> : null,
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (

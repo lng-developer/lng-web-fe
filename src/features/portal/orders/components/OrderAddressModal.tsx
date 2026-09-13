@@ -76,7 +76,6 @@ function OrderAddressModalInner({
   return (
     <>
       <PopupModal
-        centered
         anchor={anchor}
         width={920}
         open
@@ -117,7 +116,6 @@ function OrderAddressModalInner({
       </PopupModal>
 
       <Modal
-        centered
         open={overrideReasonOpen}
         title={t('orders.actions.overrideAddress')}
         okText={t('orders.actions.overrideAddress')}

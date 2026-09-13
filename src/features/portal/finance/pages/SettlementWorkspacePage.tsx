@@ -1,9 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DollarCircleOutlined, LinkOutlined, RollbackOutlined, WalletOutlined } from '@ant-design/icons'
+import {
+  DollarCircleOutlined,
+  LinkOutlined,
+  RollbackOutlined,
+  WalletOutlined,
+} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Drawer, Progress, Space, Table, Typography } from 'antd'
+import { Alert, Button, Modal, Progress, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
@@ -84,7 +89,8 @@ export function SettlementWorkspacePage() {
       {
         title: t('finance.settlements.netSettlement'),
         align: 'right',
-        render: (_, row) => formatFinanceMoney(row.netSettlementAmount ?? row.totalAmount, row.currency),
+        render: (_, row) =>
+          formatFinanceMoney(row.netSettlementAmount ?? row.totalAmount, row.currency),
       },
       {
         title: t('finance.settlements.ledgerNet'),
@@ -101,7 +107,9 @@ export function SettlementWorkspacePage() {
           const batch = batches.data?.items.find((item) => item.id === row.importBatchId)
           return (
             <Space orientation="vertical" size={2}>
-              <StatusTag status={statusTone(batch?.status)}>{batch?.status || 'IMPORTED'}</StatusTag>
+              <StatusTag status={statusTone(batch?.status)}>
+                {batch?.status || 'IMPORTED'}
+              </StatusTag>
               {batch?.recalculationTotal ? (
                 <Typography.Text type="secondary">
                   {`${batch.recalculationCompleted}/${batch.recalculationTotal}`}
@@ -118,9 +126,21 @@ export function SettlementWorkspacePage() {
   const ledgerColumns = useMemo<TableColumnsType<SettlementLedgerLine>>(
     () => [
       { title: t('finance.settlements.posted'), dataIndex: 'postedAt', render: date },
-      { title: t('finance.settlements.type'), dataIndex: 'transactionType', render: (value) => value || '—' },
-      { title: t('finance.settlements.amountType'), dataIndex: 'amountType', render: (value) => value || '—' },
-      { title: t('finance.settlements.order'), dataIndex: 'externalOrderId', render: (value) => value || '—' },
+      {
+        title: t('finance.settlements.type'),
+        dataIndex: 'transactionType',
+        render: (value) => value || '—',
+      },
+      {
+        title: t('finance.settlements.amountType'),
+        dataIndex: 'amountType',
+        render: (value) => value || '—',
+      },
+      {
+        title: t('finance.settlements.order'),
+        dataIndex: 'externalOrderId',
+        render: (value) => value || '—',
+      },
       { title: t('finance.settlements.sku'), dataIndex: 'sku', render: (value) => value || '—' },
       {
         title: t('finance.settlements.movement'),
@@ -134,9 +154,6 @@ export function SettlementWorkspacePage() {
   return (
     <section className={styles.page}>
       <SectionCard title={t('finance.settlements.title')}>
-        <Typography.Paragraph type="secondary" className={styles.description}>
-          {t('finance.settlements.description')}
-        </Typography.Paragraph>
         {currencySummaries.length ? (
           <div className={styles.metrics}>
             {currencySummaries.map((summary) => (
@@ -158,9 +175,11 @@ export function SettlementWorkspacePage() {
                   <MetricCard
                     icon={<LinkOutlined />}
                     label={t('finance.settlements.ledgerLines')}
-                    value={settlements.data?.items
-                      .filter((item) => item.currency === summary.currency)
-                      .reduce((total, item) => total + item.ledgerSummary.lineCount, 0) ?? 0}
+                    value={
+                      settlements.data?.items
+                        .filter((item) => item.currency === summary.currency)
+                        .reduce((total, item) => total + item.ledgerSummary.lineCount, 0) ?? 0
+                    }
                     variant="info"
                   />
                 </div>
@@ -210,11 +229,18 @@ export function SettlementWorkspacePage() {
         />
       </SectionCard>
 
-      <Drawer
+      <Modal
+        destroyOnClose
         open={Boolean(selected)}
-        title={selected ? `${t('finance.settlements.settlementId')}: ${selected.settlementId || '—'}` : undefined}
-        size="large"
-        onClose={() => setSelected(undefined)}
+        title={
+          selected
+            ? `${t('finance.settlements.settlementId')}: ${selected.settlementId || '—'}`
+            : undefined
+        }
+        width="min(1360px, 92vw)"
+        style={{ top: 40 }}
+        onCancel={() => setSelected(undefined)}
+        footer={null}
       >
         {detail.data ? (
           <Space orientation="vertical" size={16} style={{ width: '100%' }}>
@@ -233,13 +259,19 @@ export function SettlementWorkspacePage() {
               <MetricCard
                 icon={<DollarCircleOutlined />}
                 label={t('finance.settlements.inflow')}
-                value={formatFinanceMoney(detail.data.ledger.summary.inflowAmount, detail.data.settlement.currency)}
+                value={formatFinanceMoney(
+                  detail.data.ledger.summary.inflowAmount,
+                  detail.data.settlement.currency,
+                )}
                 variant="success"
               />
               <MetricCard
                 icon={<RollbackOutlined />}
                 label={t('finance.settlements.outflow')}
-                value={formatFinanceMoney(detail.data.ledger.summary.outflowAmount, detail.data.settlement.currency)}
+                value={formatFinanceMoney(
+                  detail.data.ledger.summary.outflowAmount,
+                  detail.data.settlement.currency,
+                )}
                 variant="warning"
               />
               <MetricCard
@@ -251,7 +283,9 @@ export function SettlementWorkspacePage() {
             </div>
             {selectedBatch?.recalculationTotal ? (
               <div>
-                <Typography.Text type="secondary">{selectedBatch.recalculationStatus}</Typography.Text>
+                <Typography.Text type="secondary">
+                  {selectedBatch.recalculationStatus}
+                </Typography.Text>
                 <Progress
                   percent={Math.round(
                     ((selectedBatch.recalculationCompleted + selectedBatch.recalculationFailed) /
@@ -279,7 +313,7 @@ export function SettlementWorkspacePage() {
             />
           </Space>
         ) : null}
-      </Drawer>
+      </Modal>
     </section>
   )
 }

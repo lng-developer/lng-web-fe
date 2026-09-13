@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { listListings } from '@/features/portal/catalog/api/catalogApi'
+import { listListings, requestListingPsd } from '@/features/portal/catalog/api/catalogApi'
 import { CatalogListingWorkbenchPage } from '@/features/portal/catalog/pages/CatalogListingWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
@@ -39,6 +39,7 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
         etsyListingId: null,
         title: 'Shirt',
         productImageUrl: 'https://m.media-amazon.com/images/S/listing.png',
+        previewImageUrl: 'https://cdn.lng.co/previews/listing.png',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'US',
         status: 'ACTIVE',
@@ -80,6 +81,7 @@ vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
   updateListing: vi.fn(),
   approveListing: vi.fn(),
   rejectListing: vi.fn(),
+  requestListingPsd: vi.fn().mockResolvedValue({ id: 'task-1' }),
   requestListingVariantPsd: vi.fn().mockResolvedValue({ id: 'task-1' }),
   createListingVariant: vi.fn(),
   updateListingVariant: vi.fn(),
@@ -101,14 +103,14 @@ describe('CatalogListingWorkbenchPage', () => {
         <CatalogListingWorkbenchPage account={account} />
       </AppProviders>,
     )
-    fireEvent.click(await screen.findByRole('button', { name: 'Expand variants' }))
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Expand variants' }))[0])
     await waitFor(() => expect(screen.getByText(/Product variants/)).toBeInTheDocument())
     expect(await screen.findByText('Unisex Hoodie')).toBeInTheDocument()
     expect(screen.getByText('Hoodie Master')).toBeInTheDocument()
     expect(document.querySelector('button[aria-label="Request PSD"]')).not.toBeNull()
   }, 15_000)
 
-  it('shows the imported listing image in the listing table', async () => {
+  it('prefers the editable preview image without replacing the imported product image', async () => {
     render(
       <AppProviders>
         <CatalogListingWorkbenchPage account={account} />
@@ -117,25 +119,49 @@ describe('CatalogListingWorkbenchPage', () => {
 
     expect(await screen.findByRole('img', { name: 'Shirt' })).toHaveAttribute(
       'src',
-      'https://m.media-amazon.com/images/S/listing.png',
+      'https://cdn.lng.co/previews/listing.png',
     )
     expect(screen.getAllByRole('img', { name: 'Shirt' })).toHaveLength(1)
   }, 15_000)
 
-  it('gives the QC column enough room for review status badges', async () => {
+  it('opens the full-size viewer when the listing preview is clicked', async () => {
     render(
       <AppProviders>
         <CatalogListingWorkbenchPage account={account} />
       </AppProviders>,
     )
 
-    const qcHeader = await screen.findByRole('columnheader', { name: 'QC' })
-    const table = qcHeader.closest('table')
+    fireEvent.click(await screen.findByRole('button', { name: 'Preview' }))
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  }, 15_000)
+
+  it('removes the unused QC column from the listing workspace', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    await screen.findByRole('columnheader', { name: 'PSD' })
+    expect(screen.queryByRole('columnheader', { name: 'QC' })).not.toBeInTheDocument()
+  })
+
+  it('asks for a PSD priority before creating the request', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Request default PSD' }))[0])
     expect(
-      Array.from(table?.querySelectorAll('col') ?? []).some(
-        (column) => column.style.width === '150px',
-      ),
-    ).toBe(true)
+      await screen.findByText('Select the delivery priority for this PSD request.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Priority')).toBeInTheDocument()
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Request PSD' }).at(-1)!)
+    await waitFor(() => expect(requestListingPsd).toHaveBeenCalledWith('listing-1', 'NORMAL'))
   })
 
   it('loads ten listings on the first page by default', async () => {
@@ -152,19 +178,31 @@ describe('CatalogListingWorkbenchPage', () => {
     )
   })
 
-  it('requests listings sorted by sold quantity when Sales is selected', async () => {
+  it('fills the remaining viewport so listing pagination stays docked at the bottom', async () => {
     render(
       <AppProviders>
         <CatalogListingWorkbenchPage account={account} />
       </AppProviders>,
     )
 
-    fireEvent.click(await screen.findByRole('columnheader', { name: 'Sales' }))
+    const table = (await screen.findByRole('columnheader', { name: 'Listing' })).closest('table')
+    if (!table) throw new Error('Listing table is unavailable')
+    expect(table.closest('[class*="dataTableFillViewport"]')).toBeInTheDocument()
+    expect(table.closest('[class*="dataTablePaginationAtBottom"]')).toBeInTheDocument()
+  })
 
-    await waitFor(() =>
-      expect(listListings).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 1, limit: 10, sort: 'quantitySoldDesc' }),
-      ),
+  it('sorts the loaded page by sales without another API request', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
     )
+
+    await screen.findByText('SKU-1')
+    const requestCount = vi.mocked(listListings).mock.calls.length
+    fireEvent.click(screen.getByRole('columnheader', { name: 'Sales' }))
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(vi.mocked(listListings).mock.calls).toHaveLength(requestCount)
   })
 })

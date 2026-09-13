@@ -56,7 +56,20 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   return (
     <ThemePreferenceContext value={preference}>
-      <ConfigProvider locale={antdLocale} modal={{ centered: true }} theme={appTheme}>
+      <ConfigProvider
+        locale={antdLocale}
+        modal={{
+          centered: false,
+          style: { top: '6vh' },
+          styles: {
+            body: {
+              maxHeight: 'calc(94dvh - 160px)',
+              overflowY: 'auto',
+            },
+          },
+        }}
+        theme={appTheme}
+      >
         {children}
       </ConfigProvider>
     </ThemePreferenceContext>

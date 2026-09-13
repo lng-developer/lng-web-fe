@@ -14,7 +14,6 @@ import {
   type DateRangeValue,
   FeedbackAlert,
   FilterBar,
-  PageHeader,
   SearchInput,
   SectionCard,
   StatusTag,
@@ -159,7 +158,6 @@ export function MediaWorkspacePage() {
   )
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <PageHeader title={t('media.title')} description={t('media.description')} />
       <SectionCard>
         <CoreDataTable
           fillViewport

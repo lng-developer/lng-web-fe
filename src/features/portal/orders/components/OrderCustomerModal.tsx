@@ -60,7 +60,6 @@ function OrderCustomerModalInner({
 
   return (
     <PopupModal
-      centered
       anchor={anchor}
       width={680}
       open

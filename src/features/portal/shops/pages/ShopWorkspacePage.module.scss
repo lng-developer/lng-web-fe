@@ -76,20 +76,43 @@
   white-space: nowrap;
 }
 
-.filters {
-  min-width: min(100%, 440px);
+.controlsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.filtersWrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.actionsWrapper {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.actionBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .filters {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 240px 180px 1fr;
+  display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .filterActions {
-  justify-self: end;
+  display: flex;
+  align-items: center;
 }
 
 .statusFilter {

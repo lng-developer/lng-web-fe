@@ -8,12 +8,13 @@ import {
   EyeOutlined,
   PictureOutlined,
   ScissorOutlined,
+  SettingOutlined,
   StopOutlined,
   TrophyOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Form, Input, InputNumber, Select, Space, Table, Tooltip, Typography } from 'antd'
+import { Button, Input, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -25,7 +26,6 @@ import {
   FeedbackAlert,
   FilterBar,
   MetricCard,
-  PageHeader,
   SectionCard,
   StatusTag,
   useFeedbackToast,
@@ -34,31 +34,20 @@ import {
 import {
   getWorkScore,
   overrideWorkScore,
-  upsertWorkScoreRule,
   voidWorkScore,
   type WorkScoreDetail,
   type WorkScoreLevel,
   type WorkScoreListItem,
-  type WorkScoreRuleFormInput,
-  type WorkScoreRuleInput,
   type WorkScoreSourceType,
 } from '../api/workScoreApi'
 import { workScoreKeys } from '../api/workScoreKeys'
-import {
-  useWorkScoreDetailQuery,
-  useWorkScoreRulesQuery,
-  useWorkScoresQuery,
-  useWorkScoreSummaryQuery,
-} from '../hooks'
+import { useWorkScoreDetailQuery, useWorkScoresQuery, useWorkScoreSummaryQuery } from '../hooks'
 import { WorkScoreAdjustmentModal } from './WorkScoreAdjustmentModal'
 import { WorkScoreDetailDrawer } from './WorkScoreDetailDrawer'
+import { WorkScoreRuleModal } from './WorkScoreRuleModal'
 import styles from './WorkScoreWorkbenchPage.module.scss'
 
-const RULE_TASK_TYPES = ['PSD_TEMPLATE', 'MOCKUP', 'PNG_ASSET', 'IDEA', 'CLONE']
-const RULE_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
-const SCALE_DIFFICULTIES = ['NORMAL', 'HARD', 'SPECIAL']
 const RULE_SOURCE_TYPES: WorkScoreSourceType[] = ['DESIGN_SUBMISSION', 'PRODUCTION_SCALE']
-const RULE_STATUSES = ['ACTIVE', 'INACTIVE']
 const objectIdPattern = /^[a-f\d]{24}$/i
 const defaultAssetPreview =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' rx='10' fill='%23f1f5f9'/><path d='M28 70h44M34 30h32v28H34z' fill='none' stroke='%2394a3b8' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/></svg>"
@@ -66,28 +55,6 @@ const defaultAssetPreview =
 function textOrNull(value: unknown) {
   const text = String(value || '').trim()
   return text && !objectIdPattern.test(text) ? text : null
-}
-
-function normalizeRuleInput(input: WorkScoreRuleFormInput): WorkScoreRuleInput {
-  const common = {
-    sourceType: input.sourceType,
-    points: input.points,
-    status: input.status,
-  }
-  if (input.sourceType === 'DESIGN_SUBMISSION') {
-    return {
-      ...common,
-      taskType: input.taskType || null,
-      priority: input.priority || null,
-      scaleDifficultyLevel: null,
-    }
-  }
-  return {
-    ...common,
-    taskType: null,
-    priority: null,
-    scaleDifficultyLevel: input.scaleDifficultyLevel || null,
-  }
 }
 
 export function WorkScoreWorkbenchPage({
@@ -108,6 +75,7 @@ export function WorkScoreWorkbenchPage({
   const [scoreStatus, setScoreStatus] = useState<'ACTIVE' | 'VOIDED' | 'ALL'>('ACTIVE')
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [selectedId, setSelectedId] = useState<string>()
+  const [ruleModalOpen, setRuleModalOpen] = useState(false)
   const [adjustment, setAdjustment] = useState<{
     mode: 'override' | 'void'
     score: WorkScoreDetail
@@ -147,7 +115,6 @@ export function WorkScoreWorkbenchPage({
   const rows = useWorkScoresQuery(params)
   const summary = useWorkScoreSummaryQuery(summaryParams)
   const detail = useWorkScoreDetailQuery(selectedId)
-  const rules = useWorkScoreRulesQuery(canAdjust)
 
   const mutation = useMutation({
     mutationFn: async (input: {
@@ -190,36 +157,12 @@ export function WorkScoreWorkbenchPage({
       toast('error', error instanceof Error ? error.message : t('portal.workScores.actionFailed'))
     },
   })
-  const ruleMutation = useMutation({
-    mutationFn: (input: WorkScoreRuleFormInput) => upsertWorkScoreRule(normalizeRuleInput(input)),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [...workScoreKeys.all, 'rules'] })
-      toast('success', t('portal.workScores.updated'))
-    },
-    onError: (error) => {
-      toast('error', error instanceof Error ? error.message : t('portal.workScores.actionFailed'))
-    },
-  })
-  const [ruleForm] = Form.useForm<WorkScoreRuleFormInput>()
-  const ruleSourceType = Form.useWatch('sourceType', ruleForm)
-  const sourceLabel = useCallback(
-    (value: string) => t(`portal.workScores.sources.${value}`, { defaultValue: value }),
-    [t],
-  )
   const taskTypeLabel = useCallback(
     (value: string) => t(`portal.workScores.taskTypes.${value}`, { defaultValue: value }),
     [t],
   )
   const scaleDifficultyLabel = useCallback(
     (value: string) => t(`portal.workScores.scaleDifficulties.${value}`, { defaultValue: value }),
-    [t],
-  )
-  const priorityLabel = useCallback(
-    (value: string) => t(`portal.workScores.priorities.${value}`, { defaultValue: value }),
-    [t],
-  )
-  const statusLabel = useCallback(
-    (value: string) => t(`portal.workScores.statuses.${value}`, { defaultValue: value }),
     [t],
   )
 
@@ -451,11 +394,6 @@ export function WorkScoreWorkbenchPage({
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('portal.workScores.title')}
-        description={t('portal.workScores.description')}
-      />
-
       {rows.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.workScores.unavailable')} />
       ) : null}
@@ -518,141 +456,67 @@ export function WorkScoreWorkbenchPage({
         </div>
       ) : null}
 
-      <SectionCard>
-        {canAdjust ? (
-          <div className={styles.ruleSetup}>
-            <Typography.Title level={4}>{t('portal.workScores.rules.title')}</Typography.Title>
-            <Form
-              form={ruleForm}
-              layout="inline"
-              initialValues={{ sourceType: 'DESIGN_SUBMISSION', status: 'ACTIVE' }}
-              onFinish={(values) => ruleMutation.mutate(values)}
-            >
-              <Form.Item
-                label={t('portal.workScores.rules.sourceType')}
-                name="sourceType"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  className={styles.filter}
-                  onChange={(value) => {
-                    ruleForm.setFieldsValue({
-                      sourceType: value,
-                      taskType: null,
-                      priority: null,
-                      scaleDifficultyLevel: null,
-                    })
-                  }}
-                  options={RULE_SOURCE_TYPES.map((value) => ({
-                    value,
-                    label: sourceLabel(value),
-                  }))}
-                />
-              </Form.Item>
-              {ruleSourceType !== 'PRODUCTION_SCALE' ? (
-                <>
-                  <Form.Item
-                    label={t('portal.workScores.rules.taskType')}
-                    name="taskType"
-                    preserve={false}
-                    rules={[{ required: true }]}
-                  >
-                    <Select
-                      className={styles.filter}
-                      placeholder={t('portal.workScores.rules.taskType')}
-                      options={RULE_TASK_TYPES.map((value) => ({
-                        value,
-                        label: taskTypeLabel(value),
-                      }))}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    label={t('portal.workScores.rules.priority')}
-                    name="priority"
-                    preserve={false}
-                  >
-                    <Select
-                      allowClear
-                      className={styles.filter}
-                      placeholder={t('portal.workScores.rules.allPriorities')}
-                      options={RULE_PRIORITIES.map((value) => ({
-                        value,
-                        label: priorityLabel(value),
-                      }))}
-                    />
-                  </Form.Item>
-                </>
-              ) : (
-                <Form.Item
-                  label={t('portal.workScores.rules.scaleDifficulty')}
-                  name="scaleDifficultyLevel"
-                  preserve={false}
-                >
-                  <Select
-                    allowClear
-                    className={styles.filter}
-                    placeholder={t('portal.workScores.rules.allDifficulties')}
-                    options={SCALE_DIFFICULTIES.map((value) => ({
-                      value,
-                      label: scaleDifficultyLabel(value),
-                    }))}
-                  />
-                </Form.Item>
-              )}
-              <Form.Item
-                label={t('portal.workScores.rules.points')}
-                name="points"
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={0} placeholder={t('portal.workScores.rules.points')} />
-              </Form.Item>
-              <Form.Item
-                label={t('portal.workScores.rules.status')}
-                name="status"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  className={styles.filter}
-                  options={RULE_STATUSES.map((value) => ({ value, label: statusLabel(value) }))}
-                />
-              </Form.Item>
-              <Button htmlType="submit" loading={ruleMutation.isPending} type="primary">
-                {t('portal.workScores.rules.save')}
-              </Button>
-            </Form>
-            <Table
-              size="small"
-              rowKey="id"
-              loading={rules.isLoading}
-              dataSource={rules.data ?? []}
-              pagination={false}
-              columns={[
-                {
-                  title: t('portal.workScores.rules.sourceType'),
-                  render: (_, row) => sourceLabel(row.sourceType),
-                },
-                {
-                  title: t('portal.workScores.rules.taskType'),
-                  render: (_, row) => (row.taskType ? taskTypeLabel(row.taskType) : '-'),
-                },
-                {
-                  title: t('portal.workScores.rules.priority'),
-                  render: (_, row) => (row.priority ? priorityLabel(row.priority) : '-'),
-                },
-                {
-                  title: t('portal.workScores.rules.scaleDifficulty'),
-                  render: (_, row) =>
-                    row.scaleDifficultyLevel ? scaleDifficultyLabel(row.scaleDifficultyLevel) : '-',
-                },
-                { title: t('portal.workScores.rules.points'), dataIndex: 'points' },
-                {
-                  title: t('portal.workScores.rules.status'),
-                  render: (_, row) => statusLabel(row.status),
-                },
-              ]}
+      <div className={styles.controlsBar}>
+        <div className={styles.filtersWrapper}>
+          <FilterBar label={t('portal.workScores.filters')} contentClassName={styles.filters}>
+            <Input.Search
+              allowClear
+              className={styles.search}
+              placeholder={t('portal.workScores.search')}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onSearch={() => setPage(1)}
             />
+            <Select
+              allowClear
+              className={styles.filter}
+              placeholder={t('portal.workScores.allSources')}
+              value={sourceType}
+              onChange={(value) => {
+                setSourceType(value)
+                setPage(1)
+              }}
+              options={RULE_SOURCE_TYPES.map((value) => ({
+                value,
+                label: t(`portal.workScores.sources.${value}`),
+              }))}
+            />
+            <Select
+              className={styles.filter}
+              value={scoreStatus}
+              onChange={(value) => {
+                setScoreStatus(value)
+                setPage(1)
+              }}
+              options={['ACTIVE', 'VOIDED', 'ALL'].map((value) => ({
+                value,
+                label: t(`portal.workScores.statuses.${value}`),
+              }))}
+            />
+            <div className={styles.dates}>
+              <DateRangePicker
+                onChange={(value) => {
+                  setDates(value)
+                  setPage(1)
+                }}
+              />
+            </div>
+          </FilterBar>
+        </div>
+        {canAdjust ? (
+          <div className={styles.actionsWrapper}>
+            <Button
+              aria-label={t('portal.workScores.rules.title')}
+              icon={<SettingOutlined />}
+              onClick={() => setRuleModalOpen(true)}
+            >
+              {t('portal.workScores.rules.title')}
+            </Button>
           </div>
         ) : null}
+      </div>
+
+      <SectionCard className={styles.tableCard}>
         <CoreDataTable
           fillViewport
           rowKey="id"
@@ -666,52 +530,6 @@ export function WorkScoreWorkbenchPage({
             total: rows.data?.total,
             onChange: setPage,
           }}
-          toolbar={
-            <FilterBar label={t('portal.workScores.filters')} contentClassName={styles.filters}>
-              <Input.Search
-                allowClear
-                className={styles.search}
-                placeholder={t('portal.workScores.search')}
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                onSearch={() => setPage(1)}
-              />
-              <Select
-                allowClear
-                className={styles.filter}
-                placeholder={t('portal.workScores.allSources')}
-                value={sourceType}
-                onChange={(value) => {
-                  setSourceType(value)
-                  setPage(1)
-                }}
-                options={RULE_SOURCE_TYPES.map((value) => ({
-                  value,
-                  label: t(`portal.workScores.sources.${value}`),
-                }))}
-              />
-              <Select
-                className={styles.filter}
-                value={scoreStatus}
-                onChange={(value) => {
-                  setScoreStatus(value)
-                  setPage(1)
-                }}
-                options={['ACTIVE', 'VOIDED', 'ALL'].map((value) => ({
-                  value,
-                  label: t(`portal.workScores.statuses.${value}`),
-                }))}
-              />
-              <div className={styles.dates}>
-                <DateRangePicker
-                  onChange={(value) => {
-                    setDates(value)
-                    setPage(1)
-                  }}
-                />
-              </div>
-            </FilterBar>
-          }
         />
       </SectionCard>
 
@@ -735,6 +553,10 @@ export function WorkScoreWorkbenchPage({
         onClose={() => setAdjustment(undefined)}
         onSubmit={(input) => mutation.mutate(input)}
       />
+
+      {canAdjust ? (
+        <WorkScoreRuleModal open={ruleModalOpen} onClose={() => setRuleModalOpen(false)} />
+      ) : null}
     </section>
   )
 }

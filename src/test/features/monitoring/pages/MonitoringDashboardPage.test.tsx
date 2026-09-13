@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/monitoring/api/monitoringApi', () => ({
@@ -49,7 +50,15 @@ describe('MonitoringDashboardPage', () => {
         lastErrorMessage: null,
       },
       modules: [],
-      workers: [],
+      workers: [
+        {
+          key: 'sync-worker',
+          name: 'Sync Worker',
+          process: 'embedded-api',
+          queueName: 'sync-queue',
+          status: 'running',
+        },
+      ],
       queues: [],
     })
     vi.mocked(getSystemLogs).mockResolvedValue({
@@ -90,7 +99,9 @@ describe('MonitoringDashboardPage', () => {
   it('loads and displays backend logs for global audit readers', async () => {
     render(
       <AppProviders>
-        <MonitoringDashboardPage />
+        <MemoryRouter initialEntries={['/portal/monitoring']}>
+          <MonitoringDashboardPage />
+        </MemoryRouter>
       </AppProviders>,
     )
 
@@ -110,7 +121,9 @@ describe('MonitoringDashboardPage', () => {
   it('shows realtime socket health', async () => {
     render(
       <AppProviders>
-        <MonitoringDashboardPage />
+        <MemoryRouter initialEntries={['/portal/monitoring']}>
+          <MonitoringDashboardPage />
+        </MemoryRouter>
       </AppProviders>,
     )
 
@@ -123,7 +136,9 @@ describe('MonitoringDashboardPage', () => {
   it('shows the selected Mongo index snapshot', async () => {
     render(
       <AppProviders>
-        <MonitoringDashboardPage />
+        <MemoryRouter initialEntries={['/portal/monitoring']}>
+          <MonitoringDashboardPage />
+        </MemoryRouter>
       </AppProviders>,
     )
 
@@ -132,5 +147,76 @@ describe('MonitoringDashboardPage', () => {
     expect(screen.getByText('42')).toBeVisible()
     expect(screen.getByText('KEEP')).toBeVisible()
     await waitFor(() => expect(getMongoIndexUsageSnapshots).toHaveBeenCalledWith(30))
+  })
+
+  it('filters log lines with client-side search', async () => {
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={['/portal/monitoring']}>
+          <MonitoringDashboardPage />
+        </MemoryRouter>
+      </AppProviders>,
+    )
+
+    fireEvent.click(await screen.findByRole('tab', { name: i18n.t('portal.monitoring.logs') }))
+    expect(await screen.findByText(i18n.t('portal.monitoring.serverLogs'))).toBeVisible()
+    expect(screen.getByText((content) => content.includes('api started'))).toBeVisible()
+    expect(screen.getByText((content) => content.includes('request ok'))).toBeVisible()
+
+    const searchInput = screen.getByPlaceholderText(
+      i18n.t('portal.monitoring.filterLogsPlaceholder'),
+    )
+    fireEvent.change(searchInput, { target: { value: 'started' } })
+
+    expect(screen.getByText((content) => content.includes('api started'))).toBeVisible()
+    expect(screen.queryByText((content) => content.includes('request ok'))).not.toBeInTheDocument()
+  })
+
+  it('filters indexes with search input', async () => {
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={['/portal/monitoring']}>
+          <MonitoringDashboardPage />
+        </MemoryRouter>
+      </AppProviders>,
+    )
+
+    fireEvent.click(document.querySelector('[data-node-key="mongo-indexes"]') as HTMLElement)
+    expect(await screen.findByText('psdStatus_1')).toBeVisible()
+
+    const searchInput = screen.getByPlaceholderText(
+      i18n.t('portal.monitoring.indexes.searchPlaceholder'),
+    )
+    fireEvent.change(searchInput, { target: { value: 'nonexistent_index' } })
+
+    expect(screen.queryByText('psdStatus_1')).not.toBeInTheDocument()
+  })
+
+  it('synchronizes active tab with URL query parameter ?tab=workers', async () => {
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={['/portal/monitoring?tab=workers']}>
+          <MonitoringDashboardPage />
+        </MemoryRouter>
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('Sync Worker')).toBeVisible()
+    expect(screen.getByText(i18n.t('portal.monitoring.workers'))).toBeVisible()
+  })
+
+  it('renders 403 when user lacks AUDIT:READ permission', async () => {
+    setPermissions([])
+    setGlobalPermissions([])
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={['/portal/monitoring']}>
+          <MonitoringDashboardPage />
+        </MemoryRouter>
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('403')).toBeVisible()
   })
 })

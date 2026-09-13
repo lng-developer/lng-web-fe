@@ -41,7 +41,6 @@ export const OrderTimelineModal = memo(function OrderTimelineModal({
 
   return (
     <PopupModal
-      centered
       anchor={anchor}
       width={720}
       open={open}

@@ -70,7 +70,6 @@ function OrderReplacementModalInner({
 
   return (
     <PopupModal
-      centered
       anchor={anchor}
       width={760}
       open

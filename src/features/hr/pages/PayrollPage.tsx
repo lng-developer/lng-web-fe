@@ -367,8 +367,6 @@ export function PayrollPage() {
     return (
       <section className={styles.page}>
         <PageHeader
-          title={t('hrOperations.payroll.myTitle')}
-          description={t('hrOperations.payroll.myDescription')}
           actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
         />
         {myPayslip ? (
@@ -539,7 +537,6 @@ export function PayrollPage() {
         </aside>
       </div>
       <Modal
-        centered
         width={editor === 'adjustment' ? 760 : 520}
         open={editor === 'run' || editor === 'adjustment'}
         title={t(
@@ -659,7 +656,6 @@ export function PayrollPage() {
         </Form>
       </Modal>
       <Modal
-        centered
         width={980}
         open={editor === 'settings'}
         title={t('hrOperations.payroll.settings')}

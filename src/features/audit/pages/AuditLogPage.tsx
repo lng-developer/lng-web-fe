@@ -164,8 +164,6 @@ export function AuditLogPage() {
   return (
     <section className="grid gap-6">
       <PageHeader
-        title={t('audit.title')}
-        description={t('audit.description')}
         actions={
           <Button
             icon={<DownloadOutlined />}

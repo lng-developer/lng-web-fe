@@ -1,14 +1,19 @@
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   DollarOutlined,
   ExclamationCircleOutlined,
   RiseOutlined,
+  SearchOutlined,
   ShoppingCartOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
-import { Empty, Pagination, Tag, Typography } from 'antd'
+import type { TableColumnsType } from 'antd'
+import { Input, Segmented, Tag, Tooltip, Typography } from 'antd'
+import dayjs from 'dayjs'
 
-import { MetricCard, SectionCard } from '@/shared/ui'
+import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { CopyableOrderId, MetricCard, StatusTag } from '@/shared/ui'
 
 import type { OrderProfitability, OrderProfitabilityReport } from '../api/reportApi'
 import styles from '../pages/ReportWorkspacePage.module.scss'
@@ -18,186 +23,429 @@ interface ReportOrderCostTabProps {
   data?: OrderProfitabilityReport
   isPending: boolean
   onPageChange: (page: number) => void
+  filterBar?: ReactNode
 }
 
-export function ReportOrderCostTab({ data, isPending, onPageChange }: ReportOrderCostTabProps) {
-  const { t } = useTranslation()
-  const missingCostRows = (data?.items || []).filter((row) => row.missingCostCount > 0)
-  const completeRows = (data?.items || []).filter((row) => row.missingCostCount === 0)
+type StatusFilter = 'all' | 'missing' | 'complete'
 
-  return (
-    <div className={styles.stack}>
-      <SectionCard title={t('reports.orderCost.overview')}>
-        <div className={styles.salesMetrics}>
-          {(data?.summaryByCurrency || []).map((summary) => (
-            <div key={summary.currency || 'unknown'} className={styles.orderCostSummary}>
-              <Typography.Text strong>{summary.currency || '—'}</Typography.Text>
-              <div className={styles.metrics}>
-                <MetricCard
-                  icon={<ShoppingCartOutlined />}
-                  label={t('reports.columns.orders')}
-                  value={String(summary.orderCount)}
-                  variant="neutral"
-                  loading={isPending}
-                />
-                <MetricCard
-                  icon={<DollarOutlined />}
-                  label={t('reports.columns.revenue')}
-                  value={formatReportMoney(summary.revenueAmount, summary.currency || 'USD')}
-                  variant="primary"
-                  loading={isPending}
-                />
-                <MetricCard
-                  icon={<RiseOutlined />}
-                  label={t('reports.metrics.netProfit')}
-                  value={formatReportMoney(summary.profitAmount, summary.currency || 'USD')}
-                  status={formatReportPercent(summary.marginBps)}
-                  variant="success"
-                  loading={isPending}
-                />
-                <MetricCard
-                  icon={<WalletOutlined />}
-                  label={t('reports.orderCost.costCoverage')}
-                  value={t('reports.orderCost.costCoverageValue', {
-                    costed: summary.costedOrderCount,
-                    total: summary.orderCount,
-                  })}
-                  variant="info"
-                  loading={isPending}
-                />
-                <MetricCard
-                  icon={<ExclamationCircleOutlined />}
-                  label={t('reports.metrics.missingCost')}
-                  value={String(summary.missingCostOrderCount)}
-                  variant="danger"
-                  loading={isPending}
-                />
+export function ReportOrderCostTab({
+  data,
+  isPending,
+  onPageChange,
+  filterBar,
+}: ReportOrderCostTabProps) {
+  const { t } = useTranslation()
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [search, setSearch] = useState('')
+
+  const items = useMemo(() => data?.items || [], [data?.items])
+  const summary = data?.summaryByCurrency?.[0]
+
+  const missingCount = useMemo(
+    () => items.filter((row) => row.missingCostCount > 0).length,
+    [items],
+  )
+  const completeCount = useMemo(
+    () => items.filter((row) => row.missingCostCount === 0).length,
+    [items],
+  )
+
+  const filteredItems = useMemo(() => {
+    let result = items
+    if (statusFilter === 'missing') {
+      result = result.filter((row) => row.missingCostCount > 0)
+    } else if (statusFilter === 'complete') {
+      result = result.filter((row) => row.missingCostCount === 0)
+    }
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      result = result.filter(
+        (row) =>
+          (row.externalOrderId && row.externalOrderId.toLowerCase().includes(q)) ||
+          (row.orderId && row.orderId.toLowerCase().includes(q)) ||
+          (row.salesChannelCode && row.salesChannelCode.toLowerCase().includes(q)) ||
+          (row.marketplaceCode && row.marketplaceCode.toLowerCase().includes(q)),
+      )
+    }
+    return result
+  }, [items, statusFilter, search])
+
+  const columns: TableColumnsType<OrderProfitability> = useMemo(
+    () => [
+      {
+        title: t('reports.columns.order'),
+        dataIndex: 'externalOrderId',
+        key: 'orderId',
+        width: 220,
+        fixed: 'left',
+        sorter: (a, b) =>
+          (a.externalOrderId || a.orderId || '').localeCompare(
+            b.externalOrderId || b.orderId || '',
+          ),
+        render: (_: unknown, record: OrderProfitability) => {
+          const displayId = record.externalOrderId || record.orderId || '—'
+
+          return (
+            <div className={styles.orderIdMeta}>
+              <div className="flex items-center gap-1.5">
+                <CopyableOrderId value={displayId} />
+              </div>
+              <div className={styles.orderIdSub}>
+                <span>
+                  {record.itemCount} {t('reports.columns.items').toLowerCase()}
+                </span>
+                {record.marketplaceCode ? (
+                  <Tag className="!m-0 !px-1.5 !text-[11px] !leading-tight">
+                    {record.marketplaceCode}
+                  </Tag>
+                ) : null}
               </div>
             </div>
-          ))}
-        </div>
-      </SectionCard>
-      <OrderCostSection
-        title={t('reports.orderCost.missingFulfillmentCost')}
-        rows={missingCostRows}
-        missingCost
+          )
+        },
+      },
+      {
+        title: t('reports.columns.date'),
+        dataIndex: 'orderedAt',
+        key: 'orderedAt',
+        width: 120,
+        sorter: (a, b) =>
+          (a.orderedAt || a.reportDate || '').localeCompare(b.orderedAt || b.reportDate || ''),
+        render: (value: string | null, record: OrderProfitability) => {
+          const rawDate = value || record.reportDate
+          if (!rawDate) return <span className={styles.moneyMuted}>—</span>
+          const d = dayjs(rawDate)
+          return (
+            <div className="flex flex-col text-xs leading-tight">
+              <span className="font-medium">{d.format('YYYY-MM-DD')}</span>
+              {value && value.includes('T') ? (
+                <span className="text-[11px] text-gray-400">{d.format('HH:mm')}</span>
+              ) : null}
+            </div>
+          )
+        },
+      },
+      {
+        title: t('reports.columns.revenue'),
+        dataIndex: 'revenueAmount',
+        key: 'revenueAmount',
+        width: 120,
+        align: 'right',
+        sorter: (a, b) => a.revenueAmount - b.revenueAmount,
+        render: (value: number, record: OrderProfitability) => (
+          <Typography.Text strong>
+            {formatReportMoney(value, record.currency || 'USD')}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: t('reports.columns.fulfillmentCost'),
+        dataIndex: 'totalCostAmount',
+        key: 'totalCostAmount',
+        width: 140,
+        align: 'right',
+        sorter: (a, b) => (a.totalCostAmount ?? -1) - (b.totalCostAmount ?? -1),
+        render: (value: number | null, record: OrderProfitability) => {
+          if (value == null) {
+            return <Tag color="warning">{t('reports.orderCost.costMissing')}</Tag>
+          }
+          return <span>{formatReportMoney(value, record.currency || 'USD')}</span>
+        },
+      },
+      {
+        title: t('reports.columns.marketplaceFee'),
+        dataIndex: 'marketplaceFeeAmount',
+        key: 'marketplaceFeeAmount',
+        width: 120,
+        align: 'right',
+        sorter: (a, b) => a.marketplaceFeeAmount - b.marketplaceFeeAmount,
+        render: (value: number, record: OrderProfitability) => (
+          <Typography.Text type="secondary">
+            {formatReportMoney(value, record.currency || 'USD')}
+          </Typography.Text>
+        ),
+      },
+      {
+        title: t('reports.orderCost.feesAndDeductions'),
+        key: 'deductions',
+        width: 130,
+        align: 'right',
+        sorter: (a, b) =>
+          (a.refundAmount || 0) +
+          (a.discountAmount || 0) -
+          ((b.refundAmount || 0) + (b.discountAmount || 0)),
+        render: (_: unknown, record: OrderProfitability) => {
+          const deductions = (record.refundAmount || 0) + (record.discountAmount || 0)
+          if (deductions === 0) return <span className={styles.moneyMuted}>—</span>
+          return (
+            <Tooltip
+              title={
+                <div>
+                  <div>
+                    {t('reports.columns.refund')}:{' '}
+                    {formatReportMoney(record.refundAmount, record.currency || 'USD')}
+                  </div>
+                  <div>
+                    {t('reports.columns.discount')}:{' '}
+                    {formatReportMoney(record.discountAmount, record.currency || 'USD')}
+                  </div>
+                </div>
+              }
+            >
+              <span className={styles.moneyNegative}>
+                -{formatReportMoney(deductions, record.currency || 'USD')}
+              </span>
+            </Tooltip>
+          )
+        },
+      },
+      {
+        title: t('reports.metrics.netProfit'),
+        dataIndex: 'profitAmount',
+        key: 'profitAmount',
+        width: 130,
+        align: 'right',
+        sorter: (a, b) => (a.profitAmount ?? -Infinity) - (b.profitAmount ?? -Infinity),
+        render: (value: number | null, record: OrderProfitability) => {
+          if (value == null) return <span className={styles.moneyMuted}>—</span>
+          const currency = record.currency || 'USD'
+          if (value > 0) {
+            return (
+              <span className={styles.moneyPositive}>+{formatReportMoney(value, currency)}</span>
+            )
+          }
+          if (value < 0) {
+            return (
+              <span className={styles.moneyNegative}>{formatReportMoney(value, currency)}</span>
+            )
+          }
+          return <span>{formatReportMoney(value, currency)}</span>
+        },
+      },
+      {
+        title: t('reports.columns.margin'),
+        dataIndex: 'marginBps',
+        key: 'marginBps',
+        width: 100,
+        align: 'center',
+        sorter: (a, b) => (a.marginBps ?? -Infinity) - (b.marginBps ?? -Infinity),
+        render: (value: number | null) => {
+          if (value == null) return <span className={styles.moneyMuted}>—</span>
+          const color = value >= 2000 ? 'success' : value >= 0 ? 'blue' : 'error'
+          return <Tag color={color}>{formatReportPercent(value)}</Tag>
+        },
+      },
+      {
+        title: t('reports.orderCost.costStatus'),
+        key: 'costStatus',
+        width: 120,
+        align: 'center',
+        sorter: (a, b) => a.missingCostCount - b.missingCostCount,
+        render: (_: unknown, record: OrderProfitability) => {
+          if (record.missingCostCount > 0) {
+            return <StatusTag status="warning">{t('reports.orderCost.costMissing')}</StatusTag>
+          }
+          if (record.profitAmount != null && record.profitAmount < 0) {
+            return <StatusTag status="critical">{t('reports.orderCost.loss')}</StatusTag>
+          }
+          return <StatusTag status="operational">{t('reports.orderCost.costComplete')}</StatusTag>
+        },
+      },
+    ],
+    [t],
+  )
+
+  const segmentedOptions = useMemo(
+    () => [
+      {
+        label: `${t('reports.orderCost.allOrders')} (${summary?.orderCount ?? items.length})`,
+        value: 'all',
+      },
+      {
+        label: `${t('reports.orderCost.missingCostOnly')} (${summary?.missingCostOrderCount ?? missingCount})`,
+        value: 'missing',
+      },
+      {
+        label: `${t('reports.orderCost.completeCostOnly')} (${summary?.costedOrderCount ?? completeCount})`,
+        value: 'complete',
+      },
+    ],
+    [t, summary, items.length, missingCount, completeCount],
+  )
+
+  const toolbar = (
+    <div className={styles.orderCostToolbar}>
+      <Segmented
+        value={statusFilter}
+        onChange={(val) => setStatusFilter(val as StatusFilter)}
+        options={segmentedOptions}
       />
-      <OrderCostSection title={t('reports.orderCost.completePnl')} rows={completeRows} />
-      <div className={styles.reportPagination}>
-        <Pagination
-          current={data?.pagination.page || 1}
-          pageSize={data?.pagination.limit || 20}
-          total={data?.pagination.total || 0}
-          showSizeChanger={false}
-          onChange={onPageChange}
+      <div className={styles.orderCostToolbarActions}>
+        <Input
+          allowClear
+          prefix={<SearchOutlined className="text-gray-400" />}
+          placeholder={t('reports.orderCost.searchPlaceholder')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={styles.orderCostSearchInput}
         />
       </div>
     </div>
   )
-}
 
-function OrderCostSection({
-  title,
-  rows,
-  missingCost = false,
-}: {
-  title: string
-  rows: OrderProfitability[]
-  missingCost?: boolean
-}) {
-  const { t } = useTranslation()
   return (
-    <SectionCard title={title}>
-      {rows.length ? (
-        <div className={styles.orderCostGrid}>
-          {rows.map((row) => {
-            const currency = row.currency || 'USD'
-            return (
-              <article
-                key={`${row.orderId}-${currency}`}
-                className={`${styles.orderCostCard} ${missingCost ? styles.orderCostCardMissing : ''}`}
-              >
-                <header className={styles.orderCostCardHeader}>
-                  <div>
-                    <Typography.Text strong>
-                      {row.externalOrderId || row.orderId || '—'}
-                    </Typography.Text>
-                    <Typography.Text type="secondary">
-                      {t('reports.columns.items')}: {row.itemCount}
-                    </Typography.Text>
-                  </div>
-                  <Tag
-                    color={
-                      missingCost
-                        ? 'warning'
-                        : row.profitAmount != null && row.profitAmount < 0
-                          ? 'error'
-                          : 'success'
-                    }
-                  >
-                    {missingCost
-                      ? t('reports.metrics.missingCost')
-                      : formatReportPercent(row.marginBps)}
-                  </Tag>
-                </header>
-                <div className={styles.orderCostValues}>
-                  <ReportValue
-                    label={t('reports.columns.revenue')}
-                    value={formatReportMoney(row.revenueAmount, currency)}
-                  />
-                  <ReportValue
-                    label={t('reports.columns.fulfillmentCost')}
-                    value={
-                      row.totalCostAmount == null
-                        ? '—'
-                        : formatReportMoney(row.totalCostAmount, currency)
-                    }
-                  />
-                  <ReportValue
-                    label={t('reports.metrics.netProfit')}
-                    value={
-                      row.profitAmount == null ? '—' : formatReportMoney(row.profitAmount, currency)
-                    }
-                    strong
-                  />
-                </div>
-                <div className={styles.orderCostBreakdown}>
-                  <span>
-                    {t('reports.columns.marketplaceFee')}:{' '}
-                    {formatReportMoney(row.marketplaceFeeAmount, currency)}
-                  </span>
-                  <span>
-                    {t('reports.columns.refund')}: {formatReportMoney(row.refundAmount, currency)}
-                  </span>
-                  <span>
-                    {t('reports.columns.discount')}:{' '}
-                    {formatReportMoney(row.discountAmount, currency)}
-                  </span>
-                </div>
-              </article>
-            )
-          })}
+    <div className={styles.stack}>
+      {(data?.summaryByCurrency || []).map((currSummary) => (
+        <div key={currSummary.currency || 'unknown'} className={styles.salesMetrics}>
+          <MetricCard
+            icon={<ShoppingCartOutlined />}
+            label={t('reports.columns.orders')}
+            value={String(currSummary.orderCount)}
+            variant="neutral"
+            loading={isPending}
+          />
+          <MetricCard
+            icon={<DollarOutlined />}
+            label={t('reports.columns.revenue')}
+            value={formatReportMoney(currSummary.revenueAmount, currSummary.currency || 'USD')}
+            variant="primary"
+            loading={isPending}
+          />
+          <MetricCard
+            icon={<RiseOutlined />}
+            label={t('reports.metrics.netProfit')}
+            value={formatReportMoney(currSummary.profitAmount, currSummary.currency || 'USD')}
+            status={formatReportPercent(currSummary.marginBps)}
+            variant="success"
+            loading={isPending}
+          />
+          <MetricCard
+            icon={<WalletOutlined />}
+            label={t('reports.orderCost.costCoverage')}
+            value={t('reports.orderCost.costCoverageValue', {
+              costed: currSummary.costedOrderCount,
+              total: currSummary.orderCount,
+            })}
+            variant="info"
+            loading={isPending}
+          />
+          <MetricCard
+            icon={<ExclamationCircleOutlined />}
+            label={t('reports.metrics.missingCost')}
+            value={String(currSummary.missingCostOrderCount)}
+            variant="danger"
+            loading={isPending}
+          />
         </div>
-      ) : (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      )}
-    </SectionCard>
-  )
-}
+      ))}
 
-function ReportValue({
-  label,
-  value,
-  strong = false,
-}: {
-  label: string
-  value: string
-  strong?: boolean
-}) {
-  return (
-    <div>
-      <Typography.Text type="secondary">{label}</Typography.Text>
-      <Typography.Text strong={strong}>{value}</Typography.Text>
+      {filterBar}
+
+      <CoreDataTable
+        toolbar={toolbar}
+        className={styles.orderCostTable}
+        tableLayout="fixed"
+        rowKey={(row) => `${row.orderId || row.externalOrderId || ''}-${row.currency || 'USD'}`}
+        dataSource={filteredItems}
+        columns={columns}
+        loading={isPending}
+        scroll={{ x: 1200 }}
+        pagination={{
+          current: data?.pagination.page || 1,
+          pageSize: data?.pagination.limit || 20,
+          total: data?.pagination.total || 0,
+          showSizeChanger: false,
+          onChange: onPageChange,
+        }}
+        expandable={{
+          expandedRowRender: (record: OrderProfitability) => {
+            const currency = record.currency || 'USD'
+            return (
+              <div className={styles.orderExpandedBreakdown}>
+                <div className={styles.orderExpandedTitle}>
+                  {t('reports.orderCost.breakdown')} · {record.externalOrderId || record.orderId}
+                </div>
+                <div className={styles.orderExpandedGrid}>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.columns.revenue')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {formatReportMoney(record.revenueAmount, currency)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>−</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.orderCost.baseCost')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {formatReportMoney(record.baseCostAmount, currency)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>−</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.columns.fulfillmentCost')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {record.totalCostAmount == null
+                        ? t('reports.orderCost.costMissing')
+                        : formatReportMoney(record.totalCostAmount, currency)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>−</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.columns.marketplaceFee')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {formatReportMoney(record.marketplaceFeeAmount, currency)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>−</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.columns.refund')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {formatReportMoney(record.refundAmount, currency)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>−</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.columns.discount')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {formatReportMoney(record.discountAmount, currency)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>=</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.metrics.netProfit')}
+                    </span>
+                    <span
+                      className={`${styles.orderExpandedItemValue} ${
+                        record.profitAmount != null && record.profitAmount >= 0
+                          ? styles.moneyPositive
+                          : styles.moneyNegative
+                      }`}
+                    >
+                      {record.profitAmount == null
+                        ? '—'
+                        : formatReportMoney(record.profitAmount, currency)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          },
+          rowExpandable: () => true,
+        }}
+      />
     </div>
   )
 }

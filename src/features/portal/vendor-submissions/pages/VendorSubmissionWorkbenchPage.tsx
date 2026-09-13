@@ -9,17 +9,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import {
-  Button,
-  Descriptions,
-  Drawer,
-  Input,
-  Modal,
-  Select,
-  Space,
-  Timeline,
-  Typography,
-} from 'antd'
+import { Button, Descriptions, Input, Modal, Select, Space, Timeline, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -400,13 +390,15 @@ export function VendorSubmissionWorkbenchPage({
           }
         />
       </SectionCard>
-      <Drawer
-        size={720}
+      <Modal
+        destroyOnClose
+        width="min(1360px, 92vw)"
+        style={{ top: 40 }}
         open={Boolean(selectedId)}
         title={t('portal.vendorSubmissions.detail')}
-        onClose={handleCloseDrawer}
+        onCancel={handleCloseDrawer}
         loading={detail.isLoading}
-        extra={
+        footer={
           detail.data ? (
             <Space>
               <Button icon={<EyeOutlined />} onClick={() => setPayloadId(detail.data!.id)}>
@@ -501,7 +493,7 @@ export function VendorSubmissionWorkbenchPage({
             <Timeline items={timelineItems} />
           </div>
         ) : null}
-      </Drawer>
+      </Modal>
       <Modal
         open={Boolean(payloadId)}
         width={760}

@@ -54,15 +54,28 @@ select {
   background: #eef1f5;
 }
 
-.ant-modal .ant-modal-content {
+.ant-modal:not(.ant-modal-confirm) .ant-modal-content {
+  padding: 0 !important;
   border: 1px solid color-mix(in srgb, var(--ant-color-border) 72%, transparent);
   border-radius: 8px;
   box-shadow: var(--ui-modal-shadow);
   overflow: hidden;
 }
 
+.ant-modal-confirm .ant-modal-content {
+  border: 1px solid color-mix(in srgb, var(--ant-color-border) 72%, transparent);
+  border-radius: 8px;
+  box-shadow: var(--ui-modal-shadow);
+  overflow: hidden;
+}
+
+.ant-modal .ant-modal-close {
+  top: 14px;
+  inset-inline-end: 16px;
+}
+
 .ant-modal .ant-modal-header {
-  margin: -20px -24px 20px;
+  margin: 0;
   padding: 18px 24px 16px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
   background:
@@ -80,8 +93,36 @@ select {
   letter-spacing: 0;
 }
 
+.ant-modal:not(.ant-modal-confirm) .ant-modal-body {
+  padding: 20px 24px;
+}
+
+.ant-modal .ant-modal-body,
+.ant-modal {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ant-color-text-quaternary) 80%, transparent) transparent;
+}
+
+.ant-modal ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.ant-modal ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ant-color-text-quaternary) 80%, transparent);
+  border-radius: 3px;
+
+  &:hover {
+    background: var(--ant-color-text-tertiary);
+  }
+}
+
+.ant-modal ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .ant-modal .ant-modal-footer {
-  margin: 20px -24px -20px;
+  margin: 0;
   padding: 14px 24px 16px;
   border-top: 1px solid var(--ant-color-border-secondary);
   background: var(--ant-color-fill-quaternary);

@@ -5,7 +5,7 @@ import {
   PlusOutlined,
   RestOutlined,
 } from '@ant-design/icons'
-import { Button, Descriptions, Drawer, Space, Tabs, Typography } from 'antd'
+import { Button, Descriptions, Modal, Space, Tabs, Typography } from 'antd'
 
 import { EmployeeAvatar, MetricCard, PageHeader } from '@/shared/ui'
 
@@ -38,8 +38,6 @@ export function TimeRequestsPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('hrOperations.requests.title')}
-        description={t('hrOperations.requests.description')}
         actions={
           <Space>
             {canLeaveWrite && (
@@ -96,11 +94,14 @@ export function TimeRequestsPage() {
 
       <TimeRequestEditorModal kind={editor?.kind} request={editor?.request} onClose={closeEditor} />
 
-      <Drawer
-        width={520}
+      <Modal
+        destroyOnClose
+        width="min(960px, 85vw)"
+        style={{ top: 40 }}
         open={Boolean(detail?.request)}
         title={t('hrOperations.requests.detail')}
-        onClose={closeDetail}
+        onCancel={closeDetail}
+        footer={null}
       >
         {detail?.request && (
           <Space orientation="vertical" size={20} style={{ width: '100%' }}>
@@ -154,7 +155,7 @@ export function TimeRequestsPage() {
             </Descriptions>
           </Space>
         )}
-      </Drawer>
+      </Modal>
     </section>
   )
 }

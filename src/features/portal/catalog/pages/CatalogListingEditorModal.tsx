@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Collapse, Drawer, Form, Input, InputNumber, Select, Space, Typography } from 'antd'
+import { Button, Collapse, Form, Input, InputNumber, Modal, Select, Space, Typography } from 'antd'
 
 import type { CreateListingInput, Listing, UpdateListingInput } from '../api/catalogApi'
 import styles from './CatalogListingEditorModal.module.scss'
@@ -61,6 +61,7 @@ export function CatalogListingEditorModal({
             title: listing.title,
             asin: listing.asin,
             etsyListingId: listing.etsyListingId,
+            previewImageUrl: listing.previewImageUrl,
             defaultPsdTemplateAssetId: listing.defaultPsdTemplateAssetId,
             baseCostAmount: listing.baseCostAmount,
             currency: listing.currency,
@@ -118,12 +119,14 @@ export function CatalogListingEditorModal({
   )
 
   return (
-    <Drawer
+    <Modal
+      destroyOnClose
       open={open}
-      width={820}
+      width="min(1280px, 90vw)"
+      style={{ top: 40 }}
       className={styles.modal}
       title={t(listing ? 'portal.catalog.edit' : 'portal.catalog.create')}
-      onClose={onClose}
+      onCancel={onClose}
       footer={
         <Space>
           <Button onClick={onClose}>{t('auth.accessEditor.cancel')}</Button>
@@ -216,6 +219,14 @@ export function CatalogListingEditorModal({
                 <Input />
               </Form.Item>
             ) : null}
+            <Form.Item
+              className={styles.spanTwo}
+              label={t('portal.catalog.fields.previewImageUrl')}
+              name="previewImageUrl"
+              extra={t('portal.catalog.fields.previewImageUrlHelp')}
+            >
+              <Input allowClear type="url" />
+            </Form.Item>
           </div>
         </section>
 
@@ -231,6 +242,6 @@ export function CatalogListingEditorModal({
           ]}
         />
       </Form>
-    </Drawer>
+    </Modal>
   )
 }

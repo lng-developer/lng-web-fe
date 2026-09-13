@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Drawer, Modal, Progress, Typography } from 'antd'
+import { Button, Descriptions, Modal, Progress, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -350,32 +350,34 @@ function ImportJobPanelForJob({
   return (
     <>
       {presentation === 'panel' ? (
-        <aside
-          aria-label={t('portal.integrations.panel.detailRegion', {
-            defaultValue: 'Import job details',
-          })}
-          className={styles.contextPanel}
+        <Modal
+          destroyOnClose
+          open={open}
+          width="min(1360px, 92vw)"
+          style={{ top: 40 }}
+          title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
+          onCancel={onClose}
+          footer={retryAction ?? null}
         >
-          <div className={styles.contextPanelHeader}>
-            <Typography.Text strong>
-              {`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
-            </Typography.Text>
-            <Button size="small" type="text" onClick={onClose}>
-              {t('common.close', { defaultValue: 'Close' })}
+          <aside
+            aria-label={t('portal.integrations.panel.detailRegion', {
+              defaultValue: 'Import job details',
+            })}
+            style={{ display: 'grid', gap: 16 }}
+          >
+            {detailContent}
+            <Button block onClick={() => setRawDrawerOpen(true)}>
+              {t('portal.integrations.panel.viewRawRecords', { defaultValue: 'View raw records' })}
             </Button>
-          </div>
-          {detailContent}
-          <Button block onClick={() => setRawDrawerOpen(true)}>
-            {t('portal.integrations.panel.viewRawRecords', { defaultValue: 'View raw records' })}
-          </Button>
-          {retryAction ? <div className={styles.contextPanelFooter}>{retryAction}</div> : null}
-          <Drawer
-            destroyOnHidden
+          </aside>
+          <Modal
+            destroyOnClose
             open={rawDrawerOpen}
-            placement="right"
             title={t('portal.integrations.panel.rawRecords', { defaultValue: 'Raw records' })}
-            width={960}
-            onClose={() => setRawDrawerOpen(false)}
+            width="min(1440px, 94vw)"
+            style={{ top: 40 }}
+            footer={null}
+            onCancel={() => setRawDrawerOpen(false)}
           >
             <CoreDataTable
               tableLayout="fixed"
@@ -391,12 +393,12 @@ function ImportJobPanelForJob({
                 onChange: setRawPage,
               }}
             />
-          </Drawer>
-        </aside>
+          </Modal>
+        </Modal>
       ) : (
         <DetailDrawer
           open={open}
-          width={900}
+          width="min(1360px, 92vw)"
           title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
           onClose={onClose}
           footer={retryAction}

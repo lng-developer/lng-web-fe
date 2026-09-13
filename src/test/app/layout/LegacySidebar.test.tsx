@@ -1,14 +1,53 @@
 import { MemoryRouter } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LegacySidebar } from '@/app/layout/LegacySidebar'
 import { AppProviders } from '@/app/providers/AppProviders'
 import i18n from '@/shared/i18n/i18n'
 
+const sidebarSummaryMocks = vi.hoisted(() => ({
+  useOrderSummaryQuery: vi.fn(),
+  useDesignSummaryQuery: vi.fn(),
+  useProductionQueueCountsQuery: vi.fn(),
+}))
+
+vi.mock('@/features/portal/orders/hooks/useOrderSummaryQuery', () => ({
+  useOrderSummaryQuery: sidebarSummaryMocks.useOrderSummaryQuery,
+}))
+vi.mock('@/features/portal/design/hooks/useDesignTasksQuery', () => ({
+  useDesignSummaryQuery: sidebarSummaryMocks.useDesignSummaryQuery,
+}))
+vi.mock('@/features/portal/production/hooks/useProductionTasksQuery', () => ({
+  useProductionQueueCountsQuery: sidebarSummaryMocks.useProductionQueueCountsQuery,
+}))
+
 describe('LegacySidebar', () => {
-  beforeEach(() => i18n.changeLanguage('en'))
+  beforeEach(() => {
+    i18n.changeLanguage('en')
+    sidebarSummaryMocks.useOrderSummaryQuery.mockReturnValue({ data: { tabCounts: { NEW: 12 } } })
+    sidebarSummaryMocks.useDesignSummaryQuery.mockReturnValue({ data: { unassigned: 4 } })
+    sidebarSummaryMocks.useProductionQueueCountsQuery.mockReturnValue({ data: { blocked: 3 } })
+  })
   afterEach(cleanup)
+
+  it('shows actionable queue counts in their owning modules', () => {
+    render(
+      <MemoryRouter initialEntries={['/portal/orders']}>
+        <AppProviders>
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByTitle('12')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Design' }))
+    expect(screen.getByTitle('4')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fulfillment' }))
+    expect(screen.getByTitle('3')).toBeVisible()
+  })
 
   it('ports the legacy Sales menu labels and its expanded 52 + 202 pixel layout', async () => {
     render(
@@ -288,7 +327,7 @@ describe('LegacySidebar', () => {
     expect(screen.queryByText('Account')).not.toBeInTheDocument()
   })
 
-  it('keeps Design tasks as the sole task queue entry', async () => {
+  it('nests Amazon and Etsy task queues under Design tasks', async () => {
     render(
       <MemoryRouter initialEntries={['/portal/design']}>
         <AppProviders>
@@ -298,9 +337,20 @@ describe('LegacySidebar', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Design' }))
-    expect(screen.getByRole('link', { name: 'Design tasks' })).toHaveAttribute(
+    expect(screen.getByRole('menuitem', { name: /^Design tasks/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Design tasks/ }))
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Amazon tasks' })).toHaveAttribute(
+        'href',
+        '/portal/design/amazon',
+      ),
+    )
+    expect(screen.getByRole('link', { name: 'Etsy tasks' })).toHaveAttribute(
       'href',
-      '/portal/design',
+      '/portal/design/etsy',
     )
     expect(screen.getByRole('link', { name: 'PSD files' })).toHaveAttribute(
       'href',
@@ -310,6 +360,66 @@ describe('LegacySidebar', () => {
     expect(screen.queryByText('All task types')).not.toBeInTheDocument()
     expect(screen.queryByText('Embroider Listing')).not.toBeInTheDocument()
     expect(screen.queryByText('Points Dashboard')).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['/portal/orders?salesChannelCode=amazon', ['Orders'], 'Amazon'],
+    ['/portal/listing/amazon', ['Listing'], 'Amz Listing'],
+    ['/portal/reports/amazon/ads', ['Reports', 'Amazon'], 'Ads Report'],
+    ['/portal/production/scale?salesChannelCode=AMAZON', ['Scale'], 'AMAZON Scale'],
+    ['/portal/design/amazon', ['Design tasks'], 'Amazon tasks'],
+    ['/portal/shops', ['Configuration'], 'Shops'],
+  ])('restores %s menu context from the URL', async (url, parents, child) => {
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <AppProviders>
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    parents.forEach((parent) => {
+      expect(screen.getByRole('menuitem', { name: new RegExp(`^${parent}`) })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      )
+    })
+    expect(screen.getByRole('link', { name: child })).toBeVisible()
+  })
+
+  it('restores a dynamic System submenu from the URL', () => {
+    render(
+      <MemoryRouter initialEntries={['/auth/accounts']}>
+        <AppProviders>
+          <LegacySidebar
+            collapsed={false}
+            onCollapsedChange={() => undefined}
+            bottomMenus={{
+              hr: [],
+              system: [
+                {
+                  key: 'configuration',
+                  labelKey: 'shell.groups.legacyConfiguration',
+                  items: [
+                    {
+                      key: 'accounts',
+                      path: '/auth/accounts',
+                      labelKey: 'shell.navigation.accounts',
+                    },
+                  ],
+                },
+              ],
+            }}
+          />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('menuitem', { name: /Configuration/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+    expect(screen.getByRole('link', { name: 'Accounts' })).toBeVisible()
   })
 
   it('links Vendor workflows to their focused workspace tabs', () => {

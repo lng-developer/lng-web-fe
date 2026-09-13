@@ -146,33 +146,37 @@ export function VendorWorkspaceVendorsTabPage({
 
   return (
     <>
-      <FilterBar
-        bordered={false}
-        label={t('portal.vendors.filters.label')}
-        contentClassName={styles.filters}
-        actions={
-          canWrite && !integrationOnly ? (
+      <div className={styles.controlsBar}>
+        <div className={styles.filtersWrapper}>
+          <FilterBar
+            bordered={false}
+            label={t('portal.vendors.filters.label')}
+            contentClassName={styles.filters}
+          >
+            <SearchInput
+              value={searchVendors}
+              onSearchChange={(value) => {
+                onSearchVendorsChange(value)
+              }}
+              placeholder={t('portal.vendors.searchVendors')}
+            />
+            <Select
+              allowClear
+              options={statusOptions}
+              placeholder={t('portal.vendors.filters.status')}
+              value={vendorStatus}
+              onChange={(value) => onVendorStatusChange(value as RecordStatus | undefined)}
+            />
+          </FilterBar>
+        </div>
+        {canWrite && !integrationOnly ? (
+          <div className={styles.actionsWrapper}>
             <Button type="primary" icon={<PlusOutlined />} onClick={onAddVendor}>
               {t('portal.vendors.addVendor')}
             </Button>
-          ) : null
-        }
-      >
-        <SearchInput
-          value={searchVendors}
-          onSearchChange={(value) => {
-            onSearchVendorsChange(value)
-          }}
-          placeholder={t('portal.vendors.searchVendors')}
-        />
-        <Select
-          allowClear
-          options={statusOptions}
-          placeholder={t('portal.vendors.filters.status')}
-          value={vendorStatus}
-          onChange={(value) => onVendorStatusChange(value as RecordStatus | undefined)}
-        />
-      </FilterBar>
+          </div>
+        ) : null}
+      </div>
       <CoreDataTable
         rowKey="id"
         columns={vendorColumns}

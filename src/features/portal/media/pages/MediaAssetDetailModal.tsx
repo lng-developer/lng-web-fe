@@ -26,7 +26,6 @@ export function MediaAssetDetailModal({
   const { t } = useTranslation()
   return (
     <Modal
-      centered
       open={Boolean(asset)}
       footer={null}
       title={t('media.detail.title')}

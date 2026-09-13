@@ -12,7 +12,6 @@ import {
   CopyableOrderId,
   FilterBar,
   MetricCard,
-  PageHeader,
   SearchInput,
   SectionCard,
   StatusTag,
@@ -148,7 +147,6 @@ export const CustomizationReviewPage = () => {
 
   return (
     <section className={styles.page}>
-      <PageHeader title={t('customization.title')} description={t('customization.description')} />
       <div className={styles.metrics}>
         <MetricCard
           label={t('customization.summary.pending')}
@@ -213,7 +211,6 @@ export const CustomizationReviewPage = () => {
         />
       </SectionCard>
       <Modal
-        centered
         width={920}
         open={Boolean(selected)}
         title={t('customization.modal.title')}

@@ -455,7 +455,25 @@
       "missingFulfillmentCost": "Missing fulfilment cost",
       "completePnl": "Complete order P&L",
       "costCoverage": "Cost coverage",
-      "costCoverageValue": "{{costed}} / {{total}} orders with cost"
+      "costCoverageValue": "{{costed}} / {{total}} orders with cost",
+      "tableTitle": "Order cost details",
+      "allOrders": "All orders",
+      "missingCostOnly": "Missing cost",
+      "completeCostOnly": "Cost complete",
+      "searchPlaceholder": "Search by order ID...",
+      "breakdown": "Cashflow breakdown",
+      "costStatus": "Cost status",
+      "costComplete": "Complete",
+      "costMissing": "Missing cost",
+      "profitable": "Profitable",
+      "loss": "Loss",
+      "margin": "Margin",
+      "netProfit": "Net profit",
+      "grossProfit": "Gross profit",
+      "baseCost": "Base cost",
+      "additionalFulfillment": "Additional fulfillment",
+      "feesAndDeductions": "Fees & deductions",
+      "emptyMatching": "No orders match the current filter"
     },
     "adsEmployee": {
       "ranking": "Employee ranking",
@@ -1248,7 +1266,17 @@
       "securitySettings": "Security settings",
       "viewDetails": "View details",
       "bulkAssign": "Bulk assign",
-      "selectCurrentPage": "Select current page"
+      "selectCurrentPage": "Select current page",
+      "allAccountsFilter": "All accounts",
+      "activeAccountsFilter": "Active",
+      "inactiveAccountsFilter": "Inactive",
+      "allRoles": "All roles",
+      "accountInspector": "Account details",
+      "closeInspector": "Close account details",
+      "overview": "Overview",
+      "editGlobalAccess": "Edit global access",
+      "accessSummary": "Manage the roles and access assigned to this account.",
+      "securitySummary": "Password, sessions, and account status are managed in the security workspace."
     },
     "accessEditor": {
       "title": "Manage access",
@@ -2183,32 +2211,6 @@
     }
   },
   "portal": {
-    "monitoring": {
-      "indexes": {
-        "tab": "Mongo Indexes",
-        "title": "MongoDB index usage",
-        "snapshotDate": "Snapshot date",
-        "refresh": "Refresh",
-        "database": "Database",
-        "indexes": "Indexes",
-        "indexSize": "Index size",
-        "capturedAt": "Captured at",
-        "empty": "No index usage snapshot is available yet.",
-        "loadFailed": "Could not load index usage snapshots.",
-        "filter": "Index filter",
-        "allIndexes": "All indexes",
-        "reviewCandidates": "Review candidates",
-        "idleDaysValue": "{{count}} days",
-        "columns": {
-          "collection": "Collection",
-          "index": "Index",
-          "key": "Key",
-          "operations": "Operations",
-          "idleDays": "No increase",
-          "decision": "Decision"
-        }
-      }
-    },
     "catalog": {
       "title": "Catalog listings",
       "actions": "Actions",
@@ -2434,6 +2436,15 @@
         "missingTag": "PSD Missing",
         "request": "Request PSD",
         "requestDefault": "Request default PSD",
+        "requested": "PSD requested",
+        "priority": "Priority",
+        "priorityDescription": "Select the delivery priority for this PSD request.",
+        "priorities": {
+          "LOW": "Low",
+          "NORMAL": "Normal",
+          "HIGH": "High",
+          "URGENT": "Urgent"
+        },
         "taskRequested": "PSD task requested",
         "requestFailed": "Could not request PSD",
         "taskCreated": "PSD task created successfully",
@@ -2458,6 +2469,8 @@
         "title": "Title",
         "asin": "ASIN",
         "etsyListingId": "Etsy listing ID",
+        "previewImageUrl": "Preview image URL",
+        "previewImageUrlHelp": "Used only in the listing preview; the product image stays unchanged.",
         "productType": "Product type",
         "internalTemplate": "Internal template",
         "previewAssetId": "Preview asset ID",
@@ -2632,6 +2645,46 @@
         "degraded": "Degraded",
         "paused": "Paused",
         "failed": "Failed"
+      },
+      "infrastructureItems": {
+        "mongo": "MongoDB",
+        "redis": "Redis",
+        "metrics": "Metrics",
+        "node": "Node.js"
+      },
+      "runtimeItems": {
+        "rss": "RSS Memory",
+        "heapUsed": "Heap Used",
+        "uptime": "Uptime"
+      },
+      "copyLogs": "Copy logs",
+      "filterLogsPlaceholder": "Filter log lines...",
+      "copied": "Logs copied to clipboard",
+      "filteredLinesCount": "{{count}} / {{total}} lines",
+      "indexes": {
+        "tab": "Mongo Indexes",
+        "title": "MongoDB index usage",
+        "snapshotDate": "Snapshot date",
+        "refresh": "Refresh",
+        "database": "Database",
+        "indexes": "Indexes",
+        "indexSize": "Index size",
+        "capturedAt": "Captured at",
+        "empty": "No index usage snapshot is available yet.",
+        "loadFailed": "Could not load index usage snapshots.",
+        "filter": "Index filter",
+        "allIndexes": "All indexes",
+        "reviewCandidates": "Review candidates",
+        "idleDaysValue": "{{count}} days",
+        "searchPlaceholder": "Search collection or index...",
+        "columns": {
+          "collection": "Collection",
+          "index": "Index",
+          "key": "Key",
+          "operations": "Operations",
+          "idleDays": "No increase",
+          "decision": "Decision"
+        }
       }
     },
     "design": {
@@ -2701,6 +2754,8 @@
       "rejectSubmission": "Reject submission",
       "reasonRequired": "Reason is required",
       "updated": "Design task updated",
+      "priorityUpdated": "Priority updated",
+      "savePriority": "Save priority",
       "updateFailed": "Could not update design task",
       "createFailed": "Could not create design task",
       "createPsdTasks": "Create PSD tasks",
@@ -2724,6 +2779,8 @@
       "copyAsin": "Copy ASIN",
       "asinCopied": "ASIN copied",
       "tasks": "Design tasks",
+      "amazonTasks": "Amazon tasks",
+      "etsyTasks": "Etsy tasks",
       "taskTypes": {
         "PSD_TEMPLATE": "PSD template",
         "MOCKUP": "Mockup",
@@ -2760,9 +2817,14 @@
       "filters": "Import filters",
       "importsSummary": "Import summary",
       "imports": {
+        "total": "Total jobs",
         "needsReview": "Needs review",
         "processing": "Processing",
         "completed": "Completed"
+      },
+      "views": {
+        "jobs": "Import jobs",
+        "issues": "Issue resolution queue"
       },
       "shop": "Shop",
       "allShops": "All shops",
@@ -2777,9 +2839,10 @@
         "operations": "Operations",
         "automation": "Automation",
         "finance": "Finance data",
-        "ads": "Amazon Ads",
-        "transactions": "Amazon Transactions",
-        "settlements": "Amazon Settlements"
+        "ads": "Ads",
+        "adsMapping": "Ads mapping",
+        "transactions": "Transactions",
+        "settlements": "Settlements"
       },
       "jobs": {
         "createdAt": "Created",
@@ -2884,7 +2947,19 @@
         "commandQueued": "Import command queued.",
         "command": "Command",
         "status": "Status",
-        "created": "Created"
+        "created": "Created",
+        "metrics": {
+          "onlineAgents": "Online extensions",
+          "activeSchedules": "Active schedules",
+          "totalCommands": "Commands run",
+          "failedCommands": "Needs attention"
+        },
+        "agentsTitle": "Connected extensions (RDC / Chrome)",
+        "commandActivity": "Extension command activity",
+        "allCommands": "All commands",
+        "runningCommands": "Running / Claimed",
+        "failedOnly": "Failed only",
+        "succeededOnly": "Succeeded"
       },
       "panel": {
         "title": "Import job",
@@ -3311,6 +3386,10 @@
       },
       "rules": {
         "title": "Score setup",
+        "rulesList": "Configured rules",
+        "addRule": "Add scoring rule",
+        "editRule": "Edit scoring rule",
+        "cancelEdit": "Cancel",
         "sourceType": "Source type",
         "taskType": "Task type",
         "priority": "Priority",
@@ -3319,7 +3398,8 @@
         "allDifficulties": "All difficulties",
         "points": "Points",
         "status": "Status",
-        "save": "Save rule"
+        "save": "Save rule",
+        "update": "Update rule"
       },
       "metrics": {
         "totalFiles": "Files",
@@ -3439,6 +3519,11 @@
       "backToCostCenters": "Back to cost centers",
       "edit": "Edit",
       "integrationTitle": "Provider integration",
+      "integrationTabs": {
+        "connection": "Connection",
+        "credentials": "Credentials",
+        "health": "Status & testing"
+      },
       "integrationMode": "Integration mode",
       "integrationModes": {
         "manual": "Manual",
@@ -3514,6 +3599,18 @@
       "trackingEndpointUrl": "Tracking endpoint URL",
       "pushOrderEndpointUrl": "Push order endpoint URL",
       "authType": "Authentication type",
+      "authTypeOptions": {
+        "apiKey": "API Key / Token",
+        "accessRefresh": "OAuth Access & Refresh",
+        "loginPassword": "Login & Password"
+      },
+      "credentialPlaceholders": {
+        "apiKey": "Enter new API token (encrypted at rest)",
+        "accessToken": "Enter access token",
+        "refreshToken": "Enter refresh token",
+        "username": "Username or email",
+        "password": "Password"
+      },
       "accessToken": "Access token",
       "refreshToken": "Refresh token",
       "username": "Username",

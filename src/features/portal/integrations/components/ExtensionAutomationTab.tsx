@@ -1,6 +1,15 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ClockCircleOutlined } from '@ant-design/icons'
+import {
+  BankOutlined,
+  ClockCircleOutlined,
+  DesktopOutlined,
+  DollarCircleOutlined,
+  ExclamationCircleOutlined,
+  ShopOutlined,
+  ShoppingCartOutlined,
+  SyncOutlined,
+} from '@ant-design/icons'
 import { Button, Empty, Popover, Select, Spin, Typography } from 'antd'
 
 import { SectionCard, StatusTag } from '@/shared/ui'
@@ -61,12 +70,17 @@ export function ExtensionAutomationTab({
     [schedules],
   )
   const financeScheduleByAgentSource = useMemo(
-    () => new Map(financeSchedules.map((schedule) => [`${schedule.agentId}:${schedule.source}`, schedule])),
+    () =>
+      new Map(
+        financeSchedules.map((schedule) => [`${schedule.agentId}:${schedule.source}`, schedule]),
+      ),
     [financeSchedules],
   )
   const agentGroups = useMemo(() => {
     const groups = new Map<string, ExtensionManagementAgent[]>()
-    agents.forEach((agent) => groups.set(agent.shopId, [...(groups.get(agent.shopId) ?? []), agent]))
+    agents.forEach((agent) =>
+      groups.set(agent.shopId, [...(groups.get(agent.shopId) ?? []), agent]),
+    )
     return [...groups].map(([shopId, groupAgents]) => ({
       agents: groupAgents,
       name: shopNames.get(shopId) ?? shopId,
@@ -78,48 +92,89 @@ export function ExtensionAutomationTab({
     const schedule = orderScheduleByAgentId.get(agent.id)
     const enabled = schedule?.enabled ?? false
     return (
-      <li>
+      <li className={styles.automationScheduleItem}>
         <section aria-label="Order import schedule" className={styles.automationScheduleRow}>
-          <Typography.Text strong>Order import</Typography.Text>
-          <div className={styles.automationScheduleMeta}>
-            <Typography.Text type="secondary">
-              {enabled && schedule ? `Every ${schedule.intervalMinutes / 60}h · Next: ${new Date(schedule.nextRunAt).toLocaleString()}` : 'Not scheduled'}
-            </Typography.Text>
-            {schedule?.lastError ? <Typography.Text type="danger">{schedule.lastError}</Typography.Text> : null}
-          </div>
-          <StatusTag status={enabled ? 'operational' : 'draft'}>{enabled ? 'Enabled' : 'Disabled'}</StatusTag>
-          {canWriteOrders ? (
-            <div className={styles.automationScheduleActions}>
-              <Popover
-                content={
-                  <div className={styles.commandPopover}>
-                    <Select
-                      aria-label={t('portal.integrations.extension.orderScheduleInterval', { defaultValue: 'Order schedule interval' })}
-                      defaultValue={schedule?.intervalMinutes ?? 120}
-                      options={[60, 120, 180, 240].map((value) => ({ value, label: `Every ${value / 60} hour${value === 60 ? '' : 's'}` }))}
-                      onChange={(intervalMinutes: 60 | 120 | 180 | 240) =>
-                        onSaveSchedule({ agentId: agent.id, enabled, intervalMinutes })
-                      }
-                    />
-                    <Button
-                      aria-label={t('portal.integrations.extension.saveOrderSchedule', { defaultValue: 'Save schedule' })}
-                      loading={isSavingSchedule}
-                      type="primary"
-                      onClick={() => onSaveSchedule({ agentId: agent.id, enabled: !enabled, intervalMinutes: schedule?.intervalMinutes ?? 120 })}
-                    >
-                      {enabled ? 'Disable schedule' : 'Save schedule'}
-                    </Button>
-                  </div>
-                }
-                title="Order schedule"
-                trigger="click"
-              >
-                <Button aria-label={t('portal.integrations.extension.configureOrderSchedule', { defaultValue: 'Configure order schedule' })} icon={<ClockCircleOutlined />} size="small">
-                  Configure
-                </Button>
-              </Popover>
+          <div className={styles.scheduleInfo}>
+            <div className={styles.scheduleTitleRow}>
+              <ShoppingCartOutlined className={styles.scheduleIconPrimary} />
+              <Typography.Text strong>Order import</Typography.Text>
             </div>
-          ) : null}
+            <div className={styles.automationScheduleMeta}>
+              <Typography.Text type="secondary" className={styles.scheduleMetaText}>
+                {enabled && schedule ? (
+                  <>
+                    <ClockCircleOutlined style={{ marginRight: 4, fontSize: 11 }} />
+                    {`Every ${schedule.intervalMinutes / 60}h · Next: ${new Date(schedule.nextRunAt).toLocaleString()}`}
+                  </>
+                ) : (
+                  'Not scheduled'
+                )}
+              </Typography.Text>
+              {schedule?.lastError ? (
+                <div className={styles.automationScheduleError}>
+                  <ExclamationCircleOutlined />
+                  <span>{schedule.lastError}</span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className={styles.scheduleControls}>
+            <StatusTag status={enabled ? 'operational' : 'draft'}>
+              {enabled ? 'Enabled' : 'Disabled'}
+            </StatusTag>
+            {canWriteOrders ? (
+              <div className={styles.automationScheduleActions}>
+                <Popover
+                  content={
+                    <div className={styles.commandPopover}>
+                      <Select
+                        aria-label={t('portal.integrations.extension.orderScheduleInterval', {
+                          defaultValue: 'Order schedule interval',
+                        })}
+                        defaultValue={schedule?.intervalMinutes ?? 120}
+                        options={[60, 120, 180, 240].map((value) => ({
+                          value,
+                          label: `Every ${value / 60} hour${value === 60 ? '' : 's'}`,
+                        }))}
+                        onChange={(intervalMinutes: 60 | 120 | 180 | 240) =>
+                          onSaveSchedule({ agentId: agent.id, enabled, intervalMinutes })
+                        }
+                      />
+                      <Button
+                        aria-label={t('portal.integrations.extension.saveOrderSchedule', {
+                          defaultValue: 'Save schedule',
+                        })}
+                        loading={isSavingSchedule}
+                        type="primary"
+                        onClick={() =>
+                          onSaveSchedule({
+                            agentId: agent.id,
+                            enabled: !enabled,
+                            intervalMinutes: schedule?.intervalMinutes ?? 120,
+                          })
+                        }
+                      >
+                        {enabled ? 'Disable schedule' : 'Save schedule'}
+                      </Button>
+                    </div>
+                  }
+                  title="Order schedule"
+                  trigger="click"
+                >
+                  <Button
+                    aria-label={t('portal.integrations.extension.configureOrderSchedule', {
+                      defaultValue: 'Configure order schedule',
+                    })}
+                    icon={<ClockCircleOutlined />}
+                    size="small"
+                  >
+                    Configure
+                  </Button>
+                </Popover>
+              </div>
+            ) : null}
+          </div>
         </section>
       </li>
     )
@@ -133,64 +188,129 @@ export function ExtensionAutomationTab({
     const schedule = financeScheduleByAgentSource.get(`${agent.id}:${source}`)
     const enabled = schedule?.enabled ?? false
     return (
-      <li>
+      <li className={styles.automationScheduleItem}>
         <section aria-label={`${label} schedule`} className={styles.automationScheduleRow}>
-          <Typography.Text strong>{label}</Typography.Text>
-          <div className={styles.automationScheduleMeta}>
-            <Typography.Text type="secondary">
-              {enabled
-                ? `${source === 'TRANSACTIONS' ? 'Daily · Up to 7 days per run' : 'Daily · Newly closed statements only'} · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}`
-                : 'Not scheduled'}
-            </Typography.Text>
-            {schedule?.lastError ? <Typography.Text type="danger">{schedule.lastError}</Typography.Text> : null}
-          </div>
-          <StatusTag status={enabled ? 'operational' : 'draft'}>{enabled ? 'Enabled' : 'Disabled'}</StatusTag>
-          {canWriteFinance ? (
-            <div className={styles.automationScheduleActions}>
-              <Button
-                aria-label={`${enabled ? 'Disable' : 'Enable'} ${label.toLowerCase()} sync`}
-                loading={isSavingFinanceSchedule}
-                size="small"
-                onClick={() => onSaveFinanceSchedule({ agentId: agent.id, source, enabled: !enabled })}
-              >
-                {enabled ? 'Disable' : 'Enable'}
-              </Button>
-              {enabled ? (
-                <Button
-                  aria-label={`Request ${label.toLowerCase()} sync now`}
-                  loading={isRequestingFinanceSchedule}
-                  size="small"
-                  type="primary"
-                  onClick={() => onRequestFinanceScheduleNow({ agentId: agent.id, source })}
-                >
-                  Request now
-                </Button>
+          <div className={styles.scheduleInfo}>
+            <div className={styles.scheduleTitleRow}>
+              {source === 'TRANSACTIONS' ? (
+                <DollarCircleOutlined className={styles.scheduleIconSuccess} />
+              ) : (
+                <BankOutlined className={styles.scheduleIconWarning} />
+              )}
+              <Typography.Text strong>{label}</Typography.Text>
+            </div>
+            <div className={styles.automationScheduleMeta}>
+              <Typography.Text type="secondary" className={styles.scheduleMetaText}>
+                {enabled ? (
+                  <>
+                    <ClockCircleOutlined style={{ marginRight: 4, fontSize: 11 }} />
+                    {`${source === 'TRANSACTIONS' ? 'Daily · Up to 7 days per run' : 'Daily · Newly closed statements only'} · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}`}
+                  </>
+                ) : (
+                  'Not scheduled'
+                )}
+              </Typography.Text>
+              {schedule?.lastError ? (
+                <div className={styles.automationScheduleError}>
+                  <ExclamationCircleOutlined />
+                  <span>{schedule.lastError}</span>
+                </div>
               ) : null}
             </div>
-          ) : null}
+          </div>
+
+          <div className={styles.scheduleControls}>
+            <StatusTag status={enabled ? 'operational' : 'draft'}>
+              {enabled ? 'Enabled' : 'Disabled'}
+            </StatusTag>
+            {canWriteFinance ? (
+              <div className={styles.automationScheduleActions}>
+                <Button
+                  aria-label={`${enabled ? 'Disable' : 'Enable'} ${label.toLowerCase()} sync`}
+                  loading={isSavingFinanceSchedule}
+                  size="small"
+                  onClick={() =>
+                    onSaveFinanceSchedule({ agentId: agent.id, source, enabled: !enabled })
+                  }
+                >
+                  {enabled ? 'Disable' : 'Enable'}
+                </Button>
+                {enabled ? (
+                  <Button
+                    aria-label={`Request ${label.toLowerCase()} sync now`}
+                    loading={isRequestingFinanceSchedule}
+                    size="small"
+                    type="primary"
+                    icon={<SyncOutlined />}
+                    onClick={() => onRequestFinanceScheduleNow({ agentId: agent.id, source })}
+                  >
+                    Request now
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </section>
       </li>
     )
   }
 
   return (
-    <SectionCard title="Automation">
+    <SectionCard
+      title={
+        <div className={styles.sectionHeaderTitle}>
+          <span>{t('portal.integrations.tabs.automation', { defaultValue: 'Automation' })}</span>
+          <span className={styles.countBadge}>
+            {agents.length} {agents.length === 1 ? 'extension' : 'extensions'}
+          </span>
+        </div>
+      }
+      className={styles.tableCard}
+    >
       <Typography.Paragraph type="secondary">
-        Configure recurring orders plus daily Transactions and Settlements imports for each connected extension.
+        Configure recurring orders plus daily Transactions and Settlements imports for each
+        connected extension.
       </Typography.Paragraph>
       <Spin spinning={isLoading}>
         {agentGroups.length ? (
           <div className={styles.automationGroups}>
             {agentGroups.map((group) => (
-              <section key={group.shopId} aria-label={`${group.name} automation`} className={styles.automationGroup}>
-                <Typography.Title level={5}>{group.name}</Typography.Title>
+              <section
+                key={group.shopId}
+                aria-label={`${group.name} automation`}
+                className={styles.automationGroup}
+              >
+                <div className={styles.automationGroupHeader}>
+                  <div className={styles.automationGroupTitle}>
+                    <ShopOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                    <Typography.Title level={5}>{group.name}</Typography.Title>
+                  </div>
+                  <span className={styles.countBadge}>
+                    {group.agents.length} {group.agents.length === 1 ? 'agent' : 'agents'}
+                  </span>
+                </div>
                 <div className={styles.automationGrid}>
                   {group.agents.map((agent) => (
-                    <article key={agent.id} aria-label={`${group.name} / ${agent.label}`} className={styles.automationAgentCard}>
+                    <article
+                      key={agent.id}
+                      aria-label={`${group.name} / ${agent.label}`}
+                      className={styles.automationAgentCard}
+                    >
                       <div className={styles.automationAgentHeader}>
-                        <div>
-                          <Typography.Text strong>{agent.label}</Typography.Text>
-                          <Typography.Text type="secondary">Agent ID · {agent.id.slice(-6)}</Typography.Text>
+                        <div className={styles.agentIdentity}>
+                          <div className={styles.agentIconBox}>
+                            <DesktopOutlined />
+                          </div>
+                          <div>
+                            <Typography.Text strong className={styles.agentLabel}>
+                              {agent.label}
+                            </Typography.Text>
+                            <div className={styles.agentMetaRow}>
+                              <Typography.Text type="secondary" className={styles.agentIdText}>
+                                Agent ID · {agent.id.slice(-6)}
+                              </Typography.Text>
+                            </div>
+                          </div>
                         </div>
                         <StatusTag status={agent.status === 'ONLINE' ? 'online' : 'offline'}>
                           {agent.status === 'ONLINE' ? 'Online' : 'Offline'}

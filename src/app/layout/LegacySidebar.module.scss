@@ -194,6 +194,27 @@
   display: block;
   color: inherit;
 }
+.menuLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+.menuLabelText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.menuBadge :global(.ant-badge-count) {
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 5px;
+  font-size: 11px;
+  line-height: 18px;
+}
 .amazonMark {
   font-family: Georgia, serif;
   font-size: 23px;

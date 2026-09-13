@@ -31,7 +31,7 @@ describe('AccountDetailPage', () => {
     vi.mocked(updateAccountEmail).mockResolvedValue({})
   })
 
-  it('keeps account details separate from access and security workspaces', async () => {
+  it('places access and security actions in the account header', async () => {
     render(
       <MemoryRouter initialEntries={['/auth/accounts/account-1']}>
         <AppProviders>
@@ -43,14 +43,8 @@ describe('AccountDetailPage', () => {
     )
 
     expect(await screen.findByDisplayValue('linh@lng.local')).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Manage access' })).toHaveAttribute(
-      'href',
-      '/auth/accounts/account-1/access',
-    )
-    expect(screen.getByRole('link', { name: 'Security' })).toHaveAttribute(
-      'href',
-      '/auth/accounts/account-1/security',
-    )
+    expect(screen.getByRole('button', { name: 'Manage access' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Security' })).toBeVisible()
   })
 
   it('updates the account email from the account detail workspace', async () => {

@@ -2,7 +2,7 @@ import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Badge, Card, Drawer, Flex, Modal, Select, Space, Typography } from 'antd'
+import { Badge, Card, Flex, Modal, Select, Space, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
@@ -183,7 +183,6 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
     (rule: MappingRule) => {
       const active = rule.status === 'ACTIVE'
       Modal.confirm({
-        centered: true,
         title: active ? t('mapping.actions.disableTitle') : t('mapping.actions.enableTitle'),
         content: active
           ? t('mapping.actions.disableDescription')
@@ -276,11 +275,12 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           onToggleStatus={toggleRuleStatus}
         />
       </Card>
-      {/* Rule Editor — Drawer */}
-      <Drawer
-        destroyOnHidden
+      {/* Rule Editor — Modal */}
+      <Modal
+        destroyOnClose
         open={editorOpen}
-        width={720}
+        width="min(1280px, 90vw)"
+        style={{ top: 40 }}
         title={
           <Space size={8}>
             <span>
@@ -293,7 +293,8 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
             ) : null}
           </Space>
         }
-        onClose={handleCloseDrawer}
+        onCancel={handleCloseDrawer}
+        footer={null}
       >
         {orderItemId ? (
           <div
@@ -337,7 +338,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           }
           onSave={(rule) => saveRule.mutateAsync(rule).then(() => undefined)}
         />
-      </Drawer>
+      </Modal>
       <RuleHistoryModal
         id={historyRule?.id}
         open={Boolean(historyRule)}

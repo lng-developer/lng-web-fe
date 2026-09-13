@@ -1,9 +1,16 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  AlertOutlined,
+  DesktopOutlined,
+  SyncOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons'
+import { Segmented } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
-import { UiButtonTabs } from '@/shared/ui'
+import { MetricCard } from '@/shared/ui'
 
 import type { ExtensionCommand } from '../api/integrationApi'
 import { useExtensionWorkbench } from '../hooks/useExtensionWorkbench'
@@ -58,23 +65,94 @@ export function ExtensionTabContent({
     requestFinanceScheduleNow,
   } = useExtensionWorkbench({ account, canWrite, canWriteFinance })
 
-  const managementAgents = extensionManagementAgents.data?.items ?? []
-  const schedules = extensionOrderSchedules.data?.items ?? []
-  const financeSchedules = extensionFinanceSchedules.data?.items ?? []
+  const managementAgents = useMemo(
+    () => extensionManagementAgents.data?.items ?? [],
+    [extensionManagementAgents.data?.items],
+  )
+  const schedules = useMemo(
+    () => extensionOrderSchedules.data?.items ?? [],
+    [extensionOrderSchedules.data?.items],
+  )
+  const financeSchedules = useMemo(
+    () => extensionFinanceSchedules.data?.items ?? [],
+    [extensionFinanceSchedules.data?.items],
+  )
+  const commands = useMemo(
+    () => extensionCommands.data?.items ?? [],
+    [extensionCommands.data?.items],
+  )
+
+  const onlineAgentsCount = useMemo(
+    () => managementAgents.filter((agent) => agent.status === 'ONLINE').length,
+    [managementAgents],
+  )
+  const activeSchedulesCount = useMemo(
+    () =>
+      schedules.filter((schedule) => schedule.enabled).length +
+      financeSchedules.filter((schedule) => schedule.enabled).length,
+    [schedules, financeSchedules],
+  )
+  const failedCommandsCount = useMemo(
+    () => commands.filter((command) => command.status === 'FAILED').length,
+    [commands],
+  )
 
   return (
-    <>
-      <UiButtonTabs
-        className={styles.segmentedTabs}
-        value={activeExtensionTab}
-        onChange={(tab) => setActiveExtensionTab(tab as ExtensionSubTab)}
-        items={[
-          ...(canWrite
-            ? [{ value: 'operations', label: t('portal.integrations.tabs.operations') }]
-            : []),
-          { value: 'automation', label: t('portal.integrations.tabs.automation') },
-        ]}
-      />
+    <div className={styles.tabSection}>
+      <div className={styles.importSummary}>
+        <MetricCard
+          className={styles.compactMetric}
+          icon={<DesktopOutlined />}
+          label={t('portal.integrations.extension.metrics.onlineAgents', {
+            defaultValue: 'Online extensions',
+          })}
+          variant={onlineAgentsCount > 0 ? 'success' : 'neutral'}
+          value={
+            managementAgents.length === 0
+              ? '0'
+              : `${onlineAgentsCount} / ${managementAgents.length}`
+          }
+        />
+        <MetricCard
+          className={styles.compactMetric}
+          icon={<SyncOutlined />}
+          label={t('portal.integrations.extension.metrics.activeSchedules', {
+            defaultValue: 'Active schedules',
+          })}
+          variant={activeSchedulesCount > 0 ? 'info' : 'neutral'}
+          value={activeSchedulesCount}
+        />
+        <MetricCard
+          className={styles.compactMetric}
+          icon={<ThunderboltOutlined />}
+          label={t('portal.integrations.extension.metrics.totalCommands', {
+            defaultValue: 'Commands run',
+          })}
+          variant="neutral"
+          value={commands.length}
+        />
+        <MetricCard
+          className={styles.compactMetric}
+          icon={<AlertOutlined />}
+          label={t('portal.integrations.extension.metrics.failedCommands', {
+            defaultValue: 'Needs attention',
+          })}
+          variant={failedCommandsCount > 0 ? 'danger' : 'success'}
+          value={failedCommandsCount}
+        />
+      </div>
+      <div className={styles.segmentedWrapper}>
+        <Segmented
+          value={activeExtensionTab}
+          onChange={(tab) => setActiveExtensionTab(tab as ExtensionSubTab)}
+          options={[
+            ...(canWrite
+              ? [{ value: 'operations', label: t('portal.integrations.tabs.operations') }]
+              : []),
+            { value: 'automation', label: t('portal.integrations.tabs.automation') },
+          ]}
+        />
+      </div>
       {activeExtensionTab === 'operations' ? (
         <ExtensionOperationsTab
           account={account}
@@ -125,6 +203,6 @@ export function ExtensionTabContent({
         command={selectedCommand}
         onClose={() => setSelectedCommand(undefined)}
       />
-    </>
+    </div>
   )
 }

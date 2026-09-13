@@ -21,6 +21,8 @@ const listing: Listing = {
   asin: 'B0G4CYCDTJ',
   etsyListingId: null,
   title: 'Shirt',
+  productImageUrl: 'https://m.media-amazon.com/images/S/product.png',
+  previewImageUrl: 'https://cdn.lng.co/previews/shirt.png',
   baseCostAmount: 0,
   currency: 'USD',
   costCenterStatus: 'MISSING',
@@ -55,11 +57,18 @@ describe('CatalogListingEditorModal', () => {
 
     expect(screen.getByText('AMAZON · AMAZON_US · SKU-1')).toBeInTheDocument()
     expect(screen.queryByLabelText('SKU')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Preview image URL')).toHaveValue(
+      'https://cdn.lng.co/previews/shirt.png',
+    )
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated shirt' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: 'Updated shirt' })
+    expect(onSubmit.mock.calls[0][0]).toHaveProperty(
+      'previewImageUrl',
+      'https://cdn.lng.co/previews/shirt.png',
+    )
     expect(onSubmit.mock.calls[0][0]).toHaveProperty('asin', 'B0G4CYCDTJ')
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('shopId')
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('sku')

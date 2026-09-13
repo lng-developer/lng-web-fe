@@ -5,6 +5,7 @@ import {
   CloseOutlined,
   DollarOutlined,
   EditOutlined,
+  InboxOutlined,
   SaveOutlined,
   SettingOutlined,
   TagOutlined,
@@ -14,15 +15,17 @@ import type { TableColumnsType } from 'antd'
 import {
   Button,
   Card,
-  Drawer,
+  Descriptions,
   Flex,
   Form,
   Input,
   InputNumber,
+  Modal,
   Select,
   Space,
   Switch,
   Tabs,
+  Tag,
   Typography,
 } from 'antd'
 
@@ -41,6 +44,11 @@ import { conflictField, isConflictError, parseJsonObject } from './vendorEditorH
 import styles from './VendorWorkspacePage.module.scss'
 
 type EditorValues = VendorCostCenterInput & { attributesText?: string; metadataText?: string }
+
+const formatMoney = (value?: number | null, currency = 'USD') =>
+  value == null
+    ? '—'
+    : new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value / 100)
 
 export interface VendorCostCenterEditorModalProps {
   readonly item?: VendorCostCenter
@@ -92,6 +100,8 @@ export function VendorCostCenterEditorModal({
       const { attributesText, code, metadataText, ...rest } = values
       const input = {
         ...rest,
+        standardSize: rest.standardSize ?? rest.vendorSize,
+        standardColor: rest.standardColor ?? rest.vendorColor,
         attributes: parseJsonObject(attributesText),
         currency: rest.currency?.toUpperCase(),
         metadata: parseJsonObject(metadataText),
@@ -148,25 +158,16 @@ export function VendorCostCenterEditorModal({
                 <Form.Item label={t('vendors.sku')} name="sku">
                   <Input placeholder="Vendor SKU Code" />
                 </Form.Item>
-                <Form.Item label={t('vendors.lngCode')} name="lngCode">
-                  <Input placeholder="LNG Internal Code" />
-                </Form.Item>
               </div>
             </Card>
 
-            <Card className={styles.editorCard} size="small" title="Size & Color Matrix">
+            <Card className={styles.editorCard} size="small" title="Size & Color">
               <div className={styles.formGrid}>
-                <Form.Item label={t('vendors.standardSize')} name="standardSize">
-                  <Input placeholder="XL, L, M, S" />
-                </Form.Item>
-                <Form.Item label={t('vendors.standardColor')} name="standardColor">
-                  <Input placeholder="Black, White, Navy" />
-                </Form.Item>
                 <Form.Item label={t('vendors.vendorSize')} name="vendorSize">
-                  <Input placeholder="Vendor specific size" />
+                  <Input placeholder="Size (e.g. XL, L, M, S)" />
                 </Form.Item>
                 <Form.Item label={t('vendors.vendorColor')} name="vendorColor">
-                  <Input placeholder="Vendor specific color" />
+                  <Input placeholder="Color (e.g. Black, White, Navy)" />
                 </Form.Item>
                 <Form.Item label={t('vendors.printMethod')} name="printMethod">
                   <Select allowClear options={printMethodSelectOptions} />
@@ -738,21 +739,189 @@ export function VendorCostCenterEditorModal({
     )
   }
 
+  if (mode === 'inline' && readOnly && item) {
+    return (
+      <div className={styles.variantDetailContainer}>
+        <div className={styles.variantDetailGrid}>
+          {/* Card 1: Variant Specs & Print Method (no duplicate SKU or Base Cost from parent table) */}
+          <Card
+            size="small"
+            className={styles.variantCard}
+            title={
+              <Space size={6}>
+                <TagOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                <span>{t('vendors.overview')}</span>
+              </Space>
+            }
+          >
+            <Descriptions size="small" column={1} className={styles.detailDescriptions}>
+              <Descriptions.Item label={t('vendors.vendorColor')}>
+                {item.vendorColor || item.standardColor || '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label={t('vendors.vendorSize')}>
+                {item.vendorSize || item.standardSize || '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label={t('vendors.printMethod')}>
+                {item.printMethod ? <Tag color="blue">{item.printMethod}</Tag> : '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label={t('vendors.importTaxAmount')}>
+                {formatMoney(item.importTaxAmount, item.currency)}
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+
+          {/* Card 2: Shipping Rates Matrix */}
+          <Card
+            size="small"
+            className={styles.variantCard}
+            title={
+              <Space size={6}>
+                <CarOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                <span>{t('vendors.shipping')}</span>
+              </Space>
+            }
+          >
+            <div className={styles.shippingRatesList}>
+              <div className={styles.shippingRateItem}>
+                <div className={styles.shippingRateTier}>
+                  <span className={styles.shippingRateDot} />
+                  <span className={styles.shippingRateName}>{t('vendors.domesticShipping')}</span>
+                </div>
+                <div className={styles.shippingRateValues}>
+                  <span className={styles.shippingBasePrice}>
+                    {formatMoney(item.domesticShipping?.economyAmount, item.currency)}
+                  </span>
+                  <span className={styles.shippingAddPrice}>
+                    +{formatMoney(item.domesticShipping?.additionalAmount, item.currency)}{' '}
+                    {t('vendors.additionalAmount')}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.shippingRateItem}>
+                <div className={styles.shippingRateTier}>
+                  <span className={styles.shippingRateDot} style={{ background: '#1677ff' }} />
+                  <span className={styles.shippingRateName}>
+                    {t('vendors.internationalShipping')}
+                  </span>
+                </div>
+                <div className={styles.shippingRateValues}>
+                  <span className={styles.shippingBasePrice}>
+                    {formatMoney(item.internationalShipping?.economyAmount, item.currency)}
+                  </span>
+                  <span className={styles.shippingAddPrice}>
+                    +{formatMoney(item.internationalShipping?.additionalAmount, item.currency)}{' '}
+                    {t('vendors.additionalAmount')}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.shippingRateItem}>
+                <div className={styles.shippingRateTier}>
+                  <span className={styles.shippingRateDot} style={{ background: '#52c41a' }} />
+                  <span className={styles.shippingRateName}>{t('vendors.priorityShipping')}</span>
+                </div>
+                <div className={styles.shippingRateValues}>
+                  <span className={styles.shippingBasePrice}>
+                    {formatMoney(item.priorityShipping?.economyAmount, item.currency)}
+                  </span>
+                  <span className={styles.shippingAddPrice}>
+                    +{formatMoney(item.priorityShipping?.additionalAmount, item.currency)}{' '}
+                    {t('vendors.additionalAmount')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Card 3: Package Specs & Actions (no duplicate Status from parent table) */}
+          <Card
+            size="small"
+            className={styles.variantCard}
+            title={
+              <Space size={6}>
+                <InboxOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                <span>{t('vendors.dimensions')}</span>
+              </Space>
+            }
+          >
+            <Descriptions size="small" column={1} className={styles.detailDescriptions}>
+              <Descriptions.Item label={t('vendors.weight')}>
+                {item.weight != null ? `${item.weight} ${item.weightUnit || 'oz'}` : '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label={t('vendors.dimensions')}>
+                {item.length != null && item.width != null && item.height != null
+                  ? `${item.length} × ${item.width} × ${item.height} ${item.dimensionUnit || 'in'}`
+                  : '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label={t('vendors.unitSurchargeAmount')}>
+                {formatMoney(item.unitSurchargeAmount, item.currency)}
+              </Descriptions.Item>
+            </Descriptions>
+
+            {onEdit ? (
+              <div className={styles.cardActionFooter}>
+                <Button
+                  type="primary"
+                  ghost
+                  icon={<EditOutlined />}
+                  onClick={onEdit}
+                  style={{ width: '100%' }}
+                >
+                  {t('vendors.editCostCenter', { name: item.name })}
+                </Button>
+              </div>
+            ) : null}
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === 'inline' && !readOnly) {
+    return (
+      <div className={styles.inlineFormContainer}>
+        <div className={styles.inlineFormHeader}>
+          <span className={styles.inlineFormHeaderTitle}>
+            {t(item ? 'vendors.editCostCenterTitle' : 'vendors.createCostCenterTitle')}
+            {item?.name ? ` — ${item.name}` : ''}
+          </span>
+          <Space size={8}>
+            <Button onClick={close} size="small">
+              {t('vendors.cancel')}
+            </Button>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={save.isPending}
+              onClick={() => form.submit()}
+              size="small"
+            >
+              {t('vendors.save')}
+            </Button>
+          </Space>
+        </div>
+        {formContent}
+      </div>
+    )
+  }
+
   if (mode === 'inline') {
     return <div className={styles.workspaceSection}>{inlineTableFormContent}</div>
   }
 
   return (
-    <Drawer
+    <Modal
       className={styles.editorDrawer}
       destroyOnClose
       open={open}
       title={t(item ? 'vendors.editCostCenterTitle' : 'vendors.createCostCenterTitle')}
-      width={760}
-      onClose={close}
+      width="min(1280px, 90vw)"
+      style={{ top: 40 }}
+      onCancel={close}
       footer={formActions}
     >
       {formContent}
-    </Drawer>
+    </Modal>
   )
 }

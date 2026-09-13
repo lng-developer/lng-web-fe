@@ -114,7 +114,37 @@
 }
 
 .importModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
+}
+
+.importTemplateRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.importUploadWrapper {
+  width: 100%;
+
+  :global(.ant-upload-wrapper),
+  :global(.ant-upload.ant-upload-drag) {
+    width: 100%;
+  }
+}
+
+.importTip {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.importPreviewSection,
+.importSummarySection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .importPreviewList {
@@ -540,4 +570,192 @@
   .formGrid {
     grid-template-columns: 1fr;
   }
+}
+
+.controlsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.filtersWrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.actionsWrapper {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.actionBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* ── Variant Detail Card Grid (Expanded Row Option 1) ── */
+.variantDetailContainer {
+  padding: 16px;
+  background: color-mix(
+    in srgb,
+    var(--ant-color-fill-quaternary) 35%,
+    var(--ant-color-bg-container)
+  );
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  margin: 4px 0 10px;
+}
+
+.variantDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 1080px) {
+  .variantDetailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.variantCard {
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  :global(.ant-card-head) {
+    min-height: 42px;
+    padding: 0 14px;
+    background: color-mix(in srgb, var(--ant-color-fill-quaternary) 60%, transparent);
+    border-bottom: 1px solid var(--ant-color-border-secondary);
+  }
+
+  :global(.ant-card-head-title) {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  :global(.ant-card-body) {
+    padding: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.detailDescriptions :global(.ant-descriptions-row) {
+  border-bottom: 1px dashed var(--ant-color-border-secondary);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.detailDescriptions :global(.ant-descriptions-item) {
+  padding: 6px 0;
+}
+
+.detailDescriptions :global(.ant-descriptions-item-label) {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+  width: 95px;
+}
+
+.detailDescriptions :global(.ant-descriptions-item-content) {
+  font-size: 13px;
+  color: var(--ant-color-text);
+  font-weight: 500;
+}
+
+.shippingRatesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  justify-content: center;
+}
+
+.shippingRateItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid color-mix(in srgb, var(--ant-color-border) 60%, transparent);
+}
+
+.shippingRateTier {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shippingRateDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ant-color-primary);
+  flex-shrink: 0;
+}
+
+.shippingRateName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ant-color-text);
+}
+
+.shippingRateValues {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.shippingBasePrice {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ant-color-text);
+}
+
+.shippingAddPrice {
+  font-size: 11px;
+  color: var(--ant-color-text-tertiary);
+}
+
+.cardActionFooter {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.inlineFormContainer {
+  padding: 16px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  margin: 4px 0 10px;
+}
+
+.inlineFormHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.inlineFormHeaderTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ant-color-text-heading);
 }

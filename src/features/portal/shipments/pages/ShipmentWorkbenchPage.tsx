@@ -3,17 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import { DownloadOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import {
-  Button,
-  Descriptions,
-  Drawer,
-  Input,
-  Modal,
-  Select,
-  Space,
-  Timeline,
-  Typography,
-} from 'antd'
+import { Button, Descriptions, Input, Modal, Select, Space, Timeline, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -166,11 +156,19 @@ export function ShipmentWorkbenchPage({
   const exportCsv = useExportShipmentsCsvMutation()
   const updateTrackingSyncConfig = useUpdateTrackingSyncConfigMutation({
     onSuccess: () => toast('success', t('portal.shipments.trackingSync.saved')),
-    onError: (error) => toast('error', error instanceof Error ? error.message : t('portal.shipments.trackingSync.saveFailed')),
+    onError: (error) =>
+      toast(
+        'error',
+        error instanceof Error ? error.message : t('portal.shipments.trackingSync.saveFailed'),
+      ),
   })
   const runTrackingSyncNow = useRunTrackingSyncNowMutation({
     onSuccess: () => toast('success', t('portal.shipments.trackingSync.runComplete')),
-    onError: (error) => toast('error', error instanceof Error ? error.message : t('portal.shipments.trackingSync.runFailed')),
+    onError: (error) =>
+      toast(
+        'error',
+        error instanceof Error ? error.message : t('portal.shipments.trackingSync.runFailed'),
+      ),
   })
 
   const handleRecheckRow = useCallback(
@@ -402,13 +400,15 @@ export function ShipmentWorkbenchPage({
           }
         />
       </SectionCard>
-      <Drawer
-        size={560}
+      <Modal
+        destroyOnClose
+        width="min(1200px, 88vw)"
+        style={{ top: 40 }}
         open={Boolean(selectedId)}
         title={t('portal.shipments.detail')}
-        onClose={handleCloseDrawer}
+        onCancel={handleCloseDrawer}
         loading={detail.isLoading}
-        extra={
+        footer={
           canWrite && detail.data ? (
             <Space>
               <Button icon={<EditOutlined />} onClick={handleOpenTrackingEdit}>
@@ -494,7 +494,7 @@ export function ShipmentWorkbenchPage({
             />
           </div>
         ) : null}
-      </Drawer>
+      </Modal>
       <Modal
         open={editMode === 'tracking'}
         title={t('portal.shipments.editTracking')}

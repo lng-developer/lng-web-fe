@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
   Button,
+  Empty,
   Form,
   Input,
   Modal,
@@ -315,7 +316,7 @@ export function ListingVariantManager({
   )
 
   return (
-    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+    <div style={{ display: 'grid', gap: 16, width: '100%' }}>
       <Space style={{ width: '100%', justifyContent: 'space-between' }}>
         <Typography.Title level={5} style={{ margin: 0 }}>
           {t('portal.catalog.variants.title', { count: variants.data?.length ?? 0 })}
@@ -330,11 +331,22 @@ export function ListingVariantManager({
         rowKey="id"
         size="small"
         tableLayout="fixed"
+        style={{ width: '100%' }}
         scroll={{ x: 890 }}
         loading={variants.isLoading}
         dataSource={variants.data ?? []}
         pagination={false}
         columns={columns}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              styles={{ image: { height: 24, marginBlock: 0 } }}
+              description={t('portal.catalog.variants.empty')}
+              style={{ marginBlock: 4 }}
+            />
+          ),
+        }}
       />
       <Modal
         open={Boolean(editing)}
@@ -388,6 +400,6 @@ export function ListingVariantManager({
           </Form.Item>
         </Form>
       </Modal>
-    </Space>
+    </div>
   )
 }

@@ -48,7 +48,6 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
 
   return (
     <Modal
-      centered
       width={900}
       open={Boolean(selectedOrder)}
       title={t('finance.detail.title')}

@@ -116,8 +116,6 @@ export function ScopesPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.scopes.title')}
-        description={t('auth.scopes.description')}
         actions={
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => openEditor()}>
             {t('auth.scopes.create')}

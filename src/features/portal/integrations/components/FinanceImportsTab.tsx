@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Segmented } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
-import { UiButtonTabs } from '@/shared/ui'
 
 import { canReadFinanceImports } from '../auth/integrationAccess'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
@@ -31,19 +31,34 @@ export function FinanceImportsTab({
   const canReadAdsImports = canReadFinanceImports(account)
   const canManageAdsMappings = account.permissions.includes('FINANCE:WRITE')
 
+  const financeTabOptions = useMemo(
+    () => [
+      { value: 'ads', label: t('portal.integrations.tabs.ads', { defaultValue: 'Ads' }) },
+      {
+        value: 'ads-mapping',
+        label: t('portal.integrations.tabs.adsMapping', { defaultValue: 'Ads mapping' }),
+      },
+      {
+        value: 'transactions',
+        label: t('portal.integrations.tabs.transactions', { defaultValue: 'Transactions' }),
+      },
+      {
+        value: 'settlements',
+        label: t('portal.integrations.tabs.settlements', { defaultValue: 'Settlements' }),
+      },
+    ],
+    [t],
+  )
+
   return (
-    <>
-      <UiButtonTabs
-        className={styles.segmentedTabs}
-        value={activeFinanceTab}
-        onChange={(tab) => setActiveFinanceTab(tab as FinanceTab)}
-        items={[
-          { value: 'ads', label: 'Ads' },
-          { value: 'ads-mapping', label: 'Ads mapping' },
-          { value: 'transactions', label: 'Transactions' },
-          { value: 'settlements', label: 'Settlements' },
-        ]}
-      />
+    <div className={styles.tabSection}>
+      <div className={styles.segmentedWrapper}>
+        <Segmented
+          value={activeFinanceTab}
+          onChange={(tab) => setActiveFinanceTab(tab as FinanceTab)}
+          options={financeTabOptions}
+        />
+      </div>
       {activeFinanceTab === 'ads' ? (
         <FinanceImportSection
           account={account}
@@ -102,6 +117,6 @@ export function FinanceImportsTab({
           isActiveTab={activeFinanceTab === 'settlements'}
         />
       ) : null}
-    </>
+    </div>
   )
 }

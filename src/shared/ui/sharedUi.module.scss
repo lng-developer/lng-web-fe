@@ -8,6 +8,13 @@
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
+.pageHeaderActionsOnly {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 16px;
+  justify-content: flex-end;
+}
+
 .pageHeaderMain {
   min-width: 0;
 }
@@ -187,7 +194,7 @@
   height: 36px;
   justify-content: center;
   padding: 7px 16px;
-  border: 0;
+  border: 1px solid var(--ant-color-border);
   border-radius: 10px;
   color: var(--ant-color-text);
   font-size: 14px;
@@ -195,7 +202,7 @@
   line-height: 20px;
   transition: all 0.2s ease;
   background: var(--ant-color-bg-container);
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .uiTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
@@ -203,7 +210,9 @@
 }
 
 .uiTabs :global(.ant-tabs-tab:hover) {
-  color: var(--ant-color-text);
+  color: var(--ant-color-primary);
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-fill-quaternary);
 }
 
 .uiTabs :global(.ant-tabs-tab:active) {
@@ -212,7 +221,8 @@
 
 .uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
   background: var(--ant-color-primary) !important;
-  box-shadow: none;
+  border-color: var(--ant-color-primary) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .uiTabs :global(.ant-tabs-tab:focus-visible),
@@ -433,14 +443,22 @@
 
 .filterBar {
   width: 100%;
-  padding: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.filterBarBordered {
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
+  padding: 12px;
   background: var(--ant-color-bg-container);
 }
 
 .filterBarBorderless {
   border: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .filterBarContent {
@@ -448,7 +466,8 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-end;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .filterBarContent :global(.ant-input-affix-wrapper),

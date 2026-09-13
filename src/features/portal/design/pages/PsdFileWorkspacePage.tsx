@@ -12,7 +12,6 @@ import {
   DateRangePicker,
   EmployeeAvatar,
   FilterBar,
-  PageHeader,
   SectionCard,
   StatusTag,
   useDebouncedValue,
@@ -206,12 +205,6 @@ export function PsdFileWorkspacePage() {
 
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <PageHeader
-        title={t('portal.design.psdFiles', { defaultValue: 'PSD files' })}
-        description={t('portal.design.psdFilesDesc', {
-          defaultValue: 'Browse PSD references, submissions, and approved files.',
-        })}
-      />
       <SectionCard>
         <CoreDataTable
           fillViewport

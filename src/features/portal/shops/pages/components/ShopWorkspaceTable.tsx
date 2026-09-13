@@ -115,31 +115,9 @@ export function ShopWorkspaceTable({
   )
 
   return (
-    <SectionCard>
-      <CoreDataTable
-        className={styles.compactTable}
-        columns={columns}
-        dataSource={data?.items ?? []}
-        fillViewport
-        emptyText={
-          params.search || params.status ? (
-            <Empty description={t('portal.shops.noFilteredResults')}>
-              <Button onClick={onClearFilters}>{t('portal.shops.clearFilters')}</Button>
-            </Empty>
-          ) : (
-            <Empty description={t('portal.shops.noAuthorizedShops')} />
-          )
-        }
-        loading={loading}
-        rowKey="id"
-        onRow={(shop) => ({ onClick: () => onEditShop(shop) })}
-        pagination={{
-          current: params.page,
-          pageSize: params.limit,
-          total: data?.pagination.total,
-          onChange: onPageChange,
-        }}
-        toolbar={
+    <>
+      <div className={styles.controlsBar}>
+        <div className={styles.filtersWrapper}>
           <FilterBar label={t('portal.shops.filters')} contentClassName={styles.filters}>
             <SearchInput
               aria-label={t('portal.shops.search')}
@@ -160,11 +138,38 @@ export function ShopWorkspaceTable({
               value={params.status}
               onChange={onStatusChange}
             />
-
-            <div className={styles.filterActions}>{actions}</div>
           </FilterBar>
-        }
-      />
-    </SectionCard>
+        </div>
+
+        {actions ? <div className={styles.actionsWrapper}>{actions}</div> : null}
+      </div>
+
+      <SectionCard className={styles.compactTable}>
+        <CoreDataTable
+          className={styles.compactTable}
+          columns={columns}
+          dataSource={data?.items ?? []}
+          fillViewport
+          emptyText={
+            params.search || params.status ? (
+              <Empty description={t('portal.shops.noFilteredResults')}>
+                <Button onClick={onClearFilters}>{t('portal.shops.clearFilters')}</Button>
+              </Empty>
+            ) : (
+              <Empty description={t('portal.shops.noAuthorizedShops')} />
+            )
+          }
+          loading={loading}
+          rowKey="id"
+          onRow={(shop) => ({ onClick: () => onEditShop(shop) })}
+          pagination={{
+            current: params.page,
+            pageSize: params.limit,
+            total: data?.pagination.total,
+            onChange: onPageChange,
+          }}
+        />
+      </SectionCard>
+    </>
   )
 }

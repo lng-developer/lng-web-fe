@@ -1,10 +1,11 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TableProps } from 'antd'
-import { Alert, Button, Image, Input, InputNumber, Modal, Select, Space, Typography } from 'antd'
+import { Alert, Button, Input, InputNumber, Modal, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
+import { ZoomableImage } from '@/shared/ui'
 
 import type { ProductTypeGroup, ProductTypeGroupInput } from '../../catalog/api/catalogApi'
 import type { VendorMigrationReviewItem } from '../api/vendorApi'
@@ -38,7 +39,6 @@ type ReviewTableProps = Pick<
 > & {
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
-  onPreviewImage: (imageUrl: string, name: string) => void
 }
 
 const ReviewTable = memo(function ReviewTable({
@@ -50,7 +50,6 @@ const ReviewTable = memo(function ReviewTable({
   onPageChange = () => undefined,
   selectedIds,
   onSelectedIdsChange,
-  onPreviewImage,
 }: ReviewTableProps) {
   const { t } = useTranslation()
   const columns = useMemo<TableProps<VendorMigrationReviewItem>['columns']>(
@@ -60,13 +59,11 @@ const ReviewTable = memo(function ReviewTable({
         width: 96,
         render: (_, row) =>
           row.imageUrl ? (
-            <Image
+            <ZoomableImage
               width={72}
               height={72}
-              preview={false}
               src={row.imageUrl}
               alt={row.name}
-              onClick={() => onPreviewImage(row.imageUrl as string, row.name)}
               style={{ cursor: 'zoom-in', objectFit: 'cover', borderRadius: 6 }}
             />
           ) : null,
@@ -103,7 +100,7 @@ const ReviewTable = memo(function ReviewTable({
         width: 110,
       },
     ],
-    [onPreviewImage, t],
+    [t],
   )
   return (
     <CoreDataTable
@@ -155,7 +152,6 @@ export function VendorMigrationTabPage({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [groupId, setGroupId] = useState<string>()
   const [createOpen, setCreateOpen] = useState(false)
-  const [previewImage, setPreviewImage] = useState<{ url: string; name: string } | null>(null)
   const [draft, setDraft] = useState<ProductTypeGroupInput>({
     code: '',
     name: '',
@@ -171,10 +167,6 @@ export function VendorMigrationTabPage({
     [productTypeGroups],
   )
   const handleSelectedIdsChange = useCallback((ids: string[]) => setSelectedIds(ids), [])
-  const handlePreviewImage = useCallback(
-    (url: string, name: string) => setPreviewImage({ url, name }),
-    [],
-  )
   const updateFilters = (next: { vendorId?: string; q?: string }) => {
     setSelectedIds([])
     onFiltersChange?.(next)
@@ -257,13 +249,7 @@ export function VendorMigrationTabPage({
         onPageChange={onPageChange}
         selectedIds={selectedIds}
         onSelectedIdsChange={handleSelectedIdsChange}
-        onPreviewImage={handlePreviewImage}
       />
-      {previewImage ? (
-        <Modal open title={previewImage.name} footer={null} onCancel={() => setPreviewImage(null)}>
-          <Image width="100%" preview={false} src={previewImage.url} alt={previewImage.name} />
-        </Modal>
-      ) : null}
       {createOpen ? (
         <Modal
           open

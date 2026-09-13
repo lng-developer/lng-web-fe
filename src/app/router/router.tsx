@@ -517,6 +517,22 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/design/:salesChannel',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/DesignWorkbenchPage'),
+          ]).then(([{ PortalPageBoundary }, { DesignWorkbenchPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <DesignWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/production/:queue?',
         lazy: () =>
           Promise.all([

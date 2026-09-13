@@ -206,8 +206,6 @@ export function HrWorkspacePage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('hr.title')}
-        description={t('hr.description')}
         actions={
           canWrite && (
             <Button

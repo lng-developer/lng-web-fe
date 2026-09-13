@@ -196,11 +196,47 @@ export function VendorWorkspaceProductsTabPage({
 
   return (
     <>
-      <FilterBar
-        label={t('portal.vendors.filters.label')}
-        contentClassName={styles.filters}
-        actions={
-          canWrite && vendorFilter ? (
+      <div className={styles.controlsBar}>
+        <div className={styles.filtersWrapper}>
+          <FilterBar label={t('portal.vendors.filters.label')} contentClassName={styles.filters}>
+            <SearchInput
+              value={searchProducts}
+              onSearchChange={(value) => {
+                onSearchProductsChange(value)
+              }}
+              placeholder={t('portal.vendors.searchProducts')}
+            />
+            <Select
+              allowClear
+              options={vendorFilterOptions}
+              placeholder={t('portal.vendors.filters.vendor')}
+              value={vendorFilter}
+              showSearch
+              optionFilterProp="label"
+              onChange={(value) => onVendorFilterChange(value as string | undefined)}
+            />
+            <Select
+              allowClear
+              options={productTypeGroupOptions}
+              placeholder={t('portal.vendors.filters.productType', {
+                defaultValue: 'Product type',
+              })}
+              value={productTypeGroupFilter}
+              showSearch
+              optionFilterProp="label"
+              onChange={(value) => onProductTypeGroupFilterChange(value as string | undefined)}
+            />
+            <Select
+              allowClear
+              options={statusOptions}
+              placeholder={t('portal.vendors.filters.status')}
+              value={productStatus}
+              onChange={(value) => onProductStatusChange(value as RecordStatus | undefined)}
+            />
+          </FilterBar>
+        </div>
+        {canWrite && vendorFilter ? (
+          <div className={styles.actionsWrapper}>
             <Space size={8} align="center">
               <Button
                 icon={<PlusOutlined />}
@@ -213,42 +249,9 @@ export function VendorWorkspaceProductsTabPage({
                 {t('portal.vendors.importProducts')}
               </Button>
             </Space>
-          ) : null
-        }
-      >
-        <SearchInput
-          value={searchProducts}
-          onSearchChange={(value) => {
-            onSearchProductsChange(value)
-          }}
-          placeholder={t('portal.vendors.searchProducts')}
-        />
-        <Select
-          allowClear
-          options={vendorFilterOptions}
-          placeholder={t('portal.vendors.filters.vendor')}
-          value={vendorFilter}
-          showSearch
-          optionFilterProp="label"
-          onChange={(value) => onVendorFilterChange(value as string | undefined)}
-        />
-        <Select
-          allowClear
-          options={productTypeGroupOptions}
-          placeholder={t('portal.vendors.filters.productType', { defaultValue: 'Product type' })}
-          value={productTypeGroupFilter}
-          showSearch
-          optionFilterProp="label"
-          onChange={(value) => onProductTypeGroupFilterChange(value as string | undefined)}
-        />
-        <Select
-          allowClear
-          options={statusOptions}
-          placeholder={t('portal.vendors.filters.status')}
-          value={productStatus}
-          onChange={(value) => onProductStatusChange(value as RecordStatus | undefined)}
-        />
-      </FilterBar>
+          </div>
+        ) : null}
+      </div>
       <CoreDataTable
         rowKey="id"
         columns={productColumns}
