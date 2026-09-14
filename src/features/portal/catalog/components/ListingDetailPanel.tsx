@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { EditOutlined, GlobalOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Divider, Space, Tag, Typography } from 'antd'
 
-import { LoadingState, StatusTag, ZoomableImage } from '@/shared/ui'
+import { FormattedDateTime, LoadingState, StatusTag, ZoomableImage } from '@/shared/ui'
 
 import type { InternalTemplate, Listing, ProductTypeGroup } from '../api/catalogApi'
 import { ListingVariantManager } from '../pages/ListingVariantManager'
@@ -24,15 +24,15 @@ interface ListingDetailPanelProps {
   templates: InternalTemplate[]
 }
 
-function StatItem({ label, value }: { label: string; value: string | number | null | undefined }) {
+function StatItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className={styles.statItem}>
       <Typography.Text type="secondary" style={{ fontSize: 12 }}>
         {label}
       </Typography.Text>
-      <Typography.Text strong style={{ fontSize: 18 }}>
+      <div className={styles.statValue} style={{ fontSize: 16, fontWeight: 600 }}>
         {value ?? '—'}
-      </Typography.Text>
+      </div>
     </div>
   )
 }
@@ -167,9 +167,11 @@ export function ListingDetailPanel({
         <StatItem
           label={t('portal.catalog.detail.lastSold')}
           value={
-            listing.salesStats.lastSoldAt
-              ? new Date(listing.salesStats.lastSoldAt).toLocaleDateString()
-              : t('portal.catalog.detail.never')
+            listing.salesStats.lastSoldAt ? (
+              <FormattedDateTime value={listing.salesStats.lastSoldAt} />
+            ) : (
+              t('portal.catalog.detail.never')
+            )
           }
         />
       </div>
@@ -223,17 +225,19 @@ export function ListingDetailPanel({
 
       {/* Timestamps */}
       <div className={styles.section}>
-        <Space direction="vertical" size={2}>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {t('portal.catalog.detail.created', {
-              value: new Date(listing.createdAt).toLocaleString(),
-            })}
-          </Typography.Text>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {t('portal.catalog.detail.updated', {
-              value: new Date(listing.updatedAt).toLocaleString(),
-            })}
-          </Typography.Text>
+        <Space direction="vertical" size={4}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            <Typography.Text type="secondary">
+              {t('common.created', { defaultValue: 'Created' })}:
+            </Typography.Text>
+            <FormattedDateTime value={listing.createdAt} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            <Typography.Text type="secondary">
+              {t('common.updated', { defaultValue: 'Updated' })}:
+            </Typography.Text>
+            <FormattedDateTime value={listing.updatedAt} />
+          </div>
           {listing.baseCostAmount ? (
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
               {t('portal.catalog.detail.baseCost', {

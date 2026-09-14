@@ -1,19 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
-import {
-  Button,
-  Card,
-  Descriptions,
-  Drawer,
-  Empty,
-  List,
-  Pagination,
-  Space,
-  Typography,
-} from 'antd'
+import { Button, Card, Descriptions, Empty, List, Modal, Pagination, Space, Typography } from 'antd'
 
-import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
+import { CopyableSku, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { VendorCostCenter, VendorProduct } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -69,7 +59,11 @@ export function VendorWorkspaceCostCenterDrawer({
   const detailItems = selected
     ? [
         { key: 'code', label: t('vendors.code'), children: selected.code },
-        { key: 'sku', label: t('vendors.sku'), children: selected.sku || '—' },
+        {
+          key: 'sku',
+          label: t('vendors.sku'),
+          children: selected.sku ? <CopyableSku value={selected.sku} /> : '—',
+        },
         { key: 'lngCode', label: t('vendors.lngCode'), children: selected.lngCode || '—' },
         {
           key: 'printMethod',
@@ -96,7 +90,7 @@ export function VendorWorkspaceCostCenterDrawer({
     : []
 
   return (
-    <Drawer
+    <Modal
       title={
         product
           ? t('portal.vendors.productCostCenters', { name: product.name })
@@ -104,17 +98,29 @@ export function VendorWorkspaceCostCenterDrawer({
       }
       destroyOnClose
       width="min(1440px, calc(100vw - 32px))"
+      style={{ top: 40 }}
       open={open}
-      onClose={onClose}
+      onCancel={onClose}
+      footer={null}
       styles={{ body: { padding: 0 } }}
     >
       {product ? (
         <div className={styles.costCenterDrawer}>
-          <FilterBar
-            label={t('portal.vendors.filters.label')}
-            contentClassName={styles.filters}
-            actions={
-              canWrite ? (
+          <div className={styles.controlsBar}>
+            <div className={styles.filtersWrapper}>
+              <FilterBar
+                label={t('portal.vendors.filters.label')}
+                contentClassName={styles.filters}
+              >
+                <SearchInput
+                  value={searchCostCenters}
+                  onSearchChange={onSearchCostCentersChange}
+                  placeholder={t('vendors.searchCostCenters')}
+                />
+              </FilterBar>
+            </div>
+            {canWrite ? (
+              <div className={styles.actionsWrapper}>
                 <Space size={8} align="center">
                   <Button
                     type="primary"
@@ -127,15 +133,9 @@ export function VendorWorkspaceCostCenterDrawer({
                     {t('portal.vendors.importCostCenters')}
                   </Button>
                 </Space>
-              ) : null
-            }
-          >
-            <SearchInput
-              value={searchCostCenters}
-              onSearchChange={onSearchCostCentersChange}
-              placeholder={t('vendors.searchCostCenters')}
-            />
-          </FilterBar>
+              </div>
+            ) : null}
+          </div>
 
           {costCentersError ? (
             <Typography.Text type="danger">
@@ -341,6 +341,6 @@ export function VendorWorkspaceCostCenterDrawer({
           )}
         </div>
       ) : null}
-    </Drawer>
+    </Modal>
   )
 }

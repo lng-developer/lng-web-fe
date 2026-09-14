@@ -1,4 +1,4 @@
-import type React from 'react'
+import type { CSSProperties, MouseEventHandler } from 'react'
 import { Image } from 'antd'
 
 import { useAuthenticatedMediaUrl } from '@/shared/media'
@@ -10,8 +10,9 @@ export type ZoomableImageProps = {
   fallback?: string
   height?: number | string
   loading?: 'eager' | 'lazy'
-  onClick?: React.MouseEventHandler<HTMLElement>
+  onClick?: MouseEventHandler<HTMLElement>
   src?: string | null
+  style?: CSSProperties
   width?: number | string
 }
 
@@ -24,6 +25,7 @@ export function ZoomableImage({
   loading,
   onClick,
   src,
+  style,
   width,
 }: ZoomableImageProps) {
   const { url } = useAuthenticatedMediaUrl(downloadUrl)
@@ -34,11 +36,13 @@ export function ZoomableImage({
     <Image
       alt={alt}
       className={className}
+      fallback={fallback}
       height={height}
       loading={loading}
       onClick={onClick}
       preview={{ mask: null }}
       src={resolvedSrc}
+      style={style}
       width={width}
     />
   )

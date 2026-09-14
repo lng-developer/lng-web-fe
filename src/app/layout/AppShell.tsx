@@ -24,6 +24,7 @@ import { isCompactBreakpoint } from './appShellResponsive'
 import { AppSidebar } from './AppSidebar'
 import { getRememberedCoreRoute, rememberCoreRoute } from './coreRouteMemory'
 import { LegacySidebar } from './LegacySidebar'
+import { formatDocumentTitle, resolvePageTitle } from './pageTitle'
 import { getSidebarRouteState } from './sidebarRouteState'
 
 const { Content, Header } = Layout
@@ -77,29 +78,32 @@ export function AppShell() {
     [account, cores, groups, navigationSearch],
   )
   const { selectedKey } = getSidebarRouteState(location.pathname, groups)
-  const isOrderWorkspace = location.pathname === '/portal/orders'
-  const isVendorWorkspace = location.pathname === '/portal/vendors'
-  const isMappingWorkspace = location.pathname === '/portal/mapping'
-  const isFixedWorkspace =
-    location.pathname === '/portal/chat' ||
-    isOrderWorkspace ||
-    location.pathname === '/portal/shops' ||
-    isVendorWorkspace ||
-    isMappingWorkspace
+  const isPortalWorkbench =
+    location.pathname.startsWith('/portal/orders') ||
+    location.pathname.startsWith('/portal/catalog/') ||
+    location.pathname.startsWith('/portal/listing') ||
+    location.pathname.startsWith('/portal/shops') ||
+    location.pathname.startsWith('/portal/vendors') ||
+    location.pathname.startsWith('/portal/customers') ||
+    location.pathname.startsWith('/portal/design') ||
+    location.pathname.startsWith('/portal/production') ||
+    location.pathname.startsWith('/portal/shipments') ||
+    location.pathname.startsWith('/portal/work-scores') ||
+    location.pathname.startsWith('/portal/vendor-submissions') ||
+    location.pathname.startsWith('/portal/mapping')
+  const isFixedWorkspace = location.pathname === '/portal/chat' || isPortalWorkbench
   const activeItem = groups.flatMap((group) => group.items).find(({ key }) => key === selectedKey)
-  const pageTitle = activeItem
-    ? t(activeItem.labelKey)
-    : t(
-        routeCore && activeCore
-          ? `shell.cores.${activeCore}`
-          : 'shell.navigation.operationsDashboard',
-      )
+  const pageTitle = resolvePageTitle(location.pathname, {
+    activeLabelKey: activeItem?.labelKey,
+    groups,
+    t,
+  })
 
   useEffect(() => {
     if (routeCore) rememberCoreRoute(routeCore, location.pathname, groups)
   }, [groups, location.pathname, routeCore])
   useEffect(() => {
-    document.title = `${pageTitle} | ${t('app.name')}`
+    document.title = formatDocumentTitle(pageTitle, t('app.name', { defaultValue: 'LNG Web' }))
   }, [pageTitle, t])
 
   const changeCore = useCallback(
@@ -126,6 +130,7 @@ export function AppShell() {
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
           bottomMenus={legacyBottomMenus}
+          accountLabel={account.account.email}
         />
       )}
       {activeCore && isCompact && (
@@ -216,9 +221,7 @@ export function AppShell() {
           className={[
             styles.content,
             isFixedWorkspace ? styles.contentFixed : undefined,
-            isOrderWorkspace || isVendorWorkspace || isMappingWorkspace
-              ? styles.contentOrderWorkspace
-              : undefined,
+            isPortalWorkbench ? styles.contentOrderWorkspace : undefined,
           ]
             .filter(Boolean)
             .join(' ')}

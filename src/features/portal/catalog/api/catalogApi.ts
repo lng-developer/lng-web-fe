@@ -20,6 +20,7 @@ export type CatalogListParams = {
   sort?: string
 }
 export type CatalogSummaryParams = Omit<CatalogListParams, 'page' | 'limit' | 'sort'>
+export type PsdPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 export type Listing = {
   id: string
   shopId: string
@@ -31,10 +32,12 @@ export type Listing = {
   etsyListingId: string | null
   title: string
   productImageUrl?: string | null
+  previewImageUrl?: string | null
   defaultPsdTemplateAssetId?: string | null
   variantCount?: number
   psdReadyCount?: number
   psdVariantCount?: number
+  psdRequested?: boolean
   baseCostAmount: number
   currency: string
   costCenterStatus: string
@@ -169,6 +172,7 @@ export type CreateListingInput = {
   title: string
   asin?: string | null
   etsyListingId?: string | null
+  previewImageUrl?: string | null
   defaultPsdTemplateAssetId?: string | null
   baseCostAmount?: number
   currency?: string
@@ -209,8 +213,10 @@ export const createListing = async (input: CreateListingInput) =>
   unwrap<Listing>(await apiClient.post('/api/catalog/listings', input))
 export const updateListing = async (id: string, input: UpdateListingInput) =>
   unwrap<Listing>(await apiClient.patch(`/api/catalog/listings/${id}`, input))
-export const requestListingPsd = async (listingId: string) =>
-  unwrap<{ id: string }>(await apiClient.post(`/api/catalog/listings/${listingId}/request-psd`))
+export const requestListingPsd = async (listingId: string, priority: PsdPriority = 'NORMAL') =>
+  unwrap<{ id: string }>(
+    await apiClient.post(`/api/catalog/listings/${listingId}/request-psd`, { priority }),
+  )
 export const approveListing = async (id: string) =>
   unwrap<Listing>(await apiClient.post(`/api/catalog/listings/${id}/approve`))
 export const rejectListing = async (id: string, rejectionReason: string) =>

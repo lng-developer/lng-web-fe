@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons'
 import type { TablePaginationConfig } from 'antd'
@@ -23,13 +23,11 @@ export function CommonTablePagination({ pagination }: { pagination: TablePaginat
   const jumpPageRef = useRef<number | null>(current)
   const showSizeChanger = merged.showSizeChanger !== false
   const showQuickJumper = Boolean(merged.showQuickJumper)
-  const pageSizeOptions = useMemo(
-    () =>
-      (merged.pageSizeOptions ?? COMMON_TABLE_PAGINATION.pageSizeOptions).map((value) => ({
-        value: Number(value),
-        label: String(value),
-      })),
-    [merged.pageSizeOptions],
+  const pageSizeOptions = (merged.pageSizeOptions ?? COMMON_TABLE_PAGINATION.pageSizeOptions).map(
+    (value) => ({
+      value: Number(value),
+      label: String(value),
+    }),
   )
 
   const goToPage = (nextPage: number, nextPageSize = pageSize) => {
@@ -47,29 +45,34 @@ export function CommonTablePagination({ pagination }: { pagination: TablePaginat
     goToPage(jumpPageRef.current)
   }
 
+  const from = total === 0 ? 0 : (current - 1) * pageSize + 1
+  const to = Math.min(current * pageSize, total)
+
   if (merged.hideOnSinglePage && total <= pageSize) return null
 
   return (
     <div className={styles.tablePagination}>
-      {showSizeChanger ? (
-        <div className={styles.tablePaginationPageSize}>
-          <span>{t('common.pagination.rowsPerPage')}</span>
-          <Select
-            aria-label={t('common.pagination.rowsPerPage')}
-            bordered={false}
-            popupMatchSelectWidth={72}
-            size="small"
-            style={{ width: 72 }}
-            value={pageSize}
-            options={pageSizeOptions}
-            onChange={changePageSize}
-          />
-        </div>
-      ) : (
-        <span />
-      )}
+      <div className={styles.tablePaginationLeft}>
+        <span className={styles.tablePaginationSummary}>
+          {t('common.pagination.showingEntries', { from, to, total })}
+        </span>
+        {showSizeChanger ? (
+          <div className={styles.tablePaginationPageSize}>
+            <Select
+              aria-label={t('common.pagination.rowsPerPage')}
+              bordered={false}
+              popupMatchSelectWidth={72}
+              size="small"
+              style={{ width: 72 }}
+              value={pageSize}
+              options={pageSizeOptions}
+              onChange={changePageSize}
+            />
+          </div>
+        ) : null}
+      </div>
 
-      <div className={styles.tablePaginationCenter}>
+      <div className={styles.tablePaginationRight}>
         <Button
           aria-label={t('common.pagination.firstPage')}
           disabled={current <= 1}
@@ -92,29 +95,26 @@ export function CommonTablePagination({ pagination }: { pagination: TablePaginat
           type="text"
           onClick={() => goToPage(totalPages)}
         />
+        {showQuickJumper ? (
+          <div className={styles.tablePaginationJump}>
+            <span>{t('common.pagination.jumpToPage')}</span>
+            <InputNumber
+              key={current}
+              aria-label={t('common.pagination.jumpToPage')}
+              controls={false}
+              min={1}
+              max={totalPages}
+              size="small"
+              defaultValue={current}
+              onBlur={submitJump}
+              onChange={(value) => {
+                jumpPageRef.current = value
+              }}
+              onPressEnter={submitJump}
+            />
+          </div>
+        ) : null}
       </div>
-
-      {showQuickJumper ? (
-        <div className={styles.tablePaginationJump}>
-          <span>{t('common.pagination.jumpToPage')}</span>
-          <InputNumber
-            key={current}
-            aria-label={t('common.pagination.jumpToPage')}
-            controls={false}
-            min={1}
-            max={totalPages}
-            size="small"
-            defaultValue={current}
-            onBlur={submitJump}
-            onChange={(value) => {
-              jumpPageRef.current = value
-            }}
-            onPressEnter={submitJump}
-          />
-        </div>
-      ) : (
-        <span />
-      )}
     </div>
   )
 }

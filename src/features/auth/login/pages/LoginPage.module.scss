@@ -115,7 +115,7 @@
 }
 
 :global(html[data-theme='dark']) .page {
-  background-color: rgb(5 10 20);
+  background-color: #18191a;
 }
 
 .card,
@@ -160,8 +160,8 @@
 }
 
 :global(html[data-theme='dark']) .card {
-  border-color: rgb(71 85 105 / 70%);
-  background: rgb(20 26 34 / 96%);
+  border-color: #393a3b;
+  background: #242526;
   box-shadow: 0 24px 64px rgb(0 0 0 / 42%);
 }
 

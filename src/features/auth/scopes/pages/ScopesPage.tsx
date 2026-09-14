@@ -12,6 +12,7 @@ import {
   PageHeader,
   SectionCard,
   StatusTag,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -62,11 +63,27 @@ export function ScopesPage() {
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const columns: TableColumnsType<Scope> = [
-    { title: t('auth.scopes.name'), dataIndex: 'name' },
-    { title: t('auth.scopes.type'), dataIndex: 'scopeType' },
-    { title: t('auth.scopes.scopeId'), dataIndex: 'scopeId' },
+    {
+      title: t('auth.scopes.name'),
+      dataIndex: 'name',
+      width: 220,
+      render: (value) => <TableTextCell strong value={value} />,
+    },
+    {
+      title: t('auth.scopes.type'),
+      dataIndex: 'scopeType',
+      width: 140,
+      render: (value) => <TableTextCell value={value} />,
+    },
+    {
+      title: t('auth.scopes.scopeId'),
+      dataIndex: 'scopeId',
+      width: 180,
+      render: (value) => <TableTextCell code value={value} />,
+    },
     {
       title: t('auth.accessExplorer.status'),
+      width: 120,
       render: (_, scope) => {
         const scopeStatus = String(scope.status).toLowerCase()
         return (
@@ -78,6 +95,7 @@ export function ScopesPage() {
     },
     {
       title: t('auth.accessEditor.actions'),
+      width: 180,
       align: 'right',
       render: (_, scope) => (
         <Space>
@@ -116,8 +134,6 @@ export function ScopesPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.scopes.title')}
-        description={t('auth.scopes.description')}
         actions={
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => openEditor()}>
             {t('auth.scopes.create')}
@@ -141,6 +157,8 @@ export function ScopesPage() {
       ) : null}
       <SectionCard title={t('auth.scopes.catalog')}>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 840 }}
           columns={columns}
           dataSource={data?.items ?? []}
           loading={isLoading}

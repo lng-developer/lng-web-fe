@@ -21,6 +21,34 @@
   min-height: 36px;
 }
 
+.operationsWorkbench {
+  display: grid;
+  gap: 16px;
+}
+
+.setupCard {
+  border-radius: var(--ant-border-radius-lg);
+  border: 1px solid var(--ant-color-border-secondary);
+}
+
+.sectionHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  background-color: var(--ant-color-fill-secondary);
+  color: var(--ant-color-text-secondary);
+}
+
 .extensionSetup {
   display: grid;
   gap: 16px;
@@ -71,31 +99,54 @@
 
 .automationGroups {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .automationGroup {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
-.automationGroup :global(.ant-typography.ant-typography-h5) {
-  margin: 0;
+.automationGroupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--ant-color-fill-quaternary);
+  border-radius: var(--ant-border-radius);
+  border: 1px solid var(--ant-color-border-secondary);
+}
+
+.automationGroupTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.automationGroupTitle :global(.ant-typography) {
+  margin: 0 !important;
 }
 
 .automationGrid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
 }
 
 .automationAgentCard {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   padding: 16px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius-lg);
   background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.automationAgentCard:hover {
+  border-color: var(--ant-color-primary-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .automationAgentHeader,
@@ -106,9 +157,38 @@
   gap: 8px;
 }
 
-.automationAgentHeader > div:first-child {
-  display: grid;
-  gap: 2px;
+.agentIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.agentIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-primary-bg);
+  color: var(--ant-color-primary);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.agentLabel {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.agentMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.agentIdText {
+  font-size: 12px;
 }
 
 .automationScheduleList {
@@ -118,43 +198,97 @@
   list-style: none;
 }
 
-.automationScheduleRow {
-  display: grid;
-  grid-template-columns: minmax(110px, 0.75fr) minmax(150px, 1.25fr) auto minmax(90px, auto);
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
+.automationScheduleItem {
   border-top: 1px solid var(--ant-color-border-secondary);
 }
 
-.automationScheduleList > li:first-child .automationScheduleRow {
-  padding-top: 0;
-  border-top: 0;
+.automationScheduleItem:first-child {
+  border-top: none;
+}
+
+.automationScheduleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.scheduleInfo {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.scheduleTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scheduleIconPrimary {
+  color: var(--ant-color-primary);
+  font-size: 15px;
+}
+
+.scheduleIconSuccess {
+  color: var(--ant-color-success);
+  font-size: 15px;
+}
+
+.scheduleIconWarning {
+  color: var(--ant-color-warning);
+  font-size: 15px;
+}
+
+.scheduleMetaText {
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.scheduleControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .automationScheduleMeta {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
-.automationScheduleActions {
-  justify-content: flex-end;
-  flex-wrap: wrap;
+.automationScheduleError {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ant-color-error);
+  background: var(--ant-color-error-bg);
+  padding: 1px 6px;
+  border-radius: var(--ant-border-radius-sm);
+  border: 1px solid var(--ant-color-error-border);
+  width: fit-content;
 }
 
-@media (max-width: 640px) {
+.automationScheduleActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 520px) {
   .automationScheduleRow {
-    grid-template-columns: minmax(0, 1fr) auto;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .automationScheduleMeta,
-  .automationScheduleActions {
-    grid-column: 1 / -1;
-  }
-
-  .automationScheduleActions {
-    justify-content: flex-start;
+  .scheduleControls {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
@@ -185,7 +319,7 @@
 .importSummary {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .compactMetric {
@@ -198,30 +332,34 @@
   gap: 16px;
 }
 
-.segmentedTabs {
-  gap: 0;
-  margin-bottom: 12px;
+.tabSection {
+  display: grid;
+  gap: 16px;
 }
 
-.segmentedTabs :global(.ant-btn) {
-  border-radius: 0;
+.segmentedWrapper {
+  margin-bottom: 4px;
 }
 
-.segmentedTabs :global(.ant-btn + .ant-btn) {
-  margin-left: -1px;
+.workbenchSubBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.segmentedTabs :global(.ant-btn:first-child) {
-  border-radius: 8px 0 0 8px;
+.tableCard {
+  min-width: 0;
 }
 
-.segmentedTabs :global(.ant-btn:last-child) {
-  border-radius: 0 8px 8px 0;
+.selectedRow {
+  background-color: var(--ant-color-primary-bg) !important;
+  cursor: pointer;
 }
 
-.segmentedTabs :global(.ant-btn-primary) {
-  position: relative;
-  z-index: 1;
+.clickableRow {
+  cursor: pointer;
 }
 
 .workbenchSplit {
@@ -347,6 +485,10 @@
 }
 
 @media (max-width: 1100px) {
+  .importSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .workbenchSplit {
     grid-template-columns: 1fr;
   }

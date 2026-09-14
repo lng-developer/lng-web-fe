@@ -11,7 +11,8 @@
       "rowsPerPage": "Số hàng hiển thị trên trang",
       "jumpToPage": "Nhảy tới trang",
       "firstPage": "Trang đầu",
-      "lastPage": "Trang cuối"
+      "lastPage": "Trang cuối",
+      "showingEntries": "Hiển thị {{from}} đến {{to}} trong {{total}} mục"
     }
   },
   "language": {
@@ -28,7 +29,6 @@
   "legacyMenu": {
     "setting": "Cài đặt",
     "systemName": "LNG System",
-    "userName": "Ngô Văn Hiếu",
     "sales": "Sales",
     "fulfillment": "Fulfillment",
     "design": "Design",
@@ -455,7 +455,25 @@
       "missingFulfillmentCost": "Thiếu fulfillment cost",
       "completePnl": "P&L đơn hàng đã đủ cost",
       "costCoverage": "Độ phủ cost",
-      "costCoverageValue": "{{costed}} / {{total}} đơn đã có cost"
+      "costCoverageValue": "{{costed}} / {{total}} đơn đã có cost",
+      "tableTitle": "Chi tiết chi phí đơn hàng",
+      "allOrders": "Tất cả đơn",
+      "missingCostOnly": "Thiếu chi phí",
+      "completeCostOnly": "Đã đủ chi phí",
+      "searchPlaceholder": "Tìm theo mã đơn hàng...",
+      "breakdown": "Bóc tách dòng tiền",
+      "costStatus": "Trạng thái cost",
+      "costComplete": "Đủ chi phí",
+      "costMissing": "Thiếu chi phí",
+      "profitable": "Có lãi",
+      "loss": "Bị lỗ",
+      "margin": "Biên lãi",
+      "netProfit": "Lợi nhuận ròng",
+      "grossProfit": "Lợi nhuận gộp",
+      "baseCost": "Chi phí gốc",
+      "additionalFulfillment": "Fulfillment phát sinh",
+      "feesAndDeductions": "Phí & Khấu trừ",
+      "emptyMatching": "Không có đơn hàng nào khớp với điều kiện lọc"
     },
     "adsEmployee": {
       "ranking": "Xếp hạng nhân viên",
@@ -1039,9 +1057,47 @@
       "orderStatus": "Trạng thái đơn hàng",
       "orderQueues": "Hàng đợi đơn hàng",
       "monthlyTarget": "Mục tiêu tháng",
+      "listingApproval": "Tỷ lệ duyệt listing",
+      "listings": "Listing",
+      "dataIncomplete": "Không thể tải đầy đủ dữ liệu dashboard",
+      "dataIncompleteDescription": "Một số yêu cầu dashboard đã lỗi. Hãy tải lại để thử lại.",
       "approvedFromListings": "{{approved}} đã duyệt trên {{total}} listing",
       "topAsins": "ASIN nổi bật",
-      "recentOrders": "Đơn hàng gần đây"
+      "recentOrders": "Đơn hàng gần đây",
+      "totalRevenue": "Tổng doanh thu",
+      "orderThisMonth": "Đơn hàng tháng này",
+      "thisMonth": "Tháng này",
+      "viewAll": "Xem tất cả",
+      "viewAllStock": "Xem tất cả tồn",
+      "trafficSources": "Nguồn kênh bán",
+      "downloadReport": "Tải báo cáo",
+      "allStatus": "Tất cả trạng thái",
+      "target": "Mục tiêu",
+      "revenue": "Doanh thu",
+      "today": "Hôm nay",
+      "topCategories": "Danh mục hàng đầu",
+      "price": "Đơn giá",
+      "totalPrice": "Thành tiền",
+      "action": "Thao tác",
+      "incomeGrowth": "Lợi nhuận gộp",
+      "addProduct": "Thêm sản phẩm",
+      "salesByChannel": "Doanh thu theo sàn",
+      "targetTrendDesc": "{{approved}} đã duyệt trên {{total}} listing",
+      "operationalHealth": "Sức khỏe vận hành",
+      "needsMapping": "Cần mapping",
+      "needsProduction": "Cần sản xuất",
+      "qcRejected": "QC bị từ chối",
+      "vendorSubmitFailed": "Gửi vendor lỗi",
+      "trackingPending": "Chờ tracking",
+      "shipmentException": "Lỗi vận chuyển",
+      "noOperationalIssues": "Không có vấn đề vận hành",
+      "vendorHealth": "Sức khỏe vendor",
+      "vendorFailureCount": "{{count}} lỗi",
+      "noVendorFailures": "Không có lần gửi vendor lỗi",
+      "viewImportHealth": "Xem tình trạng import",
+      "youEarn": "Hôm nay bạn đạt",
+      "todayTrends": "hôm nay, cao hơn so với tháng trước. Tiếp tục duy trì phong độ nhé!",
+      "lastMonth": "Tháng trước"
     },
     "accessDenied": "Bạn không có quyền truy cập bảng điều khiển vận hành.",
     "metrics": {
@@ -1248,7 +1304,17 @@
       "securitySettings": "Thiết lập bảo mật",
       "viewDetails": "Xem chi tiết",
       "bulkAssign": "Gán hàng loạt",
-      "selectCurrentPage": "Chọn trang hiện tại"
+      "selectCurrentPage": "Chọn trang hiện tại",
+      "allAccountsFilter": "Tất cả tài khoản",
+      "activeAccountsFilter": "Hoạt động",
+      "inactiveAccountsFilter": "Không hoạt động",
+      "allRoles": "Tất cả vai trò",
+      "accountInspector": "Chi tiết tài khoản",
+      "closeInspector": "Đóng chi tiết tài khoản",
+      "overview": "Tổng quan",
+      "editGlobalAccess": "Chỉnh quyền toàn cục",
+      "accessSummary": "Quản lý vai trò và quyền truy cập của tài khoản này.",
+      "securitySummary": "Mật khẩu, phiên đăng nhập và trạng thái tài khoản được quản lý trong khu vực bảo mật."
     },
     "accessEditor": {
       "title": "Quản lý quyền truy cập",
@@ -2183,32 +2249,6 @@
     }
   },
   "portal": {
-    "monitoring": {
-      "indexes": {
-        "tab": "Mongo Indexes",
-        "title": "Theo dõi MongoDB index",
-        "snapshotDate": "Ngày snapshot",
-        "refresh": "Làm mới",
-        "database": "Cơ sở dữ liệu",
-        "indexes": "Index",
-        "indexSize": "Dung lượng index",
-        "capturedAt": "Thời điểm ghi nhận",
-        "empty": "Chưa có snapshot theo dõi index.",
-        "loadFailed": "Không thể tải snapshot theo dõi index.",
-        "filter": "Bộ lọc index",
-        "allIndexes": "Tất cả index",
-        "reviewCandidates": "Ứng viên cần xem xét",
-        "idleDaysValue": "{{count}} ngày",
-        "columns": {
-          "collection": "Collection",
-          "index": "Index",
-          "key": "Key",
-          "operations": "Lượt sử dụng",
-          "idleDays": "Không tăng usage",
-          "decision": "Đánh giá"
-        }
-      }
-    },
     "catalog": {
       "actions": "Thao tác",
       "view": "Xem",
@@ -2434,6 +2474,15 @@
         "missingTag": "Thiếu PSD",
         "request": "Yêu cầu PSD",
         "requestDefault": "Yêu cầu PSD mặc định",
+        "requested": "Đã yêu cầu PSD",
+        "priority": "Độ ưu tiên",
+        "priorityDescription": "Chọn độ ưu tiên cho yêu cầu PSD này.",
+        "priorities": {
+          "LOW": "Thấp",
+          "NORMAL": "Bình thường",
+          "HIGH": "Cao",
+          "URGENT": "Khẩn cấp"
+        },
         "taskRequested": "Đã tạo task PSD",
         "requestFailed": "Không thể yêu cầu PSD",
         "taskCreated": "Đã tạo task PSD",
@@ -2458,6 +2507,8 @@
         "title": "Tiêu đề",
         "asin": "ASIN",
         "etsyListingId": "Etsy listing ID",
+        "previewImageUrl": "URL ảnh preview",
+        "previewImageUrlHelp": "Chỉ dùng cho ảnh xem trước của listing, không thay đổi ảnh sản phẩm.",
         "productType": "Loại sản phẩm",
         "internalTemplate": "Mẫu nội bộ",
         "previewAssetId": "ID ảnh xem trước",
@@ -2632,6 +2683,46 @@
         "degraded": "Hoạt động suy giảm",
         "paused": "Tạm dừng",
         "failed": "Thất bại"
+      },
+      "infrastructureItems": {
+        "mongo": "MongoDB",
+        "redis": "Redis",
+        "metrics": "Metrics",
+        "node": "Node.js"
+      },
+      "runtimeItems": {
+        "rss": "Bộ nhớ RSS",
+        "heapUsed": "Heap đã dùng",
+        "uptime": "Thời gian hoạt động"
+      },
+      "copyLogs": "Sao chép log",
+      "filterLogsPlaceholder": "Lọc dòng log theo từ khóa...",
+      "copied": "Đã sao chép log vào clipboard",
+      "filteredLinesCount": "{{count}} / {{total}} dòng",
+      "indexes": {
+        "tab": "Mongo Indexes",
+        "title": "Theo dõi MongoDB index",
+        "snapshotDate": "Ngày snapshot",
+        "refresh": "Làm mới",
+        "database": "Cơ sở dữ liệu",
+        "indexes": "Index",
+        "indexSize": "Dung lượng index",
+        "capturedAt": "Thời điểm ghi nhận",
+        "empty": "Chưa có snapshot theo dõi index.",
+        "loadFailed": "Không thể tải snapshot theo dõi index.",
+        "filter": "Bộ lọc index",
+        "allIndexes": "Tất cả index",
+        "reviewCandidates": "Ứng viên cần xem xét",
+        "idleDaysValue": "{{count}} ngày",
+        "searchPlaceholder": "Tìm theo collection hoặc tên index...",
+        "columns": {
+          "collection": "Collection",
+          "index": "Index",
+          "key": "Key",
+          "operations": "Lượt sử dụng",
+          "idleDays": "Không tăng usage",
+          "decision": "Đánh giá"
+        }
       }
     },
     "design": {
@@ -2701,6 +2792,8 @@
       "rejectSubmission": "Từ chối bản nộp",
       "reasonRequired": "Bắt buộc nhập lý do",
       "updated": "Đã cập nhật task thiết kế",
+      "priorityUpdated": "Đã cập nhật độ ưu tiên",
+      "savePriority": "Lưu độ ưu tiên",
       "updateFailed": "Không thể cập nhật task thiết kế",
       "createFailed": "Không thể tạo task thiết kế",
       "createPsdTasks": "Tạo task PSD",
@@ -2724,6 +2817,8 @@
       "copyAsin": "Sao chép ASIN",
       "asinCopied": "Đã sao chép ASIN",
       "tasks": "Tác vụ thiết kế",
+      "amazonTasks": "Tác vụ Amazon",
+      "etsyTasks": "Tác vụ Etsy",
       "taskTypes": {
         "PSD_TEMPLATE": "Mẫu PSD",
         "MOCKUP": "Mockup",
@@ -2760,9 +2855,14 @@
       "filters": "Bộ lọc nhập đơn",
       "importsSummary": "Tổng quan import",
       "imports": {
+        "total": "Tổng số lượt nhập",
         "needsReview": "Cần xem lại",
         "processing": "Đang xử lý",
         "completed": "Hoàn tất"
+      },
+      "views": {
+        "jobs": "Lịch sử nhập đơn",
+        "issues": "Hàng đợi xử lý sự cố"
       },
       "shop": "Cửa hàng",
       "allShops": "Tất cả cửa hàng",
@@ -2777,9 +2877,10 @@
         "operations": "Vận hành",
         "automation": "Tự động hóa",
         "finance": "Dữ liệu tài chính",
-        "ads": "Quảng cáo Amazon",
-        "transactions": "Giao dịch Amazon",
-        "settlements": "Đối soát Amazon"
+        "ads": "Quảng cáo",
+        "adsMapping": "Khớp nối quảng cáo",
+        "transactions": "Giao dịch",
+        "settlements": "Đối soát"
       },
       "jobs": {
         "createdAt": "Đã tạo",
@@ -2884,7 +2985,19 @@
         "commandQueued": "Đã xếp lệnh nhập đơn.",
         "command": "Lệnh",
         "status": "Trạng thái",
-        "created": "Đã tạo"
+        "created": "Đã tạo",
+        "metrics": {
+          "onlineAgents": "Extension trực tuyến",
+          "activeSchedules": "Lịch tự động hoạt động",
+          "totalCommands": "Lệnh đã chạy",
+          "failedCommands": "Lệnh cần xử lý"
+        },
+        "agentsTitle": "Extension đã kết nối (RDC / Chrome)",
+        "commandActivity": "Nhật ký hoạt động lệnh extension",
+        "allCommands": "Tất cả lệnh",
+        "runningCommands": "Đang chạy / Tiếp nhận",
+        "failedOnly": "Chỉ lệnh lỗi",
+        "succeededOnly": "Thành công"
       },
       "panel": {
         "title": "Lượt nhập đơn",
@@ -3311,6 +3424,10 @@
       },
       "rules": {
         "title": "Thiết lập điểm",
+        "rulesList": "Danh sách quy tắc",
+        "addRule": "Thêm quy tắc tính điểm",
+        "editRule": "Chỉnh sửa quy tắc",
+        "cancelEdit": "Hủy",
         "sourceType": "Nguồn",
         "taskType": "Loại tác vụ",
         "priority": "Ưu tiên",
@@ -3319,7 +3436,8 @@
         "allDifficulties": "Mọi độ khó",
         "points": "Điểm",
         "status": "Trạng thái",
-        "save": "Lưu rule"
+        "save": "Lưu quy tắc",
+        "update": "Cập nhật"
       },
       "metrics": {
         "totalFiles": "Số file",
@@ -3439,6 +3557,11 @@
       "backToCostCenters": "Quay lại trung tâm chi phí",
       "edit": "Sửa",
       "integrationTitle": "Tích hợp dịch vụ",
+      "integrationTabs": {
+        "connection": "Kết nối",
+        "credentials": "Thông tin xác thực",
+        "health": "Trạng thái & kiểm tra"
+      },
       "integrationMode": "Chế độ tích hợp",
       "integrationModes": {
         "manual": "Thủ công",
@@ -3514,6 +3637,18 @@
       "trackingEndpointUrl": "URL endpoint tracking",
       "pushOrderEndpointUrl": "URL endpoint đẩy đơn",
       "authType": "Loại xác thực",
+      "authTypeOptions": {
+        "apiKey": "API Key / Token",
+        "accessRefresh": "OAuth Access & Refresh",
+        "loginPassword": "Đăng nhập & mật khẩu"
+      },
+      "credentialPlaceholders": {
+        "apiKey": "Nhập API token mới (mã hóa khi lưu)",
+        "accessToken": "Nhập access token",
+        "refreshToken": "Nhập refresh token",
+        "username": "Tên đăng nhập hoặc email",
+        "password": "Mật khẩu"
+      },
       "accessToken": "Access token",
       "refreshToken": "Refresh token",
       "username": "Tên đăng nhập",

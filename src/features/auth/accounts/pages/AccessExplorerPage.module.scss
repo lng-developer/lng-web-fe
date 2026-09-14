@@ -7,187 +7,320 @@
   margin-bottom: 0;
 }
 
-.metrics {
+.headerActions,
+.quickFilters,
+.filters,
+.bulkBar,
+.bulkBarActions,
+.inspectorIdentity,
+.accountIdentity {
+  display: flex;
+  align-items: center;
+}
+
+.headerActions,
+.quickFilters,
+.bulkBarActions {
+  gap: 8px;
+}
+
+.workspace,
+.workspaceWithInspector {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  min-width: 0;
+}
+
+.workspaceWithInspector {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+  min-height: calc(100dvh - 184px);
+}
+
+.directory {
+  min-width: 0;
+}
+
+.directoryHeader {
+  padding: 4px 16px 20px;
+}
+
+.directoryTable {
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+
+.filters {
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  flex-wrap: wrap;
+}
+
+.quickFilters {
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quickFilters :global(.ant-btn) {
+  border-color: var(--ant-color-border-secondary);
+}
+
+.quickFilterActive {
+  color: var(--ant-color-primary) !important;
+  border-color: var(--ant-color-primary-border) !important;
+  background: var(--ant-color-primary-bg) !important;
+}
+
+.filterCount {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--ant-color-fill-tertiary);
+  font-size: 12px;
+}
+
+.searchFilter {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.roleFilter {
+  flex: 0 1 150px;
+  min-width: 130px;
+}
+
+.tableShell {
+  min-height: 380px;
+}
+
+.tableHeader,
+.accountRow {
+  display: grid;
+  grid-template-columns: 32px repeat(5, minmax(0, 1fr)) 40px;
+  align-items: center;
+  column-gap: 16px;
+}
+
+.tableHeader {
+  min-height: 44px;
+  padding: 0 16px;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-fill-quaternary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.accountRow {
+  min-height: 64px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  cursor: pointer;
+  transition: background 160ms ease;
+
+  &:hover {
+    background: var(--ant-color-fill-quaternary);
+  }
+}
+
+.accountRowSelected {
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 72%, var(--ant-color-bg-container));
+
+  &:hover {
+    background: var(--ant-color-primary-bg);
+  }
+}
+
+.accountIdentity {
+  min-width: 0;
+  gap: 10px;
+}
+
+.avatar,
+.inspectorAvatar {
+  color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
+}
+
+.emailText,
+.accountMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emailText {
+  font-size: 13px;
+}
+
+.accountMeta {
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
+
+.accountRoles {
+  min-width: 0;
+}
+
+.accountRoles :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.accountStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.accountStatusActive {
+  color: var(--ant-color-success);
+
+  .statusDot {
+    background: var(--ant-color-success);
+  }
+}
+
+.accountStatusInactive {
+  color: var(--ant-color-text-secondary);
+
+  .statusDot {
+    background: var(--ant-color-text-tertiary);
+  }
+}
+
+.rowActionMenu {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .loading {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 8px 0;
-}
-
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.sectionTitle {
-  margin: 0;
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filters {
-  width: 100%;
-  flex-wrap: nowrap !important;
-}
-
-.searchFilter {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.statusFilter {
-  flex: 0 0 148px;
-}
-
-.totalIcon,
-.activeIcon,
-.unassignedIcon {
-  font-size: 22px;
-}
-
-.totalIcon {
-  color: var(--ant-color-primary);
-}
-
-.activeIcon {
-  color: var(--ant-color-success);
-}
-
-.unassignedIcon {
-  color: var(--ant-color-warning);
-}
-
-.accountList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.accountCard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
-  background: var(--ant-color-bg-container);
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease,
-    background 180ms ease;
-  gap: 20px;
-
-  &:hover {
-    border-color: var(--ant-color-primary-border);
-    box-shadow: 0 4px 16px rgb(15 23 42 / 7%);
-    transform: translateY(-1px);
-  }
-}
-
-.accountCardSelected {
-  border-color: var(--ant-color-primary);
-  background: color-mix(in srgb, var(--ant-color-primary-bg) 80%, var(--ant-color-bg-container));
-  box-shadow: 0 0 0 1px var(--ant-color-primary-border);
-
-  &:hover {
-    box-shadow:
-      0 4px 16px rgb(15 23 42 / 8%),
-      0 0 0 1px var(--ant-color-primary);
-  }
-}
-
-.accountIdentity {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 1.5;
-  min-width: 0;
-}
-
-.emailText {
-  font-size: 14px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
-}
-
-.accountRoles {
-  flex: 1.5;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-
-.sectionLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ant-color-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  white-space: nowrap;
-}
-
-.accountStatus {
-  flex-shrink: 0;
-  width: 90px;
-  display: flex;
-  justify-content: center;
-}
-
-.accountMeta {
-  font-size: 12px;
+  gap: 1px;
 }
 
 .pagination {
-  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  padding: 16px;
+  border-top: 1px solid var(--ant-color-border-secondary);
 }
 
-.accountActions {
-  flex-shrink: 0;
+.inspector {
+  position: relative;
   display: flex;
-  gap: 2px;
-  background: var(--ant-color-fill-quaternary);
-  border-radius: 8px;
-  padding: 3px;
-
-  button {
-    color: var(--ant-color-text-tertiary);
-    border-radius: 6px !important;
-    transition:
-      color 150ms ease,
-      background 150ms ease !important;
-
-    &:hover {
-      color: var(--ant-color-primary) !important;
-      background: var(--ant-color-bg-container) !important;
-    }
-  }
+  min-height: 560px;
+  flex-direction: column;
+  padding: 28px 24px 20px;
+  border-left: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
 }
 
-.manageAccessLink {
-  text-decoration: none;
+.closeInspector {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.inspectorIdentity {
+  gap: 16px;
+  padding-right: 24px;
+}
+
+.inspectorIdentity :global(.ant-typography h3) {
+  margin: 8px 0 2px;
+  overflow-wrap: anywhere;
+}
+
+.inspectorStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 24px 0 18px;
+}
+
+.inspectorStats > div {
+  display: grid;
+  gap: 6px;
+  padding: 12px 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+}
+
+.inspectorStats span {
+  color: var(--ant-color-text-secondary);
+  font-size: 11px;
+}
+
+.inspectorStats strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspectorTabs {
+  flex: 1;
+}
+
+.detailList {
+  display: grid;
+  gap: 14px;
+  margin: 4px 0 0;
+}
+
+.detailList > div {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.detailList dt {
+  color: var(--ant-color-text-secondary);
+}
+
+.detailList dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.inspectorSection {
+  display: grid;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.inspectorRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inspectorRoles :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.inspectorPasswordForm :global(.ant-form-item) {
+  margin-bottom: 12px;
+}
+
+.inspectorTabAction {
+  justify-self: start;
+}
+
+.inspectorSecurityActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .scopeRow {
@@ -196,98 +329,83 @@
   gap: 12px;
 }
 
-/* ── Bulk action sticky bar ─────────────────────── */
 .bulkBar {
   position: sticky;
   bottom: 0;
   z-index: 10;
-  display: flex;
-  align-items: center;
   gap: 12px;
   padding: 12px 20px;
-  border-radius: 10px;
   border: 1px solid var(--ant-color-primary-border);
+  border-radius: 10px;
   background: color-mix(in srgb, var(--ant-color-primary-bg) 72%, var(--ant-color-bg-container));
   box-shadow: 0 -4px 24px rgb(15 23 42 / 10%);
-  backdrop-filter: blur(6px);
-  animation: slideUp 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .bulkBarLabel {
+  flex: 1;
+  color: var(--ant-color-primary);
   font-size: 13px;
   font-weight: 600;
-  color: var(--ant-color-primary);
-  flex: 1;
 }
 
-.bulkBarActions {
-  display: flex;
-  gap: 8px;
-}
-
-@media (max-width: 991px) {
-  .accountCard {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
+@media (max-width: 1180px) {
+  .workspaceWithInspector {
+    grid-template-columns: minmax(0, 1fr) 360px;
   }
 
-  .accountIdentity {
-    width: 100%;
+  .tableHeader,
+  .accountRow {
+    grid-template-columns: 32px repeat(4, minmax(140px, 1fr)) 40px;
   }
 
-  .accountRoles {
-    width: 100%;
-  }
-
-  .accountStatus {
-    width: auto;
-    justify-content: flex-start;
-  }
-
-  .accountActions {
-    width: 100%;
-    justify-content: flex-end;
-    padding: 4px;
+  .tableHeader > :nth-child(3),
+  .accountRow > :nth-child(3) {
+    display: none;
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 900px) {
+  .workspaceWithInspector {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .inspector {
+    border-top: 1px solid var(--ant-color-border-secondary);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
   .page {
     gap: 16px;
   }
 
-  .metrics {
-    grid-template-columns: 1fr;
-  }
-
   .filters {
-    flex-wrap: wrap !important;
+    align-items: stretch;
   }
 
-  .searchFilter {
+  .searchFilter,
+  .roleFilter {
     flex-basis: 100%;
   }
 
-  .bulkBar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .tableShell {
+    overflow-x: auto;
   }
 
-  .bulkBarActions {
-    width: 100%;
+  .tableHeader,
+  .accountRow {
+    min-width: 720px;
+  }
+
+  .inspectorStats {
+    grid-template-columns: 1fr;
+  }
+
+  .bulkBar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
   }
 }

@@ -551,6 +551,7 @@ export function ReportWorkspacePage() {
         data={orderProfitability.data}
         isPending={orderProfitability.isPending}
         onPageChange={setOrderCostPage}
+        filterBar={filterBar}
       />
     ) : activeTab === 'ads-employee' ? (
       <ReportAdsEmployeeTab data={adsSellerDaily.data} isPending={adsSellerDaily.isPending} />
@@ -577,7 +578,7 @@ export function ReportWorkspacePage() {
 
   return (
     <div className={styles.page}>
-      {filterBar}
+      {activeTab === 'order-cost' ? null : filterBar}
       {isDedicatedReport ? (
         <div className={styles.stack}>{reportContent}</div>
       ) : (

@@ -1,33 +1,68 @@
 * {
   box-sizing: border-box;
 }
-
 html {
   min-width: 320px;
-  background: #eef1f5;
+  background: #f8fafc;
+}
+
+html[data-theme='dark'] {
+  background: #18191a;
 }
 
 :root {
   --ui-border-soft: color-mix(in srgb, var(--ant-color-border) 64%, transparent);
   --ui-border-strong: color-mix(in srgb, var(--ant-color-border) 88%, transparent);
   --ui-border-accent: color-mix(in srgb, var(--ant-color-primary) 26%, var(--ant-color-border));
-  --ui-surface-elevate-shadow: 0 10px 28px rgb(15 23 42 / 10%);
-  --ui-modal-shadow: 0 22px 52px rgb(15 23 42 / 18%);
+  --ui-surface-elevate-shadow: 0 1px 3px 0 rgb(15 23 42 / 6%), 0 1px 2px -1px rgb(15 23 42 / 4%);
+  --ui-modal-shadow: 0 20px 45px -10px rgb(15 23 42 / 16%);
+}
+
+html[data-theme='dark'] {
+  --ui-surface-elevate-shadow: 0 1px 3px 0 rgb(0 0 0 / 40%), 0 1px 2px -1px rgb(0 0 0 / 40%);
+  --ui-modal-shadow: 0 25px 50px -12px rgb(0 0 0 / 55%);
 }
 
 body {
   min-width: 320px;
   min-height: 100dvh;
   margin: 0;
-  color: #172033;
+  color: #0f172a;
+  background: #f8fafc;
   font-family:
-    Inter,
-    system-ui,
+    'Plus Jakarta Sans',
+    'Poppins',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
+    Roboto,
     sans-serif;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-theme='dark'] body {
+  color: #e4e6eb;
+  background: #18191a;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ant-color-border) 80%, transparent);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ant-color-text-tertiary);
 }
 
 button,
@@ -51,18 +86,31 @@ select {
   min-height: 100dvh;
   place-items: center;
   padding: 24px;
-  background: #eef1f5;
+  background: var(--ant-color-bg-layout, #f1f5f9);
 }
 
-.ant-modal .ant-modal-content {
+.ant-modal:not(.ant-modal-confirm) .ant-modal-content {
+  padding: 0 !important;
   border: 1px solid color-mix(in srgb, var(--ant-color-border) 72%, transparent);
   border-radius: 8px;
   box-shadow: var(--ui-modal-shadow);
   overflow: hidden;
 }
 
+.ant-modal-confirm .ant-modal-content {
+  border: 1px solid color-mix(in srgb, var(--ant-color-border) 72%, transparent);
+  border-radius: 8px;
+  box-shadow: var(--ui-modal-shadow);
+  overflow: hidden;
+}
+
+.ant-modal .ant-modal-close {
+  top: 14px;
+  inset-inline-end: 16px;
+}
+
 .ant-modal .ant-modal-header {
-  margin: -20px -24px 20px;
+  margin: 0;
   padding: 18px 24px 16px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
   background:
@@ -80,8 +128,35 @@ select {
   letter-spacing: 0;
 }
 
+.ant-modal:not(.ant-modal-confirm) .ant-modal-body {
+  padding: 20px 24px;
+}
+
+.ant-modal .ant-modal-body,
+.ant-modal {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ant-color-text-quaternary) 80%, transparent) transparent;
+}
+
+.ant-modal ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.ant-modal ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ant-color-text-quaternary) 80%, transparent);
+  border-radius: 3px;
+
+  &:hover {
+    background: var(--ant-color-text-tertiary);
+  }
+}
+.ant-modal ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .ant-modal .ant-modal-footer {
-  margin: 20px -24px -20px;
+  margin: 0;
   padding: 14px 24px 16px;
   border-top: 1px solid var(--ant-color-border-secondary);
   background: var(--ant-color-fill-quaternary);
@@ -116,5 +191,110 @@ html[data-theme='dark'] {
 @media (prefers-reduced-motion: reduce) {
   .ant-modal-root .ant-modal-mask {
     backdrop-filter: none;
+  }
+}
+
+// Segmented Tabs - Edge-to-edge flush presentation (border fills entire segment, no inset gap)
+.ant-segmented {
+  background: var(--ant-color-bg-container, #ffffff);
+  border: 1px solid var(--ant-color-border, #cbd5e1);
+  padding: 0 !important;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 4%);
+
+  .ant-segmented-group {
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .ant-segmented-thumb {
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    background: var(--ant-color-primary, #e83b4a) !important;
+    box-shadow: none !important;
+  }
+
+  .ant-segmented-item {
+    border-radius: 0 !important;
+    color: var(--ant-color-text-secondary, #475569);
+    font-size: 13px;
+    font-weight: 500;
+    transition:
+      color 0.16s ease,
+      background-color 0.16s ease;
+
+    &:not(:last-child) {
+      border-inline-end: 1px solid var(--ant-color-border-secondary, #e2e8f0);
+    }
+
+    &:hover:not(.ant-segmented-item-selected):not(.ant-segmented-item-disabled) {
+      color: var(--ant-color-text, #0f172a);
+      background: var(--ant-color-fill-quaternary, #f8fafc);
+
+      .anticon,
+      svg {
+        color: var(--ant-color-text, #0f172a);
+        fill: currentColor;
+      }
+    }
+  }
+
+  .ant-segmented-item-selected {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    background: var(--ant-color-primary, #e83b4a) !important;
+
+    .ant-segmented-item-label {
+      color: #ffffff !important;
+      font-weight: 600 !important;
+
+      .anticon,
+      svg {
+        color: #ffffff !important;
+        fill: currentColor !important;
+      }
+    }
+  }
+}
+html[data-theme='dark'] .ant-segmented {
+  background: #242526;
+  border-color: #393a3b;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%);
+
+  .ant-segmented-item:not(:last-child) {
+    border-inline-end-color: #393a3b;
+  }
+
+  .ant-segmented-item {
+    color: #b0b3b8;
+
+    &:hover:not(.ant-segmented-item-selected):not(.ant-segmented-item-disabled) {
+      color: #e4e6eb;
+      background: #3a3b3c;
+
+      .anticon,
+      svg {
+        color: #e4e6eb;
+        fill: currentColor;
+      }
+    }
+  }
+
+  .ant-segmented-item-selected {
+    color: #ffffff !important;
+    background: var(--ant-color-primary, #e83b4a) !important;
+
+    .ant-segmented-item-label {
+      color: #ffffff !important;
+
+      .anticon,
+      svg {
+        color: #ffffff !important;
+        fill: currentColor !important;
+      }
+    }
   }
 }

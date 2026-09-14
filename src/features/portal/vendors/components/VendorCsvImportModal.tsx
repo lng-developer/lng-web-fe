@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { DownloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import type { UploadFile } from 'antd'
-import { Button, Modal, Space, Typography } from 'antd'
+import { Button, Modal, Typography } from 'antd'
 
 import { FileUpload, useFeedbackToast } from '@/shared/ui'
 
@@ -125,7 +125,6 @@ export const VendorCsvImportModal = memo(function VendorCsvImportModal({
 
   return (
     <Modal
-      centered
       title={
         target.kind === 'product'
           ? t('portal.vendors.importProducts')
@@ -145,8 +144,8 @@ export const VendorCsvImportModal = memo(function VendorCsvImportModal({
       okText={importing ? t('portal.vendors.import.importing') : t('portal.vendors.import.submit')}
       cancelText={t('portal.vendors.cancel')}
     >
-      <Space className={styles.importModalBody} direction="vertical" size={12}>
-        <Space size={8} wrap>
+      <div className={styles.importModalBody}>
+        <div className={styles.importTemplateRow}>
           <Button
             type="default"
             icon={<DownloadOutlined />}
@@ -154,6 +153,9 @@ export const VendorCsvImportModal = memo(function VendorCsvImportModal({
           >
             {t('portal.vendors.import.downloadTemplate')}
           </Button>
+        </div>
+
+        <div className={styles.importUploadWrapper}>
           <FileUpload
             accept=".csv"
             title={t('portal.vendors.import.chooseFile')}
@@ -191,20 +193,21 @@ export const VendorCsvImportModal = memo(function VendorCsvImportModal({
               await hydratePreview()
             }}
           />
-        </Space>
+        </div>
+
         {target.kind === 'product' ? (
-          <Typography.Text type="secondary">
+          <Typography.Text type="secondary" className={styles.importTip}>
             {t('portal.vendors.import.productTip')}
           </Typography.Text>
         ) : (
-          <Typography.Text type="secondary">
+          <Typography.Text type="secondary" className={styles.importTip}>
             {t('portal.vendors.import.costCenterTip')}
           </Typography.Text>
         )}
         {importError ? <Typography.Text type="danger">{importError}</Typography.Text> : null}
         {importFiles.length ? (
           importPreviewRows.length ? (
-            <>
+            <div className={styles.importPreviewSection}>
               <Typography.Text strong>
                 {t('portal.vendors.import.previewTitle', { limit: IMPORT_PREVIEW_LIMIT })}
               </Typography.Text>
@@ -215,7 +218,7 @@ export const VendorCsvImportModal = memo(function VendorCsvImportModal({
                   </li>
                 ))}
               </ul>
-            </>
+            </div>
           ) : (
             <Typography.Text type="secondary">
               {t('portal.vendors.import.previewEmpty')}
@@ -223,7 +226,7 @@ export const VendorCsvImportModal = memo(function VendorCsvImportModal({
           )
         ) : null}
         {importSummary ? (
-          <>
+          <div className={styles.importSummarySection}>
             <Typography.Text strong>
               {t('portal.vendors.import.summary', {
                 total: importSummary.total,
@@ -240,9 +243,9 @@ export const VendorCsvImportModal = memo(function VendorCsvImportModal({
                 ))}
               </ul>
             ) : null}
-          </>
+          </div>
         ) : null}
-      </Space>
+      </div>
     </Modal>
   )
 })

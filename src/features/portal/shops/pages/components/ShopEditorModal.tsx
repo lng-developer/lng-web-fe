@@ -42,7 +42,6 @@ export function ShopEditorModal({
 
   return (
     <Modal
-      centered
       destroyOnHidden
       footer={null}
       open={open}

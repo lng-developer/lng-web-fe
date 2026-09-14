@@ -1,14 +1,22 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Drawer, Progress, Select, Space, Table, Typography } from 'antd'
+import { Alert, Button, Modal, Progress, Select, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { ImportBatch } from '@/features/portal/finance/api/financeApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { DateRangePicker, FilterBar, SectionCard, StatusTag } from '@/shared/ui'
+import {
+  CopyableOrderId,
+  DateRangePicker,
+  FilterBar,
+  FormattedDateTime,
+  SectionCard,
+  StatusTag,
+  TableTextCell,
+} from '@/shared/ui'
 
 import { canWriteFinanceForShop } from '../auth/integrationAccess'
 import { useFinanceImportPolling } from '../hooks/useFinanceImportPolling'
@@ -83,16 +91,21 @@ export function FinanceImportSection({
       {
         title: t('portal.integrations.ads.createdAt', { defaultValue: 'Created' }),
         dataIndex: 'createdAt',
-        render: (value: string) => new Date(value).toLocaleString(),
+        width: 160,
+        render: (value: string) => <FormattedDateTime value={value} />,
       },
       {
         title: t('portal.integrations.shop', { defaultValue: 'Shop' }),
         dataIndex: 'shopId',
-        render: (id: string | null) => (id ? (shopNames.get(id) ?? id) : '-'),
+        width: 160,
+        render: (id: string | null) => (
+          <TableTextCell value={id ? (shopNames.get(id) ?? id) : '-'} maxWidth={140} />
+        ),
       },
       {
         title: t('portal.integrations.ads.status', { defaultValue: 'Status' }),
         dataIndex: 'status',
+        width: 120,
         render: (itemStatus: string) => (
           <StatusTag status={statusTone(itemStatus)}>
             {t(`portal.integrations.ads.statuses.${itemStatus}`, { defaultValue: itemStatus })}
@@ -101,15 +114,19 @@ export function FinanceImportSection({
       },
       {
         title: t('portal.integrations.ads.rows', { defaultValue: 'Rows' }),
+        width: 180,
         render: (_, batch) =>
           `${batch.processedRows} ${t('portal.integrations.ads.processed', { defaultValue: 'processed' })} / ${batch.validRows} ${t('portal.integrations.ads.valid', { defaultValue: 'valid' })}`,
       },
       {
         title: t('portal.integrations.ads.errors', { defaultValue: 'Errors' }),
         dataIndex: 'errorCount',
+        width: 90,
+        align: 'center',
       },
       {
         title: 'Profit recalculation',
+        width: 200,
         render: (_, batch) =>
           batch.recalculationTotal > 0
             ? `${batch.recalculationStatus} ${batch.recalculationCompleted}/${batch.recalculationTotal} (${batch.recalculationFailed} failed)`
@@ -118,7 +135,8 @@ export function FinanceImportSection({
       {
         title: t('portal.integrations.ads.file', { defaultValue: 'File' }),
         dataIndex: 'originalFilename',
-        render: (value: string) => value || '-',
+        width: 220,
+        render: (value: string) => <TableTextCell value={value} fallback="-" maxWidth={200} />,
       },
     ],
     [shopNames, t],
@@ -129,15 +147,22 @@ export function FinanceImportSection({
       const number = Number(value)
       return Number.isFinite(number) ? `${(number / 100).toFixed(2)} ${currency}` : '-'
     }
-    const date = (value: unknown) => (value ? new Date(String(value)).toLocaleString() : '-')
+    const date = (value: unknown) => <FormattedDateTime value={value ? String(value) : null} />
     if (sourceType === 'TRANSACTIONS') {
       return [
-        { title: 'Posted', dataIndex: 'postedAt', render: date },
-        { title: 'Type', dataIndex: 'transactionType' },
-        { title: 'Status', dataIndex: 'transactionStatus' },
-        { title: 'Order ID', dataIndex: 'externalOrderId' },
+        { title: 'Posted', dataIndex: 'postedAt', width: 150, render: date },
+        { title: 'Type', dataIndex: 'transactionType', width: 130 },
+        { title: 'Status', dataIndex: 'transactionStatus', width: 120 },
+        {
+          title: 'Order ID',
+          dataIndex: 'externalOrderId',
+          width: 180,
+          render: (id: string | null) => <CopyableOrderId value={id} fallback="—" />,
+        },
         {
           title: 'Amount',
+          width: 130,
+          align: 'right' as const,
           render: (_: unknown, row: Record<string, unknown>) =>
             amount(row.amount, String(row.currency || 'USD')),
         },
@@ -145,22 +170,36 @@ export function FinanceImportSection({
     }
     if (sourceType === 'SETTLEMENTS') {
       return [
-        { title: 'Posted', dataIndex: 'postedAt', render: date },
-        { title: 'Type', dataIndex: 'transactionType' },
-        { title: 'Order ID', dataIndex: 'externalOrderId' },
-        { title: 'Amount type', dataIndex: 'amountType' },
+        { title: 'Posted', dataIndex: 'postedAt', width: 150, render: date },
+        { title: 'Type', dataIndex: 'transactionType', width: 130 },
+        {
+          title: 'Order ID',
+          dataIndex: 'externalOrderId',
+          width: 180,
+          render: (id: string | null) => <CopyableOrderId value={id} fallback="—" />,
+        },
+        { title: 'Amount type', dataIndex: 'amountType', width: 140 },
         {
           title: 'Amount',
+          width: 130,
+          align: 'right' as const,
           render: (_: unknown, row: Record<string, unknown>) =>
             amount(row.amount, String(row.currency || 'USD')),
         },
       ]
     }
     return [
-      { title: 'Date', dataIndex: 'reportDate', render: date },
-      { title: 'Campaign', dataIndex: 'campaignName' },
+      { title: 'Date', dataIndex: 'reportDate', width: 150, render: date },
+      {
+        title: 'Campaign',
+        dataIndex: 'campaignName',
+        width: 220,
+        render: (name: string | null) => <TableTextCell value={name} maxWidth={200} />,
+      },
       {
         title: 'Spend',
+        width: 130,
+        align: 'right' as const,
         render: (_: unknown, row: Record<string, unknown>) =>
           amount(row.spendAmount, String(row.currency || 'USD')),
       },
@@ -171,6 +210,8 @@ export function FinanceImportSection({
     <SectionCard title={title}>
       {canRead ? (
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 1_110 }}
           columns={columns}
           dataSource={imports.data?.items ?? []}
           loading={imports.isLoading}
@@ -237,14 +278,17 @@ export function FinanceImportSection({
       ) : (
         <Alert type="info" showIcon message={permissionHint} />
       )}
-      <Drawer
+      <Modal
         open={Boolean(selectedBatch)}
         title={currentBatch?.originalFilename || title}
-        size="large"
-        onClose={() => setSelectedBatch(undefined)}
+        width="min(1360px, 92vw)"
+        style={{ top: 40 }}
+        onCancel={() => setSelectedBatch(undefined)}
+        footer={null}
+        destroyOnClose
       >
         {currentBatch ? (
-          <Space orientation="vertical" size={8} style={{ width: '100%' }}>
+          <Space direction="vertical" size={8} style={{ width: '100%', marginBottom: 16 }}>
             <Typography.Text type="secondary">
               {`${currentBatch.processedRows} processed · ${currentBatch.validRows} valid · ${currentBatch.errorCount} errors`}
             </Typography.Text>
@@ -287,7 +331,7 @@ export function FinanceImportSection({
           pagination={false}
           scroll={{ x: 800 }}
         />
-      </Drawer>
+      </Modal>
     </SectionCard>
   )
 }

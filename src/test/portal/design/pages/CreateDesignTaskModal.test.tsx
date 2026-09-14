@@ -33,6 +33,13 @@ describe('CreateDesignTaskModal', () => {
   })
   beforeEach(() => i18n.changeLanguage('en'))
 
+  it('uses the shared popup shell', async () => {
+    openModal()
+
+    await screen.findByRole('dialog')
+    expect(document.querySelector('[data-popup-phase]')).toBeInTheDocument()
+  })
+
   it('creates MOCKUP with its output automatically', async () => {
     openModal()
     await selectOption('Listing', 'SKU-1')

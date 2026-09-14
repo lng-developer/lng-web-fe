@@ -9,29 +9,22 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import {
-  Button,
-  Descriptions,
-  Drawer,
-  Input,
-  Modal,
-  Select,
-  Space,
-  Timeline,
-  Typography,
-} from 'antd'
+import { Button, Descriptions, Input, Modal, Select, Space, Timeline, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  CopyableSku,
+  DataFreshness,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
-  SectionCard,
   StatusTag,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -216,14 +209,20 @@ export function VendorSubmissionWorkbenchPage({
       },
       {
         title: t('portal.vendorSubmissions.columns.product'),
-        render: (_, row) => (
-          <Typography.Text strong>{row.sku || row.costCenterCode || '-'}</Typography.Text>
-        ),
+        width: 180,
+        render: (_, row) =>
+          row.sku ? (
+            <CopyableSku strong value={row.sku} />
+          ) : (
+            <TableTextCell strong value={row.costCenterCode} fallback="-" />
+          ),
       },
       {
         title: t('portal.vendorSubmissions.columns.vendor'),
         width: 172,
-        render: (_, row) => `${row.vendorName || '-'} / ${row.provider || '-'}`,
+        render: (_, row) => (
+          <TableTextCell value={`${row.vendorName || '-'} / ${row.provider || '-'}`} />
+        ),
       },
       {
         title: t('portal.vendorSubmissions.columns.status'),
@@ -243,7 +242,14 @@ export function VendorSubmissionWorkbenchPage({
       {
         title: t('portal.vendorSubmissions.columns.failure'),
         dataIndex: 'failureReason',
-        ellipsis: true,
+        width: 240,
+        render: (value: string | undefined) => (
+          <TableTextCell
+            value={value}
+            fallback="—"
+            expandable={Boolean(value && value.length > 36)}
+          />
+        ),
       },
       {
         title: t('portal.vendorSubmissions.columns.action'),
@@ -315,10 +321,11 @@ export function VendorSubmissionWorkbenchPage({
               <strong>{t(`portal.vendorSubmissions.statuses.${entry.status}`)}</strong>
               <br />
               {entry.reason || ''}
-              <br />
-              <Typography.Text type="secondary">
-                {entry.at ? new Date(entry.at).toLocaleString() : ''}
-              </Typography.Text>
+              {entry.at ? (
+                <div style={{ marginTop: 2 }}>
+                  <FormattedDateTime value={entry.at} />
+                </div>
+              ) : null}
             </>
           ),
         })),
@@ -340,7 +347,7 @@ export function VendorSubmissionWorkbenchPage({
           />
         ))}
       </div>
-      <SectionCard>
+      <div className={styles.tableArea}>
         <CoreDataTable
           fillViewport
           tableLayout="fixed"
@@ -354,12 +361,20 @@ export function VendorSubmissionWorkbenchPage({
             current: page,
             pageSize: PAGE_SIZE,
             total: submissions.data?.pagination.total,
+            showSizeChanger: true,
             onChange: setPage,
           }}
           toolbar={
             <FilterBar
               label={t('portal.vendorSubmissions.filters')}
               contentClassName={styles.filters}
+              actions={
+                <DataFreshness
+                  timestamp={submissions.dataUpdatedAt}
+                  onRefresh={() => void submissions.refetch()}
+                  loading={submissions.isFetching}
+                />
+              }
             >
               <Input.Search
                 allowClear
@@ -399,14 +414,16 @@ export function VendorSubmissionWorkbenchPage({
             </FilterBar>
           }
         />
-      </SectionCard>
-      <Drawer
-        size={720}
+      </div>
+      <Modal
+        destroyOnClose
+        width="min(1360px, 92vw)"
+        style={{ top: 40 }}
         open={Boolean(selectedId)}
         title={t('portal.vendorSubmissions.detail')}
-        onClose={handleCloseDrawer}
+        onCancel={handleCloseDrawer}
         loading={detail.isLoading}
-        extra={
+        footer={
           detail.data ? (
             <Space>
               <Button icon={<EyeOutlined />} onClick={() => setPayloadId(detail.data!.id)}>
@@ -501,7 +518,7 @@ export function VendorSubmissionWorkbenchPage({
             <Timeline items={timelineItems} />
           </div>
         ) : null}
-      </Drawer>
+      </Modal>
       <Modal
         open={Boolean(payloadId)}
         width={760}

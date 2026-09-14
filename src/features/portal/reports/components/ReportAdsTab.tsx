@@ -5,7 +5,7 @@ import type { TableColumnsType } from 'antd'
 import { Alert } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { MetricCard, SectionCard } from '@/shared/ui'
+import { FormattedDateTime, MetricCard, SectionCard } from '@/shared/ui'
 
 import type { AdsDaily, ChannelPerformance } from '../api/reportApi'
 import styles from '../pages/ReportWorkspacePage.module.scss'
@@ -42,7 +42,12 @@ export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
 
     const adsDailyColumns = useMemo<TableColumnsType<AdsDaily>>(
       () => [
-        { title: t('reports.columns.date'), dataIndex: 'reportDate', width: '10%' },
+        {
+          title: t('reports.columns.date'),
+          dataIndex: 'reportDate',
+          width: '12%',
+          render: (value: string | null) => <FormattedDateTime value={value} />,
+        },
         {
           title: t('reports.columns.channel'),
           width: '20%',

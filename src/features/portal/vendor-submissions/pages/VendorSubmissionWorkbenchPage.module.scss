@@ -1,9 +1,26 @@
 .page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+}
+.metrics {
+  flex: 0 0 auto;
   display: grid;
-  gap: 24px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.tableArea {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 .filters {
-  width: min(100%, 900px);
+  flex: 1 1 auto;
+  max-width: 900px;
 }
 .filterControl {
   width: 190px;
@@ -11,11 +28,6 @@
 .detail {
   display: grid;
   gap: 16px;
-}
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
 }
 .payload {
   max-height: 60vh;

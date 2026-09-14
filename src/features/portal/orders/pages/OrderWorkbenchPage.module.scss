@@ -1,9 +1,9 @@
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  gap: 12px;
+  grid-template-rows: auto auto minmax(0, 1fr);
   height: 100%;
+  gap: 12px;
   container-type: inline-size;
   min-width: 0;
   min-height: 0;
@@ -22,12 +22,23 @@
   margin-top: 2px;
 }
 
+.tableArea {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  gap: 12px;
+}
+
 .table :global(.ant-table table) {
   table-layout: fixed !important;
 }
 
 .table {
   min-height: 0;
+  height: 100%;
+  flex: 1 1 auto;
 }
 
 .table :global(.ant-table-cell) {
@@ -51,106 +62,247 @@
 .queueRail {
   flex: 1;
   min-width: 0;
-  padding: 7px 8px;
-  border: 1px solid var(--ant-color-border);
-  border-radius: 14px;
-  background: color-mix(
-    in srgb,
-    var(--ant-color-bg-container) 72%,
-    var(--ant-color-fill-quaternary)
-  );
-  box-shadow: 0 8px 20px rgb(15 23 42 / 4%);
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .tabs {
   min-width: 0;
 }
 .orderTabs :global(.ant-tabs-nav) {
-  overflow: hidden;
+  margin-bottom: 0;
 }
 .orderTabs :global(.ant-tabs-nav-wrap) {
   overflow-x: auto;
+  overflow-y: visible;
+  padding-block: 4px;
+  padding-inline: 2px;
   scrollbar-width: none;
 }
 .orderTabs :global(.ant-tabs-nav-list) {
   flex-wrap: nowrap;
   gap: 8px;
+  padding-block: 2px;
 }
 .orderTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
   margin-left: 0;
 }
 .orderTabs :global(.ant-tabs-tab) {
   min-width: auto;
-  border: 1px solid transparent;
-  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
   box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
   font-weight: 600;
+  transition: all 160ms ease;
 }
 .orderTabs :global(.ant-tabs-tab:hover) {
-  border-color: var(--ant-color-primary-border);
-  background: var(--ant-color-primary-bg);
-  transform: translateY(-1px);
+  border-color: var(--ant-color-primary);
+  color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg, #fff1f0);
 }
 .orderTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
-  box-shadow: 0 8px 16px color-mix(in srgb, var(--ant-color-primary) 28%, transparent);
+  border-color: var(--ant-color-primary) !important;
+  background: var(--ant-color-primary) !important;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ant-color-primary) 28%, transparent);
 }
 
 .tabsRow > button {
   flex-shrink: 0;
 }
 
-.queueContext {
-  flex-shrink: 0;
-  padding: 5px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
 .filters {
   width: 100%;
-  display: grid;
-  grid-template-columns: minmax(240px, 0.75fr) minmax(280px, 1fr) minmax(280px, 1fr) minmax(
-      280px,
-      0.8fr
-    );
-  gap: 12px;
-  align-items: end;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-height: auto;
+  box-sizing: border-box;
 }
 
-.filters :global(.ant-input-affix-wrapper),
-.filters :global(.ant-picker),
-.filters :global(.ant-select) {
-  width: 100%;
-  max-width: none;
+.searchSection {
+  flex: 1 1 260px;
+  min-width: 200px;
+  max-width: 380px;
 }
 
 .orderSearch {
   width: 100%;
   min-width: 0;
 }
-.filterSelect {
+
+.orderSearch :global(.ant-input-affix-wrapper) {
+  border-radius: 6px;
+  background: var(--ant-color-fill-quaternary);
+  border-color: transparent;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--ant-color-border);
+    background: var(--ant-color-bg-container);
+  }
+
+  &:focus,
+  &:focus-within {
+    border-color: var(--ant-color-primary);
+    background: var(--ant-color-bg-container);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 20%, transparent);
+  }
+}
+
+.filterDivider {
+  width: 1px;
+  height: 22px;
+  background: var(--ant-color-border-secondary);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.filterPills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 2 1 auto;
   min-width: 0;
-  width: 100%;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  min-width: 150px;
+  max-width: 220px;
+  flex: 1 1 150px;
+}
+
+.filterSelect :global(.ant-select-selector) {
+  border-radius: 6px !important;
+  background: var(--ant-color-fill-quaternary) !important;
+  border-color: var(--ant-color-border-secondary) !important;
+  transition: all 0.2s ease;
+}
+
+.filterSelect:hover :global(.ant-select-selector) {
+  border-color: var(--ant-color-primary) !important;
+}
+
+.filterSelectActive :global(.ant-select-selector) {
+  border-color: var(--ant-color-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--ant-color-primary) 12%,
+    var(--ant-color-bg-container)
+  ) !important;
+  font-weight: 600;
+}
+
+.filterSelectActive .filterPrefixIcon {
+  color: var(--ant-color-primary);
+}
+
+.filterPrefixIcon {
+  color: var(--ant-color-text-secondary);
+  font-size: 14px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.filterDateRange {
+  min-width: 230px;
+  max-width: 280px;
+  flex: 1 1 230px;
+}
+
+.filterDateRange:global(.ant-picker) {
+  border-radius: 6px !important;
+  background: var(--ant-color-fill-quaternary) !important;
+  border-color: var(--ant-color-border-secondary) !important;
+  transition: all 0.2s ease;
+}
+
+.filterDateRange:global(.ant-picker:hover) {
+  border-color: var(--ant-color-primary) !important;
+}
+
+.filterDateRangeActive:global(.ant-picker) {
+  border-color: var(--ant-color-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--ant-color-primary) 12%,
+    var(--ant-color-bg-container)
+  ) !important;
+}
+
+.clearFilterButton {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--ant-color-error) !important;
+    background: color-mix(in srgb, var(--ant-color-error) 12%, transparent) !important;
+  }
 }
 
 @container (max-width: 1200px) {
   .filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .searchSection {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .filterDivider {
+    display: none;
+  }
+
+  .filterPills {
+    flex: 1 1 100%;
   }
 }
 
 @container (max-width: 720px) {
   .filters {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    align-items: stretch;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+    padding: 8px;
   }
 
+  .searchSection,
   .orderSearch,
-  .filterSelect {
-    min-width: 0;
+  .filterPills,
+  .filterSelect,
+  .filterDateRange {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    flex: 1 1 100%;
+  }
+
+  .filterDivider {
+    display: none;
+  }
+
+  .clearFilterButton {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -181,7 +333,7 @@
 .table :global(.ant-table-expanded-row > .ant-table-cell) {
   padding: 0 0 18px;
   border-top: 0;
-  border-bottom: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border);
   background: linear-gradient(
     180deg,
     var(--ant-color-bg-container),
@@ -293,14 +445,14 @@
     minmax(150px, 0.9fr) minmax(170px, 1fr) 48px;
   gap: 16px;
   padding: 16px;
-  border: 1px solid var(--ant-color-border-secondary);
+  border: 1px solid var(--ant-color-border);
   border-radius: 8px;
   background: color-mix(
     in srgb,
     var(--ant-color-bg-container) 60%,
     var(--ant-color-fill-quaternary)
   );
-  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
 }
 .itemPanel > section {
   min-width: 0;
@@ -378,31 +530,99 @@
 .sellerChip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   max-width: 100%;
+  height: 22px;
+  line-height: 20px;
   overflow: hidden;
-  padding: 1px 8px;
-  border: 1px solid currentColor;
+  padding: 0 8px;
   border-radius: 999px;
   font-size: 12px;
-  line-height: 18px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: all 140ms ease;
+  user-select: none;
 }
+
 .orderIdChip {
-  color: var(--ant-color-primary-text, var(--ant-color-primary));
-  background: color-mix(in srgb, var(--ant-color-primary-bg) 54%, var(--ant-color-fill-quaternary));
+  color: var(--ant-color-primary, #e83b4a);
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 64%, var(--ant-color-bg-container));
+  border: 1px solid color-mix(in srgb, var(--ant-color-primary) 42%, var(--ant-color-border));
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+    background: color-mix(in srgb, var(--ant-color-primary-bg) 85%, var(--ant-color-bg-container));
+  }
 }
+
 .skuChip {
-  color: var(--ant-color-info-text);
-  background: var(--ant-color-info-bg);
+  color: #2563eb;
+  background: color-mix(in srgb, var(--ant-color-info-bg) 64%, var(--ant-color-bg-container));
+  border: 1px solid color-mix(in srgb, #2563eb 42%, var(--ant-color-border));
+
+  &:hover {
+    border-color: #2563eb;
+    background: color-mix(in srgb, var(--ant-color-info-bg) 85%, var(--ant-color-bg-container));
+  }
 }
+
 .asinChip {
-  color: var(--ant-color-primary-text, var(--ant-color-primary));
-  background: color-mix(in srgb, var(--ant-color-primary-bg) 68%, var(--ant-color-fill-quaternary));
+  color: #7c3aed;
+  background: color-mix(in srgb, #f5f3ff 64%, var(--ant-color-bg-container));
+  border: 1px solid color-mix(in srgb, #7c3aed 42%, var(--ant-color-border));
+
+  &:hover {
+    border-color: #7c3aed;
+    background: color-mix(in srgb, #ede9fe 85%, var(--ant-color-bg-container));
+  }
 }
+
 .sellerChip {
-  color: var(--ant-color-warning-text, var(--ant-color-warning));
-  background: color-mix(in srgb, var(--ant-color-warning-bg) 68%, var(--ant-color-fill-quaternary));
+  color: var(--ant-color-warning);
+  background: color-mix(in srgb, var(--ant-color-warning-bg) 64%, var(--ant-color-bg-container));
+  border: 1px solid color-mix(in srgb, var(--ant-color-warning) 42%, var(--ant-color-border));
+}
+
+:global(html[data-theme='dark']) {
+  .orderIdChip {
+    border-color: color-mix(in srgb, var(--ant-color-primary) 42%, #393a3b);
+    background: color-mix(in srgb, var(--ant-color-primary) 14%, #242526);
+    color: #fca5a5;
+
+    &:hover {
+      border-color: var(--ant-color-primary);
+      background: color-mix(in srgb, var(--ant-color-primary) 22%, #242526);
+    }
+  }
+
+  .skuChip {
+    border-color: color-mix(in srgb, #3b82f6 42%, #393a3b);
+    background: color-mix(in srgb, #3b82f6 14%, #242526);
+    color: #93c5fd;
+
+    &:hover {
+      border-color: #3b82f6;
+      background: color-mix(in srgb, #3b82f6 22%, #242526);
+    }
+  }
+
+  .asinChip {
+    border-color: color-mix(in srgb, #8b5cf6 42%, #393a3b);
+    background: color-mix(in srgb, #8b5cf6 14%, #242526);
+    color: #c4b5fd;
+
+    &:hover {
+      border-color: #8b5cf6;
+      background: color-mix(in srgb, #8b5cf6 22%, #242526);
+    }
+  }
+
+  .sellerChip {
+    border-color: color-mix(in srgb, #d97706 42%, #393a3b);
+    background: color-mix(in srgb, #d97706 14%, #242526);
+    color: #fcd34d;
+  }
 }
 @container (max-width: 1500px) {
   .itemPanel {

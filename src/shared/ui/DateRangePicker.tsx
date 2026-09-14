@@ -15,6 +15,7 @@ export interface DateRangePickerProps {
   readonly disabled?: boolean
   readonly placeholder?: [string, string]
   readonly style?: React.CSSProperties
+  readonly className?: string
   readonly 'aria-label'?: string
 }
 

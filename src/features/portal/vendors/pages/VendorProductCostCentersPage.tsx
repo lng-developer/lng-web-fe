@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
-import { EyeOutlined, PlusOutlined } from '@ant-design/icons'
+import { EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Space, Typography } from 'antd'
@@ -9,7 +9,14 @@ import { Button, Space, Typography } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { FilterBar, SearchInput, StatusTag, useDebouncedValue } from '@/shared/ui'
+import {
+  CopyableSku,
+  FilterBar,
+  SearchInput,
+  StatusTag,
+  TableTextCell,
+  useDebouncedValue,
+} from '@/shared/ui'
 
 import { getVendorProduct, listVendorCostCenters, type VendorCostCenter } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
@@ -31,8 +38,18 @@ export function VendorProductCostCentersPage() {
   const debouncedSearch = useDebouncedValue(search, 250)
   const [page, setPage] = useState(1)
   const [selectedCostCenter, setSelectedCostCenter] = useState<VendorCostCenter>()
+  const [editingCostCenter, setEditingCostCenter] = useState<VendorCostCenter>()
   const [isCreating, setIsCreating] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+
+  const isModalOpen = isCreating || isEditing
+  const modalItem = isEditing ? (editingCostCenter ?? selectedCostCenter) : undefined
+
+  const closeModal = () => {
+    setIsCreating(false)
+    setIsEditing(false)
+    setEditingCostCenter(undefined)
+  }
 
   const product = useQuery({
     queryKey: productId
@@ -62,24 +79,21 @@ export function VendorProductCostCentersPage() {
         title: t('portal.vendors.code'),
         dataIndex: 'code',
         width: '24%',
-        ellipsis: true,
-        render: (value) => <Typography.Text code>{value}</Typography.Text>,
+        render: (value) => <TableTextCell code value={value} />,
       },
       {
         title: t('portal.vendors.name'),
         dataIndex: 'name',
         width: '24%',
-        ellipsis: true,
-        render: (value) => <Typography.Text>{value}</Typography.Text>,
+        render: (value) => <TableTextCell value={value} />,
       },
       {
         title: t('portal.vendors.sku', { defaultValue: 'SKU' }),
         dataIndex: 'sku',
         width: '13%',
-        ellipsis: true,
         render: (value) =>
           value ? (
-            <Typography.Text type="secondary">{value}</Typography.Text>
+            <CopyableSku value={value} />
           ) : (
             <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
@@ -108,22 +122,38 @@ export function VendorProductCostCentersPage() {
         width: '10%',
         render: (_, row) =>
           canWrite ? (
-            <Button
-              type="text"
-              size="small"
-              icon={<EyeOutlined />}
-              aria-label={t('portal.vendors.viewCostCenter', { name: row.name })}
-              title={t('portal.vendors.viewCostCenter', { name: row.name })}
-              onClick={() => {
-                setSelectedCostCenter(row)
-                setIsCreating(false)
-                setIsEditing(false)
-              }}
-            />
+            <Space size={4}>
+              <Button
+                type="text"
+                size="small"
+                icon={<EyeOutlined />}
+                aria-label={t('portal.vendors.viewCostCenter', { name: row.name })}
+                title={t('portal.vendors.viewCostCenter', { name: row.name })}
+                onClick={() => {
+                  if (selectedCostCenter?.id === row.id) {
+                    setSelectedCostCenter(undefined)
+                  } else {
+                    setSelectedCostCenter(row)
+                  }
+                }}
+              />
+              <Button
+                type="text"
+                size="small"
+                icon={<EditOutlined />}
+                aria-label={t('portal.vendors.editCostCenter', { name: row.name })}
+                title={t('portal.vendors.editCostCenter', { name: row.name })}
+                onClick={() => {
+                  setEditingCostCenter(row)
+                  setIsEditing(true)
+                  setIsCreating(false)
+                }}
+              />
+            </Space>
           ) : null,
       },
     ],
-    [canWrite, t],
+    [canWrite, selectedCostCenter?.id, t],
   )
 
   const error = product.error ?? costCenters.error
@@ -131,53 +161,36 @@ export function VendorProductCostCentersPage() {
   return (
     <section className={styles.page}>
       <div className={styles.workspaceSection}>
-        <FilterBar
-          label={t('portal.vendors.filters.label')}
-          contentClassName={styles.filters}
-          actions={
-            canWrite ? (
-              <Space size={8}>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  disabled={!product.data}
-                  onClick={() => {
-                    setIsCreating(true)
-                    setIsEditing(true)
-                    setSelectedCostCenter(undefined)
-                  }}
-                >
-                  {t('portal.vendors.addCostCenter')}
-                </Button>
-              </Space>
-            ) : null
-          }
-        >
-          <SearchInput
-            value={search}
-            onSearchChange={(value) => {
-              setSearch(value)
-              setPage(1)
-            }}
-            placeholder={t('portal.vendors.searchCostCenters')}
-          />
-        </FilterBar>
-        {isCreating && product.data ? (
-          <VendorCostCenterEditorModal
-            mode="inline"
-            open
-            productId={product.data.id}
-            vendorId={product.data.vendor?.id ?? ''}
-            onCancel={() => {
-              setIsCreating(false)
-              setIsEditing(false)
-            }}
-            onSaved={() => {
-              setIsCreating(false)
-              setIsEditing(false)
-            }}
-          />
-        ) : null}
+        <div className={styles.controlsBar}>
+          <div className={styles.filtersWrapper}>
+            <FilterBar label={t('portal.vendors.filters.label')} contentClassName={styles.filters}>
+              <SearchInput
+                value={search}
+                onSearchChange={(value) => {
+                  setSearch(value)
+                  setPage(1)
+                }}
+                placeholder={t('portal.vendors.searchCostCenters')}
+              />
+            </FilterBar>
+          </div>
+          {canWrite ? (
+            <div className={styles.actionsWrapper}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                disabled={!product.data}
+                onClick={() => {
+                  setEditingCostCenter(undefined)
+                  setIsCreating(true)
+                  setIsEditing(false)
+                }}
+              >
+                {t('portal.vendors.addCostCenter')}
+              </Button>
+            </div>
+          ) : null}
+        </div>
         <CoreDataTable
           fillViewport
           rowKey="id"
@@ -200,11 +213,8 @@ export function VendorProductCostCentersPage() {
             onExpand: (expanded, row) => {
               if (expanded) {
                 setSelectedCostCenter(row)
-                setIsCreating(false)
-                setIsEditing(false)
               } else {
                 setSelectedCostCenter(undefined)
-                setIsEditing(false)
               }
             },
             expandedRowRender: (row) =>
@@ -237,6 +247,22 @@ export function VendorProductCostCentersPage() {
           }}
         />
       </div>
+      {isModalOpen && product.data ? (
+        <VendorCostCenterEditorModal
+          item={modalItem}
+          open={isModalOpen}
+          productId={product.data.id}
+          vendorId={product.data.vendor?.id ?? ''}
+          onCancel={closeModal}
+          onSaved={(costCenter) => {
+            closeModal()
+            if (selectedCostCenter?.id === costCenter.id) {
+              setSelectedCostCenter(costCenter)
+            }
+            void costCenters.refetch()
+          }}
+        />
+      ) : null}
     </section>
   )
 }

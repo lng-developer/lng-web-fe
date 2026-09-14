@@ -28,6 +28,46 @@ describe('VendorIntegrationModal', () => {
     vi.clearAllMocks()
     vi.restoreAllMocks()
   })
+
+  it('keeps setup, credentials, and health in separate near-top modal tabs', async () => {
+    vi.mocked(getVendorIntegrationConfig).mockResolvedValue({
+      accessTokenConfigured: true,
+      authType: 'ACCESS_REFRESH',
+      baseUrl: 'https://vendor.example',
+      expiresAt: null,
+      id: 'integration-1',
+      lastCheckedAt: null,
+      lastError: null,
+      metadata: {},
+      passwordConfigured: false,
+      providerKey: 'PRINTWAY',
+      refreshTokenConfigured: true,
+      status: 'CONNECTED',
+      usernameConfigured: false,
+      vendorId: 'vendor-1',
+    })
+
+    render(
+      <AppProviders>
+        <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog.closest('.ant-modal-wrap')).not.toHaveClass('ant-modal-centered')
+    expect(dialog.closest('.ant-modal')).toHaveStyle({ top: '10vh' })
+    expect(screen.getByRole('tab', { name: 'Connection' })).toHaveAttribute('aria-selected', 'true')
+    expect(await screen.findByLabelText('Base URL')).toBeVisible()
+    expect(screen.queryByLabelText('Access token')).not.toBeInTheDocument()
+    expect(screen.queryByText('Connection status')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Credentials' }))
+    expect(await screen.findByLabelText('Access token')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Status & testing' }))
+    expect(await screen.findByText('Connection status')).toBeVisible()
+  })
+
   it('shows configured flags and omits blank replacement secrets', async () => {
     i18n.addResourceBundle(
       'en',
@@ -130,7 +170,8 @@ describe('VendorIntegrationModal', () => {
       </AppProviders>,
     )
 
-    expect(await screen.findByText('Order lookup')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: 'Status & testing' }))
+    expect(await screen.findByText('Order lookup')).toBeVisible()
     expect(getLenfulOrder).not.toHaveBeenCalled()
     fireEvent.click(screen.getByText('Order lookup'))
     fireEvent.change(await screen.findByLabelText('Order number'), { target: { value: 'LF-100' } })
@@ -167,6 +208,7 @@ describe('VendorIntegrationModal', () => {
       </AppProviders>,
     )
 
+    fireEvent.click(await screen.findByRole('tab', { name: 'Credentials' }))
     fireEvent.change(await screen.findByLabelText('API key'), { target: { value: 'app-key' } })
     fireEvent.change(screen.getByLabelText('API secret'), { target: { value: 'app-secret' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
@@ -176,7 +218,9 @@ describe('VendorIntegrationModal', () => {
       apiKey: 'app-key',
       apiSecret: 'app-secret',
     })
-    expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).not.toHaveProperty('accessToken')
+    expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).not.toHaveProperty(
+      'accessToken',
+    )
   })
 
   it('defaults to manual mode and reveals connection fields only for an explicit mode', async () => {
@@ -241,6 +285,7 @@ describe('VendorIntegrationModal', () => {
         <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
       </AppProviders>,
     )
+    fireEvent.click(screen.getByRole('tab', { name: 'Credentials' }))
     fireEvent.change(await screen.findByLabelText('Access token'), {
       target: { value: 'old-api-secret' },
     })
@@ -315,6 +360,7 @@ describe('VendorIntegrationModal', () => {
         <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
       </AppProviders>,
     )
+    fireEvent.click(await screen.findByRole('tab', { name: 'Credentials' }))
     fireEvent.change(await screen.findByLabelText('Access token'), {
       target: { value: 'access-secret' },
     })
@@ -360,15 +406,14 @@ describe('VendorIntegrationModal', () => {
       usernameConfigured: true,
       vendorId: 'vendor-1',
     })
+    fireEvent.click(await screen.findByRole('tab', { name: 'Status & testing' }))
     expect((await screen.findAllByText('CONNECTED')).length).toBeGreaterThan(0)
     expect(await screen.findByText('2026-07-31T00:00:00Z')).toBeInTheDocument()
     expect(screen.getAllByText('Configured')).toHaveLength(4)
     expect(screen.getByRole('button', { name: /Test connection/ })).toBeEnabled()
     vi.mocked(testVendorIntegrationConnection).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /Test connection/ }))
-    await waitFor(() =>
-      expect(testVendorIntegrationConnection).toHaveBeenCalledWith('vendor-1'),
-    )
+    await waitFor(() => expect(testVendorIntegrationConnection).toHaveBeenCalledWith('vendor-1'))
     expect(screen.queryByText('Test the provider connection now?')).not.toBeInTheDocument()
   })
 
@@ -400,6 +445,7 @@ describe('VendorIntegrationModal', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Try again|Retry/ }))
     expect(await screen.findByDisplayValue('https://vendor.example')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: 'Status & testing' }))
     let rejectRefresh!: (error: Error) => void
     vi.mocked(testVendorIntegrationConnection).mockReturnValue(
       new Promise((_, reject) => {

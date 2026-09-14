@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { Drawer } from 'antd'
+import type { CSSProperties, ReactNode } from 'react'
+import { Modal } from 'antd'
 
 export interface DetailDrawerProps {
   readonly open: boolean
@@ -7,7 +7,8 @@ export interface DetailDrawerProps {
   readonly children: ReactNode
   readonly onClose: () => void
   readonly footer?: ReactNode
-  readonly width?: number
+  readonly width?: number | string
+  readonly style?: CSSProperties
 }
 
 export function DetailDrawer({
@@ -16,18 +17,20 @@ export function DetailDrawer({
   children,
   onClose,
   footer,
-  width = 560,
+  width = 'min(1280px, 90vw)',
+  style,
 }: DetailDrawerProps) {
   return (
-    <Drawer
+    <Modal
       open={open}
       title={title}
-      onClose={onClose}
-      footer={footer}
-      size={width}
-      destroyOnHidden
+      onCancel={onClose}
+      footer={footer ?? null}
+      width={width}
+      style={{ top: 40, ...style }}
+      destroyOnClose
     >
       {children}
-    </Drawer>
+    </Modal>
   )
 }

@@ -153,7 +153,6 @@ export function PopupModal({
   return (
     <Modal
       open
-      centered
       transitionName=""
       maskTransitionName=""
       destroyOnHidden

@@ -6,7 +6,7 @@ import styles from './sharedUi.module.scss'
 
 export interface PageHeaderProps {
   /** Retained for page call-site compatibility. */
-  readonly title: string
+  readonly title?: string
   /** Retained for page call-site compatibility. */
   readonly description?: string
   /** Retained for page call-site compatibility. */
@@ -16,24 +16,36 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, description, updatedAt, actions }: PageHeaderProps) {
   const { t } = useTranslation()
+  if (!title && !description && !updatedAt && !actions) {
+    return null
+  }
+  const hasMeta = Boolean(title || description || updatedAt)
   return (
-    <header className={styles.pageHeader}>
-      <div className={styles.pageHeaderMain}>
-        <Typography.Title level={2} className={styles.pageHeaderTitle}>
-          {title}
-        </Typography.Title>
-        {(description || updatedAt) && (
-          <div className={styles.pageHeaderMeta}>
-            {description && <Typography.Text type="secondary">{description}</Typography.Text>}
-            {description && updatedAt && <span aria-hidden="true">|</span>}
-            {updatedAt && (
-              <Typography.Text type="secondary">
-                {t('common.updatedAt', { time: new Date(updatedAt).toLocaleString() })}
-              </Typography.Text>
-            )}
-          </div>
-        )}
-      </div>
+    <header
+      className={[styles.pageHeader, !hasMeta && styles.pageHeaderActionsOnly]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {hasMeta && (
+        <div className={styles.pageHeaderMain}>
+          {title && (
+            <Typography.Title level={2} className={styles.pageHeaderTitle}>
+              {title}
+            </Typography.Title>
+          )}
+          {(description || updatedAt) && (
+            <div className={styles.pageHeaderMeta}>
+              {description && <Typography.Text type="secondary">{description}</Typography.Text>}
+              {description && updatedAt && <span aria-hidden="true">|</span>}
+              {updatedAt && (
+                <Typography.Text type="secondary">
+                  {t('common.updatedAt', { time: new Date(updatedAt).toLocaleString() })}
+                </Typography.Text>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       {actions && <div className={styles.pageHeaderActions}>{actions}</div>}
     </header>
   )

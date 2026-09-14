@@ -21,9 +21,13 @@ import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { SectionCard, StatusTag } from '@/shared/ui'
+import { SectionCard, StatusTag, TableTextCell } from '@/shared/ui'
 
-import { listVendorProducts, updateVendorProduct, type VendorProduct } from '../../vendors/api/vendorApi'
+import {
+  listVendorProducts,
+  updateVendorProduct,
+  type VendorProduct,
+} from '../../vendors/api/vendorApi'
 import type { ProductTypeGroup, ProductTypeGroupInput } from '../api/catalogApi'
 import { useProductTypesQuery } from '../hooks'
 
@@ -48,7 +52,13 @@ function VendorProductAssignmentModal({
       updateVendorProduct(vendorProductId, { productTypeGroupId: productTypeGroup.id }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['portal', 'catalog', 'product-type-groups', productTypeGroup.id, 'vendor-products'],
+        queryKey: [
+          'portal',
+          'catalog',
+          'product-type-groups',
+          productTypeGroup.id,
+          'vendor-products',
+        ],
       })
       void queryClient.invalidateQueries({
         queryKey: ['portal', 'catalog', 'vendor-products', 'available'],
@@ -112,25 +122,44 @@ function ProductTypeVendorProducts({
       updateVendorProduct(id, { status }),
     onSuccess: () =>
       queryClient.invalidateQueries({
-        queryKey: ['portal', 'catalog', 'product-type-groups', productTypeGroup.id, 'vendor-products'],
+        queryKey: [
+          'portal',
+          'catalog',
+          'product-type-groups',
+          productTypeGroup.id,
+          'vendor-products',
+        ],
       }),
   })
   const columns: TableColumnsType<VendorProduct> = useMemo(
     () => [
       {
         title: t('portal.vendors.vendor'),
-        render: (_, product) => product.vendor?.name ?? '-',
+        width: 200,
+        render: (_, product) => <TableTextCell value={product.vendor?.name} fallback="-" />,
       },
-      { title: t('portal.vendors.code'), dataIndex: 'code' },
-      { title: t('portal.vendors.name'), dataIndex: 'name' },
+      {
+        title: t('portal.vendors.code'),
+        dataIndex: 'code',
+        width: 180,
+        render: (value) => <TableTextCell code value={value} />,
+      },
+      {
+        title: t('portal.vendors.name'),
+        dataIndex: 'name',
+        width: 220,
+        render: (value) => <TableTextCell value={value} />,
+      },
       {
         title: t('portal.vendors.externalProductId'),
         dataIndex: 'externalProductId',
-        render: (value) => value || '-',
+        width: 160,
+        render: (value) => <TableTextCell value={value} fallback="-" />,
       },
       {
         title: t('portal.vendors.statusLabel'),
         dataIndex: 'status',
+        width: 120,
         align: 'center',
         render: (value, product) => {
           const active = value === 'ACTIVE'
@@ -148,9 +177,12 @@ function ProductTypeVendorProducts({
               checkedChildren={t('portal.vendors.status.ACTIVE')}
               unCheckedChildren={t('portal.vendors.status.INACTIVE')}
               loading={updateStatus.isPending}
-              aria-label={t(`portal.catalog.master.${active ? 'deactivate' : 'activate'}VendorProduct`, {
-                name: product.name,
-              })}
+              aria-label={t(
+                `portal.catalog.master.${active ? 'deactivate' : 'activate'}VendorProduct`,
+                {
+                  name: product.name,
+                },
+              )}
               onChange={(checked) =>
                 updateStatus.mutate({ id: product.id, status: checked ? 'ACTIVE' : 'INACTIVE' })
               }
@@ -197,11 +229,7 @@ function ProductTypeVendorProducts({
   )
 }
 
-export function ProductTypeManagementPage({
-  canManage,
-}: {
-  readonly canManage: boolean
-}) {
+export function ProductTypeManagementPage({ canManage }: { readonly canManage: boolean }) {
   const { t } = useTranslation()
   const canManageVendorProducts = hasAnyPermission(['VENDORS:WRITE'], { globalOnly: true })
   const [form] = Form.useForm<ProductTypeGroupInput>()
@@ -240,21 +268,34 @@ export function ProductTypeManagementPage({
   )
   const columns: TableColumnsType<ProductTypeGroup> = useMemo(
     () => [
-      { title: t('portal.catalog.master.code'), dataIndex: 'code' },
-      { title: t('portal.catalog.master.name'), dataIndex: 'name' },
+      {
+        title: t('portal.catalog.master.code'),
+        dataIndex: 'code',
+        width: 180,
+        render: (value) => <TableTextCell code value={value} />,
+      },
+      {
+        title: t('portal.catalog.master.name'),
+        dataIndex: 'name',
+        width: 240,
+        render: (value) => <TableTextCell strong value={value} />,
+      },
       {
         title: t('portal.catalog.master.printMethod', { defaultValue: 'Print method' }),
         dataIndex: 'printMethod',
-        render: (value) => value || '-',
+        width: 160,
+        render: (value) => <TableTextCell value={value} fallback="-" />,
       },
       {
         title: t('portal.catalog.master.order'),
         dataIndex: 'sortOrder',
+        width: 90,
         align: 'right',
       },
       {
         title: t('portal.catalog.master.status'),
         dataIndex: 'status',
+        width: 120,
         align: 'center',
         render: (value) => (
           <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
@@ -267,6 +308,8 @@ export function ProductTypeManagementPage({
             {
               key: 'actions',
               title: t('portal.catalog.actions'),
+              width: 80,
+              align: 'center' as const,
               render: (_: unknown, row: ProductTypeGroup) => (
                 <Tooltip title={t('portal.catalog.master.editProductType')}>
                   <Button
@@ -317,8 +360,8 @@ export function ProductTypeManagementPage({
         <CoreDataTable
           fillViewport
           rowKey="id"
-          tableLayout="auto"
-          scroll={{ x: 'max-content' }}
+          tableLayout="fixed"
+          scroll={{ x: 870 }}
           columns={columns}
           dataSource={groups.data?.items ?? []}
           loading={groups.isLoading}

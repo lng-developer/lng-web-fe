@@ -11,6 +11,7 @@ import {
   FeedbackAlert,
   PageHeader,
   SectionCard,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -60,14 +61,28 @@ export function PermissionsPage() {
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
   const columns: TableColumnsType<Permission> = [
-    { title: t('auth.permissions.code'), dataIndex: 'code' },
+    {
+      title: t('auth.permissions.code'),
+      dataIndex: 'code',
+      width: 220,
+      render: (value) => <TableTextCell code value={value} />,
+    },
     {
       title: t('auth.permissions.name'),
-      render: (_, permission) => permission.name ?? permission.code,
+      width: 220,
+      render: (_, permission) => (
+        <TableTextCell strong value={permission.name ?? permission.code} />
+      ),
     },
-    { title: t('auth.permissions.descriptionLabel'), dataIndex: 'description' },
+    {
+      title: t('auth.permissions.descriptionLabel'),
+      dataIndex: 'description',
+      width: 320,
+      render: (value) => <TableTextCell value={value} fallback="—" />,
+    },
     {
       title: t('auth.accessEditor.actions'),
+      width: 160,
       align: 'right',
       render: (_, permission) => (
         <Space>
@@ -104,8 +119,6 @@ export function PermissionsPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.permissions.title')}
-        description={t('auth.permissions.description')}
         actions={
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => openEditor()}>
             {t('auth.permissions.create')}
@@ -129,6 +142,8 @@ export function PermissionsPage() {
       ) : null}
       <SectionCard title={t('auth.permissions.catalog')}>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 920 }}
           columns={columns}
           dataSource={data?.items ?? []}
           loading={isLoading}

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { UploadFile } from 'antd'
-import { Form, Input, Modal, Select } from 'antd'
+import { Form, Input, Select } from 'antd'
 
-import { FileUpload, FormSection, FormSectionFull } from '@/shared/ui'
+import { FileUpload, FormSection, FormSectionFull, PopupModal } from '@/shared/ui'
 
 import type { CreateDesignTaskInput } from '../api/designApi'
 
@@ -77,7 +77,7 @@ export function CreateDesignTaskModal({
   }
 
   return (
-    <Modal
+    <PopupModal
       open={open}
       title={t('portal.design.createDesignTask')}
       okText={t('portal.design.create')}
@@ -238,6 +238,6 @@ export function CreateDesignTaskModal({
           </FormSectionFull>
         </FormSection>
       </Form>
-    </Modal>
+    </PopupModal>
   )
 }

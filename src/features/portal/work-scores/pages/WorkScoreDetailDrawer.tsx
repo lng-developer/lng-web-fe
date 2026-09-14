@@ -24,7 +24,15 @@ import {
 } from 'antd'
 
 import { AuthenticatedMediaImage } from '@/shared/media'
-import { DetailDrawer, FeedbackAlert, LoadingState, StatusTag } from '@/shared/ui'
+import {
+  CopyableOrderId,
+  CopyableSku,
+  DetailDrawer,
+  FeedbackAlert,
+  FormattedDateTime,
+  LoadingState,
+  StatusTag,
+} from '@/shared/ui'
 
 import type { WorkScoreDetail, WorkScoreLevel } from '../api/workScoreApi'
 import styles from './WorkScoreWorkbenchPage.module.scss'
@@ -180,7 +188,13 @@ export function WorkScoreDetailDrawer({
             </Descriptions.Item>
 
             <Descriptions.Item label={t('portal.workScores.fields.skuOrder')}>
-              <Typography.Text code>{sku}</Typography.Text>
+              {snapshot.sku ? (
+                <CopyableSku value={String(snapshot.sku)} />
+              ) : snapshot.externalOrderId ? (
+                <CopyableOrderId value={String(snapshot.externalOrderId)} />
+              ) : (
+                <Typography.Text code>{sku}</Typography.Text>
+              )}
             </Descriptions.Item>
             <Descriptions.Item label={t('portal.workScores.fields.taskSlot')}>
               {taskTitle} {slotLabel !== '—' ? `- ${slotLabel}` : ''}
@@ -201,7 +215,7 @@ export function WorkScoreDetailDrawer({
             </Descriptions.Item>
 
             <Descriptions.Item label={t('portal.workScores.columns.scoredAt')} span={2}>
-              {score.scoredAt ? new Date(score.scoredAt).toLocaleString() : '—'}
+              <FormattedDateTime value={score.scoredAt} />
             </Descriptions.Item>
           </Descriptions>
 
@@ -371,12 +385,18 @@ export function WorkScoreDetailDrawer({
                           })}
                         </Typography.Text>
                       </Space>
-                      <Typography.Paragraph
-                        type="secondary"
-                        style={{ margin: '4px 0 0', fontSize: 12 }}
+                      <div
+                        style={{
+                          margin: '4px 0 0',
+                          fontSize: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
                       >
-                        {item.reason} · {new Date(item.adjustedAt).toLocaleString()}
-                      </Typography.Paragraph>
+                        <Typography.Text type="secondary">{item.reason} ·</Typography.Text>
+                        <FormattedDateTime value={item.adjustedAt} />
+                      </div>
                     </div>
                   ),
                 }))}

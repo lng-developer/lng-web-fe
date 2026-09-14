@@ -2,11 +2,11 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Flex, Form, Input, Modal, Select, Switch, Tabs, Tooltip, Typography } from 'antd'
+import { Button, Flex, Form, Input, Modal, Select, Switch, Tabs, Tooltip } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { SectionCard, StatusTag, TableTextCell, useFeedbackToast } from '@/shared/ui'
 
 import {
   getInternalTemplate,
@@ -93,40 +93,42 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
     () => [
       {
         title: t('portal.catalog.master.templateEditor.columns.template'),
+        width: 240,
         render: (_, row) => (
-          <div>
-            <Typography.Text strong ellipsis>
-              {row.code}
-            </Typography.Text>
-            <br />
-            <Typography.Text type="secondary" ellipsis>
-              {row.name}
-            </Typography.Text>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}
+          >
+            <TableTextCell code strong value={row.code} />
+            <TableTextCell secondary value={row.name} />
           </div>
         ),
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.productType'),
-        ellipsis: true,
-        render: (_, row) => row.productTypeGroup?.name ?? '-',
+        width: 200,
+        render: (_, row) => <TableTextCell value={row.productTypeGroup?.name} fallback="-" />,
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.fields'),
         dataIndex: 'requiredFieldsCount',
+        width: 90,
         align: 'right',
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.slots'),
         dataIndex: 'artworkSlotsCount',
+        width: 90,
         align: 'right',
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.assets'),
         dataIndex: 'designAssetsCount',
+        width: 90,
         align: 'right',
       },
       {
         title: t('portal.catalog.master.templateEditor.columns.psd'),
+        width: 110,
         align: 'center',
         render: (_, row) =>
           t(
@@ -138,6 +140,7 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
       {
         title: t('portal.catalog.master.status'),
         dataIndex: 'status',
+        width: 120,
         align: 'center',
         render: (value) => (
           <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
@@ -150,6 +153,8 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
             {
               key: 'actions',
               title: t('portal.catalog.actions'),
+              width: 80,
+              align: 'center' as const,
               render: (_: unknown, row: InternalTemplate) => (
                 <Tooltip title={t('portal.catalog.master.editTemplate')}>
                   <Button
@@ -200,8 +205,8 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         <CoreDataTable
           fillViewport
           rowKey="id"
-          tableLayout="auto"
-          scroll={{ x: 'max-content' }}
+          tableLayout="fixed"
+          scroll={{ x: 1_020 }}
           columns={columns}
           dataSource={templates.data?.items ?? []}
           loading={templates.isLoading}

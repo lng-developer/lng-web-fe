@@ -1,12 +1,26 @@
 .page {
-  display: grid;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
 }
 
 .metrics {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
+}
+
+.filters {
+  flex: 0 0 auto;
+}
+
+.tableArea {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
 .search {

@@ -68,8 +68,6 @@ export const ScheduleCalendarPage = () => {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('hrOperations.schedule.title')}
-        description={t('hrOperations.schedule.description')}
         actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
       />
 

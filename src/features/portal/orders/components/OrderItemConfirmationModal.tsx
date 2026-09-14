@@ -76,7 +76,6 @@ function OrderItemConfirmationModalInner({
 
   return (
     <PopupModal
-      centered
       anchor={anchor}
       open={Boolean(confirmation)}
       title={t(isCancel ? 'orders.actions.cancelItem' : 'orders.actions.createReplacement')}

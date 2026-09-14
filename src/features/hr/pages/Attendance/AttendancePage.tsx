@@ -79,10 +79,6 @@ export const AttendancePage = () => {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={
-          canRead ? t('hrOperations.attendance.teamTitle') : t('hrOperations.attendance.myTitle')
-        }
-        description={t('hrOperations.attendance.description')}
         actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
       />
 
@@ -134,7 +130,6 @@ export const AttendancePage = () => {
       </SectionCard>
 
       <Modal
-        centered
         destroyOnHidden
         open={Boolean(adjusting)}
         title={t('hrOperations.attendance.adjustTitle')}

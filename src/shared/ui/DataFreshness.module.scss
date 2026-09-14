@@ -1,0 +1,76 @@
+.freshnessContainer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ant-color-text-secondary, #8c8c8c);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.freshnessText {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+  color: var(--ant-color-text-secondary, #8c8c8c);
+}
+
+.timeValue {
+  font-weight: 500;
+  color: var(--ant-color-text, #262626);
+}
+
+.refreshButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+  background: var(--ant-color-fill-quaternary, rgba(0, 0, 0, 0.02));
+  border-radius: 4px;
+  color: var(--ant-color-text-secondary, #8c8c8c);
+  cursor: pointer;
+  transition: all 150ms ease;
+
+  &:hover:not(:disabled) {
+    color: var(--ant-color-primary, #e83b4a);
+    border-color: var(--ant-color-primary, #e83b4a);
+    background: color-mix(in srgb, var(--ant-color-primary-bg) 30%, transparent);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.refreshIcon {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+:global(html[data-theme='dark']) {
+  .freshnessContainer {
+    color: var(--ant-color-text-secondary, #a6a6a6);
+  }
+
+  .timeValue {
+    color: var(--ant-color-text, #e4e6eb);
+  }
+
+  .refreshButton {
+    border-color: #3a3b3c;
+    background: rgba(255, 255, 255, 0.04);
+    color: #a6a6a6;
+
+    &:hover:not(:disabled) {
+      border-color: var(--ant-color-primary, #e83b4a);
+      background: rgba(232, 59, 74, 0.12);
+      color: #ff7875;
+    }
+  }
+}

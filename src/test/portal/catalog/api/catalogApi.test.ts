@@ -66,7 +66,7 @@ describe('catalogApi', () => {
     await listListingVariants('listing-1')
     await createListingVariant('listing-1', { productTypeGroupId: 'group-1' })
     await updateListingVariant('listing-1', 'variant-1', { status: 'INACTIVE' })
-    await requestListingPsd('listing-1')
+    await requestListingPsd('listing-1', 'HIGH')
     await requestListingVariantPsd('listing-1', 'variant-1')
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/catalog/listings', {
@@ -104,7 +104,9 @@ describe('catalogApi', () => {
       '/api/catalog/listings/listing-1/variants/variant-1',
       { status: 'INACTIVE' },
     )
-    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/request-psd')
+    expect(apiClient.post).toHaveBeenCalledWith('/api/catalog/listings/listing-1/request-psd', {
+      priority: 'HIGH',
+    })
     expect(apiClient.post).toHaveBeenCalledWith(
       '/api/catalog/listings/listing-1/variants/variant-1/request-psd',
     )

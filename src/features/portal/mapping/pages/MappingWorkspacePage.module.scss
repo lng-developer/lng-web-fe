@@ -15,8 +15,117 @@
   flex-direction: column;
 }
 
+/* ── Tab label & pipeline order step styling ──────────── */
+.tabLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.tabStep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ant-color-text-secondary);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.tabStepActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  background: #ffffff;
+  color: var(--ant-color-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.tabText {
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}
+
+.tabCountBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  background: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+.tabCountBadgeActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  background: #ffffff;
+  color: var(--ant-color-primary);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
 .tabs :global(.ant-tabs-nav) {
   flex: 0 0 auto;
+}
+
+.tabs :global(.ant-tabs-nav-wrap) {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-block: 4px;
+  padding-inline: 2px;
+}
+
+.tabs :global(.ant-tabs-tab) {
+  border: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+    color: var(--ant-color-primary);
+    background: var(--ant-color-primary-bg, #fff1f0);
+  }
+
+  &.ant-tabs-tab-active {
+    border-color: var(--ant-color-primary) !important;
+    background: var(--ant-color-primary) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--ant-color-primary) 28%, transparent);
+  }
 }
 
 .tabs :global(.ant-tabs-content-holder),

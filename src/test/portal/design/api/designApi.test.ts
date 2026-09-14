@@ -16,6 +16,7 @@ import {
   rejectDesignTask,
   startDesignTask,
   submitDesignTask,
+  updateDesignTaskPriority,
 } from '@/features/portal/design/api/designApi'
 import { apiClient } from '@/shared/api'
 
@@ -30,6 +31,7 @@ describe('designApi', () => {
   it('uses the Design lifecycle contracts', async () => {
     await listDesignTasks({ page: 1, limit: 20, status: 'SUBMITTED' })
     await assignDesignTask('task-1', 'designer-1')
+    await updateDesignTaskPriority('task-1', 'URGENT')
     await bulkAssignDesignTasks(['task-1', 'task-2'], 'designer-1')
     await startDesignTask('task-1')
     await submitDesignTask('task-1', ['asset-1'], 'Ready')
@@ -63,6 +65,9 @@ describe('designApi', () => {
     })
     expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/assign', {
       assignedDesignerId: 'designer-1',
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/priority', {
+      priority: 'URGENT',
     })
     expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/bulk-assign', {
       taskIds: ['task-1', 'task-2'],

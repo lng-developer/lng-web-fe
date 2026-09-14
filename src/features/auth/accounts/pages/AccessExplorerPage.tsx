@@ -1,18 +1,17 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
-  CheckCircleOutlined,
+  CloseOutlined,
   DeleteOutlined,
   DownOutlined,
   EyeOutlined,
   IdcardOutlined,
   KeyOutlined,
+  MoreOutlined,
   PlusOutlined,
   ReloadOutlined,
-  SafetyCertificateOutlined,
   SettingOutlined,
-  TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -28,10 +27,9 @@ import {
   Result,
   Select,
   Skeleton,
-  Space,
   Spin,
   Tag,
-  Tooltip,
+  Tabs,
   Typography,
 } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -51,19 +49,22 @@ import {
   ConfirmDangerModal,
   EmptyState,
   FeedbackAlert,
-  FilterBar,
-  MetricCard,
   PageHeader,
   PermissionCheckboxGroup,
   SearchInput,
-  SectionCard,
   StatusTag,
   useFeedbackToast,
 } from '@/shared/ui'
 
 import { type AccessExplorerSnapshot, loadAccessExplorer } from '../../api/accessExplorerApi'
 import { accountKeys } from '../api/accountKeys'
-import { createAccount, type CreateAccountInput } from '../api/accountManagementApi'
+import {
+  createAccount,
+  resetAccountPassword,
+  revokeAccountSessions,
+  type CreateAccountInput,
+  updateAccountStatus,
+} from '../api/accountManagementApi'
 import { useAccessAccountsQuery } from '../hooks'
 import styles from './AccessExplorerPage.module.scss'
 
@@ -82,6 +83,7 @@ type BulkAccessFormValues = {
   validFrom?: Dayjs | null
   validUntil?: Dayjs | null
 }
+type InspectorSecurityAction = 'deactivate' | 'revoke-sessions'
 
 function statusTone(status?: string) {
   return String(status ?? '').toLowerCase() === 'active' ? 'operational' : 'cancelled'
@@ -106,6 +108,7 @@ export function AccessExplorerPage() {
   }>()
   const [bulkAccessForm] = Form.useForm<BulkAccessFormValues>()
   const [createForm] = Form.useForm<CreateAccountForm>()
+  const [securityPasswordForm] = Form.useForm<{ password: string }>()
   const [quickAccessAccount, setQuickAccessAccount] =
     useState<AccessExplorerSnapshot['accounts']['items'][number]>()
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([])
@@ -116,6 +119,11 @@ export function AccessExplorerPage() {
   const [createScopeType, setCreateScopeType] = useState<ScopeType>('global')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>()
+  const [role, setRole] = useState<string>()
+  const [inspectedAccountId, setInspectedAccountId] = useState<string>()
+  const [inspectorTab, setInspectorTab] = useState('overview')
+  const [pendingInspectorSecurityAction, setPendingInspectorSecurityAction] =
+    useState<InspectorSecurityAction>()
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
@@ -205,6 +213,34 @@ export function AccessExplorerPage() {
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
+  const securityPasswordMutation = useMutation({
+    mutationFn: ({ accountId, password }: { accountId: string; password: string }) =>
+      resetAccountPassword(accountId, password),
+    onSuccess: async () => {
+      securityPasswordForm.resetFields()
+      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      showFeedbackToast('success', t('actionFeedback.saved'))
+    },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
+  })
+  const revokeSessionsMutation = useMutation({
+    mutationFn: (accountId: string) => revokeAccountSessions(accountId),
+    onSuccess: async () => {
+      setPendingInspectorSecurityAction(undefined)
+      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      showFeedbackToast('success', t('actionFeedback.saved'))
+    },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
+  })
+  const deactivateAccountMutation = useMutation({
+    mutationFn: (accountId: string) => updateAccountStatus(accountId, 'inactive'),
+    onSuccess: async () => {
+      setPendingInspectorSecurityAction(undefined)
+      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      showFeedbackToast('success', t('actionFeedback.deactivated'))
+    },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
+  })
   const bulkAccessMutation = useMutation({
     mutationFn: (payload: BulkGlobalAccessInput) => bulkUpdateGlobalAccess(payload),
     onSuccess: async () => {
@@ -241,15 +277,18 @@ export function AccessExplorerPage() {
   const allAccounts = useMemo(() => data?.items ?? [], [data?.items])
   const searchValue = search.trim().toLowerCase()
   const statusFilter = normalize(status)
+  const roleFilter = normalize(role)
 
   const accounts = useMemo(
     () =>
       allAccounts.filter((account) => {
         const matchesSearch = account.email.toLowerCase().includes(searchValue)
         const matchesStatus = !statusFilter || normalize(account.status) === statusFilter
-        return matchesSearch && matchesStatus
+        const matchesRole =
+          !roleFilter || account.roles?.some((accountRole) => normalize(accountRole) === roleFilter)
+        return matchesSearch && matchesStatus && matchesRole
       }),
-    [allAccounts, searchValue, statusFilter],
+    [allAccounts, roleFilter, searchValue, statusFilter],
   )
 
   const paginatedAccounts = useMemo(() => {
@@ -260,16 +299,36 @@ export function AccessExplorerPage() {
     selectedAccountIds.includes(account.id),
   )
 
-  const statuses = useMemo(() => {
-    const keys = new Set(allAccounts.map((account) => normalize(account.status)).filter(Boolean))
-    return [...keys].map((value) => ({ label: value, value }))
+  const roleOptions = useMemo(() => {
+    const roles = new Set(allAccounts.flatMap((account) => account.roles ?? []))
+    return [...roles].map((value) => ({ label: value, value }))
   }, [allAccounts])
-  const hasFilters = Boolean(searchValue || statusFilter)
+  const inspectedAccount = allAccounts.find((account) => account.id === inspectedAccountId)
+  const hasFilters = Boolean(searchValue || statusFilter || roleFilter)
 
   const clearFilters = () => {
     setSearch('')
     setStatus(undefined)
+    setRole(undefined)
     setCurrentPage(1)
+  }
+
+  const openInspector = (
+    account: AccessExplorerSnapshot['accounts']['items'][number],
+    tab = 'overview',
+  ) => {
+    setInspectedAccountId(account.id)
+    setInspectorTab(tab)
+  }
+
+  const confirmInspectorSecurityAction = () => {
+    if (!inspectedAccount) return
+    if (pendingInspectorSecurityAction === 'revoke-sessions') {
+      revokeSessionsMutation.mutate(inspectedAccount.id)
+    }
+    if (pendingInspectorSecurityAction === 'deactivate') {
+      deactivateAccountMutation.mutate(inspectedAccount.id)
+    }
   }
 
   const openQuickAccess = async (account: AccessExplorerSnapshot['accounts']['items'][number]) => {
@@ -432,298 +491,479 @@ export function AccessExplorerPage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('auth.accessExplorer.title')}
-        description={t('auth.accessExplorer.directoryDescription')}
-        actions={
-          <div className={styles.headerActions}>
-            {canWrite ? (
-              <Button
-                type="default"
-                onClick={() => void openBulkAssign()}
-                disabled={selectedAccountIds.length === 0}
-              >
-                {t('auth.accessExplorer.bulkAssign', 'Bulk assign')}
-              </Button>
-            ) : null}
-            {canWrite ? (
-              <Button
-                danger
-                icon={<DeleteOutlined aria-hidden />}
-                onClick={() => setIsBulkRevokeOpen(true)}
-                disabled={selectedAccountIds.length === 0}
-              >
-                {t('auth.accessExplorer.bulkRevoke', 'Revoke now')}
-              </Button>
-            ) : null}
-            {canWrite ? (
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      key: 'direct-account',
-                      label: t('auth.accessExplorer.createAccountDirect'),
-                      icon: <PlusOutlined />,
-                    },
-                    {
-                      key: 'from-profile',
-                      label: t('auth.accessExplorer.createAccountFromProfile'),
-                      icon: <IdcardOutlined />,
-                    },
-                  ],
-                  onClick: ({ key }) => {
-                    if (key === 'from-profile') openCreateFromProfile()
-                    else openCreateAccount()
-                  },
-                }}
-              >
-                <Button
-                  icon={<PlusOutlined />}
-                  type="primary"
-                  disabled={roleCatalogQuery.isLoading || scopeQuery.isLoading}
-                >
-                  {t('auth.accessExplorer.createAccount')}
-                  <DownOutlined />
-                </Button>
-              </Dropdown>
-            ) : null}
-          </div>
-        }
-      />
-      {error ? (
-        <FeedbackAlert
-          type="error"
-          title={t('auth.accessExplorer.unavailable')}
-          description={t('auth.accessExplorer.unavailableDescription')}
-          action={
-            <Button
-              type="link"
-              icon={<ReloadOutlined aria-hidden />}
-              onClick={() => void refetch()}
-            >
-              {t('auth.accessExplorer.retry')}
-            </Button>
-          }
-        />
-      ) : null}
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<TeamOutlined aria-hidden className={styles.totalIcon} />}
-          label={t('auth.accessExplorer.totalAccounts')}
-          value={String(allAccounts.length)}
-        />
-        <MetricCard
-          icon={<CheckCircleOutlined aria-hidden className={styles.activeIcon} />}
-          label={t('auth.accessExplorer.activeAccounts')}
-          value={String(
-            allAccounts.filter((account) => normalize(account.status) === 'active').length,
-          )}
-        />
-        <MetricCard
-          icon={<SafetyCertificateOutlined aria-hidden className={styles.unassignedIcon} />}
-          label={t('auth.accessExplorer.accountsWithoutRoles')}
-          value={String(allAccounts.filter((account) => !account.roles?.length).length)}
-        />
-      </div>
-
-      <SectionCard>
-        <div className={styles.sectionHeader}>
-          <div>
-            <Typography.Title level={4} className={styles.sectionTitle}>
-              {t('auth.accessExplorer.accounts')}
-            </Typography.Title>
-            <Typography.Text type="secondary">
-              {t('auth.accessExplorer.resultsSummary', {
-                count: accounts.length,
-                total: allAccounts.length,
-              })}
-            </Typography.Text>
-          </div>
-          <FilterBar contentClassName={styles.filters} label={t('auth.accessExplorer.filterLabel')}>
-            {canWrite ? (
-              <Checkbox
-                checked={isAllCurrentPageSelected}
-                disabled={paginatedAccounts.length === 0}
-                onChange={(event) => toggleCurrentPageSelectAll(event.target.checked)}
-              >
-                {t('auth.accessExplorer.selectCurrentPage', 'Select current page')}
-              </Checkbox>
-            ) : null}
-            <SearchInput
-              className={styles.searchFilter}
-              aria-label={t('auth.accessExplorer.searchAccounts')}
-              placeholder={t('auth.accessExplorer.searchEmail')}
-              value={search}
-              onSearchChange={(value) => {
-                setSearch(value)
-                setCurrentPage(1)
-              }}
+      <div className={inspectedAccount ? styles.workspaceWithInspector : styles.workspace}>
+        <main className={styles.directory}>
+          <div className={styles.directoryHeader}>
+            <PageHeader
+              title={t('auth.accessExplorer.title')}
+              actions={
+                <div className={styles.headerActions}>
+                  {canWrite ? (
+                    <Dropdown
+                      menu={{
+                        items: [
+                          {
+                            key: 'direct-account',
+                            label: t('auth.accessExplorer.createAccountDirect'),
+                            icon: <PlusOutlined />,
+                          },
+                          {
+                            key: 'from-profile',
+                            label: t('auth.accessExplorer.createAccountFromProfile'),
+                            icon: <IdcardOutlined />,
+                          },
+                        ],
+                        onClick: ({ key }) => {
+                          if (key === 'from-profile') openCreateFromProfile()
+                          else openCreateAccount()
+                        },
+                      }}
+                    >
+                      <Button
+                        icon={<PlusOutlined />}
+                        type="primary"
+                        disabled={roleCatalogQuery.isLoading || scopeQuery.isLoading}
+                      >
+                        {t('auth.accessExplorer.createAccount')}
+                        <DownOutlined />
+                      </Button>
+                    </Dropdown>
+                  ) : null}
+                </div>
+              }
             />
-            <Select
-              className={styles.statusFilter}
-              aria-label={t('auth.accessExplorer.filterStatus')}
-              allowClear
-              placeholder={t('auth.accessExplorer.allStatuses')}
-              options={statuses}
-              value={status}
-              onChange={(value) => {
-                setStatus(value)
-                setCurrentPage(1)
-              }}
-              onClear={clearFilters}
-            />
-            <Button type="default" disabled={!hasFilters} onClick={clearFilters}>
-              {t('auth.accessExplorer.clearFilters')}
-            </Button>
-          </FilterBar>
-        </div>
-
-        {isLoading ? (
-          <div className={styles.loading}>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <Skeleton.Input key={i} active block style={{ height: 68, borderRadius: 10 }} />
-            ))}
-          </div>
-        ) : (
-          <div className={styles.accountList}>
-            {paginatedAccounts.length === 0 ? (
-              <EmptyState
-                title={
-                  hasFilters
-                    ? t('auth.accessExplorer.noResults', 'No accounts match this filter')
-                    : t('auth.accessExplorer.emptyAccounts')
-                }
-                description={t('auth.accessExplorer.emptyAccountsDescription')}
+            {error ? (
+              <FeedbackAlert
+                type="error"
+                title={t('auth.accessExplorer.unavailable')}
+                description={t('auth.accessExplorer.unavailableDescription')}
                 action={
-                  hasFilters ? (
-                    <Button type="link" onClick={clearFilters}>
-                      {t('auth.accessExplorer.clearFilters')}
-                    </Button>
-                  ) : null
+                  <Button
+                    type="link"
+                    icon={<ReloadOutlined aria-hidden />}
+                    onClick={() => void refetch()}
+                  >
+                    {t('auth.accessExplorer.retry')}
+                  </Button>
                 }
               />
-            ) : (
-              paginatedAccounts.map((account) => {
-                const initials = account.email ? account.email.charAt(0).toUpperCase() : 'U'
-                const isSelected = selectedAccountIds.includes(account.id)
-                return (
-                  <div
-                    key={account.id}
-                    className={
-                      isSelected
-                        ? `${styles.accountCard} ${styles.accountCardSelected}`
-                        : styles.accountCard
+            ) : null}
+          </div>
+          <div className={styles.directoryTable}>
+            <div className={styles.filters}>
+              <div className={styles.quickFilters}>
+                <Button
+                  className={!statusFilter ? styles.quickFilterActive : undefined}
+                  onClick={() => {
+                    setStatus(undefined)
+                    setCurrentPage(1)
+                  }}
+                >
+                  {t('auth.accessExplorer.allAccountsFilter')}
+                  <span className={styles.filterCount}>{allAccounts.length}</span>
+                </Button>
+                <Button
+                  className={statusFilter === 'active' ? styles.quickFilterActive : undefined}
+                  onClick={() => {
+                    setStatus('active')
+                    setCurrentPage(1)
+                  }}
+                >
+                  {t('auth.accessExplorer.activeAccountsFilter')}
+                  <span className={styles.filterCount}>
+                    {allAccounts.filter((account) => normalize(account.status) === 'active').length}
+                  </span>
+                </Button>
+                <Button
+                  className={statusFilter === 'inactive' ? styles.quickFilterActive : undefined}
+                  onClick={() => {
+                    setStatus('inactive')
+                    setCurrentPage(1)
+                  }}
+                >
+                  {t('auth.accessExplorer.inactiveAccountsFilter')}
+                  <span className={styles.filterCount}>
+                    {
+                      allAccounts.filter((account) => normalize(account.status) === 'inactive')
+                        .length
                     }
-                  >
-                    {canWrite ? (
-                      <Checkbox
-                        checked={selectedAccountIds.includes(account.id)}
-                        onChange={(event) =>
-                          toggleAccountSelection(account.id, event.target.checked)
+                  </span>
+                </Button>
+              </div>
+              <Select
+                className={styles.roleFilter}
+                aria-label={t('auth.accessExplorer.currentRoles')}
+                allowClear
+                placeholder={t('auth.accessExplorer.allRoles')}
+                options={roleOptions}
+                value={role}
+                onChange={(value) => {
+                  setRole(value)
+                  setCurrentPage(1)
+                }}
+              />
+              <SearchInput
+                className={styles.searchFilter}
+                aria-label={t('auth.accessExplorer.searchAccounts')}
+                placeholder={t('auth.accessExplorer.searchEmail')}
+                value={search}
+                onSearchChange={(value) => {
+                  setSearch(value)
+                  setCurrentPage(1)
+                }}
+              />
+              <Button type="text" disabled={!hasFilters} onClick={clearFilters}>
+                {t('auth.accessExplorer.clearFilters')}
+              </Button>
+            </div>
+
+            <div className={styles.tableShell}>
+              <div className={styles.tableHeader}>
+                {canWrite ? (
+                  <Checkbox
+                    aria-label={t('auth.accessExplorer.selectCurrentPage')}
+                    checked={isAllCurrentPageSelected}
+                    disabled={paginatedAccounts.length === 0}
+                    onChange={(event) => toggleCurrentPageSelectAll(event.target.checked)}
+                  />
+                ) : (
+                  <span />
+                )}
+                <span>{t('auth.accessExplorer.account')}</span>
+                <span>{t('auth.accessExplorer.searchEmail')}</span>
+                <span>{t('auth.accessExplorer.currentRoles')}</span>
+                <span>{t('auth.accessExplorer.status')}</span>
+                <span>{t('auth.accessExplorer.lastLogin')}</span>
+                <span />
+              </div>
+              {isLoading ? (
+                <div className={styles.loading}>
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <Skeleton.Input key={i} active block style={{ height: 58, borderRadius: 0 }} />
+                  ))}
+                </div>
+              ) : paginatedAccounts.length === 0 ? (
+                <EmptyState
+                  title={
+                    hasFilters
+                      ? t('auth.accessExplorer.noResults')
+                      : t('auth.accessExplorer.emptyAccounts')
+                  }
+                  description={t('auth.accessExplorer.emptyAccountsDescription')}
+                  action={
+                    hasFilters ? (
+                      <Button type="link" onClick={clearFilters}>
+                        {t('auth.accessExplorer.clearFilters')}
+                      </Button>
+                    ) : null
+                  }
+                />
+              ) : (
+                paginatedAccounts.map((account) => {
+                  const initials = account.email ? account.email.charAt(0).toUpperCase() : 'U'
+                  const isSelected = inspectedAccount?.id === account.id
+                  return (
+                    <div
+                      key={account.id}
+                      className={
+                        isSelected
+                          ? `${styles.accountRow} ${styles.accountRowSelected}`
+                          : styles.accountRow
+                      }
+                      onClick={() => openInspector(account)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          openInspector(account)
                         }
-                        onClick={(event) => event.stopPropagation()}
-                      />
-                    ) : null}
-                    <div className={styles.accountIdentity}>
-                      <Avatar size={40} style={{ backgroundColor: 'var(--ant-color-primary)' }}>
-                        {initials}
-                      </Avatar>
-                      <div>
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      {canWrite ? (
+                        <Checkbox
+                          checked={selectedAccountIds.includes(account.id)}
+                          onChange={(event) =>
+                            toggleAccountSelection(account.id, event.target.checked)
+                          }
+                          onClick={(event) => event.stopPropagation()}
+                        />
+                      ) : (
+                        <span />
+                      )}
+                      <div className={styles.accountIdentity}>
+                        <Avatar size={32} className={styles.avatar}>
+                          {initials}
+                        </Avatar>
                         <Typography.Text strong className={styles.emailText}>
                           {account.email}
                         </Typography.Text>
-                        <Typography.Text type="secondary" className={styles.accountMeta}>
-                          {account.lastLoginAt
-                            ? `${t('auth.accessExplorer.lastLogin', 'Last login')}: ${dayjs(account.lastLoginAt).format('DD/MM/YYYY HH:mm')}`
-                            : t('auth.accessExplorer.neverLoggedIn', 'Never logged in')}
-                        </Typography.Text>
                       </div>
-                    </div>
-
-                    <div className={styles.accountRoles}>
-                      <span className={styles.sectionLabel}>
-                        {t('auth.accessExplorer.currentRoles')}:
-                      </span>
-                      <Space size={[4, 8]} wrap>
+                      <Typography.Text className={styles.accountMeta}>
+                        {account.email}
+                      </Typography.Text>
+                      <div className={styles.accountRoles}>
                         {account.roles?.length ? (
-                          account.roles.map((role) => (
-                            <Tag
-                              color="blue"
-                              key={role}
-                              style={{ borderRadius: 4, fontWeight: 500 }}
-                            >
-                              {role}
-                            </Tag>
-                          ))
+                          <Tag color="blue">{account.roles[0]}</Tag>
                         ) : (
                           <Typography.Text type="secondary" className={styles.accountMeta}>
                             {t('auth.accessExplorer.noRoles')}
                           </Typography.Text>
                         )}
-                      </Space>
-                    </div>
-
-                    <div className={styles.accountStatus}>
-                      <StatusTag status={statusTone(account.status)}>
-                        {account.status ?? t('auth.accessExplorer.unknown')}
-                      </StatusTag>
-                    </div>
-
-                    <div className={styles.accountActions}>
-                      <Tooltip title={t('auth.accessExplorer.viewDetails', 'View details')}>
-                        <Button
-                          type="text"
-                          icon={<EyeOutlined />}
-                          onClick={() => navigate(`/auth/accounts/${account.id}`)}
-                        />
-                      </Tooltip>
-                      <Tooltip title={t('auth.accessEditor.globalAccess')}>
-                        <Button
-                          type="text"
-                          icon={<SettingOutlined />}
-                          loading={isOpeningQuickAccess && quickAccessAccount?.id === account.id}
-                          onClick={() => void openQuickAccess(account)}
-                        />
-                      </Tooltip>
-                      <Tooltip title={t('auth.accessExplorer.manageAccess', 'Manage access')}>
-                        <Link
-                          to={`/auth/accounts/${account.id}/access`}
-                          className={styles.manageAccessLink}
-                        >
-                          <Button type="text" icon={<SafetyCertificateOutlined />}>
-                            {t('auth.accessExplorer.manageAccess', 'Manage Access')}
-                          </Button>
-                        </Link>
-                      </Tooltip>
-                      <Tooltip
-                        title={t('auth.accessExplorer.securitySettings', 'Security settings')}
+                      </div>
+                      <span
+                        className={
+                          statusTone(account.status) === 'operational'
+                            ? `${styles.accountStatus} ${styles.accountStatusActive}`
+                            : `${styles.accountStatus} ${styles.accountStatusInactive}`
+                        }
                       >
-                        <Button
-                          type="text"
-                          icon={<KeyOutlined />}
-                          onClick={() => navigate(`/auth/accounts/${account.id}/security`)}
-                        />
-                      </Tooltip>
+                        <span aria-hidden className={styles.statusDot} />
+                        {account.status ?? t('auth.accessExplorer.unknown')}
+                      </span>
+                      <Typography.Text className={styles.accountMeta}>
+                        {account.lastLoginAt
+                          ? dayjs(account.lastLoginAt).format('DD/MM/YYYY HH:mm')
+                          : t('auth.accessExplorer.neverLoggedIn')}
+                      </Typography.Text>
+                      <div className={styles.rowActionMenu}>
+                        <Dropdown
+                          trigger={['click']}
+                          menu={{
+                            items: [
+                              {
+                                key: 'details',
+                                icon: <EyeOutlined />,
+                                label: t('auth.accessExplorer.viewDetails'),
+                              },
+                              {
+                                key: 'global-access',
+                                icon: <SettingOutlined />,
+                                label: t('auth.accessEditor.globalAccess'),
+                              },
+                              {
+                                key: 'security',
+                                icon: <KeyOutlined />,
+                                label: t('auth.accessExplorer.securitySettings'),
+                              },
+                            ],
+                            onClick: ({ key }) => {
+                              if (key === 'details') openInspector(account)
+                              if (key === 'global-access') openInspector(account, 'access')
+                              if (key === 'security') openInspector(account, 'security')
+                            },
+                          }}
+                        >
+                          <Button
+                            aria-label={t('auth.accessEditor.actions')}
+                            icon={<MoreOutlined />}
+                            loading={isOpeningQuickAccess && quickAccessAccount?.id === account.id}
+                            type="text"
+                          />
+                        </Dropdown>
+                      </div>
                     </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        )}
+                  )
+                })
+              )}
+            </div>
 
-        {accounts.length > pageSize && (
-          <div className={styles.pagination}>
-            <Pagination
-              current={currentPage}
-              pageSize={pageSize}
-              total={accounts.length}
-              onChange={setCurrentPage}
-              showSizeChanger={false}
-            />
+            {accounts.length > pageSize ? (
+              <div className={styles.pagination}>
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={accounts.length}
+                  onChange={setCurrentPage}
+                  showSizeChanger={false}
+                />
+              </div>
+            ) : null}
           </div>
-        )}
-      </SectionCard>
+        </main>
+
+        {inspectedAccount ? (
+          <aside
+            className={styles.inspector}
+            aria-label={t('auth.accessExplorer.accountInspector')}
+          >
+            <Button
+              aria-label={t('auth.accessExplorer.closeInspector')}
+              className={styles.closeInspector}
+              icon={<CloseOutlined />}
+              onClick={() => setInspectedAccountId(undefined)}
+              type="text"
+            />
+            <div className={styles.inspectorIdentity}>
+              <Avatar size={72} className={styles.inspectorAvatar}>
+                {inspectedAccount.email.charAt(0).toUpperCase()}
+              </Avatar>
+              <div>
+                <StatusTag status={statusTone(inspectedAccount.status)}>
+                  {inspectedAccount.status ?? t('auth.accessExplorer.unknown')}
+                </StatusTag>
+                <Typography.Title level={3}>{inspectedAccount.email}</Typography.Title>
+                <Typography.Text type="secondary">
+                  {inspectedAccount.roles?.length
+                    ? inspectedAccount.roles.join(', ')
+                    : t('auth.accessExplorer.noRoles')}
+                </Typography.Text>
+              </div>
+            </div>
+            <div className={styles.inspectorStats}>
+              <div>
+                <span>{t('auth.accessExplorer.currentRoles')}</span>
+                <strong>{inspectedAccount.roles?.length ?? 0}</strong>
+              </div>
+              <div>
+                <span>{t('auth.accessExplorer.status')}</span>
+                <strong>{inspectedAccount.status ?? t('auth.accessExplorer.unknown')}</strong>
+              </div>
+              <div>
+                <span>{t('auth.accessExplorer.lastLogin')}</span>
+                <strong>
+                  {inspectedAccount.lastLoginAt
+                    ? dayjs(inspectedAccount.lastLoginAt).format('DD/MM/YYYY')
+                    : t('auth.accessExplorer.neverLoggedIn')}
+                </strong>
+              </div>
+            </div>
+            <Tabs
+              activeKey={inspectorTab}
+              className={styles.inspectorTabs}
+              onChange={setInspectorTab}
+              items={[
+                {
+                  key: 'overview',
+                  label: t('auth.accessExplorer.overview'),
+                  children: (
+                    <dl className={styles.detailList}>
+                      <div>
+                        <dt>{t('auth.accessExplorer.searchEmail')}</dt>
+                        <dd>{inspectedAccount.email}</dd>
+                      </div>
+                      <div>
+                        <dt>{t('auth.accessExplorer.status')}</dt>
+                        <dd>{inspectedAccount.status ?? t('auth.accessExplorer.unknown')}</dd>
+                      </div>
+                      <div>
+                        <dt>{t('auth.accessExplorer.currentRoles')}</dt>
+                        <dd>
+                          {inspectedAccount.roles?.length
+                            ? inspectedAccount.roles.join(', ')
+                            : t('auth.accessExplorer.noRoles')}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t('auth.accessExplorer.lastLogin')}</dt>
+                        <dd>
+                          {inspectedAccount.lastLoginAt
+                            ? dayjs(inspectedAccount.lastLoginAt).format('DD/MM/YYYY HH:mm')
+                            : t('auth.accessExplorer.neverLoggedIn')}
+                        </dd>
+                      </div>
+                    </dl>
+                  ),
+                },
+                {
+                  key: 'access',
+                  label: t('auth.accessEditor.globalAccess'),
+                  children: (
+                    <div className={styles.inspectorSection}>
+                      <Typography.Text type="secondary">
+                        {t('auth.accessExplorer.accessSummary')}
+                      </Typography.Text>
+                      <div className={styles.inspectorRoles}>
+                        {inspectedAccount.roles?.length ? (
+                          inspectedAccount.roles.map((accountRole) => (
+                            <Tag color="blue" key={accountRole}>
+                              {accountRole}
+                            </Tag>
+                          ))
+                        ) : (
+                          <Typography.Text type="secondary">
+                            {t('auth.accessExplorer.noRoles')}
+                          </Typography.Text>
+                        )}
+                      </div>
+                      <Button
+                        aria-label={t('auth.accessExplorer.editGlobalAccess')}
+                        className={styles.inspectorTabAction}
+                        disabled={!canWrite}
+                        icon={<SettingOutlined />}
+                        onClick={() => void openQuickAccess(inspectedAccount)}
+                        size="small"
+                        type="primary"
+                      >
+                        {t('auth.accessExplorer.editGlobalAccess')}
+                      </Button>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'security',
+                  label: t('auth.accessExplorer.securitySettings'),
+                  children: (
+                    <div className={styles.inspectorSection}>
+                      <Typography.Text type="secondary">
+                        {t('auth.accessExplorer.securitySummary')}
+                      </Typography.Text>
+                      <Form
+                        className={styles.inspectorPasswordForm}
+                        form={securityPasswordForm}
+                        layout="vertical"
+                        onFinish={({ password }) =>
+                          securityPasswordMutation.mutate({
+                            accountId: inspectedAccount.id,
+                            password,
+                          })
+                        }
+                      >
+                        <Form.Item
+                          label={t('auth.accountSecurity.newPassword')}
+                          name="password"
+                          rules={[{ min: 6, required: true }]}
+                        >
+                          <Input.Password autoComplete="new-password" disabled={!canWrite} />
+                        </Form.Item>
+                        <Button
+                          className={styles.inspectorTabAction}
+                          disabled={!canWrite}
+                          htmlType="submit"
+                          loading={securityPasswordMutation.isPending}
+                          size="small"
+                          type="primary"
+                        >
+                          {t('auth.accountSecurity.resetPassword')}
+                        </Button>
+                      </Form>
+                      <div className={styles.inspectorSecurityActions}>
+                        <Button
+                          disabled={!canWrite}
+                          onClick={() => setPendingInspectorSecurityAction('revoke-sessions')}
+                          size="small"
+                        >
+                          {t('auth.accountSecurity.revokeSessions')}
+                        </Button>
+                        {normalize(inspectedAccount.status) === 'active' ? (
+                          <Button
+                            danger
+                            disabled={!canWrite}
+                            onClick={() => setPendingInspectorSecurityAction('deactivate')}
+                            size="small"
+                          >
+                            {t('auth.accountSecurity.deactivate')}
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </aside>
+        ) : null}
+      </div>
 
       {selectedAccountIds.length > 0 && canWrite ? (
         <div className={styles.bulkBar}>
@@ -927,6 +1167,29 @@ export function AccessExplorerPage() {
           </div>
         </Form>
       </Modal>
+
+      <ConfirmDangerModal
+        open={Boolean(pendingInspectorSecurityAction)}
+        title={
+          pendingInspectorSecurityAction === 'revoke-sessions'
+            ? t('auth.accountSecurity.revokeSessionsTitle')
+            : t('auth.accountSecurity.deactivateTitle')
+        }
+        description={
+          pendingInspectorSecurityAction === 'revoke-sessions'
+            ? t('auth.accountSecurity.revokeSessionsDescription')
+            : t('auth.accountSecurity.deactivateDescription')
+        }
+        confirmLabel={
+          pendingInspectorSecurityAction === 'revoke-sessions'
+            ? t('auth.accountSecurity.revokeSessions')
+            : t('auth.accountSecurity.deactivate')
+        }
+        cancelLabel={t('auth.accessEditor.cancel')}
+        loading={revokeSessionsMutation.isPending || deactivateAccountMutation.isPending}
+        onCancel={() => setPendingInspectorSecurityAction(undefined)}
+        onConfirm={confirmInspectorSecurityAction}
+      />
 
       <ConfirmDangerModal
         open={isBulkRevokeOpen}

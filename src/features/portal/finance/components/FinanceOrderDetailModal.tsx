@@ -10,7 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Modal, Space, Spin, Timeline, Typography } from 'antd'
 
-import { MetricCard, StatusTag } from '@/shared/ui'
+import { FormattedDateTime, MetricCard, StatusTag } from '@/shared/ui'
 
 import { type FinanceSnapshot, getOrderFinanceSummary } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
@@ -48,7 +48,6 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
 
   return (
     <Modal
-      centered
       width={900}
       open={Boolean(selectedOrder)}
       title={t('finance.detail.title')}
@@ -322,9 +321,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                     color: entry.costStatus === 'MISSING' ? 'red' : 'green',
                     children: (
                       <Space wrap>
-                        <Typography.Text>
-                          {new Date(entry.calculatedAt).toLocaleString()}
-                        </Typography.Text>
+                        <FormattedDateTime value={entry.calculatedAt} />
                         <StatusTag
                           status={entry.costStatus === 'MISSING' ? 'critical' : 'operational'}
                         >

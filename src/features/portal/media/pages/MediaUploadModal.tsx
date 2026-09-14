@@ -25,7 +25,6 @@ export function MediaUploadModal({
   }
   return (
     <Modal
-      centered
       open={open}
       title={t('media.upload.title')}
       okText={t('media.upload.submit')}

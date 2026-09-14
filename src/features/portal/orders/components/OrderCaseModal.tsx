@@ -74,7 +74,6 @@ export const OrderCaseModal = memo(function OrderCaseModal({
   if (cases.isLoading) {
     return (
       <PopupModal
-        centered
         anchor={anchor}
         open={open}
         title={t('orders.actions.manageCase')}
@@ -89,7 +88,6 @@ export const OrderCaseModal = memo(function OrderCaseModal({
   if (cases.error) {
     return (
       <PopupModal
-        centered
         anchor={anchor}
         open={open}
         title={t('orders.actions.manageCase')}
@@ -160,7 +158,6 @@ function CaseEditorModalInner({
 
   return (
     <PopupModal
-      centered
       anchor={anchor}
       width={720}
       open

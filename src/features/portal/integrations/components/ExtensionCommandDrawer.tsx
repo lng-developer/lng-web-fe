@@ -1,6 +1,6 @@
-import { Alert, Drawer, Space, Typography } from 'antd'
+import { Alert, Modal, Space, Typography } from 'antd'
 
-import { StatusTag } from '@/shared/ui'
+import { FormattedDateTime, StatusTag } from '@/shared/ui'
 
 import type { ExtensionCommand } from '../api/integrationApi'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
@@ -12,7 +12,15 @@ export interface ExtensionCommandDrawerProps {
 
 export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDrawerProps) {
   return (
-    <Drawer title="Task details" open={Boolean(command)} onClose={onClose}>
+    <Modal
+      title="Task details"
+      open={Boolean(command)}
+      onCancel={onClose}
+      footer={null}
+      width="min(1000px, 85vw)"
+      style={{ top: 40 }}
+      destroyOnClose
+    >
       {command ? (
         <div className={styles.commandTimeline}>
           <Space>
@@ -46,9 +54,7 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
             .map(([label, value]) => (
               <div className={styles.commandTimelineRow} key={String(label)}>
                 <Typography.Text strong>{label}</Typography.Text>
-                <Typography.Text type="secondary">
-                  {new Date(String(value)).toLocaleString()}
-                </Typography.Text>
+                <FormattedDateTime value={String(value)} />
               </div>
             ))}
           {command.errorMessage ? (
@@ -56,6 +62,6 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
           ) : null}
         </div>
       ) : null}
-    </Drawer>
+    </Modal>
   )
 }

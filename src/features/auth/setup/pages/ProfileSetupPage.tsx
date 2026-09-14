@@ -34,7 +34,7 @@ import {
   uploadMyEmployeeAvatar,
 } from '@/features/hr/api/hrApi'
 import { ApiError } from '@/shared/api'
-import { DateTimePicker, PageHeader, SectionCard, useFeedbackToast } from '@/shared/ui'
+import { DateTimePicker, SectionCard, useFeedbackToast } from '@/shared/ui'
 
 import { SetupLayout } from '../components/SetupLayout'
 import styles from './ProfileSetupPage.module.scss'
@@ -416,19 +416,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     </>
   )
 
-  if (embedded)
-    return (
-      <section>
-        <PageHeader
-          title={t('auth.setup.profile.title', { defaultValue: 'My Employee Profile' })}
-          description={t('auth.setup.profile.description', {
-            defaultValue:
-              'Manage your personal information, emergency contacts, legal details, and bank account for payroll.',
-          })}
-        />
-        {content}
-      </section>
-    )
+  if (embedded) return <section>{content}</section>
 
   return (
     <SetupLayout

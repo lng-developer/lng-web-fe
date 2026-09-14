@@ -216,8 +216,6 @@ export function OrganizationPage() {
     <section className={styles.page}>
       <div className={styles.header}>
         <PageHeader
-          title={t('organization.title')}
-          description={t('organization.description')}
           actions={
             canManageOrganization && (
               <Button

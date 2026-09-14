@@ -1,9 +1,13 @@
 .page {
-  display: grid;
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
 }
 
 .metricsList {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
@@ -24,37 +28,6 @@
   flex: 0 0 160px;
 }
 
-.channelFilter {
-  flex: 0 1 auto;
-  gap: 0;
-}
-
-.taskNavigation {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.channelFilter :global(.ant-btn) {
-  border-radius: 0;
-}
-
-.channelFilter :global(.ant-btn + .ant-btn) {
-  margin-left: -1px;
-}
-
-.channelFilter :global(.ant-btn:first-child) {
-  border-radius: 8px 0 0 8px;
-}
-
-.channelFilter :global(.ant-btn:last-child) {
-  border-radius: 0 8px 8px 0;
-}
-
-.channelFilter :global(.ant-btn-primary) {
-  position: relative;
-  z-index: 1;
-}
-
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -63,27 +36,31 @@
 
 .taskToolbar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.taskHeader {
+  min-width: 0;
+}
+
+.taskActionBar {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .taskToolbarTitle {
   margin: 0 !important;
 }
 
-.taskToolbarTitleGroup {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .taskToolbarActions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .detail {
@@ -95,16 +72,35 @@
   margin-bottom: 10px;
 }
 
+.taskSection {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.taskSection :global(.ant-card-body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding-bottom: 0;
+}
+
+.taskSection :global(.ant-table-wrapper) {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  height: 100%;
+}
+
 .taskTable {
-  margin-top: 16px;
-}
-
-.taskTable :global(.ant-table-container) {
-  border-radius: 8px;
-}
-
-.taskTable :global(.ant-table-body) {
-  scrollbar-gutter: stable;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  margin-top: 12px;
 }
 
 .thumbnailContainer {
@@ -252,8 +248,17 @@
     grid-template-columns: 1fr;
   }
 
+  .taskActionBar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .taskToolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
   .taskToolbarActions {
     justify-content: flex-start;
-    width: 100%;
   }
 }

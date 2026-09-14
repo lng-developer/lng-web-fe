@@ -83,7 +83,6 @@ export function TimeRequestEditorModal({
 
   return (
     <Modal
-      centered
       destroyOnHidden
       open={Boolean(kind)}
       title={title}

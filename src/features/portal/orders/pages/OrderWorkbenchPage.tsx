@@ -15,7 +15,7 @@ import {
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Space, Tooltip, Typography } from 'antd'
+import { Button, Space, Tooltip } from 'antd'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -29,7 +29,9 @@ import { canUseScopedPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  DataFreshness,
   FeedbackAlert,
+  FormattedDateTime,
   type PopupModalAnchor,
   StatusTag,
   UiTabLabel,
@@ -246,23 +248,8 @@ export const OrderWorkbenchPage = () => {
   )
 
   const renderOrderDate = useCallback(
-    (value?: string | null) => {
-      if (!value) return '—'
-      const date = dayjs(value)
-      const localizedDate = date.locale(i18n.language === 'vi' ? 'vi' : 'en')
-
-      return (
-        <Tooltip title={date.format('DD/MM/YYYY HH:mm')}>
-          <Space direction="vertical" size={0}>
-            <Typography.Text>
-              {localizedDate.format(i18n.language === 'vi' ? 'DD/MM/YYYY' : 'MMM D, YYYY')}
-            </Typography.Text>
-            <Typography.Text type="secondary">({localizedDate.fromNow()})</Typography.Text>
-          </Space>
-        </Tooltip>
-      )
-    },
-    [i18n.language],
+    (value?: string | null) => <FormattedDateTime value={value} />,
+    [],
   )
 
   const columns = useMemo<TableColumnsType<OrderWorkbenchRow>>(
@@ -466,16 +453,11 @@ export const OrderWorkbenchPage = () => {
           </div>
         </div>
 
-        <Typography.Text
-          aria-label={t('orders.queue.current')}
-          className={styles.queueContext}
-          role="status"
-        >
-          {t('orders.queue.currentValue', {
-            count: summary.data?.tabCounts[tab] ?? 0,
-            queue: t(`orders.tabs.${tab}`),
-          })}
-        </Typography.Text>
+        <DataFreshness
+          timestamp={orders.dataUpdatedAt}
+          onRefresh={() => void orders.refetch()}
+          loading={orders.isFetching}
+        />
 
         <Button
           icon={<DownloadOutlined />}
@@ -506,35 +488,37 @@ export const OrderWorkbenchPage = () => {
         onDatesChange={onDatesChange}
         onClearFilters={handleClearFilters}
       />
-      {orders.error ? (
-        <FeedbackAlert
-          type="error"
-          title={t('orders.error')}
-          action={
-            <Button type="link" onClick={() => void orders.refetch()}>
-              {t('orders.actions.retry')}
-            </Button>
-          }
+      <div className={styles.tableArea}>
+        {orders.error ? (
+          <FeedbackAlert
+            type="error"
+            title={t('orders.error')}
+            action={
+              <Button type="link" onClick={() => void orders.refetch()}>
+                {t('orders.actions.retry')}
+              </Button>
+            }
+          />
+        ) : null}
+        <CoreDataTable
+          fillViewport
+          className={styles.table}
+          rowKey={(row) => row.order.id}
+          columns={columns}
+          dataSource={orders.data?.items ?? []}
+          loading={orders.isFetching}
+          scroll={{ x: 1460 }}
+          pagination={{
+            ...pagination,
+            onChange: handlePageChange,
+          }}
+          expandable={{
+            expandedRowKeys,
+            showExpandColumn: false,
+            expandedRowRender: renderExpandedRow,
+          }}
         />
-      ) : null}
-      <CoreDataTable
-        fillViewport
-        className={styles.table}
-        rowKey={(row) => row.order.id}
-        columns={columns}
-        dataSource={orders.data?.items ?? []}
-        loading={orders.isFetching}
-        scroll={{ x: 1460 }}
-        pagination={{
-          ...pagination,
-          onChange: handlePageChange,
-        }}
-        expandable={{
-          expandedRowKeys,
-          showExpandColumn: false,
-          expandedRowRender: renderExpandedRow,
-        }}
-      />
+      </div>
     </section>
   )
 }

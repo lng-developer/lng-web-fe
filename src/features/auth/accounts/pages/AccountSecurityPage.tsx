@@ -134,8 +134,6 @@ export function AccountSecurityPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.accountSecurity.title')}
-        description={t('auth.accountSecurity.description')}
         actions={
           <Button icon={<ArrowLeftOutlined aria-hidden />}>
             <Link to={`/auth/accounts/${data.account.id}`}>

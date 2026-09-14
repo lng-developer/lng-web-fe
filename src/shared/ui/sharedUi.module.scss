@@ -7,7 +7,12 @@
   padding-bottom: 16px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
-
+.pageHeaderActionsOnly {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 16px;
+  justify-content: flex-end;
+}
 .pageHeaderMain {
   min-width: 0;
 }
@@ -15,9 +20,9 @@
 .pageHeaderTitle {
   margin: 0 !important;
   color: var(--ant-color-text-heading);
-  font-size: 24px !important;
+  font-size: 22px !important;
   font-weight: 700 !important;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
 }
 
 .pageHeaderMeta {
@@ -25,7 +30,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--ant-color-text-tertiary);
   font-size: 13px;
 }
@@ -40,23 +45,25 @@
 .sectionCard {
   min-width: 0;
   border: 1px solid var(--ant-color-border);
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 10px 30px rgb(0 0 0 / 2%);
+  box-shadow:
+    0 1px 3px 0 rgb(15 23 42 / 4%),
+    0 1px 2px -1px rgb(15 23 42 / 2%);
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease;
 }
 
 .sectionCard:hover {
-  box-shadow: 0 10px 30px rgb(0 0 0 / 4%);
+  box-shadow: 0 4px 12px -2px rgb(15 23 42 / 6%);
 }
 
 .selectedCard {
   border-color: var(--ant-color-primary);
   box-shadow:
     0 0 0 1px var(--ant-color-primary),
-    0 12px 30px rgb(15 23 42 / 8%);
+    0 10px 25px -5px rgb(15 23 42 / 8%);
 }
 
 /* ── MetricCard component styles ─────────────────────── */
@@ -66,10 +73,12 @@
   gap: 14px;
   min-height: 76px;
   padding: 14px 18px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--ant-color-border);
   background: var(--ant-color-bg-container);
-  box-shadow: 0 10px 30px rgb(0 0 0 / 2%);
+  box-shadow:
+    0 1px 3px 0 rgb(15 23 42 / 4%),
+    0 1px 2px -1px rgb(15 23 42 / 2%);
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
@@ -78,8 +87,10 @@
 
   &:hover {
     border-color: var(--ant-color-border);
-    box-shadow: 0 10px 30px rgb(0 0 0 / 4%);
-    transform: translateY(-1px);
+    box-shadow:
+      0 10px 25px -5px rgb(15 23 42 / 8%),
+      0 8px 10px -6px rgb(15 23 42 / 4%);
+    transform: translateY(-2px);
   }
 }
 
@@ -87,7 +98,7 @@
   cursor: pointer;
 
   &:active {
-    transform: translateY(1px);
+    transform: translateY(0);
   }
 }
 
@@ -97,40 +108,44 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  font-size: 18px;
+  border-radius: 10px;
+  font-size: 19px;
   flex-shrink: 0;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 28%);
 }
 
 .metricIconPrimary,
 .metricIconReady,
 .metricIconInfo {
-  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: #fff;
+  box-shadow: 0 4px 12px rgb(37 99 235 / 22%);
 }
 
 .metricIconSuccess,
 .metricIconConfirmed {
-  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #fff;
+  box-shadow: 0 4px 12px rgb(16 185 129 / 22%);
 }
 
 .metricIconWarning,
 .metricIconAmbiguous {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: #fff;
+  box-shadow: 0 4px 12px rgb(245 158 11 / 22%);
 }
 
 .metricIconDanger,
 .metricIconBlocked {
-  background: linear-gradient(135deg, #fb7185 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: #fff;
+  box-shadow: 0 4px 12px rgb(239 68 68 / 22%);
 }
 
 .metricIconNeutral {
-  background: linear-gradient(135deg, #94a3b8 0%, #475569 100%);
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
   color: #fff;
+  box-shadow: 0 4px 12px rgb(100 116 139 / 20%);
 }
 
 .metricBody {
@@ -151,9 +166,10 @@
 }
 
 .metricValue {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.2;
+  letter-spacing: -0.02em;
   color: var(--ant-color-text);
   white-space: nowrap;
   overflow: hidden;
@@ -162,9 +178,11 @@
 }
 
 .metricLabel {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--ant-color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -178,6 +196,18 @@
   background: transparent;
 }
 
+.uiTabs :global(.ant-tabs-nav-wrap) {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-block: 4px;
+  padding-inline: 2px;
+  scrollbar-width: none;
+}
+
+.uiTabs :global(.ant-tabs-nav-list) {
+  padding-block: 2px;
+}
+
 .uiTabs :global(.ant-tabs-nav::before) {
   border-bottom: 0;
 }
@@ -187,7 +217,7 @@
   height: 36px;
   justify-content: center;
   padding: 7px 16px;
-  border: 0;
+  border: 1px solid var(--ant-color-border);
   border-radius: 10px;
   color: var(--ant-color-text);
   font-size: 14px;
@@ -195,7 +225,7 @@
   line-height: 20px;
   transition: all 0.2s ease;
   background: var(--ant-color-bg-container);
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .uiTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
@@ -203,7 +233,9 @@
 }
 
 .uiTabs :global(.ant-tabs-tab:hover) {
-  color: var(--ant-color-text);
+  color: var(--ant-color-primary);
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg, #fff1f0);
 }
 
 .uiTabs :global(.ant-tabs-tab:active) {
@@ -212,7 +244,8 @@
 
 .uiTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
   background: var(--ant-color-primary) !important;
-  box-shadow: none;
+  border-color: var(--ant-color-primary) !important;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ant-color-primary) 28%, transparent);
 }
 
 .uiTabs :global(.ant-tabs-tab:focus-visible),
@@ -279,10 +312,11 @@
   min-width: 20px;
   padding: 2px 8px;
   border-radius: 10px;
-  background: var(--ant-color-primary);
-  color: #fff;
+  background: #fff;
+  color: var(--ant-color-primary);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -433,33 +467,98 @@
 
 .filterBar {
   width: 100%;
-  padding: 12px;
-  border: 1px solid var(--ant-color-border-secondary);
+  padding: 6px 10px;
+  border: 1px solid var(--ant-color-border);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.filterBarBordered {
+  border: 1px solid var(--ant-color-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
 }
 
 .filterBarBorderless {
-  border: 0;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
 }
 
 .filterBarContent {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-  width: 100%;
+  gap: 8px;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .filterBarContent :global(.ant-input-affix-wrapper),
 .filterBarContent :global(.ant-input-search) {
   width: 240px;
-  max-width: 240px;
+  max-width: 320px;
   min-width: 180px;
+  border-radius: 6px;
+  background: var(--ant-color-fill-quaternary);
+  border-color: transparent;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--ant-color-border);
+    background: var(--ant-color-bg-container);
+  }
+
+  &:focus,
+  &:focus-within {
+    border-color: var(--ant-color-primary);
+    background: var(--ant-color-bg-container);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 20%, transparent);
+  }
+}
+
+.filterBarContent :global(.ant-select .ant-select-selector) {
+  border-radius: 6px !important;
+  background: var(--ant-color-fill-quaternary) !important;
+  border-color: var(--ant-color-border-secondary) !important;
+  transition: all 0.2s ease;
+}
+
+.filterBarContent :global(.ant-select:hover .ant-select-selector) {
+  border-color: var(--ant-color-primary) !important;
+}
+
+.filterBarContent :global(.ant-picker) {
+  border-radius: 6px !important;
+  background: var(--ant-color-fill-quaternary) !important;
+  border-color: var(--ant-color-border-secondary) !important;
+  transition: all 0.2s ease;
+}
+
+.filterBarContent :global(.ant-picker:hover) {
+  border-color: var(--ant-color-primary) !important;
+}
+
+.filterBarContent :global(.ant-btn) {
+  border-radius: 6px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .filterBarActions {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 960px) {
@@ -475,9 +574,10 @@
 }
 
 .dataTable :global(.ant-table-thead > tr > th) {
-  border-bottom: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border);
   background: var(--ant-color-fill-alter);
   color: var(--ant-color-text-heading);
+  font-weight: 600;
   text-align: left;
 
   &:global(.ant-table-cell-align-right) {
@@ -493,10 +593,16 @@
   overflow: hidden;
   border: 1px solid var(--ant-color-border);
   border-radius: 8px;
+  background: var(--ant-color-bg-container);
   box-shadow: 0 10px 30px rgb(0 0 0 / 2%);
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease;
+}
+
+.dataTable:has(.dataTablePaginationDock) :global(.ant-table-container) {
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
 }
 
 .dataTable:hover :global(.ant-table-container) {
@@ -505,11 +611,11 @@
 
 .dataTable :global(.ant-table-thead > tr > th:not(:last-child)),
 .dataTable :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td:not(:last-child)) {
-  border-inline-end: 1px solid var(--ant-color-border-secondary);
+  border-inline-end: 0;
 }
 
 .dataTable :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td) {
-  border-bottom: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border);
   text-align: left;
 
   &:global(.ant-table-cell-align-right) {
@@ -526,10 +632,13 @@
   color: var(--ant-color-text);
 }
 
+.dataTable:has(.dataTablePaginationDock) :global(.ant-table-tbody > tr:last-child > td) {
+  border-bottom: 0;
+}
+
 .dataTableFillViewport {
-  display: grid;
-  grid-template-rows: auto auto auto;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-width: 0;
   min-height: 0;
@@ -537,6 +646,9 @@
 }
 
 .dataTableFillViewport .dataTableBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -556,37 +668,60 @@
 .dataTableFillViewport :global(.ant-spin-container),
 .dataTableFillViewport :global(.ant-table),
 .dataTableFillViewport :global(.ant-table-container) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dataTableFillViewport :global(.ant-table-body) {
+  flex: 1 1 auto;
   min-height: 0;
 }
 
 .dataTablePaginationDock {
   flex: 0 0 auto;
-  background: var(--ant-color-bg-layout);
+  border: 1px solid var(--ant-color-border);
+  border-radius: 0 0 8px 8px;
+  background: var(--ant-color-bg-container);
 }
 
 .tablePagination {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   min-height: 56px;
-  padding: 14px 18px;
+  padding: 14px 20px;
   border-top: 0;
-  color: var(--ant-color-text);
+  color: var(--ant-color-text-secondary);
   font-size: 13px;
+  flex-wrap: wrap;
 }
 
+.tablePaginationLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tablePaginationSummary {
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
 .tablePaginationPageSize {
   display: inline-flex;
   align-items: center;
-  justify-self: start;
   gap: 8px;
   min-width: 0;
 }
 
 .tablePaginationPageSize :global(.ant-select) {
-  width: 72px;
-  flex: 0 0 72px;
+  width: 68px;
+  flex: 0 0 68px;
 }
 
 .tablePaginationPageSize :global(.ant-select-selector) {
@@ -595,44 +730,58 @@
   box-shadow: none !important;
 }
 
-.tablePaginationCenter {
+.tablePaginationRight {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
+  margin-left: auto;
 }
 
-.tablePaginationCenter :global(.ant-pagination) {
+.tablePaginationRight :global(.ant-pagination) {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.tablePaginationCenter :global(.ant-pagination-item),
-.tablePaginationCenter :global(.ant-pagination-prev),
-.tablePaginationCenter :global(.ant-pagination-next),
-.tablePaginationCenter :global(.ant-btn) {
+.tablePaginationRight :global(.ant-pagination-item),
+.tablePaginationRight :global(.ant-pagination-prev),
+.tablePaginationRight :global(.ant-pagination-next),
+.tablePaginationRight :global(.ant-btn) {
   min-width: 32px;
   height: 32px;
   margin-inline: 0;
-  border: 0;
-  border-radius: 999px;
-  line-height: 32px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 6px;
+  line-height: 30px;
+  background: var(--ant-color-bg-container);
+  color: var(--ant-color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
-.tablePaginationCenter :global(.ant-pagination-item-active) {
-  background: var(--ant-color-primary);
+.tablePaginationRight :global(.ant-pagination-item:hover),
+.tablePaginationRight :global(.ant-btn:hover:not(:disabled)) {
+  border-color: var(--ant-color-primary);
+  color: var(--ant-color-primary);
 }
 
-.tablePaginationCenter :global(.ant-pagination-item-active a) {
-  color: #fff;
+.tablePaginationRight :global(.ant-pagination-item-active) {
+  background: var(--ant-color-primary) !important;
+  border-color: var(--ant-color-primary) !important;
+}
+
+.tablePaginationRight :global(.ant-pagination-item-active a) {
+  color: #fff !important;
+  font-weight: 600;
 }
 
 .tablePaginationJump {
   display: inline-flex;
   align-items: center;
-  justify-self: end;
-  gap: 10px;
+  gap: 8px;
+  margin-left: 8px;
 }
 
 .tablePaginationJump :global(.ant-input-number) {
@@ -742,4 +891,27 @@
   .dataTable :global(.ant-table-container) {
     transition: none;
   }
+}
+
+.dateTime {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.35;
+  vertical-align: middle;
+}
+
+.dateTimePrimary {
+  color: var(--ant-color-text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.dateTimeRelative {
+  color: var(--ant-color-text-secondary, #8c8c8c);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
 }

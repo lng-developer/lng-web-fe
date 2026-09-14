@@ -1,18 +1,27 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DollarCircleOutlined, LinkOutlined, RollbackOutlined, WalletOutlined } from '@ant-design/icons'
+import {
+  DollarCircleOutlined,
+  LinkOutlined,
+  RollbackOutlined,
+  WalletOutlined,
+} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Drawer, Progress, Space, Table, Typography } from 'antd'
+import { Alert, Button, Modal, Progress, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
+  CopyableOrderId,
+  CopyableSku,
   DateRangePicker,
   type DateRangeValue,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
   SectionCard,
   StatusTag,
+  TableTextCell,
 } from '@/shared/ui'
 
 import {
@@ -28,7 +37,7 @@ import styles from './SettlementWorkspacePage.module.scss'
 const PAGE_SIZE = 20
 
 function date(value: string | null | undefined) {
-  return value ? new Date(value).toLocaleDateString() : '—'
+  return <FormattedDateTime value={value} />
 }
 
 function statusTone(status?: string) {
@@ -70,6 +79,7 @@ export function SettlementWorkspacePage() {
       {
         title: t('finance.settlements.settlementId'),
         dataIndex: 'settlementId',
+        width: 160,
         render: (value: string | null) => (
           <Button type="link" className={styles.idButton}>
             {value || '—'}
@@ -78,30 +88,50 @@ export function SettlementWorkspacePage() {
       },
       {
         title: t('finance.settlements.period'),
-        render: (_, row) => `${date(row.periodStartAt)} – ${date(row.periodEndAt)}`,
+        width: 220,
+        render: (_, row) => (
+          <Space size={4}>
+            {date(row.periodStartAt)}
+            <span>–</span>
+            {date(row.periodEndAt)}
+          </Space>
+        ),
       },
-      { title: t('finance.settlements.depositDate'), dataIndex: 'depositAt', render: date },
+      {
+        title: t('finance.settlements.depositDate'),
+        dataIndex: 'depositAt',
+        width: 150,
+        render: date,
+      },
       {
         title: t('finance.settlements.netSettlement'),
+        width: 140,
         align: 'right',
-        render: (_, row) => formatFinanceMoney(row.netSettlementAmount ?? row.totalAmount, row.currency),
+        render: (_, row) =>
+          formatFinanceMoney(row.netSettlementAmount ?? row.totalAmount, row.currency),
       },
       {
         title: t('finance.settlements.ledgerNet'),
+        width: 140,
         align: 'right',
         render: (_, row) => formatFinanceMoney(row.ledgerSummary.netAmount, row.currency),
       },
       {
         title: t('finance.settlements.linked'),
+        width: 110,
+        align: 'center',
         render: (_, row) => `${row.ledgerSummary.linkedCount}/${row.ledgerSummary.lineCount}`,
       },
       {
         title: t('finance.settlements.status'),
+        width: 140,
         render: (_, row) => {
           const batch = batches.data?.items.find((item) => item.id === row.importBatchId)
           return (
             <Space orientation="vertical" size={2}>
-              <StatusTag status={statusTone(batch?.status)}>{batch?.status || 'IMPORTED'}</StatusTag>
+              <StatusTag status={statusTone(batch?.status)}>
+                {batch?.status || 'IMPORTED'}
+              </StatusTag>
               {batch?.recalculationTotal ? (
                 <Typography.Text type="secondary">
                   {`${batch.recalculationCompleted}/${batch.recalculationTotal}`}
@@ -117,13 +147,34 @@ export function SettlementWorkspacePage() {
 
   const ledgerColumns = useMemo<TableColumnsType<SettlementLedgerLine>>(
     () => [
-      { title: t('finance.settlements.posted'), dataIndex: 'postedAt', render: date },
-      { title: t('finance.settlements.type'), dataIndex: 'transactionType', render: (value) => value || '—' },
-      { title: t('finance.settlements.amountType'), dataIndex: 'amountType', render: (value) => value || '—' },
-      { title: t('finance.settlements.order'), dataIndex: 'externalOrderId', render: (value) => value || '—' },
-      { title: t('finance.settlements.sku'), dataIndex: 'sku', render: (value) => value || '—' },
+      { title: t('finance.settlements.posted'), dataIndex: 'postedAt', width: 150, render: date },
+      {
+        title: t('finance.settlements.type'),
+        dataIndex: 'transactionType',
+        width: 130,
+        render: (value) => <TableTextCell value={value} maxWidth={120} />,
+      },
+      {
+        title: t('finance.settlements.amountType'),
+        dataIndex: 'amountType',
+        width: 140,
+        render: (value) => <TableTextCell value={value} maxWidth={130} />,
+      },
+      {
+        title: t('finance.settlements.order'),
+        dataIndex: 'externalOrderId',
+        width: 180,
+        render: (value: string | null) => <CopyableOrderId value={value} fallback="—" />,
+      },
+      {
+        title: t('finance.settlements.sku'),
+        dataIndex: 'sku',
+        width: 160,
+        render: (value: string | null) => <CopyableSku value={value} fallback="—" />,
+      },
       {
         title: t('finance.settlements.movement'),
+        width: 130,
         align: 'right',
         render: (_, row) => formatFinanceMoney(row.amount, row.currency),
       },
@@ -134,9 +185,6 @@ export function SettlementWorkspacePage() {
   return (
     <section className={styles.page}>
       <SectionCard title={t('finance.settlements.title')}>
-        <Typography.Paragraph type="secondary" className={styles.description}>
-          {t('finance.settlements.description')}
-        </Typography.Paragraph>
         {currencySummaries.length ? (
           <div className={styles.metrics}>
             {currencySummaries.map((summary) => (
@@ -158,9 +206,11 @@ export function SettlementWorkspacePage() {
                   <MetricCard
                     icon={<LinkOutlined />}
                     label={t('finance.settlements.ledgerLines')}
-                    value={settlements.data?.items
-                      .filter((item) => item.currency === summary.currency)
-                      .reduce((total, item) => total + item.ledgerSummary.lineCount, 0) ?? 0}
+                    value={
+                      settlements.data?.items
+                        .filter((item) => item.currency === summary.currency)
+                        .reduce((total, item) => total + item.ledgerSummary.lineCount, 0) ?? 0
+                    }
                     variant="info"
                   />
                 </div>
@@ -210,18 +260,27 @@ export function SettlementWorkspacePage() {
         />
       </SectionCard>
 
-      <Drawer
+      <Modal
+        destroyOnClose
         open={Boolean(selected)}
-        title={selected ? `${t('finance.settlements.settlementId')}: ${selected.settlementId || '—'}` : undefined}
-        size="large"
-        onClose={() => setSelected(undefined)}
+        title={
+          selected
+            ? `${t('finance.settlements.settlementId')}: ${selected.settlementId || '—'}`
+            : undefined
+        }
+        width="min(1360px, 92vw)"
+        style={{ top: 40 }}
+        onCancel={() => setSelected(undefined)}
+        footer={null}
       >
         {detail.data ? (
           <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             <div className={styles.detailHeader}>
-              <Typography.Text type="secondary">
-                {`${date(detail.data.settlement.periodStartAt)} – ${date(detail.data.settlement.periodEndAt)}`}
-              </Typography.Text>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {date(detail.data.settlement.periodStartAt)}
+                <span>–</span>
+                {date(detail.data.settlement.periodEndAt)}
+              </div>
               <Typography.Title level={4} className={styles.detailAmount}>
                 {formatFinanceMoney(
                   detail.data.settlement.netSettlementAmount ?? detail.data.settlement.totalAmount,
@@ -233,13 +292,19 @@ export function SettlementWorkspacePage() {
               <MetricCard
                 icon={<DollarCircleOutlined />}
                 label={t('finance.settlements.inflow')}
-                value={formatFinanceMoney(detail.data.ledger.summary.inflowAmount, detail.data.settlement.currency)}
+                value={formatFinanceMoney(
+                  detail.data.ledger.summary.inflowAmount,
+                  detail.data.settlement.currency,
+                )}
                 variant="success"
               />
               <MetricCard
                 icon={<RollbackOutlined />}
                 label={t('finance.settlements.outflow')}
-                value={formatFinanceMoney(detail.data.ledger.summary.outflowAmount, detail.data.settlement.currency)}
+                value={formatFinanceMoney(
+                  detail.data.ledger.summary.outflowAmount,
+                  detail.data.settlement.currency,
+                )}
                 variant="warning"
               />
               <MetricCard
@@ -251,7 +316,9 @@ export function SettlementWorkspacePage() {
             </div>
             {selectedBatch?.recalculationTotal ? (
               <div>
-                <Typography.Text type="secondary">{selectedBatch.recalculationStatus}</Typography.Text>
+                <Typography.Text type="secondary">
+                  {selectedBatch.recalculationStatus}
+                </Typography.Text>
                 <Progress
                   percent={Math.round(
                     ((selectedBatch.recalculationCompleted + selectedBatch.recalculationFailed) /
@@ -279,7 +346,7 @@ export function SettlementWorkspacePage() {
             />
           </Space>
         ) : null}
-      </Drawer>
+      </Modal>
     </section>
   )
 }

@@ -60,7 +60,6 @@ function OrderShippingModalInner({
 
   return (
     <PopupModal
-      centered
       anchor={anchor}
       open
       title={t('orders.actions.editShipping')}

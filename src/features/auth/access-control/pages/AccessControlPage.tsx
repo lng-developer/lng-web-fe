@@ -58,7 +58,6 @@ import {
   FeedbackAlert,
   FormActions,
   MetricCard,
-  PageHeader,
   SearchInput,
   SectionCard,
   StatusTag,
@@ -543,13 +542,6 @@ export function AccessControlPage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader
-        title={t('auth.accessControl.title', { defaultValue: 'Access Control & RBAC Matrix' })}
-        description={t('auth.accessControl.description', {
-          defaultValue: 'Manage roles, permission catalogs, and organizational scope assignments.',
-        })}
-      />
-
       {/* Summary Metric Cards */}
       <div className={styles.metrics}>
         <MetricCard
@@ -615,7 +607,6 @@ export function AccessControlPage() {
           open={editor?.kind === 'role'}
           width={720}
           destroyOnHidden
-          centered
           title={
             editor?.kind === 'role' && editor.item
               ? t('auth.roles.editTitle')
@@ -692,7 +683,6 @@ export function AccessControlPage() {
         <Modal
           open={editor?.kind === 'permission'}
           destroyOnHidden
-          centered
           width={520}
           title={
             editor?.kind === 'permission' && editor.item
@@ -740,7 +730,6 @@ export function AccessControlPage() {
         <Modal
           open={editor?.kind === 'scope'}
           destroyOnHidden
-          centered
           width={520}
           title={
             editor?.kind === 'scope' && editor.item

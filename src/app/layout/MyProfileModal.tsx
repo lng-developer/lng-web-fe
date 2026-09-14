@@ -24,7 +24,6 @@ export function MyProfileModal({ open, onClose }: { open: boolean; onClose: () =
 
   return (
     <Modal
-      centered
       destroyOnHidden
       open={open}
       width={760}

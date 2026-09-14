@@ -519,7 +519,6 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
         )}
       </div>
       <Modal
-        centered
         width={860}
         open={open}
         title={t(

@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
-  ArrowRightOutlined,
   LockOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
@@ -17,12 +16,20 @@ import {
   Input,
   InputNumber,
   Result,
+  Space,
   Typography,
 } from 'antd'
 import dayjs from 'dayjs'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
-import { FeedbackAlert, LoadingState, PageHeader, SectionCard, StatusTag } from '@/shared/ui'
+import {
+  FeedbackAlert,
+  FormattedDateTime,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+  StatusTag,
+} from '@/shared/ui'
 
 import {
   useAccountDetailQuery,
@@ -33,6 +40,7 @@ import styles from './AccountDetailPage.module.scss'
 
 export function AccountDetailPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { accountId = '' } = useParams()
   const [emailForm] = Form.useForm<{ email: string }>()
   const [costForm] = Form.useForm<{ amount: number; startedAt: dayjs.Dayjs | null }>()
@@ -78,8 +86,23 @@ export function AccountDetailPage() {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.accountDetail.profile')}
-        description={t('auth.accountDetail.description')}
+        actions={
+          <Space className={styles.headerActions} wrap>
+            <Button
+              icon={<SafetyCertificateOutlined aria-hidden />}
+              type="primary"
+              onClick={() => navigate(`/auth/accounts/${account.id}/access`)}
+            >
+              {t('auth.accessExplorer.manageAccess')}
+            </Button>
+            <Button
+              icon={<LockOutlined aria-hidden />}
+              onClick={() => navigate(`/auth/accounts/${account.id}/security`)}
+            >
+              {t('auth.accountDetail.security')}
+            </Button>
+          </Space>
+        }
       />
 
       {/* Profile Hero */}
@@ -173,9 +196,11 @@ export function AccountDetailPage() {
               {
                 key: 'end',
                 label: t('auth.accountDetail.endDate', 'End date'),
-                children: account.deactivatedAt
-                  ? new Date(account.deactivatedAt).toLocaleDateString()
-                  : t('auth.accountDetail.activeAccount', 'Active account'),
+                children: account.deactivatedAt ? (
+                  <FormattedDateTime value={account.deactivatedAt} />
+                ) : (
+                  t('auth.accountDetail.activeAccount', 'Active account')
+                ),
               },
             ]}
           />
@@ -187,54 +212,6 @@ export function AccountDetailPage() {
             </div>
           ) : null}
         </Form>
-      </SectionCard>
-
-      <SectionCard title={t('auth.accountDetail.workspaces')}>
-        <Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
-          {t('auth.accountDetail.workspacesDescription')}
-        </Typography.Paragraph>
-        <div className={styles.workspaceLinks}>
-          <Link
-            to={`/auth/accounts/${account.id}/access`}
-            className={styles.workspaceLink}
-            aria-label={t('auth.accessExplorer.manageAccess', 'Manage access')}
-          >
-            <span className={`${styles.workspaceLinkIcon} ${styles.workspaceLinkIconPrimary}`}>
-              <SafetyCertificateOutlined />
-            </span>
-            <div className={styles.workspaceLinkText}>
-              <Typography.Text strong>
-                {t('auth.accessExplorer.manageAccess', 'Manage access')}
-              </Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {t(
-                  'auth.accountDetail.manageAccessHint',
-                  'Roles, scoped permissions, validity windows',
-                )}
-              </Typography.Text>
-            </div>
-            <ArrowRightOutlined className={styles.workspaceLinkArrow} />
-          </Link>
-          <Link
-            to={`/auth/accounts/${account.id}/security`}
-            className={styles.workspaceLink}
-            aria-label={t('auth.accountDetail.security')}
-          >
-            <span className={`${styles.workspaceLinkIcon} ${styles.workspaceLinkIconNeutral}`}>
-              <LockOutlined />
-            </span>
-            <div className={styles.workspaceLinkText}>
-              <Typography.Text strong>{t('auth.accountDetail.security')}</Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {t(
-                  'auth.accountDetail.securityHint',
-                  'Password reset, session management, account archival',
-                )}
-              </Typography.Text>
-            </div>
-            <ArrowRightOutlined className={styles.workspaceLinkArrow} />
-          </Link>
-        </div>
       </SectionCard>
     </section>
   )

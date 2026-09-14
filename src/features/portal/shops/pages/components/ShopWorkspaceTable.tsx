@@ -6,7 +6,7 @@ import { Button, Empty, Select, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { FilterBar, SearchInput, SectionCard, StatusTag } from '@/shared/ui'
+import { FilterBar, FormattedDateTime, SearchInput, StatusTag } from '@/shared/ui'
 
 import type { Shop, ShopListParams, ShopStatus } from '../../api/shopApi'
 import styles from '../ShopWorkspacePage.module.scss'
@@ -85,7 +85,7 @@ export function ShopWorkspaceTable({
         title: t('portal.shops.updatedAt'),
         dataIndex: 'updatedAt',
         width: 170,
-        render: (value: string) => (value ? new Date(value).toLocaleString() : '-'),
+        render: (value: string) => <FormattedDateTime value={value} />,
       },
       ...(canWriteAnyShop
         ? [
@@ -115,31 +115,9 @@ export function ShopWorkspaceTable({
   )
 
   return (
-    <SectionCard>
-      <CoreDataTable
-        className={styles.compactTable}
-        columns={columns}
-        dataSource={data?.items ?? []}
-        fillViewport
-        emptyText={
-          params.search || params.status ? (
-            <Empty description={t('portal.shops.noFilteredResults')}>
-              <Button onClick={onClearFilters}>{t('portal.shops.clearFilters')}</Button>
-            </Empty>
-          ) : (
-            <Empty description={t('portal.shops.noAuthorizedShops')} />
-          )
-        }
-        loading={loading}
-        rowKey="id"
-        onRow={(shop) => ({ onClick: () => onEditShop(shop) })}
-        pagination={{
-          current: params.page,
-          pageSize: params.limit,
-          total: data?.pagination.total,
-          onChange: onPageChange,
-        }}
-        toolbar={
+    <>
+      <div className={styles.controlsBar}>
+        <div className={styles.filtersWrapper}>
           <FilterBar label={t('portal.shops.filters')} contentClassName={styles.filters}>
             <SearchInput
               aria-label={t('portal.shops.search')}
@@ -160,11 +138,39 @@ export function ShopWorkspaceTable({
               value={params.status}
               onChange={onStatusChange}
             />
-
-            <div className={styles.filterActions}>{actions}</div>
           </FilterBar>
-        }
-      />
-    </SectionCard>
+        </div>
+
+        {actions ? <div className={styles.actionsWrapper}>{actions}</div> : null}
+      </div>
+
+      <div className={styles.tableArea}>
+        <CoreDataTable
+          className={styles.compactTable}
+          columns={columns}
+          dataSource={data?.items ?? []}
+          fillViewport
+          emptyText={
+            params.search || params.status ? (
+              <Empty description={t('portal.shops.noFilteredResults')}>
+                <Button onClick={onClearFilters}>{t('portal.shops.clearFilters')}</Button>
+              </Empty>
+            ) : (
+              <Empty description={t('portal.shops.noAuthorizedShops')} />
+            )
+          }
+          loading={loading}
+          rowKey="id"
+          onRow={(shop) => ({ onClick: () => onEditShop(shop) })}
+          pagination={{
+            current: params.page,
+            pageSize: params.limit,
+            total: data?.pagination.total,
+            showSizeChanger: true,
+            onChange: onPageChange,
+          }}
+        />
+      </div>
+    </>
   )
 }

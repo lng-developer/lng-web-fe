@@ -1,52 +1,105 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 16px;
+}
+
+.page :global(.ant-tabs-tabpane) > * + * {
+  margin-top: 16px;
+}
+
+.page :global(.ant-card-small .ant-card-body) {
+  padding: 12px 14px;
 }
 
 .moduleCard {
   transition: all 0.2s ease-in-out;
+  border-color: var(--ant-color-border-secondary);
+
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 }
 
-.page :global(.ant-tabs-tabpane) > * + * {
-  margin-top: 28px;
+.moduleCardError {
+  border-color: var(--ant-color-error) !important;
 }
 
-.page :global(.ant-card-small .ant-card-body) {
-  padding: 18px;
+.queueCard {
+  transition: all 0.2s ease-in-out;
 }
 
 .queueCounts {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 16px;
+  gap: 6px;
+  margin-top: 12px;
+}
 
-  > div {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
+.queueCountCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 4px;
+  border-radius: 4px;
+  background: var(--ant-color-fill-quaternary);
+  text-align: center;
+}
+
+.queueCountFailed {
+  background: var(--ant-color-error-bg, #fff2f0);
+  border: 1px solid var(--ant-color-error-border, #ffccc7);
+
+  span {
+    color: var(--ant-color-error, #ff4d4f) !important;
   }
 }
 
+.terminalContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.terminalToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-bottom: none;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
 .logViewer {
-  min-height: 240px;
-  max-height: 520px;
+  min-height: 280px;
+  max-height: 540px;
   margin: 0;
-  padding: 12px;
+  padding: 14px 16px;
   overflow: auto;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 6px;
-  background: #101418;
-  color: #d5dde5;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  background: #0f172a;
+  color: #e2e8f0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.6;
   white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.indexToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 @media (max-width: 600px) {

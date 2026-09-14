@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -33,7 +33,7 @@ describe('AccessExplorerPage', () => {
     vi.mocked(loadAccessAccounts).mockResolvedValue(accounts)
   })
 
-  it('renders an account directory with a clear access-management entry point', async () => {
+  it('opens the selected account in a right-hand inspector', async () => {
     render(
       <MemoryRouter>
         <AppProviders>
@@ -42,18 +42,27 @@ describe('AccessExplorerPage', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('linh@lng.local')).toBeVisible()
+    expect((await screen.findAllByText('linh@lng.local'))[0]).toBeVisible()
     expect(screen.getByRole('heading', { level: 2, name: 'Tài khoản' })).toBeVisible()
+    fireEvent.click(screen.getAllByText('linh@lng.local')[0])
+
+    const inspector = await screen.findByRole('complementary', {
+      name: 'Chi tiết tài khoản',
+    })
+    expect(inspector.parentElement).toContainElement(
+      screen.getByRole('heading', { level: 2, name: 'Tài khoản' }),
+    )
+    expect(within(inspector).getByRole('heading', { name: 'linh@lng.local' })).toBeVisible()
     expect(
-      screen.getAllByRole('link', {
-        name: new RegExp(i18n.t('auth.accessExplorer.manageAccess'), 'i'),
-      })[0],
-    ).toHaveAttribute('href', '/auth/accounts/account-1/access')
-    expect(screen.getByText('Tổng tài khoản')).toBeVisible()
-    expect(screen.getByText('Đang hoạt động')).toBeVisible()
-    expect(screen.getAllByText('Chưa có vai trò')[0]).toBeVisible()
-    expect(screen.getAllByText('3').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
+      within(inspector).queryByRole('button', { name: 'Quản lý quyền truy cập' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(within(inspector).getByRole('tab', { name: 'Quyền toàn cục' }))
+    expect(within(inspector).getByRole('button', { name: 'Chỉnh quyền toàn cục' })).toBeVisible()
+
+    fireEvent.click(within(inspector).getByRole('tab', { name: 'Thiết lập bảo mật' }))
+    expect(within(inspector).getByRole('button', { name: 'Đặt lại mật khẩu' })).toBeVisible()
+    expect(within(inspector).getByRole('button', { name: 'Thu hồi phiên đăng nhập' })).toBeVisible()
   }, 10_000)
 
   it('retries account loading after a failed request', async () => {
@@ -73,6 +82,6 @@ describe('AccessExplorerPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Thử lại' }, { timeout: 3_000 }))
 
-    expect(await screen.findByText('linh@lng.local')).toBeVisible()
+    expect((await screen.findAllByText('linh@lng.local'))[0]).toBeVisible()
   })
 })

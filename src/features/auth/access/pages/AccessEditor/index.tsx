@@ -70,8 +70,6 @@ export const AccessEditorPage = () => {
   return (
     <section className={styles.page}>
       <PageHeader
-        title={t('auth.accessEditor.title')}
-        description={t('auth.accessEditor.description')}
         actions={
           <Button icon={<ArrowLeftOutlined aria-hidden />} onClick={backToAccounts}>
             {t('auth.accessEditor.backToAccounts')}

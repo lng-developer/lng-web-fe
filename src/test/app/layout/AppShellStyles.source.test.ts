@@ -28,13 +28,13 @@ describe('AppShell sidebar styles', () => {
 
   it('uses a dark navigation surface when the application theme is dark', () => {
     expect(appShellStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.rail\s*\{[^}]*background:\s*rgb\(15 23 42\)/s,
+      /html\[data-theme='dark'\]\) \.rail\s*\{[^}]*background:\s*#242526/s,
     )
     expect(appShellStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.sidebar\s*\{[^}]*background:\s*rgb\(15 23 42\)/s,
+      /html\[data-theme='dark'\]\) \.sidebar\s*\{[^}]*background:\s*#242526/s,
     )
     expect(appShellStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.navigation\s*\{[^}]*background:\s*rgb\(15 23 42\)/s,
+      /html\[data-theme='dark'\]\) \.navigation\s*\{[^}]*background:\s*#242526/s,
     )
   })
 
@@ -44,20 +44,20 @@ describe('AppShell sidebar styles', () => {
 
   it('styles the rendered legacy menu for the dark theme', () => {
     expect(legacySidebarStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.sidebar\s*\{[^}]*background:\s*#282b44/s,
+      /html\[data-theme='dark'\]\) \.sidebar\s*\{[^}]*background:\s*#242526/s,
     )
     expect(legacySidebarStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.detailMenu\s*\{[^}]*background:\s*#282b44/s,
+      /html\[data-theme='dark'\]\) \.detailMenu\s*\{[^}]*background:\s*#242526/s,
     )
     expect(legacySidebarStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.detailMenu :global\(\.ant-menu-item\)\s*\{[^}]*color:\s*rgb\(226 232 240\)/s,
+      /html\[data-theme='dark'\]\) \.detailMenu :global\(\.ant-menu-item\)\s*\{[^}]*color:\s*#e4e6eb/s,
     )
   })
 
   it('matches the GXON light menu and content surfaces', () => {
     expect(appShellStyles).toMatch(/\.content\s*\{[^}]*background:\s*#fdfdfd/s)
     expect(appShellStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.content\s*\{[^}]*background:\s*#26283e/s,
+      /html\[data-theme='dark'\]\) \.content\s*\{[^}]*background:\s*#18191a/s,
     )
     expect(legacySidebarStyles).toMatch(/\.sidebar\s*\{[^}]*background:\s*#fff/s)
     expect(legacySidebarStyles).toMatch(/\.sidebar\s*\{[^}]*border-right:\s*1px solid #e8ebf1/s)
@@ -65,7 +65,7 @@ describe('AppShell sidebar styles', () => {
       /\.sidebar\s*\{[^}]*box-shadow:\s*0 0 30px 10px rgb\(0 0 0 \/ 2%\)/s,
     )
     expect(legacySidebarStyles).toMatch(
-      /html\[data-theme='dark'\]\) \.sidebar\s*\{[^}]*background:\s*#282b44/s,
+      /html\[data-theme='dark'\]\) \.sidebar\s*\{[^}]*background:\s*#242526/s,
     )
   })
 })

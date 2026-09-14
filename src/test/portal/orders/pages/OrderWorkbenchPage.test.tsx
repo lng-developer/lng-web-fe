@@ -138,10 +138,11 @@ describe('OrderWorkbenchPage', () => {
     )
   })
 
-  it('keeps the active queue context visible above the filters', async () => {
+  it('activates the selected order queue tab without redundant status badge', async () => {
     renderPage('/portal/orders?tab=NEW_ORDER')
 
-    expect(await screen.findByRole('status', { name: 'Current queue' })).toHaveTextContent('New')
+    expect(await screen.findByRole('tab', { selected: true })).toHaveTextContent('New')
+    expect(screen.queryByRole('status', { name: 'Current queue' })).not.toBeInTheDocument()
   })
 
   it('renders each order ID as a bordered copy target', async () => {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -26,7 +26,7 @@ const data = {
       orderId: 'order-incomplete',
       externalOrderId: '114-0000000-0000001',
       currency: 'USD',
-      itemCount: 1,
+      itemCount: 2,
       revenueAmount: 9000,
       baseCostAmount: 0,
       totalCostAmount: null,
@@ -56,16 +56,62 @@ const data = {
 } as OrderProfitabilityReport
 
 describe('ReportOrderCostTab', () => {
-  it('prioritizes summary and cost-completeness cards over a wide table', () => {
+  it('renders overview metrics and operational data table instead of cluttered card grid', () => {
     render(
       <AppProviders>
         <ReportOrderCostTab data={data} isPending={false} onPageChange={() => undefined} />
       </AppProviders>,
     )
 
-    expect(screen.getByRole('heading', { name: 'Order cost overview' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Missing fulfilment cost' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Complete order P&L' })).toBeInTheDocument()
-    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    // Metrics and operational table are rendered
+    expect(screen.getAllByText('Orders').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Revenue').length).toBeGreaterThan(0)
+
+    // Operational table is rendered
+    expect(screen.getAllByRole('table').length).toBeGreaterThan(0)
+
+    // Both orders are displayed in table rows
+    expect(screen.getByText('114-0000000-0000000')).toBeInTheDocument()
+    expect(screen.getByText('114-0000000-0000001')).toBeInTheDocument()
+
+    // Check status tags and formatting
+    expect(screen.getByText('Complete')).toBeInTheDocument()
+    expect(screen.getAllByText('Missing cost').length).toBeGreaterThan(0)
+  })
+
+  it('filters rows by status queue segmented controls', () => {
+    render(
+      <AppProviders>
+        <ReportOrderCostTab data={data} isPending={false} onPageChange={() => undefined} />
+      </AppProviders>,
+    )
+
+    // Filter to missing cost only
+    const missingOption = screen.getByText(/Missing cost \(1\)/i)
+    fireEvent.click(missingOption)
+
+    expect(screen.getByText('114-0000000-0000001')).toBeInTheDocument()
+    expect(screen.queryByText('114-0000000-0000000')).not.toBeInTheDocument()
+
+    // Filter to complete cost only
+    const completeOption = screen.getByText(/Cost complete \(1\)/i)
+    fireEvent.click(completeOption)
+
+    expect(screen.getByText('114-0000000-0000000')).toBeInTheDocument()
+    expect(screen.queryByText('114-0000000-0000001')).not.toBeInTheDocument()
+  })
+
+  it('searches orders by order ID', () => {
+    render(
+      <AppProviders>
+        <ReportOrderCostTab data={data} isPending={false} onPageChange={() => undefined} />
+      </AppProviders>,
+    )
+
+    const searchInput = screen.getByPlaceholderText('Search by order ID...')
+    fireEvent.change(searchInput, { target: { value: '0000001' } })
+
+    expect(screen.getByText('114-0000000-0000001')).toBeInTheDocument()
+    expect(screen.queryByText('114-0000000-0000000')).not.toBeInTheDocument()
   })
 })

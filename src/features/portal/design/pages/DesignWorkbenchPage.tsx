@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/preserve-manual-memoization -- stable permission callbacks are intentionally wrapped for memoized table columns */
 import { type Key, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
+import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
   AppstoreOutlined,
   CheckCircleOutlined,
@@ -34,7 +34,6 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -47,15 +46,17 @@ import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permi
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
 import {
-  CopyableText,
+  CopyableAsin,
+  CopyableListingId,
+  CopyableSku,
   DetailDrawer,
   EmployeeAvatar,
   FileUpload,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
   SectionCard,
   StatusTag,
-  UiButtonTabs,
   useFeedbackToast,
   ZoomableImage,
 } from '@/shared/ui'
@@ -68,6 +69,7 @@ import {
   createDesignTask,
   type CreateDesignTaskInput,
   type DesignTask,
+  type DesignTaskPriority,
   exportDesignTasksCsv,
   getDesignSummary,
   getDesignTask,
@@ -78,6 +80,7 @@ import {
   rejectDesignTask,
   startDesignTask,
   submitDesignTask,
+  updateDesignTaskPriority,
   uploadDesignAsset,
 } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
@@ -147,12 +150,14 @@ export function DesignWorkbenchPage() {
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { salesChannel } = useParams()
   const taskType = TYPES.find((value) => value === searchParams.get('taskType'))
+  const salesChannelCode: 'AMAZON' | 'ETSY' | undefined =
+    salesChannel === 'amazon' ? 'AMAZON' : salesChannel === 'etsy' ? 'ETSY' : undefined
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   // Defer search to avoid network request on every keystroke
   const deferredSearch = useDeferredValue(search)
-  const [salesChannelCode, setSalesChannelCode] = useState<'AMAZON' | 'ETSY'>()
   const [status, setStatus] = useState<DesignTaskStatus>()
   const [selectedId, setSelectedId] = useState<string>()
   const [activeTask, setActiveTask] = useState<DesignTask>()
@@ -174,6 +179,7 @@ export function DesignWorkbenchPage() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [priorityDraft, setPriorityDraft] = useState<DesignTaskPriority>()
 
   // R2: Memoize query params — prevents useQuery from seeing a new object ref every render
   // Uses deferredSearch so search only triggers fetch after typing pauses (not every keystroke)
@@ -272,18 +278,16 @@ export function DesignWorkbenchPage() {
     setStatus(value)
     setPage(1)
   }, [])
-  const handleTaskTypeChange = useCallback((value?: DesignTaskType) => {
-    const nextSearchParams = new URLSearchParams(searchParams)
-    if (value) nextSearchParams.set('taskType', value)
-    else nextSearchParams.delete('taskType')
-    setSearchParams(nextSearchParams, { replace: true })
-    setPage(1)
-  }, [searchParams, setSearchParams])
-  const handleSalesChannelChange = useCallback((value: string | number) => {
-    setSalesChannelCode(value === 'ALL' ? undefined : (value as 'AMAZON' | 'ETSY'))
-    setSelectedRowKeys([])
-    setPage(1)
-  }, [])
+  const handleTaskTypeChange = useCallback(
+    (value?: DesignTaskType) => {
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (value) nextSearchParams.set('taskType', value)
+      else nextSearchParams.delete('taskType')
+      setSearchParams(nextSearchParams, { replace: true })
+      setPage(1)
+    },
+    [searchParams, setSearchParams],
+  )
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage)
   }, [])
@@ -291,9 +295,11 @@ export function DesignWorkbenchPage() {
     setCreateTaskOpen(true)
   }, [])
   const setTaskDraft = useCallback((id: string) => {
+    setPriorityDraft(undefined)
     setSelectedId(id)
   }, [])
   const closeTaskDrawer = useCallback(() => {
+    setPriorityDraft(undefined)
     setSelectedId(undefined)
   }, [])
   // W2: Prefetch catalog data on hover over "Create Task" button
@@ -383,6 +389,20 @@ export function DesignWorkbenchPage() {
     },
     onError: (error) =>
       toast('error', error instanceof Error ? error.message : t('portal.design.createFailed')),
+  })
+  const updatePriority = useMutation({
+    mutationFn: ({ taskId, priority }: { taskId: string; priority: DesignTaskPriority }) =>
+      updateDesignTaskPriority(taskId, priority),
+    onSuccess: async (_, { taskId, priority }) => {
+      setPriorityDraft(priority)
+      await Promise.all([
+        refresh(),
+        queryClient.invalidateQueries({ queryKey: designKeys.detail(taskId) }),
+      ])
+      toast('success', t('portal.design.priorityUpdated'))
+    },
+    onError: (error) =>
+      toast('error', error instanceof Error ? error.message : t('portal.design.updateFailed')),
   })
   const handleCreateTaskSubmit = useCallback(
     (draft: CreateDesignTaskDraft) => createTask.mutate(draft),
@@ -667,8 +687,17 @@ export function DesignWorkbenchPage() {
       {
         title: t('portal.design.task', 'Task'),
         key: 'task',
-        width: 220,
-        render: (_, row) => <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>,
+        width: 260,
+        render: (_, row) => (
+          <div className={styles.taskMeta}>
+            <CopyableSku value={row.listing?.sku} strong />
+            {row.listing?.asin ? (
+              <CopyableAsin value={row.listing.asin} />
+            ) : row.listing?.etsyListingId ? (
+              <CopyableListingId value={row.listing.etsyListingId} />
+            ) : null}
+          </div>
+        ),
       },
       {
         title: t('portal.design.type', 'Type'),
@@ -706,21 +735,6 @@ export function DesignWorkbenchPage() {
         ),
       },
       {
-        title: 'ASIN',
-        key: 'asin',
-        width: 140,
-        render: (_, row) =>
-          row.listing?.asin ? (
-            <CopyableText
-              value={row.listing.asin}
-              title={t('portal.design.copyAsin', 'Copy ASIN')}
-              copiedMessage={t('portal.design.asinCopied', 'ASIN copied')}
-            />
-          ) : (
-            <Typography.Text type="secondary">-</Typography.Text>
-          ),
-      },
-      {
         title: t('portal.design.designer', 'Designer'),
         key: 'designer',
         width: 220,
@@ -736,9 +750,7 @@ export function DesignWorkbenchPage() {
                 {row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
               </Typography.Text>
             </Space>
-            <Typography.Text className={styles.metaSecondary} type="secondary">
-              {dayjs(row.updatedAt).format('DD/MM/YYYY HH:mm')}
-            </Typography.Text>
+            <FormattedDateTime value={row.updatedAt} />
           </div>
         ),
       },
@@ -756,7 +768,7 @@ export function DesignWorkbenchPage() {
       {
         title: t('portal.design.actions', 'Actions'),
         key: 'actions',
-        width: 130,
+        width: 190,
         align: 'right',
         render: (_, row) => renderTaskActions(row),
       },
@@ -793,93 +805,83 @@ export function DesignWorkbenchPage() {
         />
       </div>
 
-      <div className={styles.taskNavigation}>
-        <UiButtonTabs
-          className={styles.channelFilter}
-          value={salesChannelCode ?? 'ALL'}
-          items={[
-            { label: t('portal.design.channelAll'), value: 'ALL' },
-            { label: 'Amazon', value: 'AMAZON' },
-            { label: 'Etsy', value: 'ETSY' },
-          ]}
-          onChange={handleSalesChannelChange}
-        />
-      </div>
       <SectionCard>
         <div className={styles.taskToolbar}>
-          <div className={styles.taskToolbarTitleGroup}>
+          <div className={styles.taskHeader}>
             <Typography.Title className={styles.taskToolbarTitle} level={4}>
               {t('portal.design.tasks', 'Design Tasks')}
             </Typography.Title>
           </div>
-          <Space className={styles.taskToolbarActions}>
-            <Button
-              icon={<DownloadOutlined />}
-              loading={exportCsv.isPending}
-              onClick={handleExportCsv}
-            >
-              {t('portal.design.exportCsv')}
-            </Button>
-            <Button href="/portal/design/files">{t('portal.design.psdFiles')}</Button>
-            {canAssign ? (
+          <div className={styles.taskActionBar}>
+            <Space className={styles.taskToolbarActions}>
               <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onMouseEnter={prefetchCreateData}
-                onClick={handleCreateTaskOpen}
+                icon={<DownloadOutlined />}
+                loading={exportCsv.isPending}
+                onClick={handleExportCsv}
               >
-                {t('portal.design.createDesignTask')}
+                {t('portal.design.exportCsv')}
               </Button>
-            ) : null}
-          </Space>
-          <FilterBar label={t('portal.design.filters')} contentClassName={styles.filters}>
-            <Input.Search
-              className={styles.search}
-              allowClear
-              placeholder={t('portal.design.search')}
-              value={search}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              onSearch={() => handlePageChange(1)}
-            />
-            <Select
-              className={styles.filter}
-              allowClear
-              placeholder={t('portal.design.allStatuses')}
-              value={status}
-              onChange={handleStatusChange}
-              options={statusOptions}
-            />
-            <Select
-              className={styles.filter}
-              allowClear
-              placeholder={t('portal.design.allTypes')}
-              value={taskType}
-              onChange={handleTaskTypeChange}
-              options={typeOptions}
-            />
-            {canAssign ? (
-              <>
-                <Select
-                  showSearch
-                  optionFilterProp="label"
-                  className={styles.filter}
-                  placeholder={t('portal.design.selectEligibleDesigner')}
-                  value={bulkDesignerId}
-                  onChange={setBulkDesignerId}
-                  options={assigneeOptions}
-                  notFoundContent={t('portal.design.noEligibleDesigners')}
-                />
+              <Button href="/portal/design/files">{t('portal.design.psdFiles')}</Button>
+              {canAssign ? (
                 <Button
-                  disabled={!selectedRowKeys.length || !bulkDesignerId}
-                  loading={bulkAssign.isPending}
-                  onClick={handleBulkAssign}
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onMouseEnter={prefetchCreateData}
+                  onClick={handleCreateTaskOpen}
                 >
-                  {t('portal.design.bulkAssign', { count: selectedRowKeys.length })}
+                  {t('portal.design.createDesignTask')}
                 </Button>
-              </>
-            ) : null}
-          </FilterBar>
+              ) : null}
+            </Space>
+          </div>
         </div>
+        <FilterBar label={t('portal.design.filters')} contentClassName={styles.filters}>
+          <Input.Search
+            className={styles.search}
+            allowClear
+            placeholder={t('portal.design.search')}
+            value={search}
+            onChange={(event) => handleSearchChange(event.target.value)}
+            onSearch={() => handlePageChange(1)}
+          />
+          <Select
+            className={styles.filter}
+            allowClear
+            placeholder={t('portal.design.allStatuses')}
+            value={status}
+            onChange={handleStatusChange}
+            options={statusOptions}
+          />
+          <Select
+            className={styles.filter}
+            allowClear
+            placeholder={t('portal.design.allTypes')}
+            value={taskType}
+            onChange={handleTaskTypeChange}
+            options={typeOptions}
+          />
+          {canAssign ? (
+            <>
+              <Select
+                showSearch
+                optionFilterProp="label"
+                className={styles.filter}
+                placeholder={t('portal.design.selectEligibleDesigner')}
+                value={bulkDesignerId}
+                onChange={setBulkDesignerId}
+                options={assigneeOptions}
+                notFoundContent={t('portal.design.noEligibleDesigners')}
+              />
+              <Button
+                disabled={!selectedRowKeys.length || !bulkDesignerId}
+                loading={bulkAssign.isPending}
+                onClick={handleBulkAssign}
+              >
+                {t('portal.design.bulkAssign', { count: selectedRowKeys.length })}
+              </Button>
+            </>
+          ) : null}
+        </FilterBar>
 
         <CoreDataTable
           fillViewport
@@ -904,11 +906,11 @@ export function DesignWorkbenchPage() {
             current: page,
             pageSize: DEFAULT_PAGE_SIZE,
             total: displayedTasks?.pagination.total ?? 0,
-            showSizeChanger: false,
-            hideOnSinglePage: true,
+            showSizeChanger: true,
+            hideOnSinglePage: false,
             onChange: handlePageChange,
           }}
-          scroll={{ x: 1360, y: 'calc(100vh - 430px)' }}
+          scroll={{ x: 1270 }}
         />
       </SectionCard>
 
@@ -974,6 +976,40 @@ export function DesignWorkbenchPage() {
                   key: 'type',
                   label: t('portal.design.taskType'),
                   children: t(designEnumLabelKey('taskTypes', task.taskType)),
+                },
+                {
+                  key: 'priority',
+                  label: t('portal.design.priority'),
+                  children:
+                    canAssignTask(task) && !['APPROVED', 'CANCELLED'].includes(task.status) ? (
+                      <Space.Compact>
+                        <Select
+                          aria-label={t('portal.design.priority')}
+                          value={priorityDraft ?? task.priority}
+                          onChange={(value) => setPriorityDraft(value as DesignTaskPriority)}
+                          options={['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((value) => ({
+                            value,
+                            label: t(designEnumLabelKey('priorities', value)),
+                          }))}
+                        />
+                        <Button
+                          loading={updatePriority.isPending}
+                          disabled={(priorityDraft ?? task.priority) === task.priority}
+                          onClick={() =>
+                            updatePriority.mutate({
+                              taskId: task.id,
+                              priority: priorityDraft ?? task.priority,
+                            })
+                          }
+                        >
+                          {t('portal.design.savePriority')}
+                        </Button>
+                      </Space.Compact>
+                    ) : (
+                      <StatusTag status={priorityTone(task.priority)}>
+                        {t(designEnumLabelKey('priorities', task.priority))}
+                      </StatusTag>
+                    ),
                 },
                 {
                   key: 'listing',

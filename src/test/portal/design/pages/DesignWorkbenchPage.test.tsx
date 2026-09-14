@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const routeState = vi.hoisted(() => ({ search: '' }))
+const routeState = vi.hoisted(() => ({ search: '', salesChannel: undefined as string | undefined }))
 
 vi.mock('@/app/common/CoreDataTable', async () => ({
   CoreDataTable: (await import('@/test/mocks/CoreDataTable')).CoreDataTable,
@@ -14,6 +14,7 @@ import {
   getDesignTask,
   listDesignTasks,
   submitDesignTask,
+  updateDesignTaskPriority,
   uploadDesignAsset,
 } from '@/features/portal/design/api/designApi'
 import { DesignWorkbenchPage } from '@/features/portal/design/pages/DesignWorkbenchPage'
@@ -31,6 +32,7 @@ vi.mock('@/shared/media', () => ({
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useSearchParams: () => [new URLSearchParams(routeState.search), vi.fn()],
+  useParams: () => ({ salesChannel: routeState.salesChannel }),
   useRouteLoaderData: () => ({
     account: { id: '6a339b5a033e2ff7753522c3' },
     permissions: ['DESIGN:WRITE', 'DESIGN:WORK'],
@@ -92,6 +94,7 @@ vi.mock('@/features/portal/design/api/designApi', () => ({
   bulkCreatePsdTasks: vi.fn(),
   listDesignSubmissions: vi.fn().mockResolvedValue([]),
   cancelDesignTask: vi.fn(),
+  updateDesignTaskPriority: vi.fn().mockResolvedValue({ id: 'task-1', priority: 'URGENT' }),
 }))
 
 describe('DesignWorkbenchPage', () => {
@@ -100,6 +103,7 @@ describe('DesignWorkbenchPage', () => {
     vi.clearAllMocks()
     queryClient.clear()
     routeState.search = ''
+    routeState.salesChannel = undefined
     i18n.changeLanguage('en')
     vi.mocked(listDesignTasks).mockResolvedValue({
       items: [
@@ -186,7 +190,37 @@ describe('DesignWorkbenchPage', () => {
       </AppProviders>,
     )
     await screen.findByText('SKU-1')
-    expect((await screen.findByText('High')).closest('.ant-tag')).not.toBeNull()
+    expect(await screen.findByText('High')).toBeVisible()
+  }, 15_000)
+
+  it('keeps the ASIN in the design task cell and saves priority from task detail', async () => {
+    vi.mocked(getDesignTask).mockResolvedValue({
+      id: 'task-1',
+      status: 'OPEN',
+      taskType: 'PSD_TEMPLATE',
+      priority: 'HIGH',
+      listing: { sku: 'SKU-1', asin: 'B0TESTASIN1', productTypeName: null },
+      expectedOutputs: [],
+      latestSubmission: null,
+    } as never)
+
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
+
+    const sku = await screen.findByText('SKU-1')
+    expect(screen.queryByRole('columnheader', { name: 'ASIN' })).not.toBeInTheDocument()
+    expect(within(sku.closest('td')!).getByText('B0TESTASIN1')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'View' }))
+    const drawer = await screen.findByRole('dialog')
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Priority' }))
+    fireEvent.click(await screen.findByText('Urgent'))
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Save priority' }))
+
+    await waitFor(() => expect(updateDesignTaskPriority).toHaveBeenCalledWith('task-1', 'URGENT'))
   }, 15_000)
 
   it('uses the listing product image when no media thumbnail exists', async () => {
@@ -209,6 +243,19 @@ describe('DesignWorkbenchPage', () => {
       </AppProviders>,
     )
     expect(await screen.findByText('Create design task')).toBeInTheDocument()
+  }, 15_000)
+
+  it('keeps the workbench actions beside the title in one toolbar', async () => {
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
+
+    const title = await screen.findByRole('heading', { name: 'Design tasks' })
+    const toolbar = title.closest('[class*="_taskToolbar_"]')
+    expect(toolbar).toContainElement(screen.getByRole('button', { name: /Export CSV/ }))
+    expect(toolbar).toContainElement(screen.getByRole('button', { name: /Create design task/ }))
   }, 15_000)
 
   it('filters the Design Workbench from a task-type URL parameter', async () => {
@@ -243,6 +290,28 @@ describe('DesignWorkbenchPage', () => {
       referenceAssetIds: ['asset-1'],
     })
   }, 15_000)
+
+  it.each([
+    ['amazon', 'AMAZON'],
+    ['etsy', 'ETSY'],
+  ])(
+    'filters %s tasks from the channel route without an inline channel filter',
+    async (route, channel) => {
+      routeState.salesChannel = route
+      render(
+        <AppProviders>
+          <DesignWorkbenchPage />
+        </AppProviders>,
+      )
+
+      await waitFor(() =>
+        expect(listDesignTasks).toHaveBeenCalledWith(
+          expect.objectContaining({ salesChannelCode: channel }),
+        ),
+      )
+      expect(screen.queryByText('Channel: All')).not.toBeInTheDocument()
+    },
+  )
 
   it('keeps the create modal open when a reference upload fails', async () => {
     vi.mocked(uploadDesignAsset).mockRejectedValueOnce(new Error('Upload failed'))

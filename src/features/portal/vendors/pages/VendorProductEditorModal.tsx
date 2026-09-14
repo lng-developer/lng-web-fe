@@ -2,20 +2,9 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppstoreOutlined, LinkOutlined, SettingOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Card,
-  Drawer,
-  Flex,
-  Form,
-  Image,
-  Input,
-  InputNumber,
-  Select,
-  Switch,
-  Tabs,
-} from 'antd'
+import { Card, Flex, Form, Input, InputNumber, Modal, Select, Switch, Tabs } from 'antd'
 
-import { FormActions, useFeedbackToast } from '@/shared/ui'
+import { FormActions, useFeedbackToast, ZoomableImage } from '@/shared/ui'
 
 import { listProductTypeGroups } from '../../catalog/api/catalogApi'
 import {
@@ -73,8 +62,12 @@ export function VendorProductEditorModal({
             productTypeGroupId: item.productTypeGroup?.id ?? '',
             vendorId: vendorId ?? item.vendor?.id ?? '',
           }
-        : { status: 'ACTIVE', vendorId: vendorId ?? '', productTypeGroupId: initialProductTypeGroupId },
-      )
+        : {
+            status: 'ACTIVE',
+            vendorId: vendorId ?? '',
+            productTypeGroupId: initialProductTypeGroupId,
+          },
+    )
   }, [form, initialProductTypeGroupId, item, open, vendorId])
 
   const save = useMutation({
@@ -129,11 +122,7 @@ export function VendorProductEditorModal({
           <Card className={styles.editorCard} size="small" title="Basic Info">
             <div className={styles.formGrid}>
               {!vendorId ? (
-                <Form.Item
-                  label={t('vendors.vendor')}
-                  name="vendorId"
-                  rules={[{ required: true }]}
-                >
+                <Form.Item label={t('vendors.vendor')} name="vendorId" rules={[{ required: true }]}>
                   <Select
                     showSearch
                     loading={vendors.isLoading}
@@ -267,7 +256,7 @@ export function VendorProductEditorModal({
         <Flex flex={1} vertical gap={16}>
           {imageUrl ? (
             <Card className={styles.editorPreviewCard} size="small" title="Image Preview">
-              <Image
+              <ZoomableImage
                 src={imageUrl}
                 alt="Product preview"
                 style={{ maxHeight: 180, borderRadius: 8, objectFit: 'contain' }}
@@ -349,13 +338,14 @@ export function VendorProductEditorModal({
   ]
 
   return (
-    <Drawer
+    <Modal
       className={styles.editorDrawer}
       destroyOnClose
       open={open}
       title={t(item ? 'vendors.editProductTitle' : 'vendors.createProductTitle')}
-      width={720}
-      onClose={close}
+      width="min(1200px, 88vw)"
+      style={{ top: 40 }}
+      onCancel={close}
       footer={
         <FormActions
           cancelLabel={t('vendors.cancel')}
@@ -376,6 +366,6 @@ export function VendorProductEditorModal({
       >
         <Tabs items={tabItems} defaultActiveKey="identity" />
       </Form>
-    </Drawer>
+    </Modal>
   )
 }

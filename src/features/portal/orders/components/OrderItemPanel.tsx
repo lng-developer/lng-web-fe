@@ -14,7 +14,7 @@ import {
 import { Button, Descriptions, Dropdown, type MenuProps, Space, Tooltip, Typography } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
-import { StatusTag } from '@/shared/ui'
+import { CopyableAsin, CopyableSku, StatusTag } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import { FulfillmentInlineEditor } from '../pages/FulfillmentInlineEditor'
@@ -148,12 +148,12 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     [canOperate, canRecheckProduction, canWrite, item, onAction, onConfirm, t, terminal],
   )
 
-  const renderAsin = (asin?: string | null, chip = false) => {
+  const renderAsin = (asin?: string | null) => {
     const productUrl = getAmazonProductUrl(asin)
 
     return (
       <Space size={4} className={styles.asinWithLink}>
-        <span className={chip ? styles.asinChip : undefined}>{displayValue(asin)}</span>
+        <CopyableAsin value={asin} />
         {productUrl ? (
           <Tooltip title={t('orders.actions.openProduct', { defaultValue: 'Open product' })}>
             <Button
@@ -205,7 +205,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           column={1}
           colon={false}
           items={[
-            { key: 'sku', label: 'SKU', children: displayValue(item.item.sku) },
+            { key: 'sku', label: 'SKU', children: <CopyableSku value={item.item.sku} /> },
             { key: 'asin', label: 'ASIN', children: renderAsin(item.item.asin) },
             {
               key: 'seller',
@@ -219,11 +219,11 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         <div className={styles.identifierList}>
           <div>
             <Typography.Text type="secondary">SKU</Typography.Text>
-            <span className={styles.skuChip}>{displayValue(item.item.sku)}</span>
+            <CopyableSku value={item.item.sku} />
           </div>
           <div>
             <Typography.Text type="secondary">ASIN</Typography.Text>
-            {renderAsin(item.item.asin, true)}
+            {renderAsin(item.item.asin)}
           </div>
           <div>
             <Typography.Text type="secondary">{t('orders.fields.seller')}</Typography.Text>

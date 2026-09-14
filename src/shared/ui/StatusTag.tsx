@@ -1,5 +1,4 @@
 import { type CSSProperties, memo, type ReactNode } from 'react'
-import { Tag } from 'antd'
 
 type OperationalStatus =
   | 'operational'
@@ -22,7 +21,7 @@ export interface StatusTagProps {
   readonly children: ReactNode
 }
 
-const tones: Record<OperationalStatus, { bg: string; border: string; color: string }> = {
+const tones: Record<OperationalStatus, { color: string }> = {
   operational: tone('success'),
   warning: tone('warning'),
   critical: tone('error'),
@@ -33,16 +32,12 @@ const tones: Record<OperationalStatus, { bg: string; border: string; color: stri
   rejected: tone('error'),
   cancelled: tone('error'),
   draft: {
-    bg: 'var(--ant-color-fill-tertiary)',
-    border: 'var(--ant-color-border)',
     color: 'var(--ant-color-text-secondary)',
   },
   finalized: tone('purple'),
   paid: tone('success'),
   online: tone('success'),
   offline: {
-    bg: 'var(--ant-color-fill-tertiary)',
-    border: 'var(--ant-color-border)',
     color: 'var(--ant-color-text-secondary)',
   },
 }
@@ -50,36 +45,46 @@ const tones: Record<OperationalStatus, { bg: string; border: string; color: stri
 function tone(token: 'error' | 'info' | 'processing' | 'purple' | 'success' | 'warning') {
   const colorToken = token === 'processing' ? 'primary' : token
   return {
-    bg: `color-mix(in srgb, var(--ant-color-${colorToken}-bg) 64%, var(--ant-color-bg-container))`,
-    border: `color-mix(in srgb, var(--ant-color-${colorToken}) 42%, var(--ant-color-border))`,
     color: `var(--ant-color-${colorToken})`,
   }
 }
 
-const defaultTagStyle: CSSProperties = {
-  backgroundColor: tones.draft.bg,
-  borderColor: tones.draft.border,
-  borderRadius: 999,
+const defaultStatusStyle: CSSProperties = {
+  alignItems: 'center',
   color: tones.draft.color,
-  fontWeight: 700,
-  paddingInline: 8,
+  display: 'inline-flex',
+  fontWeight: 500,
+  gap: 8,
 }
 
-const tagStyles: Record<OperationalStatus, CSSProperties> = Object.fromEntries(
+const statusStyles: Record<OperationalStatus, CSSProperties> = Object.fromEntries(
   Object.entries(tones).map(([key, item]) => [
     key,
     {
-      backgroundColor: item.bg,
-      borderColor: item.border,
-      borderRadius: 999,
+      alignItems: 'center',
       color: item.color,
-      fontWeight: 700,
-      paddingInline: 8,
+      display: 'inline-flex',
+      fontWeight: 500,
+      gap: 8,
     },
   ]),
 ) as Record<OperationalStatus, CSSProperties>
 
 export const StatusTag = memo(function StatusTag({ status, children }: StatusTagProps) {
-  const style = tagStyles[status] ?? defaultTagStyle
-  return <Tag style={style}>{children}</Tag>
+  const style = statusStyles[status] ?? defaultStatusStyle
+  return (
+    <span style={style}>
+      <span
+        aria-hidden
+        style={{
+          width: 10,
+          height: 10,
+          flex: '0 0 auto',
+          borderRadius: '50%',
+          backgroundColor: style.color,
+        }}
+      />
+      {children}
+    </span>
+  )
 })

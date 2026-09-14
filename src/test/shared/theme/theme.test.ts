@@ -15,20 +15,22 @@ describe('theme foundation', () => {
     expect(createAppTheme('dark').token?.colorPrimary).toBe('#E83B4A')
   })
 
-  it('uses GXON-style white card surfaces and subtle borders in light mode', () => {
+  it('uses bright white card surfaces and subtle borders in light mode', () => {
     const light = createAppTheme('light').token
 
-    expect(light?.colorBgBase).toBe('#EEF1F5')
+    expect(light?.colorBgBase).toBe('#FFFFFF')
     expect(light?.colorBgContainer).toBe('#FFFFFF')
-    expect(light?.colorBgLayout).toBe('#E5EAF0')
-    expect(light?.colorBorder).toBe('#E8EBF1')
-    expect(light?.colorBorderSecondary).toBe('#E8EBF1')
+    expect(light?.colorBgLayout).toBe('#F8FAFC')
+    expect(light?.colorBorder).toBe('#CBD5E1')
+    expect(light?.colorBorderSecondary).toBe('#E2E8F0')
   })
 
-  it('uses GXON dark borders instead of light card borders', () => {
+  it('uses dark borders in dark mode', () => {
     const dark = createAppTheme('dark').token
 
-    expect(dark?.colorBorder).toBe('#3A3B4D')
-    expect(dark?.colorBorderSecondary).toBe('#3A3B4D')
+    expect(dark?.colorBgLayout).toBe('#18191A')
+    expect(dark?.colorBgContainer).toBe('#242526')
+    expect(dark?.colorBorder).toBe('#393A3B')
+    expect(dark?.colorBorderSecondary).toBe('#2F3031')
   })
 })

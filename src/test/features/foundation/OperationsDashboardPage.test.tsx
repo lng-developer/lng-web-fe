@@ -15,11 +15,24 @@ vi.mock('@/features/portal/customers/api/customerApi', () => ({
   getCustomerSummary: vi.fn(),
 }))
 
+vi.mock('@/features/portal/reports/api/reportApi', () => ({
+  getBuyerInsights: vi.fn(),
+  getOperationsOverview: vi.fn(),
+  listFinanceDailyProfit: vi.fn(),
+  listVendorPerformance: vi.fn(),
+}))
+
 import { OperationsDashboardPage } from '@/features/foundation/OperationsDashboardPage'
 import { getListingSummary, listListings } from '@/features/portal/catalog/api/catalogApi'
 import { getCustomerSummary } from '@/features/portal/customers/api/customerApi'
 import type { OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
 import { getOrderSummary, listOrderWorkbench } from '@/features/portal/orders/api/orderApi'
+import {
+  getBuyerInsights,
+  getOperationsOverview,
+  listFinanceDailyProfit,
+  listVendorPerformance,
+} from '@/features/portal/reports/api/reportApi'
 import { setGlobalPermissions, setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 import { renderWithTestProviders } from '@/test/helpers/testProviders'
@@ -76,8 +89,8 @@ describe('OperationsDashboardPage', () => {
   beforeEach(async () => {
     window.localStorage.setItem('lng.language', 'vi')
     await i18n.changeLanguage('vi')
-    setPermissions(['ORDERS:READ', 'CATALOG:READ', 'CUSTOMERS:READ'])
-    setGlobalPermissions(['ORDERS:READ', 'CATALOG:READ', 'CUSTOMERS:READ'])
+    setPermissions(['ORDERS:READ', 'CATALOG:READ', 'REPORTS:READ'])
+    setGlobalPermissions(['ORDERS:READ', 'CATALOG:READ', 'REPORTS:READ'])
     vi.mocked(getOrderSummary).mockResolvedValue({
       tabCounts: {
         all: 67,
@@ -113,6 +126,38 @@ describe('OperationsDashboardPage', () => {
       totalRevenueAmount: 0,
       averageOrderValue: 0,
     })
+    vi.mocked(getBuyerInsights).mockResolvedValue({
+      knownBuyerCount: 20,
+      newBuyerCount: 4,
+      returningBuyerCount: 16,
+      repeatBuyerCount: 3,
+      unidentifiedOrderCount: 0,
+      totalOrderCount: 25,
+    })
+    vi.mocked(listFinanceDailyProfit).mockResolvedValue([])
+    vi.mocked(getOperationsOverview).mockResolvedValue({
+      orderItemsByStatus: { MAPPING_PENDING: 6, NEED_PRODUCTION: 4, QC_REJECTED: 2 },
+      productionByStatus: {},
+      productionBlockers: {},
+      vendorSubmissionsByStatus: { FAILED: 3 },
+      shipmentsByStatus: { TRACKING_PENDING: 5, EXCEPTION: 1 },
+    })
+    vi.mocked(listVendorPerformance).mockResolvedValue({
+      items: [
+        {
+          vendorId: 'vendor-1',
+          vendorCode: 'ACME',
+          vendorName: 'Acme Print',
+          readyCount: 0,
+          submittedCount: 8,
+          failedCount: 2,
+          cancelledCount: 0,
+          shippedCount: 5,
+          successRateBps: 8000,
+          avgProcessingHours: 12,
+        },
+      ],
+    })
   })
 
   it('renders total orders, summary, and order status chart metrics', async () => {
@@ -120,9 +165,9 @@ describe('OperationsDashboardPage', () => {
 
     expect(await screen.findByText('Tổng đơn hàng')).toBeVisible()
     await waitFor(() => expect(getOrderSummary).toHaveBeenCalled())
-    expect((await screen.findAllByText('37'))[0]).toBeVisible()
+    expect((await screen.findAllByText('67'))[0]).toBeVisible()
     expect(screen.getAllByRole('button', { name: 'Đơn mới: 7' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: 'Đơn hàng: 37' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: 'Đơn hàng: 67' }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: 'Đã duyệt: 0' }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: 'Đã duyệt: 0' })[0]).toHaveStyle({
       height: '18%',
@@ -141,5 +186,27 @@ describe('OperationsDashboardPage', () => {
     renderWithTestProviders(<OperationsDashboardPage />)
 
     expect(await screen.findByRole('button', { name: '111-1111111-1111111' })).toBeVisible()
+  })
+
+  it('shows a data warning when the recent orders request fails', async () => {
+    vi.mocked(listOrderWorkbench).mockRejectedValueOnce(new Error('Workbench unavailable'))
+
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Không thể tải đầy đủ dữ liệu dashboard',
+    )
+  })
+
+  it('loads operational health reports and keeps import health reachable', async () => {
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    expect(await screen.findByRole('heading', { name: 'Sức khỏe vận hành' })).toBeVisible()
+    await waitFor(() => expect(getOperationsOverview).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(listVendorPerformance).toHaveBeenCalledTimes(1))
+    expect(screen.getByRole('link', { name: 'Xem tình trạng import' })).toHaveAttribute(
+      'href',
+      '/portal/integrations',
+    )
   })
 })

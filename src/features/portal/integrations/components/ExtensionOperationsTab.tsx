@@ -16,6 +16,7 @@ import {
   Input,
   Popconfirm,
   Popover,
+  Segmented,
   Select,
   Space,
   Tooltip,
@@ -29,7 +30,7 @@ import type {
   ExtensionTokenInput,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
-import { DateRangePicker, SectionCard, StatusTag } from '@/shared/ui'
+import { DateRangePicker, FormattedDateTime, SectionCard, StatusTag } from '@/shared/ui'
 
 import type {
   ExtensionCommand,
@@ -105,6 +106,9 @@ export function ExtensionOperationsTab({
   const [adsCommandDates, setAdsCommandDates] = useState<
     Record<string, { dateFrom?: string; dateTo?: string }>
   >({})
+  const [commandStatusFilter, setCommandStatusFilter] = useState<
+    'ALL' | 'RUNNING' | 'FAILED' | 'SUCCEEDED'
+  >('ALL')
   const initializedTokenShop = useRef(false)
   const defaultSetupShopId = setupShopOptions[0]?.value
 
@@ -129,88 +133,114 @@ export function ExtensionOperationsTab({
     [managementAgents],
   )
 
+  const filteredCommands = useMemo(() => {
+    if (commandStatusFilter === 'ALL') return commands
+    if (commandStatusFilter === 'RUNNING') {
+      return commands.filter(
+        (c) => c.status === 'RUNNING' || c.status === 'CLAIMED' || c.status === 'QUEUED',
+      )
+    }
+    return commands.filter((c) => c.status === commandStatusFilter)
+  }, [commands, commandStatusFilter])
+
   return (
-    <SectionCard title={t('portal.integrations.extension.title')}>
-      <div className={styles.extensionSetup}>
-        <Form
-          form={tokenForm}
-          layout="vertical"
-          initialValues={{
-            environment: 'development',
-            name: t('portal.integrations.extension.defaultTokenName'),
-            shopId: writableShops[0]?.id ?? shops[0]?.id,
-          }}
-          onFinish={onCreateToken}
-        >
-          <div className={styles.extensionGrid}>
-            <Form.Item
-              label={t('portal.integrations.shop', { defaultValue: 'Shop' })}
-              name="shopId"
-              rules={[{ required: true }]}
-            >
-              <Select
-                loading={isShopsLoading}
-                options={setupShopOptions}
-                placeholder={t('portal.integrations.allShops', { defaultValue: 'All shops' })}
-                showSearch
-                optionFilterProp="label"
-                onChange={() => onCreatedTokenChange(undefined)}
-              />
-            </Form.Item>
-            <Form.Item
-              label={t('portal.integrations.extension.environment', {
-                defaultValue: 'Environment',
+    <div className={styles.operationsWorkbench}>
+      <SectionCard title={t('portal.integrations.extension.title')}>
+        <div className={styles.extensionSetup}>
+          <Form
+            form={tokenForm}
+            layout="vertical"
+            initialValues={{
+              environment: 'development',
+              name: t('portal.integrations.extension.defaultTokenName'),
+              shopId: writableShops[0]?.id ?? shops[0]?.id,
+            }}
+            onFinish={onCreateToken}
+          >
+            <div className={styles.extensionGrid}>
+              <Form.Item
+                label={t('portal.integrations.shop', { defaultValue: 'Shop' })}
+                name="shopId"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  loading={isShopsLoading}
+                  options={setupShopOptions}
+                  placeholder={t('portal.integrations.allShops', { defaultValue: 'All shops' })}
+                  showSearch
+                  optionFilterProp="label"
+                  onChange={() => onCreatedTokenChange(undefined)}
+                />
+              </Form.Item>
+              <Form.Item
+                label={t('portal.integrations.extension.environment', {
+                  defaultValue: 'Environment',
+                })}
+                tooltip={apiBaseUrl}
+                name="environment"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  options={[
+                    { label: 'Local', value: 'local' },
+                    { label: t('portal.integrations.extension.development'), value: 'development' },
+                    { label: t('portal.integrations.extension.production'), value: 'production' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item
+                label={t('portal.integrations.extension.tokenName')}
+                name="name"
+                rules={[{ required: true }]}
+              >
+                <Input />
+              </Form.Item>
+              <Button
+                className={styles.createTokenButton}
+                type="primary"
+                htmlType="submit"
+                loading={isCreatingToken}
+              >
+                {t('portal.integrations.extension.createToken', {
+                  defaultValue: 'Create token',
+                })}
+              </Button>
+            </div>
+          </Form>
+          {createdToken ? (
+            <Alert
+              type="warning"
+              showIcon
+              title={t('portal.integrations.extension.tokenWarning', {
+                defaultValue: 'Copy the API access token before leaving this page.',
               })}
-              tooltip={apiBaseUrl}
-              name="environment"
-              rules={[{ required: true }]}
-            >
-              <Select
-                options={[
-                  { label: 'Local', value: 'local' },
-                  { label: t('portal.integrations.extension.development'), value: 'development' },
-                  { label: t('portal.integrations.extension.production'), value: 'production' },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item
-              label={t('portal.integrations.extension.tokenName')}
-              name="name"
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
-            <Button
-              className={styles.createTokenButton}
-              type="primary"
-              htmlType="submit"
-              loading={isCreatingToken}
-            >
-              {t('portal.integrations.extension.createToken', {
-                defaultValue: 'Create token',
+              description={
+                <Typography.Text copyable className={styles.tokenText}>
+                  {createdToken}
+                </Typography.Text>
+              }
+            />
+          ) : null}
+          {createTokenError ? (
+            <Alert type="error" showIcon message={(createTokenError as Error).message} />
+          ) : null}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title={
+          <div className={styles.sectionHeaderTitle}>
+            <span>
+              {t('portal.integrations.extension.agentsTitle', {
+                defaultValue: 'Connected extensions (RDC / Chrome)',
               })}
-            </Button>
+            </span>
+            <span className={styles.countBadge}>{managementAgents.length}</span>
           </div>
-        </Form>
-        {createdToken ? (
-          <Alert
-            type="warning"
-            showIcon
-            title={t('portal.integrations.extension.tokenWarning', {
-              defaultValue: 'Copy the API access token before leaving this page.',
-            })}
-            description={
-              <Typography.Text copyable className={styles.tokenText}>
-                {createdToken}
-              </Typography.Text>
-            }
-          />
-        ) : null}
-        {createTokenError ? (
-          <Alert type="error" showIcon message={(createTokenError as Error).message} />
-        ) : null}
+        }
+        className={styles.tableCard}
+      >
         <div className={styles.commandPanel}>
-          <Typography.Title level={5}>Extension operations</Typography.Title>
           {isManagementAgentsLoading ? (
             <Typography.Text>Loading extensions…</Typography.Text>
           ) : null}
@@ -268,7 +298,7 @@ export function ExtensionOperationsTab({
                 title: 'Last seen',
                 dataIndex: 'lastSeenAt',
                 width: 160,
-                render: (value: string) => new Date(value).toLocaleString(),
+                render: (value: string) => <FormattedDateTime value={value} />,
               },
               {
                 title: 'Next poll',
@@ -463,91 +493,139 @@ export function ExtensionOperationsTab({
           {createCommandError ? (
             <Alert type="error" showIcon message={(createCommandError as Error).message} />
           ) : null}
-          <CoreDataTable
-            rowKey="id"
-            loading={isCommandsLoading}
-            dataSource={commands}
-            pagination={false}
-            columns={[
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title={
+          <div className={styles.sectionHeaderTitle}>
+            <span>
+              {t('portal.integrations.extension.commandActivity', {
+                defaultValue: 'Extension command activity',
+              })}
+            </span>
+            <span className={styles.countBadge}>{commands.length}</span>
+          </div>
+        }
+        extra={
+          <Segmented
+            size="small"
+            value={commandStatusFilter}
+            onChange={(val) => setCommandStatusFilter(val as typeof commandStatusFilter)}
+            options={[
               {
-                title: t('portal.integrations.extension.command', { defaultValue: 'Command' }),
-                dataIndex: 'type',
-                width: 175,
+                value: 'ALL',
+                label: t('portal.integrations.extension.allCommands', {
+                  defaultValue: 'All commands',
+                }),
               },
               {
-                title: 'Extension',
-                width: 180,
-                render: (_, command) => {
-                  const agent = extensionAgentById.get(command.agentId)
-                  if (!agent)
-                    return <Typography.Text type="secondary">Unknown extension</Typography.Text>
-                  const environment = agent.token?.environment
-                  return (
-                    <Space size={6}>
-                      <Typography.Text>{agent.label}</Typography.Text>
-                      {environment ? (
-                        <StatusTag status={EXTENSION_ENVIRONMENT_TONES[environment] ?? 'ready'}>
-                          {EXTENSION_ENVIRONMENT_LABELS[environment] ?? environment}
-                        </StatusTag>
-                      ) : null}
-                    </Space>
-                  )
-                },
+                value: 'RUNNING',
+                label: t('portal.integrations.extension.runningCommands', {
+                  defaultValue: 'Running / Claimed',
+                }),
               },
               {
-                title: t('portal.integrations.extension.status', { defaultValue: 'Status' }),
-                dataIndex: 'status',
-                width: 125,
-                render: (status: string, command) => (
-                  <Space size={6}>
-                    <StatusTag
-                      status={
-                        status === 'SUCCEEDED'
-                          ? 'operational'
-                          : status === 'FAILED'
-                            ? 'critical'
-                            : 'pending'
-                      }
-                    >
-                      {status}
-                    </StatusTag>
-                    <Tooltip title="View task details">
-                      <Button
-                        aria-label={t('portal.integrations.extension.viewTaskDetails', {
-                          defaultValue: 'View task details',
-                        })}
-                        type="text"
-                        icon={<InfoCircleOutlined />}
-                        onClick={() => onSelectCommand(command)}
-                      />
-                    </Tooltip>
-                  </Space>
-                ),
+                value: 'FAILED',
+                label: t('portal.integrations.extension.failedOnly', {
+                  defaultValue: 'Failed only',
+                }),
               },
               {
-                title: 'Next poll',
-                width: 105,
-                render: (_, command) => {
-                  if (command.status === 'FAILED') return 'Not retrying'
-                  if (command.status === 'SUCCEEDED') return 'Completed'
-                  if (command.status === 'RUNNING' || command.status === 'CLAIMED')
-                    return 'Processing…'
-                  const agentId = command.agentId
-                  const agent = extensionAgentById.get(agentId)
-                  return agent ? nextPollLabel(agent.lastSeenAt, now) : '-'
-                },
-              },
-              {
-                title: t('portal.integrations.extension.created', { defaultValue: 'Created' }),
-                dataIndex: 'createdAt',
-                width: 155,
-                render: (value: string) => new Date(value).toLocaleString(),
+                value: 'SUCCEEDED',
+                label: t('portal.integrations.extension.succeededOnly', {
+                  defaultValue: 'Succeeded',
+                }),
               },
             ]}
-            scroll={{ x: 760 }}
           />
-        </div>
-      </div>
-    </SectionCard>
+        }
+        className={styles.tableCard}
+      >
+        <CoreDataTable
+          rowKey="id"
+          loading={isCommandsLoading}
+          dataSource={filteredCommands}
+          pagination={false}
+          columns={[
+            {
+              title: t('portal.integrations.extension.command', { defaultValue: 'Command' }),
+              dataIndex: 'type',
+              width: 175,
+            },
+            {
+              title: 'Extension',
+              width: 180,
+              render: (_, command) => {
+                const agent = extensionAgentById.get(command.agentId)
+                if (!agent)
+                  return <Typography.Text type="secondary">Unknown extension</Typography.Text>
+                const environment = agent.token?.environment
+                return (
+                  <Space size={6}>
+                    <Typography.Text>{agent.label}</Typography.Text>
+                    {environment ? (
+                      <StatusTag status={EXTENSION_ENVIRONMENT_TONES[environment] ?? 'ready'}>
+                        {EXTENSION_ENVIRONMENT_LABELS[environment] ?? environment}
+                      </StatusTag>
+                    ) : null}
+                  </Space>
+                )
+              },
+            },
+            {
+              title: t('portal.integrations.extension.status', { defaultValue: 'Status' }),
+              dataIndex: 'status',
+              width: 125,
+              render: (status: string, command) => (
+                <Space size={6}>
+                  <StatusTag
+                    status={
+                      status === 'SUCCEEDED'
+                        ? 'operational'
+                        : status === 'FAILED'
+                          ? 'critical'
+                          : 'pending'
+                    }
+                  >
+                    {status}
+                  </StatusTag>
+                  <Tooltip title="View task details">
+                    <Button
+                      aria-label={t('portal.integrations.extension.viewTaskDetails', {
+                        defaultValue: 'View task details',
+                      })}
+                      type="text"
+                      icon={<InfoCircleOutlined />}
+                      onClick={() => onSelectCommand(command)}
+                    />
+                  </Tooltip>
+                </Space>
+              ),
+            },
+            {
+              title: 'Next poll',
+              width: 105,
+              render: (_, command) => {
+                if (command.status === 'FAILED') return 'Not retrying'
+                if (command.status === 'SUCCEEDED') return 'Completed'
+                if (command.status === 'RUNNING' || command.status === 'CLAIMED')
+                  return 'Processing…'
+                const agentId = command.agentId
+                const agent = extensionAgentById.get(agentId)
+                return agent ? nextPollLabel(agent.lastSeenAt, now) : '-'
+              },
+            },
+            {
+              title: t('portal.integrations.extension.created', { defaultValue: 'Created' }),
+              dataIndex: 'createdAt',
+              width: 160,
+              render: (value: string) => <FormattedDateTime value={value} />,
+            },
+          ]}
+          scroll={{ x: 760 }}
+        />
+      </SectionCard>
+    </div>
   )
 }

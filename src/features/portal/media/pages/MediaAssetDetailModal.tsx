@@ -3,7 +3,7 @@ import { FileOutlined } from '@ant-design/icons'
 import { Descriptions, Modal, Space, Typography } from 'antd'
 
 import { AuthenticatedMediaImage } from '@/shared/media'
-import { StatusTag } from '@/shared/ui'
+import { FormattedDateTime, StatusTag } from '@/shared/ui'
 
 import type { MediaAsset } from '../api/mediaApi'
 
@@ -26,7 +26,6 @@ export function MediaAssetDetailModal({
   const { t } = useTranslation()
   return (
     <Modal
-      centered
       open={Boolean(asset)}
       footer={null}
       title={t('media.detail.title')}
@@ -71,7 +70,7 @@ export function MediaAssetDetailModal({
               </StatusTag>
             </Descriptions.Item>
             <Descriptions.Item label={t('media.columns.createdAt')} span={2}>
-              {new Date(asset.createdAt).toLocaleString()}
+              <FormattedDateTime value={asset.createdAt} />
             </Descriptions.Item>
           </Descriptions>
         </Space>

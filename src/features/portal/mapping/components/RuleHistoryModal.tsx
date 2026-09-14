@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Modal, Timeline, Typography } from 'antd'
 
-import { FeedbackAlert } from '@/shared/ui'
+import { FeedbackAlert, FormattedDateTime } from '@/shared/ui'
 
 import type { MappingRuleType } from '../api/mappingApi'
 import { useRuleHistoryQuery } from '../hooks'
@@ -44,10 +44,12 @@ export function RuleHistoryModal({
             <div>
               <Typography.Text strong>{event.event || 'UPDATED'}</Typography.Text>
               <br />
-              <Typography.Text type="secondary">
-                {event.actor?.displayName || event.actor?.email || 'System'} ·{' '}
-                {event.createdAt ? new Date(event.createdAt).toLocaleString() : '—'}
-              </Typography.Text>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                <Typography.Text type="secondary">
+                  {event.actor?.displayName || event.actor?.email || 'System'} ·
+                </Typography.Text>
+                <FormattedDateTime value={event.createdAt} />
+              </div>
               {changedFields(event.before, event.after).map((change) => (
                 <div key={change.key} style={{ marginTop: 6 }}>
                   <Typography.Text code>{change.key}</Typography.Text>{' '}

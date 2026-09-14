@@ -287,4 +287,36 @@ describe('AppShell', () => {
     expect(screen.queryByRole('region', { name: 'designer@lng.co' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(1)
   })
+
+  it('updates document title correctly for /portal/monitoring', async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          loader: () => ({
+            account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
+            roles: [],
+            permissions: ['AUDIT:READ'],
+            scopes: [],
+            profileSetupRequired: false,
+          }),
+          HydrateFallback: () => null,
+          element: <AppShell />,
+          children: [{ path: 'portal/monitoring', element: <h1>Monitoring test page</h1> }],
+        },
+      ],
+      { initialEntries: ['/portal/monitoring'] },
+    )
+
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Monitoring test page' })).toBeVisible()
+    await waitFor(() => {
+      expect(document.title).toBe('Monitoring | LNG Web')
+    })
+  })
 })
