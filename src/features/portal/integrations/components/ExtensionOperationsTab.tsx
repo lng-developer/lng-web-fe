@@ -106,6 +106,9 @@ export function ExtensionOperationsTab({
   const [adsCommandDates, setAdsCommandDates] = useState<
     Record<string, { dateFrom?: string; dateTo?: string }>
   >({})
+  const [transactionCommandDates, setTransactionCommandDates] = useState<
+    Record<string, { dateFrom?: string; dateTo?: string }>
+  >({})
   const [commandStatusFilter, setCommandStatusFilter] = useState<
     'ALL' | 'RUNNING' | 'FAILED' | 'SUCCEEDED'
   >('ALL')
@@ -314,6 +317,7 @@ export function ExtensionOperationsTab({
                 render: (_, agent) => {
                   const numDays = commandImportDays[agent.id] ?? 1
                   const adsDateRange = adsCommandDates[agent.id]
+                  const transactionDateRange = transactionCommandDates[agent.id]
                   return (
                     <Space size={6}>
                       <LazyActionPopover
@@ -385,6 +389,56 @@ export function ExtensionOperationsTab({
                         )}
                         renderContent={() => (
                           <Space direction="vertical" size={4}>
+                            <Popover
+                              title="Pull Transactions"
+                              trigger="click"
+                              content={
+                                <div className={styles.commandPopover}>
+                                  <Typography.Text strong>Transactions period</Typography.Text>
+                                  <DateRangePicker
+                                    aria-label="Transactions date range"
+                                    value={transactionDateRange}
+                                    onChange={(value) =>
+                                      setTransactionCommandDates((current) => ({
+                                        ...current,
+                                        [agent.id]: value,
+                                      }))
+                                    }
+                                  />
+                                  <Button
+                                    aria-label="Pull transactions"
+                                    type="primary"
+                                    icon={<CloudDownloadOutlined />}
+                                    loading={isCreatingCommand}
+                                    disabled={
+                                      !transactionDateRange?.dateFrom ||
+                                      !transactionDateRange?.dateTo
+                                    }
+                                    onClick={() =>
+                                      onCreateCommand({
+                                        agentId: agent.id,
+                                        type: 'IMPORT_TRANSACTIONS',
+                                        ...transactionDateRange,
+                                      })
+                                    }
+                                  >
+                                    Pull Transactions
+                                  </Button>
+                                </div>
+                              }
+                            >
+                              <Button
+                                aria-label="Configure Pull Transactions"
+                                block
+                                icon={<CloudDownloadOutlined />}
+                                disabled={
+                                  agent.status !== 'ONLINE' ||
+                                  !canWriteFinanceForShop(account, agent.shopId)
+                                }
+                              >
+                                Pull Transactions
+                              </Button>
+                            </Popover>
                             <Popover
                               title="Pull Ads"
                               trigger="click"

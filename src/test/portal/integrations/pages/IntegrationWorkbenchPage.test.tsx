@@ -42,6 +42,26 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         </tbody>
       </table>
     ),
+    DateRangePicker: ({
+      onChange,
+      'aria-label': ariaLabel,
+    }: {
+      onChange?: (value: { dateFrom: string; dateTo: string }) => void
+      'aria-label'?: string
+    }) => (
+      <button
+        aria-label={ariaLabel}
+        type="button"
+        onClick={() =>
+          onChange?.({
+            dateFrom: '2026-09-13T00:00:00.000Z',
+            dateTo: '2026-09-13T16:59:59.999Z',
+          })
+        }
+      >
+        Select dates
+      </button>
+    ),
     useFeedbackToast: () => vi.fn(),
     UiTabs: ({
       activeKey,
@@ -146,6 +166,7 @@ import {
   reprocessImportBatch,
 } from '@/features/portal/finance/api/financeApi'
 import {
+  createExtensionCommand,
   getImportJob,
   listExtensionAgents,
   listExtensionCommands,
@@ -638,6 +659,54 @@ describe('IntegrationWorkbenchPage', () => {
 
     expect(screen.queryByText('Ads period')).not.toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'More extension actions' })).toBeVisible()
+  })
+
+  it('queues a dated transaction import from More extension actions', async () => {
+    vi.mocked(listExtensionAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+        },
+      ],
+    })
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'More extension actions' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Configure Pull Transactions' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Transactions date range' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Pull transactions' }))
+
+    await waitFor(() =>
+      expect(createExtensionCommand).toHaveBeenCalledWith({
+        agentId: 'agent-1',
+        shopId: shop.id,
+        type: 'IMPORT_TRANSACTIONS',
+        dateFrom: '2026-09-13',
+        dateTo: '2026-09-13',
+      }),
+    )
   })
 
   it('keeps automation inside the extension workbench and loads it on demand', async () => {
