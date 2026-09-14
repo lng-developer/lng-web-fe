@@ -273,6 +273,7 @@ export function VendorWorkspaceProductsTabPage({
           current: productsPage,
           pageSize: productsPageSize,
           total: displayedTotal,
+          showSizeChanger: true,
           onChange: onProductsPageChange,
         }}
       />

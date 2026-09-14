@@ -204,13 +204,15 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
         onAction={mutation.mutate}
       />
 
-      <OrderTimelineModal
-        open={requestedModal === 'timeline' || Boolean(itemTimelineId)}
-        anchor={itemTimelineId ? itemTimelineAnchor : requestedPopupAnchor}
-        orderId={row.order.id}
-        orderItemId={itemTimelineId}
-        onClose={closeTimeline}
-      />
+      {requestedModal === 'timeline' || itemTimelineId ? (
+        <OrderTimelineModal
+          open
+          anchor={itemTimelineId ? itemTimelineAnchor : requestedPopupAnchor}
+          orderId={row.order.id}
+          orderItemId={itemTimelineId}
+          onClose={closeTimeline}
+        />
+      ) : null}
 
       <OrderReplacementModal
         open={requestedModal === 'replacement'}

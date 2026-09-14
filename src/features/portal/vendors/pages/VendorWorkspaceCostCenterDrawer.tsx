@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { Button, Card, Descriptions, Empty, List, Modal, Pagination, Space, Typography } from 'antd'
 
-import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
+import { CopyableSku, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { VendorCostCenter, VendorProduct } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -59,7 +59,11 @@ export function VendorWorkspaceCostCenterDrawer({
   const detailItems = selected
     ? [
         { key: 'code', label: t('vendors.code'), children: selected.code },
-        { key: 'sku', label: t('vendors.sku'), children: selected.sku || '—' },
+        {
+          key: 'sku',
+          label: t('vendors.sku'),
+          children: selected.sku ? <CopyableSku value={selected.sku} /> : '—',
+        },
         { key: 'lngCode', label: t('vendors.lngCode'), children: selected.lngCode || '—' },
         {
           key: 'printMethod',

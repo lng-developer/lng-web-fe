@@ -9,7 +9,7 @@ import { importFinanceFile } from '@/features/portal/finance/api/financeApi'
 import { FinanceImportModal } from '@/features/portal/finance/pages/FinanceImportModal'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { StatusTag, useFeedbackToast } from '@/shared/ui'
+import { FormattedDateTime, StatusTag, TableTextCell, useFeedbackToast } from '@/shared/ui'
 
 import {
   type ImportJob,
@@ -228,23 +228,28 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         title: t('portal.integrations.jobs.createdAt', { defaultValue: 'Created' }),
         dataIndex: 'createdAt',
         width: 160,
-        render: (value: string) => new Date(value).toLocaleString(),
+        render: (value: string) => <FormattedDateTime value={value} />,
       },
       {
         title: t('portal.integrations.shop', { defaultValue: 'Shop' }),
         dataIndex: 'shopId',
-        width: 160,
-        render: (shopId: string | null) => (shopId ? (shopNames.get(shopId) ?? shopId) : '-'),
+        width: 180,
+        render: (shopId: string | null) => (
+          <TableTextCell value={shopId ? (shopNames.get(shopId) ?? shopId) : '-'} maxWidth={160} />
+        ),
       },
       {
         title: t('portal.integrations.jobs.source', { defaultValue: 'Source' }),
-        render: (_, job) =>
-          `${t(`portal.integrations.sources.${job.source}`, { defaultValue: job.source })} / ${job.marketplaceCode}`,
+        width: 250,
+        render: (_, job) => {
+          const sourceText = `${t(`portal.integrations.sources.${job.source}`, { defaultValue: job.source })} / ${job.marketplaceCode}`
+          return <TableTextCell value={sourceText} maxWidth={230} />
+        },
       },
       {
         title: t('portal.integrations.jobs.status', { defaultValue: 'Status' }),
         dataIndex: 'status',
-        width: 132,
+        width: 140,
         render: (status: ImportJobStatus) => (
           <StatusTag status={statusTone(status)}>
             {t(`portal.integrations.statuses.${status}`, { defaultValue: status })}
@@ -253,7 +258,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       },
       {
         title: t('portal.integrations.jobs.counts', { defaultValue: 'Results' }),
-        width: 220,
+        width: 240,
         render: (_, job) =>
           `${job.importedCount} ${t('portal.integrations.jobs.imported', { defaultValue: 'imported' })} / ${job.skippedCount} ${t('portal.integrations.jobs.skipped', { defaultValue: 'skipped' })} / ${job.failedCount} ${t('portal.integrations.jobs.failed', { defaultValue: 'failed' })}`,
       },
@@ -310,7 +315,9 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
             account={account}
             columns={columns}
             counts={importJobCounts}
+            dataUpdatedAt={jobs.dataUpdatedAt}
             error={jobs.error}
+            isFetching={jobs.isFetching}
             isLoading={jobs.isLoading}
             jobs={jobs.data?.items ?? []}
             params={params}

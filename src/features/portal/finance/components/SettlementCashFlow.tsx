@@ -5,16 +5,16 @@ import type { TableColumnsType } from 'antd'
 import { Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { MetricCard, SectionCard, StatusTag } from '@/shared/ui'
+import { FormattedDateTime, MetricCard, SectionCard, StatusTag } from '@/shared/ui'
 
-import { listSettlements,type Settlement } from '../api/financeApi'
+import { listSettlements, type Settlement } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
 import { formatFinanceMoney } from './financeFormatters'
 
 const coverageLabel = (coverage?: number | null) =>
   coverage === null || coverage === undefined ? '—' : `${Math.round(coverage / 100)}%`
 
-const displayDate = (value?: string | null) => (value ? new Date(value).toLocaleDateString() : '—')
+const displayDate = (value?: string | null) => <FormattedDateTime value={value} />
 
 export function SettlementCashFlow() {
   const { t } = useTranslation()
@@ -27,13 +27,13 @@ export function SettlementCashFlow() {
     () => [
       {
         title: t('finance.settlements.settlement'),
-        width: 170,
+        width: 200,
         render: (_, row) => (
-          <Space orientation="vertical" size={0}>
+          <Space orientation="vertical" size={2}>
             <Typography.Text strong>{row.settlementId}</Typography.Text>
-            <Typography.Text type="secondary">
-              {displayDate(row.periodStartAt)} – {displayDate(row.periodEndAt)}
-            </Typography.Text>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+              {displayDate(row.periodStartAt)} <span>–</span> {displayDate(row.periodEndAt)}
+            </div>
           </Space>
         ),
       },
@@ -65,7 +65,9 @@ export function SettlementCashFlow() {
         width: 120,
         align: 'right',
         render: (_, row) => (
-          <StatusTag status={row.ledgerSummary.cashVarianceAmount === 0 ? 'operational' : 'warning'}>
+          <StatusTag
+            status={row.ledgerSummary.cashVarianceAmount === 0 ? 'operational' : 'warning'}
+          >
             {t('finance.settlements.linkedValue', {
               coverage: coverageLabel(row.ledgerSummary.linkCoverageBps),
               linked: row.ledgerSummary.linkedCount,

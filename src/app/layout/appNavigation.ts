@@ -317,7 +317,9 @@ export function getCoreForPath(pathname: string): AppCoreKey | undefined {
     pathname.startsWith('/portal/media') ||
     pathname.startsWith('/portal/customers') ||
     pathname.startsWith('/portal/customizations') ||
-    pathname.startsWith('/portal/work-scores')
+    pathname.startsWith('/portal/work-scores') ||
+    pathname.startsWith('/portal/monitoring') ||
+    pathname.startsWith('/portal/audit')
   )
     return 'system'
   if (pathname.startsWith('/portal')) return 'portal'

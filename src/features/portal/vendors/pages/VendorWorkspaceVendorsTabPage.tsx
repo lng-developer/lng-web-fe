@@ -198,6 +198,7 @@ export function VendorWorkspaceVendorsTabPage({
           current: vendorsPage,
           pageSize: vendorsPageSize,
           total: vendorsTotal,
+          showSizeChanger: true,
           onChange: onVendorsPageChange,
         }}
       />

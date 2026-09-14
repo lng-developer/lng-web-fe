@@ -10,10 +10,9 @@ import {
 } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Input, Segmented, Tag, Tooltip, Typography } from 'antd'
-import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { CopyableOrderId, MetricCard, StatusTag } from '@/shared/ui'
+import { CopyableOrderId, FormattedDateTime, MetricCard, StatusTag } from '@/shared/ui'
 
 import type { OrderProfitability, OrderProfitabilityReport } from '../api/reportApi'
 import styles from '../pages/ReportWorkspacePage.module.scss'
@@ -114,16 +113,7 @@ export function ReportOrderCostTab({
           (a.orderedAt || a.reportDate || '').localeCompare(b.orderedAt || b.reportDate || ''),
         render: (value: string | null, record: OrderProfitability) => {
           const rawDate = value || record.reportDate
-          if (!rawDate) return <span className={styles.moneyMuted}>—</span>
-          const d = dayjs(rawDate)
-          return (
-            <div className="flex flex-col text-xs leading-tight">
-              <span className="font-medium">{d.format('YYYY-MM-DD')}</span>
-              {value && value.includes('T') ? (
-                <span className="text-[11px] text-gray-400">{d.format('HH:mm')}</span>
-              ) : null}
-            </div>
-          )
+          return <FormattedDateTime value={rawDate} />
         },
       },
       {

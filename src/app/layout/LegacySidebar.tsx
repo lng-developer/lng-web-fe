@@ -29,6 +29,7 @@ import {
   TbReportSearch,
 } from 'react-icons/tb'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   ApartmentOutlined,
   CalendarOutlined,
@@ -44,6 +45,7 @@ import {
 import { Badge, Dropdown, Image, Layout, Menu, Popover } from 'antd'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
+import { loadMyEmployeeProfile } from '@/features/hr/api/hrApi'
 import { useDesignSummaryQuery } from '@/features/portal/design/hooks/useDesignTasksQuery'
 import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
 import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
@@ -462,10 +464,12 @@ export function LegacySidebar({
   collapsed,
   onCollapsedChange,
   bottomMenus: bottomMenuGroups = emptyBottomMenuGroups,
+  accountLabel,
 }: {
   collapsed: boolean
   onCollapsedChange: (value: boolean) => void
   bottomMenus?: Record<'hr' | 'system', NavigationGroup[]>
+  accountLabel?: string
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -486,6 +490,14 @@ export function LegacySidebar({
     setActiveMenu(routeState.menuKey)
     setOpenKeys(routeState.openKeys)
   }, [bottomMenuGroups, location.pathname, location.search])
+  const profile = useQuery({
+    queryKey: ['hr', 'employee-profiles', 'me'],
+    queryFn: loadMyEmployeeProfile,
+    enabled: !collapsed,
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+  const accountName = profile.data?.fullName?.trim() || accountLabel || '—'
   const activeDetailMenu =
     detailMenus[activeMenu] ??
     toLegacyMenuItems(bottomMenuGroups[activeMenu as 'hr' | 'system'] ?? [])
@@ -533,7 +545,7 @@ export function LegacySidebar({
               trigger={['click']}
               popupRender={() => <div className={styles.accountMenu}>{t('shell.logout')}</div>}
             >
-              <button type="button">{t('legacyMenu.userName')}</button>
+              <button type="button">{accountName}</button>
             </Dropdown>
           </div>
         )}

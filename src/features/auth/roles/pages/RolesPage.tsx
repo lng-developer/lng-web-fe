@@ -11,6 +11,7 @@ import {
   FeedbackAlert,
   PageHeader,
   SectionCard,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -63,17 +64,30 @@ export function RolesPage() {
     (data?.permissions.items ?? []).map((permission) => [permission.id, permission]),
   )
   const columns: TableColumnsType<Role> = [
-    { title: t('auth.roles.name'), render: (_, role) => role.name ?? role.code },
-    { title: t('auth.roles.code'), dataIndex: 'code' },
+    {
+      title: t('auth.roles.name'),
+      width: 200,
+      render: (_, role) => <TableTextCell strong value={role.name ?? role.code} />,
+    },
+    {
+      title: t('auth.roles.code'),
+      dataIndex: 'code',
+      width: 180,
+      render: (value) => <TableTextCell code value={value} />,
+    },
     {
       title: t('auth.roles.permissions'),
-      render: (_, role) =>
-        (role.permissions ?? role.permissionIds ?? []).map((permissionId) => (
-          <Tag key={permissionId}>{permissionById.get(permissionId)?.code ?? permissionId}</Tag>
-        )),
+      render: (_, role) => (
+        <Space wrap size={[4, 4]}>
+          {(role.permissions ?? role.permissionIds ?? []).map((permissionId) => (
+            <Tag key={permissionId}>{permissionById.get(permissionId)?.code ?? permissionId}</Tag>
+          ))}
+        </Space>
+      ),
     },
     {
       title: t('auth.accessEditor.actions'),
+      width: 160,
       align: 'right',
       render: (_, role) => (
         <Space>
@@ -134,6 +148,8 @@ export function RolesPage() {
       ) : null}
       <SectionCard title={t('auth.roles.catalog')}>
         <CoreDataTable
+          tableLayout="fixed"
+          scroll={{ x: 800 }}
           columns={columns}
           dataSource={data?.roles.items ?? []}
           loading={isLoading}

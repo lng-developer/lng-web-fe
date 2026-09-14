@@ -1,12 +1,12 @@
 import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Checkbox, Input, InputNumber, Typography } from 'antd'
+import { Checkbox, Input, InputNumber } from 'antd'
 
-import { PopupModal, type PopupModalAnchor } from '@/shared/ui'
+import { CopyableSku, PopupModal, type PopupModalAnchor } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import styles from '../pages/OrderWorkbenchPage.module.scss'
-import { displayValue, type OrderAction } from './orderTypes'
+import type { OrderAction } from './orderTypes'
 
 type OrderReplacementModalProps = {
   readonly open: boolean
@@ -97,7 +97,7 @@ function OrderReplacementModalInner({
                   })
                 }
               >
-                <Typography.Text strong>{displayValue(item.item.sku)}</Typography.Text>
+                <CopyableSku value={item.item.sku} strong />
               </Checkbox>
               <InputNumber
                 min={1}

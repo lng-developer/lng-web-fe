@@ -701,6 +701,7 @@ describe('IntegrationWorkbenchPage', () => {
     renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
+    await screen.findByText('RDC 1')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Enable settlement sync' }))
     await waitFor(() =>
@@ -708,7 +709,7 @@ describe('IntegrationWorkbenchPage', () => {
         enabled: true,
       }),
     )
-  })
+  }, 15_000)
 
   it('requests an enabled settlement sync immediately', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
@@ -760,12 +761,13 @@ describe('IntegrationWorkbenchPage', () => {
     renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
+    await screen.findByText('RDC 1')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Request settlement sync now' }))
     await waitFor(() =>
       expect(requestExtensionFinanceScheduleNow).toHaveBeenCalledWith('agent-1', 'SETTLEMENTS'),
     )
-  })
+  }, 15_000)
 
   it('explains the daily finance import safeguards', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({

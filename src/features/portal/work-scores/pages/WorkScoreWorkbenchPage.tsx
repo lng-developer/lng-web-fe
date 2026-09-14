@@ -22,12 +22,16 @@ import { ApiError } from '@/shared/api/apiError'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
 import {
+  CopyableSku,
+  DataFreshness,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
   SectionCard,
   StatusTag,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -247,12 +251,14 @@ export function WorkScoreWorkbenchPage({
                 />
               )}
               <div className={styles.assetMeta}>
-                <Typography.Text className={styles.assetName} title={sku}>
-                  {sku}
-                </Typography.Text>
-                <Typography.Text className={styles.assetSub} title={title}>
-                  {title}
-                </Typography.Text>
+                {textOrNull(snapshot.sku) ? (
+                  <CopyableSku strong value={textOrNull(snapshot.sku)} />
+                ) : (
+                  <Typography.Text className={styles.assetName} title={sku}>
+                    {sku}
+                  </Typography.Text>
+                )}
+                <TableTextCell secondary value={title} maxWidth={140} />
               </div>
             </div>
           )
@@ -285,11 +291,8 @@ export function WorkScoreWorkbenchPage({
       },
       {
         title: t('portal.workScores.columns.worker'),
-        render: (_, row) => (
-          <Typography.Text strong style={{ fontSize: 13 }}>
-            {row.workerName || row.workerId}
-          </Typography.Text>
-        ),
+        width: 180,
+        render: (_, row) => <TableTextCell strong value={row.workerName || row.workerId} />,
       },
       {
         title: t('portal.workScores.columns.points'),
@@ -320,7 +323,7 @@ export function WorkScoreWorkbenchPage({
         title: t('portal.workScores.columns.scoredAt'),
         dataIndex: 'scoredAt',
         width: 160,
-        render: (value) => (value ? new Date(value).toLocaleString() : '-'),
+        render: (value) => <FormattedDateTime value={value} />,
       },
       {
         title: t('portal.workScores.columns.action'),
@@ -503,8 +506,8 @@ export function WorkScoreWorkbenchPage({
             </div>
           </FilterBar>
         </div>
-        {canAdjust ? (
-          <div className={styles.actionsWrapper}>
+        <div className={styles.actionsWrapper}>
+          {canAdjust ? (
             <Button
               aria-label={t('portal.workScores.rules.title')}
               icon={<SettingOutlined />}
@@ -512,13 +515,23 @@ export function WorkScoreWorkbenchPage({
             >
               {t('portal.workScores.rules.title')}
             </Button>
-          </div>
-        ) : null}
+          ) : null}
+          <DataFreshness
+            timestamp={rows.dataUpdatedAt}
+            onRefresh={() => {
+              void rows.refetch()
+              void summary.refetch()
+            }}
+            loading={rows.isFetching || summary.isFetching}
+          />
+        </div>
       </div>
 
       <SectionCard className={styles.tableCard}>
         <CoreDataTable
           fillViewport
+          tableLayout="fixed"
+          scroll={{ x: 1_100 }}
           rowKey="id"
           columns={columns}
           dataSource={rows.data?.items ?? []}
@@ -528,6 +541,7 @@ export function WorkScoreWorkbenchPage({
             current: page,
             pageSize: DEFAULT_PAGE_SIZE,
             total: rows.data?.total,
+            showSizeChanger: true,
             onChange: setPage,
           }}
         />

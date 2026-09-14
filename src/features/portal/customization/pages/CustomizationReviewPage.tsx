@@ -10,11 +10,14 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  CopyableSku,
+  DataFreshness,
   FilterBar,
   MetricCard,
   SearchInput,
   SectionCard,
   StatusTag,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -91,22 +94,27 @@ export const CustomizationReviewPage = () => {
         title: t('customization.columns.order'),
         width: 184,
         render: (_, row) => (
-          <>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}
+          >
             <CopyableOrderId strong value={row.order.externalOrderId} />
-            <br />
-            <Typography.Text type="secondary">{row.item.sku || '—'}</Typography.Text>
-          </>
+            {row.item.sku ? (
+              <CopyableSku value={row.item.sku} />
+            ) : (
+              <Typography.Text type="secondary">—</Typography.Text>
+            )}
+          </div>
         ),
       },
       {
         title: t('customization.columns.customer'),
         width: 168,
-        render: (_, row) => row.customer.name || row.customer.email || '—',
+        render: (_, row) => <TableTextCell value={row.customer.name || row.customer.email} />,
       },
       {
         title: t('customization.columns.shop'),
         width: 148,
-        render: (_, row) => row.shop.name || '—',
+        render: (_, row) => <TableTextCell value={row.shop.name} />,
       },
       {
         title: t('customization.columns.status'),
@@ -119,7 +127,13 @@ export const CustomizationReviewPage = () => {
       },
       {
         title: t('customization.columns.issue'),
-        render: (_, row) => row.errorMessage || row.errorCode || '—',
+        width: 240,
+        render: (_, row) => (
+          <TableTextCell
+            value={row.errorMessage || row.errorCode}
+            expandable={Boolean(row.errorMessage && row.errorMessage.length > 36)}
+          />
+        ),
       },
       {
         title: t('customization.columns.assets'),
@@ -163,7 +177,16 @@ export const CustomizationReviewPage = () => {
           status={t('customization.summary.status.critical')}
         />
       </div>
-      <SectionCard title={t('customization.queue')}>
+      <SectionCard
+        title={t('customization.queue')}
+        extra={
+          <DataFreshness
+            timestamp={queue.dataUpdatedAt}
+            onRefresh={() => void queue.refetch()}
+            loading={queue.isFetching}
+          />
+        }
+      >
         <FilterBar label={t('customization.filters.label')} contentClassName={styles.filters}>
           <SearchInput
             value={q}
@@ -230,16 +253,22 @@ export const CustomizationReviewPage = () => {
                   label: t('customization.columns.order'),
                   children: <CopyableOrderId value={selected.order.externalOrderId} />,
                 },
-                { key: 'sku', label: 'SKU', children: selected.item.sku || '—' },
+                {
+                  key: 'sku',
+                  label: 'SKU',
+                  children: selected.item.sku ? <CopyableSku value={selected.item.sku} /> : '—',
+                },
                 {
                   key: 'customer',
                   label: t('customization.columns.customer'),
-                  children: selected.customer.name || selected.customer.email || '—',
+                  children: (
+                    <TableTextCell value={selected.customer.name || selected.customer.email} />
+                  ),
                 },
                 {
                   key: 'shop',
                   label: t('customization.columns.shop'),
-                  children: selected.shop.name || '—',
+                  children: <TableTextCell value={selected.shop.name} />,
                 },
                 {
                   key: 'status',
@@ -253,7 +282,9 @@ export const CustomizationReviewPage = () => {
                 {
                   key: 'issue',
                   label: t('customization.columns.issue'),
-                  children: selected.errorMessage || selected.errorCode || '—',
+                  children: (
+                    <TableTextCell value={selected.errorMessage || selected.errorCode} expandable />
+                  ),
                 },
               ]}
             />

@@ -78,6 +78,8 @@ describe('app navigation', () => {
 
   it('maps nested organization and account routes to their owning core', () => {
     expect(getCoreForPath('/portal/shops')).toBe('portal')
+    expect(getCoreForPath('/portal/monitoring')).toBe('system')
+    expect(getCoreForPath('/portal/audit')).toBe('system')
     expect(getCoreForPath('/portal/media')).toBe('system')
     expect(getCoreForPath('/portal/customers')).toBe('system')
     expect(getCoreForPath('/portal/customizations')).toBe('system')

@@ -9,7 +9,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { SearchInput } from '@/shared/ui'
+import { FormattedDateTime, SearchInput } from '@/shared/ui'
 
 import type { MappingRule, MappingRuleType } from '../api/mappingApi'
 
@@ -130,17 +130,8 @@ export function RuleInventoryPanel({
       {
         key: 'updatedAt',
         title: t('mapping.fields.updatedAt'),
-        width: 110,
-        render: (_: unknown, rule) =>
-          rule.updatedAt ? (
-            <Tooltip title={new Date(rule.updatedAt).toLocaleString()}>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {dayjs(rule.updatedAt).fromNow()}
-              </Typography.Text>
-            </Tooltip>
-          ) : (
-            fallback
-          ),
+        width: 140,
+        render: (_: unknown, rule) => <FormattedDateTime value={rule.updatedAt} />,
       },
       // Actions
       {
@@ -177,7 +168,12 @@ export function RuleInventoryPanel({
     <Flex
       vertical
       gap={12}
-      style={{ display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr)', height: '100%', minHeight: 0 }}
+      style={{
+        display: 'grid',
+        gridTemplateRows: 'auto minmax(0, 1fr)',
+        height: '100%',
+        minHeight: 0,
+      }}
     >
       {/* Filter bar */}
       <Flex gap={10} wrap="wrap" align="center">

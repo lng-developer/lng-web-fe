@@ -42,6 +42,7 @@ import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
 import { getAccount } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage } from '@/shared/media'
+import { FormattedDateTime } from '@/shared/ui'
 
 import styles from './ChatWorkspacePage.module.scss'
 
@@ -67,11 +68,6 @@ function conversationTitle(
     conversation.relatedResource?.id ||
     `${conversation.type.replaceAll('_', ' ')} conversation`
   )
-}
-
-function formatTime(value: string | null) {
-  if (!value) return ''
-  return new Date(value).toLocaleString()
 }
 
 function MessageBubble({ message, isOwn }: { message: ChatMessage; isOwn: boolean }) {
@@ -116,9 +112,9 @@ function MessageBubble({ message, isOwn }: { message: ChatMessage; isOwn: boolea
             )}
           </Space>
         ) : null}
-        <Typography.Text type="secondary" className={styles.messageTime}>
-          {formatTime(message.createdAt)}
-        </Typography.Text>
+        <div className={styles.messageTime}>
+          <FormattedDateTime value={message.createdAt} />
+        </div>
       </div>
     </div>
   )

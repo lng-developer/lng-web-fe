@@ -14,9 +14,11 @@ import {
   type DateRangeValue,
   FeedbackAlert,
   FilterBar,
+  FormattedDateTime,
   SearchInput,
   SectionCard,
   StatusTag,
+  TableTextCell,
 } from '@/shared/ui'
 
 import {
@@ -90,6 +92,7 @@ export function MediaWorkspacePage() {
     () => [
       {
         title: t('media.columns.file'),
+        width: 260,
         render: (_, asset) => (
           <Space>
             {asset.mimeType?.startsWith('image/') ? (
@@ -103,16 +106,24 @@ export function MediaWorkspacePage() {
             ) : (
               <FileOutlined />
             )}
-            <Typography.Text strong>
-              {asset.originalFilename ?? t('media.unknownFile')}
-            </Typography.Text>
+            <TableTextCell
+              value={asset.originalFilename ?? t('media.unknownFile')}
+              strong
+              maxWidth={180}
+            />
           </Space>
         ),
       },
-      { title: t('media.columns.mime'), dataIndex: 'mimeType', render: (value) => value ?? '-' },
-      { title: t('media.columns.size'), dataIndex: 'size', render: formatSize },
+      {
+        title: t('media.columns.mime'),
+        dataIndex: 'mimeType',
+        width: 120,
+        render: (value) => <TableTextCell value={value ?? '-'} maxWidth={110} />,
+      },
+      { title: t('media.columns.size'), dataIndex: 'size', width: 100, render: formatSize },
       {
         title: t('media.columns.source'),
+        width: 140,
         render: (_, asset) => (
           <Space direction="vertical" size={0}>
             <span>{asset.provider ?? '-'}</span>
@@ -123,22 +134,26 @@ export function MediaWorkspacePage() {
       {
         title: t('media.columns.ownerType'),
         dataIndex: 'ownerType',
+        width: 120,
         render: (value) => value ?? '-',
       },
       {
         title: t('media.columns.createdAt'),
         dataIndex: 'createdAt',
-        render: (value) => new Date(value).toLocaleString(),
+        width: 160,
+        render: (value) => <FormattedDateTime value={value} />,
       },
       {
         title: t('media.columns.status'),
         dataIndex: 'status',
+        width: 110,
         render: (value) => (
           <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
         ),
       },
       {
         title: t('media.columns.actions'),
+        width: 80,
         render: (_, asset) =>
           asset.downloadUrl ? (
             <Tooltip title={t('media.actions.download')}>

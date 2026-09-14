@@ -4,6 +4,8 @@ import { ReloadOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Descriptions, Modal, Space, Spin, Typography } from 'antd'
 
+import { FormattedDateTime } from '@/shared/ui'
+
 import { getOrderItemFinanceSnapshot } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
 import { formatFinanceMoney } from './financeFormatters'
@@ -106,16 +108,28 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
                 key: 'rate-card',
                 label: t('finance.detail.rateCard'),
                 children:
-                  itemDetail.data.costRate?.version == null
-                    ? '—'
-                    : `${t('finance.detail.rateVersion', { version: itemDetail.data.costRate.version })} · ${itemDetail.data.costRate.effectiveFrom ? new Date(itemDetail.data.costRate.effectiveFrom).toLocaleDateString() : '—'}`,
+                  itemDetail.data.costRate?.version == null ? (
+                    '—'
+                  ) : (
+                    <Space size={6}>
+                      <span>
+                        {t('finance.detail.rateVersion', {
+                          version: itemDetail.data.costRate.version,
+                        })}{' '}
+                        ·
+                      </span>
+                      <FormattedDateTime value={itemDetail.data.costRate.effectiveFrom} />
+                    </Space>
+                  ),
               },
               {
                 key: 'calculated-at',
                 label: t('finance.detail.lastRecalculated'),
-                children: itemDetail.data.calculatedAt
-                  ? new Date(itemDetail.data.calculatedAt).toLocaleString()
-                  : '—',
+                children: itemDetail.data.calculatedAt ? (
+                  <FormattedDateTime value={itemDetail.data.calculatedAt} />
+                ) : (
+                  '—'
+                ),
               },
             ]}
           />

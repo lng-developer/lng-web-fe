@@ -14,7 +14,7 @@ import { Avatar, Badge, Button, Empty, List, Popover, Segmented, Skeleton, Typog
 
 import type { AppNotification } from '@/features/notifications/api/notificationApi'
 import { useNotificationCenter } from '@/features/notifications/useNotificationCenter'
-import { useFeedbackToast } from '@/shared/ui'
+import { FormattedDateTime, useFeedbackToast } from '@/shared/ui'
 
 import styles from './NotificationCenter.module.scss'
 
@@ -32,18 +32,6 @@ const notificationIcon = (item: AppNotification) => {
     return <FileTextOutlined />
   }
   return <NotificationOutlined />
-}
-
-const relativeTime = (value: string) => {
-  const diff = Date.now() - new Date(value).getTime()
-  const minute = 60_000
-  const hour = 60 * minute
-  const day = 24 * hour
-  if (diff < minute) return '<1m'
-  if (diff < hour) return `${Math.floor(diff / minute)}m`
-  if (diff < day) return `${Math.floor(diff / hour)}h`
-  if (diff < 7 * day) return `${Math.floor(diff / day)}d`
-  return new Date(value).toLocaleDateString()
 }
 
 export function NotificationCenter() {
@@ -160,9 +148,9 @@ export function NotificationCenter() {
                       <Typography.Text className={styles.message} title={item.message}>
                         {item.message}
                       </Typography.Text>
-                      <Typography.Text className={styles.timestamp}>
-                        {relativeTime(item.createdAt)}
-                      </Typography.Text>
+                      <div className={styles.timestamp}>
+                        <FormattedDateTime value={item.createdAt} />
+                      </div>
                     </div>
                     {unread ? (
                       <Button

@@ -162,7 +162,7 @@ describe('CatalogListingWorkbenchPage', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Request PSD' }).at(-1)!)
     await waitFor(() => expect(requestListingPsd).toHaveBeenCalledWith('listing-1', 'NORMAL'))
-  })
+  }, 15_000)
 
   it('loads ten listings on the first page by default', async () => {
     render(

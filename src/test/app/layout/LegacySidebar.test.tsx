@@ -2,6 +2,14 @@ import { MemoryRouter } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const { loadMyEmployeeProfile } = vi.hoisted(() => ({
+  loadMyEmployeeProfile: vi.fn(),
+}))
+
+vi.mock('@/features/hr/api/hrApi', () => ({
+  loadMyEmployeeProfile,
+}))
+
 import { LegacySidebar } from '@/app/layout/LegacySidebar'
 import { AppProviders } from '@/app/providers/AppProviders'
 import i18n from '@/shared/i18n/i18n'
@@ -28,6 +36,7 @@ describe('LegacySidebar', () => {
     sidebarSummaryMocks.useOrderSummaryQuery.mockReturnValue({ data: { tabCounts: { NEW: 12 } } })
     sidebarSummaryMocks.useDesignSummaryQuery.mockReturnValue({ data: { unassigned: 4 } })
     sidebarSummaryMocks.useProductionQueueCountsQuery.mockReturnValue({ data: { blocked: 3 } })
+    loadMyEmployeeProfile.mockResolvedValue({ fullName: 'Dynamic Operator' })
   })
   afterEach(cleanup)
 
@@ -59,7 +68,7 @@ describe('LegacySidebar', () => {
     )
 
     expect(screen.getByText('LNG System')).toBeVisible()
-    expect(screen.getByText('Ngô Văn Hiếu')).toBeVisible()
+    await waitFor(() => expect(screen.getByText('Dynamic Operator')).toBeVisible())
     const menuLabels = [
       'Orders',
       'Team Tasks',

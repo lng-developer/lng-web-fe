@@ -9,6 +9,7 @@
 }
 
 .metrics {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(5, minmax(180px, 1fr));
   gap: 8px;
@@ -40,6 +41,7 @@
 }
 
 .filterRow {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -65,17 +67,25 @@
 
 .tableShell {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  border: 1px solid var(--ant-color-border);
   border-radius: 8px;
   overflow: hidden;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 8px 24px rgb(15 23 42 / 5%);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 4%);
+}
+
+.tableShell :global(.ant-table-wrapper) {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  height: 100%;
 }
 
 .listingTable {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
 }
 

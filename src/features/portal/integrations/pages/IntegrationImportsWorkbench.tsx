@@ -13,7 +13,14 @@ import { Button, Segmented, Select } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
-import { DateRangePicker, FeedbackAlert, FilterBar, MetricCard, SectionCard } from '@/shared/ui'
+import {
+  DataFreshness,
+  DateRangePicker,
+  FeedbackAlert,
+  FilterBar,
+  MetricCard,
+  SectionCard,
+} from '@/shared/ui'
 
 import type {
   ImportJob,
@@ -31,6 +38,8 @@ interface IntegrationImportsWorkbenchProps {
   readonly counts: { completed: number; needsReview: number; processing: number }
   readonly error: Error | null
   readonly isLoading: boolean
+  readonly isFetching?: boolean
+  readonly dataUpdatedAt?: number
   readonly jobs: ImportJob[]
   readonly params: ImportJobListParams
   readonly selectedJobId?: string
@@ -60,7 +69,9 @@ export function IntegrationImportsWorkbench({
   account,
   columns,
   counts,
+  dataUpdatedAt,
   error,
+  isFetching,
   isLoading,
   jobs,
   onChange,
@@ -133,6 +144,7 @@ export function IntegrationImportsWorkbench({
             },
           ]}
         />
+        <DataFreshness timestamp={dataUpdatedAt} onRefresh={onRetry} loading={isFetching} />
       </div>
 
       {viewMode === 'jobs' ? (
@@ -141,7 +153,7 @@ export function IntegrationImportsWorkbench({
             <CoreDataTable
               fillViewport
               tableLayout="fixed"
-              scroll={{ x: 900 }}
+              scroll={{ x: 970 }}
               columns={columns}
               dataSource={jobs}
               loading={isLoading}

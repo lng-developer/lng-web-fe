@@ -12,12 +12,16 @@ import { Alert, Button, Modal, Progress, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
+  CopyableOrderId,
+  CopyableSku,
   DateRangePicker,
   type DateRangeValue,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
   SectionCard,
   StatusTag,
+  TableTextCell,
 } from '@/shared/ui'
 
 import {
@@ -33,7 +37,7 @@ import styles from './SettlementWorkspacePage.module.scss'
 const PAGE_SIZE = 20
 
 function date(value: string | null | undefined) {
-  return value ? new Date(value).toLocaleDateString() : '—'
+  return <FormattedDateTime value={value} />
 }
 
 function statusTone(status?: string) {
@@ -75,6 +79,7 @@ export function SettlementWorkspacePage() {
       {
         title: t('finance.settlements.settlementId'),
         dataIndex: 'settlementId',
+        width: 160,
         render: (value: string | null) => (
           <Button type="link" className={styles.idButton}>
             {value || '—'}
@@ -83,26 +88,43 @@ export function SettlementWorkspacePage() {
       },
       {
         title: t('finance.settlements.period'),
-        render: (_, row) => `${date(row.periodStartAt)} – ${date(row.periodEndAt)}`,
+        width: 220,
+        render: (_, row) => (
+          <Space size={4}>
+            {date(row.periodStartAt)}
+            <span>–</span>
+            {date(row.periodEndAt)}
+          </Space>
+        ),
       },
-      { title: t('finance.settlements.depositDate'), dataIndex: 'depositAt', render: date },
+      {
+        title: t('finance.settlements.depositDate'),
+        dataIndex: 'depositAt',
+        width: 150,
+        render: date,
+      },
       {
         title: t('finance.settlements.netSettlement'),
+        width: 140,
         align: 'right',
         render: (_, row) =>
           formatFinanceMoney(row.netSettlementAmount ?? row.totalAmount, row.currency),
       },
       {
         title: t('finance.settlements.ledgerNet'),
+        width: 140,
         align: 'right',
         render: (_, row) => formatFinanceMoney(row.ledgerSummary.netAmount, row.currency),
       },
       {
         title: t('finance.settlements.linked'),
+        width: 110,
+        align: 'center',
         render: (_, row) => `${row.ledgerSummary.linkedCount}/${row.ledgerSummary.lineCount}`,
       },
       {
         title: t('finance.settlements.status'),
+        width: 140,
         render: (_, row) => {
           const batch = batches.data?.items.find((item) => item.id === row.importBatchId)
           return (
@@ -125,25 +147,34 @@ export function SettlementWorkspacePage() {
 
   const ledgerColumns = useMemo<TableColumnsType<SettlementLedgerLine>>(
     () => [
-      { title: t('finance.settlements.posted'), dataIndex: 'postedAt', render: date },
+      { title: t('finance.settlements.posted'), dataIndex: 'postedAt', width: 150, render: date },
       {
         title: t('finance.settlements.type'),
         dataIndex: 'transactionType',
-        render: (value) => value || '—',
+        width: 130,
+        render: (value) => <TableTextCell value={value} maxWidth={120} />,
       },
       {
         title: t('finance.settlements.amountType'),
         dataIndex: 'amountType',
-        render: (value) => value || '—',
+        width: 140,
+        render: (value) => <TableTextCell value={value} maxWidth={130} />,
       },
       {
         title: t('finance.settlements.order'),
         dataIndex: 'externalOrderId',
-        render: (value) => value || '—',
+        width: 180,
+        render: (value: string | null) => <CopyableOrderId value={value} fallback="—" />,
       },
-      { title: t('finance.settlements.sku'), dataIndex: 'sku', render: (value) => value || '—' },
+      {
+        title: t('finance.settlements.sku'),
+        dataIndex: 'sku',
+        width: 160,
+        render: (value: string | null) => <CopyableSku value={value} fallback="—" />,
+      },
       {
         title: t('finance.settlements.movement'),
+        width: 130,
         align: 'right',
         render: (_, row) => formatFinanceMoney(row.amount, row.currency),
       },
@@ -245,9 +276,11 @@ export function SettlementWorkspacePage() {
         {detail.data ? (
           <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             <div className={styles.detailHeader}>
-              <Typography.Text type="secondary">
-                {`${date(detail.data.settlement.periodStartAt)} – ${date(detail.data.settlement.periodEndAt)}`}
-              </Typography.Text>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {date(detail.data.settlement.periodStartAt)}
+                <span>–</span>
+                {date(detail.data.settlement.periodEndAt)}
+              </div>
               <Typography.Title level={4} className={styles.detailAmount}>
                 {formatFinanceMoney(
                   detail.data.settlement.netSettlementAmount ?? detail.data.settlement.totalAmount,

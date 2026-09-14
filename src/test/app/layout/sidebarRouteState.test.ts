@@ -31,5 +31,31 @@ describe('getSidebarRouteState', () => {
       core: 'system',
       selectedKey: undefined,
     })
+    expect(getSidebarRouteState('/portal/monitoring', [])).toEqual({
+      core: 'system',
+      selectedKey: undefined,
+    })
+  })
+
+  it('normalizes legacy aliases so sidebar items match correctly', () => {
+    const systemGroups: NavigationGroup[] = [
+      {
+        key: 'system-main',
+        labelKey: 'system',
+        items: [
+          { key: 'monitoring', path: '/auth/monitoring', labelKey: 'monitoring' },
+          { key: 'audit-log', path: '/auth/audit-log', labelKey: 'audit' },
+        ],
+      },
+    ]
+
+    expect(getSidebarRouteState('/portal/monitoring', systemGroups)).toEqual({
+      core: 'system',
+      selectedKey: 'monitoring',
+    })
+    expect(getSidebarRouteState('/portal/audit', systemGroups)).toEqual({
+      core: 'system',
+      selectedKey: 'audit-log',
+    })
   })
 })

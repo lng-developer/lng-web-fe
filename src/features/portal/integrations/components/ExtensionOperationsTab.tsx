@@ -30,7 +30,7 @@ import type {
   ExtensionTokenInput,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
-import { DateRangePicker, SectionCard, StatusTag } from '@/shared/ui'
+import { DateRangePicker, FormattedDateTime, SectionCard, StatusTag } from '@/shared/ui'
 
 import type {
   ExtensionCommand,
@@ -298,7 +298,7 @@ export function ExtensionOperationsTab({
                 title: 'Last seen',
                 dataIndex: 'lastSeenAt',
                 width: 160,
-                render: (value: string) => new Date(value).toLocaleString(),
+                render: (value: string) => <FormattedDateTime value={value} />,
               },
               {
                 title: 'Next poll',
@@ -619,8 +619,8 @@ export function ExtensionOperationsTab({
             {
               title: t('portal.integrations.extension.created', { defaultValue: 'Created' }),
               dataIndex: 'createdAt',
-              width: 155,
-              render: (value: string) => new Date(value).toLocaleString(),
+              width: 160,
+              render: (value: string) => <FormattedDateTime value={value} />,
             },
           ]}
           scroll={{ x: 760 }}

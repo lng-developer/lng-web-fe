@@ -22,7 +22,14 @@ import {
 import dayjs from 'dayjs'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
-import { FeedbackAlert, LoadingState, PageHeader, SectionCard, StatusTag } from '@/shared/ui'
+import {
+  FeedbackAlert,
+  FormattedDateTime,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+  StatusTag,
+} from '@/shared/ui'
 
 import {
   useAccountDetailQuery,
@@ -189,9 +196,11 @@ export function AccountDetailPage() {
               {
                 key: 'end',
                 label: t('auth.accountDetail.endDate', 'End date'),
-                children: account.deactivatedAt
-                  ? new Date(account.deactivatedAt).toLocaleDateString()
-                  : t('auth.accountDetail.activeAccount', 'Active account'),
+                children: account.deactivatedAt ? (
+                  <FormattedDateTime value={account.deactivatedAt} />
+                ) : (
+                  t('auth.accountDetail.activeAccount', 'Active account')
+                ),
               },
             ]}
           />

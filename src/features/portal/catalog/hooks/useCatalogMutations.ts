@@ -9,6 +9,7 @@ import {
   type CreateListingInput,
   exportListingsCsv,
   type Listing,
+  type PsdPriority,
   requestListingPsd,
   updateListing,
   type UpdateListingInput,
@@ -55,8 +56,9 @@ export function useCatalogMutations({
   })
 
   const requestDefaultPsd = useMutation({
-    mutationFn: (listingId: string) => requestListingPsd(listingId),
-    onSuccess: async (_, listingId) => {
+    mutationFn: ({ listingId, priority }: { listingId: string; priority: PsdPriority }) =>
+      requestListingPsd(listingId, priority),
+    onSuccess: async (_, { listingId }) => {
       await refreshListings(listingId)
       toast('success', t('portal.catalog.psd.taskRequested'))
     },

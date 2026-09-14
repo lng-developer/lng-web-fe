@@ -6,7 +6,7 @@ import { Button, Empty, Select, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { FilterBar, SearchInput, SectionCard, StatusTag } from '@/shared/ui'
+import { FilterBar, FormattedDateTime, SearchInput, StatusTag } from '@/shared/ui'
 
 import type { Shop, ShopListParams, ShopStatus } from '../../api/shopApi'
 import styles from '../ShopWorkspacePage.module.scss'
@@ -85,7 +85,7 @@ export function ShopWorkspaceTable({
         title: t('portal.shops.updatedAt'),
         dataIndex: 'updatedAt',
         width: 170,
-        render: (value: string) => (value ? new Date(value).toLocaleString() : '-'),
+        render: (value: string) => <FormattedDateTime value={value} />,
       },
       ...(canWriteAnyShop
         ? [
@@ -144,7 +144,7 @@ export function ShopWorkspaceTable({
         {actions ? <div className={styles.actionsWrapper}>{actions}</div> : null}
       </div>
 
-      <SectionCard className={styles.compactTable}>
+      <div className={styles.tableArea}>
         <CoreDataTable
           className={styles.compactTable}
           columns={columns}
@@ -166,10 +166,11 @@ export function ShopWorkspaceTable({
             current: params.page,
             pageSize: params.limit,
             total: data?.pagination.total,
+            showSizeChanger: true,
             onChange: onPageChange,
           }}
         />
-      </SectionCard>
+      </div>
     </>
   )
 }

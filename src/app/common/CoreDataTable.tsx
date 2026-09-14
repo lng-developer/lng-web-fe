@@ -5,7 +5,6 @@ import { Empty, Table } from 'antd'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import styles from '@/shared/ui/sharedUi.module.scss'
 
-import { getFullRowsHeight } from './coreDataTableLayout'
 import { CommonTablePagination } from './TablePagination'
 
 export type ServerSortColumn = {
@@ -59,7 +58,7 @@ export function CoreDataTable<RecordType extends object>({
   error,
   fillViewport = false,
   viewportBottomGap = 0,
-  paginationAtBottom = true,
+  paginationAtBottom = false,
   serverSorting,
   ...tableProps
 }: CoreDataTableProps<RecordType>) {
@@ -71,7 +70,7 @@ export function CoreDataTable<RecordType extends object>({
   const tableClassName = [
     styles.dataTable,
     fillViewport ? styles.dataTableFillViewport : undefined,
-    fillViewport && paginationAtBottom ? styles.dataTablePaginationAtBottom : undefined,
+    paginationAtBottom || fillViewport ? styles.dataTablePaginationAtBottom : undefined,
     tableProps.className,
   ]
     .filter(Boolean)
@@ -189,9 +188,6 @@ export function CoreDataTable<RecordType extends object>({
     const calculateHeight = () => {
       const container = containerRef.current
       const tableHeader = container?.querySelector<HTMLElement>('.ant-table-thead')
-      const firstDataRow = container?.querySelector<HTMLElement>(
-        '.ant-table-tbody > tr:not(.ant-table-measure-row)',
-      )
 
       if (!container || !tableHeader) return
 
@@ -208,10 +204,7 @@ export function CoreDataTable<RecordType extends object>({
       const availableHeight =
         window.innerHeight - headerBottom - paginationHeight - mainPaddingBottom - viewportBottomGap
 
-      const nextHeight = getFullRowsHeight(
-        Math.max(120, Math.floor(availableHeight)),
-        firstDataRow?.getBoundingClientRect().height,
-      )
+      const nextHeight = Math.max(120, Math.floor(availableHeight))
 
       setViewportScrollY((current) => (current === nextHeight ? current : nextHeight))
     }
@@ -237,7 +230,7 @@ export function CoreDataTable<RecordType extends object>({
   }, [dataSourceLength, fillViewport, viewportBottomGap])
 
   const scroll = {
-    y: fillViewport ? (viewportScrollY ?? 'calc(100vh - 360px)') : 'calc(100vh - 360px)',
+    ...(fillViewport ? { y: viewportScrollY ?? 'calc(100vh - 360px)' } : {}),
     ...tableProps.scroll,
   }
 

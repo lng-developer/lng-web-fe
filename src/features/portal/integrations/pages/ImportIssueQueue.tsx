@@ -3,19 +3,21 @@ import { useTranslation } from 'react-i18next'
 import { CheckOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Select, Space, Tooltip, Typography } from 'antd'
+import { Button, Popover, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
+  CopyableListingId,
   CopyableOrderId,
   FeedbackAlert,
   FilterBar,
   SearchInput,
   SectionCard,
   StatusTag,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -119,29 +121,49 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
       title: t('portal.integrations.issues.reference', { defaultValue: 'Reference' }),
       width: 220,
       render: (_, issue) => (
-        <Space orientation="vertical" size={0}>
+        <Space direction="vertical" size={2}>
           <CopyableOrderId value={issue.externalOrderId} fallback="-" />
-          {issue.externalItemId ? (
-            <Typography.Text type="secondary">{issue.externalItemId}</Typography.Text>
-          ) : null}
+          {issue.externalItemId ? <CopyableListingId value={issue.externalItemId} /> : null}
         </Space>
       ),
     },
     {
       title: t('portal.integrations.issues.message', { defaultValue: 'Message' }),
-      render: (_, issue) => (
-        <div>
-          <div>{issue.errorMessage ?? issue.errorCode ?? '-'}</div>
-          {Object.keys(issue.details).length > 0 ? (
-            <pre className={styles.diagnosticText}>{JSON.stringify(issue.details, null, 2)}</pre>
-          ) : null}
-        </div>
-      ),
+      width: 300,
+      render: (_, issue) => {
+        const hasDetails = Object.keys(issue.details).length > 0
+        const messageText = issue.errorMessage ?? issue.errorCode ?? '-'
+        return (
+          <Space size={6} align="center">
+            <TableTextCell value={messageText} maxWidth={220} />
+            {hasDetails ? (
+              <Popover
+                content={
+                  <pre className={styles.diagnosticText}>
+                    {JSON.stringify(issue.details, null, 2)}
+                  </pre>
+                }
+                trigger="click"
+                placement="topLeft"
+                overlayStyle={{ zIndex: 1060 }}
+              >
+                <Button
+                  size="small"
+                  type="link"
+                  style={{ padding: 0, height: 'auto', fontSize: 12 }}
+                >
+                  JSON
+                </Button>
+              </Popover>
+            ) : null}
+          </Space>
+        )
+      },
     },
     {
       title: t('portal.integrations.issues.status', { defaultValue: 'Status' }),
       dataIndex: 'status',
-      width: 104,
+      width: 120,
       render: (status: ImportIssueStatus, issue) => (
         <StatusTag status={issueTone(issue)}>
           {t(`portal.integrations.issueStatuses.${status}`, { defaultValue: status })}
@@ -153,7 +175,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
           {
             title: t('portal.integrations.issues.actions', { defaultValue: 'Actions' }),
             align: 'center' as const,
-            width: 84,
+            width: 90,
             render: (_: unknown, issue: ImportIssue) =>
               issue.status === 'OPEN' && canWriteOrdersForShop(account, issue.shopId) ? (
                 <Tooltip
@@ -206,6 +228,7 @@ export function ImportIssueQueue({ account, shops, selectedJobId }: ImportIssueQ
           dataSource={issues.data?.items ?? []}
           loading={issues.isLoading}
           rowKey="id"
+          scroll={{ x: 1250 }}
           pagination={{
             current: params.page,
             pageSize: PAGE_SIZE,

@@ -19,6 +19,7 @@ import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
   FeedbackAlert,
+  FormattedDateTime,
   MetricCard,
   StatusTag,
   type UiButtonTabItem,
@@ -640,8 +641,8 @@ export function ProductionWorkbenchPage({
       },
       {
         title: t('portal.production.columns.updated'),
-        width: 138,
-        render: (_, row) => new Date(row.updatedAt).toLocaleString(),
+        width: 148,
+        render: (_, row) => <FormattedDateTime value={row.updatedAt} />,
       },
     ],
     [t, tab],
@@ -756,9 +757,10 @@ export function ProductionWorkbenchPage({
               current: page,
               pageSize,
               total: displayedTasks?.total,
+              showSizeChanger: true,
               onChange: handlePageChange,
             }}
-            scroll={{ x: '100%', y: 'calc(100vh - 410px)' }}
+            scroll={{ x: '100%' }}
             expandable={{
               expandedRowKeys,
               showExpandColumn: false,

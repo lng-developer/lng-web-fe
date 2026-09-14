@@ -93,12 +93,20 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--ant-color-primary);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
 }
 
 .tabs :global(.ant-tabs-nav) {
   flex: 0 0 auto;
+}
+
+.tabs :global(.ant-tabs-nav-wrap) {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-block: 4px;
+  padding-inline: 2px;
 }
 
 .tabs :global(.ant-tabs-tab) {
@@ -110,12 +118,13 @@
   &:hover {
     border-color: var(--ant-color-primary);
     color: var(--ant-color-primary);
+    background: var(--ant-color-primary-bg, #fff1f0);
   }
 
   &.ant-tabs-tab-active {
     border-color: var(--ant-color-primary) !important;
     background: var(--ant-color-primary) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--ant-color-primary) 28%, transparent);
   }
 }
 

@@ -9,20 +9,8 @@ import {
   UserSwitchOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import {
-  Button,
-  Card,
-  Descriptions,
-  Input,
-  Modal,
-  Select,
-  Space,
-  Tag,
-  Timeline,
-  Typography,
-} from 'antd'
+import { Button, Descriptions, Input, Modal, Select, Space, Tag, Timeline, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
@@ -41,7 +29,7 @@ import {
 } from '@/features/portal/customers/hooks'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { FilterBar, MetricCard } from '@/shared/ui'
+import { FilterBar, FormattedDateTime, MetricCard } from '@/shared/ui'
 
 import styles from './CustomerWorkspacePage.module.scss'
 
@@ -151,10 +139,9 @@ export const CustomerWorkspacePage = () => {
       {
         title: t('customers.columns.lastOrder'),
         width: 144,
-        render: (_, row) =>
-          row.lastOrderAt
-            ? dayjs(row.lastOrderAt).format('DD MMM YYYY')
-            : t('customers.empty.dash'),
+        render: (_, row) => (
+          <FormattedDateTime value={row.lastOrderAt} fallback={t('customers.empty.dash')} />
+        ),
       },
       {
         title: '',
@@ -211,49 +198,49 @@ export const CustomerWorkspacePage = () => {
         />
       </section>
 
-      <Card>
-        <FilterBar label={t('customers.filters.label')}>
-          <Input.Search
-            allowClear
-            placeholder={t('customers.filters.search')}
-            value={search}
-            onChange={(event) => {
-              setPage(1)
-              setSearch(event.target.value)
-            }}
-            className={styles.search}
-          />
-          <Select
-            allowClear
-            placeholder={t('customers.filters.lifecycle')}
-            value={lifecycle}
-            options={lifecycleOptions.map((option) => ({ value: option, label: labelOf(option) }))}
-            onChange={(value) => {
-              setPage(1)
-              setLifecycle(value)
-            }}
-            className={styles.select}
-          />
-          <Select
-            allowClear
-            placeholder={t('customers.filters.careStatus')}
-            value={careStatus}
-            options={careOptions.map((option) => ({ value: option, label: labelOf(option) }))}
-            onChange={(value) => {
-              setPage(1)
-              setCareStatus(value)
-            }}
-            className={styles.select}
-          />
-          <Button
-            icon={<DownloadOutlined />}
-            loading={exportCsv.isPending}
-            onClick={() => exportCsv.mutate()}
-          >
-            {t('customers.actions.exportCsv')}
-          </Button>
-        </FilterBar>
+      <FilterBar label={t('customers.filters.label')}>
+        <Input.Search
+          allowClear
+          placeholder={t('customers.filters.search')}
+          value={search}
+          onChange={(event) => {
+            setPage(1)
+            setSearch(event.target.value)
+          }}
+          className={styles.search}
+        />
+        <Select
+          allowClear
+          placeholder={t('customers.filters.lifecycle')}
+          value={lifecycle}
+          options={lifecycleOptions.map((option) => ({ value: option, label: labelOf(option) }))}
+          onChange={(value) => {
+            setPage(1)
+            setLifecycle(value)
+          }}
+          className={styles.select}
+        />
+        <Select
+          allowClear
+          placeholder={t('customers.filters.careStatus')}
+          value={careStatus}
+          options={careOptions.map((option) => ({ value: option, label: labelOf(option) }))}
+          onChange={(value) => {
+            setPage(1)
+            setCareStatus(value)
+          }}
+          className={styles.select}
+        />
+        <Button
+          icon={<DownloadOutlined />}
+          loading={exportCsv.isPending}
+          onClick={() => exportCsv.mutate()}
+        >
+          {t('customers.actions.exportCsv')}
+        </Button>
+      </FilterBar>
 
+      <div className={styles.tableArea}>
         <CoreDataTable
           fillViewport
           tableLayout="fixed"
@@ -275,7 +262,7 @@ export const CustomerWorkspacePage = () => {
             },
           }}
         />
-      </Card>
+      </div>
 
       <Modal
         destroyOnClose
@@ -340,9 +327,7 @@ export const CustomerWorkspacePage = () => {
                     <>
                       <Typography.Text>{item.body}</Typography.Text>
                       <br />
-                      <Typography.Text type="secondary">
-                        {item.createdAt ? dayjs(item.createdAt).format('DD MMM YYYY HH:mm') : '-'}
-                      </Typography.Text>
+                      <FormattedDateTime value={item.createdAt} fallback="-" />
                     </>
                   ),
                 })),
@@ -351,9 +336,7 @@ export const CustomerWorkspacePage = () => {
                     <>
                       <Typography.Text>{item.message || item.eventType}</Typography.Text>
                       <br />
-                      <Typography.Text type="secondary">
-                        {item.occurredAt ? dayjs(item.occurredAt).format('DD MMM YYYY HH:mm') : '-'}
-                      </Typography.Text>
+                      <FormattedDateTime value={item.occurredAt} fallback="-" />
                     </>
                   ),
                 })),

@@ -9,7 +9,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button, Input, Modal, Space, Tooltip, Typography } from 'antd'
 
-import { useFeedbackToast } from '@/shared/ui'
+import { FormattedDateTime, useFeedbackToast } from '@/shared/ui'
 
 import { approveListing, type Listing, rejectListing } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
@@ -58,9 +58,9 @@ export function ListingQcActions({ listing, canWrite }: ListingQcActionsProps) {
         <div>
           <Typography.Text strong>{t('portal.catalog.qc.approved')}</Typography.Text>
           {listing.approvedAt ? (
-            <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
-              {new Date(listing.approvedAt).toLocaleString()}
-            </Typography.Text>
+            <div style={{ marginTop: 2 }}>
+              <FormattedDateTime value={listing.approvedAt} />
+            </div>
           ) : null}
         </div>
       </div>

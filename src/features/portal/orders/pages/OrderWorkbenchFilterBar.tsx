@@ -1,4 +1,5 @@
 import { type FC, memo } from 'react'
+import { AppstoreOutlined, CloseCircleOutlined, ShopOutlined } from '@ant-design/icons'
 import { Button, Select } from 'antd'
 
 import { DateRangePicker, FilterBar, SearchInput } from '@/shared/ui'
@@ -58,40 +59,74 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
     onDatesChange,
     onClearFilters,
   }) {
+    const isDatesActive = Boolean(dates.dateFrom || dates.dateTo)
+
     return (
       <FilterBar label={filtersLabel} contentClassName={styles.filters}>
-        <SearchInput
-          className={styles.orderSearch}
-          value={search}
-          onSearchChange={onSearchChange}
-          placeholder={searchPlaceholder}
-        />
-        <Select
-          className={styles.filterSelect}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          filterOption={filterSelectOption}
-          value={shopId}
-          loading={loadingShops}
-          placeholder={shopPlaceholder}
-          options={shopOptions}
-          onChange={onShopChange}
-        />
-        <Select
-          className={styles.filterSelect}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          filterOption={filterSelectOption}
-          value={vendorId}
-          loading={loadingVendors}
-          placeholder={vendorPlaceholder}
-          options={vendorOptions}
-          onChange={onVendorChange}
-        />
-        <DateRangePicker style={{ maxWidth: 'none' }} value={dates} onChange={onDatesChange} />
-        {hasActiveFilters ? <Button onClick={onClearFilters}>{clearLabel}</Button> : null}
+        <div className={styles.searchSection}>
+          <SearchInput
+            className={styles.orderSearch}
+            value={search}
+            onSearchChange={onSearchChange}
+            placeholder={searchPlaceholder}
+          />
+        </div>
+
+        <div className={styles.filterDivider} aria-hidden="true" />
+
+        <div className={styles.filterPills}>
+          <Select
+            className={[styles.filterSelect, shopId ? styles.filterSelectActive : '']
+              .filter(Boolean)
+              .join(' ')}
+            prefix={<ShopOutlined className={styles.filterPrefixIcon} />}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            filterOption={filterSelectOption}
+            value={shopId}
+            loading={loadingShops}
+            placeholder={shopPlaceholder}
+            options={shopOptions}
+            onChange={onShopChange}
+          />
+
+          <Select
+            className={[styles.filterSelect, vendorId ? styles.filterSelectActive : '']
+              .filter(Boolean)
+              .join(' ')}
+            prefix={<AppstoreOutlined className={styles.filterPrefixIcon} />}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            filterOption={filterSelectOption}
+            value={vendorId}
+            loading={loadingVendors}
+            placeholder={vendorPlaceholder}
+            options={vendorOptions}
+            onChange={onVendorChange}
+          />
+
+          <DateRangePicker
+            className={[styles.filterDateRange, isDatesActive ? styles.filterDateRangeActive : '']
+              .filter(Boolean)
+              .join(' ')}
+            style={{ maxWidth: 'none' }}
+            value={dates}
+            onChange={onDatesChange}
+          />
+        </div>
+
+        {hasActiveFilters ? (
+          <Button
+            className={styles.clearFilterButton}
+            type="text"
+            icon={<CloseCircleOutlined />}
+            onClick={onClearFilters}
+          >
+            {clearLabel}
+          </Button>
+        ) : null}
       </FilterBar>
     )
   },

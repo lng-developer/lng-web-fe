@@ -121,6 +121,7 @@ const ReviewTable = memo(function ReviewTable({
         current: currentPage,
         pageSize: currentPageSize,
         total,
+        showSizeChanger: true,
         onChange: onPageChange,
       }}
     />

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Button, Select, Space, Switch, Typography } from 'antd'
 
-import { SectionCard, StatusTag } from '@/shared/ui'
+import { FormattedDateTime, SectionCard, StatusTag } from '@/shared/ui'
 
 import type { TrackingSyncConfig } from '../api/shipmentApi'
 import styles from '../pages/ShipmentWorkbenchPage.module.scss'
@@ -11,11 +11,20 @@ export interface TrackingSyncCardProps {
   readonly loading: boolean
   readonly saving: boolean
   readonly running: boolean
-  readonly onChange: (input: Pick<TrackingSyncConfig, 'enabled' | 'intervalMinutes' | 'batchSize'>) => void
+  readonly onChange: (
+    input: Pick<TrackingSyncConfig, 'enabled' | 'intervalMinutes' | 'batchSize'>,
+  ) => void
   readonly onRunNow: () => void
 }
 
-export function TrackingSyncCard({ config, loading, saving, running, onChange, onRunNow }: TrackingSyncCardProps) {
+export function TrackingSyncCard({
+  config,
+  loading,
+  saving,
+  running,
+  onChange,
+  onRunNow,
+}: TrackingSyncCardProps) {
   const { t } = useTranslation()
   const enabled = config?.enabled ?? false
 
@@ -28,14 +37,19 @@ export function TrackingSyncCard({ config, loading, saving, running, onChange, o
           </Typography.Text>
           <div className={styles.trackingSyncMeta}>
             <StatusTag status={enabled ? 'operational' : 'draft'}>
-              {t(enabled ? 'portal.shipments.trackingSync.enabled' : 'portal.shipments.trackingSync.disabled')}
+              {t(
+                enabled
+                  ? 'portal.shipments.trackingSync.enabled'
+                  : 'portal.shipments.trackingSync.disabled',
+              )}
             </StatusTag>
             {config?.lastRunFinishedAt ? (
-              <Typography.Text type="secondary">
-                {t('portal.shipments.trackingSync.lastRun', {
-                  time: new Date(config.lastRunFinishedAt).toLocaleString(),
-                })}
-              </Typography.Text>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                <Typography.Text type="secondary">
+                  {t('portal.shipments.trackingSync.lastRunPrefix', { defaultValue: 'Last run:' })}
+                </Typography.Text>
+                <FormattedDateTime value={config.lastRunFinishedAt} />
+              </div>
             ) : null}
           </div>
         </div>

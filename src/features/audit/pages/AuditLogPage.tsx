@@ -18,10 +18,12 @@ import {
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
   PageHeader,
   SearchInput,
   StatusTag,
+  TableTextCell,
 } from '@/shared/ui'
 
 import { type AuditEvent, type AuditFilters } from '../api/auditApi'
@@ -44,7 +46,7 @@ const readableCode = (value: string) =>
 const shortId = (value: string | null) => (value ? `#${value.slice(-8)}` : '')
 
 export function AuditLogPage() {
-  const { i18n, t } = useTranslation()
+  const { t } = useTranslation()
   const [filters, setFilters] = useState<AuditFilters>({})
   const [selected, setSelected] = useState<AuditEvent>()
   const [currentPage, setCurrentPage] = useState(1)
@@ -88,53 +90,68 @@ export function AuditLogPage() {
         title: t('audit.columns.time'),
         dataIndex: 'createdAt',
         width: 170,
-        render: (value) =>
-          new Date(value).toLocaleString(i18n.language === 'vi' ? 'vi-VN' : 'en-US'),
+        render: (value) => <FormattedDateTime value={value} />,
       },
       {
         title: t('audit.columns.actor'),
-        render: (_, event) => (
-          <Space direction="vertical" size={0}>
-            <Typography.Text strong>
-              {event.actorLabel ?? String(event.actorSnapshot.email ?? event.actorType)}
-            </Typography.Text>
-            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-              {[event.actorEmployeeCode, event.actorEmail, shortId(event.actorAccountId)]
-                .filter(Boolean)
-                .filter((value, index, values) => values.indexOf(value) === index)
-                .join(' | ')}
-            </Typography.Text>
-          </Space>
-        ),
+        width: 220,
+        render: (_, event) => {
+          const subInfo = [event.actorEmployeeCode, event.actorEmail, shortId(event.actorAccountId)]
+            .filter(Boolean)
+            .filter((value, index, values) => values.indexOf(value) === index)
+            .join(' | ')
+          return (
+            <Space direction="vertical" size={0} style={{ maxWidth: '100%' }}>
+              <TableTextCell
+                value={event.actorLabel ?? String(event.actorSnapshot.email ?? event.actorType)}
+                strong
+                maxWidth={200}
+              />
+              {subInfo ? <TableTextCell value={subInfo} secondary maxWidth={200} /> : null}
+            </Space>
+          )
+        },
       },
-      { title: t('audit.columns.action'), dataIndex: 'action', render: localizedCode },
+      {
+        title: t('audit.columns.action'),
+        dataIndex: 'action',
+        width: 150,
+        render: (value: string) => <TableTextCell value={localizedCode(value)} maxWidth={130} />,
+      },
       {
         title: t('audit.columns.entity'),
-        render: (_, event) => (
-          <Space direction="vertical" size={0}>
-            <Typography.Text strong>
-              {event.entityLabel ??
-                (event.entityType === 'AUTH_SESSION' && event.actorLabel
-                  ? `${event.actorLabel} - ${t('audit.entities.session')}`
-                  : localizedCode(event.entityType))}
-            </Typography.Text>
-            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-              {localizedCode(event.entityType)} | {shortId(event.entityId)}
-            </Typography.Text>
-          </Space>
-        ),
+        width: 220,
+        render: (_, event) => {
+          const primaryLabel =
+            event.entityLabel ??
+            (event.entityType === 'AUTH_SESSION' && event.actorLabel
+              ? `${event.actorLabel} - ${t('audit.entities.session')}`
+              : localizedCode(event.entityType))
+          const subLabel = `${localizedCode(event.entityType)} | ${shortId(event.entityId)}`
+          return (
+            <Space direction="vertical" size={0} style={{ maxWidth: '100%' }}>
+              <TableTextCell value={primaryLabel} strong maxWidth={200} />
+              <TableTextCell value={subLabel} secondary maxWidth={200} />
+            </Space>
+          )
+        },
       },
       {
         title: t('audit.columns.scope'),
+        width: 170,
         render: (_, event) =>
           event.scopeType ? (
-            <Space direction="vertical" size={0}>
-              <Typography.Text strong>
-                {event.scopeLabel ?? localizedCode(event.scopeType)}
-              </Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                {localizedCode(event.scopeType)} | {shortId(event.scopeId)}
-              </Typography.Text>
+            <Space direction="vertical" size={0} style={{ maxWidth: '100%' }}>
+              <TableTextCell
+                value={event.scopeLabel ?? localizedCode(event.scopeType)}
+                strong
+                maxWidth={150}
+              />
+              <TableTextCell
+                value={`${localizedCode(event.scopeType)} | ${shortId(event.scopeId)}`}
+                secondary
+                maxWidth={150}
+              />
             </Space>
           ) : (
             t('audit.globalScope')
@@ -156,7 +173,7 @@ export function AuditLogPage() {
         ),
       },
     ],
-    [t, i18n.language, localizedCode],
+    [localizedCode, t],
   )
 
   if (!getPermissions().includes('AUDIT:READ')) return <Result status="403" title="403" />

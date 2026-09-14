@@ -34,7 +34,6 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -47,11 +46,14 @@ import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permi
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { downloadMediaAsset, uploadMultipartAsset } from '@/shared/media'
 import {
-  CopyableText,
+  CopyableAsin,
+  CopyableListingId,
+  CopyableSku,
   DetailDrawer,
   EmployeeAvatar,
   FileUpload,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
   SectionCard,
   StatusTag,
@@ -688,14 +690,11 @@ export function DesignWorkbenchPage() {
         width: 260,
         render: (_, row) => (
           <div className={styles.taskMeta}>
-            <Typography.Text strong>{row.listing?.sku ?? '-'}</Typography.Text>
+            <CopyableSku value={row.listing?.sku} strong />
             {row.listing?.asin ? (
-              <CopyableText
-                value={row.listing.asin}
-                className={styles.metaSecondary}
-                title={t('portal.design.copyAsin', 'Copy ASIN')}
-                copiedMessage={t('portal.design.asinCopied', 'ASIN copied')}
-              />
+              <CopyableAsin value={row.listing.asin} />
+            ) : row.listing?.etsyListingId ? (
+              <CopyableListingId value={row.listing.etsyListingId} />
             ) : null}
           </div>
         ),
@@ -751,9 +750,7 @@ export function DesignWorkbenchPage() {
                 {row.assignedDesigner?.fullName ?? t('portal.design.unassigned')}
               </Typography.Text>
             </Space>
-            <Typography.Text className={styles.metaSecondary} type="secondary">
-              {dayjs(row.updatedAt).format('DD/MM/YYYY HH:mm')}
-            </Typography.Text>
+            <FormattedDateTime value={row.updatedAt} />
           </div>
         ),
       },
@@ -909,11 +906,11 @@ export function DesignWorkbenchPage() {
             current: page,
             pageSize: DEFAULT_PAGE_SIZE,
             total: displayedTasks?.pagination.total ?? 0,
-            showSizeChanger: false,
-            hideOnSinglePage: true,
+            showSizeChanger: true,
+            hideOnSinglePage: false,
             onChange: handlePageChange,
           }}
-          scroll={{ x: 1270, y: 'calc(100vh - 430px)' }}
+          scroll={{ x: 1270 }}
         />
       </SectionCard>
 

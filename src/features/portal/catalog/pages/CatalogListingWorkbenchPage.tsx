@@ -16,29 +16,28 @@ import {
 } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Input, Select, Space, Tag, Tooltip, Typography } from 'antd'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
+import { Button, Input, Modal, Select, Space, Tag, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { CopyableText, FeedbackAlert, MetricCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import {
+  CopyableAsin,
+  CopyableListingId,
+  CopyableSku,
+  FeedbackAlert,
+  FormattedDateTime,
+  MetricCard,
+  StatusTag,
+  useFeedbackToast,
+} from '@/shared/ui'
 
-import { getListing, type Listing } from '../api/catalogApi'
+import { getListing, type Listing, type PsdPriority } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
 import { useCatalogListingsQuery, useCatalogMutations } from '../hooks'
 import { CatalogListingEditorModal } from './CatalogListingEditorModal'
 import styles from './CatalogListingWorkbenchPage.module.scss'
 import { ListingVariantManager } from './ListingVariantManager'
 
-dayjs.extend(relativeTime)
-
-const QC_STATUS_I18N_KEY: Record<string, string> = {
-  DRAFT: 'portal.catalog.qc.statuses.DRAFT',
-  APPROVED: 'portal.catalog.qc.statuses.APPROVED',
-  REJECTED: 'portal.catalog.qc.statuses.REJECTED',
-}
 const RECORD_STATUS_I18N_KEY: Record<string, string> = {
   ACTIVE: 'portal.catalog.master.statuses.ACTIVE',
   INACTIVE: 'portal.catalog.master.statuses.INACTIVE',
@@ -65,14 +64,16 @@ export function CatalogListingWorkbenchPage(props: {
   const toast = useFeedbackToast()
 
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState('')
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
   const [qcStatus, setQcStatus] = useState<string>()
   const [psdState, setPsdState] = useState<'missing' | 'ready'>()
-  const [sort, setSort] = useState<string>()
   const [editing, setEditing] = useState<Listing | 'create'>()
+  const [previewing, setPreviewing] = useState<Listing>()
+  const [requestingPsd, setRequestingPsd] = useState<Listing>()
+  const [psdPriority, setPsdPriority] = useState<PsdPriority>('NORMAL')
   const [expandedRowKeys, setExpandedRowKeys] = useState<readonly string[]>([])
 
   const effectiveSalesChannelCode = fixedSalesChannelCode ?? salesChannelCode
@@ -85,7 +86,6 @@ export function CatalogListingWorkbenchPage(props: {
     salesChannelCode: effectiveSalesChannelCode,
     qcStatus,
     psdState,
-    sort,
   })
 
   const { save, requestDefaultPsd, exportCsv } = useCatalogMutations({
@@ -174,8 +174,19 @@ export function CatalogListingWorkbenchPage(props: {
         title: t('portal.catalog.columns.preview'),
         width: 76,
         render: (_, listing) =>
-          listing.productImageUrl ? (
-            <img src={listing.productImageUrl} alt={listing.title} className={styles.thumbnail} />
+          listing.previewImageUrl || listing.productImageUrl ? (
+            <button
+              type="button"
+              className={styles.thumbnailButton}
+              aria-label={t('portal.catalog.columns.preview')}
+              onClick={() => setPreviewing(listing)}
+            >
+              <img
+                src={listing.previewImageUrl || listing.productImageUrl || undefined}
+                alt={listing.title}
+                className={styles.thumbnail}
+              />
+            </button>
           ) : (
             <div className={styles.thumbnailFallback}>-</div>
           ),
@@ -184,29 +195,14 @@ export function CatalogListingWorkbenchPage(props: {
         title: t('portal.catalog.columns.listing'),
         width: 220,
         render: (_, listing) => (
-          <Space direction="vertical" size={2} className={styles.titleCell}>
-            <CopyableText
-              value={listing.sku}
-              strong
-              className={styles.skuButton}
-              title={t('portal.catalog.copySku')}
-              copiedMessage={t('portal.catalog.skuCopied')}
-            />
+          <Space direction="vertical" size={4} className={styles.titleCell}>
+            <CopyableSku value={listing.sku} strong />
             <Space size={4} className={styles.marketplaceIdentity}>
-              <Typography.Text type="secondary">
-                {listing.asin ? 'ASIN ' : listing.etsyListingId ? 'Etsy ' : ''}
-                <CopyableText
-                  value={listing.asin ?? listing.etsyListingId}
-                  title={
-                    listing.asin ? t('portal.catalog.copyAsin') : t('portal.catalog.copyListingId')
-                  }
-                  copiedMessage={
-                    listing.asin
-                      ? t('portal.catalog.asinCopied')
-                      : t('portal.catalog.listingIdCopied')
-                  }
-                />
-              </Typography.Text>
+              {listing.asin ? (
+                <CopyableAsin value={listing.asin} />
+              ) : listing.etsyListingId ? (
+                <CopyableListingId value={listing.etsyListingId} />
+              ) : null}
               {marketplaceProductUrl(listing) ? (
                 <Tooltip
                   title={
@@ -280,28 +276,9 @@ export function CatalogListingWorkbenchPage(props: {
         },
       },
       {
-        title: t('portal.catalog.columns.qc'),
-        align: 'center',
-        width: 150,
-        render: (_, listing) => (
-          <StatusTag
-            status={
-              listing.qcStatus === 'APPROVED'
-                ? 'operational'
-                : listing.qcStatus === 'REJECTED'
-                  ? 'critical'
-                  : 'pending'
-            }
-          >
-            {t(QC_STATUS_I18N_KEY[listing.qcStatus] ?? '', {
-              defaultValue: listing.qcStatus,
-            })}
-          </StatusTag>
-        ),
-      },
-      {
         title: t('portal.catalog.columns.sales'),
         key: 'sales',
+        sorter: (left, right) => left.salesStats.quantitySold - right.salesStats.quantitySold,
         width: 100,
         align: 'right',
         render: (_, listing) => (
@@ -329,12 +306,8 @@ export function CatalogListingWorkbenchPage(props: {
       },
       {
         title: t('portal.catalog.columns.updated'),
-        width: 110,
-        render: (_, listing) => (
-          <Tooltip title={dayjs(listing.updatedAt).format('DD/MM/YYYY HH:mm:ss')}>
-            {dayjs(listing.updatedAt).fromNow()}
-          </Tooltip>
-        ),
+        width: 140,
+        render: (_, listing) => <FormattedDateTime value={listing.updatedAt} />,
       },
       {
         title: t('portal.catalog.actions'),
@@ -350,9 +323,10 @@ export function CatalogListingWorkbenchPage(props: {
                     icon={<FileImageOutlined />}
                     aria-label={t('portal.catalog.psd.requestDefault')}
                     loading={
-                      requestDefaultPsd.isPending && requestDefaultPsd.variables === listing.id
+                      requestDefaultPsd.isPending &&
+                      requestDefaultPsd.variables?.listingId === listing.id
                     }
-                    onClick={() => requestDefaultPsd.mutate(listing.id)}
+                    onClick={() => setRequestingPsd(listing)}
                   />
                 </Tooltip>
               ) : null}
@@ -537,17 +511,10 @@ export function CatalogListingWorkbenchPage(props: {
           size="middle"
           loading={listings.isLoading}
           columns={columns}
-          serverSorting={{
-            enabled: true,
-            value: sort,
-            columns: { sales: { asc: 'quantitySoldAsc', desc: 'quantitySoldDesc' } },
-            onChange: (nextSort) => {
-              setSort(nextSort)
-              setPage(1)
-            },
-          }}
+          className={styles.listingTable}
+          fillViewport
           dataSource={listings.data?.items ?? []}
-          scroll={{ x: 1200, y: 'max(280px, calc(100vh - 500px))' }}
+          scroll={{ x: 1200 }}
           pagination={{
             current: page,
             pageSize,
@@ -590,6 +557,46 @@ export function CatalogListingWorkbenchPage(props: {
         onClose={() => setEditing(undefined)}
         onSubmit={(input) => save.mutate(input)}
       />
+      <Modal
+        open={Boolean(previewing)}
+        footer={null}
+        title={previewing?.title}
+        onCancel={() => setPreviewing(undefined)}
+      >
+        {previewing?.previewImageUrl || previewing?.productImageUrl ? (
+          <img
+            src={previewing.previewImageUrl || previewing.productImageUrl || undefined}
+            alt={previewing.title}
+            style={{ display: 'block', width: '100%' }}
+          />
+        ) : null}
+      </Modal>
+      <Modal
+        open={Boolean(requestingPsd)}
+        title={t('portal.catalog.psd.request')}
+        okText={t('portal.catalog.psd.request')}
+        confirmLoading={requestDefaultPsd.isPending}
+        onCancel={() => setRequestingPsd(undefined)}
+        onOk={() => {
+          if (!requestingPsd) return
+          requestDefaultPsd.mutate(
+            { listingId: requestingPsd.id, priority: psdPriority },
+            { onSuccess: () => setRequestingPsd(undefined) },
+          )
+        }}
+      >
+        <Typography.Paragraph>{t('portal.catalog.psd.priorityDescription')}</Typography.Paragraph>
+        <Typography.Text strong>{t('portal.catalog.psd.priority')}</Typography.Text>
+        <Select
+          value={psdPriority}
+          style={{ display: 'block', marginTop: 8 }}
+          onChange={setPsdPriority}
+          options={(['LOW', 'NORMAL', 'HIGH', 'URGENT'] as PsdPriority[]).map((value) => ({
+            value,
+            label: t(`portal.catalog.psd.priorities.${value}`),
+          }))}
+        />
+      </Modal>
     </section>
   )
 }

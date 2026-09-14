@@ -28,17 +28,17 @@ export function FilterBar({
       ]
         .filter(Boolean)
         .join(' ')}
-      align="flex-end"
+      align="center"
       justify="space-between"
-      gap={16}
+      gap={8}
       wrap
     >
       <Flex
         className={[styles.filterBarContent, contentClassName].filter(Boolean).join(' ')}
         role="group"
         aria-label={label}
-        align="flex-end"
-        gap={12}
+        align="center"
+        gap={8}
         wrap
       >
         {children}

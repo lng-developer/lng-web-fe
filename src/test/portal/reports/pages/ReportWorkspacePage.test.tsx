@@ -379,7 +379,7 @@ describe('ReportWorkspacePage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Daily ad performance' })).toBeInTheDocument()
     expect(listAdsDaily).toHaveBeenCalledTimes(1)
-    expect(await screen.findByText('2026-08-01')).toBeInTheDocument()
+    expect(await screen.findByText('Aug 1, 2026')).toBeInTheDocument()
   })
 
   it('lets both ads tables use the full report width', async () => {

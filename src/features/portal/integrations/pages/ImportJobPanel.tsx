@@ -13,6 +13,7 @@ import {
   CopyableOrderId,
   DetailDrawer,
   FeedbackAlert,
+  FormattedDateTime,
   LoadingState,
   StatusTag,
   useFeedbackToast,
@@ -249,12 +250,12 @@ function ImportJobPanelForJob({
               <Descriptions.Item
                 label={t('portal.integrations.panel.started', { defaultValue: 'Started' })}
               >
-                {job.data.job.startedAt ? new Date(job.data.job.startedAt).toLocaleString() : '-'}
+                <FormattedDateTime value={job.data.job.startedAt} />
               </Descriptions.Item>
               <Descriptions.Item
                 label={t('portal.integrations.panel.finished', { defaultValue: 'Finished' })}
               >
-                {job.data.job.finishedAt ? new Date(job.data.job.finishedAt).toLocaleString() : '-'}
+                <FormattedDateTime value={job.data.job.finishedAt} />
               </Descriptions.Item>
             </Descriptions>
             <div className={styles.progressList}>

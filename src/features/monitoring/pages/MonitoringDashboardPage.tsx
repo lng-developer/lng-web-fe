@@ -32,7 +32,17 @@ import { useSearchParams } from 'react-router-dom'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { MetricCard, PageHeader, SectionCard, StatusTag, UiTabLabel, UiTabs } from '@/shared/ui'
+import {
+  DataFreshness,
+  FormattedDateTime,
+  MetricCard,
+  PageHeader,
+  SectionCard,
+  StatusTag,
+  UiTabLabel,
+  UiTabs,
+  useDocumentTitle,
+} from '@/shared/ui'
 
 import {
   type MongoIndexUsageSnapshot,
@@ -71,6 +81,7 @@ function formatBytes(value = 0) {
 
 export const MonitoringDashboardPage = () => {
   const { t } = useTranslation()
+  useDocumentTitle(t('shell.navigation.monitoring'))
   const statusLabel = useCallback(
     (status?: string) => {
       const normalized = String(status ?? 'unknown').toLowerCase()
@@ -734,7 +745,7 @@ export const MonitoringDashboardPage = () => {
                   icon={<ClockCircleOutlined />}
                   variant="neutral"
                   label={t('portal.monitoring.indexes.capturedAt')}
-                  value={new Date(selectedIndexSnapshot.capturedAt).toLocaleString()}
+                  value={<FormattedDateTime value={selectedIndexSnapshot.capturedAt} />}
                 />
               </Col>
             </Row>
@@ -768,22 +779,11 @@ export const MonitoringDashboardPage = () => {
     <section className={styles.page}>
       <PageHeader
         actions={
-          <Space>
-            {health?.generatedAt ? (
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {t('portal.monitoring.updatedAt', {
-                  time: new Date(health.generatedAt).toLocaleTimeString(),
-                })}
-              </Typography.Text>
-            ) : null}
-            <Button
-              icon={<ReloadOutlined spin={loading} />}
-              loading={loading}
-              onClick={() => void refresh()}
-            >
-              {t('portal.monitoring.indexes.refresh')}
-            </Button>
-          </Space>
+          <DataFreshness
+            timestamp={health?.generatedAt}
+            onRefresh={() => void refresh()}
+            loading={loading}
+          />
         }
       />
 

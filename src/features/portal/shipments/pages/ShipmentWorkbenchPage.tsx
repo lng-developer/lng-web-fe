@@ -10,12 +10,14 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  DataFreshness,
   DateRangePicker,
   FeedbackAlert,
   FilterBar,
+  FormattedDateTime,
   MetricCard,
-  SectionCard,
   StatusTag,
+  TableTextCell,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -238,16 +240,24 @@ export function ShipmentWorkbenchPage({
         title: t('portal.shipments.columns.vendorOrder'),
         dataIndex: 'vendorExternalOrderId',
         width: 172,
+        render: (value) => <TableTextCell value={value} fallback="-" />,
       },
-      { title: t('portal.shipments.columns.provider'), dataIndex: 'provider', width: 120 },
+      {
+        title: t('portal.shipments.columns.provider'),
+        dataIndex: 'provider',
+        width: 120,
+        render: (value) => <TableTextCell value={value} fallback="-" />,
+      },
       {
         title: t('portal.shipments.columns.tracking'),
+        width: 220,
         render: (_, row) => (
-          <>
-            <Typography.Text>{row.trackingNumber || '-'}</Typography.Text>
-            <br />
-            <Typography.Text type="secondary">{row.carrier || '-'}</Typography.Text>
-          </>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}
+          >
+            <TableTextCell code value={row.trackingNumber} fallback="-" />
+            <TableTextCell secondary value={row.carrier} fallback="-" />
+          </div>
         ),
       },
       {
@@ -261,8 +271,8 @@ export function ShipmentWorkbenchPage({
       {
         title: t('portal.shipments.columns.updated'),
         dataIndex: 'updatedAt',
-        width: 170,
-        render: (value) => (value ? new Date(value).toLocaleString() : '-'),
+        width: 150,
+        render: (value) => <FormattedDateTime value={value} />,
       },
       {
         title: t('portal.shipments.columns.action'),
@@ -320,7 +330,7 @@ export function ShipmentWorkbenchPage({
           onRunNow={() => runTrackingSyncNow.mutate()}
         />
       ) : null}
-      <SectionCard>
+      <div className={styles.tableArea}>
         <CoreDataTable
           fillViewport
           tableLayout="fixed"
@@ -333,6 +343,7 @@ export function ShipmentWorkbenchPage({
             current: page,
             pageSize,
             total: shipments.data?.pagination.total,
+            showSizeChanger: true,
             onChange: (nextPage, nextPageSize) => {
               setPage(nextPage)
               setPageSize(nextPageSize)
@@ -340,7 +351,17 @@ export function ShipmentWorkbenchPage({
           }}
           scroll={{ x: 1_100 }}
           toolbar={
-            <FilterBar label={t('portal.shipments.filters')} contentClassName={styles.filters}>
+            <FilterBar
+              label={t('portal.shipments.filters')}
+              contentClassName={styles.filters}
+              actions={
+                <DataFreshness
+                  timestamp={shipments.dataUpdatedAt}
+                  onRefresh={() => void shipments.refetch()}
+                  loading={shipments.isFetching}
+                />
+              }
+            >
               <Input.Search
                 allowClear
                 className={styles.searchControl}
@@ -399,7 +420,7 @@ export function ShipmentWorkbenchPage({
             </FilterBar>
           }
         />
-      </SectionCard>
+      </div>
       <Modal
         destroyOnClose
         width="min(1200px, 88vw)"
@@ -485,9 +506,7 @@ export function ShipmentWorkbenchPage({
                     <br />
                     <span className={styles.breakable}>{entry.message || '-'}</span>
                     <br />
-                    <Typography.Text type="secondary">
-                      {entry.createdAt ? new Date(entry.createdAt).toLocaleString() : ''}
-                    </Typography.Text>
+                    <FormattedDateTime value={entry.createdAt} />
                   </>
                 ),
               }))}

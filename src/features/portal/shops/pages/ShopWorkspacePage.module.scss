@@ -7,6 +7,7 @@
 }
 
 .metrics {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
@@ -77,12 +78,21 @@
 }
 
 .controlsBar {
+  flex: 0 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 0;
+}
+
+.tableArea {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 .filtersWrapper {

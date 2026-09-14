@@ -1,0 +1,112 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.longBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--ant-color-fill-quaternary, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--ant-color-border-secondary, #e2e8f0);
+  color: var(--ant-color-text);
+  font-size: 12px;
+  line-height: 18px;
+  transition: all 140ms ease;
+  cursor: default;
+
+  &:hover {
+    border-color: var(--ant-color-primary, #e83b4a);
+    background: color-mix(in srgb, var(--ant-color-primary-bg) 35%, var(--ant-color-bg-container));
+  }
+}
+
+.moreTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ant-color-primary, #e83b4a);
+  background: color-mix(in srgb, var(--ant-color-primary-bg) 60%, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+  border: 0;
+  flex-shrink: 0;
+  transition: all 140ms ease;
+
+  &:hover {
+    color: #ffffff;
+    background: var(--ant-color-primary, #e83b4a);
+  }
+}
+
+.popoverCard {
+  max-width: 380px;
+  max-height: 280px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ant-color-text);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+.copyLink {
+  cursor: pointer;
+  color: var(--ant-color-primary, #e83b4a);
+  font-size: 11px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+:global(html[data-theme='dark']) {
+  .longBadge {
+    background: color-mix(in srgb, #242526 80%, transparent);
+    border-color: #3a3b3c;
+    color: #e4e6eb;
+
+    &:hover {
+      border-color: var(--ant-color-primary, #e83b4a);
+      background: color-mix(in srgb, var(--ant-color-primary) 15%, #242526);
+    }
+  }
+
+  .popoverHeader {
+    border-bottom-color: #3a3b3c;
+  }
+}

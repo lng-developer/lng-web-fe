@@ -30,7 +30,7 @@ describe('Order workbench layout styles', () => {
   it('adapts filters and expanded item panels to the Orders content width', () => {
     expect(orderWorkbenchStyles).toMatch(/\.page\s*\{[^}]*container-type:\s*inline-size/s)
     expect(orderWorkbenchStyles).toMatch(
-      /@container\s*\(max-width:\s*1200px\)\s*\{[^}]*\.filters\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/s,
+      /@container\s*\(max-width:\s*1200px\)\s*\{[^}]*\.filters\s*\{[^}]*flex-wrap:\s*wrap/s,
     )
     expect(orderWorkbenchStyles).toMatch(
       /@container\s*\(max-width:\s*1180px\)\s*\{[^}]*\.itemPanel\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/s,

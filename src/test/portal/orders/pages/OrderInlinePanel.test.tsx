@@ -38,6 +38,7 @@ import {
   recheckMapping,
   recheckProduction,
 } from '@/features/portal/orders/api/orderApi'
+import { orderKeys } from '@/features/portal/orders/api/orderKeys'
 import { OrderInlinePanel } from '@/features/portal/orders/pages/OrderInlinePanel'
 
 afterEach(cleanup)
@@ -108,9 +109,10 @@ function renderPanel(
   requestedModal?: 'address' | 'customer' | 'shipping' | 'case' | 'replacement' | 'timeline',
   source = row,
   canOperate = canWrite,
+  client = new QueryClient(),
 ) {
   return render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={client}>
       <App>
         <OrderInlinePanel
           row={source}
@@ -176,6 +178,13 @@ describe('OrderInlinePanel', () => {
       ],
     })
     vi.mocked(selectFulfillmentCandidate).mockResolvedValue({ id: 'plan-1' })
+  })
+
+  it('does not create an inactive timeline query until history is opened', () => {
+    const client = new QueryClient()
+    renderPanel(true, undefined, row, true, client)
+
+    expect(client.getQueryState(orderKeys.timeline(row.order.id))).toBeUndefined()
   })
 
   it('omits duplicated address and marketplace product titles', () => {

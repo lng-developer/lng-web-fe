@@ -9,7 +9,14 @@ import { Button, Space, Typography } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { FilterBar, SearchInput, StatusTag, useDebouncedValue } from '@/shared/ui'
+import {
+  CopyableSku,
+  FilterBar,
+  SearchInput,
+  StatusTag,
+  TableTextCell,
+  useDebouncedValue,
+} from '@/shared/ui'
 
 import { getVendorProduct, listVendorCostCenters, type VendorCostCenter } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
@@ -72,24 +79,21 @@ export function VendorProductCostCentersPage() {
         title: t('portal.vendors.code'),
         dataIndex: 'code',
         width: '24%',
-        ellipsis: true,
-        render: (value) => <Typography.Text code>{value}</Typography.Text>,
+        render: (value) => <TableTextCell code value={value} />,
       },
       {
         title: t('portal.vendors.name'),
         dataIndex: 'name',
         width: '24%',
-        ellipsis: true,
-        render: (value) => <Typography.Text>{value}</Typography.Text>,
+        render: (value) => <TableTextCell value={value} />,
       },
       {
         title: t('portal.vendors.sku', { defaultValue: 'SKU' }),
         dataIndex: 'sku',
         width: '13%',
-        ellipsis: true,
         render: (value) =>
           value ? (
-            <Typography.Text type="secondary">{value}</Typography.Text>
+            <CopyableSku value={value} />
           ) : (
             <Typography.Text type="secondary">{t('portal.vendors.none')}</Typography.Text>
           ),
