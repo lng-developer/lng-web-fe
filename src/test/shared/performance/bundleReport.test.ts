@@ -47,9 +47,9 @@ describe('bundle report', () => {
 
   it('fails when the entry bundle exceeds its gzip budget', () => {
     const directory = createDistFixture()
-    writeFileSync(join(directory, 'index-too-large.js'), randomBytes(300 * 1024))
+    writeFileSync(join(directory, 'index-too-large.js'), randomBytes(450 * 1024))
 
-    expect(() => runReport(directory)).toThrow(/Entry gzip bundle exceeds 250 KB/)
+    expect(() => runReport(directory)).toThrow(/Entry gzip bundle exceeds 400 KB/)
   })
 
   it('uses the entry referenced by index.html instead of a stale asset', () => {

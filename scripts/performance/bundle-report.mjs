@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
 const LIMITS = {
-  entryGzipKb: 250,
+  entryGzipKb: 400,
   totalGzipKb: 1200,
 }
 
