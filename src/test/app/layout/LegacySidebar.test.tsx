@@ -13,6 +13,7 @@ vi.mock('@/features/hr/api/hrApi', () => ({
 import { LegacySidebar } from '@/app/layout/LegacySidebar'
 import { AppProviders } from '@/app/providers/AppProviders'
 import i18n from '@/shared/i18n/i18n'
+import { setPermissions } from '@/shared/auth/session'
 
 const sidebarSummaryMocks = vi.hoisted(() => ({
   useOrderSummaryQuery: vi.fn(),
@@ -31,6 +32,21 @@ vi.mock('@/features/portal/production/hooks/useProductionTasksQuery', () => ({
 }))
 
 describe('LegacySidebar', () => {
+  it('shows listing drafts in the real Sales sidebar for Catalog access', async () => {
+    setPermissions(['CATALOG:WRITE'])
+    render(
+      <MemoryRouter initialEntries={['/portal/catalog/listing-launches']}>
+        <AppProviders>
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByRole('link', { name: 'Listing drafts' })).toHaveAttribute(
+      'href',
+      '/portal/catalog/listing-launches',
+    )
+    setPermissions([])
+  })
   beforeEach(() => {
     i18n.changeLanguage('en')
     sidebarSummaryMocks.useOrderSummaryQuery.mockReturnValue({ data: { tabCounts: { NEW: 12 } } })

@@ -1,5 +1,6 @@
 export const workspaceRoutePaths = {
   portal: {
+    listingLaunches: 'portal/catalog/listing-launches',
     orders: 'portal/orders',
     teamTasks: 'portal/team-tasks',
     mapping: 'portal/mapping',
@@ -11,6 +12,9 @@ export const workspaceRoutePaths = {
 } as const
 
 export const workspaceRouteLinks = {
+  listingLaunches: `/${workspaceRoutePaths.portal.listingLaunches}`,
+  listingLaunchDetail: (id: string) =>
+    `/${workspaceRoutePaths.portal.listingLaunches}/${encodeURIComponent(id)}`,
   orders: `/${workspaceRoutePaths.portal.orders}`,
   teamTasks: `/${workspaceRoutePaths.portal.teamTasks}`,
   mapping: `/${workspaceRoutePaths.portal.mapping}`,

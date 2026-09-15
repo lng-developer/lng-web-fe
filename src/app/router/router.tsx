@@ -14,6 +14,7 @@ import { PermissionBoundary } from '@/shared/auth/PermissionBoundary'
 import { NotFoundPage } from './NotFoundPage'
 import { RouteErrorPage } from './RouteErrorPage'
 import { WorkspaceIndexRedirect } from './WorkspaceIndexRedirect'
+import { workspaceRoutePaths } from './workspaceRoutes'
 
 const loadCatalogWorkspaceRoute = () =>
   Promise.all([
@@ -218,6 +219,34 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'portal/catalog',
         lazy: loadCatalogWorkspaceRoute,
+      },
+      {
+        path: workspaceRoutePaths.portal.listingLaunches,
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/catalog/listing-launch/pages/ListingLaunchListPage'),
+          ]).then(([{ PortalPageBoundary }, { default: Page }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
+                <Page />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: `${workspaceRoutePaths.portal.listingLaunches}/:id`,
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/catalog/listing-launch/pages/ListingLaunchDetailPage'),
+          ]).then(([{ PortalPageBoundary }, { default: Page }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
+                <Page />
+              </PortalPageBoundary>
+            ),
+          })),
       },
       {
         path: 'portal/catalog/product-types',

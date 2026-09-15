@@ -1,0 +1,25 @@
+.page {
+  display: grid;
+  gap: var(--ant-margin);
+  padding: var(--ant-padding);
+  min-width: 0;
+}
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--ant-margin);
+  align-items: start;
+}
+.preview {
+  display: block;
+  width: 100%;
+  max-height: 28rem;
+  object-fit: contain;
+  background: var(--ant-color-fill-quaternary);
+  border-radius: var(--ant-border-radius);
+}
+.stack {
+  display: grid;
+  gap: var(--ant-margin-sm);
+  min-width: 0;
+}

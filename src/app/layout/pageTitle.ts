@@ -34,6 +34,11 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
     defaultTitle: 'Dashboard',
   },
 
+  {
+    pattern: /^\/portal\/catalog\/listing-launches(\/.*)?$/,
+    key: 'listingLaunch.title',
+    defaultTitle: 'Listing drafts',
+  },
   // ── Catalog Sub-workbenches & Listings ────────────────────────
   {
     pattern: /^\/portal\/catalog\/product-types(\/.*)?$/,

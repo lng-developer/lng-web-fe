@@ -159,6 +159,13 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
             permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
               ? { key: 'catalog', path: '/portal/catalog', labelKey: 'shell.navigation.catalog' }
               : null,
+            permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+              ? {
+                  key: 'listing-launches',
+                  path: '/portal/catalog/listing-launches',
+                  labelKey: 'listingLaunch.title',
+                }
+              : null,
           ].filter((item): item is NavigationItem => item !== null),
         },
         {

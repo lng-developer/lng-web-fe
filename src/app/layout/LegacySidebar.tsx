@@ -45,6 +45,7 @@ import {
 import { Badge, Dropdown, Image, Layout, Menu, Popover } from 'antd'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
+import { hasAnyPermission } from '@/shared/auth/permissions'
 import { loadMyEmployeeProfile } from '@/features/hr/api/hrApi'
 import { useDesignSummaryQuery } from '@/features/portal/design/hooks/useDesignTasksQuery'
 import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
@@ -56,6 +57,7 @@ import styles from './LegacySidebar.module.scss'
 const { Sider } = Layout
 
 type LegacyMenuItem = {
+  permissions?: string[]
   key: string
   labelKey: string
   icon: ReactNode
@@ -110,6 +112,12 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       labelKey: 'legacyMenu.listing',
       icon: <LuLayoutList size={20} />,
       children: [
+        {
+          key: workspaceRouteLinks.listingLaunches,
+          labelKey: 'listingLaunch.title',
+          icon: <LuNotebook size={20} />,
+          permissions: ['CATALOG:READ', 'CATALOG:WRITE'],
+        },
         {
           key: '/portal/listing/amazon',
           labelKey: 'legacyMenu.amzListing',
@@ -364,23 +372,25 @@ function toMenuItems(
   t: (key: string) => string,
   badgeCounts: Partial<Record<string, number>> = {},
 ): Parameters<typeof Menu>[0]['items'] {
-  return items.map((item) => ({
-    key: item.key,
-    icon: item.icon,
-    label: (
-      <span className={styles.menuLabel}>
-        <span className={styles.menuLabelText}>
-          {item.children ? t(item.labelKey) : <Link to={item.key}>{t(item.labelKey)}</Link>}
-        </span>
-        {(badgeCounts[item.key] ?? 0) > 0 ? (
-          <span className={styles.menuBadge}>
-            <Badge count={badgeCounts[item.key]} overflowCount={99} />
+  return items
+    .filter((item) => !item.permissions || hasAnyPermission(item.permissions))
+    .map((item) => ({
+      key: item.key,
+      icon: item.icon,
+      label: (
+        <span className={styles.menuLabel}>
+          <span className={styles.menuLabelText}>
+            {item.children ? t(item.labelKey) : <Link to={item.key}>{t(item.labelKey)}</Link>}
           </span>
-        ) : null}
-      </span>
-    ),
-    children: item.children ? toMenuItems(item.children, t, badgeCounts) : undefined,
-  }))
+          {(badgeCounts[item.key] ?? 0) > 0 ? (
+            <span className={styles.menuBadge}>
+              <Badge count={badgeCounts[item.key]} overflowCount={99} />
+            </span>
+          ) : null}
+        </span>
+      ),
+      children: item.children ? toMenuItems(item.children, t, badgeCounts) : undefined,
+    }))
 }
 
 function matchesRoute(key: string, pathname: string, search: string) {

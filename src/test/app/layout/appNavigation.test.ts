@@ -191,6 +191,7 @@ describe('app navigation', () => {
     expect(groups.find(({ key }) => key === 'listing')?.items.map(({ key }) => key)).toEqual([
       'shops',
       'catalog',
+      'listing-launches',
     ])
     expect(groups.find(({ key }) => key === 'orders')?.items.map(({ key }) => key)).toEqual([
       'orders',
