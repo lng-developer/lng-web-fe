@@ -35,6 +35,7 @@ describe('pageTitle', () => {
     it('resolves workbench and catalog subroutes', () => {
       expect(resolvePageTitle('/portal/orders')).toBe('Orders')
       expect(resolvePageTitle('/portal/orders/123')).toBe('Orders')
+      expect(resolvePageTitle('/portal/team-tasks')).toBe('Team Tasks')
       expect(resolvePageTitle('/portal/catalog')).toBe('Catalog')
       expect(resolvePageTitle('/portal/catalog/templates')).toBe('Internal Templates')
       expect(resolvePageTitle('/portal/catalog/product-types')).toBe('Product Types')

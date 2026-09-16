@@ -4155,6 +4155,12 @@
     "infrastructure": "Infrastructure",
     "recentAudit": "Recent audit activity"
   },
+  "teamTasks": {
+    "title": "Team Tasks is under development",
+    "description": "The Team Tasks workspace is currently being built.",
+    "hint": "Please check back later.",
+    "backToDashboard": "Back to dashboard"
+  },
   "errors": {
     "unexpected": "Something unexpected happened.",
     "serverTitle": "Anh em đợi tôi :))",

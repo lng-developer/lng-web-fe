@@ -1,5 +1,5 @@
 import { I18nextProvider } from 'react-i18next'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Modal } from 'antd'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
@@ -26,7 +26,7 @@ describe('ThemeProvider', () => {
       </I18nextProvider>,
     )
 
-    expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked()
+    expect(screen.getByRole('switch', { name: 'Appearance' })).not.toBeChecked()
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light')
     expect(document.documentElement.dataset.theme).toBe('light')
   })
@@ -40,9 +40,7 @@ describe('ThemeProvider', () => {
       </I18nextProvider>,
     )
 
-    fireEvent.click(
-      within(screen.getByRole('radiogroup', { name: 'Appearance' })).getByText('Dark'),
-    )
+    fireEvent.click(screen.getByRole('switch', { name: 'Appearance' }))
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark')
     expect(document.documentElement.dataset.theme).toBe('dark')

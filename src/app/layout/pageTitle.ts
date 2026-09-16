@@ -58,6 +58,11 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
     defaultTitle: 'Orders',
   },
   {
+    pattern: /^\/portal\/team-tasks(\/.*)?$/,
+    key: 'legacyMenu.teamTasks',
+    defaultTitle: 'Team Tasks',
+  },
+  {
     pattern: /^\/portal\/integrations(\/.*)?$/,
     key: 'shell.navigation.integrations',
     defaultTitle: 'Integrations',

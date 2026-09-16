@@ -330,6 +330,13 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/team-tasks',
+        lazy: () =>
+          import('@/features/portal/team-tasks/pages/TeamTasksPage').then(({ TeamTasksPage }) => ({
+            Component: TeamTasksPage,
+          })),
+      },
+      {
         path: 'portal/customers',
         lazy: () =>
           Promise.all([

@@ -178,6 +178,24 @@ describe('CatalogListingWorkbenchPage', () => {
     )
   })
 
+  it.each(['AMAZON', 'ETSY'] as const)(
+    'hides the sales-channel filter when the %s listing route is fixed',
+    async (fixedSalesChannelCode) => {
+      render(
+        <AppProviders>
+          <CatalogListingWorkbenchPage account={account} fixedSalesChannelCode={fixedSalesChannelCode} />
+        </AppProviders>,
+      )
+
+      await waitFor(() =>
+        expect(listListings).toHaveBeenCalledWith(
+          expect.objectContaining({ salesChannelCode: fixedSalesChannelCode }),
+        ),
+      )
+      expect(document.querySelector('[class*="channelFilter"]')).not.toBeInTheDocument()
+    },
+  )
+
   it('fills the remaining viewport so listing pagination stays docked at the bottom', async () => {
     render(
       <AppProviders>

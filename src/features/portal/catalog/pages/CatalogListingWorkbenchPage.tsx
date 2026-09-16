@@ -440,18 +440,19 @@ export function CatalogListingWorkbenchPage(props: {
           onChange={resetPage(setShopId)}
           options={(options.data?.shops ?? []).map(({ id, name }) => ({ value: id, label: name }))}
         />
-        <Select
-          allowClear
-          className={styles.channelFilter}
-          placeholder={t('portal.catalog.allChannels')}
-          value={effectiveSalesChannelCode}
-          disabled={Boolean(fixedSalesChannelCode)}
-          onChange={resetPage(setSalesChannelCode)}
-          options={(options.data?.salesChannels ?? []).map(({ code, name }) => ({
-            value: code,
-            label: name || code,
-          }))}
-        />
+        {!fixedSalesChannelCode ? (
+          <Select
+            allowClear
+            className={styles.channelFilter}
+            placeholder={t('portal.catalog.allChannels')}
+            value={salesChannelCode}
+            onChange={resetPage(setSalesChannelCode)}
+            options={(options.data?.salesChannels ?? []).map(({ code, name }) => ({
+              value: code,
+              label: name || code,
+            }))}
+          />
+        ) : null}
         <Select
           allowClear
           className={styles.filter}

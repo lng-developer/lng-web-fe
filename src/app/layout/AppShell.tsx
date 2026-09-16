@@ -198,11 +198,12 @@ export function AppShell() {
               className={styles.navSearch}
             />
           </div>
-          <Space size={10} className={styles.headerActions}>
+          <Space size={14} className={styles.headerActions}>
             <Tooltip title={t('shell.refresh')}>
               <Button
                 type="text"
                 aria-label={t('shell.refresh')}
+                className={styles.headerIconButton}
                 icon={<ReloadOutlined spin={isFetching > 0} />}
                 onClick={refreshWorkspace}
               />

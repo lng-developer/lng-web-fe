@@ -7,6 +7,13 @@ import styles from '@/shared/ui/sharedUi.module.scss'
 
 import { CommonTablePagination } from './TablePagination'
 
+function getFullRowsHeight(availableHeight: number, rowHeight?: number) {
+  // Căn chiều cao theo số dòng trọn vẹn để bảng không cắt ngang một dòng dữ liệu.
+  if (!rowHeight || rowHeight <= 0 || availableHeight < rowHeight) return availableHeight
+
+  return Math.floor(availableHeight / rowHeight) * rowHeight
+}
+
 export type ServerSortColumn = {
   asc: string
   desc: string
@@ -62,6 +69,7 @@ export function CoreDataTable<RecordType extends object>({
   serverSorting,
   ...tableProps
 }: CoreDataTableProps<RecordType>) {
+  // Refs phục vụ việc đo chiều cao viewport và neo thanh phân trang.
   const containerRef = useRef<HTMLDivElement>(null)
   const paginationRef = useRef<HTMLDivElement>(null)
 
@@ -94,6 +102,7 @@ export function CoreDataTable<RecordType extends object>({
   const effectivePageSize = customPagination.pageSize ?? internalPageSize
 
   const sortableColumns = useMemo(() => {
+    // Bổ sung sorter theo mapping server nhưng vẫn giữ nguyên cấu hình cột gốc.
     if (!serverSorting?.enabled || !tableProps.columns) return tableProps.columns
 
     return tableProps.columns.map((column) => {
@@ -128,6 +137,7 @@ export function CoreDataTable<RecordType extends object>({
     sorter,
     extra,
   ) => {
+    // Đổi sorter của Ant Design thành mã sort mà backend yêu cầu.
     if (serverSorting?.enabled) {
       const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter
       const columnKey = activeSorter?.columnKey ?? activeSorter?.field
@@ -152,6 +162,7 @@ export function CoreDataTable<RecordType extends object>({
   const dataSourceLength = Array.isArray(dataSource) ? dataSource.length : 0
 
   const pagedDataSource = useMemo(() => {
+    // Chỉ cắt dữ liệu ở client khi pagination không có onChange từ server.
     if (!shouldPageClientSide || !Array.isArray(dataSource)) {
       return dataSource
     }
@@ -183,6 +194,7 @@ export function CoreDataTable<RecordType extends object>({
     : undefined
 
   useLayoutEffect(() => {
+    // Đo lại phần bảng còn lại khi bật chế độ lấp đầy viewport.
     if (!fillViewport) return
 
     const calculateHeight = () => {

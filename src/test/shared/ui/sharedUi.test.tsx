@@ -140,14 +140,19 @@ describe('shared UI', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Retry')
   })
 
-  it('allows a caller to style the filter control group and defaults to borderless', () => {
+  it('allows a caller to style the filter container and control group', () => {
     const { rerender } = render(
-      <FilterBar label="Account filters" contentClassName="single-line-filters">
+      <FilterBar
+        label="Account filters"
+        className="orders-filter-bar"
+        contentClassName="single-line-filters"
+      >
         <input aria-label="Search" />
       </FilterBar>,
     )
 
     const search = screen.getByRole('search')
+    expect(search).toHaveClass('orders-filter-bar')
     expect(search.querySelector('.single-line-filters')).toBeInTheDocument()
     expect(search.className).toContain('filterBarBorderless')
     expect(search.className).not.toContain('filterBarBordered')

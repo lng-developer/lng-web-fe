@@ -388,11 +388,57 @@
 
 .headerActions {
   line-height: normal;
-  padding: 4px 8px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--ant-color-bg-container) 92%, transparent);
-  box-shadow: 0 1px 3px 0 rgb(15 23 42 / 4%);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.headerIconButton,
+.headerActions :global(.ant-badge .ant-btn) {
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+}
+
+.headerIconButton:hover,
+.headerActions :global(.ant-badge .ant-btn:hover) {
+  background: var(--ant-color-fill-secondary) !important;
+}
+
+.headerActions :global(.ant-switch) {
+  min-width: 56px;
+  height: 26px;
+  padding-inline: 3px;
+  background: var(--ant-color-fill-secondary);
+  transition:
+    background-color 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms ease,
+    transform 180ms ease;
+}
+
+.headerActions :global(.ant-switch:hover) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ant-color-primary) 14%, transparent);
+  transform: translateY(-1px);
+}
+
+.headerActions :global(.ant-switch.ant-switch-checked) {
+  background: var(--ant-color-primary);
+}
+
+.headerActions :global(.ant-switch .ant-switch-handle) {
+  width: 20px;
+  height: 20px;
+  top: 3px;
+  transition:
+    inset-inline-start 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.headerActions :global(.ant-switch .ant-switch-inner) {
+  font-size: 13px;
+  transition: margin-inline 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .accountWrapper {

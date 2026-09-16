@@ -62,7 +62,11 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
     const isDatesActive = Boolean(dates.dateFrom || dates.dateTo)
 
     return (
-      <FilterBar label={filtersLabel} contentClassName={styles.filters}>
+      <FilterBar
+        label={filtersLabel}
+        className={styles.orderFilterBar}
+        contentClassName={styles.filters}
+      >
         <div className={styles.searchSection}>
           <SearchInput
             className={styles.orderSearch}
@@ -111,7 +115,6 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
             className={[styles.filterDateRange, isDatesActive ? styles.filterDateRangeActive : '']
               .filter(Boolean)
               .join(' ')}
-            style={{ maxWidth: 'none' }}
             value={dates}
             onChange={onDatesChange}
           />

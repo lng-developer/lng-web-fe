@@ -1,23 +1,20 @@
 import { useTranslation } from 'react-i18next'
-import { Segmented } from 'antd'
+import { MoonOutlined, SunOutlined } from '@ant-design/icons'
+import { Switch } from 'antd'
 
-import type { Appearance } from './theme'
 import { useThemePreference } from './themeContext'
 
 export function ThemeSwitch() {
   const { t } = useTranslation()
-  const { appearance, setAppearance } = useThemePreference()
+  const { resolved, setAppearance } = useThemePreference()
 
   return (
-    <Segmented<Appearance>
+    <Switch
       aria-label={t('theme.label', { defaultValue: 'Appearance' })}
-      value={appearance}
-      onChange={(value) => setAppearance(value)}
-      options={[
-        { label: t('theme.light', { defaultValue: 'Light' }), value: 'light' },
-        { label: t('theme.dark', { defaultValue: 'Dark' }), value: 'dark' },
-        { label: t('theme.system', { defaultValue: 'System' }), value: 'system' },
-      ]}
+      checked={resolved === 'dark'}
+      checkedChildren={<MoonOutlined aria-hidden />}
+      unCheckedChildren={<SunOutlined aria-hidden />}
+      onChange={(checked) => setAppearance(checked ? 'dark' : 'light')}
     />
   )
 }
