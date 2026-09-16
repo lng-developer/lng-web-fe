@@ -1,9 +1,15 @@
 import { MemoryRouter } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
-import { getSettlement, listImportBatches, listSettlements } from '@/features/portal/finance/api/financeApi'
+import {
+  getSettlement,
+  listImportBatches,
+  listSettlements,
+  reconcileSettlement,
+} from '@/features/portal/finance/api/financeApi'
+import { listShops } from '@/features/portal/shops/api/shopApi'
 import { SettlementWorkspacePage } from '@/features/portal/finance/pages/SettlementWorkspacePage'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
@@ -21,7 +27,9 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
   getSettlement: vi.fn(),
   listImportBatches: vi.fn(),
   listSettlements: vi.fn(),
+  reconcileSettlement: vi.fn(),
 }))
+vi.mock('@/features/portal/shops/api/shopApi', () => ({ listShops: vi.fn() }))
 
 const settlement = {
   id: 'settlement-1',
@@ -77,41 +85,70 @@ describe('SettlementWorkspacePage', () => {
     vi.mocked(listSettlements).mockResolvedValue({
       items: [settlement],
       pagination: { total: 1, page: 1, limit: 20 },
-      summaryByCurrency: [{ currency: 'USD', settlementCount: 1, totalAmount: 96215, netSettlementAmount: 96215 }],
+      summaryByCurrency: [
+        { currency: 'USD', settlementCount: 1, totalAmount: 96215, netSettlementAmount: 96215 },
+      ],
     })
     vi.mocked(getSettlement).mockResolvedValue({
       settlement,
       ledger: {
-        items: [{
-          id: 'line-1', settlementId: 'S-1', orderId: 'order-1', orderItemId: 'item-1',
-          externalOrderId: 'ORDER-1', externalItemId: 'ITEM-1', sku: 'SKU-1',
-          transactionType: 'Order', amountType: 'ItemPrice', amountDescription: 'Principal',
-          amount: 10000, currency: 'USD', quantityPurchased: 1, postedAt: '2026-09-05T00:00:00.000Z',
-        }],
+        items: [
+          {
+            id: 'line-1',
+            settlementId: 'S-1',
+            orderId: 'order-1',
+            orderItemId: 'item-1',
+            externalOrderId: 'ORDER-1',
+            externalItemId: 'ITEM-1',
+            sku: 'SKU-1',
+            transactionType: 'Order',
+            amountType: 'ItemPrice',
+            amountDescription: 'Principal',
+            amount: 10000,
+            currency: 'USD',
+            quantityPurchased: 1,
+            postedAt: '2026-09-05T00:00:00.000Z',
+          },
+        ],
         pagination: { total: 1, page: 1, limit: 20 },
         summary: settlement.ledgerSummary,
       },
     })
     vi.mocked(listImportBatches).mockResolvedValue({
-      items: [{
-        id: 'batch-1',
-        sourceType: 'SETTLEMENTS',
-        originalFilename: 'settlement.txt',
-        dryRun: false,
-        status: 'COMPLETED',
-        processedRows: 1,
-        validRows: 1,
-        skippedRows: 0,
-        unlinkedRows: 0,
-        errorCount: 0,
-        errors: [],
-        recalculationStatus: 'COMPLETED',
-        recalculationTotal: 1,
-        recalculationCompleted: 1,
-        recalculationFailed: 0,
-        recalculationErrors: [],
-        createdAt: '2026-09-08T00:00:00.000Z',
-      }],
+      items: [
+        {
+          id: 'batch-1',
+          sourceType: 'SETTLEMENTS',
+          originalFilename: 'settlement.txt',
+          dryRun: false,
+          status: 'COMPLETED',
+          processedRows: 1,
+          validRows: 1,
+          skippedRows: 0,
+          unlinkedRows: 0,
+          errorCount: 0,
+          errors: [],
+          recalculationStatus: 'COMPLETED',
+          recalculationTotal: 1,
+          recalculationCompleted: 1,
+          recalculationFailed: 0,
+          recalculationErrors: [],
+          createdAt: '2026-09-08T00:00:00.000Z',
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+    vi.mocked(listShops).mockResolvedValue({
+      items: [
+        {
+          id: 'shop-1',
+          name: 'Football US',
+          currency: 'USD',
+          status: 'ACTIVE',
+          createdAt: '',
+          updatedAt: '',
+        },
+      ],
       pagination: { total: 1, page: 1, limit: 100 },
     })
   })
@@ -128,10 +165,59 @@ describe('SettlementWorkspacePage', () => {
     expect(await screen.findByText('Settlement cash flow')).toBeVisible()
     expect((await screen.findAllByText('$962.15')).length).toBeGreaterThan(0)
     expect(await screen.findByText('S-1')).toBeVisible()
+    expect(screen.getAllByText('Amazon payout').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Status').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Pending').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Import completed')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByText('S-1'))
 
     expect(await screen.findByText('Ledger movement')).toBeVisible()
     expect(screen.getByText('ORDER-1')).toBeVisible()
+  })
+
+  it('forwards mismatch and shop filters to the settlement query', async () => {
+    renderPage()
+    await screen.findByText('S-1')
+
+    fireEvent.click(screen.getByText('Mismatch'))
+    await waitFor(() =>
+      expect(listSettlements).toHaveBeenLastCalledWith(
+        expect.objectContaining({ hasVariance: true }),
+      ),
+    )
+  })
+
+  it('allows a finance writer to send an explicit review note', async () => {
+    accountState.current = { permissions: ['FINANCE:WRITE'], scopes: [] }
+    vi.mocked(reconcileSettlement).mockResolvedValue({
+      settlement: {
+        ...settlement,
+        reconciliation: {
+          status: 'NEEDS_REVIEW',
+          note: 'Ledger amount differs',
+          reconciledAt: null,
+          reconciledByAccountId: null,
+        },
+      },
+      ledger: {
+        items: [],
+        pagination: { total: 0, page: 1, limit: 20 },
+        summary: settlement.ledgerSummary,
+      },
+    })
+    renderPage()
+    fireEvent.click(await screen.findByText('S-1'))
+    fireEvent.change(await screen.findByLabelText('Review note'), {
+      target: { value: 'Ledger amount differs' },
+    })
+    fireEvent.click(screen.getByText('Needs review'))
+
+    await waitFor(() =>
+      expect(reconcileSettlement).toHaveBeenCalledWith('settlement-1', {
+        status: 'NEEDS_REVIEW',
+        note: 'Ledger amount differs',
+      }),
+    )
   })
 })

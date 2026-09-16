@@ -181,6 +181,12 @@ export type Settlement = {
     unlinkedCount?: number
     linkCoverageBps: number | null
   }
+  reconciliation?: {
+    status: 'OPEN' | 'RECONCILED' | 'NEEDS_REVIEW'
+    note: string | null
+    reconciledAt: string | null
+    reconciledByAccountId: string | null
+  }
 }
 export type SettlementPage = Paginated<Settlement> & {
   summaryByCurrency: Array<{
@@ -233,7 +239,10 @@ export type SettlementDetail = {
   ledger: {
     items: SettlementLedgerLine[]
     pagination: { total: number; page: number; limit: number }
-    summary: Pick<Settlement['ledgerSummary'], 'inflowAmount' | 'outflowAmount' | 'netAmount' | 'lineCount' | 'linkedCount' | 'unlinkedCount'>
+    summary: Pick<
+      Settlement['ledgerSummary'],
+      'inflowAmount' | 'outflowAmount' | 'netAmount' | 'lineCount' | 'linkedCount' | 'unlinkedCount'
+    >
   }
 }
 export type FinanceImportInput = {
@@ -267,6 +276,14 @@ export async function listFinanceSnapshots(query: FinanceParams) {
 export async function getSettlement(id: string, query: Record<string, unknown> = {}) {
   return unwrap<SettlementDetail>(
     await apiClient.get(`/api/finance/settlements/${id}`, { params: params(query) }),
+  )
+}
+export async function reconcileSettlement(
+  id: string,
+  input: { status: 'RECONCILED' | 'NEEDS_REVIEW'; note?: string },
+) {
+  return unwrap<SettlementDetail>(
+    await apiClient.post(`/api/finance/settlements/${id}/reconcile`, input),
   )
 }
 export async function exportFinanceSnapshotsCsv(query: FinanceParams) {
