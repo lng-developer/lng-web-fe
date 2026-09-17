@@ -2989,6 +2989,26 @@
         "submit": "Upload"
       },
       "extension": {
+        "manualRequests": {
+          "ORDERS": "Order",
+          "TRANSACTIONS": "Transaction",
+          "SETTLEMENTS": "Settlement",
+          "ADS": "Ads",
+          "description": "Request a one-time import or configure a recurring schedule for each extension. Manual dates do not change schedules.",
+          "adsRegion": "Ads import",
+          "adsHint": "Manual import only. Ads scheduling is not available.",
+          "title": "Request {{label}} import",
+          "ordersHint": "Choose the order history window for this one-time import.",
+          "settlementHint": "Import whole closed statements overlapping the selected dates (up to 120 days). Open statements are excluded.",
+          "dateHint": "Choose the dates for this one-time import (up to 120 days).",
+          "days": "{{count}} days",
+          "days_one": "{{count}} day",
+          "days_other": "{{count}} days",
+          "dateRange": "{{label}} manual date range",
+          "queue": "Queue import",
+          "requestLabel": "Request {{label}} sync now",
+          "requestNow": "Request now"
+        },
         "title": "Amazon Extension setup",
         "environment": "Environment",
         "development": "Development",

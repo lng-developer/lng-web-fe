@@ -2989,6 +2989,26 @@
         "submit": "Tải lên"
       },
       "extension": {
+        "manualRequests": {
+          "ORDERS": "Đơn hàng",
+          "TRANSACTIONS": "Giao dịch",
+          "SETTLEMENTS": "Sao kê",
+          "ADS": "Quảng cáo",
+          "description": "Yêu cầu import một lần hoặc thiết lập lịch tự động cho từng extension. Ngày chọn thủ công không thay đổi lịch.",
+          "adsRegion": "Import quảng cáo",
+          "adsHint": "Chỉ import thủ công. Chưa hỗ trợ lịch quảng cáo.",
+          "title": "Yêu cầu import {{label}}",
+          "ordersHint": "Chọn số ngày lịch sử đơn hàng cho lần import này.",
+          "settlementHint": "Import nguyên các kỳ đã đóng giao với khoảng ngày chọn (tối đa 120 ngày). Bỏ qua kỳ chưa đóng.",
+          "dateHint": "Chọn khoảng ngày cho lần import này (tối đa 120 ngày).",
+          "days": "{{count}} ngày",
+          "days_one": "{{count}} ngày",
+          "days_other": "{{count}} ngày",
+          "dateRange": "Khoảng ngày thủ công {{label}}",
+          "queue": "Gửi yêu cầu import",
+          "requestLabel": "Yêu cầu {{label}} ngay",
+          "requestNow": "Yêu cầu ngay"
+        },
         "title": "Thiết lập tiện ích Amazon",
         "environment": "Môi trường",
         "development": "Phát triển",
