@@ -376,10 +376,11 @@ export type RefundReview = {
 }
 export const listRefundReviews = () =>
   unwrap<RefundReview[]>(apiClient.get('/api/finance/refunds/reviews'))
-export const confirmRefund = (orderItemId: string) =>
-  unwrap<{ orderItemId: string; status: string }>(
-    apiClient.post(`/api/finance/refunds/order-items/${orderItemId}/confirm`),
+export async function confirmRefund(orderItemId: string) {
+  return unwrap<{ orderItemId: string; status: string }>(
+    await apiClient.post(`/api/finance/refunds/order-items/${orderItemId}/confirm`),
   )
+}
 export const getOrderItemFinanceSnapshot = async (id: string) =>
   unwrap<FinanceSnapshot | null>(await apiClient.get(`/api/finance/order-items/${id}/snapshot`))
 export const recalculateOrderItem = async (id: string) =>
