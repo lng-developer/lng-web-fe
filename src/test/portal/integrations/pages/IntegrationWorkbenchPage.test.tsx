@@ -144,10 +144,14 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => {
   return {
     ...actual,
     getFinanceImportBatch: vi.fn(),
+    allocateRefund: vi.fn(),
+    confirmRefund: vi.fn(),
     importFinanceFile: vi.fn(),
     listAdsUnassignedRows: vi.fn(),
     listImportBatches: vi.fn(),
     listImportedFinanceData: vi.fn(),
+    listRefundReviews: vi.fn(),
+    listUnallocatedRefunds: vi.fn(),
     reprocessImportBatch: vi.fn(),
     upsertAdsShopMapping: vi.fn(),
   }
@@ -158,11 +162,15 @@ import {
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import {
+  allocateRefund,
+  confirmRefund,
   getFinanceImportBatch,
   importFinanceFile,
   listAdsUnassignedRows,
   listImportBatches,
   listImportedFinanceData,
+  listRefundReviews,
+  listUnallocatedRefunds,
   reprocessImportBatch,
 } from '@/features/portal/finance/api/financeApi'
 import {
@@ -388,6 +396,10 @@ describe('IntegrationWorkbenchPage', () => {
       pagination: { total: 0, page: 1, limit: 100 },
     })
     vi.mocked(getFinanceImportBatch).mockResolvedValue(adsImportBatch)
+    vi.mocked(listUnallocatedRefunds).mockResolvedValue([])
+    vi.mocked(listRefundReviews).mockResolvedValue([])
+    vi.mocked(allocateRefund).mockResolvedValue({})
+    vi.mocked(confirmRefund).mockResolvedValue({ orderItemId: 'item-1', status: 'REFUNDED' })
     vi.mocked(importFinanceFile).mockResolvedValue({ importBatchId: 'batch-new', status: 'QUEUED' })
     vi.mocked(reprocessImportBatch).mockResolvedValue({ importBatchId: 'batch-retry' })
   })

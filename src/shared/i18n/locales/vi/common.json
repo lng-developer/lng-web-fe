@@ -213,6 +213,7 @@
       "search": "Tìm mã đơn",
       "channel": "Kênh bán",
       "marketplace": "Thị trường",
+      "shop": "Cửa hàng",
       "seller": "Nhân viên bán hàng",
       "team": "Nhóm",
       "department": "Phòng ban",
@@ -263,7 +264,8 @@
       "rateCard": "Bảng giá áp dụng",
       "rateVersion": "Phiên bản {{version}}",
       "lastRecalculated": "Tính lại lần cuối",
-      "sourceReferences": "Nguồn tham chiếu"
+      "sourceReferences": "Nguồn tham chiếu",
+      "amazonFeeReversal": "Amazon hoàn phí"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Chưa có phương án fulfillment",
@@ -321,6 +323,28 @@
       "deposit": "Ngày ghi có",
       "depositDate": "Ngày chuyển tiền",
       "payout": "Amazon chi trả",
+      "amazonPayout": "Amazon chuyển",
+      "amazonTransferDate": "Ngày Amazon chuyển",
+      "bankReceipt": "Tiền vào ngân hàng",
+      "pending": "Chờ xác nhận",
+      "completed": "Hoàn tất",
+      "bankReceiptPending": "Chưa xác nhận tiền vào ngân hàng",
+      "bankReceiptConfirmed": "Đã xác nhận tiền vào ngân hàng",
+      "bankReceiptNeedsReview": "Cần kiểm tra tiền vào ngân hàng",
+      "bankReceiptHint": "Ngày Amazon chuyển không phải là xác nhận tiền đã vào tài khoản ngân hàng.",
+      "reconciliationStatus": "Trạng thái đối soát",
+      "reconciliationSummary": "Chênh lệch: {{variance}} · Chưa liên kết: {{unlinked}}",
+      "mismatch": "Có chênh lệch",
+      "unlinkedOnly": "Chỉ dòng chưa liên kết",
+      "markReconciled": "Xác nhận tiền vào ngân hàng",
+      "needsReview": "Cần kiểm tra",
+      "reviewNote": "Ghi chú kiểm tra",
+      "reviewNoteRequired": "Ghi chú kiểm tra (bắt buộc)",
+      "imported": "Đã nhập",
+      "importStatus": "Trạng thái nhập dữ liệu",
+      "importCompleted": "Đã nhập xong",
+      "importProcessing": "Đang nhập",
+      "importFailed": "Nhập lỗi",
       "netSettlement": "Settlement ròng",
       "ledgerNet": "Ledger đã nhập",
       "variance": "Chênh lệch",
@@ -471,6 +495,10 @@
       "netProfit": "Lợi nhuận ròng",
       "grossProfit": "Lợi nhuận gộp",
       "baseCost": "Chi phí gốc",
+      "totalFulfillmentCost": "Tổng chi phí fulfillment",
+      "lngFulfillmentFee": "Phí fulfillment LNG",
+      "vendorExtras": "Phí phát sinh vendor",
+      "shipping": "Vận chuyển",
       "additionalFulfillment": "Fulfillment phát sinh",
       "feesAndDeductions": "Phí & Khấu trừ",
       "emptyMatching": "Không có đơn hàng nào khớp với điều kiện lọc"
@@ -3068,6 +3096,29 @@
         "outcomes": {
           "RESOLVED": "Đã xử lý",
           "IGNORED": "Bỏ qua"
+        }
+      },
+      "refunds": {
+        "unallocatedTitle": "Hoàn tiền chưa phân bổ",
+        "reviewTitle": "Kiểm tra hoàn tiền",
+        "loadFailed": "Không thể tải dữ liệu hoàn tiền",
+        "order": "Đơn hàng",
+        "orderItem": "Mặt hàng",
+        "remaining": "Còn lại",
+        "refunded": "Đã hoàn tiền",
+        "originalCharge": "Khoản thu ban đầu",
+        "review": "Kiểm tra",
+        "action": "Thao tác",
+        "allocate": "Phân bổ",
+        "confirm": "Xác nhận hoàn tiền",
+        "reviewRequired": "Cần kiểm tra",
+        "allocateTitle": "Phân bổ hoàn tiền",
+        "remainingDescription": "Còn lại {{amount}}",
+        "amount": "Số tiền",
+        "reviewStatuses": {
+          "EXACT_FULL": "Hoàn tiền đủ",
+          "PARTIAL": "Hoàn tiền một phần",
+          "OVER": "Hoàn tiền vượt mức"
         }
       }
     },

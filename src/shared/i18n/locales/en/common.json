@@ -213,6 +213,7 @@
       "search": "Search Order ID",
       "channel": "Sales channel",
       "marketplace": "Marketplace",
+      "shop": "Shop",
       "seller": "Seller",
       "team": "Team",
       "department": "Department",
@@ -263,7 +264,8 @@
       "rateCard": "Rate card",
       "rateVersion": "Version {{version}}",
       "lastRecalculated": "Last recalculated",
-      "sourceReferences": "Source references"
+      "sourceReferences": "Source references",
+      "amazonFeeReversal": "Amazon fee reversal"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Fulfillment plan is missing",
@@ -321,6 +323,28 @@
       "deposit": "Deposit date",
       "depositDate": "Deposit date",
       "payout": "Amazon payout",
+      "amazonPayout": "Amazon payout",
+      "amazonTransferDate": "Amazon transfer date",
+      "bankReceipt": "Bank receipt",
+      "pending": "Pending",
+      "completed": "Completed",
+      "bankReceiptPending": "Bank receipt pending",
+      "bankReceiptConfirmed": "Bank receipt confirmed",
+      "bankReceiptNeedsReview": "Bank receipt needs review",
+      "bankReceiptHint": "Amazon transfer date is not confirmation that money reached the bank account.",
+      "reconciliationStatus": "Reconciliation status",
+      "reconciliationSummary": "Variance: {{variance}} · Unlinked: {{unlinked}}",
+      "mismatch": "Mismatch",
+      "unlinkedOnly": "Unlinked only",
+      "markReconciled": "Confirm bank receipt",
+      "needsReview": "Needs review",
+      "reviewNote": "Review note",
+      "reviewNoteRequired": "Review note (required)",
+      "imported": "Imported",
+      "importStatus": "Import status",
+      "importCompleted": "Import completed",
+      "importProcessing": "Import processing",
+      "importFailed": "Import failed",
       "netSettlement": "Net settlement",
       "ledgerNet": "Imported ledger",
       "variance": "Variance",
@@ -471,6 +495,10 @@
       "netProfit": "Net profit",
       "grossProfit": "Gross profit",
       "baseCost": "Base cost",
+      "totalFulfillmentCost": "Total fulfillment cost",
+      "lngFulfillmentFee": "LNG fulfillment fee",
+      "vendorExtras": "Vendor extras",
+      "shipping": "Shipping",
       "additionalFulfillment": "Additional fulfillment",
       "feesAndDeductions": "Fees & deductions",
       "emptyMatching": "No orders match the current filter"
@@ -3068,6 +3096,29 @@
         "outcomes": {
           "RESOLVED": "Resolved",
           "IGNORED": "Ignored"
+        }
+      },
+      "refunds": {
+        "unallocatedTitle": "Unallocated refunds",
+        "reviewTitle": "Refund review",
+        "loadFailed": "Could not load refund data",
+        "order": "Order",
+        "orderItem": "Order item",
+        "remaining": "Remaining",
+        "refunded": "Refunded",
+        "originalCharge": "Original charge",
+        "review": "Review",
+        "action": "Action",
+        "allocate": "Allocate",
+        "confirm": "Confirm refund",
+        "reviewRequired": "Review required",
+        "allocateTitle": "Allocate refund",
+        "remainingDescription": "{{amount}} remaining",
+        "amount": "Amount",
+        "reviewStatuses": {
+          "EXACT_FULL": "Exact full refund",
+          "PARTIAL": "Partial refund",
+          "OVER": "Over-refunded"
         }
       }
     },

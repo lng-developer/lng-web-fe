@@ -39,6 +39,11 @@ const systemPermissions = [
 const effectivePermissions = (account: CurrentAccount) =>
   new Set([...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)])
 
+export const hasFinanceAccess = (account: CurrentAccount) =>
+  account.roles.includes('SUPER_ADMIN') ||
+  effectivePermissions(account).has('FINANCE:READ') ||
+  effectivePermissions(account).has('FINANCE:WRITE')
+
 const hasExplicitHrAccess = (permissions: Set<string>) =>
   [...permissions].some((permission) => permission.startsWith('HR_')) ||
   organizationPermissions.some((permission) => permissions.has(permission))
@@ -92,6 +97,7 @@ const withDashboardGroup = (
 export function getContextNavigation(core: AppCoreKey, account: CurrentAccount): NavigationGroup[] {
   const permissions = effectivePermissions(account)
   const globalPermissions = new Set(account.permissions)
+  const canAccessFinance = hasFinanceAccess(account)
   if (core === 'portal') {
     return withDashboardGroup(
       [
@@ -181,6 +187,22 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
               : null,
             permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
               ? { key: 'mapping', path: '/portal/mapping', labelKey: 'shell.navigation.mapping' }
+              : null,
+          ].filter((item): item is NavigationItem => item !== null),
+        },
+        {
+          key: 'finance',
+          labelKey: 'shell.navigation.finance',
+          items: [
+            canAccessFinance
+              ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
+              : null,
+            canAccessFinance
+              ? {
+                  key: 'settlements',
+                  path: '/portal/finance/settlements',
+                  labelKey: 'finance.settlements.settlement',
+                }
               : null,
           ].filter((item): item is NavigationItem => item !== null),
         },

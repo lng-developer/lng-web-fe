@@ -359,6 +359,25 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
   ],
 }
 
+const financeMenuItem: LegacyMenuItem = {
+  key: 'finance',
+  labelKey: 'shell.navigation.finance',
+  icon: <DollarOutlined />,
+  children: [
+    {
+      key: '/portal/finance/settlements',
+      labelKey: 'finance.settlements.settlement',
+      icon: <DollarOutlined />,
+    },
+  ],
+}
+
+function getDetailMenu(menuKey: string, financeVisible: boolean) {
+  const items = detailMenus[menuKey]
+  if (!items) return undefined
+  return menuKey === 'sales' && financeVisible ? [...items, financeMenuItem] : items
+}
+
 function toMenuItems(
   items: LegacyMenuItem[],
   t: (key: string) => string,
@@ -405,8 +424,10 @@ function getRouteMenuState(
   pathname: string,
   search: string,
   bottomMenuGroups: Record<'hr' | 'system', NavigationGroup[]>,
+  financeVisible: boolean,
 ) {
-  for (const [menuKey, items] of Object.entries(detailMenus)) {
+  for (const menuKey of Object.keys(detailMenus)) {
+    const items = getDetailMenu(menuKey, financeVisible) ?? []
     const openKeys = findOpenKeys(items, pathname, search)
     if (openKeys) return { menuKey, openKeys }
   }
@@ -414,7 +435,7 @@ function getRouteMenuState(
   const core = getCoreForPath(pathname)
   const menuKey = core === 'hr' ? 'hr' : core === 'system' ? 'system' : 'sales'
   const items =
-    detailMenus[menuKey] ??
+    getDetailMenu(menuKey, financeVisible) ??
     (menuKey === 'hr' || menuKey === 'system' ? toLegacyMenuItems(bottomMenuGroups[menuKey]) : [])
   return { menuKey, openKeys: findOpenKeys(items, pathname, search) ?? [] }
 }
@@ -465,11 +486,13 @@ export function LegacySidebar({
   onCollapsedChange,
   bottomMenus: bottomMenuGroups = emptyBottomMenuGroups,
   accountLabel,
+  financeVisible = false,
 }: {
   collapsed: boolean
   onCollapsedChange: (value: boolean) => void
   bottomMenus?: Record<'hr' | 'system', NavigationGroup[]>
   accountLabel?: string
+  financeVisible?: boolean
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -478,18 +501,27 @@ export function LegacySidebar({
   const designSummary = useDesignSummaryQuery({})
   const productionQueueCounts = useProductionQueueCountsQuery({})
   const [activeMenu, setActiveMenu] = useState(
-    () => getRouteMenuState(location.pathname, location.search, bottomMenuGroups).menuKey,
+    () =>
+      getRouteMenuState(location.pathname, location.search, bottomMenuGroups, financeVisible)
+        .menuKey,
   )
   const [openDropdown, setOpenDropdown] = useState(false)
   const [openKeys, setOpenKeys] = useState<string[]>(
-    () => getRouteMenuState(location.pathname, location.search, bottomMenuGroups).openKeys,
+    () =>
+      getRouteMenuState(location.pathname, location.search, bottomMenuGroups, financeVisible)
+        .openKeys,
   )
   useEffect(() => {
-    const routeState = getRouteMenuState(location.pathname, location.search, bottomMenuGroups)
+    const routeState = getRouteMenuState(
+      location.pathname,
+      location.search,
+      bottomMenuGroups,
+      financeVisible,
+    )
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveMenu(routeState.menuKey)
     setOpenKeys(routeState.openKeys)
-  }, [bottomMenuGroups, location.pathname, location.search])
+  }, [bottomMenuGroups, financeVisible, location.pathname, location.search])
   const profile = useQuery({
     queryKey: ['hr', 'employee-profiles', 'me'],
     queryFn: loadMyEmployeeProfile,
@@ -499,7 +531,7 @@ export function LegacySidebar({
   })
   const accountName = profile.data?.fullName?.trim() || accountLabel || '—'
   const activeDetailMenu =
-    detailMenus[activeMenu] ??
+    getDetailMenu(activeMenu, financeVisible) ??
     toLegacyMenuItems(bottomMenuGroups[activeMenu as 'hr' | 'system'] ?? [])
   const badgeCounts = {
     [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
@@ -517,7 +549,7 @@ export function LegacySidebar({
         className={styles.detailMenu}
         mode="vertical"
         items={toMenuItems(
-          detailMenus[menuKey] ??
+          getDetailMenu(menuKey, financeVisible) ??
             toLegacyMenuItems(bottomMenuGroups[menuKey as 'hr' | 'system'] ?? []),
           t,
           badgeCounts,

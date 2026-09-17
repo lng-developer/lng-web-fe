@@ -151,6 +151,12 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
                 >
                   {reference.sourceKind}: {reference.sourceRef || '—'}
                   {reference.settlementId ? ` · ${reference.settlementId}` : ''}
+                  {reference.amount !== undefined
+                    ? ` · ${formatFinanceMoney(reference.amount, itemDetail.data!.revenue.currency)}`
+                    : ''}
+                  {reference.sourceKind === 'FEE' && (reference.amount ?? 0) < 0
+                    ? ` · ${t('finance.detail.amazonFeeReversal')}`
+                    : ''}
                 </Typography.Paragraph>
               ))
             ) : (
