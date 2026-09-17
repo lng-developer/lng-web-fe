@@ -26,6 +26,7 @@ import {
 import { integrationKeys } from '../api/integrationKeys'
 import type { CreateExtensionCommandInput } from '../components/extensionHelpers'
 import { shouldPollExtensionCommands } from './extensionCommandPolling'
+import { canReadListingImages } from '../auth/integrationAccess'
 
 export interface UseExtensionWorkbenchParams {
   readonly account: CurrentAccount
@@ -33,7 +34,11 @@ export interface UseExtensionWorkbenchParams {
   readonly canWriteFinance: boolean
 }
 
-export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensionWorkbenchParams) {
+export function useExtensionWorkbench({
+  account,
+  canWrite,
+  canWriteFinance,
+}: UseExtensionWorkbenchParams) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
@@ -53,7 +58,7 @@ export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensio
   const extensionManagementAgents = useQuery({
     queryKey: integrationKeys.extensionManagementAgents(),
     queryFn: listExtensionManagementAgents,
-    enabled: canUseExtension,
+    enabled: canUseExtension || canReadListingImages(account),
     retry: false,
     refetchInterval: 30_000,
   })

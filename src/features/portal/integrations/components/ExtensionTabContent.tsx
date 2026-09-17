@@ -18,6 +18,7 @@ import styles from '../pages/IntegrationWorkbenchPage.module.scss'
 import { ExtensionAutomationTab } from './ExtensionAutomationTab'
 import { ExtensionCommandDrawer } from './ExtensionCommandDrawer'
 import { ExtensionOperationsTab } from './ExtensionOperationsTab'
+import ListingImageSyncPanel from '../listing-images/components/ListingImageSyncPanel'
 
 export type ExtensionSubTab = 'operations' | 'automation'
 
@@ -202,6 +203,9 @@ export function ExtensionTabContent({
         command={selectedCommand}
         onClose={() => setSelectedCommand(undefined)}
       />
+      {activeExtensionTab === 'automation' ? (
+        <ListingImageSyncPanel account={account} agents={managementAgents} shopNames={shopNames} />
+      ) : null}
     </div>
   )
 }

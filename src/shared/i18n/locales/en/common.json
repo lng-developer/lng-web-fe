@@ -1,4 +1,26 @@
 {
+  "listingImageSync": {
+    "title": "Listing images",
+    "description": "Check daily for Amazon US listings created in this system at least 7 days ago. Recheck 7 days after the last successful check. Upload changed MAIN images to Cloudinary; keep manually edited images.",
+    "agent": "Image sync extension",
+    "schedule": "Daily eligibility check",
+    "request": "Request image sync now",
+    "upgrade": "Update and reload the extension to enable listing image sync.",
+    "offline": "Extension is offline. Jobs resume when the extension reconnects.",
+    "next": "Next eligibility check: {{time}}",
+    "shop": "Shop",
+    "status": "Status",
+    "progress": "Progress",
+    "results": "Results",
+    "actions": "Actions",
+    "counts": "Updated {{updated}} · Unchanged {{unchanged}} · Skipped {{skipped}} · Failed {{failed}}",
+    "pause": "Pause",
+    "resume": "Resume",
+    "retry": "Retry failed",
+    "start": "Start sync",
+    "confirm": "Check all existing Amazon US listings in this shop now, including listings less than 7 days old and recently checked listings. Manually edited images remain protected. This may take several hours for large catalogs.",
+    "statuses": { "QUEUED": "Queued", "RUNNING": "Running", "PAUSED": "Paused", "COMPLETED": "Completed", "COMPLETED_WITH_ERRORS": "Completed with errors" }
+  },
   "app": {
     "name": "LNG Web"
   },

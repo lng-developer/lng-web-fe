@@ -123,10 +123,16 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const [uploadOpen, setUploadOpen] = useState(false)
   const [financeUploadOpen, setFinanceUploadOpen] = useState(false)
   const requestedTab = searchParams.get('tab')
+  const canReadOrders = [
+    ...account.permissions,
+    ...account.scopes.flatMap((scope) => scope.permissions),
+  ].some((permission) => ['ORDERS:READ', 'ORDERS:WRITE'].includes(permission))
   const activeTab: IntegrationWorkbenchTab =
     requestedTab && (INTEGRATION_TABS as readonly string[]).includes(requestedTab)
       ? (requestedTab as IntegrationWorkbenchTab)
-      : 'orders'
+      : canReadOrders
+        ? 'orders'
+        : 'extension'
 
   const handleTabChange = (nextTab: IntegrationWorkbenchTab) => {
     const next = new URLSearchParams(searchParams)
@@ -153,7 +159,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
   const jobs = useQuery({
     queryKey: integrationKeys.jobs(params),
     queryFn: () => listImportJobs(params),
-    enabled: activeTab === 'orders',
+    enabled: activeTab === 'orders' && canReadOrders,
     retry: false,
   })
 
