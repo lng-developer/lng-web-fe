@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  ApiOutlined,
-  CloudDownloadOutlined,
-  InfoCircleOutlined,
-  MoreOutlined,
-  StopOutlined,
-} from '@ant-design/icons'
+import { ApiOutlined, InfoCircleOutlined, MoreOutlined, StopOutlined } from '@ant-design/icons'
 import type { FormInstance } from 'antd'
 import {
   Alert,
@@ -15,7 +9,6 @@ import {
   Form,
   Input,
   Popconfirm,
-  Popover,
   Segmented,
   Select,
   Space,
@@ -24,20 +17,14 @@ import {
 } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type {
   ExtensionTokenEnvironment,
   ExtensionTokenInput,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
-import { DateRangePicker, FormattedDateTime, SectionCard, StatusTag } from '@/shared/ui'
+import { FormattedDateTime, SectionCard, StatusTag } from '@/shared/ui'
 
-import type {
-  ExtensionCommand,
-  ExtensionImportDays,
-  ExtensionManagementAgent,
-} from '../api/integrationApi'
-import { canWriteFinanceForShop } from '../auth/integrationAccess'
+import type { ExtensionCommand, ExtensionManagementAgent } from '../api/integrationApi'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
 import {
   type CreateExtensionCommandInput,
@@ -50,7 +37,6 @@ import {
 import { LazyActionPopover } from './LazyActionPopover'
 
 export interface ExtensionOperationsTabProps {
-  readonly account: CurrentAccount
   readonly tokenForm: FormInstance<ExtensionTokenInput>
   readonly createdToken?: string
   readonly onCreatedTokenChange: (token?: string) => void
@@ -75,7 +61,6 @@ export interface ExtensionOperationsTabProps {
 }
 
 export function ExtensionOperationsTab({
-  account,
   tokenForm,
   createdToken,
   onCreatedTokenChange,
@@ -100,15 +85,6 @@ export function ExtensionOperationsTab({
 }: ExtensionOperationsTabProps) {
   const { t } = useTranslation()
   const [now, setNow] = useState(() => Date.now())
-  const [commandImportDays, setCommandImportDays] = useState<Record<string, ExtensionImportDays>>(
-    {},
-  )
-  const [adsCommandDates, setAdsCommandDates] = useState<
-    Record<string, { dateFrom?: string; dateTo?: string }>
-  >({})
-  const [transactionCommandDates, setTransactionCommandDates] = useState<
-    Record<string, { dateFrom?: string; dateTo?: string }>
-  >({})
   const [commandStatusFilter, setCommandStatusFilter] = useState<
     'ALL' | 'RUNNING' | 'FAILED' | 'SUCCEEDED'
   >('ALL')
@@ -315,65 +291,8 @@ export function ExtensionOperationsTab({
                 title: 'Actions',
                 width: 92,
                 render: (_, agent) => {
-                  const numDays = commandImportDays[agent.id] ?? 1
-                  const adsDateRange = adsCommandDates[agent.id]
-                  const transactionDateRange = transactionCommandDates[agent.id]
                   return (
                     <Space size={6}>
-                      <LazyActionPopover
-                        title="Pull Orders"
-                        renderTrigger={(onOpen) => (
-                          <Tooltip title="Configure and pull orders">
-                            <Button
-                              aria-label={t('portal.integrations.extension.configurePullOrders', {
-                                defaultValue: 'Configure Pull Orders',
-                              })}
-                              type="primary"
-                              icon={<CloudDownloadOutlined />}
-                              disabled={agent.status !== 'ONLINE'}
-                              onClick={onOpen}
-                            />
-                          </Tooltip>
-                        )}
-                        renderContent={() => (
-                          <div className={styles.commandPopover}>
-                            <Typography.Text strong>Order history</Typography.Text>
-                            <Select
-                              aria-label={t('portal.integrations.extension.orderHistoryWindow', {
-                                defaultValue: 'Order history window',
-                              })}
-                              value={numDays}
-                              onChange={(value: ExtensionImportDays) =>
-                                setCommandImportDays((current) => ({
-                                  ...current,
-                                  [agent.id]: value,
-                                }))
-                              }
-                              options={[1, 2, 7, 15, 30].map((value) => ({
-                                value,
-                                label: `${value} day${value === 1 ? '' : 's'}`,
-                              }))}
-                            />
-                            <Button
-                              aria-label={t('portal.integrations.extension.pullOrders', {
-                                defaultValue: 'Pull orders',
-                              })}
-                              type="primary"
-                              icon={<CloudDownloadOutlined />}
-                              loading={isCreatingCommand}
-                              onClick={() =>
-                                onCreateCommand({
-                                  agentId: agent.id,
-                                  type: 'IMPORT_NEW_ORDERS',
-                                  numDays,
-                                })
-                              }
-                            >
-                              Pull orders
-                            </Button>
-                          </div>
-                        )}
-                      />
                       <LazyActionPopover
                         title="More actions"
                         renderTrigger={(onOpen) => (
@@ -389,109 +308,6 @@ export function ExtensionOperationsTab({
                         )}
                         renderContent={() => (
                           <Space direction="vertical" size={4}>
-                            <Popover
-                              title="Pull Transactions"
-                              trigger="click"
-                              content={
-                                <div className={styles.commandPopover}>
-                                  <Typography.Text strong>Transactions period</Typography.Text>
-                                  <DateRangePicker
-                                    aria-label="Transactions date range"
-                                    value={transactionDateRange}
-                                    onChange={(value) =>
-                                      setTransactionCommandDates((current) => ({
-                                        ...current,
-                                        [agent.id]: value,
-                                      }))
-                                    }
-                                  />
-                                  <Button
-                                    aria-label="Pull transactions"
-                                    type="primary"
-                                    icon={<CloudDownloadOutlined />}
-                                    loading={isCreatingCommand}
-                                    disabled={
-                                      !transactionDateRange?.dateFrom ||
-                                      !transactionDateRange?.dateTo
-                                    }
-                                    onClick={() =>
-                                      onCreateCommand({
-                                        agentId: agent.id,
-                                        type: 'IMPORT_TRANSACTIONS',
-                                        ...transactionDateRange,
-                                      })
-                                    }
-                                  >
-                                    Pull Transactions
-                                  </Button>
-                                </div>
-                              }
-                            >
-                              <Button
-                                aria-label="Configure Pull Transactions"
-                                block
-                                icon={<CloudDownloadOutlined />}
-                                disabled={
-                                  agent.status !== 'ONLINE' ||
-                                  !canWriteFinanceForShop(account, agent.shopId)
-                                }
-                              >
-                                Pull Transactions
-                              </Button>
-                            </Popover>
-                            <Popover
-                              title="Pull Ads"
-                              trigger="click"
-                              content={
-                                <div className={styles.commandPopover}>
-                                  <Typography.Text strong>Ads period</Typography.Text>
-                                  <DateRangePicker
-                                    aria-label={t('portal.integrations.extension.adsDateRange', {
-                                      defaultValue: 'Ads date range',
-                                    })}
-                                    value={adsDateRange}
-                                    onChange={(value) =>
-                                      setAdsCommandDates((current) => ({
-                                        ...current,
-                                        [agent.id]: value,
-                                      }))
-                                    }
-                                  />
-                                  <Button
-                                    aria-label={t('portal.integrations.extension.pullAds', {
-                                      defaultValue: 'Pull Ads',
-                                    })}
-                                    type="primary"
-                                    icon={<CloudDownloadOutlined />}
-                                    loading={isCreatingCommand}
-                                    disabled={!adsDateRange?.dateFrom || !adsDateRange?.dateTo}
-                                    onClick={() =>
-                                      onCreateCommand({
-                                        agentId: agent.id,
-                                        type: 'IMPORT_ADS_SPEND',
-                                        ...adsDateRange,
-                                      })
-                                    }
-                                  >
-                                    Pull Ads
-                                  </Button>
-                                </div>
-                              }
-                            >
-                              <Button
-                                aria-label={t('portal.integrations.extension.configurePullAds', {
-                                  defaultValue: 'Configure Pull Ads',
-                                })}
-                                block
-                                icon={<CloudDownloadOutlined />}
-                                disabled={
-                                  agent.status !== 'ONLINE' ||
-                                  !canWriteFinanceForShop(account, agent.shopId)
-                                }
-                              >
-                                Pull Ads
-                              </Button>
-                            </Popover>
                             <Button
                               aria-label={t('portal.integrations.extension.testConnection', {
                                 defaultValue: 'Test connection',

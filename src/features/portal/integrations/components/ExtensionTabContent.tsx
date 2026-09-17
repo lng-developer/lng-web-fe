@@ -154,7 +154,6 @@ export function ExtensionTabContent({
       </div>
       {activeExtensionTab === 'operations' ? (
         <ExtensionOperationsTab
-          account={account}
           tokenForm={tokenForm}
           createdToken={createdToken}
           onCreatedTokenChange={setCreatedToken}
@@ -179,6 +178,7 @@ export function ExtensionTabContent({
         />
       ) : (
         <ExtensionAutomationTab
+          account={account}
           agents={managementAgents}
           schedules={schedules}
           financeSchedules={financeSchedules}
@@ -192,10 +192,10 @@ export function ExtensionTabContent({
           canWriteFinance={canWriteFinance}
           isSavingSchedule={saveOrderSchedule.isPending}
           isSavingFinanceSchedule={saveFinanceSchedule.isPending}
-          isRequestingFinanceSchedule={createCommand.isPending}
+          isCreatingCommand={createCommand.isPending}
           onSaveSchedule={(input) => saveOrderSchedule.mutate(input)}
           onSaveFinanceSchedule={(input) => saveFinanceSchedule.mutate(input)}
-          onRequestFinanceScheduleNow={(input) => createCommand.mutate(input)}
+          onCreateCommand={(input) => createCommand.mutate(input)}
         />
       )}
       <ExtensionCommandDrawer

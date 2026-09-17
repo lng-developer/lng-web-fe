@@ -673,7 +673,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByRole('button', { name: 'More extension actions' })).toBeVisible()
   })
 
-  it('queues a dated transaction import from More extension actions', async () => {
+  it('keeps Operations connection-only and queues transactions from Automation', async () => {
     vi.mocked(listExtensionAgents).mockResolvedValue({
       items: [
         {
@@ -706,9 +706,12 @@ describe('IntegrationWorkbenchPage', () => {
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:WRITE']))
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
     fireEvent.click(await screen.findByRole('button', { name: 'More extension actions' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Configure Pull Transactions' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Transactions date range' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Pull transactions' }))
+    expect(screen.queryByRole('button', { name: /Pull/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Test connection' })).toBeVisible()
+    fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Request transaction sync now' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Transaction manual date range' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Queue import' }))
 
     await waitFor(() =>
       expect(createExtensionCommand).toHaveBeenCalledWith({
@@ -719,7 +722,7 @@ describe('IntegrationWorkbenchPage', () => {
         dateTo: '2026-09-13',
       }),
     )
-  })
+  }, 15_000)
 
   it('keeps automation inside the extension workbench and loads it on demand', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
@@ -792,7 +795,7 @@ describe('IntegrationWorkbenchPage', () => {
     )
   }, 15_000)
 
-  it.each(['TRANSACTIONS', 'SETTLEMENTS'] as const)(
+  it.each(['TRANSACTIONS', 'SETTLEMENTS', 'ADS'] as const)(
     'requests a manual %s import with selected dates while schedules are disabled',
     async (source) => {
       vi.mocked(listExtensionAgents).mockResolvedValue({
@@ -859,12 +862,13 @@ describe('IntegrationWorkbenchPage', () => {
       fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
       await screen.findByText('RDC 1')
 
-      const label = source === 'TRANSACTIONS' ? 'transaction' : 'settlement'
+      const label =
+        source === 'TRANSACTIONS' ? 'transaction' : source === 'SETTLEMENTS' ? 'settlement' : 'ads'
       fireEvent.click(await screen.findByRole('button', { name: `Request ${label} sync now` }))
       expect(await screen.findByRole('button', { name: 'Queue import' })).toBeDisabled()
       fireEvent.click(
         screen.getByRole('button', {
-          name: `${source === 'TRANSACTIONS' ? 'Transaction' : 'Settlement'} manual date range`,
+          name: `${source === 'TRANSACTIONS' ? 'Transaction' : source === 'SETTLEMENTS' ? 'Settlement' : 'Ads'} manual date range`,
         }),
       )
       fireEvent.click(screen.getByRole('button', { name: 'Queue import' }))
@@ -872,7 +876,12 @@ describe('IntegrationWorkbenchPage', () => {
         expect(createExtensionCommand).toHaveBeenCalledWith({
           agentId: 'agent-1',
           shopId: shop.id,
-          type: source === 'TRANSACTIONS' ? 'IMPORT_TRANSACTIONS' : 'IMPORT_SETTLEMENTS',
+          type:
+            source === 'TRANSACTIONS'
+              ? 'IMPORT_TRANSACTIONS'
+              : source === 'SETTLEMENTS'
+                ? 'IMPORT_SETTLEMENTS'
+                : 'IMPORT_ADS_SPEND',
           dateFrom: '2026-09-13',
           dateTo: '2026-09-13',
         }),
@@ -983,7 +992,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(within(orderSchedule).getByText('Not scheduled')).toBeVisible()
   })
 
-  it('shows the three schedules as rows in an agent card', async () => {
+  it('shows all four import types in Automation', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
         {
@@ -1006,7 +1015,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
     expect(within(agentCard).getByRole('list')).toBeVisible()
-    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(3)
+    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(4)
     expect(within(agentCard).queryByText('Chrome extension')).not.toBeInTheDocument()
   })
 
