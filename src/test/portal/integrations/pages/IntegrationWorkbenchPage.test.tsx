@@ -330,7 +330,7 @@ describe('IntegrationWorkbenchPage', () => {
     await i18n.changeLanguage('en')
     vi.mocked(listShops).mockResolvedValue({
       items: [shop],
-      pagination: { total: 1, page: 1, limit: 100 },
+      pagination: { total: 101, page: 1, limit: 10 },
     })
     vi.mocked(listImportJobs).mockResolvedValue({
       items: [job],
@@ -1297,6 +1297,15 @@ describe('IntegrationWorkbenchPage', () => {
   })
 
   it('opens imported transaction records for a selected batch', async () => {
+    vi.mocked(getFinanceImportBatch).mockResolvedValue({
+      ...adsImportBatch,
+      id: 'batch-transactions-1',
+      sourceType: 'TRANSACTIONS',
+      originalFilename: 'transactions-2026-09-06-2026-09-07.csv',
+      marketplaceCode: 'US',
+      processedRows: 2,
+      validRows: 2,
+    })
     vi.mocked(listImportBatches).mockResolvedValue({
       items: [
         {
@@ -1321,6 +1330,10 @@ describe('IntegrationWorkbenchPage', () => {
           externalOrderId: '114-1',
           amount: -274,
           currency: 'USD',
+          feeSummary: {
+            totalAmount: 425,
+            items: [{ type: 'SELLING_FEES', amount: 325 }],
+          },
         },
       ],
       pagination: { total: 1, page: 1, limit: 100 },
@@ -1332,13 +1345,67 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByText('transactions-2026-09-06-2026-09-07.csv'))
 
     expect(await screen.findByText('Order Payment')).toBeVisible()
+    expect(screen.getByText('4.25 USD')).toBeVisible()
     await waitFor(() =>
       expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
         importBatchId: 'batch-transactions-1',
         page: 1,
-        limit: 100,
+        limit: 10,
       }),
     )
+    expect(screen.getByTitle('Next Page')).toBeVisible()
+    fireEvent.change(screen.getByLabelText('Transaction type'), {
+      target: { value: 'Order Payment' },
+    })
+    await waitFor(() =>
+      expect(listImportedFinanceData).toHaveBeenCalledWith(
+        'transactions',
+        expect.objectContaining({
+          importBatchId: 'batch-transactions-1',
+          page: 1,
+          limit: 10,
+          transactionType: 'Order Payment',
+        }),
+      ),
+    )
+  })
+
+  it('renders settlement fields for a selected batch', async () => {
+    const settlementBatch = {
+      ...adsImportBatch,
+      id: 'batch-settlements-1',
+      sourceType: 'SETTLEMENTS' as const,
+      originalFilename: 'settlements-55493020701.txt',
+      marketplaceCode: 'US',
+    }
+    vi.mocked(getFinanceImportBatch).mockResolvedValue(settlementBatch)
+    vi.mocked(listImportBatches).mockResolvedValue({
+      items: [settlementBatch],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+    vi.mocked(listImportedFinanceData).mockResolvedValue({
+      items: [{
+        id: 'settlement-1',
+        settlementId: '55493020701',
+        depositAt: '2026-09-17T00:00:00.000Z',
+        periodStartAt: '2026-09-01T00:00:00.000Z',
+        periodEndAt: '2026-09-14T00:00:00.000Z',
+        netSettlementAmount: 0,
+        totalAmount: 190693,
+        currency: 'USD',
+      }],
+      pagination: { total: 1, page: 1, limit: 10 },
+    })
+
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByText('Settlements'))
+    fireEvent.click(await screen.findByText('settlements-55493020701.txt'))
+
+    expect(await screen.findByText('55493020701')).toBeVisible()
+    expect(screen.getByText('1906.93 USD')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'View settlement activity' })).toBeVisible()
+    expect(screen.queryByText('Not required')).not.toBeInTheDocument()
   })
 
   it('shows recalculation progress and reprocesses a failed finance batch', async () => {

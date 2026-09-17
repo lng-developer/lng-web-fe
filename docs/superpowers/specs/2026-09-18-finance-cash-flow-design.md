@@ -51,7 +51,7 @@ Four cards use amounts in a single selected currency and link to their correspon
 - Transaction net: imported transaction movement total and linked/unlinked count.
 - Fees: fee movement total, separate from transaction net so values are never deducted twice in the display.
 - Settlement payout: sum of settlement payout values and cash variance count.
-- Needs review: unlinked ledger lines, imports with errors, and non-zero payout variances.
+- Needs review: unlinked ledger lines and non-zero payout variances. Import errors appear as a separate, non-monetary scope-level queue count because an import batch has no currency field.
 
 Cards show no cross-currency total. When more than one currency is selected, the workspace groups the cards by currency.
 
@@ -96,8 +96,8 @@ It returns minor-unit integer amounts only:
     settlementPayoutAmount: number,
     unlinkedCount: number,
     payoutVarianceCount: number,
-    importErrorCount: number,
   }],
+  importErrorCount: number,
   items: [{
     id: string,
     occurredAt: string | null,
@@ -122,7 +122,7 @@ The Finance service composes its own repositories and Order public-port data onl
 ## Error and empty states
 
 - No data: explain that the selected scope has no completed imports and link to Integration imports.
-- Partial import: show the completed rows normally and surface the error count in Needs review.
+- Partial import: show the completed rows normally and surface the error count as a non-monetary scope-level exception.
 - Multiple currencies: separate summary groups and do not create a converted grand total.
 - Missing fee or settlement relationship: render `Not linked`, not zero and not an inferred relationship.
 

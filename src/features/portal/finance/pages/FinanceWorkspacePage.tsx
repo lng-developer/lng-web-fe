@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData } from 'react-router-dom'
+import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tooltip, Typography } from 'antd'
@@ -30,6 +30,7 @@ import styles from './FinanceWorkspacePage.module.scss'
 
 export const FinanceWorkspacePage = () => {
   const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const account = useRouteLoaderData('workspace') as CurrentAccount
   const permissions = [
     ...account.permissions,
@@ -50,6 +51,7 @@ export const FinanceWorkspacePage = () => {
   const [dates, setDates] = useState<DateRangeValue>({})
   const [selected, setSelected] = useState<FinanceSnapshot>()
   const [selectedItemId, setSelectedItemId] = useState<string>()
+  const activeItemId = selectedItemId || searchParams.get('orderItemId') || undefined
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
@@ -112,7 +114,8 @@ export const FinanceWorkspacePage = () => {
 
   const handleCloseItemSnapshot = useCallback(() => {
     setSelectedItemId(undefined)
-  }, [])
+    setSearchParams({})
+  }, [setSearchParams])
 
   const columns = useMemo<TableColumnsType<FinanceSnapshot>>(
     () => [
@@ -251,6 +254,12 @@ export const FinanceWorkspacePage = () => {
             <Button type="link" href="/portal/finance/settlements">
               {t('finance.actions.settlements')}
             </Button>
+            <Button type="link" href="/portal/finance/cash-flow">
+              Cash flow
+            </Button>
+            <Button type="link" href="/portal/finance/transactions">
+              Transaction ledger
+            </Button>
             <Typography.Text type="secondary">
               {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
             </Typography.Text>
@@ -372,7 +381,7 @@ export const FinanceWorkspacePage = () => {
       />
 
       <FinanceItemSnapshotModal
-        selectedItemId={selectedItemId}
+        selectedItemId={activeItemId}
         canWrite={canWrite}
         isRecalculatingItem={recalculateItem.isPending}
         onClose={handleCloseItemSnapshot}

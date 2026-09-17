@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import {
   DollarCircleOutlined,
   LinkOutlined,
@@ -49,10 +50,12 @@ function statusTone(status?: string) {
 
 export function SettlementWorkspacePage() {
   const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [page, setPage] = useState(1)
   const [dates, setDates] = useState<DateRangeValue>({})
   const [selected, setSelected] = useState<SettlementSummary>()
   const [ledgerPage, setLedgerPage] = useState(1)
+  const selectedId = selected?.id || searchParams.get('settlementId') || undefined
 
   const query = useMemo(
     () => ({ page, limit: PAGE_SIZE, dateFrom: dates.dateFrom, dateTo: dates.dateTo }),
@@ -67,11 +70,12 @@ export function SettlementWorkspacePage() {
     queryFn: () => listImportBatches({ sourceType: 'SETTLEMENTS', limit: 100 }),
   })
   const detail = useQuery({
-    queryKey: ['finance', 'settlements', selected?.id, 'detail', ledgerPage],
-    queryFn: () => getSettlement(selected!.id, { page: ledgerPage, limit: PAGE_SIZE }),
-    enabled: Boolean(selected),
+    queryKey: ['finance', 'settlements', selectedId, 'detail', ledgerPage],
+    queryFn: () => getSettlement(selectedId!, { page: ledgerPage, limit: PAGE_SIZE }),
+    enabled: Boolean(selectedId),
   })
-  const selectedBatch = batches.data?.items.find((batch) => batch.id === selected?.importBatchId)
+  const activeSettlement = selected || detail.data?.settlement
+  const selectedBatch = batches.data?.items.find((batch) => batch.id === activeSettlement?.importBatchId)
   const currencySummaries = settlements.data?.summaryByCurrency ?? []
 
   const columns = useMemo<TableColumnsType<SettlementSummary>>(
@@ -262,15 +266,18 @@ export function SettlementWorkspacePage() {
 
       <Modal
         destroyOnClose
-        open={Boolean(selected)}
+        open={Boolean(selectedId)}
         title={
-          selected
-            ? `${t('finance.settlements.settlementId')}: ${selected.settlementId || '—'}`
+          activeSettlement
+            ? `${t('finance.settlements.settlementId')}: ${activeSettlement.settlementId || '—'}`
             : undefined
         }
         width="min(1360px, 92vw)"
         style={{ top: 40 }}
-        onCancel={() => setSelected(undefined)}
+        onCancel={() => {
+          setSelected(undefined)
+          setSearchParams({})
+        }}
         footer={null}
       >
         {detail.data ? (

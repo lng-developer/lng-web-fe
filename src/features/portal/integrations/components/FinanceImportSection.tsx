@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Modal, Progress, Select, Space, Table, Typography } from 'antd'
+import { Alert, Button, Input, Modal, Progress, Select, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -30,6 +31,16 @@ import {
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
+
+type FeeSummary = {
+  totalAmount?: unknown
+  items?: Array<{ type?: unknown; amount?: unknown }>
+}
+
+function formatAmount(value: unknown, currency = 'USD') {
+  const number = Number(value)
+  return Number.isFinite(number) ? `${(number / 100).toFixed(2)} ${currency}` : '-'
+}
 
 function statusTone(status: string) {
   if (status === 'COMPLETED') return 'operational'
@@ -63,11 +74,19 @@ export function FinanceImportSection({
   isActiveTab,
 }: FinanceImportSectionProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [shopId, setShopId] = useState<string>()
   const [status, setStatus] = useState<string>()
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch>()
+  const [detailPage, setDetailPage] = useState(1)
+  const [detailDates, setDetailDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [transactionType, setTransactionType] = useState('')
+  const [transactionStatus, setTransactionStatus] = useState('')
+  const [externalOrderId, setExternalOrderId] = useState('')
+  const [linkStatus, setLinkStatus] = useState<string>()
+  const [settlementId, setSettlementId] = useState('')
 
   const imports = useFinanceImportBatches({
     sourceType,
@@ -81,10 +100,39 @@ export function FinanceImportSection({
   })
   const selectedBatchQuery = useFinanceImportPolling(selectedBatch?.id, selectedBatch)
   const currentBatch = selectedBatchQuery.data ?? selectedBatch
-  const importedData = useImportedFinanceData(sourceType, currentBatch?.id, Boolean(canRead))
+  const importedData = useImportedFinanceData(
+    sourceType,
+    currentBatch?.id,
+    {
+      page: detailPage,
+      limit: PAGE_SIZE,
+      dateFrom: detailDates.dateFrom,
+      dateTo: detailDates.dateTo,
+      ...(sourceType === 'TRANSACTIONS'
+        ? {
+            transactionType: transactionType || undefined,
+            transactionStatus: transactionStatus || undefined,
+            externalOrderId: externalOrderId || undefined,
+            linkStatus,
+          }
+        : sourceType === 'SETTLEMENTS' ? { settlementId: settlementId || undefined } : {}),
+    },
+    Boolean(canRead),
+  )
   const reprocess = useReprocessFinanceImportMutation(() => setSelectedBatch(undefined))
 
   const resetPage = () => setPage(1)
+  const resetDetailPage = () => setDetailPage(1)
+  const selectBatch = (batch: ImportBatch) => {
+    setSelectedBatch(batch)
+    setDetailPage(1)
+    setDetailDates({})
+    setTransactionType('')
+    setTransactionStatus('')
+    setExternalOrderId('')
+    setLinkStatus(undefined)
+    setSettlementId('')
+  }
 
   const columns: TableColumnsType<ImportBatch> = useMemo(
     () => [
@@ -124,14 +172,16 @@ export function FinanceImportSection({
         width: 90,
         align: 'center',
       },
-      {
-        title: 'Profit recalculation',
-        width: 200,
-        render: (_, batch) =>
-          batch.recalculationTotal > 0
-            ? `${batch.recalculationStatus} ${batch.recalculationCompleted}/${batch.recalculationTotal} (${batch.recalculationFailed} failed)`
-            : 'Not required',
-      },
+      ...(sourceType === 'TRANSACTIONS'
+        ? [{
+            title: 'Profit recalculation',
+            width: 200,
+            render: (_: unknown, batch: ImportBatch) =>
+              batch.recalculationTotal > 0
+                ? `${batch.recalculationStatus} ${batch.recalculationCompleted}/${batch.recalculationTotal} (${batch.recalculationFailed} failed)`
+                : 'Not required',
+          }]
+        : []),
       {
         title: t('portal.integrations.ads.file', { defaultValue: 'File' }),
         dataIndex: 'originalFilename',
@@ -139,14 +189,11 @@ export function FinanceImportSection({
         render: (value: string) => <TableTextCell value={value} fallback="-" maxWidth={200} />,
       },
     ],
-    [shopNames, t],
+    [shopNames, sourceType, t],
   )
 
   const detailColumns = useMemo(() => {
-    const amount = (value: unknown, currency = 'USD') => {
-      const number = Number(value)
-      return Number.isFinite(number) ? `${(number / 100).toFixed(2)} ${currency}` : '-'
-    }
+    const amount = formatAmount
     const date = (value: unknown) => <FormattedDateTime value={value ? String(value) : null} />
     if (sourceType === 'TRANSACTIONS') {
       return [
@@ -160,31 +207,50 @@ export function FinanceImportSection({
           render: (id: string | null) => <CopyableOrderId value={id} fallback="—" />,
         },
         {
-          title: 'Amount',
+          title: 'Net amount',
           width: 130,
           align: 'right' as const,
           render: (_: unknown, row: Record<string, unknown>) =>
             amount(row.amount, String(row.currency || 'USD')),
+        },
+        {
+          title: 'Fees',
+          width: 130,
+          align: 'right' as const,
+          render: (_: unknown, row: Record<string, unknown>) =>
+            amount((row.feeSummary as FeeSummary | undefined)?.totalAmount, String(row.currency || 'USD')),
         },
       ]
     }
     if (sourceType === 'SETTLEMENTS') {
       return [
-        { title: 'Posted', dataIndex: 'postedAt', width: 150, render: date },
-        { title: 'Type', dataIndex: 'transactionType', width: 130 },
+        { title: 'Deposit date', dataIndex: 'depositAt', width: 150, render: date },
         {
-          title: 'Order ID',
-          dataIndex: 'externalOrderId',
-          width: 180,
-          render: (id: string | null) => <CopyableOrderId value={id} fallback="—" />,
+          title: 'Settlement ID',
+          dataIndex: 'settlementId',
+          width: 260,
+          render: (id: string | null, row: Record<string, unknown>) => (
+            <Space size={4}>
+              <TableTextCell value={id} fallback="—" maxWidth={120} />
+              <Button
+                type="link"
+                size="small"
+                disabled={!row.id}
+                onClick={() => navigate(`/portal/finance/settlements?settlementId=${row.id}`)}
+              >
+                View settlement activity
+              </Button>
+            </Space>
+          ),
         },
-        { title: 'Amount type', dataIndex: 'amountType', width: 140 },
+        { title: 'Period start', dataIndex: 'periodStartAt', width: 150, render: date },
+        { title: 'Period end', dataIndex: 'periodEndAt', width: 150, render: date },
         {
-          title: 'Amount',
+          title: 'Payout amount',
           width: 130,
           align: 'right' as const,
           render: (_: unknown, row: Record<string, unknown>) =>
-            amount(row.amount, String(row.currency || 'USD')),
+            amount(row.netSettlementAmount || row.totalAmount, String(row.currency || 'USD')),
         },
       ]
     }
@@ -204,7 +270,7 @@ export function FinanceImportSection({
           amount(row.spendAmount, String(row.currency || 'USD')),
       },
     ]
-  }, [sourceType])
+  }, [navigate, sourceType])
 
   return (
     <SectionCard title={title}>
@@ -273,7 +339,7 @@ export function FinanceImportSection({
               />
             </FilterBar>
           }
-          onRow={(batch) => ({ onClick: () => setSelectedBatch(batch) })}
+          onRow={(batch) => ({ onClick: () => selectBatch(batch) })}
         />
       ) : (
         <Alert type="info" showIcon message={permissionHint} />
@@ -294,11 +360,13 @@ export function FinanceImportSection({
             </Typography.Text>
             <Space wrap>
               <StatusTag status={statusTone(currentBatch.status)}>{currentBatch.status}</StatusTag>
-              <Typography.Text>
-                {currentBatch.recalculationTotal > 0
-                  ? `Profit recalculation: ${currentBatch.recalculationStatus} (${currentBatch.recalculationCompleted}/${currentBatch.recalculationTotal}; ${currentBatch.recalculationFailed} failed)`
-                  : 'Profit recalculation: not required'}
-              </Typography.Text>
+              {sourceType === 'TRANSACTIONS' ? (
+                <Typography.Text>
+                  {currentBatch.recalculationTotal > 0
+                    ? `Profit recalculation: ${currentBatch.recalculationStatus} (${currentBatch.recalculationCompleted}/${currentBatch.recalculationTotal}; ${currentBatch.recalculationFailed} failed)`
+                    : 'Profit recalculation: not required'}
+                </Typography.Text>
+              ) : null}
             </Space>
             {currentBatch.recalculationTotal > 0 ? (
               <Progress
@@ -322,13 +390,111 @@ export function FinanceImportSection({
             ) : null}
           </Space>
         ) : null}
+        {sourceType === 'TRANSACTIONS' ? (
+          <FilterBar label="Transaction detail filters" contentClassName={styles.filters}>
+            <DateRangePicker
+              aria-label="Posted date range"
+              value={detailDates}
+              onChange={(nextDates) => {
+                setDetailDates(nextDates)
+                resetDetailPage()
+              }}
+            />
+            <Input
+              className={styles.filterControl}
+              aria-label="Transaction type"
+              placeholder="Transaction type"
+              value={transactionType}
+              onChange={(event) => {
+                setTransactionType(event.target.value)
+                resetDetailPage()
+              }}
+            />
+            <Input
+              className={styles.filterControl}
+              aria-label="Transaction status"
+              placeholder="Transaction status"
+              value={transactionStatus}
+              onChange={(event) => {
+                setTransactionStatus(event.target.value)
+                resetDetailPage()
+              }}
+            />
+            <Input
+              className={styles.filterControl}
+              aria-label="Order ID"
+              placeholder="Order ID"
+              value={externalOrderId}
+              onChange={(event) => {
+                setExternalOrderId(event.target.value)
+                resetDetailPage()
+              }}
+            />
+            <Select
+              allowClear
+              aria-label="Link status"
+              className={styles.filterControl}
+              options={[
+                { label: 'Linked', value: 'LINKED' },
+                { label: 'Unlinked', value: 'UNLINKED' },
+              ]}
+              placeholder="Link status"
+              value={linkStatus}
+              onChange={(nextLinkStatus) => {
+                setLinkStatus(nextLinkStatus)
+                resetDetailPage()
+              }}
+            />
+          </FilterBar>
+        ) : null}
+        {sourceType === 'SETTLEMENTS' ? (
+          <FilterBar label="Settlement detail filters" contentClassName={styles.filters}>
+            <DateRangePicker
+              aria-label="Deposit date range"
+              value={detailDates}
+              onChange={(nextDates) => {
+                setDetailDates(nextDates)
+                resetDetailPage()
+              }}
+            />
+            <Input
+              className={styles.filterControl}
+              aria-label="Settlement ID"
+              placeholder="Settlement ID"
+              value={settlementId}
+              onChange={(event) => {
+                setSettlementId(event.target.value)
+                resetDetailPage()
+              }}
+            />
+          </FilterBar>
+        ) : null}
         <Table
           rowKey="id"
           size="small"
           loading={importedData.isLoading}
           dataSource={importedData.data?.items ?? []}
           columns={detailColumns}
-          pagination={false}
+          expandable={sourceType === 'TRANSACTIONS' ? {
+            expandedRowRender: (row: Record<string, unknown>) => {
+              const fees = (row.feeSummary as FeeSummary | undefined)?.items ?? []
+              return fees.length ? (
+                <Space size="middle" wrap>
+                  {fees.map((fee) => (
+                    <Typography.Text key={String(fee.type)}>
+                      {String(fee.type || 'Fee').replaceAll('_', ' ')}: {formatAmount(fee.amount, String(row.currency || 'USD'))}
+                    </Typography.Text>
+                  ))}
+                </Space>
+              ) : <Typography.Text type="secondary">No imported fees</Typography.Text>
+            },
+          } : undefined}
+          pagination={{
+            current: detailPage,
+            pageSize: PAGE_SIZE,
+            total: importedData.data?.pagination.total,
+            onChange: setDetailPage,
+          }}
           scroll={{ x: 800 }}
         />
       </Modal>

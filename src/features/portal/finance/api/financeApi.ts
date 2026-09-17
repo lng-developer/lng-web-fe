@@ -212,6 +212,48 @@ export type AdsShopMappingInput = {
   active?: boolean
 }
 export type ImportedFinanceData = Record<string, unknown> & { id: string }
+export type CashFlowStatus = 'LINKED' | 'UNLINKED' | 'NEEDS_REVIEW'
+export type CashFlowQuery = {
+  shopId?: string
+  salesChannelCode?: string
+  marketplaceCode?: string
+  currency?: string
+  dateFrom?: string
+  dateTo?: string
+  status?: CashFlowStatus
+  page?: number
+  limit?: number
+}
+export type CashFlowSummary = {
+  currency: string
+  transactionNetAmount: number
+  feeAmount: number
+  settlementPayoutAmount: number
+  unlinkedCount: number
+  payoutVarianceCount: number
+}
+export type CashFlowMovement = {
+  id: string
+  occurredAt: string | null
+  sourceKind: 'TRANSACTION' | 'FEE' | 'SETTLEMENT_ACTIVITY' | 'PAYOUT_VARIANCE'
+  amount: number
+  currency: string
+  reconciliationStatus: CashFlowStatus
+  orderId: string | null
+  orderItemId: string | null
+  externalOrderId: string | null
+  settlementId: string | null
+  settlementRecordId: string | null
+  sourceRef: string | null
+  importBatchId: string | null
+  reason: string | null
+}
+export type CashFlowPage = {
+  summaryByCurrency: CashFlowSummary[]
+  importErrorCount: number
+  items: CashFlowMovement[]
+  pagination: { total: number; page: number; limit: number }
+}
 export type SettlementSummary = Settlement
 export type SettlementLedgerLine = ImportedFinanceData & {
   settlementId: string | null
@@ -320,6 +362,12 @@ export async function listImportedFinanceData(
 ) {
   const data = unwrap<Paginated<ImportedFinanceData>>(
     await apiClient.get(`/api/finance/imported-data/${sourceType}`, { params: params(query) }),
+  )
+  return normalizePagination(data, query)
+}
+export async function listCashFlow(query: CashFlowQuery = {}) {
+  const data = unwrap<CashFlowPage>(
+    await apiClient.get('/api/finance/cash-flow', { params: params(query) }),
   )
   return normalizePagination(data, query)
 }
