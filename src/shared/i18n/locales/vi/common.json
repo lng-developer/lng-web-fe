@@ -263,7 +263,8 @@
       "rateCard": "Bảng giá áp dụng",
       "rateVersion": "Phiên bản {{version}}",
       "lastRecalculated": "Tính lại lần cuối",
-      "sourceReferences": "Nguồn tham chiếu"
+      "sourceReferences": "Nguồn tham chiếu",
+      "amazonFeeReversal": "Amazon hoàn phí"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Chưa có phương án fulfillment",
@@ -3094,6 +3095,29 @@
         "outcomes": {
           "RESOLVED": "Đã xử lý",
           "IGNORED": "Bỏ qua"
+        }
+      },
+      "refunds": {
+        "unallocatedTitle": "Hoàn tiền chưa phân bổ",
+        "reviewTitle": "Kiểm tra hoàn tiền",
+        "loadFailed": "Không thể tải dữ liệu hoàn tiền",
+        "order": "Đơn hàng",
+        "orderItem": "Mặt hàng",
+        "remaining": "Còn lại",
+        "refunded": "Đã hoàn tiền",
+        "originalCharge": "Khoản thu ban đầu",
+        "review": "Kiểm tra",
+        "action": "Thao tác",
+        "allocate": "Phân bổ",
+        "confirm": "Xác nhận hoàn tiền",
+        "reviewRequired": "Cần kiểm tra",
+        "allocateTitle": "Phân bổ hoàn tiền",
+        "remainingDescription": "Còn lại {{amount}}",
+        "amount": "Số tiền",
+        "reviewStatuses": {
+          "EXACT_FULL": "Hoàn tiền đủ",
+          "PARTIAL": "Hoàn tiền một phần",
+          "OVER": "Hoàn tiền vượt mức"
         }
       }
     },

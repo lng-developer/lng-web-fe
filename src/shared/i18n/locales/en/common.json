@@ -264,7 +264,8 @@
       "rateCard": "Rate card",
       "rateVersion": "Version {{version}}",
       "lastRecalculated": "Last recalculated",
-      "sourceReferences": "Source references"
+      "sourceReferences": "Source references",
+      "amazonFeeReversal": "Amazon fee reversal"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Fulfillment plan is missing",
@@ -3095,6 +3096,29 @@
         "outcomes": {
           "RESOLVED": "Resolved",
           "IGNORED": "Ignored"
+        }
+      },
+      "refunds": {
+        "unallocatedTitle": "Unallocated refunds",
+        "reviewTitle": "Refund review",
+        "loadFailed": "Could not load refund data",
+        "order": "Order",
+        "orderItem": "Order item",
+        "remaining": "Remaining",
+        "refunded": "Refunded",
+        "originalCharge": "Original charge",
+        "review": "Review",
+        "action": "Action",
+        "allocate": "Allocate",
+        "confirm": "Confirm refund",
+        "reviewRequired": "Review required",
+        "allocateTitle": "Allocate refund",
+        "remainingDescription": "{{amount}} remaining",
+        "amount": "Amount",
+        "reviewStatuses": {
+          "EXACT_FULL": "Exact full refund",
+          "PARTIAL": "Partial refund",
+          "OVER": "Over-refunded"
         }
       }
     },

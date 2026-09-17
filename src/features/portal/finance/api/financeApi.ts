@@ -54,6 +54,7 @@ export type FinanceSnapshot = {
       settlementId?: string | null
       category?: string | null
       externalReference?: string | null
+      amount?: number
     }>
   }
   calculatedAt: string
@@ -343,6 +344,42 @@ export async function listImportedFinanceData(
 export async function reprocessImportBatch(id: string) {
   return unwrap(await apiClient.post(`/api/finance/import-batches/${id}/reprocess`))
 }
+export async function allocateRefund(
+  refundId: string,
+  allocations: Array<{ orderItemId: string; amount: number }>,
+) {
+  return unwrap(
+    await apiClient.post(`/api/finance/refunds/${refundId}/allocations`, { allocations }),
+  )
+}
+export type UnallocatedRefund = {
+  id: string
+  externalOrderId: string | null
+  currency: string
+  refundedAt: string
+  totalRefundAmount: number
+  allocatedAmount: number
+  remainingAmount: number
+  items: Array<{ id: string; sku: string | null; quantity: number }>
+}
+export const listUnallocatedRefunds = () =>
+  unwrap<UnallocatedRefund[]>(apiClient.get('/api/finance/refunds/unallocated'))
+export type RefundReview = {
+  orderItemId: string
+  orderId: string | null
+  currency: string
+  allocatedAmount: number
+  expectedCustomerChargeAmount: number
+  reviewStatus: 'EXACT_FULL' | 'PARTIAL' | 'OVER'
+  canConfirmRefund: boolean
+  itemStatus: string | null
+}
+export const listRefundReviews = () =>
+  unwrap<RefundReview[]>(apiClient.get('/api/finance/refunds/reviews'))
+export const confirmRefund = (orderItemId: string) =>
+  unwrap<{ orderItemId: string; status: string }>(
+    apiClient.post(`/api/finance/refunds/order-items/${orderItemId}/confirm`),
+  )
 export const getOrderItemFinanceSnapshot = async (id: string) =>
   unwrap<FinanceSnapshot | null>(await apiClient.get(`/api/finance/order-items/${id}/snapshot`))
 export const recalculateOrderItem = async (id: string) =>
