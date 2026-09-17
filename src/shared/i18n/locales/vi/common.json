@@ -1,4 +1,26 @@
 {
+  "listingImageSync": {
+    "title": "Ảnh listing",
+    "description": "Hằng ngày chọn listing Amazon US đã được tạo trong hệ thống ít nhất 7 ngày. Kiểm tra lại sau 7 ngày kể từ lần kiểm tra thành công. Ảnh MAIN thay đổi được lưu Cloudinary; giữ nguyên ảnh chỉnh thủ công.",
+    "agent": "Extension đồng bộ ảnh",
+    "schedule": "Kiểm tra điều kiện hằng ngày",
+    "request": "Đồng bộ ảnh ngay",
+    "upgrade": "Cập nhật và reload extension để bật đồng bộ ảnh listing.",
+    "offline": "Extension đang offline. Job tiếp tục khi extension kết nối lại.",
+    "next": "Lần kiểm tra điều kiện tiếp theo: {{time}}",
+    "shop": "Shop",
+    "status": "Trạng thái",
+    "progress": "Tiến độ",
+    "results": "Kết quả",
+    "actions": "Thao tác",
+    "counts": "Cập nhật {{updated}} · Không đổi {{unchanged}} · Bỏ qua {{skipped}} · Lỗi {{failed}}",
+    "pause": "Tạm dừng",
+    "resume": "Tiếp tục",
+    "retry": "Thử lại mục lỗi",
+    "start": "Bắt đầu đồng bộ",
+    "confirm": "Kiểm tra ngay tất cả listing Amazon US hiện có của shop, kể cả listing chưa đủ 7 ngày hoặc vừa kiểm tra gần đây. Ảnh chỉnh thủ công vẫn được bảo vệ. Catalog lớn có thể mất vài giờ.",
+    "statuses": { "QUEUED": "Đang chờ", "RUNNING": "Đang chạy", "PAUSED": "Tạm dừng", "COMPLETED": "Hoàn tất", "COMPLETED_WITH_ERRORS": "Hoàn tất có lỗi" }
+  },
   "app": {
     "name": "LNG Web"
   },

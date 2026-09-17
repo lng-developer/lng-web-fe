@@ -23,6 +23,7 @@ export type PostImportStatus =
 export type ImportUploadSource = 'AMAZON_ORDER_REPORT' | 'ETSY_SOLD_ORDER_ITEMS'
 export type ExtensionCommandStatus = 'QUEUED' | 'CLAIMED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
 export type ExtensionAgent = {
+  listingImageSync?: boolean
   id: string
   shopId: string
   clientId: string
@@ -61,6 +62,7 @@ export type ExtensionCommand = {
   completedAt: string | null
 }
 export type ExtensionCommandType =
+  | 'SYNC_LISTING_IMAGES'
   | 'IMPORT_NEW_ORDERS'
   | 'IMPORT_ADS_SPEND'
   | 'IMPORT_TRANSACTIONS'
