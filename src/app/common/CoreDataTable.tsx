@@ -8,8 +8,8 @@ import styles from '@/shared/ui/sharedUi.module.scss'
 import { CommonTablePagination } from './TablePagination'
 
 export type ServerSortColumn = {
-  asc: string
-  desc: string
+  asc?: string
+  desc?: string
 }
 
 export type CoreDataTableServerSorting = {
@@ -111,7 +111,11 @@ export function CoreDataTable<RecordType extends object>({
       return {
         ...column,
         sorter: true,
-        sortDirections: ['descend', 'ascend', null] as Array<'descend' | 'ascend' | null>,
+        sortDirections: [
+          ...(sortColumn.desc ? (['descend'] as const) : []),
+          ...(sortColumn.asc ? (['ascend'] as const) : []),
+          null,
+        ],
         sortOrder:
           serverSorting.value === sortColumn.asc
             ? ('ascend' as const)

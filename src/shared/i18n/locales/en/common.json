@@ -494,6 +494,10 @@
       "netProfit": "Net profit",
       "grossProfit": "Gross profit",
       "baseCost": "Base cost",
+      "totalFulfillmentCost": "Total fulfillment cost",
+      "lngFulfillmentFee": "LNG fulfillment fee",
+      "vendorExtras": "Vendor extras",
+      "shipping": "Shipping",
       "additionalFulfillment": "Additional fulfillment",
       "feesAndDeductions": "Fees & deductions",
       "emptyMatching": "No orders match the current filter"

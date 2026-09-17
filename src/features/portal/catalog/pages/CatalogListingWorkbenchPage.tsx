@@ -70,6 +70,7 @@ export function CatalogListingWorkbenchPage(props: {
   const [salesChannelCode, setSalesChannelCode] = useState<string>()
   const [qcStatus, setQcStatus] = useState<string>()
   const [psdState, setPsdState] = useState<'missing' | 'ready'>()
+  const [sort, setSort] = useState<string>()
   const [editing, setEditing] = useState<Listing | 'create'>()
   const [previewing, setPreviewing] = useState<Listing>()
   const [requestingPsd, setRequestingPsd] = useState<Listing>()
@@ -86,6 +87,7 @@ export function CatalogListingWorkbenchPage(props: {
     salesChannelCode: effectiveSalesChannelCode,
     qcStatus,
     psdState,
+    sort,
   })
 
   const { save, requestDefaultPsd, exportCsv } = useCatalogMutations({
@@ -278,7 +280,6 @@ export function CatalogListingWorkbenchPage(props: {
       {
         title: t('portal.catalog.columns.sales'),
         key: 'sales',
-        sorter: (left, right) => left.salesStats.quantitySold - right.salesStats.quantitySold,
         width: 100,
         align: 'right',
         render: (_, listing) => (
@@ -524,6 +525,15 @@ export function CatalogListingWorkbenchPage(props: {
             onChange: (nextPage, nextPageSize) => {
               setPage(nextPageSize === pageSize ? nextPage : 1)
               setPageSize(nextPageSize)
+            },
+          }}
+          serverSorting={{
+            enabled: true,
+            value: sort,
+            columns: { sales: { desc: 'quantitySoldDesc' } },
+            onChange: (nextSort) => {
+              setSort(nextSort)
+              setPage(1)
             },
           }}
           expandable={{

@@ -493,6 +493,10 @@
       "netProfit": "Lợi nhuận ròng",
       "grossProfit": "Lợi nhuận gộp",
       "baseCost": "Chi phí gốc",
+      "totalFulfillmentCost": "Tổng chi phí fulfillment",
+      "lngFulfillmentFee": "Phí fulfillment LNG",
+      "vendorExtras": "Phí phát sinh vendor",
+      "shipping": "Vận chuyển",
       "additionalFulfillment": "Fulfillment phát sinh",
       "feesAndDeductions": "Phí & Khấu trừ",
       "emptyMatching": "Không có đơn hàng nào khớp với điều kiện lọc"

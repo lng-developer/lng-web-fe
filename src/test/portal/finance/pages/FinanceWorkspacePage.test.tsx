@@ -11,6 +11,7 @@ import {
   listSettlements,
   recalculateOrder,
 } from '@/features/portal/finance/api/financeApi'
+import { FinanceCurrencySummary } from '@/features/portal/finance/components/FinanceCurrencySummary'
 import { FinanceWorkspacePage } from '@/features/portal/finance/pages/FinanceWorkspacePage'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import i18n from '@/shared/i18n/i18n'
@@ -166,7 +167,9 @@ describe('FinanceWorkspacePage', () => {
           },
         },
       ],
-      summaryByCurrency: [{ currency: 'USD', settlementCount: 1, totalAmount: 96215, netSettlementAmount: 96215 }],
+      summaryByCurrency: [
+        { currency: 'USD', settlementCount: 1, totalAmount: 96215, netSettlementAmount: 96215 },
+      ],
       pagination: { total: 1, page: 1, limit: 10 },
     })
     vi.mocked(listShops).mockResolvedValue({
@@ -249,11 +252,13 @@ describe('FinanceWorkspacePage', () => {
       profitStatus: 'ESTIMATED',
       costRate: { version: 2, effectiveFrom: '2026-08-01T00:00:00.000Z' },
       evidence: {
-        sourceReferences: [{
-          sourceKind: 'FEE',
-          sourceRef: 'transactions.csv',
-          importBatchId: 'batch-1',
-        }],
+        sourceReferences: [
+          {
+            sourceKind: 'FEE',
+            sourceRef: 'transactions.csv',
+            importBatchId: 'batch-1',
+          },
+        ],
       },
       calculatedAt: '2026-08-03T03:00:00.000Z',
       calculationHistory: [],
@@ -348,6 +353,36 @@ describe('FinanceWorkspacePage', () => {
     expect(await screen.findAllByText('Cost & deductions')).toHaveLength(2)
     fireEvent.click(screen.getAllByText('Cost & deductions')[0])
     expect(await screen.findByText('Additional fulfillment cost')).toBeInTheDocument()
+  })
+
+  it('shows only the fulfillment cost above base cost in the summary breakdown', async () => {
+    render(
+      <AppProviders>
+        <FinanceCurrencySummary
+          summaries={[
+            {
+              currency: 'USD',
+              orderCount: 1,
+              revenueAmount: 15925,
+              marketplaceFeeAmount: 2390,
+              refundAmount: 0,
+              discountAmount: 0,
+              baseCostAmount: 4470,
+              additionalFulfillmentCostAmount: 4970,
+              knownCostAmount: 4970,
+              totalCostAmount: 4970,
+              profitAmount: 8565,
+              grossMarginBps: 5378,
+              missingCostCount: 0,
+            },
+          ]}
+        />
+      </AppProviders>,
+    )
+
+    fireEvent.click(screen.getByText('Cost & deductions'))
+
+    expect(await screen.findByText('$5.00')).toBeInTheDocument()
   })
 
   it('keeps one filter row, omits marketplace, and puts export in the profitability header', async () => {

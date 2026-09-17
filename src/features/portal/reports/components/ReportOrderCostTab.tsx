@@ -22,6 +22,8 @@ interface ReportOrderCostTabProps {
   data?: OrderProfitabilityReport
   isPending: boolean
   onPageChange: (page: number) => void
+  costCoverage?: 'MISSING' | 'COMPLETE'
+  onCostCoverageChange: (value?: 'MISSING' | 'COMPLETE') => void
   filterBar?: ReactNode
 }
 
@@ -31,11 +33,14 @@ export function ReportOrderCostTab({
   data,
   isPending,
   onPageChange,
+  costCoverage,
+  onCostCoverageChange,
   filterBar,
 }: ReportOrderCostTabProps) {
   const { t } = useTranslation()
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
+  const statusFilter: StatusFilter =
+    costCoverage === 'MISSING' ? 'missing' : costCoverage === 'COMPLETE' ? 'complete' : 'all'
 
   const items = useMemo(() => data?.items || [], [data?.items])
   const summary = data?.summaryByCurrency?.[0]
@@ -51,12 +56,6 @@ export function ReportOrderCostTab({
 
   const filteredItems = useMemo(() => {
     let result = items
-    if (statusFilter === 'missing') {
-      result = result.filter((row) => row.missingCostCount > 0)
-    } else if (statusFilter === 'complete') {
-      result = result.filter((row) => row.missingCostCount === 0)
-    }
-
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       result = result.filter(
@@ -68,7 +67,7 @@ export function ReportOrderCostTab({
       )
     }
     return result
-  }, [items, statusFilter, search])
+  }, [items, search])
 
   const columns: TableColumnsType<OrderProfitability> = useMemo(
     () => [
@@ -130,7 +129,7 @@ export function ReportOrderCostTab({
         ),
       },
       {
-        title: t('reports.columns.fulfillmentCost'),
+        title: t('reports.orderCost.totalFulfillmentCost'),
         dataIndex: 'totalCostAmount',
         key: 'totalCostAmount',
         width: 140,
@@ -268,7 +267,11 @@ export function ReportOrderCostTab({
     <div className={styles.orderCostToolbar}>
       <Segmented
         value={statusFilter}
-        onChange={(val) => setStatusFilter(val as StatusFilter)}
+        onChange={(val) =>
+          onCostCoverageChange(
+            val === 'missing' ? 'MISSING' : val === 'complete' ? 'COMPLETE' : undefined,
+          )
+        }
         options={segmentedOptions}
       />
       <div className={styles.orderCostToolbarActions}>
@@ -351,6 +354,10 @@ export function ReportOrderCostTab({
         expandable={{
           expandedRowRender: (record: OrderProfitability) => {
             const currency = record.currency || 'USD'
+            const formatCost = (amount: number | null) =>
+              amount == null
+                ? t('reports.orderCost.costMissing')
+                : formatReportMoney(amount, currency)
             return (
               <div className={styles.orderExpandedBreakdown}>
                 <div className={styles.orderExpandedTitle}>
@@ -377,12 +384,28 @@ export function ReportOrderCostTab({
                   <span className={styles.orderExpandedOperator}>−</span>
                   <div className={styles.orderExpandedItem}>
                     <span className={styles.orderExpandedItemLabel}>
-                      {t('reports.columns.fulfillmentCost')}
+                      {t('reports.orderCost.lngFulfillmentFee')}
                     </span>
                     <span className={styles.orderExpandedItemValue}>
-                      {record.totalCostAmount == null
-                        ? t('reports.orderCost.costMissing')
-                        : formatReportMoney(record.totalCostAmount, currency)}
+                      {formatCost(record.lngFulfillmentFeeAmount)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>−</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.orderCost.vendorExtras')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {formatCost(record.vendorAdditionalCostAmount)}
+                    </span>
+                  </div>
+                  <span className={styles.orderExpandedOperator}>−</span>
+                  <div className={styles.orderExpandedItem}>
+                    <span className={styles.orderExpandedItemLabel}>
+                      {t('reports.orderCost.shipping')}
+                    </span>
+                    <span className={styles.orderExpandedItemValue}>
+                      {formatCost(record.shippingCostAmount)}
                     </span>
                   </div>
                   <span className={styles.orderExpandedOperator}>−</span>
