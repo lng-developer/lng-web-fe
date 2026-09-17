@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BankOutlined,
@@ -12,7 +12,8 @@ import {
 } from '@ant-design/icons'
 import { Button, Empty, Popover, Select, Spin, Typography } from 'antd'
 
-import { SectionCard, StatusTag } from '@/shared/ui'
+import { DateRangePicker, SectionCard, StatusTag } from '@/shared/ui'
+import type { CreateExtensionCommandInput } from './extensionHelpers'
 
 import type {
   ExtensionFinanceSchedule,
@@ -43,10 +44,7 @@ export interface ExtensionAutomationTabProps {
     source: ExtensionFinanceScheduleSource
     enabled: boolean
   }) => void
-  readonly onRequestFinanceScheduleNow: (input: {
-    agentId: string
-    source: ExtensionFinanceScheduleSource
-  }) => void
+  readonly onRequestFinanceScheduleNow: (input: CreateExtensionCommandInput) => void
 }
 
 export function ExtensionAutomationTab({
@@ -65,6 +63,9 @@ export function ExtensionAutomationTab({
   onRequestFinanceScheduleNow,
 }: ExtensionAutomationTabProps) {
   const { t } = useTranslation()
+  const [manualDates, setManualDates] = useState<
+    Record<string, { dateFrom?: string; dateTo?: string } | undefined>
+  >({})
   const orderScheduleByAgentId = useMemo(
     () => new Map(schedules.map((schedule) => [schedule.agentId, schedule])),
     [schedules],
@@ -187,6 +188,8 @@ export function ExtensionAutomationTab({
   ) => {
     const schedule = financeScheduleByAgentSource.get(`${agent.id}:${source}`)
     const enabled = schedule?.enabled ?? false
+    const dateKey = `${agent.id}:${source}`
+    const dates = manualDates[dateKey]
     return (
       <li className={styles.automationScheduleItem}>
         <section aria-label={`${label} schedule`} className={styles.automationScheduleRow}>
@@ -204,7 +207,7 @@ export function ExtensionAutomationTab({
                 {enabled ? (
                   <>
                     <ClockCircleOutlined style={{ marginRight: 4, fontSize: 11 }} />
-                    {`${source === 'TRANSACTIONS' ? 'Daily · Up to 7 days per run' : 'Daily · Newly closed statements only'} · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}`}
+                    {`${source === 'TRANSACTIONS' ? 'Daily · Last 3 completed days (UTC+7) · Initial 30 days in 7-day batches' : 'Daily · Newly closed statements only'} · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}`}
                   </>
                 ) : (
                   'Not scheduled'
@@ -235,18 +238,58 @@ export function ExtensionAutomationTab({
                 >
                   {enabled ? 'Disable' : 'Enable'}
                 </Button>
-                {enabled ? (
+                <Popover
+                  trigger="click"
+                  title={`Request ${label.toLowerCase()} import`}
+                  content={
+                    <div className={styles.commandPopover}>
+                      <Typography.Text>
+                        {source === 'SETTLEMENTS'
+                          ? 'Choose the exact closed statement period.'
+                          : 'Choose the dates for this one-time import.'}
+                      </Typography.Text>
+                      <DateRangePicker
+                        aria-label={`${label} manual date range`}
+                        value={dates}
+                        onChange={(value) =>
+                          setManualDates((current) => ({ ...current, [dateKey]: value }))
+                        }
+                      />
+                      <Button
+                        type="primary"
+                        loading={isRequestingFinanceSchedule}
+                        disabled={
+                          !dates?.dateFrom ||
+                          !dates?.dateTo ||
+                          dates.dateFrom > dates.dateTo ||
+                          agent.status !== 'ONLINE'
+                        }
+                        onClick={() =>
+                          onRequestFinanceScheduleNow({
+                            agentId: agent.id,
+                            type:
+                              source === 'TRANSACTIONS'
+                                ? 'IMPORT_TRANSACTIONS'
+                                : 'IMPORT_SETTLEMENTS',
+                            ...dates,
+                          })
+                        }
+                      >
+                        Queue import
+                      </Button>
+                    </div>
+                  }
+                >
                   <Button
                     aria-label={`Request ${label.toLowerCase()} sync now`}
-                    loading={isRequestingFinanceSchedule}
+                    disabled={agent.status !== 'ONLINE'}
                     size="small"
                     type="primary"
                     icon={<SyncOutlined />}
-                    onClick={() => onRequestFinanceScheduleNow({ agentId: agent.id, source })}
                   >
                     Request now
                   </Button>
-                ) : null}
+                </Popover>
               </div>
             ) : null}
           </div>

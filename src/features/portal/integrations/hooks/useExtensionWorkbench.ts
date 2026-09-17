@@ -90,6 +90,7 @@ export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensio
   })
 
   const createCommand = useMutation({
+    onError: (error) => showFeedbackToast('error', error.message),
     mutationFn: ({ agentId, type, numDays, dateFrom, dateTo }: CreateExtensionCommandInput) => {
       const agent = extensionAgents.data?.items.find((item) => item.id === agentId)
       if (!agent) throw new Error('Extension agent is unavailable')
@@ -162,8 +163,13 @@ export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensio
   })
 
   const requestFinanceScheduleNow = useMutation({
-    mutationFn: ({ agentId, source }: { agentId: string; source: 'TRANSACTIONS' | 'SETTLEMENTS' }) =>
-      requestExtensionFinanceScheduleNow(agentId, source),
+    mutationFn: ({
+      agentId,
+      source,
+    }: {
+      agentId: string
+      source: 'TRANSACTIONS' | 'SETTLEMENTS'
+    }) => requestExtensionFinanceScheduleNow(agentId, source),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: integrationKeys.extensionFinanceSchedules() }),
@@ -172,7 +178,10 @@ export function useExtensionWorkbench({ canWrite, canWriteFinance }: UseExtensio
       showFeedbackToast('success', 'Finance import requested.')
     },
     onError: (error) => {
-      showFeedbackToast('error', error instanceof Error ? error.message : 'Finance import request failed.')
+      showFeedbackToast(
+        'error',
+        error instanceof Error ? error.message : 'Finance import request failed.',
+      )
     },
   })
 
