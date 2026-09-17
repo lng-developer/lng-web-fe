@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ApiOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { ApiOutlined, EditOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tag, Typography } from 'antd'
 
@@ -25,6 +25,7 @@ interface VendorWorkspaceVendorsTabPageProps {
   readonly onVendorStatusChange: (value: RecordStatus | undefined) => void
   readonly onVendorsPageChange: (page: number, pageSize: number) => void
   readonly onAddVendor: () => void
+  readonly onOpenCatalogImport: () => void
   readonly onEditVendor: (vendor: Vendor) => void
   readonly onOpenIntegration: (vendor: Vendor) => void
 }
@@ -52,6 +53,7 @@ export function VendorWorkspaceVendorsTabPage({
   onVendorStatusChange,
   onVendorsPageChange,
   onAddVendor,
+  onOpenCatalogImport,
   onEditVendor,
   onOpenIntegration,
 }: VendorWorkspaceVendorsTabPageProps) {
@@ -171,6 +173,9 @@ export function VendorWorkspaceVendorsTabPage({
         </div>
         {canWrite && !integrationOnly ? (
           <div className={styles.actionsWrapper}>
+            <Button icon={<ImportOutlined />} onClick={onOpenCatalogImport}>
+              {t('portal.vendors.catalogImport.title')}
+            </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={onAddVendor}>
               {t('portal.vendors.addVendor')}
             </Button>
