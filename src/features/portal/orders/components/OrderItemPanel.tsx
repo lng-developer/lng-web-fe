@@ -35,6 +35,7 @@ type OrderItemPanelProps = {
   readonly canWrite: boolean
   readonly canOperate: boolean
   readonly pending: boolean
+  readonly mappingRecheckPending: boolean
   readonly onAction: (action: OrderAction) => void
   readonly onConfirm: (
     target: EventTarget | null,
@@ -54,6 +55,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   canWrite,
   canOperate,
   pending,
+  mappingRecheckPending,
   onAction,
   onConfirm,
   onHistory,
@@ -75,14 +77,26 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         ? [{ assetDownloadUrl: customizationPreview, filename: null }]
         : []
   const mainListingImage = item.listing?.productImageUrl
-  const psdSource = item.mapping?.listingVariant || item.mapping?.listingPsd
+  const psdSource =
+    item.psd?.listingVariant ||
+    item.psd?.listingPsd ||
+    item.mapping?.listingVariant ||
+    item.mapping?.listingPsd
   const psdStatus = psdSource?.psdReadiness?.status
   const psdDownloadUrl = psdSource?.psdTemplate?.downloadUrl
   const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item.status ?? '')
   const canRecheckProduction =
-    item.workflow.nextActions.some((action) => action.startsWith('RECHECK_')) ||
+    item.workflow.nextActions.some(
+      (action) => action === 'CREATE_PRODUCTION_TASK' || action.startsWith('RECHECK_'),
+    ) ||
     item.mapping?.status === 'BLOCKED' ||
     (item.production?.status === 'BLOCKED' && psdStatus === 'PRESENT')
+  const productionRecheckBlocked = mappingRecheckPending || item.mapping?.status !== 'READY'
+  const productionRecheckLabel = mappingRecheckPending
+    ? t('orders.actions.recheckProductionWaitingMapping')
+    : item.mapping?.status !== 'READY'
+      ? t('orders.actions.recheckProductionNeedsMapping')
+      : t('orders.actions.recheckProductionShort')
 
   const relatedImages = useMemo(
     () =>
@@ -135,7 +149,8 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             {
               key: 'recheck-production',
               icon: <ReloadOutlined />,
-              label: t('orders.actions.recheckProductionShort'),
+              label: productionRecheckLabel,
+              disabled: productionRecheckBlocked,
               onClick: () => onAction({ kind: 'recheck-production', itemId: item.item.id }),
             },
           ]
@@ -158,7 +173,18 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           ]
         : []),
     ],
-    [canOperate, canRecheckProduction, canWrite, item, onAction, onConfirm, t, terminal],
+    [
+      canOperate,
+      canRecheckProduction,
+      canWrite,
+      item,
+      onAction,
+      onConfirm,
+      productionRecheckBlocked,
+      productionRecheckLabel,
+      t,
+      terminal,
+    ],
   )
 
   const renderAsin = (asin?: string | null) => {

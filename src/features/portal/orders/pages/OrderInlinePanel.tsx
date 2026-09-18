@@ -17,7 +17,7 @@ import { OrderItemPanel } from '../components/OrderItemPanel'
 import { OrderReplacementModal } from '../components/OrderReplacementModal'
 import { OrderShippingModal } from '../components/OrderShippingModal'
 import { OrderTimelineModal } from '../components/OrderTimelineModal'
-import type { OrderItemConfirmation, OrderModal } from '../components/orderTypes'
+import type { OrderAction, OrderItemConfirmation, OrderModal } from '../components/orderTypes'
 import { useOrderActionsMutation } from '../hooks/useOrderActionsMutation'
 import styles from './OrderWorkbenchPage.module.scss'
 
@@ -37,6 +37,43 @@ function isProductionBlockedByOpenCase(result: unknown) {
   if (!result || typeof result !== 'object') return false
   const task = result as { status?: string; blockers?: string[] }
   return task.status === 'BLOCKED' && task.blockers?.includes('OPEN_CASE')
+}
+
+function successMessageKey(action: OrderAction) {
+  switch (action.kind) {
+    case 'address':
+      return 'orders.messages.addressUpdated'
+    case 'customer':
+      return 'orders.messages.customerUpdated'
+    case 'shipping':
+      return 'orders.messages.shippingUpdated'
+    case 'validate-address':
+      return 'orders.messages.addressValidated'
+    case 'override-address':
+      return 'orders.messages.addressOverridden'
+    case 'note':
+      return 'orders.messages.noteSaved'
+    case 'recheck-production':
+      return 'orders.messages.productionRechecked'
+    case 'retry-customization-assets':
+      return 'orders.messages.customizationAssetsRetried'
+    case 'ready':
+      return 'orders.messages.fulfillmentReady'
+    case 'cancel':
+      return 'orders.messages.itemCancelled'
+    case 'replacement':
+      return 'orders.messages.itemReplacementCreated'
+    case 'order-replacement':
+      return 'orders.messages.orderReplacementCreated'
+    case 'case-save':
+      return action.orderCase ? 'orders.messages.caseUpdated' : 'orders.messages.caseCreated'
+    case 'case-resolve':
+      return 'orders.messages.caseResolved'
+    case 'case-cancel':
+      return 'orders.messages.caseCancelled'
+    default:
+      return 'orders.messages.updated'
+  }
 }
 
 type OrderInlinePanelProps = {
@@ -88,20 +125,35 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
             isReadyMappingPlan(result)
               ? 'orders.messages.mappingMatched'
               : 'orders.messages.mappingStillBlocked',
+            { orderId: row.order.externalOrderId || row.order.id },
           ),
         )
         return
       }
       if (action.kind === 'recheck-production' && isProductionBlockedByOpenCase(result)) {
-        toast('warning', t('orders.messages.productionBlockedOpenCase'))
+        toast(
+          'warning',
+          t('orders.messages.productionBlockedOpenCase', {
+            orderId: row.order.externalOrderId || row.order.id,
+          }),
+        )
         return
       }
-      toast('success', t('orders.messages.updated'))
+      toast(
+        'success',
+        t(successMessageKey(action), {
+          orderId: row.order.externalOrderId || row.order.id,
+        }),
+      )
     },
     onError: (error) => {
       toast('error', error instanceof Error ? error.message : t('orders.messages.actionFailed'))
     },
   })
+  const pendingMappingItemId =
+    mutation.isPending && mutation.variables?.kind === 'recheck-mapping'
+      ? mutation.variables.itemId
+      : undefined
 
   const openConfirmation = useCallback(
     (target: EventTarget | null, kind: OrderItemConfirmation['kind'], item: OrderWorkbenchItem) => {
@@ -161,6 +213,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
           canWrite={canWrite}
           canOperate={canOperate}
           pending={mutation.isPending}
+          mappingRecheckPending={pendingMappingItemId === item.item.id}
           onAction={mutation.mutate}
           onConfirm={openConfirmation}
           onHistory={openTimelineForItem}

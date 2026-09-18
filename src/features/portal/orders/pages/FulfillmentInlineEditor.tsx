@@ -98,7 +98,7 @@ export function FulfillmentInlineEditor({
         vendorCostCenterId: candidate.id,
       }),
     onSuccess: async () => {
-      toast('success', t('orders.messages.updated'))
+      toast('success', t('orders.messages.fulfillmentUpdated'))
       await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'workbench'] })
       await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'summary'] })
     },

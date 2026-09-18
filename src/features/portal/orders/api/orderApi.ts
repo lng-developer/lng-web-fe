@@ -89,6 +89,17 @@ export type OrderWorkbenchItem = {
     title: string | null
     productImageUrl?: string | null
   } | null
+  psd?: {
+    listingVariant?: {
+      id: string
+      psdReadiness?: { status?: string | null } | null
+      psdTemplate?: { downloadUrl?: string | null } | null
+    } | null
+    listingPsd?: {
+      psdReadiness?: { status?: string | null } | null
+      psdTemplate?: { downloadUrl?: string | null } | null
+    } | null
+  } | null
   customization: {
     status: string | null
     needsReview: boolean
@@ -169,6 +180,17 @@ export type OrderWorkbenchResult = {
   pagination: { total: number; page: number; limit: number }
 }
 export type OrderSummary = { tabCounts: Record<string, number> }
+export type OrderRecheckJob = {
+  id: string
+  orderItemId: string
+  type: 'MAPPING' | 'PRODUCTION'
+  status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  result: unknown | null
+  errorMessage: string | null
+  startedAt: string | null
+  finishedAt: string | null
+  reused?: boolean
+}
 
 const compact = (params: OrderWorkbenchParams) =>
   Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
@@ -245,12 +267,37 @@ export async function updateOrderItemCsNote(orderItemId: string, csNote: string)
   return unwrap(await apiClient.patch(`/api/orders/items/${orderItemId}/cs-note`, { csNote }))
 }
 
+const delay = (milliseconds: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, milliseconds))
+
+export async function getOrderRecheckJob(jobId: string) {
+  return unwrap<OrderRecheckJob>(await apiClient.get(`/api/orders/recheck-jobs/${jobId}`))
+}
+
+async function waitForOrderRecheckJob(job: OrderRecheckJob) {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (job.status === 'COMPLETED') return job.result
+    if (job.status === 'FAILED') throw new Error(job.errorMessage || 'Recheck failed')
+    await delay(2000)
+    job = await getOrderRecheckJob(job.id)
+  }
+  throw new Error('Recheck is still running. Please try again shortly.')
+}
+
 export async function recheckMapping(orderItemId: string) {
-  return unwrap(await apiClient.post(`/api/mapping/order-items/${orderItemId}/recheck`))
+  return waitForOrderRecheckJob(
+    unwrap<OrderRecheckJob>(
+      await apiClient.post(`/api/mapping/order-items/${orderItemId}/recheck`),
+    ),
+  )
 }
 
 export async function recheckProduction(orderItemId: string) {
-  return unwrap(await apiClient.post(`/api/production/order-items/${orderItemId}/recheck`))
+  return waitForOrderRecheckJob(
+    unwrap<OrderRecheckJob>(
+      await apiClient.post(`/api/production/order-items/${orderItemId}/recheck`),
+    ),
+  )
 }
 
 export async function retryCustomizationAssets(orderItemId: string) {

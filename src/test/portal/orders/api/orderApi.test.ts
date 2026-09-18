@@ -101,7 +101,9 @@ describe('orderApi', () => {
 
   it('uses the existing order write contracts', async () => {
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
-    vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: { id: 'job-1', status: 'COMPLETED', result: {} },
+    })
 
     await updateShippingAddress('order-1', { city: 'Austin', countryCode: 'US' })
     await updateOrderBuyer('order-1', { name: 'Updated customer' })

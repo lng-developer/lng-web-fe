@@ -321,6 +321,21 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByText('PSD MISSING')).not.toBeInTheDocument()
   })
 
+  it('shows PSD readiness from a replacement snapshot without mapping', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          mapping: null,
+          psd: { listingPsd: { psdReadiness: { status: 'PRESENT' } } },
+        },
+      ],
+    })
+
+    expect(screen.getByText('PSD PRESENT')).toBeInTheDocument()
+  })
+
   it('shows recheck for a production-blocked item after PSD becomes ready', () => {
     renderPanel(true, undefined, {
       ...row,
@@ -347,6 +362,77 @@ describe('OrderInlinePanel', () => {
 
     openMoreActions()
     expect(actionMenuItem('orders.actions.recheckProductionShort')).toBeInTheDocument()
+  })
+
+  it('shows recheck production when mapping is ready and the first task must be created', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          mapping: { status: 'READY', listingVariant: { id: 'variant-1' } },
+          psd: { listingPsd: { psdReadiness: { status: 'PRESENT' } } },
+          production: null,
+          workflow: {
+            stage: 'NEED_PRODUCTION',
+            owner: 'OPERATIONS',
+            blockers: [],
+            nextActions: ['CREATE_PRODUCTION_TASK'],
+          },
+        },
+      ],
+    })
+
+    openMoreActions()
+    expect(actionMenuItem('orders.actions.recheckProductionShort')).toBeInTheDocument()
+  })
+
+  it('blocks production recheck until mapping is ready', () => {
+    renderPanel()
+
+    openMoreActions()
+    expect(actionMenuItem('orders.actions.recheckProductionNeedsMapping')).toHaveClass(
+      'ant-dropdown-menu-item-disabled',
+    )
+  })
+
+  it('blocks production recheck while the item mapping recheck is running', async () => {
+    let resolveMapping: (result: unknown) => void = () => undefined
+    vi.mocked(recheckMapping).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMapping = resolve
+        }),
+    )
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          mapping: { status: 'READY', listingVariant: { id: 'variant-1' } },
+          production: null,
+          workflow: { ...row.items[0].workflow, nextActions: ['CREATE_PRODUCTION_TASK'] },
+        },
+      ],
+    })
+
+    openMoreActions()
+    fireEvent.click(actionMenuItem('orders.actions.recheckMappingShort'))
+    await waitFor(() => expect(recheckMapping).toHaveBeenCalledWith('item-1'))
+
+    openMoreActions()
+    expect(actionMenuItem('orders.actions.recheckProductionWaitingMapping')).toHaveClass(
+      'ant-dropdown-menu-item-disabled',
+    )
+
+    resolveMapping({
+      status: 'READY',
+      vendorProduct: { id: 'product-1' },
+      vendorCostCenter: { id: 'cost-1' },
+    })
+    await waitFor(() =>
+      expect(feedbackToast).toHaveBeenCalledWith('success', 'orders.messages.mappingMatched'),
+    )
   })
 
   it('warns when production recheck is blocked by an open case', async () => {

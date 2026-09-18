@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo } from 'react'
 
 import { env } from '@/shared/config/env'
 
@@ -7,12 +8,6 @@ import { fetchMediaBlob } from './mediaApi'
 type AuthenticatedMediaUrlState = {
   url: string | null
   loading: boolean
-  error: Error | null
-}
-
-type LoadedMediaState = {
-  source: string | null
-  url: string | null
   error: Error | null
 }
 
@@ -29,45 +24,31 @@ const isDirectExternalUrl = (downloadUrl: string) => {
 
 export function useAuthenticatedMediaUrl(downloadUrl?: string | null): AuthenticatedMediaUrlState {
   const directUrl = downloadUrl && isDirectExternalUrl(downloadUrl) ? downloadUrl : null
-  const [state, setState] = useState<LoadedMediaState>({
-    source: null,
-    url: null,
-    error: null,
+  const mediaQuery = useQuery({
+    queryKey: ['media-preview', downloadUrl],
+    queryFn: ({ signal }) => fetchMediaBlob(downloadUrl!, signal),
+    enabled: Boolean(downloadUrl && !directUrl),
+    staleTime: Infinity,
+    gcTime: 2 * 60 * 1000,
+    retry: false,
   })
+  const objectUrl = useMemo(
+    () => (mediaQuery.data ? URL.createObjectURL(mediaQuery.data) : null),
+    [mediaQuery.data],
+  )
 
   useEffect(() => {
-    const controller = new AbortController()
-    let objectUrl: string | null = null
-    let active = true
-
-    if (!downloadUrl || directUrl) {
-      return () => controller.abort()
-    }
-
-    void fetchMediaBlob(downloadUrl, controller.signal)
-      .then((blob) => {
-        if (!active) return
-        objectUrl = URL.createObjectURL(blob)
-        setState({ source: downloadUrl, url: objectUrl, error: null })
-      })
-      .catch((error: unknown) => {
-        if (!active || controller.signal.aborted) return
-        setState({
-          source: downloadUrl,
-          url: null,
-          error: error instanceof Error ? error : new Error('Media preview failed'),
-        })
-      })
-
     return () => {
-      active = false
-      controller.abort()
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [directUrl, downloadUrl])
+  }, [objectUrl])
 
   if (!downloadUrl) return { url: null, loading: false, error: null }
   if (directUrl) return { url: directUrl, loading: false, error: null }
-  if (state.source !== downloadUrl) return { url: null, loading: true, error: null }
-  return { url: state.url, loading: false, error: state.error }
+  if (mediaQuery.isPending || !objectUrl) return { url: null, loading: true, error: null }
+  return {
+    url: objectUrl,
+    loading: false,
+    error: mediaQuery.error instanceof Error ? mediaQuery.error : null,
+  }
 }
