@@ -7,7 +7,6 @@ export const IMPORT_CSV_EXTENSIONS = ['.csv']
 export const PRODUCT_IMPORT_TEMPLATE_HEADERS = [
   'code',
   'name',
-  'productTypeGroupCode',
   'minProductionDays',
   'maxProductionDays',
   'externalProductId',
@@ -49,7 +48,6 @@ export const COST_CENTER_IMPORT_TEMPLATE_HEADERS = [
 export const PRODUCT_IMPORT_SAMPLE_ROW = [
   'TP-SHIRT',
   'T-Shirt',
-  'PTG-POD',
   '2',
   '5',
   'EXT-TSHIRT',
@@ -193,6 +191,24 @@ export const parseCsv = (text: string): CsvRecord[] => {
   )
 }
 
+export const parseVendorTemplateCsv = (text: string): CsvRecord[] => {
+  const rows = text
+    .replace('\uFEFF', '')
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map(parseCsvLine)
+    .map((row) => row.map((value) => value.trim()))
+    .filter((row) => row.some((value) => value.length > 0))
+  if (!rows.length) return []
+  const [headers, ...data] = rows
+  return data.map(
+    (row) =>
+      Object.fromEntries(
+        headers.map((header, index) => [header, (row[index] ?? '').trim()]),
+      ) as CsvRecord,
+  )
+}
+
 export const getField = (row: CsvRecord, keys: string[]) =>
   keys
     .map((rawKey) => row[normalizeHeader(rawKey)])
@@ -285,10 +301,6 @@ export async function runProductImport({
       appendImportFailure(failed, rowNumber, t('portal.vendors.import.requiredMissing'), t)
       continue
     }
-    if (!productTypeGroupId) {
-      appendImportFailure(failed, rowNumber, t('portal.vendors.import.productTypeGroupMissing'), t)
-      continue
-    }
     if (hasTextValue(minProductionDaysValue) && Number.isNaN(minProductionDays)) {
       appendImportFailure(
         failed,
@@ -338,7 +350,7 @@ export async function runProductImport({
     importRows.push({
       code,
       name,
-      productTypeGroupId,
+      ...(productTypeGroupId ? { productTypeGroupId } : {}),
       externalProductId: getField(row, ['externalproductid']) || '',
       minProductionDays: minProductionDaysValue || '',
       maxProductionDays: maxProductionDaysValue || '',

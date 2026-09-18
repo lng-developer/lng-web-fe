@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRouteLoaderData } from 'react-router-dom'
 import {
   DollarCircleOutlined,
   LinkOutlined,
   RollbackOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Modal, Progress, Space, Table, Typography } from 'antd'
+import { Alert, Button, Input, Modal, Progress, Select, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { type CurrentAccount } from '@/features/auth/api/authApi'
 import {
   CopyableOrderId,
   CopyableSku,
@@ -28,10 +30,12 @@ import {
   getSettlement,
   listImportBatches,
   listSettlements,
+  reconcileSettlement,
   type SettlementLedgerLine,
   type SettlementSummary,
 } from '../api/financeApi'
 import { formatFinanceMoney } from '../components/financeFormatters'
+import { listShops } from '@/features/portal/shops/api/shopApi'
 import styles from './SettlementWorkspacePage.module.scss'
 
 const PAGE_SIZE = 20
@@ -40,23 +44,42 @@ function date(value: string | null | undefined) {
   return <FormattedDateTime value={value} />
 }
 
-function statusTone(status?: string) {
-  if (status === 'COMPLETED') return 'operational' as const
-  if (status === 'FAILED' || status === 'PARTIAL_FAILED') return 'critical' as const
-  if (status === 'PROCESSING') return 'processing' as const
-  return 'pending' as const
+function bankReceiptStatus(t: (key: string) => string, status?: string) {
+  if (status === 'RECONCILED') return t('finance.settlements.bankReceiptConfirmed')
+  if (status === 'NEEDS_REVIEW') return t('finance.settlements.bankReceiptNeedsReview')
+  return t('finance.settlements.bankReceiptPending')
 }
 
 export function SettlementWorkspacePage() {
   const { t } = useTranslation()
+  const account = useRouteLoaderData('workspace') as CurrentAccount
+  const canWrite = [
+    ...account.permissions,
+    ...account.scopes.flatMap((scope) => scope.permissions),
+  ].includes('FINANCE:WRITE')
+  const client = useQueryClient()
   const [page, setPage] = useState(1)
   const [dates, setDates] = useState<DateRangeValue>({})
   const [selected, setSelected] = useState<SettlementSummary>()
   const [ledgerPage, setLedgerPage] = useState(1)
+  const [reconciliationStatus, setReconciliationStatus] = useState<string>()
+  const [hasVariance, setHasVariance] = useState(false)
+  const [unlinkedOnly, setUnlinkedOnly] = useState(false)
+  const [shopId, setShopId] = useState<string>()
+  const [reviewNote, setReviewNote] = useState('')
 
   const query = useMemo(
-    () => ({ page, limit: PAGE_SIZE, dateFrom: dates.dateFrom, dateTo: dates.dateTo }),
-    [dates.dateFrom, dates.dateTo, page],
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      dateFrom: dates.dateFrom,
+      dateTo: dates.dateTo,
+      shopId,
+      reconciliationStatus,
+      hasVariance: hasVariance || undefined,
+      hasUnlinkedRows: unlinkedOnly || undefined,
+    }),
+    [dates.dateFrom, dates.dateTo, hasVariance, reconciliationStatus, shopId, unlinkedOnly, page],
   )
   const settlements = useQuery({
     queryKey: ['finance', 'settlements', query],
@@ -68,8 +91,29 @@ export function SettlementWorkspacePage() {
   })
   const detail = useQuery({
     queryKey: ['finance', 'settlements', selected?.id, 'detail', ledgerPage],
-    queryFn: () => getSettlement(selected!.id, { page: ledgerPage, limit: PAGE_SIZE }),
+    queryFn: () =>
+      getSettlement(selected!.id, {
+        page: ledgerPage,
+        limit: PAGE_SIZE,
+        linkState: unlinkedOnly ? 'UNLINKED' : 'ALL',
+      }),
     enabled: Boolean(selected),
+  })
+  const shops = useQuery({
+    queryKey: ['shops', 'finance-settlements'],
+    queryFn: () => listShops({ page: 1, limit: 100, status: 'ACTIVE' }),
+  })
+  const reconcile = useMutation({
+    mutationFn: ({
+      id,
+      status,
+      note,
+    }: {
+      id: string
+      status: 'RECONCILED' | 'NEEDS_REVIEW'
+      note?: string
+    }) => reconcileSettlement(id, { status, note }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['finance', 'settlements'] }),
   })
   const selectedBatch = batches.data?.items.find((batch) => batch.id === selected?.importBatchId)
   const currencySummaries = settlements.data?.summaryByCurrency ?? []
@@ -98,23 +142,28 @@ export function SettlementWorkspacePage() {
         ),
       },
       {
-        title: t('finance.settlements.depositDate'),
+        title: t('finance.settlements.amazonTransferDate'),
         dataIndex: 'depositAt',
         width: 150,
         render: date,
       },
       {
-        title: t('finance.settlements.netSettlement'),
+        title: t('finance.settlements.amazonPayout'),
         width: 140,
         align: 'right',
-        render: (_, row) =>
-          formatFinanceMoney(row.netSettlementAmount ?? row.totalAmount, row.currency),
+        render: (_, row) => formatFinanceMoney(row.ledgerSummary.payoutAmount, row.currency),
       },
       {
         title: t('finance.settlements.ledgerNet'),
         width: 140,
         align: 'right',
         render: (_, row) => formatFinanceMoney(row.ledgerSummary.netAmount, row.currency),
+      },
+      {
+        title: t('finance.settlements.variance'),
+        width: 120,
+        align: 'right',
+        render: (_, row) => formatFinanceMoney(row.ledgerSummary.cashVarianceAmount, row.currency),
       },
       {
         title: t('finance.settlements.linked'),
@@ -125,21 +174,23 @@ export function SettlementWorkspacePage() {
       {
         title: t('finance.settlements.status'),
         width: 140,
-        render: (_, row) => {
-          const batch = batches.data?.items.find((item) => item.id === row.importBatchId)
-          return (
-            <Space orientation="vertical" size={2}>
-              <StatusTag status={statusTone(batch?.status)}>
-                {batch?.status || 'IMPORTED'}
-              </StatusTag>
-              {batch?.recalculationTotal ? (
-                <Typography.Text type="secondary">
-                  {`${batch.recalculationCompleted}/${batch.recalculationTotal}`}
-                </Typography.Text>
-              ) : null}
-            </Space>
-          )
-        },
+        render: (_, row) => (
+          <StatusTag
+            status={
+              row.reconciliation?.status === 'RECONCILED'
+                ? 'operational'
+                : row.reconciliation?.status === 'NEEDS_REVIEW'
+                  ? 'critical'
+                  : 'pending'
+            }
+          >
+            {t(
+              row.reconciliation?.status === 'RECONCILED'
+                ? 'finance.settlements.completed'
+                : 'finance.settlements.pending',
+            )}
+          </StatusTag>
+        ),
       },
     ],
     [batches.data?.items, t],
@@ -223,6 +274,7 @@ export function SettlementWorkspacePage() {
           type="info"
           showIcon
           title={t('finance.settlements.currencyNote')}
+          description={t('finance.settlements.bankReceiptHint')}
         />
       </SectionCard>
 
@@ -236,6 +288,50 @@ export function SettlementWorkspacePage() {
               setPage(1)
             }}
           />
+          <Select
+            allowClear
+            aria-label={t('finance.filters.shop')}
+            placeholder={t('finance.filters.shop')}
+            value={shopId}
+            onChange={(value) => {
+              setShopId(value)
+              setPage(1)
+            }}
+            options={shops.data?.items.map((shop) => ({ value: shop.id, label: shop.name }))}
+          />
+          <Select
+            allowClear
+            aria-label={t('finance.settlements.reconciliationStatus')}
+            placeholder={t('finance.settlements.reconciliationStatus')}
+            value={reconciliationStatus}
+            onChange={(value) => {
+              setReconciliationStatus(value)
+              setPage(1)
+            }}
+            options={['OPEN', 'NEEDS_REVIEW', 'RECONCILED'].map((value) => ({
+              value,
+              label: bankReceiptStatus(t, value),
+            }))}
+          />
+          <Button
+            type={hasVariance ? 'primary' : 'default'}
+            onClick={() => {
+              setHasVariance(!hasVariance)
+              setPage(1)
+            }}
+          >
+            {t('finance.settlements.mismatch')}
+          </Button>
+          <Button
+            type={unlinkedOnly ? 'primary' : 'default'}
+            onClick={() => {
+              setUnlinkedOnly(!unlinkedOnly)
+              setPage(1)
+              setLedgerPage(1)
+            }}
+          >
+            {t('finance.settlements.unlinkedOnly')}
+          </Button>
         </FilterBar>
         <CoreDataTable
           fillViewport
@@ -256,7 +352,7 @@ export function SettlementWorkspacePage() {
             total: settlements.data?.pagination.total,
             onChange: (nextPage) => setPage(nextPage),
           }}
-          scroll={{ x: 1020 }}
+          scroll={{ x: 1140 }}
         />
       </SectionCard>
 
@@ -314,6 +410,62 @@ export function SettlementWorkspacePage() {
                 variant="info"
               />
             </div>
+            <Alert
+              type={
+                detail.data.settlement.ledgerSummary.cashVarianceAmount ||
+                detail.data.ledger.summary.unlinkedCount
+                  ? 'warning'
+                  : 'success'
+              }
+              showIcon
+              title={t('finance.settlements.reconciliationSummary', {
+                variance: formatFinanceMoney(
+                  detail.data.settlement.ledgerSummary.cashVarianceAmount,
+                  detail.data.settlement.currency,
+                ),
+                unlinked: detail.data.ledger.summary.unlinkedCount,
+              })}
+              description={
+                detail.data.settlement.reconciliation?.note ||
+                bankReceiptStatus(t, detail.data.settlement.reconciliation?.status)
+              }
+            />
+            {canWrite ? (
+              <Space>
+                <Button
+                  disabled={Boolean(
+                    detail.data.settlement.ledgerSummary.cashVarianceAmount ||
+                    detail.data.ledger.summary.unlinkedCount,
+                  )}
+                  loading={reconcile.isPending}
+                  onClick={() =>
+                    reconcile.mutate({ id: detail.data!.settlement.id, status: 'RECONCILED' })
+                  }
+                >
+                  {t('finance.settlements.markReconciled')}
+                </Button>
+                <Input.TextArea
+                  aria-label={t('finance.settlements.reviewNote')}
+                  autoSize={{ minRows: 1, maxRows: 3 }}
+                  placeholder={t('finance.settlements.reviewNoteRequired')}
+                  value={reviewNote}
+                  onChange={(event) => setReviewNote(event.target.value)}
+                />
+                <Button
+                  disabled={reviewNote.trim().length < 3}
+                  loading={reconcile.isPending}
+                  onClick={() =>
+                    reconcile.mutate({
+                      id: detail.data!.settlement.id,
+                      status: 'NEEDS_REVIEW',
+                      note: reviewNote.trim(),
+                    })
+                  }
+                >
+                  {t('finance.settlements.needsReview')}
+                </Button>
+              </Space>
+            ) : null}
             {selectedBatch?.recalculationTotal ? (
               <div>
                 <Typography.Text type="secondary">

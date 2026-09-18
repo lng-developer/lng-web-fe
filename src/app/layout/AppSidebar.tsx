@@ -188,6 +188,7 @@ function iconFor({ key, path }: NavigationItem) {
     'vendor-submissions': <SendOutlined />,
     shipments: <CarOutlined />,
     finance: <DollarOutlined />,
+    settlements: <DollarOutlined />,
     reports: <BarChartOutlined />,
     'work-scores': <TrophyOutlined />,
     accounts: <UserOutlined />,

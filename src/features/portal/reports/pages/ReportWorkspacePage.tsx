@@ -71,6 +71,7 @@ export function ReportWorkspacePage() {
   const fixedSalesChannelCode = SALES_CHANNEL_BY_ROUTE[routeSalesChannelCode?.toLowerCase() ?? '']
   const [selectedTab, setSelectedTab] = useState<TabKey>('overview')
   const [orderCostPage, setOrderCostPage] = useState(1)
+  const [orderCostCoverage, setOrderCostCoverage] = useState<ReportFilters['costCoverage']>()
   const dedicatedTab = TAB_BY_REPORT_VIEW[reportView?.toLowerCase() ?? '']
   const activeTab = dedicatedTab || selectedTab
   const isDedicatedReport = Boolean(dedicatedTab)
@@ -84,7 +85,9 @@ export function ReportWorkspacePage() {
     ? { ...filters, salesChannelCode: fixedSalesChannelCode }
     : filters
   const reportFilters =
-    activeTab === 'order-cost' ? { ...effectiveFilters, page: orderCostPage } : effectiveFilters
+    activeTab === 'order-cost'
+      ? { ...effectiveFilters, page: orderCostPage, costCoverage: orderCostCoverage }
+      : effectiveFilters
   const reportDates = datesInRange(filters.dateFrom, filters.dateTo)
 
   const globalRead = account.permissions.includes('REPORTS:READ')
@@ -551,6 +554,11 @@ export function ReportWorkspacePage() {
         data={orderProfitability.data}
         isPending={orderProfitability.isPending}
         onPageChange={setOrderCostPage}
+        costCoverage={orderCostCoverage}
+        onCostCoverageChange={(value) => {
+          setOrderCostCoverage(value)
+          setOrderCostPage(1)
+        }}
         filterBar={filterBar}
       />
     ) : activeTab === 'ads-employee' ? (

@@ -15,6 +15,7 @@ import { AccountMenu } from './AccountMenu'
 import {
   type AppCoreKey,
   getAvailableCores,
+  hasFinanceAccess,
   getContextNavigation,
   getCoreForPath,
   type NavigationGroup,
@@ -131,6 +132,7 @@ export function AppShell() {
           onCollapsedChange={setCollapsed}
           bottomMenus={legacyBottomMenus}
           accountLabel={account.account.email}
+          financeVisible={hasFinanceAccess(account)}
         />
       )}
       {activeCore && isCompact && (

@@ -37,6 +37,10 @@ export const FinanceCurrencySummary: React.FC<FinanceCurrencySummaryProps> = Rea
     return (
       <div className={styles.summaryGroups}>
         {summaries.map((summary) => {
+          const additionalFulfillmentCostAmount =
+            summary.totalCostAmount == null
+              ? null
+              : Math.max(summary.totalCostAmount - (summary.baseCostAmount || 0), 0)
           const marginBps =
             summary.grossMarginBps ??
             (summary.revenueAmount > 0 && summary.profitAmount != null
@@ -130,7 +134,7 @@ export const FinanceCurrencySummary: React.FC<FinanceCurrencySummaryProps> = Rea
                           icon={<TruckOutlined />}
                           label={t('finance.breakdown.fulfillmentCost')}
                           value={formatFinanceMoney(
-                            summary.additionalFulfillmentCostAmount,
+                            additionalFulfillmentCostAmount,
                             summary.currency,
                           )}
                           variant="warning"

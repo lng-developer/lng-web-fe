@@ -125,7 +125,7 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
   // ── Finance, Reports, Mapping, Media & Chat ───────────────────
   {
     pattern: /^\/portal\/finance\/settlements(\/.*)?$/,
-    key: 'finance.tabs.settlement',
+    key: 'finance.settlements.settlement',
     defaultTitle: 'Settlement',
   },
   {

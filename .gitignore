@@ -30,6 +30,7 @@ coverage
 *.tsbuildinfo
 .vite/
 .superpowers/
+.codex/
 .stitch/
 .worktrees/
 skills

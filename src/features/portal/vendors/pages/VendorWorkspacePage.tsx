@@ -11,12 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import {
-  MetricCard,
-  SectionCard,
-  useDebouncedValue,
-  useFeedbackToast,
-} from '@/shared/ui'
+import { MetricCard, SectionCard, useDebouncedValue, useFeedbackToast } from '@/shared/ui'
 
 import {
   createProductTypeGroup,
@@ -32,6 +27,7 @@ import {
 } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
 import { VendorCsvImportModal } from '../components/VendorCsvImportModal'
+import { VendorCatalogImportModal } from '../components/VendorCatalogImportModal'
 import type { ImportTarget } from '../components/vendorCsvUtils'
 import {
   useVendorMetricsQuery,
@@ -91,6 +87,7 @@ export const VendorWorkspacePage = () => {
   const [productVendorFilter, setProductVendorFilter] = useState<string>()
   const [productTypeGroupFilter, setProductTypeGroupFilter] = useState<string>()
   const [importTarget, setImportTarget] = useState<ImportTarget>()
+  const [catalogImportOpen, setCatalogImportOpen] = useState(false)
   const showFeedbackToast = useFeedbackToast()
 
   const closeEditor = () => {
@@ -260,6 +257,7 @@ export const VendorWorkspacePage = () => {
               setVendorsPageSize(pageSize)
             }}
             onAddVendor={() => setEditor({ kind: 'vendor' })}
+            onOpenCatalogImport={() => setCatalogImportOpen(true)}
             onEditVendor={(vendor) => setEditor({ kind: 'vendor', item: vendor })}
             onOpenIntegration={(vendor) => setEditor({ kind: 'integration', vendor })}
           />
@@ -373,6 +371,10 @@ export const VendorWorkspacePage = () => {
         productTypeGroups={productTypeGroups.data?.items}
         productTypeGroupsLoading={productTypeGroups.isLoading}
         productTypeGroupsError={productTypeGroups.isError}
+      />
+      <VendorCatalogImportModal
+        open={catalogImportOpen}
+        onClose={() => setCatalogImportOpen(false)}
       />
     </section>
   )

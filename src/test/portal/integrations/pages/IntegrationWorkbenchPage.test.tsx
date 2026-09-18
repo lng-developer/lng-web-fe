@@ -42,6 +42,26 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         </tbody>
       </table>
     ),
+    DateRangePicker: ({
+      onChange,
+      'aria-label': ariaLabel,
+    }: {
+      onChange?: (value: { dateFrom: string; dateTo: string }) => void
+      'aria-label'?: string
+    }) => (
+      <button
+        aria-label={ariaLabel}
+        type="button"
+        onClick={() =>
+          onChange?.({
+            dateFrom: '2026-09-13T00:00:00.000Z',
+            dateTo: '2026-09-13T16:59:59.999Z',
+          })
+        }
+      >
+        Select dates
+      </button>
+    ),
     useFeedbackToast: () => vi.fn(),
     UiTabs: ({
       activeKey,
@@ -124,10 +144,14 @@ vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => {
   return {
     ...actual,
     getFinanceImportBatch: vi.fn(),
+    allocateRefund: vi.fn(),
+    confirmRefund: vi.fn(),
     importFinanceFile: vi.fn(),
     listAdsUnassignedRows: vi.fn(),
     listImportBatches: vi.fn(),
     listImportedFinanceData: vi.fn(),
+    listRefundReviews: vi.fn(),
+    listUnallocatedRefunds: vi.fn(),
     reprocessImportBatch: vi.fn(),
     upsertAdsShopMapping: vi.fn(),
   }
@@ -138,14 +162,19 @@ import {
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import {
+  allocateRefund,
+  confirmRefund,
   getFinanceImportBatch,
   importFinanceFile,
   listAdsUnassignedRows,
   listImportBatches,
   listImportedFinanceData,
+  listRefundReviews,
+  listUnallocatedRefunds,
   reprocessImportBatch,
 } from '@/features/portal/finance/api/financeApi'
 import {
+  createExtensionCommand,
   getImportJob,
   listExtensionAgents,
   listExtensionCommands,
@@ -367,6 +396,10 @@ describe('IntegrationWorkbenchPage', () => {
       pagination: { total: 0, page: 1, limit: 100 },
     })
     vi.mocked(getFinanceImportBatch).mockResolvedValue(adsImportBatch)
+    vi.mocked(listUnallocatedRefunds).mockResolvedValue([])
+    vi.mocked(listRefundReviews).mockResolvedValue([])
+    vi.mocked(allocateRefund).mockResolvedValue({})
+    vi.mocked(confirmRefund).mockResolvedValue({ orderItemId: 'item-1', status: 'REFUNDED' })
     vi.mocked(importFinanceFile).mockResolvedValue({ importBatchId: 'batch-new', status: 'QUEUED' })
     vi.mocked(reprocessImportBatch).mockResolvedValue({ importBatchId: 'batch-retry' })
   })
@@ -640,6 +673,57 @@ describe('IntegrationWorkbenchPage', () => {
     expect(await screen.findByRole('button', { name: 'More extension actions' })).toBeVisible()
   })
 
+  it('keeps Operations connection-only and queues transactions from Automation', async () => {
+    vi.mocked(listExtensionAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+        },
+      ],
+    })
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+      items: [
+        {
+          id: 'agent-1',
+          shopId: shop.id,
+          clientId: 'rdc-1',
+          label: 'RDC 1',
+          version: '0.3.0',
+          apiBaseUrl: 'https://dev-api.lngmerch.co',
+          lastSeenAt: '2026-08-22T00:00:00.000Z',
+          status: 'ONLINE',
+          token: null,
+        },
+      ],
+    })
+
+    renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:WRITE']))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'More extension actions' }))
+    expect(screen.queryByRole('button', { name: /Pull/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Test connection' })).toBeVisible()
+    fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Request transaction sync now' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Transaction manual date range' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Queue import' }))
+
+    await waitFor(() =>
+      expect(createExtensionCommand).toHaveBeenCalledWith({
+        agentId: 'agent-1',
+        shopId: shop.id,
+        type: 'IMPORT_TRANSACTIONS',
+        dateFrom: '2026-09-13',
+        dateTo: '2026-09-13',
+      }),
+    )
+  }, 15_000)
+
   it('keeps automation inside the extension workbench and loads it on demand', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
@@ -711,63 +795,101 @@ describe('IntegrationWorkbenchPage', () => {
     )
   }, 15_000)
 
-  it('requests an enabled settlement sync immediately', async () => {
-    vi.mocked(listExtensionManagementAgents).mockResolvedValue({
-      items: [
-        {
-          id: 'agent-1',
-          shopId: shop.id,
-          clientId: 'rdc-1',
-          label: 'RDC 1',
-          version: '0.3.0',
-          apiBaseUrl: 'https://dev-api.lngmerch.co',
-          lastSeenAt: '2026-09-09T00:00:00.000Z',
-          status: 'ONLINE',
-          token: null,
-        },
-      ],
-    })
-    vi.mocked(listExtensionFinanceSchedules).mockResolvedValue({
-      items: [
-        {
-          id: 'schedule-1',
-          shopId: shop.id,
+  it.each(['TRANSACTIONS', 'SETTLEMENTS', 'ADS'] as const)(
+    'requests a manual %s import with selected dates while schedules are disabled',
+    async (source) => {
+      vi.mocked(listExtensionAgents).mockResolvedValue({
+        items: [
+          {
+            id: 'agent-1',
+            shopId: shop.id,
+            clientId: 'rdc-1',
+            label: 'RDC 1',
+            lastSeenAt: '2026-09-09T00:00:00.000Z',
+            version: '0.3.0',
+            apiBaseUrl: 'https://dev-api.lngmerch.co',
+          },
+        ],
+      })
+      vi.mocked(listExtensionManagementAgents).mockResolvedValue({
+        items: [
+          {
+            id: 'agent-1',
+            shopId: shop.id,
+            clientId: 'rdc-1',
+            label: 'RDC 1',
+            version: '0.3.0',
+            apiBaseUrl: 'https://dev-api.lngmerch.co',
+            lastSeenAt: '2026-09-09T00:00:00.000Z',
+            status: 'ONLINE',
+            token: null,
+          },
+        ],
+      })
+      vi.mocked(listExtensionFinanceSchedules).mockResolvedValue({
+        items: [
+          {
+            id: 'schedule-1',
+            shopId: shop.id,
+            agentId: 'agent-1',
+            source: 'SETTLEMENTS',
+            enabled: false,
+            intervalMinutes: 1440,
+            nextRunAt: '2026-09-10T00:00:00.000Z',
+            lastQueuedAt: null,
+            lastCompletedAt: null,
+            lastSuccessfulDate: null,
+            lastError: null,
+          },
+        ],
+      })
+      vi.mocked(requestExtensionFinanceScheduleNow).mockResolvedValue({
+        id: 'schedule-1',
+        shopId: shop.id,
+        agentId: 'agent-1',
+        source: 'SETTLEMENTS',
+        enabled: true,
+        intervalMinutes: 1440,
+        nextRunAt: '2026-09-10T00:00:00.000Z',
+        lastQueuedAt: '2026-09-09T00:00:00.000Z',
+        lastCompletedAt: null,
+        lastSuccessfulDate: null,
+        lastError: null,
+      })
+
+      renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
+      fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+      fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
+      await screen.findByText('RDC 1')
+
+      const label =
+        source === 'TRANSACTIONS' ? 'transaction' : source === 'SETTLEMENTS' ? 'settlement' : 'ads'
+      fireEvent.click(await screen.findByRole('button', { name: `Request ${label} sync now` }))
+      expect(await screen.findByRole('button', { name: 'Queue import' })).toBeDisabled()
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: `${source === 'TRANSACTIONS' ? 'Transaction' : source === 'SETTLEMENTS' ? 'Settlement' : 'Ads'} manual date range`,
+        }),
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Queue import' }))
+      await waitFor(() =>
+        expect(createExtensionCommand).toHaveBeenCalledWith({
           agentId: 'agent-1',
-          source: 'SETTLEMENTS',
-          enabled: true,
-          intervalMinutes: 1440,
-          nextRunAt: '2026-09-10T00:00:00.000Z',
-          lastQueuedAt: null,
-          lastCompletedAt: null,
-          lastSuccessfulDate: null,
-          lastError: null,
-        },
-      ],
-    })
-    vi.mocked(requestExtensionFinanceScheduleNow).mockResolvedValue({
-      id: 'schedule-1',
-      shopId: shop.id,
-      agentId: 'agent-1',
-      source: 'SETTLEMENTS',
-      enabled: true,
-      intervalMinutes: 1440,
-      nextRunAt: '2026-09-10T00:00:00.000Z',
-      lastQueuedAt: '2026-09-09T00:00:00.000Z',
-      lastCompletedAt: null,
-      lastSuccessfulDate: null,
-      lastError: null,
-    })
-
-    renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
-    fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
-    await screen.findByText('RDC 1')
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Request settlement sync now' }))
-    await waitFor(() =>
-      expect(requestExtensionFinanceScheduleNow).toHaveBeenCalledWith('agent-1', 'SETTLEMENTS'),
-    )
-  }, 15_000)
+          shopId: shop.id,
+          type:
+            source === 'TRANSACTIONS'
+              ? 'IMPORT_TRANSACTIONS'
+              : source === 'SETTLEMENTS'
+                ? 'IMPORT_SETTLEMENTS'
+                : 'IMPORT_ADS_SPEND',
+          dateFrom: '2026-09-13',
+          dateTo: '2026-09-13',
+        }),
+      )
+      expect(requestExtensionFinanceScheduleNow).not.toHaveBeenCalled()
+    },
+    15_000,
+  )
 
   it('explains the daily finance import safeguards', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
@@ -820,7 +942,11 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
 
-    expect(await screen.findByText(/Daily · Up to 7 days per run · Next:/)).toBeVisible()
+    expect(
+      await screen.findByText(
+        /Daily · Last 3 completed days \(UTC\+7\) · Initial 30 days in 7-day batches · Next:/,
+      ),
+    ).toBeVisible()
     expect(screen.getByText(/Daily · Newly closed statements only · Next:/)).toBeVisible()
   })
 
@@ -866,7 +992,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(within(orderSchedule).getByText('Not scheduled')).toBeVisible()
   })
 
-  it('shows the three schedules as rows in an agent card', async () => {
+  it('shows all four import types in Automation', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
         {
@@ -889,7 +1015,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
     expect(within(agentCard).getByRole('list')).toBeVisible()
-    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(3)
+    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(4)
     expect(within(agentCard).queryByText('Chrome extension')).not.toBeInTheDocument()
   })
 
