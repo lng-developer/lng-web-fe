@@ -85,6 +85,18 @@ function tone(status: string) {
   return 'pending'
 }
 
+function linkedCustomerInputUrl(task: ProductionTask) {
+  const linkedAssetIds = new Set(
+    (task.customization?.customerInputs?.images ?? [])
+      .map((image) => image.assetId)
+      .filter((assetId): assetId is string => Boolean(assetId)),
+  )
+  const linkedAssets = (task.customization?.imageAssets ?? []).filter(
+    (asset) => asset.assetId && linkedAssetIds.has(asset.assetId) && asset.assetDownloadUrl,
+  )
+  return linkedAssets.length === 1 ? linkedAssets[0].assetDownloadUrl : null
+}
+
 export function ProductionWorkbenchPage({
   account: accountProp,
 }: {
@@ -120,6 +132,7 @@ export function ProductionWorkbenchPage({
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
   const [inspect, setInspect] = useState<{
     check: FileCheck
+    originalInputUrl?: string | null
     listingReferenceUrl?: string | null
     readonly?: boolean
   }>()
@@ -450,7 +463,12 @@ export function ProductionWorkbenchPage({
   )
   const handleInspectSlot = useCallback(
     (task: ProductionTask, check: FileCheck, readonly = false) => {
-      setInspect({ check, listingReferenceUrl: task.productImageUrl, readonly })
+      setInspect({
+        check,
+        originalInputUrl: check.inputAssetDownloadUrl ?? linkedCustomerInputUrl(task),
+        listingReferenceUrl: task.mainListingImageUrl ?? task.productImageUrl,
+        readonly,
+      })
     },
     [],
   )
@@ -772,6 +790,7 @@ export function ProductionWorkbenchPage({
       {inspect ? (
         <ArtworkInspector
           check={inspect.check}
+          originalInputUrl={inspect.originalInputUrl}
           listingReferenceUrl={inspect.listingReferenceUrl}
           readonly={inspect.readonly}
           onClose={handleInspectClose}

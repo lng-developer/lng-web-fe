@@ -1,4 +1,4 @@
-import { memo, type MouseEvent, useMemo, useState } from 'react'
+import { Fragment, memo, type MouseEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircleOutlined,
@@ -60,10 +60,21 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   onOpenImageViewer,
 }: OrderItemPanelProps) {
   const { t } = useTranslation()
-  const preview = item.customization?.previewImageUrl
-  const customizationImage = item.customization?.inputs.find(
-    (input) => input.assetDownloadUrl,
-  )?.assetDownloadUrl
+  const customizationInputs = item.customization?.inputs ?? []
+  const buyerImageInputs = customizationInputs.filter((input) => input.assetDownloadUrl)
+  const customizationImage = buyerImageInputs[0]?.assetDownloadUrl
+  const customizationPreview = item.customization?.previewImageUrl
+  const buyerImageUrls = new Set(buyerImageInputs.map((input) => input.assetDownloadUrl))
+  const extractedArtworkImages = (item.customization?.extractedImages ?? []).filter(
+    (image) => image.assetDownloadUrl && !buyerImageUrls.has(image.assetDownloadUrl),
+  )
+  const artworkImages =
+    extractedArtworkImages.length > 0
+      ? extractedArtworkImages
+      : customizationPreview && !buyerImageUrls.has(customizationPreview)
+        ? [{ assetDownloadUrl: customizationPreview, filename: null }]
+        : []
+  const mainListingImage = item.listing?.productImageUrl
   const psdSource = item.mapping?.listingVariant || item.mapping?.listingPsd
   const psdStatus = psdSource?.psdReadiness?.status
   const psdDownloadUrl = psdSource?.psdTemplate?.downloadUrl
@@ -77,22 +88,24 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     () =>
       Array.from(
         new Set([
-          preview,
+          customizationPreview,
           customizationImage,
-          ...(item.customization?.inputs ?? []).map((input) => input.assetDownloadUrl),
+          ...artworkImages.map((image) => image.assetDownloadUrl),
+          ...customizationInputs.map((input) => input.assetDownloadUrl),
         ]),
       )
         .filter((image): image is string => Boolean(image))
         .slice(0, 5),
-    [preview, customizationImage, item.customization?.inputs],
+    [artworkImages, customizationPreview, customizationImage, customizationInputs],
   )
 
-  const customizationInputs = item.customization?.inputs ?? []
+  const customizationValueInputs = customizationInputs.filter((input) => !input.assetDownloadUrl)
   const [showAllCustomizations, setShowAllCustomizations] = useState(false)
   const visibleCustomizationInputs = showAllCustomizations
     ? customizationInputs
-    : customizationInputs.slice(0, 4)
-  const hiddenCustomizationCount = customizationInputs.length - visibleCustomizationInputs.length
+    : [...customizationValueInputs.slice(0, 4), ...buyerImageInputs]
+  const hiddenCustomizationCount =
+    customizationValueInputs.length - Math.min(customizationValueInputs.length, 4)
 
   const actionMenuItems: NonNullable<MenuProps['items']> = useMemo(
     () => [
@@ -176,17 +189,40 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     <article className={styles.itemPanel}>
       <section className={styles.assetColumn}>
         <Typography.Text strong>{t('orders.sections.imagePrint')}</Typography.Text>
-        <AuthenticatedMediaImage
-          width={112}
-          height={112}
-          downloadUrl={preview || customizationImage || undefined}
-          alt={t('orders.fields.image')}
-          style={{ cursor: 'zoom-in' }}
-          onClick={(event) =>
-            onOpenImageViewer(event, preview || customizationImage, relatedImages)
-          }
-          fallback="/favicon.svg"
-        />
+        {mainListingImage ? (
+          <>
+            <Typography.Text type="secondary">
+              {t('orders.fields.mainListingImage')}
+            </Typography.Text>
+            <AuthenticatedMediaImage
+              width={112}
+              height={112}
+              downloadUrl={mainListingImage}
+              alt={t('orders.fields.mainListingImage')}
+              style={{ cursor: 'zoom-in' }}
+              onClick={(event) => onOpenImageViewer(event, mainListingImage, [mainListingImage])}
+              fallback="/favicon.svg"
+            />
+          </>
+        ) : null}
+        {artworkImages.map((image, index) => (
+          <Fragment key={image.assetDownloadUrl}>
+            {index === 0 ? (
+              <Typography.Text type="secondary">
+                {t('orders.fields.customizationArtwork')}
+              </Typography.Text>
+            ) : null}
+            <AuthenticatedMediaImage
+              width={112}
+              height={112}
+              downloadUrl={image.assetDownloadUrl}
+              alt={image.filename || t('orders.fields.image')}
+              style={{ cursor: 'zoom-in' }}
+              onClick={(event) => onOpenImageViewer(event, image.assetDownloadUrl, relatedImages)}
+              fallback="/favicon.svg"
+            />
+          </Fragment>
+        ))}
         <StatusTag status={orderStatusTone(psdStatus)}>PSD {displayValue(psdStatus)}</StatusTag>
         {psdDownloadUrl ? (
           <Button

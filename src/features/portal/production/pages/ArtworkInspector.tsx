@@ -26,6 +26,7 @@ const REJECTION_PRESETS = [
 
 interface ArtworkInspectorProps {
   readonly check: FileCheck
+  readonly originalInputUrl?: string | null
   readonly listingReferenceUrl?: string | null
   readonly readonly?: boolean
   readonly onClose: () => void
@@ -35,6 +36,7 @@ interface ArtworkInspectorProps {
 
 export function ArtworkInspector({
   check,
+  originalInputUrl,
   listingReferenceUrl,
   readonly = false,
   onClose,
@@ -56,8 +58,8 @@ export function ArtworkInspector({
   const isDraggingRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0, originX: 0, originY: 0 })
 
-  const originalUrl = check.inputAssetDownloadUrl
-  const originalLabel = originalUrl ? 'Customer input' : 'Main listing reference'
+  const originalUrl = originalInputUrl ?? check.inputAssetDownloadUrl
+  const originalLabel = 'Customer input'
   const scaledUrl = check.outputAssetDownloadUrl
 
   const resetView = useCallback(() => {
@@ -255,6 +257,11 @@ export function ArtworkInspector({
           <Button size="small" onClick={resetView}>
             Reset View
           </Button>
+          {listingReferenceUrl ? (
+            <Typography.Link href={listingReferenceUrl} target="_blank" rel="noreferrer">
+              {t('portal.production.mainListing', 'Main listing')}
+            </Typography.Link>
+          ) : null}
         </Space>
       </div>
 
@@ -279,16 +286,9 @@ export function ArtworkInspector({
                   style={transformStyle}
                   draggable={false}
                 />
-              ) : listingReferenceUrl ? (
-                <img
-                  src={listingReferenceUrl}
-                  alt={originalLabel}
-                  style={transformStyle}
-                  draggable={false}
-                />
               ) : (
                 <Typography.Text type="secondary">
-                  {t('portal.production.fileMissing')}
+                  {t('portal.production.customerArtworkMissing', 'Customer artwork is not linked')}
                 </Typography.Text>
               )}
             </div>
@@ -336,8 +336,6 @@ export function ArtworkInspector({
                   alt="Original"
                   style={transformStyle}
                 />
-              ) : listingReferenceUrl ? (
-                <img src={listingReferenceUrl} alt={originalLabel} style={transformStyle} />
               ) : null}
             </div>
 
@@ -374,8 +372,6 @@ export function ArtworkInspector({
                   alt="Original"
                   style={transformStyle}
                 />
-              ) : listingReferenceUrl ? (
-                <img src={listingReferenceUrl} alt={originalLabel} style={transformStyle} />
               ) : null}
             </div>
 

@@ -2,11 +2,7 @@ import { ApiResponse, Paginated } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
 export type MappingRuleType =
-  | 'skuNormalize'
-  | 'skuConfig'
-  | 'semanticRules'
-  | 'valueAliases'
-  | 'vendorRouting'
+  'skuNormalize' | 'skuConfig' | 'semanticRules' | 'valueAliases' | 'vendorRouting'
 export type MappingContextParams = {
   shopId?: string
   salesChannelCode?: string
@@ -121,11 +117,7 @@ export type UnmatchedMappingItem = {
   blockingReasons: string[]
   recommendedFixTypes?: string[]
   blockedStage?:
-    | 'SKU_CLEANUP'
-    | 'PRODUCT_MAPPING'
-    | 'INPUT_SEMANTICS'
-    | 'VALUE_ALIASES'
-    | 'VENDOR_ROUTING'
+    'SKU_CLEANUP' | 'PRODUCT_MAPPING' | 'INPUT_SEMANTICS' | 'VALUE_ALIASES' | 'VENDOR_ROUTING'
   skuNormalization?: MappingPreview['skuNormalization']
   skuMapping?: MappingPreview['skuMapping']
   normalizedInputs?: NormalizedInput[]
@@ -191,6 +183,7 @@ export type MappingVendorProductOptions = {
   dimensions: { hasSize: boolean; hasColor: boolean }
   options: { sizes: string[]; colors: string[] }
   candidates: MappingCostCenterOption[]
+  allCandidates?: MappingCostCenterOption[]
 }
 export type RecheckBatchInput = Pick<
   MappingContextParams,

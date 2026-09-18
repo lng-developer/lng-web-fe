@@ -779,6 +779,22 @@
   width: 100%;
 }
 
+.imageReference {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.imageReference summary {
+  color: var(--ant-color-text-secondary);
+  cursor: pointer;
+}
+
+.imageReference img {
+  max-height: 180px;
+  object-fit: contain;
+}
+
 .slotSummary {
   display: grid;
   gap: 8px;

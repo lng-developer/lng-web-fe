@@ -39,8 +39,15 @@ export type ProductionScaleContext = {
     }
   }
 }
+export type ProductionCustomizationImage = {
+  assetId?: string | null
+  filename?: string | null
+  imageName?: string | null
+  buyerFilename?: string | null
+  label?: string | null
+}
 export type ProductionCustomization = {
-  customerInputs?: Record<string, unknown> | null
+  customerInputs?: (Record<string, unknown> & { images?: ProductionCustomizationImage[] }) | null
   imageAssets?: Array<{
     assetId?: string | null
     assetDownloadUrl?: string | null
@@ -59,6 +66,8 @@ export type ProductionTask = {
   csStatus?: CsStatus
   csNote?: string | null
   designNote: string | null
+  mainListingImageUrl?: string | null
+  amazonCustomizationPreviewUrl?: string | null
   productImageUrl?: string | null
   readyAt: string | null
   updatedAt: string

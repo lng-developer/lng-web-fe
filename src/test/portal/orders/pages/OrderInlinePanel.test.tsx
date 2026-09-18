@@ -10,6 +10,20 @@ vi.mock('@/shared/ui', async (importOriginal) => ({
   useFeedbackToast: () => feedbackToast,
 }))
 
+vi.mock('@/shared/media', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/media')>()
+  return {
+    ...actual,
+    AuthenticatedMediaImage: ({
+      alt,
+      downloadUrl,
+      ...props
+    }: React.ImgHTMLAttributes<HTMLImageElement> & { downloadUrl?: string | null }) => (
+      <img {...props} alt={alt} src={downloadUrl ?? undefined} />
+    ),
+  }
+})
+
 vi.mock('@/features/portal/orders/api/orderApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/orders/api/orderApi')>()),
   recheckMapping: vi.fn(),
@@ -480,6 +494,36 @@ describe('OrderInlinePanel', () => {
     expect(screen.getByText(/Field 5/)).toBeInTheDocument()
   })
 
+  it('keeps buyer-uploaded images visible when customization values are collapsed', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            inputs: [
+              { type: 'TEXT', label: 'Field 1', value: 'Value 1' },
+              { type: 'TEXT', label: 'Field 2', value: 'Value 2' },
+              { type: 'TEXT', label: 'Field 3', value: 'Value 3' },
+              { type: 'TEXT', label: 'Field 4', value: 'Value 4' },
+              {
+                type: 'IMAGE',
+                label: 'Upload Photo',
+                assetDownloadUrl: '/api/media/assets/buyer-photo/download',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByAltText('Upload Photo')).toBeInTheDocument()
+  })
+
   it('keeps item actions in the more menu', () => {
     renderPanel()
 
@@ -491,7 +535,7 @@ describe('OrderInlinePanel', () => {
     expect(actionMenuItem('orders.actions.replaceShort')).toBeInTheDocument()
   })
 
-  it('does not repeat extracted Amazon assets beside buyer-uploaded images', () => {
+  it('shows extracted customization artwork separately from a buyer upload', () => {
     const source: OrderWorkbenchRow = {
       ...row,
       items: [
@@ -521,7 +565,130 @@ describe('OrderInlinePanel', () => {
     renderPanel(true, undefined, source)
 
     expect(screen.getByAltText('Buyer photo')).toBeInTheDocument()
-    expect(screen.queryByAltText('archive-preview.jpg')).not.toBeInTheDocument()
+    expect(screen.getByText('orders.fields.customizationArtwork')).toBeInTheDocument()
+    expect(screen.getByAltText('archive-preview.jpg')).toBeInTheDocument()
+  })
+
+  it('does not render buyer-uploaded artwork twice', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            previewImageUrl: '/api/media/assets/buyer-photo/download',
+            inputs: [
+              {
+                type: 'IMAGE',
+                label: 'Upload Photo',
+                assetDownloadUrl: '/api/media/assets/buyer-photo/download',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByAltText('Upload Photo')).toBeInTheDocument()
+    expect(screen.queryByText('orders.fields.customizationArtwork')).not.toBeInTheDocument()
+  })
+
+  it('shows customization artwork when it differs from the buyer upload', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            previewImageUrl: 'https://m.media-amazon.com/images/S/customize-preview.png',
+            inputs: [
+              {
+                type: 'IMAGE',
+                label: 'Upload Photo',
+                assetDownloadUrl: '/api/media/assets/buyer-photo/download',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByAltText('Upload Photo')).toBeInTheDocument()
+    expect(screen.getByText('orders.fields.customizationArtwork')).toBeInTheDocument()
+    expect(screen.getByAltText('orders.fields.image')).toHaveAttribute(
+      'src',
+      'https://m.media-amazon.com/images/S/customize-preview.png',
+    )
+  })
+
+  it('prefers the downloaded artwork over an Amazon preview when ZIP artwork is available', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            previewImageUrl: 'https://m.media-amazon.com/images/S/customize-preview.png',
+            extractedImages: [
+              {
+                filename: 'customer-artwork.jpg',
+                assetDownloadUrl: '/api/media/assets/customer-artwork/download',
+              },
+            ],
+            inputs: [],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByAltText('customer-artwork.jpg')).toHaveAttribute(
+      'src',
+      '/api/media/assets/customer-artwork/download',
+    )
+  })
+
+  it('shows the synced main listing image separately from customization artwork', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          listing: {
+            ...row.items[0].listing,
+            productImageUrl: 'https://res.cloudinary.com/example/main-listing.jpg',
+          },
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            previewImageUrl: 'https://m.media-amazon.com/images/S/customize-preview.png',
+            inputs: [],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(screen.getByAltText('orders.fields.mainListingImage')).toHaveAttribute(
+      'src',
+      'https://res.cloudinary.com/example/main-listing.jpg',
+    )
+    expect(screen.getByAltText('orders.fields.image')).toHaveAttribute(
+      'src',
+      'https://m.media-amazon.com/images/S/customize-preview.png',
+    )
   })
 
   it('opens the source URL imported from Amazon for users who can edit the order', () => {
@@ -589,6 +756,38 @@ describe('OrderInlinePanel', () => {
         vendorCostCenterId: 'cost-1',
       }),
     )
+  })
+
+  it('uses a product option snapshot locally while choosing size and color', async () => {
+    vi.mocked(getMappingVendorProductOptions).mockResolvedValue({
+      dimensions: { hasSize: true, hasColor: true },
+      options: { sizes: ['M'], colors: ['Black'] },
+      candidates: [],
+      allCandidates: [
+        {
+          id: 'cost-1',
+          code: 'PRODUCT-M-BLACK',
+          size: 'M',
+          color: 'Black',
+          baseCostAmount: 1250,
+          currency: 'USD',
+        },
+      ],
+    })
+    renderPanel()
+
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
+    fireEvent.click(await screen.findByText('Vendor One'))
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
+    fireEvent.click(await screen.findByText('Product One'))
+    await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeEnabled())
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
+    fireEvent.click((await screen.findAllByText('M')).at(-1)!)
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.color'))
+    fireEvent.click((await screen.findAllByText('Black')).at(-1)!)
+
+    expect(await screen.findByRole('button', { name: 'orders.actions.apply' })).toBeInTheDocument()
+    expect(getMappingVendorProductOptions).toHaveBeenCalledTimes(1)
   })
 
   it('allows Apply when the selected product has no color option', async () => {

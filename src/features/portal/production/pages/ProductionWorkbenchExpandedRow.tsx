@@ -168,25 +168,31 @@ export function ProductionWorkbenchExpandedRow({
   const { t } = useTranslation()
   const checks = task.fileChecks ?? task.qcPreviewFileChecks ?? []
   const psdTemplate = task.scaleContext?.use?.psdTemplate
-  const artworkCheck = checks.find(
-    (check) => check.sourceType === 'CUSTOMER_IMAGE' && check.inputAssetDownloadUrl,
+  const linkedInputAssetIds = new Set(
+    (task.customization?.customerInputs?.images ?? [])
+      .map((image) => image.assetId)
+      .filter((assetId): assetId is string => Boolean(assetId)),
   )
-  const sourceArtwork = artworkCheck?.inputAssetDownloadUrl
   const customerImages = [
-    ...(sourceArtwork
-      ? [{ downloadUrl: sourceArtwork, filename: artworkCheck?.inputImageName }]
-      : []),
-    ...(task.customization?.imageAssets ?? []).map((asset) => ({
-      downloadUrl: asset.assetDownloadUrl ?? '',
-      filename: asset.filename,
-    })),
+    ...checks
+      .filter((check) => check.sourceType === 'CUSTOMER_IMAGE' && check.inputAssetDownloadUrl)
+      .map((check) => ({
+        downloadUrl: check.inputAssetDownloadUrl!,
+        filename: check.inputImageName,
+      })),
+    ...(task.customization?.imageAssets ?? [])
+      .filter(
+        (asset) =>
+          asset.assetId && linkedInputAssetIds.has(asset.assetId) && asset.assetDownloadUrl,
+      )
+      .map((asset) => ({ downloadUrl: asset.assetDownloadUrl!, filename: asset.filename })),
   ].filter(
     (asset, index, all) =>
-      asset.downloadUrl &&
       all.findIndex((candidate) => candidate.downloadUrl === asset.downloadUrl) === index,
   )
   const customerImage = customerImages[0]?.downloadUrl
-  const listingArtwork = task.productImageUrl
+  const listingArtwork = task.mainListingImageUrl ?? task.productImageUrl
+  const amazonCustomizationPreview = task.amazonCustomizationPreviewUrl
   const listingPreview = task.listing?.previewAssetDownloadUrl
   const spUrl = productUrl(task)
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
@@ -301,26 +307,56 @@ export function ProductionWorkbenchExpandedRow({
           </div>
         </div>
         <div className={styles.artworkPreview}>
-          <Typography.Text type="secondary">
-            {customerImage
-              ? t('portal.production.downloadCustomerImage', 'Customer image')
-              : t('portal.production.originalArtwork')}
-          </Typography.Text>
-          {customerImage || listingPreview || listingArtwork ? (
+          {listingArtwork ? (
+            <>
+              <Typography.Text type="secondary">
+                {t('portal.production.mainListing', 'Main listing')}
+              </Typography.Text>
+              <ZoomableImage
+                alt={t('portal.production.mainListing', 'Main listing')}
+                src={listingArtwork}
+                loading="lazy"
+              />
+            </>
+          ) : null}
+          {customerImage ? (
+            <>
+              <Typography.Text type="secondary">
+                {t('portal.production.downloadCustomerImage', 'Customer image')}
+              </Typography.Text>
+              <ZoomableImage
+                alt={t('portal.production.downloadCustomerImage', 'Customer image')}
+                downloadUrl={customerImage}
+                loading="lazy"
+              />
+            </>
+          ) : null}
+          {!listingArtwork && !customerImage && listingPreview ? (
             <ZoomableImage
-              alt={
-                customerImage
-                  ? t('portal.production.downloadCustomerImage', 'Customer image')
-                  : t('portal.production.originalArtwork')
-              }
-              downloadUrl={customerImage || listingPreview}
-              src={listingArtwork}
+              alt={t('portal.production.originalArtwork')}
+              downloadUrl={listingPreview}
               loading="lazy"
             />
-          ) : (
-            t('portal.production.fileMissing')
-          )}
+          ) : null}
+          {!listingArtwork && !customerImage && !listingPreview
+            ? t('portal.production.fileMissing')
+            : null}
         </div>
+        {amazonCustomizationPreview ? (
+          <details className={styles.imageReference}>
+            <summary>
+              {t('portal.production.amazonCustomizationPreview', 'Amazon customization preview')}
+            </summary>
+            <ZoomableImage
+              alt={t(
+                'portal.production.amazonCustomizationPreview',
+                'Amazon customization preview',
+              )}
+              src={amazonCustomizationPreview}
+              loading="lazy"
+            />
+          </details>
+        ) : null}
         <div className={styles.productActions}>
           {spUrl ? (
             <Button

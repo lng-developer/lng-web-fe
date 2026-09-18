@@ -64,8 +64,8 @@ export function FulfillmentInlineEditor({
     retry: false,
   })
   const productOptions = useQuery({
-    queryKey: mappingKeys.vendorProductOptions(productId ?? '', size, color),
-    queryFn: () => getMappingVendorProductOptions(productId!, { size, color }),
+    queryKey: mappingKeys.vendorProductOptions(productId ?? ''),
+    queryFn: () => getMappingVendorProductOptions(productId!),
     enabled: active && canWrite && Boolean(productId),
     ...modalQueryOptions,
     staleTime: 5 * 60_000,
@@ -74,7 +74,12 @@ export function FulfillmentInlineEditor({
   })
 
   const dimensions = productOptions.data?.dimensions
-  const candidates = productOptions.data?.candidates ?? []
+  const allCandidates = productOptions.data?.allCandidates ?? productOptions.data?.candidates ?? []
+  const candidates = allCandidates.filter(
+    (candidate) => (!size || candidate.size === size) && (!color || candidate.color === color),
+  )
+  const sizeOptions = allCandidates.filter((candidate) => !color || candidate.color === color)
+  const colorOptions = allCandidates.filter((candidate) => !size || candidate.size === size)
   const selectionComplete =
     Boolean(productId) &&
     (!dimensions?.hasSize || Boolean(size)) &&
@@ -225,10 +230,12 @@ export function FulfillmentInlineEditor({
                 aria-label={t('orders.fields.size')}
                 disabled={!productId || !dimensions?.hasSize}
                 placeholder={item.mapping?.vendorCostCenter?.size || notSet}
-                options={(productOptions.data?.options.sizes ?? []).map((value) => ({
-                  value,
-                  label: value,
-                }))}
+                options={unique(
+                  sizeOptions.map((candidate) => ({
+                    value: candidate.size ?? '',
+                    label: candidate.size ?? '',
+                  })),
+                ).filter((option) => option.value)}
                 value={size}
                 loading={productOptions.isFetching}
                 onChange={(value) => {
@@ -247,10 +254,12 @@ export function FulfillmentInlineEditor({
                 aria-label={t('orders.fields.color')}
                 disabled={!productId || !dimensions?.hasColor}
                 placeholder={item.mapping?.vendorCostCenter?.color || notSet}
-                options={(productOptions.data?.options.colors ?? []).map((value) => ({
-                  value,
-                  label: value,
-                }))}
+                options={unique(
+                  colorOptions.map((candidate) => ({
+                    value: candidate.color ?? '',
+                    label: candidate.color ?? '',
+                  })),
+                ).filter((option) => option.value)}
                 value={color}
                 loading={productOptions.isFetching}
                 onChange={(value) => {

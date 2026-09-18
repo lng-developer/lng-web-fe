@@ -19,7 +19,13 @@
     "retry": "Retry failed",
     "start": "Start sync",
     "confirm": "Check all existing Amazon US listings in this shop now, including listings less than 7 days old and recently checked listings. Manually edited images remain protected. This may take several hours for large catalogs.",
-    "statuses": { "QUEUED": "Queued", "RUNNING": "Running", "PAUSED": "Paused", "COMPLETED": "Completed", "COMPLETED_WITH_ERRORS": "Completed with errors" }
+    "statuses": {
+      "QUEUED": "Queued",
+      "RUNNING": "Running",
+      "PAUSED": "Paused",
+      "COMPLETED": "Completed",
+      "COMPLETED_WITH_ERRORS": "Completed with errors"
+    }
   },
   "app": {
     "name": "LNG Web"
@@ -3244,6 +3250,9 @@
       "assignedTo": "Assigned to",
       "unassigned": "Unassigned",
       "originalArtwork": "Original artwork",
+      "mainListing": "Main listing",
+      "amazonCustomizationPreview": "Amazon customization preview",
+      "customerArtworkMissing": "Customer artwork is not linked",
       "downloadPsd": "Download PSD",
       "outputReady": "Output ready",
       "outputMissing": "Output missing",
@@ -3998,6 +4007,8 @@
     "fields": {
       "seller": "Seller",
       "image": "Image",
+      "mainListingImage": "Main listing",
+      "customizationArtwork": "Customization artwork",
       "quantity": "Quantity",
       "customerPaid": "Customer paid",
       "totalCost": "Total cost",

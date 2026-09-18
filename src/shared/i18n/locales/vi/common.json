@@ -19,7 +19,13 @@
     "retry": "Thử lại mục lỗi",
     "start": "Bắt đầu đồng bộ",
     "confirm": "Kiểm tra ngay tất cả listing Amazon US hiện có của shop, kể cả listing chưa đủ 7 ngày hoặc vừa kiểm tra gần đây. Ảnh chỉnh thủ công vẫn được bảo vệ. Catalog lớn có thể mất vài giờ.",
-    "statuses": { "QUEUED": "Đang chờ", "RUNNING": "Đang chạy", "PAUSED": "Tạm dừng", "COMPLETED": "Hoàn tất", "COMPLETED_WITH_ERRORS": "Hoàn tất có lỗi" }
+    "statuses": {
+      "QUEUED": "Đang chờ",
+      "RUNNING": "Đang chạy",
+      "PAUSED": "Tạm dừng",
+      "COMPLETED": "Hoàn tất",
+      "COMPLETED_WITH_ERRORS": "Hoàn tất có lỗi"
+    }
   },
   "app": {
     "name": "LNG Web"
@@ -3244,6 +3250,9 @@
       "assignedTo": "Người phụ trách",
       "unassigned": "Chưa gán",
       "originalArtwork": "Artwork gốc",
+      "mainListing": "Ảnh main listing",
+      "amazonCustomizationPreview": "Preview customization Amazon",
+      "customerArtworkMissing": "Ảnh khách chưa được liên kết",
       "downloadPsd": "Tải PSD",
       "outputReady": "Đã có output",
       "outputMissing": "Thiếu output",
@@ -3998,6 +4007,8 @@
     "fields": {
       "seller": "Seller",
       "image": "Ảnh",
+      "mainListingImage": "Ảnh main listing",
+      "customizationArtwork": "Ảnh customization",
       "quantity": "Số lượng",
       "customerPaid": "Khách đã trả",
       "totalCost": "Tổng chi phí",
