@@ -48,7 +48,7 @@ export const CopyableText = memo(function CopyableText({
           }
         }}
       >
-        <span>{value}</span>
+        <span className={styles.badgeText}>{value}</span>
         <CopyOutlined className={styles.copyIcon} aria-hidden />
       </Typography.Text>
     </Tooltip>

@@ -6,6 +6,7 @@ import {
   EyeOutlined,
   SearchOutlined,
   ShoppingOutlined,
+  TrophyFilled,
 } from '@ant-design/icons'
 import { Button, Checkbox, Dropdown, Input, Select, Typography } from 'antd'
 
@@ -15,7 +16,7 @@ import { CopyableOrderId, FormattedDateTime, StatusTag } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
 import { money, numberOf } from './operationsDashboardFormatters'
-import { type TopCategoryItem } from './useOperationsDashboard'
+import { type TopCategoryItem, type TopSeller } from './useOperationsDashboard'
 
 export function ProductImage({ listing }: { listing: Listing }) {
   const { t } = useTranslation()
@@ -117,6 +118,37 @@ export function TopCategoriesGrid({
           {t('foundation.portalDashboard.viewAll', { defaultValue: 'View All' })}
         </Button>
       )}
+    </div>
+  )
+}
+
+export function TopSellersPodium({ sellers }: { sellers: TopSeller[] }) {
+  const rankedSellers = sellers.slice(0, 3)
+  const podiumOrder = [rankedSellers[1], rankedSellers[0], rankedSellers[2]].filter(
+    (seller): seller is TopSeller => Boolean(seller),
+  )
+
+  return (
+    <div className={styles.sellerPodium} aria-label="Top sellers">
+      {podiumOrder.map((seller) => {
+        const rank = rankedSellers.indexOf(seller) + 1
+        return (
+          <article
+            key={seller.id}
+            className={`${styles.sellerPodiumItem} ${styles[`sellerPodiumRank${rank}`]}`}
+          >
+            {rank === 1 ? (
+              <TrophyFilled className={styles.sellerTrophy} aria-hidden="true" />
+            ) : null}
+            <span className={styles.sellerRank}>#{rank}</span>
+            <div className={styles.sellerImageWrap} aria-hidden="true">
+              {seller.name.slice(0, 1).toUpperCase()}
+            </div>
+            <strong title={seller.name}>{seller.name}</strong>
+            <span>{money(seller.revenueAmount, seller.currency || 'USD')}</span>
+          </article>
+        )
+      })}
     </div>
   )
 }

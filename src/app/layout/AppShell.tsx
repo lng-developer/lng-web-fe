@@ -65,6 +65,7 @@ export function AppShell() {
   )
   const legacyBottomMenus = useMemo(
     () => ({
+      portal: getContextNavigation('portal', account),
       hr: getContextNavigation('hr', account),
       system: getContextNavigation('system', account),
     }),

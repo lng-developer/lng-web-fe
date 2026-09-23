@@ -54,50 +54,62 @@
   object-fit: contain;
 }
 
-.account {
-  display: flex;
+.coreSwitch {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 2px;
+  background: #f4f5f7;
+  border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
+  border-radius: 8px;
   flex: 1;
-  flex-direction: column;
   min-width: 0;
-  margin-left: 12px;
+  margin-left: 10px;
+  margin-right: 4px;
+  box-sizing: border-box;
 }
 
-.account span {
-  overflow: hidden;
-  color: var(--ant-color-text, #0f172a);
-  font-size: 14px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.account button {
-  overflow: hidden;
-  padding: 0;
-  border: 0;
-  color: var(--ant-color-text-secondary, #64748b);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  background: transparent;
-  cursor: pointer;
-  transition: color 140ms ease;
-
-  &:hover {
-    color: var(--ant-color-primary);
-  }
-}
-
-.star {
+.coreSwitchOption {
+  flex: 1;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: #f59e0b;
-  font-size: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8c8c8c;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: all 160ms ease;
+  user-select: none;
+
+  &:hover {
+    color: var(--ant-color-text, #0f172a);
+  }
+}
+
+.coreSwitchActive {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #ffffff;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e83b4a !important;
+  cursor: default;
+  padding: 0 4px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 160ms ease;
+  user-select: none;
 }
 
 .menuLayout {
@@ -129,6 +141,42 @@
   height: 100%;
   padding: 0;
   background: transparent;
+}
+
+.compactCoreSwitch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 20px;
+  margin: 0 0 8px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 160ms ease;
+  user-select: none;
+  border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
+  background: var(--ant-color-fill-quaternary, #f8fafc);
+  color: var(--ant-color-primary, #e83b4a);
+
+  &:hover {
+    background: var(--ant-color-primary-bg, #fff1f0);
+    border-color: var(--ant-color-primary, #e83b4a);
+  }
+}
+
+:global(html[data-theme='dark']) .compactCoreSwitch {
+  background: #262626;
+  border-color: #434343;
+  color: #ff7875;
+
+  &:hover {
+    background: #36171a;
+    border-color: #ff4d4f;
+  }
 }
 
 .railSpacer {
@@ -257,6 +305,18 @@
   font-weight: 700 !important;
 }
 
+.detailMenu :global(.ant-menu-submenu .ant-menu-submenu .ant-menu-submenu-title),
+.reportChannel :global(.ant-menu-submenu-title) {
+  padding-left: 24px !important;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.detailMenu :global(.ant-menu-submenu .ant-menu-submenu .ant-menu-item),
+.detailMenu :global(.ant-menu-submenu) .reportChannelItem {
+  padding-left: 38px !important;
+}
+
 .detailMenu :global(.ant-menu-item a) {
   display: block;
   color: inherit;
@@ -361,6 +421,25 @@
   color: #e4e6eb;
 }
 
+:global(html[data-theme='dark']) .coreSwitch {
+  background: #18191a;
+  border-color: #393a3b;
+}
+
+:global(html[data-theme='dark']) .coreSwitchOption {
+  color: #8a8d91;
+
+  &:hover {
+    color: #e4e6eb;
+  }
+}
+
+:global(html[data-theme='dark']) .coreSwitchActive {
+  background: #3a3b3c;
+  color: #ff4d4f !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
 :global(html[data-theme='dark']) .account button {
   color: #b0b3b8;
 }
@@ -409,6 +488,14 @@
   font-weight: 650;
 }
 
+:global(html[data-theme='dark'])
+  .detailMenu
+  :global(.ant-menu-submenu .ant-menu-submenu .ant-menu-submenu-title),
+:global(html[data-theme='dark']) .reportChannel :global(.ant-menu-submenu-title) {
+  color: #e4e6eb !important;
+  font-weight: 600;
+}
+
 :global(html[data-theme='dark']) .detailMenu :global(.ant-menu-item:hover),
 :global(html[data-theme='dark']) .detailMenu :global(.ant-menu-submenu-title:hover) {
   color: #ffffff !important;
@@ -433,4 +520,23 @@
   border-color: #393a3b;
   color: #b0b3b8;
   background: #242526;
+}
+
+:global(html[data-theme='dark']) .coreSwitch {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .coreSwitchActive {
+  background: #334155;
+  color: #f87171 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+:global(html[data-theme='dark']) .coreSwitchOption {
+  color: #94a3b8;
+
+  &:hover {
+    color: #f1f5f9;
+  }
 }

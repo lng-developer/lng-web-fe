@@ -75,9 +75,44 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
 
   // ── Production & Design ───────────────────────────────────────
   {
+    pattern: /^\/portal\/design\/idea-tasks(\/.*)?$/,
+    key: 'portal.design.ideaTasks',
+    defaultTitle: 'Idea Tasks',
+  },
+  {
+    pattern: /^\/portal\/design\/psd-tasks(\/.*)?$/,
+    key: 'portal.design.psdTasks',
+    defaultTitle: 'PSD Tasks',
+  },
+  {
+    pattern: /^\/portal\/design\/png-tasks(\/.*)?$/,
+    key: 'portal.design.pngTasks',
+    defaultTitle: 'PNG Tasks',
+  },
+  {
+    pattern: /^\/portal\/design\/amazon(\/.*)?$/,
+    key: 'portal.design.amazonTasks',
+    defaultTitle: 'Amazon tasks',
+  },
+  {
+    pattern: /^\/portal\/design\/etsy(\/.*)?$/,
+    key: 'portal.design.etsyTasks',
+    defaultTitle: 'Etsy tasks',
+  },
+  {
     pattern: /^\/portal\/design\/files(\/.*)?$/,
-    key: 'shell.navigation.design',
+    key: 'portal.design.psdFiles',
     defaultTitle: 'PSD Files',
+  },
+  {
+    pattern: /^\/portal\/design\/workspace(\/.*)?$/,
+    key: 'portal.design.workspace',
+    defaultTitle: 'Design Workspace',
+  },
+  {
+    pattern: /^\/portal\/design\/scores(\/.*)?$/,
+    key: 'portal.design.scores',
+    defaultTitle: 'Design Scores',
   },
   {
     pattern: /^\/portal\/design(\/.*)?$/,
@@ -92,7 +127,7 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
   {
     pattern: /^\/portal\/vendor-submissions(\/.*)?$/,
     key: 'shell.navigation.vendorSubmissions',
-    defaultTitle: 'Vendor submissions',
+    defaultTitle: 'Vendor Handoff',
   },
   {
     pattern: /^\/portal\/work-scores(\/.*)?$/,

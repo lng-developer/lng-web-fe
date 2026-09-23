@@ -26,7 +26,7 @@ import {
   SummaryLineChart,
   TrafficSourcesDonut,
 } from './OperationsDashboardCharts'
-import { RecentOrdersTable, TopCategoriesGrid } from './OperationsDashboardLists'
+import { RecentOrdersTable, TopSellersPodium } from './OperationsDashboardLists'
 import { useOperationsDashboard } from './useOperationsDashboard'
 
 export function OperationsDashboardPage() {
@@ -35,6 +35,7 @@ export function OperationsDashboardPage() {
     dayjs('2026-08-01').startOf('day'),
     dayjs().endOf('day'),
   ])
+  const [summaryExpanded, setSummaryExpanded] = useState(false)
   const { value, handle } = useOperationsDashboard(dates[0].toISOString(), dates[1].toISOString())
 
   if (!value.canViewDashboard) {
@@ -117,28 +118,46 @@ export function OperationsDashboardPage() {
           </div>
           <strong className={styles.gxonHeroValue}>{value.displayedOrderTotal}</strong>
           <div className={styles.gxonHeroSparkline}>
-            <MiniBars data={value.orderBars} total={value.displayedOrderTotal} compact />
+            <MiniBars
+              data={value.orderBars}
+              total={value.displayedOrderTotal}
+              compact
+              showPopover={false}
+            />
           </div>
         </article>
 
-        {/* Card 2: Approved Listings / Target */}
-        <article className={styles.gxonHeroCard}>
-          <div className={styles.gxonHeroHeader}>
-            <span>{t('foundation.portalDashboard.approvedListings')}</span>
-          </div>
-          <strong className={styles.gxonHeroValue}>{value.approvedListings}</strong>
-          <div className={styles.gxonHeroProgress}>
-            <small style={{ color: 'var(--ant-color-text-secondary)', fontSize: 11 }}>
-              {t('foundation.portalDashboard.approvedPercent', { percent: value.targetPercent })}
-            </small>
-            <div className={styles.gxonProgressBarTrack}>
-              <div
-                className={styles.gxonProgressBarFill}
-                style={{ width: `${value.safeTargetPercent}%` }}
+        {/* Card 2: Summary */}
+        <div className={styles.summaryHeroSlot}>
+          <article
+            className={`${styles.gxonHeroCard} ${
+              summaryExpanded ? styles.gxonHeroCardSummaryExpanded : ''
+            }`}
+          >
+            <div className={styles.gxonHeroHeader}>
+              <span>{t('foundation.portalDashboard.summary')}</span>
+              <div className={styles.summaryHeaderLegend} aria-hidden="true">
+                <span>
+                  <i className={styles.summaryLegendNetCashFlow} />
+                  {t('foundation.portalDashboard.netCashFlow')}
+                </span>
+                <span>
+                  <i className={styles.summaryLegendRevenue} />
+                  {t('foundation.portalDashboard.cashIn')}
+                </span>
+              </div>
+            </div>
+            <div className={`${styles.gxonHeroSparkline} ${styles.summaryHeroSparkline}`}>
+              <SummaryLineChart
+                points={value.timelinePoints}
+                summaryBars={value.summaryBars}
+                summaryTotal={value.summaryTotal}
+                compact
+                onExpandedChange={setSummaryExpanded}
               />
             </div>
-          </div>
-        </article>
+          </article>
+        </div>
 
         {/* Card 3: New Customers */}
         <article className={styles.gxonHeroCard}>
@@ -198,6 +217,7 @@ export function OperationsDashboardPage() {
                 title={t('foundation.portalDashboard.trafficSources', {
                   defaultValue: 'Traffic Sources',
                 })}
+                className={styles.dashboardEqualHeightCard}
               >
                 <TrafficSourcesDonut
                   data={value.channelBreakdown}
@@ -211,26 +231,56 @@ export function OperationsDashboardPage() {
               </SectionCard>
             </section>
 
-            {/* Order Analytics / Summary Line Chart */}
+            {/* Cash flow chart */}
             <section
               aria-label={t('foundation.portalDashboard.orderAnalytics')}
               className={styles.chartColLine}
             >
               <SectionCard
-                title={t('foundation.portalDashboard.summary', { defaultValue: 'Summary' })}
+                title={t('foundation.portalDashboard.cashFlow', { defaultValue: 'Cash Flow' })}
+                className={`${styles.dashboardEqualHeightCard} ${styles.cashFlowCard}`}
               >
-                <SummaryLineChart
-                  points={value.timelinePoints}
-                  summaryBars={value.summaryBars}
-                  summaryTotal={value.summaryTotal}
-                />
+                <div className={styles.cashFlowTable}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t('common.date')}</th>
+                        <th>{t('foundation.portalDashboard.cashIn')}</th>
+                        <th>{t('foundation.portalDashboard.cashOut')}</th>
+                        <th>{t('foundation.portalDashboard.netCashFlow')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {value.cashFlowRows
+                        .slice(-6)
+                        .reverse()
+                        .map((row) => {
+                          const formatAmount = (amount: number) =>
+                            new Intl.NumberFormat(undefined, {
+                              style: 'currency',
+                              currency: row.currency || 'USD',
+                              maximumFractionDigits: 0,
+                            }).format(amount / 100)
+
+                          return (
+                            <tr key={row.date}>
+                              <td>{row.displayDate}</td>
+                              <td>{formatAmount(row.cashInAmount)}</td>
+                              <td>{formatAmount(row.cashOutAmount)}</td>
+                              <td>{formatAmount(row.netCashFlowAmount)}</td>
+                            </tr>
+                          )
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </SectionCard>
             </section>
           </div>
 
           {/* Recent Orders Table Card */}
           <RecentOrdersTable
-            rows={value.filteredRecentOrders}
+            rows={value.filteredRecentOrders.slice(0, 4)}
             searchQuery={value.searchQuery}
             onSearchChange={handle.setSearchQuery}
             statusFilter={value.selectedStatus}
@@ -246,6 +296,7 @@ export function OperationsDashboardPage() {
             title={t('foundation.portalDashboard.monthlyTarget', {
               defaultValue: 'Monthly Target',
             })}
+            className={styles.dashboardEqualHeightCard}
             extra={
               <Button
                 type="text"
@@ -281,10 +332,10 @@ export function OperationsDashboardPage() {
             />
           </SectionCard>
 
-          {/* Top Categories Grid */}
+          {/* Top sellers podium */}
           <SectionCard
-            title={t('foundation.portalDashboard.topCategories', {
-              defaultValue: 'Top Categories',
+            title={t('foundation.portalDashboard.topSellers', {
+              defaultValue: 'Top Seller',
             })}
             extra={
               <Button
@@ -297,7 +348,7 @@ export function OperationsDashboardPage() {
               </Button>
             }
           >
-            <TopCategoriesGrid categories={value.topCategories} />
+            <TopSellersPodium sellers={value.topSellers} />
           </SectionCard>
         </aside>
       </section>

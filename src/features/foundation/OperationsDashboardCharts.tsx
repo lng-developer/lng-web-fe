@@ -1,8 +1,8 @@
-import { memo, useMemo } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   Pie,
@@ -16,7 +16,7 @@ import {
 import { Popover } from 'antd'
 
 import styles from './FoundationPage.module.scss'
-import { formatChartNumber } from './operationsDashboardFormatters'
+import { formatChartNumber, formatCompactNumber } from './operationsDashboardFormatters'
 import { type ChannelDatum, type ChartDatum, type TimelinePoint } from './useOperationsDashboard'
 
 function ChartMetricDetails({ item, total }: { item: ChartDatum; total: number }) {
@@ -38,14 +38,23 @@ function ChartMetricDetails({ item, total }: { item: ChartDatum; total: number }
   )
 }
 
+export function selectCompactTimelinePoints<T>(points: T[], maxPoints = 5): T[] {
+  if (points.length <= maxPoints) return points
+
+  const interval = (points.length - 1) / (maxPoints - 1)
+  return Array.from({ length: maxPoints }, (_, index) => points[Math.round(index * interval)])
+}
+
 export function MiniBars({
   data,
   total,
   compact = false,
+  showPopover = true,
 }: {
   data: ChartDatum[]
   total?: number
   compact?: boolean
+  showPopover?: boolean
 }) {
   const { t } = useTranslation()
   const max = Math.max(...data.map((item) => item.value), 1)
@@ -60,7 +69,21 @@ export function MiniBars({
         const fillPercent = Math.min(100, (item.value / heightBase) * 100 * boost)
         const fillHeight = `${Math.max(minHeight, fillPercent)}%`
 
-        return (
+        const bar = (
+          <button
+            type="button"
+            aria-label={t('foundation.portalDashboard.metricAriaLabel', {
+              label: item.label,
+              value: formatChartNumber(item.value),
+            })}
+            className={styles.mockBarButton}
+            style={{ height: fillHeight }}
+          >
+            <span aria-hidden="true" className={styles.mockBarFill} />
+          </button>
+        )
+
+        return showPopover ? (
           <Popover
             key={item.label}
             content={<ChartMetricDetails item={item} total={chartTotal} />}
@@ -68,18 +91,10 @@ export function MiniBars({
             mouseEnterDelay={0}
             mouseLeaveDelay={0}
           >
-            <button
-              type="button"
-              aria-label={t('foundation.portalDashboard.metricAriaLabel', {
-                label: item.label,
-                value: formatChartNumber(item.value),
-              })}
-              className={styles.mockBarButton}
-              style={{ height: fillHeight }}
-            >
-              <span aria-hidden="true" className={styles.mockBarFill} />
-            </button>
+            {bar}
           </Popover>
+        ) : (
+          <span key={item.label}>{bar}</span>
         )
       })}
     </div>
@@ -90,36 +105,102 @@ export const SummaryLineChart = memo(function SummaryLineChart({
   points,
   summaryBars,
   summaryTotal,
+  compact = false,
+  onExpandedChange,
+  expandOnHover = true,
 }: {
   points: TimelinePoint[]
   summaryBars?: ChartDatum[]
   summaryTotal?: number
+  compact?: boolean
+  onExpandedChange?: (expanded: boolean) => void
+  expandOnHover?: boolean
 }) {
   const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(false)
+  const isCompact = compact && (!expandOnHover || !expanded)
+  const chartPoints = useMemo(
+    () => (isCompact ? selectCompactTimelinePoints(points) : points),
+    [isCompact, points],
+  )
+
+  const setDetailExpanded = (next: boolean) => {
+    if (!compact) return
+    if (expandOnHover) setExpanded(next)
+    onExpandedChange?.(next)
+  }
 
   return (
-    <div className={styles.summaryChartWrap}>
+    <div
+      role={compact ? 'group' : undefined}
+      aria-label={compact ? t('foundation.portalDashboard.summary') : undefined}
+      aria-expanded={compact ? expanded : undefined}
+      className={`${styles.summaryChartWrap} ${expanded ? styles.summaryChartExpanded : ''}`}
+      onMouseEnter={() => setDetailExpanded(true)}
+      onMouseLeave={() => setDetailExpanded(false)}
+      onFocus={() => setDetailExpanded(true)}
+      onBlur={() => setDetailExpanded(false)}
+    >
       <div className={styles.summaryRechartsWrap}>
-        <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={points} margin={{ top: 12, right: 12, left: -20, bottom: 0 }}>
+        <ResponsiveContainer width="100%" height={isCompact ? 72 : 350}>
+          <LineChart
+            data={chartPoints}
+            margin={
+              isCompact
+                ? { top: 6, right: 4, left: 0, bottom: 2 }
+                : { top: 12, right: 12, left: -20, bottom: 0 }
+            }
+          >
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
               stroke="var(--ant-color-border-secondary, #e2e8f0)"
             />
-            <XAxis
-              dataKey="displayDate"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: 'var(--ant-color-text-tertiary, #94a3b8)', fontSize: 12 }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: 'var(--ant-color-text-tertiary, #94a3b8)', fontSize: 11 }}
-              tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))}
-            />
+            {isCompact ? (
+              <XAxis
+                dataKey="displayDate"
+                tickLine={false}
+                axisLine={false}
+                interval={0}
+                height={14}
+                padding={{ left: 6, right: 18 }}
+                tick={{ fill: 'var(--ant-color-text-tertiary, #94a3b8)', fontSize: 9 }}
+              />
+            ) : (
+              <XAxis
+                dataKey="displayDate"
+                tickLine={false}
+                axisLine={false}
+                interval="preserveStartEnd"
+                minTickGap={14}
+                padding={{ left: 6, right: 20 }}
+                tick={{ fill: 'var(--ant-color-text-tertiary, #94a3b8)', fontSize: 12 }}
+              />
+            )}
+            {isCompact ? (
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                width={28}
+                tickCount={3}
+                tick={{ fill: 'var(--ant-color-text-tertiary, #94a3b8)', fontSize: 9 }}
+                tickFormatter={(v: number) => formatCompactNumber(v)}
+              />
+            ) : (
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: 'var(--ant-color-text-tertiary, #94a3b8)', fontSize: 11 }}
+                tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))}
+              />
+            )}
             <RechartsTooltip
+              formatter={(value, name) => [
+                `$${formatCompactNumber(Number(value ?? 0))}`,
+                name === 'incomeGrowth'
+                  ? t('foundation.portalDashboard.netCashFlow', { defaultValue: 'Net cash flow' })
+                  : t('foundation.portalDashboard.cashIn', { defaultValue: 'Cash in' }),
+              ]}
               contentStyle={{
                 background: 'var(--ant-color-bg-elevated, #fff)',
                 border: '1px solid var(--ant-color-border-secondary, #e2e8f0)',
@@ -128,30 +209,14 @@ export const SummaryLineChart = memo(function SummaryLineChart({
                 fontSize: 12,
               }}
             />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              iconType="circle"
-              formatter={(val: string) => (
-                <span
-                  style={{ color: 'var(--ant-color-text, #0f172a)', fontSize: 12, fontWeight: 500 }}
-                >
-                  {val === 'incomeGrowth'
-                    ? t('foundation.portalDashboard.incomeGrowth', {
-                        defaultValue: 'Income Growth',
-                      })
-                    : t('foundation.portalDashboard.orders', { defaultValue: 'Order' })}
-                </span>
-              )}
-            />
             <Line
               type="monotone"
-              dataKey="orderCount"
-              name="orderCount"
+              dataKey="revenue"
+              name="revenue"
               stroke="#7c3aed"
               strokeDasharray="4 4"
               strokeWidth={2.5}
-              dot={{ r: 3, fill: '#7c3aed' }}
+              dot={{ r: isCompact ? 2.5 : 3, fill: '#7c3aed' }}
               activeDot={{ r: 6 }}
             />
             <Line
@@ -160,7 +225,7 @@ export const SummaryLineChart = memo(function SummaryLineChart({
               name="incomeGrowth"
               stroke="#ff7a1a"
               strokeWidth={2.5}
-              dot={{ r: 3, fill: '#ff7a1a' }}
+              dot={{ r: isCompact ? 2.5 : 3, fill: '#ff7a1a' }}
               activeDot={{ r: 6 }}
             />
           </LineChart>

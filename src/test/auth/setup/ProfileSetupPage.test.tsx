@@ -147,7 +147,7 @@ describe('ProfileSetupPage', () => {
     renderProfileSetup()
 
     await screen.findByText('Jane Nguyen')
-    expect(screen.getByRole('radiogroup', { name: 'Language' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Language' })).toBeVisible()
   })
 })
 

@@ -7,13 +7,6 @@ import styles from '@/shared/ui/sharedUi.module.scss'
 
 import { CommonTablePagination } from './TablePagination'
 
-function getFullRowsHeight(availableHeight: number, rowHeight?: number) {
-  // Căn chiều cao theo số dòng trọn vẹn để bảng không cắt ngang một dòng dữ liệu.
-  if (!rowHeight || rowHeight <= 0 || availableHeight < rowHeight) return availableHeight
-
-  return Math.floor(availableHeight / rowHeight) * rowHeight
-}
-
 export type ServerSortColumn = {
   asc: string
   desc: string
@@ -242,7 +235,9 @@ export function CoreDataTable<RecordType extends object>({
   }, [dataSourceLength, fillViewport, viewportBottomGap])
 
   const scroll = {
-    ...(fillViewport ? { y: viewportScrollY ?? 'calc(100vh - 360px)' } : {}),
+    ...(fillViewport && dataSourceLength > 0
+      ? { y: viewportScrollY ?? 'calc(100vh - 360px)' }
+      : {}),
     ...tableProps.scroll,
   }
 
@@ -254,6 +249,7 @@ export function CoreDataTable<RecordType extends object>({
         {error ?? (
           <Table
             {...tableProps}
+            tableLayout={tableProps.tableLayout ?? 'fixed'}
             columns={sortableColumns}
             onChange={serverSorting?.enabled ? handleTableChange : tableProps.onChange}
             pagination={paginationEnabled ? false : tableProps.pagination}

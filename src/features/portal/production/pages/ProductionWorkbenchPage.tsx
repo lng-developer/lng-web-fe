@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
   AppstoreOutlined,
-  CheckCircleOutlined,
   ClockCircleOutlined,
   ScissorOutlined,
   WarningOutlined,
@@ -22,6 +21,7 @@ import {
   FormattedDateTime,
   MetricCard,
   StatusTag,
+  type DateRangeValue,
   type UiButtonTabItem,
   UiButtonTabs,
   UiTabLabel,
@@ -87,8 +87,10 @@ function tone(status: string) {
 
 export function ProductionWorkbenchPage({
   account: accountProp,
+  dedicatedTab: dedicatedTabProp,
 }: {
   readonly account?: CurrentAccount
+  readonly dedicatedTab?: ProductionTab
 }) {
   const { t } = useTranslation()
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
@@ -100,16 +102,18 @@ export function ProductionWorkbenchPage({
   const [searchParams, setSearchParams] = useSearchParams()
   const { queue: routeQueue } = useParams()
   const requestedTab = searchParams.get('queue')
-  const dedicatedTab: ProductionTab | undefined = ['scale', 'blocked', 'qc'].includes(
-    routeQueue ?? '',
+  const dedicatedTab: ProductionTab | undefined =
+    dedicatedTabProp ??
+    (['scale', 'blocked', 'qc'].includes(routeQueue ?? '')
+      ? (routeQueue as ProductionTab)
+      : undefined)
+  const queryTab: ProductionTab | undefined = ['scale', 'blocked', 'qc'].includes(
+    requestedTab ?? '',
   )
-    ? (routeQueue as ProductionTab)
+    ? (requestedTab as ProductionTab)
     : undefined
-  const tab: ProductionTab =
-    dedicatedTab ??
-    (['scale', 'blocked', 'qc'].includes(requestedTab ?? '')
-      ? (requestedTab as ProductionTab)
-      : 'scale')
+  const tab: ProductionTab = dedicatedTab ?? queryTab ?? 'scale'
+  const isBlockedData = dedicatedTab ? queryTab === 'blocked' : tab === 'blocked'
   const salesChannelCode =
     SALES_CHANNEL_BY_QUERY[searchParams.get('salesChannelCode')?.toLowerCase() ?? '']
   const [page, setPage] = useState(1)
@@ -118,6 +122,7 @@ export function ProductionWorkbenchPage({
   const deferredSearch = useDeferredValue(search)
   const [status, setStatus] = useState<ProductionStatus>()
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
+  const [createdDates, setCreatedDates] = useState<DateRangeValue>({})
   const [inspect, setInspect] = useState<{
     check: FileCheck
     listingReferenceUrl?: string | null
@@ -174,23 +179,33 @@ export function ProductionWorkbenchPage({
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
-      psdReadyOnly: tab !== 'blocked',
+      psdReadyOnly: tab !== 'blocked' && !isBlockedData,
+      ...createdDates,
       scaleDifficultyLevel,
-      status: tab === 'blocked' ? ('BLOCKED' as const) : status,
-      view: tab === 'blocked' ? undefined : tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
+      status: isBlockedData ? ('BLOCKED' as const) : status,
+      view: isBlockedData ? undefined : tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
     }),
-    [deferredSearch, salesChannelCode, scaleDifficultyLevel, status, tab],
+    [
+      createdDates,
+      deferredSearch,
+      isBlockedData,
+      salesChannelCode,
+      scaleDifficultyLevel,
+      status,
+      tab,
+    ],
   )
   const params = useMemo(() => ({ ...filters, page, limit: pageSize }), [filters, page, pageSize])
   const summaryFilters = useMemo(
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
-      psdReadyOnly: tab !== 'blocked',
-      status: tab === 'blocked' ? ('BLOCKED' as const) : status,
-      view: tab === 'blocked' ? undefined : ((tab === 'qc' ? 'QC' : 'SCALE') as 'QC' | 'SCALE'),
+      psdReadyOnly: tab !== 'blocked' && !isBlockedData,
+      ...createdDates,
+      status: isBlockedData ? ('BLOCKED' as const) : status,
+      view: isBlockedData ? undefined : ((tab === 'qc' ? 'QC' : 'SCALE') as 'QC' | 'SCALE'),
     }),
-    [deferredSearch, salesChannelCode, status, tab],
+    [createdDates, deferredSearch, isBlockedData, salesChannelCode, status, tab],
   )
   const queueFilters = useMemo(
     () => ({ search: deferredSearch || undefined, salesChannelCode }),
@@ -344,6 +359,10 @@ export function ProductionWorkbenchPage({
     setScaleDifficultyLevel(value)
     setPage(1)
   }, [])
+  const handleCreatedDatesChange = useCallback((value: DateRangeValue) => {
+    setCreatedDates(value)
+    setPage(1)
+  }, [])
   const handlePageChange = useCallback(
     (nextPage: number, nextPageSize: number) => {
       setPage(nextPageSize === pageSize ? nextPage : 1)
@@ -416,7 +435,12 @@ export function ProductionWorkbenchPage({
   })
   const exportQc = useMutation({
     mutationFn: () =>
-      exportProductionQcTasks({ search: search || undefined, scaleDifficultyLevel, status }),
+      exportProductionQcTasks({
+        search: search || undefined,
+        ...createdDates,
+        scaleDifficultyLevel,
+        status,
+      }),
     onSuccess: (result) => {
       const url = URL.createObjectURL(result as unknown as Blob)
       const link = document.createElement('a')
@@ -569,7 +593,7 @@ export function ProductionWorkbenchPage({
     () => [
       {
         title: t('portal.production.columns.order'),
-        width: 136,
+        width: 196,
         render: (_, row) => <CopyableOrderId value={row.orderItem?.externalOrderId} />,
       },
       {
@@ -661,14 +685,6 @@ export function ProductionWorkbenchPage({
           loading={summary.isLoading}
         />
         <MetricCard
-          icon={<WarningOutlined />}
-          variant="danger"
-          label={t('portal.production.metrics.blocked')}
-          value={queueSummary.blocked ?? 0}
-          loading={summary.isLoading}
-          onClick={dedicatedTab ? undefined : handleBlockedMetricClick}
-        />
-        <MetricCard
           icon={<ScissorOutlined />}
           variant="warning"
           label={t('portal.production.metrics.needScale')}
@@ -683,11 +699,12 @@ export function ProductionWorkbenchPage({
           loading={summary.isLoading}
         />
         <MetricCard
-          icon={<CheckCircleOutlined />}
-          variant="success"
-          label={t('portal.production.metrics.ready')}
-          value={displaySummary?.ready ?? 0}
+          icon={<WarningOutlined />}
+          variant="danger"
+          label={t('portal.production.metrics.block')}
+          value={queueSummary.blocked ?? 0}
           loading={summary.isLoading}
+          onClick={handleBlockedMetricClick}
         />
       </div>
       <div className={styles.workspace}>
@@ -716,6 +733,7 @@ export function ProductionWorkbenchPage({
             search={search}
             status={status}
             scaleDifficultyLevel={scaleDifficultyLevel}
+            dates={createdDates}
             tab={tab}
             statusOptions={statusOptions}
             scaleAssigneeId={scaleAssigneeId}
@@ -730,6 +748,7 @@ export function ProductionWorkbenchPage({
             onSearchSubmit={handleSearchSubmit}
             onStatusChange={handleStatusChange}
             onScaleDifficultyChange={handleScaleDifficultyChange}
+            onDatesChange={handleCreatedDatesChange}
             onExportCsv={handleExportCsv}
             onExportQc={handleExportQc}
             onRecheck={handleRecheck}

@@ -49,6 +49,7 @@ export function HrWorkspacePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>()
+  const [incompleteOnly, setIncompleteOnly] = useState(false)
   const [includeDeleted, setIncludeDeleted] = useState(false)
   const [editor, setEditor] = useState<EmployeeProfile | 'create'>()
   const [deleteTarget, setDeleteTarget] = useState<EmployeeProfile>()
@@ -102,9 +103,13 @@ export function HrWorkspacePage() {
     return (profiles.data?.items ?? []).filter((profile) => {
       const identity =
         `${profile.fullName ?? ''} ${profile.employeeCode ?? ''} ${profile.jobTitle ?? ''}`.toLowerCase()
-      return (!term || identity.includes(term)) && (!status || profile.status === status)
+      return (
+        (!term || identity.includes(term)) &&
+        (!status || profile.status === status) &&
+        (!incompleteOnly || profile.onboardingStatus === 'PROFILE_INCOMPLETE')
+      )
     })
-  }, [profiles.data, search, status])
+  }, [incompleteOnly, profiles.data, search, status])
 
   const departmentGroups = useMemo(() => {
     const groups = new Map<string, HrDepartmentGroup>()
@@ -246,6 +251,8 @@ export function HrWorkspacePage() {
           icon={<IdcardOutlined />}
           label={t('hr.incompleteProfiles')}
           value={String(incompleteCount)}
+          variant={incompleteOnly ? 'warning' : 'neutral'}
+          onClick={() => setIncompleteOnly((value) => !value)}
         />
         <MetricCard
           icon={<FieldTimeOutlined />}
@@ -286,6 +293,11 @@ export function HrWorkspacePage() {
               value,
             }))}
           />
+          {incompleteOnly && (
+            <Button type="link" onClick={() => setIncompleteOnly(false)}>
+              {t('hr.clearFilters')}
+            </Button>
+          )}
           {canWrite && (
             <label className={styles.archivedToggle}>
               <Switch checked={includeDeleted} onChange={setIncludeDeleted} />

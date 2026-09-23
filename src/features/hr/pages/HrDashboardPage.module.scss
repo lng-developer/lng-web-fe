@@ -1,0 +1,331 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+  padding: 16px 20px 32px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--ant-color-bg-container, #ffffff);
+  border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headerTitle {
+  margin: 0 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: var(--ant-color-text, #0f172a);
+}
+
+.headerDate {
+  font-size: 13px;
+  color: var(--ant-color-text-secondary, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.headerRight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+
+  @media (max-width: 1280px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Operation Breakdowns */
+.breakdownList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.breakdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary, #f8fafc);
+  border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
+  transition: background 150ms ease;
+}
+
+.breakdownLabel {
+  font-size: 13px;
+  color: var(--ant-color-text-secondary, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breakdownValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ant-color-text, #0f172a);
+}
+
+.breakdownWarning {
+  color: #f59e0b !important;
+}
+
+.breakdownDanger {
+  color: #ef4444 !important;
+}
+
+.breakdownSuccess {
+  color: #10b981 !important;
+}
+
+/* Action Queue */
+.actionQueueList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.actionQueueItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary, #f8fafc);
+  border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
+  transition: all 150ms ease;
+
+  &:hover {
+    background: var(--ant-color-fill-tertiary, #f1f5f9);
+    border-color: var(--ant-color-border, #cbd5e1);
+  }
+}
+
+.actionQueueLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actionQueueIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.actionQueueTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ant-color-text, #0f172a);
+}
+
+.actionQueueSubtitle {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary, #64748b);
+}
+
+/* Department list */
+.departmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.departmentItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--ant-color-fill-quaternary, #f8fafc);
+}
+
+.departmentHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ant-color-text, #0f172a);
+}
+
+/* Announcements */
+.announcementList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.announcementCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary, #f8fafc);
+  border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
+  transition: all 150ms ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary, #1890ff);
+  }
+}
+
+.announcementHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.announcementTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ant-color-text, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.announcementSnippet {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary, #64748b);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.announcementMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ant-color-text-tertiary, #94a3b8);
+}
+
+/* Quick Links Grid */
+.quickNavGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quickNavCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary, #f8fafc);
+  border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
+  color: var(--ant-color-text, #0f172a);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+
+  &:hover {
+    background: var(--ant-color-fill-tertiary, #f1f5f9);
+    border-color: var(--ant-color-primary, #1890ff);
+    color: var(--ant-color-primary, #1890ff);
+    transform: translateY(-1px);
+  }
+}
+
+.quickNavIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--ant-color-primary-bg, #e6f7ff);
+  color: var(--ant-color-primary, #1890ff);
+  font-size: 15px;
+}
+
+/* Chart container */
+.chartWrapper {
+  width: 100%;
+  height: 280px;
+  margin-top: 8px;
+}
+
+/* Dark mode overrides */
+:global(html[data-theme='dark']) {
+  .header {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .breakdownItem,
+  .actionQueueItem,
+  .departmentItem,
+  .announcementCard,
+  .quickNavCard {
+    background: #1e293b;
+    border-color: #334155;
+
+    &:hover {
+      background: #283548;
+      border-color: #475569;
+    }
+  }
+
+  .quickNavIcon {
+    background: #24344d;
+  }
+}

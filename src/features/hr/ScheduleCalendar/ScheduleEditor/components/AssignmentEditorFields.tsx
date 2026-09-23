@@ -57,6 +57,14 @@ export const AssignmentEditorFields = ({ model }: Props) => {
           </Form.Item>
         </Col>
       </Row>
+      <Form.Item name="status" label={t('hrOperations.common.status')} rules={required}>
+        <Select
+          options={['ACTIVE', 'INACTIVE'].map((value) => ({
+            value,
+            label: t(`hrOperations.schedule.statuses.${value}`),
+          }))}
+        />
+      </Form.Item>
     </>
   )
 }

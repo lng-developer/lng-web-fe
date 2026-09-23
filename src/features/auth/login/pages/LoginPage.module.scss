@@ -22,7 +22,8 @@
   opacity: 0;
   background:
     linear-gradient(90deg, rgb(3 9 18 / 12%), rgb(3 9 18 / 32%)),
-    url('/assets/images/login-operations-hero-dark.png') center / cover no-repeat;
+    url('/assets/images/login-operations-hero-dark-v2.png') calc(50% + 70px) calc(50% + 72px) / auto
+      138% no-repeat;
   pointer-events: none;
   transition: opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -30,12 +31,13 @@
 .preferences {
   position: absolute;
   z-index: 1;
-  top: 24px;
+  top: 50%;
   right: 24px;
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: flex-end;
+  transform: translateY(-50%);
 }
 
 .workspace {
@@ -162,7 +164,39 @@
 :global(html[data-theme='dark']) .card {
   border-color: #393a3b;
   background: #242526;
+  color: rgb(226 232 240);
   box-shadow: 0 24px 64px rgb(0 0 0 / 42%);
+}
+
+:global(html[data-theme='dark']) .introTitle,
+:global(html[data-theme='dark']) .wordmark {
+  color: rgb(248 250 252) !important;
+}
+
+:global(html[data-theme='dark']) .introText,
+:global(html[data-theme='dark']) .formContent :global(.ant-form-item-label > label),
+:global(html[data-theme='dark']) .formActions :global(.ant-checkbox-wrapper),
+:global(html[data-theme='dark']) .socialDivider {
+  color: rgb(203 213 225) !important;
+}
+
+:global(html[data-theme='dark']) .formContent :global(.ant-input),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-affix-wrapper) {
+  border-color: rgb(100 116 139);
+  background: rgb(51 65 85);
+  color: rgb(248 250 252);
+}
+
+:global(html[data-theme='dark']) .formContent :global(.ant-input::placeholder),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-affix-wrapper input::placeholder),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-prefix),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-suffix) {
+  color: rgb(203 213 225);
+}
+
+:global(html[data-theme='dark']) .socialDivider::before,
+:global(html[data-theme='dark']) .socialDivider::after {
+  border-color: rgb(71 85 105) !important;
 }
 
 .formContent {
@@ -338,7 +372,7 @@
   .preferences {
     top: 18px;
     right: 16px;
-    left: 16px;
+    transform: none;
   }
 
   .card :global(.ant-card-body) {

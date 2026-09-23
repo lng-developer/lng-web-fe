@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/orders/api/orderApi', () => ({
@@ -17,18 +17,21 @@ vi.mock('@/features/portal/customers/api/customerApi', () => ({
 
 vi.mock('@/features/portal/reports/api/reportApi', () => ({
   getBuyerInsights: vi.fn(),
+  listFinanceBySeller: vi.fn(),
   getOperationsOverview: vi.fn(),
   listFinanceDailyProfit: vi.fn(),
   listVendorPerformance: vi.fn(),
 }))
 
 import { OperationsDashboardPage } from '@/features/foundation/OperationsDashboardPage'
+import { selectCompactTimelinePoints } from '@/features/foundation/OperationsDashboardCharts'
 import { getListingSummary, listListings } from '@/features/portal/catalog/api/catalogApi'
 import { getCustomerSummary } from '@/features/portal/customers/api/customerApi'
 import type { OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
 import { getOrderSummary, listOrderWorkbench } from '@/features/portal/orders/api/orderApi'
 import {
   getBuyerInsights,
+  listFinanceBySeller,
   getOperationsOverview,
   listFinanceDailyProfit,
   listVendorPerformance,
@@ -135,6 +138,7 @@ describe('OperationsDashboardPage', () => {
       totalOrderCount: 25,
     })
     vi.mocked(listFinanceDailyProfit).mockResolvedValue([])
+    vi.mocked(listFinanceBySeller).mockResolvedValue([])
     vi.mocked(getOperationsOverview).mockResolvedValue({
       orderItemsByStatus: { MAPPING_PENDING: 6, NEED_PRODUCTION: 4, QC_REJECTED: 2 },
       productionByStatus: {},
@@ -174,12 +178,57 @@ describe('OperationsDashboardPage', () => {
     })
   })
 
+  it('does not show metric popups for total-order bars', async () => {
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    const totalOrderBar = await screen.findByRole('button', { name: 'Đơn mới: 7' })
+    fireEvent.mouseEnter(totalOrderBar)
+
+    expect(screen.queryByText('Giá trị')).not.toBeInTheDocument()
+  })
+
+  it('expands the summary chart over adjacent cards on hover', async () => {
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    const summaryChart = await screen.findByRole('group', { name: 'Tổng quan' })
+    expect(summaryChart).toHaveAttribute('aria-expanded', 'false')
+
+    fireEvent.mouseEnter(summaryChart)
+
+    expect(summaryChart).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('reduces the compact summary to evenly spaced representative points', () => {
+    const points = Array.from({ length: 30 }, (_, index) => ({
+      date: `2026-08-${String(index + 1).padStart(2, '0')}`,
+      displayDate: `${index + 1} Aug`,
+      revenue: index,
+      incomeGrowth: index,
+    }))
+
+    const compactPoints = selectCompactTimelinePoints(points, 8)
+
+    expect(compactPoints).toHaveLength(8)
+    expect(compactPoints[0]).toBe(points[0])
+    expect(compactPoints.at(-1)).toBe(points.at(-1))
+  })
+
   it('puts the action queue before analytic charts', async () => {
     renderWithTestProviders(<OperationsDashboardPage />)
 
     const queue = await screen.findByRole('region', { name: 'Hàng đợi cần xử lý' })
     const charts = screen.getByRole('region', { name: 'Phân tích đơn hàng' })
     expect(queue.compareDocumentPosition(charts)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it('shows the cash-flow table with localized columns', async () => {
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    expect(await screen.findByText('Dòng tiền')).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Ngày' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Tiền vào' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Tiền ra' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Dòng tiền ròng' })).toBeVisible()
   })
 
   it('renders recent order IDs as copyable badges', async () => {

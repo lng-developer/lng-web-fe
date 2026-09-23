@@ -10,6 +10,7 @@ import { Button, Descriptions, Modal, Space, Tabs, Typography } from 'antd'
 import { EmployeeAvatar, MetricCard, PageHeader } from '@/shared/ui'
 
 import { type LeaveRequest, type OvertimeRequest } from '../../api/hrTimeApi'
+import { RequestDecisionModal } from '../../components/RequestDecisionModal'
 import styles from '../HrOperationsPage.module.scss'
 import { TimeRequestEditorModal } from '../TimeRequestEditorModal'
 import { useTimeRequest } from './useTimeRequest'
@@ -20,9 +21,12 @@ export function TimeRequestsPage() {
       t,
       editor,
       detail,
+      decision,
       closeEditor,
       closeDetail,
+      closeDecision,
       openCreateEditor,
+      submitDecision,
       pendingLeaves,
       pendingOvertime,
       availableLeaveUnits,
@@ -32,7 +36,7 @@ export function TimeRequestsPage() {
       tabItems,
       renderStatus,
     },
-    { balances, leaves, overtime, canLeaveWrite, canOvertimeWrite },
+    { balances, leaves, overtime, canLeaveWrite, canOvertimeWrite, decisionPending },
   ] = useTimeRequest()
 
   return (
@@ -93,6 +97,20 @@ export function TimeRequestsPage() {
       <Tabs items={tabItems} defaultActiveKey="leave-requests" />
 
       <TimeRequestEditorModal kind={editor?.kind} request={editor?.request} onClose={closeEditor} />
+
+      <RequestDecisionModal
+        decision={
+          decision && {
+            action: decision.action,
+            employeeName:
+              decision.request.employee?.fullName || decision.request.employee?.employeeCode,
+            requestKind: decision.kind,
+          }
+        }
+        pending={decisionPending}
+        onClose={closeDecision}
+        onSubmit={submitDecision}
+      />
 
       <Modal
         destroyOnClose

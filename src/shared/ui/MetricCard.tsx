@@ -28,6 +28,7 @@ export interface MetricCardProps {
   readonly icon?: ReactNode
   readonly variant?: MetricCardVariant
   readonly status?: ReactNode
+  readonly subtext?: ReactNode
   readonly loading?: boolean
   readonly className?: string
   readonly style?: CSSProperties
@@ -53,6 +54,7 @@ export const MetricCard = memo(function MetricCard({
   icon,
   variant = 'neutral',
   status,
+  subtext,
   loading = false,
   className,
   style,
@@ -113,6 +115,7 @@ export const MetricCard = memo(function MetricCard({
           {status}
         </div>
         <span className={styles.metricLabel}>{label}</span>
+        {subtext ? <span className={styles.metricSubtext}>{subtext}</span> : null}
       </div>
     </div>
   )

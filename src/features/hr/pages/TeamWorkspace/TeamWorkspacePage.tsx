@@ -3,6 +3,7 @@ import { Button } from 'antd'
 
 import { FeedbackAlert, MetricCard } from '@/shared/ui'
 
+import { RequestDecisionModal } from '../../components/RequestDecisionModal'
 import styles from '../HrOperationsPage.module.scss'
 import { type TeamWorkspaceView, useTeamWorkspace } from './useTeamWorkspace'
 
@@ -14,6 +15,10 @@ export function TeamWorkspacePage({ view = 'dashboard' }: { view?: TeamWorkspace
       presentCount,
       exceptions,
       approvalsCount,
+      decision,
+      closeDecision,
+      submitDecision,
+      decisionPending,
       attendanceCard,
       approvalsCard,
       directoryCard,
@@ -62,6 +67,19 @@ export function TeamWorkspacePage({ view = 'dashboard' }: { view?: TeamWorkspace
       {view === 'approvals' && approvalsCard}
 
       {(view === 'dashboard' || view === 'members') && directoryCard}
+
+      <RequestDecisionModal
+        decision={
+          decision && {
+            action: decision.approve ? 'approve' : 'reject',
+            employeeName: decision.item.employee?.fullName || decision.item.employee?.employeeCode,
+            requestKind: decision.item.requestKind,
+          }
+        }
+        pending={decisionPending}
+        onClose={closeDecision}
+        onSubmit={submitDecision}
+      />
     </section>
   )
 }

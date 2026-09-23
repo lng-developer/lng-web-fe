@@ -383,7 +383,12 @@ export function ListingVariantManager({
             label={t('portal.catalog.variants.scaleDifficulty')}
           >
             <Select
-              options={['NORMAL', 'HARD', 'SPECIAL'].map((value) => ({ label: value, value }))}
+              options={['NORMAL', 'HARD', 'SPECIAL'].map((value) => ({
+                label: t(`portal.production.scaleDifficulties.${value}`, {
+                  defaultValue: value.charAt(0) + value.slice(1).toLowerCase(),
+                }),
+                value,
+              }))}
             />
           </Form.Item>
           <Form.Item
@@ -396,7 +401,14 @@ export function ListingVariantManager({
             />
           </Form.Item>
           <Form.Item name="status" label={t('portal.catalog.master.status')}>
-            <Select options={['ACTIVE', 'INACTIVE'].map((value) => ({ label: value, value }))} />
+            <Select
+              options={['ACTIVE', 'INACTIVE'].map((value) => ({
+                label: t(`portal.catalog.master.statuses.${value}`, {
+                  defaultValue: value === 'ACTIVE' ? 'Active' : 'Inactive',
+                }),
+                value,
+              }))}
+            />
           </Form.Item>
         </Form>
       </Modal>

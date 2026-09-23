@@ -293,7 +293,11 @@ export function FinanceImportSection({
               {`${currentBatch.processedRows} processed · ${currentBatch.validRows} valid · ${currentBatch.errorCount} errors`}
             </Typography.Text>
             <Space wrap>
-              <StatusTag status={statusTone(currentBatch.status)}>{currentBatch.status}</StatusTag>
+              <StatusTag status={statusTone(currentBatch.status)}>
+                {t(`portal.integrations.ads.statuses.${currentBatch.status}`, {
+                  defaultValue: currentBatch.status,
+                })}
+              </StatusTag>
               <Typography.Text>
                 {currentBatch.recalculationTotal > 0
                   ? `Profit recalculation: ${currentBatch.recalculationStatus} (${currentBatch.recalculationCompleted}/${currentBatch.recalculationTotal}; ${currentBatch.recalculationFailed} failed)`

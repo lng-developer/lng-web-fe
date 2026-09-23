@@ -396,9 +396,10 @@
 }
 
 .headerIconButton,
-.headerActions :global(.ant-badge .ant-btn) {
-  width: 32px;
-  height: 32px;
+.headerActions :global(.ant-badge .ant-btn),
+.headerActions :global(.ant-btn) {
+  width: 36px;
+  height: 36px;
   font-size: 18px;
 }
 
@@ -450,8 +451,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border-radius: 100%;
   border: 1px solid var(--ant-color-border);

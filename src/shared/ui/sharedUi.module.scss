@@ -188,6 +188,14 @@
   text-overflow: ellipsis;
 }
 
+.metricSubtext {
+  font-size: 11px;
+  color: var(--ant-color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .uiTabs :global(.ant-tabs-nav) {
   margin-bottom: 16px;
   padding: 0;
@@ -456,6 +464,12 @@
   scrollbar-gutter: stable;
 }
 
+.dataTable :global(.ant-table-content > table),
+.dataTable :global(.ant-table-header > table),
+.dataTable :global(.ant-table-body > table) {
+  min-width: 100% !important;
+}
+
 .dataTableToolbar {
   display: flex;
   justify-content: space-between;
@@ -672,6 +686,13 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.dataTableFillViewport :global(.ant-table-content),
+.dataTableFillViewport :global(.ant-table-header),
+.dataTableFillViewport :global(.ant-table-body) {
+  width: 100%;
+  min-width: 0;
 }
 
 .dataTableFillViewport :global(.ant-table-body) {

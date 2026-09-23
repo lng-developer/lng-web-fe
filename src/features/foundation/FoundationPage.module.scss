@@ -979,6 +979,13 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.summaryHeroSlot {
+  position: relative;
+  min-width: 0;
 }
 
 .gxonHeroCard {
@@ -1004,6 +1011,21 @@
   border-color: var(--ant-color-primary-hover, #93c5fd);
 }
 
+.gxonHeroCardSummaryExpanded {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  width: calc(150% + 16px);
+  min-height: 420px;
+  overflow: visible;
+  box-shadow: 0 14px 32px rgb(0 0 0 / 20%);
+}
+
+.gxonHeroCardSummaryExpanded .summaryHeroSparkline {
+  height: 350px;
+}
+
 .gxonHeroHeader {
   display: flex;
   justify-content: space-between;
@@ -1027,10 +1049,79 @@
   margin-top: auto;
 }
 
+.summaryHeroSparkline {
+  /* Reserve separate space for the compact chart and its legend.
+     The expanded selector above owns the larger hover-only canvas. */
+  height: 72px;
+}
+
 .gxonHeroSparkline .mockBars {
   height: 46px;
   padding-top: 0;
   gap: 6px;
+}
+
+.cashFlowTable {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cashFlowTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.cashFlowTable th,
+.cashFlowTable td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--ant-color-border-secondary, #e2e8f0);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cashFlowTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--ant-color-bg-container);
+  color: var(--ant-color-text-secondary, #64748b);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cashFlowTable th:first-child,
+.cashFlowTable td:first-child {
+  text-align: left;
+}
+
+.dashboardEqualHeightCard:global(.ant-card) {
+  display: flex;
+  flex-direction: column;
+  height: 365px;
+}
+
+.dashboardEqualHeightCard :global(.ant-card-head) {
+  flex: 0 0 auto;
+}
+
+.dashboardEqualHeightCard :global(.ant-card-body) {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.cashFlowCard :global(.ant-card-body) {
+  padding: 10px 16px 16px;
+}
+
+.dashboardEqualHeightCard .donutContainer,
+.dashboardEqualHeightCard .targetGaugeWrap {
+  flex: 1;
+  justify-content: center;
 }
 
 .gxonHeroProgress {
@@ -1117,6 +1208,8 @@
   grid-template-columns: minmax(0, 1fr) 350px;
   gap: 20px;
   align-items: start;
+  position: relative;
+  z-index: 1;
 }
 
 .gxonLeftCol {
@@ -1156,6 +1249,36 @@
 .summaryChartWrap {
   width: 100%;
   position: relative;
+}
+
+.summaryHeaderLegend {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  color: var(--ant-color-text-secondary, #64748b);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.summaryHeaderLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.summaryHeaderLegend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.summaryLegendRevenue {
+  background: #7c3aed;
+}
+
+.summaryLegendNetCashFlow {
+  background: #ff7a1a;
 }
 
 .summaryRechartsWrap {
@@ -1517,6 +1640,88 @@
   font-weight: 700;
   font-size: 11px;
   white-space: nowrap;
+}
+
+.sellerPodium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 0;
+  padding-top: 42px;
+  border-bottom: 4px solid var(--ant-color-text-secondary);
+}
+
+.sellerPodiumItem {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  gap: 5px;
+  padding: 12px 6px 8px;
+  border: 0;
+  border-radius: 10px 10px 0 0;
+  background: #a8a29e;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
+
+.sellerPodiumRank1 {
+  min-height: 194px;
+  order: 2;
+  background: #facc15;
+  color: #422006;
+}
+.sellerPodiumRank2 {
+  min-height: 150px;
+  order: 1;
+}
+.sellerPodiumRank3 {
+  min-height: 122px;
+  order: 3;
+  background: #c2772d;
+}
+.sellerRank {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 32%);
+  color: #fff;
+  font-weight: 800;
+}
+.sellerImageWrap {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border: 3px solid rgb(255 255 255 / 86%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 24%);
+  color: inherit;
+  font-size: 22px;
+  font-weight: 800;
+}
+.sellerImageWrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.sellerPodiumItem strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sellerTrophy {
+  position: absolute;
+  top: -38px;
+  color: #eab308;
+  font-size: 34px;
 }
 
 .viewAllButton {

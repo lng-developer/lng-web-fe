@@ -18,6 +18,18 @@ export type DesignSubmission = {
   rejectReason: string | null
   approvedAssetId: string | null
 }
+export const ASIN_TYPE_OPTIONS = [
+  { label: 'Custom Image', value: 'Custom Image' },
+  { label: 'Outline', value: 'Outline' },
+  { label: 'Normal', value: 'Normal' },
+  { label: 'First Sale', value: 'First Sale' },
+  { label: 'POD Lovers', value: 'POD Lovers' },
+  { label: 'Style', value: 'Style' },
+  { label: 'Tool', value: 'Tool' },
+  { label: 'Auto Fulfill', value: 'Auto Fulfill' },
+  { label: 'Other', value: 'Other' },
+] as const
+
 export type DesignTaskPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 export type DesignTask = {
   id: string
@@ -33,6 +45,8 @@ export type DesignTask = {
     psdStatus: string | null
     productTypeName: string | null
     productImageUrl?: string | null
+    asinType?: string | null
+    asin_type?: string | null
   } | null
   listingVariantId: string | null
   internalTemplate: { code: string | null; name: string | null } | null
@@ -51,6 +65,16 @@ export type DesignTask = {
   thumbnailAsset?: DesignAsset | null
   submissions?: DesignSubmission[]
   rejectReason?: string | null
+  title?: string | null
+  description?: string | null
+  referenceLink?: string | null
+  productType?: string | null
+  image?: string | null
+  imageUrl?: string | null
+  seller?: { id: string; fullName: string | null } | null
+  asinType?: string | null
+  asin_type?: string | null
+  createdBy?: { id: string; fullName?: string | null; full_name?: string | null } | null
   createdAt: string
   updatedAt: string
 }
@@ -62,6 +86,12 @@ export type DesignListParams = {
   status?: string
   taskType?: string
   priority?: DesignTaskPriority
+  shopId?: string
+  sellerId?: string
+  dateFrom?: string
+  dateTo?: string
+  unassigned?: boolean
+  asinType?: string
 }
 export type DesignAssignee = {
   id: string
@@ -99,9 +129,14 @@ export type DesignSummary = {
   byTaskType: Record<string, number>
 }
 export type CreateDesignTaskInput = {
-  listingId: string
-  taskType: 'MOCKUP' | 'PNG_ASSET' | 'IDEA' | 'CLONE'
+  listingId?: string
+  taskType: 'MOCKUP' | 'PNG_ASSET' | 'IDEA' | 'CLONE' | 'PSD_TEMPLATE'
   priority?: DesignTaskPriority
+  title?: string
+  description?: string
+  referenceLink?: string
+  productType?: string
+  image?: string
   brief?: string
   note?: string
   referenceAssetIds?: string[]
@@ -168,9 +203,93 @@ export const listPsdFiles = async (params: PsdFileListParams) =>
   )
 export const createDesignTask = async (input: CreateDesignTaskInput) =>
   unwrap<DesignTask>(await apiClient.post('/api/design/tasks', input))
+export const updateDesignTask = async (id: string, input: Partial<CreateDesignTaskInput>) =>
+  unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}`, input))
+export const deleteDesignTask = async (id: string) =>
+  unwrap<{ success: boolean }>(await apiClient.delete(`/api/design/tasks/${id}`))
 export const listDesignSubmissions = async (taskId: string) =>
   unwrap<{ items: DesignSubmission[] }>(
     await apiClient.get(`/api/design/tasks/${taskId}/submissions`),
   ).items
 export const cancelDesignTask = async (taskId: string, cancelReason: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${taskId}/cancel`, { cancelReason }))
+
+export type DesignScoreLevel = 'STANDARD' | 'HARD'
+export type DesignScoreStatus = 'ACTIVE' | 'VOIDED'
+export type DesignSubmissionScore = {
+  id: string
+  taskId: string
+  submissionId: string
+  assetId: string
+  designerId: string
+  designerName: string | null
+  designerTeam: string | null
+  designerDepartment: string | null
+  shopId: string | null
+  shopName: string | null
+  taskType: string
+  priority: DesignTaskPriority
+  basePoints: number
+  finalPoints: number
+  scoreLevel: DesignScoreLevel
+  status: DesignScoreStatus
+  scoredAt: string | null
+  approvedAsset: { id: string; originalFilename: string | null; downloadUrl: string | null } | null
+  overrideReason: string | null
+  voidReason: string | null
+  version: number
+}
+export type DesignScoreListParams = {
+  page: number
+  limit: number
+  search?: string
+  designerId?: string
+  scoreLevel?: DesignScoreLevel
+  scoreStatus?: DesignScoreStatus | 'ALL'
+  dateFrom?: string
+  dateTo?: string
+  sortBy?: 'scoredAt' | 'finalPoints' | 'updatedAt'
+  sortOrder?: 'asc' | 'desc'
+}
+export type DesignScoreSummary = {
+  total: number
+  totalPoints: number
+  totalFiles: number
+  byTaskType: Array<{ _id: string | null; totalPoints: number; totalFiles: number }>
+  byDesigner: Array<{
+    _id: string
+    designerName: string | null
+    totalPoints: number
+    totalFiles: number
+  }>
+}
+
+export const listDesignScores = async (params: DesignScoreListParams) =>
+  unwrap<{ items: DesignSubmissionScore[]; total: number; page: number; limit: number }>(
+    await apiClient.get('/api/design/submission-scores', { params: compact(params) }),
+  )
+export const getDesignScoreSummary = async (
+  params: Omit<DesignScoreListParams, 'page' | 'limit' | 'sortBy' | 'sortOrder'>,
+) =>
+  unwrap<DesignScoreSummary>(
+    await apiClient.get('/api/design/score-summary', { params: compact(params) }),
+  )
+export const overrideDesignScore = async (
+  scoreId: string,
+  input: { points: number; scoreLevel?: DesignScoreLevel; overrideReason: string },
+) =>
+  unwrap<DesignSubmissionScore>(
+    await apiClient.patch(`/api/design/submission-scores/${scoreId}/override`, input),
+  )
+export const voidDesignScore = async (
+  taskId: string,
+  submissionId: string,
+  assetId: string,
+  voidReason: string,
+) =>
+  unwrap<DesignSubmissionScore>(
+    await apiClient.patch(
+      `/api/design/tasks/${taskId}/submissions/${submissionId}/assets/${assetId}/score/void`,
+      { voidReason },
+    ),
+  )

@@ -15,6 +15,7 @@ import {
   createSaturdayRotation,
   createShift,
   createShiftAssignment,
+  type ShiftAssignment,
   createWorkLocation,
   generateSaturdayRotations,
   type Holiday,
@@ -28,6 +29,7 @@ import {
   updateHoliday,
   updateSaturdayRotation,
   updateShift,
+  updateShiftAssignment,
   updateWorkLocation,
   type WorkLocation,
   type WorkLocationInput,
@@ -44,7 +46,7 @@ export type ScheduleEditorKind =
 
 export type ScheduleEditorState = {
   kind: ScheduleEditorKind
-  item?: WorkLocation | Shift | Holiday | SaturdayRotation
+  item?: WorkLocation | Shift | ShiftAssignment | Holiday | SaturdayRotation
 }
 
 export type RotationOffByDate = Record<string, string[]>
@@ -194,6 +196,8 @@ export function useScheduleEditor({
         })
       } else if (next.kind === 'rotationManual') {
         form.setFieldsValue({ month, employeeProfileIdsByDate: manualDefaultOffByDate })
+      } else if (next.kind === 'assignment') {
+        form.setFieldsValue({ status: 'ACTIVE' })
       }
 
       setEditor(next)
@@ -220,7 +224,9 @@ export function useScheduleEditor({
       }
 
       if (editor.kind === 'assignment') {
-        return createShiftAssignment(values as ShiftAssignmentInput)
+        return editor.item
+          ? updateShiftAssignment(editor.item.id, values as ShiftAssignmentInput)
+          : createShiftAssignment(values as ShiftAssignmentInput)
       }
 
       if (editor.kind === 'override') {

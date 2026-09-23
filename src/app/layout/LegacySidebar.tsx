@@ -7,12 +7,20 @@ import { CgShoppingBag } from 'react-icons/cg'
 import { CgFileDocument } from 'react-icons/cg'
 import { FaAmazon, FaEtsy, FaShopify } from 'react-icons/fa'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
-import { FcRating } from 'react-icons/fc'
 import { HiOutlineBuildingStorefront } from 'react-icons/hi2'
 import { IoStorefrontOutline } from 'react-icons/io5'
 import { IoImageOutline } from 'react-icons/io5'
-import { LuBox, LuBrain, LuLayoutList, LuNotebook, LuTruck } from 'react-icons/lu'
-import { MdBalance, MdOutlineConnectedTv, MdOutlinePendingActions } from 'react-icons/md'
+import {
+  LuBox,
+  LuLayoutDashboard,
+  LuLayoutGrid,
+  LuLayoutList,
+  LuLightbulb,
+  LuNotebook,
+  LuPalette,
+  LuTruck,
+} from 'react-icons/lu'
+import { MdBalance, MdOutlineConnectedTv } from 'react-icons/md'
 import {
   RiAdvertisementLine,
   RiPaletteLine,
@@ -20,6 +28,7 @@ import {
   RiTokenSwapLine,
 } from 'react-icons/ri'
 import {
+  TbAward,
   TbBlender,
   TbBuildingFactory2,
   TbHomeDollar,
@@ -29,7 +38,6 @@ import {
   TbReportSearch,
 } from 'react-icons/tb'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import {
   ApartmentOutlined,
   CalendarOutlined,
@@ -42,15 +50,14 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Badge, Dropdown, Image, Layout, Menu, Popover } from 'antd'
+import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
-import { loadMyEmployeeProfile } from '@/features/hr/api/hrApi'
 import { useDesignSummaryQuery } from '@/features/portal/design/hooks/useDesignTasksQuery'
 import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
-import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
 
 import { getCoreForPath, type NavigationGroup, type NavigationItem } from './appNavigation'
+import { getRememberedCoreRoute } from './coreRouteMemory'
 import styles from './LegacySidebar.module.scss'
 
 const { Sider } = Layout
@@ -59,10 +66,24 @@ type LegacyMenuItem = {
   key: string
   labelKey: string
   icon: ReactNode
+  className?: string
   children?: LegacyMenuItem[]
 }
 
-const topMenus = [
+type LegacyRailItem = {
+  key: string
+  labelKey: string
+  icon: ReactNode
+  path?: string
+}
+
+const topMenus: LegacyRailItem[] = [
+  {
+    key: 'dashboard',
+    path: '/portal/dashboard',
+    labelKey: 'shell.navigation.dashboard',
+    icon: <LuLayoutDashboard size={20} />,
+  },
   { key: 'sales', labelKey: 'legacyMenu.sales', icon: <TbHomeStats size={20} /> },
   { key: 'fulfillment', labelKey: 'legacyMenu.fulfillment', icon: <MdBalance size={20} /> },
   { key: 'design', labelKey: 'legacyMenu.design', icon: <RiPaletteLine size={20} /> },
@@ -70,11 +91,24 @@ const topMenus = [
   { key: 'extensions', labelKey: 'legacyMenu.extensions', icon: <BiExtension size={20} /> },
 ]
 
-const bottomMenus = [
+const hrTopMenus: LegacyRailItem[] = [
+  {
+    key: 'hr-dashboard',
+    path: '/hr/dashboard',
+    labelKey: 'shell.navigation.dashboard',
+    icon: <LuLayoutDashboard size={20} />,
+  },
   { key: 'hr', labelKey: 'shell.cores.hr', icon: <TeamOutlined /> },
+]
+
+const bottomMenus: LegacyRailItem[] = [
   { key: 'system', labelKey: 'legacyMenu.setting', icon: <SettingOutlined /> },
 ]
-const emptyBottomMenuGroups: Record<'hr' | 'system', NavigationGroup[]> = { hr: [], system: [] }
+const emptyBottomMenuGroups: Partial<Record<'portal' | 'hr' | 'system', NavigationGroup[]>> = {
+  portal: [],
+  hr: [],
+  system: [],
+}
 
 const detailMenus: Record<string, LegacyMenuItem[]> = {
   sales: [
@@ -150,46 +184,62 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <TbReport size={20} />,
       children: [
         {
-          key: 'reports-amazon',
-          labelKey: 'legacyMenu.amazon',
-          icon: <FaAmazon size={20} />,
+          key: 'reports-order-cost',
+          labelKey: 'legacyMenu.ordersCost',
+          icon: <CgShoppingBag size={20} />,
+          className: styles.reportChannel,
           children: [
             {
               key: '/portal/reports/amazon/order-cost',
-              labelKey: 'legacyMenu.ordersCost',
-              icon: <CgShoppingBag size={20} />,
+              labelKey: 'legacyMenu.amazon',
+              icon: <FaAmazon size={20} />,
+              className: styles.reportChannelItem,
             },
             {
-              key: '/portal/reports/amazon/ads',
-              labelKey: 'legacyMenu.adsReport',
-              icon: <RiAdvertisementLine size={20} />,
-            },
-            {
-              key: '/portal/reports/amazon/sales',
-              labelKey: 'legacyMenu.saleReport',
-              icon: <TbReportSearch size={20} />,
+              key: '/portal/reports/etsy/order-cost',
+              labelKey: 'legacyMenu.etsy',
+              icon: <FaEtsy size={20} />,
+              className: styles.reportChannelItem,
             },
           ],
         },
         {
-          key: 'reports-etsy',
-          labelKey: 'legacyMenu.etsy',
-          icon: <FaEtsy size={20} />,
+          key: 'reports-ads',
+          labelKey: 'legacyMenu.adsReport',
+          icon: <RiAdvertisementLine size={20} />,
+          className: styles.reportChannel,
           children: [
             {
-              key: '/portal/reports/etsy/order-cost',
-              labelKey: 'legacyMenu.etsyOrdersCost',
-              icon: <CgShoppingBag size={20} />,
+              key: '/portal/reports/amazon/ads',
+              labelKey: 'legacyMenu.amazon',
+              icon: <FaAmazon size={20} />,
+              className: styles.reportChannelItem,
             },
             {
               key: '/portal/reports/etsy/ads',
-              labelKey: 'legacyMenu.adsEtsy',
-              icon: <RiAdvertisementLine size={20} />,
+              labelKey: 'legacyMenu.etsy',
+              icon: <FaEtsy size={20} />,
+              className: styles.reportChannelItem,
+            },
+          ],
+        },
+        {
+          key: 'reports-sales',
+          labelKey: 'legacyMenu.saleReport',
+          icon: <TbReportSearch size={20} />,
+          className: styles.reportChannel,
+          children: [
+            {
+              key: '/portal/reports/amazon/sales',
+              labelKey: 'legacyMenu.amazon',
+              icon: <FaAmazon size={20} />,
+              className: styles.reportChannelItem,
             },
             {
               key: '/portal/reports/etsy/sales',
-              labelKey: 'legacyMenu.etsySaleReport',
-              icon: <TbReportSearch size={20} />,
+              labelKey: 'legacyMenu.etsy',
+              icon: <FaEtsy size={20} />,
+              className: styles.reportChannelItem,
             },
           ],
         },
@@ -214,6 +264,11 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
           key: '/portal/integrations',
           labelKey: 'shell.navigation.integrations',
           icon: <BiExtension size={20} />,
+        },
+        {
+          key: '/portal/shipments',
+          labelKey: 'shell.navigation.shipments',
+          icon: <LuTruck size={20} />,
         },
       ],
     },
@@ -259,36 +314,86 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <TbHomeStats size={20} />,
     },
     {
-      key: '/portal/production/blocked',
-      labelKey: 'portal.production.blockedQueue',
-      icon: <MdOutlinePendingActions size={20} />,
-    },
-    {
       key: '/portal/vendor-submissions',
       labelKey: 'shell.navigation.vendorSubmissions',
       icon: <TbBuildingFactory2 size={20} />,
-    },
-    {
-      key: '/portal/shipments',
-      labelKey: 'shell.navigation.shipments',
-      icon: <LuTruck size={20} />,
     },
   ],
   design: [
     {
       key: '/portal/design',
       labelKey: 'portal.design.tasks',
-      icon: <LuBrain size={20} />,
+      icon: <LuPalette size={20} />,
       children: [
         {
-          key: '/portal/design/amazon',
-          labelKey: 'portal.design.amazonTasks',
-          icon: <FaAmazon size={20} />,
+          key: '/portal/design/workspace',
+          labelKey: 'portal.design.workspace',
+          icon: <LuLayoutGrid size={20} />,
         },
         {
-          key: '/portal/design/etsy',
-          labelKey: 'portal.design.etsyTasks',
-          icon: <FaEtsy size={20} />,
+          key: '/portal/design/idea-tasks',
+          labelKey: 'portal.design.ideaTasks',
+          icon: <LuLightbulb size={20} />,
+          className: styles.reportChannel,
+          children: [
+            {
+              key: workspaceRouteLinks.designIdeaTasksBySalesChannel('amazon'),
+              labelKey: 'portal.design.amazonTasks',
+              icon: <FaAmazon size={20} />,
+              className: styles.reportChannelItem,
+            },
+            {
+              key: workspaceRouteLinks.designIdeaTasksBySalesChannel('etsy'),
+              labelKey: 'portal.design.etsyTasks',
+              icon: <FaEtsy size={20} />,
+              className: styles.reportChannelItem,
+            },
+          ],
+        },
+        {
+          key: '/portal/design/psd-tasks',
+          labelKey: 'portal.design.psdTasks',
+          icon: <BsFiletypePsd size={20} />,
+          className: styles.reportChannel,
+          children: [
+            {
+              key: workspaceRouteLinks.designPsdTasksBySalesChannel('amazon'),
+              labelKey: 'portal.design.amazonTasks',
+              icon: <FaAmazon size={20} />,
+              className: styles.reportChannelItem,
+            },
+            {
+              key: workspaceRouteLinks.designPsdTasksBySalesChannel('etsy'),
+              labelKey: 'portal.design.etsyTasks',
+              icon: <FaEtsy size={20} />,
+              className: styles.reportChannelItem,
+            },
+          ],
+        },
+        {
+          key: '/portal/design/png-tasks',
+          labelKey: 'portal.design.pngTasks',
+          icon: <IoImageOutline size={20} />,
+          className: styles.reportChannel,
+          children: [
+            {
+              key: workspaceRouteLinks.designPngTasksBySalesChannel('amazon'),
+              labelKey: 'portal.design.amazonTasks',
+              icon: <FaAmazon size={20} />,
+              className: styles.reportChannelItem,
+            },
+            {
+              key: workspaceRouteLinks.designPngTasksBySalesChannel('etsy'),
+              labelKey: 'portal.design.etsyTasks',
+              icon: <FaEtsy size={20} />,
+              className: styles.reportChannelItem,
+            },
+          ],
+        },
+        {
+          key: '/portal/design/scores',
+          labelKey: 'portal.design.scores',
+          icon: <TbAward size={20} />,
         },
       ],
     },
@@ -367,6 +472,7 @@ function toMenuItems(
   return items.map((item) => ({
     key: item.key,
     icon: item.icon,
+    className: item.className,
     label: (
       <span className={styles.menuLabel}>
         <span className={styles.menuLabelText}>
@@ -385,6 +491,12 @@ function toMenuItems(
 
 function matchesRoute(key: string, pathname: string, search: string) {
   if (!key.startsWith('/')) return false
+  if (
+    key === '/portal/dashboard' &&
+    (pathname === '/operations-dashboard' || pathname === '/foundation')
+  ) {
+    return true
+  }
   if (key.includes('?')) return key === pathname + search
   return pathname === key || pathname.startsWith(`${key}/`)
 }
@@ -404,8 +516,19 @@ function findOpenKeys(
 function getRouteMenuState(
   pathname: string,
   search: string,
-  bottomMenuGroups: Record<'hr' | 'system', NavigationGroup[]>,
+  bottomMenuGroups: Partial<Record<'portal' | 'hr' | 'system', NavigationGroup[]>>,
 ) {
+  if (pathname === '/hr/dashboard') {
+    return { menuKey: 'hr-dashboard', openKeys: [] }
+  }
+  if (
+    pathname === '/portal/dashboard' ||
+    pathname === '/operations-dashboard' ||
+    pathname === '/foundation'
+  ) {
+    return { menuKey: 'dashboard', openKeys: [] }
+  }
+
   for (const [menuKey, items] of Object.entries(detailMenus)) {
     const openKeys = findOpenKeys(items, pathname, search)
     if (openKeys) return { menuKey, openKeys }
@@ -415,11 +538,14 @@ function getRouteMenuState(
   const menuKey = core === 'hr' ? 'hr' : core === 'system' ? 'system' : 'sales'
   const items =
     detailMenus[menuKey] ??
-    (menuKey === 'hr' || menuKey === 'system' ? toLegacyMenuItems(bottomMenuGroups[menuKey]) : [])
+    (menuKey === 'hr' || menuKey === 'system'
+      ? toLegacyMenuItems(bottomMenuGroups[menuKey] ?? [])
+      : [])
   return { menuKey, openKeys: findOpenKeys(items, pathname, search) ?? [] }
 }
 
 function iconForNavigationItem(item: NavigationItem) {
+  if (item.key.includes('dashboard')) return <LuLayoutDashboard />
   if (item.key.includes('schedule')) return <CalendarOutlined />
   if (item.key.includes('attendance')) return <ClockCircleOutlined />
   if (item.key.includes('request') || item.key.includes('approval')) return <FileTextOutlined />
@@ -431,7 +557,7 @@ function iconForNavigationItem(item: NavigationItem) {
 }
 
 function iconForNavigationGroup(key: string) {
-  if (key === 'dashboard') return <UserOutlined />
+  if (key === 'dashboard') return <LuLayoutDashboard />
   if (key === 'personal') return <UserOutlined />
   if (key === 'team') return <TeamOutlined />
   if (key === 'operations') return <CalendarOutlined />
@@ -441,34 +567,50 @@ function iconForNavigationGroup(key: string) {
   return <UserOutlined />
 }
 
-function toLegacyMenuItems(groups: NavigationGroup[]): LegacyMenuItem[] {
-  return groups.flatMap((group) => {
-    const items = group.items.map((item) => ({
-      key: item.path,
-      labelKey: item.labelKey,
-      icon: iconForNavigationItem(item),
-    }))
-    if (group.standalone) return items
-    return [
-      {
-        key: `legacy-group:${group.key}`,
-        labelKey: group.labelKey,
-        icon: iconForNavigationGroup(group.key),
-        children: items,
-      },
-    ]
-  })
+function toLegacyMenuItems(groups: NavigationGroup[] = []): LegacyMenuItem[] {
+  return groups
+    .filter((group) => group.key !== 'dashboard')
+    .flatMap((group) => {
+      const items = group.items
+        .filter((item) => item.path !== '/hr/dashboard' && item.path !== '/portal/dashboard')
+        .map((item) => ({
+          key: item.path,
+          labelKey: item.labelKey,
+          icon: iconForNavigationItem(item),
+        }))
+      if (group.standalone) return items
+      return [
+        {
+          key: `legacy-group:${group.key}`,
+          labelKey: group.labelKey,
+          icon: iconForNavigationGroup(group.key),
+          children: items,
+        },
+      ]
+    })
+}
+
+function getInitialPortalMenu(pathname: string, search: string): string {
+  for (const [menuKey, items] of Object.entries(detailMenus)) {
+    if (findOpenKeys(items, pathname, search) !== undefined) {
+      return menuKey
+    }
+  }
+  const saved = localStorage.getItem('lng:last-portal-menu')
+  if (saved && detailMenus[saved]) {
+    return saved
+  }
+  return 'sales'
 }
 
 export function LegacySidebar({
   collapsed,
   onCollapsedChange,
   bottomMenus: bottomMenuGroups = emptyBottomMenuGroups,
-  accountLabel,
 }: {
   collapsed: boolean
   onCollapsedChange: (value: boolean) => void
-  bottomMenus?: Record<'hr' | 'system', NavigationGroup[]>
+  bottomMenus?: Partial<Record<'portal' | 'hr' | 'system', NavigationGroup[]>>
   accountLabel?: string
 }) {
   const { t } = useTranslation()
@@ -476,56 +618,101 @@ export function LegacySidebar({
   const location = useLocation()
   const orderSummary = useOrderSummaryQuery({ page: 1, limit: 1 })
   const designSummary = useDesignSummaryQuery({})
-  const productionQueueCounts = useProductionQueueCountsQuery({})
   const [activeMenu, setActiveMenu] = useState(
     () => getRouteMenuState(location.pathname, location.search, bottomMenuGroups).menuKey,
   )
-  const [openDropdown, setOpenDropdown] = useState(false)
-  const [openKeys, setOpenKeys] = useState<string[]>(
-    () => getRouteMenuState(location.pathname, location.search, bottomMenuGroups).openKeys,
+  const [lastPortalMenu, setLastPortalMenu] = useState<string>(() =>
+    getInitialPortalMenu(location.pathname, location.search),
   )
+  const [activeMode, setActiveMode] = useState<'portal' | 'hr'>(() => {
+    const isHr =
+      location.pathname.startsWith('/hr') || location.pathname.startsWith('/organization')
+    return isHr ? 'hr' : 'portal'
+  })
+  const [openKeys, setOpenKeys] = useState<string[]>(() => {
+    const routeState = getRouteMenuState(location.pathname, location.search, bottomMenuGroups)
+    return routeState.openKeys
+  })
   useEffect(() => {
     const routeState = getRouteMenuState(location.pathname, location.search, bottomMenuGroups)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveMenu(routeState.menuKey)
-    setOpenKeys(routeState.openKeys)
+    const core = getCoreForPath(location.pathname)
+    if (core === 'hr') {
+      setActiveMode('hr')
+    } else if (core === 'portal') {
+      setActiveMode('portal')
+      if (routeState.menuKey !== 'dashboard' && detailMenus[routeState.menuKey]) {
+        setLastPortalMenu(routeState.menuKey)
+        localStorage.setItem('lng:last-portal-menu', routeState.menuKey)
+      }
+    }
+    // When entering dashboard, preserve previous openKeys so the most recent menu state is kept
+    if (routeState.menuKey !== 'dashboard' && routeState.menuKey !== 'hr-dashboard') {
+      setOpenKeys(routeState.openKeys)
+    }
   }, [bottomMenuGroups, location.pathname, location.search])
-  const profile = useQuery({
-    queryKey: ['hr', 'employee-profiles', 'me'],
-    queryFn: loadMyEmployeeProfile,
-    enabled: !collapsed,
-    staleTime: 5 * 60_000,
-    retry: false,
-  })
-  const accountName = profile.data?.fullName?.trim() || accountLabel || '—'
   const activeDetailMenu =
-    detailMenus[activeMenu] ??
-    toLegacyMenuItems(bottomMenuGroups[activeMenu as 'hr' | 'system'] ?? [])
+    activeMenu === 'system'
+      ? toLegacyMenuItems(bottomMenuGroups.system ?? [])
+      : activeMode === 'hr'
+        ? toLegacyMenuItems(bottomMenuGroups.hr ?? [])
+        : (detailMenus[activeMenu === 'dashboard' ? lastPortalMenu : activeMenu] ??
+          detailMenus[lastPortalMenu] ??
+          detailMenus.sales)
   const badgeCounts = {
     [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
     '/portal/design': designSummary.data?.unassigned,
-    '/portal/production/blocked': productionQueueCounts.data?.blocked,
   }
   const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
 
-  const popover = (menuKey: string) => (
-    <div className={styles.popoverMenu}>
-      <div className={styles.popoverTitle}>
-        {t(topMenus.find((item) => item.key === menuKey)?.labelKey ?? '')}
-      </div>
-      <Menu
-        className={styles.detailMenu}
-        mode="vertical"
-        items={toMenuItems(
-          detailMenus[menuKey] ??
-            toLegacyMenuItems(bottomMenuGroups[menuKey as 'hr' | 'system'] ?? []),
-          t,
-          badgeCounts,
-        )}
-        onClick={({ key }) => navigate(String(key))}
-      />
-    </div>
-  )
+  const handleSwitchMode = (mode: 'portal' | 'hr') => {
+    if (mode === activeMode) return
+    setActiveMode(mode)
+    if (collapsed) {
+      onCollapsedChange(false)
+    }
+    if (mode === 'hr') {
+      const remembered = localStorage.getItem('lng:last-route:hr')
+      const target =
+        (remembered &&
+          (remembered.startsWith('/hr') || remembered.startsWith('/organization')
+            ? remembered
+            : undefined)) ||
+        getRememberedCoreRoute('hr', bottomMenuGroups.hr ?? []) ||
+        bottomMenuGroups.hr?.[0]?.items?.[0]?.path ||
+        '/hr/dashboard'
+      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups)
+      setActiveMenu(targetRouteState.menuKey)
+      if (targetRouteState.menuKey !== 'hr-dashboard') {
+        setOpenKeys(targetRouteState.openKeys)
+      }
+      navigate(target)
+    } else {
+      const remembered = localStorage.getItem('lng:last-route:portal')
+      const target =
+        (remembered &&
+          (remembered.startsWith('/portal') || remembered.startsWith('/operations-dashboard')
+            ? remembered
+            : undefined)) ||
+        getRememberedCoreRoute('portal', bottomMenuGroups.portal ?? []) ||
+        '/portal/dashboard'
+      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups)
+      setActiveMenu(targetRouteState.menuKey)
+      if (targetRouteState.menuKey !== 'dashboard') {
+        setOpenKeys(targetRouteState.openKeys)
+      }
+      navigate(target)
+    }
+  }
+
+  const handleLogoClick = () => {
+    if (collapsed) {
+      onCollapsedChange(false)
+    }
+    const target = activeMode === 'hr' ? '/hr/dashboard' : '/portal/dashboard'
+    navigate(target)
+  }
 
   return (
     <aside
@@ -533,46 +720,109 @@ export function LegacySidebar({
       aria-label={t('shell.navigation.cores')}
     >
       <div className={styles.identity}>
-        <div className={styles.logo}>
+        <div
+          className={styles.logo}
+          role="button"
+          tabIndex={0}
+          style={{ cursor: 'pointer' }}
+          onClick={handleLogoClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleLogoClick()
+            }
+          }}
+          aria-label={t('app.name', { defaultValue: 'LNG Web' })}
+          title={t('shell.navigation.dashboard', { defaultValue: 'Dashboard' })}
+        >
           <Image src="/assets/images/lng-logo.jpg" preview={false} alt={t('app.name')} />
         </div>
         {!collapsed && (
-          <div className={styles.account}>
-            <span>{t('legacyMenu.systemName')}</span>
-            <Dropdown
-              open={openDropdown}
-              onOpenChange={setOpenDropdown}
-              trigger={['click']}
-              popupRender={() => <div className={styles.accountMenu}>{t('shell.logout')}</div>}
+          <div className={styles.coreSwitch} role="group" aria-label="Core Switcher">
+            <button
+              type="button"
+              aria-label="Switch to Portal"
+              className={
+                activeMode === 'portal' ? styles.coreSwitchActive : styles.coreSwitchOption
+              }
+              onClick={() => handleSwitchMode('portal')}
             >
-              <button type="button">{accountName}</button>
-            </Dropdown>
+              {t('shell.cores.portal', { defaultValue: 'Portal' })}
+            </button>
+            <button
+              type="button"
+              aria-label="Switch to HR"
+              className={activeMode === 'hr' ? styles.coreSwitchActive : styles.coreSwitchOption}
+              onClick={() => handleSwitchMode('hr')}
+            >
+              {t('shell.cores.hr', { defaultValue: 'HR' })}
+            </button>
           </div>
-        )}
-        {!collapsed && (
-          <span className={styles.star}>
-            <FcRating size={20} />
-          </span>
         )}
       </div>
       <Layout className={styles.menuLayout}>
         <div className={styles.rail}>
           <nav className={styles.railMenu} aria-label={t('shell.navigation.cores')}>
-            {topMenus.map((item) => (
+            {collapsed && (
+              <Tooltip
+                title={
+                  activeMode === 'portal'
+                    ? t('shell.switchToHr', { defaultValue: 'Switch to HR' })
+                    : t('shell.switchToPortal', { defaultValue: 'Switch to Portal' })
+                }
+                placement="right"
+              >
+                <button
+                  type="button"
+                  aria-label={activeMode === 'portal' ? 'Switch to HR' : 'Switch to Portal'}
+                  className={styles.compactCoreSwitch}
+                  onClick={() => handleSwitchMode(activeMode === 'portal' ? 'hr' : 'portal')}
+                >
+                  {activeMode === 'hr' ? 'HR' : 'PORTAL'}
+                </button>
+              </Tooltip>
+            )}
+            {(activeMode === 'hr' ? hrTopMenus : topMenus).map((item) => (
               <button
                 key={item.key}
                 className={item.key === activeMenu ? styles.railButtonActive : styles.railButton}
                 type="button"
                 aria-label={t(item.labelKey)}
-                onClick={() => setActiveMenu(item.key)}
+                onClick={() => {
+                  setActiveMenu(item.key)
+                  if (
+                    item.key !== 'dashboard' &&
+                    item.key !== 'hr-dashboard' &&
+                    detailMenus[item.key]
+                  ) {
+                    setLastPortalMenu(item.key)
+                    localStorage.setItem('lng:last-portal-menu', item.key)
+                  }
+                  if (collapsed) {
+                    onCollapsedChange(false)
+                  }
+                  if (item.key === 'sales') {
+                    setOpenKeys((prev) =>
+                      Array.from(new Set([...prev, workspaceRouteLinks.orders])),
+                    )
+                  }
+                  if (item.path) {
+                    navigate(item.path)
+                  } else if (item.key === 'hr' && location.pathname === '/hr/dashboard') {
+                    const remembered = localStorage.getItem('lng:last-route:hr')
+                    const target =
+                      (remembered &&
+                      remembered !== '/hr/dashboard' &&
+                      (remembered.startsWith('/hr') || remembered.startsWith('/organization'))
+                        ? remembered
+                        : undefined) ||
+                      bottomMenuGroups.hr?.find((g) => g.key !== 'dashboard')?.items?.[0]?.path ||
+                      '/hr/me'
+                    navigate(target)
+                  }
+                }}
               >
-                {collapsed ? (
-                  <Popover content={popover(item.key)} trigger="click" placement="rightTop">
-                    <span className={styles.railIcon}>{item.icon}</span>
-                  </Popover>
-                ) : (
-                  item.icon
-                )}
+                {item.icon}
               </button>
             ))}
             <div className={styles.railSpacer} />
@@ -582,15 +832,17 @@ export function LegacySidebar({
                 className={item.key === activeMenu ? styles.railButtonActive : styles.railButton}
                 type="button"
                 aria-label={t(item.labelKey)}
-                onClick={() => setActiveMenu(item.key)}
+                onClick={() => {
+                  setActiveMenu(item.key)
+                  if (collapsed) {
+                    onCollapsedChange(false)
+                  }
+                  if (item.path) {
+                    navigate(item.path)
+                  }
+                }}
               >
-                {collapsed ? (
-                  <Popover content={popover(item.key)} trigger="click" placement="rightBottom">
-                    <span className={styles.railIcon}>{item.icon}</span>
-                  </Popover>
-                ) : (
-                  item.icon
-                )}
+                {item.icon}
               </button>
             ))}
           </nav>

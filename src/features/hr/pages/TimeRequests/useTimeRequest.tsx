@@ -34,6 +34,7 @@ import {
   rejectOvertimeRequest,
 } from '../../api/hrTimeApi'
 import { type TimeRequestKind } from '../TimeRequestEditorModal'
+import { getTimeRequestAccess } from './timeRequestAccess'
 
 type Editor = {
   kind: TimeRequestKind
@@ -41,6 +42,12 @@ type Editor = {
 }
 
 type DecisionAction = 'approve' | 'reject' | 'cancel'
+
+type Decision = {
+  action: Exclude<DecisionAction, 'cancel'>
+  kind: TimeRequestKind
+  request: LeaveRequest | OvertimeRequest
+}
 
 const statusTone = (status: string): 'approved' | 'rejected' | 'cancelled' | 'pending' =>
   status === 'APPROVED'
@@ -53,20 +60,22 @@ const statusTone = (status: string): 'approved' | 'rejected' | 'cancelled' | 'pe
 
 export const useTimeRequest = () => {
   const { t } = useTranslation()
-  const permissions = new Set(getPermissions())
+  const permissions = getPermissions()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
 
   const [editor, setEditor] = useState<Editor>()
   const [detail, setDetail] = useState<Editor>()
+  const [decision, setDecision] = useState<Decision>()
 
-  const canLeaveWrite = permissions.has('hr:leave:write')
-  const canOvertimeWrite = permissions.has('hr:overtime:write')
-  const canLeaveApprove = permissions.has('hr:leave:approve')
-  const canOvertimeApprove = permissions.has('hr:overtime:approve')
-
-  const managerLeave = permissions.has('hr:leave:read') || canLeaveApprove
-  const managerOvertime = permissions.has('hr:overtime:read') || canOvertimeApprove
+  const {
+    canLeaveWrite,
+    canOvertimeWrite,
+    canLeaveApprove,
+    canOvertimeApprove,
+    managerLeave,
+    managerOvertime,
+  } = getTimeRequestAccess(permissions)
 
   const year = dayjs().year()
 
@@ -94,17 +103,18 @@ export const useTimeRequest = () => {
   const decide = useMutation<
     unknown,
     Error,
-    { kind: TimeRequestKind; action: DecisionAction; id: string }
+    { kind: TimeRequestKind; action: DecisionAction; id: string; reason?: string }
   >({
-    mutationFn: ({ kind, action, id }) => {
+    mutationFn: ({ kind, action, id, reason: submittedReason }) => {
       if (action === 'cancel') {
         return kind === 'leave' ? cancelLeaveRequest(id) : cancelOvertimeRequest(id)
       }
 
       const reason =
-        action === 'approve'
+        submittedReason?.trim() ||
+        (action === 'approve'
           ? t('hrOperations.requests.decisionReasons.approve')
-          : t('hrOperations.requests.decisionReasons.reject')
+          : t('hrOperations.requests.decisionReasons.reject'))
 
       if (kind === 'leave') {
         return action === 'approve'
@@ -117,6 +127,7 @@ export const useTimeRequest = () => {
         : rejectOvertimeRequest(id, { reason })
     },
     onSuccess: () => {
+      setDecision(undefined)
       toast('success', t('hrOperations.messages.updated'))
       void refresh()
     },
@@ -150,6 +161,24 @@ export const useTimeRequest = () => {
     decide.mutate({ kind, action, id })
   }
 
+  const openDecision = (
+    kind: TimeRequestKind,
+    action: Exclude<DecisionAction, 'cancel'>,
+    request: LeaveRequest | OvertimeRequest,
+  ) => setDecision({ kind, action, request })
+
+  const closeDecision = () => setDecision(undefined)
+
+  const submitDecision = (reason?: string) => {
+    if (!decision) return
+    decide.mutate({
+      kind: decision.kind,
+      action: decision.action,
+      id: decision.request.id,
+      reason,
+    })
+  }
+
   const openCreateEditor = (kind: TimeRequestKind) => setEditor({ kind })
 
   const openEditEditor = (kind: TimeRequestKind, request: LeaveRequest | OvertimeRequest) =>
@@ -181,14 +210,14 @@ export const useTimeRequest = () => {
 
       {item.capabilities?.approve &&
         renderAction(t('hrOperations.team.approve'), <CheckOutlined />, () =>
-          handleDecision(kind, 'approve', item.id),
+          openDecision(kind, 'approve', item),
         )}
 
       {item.capabilities?.reject &&
         renderAction(
           t('hrOperations.team.reject'),
           <CloseOutlined />,
-          () => handleDecision(kind, 'reject', item.id),
+          () => openDecision(kind, 'reject', item),
           true,
         )}
 
@@ -334,12 +363,15 @@ export const useTimeRequest = () => {
       editor,
       setEditor,
       detail,
+      decision,
       closeEditor,
       closeDetail,
+      closeDecision,
       openEditEditor,
       openDetail,
       openCreateEditor,
       handleDecision,
+      submitDecision,
       pendingLeaves,
       pendingOvertime,
       availableLeaveUnits,
@@ -355,6 +387,7 @@ export const useTimeRequest = () => {
       queryClient,
       balances,
       decide,
+      decisionPending: decide.isPending,
       leaves,
       overtime,
       canLeaveWrite,

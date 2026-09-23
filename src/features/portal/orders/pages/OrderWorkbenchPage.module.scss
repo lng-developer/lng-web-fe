@@ -522,12 +522,24 @@
 }
 .identifierList {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 .identifierList > div {
-  display: grid;
-  justify-items: start;
-  gap: 3px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.identifierList > div > :first-child {
+  flex: 0 0 60px;
+  white-space: nowrap;
+}
+.identifierList > div > :not(:first-child) {
+  min-width: 0;
+}
+.identifierList .asinWithLink {
+  flex: 1;
+  min-width: 0;
 }
 .asinWithLink {
   max-width: 100%;

@@ -2,10 +2,13 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import {
   type DesignListParams,
+  type DesignScoreListParams,
   getDesignSummary,
+  getDesignScoreSummary,
   getDesignTask,
   getDesignWorkload,
   listDesignAssignees,
+  listDesignScores,
   listDesignTasks,
   listPsdFiles,
   type PsdFileListParams,
@@ -81,6 +84,35 @@ export function usePsdFilesQuery(
   return useQuery({
     queryKey: designKeys.psdFiles(params),
     queryFn: () => listPsdFiles(params),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useDesignScoresQuery(
+  params: DesignScoreListParams,
+  options?: { readonly enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: designKeys.scores(params),
+    queryFn: () => listDesignScores(params),
+    placeholderData: keepPreviousData,
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useDesignScoreSummaryQuery(
+  params: Omit<DesignScoreListParams, 'page' | 'limit' | 'sortBy' | 'sortOrder'>,
+  options?: { readonly enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: designKeys.scoreSummary(params),
+    queryFn: () => getDesignScoreSummary(params),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,

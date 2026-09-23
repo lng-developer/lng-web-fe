@@ -508,6 +508,61 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/design/idea-tasks',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/IdeaTasksPage'),
+          ]).then(([{ PortalPageBoundary }, { IdeaTasksPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <IdeaTasksPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/psd-tasks',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/PsdTasksPage'),
+          ]).then(([{ PortalPageBoundary }, { PsdTasksPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <PsdTasksPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/png-tasks',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/PngTasksPage'),
+          ]).then(([{ PortalPageBoundary }, { PngTasksPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={[
+                  'DESIGN:READ',
+                  'DESIGN:WRITE',
+                  'DESIGN:WORK',
+                  'DESIGN:REVIEW',
+                  'PRODUCTION:READ',
+                  'PRODUCTION:WRITE',
+                ]}
+              >
+                <PngTasksPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/design/files',
         lazy: () =>
           Promise.all([
@@ -519,6 +574,34 @@ export const appRoutes: RouteObject[] = [
                 anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
               >
                 <PsdFileWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/workspace',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/DesignWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { DesignWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW']}>
+                <DesignWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/scores',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/DesignScoresPage'),
+          ]).then(([{ PortalPageBoundary }, { DesignScoresPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW']}>
+                <DesignScoresPage />
               </PortalPageBoundary>
             ),
           })),
