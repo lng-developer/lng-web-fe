@@ -485,7 +485,9 @@ export const appRoutes: RouteObject[] = [
             import('@/features/portal/integrations/pages/IntegrationWorkbenchPage'),
           ]).then(([{ PortalPageBoundary }, { IntegrationWorkbenchPage }]) => ({
             Component: () => (
-              <PortalPageBoundary anyOf={['ORDERS:READ', 'ORDERS:WRITE']}>
+              <PortalPageBoundary
+                anyOf={['ORDERS:READ', 'ORDERS:WRITE', 'CATALOG:READ', 'CATALOG:WRITE']}
+              >
                 <IntegrationWorkbenchPage />
               </PortalPageBoundary>
             ),

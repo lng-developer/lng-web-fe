@@ -55,6 +55,7 @@ import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import { useDesignSummaryQuery } from '@/features/portal/design/hooks/useDesignTasksQuery'
 import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
+import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
 
 import { getCoreForPath, type NavigationGroup, type NavigationItem } from './appNavigation'
 import { getRememberedCoreRoute } from './coreRouteMemory'
@@ -464,6 +465,25 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
   ],
 }
 
+const financeMenuItem: LegacyMenuItem = {
+  key: 'finance',
+  labelKey: 'shell.navigation.finance',
+  icon: <DollarOutlined />,
+  children: [
+    {
+      key: '/portal/finance/settlements',
+      labelKey: 'finance.settlements.settlement',
+      icon: <DollarOutlined />,
+    },
+  ],
+}
+
+function getDetailMenu(menuKey: string, financeVisible: boolean) {
+  const items = detailMenus[menuKey]
+  if (!items) return undefined
+  return menuKey === 'sales' && financeVisible ? [...items, financeMenuItem] : items
+}
+
 function toMenuItems(
   items: LegacyMenuItem[],
   t: (key: string) => string,
@@ -517,6 +537,7 @@ function getRouteMenuState(
   pathname: string,
   search: string,
   bottomMenuGroups: Partial<Record<'portal' | 'hr' | 'system', NavigationGroup[]>>,
+  financeVisible = false,
 ) {
   if (pathname === '/hr/dashboard') {
     return { menuKey: 'hr-dashboard', openKeys: [] }
@@ -529,7 +550,8 @@ function getRouteMenuState(
     return { menuKey: 'dashboard', openKeys: [] }
   }
 
-  for (const [menuKey, items] of Object.entries(detailMenus)) {
+  for (const menuKey of Object.keys(detailMenus)) {
+    const items = getDetailMenu(menuKey, financeVisible) ?? []
     const openKeys = findOpenKeys(items, pathname, search)
     if (openKeys) return { menuKey, openKeys }
   }
@@ -537,7 +559,7 @@ function getRouteMenuState(
   const core = getCoreForPath(pathname)
   const menuKey = core === 'hr' ? 'hr' : core === 'system' ? 'system' : 'sales'
   const items =
-    detailMenus[menuKey] ??
+    getDetailMenu(menuKey, financeVisible) ??
     (menuKey === 'hr' || menuKey === 'system'
       ? toLegacyMenuItems(bottomMenuGroups[menuKey] ?? [])
       : [])
@@ -607,19 +629,24 @@ export function LegacySidebar({
   collapsed,
   onCollapsedChange,
   bottomMenus: bottomMenuGroups = emptyBottomMenuGroups,
+  financeVisible = false,
 }: {
   collapsed: boolean
   onCollapsedChange: (value: boolean) => void
   bottomMenus?: Partial<Record<'portal' | 'hr' | 'system', NavigationGroup[]>>
   accountLabel?: string
+  financeVisible?: boolean
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const orderSummary = useOrderSummaryQuery({ page: 1, limit: 1 })
   const designSummary = useDesignSummaryQuery({})
+  const productionQueueCounts = useProductionQueueCountsQuery({})
   const [activeMenu, setActiveMenu] = useState(
-    () => getRouteMenuState(location.pathname, location.search, bottomMenuGroups).menuKey,
+    () =>
+      getRouteMenuState(location.pathname, location.search, bottomMenuGroups, financeVisible)
+        .menuKey,
   )
   const [lastPortalMenu, setLastPortalMenu] = useState<string>(() =>
     getInitialPortalMenu(location.pathname, location.search),
@@ -630,11 +657,21 @@ export function LegacySidebar({
     return isHr ? 'hr' : 'portal'
   })
   const [openKeys, setOpenKeys] = useState<string[]>(() => {
-    const routeState = getRouteMenuState(location.pathname, location.search, bottomMenuGroups)
+    const routeState = getRouteMenuState(
+      location.pathname,
+      location.search,
+      bottomMenuGroups,
+      financeVisible,
+    )
     return routeState.openKeys
   })
   useEffect(() => {
-    const routeState = getRouteMenuState(location.pathname, location.search, bottomMenuGroups)
+    const routeState = getRouteMenuState(
+      location.pathname,
+      location.search,
+      bottomMenuGroups,
+      financeVisible,
+    )
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveMenu(routeState.menuKey)
     const core = getCoreForPath(location.pathname)
@@ -651,18 +688,22 @@ export function LegacySidebar({
     if (routeState.menuKey !== 'dashboard' && routeState.menuKey !== 'hr-dashboard') {
       setOpenKeys(routeState.openKeys)
     }
-  }, [bottomMenuGroups, location.pathname, location.search])
+  }, [bottomMenuGroups, financeVisible, location.pathname, location.search])
   const activeDetailMenu =
     activeMenu === 'system'
       ? toLegacyMenuItems(bottomMenuGroups.system ?? [])
       : activeMode === 'hr'
         ? toLegacyMenuItems(bottomMenuGroups.hr ?? [])
-        : (detailMenus[activeMenu === 'dashboard' ? lastPortalMenu : activeMenu] ??
-          detailMenus[lastPortalMenu] ??
+        : (getDetailMenu(
+            activeMenu === 'dashboard' ? lastPortalMenu : activeMenu,
+            financeVisible,
+          ) ??
+          getDetailMenu(lastPortalMenu, financeVisible) ??
           detailMenus.sales)
   const badgeCounts = {
     [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
     '/portal/design': designSummary.data?.unassigned,
+    '/portal/production/blocked': productionQueueCounts.data?.blocked,
   }
   const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
 
@@ -682,7 +723,7 @@ export function LegacySidebar({
         getRememberedCoreRoute('hr', bottomMenuGroups.hr ?? []) ||
         bottomMenuGroups.hr?.[0]?.items?.[0]?.path ||
         '/hr/dashboard'
-      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups)
+      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups, financeVisible)
       setActiveMenu(targetRouteState.menuKey)
       if (targetRouteState.menuKey !== 'hr-dashboard') {
         setOpenKeys(targetRouteState.openKeys)
@@ -697,7 +738,7 @@ export function LegacySidebar({
             : undefined)) ||
         getRememberedCoreRoute('portal', bottomMenuGroups.portal ?? []) ||
         '/portal/dashboard'
-      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups)
+      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups, financeVisible)
       setActiveMenu(targetRouteState.menuKey)
       if (targetRouteState.menuKey !== 'dashboard') {
         setOpenKeys(targetRouteState.openKeys)

@@ -1,11 +1,22 @@
 import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { TableColumnsType } from 'antd'
-import { Alert, Button, Modal, Progress, Select, Space, Table, Typography } from 'antd'
+import { Alert, Button, InputNumber, Modal, Progress, Select, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { ImportBatch } from '@/features/portal/finance/api/financeApi'
+import {
+  allocateRefund,
+  confirmRefund,
+  listRefundReviews,
+  listUnallocatedRefunds,
+  type RefundReview,
+  type UnallocatedRefund,
+} from '@/features/portal/finance/api/financeApi'
+import { toMinorUnits } from '@/features/portal/finance/api/refundMoney'
+import { formatFinanceMoney } from '@/features/portal/finance/components/financeFormatters'
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
@@ -68,6 +79,39 @@ export function FinanceImportSection({
   const [status, setStatus] = useState<string>()
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch>()
+  const [selectedRefund, setSelectedRefund] = useState<UnallocatedRefund>()
+  const [allocationItemId, setAllocationItemId] = useState<string>()
+  const [allocationAmount, setAllocationAmount] = useState<number>()
+  const queryClient = useQueryClient()
+  const unallocatedRefunds = useQuery({
+    queryKey: ['finance', 'unallocated-refunds'],
+    queryFn: listUnallocatedRefunds,
+    enabled: isActiveTab && canRead && sourceType === 'TRANSACTIONS',
+  })
+  const refundReviews = useQuery({
+    queryKey: ['finance', 'refund-reviews'],
+    queryFn: listRefundReviews,
+    enabled: isActiveTab && canRead && sourceType === 'TRANSACTIONS',
+  })
+  const allocationMinorUnits =
+    allocationAmount === undefined ? undefined : toMinorUnits(allocationAmount)
+  const allocate = useMutation({
+    mutationFn: () =>
+      allocateRefund(selectedRefund!.id, [
+        { orderItemId: allocationItemId!, amount: allocationMinorUnits! },
+      ]),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['finance'] })
+      setSelectedRefund(undefined)
+    },
+  })
+  const confirm = useMutation({
+    mutationFn: confirmRefund,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['finance'] })
+    },
+  })
+  const canWriteRefunds = account.permissions.includes('FINANCE:WRITE')
 
   const imports = useFinanceImportBatches({
     sourceType,
@@ -335,6 +379,140 @@ export function FinanceImportSection({
           pagination={false}
           scroll={{ x: 800 }}
         />
+      </Modal>
+      {sourceType === 'TRANSACTIONS' && canRead ? (
+        <section style={{ marginTop: 16 }}>
+          <Typography.Title level={5}>
+            {t('portal.integrations.refunds.unallocatedTitle')}
+          </Typography.Title>
+          {unallocatedRefunds.isError ? (
+            <Alert type="error" showIcon message={t('portal.integrations.refunds.loadFailed')} />
+          ) : null}
+          <Table<UnallocatedRefund>
+            rowKey="id"
+            size="small"
+            pagination={false}
+            loading={unallocatedRefunds.isLoading}
+            dataSource={unallocatedRefunds.data || []}
+            columns={[
+              { title: t('portal.integrations.refunds.order'), dataIndex: 'externalOrderId' },
+              {
+                title: t('portal.integrations.refunds.remaining'),
+                render: (_, row) => formatFinanceMoney(row.remainingAmount, row.currency),
+              },
+              {
+                title: t('portal.integrations.refunds.action'),
+                render: (_, row) => (
+                  <Button
+                    size="small"
+                    disabled={!canWriteRefunds}
+                    onClick={() => {
+                      setSelectedRefund(row)
+                      setAllocationItemId(undefined)
+                      setAllocationAmount(row.remainingAmount / 100)
+                    }}
+                  >
+                    {t('portal.integrations.refunds.allocate')}
+                  </Button>
+                ),
+              },
+            ]}
+          />
+          <Typography.Title level={5} style={{ marginTop: 16 }}>
+            {t('portal.integrations.refunds.reviewTitle')}
+          </Typography.Title>
+          {refundReviews.isError ? (
+            <Alert type="error" showIcon message={t('portal.integrations.refunds.loadFailed')} />
+          ) : null}
+          <Table<RefundReview>
+            rowKey="orderItemId"
+            size="small"
+            pagination={false}
+            loading={refundReviews.isLoading}
+            dataSource={refundReviews.data || []}
+            columns={[
+              { title: t('portal.integrations.refunds.orderItem'), dataIndex: 'orderItemId' },
+              {
+                title: t('portal.integrations.refunds.refunded'),
+                render: (_, row) => formatFinanceMoney(row.allocatedAmount, row.currency),
+              },
+              {
+                title: t('portal.integrations.refunds.originalCharge'),
+                render: (_, row) =>
+                  formatFinanceMoney(row.expectedCustomerChargeAmount, row.currency),
+              },
+              {
+                title: t('portal.integrations.refunds.review'),
+                dataIndex: 'reviewStatus',
+                render: (value) => (
+                  <StatusTag status={value === 'EXACT_FULL' ? 'operational' : 'warning'}>
+                    {t(`portal.integrations.refunds.reviewStatuses.${value}`)}
+                  </StatusTag>
+                ),
+              },
+              {
+                title: t('portal.integrations.refunds.action'),
+                render: (_, row) =>
+                  row.canConfirmRefund ? (
+                    <Button
+                      size="small"
+                      loading={confirm.isPending && confirm.variables === row.orderItemId}
+                      disabled={!canWriteRefunds}
+                      onClick={() => confirm.mutate(row.orderItemId)}
+                    >
+                      {t('portal.integrations.refunds.confirm')}
+                    </Button>
+                  ) : (
+                    t('portal.integrations.refunds.reviewRequired')
+                  ),
+              },
+            ]}
+          />
+        </section>
+      ) : null}
+      <Modal
+        open={Boolean(selectedRefund)}
+        title={t('portal.integrations.refunds.allocateTitle')}
+        onCancel={() => setSelectedRefund(undefined)}
+        onOk={() => allocate.mutate()}
+        okButtonProps={{
+          disabled:
+            !allocationItemId ||
+            !allocationMinorUnits ||
+            allocationMinorUnits > (selectedRefund?.remainingAmount || 0),
+          loading: allocate.isPending,
+        }}
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Typography.Text>
+            {selectedRefund
+              ? t('portal.integrations.refunds.remainingDescription', {
+                  amount: formatFinanceMoney(
+                    selectedRefund.remainingAmount,
+                    selectedRefund.currency,
+                  ),
+                })
+              : ''}
+          </Typography.Text>
+          <Select
+            placeholder={t('portal.integrations.refunds.orderItem')}
+            value={allocationItemId}
+            onChange={setAllocationItemId}
+            options={(selectedRefund?.items || []).map((item) => ({
+              value: item.id,
+              label: item.sku || item.id,
+            }))}
+          />
+          <InputNumber
+            min={0.01}
+            max={(selectedRefund?.remainingAmount || 0) / 100}
+            precision={2}
+            value={allocationAmount}
+            onChange={(value) => setAllocationAmount(typeof value === 'number' ? value : undefined)}
+            addonAfter={selectedRefund?.currency || 'USD'}
+            aria-label={t('portal.integrations.refunds.amount')}
+          />
+        </Space>
       </Modal>
     </SectionCard>
   )

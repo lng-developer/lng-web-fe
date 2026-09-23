@@ -8,11 +8,14 @@ import {
   ExclamationCircleOutlined,
   ShopOutlined,
   ShoppingCartOutlined,
-  SyncOutlined,
 } from '@ant-design/icons'
 import { Button, Empty, Popover, Select, Spin, Typography } from 'antd'
 
 import { SectionCard, StatusTag } from '@/shared/ui'
+import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { canWriteFinanceForShop, canWriteOrdersForShop } from '../auth/integrationAccess'
+import { ExtensionManualRequest } from './ExtensionManualRequest'
+import type { CreateExtensionCommandInput } from './extensionHelpers'
 
 import type {
   ExtensionFinanceSchedule,
@@ -23,6 +26,7 @@ import type {
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
 
 export interface ExtensionAutomationTabProps {
+  readonly account: CurrentAccount
   readonly agents: ExtensionManagementAgent[]
   readonly schedules: ExtensionOrderSchedule[]
   readonly financeSchedules: ExtensionFinanceSchedule[]
@@ -32,7 +36,7 @@ export interface ExtensionAutomationTabProps {
   readonly canWriteFinance: boolean
   readonly isSavingSchedule: boolean
   readonly isSavingFinanceSchedule: boolean
-  readonly isRequestingFinanceSchedule: boolean
+  readonly isCreatingCommand: boolean
   readonly onSaveSchedule: (input: {
     agentId: string
     enabled: boolean
@@ -43,13 +47,11 @@ export interface ExtensionAutomationTabProps {
     source: ExtensionFinanceScheduleSource
     enabled: boolean
   }) => void
-  readonly onRequestFinanceScheduleNow: (input: {
-    agentId: string
-    source: ExtensionFinanceScheduleSource
-  }) => void
+  readonly onCreateCommand: (input: CreateExtensionCommandInput) => void
 }
 
 export function ExtensionAutomationTab({
+  account,
   agents,
   schedules,
   financeSchedules,
@@ -59,10 +61,10 @@ export function ExtensionAutomationTab({
   canWriteFinance,
   isSavingSchedule,
   isSavingFinanceSchedule,
-  isRequestingFinanceSchedule,
+  isCreatingCommand,
   onSaveSchedule,
   onSaveFinanceSchedule,
-  onRequestFinanceScheduleNow,
+  onCreateCommand,
 }: ExtensionAutomationTabProps) {
   const { t } = useTranslation()
   const orderScheduleByAgentId = useMemo(
@@ -123,8 +125,14 @@ export function ExtensionAutomationTab({
             <StatusTag status={enabled ? 'operational' : 'draft'}>
               {enabled ? 'Enabled' : 'Disabled'}
             </StatusTag>
-            {canWriteOrders ? (
+            {canWriteOrders && canWriteOrdersForShop(account, agent.shopId) ? (
               <div className={styles.automationScheduleActions}>
+                <ExtensionManualRequest
+                  agent={agent}
+                  source="ORDERS"
+                  loading={isCreatingCommand}
+                  onRequest={onCreateCommand}
+                />
                 <Popover
                   content={
                     <div className={styles.commandPopover}>
@@ -204,7 +212,7 @@ export function ExtensionAutomationTab({
                 {enabled ? (
                   <>
                     <ClockCircleOutlined style={{ marginRight: 4, fontSize: 11 }} />
-                    {`${source === 'TRANSACTIONS' ? 'Daily · Up to 7 days per run' : 'Daily · Newly closed statements only'} · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}`}
+                    {`${source === 'TRANSACTIONS' ? 'Daily · Last 3 completed days (UTC+7) · Initial 30 days in 7-day batches' : 'Daily · Newly closed statements only'} · Next: ${new Date(schedule?.nextRunAt ?? '').toLocaleString()}`}
                   </>
                 ) : (
                   'Not scheduled'
@@ -223,7 +231,7 @@ export function ExtensionAutomationTab({
             <StatusTag status={enabled ? 'operational' : 'draft'}>
               {enabled ? 'Enabled' : 'Disabled'}
             </StatusTag>
-            {canWriteFinance ? (
+            {canWriteFinance && canWriteFinanceForShop(account, agent.shopId) ? (
               <div className={styles.automationScheduleActions}>
                 <Button
                   aria-label={`${enabled ? 'Disable' : 'Enable'} ${label.toLowerCase()} sync`}
@@ -235,18 +243,12 @@ export function ExtensionAutomationTab({
                 >
                   {enabled ? 'Disable' : 'Enable'}
                 </Button>
-                {enabled ? (
-                  <Button
-                    aria-label={`Request ${label.toLowerCase()} sync now`}
-                    loading={isRequestingFinanceSchedule}
-                    size="small"
-                    type="primary"
-                    icon={<SyncOutlined />}
-                    onClick={() => onRequestFinanceScheduleNow({ agentId: agent.id, source })}
-                  >
-                    Request now
-                  </Button>
-                ) : null}
+                <ExtensionManualRequest
+                  agent={agent}
+                  source={source}
+                  loading={isCreatingCommand}
+                  onRequest={onCreateCommand}
+                />
               </div>
             ) : null}
           </div>
@@ -268,8 +270,7 @@ export function ExtensionAutomationTab({
       className={styles.tableCard}
     >
       <Typography.Paragraph type="secondary">
-        Configure recurring orders plus daily Transactions and Settlements imports for each
-        connected extension.
+        {t('portal.integrations.extension.manualRequests.description')}
       </Typography.Paragraph>
       <Spin spinning={isLoading}>
         {agentGroups.length ? (
@@ -320,6 +321,29 @@ export function ExtensionAutomationTab({
                         {renderOrderSchedule(agent)}
                         {renderFinanceSchedule(agent, 'TRANSACTIONS', 'Transaction')}
                         {renderFinanceSchedule(agent, 'SETTLEMENTS', 'Settlement')}
+                        <li className={styles.automationScheduleItem}>
+                          <section
+                            aria-label={t('portal.integrations.extension.manualRequests.adsRegion')}
+                            className={styles.automationScheduleRow}
+                          >
+                            <div className={styles.scheduleInfo}>
+                              <Typography.Text strong>
+                                {t('portal.integrations.extension.manualRequests.ADS')}
+                              </Typography.Text>
+                              <Typography.Paragraph type="secondary">
+                                {t('portal.integrations.extension.manualRequests.adsHint')}
+                              </Typography.Paragraph>
+                            </div>
+                            {canWriteFinance && canWriteFinanceForShop(account, agent.shopId) ? (
+                              <ExtensionManualRequest
+                                agent={agent}
+                                source="ADS"
+                                loading={isCreatingCommand}
+                                onRequest={onCreateCommand}
+                              />
+                            ) : null}
+                          </section>
+                        </li>
                       </ul>
                     </article>
                   ))}

@@ -183,7 +183,10 @@ describe('CatalogListingWorkbenchPage', () => {
     async (fixedSalesChannelCode) => {
       render(
         <AppProviders>
-          <CatalogListingWorkbenchPage account={account} fixedSalesChannelCode={fixedSalesChannelCode} />
+          <CatalogListingWorkbenchPage
+            account={account}
+            fixedSalesChannelCode={fixedSalesChannelCode}
+          />
         </AppProviders>,
       )
 
@@ -209,7 +212,7 @@ describe('CatalogListingWorkbenchPage', () => {
     expect(table.closest('[class*="dataTablePaginationAtBottom"]')).toBeInTheDocument()
   })
 
-  it('sorts the loaded page by sales without another API request', async () => {
+  it('sorts sales through the full paginated API result', async () => {
     render(
       <AppProviders>
         <CatalogListingWorkbenchPage account={account} />
@@ -217,10 +220,12 @@ describe('CatalogListingWorkbenchPage', () => {
     )
 
     await screen.findByText('SKU-1')
-    const requestCount = vi.mocked(listListings).mock.calls.length
     fireEvent.click(screen.getByRole('columnheader', { name: 'Sales' }))
 
-    await new Promise((resolve) => setTimeout(resolve, 100))
-    expect(vi.mocked(listListings).mock.calls).toHaveLength(requestCount)
+    await waitFor(() =>
+      expect(listListings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, limit: 10, sort: 'quantitySoldDesc' }),
+      ),
+    )
   })
 })

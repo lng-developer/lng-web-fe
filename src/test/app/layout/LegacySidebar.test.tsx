@@ -39,7 +39,7 @@ describe('LegacySidebar', () => {
     render(
       <MemoryRouter initialEntries={['/portal/orders']}>
         <AppProviders>
-          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} financeVisible />
         </AppProviders>
       </MemoryRouter>,
     )
@@ -54,7 +54,7 @@ describe('LegacySidebar', () => {
     render(
       <MemoryRouter initialEntries={['/portal/team-tasks']}>
         <AppProviders>
-          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} financeVisible />
         </AppProviders>
       </MemoryRouter>,
     )
@@ -66,6 +66,7 @@ describe('LegacySidebar', () => {
       'Team Tasks',
       'Listing',
       'Cost Centers',
+      'Finance',
       'Reports',
       'Monitoring',
       'Configuration',

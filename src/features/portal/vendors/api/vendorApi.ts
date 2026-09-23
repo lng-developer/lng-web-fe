@@ -145,7 +145,10 @@ export type VendorListParams = {
   providerKey?: string
   fulfillmentType?: VendorFulfillmentType
 }
-export type ProductListParams = VendorListParams & { vendorId?: string; productTypeGroupId?: string }
+export type ProductListParams = VendorListParams & {
+  vendorId?: string
+  productTypeGroupId?: string
+}
 export type CostCenterListParams = VendorListParams
 
 export type VendorInput = {
@@ -195,6 +198,21 @@ export type VendorImportSummary = {
   total: number
   created: number
   failed: string[]
+}
+export type VendorTemplateImportPayload = {
+  vendors: VendorImportRow[]
+  vendorProducts: VendorImportRow[]
+  vendorCostCenters: VendorImportRow[]
+  dryRun: boolean
+}
+export type VendorTemplateImportSummary = {
+  dryRun: boolean
+  valid: boolean
+  counts: { vendors: number; vendorProducts: number; vendorCostCenters: number }
+  created: { vendors: number; vendorProducts: number; vendorCostCenters: number }
+  updated: { vendors: number; vendorProducts: number; vendorCostCenters: number }
+  skipped: { vendors: number; vendorProducts: number; vendorCostCenters: number }
+  errors: Array<{ type?: string; message?: string; [key: string]: unknown }>
 }
 export type VendorIntegrationConfigInput = {
   mode?: VendorIntegrationMode
@@ -257,6 +275,12 @@ export async function createVendorProduct(input: VendorProductInput) {
 
 export async function importVendorProducts(payload: VendorProductImportPayload) {
   return unwrap<VendorImportSummary>(await apiClient.post('/api/vendors/products/import', payload))
+}
+
+export async function importVendorTemplate(payload: VendorTemplateImportPayload) {
+  return unwrap<VendorTemplateImportSummary>(
+    await apiClient.post('/api/vendors/catalog-import', payload),
+  )
 }
 
 export async function updateVendorProduct(productId: string, input: VendorProductUpdateInput) {

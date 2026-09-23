@@ -8,6 +8,7 @@ import {
   createVendor,
   createVendorCostCenter,
   createVendorProduct,
+  importVendorTemplate,
   getVendorIntegrationConfig,
   listVendorCostCenters,
   listVendorProducts,
@@ -63,6 +64,19 @@ describe('vendorApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/vendors/vendor-1/integration/refresh', {
       providerKey: 'CUSTOM',
     })
+  })
+
+  it('submits the three-file catalog payload for validation or import', async () => {
+    const payload = {
+      dryRun: true,
+      vendors: [{ code: 'PRINTWAY', name: 'Printway', fulfillmentType: 'POD' }],
+      vendorProducts: [{ vendorCode: 'PRINTWAY', code: 'TEE', name: 'Tee' }],
+      vendorCostCenters: [{ vendorProductCode: 'TEE', code: 'TEE_BLACK_S', name: 'Black / S' }],
+    }
+
+    await importVendorTemplate(payload)
+
+    expect(apiClient.post).toHaveBeenCalledWith('/api/vendors/catalog-import', payload)
   })
 
   it('returns the redacted integration DTO without credential values', async () => {

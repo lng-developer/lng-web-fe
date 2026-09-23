@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { OrderProfitabilityReport } from '@/features/portal/reports/api/reportApi'
@@ -15,6 +15,9 @@ const data = {
       revenueAmount: 10000,
       baseCostAmount: 2500,
       totalCostAmount: 4000,
+      lngFulfillmentFeeAmount: 100,
+      shippingCostAmount: 200,
+      vendorAdditionalCostAmount: 1200,
       marketplaceFeeAmount: 1000,
       refundAmount: 0,
       discountAmount: 0,
@@ -59,13 +62,19 @@ describe('ReportOrderCostTab', () => {
   it('renders overview metrics and operational data table instead of cluttered card grid', () => {
     render(
       <AppProviders>
-        <ReportOrderCostTab data={data} isPending={false} onPageChange={() => undefined} />
+        <ReportOrderCostTab
+          data={data}
+          isPending={false}
+          onPageChange={() => undefined}
+          onCostCoverageChange={() => undefined}
+        />
       </AppProviders>,
     )
 
     // Metrics and operational table are rendered
     expect(screen.getAllByText('Orders').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Revenue').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Total fulfillment cost').length).toBeGreaterThan(0)
 
     // Operational table is rendered
     expect(screen.getAllByRole('table').length).toBeGreaterThan(0)
@@ -79,32 +88,37 @@ describe('ReportOrderCostTab', () => {
     expect(screen.getAllByText('Missing cost').length).toBeGreaterThan(0)
   })
 
-  it('filters rows by status queue segmented controls', () => {
+  it('requests the selected cost coverage from the paginated data source', () => {
+    const onCostCoverageChange = vi.fn()
     render(
       <AppProviders>
-        <ReportOrderCostTab data={data} isPending={false} onPageChange={() => undefined} />
+        <ReportOrderCostTab
+          data={data}
+          isPending={false}
+          onPageChange={() => undefined}
+          onCostCoverageChange={onCostCoverageChange}
+        />
       </AppProviders>,
     )
 
-    // Filter to missing cost only
     const missingOption = screen.getByText(/Missing cost \(1\)/i)
     fireEvent.click(missingOption)
+    expect(onCostCoverageChange).toHaveBeenLastCalledWith('MISSING')
 
-    expect(screen.getByText('114-0000000-0000001')).toBeInTheDocument()
-    expect(screen.queryByText('114-0000000-0000000')).not.toBeInTheDocument()
-
-    // Filter to complete cost only
     const completeOption = screen.getByText(/Cost complete \(1\)/i)
     fireEvent.click(completeOption)
-
-    expect(screen.getByText('114-0000000-0000000')).toBeInTheDocument()
-    expect(screen.queryByText('114-0000000-0000001')).not.toBeInTheDocument()
+    expect(onCostCoverageChange).toHaveBeenLastCalledWith('COMPLETE')
   })
 
   it('searches orders by order ID', () => {
     render(
       <AppProviders>
-        <ReportOrderCostTab data={data} isPending={false} onPageChange={() => undefined} />
+        <ReportOrderCostTab
+          data={data}
+          isPending={false}
+          onPageChange={() => undefined}
+          onCostCoverageChange={() => undefined}
+        />
       </AppProviders>,
     )
 
@@ -113,5 +127,27 @@ describe('ReportOrderCostTab', () => {
 
     expect(screen.getByText('114-0000000-0000001')).toBeInTheDocument()
     expect(screen.queryByText('114-0000000-0000000')).not.toBeInTheDocument()
+  })
+
+  it('shows each fulfillment cost type in an order breakdown', async () => {
+    const { container } = render(
+      <AppProviders>
+        <ReportOrderCostTab
+          data={data}
+          isPending={false}
+          onPageChange={() => undefined}
+          onCostCoverageChange={() => undefined}
+        />
+      </AppProviders>,
+    )
+
+    fireEvent.click(container.querySelector('.ant-table-row-expand-icon')!)
+
+    expect(await screen.findByText('LNG fulfillment fee')).toBeInTheDocument()
+    expect(await screen.findByText('Shipping')).toBeInTheDocument()
+    expect(await screen.findByText('Vendor extras')).toBeInTheDocument()
+    expect(await screen.findByText('1.00')).toBeInTheDocument()
+    expect(await screen.findByText('2.00')).toBeInTheDocument()
+    expect(await screen.findByText('12.00')).toBeInTheDocument()
   })
 })

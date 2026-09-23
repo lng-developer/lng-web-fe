@@ -1,4 +1,13 @@
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
+
+export function canReadListingImages(account: CurrentAccount) {
+  return ['CATALOG:READ', 'CATALOG:WRITE'].some(
+    (permission) =>
+      canUseScopedPermission(account, permission) ||
+      hasScopedPermission(account, permission, 'shop'),
+  )
+}
 
 const ORDER_WRITE = 'ORDERS:WRITE'
 const FINANCE_READ = 'FINANCE:READ'

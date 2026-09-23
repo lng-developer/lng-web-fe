@@ -13,6 +13,7 @@ export type ReportFilters = {
   sellerEmployeeCode?: string
   teamId?: string
   departmentId?: string
+  costCoverage?: 'MISSING' | 'COMPLETE'
   page?: number
   limit?: number
 }
@@ -145,6 +146,9 @@ export type OrderProfitability = {
   revenueAmount: number
   baseCostAmount: number
   totalCostAmount: number | null
+  lngFulfillmentFeeAmount: number | null
+  shippingCostAmount: number | null
+  vendorAdditionalCostAmount: number | null
   marketplaceFeeAmount: number
   refundAmount: number
   discountAmount: number

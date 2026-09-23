@@ -108,6 +108,20 @@ describe('app navigation', () => {
     expect(getAvailableCores(account([])).map(({ key }) => key)).toEqual(['hr'])
   })
 
+  it('shows Finance navigation to a super administrator', () => {
+    const superAdmin = { ...account([]), roles: ['SUPER_ADMIN'] }
+    expect(getContextNavigation('portal', superAdmin)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'finance',
+          items: expect.arrayContaining([
+            expect.objectContaining({ key: 'settlements', path: '/portal/finance/settlements' }),
+          ]),
+        }),
+      ]),
+    )
+  })
+
   it('does not expose global-only Vendor navigation from scoped permissions', () => {
     expect(portalItems([], ['VENDORS:READ'])).not.toContainEqual(
       expect.objectContaining({ key: 'vendors' }),
@@ -174,6 +188,7 @@ describe('app navigation', () => {
       'team-tasks',
       'listing',
       'cost-centers',
+      'finance',
       'reports',
     ])
     expect(groups.find(({ key }) => key === 'dashboard')).toEqual({
@@ -214,6 +229,10 @@ describe('app navigation', () => {
         labelKey: 'shell.navigation.internalTemplates',
       },
       { key: 'mapping', path: '/portal/mapping', labelKey: 'shell.navigation.mapping' },
+    ])
+    expect(groups.find(({ key }) => key === 'finance')?.items.map(({ key }) => key)).toEqual([
+      'finance',
+      'settlements',
     ])
     expect(groups.find(({ key }) => key === 'reports')?.items.map(({ key }) => key)).toEqual([
       'reports',
@@ -460,6 +479,7 @@ describe('legacy sidebar navigation', () => {
       'shell.groups.legacyTeamTasks',
       'shell.groups.legacyListing',
       'shell.groups.legacyCostCenters',
+      'shell.navigation.finance',
       'shell.navigation.reports',
     ])
   })

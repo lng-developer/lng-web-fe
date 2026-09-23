@@ -9,6 +9,7 @@ import {
   listImportedFinanceData,
   listSettlements,
   recalculateOrderItem,
+  reconcileSettlement,
 } from '@/features/portal/finance/api/financeApi'
 import { apiClient } from '@/shared/api'
 
@@ -64,12 +65,20 @@ describe('financeApi', () => {
 
     await listSettlements({ dateFrom: '2026-09-01', dateTo: '2026-09-30' })
     await getSettlement('settlement-1', { page: 2, limit: 10 })
+    await reconcileSettlement('settlement-1', {
+      status: 'NEEDS_REVIEW',
+      note: 'Ledger amount differs',
+    })
 
     expect(apiClient.get).toHaveBeenNthCalledWith(1, '/api/finance/settlements', {
       params: { dateFrom: '2026-09-01', dateTo: '2026-09-30' },
     })
     expect(apiClient.get).toHaveBeenNthCalledWith(2, '/api/finance/settlements/settlement-1', {
       params: { page: 2, limit: 10 },
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/api/finance/settlements/settlement-1/reconcile', {
+      status: 'NEEDS_REVIEW',
+      note: 'Ledger amount differs',
     })
   })
 })
