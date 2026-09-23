@@ -51,6 +51,32 @@ export async function login(identifier: string, password: string) {
   return session
 }
 
+export async function loginWithGoogle(credential: { idToken?: string; accessToken?: string }) {
+  const response = await apiClient.post<ApiResponse<AuthSession>>('/api/auth/google', credential)
+  const session = (response as unknown as ApiResponse<AuthSession>).data
+  setAccessToken(session.accessToken)
+  setAccount(session.account)
+  setHasRefreshSession(true)
+  setRoles(session.roles)
+  setPermissions(effectivePermissions(session))
+  setGlobalPermissions(session.permissions)
+  return session
+}
+
+export async function loginWithMicrosoft(idToken: string) {
+  const response = await apiClient.post<ApiResponse<AuthSession>>('/api/auth/microsoft', {
+    idToken,
+  })
+  const session = (response as unknown as ApiResponse<AuthSession>).data
+  setAccessToken(session.accessToken)
+  setAccount(session.account)
+  setHasRefreshSession(true)
+  setRoles(session.roles)
+  setPermissions(effectivePermissions(session))
+  setGlobalPermissions(session.permissions)
+  return session
+}
+
 export async function logout() {
   try {
     await apiClient.post('/api/auth/logout')

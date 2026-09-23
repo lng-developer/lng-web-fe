@@ -1263,8 +1263,14 @@
       "socialOptions": "Social sign-in options",
       "socialFacebook": "Continue with Facebook",
       "socialGoogle": "Continue with Google",
+      "socialMicrosoft": "Continue with Microsoft (@lngwork.co)",
       "socialX": "Continue with X",
-      "socialGithub": "Continue with GitHub"
+      "socialGithub": "Continue with GitHub",
+      "googleNotConfigured": "Google Client ID is not configured in the system.",
+      "googleLoadError": "Failed to load Google authentication service. Please try again later.",
+      "googleFailed": "Google sign-in was unsuccessful.",
+      "microsoftNotConfigured": "Microsoft Client ID is not configured in the system.",
+      "microsoftFailed": "Microsoft sign-in was unsuccessful."
     },
     "public": {
       "fullName": "Name",
