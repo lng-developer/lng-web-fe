@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ApiOutlined, InfoCircleOutlined, MoreOutlined, StopOutlined } from '@ant-design/icons'
+import {
+  ApiOutlined,
+  EyeOutlined,
+  InfoCircleOutlined,
+  MoreOutlined,
+  StopOutlined,
+} from '@ant-design/icons'
 import type { FormInstance } from 'antd'
 import {
   Alert,
@@ -35,6 +41,7 @@ import {
   nextPollLabel,
 } from './extensionHelpers'
 import { LazyActionPopover } from './LazyActionPopover'
+import { TrackingUploadPreviewModal } from './TrackingUploadPreviewModal'
 
 export interface ExtensionOperationsTabProps {
   readonly tokenForm: FormInstance<ExtensionTokenInput>
@@ -58,6 +65,7 @@ export interface ExtensionOperationsTabProps {
   readonly onRevokeToken: (tokenId: string) => void
   readonly onSelectCommand: (command: ExtensionCommand) => void
   readonly noOnlineAgents: boolean
+  readonly canPreviewTracking: boolean
 }
 
 export function ExtensionOperationsTab({
@@ -82,6 +90,7 @@ export function ExtensionOperationsTab({
   onRevokeToken,
   onSelectCommand,
   noOnlineAgents,
+  canPreviewTracking,
 }: ExtensionOperationsTabProps) {
   const { t } = useTranslation()
   const [now, setNow] = useState(() => Date.now())
@@ -89,6 +98,7 @@ export function ExtensionOperationsTab({
     'ALL' | 'RUNNING' | 'FAILED' | 'SUCCEEDED'
   >('ALL')
   const initializedTokenShop = useRef(false)
+  const [previewShopId, setPreviewShopId] = useState<string>()
   const defaultSetupShopId = setupShopOptions[0]?.value
 
   useEffect(() => {
@@ -322,6 +332,15 @@ export function ExtensionOperationsTab({
                             >
                               Test connection
                             </Button>
+                            {canPreviewTracking ? (
+                              <Button
+                                block
+                                icon={<EyeOutlined />}
+                                onClick={() => setPreviewShopId(agent.shopId)}
+                              >
+                                {t('portal.shipments.trackingPreview.open')}
+                              </Button>
+                            ) : null}
                             {!agent.token?.revokedAt && agent.token ? (
                               <>
                                 <Divider style={{ margin: '4px 0' }} />
@@ -496,6 +515,12 @@ export function ExtensionOperationsTab({
           scroll={{ x: 760 }}
         />
       </SectionCard>
+      {previewShopId ? (
+        <TrackingUploadPreviewModal
+          shopId={previewShopId}
+          onClose={() => setPreviewShopId(undefined)}
+        />
+      ) : null}
     </div>
   )
 }

@@ -27,6 +27,7 @@ describe('ArtworkInspector', () => {
             note: null,
           }}
           originalInputUrl="/api/media/assets/buyer-upload/download"
+          originalInputLabel="Customization artwork"
           listingReferenceUrl="https://example.test/main-listing.jpg"
           onClose={() => undefined}
           onPass={() => undefined}
@@ -39,6 +40,7 @@ describe('ArtworkInspector', () => {
       'src',
       '/api/media/assets/buyer-upload/download',
     )
+    expect(screen.getByText(/Customization artwork/)).toBeVisible()
     expect(screen.queryByRole('img', { name: 'Main listing reference' })).not.toBeInTheDocument()
   })
 })

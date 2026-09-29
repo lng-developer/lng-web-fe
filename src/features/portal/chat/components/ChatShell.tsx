@@ -202,7 +202,7 @@ export function ChatShell({ account }: ChatShellProps) {
       chatSocketRef.current = null
       setSocketReady(false)
     }
-  }, [queryClient])
+  }, [account.account.id, queryClient])
 
   useEffect(() => {
     if (!quickConversationId || !chatSocketRef.current) return
@@ -212,11 +212,13 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatConversations = useQuery({
     queryKey: chatKeys.conversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
     queryFn: () => listChatConversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
+    enabled: isChatWorkspace || isChatPreviewOpen,
     refetchInterval: false,
   })
   const chatParticipants = useQuery({
     queryKey: ['chat-participants'],
     queryFn: () => listChatParticipants({ limit: 100 }),
+    enabled: isChatWorkspace || isChatPreviewOpen,
   })
   const participantById = new Map(
     (chatParticipants.data?.items ?? []).map((participant) => [participant.id, participant]),

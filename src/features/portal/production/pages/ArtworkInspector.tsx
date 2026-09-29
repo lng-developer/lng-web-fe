@@ -27,6 +27,7 @@ const REJECTION_PRESETS = [
 interface ArtworkInspectorProps {
   readonly check: FileCheck
   readonly originalInputUrl?: string | null
+  readonly originalInputLabel?: string | null
   readonly listingReferenceUrl?: string | null
   readonly readonly?: boolean
   readonly onClose: () => void
@@ -37,6 +38,7 @@ interface ArtworkInspectorProps {
 export function ArtworkInspector({
   check,
   originalInputUrl,
+  originalInputLabel,
   listingReferenceUrl,
   readonly = false,
   onClose,
@@ -59,7 +61,7 @@ export function ArtworkInspector({
   const dragStartRef = useRef({ x: 0, y: 0, originX: 0, originY: 0 })
 
   const originalUrl = originalInputUrl ?? check.inputAssetDownloadUrl
-  const originalLabel = 'Customer input'
+  const originalLabel = originalInputLabel ?? t('portal.production.customerArtwork')
   const scaledUrl = check.outputAssetDownloadUrl
 
   const resetView = useCallback(() => {

@@ -21,7 +21,7 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profile = useQuery({
-    queryKey: ['hr', 'employee-profiles', 'me', account.account.id],
+    queryKey: ['hr', 'employee-profiles', 'me'],
     queryFn: loadMyEmployeeProfile,
   })
   const avatar = useQuery({

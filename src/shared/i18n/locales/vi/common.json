@@ -3240,6 +3240,7 @@
       "backgroundColor": "Màu nền",
       "customerInputs": "dữ liệu tùy chỉnh",
       "customerArtwork": "Artwork khách hàng",
+      "customizationArtwork": "Artwork tùy chỉnh",
       "productInput": "Sản phẩm và file gốc",
       "taskContext": "Thông tin tác vụ",
       "outputsRequired": "output cần hoàn thiện",
@@ -3468,6 +3469,20 @@
         "runFailed": "Đồng bộ tracking thất bại"
       },
       "webhookHistory": "Lịch sử webhook nhà cung cấp",
+      "trackingPreview": {
+        "title": "Xem trước dữ liệu upload tracking Amazon",
+        "open": "Xem trước dữ liệu tracking",
+        "description": "Kiểm tra các trường Shipping Confirmation do vendor xác nhận trước khi yêu cầu upload lên Amazon.",
+        "noFallback": "Hệ thống không tự suy diễn dữ liệu. Dòng thiếu thông tin sẽ chờ vendor trả về.",
+        "orderId": "order-id",
+        "shipDate": "ship-date",
+        "carrier": "carrier-code",
+        "trackingNumber": "tracking-number",
+        "status": "Trạng thái upload",
+        "ready": "Sẵn sàng",
+        "waitVendor": "Chờ vendor",
+        "limit": "Đang hiển thị {{shown}} / {{total}} shipment."
+      },
       "logsUnavailable": "Không thể tải lịch sử webhook",
       "loadingLogs": "Đang tải lịch sử webhook",
       "metrics": {

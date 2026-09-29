@@ -753,6 +753,7 @@ describe('OrderInlinePanel', () => {
           ...row.items[0],
           listing: {
             ...row.items[0].listing,
+            title: row.items[0].listing?.title ?? null,
             productImageUrl: 'https://res.cloudinary.com/example/main-listing.jpg',
           },
           customization: {
@@ -822,9 +823,7 @@ describe('OrderInlinePanel', () => {
     expect(screen.getByLabelText('orders.fields.product')).toBeEnabled()
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
     fireEvent.click(await screen.findByText('Product One'))
-    await waitFor(() =>
-      expect(getMappingVendorProductOptions).toHaveBeenCalledWith('product-1', {}),
-    )
+    await waitFor(() => expect(getMappingVendorProductOptions).toHaveBeenCalledWith('product-1'))
     await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeEnabled())
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
     fireEvent.click((await screen.findAllByText('M')).at(-1)!)

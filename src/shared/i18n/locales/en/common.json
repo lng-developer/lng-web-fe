@@ -3240,6 +3240,7 @@
       "backgroundColor": "Background",
       "customerInputs": "customer inputs",
       "customerArtwork": "Customer artwork",
+      "customizationArtwork": "Customization artwork",
       "productInput": "Product & input",
       "taskContext": "Task context",
       "outputsRequired": "outputs required",
@@ -3468,6 +3469,20 @@
         "runFailed": "Tracking sync failed"
       },
       "webhookHistory": "Vendor webhook history",
+      "trackingPreview": {
+        "title": "Amazon tracking upload preview",
+        "open": "Preview tracking data",
+        "description": "Review the vendor-confirmed Shipping Confirmation fields before requesting an Amazon upload.",
+        "noFallback": "No values are inferred. Rows with missing data stay pending until the vendor returns them.",
+        "orderId": "order-id",
+        "shipDate": "ship-date",
+        "carrier": "carrier-code",
+        "trackingNumber": "tracking-number",
+        "status": "Upload readiness",
+        "ready": "Ready",
+        "waitVendor": "Wait for vendor",
+        "limit": "Showing {{shown}} of {{total}} shipments."
+      },
       "logsUnavailable": "Webhook history is unavailable",
       "loadingLogs": "Loading webhook history",
       "metrics": {

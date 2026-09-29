@@ -128,12 +128,14 @@ export const OrderWorkbenchPage = () => {
   const shops = useQuery({
     queryKey: shopKeys.list(shopParams),
     queryFn: () => listShops(shopParams),
+    staleTime: 5 * 60_000,
     retry: false,
   })
   const vendorParams = useMemo(() => ({ page: 1, limit: 100, status: 'ACTIVE' as const }), [])
   const vendors = useQuery({
     queryKey: vendorKeys.vendors(vendorParams),
     queryFn: () => listVendors(vendorParams),
+    staleTime: 5 * 60_000,
     retry: false,
   })
   const exportOrders = useMutation({

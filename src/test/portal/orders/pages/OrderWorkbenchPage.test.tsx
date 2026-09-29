@@ -243,4 +243,8 @@ describe('OrderWorkbenchPage', () => {
   it('does not retain an earlier page while the next page is loading', () => {
     expect(orderWorkbenchSource.match(/placeholderData: keepPreviousData/g)).toHaveLength(1)
   })
+
+  it('keeps stable shop and vendor filters cached longer than order rows', () => {
+    expect(orderWorkbenchSource.match(/staleTime: 5 \* 60_000/g)).toHaveLength(2)
+  })
 })

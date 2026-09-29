@@ -48,6 +48,13 @@ export function ExtensionTabContent({
     canWrite ? 'operations' : 'automation',
   )
   const [selectedCommand, setSelectedCommand] = useState<ExtensionCommand>()
+  const canPreviewTracking = useMemo(
+    () =>
+      [...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)].some(
+        (permission) => permission === 'SHIPMENTS:READ' || permission === 'SHIPMENTS:WRITE',
+      ),
+    [account.permissions, account.scopes],
+  )
 
   const {
     tokenForm,
@@ -176,6 +183,7 @@ export function ExtensionTabContent({
           onRevokeToken={(tokenId) => revokeToken.mutate(tokenId)}
           onSelectCommand={setSelectedCommand}
           noOnlineAgents={extensionAgents.data?.items.length === 0}
+          canPreviewTracking={canPreviewTracking}
         />
       ) : (
         <ExtensionAutomationTab

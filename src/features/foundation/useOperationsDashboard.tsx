@@ -59,7 +59,11 @@ function normalizeDataKey(key: string) {
   return key.replaceAll('_', ' ')
 }
 
-export function useOperationsDashboard(dateFrom?: string, dateTo?: string) {
+export function useOperationsDashboard(
+  dateFrom?: string,
+  dateTo?: string,
+  loadOperationalHealth = true,
+) {
   const { t, i18n } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
@@ -119,13 +123,13 @@ export function useOperationsDashboard(dateFrom?: string, dateTo?: string) {
   const operationsOverview = useQuery({
     queryKey: ['foundation', 'operations', reportFilters],
     queryFn: () => getOperationsOverview(reportFilters),
-    enabled: canReports,
+    enabled: canReports && loadOperationalHealth,
   })
 
   const vendorPerformance = useQuery({
     queryKey: ['foundation', 'vendor-performance', reportFilters],
     queryFn: () => listVendorPerformance(reportFilters),
-    enabled: canReports,
+    enabled: canReports && loadOperationalHealth,
   })
 
   const financeRevenue = (finance.data ?? []).reduce((sum, row) => sum + row.revenueAmount, 0)

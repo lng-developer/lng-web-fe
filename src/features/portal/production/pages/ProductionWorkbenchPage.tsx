@@ -49,6 +49,7 @@ import {
 } from '../api/productionApi'
 import { productionKeys } from '../api/productionKeys'
 import { ArtworkInspector } from './ArtworkInspector'
+import { inspectionReference } from './inspectionReference'
 import { ProductionWorkbenchExpandedRow } from './ProductionWorkbenchExpandedRow'
 import { ProductionWorkbenchFilterBar } from './ProductionWorkbenchFilterBar'
 import styles from './ProductionWorkbenchPage.module.scss'
@@ -83,18 +84,6 @@ function tone(status: string) {
   if (['QC_PENDING', 'PENDING', 'NEED_SCALE'].includes(status)) return 'processing'
   if (['QC_REJECTED', 'REJECTED', 'BLOCKED'].includes(status)) return 'critical'
   return 'pending'
-}
-
-function linkedCustomerInputUrl(task: ProductionTask) {
-  const linkedAssetIds = new Set(
-    (task.customization?.customerInputs?.images ?? [])
-      .map((image) => image.assetId)
-      .filter((assetId): assetId is string => Boolean(assetId)),
-  )
-  const linkedAssets = (task.customization?.imageAssets ?? []).filter(
-    (asset) => asset.assetId && linkedAssetIds.has(asset.assetId) && asset.assetDownloadUrl,
-  )
-  return linkedAssets.length === 1 ? linkedAssets[0].assetDownloadUrl : null
 }
 
 export function ProductionWorkbenchPage({
@@ -133,6 +122,7 @@ export function ProductionWorkbenchPage({
   const [inspect, setInspect] = useState<{
     check: FileCheck
     originalInputUrl?: string | null
+    originalInputLabel?: string | null
     listingReferenceUrl?: string | null
     readonly?: boolean
   }>()
@@ -463,14 +453,19 @@ export function ProductionWorkbenchPage({
   )
   const handleInspectSlot = useCallback(
     (task: ProductionTask, check: FileCheck, readonly = false) => {
+      const reference = inspectionReference(task, check)
       setInspect({
         check,
-        originalInputUrl: check.inputAssetDownloadUrl ?? linkedCustomerInputUrl(task),
+        originalInputUrl: reference?.url,
+        originalInputLabel:
+          reference?.type === 'CUSTOMIZATION_ARTWORK'
+            ? t('portal.production.customizationArtwork')
+            : t('portal.production.customerArtwork'),
         listingReferenceUrl: task.mainListingImageUrl ?? task.productImageUrl,
         readonly,
       })
     },
-    [],
+    [t],
   )
   const handleSaveNote = useCallback(
     (taskId: string, note: string) => saveNote.mutate({ taskId, note }),
@@ -791,6 +786,7 @@ export function ProductionWorkbenchPage({
         <ArtworkInspector
           check={inspect.check}
           originalInputUrl={inspect.originalInputUrl}
+          originalInputLabel={inspect.originalInputLabel}
           listingReferenceUrl={inspect.listingReferenceUrl}
           readonly={inspect.readonly}
           onClose={handleInspectClose}
