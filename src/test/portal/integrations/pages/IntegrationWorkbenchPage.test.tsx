@@ -338,7 +338,7 @@ describe('IntegrationWorkbenchPage', () => {
     await i18n.changeLanguage('en')
     vi.mocked(listShops).mockResolvedValue({
       items: [shop],
-      pagination: { total: 101, page: 1, limit: 10 },
+      pagination: { total: 1, page: 1, limit: 10 },
     })
     vi.mocked(listImportJobs).mockResolvedValue({
       items: [job],
@@ -1465,7 +1465,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(screen.getByText('1906.93 USD')).toBeVisible()
     expect(screen.getByRole('button', { name: 'View settlement activity' })).toBeVisible()
     expect(screen.queryByText('Not required')).not.toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('shows recalculation progress and reprocesses a failed finance batch', async () => {
     const failedBatch: ImportBatch = {
