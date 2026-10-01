@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouteLoaderData } from 'react-router-dom'
+import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
   DollarCircleOutlined,
   LinkOutlined,
@@ -58,6 +58,7 @@ export function SettlementWorkspacePage() {
     ...account.scopes.flatMap((scope) => scope.permissions),
   ].includes('FINANCE:WRITE')
   const client = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [page, setPage] = useState(1)
   const [dates, setDates] = useState<DateRangeValue>({})
   const [selected, setSelected] = useState<SettlementSummary>()
@@ -67,6 +68,7 @@ export function SettlementWorkspacePage() {
   const [unlinkedOnly, setUnlinkedOnly] = useState(false)
   const [shopId, setShopId] = useState<string>()
   const [reviewNote, setReviewNote] = useState('')
+  const selectedId = selected?.id || searchParams.get('settlementId') || undefined
 
   const query = useMemo(
     () => ({
@@ -90,14 +92,14 @@ export function SettlementWorkspacePage() {
     queryFn: () => listImportBatches({ sourceType: 'SETTLEMENTS', limit: 100 }),
   })
   const detail = useQuery({
-    queryKey: ['finance', 'settlements', selected?.id, 'detail', ledgerPage],
+    queryKey: ['finance', 'settlements', selectedId, 'detail', ledgerPage, unlinkedOnly],
     queryFn: () =>
-      getSettlement(selected!.id, {
+      getSettlement(selectedId!, {
         page: ledgerPage,
         limit: PAGE_SIZE,
         linkState: unlinkedOnly ? 'UNLINKED' : 'ALL',
       }),
-    enabled: Boolean(selected),
+    enabled: Boolean(selectedId),
   })
   const shops = useQuery({
     queryKey: ['shops', 'finance-settlements'],
@@ -115,7 +117,10 @@ export function SettlementWorkspacePage() {
     }) => reconcileSettlement(id, { status, note }),
     onSuccess: () => client.invalidateQueries({ queryKey: ['finance', 'settlements'] }),
   })
-  const selectedBatch = batches.data?.items.find((batch) => batch.id === selected?.importBatchId)
+  const activeSettlement = selected || detail.data?.settlement
+  const selectedBatch = batches.data?.items.find(
+    (batch) => batch.id === activeSettlement?.importBatchId,
+  )
   const currencySummaries = settlements.data?.summaryByCurrency ?? []
 
   const columns = useMemo<TableColumnsType<SettlementSummary>>(
@@ -358,15 +363,18 @@ export function SettlementWorkspacePage() {
 
       <Modal
         destroyOnClose
-        open={Boolean(selected)}
+        open={Boolean(selectedId)}
         title={
-          selected
-            ? `${t('finance.settlements.settlementId')}: ${selected.settlementId || '—'}`
+          activeSettlement
+            ? `${t('finance.settlements.settlementId')}: ${activeSettlement.settlementId || '—'}`
             : undefined
         }
         width="min(1360px, 92vw)"
         style={{ top: 40 }}
-        onCancel={() => setSelected(undefined)}
+        onCancel={() => {
+          setSelected(undefined)
+          setSearchParams({})
+        }}
         footer={null}
       >
         {detail.data ? (
