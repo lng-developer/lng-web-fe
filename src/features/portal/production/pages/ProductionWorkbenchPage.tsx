@@ -13,7 +13,7 @@ import type { TableColumnsType } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
+import { canUseScopedPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
@@ -148,35 +148,33 @@ export function ProductionWorkbenchPage({
   const canScaleTask = useCallback(
     (task: ProductionTask) =>
       canWriteProductionTask(task) ||
-      (Boolean(currentAccountId) && task.assignedDesignUserId === currentAccountId),
-    [canWriteProductionTask, currentAccountId],
+      (canUseScopedPermission(account, 'PRODUCTION:SCALE_WORK', {
+        scopeType: 'shop',
+        scopeId: task.shopId ?? task.shop?.id,
+      }) &&
+        Boolean(currentAccountId) &&
+        task.csAssigneeId === currentAccountId),
+    [account, canWriteProductionTask, currentAccountId],
   )
   const canQcTask = useCallback(
     (task: ProductionTask) =>
       canWriteProductionTask(task) ||
-      canUseScopedPermission(account, 'DESIGN:REVIEW', {
+      canUseScopedPermission(account, 'PRODUCTION:QC_REVIEW', {
         scopeType: 'shop',
         scopeId: task.shopId ?? task.shop?.id,
       }),
     [account, canWriteProductionTask],
   )
-  const hasTeamDesignReview = hasScopedPermission(account, 'DESIGN:REVIEW', 'team')
-  const hasScopedScaleAssign =
-    hasTeamDesignReview ||
-    hasScopedPermission(account, 'DESIGN:REVIEW', 'shop') ||
-    hasScopedPermission(account, 'PRODUCTION:WRITE', 'team') ||
-    hasScopedPermission(account, 'PRODUCTION:WRITE', 'shop')
   const canAssignScale =
-    tab === 'scale' && (allowed.has('PRODUCTION:WRITE') || hasScopedScaleAssign)
+    tab === 'scale' && (allowed.has('PRODUCTION:WRITE') || allowed.has('PRODUCTION:SCALE_ASSIGN'))
   const canAssignProductionTask = useCallback(
     (task: ProductionTask) =>
       canWriteProductionTask(task) ||
-      hasTeamDesignReview ||
-      canUseScopedPermission(account, 'DESIGN:REVIEW', {
+      canUseScopedPermission(account, 'PRODUCTION:SCALE_ASSIGN', {
         scopeType: 'shop',
         scopeId: task.shopId ?? task.shop?.id,
       }),
-    [account, canWriteProductionTask, hasTeamDesignReview],
+    [account, canWriteProductionTask],
   )
   const filters = useMemo(
     () => ({

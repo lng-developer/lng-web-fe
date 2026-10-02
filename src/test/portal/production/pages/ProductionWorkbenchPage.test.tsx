@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  listScaleAssignees,
   listProductionTasks,
   summarizeProductionQueueCounts,
   summarizeProductionTasks,
@@ -21,6 +22,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 vi.mock('@/features/portal/production/api/productionApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/production/api/productionApi')>()),
   listProductionTasks: vi.fn(),
+  listScaleAssignees: vi.fn(),
   summarizeProductionQueueCounts: vi.fn(),
   summarizeProductionTasks: vi.fn(),
 }))
@@ -40,6 +42,11 @@ const account: CurrentAccount = {
 const scaleManagerAccount: CurrentAccount = {
   ...account,
   permissions: ['PRODUCTION:READ', 'PRODUCTION:WRITE'],
+}
+
+const scaleLeaderAccount: CurrentAccount = {
+  ...account,
+  permissions: ['PRODUCTION:READ', 'PRODUCTION:SCALE_ASSIGN'],
 }
 
 const blockedTask: Awaited<ReturnType<typeof listProductionTasks>>['items'][number] = {
@@ -115,6 +122,7 @@ describe('ProductionWorkbenchPage', () => {
       scaleQueue: 0,
       qcQueue: 0,
     })
+    vi.mocked(listScaleAssignees).mockResolvedValue({ items: [] })
   })
 
   it('stretches every table layer across the available width', async () => {
@@ -133,6 +141,12 @@ describe('ProductionWorkbenchPage', () => {
     await waitFor(() => expect(summarizeProductionQueueCounts).toHaveBeenCalledTimes(1))
     expect(listProductionTasks).toHaveBeenCalledTimes(1)
     expect(summarizeProductionQueueCounts).toHaveBeenCalledWith({})
+  })
+
+  it('loads scale assignees for a Scale Leader without production write access', async () => {
+    renderPage('/portal/production/scale', scaleLeaderAccount)
+
+    await waitFor(() => expect(listScaleAssignees).toHaveBeenCalledWith({ limit: 100 }))
   })
 
   it('shows the production metrics in the requested order', async () => {
