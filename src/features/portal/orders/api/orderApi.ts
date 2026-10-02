@@ -323,6 +323,10 @@ export async function markOrderItemFulfillmentReady(orderItemId: string) {
   return unwrap(await apiClient.post(`/api/orders/items/${orderItemId}/mark-fulfillment-ready`))
 }
 
+export async function requestOrderItemPsd(orderItemId: string) {
+  return unwrap(await apiClient.post(`/api/orders/items/${orderItemId}/request-psd`))
+}
+
 export async function cancelOrderItem(orderItemId: string, reason: string) {
   return unwrap(await apiClient.post(`/api/orders/items/${orderItemId}/cancel`, { reason }))
 }

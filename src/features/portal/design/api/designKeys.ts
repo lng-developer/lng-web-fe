@@ -6,6 +6,7 @@ export const designKeys = {
   list: (params: DesignListParams) => [...designKeys.all, 'list', params] as const,
   detail: (id: string) => [...designKeys.all, 'detail', id] as const,
   assignees: () => [...designKeys.all, 'assignees'] as const,
+  requests: () => [...designKeys.all, 'requests'] as const,
   summaries: () => [...designKeys.all, 'summary'] as const,
   summary: (params: object) => [...designKeys.all, 'summary', params] as const,
   workloads: () => [...designKeys.all, 'workload'] as const,
