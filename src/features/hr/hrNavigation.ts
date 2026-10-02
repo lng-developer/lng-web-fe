@@ -1,4 +1,4 @@
-import { getHrWorkspaces, type HrWorkspaceKey } from './hrViews'
+import { getHrWorkspaces, type HrAccess, type HrWorkspaceKey } from './hrViews'
 
 export type HrRoute = {
   key: string
@@ -74,10 +74,10 @@ const routes: HrRoute[] = [
     permissions: ['HR_ATTENDANCE:READ', 'HR_ATTENDANCE:MANAGE'],
   },
   {
-    key: 'team-approvals',
-    path: '/hr/team/approvals',
+    key: 'team-requests',
+    path: '/hr/team/requests',
     workspace: 'team',
-    labelKey: 'hrOperations.navigation.approvals',
+    labelKey: 'hrOperations.navigation.requests',
     permissions: ['HR_LEAVE:READ', 'HR_LEAVE:APPROVE', 'HR_OVERTIME:READ', 'HR_OVERTIME:APPROVE'],
   },
   {
@@ -136,19 +136,19 @@ const routes: HrRoute[] = [
   },
 ]
 
-export function getHrNavigation(
-  permissions: Iterable<string>,
-  options: { includeSelf?: boolean } = {},
-) {
-  const granted = new Set(permissions)
-  const workspaces = new Set(getHrWorkspaces(granted).map(({ key }) => key))
+export function getHrNavigation(access: HrAccess, options: { includeSelf?: boolean } = {}) {
+  const global = new Set(access.globalPermissions)
+  const team = new Set(access.teamPermissions)
+  const workspaces = new Set(getHrWorkspaces(access).map(({ key }) => key))
   if (options.includeSelf) workspaces.add('self')
   return routes.filter(
     (route) =>
       workspaces.has(route.workspace) &&
-      (!route.permissions || route.permissions.some((permission) => granted.has(permission))),
+      (!route.permissions ||
+        route.permissions.some((permission) =>
+          (route.workspace === 'team' ? new Set([...global, ...team]) : global).has(permission),
+        )),
   )
 }
 
-export const getDefaultHrPath = (permissions: Iterable<string>) =>
-  getHrNavigation(permissions)[0]?.path
+export const getDefaultHrPath = (access: HrAccess) => getHrNavigation(access)[0]?.path

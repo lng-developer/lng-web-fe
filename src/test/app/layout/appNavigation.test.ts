@@ -131,6 +131,37 @@ describe('app navigation', () => {
     )
   })
 
+  it('keeps scoped leader HR access out of Operations and Payroll', () => {
+    const items = getContextNavigation(
+      'hr',
+      account(
+        [],
+        [
+          'HR_EMPLOYEES:READ',
+          'HR_SCHEDULE:READ',
+          'HR_ATTENDANCE:READ',
+          'HR_LEAVE:READ',
+          'HR_OVERTIME:READ',
+          'TEAMS:READ',
+          'TEAMS:WRITE',
+        ],
+      ),
+    ).flatMap(({ items: groupItems }) => groupItems)
+
+    expect(items.map(({ path }) => path)).toEqual(
+      expect.arrayContaining([
+        '/hr/team',
+        '/hr/team/schedule',
+        '/hr/team/attendance',
+        '/hr/team/members',
+      ]),
+    )
+    expect(items.map(({ path }) => path)).not.toContain('/hr/operations')
+    expect(items.map(({ path }) => path)).not.toContain('/hr/payroll')
+    expect(items.map(({ path }) => path)).not.toContain('/hr/team/approvals')
+    expect(items.map(({ path }) => path)).not.toContain('/organization')
+  })
+
   it('exposes Media only from global MEDIA:READ', () => {
     expect(systemItems(['MEDIA:READ'])).toContainEqual({
       key: 'media',
@@ -389,7 +420,7 @@ describe('app navigation', () => {
     ).toEqual(['dashboard', 'personal'])
     expect(
       getContextNavigation('hr', account([], ['HR_ATTENDANCE:READ'])).map(({ key }) => key),
-    ).toEqual(['dashboard', 'personal', 'team'])
+    ).toEqual(['personal', 'team'])
   })
 
   it('groups organization under HR and chooses the first permitted route', () => {
@@ -438,7 +469,7 @@ describe('app navigation', () => {
 
   it('finds the workspace group that owns a navigation item', () => {
     const groups = getContextNavigation('hr', account(['HR_LEAVE:READ']))
-    expect(getNavigationGroupForItem(groups, 'team-approvals')).toBe('team')
+    expect(getNavigationGroupForItem(groups, 'team-members')).toBe('team')
     expect(getNavigationGroupForItem(groups, 'missing')).toBeUndefined()
   })
 

@@ -90,13 +90,13 @@ export function useStaffWorkspaceQuery(
 }
 
 export function useTeamWorkspaceQuery(
-  params: { dateKey: string },
-  rangeDays: number,
+  params: { dateKey: string; month: number; year: number },
+  rangeDays: 1 | 7 | 30,
   options?: { readonly enabled?: boolean },
 ) {
   return useQuery({
     queryKey: hrKeys.workspaceTeam(params.dateKey, rangeDays),
-    queryFn: () => getTeamHrWorkspace({ dateKey: params.dateKey, days: rangeDays }),
+    queryFn: () => getTeamHrWorkspace({ ...params, days: rangeDays }),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
     refetchOnWindowFocus: false,
@@ -152,7 +152,10 @@ export function usePayrollResultsQuery(
   options?: { readonly enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: hrKeys.payrollResults(params.month, params.year),
+    queryKey: [
+      ...hrKeys.payrollResults(params.month, params.year),
+      canRead ? 'management' : 'personal',
+    ],
     queryFn: () => (canRead ? listPayrollResults(params) : listMyPayrolls(params)),
     placeholderData: keepPreviousData,
     staleTime: 20_000,

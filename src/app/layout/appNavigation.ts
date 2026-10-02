@@ -1,6 +1,7 @@
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getHrNavigation } from '@/features/hr/hrNavigation'
+import { getHrAccess } from '@/features/hr/hrViews'
 
 export type AppCoreKey = 'portal' | 'hr' | 'system'
 
@@ -299,7 +300,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
     )
   }
 
-  const routes = getHrNavigation(permissions, { includeSelf: true })
+  const routes = getHrNavigation(getHrAccess(account), { includeSelf: true })
   const groups: NavigationGroup[] = [
     {
       key: 'personal',
@@ -322,7 +323,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
       items: routes.filter(({ workspace }) => workspace === 'payroll').map(toItem),
     },
   ]
-  if (organizationPermissions.some((permission) => permissions.has(permission))) {
+  if (organizationPermissions.some((permission) => globalPermissions.has(permission))) {
     groups[2].items.push({
       key: 'organization',
       path: '/organization',
@@ -332,7 +333,7 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
   return withDashboardGroup(
     groups.filter(({ items }) => items.length),
     'hr',
-    permissions,
+    globalPermissions,
   )
 }
 
