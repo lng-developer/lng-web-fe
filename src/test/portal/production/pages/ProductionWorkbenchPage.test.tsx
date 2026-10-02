@@ -10,6 +10,7 @@ import {
   summarizeProductionQueueCounts,
   summarizeProductionTasks,
 } from '@/features/portal/production/api/productionApi'
+import { isForbiddenProductionError } from '@/features/portal/production/pages/productionAuthorization'
 import { ProductionWorkbenchPage } from '@/features/portal/production/pages/ProductionWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
@@ -147,6 +148,11 @@ describe('ProductionWorkbenchPage', () => {
     renderPage('/portal/production/scale', scaleLeaderAccount)
 
     await waitFor(() => expect(listScaleAssignees).toHaveBeenCalledWith({ limit: 100 }))
+  })
+
+  it('recognizes a backend forbidden response for stale-workbench recovery', () => {
+    expect(isForbiddenProductionError({ response: { status: 403 } })).toBe(true)
+    expect(isForbiddenProductionError(new Error('Forbidden'))).toBe(false)
   })
 
   it('shows the production metrics in the requested order', async () => {
