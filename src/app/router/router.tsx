@@ -402,6 +402,34 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/finance/cash-flow',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/finance/pages/CashFlowWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { CashFlowWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['FINANCE:READ', 'FINANCE:WRITE']}>
+                <CashFlowWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/finance/transactions',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/finance/pages/TransactionLedgerPage'),
+          ]).then(([{ PortalPageBoundary }, { TransactionLedgerPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['FINANCE:READ', 'FINANCE:WRITE']}>
+                <TransactionLedgerPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/reports/:salesChannelCode?/:reportView?',
         lazy: () =>
           Promise.all([

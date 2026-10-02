@@ -14,7 +14,13 @@ import { isFinanceImportBatchActive } from './useFinanceImportPolling'
 
 export type FinanceImportSourceType = 'ADS' | 'TRANSACTIONS' | 'SETTLEMENTS'
 
-export const ADS_IMPORT_STATUSES = ['QUEUED', 'PROCESSING', 'COMPLETED', 'PARTIAL_FAILED', 'FAILED'] as const
+export const ADS_IMPORT_STATUSES = [
+  'QUEUED',
+  'PROCESSING',
+  'COMPLETED',
+  'PARTIAL_FAILED',
+  'FAILED',
+] as const
 
 export interface UseFinanceImportBatchesParams {
   sourceType: FinanceImportSourceType
@@ -62,7 +68,7 @@ export function useFinanceImportBatches({
         shopId,
         status,
         ...dates,
-    }),
+      }),
     enabled,
     retry: false,
     refetchInterval: (query) =>
@@ -74,13 +80,20 @@ export function useFinanceImportBatches({
 export function useImportedFinanceData(
   sourceType: FinanceImportSourceType,
   importBatchId: string | undefined,
+  query: Record<string, unknown>,
   enabled: boolean,
 ) {
   const source = sourceType.toLowerCase() as 'ads' | 'transactions' | 'settlements'
 
   return useQuery({
-    queryKey: [...integrationKeys.all, 'imported-data', source, importBatchId],
-    queryFn: () => listImportedFinanceData(source, { importBatchId, page: 1, limit: 100 }),
+    queryKey: [...integrationKeys.all, 'imported-data', source, importBatchId, query],
+    queryFn: () =>
+      listImportedFinanceData(source, {
+        importBatchId,
+        ...Object.fromEntries(
+          Object.entries(query).filter(([, value]) => value !== undefined && value !== ''),
+        ),
+      }),
     enabled: enabled && Boolean(importBatchId),
     retry: false,
   })
