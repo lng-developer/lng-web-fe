@@ -1,0 +1,50 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+}
+
+.filterBar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 0;
+}
+
+.search {
+  flex: 1 1 260px;
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.roleFilter {
+  width: 160px;
+}
+
+.designerFilter {
+  flex: 1 1 200px;
+  min-width: 190px;
+  max-width: 260px;
+}
+
+.statusFilter {
+  flex: 1 1 200px;
+  min-width: 190px;
+  max-width: 250px;
+}
+
+.dateFilter {
+  flex: 0 0 auto;
+  min-width: 260px;
+}
+
+.tableArea {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}

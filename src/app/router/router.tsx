@@ -27,6 +27,13 @@ const loadCatalogWorkspaceRoute = () =>
     ),
   }))
 
+const organizationRoutePermissions = [
+  'DEPARTMENTS:READ',
+  'DEPARTMENTS:WRITE',
+  'TEAMS:READ',
+  'TEAMS:WRITE',
+]
+
 export const appRoutes: RouteObject[] = [
   { path: 'login', element: <LoginPage /> },
   {
@@ -191,7 +198,11 @@ export const appRoutes: RouteObject[] = [
         path: 'organization',
         lazy: () =>
           import('@/features/organization/pages/OrganizationPage').then(({ OrganizationPage }) => ({
-            Component: OrganizationPage,
+            Component: () => (
+              <PermissionBoundary anyOf={organizationRoutePermissions}>
+                <OrganizationPage />
+              </PermissionBoundary>
+            ),
           })),
       },
       {
@@ -330,6 +341,13 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/team-tasks',
+        lazy: () =>
+          import('@/features/portal/team-tasks/pages/TeamTasksPage').then(({ TeamTasksPage }) => ({
+            Component: TeamTasksPage,
+          })),
+      },
+      {
         path: 'portal/customers',
         lazy: () =>
           Promise.all([
@@ -390,6 +408,34 @@ export const appRoutes: RouteObject[] = [
             Component: () => (
               <PortalPageBoundary anyOf={['FINANCE:READ', 'FINANCE:WRITE']}>
                 <SettlementWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/finance/cash-flow',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/finance/pages/CashFlowWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { CashFlowWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['FINANCE:READ', 'FINANCE:WRITE']}>
+                <CashFlowWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/finance/transactions',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/finance/pages/TransactionLedgerPage'),
+          ]).then(([{ PortalPageBoundary }, { TransactionLedgerPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['FINANCE:READ', 'FINANCE:WRITE']}>
+                <TransactionLedgerPage />
               </PortalPageBoundary>
             ),
           })),
@@ -478,7 +524,9 @@ export const appRoutes: RouteObject[] = [
             import('@/features/portal/integrations/pages/IntegrationWorkbenchPage'),
           ]).then(([{ PortalPageBoundary }, { IntegrationWorkbenchPage }]) => ({
             Component: () => (
-              <PortalPageBoundary anyOf={['ORDERS:READ', 'ORDERS:WRITE', 'CATALOG:READ', 'CATALOG:WRITE']}>
+              <PortalPageBoundary
+                anyOf={['ORDERS:READ', 'ORDERS:WRITE', 'CATALOG:READ', 'CATALOG:WRITE']}
+              >
                 <IntegrationWorkbenchPage />
               </PortalPageBoundary>
             ),
@@ -501,6 +549,61 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/design/idea-tasks',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/IdeaTasksPage'),
+          ]).then(([{ PortalPageBoundary }, { IdeaTasksPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <IdeaTasksPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/psd-tasks',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/PsdTasksPage'),
+          ]).then(([{ PortalPageBoundary }, { PsdTasksPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+              >
+                <PsdTasksPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/png-tasks',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/PngTasksPage'),
+          ]).then(([{ PortalPageBoundary }, { PngTasksPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={[
+                  'DESIGN:READ',
+                  'DESIGN:WRITE',
+                  'DESIGN:WORK',
+                  'DESIGN:REVIEW',
+                  'PRODUCTION:READ',
+                  'PRODUCTION:WRITE',
+                ]}
+              >
+                <PngTasksPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/design/files',
         lazy: () =>
           Promise.all([
@@ -512,6 +615,34 @@ export const appRoutes: RouteObject[] = [
                 anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
               >
                 <PsdFileWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/workspace',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/DesignWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { DesignWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW']}>
+                <DesignWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/design/scores',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/design/pages/DesignScoresPage'),
+          ]).then(([{ PortalPageBoundary }, { DesignScoresPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW']}>
+                <DesignScoresPage />
               </PortalPageBoundary>
             ),
           })),

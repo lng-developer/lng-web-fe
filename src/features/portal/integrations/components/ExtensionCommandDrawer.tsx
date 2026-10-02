@@ -1,6 +1,6 @@
 import { Alert, Modal, Space, Typography } from 'antd'
 
-import { FormattedDateTime, StatusTag } from '@/shared/ui'
+import { FormattedDateTime, humanizeCode, StatusTag } from '@/shared/ui'
 
 import type { ExtensionCommand } from '../api/integrationApi'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
@@ -33,7 +33,7 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
                     : 'pending'
               }
             >
-              {command.status}
+              {humanizeCode(command.status)}
             </StatusTag>
             <Typography.Text>{command.type}</Typography.Text>
           </Space>

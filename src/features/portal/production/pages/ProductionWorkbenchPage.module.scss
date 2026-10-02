@@ -9,7 +9,7 @@
 .metrics {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -47,11 +47,14 @@
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
+}
+
+.taskPane {
   border: 1px solid var(--ant-color-border);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
   box-shadow: 0 1px 3px rgb(15 23 42 / 4%);
-  overflow: hidden;
 }
 
 .queueTabs {
@@ -72,6 +75,21 @@
   height: 100%;
 }
 
+.singleRecordQueuePane {
+  flex: 0 0 auto;
+  height: auto;
+  overflow: visible;
+}
+
+.singleRecordQueuePane :global(.ant-table-wrapper) {
+  height: auto;
+}
+
+.singleRecordTable {
+  flex: 0 0 auto;
+  height: auto;
+}
+
 .table :global(.ant-table table) {
   width: 100% !important;
   table-layout: fixed !important;
@@ -88,13 +106,49 @@
   position: sticky;
   top: 0;
   z-index: 4;
-  padding: 12px;
-  border-bottom: 1px solid var(--ant-color-border-secondary);
+  padding: 12px 0;
+  border-bottom: 0;
   background: linear-gradient(
     180deg,
     var(--ant-color-bg-container),
     var(--ant-color-fill-quaternary)
   );
+}
+
+.queueFilterBar {
+  min-height: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.search:global(.ant-input-affix-wrapper) {
+  border-color: var(--ant-color-border) !important;
+}
+
+.search:global(.ant-input-affix-wrapper:hover),
+.search:global(.ant-input-affix-wrapper:focus-within) {
+  border-color: var(--ant-color-primary) !important;
+}
+
+.queueControls :global(.ant-btn) {
+  height: 36px !important;
+}
+
+.queueControls .searchSubmit {
+  width: 28px;
+  min-width: 28px;
+  height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--ant-color-text-secondary);
+}
+
+.queueControls .searchSubmit:hover {
+  color: var(--ant-color-primary) !important;
+  background: var(--ant-color-primary-bg) !important;
 }
 
 .queuePane :global(.ant-table-body) {
@@ -149,12 +203,12 @@
 .inlineWorkspace {
   display: grid;
   grid-template-areas: 'product customization task output';
-  grid-template-columns: minmax(260px, 1fr) minmax(250px, 1fr) minmax(220px, 0.85fr) minmax(
-      260px,
-      0.9fr
+  grid-template-columns: minmax(220px, 0.72fr) minmax(260px, 1fr) minmax(240px, 0.85fr) minmax(
+      420px,
+      1.35fr
     );
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 8px 10px;
   background: linear-gradient(
     180deg,
     var(--ant-color-bg-container),
@@ -164,10 +218,12 @@
 
 .inlineSection {
   display: grid;
+  align-self: start;
   align-content: start;
-  gap: 10px;
+  gap: 8px;
+  min-height: 0;
   min-width: 0;
-  padding: 12px;
+  padding: 8px 10px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
@@ -177,10 +233,12 @@
 .taskMeta {
   display: grid;
   grid-area: task;
+  align-self: start;
   align-content: start;
-  gap: 10px;
+  gap: 8px;
+  min-height: 0;
   min-width: 0;
-  padding: 12px;
+  padding: 8px 10px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
@@ -217,11 +275,31 @@
   min-width: 0;
 }
 
-.csNote {
+.requiredSlotsNote {
   display: grid;
-  gap: 4px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--ant-color-border-secondary);
+  align-content: start;
+  min-height: 0;
+  max-height: 72px;
+  gap: 6px;
+}
+
+.requiredSlotsNote strong {
+  font-size: 13px;
+}
+
+.csNoteContent {
+  display: -webkit-box;
+  min-height: 26px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-md);
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-fill-quaternary);
+  font-size: 12px;
+  line-height: 16px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .notesSummary {
@@ -244,19 +322,29 @@
   white-space: nowrap;
 }
 
+.productContext .artworkPreview {
+  min-height: 104px;
+}
+
+.productContext .artworkPreview img {
+  max-height: 112px;
+}
+
 .productActions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
 }
 
 .productActions :global(.ant-btn) {
   min-width: 0;
+  height: 28px;
+  font-size: 12px;
 }
 
 .customerImageDownload {
-  grid-column: 1 / -1;
-  grid-row: 2;
+  grid-column: auto;
+  grid-row: auto;
 }
 
 .customizationSection {
@@ -265,6 +353,25 @@
 
 .outputSection {
   grid-area: output;
+  align-self: start;
+  height: auto;
+  min-height: 0;
+  gap: 0;
+  grid-template-rows: auto auto;
+}
+
+.requiredSlotsContent {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  align-content: start;
+  min-height: 0;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.requiredSlotsContent .inlineSlots {
+  min-height: 0;
+  max-height: none;
 }
 
 .productIdentifiers {
@@ -324,60 +431,148 @@
 
 .inlineSlots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(200px, 1fr);
+  grid-template-rows: auto;
   gap: 8px;
-  max-height: 240px;
-  overflow: auto;
-  padding-right: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
 }
 
 .inlineSlot {
   display: grid;
-  gap: 8px;
-  align-content: start;
-  padding: 10px;
+  grid-template-areas:
+    'header'
+    'preview'
+    'actions';
+  grid-template-rows: auto auto auto;
+  gap: 6px;
+  min-width: 0;
+  max-width: 240px;
+  padding: 8px;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 8px;
   background: var(--ant-color-bg-container);
   box-shadow: 0 6px 16px rgb(15 23 42 / 4%);
 }
 
-.slotHeader,
-.slotActions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.inlineSlotWithRework {
+  max-width: 340px;
+  grid-template-areas:
+    'header header'
+    'preview note'
+    'actions actions';
+  grid-template-columns: minmax(114px, 0.9fr) minmax(0, 1.1fr);
+  grid-template-rows: auto minmax(112px, 1fr) auto;
 }
 
-.slotActions {
-  justify-content: flex-end;
-  flex-wrap: wrap;
+.slotHeader {
+  display: flex;
+  grid-area: header;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+}
+
+.slotIdentity {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
 }
 
 .slotOutput {
   display: grid;
-  grid-template-rows: auto 88px;
+  min-height: 104px;
+  aspect-ratio: 4 / 3;
+  max-height: 110px;
+  max-width: 146px;
+  width: 100%;
+  margin: 0 auto;
+  grid-area: preview;
+  justify-self: center;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-md);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.slotPreviewButton {
+  position: relative;
+  display: grid;
+  grid-area: preview;
+  justify-self: center;
+  width: fit-content;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--ant-border-radius-md);
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.slotPreviewButton:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+
+.slotInspectIcon {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 50%;
+  color: var(--ant-color-text-light-solid);
+  background: rgb(15 23 42 / 70%);
+  pointer-events: none;
+}
+
+.slotActions {
+  display: grid;
+  grid-area: actions;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   min-width: 0;
+}
+
+.slotActions :global(.ant-btn),
+.slotActions :global(.ant-upload-wrapper) {
+  width: 100%;
+}
+
+.slotActions :global(.ant-btn) {
+  height: 28px;
+  font-size: 12px;
+}
+
+.slotActions :global(.ant-upload-wrapper .ant-btn) {
+  width: 100%;
+  height: 28px;
+  font-size: 12px;
 }
 
 .slotOutput img,
 .slotOutput > span:last-child {
   width: 100%;
-  height: 88px;
+  height: 100%;
   object-fit: contain;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-md);
-  background: var(--ant-color-bg-container);
 }
 
 .slotOutput > span:last-child {
   display: grid;
   place-items: center;
-  padding: 16px;
+  padding: 8px;
   color: var(--ant-color-text-tertiary);
+  font-size: 11px;
+  line-height: 14px;
   text-align: center;
 }
 
@@ -385,13 +580,44 @@
   border-style: dashed !important;
 }
 
+.slotOutput {
+  min-width: 0;
+}
+
+.inlineSlot > .slotOutput {
+  grid-area: preview;
+}
+
+.inlineSlotWithRework .slotOutput {
+  min-height: 112px;
+  height: 100%;
+  aspect-ratio: auto;
+}
+
 .rejectionNote {
   display: grid;
-  gap: 4px;
-  padding: 10px 12px;
+  grid-area: note;
+  align-content: start;
+  gap: 3px;
+  padding: 6px 8px;
   border: 1px solid var(--ant-color-warning-border);
   border-radius: var(--ant-border-radius-md);
   background: var(--ant-color-warning-bg);
+  font-size: 12px;
+}
+
+.rejectionNote strong {
+  color: var(--ant-color-warning);
+  font-size: 12px;
+}
+
+.rejectionNote > span:last-child {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  line-height: 16px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .inspector {
@@ -729,6 +955,11 @@
 
 .filter {
   width: 190px;
+}
+
+.dateRange:global(.ant-picker) {
+  width: 230px !important;
+  height: 36px;
 }
 
 .drawer {

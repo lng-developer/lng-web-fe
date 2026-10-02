@@ -10,6 +10,7 @@ import { FeedbackAlert, PopupModal, type PopupModalAnchor } from '@/shared/ui'
 
 import { getOrderCase, listOrderCases, type OrderCase, type OrderCaseInput } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
+import { formatCaseSeverityLabel, formatCaseTypeLabel } from '../pages/orderPresentation'
 import styles from '../pages/OrderWorkbenchPage.module.scss'
 import type { OrderAction } from './orderTypes'
 
@@ -174,7 +175,10 @@ function CaseEditorModalInner({
             <Typography.Text>{t('orders.case.type')}</Typography.Text>
             <Select
               value={form.caseType}
-              options={CASE_TYPES.map((caseType) => ({ value: caseType, label: caseType }))}
+              options={CASE_TYPES.map((caseType) => ({
+                value: caseType,
+                label: formatCaseTypeLabel(caseType, t),
+              }))}
               onChange={(caseType) => setForm((current) => ({ ...current, caseType }))}
             />
           </label>
@@ -182,7 +186,10 @@ function CaseEditorModalInner({
             <Typography.Text>{t('orders.case.severity')}</Typography.Text>
             <Select
               value={form.severity}
-              options={CASE_SEVERITIES.map((severity) => ({ value: severity, label: severity }))}
+              options={CASE_SEVERITIES.map((severity) => ({
+                value: severity,
+                label: formatCaseSeverityLabel(severity, t),
+              }))}
               onChange={(severity) => setForm((current) => ({ ...current, severity }))}
             />
           </label>

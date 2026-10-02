@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ApartmentOutlined,
   ArrowRightOutlined,
@@ -26,19 +27,21 @@ import {
   SummaryLineChart,
   TrafficSourcesDonut,
 } from './OperationsDashboardCharts'
-import { RecentOrdersTable, TopCategoriesGrid } from './OperationsDashboardLists'
+import { RecentOrdersTable, TopSellersPodium } from './OperationsDashboardLists'
 import { useOperationsDashboard } from './useOperationsDashboard'
 
 export function OperationsDashboardPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const operationalHealthRef = useRef<HTMLDivElement>(null)
   const [loadOperationalHealth, setLoadOperationalHealth] = useState(
     () => typeof IntersectionObserver === 'undefined',
   )
   const [dates, setDates] = useState<[Dayjs, Dayjs]>(() => [
-    dayjs('2026-08-01').startOf('day'),
+    dayjs().subtract(30, 'day').startOf('day'),
     dayjs().endOf('day'),
   ])
+  const [summaryExpanded, setSummaryExpanded] = useState(false)
   const { value, handle } = useOperationsDashboard(
     dates[0].toISOString(),
     dates[1].toISOString(),
@@ -61,27 +64,19 @@ export function OperationsDashboardPage() {
   }
 
   const handleAddProduct = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/catalog')
-    }
+    navigate('/portal/catalog')
   }
 
   const handleExportReport = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/reports')
-    }
+    navigate('/portal/reports')
   }
 
   const handleViewAllCategories = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/catalog')
-    }
+    navigate('/portal/catalog')
   }
 
-  const handleViewOrder = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/orders')
-    }
+  const handleViewOrder = (orderId?: string) => {
+    navigate(orderId ? `/portal/orders?search=${encodeURIComponent(orderId)}` : '/portal/orders')
   }
 
   return (
@@ -136,28 +131,46 @@ export function OperationsDashboardPage() {
           </div>
           <strong className={styles.gxonHeroValue}>{value.displayedOrderTotal}</strong>
           <div className={styles.gxonHeroSparkline}>
-            <MiniBars data={value.orderBars} total={value.displayedOrderTotal} compact />
+            <MiniBars
+              data={value.orderBars}
+              total={value.displayedOrderTotal}
+              compact
+              showPopover={false}
+            />
           </div>
         </article>
 
-        {/* Card 2: Approved Listings / Target */}
-        <article className={styles.gxonHeroCard}>
-          <div className={styles.gxonHeroHeader}>
-            <span>{t('foundation.portalDashboard.approvedListings')}</span>
-          </div>
-          <strong className={styles.gxonHeroValue}>{value.approvedListings}</strong>
-          <div className={styles.gxonHeroProgress}>
-            <small style={{ color: 'var(--ant-color-text-secondary)', fontSize: 11 }}>
-              {t('foundation.portalDashboard.approvedPercent', { percent: value.targetPercent })}
-            </small>
-            <div className={styles.gxonProgressBarTrack}>
-              <div
-                className={styles.gxonProgressBarFill}
-                style={{ width: `${value.safeTargetPercent}%` }}
+        {/* Card 2: Summary */}
+        <div className={styles.summaryHeroSlot}>
+          <article
+            className={`${styles.gxonHeroCard} ${
+              summaryExpanded ? styles.gxonHeroCardSummaryExpanded : ''
+            }`}
+          >
+            <div className={styles.gxonHeroHeader}>
+              <span>{t('foundation.portalDashboard.summary')}</span>
+              <div className={styles.summaryHeaderLegend} aria-hidden="true">
+                <span>
+                  <i className={styles.summaryLegendNetCashFlow} />
+                  {t('foundation.portalDashboard.netCashFlow')}
+                </span>
+                <span>
+                  <i className={styles.summaryLegendRevenue} />
+                  {t('foundation.portalDashboard.cashIn')}
+                </span>
+              </div>
+            </div>
+            <div className={`${styles.gxonHeroSparkline} ${styles.summaryHeroSparkline}`}>
+              <SummaryLineChart
+                points={value.timelinePoints}
+                summaryBars={value.summaryBars}
+                summaryTotal={value.summaryTotal}
+                compact
+                onExpandedChange={setSummaryExpanded}
               />
             </div>
-          </div>
-        </article>
+          </article>
+        </div>
 
         {/* Card 3: New Customers */}
         <article className={styles.gxonHeroCard}>
@@ -173,9 +186,11 @@ export function OperationsDashboardPage() {
             </div>
             <button
               type="button"
-              aria-label={t('foundation.portalDashboard.openListingQueue')}
+              aria-label={t('foundation.portalDashboard.viewCustomers', {
+                defaultValue: 'View customers',
+              })}
               className={styles.mockHeroAction}
-              onClick={handle.openListingQueue}
+              onClick={() => navigate('/portal/customers')}
             >
               <ArrowRightOutlined />
             </button>
@@ -217,6 +232,7 @@ export function OperationsDashboardPage() {
                 title={t('foundation.portalDashboard.trafficSources', {
                   defaultValue: 'Traffic Sources',
                 })}
+                className={styles.dashboardEqualHeightCard}
               >
                 <TrafficSourcesDonut
                   data={value.channelBreakdown}
@@ -230,19 +246,60 @@ export function OperationsDashboardPage() {
               </SectionCard>
             </section>
 
-            {/* Order Analytics / Summary Line Chart */}
+            {/* Cash flow chart */}
             <section
               aria-label={t('foundation.portalDashboard.orderAnalytics')}
               className={styles.chartColLine}
             >
               <SectionCard
-                title={t('foundation.portalDashboard.summary', { defaultValue: 'Summary' })}
+                title={t('foundation.portalDashboard.cashFlow', { defaultValue: 'Cash Flow' })}
+                className={`${styles.dashboardEqualHeightCard} ${styles.cashFlowCard}`}
               >
-                <SummaryLineChart
-                  points={value.timelinePoints}
-                  summaryBars={value.summaryBars}
-                  summaryTotal={value.summaryTotal}
-                />
+                <div className={styles.cashFlowTable}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t('common.date')}</th>
+                        <th>{t('foundation.portalDashboard.cashIn')}</th>
+                        <th>{t('foundation.portalDashboard.cashOut')}</th>
+                        <th>{t('foundation.portalDashboard.netCashFlow')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {value.cashFlowRows.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8' }}
+                          >
+                            {t('foundation.portalDashboard.noData')}
+                          </td>
+                        </tr>
+                      ) : (
+                        value.cashFlowRows
+                          .slice(-6)
+                          .reverse()
+                          .map((row) => {
+                            const formatAmount = (amount: number) =>
+                              new Intl.NumberFormat(undefined, {
+                                style: 'currency',
+                                currency: row.currency || 'USD',
+                                maximumFractionDigits: 0,
+                              }).format(amount / 100)
+
+                            return (
+                              <tr key={row.date}>
+                                <td>{row.displayDate}</td>
+                                <td>{formatAmount(row.cashInAmount)}</td>
+                                <td>{formatAmount(row.cashOutAmount)}</td>
+                                <td>{formatAmount(row.netCashFlowAmount)}</td>
+                              </tr>
+                            )
+                          })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </SectionCard>
             </section>
           </div>
@@ -265,6 +322,7 @@ export function OperationsDashboardPage() {
             title={t('foundation.portalDashboard.monthlyTarget', {
               defaultValue: 'Monthly Target',
             })}
+            className={styles.dashboardEqualHeightCard}
             extra={
               <Button
                 type="text"
@@ -300,10 +358,10 @@ export function OperationsDashboardPage() {
             />
           </SectionCard>
 
-          {/* Top Categories Grid */}
+          {/* Top sellers podium */}
           <SectionCard
-            title={t('foundation.portalDashboard.topCategories', {
-              defaultValue: 'Top Categories',
+            title={t('foundation.portalDashboard.topSellers', {
+              defaultValue: 'Top Seller',
             })}
             extra={
               <Button
@@ -316,7 +374,7 @@ export function OperationsDashboardPage() {
               </Button>
             }
           >
-            <TopCategoriesGrid categories={value.topCategories} />
+            <TopSellersPodium sellers={value.topSellers} />
           </SectionCard>
         </aside>
       </section>
@@ -326,199 +384,260 @@ export function OperationsDashboardPage() {
       {value.canReports ? (
         <div ref={operationalHealthRef}>
           <SectionCard
-            title={t('foundation.portalDashboard.operationalHealth')}
-            extra={
-              <div className={styles.healthStatusHeaderExtra}>
-                {value.operationalIssues.length > 0 || value.vendorFailures.length > 0 ? (
-                  <span className={styles.healthStatusBadgeWarning}>
-                    <span className={styles.statusDotWarning} />
-                    {value.operationalIssues.reduce((s, i) => s + i.count, 0) +
-                      value.vendorFailures.reduce((s, v) => s + v.failedCount, 0)}{' '}
-                    tác vụ cần xử lý
-                  </span>
-                ) : (
-                  <span className={styles.healthStatusBadgeSuccess}>
-                    <span className={styles.statusDotSuccess} />
-                    Hệ thống ổn định
-                  </span>
-                )}
-              </div>
-            }
-          >
-            {(() => {
-              const mappingIssue = value.operationalIssues.find((i) => i.key === 'mapping')
-              const productionIssue = value.operationalIssues.find((i) => i.key === 'production')
-              const otherIssues = value.operationalIssues.filter(
-                (i) => i.key !== 'mapping' && i.key !== 'production',
-              )
-              const totalVendorFailures = value.vendorFailures.reduce(
-                (sum, v) => sum + (v.failedCount || 0),
-                0,
-              )
+          title={t('foundation.portalDashboard.operationalHealth')}
+          extra={
+            <div className={styles.healthStatusHeaderExtra}>
+              {value.operationalIssues.length > 0 || value.vendorFailures.length > 0 ? (
+                <span className={styles.healthStatusBadgeWarning}>
+                  <span className={styles.statusDotWarning} />
+                  {t('foundation.portalDashboard.tasksNeedAttention', {
+                    count:
+                      value.operationalIssues.reduce((s, i) => s + i.count, 0) +
+                      value.vendorFailures.reduce((s, v) => s + v.failedCount, 0),
+                    defaultValue: `${
+                      value.operationalIssues.reduce((s, i) => s + i.count, 0) +
+                      value.vendorFailures.reduce((s, v) => s + v.failedCount, 0)
+                    } tasks need attention`,
+                  })}
+                </span>
+              ) : (
+                <span className={styles.healthStatusBadgeSuccess}>
+                  <span className={styles.statusDotSuccess} />
+                  {t('foundation.portalDashboard.systemStable', { defaultValue: 'System stable' })}
+                </span>
+              )}
+            </div>
+          }
+        >
+          {(() => {
+            const mappingIssue = value.operationalIssues.find((i) => i.key === 'mapping')
+            const productionIssue = value.operationalIssues.find((i) => i.key === 'production')
+            const otherIssues = value.operationalIssues.filter(
+              (i) => i.key !== 'mapping' && i.key !== 'production',
+            )
+            const totalVendorFailures = value.vendorFailures.reduce(
+              (sum, v) => sum + (v.failedCount || 0),
+              0,
+            )
 
-              return (
-                <div className={styles.operationalDiagnosticsWrap}>
-                  <div className={styles.diagnosticsGrid}>
-                    {/* Card 1: Needs Mapping */}
-                    <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_amber}`}>
-                      <div className={styles.diagCardHeader}>
-                        <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_amber}`}>
-                          <ApartmentOutlined />
-                        </div>
-                        {(mappingIssue?.count ?? 0) > 0 ? (
-                          <span className={styles.diagTagWarning}>Cần xử lý</span>
-                        ) : (
-                          <span className={styles.diagTagSuccess}>Tốt</span>
-                        )}
+            return (
+              <div className={styles.operationalDiagnosticsWrap}>
+                <div className={styles.diagnosticsGrid}>
+                  {/* Card 1: Needs Mapping */}
+                  <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_amber}`}>
+                    <div className={styles.diagCardHeader}>
+                      <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_amber}`}>
+                        <ApartmentOutlined />
                       </div>
-                      <div className={styles.diagCardBody}>
-                        <strong className={styles.diagCardValue}>{mappingIssue?.count ?? 0}</strong>
-                        <span className={styles.diagCardTitle}>
-                          {t('foundation.portalDashboard.needsMapping')}
+                      {(mappingIssue?.count ?? 0) > 0 ? (
+                        <span className={styles.diagTagWarning}>
+                          {t('foundation.portalDashboard.needsAction', {
+                            defaultValue: 'Action required',
+                          })}
                         </span>
-                        <p className={styles.diagCardDesc}>
-                          {(mappingIssue?.count ?? 0) > 0
-                            ? 'Đơn hàng mới chờ cấu hình quy tắc SKU'
-                            : 'Đã hoàn tất ánh xạ toàn bộ đơn'}
-                        </p>
-                      </div>
-                      <a
-                        className={styles.diagCardLink}
-                        href={mappingIssue?.href || '/portal/mapping'}
-                      >
-                        <span>Cấu hình ánh xạ</span>
-                      </a>
-                    </article>
-
-                    {/* Card 2: Needs Production */}
-                    <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_blue}`}>
-                      <div className={styles.diagCardHeader}>
-                        <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_blue}`}>
-                          <BuildOutlined />
-                        </div>
-                        {(productionIssue?.count ?? 0) > 0 ? (
-                          <span className={styles.diagTagInfo}>Chờ sản xuất</span>
-                        ) : (
-                          <span className={styles.diagTagSuccess}>Tốt</span>
-                        )}
-                      </div>
-                      <div className={styles.diagCardBody}>
-                        <strong className={styles.diagCardValue}>
-                          {productionIssue?.count ?? 0}
-                        </strong>
-                        <span className={styles.diagCardTitle}>
-                          {t('foundation.portalDashboard.needsProduction')}
+                      ) : (
+                        <span className={styles.diagTagSuccess}>
+                          {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
                         </span>
-                        <p className={styles.diagCardDesc}>
-                          {(productionIssue?.count ?? 0) > 0
-                            ? 'Sẵn sàng điều phối xưởng in & gia công'
-                            : 'Không có đơn chờ duyệt sản xuất'}
-                        </p>
-                      </div>
-                      <a
-                        className={styles.diagCardLink}
-                        href={productionIssue?.href || '/portal/production'}
-                      >
-                        <span>Mở xưởng sản xuất</span>
-                      </a>
-                    </article>
-
-                    {/* Card 3: Vendor Health */}
-                    <article
-                      className={`${styles.diagnosticCard} ${
-                        totalVendorFailures > 0
-                          ? styles.diagnosticCard_red
-                          : styles.diagnosticCard_green
-                      }`}
-                    >
-                      <div className={styles.diagCardHeader}>
-                        <div
-                          className={`${styles.diagIconWrap} ${
-                            totalVendorFailures > 0
-                              ? styles.diagIconWrap_red
-                              : styles.diagIconWrap_green
-                          }`}
-                        >
-                          {totalVendorFailures > 0 ? <ShopOutlined /> : <CheckCircleOutlined />}
-                        </div>
-                        {totalVendorFailures > 0 ? (
-                          <span className={styles.diagTagCritical}>{totalVendorFailures} lỗi</span>
-                        ) : (
-                          <span className={styles.diagTagSuccess}>100% OK</span>
-                        )}
-                      </div>
-                      <div className={styles.diagCardBody}>
-                        <strong
-                          className={
-                            totalVendorFailures > 0
-                              ? styles.diagCardValueCritical
-                              : styles.diagCardValueSuccess
-                          }
-                        >
-                          {totalVendorFailures > 0 ? `${totalVendorFailures} lỗi` : '100%'}
-                        </strong>
-                        <span className={styles.diagCardTitle}>
-                          {t('foundation.portalDashboard.vendorHealth')}
-                        </span>
-                        <p className={styles.diagCardDesc}>
-                          {totalVendorFailures > 0
-                            ? value.vendorFailures
-                                .map(
-                                  (v) =>
-                                    `${v.vendorName || v.vendorCode || t('common.unknown')}: ${v.failedCount}`,
-                                )
-                                .join(', ')
-                            : t('foundation.portalDashboard.noVendorFailures')}
-                        </p>
-                      </div>
-                      <a
-                        className={styles.diagCardLink}
-                        href={workspaceRouteLinks.vendorSubmissions}
-                      >
-                        <span>Kiểm tra nhà cung cấp</span>
-                      </a>
-                    </article>
-
-                    {/* Card 4: Import & Sync Health */}
-                    <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_purple}`}>
-                      <div className={styles.diagCardHeader}>
-                        <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_purple}`}>
-                          <CloudSyncOutlined />
-                        </div>
-                        <span className={styles.diagTagSuccess}>Kết nối tốt</span>
-                      </div>
-                      <div className={styles.diagCardBody}>
-                        <strong className={styles.diagCardValueSuccess}>Đồng bộ</strong>
-                        <span className={styles.diagCardTitle}>Tích hợp & Dữ liệu</span>
-                        <p className={styles.diagCardDesc}>
-                          Kênh bán hàng, cổng thanh toán & kho listing hoạt động ổn định
-                        </p>
-                      </div>
-                      <a
-                        className={styles.importHealthLink}
-                        href={workspaceRouteLinks.integrations}
-                      >
-                        {t('foundation.portalDashboard.viewImportHealth')}
-                      </a>
-                    </article>
-                  </div>
-
-                  {otherIssues.length > 0 ? (
-                    <div className={styles.otherIssuesSubBar}>
-                      <span className={styles.otherIssuesLabel}>Tác vụ phát sinh khác:</span>
-                      <div className={styles.otherIssuesList}>
-                        {otherIssues.map((issue) => (
-                          <a key={issue.key} className={styles.operationalIssue} href={issue.href}>
-                            <span>{t(`foundation.portalDashboard.${issue.labelKey}`)}</span>
-                            <strong>{issue.count}</strong>
-                          </a>
-                        ))}
-                      </div>
+                      )}
                     </div>
-                  ) : null}
+                    <div className={styles.diagCardBody}>
+                      <strong className={styles.diagCardValue}>{mappingIssue?.count ?? 0}</strong>
+                      <span className={styles.diagCardTitle}>
+                        {t('foundation.portalDashboard.needsMapping')}
+                      </span>
+                      <p className={styles.diagCardDesc}>
+                        {(mappingIssue?.count ?? 0) > 0
+                          ? t('foundation.portalDashboard.needsMappingDesc', {
+                              defaultValue: 'New orders awaiting SKU mapping rules',
+                            })
+                          : t('foundation.portalDashboard.mappingCompleteDesc', {
+                              defaultValue: 'All orders mapped',
+                            })}
+                      </p>
+                    </div>
+                    <Link
+                      className={styles.diagCardLink}
+                      to={mappingIssue?.href || '/portal/mapping'}
+                    >
+                      <span>
+                        {t('foundation.portalDashboard.configureMapping', {
+                          defaultValue: 'Configure mapping',
+                        })}
+                      </span>
+                    </Link>
+                  </article>
+
+                  {/* Card 2: Needs Production */}
+                  <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_blue}`}>
+                    <div className={styles.diagCardHeader}>
+                      <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_blue}`}>
+                        <BuildOutlined />
+                      </div>
+                      {(productionIssue?.count ?? 0) > 0 ? (
+                        <span className={styles.diagTagInfo}>
+                          {t('foundation.portalDashboard.waitingProduction', {
+                            defaultValue: 'Awaiting production',
+                          })}
+                        </span>
+                      ) : (
+                        <span className={styles.diagTagSuccess}>
+                          {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.diagCardBody}>
+                      <strong className={styles.diagCardValue}>
+                        {productionIssue?.count ?? 0}
+                      </strong>
+                      <span className={styles.diagCardTitle}>
+                        {t('foundation.portalDashboard.needsProduction')}
+                      </span>
+                      <p className={styles.diagCardDesc}>
+                        {(productionIssue?.count ?? 0) > 0
+                          ? t('foundation.portalDashboard.needsProductionDesc', {
+                              defaultValue: 'Ready for print workshop & processing',
+                            })
+                          : t('foundation.portalDashboard.noPendingProductionDesc', {
+                              defaultValue: 'No orders awaiting production approval',
+                            })}
+                      </p>
+                    </div>
+                    <Link
+                      className={styles.diagCardLink}
+                      to={productionIssue?.href || '/portal/production'}
+                    >
+                      <span>
+                        {t('foundation.portalDashboard.openProduction', {
+                          defaultValue: 'Open production',
+                        })}
+                      </span>
+                    </Link>
+                  </article>
+
+                  {/* Card 3: Vendor Health */}
+                  <article
+                    className={`${styles.diagnosticCard} ${
+                      totalVendorFailures > 0
+                        ? styles.diagnosticCard_red
+                        : styles.diagnosticCard_green
+                    }`}
+                  >
+                    <div className={styles.diagCardHeader}>
+                      <div
+                        className={`${styles.diagIconWrap} ${
+                          totalVendorFailures > 0
+                            ? styles.diagIconWrap_red
+                            : styles.diagIconWrap_green
+                        }`}
+                      >
+                        {totalVendorFailures > 0 ? <ShopOutlined /> : <CheckCircleOutlined />}
+                      </div>
+                      {totalVendorFailures > 0 ? (
+                        <span className={styles.diagTagCritical}>
+                          {t('foundation.portalDashboard.vendorErrors', {
+                            count: totalVendorFailures,
+                            defaultValue: `${totalVendorFailures} errors`,
+                          })}
+                        </span>
+                      ) : (
+                        <span className={styles.diagTagSuccess}>100% OK</span>
+                      )}
+                    </div>
+                    <div className={styles.diagCardBody}>
+                      <strong
+                        className={
+                          totalVendorFailures > 0
+                            ? styles.diagCardValueCritical
+                            : styles.diagCardValueSuccess
+                        }
+                      >
+                        {totalVendorFailures > 0
+                          ? t('foundation.portalDashboard.vendorErrors', {
+                              count: totalVendorFailures,
+                              defaultValue: `${totalVendorFailures} errors`,
+                            })
+                          : '100%'}
+                      </strong>
+                      <span className={styles.diagCardTitle}>
+                        {t('foundation.portalDashboard.vendorHealth')}
+                      </span>
+                      <p className={styles.diagCardDesc}>
+                        {totalVendorFailures > 0
+                          ? value.vendorFailures
+                              .map(
+                                (v) =>
+                                  `${v.vendorName || v.vendorCode || t('common.unknown')}: ${v.failedCount}`,
+                              )
+                              .join(', ')
+                          : t('foundation.portalDashboard.noVendorFailures')}
+                      </p>
+                    </div>
+                    <Link
+                      className={styles.diagCardLink}
+                      to={workspaceRouteLinks.vendorSubmissions}
+                    >
+                      <span>
+                        {t('foundation.portalDashboard.checkVendors', {
+                          defaultValue: 'Check vendors',
+                        })}
+                      </span>
+                    </Link>
+                  </article>
+
+                  {/* Card 4: Import & Sync Health */}
+                  <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_purple}`}>
+                    <div className={styles.diagCardHeader}>
+                      <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_purple}`}>
+                        <CloudSyncOutlined />
+                      </div>
+                      <span className={styles.diagTagSuccess}>
+                        {t('foundation.portalDashboard.connectedGood', {
+                          defaultValue: 'Connected',
+                        })}
+                      </span>
+                    </div>
+                    <div className={styles.diagCardBody}>
+                      <strong className={styles.diagCardValueSuccess}>
+                        {t('foundation.portalDashboard.sync', { defaultValue: 'Sync' })}
+                      </strong>
+                      <span className={styles.diagCardTitle}>
+                        {t('foundation.portalDashboard.integrationAndData', {
+                          defaultValue: 'Integrations & Data',
+                        })}
+                      </span>
+                      <p className={styles.diagCardDesc}>
+                        {t('foundation.portalDashboard.integrationDesc', {
+                          defaultValue: 'Sales channels, payment gateways & listings operational',
+                        })}
+                      </p>
+                    </div>
+                    <Link className={styles.importHealthLink} to={workspaceRouteLinks.integrations}>
+                      {t('foundation.portalDashboard.viewImportHealth')}
+                    </Link>
+                  </article>
                 </div>
-              )
-            })()}
+
+                {otherIssues.length > 0 ? (
+                  <div className={styles.otherIssuesSubBar}>
+                    <span className={styles.otherIssuesLabel}>
+                      {t('foundation.portalDashboard.otherIssuesLabel', {
+                        defaultValue: 'Other pending tasks:',
+                      })}
+                    </span>
+                    <div className={styles.otherIssuesList}>
+                      {otherIssues.map((issue) => (
+                        <Link key={issue.key} className={styles.operationalIssue} to={issue.href}>
+                          <span>{t(`foundation.portalDashboard.${issue.labelKey}`)}</span>
+                          <strong>{issue.count}</strong>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )
+          })()}
           </SectionCard>
         </div>
       ) : null}

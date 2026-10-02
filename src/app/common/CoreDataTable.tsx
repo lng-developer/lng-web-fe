@@ -62,6 +62,7 @@ export function CoreDataTable<RecordType extends object>({
   serverSorting,
   ...tableProps
 }: CoreDataTableProps<RecordType>) {
+  // Refs phục vụ việc đo chiều cao viewport và neo thanh phân trang.
   const containerRef = useRef<HTMLDivElement>(null)
   const paginationRef = useRef<HTMLDivElement>(null)
 
@@ -94,6 +95,7 @@ export function CoreDataTable<RecordType extends object>({
   const effectivePageSize = customPagination.pageSize ?? internalPageSize
 
   const sortableColumns = useMemo(() => {
+    // Bổ sung sorter theo mapping server nhưng vẫn giữ nguyên cấu hình cột gốc.
     if (!serverSorting?.enabled || !tableProps.columns) return tableProps.columns
 
     return tableProps.columns.map((column) => {
@@ -132,6 +134,7 @@ export function CoreDataTable<RecordType extends object>({
     sorter,
     extra,
   ) => {
+    // Đổi sorter của Ant Design thành mã sort mà backend yêu cầu.
     if (serverSorting?.enabled) {
       const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter
       const columnKey = activeSorter?.columnKey ?? activeSorter?.field
@@ -156,6 +159,7 @@ export function CoreDataTable<RecordType extends object>({
   const dataSourceLength = Array.isArray(dataSource) ? dataSource.length : 0
 
   const pagedDataSource = useMemo(() => {
+    // Chỉ cắt dữ liệu ở client khi pagination không có onChange từ server.
     if (!shouldPageClientSide || !Array.isArray(dataSource)) {
       return dataSource
     }
@@ -187,6 +191,7 @@ export function CoreDataTable<RecordType extends object>({
     : undefined
 
   useLayoutEffect(() => {
+    // Đo lại phần bảng còn lại khi bật chế độ lấp đầy viewport.
     if (!fillViewport) return
 
     const calculateHeight = () => {
@@ -234,7 +239,9 @@ export function CoreDataTable<RecordType extends object>({
   }, [dataSourceLength, fillViewport, viewportBottomGap])
 
   const scroll = {
-    ...(fillViewport ? { y: viewportScrollY ?? 'calc(100vh - 360px)' } : {}),
+    ...(fillViewport && dataSourceLength > 0
+      ? { y: viewportScrollY ?? 'calc(100vh - 360px)' }
+      : {}),
     ...tableProps.scroll,
   }
 
@@ -246,6 +253,7 @@ export function CoreDataTable<RecordType extends object>({
         {error ?? (
           <Table
             {...tableProps}
+            tableLayout={tableProps.tableLayout ?? 'fixed'}
             columns={sortableColumns}
             onChange={serverSorting?.enabled ? handleTableChange : tableProps.onChange}
             pagination={paginationEnabled ? false : tableProps.pagination}

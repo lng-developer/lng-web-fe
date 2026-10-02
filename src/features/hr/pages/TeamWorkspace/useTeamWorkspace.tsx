@@ -37,6 +37,11 @@ type Approval =
   | ({ requestKind: 'leave' } & LeaveRequest)
   | ({ requestKind: 'overtime' } & OvertimeRequest)
 
+type ApprovalDecision = {
+  approve: boolean
+  item: Approval
+}
+
 const statusTone = (
   status: string,
 ): 'operational' | 'approved' | 'rejected' | 'cancelled' | 'pending' =>
@@ -57,6 +62,7 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
   const toast = useFeedbackToast()
 
   const [rangeDays, setRangeDays] = useState<1 | 7 | 30>(7)
+  const [decision, setDecision] = useState<ApprovalDecision>()
 
   const params = {
     dateKey: dayjs().format('YYYY-MM-DD'),
@@ -73,17 +79,25 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
   const decide = useMutation<
     LeaveRequest | OvertimeRequest,
     Error,
-    { item: Approval; approve: boolean }
+    { item: Approval; approve: boolean; reason?: string }
   >({
-    mutationFn: ({ item, approve }) =>
-      item.requestKind === 'leave'
+    mutationFn: ({ item, approve, reason: submittedReason }) => {
+      const reason =
+        submittedReason?.trim() ||
+        (approve
+          ? t('hrOperations.requests.decisionReasons.approve')
+          : t('hrOperations.requests.decisionReasons.reject'))
+
+      return item.requestKind === 'leave'
         ? approve
-          ? approveLeaveRequest(item.id, { reason: 'Approved by manager' })
-          : rejectLeaveRequest(item.id, { reason: 'Rejected by manager' })
+          ? approveLeaveRequest(item.id, { reason })
+          : rejectLeaveRequest(item.id, { reason })
         : approve
-          ? approveOvertimeRequest(item.id, { reason: 'Approved by manager' })
-          : rejectOvertimeRequest(item.id, { reason: 'Rejected by manager' }),
+          ? approveOvertimeRequest(item.id, { reason })
+          : rejectOvertimeRequest(item.id, { reason })
+    },
     onSuccess: () => {
+      setDecision(undefined)
       toast('success', t('hrOperations.messages.updated'))
       void queryClient.invalidateQueries({ queryKey: ['hr-workspace', 'team'] })
     },
@@ -125,8 +139,13 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
     }
   })
 
-  const handleDecision = (item: Approval, approve: boolean) => {
-    decide.mutate({ item, approve })
+  const openDecision = (item: Approval, approve: boolean) => setDecision({ item, approve })
+
+  const closeDecision = () => setDecision(undefined)
+
+  const submitDecision = (reason?: string) => {
+    if (!decision) return
+    decide.mutate({ ...decision, reason })
   }
 
   const pagination = {
@@ -257,14 +276,14 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
                     type="primary"
                     shape="circle"
                     icon={<CheckOutlined />}
-                    onClick={() => handleDecision(item, true)}
+                    onClick={() => openDecision(item, true)}
                   />
                   <Button
                     type="primary"
                     danger
                     shape="circle"
                     icon={<CloseOutlined />}
-                    onClick={() => handleDecision(item, false)}
+                    onClick={() => openDecision(item, false)}
                   />
                 </Space>
               </div>
@@ -300,14 +319,14 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
                       type="text"
                       aria-label={t('hrOperations.team.approve')}
                       icon={<CheckOutlined />}
-                      onClick={() => handleDecision(item, true)}
+                      onClick={() => openDecision(item, true)}
                     />
                     <Button
                       type="text"
                       danger
                       aria-label={t('hrOperations.team.reject')}
                       icon={<CloseOutlined />}
-                      onClick={() => handleDecision(item, false)}
+                      onClick={() => openDecision(item, false)}
                     />
                   </Space>
                 ),
@@ -384,6 +403,10 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
       presentCount,
       exceptions,
       approvalsCount: approvals.length,
+      decision,
+      closeDecision,
+      submitDecision,
+      decisionPending: decide.isPending,
       attendanceCard,
       approvalsCard,
       directoryCard,

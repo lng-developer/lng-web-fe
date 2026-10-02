@@ -1,9 +1,9 @@
 import { type FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined, SyncOutlined } from '@ant-design/icons'
+import { DownloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons'
 import { Button, Input, Select, Space } from 'antd'
 
-import { FilterBar } from '@/shared/ui'
+import { DateRangePicker, FilterBar, type DateRangeValue } from '@/shared/ui'
 
 import type { ProductionStatus } from '../api/productionApi'
 import styles from './ProductionWorkbenchPage.module.scss'
@@ -24,6 +24,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly search: string
   readonly status?: ProductionStatus
   readonly scaleDifficultyLevel?: ScaleDifficultyLevel
+  readonly dates: DateRangeValue
   readonly tab: 'scale' | 'blocked' | 'qc'
   readonly statusOptions: FilterOption[]
   readonly scaleAssigneeId?: string
@@ -38,6 +39,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly onSearchSubmit: (value: string) => void
   readonly onStatusChange: (value?: ProductionStatus) => void
   readonly onScaleDifficultyChange: (value?: ScaleDifficultyLevel) => void
+  readonly onDatesChange: (value: DateRangeValue) => void
   readonly onExportCsv: () => void
   readonly onExportQc: () => void
   readonly onRecheck: () => void
@@ -47,6 +49,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   search,
   status,
   scaleDifficultyLevel,
+  dates,
   tab,
   statusOptions,
   scaleAssigneeId,
@@ -61,6 +64,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   onSearchSubmit,
   onStatusChange,
   onScaleDifficultyChange,
+  onDatesChange,
   onExportCsv,
   onExportQc,
   onRecheck,
@@ -71,14 +75,28 @@ export const ProductionWorkbenchFilterBar: FC<{
 
   return (
     <div className={styles.queueControls}>
-      <FilterBar label={t('portal.production.filters')} contentClassName={styles.filters}>
-        <Input.Search
+      <FilterBar
+        className={styles.queueFilterBar}
+        label={t('portal.production.filters')}
+        contentClassName={styles.filters}
+      >
+        <Input
           className={styles.search}
           allowClear
           value={search}
           placeholder={t('portal.production.search')}
           onChange={(event) => onSearchChange(event.target.value)}
-          onSearch={onSearchSubmit}
+          onPressEnter={(event) => onSearchSubmit(event.currentTarget.value)}
+          suffix={
+            <Button
+              aria-label={t('portal.production.search')}
+              className={styles.searchSubmit}
+              icon={<SearchOutlined />}
+              size="small"
+              type="text"
+              onClick={() => onSearchSubmit(search)}
+            />
+          }
         />
         <Select
           className={styles.filter}
@@ -98,6 +116,12 @@ export const ProductionWorkbenchFilterBar: FC<{
             label: t(`portal.production.scaleDifficulties.${value}`),
           }))}
           onChange={onScaleDifficultyChange}
+        />
+        <DateRangePicker
+          aria-label={t('foundation.controls.dateRange')}
+          className={styles.dateRange}
+          value={dates}
+          onChange={onDatesChange}
         />
         {tab === 'qc' ? (
           <Button icon={<DownloadOutlined />} loading={exportQcLoading} onClick={onExportQc}>

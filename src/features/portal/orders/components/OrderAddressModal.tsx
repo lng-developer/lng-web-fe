@@ -6,9 +6,9 @@ import { Button, Input, Modal, Typography } from 'antd'
 import { PopupModal, type PopupModalAnchor, StatusTag } from '@/shared/ui'
 
 import type { OrderWorkbenchRow, ShippingAddress } from '../api/orderApi'
-import { orderStatusTone } from '../pages/orderPresentation'
+import { formatAddressStatusLabel, orderStatusTone } from '../pages/orderPresentation'
 import styles from '../pages/OrderWorkbenchPage.module.scss'
-import { displayValue, type OrderAction } from './orderTypes'
+import type { OrderAction } from './orderTypes'
 
 const ADDRESS_FIELDS: Array<keyof ShippingAddress> = [
   'name',
@@ -87,7 +87,7 @@ function OrderAddressModalInner({
       >
         <div className={styles.modalToolbar}>
           <StatusTag status={orderStatusTone(order.addressValidationStatus)}>
-            {displayValue(order.addressValidationStatus)}
+            {formatAddressStatusLabel(order.addressValidationStatus, t)}
           </StatusTag>
           <Button
             icon={<CheckCircleOutlined />}

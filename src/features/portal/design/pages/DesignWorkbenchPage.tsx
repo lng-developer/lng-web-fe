@@ -1070,7 +1070,7 @@ export function DesignWorkbenchPage() {
                   {
                     key: 'version',
                     label: t('portal.design.version'),
-                    children: `v${submission.version} · ${submission.status}`,
+                    children: `v${submission.version} · ${t(designEnumLabelKey('statuses', submission.status))}`,
                   },
                   { key: 'note', label: t('portal.design.note'), children: submission.note ?? '-' },
                   {

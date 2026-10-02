@@ -127,14 +127,17 @@ export function ReportWorkspacePage() {
       key: SelectFilterKey,
       placeholder: string,
       values: Array<{ value: string; label: string }>,
+      className?: string,
     ) => (
       <Select
         allowClear
         showSearch
+        popupMatchSelectWidth={false}
         optionFilterProp="label"
         value={filters[key]}
         placeholder={placeholder}
         options={values}
+        className={className}
         onChange={(value) => handleFilterChange(key, value)}
       />
     ),
@@ -239,7 +242,11 @@ export function ReportWorkspacePage() {
   )
 
   const filterBar = (
-    <FilterBar label={t('reports.filters.label')} contentClassName={styles.filters}>
+    <FilterBar
+      className={styles.filterBar}
+      label={t('reports.filters.label')}
+      contentClassName={styles.filters}
+    >
       {select(
         'shopId',
         t('reports.filters.shop'),
@@ -267,6 +274,7 @@ export function ReportWorkspacePage() {
           value: row.employeeCode,
           label: `${row.employeeCode} · ${row.name || t('reports.filters.unnamed')}`,
         })),
+        styles.sellerFilter,
       )}
       {select(
         'teamId',

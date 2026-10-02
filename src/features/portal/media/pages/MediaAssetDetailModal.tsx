@@ -66,7 +66,7 @@ export function MediaAssetDetailModal({
             </Descriptions.Item>
             <Descriptions.Item label={t('media.columns.status')}>
               <StatusTag status={asset.status === 'ACTIVE' ? 'operational' : 'cancelled'}>
-                {asset.status}
+                {t(`media.statuses.${asset.status}`, { defaultValue: asset.status })}
               </StatusTag>
             </Descriptions.Item>
             <Descriptions.Item label={t('media.columns.createdAt')} span={2}>

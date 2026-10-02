@@ -125,10 +125,18 @@
   box-sizing: border-box;
 }
 
+.orderFilterBar {
+  min-height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .searchSection {
-  flex: 1 1 260px;
-  min-width: 200px;
-  max-width: 380px;
+  flex: 1 1 0;
+  min-width: 220px;
 }
 
 .orderSearch {
@@ -136,14 +144,16 @@
   min-width: 0;
 }
 
-.orderSearch :global(.ant-input-affix-wrapper) {
+.orderSearch:global(.ant-input-affix-wrapper) {
+  width: 100% !important;
+  max-width: none !important;
   border-radius: 6px;
   background: var(--ant-color-fill-quaternary);
-  border-color: transparent;
+  border-color: var(--ant-color-border-secondary);
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: var(--ant-color-border);
+    border-color: var(--ant-color-primary);
     background: var(--ant-color-bg-container);
   }
 
@@ -167,15 +177,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 2 1 auto;
+  flex: 3 1 0;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .filterSelect {
-  min-width: 150px;
-  max-width: 220px;
-  flex: 1 1 150px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex: 1 1 0;
 }
 
 .filterSelect :global(.ant-select-selector) {
@@ -211,9 +222,10 @@
 }
 
 .filterDateRange {
-  min-width: 230px;
-  max-width: 280px;
-  flex: 1 1 230px;
+  width: 100%;
+  min-width: 0;
+  max-width: none !important;
+  flex: 1 1 0;
 }
 
 .filterDateRange:global(.ant-picker) {
@@ -273,6 +285,7 @@
 
   .filterPills {
     flex: 1 1 100%;
+    flex-wrap: wrap;
   }
 }
 
@@ -509,12 +522,24 @@
 }
 .identifierList {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 .identifierList > div {
-  display: grid;
-  justify-items: start;
-  gap: 3px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.identifierList > div > :first-child {
+  flex: 0 0 60px;
+  white-space: nowrap;
+}
+.identifierList > div > :not(:first-child) {
+  min-width: 0;
+}
+.identifierList .asinWithLink {
+  flex: 1;
+  min-width: 0;
 }
 .asinWithLink {
   max-width: 100%;

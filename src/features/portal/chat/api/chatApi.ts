@@ -54,6 +54,8 @@ export type ChatMessage = {
 export type ChatParticipant = {
   id: string
   email: string
+  displayName?: string | null
+  fullName?: string | null
   employeeCode?: string | null
   status?: string
   presence?: 'ONLINE' | 'OFFLINE'

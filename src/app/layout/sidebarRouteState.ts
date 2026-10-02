@@ -9,6 +9,11 @@ export function normalizeSidebarPath(pathname: string): string {
   return pathname
 }
 
+export function isDashboardRoute(pathname: string): boolean {
+  const normalized = normalizeSidebarPath(pathname)
+  return normalized === '/portal/dashboard' || normalized === '/hr/dashboard'
+}
+
 export function getSidebarRouteState(pathname: string, groups: NavigationGroup[]) {
   const normalized = normalizeSidebarPath(pathname)
   const selected = groups

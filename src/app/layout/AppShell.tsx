@@ -66,6 +66,7 @@ export function AppShell() {
   )
   const legacyBottomMenus = useMemo(
     () => ({
+      portal: getContextNavigation('portal', account),
       hr: getContextNavigation('hr', account),
       system: getContextNavigation('system', account),
     }),
@@ -133,6 +134,7 @@ export function AppShell() {
           bottomMenus={legacyBottomMenus}
           accountLabel={account.account.email}
           financeVisible={hasFinanceAccess(account)}
+          account={account}
         />
       )}
       {activeCore && isCompact && (
@@ -200,11 +202,12 @@ export function AppShell() {
               className={styles.navSearch}
             />
           </div>
-          <Space size={10} className={styles.headerActions}>
+          <Space size={14} className={styles.headerActions}>
             <Tooltip title={t('shell.refresh')}>
               <Button
                 type="text"
                 aria-label={t('shell.refresh')}
+                className={styles.headerIconButton}
                 icon={<ReloadOutlined spin={isFetching > 0} />}
                 onClick={refreshWorkspace}
               />

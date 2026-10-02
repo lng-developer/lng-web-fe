@@ -4,6 +4,7 @@ import { Flex } from 'antd'
 import styles from './sharedUi.module.scss'
 
 export interface FilterBarProps {
+  readonly className?: string
   readonly contentClassName?: string
   readonly bordered?: boolean
   readonly label: string
@@ -12,6 +13,7 @@ export interface FilterBarProps {
 }
 
 export function FilterBar({
+  className,
   contentClassName,
   bordered = false,
   label,
@@ -25,6 +27,7 @@ export function FilterBar({
       className={[
         styles.filterBar,
         bordered ? styles.filterBarBordered : styles.filterBarBorderless,
+        className,
       ]
         .filter(Boolean)
         .join(' ')}

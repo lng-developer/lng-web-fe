@@ -43,7 +43,7 @@ import { downloadOrdersCsv, type OrderWorkbenchRow } from '../api/orderApi'
 import { type OrderModal, useOrderActionStore } from '../hooks/useOrderActionStore'
 import { useOrderSummaryQuery } from '../hooks/useOrderSummaryQuery'
 import { useOrderWorkbenchQuery } from '../hooks/useOrderWorkbenchQuery'
-import { formatMinorMoney, orderStatusTone } from './orderPresentation'
+import { formatMinorMoney, formatOrderStatusLabel, orderStatusTone } from './orderPresentation'
 import { OrderWorkbenchExpandedRow } from './OrderWorkbenchExpandedRow'
 import { OrderWorkbenchFilterBar } from './OrderWorkbenchFilterBar'
 import styles from './OrderWorkbenchPage.module.scss'
@@ -271,7 +271,7 @@ export const OrderWorkbenchPage = () => {
         render: (_, row) => (
           <Space size={4}>
             <StatusTag status={orderStatusTone(row.order.status)}>
-              {row.order.status ?? '—'}
+              {formatOrderStatusLabel(row.order.status, t)}
             </StatusTag>
             <Tooltip title={t('orders.actions.viewHistory')}>
               <Button

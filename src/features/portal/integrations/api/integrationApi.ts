@@ -402,6 +402,8 @@ export async function requestExtensionFinanceScheduleNow(
   source: ExtensionFinanceScheduleSource,
 ) {
   return unwrap<ExtensionFinanceSchedule>(
-    await apiClient.post(`${extensionCommandPath}/finance-schedules/${agentId}/${source}/request-now`),
+    await apiClient.post(
+      `${extensionCommandPath}/finance-schedules/${agentId}/${source}/request-now`,
+    ),
   )
 }

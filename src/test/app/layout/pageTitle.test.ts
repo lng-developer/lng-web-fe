@@ -35,6 +35,7 @@ describe('pageTitle', () => {
     it('resolves workbench and catalog subroutes', () => {
       expect(resolvePageTitle('/portal/orders')).toBe('Orders')
       expect(resolvePageTitle('/portal/orders/123')).toBe('Orders')
+      expect(resolvePageTitle('/portal/team-tasks')).toBe('Team Tasks')
       expect(resolvePageTitle('/portal/catalog')).toBe('Catalog')
       expect(resolvePageTitle('/portal/catalog/templates')).toBe('Internal Templates')
       expect(resolvePageTitle('/portal/catalog/product-types')).toBe('Product Types')
@@ -43,7 +44,14 @@ describe('pageTitle', () => {
     it('resolves logistics, finance, and design routes', () => {
       expect(resolvePageTitle('/portal/shipments')).toBe('Shipments')
       expect(resolvePageTitle('/portal/design')).toBe('Design')
+      expect(resolvePageTitle('/portal/design/idea-tasks')).toBe('Idea Tasks')
+      expect(resolvePageTitle('/portal/design/psd-tasks')).toBe('PSD Tasks')
+      expect(resolvePageTitle('/portal/design/png-tasks')).toBe('PNG Tasks')
+      expect(resolvePageTitle('/portal/design/amazon')).toBe('Amazon tasks')
+      expect(resolvePageTitle('/portal/design/etsy')).toBe('Etsy tasks')
       expect(resolvePageTitle('/portal/design/files')).toBe('PSD Files')
+      expect(resolvePageTitle('/portal/design/workspace')).toBe('Design Workspace')
+      expect(resolvePageTitle('/portal/design/scores')).toBe('Design Scores')
       expect(resolvePageTitle('/portal/finance')).toBe('Finance')
       expect(resolvePageTitle('/portal/finance/settlements')).toBe('Settlement')
     })

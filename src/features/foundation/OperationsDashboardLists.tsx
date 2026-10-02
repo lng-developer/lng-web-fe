@@ -6,16 +6,21 @@ import {
   EyeOutlined,
   SearchOutlined,
   ShoppingOutlined,
+  TrophyFilled,
 } from '@ant-design/icons'
-import { Button, Checkbox, Dropdown, Input, Select, Typography } from 'antd'
+import { Button, Checkbox, Dropdown, Input, message, Select, Typography } from 'antd'
 
 import { type Listing } from '@/features/portal/catalog/api/catalogApi'
 import { type OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
+import {
+  formatOrderStatusLabel,
+  orderStatusTone,
+} from '@/features/portal/orders/pages/orderPresentation'
 import { CopyableOrderId, FormattedDateTime, StatusTag } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
 import { money, numberOf } from './operationsDashboardFormatters'
-import { type TopCategoryItem } from './useOperationsDashboard'
+import { type TopCategoryItem, type TopSeller } from './useOperationsDashboard'
 
 export function ProductImage({ listing }: { listing: Listing }) {
   const { t } = useTranslation()
@@ -121,6 +126,37 @@ export function TopCategoriesGrid({
   )
 }
 
+export function TopSellersPodium({ sellers }: { sellers: TopSeller[] }) {
+  const rankedSellers = sellers.slice(0, 3)
+  const podiumOrder = [rankedSellers[1], rankedSellers[0], rankedSellers[2]].filter(
+    (seller): seller is TopSeller => Boolean(seller),
+  )
+
+  return (
+    <div className={styles.sellerPodium} aria-label="Top sellers">
+      {podiumOrder.map((seller) => {
+        const rank = rankedSellers.indexOf(seller) + 1
+        return (
+          <article
+            key={seller.id}
+            className={`${styles.sellerPodiumItem} ${styles[`sellerPodiumRank${rank}`]}`}
+          >
+            {rank === 1 ? (
+              <TrophyFilled className={styles.sellerTrophy} aria-hidden="true" />
+            ) : null}
+            <span className={styles.sellerRank}>#{rank}</span>
+            <div className={styles.sellerImageWrap} aria-hidden="true">
+              {seller.name.slice(0, 1).toUpperCase()}
+            </div>
+            <strong title={seller.name}>{seller.name}</strong>
+            <span>{money(seller.revenueAmount, seller.currency || 'USD')}</span>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
 // Full Recent Orders Table matching the GXON mockup
 export function RecentOrdersTable({
   rows,
@@ -139,10 +175,39 @@ export function RecentOrdersTable({
 }) {
   const { t } = useTranslation()
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const pageSize = 6
   const total = rows.length
   const paginatedRows = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   const totalPages = Math.ceil(total / pageSize) || 1
+
+  const allPaginatedSelected =
+    paginatedRows.length > 0 && paginatedRows.every((r) => selectedIds.has(r.order.id))
+  const somePaginatedSelected = paginatedRows.some((r) => selectedIds.has(r.order.id))
+
+  const handleToggleAll = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      paginatedRows.forEach((r) => {
+        if (checked) next.add(r.order.id)
+        else next.delete(r.order.id)
+      })
+      return next
+    })
+  }
+
+  const handleToggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleDownloadReport = () => {
+    window.open('/api/reports/export.csv', '_blank')
+  }
 
   return (
     <div className={styles.recentOrdersTableCard}>
@@ -151,27 +216,48 @@ export function RecentOrdersTable({
           {t('foundation.portalDashboard.recentOrders', { defaultValue: 'Recent Orders' })}
         </Typography.Title>
         <div className={styles.recentOrdersActions}>
-          <Button icon={<DownloadOutlined />} size="middle" className={styles.downloadReportBtn}>
+          <Button
+            icon={<DownloadOutlined />}
+            size="middle"
+            className={styles.downloadReportBtn}
+            onClick={handleDownloadReport}
+          >
             {t('foundation.portalDashboard.downloadReport', { defaultValue: 'Download Report' })}
           </Button>
           <Select
             value={statusFilter || 'all'}
             onChange={onStatusChange}
-            style={{ width: 130 }}
+            style={{ width: 140 }}
             options={[
               {
                 label: t('foundation.portalDashboard.allStatus', { defaultValue: 'All Status' }),
                 value: 'all',
               },
-              { label: 'Confirmed', value: 'confirmed' },
-              { label: 'Shipped', value: 'shipped' },
-              { label: 'Pending', value: 'pending' },
-              { label: 'Processing', value: 'processing' },
+              {
+                label: t('orders.statuses.CONFIRMED', { defaultValue: 'Confirmed' }),
+                value: 'confirmed',
+              },
+              {
+                label: t('orders.statuses.SHIPPED', { defaultValue: 'Shipped' }),
+                value: 'shipped',
+              },
+              {
+                label: t('orders.statuses.PENDING', { defaultValue: 'Pending' }),
+                value: 'pending',
+              },
+              {
+                label: t('orders.statuses.PROCESSING', { defaultValue: 'Processing' }),
+                value: 'processing',
+              },
+              {
+                label: t('orders.statuses.CANCELLED', { defaultValue: 'Cancelled' }),
+                value: 'cancelled',
+              },
             ]}
           />
           <Input
             prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-            placeholder="Search..."
+            placeholder={t('common.search', { defaultValue: 'Search...' })}
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
             allowClear
@@ -185,7 +271,11 @@ export function RecentOrdersTable({
           <thead>
             <tr>
               <th style={{ width: 44 }}>
-                <Checkbox />
+                <Checkbox
+                  checked={allPaginatedSelected}
+                  indeterminate={!allPaginatedSelected && somePaginatedSelected}
+                  onChange={(e) => handleToggleAll(e.target.checked)}
+                />
               </th>
               <th>{t('foundation.portalDashboard.product', { defaultValue: 'Product' })}</th>
               <th>{t('foundation.portalDashboard.orderId', { defaultValue: 'Order ID' })}</th>
@@ -234,17 +324,14 @@ export function RecentOrdersTable({
                         row.order.pricing?.currency || 'USD',
                       )
                     : money(0, row.order.pricing?.currency || 'USD')
-                const rawStatus = String(row.order.status || 'CONFIRMED').toUpperCase()
-
-                let opStatus: 'operational' | 'processing' | 'critical' | 'draft' = 'processing'
-                if (rawStatus === 'SHIPPED' || rawStatus === 'COMPLETED') opStatus = 'operational'
-                else if (rawStatus === 'CANCELLED' || rawStatus === 'FAILED') opStatus = 'critical'
-                else if (rawStatus === 'CONFIRMED' || rawStatus === 'NEW') opStatus = 'operational'
 
                 return (
                   <tr key={row.order.id} className={styles.tableRow}>
                     <td>
-                      <Checkbox />
+                      <Checkbox
+                        checked={selectedIds.has(row.order.id)}
+                        onChange={() => handleToggleRow(row.order.id)}
+                      />
                     </td>
                     <td>
                       <div className={styles.productCell}>
@@ -278,7 +365,9 @@ export function RecentOrdersTable({
                     <td className={styles.priceCell}>{unitPrice}</td>
                     <td className={styles.totalPriceCell}>{totalPrice}</td>
                     <td>
-                      <StatusTag status={opStatus}>{rawStatus}</StatusTag>
+                      <StatusTag status={orderStatusTone(row.order.status)}>
+                        {formatOrderStatusLabel(row.order.status, t)}
+                      </StatusTag>
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <div className={styles.rowActions}>
@@ -287,17 +376,31 @@ export function RecentOrdersTable({
                           size="small"
                           icon={<EyeOutlined />}
                           onClick={() => onViewOrder?.(row.order.id)}
-                          title="View order"
+                          title={t('common.viewDetails', { defaultValue: 'View details' })}
                         />
                         <Dropdown
                           menu={{
                             items: [
                               {
                                 key: 'view',
-                                label: 'View Details',
+                                label: t('common.viewDetails', { defaultValue: 'View Details' }),
                                 onClick: () => onViewOrder?.(row.order.id),
                               },
-                              { key: 'copy', label: 'Copy Order ID' },
+                              {
+                                key: 'copy',
+                                label: t('common.copyOrderId', { defaultValue: 'Copy Order ID' }),
+                                onClick: async () => {
+                                  const idToCopy = row.order.externalOrderId || row.order.id
+                                  if (idToCopy && navigator.clipboard) {
+                                    await navigator.clipboard.writeText(idToCopy)
+                                    message.success(
+                                      t('common.orderIdCopied', {
+                                        defaultValue: 'Order ID copied',
+                                      }),
+                                    )
+                                  }
+                                },
+                              },
                             ],
                           }}
                           trigger={['click']}
@@ -316,8 +419,12 @@ export function RecentOrdersTable({
 
       <div className={styles.recentOrdersFooter}>
         <span className={styles.paginationText}>
-          Showing {total > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{' '}
-          {Math.min(currentPage * pageSize, total)} of {total} entries
+          {t('common.pagination.showingEntries', {
+            from: total > 0 ? (currentPage - 1) * pageSize + 1 : 0,
+            to: Math.min(currentPage * pageSize, total),
+            total,
+            defaultValue: `Showing ${total > 0 ? (currentPage - 1) * pageSize + 1 : 0} to ${Math.min(currentPage * pageSize, total)} of ${total} entries`,
+          })}
         </span>
         <div className={styles.paginationControls}>
           <Button

@@ -22,7 +22,8 @@
   opacity: 0;
   background:
     linear-gradient(90deg, rgb(3 9 18 / 12%), rgb(3 9 18 / 32%)),
-    url('/assets/images/login-operations-hero-dark.png') center / cover no-repeat;
+    url('/assets/images/login-operations-hero-dark-v2.png') calc(50% + 70px) calc(50% + 72px) / auto
+      138% no-repeat;
   pointer-events: none;
   transition: opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -30,12 +31,13 @@
 .preferences {
   position: absolute;
   z-index: 1;
-  top: 24px;
+  top: 50%;
   right: 24px;
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: flex-end;
+  transform: translateY(-50%);
 }
 
 .workspace {
@@ -162,7 +164,39 @@
 :global(html[data-theme='dark']) .card {
   border-color: #393a3b;
   background: #242526;
+  color: rgb(226 232 240);
   box-shadow: 0 24px 64px rgb(0 0 0 / 42%);
+}
+
+:global(html[data-theme='dark']) .introTitle,
+:global(html[data-theme='dark']) .wordmark {
+  color: rgb(248 250 252) !important;
+}
+
+:global(html[data-theme='dark']) .introText,
+:global(html[data-theme='dark']) .formContent :global(.ant-form-item-label > label),
+:global(html[data-theme='dark']) .formActions :global(.ant-checkbox-wrapper),
+:global(html[data-theme='dark']) .socialDivider {
+  color: rgb(203 213 225) !important;
+}
+
+:global(html[data-theme='dark']) .formContent :global(.ant-input),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-affix-wrapper) {
+  border-color: rgb(100 116 139);
+  background: rgb(51 65 85);
+  color: rgb(248 250 252);
+}
+
+:global(html[data-theme='dark']) .formContent :global(.ant-input::placeholder),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-affix-wrapper input::placeholder),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-prefix),
+:global(html[data-theme='dark']) .formContent :global(.ant-input-suffix) {
+  color: rgb(203 213 225);
+}
+
+:global(html[data-theme='dark']) .socialDivider::before,
+:global(html[data-theme='dark']) .socialDivider::after {
+  border-color: rgb(71 85 105) !important;
 }
 
 .formContent {
@@ -206,8 +240,14 @@
 }
 
 .socialActions :global(.ant-btn) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
+  color: rgb(31 41 55);
+  background: rgb(255 255 255) !important;
+  border-color: rgb(203 213 225) !important;
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
@@ -215,15 +255,61 @@
     transform 180ms ease;
 }
 
-.socialActions :global(.ant-btn:nth-child(1)) {
-  color: rgb(24 119 242);
-  background: rgb(219 234 254);
-  border-color: rgb(191 219 254);
+:global(html[data-theme='dark']) .socialActions :global(.ant-btn) {
+  color: rgb(226 232 240) !important;
+  background: rgb(51 65 85) !important;
+  border-color: rgb(71 85 105) !important;
+}
+
+:global(html[data-theme='dark']) .socialActions :global(.ant-btn):hover {
+  box-shadow: 0 8px 16px rgb(0 0 0 / 35%);
+  transition-duration: 0ms;
+}
+
+:global(html[data-theme='dark']) .socialActions .facebookButton {
+  color: rgb(96 165 250) !important;
+}
+
+.microsoftButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+
+:global(html[data-theme='dark']) .microsoftButton {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.microsoftButton :global(svg) {
+  width: 18px;
+  height: 18px;
+}
+
+.microsoftButton:hover {
+  background: rgb(37 99 235) !important;
+  border-color: rgb(96 165 250) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 22px rgb(59 130 246 / 46%),
+    0 12px 28px rgb(59 130 246 / 36%);
+}
+
+:global(html[data-theme='dark']) .socialActions .microsoftButton:hover {
+  background: rgb(37 99 235) !important;
+  border-color: rgb(96 165 250) !important;
+  box-shadow: 0 10px 20px rgb(59 130 246 / 45%);
+  transition-duration: 0ms;
 }
 
 .facebookButton {
   display: inline-grid;
   place-items: center;
+  color: rgb(24 119 242) !important;
+  background: rgb(219 234 254) !important;
+  border-color: rgb(191 219 254) !important;
 }
 
 .facebookButton :global(svg) {
@@ -232,28 +318,93 @@
   fill: currentcolor;
 }
 
+.facebookButton:hover {
+  color: rgb(255 255 255) !important;
+  background: rgb(24 119 242) !important;
+  border-color: rgb(24 119 242) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 22px rgb(24 119 242 / 46%),
+    0 12px 28px rgb(24 119 242 / 36%);
+}
+
+.xButton {
+  color: rgb(31 41 55) !important;
+  background: rgb(229 231 235) !important;
+  border-color: rgb(209 213 219) !important;
+}
+
+:global(html[data-theme='dark']) .xButton {
+  color: rgb(203 213 225) !important;
+  background: rgb(51 65 85) !important;
+  border-color: rgb(71 85 105) !important;
+}
+
 .xButton :global(svg) {
   width: 15px;
   height: 15px;
-  fill: rgb(31 41 55);
+  fill: currentcolor;
 }
 
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+.xButton:hover {
+  background: rgb(31 41 55) !important;
+  border-color: rgb(31 41 55) !important;
+  color: rgb(255 255 255) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 18px rgb(15 23 42 / 28%),
+    0 12px 28px rgb(15 23 42 / 20%);
 }
 
-.socialActions :global(.ant-btn:nth-child(2)) {
-  color: rgb(31 41 55);
-  background: rgb(229 231 235);
-  border-color: rgb(209 213 219);
+.xButton:hover :global(svg) {
+  fill: rgb(255 255 255);
+}
+
+.githubButton {
+  color: rgb(31 41 55) !important;
+  background: rgb(229 231 235) !important;
+  border-color: rgb(209 213 219) !important;
+}
+
+:global(html[data-theme='dark']) .githubButton {
+  color: rgb(203 213 225) !important;
+  background: rgb(51 65 85) !important;
+  border-color: rgb(71 85 105) !important;
+}
+
+.githubButton:hover {
+  color: rgb(255 255 255) !important;
+  background: rgb(31 41 55) !important;
+  border-color: rgb(31 41 55) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 18px rgb(15 23 42 / 28%),
+    0 12px 28px rgb(15 23 42 / 20%);
+}
+
+:global(html[data-theme='dark']) .socialActions .facebookButton:hover {
+  color: rgb(255 255 255) !important;
+  background: rgb(24 119 242) !important;
+  border-color: rgb(96 165 250) !important;
+  box-shadow: 0 10px 20px rgb(24 119 242 / 45%);
+}
+
+:global(html[data-theme='dark']) .socialActions .xButton:hover {
+  color: rgb(15 23 42) !important;
+  background: rgb(226 232 240) !important;
+  border-color: rgb(248 250 252) !important;
+  box-shadow: 0 10px 20px rgb(226 232 240 / 25%);
+}
+
+:global(html[data-theme='dark']) .socialActions .xButton:hover :global(svg) {
+  fill: rgb(15 23 42);
+}
+
+:global(html[data-theme='dark']) .socialActions .githubButton:hover {
+  color: rgb(15 23 42) !important;
+  background: rgb(248 250 252) !important;
+  border-color: rgb(255 255 255) !important;
+  box-shadow: 0 10px 20px rgb(248 250 252 / 25%);
 }
 
 .googleButton {
@@ -267,42 +418,22 @@
   height: 18px;
 }
 
-.socialActions :global(.ant-btn:nth-child(4)) {
-  color: rgb(31 41 55);
-  background: rgb(229 231 235);
-  border-color: rgb(209 213 219);
-}
-
-.socialActions :global(.ant-btn:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgb(15 23 42 / 18%);
-}
-
-.socialActions :global(.ant-btn:nth-child(1):hover) {
-  color: rgb(255 255 255);
-  background: rgb(24 119 242);
-  border-color: rgb(24 119 242);
-}
-
-.socialActions :global(.ant-btn:nth-child(2):hover) {
-  background: rgb(31 41 55);
-  border-color: rgb(31 41 55);
-}
-
-.xButton:hover :global(svg) {
-  fill: rgb(255 255 255);
-}
-
 .googleButton:hover {
   background: rgb(255 255 255) !important;
   border-color: rgb(196 199 197) !important;
   box-shadow: 0 8px 16px rgb(60 64 67 / 28%) !important;
 }
 
-.socialActions :global(.ant-btn:nth-child(4):hover) {
-  color: rgb(255 255 255);
-  background: rgb(31 41 55);
-  border-color: rgb(31 41 55);
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .submit {
@@ -338,7 +469,7 @@
   .preferences {
     top: 18px;
     right: 16px;
-    left: 16px;
+    transform: none;
   }
 
   .card :global(.ant-card-body) {

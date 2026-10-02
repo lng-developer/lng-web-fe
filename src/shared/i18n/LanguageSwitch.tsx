@@ -1,27 +1,35 @@
 import { useTranslation } from 'react-i18next'
-import { Segmented } from 'antd'
+import { Button, Tooltip } from 'antd'
 
 import { type Language, LANGUAGE_STORAGE_KEY } from './i18n'
+import styles from './LanguageSwitch.module.scss'
 
-export function LanguageSwitch() {
+type LanguageSwitchProps = {
+  showTooltip?: boolean
+}
+
+export function LanguageSwitch({ showTooltip = true }: LanguageSwitchProps) {
   const { i18n, t } = useTranslation()
   const language: Language = i18n.resolvedLanguage === 'en' ? 'en' : 'vi'
+  const nextLanguage: Language = language === 'en' ? 'vi' : 'en'
 
-  function changeLanguage(value: string | number) {
-    const nextLanguage: Language = value === 'en' ? 'en' : 'vi'
+  function changeLanguage() {
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage)
     void i18n.changeLanguage(nextLanguage)
   }
 
-  return (
-    <Segmented
+  const button = (
+    <Button
       aria-label={t('language.label')}
-      options={[
-        { label: 'VI', value: 'vi', title: t('language.vi') },
-        { label: 'EN', value: 'en', title: t('language.en') },
-      ]}
-      value={language}
-      onChange={changeLanguage}
-    />
+      className={styles.button}
+      type="text"
+      onClick={changeLanguage}
+    >
+      <span key={language} className={styles.label}>
+        {language.toUpperCase()}
+      </span>
+    </Button>
   )
+
+  return showTooltip ? <Tooltip title={t(`language.${nextLanguage}`)}>{button}</Tooltip> : button
 }

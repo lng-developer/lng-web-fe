@@ -1,0 +1,10 @@
+:global(.request-decision-modal) {
+  :global(.ant-form-item) {
+    margin-bottom: 0;
+  }
+
+  :global(.ant-input-textarea textarea) {
+    min-height: 104px;
+    resize: vertical;
+  }
+}

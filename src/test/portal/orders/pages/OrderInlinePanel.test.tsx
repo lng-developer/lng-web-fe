@@ -225,6 +225,25 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByText('J2501-DM-1')).not.toBeInTheDocument()
   })
 
+  it('shows the scale assignee code and name from production.scaleBy', () => {
+    renderPanel(true, undefined, {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          production: {
+            status: 'NEED_SCALE',
+            scaleStatus: 'SCALED',
+            qcStatus: 'NOT_READY',
+            scaleBy: { employeeCode: 'J2502', name: 'Đặng Thành Trung' },
+          },
+        },
+      ],
+    })
+
+    expect(screen.getByText('J2502 · Đặng Thành Trung')).toBeInTheDocument()
+  })
+
   it('shows recheck for a mapping-blocked item', () => {
     renderPanel()
 

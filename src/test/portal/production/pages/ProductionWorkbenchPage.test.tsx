@@ -37,6 +37,11 @@ const account: CurrentAccount = {
   profileSetupRequired: false,
 }
 
+const scaleManagerAccount: CurrentAccount = {
+  ...account,
+  permissions: ['PRODUCTION:READ', 'PRODUCTION:WRITE'],
+}
+
 const blockedTask: Awaited<ReturnType<typeof listProductionTasks>>['items'][number] = {
   id: 'production-task-1',
   status: 'BLOCKED',
@@ -56,18 +61,18 @@ function LocationProbe() {
   return <output aria-label="Current location">{location.pathname + location.search}</output>
 }
 
-function renderPage(initialEntry = '/portal/production') {
+function renderPage(initialEntry = '/portal/production', accountProp = account) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <AppProviders>
         <Routes>
           <Route
             path="/portal/production"
-            element={<ProductionWorkbenchPage account={account} />}
+            element={<ProductionWorkbenchPage account={accountProp} />}
           />
           <Route
             path="/portal/production/:queue"
-            element={<ProductionWorkbenchPage account={account} />}
+            element={<ProductionWorkbenchPage account={accountProp} />}
           />
         </Routes>
         <LocationProbe />
@@ -130,6 +135,41 @@ describe('ProductionWorkbenchPage', () => {
     expect(summarizeProductionQueueCounts).toHaveBeenCalledWith({})
   })
 
+  it('shows the production metrics in the requested order', async () => {
+    renderPage()
+
+    await waitFor(() => expect(summarizeProductionTasks).toHaveBeenCalled())
+
+    const metricLabels = Array.from(
+      document.querySelectorAll<HTMLElement>('[class*="metrics"] [class*="metricLabel"]'),
+    ).map((element) => element.textContent)
+
+    expect(metricLabels).toEqual(['Total', 'Need scale', 'QC pending', 'Block'])
+    expect(screen.queryByText('Ready')).not.toBeInTheDocument()
+  })
+
+  it('changes only the data when the Block metric is clicked from the Scale route', async () => {
+    renderPage('/portal/production/scale', scaleManagerAccount)
+
+    fireEvent.click(await screen.findByRole('button', { name: /Block/ }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('status', { name: 'Current location' })).toHaveTextContent(
+        '/portal/production/scale?queue=blocked',
+      ),
+    )
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          psdReadyOnly: false,
+          status: 'BLOCKED',
+          view: undefined,
+        }),
+      ),
+    )
+    expect(screen.getByRole('button', { name: /Recheck PSD-blocked tasks/ })).toBeVisible()
+  })
+
   it('keeps normal task rows in the document flow', async () => {
     vi.mocked(listProductionTasks).mockResolvedValue({
       items: [blockedTask],
@@ -141,6 +181,23 @@ describe('ProductionWorkbenchPage', () => {
 
     const row = (await screen.findByText('113-2183249-0763446')).closest('tr')
     expect(row?.className).not.toMatch(/stickyOrderRow/)
+  })
+
+  it('keeps the task table scrollable within the viewport when exactly one task is expanded', async () => {
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [blockedTask],
+      total: 1,
+      page: 1,
+      limit: 10,
+    })
+    renderPage()
+
+    await screen.findByText('113-2183249-0763446')
+    const table = document.querySelector('.ant-table-container table')
+
+    if (!table) throw new Error('Production task table is required')
+
+    expect(table.closest('[class*="dataTableFillViewport"]')).not.toBeNull()
   })
 
   it('keeps every visible task detail expanded', async () => {
@@ -160,6 +217,33 @@ describe('ProductionWorkbenchPage', () => {
     renderPage()
 
     expect(await screen.findAllByText('Task context')).toHaveLength(2)
+  })
+
+  it('shows the CS note in the required slots panel', async () => {
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [
+        {
+          ...blockedTask,
+          csNote: 'Use the customer-provided artwork.',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 10,
+    })
+    renderPage('/portal/production/blocked')
+
+    const csNote = await screen.findByText('Use the customer-provided artwork.')
+    const requiredSlotsPanel = csNote.closest('[class*="outputSection"]')
+    const requiredSlotsContent = requiredSlotsPanel?.querySelector(
+      '[class*="requiredSlotsContent"]',
+    )
+
+    expect(requiredSlotsPanel).toHaveTextContent('CS note')
+    expect(requiredSlotsPanel).toHaveTextContent('Required slots')
+    expect(requiredSlotsContent).toHaveTextContent('Required slots')
+    expect(requiredSlotsContent).not.toContainElement(csNote)
+    expect(csNote.closest('[class*="taskMeta"]')).toBeNull()
   })
 
   it('restores the selected queue tab from the URL after reload', async () => {

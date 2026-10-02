@@ -1,5 +1,5 @@
 import { I18nextProvider } from 'react-i18next'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Modal } from 'antd'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
@@ -8,6 +8,7 @@ import { THEME_STORAGE_KEY } from '@/shared/theme/theme'
 import { ThemeProvider } from '@/shared/theme/ThemeProvider'
 import { PopupModal } from '@/shared/ui'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
+import themeSwitchStyles from '@/shared/theme/ThemeSwitch.module.scss'
 
 describe('ThemeProvider', () => {
   beforeEach(async () => {
@@ -26,7 +27,12 @@ describe('ThemeProvider', () => {
       </I18nextProvider>,
     )
 
-    expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked()
+    const appearanceButton = screen.getByRole('button', { name: 'Appearance' })
+
+    expect(appearanceButton).toHaveClass(themeSwitchStyles.button)
+    expect(appearanceButton).toHaveAttribute('aria-pressed', 'false')
+    expect(appearanceButton.querySelector('[data-icon="sun"]')).toBeInTheDocument()
+    expect(appearanceButton.querySelector('[data-icon="moon"]')).not.toBeInTheDocument()
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light')
     expect(document.documentElement.dataset.theme).toBe('light')
   })
@@ -40,12 +46,15 @@ describe('ThemeProvider', () => {
       </I18nextProvider>,
     )
 
-    fireEvent.click(
-      within(screen.getByRole('radiogroup', { name: 'Appearance' })).getByText('Dark'),
-    )
+    const appearanceButton = screen.getByRole('button', { name: 'Appearance' })
+
+    fireEvent.click(appearanceButton)
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark')
     expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(appearanceButton).toHaveAttribute('aria-pressed', 'true')
+    expect(appearanceButton.querySelector('[data-icon="moon"]')).toBeInTheDocument()
+    expect(appearanceButton.querySelector('[data-icon="sun"]')).not.toBeInTheDocument()
   })
 
   it('places application modals near the top by default', () => {

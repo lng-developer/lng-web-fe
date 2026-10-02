@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { useState } from 'react'
 import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -27,6 +29,11 @@ import {
   TableFooter,
 } from '@/shared/ui'
 import { serializeDateTimeValue } from '@/shared/ui/dateTimeValue'
+
+const sharedUiStyles = readFileSync(
+  join(process.cwd(), 'src', 'shared', 'ui', 'sharedUi.module.scss'),
+  'utf8',
+)
 
 describe('shared UI', () => {
   beforeEach(async () => {
@@ -140,14 +147,19 @@ describe('shared UI', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Retry')
   })
 
-  it('allows a caller to style the filter control group and defaults to borderless', () => {
+  it('allows a caller to style the filter container and control group', () => {
     const { rerender } = render(
-      <FilterBar label="Account filters" contentClassName="single-line-filters">
+      <FilterBar
+        label="Account filters"
+        className="orders-filter-bar"
+        contentClassName="single-line-filters"
+      >
         <input aria-label="Search" />
       </FilterBar>,
     )
 
     const search = screen.getByRole('search')
+    expect(search).toHaveClass('orders-filter-bar')
     expect(search.querySelector('.single-line-filters')).toBeInTheDocument()
     expect(search.className).toContain('filterBarBorderless')
     expect(search.className).not.toContain('filterBarBordered')
@@ -187,6 +199,44 @@ describe('shared UI', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent('Order details')
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled()
+  })
+
+  it('keeps an empty table header at the container width', () => {
+    render(
+      <CoreDataTable
+        columns={[
+          { dataIndex: 'order', title: 'Order', width: 136 },
+          { dataIndex: 'shop', title: 'Shop', width: 150 },
+        ]}
+        dataSource={[]}
+        scroll={{ x: '100%' }}
+      />,
+    )
+
+    expect(screen.getAllByRole('table').some((table) => table.style.tableLayout === 'fixed')).toBe(
+      true,
+    )
+    expect(sharedUiStyles).toMatch(
+      /\.dataTable\s+:global\(\.ant-table-(?:content|header|body)\s*>\s*table\)[\s\S]*?min-width:\s*100%\s*!important;/,
+    )
+    const viewportTableRegionRule = sharedUiStyles.match(
+      /\.dataTableFillViewport\s+:global\(\.ant-table-content\),\s*\.dataTableFillViewport\s+:global\(\.ant-table-header\),\s*\.dataTableFillViewport\s+:global\(\.ant-table-body\)\s*\{([^}]*)\}/s,
+    )?.[1]
+
+    expect(viewportTableRegionRule).toMatch(/width:\s*100%;/)
+  })
+
+  it('does not split an empty viewport table into a fixed header', () => {
+    render(
+      <CoreDataTable
+        fillViewport
+        columns={[{ dataIndex: 'order', title: 'Order', width: 136 }]}
+        dataSource={[]}
+        scroll={{ x: '100%' }}
+      />,
+    )
+
+    expect(document.querySelector('.ant-table-header')).not.toBeInTheDocument()
   })
 
   it('returns to the first row when the table page changes', async () => {

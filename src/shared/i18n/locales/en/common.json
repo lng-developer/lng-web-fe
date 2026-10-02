@@ -35,12 +35,34 @@
     "copyOrderId": "Copy order ID",
     "orderIdCopied": "Order ID copied",
     "close": "Close",
+    "date": "Date",
     "pagination": {
       "rowsPerPage": "Rows per page",
       "jumpToPage": "Jump to page",
       "firstPage": "First page",
       "lastPage": "Last page",
       "showingEntries": "Showing {{from}} to {{to}} of {{total}} entries"
+    },
+    "save": "Save",
+    "create": "Create",
+    "title": "Title",
+    "required": "Required",
+    "status": "Status",
+    "description": "Description",
+    "actions": "Actions",
+    "search": "Search",
+    "orderId": "Order ID",
+    "channel": "Channel",
+    "priority": "Priority",
+    "note": "Note",
+    "createdAt": "Created at",
+    "created": "Created",
+    "updated": "Updated",
+    "refresh": "Refresh",
+    "unknown": "Unknown",
+    "copy": "Copy",
+    "table": {
+      "viewDetails": "View details"
     }
   },
   "language": {
@@ -147,7 +169,7 @@
       "integrations": "Integrations",
       "production": "Production",
       "design": "Design",
-      "vendorSubmissions": "Vendor submissions",
+      "vendorSubmissions": "Vendor Handoff",
       "shipments": "Shipments",
       "workScores": "Work scores",
       "orders": "Orders",
@@ -311,7 +333,9 @@
       "quality": "Accepted / parsed",
       "reason": "Failure reason",
       "importedAt": "Imported at",
-      "actions": "Actions",
+      "actions": {
+        "import": "Import"
+      },
       "valid": "Valid",
       "errors": "Errors",
       "detailTitle": "Import batch details",
@@ -494,6 +518,11 @@
       "contribution": "{{percent}}% of {{metric}}",
       "table": "Seller P&L",
       "summary": "Summary",
+      "summaryDetails": "Summary details",
+      "cashFlow": "Cash Flow",
+      "cashIn": "Cash in",
+      "cashOut": "Cash out",
+      "netCashFlow": "Net cash flow",
       "daily": "Daily detail",
       "dailyTable": "Daily seller P&L",
       "explanation": "How profit is calculated",
@@ -508,6 +537,7 @@
       "completePnl": "Complete order P&L",
       "costCoverage": "Cost coverage",
       "costCoverageValue": "{{costed}} / {{total}} orders with cost",
+      "costCoverageSubtext": "orders with cost",
       "tableTitle": "Order cost details",
       "allOrders": "All orders",
       "missingCostOnly": "Missing cost",
@@ -914,7 +944,9 @@
     "removed": "Removed successfully",
     "restored": "Restored successfully",
     "failed": "Action failed",
-    "unsaved": "Unsaved changes"
+    "unsaved": "Unsaved changes",
+    "copied": "Copied to clipboard",
+    "updated": "Updated successfully"
   },
   "foundation": {
     "eyebrow": "Operations",
@@ -967,7 +999,11 @@
       "daily": "Daily",
       "weekly": "Weekly",
       "clear": "Clear",
-      "apply": "Apply"
+      "apply": "Apply",
+      "previousMonth": "Previous month",
+      "month": "Month",
+      "year": "Year",
+      "nextMonth": "Next month"
     },
     "card": {
       "title": "Logistics Manager",
@@ -1106,6 +1142,10 @@
       "actionQueue": "Action queue",
       "orderAnalytics": "Order analytics",
       "summary": "Summary",
+      "cashFlow": "Cash Flow",
+      "cashIn": "Cash in",
+      "cashOut": "Cash out",
+      "netCashFlow": "Net cash flow",
       "approved": "Approved",
       "draft": "Draft",
       "noPsd": "No PSD",
@@ -1132,6 +1172,7 @@
       "revenue": "Revenue",
       "today": "Today",
       "topCategories": "Top Categories",
+      "topSellers": "Top Seller",
       "price": "Price",
       "totalPrice": "Total Price",
       "action": "Action",
@@ -1153,7 +1194,27 @@
       "viewImportHealth": "View import health",
       "youEarn": "You earn",
       "todayTrends": "today, it's higher than last month keep up your good trends!",
-      "lastMonth": "Last Month"
+      "lastMonth": "Last Month",
+      "dateRange": "Date range",
+      "tasksNeedAttention": "{{count}} tasks need attention",
+      "systemStable": "System stable",
+      "needsAction": "Action required",
+      "good": "Good",
+      "needsMappingDesc": "New orders awaiting SKU mapping rules",
+      "mappingCompleteDesc": "All orders mapped",
+      "configureMapping": "Configure mapping",
+      "waitingProduction": "Awaiting production",
+      "needsProductionDesc": "Ready for print workshop & processing",
+      "noPendingProductionDesc": "No orders awaiting production approval",
+      "openProduction": "Open production",
+      "vendorErrors": "{{count}} errors",
+      "checkVendors": "Check vendors",
+      "connectedGood": "Connected",
+      "sync": "Sync",
+      "integrationAndData": "Integrations & Data",
+      "integrationDesc": "Sales channels, payment gateways & listings operational",
+      "otherIssuesLabel": "Other pending tasks:",
+      "viewCustomers": "View customers"
     },
     "accessDenied": "You do not have permission to access operations dashboard.",
     "metrics": {
@@ -1222,8 +1283,14 @@
       "socialOptions": "Social sign-in options",
       "socialFacebook": "Continue with Facebook",
       "socialGoogle": "Continue with Google",
+      "socialMicrosoft": "Continue with Microsoft (@lngwork.co)",
       "socialX": "Continue with X",
-      "socialGithub": "Continue with GitHub"
+      "socialGithub": "Continue with GitHub",
+      "googleNotConfigured": "Google Client ID is not configured in the system.",
+      "googleLoadError": "Failed to load Google authentication service. Please try again later.",
+      "googleFailed": "Google sign-in was unsuccessful.",
+      "microsoftNotConfigured": "Microsoft Client ID is not configured in the system.",
+      "microsoftFailed": "Microsoft sign-in was unsuccessful."
     },
     "public": {
       "fullName": "Name",
@@ -1301,7 +1368,31 @@
         "taxPlaceholder": "Enter personal tax ID",
         "insurancePlaceholder": "Enter social insurance number",
         "bankPlaceholder": "Select a bank",
-        "bankAccountPlaceholder": "Enter bank account number"
+        "bankAccountPlaceholder": "Enter bank account number",
+        "noDepartment": "Unassigned department",
+        "employeeCode": "Staff ID",
+        "optionalBadge": "Optional",
+        "legalNotice": "Legal, tax and bank details can be added later in your Profile settings.",
+        "personalSub": "Your primary contact information for work",
+        "emergencySub": "Contact person to reach in case of emergencies",
+        "legalAndBank": "Identity papers & Bank details",
+        "selectGender": "Select gender",
+        "workEmail": "Work email",
+        "status": "Status",
+        "active": "Active",
+        "loginMethod": "Sign-in method",
+        "authMicrosoft": "Microsoft 365",
+        "authLocal": "Internal Account",
+        "digitalBadge": "Staff Member ID",
+        "heroGreeting": "Welcome to the team",
+        "heroSubtitle": "Please complete your employee profile details to activate full access to the LNG operations workspace.",
+        "stepAuth": "Account authenticated",
+        "stepProfile": "Contact details",
+        "stepReady": "Ready to operate",
+        "supportNote": "Need help? Contact IT Support at",
+        "footerNotice": "All information can be updated anytime in HR Settings.",
+        "submitCta": "Complete setup",
+        "changeAvatar": "Change photo"
       }
     },
     "accessExplorer": {
@@ -1370,7 +1461,10 @@
       "overview": "Overview",
       "editGlobalAccess": "Edit global access",
       "accessSummary": "Manage the roles and access assigned to this account.",
-      "securitySummary": "Password, sessions, and account status are managed in the security workspace."
+      "securitySummary": "Password, sessions, and account status are managed in the security workspace.",
+      "selectedCount": "{{count}} selected",
+      "clearSelection": "Clear selection",
+      "selectedAccounts": "Selected accounts"
     },
     "accessEditor": {
       "title": "Manage access",
@@ -1418,7 +1512,14 @@
       "security": "Security",
       "workspaces": "Account workspaces",
       "workspacesDescription": "Access permissions and security actions are managed separately.",
-      "unavailable": "Account data is unavailable"
+      "unavailable": "Account data is unavailable",
+      "endDate": "End date",
+      "activeAccount": "Active account",
+      "saveOperatingCost": "Save operating cost",
+      "operatingCost": "Operating cost",
+      "operatingCostDescription": "Configure daily operating cost for this account.",
+      "dailyCost": "Daily cost",
+      "startDate": "Start date"
     },
     "accountSecurity": {
       "title": "Security",
@@ -1440,7 +1541,8 @@
       "archiveTitle": "Archive this account?",
       "archiveDescription": "This action removes the account from active administration.",
       "success": "Security changes saved",
-      "error": "Security changes could not be saved"
+      "error": "Security changes could not be saved",
+      "dangerZone": "Danger zone"
     },
     "accessControl": {
       "title": "Access control",
@@ -1637,11 +1739,59 @@
     "lunchAllowance": "Lunch allowance",
     "fuelAllowance": "Fuel allowance",
     "otherAllowance": "Other allowance",
-    "responsibilityAllowance": "Responsibility allowance"
+    "responsibilityAllowance": "Responsibility allowance",
+    "clearFilters": "Clear filters"
   },
   "hrOperations": {
     "title": "HR Operations",
     "description": "Manage people, schedules, attendance, requests, and payroll in one workspace.",
+    "dashboard": {
+      "title": "HR Operations Dashboard",
+      "subtitle": "Real-time workforce, attendance tracking, action queues, and payroll status.",
+      "headcount": "Total Headcount",
+      "activeEmployees": "Active staff",
+      "probation": "Probation",
+      "onLeave": "On leave",
+      "attendanceRate": "Attendance rate",
+      "presentToday": "Present today",
+      "exceptions": "Attendance Exceptions",
+      "pendingApprovals": "Pending Approvals",
+      "payrollSummary": "Payroll Period",
+      "attendanceTrend": "Attendance & Punctuality Trend",
+      "todayOperations": "Today's Operations Breakdown",
+      "actionQueue": "Action Queue & Approvals",
+      "departmentWorkforce": "Department Workforce",
+      "announcements": "Company Announcements",
+      "quickWorkspaces": "Quick Workspaces",
+      "goToApprovals": "Go to Approvals",
+      "scheduleWorkspace": "Work Schedule",
+      "attendanceWorkspace": "Attendance",
+      "approvalsWorkspace": "Approvals",
+      "payrollWorkspace": "Payroll",
+      "employeesWorkspace": "Employees",
+      "organizationWorkspace": "Organization",
+      "viewApprovals": "Go to Approvals",
+      "viewAttendance": "View Attendance",
+      "viewPayroll": "View Payroll",
+      "viewSchedule": "Work Schedule",
+      "viewStaff": "Staff Directory",
+      "viewOrganization": "Organization Chart",
+      "missingCheckouts": "Missing check-outs",
+      "late": "Late arrivals",
+      "absent": "Absent",
+      "present": "Present",
+      "expected": "Expected",
+      "approvedOtToday": "Approved OT today",
+      "pendingLeaves": "Pending leave requests",
+      "pendingOvertimes": "Pending overtime requests",
+      "pendingAdjustments": "Pending adjustments",
+      "days7": "7 days",
+      "days30": "30 days",
+      "today": "Today",
+      "noAnnouncements": "No recent announcements",
+      "noDepartments": "No departments found",
+      "allGood": "No pending action required"
+    },
     "tabs": {
       "people": "People",
       "schedule": "Schedule",
@@ -1713,6 +1863,9 @@
       "end": "End",
       "assignments": "Staff assignments",
       "assignShift": "Assign shift",
+      "editAssignment": "Edit assignment",
+      "deactivateAssignment": "Deactivate assignment",
+      "deactivateAssignmentConfirm": "Deactivate this assignment?",
       "effective": "Effective",
       "holidays": "Holidays & substitute workdays",
       "addHoliday": "Add day",
@@ -1879,6 +2032,15 @@
       "overtimeRange": "{{date}} · {{from}}-{{to}}",
       "noReason": "No reason provided",
       "reasonPlaceholder": "Please provide reason for this request...",
+      "approveConfirmTitle": "Approve request?",
+      "approveConfirmDescription": "Approve {{type}} request from {{employee}}?",
+      "rejectTitle": "Reject request",
+      "rejectDescription": "Provide a reason so the employee understands the decision.",
+      "decisionReason": "Decision reason",
+      "decisionReasonPlaceholder": "Explain why this request is being rejected...",
+      "reasonRequired": "A reason is required.",
+      "confirmApprove": "Approve",
+      "confirmReject": "Reject",
       "tabs": {
         "leave": "Leave requests ({{count}})",
         "overtime": "Overtime requests ({{count}})"
@@ -2307,6 +2469,7 @@
   "portal": {
     "catalog": {
       "title": "Catalog listings",
+      "asin": "Asin",
       "actions": "Actions",
       "view": "View",
       "moreActions": "More actions",
@@ -2672,7 +2835,9 @@
       "results": "{{count}} results",
       "listingCount": "{{count}} listings",
       "rejectReason": "Rejection reason",
-      "reasonRequired": "Reason is required"
+      "reasonRequired": "Reason is required",
+      "openAmazonProduct": "View on Amazon",
+      "openEtsyListing": "View on Etsy"
     },
     "monitoring": {
       "title": "System Monitoring & Observability",
@@ -2802,9 +2967,16 @@
       "listing": "Listing",
       "type": "Type",
       "shop": "Shop",
+      "asinType": "ASIN Type",
       "designer": "Designer",
       "unknownDesigner": "Unknown designer",
       "unassigned": "Unassigned",
+      "productImage": "Product Image",
+      "asin": "Asin",
+      "statusTask": "Status Task",
+      "assignedTo": "Assigned",
+      "psdStatus": "PSD Status",
+      "seller": "Seller",
       "priority": "Priority",
       "status": "Status",
       "updatedAt": "Updated",
@@ -2873,8 +3045,19 @@
       "copyAsin": "Copy ASIN",
       "asinCopied": "ASIN copied",
       "tasks": "Design tasks",
+      "ideaTasks": "Idea Tasks",
+      "psdTasks": "PSD Tasks",
+      "pngTasks": "PNG Tasks",
       "amazonTasks": "Amazon tasks",
       "etsyTasks": "Etsy tasks",
+      "createIdeaTask": "Create Idea Task",
+      "updateIdeaTask": "Update Idea Task",
+      "referenceLink": "Reference Link",
+      "scaleBy": "Scale By",
+      "scaleStatus": "Scale Status",
+      "orderOwner": "Order Owner",
+      "uploadScaledPng": "Upload Scaled PNG",
+      "submitScaleQc": "Submit to QC",
       "taskTypes": {
         "PSD_TEMPLATE": "PSD template",
         "MOCKUP": "Mockup",
@@ -2895,6 +3078,7 @@
         "IDEA": "Idea"
       },
       "statuses": {
+        "NEW": "New",
         "REQUESTED": "Requested",
         "OPEN": "Open",
         "ASSIGNED": "Assigned",
@@ -2903,7 +3087,51 @@
         "APPROVED": "Approved",
         "REJECTED": "Rejected",
         "CANCELLED": "Cancelled"
-      }
+      },
+      "scoreLevels": {
+        "STANDARD": "Standard",
+        "HARD": "Hard",
+        "EASY": "Easy",
+        "MEDIUM": "Medium",
+        "COMPLEX": "Complex",
+        "SPECIAL": "Special"
+      },
+      "scoreStatuses": {
+        "ALL": "All statuses",
+        "ACTIVE": "Active",
+        "VOIDED": "Voided",
+        "OVERRIDDEN": "Overridden"
+      },
+      "enterTitle": "Enter title",
+      "selectProductType": "Select product type",
+      "enterDescription": "Enter description",
+      "psdFile": "PSD file",
+      "psdRole": "Role",
+      "psdRoles": {
+        "REFERENCE": "Reference",
+        "SUBMISSION": "Submission",
+        "APPROVED": "Approved"
+      },
+      "taskStatus": "Task status",
+      "psdFilters": "PSD filters",
+      "searchFileOrSku": "Search file or SKU",
+      "allRoles": "All roles",
+      "allDesigners": "All designers",
+      "allTaskStatuses": "All task statuses",
+      "createdAt": "Created at",
+      "workspace": "Design Workspace",
+      "scores": "Design Scores",
+      "taskId": "Task ID",
+      "scoreLevel": "Score level",
+      "scoreStatus": "Score status",
+      "basePoints": "Base points",
+      "finalPoints": "Final points",
+      "scoredAt": "Scored at",
+      "overrideScore": "Override score",
+      "voidScore": "Void score",
+      "overrideReason": "Override reason",
+      "voidReason": "Void reason",
+      "allTaskTypes": "All task types"
     },
     "integrations": {
       "title": "External order imports",
@@ -2950,6 +3178,8 @@
       },
       "statuses": {
         "PENDING": "Pending",
+        "QUEUED": "Queued",
+        "PROCESSING": "Processing",
         "PARSING": "Parsing",
         "IMPORTING": "Importing",
         "COMPLETED": "Completed",
@@ -3073,7 +3303,15 @@
         "allCommands": "All commands",
         "runningCommands": "Running / Claimed",
         "failedOnly": "Failed only",
-        "succeededOnly": "Succeeded"
+        "succeededOnly": "Succeeded",
+        "saveOrderSchedule": "Save order schedule",
+        "configureOrderSchedule": "Configure order schedule",
+        "configurePullOrders": "Configure order pull",
+        "pullAds": "Pull ads",
+        "configurePullAds": "Configure ads pull",
+        "testConnection": "Test connection",
+        "revokeToken": "Revoke token",
+        "viewTaskDetails": "View task details"
       },
       "panel": {
         "title": "Import job",
@@ -3097,7 +3335,13 @@
         "retryFailed": "Import retry failed",
         "confirmTitle": "Retry this import?",
         "confirmRetry": "Confirm retry",
-        "confirmDescription": "Failed rows and eligible post-import work will be retried."
+        "confirmDescription": "Failed rows and eligible post-import work will be retried.",
+        "postImportRetryQueued": "Post-import retry queued",
+        "postImportRetryFailed": "Post-import retry failed",
+        "parseProgress": "Parse progress",
+        "importProgress": "Import progress",
+        "postImportProgress": "Post-import progress",
+        "openIssues": "Open issues"
       },
       "issues": {
         "title": "Import issue queue",
@@ -3129,7 +3373,9 @@
         "reference": "Reference",
         "normalizeStatus": "Normalize status",
         "importStatus": "Import status",
-        "postImportStatus": "Post-import status"
+        "postImportStatus": "Post-import status",
+        "actions": "Actions",
+        "retryMapping": "Retry mapping"
       },
       "resolution": {
         "title": "Resolve import issue",
@@ -3145,6 +3391,29 @@
           "RESOLVED": "Resolved",
           "IGNORED": "Ignored"
         }
+      },
+      "ads": {
+        "title": "Amazon Ads Spend",
+        "createdAt": "Created at",
+        "status": "Status",
+        "rows": "Rows",
+        "processed": "Processed",
+        "valid": "Valid",
+        "errors": "Errors",
+        "file": "File",
+        "dateRange": "Date range",
+        "permissionHint": "You do not have permission to view Ads imports."
+      },
+      "transactions": {
+        "title": "Amazon Transactions",
+        "permissionHint": "You do not have permission to view Transactions imports."
+      },
+      "settlements": {
+        "title": "Marketplace Settlements",
+        "permissionHint": "You do not have permission to view Settlements imports."
+      },
+      "financeImports": {
+        "filters": "Import filters"
       },
       "refunds": {
         "unallocatedTitle": "Unallocated refunds",
@@ -3331,6 +3600,7 @@
       "submitQc": "Submit QC decision",
       "metrics": {
         "total": "Total",
+        "block": "Block",
         "blocked": "Blocked",
         "needScale": "Need scale",
         "qcPending": "QC pending",
@@ -3360,15 +3630,18 @@
       },
       "openProduct": "Open SP",
       "downloadCustomerImage": "Customer image",
-      "downloadCustomerImages": "Download customer images ({{count}})"
+      "downloadCustomerImages": "Download customer images ({{count}})",
+      "confirmReject": "Confirm rejection",
+      "selectPresetReasons": "Select reason",
+      "customRejectNote": "Custom rejection note"
     },
     "vendorSubmissions": {
-      "title": "Vendor submissions",
-      "description": "Monitor automatic QC handoffs and safely resolve failed or ambiguous vendor outcomes.",
+      "title": "Vendor Handoff",
+      "description": "Monitor production handoffs and safely resolve failed or ambiguous vendor outcomes.",
       "refresh": "Refresh",
       "exportCsv": "Export CSV",
-      "unavailable": "Vendor submissions are unavailable",
-      "filters": "Submission filters",
+      "unavailable": "Vendor handoff is unavailable",
+      "filters": "Handoff filters",
       "externalOrderId": "External order ID",
       "vendorOrderId": "Vendor external order ID",
       "vendorProvider": "Vendor / provider",
@@ -3466,7 +3739,8 @@
         "saved": "Tracking sync settings saved",
         "saveFailed": "Unable to save tracking sync settings",
         "runComplete": "Tracking sync completed",
-        "runFailed": "Tracking sync failed"
+        "runFailed": "Tracking sync failed",
+        "lastRunPrefix": "Last run: "
       },
       "webhookHistory": "Vendor webhook history",
       "trackingPreview": {
@@ -3843,7 +4117,8 @@
         "label": "Filters",
         "status": "Status",
         "vendor": "Vendor",
-        "search": "Search product or external ID"
+        "search": "Search product or external ID",
+        "productType": "Product type"
       },
       "metrics": {
         "total": "Total vendors",
@@ -3906,7 +4181,8 @@
         "INACTIVE": "Inactive",
         "CONNECTED": "Connected",
         "DISCONNECTED": "Disconnected"
-      }
+      },
+      "testConnection": "Test connection"
     }
   },
   "organization": {
@@ -4009,7 +4285,8 @@
       "saveCustomer": "Save customer",
       "addComment": "Add comment",
       "downloadAmazonCustomization": "Link",
-      "apply": "Apply"
+      "apply": "Apply",
+      "openProduct": "View product"
     },
     "sections": {
       "shippingAddress": "Shipping address",
@@ -4023,6 +4300,7 @@
     },
     "fields": {
       "seller": "Seller",
+      "scaleBy": "Scale",
       "image": "Image",
       "mainListingImage": "Main listing",
       "customizationArtwork": "Customization artwork",
@@ -4094,7 +4372,22 @@
       "outcomeNote": "Resolution or cancellation note",
       "comments": "Comments",
       "newComment": "Write a comment",
-      "noComments": "No comments yet"
+      "noComments": "No comments yet",
+      "types": {
+        "REFUND": "Refund",
+        "RETURN": "Return",
+        "REPLACEMENT": "Replacement",
+        "ADDRESS": "Address",
+        "CUSTOMIZATION": "Customization",
+        "SHIPMENT": "Shipment",
+        "OTHER": "Other"
+      },
+      "severities": {
+        "LOW": "Low",
+        "MEDIUM": "Medium",
+        "HIGH": "High",
+        "CRITICAL": "Critical"
+      }
     },
     "customer": {
       "name": "Customer name",
@@ -4106,7 +4399,56 @@
       "orderTitle": "Order activity",
       "itemTitle": "Item activity",
       "blockers": "Blockers",
-      "empty": "No activity recorded yet"
+      "empty": "No activity recorded yet",
+      "events": {
+        "ORDER_IMPORTED": "Order imported",
+        "ORDER_REIMPORTED": "Order reimported",
+        "ORDER_STATUS_CHANGED": "Order status changed",
+        "ORDER_DELIVERED": "Order delivered",
+        "SHIPPING_ADDRESS_UPDATED": "Shipping address updated",
+        "ADDRESS_VALIDATED": "Address validated",
+        "ORDER_CASE_OPENED": "Order case opened",
+        "ORDER_CASE_RESOLVED": "Order case resolved",
+        "ORDER_CASE_CANCELLED": "Order case cancelled",
+        "ORDER_CASE_COMMENT_ADDED": "Order case comment added",
+        "ORDER_ITEM_IMPORTED": "Order item imported",
+        "ORDER_ITEM_REIMPORTED": "Order item reimported",
+        "ORDER_ITEM_REPLACEMENT_CREATED": "Order item replacement created",
+        "ORDER_ITEM_CANCELLED": "Order item cancelled",
+        "ORDER_ITEM_STATUS_CHANGED": "Order item status changed",
+        "CUSTOMIZATION_PAYLOAD_CREATED": "Customization payload created",
+        "CUSTOMIZATION_PARSED": "Customization parsed",
+        "CUSTOMIZATION_NEEDS_REVIEW": "Customization needs review",
+        "MAPPING_PENDING": "Mapping pending",
+        "FULFILLMENT_PLAN_READY": "Fulfillment plan ready",
+        "MANUAL_VENDOR_MATCHED": "Manual vendor matched",
+        "FULFILLMENT_PLAN_BLOCKED": "Fulfillment plan blocked",
+        "FULFILLMENT_PLAN_RECHECKED": "Fulfillment plan rechecked",
+        "PRODUCTION_TASK_CREATED": "Production task created",
+        "PRODUCTION_MANUAL_FILE_CHECK_ADDED": "Production manual file check added",
+        "PRODUCTION_SCALED_FILE_UPLOADED": "Production scaled file uploaded",
+        "PRODUCTION_DESIGN_ASSIGNED": "Production design assigned",
+        "PRODUCTION_DESIGN_CLAIMED": "Production design claimed",
+        "PRODUCTION_DESIGN_NOTE_UPDATED": "Production design note updated",
+        "PRODUCTION_CS_ASSIGNED": "Production CS assigned",
+        "PRODUCTION_CS_UNASSIGNED": "Production CS unassigned",
+        "PRODUCTION_CS_NOTE_UPDATED": "Production CS note updated",
+        "PRODUCTION_CS_NOTE_SYNCED": "Production CS note synced",
+        "PRODUCTION_CS_STATUS_UPDATED": "Production CS status updated",
+        "PRODUCTION_SCALE_SUBMITTED_QC": "Production scale submitted QC",
+        "PRODUCTION_QC_PASSED": "Production QC passed",
+        "PRODUCTION_QC_REJECTED": "Production QC rejected",
+        "VENDOR_SUBMISSION_SENT": "Vendor submission sent",
+        "VENDOR_SUBMISSION_FAILED": "Vendor submission failed",
+        "TRACKING_AVAILABLE": "Tracking available",
+        "SHIPMENT_CONFIRMED": "Shipment confirmed",
+        "SHIPMENT_CONFIRM_FAILED": "Shipment confirm failed",
+        "SHIPMENT_EXCEPTION": "Shipment exception",
+        "SHIPMENT_RETURNED": "Shipment returned"
+      },
+      "blockersList": {
+        "OPEN_CASE": "Open case"
+      }
     },
     "filters": {
       "label": "Order filters",
@@ -4127,6 +4469,10 @@
       "INVALID": "Invalid",
       "WARNING": "Warning",
       "OVERRIDDEN": "Overridden"
+    },
+    "psdStatuses": {
+      "PRESENT": "Present",
+      "MISSING": "Missing"
     },
     "columns": {
       "order": "Order ID",
@@ -4172,7 +4518,22 @@
       "ADDRESS_INVALID": "Invalid address",
       "INVALID": "Invalid",
       "READY": "Ready",
-      "APPROVED": "Approved"
+      "APPROVED": "Approved",
+      "PARTIALLY_SHIPPED": "Partially shipped",
+      "REFUNDED": "Refunded",
+      "NEW": "New",
+      "MAPPING_PENDING": "Mapping pending",
+      "CUSTOMIZATION_PENDING": "Customization pending",
+      "CUSTOMIZATION_PARSED": "Customization parsed",
+      "FULFILLMENT_PLANNING": "Fulfillment planning",
+      "FULFILLMENT_READY": "Fulfillment ready",
+      "NEED_PRODUCTION": "Need production",
+      "IN_PRODUCTION": "In production",
+      "QC_REJECTED": "QC rejected",
+      "READY_TO_SEND_VENDOR": "Ready to send vendor",
+      "SENT_TO_VENDOR": "Sent to vendor",
+      "TRACKING_PENDING": "Tracking pending",
+      "CONFIRMED": "Confirmed"
     }
   },
   "audit": {
@@ -4305,8 +4666,31 @@
     "infrastructure": "Infrastructure",
     "recentAudit": "Recent audit activity"
   },
+  "teamTasks": {
+    "title": "Team Tasks is under development",
+    "description": "The Team Tasks workspace is currently being built.",
+    "hint": "Please check back later.",
+    "backToDashboard": "Back to dashboard"
+  },
   "errors": {
-    "unexpected": "Something unexpected happened.",
+    "unexpected": "Something went wrong. Please try again.",
+    "api": {
+      "APP_ERROR": "Application error. Please try again.",
+      "VALIDATION_ERROR": "Validation failed. Please check your input.",
+      "AUTHENTICATION_ERROR": "Unable to sign in. Please try again.",
+      "AUTHORIZATION_ERROR": "You do not have permission to perform this action.",
+      "ACCOUNT_SETUP_REQUIRED": "Account setup is required.",
+      "RESOURCE_NOT_FOUND": "Requested resource was not found.",
+      "CONFLICT_ERROR": "This information conflicts with an existing record.",
+      "RATE_LIMIT_ERROR": "Too many requests. Please slow down.",
+      "PAYLOAD_TOO_LARGE": "Payload is too large.",
+      "MEDIA_UPLOAD_EXPIRED": "Upload session expired.",
+      "MEDIA_UPLOAD_INCOMPLETE": "Upload is incomplete.",
+      "MEDIA_FILE_TOO_LARGE": "File size exceeds limit.",
+      "MEDIA_FILE_TYPE_INVALID": "Invalid file type.",
+      "MEDIA_ASSET_NOT_READY": "Media asset is not ready.",
+      "INTERNAL_SERVER_ERROR": "Server error. Please try again later."
+    },
     "serverTitle": "Anh em đợi tôi :))",
     "technicalHint": "Try again, then return to dashboard if the issue continues.",
     "requestId": "Request ID",
@@ -4320,5 +4704,10 @@
     "hint": "Try the home page below or check the URL and try again.",
     "backHome": "Back home",
     "illustrationAlt": "404 page not found illustration"
+  },
+  "globalFeedback": {
+    "defaultAction": "Action completed",
+    "actionFailed": "Action failed",
+    "actionSucceeded": "Action succeeded"
   }
 }

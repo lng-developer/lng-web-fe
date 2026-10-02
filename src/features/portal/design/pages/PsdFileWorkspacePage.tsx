@@ -1,18 +1,17 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined, FileOutlined } from '@ant-design/icons'
+import { DownloadOutlined, FileOutlined, ReloadOutlined } from '@ant-design/icons'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Input, Select, Space, Typography } from 'antd'
+import { Button, Input, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
+  type DateRangeValue,
   EmployeeAvatar,
-  FilterBar,
-  SectionCard,
   StatusTag,
   useDebouncedValue,
   ZoomableImage,
@@ -20,6 +19,7 @@ import {
 
 import { listDesignAssignees, listPsdFiles, type PsdFileListItem } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
+import styles from './PsdFileWorkspacePage.module.scss'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
 const tone = (status: string) =>
@@ -30,6 +30,15 @@ const tone = (status: string) =>
       : status === 'CANCELLED'
         ? 'cancelled'
         : 'processing'
+
+function formatEnumLabel(val?: string | null): string {
+  if (!val) return ''
+  return val
+    .toLowerCase()
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
 
 export function PsdFileWorkspacePage() {
   const { t } = useTranslation()
@@ -75,9 +84,9 @@ export function PsdFileWorkspacePage() {
     () =>
       ['REFERENCE', 'SUBMISSION', 'APPROVED'].map((value) => ({
         value,
-        label: value,
+        label: t(`portal.design.psdRoles.${value}`, { defaultValue: formatEnumLabel(value) }),
       })),
-    [],
+    [t],
   )
 
   const designerOptions = useMemo(
@@ -92,9 +101,12 @@ export function PsdFileWorkspacePage() {
   const taskStatusOptions = useMemo(
     () =>
       ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'SUBMITTED', 'APPROVED', 'REJECTED', 'CANCELLED'].map(
-        (value) => ({ value, label: value }),
+        (value) => ({
+          value,
+          label: t(`portal.design.statuses.${value}`, { defaultValue: formatEnumLabel(value) }),
+        }),
       ),
-    [],
+    [t],
   )
 
   const columns: TableColumnsType<PsdFileListItem> = useMemo(
@@ -131,7 +143,7 @@ export function PsdFileWorkspacePage() {
               value === 'APPROVED' ? 'approved' : value === 'SUBMISSION' ? 'ready' : 'processing'
             }
           >
-            {value}
+            {t(`portal.design.psdRoles.${value}`, { defaultValue: formatEnumLabel(value) })}
           </StatusTag>
         ),
       },
@@ -145,7 +157,13 @@ export function PsdFileWorkspacePage() {
         title: t('portal.design.taskStatus', { defaultValue: 'Task status' }),
         dataIndex: 'task',
         width: 140,
-        render: (value) => <StatusTag status={tone(value.status)}>{value.status}</StatusTag>,
+        render: (value) => (
+          <StatusTag status={tone(value.status)}>
+            {t(`portal.design.statuses.${value.status}`, {
+              defaultValue: formatEnumLabel(value.status),
+            })}
+          </StatusTag>
+        ),
       },
       {
         title: t('portal.design.designer', { defaultValue: 'Designer' }),
@@ -204,12 +222,77 @@ export function PsdFileWorkspacePage() {
   )
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <SectionCard>
+    <section className={styles.page}>
+      <div className={styles.filterBar}>
+        <Input
+          allowClear
+          className={styles.search}
+          placeholder={t('portal.design.searchFileOrSku', {
+            defaultValue: 'Search file or SKU...',
+          })}
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value)
+            setPage(1)
+          }}
+        />
+        <Select
+          allowClear
+          className={styles.roleFilter}
+          placeholder={t('portal.design.allRoles', { defaultValue: 'All roles' })}
+          value={role}
+          onChange={(value) => {
+            setRole(value)
+            setPage(1)
+          }}
+          options={roleOptions}
+        />
+        <Select
+          allowClear
+          className={styles.designerFilter}
+          placeholder={t('portal.design.allDesigners', { defaultValue: 'All designers' })}
+          value={designerId}
+          onChange={(value) => {
+            setDesignerId(value)
+            setPage(1)
+          }}
+          options={designerOptions}
+          showSearch
+          optionFilterProp="label"
+        />
+        <Select
+          allowClear
+          className={styles.statusFilter}
+          placeholder={t('portal.design.allTaskStatuses', {
+            defaultValue: 'All task statuses',
+          })}
+          value={taskStatus}
+          onChange={(value) => {
+            setTaskStatus(value)
+            setPage(1)
+          }}
+          options={taskStatusOptions}
+        />
+        <DateRangePicker
+          allowClear
+          className={styles.dateFilter}
+          value={dates}
+          onChange={(value: DateRangeValue) => {
+            setDates(value)
+            setPage(1)
+          }}
+        />
+        <Tooltip title={t('common.refresh', { defaultValue: 'Refresh' })}>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => void files.refetch()}
+            loading={files.isFetching}
+          />
+        </Tooltip>
+      </div>
+
+      <div className={styles.tableArea}>
         <CoreDataTable
-          fillViewport
-          tableLayout="fixed"
-          scroll={{ x: 980 }}
           rowKey="rowKey"
           columns={columns}
           dataSource={files.data?.items ?? []}
@@ -218,61 +301,12 @@ export function PsdFileWorkspacePage() {
             current: page,
             pageSize: PAGE_SIZE,
             total: files.data?.total,
-            onChange: setPage,
+            showSizeChanger: false,
+            onChange: (p) => setPage(p),
           }}
-          toolbar={
-            <FilterBar label={t('portal.design.psdFilters', { defaultValue: 'PSD file filters' })}>
-              <Input.Search
-                placeholder={t('portal.design.searchFileOrSku', {
-                  defaultValue: 'Search file or SKU',
-                })}
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                onSearch={() => setPage(1)}
-              />
-              <Select
-                allowClear
-                placeholder={t('portal.design.allRoles', { defaultValue: 'All roles' })}
-                value={role}
-                onChange={(value) => {
-                  setRole(value)
-                  setPage(1)
-                }}
-                options={roleOptions}
-              />
-              <Select
-                allowClear
-                placeholder={t('portal.design.allDesigners', { defaultValue: 'All designers' })}
-                value={designerId}
-                onChange={(value) => {
-                  setDesignerId(value)
-                  setPage(1)
-                }}
-                options={designerOptions}
-              />
-              <Select
-                allowClear
-                placeholder={t('portal.design.allTaskStatuses', {
-                  defaultValue: 'All task statuses',
-                })}
-                value={taskStatus}
-                onChange={(value) => {
-                  setTaskStatus(value)
-                  setPage(1)
-                }}
-                options={taskStatusOptions}
-              />
-              <DateRangePicker
-                value={dates}
-                onChange={(value) => {
-                  setDates(value)
-                  setPage(1)
-                }}
-              />
-            </FilterBar>
-          }
+          scroll={{ x: 1000 }}
         />
-      </SectionCard>
-    </Space>
+      </div>
+    </section>
   )
 }

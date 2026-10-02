@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { PlusOutlined } from '@ant-design/icons'
-import { Button, Tag, Typography } from 'antd'
+import { EditOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
+import { Button, Popconfirm, Space, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
@@ -73,6 +73,47 @@ export function ShiftAssignments({ model }: ShiftAssignmentsProps) {
               </StatusTag>
             ),
           },
+          ...(model.canScheduleWrite
+            ? [
+                {
+                  title: t('hrOperations.common.action'),
+                  align: 'right' as const,
+                  width: 96,
+                  onHeaderCell: () => ({ style: { textAlign: 'right' as const, width: 96 } }),
+                  render: (_: unknown, item: Parameters<typeof model.editAssignment>[0]) => (
+                    <Space size={2} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Tooltip title={t('hrOperations.schedule.editAssignment')}>
+                        <Button
+                          type="text"
+                          aria-label={t('hrOperations.schedule.editAssignment')}
+                          icon={<EditOutlined />}
+                          onClick={() => model.editAssignment(item)}
+                        />
+                      </Tooltip>
+                      {item.status === 'ACTIVE' && (
+                        <Popconfirm
+                          title={t('hrOperations.schedule.deactivateAssignmentConfirm')}
+                          okText={t('hrOperations.schedule.deactivateAssignment')}
+                          cancelText={t('hrOperations.common.cancel')}
+                          okButtonProps={{ danger: true }}
+                          onConfirm={() => model.deactivateAssignment(item)}
+                        >
+                          <Tooltip title={t('hrOperations.schedule.deactivateAssignment')}>
+                            <Button
+                              type="text"
+                              danger
+                              aria-label={t('hrOperations.schedule.deactivateAssignment')}
+                              icon={<StopOutlined />}
+                              loading={model.deactivatingAssignmentId === item.id}
+                            />
+                          </Tooltip>
+                        </Popconfirm>
+                      )}
+                    </Space>
+                  ),
+                },
+              ]
+            : []),
         ]}
       />
     </SectionCard>

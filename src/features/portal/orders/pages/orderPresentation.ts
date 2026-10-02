@@ -1,10 +1,8 @@
 import type { StatusTagProps } from '@/shared/ui/StatusTag'
+import { humanizeCode } from '@/shared/ui'
 
+export { humanizeCode }
 type Translate = (key: string, options?: { defaultValue?: string }) => string
-
-function normalizeStatusLabel(status: string) {
-  return status.replaceAll('_', ' ')
-}
 
 export function orderStatusTone(status?: string | null): StatusTagProps['status'] {
   if (['SHIPPED', 'DELIVERED', 'FULFILLED'].includes(status ?? '')) return 'operational'
@@ -19,7 +17,49 @@ export function formatOrderStatusLabel(status: string | null | undefined, t: Tra
   const normalizedStatus = status ?? 'OPEN'
 
   return t(`orders.statuses.${normalizedStatus}`, {
-    defaultValue: normalizeStatusLabel(normalizedStatus),
+    defaultValue: humanizeCode(normalizedStatus),
+  })
+}
+
+export function formatPsdStatusLabel(status: string | null | undefined, t: Translate) {
+  if (!status) return '—'
+  return t(`orders.psdStatuses.${status}`, {
+    defaultValue: humanizeCode(status),
+  })
+}
+
+export function formatAddressStatusLabel(status: string | null | undefined, t: Translate) {
+  if (!status) return '—'
+  return t(`orders.addressStatuses.${status}`, {
+    defaultValue: humanizeCode(status),
+  })
+}
+
+export function formatTimelineEventLabel(eventType: string | null | undefined, t: Translate) {
+  if (!eventType) return '—'
+  return t(`orders.history.events.${eventType}`, {
+    defaultValue: humanizeCode(eventType),
+  })
+}
+
+export function formatTimelineBlockerLabel(blocker: string | null | undefined, t: Translate) {
+  if (!blocker) return '—'
+  return t(`orders.history.blockersList.${blocker}`, {
+    defaultValue: humanizeCode(blocker),
+  })
+}
+
+export function formatCaseTypeLabel(caseType: string | null | undefined, t: Translate) {
+  if (!caseType) return '—'
+  return t(`orders.case.types.${caseType}`, {
+    defaultValue: humanizeCode(caseType),
+  })
+}
+
+export function formatCaseSeverityLabel(severity: string | null | undefined, t: Translate) {
+  if (!severity) return '—'
+  return t(`orders.case.severities.${severity}`, {
+    defaultValue: humanizeCode(severity),
   })
 }
 

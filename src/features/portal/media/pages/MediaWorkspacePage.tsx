@@ -148,7 +148,9 @@ export function MediaWorkspacePage() {
         dataIndex: 'status',
         width: 110,
         render: (value) => (
-          <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>{value}</StatusTag>
+          <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
+            {t(`media.statuses.${value}`, { defaultValue: value })}
+          </StatusTag>
         ),
       },
       {

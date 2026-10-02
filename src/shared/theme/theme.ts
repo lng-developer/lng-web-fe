@@ -4,6 +4,7 @@ export type Appearance = 'light' | 'dark' | 'system'
 export type ResolvedAppearance = Exclude<Appearance, 'system'>
 
 export const THEME_STORAGE_KEY = 'lng-web-appearance'
+export const APP_PRIMARY_COLOR = '#E83B4A'
 
 export function resolveAppearance(
   appearance: Appearance,
@@ -18,7 +19,7 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
   return {
     algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
-      colorPrimary: '#E83B4A',
+      colorPrimary: APP_PRIMARY_COLOR,
       colorInfo: '#2D88FF',
       colorSuccess: '#10B981',
       colorWarning: '#F59E0B',
@@ -90,15 +91,15 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
         itemBg: isDark ? '#242526' : '#FFFFFF',
         itemSelectedBg: isDark ? 'rgba(232, 59, 74, 0.16)' : 'rgba(232, 59, 74, 0.08)',
         itemColor: isDark ? '#E4E6EB' : '#334155',
-        itemSelectedColor: '#E83B4A',
+        itemSelectedColor: APP_PRIMARY_COLOR,
       },
       Tag: {
         borderRadiusSM: 6,
       },
       Segmented: {
-        itemSelectedBg: '#E83B4A',
+        itemSelectedBg: APP_PRIMARY_COLOR,
         itemSelectedColor: '#FFFFFF',
-        itemHoverColor: '#E83B4A',
+        itemHoverColor: APP_PRIMARY_COLOR,
         itemColor: isDark ? '#B0B3B8' : '#475569',
         trackBg: isDark ? '#242526' : '#F1F5F9',
         trackPadding: 3,

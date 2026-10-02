@@ -98,6 +98,8 @@ export type ProductionTask = {
   vendorSubmission?: { id: string; status: string; failureReason?: string | null }
   scaleContext?: ProductionScaleContext
   customization?: ProductionCustomization | null
+  asinType?: string | null
+  asin_type?: string | null
   vendorProduct?: {
     id?: string | null
     code?: string | null
@@ -122,9 +124,12 @@ export type ProductionParams = {
   search?: string
   salesChannelCode?: 'AMAZON' | 'ETSY'
   psdReadyOnly?: boolean
+  dateFrom?: string
+  dateTo?: string
   status?: ProductionStatus
   scaleDifficultyLevel?: 'NORMAL' | 'HARD' | 'SPECIAL'
   qcStatus?: QcStatus
+  shopId?: string
 }
 export type FileDecision = { fileCheckId: string; decision: 'PASSED' | 'REJECTED'; note?: string }
 export type ManualScaledOutput = {

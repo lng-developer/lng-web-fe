@@ -44,8 +44,14 @@ export function CatalogListingEditorModal({
     [salesChannels],
   )
   const statusOptions = useMemo(
-    () => ['ACTIVE', 'INACTIVE'].map((value) => ({ value, label: value })),
-    [],
+    () =>
+      ['ACTIVE', 'INACTIVE'].map((value) => ({
+        value,
+        label: t(`portal.catalog.master.statuses.${value}`, {
+          defaultValue: value === 'ACTIVE' ? 'Active' : 'Inactive',
+        }),
+      })),
+    [t],
   )
 
   useEffect(() => {

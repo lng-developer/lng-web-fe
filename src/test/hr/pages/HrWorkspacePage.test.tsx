@@ -243,6 +243,48 @@ describe('HrWorkspacePage', () => {
     )
   })
 
+  it('filters the directory to incomplete profiles when the metric is selected', async () => {
+    vi.mocked(loadEmployeeProfiles).mockResolvedValue({
+      items: [
+        {
+          id: 'profile-incomplete',
+          employeeCode: 'INC001',
+          fullName: 'Incomplete Employee',
+          departmentId: null,
+          teamId: null,
+          status: 'ACTIVE',
+          onboardingStatus: 'PROFILE_INCOMPLETE',
+          isDeleted: false,
+        },
+        {
+          id: 'profile-ready',
+          employeeCode: 'READY001',
+          fullName: 'Ready Employee',
+          departmentId: null,
+          teamId: null,
+          status: 'ACTIVE',
+          onboardingStatus: 'READY',
+          isDeleted: false,
+        },
+      ],
+      pagination: { page: 1, limit: 100, total: 2, totalPages: 1 },
+    })
+
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <HrWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('button', { name: /incomplete employee/i })
+    fireEvent.click(screen.getByRole('button', { name: /profile incomplete|chưa hoàn tất hồ sơ/i }))
+
+    expect(screen.getByRole('button', { name: /incomplete employee/i })).toBeVisible()
+    expect(screen.queryByRole('button', { name: /ready employee/i })).not.toBeInTheDocument()
+  })
+
   it('does not load profile details when scrolling moves a staff row under the pointer', async () => {
     vi.mocked(loadEmployeeProfiles).mockResolvedValue({
       items: [

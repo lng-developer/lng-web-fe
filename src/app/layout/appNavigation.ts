@@ -36,7 +36,7 @@ const systemPermissions = [
   'DESIGN:WORK',
 ]
 
-const effectivePermissions = (account: CurrentAccount) =>
+export const effectivePermissions = (account: CurrentAccount) =>
   new Set([...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)])
 
 export const hasFinanceAccess = (account: CurrentAccount) =>
@@ -44,14 +44,14 @@ export const hasFinanceAccess = (account: CurrentAccount) =>
   effectivePermissions(account).has('FINANCE:READ') ||
   effectivePermissions(account).has('FINANCE:WRITE')
 
-const hasExplicitHrAccess = (permissions: Set<string>) =>
+export const hasExplicitHrAccess = (permissions: Set<string>) =>
   [...permissions].some((permission) => permission.startsWith('HR_')) ||
   organizationPermissions.some((permission) => permissions.has(permission))
 
-const canReadHrDashboard = (permissions: Set<string>) =>
+export const canReadHrDashboard = (permissions: Set<string>) =>
   [...permissions].some((permission) => permission.startsWith('HR_'))
 
-const canReadOperationsDashboard = (permissions: Set<string>) =>
+export const canReadOperationsDashboard = (permissions: Set<string>) =>
   ['REPORTS:READ', 'FINANCE:READ', 'FINANCE:WRITE'].some((permission) =>
     permissions.has(permission),
   )

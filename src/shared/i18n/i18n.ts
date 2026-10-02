@@ -8,6 +8,7 @@ export const LANGUAGE_STORAGE_KEY = 'lng.language'
 export type Language = 'vi' | 'en'
 
 function getInitialLanguage(): Language {
+  if (typeof window === 'undefined') return 'en'
   const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
   return storedLanguage === 'vi' ? 'vi' : 'en'
 }

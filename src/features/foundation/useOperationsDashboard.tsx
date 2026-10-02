@@ -11,6 +11,7 @@ import {
 } from '@/features/portal/orders/api/orderApi'
 import {
   getBuyerInsights,
+  listFinanceBySeller,
   getOperationsOverview,
   listFinanceDailyProfit,
   listVendorPerformance,
@@ -29,6 +30,15 @@ export type TimelinePoint = {
   orderCount: number
 }
 
+export type CashFlowRow = {
+  date: string
+  displayDate: string
+  cashInAmount: number
+  cashOutAmount: number
+  netCashFlowAmount: number
+  currency: string | null
+}
+
 export type ChannelDatum = {
   name: string
   value: number
@@ -45,6 +55,7 @@ export type TopCategoryItem = {
   growthPercent?: number
   preset?: 'blue' | 'purple' | 'pink' | 'amber'
 }
+export type TopSeller = { id: string; name: string; revenueAmount: number; currency: string | null }
 
 export type OperationalIssue = {
   key: string
@@ -119,6 +130,11 @@ export function useOperationsDashboard(
     queryFn: () => listFinanceDailyProfit(reportFilters),
     enabled: canFinance,
   })
+  const sellerPerformance = useQuery({
+    queryKey: ['foundation', 'finance', 'by-seller', reportFilters],
+    queryFn: () => listFinanceBySeller(reportFilters),
+    enabled: canFinance,
+  })
 
   const operationsOverview = useQuery({
     queryKey: ['foundation', 'operations', reportFilters],
@@ -133,6 +149,16 @@ export function useOperationsDashboard(
   })
 
   const financeRevenue = (finance.data ?? []).reduce((sum, row) => sum + row.revenueAmount, 0)
+  const topSellers: TopSeller[] = (sellerPerformance.data ?? [])
+    .filter((seller) => seller.sellerEmployeeCode || seller.sellerName)
+    .sort((left, right) => right.revenueAmount - left.revenueAmount)
+    .slice(0, 3)
+    .map((seller) => ({
+      id: seller.sellerEmployeeCode || seller.sellerName || 'unknown',
+      name: seller.sellerName || seller.sellerEmployeeCode || t('common.unknown'),
+      revenueAmount: seller.revenueAmount,
+      currency: seller.currency,
+    }))
 
   const tabCounts = orderSummary.data?.tabCounts ?? {}
   const orderStatusEntries = Object.entries(tabCounts).filter(
@@ -190,6 +216,19 @@ export function useOperationsDashboard(
     }
     return []
   }, [finance.data])
+
+  const cashFlowRows: CashFlowRow[] = useMemo(
+    () =>
+      (finance.data ?? []).map((row) => ({
+        date: row.date,
+        displayDate: dayjs(row.date).format('D MMM'),
+        cashInAmount: row.revenueAmount,
+        cashOutAmount: numberOf(row.totalCostAmount ?? row.baseCostAmount),
+        netCashFlowAmount: numberOf(row.netProfitAmount ?? row.grossProfitAmount),
+        currency: row.currency,
+      })),
+    [finance.data],
+  )
 
   // Channel distribution for Donut Chart (100% real data)
   const channelBreakdown: ChannelDatum[] = useMemo(() => {
@@ -361,6 +400,7 @@ export function useOperationsDashboard(
     listingSummary,
     buyerInsights,
     finance,
+    sellerPerformance,
     operationsOverview,
     vendorPerformance,
   ].some((query) => query.isError)
@@ -394,8 +434,10 @@ export function useOperationsDashboard(
       operationalIssues,
       vendorFailures,
       timelinePoints,
+      cashFlowRows,
       channelBreakdown,
       topCategories,
+      topSellers,
       topListings: topListings.data?.items ?? [],
       recentOrders: allRecentOrders,
       filteredRecentOrders,
@@ -411,6 +453,7 @@ export function useOperationsDashboard(
         void recentOrders.refetch()
         void listingSummary.refetch()
         void finance.refetch()
+        void sellerPerformance.refetch()
         void operationsOverview.refetch()
         void vendorPerformance.refetch()
       },

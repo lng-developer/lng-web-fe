@@ -143,7 +143,12 @@ export type OrderWorkbenchItem = {
     totalCostAmount?: number | null
     currency: string | null
   }
-  production: { status: string | null; scaleStatus: string | null; qcStatus: string | null } | null
+  production: {
+    status: string | null
+    scaleStatus: string | null
+    qcStatus: string | null
+    scaleBy?: { employeeCode: string | null; name: string | null } | null
+  } | null
   tracking: { trackingNumber?: string | null; status?: string | null } | null
   workflow: OrderWorkflow
 }

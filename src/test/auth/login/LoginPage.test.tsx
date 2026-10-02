@@ -92,8 +92,10 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('radiogroup', { name: /language/i })).toBeVisible()
-    expect(screen.getByRole('radio', { name: 'EN' })).toBeChecked()
-    expect(screen.getByRole('radiogroup', { name: /appearance/i })).toBeVisible()
+    expect(screen.getByRole('button', { name: /language/i })).toHaveTextContent('EN')
+    expect(screen.getByRole('button', { name: /appearance/i })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
   })
 })
