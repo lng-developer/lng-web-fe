@@ -86,12 +86,12 @@ describe('ChatShell', () => {
     } as never)
     renderShell()
 
-    expect(screen.getAllByRole('button', { name: 'shell.navigation.chat' })).toHaveLength(1)
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
     await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
     const el = await screen.findByText('designer@lng.co')
     expect(el).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
 
     act(() => {
       handlers['message.created']({
@@ -126,15 +126,13 @@ describe('ChatShell', () => {
       } as never)
     })
 
-    await waitFor(() =>
-      expect(screen.getAllByRole('button', { name: 'shell.navigation.chat' })).toHaveLength(2),
-    )
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(2))
   })
 
   it('closes preview popup when clicking outside', async () => {
     renderShell()
 
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
     expect(await screen.findByText('designer@lng.co')).toBeVisible()
 
     fireEvent.mouseDown(document.body)
