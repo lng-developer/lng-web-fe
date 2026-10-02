@@ -50,7 +50,7 @@ const MESSAGE_LIMIT = 50
 type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
 
 function participantLabel(account?: ChatParticipant) {
-  return account?.employeeCode || account?.email || ''
+  return account?.displayName || account?.fullName || account?.employeeCode || account?.email || ''
 }
 
 function conversationTitle(

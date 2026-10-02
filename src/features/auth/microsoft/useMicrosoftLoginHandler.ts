@@ -27,7 +27,7 @@ export function useMicrosoftLoginHandler() {
       clearStuckMsalInteraction()
       const pca = await getMsalInstance()
       await pca.loginRedirect({
-        scopes: ['openid', 'profile', 'email', 'User.Read'],
+        scopes: ['openid', 'profile', 'email', 'User.Read', 'ChatMessage.Send', 'Chat.ReadWrite'],
         prompt: 'select_account',
         redirectUri: window.location.origin,
         redirectStartPage: window.location.origin,
