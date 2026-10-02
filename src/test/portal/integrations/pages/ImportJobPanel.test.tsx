@@ -182,10 +182,10 @@ describe('ImportJobPanel', () => {
     renderPanel()
 
     expect(await screen.findByText('8 imported')).toBeVisible()
-    expect(await screen.findByText('Parse file')).toBeVisible()
-    expect(await screen.findByText('Import orders')).toBeVisible()
-    expect(await screen.findByText('Assets and mapping')).toBeVisible()
-    expect(await screen.findByText('1 open import issues')).toBeVisible()
+    expect(await screen.findByText('Parse progress')).toBeVisible()
+    expect(await screen.findByText('Import progress')).toBeVisible()
+    expect(await screen.findByText('Post-import progress')).toBeVisible()
+    expect(await screen.findByText('Open issues')).toBeVisible()
     expect(
       (
         await screen.findAllByText(

@@ -127,10 +127,10 @@ describe('ImportIssueQueue', () => {
 
     const selections = [
       ['Issue shop', 'LNG Amazon US', 'shopId', 'shop-1'],
-      ['Issue source', 'MANUAL_EXCEL', 'source', 'MANUAL_EXCEL'],
-      ['Issue severity', 'ERROR', 'severity', 'ERROR'],
-      ['Issue status', 'OPEN', 'status', 'OPEN'],
-      ['Issue type', 'ORDER_IMPORT_FAILED', 'issueType', 'ORDER_IMPORT_FAILED'],
+      ['Issue source', 'Manual report', 'source', 'MANUAL_EXCEL'],
+      ['Issue severity', 'Error', 'severity', 'ERROR'],
+      ['Issue status', 'Open', 'status', 'OPEN'],
+      ['Issue type', 'Order import failed', 'issueType', 'ORDER_IMPORT_FAILED'],
     ] as const
     for (const [label, option, key, value] of selections) {
       fireEvent.mouseDown(screen.getByLabelText(label))
@@ -198,7 +198,7 @@ describe('ImportIssueQueue', () => {
     renderQueue(undefined, account(['ORDERS:WRITE']))
 
     fireEvent.click(await screen.findByRole('button', { name: 'Resolve issue issue-1' }))
-    fireEvent.click(screen.getByText('IGNORED'))
+    fireEvent.click(screen.getByText('Ignored'))
     fireEvent.change(screen.getByLabelText('Resolution note'), {
       target: { value: 'Duplicate report' },
     })

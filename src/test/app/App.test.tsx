@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { createMemoryRouter, Navigate, type RouteObject, RouterProvider } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { AppShell } from '@/app/layout/AppShell'
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -45,8 +45,6 @@ function renderRoute(path: string) {
 }
 
 describe('application shell', () => {
-  afterEach(cleanup)
-
   beforeEach(async () => {
     window.localStorage.clear()
     await i18n.changeLanguage('vi')

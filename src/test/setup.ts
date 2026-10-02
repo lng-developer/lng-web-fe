@@ -3,9 +3,13 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
-afterEach(() => {
+import i18n from '@/shared/i18n/i18n'
+
+afterEach(async () => {
   cleanup()
   vi.useRealTimers()
+  window.localStorage.clear()
+  await i18n.changeLanguage('en')
 })
 
 Object.defineProperty(window, 'matchMedia', {

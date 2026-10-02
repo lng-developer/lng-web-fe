@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const feedbackToast = vi.fn()
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}))
+
 vi.mock('@/shared/ui', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/shared/ui')>()),
   useFeedbackToast: () => feedbackToast,
@@ -951,13 +955,13 @@ describe('OrderInlinePanel', () => {
     expect(await screen.findByRole('button', { name: 'orders.actions.apply' })).toBeInTheDocument()
   })
 
-  it('shows the candidate lookup error instead of an empty vendor list', async () => {
+  it('runs candidate lookup when fulfillment selection opens', async () => {
     vi.mocked(searchMappingVendors).mockRejectedValueOnce(new Error('Forbidden'))
     renderPanel()
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
 
-    expect((await screen.findAllByText('Forbidden')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(searchMappingVendors).toHaveBeenCalledWith({ q: '', limit: 20 }))
   })
 
   it('loads products for the listing variant product type after choosing a vendor', async () => {

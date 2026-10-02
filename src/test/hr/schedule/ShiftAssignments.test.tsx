@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -39,9 +39,9 @@ describe('ShiftAssignments', () => {
       </AppProviders>,
     )
 
-    expect(screen.getByRole('button', { name: 'Edit assignment' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Deactivate assignment' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Action' })).toHaveStyle({
+    expect(screen.getByLabelText('Edit assignment')).toBeInTheDocument()
+    expect(screen.getByLabelText('Deactivate assignment')).toBeInTheDocument()
+    expect(screen.getAllByText('Action').find((element) => element.tagName === 'TH')).toHaveStyle({
       textAlign: 'right',
       width: '96px',
     })
@@ -57,9 +57,11 @@ describe('ShiftAssignments', () => {
       </AppProviders>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Deactivate assignment' }))
+    fireEvent.click(screen.getByLabelText('Deactivate assignment'))
     expect(screen.getByText('Deactivate this assignment?')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Deactivate' }))
+    fireEvent.click(
+      within(screen.getByRole('tooltip')).getByRole('button', { name: 'Deactivate assignment' }),
+    )
 
     expect(deactivateAssignment).toHaveBeenCalledWith(assignment)
   })

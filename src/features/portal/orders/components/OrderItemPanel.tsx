@@ -295,6 +295,18 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               )}
             </span>
           </div>
+          {item.production?.scaleBy ? (
+            <div>
+              <Typography.Text type="secondary">{t('orders.fields.scaleBy')}</Typography.Text>
+              <span className={styles.sellerChip}>
+                {displayValue(
+                  [item.production.scaleBy.employeeCode, item.production.scaleBy.name]
+                    .filter(Boolean)
+                    .join(' · '),
+                )}
+              </span>
+            </div>
+          ) : null}
         </div>
       </section>
       <section>
