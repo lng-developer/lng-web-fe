@@ -32,6 +32,14 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    build: {
+      rollupOptions: {
+        input: {
+          app: path.resolve(rootDir, 'index.html'),
+          msalPopup: path.resolve(rootDir, 'msal-popup.html'),
+        },
+      },
+    },
     test: {
       projects: [
         {

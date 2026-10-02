@@ -13,6 +13,7 @@ vi.mock('@/features/hr/api/hrApi', () => ({
 import { LegacySidebar } from '@/app/layout/LegacySidebar'
 import styles from '@/app/layout/LegacySidebar.module.scss'
 import { AppProviders } from '@/app/providers/AppProviders'
+import type { CurrentAccount } from '@/features/auth/api/authApi'
 import i18n from '@/shared/i18n/i18n'
 
 const sidebarSummaryMocks = vi.hoisted(() => ({
@@ -33,7 +34,10 @@ describe('LegacySidebar', () => {
     sidebarSummaryMocks.useDesignSummaryQuery.mockReturnValue({ data: { unassigned: 4 } })
     loadMyEmployeeProfile.mockResolvedValue({ fullName: 'Dynamic Operator' })
   })
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    localStorage.clear()
+  })
 
   it('shows actionable queue counts in their owning modules', () => {
     render(
@@ -100,7 +104,7 @@ describe('LegacySidebar', () => {
     expect(screen.getByText('Work scores')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Design' }))
-    expect(screen.getByText('Design tasks')).toBeVisible()
+    expect(screen.getByText('PSD Tasks')).toBeVisible()
     expect(screen.getByText('PSD files')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Vendor' }))
@@ -366,9 +370,9 @@ describe('LegacySidebar', () => {
     expect(screen.queryByText('Account')).not.toBeInTheDocument()
   })
 
-  it('nests Amazon and Etsy task queues under Design tasks', async () => {
+  it('nests Amazon and Etsy task queues under PSD Tasks without wrapper', async () => {
     render(
-      <MemoryRouter initialEntries={['/portal/design']}>
+      <MemoryRouter initialEntries={['/portal/design/idea-tasks']}>
         <AppProviders>
           <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
         </AppProviders>
@@ -376,12 +380,9 @@ describe('LegacySidebar', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Design' }))
-    expect(screen.getByRole('menuitem', { name: /^Design tasks/ })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    )
-    fireEvent.click(screen.getByRole('menuitem', { name: /^Design tasks/ }))
-    await waitFor(() => expect(screen.getByRole('menuitem', { name: /^PSD Tasks/ })).toBeVisible())
+    expect(screen.queryByRole('menuitem', { name: /^Design tasks/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Design Workspace')).not.toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /^PSD Tasks/ })).toBeVisible()
     fireEvent.click(screen.getByRole('menuitem', { name: /^PSD Tasks/ }))
     await waitFor(() =>
       expect(screen.getByRole('link', { name: 'Amazon tasks' })).toHaveAttribute(
@@ -393,13 +394,13 @@ describe('LegacySidebar', () => {
       'href',
       '/portal/design/psd-tasks?salesChannelCode=etsy',
     )
-    expect(screen.getByRole('menuitem', { name: /^PSD Tasks/ }).closest('li')).toHaveClass(
+    expect(screen.getByRole('menuitem', { name: /^PSD Tasks/ }).closest('li')).not.toHaveClass(
       styles.reportChannel,
     )
-    expect(screen.getByRole('link', { name: 'Amazon tasks' }).closest('li')).toHaveClass(
+    expect(screen.getByRole('link', { name: 'Amazon tasks' }).closest('li')).not.toHaveClass(
       styles.reportChannelItem,
     )
-    expect(screen.getByRole('link', { name: 'Etsy tasks' }).closest('li')).toHaveClass(
+    expect(screen.getByRole('link', { name: 'Etsy tasks' }).closest('li')).not.toHaveClass(
       styles.reportChannelItem,
     )
     expect(screen.getByRole('link', { name: 'PSD files' })).toHaveAttribute(
@@ -417,11 +418,7 @@ describe('LegacySidebar', () => {
     ['/portal/listing/amazon', ['Listing'], 'Amz Listing'],
     ['/portal/reports/amazon/ads', ['Reports', 'Ads Report'], 'Amazon'],
     ['/portal/production/scale?salesChannelCode=AMAZON', ['Scale'], 'AMAZON Scale'],
-    [
-      '/portal/design/psd-tasks?salesChannelCode=amazon',
-      ['Design tasks', 'PSD Tasks'],
-      'Amazon tasks',
-    ],
+    ['/portal/design/psd-tasks?salesChannelCode=amazon', ['PSD Tasks'], 'Amazon tasks'],
     ['/portal/shops', ['Configuration'], 'Shops'],
   ])('restores %s menu context from the URL', async (url, parents, child) => {
     render(
@@ -789,7 +786,7 @@ describe('LegacySidebar', () => {
     expect(screen.getByRole('button', { name: 'Dashboard' })).toHaveClass(styles.railButtonActive)
 
     // The secondary menu displays Design module instead of Sales/Orders
-    expect(screen.getByRole('menuitem', { name: /^Design tasks/ })).toBeVisible()
+    expect(screen.getByRole('menuitem', { name: /^PSD Tasks/ })).toBeVisible()
     expect(screen.getByRole('link', { name: 'PSD files' })).toBeVisible()
     expect(screen.queryByRole('menuitem', { name: /^Orders/ })).not.toBeInTheDocument()
 
@@ -845,5 +842,108 @@ describe('LegacySidebar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sales' }))
 
     expect(onCollapsedChange).toHaveBeenCalledWith(false)
+  })
+
+  describe('RBAC permission filtering in LegacySidebar', () => {
+    const makeAccount = (permissions: string[], roles: string[] = []): CurrentAccount => ({
+      account: { id: 'test-acc', email: 'test@lng.com', mustChangePassword: false },
+      roles,
+      permissions,
+      scopes: [],
+      profileSetupRequired: false,
+    })
+
+    it('filters out unauthorized rail icons and menu items for a scoped Order operator', () => {
+      const orderOperator = makeAccount(['ORDERS:READ'])
+
+      render(
+        <MemoryRouter initialEntries={['/portal/orders']}>
+          <AppProviders>
+            <LegacySidebar
+              collapsed={false}
+              onCollapsedChange={() => undefined}
+              account={orderOperator}
+            />
+          </AppProviders>
+        </MemoryRouter>,
+      )
+
+      // Sales button is present because Orders is accessible
+      expect(screen.getByRole('button', { name: 'Sales' })).toBeVisible()
+
+      // Orders is visible in the detail menu
+      expect(screen.getByText('Orders')).toBeVisible()
+
+      // Unauthorized rail buttons are NOT rendered
+      expect(screen.queryByRole('button', { name: 'Design' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Fulfillment' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Vendor' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Extensions' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Setting' })).not.toBeInTheDocument()
+
+      // Unauthorized detail menu items under Sales are NOT rendered
+      expect(screen.queryByText('Listing')).not.toBeInTheDocument()
+      expect(screen.queryByText('Cost Centers')).not.toBeInTheDocument()
+      expect(screen.queryByText('Reports')).not.toBeInTheDocument()
+      expect(screen.queryByText('Monitoring')).not.toBeInTheDocument()
+      expect(screen.queryByText('Finance')).not.toBeInTheDocument()
+
+      // HR switch is not rendered because no HR permission
+      expect(screen.queryByRole('button', { name: 'Switch to HR' })).not.toBeInTheDocument()
+    })
+
+    it('shows only Design rail icon and design menus for a pure Designer', () => {
+      const designer = makeAccount(['DESIGN:READ', 'DESIGN:WORK'])
+
+      render(
+        <MemoryRouter initialEntries={['/portal/design/idea-tasks']}>
+          <AppProviders>
+            <LegacySidebar
+              collapsed={false}
+              onCollapsedChange={() => undefined}
+              account={designer}
+            />
+          </AppProviders>
+        </MemoryRouter>,
+      )
+
+      // Design rail button is present
+      expect(screen.getByRole('button', { name: 'Design' })).toBeVisible()
+
+      // Sales, Vendor, Extensions, Settings are hidden
+      expect(screen.queryByRole('button', { name: 'Sales' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Vendor' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Extensions' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Setting' })).not.toBeInTheDocument()
+
+      // Inside Design, design tasks are visible
+      expect(screen.getByText('Idea Tasks')).toBeVisible()
+      expect(screen.getByText('PSD Tasks')).toBeVisible()
+      expect(screen.getByText('PNG Tasks')).toBeVisible()
+    })
+
+    it('renders all menus for a SUPER_ADMIN account', () => {
+      const superAdmin = makeAccount([], ['SUPER_ADMIN'])
+
+      render(
+        <MemoryRouter initialEntries={['/portal/orders']}>
+          <AppProviders>
+            <LegacySidebar
+              collapsed={false}
+              onCollapsedChange={() => undefined}
+              account={superAdmin}
+              financeVisible
+            />
+          </AppProviders>
+        </MemoryRouter>,
+      )
+
+      expect(screen.getByRole('button', { name: 'Sales' })).toBeVisible()
+      expect(screen.getByRole('button', { name: 'Fulfillment' })).toBeVisible()
+      expect(screen.getByRole('button', { name: 'Design' })).toBeVisible()
+      expect(screen.getByRole('button', { name: 'Vendor' })).toBeVisible()
+      expect(screen.getByRole('button', { name: 'Extensions' })).toBeVisible()
+      expect(screen.getByRole('button', { name: 'Switch to HR' })).toBeVisible()
+    })
   })
 })

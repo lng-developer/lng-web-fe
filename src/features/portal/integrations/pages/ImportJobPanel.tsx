@@ -14,6 +14,7 @@ import {
   DetailDrawer,
   FeedbackAlert,
   FormattedDateTime,
+  humanizeCode,
   LoadingState,
   StatusTag,
   useFeedbackToast,
@@ -176,7 +177,9 @@ function ImportJobPanelForJob({
       width: 128,
       render: (value: string) => (
         <StatusTag status={recordTone(value)}>
-          {t(`portal.integrations.recordStatuses.${value}`, { defaultValue: value })}
+          {t(`portal.integrations.recordStatuses.${value}`, {
+            defaultValue: humanizeCode(value),
+          })}
         </StatusTag>
       ),
     })),
@@ -227,7 +230,7 @@ function ImportJobPanelForJob({
                 label={t('portal.integrations.jobs.status', { defaultValue: 'Status' })}
               >
                 {t(`portal.integrations.statuses.${job.data.job.status}`, {
-                  defaultValue: job.data.job.status,
+                  defaultValue: humanizeCode(job.data.job.status),
                 })}
               </Descriptions.Item>
               <Descriptions.Item

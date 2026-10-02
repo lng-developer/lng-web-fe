@@ -316,10 +316,13 @@ export function ReportOrderCostTab({
           <MetricCard
             icon={<WalletOutlined />}
             label={t('reports.orderCost.costCoverage')}
-            value={t('reports.orderCost.costCoverageValue', {
-              costed: currSummary.costedOrderCount,
-              total: currSummary.orderCount,
-            })}
+            value={`${currSummary.costedOrderCount} / ${currSummary.orderCount}`}
+            status={formatReportPercent(
+              currSummary.orderCount > 0
+                ? Math.round((currSummary.costedOrderCount / currSummary.orderCount) * 10000)
+                : 0,
+            )}
+            subtext={t('reports.orderCost.costCoverageSubtext')}
             variant="info"
             loading={isPending}
           />

@@ -55,6 +55,7 @@ export {
 export { SearchInput, type SearchInputProps } from './SearchInput'
 export { SectionCard, type SectionCardProps } from './SectionCard'
 export { DATA_COLORS, StatusPill, type StatusPillProps } from './StatusPill'
+export { humanizeCode } from './statusFormatters'
 export { StatusTag, type StatusTagProps } from './StatusTag'
 export { TableFooter, type TableFooterProps } from './TableFooter'
 export { TableTextCell, type TableTextCellProps } from './TableTextCell'

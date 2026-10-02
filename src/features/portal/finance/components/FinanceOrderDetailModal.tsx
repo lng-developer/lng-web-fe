@@ -10,7 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Modal, Space, Spin, Timeline, Typography } from 'antd'
 
-import { FormattedDateTime, MetricCard, StatusTag } from '@/shared/ui'
+import { FormattedDateTime, humanizeCode, MetricCard, StatusTag } from '@/shared/ui'
 
 import { type FinanceSnapshot, getOrderFinanceSummary } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
@@ -325,7 +325,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                         <StatusTag
                           status={entry.costStatus === 'MISSING' ? 'critical' : 'operational'}
                         >
-                          {entry.snapshotStatus}
+                          {humanizeCode(entry.snapshotStatus)}
                         </StatusTag>
                         {entry.missingCostReason ? (
                           <Typography.Text type="secondary">

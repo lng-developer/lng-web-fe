@@ -7,14 +7,14 @@ import {
   hasHydratedGlobalPermissions,
 } from './session'
 
-const adminRoles = new Set(['SUPER_ADMIN', 'SUPER ADMIN', 'ADMIN'])
+const superAdminRoles = new Set(['SUPER_ADMIN'])
 
 export function hasAnyPermission(required: readonly string[], { globalOnly = false } = {}) {
   const globalPermissions = getGlobalPermissions()
   const permissions =
     globalOnly && hasHydratedGlobalPermissions() ? globalPermissions : getPermissions()
   const roles = getRoles().map((role) => role.toUpperCase())
-  if (roles.some((role) => adminRoles.has(role))) return true
+  if (roles.some((role) => superAdminRoles.has(role))) return true
   return required.some((permission) => permissions.includes(permission))
 }
 
@@ -24,7 +24,7 @@ export function canUseScopedPermission(
   scope?: { scopeType: string; scopeId?: string | null },
 ) {
   if (!account) return false
-  if (account.roles?.some((role) => adminRoles.has(role.toUpperCase()))) return true
+  if (account.roles?.some((role) => superAdminRoles.has(role.toUpperCase()))) return true
   if (account.permissions.includes(permission)) return true
   if (!scope?.scopeId) return false
   return account.scopes.some(

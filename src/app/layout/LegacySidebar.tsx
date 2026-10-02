@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AiOutlineFileSync } from 'react-icons/ai'
 import { BiExtension } from 'react-icons/bi'
@@ -13,11 +13,9 @@ import { IoImageOutline } from 'react-icons/io5'
 import {
   LuBox,
   LuLayoutDashboard,
-  LuLayoutGrid,
   LuLayoutList,
   LuLightbulb,
   LuNotebook,
-  LuPalette,
   LuTruck,
 } from 'react-icons/lu'
 import { MdBalance, MdOutlineConnectedTv } from 'react-icons/md'
@@ -53,11 +51,20 @@ import {
 import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
+import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { useDesignSummaryQuery } from '@/features/portal/design/hooks/useDesignTasksQuery'
 import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
 import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
 
-import { getCoreForPath, type NavigationGroup, type NavigationItem } from './appNavigation'
+import {
+  canReadHrDashboard,
+  canReadOperationsDashboard,
+  effectivePermissions,
+  getCoreForPath,
+  hasExplicitHrAccess,
+  type NavigationGroup,
+  type NavigationItem,
+} from './appNavigation'
 import { getRememberedCoreRoute } from './coreRouteMemory'
 import styles from './LegacySidebar.module.scss'
 
@@ -322,81 +329,60 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
   ],
   design: [
     {
-      key: '/portal/design',
-      labelKey: 'portal.design.tasks',
-      icon: <LuPalette size={20} />,
+      key: '/portal/design/idea-tasks',
+      labelKey: 'portal.design.ideaTasks',
+      icon: <LuLightbulb size={20} />,
       children: [
         {
-          key: '/portal/design/workspace',
-          labelKey: 'portal.design.workspace',
-          icon: <LuLayoutGrid size={20} />,
+          key: workspaceRouteLinks.designIdeaTasksBySalesChannel('amazon'),
+          labelKey: 'portal.design.amazonTasks',
+          icon: <FaAmazon size={20} />,
         },
         {
-          key: '/portal/design/idea-tasks',
-          labelKey: 'portal.design.ideaTasks',
-          icon: <LuLightbulb size={20} />,
-          className: styles.reportChannel,
-          children: [
-            {
-              key: workspaceRouteLinks.designIdeaTasksBySalesChannel('amazon'),
-              labelKey: 'portal.design.amazonTasks',
-              icon: <FaAmazon size={20} />,
-              className: styles.reportChannelItem,
-            },
-            {
-              key: workspaceRouteLinks.designIdeaTasksBySalesChannel('etsy'),
-              labelKey: 'portal.design.etsyTasks',
-              icon: <FaEtsy size={20} />,
-              className: styles.reportChannelItem,
-            },
-          ],
-        },
-        {
-          key: '/portal/design/psd-tasks',
-          labelKey: 'portal.design.psdTasks',
-          icon: <BsFiletypePsd size={20} />,
-          className: styles.reportChannel,
-          children: [
-            {
-              key: workspaceRouteLinks.designPsdTasksBySalesChannel('amazon'),
-              labelKey: 'portal.design.amazonTasks',
-              icon: <FaAmazon size={20} />,
-              className: styles.reportChannelItem,
-            },
-            {
-              key: workspaceRouteLinks.designPsdTasksBySalesChannel('etsy'),
-              labelKey: 'portal.design.etsyTasks',
-              icon: <FaEtsy size={20} />,
-              className: styles.reportChannelItem,
-            },
-          ],
-        },
-        {
-          key: '/portal/design/png-tasks',
-          labelKey: 'portal.design.pngTasks',
-          icon: <IoImageOutline size={20} />,
-          className: styles.reportChannel,
-          children: [
-            {
-              key: workspaceRouteLinks.designPngTasksBySalesChannel('amazon'),
-              labelKey: 'portal.design.amazonTasks',
-              icon: <FaAmazon size={20} />,
-              className: styles.reportChannelItem,
-            },
-            {
-              key: workspaceRouteLinks.designPngTasksBySalesChannel('etsy'),
-              labelKey: 'portal.design.etsyTasks',
-              icon: <FaEtsy size={20} />,
-              className: styles.reportChannelItem,
-            },
-          ],
-        },
-        {
-          key: '/portal/design/scores',
-          labelKey: 'portal.design.scores',
-          icon: <TbAward size={20} />,
+          key: workspaceRouteLinks.designIdeaTasksBySalesChannel('etsy'),
+          labelKey: 'portal.design.etsyTasks',
+          icon: <FaEtsy size={20} />,
         },
       ],
+    },
+    {
+      key: '/portal/design/psd-tasks',
+      labelKey: 'portal.design.psdTasks',
+      icon: <BsFiletypePsd size={20} />,
+      children: [
+        {
+          key: workspaceRouteLinks.designPsdTasksBySalesChannel('amazon'),
+          labelKey: 'portal.design.amazonTasks',
+          icon: <FaAmazon size={20} />,
+        },
+        {
+          key: workspaceRouteLinks.designPsdTasksBySalesChannel('etsy'),
+          labelKey: 'portal.design.etsyTasks',
+          icon: <FaEtsy size={20} />,
+        },
+      ],
+    },
+    {
+      key: '/portal/design/png-tasks',
+      labelKey: 'portal.design.pngTasks',
+      icon: <IoImageOutline size={20} />,
+      children: [
+        {
+          key: workspaceRouteLinks.designPngTasksBySalesChannel('amazon'),
+          labelKey: 'portal.design.amazonTasks',
+          icon: <FaAmazon size={20} />,
+        },
+        {
+          key: workspaceRouteLinks.designPngTasksBySalesChannel('etsy'),
+          labelKey: 'portal.design.etsyTasks',
+          icon: <FaEtsy size={20} />,
+        },
+      ],
+    },
+    {
+      key: '/portal/design/scores',
+      labelKey: 'portal.design.scores',
+      icon: <TbAward size={20} />,
     },
     {
       key: '/portal/design/files',
@@ -478,10 +464,173 @@ const financeMenuItem: LegacyMenuItem = {
   ],
 }
 
-function getDetailMenu(menuKey: string, financeVisible: boolean) {
+const adminRoles = new Set(['SUPER_ADMIN', 'SUPER ADMIN', 'ADMIN'])
+
+function getPermissionsSet(account?: CurrentAccount): Set<string> | null {
+  if (!account) return null
+  const isAdmin = account.roles?.some((role) => adminRoles.has(role.toUpperCase()))
+  if (isAdmin) return null
+  return effectivePermissions(account)
+}
+
+function canAccessItemDirectly(
+  item: LegacyMenuItem,
+  permissions: Set<string>,
+  financeVisible: boolean,
+): boolean {
+  const key = item.key
+
+  if (key === 'finance' || key.startsWith('/portal/finance')) {
+    return financeVisible
+  }
+
+  if (key === workspaceRouteLinks.orders || key.startsWith('/portal/orders')) {
+    return permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
+  }
+
+  if (key === workspaceRouteLinks.teamTasks || key === '/portal/team-tasks') {
+    return permissions.has('ORDERS:READ') || permissions.has('ORDERS:WRITE')
+  }
+
+  if (key === 'listing' || key.startsWith('/portal/listing')) {
+    return permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+  }
+
+  if (key === '/portal/catalog/product-types' || key === '/portal/catalog/templates') {
+    return permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+  }
+
+  if (key.startsWith('/portal/catalog')) {
+    return permissions.has('CATALOG:READ') || permissions.has('CATALOG:WRITE')
+  }
+
+  if (key === '/portal/mapping' || key.startsWith('/portal/mapping')) {
+    return (
+      permissions.has('MAPPING:READ') ||
+      permissions.has('MAPPING:WRITE') ||
+      permissions.has('CATALOG:READ') ||
+      permissions.has('CATALOG:WRITE')
+    )
+  }
+
+  if (key === 'reports' || key.startsWith('reports-') || key.startsWith('/portal/reports')) {
+    return permissions.has('REPORTS:READ')
+  }
+
+  if (
+    key === '/portal/monitoring' ||
+    key.startsWith('/portal/monitoring') ||
+    key.startsWith('/auth/monitoring') ||
+    key.startsWith('/auth/audit-log') ||
+    key.startsWith('/portal/audit')
+  ) {
+    return permissions.has('AUDIT:READ')
+  }
+
+  if (key === '/portal/shops' || key.startsWith('/portal/shops')) {
+    return permissions.has('SHOPS:READ')
+  }
+
+  if (key === '/portal/integrations' || key.startsWith('/portal/integrations')) {
+    return (
+      permissions.has('ORDERS:READ') ||
+      permissions.has('ORDERS:WRITE') ||
+      permissions.has('CATALOG:READ') ||
+      permissions.has('CATALOG:WRITE')
+    )
+  }
+
+  if (key === '/portal/shipments' || key.startsWith('/portal/shipments')) {
+    return permissions.has('SHIPMENTS:READ') || permissions.has('SHIPMENTS:WRITE')
+  }
+
+  if (
+    key === 'scale' ||
+    key.startsWith('/portal/production/scale') ||
+    key === 'qc' ||
+    key.startsWith('/portal/production/qc') ||
+    key.startsWith('/portal/production')
+  ) {
+    return ['PRODUCTION:READ', 'PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((p) =>
+      permissions.has(p),
+    )
+  }
+
+  if (key === '/portal/work-scores' || key.startsWith('/portal/work-scores')) {
+    return ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK'].some((p) => permissions.has(p))
+  }
+
+  if (key === '/portal/vendor-submissions' || key.startsWith('/portal/vendor-submissions')) {
+    return permissions.has('VENDOR_SUBMISSIONS:READ')
+  }
+
+  if (
+    key === '/portal/design/idea-tasks' ||
+    key.startsWith('/portal/design/idea') ||
+    key === '/portal/design/psd-tasks' ||
+    key.startsWith('/portal/design/psd') ||
+    key === '/portal/design/png-tasks' ||
+    key.startsWith('/portal/design/png') ||
+    key === '/portal/design/files' ||
+    key.startsWith('/portal/design/files')
+  ) {
+    return ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((p) =>
+      permissions.has(p),
+    )
+  }
+
+  if (key === '/portal/design/scores' || key.startsWith('/portal/design/scores')) {
+    return ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW'].some((p) => permissions.has(p))
+  }
+
+  if (key === '/portal/media' || key.startsWith('/portal/media')) {
+    return permissions.has('MEDIA:READ')
+  }
+
+  if (key === '/portal/vendors' || key.startsWith('/portal/vendors')) {
+    return permissions.has('VENDORS:READ') || permissions.has('VENDORS:WRITE')
+  }
+
+  if (key.startsWith('/portal/extensions')) {
+    return permissions.has('ORDERS:WRITE') || permissions.has('CATALOG:WRITE')
+  }
+
+  if (key === 'cost-centers' || key === 'configuration') {
+    return true
+  }
+
+  return true
+}
+
+function filterLegacyMenuItems(
+  items: LegacyMenuItem[],
+  permissions: Set<string> | null,
+  financeVisible: boolean,
+): LegacyMenuItem[] {
+  if (!permissions) return items
+
+  const result: LegacyMenuItem[] = []
+  for (const item of items) {
+    if (item.children && item.children.length > 0) {
+      const filteredChildren = filterLegacyMenuItems(item.children, permissions, financeVisible)
+      if (filteredChildren.length > 0 && canAccessItemDirectly(item, permissions, financeVisible)) {
+        result.push({
+          ...item,
+          children: filteredChildren,
+        })
+      }
+    } else if (canAccessItemDirectly(item, permissions, financeVisible)) {
+      result.push(item)
+    }
+  }
+  return result
+}
+
+function getDetailMenu(menuKey: string, financeVisible: boolean, permissions?: Set<string> | null) {
   const items = detailMenus[menuKey]
   if (!items) return undefined
-  return menuKey === 'sales' && financeVisible ? [...items, financeMenuItem] : items
+  const allItems = menuKey === 'sales' && financeVisible ? [...items, financeMenuItem] : items
+  return filterLegacyMenuItems(allItems, permissions ?? null, financeVisible)
 }
 
 function toMenuItems(
@@ -538,6 +687,7 @@ function getRouteMenuState(
   search: string,
   bottomMenuGroups: Partial<Record<'portal' | 'hr' | 'system', NavigationGroup[]>>,
   financeVisible = false,
+  permissions?: Set<string> | null,
 ) {
   if (pathname === '/hr/dashboard') {
     return { menuKey: 'hr-dashboard', openKeys: [] }
@@ -551,7 +701,7 @@ function getRouteMenuState(
   }
 
   for (const menuKey of Object.keys(detailMenus)) {
-    const items = getDetailMenu(menuKey, financeVisible) ?? []
+    const items = getDetailMenu(menuKey, financeVisible, permissions) ?? []
     const openKeys = findOpenKeys(items, pathname, search)
     if (openKeys) return { menuKey, openKeys }
   }
@@ -559,7 +709,7 @@ function getRouteMenuState(
   const core = getCoreForPath(pathname)
   const menuKey = core === 'hr' ? 'hr' : core === 'system' ? 'system' : 'sales'
   const items =
-    getDetailMenu(menuKey, financeVisible) ??
+    getDetailMenu(menuKey, financeVisible, permissions) ??
     (menuKey === 'hr' || menuKey === 'system'
       ? toLegacyMenuItems(bottomMenuGroups[menuKey] ?? [])
       : [])
@@ -612,15 +762,30 @@ function toLegacyMenuItems(groups: NavigationGroup[] = []): LegacyMenuItem[] {
     })
 }
 
-function getInitialPortalMenu(pathname: string, search: string): string {
+function getInitialPortalMenu(
+  pathname: string,
+  search: string,
+  permissions?: Set<string> | null,
+  financeVisible = false,
+): string {
   for (const [menuKey, items] of Object.entries(detailMenus)) {
-    if (findOpenKeys(items, pathname, search) !== undefined) {
+    const filtered = filterLegacyMenuItems(items, permissions ?? null, financeVisible)
+    if (findOpenKeys(filtered, pathname, search) !== undefined) {
       return menuKey
     }
   }
   const saved = localStorage.getItem('lng:last-portal-menu')
   if (saved && detailMenus[saved]) {
-    return saved
+    const savedFiltered = getDetailMenu(saved, financeVisible, permissions)
+    if (savedFiltered && savedFiltered.length > 0) {
+      return saved
+    }
+  }
+  for (const menuKey of ['sales', 'fulfillment', 'design', 'vendor', 'extensions']) {
+    const filtered = getDetailMenu(menuKey, financeVisible, permissions)
+    if (filtered && filtered.length > 0) {
+      return menuKey
+    }
   }
   return 'sales'
 }
@@ -630,12 +795,14 @@ export function LegacySidebar({
   onCollapsedChange,
   bottomMenus: bottomMenuGroups = emptyBottomMenuGroups,
   financeVisible = false,
+  account,
 }: {
   collapsed: boolean
   onCollapsedChange: (value: boolean) => void
   bottomMenus?: Partial<Record<'portal' | 'hr' | 'system', NavigationGroup[]>>
   accountLabel?: string
   financeVisible?: boolean
+  account?: CurrentAccount
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -643,13 +810,21 @@ export function LegacySidebar({
   const orderSummary = useOrderSummaryQuery({ page: 1, limit: 1 })
   const designSummary = useDesignSummaryQuery({})
   const productionQueueCounts = useProductionQueueCountsQuery({})
+
+  const permissions = useMemo(() => getPermissionsSet(account), [account])
+
   const [activeMenu, setActiveMenu] = useState(
     () =>
-      getRouteMenuState(location.pathname, location.search, bottomMenuGroups, financeVisible)
-        .menuKey,
+      getRouteMenuState(
+        location.pathname,
+        location.search,
+        bottomMenuGroups,
+        financeVisible,
+        permissions,
+      ).menuKey,
   )
   const [lastPortalMenu, setLastPortalMenu] = useState<string>(() =>
-    getInitialPortalMenu(location.pathname, location.search),
+    getInitialPortalMenu(location.pathname, location.search, permissions, financeVisible),
   )
   const [activeMode, setActiveMode] = useState<'portal' | 'hr'>(() => {
     const isHr =
@@ -662,15 +837,18 @@ export function LegacySidebar({
       location.search,
       bottomMenuGroups,
       financeVisible,
+      permissions,
     )
     return routeState.openKeys
   })
+
   useEffect(() => {
     const routeState = getRouteMenuState(
       location.pathname,
       location.search,
       bottomMenuGroups,
       financeVisible,
+      permissions,
     )
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveMenu(routeState.menuKey)
@@ -688,21 +866,54 @@ export function LegacySidebar({
     if (routeState.menuKey !== 'dashboard' && routeState.menuKey !== 'hr-dashboard') {
       setOpenKeys(routeState.openKeys)
     }
-  }, [bottomMenuGroups, financeVisible, location.pathname, location.search])
+  }, [bottomMenuGroups, financeVisible, location.pathname, location.search, permissions])
+
+  const visibleTopMenus = useMemo(() => {
+    const list = activeMode === 'hr' ? hrTopMenus : topMenus
+    if (!permissions) return list
+    return list.filter((item) => {
+      if (item.key === 'dashboard') {
+        return canReadOperationsDashboard(permissions)
+      }
+      if (item.key === 'hr-dashboard') {
+        return canReadHrDashboard(permissions)
+      }
+      if (item.key === 'hr') {
+        return (bottomMenuGroups.hr ?? []).length > 0
+      }
+      const children = getDetailMenu(item.key, financeVisible, permissions)
+      return Boolean(children && children.length > 0)
+    })
+  }, [activeMode, bottomMenuGroups.hr, financeVisible, permissions])
+
+  const visibleBottomMenus = useMemo(() => {
+    if (!permissions) return bottomMenus
+    return bottomMenus.filter((item) => {
+      if (item.key === 'system') {
+        return (bottomMenuGroups.system ?? []).length > 0
+      }
+      return true
+    })
+  }, [bottomMenuGroups.system, permissions])
+
+  const hasHrAccess = useMemo(() => {
+    if (!permissions) return true
+    return hasExplicitHrAccess(permissions) || (bottomMenuGroups.hr ?? []).length > 0
+  }, [bottomMenuGroups.hr, permissions])
+
+  const currentPortalMenu = activeMenu === 'dashboard' ? lastPortalMenu : activeMenu
   const activeDetailMenu =
     activeMenu === 'system'
       ? toLegacyMenuItems(bottomMenuGroups.system ?? [])
       : activeMode === 'hr'
         ? toLegacyMenuItems(bottomMenuGroups.hr ?? [])
-        : (getDetailMenu(
-            activeMenu === 'dashboard' ? lastPortalMenu : activeMenu,
-            financeVisible,
-          ) ??
-          getDetailMenu(lastPortalMenu, financeVisible) ??
-          detailMenus.sales)
+        : (getDetailMenu(currentPortalMenu, financeVisible, permissions) ??
+          getDetailMenu(lastPortalMenu, financeVisible, permissions) ??
+          [])
   const badgeCounts = {
     [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
     '/portal/design': designSummary.data?.unassigned,
+    '/portal/design/idea-tasks': designSummary.data?.unassigned,
     '/portal/production/blocked': productionQueueCounts.data?.blocked,
   }
   const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
@@ -716,14 +927,19 @@ export function LegacySidebar({
     if (mode === 'hr') {
       const remembered = localStorage.getItem('lng:last-route:hr')
       const target =
-        (remembered &&
-          (remembered.startsWith('/hr') || remembered.startsWith('/organization')
-            ? remembered
-            : undefined)) ||
+        (remembered && (remembered.startsWith('/hr') || remembered.startsWith('/organization'))
+          ? remembered
+          : undefined) ||
         getRememberedCoreRoute('hr', bottomMenuGroups.hr ?? []) ||
         bottomMenuGroups.hr?.[0]?.items?.[0]?.path ||
         '/hr/dashboard'
-      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups, financeVisible)
+      const targetRouteState = getRouteMenuState(
+        target,
+        '',
+        bottomMenuGroups,
+        financeVisible,
+        permissions,
+      )
       setActiveMenu(targetRouteState.menuKey)
       if (targetRouteState.menuKey !== 'hr-dashboard') {
         setOpenKeys(targetRouteState.openKeys)
@@ -733,12 +949,20 @@ export function LegacySidebar({
       const remembered = localStorage.getItem('lng:last-route:portal')
       const target =
         (remembered &&
-          (remembered.startsWith('/portal') || remembered.startsWith('/operations-dashboard')
-            ? remembered
-            : undefined)) ||
+        (remembered.startsWith('/portal') || remembered.startsWith('/operations-dashboard'))
+          ? remembered
+          : undefined) ||
         getRememberedCoreRoute('portal', bottomMenuGroups.portal ?? []) ||
-        '/portal/dashboard'
-      const targetRouteState = getRouteMenuState(target, '', bottomMenuGroups, financeVisible)
+        (permissions && !canReadOperationsDashboard(permissions)
+          ? bottomMenuGroups.portal?.[0]?.items?.[0]?.path || '/portal/orders'
+          : '/portal/dashboard')
+      const targetRouteState = getRouteMenuState(
+        target,
+        '',
+        bottomMenuGroups,
+        financeVisible,
+        permissions,
+      )
       setActiveMenu(targetRouteState.menuKey)
       if (targetRouteState.menuKey !== 'dashboard') {
         setOpenKeys(targetRouteState.openKeys)
@@ -751,8 +975,19 @@ export function LegacySidebar({
     if (collapsed) {
       onCollapsedChange(false)
     }
-    const target = activeMode === 'hr' ? '/hr/dashboard' : '/portal/dashboard'
-    navigate(target)
+    if (activeMode === 'hr') {
+      const target =
+        permissions && !canReadHrDashboard(permissions)
+          ? bottomMenuGroups.hr?.[0]?.items?.[0]?.path || '/hr/me'
+          : '/hr/dashboard'
+      navigate(target)
+    } else {
+      const canAccessDashboard = !permissions || canReadOperationsDashboard(permissions)
+      const target = canAccessDashboard
+        ? '/portal/dashboard'
+        : bottomMenuGroups.portal?.[0]?.items?.[0]?.path || '/portal/orders'
+      navigate(target)
+    }
   }
 
   return (
@@ -778,7 +1013,7 @@ export function LegacySidebar({
         >
           <Image src="/assets/images/lng-logo.jpg" preview={false} alt={t('app.name')} />
         </div>
-        {!collapsed && (
+        {!collapsed && hasHrAccess && (
           <div className={styles.coreSwitch} role="group" aria-label="Core Switcher">
             <button
               type="button"
@@ -804,7 +1039,7 @@ export function LegacySidebar({
       <Layout className={styles.menuLayout}>
         <div className={styles.rail}>
           <nav className={styles.railMenu} aria-label={t('shell.navigation.cores')}>
-            {collapsed && (
+            {collapsed && hasHrAccess && (
               <Tooltip
                 title={
                   activeMode === 'portal'
@@ -823,7 +1058,7 @@ export function LegacySidebar({
                 </button>
               </Tooltip>
             )}
-            {(activeMode === 'hr' ? hrTopMenus : topMenus).map((item) => (
+            {visibleTopMenus.map((item) => (
               <button
                 key={item.key}
                 className={item.key === activeMenu ? styles.railButtonActive : styles.railButton}
@@ -867,7 +1102,7 @@ export function LegacySidebar({
               </button>
             ))}
             <div className={styles.railSpacer} />
-            {bottomMenus.map((item) => (
+            {visibleBottomMenus.map((item) => (
               <button
                 key={item.key}
                 className={item.key === activeMenu ? styles.railButtonActive : styles.railButton}

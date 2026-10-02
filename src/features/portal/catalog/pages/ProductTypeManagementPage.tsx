@@ -21,7 +21,7 @@ import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { SectionCard, StatusTag, TableTextCell } from '@/shared/ui'
+import { humanizeCode, SectionCard, StatusTag, TableTextCell } from '@/shared/ui'
 
 import {
   listVendorProducts,
@@ -299,7 +299,9 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
         align: 'center',
         render: (value) => (
           <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
-            {t(`portal.catalog.master.statuses.${value}`, { defaultValue: value })}
+            {t(`portal.catalog.master.statuses.${value}`, {
+              defaultValue: humanizeCode(value),
+            })}
           </StatusTag>
         ),
       },

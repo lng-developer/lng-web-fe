@@ -32,4 +32,14 @@ describe('ReportAdsEmployeeTab performance safeguards', () => {
     expect(screen.getByRole('heading', { name: 'Employee trend' })).toBeInTheDocument()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
+
+  it('formats trend chart dates as DD/MM/YYYY', () => {
+    render(
+      <AppProviders>
+        <ReportAdsEmployeeTab data={rows} isPending={false} />
+      </AppProviders>,
+    )
+
+    expect(screen.getByText('01/09/2026')).toBeInTheDocument()
+  })
 })

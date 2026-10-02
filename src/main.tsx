@@ -1,14 +1,11 @@
 import '@/shared/i18n/i18n'
 import '@/styles/global.scss'
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-
-import { App } from '@/app/App'
+import { bootstrapApp } from '@/app/bootstrap'
 import { loginWithMicrosoft } from '@/features/auth/api/authApi'
 import { clearStuckMsalInteraction, getMsalInstance } from '@/features/auth/microsoft/msalClient'
 
-async function bootstrap() {
+async function resolveMicrosoftRedirect() {
   const hash = window.location.hash
   const search = window.location.search
   const authResponseString =
@@ -50,11 +47,7 @@ async function bootstrap() {
     }
   }
 
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  )
+  return true
 }
 
-void bootstrap()
+void bootstrapApp(resolveMicrosoftRedirect)

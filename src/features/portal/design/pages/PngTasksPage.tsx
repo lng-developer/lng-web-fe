@@ -34,6 +34,7 @@ import {
   type DateRangeValue,
   EmployeeAvatar,
   FormattedDateTime,
+  humanizeCode,
   StatusTag,
   UiTabLabel,
   UiTabs,
@@ -374,7 +375,9 @@ export function PngTasksPage() {
         width: 140,
         render: (_, record) => (
           <StatusTag status={getScaleStatusTone(record.status)}>
-            {t(`portal.production.statuses.${record.status}`, { defaultValue: record.status })}
+            {t(`portal.production.statuses.${record.status}`, {
+              defaultValue: humanizeCode(record.status),
+            })}
           </StatusTag>
         ),
       },

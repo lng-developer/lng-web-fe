@@ -27,6 +27,13 @@ const loadCatalogWorkspaceRoute = () =>
     ),
   }))
 
+const organizationRoutePermissions = [
+  'DEPARTMENTS:READ',
+  'DEPARTMENTS:WRITE',
+  'TEAMS:READ',
+  'TEAMS:WRITE',
+]
+
 export const appRoutes: RouteObject[] = [
   { path: 'login', element: <LoginPage /> },
   {
@@ -191,7 +198,11 @@ export const appRoutes: RouteObject[] = [
         path: 'organization',
         lazy: () =>
           import('@/features/organization/pages/OrganizationPage').then(({ OrganizationPage }) => ({
-            Component: OrganizationPage,
+            Component: () => (
+              <PermissionBoundary anyOf={organizationRoutePermissions}>
+                <OrganizationPage />
+              </PermissionBoundary>
+            ),
           })),
       },
       {

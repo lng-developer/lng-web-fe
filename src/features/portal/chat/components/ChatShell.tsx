@@ -31,7 +31,13 @@ import styles from './ChatShell.module.scss'
 const CHAT_PREVIEW_LIMIT = 8
 
 function participantLabel(participant?: ChatParticipant) {
-  return participant?.employeeCode || participant?.email || ''
+  return (
+    participant?.displayName ||
+    participant?.fullName ||
+    participant?.employeeCode ||
+    participant?.email ||
+    ''
+  )
 }
 
 function conversationTitle(

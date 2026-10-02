@@ -4,7 +4,11 @@ import { Button, Tooltip } from 'antd'
 import { type Language, LANGUAGE_STORAGE_KEY } from './i18n'
 import styles from './LanguageSwitch.module.scss'
 
-export function LanguageSwitch() {
+type LanguageSwitchProps = {
+  showTooltip?: boolean
+}
+
+export function LanguageSwitch({ showTooltip = true }: LanguageSwitchProps) {
   const { i18n, t } = useTranslation()
   const language: Language = i18n.resolvedLanguage === 'en' ? 'en' : 'vi'
   const nextLanguage: Language = language === 'en' ? 'vi' : 'en'
@@ -14,18 +18,18 @@ export function LanguageSwitch() {
     void i18n.changeLanguage(nextLanguage)
   }
 
-  return (
-    <Tooltip title={t(`language.${nextLanguage}`)}>
-      <Button
-        aria-label={t('language.label')}
-        className={styles.button}
-        type="text"
-        onClick={changeLanguage}
-      >
-        <span key={language} className={styles.label}>
-          {language.toUpperCase()}
-        </span>
-      </Button>
-    </Tooltip>
+  const button = (
+    <Button
+      aria-label={t('language.label')}
+      className={styles.button}
+      type="text"
+      onClick={changeLanguage}
+    >
+      <span key={language} className={styles.label}>
+        {language.toUpperCase()}
+      </span>
+    </Button>
   )
+
+  return showTooltip ? <Tooltip title={t(`language.${nextLanguage}`)}>{button}</Tooltip> : button
 }

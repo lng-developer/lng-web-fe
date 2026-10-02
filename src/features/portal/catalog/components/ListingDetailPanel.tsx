@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { EditOutlined, GlobalOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Divider, Space, Tag, Typography } from 'antd'
 
-import { FormattedDateTime, LoadingState, StatusTag, ZoomableImage } from '@/shared/ui'
+import {
+  FormattedDateTime,
+  humanizeCode,
+  LoadingState,
+  StatusTag,
+  ZoomableImage,
+} from '@/shared/ui'
 
 import type { InternalTemplate, Listing, ProductTypeGroup } from '../api/catalogApi'
 import { ListingVariantManager } from '../pages/ListingVariantManager'
@@ -96,7 +102,9 @@ export function ListingDetailPanel({
               </StatusTag>
               <Tag>{listing.marketplaceCode}</Tag>
               <StatusTag status={listing.status === 'ACTIVE' ? 'operational' : 'cancelled'}>
-                {listing.status}
+                {t(`portal.catalog.master.statuses.${listing.status}`, {
+                  defaultValue: humanizeCode(listing.status),
+                })}
               </StatusTag>
             </Space>
             <Typography.Text

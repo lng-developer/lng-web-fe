@@ -54,8 +54,8 @@ export function LoginPage() {
   return (
     <main className={styles.page}>
       <div className={styles.preferences}>
-        <LanguageSwitch />
-        <ThemeSwitch />
+        <LanguageSwitch showTooltip={false} />
+        <ThemeSwitch showTooltip={false} />
       </div>
       <div className={styles.workspace} role="group" aria-labelledby="login-workspace-title">
         <Card className={styles.card} variant="borderless">
