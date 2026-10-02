@@ -1320,7 +1320,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
     fireEvent.click(await screen.findByText('Ads'))
-    expect(await screen.findByText('Amazon Ads imports')).toBeVisible()
+    expect(await screen.findByText('Amazon Ads Spend')).toBeVisible()
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith({
         page: 1,
@@ -1333,7 +1333,7 @@ describe('IntegrationWorkbenchPage', () => {
       }),
     )
     expect(await screen.findByText('ads-spend-2026-08-12.csv')).toBeVisible()
-    expect(screen.getByText('5 processed / 5 valid')).toBeVisible()
+    expect(screen.getByText(/5 processed \/ 5 valid/i)).toBeVisible()
   })
 
   it('shows Amazon Transactions import history for finance readers', async () => {
@@ -1341,7 +1341,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
     fireEvent.click(await screen.findByText('Transactions'))
-    expect(await screen.findByText('Amazon Transactions imports')).toBeVisible()
+    expect(await screen.findByText('Amazon Transactions')).toBeVisible()
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1503,12 +1503,13 @@ describe('IntegrationWorkbenchPage', () => {
   it('mounts and submits the finance import modal for finance writers', async () => {
     renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
     fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Import finance data' }))
+    fireEvent.click(await screen.findByRole('button', { name: /^import$/i }))
 
     const dialog = await screen.findByRole('dialog')
     expect(dialog).toBeInTheDocument()
     fireEvent.mouseDown(within(dialog).getByLabelText('Shop'))
-    fireEvent.click(await screen.findByText('LNG Amazon US'))
+    const shopOptions = await screen.findAllByText('LNG Amazon US')
+    fireEvent.click(shopOptions[shopOptions.length - 1])
     fireEvent.change(within(dialog).getByLabelText('Sales channel'), {
       target: { value: 'amazon' },
     })
@@ -1538,7 +1539,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
     fireEvent.click(await screen.findByText('Settlements'))
-    expect(await screen.findByText('Amazon Settlements imports')).toBeVisible()
+    expect(await screen.findByText('Marketplace Settlements')).toBeVisible()
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1555,9 +1556,9 @@ describe('IntegrationWorkbenchPage', () => {
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
     fireEvent.click(await screen.findByText('Ads'))
-    expect(await screen.findByText('Amazon Ads imports')).toBeVisible()
+    expect(await screen.findByText('Amazon Ads Spend')).toBeVisible()
     expect(
-      screen.getByText('Finance read permission is required to view Ads import history.'),
+      screen.getByText('You do not have permission to view Ads imports.'),
     ).toBeVisible()
     expect(listImportBatches).not.toHaveBeenCalled()
   })

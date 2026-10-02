@@ -69,7 +69,7 @@ export function normalizeApiError(error: unknown): ApiError {
   if (!axios.isAxiosError<BackendErrorResponse>(error)) {
     const rawMessage = error instanceof Error ? error.message : 'Unexpected error'
     console.error('[LNG] request failed', error)
-    return new ApiError(getLocalizedMessage(), {
+    return new ApiError(error instanceof Error && error.message ? error.message : getLocalizedMessage(), {
       code: 'UNEXPECTED_ERROR',
       rawMessage,
     })

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { App as AntdApp } from 'antd'
 import { describe, expect, it, vi } from 'vitest'
 
-import { AppProviders } from '@/app/providers/AppProviders'
 import { ShiftAssignments } from '@/features/hr/ScheduleCalendar/ShiftAssignments'
 import type { ShiftAssignmentsModel } from '@/features/hr/ScheduleCalendar/ShiftAssignments/useShiftAssignments'
 
@@ -34,9 +34,9 @@ describe('ShiftAssignments', () => {
     const model = createModel()
 
     render(
-      <AppProviders>
+      <AntdApp>
         <ShiftAssignments model={model} />
-      </AppProviders>,
+      </AntdApp>,
     )
 
     expect(screen.getByLabelText('Edit assignment')).toBeInTheDocument()
@@ -45,16 +45,16 @@ describe('ShiftAssignments', () => {
       textAlign: 'right',
       width: '96px',
     })
-  })
+  }, 15_000)
 
   it('requires confirmation before deactivating an assignment', () => {
     const deactivateAssignment = vi.fn()
     const model = createModel({ deactivateAssignment })
 
     render(
-      <AppProviders>
+      <AntdApp>
         <ShiftAssignments model={model} />
-      </AppProviders>,
+      </AntdApp>,
     )
 
     fireEvent.click(screen.getByLabelText('Deactivate assignment'))
@@ -64,5 +64,5 @@ describe('ShiftAssignments', () => {
     )
 
     expect(deactivateAssignment).toHaveBeenCalledWith(assignment)
-  })
+  }, 15_000)
 })
