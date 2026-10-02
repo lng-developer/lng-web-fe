@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { Select, Skeleton } from 'antd'
 
@@ -45,6 +46,7 @@ const TimeRequestsPage = lazy(() =>
 )
 
 export function HrActionPage({ routeKey }: { routeKey: string }) {
+  const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount
   const [searchParams, setSearchParams] = useSearchParams()
   const access = getHrAccess(account)
@@ -56,9 +58,9 @@ export function HrActionPage({ routeKey }: { routeKey: string }) {
   const teamSelector =
     isTeamRoute && access.teamIds.length > 1 ? (
       <Select
-        aria-label="Team"
+        aria-label={t('hrOperations.common.team')}
         options={access.teamIds.map((id) => ({ value: id, label: id }))}
-        placeholder="Select team"
+        placeholder={t('hrOperations.common.team')}
         value={selectedTeamId}
         onChange={(teamId) => {
           const next = new URLSearchParams(searchParams)

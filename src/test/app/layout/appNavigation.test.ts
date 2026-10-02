@@ -468,7 +468,7 @@ describe('app navigation', () => {
   })
 
   it('finds the workspace group that owns a navigation item', () => {
-    const groups = getContextNavigation('hr', account(['HR_LEAVE:READ']))
+    const groups = getContextNavigation('hr', account([], ['HR_LEAVE:READ']))
     expect(getNavigationGroupForItem(groups, 'team-members')).toBe('team')
     expect(getNavigationGroupForItem(groups, 'missing')).toBeUndefined()
   })
@@ -476,7 +476,7 @@ describe('app navigation', () => {
   it('uses context-specific labels for each HR workspace root', () => {
     const groups = getContextNavigation(
       'hr',
-      account(['HR_ATTENDANCE:WRITE', 'HR_ATTENDANCE:READ', 'HR_EMPLOYEES:READ']),
+      account(['HR_ATTENDANCE:WRITE', 'HR_EMPLOYEES:READ'], ['HR_ATTENDANCE:READ']),
     )
     expect(groups.find(({ key }) => key === 'personal')?.items[0].labelKey).toBe(
       'shell.navigation.myDay',
