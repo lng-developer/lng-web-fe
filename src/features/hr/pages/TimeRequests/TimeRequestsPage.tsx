@@ -13,9 +13,16 @@ import { type LeaveRequest, type OvertimeRequest } from '../../api/hrTimeApi'
 import { RequestDecisionModal } from '../../components/RequestDecisionModal'
 import styles from '../HrOperationsPage.module.scss'
 import { TimeRequestEditorModal } from '../TimeRequestEditorModal'
+import { type TimeRequestWorkspace } from './timeRequestAccess'
 import { useTimeRequest } from './useTimeRequest'
 
-export function TimeRequestsPage() {
+export function TimeRequestsPage({
+  workspace,
+  teamId,
+}: {
+  workspace?: TimeRequestWorkspace
+  teamId?: string
+}) {
   const [
     {
       t,
@@ -37,7 +44,7 @@ export function TimeRequestsPage() {
       renderStatus,
     },
     { balances, leaves, overtime, canLeaveWrite, canOvertimeWrite, decisionPending },
-  ] = useTimeRequest()
+  ] = useTimeRequest(workspace, teamId)
 
   return (
     <section className={styles.page}>

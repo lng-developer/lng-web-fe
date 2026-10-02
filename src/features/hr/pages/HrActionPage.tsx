@@ -1,5 +1,10 @@
 import { lazy, Suspense } from 'react'
-import { Skeleton } from 'antd'
+import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
+import { Select, Skeleton } from 'antd'
+
+import type { CurrentAccount } from '@/features/auth/api/authApi'
+
+import { getHrAccess, getSelectedHrTeamId } from '../hrViews'
 
 const AttendancePage = lazy(() =>
   import('./Attendance/AttendancePage').then(({ AttendancePage }) => ({ default: AttendancePage })),
@@ -40,19 +45,49 @@ const TimeRequestsPage = lazy(() =>
 )
 
 export function HrActionPage({ routeKey }: { routeKey: string }) {
+  const account = useRouteLoaderData('workspace') as CurrentAccount
+  const [searchParams, setSearchParams] = useSearchParams()
+  const access = getHrAccess(account)
+  const isTeamRoute =
+    routeKey === 'team-attendance' || routeKey === 'team-requests' || routeKey === 'team-schedule'
+  const selectedTeamId = isTeamRoute
+    ? getSelectedHrTeamId(access, searchParams.get('teamId') ?? undefined)
+    : undefined
+  const teamSelector =
+    isTeamRoute && access.teamIds.length > 1 ? (
+      <Select
+        aria-label="Team"
+        options={access.teamIds.map((id) => ({ value: id, label: id }))}
+        placeholder="Select team"
+        value={selectedTeamId}
+        onChange={(teamId) => {
+          const next = new URLSearchParams(searchParams)
+          next.set('teamId', teamId)
+          setSearchParams(next, { replace: true })
+        }}
+      />
+    ) : null
   const page =
     routeKey === 'self' ? (
       <StaffWorkspacePage />
     ) : routeKey === 'self-schedule' ? (
       <StaffWorkspacePage view="schedule" />
-    ) : routeKey === 'self-attendance' ||
-      routeKey === 'team-attendance' ||
-      routeKey === 'operations-attendance' ? (
+    ) : routeKey === 'self-attendance' ? (
       <AttendancePage />
-    ) : routeKey === 'self-requests' || routeKey === 'operations-requests' ? (
+    ) : routeKey === 'team-attendance' ? (
+      <AttendancePage workspace="team" teamId={selectedTeamId} />
+    ) : routeKey === 'operations-attendance' ? (
+      <AttendancePage workspace="operations" />
+    ) : routeKey === 'self-requests' ? (
       <TimeRequestsPage />
-    ) : routeKey === 'self-payroll' || routeKey === 'payroll' ? (
+    ) : routeKey === 'team-requests' ? (
+      <TimeRequestsPage workspace="team" teamId={selectedTeamId} />
+    ) : routeKey === 'operations-requests' ? (
+      <TimeRequestsPage workspace="operations" />
+    ) : routeKey === 'self-payroll' ? (
       <PayrollPage />
+    ) : routeKey === 'payroll' ? (
+      <PayrollPage workspace="management" />
     ) : routeKey === 'self-profile' ? (
       <ProfilePage />
     ) : routeKey === 'team' ? (
@@ -62,7 +97,7 @@ export function HrActionPage({ routeKey }: { routeKey: string }) {
     ) : routeKey === 'team-members' ? (
       <TeamWorkspacePage view="members" />
     ) : routeKey === 'team-schedule' || routeKey === 'operations-scheduling' ? (
-      <ScheduleCalendarPage />
+      <ScheduleCalendarPage teamId={routeKey === 'team-schedule' ? selectedTeamId : undefined} />
     ) : routeKey === 'operations-employees' ? (
       <HrWorkspacePage />
     ) : routeKey === 'operations-announcements' ? (
@@ -71,5 +106,10 @@ export function HrActionPage({ routeKey }: { routeKey: string }) {
       <HrOverviewPage />
     )
 
-  return <Suspense fallback={<Skeleton active paragraph={{ rows: 10 }} />}>{page}</Suspense>
+  return (
+    <Suspense fallback={<Skeleton active paragraph={{ rows: 10 }} />}>
+      {teamSelector}
+      {page}
+    </Suspense>
+  )
 }

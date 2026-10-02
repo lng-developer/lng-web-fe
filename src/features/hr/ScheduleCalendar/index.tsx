@@ -13,57 +13,69 @@ import { ScheduleEditor } from './ScheduleEditor'
 import { ShiftAssignments } from './ShiftAssignments'
 import { useScheduleCalendar } from './useScheduleCalendar'
 
-export const ScheduleCalendarPage = () => {
+export const ScheduleCalendarPage = ({ teamId }: { readonly teamId?: string }) => {
   const { t } = useTranslation()
   const [
-    { month, editor, assignments, locationsShifts, holidaysOverrides, saturdayRotation, metrics },
+    {
+      month,
+      editor,
+      assignments,
+      locationsShifts,
+      holidaysOverrides,
+      saturdayRotation,
+      metrics,
+      rotationTeamId,
+    },
     { setMonth },
-  ] = useScheduleCalendar()
+  ] = useScheduleCalendar(teamId)
 
-  const tabItems = [
-    {
-      key: 'assignments',
-      label: (
-        <span>
-          <UserSwitchOutlined style={{ marginRight: 6 }} />
-          {t('hrOperations.schedule.tabs.assignments', {
-            count: assignments.assignmentCount,
-          })}
-        </span>
-      ),
-      children: <ShiftAssignments model={assignments} />,
-    },
-    {
-      key: 'locations-shifts',
-      label: (
-        <span>
-          <CompassOutlined style={{ marginRight: 6 }} />
-          {t('hrOperations.schedule.tabs.locationsShifts')}
-        </span>
-      ),
-      children: <LocationsShifts model={locationsShifts} />,
-    },
-    {
-      key: 'holidays-overrides',
-      label: (
-        <span>
-          <CalendarOutlined style={{ marginRight: 6 }} />
-          {t('hrOperations.schedule.tabs.holidaysOverrides')}
-        </span>
-      ),
-      children: <HolidaysOverrides model={holidaysOverrides} />,
-    },
-    {
-      key: 'saturday-rotation',
-      label: (
-        <span>
-          <CalendarOutlined style={{ marginRight: 6 }} />
-          {t('hrOperations.schedule.saturday')}
-        </span>
-      ),
-      children: <SaturdayRotation model={saturdayRotation} />,
-    },
-  ]
+  const rotationTab = {
+    key: 'saturday-rotation',
+    label: (
+      <span>
+        <CalendarOutlined style={{ marginRight: 6 }} />
+        {t('hrOperations.schedule.saturday')}
+      </span>
+    ),
+    children: <SaturdayRotation model={saturdayRotation} />,
+  }
+  const tabItems = rotationTeamId
+    ? [rotationTab]
+    : [
+        {
+          key: 'assignments',
+          label: (
+            <span>
+              <UserSwitchOutlined style={{ marginRight: 6 }} />
+              {t('hrOperations.schedule.tabs.assignments', {
+                count: assignments.assignmentCount,
+              })}
+            </span>
+          ),
+          children: <ShiftAssignments model={assignments} />,
+        },
+        {
+          key: 'locations-shifts',
+          label: (
+            <span>
+              <CompassOutlined style={{ marginRight: 6 }} />
+              {t('hrOperations.schedule.tabs.locationsShifts')}
+            </span>
+          ),
+          children: <LocationsShifts model={locationsShifts} />,
+        },
+        {
+          key: 'holidays-overrides',
+          label: (
+            <span>
+              <CalendarOutlined style={{ marginRight: 6 }} />
+              {t('hrOperations.schedule.tabs.holidaysOverrides')}
+            </span>
+          ),
+          children: <HolidaysOverrides model={holidaysOverrides} />,
+        },
+        rotationTab,
+      ]
 
   return (
     <section className={styles.page}>
@@ -71,9 +83,12 @@ export const ScheduleCalendarPage = () => {
         actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
       />
 
-      <ScheduleMetrics model={metrics} />
+      {!rotationTeamId && <ScheduleMetrics model={metrics} />}
 
-      <Tabs items={tabItems} defaultActiveKey="assignments" />
+      <Tabs
+        items={tabItems}
+        defaultActiveKey={rotationTeamId ? 'saturday-rotation' : 'assignments'}
+      />
 
       <ScheduleEditor model={editor} />
     </section>

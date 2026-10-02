@@ -61,6 +61,8 @@ type UseScheduleEditorParams = {
   canScheduleWrite: boolean
   canCalendarWrite: boolean
   canRotationRead: boolean
+  rotationTeamId?: string
+  teamProfiles?: Array<{ id: string; employeeCode: string; fullName: string }>
 }
 
 export function useScheduleEditor({
@@ -68,6 +70,8 @@ export function useScheduleEditor({
   canScheduleWrite,
   canCalendarWrite,
   canRotationRead,
+  rotationTeamId,
+  teamProfiles,
 }: UseScheduleEditorParams) {
   const { t } = useTranslation()
   const [editor, setEditor] = useState<ScheduleEditorState>()
@@ -95,13 +99,13 @@ export function useScheduleEditor({
   const profiles = useQuery({
     queryKey: ['hr', 'employee-profiles', false],
     queryFn: () => loadEmployeeProfiles(false),
-    enabled: canScheduleWrite || canCalendarWrite,
+    enabled: canScheduleWrite || (canCalendarWrite && !rotationTeamId),
   })
 
   const teams = useQuery({
     queryKey: ['organization', 'teams'],
     queryFn: loadTeams,
-    enabled: canRotationRead,
+    enabled: canRotationRead && !rotationTeamId,
   })
 
   const employeeOptions = useMemo(
@@ -118,24 +122,15 @@ export function useScheduleEditor({
     [teams.data],
   )
 
-  const manualTeamEmployees = useMemo(
-    () =>
-      (profiles.data?.items ?? [])
-        .filter((profile) => profile.teamId === manualTeamId)
-        .map((profile) => ({
-          value: profile.id,
-          label: `${profile.fullName || profile.employeeCode} · ${profile.employeeCode}`,
-        })),
-    [manualTeamId, profiles.data],
-  )
-
-  const manualTeamEmployeeIds = useMemo(
-    () =>
-      (profiles.data?.items ?? [])
-        .filter((profile) => profile.teamId === manualTeamId)
-        .map((profile) => profile.id),
-    [manualTeamId, profiles.data],
-  )
+  const manualTeamEmployees = useMemo(() => {
+    const members = rotationTeamId
+      ? (teamProfiles ?? [])
+      : (profiles.data?.items ?? []).filter((profile) => profile.teamId === manualTeamId)
+    return members.map((profile) => ({
+      value: profile.id,
+      label: `${profile.fullName || profile.employeeCode} · ${profile.employeeCode}`,
+    }))
+  }, [manualTeamId, profiles.data, rotationTeamId, teamProfiles])
 
   const saturdaysOfMonth = useCallback(
     (monthValue: ScheduleEditorValues[string]) => {
@@ -195,14 +190,20 @@ export function useScheduleEditor({
             : {}),
         })
       } else if (next.kind === 'rotationManual') {
-        form.setFieldsValue({ month, employeeProfileIdsByDate: manualDefaultOffByDate })
+        form.setFieldsValue({
+          teamId: rotationTeamId,
+          month,
+          employeeProfileIdsByDate: manualDefaultOffByDate,
+        })
+      } else if (next.kind === 'rotation') {
+        form.setFieldsValue({ teamId: rotationTeamId, minPresent: 1 })
       } else if (next.kind === 'assignment') {
         form.setFieldsValue({ status: 'ACTIVE' })
       }
 
       setEditor(next)
     },
-    [form, manualDefaultOffByDate, month],
+    [form, manualDefaultOffByDate, month, rotationTeamId],
   )
 
   const closeEditor = useCallback(() => setEditor(undefined), [])
@@ -253,18 +254,9 @@ export function useScheduleEditor({
         const teamId = String(values.teamId)
         const byDate = (values.employeeProfileIdsByDate as RotationOffByDate) || {}
         const targetDates = saturdaysOfMonth(values.month)
-        const teamEmployeeIds = manualTeamEmployeeIds.length
-          ? manualTeamEmployeeIds
-          : (profiles.data?.items ?? [])
-              .filter((profile) => profile.teamId === teamId)
-              .map((profile) => profile.id)
-
         return Promise.all(
           targetDates.map((dateKey) => {
-            const offEmployeeProfileIds = Array.isArray(byDate[dateKey]) ? byDate[dateKey] : []
-            const employeeProfileIds = teamEmployeeIds.filter(
-              (id) => !offEmployeeProfileIds.includes(id),
-            )
+            const employeeProfileIds = Array.isArray(byDate[dateKey]) ? byDate[dateKey] : []
 
             return createSaturdayRotation({ teamId, dateKey, employeeProfileIds })
           }),
@@ -304,6 +296,7 @@ export function useScheduleEditor({
     overrideKindLabel,
     scopeTypeLabel,
     holidayTypeLabel,
+    rotationTeamId,
     openEditor,
     closeEditor,
     save,

@@ -11,7 +11,17 @@ export const HR_TIME_REQUEST_PERMISSIONS = {
   },
 } as const
 
-export function getTimeRequestAccess(permissions: Iterable<string>) {
+export type TimeRequestWorkspace = 'personal' | 'team' | 'operations'
+
+export function getTimeRequestParams(workspace: TimeRequestWorkspace, teamId?: string) {
+  if (workspace === 'team' && !teamId) return undefined
+  return { limit: 100, ...(workspace === 'team' && teamId ? { teamId } : {}) }
+}
+
+export function getTimeRequestAccess(
+  permissions: Iterable<string>,
+  workspace: TimeRequestWorkspace = 'personal',
+) {
   const granted = new Set(permissions)
   const canLeaveWrite = granted.has(HR_TIME_REQUEST_PERMISSIONS.leave.write)
   const canOvertimeWrite = granted.has(HR_TIME_REQUEST_PERMISSIONS.overtime.write)
@@ -23,7 +33,11 @@ export function getTimeRequestAccess(permissions: Iterable<string>) {
     canOvertimeWrite,
     canLeaveApprove,
     canOvertimeApprove,
-    managerLeave: granted.has(HR_TIME_REQUEST_PERMISSIONS.leave.read) || canLeaveApprove,
-    managerOvertime: granted.has(HR_TIME_REQUEST_PERMISSIONS.overtime.read) || canOvertimeApprove,
+    managerLeave:
+      workspace !== 'personal' &&
+      (granted.has(HR_TIME_REQUEST_PERMISSIONS.leave.read) || canLeaveApprove),
+    managerOvertime:
+      workspace !== 'personal' &&
+      (granted.has(HR_TIME_REQUEST_PERMISSIONS.overtime.read) || canOvertimeApprove),
   }
 }

@@ -751,6 +751,7 @@ function toLegacyMenuItems(groups: NavigationGroup[] = []): LegacyMenuItem[] {
           icon: iconForNavigationItem(item),
         }))
       if (group.standalone) return items
+      if (!items.length) return []
       return [
         {
           key: `legacy-group:${group.key}`,

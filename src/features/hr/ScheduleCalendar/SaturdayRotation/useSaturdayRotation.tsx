@@ -19,6 +19,8 @@ type UseSaturdayRotationParams = {
   month: Dayjs
   canRotationRead: boolean
   canManageRotation: boolean
+  rotationTeamId?: string
+  teamProfiles?: Array<{ id: string; employeeCode: string; fullName: string }>
   openEditor: (editor: ScheduleEditorState) => void
 }
 
@@ -26,21 +28,23 @@ export function useSaturdayRotation({
   month,
   canRotationRead,
   canManageRotation,
+  rotationTeamId,
+  teamProfiles,
   openEditor,
 }: UseSaturdayRotationParams) {
   const { t } = useTranslation()
-  const [rotationTeamId, setRotationTeamId] = useState<string>()
+  const [selectedTeamId, setSelectedTeamId] = useState<string>()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
 
   const monthParams = useMemo(() => ({ month: month.month() + 1, year: month.year() }), [month])
 
   const rotations = useQuery({
-    queryKey: ['hr-operations', 'rotations', monthParams, rotationTeamId],
+    queryKey: ['hr-operations', 'rotations', monthParams, rotationTeamId || selectedTeamId],
     queryFn: () =>
       listSaturdayRotations({
         ...monthParams,
-        ...(rotationTeamId ? { teamId: rotationTeamId } : {}),
+        ...(rotationTeamId || selectedTeamId ? { teamId: rotationTeamId || selectedTeamId } : {}),
         limit: 100,
       }),
     enabled: canRotationRead,
@@ -49,18 +53,21 @@ export function useSaturdayRotation({
   const profiles = useQuery({
     queryKey: ['hr', 'employee-profiles', false],
     queryFn: () => loadEmployeeProfiles(false),
-    enabled: canRotationRead,
+    enabled: canRotationRead && !rotationTeamId,
   })
 
   const teams = useQuery({
     queryKey: ['organization', 'teams'],
     queryFn: loadTeams,
-    enabled: canRotationRead,
+    enabled: canRotationRead && !rotationTeamId,
   })
 
   const teamOptions = useMemo(
-    () => (teams.data?.items ?? []).map((team) => ({ value: team.id, label: team.name })),
-    [teams.data],
+    () =>
+      rotationTeamId
+        ? [{ value: rotationTeamId, label: rotationTeamId }]
+        : (teams.data?.items ?? []).map((team) => ({ value: team.id, label: team.name })),
+    [rotationTeamId, teams.data],
   )
 
   const teamById = useMemo(() => {
@@ -71,11 +78,11 @@ export function useSaturdayRotation({
 
   const employeeNameById = useMemo(() => {
     const map = new Map<string, string>()
-    ;(profiles.data?.items ?? []).forEach((profile) => {
+    ;(rotationTeamId ? (teamProfiles ?? []) : (profiles.data?.items ?? [])).forEach((profile) => {
       map.set(profile.id, `${profile.fullName || profile.employeeCode}`)
     })
     return map
-  }, [profiles.data])
+  }, [profiles.data, rotationTeamId, teamProfiles])
 
   const rotationSourceLabel = (value: string) =>
     t(`hrOperations.schedule.rotationSources.${value}`, { defaultValue: value })
@@ -91,8 +98,9 @@ export function useSaturdayRotation({
 
   const resetMonthRotation = useMutation({
     mutationFn: () => {
-      if (!rotationTeamId) return Promise.resolve()
-      return deleteTeamSaturdayRotations(rotationTeamId, month.month() + 1, month.year())
+      const teamId = rotationTeamId || selectedTeamId
+      if (!teamId) return Promise.resolve()
+      return deleteTeamSaturdayRotations(teamId, month.month() + 1, month.year())
     },
     onSuccess: () => {
       toast('success', t('hrOperations.messages.saved'))
@@ -103,8 +111,9 @@ export function useSaturdayRotation({
 
   return {
     rotations,
-    rotationTeamId,
-    setRotationTeamId,
+    rotationTeamId: rotationTeamId || selectedTeamId,
+    setRotationTeamId: setSelectedTeamId,
+    isTeamScoped: Boolean(rotationTeamId),
     canRotationRead,
     canManageRotation,
     teamOptions,

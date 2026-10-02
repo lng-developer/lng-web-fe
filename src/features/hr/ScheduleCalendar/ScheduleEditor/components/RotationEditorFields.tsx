@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Checkbox, Divider, Form, InputNumber, Select } from 'antd'
+import { Checkbox, Divider, Form, Input, InputNumber, Select } from 'antd'
 
 import { DateTimePicker, MonthPicker } from '@/shared/ui'
 
@@ -20,17 +20,23 @@ export const RotationEditorFields = ({ model }: Props) => {
         <Divider plain className={styles.modalSection}>
           {t('hrOperations.schedule.rotationGenerator')}
         </Divider>
-        <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
-          <Select
-            showSearch
-            optionFilterProp="label"
-            options={model.teams.data?.items.map((item) => ({
-              value: item.id,
-              label: item.name,
-            }))}
-            placeholder={t('hrOperations.schedule.placeholders.selectTeam')}
-          />
-        </Form.Item>
+        {model.rotationTeamId ? (
+          <Form.Item name="teamId" hidden rules={required}>
+            <Input />
+          </Form.Item>
+        ) : (
+          <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
+            <Select
+              showSearch
+              optionFilterProp="label"
+              options={model.teams.data?.items.map((item) => ({
+                value: item.id,
+                label: item.name,
+              }))}
+              placeholder={t('hrOperations.schedule.placeholders.selectTeam')}
+            />
+          </Form.Item>
+        )}
         <Form.Item
           name="minPresent"
           label={t('hrOperations.schedule.minimumStaff')}
@@ -49,20 +55,26 @@ export const RotationEditorFields = ({ model }: Props) => {
       <Divider plain className={styles.modalSection}>
         {t('hrOperations.schedule.rotationDetail')}
       </Divider>
-      <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
-        <Select
-          showSearch
-          optionFilterProp="label"
-          options={model.teamOptions}
-          placeholder={t('hrOperations.schedule.placeholders.selectTeam')}
-          disabled={Boolean(model.editor.item)}
-          onChange={() => {
-            model.form.setFieldsValue({
-              employeeProfileIdsByDate: model.manualDefaultOffByDate,
-            })
-          }}
-        />
-      </Form.Item>
+      {model.rotationTeamId ? (
+        <Form.Item name="teamId" hidden rules={required}>
+          <Input />
+        </Form.Item>
+      ) : (
+        <Form.Item name="teamId" label={t('hrOperations.common.team')} rules={required}>
+          <Select
+            showSearch
+            optionFilterProp="label"
+            options={model.teamOptions}
+            placeholder={t('hrOperations.schedule.placeholders.selectTeam')}
+            disabled={Boolean(model.editor.item)}
+            onChange={() => {
+              model.form.setFieldsValue({
+                employeeProfileIdsByDate: model.manualDefaultOffByDate,
+              })
+            }}
+          />
+        </Form.Item>
+      )}
 
       {model.editor.item ? (
         <Form.Item name="dateKey" label={t('hrOperations.common.date')} rules={required}>

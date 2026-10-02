@@ -18,9 +18,15 @@ import {
 } from '@/shared/ui'
 
 import styles from '../HrOperationsPage.module.scss'
-import { useAttendance } from './useAttendance'
+import { type AttendanceWorkspace, useAttendance } from './useAttendance'
 
-export const AttendancePage = () => {
+export const AttendancePage = ({
+  workspace,
+  teamId,
+}: {
+  workspace?: AttendanceWorkspace
+  teamId?: string
+}) => {
   const [
     {
       t,
@@ -43,7 +49,7 @@ export const AttendancePage = () => {
       pagination,
     },
     { records, canRead, canWrite },
-  ] = useAttendance()
+  ] = useAttendance(workspace, teamId)
   const attendanceActions = canWrite ? (
     hasCompletedAttendance ? (
       <Tag color="success" icon={<CheckCircleOutlined />}>

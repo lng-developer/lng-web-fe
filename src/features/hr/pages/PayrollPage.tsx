@@ -84,13 +84,14 @@ export function PayrollEmployeeCell({
   )
 }
 
-export function PayrollPage() {
+export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal' | 'management' }) {
   const { t, i18n } = useTranslation()
   const permissions = useMemo(() => new Set(getPermissions()), [])
-  const canRead = permissions.has('HR_PAYROLL:READ')
-  const canWrite = permissions.has('HR_PAYROLL:WRITE')
-  const canFinalize = permissions.has('HR_PAYROLL:FINALIZE')
-  const canPay = permissions.has('HR_PAYROLL:PAY')
+  const isManagement = workspace === 'management'
+  const canRead = isManagement && permissions.has('HR_PAYROLL:READ')
+  const canWrite = isManagement && permissions.has('HR_PAYROLL:WRITE')
+  const canFinalize = isManagement && permissions.has('HR_PAYROLL:FINALIZE')
+  const canPay = isManagement && permissions.has('HR_PAYROLL:PAY')
   const [month, setMonth] = useState(dayjs())
   const [editor, setEditor] = useState<'run' | 'adjustment' | 'settings'>()
   const [form] = Form.useForm()

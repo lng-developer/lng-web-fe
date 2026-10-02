@@ -2951,7 +2951,6 @@
       "view": "Xem",
       "review": "Kiểm duyệt",
       "moreActions": "Thao tác khác",
-      "title": "Vận hành thiết kế",
       "requests": {
         "title": "Yêu cầu PSD",
         "description": "Phân công và theo dõi công việc PSD được tạo từ đơn hàng.",
@@ -2966,6 +2965,7 @@
         "assigned": "Đã phân công yêu cầu design",
         "updateFailed": "Không thể cập nhật yêu cầu design"
       },
+      "title": "Vận hành thiết kế",
       "description": "Phân công, thực hiện, nộp và duyệt tài nguyên thiết kế gắn với listing.",
       "refresh": "Làm mới",
       "exportCsv": "Xuất CSV",

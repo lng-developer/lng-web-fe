@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -46,7 +46,7 @@ describe('AttendancePage', () => {
       </MemoryRouter>,
     )
 
-    const tableTitle = await screen.findByRole('heading', { name: 'Staff attendance' })
+    const tableTitle = await screen.findByRole('heading', { name: 'My attendance' })
     const tableHeader = tableTitle.closest('.ant-card-head')
 
     expect(tableHeader).not.toBeNull()
@@ -56,5 +56,37 @@ describe('AttendancePage', () => {
     expect(
       within(tableHeader as HTMLElement).getByRole('button', { name: /Check out$/ }),
     ).toBeVisible()
+  })
+
+  it("keeps Personal attendance on the employee's own records when they can read team attendance", async () => {
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <AttendancePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(listMyAttendance).toHaveBeenCalled())
+
+    expect(listAttendance).not.toHaveBeenCalled()
+    expect(listAttendanceMatrix).not.toHaveBeenCalled()
+  })
+
+  it('uses the selected team ID only for Team attendance queries', async () => {
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <AttendancePage workspace="team" teamId="team-sales" />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(listAttendance).toHaveBeenCalled())
+
+    expect(listAttendance).toHaveBeenCalledWith(expect.objectContaining({ teamId: 'team-sales' }))
+    expect(listAttendanceMatrix).toHaveBeenCalledWith(
+      expect.objectContaining({ teamId: 'team-sales' }),
+    )
   })
 })

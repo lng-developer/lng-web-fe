@@ -23,7 +23,9 @@ import {
 const attendanceStatusTone = (status: string): 'approved' | 'rejected' | 'pending' =>
   status === 'PRESENT' ? 'approved' : status === 'ABSENT' ? 'rejected' : 'pending'
 
-export const useAttendance = () => {
+export type AttendanceWorkspace = 'personal' | 'team' | 'operations'
+
+export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamId?: string) => {
   const { t } = useTranslation()
   const permissions = new Set(getPermissions())
   const queryClient = useQueryClient()
@@ -35,28 +37,32 @@ export const useAttendance = () => {
 
   const canRead = permissions.has('HR_ATTENDANCE:READ') || permissions.has('HR_ATTENDANCE:MANAGE')
   const canWrite = permissions.has('HR_ATTENDANCE:WRITE')
-  const canManage = permissions.has('HR_ATTENDANCE:MANAGE')
+  const showTeamAttendance =
+    workspace !== 'personal' && canRead && (workspace !== 'team' || Boolean(teamId))
+  const canManage = workspace !== 'personal' && permissions.has('HR_ATTENDANCE:MANAGE')
 
   const params = {
     month: month.month() + 1,
     year: month.year(),
+    ...(workspace === 'team' && teamId ? { teamId } : {}),
   }
 
   const range = {
     dateFrom: month.startOf('month').format('YYYY-MM-DD'),
     dateTo: month.endOf('month').format('YYYY-MM-DD'),
     limit: 1000,
+    ...(workspace === 'team' && teamId ? { teamId } : {}),
   }
 
   useQuery({
-    queryKey: ['hr-time', 'attendance-matrix', params],
+    queryKey: ['hr-time', workspace, 'attendance-matrix', params],
     queryFn: () => listAttendanceMatrix(params),
-    enabled: canRead,
+    enabled: showTeamAttendance,
   })
 
   const records = useQuery({
-    queryKey: ['hr-time', 'attendance', range, canRead],
-    queryFn: () => (canRead ? listAttendance(range) : listMyAttendance(range)),
+    queryKey: ['hr-time', workspace, 'attendance', range],
+    queryFn: () => (showTeamAttendance ? listAttendance(range) : listMyAttendance(range)),
   })
 
   const myAttendance = useQuery({
@@ -134,7 +140,7 @@ export const useAttendance = () => {
         <Typography.Text strong>{dayjs(value).format('DD/MM/YYYY')}</Typography.Text>
       ),
     },
-    ...(canRead
+    ...(showTeamAttendance
       ? [
           {
             title: t('hrOperations.common.employee'),
@@ -218,7 +224,7 @@ export const useAttendance = () => {
     {
       records,
       myAttendance,
-      canRead,
+      canRead: showTeamAttendance,
       canWrite,
       canManage,
     },

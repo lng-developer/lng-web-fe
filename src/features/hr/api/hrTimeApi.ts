@@ -300,6 +300,13 @@ export type TeamHrWorkspace = {
   pendingOvertime: Page<OvertimeRequest>
   assignments: Page<unknown>
 }
+export type TeamWorkspaceQuery = {
+  dateKey: string
+  month: number
+  year: number
+  days?: 1 | 7 | 30
+  teamId?: string
+}
 
 export const listAttendance = (params: Query = {}) =>
   get<Page<Attendance>>('/api/hr/attendance', params)
@@ -423,5 +430,5 @@ export const getHrDashboard = (dateKey?: string, days?: 1 | 7 | 30) =>
   get<HrDashboard>('/api/hr/dashboard', { dateKey, days })
 export const getMyHrWorkspace = (params: Query) =>
   get<MyHrWorkspace>('/api/hr/workspace/me', params)
-export const getTeamHrWorkspace = (params: Query) =>
+export const getTeamHrWorkspace = (params: TeamWorkspaceQuery) =>
   get<TeamHrWorkspace>('/api/hr/workspace/team', params)

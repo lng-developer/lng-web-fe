@@ -30,7 +30,7 @@ export function SaturdayRotation({ model }: SaturdayRotationProps) {
           </Typography.Paragraph>
         </div>
 
-        {model.canRotationRead && (
+        {model.canRotationRead && !model.isTeamScoped && (
           <Select
             allowClear
             showSearch

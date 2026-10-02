@@ -691,6 +691,42 @@ describe('LegacySidebar', () => {
     await waitFor(() => expect(screen.getByRole('link', { name: 'My day' })).toBeVisible())
   })
 
+  it('omits a navigation group when only its dashboard link is removed', () => {
+    render(
+      <MemoryRouter initialEntries={['/hr/me']}>
+        <AppProviders>
+          <LegacySidebar
+            collapsed={false}
+            onCollapsedChange={() => undefined}
+            bottomMenus={{
+              hr: [
+                {
+                  key: 'personal',
+                  labelKey: 'shell.groups.personal',
+                  items: [{ key: 'my-day', path: '/hr/me', labelKey: 'shell.navigation.myDay' }],
+                },
+                {
+                  key: 'operations',
+                  labelKey: 'shell.groups.hrOperations',
+                  items: [
+                    {
+                      key: 'hr-dashboard',
+                      path: '/hr/dashboard',
+                      labelKey: 'shell.navigation.dashboard',
+                    },
+                  ],
+                },
+              ],
+              system: [],
+            }}
+          />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('menuitem', { name: /HR operations/ })).not.toBeInTheDocument()
+  })
+
   it('renders Portal navigation groups collapsed by default on Portal dashboard', async () => {
     render(
       <MemoryRouter initialEntries={['/portal/dashboard']}>

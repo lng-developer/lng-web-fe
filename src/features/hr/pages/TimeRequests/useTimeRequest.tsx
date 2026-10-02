@@ -34,7 +34,11 @@ import {
   rejectOvertimeRequest,
 } from '../../api/hrTimeApi'
 import { type TimeRequestKind } from '../TimeRequestEditorModal'
-import { getTimeRequestAccess } from './timeRequestAccess'
+import {
+  getTimeRequestAccess,
+  getTimeRequestParams,
+  type TimeRequestWorkspace,
+} from './timeRequestAccess'
 
 type Editor = {
   kind: TimeRequestKind
@@ -58,7 +62,7 @@ const statusTone = (status: string): 'approved' | 'rejected' | 'cancelled' | 'pe
         ? 'cancelled'
         : 'pending'
 
-export const useTimeRequest = () => {
+export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', teamId?: string) => {
   const { t } = useTranslation()
   const permissions = getPermissions()
   const queryClient = useQueryClient()
@@ -75,9 +79,11 @@ export const useTimeRequest = () => {
     canOvertimeApprove,
     managerLeave,
     managerOvertime,
-  } = getTimeRequestAccess(permissions)
+  } = getTimeRequestAccess(permissions, workspace)
 
   const year = dayjs().year()
+  const requestParams = getTimeRequestParams(workspace, teamId)
+  const teamReady = workspace !== 'team' || Boolean(requestParams)
 
   const balances = useQuery({
     queryKey: ['hr-time', 'leave-balances', year],
@@ -85,17 +91,19 @@ export const useTimeRequest = () => {
   })
 
   const leaves = useQuery({
-    queryKey: ['hr-time', 'leave-requests', year],
+    queryKey: ['hr-time', workspace, 'leave-requests', year, teamId],
     queryFn: () =>
-      managerLeave ? listLeaveRequests({ limit: 100 }) : listMyLeaveRequests({ limit: 100 }),
+      managerLeave ? listLeaveRequests(requestParams!) : listMyLeaveRequests({ limit: 100 }),
+    enabled: teamReady,
   })
 
   const overtime = useQuery({
-    queryKey: ['hr-time', 'overtime-requests', year],
+    queryKey: ['hr-time', workspace, 'overtime-requests', year, teamId],
     queryFn: () =>
       managerOvertime
-        ? listOvertimeRequests({ limit: 100 })
+        ? listOvertimeRequests(requestParams!)
         : listMyOvertimeRequests({ limit: 100 }),
+    enabled: teamReady,
   })
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['hr-time'] })
