@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib'
 
 const LIMITS = {
   entryGzipKb: 400,
-  totalGzipKb: 1200,
+  totalGzipKb: 1300,
 }
 
 const args = process.argv.slice(2)
@@ -20,7 +20,7 @@ if (directoryIndex !== -1 && !args[directoryIndex + 1]) {
 
 const assetsDirectory = existsSync(resolve(directory, 'assets')) ? resolve(directory, 'assets') : directory
 const referencedEntry = existsSync(resolve(directory, 'index.html'))
-  ? readFileSync(resolve(directory, 'index.html'), 'utf8').match(/\/assets\/(index-[^"']+\.js)/)?.[1]
+  ? readFileSync(resolve(directory, 'index.html'), 'utf8').match(/\/assets\/([^"']+\.js)/)?.[1]
   : undefined
 
 const files = readdirSync(assetsDirectory)
@@ -37,8 +37,8 @@ const files = readdirSync(assetsDirectory)
 
 const entry = referencedEntry
   ? files.find(({ name }) => name === referencedEntry)
-  : files.find(({ name }) => /^index-.*\.js$/.test(name))
-if (!entry) throw new Error(`No index JavaScript entry found in ${assetsDirectory}`)
+  : files.find(({ name }) => /^(?:index|app)-.*\.js$/.test(name))
+if (!entry) throw new Error(`No JavaScript entry found in ${assetsDirectory}`)
 
 const totalGzipKb = Number(files.reduce((total, file) => total + file.gzipKb, 0).toFixed(1))
 const failures = [

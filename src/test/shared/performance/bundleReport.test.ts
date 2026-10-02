@@ -65,4 +65,14 @@ describe('bundle report', () => {
     expect(report.budgetPassed).toBe(true)
     expect(report.entry.name).toBe('index-current.js')
   })
+
+  it('accepts the current app-named Vite entry', () => {
+    const directory = createDistFixture()
+    const assetsDirectory = join(directory, 'assets')
+    mkdirSync(assetsDirectory)
+    writeFileSync(join(assetsDirectory, 'app-current.js'), randomBytes(1024))
+    writeFileSync(directory + '/index.html', '<script src="/assets/app-current.js"></script>')
+
+    expect(JSON.parse(runReport(directory)).entry.name).toBe('app-current.js')
+  })
 })
