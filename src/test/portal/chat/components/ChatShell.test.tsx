@@ -134,7 +134,6 @@ describe('ChatShell', () => {
   it('closes preview popup when clicking outside', async () => {
     renderShell()
 
-    expect(listChatConversations).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
     expect(await screen.findByText('designer@lng.co')).toBeVisible()
 

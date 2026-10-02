@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -120,6 +121,16 @@ vi.mock('@/app/common/CoreDataTable', () => ({
 import { VendorMigrationTabPage } from '@/features/portal/vendors/pages/VendorMigrationTabPage'
 import i18n from '@/shared/i18n/i18n'
 
+function renderPage(page: React.ReactNode) {
+  return render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {page}
+    </QueryClientProvider>,
+  )
+}
+
 afterEach(() => {
   cleanup()
   tableRenderCount = 0
@@ -131,7 +142,7 @@ beforeEach(async () => {
 })
 
 test('does not re-render the review table when only the Product Type Group changes', () => {
-  render(
+  renderPage(
     <VendorMigrationTabPage
       canWrite
       rows={[
@@ -173,7 +184,7 @@ test('does not re-render the review table when only the Product Type Group chang
 
 test('filters migration products by vendor before bulk selection', () => {
   const onFiltersChange = vi.fn()
-  render(
+  renderPage(
     <VendorMigrationTabPage
       canWrite
       rows={[]}
@@ -200,7 +211,7 @@ test('filters migration products by vendor before bulk selection', () => {
 })
 
 test('shows the vendor product thumbnail in migration review', () => {
-  render(
+  renderPage(
     <VendorMigrationTabPage
       canWrite
       rows={[
@@ -234,7 +245,7 @@ test('shows the vendor product thumbnail in migration review', () => {
 })
 
 test('uses the shared table with horizontal scrolling for migration products', () => {
-  render(
+  renderPage(
     <VendorMigrationTabPage
       canWrite
       rows={[]}
@@ -255,7 +266,7 @@ test('uses the shared table with horizontal scrolling for migration products', (
 })
 
 test('keeps the selection column compact and shows product code with its name', () => {
-  render(
+  renderPage(
     <VendorMigrationTabPage
       canWrite
       rows={[
@@ -289,7 +300,7 @@ test('keeps the selection column compact and shows product code with its name', 
 })
 
 test('opens one image preview and leaves missing images blank', () => {
-  render(
+  renderPage(
     <VendorMigrationTabPage
       canWrite
       rows={[
