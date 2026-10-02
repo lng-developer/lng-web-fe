@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ApartmentOutlined,
   ArrowRightOutlined,
@@ -31,8 +32,9 @@ import { useOperationsDashboard } from './useOperationsDashboard'
 
 export function OperationsDashboardPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [dates, setDates] = useState<[Dayjs, Dayjs]>(() => [
-    dayjs('2026-08-01').startOf('day'),
+    dayjs().subtract(30, 'day').startOf('day'),
     dayjs().endOf('day'),
   ])
   const [summaryExpanded, setSummaryExpanded] = useState(false)
@@ -43,27 +45,19 @@ export function OperationsDashboardPage() {
   }
 
   const handleAddProduct = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/catalog')
-    }
+    navigate('/portal/catalog')
   }
 
   const handleExportReport = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/reports')
-    }
+    navigate('/portal/reports')
   }
 
   const handleViewAllCategories = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/catalog')
-    }
+    navigate('/portal/catalog')
   }
 
-  const handleViewOrder = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/portal/orders')
-    }
+  const handleViewOrder = (orderId?: string) => {
+    navigate(orderId ? `/portal/orders?search=${encodeURIComponent(orderId)}` : '/portal/orders')
   }
 
   return (
@@ -173,9 +167,11 @@ export function OperationsDashboardPage() {
             </div>
             <button
               type="button"
-              aria-label={t('foundation.portalDashboard.openListingQueue')}
+              aria-label={t('foundation.portalDashboard.viewCustomers', {
+                defaultValue: 'View customers',
+              })}
               className={styles.mockHeroAction}
-              onClick={handle.openListingQueue}
+              onClick={() => navigate('/portal/customers')}
             >
               <ArrowRightOutlined />
             </button>
@@ -251,26 +247,37 @@ export function OperationsDashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {value.cashFlowRows
-                        .slice(-6)
-                        .reverse()
-                        .map((row) => {
-                          const formatAmount = (amount: number) =>
-                            new Intl.NumberFormat(undefined, {
-                              style: 'currency',
-                              currency: row.currency || 'USD',
-                              maximumFractionDigits: 0,
-                            }).format(amount / 100)
+                      {value.cashFlowRows.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8' }}
+                          >
+                            {t('foundation.portalDashboard.noData')}
+                          </td>
+                        </tr>
+                      ) : (
+                        value.cashFlowRows
+                          .slice(-6)
+                          .reverse()
+                          .map((row) => {
+                            const formatAmount = (amount: number) =>
+                              new Intl.NumberFormat(undefined, {
+                                style: 'currency',
+                                currency: row.currency || 'USD',
+                                maximumFractionDigits: 0,
+                              }).format(amount / 100)
 
-                          return (
-                            <tr key={row.date}>
-                              <td>{row.displayDate}</td>
-                              <td>{formatAmount(row.cashInAmount)}</td>
-                              <td>{formatAmount(row.cashOutAmount)}</td>
-                              <td>{formatAmount(row.netCashFlowAmount)}</td>
-                            </tr>
-                          )
-                        })}
+                            return (
+                              <tr key={row.date}>
+                                <td>{row.displayDate}</td>
+                                <td>{formatAmount(row.cashInAmount)}</td>
+                                <td>{formatAmount(row.cashOutAmount)}</td>
+                                <td>{formatAmount(row.netCashFlowAmount)}</td>
+                              </tr>
+                            )
+                          })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -280,7 +287,7 @@ export function OperationsDashboardPage() {
 
           {/* Recent Orders Table Card */}
           <RecentOrdersTable
-            rows={value.filteredRecentOrders.slice(0, 4)}
+            rows={value.filteredRecentOrders}
             searchQuery={value.searchQuery}
             onSearchChange={handle.setSearchQuery}
             statusFilter={value.selectedStatus}
@@ -363,14 +370,20 @@ export function OperationsDashboardPage() {
               {value.operationalIssues.length > 0 || value.vendorFailures.length > 0 ? (
                 <span className={styles.healthStatusBadgeWarning}>
                   <span className={styles.statusDotWarning} />
-                  {value.operationalIssues.reduce((s, i) => s + i.count, 0) +
-                    value.vendorFailures.reduce((s, v) => s + v.failedCount, 0)}{' '}
-                  tác vụ cần xử lý
+                  {t('foundation.portalDashboard.tasksNeedAttention', {
+                    count:
+                      value.operationalIssues.reduce((s, i) => s + i.count, 0) +
+                      value.vendorFailures.reduce((s, v) => s + v.failedCount, 0),
+                    defaultValue: `${
+                      value.operationalIssues.reduce((s, i) => s + i.count, 0) +
+                      value.vendorFailures.reduce((s, v) => s + v.failedCount, 0)
+                    } tasks need attention`,
+                  })}
                 </span>
               ) : (
                 <span className={styles.healthStatusBadgeSuccess}>
                   <span className={styles.statusDotSuccess} />
-                  Hệ thống ổn định
+                  {t('foundation.portalDashboard.systemStable', { defaultValue: 'System stable' })}
                 </span>
               )}
             </div>
@@ -397,9 +410,15 @@ export function OperationsDashboardPage() {
                         <ApartmentOutlined />
                       </div>
                       {(mappingIssue?.count ?? 0) > 0 ? (
-                        <span className={styles.diagTagWarning}>Cần xử lý</span>
+                        <span className={styles.diagTagWarning}>
+                          {t('foundation.portalDashboard.needsAction', {
+                            defaultValue: 'Action required',
+                          })}
+                        </span>
                       ) : (
-                        <span className={styles.diagTagSuccess}>Tốt</span>
+                        <span className={styles.diagTagSuccess}>
+                          {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
+                        </span>
                       )}
                     </div>
                     <div className={styles.diagCardBody}>
@@ -409,16 +428,24 @@ export function OperationsDashboardPage() {
                       </span>
                       <p className={styles.diagCardDesc}>
                         {(mappingIssue?.count ?? 0) > 0
-                          ? 'Đơn hàng mới chờ cấu hình quy tắc SKU'
-                          : 'Đã hoàn tất ánh xạ toàn bộ đơn'}
+                          ? t('foundation.portalDashboard.needsMappingDesc', {
+                              defaultValue: 'New orders awaiting SKU mapping rules',
+                            })
+                          : t('foundation.portalDashboard.mappingCompleteDesc', {
+                              defaultValue: 'All orders mapped',
+                            })}
                       </p>
                     </div>
-                    <a
+                    <Link
                       className={styles.diagCardLink}
-                      href={mappingIssue?.href || '/portal/mapping'}
+                      to={mappingIssue?.href || '/portal/mapping'}
                     >
-                      <span>Cấu hình ánh xạ</span>
-                    </a>
+                      <span>
+                        {t('foundation.portalDashboard.configureMapping', {
+                          defaultValue: 'Configure mapping',
+                        })}
+                      </span>
+                    </Link>
                   </article>
 
                   {/* Card 2: Needs Production */}
@@ -428,9 +455,15 @@ export function OperationsDashboardPage() {
                         <BuildOutlined />
                       </div>
                       {(productionIssue?.count ?? 0) > 0 ? (
-                        <span className={styles.diagTagInfo}>Chờ sản xuất</span>
+                        <span className={styles.diagTagInfo}>
+                          {t('foundation.portalDashboard.waitingProduction', {
+                            defaultValue: 'Awaiting production',
+                          })}
+                        </span>
                       ) : (
-                        <span className={styles.diagTagSuccess}>Tốt</span>
+                        <span className={styles.diagTagSuccess}>
+                          {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
+                        </span>
                       )}
                     </div>
                     <div className={styles.diagCardBody}>
@@ -442,16 +475,24 @@ export function OperationsDashboardPage() {
                       </span>
                       <p className={styles.diagCardDesc}>
                         {(productionIssue?.count ?? 0) > 0
-                          ? 'Sẵn sàng điều phối xưởng in & gia công'
-                          : 'Không có đơn chờ duyệt sản xuất'}
+                          ? t('foundation.portalDashboard.needsProductionDesc', {
+                              defaultValue: 'Ready for print workshop & processing',
+                            })
+                          : t('foundation.portalDashboard.noPendingProductionDesc', {
+                              defaultValue: 'No orders awaiting production approval',
+                            })}
                       </p>
                     </div>
-                    <a
+                    <Link
                       className={styles.diagCardLink}
-                      href={productionIssue?.href || '/portal/production'}
+                      to={productionIssue?.href || '/portal/production'}
                     >
-                      <span>Mở xưởng sản xuất</span>
-                    </a>
+                      <span>
+                        {t('foundation.portalDashboard.openProduction', {
+                          defaultValue: 'Open production',
+                        })}
+                      </span>
+                    </Link>
                   </article>
 
                   {/* Card 3: Vendor Health */}
@@ -473,7 +514,12 @@ export function OperationsDashboardPage() {
                         {totalVendorFailures > 0 ? <ShopOutlined /> : <CheckCircleOutlined />}
                       </div>
                       {totalVendorFailures > 0 ? (
-                        <span className={styles.diagTagCritical}>{totalVendorFailures} lỗi</span>
+                        <span className={styles.diagTagCritical}>
+                          {t('foundation.portalDashboard.vendorErrors', {
+                            count: totalVendorFailures,
+                            defaultValue: `${totalVendorFailures} errors`,
+                          })}
+                        </span>
                       ) : (
                         <span className={styles.diagTagSuccess}>100% OK</span>
                       )}
@@ -486,7 +532,12 @@ export function OperationsDashboardPage() {
                             : styles.diagCardValueSuccess
                         }
                       >
-                        {totalVendorFailures > 0 ? `${totalVendorFailures} lỗi` : '100%'}
+                        {totalVendorFailures > 0
+                          ? t('foundation.portalDashboard.vendorErrors', {
+                              count: totalVendorFailures,
+                              defaultValue: `${totalVendorFailures} errors`,
+                            })
+                          : '100%'}
                       </strong>
                       <span className={styles.diagCardTitle}>
                         {t('foundation.portalDashboard.vendorHealth')}
@@ -502,9 +553,16 @@ export function OperationsDashboardPage() {
                           : t('foundation.portalDashboard.noVendorFailures')}
                       </p>
                     </div>
-                    <a className={styles.diagCardLink} href={workspaceRouteLinks.vendorSubmissions}>
-                      <span>Kiểm tra nhà cung cấp</span>
-                    </a>
+                    <Link
+                      className={styles.diagCardLink}
+                      to={workspaceRouteLinks.vendorSubmissions}
+                    >
+                      <span>
+                        {t('foundation.portalDashboard.checkVendors', {
+                          defaultValue: 'Check vendors',
+                        })}
+                      </span>
+                    </Link>
                   </article>
 
                   {/* Card 4: Import & Sync Health */}
@@ -513,30 +571,46 @@ export function OperationsDashboardPage() {
                       <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_purple}`}>
                         <CloudSyncOutlined />
                       </div>
-                      <span className={styles.diagTagSuccess}>Kết nối tốt</span>
+                      <span className={styles.diagTagSuccess}>
+                        {t('foundation.portalDashboard.connectedGood', {
+                          defaultValue: 'Connected',
+                        })}
+                      </span>
                     </div>
                     <div className={styles.diagCardBody}>
-                      <strong className={styles.diagCardValueSuccess}>Đồng bộ</strong>
-                      <span className={styles.diagCardTitle}>Tích hợp & Dữ liệu</span>
+                      <strong className={styles.diagCardValueSuccess}>
+                        {t('foundation.portalDashboard.sync', { defaultValue: 'Sync' })}
+                      </strong>
+                      <span className={styles.diagCardTitle}>
+                        {t('foundation.portalDashboard.integrationAndData', {
+                          defaultValue: 'Integrations & Data',
+                        })}
+                      </span>
                       <p className={styles.diagCardDesc}>
-                        Kênh bán hàng, cổng thanh toán & kho listing hoạt động ổn định
+                        {t('foundation.portalDashboard.integrationDesc', {
+                          defaultValue: 'Sales channels, payment gateways & listings operational',
+                        })}
                       </p>
                     </div>
-                    <a className={styles.importHealthLink} href={workspaceRouteLinks.integrations}>
+                    <Link className={styles.importHealthLink} to={workspaceRouteLinks.integrations}>
                       {t('foundation.portalDashboard.viewImportHealth')}
-                    </a>
+                    </Link>
                   </article>
                 </div>
 
                 {otherIssues.length > 0 ? (
                   <div className={styles.otherIssuesSubBar}>
-                    <span className={styles.otherIssuesLabel}>Tác vụ phát sinh khác:</span>
+                    <span className={styles.otherIssuesLabel}>
+                      {t('foundation.portalDashboard.otherIssuesLabel', {
+                        defaultValue: 'Other pending tasks:',
+                      })}
+                    </span>
                     <div className={styles.otherIssuesList}>
                       {otherIssues.map((issue) => (
-                        <a key={issue.key} className={styles.operationalIssue} href={issue.href}>
+                        <Link key={issue.key} className={styles.operationalIssue} to={issue.href}>
                           <span>{t(`foundation.portalDashboard.${issue.labelKey}`)}</span>
                           <strong>{issue.count}</strong>
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   </div>

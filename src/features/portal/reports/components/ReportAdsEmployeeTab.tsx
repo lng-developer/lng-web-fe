@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AimOutlined, DollarOutlined, FundOutlined, ShoppingOutlined } from '@ant-design/icons'
-import { Button, Empty, Typography } from 'antd'
+import { Button, Empty, Space, Typography } from 'antd'
 
 import { MetricCard, SectionCard } from '@/shared/ui'
+
+import dayjs from 'dayjs'
 
 import type { AdsSellerDaily } from '../api/reportApi'
 import { ReportTrendChart } from '../pages/ReportTrendChart'
@@ -175,13 +177,37 @@ function AdsCurrencyReport({
         <SectionCard title={t('reports.adsEmployee.trend')}>
           {selectedSummary ? (
             <>
-              <Typography.Text strong>
-                {selectedSummary.sellerName || selectedSummary.sellerEmployeeCode}
-              </Typography.Text>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <Typography.Text strong style={{ fontSize: 14 }}>
+                  {selectedSummary.sellerName || selectedSummary.sellerEmployeeCode}
+                </Typography.Text>
+                <Space size="middle">
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    {t('reports.columns.sales')}:{' '}
+                    <Typography.Text strong style={{ color: 'var(--ant-color-primary)' }}>
+                      {formatReportMoney(selectedSummary.attributedSalesAmount, currency)}
+                    </Typography.Text>
+                  </Typography.Text>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    {t('reports.columns.spend')}:{' '}
+                    <Typography.Text strong>
+                      {formatReportMoney(selectedSummary.spendAmount, currency)}
+                    </Typography.Text>
+                  </Typography.Text>
+                </Space>
+              </div>
               <ReportTrendChart
                 ariaLabel={t('reports.adsEmployee.trend')}
                 data={trend}
                 formatValue={(value) => formatReportMoney(value, currency)}
+                formatDate={(date) => dayjs(date).format('DD/MM/YYYY')}
               />
             </>
           ) : (

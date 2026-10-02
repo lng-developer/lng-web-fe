@@ -18,7 +18,7 @@ import { CopyableAsin, CopyableSku, StatusTag } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import { FulfillmentInlineEditor } from '../pages/FulfillmentInlineEditor'
-import { formatMinorMoney, orderStatusTone } from '../pages/orderPresentation'
+import { formatMinorMoney, formatPsdStatusLabel, orderStatusTone } from '../pages/orderPresentation'
 import styles from '../pages/OrderWorkbenchPage.module.scss'
 import { OrderItemNoteEditor } from './OrderItemNoteEditor'
 import {
@@ -187,7 +187,9 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           }
           fallback="/favicon.svg"
         />
-        <StatusTag status={orderStatusTone(psdStatus)}>PSD {displayValue(psdStatus)}</StatusTag>
+        <StatusTag status={orderStatusTone(psdStatus)}>
+          PSD {formatPsdStatusLabel(psdStatus, t)}
+        </StatusTag>
         {psdDownloadUrl ? (
           <Button
             size="small"

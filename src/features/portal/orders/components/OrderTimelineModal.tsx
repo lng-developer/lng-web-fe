@@ -9,8 +9,13 @@ import { FeedbackAlert, PopupModal, type PopupModalAnchor } from '@/shared/ui'
 
 import { listOrderItemTimeline, listOrderTimeline } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
+import {
+  formatOrderStatusLabel,
+  formatTimelineBlockerLabel,
+  formatTimelineEventLabel,
+} from '../pages/orderPresentation'
 import styles from '../pages/OrderWorkbenchPage.module.scss'
-import { displayValue, extractTimelineBlockers } from './orderTypes'
+import { extractTimelineBlockers } from './orderTypes'
 
 type OrderTimelineModalProps = {
   readonly open: boolean
@@ -59,7 +64,9 @@ export const OrderTimelineModal = memo(function OrderTimelineModal({
               children: (
                 <div className={styles.historyEntry}>
                   <Space wrap>
-                    <Typography.Text strong>{event.eventType}</Typography.Text>
+                    <Typography.Text strong>
+                      {formatTimelineEventLabel(event.eventType, t)}
+                    </Typography.Text>
                     <Typography.Text type="secondary">
                       {event.createdAt ? dayjs(event.createdAt).format('DD/MM/YYYY HH:mm') : '—'}
                     </Typography.Text>
@@ -67,13 +74,16 @@ export const OrderTimelineModal = memo(function OrderTimelineModal({
                   {event.message ? <Typography.Text>{event.message}</Typography.Text> : null}
                   {event.fromStatus || event.toStatus ? (
                     <Typography.Text type="secondary">
-                      {displayValue(event.fromStatus)} → {displayValue(event.toStatus)}
+                      {formatOrderStatusLabel(event.fromStatus, t)} →{' '}
+                      {formatOrderStatusLabel(event.toStatus, t)}
                     </Typography.Text>
                   ) : null}
                   {extractTimelineBlockers(event.metadata).length ? (
                     <Typography.Text type="danger">
                       {t('orders.history.blockers')}:{' '}
-                      {extractTimelineBlockers(event.metadata).join(', ')}
+                      {extractTimelineBlockers(event.metadata)
+                        .map((blocker) => formatTimelineBlockerLabel(blocker, t))
+                        .join(', ')}
                     </Typography.Text>
                   ) : null}
                   {event.actor ? (

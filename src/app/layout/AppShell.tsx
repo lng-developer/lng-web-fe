@@ -134,6 +134,7 @@ export function AppShell() {
           bottomMenus={legacyBottomMenus}
           accountLabel={account.account.email}
           financeVisible={hasFinanceAccess(account)}
+          account={account}
         />
       )}
       {activeCore && isCompact && (

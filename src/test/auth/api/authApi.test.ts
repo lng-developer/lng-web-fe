@@ -28,6 +28,15 @@ describe('logout', () => {
     setAccessToken('access-token')
     setHasRefreshSession(false)
     vi.clearAllMocks()
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        account: { id: 'account-1', email: 'staff@lng.co', mustChangePassword: false },
+        roles: [],
+        permissions: [],
+        scopes: [],
+        profileSetupRequired: false,
+      },
+    })
   })
 
   it('revokes the cookie session and clears the in-memory access token', async () => {
@@ -45,6 +54,15 @@ describe('logout', () => {
     vi.mocked(apiClient.post).mockResolvedValue({
       data: { accessToken: 'restored-access', permissions: ['AUTH:WRITE'] },
     })
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        account: { id: 'account-1', email: 'staff@lng.co', mustChangePassword: false },
+        roles: [],
+        permissions: ['AUTH:WRITE'],
+        scopes: [],
+        profileSetupRequired: false,
+      },
+    })
 
     await restoreSession()
 
@@ -52,6 +70,33 @@ describe('logout', () => {
     expect(getAccessToken()).toBe('restored-access')
     expect(getPermissions()).toEqual(['AUTH:WRITE'])
     expect(getGlobalPermissions()).toEqual(['AUTH:WRITE'])
+  })
+
+  it('preserves required profile setup when restoring the refresh session', async () => {
+    setAccessToken(null)
+    setHasRefreshSession(true)
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        accessToken: 'restored-access',
+        account: { id: 'account-1', email: 'luannd@lngwork.co', mustChangePassword: false },
+        roles: ['USER'],
+        permissions: ['ORDERS:READ'],
+        scopes: [],
+      },
+    })
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        account: { id: 'account-1', email: 'luannd@lngwork.co', mustChangePassword: false },
+        roles: ['USER'],
+        permissions: ['ORDERS:READ'],
+        scopes: [],
+        profileSetupRequired: true,
+      },
+    })
+
+    await expect(restoreSession()).resolves.toMatchObject({ profileSetupRequired: true })
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/auth/me')
   })
 
   it('clears a stale access token when refresh is rejected', async () => {
@@ -81,6 +126,24 @@ describe('logout', () => {
         accessToken: 'scoped-access',
         permissions: [],
         scopes: [{ permissions: ['HR_ATTENDANCE:READ'] }],
+      },
+    })
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        account: { id: 'account-1', email: 'staff@lng.co', mustChangePassword: false },
+        roles: [],
+        permissions: [],
+        scopes: [
+          {
+            assignmentId: 'assignment-1',
+            scopeType: 'team',
+            scopeId: 'team-1',
+            resourceId: 'team-1',
+            roles: [],
+            permissions: ['HR_ATTENDANCE:READ'],
+          },
+        ],
+        profileSetupRequired: false,
       },
     })
 

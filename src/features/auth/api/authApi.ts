@@ -120,9 +120,15 @@ export async function restoreSession() {
     setRoles(session.roles)
     setPermissions(effectivePermissions(session))
     setGlobalPermissions(session.permissions)
+    const account = await getCurrentAccount()
     return {
-      ...session,
-      profileSetupRequired: false,
+      accessToken: session.accessToken,
+      tokenType: session.tokenType,
+      account: account.account,
+      roles: account.roles,
+      permissions: account.permissions,
+      scopes: account.scopes,
+      profileSetupRequired: account.profileSetupRequired,
     }
   } catch (error) {
     if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {

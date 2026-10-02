@@ -36,6 +36,7 @@ import {
   DateRangePicker,
   FilterBar,
   FormattedDateTime,
+  humanizeCode,
   SectionCard,
   StatusTag,
   TableTextCell,
@@ -213,7 +214,9 @@ export function FinanceImportSection({
         width: 120,
         render: (itemStatus: string) => (
           <StatusTag status={statusTone(itemStatus)}>
-            {t(`portal.integrations.ads.statuses.${itemStatus}`, { defaultValue: itemStatus })}
+            {t(`portal.integrations.ads.statuses.${itemStatus}`, {
+              defaultValue: humanizeCode(itemStatus),
+            })}
           </StatusTag>
         ),
       },
@@ -423,13 +426,13 @@ export function FinanceImportSection({
             <Space wrap>
               <StatusTag status={statusTone(currentBatch.status)}>
                 {t(`portal.integrations.ads.statuses.${currentBatch.status}`, {
-                  defaultValue: currentBatch.status,
+                  defaultValue: humanizeCode(currentBatch.status),
                 })}
               </StatusTag>
               {sourceType === 'TRANSACTIONS' ? (
                 <Typography.Text>
                   {currentBatch.recalculationTotal > 0
-                    ? `Profit recalculation: ${currentBatch.recalculationStatus} (${currentBatch.recalculationCompleted}/${currentBatch.recalculationTotal}; ${currentBatch.recalculationFailed} failed)`
+                    ? `Profit recalculation: ${humanizeCode(currentBatch.recalculationStatus)} (${currentBatch.recalculationCompleted}/${currentBatch.recalculationTotal}; ${currentBatch.recalculationFailed} failed)`
                     : 'Profit recalculation: not required'}
                 </Typography.Text>
               ) : null}

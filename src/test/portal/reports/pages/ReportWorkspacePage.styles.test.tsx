@@ -42,4 +42,11 @@ describe('ReportWorkspacePage filter layout', () => {
       'grid-template-columns: minmax(180px, 240px) minmax(260px, 1fr) max-content;',
     )
   })
+
+  it('removes the redundant outer border and container styling from the filter bar', () => {
+    expect(styles).toContain('.filterBar {')
+    expect(styles).toContain('border: 0 !important;')
+    expect(styles).toContain('background: transparent !important;')
+    expect(page).toContain('className={styles.filterBar}')
+  })
 })

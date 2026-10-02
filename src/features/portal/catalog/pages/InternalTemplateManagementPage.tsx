@@ -6,7 +6,7 @@ import { Button, Flex, Form, Input, Modal, Select, Switch, Tabs, Tooltip } from 
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { SectionCard, StatusTag, TableTextCell, useFeedbackToast } from '@/shared/ui'
+import { humanizeCode, SectionCard, StatusTag, TableTextCell, useFeedbackToast } from '@/shared/ui'
 
 import {
   getInternalTemplate,
@@ -144,7 +144,9 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
         align: 'center',
         render: (value) => (
           <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
-            {t(`portal.catalog.master.statuses.${value}`, { defaultValue: value })}
+            {t(`portal.catalog.master.statuses.${value}`, {
+              defaultValue: humanizeCode(value),
+            })}
           </StatusTag>
         ),
       },

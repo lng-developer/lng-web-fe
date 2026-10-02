@@ -9,6 +9,9 @@ describe('readEnv', () => {
       uploadApiBaseUrl: '',
       appName: 'LNG Web FE',
       isDev: false,
+      googleClientId: '',
+      microsoftClientId: '',
+      microsoftTenantId: 'common',
     })
   })
 
@@ -24,6 +27,9 @@ describe('readEnv', () => {
       uploadApiBaseUrl: 'https://api.example.test',
       appName: 'LNG Operations',
       isDev: true,
+      googleClientId: '',
+      microsoftClientId: '',
+      microsoftTenantId: 'common',
     })
   })
 

@@ -25,7 +25,7 @@ import {
 } from 'antd'
 
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { StatusTag, useFeedbackToast } from '@/shared/ui'
+import { humanizeCode, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   applyListingVariantPsdToCompatible,
@@ -186,7 +186,9 @@ export function ListingVariantManager({
         render: (_, row) => (
           <Space size="small" wrap>
             <StatusTag status={row.psdReadiness.status === 'PRESENT' ? 'operational' : 'warning'}>
-              {row.psdReadiness.status}
+              {row.psdReadiness.status === 'PRESENT'
+                ? t('portal.catalog.psd.ready')
+                : t('portal.catalog.psd.missing')}
             </StatusTag>
             <Tag color={row.psdReadiness.source === 'LISTING_DEFAULT' ? 'blue' : 'default'}>
               {t(`portal.catalog.psd.${psdSourceKey(row.psdReadiness.source)}`)}
@@ -285,7 +287,7 @@ export function ListingVariantManager({
         render: (_, row) => (
           <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
             {t(`portal.catalog.master.statuses.${row.status}`, {
-              defaultValue: row.status,
+              defaultValue: humanizeCode(row.status),
             })}
           </StatusTag>
         ),

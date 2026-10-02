@@ -3,7 +3,7 @@ import { AlertOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Space, Spin, Tag, Typography } from 'antd'
 
-import { useFeedbackToast } from '@/shared/ui'
+import { humanizeCode, useFeedbackToast } from '@/shared/ui'
 
 import { type Listing, listListingVariants, requestListingVariantPsd } from '../api/catalogApi'
 import { catalogKeys } from '../api/catalogKeys'
@@ -81,7 +81,9 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
                   color={variant.status === 'ACTIVE' ? 'success' : 'default'}
                   style={{ margin: 0 }}
                 >
-                  {variant.status}
+                  {t(`portal.catalog.master.statuses.${variant.status}`, {
+                    defaultValue: humanizeCode(variant.status),
+                  })}
                 </Tag>
               </Space>
             </div>

@@ -8,7 +8,7 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
 import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import { normalizeApiError } from '@/shared/api'
-import { FeedbackAlert, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { FeedbackAlert, humanizeCode, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createMappingRule,
@@ -288,7 +288,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
             </span>
             {selectedRule?.status ? (
               <StatusTag status={selectedRule.status === 'ACTIVE' ? 'operational' : 'draft'}>
-                {selectedRule.status}
+                {humanizeCode(selectedRule.status)}
               </StatusTag>
             ) : null}
           </Space>
