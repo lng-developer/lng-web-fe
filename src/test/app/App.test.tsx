@@ -57,7 +57,9 @@ describe('application shell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeVisible()
     expect(i18n.resolvedLanguage).toBe('vi')
-    fireEvent.click(screen.getByText('EN'))
+    const languageSwitch = screen.getByRole('button', { name: 'Ngôn ngữ' })
+    expect(languageSwitch).toHaveTextContent('VI')
+    fireEvent.click(languageSwitch)
     expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeVisible()
     expect(i18n.resolvedLanguage).toBe('en')
   })
