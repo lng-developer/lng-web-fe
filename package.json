@@ -21,6 +21,7 @@
     "test:unit": "vitest run --project unit",
     "test:ui": "vitest run --project ui --maxWorkers=2",
     "test:ui:ci": "vitest run --project ui --maxWorkers=2",
+    "test:ui:changed": "vitest run --project ui --maxWorkers=2 --changed",
     "test:portal": "vitest run src/test/portal --project unit && vitest run src/test/portal --project ui --maxWorkers=4",
     "test:ci": "npm run test:unit && npm run test:ui",
     "lint:fix": "eslint . --fix",
