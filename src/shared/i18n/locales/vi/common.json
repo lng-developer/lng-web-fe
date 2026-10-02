@@ -1263,8 +1263,14 @@
       "socialOptions": "Các lựa chọn đăng nhập mạng xã hội",
       "socialFacebook": "Tiếp tục với Facebook",
       "socialGoogle": "Tiếp tục với Google",
+      "socialMicrosoft": "Tiếp tục với Microsoft (@lngwork.co)",
       "socialX": "Tiếp tục với X",
-      "socialGithub": "Tiếp tục với GitHub"
+      "socialGithub": "Tiếp tục với GitHub",
+      "googleNotConfigured": "Chưa cấu hình Google Client ID trên hệ thống.",
+      "googleLoadError": "Không thể tải dịch vụ xác thực Google. Vui lòng thử lại sau.",
+      "googleFailed": "Đăng nhập bằng Google không thành công.",
+      "microsoftNotConfigured": "Chưa cấu hình Microsoft Client ID trên hệ thống.",
+      "microsoftFailed": "Đăng nhập bằng Microsoft không thành công."
     },
     "public": {
       "fullName": "Họ và tên",

@@ -249,15 +249,35 @@
     transform 180ms ease;
 }
 
-.socialActions :global(.ant-btn:nth-child(1)) {
-  color: rgb(24 119 242);
-  background: rgb(219 234 254);
-  border-color: rgb(191 219 254);
+.microsoftButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+
+:global(html[data-theme='dark']) .microsoftButton {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.microsoftButton :global(svg) {
+  width: 18px;
+  height: 18px;
+}
+
+.microsoftButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgb(15 23 42 / 18%);
 }
 
 .facebookButton {
   display: inline-grid;
   place-items: center;
+  color: rgb(24 119 242) !important;
+  background: rgb(219 234 254) !important;
+  border-color: rgb(191 219 254) !important;
 }
 
 .facebookButton :global(svg) {
@@ -266,28 +286,62 @@
   fill: currentcolor;
 }
 
+.facebookButton:hover {
+  color: rgb(255 255 255) !important;
+  background: rgb(24 119 242) !important;
+  border-color: rgb(24 119 242) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgb(15 23 42 / 18%);
+}
+
+.xButton {
+  color: rgb(31 41 55) !important;
+  background: rgb(229 231 235) !important;
+  border-color: rgb(209 213 219) !important;
+}
+
+:global(html[data-theme='dark']) .xButton {
+  color: rgb(203 213 225) !important;
+  background: rgb(51 65 85) !important;
+  border-color: rgb(71 85 105) !important;
+}
+
 .xButton :global(svg) {
   width: 15px;
   height: 15px;
-  fill: rgb(31 41 55);
+  fill: currentcolor;
 }
 
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+.xButton:hover {
+  background: rgb(31 41 55) !important;
+  border-color: rgb(31 41 55) !important;
+  color: rgb(255 255 255) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgb(15 23 42 / 18%);
 }
 
-.socialActions :global(.ant-btn:nth-child(2)) {
-  color: rgb(31 41 55);
-  background: rgb(229 231 235);
-  border-color: rgb(209 213 219);
+.xButton:hover :global(svg) {
+  fill: rgb(255 255 255);
+}
+
+.githubButton {
+  color: rgb(31 41 55) !important;
+  background: rgb(229 231 235) !important;
+  border-color: rgb(209 213 219) !important;
+}
+
+:global(html[data-theme='dark']) .githubButton {
+  color: rgb(203 213 225) !important;
+  background: rgb(51 65 85) !important;
+  border-color: rgb(71 85 105) !important;
+}
+
+.githubButton:hover {
+  color: rgb(255 255 255) !important;
+  background: rgb(31 41 55) !important;
+  border-color: rgb(31 41 55) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgb(15 23 42 / 18%);
 }
 
 .googleButton {
@@ -301,42 +355,22 @@
   height: 18px;
 }
 
-.socialActions :global(.ant-btn:nth-child(4)) {
-  color: rgb(31 41 55);
-  background: rgb(229 231 235);
-  border-color: rgb(209 213 219);
-}
-
-.socialActions :global(.ant-btn:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgb(15 23 42 / 18%);
-}
-
-.socialActions :global(.ant-btn:nth-child(1):hover) {
-  color: rgb(255 255 255);
-  background: rgb(24 119 242);
-  border-color: rgb(24 119 242);
-}
-
-.socialActions :global(.ant-btn:nth-child(2):hover) {
-  background: rgb(31 41 55);
-  border-color: rgb(31 41 55);
-}
-
-.xButton:hover :global(svg) {
-  fill: rgb(255 255 255);
-}
-
 .googleButton:hover {
   background: rgb(255 255 255) !important;
   border-color: rgb(196 199 197) !important;
   box-shadow: 0 8px 16px rgb(60 64 67 / 28%) !important;
 }
 
-.socialActions :global(.ant-btn:nth-child(4):hover) {
-  color: rgb(255 255 255);
-  background: rgb(31 41 55);
-  border-color: rgb(31 41 55);
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .submit {
