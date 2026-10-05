@@ -340,10 +340,17 @@ export function ChatShell({ account }: ChatShellProps) {
                 <Avatar size={50} icon={<UserOutlined />} />
               </Badge>
               <span className={styles.chatPreviewText}>
-                <strong>
-                  {conversationTitle(conversation, participantById, account.account.id)}
-                </strong>
-                <span>
+                <span className={styles.chatPreviewHeaderRow}>
+                  <strong>
+                    {conversationTitle(conversation, participantById, account.account.id)}
+                  </strong>
+                  {conversation.lastMessageAt ? (
+                    <span className={styles.chatPreviewTime}>
+                      {formatRelativeTime(conversation.lastMessageAt, timeLabels)}
+                    </span>
+                  ) : null}
+                </span>
+                <span className={styles.chatPreviewSnippet}>
                   {messagePreviewText(
                     conversation,
                     participantById,
@@ -351,9 +358,6 @@ export function ChatShell({ account }: ChatShellProps) {
                     t('chat.noMessages'),
                     t('chat.you'),
                   )}
-                  {conversation.lastMessageAt
-                    ? ` - ${formatRelativeTime(conversation.lastMessageAt, timeLabels)}`
-                    : ''}
                 </span>
               </span>
             </button>

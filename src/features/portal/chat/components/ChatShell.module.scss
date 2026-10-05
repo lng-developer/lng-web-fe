@@ -83,19 +83,36 @@
   gap: 3px;
 }
 
-.chatPreviewText strong {
-  font-size: 15px;
-  line-height: 1.25;
+.chatPreviewHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
-.chatPreviewText strong,
-.chatPreviewText span {
+.chatPreviewHeaderRow strong {
+  flex: 1 1 auto;
+  font-size: 15px;
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.chatPreviewText span {
+.chatPreviewTime {
+  flex: 0 0 auto;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.chatPreviewSnippet {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
   line-height: 1.25;
