@@ -533,22 +533,6 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
-        path: 'portal/design/requests',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/design/pages/DesignRequestsPage'),
-          ]).then(([{ PortalPageBoundary }, { DesignRequestsPage }]) => ({
-            Component: () => (
-              <PortalPageBoundary
-                anyOf={['DESIGN:REQUEST_READ', 'DESIGN:REQUEST_ASSIGN', 'DESIGN:REQUEST_WORK']}
-              >
-                <DesignRequestsPage />
-              </PortalPageBoundary>
-            ),
-          })),
-      },
-      {
         path: 'portal/design',
         lazy: () =>
           Promise.all([
@@ -589,7 +573,13 @@ export const appRoutes: RouteObject[] = [
           ]).then(([{ PortalPageBoundary }, { PsdTasksPage }]) => ({
             Component: () => (
               <PortalPageBoundary
-                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+                anyOf={[
+                  'DESIGN:READ',
+                  'DESIGN:WRITE',
+                  'DESIGN:WORK',
+                  'DESIGN:REVIEW',
+                  'DESIGN:PSD_REQUEST',
+                ]}
               >
                 <PsdTasksPage />
               </PortalPageBoundary>

@@ -11,7 +11,6 @@ import {
   overrideShippingAddress,
   recheckMapping,
   recheckProduction,
-  requestOrderItemPsd,
   resolveOrderCase,
   retryCustomizationAssets,
   updateOrderBuyer,
@@ -22,7 +21,6 @@ import {
   validateShippingAddress,
 } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
-import { designKeys } from '../../design/api/designKeys'
 import type { OrderAction } from '../components/orderTypes'
 
 type UseOrderActionsMutationOptions = {
@@ -48,7 +46,6 @@ export function useOrderActionsMutation({
       if (action.kind === 'note') return updateOrderItemCsNote(action.itemId, action.note)
       if (action.kind === 'recheck-mapping') return recheckMapping(action.itemId)
       if (action.kind === 'recheck-production') return recheckProduction(action.itemId)
-      if (action.kind === 'request-psd') return requestOrderItemPsd(action.itemId)
       if (action.kind === 'retry-customization-assets')
         return retryCustomizationAssets(action.itemId)
       if (action.kind === 'ready') return markOrderItemFulfillmentReady(action.itemId)
@@ -111,9 +108,6 @@ export function useOrderActionsMutation({
       // Invalidate active workbench and summary queries without clearing unrelated orders' caches
       await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'workbench'] })
       await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'summary'] })
-      if (action.kind === 'request-psd') {
-        await queryClient.invalidateQueries({ queryKey: designKeys.requests() })
-      }
 
       onSuccess?.(result, action)
     },

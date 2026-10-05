@@ -696,6 +696,14 @@ export function DesignWorkbenchPage() {
             ) : row.listing?.etsyListingId ? (
               <CopyableListingId value={row.listing.etsyListingId} />
             ) : null}
+            {row.taskType === 'PSD_TEMPLATE' ? (
+              <Typography.Text className={styles.metaSecondary} type="secondary">
+                {row.targetScope === 'LISTING_VARIANT'
+                  ? t('portal.design.listingVariant', 'Listing variant')
+                  : t('portal.design.listing', 'Listing')}
+                {row.orderContext?.orderId ? ` · ${row.orderContext.orderId}` : ''}
+              </Typography.Text>
+            ) : null}
           </div>
         ),
       },

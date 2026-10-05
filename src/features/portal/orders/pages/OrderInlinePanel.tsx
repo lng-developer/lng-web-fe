@@ -55,8 +55,6 @@ function successMessageKey(action: OrderAction) {
       return 'orders.messages.noteSaved'
     case 'recheck-production':
       return 'orders.messages.productionRechecked'
-    case 'request-psd':
-      return 'orders.messages.psdRequested'
     case 'retry-customization-assets':
       return 'orders.messages.customizationAssetsRetried'
     case 'ready':

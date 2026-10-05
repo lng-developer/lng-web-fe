@@ -133,13 +133,11 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
             )
               ? { key: 'design', path: '/portal/design', labelKey: 'shell.navigation.design' }
               : null,
-            ['DESIGN:REQUEST_READ', 'DESIGN:REQUEST_ASSIGN', 'DESIGN:REQUEST_WORK'].some(
-              (permission) => permissions.has(permission),
-            )
+            ['DESIGN:PSD_REQUEST'].some((permission) => permissions.has(permission))
               ? {
-                  key: 'design-requests',
-                  path: '/portal/design/requests',
-                  labelKey: 'shell.navigation.designRequests',
+                  key: 'psd-requests',
+                  path: '/portal/design/psd-tasks',
+                  labelKey: 'legacyMenu.psdTasks',
                 }
               : null,
             ['PRODUCTION:READ', 'PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some(

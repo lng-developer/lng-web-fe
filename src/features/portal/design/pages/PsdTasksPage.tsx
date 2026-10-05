@@ -49,6 +49,7 @@ import {
   startDesignTask,
   submitDesignTask,
   updateDesignTask,
+  updateDesignTaskPriority,
   uploadDesignAsset,
 } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
@@ -179,7 +180,10 @@ export function PsdTasksPage() {
   )
   const canWrite = permissions.has('DESIGN:WRITE')
   const canWork = permissions.has('DESIGN:WORK') || permissions.has('DESIGN:WRITE')
-  const canReview = permissions.has('DESIGN:REVIEW') || permissions.has('DESIGN:WRITE')
+  const canPsdRequest = permissions.has('DESIGN:PSD_REQUEST')
+  const canReview =
+    canPsdRequest || permissions.has('DESIGN:REVIEW') || permissions.has('DESIGN:WRITE')
+  const canReprioritize = canPsdRequest || canWrite
 
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
@@ -259,18 +263,21 @@ export function PsdTasksPage() {
     queryKey: ['shops', 'active'],
     queryFn: () => listShops({ page: 1, limit: 100, status: 'ACTIVE' }),
     staleTime: 5 * 60 * 1000,
+    enabled: !canPsdRequest || canWrite,
   })
 
   const summaryQuery = useQuery({
     queryKey: designKeys.summary({ taskType: 'PSD_TEMPLATE', salesChannelCode }),
     queryFn: () => getDesignSummary({ taskType: 'PSD_TEMPLATE', salesChannelCode }),
     staleTime: 30_000,
+    enabled: !canPsdRequest || canWrite,
   })
 
   const assigneesQuery = useQuery({
     queryKey: designKeys.assignees(),
     queryFn: listDesignAssignees,
     staleTime: 60_000,
+    enabled: canWrite,
   })
 
   const invalidate = useCallback(() => {
@@ -349,6 +356,15 @@ export function PsdTasksPage() {
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Approve failed'
       toast('error', msg)
+    },
+  })
+
+  const priorityMutation = useMutation({
+    mutationFn: ({ taskId, priority }: { taskId: string; priority: DesignTaskPriority }) =>
+      updateDesignTaskPriority(taskId, priority),
+    onSuccess: invalidate,
+    onError: (err: unknown) => {
+      toast('error', err instanceof Error ? err.message : t('portal.design.updateFailed'))
     },
   })
 
@@ -574,8 +590,27 @@ export function PsdTasksPage() {
         key: 'priority',
         width: 110,
         align: 'center',
-        render: (priority: DesignTaskPriority) => {
+        render: (priority: DesignTaskPriority, record) => {
           const { label, color } = getPriorityInfo(priority)
+          if (canReprioritize) {
+            return (
+              <Select
+                aria-label={t('common.priority')}
+                size="small"
+                value={priority}
+                loading={
+                  priorityMutation.isPending && priorityMutation.variables?.taskId === record.id
+                }
+                onChange={(nextPriority) =>
+                  priorityMutation.mutate({ taskId: record.id, priority: nextPriority })
+                }
+                options={['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((value) => ({
+                  value,
+                  label: value,
+                }))}
+              />
+            )
+          }
           return <StatusPill title={label} color={color} />
         },
       },
@@ -664,10 +699,11 @@ export function PsdTasksPage() {
         return (
           <Space size={4} wrap align="center" style={{ justifyContent: 'center' }}>
             {/* Upload button (not for QC Passed) */}
-            {record.status !== 'APPROVED' ? (
+            {canWork && record.status !== 'APPROVED' ? (
               <Tooltip title="Upload">
                 <Button
                   size="small"
+                  aria-label={t('portal.design.psdFile')}
                   icon={<UploadOutlined />}
                   onClick={() => {
                     setTargetTaskId(record.id)
@@ -708,10 +744,11 @@ export function PsdTasksPage() {
             ) : null}
 
             {/* Requested: Assign */}
-            {record.status === 'REQUESTED' ? (
+            {canWrite && record.status === 'REQUESTED' ? (
               <Tooltip title="Assign">
                 <Button
                   size="small"
+                  aria-label={t('portal.design.assignDesigner')}
                   icon={<SolutionOutlined />}
                   onClick={() => {
                     setTargetTaskId(record.id)
@@ -787,9 +824,12 @@ export function PsdTasksPage() {
   }, [
     activeTabKey,
     approveMutation,
+    canPsdRequest,
+    canReprioritize,
     canReview,
     canWork,
     canWrite,
+    priorityMutation,
     salesChannelCode,
     startMutation,
     t,

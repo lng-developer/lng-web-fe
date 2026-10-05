@@ -31,31 +31,6 @@ export const ASIN_TYPE_OPTIONS = [
 ] as const
 
 export type DesignTaskPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
-export type DesignRequestStatus =
-  | 'PENDING_ASSIGNMENT'
-  | 'ASSIGNED'
-  | 'IN_PROGRESS'
-  | 'COMPLETED'
-  | 'CANCELLED'
-export type DesignRequest = {
-  id: string
-  orderId: string | null
-  orderItemId: string | null
-  shopId: string | null
-  requestType: 'PSD_TEMPLATE'
-  status: DesignRequestStatus
-  requestedByAccountId: string | null
-  assignedDesignerAccountId: string | null
-  note: string | null
-  listingSnapshot: {
-    sku: string | null
-    title: string | null
-    listingId: string | null
-    listingVariantId: string | null
-  } | null
-  createdAt: string | null
-  updatedAt: string | null
-}
 export type DesignTask = {
   id: string
   taskType: string
@@ -74,6 +49,13 @@ export type DesignTask = {
     asin_type?: string | null
   } | null
   listingVariantId: string | null
+  targetScope?: 'LISTING' | 'LISTING_VARIANT'
+  orderContext?: {
+    orderId: string | null
+    orderItemId: string | null
+    requestedByAccountId: string | null
+    requestNote: string | null
+  } | null
   internalTemplate: { code: string | null; name: string | null } | null
   targetListingId: string | null
   assignedDesignerId: string | null
@@ -177,14 +159,6 @@ export const listDesignTasks = async (params: DesignListParams) =>
   unwrap<{ items: DesignTask[]; pagination: { total: number; page: number; limit: number } }>(
     await apiClient.get('/api/design/tasks', { params: compact(params) }),
   )
-export const listDesignRequests = async () =>
-  unwrap<DesignRequest[]>(await apiClient.get('/api/design/requests'))
-export const assignDesignRequest = async (id: string, assignedDesignerAccountId: string) =>
-  unwrap<DesignRequest>(
-    await apiClient.patch(`/api/design/requests/${id}/assign`, { assignedDesignerAccountId }),
-  )
-export const updateDesignRequestStatus = async (id: string, status: DesignRequestStatus) =>
-  unwrap<DesignRequest>(await apiClient.patch(`/api/design/requests/${id}/status`, { status }))
 export const exportDesignTasksCsv = (params: DesignListParams) =>
   apiClient.get('/api/design/tasks/export.csv', {
     params: compact({ ...params, page: 1, limit: 5000 }),

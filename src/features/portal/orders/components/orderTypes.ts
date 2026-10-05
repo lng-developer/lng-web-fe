@@ -18,7 +18,6 @@ export type OrderAction =
   | { kind: 'note'; itemId: string; note: string }
   | { kind: 'recheck-mapping'; itemId: string }
   | { kind: 'recheck-production'; itemId: string }
-  | { kind: 'request-psd'; itemId: string }
   | { kind: 'retry-customization-assets'; itemId: string }
   | { kind: 'ready'; itemId: string }
   | { kind: 'cancel'; itemId: string; reason: string }

@@ -121,6 +121,13 @@ describe('DesignWorkbenchPage', () => {
           },
           shop: { name: 'Shop' },
           assignedDesigner: null,
+          targetScope: 'LISTING_VARIANT',
+          orderContext: {
+            orderId: 'order-123',
+            orderItemId: 'item-123',
+            requestedByAccountId: 'sales-123',
+            requestNote: 'Customer asked for a new PSD',
+          },
           updatedAt: '2026-08-01T00:00:00Z',
         },
       ],
@@ -191,6 +198,17 @@ describe('DesignWorkbenchPage', () => {
     )
     await screen.findByText('SKU-1')
     expect(await screen.findByText('High')).toBeVisible()
+  }, 15_000)
+
+  it('shows the PSD target and originating order in the task cell', async () => {
+    render(
+      <AppProviders>
+        <DesignWorkbenchPage />
+      </AppProviders>,
+    )
+
+    const sku = await screen.findByText('SKU-1')
+    expect(within(sku.closest('td')!).getByText('Listing variant · order-123')).toBeInTheDocument()
   }, 15_000)
 
   it('keeps the ASIN in the design task cell and saves priority from task detail', async () => {

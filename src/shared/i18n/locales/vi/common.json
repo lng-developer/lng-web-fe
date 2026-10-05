@@ -4369,7 +4369,7 @@
       "addressOverridden": "Đã bỏ qua kiểm tra địa chỉ cho {{orderId}}",
       "noteSaved": "Đã lưu ghi chú cho {{orderId}}",
       "productionRechecked": "Đã kiểm tra lại production cho {{orderId}}",
-      "psdRequested": "Đã tạo yêu cầu PSD cho {{orderId}}",
+      "psdTaskCreated": "Đã tạo tác vụ PSD cho {{orderId}}",
       "customizationAssetsRetried": "Đã thử lại asset customization cho {{orderId}}",
       "fulfillmentReady": "Đã đánh dấu fulfillment sẵn sàng cho {{orderId}}",
       "itemCancelled": "Đã hủy item của {{orderId}}",

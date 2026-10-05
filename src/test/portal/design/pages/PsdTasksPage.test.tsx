@@ -9,6 +9,7 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import { PsdTasksPage } from '@/features/portal/design/pages/PsdTasksPage'
 
 let mockSearchParams = new URLSearchParams('')
+let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
@@ -16,7 +17,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useParams: () => ({}),
   useRouteLoaderData: () => ({
     account: { id: '6a339b5a033e2ff7753522c3' },
-    permissions: ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'],
+    permissions: mockPermissions,
     roles: [],
     scopes: [],
   }),
@@ -66,6 +67,7 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
     uploadDesignAsset: vi.fn(),
     deleteDesignTask: vi.fn(),
     updateDesignTask: vi.fn(),
+    updateDesignTaskPriority: vi.fn(),
   }
 })
 
@@ -73,6 +75,22 @@ describe('PsdTasksPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSearchParams = new URLSearchParams('')
+    mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
+  })
+
+  it('keeps Design work controls hidden for requester-only Sales access', async () => {
+    mockPermissions = ['DESIGN:PSD_REQUEST']
+
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('B001TESTASIN')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Assign designer')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('PSD file')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Priority')).toBeInTheDocument()
   })
 
   it('renders PsdTasksPage and displays listings and filters', async () => {

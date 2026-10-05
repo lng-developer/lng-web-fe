@@ -39,7 +39,6 @@ vi.mock('@/features/portal/orders/api/orderApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/orders/api/orderApi')>()),
   recheckMapping: vi.fn(),
   recheckProduction: vi.fn(),
-  requestOrderItemPsd: vi.fn(),
 }))
 
 vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
@@ -63,7 +62,6 @@ import {
   type OrderWorkbenchRow,
   recheckMapping,
   recheckProduction,
-  requestOrderItemPsd,
 } from '@/features/portal/orders/api/orderApi'
 import { orderKeys } from '@/features/portal/orders/api/orderKeys'
 import { OrderInlinePanel } from '@/features/portal/orders/pages/OrderInlinePanel'
@@ -182,10 +180,6 @@ describe('OrderInlinePanel', () => {
     vi.clearAllMocks()
     vi.mocked(recheckMapping).mockResolvedValue({ status: 'BLOCKED' })
     vi.mocked(recheckProduction).mockResolvedValue({ status: 'BLOCKED', blockers: ['OPEN_CASE'] })
-    vi.mocked(requestOrderItemPsd).mockResolvedValue({
-      id: 'request-1',
-      status: 'PENDING_ASSIGNMENT',
-    })
     vi.mocked(searchMappingVendors).mockResolvedValue({
       items: [{ id: 'vendor-1', name: 'Vendor One' }],
       hasMore: false,
@@ -333,27 +327,6 @@ describe('OrderInlinePanel', () => {
 
     expect(screen.getByText('PSD PRESENT')).toBeInTheDocument()
     expect(screen.queryByText('PSD MISSING')).not.toBeInTheDocument()
-  })
-
-  it('lets an operator request missing PSD from the item actions', async () => {
-    renderPanel(true, undefined, {
-      ...row,
-      items: [
-        {
-          ...row.items[0],
-          mapping: {
-            status: 'READY',
-            listingVariant: { id: 'variant-1', psdReadiness: { status: 'MISSING' } },
-          },
-        },
-      ],
-    })
-
-    openMoreActions()
-    fireEvent.click(actionMenuItem('orders.actions.requestPsd'))
-
-    await waitFor(() => expect(requestOrderItemPsd).toHaveBeenCalledWith('item-1'))
-    expect(feedbackToast).toHaveBeenCalledWith('success', 'orders.messages.psdRequested')
   })
 
   it('shows PSD readiness from listing default PSD when no variant is mapped', () => {

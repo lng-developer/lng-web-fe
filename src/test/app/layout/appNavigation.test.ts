@@ -270,11 +270,6 @@ describe('app navigation', () => {
     ])
   })
 
-  it('shows Design Requests only to request permission holders', () => {
-    expect(portalItems(['DESIGN:REQUEST_READ']).map(({ key }) => key)).toContain('design-requests')
-    expect(portalItems(['DESIGN:READ']).map(({ key }) => key)).not.toContain('design-requests')
-  })
-
   it('gives HR and System their own dashboard entry points', () => {
     expect(getContextNavigation('hr', account(['HR_ATTENDANCE:WRITE']))[0]?.items).toContainEqual({
       key: 'hr-dashboard',

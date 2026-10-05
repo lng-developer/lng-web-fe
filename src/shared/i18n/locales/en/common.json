@@ -4369,7 +4369,7 @@
       "addressOverridden": "Address validation overridden for {{orderId}}",
       "noteSaved": "Note saved for {{orderId}}",
       "productionRechecked": "Production rechecked for {{orderId}}",
-      "psdRequested": "PSD request created for {{orderId}}",
+      "psdTaskCreated": "PSD task created for {{orderId}}",
       "customizationAssetsRetried": "Customization assets retried for {{orderId}}",
       "fulfillmentReady": "Fulfillment marked ready for {{orderId}}",
       "itemCancelled": "Order item cancelled for {{orderId}}",

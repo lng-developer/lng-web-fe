@@ -136,16 +136,6 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         : []),
       ...(canOperate && !terminal
         ? [
-            ...(!psdDownloadUrl
-              ? [
-                  {
-                    key: 'request-psd',
-                    icon: <ExportOutlined />,
-                    label: t('orders.actions.requestPsd'),
-                    onClick: () => onAction({ kind: 'request-psd', itemId: item.item.id }),
-                  },
-                ]
-              : []),
             {
               key: 'recheck-mapping',
               icon: <ReloadOutlined />,

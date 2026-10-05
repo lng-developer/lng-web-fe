@@ -18,7 +18,6 @@ import {
   markOrderItemFulfillmentReady,
   recheckMapping,
   recheckProduction,
-  requestOrderItemPsd,
   resolveOrderCase,
   updateOrderBuyer,
   updateOrderCase,
@@ -121,7 +120,6 @@ describe('orderApi', () => {
       items: [{ orderItemId: 'item-1', quantity: 2 }],
     })
     await markOrderItemFulfillmentReady('item-1')
-    await requestOrderItemPsd('item-1')
 
     expect(apiClient.patch).toHaveBeenCalledWith('/api/orders/order-1/shipping-address', {
       city: 'Austin',
@@ -154,6 +152,5 @@ describe('orderApi', () => {
       items: [{ orderItemId: 'item-1', quantity: 2 }],
     })
     expect(apiClient.post).toHaveBeenCalledWith('/api/orders/items/item-1/mark-fulfillment-ready')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/orders/items/item-1/request-psd')
   })
 })

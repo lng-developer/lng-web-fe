@@ -4,7 +4,6 @@ vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch
 
 import {
   approveDesignTask,
-  assignDesignRequest,
   assignDesignTask,
   bulkAssignDesignTasks,
   cancelDesignTask,
@@ -12,14 +11,12 @@ import {
   getDesignSummary,
   getDesignWorkload,
   listDesignSubmissions,
-  listDesignRequests,
   listDesignTasks,
   listPsdFiles,
   rejectDesignTask,
   startDesignTask,
   submitDesignTask,
   updateDesignTaskPriority,
-  updateDesignRequestStatus,
 } from '@/features/portal/design/api/designApi'
 import { apiClient } from '@/shared/api'
 
@@ -62,9 +59,6 @@ describe('designApi', () => {
     })
     await listDesignSubmissions('task-1')
     await cancelDesignTask('task-1', 'Duplicate')
-    await listDesignRequests()
-    await assignDesignRequest('request-1', 'designer-1')
-    await updateDesignRequestStatus('request-1', 'IN_PROGRESS')
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks', {
       params: { page: 1, limit: 20, status: 'SUBMITTED' },
@@ -119,13 +113,6 @@ describe('designApi', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/task-1/submissions')
     expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/cancel', {
       cancelReason: 'Duplicate',
-    })
-    expect(apiClient.get).toHaveBeenCalledWith('/api/design/requests')
-    expect(apiClient.patch).toHaveBeenCalledWith('/api/design/requests/request-1/assign', {
-      assignedDesignerAccountId: 'designer-1',
-    })
-    expect(apiClient.patch).toHaveBeenCalledWith('/api/design/requests/request-1/status', {
-      status: 'IN_PROGRESS',
     })
   })
 })
