@@ -31,7 +31,13 @@ import styles from './ChatShell.module.scss'
 const CHAT_PREVIEW_LIMIT = 8
 
 function participantLabel(participant?: ChatParticipant) {
-  return participant?.displayName || participant?.fullName || participant?.employeeCode || participant?.email || ''
+  return (
+    participant?.displayName ||
+    participant?.fullName ||
+    participant?.email ||
+    participant?.employeeCode ||
+    ''
+  )
 }
 
 function conversationTitle(
@@ -41,8 +47,12 @@ function conversationTitle(
 ) {
   if (conversation.type === 'DIRECT') {
     const otherId = conversation.participantAccountIds.find((id) => id !== currentAccountId)
-    const label = participantLabel(otherId ? participantById.get(otherId) : undefined)
-    if (label) return label
+    const otherParticipant = otherId ? participantById.get(otherId) : undefined
+    const name = otherParticipant?.displayName || otherParticipant?.fullName
+    if (name) return name
+    if (conversation.title) return conversation.title
+    const fallback = participantLabel(otherParticipant)
+    if (fallback) return fallback
   }
   return (
     conversation.title || conversation.relatedResource?.id || conversation.type.replaceAll('_', ' ')
