@@ -446,8 +446,10 @@ export function ChatShell({ account }: ChatShellProps) {
               aria-label={quickTitle}
             >
               <div className={styles.quickChatHeader}>
-                <Avatar size={32} icon={<UserOutlined />} />
-                <strong>{quickTitle}</strong>
+                <div className={styles.quickChatHeaderInfo}>
+                  <Avatar size={34} icon={<UserOutlined />} />
+                  <strong className={styles.quickChatTitle}>{quickTitle}</strong>
+                </div>
                 <Button
                   aria-label={t('common.close', 'Close')}
                   icon={<CloseOutlined />}
@@ -484,6 +486,7 @@ export function ChatShell({ account }: ChatShellProps) {
                   onPressEnter={() => {
                     if (canQuickSend) quickSend.mutate()
                   }}
+                  className={styles.quickChatInput}
                 />
                 <Button
                   aria-label={t('chat.send', 'Send')}
@@ -491,6 +494,7 @@ export function ChatShell({ account }: ChatShellProps) {
                   icon={<SendOutlined />}
                   shape="circle"
                   type="primary"
+                  className={styles.quickChatSendButton}
                   onClick={() => quickSend.mutate()}
                 />
               </div>
