@@ -11,6 +11,8 @@ export type ReportFilters = {
   salesChannelCode?: string
   marketplaceCode?: string
   sellerEmployeeCode?: string
+  adStatus?: 'ENABLED' | 'PAUSED' | 'ARCHIVED'
+  sellerAttributionSource?: 'CAMPAIGN_NAME' | 'PORTFOLIO_NAME' | 'UNASSIGNED'
   teamId?: string
   departmentId?: string
   costCoverage?: 'MISSING' | 'COMPLETE'

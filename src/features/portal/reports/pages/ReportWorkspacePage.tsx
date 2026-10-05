@@ -75,6 +75,7 @@ export function ReportWorkspacePage() {
   const dedicatedTab = TAB_BY_REPORT_VIEW[reportView?.toLowerCase() ?? '']
   const activeTab = dedicatedTab || selectedTab
   const isDedicatedReport = Boolean(dedicatedTab)
+  const isAdsView = activeTab === 'ads-employee' || activeTab === 'sales-profit'
   const [profitabilityView, setProfitabilityView] = useState<ProfitabilityView>('summary')
   const [filters, setFilters] = useState<ReportFilters>(() => ({
     dateFrom: dayjs().subtract(6, 'day').startOf('day').toISOString(),
@@ -131,6 +132,7 @@ export function ReportWorkspacePage() {
     ) => (
       <Select
         allowClear
+        aria-label={placeholder}
         showSearch
         popupMatchSelectWidth={false}
         optionFilterProp="label"
@@ -276,6 +278,26 @@ export function ReportWorkspacePage() {
         })),
         styles.sellerFilter,
       )}
+      {isAdsView
+        ? select(
+            'adStatus',
+            t('reports.filters.campaignStatus'),
+            ['ENABLED', 'PAUSED', 'ARCHIVED'].map((value) => ({
+              value,
+              label: t(`reports.filters.adStatus.${value}`),
+            })),
+          )
+        : null}
+      {isAdsView
+        ? select(
+            'sellerAttributionSource',
+            t('reports.filters.adsAttribution'),
+            ['CAMPAIGN_NAME', 'PORTFOLIO_NAME', 'UNASSIGNED'].map((value) => ({
+              value,
+              label: t(`reports.filters.adsAttributionSource.${value}`),
+            })),
+          )
+        : null}
       {select(
         'teamId',
         t('reports.filters.team'),

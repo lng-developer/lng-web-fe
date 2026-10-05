@@ -470,6 +470,18 @@
       "channel": "Kênh bán",
       "marketplace": "Thị trường",
       "seller": "Seller",
+      "campaignStatus": "Trạng thái chiến dịch",
+      "adsAttribution": "Nguồn gán Ads",
+      "adStatus": {
+        "ENABLED": "Đang chạy",
+        "PAUSED": "Tạm dừng",
+        "ARCHIVED": "Đã lưu trữ"
+      },
+      "adsAttributionSource": {
+        "CAMPAIGN_NAME": "Tên chiến dịch",
+        "PORTFOLIO_NAME": "Tên portfolio",
+        "UNASSIGNED": "Chưa gán"
+      },
       "team": "Nhóm",
       "department": "Phòng ban",
       "unnamed": "Chưa đặt tên"

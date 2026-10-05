@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getReportFilterOptions, listFinanceDaily } from '@/features/portal/reports/api/reportApi'
+import {
+  getReportFilterOptions,
+  listAdsDaily,
+  listFinanceDaily,
+} from '@/features/portal/reports/api/reportApi'
 import { apiClient } from '@/shared/api'
 
 vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn() } }))
@@ -23,5 +27,15 @@ describe('reportApi', () => {
 
     await expect(getReportFilterOptions()).resolves.toMatchObject({ channels: ['AMAZON'] })
     expect(apiClient.get).toHaveBeenCalledWith('/api/reports/filter-options')
+  })
+
+  it('sends Ads status and attribution filters', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ success: true, data: [] })
+
+    await listAdsDaily({ adStatus: 'PAUSED', sellerAttributionSource: 'UNASSIGNED' })
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/reports/ads/daily', {
+      params: { adStatus: 'PAUSED', sellerAttributionSource: 'UNASSIGNED' },
+    })
   })
 })

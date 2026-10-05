@@ -215,6 +215,8 @@ describe('ReportWorkspacePage', () => {
       ),
     )
     expect(screen.queryByText('Sales channel')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Campaign status')).toBeVisible()
+    expect(screen.getByLabelText('Ads attribution')).toBeVisible()
     expect(screen.queryByRole('tab', { name: 'Seller profitability' })).not.toBeInTheDocument()
   })
 
@@ -266,6 +268,8 @@ describe('ReportWorkspacePage', () => {
       ),
     )
     expect(screen.queryByText('Sales channel')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Campaign status')).toBeVisible()
+    expect(screen.getByLabelText('Ads attribution')).toBeVisible()
     expect(screen.queryByRole('tab', { name: 'Seller profitability' })).not.toBeInTheDocument()
     const adjustments = await screen.findByText('Adjustments')
     expect(adjustments).toBeInTheDocument()

@@ -470,6 +470,18 @@
       "channel": "Sales channel",
       "marketplace": "Marketplace",
       "seller": "Seller",
+      "campaignStatus": "Campaign status",
+      "adsAttribution": "Ads attribution",
+      "adStatus": {
+        "ENABLED": "Enabled",
+        "PAUSED": "Paused",
+        "ARCHIVED": "Archived"
+      },
+      "adsAttributionSource": {
+        "CAMPAIGN_NAME": "Campaign name",
+        "PORTFOLIO_NAME": "Portfolio name",
+        "UNASSIGNED": "Unassigned"
+      },
       "team": "Team",
       "department": "Department",
       "unnamed": "Unnamed"
