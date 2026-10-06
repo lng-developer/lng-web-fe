@@ -34,8 +34,8 @@ function participantLabel(participant?: ChatParticipant) {
   return (
     participant?.displayName ||
     participant?.fullName ||
-    participant?.employeeCode ||
     participant?.email ||
+    participant?.employeeCode ||
     ''
   )
 }
@@ -47,8 +47,12 @@ function conversationTitle(
 ) {
   if (conversation.type === 'DIRECT') {
     const otherId = conversation.participantAccountIds.find((id) => id !== currentAccountId)
-    const label = participantLabel(otherId ? participantById.get(otherId) : undefined)
-    if (label) return label
+    const otherParticipant = otherId ? participantById.get(otherId) : undefined
+    const name = otherParticipant?.displayName || otherParticipant?.fullName
+    if (name) return name
+    if (conversation.title) return conversation.title
+    const fallback = participantLabel(otherParticipant)
+    if (fallback) return fallback
   }
   return (
     conversation.title || conversation.relatedResource?.id || conversation.type.replaceAll('_', ' ')
@@ -336,10 +340,17 @@ export function ChatShell({ account }: ChatShellProps) {
                 <Avatar size={50} icon={<UserOutlined />} />
               </Badge>
               <span className={styles.chatPreviewText}>
-                <strong>
-                  {conversationTitle(conversation, participantById, account.account.id)}
-                </strong>
-                <span>
+                <span className={styles.chatPreviewHeaderRow}>
+                  <strong>
+                    {conversationTitle(conversation, participantById, account.account.id)}
+                  </strong>
+                  {conversation.lastMessageAt ? (
+                    <span className={styles.chatPreviewTime}>
+                      {formatRelativeTime(conversation.lastMessageAt, timeLabels)}
+                    </span>
+                  ) : null}
+                </span>
+                <span className={styles.chatPreviewSnippet}>
                   {messagePreviewText(
                     conversation,
                     participantById,
@@ -347,9 +358,6 @@ export function ChatShell({ account }: ChatShellProps) {
                     t('chat.noMessages'),
                     t('chat.you'),
                   )}
-                  {conversation.lastMessageAt
-                    ? ` - ${formatRelativeTime(conversation.lastMessageAt, timeLabels)}`
-                    : ''}
                 </span>
               </span>
             </button>
@@ -438,8 +446,10 @@ export function ChatShell({ account }: ChatShellProps) {
               aria-label={quickTitle}
             >
               <div className={styles.quickChatHeader}>
-                <Avatar size={32} icon={<UserOutlined />} />
-                <strong>{quickTitle}</strong>
+                <div className={styles.quickChatHeaderInfo}>
+                  <Avatar size={34} icon={<UserOutlined />} />
+                  <strong className={styles.quickChatTitle}>{quickTitle}</strong>
+                </div>
                 <Button
                   aria-label={t('common.close', 'Close')}
                   icon={<CloseOutlined />}
@@ -476,6 +486,7 @@ export function ChatShell({ account }: ChatShellProps) {
                   onPressEnter={() => {
                     if (canQuickSend) quickSend.mutate()
                   }}
+                  className={styles.quickChatInput}
                 />
                 <Button
                   aria-label={t('chat.send', 'Send')}
@@ -483,6 +494,7 @@ export function ChatShell({ account }: ChatShellProps) {
                   icon={<SendOutlined />}
                   shape="circle"
                   type="primary"
+                  className={styles.quickChatSendButton}
                   onClick={() => quickSend.mutate()}
                 />
               </div>

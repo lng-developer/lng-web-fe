@@ -61,7 +61,7 @@ export function useMicrosoftLoginHandler() {
       clearStuckMsalInteraction()
       const pca = await getMsalInstance()
       const response = await pca.loginPopup({
-        scopes: ['openid', 'profile', 'email', 'User.Read'],
+        scopes: ['openid', 'profile', 'email', 'User.Read', 'ChatMessage.Send', 'Chat.ReadWrite'],
         prompt: 'select_account',
         redirectUri: `${window.location.origin}/msal-popup.html`,
         extraQueryParameters: {
