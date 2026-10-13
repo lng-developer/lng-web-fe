@@ -1,6 +1,6 @@
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/chat/api/chatApi', () => ({
@@ -18,6 +18,7 @@ import {
   listChatConversations,
   listChatMessages,
   listChatParticipants,
+  markChatConversationRead,
 } from '@/features/portal/chat/api/chatApi'
 import { ChatShell } from '@/features/portal/chat/components/ChatShell'
 import { createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
@@ -142,5 +143,130 @@ describe('ChatShell', () => {
     await waitFor(() => {
       expect(screen.queryByText('designer@lng.co')).not.toBeInTheDocument()
     })
+  })
+
+  it('opens quick chat window, allows minimizing, expanding, and closing it', async () => {
+    renderShell()
+
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    const item = await screen.findByText('designer@lng.co')
+    fireEvent.click(item)
+
+    const windowRegion = await screen.findByRole('region', { name: 'designer@lng.co' })
+    expect(windowRegion).toBeInTheDocument()
+
+    const withinWindow = within(windowRegion)
+    const minimizeBtn = withinWindow.getByRole('button', { name: /minimize/i })
+    fireEvent.click(minimizeBtn)
+
+    const chatButtons = screen.getAllByRole('button', { name: 'shell.navigation.chat' })
+    expect(chatButtons.length).toBeGreaterThan(1)
+    const bubbleBtn = chatButtons[chatButtons.length - 1]
+    fireEvent.click(bubbleBtn)
+
+    expect(await screen.findByRole('region', { name: 'designer@lng.co' })).toBeVisible()
+
+    const closeBtn = withinWindow.getByRole('button', { name: 'Close' })
+    fireEvent.click(closeBtn)
+
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: 'designer@lng.co' })).not.toBeInTheDocument()
+    })
+  })
+
+  it('opens multiple quick chat windows simultaneously', async () => {
+    vi.mocked(listChatConversations).mockResolvedValue({
+      items: [
+        {
+          id: 'conversation-1',
+          type: 'DIRECT',
+          title: null,
+          shopId: null,
+          relatedResource: null,
+          participantAccountIds: ['account-1', 'account-2'],
+          lastMessageAt: null,
+          lastMessagePreview: null,
+          lastMessageSenderAccountId: null,
+          unreadCount: 0,
+          hasUnreadFromOthers: false,
+          createdAt: '2026-08-11T00:00:00.000Z',
+          updatedAt: '2026-08-11T00:00:00.000Z',
+        },
+        {
+          id: 'conversation-2',
+          type: 'DIRECT',
+          title: null,
+          shopId: null,
+          relatedResource: null,
+          participantAccountIds: ['account-1', 'account-3'],
+          lastMessageAt: null,
+          lastMessagePreview: null,
+          lastMessageSenderAccountId: null,
+          unreadCount: 0,
+          hasUnreadFromOthers: false,
+          createdAt: '2026-08-11T00:00:00.000Z',
+          updatedAt: '2026-08-11T00:00:00.000Z',
+        },
+      ],
+      pagination: { page: 1, limit: 8, total: 2 },
+    })
+    vi.mocked(listChatParticipants).mockResolvedValue({
+      items: [
+        { id: 'account-2', email: 'designer@lng.co', status: 'active', presence: 'ONLINE' },
+        { id: 'account-3', email: 'operator@lng.co', status: 'active', presence: 'ONLINE' },
+      ],
+    })
+
+    renderShell()
+
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    const item1 = await screen.findByText('designer@lng.co')
+    fireEvent.click(item1)
+
+    expect(await screen.findByRole('region', { name: 'designer@lng.co' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    const item2 = await screen.findByText('operator@lng.co')
+    fireEvent.click(item2)
+
+    expect(await screen.findByRole('region', { name: 'operator@lng.co' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'designer@lng.co' })).toBeInTheDocument()
+  })
+
+  it('clears unread badge count when unread conversation is viewed', async () => {
+    vi.mocked(listChatConversations).mockResolvedValue({
+      items: [
+        {
+          id: 'conversation-1',
+          type: 'DIRECT',
+          title: null,
+          shopId: null,
+          relatedResource: null,
+          participantAccountIds: ['account-1', 'account-2'],
+          lastMessageAt: '2026-08-11T01:00:00.000Z',
+          lastMessagePreview: 'new message',
+          lastMessageSenderAccountId: 'account-2',
+          unreadCount: 3,
+          hasUnreadFromOthers: true,
+          createdAt: '2026-08-11T00:00:00.000Z',
+          updatedAt: '2026-08-11T01:00:00.000Z',
+        },
+      ],
+      pagination: { page: 1, limit: 8, total: 1 },
+    })
+
+    renderShell()
+
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: 'shell.navigation.chat' })).toHaveLength(2),
+    )
+    const chatButtons = screen.getAllByRole('button', { name: 'shell.navigation.chat' })
+    const bubbleBtn = chatButtons[1]
+    fireEvent.click(bubbleBtn)
+
+    expect(await screen.findByRole('region', { name: 'designer@lng.co' })).toBeInTheDocument()
+    expect(markChatConversationRead).toHaveBeenCalledWith('conversation-1')
   })
 })

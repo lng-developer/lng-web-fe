@@ -203,31 +203,10 @@ describe('ChatWorkspacePage', () => {
     )
   })
 
-  it('creates a group conversation from the group dialog', async () => {
-    vi.mocked(listChatParticipants).mockResolvedValue({
-      items: [
-        { id: 'account-2', email: 'designer@lng.co', status: 'active', presence: 'ONLINE' },
-        { id: 'account-3', email: 'qc@lng.co', status: 'active', presence: 'OFFLINE' },
-      ],
-    })
+  it('does not display group creation while group chat is hidden', async () => {
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'New group' }))
-    fireEvent.change(screen.getByPlaceholderText('Group title'), {
-      target: { value: 'Support' },
-    })
-    fireEvent.mouseDown(screen.getByRole('combobox'))
-    fireEvent.click((await screen.findAllByText('designer@lng.co')).at(-1)!)
-    fireEvent.click((await screen.findAllByText('qc@lng.co')).at(-1)!)
-    fireEvent.click(screen.getByRole('button', { name: 'Create group' }))
-
-    await waitFor(() =>
-      expect(createConversation).toHaveBeenCalledWith({
-        type: 'TEAM',
-        title: 'Support',
-        participantAccountIds: ['account-2', 'account-3'],
-      }),
-    )
+    expect(screen.queryByRole('button', { name: 'New group' })).not.toBeInTheDocument()
   })
 
   it('filters the chat sidebar by search text', async () => {
