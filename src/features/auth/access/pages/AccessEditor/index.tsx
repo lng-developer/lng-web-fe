@@ -8,8 +8,9 @@ import {
   SaveOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, Form, Modal, Result, Select, Tag, Tooltip, Typography } from 'antd'
+import { Avatar, Button, Form, Modal, Select, Tag, Tooltip, Typography } from 'antd'
 
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import {
   ConfirmDangerModal,
   DateTimePicker,
@@ -65,7 +66,7 @@ export const AccessEditorPage = () => {
 
   const { data, error, isLoading, refetch } = accessExplorer
 
-  if (!canWrite) return <Result status="403" title="403" />
+  if (!canWrite) return <AccessDeniedResult />
 
   return (
     <section className={styles.page}>

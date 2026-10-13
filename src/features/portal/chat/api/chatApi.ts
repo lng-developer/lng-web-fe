@@ -98,10 +98,32 @@ export const listChatMessages = async (conversationId: string, params: Query = {
     }),
   )
 
-export const sendChatMessage = async (conversationId: string, input: SendChatMessageInput) =>
-  unwrap<ChatMessage>(
-    await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, input),
-  )
+import { getMsalInstance } from '@/features/auth/microsoft/msalClient'
+
+async function getMsGraphToken(): Promise<string | null> {
+  try {
+    const pca = await getMsalInstance()
+    const accounts = pca.getAllAccounts()
+    if (!accounts.length) return null
+    const result = await pca.acquireTokenSilent({
+      account: accounts[0],
+      scopes: ['ChatMessage.Send', 'Chat.ReadWrite'],
+    })
+    return result.accessToken || null
+  } catch {
+    return null
+  }
+}
+
+export const sendChatMessage = async (conversationId: string, input: SendChatMessageInput) => {
+  const msToken = await getMsGraphToken()
+  const response = msToken
+    ? await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, input, {
+        headers: { 'x-ms-graph-token': msToken },
+      })
+    : await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, input)
+  return unwrap<ChatMessage>(response)
+}
 
 export const markChatConversationRead = async (conversationId: string) =>
   unwrap<{ conversationId: string; accountId: string; lastReadAt: string }>(

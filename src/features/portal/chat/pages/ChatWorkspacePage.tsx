@@ -1,22 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  CloseCircleFilled,
   PaperClipOutlined,
   SearchOutlined,
   SendOutlined,
   TeamOutlined,
-  UploadOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Avatar,
   Badge,
-  Button,
   Empty,
   Input,
-  Modal,
-  Select,
   Skeleton,
   Space,
   Typography,
@@ -42,7 +39,6 @@ import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
 import { getAccount } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage } from '@/shared/media'
-import { FormattedDateTime } from '@/shared/ui'
 
 import styles from './ChatWorkspacePage.module.scss'
 
@@ -51,6 +47,53 @@ type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; tota
 
 function participantLabel(account?: ChatParticipant) {
   return account?.displayName || account?.fullName || account?.email || account?.employeeCode || ''
+}
+
+function getInitials(name?: string) {
+  if (!name) return ''
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function formatMessageTime(dateString?: string | null) {
+  if (!dateString) return ''
+  try {
+    const d = new Date(dateString)
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  } catch {
+    return ''
+  }
+}
+
+function getDateGroupKey(dateString?: string | null) {
+  if (!dateString) return ''
+  try {
+    const d = new Date(dateString)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  } catch {
+    return ''
+  }
+}
+
+function formatDateGroupLabel(groupKey: string, t: (key: string, fallback: string) => string) {
+  if (!groupKey) return ''
+  try {
+    const now = new Date()
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`
+
+    if (groupKey === todayKey) return t('chat.today', 'Hôm nay')
+    if (groupKey === yesterdayKey) return t('chat.yesterday', 'Hôm qua')
+
+    const [year, month, day] = groupKey.split('-')
+    return `${day}/${month}/${year}`
+  } catch {
+    return groupKey
+  }
 }
 
 function conversationTitle(
@@ -74,7 +117,17 @@ function conversationTitle(
   )
 }
 
-function MessageBubble({ message, isOwn }: { message: ChatMessage; isOwn: boolean }) {
+function MessageBubble({
+  message,
+  isOwn,
+  senderParticipant,
+  showAvatar = true,
+}: {
+  message: ChatMessage
+  isOwn: boolean
+  senderParticipant?: ChatParticipant
+  showAvatar?: boolean
+}) {
   const assets = message.assets?.length
     ? message.assets
     : message.assetIds.map((assetId) => ({
@@ -85,13 +138,36 @@ function MessageBubble({ message, isOwn }: { message: ChatMessage; isOwn: boolea
         downloadUrl: `/api/media/assets/${assetId}/download`,
       }))
 
+  const timeLabel = formatMessageTime(message.createdAt)
+  const senderInitials = getInitials(participantLabel(senderParticipant))
+
   return (
-    <div className={`${styles.message} ${isOwn ? styles.ownMessage : ''}`}>
+    <div
+      className={`${styles.messageWrapper} ${isOwn ? styles.ownWrapper : styles.receivedWrapper}`}
+    >
       {!isOwn ? (
-        <Avatar size={28} icon={<UserOutlined />} className={styles.messageAvatar} />
+        showAvatar ? (
+          <Avatar
+            size={32}
+            style={{
+              backgroundColor: '#f1f5f9',
+              color: '#334155',
+              fontWeight: 600,
+              fontSize: 12,
+              border: '1px solid #e2e8f0',
+            }}
+            className={styles.messageAvatar}
+          >
+            {senderInitials || <UserOutlined style={{ color: '#64748b' }} />}
+          </Avatar>
+        ) : (
+          <div style={{ width: 32, flexShrink: 0 }} />
+        )
       ) : null}
-      <div className={styles.messageBody}>
-        {message.body ? <Typography.Text>{message.body}</Typography.Text> : null}
+      <div
+        className={`${styles.messageBubble} ${isOwn ? styles.ownBubble : styles.receivedBubble}`}
+      >
+        {message.body ? <div className={styles.messageText}>{message.body}</div> : null}
         {assets.length ? (
           <Space wrap size={6} className={styles.attachments}>
             {assets.map((asset) =>
@@ -116,8 +192,11 @@ function MessageBubble({ message, isOwn }: { message: ChatMessage; isOwn: boolea
             )}
           </Space>
         ) : null}
-        <div className={styles.messageTime}>
-          <FormattedDateTime value={message.createdAt} />
+        <div
+          className={styles.messageTime}
+          title={message.createdAt ? new Date(message.createdAt).toLocaleString() : undefined}
+        >
+          {timeLabel}
         </div>
       </div>
     </div>
@@ -175,9 +254,6 @@ export function ChatWorkspacePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [isGroupOpen, setIsGroupOpen] = useState(false)
-  const [participantIds, setParticipantIds] = useState<string[]>([])
-  const [conversationTitleDraft, setConversationTitleDraft] = useState('')
   const [presenceByAccountId, setPresenceByAccountId] = useState<
     Record<string, 'ONLINE' | 'OFFLINE'>
   >({})
@@ -187,13 +263,18 @@ export function ChatWorkspacePage() {
   const socketRef = useRef<ChatSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const activeConversationIdRef = useRef<string | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const account = getAccount()
 
   const conversations = useQuery({
     queryKey: chatKeys.conversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
     queryFn: () => listChatConversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
   })
-  const firstConversationId = conversations.data?.items[0]?.id ?? null
+  const directConversations = useMemo(
+    () => (conversations.data?.items ?? []).filter((c) => c.type === 'DIRECT'),
+    [conversations.data?.items],
+  )
+  const firstConversationId = directConversations[0]?.id ?? null
   const activeConversationId = selectedId ?? firstConversationId
   const selectedConversation =
     conversations.data?.items.find(({ id }) => id === activeConversationId) ?? null
@@ -206,16 +287,25 @@ export function ChatWorkspacePage() {
     queryKey: ['chat-participants'],
     queryFn: () => listChatParticipants({ limit: 100 }),
   })
+
+  const conversationByParticipantId = useMemo(() => {
+    const map = new Map<string, ChatConversation>()
+    directConversations.forEach((conv) => {
+      const otherId = conv.participantAccountIds.find((id) => id !== account?.id)
+      if (otherId) {
+        map.set(otherId, conv)
+      }
+    })
+    return map
+  }, [directConversations, account?.id])
+
   const createMutation = useMutation({
     mutationFn: (input: {
-      type: 'DIRECT' | 'TEAM'
+      type: 'DIRECT'
       title: string | null
       participantAccountIds: string[]
     }) => createConversation(input),
     onSuccess: async (conversation) => {
-      setIsGroupOpen(false)
-      setParticipantIds([])
-      setConversationTitleDraft('')
       setSelectedId(conversation.id)
       await queryClient.invalidateQueries({ queryKey: chatKeys.all })
     },
@@ -284,7 +374,7 @@ export function ChatWorkspacePage() {
       socket.disconnect()
       socketRef.current = null
     }
-  }, [queryClient])
+  }, [queryClient, account?.id])
 
   useEffect(() => {
     if (!activeConversationId || !socketRef.current) return
@@ -301,57 +391,65 @@ export function ChatWorkspacePage() {
   const canSend = Boolean(
     activeConversationId && (draft.trim() || files.length) && !sendMutation.isPending,
   )
-  const participantById = new Map(
-    (participants.data?.items ?? []).map((participant) => [participant.id, participant]),
+  const participantById = useMemo(
+    () => new Map((participants.data?.items ?? []).map((p) => [p.id, p])),
+    [participants.data?.items],
   )
   const searchText = search.trim().toLowerCase()
   const people = (participants.data?.items ?? []).filter(
-    (account) => !searchText || participantLabel(account).toLowerCase().includes(searchText),
+    (acc) => !searchText || participantLabel(acc).toLowerCase().includes(searchText),
   )
-  const groups = (conversations.data?.items ?? []).filter(
-    (conversation) =>
-      conversation.type !== 'DIRECT' &&
-      (!searchText ||
-        conversationTitle(conversation, participantById, account?.id)
-          .toLowerCase()
-          .includes(searchText)),
-  )
+
+  // Prioritize users with active/recent messages at the top
+  const sortedPeople = useMemo(() => {
+    return [...people].sort((a, b) => {
+      const convA = conversationByParticipantId.get(a.id)
+      const convB = conversationByParticipantId.get(b.id)
+      const timeA = convA?.lastMessageAt ? new Date(convA.lastMessageAt).getTime() : 0
+      const timeB = convB?.lastMessageAt ? new Date(convB.lastMessageAt).getTime() : 0
+      if (timeA !== timeB) return timeB - timeA
+      return participantLabel(a).localeCompare(participantLabel(b))
+    })
+  }, [people, conversationByParticipantId])
+
+  const otherAccountId =
+    selectedConversation?.type === 'DIRECT'
+      ? selectedConversation.participantAccountIds.find((id) => id !== account?.id)
+      : null
+  const otherParticipant = otherAccountId ? participantById.get(otherAccountId) : undefined
+  const otherPresence = otherAccountId
+    ? (presenceByAccountId[otherAccountId] ?? otherParticipant?.presence ?? 'OFFLINE')
+    : 'OFFLINE'
+  const isOtherOnline = otherPresence === 'ONLINE'
+  const otherInitials = getInitials(participantLabel(otherParticipant))
+
   const startDirectChat = (accountId: string) => {
+    const existingConv = conversationByParticipantId.get(accountId)
+    if (existingConv) {
+      setSelectedId(existingConv.id)
+      return
+    }
     createMutation.mutate({ type: 'DIRECT', title: null, participantAccountIds: [accountId] })
   }
-  const createGroup = () => {
-    createMutation.mutate({
-      type: 'TEAM',
-      title: conversationTitleDraft.trim() || null,
-      participantAccountIds: participantIds,
-    })
-  }
+
+  const messageItems = messages.data?.items ?? []
 
   return (
     <div className={styles.shell}>
+      {/* ================= LEFT SIDEBAR ================= */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div>
-            <Typography.Title level={4} style={{ margin: 0 }}>
-              {t('chat.title', 'Chat')}
-            </Typography.Title>
-            <Typography.Text type="secondary">
-              {t('chat.description', 'Internal conversations and file handoffs')}
-            </Typography.Text>
-          </div>
-          <Button
-            type="primary"
-            icon={<TeamOutlined />}
-            aria-label={t('chat.newGroup', 'New group')}
-            onClick={() => setIsGroupOpen(true)}
-          >
-            {t('chat.newGroup', 'New group')}
-          </Button>
+          <Typography.Title level={4} className={styles.sidebarTitle}>
+            {t('chat.title', 'Chat')}
+          </Typography.Title>
+          <Typography.Text type="secondary" className={styles.sidebarDesc}>
+            {t('chat.description', 'Internal conversations and file handoffs')}
+          </Typography.Text>
         </div>
         <div className={styles.searchWrap}>
           <Input
             allowClear
-            prefix={<SearchOutlined />}
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
             placeholder={t('chat.searchMessenger', 'Search Messenger')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -360,124 +458,194 @@ export function ChatWorkspacePage() {
         <div className={styles.conversationList}>
           {participants.isLoading || conversations.isLoading ? (
             <Skeleton active paragraph={{ rows: 6 }} />
-          ) : people.length || groups.length ? (
-            <Space orientation="vertical" size={6} style={{ width: '100%' }}>
-              <Typography.Text type="secondary" className={styles.sectionLabel}>
+          ) : sortedPeople.length ? (
+            <Space orientation="vertical" size={2} style={{ width: '100%' }}>
+              <Typography.Text className={styles.sectionLabel}>
                 {t('chat.people', 'People')}
               </Typography.Text>
-              {people.map((account) => {
-                const presence = presenceByAccountId[account.id] ?? account.presence ?? 'OFFLINE'
+              {sortedPeople.map((accountItem) => {
+                const conv = conversationByParticipantId.get(accountItem.id)
+                const isSelected = activeConversationId
+                  ? conv?.id === activeConversationId || accountItem.id === otherAccountId
+                  : false
+                const presence =
+                  presenceByAccountId[accountItem.id] ?? accountItem.presence ?? 'OFFLINE'
+                const isOnline = presence === 'ONLINE'
+                const lastTime = conv?.lastMessageAt ? formatMessageTime(conv.lastMessageAt) : null
+                const itemInitials = getInitials(participantLabel(accountItem))
+
                 return (
-                  <Button
-                    key={account.id}
-                    type="text"
-                    className={styles.conversationButton}
-                    onClick={() => startDirectChat(account.id)}
+                  <button
+                    key={accountItem.id}
+                    type="button"
+                    className={`${styles.conversationButton} ${isSelected ? styles.activeConversation : ''}`}
+                    onClick={() => startDirectChat(accountItem.id)}
                   >
-                    <Badge
-                      dot
-                      status={presence === 'ONLINE' ? 'success' : 'default'}
-                      offset={[-2, 28]}
-                    >
-                      <Avatar size={34} icon={<UserOutlined />} />
+                    <Badge dot status={isOnline ? 'success' : 'default'} offset={[-2, 30]}>
+                      <Avatar
+                        size={38}
+                        style={{
+                          backgroundColor: isSelected ? '#2563eb' : '#f1f5f9',
+                          color: isSelected ? '#ffffff' : '#334155',
+                          fontWeight: 600,
+                          fontSize: 13,
+                          border: isSelected ? 'none' : '1px solid #e2e8f0',
+                        }}
+                      >
+                        {itemInitials || (
+                          <UserOutlined style={{ color: isSelected ? '#ffffff' : '#64748b' }} />
+                        )}
+                      </Avatar>
                     </Badge>
                     <span className={styles.conversationMeta}>
-                      <Typography.Text strong>{participantLabel(account)}</Typography.Text>
-                      <Typography.Text type="secondary" className={styles.preview}>
-                        {presence === 'ONLINE'
-                          ? t('chat.online', 'Online')
-                          : t('chat.offline', 'Offline')}
-                      </Typography.Text>
+                      <span className={styles.conversationHeaderRow}>
+                        <span className={styles.participantName}>
+                          {participantLabel(accountItem)}
+                        </span>
+                        {lastTime ? (
+                          <span className={styles.lastMessageTime}>{lastTime}</span>
+                        ) : null}
+                      </span>
+                      <span className={styles.previewRow}>
+                        <span className={styles.preview}>
+                          {conv?.lastMessagePreview ||
+                            (isOnline ? t('chat.online', 'Online') : t('chat.offline', 'Offline'))}
+                        </span>
+                        {conv && conv.unreadCount > 0 ? (
+                          <span className={styles.unreadBadge}>{conv.unreadCount}</span>
+                        ) : null}
+                      </span>
                     </span>
-                  </Button>
+                  </button>
                 )
               })}
-              {groups.length ? (
-                <Typography.Text type="secondary" className={styles.sectionLabel}>
-                  {t('chat.groups', 'Groups')}
-                </Typography.Text>
-              ) : null}
-              {groups.map((conversation) => (
-                <Button
-                  key={conversation.id}
-                  type={conversation.id === activeConversationId ? 'primary' : 'text'}
-                  className={styles.conversationButton}
-                  onClick={() => setSelectedId(conversation.id)}
-                >
-                  <Avatar size={34} icon={<TeamOutlined />} />
-                  <span className={styles.conversationMeta}>
-                    <Typography.Text strong>
-                      {conversationTitle(conversation, participantById, account?.id)}
-                    </Typography.Text>
-                    <Typography.Text type="secondary" className={styles.preview}>
-                      {conversation.lastMessagePreview || t('chat.noMessages', 'No messages yet')}
-                    </Typography.Text>
-                  </span>
-                </Button>
-              ))}
             </Space>
           ) : (
             <Empty description={t('chat.emptyPeople', 'No chat participants')} />
           )}
         </div>
       </aside>
+
+      {/* ================= MAIN CHAT PANE ================= */}
       <main className={styles.pane}>
+        {/* Header */}
         <div className={styles.paneHeader}>
-          <Avatar
-            size={42}
-            icon={selectedConversation?.type === 'TEAM' ? <TeamOutlined /> : <UserOutlined />}
-          />
-          <div>
-            <Typography.Title level={4} style={{ margin: 0 }}>
-              {selectedConversation
-                ? conversationTitle(selectedConversation, participantById, account?.id)
-                : t('chat.select', 'Select a conversation')}
-            </Typography.Title>
-            <Typography.Text type="secondary">
-              {selectedConversation?.relatedResource
-                ? `${selectedConversation.relatedResource.type}: ${selectedConversation.relatedResource.id}`
-                : t('chat.internalThread', 'Internal message thread')}
-            </Typography.Text>
+          <div className={styles.paneHeaderLeft}>
+            <Badge dot status={isOtherOnline ? 'success' : 'default'} offset={[-2, 32]}>
+              <Avatar
+                size={40}
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: 14,
+                }}
+              >
+                {otherInitials || <UserOutlined style={{ color: '#ffffff' }} />}
+              </Avatar>
+            </Badge>
+            <div className={styles.paneHeaderInfo}>
+              <Typography.Title level={4} className={styles.paneHeaderTitle}>
+                {selectedConversation
+                  ? conversationTitle(selectedConversation, participantById, account?.id)
+                  : t('chat.select', 'Select a conversation')}
+              </Typography.Title>
+              <div className={styles.paneHeaderSub}>
+                <span
+                  className={`${styles.statusDot} ${isOtherOnline ? styles.online : styles.offline}`}
+                />
+                <span>
+                  {isOtherOnline ? t('chat.activeNow', 'Active now') : t('chat.offline', 'Offline')}
+                </span>
+                {otherParticipant?.email ? (
+                  <>
+                    <span>•</span>
+                    <span>{otherParticipant.email}</span>
+                  </>
+                ) : null}
+                {otherParticipant?.email?.includes('@lngwork.co') ? (
+                  <span className={styles.teamsTag}>
+                    <TeamOutlined /> {t('chat.teamsConnected', 'Teams')}
+                  </span>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Message Feed */}
         <div className={styles.messages}>
-          {!activeConversationId ? (
-            <Empty description={t('chat.select', 'Select a conversation')} />
-          ) : messages.isLoading ? (
-            <Skeleton active paragraph={{ rows: 8 }} />
-          ) : messages.data?.items.length ? (
-            <>
-              {messages.data.items.map((message) => (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  isOwn={message.senderAccountId === account?.id}
-                />
-              ))}
-              <div ref={messagesEndRef} aria-hidden="true" />
-            </>
-          ) : (
-            <Empty description={t('chat.emptyMessages', 'No messages yet')} />
-          )}
+          <div className={styles.messagesInner}>
+            {!activeConversationId ? (
+              <Empty description={t('chat.select', 'Select a conversation')} />
+            ) : messages.isLoading ? (
+              <Skeleton active paragraph={{ rows: 8 }} />
+            ) : messageItems.length ? (
+              <>
+                {messageItems.map((message, idx) => {
+                  const isOwn = message.senderAccountId === account?.id
+                  const currentDateKey = getDateGroupKey(message.createdAt)
+                  const prevDateKey =
+                    idx > 0 ? getDateGroupKey(messageItems[idx - 1].createdAt) : null
+                  const showDateDivider = currentDateKey !== prevDateKey
+
+                  const prevSender = idx > 0 ? messageItems[idx - 1].senderAccountId : null
+                  const showAvatar = message.senderAccountId !== prevSender || showDateDivider
+
+                  const senderParticipant = message.senderAccountId
+                    ? participantById.get(message.senderAccountId)
+                    : undefined
+
+                  return (
+                    <div
+                      key={message.id}
+                      className={`${styles.messageRow} ${isOwn ? styles.ownRow : styles.receivedRow}`}
+                    >
+                      {showDateDivider ? (
+                        <div className={styles.dateDivider}>
+                          <span>{formatDateGroupLabel(currentDateKey, t)}</span>
+                        </div>
+                      ) : null}
+                      <MessageBubble
+                        message={message}
+                        isOwn={isOwn}
+                        senderParticipant={senderParticipant}
+                        showAvatar={showAvatar}
+                      />
+                    </div>
+                  )
+                })}
+                <div ref={messagesEndRef} aria-hidden="true" />
+              </>
+            ) : (
+              <Empty description={t('chat.emptyMessages', 'No messages yet')} />
+            )}
+          </div>
         </div>
+
+        {/* Composer */}
         <div className={styles.composer}>
-          <textarea
-            aria-label={t('chat.composerLabel', 'Message')}
-            placeholder={t('chat.placeholder', 'Write a message')}
-            value={draft}
-            rows={1}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && canSend) {
-                event.preventDefault()
-                sendMutation.mutate()
-              }
-            }}
-          />
-          <div className={styles.composerActions}>
+          {files.length ? (
+            <div className={styles.attachmentsPreview}>
+              {files.map((file) => (
+                <span key={file.uid} className={styles.attachmentChip}>
+                  <PaperClipOutlined />
+                  <span>{file.name}</span>
+                  <CloseCircleFilled
+                    className={styles.attachmentRemove}
+                    onClick={() =>
+                      setFiles((current) => current.filter(({ uid }) => uid !== file.uid))
+                    }
+                  />
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className={styles.composerForm}>
             <Upload
               multiple
               fileList={files}
+              showUploadList={false}
               beforeUpload={(file) => {
                 setFiles((current) => [
                   ...current,
@@ -485,59 +653,46 @@ export function ChatWorkspacePage() {
                 ])
                 return false
               }}
-              onRemove={(file) =>
-                setFiles((current) => current.filter(({ uid }) => uid !== file.uid))
-              }
             >
-              <Button aria-label={t('chat.attach', 'Attach')} icon={<UploadOutlined />}>
-                {t('chat.attach', 'Attach')}
-              </Button>
+              <button
+                type="button"
+                className={styles.attachBtn}
+                aria-label={t('chat.attach', 'Attach')}
+                title={t('chat.attach', 'Attach')}
+              >
+                <PaperClipOutlined style={{ fontSize: 17 }} />
+              </button>
             </Upload>
-            <Button
-              type="primary"
+            <div className={styles.composerInputWrap}>
+              <textarea
+                ref={textareaRef}
+                className={styles.composerTextarea}
+                aria-label={t('chat.composerLabel', 'Message')}
+                placeholder={t('chat.placeholder', 'Write a message')}
+                value={draft}
+                rows={1}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey && canSend) {
+                    event.preventDefault()
+                    sendMutation.mutate()
+                  }
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              className={styles.sendBtn}
               aria-label={t('chat.send', 'Send')}
-              icon={<SendOutlined />}
+              title={t('chat.send', 'Send')}
               disabled={!canSend}
-              loading={sendMutation.isPending}
               onClick={() => sendMutation.mutate()}
             >
-              {t('chat.send', 'Send')}
-            </Button>
+              <SendOutlined style={{ fontSize: 15 }} />
+            </button>
           </div>
         </div>
       </main>
-      <Modal
-        title={t('chat.newGroup', 'New group')}
-        open={isGroupOpen}
-        okText={t('chat.createGroup', 'Create group')}
-        cancelText={t('chat.cancel', 'Cancel')}
-        confirmLoading={createMutation.isPending}
-        okButtonProps={{ disabled: participantIds.length < 2 }}
-        onOk={createGroup}
-        onCancel={() => setIsGroupOpen(false)}
-      >
-        <Space orientation="vertical" size={12} style={{ width: '100%' }}>
-          <Input
-            placeholder={t('chat.groupTitle', 'Group title')}
-            value={conversationTitleDraft}
-            onChange={(event) => setConversationTitleDraft(event.target.value)}
-          />
-          <Select
-            mode="multiple"
-            showSearch
-            style={{ width: '100%' }}
-            placeholder={t('chat.participants', 'Participants')}
-            loading={participants.isLoading}
-            value={participantIds}
-            options={(participants.data?.items ?? []).map((account) => ({
-              value: account.id,
-              label: participantLabel(account),
-            }))}
-            optionFilterProp="label"
-            onChange={setParticipantIds}
-          />
-        </Space>
-      </Modal>
     </div>
   )
 }

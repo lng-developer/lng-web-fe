@@ -10,8 +10,9 @@ import {
   SyncOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Result, Typography } from 'antd'
+import { Button, Form, Input, Typography } from 'antd'
 
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   ConfirmDangerModal,
@@ -87,7 +88,7 @@ export function AccountSecurityPage() {
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })
 
-  if (!canWrite) return <Result status="403" title="403" />
+  if (!canWrite) return <AccessDeniedResult />
   if (isLoading) return <LoadingState variant="page" />
 
   if (error || !data) {

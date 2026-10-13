@@ -11,8 +11,8 @@ describe('theme foundation', () => {
   })
 
   it('keeps the LNG primary color in both themes', () => {
-    expect(createAppTheme('light').token?.colorPrimary).toBe('#E83B4A')
-    expect(createAppTheme('dark').token?.colorPrimary).toBe('#E83B4A')
+    expect(createAppTheme('light').token?.colorPrimary).toBe('#2563eb')
+    expect(createAppTheme('dark').token?.colorPrimary).toBe('#2563eb')
   })
 
   it('uses bright white card surfaces and subtle borders in light mode', () => {

@@ -20,7 +20,6 @@ import {
   Form,
   Input,
   Modal,
-  Result,
   Select,
   Space,
   Tabs,
@@ -30,6 +29,7 @@ import {
 } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { authKeys } from '@/features/auth/api/authKeys'
 import {
   createPermission,
@@ -538,7 +538,7 @@ export function AccessControlPage() {
     },
   ]
 
-  if (!canRead) return <Result status="403" title="403" />
+  if (!canRead) return <AccessDeniedResult />
 
   return (
     <section className={styles.page}>

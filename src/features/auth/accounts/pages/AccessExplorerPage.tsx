@@ -24,7 +24,6 @@ import {
   Input,
   Modal,
   Pagination,
-  Result,
   Select,
   Skeleton,
   Spin,
@@ -43,6 +42,7 @@ import {
 import { authKeys } from '@/features/auth/api/authKeys'
 import { loadRoleCatalog } from '@/features/auth/roles/api/rolesApi'
 import { loadScopes } from '@/features/auth/scopes/api/scopesApi'
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import {
@@ -487,7 +487,7 @@ export function AccessExplorerPage() {
     })
   }
 
-  if (!canRead) return <Result status="403" title="403" />
+  if (!canRead) return <AccessDeniedResult />
 
   return (
     <section className={styles.page}>

@@ -100,7 +100,7 @@
 .orderTabs :global(.ant-tabs-tab:hover) {
   border-color: var(--ant-color-primary);
   color: var(--ant-color-primary);
-  background: var(--ant-color-primary-bg, #fff1f0);
+  background: var(--ant-color-primary-bg, #eff6ff);
 }
 .orderTabs :global(.ant-tabs-tab.ant-tabs-tab-active) {
   border-color: var(--ant-color-primary) !important;
@@ -571,7 +571,7 @@
 }
 
 .orderIdChip {
-  color: var(--ant-color-primary, #e83b4a);
+  color: var(--ant-color-primary, #2563eb);
   background: color-mix(in srgb, var(--ant-color-primary-bg) 64%, var(--ant-color-bg-container));
   border: 1px solid color-mix(in srgb, var(--ant-color-primary) 42%, var(--ant-color-border));
 

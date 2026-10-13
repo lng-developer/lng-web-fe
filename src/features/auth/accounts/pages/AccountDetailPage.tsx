@@ -15,12 +15,12 @@ import {
   Form,
   Input,
   InputNumber,
-  Result,
   Space,
   Typography,
 } from 'antd'
 import dayjs from 'dayjs'
 
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   FeedbackAlert,
@@ -63,7 +63,7 @@ export function AccountDetailPage() {
       })
   }, [data?.account, costForm])
 
-  if (!canRead) return <Result status="403" title="403" />
+  if (!canRead) return <AccessDeniedResult />
   if (isLoading) return <LoadingState variant="page" />
 
   if (error || !data) {

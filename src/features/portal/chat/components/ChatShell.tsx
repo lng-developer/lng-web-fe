@@ -1,14 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import {
-  CloseOutlined,
-  MessageOutlined,
-  SearchOutlined,
-  SendOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
+import { MessageOutlined, SearchOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, Badge, Button, Empty, Input, Popover, Typography } from 'antd'
 
@@ -16,48 +10,19 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   type ChatConversation,
   type ChatMessage,
-  type ChatParticipant,
   listChatConversations,
-  listChatMessages,
   listChatParticipants,
   markChatConversationRead,
-  sendChatMessage,
 } from '@/features/portal/chat/api/chatApi'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
+import { conversationTitle, participantLabel } from './chatViewUtils'
+import { QuickChatBox } from './QuickChatBox'
+import { QuickChatBubble } from './QuickChatBubble'
 
 import styles from './ChatShell.module.scss'
 
 const CHAT_PREVIEW_LIMIT = 8
-
-function participantLabel(participant?: ChatParticipant) {
-  return (
-    participant?.displayName ||
-    participant?.fullName ||
-    participant?.email ||
-    participant?.employeeCode ||
-    ''
-  )
-}
-
-function conversationTitle(
-  conversation: ChatConversation,
-  participantById: Map<string, ChatParticipant>,
-  currentAccountId?: string,
-) {
-  if (conversation.type === 'DIRECT') {
-    const otherId = conversation.participantAccountIds.find((id) => id !== currentAccountId)
-    const otherParticipant = otherId ? participantById.get(otherId) : undefined
-    const name = otherParticipant?.displayName || otherParticipant?.fullName
-    if (name) return name
-    const fallback = participantLabel(otherParticipant)
-    if (fallback) return fallback
-    if (conversation.title) return conversation.title
-  }
-  return (
-    conversation.title || conversation.relatedResource?.id || conversation.type.replaceAll('_', ' ')
-  )
-}
 
 function formatRelativeTime(
   value: string | null,
@@ -74,7 +39,12 @@ function formatRelativeTime(
 
 function messagePreviewText(
   conversation: ChatConversation,
-  participantById: Map<string, ChatParticipant>,
+  participantById: Map<
+    string,
+    ReturnType<typeof participantLabel> extends string
+      ? import('@/features/portal/chat/api/chatApi').ChatParticipant
+      : never
+  >,
   currentAccountId?: string,
   emptyLabel = 'No messages yet',
   ownLabel = 'You',
@@ -104,15 +74,18 @@ function mergeRealtimeConversation(
   conversation: ChatConversation,
   message: ChatMessage,
   currentAccountId: string,
-  openConversationId: string | null,
+  openConversationIds: string[],
+  minimizedConversationIds: string[],
 ) {
   const existing = items.find(({ id }) => id === conversation.id)
   const alreadyApplied =
     existing?.lastMessageAt === conversation.lastMessageAt &&
     existing?.lastMessageSenderAccountId === conversation.lastMessageSenderAccountId &&
     existing?.lastMessagePreview === conversation.lastMessagePreview
-  const shouldMarkUnread =
-    message.senderAccountId !== currentAccountId && message.conversationId !== openConversationId
+  const isActivelyOpen =
+    openConversationIds.includes(message.conversationId) &&
+    !minimizedConversationIds.includes(message.conversationId)
+  const shouldMarkUnread = message.senderAccountId !== currentAccountId && !isActivelyOpen
   const unreadCount = shouldMarkUnread
     ? alreadyApplied
       ? existing?.unreadCount || conversation.unreadCount || 1
@@ -132,16 +105,14 @@ export function ChatShell({ account }: ChatShellProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isChatPreviewOpen, setIsChatPreviewOpen] = useState(false)
-  const [quickConversationId, setQuickConversationId] = useState<string | null>(null)
-  const [quickDraft, setQuickDraft] = useState('')
-  const [readQuickConversationIds, setReadQuickConversationIds] = useState<Set<string>>(
-    () => new Set(),
-  )
+  const [openQuickConversationIds, setOpenQuickConversationIds] = useState<string[]>([])
+  const [minimizedQuickConversationIds, setMinimizedQuickConversationIds] = useState<string[]>([])
+  const [activeQuickConversationId, setActiveQuickConversationId] = useState<string | null>(null)
   const [socketReady, setSocketReady] = useState(false)
   const chatPreviewRef = useRef<HTMLDivElement>(null)
-  const quickMessagesEndRef = useRef<HTMLDivElement | null>(null)
   const chatSocketRef = useRef<ChatSocket | null>(null)
-  const quickConversationIdRef = useRef<string | null>(null)
+  const openQuickConversationIdsRef = useRef<string[]>([])
+  const minimizedQuickConversationIdsRef = useRef<string[]>([])
   const isChatWorkspaceRef = useRef(false)
   const chatLabel = t('shell.navigation.chat')
   const isChatWorkspace = location.pathname === '/portal/chat'
@@ -164,12 +135,44 @@ export function ChatShell({ account }: ChatShellProps) {
   }, [isChatPreviewOpen])
 
   useEffect(() => {
-    quickConversationIdRef.current = quickConversationId
-  }, [quickConversationId])
+    openQuickConversationIdsRef.current = openQuickConversationIds
+  }, [openQuickConversationIds])
+
+  useEffect(() => {
+    minimizedQuickConversationIdsRef.current = minimizedQuickConversationIds
+  }, [minimizedQuickConversationIds])
 
   useEffect(() => {
     isChatWorkspaceRef.current = isChatWorkspace
   }, [isChatWorkspace])
+
+  const { mutate: markQuickConversationRead } = useMutation({
+    mutationFn: (conversationId: string) => markChatConversationRead(conversationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: chatKeys.all })
+    },
+  })
+
+  const markConversationAsRead = useCallback(
+    (conversationId: string) => {
+      queryClient.setQueriesData<ChatPage<ChatConversation>>(
+        { queryKey: [...chatKeys.all, 'conversations'] },
+        (current) =>
+          current
+            ? {
+                ...current,
+                items: current.items.map((item) =>
+                  item.id === conversationId
+                    ? { ...item, unreadCount: 0, hasUnreadFromOthers: false }
+                    : item,
+                ),
+              }
+            : current,
+      )
+      markQuickConversationRead(conversationId)
+    },
+    [markQuickConversationRead, queryClient],
+  )
 
   useEffect(() => {
     const socket = createChatSocket()
@@ -180,6 +183,14 @@ export function ChatShell({ account }: ChatShellProps) {
     socket.on('connect_error', () => setSocketReady(false))
     socket.on('message.created', ({ conversation, message }) => {
       if (isChatWorkspaceRef.current) return
+      const isActivelyOpen =
+        openQuickConversationIdsRef.current.includes(message.conversationId) &&
+        !minimizedQuickConversationIdsRef.current.includes(message.conversationId)
+
+      if (isActivelyOpen && message.senderAccountId !== account.account.id) {
+        markQuickConversationRead(message.conversationId)
+      }
+
       queryClient.setQueryData<ChatPage<ChatMessage>>(
         chatKeys.messages(message.conversationId),
         (current) =>
@@ -201,7 +212,8 @@ export function ChatShell({ account }: ChatShellProps) {
                   conversation,
                   message,
                   account.account.id,
-                  quickConversationIdRef.current,
+                  openQuickConversationIdsRef.current,
+                  minimizedQuickConversationIdsRef.current,
                 ),
               }
             : current,
@@ -212,12 +224,14 @@ export function ChatShell({ account }: ChatShellProps) {
       chatSocketRef.current = null
       setSocketReady(false)
     }
-  }, [account.account.id, queryClient])
+  }, [account.account.id, markQuickConversationRead, queryClient])
 
   useEffect(() => {
-    if (!quickConversationId || !chatSocketRef.current) return
-    chatSocketRef.current.emit('conversation.join', { conversationId: quickConversationId })
-  }, [quickConversationId])
+    if (!openQuickConversationIds.length || !chatSocketRef.current) return
+    for (const conversationId of openQuickConversationIds) {
+      chatSocketRef.current.emit('conversation.join', { conversationId })
+    }
+  }, [openQuickConversationIds])
 
   const chatConversations = useQuery({
     queryKey: chatKeys.conversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
@@ -231,86 +245,91 @@ export function ChatShell({ account }: ChatShellProps) {
   const participantById = new Map(
     (chatParticipants.data?.items ?? []).map((participant) => [participant.id, participant]),
   )
-  const recentConversations = chatConversations.data?.items ?? []
-  const unreadCount = recentConversations.reduce(
-    (total, conversation) => total + (conversation.unreadCount || 0),
-    0,
+  const recentConversations = useMemo(
+    () => (chatConversations.data?.items ?? []).filter((conv) => conv.type === 'DIRECT'),
+    [chatConversations.data?.items],
   )
-  const hasUnreadFromOthers = recentConversations.some(
-    (conversation) => conversation.hasUnreadFromOthers,
+
+  // Active open windows (excluding those minimized into bubbles)
+  const openExpandedIds = openQuickConversationIds.filter(
+    (id) => !minimizedQuickConversationIds.includes(id),
   )
-  const unreadConversation = recentConversations.find(
-    (conversation) => conversation.hasUnreadFromOthers,
-  )
-  const quickConversation =
-    recentConversations.find((conversation) => conversation.id === quickConversationId) ?? null
-  const isQuickConversationUnread = Boolean(
-    quickConversation &&
-    quickConversation.hasUnreadFromOthers &&
-    !readQuickConversationIds.has(quickConversation.id),
-  )
-  const quickTitle = quickConversation
-    ? conversationTitle(quickConversation, participantById, account.account.id)
-    : chatLabel
-  const quickMessages = useQuery({
-    queryKey: chatKeys.messages(quickConversationId),
-    queryFn: () => listChatMessages(quickConversationId!, { page: 1, limit: 25 }),
-    enabled: Boolean(quickConversationId) && !isChatWorkspace,
-    refetchInterval: quickConversationId && !isChatWorkspace && !socketReady ? 30_000 : false,
-  })
-  const quickMessageItems = [...(quickMessages.data?.items ?? [])].sort(
-    (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
-  )
-  const quickSend = useMutation({
-    mutationFn: () =>
-      sendChatMessage(quickConversationId!, {
-        body: quickDraft.trim(),
-        assetIds: [],
-      }),
-    onSuccess: async () => {
-      setQuickDraft('')
-    },
-  })
-  const { mutate: markQuickConversationRead } = useMutation({
-    mutationFn: (conversationId: string) => markChatConversationRead(conversationId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: chatKeys.all })
-    },
-  })
-  const canQuickSend = Boolean(quickConversationId && quickDraft.trim() && !quickSend.isPending)
-  const markQuickChatRead = () => {
-    if (
-      !quickConversation?.hasUnreadFromOthers ||
-      readQuickConversationIds.has(quickConversation.id)
-    ) {
-      return
+  const visibleWindowIds = [...openExpandedIds].reverse()
+
+  // Total unread count excludes conversations currently open and viewed
+  const unreadCount = recentConversations.reduce((total, conversation) => {
+    if (openExpandedIds.includes(conversation.id)) {
+      return total
     }
-    setReadQuickConversationIds((current) => new Set(current).add(quickConversation.id))
-    markQuickConversationRead(quickConversation.id)
-  }
+    return total + (conversation.unreadCount || 0)
+  }, 0)
+
+  const unreadConversations = recentConversations.filter(
+    (conversation) =>
+      conversation.hasUnreadFromOthers && !openExpandedIds.includes(conversation.id),
+  )
+  const hasUnreadFromOthers = unreadConversations.length > 0
+  const unreadConversation = unreadConversations[0] ?? null
+
   const openQuickChat = (conversation: ChatConversation, markRead = true) => {
     if (isChatWorkspace) return
     setIsChatPreviewOpen(false)
-    setQuickConversationId(conversation.id)
-    if (markRead && conversation.hasUnreadFromOthers) {
-      setReadQuickConversationIds((current) => new Set(current).add(conversation.id))
-      markQuickConversationRead(conversation.id)
+    setOpenQuickConversationIds((prev) => {
+      const withoutIt = prev.filter((id) => id !== conversation.id)
+      const next = [...withoutIt, conversation.id]
+      const maxWindows = typeof window !== 'undefined' && window.innerWidth < 1024 ? 2 : 3
+      return next.length > maxWindows ? next.slice(-maxWindows) : next
+    })
+    setMinimizedQuickConversationIds((prev) => prev.filter((id) => id !== conversation.id))
+    setActiveQuickConversationId(conversation.id)
+    if (markRead) {
+      markConversationAsRead(conversation.id)
     }
   }
 
-  useEffect(() => {
-    if (!quickConversationId || quickMessages.isLoading) return
-    requestAnimationFrame(() => {
-      quickMessagesEndRef.current?.scrollIntoView?.({ block: 'end' })
-    })
-  }, [quickConversationId, quickMessageItems.length, quickMessages.isLoading])
+  const handleToggleMinimize = (conversationId: string) => {
+    setMinimizedQuickConversationIds((prev) =>
+      prev.includes(conversationId)
+        ? prev.filter((id) => id !== conversationId)
+        : [...prev, conversationId],
+    )
+  }
+
+  const handleCloseQuickChat = (conversationId: string) => {
+    setOpenQuickConversationIds((prev) => prev.filter((id) => id !== conversationId))
+    setMinimizedQuickConversationIds((prev) => prev.filter((id) => id !== conversationId))
+    setActiveQuickConversationId((current) => (current === conversationId ? null : current))
+  }
+
+  const handleExpandBubble = (conversationId: string) => {
+    setMinimizedQuickConversationIds((prev) => prev.filter((id) => id !== conversationId))
+    setOpenQuickConversationIds((prev) =>
+      prev.includes(conversationId) ? prev : [...prev, conversationId],
+    )
+    setActiveQuickConversationId(conversationId)
+    markConversationAsRead(conversationId)
+  }
+
+  // Bubbles list: all minimized chats, plus unread incoming conversation if not open
+  const bubbleIds = [...minimizedQuickConversationIds]
+  if (
+    hasUnreadFromOthers &&
+    unreadConversation &&
+    !openExpandedIds.includes(unreadConversation.id) &&
+    !bubbleIds.includes(unreadConversation.id)
+  ) {
+    bubbleIds.push(unreadConversation.id)
+  }
+
+  const hasBubbles = bubbleIds.length > 0
+  const baseRight = hasBubbles ? 84 : 20
 
   const chatPreview = (
     <div ref={chatPreviewRef} className={styles.chatPreview}>
       <div className={styles.chatPreviewHeader}>
         <Typography.Title level={4}>{t('chat.title', 'Chat')}</Typography.Title>
         <Button
-          aria-label={t('chat.newGroup', 'New group')}
+          aria-label={t('chat.openWorkspace', 'Open chat')}
           icon={<MessageOutlined />}
           shape="circle"
           type="text"
@@ -337,7 +356,10 @@ export function ChatShell({ account }: ChatShellProps) {
               onClick={() => openQuickChat(conversation)}
             >
               <Badge dot={conversation.hasUnreadFromOthers} offset={[-2, 40]}>
-                <Avatar size={50} icon={<UserOutlined />} />
+                <Avatar
+                  size={50}
+                  icon={conversation.type === 'DIRECT' ? <UserOutlined /> : <TeamOutlined />}
+                />
               </Badge>
               <span className={styles.chatPreviewText}>
                 <span className={styles.chatPreviewHeaderRow}>
@@ -385,6 +407,7 @@ export function ChatShell({ account }: ChatShellProps) {
             placement="bottomRight"
             open={isChatPreviewOpen}
             overlayClassName={styles.popover}
+            zIndex={2147483050}
             content={chatPreview}
             onOpenChange={setIsChatPreviewOpen}
           >
@@ -412,95 +435,73 @@ export function ChatShell({ account }: ChatShellProps) {
           </Badge>
         )}
       </div>
-      {overlayRoot &&
-      !isChatWorkspace &&
-      hasUnreadFromOthers &&
-      quickConversationId !== unreadConversation?.id
-        ? createPortal(
-            <Badge count={unreadCount} className={styles.floatingChatBadge}>
-              <button
-                className={styles.floatingChatButton}
-                type="button"
-                aria-label={chatLabel}
-                onClick={() => {
-                  if (!unreadConversation) return
-                  if (quickConversationId === unreadConversation.id) {
-                    setQuickConversationId(null)
-                    return
-                  }
-                  openQuickChat(unreadConversation)
-                }}
-              >
-                <MessageOutlined />
-              </button>
-            </Badge>,
-            overlayRoot,
-          )
+
+      {/* Minimized Chat Heads (Bong bóng chat) */}
+      {overlayRoot && !isChatWorkspace
+        ? bubbleIds.map((conversationId, index) => {
+            const conversation = recentConversations.find((c) => c.id === conversationId) ?? null
+            const isUnread = Boolean(
+              conversation &&
+              ((conversation.unreadCount || 0) > 0 || conversation.hasUnreadFromOthers),
+            )
+
+            return createPortal(
+              <QuickChatBubble
+                key={`bubble-${conversationId}`}
+                conversationId={conversationId}
+                conversation={conversation}
+                currentAccountId={account.account.id}
+                participantById={participantById}
+                isUnread={isUnread}
+                unreadCount={conversation?.unreadCount}
+                index={index}
+                onExpand={() => handleExpandBubble(conversationId)}
+                onClose={() => handleCloseQuickChat(conversationId)}
+                chatLabel={chatLabel}
+              />,
+              overlayRoot,
+            )
+          })
         : null}
-      {overlayRoot && !isChatWorkspace && quickConversation
-        ? createPortal(
-            <section
-              className={`${styles.quickChatWindow} ${
-                isQuickConversationUnread ? styles.quickChatWindowUnread : ''
-              }`}
-              aria-label={quickTitle}
-            >
-              <div className={styles.quickChatHeader}>
-                <div className={styles.quickChatHeaderInfo}>
-                  <Avatar size={34} icon={<UserOutlined />} />
-                  <strong className={styles.quickChatTitle}>{quickTitle}</strong>
-                </div>
-                <Button
-                  aria-label={t('common.close', 'Close')}
-                  icon={<CloseOutlined />}
-                  shape="circle"
-                  type="text"
-                  onClick={() => setQuickConversationId(null)}
-                />
-              </div>
-              <div className={styles.quickChatMessages}>
-                {quickMessageItems.map((message) => (
-                  <div
-                    className={
-                      message.senderAccountId === account.account.id
-                        ? styles.quickMessageOwn
-                        : styles.quickMessageOther
-                    }
-                    key={message.id}
-                  >
-                    {message.body}
-                  </div>
-                ))}
-                <div ref={quickMessagesEndRef} aria-hidden="true" />
-                {!quickMessages.isLoading && !quickMessageItems.length ? (
-                  <Empty description={t('chat.noMessages', 'No messages yet')} />
-                ) : null}
-              </div>
-              <div className={styles.quickChatComposer}>
-                <Input
-                  aria-label={t('chat.messageInput', 'Message')}
-                  placeholder={t('chat.messagePlaceholder', 'Aa')}
-                  value={quickDraft}
-                  onChange={(event) => setQuickDraft(event.target.value)}
-                  onFocus={markQuickChatRead}
-                  onPressEnter={() => {
-                    if (canQuickSend) quickSend.mutate()
-                  }}
-                  className={styles.quickChatInput}
-                />
-                <Button
-                  aria-label={t('chat.send', 'Send')}
-                  disabled={!canQuickSend}
-                  icon={<SendOutlined />}
-                  shape="circle"
-                  type="primary"
-                  className={styles.quickChatSendButton}
-                  onClick={() => quickSend.mutate()}
-                />
-              </div>
-            </section>,
-            overlayRoot,
-          )
+
+      {/* Open Quick Chat Windows */}
+      {overlayRoot && !isChatWorkspace
+        ? openQuickConversationIds.map((conversationId) => {
+            const conversation = recentConversations.find((c) => c.id === conversationId) ?? null
+            const isMinimized = minimizedQuickConversationIds.includes(conversationId)
+            const isUnread = Boolean(
+              conversation &&
+              !openExpandedIds.includes(conversationId) &&
+              ((conversation.unreadCount || 0) > 0 || conversation.hasUnreadFromOthers),
+            )
+            const winIndex = visibleWindowIds.indexOf(conversationId)
+            const rightOffset = baseRight + Math.max(0, winIndex) * 340
+            const isActive = activeQuickConversationId === conversationId
+            const zIndex = isActive ? 2147483015 : 2147483001
+
+            return createPortal(
+              <QuickChatBox
+                key={`box-${conversationId}`}
+                conversationId={conversationId}
+                conversation={conversation}
+                currentAccountId={account.account.id}
+                participantById={participantById}
+                isMinimized={isMinimized}
+                isUnread={isUnread}
+                style={{
+                  right: `calc(max(${rightOffset}px, calc(env(safe-area-inset-right) + ${rightOffset}px)))`,
+                  zIndex,
+                }}
+                onToggleMinimize={() => handleToggleMinimize(conversationId)}
+                onClose={() => handleCloseQuickChat(conversationId)}
+                onMarkRead={() => markConversationAsRead(conversationId)}
+                onFocus={() => setActiveQuickConversationId(conversationId)}
+                socketReady={socketReady}
+                isChatWorkspace={isChatWorkspace}
+              />,
+              overlayRoot,
+            )
+          })
         : null}
     </>
   )
