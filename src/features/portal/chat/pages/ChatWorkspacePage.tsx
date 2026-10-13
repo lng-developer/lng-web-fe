@@ -50,7 +50,7 @@ const MESSAGE_LIMIT = 50
 type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
 
 function participantLabel(account?: ChatParticipant) {
-  return account?.displayName || account?.fullName || account?.employeeCode || account?.email || ''
+  return account?.displayName || account?.fullName || account?.email || account?.employeeCode || ''
 }
 
 function conversationTitle(
@@ -60,8 +60,12 @@ function conversationTitle(
 ) {
   if (conversation.type === 'DIRECT') {
     const otherAccountId = conversation.participantAccountIds.find((id) => id !== currentAccountId)
-    const label = participantLabel(otherAccountId ? participantById.get(otherAccountId) : undefined)
-    if (label) return label
+    const otherParticipant = otherAccountId ? participantById.get(otherAccountId) : undefined
+    const name = otherParticipant?.displayName || otherParticipant?.fullName
+    if (name) return name
+    if (conversation.title) return conversation.title
+    const fallback = participantLabel(otherParticipant)
+    if (fallback) return fallback
   }
   return (
     conversation.title ||
