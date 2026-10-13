@@ -45,7 +45,7 @@ describe('useMicrosoftLoginHandler', () => {
     })
 
     expect(mocks.loginPopup).toHaveBeenCalledWith({
-      scopes: ['openid', 'profile', 'email', 'User.Read'],
+      scopes: ['openid', 'profile', 'email', 'User.Read', 'ChatMessage.Send', 'Chat.ReadWrite'],
       prompt: 'select_account',
       redirectUri: `${window.location.origin}/msal-popup.html`,
       extraQueryParameters: { domain_hint: 'lngwork.co' },
