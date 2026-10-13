@@ -146,7 +146,7 @@ describe('ChatShell', () => {
     renderShell()
 
     await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    fireEvent.click(screen.getByRole('button', { name: /chat/i }))
     const item = await screen.findByText('designer@lng.co')
     fireEvent.click(item)
 
@@ -157,7 +157,7 @@ describe('ChatShell', () => {
     const minimizeBtn = withinWindow.getByRole('button', { name: /minimize/i })
     fireEvent.click(minimizeBtn)
 
-    const chatButtons = screen.getAllByRole('button', { name: 'shell.navigation.chat' })
+    const chatButtons = screen.getAllByRole('button', { name: /chat/i })
     expect(chatButtons.length).toBeGreaterThan(1)
     const bubbleBtn = chatButtons[chatButtons.length - 1]
     fireEvent.click(bubbleBtn)
@@ -218,13 +218,13 @@ describe('ChatShell', () => {
     renderShell()
 
     await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    fireEvent.click(screen.getByRole('button', { name: /chat/i }))
     const item1 = await screen.findByText('designer@lng.co')
     fireEvent.click(item1)
 
     expect(await screen.findByRole('region', { name: 'designer@lng.co' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    fireEvent.click(screen.getByRole('button', { name: /chat/i }))
     const item2 = await screen.findByText('operator@lng.co')
     fireEvent.click(item2)
 
@@ -256,10 +256,8 @@ describe('ChatShell', () => {
 
     renderShell()
 
-    await waitFor(() =>
-      expect(screen.getAllByRole('button', { name: 'shell.navigation.chat' })).toHaveLength(2),
-    )
-    const chatButtons = screen.getAllByRole('button', { name: 'shell.navigation.chat' })
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /chat/i })).toHaveLength(2))
+    const chatButtons = screen.getAllByRole('button', { name: /chat/i })
     const bubbleBtn = chatButtons[1]
     fireEvent.click(bubbleBtn)
 
