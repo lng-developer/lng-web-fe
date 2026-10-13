@@ -584,7 +584,7 @@ export function HrDashboardPage() {
                   <div className={styles.announcementHeader}>
                     <div className={styles.announcementTitle}>
                       {item.isPinned && (
-                        <PushpinFilled style={{ color: '#e83b4a', fontSize: 13 }} />
+                        <PushpinFilled style={{ color: '#2563eb', fontSize: 13 }} />
                       )}
                       <span>{item.title}</span>
                     </div>

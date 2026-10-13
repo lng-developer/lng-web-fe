@@ -103,7 +103,7 @@
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #e83b4a !important;
+  color: #2563eb !important;
   cursor: default;
   padding: 0 4px;
   line-height: 1;
@@ -160,22 +160,22 @@
   user-select: none;
   border: 1px solid var(--ant-color-border-secondary, #e8ebf1);
   background: var(--ant-color-fill-quaternary, #f8fafc);
-  color: var(--ant-color-primary, #e83b4a);
+  color: var(--ant-color-primary, #2563eb);
 
   &:hover {
-    background: var(--ant-color-primary-bg, #fff1f0);
-    border-color: var(--ant-color-primary, #e83b4a);
+    background: color-mix(in srgb, var(--ant-color-primary, #2563eb) 12%, #fff);
+    border-color: var(--ant-color-primary, #2563eb);
   }
 }
 
 :global(html[data-theme='dark']) .compactCoreSwitch {
   background: #262626;
   border-color: #434343;
-  color: #ff7875;
+  color: #60a5fa;
 
   &:hover {
-    background: #36171a;
-    border-color: #ff4d4f;
+    background: #172554;
+    border-color: #3b82f6;
   }
 }
 
@@ -210,8 +210,8 @@
 }
 
 .railButtonActive {
-  color: var(--ant-color-primary, #e83b4a) !important;
-  background: color-mix(in srgb, var(--ant-color-primary) 12%, transparent) !important;
+  color: var(--ant-color-primary, #2563eb) !important;
+  background: color-mix(in srgb, var(--ant-color-primary, #2563eb) 12%, transparent) !important;
 }
 
 .railButton svg,
@@ -286,8 +286,8 @@
 }
 
 .detailMenu :global(.ant-menu-item-selected) {
-  color: var(--ant-color-primary, #e83b4a) !important;
-  background: color-mix(in srgb, var(--ant-color-primary) 12%, transparent) !important;
+  color: var(--ant-color-primary, #2563eb) !important;
+  background: color-mix(in srgb, var(--ant-color-primary, #2563eb) 12%, transparent) !important;
   font-weight: 700 !important;
 }
 
@@ -381,8 +381,8 @@
     transform 160ms ease;
 
   &:hover {
-    color: var(--ant-color-primary, #e83b4a);
-    border-color: var(--ant-color-primary, #e83b4a);
+    color: var(--ant-color-primary, #2563eb);
+    border-color: var(--ant-color-primary, #2563eb);
     transform: scale(1.08);
   }
 }
@@ -436,7 +436,7 @@
 
 :global(html[data-theme='dark']) .coreSwitchActive {
   background: #3a3b3c;
-  color: #ff4d4f !important;
+  color: #60a5fa !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -474,8 +474,8 @@
 }
 
 :global(html[data-theme='dark']) .railButtonActive {
-  color: #e83b4a !important;
-  background: rgba(232, 59, 74, 0.16) !important;
+  color: #60a5fa !important;
+  background: rgba(37, 99, 235, 0.2) !important;
 }
 
 :global(html[data-theme='dark']) .detailMenu :global(.ant-menu-item) {

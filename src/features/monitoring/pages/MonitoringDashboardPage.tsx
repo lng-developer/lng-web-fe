@@ -30,6 +30,7 @@ import {
 import { useSearchParams } from 'react-router-dom'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
@@ -321,7 +322,7 @@ export const MonitoringDashboardPage = () => {
     })
   }, [filteredLogLines, t])
 
-  if (!canRead) return <Result status="403" title="403" />
+  if (!canRead) return <AccessDeniedResult />
 
   const healthTab = (
     <>

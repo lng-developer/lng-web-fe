@@ -4466,6 +4466,8 @@
     "messageInput": "Tin nhắn",
     "messagePlaceholder": "Aa",
     "send": "Gửi",
+    "minimize": "Thu nhỏ",
+    "expand": "Mở rộng",
     "you": "Bạn",
     "time": {
       "now": "vừa xong",
@@ -4487,7 +4489,13 @@
     "createGroup": "Tạo nhóm",
     "cancel": "Hủy",
     "groupTitle": "Tên nhóm",
-    "participants": "Người tham gia"
+    "participants": "Người tham gia",
+    "today": "Hôm nay",
+    "yesterday": "Hôm qua",
+    "enterToSend": "Nhấn Enter để gửi, Shift + Enter để xuống dòng",
+    "teamsConnected": "Đã kết nối Teams",
+    "directChat": "Trò chuyện trực tiếp",
+    "activeNow": "Đang hoạt động"
   },
   "systemDashboard": {
     "title": "Bảng điều khiển hệ thống",
@@ -4519,6 +4527,12 @@
     "hint": "Quay ve trang chinh hoac kiem tra lai URL roi thu tiep.",
     "backHome": "Ve trang chinh",
     "illustrationAlt": "Hinh minh hoa trang khong tim thay"
+  },
+  "forbidden": {
+    "title": "Không có quyền truy cập",
+    "subtitle": "Tài khoản của bạn chưa được cấp quyền để truy cập tính năng này. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+    "code": "Từ chối truy cập",
+    "backHome": "Về Dashboard"
   },
   "globalFeedback": {
     "defaultAction": "Thao tác hoàn tất",

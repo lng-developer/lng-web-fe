@@ -4,7 +4,7 @@ export type Appearance = 'light' | 'dark' | 'system'
 export type ResolvedAppearance = Exclude<Appearance, 'system'>
 
 export const THEME_STORAGE_KEY = 'lng-web-appearance'
-export const APP_PRIMARY_COLOR = '#E83B4A'
+export const APP_PRIMARY_COLOR = '#2563eb'
 
 export function resolveAppearance(
   appearance: Appearance,
@@ -20,7 +20,7 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
     algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
       colorPrimary: APP_PRIMARY_COLOR,
-      colorInfo: '#2D88FF',
+      colorInfo: '#0284c7',
       colorSuccess: '#10B981',
       colorWarning: '#F59E0B',
       colorError: '#EF4444',
@@ -89,7 +89,7 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
         itemBorderRadius: 8,
         itemHeight: 38,
         itemBg: isDark ? '#242526' : '#FFFFFF',
-        itemSelectedBg: isDark ? 'rgba(232, 59, 74, 0.16)' : 'rgba(232, 59, 74, 0.08)',
+        itemSelectedBg: isDark ? 'rgba(37, 99, 235, 0.16)' : 'rgba(37, 99, 235, 0.08)',
         itemColor: isDark ? '#E4E6EB' : '#334155',
         itemSelectedColor: APP_PRIMARY_COLOR,
       },

@@ -37,8 +37,8 @@
   transition: all 150ms ease;
 
   &:hover:not(:disabled) {
-    color: var(--ant-color-primary, #e83b4a);
-    border-color: var(--ant-color-primary, #e83b4a);
+    color: var(--ant-color-primary, #2563eb);
+    border-color: var(--ant-color-primary, #2563eb);
     background: color-mix(in srgb, var(--ant-color-primary-bg) 30%, transparent);
   }
 
@@ -68,9 +68,9 @@
     color: #a6a6a6;
 
     &:hover:not(:disabled) {
-      border-color: var(--ant-color-primary, #e83b4a);
-      background: rgba(232, 59, 74, 0.12);
-      color: #ff7875;
+      border-color: var(--ant-color-primary, #2563eb);
+      background: rgba(37, 99, 235, 0.16);
+      color: #93c5fd;
     }
   }
 }

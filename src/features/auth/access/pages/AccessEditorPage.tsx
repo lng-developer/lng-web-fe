@@ -14,9 +14,10 @@ import {
   ShopOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Avatar, Button, Form, Modal, Result, Select, Tag, Tooltip, Typography } from 'antd'
+import { Avatar, Button, Form, Modal, Select, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
   ConfirmDangerModal,
@@ -234,7 +235,7 @@ export function AccessEditorPage() {
     return [from, until].filter(Boolean).join(' • ') || t('auth.accessEditor.always')
   }
 
-  if (!canWrite) return <Result status="403" title="403" />
+  if (!canWrite) return <AccessDeniedResult />
 
   return (
     <section className={styles.page}>

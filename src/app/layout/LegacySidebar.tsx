@@ -717,9 +717,11 @@ export function LegacySidebar({
       const remembered = localStorage.getItem('lng:last-route:hr')
       const target =
         (remembered &&
-          (remembered.startsWith('/hr') || remembered.startsWith('/organization')
-            ? remembered
-            : undefined)) ||
+        remembered !== '/hr' &&
+        remembered !== '/hr/' &&
+        (remembered.startsWith('/hr/') || remembered.startsWith('/organization'))
+          ? remembered
+          : undefined) ||
         getRememberedCoreRoute('hr', bottomMenuGroups.hr ?? []) ||
         bottomMenuGroups.hr?.[0]?.items?.[0]?.path ||
         '/hr/dashboard'
@@ -853,8 +855,10 @@ export function LegacySidebar({
                     const remembered = localStorage.getItem('lng:last-route:hr')
                     const target =
                       (remembered &&
+                      remembered !== '/hr' &&
+                      remembered !== '/hr/' &&
                       remembered !== '/hr/dashboard' &&
-                      (remembered.startsWith('/hr') || remembered.startsWith('/organization'))
+                      (remembered.startsWith('/hr/') || remembered.startsWith('/organization'))
                         ? remembered
                         : undefined) ||
                       bottomMenuGroups.hr?.find((g) => g.key !== 'dashboard')?.items?.[0]?.path ||

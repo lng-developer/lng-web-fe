@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Result } from 'antd'
 
+import { AccessDeniedResult } from './AccessDeniedResult'
 import { hasAnyPermission } from './permissions'
 
 export interface PermissionBoundaryProps {
@@ -15,5 +15,6 @@ export function PermissionBoundary({
   globalOnly = false,
 }: PermissionBoundaryProps) {
   if (hasAnyPermission(anyOf, { globalOnly })) return children
-  return <Result status="403" title="403" />
+  return <AccessDeniedResult />
 }
+

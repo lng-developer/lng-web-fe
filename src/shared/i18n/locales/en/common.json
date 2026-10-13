@@ -4466,6 +4466,8 @@
     "messageInput": "Message",
     "messagePlaceholder": "Aa",
     "send": "Send",
+    "minimize": "Minimize",
+    "expand": "Expand",
     "you": "You",
     "time": {
       "now": "now",
@@ -4487,7 +4489,13 @@
     "createGroup": "Create group",
     "cancel": "Cancel",
     "groupTitle": "Group title",
-    "participants": "Participants"
+    "participants": "Participants",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "enterToSend": "Press Enter to send, Shift + Enter for new line",
+    "teamsConnected": "Teams Connected",
+    "directChat": "Direct Chat",
+    "activeNow": "Active now"
   },
   "systemDashboard": {
     "title": "System dashboard",
@@ -4519,6 +4527,12 @@
     "hint": "Try the home page below or check the URL and try again.",
     "backHome": "Back home",
     "illustrationAlt": "404 page not found illustration"
+  },
+  "forbidden": {
+    "title": "Access Denied",
+    "subtitle": "You do not have permission to access this page. Please contact your system administrator for access.",
+    "code": "Forbidden",
+    "backHome": "Back to Dashboard"
   },
   "globalFeedback": {
     "defaultAction": "Action completed",

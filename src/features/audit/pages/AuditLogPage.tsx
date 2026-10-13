@@ -12,6 +12,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Modal, Result, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
@@ -176,7 +177,7 @@ export function AuditLogPage() {
     [localizedCode, t],
   )
 
-  if (!getPermissions().includes('AUDIT:READ')) return <Result status="403" title="403" />
+  if (!getPermissions().includes('AUDIT:READ')) return <AccessDeniedResult />
 
   return (
     <section className="grid gap-6">

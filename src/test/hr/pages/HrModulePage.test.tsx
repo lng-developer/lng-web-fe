@@ -67,4 +67,25 @@ describe('HrModulePage routes', () => {
 
     expect(await screen.findByText('team')).toBeVisible()
   })
+
+  it('allows employee self-service even without management permissions', async () => {
+    setPermissions([])
+    renderPath('/hr/me')
+
+    expect(await screen.findByText('self')).toBeVisible()
+  })
+
+  it('routes bare /hr to self-service for standard accounts', async () => {
+    setPermissions([])
+    renderPath('/hr')
+
+    expect(await screen.findByText('self')).toBeVisible()
+  })
+
+  it('routes bare /hr to dashboard for management accounts', async () => {
+    setPermissions(['HR_EMPLOYEES:READ'])
+    renderPath('/hr')
+
+    expect(await screen.findByText(/HR Operations Dashboard/i)).toBeVisible()
+  })
 })

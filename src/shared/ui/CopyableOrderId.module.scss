@@ -26,7 +26,7 @@
   flex: 0 1 auto;
 }
 .orderIdBadge {
-  color: var(--ant-color-primary, #e83b4a);
+  color: var(--ant-color-primary, #2563eb);
   background: color-mix(in srgb, var(--ant-color-primary-bg) 64%, var(--ant-color-bg-container));
   border: 1px solid color-mix(in srgb, var(--ant-color-primary) 42%, var(--ant-color-border));
 
@@ -71,7 +71,7 @@
   .orderIdBadge {
     border-color: color-mix(in srgb, var(--ant-color-primary) 42%, #393a3b);
     background: color-mix(in srgb, var(--ant-color-primary) 14%, #242526);
-    color: #fca5a5;
+    color: #93c5fd;
 
     &:hover {
       border-color: var(--ant-color-primary);
