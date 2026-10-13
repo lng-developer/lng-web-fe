@@ -50,9 +50,9 @@ function conversationTitle(
     const otherParticipant = otherId ? participantById.get(otherId) : undefined
     const name = otherParticipant?.displayName || otherParticipant?.fullName
     if (name) return name
-    if (conversation.title) return conversation.title
     const fallback = participantLabel(otherParticipant)
     if (fallback) return fallback
+    if (conversation.title) return conversation.title
   }
   return (
     conversation.title || conversation.relatedResource?.id || conversation.type.replaceAll('_', ' ')
