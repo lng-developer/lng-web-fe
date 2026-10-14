@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation, useRouteLoaderData } from 'react-router-dom'
 
+import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getPermissions } from '@/shared/auth/session'
 
 import { getDefaultHrPath, getHrNavigation } from '../hrNavigation'
@@ -11,7 +12,13 @@ import styles from './HrModulePage.module.scss'
 
 export function HrModulePage() {
   const location = useLocation()
-  const permissions = useMemo(() => new Set(getPermissions()), [])
+  const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
+  const permissions = useMemo(() => {
+    if (loadedAccount?.permissions) {
+      return new Set(loadedAccount.permissions)
+    }
+    return new Set(getPermissions())
+  }, [loadedAccount])
 
   const navigation = useMemo(
     () => getHrNavigation(permissions, { includeSelf: true }),
