@@ -4494,6 +4494,8 @@
     "yesterday": "Hôm qua",
     "enterToSend": "Nhấn Enter để gửi, Shift + Enter để xuống dòng",
     "teamsConnected": "Đã kết nối Teams",
+    "syncTeams": "Đồng bộ",
+    "syncTeamsTooltip": "Đồng bộ tin nhắn mới từ Microsoft Teams",
     "directChat": "Trò chuyện trực tiếp",
     "activeNow": "Đang hoạt động",
     "noSearchResults": "Không tìm thấy kết quả",

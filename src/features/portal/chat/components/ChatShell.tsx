@@ -613,7 +613,6 @@ export function ChatShell({ account }: ChatShellProps) {
                 onMarkRead={() => markConversationAsRead(conversationId)}
                 onFocus={() => setActiveQuickConversationId(conversationId)}
                 socketReady={socketReady}
-                isChatWorkspace={isChatWorkspace}
               />,
               overlayRoot,
             )

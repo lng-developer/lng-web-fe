@@ -8,6 +8,8 @@ vi.mock('@/features/portal/chat/api/chatApi', () => ({
   listChatMessages: vi.fn(),
   listChatParticipants: vi.fn(),
   sendChatMessage: vi.fn(),
+  getMsGraphToken: vi.fn().mockResolvedValue(null),
+  syncTeamsChat: vi.fn().mockResolvedValue({ status: 'SYNCED', syncedCount: 0 }),
 }))
 vi.mock('@/features/portal/media/api/mediaApi', () => ({ uploadMediaAsset: vi.fn() }))
 vi.mock('@/features/portal/chat/realtime/chatSocket', () => ({

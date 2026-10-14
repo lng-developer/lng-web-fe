@@ -5,6 +5,7 @@ import {
   PaperClipOutlined,
   SearchOutlined,
   SendOutlined,
+  SyncOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -28,10 +29,12 @@ import type {
 } from '@/features/portal/chat/api/chatApi'
 import {
   createConversation,
+  getMsGraphToken,
   listChatConversations,
   listChatMessages,
   listChatParticipants,
   sendChatMessage,
+  syncTeamsChat,
 } from '@/features/portal/chat/api/chatApi'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
@@ -214,7 +217,7 @@ function MessageBubble({
 function sendSocketMessage(
   socket: ChatSocket,
   conversationId: string,
-  input: { body: string; assetIds: string[] },
+  input: { body: string; assetIds: string[]; msGraphToken?: string | null },
 ) {
   return new Promise<ChatMessage>((resolve, reject) => {
     socket.emit('message.send', { conversationId, ...input }, (result) => {
@@ -322,12 +325,14 @@ export function ChatWorkspacePage() {
     mutationFn: async () => {
       if (!activeConversationId) throw new Error('No conversation selected')
       const body = draft.trim()
-      const uploadedAssets = await Promise.all(
-        files.map((file) => uploadMediaAsset(file.originFileObj as File)),
-      )
+      const [uploadedAssets, msGraphToken] = await Promise.all([
+        Promise.all(files.map((file) => uploadMediaAsset(file.originFileObj as File))),
+        getMsGraphToken(),
+      ])
       const input = {
         body,
         assetIds: uploadedAssets.map(({ id }) => id),
+        ...(msGraphToken ? { msGraphToken } : {}),
       }
       return socketRef.current
         ? sendSocketMessage(socketRef.current, activeConversationId, input)
@@ -336,6 +341,16 @@ export function ChatWorkspacePage() {
     onSuccess: () => {
       setDraft('')
       setFiles([])
+    },
+  })
+
+  const syncTeamsMutation = useMutation({
+    mutationFn: () => syncTeamsChat(activeConversationId!),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: chatKeys.messages(activeConversationId) }),
+        queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] }),
+      ])
     },
   })
 
@@ -438,6 +453,19 @@ export function ChatWorkspacePage() {
     : 'OFFLINE'
   const isOtherOnline = otherPresence === 'ONLINE'
   const otherInitials = getInitials(participantLabel(otherParticipant))
+
+  useEffect(() => {
+    if (activeConversationId && otherParticipant?.email?.includes('@lngwork.co')) {
+      syncTeamsChat(activeConversationId)
+        .then((res) => {
+          if (res?.syncedCount > 0) {
+            queryClient.invalidateQueries({ queryKey: chatKeys.messages(activeConversationId) })
+            queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] })
+          }
+        })
+        .catch(() => undefined)
+    }
+  }, [activeConversationId, otherParticipant?.email, queryClient])
 
   const startDirectChat = (accountId: string) => {
     const existingConv = conversationByParticipantId.get(accountId)
@@ -600,9 +628,21 @@ export function ChatWorkspacePage() {
                   </>
                 ) : null}
                 {otherParticipant?.email?.includes('@lngwork.co') ? (
-                  <span className={styles.teamsTag}>
-                    <TeamOutlined /> {t('chat.teamsConnected', 'Teams')}
-                  </span>
+                  <Space size={6} align="center">
+                    <span className={styles.teamsTag}>
+                      <TeamOutlined /> {t('chat.teamsConnected', 'Teams')}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.syncBtn}
+                      disabled={syncTeamsMutation.isPending}
+                      onClick={() => syncTeamsMutation.mutate()}
+                      title={t('chat.syncTeamsTooltip', 'Đồng bộ tin nhắn mới từ Microsoft Teams')}
+                    >
+                      <SyncOutlined spin={syncTeamsMutation.isPending} />
+                      <span>{t('chat.syncTeams', 'Đồng bộ')}</span>
+                    </button>
+                  </Space>
                 ) : null}
               </div>
             </div>
