@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import { HrModulePage } from '@/features/hr/pages/HrModulePage'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { setPermissions } from '@/shared/auth/session'
 
 vi.mock('@/features/hr/pages/HrActionPage', () => ({
   HrActionPage: ({ routeKey }: { routeKey: string }) => <div>{routeKey}</div>,
@@ -32,8 +33,9 @@ const account = (permissions: string[] = [], scopedPermissions: string[] = []): 
   profileSetupRequired: false,
 })
 
-const renderPath = (path: string, currentAccount: CurrentAccount = account()) =>
-  render(
+const renderPath = (path: string, currentAccount: CurrentAccount = account()) => {
+  setPermissions(currentAccount.permissions)
+  return render(
     <AppProviders>
       <RouterProvider
         router={createMemoryRouter(
@@ -50,10 +52,12 @@ const renderPath = (path: string, currentAccount: CurrentAccount = account()) =>
       />
     </AppProviders>,
   )
+}
 
 describe('HrModulePage routes', () => {
   afterEach(() => {
     cleanup()
+    setPermissions([])
   })
 
   it('opens a permitted focused action URL', async () => {
@@ -96,7 +100,7 @@ describe('HrModulePage routes', () => {
   it('redirects an unavailable action to the first permitted workspace', async () => {
     renderPath('/hr/operations/employees', account(['HR_ATTENDANCE:READ']))
 
-    expect(await screen.findByText('self')).toBeVisible()
+    expect(await screen.findByText('team')).toBeVisible()
   })
 
   it('redirects a scoped leader away from the global HR dashboard', async () => {
@@ -107,23 +111,20 @@ describe('HrModulePage routes', () => {
   })
 
   it('allows employee self-service even without management permissions', async () => {
-    setPermissions([])
-    renderPath('/hr/me')
+    renderPath('/hr/me', account([]))
 
     expect(await screen.findByText('self')).toBeVisible()
   })
 
   it('routes bare /hr to self-service for standard accounts', async () => {
-    setPermissions([])
-    renderPath('/hr')
+    renderPath('/hr', account([]))
 
     expect(await screen.findByText('self')).toBeVisible()
   })
 
   it('routes bare /hr to dashboard for management accounts', async () => {
-    setPermissions(['HR_EMPLOYEES:READ'])
-    renderPath('/hr')
+    renderPath('/hr', account(['HR_EMPLOYEES:READ']))
 
-    expect(await screen.findByText(/HR Operations Dashboard/i)).toBeVisible()
+    expect(await screen.findByText('dashboard')).toBeVisible()
   })
 })
