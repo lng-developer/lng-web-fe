@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Avatar,
   Badge,
+  Button,
   Empty,
   Input,
   Skeleton,
@@ -262,6 +263,7 @@ export function ChatWorkspacePage() {
     Record<string, 'ONLINE' | 'OFFLINE'>
   >({})
   const [search, setSearch] = useState('')
+  const [isNewMessage, setIsNewMessage] = useState(false)
   const [draft, setDraft] = useState('')
   const [files, setFiles] = useState<UploadFile[]>([])
   const socketRef = useRef<ChatSocket | null>(null)
@@ -290,6 +292,11 @@ export function ChatWorkspacePage() {
   const participants = useQuery({
     queryKey: ['chat-participants'],
     queryFn: () => listChatParticipants({ limit: 100 }),
+  })
+  const directorySearch = useQuery({
+    queryKey: ['chat-participants', 'search', search.trim()],
+    queryFn: () => listChatParticipants({ search: search.trim(), limit: 100 }),
+    enabled: isNewMessage && Boolean(search.trim()),
   })
 
   const conversationByParticipantId = useMemo(() => {
@@ -412,7 +419,19 @@ export function ChatWorkspacePage() {
     [participants.data?.items],
   )
   const people = useMemo(() => {
-    return (participants.data?.items ?? []).filter((acc) => {
+    const candidates = isNewMessage
+      ? (directorySearch.data?.items ?? [])
+      : directConversations
+          .filter((conv) => Boolean(conv.lastMessageAt))
+          .flatMap((conv) => {
+            const id = conv.participantAccountIds.find((value) => value !== account?.id)
+            return id
+              ? [participantById.get(id) ?? { id, email: '', displayName: conv.title || id }]
+              : []
+          })
+    return candidates.filter((acc) => {
+      if (acc.id === account?.id) return false
+      if (isNewMessage) return Boolean(search.trim())
       if (matchesParticipantSearch(acc, search)) return true
       const conv = conversationByParticipantId.get(acc.id)
       if (conv?.lastMessagePreview && search.trim()) {
@@ -423,7 +442,15 @@ export function ChatWorkspacePage() {
       }
       return false
     })
-  }, [participants.data?.items, search, conversationByParticipantId])
+  }, [
+    isNewMessage,
+    directorySearch.data?.items,
+    directConversations,
+    account?.id,
+    participantById,
+    search,
+    conversationByParticipantId,
+  ])
 
   // Prioritize users with active/recent messages at the top
   const sortedPeople = useMemo(() => {
@@ -462,6 +489,19 @@ export function ChatWorkspacePage() {
   }, [activeConversationId, otherParticipant?.email, queryClient])
 
   const startDirectChat = (accountId: string) => {
+    if (isNewMessage) {
+      const participant = directorySearch.data?.items.find((item) => item.id === accountId)
+      if (participant) {
+        queryClient.setQueryData<{ items: ChatParticipant[] }>(
+          ['chat-participants'],
+          (current) => ({
+            items: [...(current?.items ?? []).filter((item) => item.id !== accountId), participant],
+          }),
+        )
+      }
+      setIsNewMessage(false)
+      setSearch('')
+    }
     const existingConv = conversationByParticipantId.get(accountId)
     if (existingConv) {
       setSelectedId(existingConv.id)
@@ -483,23 +523,33 @@ export function ChatWorkspacePage() {
           <Typography.Text type="secondary" className={styles.sidebarDesc}>
             {t('chat.description', 'Internal conversations and file handoffs')}
           </Typography.Text>
+          <Button
+            onClick={() => {
+              setIsNewMessage((current) => !current)
+              setSearch('')
+            }}
+          >
+            {t(isNewMessage ? 'chat.backToConversations' : 'chat.newMessage')}
+          </Button>
         </div>
         <div className={styles.searchWrap}>
           <Input
             allowClear
             prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-            placeholder={t('chat.searchMessenger', 'Search Messenger')}
+            placeholder={t(isNewMessage ? 'chat.searchCompany' : 'chat.searchMessenger')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
         <div className={styles.conversationList}>
-          {participants.isLoading || conversations.isLoading ? (
+          {participants.isLoading ||
+          conversations.isLoading ||
+          (isNewMessage && directorySearch.isFetching) ? (
             <Skeleton active paragraph={{ rows: 6 }} />
           ) : sortedPeople.length ? (
             <Space orientation="vertical" size={2} style={{ width: '100%' }}>
               <Typography.Text className={styles.sectionLabel}>
-                {t('chat.people', 'People')}
+                {t(isNewMessage ? 'chat.people' : 'chat.conversations')}
               </Typography.Text>
               {sortedPeople.map((accountItem) => {
                 const conv = conversationByParticipantId.get(accountItem.id)
@@ -563,7 +613,7 @@ export function ChatWorkspacePage() {
               description={
                 search.trim()
                   ? t('chat.noSearchResults', 'No results found')
-                  : t('chat.emptyPeople', 'No chat participants')
+                  : t(isNewMessage ? 'chat.searchCompany' : 'chat.emptyMessages')
               }
             />
           )}

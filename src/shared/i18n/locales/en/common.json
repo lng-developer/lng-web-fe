@@ -4653,6 +4653,10 @@
     "unread": "Unread"
   },
   "chat": {
+    "newMessage": "New message",
+    "backToConversations": "Back to conversations",
+    "searchCompany": "Search company by name or email",
+    "conversations": "Conversations",
     "title": "Chat",
     "newGroup": "New group",
     "searchMessenger": "Search Messenger",

@@ -286,8 +286,9 @@ export function ChatShell({ account }: ChatShellProps) {
   }
 
   const filteredConversations = useMemo(() => {
-    if (!previewSearch.trim()) return recentConversations
-    return recentConversations.filter((conv) =>
+    const withMessages = recentConversations.filter((conv) => Boolean(conv.lastMessageAt))
+    if (!previewSearch.trim()) return withMessages
+    return withMessages.filter((conv) =>
       matchesConversationSearch(conv, participantById, account.account.id, previewSearch),
     )
   }, [recentConversations, participantById, account.account.id, previewSearch])

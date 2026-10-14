@@ -4653,6 +4653,10 @@
     "unread": "Chưa đọc"
   },
   "chat": {
+    "newMessage": "Tin nhắn mới",
+    "backToConversations": "Quay lại hội thoại",
+    "searchCompany": "Tìm người trong công ty theo tên hoặc email",
+    "conversations": "Hội thoại",
     "title": "Đoạn chat",
     "newGroup": "Tạo nhóm mới",
     "searchMessenger": "Tìm kiếm Messenger",
