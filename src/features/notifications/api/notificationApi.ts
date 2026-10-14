@@ -19,10 +19,12 @@ export type NotificationInbox = {
 
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
-export async function listNotifications(unreadOnly = false, limit = 8): Promise<NotificationInbox> {
-  return unwrap(
-    await apiClient.get('/api/notifications', { params: { unreadOnly, page: 1, limit } }),
-  )
+export async function listNotifications(
+  unreadOnly = false,
+  limit = 8,
+  page = 1,
+): Promise<NotificationInbox> {
+  return unwrap(await apiClient.get('/api/notifications', { params: { unreadOnly, page, limit } }))
 }
 
 export async function getUnreadCount(): Promise<{ unreadCount: number }> {

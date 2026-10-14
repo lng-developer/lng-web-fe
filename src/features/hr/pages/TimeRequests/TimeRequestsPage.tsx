@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Descriptions, Modal, Space, Tabs, Typography } from 'antd'
 
-import { EmployeeAvatar, MetricCard, PageHeader } from '@/shared/ui'
+import { EmployeeAvatar, FeedbackAlert, MetricCard, PageHeader } from '@/shared/ui'
 
 import { type LeaveRequest, type OvertimeRequest } from '../../api/hrTimeApi'
 import { RequestDecisionModal } from '../../components/RequestDecisionModal'
@@ -26,6 +26,8 @@ export function TimeRequestsPage({
   const [
     {
       t,
+      target,
+      targetId,
       editor,
       detail,
       decision,
@@ -42,12 +44,16 @@ export function TimeRequestsPage({
       leaveType,
       tabItems,
       renderStatus,
+      renderRequestActions,
     },
     { balances, leaves, overtime, canLeaveWrite, canOvertimeWrite, decisionPending },
   ] = useTimeRequest(workspace, teamId)
 
   return (
     <section className={styles.page}>
+      {targetId && !target.isPending && !target.data?.items.length ? (
+        <FeedbackAlert type="error" title={t('notifications.resourceUnavailable')} />
+      ) : null}
       <PageHeader
         actions={
           <Space>
@@ -126,7 +132,7 @@ export function TimeRequestsPage({
         open={Boolean(detail?.request)}
         title={t('hrOperations.requests.detail')}
         onCancel={closeDetail}
-        footer={null}
+        footer={detail?.request ? renderRequestActions(detail.kind, detail.request) : null}
       >
         {detail?.request && (
           <Space orientation="vertical" size={20} style={{ width: '100%' }}>

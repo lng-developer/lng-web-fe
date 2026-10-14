@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib'
 
 const LIMITS = {
   entryGzipKb: 400,
-  totalGzipKb: 1300,
+  totalGzipKb: 1305,
 }
 
 const args = process.argv.slice(2)

@@ -26,6 +26,7 @@ import {
   StatusTag,
   TableTextCell,
   useFeedbackToast,
+  useResourceSelection,
 } from '@/shared/ui'
 
 import type {
@@ -76,7 +77,7 @@ export function VendorSubmissionWorkbenchPage({
   const [status, setStatus] = useState<VendorSubmissionStatus>()
   const [externalOrderId, setExternalOrderId] = useState('')
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
-  const [selectedId, setSelectedId] = useState<string>()
+  const [selectedId, setSelectedId] = useResourceSelection()
   const [reconcileRow, setReconcileRow] = useState<VendorSubmission>()
   const [vendorExternalOrderId, setVendorExternalOrderId] = useState('')
   const [payloadId, setPayloadId] = useState<string>()
@@ -164,7 +165,7 @@ export function VendorSubmissionWorkbenchPage({
 
   const handleCloseDrawer = useCallback(() => {
     setSelectedId(undefined)
-  }, [])
+  }, [setSelectedId])
 
   const handleClosePayloadModal = useCallback(() => {
     setPayloadId(undefined)
@@ -456,6 +457,9 @@ export function VendorSubmissionWorkbenchPage({
           ) : null
         }
       >
+        {detail.isError ? (
+          <FeedbackAlert type="error" title={t('notifications.resourceUnavailable')} />
+        ) : null}
         {detail.data ? (
           <div className={styles.detail}>
             <div

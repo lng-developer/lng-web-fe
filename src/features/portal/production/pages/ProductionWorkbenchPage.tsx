@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
+import { Modal } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -26,6 +27,7 @@ import {
   UiButtonTabs,
   UiTabLabel,
   useFeedbackToast,
+  useResourceSelection,
 } from '@/shared/ui'
 
 import {
@@ -36,6 +38,7 @@ import {
   type FileCheck,
   type FileDecision,
   listProductionTasks,
+  getProductionTask,
   listScaleAssignees,
   type ProductionStatus,
   type ProductionTask,
@@ -101,6 +104,13 @@ export function ProductionWorkbenchPage({
   const currentAccountId = account?.account.id
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
+  const [targetId, selectTarget] = useResourceSelection()
+  const target = useQuery({
+    queryKey: ['production', 'notification-target', targetId],
+    queryFn: () => getProductionTask(targetId!),
+    enabled: Boolean(targetId),
+    retry: false,
+  })
   const [searchParams, setSearchParams] = useSearchParams()
   const { queue: routeQueue } = useParams()
   const requestedTab = searchParams.get('queue')
@@ -315,6 +325,7 @@ export function ProductionWorkbenchPage({
   )
   const refresh = useCallback(async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['production', 'notification-target'] }),
       queryClient.invalidateQueries({ queryKey: productionKeys.lists() }),
       queryClient.invalidateQueries({ queryKey: productionKeys.queueSummaries() }),
       queryClient.invalidateQueries({ queryKey: productionKeys.summaries() }),
@@ -691,6 +702,19 @@ export function ProductionWorkbenchPage({
   )
   return (
     <section className={styles.page}>
+      <Modal
+        open={Boolean(targetId)}
+        loading={target.isLoading}
+        onCancel={() => selectTarget(undefined)}
+        footer={null}
+        width="90vw"
+        title={t('notifications.openResource')}
+      >
+        {target.isError ? (
+          <FeedbackAlert type="error" title={t('notifications.resourceUnavailable')} />
+        ) : null}
+        {target.data ? renderExpandedRow(target.data) : null}
+      </Modal>
       {tasks.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.production.unavailable')} />
       ) : null}

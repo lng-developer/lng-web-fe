@@ -2,6 +2,7 @@ import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
 export type OrderWorkbenchParams = {
+  recordId?: string
   page: number
   limit: number
   tab?: string

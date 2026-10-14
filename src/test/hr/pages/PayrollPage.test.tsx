@@ -1,4 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -54,6 +55,40 @@ afterEach(() => {
   setPermissions([])
 })
 
+test('opens an older personal payslip by ID and labels its actual period', async () => {
+  vi.mocked(listMyPayrolls).mockImplementation(async (params) => ({
+    items: params?.resultId
+      ? [
+          {
+            id: 'old-slip',
+            payrollRunId: 'run-1',
+            profileId: 'profile-1',
+            inputSnapshot: { period: { month: 3, year: 2025 } },
+            baseSalary: 100,
+            workDays: 20,
+            overtimePay: 0,
+            grossIncome: 100,
+            totalDeductions: 0,
+            netIncome: 100,
+            status: 'PAID',
+          },
+        ]
+      : [],
+    pagination: { page: 1, limit: 1, total: 1, totalPages: 1 },
+  }))
+  render(
+    <MemoryRouter initialEntries={['/hr/me/payroll?resourceId=old-slip']}>
+      <AppProviders>
+        <PayrollPage />
+      </AppProviders>
+    </MemoryRouter>,
+  )
+  await waitFor(() =>
+    expect(listMyPayrolls).toHaveBeenCalledWith({ resultId: 'old-slip', limit: 1 }),
+  )
+  expect(await screen.findByText('3/2025', { exact: false })).toBeVisible()
+})
+
 test('renders employee avatar, name, and code in the HR payroll table cell', () => {
   render(
     <PayrollEmployeeCell
@@ -69,9 +104,11 @@ test('renders employee avatar, name, and code in the HR payroll table cell', () 
 
 test('keeps Personal payroll on the employee payslip even with payroll read permission', async () => {
   render(
-    <AppProviders>
-      <PayrollPage />
-    </AppProviders>,
+    <MemoryRouter>
+      <AppProviders>
+        <PayrollPage />
+      </AppProviders>
+    </MemoryRouter>,
   )
 
   expect(await screen.findByRole('heading', { name: 'My payslips' })).toBeVisible()

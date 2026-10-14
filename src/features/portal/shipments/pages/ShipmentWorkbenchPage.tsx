@@ -19,6 +19,7 @@ import {
   StatusTag,
   TableTextCell,
   useFeedbackToast,
+  useResourceSelection,
 } from '@/shared/ui'
 
 import type { Shipment, ShipmentParams, ShipmentStatus } from '../api/shipmentApi'
@@ -70,7 +71,7 @@ export function ShipmentWorkbenchPage({
   const [externalOrderId, setExternalOrderId] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
-  const [selectedId, setSelectedId] = useState<string>()
+  const [selectedId, setSelectedId] = useResourceSelection()
   const [editMode, setEditMode] = useState<'tracking' | 'status'>()
   const [carrier, setCarrier] = useState('')
   const [newTrackingNumber, setNewTrackingNumber] = useState('')
@@ -222,7 +223,7 @@ export function ShipmentWorkbenchPage({
 
   const handleCloseDrawer = useCallback(() => {
     setSelectedId(undefined)
-  }, [])
+  }, [setSelectedId])
 
   const handleCloseModal = useCallback(() => {
     setEditMode(undefined)
@@ -440,6 +441,9 @@ export function ShipmentWorkbenchPage({
           ) : null
         }
       >
+        {detail.isError ? (
+          <FeedbackAlert type="error" title={t('notifications.resourceUnavailable')} />
+        ) : null}
         {detail.data ? (
           <div className={styles.detail}>
             <Descriptions

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import {
   BellOutlined,
   CheckOutlined,
@@ -14,7 +15,8 @@ import { Avatar, Badge, Button, Empty, List, Popover, Segmented, Skeleton, Typog
 
 import type { AppNotification } from '@/features/notifications/api/notificationApi'
 import { useNotificationCenter } from '@/features/notifications/useNotificationCenter'
-import { FormattedDateTime, useFeedbackToast } from '@/shared/ui'
+import { notificationTarget } from '@/features/notifications/notificationTarget'
+import { FeedbackAlert, FormattedDateTime, useFeedbackToast } from '@/shared/ui'
 
 import styles from './NotificationCenter.module.scss'
 
@@ -37,28 +39,27 @@ const notificationIcon = (item: AppNotification) => {
 export function NotificationCenter() {
   const { t } = useTranslation()
   const toast = useFeedbackToast()
+  const navigate = useNavigate()
   const contentRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
-  const [limit, setLimit] = useState(8)
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const { countQuery, inboxQuery, readMutation, readAllMutation, refresh } = useNotificationCenter(
     open,
-    limit,
+    8,
+    filter === 'unread',
   )
   const mutationError = (error: Error) =>
     toast('error', t('notifications.updateFailed'), error.message)
   const unreadCount = countQuery.data?.unreadCount ?? 0
-  const notifications = inboxQuery.data?.items ?? []
-  const visibleNotifications =
-    filter === 'unread' ? notifications.filter((item) => !item.readAt) : notifications
-  const hasMoreItems = (inboxQuery.data?.pagination.total ?? 0) > (notifications.length ?? 0)
+  const notifications = inboxQuery.data?.pages.flatMap((page) => page.items) ?? []
+  const visibleNotifications = notifications
+  const hasMoreItems = inboxQuery.hasNextPage
 
   useEffect(() => {
     if (!open) return
     const closeOnPageScroll = (event: Event) => {
       if (event.target instanceof Node && contentRef.current?.contains(event.target)) return
       setOpen(false)
-      setLimit(8)
     }
     window.addEventListener('scroll', closeOnPageScroll, true)
     return () => window.removeEventListener('scroll', closeOnPageScroll, true)
@@ -104,7 +105,9 @@ export function NotificationCenter() {
         <Segmented
           size="small"
           value={filter}
-          onChange={(value) => setFilter(value as 'all' | 'unread')}
+          onChange={(value) => {
+            setFilter(value as 'all' | 'unread')
+          }}
           options={[
             { label: t('notifications.all', 'All'), value: 'all' },
             { label: t('notifications.unread', 'Unread'), value: 'unread' },
@@ -132,6 +135,7 @@ export function NotificationCenter() {
           }}
           renderItem={(item) => {
             const unread = !item.readAt
+            const target = notificationTarget(item)
             return (
               <List.Item className={unread ? styles.unreadItem : styles.item} role="listitem">
                 <Avatar
@@ -148,6 +152,18 @@ export function NotificationCenter() {
                       <Typography.Text className={styles.message} title={item.message}>
                         {item.message}
                       </Typography.Text>
+                      {target ? (
+                        <Button
+                          type="link"
+                          size="small"
+                          onClick={() => {
+                            setOpen(false)
+                            navigate(target)
+                          }}
+                        >
+                          {t('notifications.openResource')}
+                        </Button>
+                      ) : null}
                       <div className={styles.timestamp}>
                         <FormattedDateTime value={item.createdAt} />
                       </div>
@@ -176,13 +192,14 @@ export function NotificationCenter() {
           }}
         />
       )}
+      {inboxQuery.isError ? <FeedbackAlert type="error" title={inboxQuery.error.message} /> : null}
       {hasMoreItems ? (
         <div className={styles.footer}>
           <Button
             block
             type="link"
-            loading={inboxQuery.isFetching}
-            onClick={() => setLimit((value) => value + 8)}
+            loading={inboxQuery.isFetchingNextPage}
+            onClick={() => void inboxQuery.fetchNextPage()}
           >
             {t('notifications.loadMore')}
           </Button>
@@ -200,7 +217,6 @@ export function NotificationCenter() {
       content={content}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen)
-        if (!nextOpen) setLimit(8)
       }}
     >
       <Badge count={countQuery.data?.unreadCount ?? 0} size="small" overflowCount={99}>

@@ -82,6 +82,7 @@ export type PayrollRun = {
   capabilities: { finalize: boolean; markPaid: boolean }
 }
 export type PayrollResult = {
+  inputSnapshot?: { period?: { month: number; year: number } }
   id: string
   payrollRunId: string
   profileId: string

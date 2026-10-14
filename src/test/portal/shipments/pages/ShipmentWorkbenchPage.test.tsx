@@ -4,7 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { listShipments, summarizeShipments } from '@/features/portal/shipments/api/shipmentApi'
+import {
+  getShipment,
+  listShipments,
+  summarizeShipments,
+} from '@/features/portal/shipments/api/shipmentApi'
 import { ShipmentWorkbenchPage } from '@/features/portal/shipments/pages/ShipmentWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
@@ -17,6 +21,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 vi.mock('@/features/portal/shipments/api/shipmentApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/shipments/api/shipmentApi')>()),
   listShipments: vi.fn(),
+  getShipment: vi.fn(),
   summarizeShipments: vi.fn(),
 }))
 
@@ -32,9 +37,9 @@ const account: CurrentAccount = {
   profileSetupRequired: false,
 }
 
-function renderPage() {
+function renderPage(url = '/portal/shipments') {
   return render(
-    <MemoryRouter initialEntries={['/portal/shipments']}>
+    <MemoryRouter initialEntries={[url]}>
       <AppProviders>
         <ShipmentWorkbenchPage account={account} />
       </AppProviders>
@@ -43,6 +48,14 @@ function renderPage() {
 }
 
 describe('ShipmentWorkbenchPage', () => {
+  it('fetches a notification target outside the current page and handles denied access', async () => {
+    vi.mocked(getShipment).mockRejectedValue(new Error('Forbidden'))
+    renderPage('/portal/shipments?resourceId=shipment-outside-page')
+    await waitFor(() => expect(getShipment).toHaveBeenCalledWith('shipment-outside-page'))
+    expect(
+      await screen.findByText('This record is unavailable or you no longer have access.'),
+    ).toBeVisible()
+  })
   afterEach(cleanup)
 
   beforeEach(async () => {

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   CalendarOutlined,
   CheckCircleOutlined,
@@ -13,7 +13,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Avatar, Button, Empty, Space, Typography } from 'antd'
+import { Avatar, Button, Empty, Modal, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import {
@@ -34,6 +34,8 @@ import { MonthlyScheduleCalendar } from './MonthlyScheduleCalendar'
 export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' | 'schedule' }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const targetId = searchParams.get('resourceId')
   const [month, setMonth] = useState(dayjs())
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
@@ -41,10 +43,11 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
   const params = useMemo(
     () => ({
       dateKey: dayjs().format('YYYY-MM-DD'),
+      announcementId: targetId || undefined,
       month: month.month() + 1,
       year: month.year(),
     }),
-    [month],
+    [month, targetId],
   )
 
   const workspace = useStaffWorkspaceQuery(params)
@@ -123,6 +126,28 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
 
   return (
     <section className={styles.page}>
+      <Modal
+        open={Boolean(targetId)}
+        title={
+          data?.announcements.find((item) => item.id === targetId)?.title ||
+          t('notifications.openResource')
+        }
+        footer={null}
+        loading={workspace.isFetching}
+        onCancel={() => {
+          const next = new URLSearchParams(searchParams)
+          next.delete('resourceId')
+          setSearchParams(next, { replace: true })
+        }}
+      >
+        {data?.announcements.find((item) => item.id === targetId) ? (
+          <Typography.Paragraph>
+            {data.announcements.find((item) => item.id === targetId)?.content}
+          </Typography.Paragraph>
+        ) : (
+          <FeedbackAlert type="warning" title={t('notifications.resourceUnavailable')} />
+        )}
+      </Modal>
       {workspace.isError && (
         <FeedbackAlert
           type="error"

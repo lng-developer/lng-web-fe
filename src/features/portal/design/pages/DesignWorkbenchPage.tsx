@@ -58,6 +58,8 @@ import {
   SectionCard,
   StatusTag,
   useFeedbackToast,
+  useResourceSelection,
+  FeedbackAlert,
   ZoomableImage,
 } from '@/shared/ui'
 
@@ -159,7 +161,7 @@ export function DesignWorkbenchPage() {
   // Defer search to avoid network request on every keystroke
   const deferredSearch = useDeferredValue(search)
   const [status, setStatus] = useState<DesignTaskStatus>()
-  const [selectedId, setSelectedId] = useState<string>()
+  const [selectedId, setSelectedId] = useResourceSelection()
   const [activeTask, setActiveTask] = useState<DesignTask>()
   const [assignOpen, setAssignOpen] = useState(false)
   const [designerId, setDesignerId] = useState<string>()
@@ -294,14 +296,17 @@ export function DesignWorkbenchPage() {
   const handleCreateTaskOpen = useCallback(() => {
     setCreateTaskOpen(true)
   }, [])
-  const setTaskDraft = useCallback((id: string) => {
-    setPriorityDraft(undefined)
-    setSelectedId(id)
-  }, [])
+  const setTaskDraft = useCallback(
+    (id: string) => {
+      setPriorityDraft(undefined)
+      setSelectedId(id)
+    },
+    [setSelectedId],
+  )
   const closeTaskDrawer = useCallback(() => {
     setPriorityDraft(undefined)
     setSelectedId(undefined)
-  }, [])
+  }, [setSelectedId])
   // W2: Prefetch catalog data on hover over "Create Task" button
   const prefetchCreateData = useCallback(() => {
     void queryClient.prefetchQuery({
@@ -968,6 +973,9 @@ export function DesignWorkbenchPage() {
           ) : undefined
         }
       >
+        {detail.isError ? (
+          <FeedbackAlert type="error" title={t('notifications.resourceUnavailable')} />
+        ) : null}
         {task ? (
           <div className={styles.detail}>
             <Descriptions

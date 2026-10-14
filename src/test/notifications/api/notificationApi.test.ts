@@ -35,4 +35,11 @@ describe('notificationApi', () => {
     expect(apiClient.patch).toHaveBeenNthCalledWith(1, '/api/notifications/notification-1/read')
     expect(apiClient.patch).toHaveBeenNthCalledWith(2, '/api/notifications/read-all')
   })
+
+  it('requests the next server page without increasing the page size past the API limit', async () => {
+    await listNotifications(true, 8, 2)
+    expect(apiClient.get).toHaveBeenLastCalledWith('/api/notifications', {
+      params: { unreadOnly: true, page: 2, limit: 8 },
+    })
+  })
 })

@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   CheckOutlined,
@@ -67,9 +68,29 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
   const permissions = getPermissions()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const targetId = searchParams.get('resourceId')
+  const targetKind = searchParams.get('kind') === 'overtime' ? 'overtime' : 'leave'
+  const reviewTarget = searchParams.get('review') === '1'
 
   const [editor, setEditor] = useState<Editor>()
-  const [detail, setDetail] = useState<Editor>()
+  const [localDetail, setDetail] = useState<Editor>()
+  const target = useQuery<{ items: Array<LeaveRequest | OvertimeRequest> }>({
+    queryKey: ['hr-time', 'notification-target', targetKind, targetId, reviewTarget],
+    queryFn: () => {
+      const params = { requestId: targetId!, limit: 1 }
+      if (targetKind === 'leave')
+        return reviewTarget ? listLeaveRequests(params) : listMyLeaveRequests(params)
+      return reviewTarget ? listOvertimeRequests(params) : listMyOvertimeRequests(params)
+    },
+    enabled: Boolean(targetId),
+    retry: false,
+  })
+  const detail: Editor | undefined = targetId
+    ? target.data?.items[0]
+      ? { kind: targetKind, request: target.data.items[0] }
+      : undefined
+    : localDetail
   const [decision, setDecision] = useState<Decision>()
 
   const {
@@ -197,7 +218,14 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
 
   const closeEditor = () => setEditor(undefined)
 
-  const closeDetail = () => setDetail(undefined)
+  const closeDetail = () => {
+    setDetail(undefined)
+    const next = new URLSearchParams(searchParams)
+    next.delete('resourceId')
+    next.delete('kind')
+    next.delete('review')
+    setSearchParams(next, { replace: true })
+  }
 
   const renderStatus = (value: string) => (
     <StatusTag status={statusTone(value)}>{requestStatus(value)}</StatusTag>
@@ -367,6 +395,8 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
   return [
     {
       t,
+      target,
+      targetId,
       toast,
       editor,
       setEditor,
@@ -389,6 +419,7 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
       leaveType,
       tabItems,
       renderStatus,
+      renderRequestActions,
     },
     {
       setDetail,

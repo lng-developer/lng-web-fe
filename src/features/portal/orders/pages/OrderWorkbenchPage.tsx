@@ -76,6 +76,7 @@ export const OrderWorkbenchPage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [searchParams, setSearchParams] = useSearchParams()
+  const recordId = searchParams.get('resourceId') || undefined
   const salesChannelCode =
     SALES_CHANNEL_BY_QUERY[
       searchParams.get('salesChannelCode')?.toLowerCase() as keyof typeof SALES_CHANNEL_BY_QUERY
@@ -120,7 +121,9 @@ export const OrderWorkbenchPage = () => {
     }),
     [dates, deferredSearch, salesChannelCode, shopId, vendorId],
   )
-  const orders = useOrderWorkbenchQuery(params)
+  const orders = useOrderWorkbenchQuery(
+    recordId ? { page: 1, limit: 1, tab: 'ALL', recordId } : params,
+  )
   const summary = useOrderSummaryQuery(summaryParams, {
     placeholderData: keepPreviousData,
   })
@@ -491,6 +494,27 @@ export const OrderWorkbenchPage = () => {
         onClearFilters={handleClearFilters}
       />
       <div className={styles.tableArea}>
+        {recordId ? (
+          <FeedbackAlert
+            type="info"
+            title={t('notifications.openResource')}
+            action={
+              <Button
+                type="link"
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams)
+                  next.delete('resourceId')
+                  setSearchParams(next, { replace: true })
+                }}
+              >
+                {t('orders.filters.clear')}
+              </Button>
+            }
+          />
+        ) : null}
+        {recordId && !orders.isPending && !orders.data?.items.length ? (
+          <FeedbackAlert type="warning" title={t('notifications.resourceUnavailable')} />
+        ) : null}
         {orders.error ? (
           <FeedbackAlert
             type="error"

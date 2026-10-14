@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DownloadOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
   Alert,
@@ -36,6 +37,7 @@ import { hrKeys } from '../api/hrKeys'
 import {
   createBulkPayrollAdjustments,
   emailPayroll,
+  listMyPayrolls,
   exportPayrollResults,
   finalizePayroll,
   markPayrollPaid,
@@ -86,6 +88,14 @@ export function PayrollEmployeeCell({
 
 export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal' | 'management' }) {
   const { t, i18n } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const targetId = searchParams.get('resourceId')
+  const target = useQuery({
+    queryKey: ['hr-payroll', 'notification-target', targetId],
+    queryFn: () => listMyPayrolls({ resultId: targetId!, limit: 1 }),
+    enabled: Boolean(targetId) && workspace === 'personal',
+    retry: false,
+  })
   const permissions = useMemo(() => new Set(getPermissions()), [])
   const isManagement = workspace === 'management'
   const canRead = isManagement && permissions.has('HR_PAYROLL:READ')
@@ -232,7 +242,7 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
   )
 
   const resultItems = useMemo(() => results.data?.items ?? [], [results.data?.items])
-  const myPayslip = !canRead ? resultItems[0] : null
+  const myPayslip = !canRead ? (targetId ? target.data?.items[0] : resultItems[0]) : null
   const payrollSummary = results.data?.summary
 
   const payrollTotals = useMemo(
@@ -368,18 +378,37 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
     return (
       <section className={styles.page}>
         <PageHeader
-          actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
+          actions={
+            <MonthPicker
+              value={month}
+              onChange={(value) => {
+                if (!value) return
+                setMonth(value)
+                const next = new URLSearchParams(searchParams)
+                next.delete('resourceId')
+                setSearchParams(next, { replace: true })
+              }}
+            />
+          }
         />
         {myPayslip ? (
           <PayslipStatement
             result={myPayslip}
-            periodLabel={month.format('MM/YYYY')}
+            periodLabel={
+              targetId
+                ? myPayslip.inputSnapshot?.period
+                  ? `${myPayslip.inputSnapshot.period.month}/${myPayslip.inputSnapshot.period.year}`
+                  : '—'
+                : month.format('MM/YYYY')
+            }
             formatMoney={money}
           />
         ) : (
           <SectionCard title={t('hrOperations.payroll.myPayroll')}>
             <Typography.Text type="secondary">
-              {t('hrOperations.payroll.emptyPayslip', { period: month.format('MM/YYYY') })}
+              {targetId
+                ? t('notifications.resourceUnavailable')
+                : t('hrOperations.payroll.emptyPayslip', { period: month.format('MM/YYYY') })}
             </Typography.Text>
           </SectionCard>
         )}

@@ -4641,6 +4641,8 @@
     }
   },
   "notifications": {
+    "openResource": "Mở chi tiết",
+    "resourceUnavailable": "Bản ghi không còn khả dụng hoặc bạn không có quyền truy cập.",
     "title": "Thông báo",
     "open": "Mở thông báo",
     "empty": "Bạn chưa có thông báo.",

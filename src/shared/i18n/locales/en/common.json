@@ -4641,6 +4641,8 @@
     }
   },
   "notifications": {
+    "openResource": "Open details",
+    "resourceUnavailable": "This record is unavailable or you no longer have access.",
     "title": "Notifications",
     "open": "Open notifications",
     "empty": "You have no notifications.",
