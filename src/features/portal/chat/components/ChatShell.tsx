@@ -10,13 +10,20 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   type ChatConversation,
   type ChatMessage,
+  type ChatParticipant,
+  createConversation,
   listChatConversations,
   listChatParticipants,
   markChatConversationRead,
 } from '@/features/portal/chat/api/chatApi'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
-import { conversationTitle, participantLabel } from './chatViewUtils'
+import {
+  conversationTitle,
+  matchesConversationSearch,
+  matchesParticipantSearch,
+  participantLabel,
+} from './chatViewUtils'
 import { QuickChatBox } from './QuickChatBox'
 import { QuickChatBubble } from './QuickChatBubble'
 
@@ -105,6 +112,7 @@ export function ChatShell({ account }: ChatShellProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isChatPreviewOpen, setIsChatPreviewOpen] = useState(false)
+  const [previewSearch, setPreviewSearch] = useState('')
   const [openQuickConversationIds, setOpenQuickConversationIds] = useState<string[]>([])
   const [minimizedQuickConversationIds, setMinimizedQuickConversationIds] = useState<string[]>([])
   const [activeQuickConversationId, setActiveQuickConversationId] = useState<string | null>(null)
@@ -242,13 +250,61 @@ export function ChatShell({ account }: ChatShellProps) {
     queryKey: ['chat-participants'],
     queryFn: () => listChatParticipants({ limit: 100 }),
   })
-  const participantById = new Map(
-    (chatParticipants.data?.items ?? []).map((participant) => [participant.id, participant]),
+  const participantById = useMemo(
+    () =>
+      new Map(
+        (chatParticipants.data?.items ?? []).map((participant) => [participant.id, participant]),
+      ),
+    [chatParticipants.data?.items],
   )
   const recentConversations = useMemo(
     () => (chatConversations.data?.items ?? []).filter((conv) => conv.type === 'DIRECT'),
     [chatConversations.data?.items],
   )
+
+  const createDirectChatMutation = useMutation({
+    mutationFn: (participantAccountId: string) =>
+      createConversation({
+        type: 'DIRECT',
+        title: null,
+        participantAccountIds: [participantAccountId],
+      }),
+    onSuccess: async (conversation) => {
+      await queryClient.invalidateQueries({ queryKey: chatKeys.all })
+      openQuickChat(conversation)
+    },
+  })
+
+  const handleSelectParticipant = (participant: ChatParticipant) => {
+    const existing = (chatConversations.data?.items ?? []).find(
+      (conv) => conv.type === 'DIRECT' && conv.participantAccountIds.includes(participant.id),
+    )
+    if (existing) {
+      openQuickChat(existing)
+    } else {
+      createDirectChatMutation.mutate(participant.id)
+    }
+  }
+
+  const filteredConversations = useMemo(() => {
+    if (!previewSearch.trim()) return recentConversations
+    return recentConversations.filter((conv) =>
+      matchesConversationSearch(conv, participantById, account.account.id, previewSearch),
+    )
+  }, [recentConversations, participantById, account.account.id, previewSearch])
+
+  const matchingOtherParticipants = useMemo(() => {
+    if (!previewSearch.trim()) return []
+    const conversationParticipantIds = new Set(
+      filteredConversations.flatMap((c) => c.participantAccountIds),
+    )
+    return (chatParticipants.data?.items ?? []).filter(
+      (p) =>
+        p.id !== account.account.id &&
+        !conversationParticipantIds.has(p.id) &&
+        matchesParticipantSearch(p, previewSearch),
+    )
+  }, [chatParticipants.data?.items, account.account.id, filteredConversations, previewSearch])
 
   // Active open windows (excluding those minimized into bubbles)
   const openExpandedIds = openQuickConversationIds.filter(
@@ -274,6 +330,7 @@ export function ChatShell({ account }: ChatShellProps) {
   const openQuickChat = (conversation: ChatConversation, markRead = true) => {
     if (isChatWorkspace) return
     setIsChatPreviewOpen(false)
+    setPreviewSearch('')
     setOpenQuickConversationIds((prev) => {
       const withoutIt = prev.filter((id) => id !== conversation.id)
       const next = [...withoutIt, conversation.id]
@@ -344,46 +401,85 @@ export function ChatShell({ account }: ChatShellProps) {
         className={styles.chatPreviewSearch}
         placeholder={t('chat.searchMessenger', 'Search Messenger')}
         prefix={<SearchOutlined />}
-        readOnly
+        value={previewSearch}
+        onChange={(e) => setPreviewSearch(e.target.value)}
+        allowClear
       />
       <div className={styles.chatPreviewList}>
-        {recentConversations.length ? (
-          recentConversations.map((conversation) => (
-            <button
-              className={styles.chatPreviewItem}
-              key={conversation.id}
-              type="button"
-              onClick={() => openQuickChat(conversation)}
-            >
-              <Badge dot={conversation.hasUnreadFromOthers} offset={[-2, 40]}>
-                <Avatar
-                  size={50}
-                  icon={conversation.type === 'DIRECT' ? <UserOutlined /> : <TeamOutlined />}
-                />
-              </Badge>
-              <span className={styles.chatPreviewText}>
-                <span className={styles.chatPreviewHeaderRow}>
-                  <strong>
-                    {conversationTitle(conversation, participantById, account.account.id)}
-                  </strong>
-                  {conversation.lastMessageAt ? (
-                    <span className={styles.chatPreviewTime}>
-                      {formatRelativeTime(conversation.lastMessageAt, timeLabels)}
+        {filteredConversations.length > 0 || matchingOtherParticipants.length > 0 ? (
+          <>
+            {filteredConversations.map((conversation) => (
+              <button
+                className={styles.chatPreviewItem}
+                key={conversation.id}
+                type="button"
+                onClick={() => openQuickChat(conversation)}
+              >
+                <Badge dot={conversation.hasUnreadFromOthers} offset={[-2, 40]}>
+                  <Avatar
+                    size={50}
+                    icon={conversation.type === 'DIRECT' ? <UserOutlined /> : <TeamOutlined />}
+                  />
+                </Badge>
+                <span className={styles.chatPreviewText}>
+                  <span className={styles.chatPreviewHeaderRow}>
+                    <strong>
+                      {conversationTitle(conversation, participantById, account.account.id)}
+                    </strong>
+                    {conversation.lastMessageAt ? (
+                      <span className={styles.chatPreviewTime}>
+                        {formatRelativeTime(conversation.lastMessageAt, timeLabels)}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className={styles.chatPreviewSnippet}>
+                    {messagePreviewText(
+                      conversation,
+                      participantById,
+                      account.account.id,
+                      t('chat.noMessages'),
+                      t('chat.you'),
+                    )}
+                  </span>
+                </span>
+              </button>
+            ))}
+            {matchingOtherParticipants.length > 0 ? (
+              <>
+                {filteredConversations.length > 0 ? (
+                  <div className={styles.chatPreviewSectionTitle}>{t('chat.people', 'People')}</div>
+                ) : null}
+                {matchingOtherParticipants.map((participant) => (
+                  <button
+                    className={styles.chatPreviewItem}
+                    key={participant.id}
+                    type="button"
+                    onClick={() => handleSelectParticipant(participant)}
+                  >
+                    <Badge
+                      status={participant.presence === 'ONLINE' ? 'success' : 'default'}
+                      offset={[-2, 40]}
+                      dot
+                    >
+                      <Avatar size={50} icon={<UserOutlined />} />
+                    </Badge>
+                    <span className={styles.chatPreviewText}>
+                      <span className={styles.chatPreviewHeaderRow}>
+                        <strong>{participantLabel(participant)}</strong>
+                      </span>
+                      <span className={styles.chatPreviewSnippet}>
+                        {participant.email ||
+                          participant.employeeCode ||
+                          t('chat.startConversation', 'Start a conversation')}
+                      </span>
                     </span>
-                  ) : null}
-                </span>
-                <span className={styles.chatPreviewSnippet}>
-                  {messagePreviewText(
-                    conversation,
-                    participantById,
-                    account.account.id,
-                    t('chat.noMessages'),
-                    t('chat.you'),
-                  )}
-                </span>
-              </span>
-            </button>
-          ))
+                  </button>
+                ))}
+              </>
+            ) : null}
+          </>
+        ) : previewSearch.trim() ? (
+          <Empty description={t('chat.noSearchResults', 'No results found')} />
         ) : (
           <Empty description={t('chat.emptyMessages', 'No messages yet')} />
         )}
@@ -391,7 +487,10 @@ export function ChatShell({ account }: ChatShellProps) {
       <Link
         className={styles.chatPreviewAllLink}
         to="/portal/chat"
-        onClick={() => setIsChatPreviewOpen(false)}
+        onClick={() => {
+          setIsChatPreviewOpen(false)
+          setPreviewSearch('')
+        }}
       >
         {t('chat.viewAll', 'View all in Messenger')}
       </Link>
@@ -409,7 +508,12 @@ export function ChatShell({ account }: ChatShellProps) {
             overlayClassName={styles.popover}
             zIndex={2147483050}
             content={chatPreview}
-            onOpenChange={setIsChatPreviewOpen}
+            onOpenChange={(open) => {
+              setIsChatPreviewOpen(open)
+              if (!open) {
+                setPreviewSearch('')
+              }
+            }}
           >
             <Badge count={unreadCount} size="small">
               <Button

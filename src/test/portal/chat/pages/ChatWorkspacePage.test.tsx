@@ -225,4 +225,49 @@ describe('ChatWorkspacePage', () => {
     expect(screen.queryByRole('button', { name: /designer@lng.co/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /qc@lng.co/i })).toBeVisible()
   })
+
+  it('filters participants accent-insensitively and by employee code', async () => {
+    vi.mocked(listChatParticipants).mockResolvedValue({
+      items: [
+        {
+          id: 'account-2',
+          email: 'tung@lng.co',
+          displayName: 'Tạ Khánh Tùng',
+          employeeCode: 'LNG001',
+          status: 'active',
+          presence: 'ONLINE',
+        },
+        {
+          id: 'account-3',
+          email: 'long@lng.co',
+          displayName: 'Nguyễn Thành Long',
+          employeeCode: 'LNG002',
+          status: 'active',
+          presence: 'OFFLINE',
+        },
+      ],
+    })
+    renderPage()
+
+    // 1. Search unaccented "tung" matches "Tạ Khánh Tùng"
+    fireEvent.change(await screen.findByPlaceholderText('Search Messenger'), {
+      target: { value: 'tung' },
+    })
+    expect(screen.queryByRole('button', { name: /Nguyễn Thành Long/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Tạ Khánh Tùng/i })).toBeVisible()
+
+    // 2. Search unaccented "thanh" matches "Nguyễn Thành Long"
+    fireEvent.change(screen.getByPlaceholderText('Search Messenger'), {
+      target: { value: 'thanh' },
+    })
+    expect(screen.queryByRole('button', { name: /Tạ Khánh Tùng/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Nguyễn Thành Long/i })).toBeVisible()
+
+    // 3. Search for employeeCode "LNG001" matches "Tạ Khánh Tùng"
+    fireEvent.change(screen.getByPlaceholderText('Search Messenger'), {
+      target: { value: 'LNG001' },
+    })
+    expect(screen.getByRole('button', { name: /Tạ Khánh Tùng/i })).toBeVisible()
+    expect(screen.queryByRole('button', { name: /Nguyễn Thành Long/i })).not.toBeInTheDocument()
+  })
 })

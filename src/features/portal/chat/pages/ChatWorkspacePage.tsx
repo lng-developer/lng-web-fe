@@ -39,6 +39,7 @@ import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
 import { getAccount } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage } from '@/shared/media'
+import { matchesParticipantSearch, removeVietnameseTones } from '../components/chatViewUtils'
 
 import styles from './ChatWorkspacePage.module.scss'
 
@@ -395,10 +396,19 @@ export function ChatWorkspacePage() {
     () => new Map((participants.data?.items ?? []).map((p) => [p.id, p])),
     [participants.data?.items],
   )
-  const searchText = search.trim().toLowerCase()
-  const people = (participants.data?.items ?? []).filter(
-    (acc) => !searchText || participantLabel(acc).toLowerCase().includes(searchText),
-  )
+  const people = useMemo(() => {
+    return (participants.data?.items ?? []).filter((acc) => {
+      if (matchesParticipantSearch(acc, search)) return true
+      const conv = conversationByParticipantId.get(acc.id)
+      if (conv?.lastMessagePreview && search.trim()) {
+        const q = search.trim().toLowerCase()
+        const nq = removeVietnameseTones(q)
+        if (conv.lastMessagePreview.toLowerCase().includes(q)) return true
+        if (removeVietnameseTones(conv.lastMessagePreview).includes(nq)) return true
+      }
+      return false
+    })
+  }, [participants.data?.items, search, conversationByParticipantId])
 
   // Prioritize users with active/recent messages at the top
   const sortedPeople = useMemo(() => {
@@ -521,7 +531,13 @@ export function ChatWorkspacePage() {
               })}
             </Space>
           ) : (
-            <Empty description={t('chat.emptyPeople', 'No chat participants')} />
+            <Empty
+              description={
+                search.trim()
+                  ? t('chat.noSearchResults', 'No results found')
+                  : t('chat.emptyPeople', 'No chat participants')
+              }
+            />
           )}
         </div>
       </aside>
