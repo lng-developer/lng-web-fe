@@ -35,7 +35,7 @@ function RouterActions({ backPath, backLabel, homeLabel }: ActionButtonsProps) {
       <Button onClick={handleGoBack}>
         {backLabel}
       </Button>
-      <Button type="primary" onClick={handleGoHome}>
+      <Button type="primary" onClick={handleGoHome} data-testid="access-denied-dashboard-btn">
         {homeLabel}
       </Button>
     </Space>
@@ -62,7 +62,7 @@ function FallbackActions({ backPath, backLabel, homeLabel }: ActionButtonsProps)
       <Button onClick={handleGoBack}>
         {backLabel}
       </Button>
-      <Button type="primary" onClick={handleGoHome}>
+      <Button type="primary" onClick={handleGoHome} data-testid="access-denied-dashboard-btn">
         {homeLabel}
       </Button>
     </Space>
