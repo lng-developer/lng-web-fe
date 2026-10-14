@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/chat/api/chatApi', () => ({
+  createConversation: vi.fn(),
   listChatConversations: vi.fn(),
   listChatMessages: vi.fn(),
   listChatParticipants: vi.fn(),
@@ -15,6 +16,7 @@ vi.mock('@/features/portal/chat/realtime/chatSocket', () => ({
 }))
 
 import {
+  createConversation,
   listChatConversations,
   listChatMessages,
   listChatParticipants,
@@ -268,5 +270,99 @@ describe('ChatShell', () => {
 
     expect(await screen.findByRole('region', { name: 'designer@lng.co' })).toBeInTheDocument()
     expect(markChatConversationRead).toHaveBeenCalledWith('conversation-1')
+  })
+
+  it('searches conversations and contacts with accent-insensitivity in preview popover', async () => {
+    vi.mocked(listChatConversations).mockResolvedValue({
+      items: [
+        {
+          id: 'conversation-1',
+          type: 'DIRECT',
+          title: null,
+          shopId: null,
+          relatedResource: null,
+          participantAccountIds: ['account-1', 'account-2'],
+          lastMessageAt: '2026-08-11T01:00:00.000Z',
+          lastMessagePreview: 'Báo cáo doanh thu hôm nay',
+          lastMessageSenderAccountId: 'account-2',
+          unreadCount: 0,
+          hasUnreadFromOthers: false,
+          createdAt: '2026-08-11T00:00:00.000Z',
+          updatedAt: '2026-08-11T01:00:00.000Z',
+        },
+      ],
+      pagination: { page: 1, limit: 8, total: 1 },
+    })
+    vi.mocked(listChatParticipants).mockResolvedValue({
+      items: [
+        {
+          id: 'account-2',
+          email: 'tuan@lng.co',
+          displayName: 'Nguyễn Văn Tuấn',
+          status: 'active',
+          presence: 'ONLINE',
+        },
+        {
+          id: 'account-3',
+          email: 'hung@lng.co',
+          displayName: 'Lê Văn Hùng',
+          status: 'active',
+          presence: 'ONLINE',
+        },
+      ],
+    })
+    vi.mocked(createConversation).mockResolvedValue({
+      id: 'conversation-new',
+      type: 'DIRECT',
+      title: null,
+      shopId: null,
+      relatedResource: null,
+      participantAccountIds: ['account-1', 'account-3'],
+      lastMessageAt: null,
+      lastMessagePreview: null,
+      lastMessageSenderAccountId: null,
+      unreadCount: 0,
+      hasUnreadFromOthers: false,
+      createdAt: '2026-08-11T02:00:00.000Z',
+      updatedAt: '2026-08-11T02:00:00.000Z',
+    })
+
+    renderShell()
+
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+
+    // Initially shows existing conversation with Nguyễn Văn Tuấn
+    expect(await screen.findByText('Nguyễn Văn Tuấn')).toBeVisible()
+
+    const searchInput = screen.getByPlaceholderText('Search Messenger')
+    expect(searchInput).not.toHaveAttribute('readonly')
+
+    // 1. Search for "hung" (unaccented for "Hùng") -> finds other contact "Lê Văn Hùng"
+    fireEvent.change(searchInput, { target: { value: 'hung' } })
+    expect(screen.queryByText('Nguyễn Văn Tuấn')).not.toBeInTheDocument()
+    const hungItem = await screen.findByText('Lê Văn Hùng')
+    expect(hungItem).toBeVisible()
+
+    // Clicking contact starts direct chat and opens window
+    fireEvent.click(hungItem)
+    await waitFor(() =>
+      expect(createConversation).toHaveBeenCalledWith({
+        type: 'DIRECT',
+        title: null,
+        participantAccountIds: ['account-3'],
+      }),
+    )
+
+    // Open popover again and search for message content with tone removal ("doanh thu")
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    const searchInput2 = screen.getByPlaceholderText('Search Messenger')
+    fireEvent.change(searchInput2, { target: { value: 'doanh thu' } })
+    expect(await screen.findByText('Nguyễn Văn Tuấn')).toBeVisible()
+
+    // Search for non-existent text
+    fireEvent.change(searchInput2, { target: { value: 'khongcoaihet' } })
+    expect(screen.queryByText('Nguyễn Văn Tuấn')).not.toBeInTheDocument()
+    expect(await screen.findByText(/no results found/i)).toBeInTheDocument()
   })
 })

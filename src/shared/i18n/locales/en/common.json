@@ -4495,7 +4495,9 @@
     "enterToSend": "Press Enter to send, Shift + Enter for new line",
     "teamsConnected": "Teams Connected",
     "directChat": "Direct Chat",
-    "activeNow": "Active now"
+    "activeNow": "Active now",
+    "noSearchResults": "No results found",
+    "startConversation": "Start a conversation"
   },
   "systemDashboard": {
     "title": "System dashboard",
