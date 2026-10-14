@@ -33,10 +33,10 @@ const account = {
   profileSetupRequired: false,
 }
 
-function renderShell() {
+function renderShell(initialRoute = '/portal/orders') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={['/portal/orders']}>
+    <MemoryRouter initialEntries={[initialRoute]}>
       <QueryClientProvider client={client}>
         <ChatShell account={account} />
       </QueryClientProvider>
@@ -359,5 +359,35 @@ describe('ChatShell', () => {
     fireEvent.change(searchInput2, { target: { value: 'khongcoaihet' } })
     expect(screen.queryByText('Nguyễn Văn Tuấn')).not.toBeInTheDocument()
     expect(await screen.findByText(/no results found/i)).toBeInTheDocument()
+  })
+
+  it('allows opening quick chat and minimizing into bubbles even on /portal/chat workspace route', async () => {
+    renderShell('/portal/chat')
+
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole('button', { name: /^(chat|shell\.navigation\.chat)$/i }))
+    const item = await screen.findByText('designer@lng.co')
+    fireEvent.click(item)
+
+    // Opens QuickChatBox on /portal/chat
+    const windowRegion = await screen.findByRole('region', { name: 'designer@lng.co' })
+    expect(windowRegion).toBeInTheDocument()
+
+    // Can minimize to bubble
+    const withinWindow = within(windowRegion)
+    const minimizeBtn = withinWindow.getByRole('button', { name: /minimize/i })
+    fireEvent.click(minimizeBtn)
+
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: 'designer@lng.co' })).not.toBeInTheDocument()
+    })
+
+    // Bubble button is present and clicking it expands window back
+    const chatButtons = screen.getAllByRole('button', { name: /^(chat|shell\.navigation\.chat)$/i })
+    expect(chatButtons.length).toBeGreaterThan(1)
+    const bubbleBtn = chatButtons[chatButtons.length - 1]
+    fireEvent.click(bubbleBtn)
+
+    expect(await screen.findByRole('region', { name: 'designer@lng.co' })).toBeInTheDocument()
   })
 })

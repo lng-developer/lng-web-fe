@@ -64,8 +64,8 @@ export function QuickChatBox({
   const quickMessages = useQuery({
     queryKey: chatKeys.messages(conversationId),
     queryFn: () => listChatMessages(conversationId, { page: 1, limit: 25 }),
-    enabled: Boolean(conversationId) && !isChatWorkspace,
-    refetchInterval: conversationId && !isChatWorkspace && !socketReady ? 30_000 : false,
+    enabled: Boolean(conversationId),
+    refetchInterval: conversationId && !socketReady ? 30_000 : false,
   })
 
   const messageItems = [...(quickMessages.data?.items ?? [])].sort(
