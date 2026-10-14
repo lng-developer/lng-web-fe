@@ -1,6 +1,24 @@
 .headerChatButton {
   width: 40px;
   height: 40px;
+  color: var(--ant-color-text);
+}
+
+.headerChatButton:hover,
+.headerChatButton:focus-visible {
+  color: var(--ant-color-text);
+  background: var(--ant-color-fill-secondary);
+}
+
+.headerChatButtonActive {
+  color: #2563eb !important;
+  background: rgb(37 99 235 / 12%) !important;
+}
+
+.headerChatButtonActive:hover,
+.headerChatButtonActive:focus-visible {
+  color: #2563eb !important;
+  background: rgb(37 99 235 / 18%) !important;
 }
 
 .headerChatButtonUnread {
@@ -11,6 +29,7 @@
 
 .headerChatButtonUnread:hover,
 .headerChatButtonUnread:focus-visible {
+  color: #2563eb !important;
   background: rgb(37 99 235 / 18%) !important;
 }
 

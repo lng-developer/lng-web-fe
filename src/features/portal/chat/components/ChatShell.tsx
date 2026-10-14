@@ -497,6 +497,18 @@ export function ChatShell({ account }: ChatShellProps) {
     </div>
   )
 
+  const isButtonActive = isChatWorkspace || isChatPreviewOpen
+  const buttonClassName = [
+    styles.headerChatButton,
+    hasUnreadFromOthers
+      ? styles.headerChatButtonUnread
+      : isButtonActive
+        ? styles.headerChatButtonActive
+        : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <>
       <div className={styles.chatMenuWrapper}>
@@ -518,10 +530,10 @@ export function ChatShell({ account }: ChatShellProps) {
             <Badge count={unreadCount} size="small">
               <Button
                 aria-label={chatLabel}
-                className={`${styles.headerChatButton} ${hasUnreadFromOthers ? styles.headerChatButtonUnread : ''}`}
+                className={buttonClassName}
                 icon={<MessageOutlined />}
                 shape="circle"
-                type={isChatWorkspace ? 'primary' : 'text'}
+                type="text"
                 onClick={() => setIsChatPreviewOpen((open) => !open)}
               />
             </Badge>
@@ -530,10 +542,10 @@ export function ChatShell({ account }: ChatShellProps) {
           <Badge count={unreadCount} size="small">
             <Button
               aria-label={chatLabel}
-              className={`${styles.headerChatButton} ${hasUnreadFromOthers ? styles.headerChatButtonUnread : ''}`}
+              className={buttonClassName}
               icon={<MessageOutlined />}
               shape="circle"
-              type={isChatWorkspace ? 'primary' : 'text'}
+              type="text"
               onClick={() => setIsChatPreviewOpen((open) => !open)}
             />
           </Badge>
