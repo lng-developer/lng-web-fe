@@ -325,7 +325,7 @@ describe('ChatShell', () => {
     renderShell()
 
     await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    fireEvent.click(screen.getByRole('button', { name: /^(chat|shell\.navigation\.chat)$/i }))
 
     // Initially shows existing conversation with Nguyễn Văn Tuấn
     expect(await screen.findByText('Nguyễn Văn Tuấn')).toBeVisible()
@@ -350,7 +350,7 @@ describe('ChatShell', () => {
     )
 
     // Open popover again and search for message content with tone removal ("doanh thu")
-    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.chat' }))
+    fireEvent.click(screen.getByRole('button', { name: /^(chat|shell\.navigation\.chat)$/i }))
     const searchInput2 = screen.getByPlaceholderText('Search Messenger')
     fireEvent.change(searchInput2, { target: { value: 'doanh thu' } })
     expect(await screen.findByText('Nguyễn Văn Tuấn')).toBeVisible()
