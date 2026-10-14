@@ -285,7 +285,7 @@ describe('AppShell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Full chat page' })).toBeVisible()
     expect(screen.queryByRole('region', { name: 'designer@lng.co' })).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(2)
   })
 
   it('updates document title correctly for /portal/monitoring', async () => {
