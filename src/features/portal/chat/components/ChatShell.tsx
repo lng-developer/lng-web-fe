@@ -12,6 +12,7 @@ import {
   type ChatMessage,
   type ChatParticipant,
   createConversation,
+  getChatUnreadCount,
   listChatConversations,
   listChatParticipants,
   markChatConversationRead,
@@ -183,18 +184,48 @@ export function ChatShell({ account }: ChatShellProps) {
   )
 
   useEffect(() => {
+    const markVisibleChatsRead = () => {
+      if (document.visibilityState !== 'visible') return
+      for (const conversationId of openQuickConversationIdsRef.current) {
+        if (!minimizedQuickConversationIdsRef.current.includes(conversationId)) {
+          markConversationAsRead(conversationId)
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', markVisibleChatsRead)
+    return () => document.removeEventListener('visibilitychange', markVisibleChatsRead)
+  }, [markConversationAsRead])
+
+  useEffect(() => {
     const socket = createChatSocket()
     chatSocketRef.current = socket
     if (!socket) return
-    socket.on('connect', () => setSocketReady(true))
+    socket.on('connect', () => {
+      setSocketReady(true)
+      void queryClient.invalidateQueries({ queryKey: chatKeys.all })
+      for (const conversationId of openQuickConversationIdsRef.current) {
+        socket.emit('conversation.join', { conversationId })
+      }
+    })
+    socket.on('message.read', (state) => {
+      if (state.accountId === account.account.id) {
+        void queryClient.invalidateQueries({ queryKey: chatKeys.unread })
+        void queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] })
+      }
+    })
     socket.on('disconnect', () => setSocketReady(false))
     socket.on('connect_error', () => setSocketReady(false))
     socket.on('message.created', ({ conversation, message }) => {
+      void queryClient.invalidateQueries({ queryKey: chatKeys.unread })
       const isActivelyOpen =
         openQuickConversationIdsRef.current.includes(message.conversationId) &&
         !minimizedQuickConversationIdsRef.current.includes(message.conversationId)
 
-      if (isActivelyOpen && message.senderAccountId !== account.account.id) {
+      if (
+        isActivelyOpen &&
+        document.visibilityState === 'visible' &&
+        message.senderAccountId !== account.account.id
+      ) {
         markQuickConversationRead(message.conversationId)
       }
 
@@ -219,7 +250,7 @@ export function ChatShell({ account }: ChatShellProps) {
                   conversation,
                   message,
                   account.account.id,
-                  openQuickConversationIdsRef.current,
+                  document.visibilityState === 'visible' ? openQuickConversationIdsRef.current : [],
                   minimizedQuickConversationIdsRef.current,
                 ),
               }
@@ -244,6 +275,11 @@ export function ChatShell({ account }: ChatShellProps) {
     queryKey: chatKeys.conversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
     queryFn: () => listChatConversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
     refetchInterval: false,
+  })
+  const unreadQuery = useQuery({
+    queryKey: chatKeys.unread,
+    queryFn: getChatUnreadCount,
+    refetchInterval: socketReady ? false : 30_000,
   })
   const chatParticipants = useQuery({
     queryKey: ['chat-participants'],
@@ -312,19 +348,14 @@ export function ChatShell({ account }: ChatShellProps) {
   )
   const visibleWindowIds = [...openExpandedIds].reverse()
 
-  // Total unread count excludes conversations currently open and viewed
-  const unreadCount = recentConversations.reduce((total, conversation) => {
-    if (openExpandedIds.includes(conversation.id)) {
-      return total
-    }
-    return total + (conversation.unreadCount || 0)
-  }, 0)
+  // Count all conversations, not just the preview page.
+  const unreadCount = unreadQuery.data?.unreadCount ?? 0
 
   const unreadConversations = recentConversations.filter(
     (conversation) =>
       conversation.hasUnreadFromOthers && !openExpandedIds.includes(conversation.id),
   )
-  const hasUnreadFromOthers = unreadConversations.length > 0
+  const hasUnreadFromOthers = unreadCount > 0
   const unreadConversation = unreadConversations[0] ?? null
 
   const openQuickChat = (conversation: ChatConversation, markRead = true) => {

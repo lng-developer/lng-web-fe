@@ -18,6 +18,7 @@ vi.mock('@/app/layout/AccountMenu', () => ({
   AccountMenu: () => <button type="button">Test account</button>,
 }))
 vi.mock('@/features/portal/chat/api/chatApi', () => ({
+  getChatUnreadCount: vi.fn(async () => ({ unreadCount: 1 })),
   listChatConversations: vi.fn(async () => ({
     items: [
       {

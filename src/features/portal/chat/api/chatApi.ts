@@ -84,6 +84,9 @@ export const listChatConversations = async (params: Query = {}) =>
     await apiClient.get('/api/chat/conversations', { params: compact(params) }),
   )
 
+export const getChatUnreadCount = async () =>
+  unwrap<{ unreadCount: number }>(await apiClient.get('/api/chat/unread-count'))
+
 export const createConversation = async (input: CreateConversationInput) =>
   unwrap<ChatConversation>(await apiClient.post('/api/chat/conversations', input))
 

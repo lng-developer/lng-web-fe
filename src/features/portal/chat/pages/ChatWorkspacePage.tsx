@@ -34,6 +34,7 @@ import {
   listChatConversations,
   listChatMessages,
   listChatParticipants,
+  markChatConversationRead,
   sendChatMessage,
   syncTeamsChat,
 } from '@/features/portal/chat/api/chatApi'
@@ -289,6 +290,24 @@ export function ChatWorkspacePage() {
     queryFn: () => listChatMessages(activeConversationId!, { page: 1, limit: MESSAGE_LIMIT }),
     enabled: Boolean(activeConversationId),
   })
+  const { mutate: markRead } = useMutation({
+    mutationFn: markChatConversationRead,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: chatKeys.unread })
+      void queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] })
+    },
+  })
+  const latestMessageId = messages.data?.items.at(-1)?.id
+  useEffect(() => {
+    const readVisibleConversation = () => {
+      if (activeConversationId && latestMessageId && document.visibilityState === 'visible') {
+        markRead(activeConversationId)
+      }
+    }
+    readVisibleConversation()
+    document.addEventListener('visibilitychange', readVisibleConversation)
+    return () => document.removeEventListener('visibilitychange', readVisibleConversation)
+  }, [activeConversationId, latestMessageId, markRead])
   const participants = useQuery({
     queryKey: ['chat-participants'],
     queryFn: () => listChatParticipants({ limit: 100 }),
@@ -362,6 +381,16 @@ export function ChatWorkspacePage() {
     const socket = createChatSocket()
     socketRef.current = socket
     if (!socket) return
+    socket.on('connect', () => {
+      void queryClient.invalidateQueries({ queryKey: chatKeys.all })
+      if (activeConversationIdRef.current)
+        socket.emit('conversation.join', { conversationId: activeConversationIdRef.current })
+    })
+    socket.on('message.read', (state) => {
+      if (state.accountId === account?.id) {
+        void queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] })
+      }
+    })
     socket.on('message.created', ({ conversation, message }) => {
       queryClient.setQueryData<ChatPage<ChatMessage>>(
         chatKeys.messages(message.conversationId),
@@ -384,7 +413,7 @@ export function ChatWorkspacePage() {
                   conversation,
                   message,
                   account?.id,
-                  activeConversationIdRef.current,
+                  document.visibilityState === 'visible' ? activeConversationIdRef.current : null,
                 ),
               }
             : current,

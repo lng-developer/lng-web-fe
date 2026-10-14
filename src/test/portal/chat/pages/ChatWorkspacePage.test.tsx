@@ -8,6 +8,7 @@ vi.mock('@/features/portal/chat/api/chatApi', () => ({
   listChatMessages: vi.fn(),
   listChatParticipants: vi.fn(),
   sendChatMessage: vi.fn(),
+  markChatConversationRead: vi.fn().mockResolvedValue({}),
   getMsGraphToken: vi.fn().mockResolvedValue(null),
   syncTeamsChat: vi.fn().mockResolvedValue({ status: 'SYNCED', syncedCount: 0 }),
 }))
@@ -22,6 +23,7 @@ vi.mock('@/shared/media', () => ({
 }))
 
 import {
+  markChatConversationRead,
   createConversation,
   listChatConversations,
   listChatMessages,
@@ -57,6 +59,7 @@ describe('ChatWorkspacePage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
     vi.mocked(createChatSocket).mockReturnValue(null)
     vi.mocked(listChatConversations).mockResolvedValue({
       items: [
@@ -143,6 +146,9 @@ describe('ChatWorkspacePage', () => {
 
     expect((await screen.findAllByText('Design handoff'))[0]).toBeVisible()
     expect(await screen.findByText('Please check this file')).toBeVisible()
+    await waitFor(() =>
+      expect(markChatConversationRead).toHaveBeenCalledWith('conversation-1', expect.any(Object)),
+    )
     expect(screen.getByRole('img', { name: 'proof.png' })).toHaveAttribute(
       'src',
       '/api/media/assets/asset-1/download',
