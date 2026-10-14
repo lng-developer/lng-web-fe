@@ -34,7 +34,6 @@ type QuickChatBoxProps = {
   onMarkRead: () => void
   onFocus?: () => void
   socketReady: boolean
-  isChatWorkspace: boolean
 }
 
 export function QuickChatBox({
@@ -50,7 +49,6 @@ export function QuickChatBox({
   onMarkRead,
   onFocus,
   socketReady,
-  isChatWorkspace,
 }: QuickChatBoxProps) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState('')

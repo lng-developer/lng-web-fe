@@ -72,6 +72,7 @@ export type CreateConversationInput = {
 export type SendChatMessageInput = {
   body: string
   assetIds: string[]
+  msGraphToken?: string | null
 }
 
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -100,7 +101,7 @@ export const listChatMessages = async (conversationId: string, params: Query = {
 
 import { getMsalInstance } from '@/features/auth/microsoft/msalClient'
 
-async function getMsGraphToken(): Promise<string | null> {
+export async function getMsGraphToken(): Promise<string | null> {
   try {
     const pca = await getMsalInstance()
     const accounts = pca.getAllAccounts()
@@ -116,14 +117,24 @@ async function getMsGraphToken(): Promise<string | null> {
 }
 
 export const sendChatMessage = async (conversationId: string, input: SendChatMessageInput) => {
-  const msToken = await getMsGraphToken()
+  const msToken = input.msGraphToken || (await getMsGraphToken())
+  const payload = {
+    body: input.body,
+    assetIds: input.assetIds,
+    ...(msToken ? { msGraphToken: msToken } : {}),
+  }
   const response = msToken
-    ? await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, input, {
+    ? await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, payload, {
         headers: { 'x-ms-graph-token': msToken },
       })
-    : await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, input)
+    : await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, payload)
   return unwrap<ChatMessage>(response)
 }
+
+export const syncTeamsChat = async (conversationId: string) =>
+  unwrap<{ status: string; syncedCount: number; teamsChatId: string }>(
+    await apiClient.post(`/api/integration/teams/sync/${conversationId}`),
+  )
 
 export const markChatConversationRead = async (conversationId: string) =>
   unwrap<{ conversationId: string; accountId: string; lastReadAt: string }>(
