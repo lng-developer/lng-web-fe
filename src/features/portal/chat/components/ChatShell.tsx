@@ -191,7 +191,6 @@ export function ChatShell({ account }: ChatShellProps) {
     socket.on('disconnect', () => setSocketReady(false))
     socket.on('connect_error', () => setSocketReady(false))
     socket.on('message.created', ({ conversation, message }) => {
-      if (isChatWorkspaceRef.current) return
       const isActivelyOpen =
         openQuickConversationIdsRef.current.includes(message.conversationId) &&
         !minimizedQuickConversationIdsRef.current.includes(message.conversationId)
@@ -326,7 +325,6 @@ export function ChatShell({ account }: ChatShellProps) {
   const unreadConversation = unreadConversations[0] ?? null
 
   const openQuickChat = (conversation: ChatConversation, markRead = true) => {
-    if (isChatWorkspace) return
     setIsChatPreviewOpen(false)
     setPreviewSearch('')
     setOpenQuickConversationIds((prev) => {
@@ -553,7 +551,7 @@ export function ChatShell({ account }: ChatShellProps) {
       </div>
 
       {/* Minimized Chat Heads (Bong bóng chat) */}
-      {overlayRoot && !isChatWorkspace
+      {overlayRoot
         ? bubbleIds.map((conversationId, index) => {
             const conversation =
               recentConversations.find((c) => c.id === conversationId) ?? null
@@ -582,7 +580,7 @@ export function ChatShell({ account }: ChatShellProps) {
         : null}
 
       {/* Open Quick Chat Windows */}
-      {overlayRoot && !isChatWorkspace
+      {overlayRoot
         ? openQuickConversationIds.map((conversationId) => {
             const conversation =
               recentConversations.find((c) => c.id === conversationId) ?? null
