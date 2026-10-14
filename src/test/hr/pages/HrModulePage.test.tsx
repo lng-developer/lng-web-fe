@@ -97,10 +97,10 @@ describe('HrModulePage routes', () => {
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
   })
 
-  it('redirects an unavailable action to the first permitted workspace', async () => {
+  it('redirects an unavailable action to self-service without a team scope', async () => {
     renderPath('/hr/operations/employees', account(['HR_ATTENDANCE:READ']))
 
-    expect(await screen.findByText('team')).toBeVisible()
+    expect(await screen.findByText('self')).toBeVisible()
   })
 
   it('redirects a scoped leader away from the global HR dashboard', async () => {
@@ -122,9 +122,9 @@ describe('HrModulePage routes', () => {
     expect(await screen.findByText('self')).toBeVisible()
   })
 
-  it('routes bare /hr to dashboard for management accounts', async () => {
+  it('routes bare /hr to self-service even for management accounts', async () => {
     renderPath('/hr', account(['HR_EMPLOYEES:READ']))
 
-    expect(await screen.findByText('dashboard')).toBeVisible()
+    expect(await screen.findByText('self')).toBeVisible()
   })
 })
