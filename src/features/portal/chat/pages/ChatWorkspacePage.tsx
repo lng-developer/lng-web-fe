@@ -35,10 +35,7 @@ import {
   markChatConversationRead,
   sendChatMessage,
 } from '@/features/portal/chat/api/chatApi'
-import {
-  getTeamsOAuthStatus,
-  startTeamsOAuth,
-} from '@/features/integration/teams/api/teamsOAuthApi'
+import { getTeamsOAuthStatus } from '@/features/integration/teams/api/teamsOAuthApi'
 import {
   chatConversationOptions,
   chatMessageOptions,
@@ -398,20 +395,10 @@ export function ChatWorkspacePage() {
   const otherInitials = selectedConversation
     ? conversationInitials(selectedConversation, participantById, account?.id)
     : ''
-  const canConnectTeams =
+  const canShowTeamsStatus =
     selectedConversation?.type === 'DIRECT' &&
     Boolean(otherParticipant?.email.toLowerCase().endsWith('@lngwork.co')) &&
     teamsOAuth.data?.enabled
-  const connectTeams = async () => {
-    const popup = window.open('', 'teams-oauth', 'popup,width=560,height=720')
-    try {
-      const { authorizationUrl } = await startTeamsOAuth()
-      if (popup) popup.location.assign(authorizationUrl)
-      else window.location.assign(authorizationUrl)
-    } catch {
-      popup?.close()
-    }
-  }
 
   useTeamsChatSync(
     activeConversationId,
@@ -681,18 +668,10 @@ export function ChatWorkspacePage() {
                           <span>{otherParticipant.email}</span>
                         </>
                       ) : null}
-                      {canConnectTeams && teamsOAuth.data?.grantStatus === 'CONNECTED' ? (
+                      {canShowTeamsStatus && teamsOAuth.data?.grantStatus === 'CONNECTED' ? (
                         <span className={styles.teamsTag}>
                           <TeamOutlined /> {t('chat.teamsConnected')}
                         </span>
-                      ) : canConnectTeams ? (
-                        <Button
-                          size="small"
-                          onClick={() => void connectTeams()}
-                          loading={teamsOAuth.isFetching}
-                        >
-                          {t('chat.connectTeams')}
-                        </Button>
                       ) : null}
                     </>
                   ) : (

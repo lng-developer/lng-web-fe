@@ -12,6 +12,7 @@ import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 
 import { AccountMenu } from './AccountMenu'
+import { TeamsSetupPrompt } from './TeamsSetupPrompt'
 import {
   type AppCoreKey,
   getAvailableCores,
@@ -231,6 +232,7 @@ export function AppShell() {
             .filter(Boolean)
             .join(' ')}
         >
+          <TeamsSetupPrompt />
           <div className={`${styles.workspace} ${isFixedWorkspace ? styles.workspaceFixed : ''}`}>
             <Outlet />
           </div>

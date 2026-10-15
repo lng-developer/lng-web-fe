@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppShell } from '@/app/layout/AppShell'
 import styles from '@/app/layout/AppShell.module.scss'
 import { AppProviders } from '@/app/providers/AppProviders'
+import {
+  getTeamsOAuthStatus,
+  startTeamsOAuth,
+} from '@/features/integration/teams/api/teamsOAuthApi'
 import { markChatConversationRead } from '@/features/portal/chat/api/chatApi'
 import i18n from '@/shared/i18n/i18n'
 
@@ -67,6 +71,14 @@ vi.mock('@/features/portal/chat/api/chatApi', () => ({
   })),
   sendChatMessage: vi.fn(),
 }))
+vi.mock('@/features/integration/teams/api/teamsOAuthApi', () => ({
+  getTeamsOAuthStatus: vi.fn(async () => ({
+    enabled: true,
+    userLinked: false,
+    grantStatus: 'NOT_CONNECTED',
+  })),
+  startTeamsOAuth: vi.fn(),
+}))
 
 describe('AppShell', () => {
   beforeEach(async () => {
@@ -115,6 +127,43 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
     expect(await screen.findAllByRole('button', { name: 'Chat' })).not.toHaveLength(0)
     expect(screen.getByRole('button', { name: 'Open navigation' })).toBeVisible()
+  })
+
+  it('offers non-blocking Teams setup for an eligible account', async () => {
+    vi.mocked(getTeamsOAuthStatus).mockResolvedValue({
+      enabled: true,
+      userLinked: true,
+      grantStatus: 'NOT_CONNECTED',
+    })
+    vi.mocked(startTeamsOAuth).mockResolvedValue({
+      authorizationUrl: 'https://login.microsoftonline.com/consent',
+    })
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          loader: () => ({
+            account: { id: 'account-1', email: 'staff@lngwork.co', mustChangePassword: false },
+            roles: [],
+            permissions: [],
+            scopes: [],
+            profileSetupRequired: false,
+          }),
+          HydrateFallback: () => null,
+          element: <AppShell />,
+          children: [{ path: 'portal/orders', element: <h1>Orders test page</h1> }],
+        },
+      ],
+      { initialEntries: ['/portal/orders'] },
+    )
+
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('button', { name: 'Connect Teams' })).toBeVisible()
   })
 
   it('opens unread quick chat from the floating badge', async () => {
