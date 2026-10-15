@@ -52,7 +52,6 @@ import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { useDesignSummaryQuery } from '@/features/portal/design/hooks/useDesignTasksQuery'
 import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
 import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
 
@@ -809,7 +808,6 @@ export function LegacySidebar({
   const navigate = useNavigate()
   const location = useLocation()
   const orderSummary = useOrderSummaryQuery({ page: 1, limit: 1 })
-  const designSummary = useDesignSummaryQuery({})
   const productionQueueCounts = useProductionQueueCountsQuery({})
 
   const permissions = useMemo(() => getPermissionsSet(account), [account])
@@ -913,8 +911,6 @@ export function LegacySidebar({
           [])
   const badgeCounts = {
     [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
-    '/portal/design': designSummary.data?.unassigned,
-    '/portal/design/idea-tasks': designSummary.data?.unassigned,
     '/portal/production/blocked': productionQueueCounts.data?.blocked,
   }
   const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
