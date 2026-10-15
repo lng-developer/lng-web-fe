@@ -1,6 +1,6 @@
 import { MemoryRouter } from 'react-router-dom'
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { VendorWorkspacePage } from '@/features/portal/vendors/pages/VendorWorkspacePage'
@@ -8,17 +8,33 @@ import vendorWorkspaceSource from '@/features/portal/vendors/pages/VendorWorkspa
 import productsTabSource from '@/features/portal/vendors/pages/VendorWorkspaceProductsTabPage.tsx?raw'
 import vendorsTabSource from '@/features/portal/vendors/pages/VendorWorkspaceVendorsTabPage.tsx?raw'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
+
+vi.mock('@/features/portal/vendors/api/vendorApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/portal/vendors/api/vendorApi')>()),
+  listVendors: vi
+    .fn()
+    .mockResolvedValue({ items: [], pagination: { page: 1, limit: 20, total: 0 } }),
+  listVendorProducts: vi
+    .fn()
+    .mockResolvedValue({ items: [], pagination: { page: 1, limit: 20, total: 0 } }),
+}))
 
 vi.mock('@/features/portal/vendors/pages/VendorTree', () => ({
   VendorTree: () => <div>Vendor tree</div>,
 }))
 
 describe('VendorWorkspacePage', () => {
+  afterEach(() => {
+    cleanup()
+    queryClient.clear()
+  })
+
   beforeEach(async () => {
     await i18n.changeLanguage('en')
   })
 
-  it('renders the Vendor locale without a duplicate workspace tab bar', () => {
+  it('renders the Vendor locale without a duplicate workspace tab bar', async () => {
     render(
       <MemoryRouter>
         <AppProviders>
@@ -29,9 +45,10 @@ describe('VendorWorkspacePage', () => {
 
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
     expect(screen.queryByText('vendors.title')).not.toBeInTheDocument()
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
   })
 
-  it('opens the integrations workflow from its URL parameter without a tab bar', () => {
+  it('opens the integrations workflow from its URL parameter without a tab bar', async () => {
     render(
       <MemoryRouter initialEntries={['/portal/vendors?tab=integrations']}>
         <AppProviders>
@@ -41,6 +58,7 @@ describe('VendorWorkspacePage', () => {
     )
 
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
   })
 
   it('uses the shared permission helper so Admin keeps Vendor write actions', () => {
