@@ -26,16 +26,17 @@ export type TimelinePoint = {
   date: string
   displayDate: string
   revenue: number
-  incomeGrowth: number
+  incomeGrowth: number | null
   orderCount: number
 }
 
 export type CashFlowRow = {
   date: string
   displayDate: string
-  cashInAmount: number
-  cashOutAmount: number
-  netCashFlowAmount: number
+  revenueAmount: number
+  costAmount: number | null
+  grossProfitAmount: number | null
+  missingCostCount: number
   currency: string | null
 }
 
@@ -74,6 +75,7 @@ export function useOperationsDashboard(
   dateFrom?: string,
   dateTo?: string,
   loadOperationalHealth = true,
+  salesChannelCode?: string,
 ) {
   const { t, i18n } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
@@ -88,16 +90,19 @@ export function useOperationsDashboard(
   const canFinance = permissionSet.has('FINANCE:READ') || permissionSet.has('FINANCE:WRITE')
   const canReports = permissionSet.has('REPORTS:READ')
 
-  const orderParams = useMemo(() => ({ page: 1, limit: 12, dateFrom, dateTo }), [dateFrom, dateTo])
+  const orderParams = useMemo(
+    () => ({ page: 1, limit: 12, dateFrom, dateTo, salesChannelCode }),
+    [dateFrom, dateTo, salesChannelCode],
+  )
 
   const orderSummary = useQuery({
-    queryKey: ['foundation', 'orders', 'summary', dateFrom, dateTo],
+    queryKey: ['foundation', 'orders', 'summary', dateFrom, dateTo, salesChannelCode],
     queryFn: () => getOrderSummary(orderParams),
     enabled: canOrders,
   })
 
   const recentOrders = useQuery({
-    queryKey: ['foundation', 'orders', 'recent', dateFrom, dateTo],
+    queryKey: ['foundation', 'orders', 'recent', dateFrom, dateTo, salesChannelCode],
     queryFn: () => listOrderWorkbench(orderParams),
     enabled: canOrders,
   })
@@ -115,14 +120,14 @@ export function useOperationsDashboard(
   })
 
   const buyerInsights = useQuery({
-    queryKey: ['foundation', 'buyers', 'insights', dateFrom, dateTo],
-    queryFn: () => getBuyerInsights({ dateFrom, dateTo }),
+    queryKey: ['foundation', 'buyers', 'insights', dateFrom, dateTo, salesChannelCode],
+    queryFn: () => getBuyerInsights({ dateFrom, dateTo, salesChannelCode }),
     enabled: canReports,
   })
 
   const reportFilters = useMemo(
-    () => ({ dateFrom, dateTo, dateBasis: 'ORDERED_AT' as const }),
-    [dateFrom, dateTo],
+    () => ({ dateFrom, dateTo, salesChannelCode, dateBasis: 'ORDERED_AT' as const }),
+    [dateFrom, dateTo, salesChannelCode],
   )
 
   const finance = useQuery({
@@ -168,7 +173,6 @@ export function useOperationsDashboard(
   const orderTotal = numberOf(allOrderCount)
 
   const listingTotal = numberOf(listingSummary.data?.totalListingCount) || 0
-  const approvedListings = numberOf(listingSummary.data?.approvedCount)
 
   const orderStatus = orderStatusEntries
     .map(([key, value]) => ({
@@ -183,23 +187,6 @@ export function useOperationsDashboard(
     ? orderStatus
     : [{ label: t('foundation.portalDashboard.orders'), value: displayedOrderTotal }]
 
-  const summaryBars = [
-    { label: t('foundation.portalDashboard.orders'), value: displayedOrderTotal },
-    { label: t('foundation.portalDashboard.approved'), value: approvedListings },
-    {
-      label: t('foundation.portalDashboard.draft'),
-      value: numberOf(listingSummary.data?.draftCount),
-    },
-    {
-      label: t('foundation.portalDashboard.noPsd'),
-      value: numberOf(listingSummary.data?.noPsdCount),
-    },
-    {
-      label: t('foundation.portalDashboard.rejected'),
-      value: numberOf(listingSummary.data?.rejectedCount),
-    },
-  ]
-
   const rangeStart = dateFrom ? dayjs(dateFrom).toDate() : dayjs().startOf('month').toDate()
   const rangeEnd = dateTo ? dayjs(dateTo).toDate() : dayjs().toDate()
 
@@ -210,7 +197,8 @@ export function useOperationsDashboard(
         date: row.date,
         displayDate: dayjs(row.date).format('D MMM'),
         revenue: Math.round(row.revenueAmount / 100),
-        incomeGrowth: Math.round(numberOf(row.grossProfitAmount) / 100),
+        incomeGrowth:
+          row.grossProfitAmount === null ? null : Math.round(row.grossProfitAmount / 100),
         orderCount: row.itemCount || 0,
       }))
     }
@@ -222,9 +210,10 @@ export function useOperationsDashboard(
       (finance.data ?? []).map((row) => ({
         date: row.date,
         displayDate: dayjs(row.date).format('D MMM'),
-        cashInAmount: row.revenueAmount,
-        cashOutAmount: numberOf(row.totalCostAmount ?? row.baseCostAmount),
-        netCashFlowAmount: numberOf(row.netProfitAmount ?? row.grossProfitAmount),
+        revenueAmount: row.revenueAmount,
+        costAmount: row.totalCostAmount ?? null,
+        grossProfitAmount: row.netProfitAmount ?? row.grossProfitAmount ?? null,
+        missingCostCount: row.missingCostCount,
         currency: row.currency,
       })),
     [finance.data],
@@ -254,64 +243,6 @@ export function useOperationsDashboard(
     return []
   }, [finance.data])
 
-  // Top 4 POD Product Categories matching real database sales & catalog
-  const topCategories: TopCategoryItem[] = useMemo(() => {
-    const listings = topListings.data?.items ?? []
-    const listingByAsin = new Map(listings.map((l) => [String(l.asin || '').toUpperCase(), l]))
-
-    const metalListing = listingByAsin.get('B0H8RRF89J')
-    const doorListing = listingByAsin.get('B0H9WGN6MM')
-    const keychainListing = listingByAsin.get('B0HC1RTX2P')
-    const apparelListing = listingByAsin.get('B0H992BLJT')
-
-    return [
-      {
-        id: 'cat-metal-signs',
-        name: 'Metal Signs',
-        salesAmount: '$8.2k Sales',
-        orderCount: 123,
-        growthPercent: 14,
-        imageUrl:
-          metalListing?.productImageUrl ||
-          'https://m.media-amazon.com/images/S/gestalt-seller-images-prod-us-east-1/ATVPDKIKX0DER/A19X8ZD282VMJX/1135b8139e0e5da4d3a0bb073f41fd05.png',
-        preset: 'blue' as const,
-      },
-      {
-        id: 'cat-door-signs',
-        name: 'Door Signs',
-        salesAmount: '$7.5k Sales',
-        orderCount: 279,
-        growthPercent: -2,
-        imageUrl:
-          doorListing?.productImageUrl ||
-          'https://m.media-amazon.com/images/S/gestalt-seller-images-prod-us-east-1/ATVPDKIKX0DER/A19X8ZD282VMJX/ba9a2dc146568d5b9edd7447b2d2d88c.png',
-        preset: 'purple' as const,
-      },
-      {
-        id: 'cat-keychains',
-        name: 'Keychains',
-        salesAmount: '$4.8k Sales',
-        orderCount: 132,
-        growthPercent: -12,
-        imageUrl:
-          keychainListing?.productImageUrl ||
-          'https://m.media-amazon.com/images/S/gestalt-seller-images-prod-us-east-1/ATVPDKIKX0DER/A19X8ZD282VMJX/3166de84dc0287893f79968d1161c966.png',
-        preset: 'pink' as const,
-      },
-      {
-        id: 'cat-apparel',
-        name: 'Apparel',
-        salesAmount: '$3.6k Sales',
-        orderCount: 166,
-        growthPercent: 7,
-        imageUrl:
-          apparelListing?.productImageUrl ||
-          'https://m.media-amazon.com/images/S/gestalt-seller-images-prod-us-east-1/ATVPDKIKX0DER/A19X8ZD282VMJX/edada7a8251bf0eb3317ccc4907187f0.jpg',
-        preset: 'amber' as const,
-      },
-    ]
-  }, [topListings.data?.items])
-
   // Filtered recent orders
   const allRecentOrders: OrderWorkbenchRow[] = useMemo(
     () => recentOrders.data?.items ?? [],
@@ -334,18 +265,17 @@ export function useOperationsDashboard(
     })
   }, [allRecentOrders, searchQuery, selectedStatus])
 
-  const rawRevenueDollars = Math.round(financeRevenue / 100) || 26694
-  const targetRevenueGoal = 35000
-  const monthlyTargetPercent = Math.min(
-    100,
-    Math.max(0, Math.round((rawRevenueDollars / targetRevenueGoal) * 100)),
-  )
-  const targetGoalFormatted = `$${formatCompactNumber(targetRevenueGoal)}`
-  const revenueFormatted = `$${formatCompactNumber(rawRevenueDollars)}`
+  const revenueFormatted = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: finance.data?.[0]?.currency || 'USD',
+    maximumFractionDigits: 0,
+  }).format(financeRevenue / 100)
   const latestDailyPoint = timelinePoints[timelinePoints.length - 1]
-  const todayRevenueDollars = latestDailyPoint ? Math.round(latestDailyPoint.revenue) : 1240
-  const todayRevenueFormatted = `$${todayRevenueDollars.toLocaleString('en-US')}`
-  const targetTrendBadge = '+5% Last Month'
+  const latestDataLabel = latestDailyPoint?.displayDate || null
+  const missingCostItemCount = (finance.data ?? []).reduce(
+    (sum, row) => sum + row.missingCostCount,
+    0,
+  )
 
   const rawCustomerCount = numberOf(buyerInsights.data?.newBuyerCount)
   const formattedCustomers = canReports ? formatCompactNumber(rawCustomerCount) : '—'
@@ -413,21 +343,13 @@ export function useOperationsDashboard(
       displayedOrderTotal,
       orderBars,
       orderStatus,
-      summaryBars,
-      summaryTotal: displayedOrderTotal + listingTotal,
-      approvedListings,
       listingTotal,
-      safeTargetPercent: monthlyTargetPercent,
-      targetPercent: monthlyTargetPercent,
-      targetProgressPercent: monthlyTargetPercent,
-      targetGoalFormatted,
       revenueFormatted,
-      todayRevenueFormatted,
-      targetTrendBadge,
+      latestDataLabel,
+      missingCostItemCount,
       newCustomerCount: rawCustomerCount,
       formattedCustomers,
       financeRevenue,
-      rawRevenueDollars,
       canFinance,
       canReports,
       hasQueryError,
@@ -436,7 +358,6 @@ export function useOperationsDashboard(
       timelinePoints,
       cashFlowRows,
       channelBreakdown,
-      topCategories,
       topSellers,
       topListings: topListings.data?.items ?? [],
       recentOrders: allRecentOrders,
@@ -452,6 +373,8 @@ export function useOperationsDashboard(
         void orderSummary.refetch()
         void recentOrders.refetch()
         void listingSummary.refetch()
+        void topListings.refetch()
+        void buyerInsights.refetch()
         void finance.refetch()
         void sellerPerformance.refetch()
         void operationsOverview.refetch()
