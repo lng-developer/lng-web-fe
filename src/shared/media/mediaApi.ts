@@ -48,21 +48,6 @@ export async function fetchMediaBlob(
 ) {
   if (!downloadUrl.trim()) throw new Error('Media download URL is required')
 
-  try {
-    const signedRes = (await apiClient.get(withSignedUrlRequest(downloadUrl, disposition), {
-      signal,
-    })) as { success?: boolean; data?: { url?: string }; url?: string }
-    const directUrl = signedRes?.data?.url || signedRes?.url
-    if (directUrl && /^https?:\/\//i.test(directUrl)) {
-      const cdnRes = await fetch(directUrl, { signal })
-      if (cdnRes.ok) {
-        return await cdnRes.blob()
-      }
-    }
-  } catch (error) {
-    if (signal?.aborted) throw error
-  }
-
   return (await apiClient.get(withDisposition(downloadUrl, disposition), {
     responseType: 'blob',
     signal,

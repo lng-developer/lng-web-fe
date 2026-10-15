@@ -636,13 +636,17 @@ export function ChatWorkspacePage() {
                   account?.id,
                   t('chat.deletedUser', 'Người dùng đã xóa'),
                 )
-                const preview = messagePreviewText(
-                  conv,
-                  participantById,
-                  account?.id,
-                  t('chat.noMessages', 'Chưa có tin nhắn'),
-                  t('chat.you', 'Bạn'),
-                )
+                const preview =
+                  conv.type === 'DIRECT' && conv.lastMessageSenderAccountId !== account?.id
+                    ? conv.lastMessagePreview ||
+                      (isOnline ? t('chat.online', 'Online') : t('chat.offline', 'Offline'))
+                    : messagePreviewText(
+                        conv,
+                        participantById,
+                        account?.id,
+                        t('chat.noMessages', 'Chưa có tin nhắn'),
+                        t('chat.you', 'Bạn'),
+                      )
 
                 return (
                   <button
