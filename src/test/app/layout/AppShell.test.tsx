@@ -11,6 +11,7 @@ import {
 } from '@/features/integration/teams/api/teamsOAuthApi'
 import { markChatConversationRead } from '@/features/portal/chat/api/chatApi'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/app/layout/AppSidebar', () => ({
   AppSidebar: () => <nav aria-label="Test navigation" />,
@@ -83,12 +84,14 @@ vi.mock('@/features/integration/teams/api/teamsOAuthApi', () => ({
 describe('AppShell', () => {
   beforeEach(async () => {
     document.title = ''
+    queryClient.clear()
     vi.clearAllMocks()
     await i18n.changeLanguage('en')
   })
 
   afterEach(() => {
     cleanup()
+    queryClient.clear()
   })
 
   it('renders the shell and child route without importing application pages', async () => {
