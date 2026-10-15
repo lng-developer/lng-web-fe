@@ -4,6 +4,7 @@ vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), patch: vi.fn(), post
 
 import {
   createConversation,
+  getTeamsOAuthStatus,
   listChatConversations,
   listChatMessages,
   listChatParticipants,
@@ -61,5 +62,11 @@ describe('chatApi', () => {
       { body: 'hello', assetIds: ['asset-1'] },
     )
     expect(apiClient.patch).toHaveBeenCalledWith('/api/chat/conversations/conversation-1/read')
+  })
+
+  it('reads the current user Teams OAuth status from the restricted endpoint', async () => {
+    await getTeamsOAuthStatus()
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/integration/teams/oauth/status')
   })
 })

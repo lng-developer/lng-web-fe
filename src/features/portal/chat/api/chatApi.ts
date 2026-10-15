@@ -133,7 +133,7 @@ export const syncTeamsChat = async (conversationId: string) =>
   )
 
 export const getTeamsOAuthStatus = async () =>
-  unwrap<TeamsOAuthStatus>(await apiClient.get('/api/integration/teams/status'))
+  unwrap<TeamsOAuthStatus>(await apiClient.get('/api/integration/teams/oauth/status'))
 
 export const startTeamsOAuth = async () =>
   unwrap<{ authorizationUrl: string }>(await apiClient.get('/api/integration/teams/oauth/start'))
