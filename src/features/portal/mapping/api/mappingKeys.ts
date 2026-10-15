@@ -17,6 +17,8 @@ export const mappingKeys = {
   candidates: (orderItemId: string, q: string) =>
     [...mappingKeys.all, 'candidates', orderItemId, q] as const,
   vendors: (q: string) => [...mappingKeys.all, 'manual-vendors', q] as const,
+  productSearch: (q: string, page: number) =>
+    [...mappingKeys.all, 'manual-product-search', q, page] as const,
   vendorProducts: (
     vendorId: string,
     productTypeGroupId = '',

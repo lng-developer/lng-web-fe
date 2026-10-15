@@ -45,8 +45,7 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/mapping/api/mappingApi')>()
   return {
     ...actual,
-    searchMappingVendors: vi.fn(),
-    listMappingVendorProducts: vi.fn(),
+    searchMappingProducts: vi.fn(),
     getMappingVendorProductOptions: vi.fn(),
     selectFulfillmentCandidate: vi.fn(),
   }
@@ -54,8 +53,7 @@ vi.mock('@/features/portal/mapping/api/mappingApi', async (importOriginal) => {
 
 import {
   getMappingVendorProductOptions,
-  listMappingVendorProducts,
-  searchMappingVendors,
+  searchMappingProducts,
   selectFulfillmentCandidate,
 } from '@/features/portal/mapping/api/mappingApi'
 import {
@@ -180,14 +178,13 @@ describe('OrderInlinePanel', () => {
     vi.clearAllMocks()
     vi.mocked(recheckMapping).mockResolvedValue({ status: 'BLOCKED' })
     vi.mocked(recheckProduction).mockResolvedValue({ status: 'BLOCKED', blockers: ['OPEN_CASE'] })
-    vi.mocked(searchMappingVendors).mockResolvedValue({
-      items: [{ id: 'vendor-1', name: 'Vendor One' }],
-      hasMore: false,
+    vi.mocked(searchMappingProducts).mockResolvedValue({
+      items: [
+        { id: 'product-1', name: 'Product One', vendor: { id: 'vendor-1', name: 'Vendor One' } },
+        { id: 'product-2', name: 'Product Two', vendor: { id: 'vendor-2', name: 'Vendor Two' } },
+      ],
+      pagination: { total: 2, page: 1, limit: 20 },
     })
-    vi.mocked(listMappingVendorProducts).mockResolvedValue([
-      { id: 'product-1', name: 'Product One' },
-      { id: 'product-2', name: 'Product Two' },
-    ])
     vi.mocked(getMappingVendorProductOptions).mockResolvedValue({
       dimensions: { hasSize: true, hasColor: true },
       options: { sizes: ['M'], colors: ['Black'] },
@@ -849,18 +846,10 @@ describe('OrderInlinePanel', () => {
     expect(screen.getByLabelText('orders.fields.size')).toBeDisabled()
     expect(screen.getByLabelText('orders.fields.color')).toBeDisabled()
 
-    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
-    fireEvent.click(await screen.findByText('Vendor One'))
-    await waitFor(() =>
-      expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
-        productTypeGroupId: 'group-1',
-        includeDifferentProductType: true,
-      }),
-    )
     expect(screen.queryByRole('button', { name: 'orders.actions.apply' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('orders.fields.product')).toBeEnabled()
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
-    fireEvent.click(await screen.findByText('Product One'))
+    fireEvent.click(await screen.findByText('Product One · Vendor One'))
     await waitFor(() => expect(getMappingVendorProductOptions).toHaveBeenCalledWith('product-1'))
     await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeEnabled())
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
@@ -899,10 +888,8 @@ describe('OrderInlinePanel', () => {
     })
     renderPanel()
 
-    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
-    fireEvent.click(await screen.findByText('Vendor One'))
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
-    fireEvent.click(await screen.findByText('Product One'))
+    fireEvent.click(await screen.findByText('Product One · Vendor One'))
     await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeEnabled())
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
     fireEvent.click((await screen.findAllByText('M')).at(-1)!)
@@ -929,10 +916,8 @@ describe('OrderInlinePanel', () => {
     })
     renderPanel()
 
-    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
-    fireEvent.click(await screen.findByText('Vendor One'))
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
-    fireEvent.click(await screen.findByText('Product One'))
+    fireEvent.click(await screen.findByText('Product One · Vendor One'))
     await waitFor(() => expect(screen.getByLabelText('orders.fields.size')).toBeEnabled())
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.size'))
     fireEvent.click((await screen.findAllByText('72x36')).at(-1)!)
@@ -958,10 +943,8 @@ describe('OrderInlinePanel', () => {
     })
     renderPanel()
 
-    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
-    fireEvent.click(await screen.findByText('Vendor One'))
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
-    fireEvent.click(await screen.findByText('Product One'))
+    fireEvent.click(await screen.findByText('Product One · Vendor One'))
     await waitFor(() => expect(screen.getByLabelText('orders.fields.color')).toBeEnabled())
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.color'))
     fireEvent.click((await screen.findAllByText('Old Gold')).at(-1)!)
@@ -971,15 +954,15 @@ describe('OrderInlinePanel', () => {
   })
 
   it('runs candidate lookup when fulfillment selection opens', async () => {
-    vi.mocked(searchMappingVendors).mockRejectedValueOnce(new Error('Forbidden'))
+    vi.mocked(searchMappingProducts).mockRejectedValueOnce(new Error('Forbidden'))
     renderPanel()
 
-    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
+    fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
 
-    await waitFor(() => expect(searchMappingVendors).toHaveBeenCalledWith({ q: '', limit: 20 }))
+    await waitFor(() => expect(searchMappingProducts).toHaveBeenCalledWith({ q: '', page: 1, limit: 20 }))
   })
 
-  it('loads products for the listing variant product type after choosing a vendor', async () => {
+  it('allows browsing products across vendors without a vendor selection', async () => {
     renderPanel(true, undefined, {
       ...row,
       items: [
@@ -996,32 +979,24 @@ describe('OrderInlinePanel', () => {
       ],
     })
 
-    fireEvent.mouseDown(screen.getByLabelText('orders.fields.vendor'))
-    fireEvent.click(await screen.findByText('Vendor One'))
-    await waitFor(() =>
-      expect(listMappingVendorProducts).toHaveBeenCalledWith('vendor-1', {
-        productTypeGroupId: 'group-1',
-        includeDifferentProductType: true,
-      }),
-    )
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
 
-    expect(await screen.findByText('Product Two')).toBeInTheDocument()
+    expect(await screen.findByText('Product Two · Vendor Two')).toBeInTheDocument()
   })
 
-  it('debounces manual vendor search requests', async () => {
+  it('debounces manual product search requests', async () => {
     renderPanel()
-    const vendor = screen.getByLabelText('orders.fields.vendor')
+    const vendor = screen.getByLabelText('orders.fields.product')
     fireEvent.mouseDown(vendor)
-    await waitFor(() => expect(searchMappingVendors).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(searchMappingProducts).toHaveBeenCalledTimes(1))
 
     fireEvent.change(vendor, { target: { value: 'm' } })
     fireEvent.change(vendor, { target: { value: 'mango' } })
     fireEvent.change(vendor, { target: { value: 'mango tee' } })
 
-    expect(searchMappingVendors).toHaveBeenCalledTimes(1)
-    await waitFor(() => expect(searchMappingVendors).toHaveBeenCalledTimes(2))
-    expect(searchMappingVendors).toHaveBeenLastCalledWith({ q: 'mango tee', limit: 20 })
+    expect(searchMappingProducts).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(searchMappingProducts).toHaveBeenCalledTimes(2))
+    expect(searchMappingProducts).toHaveBeenLastCalledWith({ q: 'mango tee', page: 1, limit: 20 })
   })
 
   it('hides the Show 0 more button when no customization values are hidden', () => {
