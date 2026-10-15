@@ -4,12 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/chat/api/chatApi', () => ({
   createConversation: vi.fn(),
+  getTeamsOAuthStatus: vi
+    .fn()
+    .mockResolvedValue({ enabled: true, userLinked: false, grantStatus: 'NOT_CONNECTED' }),
   listChatConversations: vi.fn(),
   listChatMessages: vi.fn(),
   listChatParticipants: vi.fn(),
   sendChatMessage: vi.fn(),
   markChatConversationRead: vi.fn().mockResolvedValue({}),
-  getMsGraphToken: vi.fn().mockResolvedValue(null),
+  startTeamsOAuth: vi.fn(),
   syncTeamsChat: vi.fn().mockResolvedValue({ status: 'SYNCED', syncedCount: 0 }),
 }))
 vi.mock('@/features/portal/media/api/mediaApi', () => ({ uploadMediaAsset: vi.fn() }))
@@ -29,9 +32,11 @@ import {
   listChatMessages,
   listChatParticipants,
   sendChatMessage,
+  getTeamsOAuthStatus,
 } from '@/features/portal/chat/api/chatApi'
 import { ChatWorkspacePage } from '@/features/portal/chat/pages/ChatWorkspacePage'
 import { createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
+import { setAccount } from '@/shared/auth/session'
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -59,8 +64,14 @@ describe('ChatWorkspacePage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    setAccount({ id: 'account-1', email: 'staff@lngwork.co' })
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
     vi.mocked(createChatSocket).mockReturnValue(null)
+    vi.mocked(getTeamsOAuthStatus).mockResolvedValue({
+      enabled: true,
+      userLinked: false,
+      grantStatus: 'NOT_CONNECTED',
+    })
     vi.mocked(listChatConversations).mockResolvedValue({
       items: [
         {
@@ -257,6 +268,27 @@ describe('ChatWorkspacePage', () => {
     renderPage()
 
     expect(screen.queryByRole('button', { name: 'New group' })).not.toBeInTheDocument()
+  })
+
+  it('shows Teams connection from the signed-in user OAuth status', async () => {
+    const page = await listChatConversations()
+    vi.mocked(listChatConversations).mockResolvedValue({
+      ...page,
+      items: [{ ...page.items[0], participantAccountIds: ['account-1', 'account-2'] }],
+    })
+    vi.mocked(listChatParticipants).mockResolvedValue({
+      items: [
+        { id: 'account-2', email: 'designer@lngwork.co', status: 'active', presence: 'ONLINE' },
+      ],
+    })
+    vi.mocked(getTeamsOAuthStatus).mockResolvedValue({
+      enabled: true,
+      userLinked: true,
+      grantStatus: 'CONNECTED',
+    })
+    renderPage()
+
+    expect(await screen.findByText('Teams Connected')).toBeVisible()
   })
 
   it('hides empty conversations and people without any messages', async () => {

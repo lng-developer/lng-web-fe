@@ -79,7 +79,12 @@ export type SendChatMessageInput = {
   replyToMessageId?: string | null
   body: string
   assetIds: string[]
-  msGraphToken?: string | null
+}
+
+export type TeamsOAuthStatus = {
+  enabled: boolean
+  userLinked: boolean
+  grantStatus: 'CONNECTED' | 'REAUTH_REQUIRED' | 'NOT_CONNECTED'
 }
 
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -109,36 +114,16 @@ export const listChatMessages = async (conversationId: string, params: Query = {
     }),
   )
 
-import { getMsalInstance } from '@/features/auth/microsoft/msalClient'
-
-export async function getMsGraphToken(): Promise<string | null> {
-  try {
-    const pca = await getMsalInstance()
-    const accounts = pca.getAllAccounts()
-    if (!accounts.length) return null
-    const result = await pca.acquireTokenSilent({
-      account: accounts[0],
-      scopes: ['ChatMessage.Send', 'Chat.ReadWrite'],
-    })
-    return result.accessToken || null
-  } catch {
-    return null
-  }
-}
-
 export const sendChatMessage = async (conversationId: string, input: SendChatMessageInput) => {
-  const msToken = input.msGraphToken || (await getMsGraphToken())
   const payload = {
     ...(input.replyToMessageId ? { replyToMessageId: input.replyToMessageId } : {}),
     body: input.body,
     assetIds: input.assetIds,
-    ...(msToken ? { msGraphToken: msToken } : {}),
   }
-  const response = msToken
-    ? await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, payload, {
-        headers: { 'x-ms-graph-token': msToken },
-      })
-    : await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, payload)
+  const response = await apiClient.post(
+    `/api/chat/conversations/${conversationId}/messages`,
+    payload,
+  )
   return unwrap<ChatMessage>(response)
 }
 
@@ -146,6 +131,12 @@ export const syncTeamsChat = async (conversationId: string) =>
   unwrap<{ status: string; syncedCount: number; teamsChatId: string }>(
     await apiClient.post(`/api/integration/teams/sync/${conversationId}`),
   )
+
+export const getTeamsOAuthStatus = async () =>
+  unwrap<TeamsOAuthStatus>(await apiClient.get('/api/integration/teams/status'))
+
+export const startTeamsOAuth = async () =>
+  unwrap<{ authorizationUrl: string }>(await apiClient.get('/api/integration/teams/oauth/start'))
 
 export const markChatConversationRead = async (conversationId: string) =>
   unwrap<{ conversationId: string; accountId: string; lastReadAt: string }>(

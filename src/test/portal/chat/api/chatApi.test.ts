@@ -18,13 +18,12 @@ describe('chatApi', () => {
       body: 'Reply',
       assetIds: [],
       replyToMessageId: 'm1',
-      msGraphToken: 'test-token',
     })
-    expect(apiClient.post).toHaveBeenCalledWith(
-      '/api/chat/conversations/c1/messages',
-      { body: 'Reply', assetIds: [], replyToMessageId: 'm1', msGraphToken: 'test-token' },
-      { headers: { 'x-ms-graph-token': 'test-token' } },
-    )
+    expect(apiClient.post).toHaveBeenCalledWith('/api/chat/conversations/c1/messages', {
+      body: 'Reply',
+      assetIds: [],
+      replyToMessageId: 'm1',
+    })
   })
   beforeEach(() => {
     vi.clearAllMocks()

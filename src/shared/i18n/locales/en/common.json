@@ -4727,6 +4727,7 @@
     "yesterday": "Yesterday",
     "enterToSend": "Press Enter to send, Shift + Enter for new line",
     "teamsConnected": "Teams Connected",
+    "connectTeams": "Connect Teams",
     "syncTeams": "Sync",
     "syncTeamsTooltip": "Sync new messages from Microsoft Teams",
     "directChat": "Direct Chat",

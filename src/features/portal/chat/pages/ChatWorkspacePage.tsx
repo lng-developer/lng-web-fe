@@ -31,10 +31,11 @@ import type {
 } from '@/features/portal/chat/api/chatApi'
 import {
   createConversation,
-  getMsGraphToken,
+  getTeamsOAuthStatus,
   listChatParticipants,
   markChatConversationRead,
   sendChatMessage,
+  startTeamsOAuth,
 } from '@/features/portal/chat/api/chatApi'
 import {
   chatConversationOptions,
@@ -218,6 +219,10 @@ export function ChatWorkspacePage() {
     queryKey: ['chat-participants'],
     queryFn: () => listChatParticipants({ limit: 100 }),
   })
+  const teamsOAuth = useQuery({
+    queryKey: ['teams-oauth-status'],
+    queryFn: getTeamsOAuthStatus,
+  })
   const participantById = useMemo(
     () => new Map((participants.data?.items ?? []).map((p) => [p.id, p])),
     [participants.data?.items],
@@ -303,17 +308,15 @@ export function ChatWorkspacePage() {
     mutationFn: async () => {
       if (!activeConversationId) throw new Error('No conversation selected')
       const body = draft.trim()
-      const [uploadedAssets, msGraphToken] = await Promise.all([
-        Promise.all(files.map((file) => uploadMediaAsset(file.originFileObj as File))),
-        getMsGraphToken(),
-      ])
+      const uploadedAssets = await Promise.all(
+        files.map((file) => uploadMediaAsset(file.originFileObj as File)),
+      )
       const input = {
         ...(replyTo?.conversationId === activeConversationId
           ? { replyToMessageId: replyTo.id }
           : {}),
         body,
         assetIds: uploadedAssets.map(({ id }) => id),
-        ...(msGraphToken ? { msGraphToken } : {}),
       }
       return socketRef.current
         ? sendSocketMessage(socketRef.current, activeConversationId, input)
@@ -393,6 +396,20 @@ export function ChatWorkspacePage() {
   const otherInitials = selectedConversation
     ? conversationInitials(selectedConversation, participantById, account?.id)
     : ''
+  const canConnectTeams =
+    selectedConversation?.type === 'DIRECT' &&
+    Boolean(otherParticipant?.email.toLowerCase().endsWith('@lngwork.co')) &&
+    teamsOAuth.data?.enabled
+  const connectTeams = async () => {
+    const popup = window.open('', 'teams-oauth', 'popup,width=560,height=720')
+    try {
+      const { authorizationUrl } = await startTeamsOAuth()
+      if (popup) popup.location.assign(authorizationUrl)
+      else window.location.assign(authorizationUrl)
+    } catch {
+      popup?.close()
+    }
+  }
 
   useTeamsChatSync(
     activeConversationId,
@@ -662,10 +679,18 @@ export function ChatWorkspacePage() {
                           <span>{otherParticipant.email}</span>
                         </>
                       ) : null}
-                      {otherParticipant?.email?.includes('@lngwork.co') ? (
+                      {canConnectTeams && teamsOAuth.data?.grantStatus === 'CONNECTED' ? (
                         <span className={styles.teamsTag}>
                           <TeamOutlined /> {t('chat.teamsConnected')}
                         </span>
+                      ) : canConnectTeams ? (
+                        <Button
+                          size="small"
+                          onClick={() => void connectTeams()}
+                          loading={teamsOAuth.isFetching}
+                        >
+                          {t('chat.connectTeams')}
+                        </Button>
                       ) : null}
                     </>
                   ) : (
