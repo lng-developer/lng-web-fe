@@ -2,7 +2,11 @@ import { ApiResponse, Paginated } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
 export type MappingRuleType =
-  'skuNormalize' | 'skuConfig' | 'semanticRules' | 'valueAliases' | 'vendorRouting'
+  | 'skuNormalize'
+  | 'skuConfig'
+  | 'semanticRules'
+  | 'valueAliases'
+  | 'vendorRouting'
 export type MappingContextParams = {
   shopId?: string
   salesChannelCode?: string
@@ -117,7 +121,11 @@ export type UnmatchedMappingItem = {
   blockingReasons: string[]
   recommendedFixTypes?: string[]
   blockedStage?:
-    'SKU_CLEANUP' | 'PRODUCT_MAPPING' | 'INPUT_SEMANTICS' | 'VALUE_ALIASES' | 'VENDOR_ROUTING'
+    | 'SKU_CLEANUP'
+    | 'PRODUCT_MAPPING'
+    | 'INPUT_SEMANTICS'
+    | 'VALUE_ALIASES'
+    | 'VENDOR_ROUTING'
   skuNormalization?: MappingPreview['skuNormalization']
   skuMapping?: MappingPreview['skuMapping']
   normalizedInputs?: NormalizedInput[]
@@ -168,7 +176,12 @@ export type CandidateResult = {
 }
 export type CandidateSelection = { vendorProductId: string; vendorCostCenterId: string }
 export type MappingVendor = { id: string; code?: string | null; name?: string | null }
-export type MappingVendorProduct = { id: string; code?: string | null; name?: string | null }
+export type MappingVendorProduct = {
+  id: string
+  code?: string | null
+  name?: string | null
+  vendor?: MappingVendor | null
+}
 export type MappingCostCenterOption = {
   id: string
   code?: string | null
@@ -323,6 +336,13 @@ export async function listMappingVendorProducts(
 ) {
   return unwrap<MappingVendorProduct[]>(
     await apiClient.get(`/api/mapping/vendors/${vendorId}/products`, { params }),
+  )
+}
+export async function searchMappingProducts(
+  params: { q?: string; page?: number; limit?: number } = {},
+) {
+  return unwrap<Paginated<MappingVendorProduct>>(
+    await apiClient.get('/api/mapping/vendor-products', { params: compact(params) }),
   )
 }
 export async function getMappingVendorProductOptions(

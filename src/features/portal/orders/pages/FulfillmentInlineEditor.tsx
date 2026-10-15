@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Descriptions, Flex, Select, Typography } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, Descriptions, Flex, Pagination, Select, Typography } from 'antd'
 
 import {
   getMappingVendorProductOptions,
-  listMappingVendorProducts,
   type MappingCostCenterOption,
-  searchMappingVendors,
+  type MappingVendorProduct,
+  searchMappingProducts,
   selectFulfillmentCandidate,
 } from '@/features/portal/mapping/api/mappingApi'
 import { mappingKeys } from '@/features/portal/mapping/api/mappingKeys'
@@ -34,31 +34,28 @@ export function FulfillmentInlineEditor({
   const toast = useFeedbackToast()
   const queryClient = useQueryClient()
   const [active, setActive] = useState(false)
-  const [vendorId, setVendorId] = useState(item.mapping?.vendor?.id ?? undefined)
+  const [selectedProduct, setSelectedProduct] = useState<MappingVendorProduct | undefined>(
+    item.mapping?.vendorProduct?.id
+      ? {
+          id: item.mapping.vendorProduct.id,
+          name: item.mapping.vendorProduct.name,
+          vendor: item.mapping.vendor?.id
+            ? { id: item.mapping.vendor.id, name: item.mapping.vendor.name }
+            : undefined,
+        }
+      : undefined,
+  )
   const [productId, setProductId] = useState(item.mapping?.vendorProduct?.id ?? undefined)
-  const [size, setSize] = useState(item.mapping?.vendorCostCenter?.size ?? undefined)
-  const [color, setColor] = useState(item.mapping?.vendorCostCenter?.color ?? undefined)
+  const [selectedSize, setSize] = useState(item.mapping?.vendorCostCenter?.size ?? undefined)
+  const [selectedColor, setColor] = useState(item.mapping?.vendorCostCenter?.color ?? undefined)
   const [costCenterId, setCostCenterId] = useState<string>()
-  const [vendorSearchDraft, setVendorSearchDraft] = useState('')
-  const vendorSearch = useDebouncedValue(vendorSearchDraft, 200)
-  const productTypeGroupId = item.mapping?.listingVariant?.productTypeGroup?.id ?? undefined
-
-  const vendors = useQuery({
-    queryKey: mappingKeys.vendors(vendorSearch),
-    queryFn: () => searchMappingVendors({ q: vendorSearch, limit: 20 }),
-    enabled: active && canWrite,
-    ...modalQueryOptions,
-    staleTime: 5 * 60_000,
-    retry: false,
-  })
+  const [productSearchDraft, setProductSearchDraft] = useState('')
+  const productSearch = useDebouncedValue(productSearchDraft, 200)
+  const [page, setPage] = useState(1)
   const products = useQuery({
-    queryKey: mappingKeys.vendorProducts(vendorId ?? '', productTypeGroupId ?? '', true),
-    queryFn: () =>
-      listMappingVendorProducts(vendorId!, {
-        productTypeGroupId,
-        includeDifferentProductType: true,
-      }),
-    enabled: active && canWrite && Boolean(vendorId),
+    queryKey: mappingKeys.productSearch(productSearch, page),
+    queryFn: () => searchMappingProducts({ q: productSearch, page, limit: 20 }),
+    enabled: active && canWrite,
     ...modalQueryOptions,
     staleTime: 5 * 60_000,
     retry: false,
@@ -69,12 +66,21 @@ export function FulfillmentInlineEditor({
     enabled: active && canWrite && Boolean(productId),
     ...modalQueryOptions,
     staleTime: 5 * 60_000,
-    placeholderData: keepPreviousData,
     retry: false,
   })
 
   const dimensions = productOptions.data?.dimensions
   const allCandidates = productOptions.data?.allCandidates ?? productOptions.data?.candidates ?? []
+  const size =
+    selectedSize ??
+    (productOptions.data?.options.sizes.length === 1
+      ? productOptions.data.options.sizes[0]
+      : undefined)
+  const color =
+    selectedColor ??
+    (productOptions.data?.options.colors.length === 1
+      ? productOptions.data.options.colors[0]
+      : undefined)
   const candidates = allCandidates.filter(
     (candidate) => (!size || candidate.size === size) && (!color || candidate.color === color),
   )
@@ -89,7 +95,11 @@ export function FulfillmentInlineEditor({
       (candidates.length === 1 ? candidates[0] : undefined))
     : undefined
   const hasProductSelected = Boolean(productId)
-  const canApply = hasProductSelected && Boolean(selectedCandidate)
+  const canApply =
+    hasProductSelected &&
+    Boolean(selectedCandidate) &&
+    !productOptions.isFetching &&
+    !productOptions.isError
 
   const save = useMutation({
     mutationFn: (candidate: MappingCostCenterOption) =>
@@ -112,25 +122,15 @@ export function FulfillmentInlineEditor({
     onOpenChange: (open: boolean) => open && setActive(true),
   }
   const notSet = t('orders.fields.notSet')
-  const error = vendors.error || products.error || productOptions.error
-  const vendorOptions = unique([
-    ...(item.mapping?.vendor?.id
-      ? [{ value: item.mapping.vendor.id, label: item.mapping.vendor.name || '-' }]
-      : []),
-    ...(vendors.data?.items ?? []).map((vendor) => ({
-      value: vendor.id,
-      label: vendor.name || vendor.code || '—',
-    })),
-  ])
-  const productSelectOptions = unique([
-    ...(item.mapping?.vendorProduct?.id
-      ? [{ value: item.mapping.vendorProduct.id, label: item.mapping.vendorProduct.name || '-' }]
-      : []),
-    ...(products.data ?? []).map((product) => ({
-      value: product.id,
-      label: product.name || product.code || '—',
-    })),
-  ])
+  const error = products.error || productOptions.error
+  const productSelectOptions = unique(
+    [...(selectedProduct ? [selectedProduct] : []), ...(products.data?.items ?? [])].map(
+      (product) => ({
+        value: product.id,
+        label: `${product.name || product.code || '—'} · ${product.vendor?.name || product.vendor?.code || '—'}`,
+      }),
+    ),
+  )
 
   if (!canWrite) {
     return (
@@ -174,29 +174,7 @@ export function FulfillmentInlineEditor({
           {
             key: 'vendor',
             label: t('orders.fields.vendor'),
-            children: (
-              <Select
-                {...common}
-                showSearch
-                filterOption={false}
-                aria-label={t('orders.fields.vendor')}
-                placeholder={item.mapping?.vendor?.name || notSet}
-                options={vendorOptions}
-                value={vendorId}
-                loading={vendors.isFetching}
-                notFoundContent={
-                  vendors.isError ? normalizeApiError(vendors.error).message : undefined
-                }
-                onSearch={setVendorSearchDraft}
-                onChange={(nextVendorId) => {
-                  setVendorId(nextVendorId)
-                  setProductId(undefined)
-                  setSize(undefined)
-                  setColor(undefined)
-                  setCostCenterId(undefined)
-                }}
-              />
-            ),
+            children: selectedProduct?.vendor?.name || notSet,
           },
           {
             key: 'product',
@@ -205,14 +183,37 @@ export function FulfillmentInlineEditor({
               <Select
                 {...common}
                 showSearch
-                optionFilterProp="label"
+                filterOption={false}
+                onSearch={(value) => {
+                  setProductSearchDraft(value)
+                  setPage(1)
+                }}
                 aria-label={t('orders.fields.product')}
-                disabled={!vendorId}
+                disabled={save.isPending}
                 placeholder={item.mapping?.vendorProduct?.name || notSet}
                 options={productSelectOptions}
                 value={productId}
                 loading={products.isFetching}
+                popupRender={(menu) => (
+                  <>
+                    {menu}
+                    <Pagination
+                      size="small"
+                      simple
+                      current={page}
+                      pageSize={20}
+                      total={products.data?.pagination.total ?? 0}
+                      hideOnSinglePage
+                      showSizeChanger={false}
+                      onChange={setPage}
+                    />
+                  </>
+                )}
                 onChange={(nextProductId) => {
+                  setSelectedProduct(
+                    products.data?.items.find((product) => product.id === nextProductId) ??
+                      selectedProduct,
+                  )
                   setProductId(nextProductId)
                   setSize(undefined)
                   setColor(undefined)
@@ -228,8 +229,9 @@ export function FulfillmentInlineEditor({
               <Select
                 {...common}
                 aria-label={t('orders.fields.size')}
+                allowClear
                 disabled={!productId || !dimensions?.hasSize}
-                placeholder={item.mapping?.vendorCostCenter?.size || notSet}
+                placeholder={notSet}
                 options={unique(
                   sizeOptions.map((candidate) => ({
                     value: candidate.size ?? '',
@@ -252,8 +254,9 @@ export function FulfillmentInlineEditor({
               <Select
                 {...common}
                 aria-label={t('orders.fields.color')}
+                allowClear
                 disabled={!productId || !dimensions?.hasColor}
-                placeholder={item.mapping?.vendorCostCenter?.color || notSet}
+                placeholder={notSet}
                 options={unique(
                   colorOptions.map((candidate) => ({
                     value: candidate.color ?? '',
@@ -298,7 +301,7 @@ export function FulfillmentInlineEditor({
       {canApply && selectedCandidate ? (
         <Flex align="center" justify="space-between" gap={8}>
           <Typography.Text type="secondary">
-            {t('orders.fields.totalCost')}:{' '}
+            {t('orders.fields.baseCost')}:{' '}
             <Typography.Text strong>
               {formatMinorMoney(
                 selectedCandidate.totalCostAmount ?? selectedCandidate.baseCostAmount ?? 0,
