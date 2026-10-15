@@ -20,9 +20,13 @@ import {
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import {
+  conversationInitials,
   conversationTitle,
+  formatRelativeTime,
+  getInitials,
   matchesConversationSearch,
   matchesParticipantSearch,
+  messagePreviewText,
   participantLabel,
 } from './chatViewUtils'
 import { QuickChatBox } from './QuickChatBox'
@@ -31,41 +35,6 @@ import { QuickChatBubble } from './QuickChatBubble'
 import styles from './ChatShell.module.scss'
 
 const CHAT_PREVIEW_LIMIT = 8
-
-function formatRelativeTime(
-  value: string | null,
-  labels: { now: string; minute: string; hour: string; day: string },
-) {
-  if (!value) return ''
-  const minutes = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 60000))
-  if (minutes < 1) return labels.now
-  if (minutes < 60) return `${minutes}${labels.minute}`
-  const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${hours}${labels.hour}`
-  return `${Math.round(hours / 24)}${labels.day}`
-}
-
-function messagePreviewText(
-  conversation: ChatConversation,
-  participantById: Map<
-    string,
-    ReturnType<typeof participantLabel> extends string
-      ? import('@/features/portal/chat/api/chatApi').ChatParticipant
-      : never
-  >,
-  currentAccountId?: string,
-  emptyLabel = 'No messages yet',
-  ownLabel = 'You',
-) {
-  if (!conversation.lastMessagePreview) return emptyLabel
-  if (conversation.lastMessageSenderAccountId === currentAccountId) {
-    return `${ownLabel}: ${conversation.lastMessagePreview}`
-  }
-  const sender = conversation.lastMessageSenderAccountId
-    ? participantLabel(participantById.get(conversation.lastMessageSenderAccountId))
-    : ''
-  return sender ? `${sender}: ${conversation.lastMessagePreview}` : conversation.lastMessagePreview
-}
 
 type ChatShellProps = {
   account: CurrentAccount
@@ -79,29 +48,36 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
 
 function mergeRealtimeConversation(
   items: ChatConversation[],
-  conversation: ChatConversation,
+  conversation: ChatConversation | undefined,
   message: ChatMessage,
   currentAccountId: string,
   openConversationIds: string[],
   minimizedConversationIds: string[],
 ) {
-  const existing = items.find(({ id }) => id === conversation.id)
+  const convId = conversation?.id || message?.conversationId
+  const existing = items.find(({ id }) => id === convId)
+  const baseConv = conversation || existing
+  if (!baseConv) return items
+
   const alreadyApplied =
-    existing?.lastMessageAt === conversation.lastMessageAt &&
-    existing?.lastMessageSenderAccountId === conversation.lastMessageSenderAccountId &&
-    existing?.lastMessagePreview === conversation.lastMessagePreview
+    existing?.lastMessageAt === (conversation?.lastMessageAt || message?.createdAt) &&
+    existing?.lastMessageSenderAccountId ===
+      (conversation?.lastMessageSenderAccountId || message?.senderAccountId) &&
+    existing?.lastMessagePreview === (conversation?.lastMessagePreview || message?.body)
   const isActivelyOpen =
-    openConversationIds.includes(message.conversationId) &&
-    !minimizedConversationIds.includes(message.conversationId)
-  const shouldMarkUnread = message.senderAccountId !== currentAccountId && !isActivelyOpen
+    openConversationIds.includes(convId) && !minimizedConversationIds.includes(convId)
+  const shouldMarkUnread = message?.senderAccountId !== currentAccountId && !isActivelyOpen
   const unreadCount = shouldMarkUnread
     ? alreadyApplied
-      ? existing?.unreadCount || conversation.unreadCount || 1
-      : Math.max(existing?.unreadCount || 0, conversation.unreadCount || 0) + 1
+      ? existing?.unreadCount || baseConv.unreadCount || 1
+      : Math.max(existing?.unreadCount || 0, baseConv.unreadCount || 0) + 1
     : 0
 
   return upsertById(items, {
-    ...conversation,
+    ...baseConv,
+    lastMessageAt: message?.createdAt || baseConv.lastMessageAt,
+    lastMessagePreview: message?.body || baseConv.lastMessagePreview,
+    lastMessageSenderAccountId: message?.senderAccountId || baseConv.lastMessageSenderAccountId,
     unreadCount,
     hasUnreadFromOthers: shouldMarkUnread,
   })
@@ -355,7 +331,7 @@ export function ChatShell({ account }: ChatShellProps) {
     (conversation) =>
       conversation.hasUnreadFromOthers && !openExpandedIds.includes(conversation.id),
   )
-  const hasUnreadFromOthers = unreadCount > 0
+  const hasUnreadFromOthers = unreadConversations.length > 0 || unreadCount > 0
   const unreadConversation = unreadConversations[0] ?? null
 
   const openQuickChat = (conversation: ChatConversation, markRead = true) => {
@@ -438,73 +414,113 @@ export function ChatShell({ account }: ChatShellProps) {
       <div className={styles.chatPreviewList}>
         {filteredConversations.length > 0 || matchingOtherParticipants.length > 0 ? (
           <>
-            {filteredConversations.map((conversation) => (
-              <button
-                className={styles.chatPreviewItem}
-                key={conversation.id}
-                type="button"
-                onClick={() => openQuickChat(conversation)}
-              >
-                <Badge dot={conversation.hasUnreadFromOthers} offset={[-2, 40]}>
-                  <Avatar
-                    size={50}
-                    icon={conversation.type === 'DIRECT' ? <UserOutlined /> : <TeamOutlined />}
-                  />
-                </Badge>
-                <span className={styles.chatPreviewText}>
-                  <span className={styles.chatPreviewHeaderRow}>
-                    <strong>
-                      {conversationTitle(conversation, participantById, account.account.id)}
-                    </strong>
-                    {conversation.lastMessageAt ? (
-                      <span className={styles.chatPreviewTime}>
-                        {formatRelativeTime(conversation.lastMessageAt, timeLabels)}
-                      </span>
-                    ) : null}
+            {filteredConversations.map((conversation) => {
+              const initials = conversationInitials(
+                conversation,
+                participantById,
+                account.account.id,
+              )
+              return (
+                <button
+                  className={styles.chatPreviewItem}
+                  key={conversation.id}
+                  type="button"
+                  onClick={() => openQuickChat(conversation)}
+                >
+                  <Badge dot={conversation.hasUnreadFromOthers} offset={[-2, 40]}>
+                    <Avatar
+                      size={50}
+                      style={{
+                        backgroundColor: '#f1f5f9',
+                        color: '#334155',
+                        fontWeight: 600,
+                        fontSize: 16,
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {conversation.type === 'TEAM' ? (
+                        <TeamOutlined style={{ color: '#2563eb' }} />
+                      ) : initials ? (
+                        initials
+                      ) : (
+                        <UserOutlined style={{ color: '#64748b' }} />
+                      )}
+                    </Avatar>
+                  </Badge>
+                  <span className={styles.chatPreviewText}>
+                    <span className={styles.chatPreviewHeaderRow}>
+                      <strong>
+                        {conversationTitle(
+                          conversation,
+                          participantById,
+                          account.account.id,
+                          t('chat.deletedUser', 'Người dùng đã xóa'),
+                        )}
+                      </strong>
+                      {conversation.lastMessageAt ? (
+                        <span className={styles.chatPreviewTime}>
+                          {formatRelativeTime(conversation.lastMessageAt, timeLabels)}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className={styles.chatPreviewSnippet}>
+                      {messagePreviewText(
+                        conversation,
+                        participantById,
+                        account.account.id,
+                        t('chat.noMessages'),
+                        t('chat.you'),
+                      )}
+                    </span>
                   </span>
-                  <span className={styles.chatPreviewSnippet}>
-                    {messagePreviewText(
-                      conversation,
-                      participantById,
-                      account.account.id,
-                      t('chat.noMessages'),
-                      t('chat.you'),
-                    )}
-                  </span>
-                </span>
-              </button>
-            ))}
+                </button>
+              )
+            })}
             {matchingOtherParticipants.length > 0 ? (
               <>
                 {filteredConversations.length > 0 ? (
                   <div className={styles.chatPreviewSectionTitle}>{t('chat.people', 'People')}</div>
                 ) : null}
-                {matchingOtherParticipants.map((participant) => (
-                  <button
-                    className={styles.chatPreviewItem}
-                    key={participant.id}
-                    type="button"
-                    onClick={() => handleSelectParticipant(participant)}
-                  >
-                    <Badge
-                      status={participant.presence === 'ONLINE' ? 'success' : 'default'}
-                      offset={[-2, 40]}
-                      dot
+                {matchingOtherParticipants.map((participant) => {
+                  const pInitials = getInitials(participantLabel(participant))
+                  return (
+                    <button
+                      className={styles.chatPreviewItem}
+                      key={participant.id}
+                      type="button"
+                      onClick={() => handleSelectParticipant(participant)}
                     >
-                      <Avatar size={50} icon={<UserOutlined />} />
-                    </Badge>
-                    <span className={styles.chatPreviewText}>
-                      <span className={styles.chatPreviewHeaderRow}>
-                        <strong>{participantLabel(participant)}</strong>
+                      <Badge
+                        status={participant.presence === 'ONLINE' ? 'success' : 'default'}
+                        offset={[-2, 40]}
+                        dot
+                      >
+                        <Avatar
+                          size={50}
+                          style={{
+                            backgroundColor: '#f1f5f9',
+                            color: '#334155',
+                            fontWeight: 600,
+                            fontSize: 16,
+                            border: '1px solid #e2e8f0',
+                          }}
+                        >
+                          {pInitials || <UserOutlined style={{ color: '#64748b' }} />}
+                        </Avatar>
+                      </Badge>
+                      <span className={styles.chatPreviewText}>
+                        <span className={styles.chatPreviewHeaderRow}>
+                          <strong>{participantLabel(participant)}</strong>
+                        </span>
+                        <span className={styles.chatPreviewSnippet}>
+                          {participant.email ||
+                            participant.employeeCode ||
+                            t('chat.startConversation', 'Start a conversation')}
+                        </span>
                       </span>
-                      <span className={styles.chatPreviewSnippet}>
-                        {participant.email ||
-                          participant.employeeCode ||
-                          t('chat.startConversation', 'Start a conversation')}
-                      </span>
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </>
             ) : null}
           </>

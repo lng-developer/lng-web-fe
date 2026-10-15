@@ -18,6 +18,7 @@ import { Button, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { DateRangePicker, FeedbackAlert, SectionCard } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
@@ -60,7 +61,7 @@ export function OperationsDashboardPage() {
   }, [loadOperationalHealth])
 
   if (!value.canViewDashboard) {
-    return <FeedbackAlert type="info" title={t('foundation.portal.noPermission')} />
+    return <AccessDeniedResult />
   }
 
   const handleAddProduct = () => {
@@ -384,260 +385,265 @@ export function OperationsDashboardPage() {
       {value.canReports ? (
         <div ref={operationalHealthRef}>
           <SectionCard
-          title={t('foundation.portalDashboard.operationalHealth')}
-          extra={
-            <div className={styles.healthStatusHeaderExtra}>
-              {value.operationalIssues.length > 0 || value.vendorFailures.length > 0 ? (
-                <span className={styles.healthStatusBadgeWarning}>
-                  <span className={styles.statusDotWarning} />
-                  {t('foundation.portalDashboard.tasksNeedAttention', {
-                    count:
-                      value.operationalIssues.reduce((s, i) => s + i.count, 0) +
-                      value.vendorFailures.reduce((s, v) => s + v.failedCount, 0),
-                    defaultValue: `${
-                      value.operationalIssues.reduce((s, i) => s + i.count, 0) +
-                      value.vendorFailures.reduce((s, v) => s + v.failedCount, 0)
-                    } tasks need attention`,
-                  })}
-                </span>
-              ) : (
-                <span className={styles.healthStatusBadgeSuccess}>
-                  <span className={styles.statusDotSuccess} />
-                  {t('foundation.portalDashboard.systemStable', { defaultValue: 'System stable' })}
-                </span>
-              )}
-            </div>
-          }
-        >
-          {(() => {
-            const mappingIssue = value.operationalIssues.find((i) => i.key === 'mapping')
-            const productionIssue = value.operationalIssues.find((i) => i.key === 'production')
-            const otherIssues = value.operationalIssues.filter(
-              (i) => i.key !== 'mapping' && i.key !== 'production',
-            )
-            const totalVendorFailures = value.vendorFailures.reduce(
-              (sum, v) => sum + (v.failedCount || 0),
-              0,
-            )
+            title={t('foundation.portalDashboard.operationalHealth')}
+            extra={
+              <div className={styles.healthStatusHeaderExtra}>
+                {value.operationalIssues.length > 0 || value.vendorFailures.length > 0 ? (
+                  <span className={styles.healthStatusBadgeWarning}>
+                    <span className={styles.statusDotWarning} />
+                    {t('foundation.portalDashboard.tasksNeedAttention', {
+                      count:
+                        value.operationalIssues.reduce((s, i) => s + i.count, 0) +
+                        value.vendorFailures.reduce((s, v) => s + v.failedCount, 0),
+                      defaultValue: `${
+                        value.operationalIssues.reduce((s, i) => s + i.count, 0) +
+                        value.vendorFailures.reduce((s, v) => s + v.failedCount, 0)
+                      } tasks need attention`,
+                    })}
+                  </span>
+                ) : (
+                  <span className={styles.healthStatusBadgeSuccess}>
+                    <span className={styles.statusDotSuccess} />
+                    {t('foundation.portalDashboard.systemStable', {
+                      defaultValue: 'System stable',
+                    })}
+                  </span>
+                )}
+              </div>
+            }
+          >
+            {(() => {
+              const mappingIssue = value.operationalIssues.find((i) => i.key === 'mapping')
+              const productionIssue = value.operationalIssues.find((i) => i.key === 'production')
+              const otherIssues = value.operationalIssues.filter(
+                (i) => i.key !== 'mapping' && i.key !== 'production',
+              )
+              const totalVendorFailures = value.vendorFailures.reduce(
+                (sum, v) => sum + (v.failedCount || 0),
+                0,
+              )
 
-            return (
-              <div className={styles.operationalDiagnosticsWrap}>
-                <div className={styles.diagnosticsGrid}>
-                  {/* Card 1: Needs Mapping */}
-                  <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_amber}`}>
-                    <div className={styles.diagCardHeader}>
-                      <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_amber}`}>
-                        <ApartmentOutlined />
-                      </div>
-                      {(mappingIssue?.count ?? 0) > 0 ? (
-                        <span className={styles.diagTagWarning}>
-                          {t('foundation.portalDashboard.needsAction', {
-                            defaultValue: 'Action required',
-                          })}
-                        </span>
-                      ) : (
-                        <span className={styles.diagTagSuccess}>
-                          {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
-                        </span>
-                      )}
-                    </div>
-                    <div className={styles.diagCardBody}>
-                      <strong className={styles.diagCardValue}>{mappingIssue?.count ?? 0}</strong>
-                      <span className={styles.diagCardTitle}>
-                        {t('foundation.portalDashboard.needsMapping')}
-                      </span>
-                      <p className={styles.diagCardDesc}>
-                        {(mappingIssue?.count ?? 0) > 0
-                          ? t('foundation.portalDashboard.needsMappingDesc', {
-                              defaultValue: 'New orders awaiting SKU mapping rules',
-                            })
-                          : t('foundation.portalDashboard.mappingCompleteDesc', {
-                              defaultValue: 'All orders mapped',
+              return (
+                <div className={styles.operationalDiagnosticsWrap}>
+                  <div className={styles.diagnosticsGrid}>
+                    {/* Card 1: Needs Mapping */}
+                    <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_amber}`}>
+                      <div className={styles.diagCardHeader}>
+                        <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_amber}`}>
+                          <ApartmentOutlined />
+                        </div>
+                        {(mappingIssue?.count ?? 0) > 0 ? (
+                          <span className={styles.diagTagWarning}>
+                            {t('foundation.portalDashboard.needsAction', {
+                              defaultValue: 'Action required',
                             })}
-                      </p>
-                    </div>
-                    <Link
-                      className={styles.diagCardLink}
-                      to={mappingIssue?.href || '/portal/mapping'}
-                    >
-                      <span>
-                        {t('foundation.portalDashboard.configureMapping', {
-                          defaultValue: 'Configure mapping',
-                        })}
-                      </span>
-                    </Link>
-                  </article>
-
-                  {/* Card 2: Needs Production */}
-                  <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_blue}`}>
-                    <div className={styles.diagCardHeader}>
-                      <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_blue}`}>
-                        <BuildOutlined />
+                          </span>
+                        ) : (
+                          <span className={styles.diagTagSuccess}>
+                            {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
+                          </span>
+                        )}
                       </div>
-                      {(productionIssue?.count ?? 0) > 0 ? (
-                        <span className={styles.diagTagInfo}>
-                          {t('foundation.portalDashboard.waitingProduction', {
-                            defaultValue: 'Awaiting production',
+                      <div className={styles.diagCardBody}>
+                        <strong className={styles.diagCardValue}>{mappingIssue?.count ?? 0}</strong>
+                        <span className={styles.diagCardTitle}>
+                          {t('foundation.portalDashboard.needsMapping')}
+                        </span>
+                        <p className={styles.diagCardDesc}>
+                          {(mappingIssue?.count ?? 0) > 0
+                            ? t('foundation.portalDashboard.needsMappingDesc', {
+                                defaultValue: 'New orders awaiting SKU mapping rules',
+                              })
+                            : t('foundation.portalDashboard.mappingCompleteDesc', {
+                                defaultValue: 'All orders mapped',
+                              })}
+                        </p>
+                      </div>
+                      <Link
+                        className={styles.diagCardLink}
+                        to={mappingIssue?.href || '/portal/mapping'}
+                      >
+                        <span>
+                          {t('foundation.portalDashboard.configureMapping', {
+                            defaultValue: 'Configure mapping',
                           })}
                         </span>
-                      ) : (
-                        <span className={styles.diagTagSuccess}>
-                          {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
-                        </span>
-                      )}
-                    </div>
-                    <div className={styles.diagCardBody}>
-                      <strong className={styles.diagCardValue}>
-                        {productionIssue?.count ?? 0}
-                      </strong>
-                      <span className={styles.diagCardTitle}>
-                        {t('foundation.portalDashboard.needsProduction')}
-                      </span>
-                      <p className={styles.diagCardDesc}>
-                        {(productionIssue?.count ?? 0) > 0
-                          ? t('foundation.portalDashboard.needsProductionDesc', {
-                              defaultValue: 'Ready for print workshop & processing',
-                            })
-                          : t('foundation.portalDashboard.noPendingProductionDesc', {
-                              defaultValue: 'No orders awaiting production approval',
+                      </Link>
+                    </article>
+
+                    {/* Card 2: Needs Production */}
+                    <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_blue}`}>
+                      <div className={styles.diagCardHeader}>
+                        <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_blue}`}>
+                          <BuildOutlined />
+                        </div>
+                        {(productionIssue?.count ?? 0) > 0 ? (
+                          <span className={styles.diagTagInfo}>
+                            {t('foundation.portalDashboard.waitingProduction', {
+                              defaultValue: 'Awaiting production',
                             })}
-                      </p>
-                    </div>
-                    <Link
-                      className={styles.diagCardLink}
-                      to={productionIssue?.href || '/portal/production'}
-                    >
-                      <span>
-                        {t('foundation.portalDashboard.openProduction', {
-                          defaultValue: 'Open production',
-                        })}
-                      </span>
-                    </Link>
-                  </article>
-
-                  {/* Card 3: Vendor Health */}
-                  <article
-                    className={`${styles.diagnosticCard} ${
-                      totalVendorFailures > 0
-                        ? styles.diagnosticCard_red
-                        : styles.diagnosticCard_green
-                    }`}
-                  >
-                    <div className={styles.diagCardHeader}>
-                      <div
-                        className={`${styles.diagIconWrap} ${
-                          totalVendorFailures > 0
-                            ? styles.diagIconWrap_red
-                            : styles.diagIconWrap_green
-                        }`}
-                      >
-                        {totalVendorFailures > 0 ? <ShopOutlined /> : <CheckCircleOutlined />}
+                          </span>
+                        ) : (
+                          <span className={styles.diagTagSuccess}>
+                            {t('foundation.portalDashboard.good', { defaultValue: 'Good' })}
+                          </span>
+                        )}
                       </div>
-                      {totalVendorFailures > 0 ? (
-                        <span className={styles.diagTagCritical}>
-                          {t('foundation.portalDashboard.vendorErrors', {
-                            count: totalVendorFailures,
-                            defaultValue: `${totalVendorFailures} errors`,
+                      <div className={styles.diagCardBody}>
+                        <strong className={styles.diagCardValue}>
+                          {productionIssue?.count ?? 0}
+                        </strong>
+                        <span className={styles.diagCardTitle}>
+                          {t('foundation.portalDashboard.needsProduction')}
+                        </span>
+                        <p className={styles.diagCardDesc}>
+                          {(productionIssue?.count ?? 0) > 0
+                            ? t('foundation.portalDashboard.needsProductionDesc', {
+                                defaultValue: 'Ready for print workshop & processing',
+                              })
+                            : t('foundation.portalDashboard.noPendingProductionDesc', {
+                                defaultValue: 'No orders awaiting production approval',
+                              })}
+                        </p>
+                      </div>
+                      <Link
+                        className={styles.diagCardLink}
+                        to={productionIssue?.href || '/portal/production'}
+                      >
+                        <span>
+                          {t('foundation.portalDashboard.openProduction', {
+                            defaultValue: 'Open production',
                           })}
                         </span>
-                      ) : (
-                        <span className={styles.diagTagSuccess}>100% OK</span>
-                      )}
-                    </div>
-                    <div className={styles.diagCardBody}>
-                      <strong
-                        className={
-                          totalVendorFailures > 0
-                            ? styles.diagCardValueCritical
-                            : styles.diagCardValueSuccess
-                        }
-                      >
-                        {totalVendorFailures > 0
-                          ? t('foundation.portalDashboard.vendorErrors', {
+                      </Link>
+                    </article>
+
+                    {/* Card 3: Vendor Health */}
+                    <article
+                      className={`${styles.diagnosticCard} ${
+                        totalVendorFailures > 0
+                          ? styles.diagnosticCard_red
+                          : styles.diagnosticCard_green
+                      }`}
+                    >
+                      <div className={styles.diagCardHeader}>
+                        <div
+                          className={`${styles.diagIconWrap} ${
+                            totalVendorFailures > 0
+                              ? styles.diagIconWrap_red
+                              : styles.diagIconWrap_green
+                          }`}
+                        >
+                          {totalVendorFailures > 0 ? <ShopOutlined /> : <CheckCircleOutlined />}
+                        </div>
+                        {totalVendorFailures > 0 ? (
+                          <span className={styles.diagTagCritical}>
+                            {t('foundation.portalDashboard.vendorErrors', {
                               count: totalVendorFailures,
                               defaultValue: `${totalVendorFailures} errors`,
-                            })
-                          : '100%'}
-                      </strong>
-                      <span className={styles.diagCardTitle}>
-                        {t('foundation.portalDashboard.vendorHealth')}
-                      </span>
-                      <p className={styles.diagCardDesc}>
-                        {totalVendorFailures > 0
-                          ? value.vendorFailures
-                              .map(
-                                (v) =>
-                                  `${v.vendorName || v.vendorCode || t('common.unknown')}: ${v.failedCount}`,
-                              )
-                              .join(', ')
-                          : t('foundation.portalDashboard.noVendorFailures')}
-                      </p>
-                    </div>
-                    <Link
-                      className={styles.diagCardLink}
-                      to={workspaceRouteLinks.vendorSubmissions}
-                    >
-                      <span>
-                        {t('foundation.portalDashboard.checkVendors', {
-                          defaultValue: 'Check vendors',
-                        })}
-                      </span>
-                    </Link>
-                  </article>
-
-                  {/* Card 4: Import & Sync Health */}
-                  <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_purple}`}>
-                    <div className={styles.diagCardHeader}>
-                      <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_purple}`}>
-                        <CloudSyncOutlined />
+                            })}
+                          </span>
+                        ) : (
+                          <span className={styles.diagTagSuccess}>100% OK</span>
+                        )}
                       </div>
-                      <span className={styles.diagTagSuccess}>
-                        {t('foundation.portalDashboard.connectedGood', {
-                          defaultValue: 'Connected',
-                        })}
-                      </span>
-                    </div>
-                    <div className={styles.diagCardBody}>
-                      <strong className={styles.diagCardValueSuccess}>
-                        {t('foundation.portalDashboard.sync', { defaultValue: 'Sync' })}
-                      </strong>
-                      <span className={styles.diagCardTitle}>
-                        {t('foundation.portalDashboard.integrationAndData', {
-                          defaultValue: 'Integrations & Data',
-                        })}
-                      </span>
-                      <p className={styles.diagCardDesc}>
-                        {t('foundation.portalDashboard.integrationDesc', {
-                          defaultValue: 'Sales channels, payment gateways & listings operational',
-                        })}
-                      </p>
-                    </div>
-                    <Link className={styles.importHealthLink} to={workspaceRouteLinks.integrations}>
-                      {t('foundation.portalDashboard.viewImportHealth')}
-                    </Link>
-                  </article>
-                </div>
+                      <div className={styles.diagCardBody}>
+                        <strong
+                          className={
+                            totalVendorFailures > 0
+                              ? styles.diagCardValueCritical
+                              : styles.diagCardValueSuccess
+                          }
+                        >
+                          {totalVendorFailures > 0
+                            ? t('foundation.portalDashboard.vendorErrors', {
+                                count: totalVendorFailures,
+                                defaultValue: `${totalVendorFailures} errors`,
+                              })
+                            : '100%'}
+                        </strong>
+                        <span className={styles.diagCardTitle}>
+                          {t('foundation.portalDashboard.vendorHealth')}
+                        </span>
+                        <p className={styles.diagCardDesc}>
+                          {totalVendorFailures > 0
+                            ? value.vendorFailures
+                                .map(
+                                  (v) =>
+                                    `${v.vendorName || v.vendorCode || t('common.unknown')}: ${v.failedCount}`,
+                                )
+                                .join(', ')
+                            : t('foundation.portalDashboard.noVendorFailures')}
+                        </p>
+                      </div>
+                      <Link
+                        className={styles.diagCardLink}
+                        to={workspaceRouteLinks.vendorSubmissions}
+                      >
+                        <span>
+                          {t('foundation.portalDashboard.checkVendors', {
+                            defaultValue: 'Check vendors',
+                          })}
+                        </span>
+                      </Link>
+                    </article>
 
-                {otherIssues.length > 0 ? (
-                  <div className={styles.otherIssuesSubBar}>
-                    <span className={styles.otherIssuesLabel}>
-                      {t('foundation.portalDashboard.otherIssuesLabel', {
-                        defaultValue: 'Other pending tasks:',
-                      })}
-                    </span>
-                    <div className={styles.otherIssuesList}>
-                      {otherIssues.map((issue) => (
-                        <Link key={issue.key} className={styles.operationalIssue} to={issue.href}>
-                          <span>{t(`foundation.portalDashboard.${issue.labelKey}`)}</span>
-                          <strong>{issue.count}</strong>
-                        </Link>
-                      ))}
-                    </div>
+                    {/* Card 4: Import & Sync Health */}
+                    <article className={`${styles.diagnosticCard} ${styles.diagnosticCard_purple}`}>
+                      <div className={styles.diagCardHeader}>
+                        <div className={`${styles.diagIconWrap} ${styles.diagIconWrap_purple}`}>
+                          <CloudSyncOutlined />
+                        </div>
+                        <span className={styles.diagTagSuccess}>
+                          {t('foundation.portalDashboard.connectedGood', {
+                            defaultValue: 'Connected',
+                          })}
+                        </span>
+                      </div>
+                      <div className={styles.diagCardBody}>
+                        <strong className={styles.diagCardValueSuccess}>
+                          {t('foundation.portalDashboard.sync', { defaultValue: 'Sync' })}
+                        </strong>
+                        <span className={styles.diagCardTitle}>
+                          {t('foundation.portalDashboard.integrationAndData', {
+                            defaultValue: 'Integrations & Data',
+                          })}
+                        </span>
+                        <p className={styles.diagCardDesc}>
+                          {t('foundation.portalDashboard.integrationDesc', {
+                            defaultValue: 'Sales channels, payment gateways & listings operational',
+                          })}
+                        </p>
+                      </div>
+                      <Link
+                        className={styles.importHealthLink}
+                        to={workspaceRouteLinks.integrations}
+                      >
+                        {t('foundation.portalDashboard.viewImportHealth')}
+                      </Link>
+                    </article>
                   </div>
-                ) : null}
-              </div>
-            )
-          })()}
+
+                  {otherIssues.length > 0 ? (
+                    <div className={styles.otherIssuesSubBar}>
+                      <span className={styles.otherIssuesLabel}>
+                        {t('foundation.portalDashboard.otherIssuesLabel', {
+                          defaultValue: 'Other pending tasks:',
+                        })}
+                      </span>
+                      <div className={styles.otherIssuesList}>
+                        {otherIssues.map((issue) => (
+                          <Link key={issue.key} className={styles.operationalIssue} to={issue.href}>
+                            <span>{t(`foundation.portalDashboard.${issue.labelKey}`)}</span>
+                            <strong>{issue.count}</strong>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })()}
           </SectionCard>
         </div>
       ) : null}

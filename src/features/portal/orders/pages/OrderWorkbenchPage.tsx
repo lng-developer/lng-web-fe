@@ -28,7 +28,6 @@ import { vendorKeys } from '@/features/portal/vendors/api/vendorKeys'
 import { canUseScopedPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
-  CopyableOrderId,
   DataFreshness,
   FeedbackAlert,
   FormattedDateTime,
@@ -263,9 +262,7 @@ export const OrderWorkbenchPage = () => {
         title: t('orders.columns.order'),
         width: '14%',
         render: (_, row) => (
-          <span className={styles.orderIdChip}>
-            <CopyableOrderId strong value={row.order.externalOrderId} />
-          </span>
+          <span className={styles.orderIdChip}>{row.order.externalOrderId || '—'}</span>
         ),
       },
       {

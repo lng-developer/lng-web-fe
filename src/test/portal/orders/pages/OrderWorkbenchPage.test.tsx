@@ -145,7 +145,7 @@ describe('OrderWorkbenchPage', () => {
     expect(screen.queryByRole('status', { name: 'Current queue' })).not.toBeInTheDocument()
   })
 
-  it('renders each order ID as a bordered copy target', async () => {
+  it('renders each order ID as a chip without copy icon', async () => {
     vi.mocked(listOrderWorkbench).mockResolvedValue({
       items: [workbenchRow],
       pagination: { total: 1, page: 1, limit: 20 },
@@ -153,8 +153,9 @@ describe('OrderWorkbenchPage', () => {
 
     renderPage()
 
-    const orderId = await screen.findByRole('button', { name: '113-2183249-0763446' })
+    const orderId = await screen.findByText('113-2183249-0763446')
     expect(orderId.closest(`.${styles.orderIdChip}`)).not.toBeNull()
+    expect(screen.queryByRole('img', { name: 'copy' })).not.toBeInTheDocument()
   })
 
   it('shows the marketplace order time separately from the import time', async () => {
@@ -220,7 +221,9 @@ describe('OrderWorkbenchPage', () => {
 
     expect(await screen.findByLabelText('Manage case')).toBeVisible()
     expect(screen.queryByText('Address validation failed')).not.toBeInTheDocument()
-    expect(screen.getByTitle('Copy order ID').closest(`.${styles.orderIdChip}`)).toBeInTheDocument()
+    expect(
+      screen.getByText('ORDER-WITH-CASE').closest(`.${styles.orderIdChip}`),
+    ).toBeInTheDocument()
     expect(orderWorkbenchSource).toContain("title: t('orders.columns.totalCost')")
     expect(orderWorkbenchSource).not.toContain("align: 'right'")
   })
