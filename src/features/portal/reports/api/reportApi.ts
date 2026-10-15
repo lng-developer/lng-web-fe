@@ -42,7 +42,7 @@ export type FinanceDaily = {
   marketplaceFeeAmount?: number
   refundAmount?: number
   discountAmount?: number
-  grossProfitAmount: number
+  grossProfitAmount: number | null
   grossMarginBps: number | null
   missingCostCount: number
   adSpendAmount?: number

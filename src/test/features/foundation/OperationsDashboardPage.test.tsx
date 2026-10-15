@@ -171,11 +171,6 @@ describe('OperationsDashboardPage', () => {
     await waitFor(() => expect(getOrderSummary).toHaveBeenCalled())
     expect((await screen.findAllByText('67'))[0]).toBeVisible()
     expect(screen.getAllByRole('button', { name: 'Đơn mới: 7' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: 'Đơn hàng: 67' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: 'Đã duyệt: 0' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: 'Đã duyệt: 0' })[0]).toHaveStyle({
-      height: '18%',
-    })
   })
 
   it('does not show metric popups for total-order bars', async () => {
@@ -224,11 +219,52 @@ describe('OperationsDashboardPage', () => {
   it('shows the cash-flow table with localized columns', async () => {
     renderWithTestProviders(<OperationsDashboardPage />)
 
-    expect(await screen.findByText('Dòng tiền')).toBeVisible()
+    expect(await screen.findByText('Doanh thu & lợi nhuận')).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Ngày' })).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Tiền vào' })).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Tiền ra' })).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Dòng tiền ròng' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Doanh thu' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Chi phí' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Lợi nhuận gộp' })).toBeVisible()
+  })
+
+  it('marks cost and profit as unavailable when finance data has missing costs', async () => {
+    setPermissions(['ORDERS:READ', 'CATALOG:READ', 'REPORTS:READ', 'FINANCE:READ'])
+    setGlobalPermissions(['ORDERS:READ', 'CATALOG:READ', 'REPORTS:READ', 'FINANCE:READ'])
+    vi.mocked(listFinanceDailyProfit).mockResolvedValue([
+      {
+        date: '2026-10-14',
+        salesChannelCode: 'AMAZON',
+        marketplaceCode: 'US',
+        currency: 'USD',
+        itemCount: 3,
+        revenueAmount: 9255,
+        baseCostAmount: 0,
+        totalCostAmount: null,
+        grossProfitAmount: null,
+        grossMarginBps: null,
+        missingCostCount: 3,
+      },
+    ])
+
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    expect(await screen.findByText('Doanh thu & lợi nhuận')).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Chi phí' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Lợi nhuận gộp' })).toBeVisible()
+    expect(await screen.findByText('3 order items thiếu giá vốn')).toBeVisible()
+  })
+
+  it('updates the dashboard totals when a sales channel is selected', async () => {
+    vi.mocked(getOrderSummary).mockImplementation(async (filters) => ({
+      tabCounts: {
+        all: filters.salesChannelCode === 'AMAZON' ? 14 : 24,
+      },
+    }))
+
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    fireEvent.click(await screen.findByRole('radio', { name: 'Amazon' }))
+
+    expect(await screen.findByText('14')).toBeVisible()
   })
 
   it('renders recent order IDs as copyable badges', async () => {

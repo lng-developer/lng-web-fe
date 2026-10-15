@@ -7,14 +7,13 @@ import {
   BuildOutlined,
   CheckCircleOutlined,
   CloudSyncOutlined,
-  DownloadOutlined,
   PlusOutlined,
   ReloadOutlined,
   ShopOutlined,
   ShoppingOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Button, Typography } from 'antd'
+import { Button, Segmented, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
@@ -22,12 +21,7 @@ import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { DateRangePicker, FeedbackAlert, SectionCard } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
-import {
-  MiniBars,
-  MonthlyTargetGauge,
-  SummaryLineChart,
-  TrafficSourcesDonut,
-} from './OperationsDashboardCharts'
+import { MiniBars, SummaryLineChart, TrafficSourcesDonut } from './OperationsDashboardCharts'
 import { RecentOrdersTable, TopSellersPodium } from './OperationsDashboardLists'
 import { useOperationsDashboard } from './useOperationsDashboard'
 
@@ -43,10 +37,12 @@ export function OperationsDashboardPage() {
     dayjs().endOf('day'),
   ])
   const [summaryExpanded, setSummaryExpanded] = useState(false)
+  const [salesChannelCode, setSalesChannelCode] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
   const { value, handle } = useOperationsDashboard(
     dates[0].toISOString(),
     dates[1].toISOString(),
     loadOperationalHealth,
+    salesChannelCode === 'ALL' ? undefined : salesChannelCode,
   )
 
   useEffect(() => {
@@ -98,6 +94,16 @@ export function OperationsDashboardPage() {
             onChange={(next) => {
               if (next.dateFrom && next.dateTo) setDates([dayjs(next.dateFrom), dayjs(next.dateTo)])
             }}
+          />
+          <Segmented
+            aria-label="Kênh bán"
+            options={[
+              { label: 'Tất cả', value: 'ALL' },
+              { label: 'Amazon', value: 'AMAZON' },
+              { label: 'Etsy', value: 'ETSY' },
+            ]}
+            value={salesChannelCode}
+            onChange={(value) => setSalesChannelCode(value as 'ALL' | 'AMAZON' | 'ETSY')}
           />
           <Button
             type="primary"
@@ -153,19 +159,19 @@ export function OperationsDashboardPage() {
               <div className={styles.summaryHeaderLegend} aria-hidden="true">
                 <span>
                   <i className={styles.summaryLegendNetCashFlow} />
-                  {t('foundation.portalDashboard.netCashFlow')}
+                  {t('foundation.portalDashboard.grossProfit', {
+                    defaultValue: 'Lợi nhuận gộp',
+                  })}
                 </span>
                 <span>
                   <i className={styles.summaryLegendRevenue} />
-                  {t('foundation.portalDashboard.cashIn')}
+                  {t('foundation.portalDashboard.revenue', { defaultValue: 'Doanh thu' })}
                 </span>
               </div>
             </div>
             <div className={`${styles.gxonHeroSparkline} ${styles.summaryHeroSparkline}`}>
               <SummaryLineChart
                 points={value.timelinePoints}
-                summaryBars={value.summaryBars}
-                summaryTotal={value.summaryTotal}
                 compact
                 onExpandedChange={setSummaryExpanded}
               />
@@ -230,16 +236,14 @@ export function OperationsDashboardPage() {
               className={styles.chartColDonut}
             >
               <SectionCard
-                title={t('foundation.portalDashboard.trafficSources', {
-                  defaultValue: 'Traffic Sources',
+                title={t('foundation.portalDashboard.revenueByChannel', {
+                  defaultValue: 'Doanh thu theo kênh',
                 })}
                 className={styles.dashboardEqualHeightCard}
               >
                 <TrafficSourcesDonut
                   data={value.channelBreakdown}
-                  totalLabel={
-                    value.canFinance ? `$${Math.round(value.rawRevenueDollars / 1000)}k` : '—'
-                  }
+                  totalLabel={value.canFinance ? value.revenueFormatted : '—'}
                   subLabel={t('foundation.portalDashboard.revenue', {
                     defaultValue: 'Revenue',
                   })}
@@ -253,7 +257,9 @@ export function OperationsDashboardPage() {
               className={styles.chartColLine}
             >
               <SectionCard
-                title={t('foundation.portalDashboard.cashFlow', { defaultValue: 'Cash Flow' })}
+                title={t('foundation.portalDashboard.revenueAndProfit', {
+                  defaultValue: 'Doanh thu & lợi nhuận',
+                })}
                 className={`${styles.dashboardEqualHeightCard} ${styles.cashFlowCard}`}
               >
                 <div className={styles.cashFlowTable}>
@@ -261,9 +267,15 @@ export function OperationsDashboardPage() {
                     <thead>
                       <tr>
                         <th>{t('common.date')}</th>
-                        <th>{t('foundation.portalDashboard.cashIn')}</th>
-                        <th>{t('foundation.portalDashboard.cashOut')}</th>
-                        <th>{t('foundation.portalDashboard.netCashFlow')}</th>
+                        <th>
+                          {t('foundation.portalDashboard.revenue', { defaultValue: 'Doanh thu' })}
+                        </th>
+                        <th>{t('foundation.portalDashboard.cost', { defaultValue: 'Chi phí' })}</th>
+                        <th>
+                          {t('foundation.portalDashboard.grossProfit', {
+                            defaultValue: 'Lợi nhuận gộp',
+                          })}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -281,19 +293,21 @@ export function OperationsDashboardPage() {
                           .slice(-6)
                           .reverse()
                           .map((row) => {
-                            const formatAmount = (amount: number) =>
-                              new Intl.NumberFormat(undefined, {
-                                style: 'currency',
-                                currency: row.currency || 'USD',
-                                maximumFractionDigits: 0,
-                              }).format(amount / 100)
+                            const formatAmount = (amount: number | null) =>
+                              amount === null
+                                ? '—'
+                                : new Intl.NumberFormat(undefined, {
+                                    style: 'currency',
+                                    currency: row.currency || 'USD',
+                                    maximumFractionDigits: 0,
+                                  }).format(amount / 100)
 
                             return (
                               <tr key={row.date}>
                                 <td>{row.displayDate}</td>
-                                <td>{formatAmount(row.cashInAmount)}</td>
-                                <td>{formatAmount(row.cashOutAmount)}</td>
-                                <td>{formatAmount(row.netCashFlowAmount)}</td>
+                                <td>{formatAmount(row.revenueAmount)}</td>
+                                <td>{formatAmount(row.costAmount)}</td>
+                                <td>{formatAmount(row.grossProfitAmount)}</td>
                               </tr>
                             )
                           })
@@ -301,6 +315,11 @@ export function OperationsDashboardPage() {
                     </tbody>
                   </table>
                 </div>
+                {value.missingCostItemCount > 0 ? (
+                  <div role="status" style={{ marginTop: 12, color: '#b45309' }}>
+                    {value.missingCostItemCount} order items thiếu giá vốn
+                  </div>
+                ) : null}
               </SectionCard>
             </section>
           </div>
@@ -318,45 +337,32 @@ export function OperationsDashboardPage() {
 
         {/* Right Column (Side) */}
         <aside className={styles.gxonRightCol}>
-          {/* Monthly Target Gauge */}
+          {/* Revenue overview only uses values available from finance snapshots. */}
           <SectionCard
-            title={t('foundation.portalDashboard.monthlyTarget', {
-              defaultValue: 'Monthly Target',
+            title={t('foundation.portalDashboard.revenueOverview', {
+              defaultValue: 'Tổng quan doanh thu',
             })}
             className={styles.dashboardEqualHeightCard}
             extra={
               <Button
                 type="text"
                 size="small"
-                icon={<DownloadOutlined />}
                 onClick={handleExportReport}
                 className={styles.cardHeaderAction}
               >
-                {t('foundation.portalDashboard.downloadReport', {
-                  defaultValue: 'Download Report',
+                {t('foundation.portalDashboard.viewReports', {
+                  defaultValue: 'Xem báo cáo',
                 })}
               </Button>
             }
           >
-            <MonthlyTargetGauge
-              percent={value.targetProgressPercent}
-              targetAmount={value.targetGoalFormatted}
-              revenueAmount={value.revenueFormatted}
-              todayAmount={value.todayRevenueFormatted}
-              targetLabel={t('foundation.portalDashboard.target', { defaultValue: 'Target' })}
-              revenueLabel={t('foundation.portalDashboard.revenue', { defaultValue: 'Revenue' })}
-              todayLabel={t('foundation.portalDashboard.today', { defaultValue: 'Today' })}
-              trendBadge={value.targetTrendBadge}
-              trendText={
-                <span className={styles.targetTrendSentence}>
-                  {t('foundation.portalDashboard.youEarn', { defaultValue: 'You earn' })}{' '}
-                  <span className={styles.highlightAmount}>{value.todayRevenueFormatted}</span>{' '}
-                  {t('foundation.portalDashboard.todayTrends', {
-                    defaultValue: "today, it's higher than last month keep up your good trends!",
-                  })}
-                </span>
-              }
-            />
+            <div className={styles.targetTrendSentence}>
+              <strong>{value.revenueFormatted}</strong>
+              <span>{t('foundation.portalDashboard.revenue', { defaultValue: 'Doanh thu' })}</span>
+              {value.latestDataLabel ? (
+                <span>Dữ liệu mới nhất: {value.latestDataLabel}</span>
+              ) : null}
+            </div>
           </SectionCard>
 
           {/* Top sellers podium */}

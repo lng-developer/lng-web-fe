@@ -123,6 +123,7 @@ export const SummaryLineChart = memo(function SummaryLineChart({
     () => (isCompact ? selectCompactTimelinePoints(points) : points),
     [isCompact, points],
   )
+  const hasProfitData = chartPoints.some((point) => point.incomeGrowth !== null)
 
   const setDetailExpanded = (next: boolean) => {
     if (!compact) return
@@ -198,8 +199,8 @@ export const SummaryLineChart = memo(function SummaryLineChart({
               formatter={(value, name) => [
                 `$${formatCompactNumber(Number(value ?? 0))}`,
                 name === 'incomeGrowth'
-                  ? t('foundation.portalDashboard.netCashFlow', { defaultValue: 'Net cash flow' })
-                  : t('foundation.portalDashboard.cashIn', { defaultValue: 'Cash in' }),
+                  ? t('foundation.portalDashboard.grossProfit', { defaultValue: 'Gross profit' })
+                  : t('foundation.portalDashboard.revenue', { defaultValue: 'Revenue' }),
               ]}
               contentStyle={{
                 background: 'var(--ant-color-bg-elevated, #fff)',
@@ -219,15 +220,17 @@ export const SummaryLineChart = memo(function SummaryLineChart({
               dot={{ r: isCompact ? 2.5 : 3, fill: '#7c3aed' }}
               activeDot={{ r: 6 }}
             />
-            <Line
-              type="monotone"
-              dataKey="incomeGrowth"
-              name="incomeGrowth"
-              stroke="#ff7a1a"
-              strokeWidth={2.5}
-              dot={{ r: isCompact ? 2.5 : 3, fill: '#ff7a1a' }}
-              activeDot={{ r: 6 }}
-            />
+            {hasProfitData ? (
+              <Line
+                type="monotone"
+                dataKey="incomeGrowth"
+                name="incomeGrowth"
+                stroke="#ff7a1a"
+                strokeWidth={2.5}
+                dot={{ r: isCompact ? 2.5 : 3, fill: '#ff7a1a' }}
+                activeDot={{ r: 6 }}
+              />
+            ) : null}
           </LineChart>
         </ResponsiveContainer>
       </div>
