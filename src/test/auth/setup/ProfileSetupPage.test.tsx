@@ -23,6 +23,7 @@ import {
   uploadMyEmployeeAvatar,
 } from '@/features/hr/api/hrApi'
 import { ApiError } from '@/shared/api'
+import { setAccount } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 
 describe('ProfileSetupPage', () => {
@@ -30,6 +31,7 @@ describe('ProfileSetupPage', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
+    setAccount(null)
     navigateMock.mockReset()
     await i18n.changeLanguage('en')
     vi.mocked(loadMyEmployeeProfile).mockResolvedValue({
@@ -46,49 +48,65 @@ describe('ProfileSetupPage', () => {
     })
   })
 
-  it('submits the required personal profile fields and enters the workspace', async () => {
-    vi.mocked(updateMyPersonalProfile).mockResolvedValue({
-      id: 'profile-1',
-      employeeCode: 'J2601',
-      fullName: 'Jane Nguyen',
-      departmentId: 'department-1',
-      teamId: 'team-1',
-      status: 'ACTIVE',
-      onboardingStatus: 'READY',
-      isDeleted: false,
-    })
+  it.each([false, true])(
+    'submits profile and routes correctly (initial password required: %s)',
+    async (passwordSetupRequired) => {
+      setAccount({ id: 'account-1', email: 'jane@lngwork.co', passwordSetupRequired })
+      vi.mocked(updateMyPersonalProfile).mockResolvedValue({
+        id: 'profile-1',
+        employeeCode: 'J2601',
+        fullName: 'Jane Nguyen',
+        departmentId: 'department-1',
+        teamId: 'team-1',
+        status: 'ACTIVE',
+        onboardingStatus: 'READY',
+        isDeleted: false,
+      })
 
-    renderProfileSetup()
+      renderProfileSetup()
 
-    expect(await screen.findByText('Jane Nguyen')).toBeVisible()
-    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0900000000' } })
-    fireEvent.change(screen.getByLabelText('Personal email'), {
-      target: { value: 'jane@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Ha Noi' } })
-    fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
-    fireEvent.change(screen.getByLabelText('Emergency contact', { selector: 'input' }), {
-      target: { value: 'Parent' },
-    })
-    fireEvent.change(screen.getByLabelText('Emergency phone'), { target: { value: '0911111111' } })
-    await selectRelationship('Parent')
-    const avatar = new File(['avatar'], 'avatar.png', { type: 'image/png' })
-    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [avatar] } })
-    fireEvent.click(screen.getByRole('button', { name: /Complete setup/ }))
+      expect(await screen.findByText('Jane Nguyen')).toBeVisible()
+      fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0900000000' } })
+      fireEvent.change(screen.getByLabelText('Personal email'), {
+        target: { value: 'jane@example.com' },
+      })
+      fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Ha Noi' } })
+      fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
+      fireEvent.change(screen.getByLabelText('Emergency contact', { selector: 'input' }), {
+        target: { value: 'Parent' },
+      })
+      fireEvent.change(screen.getByLabelText('Emergency phone'), {
+        target: { value: '0911111111' },
+      })
+      await selectRelationship('Parent')
+      const avatar = new File(['avatar'], 'avatar.png', { type: 'image/png' })
+      fireEvent.change(document.querySelector('input[type="file"]')!, {
+        target: { files: [avatar] },
+      })
+      fireEvent.click(
+        screen.getByRole('button', { name: passwordSetupRequired ? /Continue/ : /Complete setup/ }),
+      )
 
-    await waitFor(() => expect(uploadMyEmployeeAvatar).toHaveBeenCalledWith(avatar))
-    await waitFor(() =>
-      expect(updateMyPersonalProfile).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phoneNumber: '0900000000',
-          personalEmail: 'jane@example.com',
-          address: 'Ha Noi',
-          emergencyContact: { name: 'Parent', phone: '0911111111', relation: 'PARENT' },
-        }),
-      ),
-    )
-    expect(navigateMock).toHaveBeenCalledWith('/operations-dashboard', { replace: true })
-  })
+      await waitFor(() => expect(uploadMyEmployeeAvatar).toHaveBeenCalledWith(avatar))
+      await waitFor(() =>
+        expect(updateMyPersonalProfile).toHaveBeenCalledWith(
+          expect.objectContaining({
+            phoneNumber: '0900000000',
+            personalEmail: 'jane@example.com',
+            address: 'Ha Noi',
+            emergencyContact: { name: 'Parent', phone: '0911111111', relation: 'PARENT' },
+          }),
+        ),
+      )
+      expect(navigateMock).toHaveBeenCalledWith(
+        passwordSetupRequired ? '/setup/password' : '/operations-dashboard',
+        { replace: true },
+      )
+      expect(updateMyPersonalProfile).not.toHaveBeenCalledWith(
+        expect.objectContaining({ workEmail: expect.anything() }),
+      )
+    },
+  )
 
   it('shows the normalized submit error in the designed feedback toast', async () => {
     let rejectUpdate!: (cause: Error) => void

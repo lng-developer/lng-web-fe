@@ -31,6 +31,17 @@ async function redirectLocation(loader: () => Promise<unknown>) {
 }
 
 describe('account setup guards', () => {
+  it('requires Microsoft profile completion before initial LNG password setup', async () => {
+    const state = {
+      ...session(false, true),
+      account: { ...session(false).account, passwordSetupRequired: true },
+    }
+    vi.mocked(restoreSession).mockResolvedValue(state)
+    await expect(redirectLocation(requireWorkspace)).resolves.toBe('/setup/profile')
+    vi.mocked(restoreSession).mockResolvedValue({ ...state, profileSetupRequired: false })
+    await expect(redirectLocation(requireWorkspace)).resolves.toBe('/setup/password')
+    await expect(redirectLocation(requireProfileSetup)).resolves.toBe('/setup/password')
+  })
   beforeEach(() => vi.clearAllMocks())
 
   it('sends a provisioned account to password setup first', async () => {
