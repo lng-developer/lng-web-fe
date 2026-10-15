@@ -11,6 +11,7 @@ vi.mock('@/features/portal/chat/api/chatApi', () => ({
   listChatParticipants: vi.fn(),
   markChatConversationRead: vi.fn(),
   sendChatMessage: vi.fn(),
+  syncTeamsChat: vi.fn().mockResolvedValue({ status: 'SYNCED', syncedCount: 0 }),
 }))
 vi.mock('@/features/portal/chat/realtime/chatSocket', () => ({
   createChatSocket: vi.fn(() => null),
@@ -47,6 +48,16 @@ function renderShell(initialRoute = '/portal/orders') {
 }
 
 describe('ChatShell', () => {
+  it('includes group conversations in the preview', async () => {
+    const page = await listChatConversations()
+    vi.mocked(listChatConversations).mockResolvedValue({
+      ...page,
+      items: [{ ...page.items[0], type: 'TEAM', title: 'Production team' }],
+    })
+    renderShell()
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
+    expect(await screen.findByText('Production team')).toBeVisible()
+  })
   afterEach(cleanup)
 
   beforeEach(() => {
@@ -100,6 +111,15 @@ describe('ChatShell', () => {
     expect(el).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
 
+    const page = await listChatConversations()
+    vi.mocked(listChatConversations).mockResolvedValue({
+      ...page,
+      items: page.items.map((conversation) => ({
+        ...conversation,
+        unreadCount: 1,
+        hasUnreadFromOthers: true,
+      })),
+    })
     act(() => {
       handlers['message.created']({
         conversation: {

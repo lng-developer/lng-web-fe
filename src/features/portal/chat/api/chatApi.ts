@@ -45,6 +45,12 @@ export type ChatMessage = {
   }>
   mentions: string[]
   replyToMessageId: string | null
+  replyToMessage?: {
+    id: string
+    senderAccountId: string
+    body: string
+    attachmentCount: number
+  } | null
   editedAt: string | null
   deletedAt: string | null
   createdAt: string
@@ -70,6 +76,7 @@ export type CreateConversationInput = {
 }
 
 export type SendChatMessageInput = {
+  replyToMessageId?: string | null
   body: string
   assetIds: string[]
   msGraphToken?: string | null
@@ -122,6 +129,7 @@ export async function getMsGraphToken(): Promise<string | null> {
 export const sendChatMessage = async (conversationId: string, input: SendChatMessageInput) => {
   const msToken = input.msGraphToken || (await getMsGraphToken())
   const payload = {
+    ...(input.replyToMessageId ? { replyToMessageId: input.replyToMessageId } : {}),
     body: input.body,
     assetIds: input.assetIds,
     ...(msToken ? { msGraphToken: msToken } : {}),

@@ -27,6 +27,19 @@
       "COMPLETED_WITH_ERRORS": "Completed with errors"
     }
   },
+  "chatReply": {
+    "reply": "Reply",
+    "cancel": "Cancel reply",
+    "quote": "Quoted message",
+    "unknownSender": "Chat participant",
+    "unavailable": "Original message unavailable",
+    "attachments": "Attachments ({{count}})"
+  },
+  "chatMedia": {
+    "sendFailed": "Unable to send the message or attachment. Please try again.",
+    "removeAttachment": "Remove {{name}}",
+    "downloadFailed": "Unable to download the attachment. Please try again."
+  },
   "app": {
     "name": "LNG Web"
   },

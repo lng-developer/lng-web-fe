@@ -11,6 +11,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Avatar,
+  Alert,
   Badge,
   Button,
   Empty,
@@ -26,23 +27,29 @@ import type {
   ChatConversation,
   ChatMessage,
   ChatParticipant,
+  SendChatMessageInput,
 } from '@/features/portal/chat/api/chatApi'
 import {
   createConversation,
   getMsGraphToken,
-  listChatConversations,
-  listChatMessages,
   listChatParticipants,
   markChatConversationRead,
   sendChatMessage,
-  syncTeamsChat,
 } from '@/features/portal/chat/api/chatApi'
+import {
+  chatConversationOptions,
+  chatMessageOptions,
+  receiveChatMessage,
+  useTeamsChatSync,
+} from '@/features/portal/chat/api/chatQueries'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
 import { getAccount } from '@/shared/auth/session'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { AuthenticatedMediaImage } from '@/shared/media'
+import { ChatAttachments } from '../components/ChatAttachments'
+import { ChatReplyQuote } from '../components/ChatReplyQuote'
+import { ChatReplyAction } from '../components/ChatReplyAction'
+import messageStyles from '../components/ChatMessageActions.module.scss'
 import {
   conversationInitials,
   conversationTitle,
@@ -55,9 +62,6 @@ import {
 } from '../components/chatViewUtils'
 
 import styles from './ChatWorkspacePage.module.scss'
-
-const MESSAGE_LIMIT = 50
-type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
 
 function formatMessageTime(dateString?: string | null) {
   if (!dateString) return ''
@@ -104,28 +108,28 @@ function MessageBubble({
   isOwn,
   senderParticipant,
   showAvatar = true,
+  participants,
+  onReply,
+  sending,
 }: {
   message: ChatMessage
   isOwn: boolean
   senderParticipant?: ChatParticipant
   showAvatar?: boolean
+  participants: Map<string, ChatParticipant>
+  onReply: () => void
+  sending: boolean
 }) {
-  const assets = message.assets?.length
-    ? message.assets
-    : message.assetIds.map((assetId) => ({
-        id: assetId,
-        originalFilename: null,
-        mimeType: null,
-        size: null,
-        downloadUrl: `/api/media/assets/${assetId}/download`,
-      }))
-
   const timeLabel = formatMessageTime(message.createdAt)
   const senderInitials = getInitials(participantLabel(senderParticipant))
 
   return (
     <div
-      className={`${styles.messageWrapper} ${isOwn ? styles.ownWrapper : styles.receivedWrapper}`}
+      className={`${messageStyles.message} ${styles.messageWrapper} ${isOwn ? styles.ownWrapper : styles.receivedWrapper}`}
+      tabIndex={-1}
+      onPointerDown={(event) => {
+        if (event.pointerType === 'touch') event.currentTarget.focus()
+      }}
     >
       {!isOwn ? (
         showAvatar ? (
@@ -149,31 +153,11 @@ function MessageBubble({
       <div
         className={`${styles.messageBubble} ${isOwn ? styles.ownBubble : styles.receivedBubble}`}
       >
-        {message.body ? <div className={styles.messageText}>{message.body}</div> : null}
-        {assets.length ? (
-          <Space wrap size={6} className={styles.attachments}>
-            {assets.map((asset) =>
-              asset.mimeType?.startsWith('image/') ? (
-                <a
-                  key={asset.id}
-                  href={asset.downloadUrl || undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <AuthenticatedMediaImage
-                    alt={asset.originalFilename || asset.id}
-                    downloadUrl={asset.downloadUrl}
-                    className={styles.imageAttachment}
-                  />
-                </a>
-              ) : (
-                <Typography.Link key={asset.id} href={asset.downloadUrl || undefined}>
-                  <PaperClipOutlined /> {asset.originalFilename || asset.id.slice(-6)}
-                </Typography.Link>
-              ),
-            )}
-          </Space>
+        {message.replyToMessageId ? (
+          <ChatReplyQuote quote={message.replyToMessage} participants={participants} />
         ) : null}
+        {message.body ? <div className={styles.messageText}>{message.body}</div> : null}
+        <ChatAttachments message={message} />
         <div
           className={styles.messageTime}
           title={message.createdAt ? new Date(message.createdAt).toLocaleString() : undefined}
@@ -181,6 +165,7 @@ function MessageBubble({
           {timeLabel}
         </div>
       </div>
+      {!message.deletedAt ? <ChatReplyAction onClick={onReply} disabled={sending} /> : null}
     </div>
   )
 }
@@ -188,7 +173,7 @@ function MessageBubble({
 function sendSocketMessage(
   socket: ChatSocket,
   conversationId: string,
-  input: { body: string; assetIds: string[]; msGraphToken?: string | null },
+  input: SendChatMessageInput,
 ) {
   return new Promise<ChatMessage>((resolve, reject) => {
     socket.emit('message.send', { conversationId, ...input }, (result) => {
@@ -198,37 +183,6 @@ function sendSocketMessage(
       }
       resolve(result.message)
     })
-  })
-}
-
-function upsertById<T extends { id: string }>(items: T[], item: T) {
-  return [item, ...items.filter(({ id }) => id !== item.id)]
-}
-
-function mergeRealtimeConversation(
-  items: ChatConversation[],
-  conversation: ChatConversation,
-  message: ChatMessage,
-  currentAccountId: string | undefined,
-  activeConversationId: string | null,
-) {
-  const existing = items.find(({ id }) => id === conversation.id)
-  const alreadyApplied =
-    existing?.lastMessageAt === conversation.lastMessageAt &&
-    existing?.lastMessageSenderAccountId === conversation.lastMessageSenderAccountId &&
-    existing?.lastMessagePreview === conversation.lastMessagePreview
-  const shouldMarkUnread =
-    message.senderAccountId !== currentAccountId && message.conversationId !== activeConversationId
-  const unreadCount = shouldMarkUnread
-    ? alreadyApplied
-      ? existing?.unreadCount || conversation.unreadCount || 1
-      : Math.max(existing?.unreadCount || 0, conversation.unreadCount || 0) + 1
-    : 0
-
-  return upsertById(items, {
-    ...conversation,
-    unreadCount,
-    hasUnreadFromOthers: shouldMarkUnread,
   })
 }
 
@@ -242,6 +196,7 @@ export function ChatWorkspacePage() {
   const [search, setSearch] = useState('')
   const [isNewMessage, setIsNewMessage] = useState(false)
   const [draft, setDraft] = useState('')
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const [files, setFiles] = useState<UploadFile[]>([])
   const socketRef = useRef<ChatSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
@@ -257,8 +212,7 @@ export function ChatWorkspacePage() {
   }
 
   const conversations = useQuery({
-    queryKey: chatKeys.conversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
-    queryFn: () => listChatConversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
+    ...chatConversationOptions(),
   })
   const participants = useQuery({
     queryKey: ['chat-participants'],
@@ -294,8 +248,7 @@ export function ChatWorkspacePage() {
   const selectedConversation =
     conversations.data?.items.find(({ id }) => id === activeConversationId) ?? null
   const messages = useQuery({
-    queryKey: chatKeys.messages(activeConversationId),
-    queryFn: () => listChatMessages(activeConversationId!, { page: 1, limit: MESSAGE_LIMIT }),
+    ...chatMessageOptions(activeConversationId),
     enabled: Boolean(activeConversationId),
   })
   const { mutate: markRead } = useMutation({
@@ -355,6 +308,9 @@ export function ChatWorkspacePage() {
         getMsGraphToken(),
       ])
       const input = {
+        ...(replyTo?.conversationId === activeConversationId
+          ? { replyToMessageId: replyTo.id }
+          : {}),
         body,
         assetIds: uploadedAssets.map(({ id }) => id),
         ...(msGraphToken ? { msGraphToken } : {}),
@@ -363,8 +319,10 @@ export function ChatWorkspacePage() {
         ? sendSocketMessage(socketRef.current, activeConversationId, input)
         : sendChatMessage(activeConversationId, input)
     },
-    onSuccess: () => {
+    onSuccess: async (message) => {
+      await receiveChatMessage(queryClient, message)
       setDraft('')
+      setReplyTo(null)
       setFiles([])
     },
   })
@@ -387,33 +345,8 @@ export function ChatWorkspacePage() {
         void queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] })
       }
     })
-    socket.on('message.created', ({ conversation, message }) => {
-      queryClient.setQueryData<ChatPage<ChatMessage>>(
-        chatKeys.messages(message.conversationId),
-        (current) =>
-          current
-            ? {
-                ...current,
-                items: [...current.items.filter(({ id }) => id !== message.id), message],
-              }
-            : current,
-      )
-      queryClient.setQueriesData<ChatPage<ChatConversation>>(
-        { queryKey: [...chatKeys.all, 'conversations'] },
-        (current) =>
-          current
-            ? {
-                ...current,
-                items: mergeRealtimeConversation(
-                  current.items,
-                  conversation,
-                  message,
-                  account?.id,
-                  document.visibilityState === 'visible' ? activeConversationIdRef.current : null,
-                ),
-              }
-            : current,
-      )
+    socket.on('message.created', ({ message }) => {
+      receiveChatMessage(queryClient, message)
     })
     socket.on('presence.changed', ({ accountId, presence }) => {
       setPresenceByAccountId((current) => ({ ...current, [accountId]: presence }))
@@ -434,7 +367,7 @@ export function ChatWorkspacePage() {
     requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView?.({ block: 'end' })
     })
-  }, [activeConversationId, messages.data?.items.length, messages.isLoading])
+  }, [activeConversationId, latestMessageId, messages.isLoading])
 
   const canSend = Boolean(
     activeConversationId && (draft.trim() || files.length) && !sendMutation.isPending,
@@ -461,33 +394,11 @@ export function ChatWorkspacePage() {
     ? conversationInitials(selectedConversation, participantById, account?.id)
     : ''
 
-  useEffect(() => {
-    if (!activeConversationId || !otherParticipant?.email?.includes('@lngwork.co')) return
-
-    let isDisposed = false
-    const pollSync = () => {
-      syncTeamsChat(activeConversationId)
-        .then((res) => {
-          if (!isDisposed && res?.syncedCount > 0) {
-            queryClient.invalidateQueries({ queryKey: chatKeys.messages(activeConversationId) })
-            queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] })
-          }
-        })
-        .catch(() => undefined)
-    }
-
-    pollSync()
-    const timer = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        pollSync()
-      }
-    }, 8000)
-
-    return () => {
-      isDisposed = true
-      clearInterval(timer)
-    }
-  }, [activeConversationId, otherParticipant?.email, queryClient])
+  useTeamsChatSync(
+    activeConversationId,
+    selectedConversation?.type === 'DIRECT' &&
+      Boolean(otherParticipant?.email.toLowerCase().endsWith('@lngwork.co')),
+  )
 
   const startDirectChat = (accountId: string) => {
     if (isNewMessage) {
@@ -824,6 +735,12 @@ export function ChatWorkspacePage() {
                         isOwn={isOwn}
                         senderParticipant={senderParticipant}
                         showAvatar={showAvatar}
+                        participants={participantById}
+                        sending={sendMutation.isPending}
+                        onReply={() => {
+                          setReplyTo(message)
+                          textareaRef.current?.focus()
+                        }}
                       />
                     </div>
                   )
@@ -838,6 +755,15 @@ export function ChatWorkspacePage() {
 
         {/* Composer */}
         <div className={styles.composer}>
+          {sendMutation.isError ? <Alert type="error" title={t('chatMedia.sendFailed')} /> : null}
+          {replyTo?.conversationId === activeConversationId ? (
+            <ChatReplyQuote
+              quote={replyTo}
+              participants={participantById}
+              onCancel={() => setReplyTo(null)}
+              disabled={sendMutation.isPending}
+            />
+          ) : null}
           {files.length ? (
             <div className={styles.attachmentsPreview}>
               {files.map((file) => (
@@ -856,6 +782,7 @@ export function ChatWorkspacePage() {
           ) : null}
           <div className={styles.composerForm}>
             <Upload
+              disabled={sendMutation.isPending}
               multiple
               fileList={files}
               showUploadList={false}
@@ -868,6 +795,7 @@ export function ChatWorkspacePage() {
               }}
             >
               <button
+                disabled={sendMutation.isPending}
                 type="button"
                 className={styles.attachBtn}
                 aria-label={t('chat.attach', 'Attach')}
@@ -878,6 +806,7 @@ export function ChatWorkspacePage() {
             </Upload>
             <div className={styles.composerInputWrap}>
               <textarea
+                disabled={sendMutation.isPending}
                 ref={textareaRef}
                 className={styles.composerTextarea}
                 aria-label={t('chat.composerLabel', 'Message')}

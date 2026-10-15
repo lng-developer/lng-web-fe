@@ -9,14 +9,13 @@ import { Avatar, Badge, Button, Empty, Input, Popover, Typography } from 'antd'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   type ChatConversation,
-  type ChatMessage,
   type ChatParticipant,
   createConversation,
   getChatUnreadCount,
-  listChatConversations,
   listChatParticipants,
   markChatConversationRead,
 } from '@/features/portal/chat/api/chatApi'
+import { chatConversationOptions, receiveChatMessage } from '@/features/portal/chat/api/chatQueries'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import {
@@ -35,52 +34,10 @@ import { QuickChatBubble } from './QuickChatBubble'
 import styles from './ChatShell.module.scss'
 
 const CHAT_PREVIEW_LIMIT = 8
+type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
 
 type ChatShellProps = {
   account: CurrentAccount
-}
-
-type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
-
-function upsertById<T extends { id: string }>(items: T[], item: T) {
-  return [item, ...items.filter(({ id }) => id !== item.id)]
-}
-
-function mergeRealtimeConversation(
-  items: ChatConversation[],
-  conversation: ChatConversation | undefined,
-  message: ChatMessage,
-  currentAccountId: string,
-  openConversationIds: string[],
-  minimizedConversationIds: string[],
-) {
-  const convId = conversation?.id || message?.conversationId
-  const existing = items.find(({ id }) => id === convId)
-  const baseConv = conversation || existing
-  if (!baseConv) return items
-
-  const alreadyApplied =
-    existing?.lastMessageAt === (conversation?.lastMessageAt || message?.createdAt) &&
-    existing?.lastMessageSenderAccountId ===
-      (conversation?.lastMessageSenderAccountId || message?.senderAccountId) &&
-    existing?.lastMessagePreview === (conversation?.lastMessagePreview || message?.body)
-  const isActivelyOpen =
-    openConversationIds.includes(convId) && !minimizedConversationIds.includes(convId)
-  const shouldMarkUnread = message?.senderAccountId !== currentAccountId && !isActivelyOpen
-  const unreadCount = shouldMarkUnread
-    ? alreadyApplied
-      ? existing?.unreadCount || baseConv.unreadCount || 1
-      : Math.max(existing?.unreadCount || 0, baseConv.unreadCount || 0) + 1
-    : 0
-
-  return upsertById(items, {
-    ...baseConv,
-    lastMessageAt: message?.createdAt || baseConv.lastMessageAt,
-    lastMessagePreview: message?.body || baseConv.lastMessagePreview,
-    lastMessageSenderAccountId: message?.senderAccountId || baseConv.lastMessageSenderAccountId,
-    unreadCount,
-    hasUnreadFromOthers: shouldMarkUnread,
-  })
 }
 
 export function ChatShell({ account }: ChatShellProps) {
@@ -191,8 +148,7 @@ export function ChatShell({ account }: ChatShellProps) {
     })
     socket.on('disconnect', () => setSocketReady(false))
     socket.on('connect_error', () => setSocketReady(false))
-    socket.on('message.created', ({ conversation, message }) => {
-      void queryClient.invalidateQueries({ queryKey: chatKeys.unread })
+    socket.on('message.created', ({ message }) => {
       const isActivelyOpen =
         openQuickConversationIdsRef.current.includes(message.conversationId) &&
         !minimizedQuickConversationIdsRef.current.includes(message.conversationId)
@@ -205,33 +161,7 @@ export function ChatShell({ account }: ChatShellProps) {
         markQuickConversationRead(message.conversationId)
       }
 
-      queryClient.setQueryData<ChatPage<ChatMessage>>(
-        chatKeys.messages(message.conversationId),
-        (current) =>
-          current
-            ? {
-                ...current,
-                items: [...current.items.filter(({ id }) => id !== message.id), message],
-              }
-            : current,
-      )
-      queryClient.setQueriesData<ChatPage<ChatConversation>>(
-        { queryKey: [...chatKeys.all, 'conversations'] },
-        (current) =>
-          current
-            ? {
-                ...current,
-                items: mergeRealtimeConversation(
-                  current.items,
-                  conversation,
-                  message,
-                  account.account.id,
-                  document.visibilityState === 'visible' ? openQuickConversationIdsRef.current : [],
-                  minimizedQuickConversationIdsRef.current,
-                ),
-              }
-            : current,
-      )
+      receiveChatMessage(queryClient, message)
     })
     return () => {
       socket.disconnect()
@@ -248,8 +178,7 @@ export function ChatShell({ account }: ChatShellProps) {
   }, [openQuickConversationIds])
 
   const chatConversations = useQuery({
-    queryKey: chatKeys.conversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
-    queryFn: () => listChatConversations({ page: 1, limit: CHAT_PREVIEW_LIMIT }),
+    ...chatConversationOptions(),
     refetchInterval: false,
   })
   const unreadQuery = useQuery({
@@ -269,7 +198,7 @@ export function ChatShell({ account }: ChatShellProps) {
     [chatParticipants.data?.items],
   )
   const recentConversations = useMemo(
-    () => (chatConversations.data?.items ?? []).filter((conv) => conv.type === 'DIRECT'),
+    () => chatConversations.data?.items ?? [],
     [chatConversations.data?.items],
   )
 
@@ -414,7 +343,7 @@ export function ChatShell({ account }: ChatShellProps) {
       <div className={styles.chatPreviewList}>
         {filteredConversations.length > 0 || matchingOtherParticipants.length > 0 ? (
           <>
-            {filteredConversations.map((conversation) => {
+            {filteredConversations.slice(0, CHAT_PREVIEW_LIMIT).map((conversation) => {
               const initials = conversationInitials(
                 conversation,
                 participantById,

@@ -13,6 +13,19 @@ import {
 import { apiClient } from '@/shared/api'
 
 describe('chatApi', () => {
+  it('preserves reply target in the REST payload', async () => {
+    await sendChatMessage('c1', {
+      body: 'Reply',
+      assetIds: [],
+      replyToMessageId: 'm1',
+      msGraphToken: 'test-token',
+    })
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/chat/conversations/c1/messages',
+      { body: 'Reply', assetIds: [], replyToMessageId: 'm1', msGraphToken: 'test-token' },
+      { headers: { 'x-ms-graph-token': 'test-token' } },
+    )
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [], pagination: {} } })

@@ -166,6 +166,28 @@ describe('ChatWorkspacePage', () => {
     )
   })
 
+  it('keeps a failed reply draft and sends the selected target on retry', async () => {
+    vi.mocked(sendChatMessage).mockRejectedValueOnce(new Error('Unavailable'))
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Reply' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+      target: { value: 'Done' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to send')
+    expect(screen.getByRole('button', { name: 'Cancel reply' })).toBeVisible()
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Done')
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Cancel reply' })).not.toBeInTheDocument(),
+    )
+    expect(sendChatMessage).toHaveBeenLastCalledWith('conversation-1', {
+      body: 'Done',
+      assetIds: [],
+      replyToMessageId: 'message-1',
+    })
+  })
+
   it('sends composer messages through the realtime socket when connected', async () => {
     const emit = vi.fn((event, payload, ack) => {
       if (event === 'message.send') {
