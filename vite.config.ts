@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadEnv } from 'vite'
@@ -12,6 +13,18 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    css: {
+      modules: {
+        generateScopedName:
+          mode === 'production'
+            ? (name, filename) => {
+                const file = path.relative(rootDir, filename).replaceAll('\\', '/')
+                const scope = createHash('sha256').update(file).digest('hex').slice(0, 12)
+                return `_${name}_${scope}`
+              }
+            : undefined,
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(rootDir, 'src'),
