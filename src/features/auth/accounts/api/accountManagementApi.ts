@@ -6,9 +6,16 @@ export type ManagedAccount = {
     email: string
     id: string
     status?: string
+    roles?: string[]
     operatingCostAmount?: number
     operatingCostStartedAt?: string | null
     deactivatedAt?: string | null
+  }
+  access?: {
+    roleIds?: string[]
+    customPermissionIds?: string[]
+    validFrom?: string | null
+    validUntil?: string | null
   }
 }
 

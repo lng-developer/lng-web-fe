@@ -96,7 +96,14 @@ export function useExtensionWorkbench({
 
   const createCommand = useMutation({
     onError: (error) => showFeedbackToast('error', error.message),
-    mutationFn: ({ agentId, type, numDays, dateFrom, dateTo }: CreateExtensionCommandInput) => {
+    mutationFn: ({
+      agentId,
+      type,
+      numDays,
+      maxOrders,
+      dateFrom,
+      dateTo,
+    }: CreateExtensionCommandInput) => {
       const agent = extensionAgents.data?.items.find((item) => item.id === agentId)
       if (!agent) throw new Error('Extension agent is unavailable')
       if (
@@ -108,6 +115,7 @@ export function useExtensionWorkbench({
         type,
         shopId: agent.shopId,
         agentId,
+        ...(maxOrders !== undefined ? { maxOrders } : {}),
         ...(numDays ? { numDays } : {}),
         ...(dateFrom ? { dateFrom: dayjs(dateFrom).format('YYYY-MM-DD') } : {}),
         ...(dateTo ? { dateTo: dayjs(dateTo).format('YYYY-MM-DD') } : {}),

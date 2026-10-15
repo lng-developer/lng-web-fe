@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -97,6 +97,30 @@ describe('CatalogListingWorkbenchPage', () => {
     queryClient.clear()
     i18n.changeLanguage('en')
   })
+  it.each([
+    ['ETSY', 'ETSY_US', 'US'],
+    ['ETSY', 'US', 'US'],
+    ['ETSY', 'ETSY_UK', 'ETSY_UK'],
+    ['AMAZON', 'AMAZON_US', 'AMAZON_US'],
+  ])(
+    'displays %s marketplace %s as %s without changing source data',
+    async (channel, code, label) => {
+      const response = await listListings({ page: 1, limit: 10 })
+      const listing = { ...response.items[0], salesChannelCode: channel, marketplaceCode: code }
+      vi.mocked(listListings).mockResolvedValueOnce({ ...response, items: [listing] })
+
+      render(
+        <AppProviders>
+          <CatalogListingWorkbenchPage account={account} />
+        </AppProviders>,
+      )
+
+      const channelCell = (await screen.findByText(channel, { selector: 'td span' })).closest('td')!
+      expect(within(channelCell).getByText(label)).toBeInTheDocument()
+      expect(listing.marketplaceCode).toBe(code)
+    },
+  )
+
   it('opens listing variants from the listing table', async () => {
     render(
       <AppProviders>
@@ -154,15 +178,60 @@ describe('CatalogListingWorkbenchPage', () => {
       </AppProviders>,
     )
 
-    fireEvent.click((await screen.findAllByRole('button', { name: 'Request default PSD' }))[0])
+    fireEvent.click(await screen.findByLabelText('Request default PSD'))
     expect(
       await screen.findByText('Select the delivery priority for this PSD request.'),
     ).toBeInTheDocument()
     expect(screen.getByText('Priority')).toBeInTheDocument()
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Request PSD' }).at(-1)!)
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Request PSD' }))
     await waitFor(() => expect(requestListingPsd).toHaveBeenCalledWith('listing-1', 'NORMAL'))
   }, 15_000)
+
+  it('shows a persisted PSD request and prevents opening a duplicate request', async () => {
+    const response = await listListings({ page: 1, limit: 10 })
+    vi.mocked(listListings).mockResolvedValueOnce({
+      ...response,
+      items: [
+        {
+          ...response.items[0],
+          salesChannelCode: 'ETSY',
+          etsyListingId: '4561569753',
+          psdRequested: true,
+        },
+      ],
+    })
+
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} fixedSalesChannelCode="ETSY" />
+      </AppProviders>,
+    )
+
+    const requested = await screen.findByRole('button', { name: 'PSD requested' })
+    expect(requested).toBeDisabled()
+    fireEvent.click(requested)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Request default PSD' })).not.toBeInTheDocument()
+  }, 60_000)
+
+  it('refreshes the request indicator after a successful PSD request', async () => {
+    const response = await listListings({ page: 1, limit: 10 })
+    vi.mocked(listListings).mockResolvedValueOnce(response)
+    vi.mocked(listListings).mockResolvedValueOnce({
+      ...response,
+      items: [{ ...response.items[0], psdRequested: true }],
+    })
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} />
+      </AppProviders>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Request default PSD' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Request PSD' }).at(-1)!)
+    expect(await screen.findByRole('button', { name: 'PSD requested' })).toBeDisabled()
+  }, 60_000)
 
   it('loads ten listings on the first page by default', async () => {
     render(

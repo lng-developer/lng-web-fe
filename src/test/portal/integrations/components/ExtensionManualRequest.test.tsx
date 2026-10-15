@@ -1,100 +1,101 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeEach, expect, it, vi } from 'vitest'
-
-import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { ExtensionAutomationTab } from '@/features/portal/integrations/components/ExtensionAutomationTab'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import type { ExtensionManagementAgent } from '@/features/portal/integrations/api/integrationApi'
 import { ExtensionManualRequest } from '@/features/portal/integrations/components/ExtensionManualRequest'
-import i18n from '@/shared/i18n/i18n'
+import { ExtensionCommandDrawer } from '@/features/portal/integrations/components/ExtensionCommandDrawer'
+import type { ExtensionCommand } from '@/features/portal/integrations/api/integrationApi'
 
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
+afterEach(cleanup)
 const agent = {
-  id: 'a',
-  shopId: 'shop-a',
-  clientId: 'c',
-  label: 'RDC',
-  version: 'test',
-  apiBaseUrl: 'https://example.test',
-  status: 'ONLINE' as const,
-  lastSeenAt: '',
-  token: null,
-}
-beforeEach(async () => {
-  await i18n.changeLanguage('en')
-})
-
-it('queues a selected order history window without changing a schedule', async () => {
+  id: 'agent',
+  shopId: 'shop',
+  provider: 'ETSY',
+  protocolVersion: 1,
+  status: 'ONLINE',
+} as ExtensionManagementAgent
+const key = 'portal.integrations.extension.manualRequests'
+it('queues Etsy count instead of a day window, defaulting to one', async () => {
   const onRequest = vi.fn()
   render(
     <ExtensionManualRequest agent={agent} source="ORDERS" loading={false} onRequest={onRequest} />,
   )
-  fireEvent.click(screen.getByRole('button', { name: 'Request order sync now' }))
-  fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Order history window' }))
-  fireEvent.click(await screen.findByText('30 days'))
-  fireEvent.click(screen.getByRole('button', { name: 'Queue import' }))
-  expect(onRequest).toHaveBeenCalledWith({ agentId: 'a', type: 'IMPORT_NEW_ORDERS', numDays: 30 })
+  fireEvent.click(screen.getByRole('button'))
+  expect(await screen.findByRole('spinbutton')).toHaveValue('1')
+  fireEvent.click(screen.getByText(`${key}.queue`))
+  expect(onRequest).toHaveBeenCalledWith({
+    agentId: 'agent',
+    type: 'IMPORT_NEW_ORDERS',
+    maxOrders: 1,
+  })
 })
-
-it('blocks manual requests while offline or another request is pending', () => {
+it('accepts 200 and disables empty count', async () => {
   const onRequest = vi.fn()
+  render(
+    <ExtensionManualRequest agent={agent} source="ORDERS" loading={false} onRequest={onRequest} />,
+  )
+  fireEvent.click(screen.getByRole('button'))
+  const input = await screen.findByRole('spinbutton')
+  fireEvent.change(input, { target: { value: '200' } })
+  fireEvent.click(screen.getByText(`${key}.queue`))
+  expect(onRequest).toHaveBeenCalledWith({
+    agentId: 'agent',
+    type: 'IMPORT_NEW_ORDERS',
+    maxOrders: 200,
+  })
+  fireEvent.change(input, { target: { value: '' } })
+  expect(screen.getByText(`${key}.queue`).closest('button')).toBeDisabled()
+})
+it('keeps the Amazon day selector', async () => {
+  render(
+    <ExtensionManualRequest
+      agent={{ ...agent, provider: undefined }}
+      source="ORDERS"
+      loading={false}
+      onRequest={vi.fn()}
+    />,
+  )
+  fireEvent.click(screen.getByRole('button'))
+  expect(await screen.findByRole('combobox')).toBeInTheDocument()
+  expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument()
+})
+it('disables offline agent and hides unsupported Etsy source', () => {
   const { rerender } = render(
     <ExtensionManualRequest
       agent={{ ...agent, status: 'OFFLINE' }}
-      source="ADS"
+      source="ORDERS"
       loading={false}
-      onRequest={onRequest}
+      onRequest={vi.fn()}
     />,
   )
-  expect(screen.getByRole('button', { name: 'Request ads sync now' })).toBeDisabled()
-  rerender(<ExtensionManualRequest agent={agent} source="ADS" loading onRequest={onRequest} />)
-  expect(screen.getByRole('button', { name: 'Request ads sync now' })).toBeDisabled()
+  expect(screen.getByRole('button')).toBeDisabled()
+  rerender(
+    <ExtensionManualRequest agent={agent} source="ADS" loading={false} onRequest={vi.fn()} />,
+  )
+  expect(screen.queryByRole('button')).not.toBeInTheDocument()
 })
-
-it('shows manual and schedule controls only for shops the operator can write', () => {
-  const account: CurrentAccount = {
-    account: { id: 'u', email: 'test@example.test', mustChangePassword: false },
-    roles: [],
-    permissions: [],
-    profileSetupRequired: false,
-    scopes: [
-      {
-        assignmentId: 'assignment-a',
-        scopeType: 'shop',
-        scopeId: 'shop-a',
-        resourceId: 'shop-a',
-        roles: [],
-        permissions: ['FINANCE:WRITE'],
-      },
-    ],
-  }
+it('shows requested count and import job in task details', () => {
   render(
-    <ExtensionAutomationTab
-      account={account}
-      agents={[agent, { ...agent, id: 'b', shopId: 'shop-b' }]}
-      schedules={[]}
-      financeSchedules={[]}
-      shopNames={
-        new Map([
-          ['shop-a', 'A'],
-          ['shop-b', 'B'],
-        ])
+    <ExtensionCommandDrawer
+      command={
+        {
+          id: 'task',
+          provider: 'ETSY',
+          maxOrders: 5,
+          status: 'FAILED',
+          type: 'IMPORT_NEW_ORDERS',
+          importJobId: 'job-123',
+          errorMessage: 'ETSY_IMPORT_NEEDS_REVIEW',
+        } as ExtensionCommand
       }
-      isLoading={false}
-      canWriteOrders
-      canWriteFinance
-      isSavingSchedule={false}
-      isSavingFinanceSchedule={false}
-      isCreatingCommand={false}
-      onSaveSchedule={vi.fn()}
-      onSaveFinanceSchedule={vi.fn()}
-      onCreateCommand={vi.fn()}
+      onClose={vi.fn()}
     />,
   )
-  const allowed = within(screen.getByRole('article', { name: 'A / RDC' }))
-  expect(allowed.getByRole('button', { name: 'Request ads sync now' })).toBeVisible()
-  expect(allowed.queryByRole('button', { name: 'Request order sync now' })).not.toBeInTheDocument()
-  expect(
-    allowed.queryByRole('button', { name: /Configure order schedule/ }),
-  ).not.toBeInTheDocument()
-  expect(
-    within(screen.getByRole('article', { name: 'B / RDC' })).queryAllByRole('button'),
-  ).toHaveLength(0)
+  expect(screen.getByText(`${key}.maxOrders`)).toBeInTheDocument()
+  expect(screen.getByText('5')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'job-123' })).toHaveAttribute(
+    'href',
+    '?selectedJobId=job-123',
+  )
+  expect(screen.getByText('ETSY_IMPORT_NEEDS_REVIEW')).toBeInTheDocument()
 })

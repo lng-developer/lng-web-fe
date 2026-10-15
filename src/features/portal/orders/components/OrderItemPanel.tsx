@@ -21,6 +21,7 @@ import type { OrderWorkbenchItem } from '../api/orderApi'
 import { FulfillmentInlineEditor } from '../pages/FulfillmentInlineEditor'
 import { formatMinorMoney, orderStatusTone } from '../pages/orderPresentation'
 import styles from '../pages/OrderWorkbenchPage.module.scss'
+import EtsyPurchasedDetails from './EtsyPurchasedDetails'
 import { OrderItemNoteEditor } from './OrderItemNoteEditor'
 import {
   displayValue,
@@ -93,7 +94,28 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           : [],
     [extractedArtworkImages, customizationPreview, buyerImageUrls],
   )
-  const mainListingImage = item.listing?.productImageUrl
+  const savedListingImage = item.item.listingImageAssetId
+    ? `/api/media/assets/${encodeURIComponent(item.item.listingImageAssetId)}/download`
+    : null
+  const mainListingImage =
+    item.listing?.productImageUrl || savedListingImage || item.item.listingImageUrl
+  const listingImageFallback =
+    item.item.listingImageThumbnailUrl || item.item.listingImageUrl || '/assets/images/favicon.svg'
+  const isEtsy = item.item.salesChannelCode === 'ETSY'
+  const etsyListingId = item.item.externalListingId
+  const platformIdentity = isEtsy ? (
+    etsyListingId && /^\d+$/.test(etsyListingId) ? (
+      <Typography.Link
+        href={`https://www.etsy.com/listing/${etsyListingId}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {etsyListingId}
+      </Typography.Link>
+    ) : (
+      displayValue(etsyListingId)
+    )
+  ) : null
   const psdSource =
     item.psd?.listingVariant ||
     item.psd?.listingPsd ||
@@ -230,7 +252,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   }
 
   return (
-    <article className={styles.itemPanel}>
+    <article className={`${styles.itemPanel} ${isEtsy ? styles.etsyItemPanel : ''}`}>
       <section className={styles.assetColumn}>
         <Typography.Text strong>{t('orders.sections.imagePrint')}</Typography.Text>
         {mainListingImage ? (
@@ -245,7 +267,11 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               alt={t('orders.fields.mainListingImage')}
               style={{ cursor: 'zoom-in' }}
               onClick={(event) => onOpenImageViewer(event, mainListingImage, [mainListingImage])}
-              fallback="/assets/images/favicon.svg"
+              fallback={listingImageFallback}
+              onError={(event) => {
+                if (event.currentTarget.getAttribute('src') !== listingImageFallback)
+                  event.currentTarget.src = listingImageFallback
+              }}
             />
           </>
         ) : null}
@@ -311,7 +337,11 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               label: 'SKU',
               children: <span className={styles.skuChip}>{displayValue(item.item.sku)}</span>,
             },
-            { key: 'asin', label: 'ASIN', children: renderAsin(item.item.asin) },
+            {
+              key: 'platform-id',
+              label: isEtsy ? t('orders.fields.etsyListingId') : 'ASIN',
+              children: isEtsy ? platformIdentity : renderAsin(item.item.asin),
+            },
             {
               key: 'seller',
               label: t('orders.fields.seller'),
@@ -327,8 +357,10 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             <span className={styles.skuChip}>{displayValue(item.item.sku)}</span>
           </div>
           <div>
-            <Typography.Text type="secondary">ASIN</Typography.Text>
-            {renderAsin(item.item.asin)}
+            <Typography.Text type="secondary">
+              {isEtsy ? t('orders.fields.etsyListingId') : 'ASIN'}
+            </Typography.Text>
+            {isEtsy ? platformIdentity : renderAsin(item.item.asin)}
           </div>
           <div>
             <Typography.Text type="secondary">{t('orders.fields.seller')}</Typography.Text>
@@ -352,10 +384,10 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           ) : null}
         </div>
       </section>
-      <section>
+      <section aria-label={isEtsy ? t('orders.sections.customization') : undefined}>
         <Space className={styles.customizationHeader} size="small" wrap>
           <Typography.Text strong>{t('orders.sections.customization')}</Typography.Text>
-          {canOperate && item.customization?.sourceCustomizationUrl ? (
+          {!isEtsy && canOperate && item.customization?.sourceCustomizationUrl ? (
             <Button
               size="small"
               icon={<DownloadOutlined />}
@@ -366,7 +398,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               {t('orders.actions.downloadAmazonCustomization')}
             </Button>
           ) : null}
-          {canOperate && item.customization?.downloadedZip?.status === 'FAILED' ? (
+          {!isEtsy && canOperate && item.customization?.downloadedZip?.status === 'FAILED' ? (
             <Button
               size="small"
               icon={<ReloadOutlined />}
@@ -377,8 +409,9 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             </Button>
           ) : null}
         </Space>
+        {isEtsy ? <EtsyPurchasedDetails item={item} /> : null}
         <div className={styles.inputList}>
-          {visibleCustomizationInputs.map((input, index) => (
+          {(isEtsy ? buyerImageInputs : visibleCustomizationInputs).map((input, index) => (
             <div key={`${input.label}-${index}`}>
               <Typography.Text type="secondary">{input.label || input.type}: </Typography.Text>
               {input.assetDownloadUrl ? (
@@ -410,11 +443,11 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               )}
             </div>
           ))}
-          {!customizationInputs.length ? (
+          {!isEtsy && !customizationInputs.length ? (
             <Typography.Text type="secondary">—</Typography.Text>
           ) : null}
         </div>
-        {hiddenCustomizationCount > 0 ? (
+        {!isEtsy && hiddenCustomizationCount > 0 ? (
           <Button
             size="small"
             type="link"

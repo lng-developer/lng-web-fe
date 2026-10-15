@@ -477,6 +477,46 @@
 .itemActions {
   justify-items: end;
 }
+.itemPanel.etsyItemPanel {
+  .identifierList > div {
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+  .identifierList > div > :first-child {
+    flex-basis: auto;
+  }
+  .customizationHeader :global(.ant-typography) {
+    white-space: normal;
+  }
+}
+.etsyPurchasedDetails {
+  display: grid;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.etsyOptions {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  dt {
+    color: var(--ant-color-text-secondary);
+  }
+  dd {
+    margin: 0;
+    white-space: pre-wrap;
+  }
+}
+.etsyPersonalization {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  white-space: pre-wrap;
+}
 .assetColumn {
   justify-items: start;
 }

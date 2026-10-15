@@ -1,10 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, renderHook, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { StrictMode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/shared/media/mediaApi', () => ({ fetchMediaBlob: vi.fn() }))
 
-import { AuthenticatedMediaImage } from '@/shared/media'
+import { AuthenticatedMediaImage, useAuthenticatedMediaUrl } from '@/shared/media'
 import { fetchMediaBlob } from '@/shared/media/mediaApi'
 
 describe('AuthenticatedMediaImage', () => {
@@ -83,6 +84,52 @@ describe('AuthenticatedMediaImage', () => {
 
     expect(firstSignal?.aborted).toBe(true)
     expect(screen.getByAltText('Protected preview')).toHaveAttribute('src', '/fallback.svg')
+  })
+
+  it('keeps cached preview URLs alive through StrictMode cleanup and reopening', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const downloadUrl = '/api/media/assets/cached/download'
+    client.setQueryData(['media-preview', downloadUrl], new Blob(['cached image']))
+    for (let opening = 0; opening < 2; opening += 1) {
+      const view = render(
+        <StrictMode>
+          <QueryClientProvider client={client}>
+            <AuthenticatedMediaImage downloadUrl={downloadUrl} alt="Strict preview" />
+          </QueryClientProvider>
+        </StrictMode>,
+      )
+      await waitFor(() => {
+        const src = screen.getByAltText('Strict preview').getAttribute('src')
+        expect(src).toMatch(/^blob:/)
+        expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(src)
+      })
+      const src = screen.getByAltText('Strict preview').getAttribute('src')
+      view.unmount()
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(src)
+    }
+    const created = vi.mocked(URL.createObjectURL).mock.results.map((result) => result.value)
+    expect(
+      vi
+        .mocked(URL.revokeObjectURL)
+        .mock.calls.map(([url]) => url)
+        .sort(),
+    ).toEqual(created.sort())
+    client.clear()
+  })
+
+  it('reports failed media requests instead of staying in loading state', async () => {
+    const error = new Error('Image unavailable')
+    vi.mocked(fetchMediaBlob).mockRejectedValueOnce(error)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const view = renderHook(() => useAuthenticatedMediaUrl('/api/media/assets/failed/download'), {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    })
+    await waitFor(() => expect(view.result.current.error).toBe(error))
+    expect(view.result.current).toEqual({ url: null, loading: false, error })
+    view.unmount()
+    client.clear()
   })
 
   it('reuses a protected-media blob when the same image remounts', async () => {

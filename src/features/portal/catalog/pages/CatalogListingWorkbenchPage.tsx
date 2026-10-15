@@ -6,6 +6,7 @@ import {
   CaretDownOutlined,
   CaretRightOutlined,
   CheckCircleOutlined,
+  ClockCircleOutlined,
   DownloadOutlined,
   EditOutlined,
   ExportOutlined,
@@ -234,7 +235,11 @@ export function CatalogListingWorkbenchPage(props: {
         render: (_, listing) => (
           <Space direction="vertical" size={0}>
             <Typography.Text>{listing.salesChannelCode}</Typography.Text>
-            <Typography.Text type="secondary">{listing.marketplaceCode}</Typography.Text>
+            <Typography.Text type="secondary">
+              {listing.salesChannelCode === 'ETSY' && listing.marketplaceCode === 'ETSY_US'
+                ? 'US'
+                : listing.marketplaceCode}
+            </Typography.Text>
           </Space>
         ),
       },
@@ -318,17 +323,30 @@ export function CatalogListingWorkbenchPage(props: {
           canWrite(listing) ? (
             <Space size={2}>
               {!listing.defaultPsdTemplateAssetId ? (
-                <Tooltip title={t('portal.catalog.psd.requestDefault')}>
-                  <Button
-                    type="text"
-                    icon={<FileImageOutlined />}
-                    aria-label={t('portal.catalog.psd.requestDefault')}
-                    loading={
-                      requestDefaultPsd.isPending &&
-                      requestDefaultPsd.variables?.listingId === listing.id
-                    }
-                    onClick={() => setRequestingPsd(listing)}
-                  />
+                <Tooltip
+                  title={t(
+                    listing.psdRequested
+                      ? 'portal.catalog.psd.requested'
+                      : 'portal.catalog.psd.requestDefault',
+                  )}
+                >
+                  <span>
+                    <Button
+                      type="text"
+                      icon={listing.psdRequested ? <ClockCircleOutlined /> : <FileImageOutlined />}
+                      aria-label={t(
+                        listing.psdRequested
+                          ? 'portal.catalog.psd.requested'
+                          : 'portal.catalog.psd.requestDefault',
+                      )}
+                      disabled={listing.psdRequested}
+                      loading={
+                        requestDefaultPsd.isPending &&
+                        requestDefaultPsd.variables?.listingId === listing.id
+                      }
+                      onClick={() => setRequestingPsd(listing)}
+                    />
+                  </span>
                 </Tooltip>
               ) : null}
               <Tooltip title={t('portal.catalog.edit')}>

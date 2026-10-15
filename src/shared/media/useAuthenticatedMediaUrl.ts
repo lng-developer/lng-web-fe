@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 
 import { env } from '@/shared/config/env'
 
@@ -32,23 +32,25 @@ export function useAuthenticatedMediaUrl(downloadUrl?: string | null): Authentic
     gcTime: 2 * 60 * 1000,
     retry: false,
   })
-  const objectUrl = useMemo(
-    () => (mediaQuery.data ? URL.createObjectURL(mediaQuery.data) : null),
-    [mediaQuery.data],
-  )
+  const [preview, setPreview] = useState<{ blob: Blob; url: string } | null>(null)
 
   useEffect(() => {
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-    }
-  }, [objectUrl])
+    if (!mediaQuery.data) return
+    const url = URL.createObjectURL(mediaQuery.data)
+    // The effect owns both allocation and cleanup, including StrictMode's setup replay.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Publish the browser resource allocated by this effect, never during render.
+    setPreview({ blob: mediaQuery.data, url })
+    return () => URL.revokeObjectURL(url)
+  }, [mediaQuery.data])
+  const objectUrl = preview?.blob === mediaQuery.data ? preview?.url : null
 
   if (!downloadUrl) return { url: null, loading: false, error: null }
   if (directUrl) return { url: directUrl, loading: false, error: null }
+  if (mediaQuery.isError) return { url: null, loading: false, error: mediaQuery.error }
   if (mediaQuery.isPending || !objectUrl) return { url: null, loading: true, error: null }
   return {
     url: objectUrl,
     loading: false,
-    error: mediaQuery.error instanceof Error ? mediaQuery.error : null,
+    error: null,
   }
 }
