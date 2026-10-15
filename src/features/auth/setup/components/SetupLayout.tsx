@@ -13,9 +13,17 @@ type SetupLayoutProps = {
   description: string
   children: ReactNode
   wide?: boolean
+  profileFirst?: boolean
 }
 
-export function SetupLayout({ currentStep, title, description, children, wide }: SetupLayoutProps) {
+export function SetupLayout({
+  currentStep,
+  title,
+  description,
+  children,
+  wide,
+  profileFirst = false,
+}: SetupLayoutProps) {
   const { t } = useTranslation()
 
   return (
@@ -36,16 +44,14 @@ export function SetupLayout({ currentStep, title, description, children, wide }:
         <Steps
           current={currentStep}
           orientation="vertical"
-          items={[
-            {
-              title: t('auth.setup.password.step'),
-              content: t('auth.setup.password.stepDescription'),
-            },
-            {
-              title: t('auth.setup.profile.step'),
-              content: t('auth.setup.profile.stepDescription'),
-            },
-          ]}
+          items={(profileFirst ? ['profile', 'password'] : ['password', 'profile']).map((step) => ({
+            title: t(`auth.setup.${step}.step`),
+            content: t(
+              profileFirst && step === 'password'
+                ? 'auth.setup.password.initialStepDescription'
+                : `auth.setup.${step}.stepDescription`,
+            ),
+          }))}
         />
       </aside>
       <section className={styles.content}>

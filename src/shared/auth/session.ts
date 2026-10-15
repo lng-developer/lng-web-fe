@@ -2,7 +2,8 @@ let accessToken: string | null = null
 let roles: string[] = []
 let permissions: string[] = []
 let globalPermissions: string[] = []
-let account: { id: string; email: string } | null = null
+type SessionAccount = { id: string; email: string; passwordSetupRequired?: boolean }
+let account: SessionAccount | null = null
 let globalPermissionsHydrated = false
 let expirationAnnounced = false
 let refreshSessionAvailable = false
@@ -34,7 +35,7 @@ export const setGlobalPermissions = (nextPermissions: string[]) => {
   globalPermissions = nextPermissions
   globalPermissionsHydrated = true
 }
-export const setAccount = (nextAccount: { id: string; email: string } | null) => {
+export const setAccount = (nextAccount: SessionAccount | null) => {
   account = nextAccount
 }
 export const setAccessToken = (token: string | null) => {

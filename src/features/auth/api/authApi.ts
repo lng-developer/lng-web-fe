@@ -21,7 +21,12 @@ export type ScopedAccess = {
 export type AuthSession = {
   accessToken: string
   tokenType: 'Bearer'
-  account: { id: string; email: string; mustChangePassword: boolean }
+  account: {
+    id: string
+    email: string
+    mustChangePassword: boolean
+    passwordSetupRequired?: boolean
+  }
   roles: string[]
   permissions: string[]
   scopes?: ScopedAccess[]
@@ -153,6 +158,14 @@ export async function changeOwnPassword(currentPassword: string, newPassword: st
   const response = await apiClient.post<ApiResponse<AuthSession['account']>>(
     '/api/auth/me/change-password',
     { currentPassword, newPassword },
+  )
+  return (response as unknown as ApiResponse<AuthSession['account']>).data
+}
+
+export async function setInitialPassword(newPassword: string) {
+  const response = await apiClient.post<ApiResponse<AuthSession['account']>>(
+    '/api/auth/me/initial-password',
+    { newPassword },
   )
   return (response as unknown as ApiResponse<AuthSession['account']>).data
 }

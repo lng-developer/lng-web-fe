@@ -21,6 +21,7 @@ async function loadSetupState() {
 function setupDestination(state: Awaited<ReturnType<typeof loadSetupState>>) {
   if (state.account.mustChangePassword) return '/setup/password'
   if (state.profileSetupRequired) return '/setup/profile'
+  if (state.account.passwordSetupRequired) return '/setup/password'
   return null
 }
 

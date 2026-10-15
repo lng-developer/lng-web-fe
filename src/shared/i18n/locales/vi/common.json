@@ -1341,6 +1341,9 @@
       "validationDescription": "Biểu mẫu đã chuyển đến tab đầu tiên cần chỉnh sửa.",
       "password": {
         "step": "Bảo mật tài khoản",
+        "initialTitle": "Tạo mật khẩu LNG",
+        "initialDescription": "Sử dụng ít nhất 12 ký tự. Mật khẩu này độc lập với Microsoft. Lần sau, đăng nhập bằng email công ty hoặc mã nhân viên và mật khẩu LNG này.",
+        "initialStepDescription": "Thiết lập mật khẩu LNG của bạn",
         "stepDescription": "Thay mật khẩu tạm thời",
         "title": "Tạo mật khẩu mới",
         "description": "Mật khẩu tạm thời chỉ dùng cho lần truy cập đầu tiên.",

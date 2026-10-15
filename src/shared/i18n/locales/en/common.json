@@ -1341,6 +1341,9 @@
       "validationDescription": "The form moved to the first tab that needs attention.",
       "password": {
         "step": "Secure account",
+        "initialTitle": "Create your LNG password",
+        "initialDescription": "Use at least 12 characters. This password is separate from Microsoft. Next time, sign in with your work email or employee code and this LNG password.",
+        "initialStepDescription": "Set your own LNG password",
         "stepDescription": "Replace your temporary password",
         "title": "Create a new password",
         "description": "Your temporary password can only be used for initial access.",

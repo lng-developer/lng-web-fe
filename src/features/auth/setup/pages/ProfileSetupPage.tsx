@@ -26,6 +26,7 @@ import {
   Upload,
 } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
+import { getAccount } from '@/shared/auth/session'
 
 import {
   loadMyEmployeeProfile,
@@ -90,6 +91,7 @@ function serializeBirthDate(value: ProfileValues['birthDate']) {
 export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const initialPasswordRequired = Boolean(getAccount()?.passwordSetupRequired)
   const showFeedbackToast = useFeedbackToast()
   const [form] = Form.useForm<ProfileValues>()
   const [activeTab, setActiveTab] = useState<ProfileTabKey>('personal')
@@ -157,7 +159,14 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
         birthDate: serializeBirthDate(values.birthDate),
       })
       showFeedbackToast('success', t('actionFeedback.updated'))
-      navigate(embedded ? '/hr/me/profile' : '/operations-dashboard', { replace: true })
+      navigate(
+        embedded
+          ? '/hr/me/profile'
+          : initialPasswordRequired
+            ? '/setup/password'
+            : '/operations-dashboard',
+        { replace: true },
+      )
     } catch (cause) {
       form.setFieldsValue(values)
       const duplicateField = getDuplicateProfileField(cause)
@@ -371,6 +380,9 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
               <Tag color="blue" style={{ marginTop: 4 }}>
                 {profile.employeeCode}
               </Tag>
+              <Typography.Text type="secondary">
+                {t('hr.workEmail')}: {profile.workEmail || getAccount()?.email || '-'}
+              </Typography.Text>
               <Typography.Text type="secondary" style={{ fontSize: 12, marginTop: 4 }}>
                 {profile.department?.name || '-'} · {profile.team?.name || '-'}
               </Typography.Text>
@@ -407,7 +419,13 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
                 htmlType="submit"
                 loading={submitting}
               >
-                {t(embedded ? 'hrOperations.common.save' : 'auth.setup.complete')}
+                {t(
+                  embedded
+                    ? 'hrOperations.common.save'
+                    : initialPasswordRequired
+                      ? 'auth.setup.continue'
+                      : 'auth.setup.complete',
+                )}
               </Button>
             </div>
           </Form>
@@ -421,7 +439,8 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
   return (
     <SetupLayout
       wide
-      currentStep={1}
+      currentStep={initialPasswordRequired ? 0 : 1}
+      profileFirst={initialPasswordRequired}
       title={t('auth.setup.profile.title')}
       description={t('auth.setup.profile.description')}
     >
