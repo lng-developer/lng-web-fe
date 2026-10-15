@@ -588,15 +588,6 @@
     background: #242526;
     border-bottom-color: #393a3b;
     color: #e4e6eb;
-
-    :global(.ant-btn) {
-      color: #b0b3b8;
-
-      &:hover {
-        color: #ffffff;
-        background: #3a3b3c;
-      }
-    }
   }
 
   .quickChatHeaderActionBtn {
@@ -619,11 +610,6 @@
   .quickMessageOther {
     background: #3a3b3c;
     color: #e4e6eb;
-  }
-
-  .quickMessageOwn {
-    background: #2563eb;
-    color: #ffffff;
   }
 
   .quickChatComposer {

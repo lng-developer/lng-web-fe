@@ -137,7 +137,7 @@ export function QuickChatBox({
 
   const title = conversation
     ? conversationTitle(conversation, participantById, currentAccountId)
-    : t('shell.navigation.chat', 'Chat')
+    : t('shell.navigation.chat')
 
   const canSend = Boolean(conversationId && (draft.trim() || files.length) && !quickSend.isPending)
 
@@ -164,7 +164,7 @@ export function QuickChatBox({
         </div>
         <div className={styles.quickChatHeaderActions}>
           <Button
-            aria-label={t('chat.minimize', 'Minimize')}
+            aria-label={t('chat.minimize')}
             className={styles.quickChatHeaderActionBtn}
             icon={<MinusOutlined />}
             size="small"
@@ -176,7 +176,7 @@ export function QuickChatBox({
             }}
           />
           <Button
-            aria-label={t('common.close', 'Close')}
+            aria-label={t('common.close')}
             className={styles.quickChatHeaderActionBtn}
             icon={<CloseOutlined />}
             size="small"
@@ -228,7 +228,7 @@ export function QuickChatBox({
           })}
           <div ref={messagesEndRef} aria-hidden="true" />
           {!quickMessages.isLoading && !messageItems.length ? (
-            <Empty description={t('chat.noMessages', 'No messages yet')} />
+            <Empty description={t('chat.noMessages')} />
           ) : null}
         </div>
         {quickSend.isError ? <Alert type="error" title={t('chatMedia.sendFailed')} /> : null}
@@ -288,8 +288,8 @@ export function QuickChatBox({
           </Upload>
           <Input
             disabled={quickSend.isPending}
-            aria-label={t('chat.messageInput', 'Message')}
-            placeholder={t('chat.messagePlaceholder', 'Aa')}
+            aria-label={t('chat.messageInput')}
+            placeholder={t('chat.messagePlaceholder')}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onFocus={() => onMarkReadRef.current()}
@@ -299,7 +299,7 @@ export function QuickChatBox({
             className={styles.quickChatInput}
           />
           <Button
-            aria-label={t('chat.send', 'Send')}
+            aria-label={t('chat.send')}
             disabled={!canSend}
             loading={quickSend.isPending}
             icon={<SendOutlined />}

@@ -55,7 +55,6 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatSocketRef = useRef<ChatSocket | null>(null)
   const openQuickConversationIdsRef = useRef<string[]>([])
   const minimizedQuickConversationIdsRef = useRef<string[]>([])
-  const isChatWorkspaceRef = useRef(false)
   const chatLabel = t('shell.navigation.chat')
   const isChatWorkspace = location.pathname === '/portal/chat'
   const overlayRoot = typeof document === 'undefined' ? null : document.body
@@ -83,10 +82,6 @@ export function ChatShell({ account }: ChatShellProps) {
   useEffect(() => {
     minimizedQuickConversationIdsRef.current = minimizedQuickConversationIds
   }, [minimizedQuickConversationIds])
-
-  useEffect(() => {
-    isChatWorkspaceRef.current = isChatWorkspace
-  }, [isChatWorkspace])
 
   const { mutate: markQuickConversationRead } = useMutation({
     mutationFn: (conversationId: string) => markChatConversationRead(conversationId),
@@ -319,7 +314,7 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatPreview = (
     <div ref={chatPreviewRef} className={styles.chatPreview}>
       <div className={styles.chatPreviewHeader}>
-        <Typography.Title level={4}>{t('chat.title', 'Chat')}</Typography.Title>
+        <Typography.Title level={4}>{t('chat.title')}</Typography.Title>
         <Button
           aria-label={t('chat.openWorkspace', 'Open chat')}
           icon={<MessageOutlined />}
@@ -332,9 +327,9 @@ export function ChatShell({ account }: ChatShellProps) {
         />
       </div>
       <Input
-        aria-label={t('chat.searchMessenger', 'Search Messenger')}
+        aria-label={t('chat.searchMessenger')}
         className={styles.chatPreviewSearch}
-        placeholder={t('chat.searchMessenger', 'Search Messenger')}
+        placeholder={t('chat.searchMessenger')}
         prefix={<SearchOutlined />}
         value={previewSearch}
         onChange={(e) => setPreviewSearch(e.target.value)}
@@ -383,7 +378,7 @@ export function ChatShell({ account }: ChatShellProps) {
                           conversation,
                           participantById,
                           account.account.id,
-                          t('chat.deletedUser', 'Người dùng đã xóa'),
+                          t('chat.deletedUser'),
                         )}
                       </strong>
                       {conversation.lastMessageAt ? (
@@ -408,7 +403,7 @@ export function ChatShell({ account }: ChatShellProps) {
             {matchingOtherParticipants.length > 0 ? (
               <>
                 {filteredConversations.length > 0 ? (
-                  <div className={styles.chatPreviewSectionTitle}>{t('chat.people', 'People')}</div>
+                  <div className={styles.chatPreviewSectionTitle}>{t('chat.people')}</div>
                 ) : null}
                 {matchingOtherParticipants.map((participant) => {
                   const pInitials = getInitials(participantLabel(participant))
@@ -444,7 +439,7 @@ export function ChatShell({ account }: ChatShellProps) {
                         <span className={styles.chatPreviewSnippet}>
                           {participant.email ||
                             participant.employeeCode ||
-                            t('chat.startConversation', 'Start a conversation')}
+                            t('chat.startConversation')}
                         </span>
                       </span>
                     </button>
@@ -454,9 +449,9 @@ export function ChatShell({ account }: ChatShellProps) {
             ) : null}
           </>
         ) : previewSearch.trim() ? (
-          <Empty description={t('chat.noSearchResults', 'No results found')} />
+          <Empty description={t('chat.noSearchResults')} />
         ) : (
-          <Empty description={t('chat.emptyMessages', 'No messages yet')} />
+          <Empty description={t('chat.emptyMessages')} />
         )}
       </div>
       <Link
@@ -467,7 +462,7 @@ export function ChatShell({ account }: ChatShellProps) {
           setPreviewSearch('')
         }}
       >
-        {t('chat.viewAll', 'View all in Messenger')}
+        {t('chat.viewAll')}
       </Link>
     </div>
   )

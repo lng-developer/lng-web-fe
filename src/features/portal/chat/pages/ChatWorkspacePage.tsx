@@ -431,10 +431,10 @@ export function ChatWorkspacePage() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <Typography.Title level={4} className={styles.sidebarTitle}>
-            {t('chat.title', 'Chat')}
+            {t('chat.title')}
           </Typography.Title>
           <Typography.Text type="secondary" className={styles.sidebarDesc}>
-            {t('chat.description', 'Internal conversations and file handoffs')}
+            {t('chat.description')}
           </Typography.Text>
           <Button
             onClick={() => {
@@ -502,9 +502,7 @@ export function ChatWorkspacePage() {
                           <span className={styles.preview}>
                             {accountItem.email ||
                               accountItem.employeeCode ||
-                              (isOnline
-                                ? t('chat.online', 'Online')
-                                : t('chat.offline', 'Offline'))}
+                              (isOnline ? t('chat.online') : t('chat.offline'))}
                           </span>
                         </span>
                       </span>
@@ -514,11 +512,7 @@ export function ChatWorkspacePage() {
               </Space>
             ) : (
               <Empty
-                description={
-                  search.trim()
-                    ? t('chat.noSearchResults', 'No results found')
-                    : t('chat.searchCompany')
-                }
+                description={search.trim() ? t('chat.noSearchResults') : t('chat.searchCompany')}
               />
             )
           ) : conversationListItems.length ? (
@@ -545,18 +539,17 @@ export function ChatWorkspacePage() {
                   conv,
                   participantById,
                   account?.id,
-                  t('chat.deletedUser', 'Người dùng đã xóa'),
+                  t('chat.deletedUser'),
                 )
                 const preview =
                   conv.type === 'DIRECT' && conv.lastMessageSenderAccountId !== account?.id
-                    ? conv.lastMessagePreview ||
-                      (isOnline ? t('chat.online', 'Online') : t('chat.offline', 'Offline'))
+                    ? conv.lastMessagePreview || (isOnline ? t('chat.online') : t('chat.offline'))
                     : messagePreviewText(
                         conv,
                         participantById,
                         account?.id,
-                        t('chat.noMessages', 'Chưa có tin nhắn'),
-                        t('chat.you', 'Bạn'),
+                        t('chat.noMessages'),
+                        t('chat.you'),
                       )
 
                 return (
@@ -610,11 +603,7 @@ export function ChatWorkspacePage() {
             </Space>
           ) : (
             <Empty
-              description={
-                search.trim()
-                  ? t('chat.noSearchResults', 'No results found')
-                  : t('chat.emptyMessages')
-              }
+              description={search.trim() ? t('chat.noSearchResults') : t('chat.emptyMessages')}
             />
           )}
         </div>
@@ -655,9 +644,9 @@ export function ChatWorkspacePage() {
                       selectedConversation,
                       participantById,
                       account?.id,
-                      t('chat.deletedUser', 'Người dùng đã xóa'),
+                      t('chat.deletedUser'),
                     )
-                  : t('chat.select', 'Select a conversation')}
+                  : t('chat.select')}
               </Typography.Title>
               <div className={styles.paneHeaderSub}>
                 {selectedConversation?.type === 'DIRECT' ? (
@@ -666,11 +655,7 @@ export function ChatWorkspacePage() {
                       <span
                         className={`${styles.statusDot} ${isOtherOnline ? styles.online : styles.offline}`}
                       />
-                      <span>
-                        {isOtherOnline
-                          ? t('chat.activeNow', 'Active now')
-                          : t('chat.offline', 'Offline')}
-                      </span>
+                      <span>{isOtherOnline ? t('chat.activeNow') : t('chat.offline')}</span>
                       {otherParticipant?.email ? (
                         <>
                           <span>•</span>
@@ -679,17 +664,17 @@ export function ChatWorkspacePage() {
                       ) : null}
                       {otherParticipant?.email?.includes('@lngwork.co') ? (
                         <span className={styles.teamsTag}>
-                          <TeamOutlined /> {t('chat.teamsConnected', 'Teams')}
+                          <TeamOutlined /> {t('chat.teamsConnected')}
                         </span>
                       ) : null}
                     </>
                   ) : (
-                    <span>{t('chat.deletedUser', 'Người dùng đã xóa')}</span>
+                    <span>{t('chat.deletedUser')}</span>
                   )
                 ) : (
                   <span>
                     {selectedConversation?.participantAccountIds.length || 0}{' '}
-                    {t('chat.participants', 'người tham gia')}
+                    {t('chat.participants')}
                   </span>
                 )}
               </div>
@@ -701,7 +686,7 @@ export function ChatWorkspacePage() {
         <div className={styles.messages}>
           <div className={styles.messagesInner}>
             {!activeConversationId ? (
-              <Empty description={t('chat.select', 'Select a conversation')} />
+              <Empty description={t('chat.select')} />
             ) : messages.isLoading ? (
               <Skeleton active paragraph={{ rows: 8 }} />
             ) : messageItems.length ? (
@@ -748,7 +733,7 @@ export function ChatWorkspacePage() {
                 <div ref={messagesEndRef} aria-hidden="true" />
               </>
             ) : (
-              <Empty description={t('chat.emptyMessages', 'No messages yet')} />
+              <Empty description={t('chat.emptyMessages')} />
             )}
           </div>
         </div>
@@ -798,8 +783,8 @@ export function ChatWorkspacePage() {
                 disabled={sendMutation.isPending}
                 type="button"
                 className={styles.attachBtn}
-                aria-label={t('chat.attach', 'Attach')}
-                title={t('chat.attach', 'Attach')}
+                aria-label={t('chat.attach')}
+                title={t('chat.attach')}
               >
                 <PaperClipOutlined style={{ fontSize: 17 }} />
               </button>
@@ -809,8 +794,8 @@ export function ChatWorkspacePage() {
                 disabled={sendMutation.isPending}
                 ref={textareaRef}
                 className={styles.composerTextarea}
-                aria-label={t('chat.composerLabel', 'Message')}
-                placeholder={t('chat.placeholder', 'Write a message')}
+                aria-label={t('chat.composerLabel')}
+                placeholder={t('chat.placeholder')}
                 value={draft}
                 rows={1}
                 onChange={(event) => setDraft(event.target.value)}
@@ -825,8 +810,8 @@ export function ChatWorkspacePage() {
             <button
               type="button"
               className={styles.sendBtn}
-              aria-label={t('chat.send', 'Send')}
-              title={t('chat.send', 'Send')}
+              aria-label={t('chat.send')}
+              title={t('chat.send')}
               disabled={!canSend}
               onClick={() => sendMutation.mutate()}
             >
