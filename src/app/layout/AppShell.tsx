@@ -232,7 +232,7 @@ export function AppShell() {
             .filter(Boolean)
             .join(' ')}
         >
-          <TeamsSetupPrompt />
+          <TeamsSetupPrompt key={account.account.id} accountId={account.account.id} />
           <div className={`${styles.workspace} ${isFixedWorkspace ? styles.workspaceFixed : ''}`}>
             <Outlet />
           </div>

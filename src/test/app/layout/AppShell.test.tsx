@@ -166,6 +166,41 @@ describe('AppShell', () => {
     expect(await screen.findByRole('button', { name: 'Connect Teams' })).toBeVisible()
   })
 
+  it('does not inherit a dismissed Teams prompt from another account', async () => {
+    sessionStorage.setItem('teams-setup-prompt-dismissed', 'true')
+    vi.mocked(getTeamsOAuthStatus).mockResolvedValue({
+      enabled: true,
+      userLinked: true,
+      grantStatus: 'NOT_CONNECTED',
+    })
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          loader: () => ({
+            account: { id: 'account-2', email: 'other@lngwork.co', mustChangePassword: false },
+            roles: [],
+            permissions: [],
+            scopes: [],
+            profileSetupRequired: false,
+          }),
+          HydrateFallback: () => null,
+          element: <AppShell />,
+          children: [{ path: 'portal/orders', element: <h1>Orders test page</h1> }],
+        },
+      ],
+      { initialEntries: ['/portal/orders'] },
+    )
+
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByRole('button', { name: 'Connect Teams' })).toBeVisible()
+  })
+
   it('opens unread quick chat from the floating badge', async () => {
     const router = createMemoryRouter(
       [

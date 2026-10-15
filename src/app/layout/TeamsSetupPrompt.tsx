@@ -7,21 +7,21 @@ import {
   startTeamsOAuth,
 } from '@/features/integration/teams/api/teamsOAuthApi'
 
-const dismissalKey = 'teams-setup-prompt-dismissed'
+const dismissalKey = (accountId: string) => `teams-setup-prompt-dismissed:${accountId}`
 
-function readDismissal() {
+function readDismissal(accountId: string) {
   try {
-    return sessionStorage.getItem(dismissalKey) === 'true'
+    return sessionStorage.getItem(dismissalKey(accountId)) === 'true'
   } catch {
     return false
   }
 }
 
-export function TeamsSetupPrompt() {
+export function TeamsSetupPrompt({ accountId }: { accountId: string }) {
   const queryClient = useQueryClient()
-  const [dismissed, setDismissed] = useState(readDismissal)
+  const [dismissed, setDismissed] = useState(() => readDismissal(accountId))
   const status = useQuery({
-    queryKey: ['teams-oauth-status'],
+    queryKey: ['teams-oauth-status', accountId],
     queryFn: getTeamsOAuthStatus,
   })
   const needsSetup =
@@ -29,10 +29,10 @@ export function TeamsSetupPrompt() {
 
   useEffect(() => {
     const refreshStatus = () =>
-      void queryClient.invalidateQueries({ queryKey: ['teams-oauth-status'] })
+      void queryClient.invalidateQueries({ queryKey: ['teams-oauth-status', accountId] })
     window.addEventListener('focus', refreshStatus)
     return () => window.removeEventListener('focus', refreshStatus)
-  }, [queryClient])
+  }, [accountId, queryClient])
 
   if (!needsSetup || dismissed) return null
 
@@ -49,7 +49,7 @@ export function TeamsSetupPrompt() {
 
   const dismiss = () => {
     try {
-      sessionStorage.setItem(dismissalKey, 'true')
+      sessionStorage.setItem(dismissalKey(accountId), 'true')
     } catch {
       // Session storage is optional for this non-blocking prompt.
     }
