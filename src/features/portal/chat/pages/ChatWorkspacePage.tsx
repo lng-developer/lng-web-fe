@@ -31,12 +31,14 @@ import type {
 } from '@/features/portal/chat/api/chatApi'
 import {
   createConversation,
-  getTeamsOAuthStatus,
   listChatParticipants,
   markChatConversationRead,
   sendChatMessage,
-  startTeamsOAuth,
 } from '@/features/portal/chat/api/chatApi'
+import {
+  getTeamsOAuthStatus,
+  startTeamsOAuth,
+} from '@/features/integration/teams/api/teamsOAuthApi'
 import {
   chatConversationOptions,
   chatMessageOptions,

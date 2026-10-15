@@ -81,12 +81,6 @@ export type SendChatMessageInput = {
   assetIds: string[]
 }
 
-export type TeamsOAuthStatus = {
-  enabled: boolean
-  userLinked: boolean
-  grantStatus: 'CONNECTED' | 'REAUTH_REQUIRED' | 'NOT_CONNECTED'
-}
-
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 const compact = (params: Query = {}) =>
   Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined))
@@ -131,12 +125,6 @@ export const syncTeamsChat = async (conversationId: string) =>
   unwrap<{ status: string; syncedCount: number; teamsChatId: string }>(
     await apiClient.post(`/api/integration/teams/sync/${conversationId}`),
   )
-
-export const getTeamsOAuthStatus = async () =>
-  unwrap<TeamsOAuthStatus>(await apiClient.get('/api/integration/teams/oauth/status'))
-
-export const startTeamsOAuth = async () =>
-  unwrap<{ authorizationUrl: string }>(await apiClient.get('/api/integration/teams/oauth/start'))
 
 export const markChatConversationRead = async (conversationId: string) =>
   unwrap<{ conversationId: string; accountId: string; lastReadAt: string }>(

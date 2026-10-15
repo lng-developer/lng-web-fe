@@ -4,16 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/chat/api/chatApi', () => ({
   createConversation: vi.fn(),
-  getTeamsOAuthStatus: vi
-    .fn()
-    .mockResolvedValue({ enabled: true, userLinked: false, grantStatus: 'NOT_CONNECTED' }),
   listChatConversations: vi.fn(),
   listChatMessages: vi.fn(),
   listChatParticipants: vi.fn(),
   sendChatMessage: vi.fn(),
   markChatConversationRead: vi.fn().mockResolvedValue({}),
-  startTeamsOAuth: vi.fn(),
   syncTeamsChat: vi.fn().mockResolvedValue({ status: 'SYNCED', syncedCount: 0 }),
+}))
+vi.mock('@/features/integration/teams/api/teamsOAuthApi', () => ({
+  getTeamsOAuthStatus: vi
+    .fn()
+    .mockResolvedValue({ enabled: true, userLinked: false, grantStatus: 'NOT_CONNECTED' }),
+  startTeamsOAuth: vi.fn(),
 }))
 vi.mock('@/features/portal/media/api/mediaApi', () => ({ uploadMediaAsset: vi.fn() }))
 vi.mock('@/features/portal/chat/realtime/chatSocket', () => ({
@@ -32,8 +34,8 @@ import {
   listChatMessages,
   listChatParticipants,
   sendChatMessage,
-  getTeamsOAuthStatus,
 } from '@/features/portal/chat/api/chatApi'
+import { getTeamsOAuthStatus } from '@/features/integration/teams/api/teamsOAuthApi'
 import { ChatWorkspacePage } from '@/features/portal/chat/pages/ChatWorkspacePage'
 import { createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import { setAccount } from '@/shared/auth/session'
