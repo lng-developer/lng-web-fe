@@ -85,9 +85,6 @@ export function messagePreviewText(
   if (conversation.lastMessageSenderAccountId === currentAccountId) {
     return `${ownLabel}: ${conversation.lastMessagePreview}`
   }
-  if (conversation.type === 'DIRECT') {
-    return conversation.lastMessagePreview
-  }
   const sender = conversation.lastMessageSenderAccountId
     ? participantLabel(participantById.get(conversation.lastMessageSenderAccountId))
     : ''

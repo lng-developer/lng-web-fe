@@ -63,20 +63,36 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   onOpenImageViewer,
 }: OrderItemPanelProps) {
   const { t } = useTranslation()
-  const customizationInputs = item.customization?.inputs ?? []
-  const buyerImageInputs = customizationInputs.filter((input) => input.assetDownloadUrl)
+  const customizationInputs = useMemo(
+    () => item.customization?.inputs ?? [],
+    [item.customization?.inputs],
+  )
+  const buyerImageInputs = useMemo(
+    () => customizationInputs.filter((input) => input.assetDownloadUrl),
+    [customizationInputs],
+  )
   const customizationImage = buyerImageInputs[0]?.assetDownloadUrl
   const customizationPreview = item.customization?.previewImageUrl
-  const buyerImageUrls = new Set(buyerImageInputs.map((input) => input.assetDownloadUrl))
-  const extractedArtworkImages = (item.customization?.extractedImages ?? []).filter(
-    (image) => image.assetDownloadUrl && !buyerImageUrls.has(image.assetDownloadUrl),
+  const buyerImageUrls = useMemo(
+    () => new Set(buyerImageInputs.map((input) => input.assetDownloadUrl)),
+    [buyerImageInputs],
   )
-  const artworkImages =
-    extractedArtworkImages.length > 0
-      ? extractedArtworkImages
-      : customizationPreview && !buyerImageUrls.has(customizationPreview)
-        ? [{ assetDownloadUrl: customizationPreview, filename: null }]
-        : []
+  const extractedArtworkImages = useMemo(
+    () =>
+      (item.customization?.extractedImages ?? []).filter(
+        (image) => image.assetDownloadUrl && !buyerImageUrls.has(image.assetDownloadUrl),
+      ),
+    [item.customization?.extractedImages, buyerImageUrls],
+  )
+  const artworkImages = useMemo(
+    () =>
+      extractedArtworkImages.length > 0
+        ? extractedArtworkImages
+        : customizationPreview && !buyerImageUrls.has(customizationPreview)
+          ? [{ assetDownloadUrl: customizationPreview, filename: null }]
+          : [],
+    [extractedArtworkImages, customizationPreview, buyerImageUrls],
+  )
   const mainListingImage = item.listing?.productImageUrl
   const psdSource =
     item.psd?.listingVariant ||
