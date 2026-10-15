@@ -4,13 +4,13 @@ vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), patch: vi.fn(), post
 
 import {
   createConversation,
-  getTeamsOAuthStatus,
   listChatConversations,
   listChatMessages,
   listChatParticipants,
   markChatConversationRead,
   sendChatMessage,
 } from '@/features/portal/chat/api/chatApi'
+import { getTeamsOAuthStatus } from '@/features/integration/teams/api/teamsOAuthApi'
 import { apiClient } from '@/shared/api'
 
 describe('chatApi', () => {
