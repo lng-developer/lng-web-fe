@@ -27,6 +27,19 @@
       "COMPLETED_WITH_ERRORS": "Hoàn tất có lỗi"
     }
   },
+  "chatReply": {
+    "reply": "Trả lời",
+    "cancel": "Hủy trả lời",
+    "quote": "Tin nhắn trích dẫn",
+    "unknownSender": "Thành viên hội thoại",
+    "unavailable": "Tin nhắn gốc không còn khả dụng",
+    "attachments": "Tệp đính kèm ({{count}})"
+  },
+  "chatMedia": {
+    "sendFailed": "Không thể gửi tin nhắn hoặc tệp đính kèm. Vui lòng thử lại.",
+    "removeAttachment": "Bỏ {{name}}",
+    "downloadFailed": "Không thể tải tệp đính kèm. Vui lòng thử lại."
+  },
   "app": {
     "name": "LNG Web"
   },

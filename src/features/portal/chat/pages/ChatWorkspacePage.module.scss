@@ -246,32 +246,6 @@
   font-weight: 500;
 }
 
-.syncBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #ffffff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  padding: 1px 8px;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background: #eff6ff;
-    border-color: #93c5fd;
-    color: #1d4ed8;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
 /* ================= MESSAGE FEED ================= */
 .messages {
   display: flex;
@@ -398,19 +372,6 @@
     text-align: right;
     user-select: none;
   }
-}
-
-.attachments {
-  margin-top: 6px;
-}
-
-.imageAttachment {
-  display: block;
-  width: min(300px, 60vw);
-  max-height: 240px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* ================= COMPOSER ================= */
