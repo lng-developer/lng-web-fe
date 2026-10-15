@@ -1,4 +1,5 @@
 import { Alert, Modal, Space, Typography } from 'antd'
+import { useTranslation } from 'react-i18next'
 
 import { FormattedDateTime, humanizeCode, StatusTag } from '@/shared/ui'
 
@@ -11,6 +12,7 @@ export interface ExtensionCommandDrawerProps {
 }
 
 export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDrawerProps) {
+  const { t } = useTranslation()
   return (
     <Modal
       title="Task details"
@@ -37,6 +39,32 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
             </StatusTag>
             <Typography.Text>{command.type}</Typography.Text>
           </Space>
+          {command.provider === 'ETSY' ? (
+            <Space>
+              <Typography.Text>
+                {t('portal.integrations.extension.manualRequests.maxOrders')}
+              </Typography.Text>
+              <Typography.Text>{command.maxOrders}</Typography.Text>
+            </Space>
+          ) : null}
+          {command.importJobId ? (
+            <Space>
+              <Typography.Text>{t('portal.integrations.panel.title')}</Typography.Text>
+              <Typography.Link href={`?selectedJobId=${encodeURIComponent(command.importJobId)}`}>
+                {command.importJobId}
+              </Typography.Link>
+            </Space>
+          ) : null}
+          {command.result ? (
+            <Space>
+              <Typography.Text>
+                {t('portal.integrations.panel.imported')}: {command.result.importedCount}
+              </Typography.Text>
+              <Typography.Text>
+                {t('portal.integrations.panel.failed')}: {command.result.failedCount}
+              </Typography.Text>
+            </Space>
+          ) : null}
           {[
             ['Created', command.createdAt],
             ['Claimed', command.claimedAt],

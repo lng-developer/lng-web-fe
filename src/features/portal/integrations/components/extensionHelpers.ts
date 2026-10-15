@@ -7,6 +7,7 @@ import type {
 } from '../api/integrationApi'
 
 export interface CreateExtensionCommandInput {
+  maxOrders?: number
   agentId: string
   type: ExtensionCommandType
   numDays?: ExtensionImportDays

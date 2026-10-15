@@ -245,7 +245,13 @@ export function ExtensionOperationsTab({
                 width: 170,
                 render: (shopId: string) => shopNames.get(shopId) ?? shopId,
               },
-              { title: 'RDC / Chrome', dataIndex: 'label', width: 150 },
+              {
+                title: 'RDC / Chrome',
+                dataIndex: 'label',
+                width: 150,
+                render: (label: string, agent) =>
+                  agent.provider === 'ETSY' ? `${label} · ETSY` : label,
+              },
               {
                 title: 'Environment',
                 width: 115,
@@ -318,20 +324,22 @@ export function ExtensionOperationsTab({
                         )}
                         renderContent={() => (
                           <Space direction="vertical" size={4}>
-                            <Button
-                              aria-label={t('portal.integrations.extension.testConnection', {
-                                defaultValue: 'Test connection',
-                              })}
-                              block
-                              icon={<ApiOutlined />}
-                              loading={isCreatingCommand}
-                              disabled={agent.status !== 'ONLINE'}
-                              onClick={() =>
-                                onCreateCommand({ agentId: agent.id, type: 'TEST_CONNECTION' })
-                              }
-                            >
-                              Test connection
-                            </Button>
+                            {agent.provider !== 'ETSY' && (
+                              <Button
+                                aria-label={t('portal.integrations.extension.testConnection', {
+                                  defaultValue: 'Test connection',
+                                })}
+                                block
+                                icon={<ApiOutlined />}
+                                loading={isCreatingCommand}
+                                disabled={agent.status !== 'ONLINE'}
+                                onClick={() =>
+                                  onCreateCommand({ agentId: agent.id, type: 'TEST_CONNECTION' })
+                                }
+                              >
+                                Test connection
+                              </Button>
+                            )}
                             {canPreviewTracking ? (
                               <Button
                                 block

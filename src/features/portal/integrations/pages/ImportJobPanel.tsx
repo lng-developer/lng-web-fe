@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { importJobSource, importJobResults, importJobIssues } from './importJobPresentation'
 import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -236,14 +237,13 @@ function ImportJobPanelForJob({
               <Descriptions.Item
                 label={t('portal.integrations.jobs.source', { defaultValue: 'Source' })}
               >
-                {t(`portal.integrations.sources.${job.data.job.source}`, {
-                  defaultValue: job.data.job.source,
-                })}
+                {importJobSource(job.data.job, t)}
               </Descriptions.Item>
               <Descriptions.Item
                 label={t('portal.integrations.panel.imported', { defaultValue: 'Imported' })}
               >
-                {`${job.data.job.importedCount} ${t('portal.integrations.jobs.imported', { defaultValue: 'imported' })}`}
+                <div>{importJobResults(job.data.job, t)}</div>
+                <div>{importJobIssues(job.data.job, t)}</div>
               </Descriptions.Item>
               <Descriptions.Item
                 label={t('portal.integrations.panel.failed', { defaultValue: 'Failed' })}

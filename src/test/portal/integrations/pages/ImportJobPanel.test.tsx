@@ -181,7 +181,9 @@ describe('ImportJobPanel', () => {
   it('shows job summary before raw-record diagnostics', async () => {
     renderPanel()
 
-    expect(await screen.findByText('8 imported')).toBeVisible()
+    expect(
+      await screen.findByText('8 rows processed / 1 rows skipped / 3 rows failed'),
+    ).toBeVisible()
     expect(await screen.findByText('Parse progress')).toBeVisible()
     expect(await screen.findByText('Import progress')).toBeVisible()
     expect(await screen.findByText('Post-import progress')).toBeVisible()
@@ -258,7 +260,9 @@ describe('ImportJobPanel', () => {
 
     renderPanel(undefined, scopedAccount)
 
-    expect(await screen.findByText('8 imported')).toBeVisible()
+    expect(
+      await screen.findByText('8 rows processed / 1 rows skipped / 3 rows failed'),
+    ).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Retry import' })).not.toBeInTheDocument()
   })
 

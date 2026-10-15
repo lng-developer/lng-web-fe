@@ -23,6 +23,8 @@ export type PostImportStatus =
 export type ImportUploadSource = 'AMAZON_ORDER_REPORT' | 'ETSY_SOLD_ORDER_ITEMS'
 export type ExtensionCommandStatus = 'QUEUED' | 'CLAIMED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
 export type ExtensionAgent = {
+  provider?: 'ETSY' | null
+  protocolVersion?: number | null
   listingImageSync?: boolean
   id: string
   shopId: string
@@ -46,6 +48,10 @@ export type ExtensionManagementAgent = ExtensionAgent & {
   } | null
 }
 export type ExtensionCommand = {
+  provider?: 'ETSY' | null
+  origin?: 'WEB' | 'SCHEDULE' | 'EXTENSION' | null
+  maxOrders?: number | null
+  result?: { importedCount: number; failedCount: number }
   id: string
   type: ExtensionCommandType
   status: ExtensionCommandStatus
@@ -137,6 +143,13 @@ export type ImportJobProgress = {
 }
 
 export type ImportJob = {
+  importOrigin?: 'EXTENSION' | 'UPLOAD' | null
+  resultSummary?: {
+    createdOrders: number | null
+    updatedOrders: number | null
+    openIssues: number
+    addressIssues: number
+  } | null
   id: string
   source: ImportSource
   sourceType: 'EXTENSION_REPORT' | 'FILE'
@@ -361,6 +374,7 @@ export async function listExtensionCommands(params: PageParams = {}) {
   )
 }
 export async function createExtensionCommand(input: {
+  maxOrders?: number
   type: ExtensionCommandType
   shopId: string
   agentId: string

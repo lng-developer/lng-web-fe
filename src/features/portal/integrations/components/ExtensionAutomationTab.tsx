@@ -91,6 +91,24 @@ export function ExtensionAutomationTab({
   }, [agents, shopNames])
 
   const renderOrderSchedule = (agent: ExtensionManagementAgent) => {
+    if (agent.provider === 'ETSY')
+      return (
+        <li className={styles.automationScheduleItem}>
+          <section className={styles.automationScheduleRow}>
+            <Typography.Text>
+              {t('portal.integrations.extension.manualRequests.etsyHint')}
+            </Typography.Text>
+            {canWriteOrders && canWriteOrdersForShop(account, agent.shopId) ? (
+              <ExtensionManualRequest
+                agent={agent}
+                source="ORDERS"
+                loading={isCreatingCommand}
+                onRequest={onCreateCommand}
+              />
+            ) : null}
+          </section>
+        </li>
+      )
     const schedule = orderScheduleByAgentId.get(agent.id)
     const enabled = schedule?.enabled ?? false
     return (
@@ -319,31 +337,37 @@ export function ExtensionAutomationTab({
                       </div>
                       <ul className={styles.automationScheduleList}>
                         {renderOrderSchedule(agent)}
-                        {renderFinanceSchedule(agent, 'TRANSACTIONS', 'Transaction')}
-                        {renderFinanceSchedule(agent, 'SETTLEMENTS', 'Settlement')}
-                        <li className={styles.automationScheduleItem}>
-                          <section
-                            aria-label={t('portal.integrations.extension.manualRequests.adsRegion')}
-                            className={styles.automationScheduleRow}
-                          >
-                            <div className={styles.scheduleInfo}>
-                              <Typography.Text strong>
-                                {t('portal.integrations.extension.manualRequests.ADS')}
-                              </Typography.Text>
-                              <Typography.Paragraph type="secondary">
-                                {t('portal.integrations.extension.manualRequests.adsHint')}
-                              </Typography.Paragraph>
-                            </div>
-                            {canWriteFinance && canWriteFinanceForShop(account, agent.shopId) ? (
-                              <ExtensionManualRequest
-                                agent={agent}
-                                source="ADS"
-                                loading={isCreatingCommand}
-                                onRequest={onCreateCommand}
-                              />
-                            ) : null}
-                          </section>
-                        </li>
+                        {agent.provider !== 'ETSY' &&
+                          renderFinanceSchedule(agent, 'TRANSACTIONS', 'Transaction')}
+                        {agent.provider !== 'ETSY' &&
+                          renderFinanceSchedule(agent, 'SETTLEMENTS', 'Settlement')}
+                        {agent.provider !== 'ETSY' && (
+                          <li className={styles.automationScheduleItem}>
+                            <section
+                              aria-label={t(
+                                'portal.integrations.extension.manualRequests.adsRegion',
+                              )}
+                              className={styles.automationScheduleRow}
+                            >
+                              <div className={styles.scheduleInfo}>
+                                <Typography.Text strong>
+                                  {t('portal.integrations.extension.manualRequests.ADS')}
+                                </Typography.Text>
+                                <Typography.Paragraph type="secondary">
+                                  {t('portal.integrations.extension.manualRequests.adsHint')}
+                                </Typography.Paragraph>
+                              </div>
+                              {canWriteFinance && canWriteFinanceForShop(account, agent.shopId) ? (
+                                <ExtensionManualRequest
+                                  agent={agent}
+                                  source="ADS"
+                                  loading={isCreatingCommand}
+                                  onRequest={onCreateCommand}
+                                />
+                              ) : null}
+                            </section>
+                          </li>
+                        )}
                       </ul>
                     </article>
                   ))}

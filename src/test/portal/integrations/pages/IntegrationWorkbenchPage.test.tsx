@@ -291,7 +291,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     expect(await screen.findByRole('region', { name: 'Imports workbench' })).toBeVisible()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }))
     expect(await screen.findByRole('region', { name: 'Amazon Extension workbench' })).toBeVisible()
 
     fireEvent.click(screen.getByRole('tab', { name: 'Finance data' }))
@@ -306,7 +306,7 @@ describe('IntegrationWorkbenchPage', () => {
       expect(await screen.findByRole('region', { name: 'Imports workbench' })).toBeVisible()
       expect(setIntervalSpy).not.toHaveBeenCalledWith(expect.any(Function), 1000)
 
-      fireEvent.click(screen.getByRole('tab', { name: 'Amazon Extension' }))
+      fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }))
       expect(
         await screen.findByRole('region', { name: 'Amazon Extension workbench' }),
       ).toBeVisible()
@@ -421,15 +421,42 @@ describe('IntegrationWorkbenchPage', () => {
       }),
     )
     expect((await screen.findAllByText('LNG Amazon US')).length).toBeGreaterThan(0)
-    expect(screen.getByText('8 imported / 1 skipped / 3 failed')).toBeVisible()
+    expect(screen.getByText('8 rows processed / 1 rows skipped / 3 rows failed')).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Upload report' })).not.toBeInTheDocument()
+  })
+
+  it('shows Etsy extension updates separately from address validation issues', async () => {
+    vi.mocked(listImportJobs).mockResolvedValue({
+      items: [
+        {
+          ...job,
+          salesChannelCode: 'ETSY',
+          marketplaceCode: 'ETSY_US',
+          importOrigin: 'EXTENSION',
+          importedCount: 5,
+          skippedCount: 0,
+          failedCount: 0,
+          resultSummary: { createdOrders: 0, updatedOrders: 5, openIssues: 4, addressIssues: 4 },
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 10 },
+    })
+    renderWorkbench('/portal/integrations')
+    expect(await screen.findByText('Etsy Extension')).toBeVisible()
+    expect(
+      screen.getByText('0 orders created / 5 orders updated / 0 rows skipped / 0 rows failed'),
+    ).toBeVisible()
+    expect(screen.getByText('4 address validation issues')).toBeVisible()
+    expect(screen.queryByText(/ETSY_US/)).not.toBeInTheDocument()
   })
 
   it('sanitizes malformed page, source, and status URL filters before querying', async () => {
     renderWorkbench('/portal/integrations?page=-3&source=UNKNOWN_SOURCE&status=UNKNOWN_STATUS')
 
     await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 10 }))
-    expect(await screen.findByText('8 imported / 1 skipped / 3 failed')).toBeVisible()
+    expect(
+      await screen.findByText('8 rows processed / 1 rows skipped / 3 rows failed'),
+    ).toBeVisible()
   })
 
   it('accepts valid date-only deep-link filters', async () => {
@@ -538,8 +565,8 @@ describe('IntegrationWorkbenchPage', () => {
   it('creates an Amazon extension token from the integrations setup panel', async () => {
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
-    expect(await screen.findByText('Amazon Extension setup')).toBeVisible()
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
+    expect(await screen.findByText('Extension setup')).toBeVisible()
     expect(screen.queryByText('API Base URL')).not.toBeInTheDocument()
     expect(screen.queryByText('Shop ID')).not.toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Shop' })).toBeEnabled())
@@ -559,7 +586,7 @@ describe('IntegrationWorkbenchPage', () => {
   it('creates a local extension token for localhost testing', async () => {
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Shop' })).toBeEnabled())
     fireEvent.mouseDown(document.querySelector('#environment')!)
     fireEvent.click(await screen.findByText('Local'))
@@ -580,7 +607,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     await waitFor(() =>
       expect(screen.getByRole('combobox', { name: 'Shop' }).parentElement).toHaveTextContent(
         'LNG Amazon US',
@@ -613,7 +640,7 @@ describe('IntegrationWorkbenchPage', () => {
       ],
     })
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     expect(await screen.findByText('RDC 1')).toBeVisible()
     expect(screen.getByRole('button', { name: 'More extension actions' })).toBeVisible()
   })
@@ -644,7 +671,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     expect(await screen.findByText('Local')).toBeVisible()
   })
@@ -667,7 +694,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     expect(screen.queryByText('Ads period')).not.toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'More extension actions' })).toBeVisible()
@@ -704,7 +731,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE', 'FINANCE:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     fireEvent.click(await screen.findByRole('button', { name: 'More extension actions' }))
     expect(screen.queryByRole('button', { name: /Pull/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Test connection' })).toBeVisible()
@@ -723,6 +750,45 @@ describe('IntegrationWorkbenchPage', () => {
       }),
     )
   }, 15_000)
+
+  it('queues Etsy maxOrders from web and hides unsupported automation', async () => {
+    const etsyAgent = {
+      id: 'etsy-agent',
+      shopId: shop.id,
+      clientId: 'etsy-vm',
+      label: 'Etsy VM',
+      version: '2',
+      apiBaseUrl: 'http://localhost:3000',
+      lastSeenAt: new Date().toISOString(),
+      provider: 'ETSY' as const,
+      protocolVersion: 1,
+      status: 'ONLINE' as const,
+      token: null,
+    }
+    vi.mocked(listExtensionAgents).mockResolvedValue({ items: [etsyAgent] })
+    vi.mocked(listExtensionManagementAgents).mockResolvedValue({ items: [etsyAgent] })
+    renderWorkbench(
+      '/portal/integrations?tab=extension',
+      account(['ORDERS:WRITE', 'FINANCE:WRITE']),
+    )
+    fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
+    expect(
+      screen.queryByRole('button', { name: 'Configure order schedule' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Request transaction sync now' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: 'Request order sync now' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Queue import' }))
+    await waitFor(() =>
+      expect(createExtensionCommand).toHaveBeenCalledWith({
+        agentId: etsyAgent.id,
+        shopId: shop.id,
+        type: 'IMPORT_NEW_ORDERS',
+        maxOrders: 1,
+      }),
+    )
+  }, 15000)
 
   it('keeps automation inside the extension workbench and loads it on demand', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
@@ -743,11 +809,13 @@ describe('IntegrationWorkbenchPage', () => {
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
 
-    expect(await screen.findByText('8 imported / 1 skipped / 3 failed')).toBeVisible()
+    expect(
+      await screen.findByText('8 rows processed / 1 rows skipped / 3 rows failed'),
+    ).toBeVisible()
     expect(listExtensionManagementAgents).not.toHaveBeenCalled()
     expect(screen.queryByRole('tab', { name: 'Automation' })).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }))
     expect(await screen.findByRole('radio', { name: 'Automation' })).toBeInTheDocument()
     await waitFor(() => expect(listExtensionManagementAgents).toHaveBeenCalled())
   })
@@ -783,7 +851,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
     await screen.findByText('RDC 1')
 
@@ -858,7 +926,7 @@ describe('IntegrationWorkbenchPage', () => {
       })
 
       renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
-      fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+      fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
       fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
       await screen.findByText('RDC 1')
 
@@ -939,7 +1007,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
 
     expect(
@@ -982,7 +1050,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
 
     const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
@@ -1010,7 +1078,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['FINANCE:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
 
     const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
@@ -1046,7 +1114,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     expect(await screen.findByText('Reconnected')).toBeVisible()
   })
@@ -1070,7 +1138,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     await screen.findByText('RDC 1')
     expect(screen.queryByText('Reconnected')).not.toBeInTheDocument()
@@ -1095,7 +1163,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     await screen.findByText('RDC 1')
     expect(screen.queryByText('Reconnected')).not.toBeInTheDocument()
@@ -1121,7 +1189,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     expect(screen.queryByRole('button', { name: 'View command error' })).not.toBeInTheDocument()
     fireEvent.click(await screen.findByRole('button', { name: 'View task details' }))
@@ -1171,13 +1239,43 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     await waitFor(() => expect(screen.getAllByText('Local Chrome')).toHaveLength(2))
     const commandTable = screen.getAllByRole('table')[1]
     expect(within(commandTable).getByText('Local Chrome')).toBeVisible()
     expect(within(commandTable).getByText('Local')).toBeVisible()
   })
+
+  it('refreshes an open task drawer when command polling changes the result', async () => {
+    const command = {
+      id: 'remote-task',
+      type: 'IMPORT_NEW_ORDERS' as const,
+      status: 'RUNNING' as const,
+      shopId: shop.id,
+      agentId: 'agent',
+      importJobId: null,
+      attemptCount: 1,
+      errorMessage: null,
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+    }
+    vi.mocked(listExtensionCommands).mockResolvedValue({
+      items: [command],
+      pagination: { total: 1, page: 1, limit: 10 },
+    })
+    const { client } = renderWorkbench(
+      '/portal/integrations?tab=extension',
+      account(['ORDERS:WRITE']),
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'View task details' }))
+    vi.mocked(listExtensionCommands).mockResolvedValue({
+      items: [{ ...command, status: 'FAILED', errorMessage: 'ETSY_IMPORT_NEEDS_REVIEW' }],
+      pagination: { total: 1, page: 1, limit: 10 },
+    })
+    await client.invalidateQueries()
+    expect(await screen.findByText('ETSY_IMPORT_NEEDS_REVIEW')).toBeVisible()
+  }, 15000)
 
   it('shows a task timeline for an extension command', async () => {
     vi.mocked(listExtensionCommands).mockResolvedValue({
@@ -1201,7 +1299,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
     fireEvent.click(await screen.findByRole('button', { name: 'View task details' }))
 
     expect(await screen.findByText('Task details')).toBeVisible()
@@ -1238,7 +1336,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
 
     renderWorkbench('/portal/integrations', account(['ORDERS:WRITE']))
-    fireEvent.click(await screen.findByRole('tab', { name: 'Amazon Extension' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Extensions' }))
 
     expect(await screen.findByText('Shop one Chrome')).toBeVisible()
     expect(screen.getByText('Shop two Chrome')).toBeVisible()
@@ -1557,16 +1655,14 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
     fireEvent.click(await screen.findByText('Ads'))
     expect(await screen.findByText('Amazon Ads Spend')).toBeVisible()
-    expect(
-      screen.getByText('You do not have permission to view Ads imports.'),
-    ).toBeVisible()
+    expect(screen.getByText('You do not have permission to view Ads imports.')).toBeVisible()
     expect(listImportBatches).not.toHaveBeenCalled()
   })
 
   it('renders all four workbench metric cards and supports tab switching via URL', async () => {
     renderWorkbench('/portal/integrations?tab=extension', account(['ORDERS:READ', 'FINANCE:READ']))
 
-    expect(await screen.findByRole('tab', { name: 'Amazon Extension' })).toHaveAttribute(
+    expect(await screen.findByRole('tab', { name: 'Extensions' })).toHaveAttribute(
       'aria-selected',
       'true',
     )

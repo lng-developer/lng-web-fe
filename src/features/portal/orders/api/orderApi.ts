@@ -76,6 +76,13 @@ export type OrderCaseInput = Pick<OrderCase, 'caseType' | 'severity' | 'title'> 
 }
 export type OrderWorkbenchItem = {
   item: {
+    salesChannelCode?: string | null
+    externalListingId?: string | null
+    externalItemId?: string | null
+    variations?: string | null
+    listingImageUrl?: string | null
+    listingImageAssetId?: string | null
+    listingImageThumbnailUrl?: string | null
     id: string
     sourceSku: string | null
     sku: string | null

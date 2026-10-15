@@ -23,6 +23,7 @@ import {
   uploadManualExcel,
 } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
+import { importJobSource, importJobResults, importJobIssues } from './importJobPresentation'
 import { listAllActiveShops } from '../api/loadActiveShops'
 import {
   canWriteFinanceForShop,
@@ -248,7 +249,7 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
         title: t('portal.integrations.jobs.source', { defaultValue: 'Source' }),
         width: 250,
         render: (_, job) => {
-          const sourceText = `${t(`portal.integrations.sources.${job.source}`, { defaultValue: job.source })} / ${job.marketplaceCode}`
+          const sourceText = importJobSource(job, t)
           return <TableTextCell value={sourceText} maxWidth={230} />
         },
       },
@@ -265,8 +266,12 @@ function IntegrationWorkbench({ account }: { readonly account: CurrentAccount })
       {
         title: t('portal.integrations.jobs.counts', { defaultValue: 'Results' }),
         width: 240,
-        render: (_, job) =>
-          `${job.importedCount} ${t('portal.integrations.jobs.imported', { defaultValue: 'imported' })} / ${job.skippedCount} ${t('portal.integrations.jobs.skipped', { defaultValue: 'skipped' })} / ${job.failedCount} ${t('portal.integrations.jobs.failed', { defaultValue: 'failed' })}`,
+        render: (_, job) => (
+          <div>
+            <div>{importJobResults(job, t)}</div>
+            <div>{importJobIssues(job, t)}</div>
+          </div>
+        ),
       },
     ],
     [shopNames, t],

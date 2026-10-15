@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SyncOutlined } from '@ant-design/icons'
-import { Button, Popover, Select, Typography } from 'antd'
+import { Button, InputNumber, Popover, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { DateRangePicker } from '@/shared/ui'
@@ -30,6 +30,8 @@ export function ExtensionManualRequest({
 }) {
   const { t } = useTranslation()
   const [numDays, setNumDays] = useState<ExtensionImportDays>(1)
+  const [maxOrders, setMaxOrders] = useState<number | null>(1)
+  const etsy = agent.provider === 'ETSY'
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const key = 'portal.integrations.extension.manualRequests'
   const label = t(`${key}.${source}`)
@@ -37,6 +39,9 @@ export function ExtensionManualRequest({
   const to = dates.dateTo ? dayjs(dates.dateTo).startOf('day') : null
   const validDates =
     from?.isValid() && to?.isValid() && !to.isBefore(from) && to.diff(from, 'day') <= 119
+  const validCount =
+    maxOrders !== null && Number.isInteger(maxOrders) && maxOrders >= 1 && maxOrders <= 200
+  if (etsy && source !== 'ORDERS') return null
 
   return (
     <Popover
@@ -46,10 +51,18 @@ export function ExtensionManualRequest({
         <div className={styles.commandPopover}>
           <Typography.Text>
             {t(
-              `${key}.${source === 'ORDERS' ? 'ordersHint' : source === 'SETTLEMENTS' ? 'settlementHint' : 'dateHint'}`,
+              `${key}.${etsy ? 'etsyHint' : source === 'ORDERS' ? 'ordersHint' : source === 'SETTLEMENTS' ? 'settlementHint' : 'dateHint'}`,
             )}
           </Typography.Text>
-          {source === 'ORDERS' ? (
+          {etsy ? (
+            <InputNumber
+              aria-label={t(`${key}.maxOrders`)}
+              min={1}
+              max={200}
+              value={maxOrders}
+              onChange={setMaxOrders}
+            />
+          ) : source === 'ORDERS' ? (
             <Select
               aria-label={t('portal.integrations.extension.orderHistoryWindow')}
               value={numDays}
@@ -69,12 +82,17 @@ export function ExtensionManualRequest({
           <Button
             type="primary"
             loading={loading}
-            disabled={agent.status !== 'ONLINE' || loading || (source !== 'ORDERS' && !validDates)}
+            disabled={
+              agent.status !== 'ONLINE' ||
+              loading ||
+              (etsy && !validCount) ||
+              (source !== 'ORDERS' && !validDates)
+            }
             onClick={() =>
               onRequest({
                 agentId: agent.id,
                 type: commandTypes[source],
-                ...(source === 'ORDERS' ? { numDays } : dates),
+                ...(etsy ? { maxOrders: maxOrders! } : source === 'ORDERS' ? { numDays } : dates),
               })
             }
           >

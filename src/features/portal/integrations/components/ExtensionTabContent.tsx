@@ -208,7 +208,7 @@ export function ExtensionTabContent({
         />
       )}
       <ExtensionCommandDrawer
-        command={selectedCommand}
+        command={commands.find((command) => command.id === selectedCommand?.id) ?? selectedCommand}
         onClose={() => setSelectedCommand(undefined)}
       />
       {activeExtensionTab === 'automation' ? (

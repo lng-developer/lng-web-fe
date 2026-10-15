@@ -56,10 +56,11 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { type AccessExplorerSnapshot, loadAccessExplorer } from '../../api/accessExplorerApi'
+import { type AccessExplorerSnapshot } from '../../api/accessExplorerApi'
 import { accountKeys } from '../api/accountKeys'
 import {
   createAccount,
+  loadAccount,
   resetAccountPassword,
   revokeAccountSessions,
   type CreateAccountInput,
@@ -336,16 +337,12 @@ export function AccessExplorerPage() {
     setQuickAccessAccount(account)
     setIsOpeningQuickAccess(true)
     try {
-      const snapshot = await loadAccessExplorer(account.id)
+      const detail = await loadAccount(account.id)
       quickAccessForm.setFieldsValue({
-        roleIds: snapshot.account.access?.roleIds ?? snapshot.account.account.roles ?? [],
-        customPermissionIds: snapshot.account.access?.customPermissionIds ?? [],
-        validFrom: snapshot.account.access?.validFrom
-          ? dayjs(snapshot.account.access.validFrom)
-          : null,
-        validUntil: snapshot.account.access?.validUntil
-          ? dayjs(snapshot.account.access.validUntil)
-          : null,
+        roleIds: detail.access?.roleIds ?? detail.account.roles ?? [],
+        customPermissionIds: detail.access?.customPermissionIds ?? [],
+        validFrom: detail.access?.validFrom ? dayjs(detail.access.validFrom) : null,
+        validUntil: detail.access?.validUntil ? dayjs(detail.access.validUntil) : null,
       })
     } catch {
       quickAccessForm.resetFields()
@@ -392,16 +389,12 @@ export function AccessExplorerPage() {
     bulkAccessForm.resetFields()
     if (selectedAccountIds.length === 1) {
       try {
-        const snapshot = await loadAccessExplorer(selectedAccountIds[0])
+        const detail = await loadAccount(selectedAccountIds[0])
         bulkAccessForm.setFieldsValue({
-          roleIds: snapshot.account.access?.roleIds ?? snapshot.account.account.roles ?? [],
-          customPermissionIds: snapshot.account.access?.customPermissionIds ?? [],
-          validFrom: snapshot.account.access?.validFrom
-            ? dayjs(snapshot.account.access.validFrom)
-            : null,
-          validUntil: snapshot.account.access?.validUntil
-            ? dayjs(snapshot.account.access.validUntil)
-            : null,
+          roleIds: detail.access?.roleIds ?? detail.account.roles ?? [],
+          customPermissionIds: detail.access?.customPermissionIds ?? [],
+          validFrom: detail.access?.validFrom ? dayjs(detail.access.validFrom) : null,
+          validUntil: detail.access?.validUntil ? dayjs(detail.access.validUntil) : null,
         })
       } catch (error) {
         showFeedbackToast(
