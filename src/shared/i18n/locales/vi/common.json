@@ -4716,7 +4716,8 @@
     "directChat": "Trò chuyện trực tiếp",
     "activeNow": "Đang hoạt động",
     "noSearchResults": "Không tìm thấy kết quả",
-    "startConversation": "Bắt đầu cuộc trò chuyện"
+    "startConversation": "Bắt đầu cuộc trò chuyện",
+    "deletedUser": "Người dùng đã xóa"
   },
   "systemDashboard": {
     "title": "Bảng điều khiển hệ thống",

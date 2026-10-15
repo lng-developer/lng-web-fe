@@ -26,6 +26,7 @@ describe('AccessDeniedResult', () => {
     render(<AccessDeniedResult />)
     expect(screen.getByText('403')).toBeVisible()
     expect(screen.getByText(/Không có quyền truy cập|Access Denied/i)).toBeVisible()
+    expect(screen.getByTestId('access-denied-image')).toBeInTheDocument()
   })
 
   it('navigates via router client-side when clicking back to dashboard inside Router', () => {

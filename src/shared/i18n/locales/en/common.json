@@ -4716,7 +4716,8 @@
     "directChat": "Direct Chat",
     "activeNow": "Active now",
     "noSearchResults": "No results found",
-    "startConversation": "Start a conversation"
+    "startConversation": "Start a conversation",
+    "deletedUser": "Deleted user"
   },
   "systemDashboard": {
     "title": "System dashboard",

@@ -5,7 +5,6 @@ import {
   PaperClipOutlined,
   SearchOutlined,
   SendOutlined,
-  SyncOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -44,23 +43,21 @@ import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
 import { getAccount } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { AuthenticatedMediaImage } from '@/shared/media'
-import { matchesParticipantSearch, removeVietnameseTones } from '../components/chatViewUtils'
+import {
+  conversationInitials,
+  conversationTitle,
+  formatRelativeTime,
+  getInitials,
+  matchesConversationSearch,
+  matchesParticipantSearch,
+  messagePreviewText,
+  participantLabel,
+} from '../components/chatViewUtils'
 
 import styles from './ChatWorkspacePage.module.scss'
 
 const MESSAGE_LIMIT = 50
 type ChatPage<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
-
-function participantLabel(account?: ChatParticipant) {
-  return account?.displayName || account?.fullName || account?.email || account?.employeeCode || ''
-}
-
-function getInitials(name?: string) {
-  if (!name) return ''
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
 
 function formatMessageTime(dateString?: string | null) {
   if (!dateString) return ''
@@ -100,27 +97,6 @@ function formatDateGroupLabel(groupKey: string, t: (key: string, fallback: strin
   } catch {
     return groupKey
   }
-}
-
-function conversationTitle(
-  conversation: ChatConversation,
-  participantById: Map<string, ChatParticipant> = new Map(),
-  currentAccountId?: string,
-) {
-  if (conversation.type === 'DIRECT') {
-    const otherAccountId = conversation.participantAccountIds.find((id) => id !== currentAccountId)
-    const otherParticipant = otherAccountId ? participantById.get(otherAccountId) : undefined
-    const name = otherParticipant?.displayName || otherParticipant?.fullName
-    if (name) return name
-    const fallback = participantLabel(otherParticipant)
-    if (fallback) return fallback
-    if (conversation.title) return conversation.title
-  }
-  return (
-    conversation.title ||
-    conversation.relatedResource?.id ||
-    `${conversation.type.replaceAll('_', ' ')} conversation`
-  )
 }
 
 function MessageBubble({
@@ -273,15 +249,47 @@ export function ChatWorkspacePage() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const account = getAccount()
 
+  const timeLabels = {
+    now: t('chat.time.now'),
+    minute: t('chat.time.minute'),
+    hour: t('chat.time.hour'),
+    day: t('chat.time.day'),
+  }
+
   const conversations = useQuery({
     queryKey: chatKeys.conversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
     queryFn: () => listChatConversations({ page: 1, limit: DEFAULT_PAGE_SIZE }),
   })
-  const directConversations = useMemo(
-    () => (conversations.data?.items ?? []).filter((c) => c.type === 'DIRECT'),
+  const participants = useQuery({
+    queryKey: ['chat-participants'],
+    queryFn: () => listChatParticipants({ limit: 100 }),
+  })
+  const participantById = useMemo(
+    () => new Map((participants.data?.items ?? []).map((p) => [p.id, p])),
+    [participants.data?.items],
+  )
+  const recentConversations = useMemo(
+    () => (conversations.data?.items ?? []).filter((c) => Boolean(c.lastMessageAt)),
     [conversations.data?.items],
   )
-  const firstConversationId = directConversations[0]?.id ?? null
+  const filteredConversations = useMemo(() => {
+    if (!search.trim()) return recentConversations
+    return recentConversations.filter((conv) =>
+      matchesConversationSearch(conv, participantById, account?.id, search),
+    )
+  }, [recentConversations, participantById, account?.id, search])
+
+  const conversationListItems = useMemo(() => {
+    if (selectedId && !recentConversations.some((c) => c.id === selectedId)) {
+      const newlyCreated = (conversations.data?.items ?? []).find((c) => c.id === selectedId)
+      if (newlyCreated) {
+        return [newlyCreated, ...filteredConversations]
+      }
+    }
+    return filteredConversations
+  }, [selectedId, recentConversations, conversations.data?.items, filteredConversations])
+
+  const firstConversationId = conversationListItems[0]?.id ?? recentConversations[0]?.id ?? null
   const activeConversationId = selectedId ?? firstConversationId
   const selectedConversation =
     conversations.data?.items.find(({ id }) => id === activeConversationId) ?? null
@@ -308,10 +316,6 @@ export function ChatWorkspacePage() {
     document.addEventListener('visibilitychange', readVisibleConversation)
     return () => document.removeEventListener('visibilitychange', readVisibleConversation)
   }, [activeConversationId, latestMessageId, markRead])
-  const participants = useQuery({
-    queryKey: ['chat-participants'],
-    queryFn: () => listChatParticipants({ limit: 100 }),
-  })
   const directorySearch = useQuery({
     queryKey: ['chat-participants', 'search', search.trim()],
     queryFn: () => listChatParticipants({ search: search.trim(), limit: 100 }),
@@ -320,14 +324,16 @@ export function ChatWorkspacePage() {
 
   const conversationByParticipantId = useMemo(() => {
     const map = new Map<string, ChatConversation>()
-    directConversations.forEach((conv) => {
-      const otherId = conv.participantAccountIds.find((id) => id !== account?.id)
-      if (otherId) {
-        map.set(otherId, conv)
+    ;(conversations.data?.items ?? []).forEach((conv) => {
+      if (conv.type === 'DIRECT') {
+        const otherId = conv.participantAccountIds.find((id) => id !== account?.id)
+        if (otherId) {
+          map.set(otherId, conv)
+        }
       }
     })
     return map
-  }, [directConversations, account?.id])
+  }, [conversations.data?.items, account?.id])
 
   const createMutation = useMutation({
     mutationFn: (input: {
@@ -360,16 +366,6 @@ export function ChatWorkspacePage() {
     onSuccess: () => {
       setDraft('')
       setFiles([])
-    },
-  })
-
-  const syncTeamsMutation = useMutation({
-    mutationFn: () => syncTeamsChat(activeConversationId!),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: chatKeys.messages(activeConversationId) }),
-        queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] }),
-      ])
     },
   })
 
@@ -443,55 +439,14 @@ export function ChatWorkspacePage() {
   const canSend = Boolean(
     activeConversationId && (draft.trim() || files.length) && !sendMutation.isPending,
   )
-  const participantById = useMemo(
-    () => new Map((participants.data?.items ?? []).map((p) => [p.id, p])),
-    [participants.data?.items],
-  )
   const people = useMemo(() => {
-    const candidates = isNewMessage
-      ? (directorySearch.data?.items ?? [])
-      : directConversations
-          .filter((conv) => Boolean(conv.lastMessageAt))
-          .flatMap((conv) => {
-            const id = conv.participantAccountIds.find((value) => value !== account?.id)
-            return id
-              ? [participantById.get(id) ?? { id, email: '', displayName: conv.title || id }]
-              : []
-          })
+    if (!isNewMessage) return []
+    const candidates = directorySearch.data?.items ?? participants.data?.items ?? []
     return candidates.filter((acc) => {
       if (acc.id === account?.id) return false
-      if (isNewMessage) return Boolean(search.trim())
-      if (matchesParticipantSearch(acc, search)) return true
-      const conv = conversationByParticipantId.get(acc.id)
-      if (conv?.lastMessagePreview && search.trim()) {
-        const q = search.trim().toLowerCase()
-        const nq = removeVietnameseTones(q)
-        if (conv.lastMessagePreview.toLowerCase().includes(q)) return true
-        if (removeVietnameseTones(conv.lastMessagePreview).includes(nq)) return true
-      }
-      return false
+      return matchesParticipantSearch(acc, search)
     })
-  }, [
-    isNewMessage,
-    directorySearch.data?.items,
-    directConversations,
-    account?.id,
-    participantById,
-    search,
-    conversationByParticipantId,
-  ])
-
-  // Prioritize users with active/recent messages at the top
-  const sortedPeople = useMemo(() => {
-    return [...people].sort((a, b) => {
-      const convA = conversationByParticipantId.get(a.id)
-      const convB = conversationByParticipantId.get(b.id)
-      const timeA = convA?.lastMessageAt ? new Date(convA.lastMessageAt).getTime() : 0
-      const timeB = convB?.lastMessageAt ? new Date(convB.lastMessageAt).getTime() : 0
-      if (timeA !== timeB) return timeB - timeA
-      return participantLabel(a).localeCompare(participantLabel(b))
-    })
-  }, [people, conversationByParticipantId])
+  }, [isNewMessage, directorySearch.data?.items, participants.data?.items, account?.id, search])
 
   const otherAccountId =
     selectedConversation?.type === 'DIRECT'
@@ -502,24 +457,42 @@ export function ChatWorkspacePage() {
     ? (presenceByAccountId[otherAccountId] ?? otherParticipant?.presence ?? 'OFFLINE')
     : 'OFFLINE'
   const isOtherOnline = otherPresence === 'ONLINE'
-  const otherInitials = getInitials(participantLabel(otherParticipant))
+  const otherInitials = selectedConversation
+    ? conversationInitials(selectedConversation, participantById, account?.id)
+    : ''
 
   useEffect(() => {
-    if (activeConversationId && otherParticipant?.email?.includes('@lngwork.co')) {
+    if (!activeConversationId || !otherParticipant?.email?.includes('@lngwork.co')) return
+
+    let isDisposed = false
+    const pollSync = () => {
       syncTeamsChat(activeConversationId)
         .then((res) => {
-          if (res?.syncedCount > 0) {
+          if (!isDisposed && res?.syncedCount > 0) {
             queryClient.invalidateQueries({ queryKey: chatKeys.messages(activeConversationId) })
             queryClient.invalidateQueries({ queryKey: [...chatKeys.all, 'conversations'] })
           }
         })
         .catch(() => undefined)
     }
+
+    pollSync()
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        pollSync()
+      }
+    }, 8000)
+
+    return () => {
+      isDisposed = true
+      clearInterval(timer)
+    }
   }, [activeConversationId, otherParticipant?.email, queryClient])
 
   const startDirectChat = (accountId: string) => {
     if (isNewMessage) {
-      const participant = directorySearch.data?.items.find((item) => item.id === accountId)
+      const candidateList = directorySearch.data?.items ?? participants.data?.items ?? []
+      const participant = candidateList.find((item) => item.id === accountId)
       if (participant) {
         queryClient.setQueryData<{ items: ChatParticipant[] }>(
           ['chat-participants'],
@@ -575,30 +548,118 @@ export function ChatWorkspacePage() {
           conversations.isLoading ||
           (isNewMessage && directorySearch.isFetching) ? (
             <Skeleton active paragraph={{ rows: 6 }} />
-          ) : sortedPeople.length ? (
+          ) : isNewMessage ? (
+            people.length ? (
+              <Space orientation="vertical" size={2} style={{ width: '100%' }}>
+                <Typography.Text className={styles.sectionLabel}>
+                  {t('chat.people')}
+                </Typography.Text>
+                {people.map((accountItem) => {
+                  const presence =
+                    presenceByAccountId[accountItem.id] ?? accountItem.presence ?? 'OFFLINE'
+                  const isOnline = presence === 'ONLINE'
+                  const itemInitials = getInitials(participantLabel(accountItem))
+
+                  return (
+                    <button
+                      key={accountItem.id}
+                      type="button"
+                      className={styles.conversationButton}
+                      onClick={() => startDirectChat(accountItem.id)}
+                    >
+                      <Badge dot status={isOnline ? 'success' : 'default'} offset={[-2, 30]}>
+                        <Avatar
+                          size={38}
+                          style={{
+                            backgroundColor: '#f1f5f9',
+                            color: '#334155',
+                            fontWeight: 600,
+                            fontSize: 13,
+                            border: '1px solid #e2e8f0',
+                          }}
+                        >
+                          {itemInitials || <UserOutlined style={{ color: '#64748b' }} />}
+                        </Avatar>
+                      </Badge>
+                      <span className={styles.conversationMeta}>
+                        <span className={styles.conversationHeaderRow}>
+                          <span className={styles.participantName}>
+                            {participantLabel(accountItem)}
+                          </span>
+                        </span>
+                        <span className={styles.previewRow}>
+                          <span className={styles.preview}>
+                            {accountItem.email ||
+                              accountItem.employeeCode ||
+                              (isOnline
+                                ? t('chat.online', 'Online')
+                                : t('chat.offline', 'Offline'))}
+                          </span>
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </Space>
+            ) : (
+              <Empty
+                description={
+                  search.trim()
+                    ? t('chat.noSearchResults', 'No results found')
+                    : t('chat.searchCompany')
+                }
+              />
+            )
+          ) : conversationListItems.length ? (
             <Space orientation="vertical" size={2} style={{ width: '100%' }}>
               <Typography.Text className={styles.sectionLabel}>
-                {t(isNewMessage ? 'chat.people' : 'chat.conversations')}
+                {t('chat.conversations')}
               </Typography.Text>
-              {sortedPeople.map((accountItem) => {
-                const conv = conversationByParticipantId.get(accountItem.id)
-                const isSelected = activeConversationId
-                  ? conv?.id === activeConversationId || accountItem.id === otherAccountId
-                  : false
-                const presence =
-                  presenceByAccountId[accountItem.id] ?? accountItem.presence ?? 'OFFLINE'
+              {conversationListItems.map((conv) => {
+                const isSelected = conv.id === activeConversationId
+                const otherId =
+                  conv.type === 'DIRECT'
+                    ? conv.participantAccountIds.find((id) => id !== account?.id)
+                    : null
+                const otherP = otherId ? participantById.get(otherId) : undefined
+                const presence = otherId
+                  ? (presenceByAccountId[otherId] ?? otherP?.presence ?? 'OFFLINE')
+                  : 'OFFLINE'
                 const isOnline = presence === 'ONLINE'
-                const lastTime = conv?.lastMessageAt ? formatMessageTime(conv.lastMessageAt) : null
-                const itemInitials = getInitials(participantLabel(accountItem))
+                const timeLabel = conv.lastMessageAt
+                  ? formatRelativeTime(conv.lastMessageAt, timeLabels)
+                  : null
+                const initials = conversationInitials(conv, participantById, account?.id)
+                const title = conversationTitle(
+                  conv,
+                  participantById,
+                  account?.id,
+                  t('chat.deletedUser', 'Người dùng đã xóa'),
+                )
+                const preview =
+                  conv.type === 'DIRECT' && conv.lastMessageSenderAccountId !== account?.id
+                    ? conv.lastMessagePreview ||
+                      (isOnline ? t('chat.online', 'Online') : t('chat.offline', 'Offline'))
+                    : messagePreviewText(
+                        conv,
+                        participantById,
+                        account?.id,
+                        t('chat.noMessages', 'Chưa có tin nhắn'),
+                        t('chat.you', 'Bạn'),
+                      )
 
                 return (
                   <button
-                    key={accountItem.id}
+                    key={conv.id}
                     type="button"
                     className={`${styles.conversationButton} ${isSelected ? styles.activeConversation : ''}`}
-                    onClick={() => startDirectChat(accountItem.id)}
+                    onClick={() => setSelectedId(conv.id)}
                   >
-                    <Badge dot status={isOnline ? 'success' : 'default'} offset={[-2, 30]}>
+                    <Badge
+                      dot={conv.type === 'DIRECT' && Boolean(otherP)}
+                      status={isOnline ? 'success' : 'default'}
+                      offset={[-2, 30]}
+                    >
                       <Avatar
                         size={38}
                         style={{
@@ -609,26 +670,25 @@ export function ChatWorkspacePage() {
                           border: isSelected ? 'none' : '1px solid #e2e8f0',
                         }}
                       >
-                        {itemInitials || (
+                        {conv.type === 'TEAM' ? (
+                          <TeamOutlined style={{ color: isSelected ? '#ffffff' : '#2563eb' }} />
+                        ) : initials ? (
+                          initials
+                        ) : (
                           <UserOutlined style={{ color: isSelected ? '#ffffff' : '#64748b' }} />
                         )}
                       </Avatar>
                     </Badge>
                     <span className={styles.conversationMeta}>
                       <span className={styles.conversationHeaderRow}>
-                        <span className={styles.participantName}>
-                          {participantLabel(accountItem)}
-                        </span>
-                        {lastTime ? (
-                          <span className={styles.lastMessageTime}>{lastTime}</span>
+                        <span className={styles.participantName}>{title}</span>
+                        {timeLabel ? (
+                          <span className={styles.lastMessageTime}>{timeLabel}</span>
                         ) : null}
                       </span>
                       <span className={styles.previewRow}>
-                        <span className={styles.preview}>
-                          {conv?.lastMessagePreview ||
-                            (isOnline ? t('chat.online', 'Online') : t('chat.offline', 'Offline'))}
-                        </span>
-                        {conv && conv.unreadCount > 0 ? (
+                        <span className={styles.preview}>{preview}</span>
+                        {conv.unreadCount > 0 ? (
                           <span className={styles.unreadBadge}>{conv.unreadCount}</span>
                         ) : null}
                       </span>
@@ -642,7 +702,7 @@ export function ChatWorkspacePage() {
               description={
                 search.trim()
                   ? t('chat.noSearchResults', 'No results found')
-                  : t(isNewMessage ? 'chat.searchCompany' : 'chat.emptyMessages')
+                  : t('chat.emptyMessages')
               }
             />
           )}
@@ -654,7 +714,11 @@ export function ChatWorkspacePage() {
         {/* Header */}
         <div className={styles.paneHeader}>
           <div className={styles.paneHeaderLeft}>
-            <Badge dot status={isOtherOnline ? 'success' : 'default'} offset={[-2, 32]}>
+            <Badge
+              dot={Boolean(selectedConversation?.type === 'DIRECT' && otherParticipant)}
+              status={isOtherOnline ? 'success' : 'default'}
+              offset={[-2, 32]}
+            >
               <Avatar
                 size={40}
                 style={{
@@ -664,45 +728,59 @@ export function ChatWorkspacePage() {
                   fontSize: 14,
                 }}
               >
-                {otherInitials || <UserOutlined style={{ color: '#ffffff' }} />}
+                {selectedConversation?.type === 'TEAM' ? (
+                  <TeamOutlined style={{ color: '#ffffff' }} />
+                ) : otherInitials ? (
+                  otherInitials
+                ) : (
+                  <UserOutlined style={{ color: '#ffffff' }} />
+                )}
               </Avatar>
             </Badge>
             <div className={styles.paneHeaderInfo}>
               <Typography.Title level={4} className={styles.paneHeaderTitle}>
                 {selectedConversation
-                  ? conversationTitle(selectedConversation, participantById, account?.id)
+                  ? conversationTitle(
+                      selectedConversation,
+                      participantById,
+                      account?.id,
+                      t('chat.deletedUser', 'Người dùng đã xóa'),
+                    )
                   : t('chat.select', 'Select a conversation')}
               </Typography.Title>
               <div className={styles.paneHeaderSub}>
-                <span
-                  className={`${styles.statusDot} ${isOtherOnline ? styles.online : styles.offline}`}
-                />
-                <span>
-                  {isOtherOnline ? t('chat.activeNow', 'Active now') : t('chat.offline', 'Offline')}
-                </span>
-                {otherParticipant?.email ? (
-                  <>
-                    <span>•</span>
-                    <span>{otherParticipant.email}</span>
-                  </>
-                ) : null}
-                {otherParticipant?.email?.includes('@lngwork.co') ? (
-                  <Space size={6} align="center">
-                    <span className={styles.teamsTag}>
-                      <TeamOutlined /> {t('chat.teamsConnected', 'Teams')}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.syncBtn}
-                      disabled={syncTeamsMutation.isPending}
-                      onClick={() => syncTeamsMutation.mutate()}
-                      title={t('chat.syncTeamsTooltip', 'Đồng bộ tin nhắn mới từ Microsoft Teams')}
-                    >
-                      <SyncOutlined spin={syncTeamsMutation.isPending} />
-                      <span>{t('chat.syncTeams', 'Đồng bộ')}</span>
-                    </button>
-                  </Space>
-                ) : null}
+                {selectedConversation?.type === 'DIRECT' ? (
+                  otherParticipant ? (
+                    <>
+                      <span
+                        className={`${styles.statusDot} ${isOtherOnline ? styles.online : styles.offline}`}
+                      />
+                      <span>
+                        {isOtherOnline
+                          ? t('chat.activeNow', 'Active now')
+                          : t('chat.offline', 'Offline')}
+                      </span>
+                      {otherParticipant?.email ? (
+                        <>
+                          <span>•</span>
+                          <span>{otherParticipant.email}</span>
+                        </>
+                      ) : null}
+                      {otherParticipant?.email?.includes('@lngwork.co') ? (
+                        <span className={styles.teamsTag}>
+                          <TeamOutlined /> {t('chat.teamsConnected', 'Teams')}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span>{t('chat.deletedUser', 'Người dùng đã xóa')}</span>
+                  )
+                ) : (
+                  <span>
+                    {selectedConversation?.participantAccountIds.length || 0}{' '}
+                    {t('chat.participants', 'người tham gia')}
+                  </span>
+                )}
               </div>
             </div>
           </div>

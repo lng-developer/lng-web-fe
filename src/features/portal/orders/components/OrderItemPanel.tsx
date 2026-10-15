@@ -1,4 +1,4 @@
-import { Fragment, memo, type MouseEvent, useMemo, useState } from 'react'
+import { memo, type MouseEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircleOutlined,
@@ -9,12 +9,13 @@ import {
   HistoryOutlined,
   LinkOutlined,
   ReloadOutlined,
+  RightOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
 import { Button, Descriptions, Dropdown, type MenuProps, Space, Tooltip, Typography } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
-import { CopyableAsin, CopyableSku, StatusTag } from '@/shared/ui'
+import { StatusTag } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import { FulfillmentInlineEditor } from '../pages/FulfillmentInlineEditor'
@@ -63,27 +64,43 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   onOpenImageViewer,
 }: OrderItemPanelProps) {
   const { t } = useTranslation()
-  const customizationInputs = item.customization?.inputs ?? []
-  const buyerImageInputs = customizationInputs.filter((input) => input.assetDownloadUrl)
+  const customizationInputs = useMemo(
+    () => item.customization?.inputs ?? [],
+    [item.customization?.inputs],
+  )
+  const buyerImageInputs = useMemo(
+    () => customizationInputs.filter((input) => input.assetDownloadUrl),
+    [customizationInputs],
+  )
   const customizationImage = buyerImageInputs[0]?.assetDownloadUrl
   const customizationPreview = item.customization?.previewImageUrl
-  const buyerImageUrls = new Set(buyerImageInputs.map((input) => input.assetDownloadUrl))
-  const extractedArtworkImages = (item.customization?.extractedImages ?? []).filter(
-    (image) => image.assetDownloadUrl && !buyerImageUrls.has(image.assetDownloadUrl),
+  const buyerImageUrls = useMemo(
+    () => new Set(buyerImageInputs.map((input) => input.assetDownloadUrl)),
+    [buyerImageInputs],
   )
-  const artworkImages =
-    extractedArtworkImages.length > 0
-      ? extractedArtworkImages
-      : customizationPreview && !buyerImageUrls.has(customizationPreview)
-        ? [{ assetDownloadUrl: customizationPreview, filename: null }]
-        : []
+  const extractedArtworkImages = useMemo(
+    () =>
+      (item.customization?.extractedImages ?? []).filter(
+        (image) => image.assetDownloadUrl && !buyerImageUrls.has(image.assetDownloadUrl),
+      ),
+    [item.customization?.extractedImages, buyerImageUrls],
+  )
+  const artworkImages = useMemo(
+    () =>
+      extractedArtworkImages.length > 0
+        ? extractedArtworkImages
+        : customizationPreview && !buyerImageUrls.has(customizationPreview)
+          ? [{ assetDownloadUrl: customizationPreview, filename: null }]
+          : [],
+    [extractedArtworkImages, customizationPreview, buyerImageUrls],
+  )
   const savedListingImage = item.item.listingImageAssetId
     ? `/api/media/assets/${encodeURIComponent(item.item.listingImageAssetId)}/download`
     : null
   const mainListingImage =
     item.listing?.productImageUrl || savedListingImage || item.item.listingImageUrl
   const listingImageFallback =
-    item.item.listingImageThumbnailUrl || item.item.listingImageUrl || '/favicon.svg'
+    item.item.listingImageThumbnailUrl || item.item.listingImageUrl || '/assets/images/favicon.svg'
   const isEtsy = item.item.salesChannelCode === 'ETSY'
   const etsyListingId = item.item.externalListingId
   const platformIdentity = isEtsy ? (
@@ -137,6 +154,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
 
   const customizationValueInputs = customizationInputs.filter((input) => !input.assetDownloadUrl)
   const [showAllCustomizations, setShowAllCustomizations] = useState(false)
+  const [isArtworkExpanded, setIsArtworkExpanded] = useState(false)
   const visibleCustomizationInputs = showAllCustomizations
     ? customizationInputs
     : [...customizationValueInputs.slice(0, 4), ...buyerImageInputs]
@@ -202,7 +220,6 @@ export const OrderItemPanel = memo(function OrderItemPanel({
       item,
       onAction,
       onConfirm,
-      psdDownloadUrl,
       productionRecheckBlocked,
       productionRecheckLabel,
       t,
@@ -215,7 +232,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
 
     return (
       <Space size={4} className={styles.asinWithLink}>
-        <CopyableAsin value={asin} />
+        <span className={styles.asinChip}>{displayValue(asin)}</span>
         {productUrl ? (
           <Tooltip title={t('orders.actions.openProduct', { defaultValue: 'Open product' })}>
             <Button
@@ -258,24 +275,45 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             />
           </>
         ) : null}
-        {artworkImages.map((image, index) => (
-          <Fragment key={image.assetDownloadUrl}>
-            {index === 0 ? (
-              <Typography.Text type="secondary">
-                {t('orders.fields.customizationArtwork')}
-              </Typography.Text>
+        {artworkImages.length > 0 ? (
+          <div className={styles.artworkCollapsible}>
+            <button
+              type="button"
+              className={styles.artworkToggle}
+              onClick={() => setIsArtworkExpanded((current) => !current)}
+              aria-expanded={isArtworkExpanded}
+            >
+              <RightOutlined
+                className={styles.artworkToggleIcon}
+                style={{
+                  transform: isArtworkExpanded ? 'rotate(90deg)' : 'none',
+                  transition: 'transform 150ms ease',
+                }}
+              />
+              <span className={styles.artworkToggleLabel}>
+                {t('orders.fields.customizationArtwork')} ({artworkImages.length})
+              </span>
+            </button>
+            {isArtworkExpanded ? (
+              <div className={styles.artworkImages}>
+                {artworkImages.map((image) => (
+                  <AuthenticatedMediaImage
+                    key={image.assetDownloadUrl}
+                    width={112}
+                    height={112}
+                    downloadUrl={image.assetDownloadUrl}
+                    alt={image.filename || t('orders.fields.image')}
+                    style={{ cursor: 'zoom-in' }}
+                    onClick={(event) =>
+                      onOpenImageViewer(event, image.assetDownloadUrl, relatedImages)
+                    }
+                    fallback="/assets/images/favicon.svg"
+                  />
+                ))}
+              </div>
             ) : null}
-            <AuthenticatedMediaImage
-              width={112}
-              height={112}
-              downloadUrl={image.assetDownloadUrl}
-              alt={image.filename || t('orders.fields.image')}
-              style={{ cursor: 'zoom-in' }}
-              onClick={(event) => onOpenImageViewer(event, image.assetDownloadUrl, relatedImages)}
-              fallback="/favicon.svg"
-            />
-          </Fragment>
-        ))}
+          </div>
+        ) : null}
         <StatusTag status={orderStatusTone(psdStatus)}>PSD {displayValue(psdStatus)}</StatusTag>
         {psdDownloadUrl ? (
           <Button
@@ -294,7 +332,11 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           column={1}
           colon={false}
           items={[
-            { key: 'sku', label: 'SKU', children: <CopyableSku value={item.item.sku} /> },
+            {
+              key: 'sku',
+              label: 'SKU',
+              children: <span className={styles.skuChip}>{displayValue(item.item.sku)}</span>,
+            },
             {
               key: 'platform-id',
               label: isEtsy ? t('orders.fields.etsyListingId') : 'ASIN',
@@ -312,7 +354,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         <div className={styles.identifierList}>
           <div>
             <Typography.Text type="secondary">SKU</Typography.Text>
-            <CopyableSku value={item.item.sku} />
+            <span className={styles.skuChip}>{displayValue(item.item.sku)}</span>
           </div>
           <div>
             <Typography.Text type="secondary">
@@ -379,7 +421,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
                     height={72}
                     downloadUrl={input.assetDownloadUrl}
                     alt={input.label || t('orders.fields.image')}
-                    fallback="/favicon.svg"
+                    fallback="/assets/images/favicon.svg"
                     style={{ cursor: 'zoom-in' }}
                     onClick={(event) =>
                       onOpenImageViewer(event, input.assetDownloadUrl, relatedImages)
@@ -405,7 +447,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             <Typography.Text type="secondary">—</Typography.Text>
           ) : null}
         </div>
-        {!isEtsy && customizationInputs.length > 4 ? (
+        {!isEtsy && hiddenCustomizationCount > 0 ? (
           <Button
             size="small"
             type="link"

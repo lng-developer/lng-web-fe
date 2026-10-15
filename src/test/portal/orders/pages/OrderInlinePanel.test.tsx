@@ -681,7 +681,9 @@ describe('OrderInlinePanel', () => {
     renderPanel(true, undefined, source)
 
     expect(screen.getByAltText('Buyer photo')).toBeInTheDocument()
-    expect(screen.getByText('orders.fields.customizationArtwork')).toBeInTheDocument()
+    expect(screen.getByText(/orders.fields.customizationArtwork/)).toBeInTheDocument()
+    expect(screen.queryByAltText('archive-preview.jpg')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /orders.fields.customizationArtwork/ }))
     expect(screen.getByAltText('archive-preview.jpg')).toBeInTheDocument()
   })
 
@@ -710,7 +712,7 @@ describe('OrderInlinePanel', () => {
     renderPanel(true, undefined, source)
 
     expect(screen.getByAltText('Upload Photo')).toBeInTheDocument()
-    expect(screen.queryByText('orders.fields.customizationArtwork')).not.toBeInTheDocument()
+    expect(screen.queryByText(/orders.fields.customizationArtwork/)).not.toBeInTheDocument()
   })
 
   it('shows customization artwork when it differs from the buyer upload', () => {
@@ -738,7 +740,9 @@ describe('OrderInlinePanel', () => {
     renderPanel(true, undefined, source)
 
     expect(screen.getByAltText('Upload Photo')).toBeInTheDocument()
-    expect(screen.getByText('orders.fields.customizationArtwork')).toBeInTheDocument()
+    expect(screen.getByText(/orders.fields.customizationArtwork/)).toBeInTheDocument()
+    expect(screen.queryByAltText('orders.fields.image')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /orders.fields.customizationArtwork/ }))
     expect(screen.getByAltText('orders.fields.image')).toHaveAttribute(
       'src',
       'https://m.media-amazon.com/images/S/customize-preview.png',
@@ -769,6 +773,8 @@ describe('OrderInlinePanel', () => {
 
     renderPanel(true, undefined, source)
 
+    expect(screen.queryByAltText('customer-artwork.jpg')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /orders.fields.customizationArtwork/ }))
     expect(screen.getByAltText('customer-artwork.jpg')).toHaveAttribute(
       'src',
       '/api/media/assets/customer-artwork/download',
@@ -802,6 +808,8 @@ describe('OrderInlinePanel', () => {
       'src',
       'https://res.cloudinary.com/example/main-listing.jpg',
     )
+    expect(screen.queryByAltText('orders.fields.image')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /orders.fields.customizationArtwork/ }))
     expect(screen.getByAltText('orders.fields.image')).toHaveAttribute(
       'src',
       'https://m.media-amazon.com/images/S/customize-preview.png',
@@ -1014,5 +1022,46 @@ describe('OrderInlinePanel', () => {
     expect(searchMappingVendors).toHaveBeenCalledTimes(1)
     await waitFor(() => expect(searchMappingVendors).toHaveBeenCalledTimes(2))
     expect(searchMappingVendors).toHaveBeenLastCalledWith({ q: 'mango tee', limit: 20 })
+  })
+
+  it('hides the Show 0 more button when no customization values are hidden', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            inputs: [
+              { type: 'TEXT', label: 'Field 1', value: 'Value 1' },
+              { type: 'TEXT', label: 'Field 2', value: 'Value 2' },
+              { type: 'TEXT', label: 'Field 3', value: 'Value 3' },
+              { type: 'TEXT', label: 'Field 4', value: 'Value 4' },
+              {
+                type: 'IMAGE',
+                label: 'Buyer Image',
+                assetDownloadUrl: '/api/media/assets/buyer-photo/download',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    expect(
+      screen.queryByRole('button', { name: /orders.actions.showMoreCustomization/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('renders SKU and ASIN chips without copy icons in the item panel', () => {
+    renderPanel()
+
+    expect(screen.getAllByText('J2501-DM-1').length).toBeGreaterThan(0)
+    expect(
+      screen.queryByRole('button', { name: /common.copySku|portal.catalog.copySku/ }),
+    ).not.toBeInTheDocument()
   })
 })

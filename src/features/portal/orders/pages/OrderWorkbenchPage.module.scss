@@ -49,6 +49,18 @@
   white-space: nowrap;
 }
 
+.table :global(.ant-table-thead > tr > th:not(:last-child)) {
+  border-inline-end: 1px solid var(--ant-color-border-secondary, rgba(0, 0, 0, 0.06));
+}
+
+.table :global(.ant-table-thead > tr > th::before) {
+  display: none !important;
+}
+
+.table :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td:not(:last-child)) {
+  border-inline-end: 1px solid var(--ant-color-border-secondary, rgba(0, 0, 0, 0.06));
+}
+
 .table :global(.ant-table-cell .ant-space) {
   max-width: 100%;
 }
@@ -325,17 +337,6 @@
 .activeCaseIcon {
   color: var(--ant-color-warning);
 }
-.orderIdChip {
-  display: inline-flex;
-  max-width: 100%;
-}
-.orderIdChip :global(.ant-typography) {
-  overflow: hidden;
-  border: 0;
-  background: color-mix(in srgb, var(--ant-color-primary-bg) 82%, var(--ant-color-bg-container));
-  font-weight: 700;
-  text-overflow: ellipsis;
-}
 .caseButton {
   padding-inline: 4px;
 }
@@ -454,7 +455,7 @@
 .itemPanel {
   display: grid;
   grid-template-columns:
-    150px minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(150px, 0.65fr)
+    minmax(175px, 0.9fr) minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(150px, 0.65fr)
     minmax(150px, 0.9fr) minmax(170px, 1fr) 48px;
   gap: 16px;
   padding: 16px;
@@ -523,6 +524,46 @@
   object-fit: cover;
   border-radius: 8px;
 }
+.artworkCollapsible {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+.artworkToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  margin-left: -4px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+  transition: all 140ms ease;
+  white-space: nowrap;
+  max-width: 100%;
+
+  &:hover {
+    color: var(--ant-color-primary);
+    background: var(--ant-color-fill-tertiary);
+  }
+}
+.artworkToggleIcon {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.artworkToggleLabel {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.artworkImages {
+  display: grid;
+  gap: 8px;
+}
 .inputList,
 .trackingRow {
   display: grid;
@@ -566,19 +607,22 @@
 }
 .identifierList > div {
   display: flex;
+  flex-direction: column;
   min-width: 0;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 2px;
 }
 .identifierList > div > :first-child {
-  flex: 0 0 60px;
-  white-space: nowrap;
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1.2;
 }
 .identifierList > div > :not(:first-child) {
   min-width: 0;
+  max-width: 100%;
 }
 .identifierList .asinWithLink {
-  flex: 1;
+  width: 100%;
   min-width: 0;
 }
 .asinWithLink {
@@ -607,7 +651,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: all 140ms ease;
-  user-select: none;
+  user-select: text;
 }
 
 .orderIdChip {
@@ -691,7 +735,10 @@
 }
 @container (max-width: 1500px) {
   .itemPanel {
-    grid-template-columns: 140px minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr) 48px;
+    grid-template-columns: minmax(175px, 0.9fr) minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(
+        170px,
+        0.9fr
+      ) 48px;
   }
   .addressEditor {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
