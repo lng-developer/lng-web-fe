@@ -4381,6 +4381,7 @@
       "tracking": "Tracking",
       "baseCost": "Chi phí gốc",
       "notSet": "Chưa thiết lập",
+      "notApplicable": "Không áp dụng",
       "noNote": "Chưa có ghi chú",
       "reason": "Lý do",
       "replacementReason": "Lý do thay thế"

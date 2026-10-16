@@ -4381,6 +4381,7 @@
       "tracking": "Tracking",
       "baseCost": "Base cost",
       "notSet": "Not set",
+      "notApplicable": "Not applicable",
       "noNote": "No note",
       "reason": "Reason",
       "replacementReason": "Replacement reason"
