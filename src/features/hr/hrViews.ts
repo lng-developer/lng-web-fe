@@ -14,6 +14,7 @@ const teamWorkspacePermissions = [
   'HR_SCHEDULE:WRITE',
   'HR_CALENDAR:READ',
   'HR_CALENDAR:WRITE',
+  'HR_SATURDAY_ROTATION:WRITE',
   'HR_ATTENDANCE:READ',
   'HR_ATTENDANCE:MANAGE',
   'HR_LEAVE:READ',
@@ -41,7 +42,13 @@ const viewPermissions: Array<{ key: HrViewKey; permissions: string[] }> = [
   { key: 'people', permissions: ['HR_EMPLOYEES:READ', 'HR_EMPLOYEES:WRITE'] },
   {
     key: 'schedule',
-    permissions: ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE', 'HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
+    permissions: [
+      'HR_SCHEDULE:READ',
+      'HR_SCHEDULE:WRITE',
+      'HR_CALENDAR:READ',
+      'HR_CALENDAR:WRITE',
+      'HR_SATURDAY_ROTATION:WRITE',
+    ],
   },
   {
     key: 'attendance',

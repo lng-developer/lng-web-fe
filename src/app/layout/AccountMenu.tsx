@@ -25,14 +25,7 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
     queryFn: loadMyEmployeeProfile,
   })
   const avatar = useQuery({
-    queryKey: [
-      'hr',
-      'employee-profiles',
-      'me',
-      'avatar',
-      account.account.id,
-      profile.data?.avatarAssetId,
-    ],
+    queryKey: ['hr', 'employee-profiles', 'me', 'avatar', profile.data?.avatarAssetId],
     queryFn: () => loadEmployeeAvatar(profile.data!.avatarUrl!),
     enabled: Boolean(profile.data?.avatarAssetId && profile.data.avatarUrl),
   })

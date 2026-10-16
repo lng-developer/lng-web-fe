@@ -128,9 +128,11 @@ export function ChatShell({ account }: ChatShellProps) {
     const socket = createChatSocket()
     chatSocketRef.current = socket
     if (!socket) return
+    let hasConnected = false
     socket.on('connect', () => {
       setSocketReady(true)
-      void queryClient.invalidateQueries({ queryKey: chatKeys.all })
+      if (hasConnected) void queryClient.invalidateQueries({ queryKey: chatKeys.all })
+      hasConnected = true
       for (const conversationId of openQuickConversationIdsRef.current) {
         socket.emit('conversation.join', { conversationId })
       }
@@ -174,7 +176,7 @@ export function ChatShell({ account }: ChatShellProps) {
 
   const chatConversations = useQuery({
     ...chatConversationOptions(),
-    refetchInterval: false,
+    refetchInterval: !socketReady && isChatPreviewOpen ? 30_000 : false,
   })
   const unreadQuery = useQuery({
     queryKey: chatKeys.unread,
@@ -184,6 +186,7 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatParticipants = useQuery({
     queryKey: ['chat-participants'],
     queryFn: () => listChatParticipants({ limit: 100 }),
+    enabled: isChatPreviewOpen || openQuickConversationIds.length > 0,
   })
   const participantById = useMemo(
     () =>

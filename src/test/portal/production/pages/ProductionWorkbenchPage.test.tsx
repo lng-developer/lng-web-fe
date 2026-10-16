@@ -126,6 +126,60 @@ describe('ProductionWorkbenchPage', () => {
     vi.mocked(listScaleAssignees).mockResolvedValue({ items: [] })
   })
 
+  it.each([true, false])(
+    'shows manual file upload only for the assigned Designer (assigned=%s)',
+    async (assigned) => {
+      const designer: CurrentAccount = {
+        ...account,
+        permissions: [],
+        scopes: [
+          {
+            assignmentId: 'assignment',
+            resourceId: null,
+            scopeType: 'team',
+            scopeId: 'team-design',
+            roles: ['DESIGNER'],
+            permissions: ['DESIGN:WORK', 'PRODUCTION:READ'],
+          },
+        ],
+      }
+      vi.mocked(listProductionTasks).mockResolvedValue({
+        items: [
+          {
+            ...blockedTask,
+            status: 'NEED_SCALE',
+            blockers: [],
+            assignedDesignUserId: assigned ? account.account.id : 'another-designer',
+            fileChecks: [
+              {
+                id: 'psd-source',
+                slotKey: 'PSD_TEMPLATE',
+                slotLabel: null,
+                required: true,
+                sourceType: 'PSD_TEMPLATE',
+                qcStatus: 'NOT_READY',
+                inputAssetDownloadUrl: null,
+                outputAssetDownloadUrl: null,
+                outputStatus: 'MISSING',
+                note: null,
+              },
+            ],
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+      })
+      renderPage('/portal/production/scale', designer)
+      await screen.findByText('113-2183249-0763446')
+      await screen.findByText('Task context')
+      expect(screen.getByText('No output files yet')).toBeInTheDocument()
+      const label = String(i18n.t('portal.production.addManualSlot'))
+      if (assigned) expect(await screen.findByText(label)).toBeInTheDocument()
+      else expect(screen.queryByText(label)).not.toBeInTheDocument()
+    },
+  )
+
   it('stretches every table layer across the available width', async () => {
     renderPage()
 
@@ -134,6 +188,20 @@ describe('ProductionWorkbenchPage', () => {
     const tables = document.querySelectorAll<HTMLTableElement>('.ant-table-container table')
     expect(tables.length).toBeGreaterThan(0)
     tables.forEach((table) => expect(table).toHaveStyle({ width: '100%' }))
+  })
+
+  it('applies scale difficulty to both task rows and summary', async () => {
+    renderPage('/portal/production/scale')
+    fireEvent.mouseDown(screen.getByText('All scale difficulty'))
+    fireEvent.click(await screen.findByText('Hard'))
+    await waitFor(() => {
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ scaleDifficultyLevel: 'HARD' }),
+      )
+      expect(summarizeProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ scaleDifficultyLevel: 'HARD' }),
+      )
+    })
   })
 
   it('uses one queue-summary request instead of three count-only task lists', async () => {
@@ -150,10 +218,91 @@ describe('ProductionWorkbenchPage', () => {
     await waitFor(() => expect(listScaleAssignees).toHaveBeenCalledWith({ limit: 100 }))
   })
 
+  it('allows a team Scale assigner to select tasks from any shop', async () => {
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [{ ...blockedTask, status: 'NEED_SCALE', blockers: [], shopId: 'other-shop' }],
+      total: 1,
+      page: 1,
+      limit: 10,
+    })
+    renderPage('/portal/production/scale', {
+      ...account,
+      scopes: [
+        {
+          assignmentId: 'assignment',
+          resourceId: 'design-team',
+          roles: ['DESIGN_LEADER'],
+          scopeType: 'team',
+          scopeId: 'design-team',
+          permissions: ['PRODUCTION:SCALE_ASSIGN'],
+        },
+      ],
+    })
+    await screen.findByText('113-2183249-0763446', {}, { timeout: 5000 })
+    await waitFor(() => {
+      const checkboxes = screen.getAllByRole('checkbox')
+      expect(checkboxes).toHaveLength(2)
+      checkboxes.forEach((checkbox) => expect(checkbox).toBeEnabled())
+    })
+  })
+
   it('recognizes a backend forbidden response for stale-workbench recovery', () => {
     expect(isForbiddenProductionError({ response: { status: 403 } })).toBe(true)
     expect(isForbiddenProductionError(new Error('Forbidden'))).toBe(false)
   })
+
+  it.each([
+    { permissions: ['DESIGN:REVIEW'], workerId: 'other', canReview: false },
+    { permissions: ['PRODUCTION:QC_REVIEW'], workerId: 'other', canReview: true },
+    { permissions: ['PRODUCTION:QC_REVIEW'], workerId: 'production-reader', canReview: false },
+  ])(
+    'shows QC actions only for an independent reviewer: $permissions / $workerId',
+    async ({ permissions, workerId, canReview }) => {
+      vi.mocked(listProductionTasks).mockResolvedValue({
+        items: [
+          {
+            ...blockedTask,
+            status: 'QC_PENDING',
+            qcStatus: 'PENDING',
+            blockers: [],
+            fileChecks: [
+              {
+                id: 'front',
+                slotKey: 'FRONT',
+                slotLabel: 'Front',
+                required: true,
+                inputAssetDownloadUrl: null,
+                outputAssetDownloadUrl: 'https://assets.example.test/output.png',
+                outputAssetId: 'output',
+                outputWorkerId: workerId,
+                outputStatus: 'UPLOADED',
+                qcStatus: 'PENDING',
+                note: null,
+              },
+            ],
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+      })
+      renderPage('/portal/production/qc', {
+        ...account,
+        scopes: [
+          {
+            assignmentId: 'design-leader',
+            resourceId: 'design-team',
+            roles: ['DESIGN_LEADER'],
+            scopeType: 'team',
+            scopeId: 'design-team',
+            permissions,
+          },
+        ],
+      })
+      await screen.findByText('113-2183249-0763446')
+      expect(Boolean(screen.queryByText('Pass slot')?.closest('button'))).toBe(canReview)
+    },
+  )
 
   it('shows the production metrics in the requested order', async () => {
     renderPage()
@@ -287,7 +436,7 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'QC' }),
+        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'QC', designType: undefined }),
       ),
     )
     expect(summarizeProductionTasks).toHaveBeenCalledWith(
@@ -301,11 +450,18 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'SCALE' }),
+        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'SCALE', designType: 'NORMAL' }),
       ),
     )
     expect(screen.queryByRole('button', { name: /Scale queue/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Amazon' })).not.toBeInTheDocument()
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Design Type' }))
+    fireEvent.click(await screen.findByText('Unclassified'))
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ designType: 'UNCLASSIFIED' }),
+      ),
+    )
   })
 
   it('reloads server data when the shared page-size control changes', async () => {

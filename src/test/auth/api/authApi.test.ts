@@ -15,6 +15,7 @@ import {
   restoreSession,
 } from '@/features/auth/api/authApi'
 import { apiClient, ApiError } from '@/shared/api'
+import { queryClient } from '@/shared/query/queryClient'
 import {
   getAccessToken,
   getGlobalPermissions,
@@ -41,11 +42,13 @@ describe('logout', () => {
 
   it('revokes the cookie session and clears the in-memory access token', async () => {
     vi.mocked(apiClient.post).mockResolvedValue(undefined)
+    queryClient.setQueryData(['private-data'], { owner: 'previous-account' })
 
     await logout()
 
     expect(apiClient.post).toHaveBeenCalledWith('/api/auth/logout')
     expect(getAccessToken()).toBeNull()
+    expect(queryClient.getQueryData(['private-data'])).toBeUndefined()
   })
 
   it('restores the access token from the refresh cookie', async () => {
@@ -70,6 +73,21 @@ describe('logout', () => {
     expect(getAccessToken()).toBe('restored-access')
     expect(getPermissions()).toEqual(['AUTH:WRITE'])
     expect(getGlobalPermissions()).toEqual(['AUTH:WRITE'])
+  })
+
+  it('does not restore old cached data when an in-flight query finishes after logout', async () => {
+    let resolveRequest!: (value: string) => void
+    const response = new Promise<string>((resolve) => {
+      resolveRequest = resolve
+    })
+    const request = queryClient
+      .fetchQuery({ queryKey: ['old-session'], queryFn: () => response })
+      .catch(() => undefined)
+    vi.mocked(apiClient.post).mockResolvedValue(undefined)
+    await logout()
+    resolveRequest('old private data')
+    await request
+    expect(queryClient.getQueryData(['old-session'])).toBeUndefined()
   })
 
   it('preserves required profile setup when restoring the refresh session', async () => {

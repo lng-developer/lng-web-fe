@@ -192,7 +192,13 @@ export function ProductionWorkbenchExpandedRow({
   )
   const customerImage = customerImages[0]?.downloadUrl
   const listingArtwork = task.mainListingImageUrl ?? task.productImageUrl
-  const amazonCustomizationPreview = task.amazonCustomizationPreviewUrl
+  const customizationPreviews = (task.customization?.imageAssets ?? []).filter(
+    (asset) =>
+      asset.assetId &&
+      !linkedInputAssetIds.has(asset.assetId) &&
+      asset.assetDownloadUrl &&
+      asset.mimeType?.startsWith('image/'),
+  )
   const listingPreview = task.listing?.previewAssetDownloadUrl
   const spUrl = productUrl(task)
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
@@ -332,19 +338,22 @@ export function ProductionWorkbenchExpandedRow({
             ? t('portal.production.fileMissing')
             : null}
         </div>
-        {amazonCustomizationPreview ? (
+        {customizationPreviews.length > 0 ? (
           <details className={styles.imageReference}>
             <summary>
               {t('portal.production.amazonCustomizationPreview', 'Amazon customization preview')}
             </summary>
-            <ZoomableImage
-              alt={t(
-                'portal.production.amazonCustomizationPreview',
-                'Amazon customization preview',
-              )}
-              src={amazonCustomizationPreview}
-              loading="lazy"
-            />
+            {customizationPreviews.map((asset) => (
+              <ZoomableImage
+                key={asset.assetId}
+                alt={t(
+                  'portal.production.amazonCustomizationPreview',
+                  'Amazon customization preview',
+                )}
+                downloadUrl={asset.assetDownloadUrl}
+                loading="lazy"
+              />
+            ))}
           </details>
         ) : null}
         <div className={styles.productActions}>
@@ -395,7 +404,13 @@ export function ProductionWorkbenchExpandedRow({
             <div>
               <Typography.Text strong>{t('portal.production.requiredSlots')}</Typography.Text>
               <Typography.Text type="secondary">
-                {outputChecks.length} {t('portal.production.outputsRequired')}
+                {outputChecks.length > 0 ? (
+                  <>
+                    {outputChecks.length} {t('portal.production.outputsRequired')}
+                  </>
+                ) : (
+                  t('portal.production.noOutputFilesYet')
+                )}
               </Typography.Text>
             </div>
             {tab === 'scale' && canScale ? (

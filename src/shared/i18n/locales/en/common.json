@@ -3046,6 +3046,8 @@
       "approveConfirm": "Approve submission?",
       "chooseApprovedFile": "Choose the approved file",
       "assignDesigner": "Assign designer",
+      "reassignDesigner": "Reassign designer",
+      "confirmAssignment": "Confirm",
       "selectDesigner": "Select designer",
       "selectEligibleDesigner": "Select eligible designer",
       "noEligibleDesigners": "No eligible designers",
@@ -3534,6 +3536,8 @@
     },
     "production": {
       "title": "Production operations",
+      "designType": "Design Type",
+      "unclassified": "Unclassified",
       "description": "Prepare artwork, review scaled files, and hand approved orders to vendors.",
       "refresh": "Refresh",
       "unavailable": "Production tasks are unavailable",
@@ -3610,7 +3614,8 @@
       "designNote": "Design note",
       "saveNote": "Save note",
       "uploadOutput": "Upload scaled output",
-      "addManualSlot": "Add print position",
+      "addManualSlot": "Add output file",
+      "noOutputFilesYet": "No output files yet",
       "manualSlot": {
         "title": "Add print position",
         "choosePosition": "Choose a position on the product",

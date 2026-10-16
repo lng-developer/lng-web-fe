@@ -23,6 +23,8 @@ export type FileCheck = {
   inputAssetDownloadUrl: string | null
   inputImageName?: string | null
   outputAssetDownloadUrl: string | null
+  outputAssetId?: string | null
+  outputWorkerId?: string | null
   outputStatus: string
   qcStatus: QcStatus
   note: string | null
@@ -52,9 +54,12 @@ export type ProductionCustomization = {
     assetId?: string | null
     assetDownloadUrl?: string | null
     filename?: string | null
+    mimeType?: string | null
   }> | null
 }
 export type ProductionTask = {
+  designType?: 'NORMAL' | 'CUSTOM_IMAGE' | null
+  designTypeSource?: 'AUTO' | 'MANUAL' | null
   id: string
   status: ProductionStatus
   productionStatus?: ProductionStatus
@@ -118,6 +123,8 @@ export type ProductionTask = {
 export type ProductionList = { items: ProductionTask[]; total: number; page: number; limit: number }
 export type ProductionSummary = Record<string, number>
 export type ProductionParams = {
+  designType?: 'NORMAL' | 'CUSTOM_IMAGE' | 'UNCLASSIFIED'
+  unassigned?: boolean
   page: number
   limit: number
   view?: 'SCALE' | 'QC'

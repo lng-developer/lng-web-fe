@@ -31,7 +31,7 @@ const task: ProductionTask = {
   ],
 }
 
-function renderExpandedRow() {
+function renderExpandedRow(displayTask = task) {
   const onInspectSlot =
     vi.fn<(productionTask: ProductionTask, check: FileCheck, readonly?: boolean) => void>()
   const onPassSlot = vi.fn<(fileCheckId: string) => void>()
@@ -39,7 +39,7 @@ function renderExpandedRow() {
   render(
     <AppProviders>
       <ProductionWorkbenchExpandedRow
-        task={task}
+        task={displayTask}
         tab="qc"
         canScale={false}
         canQc
@@ -66,6 +66,34 @@ describe('ProductionWorkbenchExpandedRow', () => {
 
   beforeEach(async () => {
     await i18n.changeLanguage('en')
+  })
+
+  it('shows ZIP preview for text-only customization without treating it as buyer artwork', () => {
+    renderExpandedRow({
+      ...task,
+      customization: {
+        customerInputs: { images: [] },
+        imageAssets: [
+          {
+            assetId: 'preview',
+            mimeType: 'image/jpeg',
+            assetDownloadUrl: 'https://assets.example.test/text-preview.jpg',
+          },
+        ],
+      },
+    })
+    expect(screen.getByAltText('Amazon customization preview')).toHaveAttribute(
+      'src',
+      'https://assets.example.test/text-preview.jpg',
+    )
+    expect(
+      screen.queryByRole('button', { name: /Download customer images/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not present Amazon base image as a customized preview when ZIP images are absent', () => {
+    renderExpandedRow({ ...task, amazonCustomizationPreviewUrl: 'https://example.test/base.jpg' })
+    expect(screen.queryByText('Amazon customization preview')).not.toBeInTheDocument()
   })
 
   it('opens a slot inspection from its thumbnail while retaining the pass action', () => {
@@ -105,8 +133,9 @@ describe('ProductionWorkbenchExpandedRow', () => {
           },
           {
             assetId: 'product-details',
-            assetDownloadUrl: '/api/media/assets/product-details/download',
+            assetDownloadUrl: 'https://assets.example.test/order-preview.jpg',
             filename: 'product-details.jpg',
+            mimeType: 'image/jpeg',
           },
         ],
       },
@@ -136,6 +165,11 @@ describe('ProductionWorkbenchExpandedRow', () => {
 
     expect(screen.getByRole('button', { name: /Download customer images \(1\)/ })).toBeVisible()
     expect(screen.getByText('Main listing')).toBeVisible()
+    expect(screen.getByAltText('Amazon customization preview')).toHaveAttribute(
+      'src',
+      'https://assets.example.test/order-preview.jpg',
+    )
+    expect(screen.queryByRole('img', { name: 'buyer-photo.jpg' })).not.toBeInTheDocument()
     expect(screen.getByText('Amazon customization preview').closest('details')).not.toHaveAttribute(
       'open',
     )

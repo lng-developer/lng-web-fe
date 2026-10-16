@@ -504,12 +504,7 @@ function canAccessItemDirectly(
   }
 
   if (key === '/portal/mapping' || key.startsWith('/portal/mapping')) {
-    return (
-      permissions.has('MAPPING:READ') ||
-      permissions.has('MAPPING:WRITE') ||
-      permissions.has('CATALOG:READ') ||
-      permissions.has('CATALOG:WRITE')
-    )
+    return permissions.has('MAPPING:READ') || permissions.has('MAPPING:WRITE')
   }
 
   if (key === 'reports' || key.startsWith('reports-') || key.startsWith('/portal/reports')) {
@@ -534,7 +529,6 @@ function canAccessItemDirectly(
     return (
       permissions.has('ORDERS:READ') ||
       permissions.has('ORDERS:WRITE') ||
-      permissions.has('CATALOG:READ') ||
       permissions.has('CATALOG:WRITE')
     )
   }
@@ -807,10 +801,30 @@ export function LegacySidebar({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const orderSummary = useOrderSummaryQuery({ page: 1, limit: 1 })
-  const productionQueueCounts = useProductionQueueCountsQuery({})
-
   const permissions = useMemo(() => getPermissionsSet(account), [account])
+  const canQuerySummary = (required: readonly string[]) =>
+    Boolean(account) &&
+    (permissions === null || required.some((permission) => permissions.has(permission)))
+  const orderSummary = useOrderSummaryQuery(
+    { page: 1, limit: 1 },
+    {
+      enabled: canQuerySummary(['ORDERS:READ', 'ORDERS:WRITE']),
+    },
+  )
+  const productionQueueCounts = useProductionQueueCountsQuery(
+    {},
+    {
+      enabled: canQuerySummary([
+        'PRODUCTION:READ',
+        'PRODUCTION:WRITE',
+        'PRODUCTION:SCALE_WORK',
+        'PRODUCTION:SCALE_ASSIGN',
+        'PRODUCTION:QC_REVIEW',
+        'DESIGN:WORK',
+        'DESIGN:REVIEW',
+      ]),
+    },
+  )
 
   const [activeMenu, setActiveMenu] = useState(
     () =>

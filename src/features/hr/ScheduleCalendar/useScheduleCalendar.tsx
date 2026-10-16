@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { canUseScopedPermission } from '@/shared/auth/permissions'
 import { getPermissions } from '@/shared/auth/session'
 
 import { useHolidaysOverrides } from './HolidaysOverrides/useHolidaysOverrides'
@@ -21,28 +22,44 @@ export const buildTeamWorkspaceParams = (date: dayjs.Dayjs, teamId?: string) => 
   days: 1 as const,
 })
 
-export function useScheduleCalendar(selectedTeamId?: string) {
-  const account = useRouteLoaderData('workspace') as CurrentAccount
-  const permissions = new Set(getPermissions())
-  const canScheduleWrite = permissions.has('HR_SCHEDULE:WRITE')
-  const canCalendarWrite = permissions.has('HR_CALENDAR:WRITE')
-  const canCalendarRead = permissions.has('HR_CALENDAR:READ') || canCalendarWrite
+export function getRotationAccess(
+  account: Pick<CurrentAccount, 'permissions' | 'scopes' | 'roles'>,
+  selectedTeamId?: string,
+) {
+  const writePermissions = ['HR_CALENDAR:WRITE', 'HR_SATURDAY_ROTATION:WRITE']
+  const canManageAllRotations = writePermissions.some((permission) =>
+    canUseScopedPermission(account, permission),
+  )
   const rotationTeamIds = [
     ...new Set(
       account.scopes
         .filter((scope) => scope.scopeType.toLowerCase() === 'team')
-        .filter((scope) => scope.permissions.includes('HR_CALENDAR:WRITE'))
+        .filter((scope) =>
+          writePermissions.some((permission) => scope.permissions.includes(permission)),
+        )
         .map((scope) => scope.scopeId)
         .filter((scopeId): scopeId is string => Boolean(scopeId)),
     ),
   ]
   const rotationTeamId =
     selectedTeamId ??
-    (!account.permissions.includes('HR_CALENDAR:WRITE') && rotationTeamIds.length === 1
-      ? rotationTeamIds[0]
-      : undefined)
-  const canManageRotation = canScheduleWrite || canCalendarWrite
-  const canRotationRead = canCalendarRead || canScheduleWrite
+    (!canManageAllRotations && rotationTeamIds.length === 1 ? rotationTeamIds[0] : undefined)
+  const canManageRotation =
+    canManageAllRotations ||
+    writePermissions.some((permission) =>
+      canUseScopedPermission(account, permission, { scopeType: 'team', scopeId: rotationTeamId }),
+    )
+  return { rotationTeamId, canManageRotation }
+}
+
+export function useScheduleCalendar(selectedTeamId?: string) {
+  const account = useRouteLoaderData('workspace') as CurrentAccount
+  const permissions = new Set(getPermissions())
+  const canScheduleWrite = permissions.has('HR_SCHEDULE:WRITE')
+  const canCalendarWrite = permissions.has('HR_CALENDAR:WRITE')
+  const canCalendarRead = permissions.has('HR_CALENDAR:READ') || canCalendarWrite
+  const { rotationTeamId, canManageRotation } = getRotationAccess(account, selectedTeamId)
+  const canRotationRead = canCalendarRead || canScheduleWrite || canManageRotation
   const canManageGlobalCalendar = canCalendarWrite && !rotationTeamId
 
   const [month, setMonth] = useState(dayjs())
