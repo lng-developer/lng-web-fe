@@ -115,7 +115,7 @@ export function ShipmentWorkbenchPage({
   const shipments = useShipmentsQuery(params)
   const summary = useShipmentSummaryQuery(filters)
   const detail = useShipmentDetailQuery(selectedId)
-  const logs = useShipmentLogsQuery(detail.data?.vendorSubmissionId)
+  const logs = useShipmentLogsQuery(canWrite ? detail.data?.vendorSubmissionId : undefined)
   const trackingSyncConfig = useTrackingSyncConfigQuery({ enabled: canWrite })
 
   const recheck = useRecheckShipmentMutation({
@@ -489,32 +489,38 @@ export function ShipmentWorkbenchPage({
                 },
               ]}
             />
-            <Typography.Title level={5}>{t('portal.shipments.webhookHistory')}</Typography.Title>
-            {logs.error ? (
-              <FeedbackAlert type="error" title={t('portal.shipments.logsUnavailable')} />
+            {canWrite ? (
+              <>
+                <Typography.Title level={5}>
+                  {t('portal.shipments.webhookHistory')}
+                </Typography.Title>
+                {logs.error ? (
+                  <FeedbackAlert type="error" title={t('portal.shipments.logsUnavailable')} />
+                ) : null}
+                <Timeline
+                  pending={logs.isLoading ? t('portal.shipments.loadingLogs') : undefined}
+                  items={(logs.data?.items ?? []).map((entry) => ({
+                    color:
+                      entry.outcome === 'SUCCESS'
+                        ? 'green'
+                        : entry.outcome === 'ERROR'
+                          ? 'red'
+                          : 'orange',
+                    children: (
+                      <>
+                        <strong>
+                          {entry.provider} · {entry.outcome}
+                        </strong>
+                        <br />
+                        <span className={styles.breakable}>{entry.message || '-'}</span>
+                        <br />
+                        <FormattedDateTime value={entry.createdAt} />
+                      </>
+                    ),
+                  }))}
+                />
+              </>
             ) : null}
-            <Timeline
-              pending={logs.isLoading ? t('portal.shipments.loadingLogs') : undefined}
-              items={(logs.data?.items ?? []).map((entry) => ({
-                color:
-                  entry.outcome === 'SUCCESS'
-                    ? 'green'
-                    : entry.outcome === 'ERROR'
-                      ? 'red'
-                      : 'orange',
-                children: (
-                  <>
-                    <strong>
-                      {entry.provider} · {entry.outcome}
-                    </strong>
-                    <br />
-                    <span className={styles.breakable}>{entry.message || '-'}</span>
-                    <br />
-                    <FormattedDateTime value={entry.createdAt} />
-                  </>
-                ),
-              }))}
-            />
           </div>
         ) : null}
       </Modal>

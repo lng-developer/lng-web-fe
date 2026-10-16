@@ -8,6 +8,7 @@ import {
   getShipment,
   listShipments,
   summarizeShipments,
+  listWebhookLogs,
 } from '@/features/portal/shipments/api/shipmentApi'
 import { ShipmentWorkbenchPage } from '@/features/portal/shipments/pages/ShipmentWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
@@ -23,6 +24,7 @@ vi.mock('@/features/portal/shipments/api/shipmentApi', async (importOriginal) =>
   listShipments: vi.fn(),
   getShipment: vi.fn(),
   summarizeShipments: vi.fn(),
+  listWebhookLogs: vi.fn(),
 }))
 
 const account: CurrentAccount = {
@@ -48,6 +50,31 @@ function renderPage(url = '/portal/shipments') {
 }
 
 describe('ShipmentWorkbenchPage', () => {
+  it('read-only shipment viewers see tracking without fetching shared webhook logs', async () => {
+    vi.mocked(getShipment).mockResolvedValue({
+      id: 'shipment-own',
+      orderId: 'order-own',
+      orderItemId: 'item-own',
+      vendorSubmissionId: 'submission-own',
+      shopId: 'shop-own',
+      status: 'SHIPPED',
+      provider: 'MERCHIZE',
+      externalOrderId: 'order-own',
+      vendorExternalOrderId: null,
+      carrier: 'USPS',
+      trackingNumber: 'TRACK-OWN',
+      trackingUrl: null,
+      shippedAt: null,
+      deliveredAt: null,
+      note: null,
+      createdAt: '',
+      updatedAt: '',
+    })
+    renderPage('/portal/shipments?resourceId=shipment-own')
+    expect(await screen.findByText('TRACK-OWN')).toBeVisible()
+    expect(listWebhookLogs).not.toHaveBeenCalled()
+    expect(screen.queryByText('Vendor webhook history')).not.toBeInTheDocument()
+  })
   it('fetches a notification target outside the current page and handles denied access', async () => {
     vi.mocked(getShipment).mockRejectedValue(new Error('Forbidden'))
     renderPage('/portal/shipments?resourceId=shipment-outside-page')

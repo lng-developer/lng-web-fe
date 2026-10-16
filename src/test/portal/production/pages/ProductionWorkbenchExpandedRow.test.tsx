@@ -106,6 +106,32 @@ describe('ProductionWorkbenchExpandedRow', () => {
     expect(onPassSlot).toHaveBeenCalledWith('front-check')
   })
 
+  it('labels the design source independently from buyer artwork', () => {
+    renderExpandedRow({
+      ...task,
+      scaleContext: {
+        use: { psdTemplate: { assetDownloadUrl: '/api/media/assets/source/download' } },
+      },
+    })
+    expect(screen.getByRole('button', { name: /Download PSD source/ })).toBeVisible()
+  })
+
+  it('shows missing source instead of offering a stale download', () => {
+    renderExpandedRow({
+      ...task,
+      scaleContext: {
+        use: {
+          psdTemplate: {
+            status: 'MISSING',
+            assetDownloadUrl: '/api/media/assets/stale/download',
+          },
+        },
+      },
+    })
+    expect(screen.getByText(/Design source missing/)).toBeVisible()
+    expect(screen.queryByRole('button', { name: /Download PSD source/ })).not.toBeInTheDocument()
+  })
+
   it('downloads only buyer artwork linked to a scale slot', () => {
     const artworkTask: ProductionTask = {
       ...task,

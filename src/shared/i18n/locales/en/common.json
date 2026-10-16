@@ -44,6 +44,8 @@
     "name": "LNG Web"
   },
   "common": {
+    "downloadFailed": "Unable to download the file. Please try again.",
+    "download": "Download",
     "updatedAt": "Updated at {{time}}",
     "copyOrderId": "Copy order ID",
     "orderIdCopied": "Order ID copied",
@@ -3649,6 +3651,9 @@
       "amazonCustomizationPreview": "Amazon customization preview",
       "customerArtworkMissing": "Customer artwork is not linked",
       "downloadPsd": "Download PSD",
+      "downloadDesignSource": "Download design source",
+      "downloadPsdSource": "Download PSD source",
+      "designSourceMissing": "Design source missing. Ask your leader to add the approved source for this listing/variant.",
       "outputReady": "Output ready",
       "outputMissing": "Output missing",
       "filters": "Production filters",

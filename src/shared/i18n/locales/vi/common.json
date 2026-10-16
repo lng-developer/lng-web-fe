@@ -44,6 +44,8 @@
     "name": "LNG Web"
   },
   "common": {
+    "downloadFailed": "Không thể tải file. Vui lòng thử lại.",
+    "download": "Tải xuống",
     "updatedAt": "Cập nhật lúc {{time}}",
     "copyOrderId": "Sao chép mã đơn",
     "orderIdCopied": "Đã sao chép mã đơn",
@@ -3650,6 +3652,9 @@
       "amazonCustomizationPreview": "Preview customization Amazon",
       "customerArtworkMissing": "Ảnh khách chưa được liên kết",
       "downloadPsd": "Tải PSD",
+      "downloadDesignSource": "Tải file nguồn thiết kế",
+      "downloadPsdSource": "Tải PSD nguồn",
+      "designSourceMissing": "Thiếu file thiết kế nguồn. Nhờ Leader bổ sung nguồn đã duyệt cho listing/variant này.",
       "outputReady": "Đã có output",
       "outputMissing": "Thiếu output",
       "filters": "Bộ lọc sản xuất",

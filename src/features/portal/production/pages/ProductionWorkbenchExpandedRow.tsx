@@ -355,13 +355,17 @@ export function ProductionWorkbenchExpandedRow({
               })}
             </Button>
           ) : null}
-          {psdTemplate?.assetDownloadUrl ? (
+          {psdTemplate?.status !== 'MISSING' && psdTemplate?.assetDownloadUrl ? (
             <Button
               icon={<DownloadOutlined />}
-              onClick={() => void downloadMediaAsset(psdTemplate.assetDownloadUrl!, 'template.psd')}
+              onClick={() => void downloadMediaAsset(psdTemplate.assetDownloadUrl!)}
             >
-              {t('portal.production.downloadPsd')}
+              {t('portal.production.downloadPsdSource')}
             </Button>
+          ) : psdTemplate?.status !== 'NOT_REQUIRED' ? (
+            <Typography.Text type="danger">
+              {t('portal.production.designSourceMissing')}
+            </Typography.Text>
           ) : null}
         </div>
       </div>

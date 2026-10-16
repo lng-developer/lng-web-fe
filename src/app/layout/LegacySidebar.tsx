@@ -563,6 +563,12 @@ function canAccessItemDirectly(
   }
 
   if (
+    (key.startsWith('/portal/design/psd') || key.startsWith('/portal/design/files')) &&
+    permissions.has('DESIGN:PSD_REQUEST')
+  )
+    return true
+
+  if (
     key === '/portal/design/idea-tasks' ||
     key.startsWith('/portal/design/idea') ||
     key === '/portal/design/psd-tasks' ||

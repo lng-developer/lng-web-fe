@@ -8,6 +8,12 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 import { AppProviders } from '@/app/providers/AppProviders'
 import { PsdTasksPage } from '@/features/portal/design/pages/PsdTasksPage'
 import { queryClient } from '@/shared/query/queryClient'
+import { downloadMediaAsset } from '@/shared/media'
+
+vi.mock('@/shared/media', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/shared/media')>()),
+  downloadMediaAsset: vi.fn().mockResolvedValue(undefined),
+}))
 
 let mockSearchParams = new URLSearchParams('')
 let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
@@ -51,6 +57,20 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
           },
           createdAt: '2026-09-18T10:00:00.000Z',
           updatedAt: '2026-09-18T10:00:00.000Z',
+          latestSubmission:
+            mockTaskStatus === 'APPROVED'
+              ? {
+                  approvedAssetId: 'approved-asset',
+                  assets: [
+                    { id: 'draft-asset', downloadUrl: '/draft', originalFilename: 'draft.psd' },
+                    {
+                      id: 'approved-asset',
+                      downloadUrl: '/approved',
+                      originalFilename: 'approved.psd',
+                    },
+                  ],
+                }
+              : null,
         },
       ],
       pagination: { total: 1, page: 1, limit: 10 },
@@ -78,6 +98,19 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 })
 
 describe('PsdTasksPage', () => {
+  it('Seller downloads the approved PSD and does not get QC controls', async () => {
+    mockTaskStatus = 'APPROVED'
+    mockPermissions = ['DESIGN:READ', 'DESIGN:PSD_REQUEST']
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    fireEvent.click(screen.getByRole('button', { name: /download/i }))
+    expect(downloadMediaAsset).toHaveBeenCalledWith('/approved', 'approved.psd')
+    expect(screen.queryByRole('button', { name: /check-circle/i })).not.toBeInTheDocument()
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     queryClient.clear()
