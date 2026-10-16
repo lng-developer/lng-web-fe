@@ -231,7 +231,7 @@ export function FulfillmentInlineEditor({
                 aria-label={t('orders.fields.size')}
                 allowClear
                 disabled={!productId || !dimensions?.hasSize}
-                placeholder={notSet}
+                placeholder={dimensions?.hasSize === false ? t('orders.fields.notApplicable') : notSet}
                 options={unique(
                   sizeOptions.map((candidate) => ({
                     value: candidate.size ?? '',
@@ -256,7 +256,7 @@ export function FulfillmentInlineEditor({
                 aria-label={t('orders.fields.color')}
                 allowClear
                 disabled={!productId || !dimensions?.hasColor}
-                placeholder={notSet}
+                placeholder={dimensions?.hasColor === false ? t('orders.fields.notApplicable') : notSet}
                 options={unique(
                   colorOptions.map((candidate) => ({
                     value: candidate.color ?? '',

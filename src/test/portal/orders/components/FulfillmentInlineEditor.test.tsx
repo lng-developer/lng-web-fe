@@ -30,6 +30,41 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+it('allows a keychain size to be selected without requiring a color', async () => {
+  await i18n.changeLanguage('en')
+  vi.mocked(mappingApi.getMappingVendorProductOptions).mockResolvedValueOnce({
+    dimensions: { hasSize: true, hasColor: false },
+    options: { sizes: ['1,9 in', '3,5 in'], colors: [] },
+    candidates: [],
+    allCandidates: [
+      { id: 'small', size: '1,9 in', color: null, baseCostAmount: 65, currency: 'USD' },
+      { id: 'large', size: '3,5 in', color: null, baseCostAmount: 100, currency: 'USD' },
+    ],
+  })
+  render(
+    <AppProviders>
+      <QueryClientProvider client={new QueryClient()}>
+        <FulfillmentInlineEditor canWrite item={{ item: { id: 'item' } } as OrderWorkbenchItem} />
+      </QueryClientProvider>
+    </AppProviders>,
+  )
+  expect(screen.queryByText('Not applicable')).toBeNull()
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: i18n.t('orders.fields.product') }))
+  fireEvent.click(await screen.findByText('Napkin · LNG'))
+  expect(await screen.findByText('Not applicable')).toBeInTheDocument()
+  expect(screen.getByRole('combobox', { name: i18n.t('orders.fields.color') })).toBeDisabled()
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: i18n.t('orders.fields.size') }))
+  const option = await screen.findByTitle('3,5 in')
+  fireEvent.click(option)
+  fireEvent.click(await screen.findByRole('button', { name: i18n.t('orders.actions.apply') }))
+  await waitFor(() =>
+    expect(mappingApi.selectFulfillmentCandidate).toHaveBeenCalledWith('item', {
+      vendorProductId: 'product',
+      vendorCostCenterId: 'large',
+    }),
+  )
+})
+
 it('does not offer the previous product variant while the next product is loading', async () => {
   await i18n.changeLanguage('en')
   vi.mocked(mappingApi.searchMappingProducts).mockResolvedValueOnce({
