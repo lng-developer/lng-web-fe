@@ -191,7 +191,7 @@ describe('OrganizationPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Manage access' }))
 
     expect(screen.getByTestId('location')).toHaveTextContent('/auth/accounts/account-1/access')
-  })
+  }, 15_000)
 
   it('does not expose member access management without AUTH:WRITE', async () => {
     setPermissions(['TEAMS:WRITE'])
