@@ -62,6 +62,7 @@ describe('ChatShell', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(createChatSocket).mockReturnValue(null)
     vi.mocked(getChatUnreadCount).mockResolvedValue({ unreadCount: 0 })
     vi.mocked(listChatConversations).mockResolvedValue({
       items: [
@@ -90,6 +91,34 @@ describe('ChatShell', () => {
     vi.mocked(listChatParticipants).mockResolvedValue({
       items: [{ id: 'account-2', email: 'designer@lng.co', status: 'active', presence: 'ONLINE' }],
     })
+  })
+
+  it('loads participants only when the preview opens', async () => {
+    renderShell()
+    await waitFor(() => expect(getChatUnreadCount).toHaveBeenCalledTimes(1))
+    expect(listChatParticipants).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
+    await waitFor(() => expect(listChatParticipants).toHaveBeenCalledTimes(1))
+  })
+
+  it('refreshes cached conversations on reconnect but not the first socket connection', async () => {
+    const handlers: Record<string, () => void> = {}
+    vi.mocked(createChatSocket).mockReturnValue({
+      disconnect: vi.fn(),
+      emit: vi.fn(),
+      on: vi.fn((event, handler) => {
+        handlers[event] = handler
+      }),
+    } as never)
+    renderShell()
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalledTimes(1))
+    await act(async () => handlers.connect())
+    expect(listChatConversations).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      handlers.disconnect()
+      handlers.connect()
+    })
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalledTimes(2))
   })
 
   it('shows the floating chat popup trigger when another account sends a realtime message', async () => {

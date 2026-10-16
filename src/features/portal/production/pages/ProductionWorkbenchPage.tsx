@@ -11,10 +11,11 @@ import {
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Modal } from 'antd'
+import { Select } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { canUseScopedPermission } from '@/shared/auth/permissions'
+import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
@@ -55,7 +56,7 @@ import { ArtworkInspector } from './ArtworkInspector'
 import { inspectionReference } from './inspectionReference'
 import { ProductionWorkbenchExpandedRow } from './ProductionWorkbenchExpandedRow'
 import { ProductionWorkbenchFilterBar } from './ProductionWorkbenchFilterBar'
-import { isForbiddenProductionError } from './productionAuthorization'
+import { isForbiddenProductionError, isOwnProductionOutput } from './productionAuthorization'
 import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
@@ -134,6 +135,7 @@ export function ProductionWorkbenchPage({
   const deferredSearch = useDeferredValue(search)
   const [status, setStatus] = useState<ProductionStatus>()
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
+  const [designType, setDesignType] = useState<'NORMAL' | 'UNCLASSIFIED'>('NORMAL')
   const [createdDates, setCreatedDates] = useState<DateRangeValue>({})
   const [inspect, setInspect] = useState<{
     check: FileCheck
@@ -159,28 +161,34 @@ export function ProductionWorkbenchPage({
   const canScaleTask = useCallback(
     (task: ProductionTask) =>
       canWriteProductionTask(task) ||
+      (allowed.has('DESIGN:WORK') &&
+        Boolean(currentAccountId) &&
+        task.assignedDesignUserId === currentAccountId) ||
       (canUseScopedPermission(account, 'PRODUCTION:SCALE_WORK', {
         scopeType: 'shop',
         scopeId: task.shopId ?? task.shop?.id,
       }) &&
         Boolean(currentAccountId) &&
         task.csAssigneeId === currentAccountId),
-    [account, canWriteProductionTask, currentAccountId],
+    [account, allowed, canWriteProductionTask, currentAccountId],
   )
   const canQcTask = useCallback(
     (task: ProductionTask) =>
-      canWriteProductionTask(task) ||
-      canUseScopedPermission(account, 'PRODUCTION:QC_REVIEW', {
-        scopeType: 'shop',
-        scopeId: task.shopId ?? task.shop?.id,
-      }),
-    [account, canWriteProductionTask],
+      !isOwnProductionOutput(task, currentAccountId) &&
+      (canWriteProductionTask(task) ||
+        hasScopedPermission(account, 'PRODUCTION:QC_REVIEW', 'team') ||
+        canUseScopedPermission(account, 'PRODUCTION:QC_REVIEW', {
+          scopeType: 'shop',
+          scopeId: task.shopId ?? task.shop?.id,
+        })),
+    [account, canWriteProductionTask, currentAccountId],
   )
   const canAssignScale =
     tab === 'scale' && (allowed.has('PRODUCTION:WRITE') || allowed.has('PRODUCTION:SCALE_ASSIGN'))
   const canAssignProductionTask = useCallback(
     (task: ProductionTask) =>
       canWriteProductionTask(task) ||
+      hasScopedPermission(account, 'PRODUCTION:SCALE_ASSIGN', 'team') ||
       canUseScopedPermission(account, 'PRODUCTION:SCALE_ASSIGN', {
         scopeType: 'shop',
         scopeId: task.shopId ?? task.shop?.id,
@@ -194,6 +202,7 @@ export function ProductionWorkbenchPage({
       psdReadyOnly: tab !== 'blocked' && !isBlockedData,
       ...createdDates,
       scaleDifficultyLevel,
+      designType: tab === 'scale' && !isBlockedData ? designType : undefined,
       status: isBlockedData ? ('BLOCKED' as const) : status,
       view: isBlockedData ? undefined : tab === 'qc' ? ('QC' as const) : ('SCALE' as const),
     }),
@@ -205,20 +214,11 @@ export function ProductionWorkbenchPage({
       scaleDifficultyLevel,
       status,
       tab,
+      designType,
     ],
   )
   const params = useMemo(() => ({ ...filters, page, limit: pageSize }), [filters, page, pageSize])
-  const summaryFilters = useMemo(
-    () => ({
-      search: deferredSearch || undefined,
-      salesChannelCode,
-      psdReadyOnly: tab !== 'blocked' && !isBlockedData,
-      ...createdDates,
-      status: isBlockedData ? ('BLOCKED' as const) : status,
-      view: isBlockedData ? undefined : ((tab === 'qc' ? 'QC' : 'SCALE') as 'QC' | 'SCALE'),
-    }),
-    [createdDates, deferredSearch, isBlockedData, salesChannelCode, status, tab],
-  )
+  const summaryFilters = filters
   const queueFilters = useMemo(
     () => ({ search: deferredSearch || undefined, salesChannelCode }),
     [deferredSearch, salesChannelCode],
@@ -771,6 +771,25 @@ export function ProductionWorkbenchPage({
           </div>
         )}
         <section className={styles.queuePane} aria-label={t('portal.production.title')}>
+          {tab === 'scale' && !isBlockedData && (
+            <Select
+              aria-label="Design Type"
+              value={designType}
+              style={{ minWidth: 180, marginBottom: 12 }}
+              options={[
+                { value: 'NORMAL', label: 'Normal' },
+                {
+                  value: 'UNCLASSIFIED',
+                  label: t('portal.production.unclassified', { defaultValue: 'Unclassified' }),
+                },
+              ]}
+              onChange={(value) => {
+                setDesignType(value)
+                setPage(1)
+                setSelectedRowKeys([])
+              }}
+            />
+          )}
           <ProductionWorkbenchFilterBar
             search={search}
             status={status}

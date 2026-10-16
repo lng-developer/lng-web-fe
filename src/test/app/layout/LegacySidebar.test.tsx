@@ -47,6 +47,36 @@ describe('LegacySidebar', () => {
     expect(screen.getByTitle('12')).toBeVisible()
   })
 
+  it('does not expose Mapping or Configuration through catalog read access', async () => {
+    const account: CurrentAccount = {
+      account: { id: 'leader', email: 'leader@example.test', mustChangePassword: false },
+      profileSetupRequired: false,
+      permissions: [],
+      roles: [],
+      scopes: [
+        {
+          assignmentId: 'assignment',
+          resourceId: null,
+          scopeType: 'team',
+          scopeId: 'design-team',
+          roles: ['DESIGN_LEADER'],
+          permissions: ['CATALOG:READ', 'DESIGN:WRITE'],
+        },
+      ],
+    }
+    render(
+      <MemoryRouter initialEntries={['/portal/listing/amazon']}>
+        <AppProviders>
+          <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} account={account} />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText('Configuration')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('Cost Centers'))
+    await screen.findByText('Product Types')
+    expect(screen.queryByText('Mapping')).not.toBeInTheDocument()
+  })
+
   it('ports the legacy Sales menu labels and its expanded 52 + 202 pixel layout', async () => {
     render(
       <MemoryRouter initialEntries={['/portal/team-tasks']}>

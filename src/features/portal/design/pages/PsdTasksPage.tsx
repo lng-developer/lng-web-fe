@@ -581,7 +581,24 @@ export function PsdTasksPage() {
             (record.assignedDesigner as { name?: string })?.name ||
             (record.assignedDesigner as { full_name?: string })?.full_name ||
             'Pending assign'
-          return <StatusPill title={assignedName} color={DATA_COLORS.purple} />
+          return (
+            <Space orientation="vertical">
+              <StatusPill title={assignedName} color={DATA_COLORS.purple} />
+              {canWrite && record.status === 'ASSIGNED' ? (
+                <Button
+                  size="small"
+                  type="link"
+                  onClick={() => {
+                    setTargetTaskId(record.id)
+                    setSelectedDesignerId(record.assignedDesignerId || undefined)
+                    setAssignModalOpen(true)
+                  }}
+                >
+                  {t('portal.design.reassignDesigner')}
+                </Button>
+              ) : null}
+            </Space>
+          )
         },
       },
       {
@@ -836,6 +853,14 @@ export function PsdTasksPage() {
     toast,
   ])
 
+  const assignmentTask = tasksQuery.data?.items.find((task) => task.id === targetTaskId)
+  const canConfirmAssignment = Boolean(
+    selectedDesignerId &&
+    assignmentTask &&
+    (assignmentTask.status !== 'ASSIGNED' ||
+      assignmentTask.assignedDesignerId !== selectedDesignerId),
+  )
+
   return (
     <section className={styles.page}>
       {/* Top row: Status Tabs + Refresh action */}
@@ -926,8 +951,13 @@ export function PsdTasksPage() {
       {/* Assign Designer Modal */}
       <Modal
         open={assignModalOpen}
-        title="Assign Designer"
-        okText="Assign"
+        title={t(
+          assignmentTask?.status === 'ASSIGNED'
+            ? 'portal.design.reassignDesigner'
+            : 'portal.design.assignDesigner',
+        )}
+        okText={t('portal.design.confirmAssignment')}
+        okButtonProps={{ disabled: !canConfirmAssignment }}
         confirmLoading={assignMutation.isPending}
         onCancel={() => {
           setAssignModalOpen(false)
@@ -935,18 +965,18 @@ export function PsdTasksPage() {
           setSelectedDesignerId(undefined)
         }}
         onOk={() => {
-          if (targetTaskId && selectedDesignerId) {
+          if (targetTaskId && selectedDesignerId && canConfirmAssignment) {
             assignMutation.mutate({ taskId: targetTaskId, designerId: selectedDesignerId })
           }
         }}
       >
         <div style={{ padding: '16px 0' }}>
           <Text strong style={{ display: 'block', marginBottom: 8 }}>
-            Select Designer
+            {t('portal.design.selectDesigner')}
           </Text>
           <Select
             style={{ width: '100%' }}
-            placeholder="Select a designer"
+            placeholder={t('portal.design.selectDesigner')}
             value={selectedDesignerId}
             onChange={(val) => setSelectedDesignerId(val)}
             options={(assigneesQuery.data || []).map((a) => ({

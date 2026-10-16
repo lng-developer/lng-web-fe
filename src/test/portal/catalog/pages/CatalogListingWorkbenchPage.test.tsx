@@ -94,6 +94,7 @@ const account = { permissions: ['CATALOG:WRITE'], scopes: [] } as unknown as Cur
 describe('CatalogListingWorkbenchPage', () => {
   afterEach(cleanup)
   beforeEach(() => {
+    vi.clearAllMocks()
     queryClient.clear()
     i18n.changeLanguage('en')
   })

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/app/common/CoreDataTable', async () => ({
@@ -7,6 +7,10 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { PngTasksPage } from '@/features/portal/design/pages/PngTasksPage'
+import {
+  listProductionTasks,
+  summarizeProductionTasks,
+} from '@/features/portal/production/api/productionApi'
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
@@ -86,6 +90,18 @@ describe('PngTasksPage', () => {
     expect(screen.getByText('All')).toBeInTheDocument()
     expect(screen.getByText('Need Scale')).toBeInTheDocument()
     expect(screen.getAllByText('Shop').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('ASIN Type').length).toBeGreaterThan(0)
+    expect(screen.queryByText('ASIN Type')).not.toBeInTheDocument()
+    expect(listProductionTasks).toHaveBeenCalledWith(
+      expect.objectContaining({ designType: 'CUSTOM_IMAGE' }),
+    )
+    expect(summarizeProductionTasks).toHaveBeenCalledWith(
+      expect.objectContaining({ designType: 'CUSTOM_IMAGE', status: undefined }),
+    )
+    fireEvent.click(screen.getByText('Pending Assignment'))
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ designType: 'CUSTOM_IMAGE', unassigned: true }),
+      ),
+    )
   })
 })

@@ -1,5 +1,6 @@
 import { ApiResponse } from '@/server/type'
 import { apiClient, ApiError } from '@/shared/api'
+import { queryClient } from '@/shared/query/queryClient'
 import {
   getAccessToken,
   hasRefreshSession,
@@ -47,6 +48,7 @@ export async function login(identifier: string, password: string) {
     password,
   })
   const session = (response as unknown as ApiResponse<AuthSession>).data
+  queryClient.clear()
   setAccessToken(session.accessToken)
   setAccount(session.account)
   setHasRefreshSession(true)
@@ -59,6 +61,7 @@ export async function login(identifier: string, password: string) {
 export async function loginWithGoogle(credential: { idToken?: string; accessToken?: string }) {
   const response = await apiClient.post<ApiResponse<AuthSession>>('/api/auth/google', credential)
   const session = (response as unknown as ApiResponse<AuthSession>).data
+  queryClient.clear()
   setAccessToken(session.accessToken)
   setAccount(session.account)
   setHasRefreshSession(true)
@@ -73,6 +76,7 @@ export async function loginWithMicrosoft(idToken: string) {
     idToken,
   })
   const session = (response as unknown as ApiResponse<AuthSession>).data
+  queryClient.clear()
   setAccessToken(session.accessToken)
   setAccount(session.account)
   setHasRefreshSession(true)
@@ -86,6 +90,7 @@ export async function logout() {
   try {
     await apiClient.post('/api/auth/logout')
   } finally {
+    queryClient.clear()
     setAccessToken(null)
     setHasRefreshSession(false)
   }

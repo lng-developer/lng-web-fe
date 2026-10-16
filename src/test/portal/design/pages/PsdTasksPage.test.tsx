@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/app/common/CoreDataTable', async () => ({
@@ -7,9 +7,11 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { PsdTasksPage } from '@/features/portal/design/pages/PsdTasksPage'
+import { queryClient } from '@/shared/query/queryClient'
 
 let mockSearchParams = new URLSearchParams('')
 let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
+let mockTaskStatus = 'REQUESTED'
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
@@ -34,12 +36,13 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/portal/design/api/designApi')>()
   return {
     ...actual,
-    listDesignTasks: vi.fn().mockResolvedValue({
+    listDesignTasks: vi.fn().mockImplementation(async () => ({
       items: [
         {
           id: 'psd-1',
           taskType: 'PSD_TEMPLATE',
-          status: 'REQUESTED',
+          status: mockTaskStatus,
+          assignedDesignerId: mockTaskStatus === 'ASSIGNED' ? 'old-designer' : null,
           priority: 'HIGH',
           listing: {
             sku: 'SKU-TEST-001',
@@ -51,7 +54,7 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
         },
       ],
       pagination: { total: 1, page: 1, limit: 10 },
-    }),
+    })),
     getDesignSummary: vi.fn().mockResolvedValue({
       total: 1,
       unassigned: 1,
@@ -59,7 +62,10 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
       byStatus: { REQUESTED: 1 },
       byTaskType: { PSD_TEMPLATE: 1 },
     }),
-    listDesignAssignees: vi.fn().mockResolvedValue([]),
+    listDesignAssignees: vi
+      .fn()
+      .mockResolvedValue([{ id: 'new-designer', fullName: 'New Designer' }]),
+    assignDesignTask: vi.fn().mockResolvedValue({}),
     startDesignTask: vi.fn(),
     approveDesignTask: vi.fn(),
     rejectDesignTask: vi.fn(),
@@ -74,8 +80,40 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 describe('PsdTasksPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    queryClient.clear()
     mockSearchParams = new URLSearchParams('')
+    mockTaskStatus = 'REQUESTED'
     mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
+  })
+
+  it('lets a manager change the recipient before the assigned task is claimed', async () => {
+    mockTaskStatus = 'ASSIGNED'
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    fireEvent.click(screen.getByRole('button', { name: 'Reassign designer' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('Reassign designer')
+    const dialog = within(screen.getByRole('dialog'))
+    expect(dialog.getByRole('button', { name: 'Confirm' })).toBeDisabled()
+    fireEvent.mouseDown(dialog.getByRole('combobox'))
+    fireEvent.click(await screen.findByText('New Designer'))
+    fireEvent.click(dialog.getByRole('button', { name: 'Confirm' }))
+    const { assignDesignTask } = await import('@/features/portal/design/api/designApi')
+    await waitFor(() => expect(assignDesignTask).toHaveBeenCalledWith('psd-1', 'new-designer'))
+  })
+
+  it('does not offer reassignment after work starts', async () => {
+    mockTaskStatus = 'IN_PROGRESS'
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    expect(screen.queryByRole('button', { name: 'Reassign designer' })).not.toBeInTheDocument()
   })
 
   it('keeps Design work controls hidden for requester-only Sales access', async () => {

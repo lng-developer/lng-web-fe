@@ -3046,6 +3046,8 @@
       "approveConfirm": "Duyệt bản nộp này?",
       "chooseApprovedFile": "Chọn tệp được duyệt",
       "assignDesigner": "Phân công designer",
+      "reassignDesigner": "Đổi người nhận",
+      "confirmAssignment": "Xác nhận",
       "selectDesigner": "Chọn designer",
       "selectEligibleDesigner": "Chọn designer đủ điều kiện",
       "noEligibleDesigners": "Không có designer đủ điều kiện",
@@ -3534,6 +3536,9 @@
     },
     "production": {
       "title": "Vận hành sản xuất",
+      "noOutputFilesYet": "Chưa có file đầu ra",
+      "designType": "Loại thiết kế",
+      "unclassified": "Chưa phân loại",
       "description": "Chuẩn bị artwork, kiểm tra file scale và chuyển đơn đã duyệt sang nhà cung cấp.",
       "refresh": "Làm mới",
       "unavailable": "Không thể tải tác vụ sản xuất",
@@ -3610,7 +3615,7 @@
       "designNote": "Ghi chú thiết kế",
       "saveNote": "Lưu ghi chú",
       "uploadOutput": "Tải file scale lên",
-      "addManualSlot": "Thêm vị trí in",
+      "addManualSlot": "Thêm file đầu ra",
       "manualSlot": {
         "title": "Thêm vị trí in",
         "choosePosition": "Chọn vị trí trên sản phẩm",

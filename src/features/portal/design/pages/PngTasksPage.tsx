@@ -19,7 +19,6 @@ import {
   type ProductionParams,
   type ProductionTask,
   submitScaleForQc,
-  summarizeProductionQueueCounts,
   summarizeProductionTasks,
   updateDesignNote,
   uploadScaledOutput,
@@ -41,7 +40,6 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { ASIN_TYPE_OPTIONS } from '../api/designApi'
 import styles from './PngTasksPage.module.scss'
 
 const { Text } = Typography
@@ -129,7 +127,6 @@ export function PngTasksPage() {
   const deferredSearch = useDeferredValue(search)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
   const [selectedShopId, setSelectedShopId] = useState<string>()
-  const [selectedAsinType, setSelectedAsinType] = useState<string>()
   const [dates, setDates] = useState<DateRangeValue>({})
 
   const [assignModalOpen, setAssignModalOpen] = useState(false)
@@ -155,6 +152,8 @@ export function PngTasksPage() {
       page,
       limit: pageSize,
       view: 'SCALE',
+      designType: 'CUSTOM_IMAGE',
+      unassigned: activeTabConfig.unassigned || undefined,
       psdReadyOnly: true,
       search: deferredSearch || undefined,
       status: activeTabConfig.status,
@@ -168,6 +167,7 @@ export function PngTasksPage() {
       pageSize,
       deferredSearch,
       activeTabConfig.status,
+      activeTabConfig.unassigned,
       selectedShopId,
       salesChannelCode,
       dates.dateFrom,
@@ -188,16 +188,16 @@ export function PngTasksPage() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const summaryParams = {
+    ...queryParams,
+    status: undefined,
+    unassigned: undefined,
+    page: undefined,
+    limit: undefined,
+  }
   const summaryQuery = useQuery({
-    queryKey: productionKeys.summary({ view: 'SCALE', psdReadyOnly: true, salesChannelCode }),
-    queryFn: () =>
-      summarizeProductionTasks({ view: 'SCALE', psdReadyOnly: true, salesChannelCode }),
-    staleTime: 20_000,
-  })
-
-  const queueCountsQuery = useQuery({
-    queryKey: productionKeys.queueSummary({}),
-    queryFn: () => summarizeProductionQueueCounts({}),
+    queryKey: productionKeys.summary(summaryParams),
+    queryFn: () => summarizeProductionTasks(summaryParams),
     staleTime: 20_000,
   })
 
@@ -295,60 +295,17 @@ export function PngTasksPage() {
 
   const counts = useMemo(() => {
     const summaryData = summaryQuery.data || {}
-    const items = tasksQuery.data?.items || []
-    const unassignedCount = items.filter(
-      (item) => !item.assignedDesignUserId && !item.assignedDesigner,
-    ).length
     return {
-      all: summaryData.total ?? queueCountsQuery.data?.scaleQueue ?? tasksQuery.data?.total ?? 0,
-      unassigned: unassignedCount,
+      all: summaryData.total ?? 0,
+      unassigned: summaryData.unassigned ?? 0,
       need_scale: summaryData.needScale ?? 0,
       qc_pending: summaryData.qcPending ?? 0,
-      completed:
-        (summaryData.readyToSendVendor ?? summaryData.ready ?? 0) + (summaryData.sentToVendor ?? 0),
+      completed: summaryData.readyToSendVendor ?? 0,
       qc_rejected: summaryData.qcRejected ?? 0,
     }
-  }, [summaryQuery.data, queueCountsQuery.data, tasksQuery.data])
+  }, [summaryQuery.data])
 
-  const displayedTasks = useMemo(() => {
-    let items = tasksQuery.data?.items || []
-    if (activeTabConfig.unassigned) {
-      items = items.filter((item) => !item.assignedDesignUserId && !item.assignedDesigner)
-    }
-    if (selectedShopId) {
-      items = items.filter((item) => (item.shopId || item.shop?.id) === selectedShopId)
-    }
-    if (salesChannelCode) {
-      items = items.filter((item) => {
-        const code = item.orderItem?.salesChannelCode?.toUpperCase()
-        return !code || code === salesChannelCode
-      })
-    }
-    if (selectedAsinType) {
-      const target = selectedAsinType.toLowerCase()
-      items = items.filter((item) => {
-        const type =
-          item.asinType ||
-          item.asin_type ||
-          (item.listing as { asinType?: string; asin_type?: string } | undefined)?.asinType ||
-          (item.listing as { asinType?: string; asin_type?: string } | undefined)?.asin_type
-        if (type) {
-          return type.toLowerCase() === target
-        }
-        if (selectedAsinType === 'Custom Image') {
-          return item.fileChecks?.some((check) => check.sourceType === 'CUSTOMER_IMAGE')
-        }
-        return false
-      })
-    }
-    return items
-  }, [
-    tasksQuery.data?.items,
-    activeTabConfig.unassigned,
-    selectedShopId,
-    salesChannelCode,
-    selectedAsinType,
-  ])
+  const displayedTasks = tasksQuery.data?.items || []
 
   const columns = useMemo<TableColumnsType<ProductionTask>>(() => {
     const baseColumns: TableColumnsType<ProductionTask> = [
@@ -406,21 +363,12 @@ export function PngTasksPage() {
         render: (_, record) => record.shop?.name || record.shopName || '-',
       },
       {
-        title: t('portal.design.asinType', { defaultValue: 'ASIN Type' }),
-        key: 'asinType',
+        title: t('portal.production.designType', { defaultValue: 'Design Type' }),
+        key: 'designType',
         width: 130,
         align: 'center',
-        render: (_, record) => {
-          const asinType =
-            record.asinType ||
-            record.asin_type ||
-            (record.listing as { asinType?: string; asin_type?: string } | undefined)?.asinType ||
-            (record.listing as { asinType?: string; asin_type?: string } | undefined)?.asin_type ||
-            (record.fileChecks?.some((check) => check.sourceType === 'CUSTOMER_IMAGE')
-              ? 'Custom Image'
-              : null)
-          return asinType ? <Tag color="magenta">{asinType}</Tag> : '-'
-        },
+        render: (_, record) =>
+          record.designType ? <Tag color="magenta">{humanizeCode(record.designType)}</Tag> : '-',
       },
       {
         title: t('common.channel', { defaultValue: 'Channel' }),
@@ -566,23 +514,6 @@ export function PngTasksPage() {
           options={(shopsQuery.data?.items || []).map((shop) => ({
             label: shop.name,
             value: shop.id,
-          }))}
-        />
-        <Select
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder={t('portal.design.asinType', { defaultValue: 'ASIN Type' })}
-          value={selectedAsinType}
-          onChange={(val) => {
-            setSelectedAsinType(val)
-            setPage(1)
-          }}
-          className={styles.select}
-          style={{ minWidth: 140 }}
-          options={ASIN_TYPE_OPTIONS.map((opt) => ({
-            label: opt.label,
-            value: opt.value,
           }))}
         />
         <Tooltip title={t('common.refresh', { defaultValue: 'Refresh' })}>

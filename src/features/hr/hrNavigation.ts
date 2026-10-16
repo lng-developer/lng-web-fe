@@ -13,6 +13,7 @@ const teamPermissions = [
   'HR_SCHEDULE:WRITE',
   'HR_CALENDAR:READ',
   'HR_CALENDAR:WRITE',
+  'HR_SATURDAY_ROTATION:WRITE',
   'HR_ATTENDANCE:READ',
   'HR_ATTENDANCE:MANAGE',
   'HR_LEAVE:READ',
@@ -64,7 +65,13 @@ const routes: HrRoute[] = [
     path: '/hr/team/schedule',
     workspace: 'team',
     labelKey: 'hrOperations.navigation.schedule',
-    permissions: ['HR_SCHEDULE:READ', 'HR_SCHEDULE:WRITE', 'HR_CALENDAR:READ', 'HR_CALENDAR:WRITE'],
+    permissions: [
+      'HR_SCHEDULE:READ',
+      'HR_SCHEDULE:WRITE',
+      'HR_CALENDAR:READ',
+      'HR_CALENDAR:WRITE',
+      'HR_SATURDAY_ROTATION:WRITE',
+    ],
   },
   {
     key: 'team-attendance',
