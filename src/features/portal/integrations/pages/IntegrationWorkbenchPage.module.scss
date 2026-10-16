@@ -130,7 +130,7 @@
 .automationGrid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
 }
 
 .automationAgentCard {
@@ -225,6 +225,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .scheduleIconPrimary {
@@ -281,6 +282,10 @@
 }
 
 @media (max-width: 520px) {
+  .automationGrid {
+    grid-template-columns: 1fr;
+  }
+
   .automationScheduleRow {
     flex-direction: column;
     align-items: flex-start;
