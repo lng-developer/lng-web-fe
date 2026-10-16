@@ -1,10 +1,14 @@
-import { memo, type ReactNode, useState } from 'react'
+import { memo, type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ApartmentOutlined,
+  CheckCircleOutlined,
+  CrownOutlined,
   DeleteOutlined,
+  DownOutlined,
   EditOutlined,
   PlusOutlined,
+  RightOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -29,6 +33,7 @@ import {
   FeedbackAlert,
   MetricCard,
   PageHeader,
+  SearchInput,
   SectionCard,
   StatusTag,
   useFeedbackToast,
@@ -57,10 +62,12 @@ type EditorValues = DepartmentInput & { departmentId?: string }
 
 const OrganizationTeamNode = memo(function OrganizationTeamNode({
   actions,
+  canManageAccess,
   canManageMembers,
   team,
 }: {
   actions: ReactNode
+  canManageAccess: boolean
   canManageMembers: boolean
   team: Team
 }) {
@@ -81,7 +88,10 @@ const OrganizationTeamNode = memo(function OrganizationTeamNode({
           aria-label={t('organization.openResource', { name: team.name })}
           onClick={() => setIsOpen((open) => !open)}
         >
-          <TeamOutlined />
+          <span className={styles.teamChevron}>
+            {isOpen ? <DownOutlined /> : <RightOutlined />}
+          </span>
+          <TeamOutlined className={styles.teamIcon} />
           <span className={styles.teamIdentity}>
             <strong>{team.name}</strong>
             <small>
@@ -105,7 +115,13 @@ const OrganizationTeamNode = memo(function OrganizationTeamNode({
             showArrow: false,
             collapsible: 'disabled',
             label: null,
-            children: <TeamStaffBranch canManageMembers={canManageMembers} team={team} />,
+            children: (
+              <TeamStaffBranch
+                canManageAccess={canManageAccess}
+                canManageMembers={canManageMembers}
+                team={team}
+              />
+            ),
           },
         ]}
       />
@@ -120,6 +136,7 @@ export function OrganizationPage() {
   const [form] = Form.useForm<EditorValues>()
   const [editor, setEditor] = useState<Editor>()
   const [deactivateTarget, setDeactivateTarget] = useState<Department | Team>()
+  const [deptSearch, setDeptSearch] = useState('')
   const permissions = getPermissions()
   const canManageOrganization = permissions.includes('AUTH:WRITE')
   const canManageMembers = canManageOrganization || permissions.includes('TEAMS:WRITE')
@@ -176,12 +193,31 @@ export function OrganizationPage() {
   }
   const hasError = departments.error || teams.error
 
-  const deptItems = departments.data?.items ?? []
+  const deptItems = useMemo(() => departments.data?.items ?? [], [departments.data?.items])
   const activeDept = deptItems.find((d) => d.id === selectedDeptId) || deptItems[0]
   const activeDeptTeams = activeDept
     ? (teams.data?.items ?? []).filter((team) => team.departmentId === activeDept.id)
     : []
-  const totalMembers = (teams.data?.items ?? []).reduce((sum, t) => sum + (t.memberCount || 0), 0)
+  const totalMembers = (teams.data?.items ?? []).reduce((sum, tm) => sum + (tm.memberCount || 0), 0)
+  const totalDepts = departments.data?.pagination?.total ?? deptItems.length ?? 0
+  const activeDeptsCount = useMemo(
+    () => deptItems.filter((d) => d.status === 'active').length,
+    [deptItems],
+  )
+  const totalTeams = teams.data?.pagination?.total ?? teams.data?.items.length ?? 0
+  const activeTeamsCount = useMemo(
+    () => (teams.data?.items ?? []).filter((team) => team.status === 'active').length,
+    [teams.data?.items],
+  )
+
+  const filteredDepts = useMemo(() => {
+    const query = deptSearch.trim().toLowerCase()
+    return deptItems.filter((dept) => {
+      return (
+        !query || dept.name.toLowerCase().includes(query) || dept.code.toLowerCase().includes(query)
+      )
+    })
+  }, [deptItems, deptSearch])
 
   const resourceActions = (item: Department | Team, kind: Editor['kind']) =>
     canManageOrganization && (
@@ -216,6 +252,8 @@ export function OrganizationPage() {
     <section className={styles.page}>
       <div className={styles.header}>
         <PageHeader
+          title={t('organization.title')}
+          description={t('organization.description')}
           actions={
             canManageOrganization && (
               <Button
@@ -251,29 +289,59 @@ export function OrganizationPage() {
         <MetricCard
           icon={<ApartmentOutlined aria-hidden />}
           label={t('organization.departmentCount')}
-          value={String(departments.data?.pagination?.total ?? departments.data?.items.length ?? 0)}
+          value={String(totalDepts)}
+          variant="primary"
+          subtext={t('organization.activeDeptCountSubtext', {
+            count: activeDeptsCount,
+            total: totalDepts,
+          })}
+        />
+        <MetricCard
+          icon={<CheckCircleOutlined aria-hidden />}
+          label={t('organization.activeDepartments')}
+          value={String(activeDeptsCount)}
+          variant="success"
+          subtext={t('organization.activeRate', {
+            rate: totalDepts ? Math.round((activeDeptsCount / totalDepts) * 100) : 0,
+          })}
         />
         <MetricCard
           icon={<TeamOutlined aria-hidden />}
           label={t('organization.teamCount')}
-          value={String(teams.data?.pagination?.total ?? teams.data?.items.length ?? 0)}
+          value={String(totalTeams)}
+          variant="info"
+          subtext={t('organization.activeTeamCountSubtext', { count: activeTeamsCount })}
         />
         <MetricCard
           icon={<UserOutlined aria-hidden />}
           label={t('organization.memberCount', 'Total Members')}
           value={String(totalMembers)}
+          variant="warning"
+          subtext={t('organization.memberCountSubtext')}
         />
       </div>
 
       <div className={styles.splitLayout}>
         <div className={styles.leftPanel}>
           <div className={styles.leftPanelHeader}>
-            <Typography.Title level={5} style={{ margin: 0 }}>
-              {t('organization.departments', 'Departments')}
-            </Typography.Title>
+            <div className={styles.leftPanelTitleRow}>
+              <Space size={8} align="center">
+                <ApartmentOutlined className={styles.panelTitleIcon} />
+                <Typography.Title level={5} style={{ margin: 0 }}>
+                  {t('organization.departments', 'Departments')}
+                </Typography.Title>
+              </Space>
+              <Tag className={styles.countBadge}>{filteredDepts.length}</Tag>
+            </div>
+            <SearchInput
+              placeholder={t('organization.searchDepartments', 'Search departments...')}
+              value={deptSearch}
+              onSearchChange={setDeptSearch}
+              allowClear
+            />
           </div>
           <div className={styles.deptList}>
-            {deptItems.map((dept) => {
+            {filteredDepts.map((dept) => {
               const isActive = activeDept?.id === dept.id
               const count = (teams.data?.items ?? []).filter(
                 (team) => team.departmentId === dept.id,
@@ -298,44 +366,47 @@ export function OrganizationPage() {
                     <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                       {count} {t('organization.teams', 'Teams').toLowerCase()}
                     </Typography.Text>
-                    <Tag
-                      color={dept.status === 'active' ? 'success' : 'default'}
-                      style={{ fontSize: 10 }}
-                    >
+                    <StatusTag status={dept.status === 'active' ? 'operational' : 'draft'}>
                       {dept.status}
-                    </Tag>
+                    </StatusTag>
                   </div>
                 </div>
               )
             })}
-            {deptItems.length === 0 && !departments.isLoading && (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            {filteredDepts.length === 0 && !departments.isLoading && (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={t('organization.noDepartmentsFound')}
+              />
             )}
           </div>
         </div>
 
         <div className={styles.rightPanel}>
           {activeDept ? (
-            <SectionCard>
-              <div
-                className={styles.rightPanelTitleBar}
-                style={{
-                  borderBottom: '1px solid var(--ant-color-border-secondary)',
-                  paddingBottom: 16,
-                  marginBottom: 16,
-                }}
-              >
-                <Space size="middle">
-                  <ApartmentOutlined className={styles.activeDeptIcon} />
+            <SectionCard className={styles.departmentWorkbench}>
+              <div className={styles.departmentHero}>
+                <div className={styles.departmentHeroMain}>
+                  <div className={styles.departmentHeroIcon}>
+                    <ApartmentOutlined />
+                  </div>
                   <div>
-                    <Typography.Title level={4} style={{ margin: 0 }}>
-                      {activeDept.name}
-                    </Typography.Title>
+                    <div className={styles.departmentHeroTitleRow}>
+                      <Typography.Title level={4} style={{ margin: 0 }}>
+                        {activeDept.name}
+                      </Typography.Title>
+                      <Tag color="blue" className={styles.deptCodeTag}>
+                        {activeDept.code}
+                      </Tag>
+                      <StatusTag status={activeDept.status === 'active' ? 'operational' : 'draft'}>
+                        {activeDept.status}
+                      </StatusTag>
+                    </div>
                     <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                      {activeDept.code}
+                      {t('organization.departmentHeroDesc')}
                     </Typography.Text>
                   </div>
-                </Space>
+                </div>
                 <Space>
                   {canManageOrganization && (
                     <Button
@@ -350,20 +421,80 @@ export function OrganizationPage() {
                   {resourceActions(activeDept, 'department')}
                 </Space>
               </div>
+
+              <div className={styles.departmentStatsRibbon}>
+                <div className={styles.statPill}>
+                  <TeamOutlined className={styles.statPillIcon} />
+                  <div>
+                    <div className={styles.statPillValue}>{activeDeptTeams.length}</div>
+                    <div className={styles.statPillLabel}>{t('organization.teams', 'Teams')}</div>
+                  </div>
+                </div>
+                <div className={styles.statPillDivider} />
+                <div className={styles.statPill}>
+                  <UserOutlined className={styles.statPillIcon} />
+                  <div>
+                    <div className={styles.statPillValue}>
+                      {activeDeptTeams.reduce((sum, tm) => sum + (tm.memberCount || 0), 0)}
+                    </div>
+                    <div className={styles.statPillLabel}>
+                      {t('organization.members', 'Members')}
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.statPillDivider} />
+                <div className={styles.statPill}>
+                  <CrownOutlined className={styles.statPillIcon} />
+                  <div>
+                    <div className={styles.statPillValue}>
+                      {activeDeptTeams.filter((tm) => tm.status === 'active').length}
+                    </div>
+                    <div className={styles.statPillLabel}>
+                      {t('organization.activeTeams', 'Active Teams')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.teamsSectionHeader}>
+                <div className={styles.teamsSectionTitle}>
+                  <Typography.Title level={5} style={{ margin: 0 }}>
+                    {t('organization.departmentTeams', 'Đội ngũ trực thuộc')}
+                  </Typography.Title>
+                  <span className={styles.teamsCountBadge}>
+                    {activeDeptTeams.length} {t('organization.teams', 'Teams').toLowerCase()}
+                  </span>
+                </div>
+              </div>
+
               <div className={styles.teamList}>
                 {activeDeptTeams.map((team) => (
                   <OrganizationTeamNode
                     actions={resourceActions(team, 'team')}
+                    canManageAccess={canManageOrganization}
                     canManageMembers={canManageMembers}
                     team={team}
                     key={team.id}
                   />
                 ))}
                 {activeDeptTeams.length === 0 && (
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={t('organization.noTeams')}
-                  />
+                  <div className={styles.emptyTeamsBox}>
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={t('organization.noTeams')}
+                    >
+                      {canManageOrganization && (
+                        <Button
+                          type="primary"
+                          ghost
+                          icon={<PlusOutlined />}
+                          onClick={() => openEditor({ kind: 'team', departmentId: activeDept.id })}
+                        >
+                          {t('organization.addTeam')}
+                        </Button>
+                      )}
+                    </Empty>
+                  </div>
                 )}
               </div>
             </SectionCard>
@@ -392,6 +523,7 @@ export function OrganizationPage() {
           )
         }
         footer={null}
+        width={460}
         transitionName=""
         maskTransitionName=""
         onCancel={() => {

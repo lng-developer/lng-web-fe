@@ -40,12 +40,17 @@ import {
   ApartmentOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
+  ContactsOutlined,
   DollarOutlined,
   FileTextOutlined,
+  FormatPainterOutlined,
   HistoryOutlined,
+  LineChartOutlined,
+  PictureOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
+  TrophyOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
@@ -717,6 +722,16 @@ function iconForNavigationItem(item: NavigationItem) {
   if (item.key.includes('payroll')) return <DollarOutlined />
   if (item.key.includes('member') || item.key === 'team') return <TeamOutlined />
   if (item.key === 'organization') return <ApartmentOutlined />
+  if (item.key === 'audit-log' || item.path.includes('audit')) return <HistoryOutlined />
+  if (item.key === 'monitoring' || item.path.includes('monitoring')) return <LineChartOutlined />
+  if (item.key === 'accounts' || item.path.includes('accounts')) return <TeamOutlined />
+  if (item.key === 'access-control' || item.path.includes('access'))
+    return <SafetyCertificateOutlined />
+  if (item.key === 'media' || item.path.includes('media')) return <PictureOutlined />
+  if (item.key === 'customers' || item.path.includes('customers')) return <ContactsOutlined />
+  if (item.key === 'customizations' || item.path.includes('customizations'))
+    return <FormatPainterOutlined />
+  if (item.key === 'work-scores' || item.path.includes('work-scores')) return <TrophyOutlined />
   if (item.path.startsWith('/auth')) return <SafetyCertificateOutlined />
   return <UserOutlined />
 }
@@ -915,6 +930,132 @@ export function LegacySidebar({
   }, [bottomMenuGroups.hr, permissions])
 
   const currentPortalMenu = activeMenu === 'dashboard' ? lastPortalMenu : activeMenu
+
+  const normalizedHrGroups = useMemo(() => {
+    const rawGroups = (bottomMenuGroups.hr ?? []).filter(
+      (g) => g.key !== 'dashboard' && g.items.length > 0,
+    )
+    const hasOperations = rawGroups.some((g) => g.key === 'operations')
+    const payrollGroup = rawGroups.find((g) => g.key === 'payroll')
+
+    if (hasOperations && payrollGroup) {
+      return rawGroups
+        .filter((g) => g.key !== 'payroll')
+        .map((g) => {
+          if (g.key === 'operations') {
+            const hasPayrollItem = g.items.some((item) => item.path === '/hr/payroll')
+            return hasPayrollItem ? g : { ...g, items: [...g.items, ...payrollGroup.items] }
+          }
+          return g
+        })
+    }
+    return rawGroups
+  }, [bottomMenuGroups.hr])
+
+  const [activeHrWorkspace, setActiveHrWorkspace] = useState<string>(() => {
+    const matching = normalizedHrGroups.find((g) =>
+      g.items.some((item) => matchesRoute(item.path, location.pathname, location.search)),
+    )
+    return matching?.key ?? normalizedHrGroups[0]?.key ?? 'personal'
+  })
+
+  useEffect(() => {
+    if (activeMode !== 'hr') return
+    const matching = normalizedHrGroups.find((g) =>
+      g.items.some((item) => matchesRoute(item.path, location.pathname, location.search)),
+    )
+    if (matching && matching.key !== activeHrWorkspace) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveHrWorkspace(matching.key)
+    }
+  }, [activeMode, activeHrWorkspace, location.pathname, location.search, normalizedHrGroups])
+
+  const currentHrGroup = useMemo(() => {
+    return normalizedHrGroups.find((g) => g.key === activeHrWorkspace) ?? normalizedHrGroups[0]
+  }, [activeHrWorkspace, normalizedHrGroups])
+
+  const hrMenuItems = useMemo(() => {
+    if (!currentHrGroup) return []
+    return (currentHrGroup.items ?? []).map((item) => ({
+      key: item.path,
+      icon: iconForNavigationItem(item),
+      label: (
+        <span className={styles.menuLabel}>
+          <span className={styles.menuLabelText}>
+            <Link to={item.path}>{t(item.labelKey)}</Link>
+          </span>
+        </span>
+      ),
+    }))
+  }, [currentHrGroup, t])
+
+  const selectedHrKeys = useMemo(() => {
+    const currentPath = location.pathname
+    const items = currentHrGroup?.items ?? []
+    const exact = items.find((item) => item.path === currentPath)
+    if (exact) return [exact.path]
+    const rootPaths = new Set(['/hr/me', '/hr/team', '/hr/operations'])
+    const prefix = items.find(
+      (item) => !rootPaths.has(item.path) && currentPath.startsWith(`${item.path}/`),
+    )
+    if (prefix) return [prefix.path]
+    const fallbackRoot = items.find(
+      (item) => rootPaths.has(item.path) && currentPath.startsWith(item.path),
+    )
+    if (fallbackRoot) return [fallbackRoot.path]
+    return [currentPath]
+  }, [currentHrGroup, location.pathname])
+
+  const isSystemActive = activeMenu === 'system'
+
+  const systemMenuItems = useMemo(() => {
+    const groups = bottomMenuGroups.system ?? []
+    return groups
+      .filter((group) => group.key !== 'dashboard')
+      .flatMap((group) => {
+        const items = group.items
+          .filter((item) => item.path !== '/portal/dashboard')
+          .map((item) => ({
+            key: item.path,
+            icon: iconForNavigationItem(item),
+            label: (
+              <span className={styles.menuLabel}>
+                <span className={styles.menuLabelText}>
+                  <Link to={item.path}>{t(item.labelKey)}</Link>
+                </span>
+              </span>
+            ),
+          }))
+        if (!items.length) return []
+        return [
+          {
+            type: 'group' as const,
+            key: `system-group:${group.key}`,
+            label: (
+              <span className={styles.systemGroupTitle}>
+                <span className={styles.systemGroupIcon}>{iconForNavigationGroup(group.key)}</span>
+                <span>{t(group.labelKey)}</span>
+              </span>
+            ),
+            children: items,
+          },
+        ]
+      })
+  }, [bottomMenuGroups.system, t])
+
+  const handleSelectHrWorkspace = (workspaceKey: string) => {
+    setActiveHrWorkspace(workspaceKey)
+    const targetGroup = normalizedHrGroups.find((g) => g.key === workspaceKey)
+    if (targetGroup && targetGroup.items.length > 0) {
+      const inTarget = targetGroup.items.some((item) =>
+        matchesRoute(item.path, location.pathname, location.search),
+      )
+      if (!inTarget) {
+        navigate(targetGroup.items[0].path)
+      }
+    }
+  }
+
   const activeDetailMenu =
     activeMenu === 'system'
       ? toLegacyMenuItems(bottomMenuGroups.system ?? [])
@@ -1140,15 +1281,74 @@ export function LegacySidebar({
           </nav>
         </div>
         <Sider className={styles.detailSider} width={202} collapsedWidth={0} collapsed={collapsed}>
-          <Menu
-            className={styles.detailMenu}
-            mode="inline"
-            openKeys={openKeys}
-            onOpenChange={setOpenKeys}
-            selectedKeys={[location.pathname + location.search]}
-            items={menuItems}
-            onClick={({ key }) => navigate(String(key))}
-          />
+          {(() => {
+            const isHrActive = activeMode === 'hr' && activeMenu !== 'system'
+            return (
+              <>
+                {isHrActive && normalizedHrGroups.length > 1 && (
+                  <div
+                    className={styles.hrWorkspaceSwitcher}
+                    role="tablist"
+                    aria-label={t('shell.workspace')}
+                  >
+                    {normalizedHrGroups.map((group) => {
+                      const isActive = group.key === activeHrWorkspace
+                      const shortKey =
+                        group.key === 'operations'
+                          ? 'shell.groups.hrOperationsShort'
+                          : `shell.groups.${group.key}Short`
+                      const label = t(shortKey, { defaultValue: t(group.labelKey) })
+                      return (
+                        <button
+                          key={group.key}
+                          type="button"
+                          role="tab"
+                          aria-selected={isActive}
+                          className={isActive ? styles.hrWorkspaceTabActive : styles.hrWorkspaceTab}
+                          onClick={() => handleSelectHrWorkspace(group.key)}
+                          title={t(group.labelKey)}
+                        >
+                          <span className={styles.hrWorkspaceIcon}>
+                            {iconForNavigationGroup(group.key)}
+                          </span>
+                          <span className={styles.hrWorkspaceLabel}>{label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                {isHrActive && normalizedHrGroups.length === 1 && (
+                  <div className={styles.hrSingleWorkspaceHeader}>
+                    <span className={styles.hrWorkspaceIcon}>
+                      {iconForNavigationGroup(normalizedHrGroups[0].key)}
+                    </span>
+                    <span className={styles.hrWorkspaceLabel}>
+                      {t(normalizedHrGroups[0].labelKey)}
+                    </span>
+                  </div>
+                )}
+                {isSystemActive && (
+                  <div className={styles.systemHeader}>
+                    <span className={styles.systemHeaderIcon}>
+                      <SettingOutlined />
+                    </span>
+                    <span className={styles.systemHeaderLabel}>
+                      {t('shell.groups.system', { defaultValue: 'Quản trị hệ thống' })}
+                    </span>
+                  </div>
+                )}
+                <Menu
+                  className={styles.detailMenu}
+                  mode="inline"
+                  openKeys={isHrActive || isSystemActive ? [] : openKeys}
+                  onOpenChange={isHrActive || isSystemActive ? undefined : setOpenKeys}
+                  selectedKeys={isHrActive ? selectedHrKeys : [location.pathname + location.search]}
+                  items={isHrActive ? hrMenuItems : isSystemActive ? systemMenuItems : menuItems}
+                  onClick={({ key }) => navigate(String(key))}
+                />
+              </>
+            )
+          })()}
         </Sider>
       </Layout>
       <button

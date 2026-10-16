@@ -378,6 +378,8 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
     return (
       <section className={styles.page}>
         <PageHeader
+          title={t('hrOperations.payroll.myTitle')}
+          description={t('hrOperations.payroll.myDescription')}
           actions={
             <MonthPicker
               value={month}
@@ -404,13 +406,15 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
             formatMoney={money}
           />
         ) : (
-          <SectionCard title={t('hrOperations.payroll.myPayroll')}>
-            <Typography.Text type="secondary">
-              {targetId
-                ? t('notifications.resourceUnavailable')
-                : t('hrOperations.payroll.emptyPayslip', { period: month.format('MM/YYYY') })}
-            </Typography.Text>
-          </SectionCard>
+          <div style={{ maxWidth: 1080, marginInline: 'auto', width: '100%' }}>
+            <SectionCard title={t('hrOperations.payroll.myPayroll')}>
+              <Typography.Text type="secondary">
+                {targetId
+                  ? t('notifications.resourceUnavailable')
+                  : t('hrOperations.payroll.emptyPayslip', { period: month.format('MM/YYYY') })}
+              </Typography.Text>
+            </SectionCard>
+          </div>
         )}
       </section>
     )

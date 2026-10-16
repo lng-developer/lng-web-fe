@@ -16,6 +16,14 @@ export type AccessExplorerSnapshot = {
     roles?: string[]
     lastLoginAt?: string | null
     lastLoginIp?: string | null
+    roleAssignments?: Array<{
+      roleCode?: string | null
+      scopeId?: string | null
+      scopeType?: string | null
+    }>
+    department?: { id: string; name: string; code?: string; status?: string } | null
+    team?: { id: string; name: string; code?: string; status?: string } | null
+    memberType?: string | null
   }>
   account: {
     account: { id: string; email: string; status?: string; roles?: string[] }

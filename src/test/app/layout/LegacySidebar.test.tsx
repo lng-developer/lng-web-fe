@@ -188,23 +188,16 @@ describe('LegacySidebar', () => {
 
     // HR navigation items are available
     expect(screen.getByText('Personal')).toBeVisible()
-    expect(
-      screen.getByText('Personal').closest('[role="menuitem"]')?.querySelector('.anticon-user'),
-    ).toBeTruthy()
-    fireEvent.click(screen.getByText('Personal'))
+    expect(screen.getByText('Personal').parentElement?.querySelector('.anticon-user')).toBeTruthy()
     await waitFor(() => expect(screen.getByText('My day')).toBeVisible())
 
     // Setting remains at the bottom rail
     fireEvent.click(screen.getByRole('button', { name: 'Setting' }))
     expect(screen.getByText('Configuration')).toBeVisible()
     expect(
-      screen
-        .getByText('Configuration')
-        .closest('[role="menuitem"]')
-        ?.querySelector('.anticon-setting'),
+      screen.getByText('Configuration').parentElement?.querySelector('.anticon-setting'),
     ).toBeTruthy()
-    fireEvent.click(screen.getByText('Configuration'))
-    await waitFor(() => expect(screen.getByText('Accounts')).toBeVisible())
+    expect(screen.getByText('Accounts')).toBeVisible()
   })
 
   it('marks the selected sales-channel link active when its query is in the URL', async () => {
@@ -489,10 +482,7 @@ describe('LegacySidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('menuitem', { name: /Configuration/ })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    )
+    expect(screen.getByText('Configuration')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Accounts' })).toBeVisible()
   })
 
@@ -695,23 +685,20 @@ describe('LegacySidebar', () => {
     expect(screen.getByRole('button', { name: 'Dashboard' })).toHaveClass(styles.railButtonActive)
     expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
 
-    // All HR group labels are present and collapsed by default
-    expect(screen.getByRole('menuitem', { name: /Personal/ })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    )
-    expect(screen.getByRole('menuitem', { name: /Team management/ })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    )
-    expect(screen.getByRole('menuitem', { name: /HR operations/ })).toHaveAttribute(
-      'aria-expanded',
+    // All HR workspace tabs are present in Model A
+    expect(screen.getByRole('tab', { name: /Personal/ })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: /Team/ })).toHaveAttribute('aria-selected', 'false')
+    expect(screen.getByRole('tab', { name: /Operations/ })).toHaveAttribute(
+      'aria-selected',
       'false',
     )
 
-    // Expanding a group reveals its subitems
-    fireEvent.click(screen.getByRole('menuitem', { name: /Personal/ }))
-    await waitFor(() => expect(screen.getByRole('link', { name: 'My day' })).toBeVisible())
+    // Active workspace items (My day) are directly visible without accordion expansion
+    expect(screen.getByRole('link', { name: 'My day' })).toBeVisible()
+
+    // Switching workspace tab reveals the target workspace items directly
+    fireEvent.click(screen.getByRole('tab', { name: /Team/ }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Team overview' })).toBeVisible())
   })
 
   it('omits a navigation group when only its dashboard link is removed', () => {

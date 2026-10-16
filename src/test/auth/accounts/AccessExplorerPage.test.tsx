@@ -1,4 +1,4 @@
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -10,6 +10,10 @@ import { loadRoleCatalog } from '@/features/auth/roles/api/rolesApi'
 import { setPermissions } from '@/shared/auth/session'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
+
+function LocationDisplay() {
+  return <output data-testid="location">{useLocation().pathname}</output>
+}
 
 vi.mock('@/features/auth/api/accessExplorerApi', () => ({
   loadAccessAccounts: vi.fn(),
@@ -24,9 +28,26 @@ vi.mock('@/features/auth/roles/api/rolesApi', () => ({ loadRoleCatalog: vi.fn() 
 describe('AccessExplorerPage', () => {
   const accounts = {
     items: [
-      { id: 'account-1', email: 'linh@lng.local', status: 'active', roles: ['REVIEWER'] },
+      {
+        id: 'account-1',
+        email: 'linh@lng.local',
+        status: 'active',
+        roles: ['REVIEWER', 'DESIGNER'],
+        roleAssignments: [
+          { roleCode: 'REVIEWER', scopeType: 'global' },
+          { roleCode: 'DESIGNER', scopeId: 'team-1', scopeType: 'team' },
+        ],
+        team: { id: 'team-1', name: 'Design' },
+      },
       { id: 'account-2', email: 'minh@lng.local', status: 'inactive', roles: [] },
-      { id: 'account-3', email: 'hoa@lng.local', status: 'active' },
+      {
+        id: 'account-3',
+        email: 'hoa@lng.local',
+        status: 'active',
+        roles: ['OPS_VIEWER'],
+        roleAssignments: [{ roleCode: 'OPS_VIEWER', scopeId: 'team-2', scopeType: 'team' }],
+        team: { id: 'team-2', name: 'Operations' },
+      },
     ],
     total: 3,
   }
@@ -85,6 +106,27 @@ describe('AccessExplorerPage', () => {
     fireEvent.click(within(inspector).getByRole('tab', { name: 'Thiết lập bảo mật' }))
     expect(within(inspector).getByRole('button', { name: 'Đặt lại mật khẩu' })).toBeVisible()
     expect(within(inspector).getByRole('button', { name: 'Thu hồi phiên đăng nhập' })).toBeVisible()
+  }, 10_000)
+
+  it('separates global and team roles and opens scoped access from the row menu', async () => {
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <AccessExplorerPage />
+          <LocationDisplay />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('REVIEWER')).toBeVisible()
+    expect(screen.getByText('Design · DESIGNER')).toBeVisible()
+    expect(screen.getByText('Operations · OPS_VIEWER')).toBeVisible()
+    expect(screen.getAllByText('Chưa có vai trò')).toHaveLength(2)
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Thao tác' })[0])
+    fireEvent.click(await screen.findByText('Quản lý quyền theo phạm vi'))
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/auth/accounts/account-1/access')
   }, 10_000)
 
   it('retries account loading after a failed request', async () => {

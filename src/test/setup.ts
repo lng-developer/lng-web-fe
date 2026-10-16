@@ -33,7 +33,8 @@ window.getComputedStyle = (element) => {
     element.classList?.contains('ant-popover') ||
     element.classList?.contains('ant-modal') ||
     element.classList?.contains('ant-modal-wrap') ||
-    element.classList?.contains('ant-modal-content')
+    element.classList?.contains('ant-modal-content') ||
+    element.classList?.contains('ant-modal-container')
   ) {
     return new Proxy(style, {
       get(target, prop) {

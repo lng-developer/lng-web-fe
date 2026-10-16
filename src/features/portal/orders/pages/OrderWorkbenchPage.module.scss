@@ -584,7 +584,8 @@
   object-fit: cover;
   border-radius: 6px;
 }
-.imagePreviewModal :global(.ant-modal-content) {
+.imagePreviewModal :global(.ant-modal-content),
+.imagePreviewModal :global(.ant-modal-container) {
   padding: 0;
   background: transparent;
   box-shadow: none;
@@ -735,10 +736,9 @@
 }
 @container (max-width: 1500px) {
   .itemPanel {
-    grid-template-columns: minmax(175px, 0.9fr) minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(
-        170px,
-        0.9fr
-      ) 48px;
+    grid-template-columns:
+      minmax(175px, 0.9fr) minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr)
+      48px;
   }
   .addressEditor {
     grid-template-columns: repeat(2, minmax(180px, 1fr));

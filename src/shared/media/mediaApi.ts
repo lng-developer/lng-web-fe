@@ -48,7 +48,11 @@ export async function fetchMediaBlob(
 ) {
   if (!downloadUrl.trim()) throw new Error('Media download URL is required')
 
-  return (await apiClient.get(withDisposition(downloadUrl, disposition), {
+  const targetUrl = downloadUrl.includes('/avatar')
+    ? downloadUrl
+    : withDisposition(downloadUrl, disposition)
+
+  return (await apiClient.get(targetUrl, {
     responseType: 'blob',
     signal,
   })) as Blob

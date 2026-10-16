@@ -1,10 +1,11 @@
 import { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CloseCircleOutlined, DeleteOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons'
+import { CloseCircleOutlined, DeleteOutlined, KeyOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, Popconfirm, Radio, Tag, Typography } from 'antd'
+import { useNavigate } from 'react-router-dom'
 
-import { SearchInput, useFeedbackToast } from '@/shared/ui'
+import { EmployeeAvatar, SearchInput, useFeedbackToast } from '@/shared/ui'
 
 import {
   addTeamMember,
@@ -17,15 +18,18 @@ import {
 import styles from './OrganizationPage.module.scss'
 
 interface TeamStaffBranchProps {
+  readonly canManageAccess: boolean
   readonly canManageMembers: boolean
   readonly team: Team
 }
 
 export const TeamStaffBranch = memo(function TeamStaffBranch({
+  canManageAccess,
   canManageMembers,
   team,
 }: TeamStaffBranchProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showFeedbackToast = useFeedbackToast()
   const [staffSearch, setStaffSearch] = useState('')
@@ -125,8 +129,12 @@ export const TeamStaffBranch = memo(function TeamStaffBranch({
             onChange={(values) => setSelectedAccounts(values as string[])}
           >
             {visibleCandidates.map((candidate) => {
-              const label =
-                `${candidate.fullName || candidate.employeeCode} ${candidate.employeeCode || ''}`.trim()
+              const fullName = candidate.fullName || candidate.employeeCode
+              const employeeCode = candidate.employeeCode
+              const avatarUrl = candidate.id
+                ? `/api/hr/employee-profiles/${candidate.id}/avatar`
+                : undefined
+              const label = `${fullName} ${employeeCode || ''}`.trim()
               return (
                 <Checkbox
                   className={styles.candidate}
@@ -134,9 +142,9 @@ export const TeamStaffBranch = memo(function TeamStaffBranch({
                   value={candidate.accountId}
                   key={candidate.accountId}
                 >
-                  <UserOutlined />
+                  <EmployeeAvatar name={fullName} avatarUrl={avatarUrl} size={28} />
                   <span>
-                    <strong>{candidate.fullName || candidate.employeeCode}</strong>
+                    <strong>{fullName}</strong>
                     {candidate.fullName && <small>{candidate.employeeCode}</small>}
                   </span>
                 </Checkbox>
@@ -149,40 +157,59 @@ export const TeamStaffBranch = memo(function TeamStaffBranch({
         </div>
       )}
       <div className={styles.memberList} role="list">
-        {[...(members.data?.leaders ?? []), ...(members.data?.members ?? [])].map((member) => (
-          <div className={styles.memberRow} role="listitem" key={member.accountId}>
-            <div>
-              <UserOutlined />
-              <span className={styles.memberIdentity}>
-                <strong>{member.fullName || member.email}</strong>
-                {member.employeeCode && <small>{member.employeeCode}</small>}
-              </span>
-              <Tag color={member.memberType === 'leader' ? 'gold' : 'default'}>
-                {t(`organization.${member.memberType}`)}
-              </Tag>
+        {[...(members.data?.leaders ?? []), ...(members.data?.members ?? [])].map((member) => {
+          const fullName = member.fullName || member.email
+          const avatarUrl = member.profileId
+            ? `/api/hr/employee-profiles/${member.profileId}/avatar`
+            : undefined
+
+          return (
+            <div className={styles.memberRow} role="listitem" key={member.accountId}>
+              <div className={styles.memberMain}>
+                <EmployeeAvatar name={fullName} avatarUrl={avatarUrl} size={32} />
+                <span className={styles.memberIdentity}>
+                  <strong>{fullName}</strong>
+                  {member.employeeCode && <small>{member.employeeCode}</small>}
+                </span>
+                <Tag color={member.memberType === 'leader' ? 'gold' : 'default'}>
+                  {t(`organization.${member.memberType}`)}
+                </Tag>
+              </div>
+              <div className={styles.memberActions}>
+                {canManageMembers && (
+                  <Popconfirm
+                    title={t('organization.removeMemberTitle')}
+                    description={t('organization.removeMemberDescription', {
+                      email: fullName,
+                    })}
+                    okText={t('organization.remove')}
+                    cancelText={t('organization.cancel')}
+                    onConfirm={() => removeMemberMutation.mutate(member.accountId)}
+                  >
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      aria-label={t('organization.removeMember', {
+                        email: fullName,
+                      })}
+                    />
+                  </Popconfirm>
+                )}
+                {canManageAccess && (
+                  <Button
+                    type="text"
+                    icon={<KeyOutlined />}
+                    aria-label={t('auth.accessExplorer.manageAccess')}
+                    onClick={() => navigate(`/auth/accounts/${member.accountId}/access`)}
+                  >
+                    {t('auth.accessExplorer.manageAccess')}
+                  </Button>
+                )}
+              </div>
             </div>
-            {canManageMembers && (
-              <Popconfirm
-                title={t('organization.removeMemberTitle')}
-                description={t('organization.removeMemberDescription', {
-                  email: member.fullName || member.email,
-                })}
-                okText={t('organization.remove')}
-                cancelText={t('organization.cancel')}
-                onConfirm={() => removeMemberMutation.mutate(member.accountId)}
-              >
-                <Button
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  aria-label={t('organization.removeMember', {
-                    email: member.fullName || member.email,
-                  })}
-                />
-              </Popconfirm>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
