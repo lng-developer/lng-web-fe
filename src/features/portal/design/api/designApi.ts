@@ -1,5 +1,6 @@
 import { ApiResponse } from '@/server/type'
-import { apiClient } from '@/shared/api'
+import { apiClient, uploadApiClient } from '@/shared/api'
+import { uploadMultipartAsset } from '@/shared/media'
 
 export type DesignAsset = {
   id: string
@@ -182,10 +183,28 @@ export const bulkAssignDesignTasks = async (taskIds: string[], assignedDesignerI
   }>(await apiClient.patch('/api/design/tasks/bulk-assign', { taskIds, assignedDesignerId }))
 export const startDesignTask = async (id: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/start`, {}))
-export const uploadDesignAsset = async (file: File) => {
+export const uploadDesignAsset = async (
+  file: File,
+  options?: { onProgress?: (percent: number) => void; signal?: AbortSignal },
+): Promise<DesignAsset> => {
+  const extension = file.name ? file.name.split('.').pop()?.toLowerCase() : ''
+  if (extension === 'psd' || extension === 'zip') {
+    const asset = await uploadMultipartAsset(file, {
+      assetPurpose: 'PSD_TEMPLATE',
+      onProgress: options?.onProgress,
+      signal: options?.signal,
+    })
+    return {
+      id: asset.id,
+      originalFilename: asset.originalFilename,
+      mimeType: asset.mimeType,
+      size: asset.size,
+      downloadUrl: `/api/media/assets/${asset.id}/download`,
+    }
+  }
   const body = new FormData()
   body.append('file', file)
-  return unwrap<DesignAsset>(await apiClient.post('/api/design/assets', body))
+  return unwrap<DesignAsset>(await uploadApiClient.post('/api/design/assets', body))
 }
 export const submitDesignTask = async (id: string, submittedAssetIds: string[], note?: string) =>
   unwrap<DesignTask>(

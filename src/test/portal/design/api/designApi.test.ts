@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn() } }))
+vi.mock('@/shared/api', () => ({
+  apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
+  uploadApiClient: { post: vi.fn() },
+}))
+vi.mock('@/shared/media', () => ({
+  uploadMultipartAsset: vi.fn(),
+}))
 
 import {
   approveDesignTask,
@@ -17,8 +23,10 @@ import {
   startDesignTask,
   submitDesignTask,
   updateDesignTaskPriority,
+  uploadDesignAsset,
 } from '@/features/portal/design/api/designApi'
-import { apiClient } from '@/shared/api'
+import { apiClient, uploadApiClient } from '@/shared/api'
+import { uploadMultipartAsset } from '@/shared/media'
 
 describe('designApi', () => {
   beforeEach(() => {
@@ -114,5 +122,52 @@ describe('designApi', () => {
     expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/cancel', {
       cancelReason: 'Duplicate',
     })
+  })
+
+  it('routes PSD files to Wasabi multipart upload', async () => {
+    vi.mocked(uploadMultipartAsset).mockResolvedValue({
+      id: 'wasabi-asset-1',
+      originalFilename: 'B0HFM6K1GX.psd',
+      mimeType: 'image/vnd.adobe.photoshop',
+      size: 200 * 1024 * 1024,
+      provider: 'wasabi',
+      resourceType: 'raw',
+      createdAt: '2026-10-17T00:00:00Z',
+      uploadStatus: 'READY',
+    })
+
+    const file = new File(['mock content'], 'B0HFM6K1GX.psd', { type: 'image/vnd.adobe.photoshop' })
+    const result = await uploadDesignAsset(file)
+
+    expect(uploadMultipartAsset).toHaveBeenCalledWith(file, {
+      assetPurpose: 'PSD_TEMPLATE',
+      onProgress: undefined,
+      signal: undefined,
+    })
+    expect(result).toEqual({
+      id: 'wasabi-asset-1',
+      originalFilename: 'B0HFM6K1GX.psd',
+      mimeType: 'image/vnd.adobe.photoshop',
+      size: 200 * 1024 * 1024,
+      downloadUrl: '/api/media/assets/wasabi-asset-1/download',
+    })
+  })
+
+  it('routes non-PSD files to uploadApiClient', async () => {
+    vi.mocked(uploadApiClient.post).mockResolvedValue({
+      data: {
+        id: 'direct-asset-1',
+        originalFilename: 'preview.png',
+        mimeType: 'image/png',
+        size: 1024,
+        downloadUrl: '/api/media/assets/direct-asset-1/download',
+      },
+    })
+
+    const file = new File(['mock png'], 'preview.png', { type: 'image/png' })
+    const result = await uploadDesignAsset(file)
+
+    expect(uploadApiClient.post).toHaveBeenCalledWith('/api/design/assets', expect.any(FormData))
+    expect(result.id).toBe('direct-asset-1')
   })
 })
