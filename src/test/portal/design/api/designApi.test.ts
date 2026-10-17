@@ -127,12 +127,6 @@ describe('designApi', () => {
   it('routes PSD files to Wasabi multipart upload', async () => {
     vi.mocked(uploadMultipartAsset).mockResolvedValue({
       id: 'wasabi-asset-1',
-      originalFilename: 'B0HFM6K1GX.psd',
-      mimeType: 'image/vnd.adobe.photoshop',
-      size: 200 * 1024 * 1024,
-      provider: 'wasabi',
-      resourceType: 'raw',
-      createdAt: '2026-10-17T00:00:00Z',
       uploadStatus: 'READY',
     })
 
@@ -148,7 +142,7 @@ describe('designApi', () => {
       id: 'wasabi-asset-1',
       originalFilename: 'B0HFM6K1GX.psd',
       mimeType: 'image/vnd.adobe.photoshop',
-      size: 200 * 1024 * 1024,
+      size: file.size,
       downloadUrl: '/api/media/assets/wasabi-asset-1/download',
     })
   })

@@ -196,9 +196,9 @@ export const uploadDesignAsset = async (
     })
     return {
       id: asset.id,
-      originalFilename: asset.originalFilename,
-      mimeType: asset.mimeType,
-      size: asset.size,
+      originalFilename: file.name || null,
+      mimeType: file.type || 'image/vnd.adobe.photoshop',
+      size: file.size || null,
       downloadUrl: `/api/media/assets/${asset.id}/download`,
     }
   }
