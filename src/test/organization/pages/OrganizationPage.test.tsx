@@ -1,4 +1,4 @@
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -34,6 +34,10 @@ const pageOf = <T,>(items: T[]) => ({
   items,
   pagination: { limit: 100, page: 1, total: items.length, totalPages: 1 },
 })
+
+function LocationDisplay() {
+  return <output data-testid="location">{useLocation().pathname}</output>
+}
 
 describe('OrganizationPage', () => {
   afterEach(() => {
@@ -172,6 +176,37 @@ describe('OrganizationPage', () => {
     expect(screen.getByRole('radio', { name: 'Member' })).toBeChecked()
     expect(await screen.findByRole('button', { name: 'Remove Member Nguyen' })).toBeInTheDocument()
   }, 15_000)
+
+  it('lets an auth admin open a member scoped-access editor', async () => {
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <OrganizationPage />
+          <LocationDisplay />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Fulfillment' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Manage access' }))
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/auth/accounts/account-1/access')
+  }, 15_000)
+
+  it('does not expose member access management without AUTH:WRITE', async () => {
+    setPermissions(['TEAMS:WRITE'])
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <OrganizationPage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Fulfillment' }))
+
+    expect(screen.queryByRole('button', { name: 'Manage access' })).not.toBeInTheDocument()
+  })
 
   it('keeps each team expansion independent from the organization tree', async () => {
     vi.mocked(loadTeams).mockResolvedValue(

@@ -1,12 +1,28 @@
 import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
+export type ManagedAccountScope = {
+  assignmentId: string
+  roleId: string | null
+  scopeType: string
+  scopeId: string | null
+  resourceId: string | null
+  scopeName?: string | null
+  roles?: string[]
+  permissions?: string[]
+  customPermissionIds?: string[]
+  overridePermissionIds?: string[] | null
+  isPermissionOverridden?: boolean
+}
+
 export type ManagedAccount = {
   account: {
     email: string
     id: string
     status?: string
     roles?: string[]
+    lastLoginAt?: string | null
+    lastLoginIp?: string | null
     operatingCostAmount?: number
     operatingCostStartedAt?: string | null
     deactivatedAt?: string | null
@@ -17,6 +33,11 @@ export type ManagedAccount = {
     validFrom?: string | null
     validUntil?: string | null
   }
+  roles?: string[]
+  permissions?: string[]
+  effectiveRoles?: string[]
+  effectivePermissions?: string[]
+  scopes?: ManagedAccountScope[]
 }
 
 export type AccountAssignmentInput = {

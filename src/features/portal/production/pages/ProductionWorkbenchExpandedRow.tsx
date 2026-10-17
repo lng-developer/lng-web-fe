@@ -14,36 +14,9 @@ import {
   type ProductionTask,
   uploadManualScaledOutput,
 } from '../api/productionApi'
+import { formatCustomization } from './inspectionReference'
 import { ManualSlotUploadModal } from './ManualSlotUploadModal'
 import styles from './ProductionWorkbenchPage.module.scss'
-
-function formatInputValue(value: unknown): string | null {
-  if (typeof value === 'string' || typeof value === 'number') return String(value)
-  if (Array.isArray(value)) {
-    const entries = value.filter(
-      (item): item is string | number => typeof item === 'string' || typeof item === 'number',
-    )
-    return entries.length ? entries.join(', ') : null
-  }
-  return null
-}
-
-function formatCustomization(inputs: Record<string, unknown> | null | undefined) {
-  return Object.entries(inputs ?? {}).flatMap(([group, value]) => {
-    if (!Array.isArray(value)) {
-      const formatted = formatInputValue(value)
-      return formatted ? [[group, formatted] as const] : []
-    }
-    return value.flatMap((item) => {
-      if (!item || typeof item !== 'object') return []
-      const entry = item as { label?: unknown; name?: unknown; value?: unknown }
-      const formatted = formatInputValue(entry.value)
-      if (!formatted) return []
-      const label = String(entry.label || entry.name || group)
-      return [[label, formatted] as const]
-    })
-  })
-}
 
 function productUrl(task: ProductionTask) {
   const channel =
@@ -382,13 +355,17 @@ export function ProductionWorkbenchExpandedRow({
               })}
             </Button>
           ) : null}
-          {psdTemplate?.assetDownloadUrl ? (
+          {psdTemplate?.status !== 'MISSING' && psdTemplate?.assetDownloadUrl ? (
             <Button
               icon={<DownloadOutlined />}
-              onClick={() => void downloadMediaAsset(psdTemplate.assetDownloadUrl!, 'template.psd')}
+              onClick={() => void downloadMediaAsset(psdTemplate.assetDownloadUrl!)}
             >
-              {t('portal.production.downloadPsd')}
+              {t('portal.production.downloadPsdSource')}
             </Button>
+          ) : psdTemplate?.status !== 'NOT_REQUIRED' ? (
+            <Typography.Text type="danger">
+              {t('portal.production.designSourceMissing')}
+            </Typography.Text>
           ) : null}
         </div>
       </div>

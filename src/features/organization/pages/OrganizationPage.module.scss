@@ -4,90 +4,89 @@
 }
 
 .header {
-  padding-block: 8px 2px;
-  border-bottom: 1px solid var(--ant-color-border-secondary);
-}
-
-.header :global(.ant-typography) {
-  margin-bottom: 6px;
+  padding-block: 4px 2px;
 }
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  overflow: hidden;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
-  background: var(--ant-color-bg-container);
-}
-
-.metrics :global(.ant-card) {
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.metrics :global(.ant-card + .ant-card) {
-  border-left: 1px solid var(--ant-color-border-secondary);
-}
-
-.metrics :global(.ant-card-body) {
-  padding: 18px 20px;
-}
-
-.metrics :global(.ant-statistic-content) {
-  font-variant-numeric: tabular-nums;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .splitLayout {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
 }
 
 .leftPanel {
-  width: 320px;
-  flex-shrink: 0;
   background: var(--ant-color-bg-container);
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 10px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  box-shadow: 0 1px 3px 0 rgb(15 23 42 / 4%);
 }
 
 .leftPanelHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   border-bottom: 1px solid var(--ant-color-border-secondary);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
+}
+
+.leftPanelTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panelTitleIcon {
+  color: var(--ant-color-primary);
+  font-size: 16px;
+}
+
+.countBadge {
+  border-radius: 10px;
+  font-size: 11px;
+  padding: 0 7px;
+  margin: 0;
 }
 
 .deptList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 600px;
+  gap: 8px;
+  max-height: calc(100vh - 340px);
+  min-height: 240px;
   overflow-y: auto;
+  padding-right: 2px;
 }
 
 .deptCard {
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius);
-  padding: 12px;
+  border-radius: 8px;
+  padding: 12px 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--ant-color-bg-container);
   outline: none;
 
   &:hover {
     border-color: var(--ant-color-primary);
     background: var(--ant-color-fill-quaternary);
+    transform: translateY(-1px);
   }
 }
 
 .deptCardActive {
   border-color: var(--ant-color-primary);
-  background: rgba(24, 144, 255, 0.05);
+  background: color-mix(in srgb, var(--ant-color-primary) 6%, var(--ant-color-bg-container));
+  box-shadow: 0 0 0 1px var(--ant-color-primary);
 
   .deptIcon {
     color: var(--ant-color-primary);
@@ -113,43 +112,131 @@
 }
 
 .rightPanel {
-  flex: 1;
   min-width: 0;
 }
 
-.rightPanelTitleBar {
+.departmentWorkbench {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.departmentHero {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
-.activeDeptIcon {
-  font-size: 24px;
+.departmentHeroMain {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.departmentHeroIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ant-color-primary) 10%, transparent);
+  color: var(--ant-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.departmentHeroTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.deptCodeTag {
+  font-weight: 600;
+  font-family: monospace;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.departmentStatsRibbon {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 12px 18px;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+}
+
+.statPill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statPillIcon {
+  font-size: 20px;
   color: var(--ant-color-primary);
 }
 
-.emptyDetail {
-  background: var(--ant-color-bg-container);
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
-  padding: 48px;
-  text-align: center;
+.statPillValue {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.statPillLabel {
+  font-size: 11px;
+  color: var(--ant-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statPillDivider {
+  width: 1px;
+  height: 28px;
+  background: var(--ant-color-border-secondary);
+}
+
+.teamsSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.teamsSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.teamsCountBadge {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-fill-tertiary);
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 
 .teamList {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 16px;
+  gap: 14px;
 }
 
 .teamNode {
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 10px;
   background: var(--ant-color-bg-container);
   overflow: hidden;
-  transition: all 0.3s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     border-color: var(--ant-color-primary);
@@ -158,16 +245,16 @@
 
 .teamNodeOpen {
   border-color: var(--ant-color-primary);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.05);
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.08);
 }
 
 .teamHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-height: 62px;
-  padding: 12px 16px;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 16px;
   background: var(--ant-color-fill-quaternary);
 }
 
@@ -188,17 +275,32 @@
   &:hover strong {
     color: var(--ant-color-primary);
   }
+}
 
-  & > :global(.anticon) {
-    color: var(--ant-color-primary);
-    font-size: 18px;
-  }
+.teamChevron {
+  font-size: 12px;
+  color: var(--ant-color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+}
+
+.teamIcon {
+  color: var(--ant-color-primary);
+  font-size: 18px;
 }
 
 .teamIdentity {
-  display: grid;
-  flex: 1;
+  display: flex;
+  flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
+
+  strong {
+    font-size: 14px;
+  }
 
   small {
     color: var(--ant-color-text-secondary);
@@ -208,49 +310,64 @@
 .teamPanel {
   background: transparent;
 }
+
 .teamPanel > :global(.ant-collapse-item) {
   border: 0;
 }
+
 .teamPanel :global(.ant-collapse-header) {
   display: none;
 }
+
 .teamPanel :global(.ant-collapse-content-box) {
   padding: 0;
 }
 
 .staffBranch {
-  margin: 16px;
+  margin: 14px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .assignmentBox {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  padding: 16px;
+  padding: 14px 16px;
   background: var(--ant-color-fill-quaternary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
 .assignmentToolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }
 
 .candidateGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
 }
 
 .candidate {
   margin: 0 !important;
-  padding: 9px 10px;
+  padding: 8px 10px;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius);
+  border-radius: 6px;
   background: var(--ant-color-bg-container);
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+  }
 
   & > span:last-child {
     display: inline-flex;
@@ -277,7 +394,8 @@
 }
 
 .memberList {
-  display: grid;
+  display: flex;
+  flex-direction: column;
 }
 
 .memberRow {
@@ -285,27 +403,52 @@
   align-items: center;
   justify-content: space-between;
   min-height: 48px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-top: 1px solid var(--ant-color-border-secondary);
+  transition: background 0.15s;
 
-  & > div {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    & > :global(.anticon) {
-      color: var(--ant-color-text-secondary);
-    }
+  &:hover {
+    background: var(--ant-color-fill-quaternary);
   }
 }
 
+.memberMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .memberIdentity {
-  display: grid;
-  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
 
   small {
     color: var(--ant-color-text-secondary);
   }
+}
+
+.memberActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.emptyTeamsBox {
+  padding: 32px 16px;
+  text-align: center;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px dashed var(--ant-color-border-secondary);
+  border-radius: 8px;
+}
+
+.emptyDetail {
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  padding: 48px;
+  text-align: center;
 }
 
 .departmentChoices {
@@ -316,25 +459,31 @@
 .formActions {
   display: flex;
   justify-content: flex-end;
+  margin-top: 16px;
 }
 
 @media (max-width: 1200px) {
   .splitLayout {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   .leftPanel {
     width: 100%;
   }
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-@media (max-width: 1100px) {
-  .assignmentToolbar {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 768px) {
+  .metrics {
+    grid-template-columns: 1fr;
   }
-  .assignmentToolbar > :last-child {
-    grid-column: 1 / -1;
+  .departmentStatsRibbon {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
-  .candidateGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .statPillDivider {
+    display: none;
   }
 }

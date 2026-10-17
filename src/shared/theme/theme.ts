@@ -59,6 +59,10 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
       Drawer: {
         paddingLG: 20,
       },
+      Modal: {
+        headerBg: 'transparent',
+        footerBg: 'transparent',
+      },
       Input: {
         controlHeight: 36,
         borderRadius: 8,

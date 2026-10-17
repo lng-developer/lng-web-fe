@@ -618,7 +618,13 @@ export const appRoutes: RouteObject[] = [
           ]).then(([{ PortalPageBoundary }, { PsdFileWorkspacePage }]) => ({
             Component: () => (
               <PortalPageBoundary
-                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
+                anyOf={[
+                  'DESIGN:READ',
+                  'DESIGN:WRITE',
+                  'DESIGN:WORK',
+                  'DESIGN:REVIEW',
+                  'DESIGN:PSD_REQUEST',
+                ]}
               >
                 <PsdFileWorkspacePage />
               </PortalPageBoundary>

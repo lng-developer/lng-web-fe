@@ -22,6 +22,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+import { downloadMediaAsset } from '@/shared/media'
 import {
   ConfirmDangerModal,
   DATA_COLORS,
@@ -181,8 +182,7 @@ export function PsdTasksPage() {
   const canWrite = permissions.has('DESIGN:WRITE')
   const canWork = permissions.has('DESIGN:WORK') || permissions.has('DESIGN:WRITE')
   const canPsdRequest = permissions.has('DESIGN:PSD_REQUEST')
-  const canReview =
-    canPsdRequest || permissions.has('DESIGN:REVIEW') || permissions.has('DESIGN:WRITE')
+  const canReview = permissions.has('DESIGN:REVIEW') || permissions.has('DESIGN:WRITE')
   const canReprioritize = canPsdRequest || canWrite
 
   const queryClient = useQueryClient()
@@ -708,10 +708,13 @@ export function PsdTasksPage() {
       align: 'center',
       render: (_, record) => {
         const latestAsset = record.latestSubmission?.assets?.[0]
-        const isAvailable =
-          record.listing?.psdStatus === 'Available' ||
-          record.listing?.psdStatus === 'PRESENT' ||
+        const approvedId = record.approvedAssetId || record.latestSubmission?.approvedAssetId
+        const downloadAsset =
           record.status === 'APPROVED'
+            ? record.latestSubmission?.assets?.find((asset) => asset.id === approvedId)
+            : canWork
+              ? latestAsset
+              : null
 
         return (
           <Space size={4} wrap align="center" style={{ justifyContent: 'center' }}>
@@ -731,16 +734,18 @@ export function PsdTasksPage() {
             ) : null}
 
             {/* Download button */}
-            <Tooltip title="Download">
+            <Tooltip title={t('common.download')}>
               <Button
                 size="small"
-                disabled={!isAvailable}
+                aria-label={t('common.download')}
+                disabled={!downloadAsset?.downloadUrl}
                 icon={<DownloadOutlined />}
                 onClick={() => {
-                  if (latestAsset?.downloadUrl) {
-                    window.open(latestAsset.downloadUrl, '_blank')
-                  } else if (record.listing?.asin) {
-                    toast('info', `Downloading PSD for ASIN: ${record.listing.asin}`)
+                  if (downloadAsset?.downloadUrl) {
+                    void downloadMediaAsset(
+                      downloadAsset.downloadUrl,
+                      downloadAsset.originalFilename ?? undefined,
+                    ).catch(() => toast('error', t('common.downloadFailed')))
                   }
                 }}
               />
@@ -841,7 +846,6 @@ export function PsdTasksPage() {
   }, [
     activeTabKey,
     approveMutation,
-    canPsdRequest,
     canReprioritize,
     canReview,
     canWork,

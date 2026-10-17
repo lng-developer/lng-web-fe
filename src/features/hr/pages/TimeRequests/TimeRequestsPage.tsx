@@ -55,6 +55,8 @@ export function TimeRequestsPage({
         <FeedbackAlert type="error" title={t('notifications.resourceUnavailable')} />
       ) : null}
       <PageHeader
+        title={t('hrOperations.requests.title')}
+        description={t('hrOperations.requests.description')}
         actions={
           <Space>
             {canLeaveWrite && (

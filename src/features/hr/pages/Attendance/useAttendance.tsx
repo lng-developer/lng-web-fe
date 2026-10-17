@@ -212,6 +212,7 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
       completedCheckIn,
       completedCheckOut,
       hasCompletedAttendance,
+      todayAttendance,
       action,
       adjust,
       items,

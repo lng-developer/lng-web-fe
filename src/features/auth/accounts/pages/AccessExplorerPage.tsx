@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -8,10 +8,12 @@ import {
   EyeOutlined,
   IdcardOutlined,
   KeyOutlined,
+  LockOutlined,
   MoreOutlined,
   PlusOutlined,
   ReloadOutlined,
   SettingOutlined,
+  UnlockOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -96,6 +98,112 @@ function normalize(value?: string) {
     .toLowerCase()
 }
 
+function roleCodesForScope(
+  account: AccessExplorerSnapshot['accounts']['items'][number],
+  scopeType: string,
+) {
+  return [
+    ...new Set(
+      (account.roleAssignments ?? [])
+        .filter((assignment) => assignment.scopeType?.toLowerCase() === scopeType)
+        .map((assignment) => assignment.roleCode)
+        .filter((roleCode): roleCode is string => Boolean(roleCode)),
+    ),
+  ]
+}
+
+type MatrixModuleKey = 'orders' | 'catalog' | 'design' | 'hr' | 'reports'
+type PermLevel = 'FULL' | 'WRITE' | 'READ' | 'NONE'
+
+function getModuleLevel(
+  account: AccessExplorerSnapshot['accounts']['items'][number],
+  module: MatrixModuleKey,
+): PermLevel {
+  const allRoles = new Set([
+    ...(account.roles ?? []).map((r) => r.toUpperCase()),
+    ...(account.roleAssignments ?? []).map((a) => (a.roleCode ?? '').toUpperCase()).filter(Boolean),
+  ])
+
+  if (allRoles.has('SUPER_ADMIN') || allRoles.has('ADMIN')) {
+    return 'FULL'
+  }
+
+  switch (module) {
+    case 'orders': {
+      if (allRoles.has('OPS_MANAGER') || allRoles.has('ORDER_MANAGER')) return 'FULL'
+      if (
+        allRoles.has('OPS_LEADER') ||
+        allRoles.has('SALES_LEADER') ||
+        allRoles.has('OPS_OPERATOR')
+      )
+        return 'WRITE'
+      if (allRoles.has('OPS_VIEWER') || allRoles.has('REVIEWER') || allRoles.has('SALES_VIEWER'))
+        return 'READ'
+      return 'NONE'
+    }
+    case 'catalog': {
+      if (allRoles.has('CATALOG_MANAGER') || allRoles.has('PRODUCT_MANAGER')) return 'FULL'
+      if (
+        allRoles.has('CATALOG_EDITOR') ||
+        allRoles.has('PRODUCT_EDITOR') ||
+        allRoles.has('DESIGNER') ||
+        allRoles.has('DESIGN_LEADER')
+      )
+        return 'WRITE'
+      if (allRoles.has('CATALOG_VIEWER') || allRoles.has('REVIEWER')) return 'READ'
+      return 'NONE'
+    }
+    case 'design': {
+      if (allRoles.has('DESIGN_LEADER') || allRoles.has('DESIGN_MANAGER')) return 'FULL'
+      if (allRoles.has('DESIGNER')) return 'WRITE'
+      if (allRoles.has('REVIEWER')) return 'READ'
+      return 'NONE'
+    }
+    case 'hr': {
+      if (allRoles.has('HR_MANAGER') || allRoles.has('HR_ADMIN')) return 'FULL'
+      if (allRoles.has('LEADER') || allRoles.has('HR_STAFF')) return 'WRITE'
+      if (allRoles.has('EMPLOYEE') || allRoles.has('HR_VIEWER')) return 'READ'
+      return 'NONE'
+    }
+    case 'reports': {
+      if (allRoles.has('FINANCE_MANAGER') || allRoles.has('REPORT_MANAGER')) return 'FULL'
+      if (allRoles.has('SALES_LEADER') || allRoles.has('FINANCE_STAFF')) return 'WRITE'
+      if (
+        allRoles.has('OPS_VIEWER') ||
+        allRoles.has('FINANCE_VIEWER') ||
+        allRoles.has('REPORT_VIEWER')
+      )
+        return 'READ'
+      return 'NONE'
+    }
+  }
+}
+
+function renderMatrixBadge(level: PermLevel, t: (key: string) => string) {
+  switch (level) {
+    case 'FULL':
+      return (
+        <span className={`${styles.matrixBadge} ${styles.badgeFull}`}>
+          {t('auth.accessExplorer.permFull')}
+        </span>
+      )
+    case 'WRITE':
+      return (
+        <span className={`${styles.matrixBadge} ${styles.badgeWrite}`}>
+          {t('auth.accessExplorer.permWrite')}
+        </span>
+      )
+    case 'READ':
+      return (
+        <span className={`${styles.matrixBadge} ${styles.badgeRead}`}>
+          {t('auth.accessExplorer.permRead')}
+        </span>
+      )
+    default:
+      return <span className={`${styles.matrixBadge} ${styles.badgeNone}`}>—</span>
+  }
+}
+
 export function AccessExplorerPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -113,6 +221,10 @@ export function AccessExplorerPage() {
   const [quickAccessAccount, setQuickAccessAccount] =
     useState<AccessExplorerSnapshot['accounts']['items'][number]>()
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([])
+  const [selectedScopeId, setSelectedScopeId] = useState<string>('ALL')
+  const [scopeSearch, setScopeSearch] = useState('')
+  const [permSearch, setPermSearch] = useState('')
+  const [selectedPermModule, setSelectedPermModule] = useState<string>('ALL')
   const [isOpeningQuickAccess, setIsOpeningQuickAccess] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isBulkAssignOpen, setIsBulkAssignOpen] = useState(false)
@@ -142,6 +254,11 @@ export function AccessExplorerPage() {
     queryFn: loadScopes,
     ...modalQueryOptions,
     enabled: isCreateOpen,
+  })
+  const inspectedAccountDetailQuery = useQuery({
+    queryKey: accountKeys.detail(inspectedAccountId ?? ''),
+    queryFn: () => loadAccount(inspectedAccountId!),
+    enabled: Boolean(inspectedAccountId),
   })
 
   const createRoleOptions = useMemo(
@@ -280,16 +397,138 @@ export function AccessExplorerPage() {
   const statusFilter = normalize(status)
   const roleFilter = normalize(role)
 
+  const scopeCategories = useMemo(() => {
+    const searchLower = scopeSearch.trim().toLowerCase()
+    const deptMap = new Map<
+      string,
+      { id: string; name: string; type: 'department'; teams: { id: string; name: string }[] }
+    >()
+
+    allAccounts.forEach((account) => {
+      if (account.department) {
+        if (!deptMap.has(account.department.id)) {
+          deptMap.set(account.department.id, {
+            id: account.department.id,
+            name: account.department.name,
+            type: 'department',
+            teams: [],
+          })
+        }
+        if (account.team) {
+          const entry = deptMap.get(account.department.id)!
+          if (!entry.teams.some((t) => t.id === account.team!.id)) {
+            entry.teams.push({ id: account.team.id, name: account.team.name })
+          }
+        }
+      }
+      ;(account.roleAssignments ?? []).forEach((assignment) => {
+        if (assignment.scopeType === 'department' && assignment.scopeId) {
+          if (!deptMap.has(assignment.scopeId)) {
+            deptMap.set(assignment.scopeId, {
+              id: assignment.scopeId,
+              name: assignment.scopeId,
+              type: 'department',
+              teams: [],
+            })
+          }
+        }
+      })
+    })
+    ;(scopeQuery.data?.items ?? []).forEach((scope) => {
+      if (scope.scopeType === 'department') {
+        const existing = deptMap.get(scope.scopeId)
+        if (existing) {
+          existing.name = scope.name
+        } else {
+          deptMap.set(scope.scopeId, {
+            id: scope.scopeId,
+            name: scope.name,
+            type: 'department',
+            teams: [],
+          })
+        }
+      }
+    })
+
+    const shopsAndVendors: { id: string; name: string; type: 'shop' | 'vendor' }[] = []
+    ;(scopeQuery.data?.items ?? []).forEach((scope) => {
+      if (scope.scopeType === 'shop' || scope.scopeType === 'vendor') {
+        shopsAndVendors.push({ id: scope.scopeId, name: scope.name, type: scope.scopeType })
+      }
+    })
+
+    return {
+      departments: Array.from(deptMap.values()).filter(
+        (dept) =>
+          !searchLower ||
+          dept.name.toLowerCase().includes(searchLower) ||
+          dept.teams.some((t) => t.name.toLowerCase().includes(searchLower)),
+      ),
+      shopsAndVendors: shopsAndVendors.filter(
+        (item) => !searchLower || item.name.toLowerCase().includes(searchLower),
+      ),
+    }
+  }, [allAccounts, scopeQuery.data?.items, scopeSearch])
+
+  const getScopeAccountCount = (scopeId: string, scopeType?: string) => {
+    if (scopeId === 'ALL') return allAccounts.length
+    if (scopeId === 'global') {
+      return allAccounts.filter(
+        (acc) =>
+          (acc.roles && acc.roles.length > 0) ||
+          (acc.roleAssignments ?? []).some((asg) => asg.scopeType === 'global'),
+      ).length
+    }
+    return allAccounts.filter((acc) => {
+      if (scopeType === 'department') {
+        return (
+          acc.department?.id === scopeId ||
+          (acc.roleAssignments ?? []).some(
+            (asg) => asg.scopeType === 'department' && asg.scopeId === scopeId,
+          )
+        )
+      }
+      if (scopeType === 'team') {
+        return (
+          acc.team?.id === scopeId ||
+          (acc.roleAssignments ?? []).some(
+            (asg) => asg.scopeType === 'team' && asg.scopeId === scopeId,
+          )
+        )
+      }
+      return (acc.roleAssignments ?? []).some((asg) => asg.scopeId === scopeId)
+    }).length
+  }
+
   const accounts = useMemo(
     () =>
       allAccounts.filter((account) => {
-        const matchesSearch = account.email.toLowerCase().includes(searchValue)
+        if (selectedScopeId !== 'ALL') {
+          if (selectedScopeId === 'global') {
+            const hasGlobal =
+              (account.roles && account.roles.length > 0) ||
+              (account.roleAssignments ?? []).some((asg) => asg.scopeType === 'global')
+            if (!hasGlobal) return false
+          } else {
+            const inDept = account.department?.id === selectedScopeId
+            const inTeam = account.team?.id === selectedScopeId
+            const inAssignment = (account.roleAssignments ?? []).some(
+              (asg) => asg.scopeId === selectedScopeId,
+            )
+            if (!inDept && !inTeam && !inAssignment) return false
+          }
+        }
+
+        const matchesSearch =
+          account.email.toLowerCase().includes(searchValue) ||
+          (account.team?.name?.toLowerCase().includes(searchValue) ?? false) ||
+          (account.department?.name?.toLowerCase().includes(searchValue) ?? false)
         const matchesStatus = !statusFilter || normalize(account.status) === statusFilter
         const matchesRole =
           !roleFilter || account.roles?.some((accountRole) => normalize(accountRole) === roleFilter)
         return matchesSearch && matchesStatus && matchesRole
       }),
-    [allAccounts, roleFilter, searchValue, statusFilter],
+    [allAccounts, roleFilter, searchValue, selectedScopeId, statusFilter],
   )
 
   const paginatedAccounts = useMemo(() => {
@@ -305,7 +544,95 @@ export function AccessExplorerPage() {
     return [...roles].map((value) => ({ label: value, value }))
   }, [allAccounts])
   const inspectedAccount = allAccounts.find((account) => account.id === inspectedAccountId)
-  const hasFilters = Boolean(searchValue || statusFilter || roleFilter)
+  const hasFilters = Boolean(searchValue || statusFilter || roleFilter || selectedScopeId !== 'ALL')
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: (targetStatus: 'active' | 'inactive') =>
+      updateAccountStatus(inspectedAccount!.id, targetStatus),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      if (inspectedAccountId) {
+        await queryClient.invalidateQueries({ queryKey: accountKeys.detail(inspectedAccountId) })
+      }
+      showFeedbackToast('success', t('actionFeedback.saved'))
+    },
+    onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
+  })
+
+  // Keyboard navigation for fast operator workflow
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && inspectedAccountId) {
+        setInspectedAccountId(undefined)
+        return
+      }
+
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase()
+      if (activeTag === 'input' || activeTag === 'textarea') return
+
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        const currentIndex = paginatedAccounts.findIndex(
+          (account) => account.id === inspectedAccountId,
+        )
+        if (event.key === 'ArrowDown' && currentIndex < paginatedAccounts.length - 1) {
+          setInspectedAccountId(paginatedAccounts[currentIndex + 1].id)
+        } else if (event.key === 'ArrowUp' && currentIndex > 0) {
+          setInspectedAccountId(paginatedAccounts[currentIndex - 1].id)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [inspectedAccountId, paginatedAccounts])
+
+  const effectivePermissionsList = useMemo(() => {
+    const detail = inspectedAccountDetailQuery.data
+    const perms = detail?.effectivePermissions ?? []
+    const scopes = detail?.scopes ?? []
+    const searchLower = permSearch.trim().toLowerCase()
+
+    return perms
+      .map((code) => {
+        const mod = code.includes(':') ? code.split(':')[0] : 'GENERAL'
+        let provenance = 'Inherited'
+
+        const matchingScope = scopes.find((s) => s.permissions?.includes(code))
+        if (matchingScope) {
+          provenance = `${matchingScope.scopeName || matchingScope.scopeType} (${matchingScope.roles?.join(', ') || 'Scoped'})`
+        } else if (detail?.permissions?.includes(code)) {
+          provenance = 'Global'
+        } else if (detail?.access?.customPermissionIds?.length) {
+          provenance = 'Custom'
+        }
+
+        return { code, module: mod, provenance }
+      })
+      .filter((p) => {
+        const matchMod = selectedPermModule === 'ALL' || p.module === selectedPermModule
+        const matchSearch =
+          !searchLower ||
+          p.code.toLowerCase().includes(searchLower) ||
+          p.provenance.toLowerCase().includes(searchLower)
+        return matchMod && matchSearch
+      })
+  }, [inspectedAccountDetailQuery.data, permSearch, selectedPermModule])
+
+  const groupedEffectivePermissions = useMemo(() => {
+    const groups = new Map<string, typeof effectivePermissionsList>()
+    for (const item of effectivePermissionsList) {
+      const list = groups.get(item.module) ?? []
+      list.push(item)
+      groups.set(item.module, list)
+    }
+    return Array.from(groups.entries()).map(([module, perms]) => ({ module, perms }))
+  }, [effectivePermissionsList])
+
+  const availablePermModules = useMemo(() => {
+    const perms = inspectedAccountDetailQuery.data?.effectivePermissions ?? []
+    const mods = new Set(perms.map((code) => (code.includes(':') ? code.split(':')[0] : 'GENERAL')))
+    return ['ALL', ...mods]
+  }, [inspectedAccountDetailQuery.data?.effectivePermissions])
 
   const clearFilters = () => {
     setSearch('')
@@ -484,7 +811,156 @@ export function AccessExplorerPage() {
 
   return (
     <section className={styles.page}>
-      <div className={inspectedAccount ? styles.workspaceWithInspector : styles.workspace}>
+      <div className={styles.workspace}>
+        {/* ==================== CỘT 1: CÂY TỔ CHỨC & SCOPE ==================== */}
+        <aside
+          className={styles.scopeSidebar}
+          aria-label={t('auth.accessExplorer.scopesNavigation', 'Phạm vi & Tổ chức')}
+        >
+          <div className={styles.scopeHeader}>
+            <span>{t('auth.accessExplorer.scopesNavigation', 'Phạm vi & Tổ chức')}</span>
+            <Tag color="blue">{allAccounts.length}</Tag>
+          </div>
+          <div className={styles.scopeSearch}>
+            <Input
+              size="small"
+              placeholder={t('auth.accessExplorer.searchScopes', 'Lọc phạm vi...')}
+              value={scopeSearch}
+              onChange={(e) => setScopeSearch(e.target.value)}
+              allowClear
+            />
+          </div>
+          <div className={styles.scopeList}>
+            {/* All accounts node */}
+            <button
+              type="button"
+              className={
+                selectedScopeId === 'ALL'
+                  ? `${styles.scopeItem} ${styles.scopeItemActive}`
+                  : styles.scopeItem
+              }
+              onClick={() => {
+                setSelectedScopeId('ALL')
+                setCurrentPage(1)
+              }}
+            >
+              <span>🌐 {t('auth.accessExplorer.allScopes', 'Tất cả tài khoản')}</span>
+              <span className={styles.scopeCountBadge}>{getScopeAccountCount('ALL')}</span>
+            </button>
+
+            {/* Global Admin node */}
+            <button
+              type="button"
+              className={
+                selectedScopeId === 'global'
+                  ? `${styles.scopeItem} ${styles.scopeItemActive}`
+                  : styles.scopeItem
+              }
+              onClick={() => {
+                setSelectedScopeId('global')
+                setCurrentPage(1)
+              }}
+            >
+              <span>⭐ {t('auth.accessExplorer.globalScope', 'Toàn cục (Global)')}</span>
+              <span className={styles.scopeCountBadge}>{getScopeAccountCount('global')}</span>
+            </button>
+
+            {/* Departments & Teams */}
+            {scopeCategories.departments.length > 0 ? (
+              <>
+                <div className={styles.scopeCategoryHeader}>
+                  🏢 {t('auth.accessExplorer.departmentScope', 'Phòng ban')}
+                </div>
+                {scopeCategories.departments.map((dept) => {
+                  const isDeptSelected = selectedScopeId === dept.id
+                  return (
+                    <div key={dept.id}>
+                      <button
+                        type="button"
+                        className={
+                          isDeptSelected
+                            ? `${styles.scopeItem} ${styles.scopeItemActive}`
+                            : styles.scopeItem
+                        }
+                        onClick={() => {
+                          setSelectedScopeId(dept.id)
+                          setCurrentPage(1)
+                        }}
+                      >
+                        <span style={{ fontWeight: 500 }}>{dept.name}</span>
+                        <span className={styles.scopeCountBadge}>
+                          {getScopeAccountCount(dept.id, 'department')}
+                        </span>
+                      </button>
+                      {dept.teams.map((team) => {
+                        const isTeamSelected = selectedScopeId === team.id
+                        return (
+                          <button
+                            type="button"
+                            key={team.id}
+                            style={{ paddingLeft: 20 }}
+                            className={
+                              isTeamSelected
+                                ? `${styles.scopeItem} ${styles.scopeItemActive}`
+                                : styles.scopeItem
+                            }
+                            onClick={() => {
+                              setSelectedScopeId(team.id)
+                              setCurrentPage(1)
+                            }}
+                          >
+                            <span>👥 {team.name}</span>
+                            <span className={styles.scopeCountBadge}>
+                              {getScopeAccountCount(team.id, 'team')}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </>
+            ) : null}
+
+            {/* Shops & Vendors */}
+            {scopeCategories.shopsAndVendors.length > 0 ? (
+              <>
+                <div className={styles.scopeCategoryHeader}>
+                  🏪 {t('auth.accessExplorer.shopScope', 'Cửa hàng & Vendor')}
+                </div>
+                {scopeCategories.shopsAndVendors.map((item) => {
+                  const isSelected = selectedScopeId === item.id
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      className={
+                        isSelected
+                          ? `${styles.scopeItem} ${styles.scopeItemActive}`
+                          : styles.scopeItem
+                      }
+                      onClick={() => {
+                        setSelectedScopeId(item.id)
+                        setCurrentPage(1)
+                      }}
+                    >
+                      <span>
+                        {item.type === 'shop' ? '🛍️' : '🚚'} {item.name}
+                      </span>
+                      <span className={styles.scopeCountBadge}>
+                        {getScopeAccountCount(item.id, item.type)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </>
+            ) : null}
+          </div>
+          <div className={styles.keyboardHint}>
+            {t('auth.accessExplorer.keyboardHint', 'Dùng phím ↑ ↓ để duyệt nhanh')}
+          </div>
+        </aside>
+
         <main className={styles.directory}>
           <div className={styles.directoryHeader}>
             <PageHeader
@@ -623,8 +1099,21 @@ export function AccessExplorerPage() {
                   <span />
                 )}
                 <span>{t('auth.accessExplorer.account')}</span>
-                <span>{t('auth.accessExplorer.searchEmail')}</span>
-                <span>{t('auth.accessExplorer.currentRoles')}</span>
+                <span>{t('auth.accessExplorer.globalRoles')}</span>
+                <span>{t('auth.accessExplorer.teamAccess')}</span>
+                <span className={styles.matrixColHeader}>
+                  {t('auth.accessExplorer.matrixOrders')}
+                </span>
+                <span className={styles.matrixColHeader}>
+                  {t('auth.accessExplorer.matrixCatalog')}
+                </span>
+                <span className={styles.matrixColHeader}>
+                  {t('auth.accessExplorer.matrixDesign')}
+                </span>
+                <span className={styles.matrixColHeader}>{t('auth.accessExplorer.matrixHr')}</span>
+                <span className={styles.matrixColHeader}>
+                  {t('auth.accessExplorer.matrixReports')}
+                </span>
                 <span>{t('auth.accessExplorer.status')}</span>
                 <span>{t('auth.accessExplorer.lastLogin')}</span>
                 <span />
@@ -654,7 +1143,18 @@ export function AccessExplorerPage() {
               ) : (
                 paginatedAccounts.map((account) => {
                   const initials = account.email ? account.email.charAt(0).toUpperCase() : 'U'
-                  const isSelected = inspectedAccount?.id === account.id
+                  const isSelected = inspectedAccountId === account.id
+                  const globalRoles = roleCodesForScope(account, 'global')
+                  const teamRoles = roleCodesForScope(account, 'team')
+                  const globalRoleDisplay = account.roleAssignments
+                    ? globalRoles
+                    : (account.roles ?? [])
+                  const orderLevel = getModuleLevel(account, 'orders')
+                  const catalogLevel = getModuleLevel(account, 'catalog')
+                  const designLevel = getModuleLevel(account, 'design')
+                  const hrLevel = getModuleLevel(account, 'hr')
+                  const reportsLevel = getModuleLevel(account, 'reports')
+
                   return (
                     <div
                       key={account.id}
@@ -692,18 +1192,34 @@ export function AccessExplorerPage() {
                           {account.email}
                         </Typography.Text>
                       </div>
-                      <Typography.Text className={styles.accountMeta}>
-                        {account.email}
-                      </Typography.Text>
                       <div className={styles.accountRoles}>
-                        {account.roles?.length ? (
-                          <Tag color="blue">{account.roles[0]}</Tag>
+                        {globalRoleDisplay.length ? (
+                          <Tag color="blue">{globalRoleDisplay.join(', ')}</Tag>
                         ) : (
                           <Typography.Text type="secondary" className={styles.accountMeta}>
                             {t('auth.accessExplorer.noRoles')}
                           </Typography.Text>
                         )}
                       </div>
+                      <div className={styles.teamAccess}>
+                        {teamRoles.length ? (
+                          <Tag color="cyan">
+                            {account.team?.name ?? t('auth.accessExplorer.teamScope')} ·{' '}
+                            {teamRoles.join(', ')}
+                          </Tag>
+                        ) : (
+                          <Typography.Text type="secondary" className={styles.accountMeta}>
+                            {t('auth.accessExplorer.noTeamAccess')}
+                          </Typography.Text>
+                        )}
+                      </div>
+
+                      <div className={styles.matrixCell}>{renderMatrixBadge(orderLevel, t)}</div>
+                      <div className={styles.matrixCell}>{renderMatrixBadge(catalogLevel, t)}</div>
+                      <div className={styles.matrixCell}>{renderMatrixBadge(designLevel, t)}</div>
+                      <div className={styles.matrixCell}>{renderMatrixBadge(hrLevel, t)}</div>
+                      <div className={styles.matrixCell}>{renderMatrixBadge(reportsLevel, t)}</div>
+
                       <span
                         className={
                           statusTone(account.status) === 'operational'
@@ -734,6 +1250,15 @@ export function AccessExplorerPage() {
                                 icon: <SettingOutlined />,
                                 label: t('auth.accessEditor.globalAccess'),
                               },
+                              ...(canWrite
+                                ? [
+                                    {
+                                      key: 'scoped-access',
+                                      icon: <KeyOutlined />,
+                                      label: t('auth.accessExplorer.manageScopedAccess'),
+                                    },
+                                  ]
+                                : []),
                               {
                                 key: 'security',
                                 icon: <KeyOutlined />,
@@ -743,6 +1268,8 @@ export function AccessExplorerPage() {
                             onClick: ({ key }) => {
                               if (key === 'details') openInspector(account)
                               if (key === 'global-access') openInspector(account, 'access')
+                              if (key === 'scoped-access')
+                                navigate(`/auth/accounts/${account.id}/access`)
                               if (key === 'security') openInspector(account, 'security')
                             },
                           }}
@@ -752,6 +1279,7 @@ export function AccessExplorerPage() {
                             icon={<MoreOutlined />}
                             loading={isOpeningQuickAccess && quickAccessAccount?.id === account.id}
                             type="text"
+                            onClick={(e) => e.stopPropagation()}
                           />
                         </Dropdown>
                       </div>
@@ -776,185 +1304,322 @@ export function AccessExplorerPage() {
         </main>
 
         {inspectedAccount ? (
-          <aside
-            className={styles.inspector}
-            aria-label={t('auth.accessExplorer.accountInspector')}
-          >
-            <Button
-              aria-label={t('auth.accessExplorer.closeInspector')}
-              className={styles.closeInspector}
-              icon={<CloseOutlined />}
+          <>
+            <div
+              className={styles.drawerBackdrop}
               onClick={() => setInspectedAccountId(undefined)}
-              type="text"
+              aria-hidden
             />
-            <div className={styles.inspectorIdentity}>
-              <Avatar size={72} className={styles.inspectorAvatar}>
-                {inspectedAccount.email.charAt(0).toUpperCase()}
-              </Avatar>
-              <div>
-                <StatusTag status={statusTone(inspectedAccount.status)}>
-                  {inspectedAccount.status ?? t('auth.accessExplorer.unknown')}
-                </StatusTag>
-                <Typography.Title level={3}>{inspectedAccount.email}</Typography.Title>
-                <Typography.Text type="secondary">
-                  {inspectedAccount.roles?.length
-                    ? inspectedAccount.roles.join(', ')
-                    : t('auth.accessExplorer.noRoles')}
-                </Typography.Text>
-              </div>
-            </div>
-            <div className={styles.inspectorStats}>
-              <div>
-                <span>{t('auth.accessExplorer.currentRoles')}</span>
-                <strong>{inspectedAccount.roles?.length ?? 0}</strong>
-              </div>
-              <div>
-                <span>{t('auth.accessExplorer.status')}</span>
-                <strong>{inspectedAccount.status ?? t('auth.accessExplorer.unknown')}</strong>
-              </div>
-              <div>
-                <span>{t('auth.accessExplorer.lastLogin')}</span>
-                <strong>
-                  {inspectedAccount.lastLoginAt
-                    ? dayjs(inspectedAccount.lastLoginAt).format('DD/MM/YYYY')
-                    : t('auth.accessExplorer.neverLoggedIn')}
-                </strong>
-              </div>
-            </div>
-            <Tabs
-              activeKey={inspectorTab}
-              className={styles.inspectorTabs}
-              onChange={setInspectorTab}
-              items={[
-                {
-                  key: 'overview',
-                  label: t('auth.accessExplorer.overview'),
-                  children: (
-                    <dl className={styles.detailList}>
-                      <div>
-                        <dt>{t('auth.accessExplorer.searchEmail')}</dt>
-                        <dd>{inspectedAccount.email}</dd>
-                      </div>
-                      <div>
-                        <dt>{t('auth.accessExplorer.status')}</dt>
-                        <dd>{inspectedAccount.status ?? t('auth.accessExplorer.unknown')}</dd>
-                      </div>
-                      <div>
-                        <dt>{t('auth.accessExplorer.currentRoles')}</dt>
-                        <dd>
-                          {inspectedAccount.roles?.length
-                            ? inspectedAccount.roles.join(', ')
-                            : t('auth.accessExplorer.noRoles')}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>{t('auth.accessExplorer.lastLogin')}</dt>
-                        <dd>
-                          {inspectedAccount.lastLoginAt
-                            ? dayjs(inspectedAccount.lastLoginAt).format('DD/MM/YYYY HH:mm')
-                            : t('auth.accessExplorer.neverLoggedIn')}
-                        </dd>
-                      </div>
-                    </dl>
-                  ),
-                },
-                {
-                  key: 'access',
-                  label: t('auth.accessEditor.globalAccess'),
-                  children: (
-                    <div className={styles.inspectorSection}>
-                      <Typography.Text type="secondary">
-                        {t('auth.accessExplorer.accessSummary')}
-                      </Typography.Text>
-                      <div className={styles.inspectorRoles}>
-                        {inspectedAccount.roles?.length ? (
-                          inspectedAccount.roles.map((accountRole) => (
-                            <Tag color="blue" key={accountRole}>
-                              {accountRole}
-                            </Tag>
-                          ))
-                        ) : (
-                          <Typography.Text type="secondary">
-                            {t('auth.accessExplorer.noRoles')}
-                          </Typography.Text>
-                        )}
-                      </div>
-                      <Button
-                        aria-label={t('auth.accessExplorer.editGlobalAccess')}
-                        className={styles.inspectorTabAction}
-                        disabled={!canWrite}
-                        icon={<SettingOutlined />}
-                        onClick={() => void openQuickAccess(inspectedAccount)}
-                        size="small"
-                        type="primary"
-                      >
-                        {t('auth.accessExplorer.editGlobalAccess')}
-                      </Button>
+            <aside
+              className={styles.drawerInspector}
+              aria-label={t('auth.accessExplorer.accountInspector')}
+            >
+              {/* Header: Identity Bar + Meta */}
+              <div className={styles.inspectorHeader}>
+                <div className={styles.inspectorIdentityRow}>
+                  <Avatar size={36} className={styles.inspectorAvatar}>
+                    {inspectedAccount.email.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <div className={styles.inspectorIdentityText}>
+                    <div className={styles.inspectorTitleRow}>
+                      <Typography.Title level={3} className={styles.inspectorTitle}>
+                        {inspectedAccount.email}
+                      </Typography.Title>
+                      <StatusTag status={statusTone(inspectedAccount.status)}>
+                        {inspectedAccount.status ?? t('auth.accessExplorer.unknown')}
+                      </StatusTag>
+                      {inspectedAccount.team?.name ? (
+                        <Tag color="cyan" style={{ marginInlineEnd: 0 }}>
+                          {inspectedAccount.team.name}
+                        </Tag>
+                      ) : null}
                     </div>
-                  ),
-                },
-                {
-                  key: 'security',
-                  label: t('auth.accessExplorer.securitySettings'),
-                  children: (
-                    <div className={styles.inspectorSection}>
-                      <Typography.Text type="secondary">
-                        {t('auth.accessExplorer.securitySummary')}
-                      </Typography.Text>
-                      <Form
-                        className={styles.inspectorPasswordForm}
-                        form={securityPasswordForm}
-                        layout="vertical"
-                        onFinish={({ password }) =>
-                          securityPasswordMutation.mutate({
-                            accountId: inspectedAccount.id,
-                            password,
-                          })
-                        }
-                      >
-                        <Form.Item
-                          label={t('auth.accountSecurity.newPassword')}
-                          name="password"
-                          rules={[{ min: 6, required: true }]}
-                        >
-                          <Input.Password autoComplete="new-password" disabled={!canWrite} />
-                        </Form.Item>
+                  </div>
+                  <Button
+                    aria-label={t('auth.accessExplorer.closeInspector')}
+                    className={styles.closeInspectorBtn}
+                    icon={<CloseOutlined />}
+                    onClick={() => setInspectedAccountId(undefined)}
+                    type="text"
+                  />
+                </div>
+
+                {/* Meta Info Strip */}
+                <div className={styles.inspectorMetaInline}>
+                  <span>
+                    {t('auth.accessExplorer.lastLogin')}:{' '}
+                    <strong>
+                      {inspectedAccount.lastLoginAt
+                        ? dayjs(inspectedAccount.lastLoginAt).format('DD/MM/YYYY HH:mm')
+                        : t('auth.accessExplorer.neverLoggedIn')}
+                    </strong>
+                    {inspectedAccount.lastLoginIp ? ` (IP: ${inspectedAccount.lastLoginIp})` : ''}
+                  </span>
+                  <span>•</span>
+                  <span>
+                    {inspectedAccount.roles?.length ?? 0} {t('auth.accessEditor.roles', 'vai trò')}
+                  </span>
+                  <span>•</span>
+                  <span>
+                    {effectivePermissionsList.length} {t('auth.accessEditor.permissions', 'quyền')}
+                  </span>
+                </div>
+              </div>
+
+              <Tabs
+                activeKey={inspectorTab}
+                className={styles.inspectorTabs}
+                onChange={setInspectorTab}
+                items={[
+                  {
+                    key: 'overview',
+                    label: t('auth.accessExplorer.overview'),
+                    children: (
+                      <>
+                        {/* Compact 1-line assigned scopes bar */}
+                        <div className={styles.assignedScopesCompact}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>
+                              🛡️ {t('auth.accessExplorer.assignedScopes', 'Phân quyền')}:
+                            </span>
+                            <span style={{ color: 'var(--ant-color-text-secondary)' }}>
+                              {t('auth.accessExplorer.globalScope', 'Toàn cục')}:
+                            </span>
+                            {inspectedAccount.roles?.length ? (
+                              inspectedAccount.roles.map((r) => (
+                                <Tag color="blue" key={r} style={{ marginInlineEnd: 0 }}>
+                                  {r}
+                                </Tag>
+                              ))
+                            ) : (
+                              <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                                {t('auth.accessExplorer.noRoles')}
+                              </Typography.Text>
+                            )}
+                            {(inspectedAccount.roleAssignments ?? []).filter(
+                              (a) => a.scopeType !== 'global',
+                            ).length > 0 ? (
+                              <>
+                                <span style={{ color: 'var(--ant-color-text-secondary)' }}>
+                                  • {t('auth.accessExplorer.scoped', 'Phạm vi')}:
+                                </span>
+                                {(inspectedAccount.roleAssignments ?? [])
+                                  .filter((a) => a.scopeType !== 'global')
+                                  .map((a, idx) => (
+                                    <Tag color="cyan" key={idx} style={{ marginInlineEnd: 0 }}>
+                                      {a.scopeType}: {a.roleCode}
+                                    </Tag>
+                                  ))}
+                              </>
+                            ) : null}
+                          </div>
+                          {canWrite && (
+                            <Button
+                              type="link"
+                              size="small"
+                              style={{ padding: 0, height: 'auto', fontSize: 11 }}
+                              onClick={() =>
+                                navigate(`/auth/accounts/${inspectedAccount.id}/access`)
+                              }
+                            >
+                              {t('auth.accessExplorer.manageScopedAccess')} →
+                            </Button>
+                          )}
+                        </div>
+
+                        <div style={{ marginTop: 8 }}>
+                          <div className={styles.permMatrixHeader}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <Typography.Text strong style={{ fontSize: 13 }}>
+                                ⚡ {t('auth.accessExplorer.effectiveMatrix', 'Quyền thực tế')}
+                              </Typography.Text>
+                              <Tag color="blue" style={{ borderRadius: 999 }}>
+                                {effectivePermissionsList.length}
+                              </Tag>
+                            </div>
+                            <Input
+                              className={styles.permSearch}
+                              size="small"
+                              placeholder={t(
+                                'auth.accessExplorer.searchPermissions',
+                                'Tìm kiếm quyền...',
+                              )}
+                              value={permSearch}
+                              onChange={(e) => setPermSearch(e.target.value)}
+                              allowClear
+                            />
+                          </div>
+
+                          {availablePermModules.length > 1 && (
+                            <div className={styles.permModuleFilters} style={{ marginBottom: 10 }}>
+                              {availablePermModules.map((mod) => (
+                                <Button
+                                  key={mod}
+                                  size="small"
+                                  type={selectedPermModule === mod ? 'primary' : 'default'}
+                                  onClick={() => setSelectedPermModule(mod)}
+                                  style={{ fontSize: 11, height: 22, padding: '0 8px' }}
+                                >
+                                  {mod === 'ALL'
+                                    ? t('auth.accessExplorer.allModules', 'Tất cả')
+                                    : mod}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className={styles.permModulesList}>
+                            {inspectedAccountDetailQuery.isLoading ? (
+                              <Skeleton active paragraph={{ rows: 3 }} />
+                            ) : groupedEffectivePermissions.length === 0 ? (
+                              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                                {t(
+                                  'auth.accessExplorer.emptyPermissionsDescription',
+                                  'Tài khoản chưa có quyền hiệu lực nào.',
+                                )}
+                              </Typography.Text>
+                            ) : (
+                              groupedEffectivePermissions.map(({ module, perms }) => (
+                                <div key={module} className={styles.permModuleCard}>
+                                  <div className={styles.permModuleTitle}>
+                                    <span>
+                                      {module} ({perms.length})
+                                    </span>
+                                  </div>
+                                  <div className={styles.permPillList}>
+                                    {perms.map((p) => (
+                                      <div key={p.code} className={styles.permPill}>
+                                        <span>{p.code}</span>
+                                        <span className={styles.provenanceBadge}>
+                                          {p.provenance}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ),
+                  },
+                  {
+                    key: 'access',
+                    label: t('auth.accessEditor.globalAccess'),
+                    children: (
+                      <div className={styles.inspectorSection}>
+                        <Typography.Text type="secondary">
+                          {t('auth.accessExplorer.accessSummary')}
+                        </Typography.Text>
+                        <div className={styles.inspectorRoles}>
+                          {inspectedAccount.roles?.length ? (
+                            inspectedAccount.roles.map((accountRole) => (
+                              <Tag color="blue" key={accountRole}>
+                                {accountRole}
+                              </Tag>
+                            ))
+                          ) : (
+                            <Typography.Text type="secondary">
+                              {t('auth.accessExplorer.noRoles')}
+                            </Typography.Text>
+                          )}
+                        </div>
                         <Button
+                          aria-label={t('auth.accessExplorer.editGlobalAccess')}
                           className={styles.inspectorTabAction}
                           disabled={!canWrite}
-                          htmlType="submit"
-                          loading={securityPasswordMutation.isPending}
+                          icon={<SettingOutlined />}
+                          onClick={() => void openQuickAccess(inspectedAccount)}
                           size="small"
                           type="primary"
                         >
-                          {t('auth.accountSecurity.resetPassword')}
+                          {t('auth.accessExplorer.editGlobalAccess')}
                         </Button>
-                      </Form>
-                      <div className={styles.inspectorSecurityActions}>
-                        <Button
-                          disabled={!canWrite}
-                          onClick={() => setPendingInspectorSecurityAction('revoke-sessions')}
-                          size="small"
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'security',
+                    label: t('auth.accessExplorer.securitySettings'),
+                    children: (
+                      <div className={styles.inspectorSection}>
+                        <Typography.Text type="secondary">
+                          {t('auth.accessExplorer.securitySummary')}
+                        </Typography.Text>
+                        <Form
+                          className={styles.inspectorPasswordForm}
+                          form={securityPasswordForm}
+                          layout="vertical"
+                          onFinish={({ password }) =>
+                            securityPasswordMutation.mutate({
+                              accountId: inspectedAccount.id,
+                              password,
+                            })
+                          }
                         >
-                          {t('auth.accountSecurity.revokeSessions')}
-                        </Button>
-                        {normalize(inspectedAccount.status) === 'active' ? (
+                          <Form.Item
+                            label={t('auth.accountSecurity.newPassword')}
+                            name="password"
+                            rules={[{ min: 6, required: true }]}
+                          >
+                            <Input.Password autoComplete="new-password" disabled={!canWrite} />
+                          </Form.Item>
                           <Button
-                            danger
+                            className={styles.inspectorTabAction}
                             disabled={!canWrite}
-                            onClick={() => setPendingInspectorSecurityAction('deactivate')}
+                            htmlType="submit"
+                            loading={securityPasswordMutation.isPending}
+                            size="small"
+                            type="primary"
+                          >
+                            {t('auth.accountSecurity.resetPassword')}
+                          </Button>
+                        </Form>
+                        <div className={styles.inspectorSecurityActions}>
+                          <Button
+                            disabled={!canWrite}
+                            onClick={() => setPendingInspectorSecurityAction('revoke-sessions')}
                             size="small"
                           >
-                            {t('auth.accountSecurity.deactivate')}
+                            {t('auth.accountSecurity.revokeSessions')}
                           </Button>
-                        ) : null}
+                          {normalize(inspectedAccount.status) === 'active' ? (
+                            <Button
+                              danger
+                              disabled={!canWrite}
+                              icon={<LockOutlined />}
+                              onClick={() => setPendingInspectorSecurityAction('deactivate')}
+                              size="small"
+                            >
+                              {t('auth.accountSecurity.deactivate')}
+                            </Button>
+                          ) : (
+                            <Button
+                              disabled={!canWrite}
+                              icon={<UnlockOutlined />}
+                              loading={toggleStatusMutation.isPending}
+                              onClick={() => toggleStatusMutation.mutate('active')}
+                              size="small"
+                            >
+                              {t('auth.accessExplorer.unlockAccount', 'Mở khóa tài khoản')}
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          </aside>
+                    ),
+                  },
+                ]}
+              />
+            </aside>
+          </>
         ) : null}
       </div>
 

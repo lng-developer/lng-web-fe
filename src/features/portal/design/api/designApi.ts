@@ -70,6 +70,7 @@ export type DesignTask = {
   expectedOutputs: string[]
   referenceAssetCount: number
   latestSubmission: DesignSubmission | null
+  approvedAssetId?: string | null
   thumbnailAsset?: DesignAsset | null
   submissions?: DesignSubmission[]
   rejectReason?: string | null

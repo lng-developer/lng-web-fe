@@ -3,17 +3,40 @@ import {
   type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type WheelEvent as ReactWheelEvent,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CheckOutlined, StopOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
-import { Button, Flex, Input, Modal, Radio, Segmented, Slider, Space, Tag, Typography } from 'antd'
+import {
+  CheckOutlined,
+  DisconnectOutlined,
+  FileTextOutlined,
+  LinkOutlined,
+  StopOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined,
+} from '@ant-design/icons'
+import {
+  Button,
+  Flex,
+  Input,
+  Modal,
+  Popover,
+  Radio,
+  Segmented,
+  Slider,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd'
 
 import { AuthenticatedMediaImage } from '@/shared/media'
 
-import type { FileCheck } from '../api/productionApi'
+import type { FileCheck, ProductionTask } from '../api/productionApi'
+import { formatCustomization } from './inspectionReference'
 import styles from './ProductionWorkbenchPage.module.scss'
 
 const REJECTION_PRESETS = [
@@ -26,6 +49,7 @@ const REJECTION_PRESETS = [
 
 interface ArtworkInspectorProps {
   readonly check: FileCheck
+  readonly task?: ProductionTask
   readonly originalInputUrl?: string | null
   readonly originalInputLabel?: string | null
   readonly listingReferenceUrl?: string | null
@@ -37,6 +61,7 @@ interface ArtworkInspectorProps {
 
 export function ArtworkInspector({
   check,
+  task,
   originalInputUrl,
   originalInputLabel,
   listingReferenceUrl,
@@ -50,61 +75,137 @@ export function ArtworkInspector({
   const [bgType, setBgType] = useState<'checkerboard' | 'white' | 'black' | 'navy'>('checkerboard')
   const [splitPos, setSplitPos] = useState(50)
   const [opacity, setOpacity] = useState(60)
-  const [zoom, setZoom] = useState(100)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
+
+  // Pan & Zoom controls (Supports both synchronized and independent alignment)
+  const [isSync, setIsSync] = useState(true)
+  const [originalPan, setOriginalPan] = useState({ x: 0, y: 0 })
+  const [scaledPan, setScaledPan] = useState({ x: 0, y: 0 })
+  const [originalZoom, setOriginalZoom] = useState(100)
+  const [scaledZoom, setScaledZoom] = useState(100)
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [selectedPresets, setSelectedPresets] = useState<string[]>([])
   const [rejectNote, setRejectNote] = useState('')
 
+  const canvasRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
-  const dragStartRef = useRef({ x: 0, y: 0, originX: 0, originY: 0 })
+  const isDraggingSplitRef = useRef(false)
+  const activeDragTargetRef = useRef<'original' | 'scaled' | 'both'>('both')
+  const dragStartRef = useRef({
+    x: 0,
+    y: 0,
+    origOriginX: 0,
+    origOriginY: 0,
+    scaledOriginX: 0,
+    scaledOriginY: 0,
+  })
 
   const originalUrl = originalInputUrl ?? check.inputAssetDownloadUrl
   const originalLabel = originalInputLabel ?? t('portal.production.customerArtwork')
   const scaledUrl = check.outputAssetDownloadUrl
 
+  const customizationEntries = useMemo(
+    () => formatCustomization(task?.customization?.customerInputs),
+    [task?.customization?.customerInputs],
+  )
+
   const resetView = useCallback(() => {
-    setZoom(100)
-    setPan({ x: 0, y: 0 })
+    setOriginalPan({ x: 0, y: 0 })
+    setScaledPan({ x: 0, y: 0 })
+    setOriginalZoom(100)
+    setScaledZoom(100)
     setSplitPos(50)
     setOpacity(60)
   }, [])
 
   // Mouse wheel zoom
-  const handleWheel = useCallback((e: ReactWheelEvent) => {
-    e.preventDefault()
-    setZoom((prev) => Math.min(500, Math.max(25, prev + (e.deltaY < 0 ? 15 : -15))))
-  }, [])
+  const handleWheelOn = useCallback(
+    (target: 'original' | 'scaled' | 'both', e: ReactWheelEvent) => {
+      e.preventDefault()
+      const delta = e.deltaY < 0 ? 15 : -15
+      if (isSync || target === 'both') {
+        setOriginalZoom((prev) => Math.min(500, Math.max(25, prev + delta)))
+        setScaledZoom((prev) => Math.min(500, Math.max(25, prev + delta)))
+      } else if (target === 'original') {
+        setOriginalZoom((prev) => Math.min(500, Math.max(25, prev + delta)))
+      } else {
+        setScaledZoom((prev) => Math.min(500, Math.max(25, prev + delta)))
+      }
+    },
+    [isSync],
+  )
 
   // Pointer drag pan
-  const handlePointerDown = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
+  const handlePointerDownOn = useCallback(
+    (target: 'original' | 'scaled' | 'both', e: ReactPointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return
       isDraggingRef.current = true
+      activeDragTargetRef.current = isSync ? 'both' : target
       dragStartRef.current = {
         x: e.clientX,
         y: e.clientY,
-        originX: pan.x,
-        originY: pan.y,
+        origOriginX: originalPan.x,
+        origOriginY: originalPan.y,
+        scaledOriginX: scaledPan.x,
+        scaledOriginY: scaledPan.y,
       }
       e.currentTarget.setPointerCapture(e.pointerId)
     },
-    [pan.x, pan.y],
+    [isSync, originalPan.x, originalPan.y, scaledPan.x, scaledPan.y],
   )
 
   const handlePointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return
     const dx = e.clientX - dragStartRef.current.x
     const dy = e.clientY - dragStartRef.current.y
-    setPan({
-      x: dragStartRef.current.originX + dx,
-      y: dragStartRef.current.originY + dy,
-    })
+    const target = activeDragTargetRef.current
+
+    if (target === 'both' || target === 'original') {
+      setOriginalPan({
+        x: dragStartRef.current.origOriginX + dx,
+        y: dragStartRef.current.origOriginY + dy,
+      })
+    }
+    if (target === 'both' || target === 'scaled') {
+      setScaledPan({
+        x: dragStartRef.current.scaledOriginX + dx,
+        y: dragStartRef.current.scaledOriginY + dy,
+      })
+    }
   }, [])
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     isDraggingRef.current = false
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  // Split slider interactive dragging
+  const handleSplitPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    isDraggingSplitRef.current = true
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }, [])
+
+  const handleSplitPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isDraggingSplitRef.current || !canvasRef.current) return
+    const rect = canvasRef.current.getBoundingClientRect()
+    if (rect.width <= 0) return
+    const x = e.clientX - rect.left
+    const percent = Math.min(100, Math.max(0, (x / rect.width) * 100))
+    setSplitPos(Math.round(percent))
+  }, [])
+
+  const handleSplitPointerUp = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    isDraggingSplitRef.current = false
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // ignore
+    }
   }, [])
 
   // Keyboard Shortcuts (P = Pass, R = Reject, 1/2/3 = View Mode, Space = Reset)
@@ -156,24 +257,113 @@ export function ArtworkInspector({
           ? styles.bgBlack
           : styles.bgNavy
 
-  const transformStyle: CSSProperties = {
-    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`,
+  const originalTransformStyle: CSSProperties = {
+    transform: `translate(${originalPan.x}px, ${originalPan.y}px) scale(${originalZoom / 100})`,
     transformOrigin: 'center',
     willChange: 'transform',
     transition: 'transform 0.05s ease-out',
   }
 
+  const scaledTransformStyle: CSSProperties = {
+    transform: `translate(${scaledPan.x}px, ${scaledPan.y}px) scale(${scaledZoom / 100})`,
+    transformOrigin: 'center',
+    willChange: 'transform',
+    transition: 'transform 0.05s ease-out',
+  }
+
+  const zoomDisplay = isSync ? `${scaledZoom}%` : `${originalZoom}% · ${scaledZoom}%`
+
   return (
     <Modal
       open
-      width="94vw"
+      width="96vw"
+      centered
+      style={{ top: 12, paddingBottom: 12 }}
+      styles={{
+        body: {
+          height: 'calc(94vh - 76px)',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        },
+      }}
       footer={null}
       title={
         <Flex justify="space-between" align="center" style={{ paddingRight: 32 }}>
-          <span>
-            {t('portal.production.inspectArtwork', { slot: check.slotLabel || check.slotKey })}
-          </span>
-          <Tag color="blue">{check.slotKey}</Tag>
+          <Space size={8}>
+            <span>
+              {t('portal.production.inspectArtwork', { slot: check.slotLabel || check.slotKey })}
+            </span>
+            <Tag color="blue">{check.slotKey}</Tag>
+          </Space>
+          {task && (customizationEntries.length > 0 || task.csNote) ? (
+            <Popover
+              title={
+                <Flex justify="space-between" align="center" gap={12}>
+                  <Typography.Text strong>{t('portal.production.customerInputs')}</Typography.Text>
+                  <Tag color="cyan">{customizationEntries.length}</Tag>
+                </Flex>
+              }
+              content={
+                <div style={{ maxWidth: 360, maxHeight: 280, overflowY: 'auto' }}>
+                  {task.csNote && (
+                    <div
+                      style={{
+                        marginBottom: 8,
+                        padding: '6px 10px',
+                        background: 'var(--ant-color-warning-bg)',
+                        borderRadius: 6,
+                        border: '1px solid var(--ant-color-warning-border)',
+                      }}
+                    >
+                      <Typography.Text
+                        strong
+                        style={{
+                          fontSize: 11,
+                          display: 'block',
+                          color: 'var(--ant-color-warning-text)',
+                        }}
+                      >
+                        CS Note:
+                      </Typography.Text>
+                      <Typography.Text style={{ fontSize: 12 }}>{task.csNote}</Typography.Text>
+                    </div>
+                  )}
+                  {customizationEntries.length > 0 ? (
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      {customizationEntries.map(([label, value]) => (
+                        <div
+                          key={`${label}-${value}`}
+                          style={{
+                            fontSize: 12,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            borderBottom: '1px solid var(--ant-color-border-secondary)',
+                            paddingBottom: 4,
+                          }}
+                        >
+                          <span style={{ color: 'var(--ant-color-text-secondary)' }}>{label}:</span>
+                          <strong style={{ textAlign: 'right' }}>{value}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      -
+                    </Typography.Text>
+                  )}
+                </div>
+              }
+              trigger="click"
+              placement="bottomRight"
+            >
+              <Button size="small" icon={<FileTextOutlined />}>
+                {t('portal.production.customerInputs')} ({customizationEntries.length})
+              </Button>
+            </Popover>
+          ) : null}
         </Flex>
       }
       onCancel={onClose}
@@ -240,24 +430,58 @@ export function ArtworkInspector({
             <Radio.Button value="navy">🔵 Navy</Radio.Button>
           </Radio.Group>
 
+          {/* Sync Pan/Zoom toggle */}
+          <Tooltip
+            title={
+              isSync
+                ? t('portal.production.syncZoom')
+                : t('portal.production.independentZoom', { defaultValue: 'Independent Pan/Zoom' })
+            }
+          >
+            <Button
+              size="small"
+              type={isSync ? 'primary' : 'default'}
+              icon={isSync ? <LinkOutlined /> : <DisconnectOutlined />}
+              onClick={() => setIsSync((prev) => !prev)}
+            >
+              {isSync
+                ? t('portal.production.syncZoom')
+                : t('portal.production.independentZoom', { defaultValue: 'Independent' })}
+            </Button>
+          </Tooltip>
+
           <Space size={4}>
             <Button
               size="small"
               icon={<ZoomOutOutlined />}
-              onClick={() => setZoom((z) => Math.max(25, z - 25))}
+              onClick={() => {
+                if (isSync) {
+                  setOriginalZoom((z) => Math.max(25, z - 25))
+                  setScaledZoom((z) => Math.max(25, z - 25))
+                } else {
+                  setScaledZoom((z) => Math.max(25, z - 25))
+                }
+              }}
             />
-            <Typography.Text strong style={{ fontSize: 12, minWidth: 42, textAlign: 'center' }}>
-              {zoom}%
+            <Typography.Text strong style={{ fontSize: 12, minWidth: 46, textAlign: 'center' }}>
+              {zoomDisplay}
             </Typography.Text>
             <Button
               size="small"
               icon={<ZoomInOutlined />}
-              onClick={() => setZoom((z) => Math.min(500, z + 25))}
+              onClick={() => {
+                if (isSync) {
+                  setOriginalZoom((z) => Math.min(500, z + 25))
+                  setScaledZoom((z) => Math.min(500, z + 25))
+                } else {
+                  setScaledZoom((z) => Math.min(500, z + 25))
+                }
+              }}
             />
           </Space>
 
           <Button size="small" onClick={resetView}>
-            Reset View
+            {t('portal.production.resetView')}
           </Button>
           {listingReferenceUrl ? (
             <Typography.Link href={listingReferenceUrl} target="_blank" rel="noreferrer">
@@ -267,25 +491,27 @@ export function ArtworkInspector({
         </Space>
       </div>
 
-      {/* Main Inspection Canvas */}
-      <div onWheel={handleWheel}>
+      {/* Main Inspection Canvas Container */}
+      <div className={styles.canvasContainer}>
         {viewMode === 'sideBySide' ? (
           <div className={styles.inspector}>
             {/* Original */}
             <div
               className={`${styles.inspectPanel} ${bgClass}`}
-              onPointerDown={handlePointerDown}
+              onWheel={(e) => handleWheelOn('original', e)}
+              onPointerDown={(e) => handlePointerDownOn('original', e)}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
             >
-              <Typography.Text strong>
+              <div className={styles.inspectPanelBadge}>
+                <span className={styles.badgeDot} />
                 {t('portal.production.original')} ({originalLabel})
-              </Typography.Text>
+              </div>
               {originalUrl ? (
                 <AuthenticatedMediaImage
                   downloadUrl={originalUrl}
                   alt={t('portal.production.original')}
-                  style={transformStyle}
+                  style={originalTransformStyle}
                   draggable={false}
                 />
               ) : (
@@ -298,18 +524,20 @@ export function ArtworkInspector({
             {/* Scaled Output */}
             <div
               className={`${styles.inspectPanel} ${bgClass}`}
-              onPointerDown={handlePointerDown}
+              onWheel={(e) => handleWheelOn('scaled', e)}
+              onPointerDown={(e) => handlePointerDownOn('scaled', e)}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
             >
-              <Typography.Text strong>
+              <div className={styles.inspectPanelBadge}>
+                <span className={`${styles.badgeDot} ${styles.badgeDotSuccess}`} />
                 {t('portal.production.scaled')} (Scaled Output)
-              </Typography.Text>
+              </div>
               {scaledUrl ? (
                 <AuthenticatedMediaImage
                   downloadUrl={scaledUrl}
                   alt={t('portal.production.scaled')}
-                  style={transformStyle}
+                  style={scaledTransformStyle}
                   draggable={false}
                 />
               ) : (
@@ -320,10 +548,12 @@ export function ArtworkInspector({
             </div>
           </div>
         ) : viewMode === 'split' ? (
-          /* Split Screen Slider Canvas */
+          /* Split Screen Slider Canvas with Direct Dragging */
           <div
+            ref={canvasRef}
             className={`${styles.singleInspectCanvas} ${bgClass}`}
-            onPointerDown={handlePointerDown}
+            onWheel={(e) => handleWheelOn('scaled', e)}
+            onPointerDown={(e) => handlePointerDownOn('both', e)}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
           >
@@ -335,8 +565,8 @@ export function ArtworkInspector({
               {originalUrl ? (
                 <AuthenticatedMediaImage
                   downloadUrl={originalUrl}
-                  alt="Original"
-                  style={transformStyle}
+                  alt={t('portal.production.original')}
+                  style={originalTransformStyle}
                 />
               ) : null}
             </div>
@@ -349,20 +579,27 @@ export function ArtworkInspector({
               {scaledUrl ? (
                 <AuthenticatedMediaImage
                   downloadUrl={scaledUrl}
-                  alt="Scaled"
-                  style={transformStyle}
+                  alt={t('portal.production.scaled')}
+                  style={scaledTransformStyle}
                 />
               ) : null}
             </div>
 
-            {/* Divider Track Handle */}
-            <div className={styles.splitSliderTrack} style={{ left: `${splitPos}%` }} />
+            {/* Interactive Divider Track Handle */}
+            <div
+              className={styles.splitSliderTrack}
+              style={{ left: `${splitPos}%` }}
+              onPointerDown={handleSplitPointerDown}
+              onPointerMove={handleSplitPointerMove}
+              onPointerUp={handleSplitPointerUp}
+            />
           </div>
         ) : (
           /* Overlay Opacity Canvas */
           <div
             className={`${styles.singleInspectCanvas} ${bgClass}`}
-            onPointerDown={handlePointerDown}
+            onWheel={(e) => handleWheelOn('scaled', e)}
+            onPointerDown={(e) => handlePointerDownOn('both', e)}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
           >
@@ -371,8 +608,8 @@ export function ArtworkInspector({
               {originalUrl ? (
                 <AuthenticatedMediaImage
                   downloadUrl={originalUrl}
-                  alt="Original"
-                  style={transformStyle}
+                  alt={t('portal.production.original')}
+                  style={originalTransformStyle}
                 />
               ) : null}
             </div>
@@ -382,8 +619,8 @@ export function ArtworkInspector({
               {scaledUrl ? (
                 <AuthenticatedMediaImage
                   downloadUrl={scaledUrl}
-                  alt="Scaled"
-                  style={transformStyle}
+                  alt={t('portal.production.scaled')}
+                  style={scaledTransformStyle}
                 />
               ) : null}
             </div>
@@ -391,18 +628,18 @@ export function ArtworkInspector({
         )}
       </div>
 
+      {/* QC Fixed Footer Guide and Action Bar */}
       {!readonly ? (
-        <>
-          {/* QC Keyboard Shortcuts Footer Guide */}
+        <div className={styles.inspectFooter}>
           <div className={styles.shortcutBar}>
             <span>
               ⚡ <strong>QC Shortcuts</strong>:
             </span>
             <span>
-              <kbd>P</kbd> Pass Slot
+              <kbd>P</kbd> {t('portal.production.passSlot')}
             </span>
             <span>
-              <kbd>R</kbd> Reject Slot
+              <kbd>R</kbd> {t('portal.production.rejectSlot')}
             </span>
             <span>
               <kbd>1</kbd> Side-by-Side
@@ -414,20 +651,26 @@ export function ArtworkInspector({
               <kbd>3</kbd> Overlay
             </span>
             <span>
-              <kbd>Space</kbd> Center View
+              <kbd>Space</kbd> {t('portal.production.resetView')}
             </span>
           </div>
 
-          {/* Main Action Bar */}
-          <Flex justify="end" gap={12} style={{ marginTop: 16 }}>
-            <Button danger icon={<StopOutlined />} onClick={() => setRejectModalOpen(true)}>
-              {t('portal.production.rejectSlot')} (R)
-            </Button>
-            <Button type="primary" icon={<CheckOutlined />} onClick={() => onPass()}>
-              {t('portal.production.passSlot')} (P)
-            </Button>
-          </Flex>
-        </>
+          <div className={styles.inspectBottomRow}>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {isSync
+                ? t('portal.production.syncZoom')
+                : t('portal.production.independentZoom', { defaultValue: 'Independent Pan/Zoom' })}
+            </Typography.Text>
+            <Flex gap={12}>
+              <Button danger icon={<StopOutlined />} onClick={() => setRejectModalOpen(true)}>
+                {t('portal.production.rejectSlot')} (R)
+              </Button>
+              <Button type="primary" icon={<CheckOutlined />} onClick={() => onPass()}>
+                {t('portal.production.passSlot')} (P)
+              </Button>
+            </Flex>
+          </div>
+        </div>
       ) : null}
 
       {/* Quick Rejection Modal with Preset Reason Chips */}

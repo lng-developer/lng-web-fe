@@ -138,6 +138,7 @@ export function ProductionWorkbenchPage({
   const [designType, setDesignType] = useState<'NORMAL' | 'UNCLASSIFIED'>('NORMAL')
   const [createdDates, setCreatedDates] = useState<DateRangeValue>({})
   const [inspect, setInspect] = useState<{
+    task?: ProductionTask
     check: FileCheck
     originalInputUrl?: string | null
     originalInputLabel?: string | null
@@ -495,6 +496,7 @@ export function ProductionWorkbenchPage({
     (task: ProductionTask, check: FileCheck, readonly = false) => {
       const reference = inspectionReference(task, check)
       setInspect({
+        task,
         check,
         originalInputUrl: reference?.url,
         originalInputLabel:
@@ -851,6 +853,7 @@ export function ProductionWorkbenchPage({
       </div>
       {inspect ? (
         <ArtworkInspector
+          task={inspect.task}
           check={inspect.check}
           originalInputUrl={inspect.originalInputUrl}
           originalInputLabel={inspect.originalInputLabel}
