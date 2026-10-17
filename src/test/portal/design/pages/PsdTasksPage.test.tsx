@@ -7,8 +7,8 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { PsdTasksPage } from '@/features/portal/design/pages/PsdTasksPage'
-import { queryClient } from '@/shared/query/queryClient'
 import { downloadMediaAsset } from '@/shared/media'
+import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/shared/media', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/shared/media')>()),
