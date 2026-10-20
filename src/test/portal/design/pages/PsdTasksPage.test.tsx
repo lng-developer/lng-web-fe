@@ -95,6 +95,7 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
     startDesignTask: vi.fn(),
     approveDesignTask: vi.fn(),
     rejectDesignTask: vi.fn(),
+    reopenDesignTask: vi.fn(),
     submitDesignTask: vi.fn(),
     uploadDesignAsset: vi.fn(),
     deleteDesignTask: vi.fn(),
@@ -222,6 +223,27 @@ describe('PsdTasksPage', () => {
 
     await screen.findByText('B001TESTASIN')
     expect(screen.queryByLabelText('PSD file')).not.toBeInTheDocument()
+  })
+
+  it('lets a reviewer reopen a QC-passed task with a revision reason', async () => {
+    mockTaskStatus = 'APPROVED'
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+
+    await screen.findByText('B001TESTASIN')
+    fireEvent.click(screen.getByRole('button', { name: 'Reopen for revision' }))
+    const dialog = screen.getByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox'), {
+      target: { value: 'Customer changed wording' },
+    })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Reopen' }))
+    const { reopenDesignTask } = await import('@/features/portal/design/api/designApi')
+    await waitFor(() =>
+      expect(reopenDesignTask).toHaveBeenCalledWith('psd-1', 'Customer changed wording'),
+    )
   })
 
   it('filters by salesChannelCode when present in search params', async () => {

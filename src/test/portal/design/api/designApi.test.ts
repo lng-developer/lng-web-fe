@@ -20,6 +20,7 @@ import {
   listDesignTasks,
   listPsdFiles,
   rejectDesignTask,
+  reopenDesignTask,
   startDesignTask,
   submitDesignTask,
   updateDesignTaskPriority,
@@ -45,6 +46,7 @@ describe('designApi', () => {
     await submitDesignTask('task-1', ['asset-1'], 'Ready')
     await approveDesignTask('task-1', 'asset-1')
     await rejectDesignTask('task-1', 'Wrong size')
+    await reopenDesignTask('task-1', 'Customer changed wording')
     await getDesignSummary({ status: 'OPEN' })
     await getDesignWorkload({ taskType: 'PSD_TEMPLATE' })
     await listPsdFiles({
@@ -91,6 +93,9 @@ describe('designApi', () => {
     })
     expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/reject', {
       rejectReason: 'Wrong size',
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/design/tasks/task-1/reopen', {
+      reason: 'Customer changed wording',
     })
     expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/summary', {
       params: { status: 'OPEN' },

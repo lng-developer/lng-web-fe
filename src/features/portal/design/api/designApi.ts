@@ -215,6 +215,8 @@ export const approveDesignTask = async (id: string, approvedAssetId: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/approve`, { approvedAssetId }))
 export const rejectDesignTask = async (id: string, rejectReason: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/reject`, { rejectReason }))
+export const reopenDesignTask = async (id: string, reason: string) =>
+  unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/reopen`, { reason }))
 export const getDesignSummary = async (params: Omit<DesignListParams, 'page' | 'limit'>) =>
   unwrap<DesignSummary>(
     await apiClient.get('/api/design/tasks/summary', { params: compact(params) }),

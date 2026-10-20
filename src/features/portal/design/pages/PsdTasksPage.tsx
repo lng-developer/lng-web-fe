@@ -47,6 +47,7 @@ import {
   listDesignAssignees,
   listDesignTasks,
   rejectDesignTask,
+  reopenDesignTask,
   startDesignTask,
   submitDesignTask,
   updateDesignTask,
@@ -213,6 +214,8 @@ export function PsdTasksPage() {
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  const [reopenModalOpen, setReopenModalOpen] = useState(false)
+  const [reopenReason, setReopenReason] = useState('')
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([])
@@ -389,6 +392,21 @@ export function PsdTasksPage() {
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Reject failed'
       toast('error', msg)
+    },
+  })
+
+  const reopenMutation = useMutation({
+    mutationFn: ({ taskId, reason }: { taskId: string; reason: string }) =>
+      reopenDesignTask(taskId, reason),
+    onSuccess: () => {
+      toast('success', 'Task reopened for revision')
+      setReopenModalOpen(false)
+      setReopenReason('')
+      setTargetTaskId(null)
+      invalidate()
+    },
+    onError: (err: unknown) => {
+      toast('error', err instanceof Error ? err.message : 'Failed to reopen task')
     },
   })
 
@@ -834,6 +852,20 @@ export function PsdTasksPage() {
               </>
             ) : null}
 
+            {(canWrite || canReview) && record.status === 'APPROVED' ? (
+              <Tooltip title="Reopen for revision">
+                <Button
+                  size="small"
+                  aria-label="Reopen for revision"
+                  icon={<RollbackOutlined />}
+                  onClick={() => {
+                    setTargetTaskId(record.id)
+                    setReopenModalOpen(true)
+                  }}
+                />
+              </Tooltip>
+            ) : null}
+
             {/* Delete */}
             {canWrite ? (
               <Tooltip title="Delete">
@@ -1029,6 +1061,36 @@ export function PsdTasksPage() {
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder="Enter reason for rejection..."
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        open={reopenModalOpen}
+        title="Reopen PSD Task"
+        okText="Reopen"
+        okButtonProps={{ danger: true }}
+        confirmLoading={reopenMutation.isPending}
+        onCancel={() => {
+          setReopenModalOpen(false)
+          setTargetTaskId(null)
+          setReopenReason('')
+        }}
+        onOk={() => {
+          if (targetTaskId && reopenReason.trim()) {
+            reopenMutation.mutate({ taskId: targetTaskId, reason: reopenReason.trim() })
+          }
+        }}
+      >
+        <div style={{ padding: '16px 0' }}>
+          <Text strong style={{ display: 'block', marginBottom: 8 }}>
+            Revision reason
+          </Text>
+          <Input.TextArea
+            rows={4}
+            value={reopenReason}
+            onChange={(e) => setReopenReason(e.target.value)}
+            placeholder="Explain what needs to change..."
           />
         </div>
       </Modal>
