@@ -124,13 +124,16 @@ describe('designApi', () => {
     })
   })
 
-  it('routes PSD files to Wasabi multipart upload', async () => {
+  it.each([
+    ['B0HFM6K1GX.psd', 'image/vnd.adobe.photoshop'],
+    ['B0HDSZDZCB.rar', 'application/octet-stream'],
+  ])('routes %s files to Wasabi multipart upload', async (filename, mimeType) => {
     vi.mocked(uploadMultipartAsset).mockResolvedValue({
       id: 'wasabi-asset-1',
       uploadStatus: 'READY',
     })
 
-    const file = new File(['mock content'], 'B0HFM6K1GX.psd', { type: 'image/vnd.adobe.photoshop' })
+    const file = new File(['mock content'], filename, { type: mimeType })
     const result = await uploadDesignAsset(file)
 
     expect(uploadMultipartAsset).toHaveBeenCalledWith(file, {
@@ -140,8 +143,8 @@ describe('designApi', () => {
     })
     expect(result).toEqual({
       id: 'wasabi-asset-1',
-      originalFilename: 'B0HFM6K1GX.psd',
-      mimeType: 'image/vnd.adobe.photoshop',
+      originalFilename: filename,
+      mimeType,
       size: file.size,
       downloadUrl: '/api/media/assets/wasabi-asset-1/download',
     })

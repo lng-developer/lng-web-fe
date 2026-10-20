@@ -4,7 +4,15 @@ import { Upload } from 'antd'
 
 export interface FileUploadProps extends Pick<
   UploadProps,
-  'accept' | 'fileList' | 'maxCount' | 'multiple' | 'onChange' | 'className' | 'style'
+  | 'accept'
+  | 'fileList'
+  | 'maxCount'
+  | 'multiple'
+  | 'onChange'
+  | 'onRemove'
+  | 'showUploadList'
+  | 'className'
+  | 'style'
 > {
   readonly title: string
   readonly description: string

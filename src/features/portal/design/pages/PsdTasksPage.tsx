@@ -15,7 +15,7 @@ import {
 } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType, UploadFile } from 'antd'
-import { Button, Input, Modal, Popover, Select, Space, Tooltip, Typography } from 'antd'
+import { Button, Input, Modal, Popover, Progress, Select, Space, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -217,6 +217,8 @@ export function PsdTasksPage() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([])
   const [uploadNote, setUploadNote] = useState('')
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const selectedUploadFile = uploadFiles[0]
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [requestModalOpen, setRequestModalOpen] = useState(false)
@@ -324,7 +326,11 @@ export function PsdTasksPage() {
       note?: string
     }) => {
       const uploadedAssets = await Promise.all(
-        files.filter((f) => f.originFileObj).map((f) => uploadDesignAsset(f.originFileObj as File)),
+        files
+          .filter((f) => f.originFileObj)
+          .map((f) =>
+            uploadDesignAsset(f.originFileObj as File, { onProgress: setUploadProgress }),
+          ),
       )
       return submitDesignTask(
         taskId,
@@ -337,12 +343,14 @@ export function PsdTasksPage() {
       setUploadModalOpen(false)
       setUploadFiles([])
       setUploadNote('')
+      setUploadProgress(0)
       setTargetTaskId(null)
       invalidate()
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Submit failed'
       toast('error', msg)
+      setUploadProgress(0)
     },
   })
 
@@ -709,6 +717,8 @@ export function PsdTasksPage() {
       render: (_, record) => {
         const latestAsset = record.latestSubmission?.assets?.[0]
         const approvedId = record.approvedAssetId || record.latestSubmission?.approvedAssetId
+        const isAssignedDesigner = String(record.assignedDesignerId) === String(account.account.id)
+        const canSubmitTask = canWork && isAssignedDesigner
         const downloadAsset =
           record.status === 'APPROVED'
             ? record.latestSubmission?.assets?.find((asset) => asset.id === approvedId)
@@ -719,7 +729,7 @@ export function PsdTasksPage() {
         return (
           <Space size={4} wrap align="center" style={{ justifyContent: 'center' }}>
             {/* Upload button (not for QC Passed) */}
-            {canWork && record.status !== 'APPROVED' ? (
+            {canSubmitTask && ['IN_PROGRESS', 'REJECTED'].includes(record.status) ? (
               <Tooltip title="Upload">
                 <Button
                   size="small"
@@ -782,7 +792,7 @@ export function PsdTasksPage() {
             ) : null}
 
             {/* Assigned: Start doing */}
-            {canWork && record.status === 'ASSIGNED' ? (
+            {canSubmitTask && record.status === 'ASSIGNED' ? (
               <Tooltip title="Start doing">
                 <Button
                   size="small"
@@ -850,6 +860,7 @@ export function PsdTasksPage() {
     canReview,
     canWork,
     canWrite,
+    account.account.id,
     priorityMutation,
     salesChannelCode,
     startMutation,
@@ -1033,9 +1044,11 @@ export function PsdTasksPage() {
           setTargetTaskId(null)
           setUploadFiles([])
           setUploadNote('')
+          setUploadProgress(0)
         }}
         onOk={() => {
           if (targetTaskId && uploadFiles.length > 0) {
+            setUploadProgress(0)
             submitMutation.mutate({
               taskId: targetTaskId,
               files: uploadFiles,
@@ -1047,13 +1060,37 @@ export function PsdTasksPage() {
         <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <FileUpload
-              title="Upload Finished PSD"
-              description="Upload PSD or archive file (.psd, .zip, .rar, etc.)"
+              title={
+                selectedUploadFile
+                  ? t('portal.design.replaceSelectedFile', { name: selectedUploadFile.name })
+                  : t('portal.design.finishedPsdUpload')
+              }
+              description={
+                selectedUploadFile
+                  ? t('portal.design.replaceSelectedFileHint')
+                  : t('portal.design.finishedPsdUploadHint')
+              }
               accept=".psd,.zip,.rar,.png,.jpg,.jpeg"
               fileList={uploadFiles}
               onChange={({ fileList }) => setUploadFiles(fileList)}
+              onRemove={() => {
+                setUploadFiles([])
+                setUploadProgress(0)
+                return false
+              }}
+              showUploadList={{ showRemoveIcon: true }}
               maxCount={1}
             />
+            {submitMutation.isPending ? (
+              <div style={{ marginTop: 12 }}>
+                <Text type="secondary">{t('portal.design.uploadingFile')}</Text>
+                <Progress
+                  percent={uploadProgress}
+                  status={uploadProgress < 100 ? 'active' : 'success'}
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            ) : null}
           </div>
           <div>
             <Text strong style={{ display: 'block', marginBottom: 8 }}>

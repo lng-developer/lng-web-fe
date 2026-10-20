@@ -18,13 +18,15 @@ vi.mock('@/shared/media', async (importOriginal) => ({
 let mockSearchParams = new URLSearchParams('')
 let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
 let mockTaskStatus = 'REQUESTED'
+let mockAssignedDesignerId: string | null = null
+const currentAccountId = '6a339b5a033e2ff7753522c3'
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useSearchParams: () => [mockSearchParams, vi.fn()],
   useParams: () => ({}),
   useRouteLoaderData: () => ({
-    account: { id: '6a339b5a033e2ff7753522c3' },
+    account: { id: currentAccountId },
     permissions: mockPermissions,
     roles: [],
     scopes: [],
@@ -48,7 +50,11 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
           id: 'psd-1',
           taskType: 'PSD_TEMPLATE',
           status: mockTaskStatus,
-          assignedDesignerId: mockTaskStatus === 'ASSIGNED' ? 'old-designer' : null,
+          assignedDesignerId:
+            mockAssignedDesignerId ??
+            (['ASSIGNED', 'IN_PROGRESS', 'REJECTED'].includes(mockTaskStatus)
+              ? currentAccountId
+              : null),
           priority: 'HIGH',
           listing: {
             sku: 'SKU-TEST-001',
@@ -116,6 +122,7 @@ describe('PsdTasksPage', () => {
     queryClient.clear()
     mockSearchParams = new URLSearchParams('')
     mockTaskStatus = 'REQUESTED'
+    mockAssignedDesignerId = null
     mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
   })
 
@@ -177,6 +184,44 @@ describe('PsdTasksPage', () => {
     expect(screen.getByPlaceholderText(/Search/)).toBeInTheDocument()
     expect(screen.getAllByText('Seller').length).toBeGreaterThan(0)
     expect(screen.queryByPlaceholderText('ASIN Type')).not.toBeInTheDocument()
+  })
+
+  it('lets a designer replace or remove the selected PSD before submitting', async () => {
+    mockTaskStatus = 'IN_PROGRESS'
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+
+    await screen.findByText('B001TESTASIN')
+    fireEvent.click(screen.getByLabelText('PSD file'))
+    const dialog = screen.getByRole('dialog')
+    const input = dialog.querySelector('input[type="file"]')
+    expect(input).not.toBeNull()
+    fireEvent.change(input!, {
+      target: { files: [new File(['psd'], 'finished.psd', { type: 'image/vnd.adobe.photoshop' })] },
+    })
+
+    expect(await within(dialog).findByText('Replace finished.psd')).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByLabelText('delete'))
+    await waitFor(() =>
+      expect(within(dialog).queryByText('Replace finished.psd')).not.toBeInTheDocument(),
+    )
+  })
+
+  it('hides PSD upload from designers who are not assigned to the task', async () => {
+    mockTaskStatus = 'IN_PROGRESS'
+    mockAssignedDesignerId = 'another-designer'
+
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+
+    await screen.findByText('B001TESTASIN')
+    expect(screen.queryByLabelText('PSD file')).not.toBeInTheDocument()
   })
 
   it('filters by salesChannelCode when present in search params', async () => {

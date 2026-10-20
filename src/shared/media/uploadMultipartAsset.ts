@@ -19,11 +19,65 @@ const groupsOf = <T>(items: T[], size: number) =>
     items.slice(index * size, (index + 1) * size),
   )
 
-async function putPart(url: string, body: Blob, signal?: AbortSignal) {
+function putPartWithXhr(
+  url: string,
+  body: Blob,
+  signal?: AbortSignal,
+  onProgress?: (loaded: number) => void,
+) {
+  return new Promise<string>((resolve, reject) => {
+    const request = new XMLHttpRequest()
+    const abort = () => request.abort()
+    const cleanup = () => signal?.removeEventListener('abort', abort)
+
+    request.open('PUT', url)
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(event.loaded)
+    }
+    request.onload = () => {
+      cleanup()
+      if (request.status < 200 || request.status >= 300) {
+        reject(new Error(`Part upload failed with HTTP ${request.status}`))
+        return
+      }
+      const etag = request.getResponseHeader('etag')
+      if (!etag) {
+        reject(new Error('Wasabi did not expose the ETag response header'))
+        return
+      }
+      resolve(etag)
+    }
+    request.onerror = () => {
+      cleanup()
+      reject(new Error('Part upload failed'))
+    }
+    request.onabort = () => {
+      cleanup()
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    signal?.addEventListener('abort', abort, { once: true })
+    if (signal?.aborted) {
+      request.abort()
+      return
+    }
+    request.send(body)
+  })
+}
+
+async function putPart(
+  url: string,
+  body: Blob,
+  signal?: AbortSignal,
+  onProgress?: (loaded: number) => void,
+) {
   let lastError: unknown
   for (let attempt = 0; attempt < 3; attempt += 1) {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     try {
+      onProgress?.(0)
+      if (typeof XMLHttpRequest !== 'undefined') {
+        return await putPartWithXhr(url, body, signal, onProgress)
+      }
       const response = await fetch(url, { method: 'PUT', body, signal })
       if (!response.ok) throw new Error(`Part upload failed with HTTP ${response.status}`)
       const etag = response.headers.get('etag')
@@ -47,24 +101,35 @@ export async function uploadMultipartAsset(file: File, options: Options): Promis
   })
   try {
     const partNumbers = Array.from({ length: session.totalParts }, (_, index) => index + 1)
-    const signed = (await Promise.all(
-      groupsOf(partNumbers, 20).map((batch) => presignMultipartParts(session.assetId, batch)),
-    )).flat()
+    const signed = (
+      await Promise.all(
+        groupsOf(partNumbers, 20).map((batch) => presignMultipartParts(session.assetId, batch)),
+      )
+    ).flat()
     const urls = new Map(signed.map(({ partNumber, url }) => [partNumber, url]))
     const completed: MultipartPart[] = []
-    let uploadedBytes = 0
+    const partProgress = new Map<number, number>()
+
+    const reportProgress = (partNumber: number, loaded: number) => {
+      partProgress.set(partNumber, loaded)
+      const uploadedBytes = [...partProgress.values()].reduce((sum, value) => sum + value, 0)
+      options.onProgress?.(Math.round((uploadedBytes / file.size) * 100))
+    }
 
     for (const batch of groupsOf(partNumbers, 3)) {
-      const parts = await Promise.all(batch.map(async (partNumber) => {
-        const start = (partNumber - 1) * session.partSize
-        const body = file.slice(start, Math.min(start + session.partSize, file.size))
-        const url = urls.get(partNumber)
-        if (!url) throw new Error(`Missing signed URL for part ${partNumber}`)
-        const etag = await putPart(url, body, options.signal)
-        uploadedBytes += body.size
-        options.onProgress?.(Math.round((uploadedBytes / file.size) * 100))
-        return { partNumber, etag }
-      }))
+      const parts = await Promise.all(
+        batch.map(async (partNumber) => {
+          const start = (partNumber - 1) * session.partSize
+          const body = file.slice(start, Math.min(start + session.partSize, file.size))
+          const url = urls.get(partNumber)
+          if (!url) throw new Error(`Missing signed URL for part ${partNumber}`)
+          const etag = await putPart(url, body, options.signal, (loaded) =>
+            reportProgress(partNumber, loaded),
+          )
+          reportProgress(partNumber, body.size)
+          return { partNumber, etag }
+        }),
+      )
       completed.push(...parts)
     }
     return await completeMultipartUpload(
