@@ -12,59 +12,54 @@ vi.mock('react-router-dom', async (importOriginal) => ({
     email: 'lead@lng.local',
     fullName: 'Design Lead',
     status: 'ACTIVE',
-    permissions: ['DESIGN:READ', 'DESIGN:REVIEW'],
+    permissions: ['DESIGN:READ', 'DESIGN:WORK', 'DESIGN:REVIEW', 'WORK_SCORES:READ'],
     scopes: [],
   }),
 }))
 
-vi.mock('@/features/portal/design/api/designApi', () => ({
-  listDesignScores: vi.fn().mockResolvedValue({
+vi.mock('@/features/portal/work-scores/api/workScoreApi', () => ({
+  listWorkScores: vi.fn().mockResolvedValue({
     items: [
       {
         id: 'score-1',
-        taskId: 'task-1',
-        submissionId: 'sub-1',
+        sourceType: 'DESIGN_SUBMISSION',
+        sourceTaskId: 'task-1',
+        sourceUnitId: 'sub-1',
         assetId: 'asset-1',
-        designerId: 'designer-1',
-        designerName: 'Bob Artist',
-        designerTeam: 'Alpha Team',
-        designerDepartment: 'Design Dept',
+        assetDownloadUrl: null,
         shopId: 'shop-1',
-        shopName: 'PrintHub',
-        taskType: 'PSD_TEMPLATE',
-        priority: 'NORMAL',
+        workerId: 'designer-1',
+        workerName: 'Bob Artist',
+        contextSnapshot: {
+          taskType: 'PSD_TEMPLATE',
+          sku: 'SKU-DESIGN-01',
+          taskTitle: 'Front Design Template',
+        },
         basePoints: 3,
         finalPoints: 3,
         scoreLevel: 'STANDARD',
         status: 'ACTIVE',
-        scoredAt: '2026-03-22T08:00:00Z',
-        approvedAsset: null,
-        overrideReason: null,
-        voidReason: null,
+        adjustments: [],
         version: 1,
+        scoredAt: '2026-03-22T08:00:00Z',
       },
     ],
     total: 1,
     page: 1,
     limit: 20,
   }),
-  getDesignScoreSummary: vi.fn().mockResolvedValue({
-    total: 1,
+  getWorkScoreSummary: vi.fn().mockResolvedValue({
     totalPoints: 3,
     totalFiles: 1,
+    bySourceType: [{ _id: 'DESIGN_SUBMISSION', totalPoints: 3, totalFiles: 1 }],
+    byWorker: [{ _id: 'designer-1', workerName: 'Bob Artist', totalPoints: 3, totalFiles: 1 }],
     byTaskType: [{ _id: 'PSD_TEMPLATE', totalPoints: 3, totalFiles: 1 }],
-    byDesigner: [{ _id: 'designer-1', designerName: 'Bob Artist', totalPoints: 3, totalFiles: 1 }],
   }),
-  listDesignAssignees: vi.fn().mockResolvedValue([
-    {
-      id: 'designer-1',
-      fullName: 'Bob Artist',
-      avatarUrl: null,
-      activeTaskCount: 1,
-    },
-  ]),
-  overrideDesignScore: vi.fn().mockResolvedValue({}),
-  voidDesignScore: vi.fn().mockResolvedValue({}),
+  getWorkScore: vi.fn().mockResolvedValue({}),
+  listWorkScoreRules: vi.fn().mockResolvedValue([]),
+  overrideWorkScore: vi.fn().mockResolvedValue({}),
+  upsertWorkScoreRule: vi.fn().mockResolvedValue({}),
+  voidWorkScore: vi.fn().mockResolvedValue({}),
 }))
 
 import { DesignScoresPage } from '@/features/portal/design/pages/DesignScoresPage'
@@ -80,9 +75,10 @@ describe('DesignScoresPage', () => {
 
   it('renders summary metrics, top designer leaderboard, and scores table', async () => {
     const view = renderWithTestProviders(<DesignScoresPage />)
-    await view.findByText('Top designers:')
-    expect(await view.findByText('PrintHub')).toBeVisible()
-    expect(view.getAllByText('Bob Artist').length).toBeGreaterThan(0)
-    expect(view.getByText('Total points')).toBeVisible()
+    expect(await view.findByText('Top Designers:')).toBeVisible()
+    expect((await view.findAllByText('Bob Artist')).length).toBeGreaterThanOrEqual(1)
+    expect(view.getByText('SKU-DESIGN-01')).toBeVisible()
+    expect(view.getByText('Design files')).toBeVisible()
+    expect(view.getByText('Design points')).toBeVisible()
   }, 15_000)
 })

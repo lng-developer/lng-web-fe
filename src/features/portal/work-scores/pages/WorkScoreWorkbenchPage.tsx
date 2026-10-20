@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
   AppstoreOutlined,
+  CheckCircleOutlined,
   DownloadOutlined,
   EditOutlined,
   EyeOutlined,
@@ -14,7 +15,7 @@ import {
 } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Input, Select, Space, Tooltip, Typography } from 'antd'
+import { Button, Input, Select, Space, Tag, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -51,7 +52,16 @@ import { WorkScoreDetailDrawer } from './WorkScoreDetailDrawer'
 import { WorkScoreRuleModal } from './WorkScoreRuleModal'
 import styles from './WorkScoreWorkbenchPage.module.scss'
 
+export type WorkScoreScope = 'DESIGN' | 'PRODUCTION' | 'ALL'
+
+export interface WorkScoreWorkbenchPageProps {
+  readonly account?: CurrentAccount
+  readonly scope?: WorkScoreScope
+}
+
 const RULE_SOURCE_TYPES: WorkScoreSourceType[] = ['DESIGN_SUBMISSION', 'PRODUCTION_SCALE']
+const DESIGN_TASK_TYPES = ['PSD_TEMPLATE', 'IDEA', 'PNG_ASSET', 'MOCKUP', 'CLONE']
+const SCALE_DIFFICULTIES: Array<'NORMAL' | 'HARD' | 'SPECIAL'> = ['NORMAL', 'HARD', 'SPECIAL']
 const objectIdPattern = /^[a-f\d]{24}$/i
 const defaultAssetPreview =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' rx='10' fill='%23f1f5f9'/><path d='M28 70h44M34 30h32v28H34z' fill='none' stroke='%2394a3b8' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/></svg>"
@@ -63,9 +73,8 @@ function textOrNull(value: unknown) {
 
 export function WorkScoreWorkbenchPage({
   account: accountProp,
-}: {
-  readonly account?: CurrentAccount
-}) {
+  scope = 'ALL',
+}: WorkScoreWorkbenchPageProps) {
   const { t } = useTranslation()
   const loaded = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const account = accountProp ?? loaded
@@ -76,6 +85,8 @@ export function WorkScoreWorkbenchPage({
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [sourceType, setSourceType] = useState<WorkScoreSourceType>()
+  const [taskType, setTaskType] = useState<string>()
+  const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
   const [scoreStatus, setScoreStatus] = useState<'ACTIVE' | 'VOIDED' | 'ALL'>('ACTIVE')
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
   const [selectedId, setSelectedId] = useState<string>()
@@ -94,26 +105,53 @@ export function WorkScoreWorkbenchPage({
   )
   const canAdjust = permissions.includes('WORK_SCORES:ADJUST')
 
+  const effectiveSourceType: WorkScoreSourceType | undefined = useMemo(() => {
+    if (scope === 'DESIGN') return 'DESIGN_SUBMISSION'
+    if (scope === 'PRODUCTION') return 'PRODUCTION_SCALE'
+    return sourceType
+  }, [scope, sourceType])
+
   const params = useMemo(
     () => ({
       page,
       limit: DEFAULT_PAGE_SIZE,
       search: deferredSearch || undefined,
-      sourceType,
+      sourceType: effectiveSourceType,
+      taskType: scope === 'DESIGN' ? taskType : undefined,
+      scaleDifficultyLevel: scope === 'PRODUCTION' ? scaleDifficultyLevel : undefined,
       scoreStatus,
       ...dates,
     }),
-    [page, deferredSearch, sourceType, scoreStatus, dates],
+    [
+      page,
+      deferredSearch,
+      effectiveSourceType,
+      scope,
+      taskType,
+      scaleDifficultyLevel,
+      scoreStatus,
+      dates,
+    ],
   )
 
   const summaryParams = useMemo(
     () => ({
       search: deferredSearch || undefined,
-      sourceType,
+      sourceType: effectiveSourceType,
+      taskType: scope === 'DESIGN' ? taskType : undefined,
+      scaleDifficultyLevel: scope === 'PRODUCTION' ? scaleDifficultyLevel : undefined,
       scoreStatus,
       ...dates,
     }),
-    [deferredSearch, sourceType, scoreStatus, dates],
+    [
+      deferredSearch,
+      effectiveSourceType,
+      scope,
+      taskType,
+      scaleDifficultyLevel,
+      scoreStatus,
+      dates,
+    ],
   )
 
   const rows = useWorkScoresQuery(params)
@@ -264,33 +302,80 @@ export function WorkScoreWorkbenchPage({
           )
         },
       },
+      ...(scope === 'DESIGN'
+        ? [
+            {
+              title: t('portal.workScores.fields.taskType', { defaultValue: 'Loại tác vụ' }),
+              width: 150,
+              render: (_: unknown, row: WorkScoreListItem) => {
+                const snapshot = row.contextSnapshot ?? {}
+                const currentTaskType = textOrNull(snapshot.taskType) || 'OTHER'
+                const tagColor =
+                  currentTaskType === 'PSD_TEMPLATE'
+                    ? 'blue'
+                    : currentTaskType === 'IDEA'
+                      ? 'green'
+                      : currentTaskType === 'PNG_ASSET'
+                        ? 'cyan'
+                        : currentTaskType === 'MOCKUP'
+                          ? 'purple'
+                          : 'default'
+                return <Tag color={tagColor}>{taskTypeLabel(currentTaskType)}</Tag>
+              },
+            },
+          ]
+        : scope === 'PRODUCTION'
+          ? [
+              {
+                title: t('portal.workScores.rules.scaleDifficulty', {
+                  defaultValue: 'Độ khó Scale',
+                }),
+                width: 150,
+                render: (_: unknown, row: WorkScoreListItem) => {
+                  const snapshot = row.contextSnapshot ?? {}
+                  const level = textOrNull(snapshot.scaleDifficultyLevel) || 'NORMAL'
+                  const color =
+                    level === 'SPECIAL' ? 'purple' : level === 'HARD' ? 'orange' : 'blue'
+                  return <Tag color={color}>{scaleDifficultyLabel(level)}</Tag>
+                },
+              },
+            ]
+          : [
+              {
+                title: t('portal.workScores.columns.source'),
+                width: 190,
+                render: (_: unknown, row: WorkScoreListItem) => {
+                  const snapshot = row.contextSnapshot ?? {}
+                  const subtype =
+                    row.sourceType === 'DESIGN_SUBMISSION'
+                      ? snapshot.taskType
+                      : snapshot.scaleDifficultyLevel
+                  return (
+                    <Space direction="vertical" size={2}>
+                      <StatusTag
+                        status={row.sourceType === 'DESIGN_SUBMISSION' ? 'processing' : 'ready'}
+                      >
+                        {t(`portal.workScores.sources.${row.sourceType}`)}
+                      </StatusTag>
+                      {subtype ? (
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                          {row.sourceType === 'DESIGN_SUBMISSION'
+                            ? taskTypeLabel(String(subtype))
+                            : scaleDifficultyLabel(String(subtype))}
+                        </Typography.Text>
+                      ) : null}
+                    </Space>
+                  )
+                },
+              },
+            ]),
       {
-        title: t('portal.workScores.columns.source'),
-        width: 190,
-        render: (_, row) => {
-          const snapshot = row.contextSnapshot ?? {}
-          const subtype =
-            row.sourceType === 'DESIGN_SUBMISSION'
-              ? snapshot.taskType
-              : snapshot.scaleDifficultyLevel
-          return (
-            <Space direction="vertical" size={2}>
-              <StatusTag status={row.sourceType === 'DESIGN_SUBMISSION' ? 'processing' : 'ready'}>
-                {t(`portal.workScores.sources.${row.sourceType}`)}
-              </StatusTag>
-              {subtype ? (
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  {row.sourceType === 'DESIGN_SUBMISSION'
-                    ? taskTypeLabel(String(subtype))
-                    : scaleDifficultyLabel(String(subtype))}
-                </Typography.Text>
-              ) : null}
-            </Space>
-          )
-        },
-      },
-      {
-        title: t('portal.workScores.columns.worker'),
+        title:
+          scope === 'DESIGN'
+            ? t('portal.workScores.columns.designer', { defaultValue: 'Designer' })
+            : scope === 'PRODUCTION'
+              ? t('portal.workScores.columns.scaler', { defaultValue: 'Scaler' })
+              : t('portal.workScores.columns.worker'),
         width: 180,
         render: (_, row) => <TableTextCell strong value={row.workerName || row.workerId} />,
       },
@@ -385,7 +470,7 @@ export function WorkScoreWorkbenchPage({
         ),
       },
     ],
-    [canAdjust, openAction, scaleDifficultyLabel, t, taskTypeLabel],
+    [canAdjust, openAction, scaleDifficultyLabel, scope, t, taskTypeLabel],
   )
 
   const designFiles = summary.data?.bySourceType?.find((item) => item._id === 'DESIGN_SUBMISSION')
@@ -403,34 +488,117 @@ export function WorkScoreWorkbenchPage({
 
       {/* Synchronized Summary Metric Cards */}
       <div className={styles.metrics}>
-        <MetricCard
-          icon={<AppstoreOutlined />}
-          variant="neutral"
-          label={t('portal.workScores.metrics.totalFiles')}
-          value={summary.data?.totalFiles ?? 0}
-          loading={summary.isLoading}
-        />
-        <MetricCard
-          icon={<TrophyOutlined />}
-          variant="primary"
-          label={t('portal.workScores.metrics.totalPoints')}
-          value={summary.data?.totalPoints ?? 0}
-          loading={summary.isLoading}
-        />
-        <MetricCard
-          icon={<PictureOutlined />}
-          variant="info"
-          label={t('portal.workScores.metrics.designFiles')}
-          value={designFiles?.totalFiles ?? 0}
-          loading={summary.isLoading}
-        />
-        <MetricCard
-          icon={<ScissorOutlined />}
-          variant="success"
-          label={t('portal.workScores.metrics.scaleFiles')}
-          value={scaleFiles?.totalFiles ?? 0}
-          loading={summary.isLoading}
-        />
+        {scope === 'DESIGN' ? (
+          <>
+            <MetricCard
+              icon={<PictureOutlined />}
+              variant="neutral"
+              label={t('portal.workScores.metrics.designFiles')}
+              value={summary.data?.totalFiles ?? 0}
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<TrophyOutlined />}
+              variant="primary"
+              label={t('portal.workScores.metrics.designTotalPoints', {
+                defaultValue: 'Tổng điểm Design',
+              })}
+              value={summary.data?.totalPoints ?? 0}
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<AppstoreOutlined />}
+              variant="info"
+              label={t('portal.workScores.metrics.psdFiles', { defaultValue: 'File PSD' })}
+              value={
+                summary.data?.byTaskType?.find((item) => item._id === 'PSD_TEMPLATE')?.totalFiles ??
+                0
+              }
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<CheckCircleOutlined />}
+              variant="success"
+              label={t('portal.workScores.metrics.ideaFiles', { defaultValue: 'File Idea / PNG' })}
+              value={
+                (summary.data?.byTaskType?.find((item) => item._id === 'IDEA')?.totalFiles ?? 0) +
+                (summary.data?.byTaskType?.find((item) => item._id === 'PNG_ASSET')?.totalFiles ??
+                  0)
+              }
+              loading={summary.isLoading}
+            />
+          </>
+        ) : scope === 'PRODUCTION' ? (
+          <>
+            <MetricCard
+              icon={<ScissorOutlined />}
+              variant="neutral"
+              label={t('portal.workScores.metrics.scaleFiles')}
+              value={summary.data?.totalFiles ?? 0}
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<TrophyOutlined />}
+              variant="primary"
+              label={t('portal.workScores.metrics.scaleTotalPoints', {
+                defaultValue: 'Tổng điểm Scale',
+              })}
+              value={summary.data?.totalPoints ?? 0}
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<AppstoreOutlined />}
+              variant="info"
+              label={t('portal.workScores.metrics.normalFiles', { defaultValue: 'File Thường' })}
+              value={
+                summary.data?.byDifficulty?.find((item) => item._id === 'NORMAL')?.totalFiles ?? 0
+              }
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<CheckCircleOutlined />}
+              variant="success"
+              label={t('portal.workScores.metrics.hardFiles', { defaultValue: 'File Khó / ĐB' })}
+              value={
+                (summary.data?.byDifficulty?.find((item) => item._id === 'HARD')?.totalFiles ?? 0) +
+                (summary.data?.byDifficulty?.find((item) => item._id === 'SPECIAL')?.totalFiles ??
+                  0)
+              }
+              loading={summary.isLoading}
+            />
+          </>
+        ) : (
+          <>
+            <MetricCard
+              icon={<AppstoreOutlined />}
+              variant="neutral"
+              label={t('portal.workScores.metrics.totalFiles')}
+              value={summary.data?.totalFiles ?? 0}
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<TrophyOutlined />}
+              variant="primary"
+              label={t('portal.workScores.metrics.totalPoints')}
+              value={summary.data?.totalPoints ?? 0}
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<PictureOutlined />}
+              variant="info"
+              label={t('portal.workScores.metrics.designFiles')}
+              value={designFiles?.totalFiles ?? 0}
+              loading={summary.isLoading}
+            />
+            <MetricCard
+              icon={<ScissorOutlined />}
+              variant="success"
+              label={t('portal.workScores.metrics.scaleFiles')}
+              value={scaleFiles?.totalFiles ?? 0}
+              loading={summary.isLoading}
+            />
+          </>
+        )}
       </div>
 
       {/* Top Worker Performance Leaderboard Bar */}
@@ -438,7 +606,12 @@ export function WorkScoreWorkbenchPage({
         <div className={styles.leaderboardCard}>
           <span className={styles.leaderboardTitle}>
             <TrophyOutlined style={{ color: '#faad14' }} />
-            {t('portal.workScores.topWorkers')}:
+            {scope === 'DESIGN'
+              ? t('portal.workScores.topDesigners', { defaultValue: 'Top Designers' })
+              : scope === 'PRODUCTION'
+                ? t('portal.workScores.topScalers', { defaultValue: 'Top Scalers' })
+                : t('portal.workScores.topWorkers')}
+            :
           </span>
           <div className={styles.leaderboardList}>
             {topWorkers.map((w, idx) => (
@@ -465,25 +638,71 @@ export function WorkScoreWorkbenchPage({
             <Input.Search
               allowClear
               className={styles.search}
-              placeholder={t('portal.workScores.search')}
+              placeholder={
+                scope === 'DESIGN'
+                  ? t('portal.workScores.searchDesign', {
+                      defaultValue: 'Tìm SKU, tác vụ hoặc designer...',
+                    })
+                  : scope === 'PRODUCTION'
+                    ? t('portal.workScores.searchScale', {
+                        defaultValue: 'Tìm mã đơn, SKU hoặc scaler...',
+                      })
+                    : t('portal.workScores.search')
+              }
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onSearch={() => setPage(1)}
             />
-            <Select
-              allowClear
-              className={styles.filter}
-              placeholder={t('portal.workScores.allSources')}
-              value={sourceType}
-              onChange={(value) => {
-                setSourceType(value)
-                setPage(1)
-              }}
-              options={RULE_SOURCE_TYPES.map((value) => ({
-                value,
-                label: t(`portal.workScores.sources.${value}`),
-              }))}
-            />
+            {scope === 'DESIGN' ? (
+              <Select
+                allowClear
+                className={styles.filter}
+                placeholder={t('portal.workScores.allTaskTypes', {
+                  defaultValue: 'Tất cả loại tác vụ',
+                })}
+                value={taskType}
+                onChange={(value) => {
+                  setTaskType(value)
+                  setPage(1)
+                }}
+                options={DESIGN_TASK_TYPES.map((value) => ({
+                  value,
+                  label: taskTypeLabel(value),
+                }))}
+              />
+            ) : scope === 'PRODUCTION' ? (
+              <Select
+                allowClear
+                className={styles.filter}
+                placeholder={t('portal.workScores.allDifficulties', {
+                  defaultValue: 'Tất cả độ khó',
+                })}
+                value={scaleDifficultyLevel}
+                onChange={(value) => {
+                  setScaleDifficultyLevel(value)
+                  setPage(1)
+                }}
+                options={SCALE_DIFFICULTIES.map((value) => ({
+                  value,
+                  label: scaleDifficultyLabel(value),
+                }))}
+              />
+            ) : (
+              <Select
+                allowClear
+                className={styles.filter}
+                placeholder={t('portal.workScores.allSources')}
+                value={sourceType}
+                onChange={(value) => {
+                  setSourceType(value)
+                  setPage(1)
+                }}
+                options={RULE_SOURCE_TYPES.map((value) => ({
+                  value,
+                  label: t(`portal.workScores.sources.${value}`),
+                }))}
+              />
+            )}
             <Select
               className={styles.filter}
               value={scoreStatus}
@@ -569,7 +788,17 @@ export function WorkScoreWorkbenchPage({
       />
 
       {canAdjust ? (
-        <WorkScoreRuleModal open={ruleModalOpen} onClose={() => setRuleModalOpen(false)} />
+        <WorkScoreRuleModal
+          open={ruleModalOpen}
+          allowedSourceType={
+            scope === 'DESIGN'
+              ? 'DESIGN_SUBMISSION'
+              : scope === 'PRODUCTION'
+                ? 'PRODUCTION_SCALE'
+                : undefined
+          }
+          onClose={() => setRuleModalOpen(false)}
+        />
       ) : null}
     </section>
   )

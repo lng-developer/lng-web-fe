@@ -653,7 +653,16 @@ export const appRoutes: RouteObject[] = [
             import('@/features/portal/design/pages/DesignScoresPage'),
           ]).then(([{ PortalPageBoundary }, { DesignScoresPage }]) => ({
             Component: () => (
-              <PortalPageBoundary anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW']}>
+              <PortalPageBoundary
+                anyOf={[
+                  'DESIGN:READ',
+                  'DESIGN:WRITE',
+                  'DESIGN:WORK',
+                  'DESIGN:REVIEW',
+                  'WORK_SCORES:READ',
+                  'WORK_SCORES:ADJUST',
+                ]}
+              >
                 <DesignScoresPage />
               </PortalPageBoundary>
             ),
@@ -671,6 +680,28 @@ export const appRoutes: RouteObject[] = [
                 anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
               >
                 <DesignWorkbenchPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/production/scores',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/production/pages/ProductionScoresPage'),
+          ]).then(([{ PortalPageBoundary }, { ProductionScoresPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={[
+                  'PRODUCTION:READ',
+                  'PRODUCTION:WRITE',
+                  'PRODUCTION:SCALE_WORK',
+                  'WORK_SCORES:READ',
+                  'WORK_SCORES:ADJUST',
+                ]}
+              >
+                <ProductionScoresPage />
               </PortalPageBoundary>
             ),
           })),
@@ -713,8 +744,15 @@ export const appRoutes: RouteObject[] = [
             import('@/features/portal/work-scores/pages/WorkScoreWorkbenchPage'),
           ]).then(([{ PortalPageBoundary }, { WorkScoreWorkbenchPage }]) => ({
             Component: () => (
-              <PortalPageBoundary anyOf={['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK']}>
-                <WorkScoreWorkbenchPage />
+              <PortalPageBoundary
+                anyOf={[
+                  'WORK_SCORES:READ',
+                  'WORK_SCORES:ADJUST',
+                  'DESIGN:WORK',
+                  'PRODUCTION:SCALE_WORK',
+                ]}
+              >
+                <WorkScoreWorkbenchPage scope="ALL" />
               </PortalPageBoundary>
             ),
           })),

@@ -321,8 +321,8 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       ],
     },
     {
-      key: '/portal/work-scores',
-      labelKey: 'shell.navigation.workScores',
+      key: '/portal/production/scores',
+      labelKey: 'legacyMenu.scaleScores',
       icon: <TbHomeStats size={20} />,
     },
     {
@@ -542,6 +542,16 @@ function canAccessItemDirectly(
     return permissions.has('SHIPMENTS:READ') || permissions.has('SHIPMENTS:WRITE')
   }
 
+  if (key === '/portal/production/scores' || key.startsWith('/portal/production/scores')) {
+    return [
+      'PRODUCTION:READ',
+      'PRODUCTION:WRITE',
+      'PRODUCTION:SCALE_WORK',
+      'WORK_SCORES:READ',
+      'WORK_SCORES:ADJUST',
+    ].some((p) => permissions.has(p))
+  }
+
   if (
     key === 'scale' ||
     key.startsWith('/portal/production/scale') ||
@@ -549,13 +559,19 @@ function canAccessItemDirectly(
     key.startsWith('/portal/production/qc') ||
     key.startsWith('/portal/production')
   ) {
-    return ['PRODUCTION:READ', 'PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((p) =>
-      permissions.has(p),
-    )
+    return [
+      'PRODUCTION:READ',
+      'PRODUCTION:WRITE',
+      'PRODUCTION:SCALE_WORK',
+      'DESIGN:WORK',
+      'DESIGN:REVIEW',
+    ].some((p) => permissions.has(p))
   }
 
   if (key === '/portal/work-scores' || key.startsWith('/portal/work-scores')) {
-    return ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK'].some((p) => permissions.has(p))
+    return ['WORK_SCORES:READ', 'WORK_SCORES:ADJUST', 'DESIGN:WORK', 'PRODUCTION:SCALE_WORK'].some(
+      (p) => permissions.has(p),
+    )
   }
 
   if (key === '/portal/vendor-submissions' || key.startsWith('/portal/vendor-submissions')) {
@@ -584,7 +600,14 @@ function canAccessItemDirectly(
   }
 
   if (key === '/portal/design/scores' || key.startsWith('/portal/design/scores')) {
-    return ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW'].some((p) => permissions.has(p))
+    return [
+      'DESIGN:READ',
+      'DESIGN:WRITE',
+      'DESIGN:WORK',
+      'DESIGN:REVIEW',
+      'WORK_SCORES:READ',
+      'WORK_SCORES:ADJUST',
+    ].some((p) => permissions.has(p))
   }
 
   if (key === '/portal/media' || key.startsWith('/portal/media')) {
@@ -737,7 +760,12 @@ function iconForNavigationItem(item: NavigationItem) {
   if (item.key === 'customers' || item.path.includes('customers')) return <ContactsOutlined />
   if (item.key === 'customizations' || item.path.includes('customizations'))
     return <FormatPainterOutlined />
-  if (item.key === 'work-scores' || item.path.includes('work-scores')) return <TrophyOutlined />
+  if (
+    item.key === 'work-scores' ||
+    item.path.includes('work-scores') ||
+    item.path.includes('scores')
+  )
+    return <TrophyOutlined />
   if (item.path.startsWith('/auth')) return <SafetyCertificateOutlined />
   return <UserOutlined />
 }

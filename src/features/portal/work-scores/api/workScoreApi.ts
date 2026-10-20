@@ -53,6 +53,7 @@ export type WorkScoreSummary = {
     totalFiles: number
   }>
   byTaskType: Array<{ _id: string | null; totalPoints: number; totalFiles: number }>
+  byDifficulty?: Array<{ _id: string | null; totalPoints: number; totalFiles: number }>
 }
 export type WorkScoreListParams = {
   page?: number
@@ -62,6 +63,7 @@ export type WorkScoreListParams = {
   shopId?: string
   workerId?: string
   taskType?: string
+  scaleDifficultyLevel?: 'NORMAL' | 'HARD' | 'SPECIAL'
   scoreLevel?: WorkScoreLevel
   scoreStatus?: WorkScoreStatus | 'ALL'
   dateFrom?: string

@@ -101,13 +101,15 @@ function normalizeRuleInput(
 interface WorkScoreRuleModalProps {
   readonly open: boolean
   readonly onClose: () => void
+  readonly allowedSourceType?: WorkScoreSourceType
 }
 
-export function WorkScoreRuleModal({ open, onClose }: WorkScoreRuleModalProps) {
+export function WorkScoreRuleModal({ open, onClose, allowedSourceType }: WorkScoreRuleModalProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
-  const [activeTab, setActiveTab] = useState<WorkScoreSourceType>('DESIGN_SUBMISSION')
+  const [selectedTab, setSelectedTab] = useState<WorkScoreSourceType>('DESIGN_SUBMISSION')
+  const activeTab = allowedSourceType ?? selectedTab
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null)
 
   const [designForm] = Form.useForm<WorkScoreRuleFormInput>()
@@ -168,7 +170,7 @@ export function WorkScoreRuleModal({ open, onClose }: WorkScoreRuleModalProps) {
 
   const handleTabChange = useCallback(
     (key: string) => {
-      setActiveTab(key as WorkScoreSourceType)
+      setSelectedTab(key as WorkScoreSourceType)
       handleCancelEdit()
     },
     [handleCancelEdit],
@@ -646,6 +648,10 @@ export function WorkScoreRuleModal({ open, onClose }: WorkScoreRuleModalProps) {
     },
   ]
 
+  const visibleTabItems = allowedSourceType
+    ? tabItems.filter((item) => item.key === allowedSourceType)
+    : tabItems
+
   return (
     <Modal
       destroyOnHidden
@@ -665,7 +671,7 @@ export function WorkScoreRuleModal({ open, onClose }: WorkScoreRuleModalProps) {
     >
       <Tabs
         activeKey={activeTab}
-        items={tabItems}
+        items={visibleTabItems}
         style={{ marginTop: 4 }}
         onChange={handleTabChange}
       />
