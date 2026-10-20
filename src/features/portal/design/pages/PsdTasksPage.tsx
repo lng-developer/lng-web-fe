@@ -871,6 +871,7 @@ export function PsdTasksPage() {
               <Tooltip title="Delete">
                 <Button
                   size="small"
+                  aria-label="Delete task"
                   icon={<DeleteOutlined style={{ color: DATA_COLORS.cancelled }} />}
                   onClick={() => {
                     setTargetTaskId(record.id)
@@ -975,6 +976,7 @@ export function PsdTasksPage() {
       {/* Table area using standard CoreDataTable */}
       <div className={styles.tableArea}>
         <CoreDataTable
+          fillViewport
           rowKey="id"
           columns={columns}
           dataSource={displayedTasks}
@@ -1202,7 +1204,7 @@ export function PsdTasksPage() {
       <ConfirmDangerModal
         open={deleteModalOpen}
         title="Delete task"
-        description="Are you sure you want to delete this PSD task?"
+        description="Delete this PSD task? Tasks with an approved PSD must be cancelled instead."
         confirmLabel="Delete"
         loading={deleteMutation.isPending}
         onConfirm={() => {

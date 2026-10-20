@@ -246,6 +246,20 @@ describe('PsdTasksPage', () => {
     )
   })
 
+  it('deletes an unfinished task through the task delete endpoint', async () => {
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+
+    await screen.findByText('B001TESTASIN')
+    fireEvent.click(screen.getByLabelText('Delete task'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    const { deleteDesignTask } = await import('@/features/portal/design/api/designApi')
+    await waitFor(() => expect(deleteDesignTask).toHaveBeenCalledWith('psd-1'))
+  })
+
   it('filters by salesChannelCode when present in search params', async () => {
     mockSearchParams = new URLSearchParams('salesChannelCode=amazon')
 
