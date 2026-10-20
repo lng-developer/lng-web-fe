@@ -5,13 +5,7 @@ import { Button, Input, Select, Space } from 'antd'
 
 import { DateRangePicker, FilterBar, type DateRangeValue } from '@/shared/ui'
 
-import type { ProductionStatus } from '../api/productionApi'
 import styles from './ProductionWorkbenchPage.module.scss'
-
-type FilterOption = {
-  readonly value: ProductionStatus
-  readonly label: string
-}
 
 type AssigneeOption = {
   readonly value: string
@@ -22,11 +16,9 @@ type ScaleDifficultyLevel = 'NORMAL' | 'HARD' | 'SPECIAL'
 
 export const ProductionWorkbenchFilterBar: FC<{
   readonly search: string
-  readonly status?: ProductionStatus
   readonly scaleDifficultyLevel?: ScaleDifficultyLevel
   readonly dates: DateRangeValue
   readonly tab: 'scale' | 'blocked' | 'qc' | 'all' | 'ready' | 'sent' | 'cancelled' | string
-  readonly statusOptions: FilterOption[]
   readonly scaleAssigneeId?: string
   readonly canAssignScale: boolean
   readonly scaleAssigneeOptions: AssigneeOption[]
@@ -37,7 +29,6 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly reassignLoading: boolean
   readonly onSearchChange: (value: string) => void
   readonly onSearchSubmit: (value: string) => void
-  readonly onStatusChange: (value?: ProductionStatus) => void
   readonly onScaleDifficultyChange: (value?: ScaleDifficultyLevel) => void
   readonly onDatesChange: (value: DateRangeValue) => void
   readonly onExportCsv: () => void
@@ -47,11 +38,9 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly onBulkAssign: () => void
 }> = ({
   search,
-  status,
   scaleDifficultyLevel,
   dates,
   tab,
-  statusOptions,
   scaleAssigneeId,
   canAssignScale,
   scaleAssigneeOptions,
@@ -62,7 +51,6 @@ export const ProductionWorkbenchFilterBar: FC<{
   reassignLoading,
   onSearchChange,
   onSearchSubmit,
-  onStatusChange,
   onScaleDifficultyChange,
   onDatesChange,
   onExportCsv,
@@ -97,14 +85,6 @@ export const ProductionWorkbenchFilterBar: FC<{
               onClick={() => onSearchSubmit(search)}
             />
           }
-        />
-        <Select
-          className={styles.filter}
-          allowClear
-          value={status}
-          placeholder={t('portal.production.allStatuses')}
-          options={statusOptions}
-          onChange={onStatusChange}
         />
         <Select
           className={styles.filter}

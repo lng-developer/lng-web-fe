@@ -2,16 +2,9 @@
 import { type Key, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
-import {
-  AppstoreOutlined,
-  ClockCircleOutlined,
-  ScissorOutlined,
-  WarningOutlined,
-} from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Modal } from 'antd'
-import { Select } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -21,7 +14,6 @@ import {
   CopyableOrderId,
   FeedbackAlert,
   FormattedDateTime,
-  MetricCard,
   StatusTag,
   type DateRangeValue,
   type UiButtonTabItem,
@@ -38,8 +30,8 @@ import {
   exportProductionTasksCsv,
   type FileCheck,
   type FileDecision,
-  listProductionTasks,
   getProductionTask,
+  listProductionTasks,
   listScaleAssignees,
   type ProductionStatus,
   type ProductionTask,
@@ -60,33 +52,26 @@ import { isForbiddenProductionError, isOwnProductionOutput } from './productionA
 import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
-const PRODUCTION_TABS = ['all', 'scale', 'qc', 'ready', 'sent', 'blocked', 'cancelled'] as const
+const PRODUCTION_TABS = [
+  'all',
+  'scale',
+  'need_scale',
+  'qc_rejected',
+  'unclassified',
+  'qc_pending',
+  'qc',
+  'ready',
+  'sent',
+  'blocked',
+  'cancelled',
+] as const
 type ProductionTab = (typeof PRODUCTION_TABS)[number]
+type ViewMode = 'scale' | 'qc' | 'general'
 const SALES_CHANNEL_BY_QUERY: Record<string, 'AMAZON' | 'ETSY'> = {
   amazon: 'AMAZON',
   etsy: 'ETSY',
 }
-const ALL_STATUSES: ProductionStatus[] = [
-  'NEED_SCALE',
-  'QC_PENDING',
-  'QC_REJECTED',
-  'READY_TO_SEND_VENDOR',
-  'SENT_TO_VENDOR',
-  'BLOCKED',
-  'CANCELLED',
-]
 const SCALE_STATUSES: ProductionStatus[] = ['NEED_SCALE', 'QC_REJECTED', 'BLOCKED']
-const BLOCKED_STATUSES: ProductionStatus[] = ['BLOCKED']
-const QC_STATUSES: ProductionStatus[] = [
-  'QC_PENDING',
-  'READY_TO_SEND_VENDOR',
-  'SENT_TO_VENDOR',
-  'BLOCKED',
-  'CANCELLED',
-]
-const READY_STATUSES: ProductionStatus[] = ['READY_TO_SEND_VENDOR']
-const SENT_STATUSES: ProductionStatus[] = ['SENT_TO_VENDOR']
-const CANCELLED_STATUSES: ProductionStatus[] = ['CANCELLED']
 
 function permissions(account?: CurrentAccount) {
   return new Set(
@@ -127,28 +112,55 @@ export function ProductionWorkbenchPage({
   })
   const [searchParams, setSearchParams] = useSearchParams()
   const { queue: routeQueue } = useParams()
-  const requestedTab = searchParams.get('queue')
-  const dedicatedTab: ProductionTab | undefined =
-    dedicatedTabProp ??
-    (PRODUCTION_TABS.includes((routeQueue ?? '') as ProductionTab)
-      ? (routeQueue as ProductionTab)
-      : undefined)
-  const queryTab: ProductionTab | undefined = PRODUCTION_TABS.includes(
-    (requestedTab ?? '') as ProductionTab,
-  )
-    ? (requestedTab as ProductionTab)
-    : undefined
-  const tab: ProductionTab = dedicatedTab ?? queryTab ?? 'scale'
-  const isBlockedData = dedicatedTab ? queryTab === 'blocked' : tab === 'blocked'
+  const requestedTab = searchParams.get('queue') as ProductionTab | null
+  const viewMode: ViewMode = useMemo(() => {
+    if (dedicatedTabProp === 'scale' || routeQueue === 'scale') return 'scale'
+    if (dedicatedTabProp === 'qc' || routeQueue === 'qc') return 'qc'
+    return 'general'
+  }, [dedicatedTabProp, routeQueue])
+
+  const tab: ProductionTab = useMemo(() => {
+    if (viewMode === 'scale') {
+      const validTabs: ProductionTab[] = [
+        'all',
+        'need_scale',
+        'qc_rejected',
+        'unclassified',
+        'qc_pending',
+        'ready',
+        'sent',
+        'blocked',
+        'cancelled',
+      ]
+      return requestedTab && validTabs.includes(requestedTab) ? requestedTab : 'all'
+    }
+    if (viewMode === 'qc') {
+      const validTabs: ProductionTab[] = [
+        'all',
+        'qc',
+        'ready',
+        'qc_rejected',
+        'sent',
+        'blocked',
+        'cancelled',
+      ]
+      return requestedTab && validTabs.includes(requestedTab) ? requestedTab : 'all'
+    }
+    if (requestedTab && PRODUCTION_TABS.includes(requestedTab)) {
+      return requestedTab
+    }
+    if (routeQueue && PRODUCTION_TABS.includes(routeQueue as ProductionTab)) {
+      return routeQueue as ProductionTab
+    }
+    return 'all'
+  }, [viewMode, requestedTab, routeQueue])
   const salesChannelCode =
     SALES_CHANNEL_BY_QUERY[searchParams.get('salesChannelCode')?.toLowerCase() ?? '']
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
-  const [status, setStatus] = useState<ProductionStatus>()
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
-  const [designType, setDesignType] = useState<'NORMAL' | 'UNCLASSIFIED'>('NORMAL')
   const [createdDates, setCreatedDates] = useState<DateRangeValue>({})
   const [inspect, setInspect] = useState<{
     task?: ProductionTask
@@ -197,8 +209,9 @@ export function ProductionWorkbenchPage({
         })),
     [account, canWriteProductionTask, currentAccountId],
   )
+  const isScaleTab = tab === 'need_scale' || tab === 'qc_rejected' || tab === 'unclassified'
   const canAssignScale =
-    (tab === 'scale' || tab === 'all') &&
+    (isScaleTab || tab === 'all') &&
     (allowed.has('PRODUCTION:WRITE') || allowed.has('PRODUCTION:SCALE_ASSIGN'))
   const canAssignProductionTask = useCallback(
     (task: ProductionTask) =>
@@ -210,70 +223,112 @@ export function ProductionWorkbenchPage({
       }),
     [account, canWriteProductionTask],
   )
-  const filters = useMemo(
+  const filters = useMemo(() => {
+    let filterStatus: ProductionStatus | undefined = undefined
+    let filterDesignType: 'NORMAL' | 'UNCLASSIFIED' | undefined = undefined
+    let filterView: 'SCALE' | 'QC' | undefined = undefined
+    let psdReadyOnly = false
+
+    if (viewMode === 'scale') {
+      if (tab === 'need_scale') {
+        filterView = 'SCALE'
+        filterStatus = 'NEED_SCALE'
+        filterDesignType = 'NORMAL'
+        psdReadyOnly = true
+      } else if (tab === 'qc_rejected') {
+        filterView = 'SCALE'
+        filterStatus = 'QC_REJECTED'
+        filterDesignType = 'NORMAL'
+        psdReadyOnly = true
+      } else if (tab === 'unclassified') {
+        filterView = 'SCALE'
+        filterDesignType = 'UNCLASSIFIED'
+        psdReadyOnly = true
+      } else if (tab === 'blocked') {
+        filterStatus = 'BLOCKED'
+        psdReadyOnly = false
+      } else if (tab === 'qc_pending') {
+        filterStatus = 'QC_PENDING'
+        psdReadyOnly = false
+      } else if (tab === 'ready') {
+        filterStatus = 'READY_TO_SEND_VENDOR'
+        psdReadyOnly = false
+      } else if (tab === 'sent') {
+        filterStatus = 'SENT_TO_VENDOR'
+        psdReadyOnly = false
+      } else if (tab === 'cancelled') {
+        filterStatus = 'CANCELLED'
+        psdReadyOnly = false
+      } else {
+        filterStatus = undefined
+        filterDesignType = undefined
+        psdReadyOnly = false
+      }
+    } else if (viewMode === 'qc') {
+      if (tab === 'qc') {
+        filterView = 'QC'
+        psdReadyOnly = true
+      } else if (tab === 'ready') {
+        filterStatus = 'READY_TO_SEND_VENDOR'
+        psdReadyOnly = false
+      } else if (tab === 'qc_rejected') {
+        filterStatus = 'QC_REJECTED'
+        psdReadyOnly = false
+      } else if (tab === 'sent') {
+        filterStatus = 'SENT_TO_VENDOR'
+        psdReadyOnly = false
+      } else if (tab === 'blocked') {
+        filterStatus = 'BLOCKED'
+        psdReadyOnly = false
+      } else if (tab === 'cancelled') {
+        filterStatus = 'CANCELLED'
+        psdReadyOnly = false
+      } else {
+        filterStatus = undefined
+        psdReadyOnly = false
+      }
+    } else {
+      if (tab === 'scale') {
+        filterView = 'SCALE'
+        psdReadyOnly = true
+      } else if (tab === 'qc') {
+        filterView = 'QC'
+        psdReadyOnly = true
+      } else if (tab === 'ready') {
+        filterStatus = 'READY_TO_SEND_VENDOR'
+      } else if (tab === 'sent') {
+        filterStatus = 'SENT_TO_VENDOR'
+      } else if (tab === 'blocked') {
+        filterStatus = 'BLOCKED'
+      } else if (tab === 'cancelled') {
+        filterStatus = 'CANCELLED'
+      }
+    }
+
+    return {
+      search: deferredSearch || undefined,
+      salesChannelCode,
+      psdReadyOnly: tab !== 'blocked' && psdReadyOnly,
+      ...createdDates,
+      scaleDifficultyLevel,
+      designType: filterDesignType,
+      status: filterStatus,
+      view: filterView,
+    }
+  }, [createdDates, deferredSearch, salesChannelCode, scaleDifficultyLevel, tab, viewMode])
+  const params = useMemo(() => ({ ...filters, page, limit: pageSize }), [filters, page, pageSize])
+  const summaryFilters = useMemo(
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
-      psdReadyOnly: tab !== 'blocked' && !isBlockedData && (tab === 'scale' || tab === 'qc'),
       ...createdDates,
-      scaleDifficultyLevel,
-      designType: tab === 'scale' && !isBlockedData ? designType : undefined,
-      status: isBlockedData
-        ? ('BLOCKED' as const)
-        : tab === 'blocked'
-          ? ('BLOCKED' as const)
-          : tab === 'ready'
-            ? (status ?? ('READY_TO_SEND_VENDOR' as const))
-            : tab === 'sent'
-              ? (status ?? ('SENT_TO_VENDOR' as const))
-              : tab === 'cancelled'
-                ? (status ?? ('CANCELLED' as const))
-                : status,
-      view: isBlockedData
-        ? undefined
-        : tab === 'qc'
-          ? ('QC' as const)
-          : tab === 'scale'
-            ? ('SCALE' as const)
-            : undefined,
     }),
-    [
-      createdDates,
-      deferredSearch,
-      designType,
-      isBlockedData,
-      salesChannelCode,
-      scaleDifficultyLevel,
-      status,
-      tab,
-    ],
+    [createdDates, deferredSearch, salesChannelCode],
   )
-  const params = useMemo(() => ({ ...filters, page, limit: pageSize }), [filters, page, pageSize])
-  const summaryFilters = filters
   const queueFilters = useMemo(
     () => ({ search: deferredSearch || undefined, salesChannelCode }),
     [deferredSearch, salesChannelCode],
   )
-  const statusOptions = useMemo(() => {
-    const list =
-      tab === 'blocked'
-        ? BLOCKED_STATUSES
-        : tab === 'scale'
-          ? SCALE_STATUSES
-          : tab === 'qc'
-            ? QC_STATUSES
-            : tab === 'ready'
-              ? READY_STATUSES
-              : tab === 'sent'
-                ? SENT_STATUSES
-                : tab === 'cancelled'
-                  ? CANCELLED_STATUSES
-                  : ALL_STATUSES
-    return list.map((value) => ({
-      value,
-      label: t(`portal.production.statuses.${value}`),
-    }))
-  }, [tab, t])
   const tasks = useQuery({
     queryKey: productionKeys.list(params),
     queryFn: () => listProductionTasks(params),
@@ -304,11 +359,15 @@ export function ProductionWorkbenchPage({
       blocked: summaryRows.filter((task) => task.status === 'BLOCKED').length,
       needScale: summaryRows.filter((task) => task.status === 'NEED_SCALE').length,
       qcPending: summaryRows.filter((task) => task.status === 'QC_PENDING').length,
+      qcRejected: summaryRows.filter((task) => task.status === 'QC_REJECTED').length,
       ready: summaryRows.filter((task) => task.status === 'READY_TO_SEND_VENDOR').length,
       sent: summaryRows.filter((task) => task.status === 'SENT_TO_VENDOR').length,
       cancelled: summaryRows.filter((task) => task.status === 'CANCELLED').length,
       scaleQueue: summaryRows.filter((task) => SCALE_STATUSES.includes(task.status)).length,
       qcQueue: summaryRows.filter((task) => task.qcStatus === 'PENDING').length,
+      unclassified: summaryRows.filter(
+        (task) => !task.designType && SCALE_STATUSES.includes(task.status),
+      ).length,
     }
   }, [summary.data, summaryRows, tasks.data?.total])
   const queueSummary = useMemo(
@@ -318,14 +377,177 @@ export function ProductionWorkbenchPage({
       blocked: queueCounts.data?.blocked ?? displaySummary?.blocked ?? 0,
       scaleQueue: queueCounts.data?.scaleQueue ?? displaySummary?.scaleQueue ?? 0,
       qcQueue: queueCounts.data?.qcQueue ?? displaySummary?.qcQueue ?? 0,
-      qcPending: queueCounts.data?.qcQueue ?? displaySummary?.qcPending ?? 0,
+      qcPending: displaySummary?.qcPending ?? queueCounts.data?.qcQueue ?? 0,
+      qcRejected: displaySummary?.qcRejected ?? 0,
+      needScale: displaySummary?.needScale ?? 0,
       ready: queueCounts.data?.ready ?? displaySummary?.ready ?? 0,
       sent: queueCounts.data?.sent ?? displaySummary?.sent ?? 0,
       cancelled: queueCounts.data?.cancelled ?? displaySummary?.cancelled ?? 0,
+      unclassified: queueCounts.data?.unclassified ?? displaySummary?.unclassified ?? 0,
     }),
     [displaySummary, queueCounts.data],
   )
-  const queueTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
+  const scaleTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
+    () => [
+      {
+        value: 'all',
+        label: (
+          <UiTabLabel count={queueSummary.total ?? 0} active={tab === 'all'}>
+            {t('portal.production.allQueue', { defaultValue: 'Tất cả' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'need_scale',
+        label: (
+          <UiTabLabel count={queueSummary.needScale ?? 0} active={tab === 'need_scale'}>
+            {t('portal.production.needScaleQueue', { defaultValue: 'Cần Scale' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'qc_rejected',
+        label: (
+          <UiTabLabel count={queueSummary.qcRejected ?? 0} active={tab === 'qc_rejected'}>
+            {t('portal.production.qcRejectedQueue', { defaultValue: 'QC từ chối' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'unclassified',
+        label: (
+          <UiTabLabel count={queueSummary.unclassified ?? 0} active={tab === 'unclassified'}>
+            {t('portal.production.unclassifiedQueue', { defaultValue: 'Chưa phân loại' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'qc_pending',
+        label: (
+          <UiTabLabel count={queueSummary.qcPending ?? 0} active={tab === 'qc_pending'}>
+            {t('portal.production.qcPendingQueue', { defaultValue: 'Đã nộp / Chờ QC' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'ready',
+        label: (
+          <UiTabLabel count={queueSummary.ready ?? 0} active={tab === 'ready'}>
+            {t('portal.production.readyQueue', { defaultValue: 'QC đạt' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'sent',
+        label: (
+          <UiTabLabel count={queueSummary.sent ?? 0} active={tab === 'sent'}>
+            {t('portal.production.sentQueue', { defaultValue: 'Đã gửi Vendor (Xong)' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'blocked',
+        label: (
+          <UiTabLabel count={queueSummary.blocked ?? 0} active={tab === 'blocked'}>
+            {t('portal.production.blockedQueue')}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'cancelled',
+        label: (
+          <UiTabLabel count={queueSummary.cancelled ?? 0} active={tab === 'cancelled'}>
+            {t('portal.production.cancelledQueue', { defaultValue: 'Đã hủy' })}
+          </UiTabLabel>
+        ),
+      },
+    ],
+    [
+      queueSummary.blocked,
+      queueSummary.cancelled,
+      queueSummary.needScale,
+      queueSummary.qcPending,
+      queueSummary.qcRejected,
+      queueSummary.ready,
+      queueSummary.sent,
+      queueSummary.total,
+      queueSummary.unclassified,
+      tab,
+      t,
+    ],
+  )
+  const qcTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
+    () => [
+      {
+        value: 'all',
+        label: (
+          <UiTabLabel count={queueSummary.total ?? 0} active={tab === 'all'}>
+            {t('portal.production.allQueue', { defaultValue: 'Tất cả' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'qc',
+        label: (
+          <UiTabLabel count={queueSummary.qcQueue ?? 0} active={tab === 'qc'}>
+            {t('portal.production.qcQueue')}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'ready',
+        label: (
+          <UiTabLabel count={queueSummary.ready ?? 0} active={tab === 'ready'}>
+            {t('portal.production.readyQueue')}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'qc_rejected',
+        label: (
+          <UiTabLabel count={queueSummary.qcRejected ?? 0} active={tab === 'qc_rejected'}>
+            {t('portal.production.qcRejectedQueue', { defaultValue: 'QC từ chối' })}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'sent',
+        label: (
+          <UiTabLabel count={queueSummary.sent ?? 0} active={tab === 'sent'}>
+            {t('portal.production.sentQueue')}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'blocked',
+        label: (
+          <UiTabLabel count={queueSummary.blocked ?? 0} active={tab === 'blocked'}>
+            {t('portal.production.blockedQueue')}
+          </UiTabLabel>
+        ),
+      },
+      {
+        value: 'cancelled',
+        label: (
+          <UiTabLabel count={queueSummary.cancelled ?? 0} active={tab === 'cancelled'}>
+            {t('portal.production.cancelledQueue', { defaultValue: 'Đã hủy' })}
+          </UiTabLabel>
+        ),
+      },
+    ],
+    [
+      queueSummary.blocked,
+      queueSummary.cancelled,
+      queueSummary.qcQueue,
+      queueSummary.qcRejected,
+      queueSummary.ready,
+      queueSummary.sent,
+      queueSummary.total,
+      tab,
+      t,
+    ],
+  )
+  const generalTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
     () => [
       {
         value: 'all',
@@ -396,6 +618,8 @@ export function ProductionWorkbenchPage({
       t,
     ],
   )
+  const activeTabItems =
+    viewMode === 'scale' ? scaleTabItems : viewMode === 'qc' ? qcTabItems : generalTabItems
   const scaleAssignees = useQuery({
     queryKey: productionKeys.scaleAssignees(),
     queryFn: () => listScaleAssignees({ limit: 100 }),
@@ -434,11 +658,14 @@ export function ProductionWorkbenchPage({
   const handleTabChange = useCallback(
     (value: ProductionTab) => {
       const nextSearchParams = new URLSearchParams(searchParams)
-      if (value === 'scale') nextSearchParams.delete('queue')
-      else nextSearchParams.set('queue', value)
+      const isDefault = value === 'all'
+      if (isDefault) {
+        nextSearchParams.delete('queue')
+      } else {
+        nextSearchParams.set('queue', value)
+      }
       setSearchParams(nextSearchParams, { replace: true })
       setPage(1)
-      setStatus(undefined)
       setScaleDifficultyLevel(undefined)
       setSelectedRowKeys([])
       setDecisions({})
@@ -449,28 +676,6 @@ export function ProductionWorkbenchPage({
     setSearch(value)
     setPage(1)
   }, [])
-  const handleStatusChange = useCallback((value?: ProductionStatus) => {
-    setStatus(value)
-    setPage(1)
-  }, [])
-  const handleSalesChannelChange = useCallback(
-    (value: string | number) => {
-      const nextSearchParams = new URLSearchParams(searchParams)
-      if (value === 'AMAZON' || value === 'ETSY') {
-        nextSearchParams.set('salesChannelCode', value.toLowerCase())
-      } else {
-        nextSearchParams.delete('salesChannelCode')
-      }
-      setSearchParams(nextSearchParams, { replace: true })
-      setPage(1)
-      setSelectedRowKeys([])
-    },
-    [searchParams, setSearchParams],
-  )
-  const handleTotalMetricClick = useCallback(() => handleTabChange('all'), [handleTabChange])
-  const handleNeedScaleMetricClick = useCallback(() => handleTabChange('scale'), [handleTabChange])
-  const handleQcMetricClick = useCallback(() => handleTabChange('qc'), [handleTabChange])
-  const handleBlockedMetricClick = useCallback(() => handleTabChange('blocked'), [handleTabChange])
   const handleScaleDifficultyChange = useCallback((value?: 'NORMAL' | 'HARD' | 'SPECIAL') => {
     setScaleDifficultyLevel(value)
     setPage(1)
@@ -551,7 +756,6 @@ export function ProductionWorkbenchPage({
         search: search || undefined,
         ...createdDates,
         scaleDifficultyLevel,
-        status,
       }),
     onSuccess: (result) => {
       const url = URL.createObjectURL(result as unknown as Blob)
@@ -811,88 +1015,21 @@ export function ProductionWorkbenchPage({
       {tasks.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.production.unavailable')} />
       ) : null}
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<AppstoreOutlined />}
-          variant="neutral"
-          label={t('portal.production.metrics.total')}
-          value={displaySummary?.total ?? 0}
-          loading={summary.isLoading}
-          onClick={handleTotalMetricClick}
-        />
-        <MetricCard
-          icon={<ScissorOutlined />}
-          variant="warning"
-          label={t('portal.production.metrics.needScale')}
-          value={displaySummary?.needScale ?? 0}
-          loading={summary.isLoading}
-          onClick={handleNeedScaleMetricClick}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="info"
-          label={t('portal.production.metrics.qcPending')}
-          value={queueSummary.qcPending ?? 0}
-          loading={summary.isLoading}
-          onClick={handleQcMetricClick}
-        />
-        <MetricCard
-          icon={<WarningOutlined />}
-          variant="danger"
-          label={t('portal.production.metrics.block')}
-          value={queueSummary.blocked ?? 0}
-          loading={summary.isLoading}
-          onClick={handleBlockedMetricClick}
-        />
-      </div>
       <div className={styles.workspace}>
-        {dedicatedTab ? null : (
-          <div className={styles.queueToolbar}>
-            <UiButtonTabs
-              className={styles.queueTabs}
-              value={tab}
-              onChange={handleTabChange}
-              items={queueTabItems}
-            />
-            <UiButtonTabs
-              className={styles.channelFilter}
-              value={salesChannelCode ?? 'ALL'}
-              items={[
-                { label: t('portal.production.channelAll'), value: 'ALL' },
-                { label: 'Amazon', value: 'AMAZON' },
-                { label: 'Etsy', value: 'ETSY' },
-              ]}
-              onChange={handleSalesChannelChange}
-            />
-          </div>
-        )}
+        <div className={styles.queueToolbar}>
+          <UiButtonTabs
+            className={styles.queueTabs}
+            value={tab}
+            onChange={handleTabChange}
+            items={activeTabItems}
+          />
+        </div>
         <section className={styles.queuePane} aria-label={t('portal.production.title')}>
-          {tab === 'scale' && !isBlockedData && (
-            <Select
-              aria-label="Design Type"
-              value={designType}
-              style={{ minWidth: 180, marginBottom: 12 }}
-              options={[
-                { value: 'NORMAL', label: 'Normal' },
-                {
-                  value: 'UNCLASSIFIED',
-                  label: t('portal.production.unclassified', { defaultValue: 'Unclassified' }),
-                },
-              ]}
-              onChange={(value) => {
-                setDesignType(value)
-                setPage(1)
-                setSelectedRowKeys([])
-              }}
-            />
-          )}
           <ProductionWorkbenchFilterBar
             search={search}
-            status={status}
             scaleDifficultyLevel={scaleDifficultyLevel}
             dates={createdDates}
             tab={tab}
-            statusOptions={statusOptions}
             scaleAssigneeId={scaleAssigneeId}
             canAssignScale={canAssignScale}
             scaleAssigneeOptions={scaleAssigneeOptions}
@@ -903,7 +1040,6 @@ export function ProductionWorkbenchPage({
             reassignLoading={operations.isPending}
             onSearchChange={handleSearchChange}
             onSearchSubmit={handleSearchSubmit}
-            onStatusChange={handleStatusChange}
             onScaleDifficultyChange={handleScaleDifficultyChange}
             onDatesChange={handleCreatedDatesChange}
             onExportCsv={handleExportCsv}

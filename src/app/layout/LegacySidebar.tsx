@@ -693,7 +693,20 @@ function matchesRoute(key: string, pathname: string, search: string) {
   ) {
     return true
   }
-  if (key.includes('?')) return key === pathname + search
+  if (key.includes('?')) {
+    const [keyPath, keyQuery] = key.split('?')
+    if (pathname !== keyPath && !pathname.startsWith(`${keyPath}/`)) {
+      return false
+    }
+    const keyParams = new URLSearchParams(keyQuery)
+    const currentParams = new URLSearchParams(search)
+    for (const [paramName, paramValue] of keyParams.entries()) {
+      if (currentParams.get(paramName)?.toUpperCase() !== paramValue.toUpperCase()) {
+        return false
+      }
+    }
+    return true
+  }
   return pathname === key || pathname.startsWith(`${key}/`)
 }
 
@@ -1104,6 +1117,32 @@ export function LegacySidebar({
   }
   const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
 
+  const selectedPortalKeys = useMemo(() => {
+    let bestKey: string | undefined
+    let bestScore = -1
+
+    function searchItems(items?: typeof menuItems) {
+      if (!items) return
+      for (const item of items) {
+        if (!item) continue
+        const itemKey = String(item.key ?? '')
+        const children = (item as { children?: typeof menuItems }).children
+        if (children && children.length > 0) {
+          searchItems(children)
+        } else if (matchesRoute(itemKey, location.pathname, location.search)) {
+          const score = itemKey.includes('?') ? 2 : 1
+          if (score > bestScore) {
+            bestScore = score
+            bestKey = itemKey
+          }
+        }
+      }
+    }
+
+    searchItems(menuItems)
+    return bestKey ? [bestKey] : [location.pathname + location.search]
+  }, [location.pathname, location.search, menuItems])
+
   const handleSwitchMode = (mode: 'portal' | 'hr') => {
     if (mode === activeMode) return
     setActiveMode(mode)
@@ -1376,7 +1415,7 @@ export function LegacySidebar({
                   mode="inline"
                   openKeys={isHrActive || isSystemActive ? [] : openKeys}
                   onOpenChange={isHrActive || isSystemActive ? undefined : setOpenKeys}
-                  selectedKeys={isHrActive ? selectedHrKeys : [location.pathname + location.search]}
+                  selectedKeys={isHrActive ? selectedHrKeys : selectedPortalKeys}
                   items={isHrActive ? hrMenuItems : isSystemActive ? systemMenuItems : menuItems}
                   onClick={({ key }) => navigate(String(key))}
                 />

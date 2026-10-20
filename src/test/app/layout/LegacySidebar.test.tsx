@@ -434,6 +434,11 @@ describe('LegacySidebar', () => {
     ['/portal/listing/amazon', ['Listing'], 'Amz Listing'],
     ['/portal/reports/amazon/ads', ['Reports', 'Ads Report'], 'Amazon'],
     ['/portal/production/scale?salesChannelCode=AMAZON', ['Scale'], 'AMAZON Scale'],
+    [
+      '/portal/production/scale?salesChannelCode=AMAZON&queue=need_scale',
+      ['Scale'],
+      'AMAZON Scale',
+    ],
     ['/portal/design/psd-tasks?salesChannelCode=amazon', ['PSD Tasks'], 'Amazon tasks'],
     ['/portal/shops', ['Configuration'], 'Shops'],
   ])('restores %s menu context from the URL', async (url, parents, child) => {

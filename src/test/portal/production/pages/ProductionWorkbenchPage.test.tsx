@@ -304,23 +304,21 @@ describe('ProductionWorkbenchPage', () => {
     },
   )
 
-  it('shows the production metrics in the requested order', async () => {
+  it('does not render metric cards and shows dedicated queue filter tabs', async () => {
     renderPage()
 
     await waitFor(() => expect(summarizeProductionTasks).toHaveBeenCalled())
 
-    const metricLabels = Array.from(
-      document.querySelectorAll<HTMLElement>('[class*="metrics"] [class*="metricLabel"]'),
-    ).map((element) => element.textContent)
-
-    expect(metricLabels).toEqual(['Total', 'Need scale', 'QC pending', 'Block'])
-    expect(screen.queryByText('Ready')).not.toBeInTheDocument()
+    expect(document.querySelector('[class*="metrics"]')).toBeNull()
+    expect(await screen.findByRole('button', { name: /All/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Scale queue/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /QC queue/ })).toBeInTheDocument()
   })
 
-  it('changes only the data when the Block metric is clicked from the Scale route', async () => {
+  it('changes only the data when the Blocked tab is clicked from the Scale route', async () => {
     renderPage('/portal/production/scale', scaleManagerAccount)
 
-    fireEvent.click(await screen.findByRole('button', { name: /Block/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Blocked/ }))
 
     await waitFor(() =>
       expect(screen.getByRole('status', { name: 'Current location' })).toHaveTextContent(
@@ -440,26 +438,52 @@ describe('ProductionWorkbenchPage', () => {
       ),
     )
     expect(summarizeProductionTasks).toHaveBeenCalledWith(
-      expect.objectContaining({ salesChannelCode: 'ETSY', view: 'QC' }),
+      expect.objectContaining({ salesChannelCode: 'ETSY' }),
     )
     expect(summarizeProductionQueueCounts).toHaveBeenCalledWith({ salesChannelCode: 'ETSY' })
   })
 
-  it('renders a dedicated queue route without the shared queue and channel tabs', async () => {
+  it('renders a dedicated queue route with specialized scale tabs without toolbar channel filter', async () => {
     renderPage('/portal/production/scale?salesChannelCode=etsy')
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'SCALE', designType: 'NORMAL' }),
+        expect.objectContaining({ salesChannelCode: 'ETSY', view: undefined }),
       ),
     )
-    expect(screen.queryByRole('button', { name: /Scale queue/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /All/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Need scale/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Ready to send/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Sent to vendor/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Cancelled/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Amazon' })).not.toBeInTheDocument()
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Design Type' }))
-    fireEvent.click(await screen.findByText('Unclassified'))
+    expect(screen.getByRole('button', { name: /Unclassified/ })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Unclassified/ }))
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenLastCalledWith(
         expect.objectContaining({ designType: 'UNCLASSIFIED' }),
+      ),
+    )
+  })
+
+  it('supports viewing completed and historical tasks from the scale queue route', async () => {
+    renderPage('/portal/production/scale', scaleManagerAccount)
+
+    fireEvent.click(await screen.findByRole('button', { name: /Ready to send/ }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('status', { name: 'Current location' })).toHaveTextContent(
+        '/portal/production/scale?queue=ready',
+      ),
+    )
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          status: 'READY_TO_SEND_VENDOR',
+          psdReadyOnly: false,
+          view: undefined,
+          designType: undefined,
+        }),
       ),
     )
   })
