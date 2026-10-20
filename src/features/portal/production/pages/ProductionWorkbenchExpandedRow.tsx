@@ -118,7 +118,7 @@ export function ProductionWorkbenchExpandedRow({
   onManualSlotUploaded,
 }: {
   readonly task: ProductionTask
-  readonly tab: 'scale' | 'blocked' | 'qc'
+  readonly tab: 'scale' | 'blocked' | 'qc' | 'all' | 'ready' | 'sent' | 'cancelled' | string
   readonly canScale: boolean
   readonly canQc: boolean
   readonly decisions: Record<string, FileDecision>
@@ -139,6 +139,9 @@ export function ProductionWorkbenchExpandedRow({
   readonly onManualSlotUploaded: () => void | Promise<void>
 }) {
   const { t } = useTranslation()
+  const isScale =
+    tab === 'scale' || (tab === 'all' && ['NEED_SCALE', 'QC_REJECTED'].includes(task.status))
+  const isQc = tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
   const checks = task.fileChecks ?? task.qcPreviewFileChecks ?? []
   const psdTemplate = task.scaleContext?.use?.psdTemplate
   const linkedInputAssetIds = new Set(
@@ -224,7 +227,7 @@ export function ProductionWorkbenchExpandedRow({
             <Typography.Text strong>{color || '-'}</Typography.Text>
           </div>
         </div>
-        {tab === 'qc' ? (
+        {isQc ? (
           <div className={styles.notesSummary}>
             <div>
               <Typography.Text type="secondary">
@@ -390,7 +393,7 @@ export function ProductionWorkbenchExpandedRow({
                 )}
               </Typography.Text>
             </div>
-            {tab === 'scale' && canScale ? (
+            {isScale && canScale ? (
               <ManualSlotUploadAction
                 taskId={task.id}
                 existingSlotKeys={checks.map((check) => check.slotKey)}
@@ -402,12 +405,13 @@ export function ProductionWorkbenchExpandedRow({
             {outputChecks.map((check) => {
               const uploading = uploadingFileCheckIds.has(check.id)
               const slotLabel = check.slotLabel || check.slotKey
-              const canInspect =
-                tab === 'qc'
-                  ? canQc
-                  : tab === 'scale' && canScale && Boolean(check.outputAssetDownloadUrl)
+              const canInspect = isQc
+                ? canQc
+                : isScale
+                  ? canScale && Boolean(check.outputAssetDownloadUrl)
+                  : Boolean(check.outputAssetDownloadUrl)
               const hasRework =
-                tab === 'scale' && check.qcStatus === 'REJECTED' && Boolean(check.note?.trim())
+                isScale && check.qcStatus === 'REJECTED' && Boolean(check.note?.trim())
               const preview = (
                 <div className={styles.slotOutput}>
                   {check.outputAssetDownloadUrl ? (
@@ -443,9 +447,7 @@ export function ProductionWorkbenchExpandedRow({
                       type="button"
                       aria-label={t('portal.production.inspectArtwork', { slot: slotLabel })}
                       onClick={() =>
-                        tab === 'scale'
-                          ? onInspectSlot(task, check, true)
-                          : onInspectSlot(task, check)
+                        isScale ? onInspectSlot(task, check, true) : onInspectSlot(task, check)
                       }
                     >
                       {preview}
@@ -463,7 +465,7 @@ export function ProductionWorkbenchExpandedRow({
                     </div>
                   ) : null}
                   <div className={styles.slotActions}>
-                    {tab === 'scale' && canScale ? (
+                    {isScale && canScale ? (
                       <Upload
                         disabled={uploading}
                         showUploadList={false}
@@ -477,7 +479,7 @@ export function ProductionWorkbenchExpandedRow({
                         </Button>
                       </Upload>
                     ) : null}
-                    {tab === 'qc' && canQc && check.outputAssetDownloadUrl ? (
+                    {isQc && canQc && check.outputAssetDownloadUrl ? (
                       <Button
                         type={decisions[check.id]?.decision === 'PASSED' ? 'primary' : 'default'}
                         onClick={() => onPassSlot(check.id)}
@@ -490,7 +492,7 @@ export function ProductionWorkbenchExpandedRow({
               )
             })}
           </div>
-          {tab === 'qc' && canQc ? (
+          {isQc && canQc ? (
             <Button
               type="primary"
               disabled={!canSubmitQc}
@@ -500,7 +502,7 @@ export function ProductionWorkbenchExpandedRow({
               {t('portal.production.submitQc')}
             </Button>
           ) : null}
-          {tab === 'scale' && canScale && canSubmitScale ? (
+          {isScale && canScale && canSubmitScale ? (
             <Button
               type="primary"
               loading={submittingScale}

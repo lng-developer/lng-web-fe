@@ -189,7 +189,7 @@ export const uploadDesignAsset = async (
   options?: { onProgress?: (percent: number) => void; signal?: AbortSignal },
 ): Promise<DesignAsset> => {
   const extension = file.name ? file.name.split('.').pop()?.toLowerCase() : ''
-  if (extension === 'psd' || extension === 'zip') {
+  if (extension === 'psd' || extension === 'zip' || extension === 'rar') {
     const asset = await uploadMultipartAsset(file, {
       assetPurpose: 'PSD_TEMPLATE',
       onProgress: options?.onProgress,
