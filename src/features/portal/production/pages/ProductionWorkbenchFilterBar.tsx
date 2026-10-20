@@ -25,7 +25,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly status?: ProductionStatus
   readonly scaleDifficultyLevel?: ScaleDifficultyLevel
   readonly dates: DateRangeValue
-  readonly tab: 'scale' | 'blocked' | 'qc'
+  readonly tab: 'scale' | 'blocked' | 'qc' | 'all' | 'ready' | 'sent' | 'cancelled' | string
   readonly statusOptions: FilterOption[]
   readonly scaleAssigneeId?: string
   readonly canAssignScale: boolean
