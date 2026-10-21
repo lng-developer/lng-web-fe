@@ -321,8 +321,8 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       ],
     },
     {
-      key: '/portal/production/scores',
-      labelKey: 'legacyMenu.scaleScores',
+      key: '/portal/work-scores',
+      labelKey: 'shell.navigation.workScores',
       icon: <TbHomeStats size={20} />,
     },
     {
@@ -542,7 +542,7 @@ function canAccessItemDirectly(
     return permissions.has('SHIPMENTS:READ') || permissions.has('SHIPMENTS:WRITE')
   }
 
-  if (key === '/portal/production/scores' || key.startsWith('/portal/production/scores')) {
+  if (key === '/portal/work-scores' || key.startsWith('/portal/work-scores')) {
     return [
       'PRODUCTION:READ',
       'PRODUCTION:WRITE',
