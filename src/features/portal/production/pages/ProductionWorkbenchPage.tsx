@@ -211,7 +211,7 @@ export function ProductionWorkbenchPage({
   )
   const isScaleTab = tab === 'need_scale' || tab === 'qc_rejected' || tab === 'unclassified'
   const canAssignScale =
-    (isScaleTab || tab === 'all') &&
+    (isScaleTab || tab === 'all' || tab === 'blocked') &&
     (allowed.has('PRODUCTION:WRITE') || allowed.has('PRODUCTION:SCALE_ASSIGN'))
   const canAssignProductionTask = useCallback(
     (task: ProductionTask) =>
@@ -321,9 +321,10 @@ export function ProductionWorkbenchPage({
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
+      scaleDifficultyLevel,
       ...createdDates,
     }),
-    [createdDates, deferredSearch, salesChannelCode],
+    [createdDates, deferredSearch, salesChannelCode, scaleDifficultyLevel],
   )
   const queueFilters = useMemo(
     () => ({ search: deferredSearch || undefined, salesChannelCode }),
