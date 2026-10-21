@@ -493,7 +493,7 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 10, page: 1, view: 'SCALE' }),
+        expect.objectContaining({ limit: 10, page: 1, view: undefined }),
       ),
     )
 
@@ -502,7 +502,7 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 50, page: 1, view: 'SCALE' }),
+        expect.objectContaining({ limit: 50, page: 1, view: undefined }),
       ),
     )
   })
