@@ -5,7 +5,6 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd'
 
 import { ApiError } from '@/shared/api'
-import { brandAssets } from '@/shared/config/brandAssets'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 
@@ -39,7 +38,7 @@ export function LoginPage() {
       </div>
       <section className={styles.intro} aria-label="LNG Web">
         <div className={styles.introInner}>
-          <img className={styles.logo} src={brandAssets.logoWide} alt={t('app.name')} />
+          <img className={styles.logo} src="/assets/images/login-lng-3d.png" alt={t('app.name')} />
           <Typography.Title level={1} className={styles.introTitle}>
             {t('auth.login.title')}
           </Typography.Title>

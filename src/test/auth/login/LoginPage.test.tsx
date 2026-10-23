@@ -29,6 +29,18 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /sign in|đăng nhập/i })).toBeVisible()
   })
 
+  it('uses the dedicated 3D LNG background visual', () => {
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <LoginPage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByAltText('LNG Web')).toHaveAttribute('src', '/assets/images/login-lng-3d.png')
+  })
+
   it('offers language and appearance switching before sign in', () => {
     render(
       <MemoryRouter>
