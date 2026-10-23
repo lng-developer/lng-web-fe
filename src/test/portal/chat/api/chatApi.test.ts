@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() } }))
+vi.mock('@/features/auth/microsoft/msalClient', () => ({ getMsalInstance: vi.fn() }))
 
 import {
   createConversation,
@@ -10,6 +11,7 @@ import {
   markChatConversationRead,
   sendChatMessage,
 } from '@/features/portal/chat/api/chatApi'
+import { getMsalInstance } from '@/features/auth/microsoft/msalClient'
 import { apiClient } from '@/shared/api'
 
 describe('chatApi', () => {
@@ -49,5 +51,20 @@ describe('chatApi', () => {
       { body: 'hello', assetIds: ['asset-1'] },
     )
     expect(apiClient.patch).toHaveBeenCalledWith('/api/chat/conversations/conversation-1/read')
+  })
+
+  it('sends a Portal message without waiting for an optional Teams token refresh', async () => {
+    vi.mocked(getMsalInstance).mockResolvedValue({
+      getAllAccounts: () => [{}],
+      acquireTokenSilent: () => new Promise(() => undefined),
+    } as never)
+
+    const send = sendChatMessage('conversation-1', { body: 'hello', assetIds: [] })
+
+    await expect(send).resolves.toEqual({})
+    expect(apiClient.post).toHaveBeenCalledWith('/api/chat/conversations/conversation-1/messages', {
+      body: 'hello',
+      assetIds: [],
+    })
   })
 })

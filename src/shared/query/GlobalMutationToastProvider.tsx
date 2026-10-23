@@ -48,8 +48,8 @@ export function GlobalMutationToastProvider() {
               ? state.error.message
               : undefined) || undefined
           notification.open({
-            className: styles.feedbackToastNotification,
-            closable: false,
+            className: `${styles.feedbackToastNotification} ${styles.feedbackToastError}`,
+            closable: true,
             duration: 5,
             title: <FeedbackAlert type="error" title={title} description={description} />,
             placement: 'topRight',
@@ -63,7 +63,7 @@ export function GlobalMutationToastProvider() {
           const title = t('globalFeedback.actionSucceeded', { action })
           notification.open({
             className: styles.feedbackToastNotification,
-            closable: false,
+            closable: true,
             duration: 5,
             title: <FeedbackAlert type="success" title={title} />,
             placement: 'topRight',

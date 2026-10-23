@@ -31,6 +31,7 @@ import {
   DataFreshness,
   FeedbackAlert,
   FormattedDateTime,
+  CopyableOrderId,
   type PopupModalAnchor,
   StatusTag,
   UiTabLabel,
@@ -261,9 +262,7 @@ export const OrderWorkbenchPage = () => {
       {
         title: t('orders.columns.order'),
         width: '14%',
-        render: (_, row) => (
-          <span className={styles.orderIdChip}>{row.order.externalOrderId || '—'}</span>
-        ),
+        render: (_, row) => <CopyableOrderId hideIcon value={row.order.externalOrderId} />,
       },
       {
         title: t('orders.columns.status'),

@@ -23,7 +23,10 @@ const isDirectExternalUrl = (downloadUrl: string) => {
 }
 
 export function useAuthenticatedMediaUrl(downloadUrl?: string | null): AuthenticatedMediaUrlState {
-  const directUrl = downloadUrl && isDirectExternalUrl(downloadUrl) ? downloadUrl : null
+  const directUrl =
+    downloadUrl && (isDirectExternalUrl(downloadUrl) || /^(blob:|data:)/i.test(downloadUrl))
+      ? downloadUrl
+      : null
   const mediaQuery = useQuery({
     queryKey: ['media-preview', downloadUrl],
     queryFn: ({ signal }) => fetchMediaBlob(downloadUrl!, signal),

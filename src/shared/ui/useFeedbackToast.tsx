@@ -8,8 +8,8 @@ export function useFeedbackToast() {
 
   return (type: FeedbackAlertProps['type'], title: string, description?: string) => {
     notification.open({
-      className: styles.feedbackToastNotification,
-      closable: false,
+      className: `${styles.feedbackToastNotification} ${type === 'error' ? styles.feedbackToastError : ''}`,
+      closable: true,
       duration: 5,
       title: <FeedbackAlert type={type} title={title} description={description} />,
       placement: 'topRight',

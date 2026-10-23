@@ -12,6 +12,7 @@ export const CopyableText = memo(function CopyableText({
   strong = false,
   copiedMessage,
   title,
+  hideIcon = false,
 }: {
   readonly value?: string | null
   readonly fallback?: string
@@ -19,6 +20,7 @@ export const CopyableText = memo(function CopyableText({
   readonly strong?: boolean
   readonly copiedMessage: string
   readonly title: string
+  readonly hideIcon?: boolean
 }) {
   const { message } = App.useApp()
 
@@ -49,7 +51,7 @@ export const CopyableText = memo(function CopyableText({
         }}
       >
         <span className={styles.badgeText}>{value}</span>
-        <CopyOutlined className={styles.copyIcon} aria-hidden />
+        {hideIcon ? null : <CopyOutlined className={styles.copyIcon} aria-hidden />}
       </Typography.Text>
     </Tooltip>
   )
@@ -59,10 +61,12 @@ export const CopyableOrderId = memo(function CopyableOrderId({
   value,
   fallback = '-',
   strong = false,
+  hideIcon = false,
 }: {
   readonly value?: string | null
   readonly fallback?: string
   readonly strong?: boolean
+  readonly hideIcon?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -74,6 +78,7 @@ export const CopyableOrderId = memo(function CopyableOrderId({
       strong={strong}
       title={t('common.copyOrderId')}
       copiedMessage={t('common.orderIdCopied')}
+      hideIcon={hideIcon}
     />
   )
 })

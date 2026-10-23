@@ -1,4 +1,10 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import {
   getUnreadCount,
@@ -30,16 +36,19 @@ export function useNotificationCenter(open: boolean, limit: number, unreadOnly =
     staleTime: 30_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   })
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: notificationKey })
 
   const readMutation = useMutation({
     mutationFn: markNotificationRead,
+    meta: { skipGlobalToast: true },
   })
 
   const readAllMutation = useMutation({
     mutationFn: markAllNotificationsRead,
+    meta: { skipGlobalToast: true },
   })
 
   return {

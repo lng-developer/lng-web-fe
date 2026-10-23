@@ -61,6 +61,8 @@ describe('ProfileSetupPage', () => {
     renderProfileSetup()
 
     expect(await screen.findByText('Jane Nguyen')).toBeVisible()
+    expect(screen.getByLabelText('Full name')).toHaveValue('Jane Nguyen')
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Jane Nguyen Tran' } })
     fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0900000000' } })
     fireEvent.change(screen.getByLabelText('Personal email'), {
       target: { value: 'jane@example.com' },
@@ -80,6 +82,7 @@ describe('ProfileSetupPage', () => {
     await waitFor(() =>
       expect(updateMyPersonalProfile).toHaveBeenCalledWith(
         expect.objectContaining({
+          fullName: 'Jane Nguyen Tran',
           phoneNumber: '0900000000',
           personalEmail: 'jane@example.com',
           address: 'Ha Noi',
@@ -141,6 +144,57 @@ describe('ProfileSetupPage', () => {
     expect(screen.getByLabelText('Emergency phone')).toHaveValue('0911111111')
     expect(screen.getByLabelText('Relationship').closest('.ant-select')).toHaveTextContent('Parent')
     expect(loadMyEmployeeProfile).toHaveBeenCalledTimes(1)
+  })
+
+  it('opens the invalid tab and shows the backend validation detail beside its field', async () => {
+    let rejectUpdate!: (cause: Error) => void
+    vi.mocked(updateMyPersonalProfile).mockImplementation(
+      () =>
+        new Promise((_, reject) => {
+          rejectUpdate = reject
+        }),
+    )
+    renderProfileSetup()
+
+    await screen.findByText('Jane Nguyen')
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0900000000' } })
+    fireEvent.change(screen.getByLabelText('Personal email'), {
+      target: { value: 'jane@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Ha Noi' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
+    fireEvent.change(screen.getByLabelText('Emergency contact', { selector: 'input' }), {
+      target: { value: 'Parent' },
+    })
+    fireEvent.change(screen.getByLabelText('Emergency phone'), { target: { value: '0911111111' } })
+    await selectRelationship('Parent')
+    fireEvent.click(screen.getByRole('button', { name: /Complete setup/ }))
+    await waitFor(() => expect(updateMyPersonalProfile).toHaveBeenCalledOnce())
+
+    fireEvent.click(screen.getByRole('tab', { name: /Personal information/i }))
+    rejectUpdate(
+      new ApiError('Validation failed', {
+        code: 'VALIDATION_ERROR',
+        status: 400,
+        details: [
+          {
+            path: ['emergencyContact', 'phone'],
+            message: 'Emergency phone is required',
+          },
+        ],
+      }),
+    )
+
+    expect(await screen.findByRole('tab', { name: /Emergency contact/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    await waitFor(() =>
+      expect(document.querySelector('.ant-form-item-explain-error')).toHaveTextContent(
+        'Emergency phone is required',
+      ),
+    )
+    expect(screen.getByLabelText('Emergency phone')).toHaveAttribute('aria-invalid', 'true')
   })
 
   it('offers language switching during account setup', async () => {

@@ -31,6 +31,13 @@ import {
 
 type MenuClickInfo = Parameters<NonNullable<MenuProps['onClick']>>[0]
 
+function getLoadedImageUrl(event: MouseEvent<HTMLElement>, fallbackUrl: string) {
+  const target = event.currentTarget
+  const image =
+    target instanceof HTMLImageElement ? target : target.parentElement?.querySelector('img')
+  return image?.currentSrc || image?.src || fallbackUrl
+}
+
 type OrderItemPanelProps = {
   readonly item: OrderWorkbenchItem
   readonly canWrite: boolean
@@ -71,7 +78,6 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     () => customizationInputs.filter((input) => input.assetDownloadUrl),
     [customizationInputs],
   )
-  const customizationImage = buyerImageInputs[0]?.assetDownloadUrl
   const customizationPreview = item.customization?.previewImageUrl
   const buyerImageUrls = useMemo(
     () => new Set(buyerImageInputs.map((input) => input.assetDownloadUrl)),
@@ -114,21 +120,6 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     : item.mapping?.status !== 'READY'
       ? t('orders.actions.recheckProductionNeedsMapping')
       : t('orders.actions.recheckProductionShort')
-
-  const relatedImages = useMemo(
-    () =>
-      Array.from(
-        new Set([
-          customizationPreview,
-          customizationImage,
-          ...artworkImages.map((image) => image.assetDownloadUrl),
-          ...customizationInputs.map((input) => input.assetDownloadUrl),
-        ]),
-      )
-        .filter((image): image is string => Boolean(image))
-        .slice(0, 5),
-    [artworkImages, customizationPreview, customizationImage, customizationInputs],
-  )
 
   const customizationValueInputs = customizationInputs.filter((input) => !input.assetDownloadUrl)
   const [showAllCustomizations, setShowAllCustomizations] = useState(false)
@@ -244,8 +235,10 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               downloadUrl={mainListingImage}
               alt={t('orders.fields.mainListingImage')}
               style={{ cursor: 'zoom-in' }}
-              onClick={(event) => onOpenImageViewer(event, mainListingImage, [mainListingImage])}
-              fallback="/assets/images/favicon.svg"
+              onClick={(event) => {
+                const url = getLoadedImageUrl(event, mainListingImage)
+                onOpenImageViewer(event, url, [url])
+              }}
             />
           </>
         ) : null}
@@ -278,10 +271,10 @@ export const OrderItemPanel = memo(function OrderItemPanel({
                     downloadUrl={image.assetDownloadUrl}
                     alt={image.filename || t('orders.fields.image')}
                     style={{ cursor: 'zoom-in' }}
-                    onClick={(event) =>
-                      onOpenImageViewer(event, image.assetDownloadUrl, relatedImages)
-                    }
-                    fallback="/assets/images/favicon.svg"
+                    onClick={(event) => {
+                      const url = getLoadedImageUrl(event, image.assetDownloadUrl)
+                      onOpenImageViewer(event, url, [url])
+                    }}
                   />
                 ))}
               </div>
@@ -388,19 +381,20 @@ export const OrderItemPanel = memo(function OrderItemPanel({
                     height={72}
                     downloadUrl={input.assetDownloadUrl}
                     alt={input.label || t('orders.fields.image')}
-                    fallback="/assets/images/favicon.svg"
                     style={{ cursor: 'zoom-in' }}
-                    onClick={(event) =>
-                      onOpenImageViewer(event, input.assetDownloadUrl, relatedImages)
-                    }
+                    onClick={(event) => {
+                      const url = getLoadedImageUrl(event, input.assetDownloadUrl)
+                      onOpenImageViewer(event, url, [url])
+                    }}
                   />
                   <Button
                     size="small"
                     type="link"
                     icon={<LinkOutlined />}
-                    onClick={(event) =>
-                      onOpenImageViewer(event, input.assetDownloadUrl, relatedImages)
-                    }
+                    onClick={(event) => {
+                      const url = getLoadedImageUrl(event, input.assetDownloadUrl)
+                      onOpenImageViewer(event, url, [url])
+                    }}
                   >
                     {t('orders.fields.image')}
                   </Button>

@@ -128,6 +128,7 @@ export type StaffProvisioningInput = Omit<
 }
 
 export type PersonalProfileInput = {
+  fullName: string
   gender?: string | null
   birthDate?: string | null
   phoneNumber: string

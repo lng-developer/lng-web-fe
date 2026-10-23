@@ -15,8 +15,15 @@ vi.mock('@/features/hr/api/hrApi', () => ({
   loadMyEmployeeProfile: vi.fn(),
 }))
 vi.mock('@/app/layout/MyProfileModal', () => ({
-  MyProfileModal: ({ open }: { open: boolean }) =>
-    open ? <div role="dialog">Profile modal</div> : null,
+  MyProfileModal: ({ open, onEdit }: { open: boolean; onEdit: () => void }) =>
+    open ? (
+      <div role="dialog">
+        Profile modal
+        <button type="button" onClick={onEdit}>
+          Edit profile
+        </button>
+      </div>
+    ) : null,
 }))
 
 const account: CurrentAccount = {
@@ -78,6 +85,16 @@ describe('AccountMenu', () => {
         document.querySelector('img[src="data:image/png;base64,YXZhdGFy"]'),
       ).toBeInTheDocument(),
     )
+  })
+
+  it('opens the self-profile editor from the modal', async () => {
+    const router = renderMenu()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }))
+    fireEvent.click(await screen.findByText('My profile'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit profile' }))
+
+    expect(router.state.location.pathname).toBe('/hr/me/profile')
   })
 
   it('logs out from the dropdown', async () => {

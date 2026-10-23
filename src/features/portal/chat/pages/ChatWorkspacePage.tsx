@@ -29,7 +29,6 @@ import type {
 } from '@/features/portal/chat/api/chatApi'
 import {
   createConversation,
-  getMsGraphToken,
   listChatConversations,
   listChatMessages,
   listChatParticipants,
@@ -350,16 +349,14 @@ export function ChatWorkspacePage() {
     mutationFn: async () => {
       if (!activeConversationId) throw new Error('No conversation selected')
       const body = draft.trim()
-      const [uploadedAssets, msGraphToken] = await Promise.all([
-        Promise.all(files.map((file) => uploadMediaAsset(file.originFileObj as File))),
-        getMsGraphToken(),
-      ])
+      const uploadedAssets = await Promise.all(
+        files.map((file) => uploadMediaAsset(file.originFileObj as File)),
+      )
       const input = {
         body,
         assetIds: uploadedAssets.map(({ id }) => id),
-        ...(msGraphToken ? { msGraphToken } : {}),
       }
-      return socketRef.current
+      return socketRef.current?.connected
         ? sendSocketMessage(socketRef.current, activeConversationId, input)
         : sendChatMessage(activeConversationId, input)
     },

@@ -85,6 +85,43 @@ describe('AuthenticatedMediaImage', () => {
     expect(screen.getByAltText('Protected preview')).toHaveAttribute('src', '/fallback.svg')
   })
 
+  it('renders nothing when protected media is unavailable and no fallback was provided', async () => {
+    vi.mocked(fetchMediaBlob).mockRejectedValue(new Error('Media not found'))
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <AuthenticatedMediaImage
+          downloadUrl="/api/media/assets/missing/download"
+          alt="Unavailable preview"
+        />
+      </QueryClientProvider>,
+    )
+
+    await waitFor(() =>
+      expect(screen.queryByAltText('Unavailable preview')).not.toBeInTheDocument(),
+    )
+  })
+
+  it('removes a preview when the browser cannot render the media', async () => {
+    vi.mocked(fetchMediaBlob).mockResolvedValue(new Blob(['not-an-image']))
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <AuthenticatedMediaImage
+          downloadUrl="/api/media/assets/invalid/download"
+          alt="Invalid preview"
+        />
+      </QueryClientProvider>,
+    )
+
+    const preview = await screen.findByAltText('Invalid preview')
+    preview.dispatchEvent(new Event('error'))
+
+    await waitFor(() => expect(screen.queryByAltText('Invalid preview')).not.toBeInTheDocument())
+  })
+
   it('reuses a protected-media blob when the same image remounts', async () => {
     vi.mocked(fetchMediaBlob).mockResolvedValue(new Blob(['cached']))
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

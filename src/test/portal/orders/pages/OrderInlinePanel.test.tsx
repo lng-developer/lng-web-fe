@@ -27,11 +27,17 @@ vi.mock('@/shared/media', async (importOriginal) => {
     ...actual,
     AuthenticatedMediaImage: ({
       alt,
-      downloadUrl,
+      downloadUrl: _downloadUrl,
       ...props
-    }: React.ImgHTMLAttributes<HTMLImageElement> & { downloadUrl?: string | null }) => (
-      <img {...props} alt={alt} src={downloadUrl ?? undefined} />
-    ),
+    }: React.ImgHTMLAttributes<HTMLImageElement> & { downloadUrl?: string | null }) => {
+      void _downloadUrl
+      return <img {...props} alt={alt} src="blob:http://localhost:5173/customization-thumbnail" />
+    },
+    useAuthenticatedMediaUrl: (downloadUrl?: string | null) => ({
+      url: downloadUrl ?? null,
+      loading: false,
+      error: null,
+    }),
   }
 })
 
@@ -685,6 +691,69 @@ describe('OrderInlinePanel', () => {
     expect(screen.queryByAltText('archive-preview.jpg')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /orders.fields.customizationArtwork/ }))
     expect(screen.getByAltText('archive-preview.jpg')).toBeInTheDocument()
+  })
+
+  it('opens customization artwork with the already-loaded thumbnail URL', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            inputs: [],
+            extractedImages: [
+              {
+                filename: 'zoomable-artwork.jpg',
+                assetDownloadUrl: '/api/media/assets/zoomable-artwork/download',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    fireEvent.click(screen.getByRole('button', { name: /orders.fields.customizationArtwork/ }))
+    fireEvent.click(screen.getByAltText('zoomable-artwork.jpg'))
+
+    expect(screen.getByRole('dialog').querySelector('img')).toHaveAttribute(
+      'src',
+      'blob:http://localhost:5173/customization-thumbnail',
+    )
+  })
+
+  it('opens the buyer image link with its already-loaded thumbnail URL', () => {
+    const source: OrderWorkbenchRow = {
+      ...row,
+      items: [
+        {
+          ...row.items[0],
+          customization: {
+            status: 'PARSED',
+            needsReview: false,
+            inputs: [
+              {
+                type: 'IMAGE',
+                label: 'Buyer image',
+                assetDownloadUrl: '/api/media/assets/buyer-image/download',
+              },
+            ],
+          },
+        },
+      ],
+    }
+
+    renderPanel(true, undefined, source)
+
+    fireEvent.click(screen.getByRole('button', { name: /orders.fields.image/ }))
+
+    expect(screen.getByRole('dialog').querySelector('img')).toHaveAttribute(
+      'src',
+      'blob:http://localhost:5173/customization-thumbnail',
+    )
   })
 
   it('does not render buyer-uploaded artwork twice', () => {

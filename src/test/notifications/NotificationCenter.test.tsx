@@ -5,6 +5,7 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
 import {
   listNotifications,
+  markAllNotificationsRead,
   markNotificationRead,
 } from '@/features/notifications/api/notificationApi'
 import { useResourceSelection } from '@/shared/ui'
@@ -41,7 +42,7 @@ beforeEach(async () => {
   })
 })
 afterEach(cleanup)
-it('opens the exact resource without treating it as read or resolved', async () => {
+it('navigates to the exact resource and marks read when clicking the notification', async () => {
   render(
     <MemoryRouter>
       <AppProviders>
@@ -51,9 +52,11 @@ it('opens the exact resource without treating it as read or resolved', async () 
     </MemoryRouter>,
   )
   fireEvent.click(screen.getByRole('button', { name: 'Open notifications' }))
-  fireEvent.click(await screen.findByRole('button', { name: 'Open details' }))
+  fireEvent.click(await screen.findByText('Shipment needs attention'))
   expect(screen.getByText('/portal/shipments?resourceId=shipment-1')).toBeInTheDocument()
-  expect(markNotificationRead).not.toHaveBeenCalled()
+  await waitFor(() =>
+    expect(markNotificationRead).toHaveBeenCalledWith('notification-1', expect.any(Object)),
+  )
 })
 it('keeps mark-read available independently of navigation', async () => {
   render(
@@ -68,6 +71,20 @@ it('keeps mark-read available independently of navigation', async () => {
   await waitFor(() =>
     expect(markNotificationRead).toHaveBeenCalledWith('notification-1', expect.any(Object)),
   )
+})
+it('marks all notifications read when clicking mark all read button', async () => {
+  render(
+    <MemoryRouter>
+      <AppProviders>
+        <NotificationCenter />
+      </AppProviders>
+    </MemoryRouter>,
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Open notifications' }))
+  const markAllBtn = await screen.findByRole('button', { name: 'Mark all as read' })
+  await waitFor(() => expect(markAllBtn).not.toBeDisabled())
+  fireEvent.click(markAllBtn)
+  await waitFor(() => expect(markAllNotificationsRead).toHaveBeenCalled())
 })
 it('selects URL resources and closes them without dropping unrelated filters', () => {
   function Selection() {

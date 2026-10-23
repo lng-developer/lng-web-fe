@@ -57,6 +57,30 @@ const duplicateProfileFields = new Set<DuplicateProfileField>([
   'taxIdentification',
 ])
 
+type ValidationErrorField = {
+  name: (string | number)[]
+  errors: string[]
+}
+
+function getValidationErrorFields(cause: unknown): ValidationErrorField[] {
+  if (!(cause instanceof ApiError) || cause.code !== 'VALIDATION_ERROR') return []
+  if (!Array.isArray(cause.details)) return []
+
+  return cause.details.flatMap((detail) => {
+    if (!detail || typeof detail !== 'object') return []
+    const { message, path } = detail as { message?: unknown; path?: unknown }
+    if (
+      !Array.isArray(path) ||
+      !path.length ||
+      !path.every((part) => typeof part === 'string' || typeof part === 'number')
+    ) {
+      return []
+    }
+    if (typeof message !== 'string' || !message.trim()) return []
+    return [{ name: path, errors: [message] }]
+  })
+}
+
 function getDuplicateProfileField(cause: unknown) {
   if (!(cause instanceof ApiError) || cause.code !== 'CONFLICT_ERROR') return undefined
   const field = (cause.details as { field?: unknown } | undefined)?.field
@@ -107,6 +131,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
         if (!active) return
         setProfile(value)
         form.setFieldsValue({
+          fullName: value.fullName || '',
           gender: value.gender,
           birthDate: value.birthDate ? dayjs(value.birthDate) : null,
           phoneNumber: value.phoneNumber || '',
@@ -152,14 +177,22 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     setSubmitting(true)
     try {
       if (avatarFile) await uploadMyEmployeeAvatar(avatarFile)
-      await updateMyPersonalProfile({
+      const updatedProfile = await updateMyPersonalProfile({
         ...values,
         birthDate: serializeBirthDate(values.birthDate),
       })
+      setProfile(updatedProfile)
       showFeedbackToast('success', t('actionFeedback.updated'))
       navigate(embedded ? '/hr/me/profile' : '/operations-dashboard', { replace: true })
     } catch (cause) {
       form.setFieldsValue(values)
+      const validationFields = getValidationErrorFields(cause)
+      if (validationFields.length) {
+        form.setFields(validationFields)
+        setActiveTab(tabKeyForField(validationFields[0].name))
+        showFeedbackToast('error', t('auth.setup.validationTitle'), validationFields[0].errors[0])
+        return
+      }
       const duplicateField = getDuplicateProfileField(cause)
       if (duplicateField) {
         const description = t('auth.setup.profile.duplicateDescription', {
@@ -199,6 +232,11 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       children: (
         <SectionCard title={t('auth.setup.profile.personal')}>
           <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="fullName" label={t('hr.fullName')} rules={required}>
+                <Input />
+              </Form.Item>
+            </Col>
             <Col xs={24} sm={12}>
               <Form.Item name="gender" label={t('hr.gender')}>
                 <Select

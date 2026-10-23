@@ -9,7 +9,6 @@ vi.mock('@/features/portal/chat/api/chatApi', () => ({
   listChatParticipants: vi.fn(),
   sendChatMessage: vi.fn(),
   markChatConversationRead: vi.fn().mockResolvedValue({}),
-  getMsGraphToken: vi.fn().mockResolvedValue(null),
   syncTeamsChat: vi.fn().mockResolvedValue({ status: 'SYNCED', syncedCount: 0 }),
 }))
 vi.mock('@/features/portal/media/api/mediaApi', () => ({ uploadMediaAsset: vi.fn() }))
@@ -188,6 +187,7 @@ describe('ChatWorkspacePage', () => {
       }
     })
     vi.mocked(createChatSocket).mockReturnValue({
+      connected: true,
       disconnect: vi.fn(),
       emit,
       on: vi.fn(),
@@ -207,6 +207,30 @@ describe('ChatWorkspacePage', () => {
       ),
     )
     expect(sendChatMessage).not.toHaveBeenCalled()
+  })
+
+  it('falls back to REST immediately while the chat socket is reconnecting', async () => {
+    const emit = vi.fn()
+    vi.mocked(createChatSocket).mockReturnValue({
+      connected: false,
+      disconnect: vi.fn(),
+      emit,
+      on: vi.fn(),
+    } as never)
+    renderPage()
+
+    fireEvent.change(await screen.findByPlaceholderText('Write a message'), {
+      target: { value: 'Done' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    await waitFor(() =>
+      expect(sendChatMessage).toHaveBeenCalledWith('conversation-1', {
+        body: 'Done',
+        assetIds: [],
+      }),
+    )
+    expect(emit).not.toHaveBeenCalledWith('message.send', expect.anything(), expect.any(Function))
   })
 
   it('creates a direct conversation by clicking a person', async () => {

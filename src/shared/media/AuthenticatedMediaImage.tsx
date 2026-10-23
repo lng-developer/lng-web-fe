@@ -1,4 +1,4 @@
-import type { ImgHTMLAttributes } from 'react'
+import { useState, type ImgHTMLAttributes } from 'react'
 
 import { useAuthenticatedMediaUrl } from './useAuthenticatedMediaUrl'
 
@@ -12,9 +12,24 @@ export function AuthenticatedMediaImage({
   downloadUrl,
   fallback,
   alt,
+  onError,
   ...imageProps
 }: AuthenticatedMediaImageProps) {
   const { url } = useAuthenticatedMediaUrl(downloadUrl)
+  const [failedSrc, setFailedSrc] = useState<string | undefined>()
 
-  return <img {...imageProps} alt={alt} src={url ?? fallback} />
+  const src = url ?? fallback
+  if (!src || failedSrc === src) return null
+
+  return (
+    <img
+      {...imageProps}
+      alt={alt}
+      src={src}
+      onError={(event) => {
+        setFailedSrc(src)
+        onError?.(event)
+      }}
+    />
+  )
 }

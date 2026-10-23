@@ -102,33 +102,15 @@ export const listChatMessages = async (conversationId: string, params: Query = {
     }),
   )
 
-import { getMsalInstance } from '@/features/auth/microsoft/msalClient'
-
-export async function getMsGraphToken(): Promise<string | null> {
-  try {
-    const pca = await getMsalInstance()
-    const accounts = pca.getAllAccounts()
-    if (!accounts.length) return null
-    const result = await pca.acquireTokenSilent({
-      account: accounts[0],
-      scopes: ['ChatMessage.Send', 'Chat.ReadWrite'],
-    })
-    return result.accessToken || null
-  } catch {
-    return null
-  }
-}
-
 export const sendChatMessage = async (conversationId: string, input: SendChatMessageInput) => {
-  const msToken = input.msGraphToken || (await getMsGraphToken())
   const payload = {
     body: input.body,
     assetIds: input.assetIds,
-    ...(msToken ? { msGraphToken: msToken } : {}),
+    ...(input.msGraphToken ? { msGraphToken: input.msGraphToken } : {}),
   }
-  const response = msToken
+  const response = input.msGraphToken
     ? await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, payload, {
-        headers: { 'x-ms-graph-token': msToken },
+        headers: { 'x-ms-graph-token': input.msGraphToken },
       })
     : await apiClient.post(`/api/chat/conversations/${conversationId}/messages`, payload)
   return unwrap<ChatMessage>(response)
