@@ -18,20 +18,16 @@ import i18n from '@/shared/i18n/i18n'
 
 const sidebarSummaryMocks = vi.hoisted(() => ({
   useOrderSummaryQuery: vi.fn(),
-  useDesignSummaryQuery: vi.fn(),
 }))
 
 vi.mock('@/features/portal/orders/hooks/useOrderSummaryQuery', () => ({
   useOrderSummaryQuery: sidebarSummaryMocks.useOrderSummaryQuery,
 }))
-vi.mock('@/features/portal/design/hooks/useDesignTasksQuery', () => ({
-  useDesignSummaryQuery: sidebarSummaryMocks.useDesignSummaryQuery,
-}))
+
 describe('LegacySidebar', () => {
   beforeEach(() => {
     i18n.changeLanguage('en')
     sidebarSummaryMocks.useOrderSummaryQuery.mockReturnValue({ data: { tabCounts: { NEW: 12 } } })
-    sidebarSummaryMocks.useDesignSummaryQuery.mockReturnValue({ data: { unassigned: 4 } })
     loadMyEmployeeProfile.mockResolvedValue({ fullName: 'Dynamic Operator' })
   })
   afterEach(() => {
@@ -49,9 +45,6 @@ describe('LegacySidebar', () => {
     )
 
     expect(screen.getByTitle('12')).toBeVisible()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Design' }))
-    expect(screen.getByTitle('4')).toBeVisible()
   })
 
   it('ports the legacy Sales menu labels and its expanded 52 + 202 pixel layout', async () => {

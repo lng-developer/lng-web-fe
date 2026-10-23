@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/chat/api/chatApi', () => ({
+  getChatUnreadCount: vi.fn().mockResolvedValue({ unreadCount: 0 }),
   createConversation: vi.fn(),
   listChatConversations: vi.fn(),
   listChatMessages: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock('@/features/portal/chat/realtime/chatSocket', () => ({
 }))
 
 import {
+  getChatUnreadCount,
   createConversation,
   listChatConversations,
   listChatMessages,
@@ -49,6 +51,7 @@ describe('ChatShell', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getChatUnreadCount).mockResolvedValue({ unreadCount: 0 })
     vi.mocked(listChatConversations).mockResolvedValue({
       items: [
         {
@@ -58,8 +61,8 @@ describe('ChatShell', () => {
           shopId: null,
           relatedResource: null,
           participantAccountIds: ['account-1', 'account-2'],
-          lastMessageAt: null,
-          lastMessagePreview: null,
+          lastMessageAt: '2026-08-11T01:00:00.000Z',
+          lastMessagePreview: 'Hello',
           lastMessageSenderAccountId: null,
           unreadCount: 0,
           hasUnreadFromOthers: false,
@@ -79,6 +82,7 @@ describe('ChatShell', () => {
   })
 
   it('shows the floating chat popup trigger when another account sends a realtime message', async () => {
+    vi.mocked(getChatUnreadCount).mockResolvedValue({ unreadCount: 1 })
     const handlers: Record<string, (payload: never) => void> = {}
     vi.mocked(createChatSocket).mockReturnValue({
       disconnect: vi.fn(),
@@ -130,6 +134,32 @@ describe('ChatShell', () => {
     })
 
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(2))
+  })
+
+  it('shows a direct-message participant full name instead of their username', async () => {
+    vi.mocked(listChatParticipants).mockResolvedValue({
+      items: [
+        {
+          id: 'account-2',
+          email: 'luan@lng.co',
+          displayName: 'luannd',
+          fullName: 'Nguyễn Đức Luân',
+          status: 'active',
+          presence: 'ONLINE',
+        },
+      ],
+    })
+    renderShell()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
+
+    expect(await screen.findByText('Nguyễn Đức Luân')).toBeVisible()
+  })
+
+  it('uses the total unread count even when previews have no unread messages', async () => {
+    vi.mocked(getChatUnreadCount).mockResolvedValue({ unreadCount: 24 })
+    renderShell()
+    expect(await screen.findByTitle('24')).toBeInTheDocument()
   })
 
   it('closes preview popup when clicking outside', async () => {
@@ -184,8 +214,8 @@ describe('ChatShell', () => {
           shopId: null,
           relatedResource: null,
           participantAccountIds: ['account-1', 'account-2'],
-          lastMessageAt: null,
-          lastMessagePreview: null,
+          lastMessageAt: '2026-08-11T01:00:00.000Z',
+          lastMessagePreview: 'Hello',
           lastMessageSenderAccountId: null,
           unreadCount: 0,
           hasUnreadFromOthers: false,
@@ -199,8 +229,8 @@ describe('ChatShell', () => {
           shopId: null,
           relatedResource: null,
           participantAccountIds: ['account-1', 'account-3'],
-          lastMessageAt: null,
-          lastMessagePreview: null,
+          lastMessageAt: '2026-08-11T01:00:00.000Z',
+          lastMessagePreview: 'Hello',
           lastMessageSenderAccountId: null,
           unreadCount: 0,
           hasUnreadFromOthers: false,
@@ -235,6 +265,7 @@ describe('ChatShell', () => {
   })
 
   it('clears unread badge count when unread conversation is viewed', async () => {
+    vi.mocked(getChatUnreadCount).mockResolvedValue({ unreadCount: 3 })
     vi.mocked(listChatConversations).mockResolvedValue({
       items: [
         {

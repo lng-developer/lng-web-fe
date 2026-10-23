@@ -18,6 +18,7 @@ import { Button, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
+import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { DateRangePicker, FeedbackAlert, SectionCard } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
@@ -60,7 +61,7 @@ export function OperationsDashboardPage() {
   }, [loadOperationalHealth])
 
   if (!value.canViewDashboard) {
-    return <FeedbackAlert type="info" title={t('foundation.portal.noPermission')} />
+    return <AccessDeniedResult />
   }
 
   const handleAddProduct = () => {

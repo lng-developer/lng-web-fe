@@ -93,7 +93,29 @@ export function AccessDeniedResult({
       }}
     >
       <Result
-        status="403"
+        icon={
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <img
+              data-testid="access-denied-image"
+              src="/assets/images/access-denied-cat.jpg"
+              alt={title || defaultTitle}
+              style={{
+                maxWidth: 420,
+                width: '100%',
+                height: 'auto',
+                borderRadius: 16,
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.18)',
+                objectFit: 'contain',
+              }}
+            />
+          </div>
+        }
         title={
           <div
             style={{

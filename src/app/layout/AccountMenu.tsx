@@ -114,7 +114,14 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
       </Dropdown>
       {isProfileOpen && (
         <Suspense fallback={null}>
-          <MyProfileModal open onClose={() => setIsProfileOpen(false)} />
+          <MyProfileModal
+            open
+            onClose={() => setIsProfileOpen(false)}
+            onEdit={() => {
+              setIsProfileOpen(false)
+              navigate('/hr/me/profile')
+            }}
+          />
         </Suspense>
       )}
     </div>

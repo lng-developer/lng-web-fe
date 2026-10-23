@@ -8,6 +8,7 @@ vi.mock('@/features/portal/chat/api/chatApi', () => ({
   listChatMessages: vi.fn(),
   listChatParticipants: vi.fn(),
   sendChatMessage: vi.fn(),
+  markChatConversationRead: vi.fn().mockResolvedValue({}),
   getMsGraphToken: vi.fn().mockResolvedValue(null),
   syncTeamsChat: vi.fn().mockResolvedValue({ status: 'SYNCED', syncedCount: 0 }),
 }))
@@ -22,6 +23,7 @@ vi.mock('@/shared/media', () => ({
 }))
 
 import {
+  markChatConversationRead,
   createConversation,
   listChatConversations,
   listChatMessages,
@@ -40,11 +42,24 @@ function renderPage() {
   )
 }
 
+async function setRecentParticipants() {
+  const page = await listChatConversations()
+  vi.mocked(listChatConversations).mockResolvedValue({
+    ...page,
+    items: ['account-2', 'account-3'].map((id) => ({
+      ...page.items[0],
+      id: `conversation-${id}`,
+      participantAccountIds: [id],
+    })),
+  })
+}
+
 describe('ChatWorkspacePage', () => {
   afterEach(cleanup)
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
     vi.mocked(createChatSocket).mockReturnValue(null)
     vi.mocked(listChatConversations).mockResolvedValue({
       items: [
@@ -131,6 +146,9 @@ describe('ChatWorkspacePage', () => {
 
     expect((await screen.findAllByText('Design handoff'))[0]).toBeVisible()
     expect(await screen.findByText('Please check this file')).toBeVisible()
+    await waitFor(() =>
+      expect(markChatConversationRead).toHaveBeenCalledWith('conversation-1', expect.any(Object)),
+    )
     expect(screen.getByRole('img', { name: 'proof.png' })).toHaveAttribute(
       'src',
       '/api/media/assets/asset-1/download',
@@ -193,7 +211,11 @@ describe('ChatWorkspacePage', () => {
 
   it('creates a direct conversation by clicking a person', async () => {
     renderPage()
-
+    expect(screen.queryByRole('button', { name: /designer@lng.co/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'New message' }))
+    fireEvent.change(screen.getByPlaceholderText('Search company by name or email'), {
+      target: { value: 'designer' },
+    })
     fireEvent.click(await screen.findByRole('button', { name: /designer@lng.co/i }))
 
     await waitFor(() =>
@@ -203,6 +225,10 @@ describe('ChatWorkspacePage', () => {
         participantAccountIds: ['account-2'],
       }),
     )
+    expect(listChatParticipants).toHaveBeenCalledWith({ search: 'designer', limit: 100 })
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /designer@lng.co/i })).not.toBeInTheDocument(),
+    )
   })
 
   it('does not display group creation while group chat is hidden', async () => {
@@ -211,7 +237,27 @@ describe('ChatWorkspacePage', () => {
     expect(screen.queryByRole('button', { name: 'New group' })).not.toBeInTheDocument()
   })
 
+  it('hides empty conversations and people without any messages', async () => {
+    const page = await listChatConversations()
+    vi.mocked(listChatConversations).mockResolvedValue({
+      ...page,
+      items: [
+        {
+          ...page.items[0],
+          participantAccountIds: ['account-2'],
+          lastMessageAt: null,
+          lastMessagePreview: null,
+        },
+      ],
+    })
+    renderPage()
+    await screen.findByText('No messages yet')
+    expect(screen.queryByRole('button', { name: /designer@lng.co/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New message' })).toBeVisible()
+  })
+
   it('filters the chat sidebar by search text', async () => {
+    await setRecentParticipants()
     vi.mocked(listChatParticipants).mockResolvedValue({
       items: [
         { id: 'account-2', email: 'designer@lng.co', status: 'active', presence: 'ONLINE' },
@@ -229,6 +275,7 @@ describe('ChatWorkspacePage', () => {
   })
 
   it('filters participants accent-insensitively and by employee code', async () => {
+    await setRecentParticipants()
     vi.mocked(listChatParticipants).mockResolvedValue({
       items: [
         {

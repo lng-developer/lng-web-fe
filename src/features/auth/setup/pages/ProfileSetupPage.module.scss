@@ -1,7 +1,10 @@
 .workspace {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  gap: 20px;
+  grid-template-columns: 256px minmax(0, 1fr);
+  gap: 28px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
   align-items: start;
 }
 
@@ -15,6 +18,8 @@
   border-radius: 12px;
   background: var(--ant-color-bg-container);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 16px;
 }
 
 .identity :global(.ant-upload-list) {
@@ -33,11 +38,15 @@
   min-width: 0;
 }
 
+.form :global(.ant-tabs-content-holder) {
+  padding-top: 16px;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 20px;
+  padding: 16px 0;
   border-top: 1px solid var(--ant-color-border-secondary);
 }
 

@@ -4695,7 +4695,12 @@
     "directChat": "Direct Chat",
     "activeNow": "Active now",
     "noSearchResults": "No results found",
-    "startConversation": "Start a conversation"
+    "startConversation": "Start a conversation",
+    "newMessage": "New message",
+    "backToConversations": "Back to conversations",
+    "searchCompany": "Search company by name or email",
+    "conversations": "Conversations",
+    "deletedUser": "Deleted user"
   },
   "systemDashboard": {
     "title": "System dashboard",

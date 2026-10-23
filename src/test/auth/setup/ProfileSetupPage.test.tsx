@@ -36,6 +36,7 @@ describe('ProfileSetupPage', () => {
       id: 'profile-1',
       employeeCode: 'J2601',
       fullName: 'Jane Nguyen',
+      emergencyContact: { name: 'Mai Nguyen', phone: '0988888888', relation: 'PARENT' },
       departmentId: 'department-1',
       teamId: 'team-1',
       department: { id: 'department-1', name: 'Production' },
@@ -43,6 +44,11 @@ describe('ProfileSetupPage', () => {
       status: 'ACTIVE',
       onboardingStatus: 'PROFILE_INCOMPLETE',
       isDeleted: false,
+      bankAccount: {
+        bankName: 'VCB',
+        accountNumber: '0123456789',
+        _id: 'bank-account-subdocument-id',
+      } as never,
     })
   })
 
@@ -61,11 +67,14 @@ describe('ProfileSetupPage', () => {
     renderProfileSetup()
 
     expect(await screen.findByText('Jane Nguyen')).toBeVisible()
+    expect(screen.getByLabelText('Full name')).toHaveValue('Jane Nguyen')
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Jane Nguyen Tran' } })
     fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0900000000' } })
     fireEvent.change(screen.getByLabelText('Personal email'), {
       target: { value: 'jane@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Ha Noi' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Legal information/i }))
     fireEvent.click(screen.getByRole('tab', { name: /Emergency contact/i }))
     fireEvent.change(screen.getByLabelText('Emergency contact', { selector: 'input' }), {
       target: { value: 'Parent' },
@@ -80,10 +89,12 @@ describe('ProfileSetupPage', () => {
     await waitFor(() =>
       expect(updateMyPersonalProfile).toHaveBeenCalledWith(
         expect.objectContaining({
+          fullName: 'Jane Nguyen Tran',
           phoneNumber: '0900000000',
           personalEmail: 'jane@example.com',
           address: 'Ha Noi',
           emergencyContact: { name: 'Parent', phone: '0911111111', relation: 'PARENT' },
+          bankAccount: { bankName: 'VCB', accountNumber: '0123456789' },
         }),
       ),
     )
@@ -143,11 +154,49 @@ describe('ProfileSetupPage', () => {
     expect(loadMyEmployeeProfile).toHaveBeenCalledTimes(1)
   })
 
+  it('submits the existing emergency contact even when its tab was not opened', async () => {
+    vi.mocked(updateMyPersonalProfile).mockResolvedValue({
+      id: 'profile-1',
+      employeeCode: 'J2601',
+      fullName: 'Jane Nguyen',
+      departmentId: 'department-1',
+      teamId: 'team-1',
+      status: 'ACTIVE',
+      onboardingStatus: 'READY',
+      isDeleted: false,
+    })
+
+    renderProfileSetup()
+
+    await screen.findByText('Jane Nguyen')
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0900000000' } })
+    fireEvent.change(screen.getByLabelText('Personal email'), {
+      target: { value: 'jane@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Ha Noi' } })
+    fireEvent.click(screen.getByRole('button', { name: /Complete setup/ }))
+
+    await waitFor(() =>
+      expect(updateMyPersonalProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          emergencyContact: { name: 'Mai Nguyen', phone: '0988888888', relation: 'PARENT' },
+        }),
+      ),
+    )
+  })
+
   it('offers language switching during account setup', async () => {
     renderProfileSetup()
 
     await screen.findByText('Jane Nguyen')
     expect(screen.getByRole('button', { name: 'Language' })).toBeVisible()
+  })
+
+  it('uses the selected tab as the only section title', async () => {
+    renderProfileSetup()
+
+    await screen.findByText('Jane Nguyen')
+    expect(screen.queryByRole('heading', { name: 'Personal information' })).not.toBeInTheDocument()
   })
 })
 

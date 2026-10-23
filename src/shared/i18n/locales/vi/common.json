@@ -4695,7 +4695,12 @@
     "directChat": "Trò chuyện trực tiếp",
     "activeNow": "Đang hoạt động",
     "noSearchResults": "Không tìm thấy kết quả",
-    "startConversation": "Bắt đầu cuộc trò chuyện"
+    "startConversation": "Bắt đầu cuộc trò chuyện",
+    "newMessage": "Tin nhắn mới",
+    "backToConversations": "Quay lại hội thoại",
+    "searchCompany": "Tìm người trong công ty theo tên hoặc email",
+    "conversations": "Hội thoại",
+    "deletedUser": "Người dùng đã xóa"
   },
   "systemDashboard": {
     "title": "Bảng điều khiển hệ thống",
