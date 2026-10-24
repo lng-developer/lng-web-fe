@@ -6,14 +6,14 @@ import {
   RiseOutlined,
   ShoppingCartOutlined,
 } from '@ant-design/icons'
-import type { TableColumnsType } from 'antd'
+import { Typography, type TableColumnsType } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { MetricCard, SectionCard } from '@/shared/ui'
 
 import type { SellerDailyProfit, SellerPerformance } from '../api/reportApi'
 import styles from '../pages/ReportWorkspacePage.module.scss'
-import { formatReportMoney, formatReportPercent } from './reportFormatters'
+import { formatReportMoney } from './reportFormatters'
 import { ReportProfitComparisonChart } from './ReportProfitComparisonChart'
 
 interface ReportSalesTabProps {
@@ -52,16 +52,14 @@ type SalesSummary = {
 type SellerMatrixMetricKey =
   | 'orders'
   | 'revenue'
-  | 'baseCost'
-  | 'adSpend'
+  | 'fulfillmentCost'
   | 'fee'
-  | 'tax'
+  | 'adSpend'
   | 'discount'
   | 'grossProfit'
   | 'operatingCost'
   | 'refund'
   | 'netProfit'
-  | 'margin'
 
 type SellerMatrixMetric = {
   key: SellerMatrixMetricKey
@@ -86,6 +84,41 @@ type SellerMatrixGroup = {
   rows: SellerMatrixRow[]
 }
 
+const METRIC_STYLES: Record<
+  SellerMatrixMetricKey,
+  {
+    dotColor: string
+    textColor?: string
+    isBold?: boolean
+  }
+> = {
+  orders: { dotColor: 'var(--ant-color-primary)' },
+  revenue: {
+    dotColor: 'var(--ant-color-primary)',
+    textColor: 'var(--ant-color-primary)',
+    isBold: true,
+  },
+  fulfillmentCost: { dotColor: 'var(--ant-color-warning)', textColor: 'var(--ant-color-warning)' },
+  fee: { dotColor: 'var(--ant-color-warning)', textColor: 'var(--ant-color-warning)' },
+  adSpend: { dotColor: '#7248ba', textColor: '#7248ba' },
+  discount: { dotColor: 'var(--ant-color-error)', textColor: 'var(--ant-color-error)' },
+  grossProfit: {
+    dotColor: 'var(--ant-color-success)',
+    textColor: 'var(--ant-color-success)',
+    isBold: true,
+  },
+  operatingCost: {
+    dotColor: 'var(--ant-color-text-secondary)',
+    textColor: 'var(--ant-color-text-secondary)',
+  },
+  refund: { dotColor: 'var(--ant-color-error)', textColor: 'var(--ant-color-error)' },
+  netProfit: {
+    dotColor: 'var(--ant-color-primary)',
+    textColor: 'var(--ant-color-primary)',
+    isBold: true,
+  },
+}
+
 function formatSellerMatrixValue(
   metricKey: SellerMatrixMetricKey,
   value: number | null,
@@ -93,8 +126,71 @@ function formatSellerMatrixValue(
 ) {
   if (value === null) return '—'
   if (metricKey === 'orders') return value.toLocaleString()
-  if (metricKey === 'margin') return formatReportPercent(value)
   return formatReportMoney(value, currency)
+}
+
+function renderMatrixCellValue(
+  metricKey: SellerMatrixMetricKey,
+  value: number | null,
+  currency: string,
+) {
+  if (value === null) {
+    return <span style={{ color: 'var(--ant-color-text-quaternary)' }}>—</span>
+  }
+  const text = formatSellerMatrixValue(metricKey, value, currency)
+
+  if (metricKey === 'grossProfit' || metricKey === 'netProfit') {
+    const isNegative = value < 0
+    const color = isNegative
+      ? 'var(--ant-color-error)'
+      : metricKey === 'grossProfit'
+        ? 'var(--ant-color-success)'
+        : 'var(--ant-color-primary)'
+    return <span style={{ color, fontWeight: 700 }}>{text}</span>
+  }
+
+  if (metricKey === 'revenue') {
+    return <span style={{ color: 'var(--ant-color-primary)', fontWeight: 600 }}>{text}</span>
+  }
+
+  if (metricKey === 'fulfillmentCost') {
+    return <span style={{ color: 'var(--ant-color-warning)', fontWeight: 500 }}>{text}</span>
+  }
+
+  if (metricKey === 'fee') {
+    return <span style={{ color: 'var(--ant-color-warning)' }}>{text}</span>
+  }
+
+  if (metricKey === 'adSpend') {
+    return <span style={{ color: value > 0 ? '#7248ba' : undefined }}>{text}</span>
+  }
+
+  if (metricKey === 'discount') {
+    return <span style={{ color: value > 0 ? 'var(--ant-color-error)' : undefined }}>{text}</span>
+  }
+
+  if (metricKey === 'refund') {
+    return (
+      <span
+        style={{
+          color: value > 0 ? 'var(--ant-color-error)' : undefined,
+          fontWeight: value > 0 ? 600 : undefined,
+        }}
+      >
+        {text}
+      </span>
+    )
+  }
+
+  if (metricKey === 'operatingCost') {
+    return <span style={{ color: 'var(--ant-color-text-secondary)' }}>{text}</span>
+  }
+
+  if (metricKey === 'orders') {
+    return <span style={{ fontWeight: 500 }}>{text}</span>
+  }
+
+  return <span>{text}</span>
 }
 
 export function ReportSalesTab({
@@ -220,14 +316,17 @@ export function ReportSalesTab({
     () => [
       { key: 'orders', label: t('reports.columns.orders'), value: (row) => row.orderCount },
       { key: 'revenue', label: t('reports.columns.revenue'), value: (row) => row.revenueAmount },
-      { key: 'baseCost', label: t('reports.columns.baseCost'), value: (row) => row.baseCostAmount },
-      { key: 'adSpend', label: t('reports.columns.spend'), value: (row) => row.adSpendAmount || 0 },
+      {
+        key: 'fulfillmentCost',
+        label: t('reports.columns.fulfillmentCost'),
+        value: (row) => row.totalCostAmount,
+      },
       {
         key: 'fee',
         label: t('reports.columns.marketplaceFee'),
         value: (row) => row.marketplaceFeeAmount,
       },
-      { key: 'tax', label: t('reports.columns.tax'), value: (row) => row.taxAmount },
+      { key: 'adSpend', label: t('reports.columns.spend'), value: (row) => row.adSpendAmount || 0 },
       { key: 'discount', label: t('reports.columns.discount'), value: (row) => row.discountAmount },
       {
         key: 'grossProfit',
@@ -244,11 +343,6 @@ export function ReportSalesTab({
         key: 'netProfit',
         label: t('reports.columns.netProfit'),
         value: (row) => row.partialNetProfitAmount ?? row.netProfitAmount,
-      },
-      {
-        key: 'margin',
-        label: t('reports.columns.margin'),
-        value: (row) => row.netMarginBps,
       },
     ],
     [t],
@@ -283,14 +377,6 @@ export function ReportSalesTab({
             [...sellerRows.values()][0]?.sellerName ||
             [...sellerRows.values()][0]?.sellerEmployeeCode ||
             '—'
-          const totalRevenue = dates.reduce<number>(
-            (sum, date) => sum + (sellerRows.get(date)?.revenueAmount || 0),
-            0,
-          )
-          const totalNetProfit = dates.reduce<number>((sum, date) => {
-            const row = sellerRows.get(date)
-            return sum + (row ? sellerMatrixMetrics[10].value(row) || 0 : 0)
-          }, 0)
           return sellerMatrixMetrics.map((metric, metricIndex) => {
             const dateValues = Object.fromEntries(
               dates.map((date) => {
@@ -301,12 +387,10 @@ export function ReportSalesTab({
                 ]
               }),
             )
-            const totalValue =
-              metric.key === 'margin'
-                ? totalRevenue > 0
-                  ? Math.round((totalNetProfit / totalRevenue) * 10000)
-                  : null
-                : Object.values(dateValues).reduce<number>((sum, value) => sum + (value || 0), 0)
+            const totalValue = Object.values(dateValues).reduce<number>(
+              (sum, value) => sum + (value || 0),
+              0,
+            )
             return {
               key: `${currency}-${sellerKey}-${metric.key}`,
               sellerName,
@@ -329,23 +413,58 @@ export function ReportSalesTab({
         title: t('reports.columns.seller'),
         width: 190,
         fixed: 'left',
-        onCell: (row) => ({ rowSpan: row.metricIndex === 0 ? sellerMatrixMetrics.length : 0 }),
-        render: (_, row) => (row.metricIndex === 0 ? row.sellerName : null),
+        align: 'center',
+        onCell: (row) => ({
+          rowSpan: row.metricIndex === 0 ? sellerMatrixMetrics.length : 0,
+          className: styles.dailySellerCell,
+        }),
+        render: (_, row) =>
+          row.metricIndex === 0 ? (
+            <div className={styles.sellerNameWrapper}>
+              <Typography.Text strong>{row.sellerName}</Typography.Text>
+              {row.sellerEmployeeCode ? (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  {row.sellerEmployeeCode}
+                </Typography.Text>
+              ) : null}
+            </div>
+          ) : null,
       },
-      { title: t('reports.columns.type'), dataIndex: 'metricLabel', width: 180 },
+      {
+        title: t('reports.columns.type'),
+        dataIndex: 'metricLabel',
+        width: 180,
+        fixed: 'left',
+        className: styles.dailyTypeCell,
+        render: (label: string, row: SellerMatrixRow) => {
+          const config = METRIC_STYLES[row.metricKey]
+          return (
+            <div className={styles.typeLabelCell}>
+              <span className={styles.metricDot} style={{ backgroundColor: config.dotColor }} />
+              <Typography.Text
+                strong={config.isBold}
+                style={config.textColor ? { color: config.textColor } : undefined}
+              >
+                {label}
+              </Typography.Text>
+            </div>
+          )
+        },
+      },
       {
         title: t('reports.columns.total'),
         width: 130,
-        align: 'right',
-        render: (_, row) => formatSellerMatrixValue(row.metricKey, row.totalValue, currency),
+        align: 'center',
+        className: styles.dailyTotalCell,
+        render: (_, row) => renderMatrixCellValue(row.metricKey, row.totalValue, currency),
       },
       ...(dates.map((date) => ({
         title: date.slice(5),
         dataIndex: ['dateValues', date],
         width: 120,
-        align: 'right' as const,
+        align: 'center' as const,
         render: (_: unknown, row: SellerMatrixRow) =>
-          formatSellerMatrixValue(row.metricKey, row.dateValues[date], currency),
+          renderMatrixCellValue(row.metricKey, row.dateValues[date], currency),
       })) as TableColumnsType<SellerMatrixRow>),
     ] as TableColumnsType<SellerMatrixRow>
 
@@ -422,6 +541,7 @@ export function ReportSalesTab({
           title={`${t('reports.profitability.dailyTable')} · ${group.currency}`}
         >
           <CoreDataTable
+            bordered
             className={styles.dailyTable}
             tableLayout="fixed"
             rowKey="key"
@@ -429,6 +549,12 @@ export function ReportSalesTab({
             loading={isPending}
             pagination={false}
             virtual
+            rowClassName={(row) => {
+              if (row.metricKey === 'grossProfit') return styles.dailyRowGrossProfit
+              if (row.metricKey === 'netProfit') return styles.dailyRowNetProfit
+              if (row.metricIndex === 0) return styles.dailySellerGroupStart
+              return ''
+            }}
             columns={getSellerMatrixColumns(group.currency, group.dates)}
             scroll={{ x: 500 + group.dates.length * 120, y: 560 }}
           />

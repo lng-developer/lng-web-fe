@@ -68,6 +68,17 @@
   min-width: 0;
 }
 
+.dailyTable :global(.ant-table-cell) {
+  border-inline-end: 1px solid var(--ant-color-border-secondary) !important;
+  border-bottom: 1px solid var(--ant-color-border-secondary) !important;
+}
+
+.dailyTable :global(.ant-table-thead > tr > th) {
+  text-align: center !important;
+  border-inline-end: 1px solid var(--ant-color-border-secondary) !important;
+  border-bottom: 1px solid var(--ant-color-border-secondary) !important;
+}
+
 .dailyTable :global(.ant-table-cell-fix-left) {
   background: var(--ant-color-bg-container);
 }
@@ -84,28 +95,74 @@
 }
 
 .dailySellerGroupStart > :global(td) {
-  border-top: 3px solid var(--ant-color-border-secondary) !important;
+  border-top: 2px solid var(--ant-color-border) !important;
 }
 
-.dailyRowGrossProfit > :global(td) {
-  background:
-    linear-gradient(0deg, rgba(82, 196, 26, 0.08), rgba(82, 196, 26, 0.08)),
-    var(--ant-color-bg-container) !important;
+.dailyRowGrossProfit > :global(td),
+.dailyRowGrossProfit > :global(td.ant-table-cell) {
+  background: rgba(82, 196, 26, 0.09) !important;
 }
 
-.dailyRowNetProfit > :global(td) {
-  background:
-    linear-gradient(0deg, rgba(22, 119, 255, 0.08), rgba(22, 119, 255, 0.08)),
-    var(--ant-color-bg-container) !important;
+.dailyRowGrossProfit:hover > :global(td),
+.dailyRowGrossProfit:hover > :global(td.ant-table-cell) {
+  background: rgba(82, 196, 26, 0.16) !important;
+}
+
+.dailyRowNetProfit > :global(td),
+.dailyRowNetProfit > :global(td.ant-table-cell) {
+  background: rgba(22, 119, 255, 0.09) !important;
+}
+
+.dailyRowNetProfit:hover > :global(td),
+.dailyRowNetProfit:hover > :global(td.ant-table-cell) {
+  background: rgba(22, 119, 255, 0.16) !important;
 }
 
 .dailySellerCell {
-  background:
-    linear-gradient(0deg, var(--ant-color-fill-secondary), var(--ant-color-fill-secondary)),
-    var(--ant-color-bg-container) !important;
-  border-right: 1px solid var(--ant-color-border-secondary) !important;
+  background: var(--ant-color-fill-quaternary) !important;
+  border-right: 2px solid var(--ant-color-border) !important;
   color: var(--ant-color-text-heading);
   font-size: 14px;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.sellerNameWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+.typeLabelCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metricDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dailyTypeCell {
+  background: var(--ant-color-bg-container);
+  border-right: 1px solid var(--ant-color-border-secondary) !important;
+  font-weight: 500;
+}
+
+.dailyRowGrossProfit > :global(td.dailyTypeCell) {
+  background: color-mix(in srgb, var(--ant-color-success) 12%, transparent) !important;
+}
+
+.dailyRowNetProfit > :global(td.dailyTypeCell) {
+  background: color-mix(in srgb, var(--ant-color-primary) 12%, transparent) !important;
 }
 
 .dailyMetricCell {
@@ -113,8 +170,17 @@
 }
 
 .dailyTotalCell {
-  border-right: 2px solid var(--ant-color-border-secondary) !important;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+  background: var(--ant-color-fill-quaternary) !important;
+  border-right: 2px solid var(--ant-color-border) !important;
+  font-weight: 600;
+}
+
+.dailyRowGrossProfit > :global(td.dailyTotalCell) {
+  background: color-mix(in srgb, var(--ant-color-success) 14%, transparent) !important;
+}
+
+.dailyRowNetProfit > :global(td.dailyTotalCell) {
+  background: color-mix(in srgb, var(--ant-color-primary) 14%, transparent) !important;
 }
 
 .dailyMetric {
@@ -562,4 +628,30 @@
     border-top: 1px solid var(--ant-color-border-secondary);
     border-left: 0;
   }
+}
+
+.marginCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  width: 100%;
+}
+
+.marginPercentText {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.marginMiniTrack {
+  width: 100%;
+  height: 4px;
+  background: var(--ant-color-fill-tertiary);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.marginMiniFill {
+  height: 100%;
+  border-radius: 999px;
 }

@@ -34,6 +34,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+import { downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
   type DateRangeValue,
@@ -579,8 +580,12 @@ export function IdeaTasksPage() {
                     type="text"
                     size="small"
                     icon={<DownloadOutlined />}
-                    href={latestAsset.downloadUrl}
-                    target="_blank"
+                    onClick={() =>
+                      void downloadMediaAsset(
+                        latestAsset.downloadUrl!,
+                        latestAsset.originalFilename ?? undefined,
+                      )
+                    }
                   />
                 </Tooltip>
               ) : null}

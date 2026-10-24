@@ -102,6 +102,7 @@ function ManualSlotUploadAction({
 export function ProductionWorkbenchExpandedRow({
   task,
   tab,
+  viewMode = 'general',
   canScale,
   canQc,
   decisions,
@@ -119,6 +120,7 @@ export function ProductionWorkbenchExpandedRow({
 }: {
   readonly task: ProductionTask
   readonly tab: 'scale' | 'blocked' | 'qc' | 'all' | 'ready' | 'sent' | 'cancelled' | string
+  readonly viewMode?: 'scale' | 'qc' | 'general'
   readonly canScale: boolean
   readonly canQc: boolean
   readonly decisions: Record<string, FileDecision>
@@ -139,9 +141,19 @@ export function ProductionWorkbenchExpandedRow({
   readonly onManualSlotUploaded: () => void | Promise<void>
 }) {
   const { t } = useTranslation()
-  const isScale =
-    tab === 'scale' || (tab === 'all' && ['NEED_SCALE', 'QC_REJECTED'].includes(task.status))
-  const isQc = tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
+  const isScaleMutationLocked =
+    ['READY_TO_SEND_VENDOR', 'SENT_TO_VENDOR', 'CANCELLED'].includes(task.status) ||
+    task.qcStatus === 'PASSED'
+  const isScaleTab =
+    viewMode === 'scale'
+      ? !['ready', 'sent', 'cancelled', 'qc_pending'].includes(tab)
+      : ['scale', 'need_scale', 'qc_rejected', 'unclassified'].includes(tab) ||
+        (tab === 'all' && ['NEED_SCALE', 'QC_REJECTED'].includes(task.status))
+  const isScale = isScaleTab && !isScaleMutationLocked
+  const isQc =
+    viewMode === 'qc'
+      ? tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
+      : tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
   const checks = task.fileChecks ?? task.qcPreviewFileChecks ?? []
   const psdTemplate = task.scaleContext?.use?.psdTemplate
   const linkedInputAssetIds = new Set(
@@ -170,10 +182,9 @@ export function ProductionWorkbenchExpandedRow({
   const listingArtwork = task.mainListingImageUrl ?? task.productImageUrl
   const customizationPreviews = (task.customization?.imageAssets ?? []).filter(
     (asset) =>
-      asset.assetId &&
-      !linkedInputAssetIds.has(asset.assetId) &&
       asset.assetDownloadUrl &&
-      asset.mimeType?.startsWith('image/'),
+      (!linkedInputAssetIds.size || !asset.assetId || !linkedInputAssetIds.has(asset.assetId)) &&
+      (asset.mimeType ? asset.mimeType.startsWith('image/') : true),
   )
   const listingPreview = task.listing?.previewAssetDownloadUrl
   const spUrl = productUrl(task)
@@ -227,7 +238,7 @@ export function ProductionWorkbenchExpandedRow({
             <Typography.Text strong>{color || '-'}</Typography.Text>
           </div>
         </div>
-        {isQc ? (
+        {isQc || viewMode === 'qc' ? (
           <div className={styles.notesSummary}>
             <div>
               <Typography.Text type="secondary">
@@ -365,7 +376,7 @@ export function ProductionWorkbenchExpandedRow({
             >
               {t('portal.production.downloadPsdSource')}
             </Button>
-          ) : psdTemplate?.status !== 'NOT_REQUIRED' ? (
+          ) : psdTemplate?.status === 'MISSING' || task.blockers?.includes('PSD_MISSING') ? (
             <Typography.Text type="danger">
               {t('portal.production.designSourceMissing')}
             </Typography.Text>
@@ -411,7 +422,9 @@ export function ProductionWorkbenchExpandedRow({
                   ? canScale && Boolean(check.outputAssetDownloadUrl)
                   : Boolean(check.outputAssetDownloadUrl)
               const hasRework =
-                isScale && check.qcStatus === 'REJECTED' && Boolean(check.note?.trim())
+                (isScale || viewMode === 'scale') &&
+                check.qcStatus === 'REJECTED' &&
+                Boolean(check.note?.trim())
               const preview = (
                 <div className={styles.slotOutput}>
                   {check.outputAssetDownloadUrl ? (
@@ -447,7 +460,9 @@ export function ProductionWorkbenchExpandedRow({
                       type="button"
                       aria-label={t('portal.production.inspectArtwork', { slot: slotLabel })}
                       onClick={() =>
-                        isScale ? onInspectSlot(task, check, true) : onInspectSlot(task, check)
+                        viewMode === 'scale' || isScale || !isQc || !canQc
+                          ? onInspectSlot(task, check, true)
+                          : onInspectSlot(task, check)
                       }
                     >
                       {preview}

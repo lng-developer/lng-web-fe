@@ -21,6 +21,7 @@ export type CoreDataTableServerSorting = {
 
 export type CoreDataTableProps<RecordType extends object> = Pick<
   TableProps<RecordType>,
+  | 'bordered'
   | 'columns'
   | 'className'
   | 'dataSource'

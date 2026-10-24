@@ -458,7 +458,9 @@
       "imported": "Đã nhập dữ liệu tài chính",
       "recalculated": "Đã tính lại dữ liệu tài chính",
       "failed": "Thao tác tài chính thất bại"
-    }
+    },
+    "cashFlow": "Dòng tiền",
+    "transactions": "Sổ cái giao dịch"
   },
   "reports": {
     "title": "Không gian báo cáo",
@@ -615,7 +617,7 @@
       "items": "Sản phẩm",
       "revenue": "Doanh thu",
       "baseCost": "Chi phí sản phẩm",
-      "fulfillmentCost": "Fulfillment phát sinh",
+      "fulfillmentCost": "Chi phí fulfillment",
       "marketplaceFee": "Phí marketplace",
       "refund": "Hoàn tiền",
       "discount": "Giảm giá",
@@ -1441,7 +1443,7 @@
       "currentRoles": "Vai trò hiện tại",
       "globalRoles": "Vai trò toàn cục",
       "teamAccess": "Quyền theo team",
-      "teamScope": "Team",
+      "teamScope": "Đội nhóm",
       "noTeamAccess": "Không có quyền team",
       "manageScopedAccess": "Quản lý quyền theo phạm vi",
       "status": "Trạng thái",
@@ -1512,7 +1514,6 @@
       "allScopes": "Tất cả tài khoản",
       "globalScope": "Toàn cục (Global)",
       "departmentScope": "Phòng ban",
-      "teamScope": "Đội nhóm",
       "shopScope": "Cửa hàng",
       "vendorScope": "Nhà cung ứng",
       "effectiveMatrix": "Quyền thực tế",
@@ -3774,13 +3775,14 @@
         "PASSED": "Đã duyệt",
         "REJECTED": "Đã từ chối"
       },
-      "submitScaleQc": "G?i sang QC",
+      "submitScaleQc": "Gửi sang QC",
       "openProduct": "Mở SP",
       "downloadCustomerImage": "Ảnh khách hàng",
       "downloadCustomerImages": "Tải {{count}} ảnh khách hàng",
       "confirmReject": "Xác nhận từ chối",
       "selectPresetReasons": "Chọn lý do có sẵn",
-      "customRejectNote": "Ghi chú lý do từ chối"
+      "customRejectNote": "Ghi chú lý do từ chối",
+      "scores": "Điểm sản lượng SX"
     },
     "vendorSubmissions": {
       "title": "Bàn giao Vendor",

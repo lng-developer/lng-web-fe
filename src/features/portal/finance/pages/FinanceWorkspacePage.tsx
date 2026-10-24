@@ -28,7 +28,21 @@ import { useFinanceMutations } from '../hooks/useFinanceMutations'
 import { useFinanceWorkspace } from '../hooks/useFinanceWorkspace'
 import styles from './FinanceWorkspacePage.module.scss'
 
-export const FinanceWorkspacePage = () => {
+export interface FinanceWorkspacePageProps {
+  initialSalesChannelCode?: string
+  fixedSalesChannelCode?: string
+  hideCashFlow?: boolean
+  hideReconciliationLinks?: boolean
+  title?: string
+}
+
+export const FinanceWorkspacePage = ({
+  initialSalesChannelCode,
+  fixedSalesChannelCode,
+  hideCashFlow = false,
+  hideReconciliationLinks = false,
+  title,
+}: FinanceWorkspacePageProps = {}) => {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const account = useRouteLoaderData('workspace') as CurrentAccount
@@ -37,14 +51,18 @@ export const FinanceWorkspacePage = () => {
     ...account.scopes.flatMap((scope) => scope.permissions),
   ]
   const globalRead =
-    account.permissions.includes('FINANCE:READ') || account.permissions.includes('FINANCE:WRITE')
-  const canWrite = permissions.includes('FINANCE:WRITE')
+    account.permissions.includes('FINANCE:READ') ||
+    account.permissions.includes('FINANCE:WRITE') ||
+    account.permissions.includes('REPORTS:READ')
+  const canWrite = permissions.includes('FINANCE:WRITE') || permissions.includes('REPORTS:WRITE')
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [costStatus, setCostStatus] = useState<string>()
-  const [salesChannelCode, setSalesChannelCode] = useState<string>()
+  const [salesChannelCode, setSalesChannelCode] = useState<string | undefined>(
+    fixedSalesChannelCode || initialSalesChannelCode,
+  )
   const [sellerEmployeeCode, setSellerEmployeeCode] = useState<string>()
   const [teamId, setTeamId] = useState<string>()
   const [departmentId, setDepartmentId] = useState<string>()
@@ -88,13 +106,15 @@ export const FinanceWorkspacePage = () => {
     setPage(1)
   }, [])
 
+  const effectiveSalesChannelCode = fixedSalesChannelCode || salesChannelCode
+
   const { snapshots, filterOptions, shopNameById, queryParams } = useFinanceWorkspace({
     globalRead,
     page,
     pageSize,
     search,
     costStatus,
-    salesChannelCode,
+    salesChannelCode: effectiveSalesChannelCode,
     sellerEmployeeCode,
     teamId,
     departmentId,
@@ -245,21 +265,25 @@ export const FinanceWorkspacePage = () => {
       />
 
       <SectionCard
-        title={t('finance.profitability')}
+        title={title || t('finance.profitability')}
         extra={
           <Space className={styles.headerActions}>
-            <Button type="link" href="/portal/integrations?tab=finance">
-              {t('finance.actions.manageReconciliation')}
-            </Button>
-            <Button type="link" href="/portal/finance/settlements">
-              {t('finance.actions.settlements')}
-            </Button>
-            <Button type="link" href="/portal/finance/cash-flow">
-              Cash flow
-            </Button>
-            <Button type="link" href="/portal/finance/transactions">
-              Transaction ledger
-            </Button>
+            {!hideReconciliationLinks ? (
+              <>
+                <Button type="link" href="/portal/integrations?tab=finance">
+                  {t('finance.actions.manageReconciliation')}
+                </Button>
+                <Button type="link" href="/portal/finance/settlements">
+                  {t('finance.actions.settlements')}
+                </Button>
+                <Button type="link" href="/portal/finance/cash-flow">
+                  Cash flow
+                </Button>
+                <Button type="link" href="/portal/finance/transactions">
+                  Transaction ledger
+                </Button>
+              </>
+            ) : null}
             <Typography.Text type="secondary">
               {globalRead ? t('finance.scope.global') : t('finance.scope.scoped')}
             </Typography.Text>
@@ -280,14 +304,16 @@ export const FinanceWorkspacePage = () => {
               onSearchChange={handleSearchChange}
               placeholder={t('finance.filters.search')}
             />
-            <Select
-              allowClear
-              aria-label={t('finance.filters.channel')}
-              value={salesChannelCode}
-              onChange={handleSalesChannelChange}
-              placeholder={t('finance.filters.channel')}
-              options={filterOptions.data?.channels.map((value) => ({ value, label: value }))}
-            />
+            {!fixedSalesChannelCode ? (
+              <Select
+                allowClear
+                aria-label={t('finance.filters.channel')}
+                value={salesChannelCode}
+                onChange={handleSalesChannelChange}
+                placeholder={t('finance.filters.channel')}
+                options={filterOptions.data?.channels.map((value) => ({ value, label: value }))}
+              />
+            ) : null}
             <Select
               allowClear
               showSearch
@@ -367,7 +393,7 @@ export const FinanceWorkspacePage = () => {
         />
       </SectionCard>
 
-      {globalRead ? <SettlementCashFlow /> : null}
+      {globalRead && !hideCashFlow ? <SettlementCashFlow /> : null}
 
       <FinanceOrderDetailModal
         selectedOrder={selected}

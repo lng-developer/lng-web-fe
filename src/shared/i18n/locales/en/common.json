@@ -458,7 +458,9 @@
       "imported": "Finance import completed",
       "recalculated": "Finance snapshot recalculated",
       "failed": "Finance action failed"
-    }
+    },
+    "cashFlow": "Cash Flow",
+    "transactions": "Transaction Ledger"
   },
   "reports": {
     "title": "Report workspace",
@@ -615,7 +617,7 @@
       "items": "Items",
       "revenue": "Revenue",
       "baseCost": "Product cost",
-      "fulfillmentCost": "Additional fulfillment",
+      "fulfillmentCost": "Fulfillment cost",
       "marketplaceFee": "Marketplace fee",
       "refund": "Refund",
       "discount": "Discount",
@@ -1441,7 +1443,7 @@
       "currentRoles": "Current roles",
       "globalRoles": "Global roles",
       "teamAccess": "Team access",
-      "teamScope": "Team",
+      "teamScope": "Teams",
       "noTeamAccess": "No team access",
       "manageScopedAccess": "Manage scoped access",
       "status": "Status",
@@ -1512,7 +1514,6 @@
       "allScopes": "All accounts",
       "globalScope": "Global",
       "departmentScope": "Departments",
-      "teamScope": "Teams",
       "shopScope": "Shops",
       "vendorScope": "Vendors",
       "effectiveMatrix": "Effective Permissions",
@@ -3780,7 +3781,8 @@
       "downloadCustomerImages": "Download customer images ({{count}})",
       "confirmReject": "Confirm rejection",
       "selectPresetReasons": "Select reason",
-      "customRejectNote": "Custom rejection note"
+      "customRejectNote": "Custom rejection note",
+      "scores": "Production Scores"
     },
     "vendorSubmissions": {
       "title": "Vendor Handoff",

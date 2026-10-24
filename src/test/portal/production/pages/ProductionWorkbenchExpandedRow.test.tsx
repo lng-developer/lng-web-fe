@@ -200,4 +200,134 @@ describe('ProductionWorkbenchExpandedRow', () => {
       'open',
     )
   })
+
+  it('renders upload button and manual slot action on need_scale tab in scale view', () => {
+    const scaleTask: ProductionTask = {
+      ...task,
+      status: 'NEED_SCALE',
+      qcStatus: 'NOT_READY',
+      fileChecks: [
+        {
+          id: 'slot-1',
+          slotKey: 'FRONT',
+          slotLabel: 'Front',
+          required: true,
+          inputAssetDownloadUrl: 'https://assets.example.test/in.png',
+          outputAssetDownloadUrl: null,
+          outputStatus: 'MISSING',
+          qcStatus: 'NOT_READY',
+          note: null,
+        },
+      ],
+    }
+
+    render(
+      <AppProviders>
+        <ProductionWorkbenchExpandedRow
+          task={scaleTask}
+          tab="need_scale"
+          viewMode="scale"
+          canScale
+          canQc={false}
+          decisions={{}}
+          submittingQc={false}
+          submittingScale={false}
+          uploadingFileCheckIds={new Set()}
+          onSaveNote={vi.fn()}
+          onSubmitQc={vi.fn()}
+          onSubmitScaleForQc={vi.fn()}
+          onUploadScaledOutput={vi.fn()}
+          onInspectSlot={vi.fn()}
+          onPassSlot={vi.fn()}
+          onManualSlotUploaded={vi.fn()}
+        />
+      </AppProviders>,
+    )
+
+    expect(screen.getByRole('button', { name: /Upload scaled output/ })).toBeVisible()
+    expect(screen.getByRole('button', { name: /Add output file/ })).toBeVisible()
+  })
+
+  it('opens slot inspection as readonly in scale view on need_scale tab', () => {
+    const onInspectSlot = vi.fn()
+    const scaleTask: ProductionTask = {
+      ...task,
+      status: 'NEED_SCALE',
+      qcStatus: 'NOT_READY',
+      fileChecks: [
+        {
+          id: 'slot-1',
+          slotKey: 'FRONT',
+          slotLabel: 'Front',
+          required: true,
+          inputAssetDownloadUrl: 'https://assets.example.test/in.png',
+          outputAssetDownloadUrl: 'https://assets.example.test/out.png',
+          outputStatus: 'UPLOADED',
+          qcStatus: 'NOT_READY',
+          note: null,
+        },
+      ],
+    }
+
+    render(
+      <AppProviders>
+        <ProductionWorkbenchExpandedRow
+          task={scaleTask}
+          tab="need_scale"
+          viewMode="scale"
+          canScale
+          canQc={false}
+          decisions={{}}
+          submittingQc={false}
+          submittingScale={false}
+          uploadingFileCheckIds={new Set()}
+          onSaveNote={vi.fn()}
+          onSubmitQc={vi.fn()}
+          onSubmitScaleForQc={vi.fn()}
+          onUploadScaledOutput={vi.fn()}
+          onInspectSlot={onInspectSlot}
+          onPassSlot={vi.fn()}
+          onManualSlotUploaded={vi.fn()}
+        />
+      </AppProviders>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inspect artwork · Front' }))
+    expect(onInspectSlot).toHaveBeenCalledWith(scaleTask, scaleTask.fileChecks![0], true)
+  })
+
+  it('does not display false design source missing warning in QC view when scaleContext is omitted', () => {
+    const qcTask: ProductionTask = {
+      ...task,
+      status: 'QC_PENDING',
+      qcStatus: 'PENDING',
+      scaleContext: undefined,
+      blockers: [],
+    }
+
+    render(
+      <AppProviders>
+        <ProductionWorkbenchExpandedRow
+          task={qcTask}
+          tab="qc"
+          viewMode="qc"
+          canScale={false}
+          canQc
+          decisions={{}}
+          submittingQc={false}
+          submittingScale={false}
+          uploadingFileCheckIds={new Set()}
+          onSaveNote={vi.fn()}
+          onSubmitQc={vi.fn()}
+          onSubmitScaleForQc={vi.fn()}
+          onUploadScaledOutput={vi.fn()}
+          onInspectSlot={vi.fn()}
+          onPassSlot={vi.fn()}
+          onManualSlotUploaded={vi.fn()}
+        />
+      </AppProviders>,
+    )
+
+    expect(screen.queryByText(/Design source missing/)).not.toBeInTheDocument()
+  })
 })

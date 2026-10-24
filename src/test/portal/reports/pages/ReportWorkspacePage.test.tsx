@@ -21,6 +21,7 @@ import {
   listVendorPerformance,
   type SellerDailyProfit,
 } from '@/features/portal/reports/api/reportApi'
+import { listFinanceSnapshots } from '@/features/portal/finance/api/financeApi'
 import { buildRevenueTrend } from '@/features/portal/reports/pages/reportTrend'
 import { ReportWorkspacePage } from '@/features/portal/reports/pages/ReportWorkspacePage'
 import i18n from '@/shared/i18n/i18n'
@@ -52,6 +53,21 @@ vi.mock('@/features/portal/reports/api/reportApi', async (importOriginal) => ({
   listFinanceOrderProfitability: vi.fn(),
   listVendorPerformance: vi.fn(),
 }))
+vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/portal/finance/api/financeApi')>()),
+  listFinanceFilterOptions: vi.fn().mockResolvedValue({
+    channels: ['AMAZON', 'ETSY'],
+    marketplaces: ['US'],
+    sellers: [],
+    teams: [],
+    departments: [],
+  }),
+  listFinanceSnapshots: vi.fn().mockResolvedValue({
+    items: [],
+    pagination: { total: 0, page: 1, limit: 20 },
+    summaryByCurrency: [],
+  }),
+}))
 
 describe('ReportWorkspacePage', () => {
   beforeEach(async () => {
@@ -64,6 +80,11 @@ describe('ReportWorkspacePage', () => {
       profileSetupRequired: false,
     }
     queryClient.clear()
+    vi.mocked(listFinanceSnapshots).mockResolvedValue({
+      items: [],
+      pagination: { total: 0, page: 1, limit: 20 },
+      summaryByCurrency: [],
+    })
     await i18n.changeLanguage('en')
     vi.mocked(getReportFilterOptions).mockResolvedValue({
       channels: [],
@@ -187,7 +208,7 @@ describe('ReportWorkspacePage', () => {
     )
 
     await waitFor(() =>
-      expect(listFinanceOrderProfitability).toHaveBeenCalledWith(
+      expect(listFinanceSnapshots).toHaveBeenCalledWith(
         expect.objectContaining({ salesChannelCode: 'AMAZON' }),
       ),
     )
@@ -268,8 +289,8 @@ describe('ReportWorkspacePage', () => {
       ),
     )
     expect(screen.queryByText('Sales channel')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Campaign status')).toBeVisible()
-    expect(screen.getByLabelText('Ads attribution')).toBeVisible()
+    expect(screen.queryByLabelText('Campaign status')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Ads attribution')).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Seller profitability' })).not.toBeInTheDocument()
     const adjustments = await screen.findByText('Adjustments')
     expect(adjustments).toBeInTheDocument()

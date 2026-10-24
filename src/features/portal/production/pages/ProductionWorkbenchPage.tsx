@@ -187,15 +187,13 @@ export function ProductionWorkbenchPage({
   const canScaleTask = useCallback(
     (task: ProductionTask) =>
       canWriteProductionTask(task) ||
-      (allowed.has('DESIGN:WORK') &&
-        Boolean(currentAccountId) &&
-        task.assignedDesignUserId === currentAccountId) ||
-      (canUseScopedPermission(account, 'PRODUCTION:SCALE_WORK', {
+      canUseScopedPermission(account, 'PRODUCTION:SCALE_WORK', {
         scopeType: 'shop',
         scopeId: task.shopId ?? task.shop?.id,
-      }) &&
+      }) ||
+      (allowed.has('DESIGN:WORK') &&
         Boolean(currentAccountId) &&
-        task.csAssigneeId === currentAccountId),
+        (task.assignedDesignUserId === currentAccountId || !task.assignedDesignUserId)),
     [account, allowed, canWriteProductionTask, currentAccountId],
   )
   const canQcTask = useCallback(
@@ -211,6 +209,7 @@ export function ProductionWorkbenchPage({
   )
   const isScaleTab = tab === 'need_scale' || tab === 'qc_rejected' || tab === 'unclassified'
   const canAssignScale =
+    viewMode === 'scale' &&
     (isScaleTab || tab === 'all' || tab === 'blocked') &&
     (allowed.has('PRODUCTION:WRITE') || allowed.has('PRODUCTION:SCALE_ASSIGN'))
   const canAssignProductionTask = useCallback(
@@ -378,9 +377,10 @@ export function ProductionWorkbenchPage({
       blocked: queueCounts.data?.blocked ?? displaySummary?.blocked ?? 0,
       scaleQueue: queueCounts.data?.scaleQueue ?? displaySummary?.scaleQueue ?? 0,
       qcQueue: queueCounts.data?.qcQueue ?? displaySummary?.qcQueue ?? 0,
-      qcPending: displaySummary?.qcPending ?? queueCounts.data?.qcQueue ?? 0,
-      qcRejected: displaySummary?.qcRejected ?? 0,
-      needScale: displaySummary?.needScale ?? 0,
+      qcPending:
+        queueCounts.data?.qcPending ?? displaySummary?.qcPending ?? queueCounts.data?.qcQueue ?? 0,
+      qcRejected: queueCounts.data?.qcRejected ?? displaySummary?.qcRejected ?? 0,
+      needScale: queueCounts.data?.needScale ?? displaySummary?.needScale ?? 0,
       ready: queueCounts.data?.ready ?? displaySummary?.ready ?? 0,
       sent: queueCounts.data?.sent ?? displaySummary?.sent ?? 0,
       cancelled: queueCounts.data?.cancelled ?? displaySummary?.cancelled ?? 0,
@@ -755,6 +755,7 @@ export function ProductionWorkbenchPage({
     mutationFn: () =>
       exportProductionQcTasks({
         search: search || undefined,
+        salesChannelCode,
         ...createdDates,
         scaleDifficultyLevel,
       }),
@@ -874,6 +875,7 @@ export function ProductionWorkbenchPage({
       <ProductionWorkbenchExpandedRow
         task={task}
         tab={tab}
+        viewMode={viewMode}
         canScale={canScaleTask(task)}
         canQc={canQcTask(task)}
         decisions={decisions}
@@ -907,6 +909,7 @@ export function ProductionWorkbenchPage({
       submitScale.variables,
       tab,
       uploadingFileCheckIds,
+      viewMode,
     ],
   )
   const displayedTasks = useDeferredValue(tasks.data)
@@ -984,7 +987,7 @@ export function ProductionWorkbenchPage({
         title: t('portal.production.columns.status'),
         width: 126,
         render: (_, row) => {
-          const value = tab === 'qc' ? row.qcStatus : row.status
+          const value = viewMode === 'qc' || tab === 'qc' ? row.qcStatus : row.status
           return (
             <StatusTag status={tone(value)}>{t(`portal.production.statuses.${value}`)}</StatusTag>
           )
@@ -996,7 +999,7 @@ export function ProductionWorkbenchPage({
         render: (_, row) => <FormattedDateTime value={row.updatedAt} />,
       },
     ],
-    [t, tab],
+    [t, tab, viewMode],
   )
   return (
     <section className={styles.page}>
@@ -1031,8 +1034,10 @@ export function ProductionWorkbenchPage({
             scaleDifficultyLevel={scaleDifficultyLevel}
             dates={createdDates}
             tab={tab}
+            viewMode={viewMode}
             scaleAssigneeId={scaleAssigneeId}
             canAssignScale={canAssignScale}
+            canRecheckBlocked={allowed.has('PRODUCTION:WRITE')}
             scaleAssigneeOptions={scaleAssigneeOptions}
             selectedRowCount={selectedRowKeys.length}
             exportCsvLoading={exportCsv.isPending}

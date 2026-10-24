@@ -2,8 +2,8 @@ import type { NavigationGroup } from './appNavigation'
 import { getCoreForPath } from './appNavigation'
 
 export function normalizeSidebarPath(pathname: string): string {
-  if (pathname === '/portal/monitoring') return '/auth/monitoring'
-  if (pathname === '/portal/audit') return '/auth/audit-log'
+  if (pathname === '/auth/monitoring') return '/portal/monitoring'
+  if (pathname === '/auth/audit-log') return '/portal/audit'
   if (pathname === '/operations-dashboard' || pathname === '/foundation') return '/portal/dashboard'
   if (pathname === '/portal/customization') return '/portal/customizations'
   return pathname

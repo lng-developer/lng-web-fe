@@ -2,7 +2,7 @@ import type { AppNotification } from './api/notificationApi'
 
 const targets: Record<string, string> = {
   order: '/portal/orders',
-  designTask: '/portal/design',
+  designTask: '/portal/design/idea-tasks',
   productionTask: '/portal/production',
   vendorSubmission: '/portal/vendor-submissions',
   shipment: '/portal/shipments',

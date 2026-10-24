@@ -5,6 +5,7 @@ This repo is the frontend for the LNG Web POD FBM system.
 ## UI Work
 
 - Use the installed `taste-skill` for UI creation, redesign, and visual polish.
+- Follow `DESIGN.md` for design tokens, typography, operational high-density rules, and shared UI component specifications.
 - Keep screens operational and dense: dashboards, queues, workbenches, tables, filters, and detail panels matter more than marketing sections.
 - Follow `CONVENTIONS.md` for feature structure, naming, API hooks, routing, styling, and shared helpers.
 - Do not put every capability of a domain into one page. Split distinct operator jobs into focused routes/screens; use tabs, drawers, or detail views only when they preserve one coherent workflow.

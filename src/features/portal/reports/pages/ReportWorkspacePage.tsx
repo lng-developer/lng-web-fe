@@ -22,7 +22,7 @@ import { ReportAdsEmployeeTab } from '../components/ReportAdsEmployeeTab'
 import { ReportAdsTab } from '../components/ReportAdsTab'
 import { ReportCoverageStrip } from '../components/ReportCoverageStrip'
 import { formatReportMoney, formatReportPercent } from '../components/reportFormatters'
-import { ReportOrderCostTab } from '../components/ReportOrderCostTab'
+import { FinanceWorkspacePage } from '@/features/portal/finance/pages/FinanceWorkspacePage'
 import { ReportProfitComparisonChart } from '../components/ReportProfitComparisonChart'
 import { ReportSalesTab } from '../components/ReportSalesTab'
 import { ReportTeamTab } from '../components/ReportTeamTab'
@@ -70,12 +70,10 @@ export function ReportWorkspacePage() {
   const { salesChannelCode: routeSalesChannelCode, reportView } = useParams()
   const fixedSalesChannelCode = SALES_CHANNEL_BY_ROUTE[routeSalesChannelCode?.toLowerCase() ?? '']
   const [selectedTab, setSelectedTab] = useState<TabKey>('overview')
-  const [orderCostPage, setOrderCostPage] = useState(1)
-  const [orderCostCoverage, setOrderCostCoverage] = useState<ReportFilters['costCoverage']>()
   const dedicatedTab = TAB_BY_REPORT_VIEW[reportView?.toLowerCase() ?? '']
   const activeTab = dedicatedTab || selectedTab
   const isDedicatedReport = Boolean(dedicatedTab)
-  const isAdsView = activeTab === 'ads-employee' || activeTab === 'sales-profit'
+  const isAdsView = activeTab === 'ads-employee'
   const [profitabilityView, setProfitabilityView] = useState<ProfitabilityView>('summary')
   const [filters, setFilters] = useState<ReportFilters>(() => ({
     dateFrom: dayjs().subtract(6, 'day').startOf('day').toISOString(),
@@ -85,10 +83,6 @@ export function ReportWorkspacePage() {
   const effectiveFilters = fixedSalesChannelCode
     ? { ...filters, salesChannelCode: fixedSalesChannelCode }
     : filters
-  const reportFilters =
-    activeTab === 'order-cost'
-      ? { ...effectiveFilters, page: orderCostPage, costCoverage: orderCostCoverage }
-      : effectiveFilters
   const reportDates = datesInRange(filters.dateFrom, filters.dateTo)
 
   const globalRead = account.permissions.includes('REPORTS:READ')
@@ -103,14 +97,13 @@ export function ReportWorkspacePage() {
     sellers,
     coverage,
     sellerDaily,
-    orderProfitability,
     adsSellerDaily,
     teams,
     channels,
     adsDaily,
     exportCsv,
   } = useReportData({
-    filters: reportFilters,
+    filters: effectiveFilters,
     activeTab,
     profitabilityView,
     operationalScope,
@@ -120,7 +113,6 @@ export function ReportWorkspacePage() {
 
   const handleFilterChange = useCallback((key: keyof ReportFilters, value?: string) => {
     setFilters((current) => ({ ...current, [key]: value }))
-    setOrderCostPage(1)
   }, [])
 
   const select = useCallback(
@@ -148,7 +140,6 @@ export function ReportWorkspacePage() {
 
   const handleDateRangeChange = useCallback((range: { dateFrom?: string; dateTo?: string }) => {
     setFilters((current) => ({ ...current, ...range }))
-    setOrderCostPage(1)
   }, [])
 
   const handleTabChange = useCallback((key: string) => {
@@ -405,7 +396,10 @@ export function ReportWorkspacePage() {
       { key: 'orderCount', label: t('reports.columns.orders') },
       { key: 'revenueAmount', label: t('reports.columns.revenue') },
       { key: 'baseCostAmount', label: t('reports.columns.baseCost') },
-      { key: 'additionalFulfillmentCostAmount', label: t('reports.columns.fulfillmentCost') },
+      {
+        key: 'additionalFulfillmentCostAmount',
+        label: t('reports.orderCost.additionalFulfillment'),
+      },
       { key: 'marketplaceFeeAmount', label: t('reports.columns.marketplaceFee') },
       { key: 'adSpendAmount', label: t('reports.columns.spend') },
       { key: 'refundAmount', label: t('reports.columns.refund') },
@@ -580,16 +574,10 @@ export function ReportWorkspacePage() {
 
   const reportContent =
     activeTab === 'order-cost' ? (
-      <ReportOrderCostTab
-        data={orderProfitability.data}
-        isPending={orderProfitability.isPending}
-        onPageChange={setOrderCostPage}
-        costCoverage={orderCostCoverage}
-        onCostCoverageChange={(value) => {
-          setOrderCostCoverage(value)
-          setOrderCostPage(1)
-        }}
-        filterBar={filterBar}
+      <FinanceWorkspacePage
+        fixedSalesChannelCode={fixedSalesChannelCode}
+        hideCashFlow
+        hideReconciliationLinks
       />
     ) : activeTab === 'ads-employee' ? (
       <ReportAdsEmployeeTab data={adsSellerDaily.data} isPending={adsSellerDaily.isPending} />

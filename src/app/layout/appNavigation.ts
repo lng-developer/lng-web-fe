@@ -131,7 +131,11 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
             ['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'].some((permission) =>
               permissions.has(permission),
             )
-              ? { key: 'design', path: '/portal/design', labelKey: 'shell.navigation.design' }
+              ? {
+                  key: 'design',
+                  path: '/portal/design/idea-tasks',
+                  labelKey: 'shell.navigation.design',
+                }
               : null,
             ['DESIGN:PSD_REQUEST'].some((permission) => permissions.has(permission))
               ? {
@@ -239,12 +243,12 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           labelKey: 'shell.groups.legacyMonitoring',
           items: [
             permissions.has('AUDIT:READ')
-              ? { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' }
+              ? { key: 'audit-log', path: '/portal/audit', labelKey: 'shell.navigation.auditLog' }
               : null,
             permissions.has('AUDIT:READ')
               ? {
                   key: 'monitoring',
-                  path: '/auth/monitoring',
+                  path: '/portal/monitoring',
                   labelKey: 'shell.navigation.monitoring',
                 }
               : null,
