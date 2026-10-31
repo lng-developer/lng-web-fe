@@ -39,6 +39,14 @@ jobs:
       - run: npm run test:unit
       - run: npm run build
       - run: npm run performance:bundle
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: |
+            dist
+            server.mjs
+          retention-days: 1
 
   ui-tests:
     if: ${{ inputs.ui_test_file == '' }}
@@ -88,14 +96,16 @@ jobs:
     env:
       TZ: Asia/Ho_Chi_Minh
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm i -g npm@11.6.2
-      - run: npm ci
-      - run: npm run build
+          name: frontend-build
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github-actions
       - name: Install SSH key
         run: |
           mkdir -p ~/.ssh
