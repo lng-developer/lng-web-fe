@@ -4,7 +4,9 @@ import { InboxOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { Button, Collapse, Form, Input, Modal, Radio, Typography, Upload } from 'antd'
 
+import { useFeedbackToast } from '@/shared/ui'
 import type { ManualScaledOutput } from '../api/productionApi'
+import { validateScaledOutputFile } from '../utils/productionFeedback'
 import styles from './ManualSlotUploadModal.module.scss'
 
 const SLOT_PRESETS = [
@@ -44,6 +46,7 @@ export function ManualSlotUploadModal({
   readonly onSubmit: (input: ManualScaledOutput) => void
 }) {
   const { t } = useTranslation()
+  const toast = useFeedbackToast()
   const [form] = Form.useForm<Values>()
   const [files, setFiles] = useState<UploadFile[]>([])
   const position = Form.useWatch('position', form)
@@ -73,6 +76,11 @@ export function ManualSlotUploadModal({
         onFinish={(values) => {
           const file = (files[0]?.originFileObj ?? files[0]) as File | undefined
           if (!file) return
+          const validation = validateScaledOutputFile(file)
+          if (!validation.valid) {
+            toast('error', validation.errorTitle!, validation.errorDescription)
+            return
+          }
           const preset = SLOT_PRESETS.find(([key]) => key === values.position)
           const slotLabel =
             values.position === 'CUSTOM'
@@ -139,6 +147,11 @@ export function ManualSlotUploadModal({
             fileList={files}
             maxCount={1}
             beforeUpload={(file) => {
+              const validation = validateScaledOutputFile(file)
+              if (!validation.valid) {
+                toast('error', validation.errorTitle!, validation.errorDescription)
+                return false
+              }
               setFiles([file])
               return false
             }}

@@ -43,17 +43,17 @@ describe('getSidebarRouteState', () => {
         key: 'system-main',
         labelKey: 'system',
         items: [
-          { key: 'monitoring', path: '/auth/monitoring', labelKey: 'monitoring' },
-          { key: 'audit-log', path: '/auth/audit-log', labelKey: 'audit' },
+          { key: 'monitoring', path: '/portal/monitoring', labelKey: 'monitoring' },
+          { key: 'audit-log', path: '/portal/audit', labelKey: 'audit' },
         ],
       },
     ]
 
-    expect(getSidebarRouteState('/portal/monitoring', systemGroups)).toEqual({
+    expect(getSidebarRouteState('/auth/monitoring', systemGroups)).toEqual({
       core: 'system',
       selectedKey: 'monitoring',
     })
-    expect(getSidebarRouteState('/portal/audit', systemGroups)).toEqual({
+    expect(getSidebarRouteState('/auth/audit-log', systemGroups)).toEqual({
       core: 'system',
       selectedKey: 'audit-log',
     })

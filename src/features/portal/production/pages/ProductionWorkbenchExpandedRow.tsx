@@ -15,6 +15,7 @@ import {
   uploadManualScaledOutput,
 } from '../api/productionApi'
 import { formatCustomization } from './inspectionReference'
+import { formatProductionError, formatSlotLabel } from '../utils/productionFeedback'
 import { ManualSlotUploadModal } from './ManualSlotUploadModal'
 import styles from './ProductionWorkbenchPage.module.scss'
 
@@ -72,13 +73,23 @@ function ManualSlotUploadAction({
   const [open, setOpen] = useState(false)
   const upload = useMutation({
     mutationFn: (input: ManualScaledOutput) => uploadManualScaledOutput(taskId, input),
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       setOpen(false)
       await onUploaded()
-      toast('success', t('portal.production.updated'))
+      const slotName = formatSlotLabel(variables.slotKey, variables.slotLabel)
+      toast(
+        'success',
+        t('portal.production.feedback.addSlotSuccessTitle'),
+        t('portal.production.feedback.addSlotSuccessDescription', { slot: slotName }),
+      )
     },
-    onError: (error) =>
-      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+    onError: (error) => {
+      const { title, description } = formatProductionError(
+        error,
+        t('portal.production.feedback.defaultFailedTitle'),
+      )
+      toast('error', title, description)
+    },
   })
 
   return (
