@@ -3956,7 +3956,9 @@
         "status": "Upload readiness",
         "ready": "Ready",
         "waitVendor": "Wait for vendor",
-        "limit": "Showing {{shown}} of {{total}} shipments."
+        "limit": "Showing {{shown}} of {{total}} shipments.",
+        "submitToAmazon": "Submit {{count}} to Amazon",
+        "submitSuccess": "Tracking submission queued for Amazon Extension."
       },
       "logsUnavailable": "Webhook history is unavailable",
       "loadingLogs": "Loading webhook history",

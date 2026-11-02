@@ -421,3 +421,44 @@ export async function requestExtensionFinanceScheduleNow(
     ),
   )
 }
+
+export interface AmazonTrackingSubmissionInput {
+  shopId: string
+  agentId: string
+  shipmentIds: string[]
+}
+
+export interface AmazonTrackingSubmission {
+  id: string
+  shopId: string
+  agentId: string
+  commandId?: string
+  shipmentIds: string[]
+  filename: string
+  rowCount: number
+  checksum: string
+  status: 'PENDING' | 'SUBMITTED' | 'WAITING_AMAZON' | 'SUCCEEDED' | 'FAILED'
+  amazonBatchId?: string
+  result?: {
+    importedCount: number
+    failedCount: number
+    diagnostics: string[]
+  }
+  submittedAt?: string
+  completedAt?: string
+  errorMessage?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export async function createAmazonTrackingSubmission(input: AmazonTrackingSubmissionInput) {
+  return unwrap<AmazonTrackingSubmission>(
+    await apiClient.post('/api/integration/amazon-tracking-submissions', input),
+  )
+}
+
+export async function listAmazonTrackingSubmissions(params: PageParams & { shopId?: string } = {}) {
+  return unwrap<Paginated<AmazonTrackingSubmission>>(
+    await apiClient.get('/api/integration/amazon-tracking-submissions', { params }),
+  )
+}
