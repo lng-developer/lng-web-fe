@@ -33,6 +33,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - run: npm i -g npm@11.6.2
       - run: npm ci
       - run: npm run lint
       - run: npm run test:unit
@@ -64,6 +65,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - run: npm i -g npm@11.6.2
       - run: npm ci
       - run: npm run test:ui:ci -- --shard=${{ matrix.shard }}
 
@@ -81,6 +83,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - run: npm i -g npm@11.6.2
       - run: npm ci
       - run: npm run test:ui:ci -- "$UI_TEST_FILE"
 
