@@ -124,7 +124,7 @@ describe('LegacySidebar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Fulfillment' }))
     expect(screen.getByText('Scale')).toBeVisible()
     expect(screen.getByText('QC')).toBeVisible()
-    expect(screen.getByText('Work scores')).toBeVisible()
+    expect(screen.getByText('Production Scores')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Design' }))
     expect(screen.getByText('PSD Tasks')).toBeVisible()
@@ -250,9 +250,9 @@ describe('LegacySidebar', () => {
       '/portal/production/qc?salesChannelCode=ETSY',
     )
 
-    expect(screen.getByRole('link', { name: 'Work scores' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Production Scores' })).toHaveAttribute(
       'href',
-      '/portal/work-scores',
+      '/portal/production/scores',
     )
     expect(screen.queryByRole('link', { name: 'Blocked' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Vendor Handoff' })).toHaveAttribute(
