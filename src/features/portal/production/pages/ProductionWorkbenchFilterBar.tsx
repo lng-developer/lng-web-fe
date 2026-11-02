@@ -19,8 +19,10 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly scaleDifficultyLevel?: ScaleDifficultyLevel
   readonly dates: DateRangeValue
   readonly tab: 'scale' | 'blocked' | 'qc' | 'all' | 'ready' | 'sent' | 'cancelled' | string
+  readonly viewMode?: 'scale' | 'qc' | 'general'
   readonly scaleAssigneeId?: string
   readonly canAssignScale: boolean
+  readonly canRecheckBlocked?: boolean
   readonly scaleAssigneeOptions: AssigneeOption[]
   readonly selectedRowCount: number
   readonly exportCsvLoading: boolean
@@ -41,8 +43,10 @@ export const ProductionWorkbenchFilterBar: FC<{
   scaleDifficultyLevel,
   dates,
   tab,
+  viewMode = 'general',
   scaleAssigneeId,
   canAssignScale,
+  canRecheckBlocked,
   scaleAssigneeOptions,
   selectedRowCount,
   exportCsvLoading,
@@ -103,7 +107,7 @@ export const ProductionWorkbenchFilterBar: FC<{
           value={dates}
           onChange={onDatesChange}
         />
-        {tab === 'qc' ? (
+        {viewMode === 'qc' || tab === 'qc' ? (
           <Button icon={<DownloadOutlined />} loading={exportQcLoading} onClick={onExportQc}>
             {t('portal.production.exportQc')}
           </Button>
@@ -132,7 +136,7 @@ export const ProductionWorkbenchFilterBar: FC<{
           <Button icon={<DownloadOutlined />} loading={exportCsvLoading} onClick={onExportCsv}>
             {t('portal.production.exportCsv')}
           </Button>
-          {canAssignScale ? (
+          {(canRecheckBlocked ?? canAssignScale) ? (
             <Button icon={<SyncOutlined />} loading={recheckLoading} onClick={onRecheck}>
               {t('portal.production.recheckBlocked')}
             </Button>

@@ -321,8 +321,8 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       ],
     },
     {
-      key: '/portal/work-scores',
-      labelKey: 'shell.navigation.workScores',
+      key: '/portal/production/scores',
+      labelKey: 'portal.production.scores',
       icon: <TbHomeStats size={20} />,
     },
     {
@@ -461,8 +461,23 @@ const financeMenuItem: LegacyMenuItem = {
   icon: <DollarOutlined />,
   children: [
     {
+      key: '/portal/finance',
+      labelKey: 'finance.tabs.overview',
+      icon: <DollarOutlined />,
+    },
+    {
       key: '/portal/finance/settlements',
       labelKey: 'finance.settlements.settlement',
+      icon: <DollarOutlined />,
+    },
+    {
+      key: '/portal/finance/cash-flow',
+      labelKey: 'finance.cashFlow',
+      icon: <DollarOutlined />,
+    },
+    {
+      key: '/portal/finance/transactions',
+      labelKey: 'finance.transactions',
       icon: <DollarOutlined />,
     },
   ],
@@ -542,7 +557,12 @@ function canAccessItemDirectly(
     return permissions.has('SHIPMENTS:READ') || permissions.has('SHIPMENTS:WRITE')
   }
 
-  if (key === '/portal/work-scores' || key.startsWith('/portal/work-scores')) {
+  if (
+    key === '/portal/production/scores' ||
+    key.startsWith('/portal/production/scores') ||
+    key === '/portal/work-scores' ||
+    key.startsWith('/portal/work-scores')
+  ) {
     return [
       'PRODUCTION:READ',
       'PRODUCTION:WRITE',

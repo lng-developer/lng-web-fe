@@ -105,11 +105,6 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
     defaultTitle: 'PSD Files',
   },
   {
-    pattern: /^\/portal\/design\/workspace(\/.*)?$/,
-    key: 'portal.design.workspace',
-    defaultTitle: 'Design Workspace',
-  },
-  {
     pattern: /^\/portal\/design\/scores(\/.*)?$/,
     key: 'portal.design.scores',
     defaultTitle: 'Design Scores',

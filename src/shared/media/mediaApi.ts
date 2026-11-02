@@ -54,6 +54,7 @@ export async function fetchMediaBlob(
 
   return (await apiClient.get(targetUrl, {
     responseType: 'blob',
+    withCredentials: false,
     signal,
   })) as Blob
 }

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams, type RouteObject } from 'react-router-dom'
 
 import { AppShell } from '@/app/layout/AppShell'
 import {
@@ -77,14 +77,7 @@ export const appRoutes: RouteObject[] = [
       { index: true, element: <WorkspaceIndexRedirect /> },
       {
         path: 'auth/audit-log',
-        lazy: () =>
-          import('@/features/audit/pages/AuditLogPage').then(({ AuditLogPage }) => ({
-            Component: () => (
-              <PermissionBoundary anyOf={['AUDIT:READ']} globalOnly>
-                <AuditLogPage />
-              </PermissionBoundary>
-            ),
-          })),
+        element: <Navigate to="/portal/audit" replace />,
       },
       {
         path: 'system/dashboard',
@@ -99,16 +92,7 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'auth/monitoring',
-        lazy: () =>
-          import('@/features/monitoring/pages/MonitoringDashboardPage').then(
-            ({ MonitoringDashboardPage }) => ({
-              Component: () => (
-                <PermissionBoundary anyOf={['AUDIT:READ']} globalOnly>
-                  <MonitoringDashboardPage />
-                </PermissionBoundary>
-              ),
-            }),
-          ),
+        element: <Navigate to="/portal/monitoring" replace />,
       },
       {
         path: 'auth/accounts',
@@ -186,13 +170,12 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'auth/access/:accountId',
         lazy: () =>
-          import('@/features/auth/access/pages/AccessEditorPage').then(({ AccessEditorPage }) => ({
-            Component: () => (
-              <PermissionBoundary anyOf={['AUTH:WRITE']} globalOnly>
-                <AccessEditorPage />
-              </PermissionBoundary>
-            ),
-          })),
+          Promise.resolve({
+            Component: () => {
+              const { accountId } = useParams()
+              return <Navigate to={`/auth/accounts/${accountId}/access`} replace />
+            },
+          }),
       },
       {
         path: 'organization',
@@ -448,7 +431,7 @@ export const appRoutes: RouteObject[] = [
             import('@/features/portal/reports/pages/ReportWorkspacePage'),
           ]).then(([{ PortalPageBoundary }, { ReportWorkspacePage }]) => ({
             Component: () => (
-              <PortalPageBoundary anyOf={['REPORTS:READ']}>
+              <PortalPageBoundary anyOf={['REPORTS:READ', 'FINANCE:READ']}>
                 <ReportWorkspacePage />
               </PortalPageBoundary>
             ),
@@ -534,19 +517,7 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'portal/design',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/design/pages/DesignWorkbenchPage'),
-          ]).then(([{ PortalPageBoundary }, { DesignWorkbenchPage }]) => ({
-            Component: () => (
-              <PortalPageBoundary
-                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
-              >
-                <DesignWorkbenchPage />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <Navigate to="/portal/design/idea-tasks" replace />,
       },
       {
         path: 'portal/design/idea-tasks',
@@ -633,17 +604,7 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'portal/design/workspace',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/design/pages/DesignWorkspacePage'),
-          ]).then(([{ PortalPageBoundary }, { DesignWorkspacePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:REVIEW']}>
-                <DesignWorkspacePage />
-              </PortalPageBoundary>
-            ),
-          })),
+        element: <Navigate to="/portal/design/idea-tasks" replace />,
       },
       {
         path: 'portal/design/scores',
@@ -671,18 +632,17 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'portal/design/:salesChannel',
         lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/design/pages/DesignWorkbenchPage'),
-          ]).then(([{ PortalPageBoundary }, { DesignWorkbenchPage }]) => ({
-            Component: () => (
-              <PortalPageBoundary
-                anyOf={['DESIGN:READ', 'DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']}
-              >
-                <DesignWorkbenchPage />
-              </PortalPageBoundary>
-            ),
-          })),
+          Promise.resolve({
+            Component: () => {
+              const { salesChannel } = useParams()
+              return (
+                <Navigate
+                  to={`/portal/design/idea-tasks?salesChannelCode=${salesChannel}`}
+                  replace
+                />
+              )
+            },
+          }),
       },
       {
         path: 'portal/production/scores',

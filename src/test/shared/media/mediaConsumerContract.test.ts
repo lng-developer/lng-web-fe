@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import catalogSource from '@/features/portal/catalog/pages/CatalogListingWorkbenchPage.tsx?raw'
-import designSource from '@/features/portal/design/pages/DesignWorkbenchPage.tsx?raw'
+import designSource from '@/features/portal/design/pages/IdeaTasksPage.tsx?raw'
 import psdSource from '@/features/portal/design/pages/PsdFileWorkspacePage.tsx?raw'
 import orderSource from '@/features/portal/orders/pages/OrderInlinePanel.tsx?raw'
 import productionSource from '@/features/portal/production/pages/ProductionWorkbenchPage.tsx?raw'

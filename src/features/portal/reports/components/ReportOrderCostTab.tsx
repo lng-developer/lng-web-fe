@@ -217,12 +217,31 @@ export function ReportOrderCostTab({
         dataIndex: 'marginBps',
         key: 'marginBps',
         width: 100,
-        align: 'center',
+        align: 'right',
         sorter: (a, b) => (a.marginBps ?? -Infinity) - (b.marginBps ?? -Infinity),
         render: (value: number | null) => {
           if (value == null) return <span className={styles.moneyMuted}>—</span>
-          const color = value >= 2000 ? 'success' : value >= 0 ? 'blue' : 'error'
-          return <Tag color={color}>{formatReportPercent(value)}</Tag>
+          const marginPercent = formatReportPercent(value)
+          const marginVal = value / 100
+          const barWidth = Math.min(Math.max(marginVal, 0), 100)
+          const barColor =
+            marginVal >= 20
+              ? 'var(--ant-color-success)'
+              : marginVal >= 10
+                ? 'var(--ant-color-warning)'
+                : 'var(--ant-color-error)'
+
+          return (
+            <div className={styles.marginCell}>
+              <span className={styles.marginPercentText}>{marginPercent}</span>
+              <div className={styles.marginMiniTrack}>
+                <div
+                  className={styles.marginMiniFill}
+                  style={{ width: `${barWidth}%`, backgroundColor: barColor }}
+                />
+              </div>
+            </div>
+          )
         },
       },
       {

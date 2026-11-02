@@ -1,5 +1,5 @@
 import type { ImgHTMLAttributes } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useAuthenticatedMediaUrl } from './useAuthenticatedMediaUrl'
 
@@ -7,6 +7,7 @@ export type AuthenticatedMediaImageProps = Omit<ImgHTMLAttributes<HTMLImageEleme
   alt: string
   downloadUrl?: string | null
   fallback?: string
+  lazy?: boolean
 }
 
 export function AuthenticatedMediaImage({
@@ -14,9 +15,31 @@ export function AuthenticatedMediaImage({
   fallback,
   alt,
   onError,
+  lazy = true,
   ...imageProps
 }: AuthenticatedMediaImageProps) {
-  const { url, error } = useAuthenticatedMediaUrl(downloadUrl)
+  const imageRef = useRef<HTMLImageElement>(null)
+  const [isInView, setIsInView] = useState(
+    () => !lazy || typeof IntersectionObserver === 'undefined',
+  )
+
+  useEffect(() => {
+    if (isInView || !lazy || !imageRef.current) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '300px 0px' },
+    )
+    observer.observe(imageRef.current)
+    return () => observer.disconnect()
+  }, [isInView, lazy])
+
+  const effectiveDownloadUrl = isInView ? downloadUrl : null
+  const { url, error } = useAuthenticatedMediaUrl(effectiveDownloadUrl)
   const resolvedSrc = url ?? fallback
 
   useEffect(() => {
@@ -27,6 +50,7 @@ export function AuthenticatedMediaImage({
 
   return (
     <img
+      ref={imageRef}
       {...imageProps}
       alt={alt}
       src={resolvedSrc}

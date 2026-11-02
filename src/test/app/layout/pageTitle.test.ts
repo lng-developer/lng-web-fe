@@ -50,7 +50,6 @@ describe('pageTitle', () => {
       expect(resolvePageTitle('/portal/design/amazon')).toBe('Amazon tasks')
       expect(resolvePageTitle('/portal/design/etsy')).toBe('Etsy tasks')
       expect(resolvePageTitle('/portal/design/files')).toBe('PSD Files')
-      expect(resolvePageTitle('/portal/design/workspace')).toBe('Design Workspace')
       expect(resolvePageTitle('/portal/design/scores')).toBe('Design Scores')
       expect(resolvePageTitle('/portal/finance')).toBe('Finance')
       expect(resolvePageTitle('/portal/finance/settlements')).toBe('Settlement')
