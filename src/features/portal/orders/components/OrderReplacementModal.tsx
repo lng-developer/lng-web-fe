@@ -57,6 +57,8 @@ function OrderReplacementModalInner({
   const [replacementItems, setReplacementItems] = useState<Record<string, number>>({})
   const [orderReplacementReason, setOrderReplacementReason] = useState('')
 
+  const validItems = (items ?? []).filter((item) => Boolean(item?.item?.id))
+
   const handleOk = () => {
     onAction({
       kind: 'order-replacement',
@@ -81,33 +83,34 @@ function OrderReplacementModalInner({
       onOk={handleOk}
     >
       <div className={styles.replacementForm}>
-        {items.map((item) => {
-          const selected = replacementItems[item.item.id] !== undefined
+        {validItems.map((item) => {
+          const itemId = item.item?.id ?? ''
+          const selected = replacementItems[itemId] !== undefined
+          const maxQuantity = item.item?.quantity || 1
           return (
-            <div key={item.item.id} className={styles.replacementRow}>
+            <div key={itemId} className={styles.replacementRow}>
               <Checkbox
                 checked={selected}
                 onChange={(event) =>
                   setReplacementItems((current) => {
-                    if (event.target.checked)
-                      return { ...current, [item.item.id]: item.item.quantity || 1 }
+                    if (event.target.checked) return { ...current, [itemId]: maxQuantity }
                     const next = { ...current }
-                    delete next[item.item.id]
+                    delete next[itemId]
                     return next
                   })
                 }
               >
-                <CopyableSku value={item.item.sku} strong />
+                <CopyableSku value={item.item?.sku ?? ''} strong />
               </Checkbox>
               <InputNumber
                 min={1}
-                max={item.item.quantity || 1}
+                max={maxQuantity}
                 disabled={!selected}
-                value={replacementItems[item.item.id] ?? item.item.quantity ?? 1}
+                value={replacementItems[itemId] ?? maxQuantity}
                 onChange={(nextQuantity) =>
                   setReplacementItems((current) => ({
                     ...current,
-                    [item.item.id]: nextQuantity ?? 1,
+                    [itemId]: nextQuantity ?? 1,
                   }))
                 }
               />

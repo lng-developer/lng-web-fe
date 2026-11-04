@@ -92,3 +92,23 @@ it('does not truncate a variation value that contains a comma', () => {
   expect(result.options).toEqual([])
   expect(result.originals).toEqual([raw])
 })
+
+it('handles custom personalization labels such as Enter Your Name in inputs', () => {
+  const result = getEtsyPurchasedDetails(
+    'Choose Size: 4 Inches, Number Name: 2 Name, Enter Your Name: The Hansen’s, Bryce, Kyleigh, 2026',
+    [
+      { type: 'OPTION', label: 'Choose Size', value: '4 Inches' },
+      { type: 'OPTION', label: 'Number Name', value: '2 Name' },
+      {
+        type: 'TEXT',
+        label: 'Enter Your Name',
+        value: 'The Hansen’s, Bryce, Kyleigh, 2026',
+      },
+    ],
+  )
+  expect(result.options).toEqual([
+    { label: 'Choose Size', value: '4 Inches' },
+    { label: 'Number Name', value: '2 Name' },
+  ])
+  expect(result.personalizations).toEqual(['Enter Your Name: The Hansen’s, Bryce, Kyleigh, 2026'])
+})

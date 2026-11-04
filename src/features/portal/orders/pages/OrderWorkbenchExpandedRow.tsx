@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { Component, memo, type ReactNode, useEffect, useRef, useState } from 'react'
 import { Skeleton } from 'antd'
 
 import { type PopupModalAnchor } from '@/shared/ui'
@@ -16,6 +16,40 @@ type OrderWorkbenchExpandedRowProps = {
   readonly requestedModal?: OrderModal
   readonly requestedPopupAnchor?: PopupModalAnchor
   readonly onOrderModalClose?: () => void
+}
+
+interface RowErrorBoundaryProps {
+  children: ReactNode
+}
+
+interface RowErrorBoundaryState {
+  hasError: boolean
+}
+
+class OrderRowErrorBoundary extends Component<RowErrorBoundaryProps, RowErrorBoundaryState> {
+  override state: RowErrorBoundaryState = { hasError: false }
+
+  static getDerivedStateFromError(): RowErrorBoundaryState {
+    return { hasError: true }
+  }
+
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('OrderRow render failed:', error, errorInfo)
+  }
+
+  override render() {
+    if (this.state.hasError) {
+      return (
+        <div className={styles.inlinePanel} style={{ padding: '16px' }}>
+          <span style={{ color: '#faad14' }}>
+            Không thể hiển thị chi tiết dòng sản phẩm do dữ liệu không đồng bộ. Vui lòng tải lại
+            trang.
+          </span>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 const LazyOrderDetail = memo(function LazyOrderDetail({
@@ -69,8 +103,9 @@ export const OrderWorkbenchExpandedRow = memo(function OrderWorkbenchExpandedRow
   requestedPopupAnchor: propAnchor,
   onOrderModalClose: propOnClose,
 }: OrderWorkbenchExpandedRowProps) {
+  const orderId = row?.order?.id
   const storeAction = useOrderActionStore((state) =>
-    state.orderAction?.orderId === row.order.id ? state.orderAction : undefined,
+    orderId && state.orderAction?.orderId === orderId ? state.orderAction : undefined,
   )
   const storeClose = useOrderActionStore((state) => state.closeOrderModal)
 
@@ -78,15 +113,21 @@ export const OrderWorkbenchExpandedRow = memo(function OrderWorkbenchExpandedRow
   const requestedPopupAnchor = propAnchor ?? storeAction?.anchor
   const onOrderModalClose = propOnClose ?? storeClose
 
+  if (!row?.order) {
+    return null
+  }
+
   return (
-    <LazyOrderDetail
-      row={row}
-      canWrite={canWrite}
-      canOperate={canOperate}
-      requestedModal={requestedModal}
-      requestedPopupAnchor={requestedPopupAnchor}
-      onOrderModalClose={onOrderModalClose}
-    />
+    <OrderRowErrorBoundary>
+      <LazyOrderDetail
+        row={row}
+        canWrite={canWrite}
+        canOperate={canOperate}
+        requestedModal={requestedModal}
+        requestedPopupAnchor={requestedPopupAnchor}
+        onOrderModalClose={onOrderModalClose}
+      />
+    </OrderRowErrorBoundary>
   )
 })
 

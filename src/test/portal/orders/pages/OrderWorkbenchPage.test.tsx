@@ -230,9 +230,9 @@ describe('OrderWorkbenchPage', () => {
 
   it('uses a compact Case column and reallocates its width to the earlier columns', () => {
     expect(orderWorkbenchSource).toContain("title: t('orders.columns.case')")
-    expect(orderWorkbenchSource).toContain("width: '5%'")
+    expect(orderWorkbenchSource).toContain('width: 70')
     expect(orderWorkbenchSource).toContain("title: t('orders.columns.order')")
-    expect(orderWorkbenchSource).toContain("width: '14%'")
+    expect(orderWorkbenchSource).toContain('width: 180')
   })
 
   it('allows the order table to scroll horizontally when space is constrained', () => {
@@ -245,6 +245,29 @@ describe('OrderWorkbenchPage', () => {
 
   it('does not retain an earlier page while the next page is loading', () => {
     expect(orderWorkbenchSource.match(/placeholderData: keepPreviousData/g)).toHaveLength(1)
+  })
+
+  it('filters out CANCELLED orders when active tab is NO_COST_CENTER', async () => {
+    vi.mocked(listOrderWorkbench).mockResolvedValue({
+      items: [
+        workbenchRow,
+        {
+          order: {
+            ...workbenchRow.order,
+            id: 'order-cancelled',
+            externalOrderId: '111-4188416-4909046',
+            status: 'CANCELLED',
+          },
+          items: [],
+        },
+      ],
+      pagination: { total: 2, page: 1, limit: 20 },
+    })
+
+    renderPage('/portal/orders?tab=NO_COST_CENTER')
+
+    expect(await screen.findByText('113-2183249-0763446')).toBeVisible()
+    expect(screen.queryByText('111-4188416-4909046')).not.toBeInTheDocument()
   })
 
   it('keeps stable shop and vendor filters cached longer than order rows', () => {

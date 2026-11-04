@@ -103,7 +103,7 @@ export function FulfillmentInlineEditor({
 
   const save = useMutation({
     mutationFn: (candidate: MappingCostCenterOption) =>
-      selectFulfillmentCandidate(item.item.id, {
+      selectFulfillmentCandidate(item.item?.id ?? '', {
         vendorProductId: productId!,
         vendorCostCenterId: candidate.id,
       }),

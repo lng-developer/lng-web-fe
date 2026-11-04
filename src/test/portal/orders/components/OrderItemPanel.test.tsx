@@ -100,11 +100,11 @@ it('shows Etsy listing identity and variations rather than an empty Amazon ident
   expect(within(purchased).getByText('8in')).toBeInTheDocument()
   expect(within(purchased).getByText('Red')).toBeInTheDocument()
   expect(within(purchased).getByText('Aiden/Alabama')).toBeVisible()
-  expect(within(purchased).getByText('Personalization')).toBeVisible()
+  expect(within(purchased).getAllByText('Personalization')[0]).toBeVisible()
   expect(within(purchased).queryByText('View details')).not.toBeInTheDocument()
   expect(
-    within(purchased).queryByText('Other instruction: Keep the original capitalization'),
-  ).not.toBeInTheDocument()
+    within(purchased).getByText(/Other instruction: Keep the original capitalization/),
+  ).toBeVisible()
   expect(
     screen.queryByText('Production mapping, separate from customer selection.'),
   ).not.toBeInTheDocument()

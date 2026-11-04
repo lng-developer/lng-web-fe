@@ -128,7 +128,7 @@ describe('ProductionWorkbenchExpandedRow', () => {
         },
       },
     })
-    expect(screen.getByText(/Design source missing/)).toBeVisible()
+    expect(screen.queryByText(/Design source missing/)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Download PSD source/ })).not.toBeInTheDocument()
   })
 

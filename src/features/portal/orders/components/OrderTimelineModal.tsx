@@ -115,7 +115,7 @@ export const OrderTimelineModal = memo(function OrderTimelineModal({
   const timeline = useQuery({
     queryKey: orderKeys.timeline(orderId, orderItemId),
     queryFn: () => (orderItemId ? listOrderItemTimeline(orderItemId) : listOrderTimeline(orderId)),
-    enabled: open,
+    enabled: open && Boolean(orderItemId || orderId),
     ...modalQueryOptions,
     retry: false,
   })

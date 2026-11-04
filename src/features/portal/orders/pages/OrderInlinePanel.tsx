@@ -109,7 +109,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
   }, [onOrderModalClose])
 
   const mutation = useOrderActionsMutation({
-    orderId: row.order.id,
+    orderId: row.order?.id ?? '',
     onSuccess: (result, action) => {
       if (action.kind === 'case-comment') {
         toast('success', t('orders.messages.commentAdded'))
@@ -125,7 +125,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
             isReadyMappingPlan(result)
               ? 'orders.messages.mappingMatched'
               : 'orders.messages.mappingStillBlocked',
-            { orderId: row.order.externalOrderId || row.order.id },
+            { orderId: row.order?.externalOrderId || row.order?.id || '' },
           ),
         )
         return
@@ -134,7 +134,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
         toast(
           'warning',
           t('orders.messages.productionBlockedOpenCase', {
-            orderId: row.order.externalOrderId || row.order.id,
+            orderId: row.order?.externalOrderId || row.order?.id || '',
           }),
         )
         return
@@ -142,7 +142,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       toast(
         'success',
         t(successMessageKey(action), {
-          orderId: row.order.externalOrderId || row.order.id,
+          orderId: row.order?.externalOrderId || row.order?.id || '',
         }),
       )
     },
@@ -206,14 +206,14 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
 
   return (
     <div className={styles.inlinePanel}>
-      {row.items.map((item) => (
+      {(row.items ?? []).map((item) => (
         <OrderItemPanel
-          key={item.item.id}
+          key={item.item?.id ?? item.item?.sku ?? String(Math.random())}
           item={item}
           canWrite={canWrite}
           canOperate={canOperate}
           pending={mutation.isPending}
-          mappingRecheckPending={pendingMappingItemId === item.item.id}
+          mappingRecheckPending={pendingMappingItemId === item.item?.id}
           onAction={mutation.mutate}
           onConfirm={openConfirmation}
           onHistory={openTimelineForItem}
@@ -233,7 +233,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       <OrderCustomerModal
         open={requestedModal === 'customer'}
         anchor={requestedPopupAnchor}
-        initialBuyer={row.order.buyer}
+        initialBuyer={row.order?.buyer}
         pending={mutation.isPending}
         onClose={closeOrderModal}
         onAction={mutation.mutate}
@@ -242,7 +242,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       <OrderShippingModal
         open={requestedModal === 'shipping'}
         anchor={requestedPopupAnchor}
-        initialShipping={row.order.shippingService}
+        initialShipping={row.order?.shippingService}
         pending={mutation.isPending}
         onClose={closeOrderModal}
         onAction={mutation.mutate}
@@ -251,13 +251,13 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       <OrderCaseModal
         open={requestedModal === 'case'}
         anchor={requestedPopupAnchor}
-        orderId={row.order.id}
+        orderId={row.order?.id ?? ''}
         pending={mutation.isPending}
         onClose={closeOrderModal}
         onAction={mutation.mutate}
       />
 
-      {requestedModal === 'timeline' || itemTimelineId ? (
+      {(requestedModal === 'timeline' || itemTimelineId) && row.order?.id ? (
         <OrderTimelineModal
           open
           anchor={itemTimelineId ? itemTimelineAnchor : requestedPopupAnchor}
@@ -270,7 +270,7 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       <OrderReplacementModal
         open={requestedModal === 'replacement'}
         anchor={requestedPopupAnchor}
-        items={row.items}
+        items={row.items ?? []}
         pending={mutation.isPending}
         onClose={closeOrderModal}
         onAction={mutation.mutate}

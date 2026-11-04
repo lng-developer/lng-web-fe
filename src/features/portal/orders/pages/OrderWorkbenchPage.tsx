@@ -28,6 +28,7 @@ import { vendorKeys } from '@/features/portal/vendors/api/vendorKeys'
 import { canUseScopedPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
+  CopyableOrderId,
   DataFreshness,
   FeedbackAlert,
   FormattedDateTime,
@@ -57,6 +58,7 @@ const TABS = [
   'PAYMENT_PENDING',
   'IN_PROGRESS',
   'SHIPPED',
+  'DELIVERED',
   'CANCELLED',
   'OPEN_CASE',
 ] as const
@@ -91,7 +93,7 @@ export const OrderWorkbenchPage = () => {
     (row: OrderWorkbenchRow) =>
       canUseScopedPermission(account, 'ORDERS:WRITE', {
         scopeType: 'shop',
-        scopeId: row.order.shopId ?? row.order.shop?.id,
+        scopeId: row.order?.shopId ?? row.order?.shop?.id,
       }),
     [account],
   )
@@ -203,33 +205,58 @@ export const OrderWorkbenchPage = () => {
     setDates(EMPTY_DATES)
     setPage(1)
   }, [])
+  const orderItems = useMemo(() => {
+    const items = orders.data?.items ?? []
+    if (tab === 'NO_COST_CENTER') {
+      return items.filter((row) => row.order?.status !== 'CANCELLED')
+    }
+    return items
+  }, [orders.data?.items, tab])
+
   // R2: memoize tab items — avoids recreating array on every render
   const tabItems = useMemo(
     () =>
-      TABS.map((key) => ({
-        key,
-        label: (
-          <UiTabLabel count={summary.data?.tabCounts[key] ?? 0} active={tab === key}>
-            {t(`orders.tabs.${key}`)}
-          </UiTabLabel>
-        ),
-      })),
-    [summary.data, tab, t],
+      TABS.map((key) => {
+        let count = summary.data?.tabCounts[key] ?? 0
+        if (key === 'NO_COST_CENTER' && tab === 'NO_COST_CENTER' && orderItems.length === 0) {
+          count = 0
+        }
+        return {
+          key,
+          label: (
+            <UiTabLabel count={count} active={tab === key}>
+              {t(`orders.tabs.${key}`)}
+            </UiTabLabel>
+          ),
+        }
+      }),
+    [orderItems.length, summary.data, tab, t],
   )
   // R2: memoize expandedRowKeys — avoids .map() on every render
   const expandedRowKeys = useMemo(
-    () => (orders.data?.items ?? []).map((row) => row.order.id),
-    [orders.data],
+    () => orderItems.map((row) => row.order?.id).filter(Boolean) as string[],
+    [orderItems],
   )
   const hasActiveFilters = Boolean(shopId || vendorId || dates.dateFrom || dates.dateTo)
-  const pagination = useMemo(
-    () => ({
+  const pagination = useMemo(() => {
+    const rawTotal = orders.data?.pagination.total ?? orders.data?.items.length ?? 0
+    const total =
+      tab === 'NO_COST_CENTER' && orderItems.length < (orders.data?.items?.length ?? 0)
+        ? orderItems.length
+        : rawTotal
+    return {
       current: page,
       pageSize,
-      total: orders.data?.pagination.total ?? orders.data?.items.length ?? 0,
-    }),
-    [orders.data?.items.length, orders.data?.pagination.total, page, pageSize],
-  )
+      total,
+    }
+  }, [
+    orders.data?.items?.length,
+    orders.data?.pagination.total,
+    orderItems.length,
+    page,
+    pageSize,
+    tab,
+  ])
   const handlePageChange = useCallback(
     (nextPage: number, nextPageSize: number) => {
       setPage(nextPageSize === pageSize ? nextPage : 1)
@@ -244,7 +271,7 @@ export const OrderWorkbenchPage = () => {
         <OrderWorkbenchExpandedRow
           row={row}
           canWrite={canWrite}
-          canOperate={canWrite && row.order.status !== 'CANCELLED'}
+          canOperate={canWrite && row.order?.status !== 'CANCELLED'}
         />
       )
     },
@@ -260,18 +287,22 @@ export const OrderWorkbenchPage = () => {
     () => [
       {
         title: t('orders.columns.order'),
-        width: '14%',
+        width: 180,
         render: (_, row) => (
-          <span className={styles.orderIdChip}>{row.order.externalOrderId || '—'}</span>
+          <CopyableOrderId
+            value={row.order?.externalOrderId}
+            className={styles.orderIdChip}
+            fallback="—"
+          />
         ),
       },
       {
         title: t('orders.columns.status'),
-        width: '12%',
+        width: 150,
         render: (_, row) => (
           <Space size={4}>
-            <StatusTag status={orderStatusTone(row.order.status)}>
-              {formatOrderStatusLabel(row.order.status, t)}
+            <StatusTag status={orderStatusTone(row.order?.status)}>
+              {formatOrderStatusLabel(row.order?.status, t)}
             </StatusTag>
             <Tooltip title={t('orders.actions.viewHistory')}>
               <Button
@@ -279,7 +310,9 @@ export const OrderWorkbenchPage = () => {
                 size="small"
                 aria-label={t('orders.actions.viewHistory')}
                 icon={<HistoryOutlined />}
-                onClick={(event) => openOrderModal(event, row.order.id, 'timeline')}
+                onClick={(event) =>
+                  row.order?.id && openOrderModal(event, row.order.id, 'timeline')
+                }
               />
             </Tooltip>
           </Space>
@@ -287,44 +320,48 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.orderedAt'),
-        width: '11%',
-        render: (_, row) => renderOrderDate(row.order.orderedAt),
+        width: 140,
+        render: (_, row) => renderOrderDate(row.order?.orderedAt),
       },
       {
         title: t('orders.columns.importedAt'),
-        width: '11%',
-        render: (_, row) => renderOrderDate(row.order.createdAt),
+        width: 140,
+        render: (_, row) => renderOrderDate(row.order?.createdAt),
       },
       {
         title: t('orders.columns.customer'),
-        width: '14%',
+        width: 180,
         render: (_, row) => (
           <Space size={4}>
-            <span>{row.order.buyer.name ?? '—'}</span>
-            {row.order.addressValidationStatus === 'VALID' ? (
+            <span>{row.order?.buyer?.name ?? '—'}</span>
+            {row.order?.addressValidationStatus === 'VALID' ? (
               <Tooltip title={t('orders.sections.shippingAddress')}>
                 <CheckCircleFilled className={styles.validIcon} />
               </Tooltip>
             ) : null}
-            {canWriteOrder(row) && row.order.status !== 'CANCELLED' ? (
+            {canWriteOrder(row) && row.order?.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editCustomer')}>
                 <Button
                   type="text"
                   size="small"
                   aria-label={t('orders.actions.editCustomer')}
                   icon={<EditOutlined />}
-                  onClick={(event) => openOrderModal(event, row.order.id, 'customer')}
+                  onClick={(event) =>
+                    row.order?.id && openOrderModal(event, row.order.id, 'customer')
+                  }
                 />
               </Tooltip>
             ) : null}
-            {canWriteOrder(row) && row.order.status !== 'CANCELLED' ? (
+            {canWriteOrder(row) && row.order?.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editAddress')}>
                 <Button
                   type="text"
                   size="small"
                   aria-label={t('orders.actions.editAddress')}
                   icon={<EnvironmentOutlined />}
-                  onClick={(event) => openOrderModal(event, row.order.id, 'address')}
+                  onClick={(event) =>
+                    row.order?.id && openOrderModal(event, row.order.id, 'address')
+                  }
                 />
               </Tooltip>
             ) : null}
@@ -333,18 +370,22 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.shipping'),
-        width: '12%',
+        width: 150,
         render: (_, row) => (
           <Space size={4}>
-            <span>{row.order.shippingService.name || row.order.shippingService.level || '—'}</span>
-            {canWriteOrder(row) && row.order.status !== 'CANCELLED' ? (
+            <span>
+              {row.order?.shippingService?.name || row.order?.shippingService?.level || '—'}
+            </span>
+            {canWriteOrder(row) && row.order?.status !== 'CANCELLED' ? (
               <Tooltip title={t('orders.actions.editShipping')}>
                 <Button
                   type="text"
                   size="small"
                   aria-label={t('orders.actions.editShipping')}
                   icon={<TruckOutlined />}
-                  onClick={(event) => openOrderModal(event, row.order.id, 'shipping')}
+                  onClick={(event) =>
+                    row.order?.id && openOrderModal(event, row.order.id, 'shipping')
+                  }
                 />
               </Tooltip>
             ) : null}
@@ -353,16 +394,16 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.shop'),
-        width: '12%',
-        render: (_, row) => row.order.shop?.name ?? '—',
+        width: 140,
+        render: (_, row) => row.order?.shop?.name ?? '—',
       },
       {
         title: t('orders.columns.totalCost'),
-        width: '12%',
+        width: 130,
         render: (_, row) =>
           formatMinorMoney(
-            row.order.pricing.totalCostAmount ?? row.order.pricing.baseCostAmount,
-            row.order.pricing.currency ?? 'USD',
+            row.order?.pricing?.totalCostAmount ?? row.order?.pricing?.baseCostAmount,
+            row.order?.pricing?.currency ?? 'USD',
             i18n.language === 'vi' ? 'vi-VN' : 'en-US',
           ),
       },
@@ -387,9 +428,10 @@ export const OrderWorkbenchPage = () => {
       // },
       {
         title: t('orders.columns.case'),
-        width: '5%',
+        width: 70,
+        align: 'center',
         render: (_, row) => {
-          const hasCase = Boolean(row.order.caseStatus && row.order.caseStatus !== 'NONE')
+          const hasCase = Boolean(row.order?.caseStatus && row.order?.caseStatus !== 'NONE')
 
           if (canWriteOrder(row)) {
             return (
@@ -402,7 +444,7 @@ export const OrderWorkbenchPage = () => {
                   size="small"
                   aria-label={t('orders.actions.manageCase')}
                   icon={<FileExclamationOutlined />}
-                  onClick={(event) => openOrderModal(event, row.order.id, 'case')}
+                  onClick={(event) => row.order?.id && openOrderModal(event, row.order.id, 'case')}
                 />
               </Tooltip>
             )
@@ -410,7 +452,7 @@ export const OrderWorkbenchPage = () => {
 
           if (!hasCase) return '—'
           return (
-            <Tooltip title={row.order.caseTitle ?? t('orders.actions.manageCase')}>
+            <Tooltip title={row.order?.caseTitle ?? t('orders.actions.manageCase')}>
               <span className={styles.caseIndicator} aria-label={t('orders.actions.manageCase')}>
                 <FileExclamationOutlined className={styles.activeCaseIcon} />
               </span>
@@ -430,7 +472,9 @@ export const OrderWorkbenchPage = () => {
                 size="small"
                 aria-label={t('orders.actions.replaceOrder')}
                 icon={<SwapOutlined />}
-                onClick={(event) => openOrderModal(event, row.order.id, 'replacement')}
+                onClick={(event) =>
+                  row.order?.id && openOrderModal(event, row.order.id, 'replacement')
+                }
               />
             </Tooltip>
           ) : (
@@ -526,9 +570,9 @@ export const OrderWorkbenchPage = () => {
         <CoreDataTable
           fillViewport
           className={styles.table}
-          rowKey={(row) => row.order.id}
+          rowKey={(row) => row.order?.id ?? row.order?.externalOrderId ?? ''}
           columns={columns}
-          dataSource={orders.data?.items ?? []}
+          dataSource={orderItems}
           loading={orders.isFetching}
           scroll={{ x: 1460 }}
           pagination={{

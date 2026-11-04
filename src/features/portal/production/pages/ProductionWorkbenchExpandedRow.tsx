@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DownloadOutlined, LinkOutlined, ZoomInOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
-import { Button, Input, Typography, Upload } from 'antd'
+import { Button, Input, Tooltip, Typography, Upload } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset, downloadMediaAssets } from '@/shared/media'
 import { StatusTag, useFeedbackToast, ZoomableImage } from '@/shared/ui'
@@ -105,6 +105,8 @@ export function ProductionWorkbenchExpandedRow({
   viewMode = 'general',
   canScale,
   canQc,
+  currentUserId,
+  claimingTaskId,
   decisions,
   savingNoteTaskId,
   submittingQc,
@@ -117,12 +119,15 @@ export function ProductionWorkbenchExpandedRow({
   onInspectSlot,
   onPassSlot,
   onManualSlotUploaded,
+  onClaimTask,
 }: {
   readonly task: ProductionTask
   readonly tab: 'scale' | 'blocked' | 'qc' | 'all' | 'ready' | 'sent' | 'cancelled' | string
   readonly viewMode?: 'scale' | 'qc' | 'general'
   readonly canScale: boolean
   readonly canQc: boolean
+  readonly currentUserId?: string
+  readonly claimingTaskId?: string
   readonly decisions: Record<string, FileDecision>
   readonly savingNoteTaskId?: string
   readonly submittingQc: boolean
@@ -139,6 +144,7 @@ export function ProductionWorkbenchExpandedRow({
   readonly onInspectSlot: (task: ProductionTask, check: FileCheck, readonly?: boolean) => void
   readonly onPassSlot: (checkId: string) => void
   readonly onManualSlotUploaded: () => void | Promise<void>
+  readonly onClaimTask?: (taskId: string) => void
 }) {
   const { t } = useTranslation()
   const isScaleMutationLocked =
@@ -146,14 +152,19 @@ export function ProductionWorkbenchExpandedRow({
     task.qcStatus === 'PASSED'
   const isScaleTab =
     viewMode === 'scale'
-      ? !['ready', 'sent', 'cancelled', 'qc_pending'].includes(tab)
-      : ['scale', 'need_scale', 'qc_rejected', 'unclassified'].includes(tab) ||
+      ? ['need_scale', 'qc_rejected'].includes(tab) ||
         (tab === 'all' && ['NEED_SCALE', 'QC_REJECTED'].includes(task.status))
+      : viewMode === 'qc'
+        ? false
+        : ['scale', 'need_scale', 'qc_rejected'].includes(tab) ||
+          (tab === 'all' && ['NEED_SCALE', 'QC_REJECTED'].includes(task.status))
   const isScale = isScaleTab && !isScaleMutationLocked
   const isQc =
-    viewMode === 'qc'
-      ? tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
-      : tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
+    viewMode === 'scale'
+      ? false
+      : viewMode === 'qc'
+        ? tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
+        : tab === 'qc' || (tab === 'all' && task.qcStatus === 'PENDING')
   const checks = task.fileChecks ?? task.qcPreviewFileChecks ?? []
   const psdTemplate = task.scaleContext?.use?.psdTemplate
   const linkedInputAssetIds = new Set(
@@ -191,7 +202,8 @@ export function ProductionWorkbenchExpandedRow({
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
   const outputChecks = checks.filter(
     (check) =>
-      check.sourceType !== 'PSD_TEMPLATE' && (check.required || check.outputAssetDownloadUrl),
+      check.sourceType !== 'PSD_TEMPLATE' &&
+      (check.required || check.outputRequired || check.outputAssetDownloadUrl),
   )
   const canSubmitQc = outputChecks.length > 0 && outputChecks.every((check) => decisions[check.id])
   const canSubmitScale =
@@ -376,10 +388,6 @@ export function ProductionWorkbenchExpandedRow({
             >
               {t('portal.production.downloadPsdSource')}
             </Button>
-          ) : psdTemplate?.status === 'MISSING' || task.blockers?.includes('PSD_MISSING') ? (
-            <Typography.Text type="danger">
-              {t('portal.production.designSourceMissing')}
-            </Typography.Text>
           ) : null}
         </div>
       </div>
@@ -410,6 +418,14 @@ export function ProductionWorkbenchExpandedRow({
                 existingSlotKeys={checks.map((check) => check.slotKey)}
                 onUploaded={onManualSlotUploaded}
               />
+            ) : isScale && !canScale && !task.assignedDesignUserId && onClaimTask ? (
+              <Button
+                type="primary"
+                loading={claimingTaskId === task.id}
+                onClick={() => onClaimTask(task.id)}
+              >
+                {t('portal.production.claimTask', { defaultValue: 'Nhận việc (Claim)' })}
+              </Button>
             ) : null}
           </div>
           <div className={styles.inlineSlots}>
@@ -493,6 +509,46 @@ export function ProductionWorkbenchExpandedRow({
                           {t('portal.production.uploadOutput')}
                         </Button>
                       </Upload>
+                    ) : isScale && !canScale ? (
+                      !task.assignedDesignUserId && onClaimTask ? (
+                        <Tooltip
+                          title={t('portal.production.claimToUpload', {
+                            defaultValue: 'Nhận task để tải lên file scale',
+                          })}
+                        >
+                          <Button
+                            type="dashed"
+                            loading={claimingTaskId === task.id}
+                            onClick={() => onClaimTask(task.id)}
+                          >
+                            {t('portal.production.claimShort', { defaultValue: 'Nhận việc' })}
+                          </Button>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip
+                          title={
+                            task.assignedDesignUserId && task.assignedDesignUserId !== currentUserId
+                              ? t('portal.production.assignedToOther', {
+                                  name:
+                                    task.assignedDesigner?.fullName ||
+                                    task.assignedDesigner?.employeeCode ||
+                                    'người khác',
+                                  defaultValue: `Đang được giao cho: ${
+                                    task.assignedDesigner?.fullName ||
+                                    task.assignedDesigner?.employeeCode ||
+                                    'người khác'
+                                  }`,
+                                })
+                              : undefined
+                          }
+                        >
+                          <span>
+                            <Button disabled type="dashed">
+                              {t('portal.production.uploadOutput')}
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )
                     ) : null}
                     {isQc && canQc && check.outputAssetDownloadUrl ? (
                       <Button

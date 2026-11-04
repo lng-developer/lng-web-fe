@@ -29,9 +29,22 @@ export default function EtsyPurchasedDetails({ item }: { readonly item: OrderWor
         </div>
       ))}
       {!details.options.length && !details.personalizations.length ? (
-        <Typography.Text type="secondary">
-          {t('orders.fields.etsySelectionUnavailable')}
-        </Typography.Text>
+        details.originals.length ? (
+          <div className={styles.etsyPersonalization}>
+            <Typography.Text type="secondary">
+              {t('orders.fields.etsyPersonalization')}
+            </Typography.Text>
+            {details.originals.map((orig) => (
+              <Typography.Text key={orig} copyable={{ text: orig }}>
+                {orig}
+              </Typography.Text>
+            ))}
+          </div>
+        ) : (
+          <Typography.Text type="secondary">
+            {t('orders.fields.etsySelectionUnavailable')}
+          </Typography.Text>
+        )
       ) : null}
     </div>
   )

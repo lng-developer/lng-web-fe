@@ -13,7 +13,7 @@ const CUSTOMER_FIELDS = ['name', 'emailMasked', 'phoneMasked', 'externalBuyerId'
 type OrderCustomerModalProps = {
   readonly open: boolean
   readonly anchor?: PopupModalAnchor
-  readonly initialBuyer: OrderBuyer
+  readonly initialBuyer?: OrderBuyer
   readonly pending: boolean
   readonly onClose: () => void
   readonly onAction: (action: OrderAction) => void
@@ -42,7 +42,7 @@ export const OrderCustomerModal = memo(function OrderCustomerModal({
 
 type OrderCustomerModalInnerProps = {
   readonly anchor?: PopupModalAnchor
-  readonly initialBuyer: OrderBuyer
+  readonly initialBuyer?: OrderBuyer
   readonly pending: boolean
   readonly onClose: () => void
   readonly onAction: (action: OrderAction) => void
@@ -56,7 +56,15 @@ function OrderCustomerModalInner({
   onAction,
 }: OrderCustomerModalInnerProps) {
   const { t } = useTranslation()
-  const [buyer, setBuyer] = useState<OrderBuyer>(initialBuyer)
+  const [buyer, setBuyer] = useState<OrderBuyer>(
+    () =>
+      initialBuyer ?? {
+        name: null,
+        emailMasked: null,
+        phoneMasked: null,
+        externalBuyerId: null,
+      },
+  )
 
   return (
     <PopupModal
@@ -74,7 +82,7 @@ function OrderCustomerModalInner({
           <label key={field}>
             <Typography.Text>{t(`orders.customer.${field}`)}</Typography.Text>
             <Input
-              value={buyer[field] ?? ''}
+              value={buyer?.[field] ?? ''}
               onChange={(event) =>
                 setBuyer((current) => ({ ...current, [field]: event.target.value }))
               }
