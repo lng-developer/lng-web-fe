@@ -41,6 +41,28 @@ npm run lint
 npm run build
 ```
 
+## Autonomous Tooling & Workflow Protocols
+
+Agents operating on this repository must automatically adopt the following integrated workflows on every user request without requiring explicit prompt activation:
+
+1. **Architecture & Impact Analysis (CodeGraph MCP):**
+   - Automatically use `codegraph_explore` MCP tool for symbol lookup, cross-file caller/callee paths, and blast-radius analysis before editing shared contracts, routes, or cross-cutting hooks.
+   - Avoid slow, token-heavy grep/read polling loops when structural knowledge graph queries can map dependencies in one round-trip.
+
+2. **Anti-Bloat & YAGNI (Ponytail):**
+   - Implement the smallest, cleanest change that fully solves the problem.
+   - Strictly reuse existing helpers, UI primitives, and hooks in `@/shared/*`.
+   - Never add new dependencies or create speculative wrapper/abstraction layers without explicit instructions.
+
+3. **Engineering Rigor & Verification (Superpowers):**
+   - **Systematic Debugging:** Trace root causes and verify hypotheses with evidence before modifying code.
+   - **Plan First for Complex Tasks:** Draft and follow clear step-by-step milestones for multi-file refactoring or major features.
+   - **Strict Verification:** Always run `npm run lint`, `npm run build`, and narrow unit/UI test suites before claiming any task is done. Evidence before assertions always.
+
+4. **UI/UX Design Intelligence (UI-UX Pro Max & Taste Skill):**
+   - Leverage UI/UX data guidance for data visualization, dashboard hierarchy, and complex operational workbenches.
+   - **Authoritative Constraint:** All UI code must strictly adhere to `DESIGN.md` (high-density B2B operational rules, compact tables, theme tokens). Never introduce low-density consumer styles, glassmorphism, or non-standard visual clutter.
+
 ## Agent skills
 
 ### Domain docs
