@@ -75,24 +75,31 @@ export type ExtensionCommandType =
   | 'IMPORT_SETTLEMENTS'
   | 'TEST_CONNECTION'
 export type ExtensionImportDays = 1 | 2 | 7 | 15 | 30
+export type ExtensionScheduleType = 'INTERVAL' | 'FIXED_TIMES'
 export type ExtensionOrderSchedule = {
   id: string
   shopId: string
   agentId: string
   enabled: boolean
+  scheduleType?: ExtensionScheduleType
   intervalMinutes: 60 | 120 | 180 | 240
+  fixedTimes?: string[]
+  timezone?: string
   nextRunAt: string
   lastQueuedAt: string | null
   lastError: string | null
 }
-export type ExtensionFinanceScheduleSource = 'TRANSACTIONS' | 'SETTLEMENTS'
+export type ExtensionFinanceScheduleSource = 'TRANSACTIONS' | 'SETTLEMENTS' | 'ADS'
 export type ExtensionFinanceSchedule = {
   id: string
   shopId: string
   agentId: string
   source: ExtensionFinanceScheduleSource
   enabled: boolean
-  intervalMinutes: 1440
+  scheduleType?: ExtensionScheduleType
+  intervalMinutes: number
+  fixedTimes?: string[]
+  timezone?: string
   nextRunAt: string
   lastQueuedAt: string | null
   lastCompletedAt: string | null
@@ -389,9 +396,16 @@ export async function listExtensionOrderSchedules() {
     await apiClient.get(`${extensionCommandPath}/order-schedules`),
   )
 }
+export type UpsertExtensionOrderScheduleInput = {
+  enabled: boolean
+  scheduleType?: ExtensionScheduleType
+  intervalMinutes?: 60 | 120 | 180 | 240
+  fixedTimes?: string[]
+  timezone?: string
+}
 export async function upsertExtensionOrderSchedule(
   agentId: string,
-  input: Pick<ExtensionOrderSchedule, 'enabled' | 'intervalMinutes'>,
+  input: UpsertExtensionOrderScheduleInput,
 ) {
   return unwrap<ExtensionOrderSchedule>(
     await apiClient.put(`${extensionCommandPath}/order-schedules/${agentId}`, input),
@@ -402,10 +416,17 @@ export async function listExtensionFinanceSchedules() {
     await apiClient.get(`${extensionCommandPath}/finance-schedules`),
   )
 }
+export type UpsertExtensionFinanceScheduleInput = {
+  enabled: boolean
+  scheduleType?: ExtensionScheduleType
+  intervalMinutes?: number
+  fixedTimes?: string[]
+  timezone?: string
+}
 export async function upsertExtensionFinanceSchedule(
   agentId: string,
   source: ExtensionFinanceScheduleSource,
-  input: Pick<ExtensionFinanceSchedule, 'enabled'>,
+  input: UpsertExtensionFinanceScheduleInput,
 ) {
   return unwrap<ExtensionFinanceSchedule>(
     await apiClient.put(`${extensionCommandPath}/finance-schedules/${agentId}/${source}`, input),

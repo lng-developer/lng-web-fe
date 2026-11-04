@@ -22,6 +22,8 @@ import {
   requestExtensionFinanceScheduleNow,
   upsertExtensionFinanceSchedule,
   upsertExtensionOrderSchedule,
+  type ExtensionFinanceScheduleSource,
+  type ExtensionScheduleType,
 } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
 import type { CreateExtensionCommandInput } from '../components/extensionHelpers'
@@ -147,12 +149,25 @@ export function useExtensionWorkbench({
     mutationFn: ({
       agentId,
       enabled,
+      scheduleType,
       intervalMinutes,
+      fixedTimes,
+      timezone,
     }: {
       agentId: string
       enabled: boolean
-      intervalMinutes: 60 | 120 | 180 | 240
-    }) => upsertExtensionOrderSchedule(agentId, { enabled, intervalMinutes }),
+      scheduleType?: ExtensionScheduleType
+      intervalMinutes?: 60 | 120 | 180 | 240
+      fixedTimes?: string[]
+      timezone?: string
+    }) =>
+      upsertExtensionOrderSchedule(agentId, {
+        enabled,
+        scheduleType,
+        intervalMinutes,
+        fixedTimes,
+        timezone,
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: integrationKeys.extensionOrderSchedules() })
       showFeedbackToast('success', 'Order schedule saved.')
@@ -164,11 +179,26 @@ export function useExtensionWorkbench({
       agentId,
       source,
       enabled,
+      scheduleType,
+      intervalMinutes,
+      fixedTimes,
+      timezone,
     }: {
       agentId: string
-      source: 'TRANSACTIONS' | 'SETTLEMENTS'
+      source: ExtensionFinanceScheduleSource
       enabled: boolean
-    }) => upsertExtensionFinanceSchedule(agentId, source, { enabled }),
+      scheduleType?: ExtensionScheduleType
+      intervalMinutes?: number
+      fixedTimes?: string[]
+      timezone?: string
+    }) =>
+      upsertExtensionFinanceSchedule(agentId, source, {
+        enabled,
+        scheduleType,
+        intervalMinutes,
+        fixedTimes,
+        timezone,
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: integrationKeys.extensionFinanceSchedules() })
       showFeedbackToast('success', 'Finance schedule saved.')
@@ -181,7 +211,7 @@ export function useExtensionWorkbench({
       source,
     }: {
       agentId: string
-      source: 'TRANSACTIONS' | 'SETTLEMENTS'
+      source: ExtensionFinanceScheduleSource
     }) => requestExtensionFinanceScheduleNow(agentId, source),
     onSuccess: async () => {
       await Promise.all([

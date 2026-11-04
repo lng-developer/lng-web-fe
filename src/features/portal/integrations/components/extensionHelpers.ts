@@ -48,3 +48,50 @@ export function isRecentlyReconnected(agent: ExtensionManagementAgent, now: numb
     now - Date.parse(agent.lastReconnectedAt!) <= RECENT_RECONNECT_MS
   )
 }
+
+export function formatScheduleSubtitle(
+  schedule?: {
+    enabled?: boolean
+    scheduleType?: 'INTERVAL' | 'FIXED_TIMES'
+    intervalMinutes?: number
+    fixedTimes?: string[]
+    nextRunAt?: string | null
+  } | null,
+  t: (key: string, options?: Record<string, unknown>) => string = (_, opts) =>
+    (opts?.defaultValue as string) ?? '',
+  defaultIntervalMinutes = 120,
+  intervalNote?: string,
+) {
+  if (!schedule?.enabled) {
+    return t('portal.integrations.extension.notScheduled', { defaultValue: 'Not scheduled' })
+  }
+  const nextDate = schedule.nextRunAt ? new Date(schedule.nextRunAt) : null
+  const validNext = nextDate && !isNaN(nextDate.getTime())
+  const nextPart = validNext
+    ? ` · ${t('portal.integrations.extension.nextRun', {
+        defaultValue: `Next: ${nextDate.toLocaleString()}`,
+        time: nextDate.toLocaleString(),
+      })}`
+    : ''
+
+  if (
+    schedule.scheduleType === 'FIXED_TIMES' ||
+    (schedule.fixedTimes && schedule.fixedTimes.length > 0)
+  ) {
+    const times = (schedule.fixedTimes ?? []).join(', ')
+    return `${t('portal.integrations.extension.dailyAt', {
+      defaultValue: `Daily at ${times} (UTC+7)`,
+      times,
+    })}${nextPart}`
+  }
+
+  if (intervalNote) {
+    return `${intervalNote}${nextPart}`
+  }
+
+  const hours = (schedule.intervalMinutes ?? defaultIntervalMinutes) / 60
+  return `${t('portal.integrations.extension.everyHours', {
+    defaultValue: `Every ${hours}h`,
+    hours,
+  })}${nextPart}`
+}

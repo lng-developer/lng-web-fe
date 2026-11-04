@@ -97,6 +97,19 @@
   width: 280px;
 }
 
+.schedulePopover {
+  display: grid;
+  gap: 12px;
+  width: 320px;
+}
+
+.schedulePopoverPresets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .automationGroups {
   display: grid;
   gap: 24px;
