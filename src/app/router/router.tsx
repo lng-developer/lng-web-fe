@@ -7,7 +7,6 @@ import {
   requireWorkspace,
 } from '@/features/auth/guards/accountSetupGuards'
 import { LoginPage } from '@/features/auth/login/pages/LoginPage'
-import { OperationsDashboardPage } from '@/features/foundation/OperationsDashboardPage'
 import { LegacyMappingRedirect } from '@/features/portal/mapping/pages/LegacyMappingRedirect'
 import { PermissionBoundary } from '@/shared/auth/PermissionBoundary'
 
@@ -23,6 +22,18 @@ const loadCatalogWorkspaceRoute = () =>
     Component: () => (
       <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
         <CatalogWorkspacePage />
+      </PortalPageBoundary>
+    ),
+  }))
+
+const loadReportWorkspaceRoute = () =>
+  Promise.all([
+    import('@/features/portal/components/PortalPageBoundary'),
+    import('@/features/portal/reports/pages/ReportWorkspacePage'),
+  ]).then(([{ PortalPageBoundary }, { ReportWorkspacePage }]) => ({
+    Component: () => (
+      <PortalPageBoundary anyOf={['REPORTS:READ', 'FINANCE:READ']}>
+        <ReportWorkspacePage />
       </PortalPageBoundary>
     ),
   }))
@@ -227,17 +238,7 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'portal/listing/:salesChannelCode',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/catalog/pages/CatalogWorkspacePage'),
-          ]).then(([{ PortalPageBoundary }, { CatalogWorkspacePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
-                <CatalogWorkspacePage />
-              </PortalPageBoundary>
-            ),
-          })),
+        lazy: loadCatalogWorkspaceRoute,
       },
       {
         path: 'portal/vendors',
@@ -347,11 +348,16 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'portal/chat',
         lazy: () =>
-          import('@/features/portal/chat/pages/ChatWorkspacePage').then(
-            ({ ChatWorkspacePage }) => ({
-              Component: ChatWorkspacePage,
-            }),
-          ),
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/chat/pages/ChatWorkspacePage'),
+          ]).then(([{ PortalPageBoundary }, { ChatWorkspacePage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['CHAT:READ', 'CHAT:WRITE']}>
+                <ChatWorkspacePage />
+              </PortalPageBoundary>
+            ),
+          })),
       },
       {
         path: 'portal/customizations',
@@ -425,17 +431,7 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: 'portal/reports/:salesChannelCode?/:reportView?',
-        lazy: () =>
-          Promise.all([
-            import('@/features/portal/components/PortalPageBoundary'),
-            import('@/features/portal/reports/pages/ReportWorkspacePage'),
-          ]).then(([{ PortalPageBoundary }, { ReportWorkspacePage }]) => ({
-            Component: () => (
-              <PortalPageBoundary anyOf={['REPORTS:READ', 'FINANCE:READ']}>
-                <ReportWorkspacePage />
-              </PortalPageBoundary>
-            ),
-          })),
+        lazy: loadReportWorkspaceRoute,
       },
       {
         path: 'portal/audit',
@@ -745,7 +741,13 @@ export const appRoutes: RouteObject[] = [
             ),
           })),
       },
-      { path: 'portal/dashboard', element: <OperationsDashboardPage /> },
+      {
+        path: 'portal/dashboard',
+        lazy: () =>
+          import('@/features/foundation/OperationsDashboardPage').then(
+            ({ OperationsDashboardPage }) => ({ Component: OperationsDashboardPage }),
+          ),
+      },
       { path: 'operations-dashboard', element: <Navigate to="/portal/dashboard" replace /> },
       { path: 'foundation', element: <Navigate to="/portal/dashboard" replace /> },
     ],
