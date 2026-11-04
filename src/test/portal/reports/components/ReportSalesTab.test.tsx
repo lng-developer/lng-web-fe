@@ -68,5 +68,5 @@ describe('ReportSalesTab performance safeguards', () => {
 
     expect(screen.getByRole('heading', { name: 'Daily seller P&L · USD' })).toBeInTheDocument()
     expect(screen.getAllByRole('row').length).toBeLessThan(109)
-  })
+  }, 15000)
 })

@@ -17,6 +17,7 @@ interface ReportAdsTabProps {
   isAdsDailyPending: boolean
   channelsData?: ChannelPerformance[]
   isChannelsPending: boolean
+  filterBar?: React.ReactNode
 }
 
 export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
@@ -26,6 +27,7 @@ export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
     isAdsDailyPending,
     channelsData = [],
     isChannelsPending,
+    filterBar,
   }) => {
     const { t } = useTranslation()
 
@@ -128,38 +130,41 @@ export const ReportAdsTab: React.FC<ReportAdsTabProps> = React.memo(
       )
     }
 
+    const currency = adsKpis?.currency || adsDailyData[0]?.currency || 'USD'
+
     return (
       <div className={styles.stack}>
-        {adsKpis && (
-          <div className={styles.metrics}>
-            <MetricCard
-              icon={<DollarOutlined />}
-              variant="warning"
-              label={t('reports.columns.spend')}
-              value={formatReportMoney(adsKpis.totalSpend, adsKpis.currency)}
-            />
-            <MetricCard
-              icon={<ShoppingOutlined />}
-              variant="primary"
-              label={t('reports.columns.sales')}
-              value={formatReportMoney(adsKpis.totalSales, adsKpis.currency)}
-            />
-            <MetricCard
-              icon={<FundOutlined />}
-              variant="success"
-              label={t('reports.columns.roas')}
-              value={adsKpis.roas === '—' ? '—' : `${adsKpis.roas}x`}
-            />
-            <MetricCard
-              icon={<AimOutlined />}
-              variant="neutral"
-              label={t('reports.columns.cpa')}
-              value={
-                adsKpis.avgCpa != null ? formatReportMoney(adsKpis.avgCpa, adsKpis.currency) : '—'
-              }
-            />
-          </div>
-        )}
+        <div className={styles.metrics}>
+          <MetricCard
+            icon={<DollarOutlined />}
+            variant="warning"
+            label={t('reports.columns.spend')}
+            value={formatReportMoney(adsKpis?.totalSpend ?? 0, currency)}
+            loading={isAdsDailyPending}
+          />
+          <MetricCard
+            icon={<ShoppingOutlined />}
+            variant="primary"
+            label={t('reports.columns.sales')}
+            value={formatReportMoney(adsKpis?.totalSales ?? 0, currency)}
+            loading={isAdsDailyPending}
+          />
+          <MetricCard
+            icon={<FundOutlined />}
+            variant="success"
+            label={t('reports.columns.roas')}
+            value={!adsKpis || adsKpis.roas === '—' ? '—' : `${adsKpis.roas}x`}
+            loading={isAdsDailyPending}
+          />
+          <MetricCard
+            icon={<AimOutlined />}
+            variant="neutral"
+            label={t('reports.columns.cpa')}
+            value={adsKpis?.avgCpa != null ? formatReportMoney(adsKpis.avgCpa, currency) : '—'}
+            loading={isAdsDailyPending}
+          />
+        </div>
+        {filterBar}
         <SectionCard title={t('reports.sales.dailyAds')}>
           <CoreDataTable
             tableLayout="fixed"

@@ -1,12 +1,15 @@
-import { useMemo } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   DollarOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   MinusCircleOutlined,
   RiseOutlined,
+  SearchOutlined,
   ShoppingCartOutlined,
 } from '@ant-design/icons'
-import { Typography, type TableColumnsType } from 'antd'
+import { Button, Input, Segmented, Space, Typography, type TableColumnsType } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { MetricCard, SectionCard } from '@/shared/ui'
@@ -21,7 +24,10 @@ interface ReportSalesTabProps {
   isPending: boolean
   canCompareSellers: boolean
   dates?: string[]
+  filterBar?: ReactNode
 }
+
+type MetricFilterKey = 'all' | 'core' | 'profit'
 
 type DailySalesRow = {
   date: string
@@ -87,36 +93,19 @@ type SellerMatrixGroup = {
 const METRIC_STYLES: Record<
   SellerMatrixMetricKey,
   {
-    dotColor: string
-    textColor?: string
     isBold?: boolean
   }
 > = {
-  orders: { dotColor: 'var(--ant-color-primary)' },
-  revenue: {
-    dotColor: 'var(--ant-color-primary)',
-    textColor: 'var(--ant-color-primary)',
-    isBold: true,
-  },
-  fulfillmentCost: { dotColor: 'var(--ant-color-warning)', textColor: 'var(--ant-color-warning)' },
-  fee: { dotColor: 'var(--ant-color-warning)', textColor: 'var(--ant-color-warning)' },
-  adSpend: { dotColor: '#7248ba', textColor: '#7248ba' },
-  discount: { dotColor: 'var(--ant-color-error)', textColor: 'var(--ant-color-error)' },
-  grossProfit: {
-    dotColor: 'var(--ant-color-success)',
-    textColor: 'var(--ant-color-success)',
-    isBold: true,
-  },
-  operatingCost: {
-    dotColor: 'var(--ant-color-text-secondary)',
-    textColor: 'var(--ant-color-text-secondary)',
-  },
-  refund: { dotColor: 'var(--ant-color-error)', textColor: 'var(--ant-color-error)' },
-  netProfit: {
-    dotColor: 'var(--ant-color-primary)',
-    textColor: 'var(--ant-color-primary)',
-    isBold: true,
-  },
+  orders: {},
+  revenue: { isBold: true },
+  fulfillmentCost: {},
+  fee: {},
+  adSpend: {},
+  discount: {},
+  grossProfit: { isBold: true },
+  operatingCost: {},
+  refund: {},
+  netProfit: { isBold: true },
 }
 
 function formatSellerMatrixValue(
@@ -140,50 +129,17 @@ function renderMatrixCellValue(
   const text = formatSellerMatrixValue(metricKey, value, currency)
 
   if (metricKey === 'grossProfit' || metricKey === 'netProfit') {
-    const isNegative = value < 0
-    const color = isNegative
-      ? 'var(--ant-color-error)'
-      : metricKey === 'grossProfit'
-        ? 'var(--ant-color-success)'
-        : 'var(--ant-color-primary)'
-    return <span style={{ color, fontWeight: 700 }}>{text}</span>
+    if (value > 0) {
+      return <span style={{ color: 'var(--ant-color-success)', fontWeight: 700 }}>{text}</span>
+    }
+    if (value < 0) {
+      return <span style={{ color: 'var(--ant-color-error)', fontWeight: 700 }}>{text}</span>
+    }
+    return <span style={{ fontWeight: 600 }}>{text}</span>
   }
 
   if (metricKey === 'revenue') {
-    return <span style={{ color: 'var(--ant-color-primary)', fontWeight: 600 }}>{text}</span>
-  }
-
-  if (metricKey === 'fulfillmentCost') {
-    return <span style={{ color: 'var(--ant-color-warning)', fontWeight: 500 }}>{text}</span>
-  }
-
-  if (metricKey === 'fee') {
-    return <span style={{ color: 'var(--ant-color-warning)' }}>{text}</span>
-  }
-
-  if (metricKey === 'adSpend') {
-    return <span style={{ color: value > 0 ? '#7248ba' : undefined }}>{text}</span>
-  }
-
-  if (metricKey === 'discount') {
-    return <span style={{ color: value > 0 ? 'var(--ant-color-error)' : undefined }}>{text}</span>
-  }
-
-  if (metricKey === 'refund') {
-    return (
-      <span
-        style={{
-          color: value > 0 ? 'var(--ant-color-error)' : undefined,
-          fontWeight: value > 0 ? 600 : undefined,
-        }}
-      >
-        {text}
-      </span>
-    )
-  }
-
-  if (metricKey === 'operatingCost') {
-    return <span style={{ color: 'var(--ant-color-text-secondary)' }}>{text}</span>
+    return <span style={{ fontWeight: 600 }}>{text}</span>
   }
 
   if (metricKey === 'orders') {
@@ -193,13 +149,41 @@ function renderMatrixCellValue(
   return <span>{text}</span>
 }
 
+const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const WEEKDAYS_VI = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+
+function formatHeaderDate(dateStr: string, locale?: string) {
+  try {
+    const parts = dateStr.split('-')
+    if (parts.length === 3) {
+      const year = Number.parseInt(parts[0], 10)
+      const month = Number.parseInt(parts[1], 10) - 1
+      const day = Number.parseInt(parts[2], 10)
+      const d = new Date(Date.UTC(year, month, day))
+      const dayOfWeek = (locale === 'vi' ? WEEKDAYS_VI : WEEKDAYS_EN)[d.getUTCDay()] || ''
+      return {
+        date: `${parts[2]}/${parts[1]}`,
+        dayOfWeek,
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return { date: dateStr.slice(5), dayOfWeek: '' }
+}
+
 export function ReportSalesTab({
   data = [],
   isPending,
   canCompareSellers,
   dates: selectedDates = [],
+  filterBar,
 }: ReportSalesTabProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const [metricFilter, setMetricFilter] = useState<MetricFilterKey>('all')
+  const [sellerSearch, setSellerSearch] = useState('')
+  const [showChart, setShowChart] = useState(true)
+
   const dailyRows = useMemo<DailySalesRow[]>(() => {
     const rows = new Map<string, DailySalesRow>()
     data.forEach((row) => {
@@ -261,6 +245,20 @@ export function ReportSalesTab({
     return [...rows.values()].sort((left, right) => left.currency.localeCompare(right.currency))
   }, [dailyRows])
 
+  const displaySummaries = useMemo<SalesSummary[]>(() => {
+    if (summaries.length) return summaries
+    return [
+      {
+        currency: 'USD',
+        orderCount: 0,
+        revenueAmount: 0,
+        totalCostAmount: null,
+        netProfitAmount: null,
+        adjustmentsAmount: 0,
+      },
+    ]
+  }, [summaries])
+
   const sellerRowsByCurrency = useMemo(() => {
     const currencyRows = new Map<string, Map<string, SellerPerformance>>()
     data.forEach((row) => {
@@ -312,6 +310,11 @@ export function ReportSalesTab({
     }))
   }, [data])
 
+  const hasMultipleSellers = useMemo(
+    () => sellerRowsByCurrency.some(({ rows }) => rows.length > 1),
+    [sellerRowsByCurrency],
+  )
+
   const sellerMatrixMetrics = useMemo<SellerMatrixMetric[]>(
     () => [
       { key: 'orders', label: t('reports.columns.orders'), value: (row) => row.orderCount },
@@ -348,6 +351,20 @@ export function ReportSalesTab({
     [t],
   )
 
+  const activeMetrics = useMemo(() => {
+    if (metricFilter === 'core') {
+      return sellerMatrixMetrics.filter((m) =>
+        ['orders', 'revenue', 'grossProfit', 'netProfit'].includes(m.key),
+      )
+    }
+    if (metricFilter === 'profit') {
+      return sellerMatrixMetrics.filter((m) =>
+        ['revenue', 'grossProfit', 'netProfit'].includes(m.key),
+      )
+    }
+    return sellerMatrixMetrics
+  }, [sellerMatrixMetrics, metricFilter])
+
   const sellerMatrixByCurrency = useMemo<SellerMatrixGroup[]>(() => {
     const grouped = new Map<
       string,
@@ -364,9 +381,18 @@ export function ReportSalesTab({
       grouped.set(currency, group)
     })
 
+    const normalizedSearch = sellerSearch.trim().toLowerCase()
+
     return [...grouped.entries()].map(([currency, group]) => {
       const dates = selectedDates.length ? selectedDates : [...group.dates].sort()
       const rows = [...group.sellers.entries()]
+        .filter(([, sellerRows]) => {
+          if (!normalizedSearch) return true
+          const firstRow = [...sellerRows.values()][0]
+          const name = firstRow?.sellerName?.toLowerCase() || ''
+          const code = firstRow?.sellerEmployeeCode?.toLowerCase() || ''
+          return name.includes(normalizedSearch) || code.includes(normalizedSearch)
+        })
         .sort(([, left], [, right]) => {
           const leftName = [...left.values()][0]?.sellerName || ''
           const rightName = [...right.values()][0]?.sellerName || ''
@@ -377,7 +403,7 @@ export function ReportSalesTab({
             [...sellerRows.values()][0]?.sellerName ||
             [...sellerRows.values()][0]?.sellerEmployeeCode ||
             '—'
-          return sellerMatrixMetrics.map((metric, metricIndex) => {
+          return activeMetrics.map((metric, metricIndex) => {
             const dateValues = Object.fromEntries(
               dates.map((date) => {
                 const row = sellerRows.get(date)
@@ -405,77 +431,88 @@ export function ReportSalesTab({
         })
       return { currency, dates, rows }
     })
-  }, [data, selectedDates, sellerMatrixMetrics])
+  }, [data, selectedDates, activeMetrics, sellerSearch])
 
-  const getSellerMatrixColumns = (currency: string, dates: string[]) =>
-    [
-      {
-        title: t('reports.columns.seller'),
-        width: 190,
-        fixed: 'left',
-        align: 'center',
-        onCell: (row) => ({
-          rowSpan: row.metricIndex === 0 ? sellerMatrixMetrics.length : 0,
-          className: styles.dailySellerCell,
-        }),
-        render: (_, row) =>
-          row.metricIndex === 0 ? (
-            <div className={styles.sellerNameWrapper}>
-              <Typography.Text strong>{row.sellerName}</Typography.Text>
-              {row.sellerEmployeeCode ? (
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  {row.sellerEmployeeCode}
+  const columnsByCurrency = useMemo(() => {
+    const map = new Map<string, TableColumnsType<SellerMatrixRow>>()
+    sellerMatrixByCurrency.forEach((group) => {
+      const cols: TableColumnsType<SellerMatrixRow> = [
+        {
+          title: t('reports.columns.seller'),
+          width: 150,
+          fixed: 'left',
+          align: 'center',
+          onCell: (row) => ({
+            rowSpan: row.metricIndex === 0 ? activeMetrics.length : 0,
+            className: styles.dailySellerCell,
+          }),
+          render: (_, row) =>
+            row.metricIndex === 0 ? (
+              <div className={styles.sellerNameWrapper}>
+                <Typography.Text strong ellipsis title={row.sellerName}>
+                  {row.sellerName}
                 </Typography.Text>
-              ) : null}
-            </div>
-          ) : null,
-      },
-      {
-        title: t('reports.columns.type'),
-        dataIndex: 'metricLabel',
-        width: 180,
-        fixed: 'left',
-        className: styles.dailyTypeCell,
-        render: (label: string, row: SellerMatrixRow) => {
-          const config = METRIC_STYLES[row.metricKey]
-          return (
-            <div className={styles.typeLabelCell}>
-              <span className={styles.metricDot} style={{ backgroundColor: config.dotColor }} />
-              <Typography.Text
-                strong={config.isBold}
-                style={config.textColor ? { color: config.textColor } : undefined}
-              >
-                {label}
-              </Typography.Text>
-            </div>
-          )
+                {row.sellerEmployeeCode ? (
+                  <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                    {row.sellerEmployeeCode}
+                  </Typography.Text>
+                ) : null}
+              </div>
+            ) : null,
         },
-      },
-      {
-        title: t('reports.columns.total'),
-        width: 130,
-        align: 'center',
-        className: styles.dailyTotalCell,
-        render: (_, row) => renderMatrixCellValue(row.metricKey, row.totalValue, currency),
-      },
-      ...(dates.map((date) => ({
-        title: date.slice(5),
-        dataIndex: ['dateValues', date],
-        width: 120,
-        align: 'center' as const,
-        render: (_: unknown, row: SellerMatrixRow) =>
-          renderMatrixCellValue(row.metricKey, row.dateValues[date], currency),
-      })) as TableColumnsType<SellerMatrixRow>),
-    ] as TableColumnsType<SellerMatrixRow>
+        {
+          title: t('reports.columns.type'),
+          dataIndex: 'metricLabel',
+          width: 140,
+          fixed: 'left',
+          className: styles.dailyTypeCell,
+          render: (label: string, row: SellerMatrixRow) => {
+            const config = METRIC_STYLES[row.metricKey]
+            return <Typography.Text strong={config?.isBold}>{label}</Typography.Text>
+          },
+        },
+        {
+          title: t('reports.columns.total'),
+          width: 110,
+          align: 'center',
+          className: styles.dailyTotalCell,
+          render: (_, row) => renderMatrixCellValue(row.metricKey, row.totalValue, group.currency),
+        },
+        ...(group.dates.map((date) => {
+          const { date: displayDate, dayOfWeek } = formatHeaderDate(date, i18n.language)
+          return {
+            title: (
+              <div className={styles.matrixDateHeader}>
+                <span>{displayDate}</span>
+                {dayOfWeek ? <span className={styles.matrixWeekday}>{dayOfWeek}</span> : null}
+              </div>
+            ),
+            dataIndex: ['dateValues', date],
+            width: 95,
+            align: 'center' as const,
+            render: (_: unknown, row: SellerMatrixRow) =>
+              renderMatrixCellValue(row.metricKey, row.dateValues[date], group.currency),
+          }
+        }) as TableColumnsType<SellerMatrixRow>),
+      ]
+      map.set(group.currency, cols)
+    })
+    return map
+  }, [sellerMatrixByCurrency, activeMetrics.length, t, i18n.language])
 
   return (
     <div className={styles.stack}>
-      {summaries.map((summary) => (
+      {displaySummaries.map((summary) => (
         <section
           key={summary.currency}
           className={styles.currencySection}
           aria-label={summary.currency}
         >
+          {displaySummaries.length > 1 ? (
+            <Typography.Text strong className={styles.currencyLabel}>
+              {summary.currency}
+            </Typography.Text>
+          ) : null}
           <div className={styles.salesMetrics}>
             <MetricCard
               icon={<ShoppingCartOutlined />}
@@ -523,7 +560,23 @@ export function ReportSalesTab({
           </div>
         </section>
       ))}
-      {canCompareSellers
+
+      {filterBar}
+
+      {canCompareSellers && hasMultipleSellers ? (
+        <div className={styles.chartToggleRow}>
+          <Button
+            size="small"
+            icon={showChart ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+            onClick={() => setShowChart((prev) => !prev)}
+          >
+            {showChart
+              ? t('reports.profitability.hideChart')
+              : t('reports.profitability.showChart')}
+          </Button>
+        </div>
+      ) : null}
+      {canCompareSellers && showChart
         ? sellerRowsByCurrency
             .filter(({ rows }) => rows.length > 1)
             .map(({ currency, rows }) => (
@@ -539,6 +592,29 @@ export function ReportSalesTab({
         <SectionCard
           key={group.currency}
           title={`${t('reports.profitability.dailyTable')} · ${group.currency}`}
+          extra={
+            <Space wrap size="middle">
+              <Input
+                placeholder={t('reports.profitability.searchSeller')}
+                prefix={<SearchOutlined style={{ color: 'var(--ant-color-text-quaternary)' }} />}
+                allowClear
+                size="small"
+                value={sellerSearch}
+                onChange={(e) => setSellerSearch(e.target.value)}
+                style={{ width: 170 }}
+              />
+              <Segmented
+                size="small"
+                value={metricFilter}
+                onChange={(val) => setMetricFilter(val as MetricFilterKey)}
+                options={[
+                  { label: t('reports.profitability.allMetrics'), value: 'all' },
+                  { label: t('reports.profitability.coreMetrics'), value: 'core' },
+                  { label: t('reports.profitability.profitOnly'), value: 'profit' },
+                ]}
+              />
+            </Space>
+          }
         >
           <CoreDataTable
             bordered
@@ -548,15 +624,14 @@ export function ReportSalesTab({
             dataSource={group.rows}
             loading={isPending}
             pagination={false}
-            virtual
             rowClassName={(row) => {
               if (row.metricKey === 'grossProfit') return styles.dailyRowGrossProfit
               if (row.metricKey === 'netProfit') return styles.dailyRowNetProfit
               if (row.metricIndex === 0) return styles.dailySellerGroupStart
               return ''
             }}
-            columns={getSellerMatrixColumns(group.currency, group.dates)}
-            scroll={{ x: 500 + group.dates.length * 120, y: 560 }}
+            columns={columnsByCurrency.get(group.currency) || []}
+            scroll={{ x: 400 + group.dates.length * 95, y: 600 }}
           />
         </SectionCard>
       ))}

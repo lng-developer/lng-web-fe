@@ -100,22 +100,22 @@
 
 .dailyRowGrossProfit > :global(td),
 .dailyRowGrossProfit > :global(td.ant-table-cell) {
-  background: rgba(82, 196, 26, 0.09) !important;
+  background: var(--ant-color-bg-container);
 }
 
 .dailyRowGrossProfit:hover > :global(td),
 .dailyRowGrossProfit:hover > :global(td.ant-table-cell) {
-  background: rgba(82, 196, 26, 0.16) !important;
+  background: var(--ant-color-fill-quaternary);
 }
 
 .dailyRowNetProfit > :global(td),
 .dailyRowNetProfit > :global(td.ant-table-cell) {
-  background: rgba(22, 119, 255, 0.09) !important;
+  background: var(--ant-color-bg-container);
 }
 
 .dailyRowNetProfit:hover > :global(td),
 .dailyRowNetProfit:hover > :global(td.ant-table-cell) {
-  background: rgba(22, 119, 255, 0.16) !important;
+  background: var(--ant-color-fill-quaternary);
 }
 
 .dailySellerCell {
@@ -157,14 +157,6 @@
   font-weight: 500;
 }
 
-.dailyRowGrossProfit > :global(td.dailyTypeCell) {
-  background: color-mix(in srgb, var(--ant-color-success) 12%, transparent) !important;
-}
-
-.dailyRowNetProfit > :global(td.dailyTypeCell) {
-  background: color-mix(in srgb, var(--ant-color-primary) 12%, transparent) !important;
-}
-
 .dailyMetricCell {
   border-right: 1px solid var(--ant-color-border-secondary) !important;
 }
@@ -175,25 +167,16 @@
   font-weight: 600;
 }
 
-.dailyRowGrossProfit > :global(td.dailyTotalCell) {
-  background: color-mix(in srgb, var(--ant-color-success) 14%, transparent) !important;
-}
-
-.dailyRowNetProfit > :global(td.dailyTotalCell) {
-  background: color-mix(in srgb, var(--ant-color-primary) 14%, transparent) !important;
-}
-
 .dailyMetric {
   font-weight: 600;
 }
 
 .dailyMoneyRevenue {
-  color: var(--ant-color-primary);
   font-weight: 600;
 }
 
 .dailyMoneyCost {
-  color: var(--ant-color-warning);
+  color: inherit;
 }
 
 .dailyMoneyProfit {
@@ -654,4 +637,24 @@
 .marginMiniFill {
   height: 100%;
   border-radius: 999px;
+}
+
+.matrixDateHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.matrixWeekday {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ant-color-text-tertiary);
+}
+
+.chartToggleRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }

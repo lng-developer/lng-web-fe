@@ -49,4 +49,12 @@ describe('ReportWorkspacePage filter layout', () => {
     expect(styles).toContain('background: transparent !important;')
     expect(page).toContain('className={styles.filterBar}')
   })
+
+  it('keeps revenue and cost fields black while styling only profit in green/red', () => {
+    expect(styles).not.toContain('color: var(--ant-color-warning);')
+    expect(styles).toContain('.dailyMoneyProfit {')
+    expect(styles).toContain('color: var(--ant-color-success);')
+    expect(styles).toContain('.dailyMoneyLoss {')
+    expect(styles).toContain('color: var(--ant-color-error);')
+  })
 })
