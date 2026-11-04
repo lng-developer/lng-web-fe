@@ -43,6 +43,7 @@ import {
   deleteDesignTask,
   type DesignTask,
   type DesignTaskPriority,
+  formatTaskSeller,
   getDesignSummary,
   listDesignAssignees,
   listDesignTasks,
@@ -62,14 +63,44 @@ dayjs.extend(relativeTime)
 const { Text } = Typography
 
 const STATUS_TABS = [
-  { key: 'all', title: 'All', status: undefined },
-  { key: 'New', title: 'New', status: 'NEW' },
-  { key: 'Requested', title: 'Requested', status: 'REQUESTED' },
-  { key: 'Assigned', title: 'Assigned', status: 'ASSIGNED' },
-  { key: 'In Progress', title: 'In Progress', status: 'IN_PROGRESS' },
-  { key: 'Uploaded', title: 'Uploaded', status: 'SUBMITTED' },
-  { key: 'QC Rejected', title: 'QC Rejected', status: 'REJECTED' },
-  { key: 'QC Passed', title: 'QC Passed', status: 'APPROVED' },
+  { key: 'all', titleKey: 'portal.design.tabs.all', defaultTitle: 'All', status: undefined },
+  { key: 'New', titleKey: 'portal.design.tabs.new', defaultTitle: 'New', status: 'NEW' },
+  {
+    key: 'Requested',
+    titleKey: 'portal.design.tabs.requested',
+    defaultTitle: 'Requested',
+    status: 'REQUESTED',
+  },
+  {
+    key: 'Assigned',
+    titleKey: 'portal.design.tabs.assigned',
+    defaultTitle: 'Assigned',
+    status: 'ASSIGNED',
+  },
+  {
+    key: 'In Progress',
+    titleKey: 'portal.design.tabs.inProgress',
+    defaultTitle: 'In Progress',
+    status: 'IN_PROGRESS',
+  },
+  {
+    key: 'Uploaded',
+    titleKey: 'portal.design.tabs.uploaded',
+    defaultTitle: 'Uploaded',
+    status: 'SUBMITTED',
+  },
+  {
+    key: 'QC Rejected',
+    titleKey: 'portal.design.tabs.qcRejected',
+    defaultTitle: 'QC Rejected',
+    status: 'REJECTED',
+  },
+  {
+    key: 'QC Passed',
+    titleKey: 'portal.design.tabs.qcPassed',
+    defaultTitle: 'QC Passed',
+    status: 'APPROVED',
+  },
 ] as const
 
 type TaskHistoryItem = {
@@ -460,7 +491,10 @@ export function PsdTasksPage() {
     if (salesChannelCode) {
       items = items.filter((item) => {
         const code = item.listing?.salesChannelCode?.toUpperCase()
-        return !code || code === salesChannelCode
+        if (code) return code === salesChannelCode
+        if (salesChannelCode === 'AMAZON') return Boolean(item.listing?.asin)
+        if (salesChannelCode === 'ETSY') return Boolean(item.listing?.etsyListingId)
+        return false
       })
     }
     if (selectedSellerId) {
@@ -471,6 +505,29 @@ export function PsdTasksPage() {
     }
     return items
   }, [tasksQuery.data?.items, salesChannelCode, selectedSellerId])
+
+  const paginationTotal = useMemo(() => {
+    if (selectedSellerId) return displayedTasks.length
+    if (deferredSearch) {
+      return tasksQuery.data?.pagination?.total ?? displayedTasks.length
+    }
+    if (salesChannelCode) {
+      const activeCount = counts[activeTabKey as keyof typeof counts]
+      if (typeof activeCount === 'number') {
+        return activeCount
+      }
+      return displayedTasks.length
+    }
+    return tasksQuery.data?.pagination?.total ?? displayedTasks.length
+  }, [
+    selectedSellerId,
+    deferredSearch,
+    salesChannelCode,
+    counts,
+    activeTabKey,
+    tasksQuery.data?.pagination?.total,
+    displayedTasks.length,
+  ])
 
   const columns = useMemo<TableColumnsType<DesignTask>>(() => {
     const baseColumns: TableColumnsType<DesignTask> = [
@@ -676,19 +733,21 @@ export function PsdTasksPage() {
         },
       },
       {
+        title: t('portal.design.shop', { defaultValue: 'Shop' }),
+        key: 'shop',
+        width: 140,
+        align: 'center',
+        render: (_, record) => (
+          <StatusPill title={record.shop?.name || '-'} color={DATA_COLORS.pending} />
+        ),
+      },
+      {
         title: t('portal.design.seller', { defaultValue: 'Seller' }),
         key: 'seller',
-        width: 150,
+        width: 160,
         align: 'center',
         render: (_, record) => {
-          const sellerName =
-            record.seller?.fullName ||
-            (record.seller as { full_name?: string })?.full_name ||
-            record.createdBy?.fullName ||
-            (record.createdBy as { full_name?: string })?.full_name ||
-            (record.seller as { name?: string })?.name ||
-            record.shop?.name ||
-            'Unknown'
+          const sellerName = formatTaskSeller(record)
           return <StatusPill title={sellerName} color={DATA_COLORS.process} />
         },
       },
@@ -924,7 +983,7 @@ export function PsdTasksPage() {
               key: tab.key,
               label: (
                 <UiTabLabel count={counts[tab.key]} active={activeTabKey === tab.key}>
-                  {tab.title}
+                  {t(tab.titleKey, { defaultValue: tab.defaultTitle })}
                 </UiTabLabel>
               ),
             }))}
@@ -956,7 +1015,7 @@ export function PsdTasksPage() {
           allowClear
           showSearch
           optionFilterProp="label"
-          placeholder={t('portal.design.seller', { defaultValue: 'Seller' })}
+          placeholder={t('portal.design.shop', { defaultValue: 'Shop' })}
           value={selectedSellerId}
           onChange={(val) => {
             setSelectedSellerId(val)
@@ -984,16 +1043,14 @@ export function PsdTasksPage() {
           pagination={{
             current: page,
             pageSize,
-            total: selectedSellerId
-              ? displayedTasks.length
-              : tasksQuery.data?.pagination?.total || 0,
+            total: paginationTotal,
             showSizeChanger: true,
             onChange: (p, ps) => {
               setPage(p)
               setPageSize(ps)
             },
           }}
-          scroll={{ x: 'max-content' }}
+          scroll={{ x: 1380 }}
         />
       </div>
 

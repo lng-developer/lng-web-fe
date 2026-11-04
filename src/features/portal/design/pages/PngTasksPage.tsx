@@ -45,17 +45,48 @@ import styles from './PngTasksPage.module.scss'
 const { Text } = Typography
 
 const STATUS_TABS = [
-  { key: 'all', title: 'All', status: undefined, unassigned: false },
-  { key: 'unassigned', title: 'Pending Assignment', status: undefined, unassigned: true },
-  { key: 'need_scale', title: 'Need Scale', status: 'NEED_SCALE' as const, unassigned: false },
-  { key: 'qc_pending', title: 'Pending QC', status: 'QC_PENDING' as const, unassigned: false },
+  {
+    key: 'all',
+    titleKey: 'portal.design.tabs.all',
+    defaultTitle: 'All',
+    status: undefined,
+    unassigned: false,
+  },
+  {
+    key: 'unassigned',
+    titleKey: 'portal.design.tabs.pendingAssignment',
+    defaultTitle: 'Pending Assignment',
+    status: undefined,
+    unassigned: true,
+  },
+  {
+    key: 'need_scale',
+    titleKey: 'portal.design.tabs.needScale',
+    defaultTitle: 'Need Scale',
+    status: 'NEED_SCALE' as const,
+    unassigned: false,
+  },
+  {
+    key: 'qc_pending',
+    titleKey: 'portal.design.tabs.qcPending',
+    defaultTitle: 'Pending QC',
+    status: 'QC_PENDING' as const,
+    unassigned: false,
+  },
   {
     key: 'completed',
-    title: 'Completed',
+    titleKey: 'portal.design.tabs.completed',
+    defaultTitle: 'Completed',
     status: 'READY_TO_SEND_VENDOR' as const,
     unassigned: false,
   },
-  { key: 'qc_rejected', title: 'QC Rejected', status: 'QC_REJECTED' as const, unassigned: false },
+  {
+    key: 'qc_rejected',
+    titleKey: 'portal.design.tabs.qcRejected',
+    defaultTitle: 'QC Rejected',
+    status: 'QC_REJECTED' as const,
+    unassigned: false,
+  },
 ] as const
 
 function getScaleStatusTone(
@@ -469,7 +500,7 @@ export function PngTasksPage() {
               key: tab.key,
               label: (
                 <UiTabLabel count={counts[tab.key]} active={activeTabKey === tab.key}>
-                  {tab.title}
+                  {t(tab.titleKey, { defaultValue: tab.defaultTitle })}
                 </UiTabLabel>
               ),
             }))}
@@ -543,11 +574,13 @@ export function PngTasksPage() {
               <ProductionWorkbenchExpandedRow
                 task={record}
                 tab="scale"
+                currentUserId={currentAccountId}
                 canScale={canScaleTask(record)}
                 canQc={false}
                 decisions={{}}
                 submittingQc={false}
                 submittingScale={submitScaleMutation.isPending}
+                claimingTaskId={claimMutation.isPending ? claimMutation.variables : undefined}
                 uploadingFileCheckIds={uploadingFileCheckIds}
                 onSaveNote={(taskId, note) => saveNoteMutation.mutate({ taskId, note })}
                 onSubmitQc={() => {}}
@@ -556,6 +589,7 @@ export function PngTasksPage() {
                 onInspectSlot={handleInspectSlot}
                 onPassSlot={() => {}}
                 onManualSlotUploaded={invalidate}
+                onClaimTask={(taskId) => claimMutation.mutate(taskId)}
               />
             ),
           }}

@@ -277,10 +277,10 @@ export const FinanceWorkspacePage = ({
                   {t('finance.actions.settlements')}
                 </Button>
                 <Button type="link" href="/portal/finance/cash-flow">
-                  Cash flow
+                  {t('finance.cashFlow')}
                 </Button>
                 <Button type="link" href="/portal/finance/transactions">
-                  Transaction ledger
+                  {t('finance.transactions')}
                 </Button>
               </>
             ) : null}
