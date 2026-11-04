@@ -35,6 +35,7 @@ export type CoreDataTableProps<RecordType extends object> = Pick<
   | 'rowSelection'
   | 'scroll'
   | 'size'
+  | 'sticky'
   | 'tableLayout'
   | 'virtual'
 > & {
@@ -95,39 +96,114 @@ export function CoreDataTable<RecordType extends object>({
 
   const effectivePageSize = customPagination.pageSize ?? internalPageSize
 
-  const sortableColumns = useMemo(() => {
-    // Bổ sung sorter theo mapping server nhưng vẫn giữ nguyên cấu hình cột gốc.
-    if (!serverSorting?.enabled || !tableProps.columns) return tableProps.columns
+  const processedColumns = useMemo(() => {
+    if (!tableProps.columns || tableProps.columns.length === 0) return tableProps.columns
 
-    return tableProps.columns.map((column) => {
-      if ('children' in column) return column
-
-      const columnKey =
-        column.key != null
-          ? String(column.key)
-          : typeof column.dataIndex === 'string'
-            ? column.dataIndex
-            : undefined
-      const sortColumn = columnKey ? serverSorting.columns[columnKey] : undefined
-      if (!sortColumn) return column
-
-      return {
-        ...column,
-        sorter: true,
-        sortDirections: [
-          ...(sortColumn.desc ? (['descend'] as const) : []),
-          ...(sortColumn.asc ? (['ascend'] as const) : []),
-          null,
-        ],
-        sortOrder:
-          serverSorting.value === sortColumn.asc
-            ? ('ascend' as const)
-            : serverSorting.value === sortColumn.desc
-              ? ('descend' as const)
-              : undefined,
+    const mapColumn = (
+      column: NonNullable<TableProps<RecordType>['columns']>[number],
+    ): NonNullable<TableProps<RecordType>['columns']>[number] => {
+      if ('children' in column) {
+        return {
+          ...column,
+          align: column.align ?? 'center',
+          children: column.children?.map(mapColumn),
+        }
       }
-    })
+
+      const targetAlign = column.align ?? 'center'
+      const isExplicitRight = column.align === 'right'
+      const isExplicitLeft = column.align === 'left'
+      const originalRender = column.render
+
+      let nextCol = {
+        ...column,
+        align: targetAlign,
+        render: (value: unknown, record: RecordType, index: number) => {
+          if (!originalRender) {
+            if (value == null || value === '' || isExplicitRight || isExplicitLeft) {
+              return value as ReactNode
+            }
+            return <span className={styles.cellContentBlock}>{value as ReactNode}</span>
+          }
+
+          const rendered = originalRender(value, record, index)
+          if (rendered == null || rendered === '' || isExplicitRight || isExplicitLeft) {
+            return rendered as ReactNode
+          }
+
+          if (
+            typeof rendered === 'object' &&
+            rendered !== null &&
+            'children' in rendered &&
+            'props' in rendered
+          ) {
+            return {
+              ...rendered,
+              children: (
+                <span className={styles.cellContentBlock}>{rendered.children as ReactNode}</span>
+              ),
+            }
+          }
+
+          return <span className={styles.cellContentBlock}>{rendered as ReactNode}</span>
+        },
+      }
+
+      if (serverSorting?.enabled) {
+        const columnKey =
+          column.key != null
+            ? String(column.key)
+            : 'dataIndex' in column && typeof column.dataIndex === 'string'
+              ? column.dataIndex
+              : undefined
+        const sortColumn = columnKey ? serverSorting.columns[columnKey] : undefined
+        if (sortColumn) {
+          nextCol = {
+            ...nextCol,
+            sorter: true,
+            sortDirections: [
+              ...(sortColumn.desc ? (['descend'] as const) : []),
+              ...(sortColumn.asc ? (['ascend'] as const) : []),
+              null,
+            ],
+            sortOrder:
+              serverSorting.value === sortColumn.asc
+                ? ('ascend' as const)
+                : serverSorting.value === sortColumn.desc
+                  ? ('descend' as const)
+                  : undefined,
+          }
+        }
+      }
+
+      return nextCol
+    }
+
+    return tableProps.columns.map(mapColumn)
   }, [serverSorting, tableProps.columns])
+
+  const defaultScrollX = useMemo(() => {
+    if (tableProps.scroll?.x && tableProps.scroll.x !== '100%') {
+      return tableProps.scroll.x
+    }
+    if (!tableProps.columns || tableProps.columns.length === 0) {
+      return tableProps.scroll?.x
+    }
+    let sum = 0
+    for (const col of tableProps.columns) {
+      if ('width' in col && typeof col.width === 'number') {
+        sum += col.width
+      } else if ('width' in col && typeof col.width === 'string' && col.width.endsWith('px')) {
+        sum += Number.parseFloat(col.width) || 120
+      } else {
+        sum += 120
+      }
+    }
+    if (tableProps.rowSelection) {
+      sum += 48
+    }
+    return sum > 0 ? Math.max(sum, 1000) : 'max-content'
+  }, [tableProps.columns, tableProps.rowSelection, tableProps.scroll])
 
   const handleTableChange: TableProps<RecordType>['onChange'] = (
     pagination,
@@ -244,6 +320,7 @@ export function CoreDataTable<RecordType extends object>({
       ? { y: viewportScrollY ?? 'calc(100vh - 360px)' }
       : {}),
     ...tableProps.scroll,
+    ...(defaultScrollX ? { x: defaultScrollX } : {}),
   }
 
   return (
@@ -255,7 +332,7 @@ export function CoreDataTable<RecordType extends object>({
           <Table
             {...tableProps}
             tableLayout={tableProps.tableLayout ?? 'fixed'}
-            columns={sortableColumns}
+            columns={processedColumns}
             onChange={serverSorting?.enabled ? handleTableChange : tableProps.onChange}
             pagination={paginationEnabled ? false : tableProps.pagination}
             dataSource={pagedDataSource}

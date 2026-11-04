@@ -46,6 +46,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      cssMinify: false,
       rollupOptions: {
         input: {
           app: path.resolve(rootDir, 'index.html'),

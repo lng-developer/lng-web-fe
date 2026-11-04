@@ -21,7 +21,7 @@ export function createCorePickerTheme(isDark: boolean): ThemeConfig {
       colorText: isDark ? '#E5E7EB' : '#1F2A44',
       colorTextPlaceholder: isDark ? '#94A3B8' : '#97A1C0',
       controlHeight: 40,
-      fontSize: 14,
+      fontSize: 13,
     },
     components: {
       DatePicker: {
@@ -34,7 +34,7 @@ export function createCorePickerTheme(isDark: boolean): ThemeConfig {
         cellRangeBorderColor: '#316AFF',
         cellWidth: 38,
         hoverBorderColor: '#316AFF',
-        inputFontSize: 14,
+        inputFontSize: 13,
         paddingBlock: 8,
         paddingInline: 18,
       },
@@ -53,7 +53,7 @@ function CorePickerGxonStyles({ isDark }: Readonly<{ isDark: boolean }>) {
   return (
     <style>{`
       .core-picker.ant-picker { padding-inline: 19px; }
-      .core-picker.ant-picker .ant-picker-input > input { color: ${text}; font-size: 14px; font-weight: 500; }
+      .core-picker.ant-picker .ant-picker-input > input { color: ${text}; font-size: 13px; font-weight: 500; }
       .core-picker.ant-picker .ant-picker-suffix, .core-picker.ant-picker .ant-picker-clear { color: ${mutedText}; }
       .core-picker-popup.ant-picker-dropdown .ant-picker-panel-container { background: ${elevatedBackground}; border: 1px solid ${border}; border-radius: 6px; box-shadow: 0 8px 24px rgba(0, 0, 0, ${isDark ? '0.34' : '0.12'}); overflow: hidden; }
       .core-picker-popup.ant-picker-dropdown { min-width: 0 !important; width: fit-content !important; }
@@ -64,9 +64,9 @@ function CorePickerGxonStyles({ isDark }: Readonly<{ isDark: boolean }>) {
       .core-picker-popup--custom-header .ant-picker-body { padding-bottom: 0; }
       .core-picker-panel-header { align-items: center; display: grid; gap: 6px; grid-template-columns: 24px 1fr 1fr 24px; padding: 8px 10px 2px; }
       .core-picker-panel-header button { background: transparent; border: 0; color: ${mutedText}; cursor: pointer; font-size: 24px; line-height: 1; padding: 0; }
-      .core-picker-panel-header select { appearance: auto; background: ${rangeBackground}; border: 0; border-radius: 4px; color: ${mutedText}; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; }
-      .core-picker-popup .ant-picker-content th { color: ${text}; font-size: 12px; font-weight: 600; padding-bottom: 10px; }
-      .core-picker-popup .ant-picker-cell { color: ${text}; font-size: 13px; }
+      .core-picker-panel-header select { appearance: auto; background: ${rangeBackground}; border: 0; border-radius: 4px; color: ${mutedText}; font-size: 12px; font-weight: 600; height: 32px; padding: 0 12px; }
+      .core-picker-popup .ant-picker-content th { color: ${text}; font-size: 11px; font-weight: 600; padding-bottom: 10px; }
+      .core-picker-popup .ant-picker-cell { color: ${text}; font-size: 12px; }
       .core-picker-popup .ant-picker-cell .ant-picker-cell-inner { border-radius: 50%; }
       .core-picker-popup .ant-picker-cell:hover .ant-picker-cell-inner { background: ${rangeBackground}; border-color: #316AFF; }
       .core-picker-popup .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner { background: #316AFF; color: #FFFFFF; }
@@ -94,20 +94,51 @@ export function CorePickerTheme({ children }: Readonly<{ children: ReactNode }>)
 const monthIndexes = Array.from({ length: 12 }, (_, index) => index)
 
 // Header thay thế header mặc định để người dùng chọn nhanh tháng và năm.
-export function CorePickerPanelHeader({ value, onChange }: Readonly<{ value: Dayjs; onChange: (value: Dayjs) => void }>) {
+export function CorePickerPanelHeader({
+  value,
+  onChange,
+}: Readonly<{ value: Dayjs; onChange: (value: Dayjs) => void }>) {
   const { t } = useTranslation()
   const years = Array.from({ length: 11 }, (_, index) => value.year() - 5 + index)
 
   return (
     <div className="core-picker-panel-header">
-      <button aria-label={t('foundation.controls.previousMonth')} type="button" onClick={() => onChange(value.subtract(1, 'month'))}>‹</button>
-      <select aria-label={t('foundation.controls.month')} value={value.month()} onChange={(event) => onChange(value.month(Number(event.target.value)))}>
-        {monthIndexes.map((monthIndex) => <option key={monthIndex} value={monthIndex}>{value.month(monthIndex).format('MMMM')}</option>)}
+      <button
+        aria-label={t('foundation.controls.previousMonth')}
+        type="button"
+        onClick={() => onChange(value.subtract(1, 'month'))}
+      >
+        ‹
+      </button>
+      <select
+        aria-label={t('foundation.controls.month')}
+        value={value.month()}
+        onChange={(event) => onChange(value.month(Number(event.target.value)))}
+      >
+        {monthIndexes.map((monthIndex) => (
+          <option key={monthIndex} value={monthIndex}>
+            {value.month(monthIndex).format('MMMM')}
+          </option>
+        ))}
       </select>
-      <select aria-label={t('foundation.controls.year')} value={value.year()} onChange={(event) => onChange(value.year(Number(event.target.value)))}>
-        {years.map((year) => <option key={year} value={year}>{year}</option>)}
+      <select
+        aria-label={t('foundation.controls.year')}
+        value={value.year()}
+        onChange={(event) => onChange(value.year(Number(event.target.value)))}
+      >
+        {years.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
       </select>
-      <button aria-label={t('foundation.controls.nextMonth')} type="button" onClick={() => onChange(value.add(1, 'month'))}>›</button>
+      <button
+        aria-label={t('foundation.controls.nextMonth')}
+        type="button"
+        onClick={() => onChange(value.add(1, 'month'))}
+      >
+        ›
+      </button>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { notificationTarget } from '@/features/notifications/notificationTarget'
 describe('notification targets', () => {
   it.each([
     ['order', 'ORDER_ASSIGNED', '/portal/orders?resourceId=record-1'],
-    ['designTask', 'DESIGN_TASK_ASSIGNED', '/portal/design?resourceId=record-1'],
+    ['designTask', 'DESIGN_TASK_ASSIGNED', '/portal/design/idea-tasks?resourceId=record-1'],
     ['productionTask', 'PRODUCTION_TASK_ASSIGNED', '/portal/production?resourceId=record-1'],
     [
       'vendorSubmission',

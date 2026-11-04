@@ -38,6 +38,15 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
       borderRadius: 8,
       borderRadiusLG: 12,
       borderRadiusSM: 6,
+      fontSize: 13,
+      fontSizeSM: 11,
+      fontSizeLG: 15,
+      fontSizeXL: 19,
+      fontSizeHeading1: 37,
+      fontSizeHeading2: 29,
+      fontSizeHeading3: 23,
+      fontSizeHeading4: 19,
+      fontSizeHeading5: 15,
       boxShadow: isDark
         ? '0 1px 3px 0 rgb(0 0 0 / 40%), 0 1px 2px -1px rgb(0 0 0 / 40%)'
         : '0 1px 3px 0 rgb(15 23 42 / 6%), 0 1px 2px -1px rgb(15 23 42 / 4%)',

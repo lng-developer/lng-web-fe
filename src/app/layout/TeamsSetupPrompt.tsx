@@ -23,16 +23,19 @@ export function TeamsSetupPrompt({ accountId }: { accountId: string }) {
   const status = useQuery({
     queryKey: ['teams-oauth-status', accountId],
     queryFn: getTeamsOAuthStatus,
+    enabled: !dismissed,
+    staleTime: 5 * 60 * 1000,
   })
   const needsSetup =
     status.data?.enabled && status.data.userLinked && status.data.grantStatus !== 'CONNECTED'
 
   useEffect(() => {
+    if (dismissed || !needsSetup) return
     const refreshStatus = () =>
       void queryClient.invalidateQueries({ queryKey: ['teams-oauth-status', accountId] })
     window.addEventListener('focus', refreshStatus)
     return () => window.removeEventListener('focus', refreshStatus)
-  }, [accountId, queryClient])
+  }, [accountId, queryClient, dismissed, needsSetup])
 
   if (!needsSetup || dismissed) return null
 

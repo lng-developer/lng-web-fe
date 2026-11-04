@@ -72,13 +72,50 @@ select {
   font: inherit;
 }
 
-// Keep table headers consistent across common CoreDataTable and direct Ant Design Table usage.
+// Keep table headers and cells centered by default, respecting explicit left/right alignments.
 .ant-table-wrapper .ant-table-thead > tr > th {
-  text-align: left !important;
+  text-align: center !important;
+
+  &.ant-table-cell-align-left {
+    text-align: left !important;
+  }
+
+  &.ant-table-cell-align-right {
+    text-align: right !important;
+  }
+
+  &.ant-table-cell-align-center {
+    text-align: center !important;
+  }
 }
 
 .ant-table-wrapper .ant-table-thead > tr > th .ant-table-column-sorters {
+  justify-content: center;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th.ant-table-cell-align-left .ant-table-column-sorters {
   justify-content: flex-start;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th.ant-table-cell-align-right .ant-table-column-sorters {
+  justify-content: flex-end;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr:not(.ant-table-expanded-row) > td {
+  text-align: center;
+  vertical-align: middle;
+
+  &.ant-table-cell-align-left {
+    text-align: left !important;
+  }
+
+  &.ant-table-cell-align-right {
+    text-align: right !important;
+  }
+
+  &.ant-table-cell-align-center {
+    text-align: center !important;
+  }
 }
 
 .route-state {

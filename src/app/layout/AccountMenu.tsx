@@ -23,6 +23,7 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
   const profile = useQuery({
     queryKey: ['hr', 'employee-profiles', 'me'],
     queryFn: loadMyEmployeeProfile,
+    staleTime: 5 * 60 * 1000,
   })
   const avatar = useQuery({
     queryKey: ['hr', 'employee-profiles', 'me', 'avatar', profile.data?.avatarAssetId],

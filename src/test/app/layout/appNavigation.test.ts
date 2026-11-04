@@ -68,8 +68,8 @@ describe('app navigation', () => {
         ({ key }) => key === 'monitoring',
       )?.items,
     ).toEqual([
-      { key: 'audit-log', path: '/auth/audit-log', labelKey: 'shell.navigation.auditLog' },
-      { key: 'monitoring', path: '/auth/monitoring', labelKey: 'shell.navigation.monitoring' },
+      { key: 'audit-log', path: '/portal/audit', labelKey: 'shell.navigation.auditLog' },
+      { key: 'monitoring', path: '/portal/monitoring', labelKey: 'shell.navigation.monitoring' },
     ])
     expect(getContextNavigation('system', account(['AUTH:READ']))[0]?.items).not.toContainEqual(
       expect.objectContaining({ key: 'audit-log' }),

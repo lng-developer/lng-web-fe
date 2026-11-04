@@ -88,12 +88,9 @@ export function useGoogleLoginHandler() {
 
             try {
               const session = await loginWithGoogle({ accessToken: tokenResponse.access_token })
-              navigate(
-                session.account.mustChangePassword ? '/setup/password' : '/operations-dashboard',
-                {
-                  replace: true,
-                },
-              )
+              navigate(session.account.mustChangePassword ? '/setup/password' : '/', {
+                replace: true,
+              })
             } catch (err) {
               setGoogleError(err instanceof ApiError ? err.message : t('errors.unexpected'))
             } finally {
@@ -148,12 +145,9 @@ export function useGoogleLoginHandler() {
             }
             try {
               const session = await loginWithGoogle({ accessToken: tokenResponse.access_token })
-              navigate(
-                session.account.mustChangePassword ? '/setup/password' : '/operations-dashboard',
-                {
-                  replace: true,
-                },
-              )
+              navigate(session.account.mustChangePassword ? '/setup/password' : '/', {
+                replace: true,
+              })
             } catch (err) {
               setGoogleError(err instanceof ApiError ? err.message : t('errors.unexpected'))
             } finally {
@@ -188,12 +182,9 @@ export function useGoogleLoginHandler() {
           }
           try {
             const session = await loginWithGoogle({ accessToken: tokenResponse.access_token })
-            navigate(
-              session.account.mustChangePassword ? '/setup/password' : '/operations-dashboard',
-              {
-                replace: true,
-              },
-            )
+            navigate(session.account.mustChangePassword ? '/setup/password' : '/', {
+              replace: true,
+            })
           } catch (err) {
             setGoogleError(err instanceof ApiError ? err.message : t('errors.unexpected'))
           } finally {

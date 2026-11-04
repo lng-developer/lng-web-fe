@@ -174,8 +174,10 @@ export function ChatShell({ account }: ChatShellProps) {
     }
   }, [openQuickConversationIds])
 
+  const isChatNeeded = isChatPreviewOpen || isChatWorkspace || openQuickConversationIds.length > 0
   const chatConversations = useQuery({
     ...chatConversationOptions(),
+    enabled: isChatNeeded,
     refetchInterval: !socketReady && isChatPreviewOpen ? 30_000 : false,
   })
   const unreadQuery = useQuery({

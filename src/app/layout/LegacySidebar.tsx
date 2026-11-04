@@ -58,7 +58,6 @@ import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
-import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
 
 import {
   canReadHrDashboard,
@@ -887,27 +886,6 @@ export function LegacySidebar({
   const canQuerySummary = (required: readonly string[]) =>
     Boolean(account) &&
     (permissions === null || required.some((permission) => permissions.has(permission)))
-  const orderSummary = useOrderSummaryQuery(
-    { page: 1, limit: 1 },
-    {
-      enabled: canQuerySummary(['ORDERS:READ', 'ORDERS:WRITE']),
-    },
-  )
-  const productionQueueCounts = useProductionQueueCountsQuery(
-    {},
-    {
-      enabled: canQuerySummary([
-        'PRODUCTION:READ',
-        'PRODUCTION:WRITE',
-        'PRODUCTION:SCALE_WORK',
-        'PRODUCTION:SCALE_ASSIGN',
-        'PRODUCTION:QC_REVIEW',
-        'DESIGN:WORK',
-        'DESIGN:REVIEW',
-      ]),
-    },
-  )
-
   const [activeMenu, setActiveMenu] = useState(
     () =>
       getRouteMenuState(
@@ -920,6 +898,15 @@ export function LegacySidebar({
   )
   const [lastPortalMenu, setLastPortalMenu] = useState<string>(() =>
     getInitialPortalMenu(location.pathname, location.search, permissions, financeVisible),
+  )
+  const isOrdersSection =
+    !collapsed && (activeMenu === 'sales' || location.pathname.startsWith('/portal/orders'))
+  const orderSummary = useOrderSummaryQuery(
+    { page: 1, limit: 1 },
+    {
+      enabled: canQuerySummary(['ORDERS:READ', 'ORDERS:WRITE']) && isOrdersSection,
+      staleTime: 60_000,
+    },
   )
   const [activeMode, setActiveMode] = useState<'portal' | 'hr'>(() => {
     const isHr =
@@ -1131,9 +1118,8 @@ export function LegacySidebar({
         : (getDetailMenu(currentPortalMenu, financeVisible, permissions) ??
           getDetailMenu(lastPortalMenu, financeVisible, permissions) ??
           [])
-  const badgeCounts = {
-    [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
-    '/portal/production/blocked': productionQueueCounts.data?.blocked,
+  const badgeCounts: Partial<Record<string, number>> = {
+    [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts?.NEW,
   }
   const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
 
