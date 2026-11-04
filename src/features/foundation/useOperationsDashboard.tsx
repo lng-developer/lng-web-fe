@@ -99,30 +99,35 @@ export function useOperationsDashboard(
     queryKey: ['foundation', 'orders', 'summary', dateFrom, dateTo, salesChannelCode],
     queryFn: () => getOrderSummary(orderParams),
     enabled: canOrders,
+    staleTime: 60_000,
   })
 
   const recentOrders = useQuery({
     queryKey: ['foundation', 'orders', 'recent', dateFrom, dateTo, salesChannelCode],
     queryFn: () => listOrderWorkbench(orderParams),
     enabled: canOrders,
+    staleTime: 60_000,
   })
 
   const listingSummary = useQuery({
     queryKey: ['foundation', 'catalog', 'summary'],
     queryFn: () => getListingSummary({}),
     enabled: canCatalog,
+    staleTime: 60_000,
   })
 
   const topListings = useQuery({
     queryKey: ['foundation', 'catalog', 'top-listings'],
     queryFn: () => listListings({ page: 1, limit: 8, sort: 'quantitySoldDesc' }),
     enabled: canCatalog,
+    staleTime: 60_000,
   })
 
   const buyerInsights = useQuery({
     queryKey: ['foundation', 'buyers', 'insights', dateFrom, dateTo, salesChannelCode],
     queryFn: () => getBuyerInsights({ dateFrom, dateTo, salesChannelCode }),
     enabled: canReports,
+    staleTime: 60_000,
   })
 
   const reportFilters = useMemo(
@@ -134,23 +139,27 @@ export function useOperationsDashboard(
     queryKey: ['foundation', 'finance', reportFilters],
     queryFn: () => listFinanceDailyProfit(reportFilters),
     enabled: canFinance,
+    staleTime: 60_000,
   })
   const sellerPerformance = useQuery({
     queryKey: ['foundation', 'finance', 'by-seller', reportFilters],
     queryFn: () => listFinanceBySeller(reportFilters),
     enabled: canFinance,
+    staleTime: 60_000,
   })
 
   const operationsOverview = useQuery({
     queryKey: ['foundation', 'operations', reportFilters],
     queryFn: () => getOperationsOverview(reportFilters),
     enabled: canReports && loadOperationalHealth,
+    staleTime: 60_000,
   })
 
   const vendorPerformance = useQuery({
     queryKey: ['foundation', 'vendor-performance', reportFilters],
     queryFn: () => listVendorPerformance(reportFilters),
     enabled: canReports && loadOperationalHealth,
+    staleTime: 60_000,
   })
 
   const financeRevenue = (finance.data ?? []).reduce((sum, row) => sum + row.revenueAmount, 0)

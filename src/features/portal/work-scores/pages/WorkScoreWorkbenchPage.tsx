@@ -305,7 +305,7 @@ export function WorkScoreWorkbenchPage({
       ...(scope === 'DESIGN'
         ? [
             {
-              title: t('portal.workScores.fields.taskType', { defaultValue: 'Loại tác vụ' }),
+              title: t('portal.workScores.fields.taskType'),
               width: 150,
               render: (_: unknown, row: WorkScoreListItem) => {
                 const snapshot = row.contextSnapshot ?? {}
@@ -634,7 +634,7 @@ export function WorkScoreWorkbenchPage({
 
       <div className={styles.controlsBar}>
         <div className={styles.filtersWrapper}>
-          <FilterBar label={t('portal.workScores.filters')} contentClassName={styles.filters}>
+          <FilterBar label={t('portal.workScores.filters.label')} contentClassName={styles.filters}>
             <Input.Search
               allowClear
               className={styles.search}
@@ -657,9 +657,7 @@ export function WorkScoreWorkbenchPage({
               <Select
                 allowClear
                 className={styles.filter}
-                placeholder={t('portal.workScores.allTaskTypes', {
-                  defaultValue: 'Tất cả loại tác vụ',
-                })}
+                placeholder={t('portal.workScores.filters.allTaskTypes')}
                 value={taskType}
                 onChange={(value) => {
                   setTaskType(value)
@@ -674,9 +672,7 @@ export function WorkScoreWorkbenchPage({
               <Select
                 allowClear
                 className={styles.filter}
-                placeholder={t('portal.workScores.allDifficulties', {
-                  defaultValue: 'Tất cả độ khó',
-                })}
+                placeholder={t('portal.workScores.filters.allDifficulties')}
                 value={scaleDifficultyLevel}
                 onChange={(value) => {
                   setScaleDifficultyLevel(value)

@@ -159,9 +159,7 @@ export function OperationsDashboardPage() {
               <div className={styles.summaryHeaderLegend} aria-hidden="true">
                 <span>
                   <i className={styles.summaryLegendNetCashFlow} />
-                  {t('foundation.portalDashboard.grossProfit', {
-                    defaultValue: 'Lợi nhuận gộp',
-                  })}
+                  {t('foundation.portalDashboard.grossProfit')}
                 </span>
                 <span>
                   <i className={styles.summaryLegendRevenue} />
@@ -236,9 +234,7 @@ export function OperationsDashboardPage() {
               className={styles.chartColDonut}
             >
               <SectionCard
-                title={t('foundation.portalDashboard.revenueByChannel', {
-                  defaultValue: 'Doanh thu theo kênh',
-                })}
+                title={t('foundation.portalDashboard.revenueByChannel')}
                 className={styles.dashboardEqualHeightCard}
               >
                 <TrafficSourcesDonut
@@ -257,9 +253,7 @@ export function OperationsDashboardPage() {
               className={styles.chartColLine}
             >
               <SectionCard
-                title={t('foundation.portalDashboard.revenueAndProfit', {
-                  defaultValue: 'Doanh thu & lợi nhuận',
-                })}
+                title={t('foundation.portalDashboard.revenueAndProfit')}
                 className={`${styles.dashboardEqualHeightCard} ${styles.cashFlowCard}`}
               >
                 <div className={styles.cashFlowTable}>
@@ -271,11 +265,7 @@ export function OperationsDashboardPage() {
                           {t('foundation.portalDashboard.revenue', { defaultValue: 'Doanh thu' })}
                         </th>
                         <th>{t('foundation.portalDashboard.cost', { defaultValue: 'Chi phí' })}</th>
-                        <th>
-                          {t('foundation.portalDashboard.grossProfit', {
-                            defaultValue: 'Lợi nhuận gộp',
-                          })}
-                        </th>
+                        <th>{t('foundation.portalDashboard.grossProfit')}</th>
                       </tr>
                     </thead>
                     <tbody>
