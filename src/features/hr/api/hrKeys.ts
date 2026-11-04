@@ -39,5 +39,6 @@ export const hrKeys = {
   timeBalances: (year: number) => ['hr-time', 'leave-balances', year] as const,
   timeLeaves: (year: number) => ['hr-time', 'leave-requests', year] as const,
   timeOvertime: (year: number) => ['hr-time', 'overtime-requests', year] as const,
-  timeAttendance: (params?: unknown) => ['hr-time', 'attendance', params] as const,
+  timeAttendance: (workspace?: string, params?: unknown) =>
+    (['hr-time', 'attendance', workspace, params] as const).filter(Boolean),
 }

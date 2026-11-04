@@ -54,6 +54,7 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
     ...(workspace === 'team' && teamId ? { teamId } : {}),
   }
 
+  // Prefetch or cache attendance matrix for team/operations workspace
   useQuery({
     queryKey: ['hr-time', workspace, 'attendance-matrix', params],
     queryFn: () => listAttendanceMatrix(params),
@@ -61,7 +62,7 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
   })
 
   const records = useQuery({
-    queryKey: ['hr-time', workspace, 'attendance', range],
+    queryKey: ['hr-time', 'attendance', workspace, range],
     queryFn: () => (showTeamAttendance ? listAttendance(range) : listMyAttendance(range)),
   })
 
