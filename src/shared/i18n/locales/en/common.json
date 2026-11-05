@@ -4472,8 +4472,19 @@
         "validity": "Validity (Days)",
         "revokeConfirm": "Revoke this bot token? The extension will disconnect."
       },
+      "view": {
+        "cards": "Cards View",
+        "table": "Table View"
+      },
       "schedules": {
-        "subtitle": "Configure recurring automated background tasks for order ingestion and finance reporting by shop."
+        "subtitle": "Configure recurring automated background tasks for order ingestion and finance reporting by shop.",
+        "columns": {
+          "store": "Store & Platform",
+          "agent": "Worker Extension",
+          "orderSync": "Order Ingestion Schedule",
+          "financeSync": "Finance & Reporting Schedule",
+          "actions": "Actions"
+        }
       },
       "logs": {
         "subtitle": "Monitor bot command dispatch queues, track live execution status, and inspect payload logs.",

@@ -194,6 +194,13 @@
   font-weight: 600;
 }
 
+.agentTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .agentMetaRow {
   display: flex;
   align-items: center;
@@ -221,10 +228,33 @@
 
 .automationScheduleRow {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+}
+
+.scheduleRowTier1 {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scheduleRowTier2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-left: 23px;
+}
+
+.scheduleTiming {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 160px;
 }
 
 .scheduleInfo {
@@ -286,12 +316,59 @@
   border-radius: var(--ant-border-radius-sm);
   border: 1px solid var(--ant-color-error-border);
   width: fit-content;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .automationScheduleActions {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.automationTableWrapper {
+  margin-top: 12px;
+}
+
+.tableScheduleCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tableScheduleInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tableFinanceCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.tableFinanceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--ant-color-border-secondary);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.tableFinanceLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
 }
 
 @media (max-width: 520px) {
@@ -302,6 +379,10 @@
   .automationScheduleRow {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .scheduleRowTier2 {
+    padding-left: 0;
   }
 
   .scheduleControls {

@@ -4472,8 +4472,19 @@
         "validity": "Thời hạn hiệu lực (Ngày)",
         "revokeConfirm": "Thu hồi token bot này? Extension sẽ bị ngắt kết nối."
       },
+      "view": {
+        "cards": "Dạng thẻ",
+        "table": "Bảng tổng hợp"
+      },
       "schedules": {
-        "subtitle": "Cấu hình lịch trình tự động cào đơn hàng và báo cáo tài chính định kỳ theo từng shop."
+        "subtitle": "Cấu hình lịch trình tự động cào đơn hàng và báo cáo tài chính định kỳ theo từng shop.",
+        "columns": {
+          "store": "Cửa hàng & Nền tảng",
+          "agent": "Bot Extension",
+          "orderSync": "Lịch đồng bộ đơn hàng",
+          "financeSync": "Lịch báo cáo tài chính",
+          "actions": "Thao tác"
+        }
       },
       "logs": {
         "subtitle": "Theo dõi hàng đợi lệnh của bot, giám sát trạng thái thực thi và xem log payload chi tiết.",

@@ -41,7 +41,7 @@ export function ExtensionManualRequest({
     from?.isValid() && to?.isValid() && !to.isBefore(from) && to.diff(from, 'day') <= 119
   const validCount =
     maxOrders !== null && Number.isInteger(maxOrders) && maxOrders >= 1 && maxOrders <= 200
-  if (etsy && source === 'TRANSACTIONS') return null
+  if (etsy && (source === 'TRANSACTIONS' || source === 'ADS')) return null
 
   return (
     <Popover
