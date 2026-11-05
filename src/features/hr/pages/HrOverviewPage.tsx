@@ -48,7 +48,7 @@ import {
 } from 'recharts'
 
 import { loadDepartments } from '@/features/organization/api/organizationApi'
-import { getPermissions } from '@/shared/auth/session'
+import { usePermissions } from '@/shared/auth/useAuthStore'
 import { MetricCard, PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import { hrKeys } from '../api/hrKeys'
@@ -100,7 +100,8 @@ const percent = (value?: number) => `${value ?? 0}%`
 
 export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'announcements' }) {
   const { t } = useTranslation()
-  const permissions = useMemo(() => new Set(getPermissions()), [])
+  const permissionsList = usePermissions()
+  const permissions = useMemo(() => new Set(permissionsList), [permissionsList])
   const canEmployeeRead =
     permissions.has('HR_EMPLOYEES:READ') || permissions.has('HR_EMPLOYEES:WRITE')
   const canAnnouncementRead =

@@ -13,7 +13,7 @@ import { Button, Descriptions, Modal, Result, Select, Space, Typography } from '
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
-import { getPermissions } from '@/shared/auth/session'
+import { usePermissions } from '@/shared/auth/useAuthStore'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
   DateRangePicker,
@@ -48,6 +48,7 @@ const shortId = (value: string | null) => (value ? `#${value.slice(-8)}` : '')
 
 export function AuditLogPage() {
   const { t } = useTranslation()
+  const permissions = usePermissions()
   const [filters, setFilters] = useState<AuditFilters>({})
   const [selected, setSelected] = useState<AuditEvent>()
   const [currentPage, setCurrentPage] = useState(1)
@@ -177,7 +178,7 @@ export function AuditLogPage() {
     [localizedCode, t],
   )
 
-  if (!getPermissions().includes('AUDIT:READ')) return <AccessDeniedResult />
+  if (!permissions.includes('AUDIT:READ')) return <AccessDeniedResult />
 
   return (
     <section className="grid gap-6">

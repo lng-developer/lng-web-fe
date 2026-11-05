@@ -6,6 +6,7 @@ import {
   getRoles,
   hasHydratedGlobalPermissions,
 } from './session'
+import { useAuthStore, useGlobalPermissions, usePermissions, useRoles } from './useAuthStore'
 
 const superAdminRoles = new Set(['SUPER_ADMIN'])
 
@@ -16,6 +17,19 @@ export function hasAnyPermission(required: readonly string[], { globalOnly = fal
   const roles = getRoles().map((role) => role.toUpperCase())
   if (roles.some((role) => superAdminRoles.has(role))) return true
   return required.some((permission) => permissions.includes(permission))
+}
+
+export function useHasAnyPermission(required: readonly string[], { globalOnly = false } = {}) {
+  const permissions = usePermissions()
+  const globalPermissions = useGlobalPermissions()
+  const globalPermissionsHydrated = useAuthStore((s) => s.globalPermissionsHydrated)
+  const roles = useRoles()
+
+  const activePermissions =
+    globalOnly && globalPermissionsHydrated ? globalPermissions : permissions
+  const normalizedRoles = roles.map((role) => role.toUpperCase())
+  if (normalizedRoles.some((role) => superAdminRoles.has(role))) return true
+  return required.some((permission) => activePermissions.includes(permission))
 }
 
 export function canUseScopedPermission(
