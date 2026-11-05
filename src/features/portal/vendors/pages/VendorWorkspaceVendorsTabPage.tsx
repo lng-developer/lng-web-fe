@@ -5,7 +5,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Tag, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
+import { FeedbackAlert, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { RecordStatus, Vendor } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -21,6 +21,7 @@ interface VendorWorkspaceVendorsTabPageProps {
   readonly vendorsLoading: boolean
   readonly vendorsTotal: number | undefined
   readonly vendorsError: unknown
+  readonly refetchVendors?: () => void
   readonly onSearchVendorsChange: (value: string) => void
   readonly onVendorStatusChange: (value: RecordStatus | undefined) => void
   readonly onVendorsPageChange: (page: number, pageSize: number) => void
@@ -49,6 +50,7 @@ export function VendorWorkspaceVendorsTabPage({
   vendorsLoading,
   vendorsTotal,
   vendorsError,
+  refetchVendors,
   onSearchVendorsChange,
   onVendorStatusChange,
   onVendorsPageChange,
@@ -192,11 +194,19 @@ export function VendorWorkspaceVendorsTabPage({
         loading={vendorsLoading}
         error={
           vendorsError ? (
-            <Typography.Text type="danger">
-              {vendorsError instanceof Error
-                ? vendorsError.message
-                : t('portal.vendors.unavailable')}
-            </Typography.Text>
+            <FeedbackAlert
+              type="error"
+              title={
+                vendorsError instanceof Error
+                  ? vendorsError.message
+                  : t('portal.vendors.unavailable')
+              }
+              action={
+                <Button type="link" onClick={() => void refetchVendors?.()}>
+                  {t('common.retry', { defaultValue: 'Retry' })}
+                </Button>
+              }
+            />
           ) : undefined
         }
         pagination={{

@@ -76,6 +76,8 @@
     "refresh": "Làm mới",
     "unknown": "Không xác định",
     "copy": "Sao chép",
+    "retry": "Thử lại",
+    "noMatchingResults": "Không tìm thấy kết quả phù hợp",
     "table": {
       "viewDetails": "Xem chi tiết"
     }
@@ -2532,6 +2534,7 @@
   },
   "customers": {
     "title": "Khách hàng",
+    "loadFailed": "Không thể tải danh sách khách hàng",
     "description": "Theo dõi khách mới, khách quay lại, VIP và các khách cần chăm sóc.",
     "columns": {
       "customer": "Khách hàng",
@@ -2585,6 +2588,9 @@
     }
   },
   "portal": {
+    "finance": {
+      "loadFailed": "Không thể tải dữ liệu tài chính"
+    },
     "catalog": {
       "actions": "Thao tác",
       "view": "Xem",
@@ -2662,6 +2668,7 @@
         "advanced": "Thiết lập nâng cao"
       },
       "master": {
+        "loadFailed": "Không thể tải dữ liệu danh mục",
         "productTypes": "Loại sản phẩm",
         "productTypeDescription": "Định nghĩa nhóm sản phẩm dùng cho listing và mẫu nội bộ.",
         "createProductType": "Tạo loại sản phẩm",

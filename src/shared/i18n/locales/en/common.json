@@ -76,6 +76,8 @@
     "refresh": "Refresh",
     "unknown": "Unknown",
     "copy": "Copy",
+    "retry": "Retry",
+    "noMatchingResults": "No matching results found",
     "table": {
       "viewDetails": "View details"
     }
@@ -2532,6 +2534,7 @@
   },
   "customers": {
     "title": "Customers",
+    "loadFailed": "Failed to load customers",
     "description": "Track new, returning, VIP and follow-up customers.",
     "columns": {
       "customer": "Customer",
@@ -2585,6 +2588,9 @@
     }
   },
   "portal": {
+    "finance": {
+      "loadFailed": "Failed to load financial records"
+    },
     "catalog": {
       "title": "Catalog listings",
       "asin": "Asin",
@@ -2662,6 +2668,7 @@
         "advanced": "Advanced setup"
       },
       "master": {
+        "loadFailed": "Failed to load master data",
         "productTypes": "Product types",
         "productTypeDescription": "Define the product families used by listings and internal templates.",
         "createProductType": "Create product type",

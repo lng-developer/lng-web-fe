@@ -244,6 +244,7 @@ export const VendorWorkspacePage = () => {
             vendorsLoading={vendors.isLoading}
             vendorsTotal={vendors.data?.pagination.total}
             vendorsError={vendors.error}
+            refetchVendors={() => void vendors.refetch()}
             onSearchVendorsChange={(value) => {
               setSearchVendors(value)
               setVendorsPage(1)
@@ -274,6 +275,7 @@ export const VendorWorkspacePage = () => {
             productsLoading={products.isLoading}
             productsTotal={products.data?.pagination.total}
             productsError={products.error}
+            refetchProducts={() => void products.refetch()}
             vendorFilterOptions={vendorFilterOptions}
             productTypeGroupOptions={(productTypeGroups.data?.items ?? []).map((group) => ({
               value: group.id,

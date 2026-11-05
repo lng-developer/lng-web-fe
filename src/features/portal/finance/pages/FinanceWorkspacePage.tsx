@@ -12,6 +12,7 @@ import {
   CopyableOrderId,
   DateRangePicker,
   type DateRangeValue,
+  FeedbackAlert,
   FilterBar,
   SearchInput,
   SectionCard,
@@ -136,6 +137,19 @@ export const FinanceWorkspacePage = ({
     setSelectedItemId(undefined)
     setSearchParams({})
   }, [setSearchParams])
+
+  const tableError = snapshots.isError ? (
+    <FeedbackAlert
+      type="error"
+      title={t('portal.finance.loadFailed', { defaultValue: 'Failed to load financial records' })}
+      description={snapshots.error instanceof Error ? snapshots.error.message : undefined}
+      action={
+        <Button type="link" onClick={() => void snapshots.refetch()}>
+          {t('common.retry', { defaultValue: 'Retry' })}
+        </Button>
+      }
+    />
+  ) : undefined
 
   const columns = useMemo<TableColumnsType<FinanceSnapshot>>(
     () => [
@@ -379,6 +393,7 @@ export const FinanceWorkspacePage = ({
           columns={columns}
           dataSource={snapshots.data?.items}
           loading={snapshots.isLoading}
+          error={tableError}
           onRow={(row) => ({ onClick: () => setSelected(row) })}
           pagination={{
             current: page,

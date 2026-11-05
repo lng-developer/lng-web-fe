@@ -29,7 +29,7 @@ import {
 } from '@/features/portal/customers/hooks'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { FilterBar, FormattedDateTime, MetricCard } from '@/shared/ui'
+import { FeedbackAlert, FilterBar, FormattedDateTime, MetricCard } from '@/shared/ui'
 
 import styles from './CustomerWorkspacePage.module.scss'
 
@@ -90,6 +90,19 @@ export const CustomerWorkspacePage = () => {
   const careMutation = useUpdateCustomerCareStatusMutation()
   const noteMutation = useAddCustomerNoteMutation()
   const exportCsv = useExportCustomersCsvMutation(params)
+
+  const tableError = customers.isError ? (
+    <FeedbackAlert
+      type="error"
+      title={t('customers.loadFailed', { defaultValue: 'Failed to load customers' })}
+      description={customers.error instanceof Error ? customers.error.message : undefined}
+      action={
+        <Button type="link" onClick={() => void customers.refetch()}>
+          {t('common.retry', { defaultValue: 'Retry' })}
+        </Button>
+      }
+    />
+  ) : undefined
 
   const columns = useMemo<ColumnsType<Customer>>(
     () => [
@@ -249,6 +262,7 @@ export const CustomerWorkspacePage = () => {
           columns={columns}
           dataSource={customers.data?.items ?? []}
           loading={customers.isFetching}
+          error={tableError}
           emptyText={t('customers.empty.noCustomers')}
           pagination={{
             current: page,
