@@ -46,11 +46,43 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      cssMinify: false,
+      cssMinify: 'lightningcss',
       rollupOptions: {
         input: {
           app: path.resolve(rootDir, 'index.html'),
           msalPopup: path.resolve(rootDir, 'msal-popup.html'),
+        },
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (
+                id.includes('react') ||
+                id.includes('react-dom') ||
+                id.includes('react-router-dom')
+              ) {
+                return 'vendor-react'
+              }
+              if (
+                id.includes('antd') ||
+                id.includes('@ant-design') ||
+                id.includes('@rc-component')
+              ) {
+                return 'vendor-antd'
+              }
+              if (id.includes('@tanstack')) {
+                return 'vendor-tanstack'
+              }
+              if (id.includes('recharts')) {
+                return 'vendor-charts'
+              }
+              if (id.includes('axios') || id.includes('dayjs') || id.includes('i18next')) {
+                return 'vendor-utils'
+              }
+              if (id.includes('@azure/msal-browser') || id.includes('@azure/msal-common')) {
+                return 'vendor-msal'
+              }
+            }
+          },
         },
       },
     },
