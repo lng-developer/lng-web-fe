@@ -30,17 +30,17 @@
 
 **Steps:**
 
-- [ ] **Step 1: Tạo `useAuthStore.ts` với Zustand**
+- [x] **Step 1: Tạo `useAuthStore.ts` với Zustand**
   - Quản lý `accessToken`, `roles`, `permissions`, `globalPermissions`, `account`.
   - Cung cấp selector hooks: `usePermissions()`, `useRoles()`, `useCurrentAccount()`, `useIsAuthenticated()`.
   - Đồng bộ hai chiều với `src/shared/auth/session.ts` để các hàm đồng bộ (`getAccessToken()`, `getPermissions()`) của Axios Interceptor tiếp tục hoạt động trơn tru.
-- [ ] **Step 2: Cập nhật `session.ts`**
+- [x] **Step 2: Cập nhật `session.ts`**
   - Trong các hàm `setAccessToken`, `setPermissions`, `setRoles`, `setAccount`, dispatch cập nhật sang `useAuthStore.getState()`.
-- [ ] **Step 3: Thay thế `useMemo(() => getPermissions(), [])` trong các trang HR và Audit**
+- [x] **Step 3: Thay thế `useMemo(() => getPermissions(), [])` trong các trang HR và Audit**
   - Chuyển sang dùng `usePermissions()` từ `useAuthStore` để component re-render tức thì khi quyền được nạp.
-- [ ] **Step 4: Viết Unit Test cho `useAuthStore`**
+- [x] **Step 4: Viết Unit Test cho `useAuthStore`**
   - Kiểm tra `setPermissions`, `setAccessToken`, tính phản ứng của hooks khi state cập nhật.
-- [ ] **Step 5: Chạy kiểm tra lint & tests**
+- [x] **Step 5: Chạy kiểm tra lint & tests**
   - `npm run lint` && `npm run test:unit`
 
 ---
@@ -55,7 +55,7 @@
 
 **Steps:**
 
-- [ ] **Step 1: Cập nhật cấu hình QueryClient**
+- [x] **Step 1: Cập nhật cấu hình QueryClient**
   - Trong `src/shared/query/queryClient.ts`, thêm hàm điều kiện `retry`:
     ```typescript
     retry: (failureCount, error) => {
@@ -68,9 +68,9 @@
     },
     refetchOnReconnect: true,
     ```
-- [ ] **Step 2: Tối ưu nạp từ điển trong `i18n.ts`**
+- [x] **Step 2: Tối ưu nạp từ điển trong `i18n.ts`**
   - Nạp ngôn ngữ hiện tại (`vi` hoặc `en`), dynamic load gói ngôn ngữ còn lại khi người dùng thực hiện chuyển đổi qua `changeLanguage()`.
-- [ ] **Step 3: Viết Unit Test và xác nhận**
+- [x] **Step 3: Viết Unit Test và xác nhận**
   - Kiểm tra QueryClient không retry khi gặp lỗi 403 hoặc 404.
   - `npm run lint` && `npm run test:unit`
 
@@ -89,11 +89,11 @@
 
 **Steps:**
 
-- [ ] **Step 1: Quét và thay thế 61 inline hex styles trong JSX**
+- [x] **Step 1: Quét và thay thế 61 inline hex styles trong JSX**
   - Chuyển đổi các style cứng như `background: '#f8fafc'`, `border: '1px solid #e2e8f0'`, `color: '#64748b'` sang các token biến CSS Ant Design: `var(--ant-color-bg-container)`, `var(--ant-color-border-secondary)`, `var(--ant-color-text-secondary)`.
-- [ ] **Step 2: Chuyển cấu hình `.ant-segmented` từ `global.scss` vào Theme Engine**
+- [x] **Step 2: Chuyển cấu hình `.ant-segmented` từ `global.scss` vào Theme Engine**
   - Cấu hình component tokens cho `Segmented` trong `src/shared/theme/theme.ts` (ví dụ `itemSelectedBg`, `itemHoverColor`), dọn dẹp các rule `!important` trong `global.scss`.
-- [ ] **Step 3: Chạy lint & build kiểm tra**
+- [x] **Step 3: Chạy lint & build kiểm tra**
   - `npm run lint` && `npm run build`
 
 ---
@@ -110,11 +110,11 @@
 
 **Steps:**
 
-- [ ] **Step 1: Truyền prop `error` chuẩn cho `CoreDataTable`**
+- [x] **Step 1: Truyền prop `error` chuẩn cho `CoreDataTable`**
   - Kiểm tra `query.isError` và truyền `error={query.error}` kèm hành động retry `onRetry={() => query.refetch()}`.
-- [ ] **Step 2: Đảm bảo phân biệt trạng thái Empty do Filter vs Không có dữ liệu**
+- [x] **Step 2: Đảm bảo phân biệt trạng thái Empty do Filter vs Không có dữ liệu**
   - Tận dụng `@/shared/ui/EmptyState` để hiển thị đúng thông điệp "Không tìm thấy dữ liệu khớp bộ lọc" khi có tìm kiếm, và "Chưa có bản ghi nào" khi dữ liệu rỗng.
-- [ ] **Step 3: Chạy kiểm tra lint & unit tests**
+- [x] **Step 3: Chạy kiểm tra lint & unit tests**
   - `npm run lint` && `npm run test:unit`
 
 ---
@@ -129,10 +129,10 @@
 
 **Steps:**
 
-- [ ] **Step 1: Tạo component con `SidebarOrderBadge`**
+- [x] **Step 1: Tạo component con `SidebarOrderBadge`**
   - Đóng gói hook `useOrderSummaryQuery` bên trong component con này thay vì gọi ở cấp toàn thể `LegacySidebar`.
   - Chỉ kích hoạt query khi tài khoản có quyền truy cập Orders (`ORDER:READ`).
-- [ ] **Step 2: Cập nhật `LegacySidebar.tsx`**
+- [x] **Step 2: Cập nhật `LegacySidebar.tsx`**
   - Thay thế việc tính toán badge trực tiếp trong menu items bằng việc lồng `SidebarOrderBadge`.
-- [ ] **Step 3: Chạy toàn bộ test suites**
+- [x] **Step 3: Chạy toàn bộ test suites**
   - `npm run lint` && `npm run test:unit` && `npm run build`
