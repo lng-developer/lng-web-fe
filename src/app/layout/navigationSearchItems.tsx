@@ -1,34 +1,35 @@
 import type { ReactNode } from 'react'
-import { AiOutlineFileSync } from 'react-icons/ai'
-import { BiExtension } from 'react-icons/bi'
-import { BsFiletypePsd } from 'react-icons/bs'
-import { CgFileDocument, CgShoppingBag } from 'react-icons/cg'
-import { FaAmazon, FaEtsy, FaShopify } from 'react-icons/fa'
-import { HiOutlineBuildingStorefront } from 'react-icons/hi2'
-import { IoImageOutline, IoStorefrontOutline } from 'react-icons/io5'
-import { LuBox, LuLayoutDashboard, LuLightbulb, LuNotebook, LuTruck } from 'react-icons/lu'
-import { MdBalance, MdOutlineConnectedTv } from 'react-icons/md'
-import { RiAdvertisementLine, RiSettings2Line, RiTokenSwapLine } from 'react-icons/ri'
 import {
-  TbAward,
-  TbBlender,
-  TbBuildingFactory2,
-  TbHomeStats,
-  TbPackages,
-  TbReport,
-  TbReportSearch,
-} from 'react-icons/tb'
-import {
+  AccountBookOutlined,
   ApartmentOutlined,
+  AppstoreAddOutlined,
+  BookOutlined,
+  BuildOutlined,
+  BulbOutlined,
   CalendarOutlined,
+  CarOutlined,
   ClockCircleOutlined,
   ContactsOutlined,
+  DashboardOutlined,
+  DesktopOutlined,
   DollarOutlined,
+  ExperimentOutlined,
+  FileDoneOutlined,
+  FileImageOutlined,
+  FileSearchOutlined,
   FileTextOutlined,
   FormatPainterOutlined,
+  FundOutlined,
   HistoryOutlined,
+  InboxOutlined,
+  NotificationOutlined,
   PictureOutlined,
   SafetyCertificateOutlined,
+  SettingOutlined,
+  ShopOutlined,
+  ShoppingOutlined,
+  SwapOutlined,
+  SyncOutlined,
   TeamOutlined,
   TrophyOutlined,
   UserOutlined,
@@ -65,7 +66,7 @@ function getPermissionsSet(account?: CurrentAccount): Set<string> | null {
 }
 
 function iconForHrKey(key: string, path: string): ReactNode {
-  if (key.includes('dashboard')) return <LuLayoutDashboard />
+  if (key.includes('dashboard')) return <DashboardOutlined />
   if (key.includes('schedule')) return <CalendarOutlined />
   if (key.includes('attendance')) return <ClockCircleOutlined />
   if (key.includes('request') || key.includes('approval')) return <FileTextOutlined />
@@ -87,7 +88,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/dashboard',
       labelKey: 'shell.navigation.dashboard',
       categoryKey: 'shell.cores.portal',
-      icon: <LuLayoutDashboard />,
+      icon: <DashboardOutlined />,
       keywords: ['dashboard', 'tong quan', 'bang dieu khien', 'portal'],
     })
   }
@@ -98,7 +99,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/hr/dashboard',
       labelKey: 'shell.navigation.dashboard',
       categoryKey: 'shell.cores.hr',
-      icon: <LuLayoutDashboard />,
+      icon: <DashboardOutlined />,
       keywords: ['hr', 'dashboard', 'nhan su', 'tong quan'],
     })
   }
@@ -109,7 +110,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/system/dashboard',
       labelKey: 'shell.navigation.dashboard',
       categoryKey: 'shell.cores.system',
-      icon: <LuLayoutDashboard />,
+      icon: <DashboardOutlined />,
       keywords: ['system', 'he thong', 'dashboard'],
     })
   }
@@ -123,7 +124,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.orders,
       labelKey: 'legacyMenu.orders',
       categoryKey: 'legacyMenu.sales',
-      icon: <LuBox />,
+      icon: <InboxOutlined />,
       keywords: ['orders', 'don hang', 'all orders', 'ban hang'],
     })
     items.push({
@@ -131,7 +132,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.ordersBySalesChannel('amazon'),
       labelKey: 'legacyMenu.amazon',
       categoryKey: 'legacyMenu.orders',
-      icon: <FaAmazon />,
+      icon: <ShopOutlined />,
       keywords: ['amazon', 'amz', 'orders', 'don hang amazon'],
     })
     items.push({
@@ -139,7 +140,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.ordersBySalesChannel('etsy'),
       labelKey: 'legacyMenu.etsy',
       categoryKey: 'legacyMenu.orders',
-      icon: <FaEtsy />,
+      icon: <ShopOutlined />,
       keywords: ['etsy', 'orders', 'don hang etsy'],
     })
     items.push({
@@ -147,7 +148,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.ordersBySalesChannel('shopify'),
       labelKey: 'legacyMenu.shopify',
       categoryKey: 'legacyMenu.orders',
-      icon: <FaShopify />,
+      icon: <ShopOutlined />,
       keywords: ['shopify', 'orders', 'don hang shopify'],
     })
     items.push({
@@ -155,7 +156,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.teamTasks,
       labelKey: 'legacyMenu.teamTasks',
       categoryKey: 'legacyMenu.sales',
-      icon: <LuNotebook />,
+      icon: <BookOutlined />,
       keywords: ['tasks', 'team tasks', 'nhiem vu', 'cong viec doi'],
     })
   }
@@ -169,7 +170,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/listing/amazon',
       labelKey: 'legacyMenu.amzListing',
       categoryKey: 'legacyMenu.listing',
-      icon: <FaAmazon />,
+      icon: <ShopOutlined />,
       keywords: ['listing', 'amazon listing', 'amz', 'dang ban'],
     })
     items.push({
@@ -177,7 +178,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/listing/etsy',
       labelKey: 'legacyMenu.etsyListing',
       categoryKey: 'legacyMenu.listing',
-      icon: <FaEtsy />,
+      icon: <ShopOutlined />,
       keywords: ['listing', 'etsy listing', 'dang ban etsy'],
     })
     items.push({
@@ -185,7 +186,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/catalog',
       labelKey: 'shell.navigation.catalog',
       categoryKey: 'legacyMenu.costCenters',
-      icon: <TbPackages />,
+      icon: <InboxOutlined />,
       keywords: ['catalog', 'danh muc', 'san pham'],
     })
     items.push({
@@ -193,7 +194,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/catalog/product-types',
       labelKey: 'shell.navigation.productTypes',
       categoryKey: 'legacyMenu.costCenters',
-      icon: <TbPackages />,
+      icon: <InboxOutlined />,
       keywords: ['product types', 'loai san pham'],
     })
     items.push({
@@ -201,7 +202,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/catalog/templates',
       labelKey: 'shell.navigation.internalTemplates',
       categoryKey: 'legacyMenu.costCenters',
-      icon: <BsFiletypePsd />,
+      icon: <FileImageOutlined />,
       keywords: ['templates', 'mau noi bo', 'psd template'],
     })
   }
@@ -215,7 +216,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/mapping',
       labelKey: 'shell.navigation.mapping',
       categoryKey: 'legacyMenu.costCenters',
-      icon: <RiTokenSwapLine />,
+      icon: <SwapOutlined />,
       keywords: ['mapping', 'anh xa', 'sku mapping'],
     })
   }
@@ -227,7 +228,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/reports/amazon/order-cost',
       labelKey: 'legacyMenu.amazon',
       categoryKey: 'legacyMenu.ordersCost',
-      icon: <CgShoppingBag />,
+      icon: <ShoppingOutlined />,
       keywords: ['reports', 'cost', 'gia von', 'chi phi don hang', 'amazon cost'],
     })
     items.push({
@@ -235,7 +236,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/reports/etsy/order-cost',
       labelKey: 'legacyMenu.etsy',
       categoryKey: 'legacyMenu.ordersCost',
-      icon: <CgShoppingBag />,
+      icon: <ShoppingOutlined />,
       keywords: ['reports', 'cost', 'gia von', 'etsy cost'],
     })
     items.push({
@@ -243,7 +244,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/reports/amazon/ads',
       labelKey: 'legacyMenu.amazon',
       categoryKey: 'legacyMenu.adsReport',
-      icon: <RiAdvertisementLine />,
+      icon: <NotificationOutlined />,
       keywords: ['ads', 'quang cao', 'amazon ads'],
     })
     items.push({
@@ -251,7 +252,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/reports/etsy/ads',
       labelKey: 'legacyMenu.etsy',
       categoryKey: 'legacyMenu.adsReport',
-      icon: <RiAdvertisementLine />,
+      icon: <NotificationOutlined />,
       keywords: ['ads', 'quang cao', 'etsy ads'],
     })
     items.push({
@@ -259,7 +260,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/reports/amazon/sales',
       labelKey: 'legacyMenu.amazon',
       categoryKey: 'legacyMenu.saleReport',
-      icon: <TbReportSearch />,
+      icon: <FileSearchOutlined />,
       keywords: ['sales report', 'doanh thu', 'doanh so', 'amazon sales'],
     })
     items.push({
@@ -267,7 +268,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/reports/etsy/sales',
       labelKey: 'legacyMenu.etsy',
       categoryKey: 'legacyMenu.saleReport',
-      icon: <TbReportSearch />,
+      icon: <FileSearchOutlined />,
       keywords: ['sales report', 'doanh thu', 'doanh so', 'etsy sales'],
     })
   }
@@ -279,7 +280,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/monitoring',
       labelKey: 'legacyMenu.monitoring',
       categoryKey: 'legacyMenu.sales',
-      icon: <AiOutlineFileSync />,
+      icon: <SyncOutlined />,
       keywords: ['monitoring', 'giam sat', 'he thong'],
     })
   }
@@ -291,7 +292,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/shops',
       labelKey: 'shell.navigation.shops',
       categoryKey: 'legacyMenu.configuration',
-      icon: <IoStorefrontOutline />,
+      icon: <ShopOutlined />,
       keywords: ['shops', 'cua hang', 'stores'],
     })
   }
@@ -307,7 +308,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/integrations',
       labelKey: 'shell.navigation.integrations',
       categoryKey: 'legacyMenu.configuration',
-      icon: <BiExtension />,
+      icon: <AppstoreAddOutlined />,
       keywords: ['integrations', 'tich hop', 'api', 'channels'],
     })
   }
@@ -318,7 +319,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/shipments',
       labelKey: 'shell.navigation.shipments',
       categoryKey: 'legacyMenu.configuration',
-      icon: <LuTruck />,
+      icon: <CarOutlined />,
       keywords: ['shipments', 'van chuyen', 'tracking', 'giao hang'],
     })
   }
@@ -375,7 +376,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/production/scale?salesChannelCode=AMAZON',
       labelKey: 'legacyMenu.amazonScale',
       categoryKey: 'legacyMenu.scale',
-      icon: <MdBalance />,
+      icon: <AccountBookOutlined />,
       keywords: ['scale', 'amazon scale', 'san xuat amazon', 'fulfillment'],
     })
     items.push({
@@ -383,7 +384,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/production/scale?salesChannelCode=ETSY',
       labelKey: 'legacyMenu.etsyScale',
       categoryKey: 'legacyMenu.scale',
-      icon: <MdBalance />,
+      icon: <AccountBookOutlined />,
       keywords: ['scale', 'etsy scale', 'san xuat etsy'],
     })
     items.push({
@@ -391,7 +392,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/production/qc?salesChannelCode=AMAZON',
       labelKey: 'legacyMenu.amazonQc',
       categoryKey: 'legacyMenu.qc',
-      icon: <TbBlender />,
+      icon: <ExperimentOutlined />,
       keywords: ['qc', 'kiem tra', 'amazon qc', 'chat luong'],
     })
     items.push({
@@ -399,7 +400,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/production/qc?salesChannelCode=ETSY',
       labelKey: 'legacyMenu.etsyQc',
       categoryKey: 'legacyMenu.qc',
-      icon: <TbBlender />,
+      icon: <ExperimentOutlined />,
       keywords: ['qc', 'kiem tra', 'etsy qc'],
     })
     items.push({
@@ -407,7 +408,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/production',
       labelKey: 'shell.navigation.production',
       categoryKey: 'legacyMenu.fulfillment',
-      icon: <TbBuildingFactory2 />,
+      icon: <BuildOutlined />,
       keywords: ['production', 'san xuat', 'xuong in', 'fulfill'],
     })
   }
@@ -427,7 +428,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/production/scores',
       labelKey: 'portal.production.scores',
       categoryKey: 'legacyMenu.fulfillment',
-      icon: <TbHomeStats />,
+      icon: <FundOutlined />,
       keywords: ['production scores', 'diem san xuat', 'hieu suat'],
     })
   }
@@ -438,7 +439,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/vendor-submissions',
       labelKey: 'shell.navigation.vendorSubmissions',
       categoryKey: 'legacyMenu.fulfillment',
-      icon: <TbBuildingFactory2 />,
+      icon: <BuildOutlined />,
       keywords: ['vendor handoff', 'ban giao vendor', 'submissions'],
     })
   }
@@ -453,7 +454,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.designIdeaTasks,
       labelKey: 'portal.design.ideaTasks',
       categoryKey: 'legacyMenu.design',
-      icon: <LuLightbulb />,
+      icon: <BulbOutlined />,
       keywords: ['design', 'thiet ke', 'idea tasks', 'y tuong'],
     })
     items.push({
@@ -461,7 +462,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.designIdeaTasksBySalesChannel('amazon'),
       labelKey: 'portal.design.amazonTasks',
       categoryKey: 'portal.design.ideaTasks',
-      icon: <FaAmazon />,
+      icon: <ShopOutlined />,
       keywords: ['design amazon', 'idea amazon', 'thiet ke amazon'],
     })
     items.push({
@@ -469,7 +470,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.designIdeaTasksBySalesChannel('etsy'),
       labelKey: 'portal.design.etsyTasks',
       categoryKey: 'portal.design.ideaTasks',
-      icon: <FaEtsy />,
+      icon: <ShopOutlined />,
       keywords: ['design etsy', 'idea etsy', 'thiet ke etsy'],
     })
     items.push({
@@ -477,7 +478,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.designPngTasks,
       labelKey: 'portal.design.pngTasks',
       categoryKey: 'legacyMenu.design',
-      icon: <IoImageOutline />,
+      icon: <PictureOutlined />,
       keywords: ['png tasks', 'xuat png', 'file in'],
     })
     items.push({
@@ -485,7 +486,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/design/scores',
       labelKey: 'portal.design.scores',
       categoryKey: 'legacyMenu.design',
-      icon: <TbAward />,
+      icon: <TrophyOutlined />,
       keywords: ['design scores', 'diem thiet ke', 'cham diem'],
     })
   }
@@ -501,7 +502,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: workspaceRouteLinks.designPsdTasks,
       labelKey: 'portal.design.psdTasks',
       categoryKey: 'legacyMenu.design',
-      icon: <BsFiletypePsd />,
+      icon: <FileImageOutlined />,
       keywords: ['psd tasks', 'yeu cau psd', 've lai psd'],
     })
     items.push({
@@ -509,7 +510,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/design/files',
       labelKey: 'portal.design.psdFiles',
       categoryKey: 'legacyMenu.design',
-      icon: <BsFiletypePsd />,
+      icon: <FileImageOutlined />,
       keywords: ['files', 'psd files', 'tep mau'],
     })
   }
@@ -548,7 +549,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/vendors',
       labelKey: 'shell.navigation.vendors',
       categoryKey: 'legacyMenu.vendor',
-      icon: <HiOutlineBuildingStorefront />,
+      icon: <ShopOutlined />,
       keywords: ['vendors', 'nha cung cap', 'danh sach vendor'],
     })
     items.push({
@@ -556,7 +557,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/vendors?tab=products',
       labelKey: 'legacyMenu.vendorProducts',
       categoryKey: 'legacyMenu.vendor',
-      icon: <CgFileDocument />,
+      icon: <FileTextOutlined />,
       keywords: ['vendor products', 'san pham vendor'],
     })
     items.push({
@@ -564,7 +565,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/vendors?tab=integrations',
       labelKey: 'portal.vendors.tabs.integrations',
       categoryKey: 'legacyMenu.vendor',
-      icon: <BiExtension />,
+      icon: <AppstoreAddOutlined />,
       keywords: ['vendor api', 'tich hop vendor'],
     })
     items.push({
@@ -572,7 +573,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/vendors?tab=migration',
       labelKey: 'portal.vendors.tabs.migration',
       categoryKey: 'legacyMenu.vendor',
-      icon: <TbPackages />,
+      icon: <InboxOutlined />,
       keywords: ['migration', 'chuyen du lieu'],
     })
   }
@@ -584,7 +585,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/extensions/clients',
       labelKey: 'legacyMenu.manageClients',
       categoryKey: 'legacyMenu.extensions',
-      icon: <MdOutlineConnectedTv />,
+      icon: <DesktopOutlined />,
       keywords: ['clients', 'extensions', 'tien ich'],
     })
     items.push({
@@ -592,7 +593,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/extensions/config-auto',
       labelKey: 'legacyMenu.configAuto',
       categoryKey: 'legacyMenu.extensions',
-      icon: <RiSettings2Line />,
+      icon: <SettingOutlined />,
       keywords: ['config auto', 'tu dong'],
     })
     items.push({
@@ -600,7 +601,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/extensions/log-manager',
       labelKey: 'legacyMenu.logManager',
       categoryKey: 'legacyMenu.extensions',
-      icon: <TbReport />,
+      icon: <FileDoneOutlined />,
       keywords: ['log manager', 'nhat ky tien ich'],
     })
     items.push({
@@ -608,7 +609,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/extensions/tracking-etsy',
       labelKey: 'legacyMenu.trackingEtsy',
       categoryKey: 'legacyMenu.extensions',
-      icon: <FaEtsy />,
+      icon: <ShopOutlined />,
       keywords: ['tracking etsy', 'dong bo ma van don'],
     })
     items.push({
@@ -616,7 +617,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/extensions/message-etsy',
       labelKey: 'legacyMenu.messageEtsy',
       categoryKey: 'legacyMenu.extensions',
-      icon: <FaEtsy />,
+      icon: <ShopOutlined />,
       keywords: ['message etsy', 'tin nhan etsy'],
     })
     items.push({
@@ -624,7 +625,7 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       path: '/portal/extensions/check-tracking',
       labelKey: 'legacyMenu.checkTracking',
       categoryKey: 'legacyMenu.extensions',
-      icon: <LuTruck />,
+      icon: <CarOutlined />,
       keywords: ['check tracking', 'kiem tra ma van don'],
     })
   }
