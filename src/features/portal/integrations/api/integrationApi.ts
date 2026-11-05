@@ -51,6 +51,7 @@ export type ExtensionCommand = {
   provider?: 'ETSY' | null
   origin?: 'WEB' | 'SCHEDULE' | 'EXTENSION' | null
   maxOrders?: number | null
+  numDays?: ExtensionImportDays | null
   result?: { importedCount: number; failedCount: number }
   id: string
   type: ExtensionCommandType

@@ -586,47 +586,47 @@ export function getSearchableNavigationItems(account: CurrentAccount): Searchabl
       labelKey: 'legacyMenu.manageClients',
       categoryKey: 'legacyMenu.extensions',
       icon: <DesktopOutlined />,
-      keywords: ['clients', 'extensions', 'tien ich'],
+      keywords: ['clients', 'extensions', 'tien ich', 'may tram', 'bot'],
     })
     items.push({
-      key: 'ext-config-auto',
-      path: '/portal/extensions/config-auto',
+      key: 'ext-schedules',
+      path: '/portal/extensions/schedules',
       labelKey: 'legacyMenu.configAuto',
       categoryKey: 'legacyMenu.extensions',
       icon: <SettingOutlined />,
-      keywords: ['config auto', 'tu dong'],
+      keywords: ['config auto', 'tu dong', 'lich trinh', 'schedules', 'cron'],
     })
     items.push({
-      key: 'ext-log-manager',
-      path: '/portal/extensions/log-manager',
+      key: 'ext-logs',
+      path: '/portal/extensions/logs',
       labelKey: 'legacyMenu.logManager',
       categoryKey: 'legacyMenu.extensions',
       icon: <FileDoneOutlined />,
-      keywords: ['log manager', 'nhat ky tien ich'],
+      keywords: ['log manager', 'nhat ky tien ich', 'logs', 'command logs'],
     })
     items.push({
-      key: 'ext-tracking-etsy',
-      path: '/portal/extensions/tracking-etsy',
-      labelKey: 'legacyMenu.trackingEtsy',
-      categoryKey: 'legacyMenu.extensions',
-      icon: <ShopOutlined />,
-      keywords: ['tracking etsy', 'dong bo ma van don'],
-    })
-    items.push({
-      key: 'ext-message-etsy',
-      path: '/portal/extensions/message-etsy',
-      labelKey: 'legacyMenu.messageEtsy',
-      categoryKey: 'legacyMenu.extensions',
-      icon: <ShopOutlined />,
-      keywords: ['message etsy', 'tin nhan etsy'],
-    })
-    items.push({
-      key: 'ext-check-tracking',
-      path: '/portal/extensions/check-tracking',
-      labelKey: 'legacyMenu.checkTracking',
+      key: 'ext-tracking',
+      path: '/portal/extensions/tracking',
+      labelKey: 'legacyMenu.trackingAutomation',
       categoryKey: 'legacyMenu.extensions',
       icon: <CarOutlined />,
-      keywords: ['check tracking', 'kiem tra ma van don'],
+      keywords: ['tracking', 'tracking etsy', 'dong bo ma van don', 'check tracking'],
+    })
+    items.push({
+      key: 'ext-messages',
+      path: '/portal/extensions/messages',
+      labelKey: 'legacyMenu.messageAutomation',
+      categoryKey: 'legacyMenu.extensions',
+      icon: <ShopOutlined />,
+      keywords: ['message', 'message etsy', 'tin nhan etsy', 'tin nhan amazon', 'cs'],
+    })
+    items.push({
+      key: 'ext-images',
+      path: '/portal/extensions/images',
+      labelKey: 'legacyMenu.imageSync',
+      categoryKey: 'legacyMenu.extensions',
+      icon: <PictureOutlined />,
+      keywords: ['image sync', 'dong bo anh', 'listing images'],
     })
   }
 

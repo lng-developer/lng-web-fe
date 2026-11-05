@@ -157,7 +157,10 @@
     "logManager": "Log Manager",
     "trackingEtsy": "Tracking Etsy",
     "messageEtsy": "Message Etsy",
-    "checkTracking": "Check Tracking"
+    "checkTracking": "Check Tracking",
+    "trackingAutomation": "Trung tâm Tracking",
+    "messageAutomation": "Trung tâm Tin nhắn",
+    "imageSync": "Đồng bộ ảnh Listing"
   },
   "shell": {
     "refresh": "Làm mới",
@@ -3125,7 +3128,7 @@
       "unknownDesigner": "Designer không xác định",
       "unassigned": "Chưa phân công",
       "productImage": "Ảnh sản phẩm",
-      "asin": "Asin",
+      "asin": "ASIN",
       "statusTask": "Trạng thái Task",
       "assignedTo": "Người thực hiện",
       "psdStatus": "Trạng thái PSD",
@@ -3201,7 +3204,6 @@
       "requirements": "Yêu cầu",
       "attachments": "Tệp đính kèm",
       "openProduct": "Mở SP",
-      "asin": "ASIN",
       "listingId": "Listing ID",
       "image": "Ảnh",
       "copyAsin": "Sao chép ASIN",
@@ -3277,7 +3279,6 @@
       "totalFiles": "Tổng tệp PSD",
       "approvedFiles": "Tệp đã duyệt",
       "submissionFiles": "Bản nộp thiết kế",
-      "referenceFiles": "Tệp tham khảo",
       "open": "Mở",
       "download": "Tải xuống",
       "clearFilters": "Xóa bộ lọc",
@@ -4422,6 +4423,105 @@
         "DISCONNECTED": "Mất kết nối"
       },
       "testConnection": "Kiểm tra kết nối"
+    },
+    "extensions": {
+      "metrics": {
+        "onlineClients": "Client đang Online",
+        "amazonClients": "Máy cào Amazon",
+        "etsyClients": "Máy cào Etsy",
+        "activeSchedules": "Lịch đang chạy",
+        "orderSchedules": "Lịch cào đơn",
+        "financeSchedules": "Lịch sao kê",
+        "totalCommands": "Tổng số lệnh",
+        "runningCommands": "Đang chạy / Chờ xử lý",
+        "succeededCommands": "Hoàn thành",
+        "failedCommands": "Cần chú ý",
+        "monitoredShops": "Store kết nối",
+        "onlineSyncBots": "Bot đẩy tracking online",
+        "onlineAgents": "Extension Online"
+      },
+      "filters": {
+        "allStatus": "Tất cả trạng thái",
+        "allTypes": "Tất cả loại lệnh",
+        "searchPlaceholder": "Tìm kiếm client, shop, lệnh..."
+      },
+      "clients": {
+        "subtitle": "Giám sát các máy bot worker trên Amazon & Etsy, kiểm tra heartbeat trực tuyến và quản lý token client.",
+        "table": {
+          "status": "Trạng thái",
+          "platform": "Sàn / Nền tảng",
+          "client": "Máy trạm (Client)",
+          "shop": "Shop liên kết",
+          "version": "Phiên bản & Gateway",
+          "lastSeen": "Heartbeat gần nhất"
+        },
+        "actions": {
+          "ping": "Gửi lệnh ping kiểm tra kết nối",
+          "syncNow": "Chạy lệnh cào đơn ngay"
+        }
+      },
+      "tokens": {
+        "modalTitle": "Cấp Token Extension Mới",
+        "generate": "Tạo Token",
+        "createdSuccess": "Tạo token thành công!",
+        "copyNotice": "Hãy sao chép token này ngay bây giờ. Token sẽ không được hiển thị lại vì lý do bảo mật. Dán token vào cài đặt LNG Extension trên máy client.",
+        "shop": "Shop mục tiêu",
+        "shopPlaceholder": "Chọn shop để gắn extension",
+        "clientLabel": "Tên máy trạm PC / VM",
+        "environment": "Môi trường",
+        "validity": "Thời hạn hiệu lực (Ngày)",
+        "revokeConfirm": "Thu hồi token bot này? Extension sẽ bị ngắt kết nối."
+      },
+      "schedules": {
+        "subtitle": "Cấu hình lịch trình tự động cào đơn hàng và báo cáo tài chính định kỳ theo từng shop."
+      },
+      "logs": {
+        "subtitle": "Theo dõi hàng đợi lệnh của bot, giám sát trạng thái thực thi và xem log payload chi tiết.",
+        "table": {
+          "status": "Trạng thái",
+          "platform": "Sàn",
+          "type": "Loại lệnh",
+          "shop": "Shop",
+          "agent": "Máy Extension",
+          "result": "Kết quả thực thi",
+          "time": "Thời gian"
+        },
+        "actions": {
+          "details": "Xem chi tiết payload & phản hồi"
+        }
+      },
+      "tracking": {
+        "title": "Trung Tâm Quản Lý Tracking & Vận Đơn",
+        "subtitle": "Kiểm tra các đơn đã sẵn sàng dispatch, xem trước file upload tracking và đồng bộ mã vận đơn lên Etsy và Amazon.",
+        "workflowTitle": "Quy Trình Tự Động Hóa Vận Đơn",
+        "shopsTitle": "Danh Sách Shop & Trạng Thái Extension Tracking",
+        "table": {
+          "platform": "Sàn",
+          "shop": "Shop",
+          "botAgent": "Extension Bot"
+        },
+        "actions": {
+          "preview": "Xem danh sách fulfillment"
+        }
+      },
+      "messages": {
+        "title": "Trung Tâm Tin Nhắn Khách Hàng",
+        "subtitle": "Giám sát hội thoại khách hàng, phối hợp phản hồi CS kịp thời và đồng bộ tin nhắn qua Etsy và Amazon Seller Central.",
+        "slaAlertTitle": "Quy định SLA Phản hồi 24 Giờ của Sàn",
+        "slaAlertDesc": "Cả Etsy (Star Seller) và Amazon đều yêu cầu phản hồi tin nhắn khách hàng trong vòng 24 giờ bao gồm cả cuối tuần. Extension Bot hỗ trợ cảnh báo sớm để đội CS không bị chậm trễ.",
+        "storesTitle": "Hộp Thư Tin Nhắn Các Store",
+        "table": {
+          "platform": "Sàn",
+          "shop": "Store",
+          "botAgent": "Extension Bot"
+        },
+        "actions": {
+          "openInbox": "Mở hộp thư trên sàn"
+        }
+      },
+      "images": {
+        "subtitle": "Đồng bộ ảnh gallery và mockup độ phân giải cao từ listing sàn về hệ thống LNG."
+      }
     }
   },
   "organization": {

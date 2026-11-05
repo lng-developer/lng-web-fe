@@ -512,6 +512,129 @@ export const appRoutes: RouteObject[] = [
           })),
       },
       {
+        path: 'portal/extensions',
+        element: <Navigate to="/portal/extensions/clients" replace />,
+      },
+      {
+        path: 'portal/extensions/clients',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/extensions/pages/ExtensionClientsPage'),
+          ]).then(([{ PortalPageBoundary }, { ExtensionClientsPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={[
+                  'ORDERS:READ',
+                  'ORDERS:WRITE',
+                  'CATALOG:READ',
+                  'CATALOG:WRITE',
+                  'FINANCE:READ',
+                  'FINANCE:WRITE',
+                ]}
+              >
+                <ExtensionClientsPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/extensions/schedules',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/extensions/pages/ExtensionSchedulesPage'),
+          ]).then(([{ PortalPageBoundary }, { ExtensionSchedulesPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['ORDERS:READ', 'ORDERS:WRITE', 'FINANCE:READ', 'FINANCE:WRITE']}
+              >
+                <ExtensionSchedulesPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/extensions/config-auto',
+        element: <Navigate to="/portal/extensions/schedules" replace />,
+      },
+      {
+        path: 'portal/extensions/logs',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/extensions/pages/ExtensionLogsPage'),
+          ]).then(([{ PortalPageBoundary }, { ExtensionLogsPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['ORDERS:READ', 'ORDERS:WRITE', 'FINANCE:READ', 'FINANCE:WRITE']}
+              >
+                <ExtensionLogsPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/extensions/log-manager',
+        element: <Navigate to="/portal/extensions/logs" replace />,
+      },
+      {
+        path: 'portal/extensions/tracking',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/extensions/pages/ExtensionTrackingPage'),
+          ]).then(([{ PortalPageBoundary }, { ExtensionTrackingPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary
+                anyOf={['ORDERS:READ', 'ORDERS:WRITE', 'SHIPMENTS:READ', 'SHIPMENTS:WRITE']}
+              >
+                <ExtensionTrackingPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/extensions/tracking-etsy',
+        element: <Navigate to="/portal/extensions/tracking" replace />,
+      },
+      {
+        path: 'portal/extensions/check-tracking',
+        element: <Navigate to="/portal/extensions/tracking" replace />,
+      },
+      {
+        path: 'portal/extensions/messages',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/extensions/pages/ExtensionMessagesPage'),
+          ]).then(([{ PortalPageBoundary }, { ExtensionMessagesPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['ORDERS:READ', 'ORDERS:WRITE']}>
+                <ExtensionMessagesPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
+        path: 'portal/extensions/message-etsy',
+        element: <Navigate to="/portal/extensions/messages" replace />,
+      },
+      {
+        path: 'portal/extensions/images',
+        lazy: () =>
+          Promise.all([
+            import('@/features/portal/components/PortalPageBoundary'),
+            import('@/features/portal/extensions/pages/ExtensionImagesPage'),
+          ]).then(([{ PortalPageBoundary }, { ExtensionImagesPage }]) => ({
+            Component: () => (
+              <PortalPageBoundary anyOf={['CATALOG:READ', 'CATALOG:WRITE']}>
+                <ExtensionImagesPage />
+              </PortalPageBoundary>
+            ),
+          })),
+      },
+      {
         path: 'portal/design',
         element: <Navigate to="/portal/design/idea-tasks" replace />,
       },

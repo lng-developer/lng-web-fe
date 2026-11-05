@@ -416,29 +416,29 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
       icon: <DesktopOutlined />,
     },
     {
-      key: '/portal/extensions/config-auto',
+      key: '/portal/extensions/schedules',
       labelKey: 'legacyMenu.configAuto',
       icon: <SettingOutlined />,
     },
     {
-      key: '/portal/extensions/log-manager',
+      key: '/portal/extensions/logs',
       labelKey: 'legacyMenu.logManager',
       icon: <FileDoneOutlined />,
     },
     {
-      key: '/portal/extensions/tracking-etsy',
-      labelKey: 'legacyMenu.trackingEtsy',
-      icon: <ShopOutlined />,
-    },
-    {
-      key: '/portal/extensions/message-etsy',
-      labelKey: 'legacyMenu.messageEtsy',
-      icon: <ShopOutlined />,
-    },
-    {
-      key: '/portal/extensions/check-tracking',
-      labelKey: 'legacyMenu.checkTracking',
+      key: '/portal/extensions/tracking',
+      labelKey: 'legacyMenu.trackingAutomation',
       icon: <CarOutlined />,
+    },
+    {
+      key: '/portal/extensions/messages',
+      labelKey: 'legacyMenu.messageAutomation',
+      icon: <ShopOutlined />,
+    },
+    {
+      key: '/portal/extensions/images',
+      labelKey: 'legacyMenu.imageSync',
+      icon: <PictureOutlined />,
     },
   ],
 }
@@ -1311,6 +1311,11 @@ export function LegacySidebar({
                       bottomMenuGroups.hr?.find((g) => g.key !== 'dashboard')?.items?.[0]?.path ||
                       '/hr/me'
                     navigate(target)
+                  } else if (
+                    item.key === 'extensions' &&
+                    !location.pathname.startsWith('/portal/extensions')
+                  ) {
+                    navigate('/portal/extensions/clients')
                   }
                 }}
               >

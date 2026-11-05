@@ -157,7 +157,10 @@
     "logManager": "Log Manager",
     "trackingEtsy": "Tracking Etsy",
     "messageEtsy": "Message Etsy",
-    "checkTracking": "Check Tracking"
+    "checkTracking": "Check Tracking",
+    "trackingAutomation": "Tracking Center",
+    "messageAutomation": "Message Center",
+    "imageSync": "Image Sync"
   },
   "shell": {
     "refresh": "Refresh",
@@ -3125,7 +3128,7 @@
       "unknownDesigner": "Unknown designer",
       "unassigned": "Unassigned",
       "productImage": "Product Image",
-      "asin": "Asin",
+      "asin": "ASIN",
       "statusTask": "Status Task",
       "assignedTo": "Assigned",
       "psdStatus": "PSD Status",
@@ -3147,7 +3150,7 @@
       "sourceListing": "Listing",
       "sourceTemplate": "Internal template",
       "expectedOutputs": "Expected outputs",
-      "referenceFiles": "Reference files",
+      "referenceFiles": "Reference Files",
       "assign": "Assign",
       "start": "Start",
       "submitFiles": "Submit design files",
@@ -3201,7 +3204,6 @@
       "requirements": "Requirements",
       "attachments": "Attachments",
       "openProduct": "Open SP",
-      "asin": "ASIN",
       "listingId": "Listing ID",
       "image": "Image",
       "copyAsin": "Copy ASIN",
@@ -3277,7 +3279,6 @@
       "totalFiles": "Total PSD Files",
       "approvedFiles": "Approved Files",
       "submissionFiles": "Submissions",
-      "referenceFiles": "Reference Files",
       "open": "Open",
       "download": "Download",
       "clearFilters": "Reset",
@@ -4422,6 +4423,105 @@
         "DISCONNECTED": "Disconnected"
       },
       "testConnection": "Test connection"
+    },
+    "extensions": {
+      "metrics": {
+        "onlineClients": "Online Clients",
+        "amazonClients": "Amazon Workers",
+        "etsyClients": "Etsy Workers",
+        "activeSchedules": "Active Schedules",
+        "orderSchedules": "Order Sync Schedules",
+        "financeSchedules": "Finance Schedules",
+        "totalCommands": "Total Commands",
+        "runningCommands": "In Progress / Queued",
+        "succeededCommands": "Succeeded",
+        "failedCommands": "Needs Attention",
+        "monitoredShops": "Connected Stores",
+        "onlineSyncBots": "Online Dispatch Bots",
+        "onlineAgents": "Online Agents"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "allTypes": "All Types",
+        "searchPlaceholder": "Search client, shop, command..."
+      },
+      "clients": {
+        "subtitle": "Monitor connected worker bots across Amazon & Etsy, verify online heartbeats, and manage client access tokens.",
+        "table": {
+          "status": "Status",
+          "platform": "Platform",
+          "client": "Client Machine",
+          "shop": "Bound Shop",
+          "version": "Version & Gateway",
+          "lastSeen": "Last Heartbeat"
+        },
+        "actions": {
+          "ping": "Send health check ping",
+          "syncNow": "Trigger order fetch now"
+        }
+      },
+      "tokens": {
+        "modalTitle": "Generate Extension Bot Token",
+        "generate": "Generate Token",
+        "createdSuccess": "Token created successfully!",
+        "copyNotice": "Copy this token now. It will not be shown again for security reasons. Paste it into the LNG Extension settings on the bot client machine.",
+        "shop": "Target Shop",
+        "shopPlaceholder": "Select shop to bind extension to",
+        "clientLabel": "Client PC / VM Name",
+        "environment": "Environment",
+        "validity": "Validity (Days)",
+        "revokeConfirm": "Revoke this bot token? The extension will disconnect."
+      },
+      "schedules": {
+        "subtitle": "Configure recurring automated background tasks for order ingestion and finance reporting by shop."
+      },
+      "logs": {
+        "subtitle": "Monitor bot command dispatch queues, track live execution status, and inspect payload logs.",
+        "table": {
+          "status": "Status",
+          "platform": "Platform",
+          "type": "Command",
+          "shop": "Shop",
+          "agent": "Agent Machine",
+          "result": "Execution Result",
+          "time": "Timestamp"
+        },
+        "actions": {
+          "details": "View command payload & response"
+        }
+      },
+      "tracking": {
+        "title": "Tracking & Dispatch Center",
+        "subtitle": "Review shipments ready to dispatch, preview tracking upload files, and synchronize fulfillment numbers to Etsy and Amazon.",
+        "workflowTitle": "Automated Dispatch Workflow",
+        "shopsTitle": "Stores & Extension Tracking Status",
+        "table": {
+          "platform": "Platform",
+          "shop": "Shop",
+          "botAgent": "Worker Extension"
+        },
+        "actions": {
+          "preview": "Preview Fulfillments"
+        }
+      },
+      "messages": {
+        "title": "Customer Message Center",
+        "subtitle": "Monitor customer conversations, coordinate prompt CS responses, and synchronize messages across Etsy and Amazon Seller Central.",
+        "slaAlertTitle": "24-Hour Marketplace Response SLA",
+        "slaAlertDesc": "Both Etsy (Star Seller) and Amazon (Buyer-Seller Messaging SLA) require responses within 24 hours including weekends. Use Extension Bot to notify customer support teams of pending customer questions.",
+        "storesTitle": "Store Message Inboxes",
+        "table": {
+          "platform": "Platform",
+          "shop": "Store",
+          "botAgent": "Worker Extension"
+        },
+        "actions": {
+          "openInbox": "Open Store Inbox"
+        }
+      },
+      "images": {
+        "subtitle": "Synchronize marketplace listing high-resolution gallery and mockup images to LNG System storage."
+      }
     }
   },
   "organization": {

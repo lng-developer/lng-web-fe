@@ -156,6 +156,16 @@ export type OrderWorkbenchItem = {
     scaleStatus: string | null
     qcStatus: string | null
     scaleBy?: { employeeCode: string | null; name: string | null } | null
+    scaleContext?: {
+      use?: {
+        psdTemplate?: {
+          id?: string | null
+          status?: string | null
+          assetDownloadUrl?: string | null
+          downloadUrl?: string | null
+        } | null
+      }
+    } | null
   } | null
   tracking: { trackingNumber?: string | null; status?: string | null } | null
   workflow: OrderWorkflow

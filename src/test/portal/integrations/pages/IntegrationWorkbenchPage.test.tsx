@@ -772,9 +772,7 @@ describe('IntegrationWorkbenchPage', () => {
       account(['ORDERS:WRITE', 'FINANCE:WRITE']),
     )
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
-    expect(
-      screen.queryByRole('button', { name: 'Configure order schedule' }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Configure order schedule' })).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Request transaction sync now' }),
     ).not.toBeInTheDocument()
