@@ -18,7 +18,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "npm run test:ci",
-    "test:unit": "vitest run --project unit",
+    "test:unit": "vitest run --project unit --maxWorkers=2",
     "test:ui": "vitest run --project ui --maxWorkers=2",
     "test:ui:ci": "vitest run --project ui --maxWorkers=2",
     "test:ui:changed": "vitest run --project ui --maxWorkers=2 --changed",
