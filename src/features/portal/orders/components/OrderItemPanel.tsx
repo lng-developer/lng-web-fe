@@ -126,13 +126,23 @@ export const OrderItemPanel = memo(function OrderItemPanel({
       <CopyableListingId value={etsyListingId} className={styles.asinChip} fallback="—" />
     )
   ) : null
+  const productionPsd = item.production?.scaleContext?.use?.psdTemplate
+  const listingPsdAssetId = (item.listing as { defaultPsdTemplateAssetId?: string | null })
+    ?.defaultPsdTemplateAssetId
   const psdSource =
     item.psd?.listingVariant ||
     item.psd?.listingPsd ||
     item.mapping?.listingVariant ||
     item.mapping?.listingPsd
-  const psdStatus = psdSource?.psdReadiness?.status
-  const psdDownloadUrl = psdSource?.psdTemplate?.downloadUrl
+  const psdStatus =
+    psdSource?.psdReadiness?.status ||
+    (listingPsdAssetId || productionPsd?.status === 'READY' ? 'PRESENT' : productionPsd?.status)
+  const psdDownloadUrl =
+    psdSource?.psdTemplate?.downloadUrl ||
+    productionPsd?.assetDownloadUrl ||
+    (listingPsdAssetId
+      ? `/api/media/assets/${encodeURIComponent(listingPsdAssetId)}/download`
+      : null)
   const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item?.status ?? '')
   const canRecheckProduction = Boolean(
     item.workflow?.nextActions?.some(
