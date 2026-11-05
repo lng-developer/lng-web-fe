@@ -330,4 +330,33 @@ describe('ProductionWorkbenchExpandedRow', () => {
 
     expect(screen.queryByText(/Design source missing/)).not.toBeInTheDocument()
   })
+
+  it('renders Open SP button and Listing ID for Etsy tasks', () => {
+    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const etsyTask: ProductionTask = {
+      ...task,
+      salesChannelCode: 'ETSY',
+      orderItem: {
+        externalOrderId: 'ETSY-12345',
+        salesChannelCode: 'ETSY',
+        etsyListingId: '987654321',
+      },
+    }
+
+    renderExpandedRow(etsyTask)
+
+    expect(screen.getByText('Listing ID')).toBeVisible()
+    expect(screen.getByText('987654321')).toBeVisible()
+
+    const openSpButton = screen.getByRole('button', { name: /Open SP/i })
+    expect(openSpButton).toBeVisible()
+
+    fireEvent.click(openSpButton)
+    expect(windowOpenSpy).toHaveBeenCalledWith(
+      'https://www.etsy.com/listing/987654321',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    windowOpenSpy.mockRestore()
+  })
 })
