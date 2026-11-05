@@ -21,12 +21,17 @@ import styles from './ProductionWorkbenchPage.module.scss'
 function productUrl(task: ProductionTask) {
   const channel =
     task.orderItem?.salesChannelCode ||
+    task.salesChannelCode ||
     task.listing?.salesChannelCode ||
     task.scaleContext?.use?.listing?.salesChannelCode
-  const asin = task.orderItem?.asin || task.listing?.asin
-  const etsyListingId = task.orderItem?.etsyListingId || task.listing?.etsyListingId
+  const asin = task.orderItem?.asin || task.listing?.asin || task.scaleContext?.use?.listing?.asin
+  const etsyListingId =
+    task.orderItem?.etsyListingId ||
+    task.listing?.etsyListingId ||
+    task.scaleContext?.use?.listing?.etsyListingId
   if (channel === 'ETSY' && etsyListingId) return `https://www.etsy.com/listing/${etsyListingId}`
   if (asin) return `https://www.amazon.com/dp/${asin}`
+  if (etsyListingId) return `https://www.etsy.com/listing/${etsyListingId}`
   return null
 }
 
@@ -176,6 +181,22 @@ export function ProductionWorkbenchExpandedRow({
       asset.mimeType?.startsWith('image/'),
   )
   const listingPreview = task.listing?.previewAssetDownloadUrl
+  const isEtsy =
+    task.orderItem?.salesChannelCode === 'ETSY' ||
+    task.salesChannelCode === 'ETSY' ||
+    task.listing?.salesChannelCode === 'ETSY' ||
+    task.scaleContext?.use?.listing?.salesChannelCode === 'ETSY' ||
+    Boolean(
+      task.orderItem?.etsyListingId ||
+      task.listing?.etsyListingId ||
+      task.scaleContext?.use?.listing?.etsyListingId,
+    )
+  const productIdentifier = isEtsy
+    ? task.orderItem?.etsyListingId ||
+      task.listing?.etsyListingId ||
+      task.scaleContext?.use?.listing?.etsyListingId ||
+      '-'
+    : task.orderItem?.asin || task.listing?.asin || '-'
   const spUrl = productUrl(task)
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
   const outputChecks = checks.filter(
@@ -274,8 +295,10 @@ export function ProductionWorkbenchExpandedRow({
         </div>
         <div className={styles.productIdentifiers}>
           <div>
-            <Typography.Text type="secondary">ASIN</Typography.Text>
-            <Typography.Text>{task.orderItem?.asin || '-'}</Typography.Text>
+            <Typography.Text type="secondary">
+              {isEtsy ? t('portal.production.etsyListingId', 'Listing ID') : 'ASIN'}
+            </Typography.Text>
+            <Typography.Text>{productIdentifier}</Typography.Text>
           </div>
         </div>
         <div className={styles.artworkPreview}>

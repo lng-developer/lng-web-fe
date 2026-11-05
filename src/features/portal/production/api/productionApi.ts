@@ -35,6 +35,8 @@ export type ProductionScaleContext = {
     psdTemplate?: { assetDownloadUrl?: string | null; status?: string | null }
     listing?: {
       salesChannelCode?: string | null
+      asin?: string | null
+      etsyListingId?: string | null
       psdStatus?: string | null
       previewAssetDownloadUrl?: string | null
       scaleDifficulty?: { level?: string | null; reason?: string | null } | null
@@ -58,6 +60,8 @@ export type ProductionCustomization = {
   }> | null
 }
 export type ProductionTask = {
+  salesChannelCode?: string | null
+  marketplaceCode?: string | null
   designType?: 'NORMAL' | 'CUSTOM_IMAGE' | null
   designTypeSource?: 'AUTO' | 'MANUAL' | null
   id: string

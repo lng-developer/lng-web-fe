@@ -23,7 +23,8 @@ export type Attendance = {
   lateMinutes: number
   earlyLeaveMinutes: number
   workedMinutes: number
-  shift?: { name?: string } | null
+  source?: string | null
+  shift?: { name?: string; startTime?: string; endTime?: string } | null
   capabilities?: { adjust?: boolean }
 }
 export type MyAttendancePage = Page<Attendance> & {
@@ -321,6 +322,30 @@ export const checkOut = (input: object = {}) =>
   post<Attendance>('/api/hr/attendance/check-out', input)
 export const adjustAttendance = async (id: string, input: object) =>
   unwrap<Attendance>(await apiClient.patch(`/api/hr/attendance/${id}`, input))
+
+export type SqlAttendanceSyncResult = {
+  fetched: number
+  inserted: number
+  updated: number
+  unchanged: number
+  failed: number
+}
+
+export const syncSqlAttendance = (immediate = true, limit?: number) =>
+  post<SqlAttendanceSyncResult>('/api/hr/integrations/sql-attendance/sync', {
+    immediate,
+    ...(limit ? { limit } : {}),
+  })
+
+export const getSqlAttendanceStatus = () =>
+  get<{
+    status: string
+    lastSourceTimestamp: string | null
+    lastSourceEventId: string | null
+    lastResult: SqlAttendanceSyncResult | null
+    lastStartedAt: string | null
+    lastFinishedAt: string | null
+  }>('/api/hr/integrations/sql-attendance/status')
 
 export const listMyLeaveBalances = () =>
   get<LeaveBalance[]>('/api/hr/leave-balances/me', { year: new Date().getFullYear() })
