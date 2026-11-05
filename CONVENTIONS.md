@@ -1,25 +1,24 @@
 # CONVENTIONS.md — Quy chuẩn dự án `lng-web-fe`
 
 Tài liệu này là **quy chuẩn bắt buộc** khi phát triển dự án. Mọi PR nên tuân theo cấu trúc,
-naming convention và pattern được mô tả ở đây. Khi cần tạo một module/feature mới, hãy copy
-cấu trúc của `src/features/home` làm khuôn mẫu.
+naming convention và pattern được mô tả ở đây.
 
 ## 1. Tech stack
 
-| Nhóm            | Công nghệ                                            | Vai trò                                         |
-| --------------- | ---------------------------------------------------- | ----------------------------------------------- |
-| Core            | React 19 (JS/JSX), Vite                              | Build tool, UI library                          |
-| Styling         | Tailwind CSS 4, MUI 9 (Emotion), SCSS                | Layout/utility, component/theme, style phức tạp |
-| Routing         | React Router 7                                       | `createBrowserRouter`, lazy-loaded pages        |
-| Server state    | TanStack Query 5                                     | Fetch/cache/sync dữ liệu server                 |
-| Client state    | Zustand 5                                            | UI state, preferences (persist)                 |
-| Form & validate | react-hook-form + zod + @hookform/resolvers          | Quản lý form, schema validation                 |
-| i18n            | react-i18next                                        | Đa ngôn ngữ vi/en                               |
-| Notification    | notistack                                            | Toast/snackbar                                  |
-| Date            | dayjs                                                | Format/parse ngày giờ                           |
-| HTTP            | axios                                                | Gọi API qua 1 instance dùng chung               |
-| Lint/format     | ESLint (flat config) + Prettier + simple-import-sort | Code style, import order                        |
-| Git hooks       | Husky + lint-staged                                  | Lint/format tự động trước khi commit            |
+| Nhóm            | Công nghệ                                                                      | Vai trò                                                        |
+| --------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Core            | React 19 (TS/TSX), Vite 8                                                      | Build tool, UI library                                         |
+| Styling         | Ant Design 6 (Token Engine), SCSS Modules                                      | Component design system, theme tokens, layout & style phức tạp |
+| Routing         | React Router 7 (`createBrowserRouter`, dynamic `lazy()`)                       | Router SPA, route-level code splitting                         |
+| Server state    | TanStack Query 5 (Query Key factories, invalidation, mutation)                 | Fetch/cache/sync dữ liệu server, mutation handling             |
+| Client state    | Zustand 5 (UI state)                                                           | UI state cục bộ & tương tác workbench                          |
+| Form & validate | Ant Design Form (Typed `Form.Item` rules, client-side validation)              | Quản lý form, field validation                                 |
+| i18n            | react-i18next (`useTranslation`, đồng bộ `vi/common.json` & `en/common.json`)  | Đa ngôn ngữ song song vi/en                                    |
+| Notification    | `useFeedbackToast` (`@/shared/ui`) / Ant Design `App` (message / notification) | Feedback toast, thông báo người dùng                           |
+| Date            | dayjs                                                                          | Format/parse ngày giờ                                          |
+| HTTP            | axios (Tập trung tại `@/shared/api/client.ts` với 401 refresh token mutex)     | Gọi API qua HTTP client dùng chung                             |
+| Lint/format     | ESLint + Prettier                                                              | Code style, format tự động                                     |
+| Git hooks       | Husky + lint-staged                                                            | Lint/format tự động trước khi commit                           |
 
 ## 2. Cấu trúc thư mục
 
@@ -28,417 +27,286 @@ public/
   favicon.svg
 
 src/
-├── main.jsx                  # Entry point, import global styles + render <App/>
+├── main.tsx                  # Entry point, import global styles & bootstrapApp
 ├── app/
-│   ├── App.jsx                # Compose AppProviders + RouterProvider
-│   └── providers/
-│       └── AppProviders.jsx   # QueryClient, MUI ThemeProvider, SnackbarProvider, i18n init
-├── assets/                    # Ảnh, icon tĩnh (import trực tiếp trong component)
-│   ├── images/
-│   └── icons/
-├── components/                # Component dùng chung toàn app
-│   ├── common/                 # Loader, ErrorBoundary, EmptyState...
-│   └── form/                   # FormTextField, FormSelect... (wrap MUI + RHF)
-├── constants/
-│   ├── app.js                  # App-level constants: modes, languages, storage keys, variants...
-│   ├── env.js                  # Wrap import.meta.env
-│   └── routes.js               # Hằng số route path
-├── features/                  # Module nghiệp vụ (feature-based)
+│   ├── bootstrap.tsx          # Xác thực ban đầu & render root bọc ContentErrorBoundary
+│   ├── App.tsx                # Compose AppProviders + RouterProvider
+│   ├── layout/                # AppShell, AppHeader, AppSidebar, PageContainer
+│   ├── providers/             # AppProviders (I18nextProvider, ThemeProvider, AntdApp, QueryClientProvider)
+│   └── router/                # Router config (router.tsx, createBrowserRouter với lazy(), guards)
+├── features/                  # Module nghiệp vụ theo bounded domain
 │   └── <feature-name>/
-│       ├── api/                 # TanStack Query hooks + query-key factory
-│       ├── components/          # Component chỉ dùng trong feature này
-│       ├── hooks/                # Hook riêng của feature
-│       ├── store/                # Zustand store riêng của feature (nếu cần)
-│       └── pages/                # Page component - route target
-├── hooks/                     # Hook dùng chung (useDebounce...)
-├── i18n/
-│   ├── index.js                # react-i18next init
-│   └── locales/
-│       ├── vi/common.json
-│       └── en/common.json
-├── layouts/                   # Layout shell (MainLayout, AuthLayout...)
-├── lib/                       # Cấu hình thư viện bên thứ 3
-│   ├── queryClient.js          # TanStack QueryClient
-│   └── dayjs.js                # dayjs + plugin/locale
-├── routes/
-│   └── index.jsx              # createBrowserRouter + route definitions
-├── services/                  # Gọi API: axios instance + endpoint path
-│   ├── axiosInstance.js        # axios instance + interceptors (export apiClient)
-│   └── endpoints.js            # Hằng số đường dẫn API, nhóm theo feature
-├── store/                     # Zustand store global (UI state, auth...)
+│       ├── api/                 # TanStack Query hooks, query key factories, API adapters
+│       ├── components/          # Component riêng của feature (co-locate .module.scss)
+│       ├── hooks/               # Custom hooks & UI store của feature
+│       └── pages/               # Page components — route targets (co-locate .module.scss)
+├── shared/                    # Tài nguyên dùng chung độc lập domain
+│   ├── api/                   # axios client (client.ts), error normalizer (apiError.ts)
+│   ├── auth/                  # Session management, token storage, PermissionBoundary
+│   ├── config/                # env.ts, app configuration
+│   ├── constants/             # Enums, static configurations
+│   ├── hooks/                 # Custom React hooks dùng chung
+│   ├── i18n/                  # i18n instance & locales (locales/{vi,en}/common.json)
+│   ├── media/                 # Shared media helpers & utilities
+│   ├── query/                 # queryClient config & GlobalMutationToastProvider
+│   ├── theme/                 # Ant Design token theme engine (ThemeProvider, theme.ts)
+│   └── ui/                    # Shared UI primitives (PageHeader, StatusTag, PopupModal, useFeedbackToast...)
 ├── styles/
-│   ├── tailwind.css            # Entry Tailwind (theme + utilities, bỏ preflight)
-│   ├── _variables.scss         # Biến SCSS (kích thước layout, z-index...)
-│   ├── _mixins.scss            # Mixin SCSS dùng chung
-│   └── global.scss             # Global style (reset nhẹ, scrollbar...)
-├── theme/                     # MUI theme
-│   ├── index.js                # createAppTheme(mode) + components style overrides
-│   ├── palette.js               # colorTokens (light/dark) + buildPalette
-│   └── typography.js            # Typography scale
-├── utils/                     # Hàm thuần (formatters, helpers...)
-└── validations/               # zod schema cho form/validate (tập trung)
-    ├── index.js                 # Re-export các schema
-    └── <feature>Schema.js       # zod schema theo feature, ví dụ feedbackSchema.js
+│   └── global.scss            # Global styles, Ant Design theme resets, utility classes
+└── test/                      # Test mirror theo domain ngoài feature (src/test/<feature>/...)
 ```
 
 ### Nguyên tắc đặt code
 
-- **Chung toàn app** (dùng ở ≥ 2 feature) → đặt ở `components/`, `hooks/`, `store/`, `lib/`,
-  `services/`, `theme/`, `i18n/`, `validations/`, `routes/`, `utils/`, `constants/`.
-- **Riêng của 1 nghiệp vụ** → đặt trong `features/<feature-name>/...` tương ứng.
-- Khi tạo feature mới, copy cấu trúc `src/features/home` (api, components, pages), thêm schema
-  vào `src/validations/<feature>Schema.js` và đăng ký route trong `src/routes/index.jsx` +
-  `src/constants/routes.js`.
+- **Chung toàn app** (dùng ở ≥ 2 feature, độc lập nghiệp vụ):
+  - Đặt tại `src/shared/*` (`ui/`, `theme/`, `api/`, `query/`, `auth/`, `i18n/`, `config/`, `constants/`, `hooks/`).
+  - Cấu trúc layout, providers, bootstrap, router đặt tại `src/app/*`.
+- **Riêng của một nghiệp vụ**:
+  - Đặt trong `src/features/<feature-name>/` với các folder `api/`, `components/`, `pages/`, `hooks/`.
+  - Co-locate file `.module.scss` trực tiếp bên cạnh component hoặc page tương ứng.
+  - Phân tách theo bounded-domain rõ ràng (ví dụ: `auth/accounts/`, `auth/roles/`, `auth/permissions/`), không để collection file rời rạc ở root feature.
+- **Unit & UI tests**:
+  - Đặt ngoài production feature folders, tại `src/test/<feature>/...` mirror cấu trúc domain của feature.
+  - Sử dụng absolute import qua alias `@/features/*` từ test files.
+- **Tái sử dụng shared UI**:
+  - Luôn kiểm tra `src/shared/ui/` trước khi tạo component UI mới.
+  - Import shared primitives qua alias `@/shared/*`.
 
 ## 3. Quy ước đặt tên
 
-| Đối tượng              | Convention                                     | Ví dụ                            |
-| ---------------------- | ---------------------------------------------- | -------------------------------- | ---------------------------------------------- |
-| Folder                 | kebab-case                                     | `features/user-management/`      |
-| File component (React) | PascalCase, default export, 1 component/file   | `UserCard.jsx`                   |
-| Hook                   | camelCase, tiền tố `use`, named export         | `useDebounce.js` → `useDebounce` |
-| Zustand store          | camelCase, tiền tố `use...Store`, named export | `useUIStore.js` → `useUIStore`   |
-| TanStack Query hook    | `use<Resource><Query                           | Mutation>`                       | `useHomeSummaryQuery`, `useCreateUserMutation` |
-| Query key factory      | `<feature>.keys.js`, object `<feature>Keys`    | `homeKeys.summary()`             |
-| zod schema             | camelCase + `Schema`, named export             | `feedbackSchema`                 |
-| Hằng số                | UPPER_SNAKE_CASE cho giá trị, file camelCase   | `ROUTES.HOME` trong `routes.js`  |
-| Utils/helpers          | camelCase, named export, pure function         | `formatCurrency()`               |
+| Đối tượng              | Convention                                    | Ví dụ                                         |
+| ---------------------- | --------------------------------------------- | --------------------------------------------- |
+| Folder                 | kebab-case                                    | `features/access-control/`                    |
+| File component (React) | PascalCase, `.tsx`, 1 component/file          | `UserCard.tsx`                                |
+| SCSS Module            | PascalCase theo tên component, `.module.scss` | `UserCard.module.scss`                        |
+| Hook                   | camelCase, tiền tố `use`, `.ts` / `.tsx`      | `useDebouncedValue.ts`                        |
+| Zustand store          | camelCase, tiền tố `use...Store`, `.ts`       | `useOrderActionStore.ts`                      |
+| TanStack Query hook    | `use<Resource><Query \| Mutation>`            | `useOrderListQuery`, `useUpdateOrderMutation` |
+| Query key factory      | `<feature>.keys.ts` hoặc `<feature>Keys`      | `orderKeys.list()`                            |
+| Form Item Rule         | Typed Ant Design `Rule[]` / rule validator    | `rules={[{ required: true }]}`                |
+| Hằng số                | UPPER_SNAKE_CASE cho giá trị, file camelCase  | `STORAGE_KEYS.TOKEN`                          |
+| Utils/helpers          | camelCase, named export, pure function        | `formatCurrency()`                            |
 
 ## 4. Quy ước viết component
 
-- Functional component, khai báo bằng `function`, **default export**:
+- Functional component bằng `function` hoặc `const`, có định nghĩa kiểu TypeScript rõ ràng qua `interface` hoặc `type`:
 
-```jsx
-export default function UserCard({ user, onEdit }) {
-  return <div>{user.name}</div>
+```tsx
+interface UserCardProps {
+  user: User
+  onEdit?: (user: User) => void
+}
+
+export function UserCard({ user, onEdit }: UserCardProps) {
+  return <div className={styles.container}>{user.name}</div>
 }
 ```
 
-- Destructure props ngay trong tham số hàm. Không dùng `propTypes` (đã tắt rule
-  `react/prop-types` vì dùng JS thuần - nếu cần mô tả type, dùng JSDoc).
-- Mỗi file chỉ export **1 component** (default) + có thể export thêm hằng số/hook liên quan
-  nếu cần (theo rule `react-refresh/only-export-components`). Nếu file không phải component
-  (ví dụ route config), thêm comment `eslint-disable react-refresh/only-export-components`
-  kèm lý do — xem `src/routes/index.jsx`.
-- Style ưu tiên: dùng Tailwind qua prop `className` cho style tĩnh, kể cả trên MUI component
-  (`Box`, `Stack`, `Typography`, `Avatar`, `FormControl`...). Chỉ dùng `sx`/theme của MUI cho giá
-  trị phụ thuộc theme callback, selector nội bộ của MUI, hoặc style động theo state phức tạp. SCSS
-  module (`*.module.scss`) dùng cho style phức tạp/animation.
+- Destructure props ngay trong tham số hàm. Không sử dụng `propTypes` — toàn bộ codebase chuẩn hóa bằng TypeScript.
+- Khai báo export: ưu tiên named export cho component; với các route page có thể dùng named export hoặc default export tương thích với dynamic `lazy()`.
+- Styling: Sử dụng các Ant Design components chuẩn kết hợp SCSS Modules (`*.module.scss`). Tận dụng token từ `theme.useToken()` khi cần tính toán style theo theme động.
 
-## 5. Styling: Tailwind vs MUI vs SCSS
+## 5. Styling: Ant Design 6 (Token Engine) & SCSS Modules
 
 **Nguyên tắc chọn công cụ:**
 
-- **Tailwind**: mặc định cho style tĩnh trong component: layout, spacing, gap, flex/grid, responsive,
-  width/height, padding/margin, radius, border, shadow, cursor và màu token (`flex`, `gap-4`,
-  `w-[360px]`, `rounded-lg`, `border-l-4`, `bg-surface`, `text-ink`, `md:p-6`...). Dùng được trực
-  tiếp trên cả element thường và MUI component qua `className`.
-- **MUI**: dùng component design-system (Button, TextField, Dialog, AppBar, Card...), global theme
-  và `styleOverrides` trong `src/theme/`. Dùng `sx` khi cần:
-  - đọc giá trị từ theme callback (`sx={(theme) => ...}`), ví dụ màu preview trong nested
-    `ThemeProvider`;
-  - selector nội bộ của MUI, ví dụ `& .MuiDrawer-paper`;
-  - style phụ thuộc state phức tạp hoặc pseudo state khó đọc nếu viết bằng class, ví dụ ô ngày
-    trong `DateRangePicker`;
-  - z-index/breakpoint tính từ MUI theme.
-- **SCSS module**: style phức tạp không tiện làm bằng utility/sx (animation, pseudo-element,
-  override style của thư viện ngoài). Đặt cùng folder với component: `Component.module.scss`.
+- **Ant Design 6**: Nền tảng component library chính cho hệ thống B2B/Workbench (Button, Input, Select, Table, Modal, Drawer, Form, Card, Tag, Alert, Dropdown, Menu, Tooltip...).
+- **Ant Design Token Engine (`src/shared/theme/theme.ts`)**:
+  - Toàn bộ design token (màu sắc, border radius, typography scale, box shadow, control height) được cấu hình tập trung trong hàm `createAppTheme`.
+  - Phân tách theo thuật toán: `theme.defaultAlgorithm` (light mode) và `theme.darkAlgorithm` (dark mode).
+  - Chuẩn hóa màu chủ đạo `colorPrimary: '#2563eb'`, cùng hệ thống surface colors (`colorBgBase`, `colorBgContainer`, `colorBgLayout`) và text colors đồng nhất theo `DESIGN.md`.
+- **SCSS Modules (`*.module.scss`)**:
+  - Dùng cho custom layout, high-density workbenches, grid hệ thống, custom scrollbar, table cell formatting và animations phức tạp.
+  - Đặt cùng folder với component: `Component.module.scss`.
+- **Global Styles (`src/styles/global.scss`)**:
+  - Chứa CSS resets, font import ('Plus Jakarta Sans', 'Poppins'), scrollbar toàn cục và các class tiện ích bổ trợ.
 
-**Quy tắc khi gặp `sx`:**
+**Chế độ Appearance (Dark Mode):**
 
-- Nếu `sx` chỉ chứa style tĩnh như `width`, `height`, `p`, `px`, `py`, `mt`, `mb`, `borderRadius`,
-  `borderLeft`, `bgcolor`, `boxShadow`, `display`, `gridTemplateColumns`, `textTransform`,
-  `cursor`... thì chuyển sang Tailwind.
-- Nếu chỉ còn một giá trị động đơn giản như màu theo variant, ưu tiên map variant sang class token
-  thay vì truyền `color` vào `sx`.
-- Với MUI component có style mặc định ưu tiên cao hơn class thường, dùng Tailwind important modifier
-  có chủ đích, ví dụ `className="!h-6 !w-6 !text-xs"` cho `Avatar` hoặc
-  `className="!bg-primary-light !text-primary"` cho `IconButton`.
-- Arbitrary value của Tailwind (`w-[260px]`, `grid-cols-[repeat(7,36px)]`, `mb-[3px]`) được phép
-  khi cần khớp thiết kế hoặc thay thế trực tiếp giá trị `sx` cũ. Không dùng arbitrary color rời rạc
-  nếu đã có token màu.
-
-Ví dụ đúng:
-
-```jsx
-<Stack
-  direction="row"
-  alignItems="center"
-  spacing={1.5}
-  className="w-[360px] max-w-full rounded-lg border-l-4 bg-surface px-4 py-3 shadow-lg"
-/>
-```
-
-Không viết nếu chỉ là style tĩnh:
-
-```jsx
-<Stack
-  sx={{
-    width: 360,
-    maxWidth: '100%',
-    p: '12px 16px',
-    borderRadius: 2,
-    bgcolor: 'background.paper',
-    boxShadow: ELEVATION_SHADOWS.LG,
-  }}
-/>
-```
-
-**Đồng bộ design tokens (quan trọng):**
-
-- `src/theme/palette.js` (export `colorTokens` + `buildPalette`), `src/theme/index.js` (export
-  `createAppTheme(mode)`) và `src/styles/tailwind.css` (`@theme` + `.dark{}`) phải khớp nhau —
-  tokens lấy từ Figma "LNG v2" > Design System > Color Tokens (Light/Dark):
-  - `breakpoints.values` (MUI, `src/theme/index.js`) ↔ `--breakpoint-*` (Tailwind): `sm:600
-md:900 lg:1200 xl:1536`.
-  - `colorTokens.light/dark` (MUI, `src/theme/palette.js`) ↔ `--color-*` trong `@theme` (light)
-    và `.dark{}` (dark) — xem bảng mapping đầy đủ trong comment đầu `tailwind.css`. Ví dụ:
-    `brand/primary` ↔ `--color-primary` ↔ `palette.primary.main`; `text/primary` ↔ `--color-ink`
-    ↔ `palette.text.primary`.
-  - Khi đổi 1 trong 2 file, **phải cập nhật file còn lại** để ví dụ `bg-page`/`text-ink`
-    (Tailwind) và `theme.palette.background.default`/`theme.palette.text.primary` (MUI) luôn
-    đồng nhất ở cả light và dark.
-
-**Vì sao Tailwind preflight bị tắt?** `src/styles/tailwind.css` chỉ import
-`tailwindcss/theme.css` + `tailwindcss/utilities.css`, **không** import preflight (reset CSS
-mặc định của Tailwind). MUI `<CssBaseline />` (đăng ký trong `AppProviders`) đóng vai trò
-reset CSS duy nhất, tránh 2 lớp reset xung đột nhau.
-
-**Dark mode:**
-
-- Nguồn duy nhất: `themeMode` (`'light' | 'dark'`) trong `useUIStore` (persist), đổi qua
-  `toggleThemeMode()`/`setThemeMode()` — nút bật/tắt ở `MainLayout` (icon
-  `LightModeIcon`/`DarkModeIcon`).
-- `AppProviders` tạo MUI theme bằng `createAppTheme(themeMode)` (qua `useMemo`) và đồng bộ
-  class `dark` trên `<html>` bằng `useEffect` (`document.documentElement.classList.toggle`).
-- Tailwind dùng `@custom-variant dark (&:where(.dark, .dark *));` (class-based, **không** dùng
-  `prefers-color-scheme`) — các biến `--color-*` được redefine trong `.dark{}` nên utility như
-  `bg-page`/`text-ink` tự đổi màu theo class `dark` trên `<html>`, không cần thêm tiền tố
-  `dark:` cho các token màu đã định nghĩa.
+- Quản lý qua `src/shared/theme/ThemeProvider.tsx` với 3 chế độ: `'light' | 'dark' | 'system'`.
+- Persist lựa chọn của người dùng trong `localStorage` với key `lng-web-appearance`.
+- Tự động đồng bộ với hệ thống thông qua `resolveAppearance`. Khi dark mode kích hoạt, toàn bộ component Ant Design tự động nhận token của `theme.darkAlgorithm`.
 
 ## 6. State management — Zustand
 
-- 1 store cho 1 "concern" (UI prefs, auth, cart...), không dồn hết vào 1 store khổng lồ.
-- Store global đặt ở `src/store/`, store riêng feature đặt ở `features/<name>/store/`.
-- Dùng **selector** khi đọc state để tránh re-render thừa:
+- Dùng cho **UI state** cục bộ phức tạp hoặc tương tác giữa các thành phần workbench (ví dụ: quản lý modal đang mở, action bar, selected items).
+- Store UI đặt trong `src/features/<feature>/hooks/` hoặc `src/features/<feature>/store/`.
+- Sử dụng **selector** khi đọc state để tránh re-render không cần thiết:
 
-```js
-const sidebarOpen = useUIStore((state) => state.sidebarOpen)
-const toggleSidebar = useUIStore((state) => state.toggleSidebar)
+```ts
+const orderAction = useOrderActionStore((state) => state.orderAction)
+const openOrderModal = useOrderActionStore((state) => state.openOrderModal)
 ```
 
-- Dùng middleware `persist` cho dữ liệu cần lưu qua session (theme, ngôn ngữ, sidebar...) —
-  xem `src/store/useUIStore.js`. Dùng `partialize` để chỉ persist field cần thiết.
+- Không lạm dụng Zustand để lưu trữ dữ liệu server. Toàn bộ dữ liệu server phải được quản lý bởi TanStack Query.
 
 ## 7. Data fetching — TanStack Query
 
-- 1 `QueryClient` chung tại `src/lib/queryClient.js` (default: `staleTime: 60_000`,
-  `refetchOnWindowFocus: false`, `retry: 1`).
-- Mỗi feature có:
-  - `<feature>.keys.js` — query-key factory (object `<feature>Keys`):
+- 1 `QueryClient` chung tại `src/shared/query/queryClient.ts` (cấu hình mặc định: `staleTime: 60_000`, `refetchOnWindowFocus: false`, `retry: 1`).
+- Mỗi feature tổ chức theo pattern:
+  - Query-key factory: gom các keys liên quan để quản lý tập trung và tránh trùng lặp.
+  - Custom query / mutation hooks: bọc `useQuery` và `useMutation`, gọi qua `apiClient` từ `@/shared/api/client`.
 
-    ```js
-    export const homeKeys = {
-      all: ['home'],
-      summary: () => [...homeKeys.all, 'summary'],
-    }
-    ```
+```ts
+export const orderKeys = {
+  all: ['orders'] as const,
+  lists: () => [...orderKeys.all, 'list'] as const,
+  list: (filters: OrderFilters) => [...orderKeys.lists(), filters] as const,
+  detail: (id: string) => [...orderKeys.all, 'detail', id] as const,
+}
 
-  - `<feature>.queries.js` / `<feature>.mutations.js` — custom hook bọc `useQuery`/`useMutation`,
-    gọi hàm fetch dùng `apiClient` (từ `@/services/axiosInstance`) với path từ `ENDPOINTS`
-    (`@/services/endpoints`):
+export function useOrderListQuery(filters: OrderFilters) {
+  return useQuery({
+    queryKey: orderKeys.list(filters),
+    queryFn: () => fetchOrders(filters),
+  })
+}
+```
 
-    ```js
-    export function useHomeSummaryQuery() {
-      return useQuery({
-        queryKey: homeKeys.summary(),
-        queryFn: () => apiClient.get(ENDPOINTS.HOME.SUMMARY),
-      })
-    }
-    ```
-
-- Mutation thành công → `queryClient.invalidateQueries({ queryKey: homeKeys.all })` để
-  refetch dữ liệu liên quan.
-- Component dùng `isPending`/`isError`/`data` từ hook, không gọi `axios`/`fetch` trực tiếp
-  trong component.
+- Mutation thành công → gọi `queryClient.invalidateQueries(...)` để refetch dữ liệu server liên quan.
+- Tích hợp `GlobalMutationToastProvider` (`src/shared/query/GlobalMutationToastProvider.tsx`): tự động lắng nghe lỗi từ mutation và hiển thị thông báo lỗi qua `useFeedbackToast`, trừ khi mutation có tùy chọn `meta: { skipGlobalToast: true }` hoặc tự xử lý `onError`.
 
 ## 8. API layer — axios & endpoints
 
-- 1 instance duy nhất: `src/services/axiosInstance.js` (export `apiClient`), `baseURL` lấy từ
-  `src/constants/env.js` (`VITE_API_BASE_URL`).
-- Request interceptor: tự gắn `Authorization: Bearer <token>` từ `localStorage`.
-- Response interceptor: trả về `response.data` trực tiếp (component nhận data đã unwrap),
-  lỗi được `reject` để TanStack Query xử lý qua `isError`/`error`.
-- Đường dẫn API khai báo tập trung trong `src/services/endpoints.js` (object `ENDPOINTS`, nhóm
-  theo feature, ví dụ `ENDPOINTS.HOME.SUMMARY`), không hard-code string path trong
-  `<feature>.queries.js`/`.mutations.js`.
-- Mọi gọi API đặt trong `features/<name>/api/`, **không** gọi `apiClient` trực tiếp từ
-  component/page.
+- HTTP client tập trung tại `src/shared/api/client.ts`:
+  - `apiClient`: instance axios dùng cho hầu hết các API nghiệp vụ.
+  - `uploadApiClient`: instance riêng với timeout lớn (120s) phục vụ upload tệp tin.
+  - `refreshClient`: instance riêng dùng riêng cho luồng refresh token.
+- `baseURL` được cấu hình qua `src/shared/config/env.ts` (`env.apiBaseUrl`).
+- **Request interceptor**: Tự động lấy access token từ session (`getAccessToken()`) và gắn header `Authorization: Bearer <token>`.
+- **401 Refresh Token Mutex**:
+  - Khi nhận response 401 từ backend, client tạm hoãn các request tiếp theo và đưa vào `failedQueue`.
+  - Thực hiện gọi refresh token duy nhất qua `refreshClient.post('/api/auth/refresh')`.
+  - Nếu refresh thành công: cập nhật access token mới, retry toàn bộ request trong hàng đợi.
+  - Nếu refresh thất bại: gọi `expireSession()`, dọn dẹp phiên và kích hoạt chuyển hướng đăng nhập.
+- **Chuẩn hóa lỗi API**: Toàn bộ lỗi được chuyển đổi qua `normalizeApiError` (`src/shared/api/apiError.ts`) để đảm bảo format lỗi chuẩn (`status`, `message`, `code`, `details`).
+- Mọi hàm gọi API phải đặt trong `features/<name>/api/`. **Không** gọi `apiClient` trực tiếp từ component/page.
 
 ## 9. Routing — React Router v7
 
-- Khai báo path trong `src/constants/routes.js` (object `ROUTES`), không hard-code string path
-  trong component.
-- `src/routes/index.jsx`: `createBrowserRouter`, page component load qua `React.lazy`.
-- `MainLayout` bọc `<Outlet/>` trong 1 `<Suspense fallback={<Loader/>}>` duy nhất — các page
-  con không cần tự thêm Suspense.
-- Thêm route mới: thêm hằng số vào `ROUTES`, `lazy import` page, thêm vào `children` của router.
+- Khai báo cấu hình router tại `src/app/router/router.tsx` bằng `createBrowserRouter`.
+- **Code splitting**: Toàn bộ route pages được nạp bất đồng bộ qua dynamic `lazy: () => import(...)` trên từng route definition.
+- **Route guards**:
+  - Bảo vệ các bước thiết lập tài khoản qua guards: `requireWorkspace`, `requirePasswordSetup`, `requireProfileSetup`.
+  - Phân quyền trang qua `PermissionBoundary` (`@/shared/auth/PermissionBoundary`) hoặc `PortalPageBoundary` (kiểm tra permissions như `CATALOG:READ`, `ORDERS:WRITE`...).
+- Layout vỏ: `AppShell` (`src/app/layout/AppShell.tsx`) đóng vai trò container bao bọc header, sidebar, navigation, và `<Outlet />`.
 
-## 10. Form & validation — react-hook-form + zod
+## 10. Form & validation — Ant Design Form
 
-- Schema validate đặt tập trung ở `src/validations/<feature>Schema.js`, dùng `zod`, và được
-  re-export qua `src/validations/index.js`.
-- **Message lỗi của schema là i18n key** (ví dụ `'feedback.errors.nameRequired'`), không phải
-  text cứng — để hỗ trợ đa ngôn ngữ:
+- Quản lý form tập trung với Ant Design `<Form>` và `Form.useForm()`. Định kiểu dữ liệu mạnh mẽ bằng generic type `<Form<FormValues>>`.
+- **Validation**:
+  - Định nghĩa rules trực tiếp trên `<Form.Item rules={[...]} />`.
+  - Hỗ trợ các rule chuẩn: `required`, `type: 'email'`, `min`, `max`, `pattern`, hoặc custom validator function.
+  - Client-side validation: thông báo lỗi hiển thị inline ngay dưới trường nhập liệu.
 
-  ```js
-  export const feedbackSchema = z.object({
-    name: z.string().min(1, 'feedback.errors.nameRequired'),
-    email: z.email('feedback.errors.emailInvalid'),
-  })
-  ```
+```tsx
+<Form<LoginValues> layout="vertical" requiredMark={false} onFinish={onFinish}>
+  <Form.Item
+    name="identifier"
+    label={t('auth.login.identifier')}
+    rules={[{ required: true, message: t('auth.login.identifierRequired') }]}
+  >
+    <Input size="large" placeholder="user@company.com" />
+  </Form.Item>
+  <Form.Item
+    name="password"
+    label={t('auth.login.password')}
+    rules={[{ required: true, message: t('auth.login.passwordRequired') }]}
+  >
+    <Input.Password size="large" />
+  </Form.Item>
+  <Button type="primary" htmlType="submit">
+    {t('auth.login.submit')}
+  </Button>
+</Form>
+```
 
-- Dùng `useForm({ resolver: zodResolver(schema) })`.
-- Field MUI dùng chung `components/form/FormTextField.jsx` (wrap `TextField` qua RHF
-  `Controller`, tự dịch `fieldState.error.message` bằng `useTranslation`). Tạo thêm
-  `FormSelect`, `FormCheckbox`... theo cùng pattern khi cần.
+- **Message lỗi**: Luôn lấy từ translation qua `t('...')`, tuyệt đối không hardcode chuỗi text trong rules.
 
 ## 11. i18n — react-i18next
 
-- File ngôn ngữ: `src/i18n/locales/{vi,en}/common.json`, namespace mặc định `common`.
-- Ngôn ngữ hiện tại lưu trong `useUIStore` (persist) — **đây là nguồn duy nhất**, không dùng
-  thêm language-detector để tránh 2 nguồn xung đột.
-- Đổi ngôn ngữ: gọi đồng thời `i18n.changeLanguage(lang)` và `setLanguage(lang)` (xem
-  `MainLayout`).
-- Dùng `useTranslation()` + `t('namespace.key')` trong component. Thêm namespace mới (ví dụ
-  `<feature>.json`) nếu file `common.json` quá lớn, rồi khai báo trong `src/i18n/index.js`.
+- Tệp tin ngôn ngữ: `src/shared/i18n/locales/{vi,en}/common.json`.
+- Sử dụng hook `useTranslation()` và hàm `t('namespace.key')` trong component.
+- **Quy tắc bắt buộc**: Khi bổ sung bất kỳ text mới nào, phải thêm đồng thời key vào **cả 2 file**:
+  - `src/shared/i18n/locales/vi/common.json`
+  - `src/shared/i18n/locales/en/common.json`
+- Không hardcode chuỗi text hiển thị trên UI.
 
-## 12. Notification — notistack
+## 12. Notification — `useFeedbackToast` & Ant Design `App`
 
-- `SnackbarProvider` đã đăng ký ở `AppProviders` (vị trí top-right, `autoHideDuration=3000`).
-- Dùng hook `useSnackbar()` → `enqueueSnackbar(message, { variant })` với
-  `variant: 'success' | 'error' | 'warning' | 'info'`.
-- Lỗi API nên hiển thị qua `enqueueSnackbar(t('common.errors.generic'), { variant: 'error' })`
-  tại nơi gọi mutation/query (hoặc qua `onError` callback), không `alert()`.
+- Ứng dụng bọc `<AntdApp>` từ `antd` tại `src/app/providers/AppProviders.tsx` để cung cấp context cho notification, message và modal.
+- **Feedback Toast**:
+  - Sử dụng hook `useFeedbackToast()` từ `@/shared/ui`:
+    ```ts
+    const showFeedbackToast = useFeedbackToast()
+    showFeedbackToast('success', t('common.savedSuccessfully'), t('common.savedDescription'))
+    ```
+  - Hỗ trợ các type: `'success' | 'error' | 'warning' | 'info'`.
+- **Ant Design App Context**:
+  - Sử dụng `AntdApp.useApp()` khi cần truy cập trực tiếp `message`, `notification` hoặc `modal.confirm`.
+- **Global Mutation Toast**:
+  - `GlobalMutationToastProvider` tự động bắt lỗi các mutation thất bại và hiển thị feedback toast.
+- **Tuyệt đối không dùng**: `window.alert()`, `window.confirm()`, hoặc các thư viện bên ngoài không đồng bộ với design system.
 
 ## 13. Thứ tự import & alias `@/`
 
-ESLint (`eslint-plugin-simple-import-sort`) tự sắp xếp import theo 4 nhóm, cách nhau 1 dòng
-trống:
+ESLint (`eslint-plugin-simple-import-sort`) tự động sắp xếp import theo 4 nhóm, cách nhau 1 dòng trống:
 
-1. **Side-effect imports** — `import './foo.css'`, `import '@/i18n'`.
-2. **react/react-\* trước, các package ngoài khác sau** (react, react-dom, react-router-dom...
-   rồi @mui/..., @tanstack/..., axios, zod, zustand...).
-3. **Import nội bộ qua alias `@/`** — `@/components/...`, `@/lib/...`, `@/services/...`,
-   `@/constants/...`.
-4. **Import tương đối** — `./Component`, `../api/xxx.queries`, `*.module.scss`.
+1. **Side-effect imports** — `import './foo.scss'`, `import '@/shared/i18n/i18n'`.
+2. **react / react-\* trước, third-party packages sau** (`react`, `react-dom`, `react-router-dom`, `antd`, `@ant-design/icons`, `@tanstack/react-query`, `axios`, `dayjs`, `zustand`...).
+3. **Import nội bộ qua alias `@/`** — `@/app/...`, `@/features/...`, `@/shared/...`.
+4. **Import tương đối** — `./Component`, `../api/order.api`, `*.module.scss`.
 
-Chạy `npm run lint:fix` để tự sắp xếp. Luôn dùng alias `@/` cho import xuyên thư mục
-(`src/...`); chỉ dùng import tương đối (`./`, `../`) cho file trong cùng feature/folder.
+Chạy `npm run lint:fix` để tự động sắp xếp. Luôn dùng alias `@/` cho import xuyên thư mục; chỉ dùng import tương đối cho các file trong cùng một thư mục/subfolder.
 
 ## 14. Biến môi trường
 
-- Dùng env theo Vite mode:
-  - `.env.development` cho môi trường dev (`npm.cmd run dev`, `npm.cmd run build:dev`).
-  - `.env.production` cho môi trường production (`npm.cmd run build` hoặc `npm.cmd run build:prod`).
-- `.env.example` chỉ là template chung khi cần tạo env riêng theo máy. Mọi biến phải có tiền tố `VITE_` để Vite
-  expose ra client.
-- Không đọc `import.meta.env` trực tiếp trong component/feature — luôn qua
-  `src/constants/env.js` (object `env`).
-- `.env`, `.env.local`, `.env.*.local` đã được `.gitignore` — **không commit** file chứa secret.
+- Cấu hình theo môi trường Vite:
+  - `.env.development`: Môi trường dev server.
+  - `.env.localdev`: Môi trường kết nối mock/local services.
+  - `.env.production`: Môi trường production build.
+- Toàn bộ biến môi trường truy cập tập trung qua `src/shared/config/env.ts` (`env.apiBaseUrl`, `env.uploadApiBaseUrl`, v.v.). Không đọc trực tiếp `import.meta.env` rải rác trong component.
+- Biến môi trường expose ra client bắt buộc có tiền tố `VITE_`.
+- Không commit các file chứa secret (`.env.local`, `.env.*.local`).
 
 ## 15. Lint, format, git hooks
 
-- `npm run lint` / `npm run lint:fix` — ESLint (flat config, `eslint.config.js`).
-- `npm run format` — Prettier theo `.prettierrc.json` (no semi, single quote, trailing comma).
-- Husky `pre-commit` chạy `lint-staged` (ESLint --fix + Prettier cho file staged) — đã cấu
-  hình trong `package.json` (`"lint-staged"`).
-- Không dùng `--no-verify` để bypass hook trừ khi có lý do rõ ràng và được team đồng ý.
+- `npm run lint` / `npm run lint:fix` — ESLint (flat config `eslint.config.js`).
+- `npm run format` — Prettier (theo `.prettierrc.json`).
+- `npm run typecheck` — TypeScript typecheck (`tsc -b`).
+- Husky `pre-commit` chạy `lint-staged` (tự động format và kiểm tra lint cho các file staged trước khi commit).
+- Không dùng cờ `--no-verify` để bỏ qua git hooks.
 
 ## 16. Quy ước commit message
 
-Khuyến nghị theo [Conventional Commits](https://www.conventionalcommits.org/) (không enforce
-bằng tool, nhưng nên tuân theo để changelog/lịch sử rõ ràng):
+Khuyến nghị theo [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <mô tả ngắn>
 
-feat(home): thêm form feedback
-fix(auth): sửa lỗi refresh token hết hạn
-chore(deps): nâng cấp react-router lên v7
+feat(orders): thêm modal xác nhận giao hàng
+fix(auth): sửa lỗi 401 refresh token race condition
+docs(conventions): đồng bộ tài liệu tech stack với Ant Design v6
 ```
 
-Các `type` phổ biến: `feat`, `fix`, `refactor`, `style`, `docs`, `chore`, `test`.
+Các `type` chuẩn: `feat`, `fix`, `refactor`, `style`, `docs`, `chore`, `test`.
 
 ## 17. Không hardcode — Text & Style khi phát triển UI mới
 
-Khi phát triển một UI/feature mới, **không hardcode** text hiển thị, màu sắc, spacing, kích
-thước, font... Mọi giá trị phải lấy từ nguồn chuẩn hóa (file i18n, design tokens) để dễ bảo trì
-và đảm bảo đồng bộ toàn app.
+### Text hiển thị
 
-### Text
+- Mọi chuỗi ký tự hiển thị (tiêu đề, nhãn, placeholder, nút bấm, thông báo, aria-label) bắt buộc dùng qua `useTranslation()` + `t('...')`.
+- Bổ sung song song cả tiếng Việt và tiếng Anh trong `src/shared/i18n/locales/{vi,en}/common.json`.
+- Ngoại lệ: Mã kỹ thuật, enum value không hiển thị cho người dùng.
 
-- Mọi text hiển thị cho người dùng (label, title, placeholder, message lỗi/thành công, tooltip,
-  aria-label, alt...) phải lấy qua `useTranslation()` + `t('namespace.key')`, **không** viết
-  text cứng trực tiếp trong JSX (cả tiếng Việt và tiếng Anh).
-- Thêm key mới vào **cả 2 file** `src/i18n/locales/vi/common.json` và
-  `src/i18n/locales/en/common.json` (cùng cấu trúc, namespace theo feature - xem mục 11).
-- Message lỗi của zod schema cũng phải là i18n key (xem mục 10), không phải text cứng.
-- Ngoại lệ: giá trị kỹ thuật không hiển thị cho người dùng (key tra cứu, `value` của option,
-  enum nội bộ...) không cần qua i18n.
+### Style, màu sắc & kích thước
 
-### Style, màu sắc, spacing, kích thước
+- **Không hardcode** mã màu hex, rgb hay kích thước px tùy tiện trong JSX (`style={{ color: '#2563eb', padding: '12px' }}`).
+- Màu sắc & tokens: Sử dụng token từ Ant Design (`theme.useToken()`) hoặc các biến SCSS chuẩn hóa.
+- Spacing & Layout: Định nghĩa trong file SCSS Module (`[Name].module.scss`) với cấu trúc high-density phù hợp tiêu chuẩn `DESIGN.md`.
+- Chuẩn chiều cao control: 36px cho Buttons, Inputs, Selects, DatePickers.
 
-- **Không** dùng màu hex/rgb, kích thước px tùy ý viết trực tiếp trong component (ví dụ
-  `style={{ color: '#E63946' }}`, `className="text-[#fff] p-[13px]"`, `sx={{ marginTop: '13px'
-}}`...).
-- Màu sắc: dùng `theme.palette`/`colorTokens` (MUI, qua `sx`/`src/theme/`) hoặc token Tailwind đã
-  định nghĩa trong `tailwind.css` (`bg-page`, `text-ink`, `border-default`...) - xem mục 5. Cần
-  màu mới → bổ sung vào `colorTokens` (`src/theme/palette.js`) **và** `@theme`/`.dark{}`
-  (`tailwind.css`) cho cả light/dark, không thêm màu rời rạc tại chỗ dùng.
-- Spacing/kích thước/radius/shadow tĩnh trong JSX: ưu tiên Tailwind (`gap-4`, `p-6`, `mt-16`,
-  `w-[260px]`, `rounded-lg`, `shadow-lg`). Dùng `theme.spacing()`/`theme.shape.borderRadius*` trong
-  `src/theme/` hoặc khi `sx` thật sự cần theme callback. Kích thước layout dùng chung (header
-  height, sidebar width, z-index...) lấy từ biến trong `src/styles/_variables.scss` hoặc constant
-  module phù hợp; cần giá trị mới thì thêm vào nguồn dùng chung, không hardcode số rải rác trong
-  các file SCSS khác.
-- Breakpoint dùng `theme.breakpoints` (MUI) hoặc prefix responsive của Tailwind (`sm: md: lg:
-xl:`) đã đồng bộ ở mục 5, không tự định nghĩa breakpoint riêng trong component.
-- Font/typography: dùng `theme.typography` (variant `h1`, `body1`, `caption`...) hoặc class
-  Tailwind tương ứng, không khai `fontSize`/`fontWeight`/`fontFamily` tùy ý trong component.
+### Keys & Configuration Literals
 
-### Keys/config literals
-
-- Không hardcode các key/config literal rải rác trong component, store, service, theme hoặc i18n
-  init. Các giá trị dùng cho logic phải được gom vào `src/constants/app.js` hoặc file constants
-  chuyên biệt.
-- Các nhóm key bắt buộc đi qua constants:
-  - theme mode / html class: `THEME_MODES.LIGHT`, `THEME_MODES.DARK`, `HTML_CLASSES.DARK`.
-  - language code: `LANGUAGES.VI`, `LANGUAGES.EN`.
-  - localStorage/sessionStorage key: `STORAGE_KEYS.*`.
-  - API response field/key dùng cho parsing: `AUTH_RESPONSE_FIELDS.*`.
-  - snackbar/toast variant: `SNACKBAR_VARIANTS.SUCCESS`, `ERROR`, `WARNING`, `INFO`.
-  - elevation/shadow tái sử dụng: `ELEVATION_SHADOWS.*`.
-- Endpoint path luôn đặt trong `src/services/endpoints.js` (`ENDPOINTS.*`), route path luôn đặt trong
-  `src/constants/routes.js` (`ROUTES.*`), không viết trực tiếp trong feature/api/component.
-- Ngoại lệ chấp nhận: literal chỉ dùng một lần và là giá trị hiển thị kĩ thuật cục bộ
-  (ví dụ option demo trong UI Kit) có thể để tại chỗ, nhưng nếu được so sánh logic, persist, parse
-  response, hoặc dùng ở hạn mức cross-file thì phải tạo constants.
-
-Ví dụ đúng:
-
-```js
-import { LANGUAGES, SNACKBAR_VARIANTS, THEME_MODES } from '@/constants/app'
-
-setThemeMode(THEME_MODES.DARK)
-i18n.changeLanguage(LANGUAGES.VI)
-enqueueSnackbar(t('feedback.success'), { variant: SNACKBAR_VARIANTS.SUCCESS })
-```
-
-Không viết:
-
-```js
-setThemeMode('dark')
-i18n.changeLanguage('vi')
-enqueueSnackbar(t('feedback.success'), { variant: 'success' })
-```
+- Các chuỗi literal so sánh logic, key lưu trữ, action types phải được định nghĩa thành hằng số trong `src/shared/constants/` hoặc hằng số riêng của feature.
+- Đường dẫn API luôn định nghĩa trong feature API / shared API layer, không hardcode string URL rải rác trong component.

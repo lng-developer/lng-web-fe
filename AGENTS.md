@@ -12,7 +12,7 @@ This repo is the frontend for the LNG Web POD FBM system.
 - Organize code by feature and subfeature: keep each screen, its API adapter, query hooks, types, and screen-specific components in a focused folder rather than accumulating a large flat module.
 - Within a feature, use bounded-domain folders (for example `accounts`, `roles`, `permissions`) with `api/`, `pages/`, and `components/` only when needed. Co-locate a page's `.module.scss` and `.test.tsx` beside that page; keep route guards in `guards/`. Do not leave a growing collection of unrelated page, API, test, and style files at the feature root.
 - Keep tests outside production feature folders under `src/test/<feature>/`, mirroring the feature's domain structure (for example `src/test/auth/accounts/`). Use absolute `@/features/*` imports from those tests. Keep a page's `.module.scss` next to its page source.
-- Prefer existing MUI, Tailwind, SCSS, TanStack Query, Zustand, and local components before adding anything new.
+- Prefer existing Ant Design v6 components, SCSS Modules, shared UI primitives (@/shared/ui), TanStack Query, Zustand, and local components before adding anything new.
 - Do not add frontend dependencies for basic layout, icons, forms, tables, or simple motion unless the user explicitly asks.
 - Treat backend API contracts as stable unless evidence says otherwise. Build typed adapters and focused TanStack Query hooks around them; avoid duplicating server state in component state, refetching unnecessarily, or creating ad hoc data-fetching paths.
 - Keep local state minimal and UI-only (for example: filters, selected rows, drawer state). Derive display data with memoization only when it prevents meaningful repeated work.
