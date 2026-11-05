@@ -369,7 +369,10 @@ export function AccessEditorPage() {
                     <div key={item.id} className={styles.assignmentCard}>
                       <div className={styles.assignmentIdentity}>
                         <Avatar
-                          style={{ backgroundColor: '#f0f2f5', color: '#1890ff' }}
+                          style={{
+                            backgroundColor: 'var(--ant-color-fill-secondary)',
+                            color: 'var(--ant-color-primary)',
+                          }}
                           icon={getScopeIcon(item.scopeType)}
                         />
                         <div className={styles.assignmentInfo}>

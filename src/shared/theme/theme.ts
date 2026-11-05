@@ -112,7 +112,8 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
       Segmented: {
         itemSelectedBg: APP_PRIMARY_COLOR,
         itemSelectedColor: '#FFFFFF',
-        itemHoverColor: APP_PRIMARY_COLOR,
+        itemHoverBg: isDark ? '#3A3B3C' : '#F1F5F9',
+        itemHoverColor: isDark ? '#E4E6EB' : '#0F172A',
         itemColor: isDark ? '#B0B3B8' : '#475569',
         trackBg: isDark ? '#242526' : '#F1F5F9',
         trackPadding: 3,

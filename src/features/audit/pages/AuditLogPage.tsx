@@ -363,7 +363,12 @@ export function AuditLogPage() {
             </Typography.Title>
             <pre
               className="max-h-64 overflow-auto rounded-lg bg-page p-4"
-              style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}
+              style={{
+                background: 'var(--ant-color-fill-quaternary)',
+                border: '1px solid var(--ant-color-border-secondary)',
+                padding: 12,
+                borderRadius: 6,
+              }}
             >
               {JSON.stringify(event.changes ?? {}, null, 2)}
             </pre>
@@ -372,7 +377,12 @@ export function AuditLogPage() {
             </Typography.Title>
             <pre
               className="max-h-64 overflow-auto rounded-lg bg-page p-4"
-              style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}
+              style={{
+                background: 'var(--ant-color-fill-quaternary)',
+                border: '1px solid var(--ant-color-border-secondary)',
+                padding: 12,
+                borderRadius: 6,
+              }}
             >
               {JSON.stringify(event.metadata, null, 2)}
             </pre>
