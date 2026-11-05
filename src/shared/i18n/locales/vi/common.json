@@ -3201,6 +3201,8 @@
       "requirements": "Yêu cầu",
       "attachments": "Tệp đính kèm",
       "openProduct": "Mở SP",
+      "asin": "ASIN",
+      "listingId": "Listing ID",
       "image": "Ảnh",
       "copyAsin": "Sao chép ASIN",
       "asinCopied": "Đã sao chép ASIN",

@@ -21,11 +21,18 @@ import styles from './ProductionWorkbenchPage.module.scss'
 function productUrl(task: ProductionTask) {
   const channel =
     task.orderItem?.salesChannelCode ||
+    task.salesChannelCode ||
     task.listing?.salesChannelCode ||
     task.scaleContext?.use?.listing?.salesChannelCode
-  const asin = task.orderItem?.asin || task.listing?.asin
-  const etsyListingId = task.orderItem?.etsyListingId || task.listing?.etsyListingId
-  if (channel === 'ETSY' && etsyListingId) return `https://www.etsy.com/listing/${etsyListingId}`
+  const asin = task.orderItem?.asin || task.listing?.asin || task.scaleContext?.use?.listing?.asin
+  const etsyListingId =
+    task.orderItem?.etsyListingId ||
+    task.orderItem?.externalListingId ||
+    task.listing?.etsyListingId ||
+    task.scaleContext?.use?.listing?.etsyListingId
+  if ((channel === 'ETSY' || (!asin && etsyListingId)) && etsyListingId) {
+    return `https://www.etsy.com/listing/${etsyListingId}`
+  }
   if (asin) return `https://www.amazon.com/dp/${asin}`
   return null
 }
@@ -199,6 +206,23 @@ export function ProductionWorkbenchExpandedRow({
   )
   const listingPreview = task.listing?.previewAssetDownloadUrl
   const spUrl = productUrl(task)
+  const isEtsy =
+    task.orderItem?.salesChannelCode === 'ETSY' ||
+    task.salesChannelCode === 'ETSY' ||
+    task.listing?.salesChannelCode === 'ETSY' ||
+    task.scaleContext?.use?.listing?.salesChannelCode === 'ETSY' ||
+    Boolean(
+      task.orderItem?.etsyListingId ||
+      task.orderItem?.externalListingId ||
+      task.listing?.etsyListingId ||
+      task.scaleContext?.use?.listing?.etsyListingId,
+    )
+  const identifier = isEtsy
+    ? task.orderItem?.etsyListingId ||
+      task.orderItem?.externalListingId ||
+      task.listing?.etsyListingId ||
+      task.scaleContext?.use?.listing?.etsyListingId
+    : task.orderItem?.asin || task.listing?.asin || task.scaleContext?.use?.listing?.asin
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
   const outputChecks = checks.filter(
     (check) =>
@@ -297,8 +321,12 @@ export function ProductionWorkbenchExpandedRow({
         </div>
         <div className={styles.productIdentifiers}>
           <div>
-            <Typography.Text type="secondary">ASIN</Typography.Text>
-            <Typography.Text>{task.orderItem?.asin || '-'}</Typography.Text>
+            <Typography.Text type="secondary">
+              {isEtsy
+                ? t('portal.production.listingId', 'Listing ID')
+                : t('portal.production.asin', 'ASIN')}
+            </Typography.Text>
+            <Typography.Text>{identifier || '-'}</Typography.Text>
           </div>
         </div>
         <div className={styles.artworkPreview}>

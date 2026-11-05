@@ -3201,6 +3201,8 @@
       "requirements": "Requirements",
       "attachments": "Attachments",
       "openProduct": "Open SP",
+      "asin": "ASIN",
+      "listingId": "Listing ID",
       "image": "Image",
       "copyAsin": "Copy ASIN",
       "asinCopied": "ASIN copied",
