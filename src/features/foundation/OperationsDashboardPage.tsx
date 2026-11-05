@@ -108,7 +108,7 @@ export function OperationsDashboardPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            style={{ background: '#ff7a1a', borderColor: '#ff7a1a' }}
+            className={styles.primaryAction}
             onClick={handleAddProduct}
           >
             {t('foundation.portalDashboard.addProduct', { defaultValue: 'Add Product' })}

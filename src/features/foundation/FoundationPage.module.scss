@@ -1,5 +1,10 @@
 .page {
   --dashboard-blue: #2563eb;
+
+  .primaryAction {
+    background: var(--ant-color-primary);
+    border-color: var(--ant-color-primary);
+  }
   --dashboard-green: #16a34a;
   --dashboard-orange: #ff7a1a;
   --dashboard-red: #dc2626;
