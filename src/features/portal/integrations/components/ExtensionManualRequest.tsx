@@ -21,11 +21,13 @@ export function ExtensionManualRequest({
   agent,
   source,
   loading,
+  iconOnly = false,
   onRequest,
 }: {
   readonly agent: ExtensionManagementAgent
   readonly source: keyof typeof commandTypes
   readonly loading: boolean
+  readonly iconOnly?: boolean
   readonly onRequest: (input: CreateExtensionCommandInput) => void
 }) {
   const { t } = useTranslation()
@@ -110,10 +112,11 @@ export function ExtensionManualRequest({
         aria-label={t(`${key}.requestLabel`, { label: label.toLowerCase() })}
         disabled={agent.status !== 'ONLINE' || loading}
         size="small"
-        type="primary"
+        type={iconOnly ? 'default' : 'primary'}
         icon={<SyncOutlined />}
+        title={t(`${key}.requestNow`)}
       >
-        {t(`${key}.requestNow`)}
+        {iconOnly ? null : t(`${key}.requestNow`)}
       </Button>
     </Popover>
   )

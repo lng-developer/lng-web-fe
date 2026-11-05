@@ -4478,6 +4478,10 @@
       },
       "schedules": {
         "subtitle": "Configure recurring automated background tasks for order ingestion and finance reporting by shop.",
+        "showOfflineBots": "{{count}} offline worker (click to expand)",
+        "showOfflineBots_other": "{{count}} offline workers (click to expand)",
+        "hideOfflineBots": "Hide {{count}} offline worker",
+        "hideOfflineBots_other": "Hide {{count}} offline workers",
         "columns": {
           "store": "Store & Platform",
           "agent": "Worker Extension",

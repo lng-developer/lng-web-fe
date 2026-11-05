@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ClockCircleOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined, SettingOutlined } from '@ant-design/icons'
 import { Button, Popover, Segmented, Select, Tag, Typography } from 'antd'
 
 import type { ExtensionScheduleType } from '../api/integrationApi'
@@ -28,6 +28,7 @@ export interface ExtensionSchedulePopoverProps {
   readonly timezone?: string
   readonly loading?: boolean
   readonly buttonAriaLabel?: string
+  readonly iconOnly?: boolean
   readonly onSave: (input: {
     enabled: boolean
     scheduleType: ExtensionScheduleType
@@ -47,6 +48,7 @@ export function ExtensionSchedulePopover({
   timezone = 'Asia/Ho_Chi_Minh',
   loading = false,
   buttonAriaLabel,
+  iconOnly = false,
   onSave,
 }: ExtensionSchedulePopoverProps) {
   const { t } = useTranslation()
@@ -213,10 +215,13 @@ export function ExtensionSchedulePopover({
             defaultValue: 'Configure schedule',
           })
         }
-        icon={<ClockCircleOutlined />}
+        icon={iconOnly ? <SettingOutlined /> : <ClockCircleOutlined />}
         size="small"
+        title={t('portal.integrations.extension.configure', { defaultValue: 'Configure' })}
       >
-        {t('portal.integrations.extension.configure', { defaultValue: 'Configure' })}
+        {iconOnly
+          ? null
+          : t('portal.integrations.extension.configure', { defaultValue: 'Configure' })}
       </Button>
     </Popover>
   )

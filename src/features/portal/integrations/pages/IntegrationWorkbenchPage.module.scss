@@ -189,6 +189,103 @@
   flex-shrink: 0;
 }
 
+.agentIconBoxOnline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-success-bg);
+  color: var(--ant-color-success);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.automationAgentHeaderCompact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  margin-bottom: 2px;
+}
+
+.automationScheduleRowCompact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--ant-color-border-secondary);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.scheduleRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.scheduleIconAndTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.taskLabel {
+  font-size: 13px;
+}
+
+.scheduleMetaCompact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.scheduleTimingBadge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-fill-quaternary);
+  padding: 2px 8px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.scheduleRowRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.offlineToggleRow {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
+}
+
+.offlineAgentsSubGrid {
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+  opacity: 0.9;
+}
+
 .agentLabel {
   font-size: 14px;
   font-weight: 600;

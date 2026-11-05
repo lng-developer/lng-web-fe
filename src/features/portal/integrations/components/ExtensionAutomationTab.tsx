@@ -7,12 +7,26 @@ import {
   ClockCircleOutlined,
   DesktopOutlined,
   DollarCircleOutlined,
+  DownOutlined,
   ExclamationCircleOutlined,
   FundOutlined,
+  InfoCircleOutlined,
   ShopOutlined,
   ShoppingCartOutlined,
+  UpOutlined,
 } from '@ant-design/icons'
-import { Button, Empty, Segmented, Space, Spin, Table, Tooltip, Typography } from 'antd'
+import {
+  Button,
+  Empty,
+  Segmented,
+  Space,
+  Spin,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
 import { SectionCard, StatusTag } from '@/shared/ui'
@@ -21,7 +35,7 @@ import { ExtensionPlatformBadge } from '@/features/portal/extensions/components/
 import { canWriteFinanceForShop, canWriteOrdersForShop } from '../auth/integrationAccess'
 import { ExtensionManualRequest } from './ExtensionManualRequest'
 import { ExtensionSchedulePopover, type IntervalOption } from './ExtensionSchedulePopover'
-import { formatScheduleSubtitle, type CreateExtensionCommandInput } from './extensionHelpers'
+import type { CreateExtensionCommandInput } from './extensionHelpers'
 
 import type {
   ExtensionFinanceSchedule,
@@ -83,6 +97,43 @@ const SETTLEMENT_INTERVAL_OPTIONS: IntervalOption[] = [
 
 const TRANSACTION_INTERVAL_OPTIONS: IntervalOption[] = [{ value: 1440, label: 'Daily (Every 24h)' }]
 
+function formatCompactScheduleTiming(
+  schedule?: {
+    enabled?: boolean
+    scheduleType?: 'INTERVAL' | 'FIXED_TIMES'
+    intervalMinutes?: number
+    fixedTimes?: string[]
+    nextRunAt?: string | null
+  } | null,
+  defaultIntervalMinutes = 120,
+) {
+  if (!schedule?.enabled) return ''
+  const nextDate = schedule.nextRunAt ? new Date(schedule.nextRunAt) : null
+  const validNext = nextDate && !isNaN(nextDate.getTime())
+
+  let nextText = ''
+  if (validNext) {
+    const isToday = nextDate.toDateString() === new Date().toDateString()
+    const timeStr = nextDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    nextText = isToday
+      ? `Next: ${timeStr}`
+      : `Next: ${nextDate.toLocaleDateString([], { month: 'numeric', day: 'numeric' })} ${timeStr}`
+  }
+
+  let freqText = ''
+  if (
+    schedule.scheduleType === 'FIXED_TIMES' ||
+    (schedule.fixedTimes && schedule.fixedTimes.length > 0)
+  ) {
+    freqText = `Daily (${schedule.fixedTimes?.join(', ')})`
+  } else {
+    const hours = (schedule.intervalMinutes ?? defaultIntervalMinutes) / 60
+    freqText = hours >= 24 ? `Daily (${hours}h)` : `Every ${hours}h`
+  }
+
+  return nextText ? `${freqText} · ${nextText}` : freqText
+}
+
 export function ExtensionAutomationTab({
   account,
   agents,
@@ -112,6 +163,8 @@ export function ExtensionAutomationTab({
     return defaultViewMode
   })
 
+  const [expandedOfflineShops, setExpandedOfflineShops] = useState<Record<string, boolean>>({})
+
   const handleViewModeChange = (mode: 'cards' | 'table') => {
     setViewMode(mode)
     try {
@@ -139,104 +192,136 @@ export function ExtensionAutomationTab({
     agents.forEach((agent) =>
       groups.set(agent.shopId, [...(groups.get(agent.shopId) ?? []), agent]),
     )
-    return [...groups].map(([shopId, groupAgents]) => ({
-      agents: groupAgents,
-      name: shopNames.get(shopId) ?? shopId,
-      shopId,
-      provider: groupAgents[0]?.provider,
-    }))
+    return [...groups].map(([shopId, groupAgents]) => {
+      const sorted = [...groupAgents].sort((a, b) => {
+        if (a.status === 'ONLINE' && b.status !== 'ONLINE') return -1
+        if (a.status !== 'ONLINE' && b.status === 'ONLINE') return 1
+        return 0
+      })
+      const onlineAgents = sorted.filter((a) => a.status === 'ONLINE')
+      const offlineAgents = sorted.filter((a) => a.status !== 'ONLINE')
+      return {
+        agents: sorted,
+        onlineAgents,
+        offlineAgents,
+        name: shopNames.get(shopId) ?? shopId,
+        shopId,
+        provider: sorted[0]?.provider,
+      }
+    })
   }, [agents, shopNames])
 
-  const renderOrderSchedule = (agent: ExtensionManagementAgent) => {
+  const renderOrderScheduleRow = (agent: ExtensionManagementAgent) => {
     const schedule = orderScheduleByAgentId.get(agent.id)
     const enabled = schedule?.enabled ?? false
+    const compactTiming = formatCompactScheduleTiming(schedule, 120)
+    const canWrite = canWriteOrders && canWriteOrdersForShop(account, agent.shopId)
+
     return (
-      <li className={styles.automationScheduleItem}>
-        <section aria-label="Order import schedule" className={styles.automationScheduleRow}>
-          <div className={styles.scheduleRowTier1}>
-            <div className={styles.scheduleTitleRow}>
-              <ShoppingCartOutlined className={styles.scheduleIconPrimary} />
-              <Typography.Text strong>
-                {t('portal.integrations.extension.orderImport', {
-                  defaultValue: 'Order import',
-                })}
-              </Typography.Text>
-              <StatusTag status={enabled ? 'operational' : 'draft'}>
-                {enabled ? 'Enabled' : 'Disabled'}
-              </StatusTag>
-            </div>
-            {schedule?.lastError ? (
-              <div className={styles.automationScheduleError} title={schedule.lastError}>
-                <ExclamationCircleOutlined />
-                <span>{schedule.lastError}</span>
-              </div>
-            ) : null}
+      <li key="order-sync" className={styles.automationScheduleRowCompact}>
+        <div className={styles.scheduleRowLeft}>
+          <div className={styles.scheduleIconAndTitle}>
+            <ShoppingCartOutlined className={styles.scheduleIconPrimary} />
+            <Typography.Text strong className={styles.taskLabel}>
+              {t('portal.integrations.extension.orderImport', {
+                defaultValue: 'Order import',
+              })}
+            </Typography.Text>
           </div>
 
-          <div className={styles.scheduleRowTier2}>
-            <div className={styles.scheduleTiming}>
-              <Typography.Text type="secondary" className={styles.scheduleMetaText}>
-                {enabled ? (
-                  <>
-                    <ClockCircleOutlined style={{ marginRight: 4, fontSize: 11 }} />
-                    {formatScheduleSubtitle(schedule, t, 120)}
-                  </>
-                ) : (
-                  t('portal.integrations.extension.notScheduled', {
-                    defaultValue: 'Not scheduled',
-                  })
-                )}
+          <div className={styles.scheduleMetaCompact}>
+            {enabled ? (
+              <span className={styles.scheduleTimingBadge}>
+                <ClockCircleOutlined
+                  style={{ fontSize: 11, marginRight: 5, color: 'var(--ant-color-primary)' }}
+                />
+                <span>{compactTiming}</span>
+              </span>
+            ) : (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {t('portal.integrations.extension.disabled', { defaultValue: 'Off' })}
               </Typography.Text>
-            </div>
+            )}
 
-            {canWriteOrders && canWriteOrdersForShop(account, agent.shopId) ? (
-              <div className={styles.automationScheduleActions}>
+            {schedule?.lastError ? (
+              <Tooltip title={schedule.lastError}>
+                <Tag color="error" icon={<ExclamationCircleOutlined />} style={{ margin: 0 }}>
+                  Error
+                </Tag>
+              </Tooltip>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={styles.scheduleRowRight}>
+          <Switch
+            size="small"
+            checked={enabled}
+            loading={isSavingSchedule}
+            disabled={!canWrite}
+            onChange={(checked) =>
+              onSaveSchedule({
+                agentId: agent.id,
+                enabled: checked,
+                scheduleType: schedule?.scheduleType,
+                intervalMinutes: schedule?.intervalMinutes ?? 120,
+                fixedTimes: schedule?.fixedTimes,
+                timezone: schedule?.timezone,
+              })
+            }
+          />
+          {canWrite ? (
+            <Space size={4}>
+              {agent.status === 'ONLINE' ? (
                 <ExtensionManualRequest
                   agent={agent}
                   source="ORDERS"
+                  iconOnly
                   loading={isCreatingCommand}
                   onRequest={onCreateCommand}
                 />
-                <ExtensionSchedulePopover
-                  title={t('portal.integrations.extension.orderSchedule', {
-                    defaultValue: 'Order schedule',
-                  })}
-                  buttonAriaLabel={t('portal.integrations.extension.configureOrderSchedule', {
-                    defaultValue: 'Configure order schedule',
-                  })}
-                  enabled={enabled}
-                  scheduleType={schedule?.scheduleType}
-                  intervalMinutes={schedule?.intervalMinutes ?? 120}
-                  intervalOptions={ORDER_INTERVAL_OPTIONS}
-                  fixedTimes={schedule?.fixedTimes}
-                  timezone={schedule?.timezone}
-                  loading={isSavingSchedule}
-                  onSave={(values) =>
-                    onSaveSchedule({
-                      agentId: agent.id,
-                      enabled: values.enabled,
-                      scheduleType: values.scheduleType,
-                      intervalMinutes: values.intervalMinutes as 60 | 120 | 180 | 240,
-                      fixedTimes: values.fixedTimes,
-                      timezone: values.timezone,
-                    })
-                  }
-                />
-              </div>
-            ) : null}
-          </div>
-        </section>
+              ) : null}
+              <ExtensionSchedulePopover
+                iconOnly
+                title={t('portal.integrations.extension.orderSchedule', {
+                  defaultValue: 'Order schedule',
+                })}
+                buttonAriaLabel={t('portal.integrations.extension.configureOrderSchedule', {
+                  defaultValue: 'Configure order schedule',
+                })}
+                enabled={enabled}
+                scheduleType={schedule?.scheduleType}
+                intervalMinutes={schedule?.intervalMinutes ?? 120}
+                intervalOptions={ORDER_INTERVAL_OPTIONS}
+                fixedTimes={schedule?.fixedTimes}
+                timezone={schedule?.timezone}
+                loading={isSavingSchedule}
+                onSave={(values) =>
+                  onSaveSchedule({
+                    agentId: agent.id,
+                    enabled: values.enabled,
+                    scheduleType: values.scheduleType,
+                    intervalMinutes: values.intervalMinutes as 60 | 120 | 180 | 240,
+                    fixedTimes: values.fixedTimes,
+                    timezone: values.timezone,
+                  })
+                }
+              />
+            </Space>
+          ) : null}
+        </div>
       </li>
     )
   }
 
-  const renderFinanceSchedule = (
+  const renderFinanceScheduleRow = (
     agent: ExtensionManagementAgent,
     source: ExtensionFinanceScheduleSource,
     label: string,
   ) => {
     const schedule = financeScheduleByAgentSource.get(`${agent.id}:${source}`)
     const enabled = schedule?.enabled ?? false
+    const canWrite = canWriteFinance && canWriteFinanceForShop(account, agent.shopId)
 
     const intervalOptions =
       source === 'ADS'
@@ -261,85 +346,166 @@ export function ExtensionAutomationTab({
         <BankOutlined className={styles.scheduleIconWarning} />
       )
 
+    const compactTiming = formatCompactScheduleTiming(schedule, 1440)
+
     return (
-      <li className={styles.automationScheduleItem}>
-        <section aria-label={`${label} schedule`} className={styles.automationScheduleRow}>
-          <div className={styles.scheduleRowTier1}>
-            <div className={styles.scheduleTitleRow}>
-              {icon}
-              <Typography.Text strong>{label}</Typography.Text>
-              <StatusTag status={enabled ? 'operational' : 'draft'}>
-                {enabled ? 'Enabled' : 'Disabled'}
-              </StatusTag>
-            </div>
-            {schedule?.lastError ? (
-              <div className={styles.automationScheduleError} title={schedule.lastError}>
-                <ExclamationCircleOutlined />
-                <span>{schedule.lastError}</span>
-              </div>
-            ) : null}
+      <li key={source} className={styles.automationScheduleRowCompact}>
+        <div className={styles.scheduleRowLeft}>
+          <div className={styles.scheduleIconAndTitle}>
+            {icon}
+            <Typography.Text strong className={styles.taskLabel}>
+              {label}
+            </Typography.Text>
           </div>
 
-          <div className={styles.scheduleRowTier2}>
-            <div className={styles.scheduleTiming}>
-              <Typography.Text type="secondary" className={styles.scheduleMetaText}>
-                {enabled ? (
-                  <>
-                    <ClockCircleOutlined style={{ marginRight: 4, fontSize: 11 }} />
-                    {formatScheduleSubtitle(schedule, t, 1440, intervalNote)}
-                  </>
-                ) : (
-                  t('portal.integrations.extension.notScheduled', {
-                    defaultValue: 'Not scheduled',
-                  })
-                )}
+          <div className={styles.scheduleMetaCompact}>
+            {enabled ? (
+              <span className={styles.scheduleTimingBadge}>
+                <ClockCircleOutlined
+                  style={{ fontSize: 11, marginRight: 5, color: 'var(--ant-color-primary)' }}
+                />
+                <span>{compactTiming}</span>
+                {intervalNote ? (
+                  <Tooltip title={intervalNote}>
+                    <InfoCircleOutlined
+                      style={{
+                        marginLeft: 5,
+                        fontSize: 12,
+                        color: 'var(--ant-color-text-tertiary)',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                ) : null}
+              </span>
+            ) : (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {t('portal.integrations.extension.disabled', { defaultValue: 'Off' })}
               </Typography.Text>
-            </div>
+            )}
 
-            {canWriteFinance && canWriteFinanceForShop(account, agent.shopId) ? (
-              <div className={styles.automationScheduleActions}>
-                <Button
-                  aria-label={`${enabled ? 'Disable' : 'Enable'} ${label.toLowerCase()} sync`}
-                  loading={isSavingFinanceSchedule}
-                  size="small"
-                  onClick={() =>
-                    onSaveFinanceSchedule({ agentId: agent.id, source, enabled: !enabled })
-                  }
-                >
-                  {enabled ? 'Disable' : 'Enable'}
-                </Button>
+            {schedule?.lastError ? (
+              <Tooltip title={schedule.lastError}>
+                <Tag color="error" icon={<ExclamationCircleOutlined />} style={{ margin: 0 }}>
+                  Error
+                </Tag>
+              </Tooltip>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={styles.scheduleRowRight}>
+          <Switch
+            size="small"
+            checked={enabled}
+            loading={isSavingFinanceSchedule}
+            disabled={!canWrite}
+            onChange={(checked) =>
+              onSaveFinanceSchedule({ agentId: agent.id, source, enabled: checked })
+            }
+          />
+          {canWrite ? (
+            <Space size={4}>
+              {agent.status === 'ONLINE' ? (
                 <ExtensionManualRequest
                   agent={agent}
                   source={source}
+                  iconOnly
                   loading={isCreatingCommand}
                   onRequest={onCreateCommand}
                 />
-                <ExtensionSchedulePopover
-                  title={`${label} ${t('portal.integrations.extension.schedule', { defaultValue: 'schedule' })}`}
-                  enabled={enabled}
-                  scheduleType={schedule?.scheduleType}
-                  intervalMinutes={schedule?.intervalMinutes ?? 1440}
-                  intervalOptions={intervalOptions}
-                  fixedTimes={schedule?.fixedTimes}
-                  timezone={schedule?.timezone}
-                  loading={isSavingFinanceSchedule}
-                  onSave={(values) =>
-                    onSaveFinanceSchedule({
-                      agentId: agent.id,
-                      source,
-                      enabled: values.enabled,
-                      scheduleType: values.scheduleType,
-                      intervalMinutes: values.intervalMinutes,
-                      fixedTimes: values.fixedTimes,
-                      timezone: values.timezone,
-                    })
-                  }
-                />
-              </div>
-            ) : null}
-          </div>
-        </section>
+              ) : null}
+              <ExtensionSchedulePopover
+                iconOnly
+                title={`${label} ${t('portal.integrations.extension.schedule', { defaultValue: 'schedule' })}`}
+                enabled={enabled}
+                scheduleType={schedule?.scheduleType}
+                intervalMinutes={schedule?.intervalMinutes ?? 1440}
+                intervalOptions={intervalOptions}
+                fixedTimes={schedule?.fixedTimes}
+                timezone={schedule?.timezone}
+                loading={isSavingFinanceSchedule}
+                onSave={(values) =>
+                  onSaveFinanceSchedule({
+                    agentId: agent.id,
+                    source,
+                    enabled: values.enabled,
+                    scheduleType: values.scheduleType,
+                    intervalMinutes: values.intervalMinutes,
+                    fixedTimes: values.fixedTimes,
+                    timezone: values.timezone,
+                  })
+                }
+              />
+            </Space>
+          ) : null}
+        </div>
       </li>
+    )
+  }
+
+  const renderAgentCard = (agent: ExtensionManagementAgent) => {
+    return (
+      <article key={agent.id} aria-label={agent.label} className={styles.automationAgentCard}>
+        <div className={styles.automationAgentHeaderCompact}>
+          <div className={styles.agentIdentity}>
+            <div
+              className={
+                agent.status === 'ONLINE' ? styles.agentIconBoxOnline : styles.agentIconBox
+              }
+            >
+              <DesktopOutlined />
+            </div>
+            <div>
+              <div className={styles.agentTitleRow}>
+                <Typography.Text strong className={styles.agentLabel}>
+                  {agent.label}
+                </Typography.Text>
+                <ExtensionPlatformBadge platform={agent.provider} />
+              </div>
+              <div className={styles.agentMetaRow}>
+                <Typography.Text type="secondary" className={styles.agentIdText}>
+                  Agent ID · {agent.id.slice(-6)}
+                </Typography.Text>
+              </div>
+            </div>
+          </div>
+          <StatusTag status={agent.status === 'ONLINE' ? 'online' : 'offline'}>
+            {agent.status === 'ONLINE' ? 'Online' : 'Offline'}
+          </StatusTag>
+        </div>
+
+        <ul className={styles.automationScheduleList}>
+          {renderOrderScheduleRow(agent)}
+          {agent.provider !== 'ETSY' &&
+            renderFinanceScheduleRow(
+              agent,
+              'ADS',
+              t('portal.integrations.extension.manualRequests.ADS', {
+                defaultValue: 'Ads',
+              }),
+            )}
+          {agent.provider !== 'ETSY' &&
+            renderFinanceScheduleRow(
+              agent,
+              'TRANSACTIONS',
+              t('portal.integrations.extension.manualRequests.TRANSACTIONS', {
+                defaultValue: 'Transaction',
+              }),
+            )}
+          {renderFinanceScheduleRow(
+            agent,
+            'SETTLEMENTS',
+            agent.provider === 'ETSY'
+              ? t('portal.integrations.extension.monthlyStatement', {
+                  defaultValue: 'Monthly statement',
+                })
+              : t('portal.integrations.extension.manualRequests.SETTLEMENTS', {
+                  defaultValue: 'Settlement',
+                }),
+          )}
+        </ul>
+      </article>
     )
   }
 
@@ -352,7 +518,7 @@ export function ExtensionAutomationTab({
         render: (_, agent) => {
           const name = shopNames.get(agent.shopId) ?? agent.shopId
           return (
-            <Space direction="vertical" size={4}>
+            <Space direction="vertical" size={2}>
               <Typography.Text strong style={{ fontSize: 13 }}>
                 {name}
               </Typography.Text>
@@ -364,11 +530,18 @@ export function ExtensionAutomationTab({
       {
         title: t('portal.extensions.schedules.columns.agent', { defaultValue: 'Worker Extension' }),
         key: 'agent',
-        width: 240,
+        width: 220,
         render: (_, agent) => (
-          <Space direction="vertical" size={4}>
+          <Space direction="vertical" size={2}>
             <Space size={6}>
-              <DesktopOutlined style={{ color: 'var(--ant-color-primary)' }} />
+              <DesktopOutlined
+                style={{
+                  color:
+                    agent.status === 'ONLINE'
+                      ? 'var(--ant-color-success)'
+                      : 'var(--ant-color-text-tertiary)',
+                }}
+              />
               <Typography.Text strong style={{ fontSize: 13 }}>
                 {agent.label}
               </Typography.Text>
@@ -389,48 +562,67 @@ export function ExtensionAutomationTab({
           defaultValue: 'Order Ingestion Schedule',
         }),
         key: 'orderSchedule',
-        width: 340,
+        width: 320,
         render: (_, agent) => {
           const schedule = orderScheduleByAgentId.get(agent.id)
           const enabled = schedule?.enabled ?? false
+          const canWrite = canWriteOrders && canWriteOrdersForShop(account, agent.shopId)
+          const compactTiming = formatCompactScheduleTiming(schedule, 120)
+
           return (
             <div className={styles.tableScheduleCell}>
               <div className={styles.tableScheduleInfo}>
-                <Space size={6} wrap>
-                  <StatusTag status={enabled ? 'operational' : 'draft'}>
-                    {enabled ? 'Enabled' : 'Disabled'}
-                  </StatusTag>
+                <Space size={8} align="center">
+                  <Switch
+                    size="small"
+                    checked={enabled}
+                    loading={isSavingSchedule}
+                    disabled={!canWrite}
+                    onChange={(checked) =>
+                      onSaveSchedule({
+                        agentId: agent.id,
+                        enabled: checked,
+                        scheduleType: schedule?.scheduleType,
+                        intervalMinutes: schedule?.intervalMinutes ?? 120,
+                        fixedTimes: schedule?.fixedTimes,
+                        timezone: schedule?.timezone,
+                      })
+                    }
+                  />
+                  {enabled ? (
+                    <span className={styles.scheduleTimingBadge}>
+                      <ClockCircleOutlined
+                        style={{ fontSize: 11, marginRight: 4, color: 'var(--ant-color-primary)' }}
+                      />
+                      <span>{compactTiming}</span>
+                    </span>
+                  ) : (
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {t('portal.integrations.extension.disabled', { defaultValue: 'Off' })}
+                    </Typography.Text>
+                  )}
                   {schedule?.lastError ? (
                     <Tooltip title={schedule.lastError}>
-                      <div className={styles.automationScheduleError}>
-                        <ExclamationCircleOutlined />
-                        <span>{schedule.lastError}</span>
-                      </div>
+                      <Tag color="error" icon={<ExclamationCircleOutlined />} style={{ margin: 0 }}>
+                        Error
+                      </Tag>
                     </Tooltip>
                   ) : null}
                 </Space>
-                <Typography.Text type="secondary" className={styles.scheduleMetaText}>
-                  {enabled ? (
-                    <>
-                      <ClockCircleOutlined style={{ marginRight: 4, fontSize: 11 }} />
-                      {formatScheduleSubtitle(schedule, t, 120)}
-                    </>
-                  ) : (
-                    t('portal.integrations.extension.notScheduled', {
-                      defaultValue: 'Not scheduled',
-                    })
-                  )}
-                </Typography.Text>
               </div>
-              {canWriteOrders && canWriteOrdersForShop(account, agent.shopId) ? (
-                <div className={styles.automationScheduleActions}>
-                  <ExtensionManualRequest
-                    agent={agent}
-                    source="ORDERS"
-                    loading={isCreatingCommand}
-                    onRequest={onCreateCommand}
-                  />
+              {canWrite ? (
+                <Space size={4} style={{ marginTop: 2 }}>
+                  {agent.status === 'ONLINE' ? (
+                    <ExtensionManualRequest
+                      agent={agent}
+                      source="ORDERS"
+                      iconOnly
+                      loading={isCreatingCommand}
+                      onRequest={onCreateCommand}
+                    />
+                  ) : null}
                   <ExtensionSchedulePopover
+                    iconOnly
                     title={t('portal.integrations.extension.orderSchedule', {
                       defaultValue: 'Order schedule',
                     })}
@@ -455,7 +647,7 @@ export function ExtensionAutomationTab({
                       })
                     }
                   />
-                </div>
+                </Space>
               ) : null}
             </div>
           )
@@ -468,6 +660,7 @@ export function ExtensionAutomationTab({
         key: 'financeSchedule',
         render: (_, agent) => {
           const isEtsy = agent.provider === 'ETSY'
+          const canWrite = canWriteFinance && canWriteFinanceForShop(account, agent.shopId)
           const sources: Array<{
             source: ExtensionFinanceScheduleSource
             label: string
@@ -521,6 +714,8 @@ export function ExtensionAutomationTab({
               {sources.map((item) => {
                 const schedule = financeScheduleByAgentSource.get(`${agent.id}:${item.source}`)
                 const enabled = schedule?.enabled ?? false
+                const compactTiming = formatCompactScheduleTiming(schedule, 1440)
+
                 return (
                   <div key={item.source} className={styles.tableFinanceRow}>
                     <div className={styles.tableFinanceLabel}>
@@ -528,37 +723,61 @@ export function ExtensionAutomationTab({
                       <Typography.Text strong style={{ fontSize: 12 }}>
                         {item.label}
                       </Typography.Text>
-                      <StatusTag status={enabled ? 'operational' : 'draft'}>
-                        {enabled ? 'Enabled' : 'Disabled'}
-                      </StatusTag>
+                      <Switch
+                        size="small"
+                        checked={enabled}
+                        loading={isSavingFinanceSchedule}
+                        disabled={!canWrite}
+                        onChange={(checked) =>
+                          onSaveFinanceSchedule({
+                            agentId: agent.id,
+                            source: item.source,
+                            enabled: checked,
+                          })
+                        }
+                      />
                       {enabled ? (
+                        <span className={styles.scheduleTimingBadge}>
+                          <ClockCircleOutlined
+                            style={{
+                              fontSize: 11,
+                              marginRight: 4,
+                              color: 'var(--ant-color-primary)',
+                            }}
+                          />
+                          <span>{compactTiming}</span>
+                          {item.intervalNote ? (
+                            <Tooltip title={item.intervalNote}>
+                              <InfoCircleOutlined
+                                style={{
+                                  marginLeft: 4,
+                                  fontSize: 11,
+                                  color: 'var(--ant-color-text-tertiary)',
+                                  cursor: 'help',
+                                }}
+                              />
+                            </Tooltip>
+                          ) : null}
+                        </span>
+                      ) : (
                         <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                          ({formatScheduleSubtitle(schedule, t, 1440, item.intervalNote)})
+                          {t('portal.integrations.extension.disabled', { defaultValue: 'Off' })}
                         </Typography.Text>
-                      ) : null}
+                      )}
                     </div>
-                    {canWriteFinance && canWriteFinanceForShop(account, agent.shopId) ? (
-                      <div className={styles.automationScheduleActions}>
-                        <Button
-                          size="small"
-                          loading={isSavingFinanceSchedule}
-                          onClick={() =>
-                            onSaveFinanceSchedule({
-                              agentId: agent.id,
-                              source: item.source,
-                              enabled: !enabled,
-                            })
-                          }
-                        >
-                          {enabled ? 'Disable' : 'Enable'}
-                        </Button>
-                        <ExtensionManualRequest
-                          agent={agent}
-                          source={item.source}
-                          loading={isCreatingCommand}
-                          onRequest={onCreateCommand}
-                        />
+                    {canWrite ? (
+                      <Space size={4}>
+                        {agent.status === 'ONLINE' ? (
+                          <ExtensionManualRequest
+                            agent={agent}
+                            source={item.source}
+                            iconOnly
+                            loading={isCreatingCommand}
+                            onRequest={onCreateCommand}
+                          />
+                        ) : null}
                         <ExtensionSchedulePopover
+                          iconOnly
                           title={`${item.label} schedule`}
                           enabled={enabled}
                           scheduleType={schedule?.scheduleType}
@@ -579,7 +798,7 @@ export function ExtensionAutomationTab({
                             })
                           }
                         />
-                      </div>
+                      </Space>
                     ) : null}
                   </div>
                 )
@@ -662,89 +881,78 @@ export function ExtensionAutomationTab({
           </div>
         ) : (
           <div className={styles.automationGroups}>
-            {agentGroups.map((group) => (
-              <section
-                key={group.shopId}
-                aria-label={`${group.name} automation`}
-                className={styles.automationGroup}
-              >
-                <div className={styles.automationGroupHeader}>
-                  <div className={styles.automationGroupTitle}>
-                    <ShopOutlined style={{ color: 'var(--ant-color-primary)' }} />
-                    <Typography.Title level={5} style={{ margin: 0 }}>
-                      {group.name}
-                    </Typography.Title>
-                    <ExtensionPlatformBadge platform={group.provider} />
+            {agentGroups.map((group) => {
+              const isExpanded = Boolean(expandedOfflineShops[group.shopId])
+              // If there are online agents, show online agents first.
+              // If no online agents, show the first offline agent as primary.
+              const primaryAgents =
+                group.onlineAgents.length > 0 ? group.onlineAgents : group.offlineAgents.slice(0, 1)
+
+              const secondaryOfflineAgents =
+                group.onlineAgents.length > 0 ? group.offlineAgents : group.offlineAgents.slice(1)
+
+              return (
+                <section
+                  key={group.shopId}
+                  aria-label={`${group.name} automation`}
+                  className={styles.automationGroup}
+                >
+                  <div className={styles.automationGroupHeader}>
+                    <div className={styles.automationGroupTitle}>
+                      <ShopOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                      <Typography.Title level={5} style={{ margin: 0 }}>
+                        {group.name}
+                      </Typography.Title>
+                      <ExtensionPlatformBadge platform={group.provider} />
+                    </div>
+                    <span className={styles.countBadge}>
+                      {group.onlineAgents.length > 0
+                        ? `${group.onlineAgents.length} online / ${group.agents.length} bots`
+                        : `${group.agents.length} bots (offline)`}
+                    </span>
                   </div>
-                  <span className={styles.countBadge}>
-                    {group.agents.length} {group.agents.length === 1 ? 'agent' : 'agents'}
-                  </span>
-                </div>
-                <div className={styles.automationGrid}>
-                  {group.agents.map((agent) => (
-                    <article
-                      key={agent.id}
-                      aria-label={`${group.name} / ${agent.label}`}
-                      className={styles.automationAgentCard}
-                    >
-                      <div className={styles.automationAgentHeader}>
-                        <div className={styles.agentIdentity}>
-                          <div className={styles.agentIconBox}>
-                            <DesktopOutlined />
-                          </div>
-                          <div>
-                            <div className={styles.agentTitleRow}>
-                              <Typography.Text strong className={styles.agentLabel}>
-                                {agent.label}
-                              </Typography.Text>
-                              <ExtensionPlatformBadge platform={agent.provider} />
-                            </div>
-                            <div className={styles.agentMetaRow}>
-                              <Typography.Text type="secondary" className={styles.agentIdText}>
-                                Agent ID · {agent.id.slice(-6)}
-                              </Typography.Text>
-                            </div>
-                          </div>
-                        </div>
-                        <StatusTag status={agent.status === 'ONLINE' ? 'online' : 'offline'}>
-                          {agent.status === 'ONLINE' ? 'Online' : 'Offline'}
-                        </StatusTag>
-                      </div>
-                      <ul className={styles.automationScheduleList}>
-                        {renderOrderSchedule(agent)}
-                        {agent.provider !== 'ETSY' &&
-                          renderFinanceSchedule(
-                            agent,
-                            'ADS',
-                            t('portal.integrations.extension.manualRequests.ADS', {
-                              defaultValue: 'Ads',
-                            }),
-                          )}
-                        {agent.provider !== 'ETSY' &&
-                          renderFinanceSchedule(
-                            agent,
-                            'TRANSACTIONS',
-                            t('portal.integrations.extension.manualRequests.TRANSACTIONS', {
-                              defaultValue: 'Transaction',
-                            }),
-                          )}
-                        {renderFinanceSchedule(
-                          agent,
-                          'SETTLEMENTS',
-                          agent.provider === 'ETSY'
-                            ? t('portal.integrations.extension.monthlyStatement', {
-                                defaultValue: 'Monthly statement',
+
+                  {/* Primary / Active Bot Cards */}
+                  <div className={styles.automationGrid}>{primaryAgents.map(renderAgentCard)}</div>
+
+                  {/* Collapsible Secondary / Offline Workers */}
+                  {secondaryOfflineAgents.length > 0 ? (
+                    <>
+                      <div className={styles.offlineToggleRow}>
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={isExpanded ? <UpOutlined /> : <DownOutlined />}
+                          onClick={() =>
+                            setExpandedOfflineShops((prev) => ({
+                              ...prev,
+                              [group.shopId]: !prev[group.shopId],
+                            }))
+                          }
+                          style={{ padding: 0, fontSize: 12 }}
+                        >
+                          {isExpanded
+                            ? t('portal.extensions.schedules.hideOfflineBots', {
+                                count: secondaryOfflineAgents.length,
+                                defaultValue: `Hide ${secondaryOfflineAgents.length} offline extension workers`,
                               })
-                            : t('portal.integrations.extension.manualRequests.SETTLEMENTS', {
-                                defaultValue: 'Settlement',
-                              }),
-                        )}
-                      </ul>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))}
+                            : t('portal.extensions.schedules.showOfflineBots', {
+                                count: secondaryOfflineAgents.length,
+                                defaultValue: `${secondaryOfflineAgents.length} offline extension workers (click to view)`,
+                              })}
+                        </Button>
+                      </div>
+
+                      {isExpanded ? (
+                        <div className={styles.offlineAgentsSubGrid}>
+                          {secondaryOfflineAgents.map(renderAgentCard)}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
+                </section>
+              )
+            })}
           </div>
         )}
       </Spin>

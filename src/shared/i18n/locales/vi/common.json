@@ -4478,6 +4478,10 @@
       },
       "schedules": {
         "subtitle": "Cấu hình lịch trình tự động cào đơn hàng và báo cáo tài chính định kỳ theo từng shop.",
+        "showOfflineBots": "{{count}} máy bot đang offline (nhấn để xem)",
+        "showOfflineBots_other": "{{count}} máy bot đang offline (nhấn để xem)",
+        "hideOfflineBots": "Thu gọn {{count}} máy bot offline",
+        "hideOfflineBots_other": "Thu gọn {{count}} máy bot offline",
         "columns": {
           "store": "Cửa hàng & Nền tảng",
           "agent": "Bot Extension",
