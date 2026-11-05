@@ -129,11 +129,14 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   const productionPsd = item.production?.scaleContext?.use?.psdTemplate
   const listingPsdAssetId = (item.listing as { defaultPsdTemplateAssetId?: string | null })
     ?.defaultPsdTemplateAssetId
+  const variantSource = item.psd?.listingVariant || item.mapping?.listingVariant
+  const listingSource = item.psd?.listingPsd || item.mapping?.listingPsd
   const psdSource =
-    item.psd?.listingVariant ||
-    item.psd?.listingPsd ||
-    item.mapping?.listingVariant ||
-    item.mapping?.listingPsd
+    variantSource?.psdReadiness?.status || variantSource?.psdTemplate?.downloadUrl
+      ? variantSource
+      : listingSource?.psdReadiness?.status || listingSource?.psdTemplate?.downloadUrl
+        ? listingSource
+        : variantSource || listingSource
   const psdStatus =
     psdSource?.psdReadiness?.status ||
     (listingPsdAssetId || productionPsd?.status === 'READY' ? 'PRESENT' : productionPsd?.status)
