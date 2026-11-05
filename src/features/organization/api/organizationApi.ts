@@ -1,5 +1,4 @@
-import { Page } from '@/features/hr/api/hrOperationsApi'
-import { ApiResponse } from '@/server/type'
+import { ApiResponse, Page } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
 export type Department = {

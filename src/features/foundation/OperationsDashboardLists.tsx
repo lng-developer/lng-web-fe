@@ -12,10 +12,7 @@ import { Button, Checkbox, Dropdown, Input, message, Select, Typography } from '
 
 import { type Listing } from '@/features/portal/catalog/api/catalogApi'
 import { type OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
-import {
-  formatOrderStatusLabel,
-  orderStatusTone,
-} from '@/features/portal/orders/pages/orderPresentation'
+import { formatOrderStatusLabel, orderStatusTone } from '@/features/portal/orders'
 import { CopyableOrderId, FormattedDateTime, StatusTag } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'

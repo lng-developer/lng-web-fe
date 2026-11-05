@@ -1,10 +1,7 @@
-import { ApiResponse } from '@/server/type'
+import { ApiResponse, type Page } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
-export type Page<T> = {
-  items: T[]
-  pagination: { page: number; limit: number; total: number; totalPages: number }
-}
+export type { Page } from '@/server/type'
 type Query = Record<string, boolean | number | string | null | undefined>
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
