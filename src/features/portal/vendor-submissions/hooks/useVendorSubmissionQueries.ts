@@ -83,6 +83,7 @@ export interface VendorSubmissionActionVariables {
   readonly retryReason?: string
   readonly remoteMissingReason?: string
   readonly remoteFoundReason?: string
+  readonly productionLineId?: string
 }
 
 export function useVendorSubmissionActionMutation(options?: {
@@ -102,8 +103,9 @@ export function useVendorSubmissionActionMutation(options?: {
       retryReason = '',
       remoteMissingReason = '',
       remoteFoundReason = '',
+      productionLineId,
     }: VendorSubmissionActionVariables) => {
-      if (kind === 'submit') return submitVendorSubmission(row.id)
+      if (kind === 'submit') return submitVendorSubmission(row.id, productionLineId)
       if (kind === 'retry') return retryVendorSubmission(row.id, retryReason)
       if (kind === 'fail') return markVendorSubmissionFailed(row.id, externalId || '')
       if (kind === 'cancel') return cancelVendorSubmission(row.id, externalId || '')

@@ -21,6 +21,9 @@ export type FinanceSnapshot = {
     feeConfidence?: string | null
     refundAmount: number
     discountAmount: number
+    netRevenueAmount?: number
+    orderItemStatus?: string | null
+    financialStatus?: 'ACTIVE' | 'CANCELLED' | 'PARTIALLY_REFUNDED' | 'REFUNDED'
     currency: string
   }
   cost: {
@@ -31,7 +34,17 @@ export type FinanceSnapshot = {
     costStatus: 'PRESENT' | 'MISSING'
     missingCostReason: string | null
   }
+  actualVendorCost?: {
+    baseCostAmount: number | null
+    shippingAmount: number | null
+    taxAmount: number | null
+    totalAmount: number | null
+    currency: string | null
+    source: string | null
+    capturedAt: string | null
+  }
   margin: { grossProfitAmount: number | null; grossMarginBps: number | null }
+  financialStatus?: 'ACTIVE' | 'CANCELLED' | 'PARTIALLY_REFUNDED' | 'REFUNDED'
   orderPnl: {
     marketplaceFeeAmount: number
     refundAmount: number
@@ -95,6 +108,7 @@ export type FinanceSnapshotSummary = {
   currency: string
   orderCount: number
   revenueAmount: number
+  netRevenueAmount?: number
   marketplaceFeeAmount: number
   refundAmount: number
   discountAmount: number

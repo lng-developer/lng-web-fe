@@ -13,6 +13,7 @@ export interface UseFinanceWorkspaceParams {
   pageSize: number
   search: string
   costStatus?: string
+  financialStatus?: string
   salesChannelCode?: string
   sellerEmployeeCode?: string
   teamId?: string
@@ -26,6 +27,7 @@ export const useFinanceWorkspace = ({
   pageSize,
   search,
   costStatus,
+  financialStatus,
   salesChannelCode,
   sellerEmployeeCode,
   teamId,
@@ -40,6 +42,7 @@ export const useFinanceWorkspace = ({
       limit: pageSize,
       externalOrderId: debouncedSearch || undefined,
       costStatus,
+      financialStatus,
       salesChannelCode,
       sellerEmployeeCode,
       teamId,
@@ -51,6 +54,7 @@ export const useFinanceWorkspace = ({
       pageSize,
       debouncedSearch,
       costStatus,
+      financialStatus,
       salesChannelCode,
       sellerEmployeeCode,
       teamId,

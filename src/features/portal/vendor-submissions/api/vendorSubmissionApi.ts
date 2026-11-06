@@ -19,6 +19,7 @@ export type VendorSubmission = {
   listingTitle: string | null
   sku: string | null
   vendorName: string | null
+  vendorId: string | null
   vendorProductName: string | null
   costCenterCode: string | null
   submitClaimedAt: string | null
@@ -26,6 +27,17 @@ export type VendorSubmission = {
   submittedAt: string | null
   failedAt: string | null
   failureReason: string | null
+  vendorCost?: {
+    vendorBaseCostAmount: number | null
+    baseCostAmount: number | null
+    shippingAmount: number | null
+    taxAmount: number | null
+    additionalFeesAmount: number | null
+    totalAmount: number | null
+    currency: string | null
+    source: string | null
+    capturedAt: string | null
+  } | null
   statusHistory?: Array<{
     status: VendorSubmissionStatus
     reason: string | null
@@ -79,6 +91,21 @@ export async function getVendorSubmissionPayloadPreview(id: string) {
   return unwrap<unknown>(await apiClient.get(`${basePath}/${id}/payload-preview`))
 }
 
+export type VendorProductionLine = {
+  id: string
+  name: string
+  isActive: boolean
+  supportedShippingMethods: string[]
+  supportedFacilities: string[]
+  supportsLabelUrl: boolean
+}
+
+export async function getVendorProductionLines(vendorId: string, providerKey: string) {
+  return unwrap<{ items: VendorProductionLine[] }>(
+    await apiClient.get(`/api/vendors/${vendorId}/integration/${providerKey}/production-lines`),
+  )
+}
+
 export async function markVendorSubmissionFailed(id: string, failureReason: string) {
   return unwrap<VendorSubmission>(
     await apiClient.post(`${basePath}/${id}/mark-failed`, { failureReason }),
@@ -91,9 +118,12 @@ export async function cancelVendorSubmission(id: string, cancelReason = '') {
   )
 }
 
-export async function submitVendorSubmission(id: string) {
+export async function submitVendorSubmission(id: string, productionLineId?: string) {
   return unwrap<VendorSubmission>(
-    await apiClient.post(`${basePath}/${id}/submit-to-vendor`, { dryRun: false }),
+    await apiClient.post(`${basePath}/${id}/submit-to-vendor`, {
+      dryRun: false,
+      ...(productionLineId ? { productionLineId } : {}),
+    }),
   )
 }
 

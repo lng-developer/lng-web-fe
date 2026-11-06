@@ -4,6 +4,7 @@ import { apiClient } from '@/shared/api'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
 export type ReportFilters = {
+  externalOrderId?: string
   dateBasis?: 'ORDERED_AT' | 'CALCULATED_AT'
   dateFrom?: string
   dateTo?: string
@@ -16,6 +17,7 @@ export type ReportFilters = {
   teamId?: string
   departmentId?: string
   costCoverage?: 'MISSING' | 'COMPLETE'
+  financialStatus?: 'ACTIVE' | 'CANCELLED' | 'PARTIALLY_REFUNDED' | 'REFUNDED'
   page?: number
   limit?: number
 }
@@ -36,11 +38,15 @@ export type FinanceDaily = {
   currency: string | null
   itemCount: number
   revenueAmount: number
+  netRevenueAmount?: number
   baseCostAmount: number
   totalCostAmount?: number | null
   additionalFulfillmentCostAmount?: number | null
   marketplaceFeeAmount?: number
   refundAmount?: number
+  cancelledCount?: number
+  partiallyRefundedCount?: number
+  refundedCount?: number
   discountAmount?: number
   grossProfitAmount: number | null
   grossMarginBps: number | null
@@ -56,6 +62,7 @@ export type SellerPerformance = {
   currency: string | null
   itemCount: number
   revenueAmount: number
+  netRevenueAmount?: number
   baseCostAmount: number
   grossProfitAmount: number | null
   partialGrossProfitAmount?: number
@@ -107,6 +114,9 @@ export type SellerDailyProfit = SellerPerformance & {
   additionalFulfillmentCostAmount: number | null
   marketplaceFeeAmount: number
   refundAmount: number
+  cancelledCount?: number
+  partiallyRefundedCount?: number
+  refundedCount?: number
   discountAmount: number
   taxAmount: number
 }
@@ -146,6 +156,7 @@ export type OrderProfitability = {
   currency: string | null
   itemCount: number
   revenueAmount: number
+  netRevenueAmount?: number
   baseCostAmount: number
   totalCostAmount: number | null
   lngFulfillmentFeeAmount: number | null
@@ -153,6 +164,9 @@ export type OrderProfitability = {
   vendorAdditionalCostAmount: number | null
   marketplaceFeeAmount: number
   refundAmount: number
+  cancelledCount?: number
+  partiallyRefundedCount?: number
+  refundedCount?: number
   discountAmount: number
   profitAmount: number | null
   marginBps: number | null
@@ -170,6 +184,7 @@ export type OrderProfitabilitySummary = {
   costedOrderCount: number
   missingCostOrderCount: number
   revenueAmount: number
+  netRevenueAmount?: number
   totalCostAmount: number
   profitAmount: number
   marginBps: number | null

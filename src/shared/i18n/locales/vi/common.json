@@ -3533,6 +3533,7 @@
         "nextRun": "Lần chạy tới: {{time}}",
         "configureSchedule": "Cài đặt lịch",
         "presets": "Gợi ý:",
+        "presetAdsTwiceDaily": "06:00, 18:00",
         "presetCommon": "10:00, 17:00",
         "presetThreeTimes": "09:00, 15:00, 21:00",
         "timezoneNote": "Múi giờ: Asia/Ho_Chi_Minh (UTC+7)",

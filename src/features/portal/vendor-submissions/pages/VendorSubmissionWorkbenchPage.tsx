@@ -34,6 +34,7 @@ import type {
   VendorSubmissionParams,
   VendorSubmissionStatus,
 } from '../api/vendorSubmissionApi'
+import { getVendorProductionLines } from '../api/vendorSubmissionApi'
 import {
   useExportVendorSubmissionsCsvMutation,
   useVendorSubmissionActionMutation,
@@ -64,6 +65,11 @@ function tone(status: VendorSubmissionStatus) {
   return 'pending'
 }
 
+function formatVendorMoney(amount: number | null | undefined, currency: string | null | undefined) {
+  if (amount === null || amount === undefined) return '-'
+  return `${(amount / 100).toFixed(2)} ${currency || 'USD'}`
+}
+
 export function VendorSubmissionWorkbenchPage({
   account: accountProp,
 }: {
@@ -86,6 +92,7 @@ export function VendorSubmissionWorkbenchPage({
     row: VendorSubmission
   }>()
   const [reason, setReason] = useState('')
+  const [productionLineId, setProductionLineId] = useState<string>()
 
   const canWrite = useMemo(
     () =>
@@ -138,18 +145,45 @@ export function VendorSubmissionWorkbenchPage({
   const exportCsv = useExportVendorSubmissionsCsvMutation()
 
   const handleRun = useCallback(
-    (kind: 'submit' | 'retry' | 'found' | 'missing', row: VendorSubmission) => {
+    async (kind: 'submit' | 'retry' | 'found' | 'missing', row: VendorSubmission) => {
       if (kind === 'found') {
         setReconcileRow(row)
         setVendorExternalOrderId('')
         return
+      }
+      let lineOptions: Array<{ label: string; value: string }> = []
+      let selectedLineId = productionLineId
+      if (kind === 'submit' && row.provider === 'MANGOTEE' && row.vendorId) {
+        const result = await getVendorProductionLines(row.vendorId, row.provider)
+        lineOptions = result.items
+          .filter((line) => line.isActive)
+          .map((line) => ({ label: line.name, value: line.id }))
+        if (!lineOptions.length) {
+          toast('error', 'MangoTee không có production line đang hoạt động')
+          return
+        }
+        selectedLineId = lineOptions[0].value
+        setProductionLineId(selectedLineId)
       }
       Modal.confirm({
         title:
           kind === 'submit'
             ? t('portal.vendorSubmissions.confirmSubmit')
             : t('portal.vendorSubmissions.confirmReconcile'),
-        content: kind === 'missing' ? t('portal.vendorSubmissions.remoteMissingHelp') : undefined,
+        content:
+          kind === 'missing' ? (
+            t('portal.vendorSubmissions.remoteMissingHelp')
+          ) : lineOptions.length ? (
+            <Select
+              style={{ width: '100%' }}
+              defaultValue={lineOptions[0].value}
+              options={lineOptions}
+              onChange={(value) => {
+                selectedLineId = value
+                setProductionLineId(value)
+              }}
+            />
+          ) : undefined,
         okText: t('portal.vendorSubmissions.confirm'),
         onOk: () =>
           action.mutateAsync({
@@ -157,10 +191,11 @@ export function VendorSubmissionWorkbenchPage({
             row,
             retryReason: t('portal.vendorSubmissions.reasons.payloadCorrected'),
             remoteMissingReason: t('portal.vendorSubmissions.reasons.remoteMissing'),
+            productionLineId: kind === 'submit' ? selectedLineId : undefined,
           }),
       })
     },
-    [action, t],
+    [action, productionLineId, t, toast],
   )
 
   const handleCloseDrawer = useCallback(() => {
@@ -505,6 +540,42 @@ export function VendorSubmissionWorkbenchPage({
                   label: t('portal.vendorSubmissions.submitAttempts'),
                   children: detail.data.submitAttemptCount,
                 },
+                ...(detail.data.vendorCost
+                  ? [
+                      {
+                        key: 'vendorBaseCost',
+                        label: 'Vendor base cost',
+                        children: formatVendorMoney(
+                          detail.data.vendorCost.vendorBaseCostAmount,
+                          detail.data.vendorCost.currency,
+                        ),
+                      },
+                      {
+                        key: 'systemBaseCost',
+                        label: 'System base cost (+$1)',
+                        children: formatVendorMoney(
+                          detail.data.vendorCost.baseCostAmount,
+                          detail.data.vendorCost.currency,
+                        ),
+                      },
+                      {
+                        key: 'vendorShipping',
+                        label: 'Vendor shipping',
+                        children: formatVendorMoney(
+                          detail.data.vendorCost.shippingAmount,
+                          detail.data.vendorCost.currency,
+                        ),
+                      },
+                      {
+                        key: 'vendorTotal',
+                        label: 'Vendor total',
+                        children: formatVendorMoney(
+                          detail.data.vendorCost.totalAmount,
+                          detail.data.vendorCost.currency,
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   key: 'failure',
                   label: t('portal.vendorSubmissions.columns.failure'),

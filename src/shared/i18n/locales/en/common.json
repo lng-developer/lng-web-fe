@@ -3533,6 +3533,7 @@
         "nextRun": "Next: {{time}}",
         "configureSchedule": "Configure schedule",
         "presets": "Presets:",
+        "presetAdsTwiceDaily": "06:00, 18:00",
         "presetCommon": "10:00, 17:00",
         "presetThreeTimes": "09:00, 15:00, 21:00",
         "timezoneNote": "Timezone: Asia/Ho_Chi_Minh (UTC+7)",

@@ -97,14 +97,43 @@ export function VendorCostCenterEditorModal({
 
   const save = useMutation({
     mutationFn: (values: EditorValues) => {
-      const { attributesText, code, metadataText, ...rest } = values
+      const {
+        attributesText,
+        baseCostAmount,
+        code,
+        currency,
+        domesticShipping,
+        importTaxAmount,
+        internationalShipping,
+        metadataText,
+        priorityShipping,
+        additionalCosts,
+        unitSurchargeAmount,
+        ...rest
+      } = values
+      const costFields = Object.fromEntries(
+        Object.entries({
+          baseCostAmount,
+          unitSurchargeAmount,
+          currency: currency?.toUpperCase(),
+          domesticShipping,
+          internationalShipping,
+          priorityShipping,
+          importTaxAmount,
+          additionalCosts,
+        }).filter(([, value]) => value !== undefined),
+      )
       const input = {
         ...rest,
         standardSize: rest.standardSize ?? rest.vendorSize,
         standardColor: rest.standardColor ?? rest.vendorColor,
         attributes: parseJsonObject(attributesText),
-        currency: rest.currency?.toUpperCase(),
         metadata: parseJsonObject(metadataText),
+        ...(item
+          ? Object.keys(costFields).length > 0
+            ? { costRate: { effectiveFrom: new Date().toISOString(), ...costFields } }
+            : {}
+          : costFields),
       }
       return item
         ? updateVendorCostCenter(productId, item.id, input)

@@ -1,8 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
-import { EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
+import {
+  CopyOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  SyncOutlined,
+} from '@ant-design/icons'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Space, Typography } from 'antd'
 
@@ -18,7 +24,13 @@ import {
   useDebouncedValue,
 } from '@/shared/ui'
 
-import { getVendorProduct, listVendorCostCenters, type VendorCostCenter } from '../api/vendorApi'
+import {
+  cloneVendorCostCenter,
+  getVendorProduct,
+  listVendorCostCenters,
+  syncVendorProduct,
+  type VendorCostCenter,
+} from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
 import { VendorCostCenterEditorModal } from './VendorCostCenterEditorModal'
 import styles from './VendorWorkspacePage.module.scss'
@@ -41,6 +53,19 @@ export function VendorProductCostCentersPage() {
   const [editingCostCenter, setEditingCostCenter] = useState<VendorCostCenter>()
   const [isCreating, setIsCreating] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const clone = useMutation({
+    mutationFn: (costCenterId: string) => cloneVendorCostCenter(productId!, costCenterId),
+    onSuccess: (costCenter) => {
+      setEditingCostCenter(costCenter)
+      setIsEditing(true)
+      setIsCreating(false)
+      void costCenters.refetch()
+    },
+  })
+  const sync = useMutation({
+    mutationFn: () => syncVendorProduct(productId!),
+    onSuccess: () => void costCenters.refetch(),
+  })
 
   const isModalOpen = isCreating || isEditing
   const modalItem = isEditing ? (editingCostCenter ?? selectedCostCenter) : undefined
@@ -140,6 +165,15 @@ export function VendorProductCostCentersPage() {
               <Button
                 type="text"
                 size="small"
+                icon={<CopyOutlined />}
+                aria-label={`Clone ${row.name}`}
+                title="Clone cost center"
+                loading={clone.isPending}
+                onClick={() => clone.mutate(row.id)}
+              />
+              <Button
+                type="text"
+                size="small"
                 icon={<EditOutlined />}
                 aria-label={t('portal.vendors.editCostCenter', { name: row.name })}
                 title={t('portal.vendors.editCostCenter', { name: row.name })}
@@ -176,6 +210,14 @@ export function VendorProductCostCentersPage() {
           </div>
           {canWrite ? (
             <div className={styles.actionsWrapper}>
+              <Button
+                icon={<SyncOutlined />}
+                loading={sync.isPending}
+                disabled={!product.data}
+                onClick={() => sync.mutate()}
+              >
+                Sync vendor prices
+              </Button>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

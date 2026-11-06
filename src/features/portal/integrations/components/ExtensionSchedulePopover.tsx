@@ -150,6 +150,11 @@ export function ExtensionSchedulePopover({
             tokenSeparators={[',', ' ']}
           />
           <div className={styles.schedulePopoverPresets}>
+            <Tag style={{ cursor: 'pointer' }} onClick={() => setTimes(['06:00', '18:00'])}>
+              {t('portal.integrations.extension.presetAdsTwiceDaily', {
+                defaultValue: '06:00, 18:00',
+              })}
+            </Tag>
             <Tag style={{ cursor: 'pointer' }} onClick={() => setTimes(['10:00', '17:00'])}>
               {t('portal.integrations.extension.presetCommon', { defaultValue: '10:00, 17:00' })}
             </Tag>

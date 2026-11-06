@@ -61,6 +61,7 @@ export const FinanceWorkspacePage = ({
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [costStatus, setCostStatus] = useState<string>()
+  const [financialStatus, setFinancialStatus] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string | undefined>(
     fixedSalesChannelCode || initialSalesChannelCode,
   )
@@ -107,6 +108,11 @@ export const FinanceWorkspacePage = ({
     setPage(1)
   }, [])
 
+  const handleFinancialStatusChange = useCallback((value?: string) => {
+    setFinancialStatus(value)
+    setPage(1)
+  }, [])
+
   const effectiveSalesChannelCode = fixedSalesChannelCode || salesChannelCode
 
   const { snapshots, filterOptions, shopNameById, queryParams } = useFinanceWorkspace({
@@ -115,6 +121,7 @@ export const FinanceWorkspacePage = ({
     pageSize,
     search,
     costStatus,
+    financialStatus,
     salesChannelCode: effectiveSalesChannelCode,
     sellerEmployeeCode,
     teamId,
@@ -263,6 +270,9 @@ export const FinanceWorkspacePage = ({
                   {t(`finance.detail.feeSources.${row.revenue.feeSource}`)}
                 </StatusTag>
               ) : null}
+              {row.financialStatus && row.financialStatus !== 'ACTIVE' ? (
+                <StatusTag status="warning">{row.financialStatus.replaceAll('_', ' ')}</StatusTag>
+              ) : null}
             </Space>
           )
         },
@@ -377,6 +387,17 @@ export const FinanceWorkspacePage = ({
                 { value: 'PRESENT', label: t('finance.costStatuses.PRESENT') },
                 { value: 'MISSING', label: t('finance.costStatuses.MISSING') },
               ]}
+            />
+            <Select
+              allowClear
+              aria-label="Financial status"
+              value={financialStatus}
+              onChange={handleFinancialStatusChange}
+              placeholder="Financial status"
+              options={['ACTIVE', 'CANCELLED', 'PARTIALLY_REFUNDED', 'REFUNDED'].map((value) => ({
+                value,
+                label: value.replaceAll('_', ' '),
+              }))}
             />
             <DateRangePicker
               value={dates}

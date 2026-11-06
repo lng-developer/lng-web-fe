@@ -1,9 +1,15 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { AppstoreOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import {
+  AppstoreOutlined,
+  CopyOutlined,
+  EditOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Image, Select, Space, Typography } from 'antd'
+import { Button, Form, Image, Input, Modal, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { FeedbackAlert, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
@@ -40,6 +46,12 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly onAddProduct: (vendorId: string) => void
   readonly onOpenProductImport: (vendorId: string | undefined) => void
   readonly onEditProduct: (product: VendorProduct) => void
+  readonly onCloneProduct: (
+    product: VendorProduct,
+    input: { vendorId: string; code?: string; name?: string },
+  ) => Promise<VendorProduct>
+  readonly cloneVendorOptions: SelectOption[]
+  readonly cloningProduct: boolean
 }
 
 export function VendorWorkspaceProductsTabPage({
@@ -65,9 +77,14 @@ export function VendorWorkspaceProductsTabPage({
   onAddProduct,
   onOpenProductImport,
   onEditProduct,
+  onCloneProduct,
+  cloneVendorOptions,
+  cloningProduct,
 }: VendorWorkspaceProductsTabPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [cloneProduct, setCloneProduct] = useState<VendorProduct>()
+  const [cloneForm] = Form.useForm<{ vendorId: string; code?: string; name?: string }>()
   const useProductTabMocks = import.meta.env.VITE_USE_VENDOR_PRODUCTS_TAB_MOCKS === 'true'
   const displayedProducts = useMemo(() => {
     if (!useProductTabMocks) return products
@@ -177,6 +194,21 @@ export function VendorWorkspaceProductsTabPage({
                 <Button
                   type="text"
                   size="small"
+                  icon={<CopyOutlined />}
+                  aria-label={`Clone ${row.name}`}
+                  title="Clone product"
+                  onClick={() => {
+                    setCloneProduct(row)
+                    cloneForm.setFieldsValue({
+                      vendorId: row.vendor?.id,
+                      code: `${row.code}-COPY`,
+                      name: `${row.name} Copy`,
+                    })
+                  }}
+                />
+                <Button
+                  type="text"
+                  size="small"
                   icon={<AppstoreOutlined />}
                   aria-label={t('portal.vendors.manageCostCenters')}
                   title={t('portal.vendors.manageCostCenters')}
@@ -188,7 +220,7 @@ export function VendorWorkspaceProductsTabPage({
         ),
       },
     ],
-    [canWrite, navigate, onEditProduct, t],
+    [canWrite, cloneForm, navigate, onEditProduct, t],
   )
 
   const statusOptions = [
@@ -287,6 +319,32 @@ export function VendorWorkspaceProductsTabPage({
           onChange: onProductsPageChange,
         }}
       />
+      <Modal
+        open={Boolean(cloneProduct)}
+        title="Clone vendor product"
+        okText="Clone"
+        confirmLoading={cloningProduct}
+        onCancel={() => setCloneProduct(undefined)}
+        onOk={() =>
+          void cloneForm.validateFields().then(async (values) => {
+            const clonedProduct = await onCloneProduct(cloneProduct!, values)
+            setCloneProduct(undefined)
+            navigate(`/portal/vendors/products/${clonedProduct.id}/cost-centers`)
+          })
+        }
+      >
+        <Form form={cloneForm} layout="vertical">
+          <Form.Item name="vendorId" label="Target vendor" rules={[{ required: true }]}>
+            <Select options={cloneVendorOptions} showSearch optionFilterProp="label" />
+          </Form.Item>
+          <Form.Item name="code" label="Code" rules={[{ required: true, max: 80 }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="name" label="Name" rules={[{ required: true, max: 200 }]}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   )
 }

@@ -10,6 +10,7 @@ import {
   createVendorProduct,
   listVendors,
   updateVendor,
+  updateVendorCostCenter,
 } from '@/features/portal/vendors/api/vendorApi'
 import { VendorCostCenterEditorModal } from '@/features/portal/vendors/pages/VendorCostCenterEditorModal'
 import { VendorEditorModal } from '@/features/portal/vendors/pages/VendorEditorModal'
@@ -175,9 +176,7 @@ describe('VendorEditorModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() =>
-      expect(createVendor).toHaveBeenCalledWith(
-        expect.objectContaining({ providerKey: null }),
-      ),
+      expect(createVendor).toHaveBeenCalledWith(expect.objectContaining({ providerKey: null })),
     )
   })
 
@@ -414,6 +413,74 @@ describe('VendorEditorModal', () => {
       expect(screen.getByLabelText('Attributes')).toHaveAttribute('aria-invalid', 'true'),
     )
     expect(createVendorCostCenter).not.toHaveBeenCalled()
+  })
+
+  it('submits edited Cost Center money as a cost rate append', async () => {
+    vi.mocked(updateVendorCostCenter).mockResolvedValue({ id: 'cost-1' } as never)
+    render(
+      <AppProviders>
+        <VendorCostCenterEditorModal
+          item={
+            {
+              id: 'cost-1',
+              vendorProductId: 'product-1',
+              code: 'TEE-XL',
+              name: 'Tee XL',
+              sku: 'SKU-1',
+              status: 'ACTIVE',
+              currency: 'USD',
+              baseCostAmount: 1250,
+            } as never
+          }
+          open
+          productId="product-1"
+          vendorId="vendor-1"
+          onCancel={vi.fn()}
+          onSaved={vi.fn()}
+        />
+      </AppProviders>,
+    )
+    fireEvent.click(screen.getByRole('tab', { name: /Base Pricing & Taxes/ }))
+    fireEvent.change(screen.getByLabelText('Base cost'), { target: { value: '1500' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(updateVendorCostCenter).toHaveBeenCalled())
+    expect(vi.mocked(updateVendorCostCenter).mock.calls[0][2]).toMatchObject({
+      costRate: { baseCostAmount: 1500, currency: 'USD' },
+    })
+    expect(vi.mocked(updateVendorCostCenter).mock.calls[0][2]).not.toHaveProperty('baseCostAmount')
+  })
+
+  it('allows changing Cost Center status without sending an empty cost rate', async () => {
+    vi.mocked(updateVendorCostCenter).mockResolvedValue({ id: 'cost-1' } as never)
+    render(
+      <AppProviders>
+        <VendorCostCenterEditorModal
+          item={
+            {
+              id: 'cost-1',
+              vendorProductId: 'product-1',
+              code: 'TEE-XL',
+              name: 'Tee XL',
+              status: 'ACTIVE',
+            } as never
+          }
+          open
+          productId="product-1"
+          vendorId="vendor-1"
+          onCancel={vi.fn()}
+          onSaved={vi.fn()}
+        />
+      </AppProviders>,
+    )
+    fireEvent.click(screen.getByRole('tab', { name: /Status & Metadata/ }))
+    fireEvent.click(screen.getByRole('switch'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(updateVendorCostCenter).toHaveBeenCalled())
+    const payload = vi.mocked(updateVendorCostCenter).mock.calls[0][2]
+    expect(payload.status).toBe('INACTIVE')
+    expect(payload).not.toHaveProperty('costRate')
   })
 
   it('preserves Cost Center fields on a detail-less duplicate conflict', async () => {

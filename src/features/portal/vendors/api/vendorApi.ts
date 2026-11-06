@@ -183,7 +183,19 @@ export type VendorCostCenterInput = Omit<Partial<VendorCostCenter>, 'id' | 'vend
   code: string
   name: string
 }
-export type VendorCostCenterUpdateInput = Omit<Partial<VendorCostCenterInput>, 'code'>
+export type VendorCostCenterUpdateInput = Omit<Partial<VendorCostCenterInput>, 'code'> & {
+  costRate?: {
+    effectiveFrom: string
+    baseCostAmount?: number
+    unitSurchargeAmount?: number | null
+    currency?: string
+    domesticShipping?: ShippingCost
+    internationalShipping?: ShippingCost
+    priorityShipping?: ShippingCost
+    importTaxAmount?: number
+    additionalCosts?: AdditionalCosts
+  }
+}
 export type VendorImportRow = Record<string, string>
 export type VendorProductImportPayload = {
   vendorId: string
@@ -269,6 +281,12 @@ export async function getVendorProduct(productId: string) {
   return unwrap<VendorProduct>(await apiClient.get(`/api/vendors/products/${productId}`))
 }
 
+export async function syncVendorProduct(productId: string) {
+  return unwrap<{ total: number; matched: number; updated: number; missing: string[] }>(
+    await apiClient.post(`/api/vendors/products/${productId}/sync`),
+  )
+}
+
 export async function createVendorProduct(input: VendorProductInput) {
   return unwrap<VendorProduct>(await apiClient.post('/api/vendors/products', input))
 }
@@ -285,6 +303,15 @@ export async function importVendorTemplate(payload: VendorTemplateImportPayload)
 
 export async function updateVendorProduct(productId: string, input: VendorProductUpdateInput) {
   return unwrap<VendorProduct>(await apiClient.patch(`/api/vendors/products/${productId}`, input))
+}
+
+export async function cloneVendorProduct(
+  productId: string,
+  input: { vendorId: string; code?: string; name?: string },
+) {
+  return unwrap<VendorProduct>(
+    await apiClient.post(`/api/vendors/products/${productId}/clone`, input),
+  )
 }
 
 export async function listVendorMigrationReview(
@@ -334,6 +361,12 @@ export async function updateVendorCostCenter(
 ) {
   return unwrap<VendorCostCenter>(
     await apiClient.patch(`/api/vendors/products/${productId}/cost-centers/${costCenterId}`, input),
+  )
+}
+
+export async function cloneVendorCostCenter(productId: string, costCenterId: string) {
+  return unwrap<VendorCostCenter>(
+    await apiClient.post(`/api/vendors/products/${productId}/cost-centers/${costCenterId}/clone`),
   )
 }
 

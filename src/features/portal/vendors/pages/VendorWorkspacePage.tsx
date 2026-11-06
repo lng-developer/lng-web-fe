@@ -20,6 +20,7 @@ import {
 } from '../../catalog/api/catalogApi'
 import {
   bulkAssignVendorMigrationProductTypeGroup,
+  cloneVendorProduct,
   type RecordStatus,
   type Vendor,
   type VendorCostCenter,
@@ -140,6 +141,29 @@ export const VendorWorkspacePage = () => {
     { page: 1, limit: 100 },
     { enabled: tab === 'migration' },
   )
+  const cloneVendors = useVendorsQuery(
+    { page: 1, limit: 100, status: 'ACTIVE' },
+    { enabled: tab === 'products' },
+  )
+  const cloneProductMutation = useMutation({
+    mutationFn: ({
+      productId,
+      input,
+    }: {
+      productId: string
+      input: { vendorId: string; code?: string; name?: string }
+    }) => cloneVendorProduct(productId, input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: vendorKeys.productsRoot(ALL_PRODUCTS_VENDOR_ID),
+      })
+      if (productVendorFilter)
+        await queryClient.invalidateQueries({
+          queryKey: vendorKeys.productsRoot(productVendorFilter),
+        })
+      showFeedbackToast('success', 'Product cloned')
+    },
+  })
   const migrationReviewParams = useMemo(
     () => ({ page: migrationPage, limit: migrationPageSize, ...migrationFilters }),
     [migrationFilters, migrationPage, migrationPageSize],
@@ -308,6 +332,14 @@ export const VendorWorkspacePage = () => {
             onEditProduct={(product) =>
               setEditor({ kind: 'product', item: product, vendorId: product.vendor?.id ?? '' })
             }
+            onCloneProduct={(product, input) =>
+              cloneProductMutation.mutateAsync({ productId: product.id, input })
+            }
+            cloningProduct={cloneProductMutation.isPending}
+            cloneVendorOptions={(cloneVendors.data?.items ?? []).map((vendor) => ({
+              value: vendor.id,
+              label: `${vendor.code} — ${vendor.name}`,
+            }))}
           />
         ) : (
           <VendorMigrationTabPage

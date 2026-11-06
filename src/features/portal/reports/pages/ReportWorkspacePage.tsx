@@ -22,10 +22,10 @@ import { ReportAdsEmployeeTab } from '../components/ReportAdsEmployeeTab'
 import { ReportAdsTab } from '../components/ReportAdsTab'
 import { ReportCoverageStrip } from '../components/ReportCoverageStrip'
 import { formatReportMoney, formatReportPercent } from '../components/reportFormatters'
-import { FinanceWorkspacePage } from '@/features/portal/finance/pages/FinanceWorkspacePage'
 import { ReportProfitComparisonChart } from '../components/ReportProfitComparisonChart'
 import { ReportSalesTab } from '../components/ReportSalesTab'
 import { ReportTeamTab } from '../components/ReportTeamTab'
+import { ReportOrderCostPage } from './ReportOrderCostPage'
 import { type ProfitabilityView, type TabKey, useReportData } from '../hooks/useReportData'
 import styles from './ReportWorkspacePage.module.scss'
 
@@ -312,6 +312,14 @@ export function ReportWorkspacePage() {
           label: row.name || row.code || t('reports.filters.unnamed'),
         })),
       )}
+      {select(
+        'financialStatus',
+        'Financial status',
+        ['ACTIVE', 'CANCELLED', 'PARTIALLY_REFUNDED', 'REFUNDED'].map((value) => ({
+          value,
+          label: value.replaceAll('_', ' '),
+        })),
+      )}
       <div className={styles.dateFilter}>
         <DateRangePicker
           value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
@@ -435,6 +443,7 @@ export function ReportWorkspacePage() {
     const metrics: Array<{ key: keyof SellerDailyProfit; label: string }> = [
       { key: 'orderCount', label: t('reports.columns.orders') },
       { key: 'revenueAmount', label: t('reports.columns.revenue') },
+      { key: 'netRevenueAmount', label: 'Net revenue' },
       { key: 'baseCostAmount', label: t('reports.columns.baseCost') },
       {
         key: 'additionalFulfillmentCostAmount',
@@ -628,11 +637,7 @@ export function ReportWorkspacePage() {
 
   const reportContent =
     activeTab === 'order-cost' ? (
-      <FinanceWorkspacePage
-        fixedSalesChannelCode={fixedSalesChannelCode}
-        hideCashFlow
-        hideReconciliationLinks
-      />
+      <ReportOrderCostPage fixedSalesChannelCode={fixedSalesChannelCode} />
     ) : activeTab === 'ads-employee' ? (
       <ReportAdsEmployeeTab
         data={adsSellerDaily.data}
@@ -683,13 +688,7 @@ export function ReportWorkspacePage() {
             {
               key: 'order-cost',
               label: <UiTabLabel>{t('reports.tabs.orderCost')}</UiTabLabel>,
-              children: (
-                <FinanceWorkspacePage
-                  fixedSalesChannelCode={fixedSalesChannelCode}
-                  hideCashFlow
-                  hideReconciliationLinks
-                />
-              ),
+              children: <ReportOrderCostPage fixedSalesChannelCode={fixedSalesChannelCode} />,
             },
             {
               key: 'sales',

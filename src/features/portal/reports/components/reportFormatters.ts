@@ -5,7 +5,7 @@ const moneyFormatter = new Intl.NumberFormat(undefined, {
 
 export const formatReportMoney = (amount: number, _currency: string): string => {
   void _currency
-  return moneyFormatter.format(amount / 100)
+  return `$${moneyFormatter.format(amount / 100)}`
 }
 
 export const formatReportPercent = (bps: number | null): string =>

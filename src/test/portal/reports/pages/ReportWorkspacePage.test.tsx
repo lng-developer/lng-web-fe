@@ -16,6 +16,7 @@ import {
   listFinanceCoverage,
   listFinanceDaily,
   listFinanceDailyProfit,
+  listFinanceOrderProfitability,
   listFinanceSellerDaily,
   listVendorPerformance,
   type SellerDailyProfit,
@@ -49,6 +50,7 @@ vi.mock('@/features/portal/reports/api/reportApi', async (importOriginal) => ({
   listFinanceByTeam: vi.fn(),
   listFinanceDaily: vi.fn(),
   listFinanceDailyProfit: vi.fn(),
+  listFinanceOrderProfitability: vi.fn(),
   listVendorPerformance: vi.fn(),
 }))
 vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
@@ -79,6 +81,11 @@ describe('ReportWorkspacePage', () => {
     }
     queryClient.clear()
     vi.mocked(listFinanceSnapshots).mockResolvedValue({
+      items: [],
+      pagination: { total: 0, page: 1, limit: 20 },
+      summaryByCurrency: [],
+    })
+    vi.mocked(listFinanceOrderProfitability).mockResolvedValue({
       items: [],
       pagination: { total: 0, page: 1, limit: 20 },
       summaryByCurrency: [],
@@ -201,7 +208,7 @@ describe('ReportWorkspacePage', () => {
     )
 
     await waitFor(() =>
-      expect(listFinanceSnapshots).toHaveBeenCalledWith(
+      expect(listFinanceOrderProfitability).toHaveBeenCalledWith(
         expect.objectContaining({ salesChannelCode: 'AMAZON' }),
       ),
     )
@@ -757,7 +764,7 @@ describe('ReportWorkspacePage', () => {
     fireEvent.click(orderProfitabilityTab)
 
     await waitFor(() =>
-      expect(listFinanceSnapshots).toHaveBeenCalledWith(expect.objectContaining({ page: 1 })),
+      expect(listFinanceOrderProfitability).toHaveBeenCalledWith(expect.any(Object)),
     )
   })
 })

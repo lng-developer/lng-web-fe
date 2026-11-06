@@ -14,6 +14,9 @@ describe('VendorWorkspaceProductsTabPage', () => {
             canWrite
             onAddProduct={() => undefined}
             onEditProduct={() => undefined}
+            onCloneProduct={() => Promise.reject(new Error('unused in render test'))}
+            cloneVendorOptions={[]}
+            cloningProduct={false}
             onOpenProductImport={() => undefined}
             onProductStatusChange={() => undefined}
             onProductsPageChange={() => undefined}
