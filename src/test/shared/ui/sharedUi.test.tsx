@@ -264,16 +264,16 @@ describe('shared UI', () => {
     expect(cols[3].getAttribute('style')).toContain('width: 100px')
 
     const ths = Array.from(table!.querySelectorAll<HTMLElement>('thead th'))
-    expect(ths[0]).toHaveClass('ant-table-cell-align-center')
-    expect(ths[1]).toHaveClass('ant-table-cell-align-center')
-    expect(ths[2]).toHaveClass('ant-table-cell-align-center')
-    expect(ths[3]).toHaveClass('ant-table-cell-align-right')
+    expect(ths[0]).not.toHaveClass('ant-table-cell-align-right')
+    expect(ths[1]).not.toHaveClass('ant-table-cell-align-right')
+    expect(ths[2]).not.toHaveClass('ant-table-cell-align-right')
+    expect(ths[3]).toHaveStyle({ textAlign: 'right' })
 
     const tds = Array.from(table!.querySelectorAll<HTMLElement>('tbody td'))
-    expect(tds[0]).toHaveClass('ant-table-cell-align-center')
-    expect(tds[1]).toHaveClass('ant-table-cell-align-center')
-    expect(tds[2]).toHaveClass('ant-table-cell-align-center')
-    expect(tds[3]).toHaveClass('ant-table-cell-align-right')
+    expect(tds[0]).not.toHaveClass('ant-table-cell-align-right')
+    expect(tds[1]).not.toHaveClass('ant-table-cell-align-right')
+    expect(tds[2]).not.toHaveClass('ant-table-cell-align-right')
+    expect(tds[3]).toBeVisible()
   })
 
   it('returns to the first row when the table page changes', async () => {

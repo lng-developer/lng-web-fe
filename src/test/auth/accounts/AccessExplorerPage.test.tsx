@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { AccessExplorerPage } from '@/features/auth/accounts/pages/AccessExplorerPage'
+import { accountKeys } from '@/features/auth/accounts/api/accountKeys'
 import { loadAccessAccounts, loadAccessExplorer } from '@/features/auth/api/accessExplorerApi'
 import { loadAccount } from '@/features/auth/accounts/api/accountManagementApi'
 import { loadRoleCatalog } from '@/features/auth/roles/api/rolesApi'
@@ -133,8 +134,8 @@ describe('AccessExplorerPage', () => {
     vi.mocked(loadAccessAccounts).mockReset()
     vi.mocked(loadAccessAccounts)
       .mockRejectedValueOnce(new Error('network error'))
-      .mockRejectedValueOnce(new Error('network error'))
       .mockResolvedValue(accounts)
+    queryClient.setQueryDefaults(accountKeys.all(), { retry: false })
 
     render(
       <MemoryRouter>
@@ -144,7 +145,9 @@ describe('AccessExplorerPage', () => {
       </MemoryRouter>,
     )
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Thử lại' }, { timeout: 3_000 }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: /Thử lại|Retry/ }, { timeout: 3_000 }),
+    )
 
     expect((await screen.findAllByText('linh@lng.local'))[0]).toBeVisible()
   })
