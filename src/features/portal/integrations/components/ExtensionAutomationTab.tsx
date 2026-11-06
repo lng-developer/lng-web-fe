@@ -693,6 +693,8 @@ export function ExtensionAutomationTab({
                   }),
                   icon: <FundOutlined className={styles.scheduleIconPrimary} />,
                   intervalOptions: ADS_INTERVAL_OPTIONS,
+                  intervalNote:
+                    'Daily · D-1 · Sunday first run reconciles the previous 7 completed days',
                 },
                 {
                   source: 'TRANSACTIONS',
