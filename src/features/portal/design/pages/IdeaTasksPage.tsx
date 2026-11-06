@@ -255,10 +255,21 @@ export function IdeaTasksPage() {
     staleTime: 15_000,
   })
 
+  const summaryParams = useMemo(
+    () => ({
+      taskType: 'IDEA' as const,
+      salesChannelCode,
+      search: deferredSearch || undefined,
+      dateFrom: dates.dateFrom,
+      dateTo: dates.dateTo,
+    }),
+    [salesChannelCode, deferredSearch, dates.dateFrom, dates.dateTo],
+  )
+
   const summaryQuery = useQuery({
-    queryKey: designKeys.summary({ taskType: 'IDEA', salesChannelCode }),
-    queryFn: () => getDesignSummary({ taskType: 'IDEA', salesChannelCode }),
-    staleTime: 30_000,
+    queryKey: designKeys.summary(summaryParams),
+    queryFn: () => getDesignSummary(summaryParams),
+    staleTime: 15_000,
   })
 
   const assigneesQuery = useQuery({
@@ -417,26 +428,7 @@ export function IdeaTasksPage() {
     return items
   }, [tasksQuery.data?.items, salesChannelCode])
 
-  const paginationTotal = useMemo(() => {
-    if (deferredSearch) {
-      return tasksQuery.data?.pagination?.total ?? displayedTasks.length
-    }
-    if (salesChannelCode) {
-      const activeCount = counts[activeTabKey as keyof typeof counts]
-      if (typeof activeCount === 'number') {
-        return activeCount
-      }
-      return displayedTasks.length
-    }
-    return tasksQuery.data?.pagination?.total ?? displayedTasks.length
-  }, [
-    deferredSearch,
-    salesChannelCode,
-    counts,
-    activeTabKey,
-    tasksQuery.data?.pagination?.total,
-    displayedTasks.length,
-  ])
+  const paginationTotal = tasksQuery.data?.pagination?.total ?? displayedTasks.length
 
   const columns = useMemo<TableColumnsType<DesignTask>>(() => {
     const baseColumns: TableColumnsType<DesignTask> = [
@@ -748,7 +740,10 @@ export function IdeaTasksPage() {
         <Input
           placeholder={t('common.search', { defaultValue: 'Search ideas...' })}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
           allowClear
           className={styles.search}
         />

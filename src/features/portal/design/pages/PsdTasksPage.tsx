@@ -229,6 +229,8 @@ export function PsdTasksPage() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
+  const [etsyListingId, setEtsyListingId] = useState('')
+  const deferredEtsyListingId = useDeferredValue(etsyListingId)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
   const [selectedSellerId, setSelectedSellerId] = useState<string>()
   const [dateRange, setDateRange] = useState<DateRangeValue>({})
@@ -268,6 +270,7 @@ export function PsdTasksPage() {
       page,
       limit: pageSize,
       search: deferredSearch || undefined,
+      etsyListingId: deferredEtsyListingId.trim() || undefined,
       taskType: 'PSD_TEMPLATE' as const,
       salesChannelCode,
       status: activeTabConfig.status,
@@ -280,6 +283,7 @@ export function PsdTasksPage() {
       page,
       pageSize,
       deferredSearch,
+      deferredEtsyListingId,
       salesChannelCode,
       activeTabConfig.status,
       selectedSellerId,
@@ -302,11 +306,31 @@ export function PsdTasksPage() {
     enabled: !canPsdRequest || canWrite,
   })
 
+  const summaryParams = useMemo(
+    () => ({
+      taskType: 'PSD_TEMPLATE' as const,
+      salesChannelCode,
+      search: deferredSearch || undefined,
+      etsyListingId: deferredEtsyListingId.trim() || undefined,
+      sellerId: selectedSellerId || undefined,
+      shopId: selectedSellerId || undefined,
+      dateFrom: dateRange.dateFrom,
+      dateTo: dateRange.dateTo,
+    }),
+    [
+      salesChannelCode,
+      deferredSearch,
+      deferredEtsyListingId,
+      selectedSellerId,
+      dateRange.dateFrom,
+      dateRange.dateTo,
+    ],
+  )
+
   const summaryQuery = useQuery({
-    queryKey: designKeys.summary({ taskType: 'PSD_TEMPLATE', salesChannelCode }),
-    queryFn: () => getDesignSummary({ taskType: 'PSD_TEMPLATE', salesChannelCode }),
-    staleTime: 30_000,
-    enabled: !canPsdRequest || canWrite,
+    queryKey: designKeys.summary(summaryParams),
+    queryFn: () => getDesignSummary(summaryParams),
+    staleTime: 15_000,
   })
 
   const assigneesQuery = useQuery({
@@ -506,28 +530,7 @@ export function PsdTasksPage() {
     return items
   }, [tasksQuery.data?.items, salesChannelCode, selectedSellerId])
 
-  const paginationTotal = useMemo(() => {
-    if (selectedSellerId) return displayedTasks.length
-    if (deferredSearch) {
-      return tasksQuery.data?.pagination?.total ?? displayedTasks.length
-    }
-    if (salesChannelCode) {
-      const activeCount = counts[activeTabKey as keyof typeof counts]
-      if (typeof activeCount === 'number') {
-        return activeCount
-      }
-      return displayedTasks.length
-    }
-    return tasksQuery.data?.pagination?.total ?? displayedTasks.length
-  }, [
-    selectedSellerId,
-    deferredSearch,
-    salesChannelCode,
-    counts,
-    activeTabKey,
-    tasksQuery.data?.pagination?.total,
-    displayedTasks.length,
-  ])
+  const paginationTotal = tasksQuery.data?.pagination?.total ?? displayedTasks.length
 
   const columns = useMemo<TableColumnsType<DesignTask>>(() => {
     const baseColumns: TableColumnsType<DesignTask> = [
@@ -608,7 +611,9 @@ export function PsdTasksPage() {
         title:
           salesChannelCode === 'ETSY'
             ? 'Listing ID'
-            : t('portal.design.asin', { defaultValue: 'Asin' }),
+            : salesChannelCode === 'AMAZON'
+              ? 'ASIN'
+              : 'ASIN / Listing ID',
         key: 'asin',
         width: 130,
         align: 'center',
@@ -1005,11 +1010,36 @@ export function PsdTasksPage() {
       {/* Filter bar: Search + Seller + Refresh */}
       <div className={styles.filterBar}>
         <Input
-          placeholder={t('common.search', { defaultValue: 'Search PSD tasks...' })}
+          placeholder={
+            salesChannelCode === 'ETSY'
+              ? t('portal.design.searchEtsyPlaceholder', {
+                  defaultValue: 'Search Listing ID, SKU...',
+                })
+              : salesChannelCode === 'AMAZON'
+                ? t('portal.design.searchAmazonPlaceholder', {
+                    defaultValue: 'Search ASIN, SKU...',
+                  })
+                : t('portal.design.searchAllPlaceholder', {
+                    defaultValue: 'Search ASIN, Etsy Listing ID, SKU...',
+                  })
+          }
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
           allowClear
           className={styles.search}
+        />
+        <Input
+          placeholder={t('portal.design.etsyListingId', { defaultValue: 'Etsy Listing ID' })}
+          value={etsyListingId}
+          onChange={(e) => {
+            setEtsyListingId(e.target.value)
+            setPage(1)
+          }}
+          allowClear
+          style={{ width: 180 }}
         />
         <Select
           allowClear

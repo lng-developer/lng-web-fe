@@ -158,6 +158,8 @@ export type DesignListParams = {
   page: number
   limit: number
   search?: string
+  asin?: string
+  etsyListingId?: string
   salesChannelCode?: 'AMAZON' | 'ETSY'
   status?: string
   taskType?: string
