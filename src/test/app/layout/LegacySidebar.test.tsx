@@ -136,7 +136,7 @@ describe('LegacySidebar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Extensions' }))
     expect(screen.getByText('Manage Clients')).toBeVisible()
-    expect(screen.getByText('Check Tracking')).toBeVisible()
+    expect(screen.getByText('Image Sync')).toBeVisible()
   })
 
   it('keeps Setting at the bottom rail, manages HR via the core switch/top rail, and renders their navigation', async () => {

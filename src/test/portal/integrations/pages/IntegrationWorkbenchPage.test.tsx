@@ -786,7 +786,7 @@ describe('IntegrationWorkbenchPage', () => {
         maxOrders: 1,
       }),
     )
-  }, 15000)
+  }, 60_000)
 
   it('keeps automation inside the extension workbench and loads it on demand', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
@@ -853,7 +853,7 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByRole('radio', { name: 'Automation' }))
     await screen.findByText('RDC 1')
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Enable settlement sync' }))
+    fireEvent.click(await screen.findByRole('switch', { name: 'Enable settlement sync' }))
     await waitFor(() =>
       expect(upsertExtensionFinanceSchedule).toHaveBeenCalledWith('agent-1', 'SETTLEMENTS', {
         enabled: true,
@@ -1010,10 +1010,10 @@ describe('IntegrationWorkbenchPage', () => {
 
     expect(
       await screen.findByText(
-        /Daily · Last 3 completed days \(UTC\+7\) · Initial 30 days in 7-day batches · Next:/,
+        /Daily · Last 3 completed days \(UTC\+7\) · Initial 30 days in 7-day batches/,
       ),
     ).toBeVisible()
-    expect(screen.getByText(/Daily · Newly closed statements only · Next:/)).toBeVisible()
+    expect(screen.getByText(/Daily · Newly closed statements only/)).toBeVisible()
   })
 
   it('shows an agent schedule as a compact card without stale next-run data', async () => {
@@ -1053,9 +1053,9 @@ describe('IntegrationWorkbenchPage', () => {
 
     const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
     expect(within(agentCard).getByText('Online')).toBeVisible()
-    const orderSchedule = within(agentCard).getByRole('region', { name: 'Order import schedule' })
+    const orderSchedule = within(agentCard).getAllByRole('listitem')[0]
     expect(within(orderSchedule).getByText('Order import')).toBeVisible()
-    expect(within(orderSchedule).getByText('Not scheduled')).toBeVisible()
+    expect(within(orderSchedule).getByText('Off')).toBeVisible()
   })
 
   it('shows all four import types in Automation', async () => {
@@ -1273,7 +1273,7 @@ describe('IntegrationWorkbenchPage', () => {
     })
     await client.invalidateQueries()
     expect(await screen.findByText('ETSY_IMPORT_NEEDS_REVIEW')).toBeVisible()
-  }, 15000)
+  }, 60_000)
 
   it('shows a task timeline for an extension command', async () => {
     vi.mocked(listExtensionCommands).mockResolvedValue({

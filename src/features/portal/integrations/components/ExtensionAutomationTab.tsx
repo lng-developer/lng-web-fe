@@ -383,6 +383,7 @@ export function ExtensionAutomationTab({
                 {t('portal.integrations.extension.disabled', { defaultValue: 'Off' })}
               </Typography.Text>
             )}
+            {intervalNote ? <span className={styles.scheduleNote}>{intervalNote}</span> : null}
 
             {schedule?.lastError ? (
               <Tooltip title={schedule.lastError}>
@@ -397,6 +398,7 @@ export function ExtensionAutomationTab({
         <div className={styles.scheduleRowRight}>
           <Switch
             size="small"
+            aria-label={`${enabled ? 'Disable' : 'Enable'} ${label.toLowerCase()} sync`}
             checked={enabled}
             loading={isSavingFinanceSchedule}
             disabled={!canWrite}
@@ -446,7 +448,11 @@ export function ExtensionAutomationTab({
 
   const renderAgentCard = (agent: ExtensionManagementAgent) => {
     return (
-      <article key={agent.id} aria-label={agent.label} className={styles.automationAgentCard}>
+      <article
+        key={agent.id}
+        aria-label={`${shopNames.get(agent.shopId) ?? agent.shopId} / ${agent.label}`}
+        className={styles.automationAgentCard}
+      >
         <div className={styles.automationAgentHeaderCompact}>
           <div className={styles.agentIdentity}>
             <div

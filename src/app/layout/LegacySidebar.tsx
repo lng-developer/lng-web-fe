@@ -1,4 +1,11 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import {
+  cloneElement,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -675,7 +682,11 @@ function toMenuItems(
 ): Parameters<typeof Menu>[0]['items'] {
   return items.map((item) => ({
     key: item.key,
-    icon: item.icon,
+    icon: item.icon
+      ? cloneElement(item.icon as ReactElement<{ 'aria-hidden'?: boolean }>, {
+          'aria-hidden': true,
+        })
+      : undefined,
     className: item.className,
     label: (
       <span className={styles.menuLabel}>
